@@ -16,14 +16,18 @@ def outDir = "${buildDir}/kotlin2js/main/"
 compileKotlin2Js.kotlinOptions.moduleKind = "amd"
 compileKotlin2Js.kotlinOptions.outputFile = outDir + "app.js"
 
+if (project.findProperty("kotlin.js.useIrBackend")?.toBoolean() == true) {
+    compileKotlin2Js.kotlinOptions.freeCompilerArgs += ["-Xir-produce-js"]
+}
+
 repositories {
     mavenLocal()
     mavenCentral()
 }
 
 dependencies {
-    compile "org.jetbrains.kotlin:kotlin-stdlib-js:$kotlin_version"
-    compile "org.mozilla:rhino:1.7.7.1"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-js:$kotlin_version"
+    implementation "org.mozilla:rhino:1.7.7.1"
 }
 
 task runRhino(type: JavaExec) {
@@ -34,7 +38,7 @@ task runRhino(type: JavaExec) {
 }
 
 build.doLast {
-    configurations.compile.each { File file ->
+    configurations.compileClasspath.each { File file ->
         copy {
             includeEmptyDirs = false
 

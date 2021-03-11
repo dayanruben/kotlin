@@ -1,6 +1,6 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2000-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.metadata.jvm.serialization
@@ -21,7 +21,7 @@ open class JvmStringTable(nameResolver: JvmNameResolver? = null) : StringTable {
     init {
         if (nameResolver != null) {
             strings.addAll(nameResolver.strings)
-            nameResolver.records.mapTo(records, JvmProtoBuf.StringTableTypes.Record::toBuilder)
+            nameResolver.types.recordList.mapTo(records, JvmProtoBuf.StringTableTypes.Record::toBuilder)
             for (index in strings.indices) {
                 map[nameResolver.getString(index)] = index
             }

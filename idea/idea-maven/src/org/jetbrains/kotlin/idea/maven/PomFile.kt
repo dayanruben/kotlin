@@ -1,17 +1,6 @@
 /*
- * Copyright 2010-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.maven
@@ -40,11 +29,13 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenArtifactScope
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.kotlin.cli.common.arguments.CliArgumentStringBuilder.buildArgumentString
-import org.jetbrains.kotlin.config.KotlinSourceRootType
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.config.SourceKotlinRootType
+import org.jetbrains.kotlin.config.TestSourceKotlinRootType
 import org.jetbrains.kotlin.idea.configuration.RepositoryDescription
 import org.jetbrains.kotlin.idea.maven.configuration.KotlinMavenConfigurator
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
+import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 import org.jetbrains.kotlin.utils.SmartList
 import java.util.*
 
@@ -55,7 +46,7 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
     constructor(xmlFile: XmlFile) : this(
         xmlFile,
         MavenDomUtil.getMavenDomProjectModel(xmlFile.project, xmlFile.virtualFile)
-                ?: throw IllegalStateException("No DOM model found for pom ${xmlFile.name}")
+            ?: throw IllegalStateException("No DOM model found for pom ${xmlFile.name}")
     )
 
     private val nodesByName = HashMap<String, XmlTag>()
@@ -126,7 +117,7 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
         dependency.classifier.stringValue = classifier
 
         if (scope != null && scope != MavenArtifactScope.COMPILE) {
-            dependency.scope.stringValue = scope.name.toLowerCase()
+            dependency.scope.stringValue = scope.name.toLowerCaseAsciiOnly()
         }
 
         if (optional) {
@@ -256,11 +247,11 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
         }
 
         if (isPluginExecutionMissing(plugin, "default-compile", "compile")) {
-            addExecution(javacPlugin, "compile", PomFile.DefaultPhases.Compile, listOf("compile"))
+            addExecution(javacPlugin, "compile", DefaultPhases.Compile, listOf("compile"))
         }
 
         if (isPluginExecutionMissing(plugin, "default-testCompile", "testCompile")) {
-            addExecution(javacPlugin, "testCompile", PomFile.DefaultPhases.TestCompile, listOf("testCompile"))
+            addExecution(javacPlugin, "testCompile", DefaultPhases.TestCompile, listOf("testCompile"))
         }
     }
 
@@ -277,10 +268,8 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
             return false
         }
 
-        // TODO: getPhase has been added as per https://youtrack.jetbrains.com/issue/IDEA-153582 and available only in latest IDEAs
         return plugin.executions.filter { it.executionId == executionId }.all { execution ->
-            execution::class.java.methods.filter { it.name == "getPhase" && it.parameterTypes.isEmpty() }
-                .all { it.invoke(execution) == DefaultPhases.None }
+            execution.phase == DefaultPhases.None
         }
     }
 
@@ -500,9 +489,9 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
 
     private fun SourceFolder.isRelatedSourceRoot(isTest: Boolean): Boolean {
         return if (isTest) {
-            rootType == JavaSourceRootType.TEST_SOURCE || rootType == KotlinSourceRootType.TestSource
+            rootType == JavaSourceRootType.TEST_SOURCE || rootType == TestSourceKotlinRootType
         } else {
-            rootType == JavaSourceRootType.SOURCE || rootType == KotlinSourceRootType.Source
+            rootType == JavaSourceRootType.SOURCE || rootType == SourceKotlinRootType
         }
     }
 
@@ -647,7 +636,8 @@ internal fun MavenDomDependencies.findDependencies(artifacts: List<MavenId>, sco
 }
 
 private fun MavenDomDependency.matches(artifact: MavenId, scope: MavenArtifactScope?) =
-    this.matches(artifact) && (this.scope.stringValue == scope?.name?.toLowerCase() || scope == null && this.scope.stringValue == "compile")
+    this.matches(artifact) &&
+            (this.scope.stringValue == scope?.name?.toLowerCaseAsciiOnly() || scope == null && this.scope.stringValue == "compile")
 
 private fun MavenDomArtifactCoordinates.matches(artifact: MavenId) =
     (artifact.groupId == null || groupId.stringValue == artifact.groupId)
@@ -710,7 +700,7 @@ fun PomFile.changeFeatureConfiguration(
         }
 
     argsSubTag.findSubTags("arg").filter { feature.name in it.value.text }.forEach { it.deleteCascade() }
-    val featureArgumentString = feature.buildArgumentString(state)
+    val featureArgumentString = feature.buildArgumentString(state, kotlinPlugin.version.stringValue)
     val childTag = argsSubTag.createChildTag("arg", featureArgumentString)
     return argsSubTag.add(childTag)
 }

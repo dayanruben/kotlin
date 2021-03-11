@@ -1,16 +1,13 @@
-
 plugins {
     kotlin("jvm")
     id("jps-compatible")
 }
 
-jvmTarget = "1.6"
-
 dependencies {
     compile(project(":compiler:util"))
     compile(project(":core:descriptors"))
+    api(project(":compiler:resolution.common"))
     compileOnly(intellijDep()) { includeJars("trove4j") }
-    compileOnly("org.jetbrains:annotations:13.0")
 }
 
 sourceSets {

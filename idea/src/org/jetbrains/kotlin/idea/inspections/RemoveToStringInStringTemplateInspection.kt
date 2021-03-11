@@ -1,6 +1,6 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2000-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.inspections
@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.idea.inspections
 import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.intentions.isToString
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.canPlaceAfterSimpleNameEntry
@@ -22,7 +23,7 @@ class RemoveToStringInStringTemplateInspection : AbstractKotlinInspection(), Cle
 
             holder.registerProblem(
                 selectorExpression,
-                "Redundant 'toString()' call in string template",
+                KotlinBundle.message("redundant.tostring.call.in.string.template"),
                 ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                 RemoveToStringFix()
             )
@@ -30,7 +31,7 @@ class RemoveToStringInStringTemplateInspection : AbstractKotlinInspection(), Cle
 }
 
 class RemoveToStringFix : LocalQuickFix {
-    override fun getName() = "Remove 'toString()' call"
+    override fun getName() = KotlinBundle.message("remove.to.string.fix.text")
     override fun getFamilyName() = name
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {

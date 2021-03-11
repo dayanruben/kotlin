@@ -20,7 +20,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.refactoring.classMembers.MemberInfoModel
 import com.intellij.refactoring.ui.AbstractMemberSelectionTable
 import com.intellij.ui.RowIcon
-import org.jetbrains.kotlin.idea.KotlinIconProvider
+import org.jetbrains.kotlin.idea.KotlinIconProviderBase
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -29,9 +29,9 @@ import org.jetbrains.kotlin.psi.KtProperty
 import javax.swing.Icon
 
 class KotlinMemberSelectionTable(
-        memberInfos: List<KotlinMemberInfo>,
-        memberInfoModel: MemberInfoModel<KtNamedDeclaration, KotlinMemberInfo>?,
-        abstractColumnHeader: String?
+    memberInfos: List<KotlinMemberInfo>,
+    memberInfoModel: MemberInfoModel<KtNamedDeclaration, KotlinMemberInfo>?,
+    abstractColumnHeader: String?
 ) : AbstractMemberSelectionTable<KtNamedDeclaration, KotlinMemberInfo>(memberInfos, memberInfoModel, abstractColumnHeader) {
     override fun getAbstractColumnValue(memberInfo: KotlinMemberInfo): Any? {
         if (memberInfo.isStatic || memberInfo.isCompanionMember) return null
@@ -62,11 +62,11 @@ class KotlinMemberSelectionTable(
     }
 
     override fun setVisibilityIcon(memberInfo: KotlinMemberInfo, icon: RowIcon) {
-        icon.setIcon(KotlinIconProvider.getVisibilityIcon(memberInfo.member.modifierList), 1)
+        icon.setIcon(KotlinIconProviderBase.getVisibilityIcon(memberInfo.member.modifierList), 1)
     }
 
     override fun getOverrideIcon(memberInfo: KotlinMemberInfo): Icon? {
-        val defaultIcon = AbstractMemberSelectionTable.EMPTY_OVERRIDE_ICON
+        val defaultIcon = EMPTY_OVERRIDE_ICON
 
         val member = memberInfo.member
         if (member !is KtNamedFunction && member !is KtProperty && member !is KtParameter) return defaultIcon

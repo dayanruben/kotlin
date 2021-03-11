@@ -16,7 +16,6 @@
 
 package org.jetbrains.kotlin.idea.refactoring.rename
 
-import org.jetbrains.kotlin.statistics.KotlinStatisticsTrigger
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -25,7 +24,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.rename.RenameHandler
-import org.jetbrains.kotlin.statistics.KotlinIdeRefactoringTrigger
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import java.util.*
 
@@ -33,7 +31,11 @@ class KotlinRenameDispatcherHandler : RenameHandler {
     companion object {
         val EP_NAME = ExtensionPointName<RenameHandler>("org.jetbrains.kotlin.renameHandler")
 
-        private val handlers: Array<out RenameHandler> get() = Extensions.getExtensions(EP_NAME)
+        private val handlers: Array<out RenameHandler>
+            get() {
+                @Suppress("DEPRECATION")
+                return Extensions.getExtensions(EP_NAME)
+            }
     }
 
     internal fun getRenameHandler(dataContext: DataContext): RenameHandler? {
@@ -49,11 +51,9 @@ class KotlinRenameDispatcherHandler : RenameHandler {
 
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?, dataContext: DataContext) {
         getRenameHandler(dataContext)?.invoke(project, editor, file, dataContext)
-        KotlinStatisticsTrigger.trigger(KotlinIdeRefactoringTrigger::class.java, this::class.java.name)
     }
 
     override fun invoke(project: Project, elements: Array<out PsiElement>, dataContext: DataContext) {
         getRenameHandler(dataContext)?.invoke(project, elements, dataContext)
-        KotlinStatisticsTrigger.trigger(KotlinIdeRefactoringTrigger::class.java, this::class.java.name)
     }
 }

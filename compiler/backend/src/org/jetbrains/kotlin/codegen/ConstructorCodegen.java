@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.codegen;
@@ -17,8 +17,8 @@ import org.jetbrains.kotlin.descriptors.*;
 import org.jetbrains.kotlin.psi.*;
 import org.jetbrains.kotlin.resolve.BindingContext;
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils;
+import org.jetbrains.kotlin.resolve.InlineClassesUtilsKt;
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall;
-import org.jetbrains.kotlin.resolve.jvm.InlineClassManglingRulesKt;
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.JvmDeclarationOrigin;
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.JvmDeclarationOriginKt;
 import org.jetbrains.kotlin.resolve.jvm.jvmSignature.JvmMethodParameterKind;
@@ -117,8 +117,9 @@ public class ConstructorCodegen {
     }
 
     private void registerAccessorForHiddenConstructorIfNeeded(ClassConstructorDescriptor descriptor) {
-        if (!InlineClassManglingRulesKt.shouldHideConstructorDueToInlineClassTypeValueParameters(descriptor)) return;
-        context.getAccessor(descriptor, AccessorKind.NORMAL, null, null);
+        if (DescriptorAsmUtil.isHiddenConstructor(descriptor)) {
+            context.getAccessor(descriptor, AccessorKind.NORMAL, null, null);
+        }
     }
 
     public void generateSecondaryConstructor(
@@ -127,12 +128,14 @@ public class ConstructorCodegen {
     ) {
         if (!canHaveDeclaredConstructors(descriptor)) return;
 
+        KtSecondaryConstructor constructor = (KtSecondaryConstructor) descriptorToDeclaration(constructorDescriptor);
+        // Synthetic constructors don't have corresponding declarations
+        if (constructor == null) return;
+
         ConstructorContext constructorContext = context.intoConstructor(constructorDescriptor, typeMapper);
 
-        KtSecondaryConstructor constructor = (KtSecondaryConstructor) descriptorToDeclaration(constructorDescriptor);
-
         functionCodegen.generateMethod(
-                JvmDeclarationOriginKt.OtherOrigin(constructor, constructorDescriptor),
+                JvmDeclarationOriginKt.OtherOrigin(constructorDescriptor),
                 constructorDescriptor, constructorContext,
                 new FunctionGenerationStrategy.CodegenBased(state) {
                     @Override
@@ -190,6 +193,7 @@ public class ConstructorCodegen {
         markLineNumberForConstructor(constructorDescriptor, primaryConstructor, codegen);
 
         if (OwnerKind.ERASED_INLINE_CLASS == kind) {
+            memberCodegen.generateInitializers(() -> codegen);
             Type t = typeMapper.mapType(constructorDescriptor.getContainingDeclaration());
             iv.load(0, t);
             iv.areturn(t);
@@ -224,7 +228,7 @@ public class ConstructorCodegen {
         }
 
         //object initialization was moved to initializeObjects()
-        if (!isObject(descriptor)) {
+        if (!isObject(descriptor) && !InlineClassesUtilsKt.isInlineClass(descriptor)) {
             memberCodegen.generateInitializers(() -> codegen);
         }
         iv.visitInsn(RETURN);
@@ -296,7 +300,7 @@ public class ConstructorCodegen {
 
             int k = 1;
             for (FieldInfo info : argsFromClosure) {
-                k = AsmUtil.genAssignInstanceFieldFromParam(info, k, iv);
+                k = DescriptorAsmUtil.genAssignInstanceFieldFromParam(info, k, iv);
             }
         }
     }
@@ -367,11 +371,13 @@ public class ConstructorCodegen {
             JvmMethodParameterKind delegatingKind = delegatingParameters.get(index).getKind();
             if (delegatingKind == JvmMethodParameterKind.VALUE) {
                 assert index == parameters.size() || parameters.get(index).getKind() == JvmMethodParameterKind.VALUE:
-                        "Delegating constructor has not enough implicit parameters";
+                        "Delegating constructor has not enough implicit parameters: " + delegatingConstructor;
                 break;
             }
-            assert index < parameters.size() && parameters.get(index).getKind() == delegatingKind :
-                    "Constructors of the same class should have the same set of implicit arguments";
+            if (index >= parameters.size() || parameters.get(index).getKind() != delegatingKind) {
+                throw new AssertionError(
+                        "Constructors of the same class should have the same set of implicit arguments: " + delegatingConstructor);
+            }
             JvmMethodParameterSignature parameter = parameters.get(index);
 
             iv.load(offset, parameter.getAsmType());
@@ -379,7 +385,7 @@ public class ConstructorCodegen {
         }
 
         assert index == parameters.size() || parameters.get(index).getKind() == JvmMethodParameterKind.VALUE :
-                "Delegating constructor has not enough parameters";
+                "Delegating constructor has not enough parameters: " + delegatingConstructor;
 
         return new CallBasedArgumentGenerator(codegen, codegen.defaultCallGenerator, delegatingConstructor.getValueParameters(),
                                               delegatingCallable.getValueParameterTypes());
@@ -420,8 +426,7 @@ public class ConstructorCodegen {
                 // Super constructor requires OUTER parameter, but our OUTER instance may be different from what is expected by the super
                 // constructor. We need to traverse our outer classes from the bottom up, to find the needed class. See innerExtendsOuter.kt
                 ClassDescriptor outerForSuper = (ClassDescriptor) superConstructor.getContainingDeclaration().getContainingDeclaration();
-                StackValue outer = codegen.generateThisOrOuter(outerForSuper, true, true);
-                outer.put(outer.type, codegen.v);
+                codegen.generateThisOrOuter(outerForSuper, true, true).put(codegen.v);
                 superIndex++;
             }
             else if (kind == JvmMethodParameterKind.SUPER_CALL_PARAM || kind == JvmMethodParameterKind.ENUM_NAME_OR_ORDINAL) {

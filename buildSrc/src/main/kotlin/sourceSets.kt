@@ -1,15 +1,9 @@
-@file:Suppress("unused") // usages in build scripts are not tracked properly
-
-import org.gradle.api.*
+import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPluginConvention
-import org.gradle.api.tasks.*
-import org.gradle.kotlin.dsl.*
-import org.gradle.language.jvm.tasks.ProcessResources
+import org.gradle.api.tasks.SourceSet
+import org.gradle.api.tasks.SourceSetContainer
 
-//import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
-
-inline fun Project.sourceSets(crossinline body: SourceSetsBuilder.() -> Unit) =
-        SourceSetsBuilder(this).body()
+inline fun Project.sourceSets(crossinline body: SourceSetsBuilder.() -> Unit) = SourceSetsBuilder(this).body()
 
 class SourceSetsBuilder(val project: Project) {
 
@@ -36,32 +30,22 @@ val SourceSet.projectDefault: Project.() -> Unit
             }
             "test" -> {
                 java.srcDirs("test", "tests")
+                this@projectDefault.resources.srcDir("testResources")
             }
         }
     }
-
-// TODO: adding KotlinSourceSet dep to the plugin breaks the build unexpectedly, resolve and uncomment
-//val SourceSet.kotlin: SourceDirectorySet
-//    get() =
-//        (this as HasConvention)
-//                .convention
-//                .getPlugin(KotlinSourceSet::class.java)
-//                .kotlin
-//
-//
-//fun SourceSet.kotlin(action: SourceDirectorySet.() -> Unit) =
-//        kotlin.action()
-
-fun Project.getSourceSetsFrom(projectPath: String): SourceSetContainer {
-    evaluationDependsOn(projectPath)
-    return project(projectPath).sourceSets
-}
 
 val Project.sourceSets: SourceSetContainer
     get() = javaPluginConvention().sourceSets
 
 val Project.mainSourceSet: SourceSet
-    get() = sourceSets.getByName("main")
+    get() = javaPluginConvention().mainSourceSet
 
 val Project.testSourceSet: SourceSet
+    get() = javaPluginConvention().testSourceSet
+
+val JavaPluginConvention.mainSourceSet: SourceSet
+    get() = sourceSets.getByName("main")
+
+val JavaPluginConvention.testSourceSet: SourceSet
     get() = sourceSets.getByName("test")

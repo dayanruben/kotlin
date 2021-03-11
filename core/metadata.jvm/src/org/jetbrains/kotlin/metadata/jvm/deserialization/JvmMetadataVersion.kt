@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.metadata.jvm.deserialization
@@ -20,14 +20,13 @@ class JvmMetadataVersion(versionArray: IntArray, val isStrictSemantics: Boolean)
                 if (isStrictSemantics) {
                     isCompatibleTo(INSTANCE)
                 } else {
-                    // In Kotlin 1.4, JVM metadata version is going to be advanced to 1.4.0.
-                    // Kotlin 1.3 is able to read metadata of versions up to Kotlin 1.4 (unless the version has strict semantics).
-                    major == 1 && minor <= 4
+                    // Kotlin 1.N is able to read metadata of versions up to Kotlin 1.{N+1} (unless the version has strict semantics).
+                    major == INSTANCE.major && minor <= INSTANCE.minor + 1
                 }
 
     companion object {
         @JvmField
-        val INSTANCE = JvmMetadataVersion(1, 1, 13)
+        val INSTANCE = JvmMetadataVersion(1, 5, 0)
 
         @JvmField
         val INVALID_VERSION = JvmMetadataVersion()

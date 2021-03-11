@@ -16,7 +16,6 @@
 
 package org.jetbrains.kotlin.compilerRunner;
 
-import com.intellij.util.containers.ContainerUtil;
 import kotlin.collections.CollectionsKt;
 import kotlin.jvm.JvmClassMappingKt;
 import kotlin.reflect.KClass;
@@ -25,24 +24,47 @@ import kotlin.reflect.KVisibility;
 import kotlin.reflect.full.KClasses;
 import kotlin.reflect.jvm.ReflectJvmMapping;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.cli.common.arguments.Argument;
 import org.jetbrains.kotlin.cli.common.arguments.CommonToolArguments;
 import org.jetbrains.kotlin.cli.common.arguments.InternalArgument;
 import org.jetbrains.kotlin.cli.common.arguments.ParseCommandLineArgumentsKt;
+import org.jetbrains.kotlin.idea.ExplicitDefaultSubstitutor;
+import org.jetbrains.kotlin.idea.ExplicitDefaultSubstitutorsKt;
 import org.jetbrains.kotlin.utils.StringsKt;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class ArgumentUtils {
-    private ArgumentUtils() {}
+    private ArgumentUtils() {
+    }
 
     @NotNull
     public static List<String> convertArgumentsToStringList(@NotNull CommonToolArguments arguments)
+            throws InstantiationException, IllegalAccessException, InvocationTargetException {
+        List<String> convertedArguments = convertArgumentsToStringListInternal(arguments);
+
+        Map<KClass<? extends CommonToolArguments>, Collection<ExplicitDefaultSubstitutor>> defaultSubstitutorsMap =
+                ExplicitDefaultSubstitutorsKt.getDefaultSubstitutors();
+        KClass<? extends CommonToolArguments> argumentsKClass = JvmClassMappingKt.getKotlinClass(arguments.getClass());
+        Collection<ExplicitDefaultSubstitutor> defaultSubstitutors = defaultSubstitutorsMap.get(argumentsKClass);
+        if (defaultSubstitutors != null) {
+            for (ExplicitDefaultSubstitutor substitutor : defaultSubstitutors) {
+                if (substitutor.isSubstitutable(convertedArguments)) convertedArguments.addAll(substitutor.getNewSubstitution());
+            }
+        }
+        return convertedArguments;
+    }
+
+    @NotNull
+    public static List<String> convertArgumentsToStringListNoDefaults(@NotNull CommonToolArguments arguments)
+            throws InstantiationException, IllegalAccessException, InvocationTargetException {
+        return convertArgumentsToStringListInternal(arguments);
+    }
+
+    private static List<String> convertArgumentsToStringListInternal(@NotNull CommonToolArguments arguments)
             throws InstantiationException, IllegalAccessException, InvocationTargetException {
         List<String> result = new ArrayList<>();
         Class<? extends CommonToolArguments> argumentsClass = arguments.getClass();
@@ -60,7 +82,7 @@ public class ArgumentUtils {
             @NotNull List<String> result
     ) throws IllegalAccessException, InstantiationException, InvocationTargetException {
         for (KProperty1 property : KClasses.getMemberProperties(clazz)) {
-            Argument argument = ContainerUtil.findInstance(property.getAnnotations(), Argument.class);
+            Argument argument = findInstance(property.getAnnotations(), Argument.class);
             if (argument == null) continue;
 
             if (property.getVisibility() != KVisibility.PUBLIC) continue;
@@ -89,5 +111,15 @@ public class ArgumentUtils {
                 result.add(value.toString());
             }
         }
+    }
+
+    @Nullable
+    private static <T> T findInstance(Iterable<? super T> iterable, Class<T> clazz) {
+        for (Object item : iterable) {
+            if (clazz.isInstance(item)) {
+                return clazz.cast(item);
+            }
+        }
+        return null;
     }
 }

@@ -1,14 +1,16 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 @file:kotlin.jvm.JvmMultifileClass
 @file:kotlin.jvm.JvmName("CollectionsKt")
+@file:OptIn(kotlin.experimental.ExperimentalTypeInference::class)
 
 package kotlin.collections
 
 import kotlin.contracts.*
+import kotlin.random.Random
 
 internal object EmptyIterator : ListIterator<Nothing> {
     override fun hasNext(): Boolean = false
@@ -125,7 +127,11 @@ public fun <T : Any> listOfNotNull(vararg elements: T?): List<T> = elements.filt
 
 /**
  * Creates a new read-only list with the specified [size], where each element is calculated by calling the specified
- * [init] function. The [init] function returns a list element given its index.
+ * [init] function.
+ *
+ * The function [init] is called for each list element sequentially starting from the first one.
+ * It should return the value for a list element given its index.
+ *
  * @sample samples.collections.Collections.Lists.readOnlyListFromInitializer
  */
 @SinceKotlin("1.1")
@@ -134,7 +140,11 @@ public inline fun <T> List(size: Int, init: (index: Int) -> T): List<T> = Mutabl
 
 /**
  * Creates a new mutable list with the specified [size], where each element is calculated by calling the specified
- * [init] function. The [init] function returns a list element given its index.
+ * [init] function.
+ *
+ * The function [init] is called for each list element sequentially starting from the first one.
+ * It should return the value for a list element given its index.
+ *
  * @sample samples.collections.Collections.Lists.mutableListFromInitializer
  */
 @SinceKotlin("1.1")
@@ -144,6 +154,56 @@ public inline fun <T> MutableList(size: Int, init: (index: Int) -> T): MutableLi
     repeat(size) { index -> list.add(init(index)) }
     return list
 }
+
+/**
+ * Builds a new read-only [List] by populating a [MutableList] using the given [builderAction]
+ * and returning a read-only list with the same elements.
+ *
+ * The list passed as a receiver to the [builderAction] is valid only inside that function.
+ * Using it outside of the function produces an unspecified behavior.
+ *
+ * @sample samples.collections.Builders.Lists.buildListSample
+ */
+@SinceKotlin("1.3")
+@ExperimentalStdlibApi
+@kotlin.internal.InlineOnly
+public inline fun <E> buildList(@BuilderInference builderAction: MutableList<E>.() -> Unit): List<E> {
+    contract { callsInPlace(builderAction, InvocationKind.EXACTLY_ONCE) }
+    return buildListInternal(builderAction)
+}
+
+@PublishedApi
+@SinceKotlin("1.3")
+@ExperimentalStdlibApi
+@kotlin.internal.InlineOnly
+internal expect inline fun <E> buildListInternal(builderAction: MutableList<E>.() -> Unit): List<E>
+
+/**
+ * Builds a new read-only [List] by populating a [MutableList] using the given [builderAction]
+ * and returning a read-only list with the same elements.
+ *
+ * The list passed as a receiver to the [builderAction] is valid only inside that function.
+ * Using it outside of the function produces an unspecified behavior.
+ *
+ * [capacity] is used to hint the expected number of elements added in the [builderAction].
+ *
+ * @throws IllegalArgumentException if the given [capacity] is negative.
+ *
+ * @sample samples.collections.Builders.Lists.buildListSampleWithCapacity
+ */
+@SinceKotlin("1.3")
+@ExperimentalStdlibApi
+@kotlin.internal.InlineOnly
+public inline fun <E> buildList(capacity: Int, @BuilderInference builderAction: MutableList<E>.() -> Unit): List<E> {
+    contract { callsInPlace(builderAction, InvocationKind.EXACTLY_ONCE) }
+    return buildListInternal(capacity, builderAction)
+}
+
+@PublishedApi
+@SinceKotlin("1.3")
+@ExperimentalStdlibApi
+@kotlin.internal.InlineOnly
+internal expect inline fun <E> buildListInternal(capacity: Int, builderAction: MutableList<E>.() -> Unit): List<E>
 
 /**
  * Returns an [IntRange] of the valid indices for this collection.
@@ -216,6 +276,15 @@ public inline fun <C, R> C.ifEmpty(defaultValue: () -> R): R where C : Collectio
 @Suppress("EXTENSION_SHADOWED_BY_MEMBER") // false warning, extension takes precedence in some cases
 @kotlin.internal.InlineOnly
 public inline fun <@kotlin.internal.OnlyInputTypes T> Collection<T>.containsAll(elements: Collection<T>): Boolean = this.containsAll(elements)
+
+
+/**
+ * Returns a new list with the elements of this list randomly shuffled
+ * using the specified [random] instance as the source of randomness.
+ */
+@SinceKotlin("1.3")
+public fun <T> Iterable<T>.shuffled(random: Random): List<T> = toMutableList().apply { shuffle(random) }
+
 
 internal fun <T> List<T>.optimizeReadOnlyList() = when (size) {
     0 -> emptyList()
@@ -326,13 +395,17 @@ public inline fun <T, K : Comparable<K>> List<T>.binarySearchBy(
 
 
 /**
- * Searches this list or its range for an element for which [comparison] function returns zero using the binary search algorithm.
- * The list is expected to be sorted into ascending order according to the provided [comparison],
- * otherwise the result is undefined.
+ * Searches this list or its range for an element for which the given [comparison] function returns zero using the binary search algorithm.
+ *
+ * The list is expected to be sorted so that the signs of the [comparison] function's return values ascend on the list elements,
+ * i.e. negative values come before zero and zeroes come before positive values.
+ * Otherwise, the result is undefined.
  *
  * If the list contains multiple elements for which [comparison] returns zero, there is no guarantee which one will be found.
  *
- * @param comparison function that compares an element of the list with the element being searched.
+ * @param comparison function that returns zero when called on the list element being searched.
+ * On the elements coming before the target element, the function must return negative values;
+ * on the elements coming after the target element, the function must return positive values.
  *
  * @return the index of the found element, if it is contained in the list within the specified range;
  * otherwise, the inverted insertion point `(-insertion point - 1)`.

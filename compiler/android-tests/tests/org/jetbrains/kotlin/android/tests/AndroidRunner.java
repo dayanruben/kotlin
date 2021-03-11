@@ -19,14 +19,11 @@ package org.jetbrains.kotlin.android.tests;
 import com.google.common.io.Files;
 import com.intellij.openapi.util.io.FileUtil;
 import junit.framework.TestSuite;
-import kotlin.io.FilesKt;
 import org.jetbrains.annotations.NotNull;
 import org.junit.runner.RunWith;
 import org.junit.runners.AllTests;
 
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 
 @RunWith(AllTests.class)
 public class AndroidRunner {
@@ -47,17 +44,10 @@ public class AndroidRunner {
     public static TestSuite suite() throws Throwable {
         PathManager pathManager = getPathManager();
 
-        FileUtil.copyDir(new File(pathManager.getAndroidModuleRoot()), new File(pathManager.getTmpFolder()));
-        writeAndroidSkdToLocalProperties();
-
         CodegenTestsOnAndroidGenerator.generate(pathManager);
 
-        System.out.println("Run tests on android...");
-        TestSuite suite = CodegenTestsOnAndroidRunner.runTestsInEmulator(pathManager);
-        //AndroidJpsBuildTestCase indirectly depends on UsefulTestCase which compiled against java 8
-        //TODO: Need add separate run configuration for AndroidJpsBuildTestCase
-        //suite.addTest(new AndroidJpsBuildTestCase());
-        return suite;
+        System.out.println("Run tests on Android...");
+        return CodegenTestsOnAndroidRunner.runTestsInEmulator(pathManager);
     }
 
     public void tearDown() throws Exception {
@@ -65,12 +55,4 @@ public class AndroidRunner {
         FileUtil.delete(new File(pathManager.getTmpFolder()));
     }
 
-    private static void writeAndroidSkdToLocalProperties() throws IOException {
-        String sdkRoot = FilesKt.getInvariantSeparatorsPath(new File(pathManager.getAndroidSdkRoot()));
-        System.out.println("Writing android sdk to local.properties: " + sdkRoot);
-        File file = new File(pathManager.getTmpFolder() + "/local.properties");
-        try (FileWriter fw = new FileWriter(file)) {
-            fw.write("sdk.dir=" + sdkRoot);
-        }
-    }
 }

@@ -1,11 +1,12 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.resolve.deprecation
 
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.config.LanguageVersionSettings
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.descriptors.impl.TypeAliasConstructorDescriptor
 import org.jetbrains.kotlin.metadata.ProtoBuf
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.Call
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.SinceKotlinAccessibility
 import org.jetbrains.kotlin.resolve.calls.checkers.isOperatorMod
@@ -36,7 +38,8 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 class DeprecationResolver(
     storageManager: StorageManager,
     private val languageVersionSettings: LanguageVersionSettings,
-    private val coroutineCompatibilitySupport: CoroutineCompatibilitySupport
+    private val coroutineCompatibilitySupport: CoroutineCompatibilitySupport,
+    private val deprecationSettings: DeprecationSettings
 ) {
     private val deprecations = storageManager.createMemoizedFunction { descriptor: DeclarationDescriptor ->
         val deprecations = descriptor.getOwnDeprecations()
@@ -62,7 +65,17 @@ class DeprecationResolver(
         descriptor: DeclarationDescriptor,
         call: Call? = null,
         bindingContext: BindingContext? = null,
-        isSuperCall: Boolean = false
+        isSuperCall: Boolean = false,
+        fromImportingScope: Boolean = false
+    ): Boolean =
+        isHiddenInResolution(descriptor, call?.callElement, bindingContext, isSuperCall, fromImportingScope)
+
+    fun isHiddenInResolution(
+        descriptor: DeclarationDescriptor,
+        callElement: KtElement?,
+        bindingContext: BindingContext?,
+        isSuperCall: Boolean,
+        fromImportingScope: Boolean
     ): Boolean {
         if (descriptor is FunctionDescriptor) {
             if (descriptor.isHiddenToOvercomeSignatureClash) return true
@@ -73,14 +86,17 @@ class DeprecationResolver(
         if (sinceKotlinAccessibility is SinceKotlinAccessibility.NotAccessible) return true
 
         if (sinceKotlinAccessibility is SinceKotlinAccessibility.NotAccessibleButWasExperimental) {
-            if (call != null && bindingContext != null) {
-                return with(ExperimentalUsageChecker) {
+            return if (callElement != null && bindingContext != null) {
+                with(ExperimentalUsageChecker) {
                     sinceKotlinAccessibility.markerClasses.any { classDescriptor ->
-                        !call.callElement.isExperimentalityAccepted(classDescriptor.fqNameSafe, languageVersionSettings, bindingContext)
+                        !callElement.isExperimentalityAccepted(classDescriptor.fqNameSafe, languageVersionSettings, bindingContext)
                     }
                 }
+            } else {
+                // We need a softer check for descriptors from importing scope as there is no access to PSI elements
+                // It's fine to return false here as there will be additional checks for accessibility later
+                !fromImportingScope
             }
-            return true
         }
 
         return isDeprecatedHidden(descriptor)
@@ -126,6 +142,28 @@ class DeprecationResolver(
 
         if (hasUndeprecatedOverridden || deprecations.isEmpty()) return null
 
+        // We might've filtered out not-propagating deprecations already in the initializer of `deprecationsByAnnotation` in the code above.
+        // But it would lead to treating Java overridden as not-deprecated at all that works controversially in case of mixed J/K override:
+        // interface J {
+        //      @Deprecated
+        //      void foo();
+        // }
+        //
+        // interface K {
+        //      @Deprecated("")
+        //      fun foo();
+        // }
+        //
+        // class K1 : K, J {
+        //      // We'd probably better treating it as deprecated
+        //      // Basically, it's just a corner case and we may change the behavior if it's too annoying
+        //      override fun foo() {}
+        // }
+        //
+        // Also, we don't ignore non-propagating deprecations in case of fake overrides
+        // Because we don't want to depend on the choice of the base descriptor
+        if (root.kind.isReal && deprecations.none(Deprecation::propagatesToOverrides)) return null
+
         return DeprecatedByOverridden(deprecations)
     }
 
@@ -163,20 +201,26 @@ class DeprecationResolver(
     }
 
     private fun DeclarationDescriptor.addDeprecationIfPresent(result: MutableList<Deprecation>) {
-        val annotation = annotations.findAnnotation(KotlinBuiltIns.FQ_NAMES.deprecated)
-            ?: annotations.findAnnotation(JAVA_DEPRECATED)
+        val annotation = annotations.findAnnotation(StandardNames.FqNames.deprecated) ?: annotations.findAnnotation(JAVA_DEPRECATED)
         if (annotation != null) {
-            val deprecatedByAnnotation = DeprecatedByAnnotation(annotation, this)
-            val deprecation = when {
-                this is TypeAliasConstructorDescriptor ->
-                    DeprecatedTypealiasByAnnotation(typeAliasDescriptor, deprecatedByAnnotation)
+            val deprecatedByAnnotation =
+                DeprecatedByAnnotation.create(
+                    annotation, annotations.findAnnotation(StandardNames.FqNames.deprecatedSinceKotlin),
+                    this, deprecationSettings.propagatedToOverrides(annotation),
+                    languageVersionSettings.apiVersion
+                )
+            if (deprecatedByAnnotation != null) {
+                val deprecation = when {
+                    this is TypeAliasConstructorDescriptor ->
+                        DeprecatedTypealiasByAnnotation(typeAliasDescriptor, deprecatedByAnnotation)
 
-                isBuiltInOperatorMod ->
-                    DeprecatedOperatorMod(languageVersionSettings, deprecatedByAnnotation)
+                    isBuiltInOperatorMod ->
+                        DeprecatedOperatorMod(languageVersionSettings, deprecatedByAnnotation)
 
-                else -> deprecatedByAnnotation
+                    else -> deprecatedByAnnotation
+                }
+                result.add(deprecation)
             }
-            result.add(deprecation)
         }
 
         for (deprecation in getDeprecationByVersionRequirement(this)) {
@@ -245,6 +289,6 @@ class DeprecationResolver(
     }
 
     companion object {
-        private val JAVA_DEPRECATED = FqName("java.lang.Deprecated")
+        val JAVA_DEPRECATED = FqName("java.lang.Deprecated")
     }
 }

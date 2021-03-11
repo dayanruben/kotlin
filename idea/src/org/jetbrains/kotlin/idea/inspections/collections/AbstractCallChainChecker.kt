@@ -1,10 +1,11 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.inspections.collections
 
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.name.FqName
@@ -63,10 +64,12 @@ abstract class AbstractCallChainChecker : AbstractKotlinInspection() {
     }
 
     data class Conversion(
-        val firstFqName: String,
-        val secondFqName: String,
-        val replacement: String,
-        val additionalArgument: String? = null
+        @NonNls val firstFqName: String,
+        @NonNls val secondFqName: String,
+        @NonNls val replacement: String,
+        @NonNls val additionalArgument: String? = null,
+        val withNotNullAssertion: Boolean = false,
+        val enableSuspendFunctionCall: Boolean = true
     ) {
         private fun String.convertToShort() = takeLastWhile { it != '.' }
 

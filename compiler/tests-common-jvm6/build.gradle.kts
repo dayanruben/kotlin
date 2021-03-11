@@ -1,4 +1,3 @@
-
 plugins {
     kotlin("jvm")
     id("jps-compatible")
@@ -7,8 +6,7 @@ plugins {
 jvmTarget = "1.6"
 
 dependencies {
-    compile(project(":kotlin-stdlib"))
-    compileOnly("org.jetbrains:annotations:13.0")
+    compile(kotlinStdlib())
     testCompile(project(":kotlin-test:kotlin-test-jvm"))
 }
 
@@ -18,3 +16,9 @@ sourceSets {
 }
 
 testsJar {}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    kotlinOptions {
+        freeCompilerArgs += "-Xsuppress-deprecated-jvm-target-warning"
+    }
+}

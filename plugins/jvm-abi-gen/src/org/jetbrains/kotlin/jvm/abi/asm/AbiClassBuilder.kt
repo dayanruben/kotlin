@@ -1,17 +1,20 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.jvm.abi.asm
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.codegen.AbstractClassBuilder
-import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.MemberDescriptor
-import org.jetbrains.kotlin.descriptors.Visibilities
+import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
+import org.jetbrains.kotlin.resolve.inline.InlineUtil.isInlineOrContainingInline
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.JvmDeclarationOrigin
-import org.jetbrains.org.objectweb.asm.*
+import org.jetbrains.org.objectweb.asm.ClassVisitor
+import org.jetbrains.org.objectweb.asm.FieldVisitor
+import org.jetbrains.org.objectweb.asm.MethodVisitor
+import org.jetbrains.org.objectweb.asm.Opcodes
 
 internal class AbiClassBuilder(private val cv: ClassVisitor) : AbstractClassBuilder() {
     override fun getVisitor(): ClassVisitor = cv
@@ -35,7 +38,7 @@ internal class AbiClassBuilder(private val cv: ClassVisitor) : AbstractClassBuil
         val mv = super.newMethod(origin, access, name, desc, signature, exceptions)
         // inline function bodies are part of ABI,
         // but non-inline functions can be thrown out
-        if (descriptor is FunctionDescriptor && descriptor.isInline) return mv
+        if (isInlineOrContainingInline(descriptor)) return mv
 
         return ReplaceWithEmptyMethodVisitor(
             delegate = mv,
@@ -55,7 +58,7 @@ internal class AbiClassBuilder(private val cv: ClassVisitor) : AbstractClassBuil
         signature: String?,
         value: Any?
     ): FieldVisitor {
-        if (isPrivate(access)) return EMPTY_FIELD_VISITOR
+        if (isPrivate(access) && !isInlineOrContainingInline(origin.descriptor)) return EMPTY_FIELD_VISITOR
 
         return super.newField(origin, access, name, desc, signature, value)
     }
@@ -75,7 +78,7 @@ internal class AbiClassBuilder(private val cv: ClassVisitor) : AbstractClassBuil
     }
 
     private fun isPrivate(descriptor: MemberDescriptor): Boolean =
-        descriptor.visibility == Visibilities.PRIVATE
+        descriptor.visibility == DescriptorVisibilities.PRIVATE
 
     private fun isPrivate(access: Int): Boolean =
         (access and Opcodes.ACC_PRIVATE) == Opcodes.ACC_PRIVATE

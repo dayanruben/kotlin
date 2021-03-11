@@ -16,30 +16,17 @@
 
 package org.jetbrains.kotlin.ir.expressions.impl
 
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.ir.expressions.IrGetEnumValue
 import org.jetbrains.kotlin.ir.symbols.IrEnumEntrySymbol
-import org.jetbrains.kotlin.ir.symbols.impl.IrEnumEntrySymbolImpl
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitor
 
 class IrGetEnumValueImpl(
-    startOffset: Int,
-    endOffset: Int,
-    type: IrType,
-    symbol: IrEnumEntrySymbol
-) :
-    IrTerminalDeclarationReferenceBase<IrEnumEntrySymbol, ClassDescriptor>(startOffset, endOffset, type, symbol, symbol.descriptor),
-    IrGetEnumValue {
-
-    @Deprecated("Creates unbound symbol")
-    constructor(
-        startOffset: Int,
-        endOffset: Int,
-        type: IrType,
-        descriptor: ClassDescriptor
-    ) : this(startOffset, endOffset, type, IrEnumEntrySymbolImpl(descriptor))
-
+    override val startOffset: Int,
+    override val endOffset: Int,
+    override var type: IrType,
+    override val symbol: IrEnumEntrySymbol,
+) : IrGetEnumValue() {
     override fun <R, D> accept(visitor: IrElementVisitor<R, D>, data: D): R {
         return visitor.visitGetEnumValue(this, data)
     }

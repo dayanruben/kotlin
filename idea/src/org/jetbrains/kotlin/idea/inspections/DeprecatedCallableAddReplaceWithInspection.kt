@@ -1,19 +1,19 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.CodeStyleManager
-import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
-import org.jetbrains.kotlin.descriptors.Visibilities
+import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -22,8 +22,8 @@ import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.core.unblockDocument
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
+import org.jetbrains.kotlin.idea.util.textRangeIn
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
@@ -38,14 +38,13 @@ import java.util.*
 class DeprecatedCallableAddReplaceWithInspection : AbstractApplicabilityBasedInspection<KtCallableDeclaration>(
     KtCallableDeclaration::class.java
 ) {
-    override fun inspectionText(element: KtCallableDeclaration) =
-        "@Deprecated annotation without 'replaceWith' argument"
+    override fun inspectionText(element: KtCallableDeclaration) = KotlinBundle.message("deprecated.annotation.without.replacewith.argument")
 
-    override fun inspectionTarget(element: KtCallableDeclaration): KtAnnotationEntry =
-        element.annotationEntries.first { it.shortName == DEPRECATED_NAME }
+    override fun inspectionHighlightRangeInElement(element: KtCallableDeclaration) = element.annotationEntries.first {
+        it.shortName == DEPRECATED_NAME
+    }.textRangeIn(element)
 
-    override val defaultFixText =
-        "Add 'replaceWith' argument to specify replacement pattern"
+    override val defaultFixText get() = KotlinBundle.message("add.replacewith.argument.to.specify.replacement.pattern")
 
     private class ReplaceWith(val expression: String, vararg val imports: String)
 
@@ -54,14 +53,13 @@ class DeprecatedCallableAddReplaceWithInspection : AbstractApplicabilityBasedIns
         return element.suggestReplaceWith() != null
     }
 
-    override fun applyTo(element: PsiElement, project: Project, editor: Editor?) {
-        val declaration = element.getParentOfType<KtCallableDeclaration>(strict = true) ?: return
-        val replaceWith = declaration.suggestReplaceWith()!!
+    override fun applyTo(element: KtCallableDeclaration, project: Project, editor: Editor?) {
+        val replaceWith = element.suggestReplaceWith()!!
 
         assert('\n' !in replaceWith.expression && '\r' !in replaceWith.expression) { "Formatted expression text should not contain \\n or \\r" }
 
-        val annotationEntry = declaration.deprecatedAnnotationWithNoReplaceWith()!!
-        val psiFactory = KtPsiFactory(declaration)
+        val annotationEntry = element.deprecatedAnnotationWithNoReplaceWith()!!
+        val psiFactory = KtPsiFactory(element)
 
         var escapedText = replaceWith.expression.replace("\\", "\\\\").replace("\"", "\\\"")
 
@@ -84,6 +82,7 @@ class DeprecatedCallableAddReplaceWithInspection : AbstractApplicabilityBasedIns
         }
 
         val argumentText = StringBuilder().apply {
+            if (annotationEntry.valueArguments.any { it.isNamed() }) append("replaceWith = ")
             append("kotlin.ReplaceWith(\"")
             append(escapedText)
             append("\"")
@@ -111,7 +110,7 @@ class DeprecatedCallableAddReplaceWithInspection : AbstractApplicabilityBasedIns
 
             val descriptor = resolvedCall.resultingDescriptor.containingDeclaration
             val descriptorFqName = DescriptorUtils.getFqName(descriptor).toSafe()
-            if (descriptorFqName != KotlinBuiltIns.FQ_NAMES.deprecated) continue
+            if (descriptorFqName != StandardNames.FqNames.deprecated) continue
 
             val args = resolvedCall.valueArguments.mapKeys { it.key.name.asString() }
             val replaceWithArguments = args["replaceWith"] /*TODO: kotlin.deprecated::replaceWith.name*/
@@ -161,7 +160,7 @@ class DeprecatedCallableAddReplaceWithInspection : AbstractApplicabilityBasedIns
 
             override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
                 val target = expression.resolveToCall()?.resultingDescriptor as? DeclarationDescriptorWithVisibility ?: return
-                if (Visibilities.isPrivate((target.visibility))) {
+                if (DescriptorVisibilities.isPrivate((target.visibility))) {
                     isGood = false
                 }
             }
@@ -212,8 +211,8 @@ class DeprecatedCallableAddReplaceWithInspection : AbstractApplicabilityBasedIns
             override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
                 val bindingContext = expression.analyze()
                 val target = bindingContext[BindingContext.SHORT_REFERENCE_TO_COMPANION_OBJECT, expression]
-                             ?: bindingContext[BindingContext.REFERENCE_TARGET, expression]
-                             ?: return
+                    ?: bindingContext[BindingContext.REFERENCE_TARGET, expression]
+                    ?: return
                 if (target.isExtension || expression.getReceiverExpression() == null) {
                     val fqName = target.importableFqName ?: return
                     if (!importHelper.isImportedWithDefault(ImportPath(fqName, false), file)
@@ -232,6 +231,6 @@ class DeprecatedCallableAddReplaceWithInspection : AbstractApplicabilityBasedIns
     }
 
     companion object {
-        val DEPRECATED_NAME = KotlinBuiltIns.FQ_NAMES.deprecated.shortName()
+        val DEPRECATED_NAME = StandardNames.FqNames.deprecated.shortName()
     }
 }

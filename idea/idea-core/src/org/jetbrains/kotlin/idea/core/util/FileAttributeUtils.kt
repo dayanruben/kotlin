@@ -1,10 +1,11 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.core.util
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.NullableLazyKey
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
@@ -44,8 +45,15 @@ abstract class FileAttributeProperty<T : Any>(name: String, version: Int, privat
         if (file !is VirtualFileWithId || !file.isValid) return null
 
         return attribute.readAttribute(file)?.use { input ->
-            input.readNullable {
-                readValue(input)
+            try {
+                input.readNullable {
+                    readValue(input)
+                }
+            } catch (e: Throwable) {
+                Logger.getInstance("#org.jetbrains.kotlin.idea.core.util.FileAttributeProperty")
+                    .warn("Unable to read attribute from $file", e)
+                file.putUserData(cache, null)
+                null
             }
         } ?: default
     }
@@ -85,4 +93,24 @@ fun <T : Any> DataOutput.writeNullable(nullable: T?, writeT: DataOutput.(T) -> U
 fun <T : Any> DataInput.readNullable(readT: DataInput.() -> T): T? {
     val hasValue = readBoolean()
     return if (hasValue) readT() else null
+}
+
+inline fun <reified T : Any> DataOutputStream.writeObject(obj: T) {
+    val os = ByteArrayOutputStream()
+    ObjectOutputStream(os).use { oos ->
+        oos.writeObject(obj)
+    }
+    val bytes = os.toByteArray()
+    writeInt(bytes.size)
+    write(bytes)
+}
+
+inline fun <reified T : Any> DataInputStream.readObject(): T {
+    val size = readInt()
+    val bytes = ByteArray(size)
+    read(bytes, 0, size)
+    val bis = ByteArrayInputStream(bytes)
+    return ObjectInputStream(bis).use { ois ->
+        ois.readObject() as T
+    }
 }

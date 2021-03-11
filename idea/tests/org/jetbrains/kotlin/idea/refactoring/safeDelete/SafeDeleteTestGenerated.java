@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.refactoring.safeDelete;
@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.idea.refactoring.safeDelete;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.test.KotlinTestUtils;
-import org.jetbrains.kotlin.test.TargetBackend;
+import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.runner.RunWith;
 
@@ -24,11 +24,11 @@ public class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
     @RunWith(JUnit3RunnerWithInners.class)
     public static class KotlinClass extends AbstractSafeDeleteTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doClassTest, TargetBackend.ANY, testDataFilePath);
+            KotlinTestUtils.runTest(this::doClassTest, this, testDataFilePath);
         }
 
         public void testAllFilesPresentInKotlinClass() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/refactoring/safeDelete/deleteClass/kotlinClass"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.ANY, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/refactoring/safeDelete/deleteClass/kotlinClass"), Pattern.compile("^(.+)\\.kt$"), null, true);
         }
 
         @TestMetadata("class1.kt")
@@ -107,11 +107,11 @@ public class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
     @RunWith(JUnit3RunnerWithInners.class)
     public static class KotlinClassWithJava extends AbstractSafeDeleteTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doClassTestWithJava, TargetBackend.ANY, testDataFilePath);
+            KotlinTestUtils.runTest(this::doClassTestWithJava, this, testDataFilePath);
         }
 
         public void testAllFilesPresentInKotlinClassWithJava() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/refactoring/safeDelete/deleteClass/kotlinClassWithJava"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.ANY, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/refactoring/safeDelete/deleteClass/kotlinClassWithJava"), Pattern.compile("^(.+)\\.kt$"), null, true);
         }
 
         @TestMetadata("classWithDelegationCalls.kt")
@@ -125,11 +125,11 @@ public class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
     @RunWith(JUnit3RunnerWithInners.class)
     public static class JavaClassWithKotlin extends AbstractSafeDeleteTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doJavaClassTest, TargetBackend.ANY, testDataFilePath);
+            KotlinTestUtils.runTest(this::doJavaClassTest, this, testDataFilePath);
         }
 
         public void testAllFilesPresentInJavaClassWithKotlin() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/refactoring/safeDelete/deleteClass/javaClassWithKotlin"), Pattern.compile("^(.+)\\.java$"), TargetBackend.ANY, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/refactoring/safeDelete/deleteClass/javaClassWithKotlin"), Pattern.compile("^(.+)\\.java$"), null, true);
         }
 
         @TestMetadata("ImportJavaClassToKotlin.java")
@@ -153,11 +153,11 @@ public class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
     @RunWith(JUnit3RunnerWithInners.class)
     public static class KotlinObject extends AbstractSafeDeleteTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doObjectTest, TargetBackend.ANY, testDataFilePath);
+            KotlinTestUtils.runTest(this::doObjectTest, this, testDataFilePath);
         }
 
         public void testAllFilesPresentInKotlinObject() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/refactoring/safeDelete/deleteObject/kotlinObject"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.ANY, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/refactoring/safeDelete/deleteObject/kotlinObject"), Pattern.compile("^(.+)\\.kt$"), null, true);
         }
 
         @TestMetadata("anonymousObject.kt")
@@ -190,6 +190,11 @@ public class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
             runTest("idea/testData/refactoring/safeDelete/deleteObject/kotlinObject/nestedObject2.kt");
         }
 
+        @TestMetadata("nestedObject3.kt")
+        public void testNestedObject3() throws Exception {
+            runTest("idea/testData/refactoring/safeDelete/deleteObject/kotlinObject/nestedObject3.kt");
+        }
+
         @TestMetadata("noUsages.kt")
         public void testNoUsages() throws Exception {
             runTest("idea/testData/refactoring/safeDelete/deleteObject/kotlinObject/noUsages.kt");
@@ -216,11 +221,11 @@ public class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
     @RunWith(JUnit3RunnerWithInners.class)
     public static class KotlinFunction extends AbstractSafeDeleteTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doFunctionTest, TargetBackend.ANY, testDataFilePath);
+            KotlinTestUtils.runTest(this::doFunctionTest, this, testDataFilePath);
         }
 
         public void testAllFilesPresentInKotlinFunction() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/refactoring/safeDelete/deleteFunction/kotlinFunction"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.ANY, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/refactoring/safeDelete/deleteFunction/kotlinFunction"), Pattern.compile("^(.+)\\.kt$"), null, true);
         }
 
         @TestMetadata("fun1.kt")
@@ -314,11 +319,11 @@ public class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
     @RunWith(JUnit3RunnerWithInners.class)
     public static class KotlinFunctionWithJava extends AbstractSafeDeleteTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doFunctionTestWithJava, TargetBackend.ANY, testDataFilePath);
+            KotlinTestUtils.runTest(this::doFunctionTestWithJava, this, testDataFilePath);
         }
 
         public void testAllFilesPresentInKotlinFunctionWithJava() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/refactoring/safeDelete/deleteFunction/kotlinFunctionWithJava"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.ANY, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/refactoring/safeDelete/deleteFunction/kotlinFunctionWithJava"), Pattern.compile("^(.+)\\.kt$"), null, true);
         }
 
         @TestMetadata("funExt.kt")
@@ -387,11 +392,11 @@ public class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
     @RunWith(JUnit3RunnerWithInners.class)
     public static class JavaFunctionWithKotlin extends AbstractSafeDeleteTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doJavaMethodTest, TargetBackend.ANY, testDataFilePath);
+            KotlinTestUtils.runTest(this::doJavaMethodTest, this, testDataFilePath);
         }
 
         public void testAllFilesPresentInJavaFunctionWithKotlin() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/refactoring/safeDelete/deleteFunction/javaFunctionWithKotlin"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.ANY, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/refactoring/safeDelete/deleteFunction/javaFunctionWithKotlin"), Pattern.compile("^(.+)\\.kt$"), null, true);
         }
 
         @TestMetadata("mixedHierarchy1.kt")
@@ -410,11 +415,11 @@ public class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
     @RunWith(JUnit3RunnerWithInners.class)
     public static class KotlinProperty extends AbstractSafeDeleteTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doPropertyTest, TargetBackend.ANY, testDataFilePath);
+            KotlinTestUtils.runTest(this::doPropertyTest, this, testDataFilePath);
         }
 
         public void testAllFilesPresentInKotlinProperty() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/refactoring/safeDelete/deleteProperty/kotlinProperty"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.ANY, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/refactoring/safeDelete/deleteProperty/kotlinProperty"), Pattern.compile("^(.+)\\.kt$"), null, true);
         }
 
         @TestMetadata("implement1.kt")
@@ -543,11 +548,11 @@ public class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
     @RunWith(JUnit3RunnerWithInners.class)
     public static class KotlinPropertyWithJava extends AbstractSafeDeleteTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doPropertyTestWithJava, TargetBackend.ANY, testDataFilePath);
+            KotlinTestUtils.runTest(this::doPropertyTestWithJava, this, testDataFilePath);
         }
 
         public void testAllFilesPresentInKotlinPropertyWithJava() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/refactoring/safeDelete/deleteProperty/kotlinPropertyWithJava"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.ANY, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/refactoring/safeDelete/deleteProperty/kotlinPropertyWithJava"), Pattern.compile("^(.+)\\.kt$"), null, true);
         }
 
         @TestMetadata("implement1.kt")
@@ -616,11 +621,11 @@ public class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
     @RunWith(JUnit3RunnerWithInners.class)
     public static class JavaPropertyWithKotlin extends AbstractSafeDeleteTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doJavaPropertyTest, TargetBackend.ANY, testDataFilePath);
+            KotlinTestUtils.runTest(this::doJavaPropertyTest, this, testDataFilePath);
         }
 
         public void testAllFilesPresentInJavaPropertyWithKotlin() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/refactoring/safeDelete/deleteProperty/javaPropertyWithKotlin"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.ANY, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/refactoring/safeDelete/deleteProperty/javaPropertyWithKotlin"), Pattern.compile("^(.+)\\.kt$"), null, true);
         }
 
         @TestMetadata("middleJava1.kt")
@@ -659,11 +664,11 @@ public class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
     @RunWith(JUnit3RunnerWithInners.class)
     public static class KotlinTypeAlias extends AbstractSafeDeleteTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTypeAliasTest, TargetBackend.ANY, testDataFilePath);
+            KotlinTestUtils.runTest(this::doTypeAliasTest, this, testDataFilePath);
         }
 
         public void testAllFilesPresentInKotlinTypeAlias() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/refactoring/safeDelete/deleteTypeAlias/kotlinTypeAlias"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.ANY, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/refactoring/safeDelete/deleteTypeAlias/kotlinTypeAlias"), Pattern.compile("^(.+)\\.kt$"), null, true);
         }
 
         @TestMetadata("simple.kt")
@@ -682,11 +687,11 @@ public class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
     @RunWith(JUnit3RunnerWithInners.class)
     public static class KotlinTypeParameter extends AbstractSafeDeleteTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTypeParameterTest, TargetBackend.ANY, testDataFilePath);
+            KotlinTestUtils.runTest(this::doTypeParameterTest, this, testDataFilePath);
         }
 
         public void testAllFilesPresentInKotlinTypeParameter() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameter"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.ANY, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameter"), Pattern.compile("^(.+)\\.kt$"), null, true);
         }
 
         @TestMetadata("internalUsages1.kt")
@@ -775,11 +780,11 @@ public class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
     @RunWith(JUnit3RunnerWithInners.class)
     public static class KotlinTypeParameterWithJava extends AbstractSafeDeleteTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTypeParameterTestWithJava, TargetBackend.ANY, testDataFilePath);
+            KotlinTestUtils.runTest(this::doTypeParameterTestWithJava, this, testDataFilePath);
         }
 
         public void testAllFilesPresentInKotlinTypeParameterWithJava() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.ANY, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/refactoring/safeDelete/deleteTypeParameter/kotlinTypeParameterWithJava"), Pattern.compile("^(.+)\\.kt$"), null, true);
         }
 
         @TestMetadata("internalUsages1.kt")
@@ -873,11 +878,11 @@ public class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
     @RunWith(JUnit3RunnerWithInners.class)
     public static class KotlinValueParameter extends AbstractSafeDeleteTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doValueParameterTest, TargetBackend.ANY, testDataFilePath);
+            KotlinTestUtils.runTest(this::doValueParameterTest, this, testDataFilePath);
         }
 
         public void testAllFilesPresentInKotlinValueParameter() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.ANY, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter"), Pattern.compile("^(.+)\\.kt$"), null, true);
         }
 
         @TestMetadata("dataClassComponent.kt")
@@ -1046,11 +1051,11 @@ public class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
     @RunWith(JUnit3RunnerWithInners.class)
     public static class KotlinValueParameterWithJava extends AbstractSafeDeleteTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doValueParameterTestWithJava, TargetBackend.ANY, testDataFilePath);
+            KotlinTestUtils.runTest(this::doValueParameterTestWithJava, this, testDataFilePath);
         }
 
         public void testAllFilesPresentInKotlinValueParameterWithJava() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.ANY, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava"), Pattern.compile("^(.+)\\.kt$"), null, true);
         }
 
         @TestMetadata("dataClassComponent.kt")

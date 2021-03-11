@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.build
@@ -15,9 +15,6 @@ data class CommonBuildMetaInfo(
     override val compilerBuildVersion: String,
     override val languageVersionString: String,
     override val apiVersionString: String,
-    override val coroutinesEnable: Boolean,
-    override val coroutinesWarn: Boolean,
-    override val coroutinesError: Boolean,
     override val multiplatformEnable: Boolean,
     override val metadataVersionMajor: Int,
     override val metadataVersionMinor: Int,
@@ -32,9 +29,6 @@ data class CommonBuildMetaInfo(
             compilerBuildVersion: String,
             languageVersionString: String,
             apiVersionString: String,
-            coroutinesEnable: Boolean,
-            coroutinesWarn: Boolean,
-            coroutinesError: Boolean,
             multiplatformEnable: Boolean,
             ownVersion: Int,
             coroutinesVersion: Int,
@@ -47,9 +41,6 @@ data class CommonBuildMetaInfo(
                 compilerBuildVersion = compilerBuildVersion,
                 languageVersionString = languageVersionString,
                 apiVersionString = apiVersionString,
-                coroutinesEnable = coroutinesEnable,
-                coroutinesWarn = coroutinesWarn,
-                coroutinesError = coroutinesError,
                 multiplatformEnable = multiplatformEnable,
                 metadataVersionMajor = metadataVersion.major,
                 metadataVersionMinor = metadataVersion.minor,

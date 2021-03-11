@@ -1,5 +1,5 @@
 // WITH_RUNTIME
-// OPTIONS: true, true, false, false, false, false
+// OPTIONS: true, true, false, false, false
 // PARAM_TYPES: kotlin.Int
 // PARAM_TYPES: kotlin.Int
 // PARAM_TYPES: kotlin.Int
@@ -26,7 +26,13 @@ fun foo(a: Int): Int {
     return b + c + d + e
 }
 
-private fun list(b: Int, a: Int, c: Int, d: Int, e: Int): List<Int> {
+private fun list(
+    b: Int,
+    a: Int,
+    c: Int,
+    d: Int,
+    e: Int
+): List<Int> {
     var b1 = b
     var c1 = c
     var d1 = d

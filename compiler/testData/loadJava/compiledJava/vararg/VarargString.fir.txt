@@ -1,0 +1,6 @@
+public open class VarargString : R|kotlin/Any| {
+    public open fun vararg(vararg strings: R|ft<@FlexibleNullability kotlin/Array<ft<@FlexibleNullability kotlin/String, kotlin/String?>!>, kotlin/Array<out ft<@FlexibleNullability kotlin/String, kotlin/String?>!>?>!|): R|kotlin/Unit|
+
+    public constructor(): R|test/VarargString|
+
+}

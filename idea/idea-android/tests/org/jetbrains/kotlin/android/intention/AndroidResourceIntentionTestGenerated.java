@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.android.intention;
@@ -26,7 +26,7 @@ public class AndroidResourceIntentionTestGenerated extends AbstractAndroidResour
     }
 
     public void testAllFilesPresentInResourceIntention() throws Exception {
-        KotlinTestUtils.assertAllTestsPresentInSingleGeneratedClass(this.getClass(), new File("idea/testData/android/resourceIntention"), Pattern.compile("^(.+)\\.test$"), TargetBackend.ANY);
+        org.jetbrains.kotlin.test.util.KtTestUtil.assertAllTestsPresentInSingleGeneratedClass(this.getClass(), new File("idea/testData/android/resourceIntention"), Pattern.compile("^(.+)\\.test$"), TargetBackend.ANY);
     }
 
     @TestMetadata("createColorValueResource/alreadyExists/alreadyExists.test")

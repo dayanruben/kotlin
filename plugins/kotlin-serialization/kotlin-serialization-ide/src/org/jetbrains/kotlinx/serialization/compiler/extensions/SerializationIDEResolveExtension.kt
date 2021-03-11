@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlinx.serialization.compiler.extensions
@@ -20,6 +20,12 @@ import java.util.*
 class SerializationIDEResolveExtension : SerializationResolveExtension() {
     override fun getSyntheticNestedClassNames(thisDescriptor: ClassDescriptor): List<Name> =
         getIfEnabledOn(thisDescriptor) { super.getSyntheticNestedClassNames(thisDescriptor) } ?: emptyList()
+
+    override fun getPossibleSyntheticNestedClassNames(thisDescriptor: ClassDescriptor): List<Name>? {
+        val enabled = getIfEnabledOn(thisDescriptor) { true } ?: false
+        return if (enabled) super.getPossibleSyntheticNestedClassNames(thisDescriptor)
+        else emptyList()
+    }
 
     override fun getSyntheticFunctionNames(thisDescriptor: ClassDescriptor): List<Name> =
         getIfEnabledOn(thisDescriptor) { super.getSyntheticFunctionNames(thisDescriptor) } ?: emptyList()

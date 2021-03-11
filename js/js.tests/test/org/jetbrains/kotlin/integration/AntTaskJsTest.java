@@ -1,17 +1,6 @@
 /*
- * Copyright 2010-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.integration;
@@ -21,7 +10,8 @@ import kotlin.collections.CollectionsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.js.test.NashornJsTestChecker;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.js.test.V8JsTestChecker;
+import org.jetbrains.kotlin.test.util.KtTestUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,10 +21,11 @@ import java.util.List;
 
 public class AntTaskJsTest extends AbstractAntTaskTest {
     private static final String JS_OUT_FILE = "out.js";
+    private static final Boolean useNashorn = Boolean.getBoolean("kotlin.js.useNashorn");
 
     @NotNull
     private String getTestDataDir() {
-        return KotlinTestUtils.getTestDataPathBase() + "/integration/ant/js/" + getTestName(true);
+        return KtTestUtil.getTestDataPathBase() + "/integration/ant/js/" + getTestName(true);
     }
 
     @NotNull
@@ -58,7 +49,7 @@ public class AntTaskJsTest extends AbstractAntTaskTest {
 
         List<String> filePaths = CollectionsKt.map(fileNames, s -> getOutputFileByName(s).getAbsolutePath());
 
-        NashornJsTestChecker.INSTANCE.check(filePaths, "out", "foo", "box", "OK", withModuleSystem);
+        (useNashorn ? NashornJsTestChecker.INSTANCE : V8JsTestChecker.INSTANCE).check(filePaths, "out", "foo", "box", "OK", withModuleSystem);
     }
 
     private void doJsAntTestForPostfixPrefix(@Nullable String prefix, @Nullable String postfix) throws Exception {
@@ -93,7 +84,7 @@ public class AntTaskJsTest extends AbstractAntTaskTest {
         doJsAntTest();
     }
 
-    public void testSimpleWithStdlib() throws Exception {
+    public void testSimpleWithoutStdlib() throws Exception {
         doJsAntTest();
     }
 
@@ -105,19 +96,19 @@ public class AntTaskJsTest extends AbstractAntTaskTest {
         doJsAntTest("jslib-example.js");
     }
 
-    public void testSimpleWithStdlibAndJsFileAsAnotherLib() throws Exception {
+    public void testSimpleWithJsFileAsAnotherLib() throws Exception {
         doJsAntTest("jslib-example.js");
     }
 
-    public void testSimpleWithStdlibAndJsFileAsAnotherLibModuleKind() throws Exception {
+    public void testSimpleWithJsFileAsAnotherLibModuleKind() throws Exception {
         doJsAntTest(true, "amd.js", "jslib-example.js");
     }
 
-    public void testSimpleWithStdlibAndTwoJsFilesAsLibraries() throws Exception {
+    public void testSimpleWithTwoJsFilesAsLibraries() throws Exception {
         doJsAntTest("jslib-example1.js", "jslib-example2.js");
     }
 
-    public void testSimpleWithStdlibAndJsFilesWithTwoModulesAsLibrary() throws Exception {
+    public void testSimpleWithJsFilesWithTwoModulesAsLibrary() throws Exception {
         doJsAntTest("jslib-example.js");
     }
 

@@ -7,8 +7,6 @@ This part of the project contains the sources of the following libraries:
   - [kotlin-test](kotlin.test), the library for multiplatform unit testing
   - [kotlin-annotations-jvm](tools/kotlin-annotations-jvm), the annotations to improve types in the Java code to look better when being consumed in the Kotlin code.
 
-<!--  - [kotlin-annotations-android](tools/kotlin-annotations-android) -->
-
 These libraries are built as a part of the [root](../) Gradle project.
 
 
@@ -22,7 +20,7 @@ You can work with the maven modules of this maven project in IDEA from the [root
 
 ### Building
 
-You need to install a recent (at least 3.3) [Maven](http://maven.apache.org/) distribution.
+You need to install a recent (at least 3.3) [Maven](https://maven.apache.org/) distribution.
 
 Before building this Maven project you need to build and install the required artifacts built with Gradle to the local maven repository, by issuing the following command in the root project:
 

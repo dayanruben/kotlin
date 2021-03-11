@@ -3,8 +3,6 @@ plugins {
     id("jps-compatible")
 }
 
-jvmTarget = "1.6"
-
 dependencies {
     compile(project(":compiler:util"))
     compile(project(":compiler:frontend"))
@@ -16,5 +14,13 @@ dependencies {
 sourceSets {
     "main" { projectDefault() }
     "test" {}
+}
+
+tasks {
+    val compileKotlin by existing(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class) {
+        kotlinOptions {
+            freeCompilerArgs += "-Xopt-in=org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI"
+        }
+    }
 }
 

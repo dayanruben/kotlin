@@ -1,6 +1,6 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2000-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.inspections
@@ -13,16 +13,19 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.descriptors.ClassKind
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.actions.generate.KotlinGenerateEqualsAndHashcodeAction
 import org.jetbrains.kotlin.idea.actions.generate.findDeclaredEquals
 import org.jetbrains.kotlin.idea.actions.generate.findDeclaredHashCode
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
+import org.jetbrains.kotlin.psi.classOrObjectVisitor
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.source.getPsi
 
 object DeleteEqualsAndHashCodeFix : LocalQuickFix {
-    override fun getName() = "Delete equals()/hashCode()"
+    override fun getName() = KotlinBundle.message("delete.equals.and.hash.code.fix.text")
 
     override fun getFamilyName() = name
 
@@ -37,11 +40,11 @@ object DeleteEqualsAndHashCodeFix : LocalQuickFix {
 
 sealed class GenerateEqualsOrHashCodeFix : LocalQuickFix {
     object Equals : GenerateEqualsOrHashCodeFix() {
-        override fun getName() = "Generate 'equals()'"
+        override fun getName() = KotlinBundle.message("equals.text")
     }
 
     object HashCode : GenerateEqualsOrHashCodeFix() {
-        override fun getName() = "Generate 'hashCode()'"
+        override fun getName() = KotlinBundle.message("hash.code.text")
     }
 
     override fun getFamilyName() = name
@@ -66,19 +69,23 @@ class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
             when (classDescriptor.kind) {
                 ClassKind.OBJECT -> {
                     if (classOrObject.superTypeListEntries.isNotEmpty()) return
-                    holder.registerProblem(nameIdentifier, "equals()/hashCode() in object declaration", DeleteEqualsAndHashCodeFix)
+                    holder.registerProblem(
+                        nameIdentifier,
+                        KotlinBundle.message("equals.hashcode.in.object.declaration"),
+                        DeleteEqualsAndHashCodeFix
+                    )
                 }
                 ClassKind.CLASS -> {
                     if (hasEquals && hasHashCode) return
                     val description = InspectionsBundle.message(
-                            "inspection.equals.hashcode.only.one.defined.problem.descriptor",
-                            if (hasEquals) "<code>equals()</code>" else "<code>hashCode()</code>",
-                            if (hasEquals) "<code>hashCode()</code>" else "<code>equals()</code>"
+                        "inspection.equals.hashcode.only.one.defined.problem.descriptor",
+                        if (hasEquals) "<code>equals()</code>" else "<code>hashCode()</code>",
+                        if (hasEquals) "<code>hashCode()</code>" else "<code>equals()</code>"
                     )
                     holder.registerProblem(
-                            nameIdentifier,
-                            description,
-                            if (hasEquals) GenerateEqualsOrHashCodeFix.HashCode else GenerateEqualsOrHashCodeFix.Equals
+                        nameIdentifier,
+                        description,
+                        if (hasEquals) GenerateEqualsOrHashCodeFix.HashCode else GenerateEqualsOrHashCodeFix.Equals
                     )
                 }
                 else -> return

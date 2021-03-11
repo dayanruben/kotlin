@@ -16,8 +16,12 @@
 
 package org.jetbrains.kotlin.resolve
 
+import com.intellij.codeInsight.completion.CompletionUtilCore
 import com.intellij.psi.impl.source.DummyHolder
 import com.intellij.util.SmartList
+import org.jetbrains.kotlin.config.AnalysisFlags
+import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.config.isLibraryToSourceAnalysisEnabled
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.incremental.KotlinLookupLocation
@@ -25,6 +29,7 @@ import org.jetbrains.kotlin.incremental.components.LookupLocation
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.progress.ProgressIndicatorAndCompilationCanceledStatus
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.codeFragmentUtil.suppressDiagnosticsInDebugMode
 import org.jetbrains.kotlin.psi.psiUtil.getTopmostParentQualifiedExpressionForSelector
@@ -32,6 +37,7 @@ import org.jetbrains.kotlin.resolve.calls.CallExpressionElement
 import org.jetbrains.kotlin.resolve.calls.checkers.UnderscoreUsageChecker
 import org.jetbrains.kotlin.resolve.calls.unrollToLeftMostQualifiedExpression
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
+import org.jetbrains.kotlin.resolve.scopes.CompositePrioritizedImportingScope
 import org.jetbrains.kotlin.resolve.scopes.ImportingScope
 import org.jetbrains.kotlin.resolve.scopes.LexicalScope
 import org.jetbrains.kotlin.resolve.scopes.receivers.*
@@ -42,8 +48,9 @@ import org.jetbrains.kotlin.resolve.scopes.utils.memberScopeAsImportingScope
 import org.jetbrains.kotlin.resolve.source.KotlinSourceElement
 import org.jetbrains.kotlin.types.expressions.ExpressionTypingContext
 import org.jetbrains.kotlin.types.expressions.isWithoutValueArguments
+import org.jetbrains.kotlin.utils.CallOnceFunction
 
-class QualifiedExpressionResolver {
+class QualifiedExpressionResolver(val languageVersionSettings: LanguageVersionSettings) {
     fun resolvePackageHeader(
         packageDirective: KtPackageDirective,
         module: ModuleDescriptor,
@@ -217,7 +224,34 @@ class QualifiedExpressionResolver {
         trace: BindingTrace,
         excludedImportNames: Collection<FqName>,
         packageFragmentForVisibilityCheck: PackageFragmentDescriptor?
+    ): ImportingScope? {
+        fun processReferenceInContextOf(moduleDescriptor: ModuleDescriptor): ImportingScope? =
+            doProcessImportReference(
+                importDirective,
+                moduleDescriptor,
+                trace,
+                excludedImportNames,
+                packageFragmentForVisibilityCheck
+            )
+
+        val primaryImportingScope = processReferenceInContextOf(moduleDescriptor)
+        if (!languageVersionSettings.isLibraryToSourceAnalysisEnabled) return primaryImportingScope
+
+        val resolutionAnchor = moduleDescriptor.getResolutionAnchorIfAny() ?: return primaryImportingScope
+        val anchorImportingScope = processReferenceInContextOf(resolutionAnchor) ?: return primaryImportingScope
+        if (primaryImportingScope == null) return anchorImportingScope
+        return CompositePrioritizedImportingScope(anchorImportingScope, primaryImportingScope)
+    }
+
+    private fun doProcessImportReference(
+        importDirective: KtImportInfo,
+        moduleDescriptor: ModuleDescriptor,
+        trace: BindingTrace,
+        excludedImportNames: Collection<FqName>,
+        packageFragmentForVisibilityCheck: PackageFragmentDescriptor?
     ): ImportingScope? { // null if some error happened
+        ProgressIndicatorAndCompilationCanceledStatus.checkCanceled()
+
         val importedReference = importDirective.importContent ?: return null
         val path = importedReference.asQualifierPartList()
         val lastPart = path.lastOrNull() ?: return null
@@ -231,7 +265,7 @@ class QualifiedExpressionResolver {
             val packageOrClassDescriptor = resolveToPackageOrClass(
                 path, moduleDescriptor, trace, packageFragmentForCheck,
                 scopeForFirstPart = null, position = QualifierPosition.IMPORT
-            ) ?: return null
+            ).classDescriptorFromTypeAlias() ?: return null
 
             if (packageOrClassDescriptor is ClassDescriptor && packageOrClassDescriptor.kind.isSingleton && lastPart.expression != null) {
                 trace.report(
@@ -243,10 +277,14 @@ class QualifiedExpressionResolver {
                 return null
             }
 
-            return AllUnderImportScope(packageOrClassDescriptor, excludedImportNames)
+            return AllUnderImportScope.create(packageOrClassDescriptor, excludedImportNames)
         } else {
             return processSingleImport(moduleDescriptor, trace, importDirective, path, lastPart, packageFragmentForCheck)
         }
+    }
+
+    private fun DeclarationDescriptor?.classDescriptorFromTypeAlias(): DeclarationDescriptor? {
+        return if (this is TypeAliasDescriptor) classDescriptor else this
     }
 
     private fun computePackageFragmentToCheck(
@@ -301,22 +339,22 @@ class QualifiedExpressionResolver {
             packageOrClassDescriptor,
             packageFragmentForVisibilityCheck,
             lastPart.name,
-            aliasName
-        ) { candidates ->
-
-            if (candidates.isNotEmpty()) {
-                storeResult(
-                    trace,
-                    lastPart.expression,
-                    candidates,
-                    packageFragmentForVisibilityCheck,
-                    position = QualifierPosition.IMPORT,
-                    isQualifier = false
-                )
-            } else {
-                tryResolveDescriptorsWhichCannotBeImported(trace, moduleDescriptor, packageOrClassDescriptor, lastPart)
+            aliasName,
+            CallOnceFunction(Unit) { candidates ->
+                if (candidates.isNotEmpty()) {
+                    storeResult(
+                        trace,
+                        lastPart.expression,
+                        candidates,
+                        packageFragmentForVisibilityCheck,
+                        position = QualifierPosition.IMPORT,
+                        isQualifier = false
+                    )
+                } else {
+                    tryResolveDescriptorsWhichCannotBeImported(trace, moduleDescriptor, packageOrClassDescriptor, lastPart)
+                }
             }
-        }
+        )
     }
 
     private fun tryResolveDescriptorsWhichCannotBeImported(
@@ -427,7 +465,7 @@ class QualifiedExpressionResolver {
         position: QualifierPosition
     ): DeclarationDescriptor? {
         val (packageOrClassDescriptor, endIndex) =
-                resolveToPackageOrClassPrefix(path, moduleDescriptor, trace, shouldBeVisibleFrom, scopeForFirstPart, position)
+            resolveToPackageOrClassPrefix(path, moduleDescriptor, trace, shouldBeVisibleFrom, scopeForFirstPart, position)
 
         if (endIndex != path.size) {
             return null
@@ -435,6 +473,9 @@ class QualifiedExpressionResolver {
 
         return packageOrClassDescriptor
     }
+
+    private fun resolveInIDEMode(path: List<QualifierPart>): Boolean =
+        languageVersionSettings.getFlag(AnalysisFlags.ideMode) && path.size > 1 && path.first().name.asString() == ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE
 
     private fun resolveToPackageOrClassPrefix(
         path: List<QualifierPart>,
@@ -445,6 +486,18 @@ class QualifiedExpressionResolver {
         position: QualifierPosition,
         isValue: ((KtSimpleNameExpression) -> Boolean)? = null
     ): Pair<DeclarationDescriptor?, Int> {
+        if (resolveInIDEMode(path)) {
+            return resolveToPackageOrClassPrefix(
+                path.subList(1, path.size),
+                moduleDescriptor,
+                trace,
+                shouldBeVisibleFrom,
+                scopeForFirstPart = null,
+                position = position,
+                isValue = null
+            ).let { it.first to it.second + 1 }
+        }
+
         if (path.isEmpty()) {
             return Pair(moduleDescriptor.getPackage(FqName.ROOT), 0)
         }
@@ -467,13 +520,13 @@ class QualifiedExpressionResolver {
         }
 
         val (prefixDescriptor, nextIndexAfterPrefix) =
-                if (classifierDescriptor != null)
-                    Pair(classifierDescriptor, 1)
-                else
-                    moduleDescriptor.quickResolveToPackage(path, trace, position)
+            if (classifierDescriptor != null)
+                Pair(classifierDescriptor, 1)
+            else
+                moduleDescriptor.quickResolveToPackage(path, trace, position)
 
         var currentDescriptor: DeclarationDescriptor? = prefixDescriptor
-        for (qualifierPartIndex in nextIndexAfterPrefix..path.size - 1) {
+        for (qualifierPartIndex in nextIndexAfterPrefix until path.size) {
             val qualifierPart = path[qualifierPartIndex]
 
             val nextPackageOrClassDescriptor =
@@ -521,6 +574,9 @@ class QualifiedExpressionResolver {
         context: ExpressionTypingContext
     ): Qualifier? {
         val name = expression.getReferencedNameAsName()
+        if (!expression.isPhysical && !name.isSpecial && name.asString().endsWith(CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED)) {
+            return null
+        }
 
         val location = KotlinLookupLocation(expression)
         val qualifierDescriptor = when (receiver) {
@@ -755,6 +811,26 @@ class QualifiedExpressionResolver {
 
         return qualifier
     }
+
+    companion object {
+        /**
+         *  Shouldn't be visible to users.
+         *  Used as prefix for [FqName] from non-root to avoid conflicts when resolving in IDE.
+         *  E.g.:
+         *  ---------
+         *  package a
+         *
+         *  class A
+         *
+         *  fun test(a: Any) {
+         *      a.A() // invalid code -> incorrect import/completion/etc.
+         *      _root_ide_package_.a.A() // OK
+         *  }
+         *  ---------
+         */
+        const val ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE = "_root_ide_package_"
+        const val ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE_WITH_DOT = "$ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE."
+    }
 }
 
 internal fun isVisible(
@@ -766,10 +842,10 @@ internal fun isVisible(
 
     val visibility = descriptor.visibility
     if (position == QualifierPosition.IMPORT) {
-        if (Visibilities.isPrivate(visibility)) return Visibilities.inSameFile(descriptor, shouldBeVisibleFrom)
+        if (DescriptorVisibilities.isPrivate(visibility)) return DescriptorVisibilities.inSameFile(descriptor, shouldBeVisibleFrom)
         if (!visibility.mustCheckInImports()) return true
     }
-    return Visibilities.isVisibleIgnoringReceiver(descriptor, shouldBeVisibleFrom)
+    return DescriptorVisibilities.isVisibleIgnoringReceiver(descriptor, shouldBeVisibleFrom)
 }
 
 internal enum class QualifierPosition {

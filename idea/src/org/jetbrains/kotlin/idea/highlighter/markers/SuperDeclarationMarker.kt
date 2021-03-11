@@ -41,7 +41,7 @@ import java.util.*
 object SuperDeclarationMarkerTooltip : Function<PsiElement, String> {
     override fun `fun`(element: PsiElement): String? {
         val ktDeclaration = element.getParentOfType<KtDeclaration>(false) ?: return null
-        val (elementDescriptor, overriddenDescriptors) = resolveDeclarationWithParents(ktDeclaration!!)
+        val (elementDescriptor, overriddenDescriptors) = resolveDeclarationWithParents(ktDeclaration)
         if (overriddenDescriptors.isEmpty()) return ""
 
         val isAbstract = elementDescriptor!!.modality == Modality.ABSTRACT
@@ -55,11 +55,23 @@ object SuperDeclarationMarkerTooltip : Function<PsiElement, String> {
 
         val containingStrings = overriddenDescriptors.map {
             val declaration = it.containingDeclaration
-            val memberKind = if (it is PropertyAccessorDescriptor || it is PropertyDescriptor) "property" else "function"
+            val memberKind = if (it is PropertyAccessorDescriptor || it is PropertyDescriptor)
+                KotlinBundle.message("highlighter.tool.tip.text.property")
+            else
+                KotlinBundle.message("highlighter.tool.tip.text.function")
 
             val isBaseAbstract = it.modality == Modality.ABSTRACT
-            "${if (!isAbstract && isBaseAbstract) "Implements" else "Overrides"} $memberKind in '${renderer.render(declaration)}'"
+            KotlinBundle.message(
+                "highlighter.text.in",
+                "${if (!isAbstract && isBaseAbstract)
+                    KotlinBundle.message("highlighter.text.implements")
+                else
+                    KotlinBundle.message("highlighter.text.overrides")
+                } $memberKind",
+                renderer.render(declaration)
+            )
         }
+
 
         return containingStrings.sorted().joinToString(separator = "<br/>")
     }
@@ -85,8 +97,8 @@ class SuperDeclarationMarkerNavigationHandler : GutterIconNavigationHandler<PsiE
         val elementName = elementDescriptor!!.name
         return NavigationPopupDescriptor(
             superDeclarations,
-            KotlinBundle.message("navigation.title.super.declaration", elementName),
-            KotlinBundle.message("navigation.findUsages.title.super.declaration", elementName),
+            KotlinBundle.message("overridden.marker.overrides.choose.implementation.title", elementName),
+            KotlinBundle.message("overridden.marker.overrides.choose.implementation.find.usages", elementName),
             KtFunctionPsiElementCellRenderer()
         )
     }

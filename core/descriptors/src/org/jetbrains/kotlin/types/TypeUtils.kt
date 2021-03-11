@@ -24,9 +24,9 @@ import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.calls.inference.isCaptured
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 import org.jetbrains.kotlin.types.*
-import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
-import org.jetbrains.kotlin.types.checker.NewCapturedType
-import org.jetbrains.kotlin.types.checker.NewTypeVariableConstructor
+import org.jetbrains.kotlin.types.checker.*
+import org.jetbrains.kotlin.types.model.TypeVariableTypeConstructorMarker
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.*
 
 enum class TypeNullability {
@@ -54,6 +54,7 @@ fun KotlinType.supertypes(): Collection<KotlinType> = TypeUtils.getAllSupertypes
 
 fun KotlinType.isNothing(): Boolean = KotlinBuiltIns.isNothing(this)
 fun KotlinType.isNullableNothing(): Boolean = KotlinBuiltIns.isNullableNothing(this)
+fun KotlinType.isNothingOrNullableNothing(): Boolean = KotlinBuiltIns.isNothingOrNullableNothing(this)
 fun KotlinType.isUnit(): Boolean = KotlinBuiltIns.isUnit(this)
 fun KotlinType.isAnyOrNullableAny(): Boolean = KotlinBuiltIns.isAnyOrNullableAny(this)
 fun KotlinType.isNullableAny(): Boolean = KotlinBuiltIns.isNullableAny(this)
@@ -78,6 +79,11 @@ fun KotlinType.isPrimitiveNumberOrNullableType(): Boolean =
             !KotlinBuiltIns.isCharOrNullableChar(this)
 
 fun KotlinType.isTypeParameter(): Boolean = TypeUtils.isTypeParameter(this)
+
+fun KotlinType.upperBoundedByPrimitiveNumberOrNullableType(): Boolean =
+    TypeUtils.getTypeParameterDescriptorOrNull(this)?.upperBounds?.any {
+        it.isPrimitiveNumberOrNullableType() || it.upperBoundedByPrimitiveNumberOrNullableType()
+    } == true
 
 fun KotlinType.isInterface(): Boolean = (constructor.declarationDescriptor as? ClassDescriptor)?.kind == ClassKind.INTERFACE
 fun KotlinType.isEnum(): Boolean = (constructor.declarationDescriptor as? ClassDescriptor)?.kind == ClassKind.ENUM_CLASS
@@ -124,15 +130,15 @@ fun KotlinType.isDefaultBound(): Boolean = KotlinBuiltIns.isDefaultBound(getSupe
 fun createProjection(type: KotlinType, projectionKind: Variance, typeParameterDescriptor: TypeParameterDescriptor?): TypeProjection =
     TypeProjectionImpl(if (typeParameterDescriptor?.variance == projectionKind) Variance.INVARIANT else projectionKind, type)
 
-fun Collection<KotlinType>.closure(f: (KotlinType) -> Collection<KotlinType>): Collection<KotlinType> {
+fun <T> Collection<T>.closure(preserveOrder: Boolean = false, f: (T) -> Collection<T>): Collection<T> {
     if (size == 0) return this
 
-    val result = HashSet(this)
+    val result = if (preserveOrder) LinkedHashSet(this) else HashSet(this)
     var elementsToCheck = result
     var oldSize = 0
     while (result.size > oldSize) {
         oldSize = result.size
-        val toAdd = hashSetOf<KotlinType>()
+        val toAdd = if (preserveOrder) linkedSetOf() else hashSetOf<T>()
         elementsToCheck.forEach { toAdd.addAll(f(it)) }
         result.addAll(toAdd)
         elementsToCheck = toAdd
@@ -224,7 +230,82 @@ fun KotlinType.containsTypeProjectionsInTopLevelArguments(): Boolean {
     return possiblyInnerType.arguments.any { it.isStarProjection || it.projectionKind != Variance.INVARIANT }
 }
 
-fun UnwrappedType.canHaveUndefinedNullability(): Boolean =
-    constructor is NewTypeVariableConstructor ||
-            constructor.declarationDescriptor is TypeParameterDescriptor ||
-            this is NewCapturedType
+val TypeParameterDescriptor.representativeUpperBound: KotlinType
+    get() {
+        assert(upperBounds.isNotEmpty()) { "Upper bounds should not be empty: $this" }
+
+        return upperBounds.firstOrNull {
+            val classDescriptor = it.constructor.declarationDescriptor as? ClassDescriptor ?: return@firstOrNull false
+            classDescriptor.kind != ClassKind.INTERFACE && classDescriptor.kind != ClassKind.ANNOTATION_CLASS
+        } ?: upperBounds.first()
+    }
+
+fun KotlinType.expandIntersectionTypeIfNecessary(): Collection<KotlinType> {
+    if (constructor !is IntersectionTypeConstructor) return listOf(this)
+    val types = constructor.supertypes
+    return if (isMarkedNullable) {
+        types.map { it.makeNullable() }
+    } else {
+        types
+    }
+}
+
+fun KotlinType.unCapture(): KotlinType = unwrap().unCapture()
+
+fun UnwrappedType.unCapture(): UnwrappedType = when (this) {
+    is AbbreviatedType -> unCapture()
+    is SimpleType -> unCapture()
+    is FlexibleType -> unCapture()
+}
+
+fun SimpleType.unCapture(): UnwrappedType {
+    if (this is ErrorType) return this
+    if (this is NewCapturedType)
+        return unCaptureTopLevelType()
+
+    val newArguments = arguments.map(::unCaptureProjection)
+    return replace(newArguments).unwrap()
+}
+
+fun unCaptureProjection(projection: TypeProjection): TypeProjection {
+    val unCapturedProjection = projection.type.constructor.safeAs<NewCapturedTypeConstructor>()?.projection ?: projection
+    if (unCapturedProjection.isStarProjection || unCapturedProjection.type is ErrorType) return unCapturedProjection
+
+    val newArguments = unCapturedProjection.type.arguments.map(::unCaptureProjection)
+    return TypeProjectionImpl(
+        unCapturedProjection.projectionKind,
+        unCapturedProjection.type.replace(newArguments)
+    )
+}
+
+fun AbbreviatedType.unCapture(): SimpleType {
+    val newType = expandedType.unCapture()
+    return AbbreviatedType(newType as? SimpleType ?: expandedType, abbreviation)
+}
+
+fun FlexibleType.unCapture(): FlexibleType {
+    val unCapturedLowerBound = when (val unCaptured = lowerBound.unCapture()) {
+        is SimpleType -> unCaptured
+        is FlexibleType -> unCaptured.lowerBound
+        else -> lowerBound
+    }
+
+    val unCapturedUpperBound = when (val unCaptured = upperBound.unCapture()) {
+        is SimpleType -> unCaptured
+        is FlexibleType -> unCaptured.upperBound
+        else -> upperBound
+    }
+
+    return FlexibleTypeImpl(unCapturedLowerBound, unCapturedUpperBound)
+}
+
+private fun NewCapturedType.unCaptureTopLevelType(): UnwrappedType {
+    if (lowerType != null) return lowerType
+
+    val supertypes = constructor.supertypes
+    if (supertypes.isNotEmpty()) return intersectTypes(supertypes)
+
+    return constructor.projection.type.unwrap()
+}
+
+fun KotlinType.shouldBeSubstituted() = contains { it is StubType || it.constructor is TypeVariableTypeConstructorMarker }

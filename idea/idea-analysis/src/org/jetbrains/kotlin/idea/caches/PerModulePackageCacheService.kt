@@ -1,6 +1,6 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2000-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.caches
@@ -10,14 +10,14 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
-import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -25,11 +25,13 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.*
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
+import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.impl.PsiTreeChangeEventImpl
 import com.intellij.psi.impl.PsiTreeChangePreprocessor
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService.Companion.DEBUG_LOG_ENABLE_PerModulePackageCache
 import org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService.Companion.FULL_DROP_THRESHOLD
 import org.jetbrains.kotlin.idea.caches.project.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.caches.project.getModuleInfoByVirtualFile
@@ -40,34 +42,68 @@ import org.jetbrains.kotlin.idea.util.sourceRoot
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPackageDirective
+import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
-class KotlinPackageContentModificationListener(private val project: Project) {
-    init {
-        val connection = project.messageBus.connect()
+class KotlinPackageContentModificationListener : StartupActivity {
 
+    companion object {
+        val LOG = Logger.getInstance(this::class.java)
+    }
+
+    override fun runActivity(project: Project) {
+        val connection = project.messageBus.connect(project)
         connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
-            override fun before(events: MutableList<out VFileEvent>) = onEvents(events)
-            override fun after(events: List<VFileEvent>) = onEvents(events)
+            override fun before(events: MutableList<out VFileEvent>) = onEvents(events, false)
+            override fun after(events: List<VFileEvent>) = onEvents(events, true)
 
-            private fun isRelevant(it: VFileEvent): Boolean =
-                it is VFileMoveEvent || it is VFileCreateEvent || it is VFileCopyEvent || it is VFileDeleteEvent
+            private fun isRelevant(event: VFileEvent): Boolean = when (event) {
+                is VFilePropertyChangeEvent -> false
+                is VFileCreateEvent -> true
+                is VFileMoveEvent -> true
+                is VFileDeleteEvent -> true
+                is VFileContentChangeEvent -> true
+                is VFileCopyEvent -> true
+                else -> {
+                    LOG.warn("Unknown vfs event: ${event.javaClass}")
+                    false
+                }
+            }
 
-            fun onEvents(events: List<VFileEvent>) {
+            fun onEvents(events: List<VFileEvent>, isAfter: Boolean) {
                 val service = PerModulePackageCacheService.getInstance(project)
+                val fileManager = PsiManagerEx.getInstanceEx(project).fileManager
                 if (events.size >= FULL_DROP_THRESHOLD) {
                     service.onTooComplexChange()
                 } else {
-                    events
-                        .asSequence()
+                    events.asSequence()
                         .filter(::isRelevant)
-                        .filter { (it.isValid || it !is VFileCreateEvent) && it.file != null }
+                        .filter {
+                            (it.isValid || it !is VFileCreateEvent) && it.file != null
+                        }
                         .filter {
                             val vFile = it.file!!
-                            vFile.isDirectory || FileTypeRegistry.getInstance().getFileTypeByFileName(vFile.nameSequence) == KotlinFileType.INSTANCE
+                            vFile.isDirectory || vFile.fileType == KotlinFileType.INSTANCE
+                        }
+                        .filter {
+                            // It expected that content change events will be duplicated with more precise PSI events and processed
+                            // in KotlinPackageStatementPsiTreeChangePreprocessor, but events might have been missing if PSI view provider
+                            // is absent.
+                            if (it is VFileContentChangeEvent) {
+                                isAfter && fileManager.findCachedViewProvider(it.file) == null
+                            } else {
+                                true
+                            }
+                        }
+                        .filter {
+                            when (val origin = it.requestor) {
+                                is Project -> origin == project
+                                is PsiManager -> origin.project == project
+                                else -> true
+                            }
                         }
                         .forEach { event -> service.notifyPackageChange(event) }
                 }
@@ -80,12 +116,15 @@ class KotlinPackageContentModificationListener(private val project: Project) {
             }
         })
     }
+
 }
 
 class KotlinPackageStatementPsiTreeChangePreprocessor(private val project: Project) : PsiTreeChangePreprocessor {
     override fun treeChanged(event: PsiTreeChangeEventImpl) {
         val eFile = event.file ?: event.child as? PsiFile
-        if (eFile == null) LOG.debugInTests("Got PsiEvent: $event without file", true)
+        if (eFile == null) {
+            LOG.debugIfEnabled(project, true) { "Got PsiEvent: $event without file" }
+        }
         val file = eFile as? KtFile ?: return
 
         when (event.code) {
@@ -94,7 +133,7 @@ class KotlinPackageStatementPsiTreeChangePreprocessor(private val project: Proje
             PsiTreeChangeEventImpl.PsiEventType.CHILD_REPLACED,
             PsiTreeChangeEventImpl.PsiEventType.CHILD_REMOVED -> {
                 val child = event.child ?: run {
-                    LOG.debugInTests("Got PsiEvent: $event without child", true)
+                    LOG.debugIfEnabled(project, true) { "Got PsiEvent: $event without child" }
                     return
                 }
                 if (child.getParentOfType<KtPackageDirective>(false) != null)
@@ -102,11 +141,16 @@ class KotlinPackageStatementPsiTreeChangePreprocessor(private val project: Proje
             }
             PsiTreeChangeEventImpl.PsiEventType.CHILDREN_CHANGED -> {
                 val parent = event.parent ?: run {
-                    LOG.debugInTests("Got PsiEvent: $event without parent", true)
+                    LOG.debugIfEnabled(project, true) { "Got PsiEvent: $event without parent" }
                     return
                 }
-                if (parent.getChildrenOfType<KtPackageDirective>().any())
+                val childrenOfType = parent.getChildrenOfType<KtPackageDirective>()
+                if (
+                    (!event.isGenericChange && (childrenOfType.any() || parent is KtPackageDirective)) ||
+                    (childrenOfType.any { it.name.isEmpty() } && parent is KtFile)
+                ) {
                     ServiceManager.getService(project, PerModulePackageCacheService::class.java).notifyPackageChange(file)
+                }
             }
             else -> {
             }
@@ -206,20 +250,19 @@ class ImplicitPackagePrefixCache(private val project: Project) {
     }
 
     internal fun update(ktFile: KtFile) {
-        val parent = ktFile.virtualFile.parent
+        val parent = ktFile.virtualFile?.parent ?: return
         if (ktFile.sourceRoot == parent) {
             implicitPackageCache[parent]?.updateFile(ktFile)
         }
     }
 }
 
-class PerModulePackageCacheService(private val project: Project) {
+class PerModulePackageCacheService(private val project: Project) : Disposable {
 
     /*
-     * Disposal of entries handled by Module child Disposable registered in packageExists
-     * Actually an StrongMap<Module, SoftMap<ModuleSourceInfo, SoftMap<FqName, Boolean>>>
+     * Actually an WeakMap<Module, SoftMap<ModuleSourceInfo, SoftMap<FqName, Boolean>>>
      */
-    private val cache = ConcurrentHashMap<Module, ConcurrentMap<ModuleSourceInfo, ConcurrentMap<FqName, Boolean>>>()
+    private val cache = ContainerUtil.createConcurrentWeakMap<Module, ConcurrentMap<ModuleSourceInfo, ConcurrentMap<FqName, Boolean>>>()
     private val implicitPackagePrefixCache = ImplicitPackagePrefixCache(project)
 
     private val pendingVFileChanges: MutableSet<VFileEvent> = mutableSetOf()
@@ -227,11 +270,17 @@ class PerModulePackageCacheService(private val project: Project) {
 
     private val projectScope = GlobalSearchScope.projectScope(project)
 
-    internal fun onTooComplexChange(): Unit = synchronized(this) {
-        pendingVFileChanges.clear()
-        pendingKtFileChanges.clear()
-        cache.clear()
-        implicitPackagePrefixCache.clear()
+    internal fun onTooComplexChange() {
+        clear()
+    }
+
+    private fun clear() {
+        synchronized(this) {
+            pendingVFileChanges.clear()
+            pendingKtFileChanges.clear()
+            cache.clear()
+            implicitPackagePrefixCache.clear()
+        }
     }
 
     internal fun notifyPackageChange(file: VFileEvent): Unit = synchronized(this) {
@@ -243,7 +292,7 @@ class PerModulePackageCacheService(private val project: Project) {
     }
 
     private fun invalidateCacheForModuleSourceInfo(moduleSourceInfo: ModuleSourceInfo) {
-        LOG.debugInTests("Invalidated cache for $moduleSourceInfo", false)
+        LOG.debugIfEnabled(project) { "Invalidated cache for $moduleSourceInfo" }
         val perSourceInfoData = cache[moduleSourceInfo.module] ?: return
         val dataForSourceInfo = perSourceInfoData[moduleSourceInfo] ?: return
         dataForSourceInfo.clear()
@@ -263,14 +312,14 @@ class PerModulePackageCacheService(private val project: Project) {
                         if (sourceRootUrls.any { url ->
                                 vfile.containedInOrContains(url)
                             }) {
-                            LOG.debugInTests("Invalidated cache for $module")
+                            LOG.debugIfEnabled(project) { "Invalidated cache for $module" }
                             data.clear()
                         }
                     }
                 } else {
                     val infoByVirtualFile = getModuleInfoByVirtualFile(project, vfile)
                     if (infoByVirtualFile == null || infoByVirtualFile !is ModuleSourceInfo) {
-                        LOG.debugInTests("Skip $vfile as it has mismatched ModuleInfo=$infoByVirtualFile")
+                        LOG.debugIfEnabled(project) { "Skip $vfile as it has mismatched ModuleInfo=$infoByVirtualFile" }
                     }
                     (infoByVirtualFile as? ModuleSourceInfo)?.let {
                         invalidateCacheForModuleSourceInfo(it)
@@ -282,13 +331,15 @@ class PerModulePackageCacheService(private val project: Project) {
 
             pendingKtFileChanges.processPending { file ->
                 if (file.virtualFile != null && file.virtualFile !in projectScope) {
-                    LOG.debugInTests("Skip $file without vFile, or not in scope: ${file.virtualFile?.let { it !in projectScope }}")
+                    LOG.debugIfEnabled(project) {
+                        "Skip $file without vFile, or not in scope: ${file.virtualFile?.let { it !in projectScope }}"
+                    }
                     return@processPending
                 }
                 val nullableModuleInfo = file.getNullableModuleInfo()
                 (nullableModuleInfo as? ModuleSourceInfo)?.let { invalidateCacheForModuleSourceInfo(it) }
                 if (nullableModuleInfo == null || nullableModuleInfo !is ModuleSourceInfo) {
-                    LOG.debugInTests("Skip $file as it has mismatched ModuleInfo=$nullableModuleInfo")
+                    LOG.debugIfEnabled(project) { "Skip $file as it has mismatched ModuleInfo=$nullableModuleInfo" }
                 }
                 implicitPackagePrefixCache.update(file)
             }
@@ -320,7 +371,6 @@ class PerModulePackageCacheService(private val project: Project) {
         checkPendingChanges()
 
         val perSourceInfoCache = cache.getOrPut(module) {
-            Disposer.register(module, Disposable { cache.remove(module) })
             ContainerUtil.createConcurrentSoftMap()
         }
         val cacheForCurrentModuleInfo = perSourceInfoCache.getOrPut(moduleInfo) {
@@ -329,7 +379,7 @@ class PerModulePackageCacheService(private val project: Project) {
 
         return cacheForCurrentModuleInfo.getOrPut(packageFqName) {
             val packageExists = PackageIndexUtil.packageExists(packageFqName, moduleInfo.contentScope(), project)
-            LOG.debugInTests("Computed cache value for $packageFqName in $moduleInfo is $packageExists")
+            LOG.debugIfEnabled(project) { "Computed cache value for $packageFqName in $moduleInfo is $packageExists" }
             packageExists
         }
     }
@@ -339,23 +389,30 @@ class PerModulePackageCacheService(private val project: Project) {
         return implicitPackagePrefixCache.getPrefix(sourceRoot)
     }
 
+    override fun dispose() {
+        clear()
+    }
+
     companion object {
         const val FULL_DROP_THRESHOLD = 1000
         private val LOG = Logger.getInstance(this::class.java)
 
         fun getInstance(project: Project): PerModulePackageCacheService =
             ServiceManager.getService(project, PerModulePackageCacheService::class.java)
+
+        var Project.DEBUG_LOG_ENABLE_PerModulePackageCache: Boolean
+                by NotNullableUserDataProperty<Project, Boolean>(Key.create("debug.PerModulePackageCache"), false)
     }
 }
 
-
-private fun Logger.debugInTests(message: String, withCurrentTrace: Boolean = false) {
-    if (ApplicationManager.getApplication().isUnitTestMode) {
+private fun Logger.debugIfEnabled(project: Project, withCurrentTrace: Boolean = false, message: () -> String) {
+    if (ApplicationManager.getApplication().isUnitTestMode && project.DEBUG_LOG_ENABLE_PerModulePackageCache) {
+        val msg = message()
         if (withCurrentTrace) {
             val e = Exception().apply { fillInStackTrace() }
-            this.debug(message, e)
+            this.debug(msg, e)
         } else {
-            this.debug(message)
+            this.debug(msg)
         }
     }
 }

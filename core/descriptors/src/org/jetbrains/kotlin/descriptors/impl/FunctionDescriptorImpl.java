@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.descriptors.impl;
@@ -26,7 +26,7 @@ public abstract class FunctionDescriptorImpl extends DeclarationDescriptorNonRoo
     private ReceiverParameterDescriptor extensionReceiverParameter;
     private ReceiverParameterDescriptor dispatchReceiverParameter;
     private Modality modality;
-    private Visibility visibility = Visibilities.UNKNOWN;
+    private DescriptorVisibility visibility = DescriptorVisibilities.UNKNOWN;
     private boolean isOperator = false;
     private boolean isInfix = false;
     private boolean isExternal = false;
@@ -72,7 +72,7 @@ public abstract class FunctionDescriptorImpl extends DeclarationDescriptorNonRoo
             @NotNull List<ValueParameterDescriptor> unsubstitutedValueParameters,
             @Nullable KotlinType unsubstitutedReturnType,
             @Nullable Modality modality,
-            @NotNull Visibility visibility
+            @NotNull DescriptorVisibility visibility
     ) {
         this.typeParameters = CollectionsKt.toList(typeParameters);
         this.unsubstitutedValueParameters = CollectionsKt.toList(unsubstitutedValueParameters);
@@ -101,7 +101,7 @@ public abstract class FunctionDescriptorImpl extends DeclarationDescriptorNonRoo
         return this;
     }
 
-    public void setVisibility(@NotNull Visibility visibility) {
+    public void setVisibility(@NotNull DescriptorVisibility visibility) {
         this.visibility = visibility;
     }
 
@@ -204,7 +204,7 @@ public abstract class FunctionDescriptorImpl extends DeclarationDescriptorNonRoo
 
     @NotNull
     @Override
-    public Visibility getVisibility() {
+    public DescriptorVisibility getVisibility() {
         return visibility;
     }
 
@@ -287,7 +287,12 @@ public abstract class FunctionDescriptorImpl extends DeclarationDescriptorNonRoo
     @Override
     @NotNull
     public List<TypeParameterDescriptor> getTypeParameters() {
-        return typeParameters;
+        List<TypeParameterDescriptor> parameters = typeParameters;
+        // Diagnostics for EA-141456
+        if (parameters == null) {
+            throw new IllegalStateException("typeParameters == null for " + this);
+        }
+        return parameters;
     }
 
     @Override
@@ -328,7 +333,12 @@ public abstract class FunctionDescriptorImpl extends DeclarationDescriptorNonRoo
         if (originalSubstitutor.isEmpty()) {
             return this;
         }
-        return newCopyBuilder(originalSubstitutor).setOriginal(getOriginal()).setJustForTypeSubstitution(true).build();
+
+        return newCopyBuilder(originalSubstitutor)
+                .setOriginal(getOriginal())
+                .setPreserveSourceElement()
+                .setJustForTypeSubstitution(true)
+                .build();
     }
 
     @Nullable
@@ -346,7 +356,8 @@ public abstract class FunctionDescriptorImpl extends DeclarationDescriptorNonRoo
         protected @NotNull TypeSubstitution substitution;
         protected @NotNull DeclarationDescriptor newOwner;
         protected @NotNull Modality newModality;
-        protected @NotNull Visibility newVisibility;
+        protected @NotNull
+        DescriptorVisibility newVisibility;
         protected @Nullable FunctionDescriptor original = null;
         protected @NotNull Kind kind;
         protected @NotNull List<ValueParameterDescriptor> newValueParameterDescriptors;
@@ -370,7 +381,7 @@ public abstract class FunctionDescriptorImpl extends DeclarationDescriptorNonRoo
                 @NotNull TypeSubstitution substitution,
                 @NotNull DeclarationDescriptor newOwner,
                 @NotNull Modality newModality,
-                @NotNull Visibility newVisibility,
+                @NotNull DescriptorVisibility newVisibility,
                 @NotNull Kind kind,
                 @NotNull List<ValueParameterDescriptor> newValueParameterDescriptors,
                 @Nullable ReceiverParameterDescriptor newExtensionReceiverParameter,
@@ -404,7 +415,7 @@ public abstract class FunctionDescriptorImpl extends DeclarationDescriptorNonRoo
 
         @Override
         @NotNull
-        public CopyConfiguration setVisibility(@NotNull Visibility visibility) {
+        public CopyConfiguration setVisibility(@NotNull DescriptorVisibility visibility) {
             this.newVisibility = visibility;
             return this;
         }
@@ -736,7 +747,7 @@ public abstract class FunctionDescriptorImpl extends DeclarationDescriptorNonRoo
     public FunctionDescriptor copy(
             DeclarationDescriptor newOwner,
             Modality modality,
-            Visibility visibility,
+            DescriptorVisibility visibility,
             Kind kind,
             boolean copyOverrides
     ) {
@@ -802,8 +813,22 @@ public abstract class FunctionDescriptorImpl extends DeclarationDescriptorNonRoo
                     wereChanges[0] = true;
                 }
             }
+
+            Function0<List<VariableDescriptor>> destructuringVariablesAction = null;
+            if (unsubstitutedValueParameter instanceof ValueParameterDescriptorImpl.WithDestructuringDeclaration) {
+                final List<VariableDescriptor> destructuringVariables =
+                        ((ValueParameterDescriptorImpl.WithDestructuringDeclaration) unsubstitutedValueParameter)
+                                .getDestructuringVariables();
+                destructuringVariablesAction = new Function0<List<VariableDescriptor>>() {
+                    @Override
+                    public List<VariableDescriptor> invoke() {
+                        return destructuringVariables;
+                    }
+                };
+            }
+
             result.add(
-                    new ValueParameterDescriptorImpl(
+                    ValueParameterDescriptorImpl.createWithDestructuringDeclarations(
                             substitutedDescriptor,
                             dropOriginal ? null : unsubstitutedValueParameter,
                             unsubstitutedValueParameter.getIndex(),
@@ -814,7 +839,8 @@ public abstract class FunctionDescriptorImpl extends DeclarationDescriptorNonRoo
                             unsubstitutedValueParameter.isCrossinline(),
                             unsubstitutedValueParameter.isNoinline(),
                             substituteVarargElementType,
-                            preserveSourceElement ? unsubstitutedValueParameter.getSource() : SourceElement.NO_SOURCE
+                            preserveSourceElement ? unsubstitutedValueParameter.getSource() : SourceElement.NO_SOURCE,
+                            destructuringVariablesAction
                     )
             );
         }

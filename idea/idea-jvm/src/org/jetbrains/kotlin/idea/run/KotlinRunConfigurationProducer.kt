@@ -18,7 +18,8 @@ package org.jetbrains.kotlin.idea.run
 
 import com.intellij.execution.Location
 import com.intellij.execution.actions.ConfigurationContext
-import com.intellij.execution.actions.RunConfigurationProducer
+import com.intellij.execution.actions.LazyRunConfigurationProducer
+import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
@@ -34,11 +35,12 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
-class KotlinRunConfigurationProducer : RunConfigurationProducer<KotlinRunConfiguration>(KotlinRunConfigurationType.getInstance()) {
-
-    override fun setupConfigurationFromContext(configuration: KotlinRunConfiguration,
-                                               context: ConfigurationContext,
-                                               sourceElement: Ref<PsiElement>): Boolean {
+class KotlinRunConfigurationProducer : LazyRunConfigurationProducer<KotlinRunConfiguration>() {
+    override fun setupConfigurationFromContext(
+        configuration: KotlinRunConfiguration,
+        context: ConfigurationContext,
+        sourceElement: Ref<PsiElement>
+    ): Boolean {
         val location = context.location ?: return false
         val module = location.module?.asJvmModule() ?: return false
         val container = getEntryPointContainer(location) ?: return false
@@ -87,21 +89,19 @@ class KotlinRunConfigurationProducer : RunConfigurationProducer<KotlinRunConfigu
             return null
         }
 
-        fun getStartClassFqName(container: KtDeclarationContainer): String? = when(container) {
+        fun getStartClassFqName(container: KtDeclarationContainer): String? = when (container) {
             is KtFile -> container.javaFileFacadeFqName.asString()
             is KtClassOrObject -> {
                 if (!container.isValid) {
                     null
-                }
-                else if (container is KtObjectDeclaration && container.isCompanion()) {
+                } else if (container is KtObjectDeclaration && container.isCompanion()) {
                     val containerClass = container.getParentOfType<KtClass>(true)
                     containerClass?.toLightClass()?.let { ClassUtil.getJVMClassName(it) }
-                }
-                else {
+                } else {
                     container.toLightClass()?.let { ClassUtil.getJVMClassName(it) }
                 }
             }
-            else -> throw IllegalArgumentException("Invalid entry-point container: " + (container as PsiElement).text)
+            else -> null
         }
 
         private fun PsiElement.declarationContainer(strict: Boolean): KtDeclarationContainer? {
@@ -111,6 +111,7 @@ class KotlinRunConfigurationProducer : RunConfigurationProducer<KotlinRunConfigu
                 PsiTreeUtil.getNonStrictParentOfType(this, KtClassOrObject::class.java, KtFile::class.java)
             return element as KtDeclarationContainer?
         }
-
     }
+
+    override fun getConfigurationFactory(): ConfigurationFactory = KotlinRunConfigurationType.getInstance()
 }

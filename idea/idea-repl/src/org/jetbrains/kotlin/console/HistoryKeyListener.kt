@@ -1,17 +1,6 @@
 /*
- * Copyright 2010-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.console
@@ -23,10 +12,11 @@ import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.project.Project
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
+import kotlin.math.max
+import kotlin.math.min
 
-class HistoryKeyListener(
-        private val project: Project, private val consoleEditor: EditorEx, private val history: CommandHistory
-) : KeyAdapter(), HistoryUpdateListener {
+class HistoryKeyListener(private val project: Project, private val consoleEditor: EditorEx, private val history: CommandHistory) :
+    KeyAdapter(), HistoryUpdateListener {
     private var historyPos = 0
     private var prevCaretOffset = -1
     private var unfinishedCommand = ""
@@ -73,7 +63,7 @@ class HistoryKeyListener(
                     unfinishedCommand = document.text
                 }
 
-                historyPos = Math.max(historyPos - 1, 0)
+                historyPos = max(historyPos - 1, 0)
                 WriteCommandAction.runWriteCommandAction(project) {
                     document.setText(history[historyPos].entryText)
                     EditorUtil.scrollToTheEnd(consoleEditor)
@@ -89,7 +79,7 @@ class HistoryKeyListener(
                     return
                 }
 
-                historyPos = Math.min(historyPos + 1, history.size)
+                historyPos = min(historyPos + 1, history.size)
                 WriteCommandAction.runWriteCommandAction(project) {
                     document.setText(if (historyPos == history.size) unfinishedCommand else history[historyPos].entryText)
                     prevCaretOffset = document.textLength

@@ -1,5 +1,10 @@
-// IGNORE_BACKEND: JS_IR
 // SKIP_MINIFICATION
+
+// Exported declaration uses non-exportable return type: Char
+// IGNORE_BACKEND: JS_IR
+// IGNORE_BACKEND: JS_IR_ES6
+
+@JsName("foo")
 fun foo(): Char = '1'
 
 val p1: Char = '2'

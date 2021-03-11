@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.navigation;
@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.idea.navigation;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.test.KotlinTestUtils;
-import org.jetbrains.kotlin.test.TargetBackend;
+import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.runner.RunWith;
 
@@ -24,11 +24,11 @@ public class KotlinGotoTestGenerated extends AbstractKotlinGotoTest {
     @RunWith(JUnit3RunnerWithInners.class)
     public static class GotoClass extends AbstractKotlinGotoTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doClassTest, TargetBackend.ANY, testDataFilePath);
+            KotlinTestUtils.runTest(this::doClassTest, this, testDataFilePath);
         }
 
         public void testAllFilesPresentInGotoClass() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/navigation/gotoClass"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.ANY, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/navigation/gotoClass"), Pattern.compile("^(.+)\\.kt$"), null, true);
         }
 
         @TestMetadata("builtInAny.kt")
@@ -92,11 +92,11 @@ public class KotlinGotoTestGenerated extends AbstractKotlinGotoTest {
     @RunWith(JUnit3RunnerWithInners.class)
     public static class GotoSymbol extends AbstractKotlinGotoTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doSymbolTest, TargetBackend.ANY, testDataFilePath);
+            KotlinTestUtils.runTest(this::doSymbolTest, this, testDataFilePath);
         }
 
         public void testAllFilesPresentInGotoSymbol() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/navigation/gotoSymbol"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.ANY, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/navigation/gotoSymbol"), Pattern.compile("^(.+)\\.kt$"), null, true);
         }
 
         @TestMetadata("builtInArrayOfNulls.kt")

@@ -16,34 +16,37 @@
 
 package org.jetbrains.kotlin.ir.expressions
 
-import org.jetbrains.kotlin.descriptors.CallableDescriptor
-import org.jetbrains.kotlin.descriptors.FunctionDescriptor
-import org.jetbrains.kotlin.descriptors.PropertyDescriptor
-import org.jetbrains.kotlin.descriptors.VariableDescriptorWithAccessors
-import org.jetbrains.kotlin.ir.symbols.IrFieldSymbol
-import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
-import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
-import org.jetbrains.kotlin.ir.symbols.IrVariableSymbol
+import org.jetbrains.kotlin.ir.symbols.*
+import org.jetbrains.kotlin.name.Name
 
-interface IrCallableReference : IrMemberAccessExpression {
-    override val descriptor: CallableDescriptor
+abstract class IrCallableReference<S : IrSymbol>(typeArgumentsCount: Int) : IrMemberAccessExpression<S>(typeArgumentsCount) {
+    abstract val referencedName: Name
 }
 
-interface IrFunctionReference : IrCallableReference {
-    override val descriptor: FunctionDescriptor
-    val symbol: IrFunctionSymbol
+abstract class IrFunctionReference(typeArgumentsCount: Int) : IrCallableReference<IrFunctionSymbol>(typeArgumentsCount) {
+    abstract val reflectionTarget: IrFunctionSymbol?
 }
 
-interface IrPropertyReference : IrCallableReference {
-    override val descriptor: PropertyDescriptor
-    val field: IrFieldSymbol?
-    val getter: IrSimpleFunctionSymbol?
-    val setter: IrSimpleFunctionSymbol?
+val IrFunctionReference.isWithReflection: Boolean
+    get() = reflectionTarget != null
+
+val IrFunctionReference.isAdapterWithReflection: Boolean
+    get() = reflectionTarget != null && reflectionTarget != symbol
+
+abstract class IrPropertyReference(typeArgumentsCount: Int) : IrCallableReference<IrPropertySymbol>(typeArgumentsCount) {
+    abstract val field: IrFieldSymbol?
+    abstract val getter: IrSimpleFunctionSymbol?
+    abstract val setter: IrSimpleFunctionSymbol?
+
+    override val valueArgumentsCount: Int
+        get() = 0
 }
 
-interface IrLocalDelegatedPropertyReference : IrCallableReference {
-    override val descriptor: VariableDescriptorWithAccessors
-    val delegate: IrVariableSymbol
-    val getter: IrSimpleFunctionSymbol
-    val setter: IrSimpleFunctionSymbol?
+abstract class IrLocalDelegatedPropertyReference : IrCallableReference<IrLocalDelegatedPropertySymbol>(0) {
+    abstract val delegate: IrVariableSymbol
+    abstract val getter: IrSimpleFunctionSymbol
+    abstract val setter: IrSimpleFunctionSymbol?
+
+    override val valueArgumentsCount: Int
+        get() = 0
 }

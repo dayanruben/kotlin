@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 @file:kotlin.jvm.JvmMultifileClass
@@ -71,7 +71,7 @@ public fun String.replaceIndent(newIndent: String = ""): String {
     val minCommonIndent = lines
         .filter(String::isNotBlank)
         .map(String::indentWidth)
-        .min() ?: 0
+        .minOrNull() ?: 0
 
     return lines.reindent(length + newIndent.length * lines.size, getIndentFunction(newIndent), { line -> line.drop(minCommonIndent) })
 }

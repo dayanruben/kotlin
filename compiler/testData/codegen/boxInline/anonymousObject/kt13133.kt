@@ -1,4 +1,3 @@
-// IGNORE_BACKEND: JVM_IR
 // TARGET_BACKEND: JVM
 // WITH_REFLECT
 // FILE: 1.kt
@@ -32,4 +31,3 @@ fun box(): String {
 
     return "OK"
 }
-

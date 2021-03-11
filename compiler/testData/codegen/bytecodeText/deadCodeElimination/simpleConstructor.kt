@@ -1,4 +1,3 @@
-// IGNORE_BACKEND: JVM_IR
 class A
 fun box() {
     val x: A? = A()
@@ -14,3 +13,4 @@ fun box() {
 // 0 IFNONNULL
 // 0 throwNpe
 // 0 ATHROW
+// 0 checkNotNull

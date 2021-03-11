@@ -6,8 +6,6 @@ plugins {
     id("jps-compatible")
 }
 
-jvmTarget = "1.6"
-
 dependencies {
     compile(project(":core:descriptors"))
     compile(project(":compiler:util"))
@@ -16,7 +14,7 @@ dependencies {
     compile(project(":js:js.ast"))
     compile(project(":js:js.frontend"))
     compile(project(":js:js.parser"))
-    compileOnly(intellijCoreDep()) { includeJars("intellij-core", "annotations") }
+    compileOnly(intellijCoreDep()) { includeJars("intellij-core") }
     compileOnly(intellijDep()) { includeJars("trove4j", "guava", rootProject = rootProject) }
 }
 
@@ -30,6 +28,6 @@ sourceSets {
 
 configure<IdeaModel> {
     module {
-        excludeDirs = excludeDirs + files("testData/out-min")
+        excludeDirs = excludeDirs + files("testData/out", "testData/out-min")
     }
 }

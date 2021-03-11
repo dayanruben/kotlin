@@ -14,10 +14,15 @@
  * limitations under the License.
  */
 
+@file:Suppress("DEPRECATION")
+
 package org.jetbrains.kotlin.script.util
 
-import org.jetbrains.kotlin.script.InvalidScriptResolverAnnotation
-import org.jetbrains.kotlin.script.util.resolvers.*
+import org.jetbrains.kotlin.script.util.resolvers.DirectResolver
+import org.jetbrains.kotlin.script.util.resolvers.FlatLibDirectoryResolver
+import org.jetbrains.kotlin.script.util.resolvers.MavenResolver
+import org.jetbrains.kotlin.script.util.resolvers.Resolver
+import org.jetbrains.kotlin.scripting.resolve.InvalidScriptResolverAnnotation
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import java.io.File
 import java.util.concurrent.Future
@@ -27,6 +32,7 @@ import kotlin.script.dependencies.ScriptDependenciesResolver
 import kotlin.script.dependencies.asFuture
 import kotlin.script.templates.AcceptedAnnotations
 
+@Deprecated("Use new resolving classes from kotlin-scripting-dependencies and kotlin-scripting-dependencies-maven")
 open class KotlinAnnotatedScriptDependenciesResolver(val baseClassPath: List<File>, resolvers: Iterable<Resolver>)
     : ScriptDependenciesResolver
 {
@@ -72,9 +78,11 @@ open class KotlinAnnotatedScriptDependenciesResolver(val baseClassPath: List<Fil
     }
 }
 
+@Deprecated("Use FileSystemDependenciesResolver from kotlin-scripting-dependencies instead")
 class LocalFilesResolver :
         KotlinAnnotatedScriptDependenciesResolver(emptyList(), arrayListOf(DirectResolver()))
 
+@Deprecated("Use CompoundDependenciesResolver and MavenDependenciesResolver from kotlin-scripting-dependencies and kotlin-scripting-dependencies-maven")
 class FilesAndMavenResolver :
         KotlinAnnotatedScriptDependenciesResolver(emptyList(), arrayListOf(DirectResolver(), MavenResolver()))
 

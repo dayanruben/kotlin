@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.jvm.abi
@@ -10,14 +10,16 @@ import org.jetbrains.kotlin.cli.common.ExitCode
 import org.jetbrains.kotlin.cli.jvm.K2JVMCompiler
 import org.jetbrains.kotlin.config.Services
 import java.io.File
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.createTempDirectory
 
 abstract class BaseJvmAbiTest : TestCase() {
     private lateinit var workingDir: File
 
+    @OptIn(ExperimentalPathApi::class)
     override fun setUp() {
         super.setUp()
-        workingDir = createTempDir(javaClass.simpleName)
-        workingDir.deleteOnExit()
+        workingDir = createTempDirectory(javaClass.simpleName).toFile().apply { deleteOnExit() }
     }
 
     override fun tearDown() {

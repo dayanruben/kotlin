@@ -1,3 +1,6 @@
+// DONT_TARGET_EXACT_BACKEND: WASM
+// WASM_MUTE_REASON: WASM_NULL_CAST
+// KJS_WITH_FULL_RUNTIME
 // WITH_RUNTIME
 
 fun concatNonNulls(strings: List<String?>): String {

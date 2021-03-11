@@ -1,39 +1,34 @@
 /*
- * Copyright 2010-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.generators.builtins
 
 import org.jetbrains.kotlin.generators.builtins.ProgressionKind.*
-import kotlin.properties.Delegates
+import java.io.PrintWriter
 
-enum class PrimitiveType(val byteSize: Int?) {
+enum class PrimitiveType(val byteSize: Int) {
     BYTE(1),
     CHAR(2),
     SHORT(2),
     INT(4),
     LONG(8),
-    FLOAT(null),
-    DOUBLE(null),
-    BOOLEAN(null);
+    FLOAT(4),
+    DOUBLE(8),
+    BOOLEAN(1);
 
     val capitalized: String get() = name.toLowerCase().capitalize()
+    val bitSize = byteSize * 8
+
+    val isFloatingPoint: Boolean get() = this in floatingPoint
+    val isIntegral: Boolean get() = this in integral
 
     companion object {
         val exceptBoolean = PrimitiveType.values().filterNot { it == BOOLEAN }
         val onlyNumeric = PrimitiveType.values().filterNot { it == BOOLEAN || it == CHAR }
+        val floatingPoint = listOf(FLOAT, DOUBLE)
+        val integral = exceptBoolean - floatingPoint
     }
 }
 
@@ -47,6 +42,7 @@ enum class UnsignedType {
     val asSigned: PrimitiveType = PrimitiveType.valueOf(name.substring(1))
 
     val byteSize = (1 shl ordinal)
+    val bitSize = byteSize * 8
     val mask = "0x${List(byteSize) { "FF" }.chunked(2).joinToString("_") { it.joinToString("") }}"
 }
 
@@ -68,3 +64,17 @@ fun areEqualNumbers(v: String) = "$v == other.$v"
 fun hashLong(v: String) = "($v xor ($v ushr 32))"
 
 fun convert(v: String, from: UnsignedType, to: UnsignedType) = if (from == to) v else "$v.to${to.capitalized}()"
+
+fun convert(v: String, from: PrimitiveType, to: PrimitiveType) = if (from == to) v else "$v.to${to.capitalized}()"
+
+
+fun PrintWriter.printDoc(documentation: String, indent: String) {
+    val docLines = documentation.lines()
+    if (docLines.size == 1) {
+        this.println("$indent/** $documentation */")
+    } else {
+        this.println("$indent/**")
+        docLines.forEach { this.println("$indent * $it") }
+        this.println("$indent */")
+    }
+}

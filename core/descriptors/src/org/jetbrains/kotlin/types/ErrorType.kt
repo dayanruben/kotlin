@@ -18,12 +18,15 @@ package org.jetbrains.kotlin.types
 
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.resolve.scopes.MemberScope
+import org.jetbrains.kotlin.types.checker.KotlinTypeRefiner
+import org.jetbrains.kotlin.types.refinement.TypeRefinement
 
 open class ErrorType @JvmOverloads internal constructor(
-        override val constructor: TypeConstructor,
-        override val memberScope: MemberScope,
-        override val arguments: List<TypeProjection> = emptyList(),
-        override val isMarkedNullable: Boolean = false
+    override val constructor: TypeConstructor,
+    override val memberScope: MemberScope,
+    override val arguments: List<TypeProjection> = emptyList(),
+    override val isMarkedNullable: Boolean = false,
+    open val presentableName: String = "???"
 ) : SimpleType() {
     override val annotations: Annotations
         get() = Annotations.EMPTY
@@ -35,15 +38,21 @@ open class ErrorType @JvmOverloads internal constructor(
 
     override fun makeNullableAsSpecified(newNullability: Boolean): SimpleType =
             ErrorType(constructor, memberScope, arguments, newNullability)
+
+    @TypeRefinement
+    override fun refine(kotlinTypeRefiner: KotlinTypeRefiner) = this
 }
 
 class UnresolvedType(
-        val presentableName: String,
-        constructor: TypeConstructor,
-        memberScope: MemberScope,
-        arguments: List<TypeProjection>,
-        isMarkedNullable: Boolean
+    override val presentableName: String,
+    constructor: TypeConstructor,
+    memberScope: MemberScope,
+    arguments: List<TypeProjection>,
+    isMarkedNullable: Boolean
 ) : ErrorType(constructor, memberScope, arguments, isMarkedNullable) {
     override fun makeNullableAsSpecified(newNullability: Boolean): SimpleType =
-            UnresolvedType(presentableName, constructor, memberScope, arguments, newNullability)
+        UnresolvedType(presentableName, constructor, memberScope, arguments, newNullability)
+
+    @TypeRefinement
+    override fun refine(kotlinTypeRefiner: KotlinTypeRefiner) = this
 }

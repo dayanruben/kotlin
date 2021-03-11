@@ -21,22 +21,23 @@ import com.intellij.psi.PsiCompiledElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.impl.light.LightIdentifier
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.KtPrimaryConstructor
-import org.jetbrains.kotlin.psi.KtSecondaryConstructor
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
 open class KtLightIdentifier(
     private val lightOwner: PsiElement,
-    private val ktDeclaration: KtNamedDeclaration?
-) : LightIdentifier(lightOwner.manager, ktDeclaration?.name ?: ""), PsiCompiledElement {
-    val origin: PsiElement?
+    private val ktDeclaration: KtDeclaration?
+) : LightIdentifier(lightOwner.manager, ktDeclaration?.name ?: ""), PsiCompiledElement,
+    PsiElementWithOrigin<PsiElement> {
+    override val origin: PsiElement?
         get() = when (ktDeclaration) {
             is KtSecondaryConstructor -> ktDeclaration.getConstructorKeyword()
             is KtPrimaryConstructor -> ktDeclaration.getConstructorKeyword()
-                                       ?: ktDeclaration.valueParameterList
-                                       ?: ktDeclaration.containingClassOrObject?.nameIdentifier
-            else -> ktDeclaration?.nameIdentifier
+                ?: ktDeclaration.valueParameterList
+                ?: ktDeclaration.containingClassOrObject?.nameIdentifier
+            is KtPropertyAccessor -> ktDeclaration.namePlaceholder
+            is KtNamedDeclaration -> ktDeclaration.nameIdentifier
+            else -> null
         }
 
     override fun getMirror() = ((lightOwner as? KtLightElement<*, *>)?.clsDelegate as? PsiNameIdentifierOwner)?.nameIdentifier
@@ -45,4 +46,5 @@ open class KtLightIdentifier(
     override fun getParent() = lightOwner
     override fun getContainingFile() = lightOwner.containingFile
     override fun getTextRange() = origin?.textRange ?: TextRange.EMPTY_RANGE
+    override fun getTextOffset(): Int = origin?.textOffset ?: -1
 }

@@ -17,36 +17,50 @@
 package org.jetbrains.kotlin.idea.highlighter
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiManager
+import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.idea.caches.project.NotUnderContentRootModuleInfo
 import org.jetbrains.kotlin.idea.caches.project.getModuleInfo
 import org.jetbrains.kotlin.idea.core.script.IdeScriptReportSink
-import org.jetbrains.kotlin.idea.core.script.scriptDependencies
+import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
+import org.jetbrains.kotlin.idea.util.isRunningInCidrIde
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
-import kotlin.script.experimental.dependencies.ScriptReport
+import kotlin.script.experimental.api.ScriptDiagnostic
 
 object KotlinHighlightingUtil {
     fun shouldHighlight(psiElement: PsiElement): Boolean {
         val ktFile = psiElement.containingFile as? KtFile ?: return false
+        return shouldHighlightFile(ktFile)
+    }
 
+    fun shouldHighlightFile(ktFile: KtFile): Boolean {
         if (ktFile is KtCodeFragment && ktFile.context != null) {
             return true
+        }
+
+        if (OutsidersPsiFileSupportWrapper.isOutsiderFile(ktFile.virtualFile)) {
+            val origin = OutsidersPsiFileSupportUtils.getOutsiderFileOrigin(ktFile.project, ktFile.virtualFile) ?: return false
+            val psiFileOrigin = PsiManager.getInstance(ktFile.project).findFile(origin) ?: return false
+            return shouldHighlight(psiFileOrigin)
         }
 
         if (ktFile.isScript()) {
             return shouldHighlightScript(ktFile)
         }
 
-        if (OutsidersPsiFileSupportWrapper.isOutsiderFile(ktFile.virtualFile)) {
-            return true
-        }
-
         return ProjectRootsUtil.isInProjectOrLibraryContent(ktFile) && ktFile.getModuleInfo() !is NotUnderContentRootModuleInfo
     }
 
-    fun shouldHighlightErrors(psiElement: PsiElement): Boolean {
-        val ktFile = psiElement.containingFile as? KtFile ?: return false
+    fun shouldHighlightErrors(psiElement: PsiElement): Boolean =
+        (psiElement.containingFile as? KtFile)?.let {
+            shouldHighlightErrors(it)
+        } ?: false
+
+    fun shouldHighlightErrors(ktFile: KtFile): Boolean {
         if (ktFile.isCompiled) {
             return false
         }
@@ -64,11 +78,27 @@ object KotlinHighlightingUtil {
 
     @Suppress("DEPRECATION")
     private fun shouldHighlightScript(ktFile: KtFile): Boolean {
-        if (ktFile.virtualFile.scriptDependencies == null) return false
-        if (ktFile.virtualFile.getUserData(IdeScriptReportSink.Reports)?.any { it.severity == ScriptReport.Severity.FATAL } == true) {
+        if (isRunningInCidrIde) return false // There is no Java support in CIDR. So do not highlight errors in KTS if running in CIDR.
+        if (!ScriptConfigurationManager.getInstance(ktFile.project).hasConfiguration(ktFile)) return false
+        if (IdeScriptReportSink.getReports(ktFile).any { it.severity == ScriptDiagnostic.Severity.FATAL }) {
             return false
         }
 
+        if (!ScriptDefinitionsManager.getInstance(ktFile.project).isReady()) return false
+
         return ProjectRootsUtil.isInProjectSource(ktFile, includeScriptsOutsideSourceRoots = true)
+    }
+
+    fun hasCustomPropertyDeclaration(descriptor: PropertyDescriptor): Boolean {
+        var hasCustomPropertyDeclaration = false
+        if (!hasExtensionReceiverParameter(descriptor)) {
+            if (descriptor.getter?.isDefault == false || descriptor.setter?.isDefault == false)
+                hasCustomPropertyDeclaration = true
+        }
+        return hasCustomPropertyDeclaration
+    }
+
+    fun hasExtensionReceiverParameter(descriptor: PropertyDescriptor): Boolean {
+        return descriptor.extensionReceiverParameter != null
     }
 }

@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package kotlin.test.junit
@@ -56,5 +56,17 @@ object JUnitAsserter : Asserter {
         Assert.fail(message)
         // should not get here
         throw AssertionError(message)
+    }
+
+    @SinceKotlin("1.4")
+    override fun fail(message: String?, cause: Throwable?): Nothing {
+        try {
+            Assert.fail(message)
+        } catch (e: AssertionError) {
+            e.initCause(cause)
+            throw e
+        }
+        // should not get here
+        throw AssertionError(message).initCause(cause)
     }
 }

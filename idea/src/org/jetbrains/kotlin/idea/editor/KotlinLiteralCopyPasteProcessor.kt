@@ -1,17 +1,6 @@
 /*
- * Copyright 2010-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.editor
@@ -28,6 +17,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.editor.fixers.range
+import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.lexer.KotlinLexer
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtEscapeStringTemplateEntry
@@ -41,10 +31,11 @@ private val PsiElement.templateContentRange: TextRange?
     }
 
 
-private fun PsiFile.getTemplateIfAtLiteral(offset: Int): KtStringTemplateExpression? {
-    val at = this.findElementAt(offset) ?: return null
+private fun PsiFile.getTemplateIfAtLiteral(offset: Int, at: PsiElement? = findElementAt(offset)): KtStringTemplateExpression? {
+    if (at == null) return null
     return when (at.node?.elementType) {
-        KtTokens.REGULAR_STRING_PART, KtTokens.ESCAPE_SEQUENCE, KtTokens.LONG_TEMPLATE_ENTRY_START, KtTokens.SHORT_TEMPLATE_ENTRY_START -> at.parent.parent as? KtStringTemplateExpression
+        KtTokens.REGULAR_STRING_PART, KtTokens.ESCAPE_SEQUENCE, KtTokens.LONG_TEMPLATE_ENTRY_START, KtTokens.SHORT_TEMPLATE_ENTRY_START -> at.parent
+            .parent as? KtStringTemplateExpression
         KtTokens.CLOSING_QUOTE -> if (offset == at.startOffset) at.parent as? KtStringTemplateExpression else null
         else -> null
     }
@@ -85,7 +76,7 @@ class KotlinLiteralCopyPasteProcessor : CopyPastePreProcessor {
             while (givenTextOffset < fileRange.endOffset) {
                 val element: PsiElement? = file.findElementAt(givenTextOffset)
                 if (element == null) {
-                    buffer.append(fileText.substring(givenTextOffset, fileRange.endOffset))
+                    buffer.append(fileText.substring(givenTextOffset, fileRange.endOffset - 1))
                     break
                 }
                 val elTp = element.node.elementType
@@ -109,7 +100,7 @@ class KotlinLiteralCopyPasteProcessor : CopyPastePreProcessor {
                 }
             }
             val blockSelectionPadding = deducedBlockSelectionWidth - fileRange.length
-            for (j in 0..blockSelectionPadding - 1) {
+            for (j in 0 until blockSelectionPadding) {
                 buffer.append(' ')
             }
         }
@@ -123,17 +114,20 @@ class KotlinLiteralCopyPasteProcessor : CopyPastePreProcessor {
         }
         PsiDocumentManager.getInstance(project).commitDocument(editor.document)
         val selectionModel = editor.selectionModel
-        val beginTp = file.getTemplateIfAtLiteral(selectionModel.selectionStart) ?: return text
+        val begin = file.findElementAt(selectionModel.selectionStart) ?: return text
+        val beginTp = file.getTemplateIfAtLiteral(selectionModel.selectionStart, begin) ?: return text
         val endTp = file.getTemplateIfAtLiteral(selectionModel.selectionEnd) ?: return text
         if (beginTp.isSingleQuoted() != endTp.isSingleQuoted()) {
             return text
         }
 
+        val templateTokenSequence = TemplateTokenSequence(text)
+
         return if (beginTp.isSingleQuoted()) {
             val res = StringBuilder()
             val lineBreak = "\\n\"+\n \""
             var endsInLineBreak = false
-            TemplateTokenSequence(text).forEach {
+            templateTokenSequence.forEach {
                 when (it) {
                     is LiteralChunk -> StringUtil.escapeStringCharacters(it.text.length, it.text, "\$\"", res)
                     is EntryChunk -> res.append(it.text)
@@ -147,13 +141,32 @@ class KotlinLiteralCopyPasteProcessor : CopyPastePreProcessor {
                 res.toString()
             }
         } else {
+            fun TemplateChunk?.indent() = when (this) {
+                is LiteralChunk -> this.text
+                is EntryChunk -> this.text
+                else -> ""
+            }.takeWhile { it.isWhitespace() }
+
+            val indent =
+                if (beginTp.firstChild?.text == "\"\"\"" &&
+                    beginTp.getQualifiedExpressionForReceiver()?.callExpression?.calleeExpression?.text == "trimIndent" &&
+                    templateTokenSequence.firstOrNull()?.indent() == templateTokenSequence.lastOrNull()?.indent()
+                ) {
+                    begin.parent?.prevSibling?.takeIf { it.text != "\n" }?.text
+                } else {
+                    null
+                } ?: ""
+
             val tripleQuoteRe = Regex("[\"]{3,}")
-            TemplateTokenSequence(text).map { chunk ->
+            templateTokenSequence.mapIndexed { index, chunk ->
                 when (chunk) {
-                    is LiteralChunk -> chunk.text.replace("\$", "\${'$'}").let { escapedDollar ->
-                        tripleQuoteRe.replace(escapedDollar) { "\"\"" + "\${'\"'}".repeat(it.value.count() - 2) }
+                    is LiteralChunk -> {
+                        val replaced = chunk.text.replace("\$", "\${'$'}").let { escapedDollar ->
+                            tripleQuoteRe.replace(escapedDollar) { "\"\"" + "\${'\"'}".repeat(it.value.count() - 2) }
+                        }
+                        if (index == 0) replaced else indent + replaced
                     }
-                    is EntryChunk -> chunk.text
+                    is EntryChunk -> if (index == 0) chunk.text else indent + chunk.text
                     is NewLineChunk -> "\n"
                 }
             }.joinToString(separator = "")
@@ -212,11 +225,11 @@ private class TemplateTokenSequence(private val inputString: String) : Sequence<
 
     private suspend fun SequenceScope<TemplateChunk>.yieldLiteral(chunk: String) {
         val splitLines = LineTokenizer.tokenize(chunk, false, false)
-        for (i in 0..splitLines.size - 1) {
+        for (i in splitLines.indices) {
             if (i != 0) {
                 yield(NewLineChunk)
             }
-            splitLines[i].takeIf { !it.isEmpty() }?.let { yield(LiteralChunk(it)) }
+            splitLines[i].takeIf { it.isNotEmpty() }?.let { yield(LiteralChunk(it)) }
         }
     }
 
@@ -230,8 +243,8 @@ private class TemplateTokenSequence(private val inputString: String) : Sequence<
             while (to < inputString.length) {
                 val c = inputString[to]
                 if (c == '\\') {
-                    to += 1
-                    if (to < inputString.length) to += 1
+                    to += 1.toInt()
+                    if (to < inputString.length) to += 1.toInt()
                     continue
                 } else if (c == '$') {
                     if (inputString.substring(to).guessIsTemplateEntryStart()) {

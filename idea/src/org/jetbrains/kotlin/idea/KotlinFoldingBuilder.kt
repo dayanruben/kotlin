@@ -1,17 +1,6 @@
 /*
- * Copyright 2010-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea
@@ -35,12 +24,12 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.psi.stubs.elements.KtFunctionElementType
 import org.jetbrains.kotlin.resolve.calls.components.isVararg
 
 class KotlinFoldingBuilder : CustomFoldingBuilder(), DumbAware {
@@ -66,17 +55,19 @@ class KotlinFoldingBuilder : CustomFoldingBuilder(), DumbAware {
         if (root !is KtFile) {
             return
         }
-        val imports = root.importDirectives
-        if (imports.size > 1) {
-            val importKeyword = imports[0].firstChild
-            val startOffset = importKeyword.endOffset + 1
 
-            val importList = root.importList
-            if (importList != null) {
+        val importList = root.importList
+        if (importList != null) {
+            val firstImport = importList.imports.firstOrNull()
+            if (firstImport != null && importList.imports.size > 1) {
+                val importKeyword = firstImport.firstChild
+
+                val startOffset = importKeyword.endOffset + 1
                 val endOffset = importList.endOffset
 
-                val range = TextRange(startOffset, endOffset)
-                descriptors.add(FoldingDescriptor(importList, range).apply { setCanBeRemovedWhenCollapsed(true) })
+                descriptors.add(FoldingDescriptor(importList, TextRange(startOffset, endOffset)).apply {
+                    setCanBeRemovedWhenCollapsed(true)
+                })
             }
         }
 
@@ -104,10 +95,15 @@ class KotlinFoldingBuilder : CustomFoldingBuilder(), DumbAware {
         val type = node.elementType
         val parentType = node.treeParent?.elementType
 
+        if (type is KtFunctionElementType) {
+            val bodyExpression = (node.psi as? KtNamedFunction)?.bodyExpression
+            if (bodyExpression != null && bodyExpression !is KtBlockExpression) return true
+        }
+
         return type == KtNodeTypes.FUNCTION_LITERAL ||
                 (type == KtNodeTypes.BLOCK && parentType != KtNodeTypes.FUNCTION_LITERAL) ||
                 type == KtNodeTypes.CLASS_BODY || type == KtTokens.BLOCK_COMMENT || type == KDocTokens.KDOC ||
-                type == KtNodeTypes.STRING_TEMPLATE || type == KtNodeTypes.PRIMARY_CONSTRUCTOR ||
+                type == KtNodeTypes.STRING_TEMPLATE || type == KtNodeTypes.PRIMARY_CONSTRUCTOR || type == KtNodeTypes.WHEN ||
                 node.shouldFoldCollection(document)
     }
 
@@ -131,6 +127,13 @@ class KotlinFoldingBuilder : CustomFoldingBuilder(), DumbAware {
     }
 
     private fun getRangeToFold(node: ASTNode): TextRange {
+        if (node.elementType is KtFunctionElementType) {
+            val bodyExpression = (node.psi as? KtNamedFunction)?.bodyExpression
+            if (bodyExpression != null && bodyExpression !is KtBlockExpression) {
+                return bodyExpression.textRange
+            }
+        }
+
         if (node.elementType == KtNodeTypes.FUNCTION_LITERAL) {
             val psi = node.psi as? KtFunctionLiteral
             val lbrace = psi?.lBrace
@@ -146,6 +149,15 @@ class KotlinFoldingBuilder : CustomFoldingBuilder(), DumbAware {
             val rightParenthesis = valueArgumentList?.rightParenthesis
             if (leftParenthesis != null && rightParenthesis != null) {
                 return TextRange(leftParenthesis.startOffset, rightParenthesis.endOffset)
+            }
+        }
+
+        if (node.elementType == KtNodeTypes.WHEN) {
+            val whenExpression = node.psi as? KtWhenExpression
+            val openBrace = whenExpression?.openBrace
+            val closeBrace = whenExpression?.closeBrace
+            if (openBrace != null && closeBrace != null) {
+                return TextRange(openBrace.startOffset, closeBrace.endOffset)
             }
         }
 
@@ -169,7 +181,7 @@ class KotlinFoldingBuilder : CustomFoldingBuilder(), DumbAware {
 
     private fun String.addSpaceIfNeeded(): String {
         if (isEmpty() || endsWith(" ")) return this
-        return this + " "
+        return "$this "
     }
 
     private fun getFirstLineOfComment(node: ASTNode): String {

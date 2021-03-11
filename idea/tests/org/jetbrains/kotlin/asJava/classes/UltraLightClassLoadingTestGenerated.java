@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.asJava.classes;
@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.asJava.classes;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.test.KotlinTestUtils;
-import org.jetbrains.kotlin.test.TargetBackend;
+import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.runner.RunWith;
 
@@ -22,11 +22,21 @@ import java.util.regex.Pattern;
 @RunWith(JUnit3RunnerWithInners.class)
 public class UltraLightClassLoadingTestGenerated extends AbstractUltraLightClassLoadingTest {
     private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTest, TargetBackend.ANY, testDataFilePath);
+        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
     public void testAllFilesPresentInUltraLightClasses() throws Exception {
-        KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/asJava/ultraLightClasses"), Pattern.compile("^(.+)\\.(kt|kts)$"), TargetBackend.ANY, true);
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/asJava/ultraLightClasses"), Pattern.compile("^(.+)\\.(kt|kts)$"), null, true);
+    }
+
+    @TestMetadata("annotationTargets_1_6.kt")
+    public void testAnnotationTargets_1_6() throws Exception {
+        runTest("compiler/testData/asJava/ultraLightClasses/annotationTargets_1_6.kt");
+    }
+
+    @TestMetadata("annotationWithSetParamPropertyModifier.kt")
+    public void testAnnotationWithSetParamPropertyModifier() throws Exception {
+        runTest("compiler/testData/asJava/ultraLightClasses/annotationWithSetParamPropertyModifier.kt");
     }
 
     @TestMetadata("annotations.kt")
@@ -62,6 +72,11 @@ public class UltraLightClassLoadingTestGenerated extends AbstractUltraLightClass
     @TestMetadata("delegatingToInterfaces.kt")
     public void testDelegatingToInterfaces() throws Exception {
         runTest("compiler/testData/asJava/ultraLightClasses/delegatingToInterfaces.kt");
+    }
+
+    @TestMetadata("dollarsInNameLocal.kt")
+    public void testDollarsInNameLocal() throws Exception {
+        runTest("compiler/testData/asJava/ultraLightClasses/dollarsInNameLocal.kt");
     }
 
     @TestMetadata("enums.kt")
@@ -104,6 +119,11 @@ public class UltraLightClassLoadingTestGenerated extends AbstractUltraLightClass
         runTest("compiler/testData/asJava/ultraLightClasses/inlineOnly.kt");
     }
 
+    @TestMetadata("inlineReified.kt")
+    public void testInlineReified() throws Exception {
+        runTest("compiler/testData/asJava/ultraLightClasses/inlineReified.kt");
+    }
+
     @TestMetadata("jvmField.kt")
     public void testJvmField() throws Exception {
         runTest("compiler/testData/asJava/ultraLightClasses/jvmField.kt");
@@ -119,9 +139,19 @@ public class UltraLightClassLoadingTestGenerated extends AbstractUltraLightClass
         runTest("compiler/testData/asJava/ultraLightClasses/jvmOverloads.kt");
     }
 
+    @TestMetadata("jvmRecord.kt")
+    public void testJvmRecord() throws Exception {
+        runTest("compiler/testData/asJava/ultraLightClasses/jvmRecord.kt");
+    }
+
     @TestMetadata("jvmSynthetic.kt")
     public void testJvmSynthetic() throws Exception {
         runTest("compiler/testData/asJava/ultraLightClasses/jvmSynthetic.kt");
+    }
+
+    @TestMetadata("jvmSyntheticForAccessors.kt")
+    public void testJvmSyntheticForAccessors() throws Exception {
+        runTest("compiler/testData/asJava/ultraLightClasses/jvmSyntheticForAccessors.kt");
     }
 
     @TestMetadata("jvmWildcardAnnotations.kt")
@@ -132,6 +162,11 @@ public class UltraLightClassLoadingTestGenerated extends AbstractUltraLightClass
     @TestMetadata("lateinitProperty.kt")
     public void testLateinitProperty() throws Exception {
         runTest("compiler/testData/asJava/ultraLightClasses/lateinitProperty.kt");
+    }
+
+    @TestMetadata("localClassDerived.kt")
+    public void testLocalClassDerived() throws Exception {
+        runTest("compiler/testData/asJava/ultraLightClasses/localClassDerived.kt");
     }
 
     @TestMetadata("objects.kt")
@@ -157,6 +192,11 @@ public class UltraLightClassLoadingTestGenerated extends AbstractUltraLightClass
     @TestMetadata("typeAliases.kt")
     public void testTypeAliases() throws Exception {
         runTest("compiler/testData/asJava/ultraLightClasses/typeAliases.kt");
+    }
+
+    @TestMetadata("typeAnnotations.kt")
+    public void testTypeAnnotations() throws Exception {
+        runTest("compiler/testData/asJava/ultraLightClasses/typeAnnotations.kt");
     }
 
     @TestMetadata("wildcardOptimization.kt")

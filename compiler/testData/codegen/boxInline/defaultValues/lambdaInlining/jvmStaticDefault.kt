@@ -1,8 +1,7 @@
-// FILE: 1.kt
 // SKIP_INLINE_CHECK_IN: inlineFun$default
-// IGNORE_BACKEND: JVM_IR
+// WITH_RUNTIME
+// FILE: 1.kt
 // TARGET_BACKEND: JVM
-//WITH_RUNTIME
 package test
 
 object X {

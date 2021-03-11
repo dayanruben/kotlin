@@ -5,23 +5,26 @@ plugins {
 }
 
 dependencies {
-    compile(project(":kotlin-stdlib"))
+    compile(kotlinStdlib())
     compile(project(":core:util.runtime"))
     compile(project(":compiler:backend"))
     compile(project(":compiler:frontend"))
     compile(project(":compiler:frontend.java"))
     compile(project(":compiler:light-classes"))
 
-    Platform[181].orHigher {
-        // BEWARE: Uast should not depend on IDEA.
-        compileOnly(intellijCoreDep()) { includeJars("intellij-core") }
-        compileOnly(intellijDep()) { includeJars("java-api", "java-impl", "asm-all", rootProject = rootProject) }
+    // BEWARE: Uast should not depend on IDEA.
+    compileOnly(intellijCoreDep()) { includeJars("intellij-core", "asm-all", rootProject = rootProject) }
+
+    testCompileOnly(intellijDep())
+
+    if (Platform.P191.orLower()) {
+        compileOnly(intellijDep()) { includeJars("java-api", "java-impl") }
     }
 
-    Platform[173].orLower {
-        compile(project(":idea:idea-core"))
-        compileOnly(intellijDep()) { includeJars("openapi", "idea", "util", "extensions", "asm-all", rootProject = rootProject) }
-    }
+    compileOnly(intellijDep()) { includeJars("platform-impl") }
+    compileOnly(intellijPluginDep("java")) { includeJars("java-api", "java-impl") }
+    testCompileOnly(intellijPluginDep("java")) { includeJars("java-api", "java-impl") }
+    testRuntime(intellijPluginDep("java"))
 
     testCompile(project(":kotlin-test:kotlin-test-jvm"))
     testCompile(projectTests(":compiler:tests-common"))
@@ -30,19 +33,11 @@ dependencies {
     testCompile(project(":compiler:cli"))
     testCompile(projectTests(":idea:idea-test-framework"))
 
-    Platform[181].orHigher {
-        testCompileOnly(intellijDep()) { includeJars("java-api", "java-impl") }
-    }
-
-    Platform[173].orLower {
-        testCompileOnly(intellijDep()) { includeJars("idea_rt") }
-    }
-
     testCompile(project(":idea:idea-native")) { isTransitive = false }
     testCompile(project(":idea:idea-gradle-native")) { isTransitive = false }
 
-    testRuntime(project(":kotlin-native:kotlin-native-library-reader")) { isTransitive = false }
-    testRuntime(project(":kotlin-native:kotlin-native-utils")) { isTransitive = false }
+    testRuntimeOnly(toolsJar())
+    testRuntime(project(":native:frontend.native"))
     testRuntime(project(":kotlin-reflect"))
     testRuntime(project(":idea:idea-android"))
     testRuntime(project(":idea:idea-gradle"))
@@ -54,6 +49,7 @@ dependencies {
     testRuntime(project(":plugins:android-extensions-ide"))
     testRuntime(project(":plugins:kapt3-idea"))
     testRuntime(project(":kotlinx-serialization-ide-plugin"))
+    testRuntime(project(":plugins:parcelize:parcelize-ide"))
     testRuntime(intellijDep())
     testRuntime(intellijPluginDep("junit"))
     testRuntime(intellijPluginDep("gradle"))
@@ -68,6 +64,6 @@ sourceSets {
 
 testsJar {}
 
-projectTest {
+projectTest(parallel = true) {
     workingDir = rootDir
 }

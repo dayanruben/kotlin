@@ -1,20 +1,25 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2000-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea
 
-import com.intellij.ide.actions.ShowFilePathAction
+import com.google.gson.GsonBuilder
+import com.google.gson.JsonIOException
+import com.google.gson.JsonSyntaxException
+import com.intellij.ide.actions.RevealFileAction
 import com.intellij.ide.plugins.*
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationGroup
+import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -27,13 +32,16 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Alarm
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.text.VersionComparatorUtil
-import org.jetbrains.kotlin.idea.update.PluginUpdateVerifier
 import org.jetbrains.kotlin.idea.update.verify
 import java.io.File
 import java.io.IOException
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.net.URLEncoder
+import java.time.DateTimeException
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneOffset
 import java.util.concurrent.TimeUnit
 
 sealed class PluginUpdateStatus {
@@ -79,13 +87,17 @@ sealed class PluginUpdateStatus {
     }
 }
 
-class KotlinPluginUpdater(val propertiesComponent: PropertiesComponent) : Disposable {
+class KotlinPluginUpdater : Disposable {
     private var updateDelay = INITIAL_UPDATE_DELAY
     private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, this)
-    private val notificationGroup = NotificationGroup("Kotlin plugin updates", NotificationDisplayType.STICKY_BALLOON, true)
+    private val notificationGroup = NotificationGroup(
+        KotlinBundle.message("plugin.updater.notification.group"),
+        NotificationDisplayType.STICKY_BALLOON, true
+    )
 
     @Volatile
     private var checkQueued = false
+
     @Volatile
     private var lastUpdateStatus: PluginUpdateStatus? = null
 
@@ -94,7 +106,7 @@ class KotlinPluginUpdater(val propertiesComponent: PropertiesComponent) : Dispos
         if (ApplicationManager.getApplication().isUnitTestMode || ApplicationManager.getApplication().isHeadlessEnvironment) return
         if (!UpdateSettings.getInstance().isCheckNeeded) return
 
-        val lastUpdateTime = java.lang.Long.parseLong(propertiesComponent.getValue(PROPERTY_NAME, "0"))
+        val lastUpdateTime = java.lang.Long.parseLong(PropertiesComponent.getInstance().getValue(PROPERTY_NAME, "0"))
         if (lastUpdateTime == 0L || System.currentTimeMillis() - lastUpdateTime > CACHED_REQUEST_DELAY) {
             queueUpdateCheck { updateStatus ->
                 when (updateStatus) {
@@ -136,7 +148,7 @@ class KotlinPluginUpdater(val propertiesComponent: PropertiesComponent) : Dispos
 
     private fun updateCheck(callback: (PluginUpdateStatus) -> Boolean) {
         var updateStatus: PluginUpdateStatus
-        if (KotlinPluginUtil.isSnapshotVersion()) {
+        if (KotlinPluginUtil.isSnapshotVersion() || KotlinPluginUtil.isPatched()) {
             updateStatus = PluginUpdateStatus.LatestVersionInstalled
         } else {
             try {
@@ -147,7 +159,7 @@ class KotlinPluginUpdater(val propertiesComponent: PropertiesComponent) : Dispos
                     updateStatus = updateStatus.mergeWith(customUpdateStatus)
                 }
             } catch (e: Exception) {
-                updateStatus = PluginUpdateStatus.fromException("Kotlin plugin update check failed", e)
+                updateStatus = PluginUpdateStatus.fromException(KotlinBundle.message("plugin.updater.error.check.failed"), e)
             }
         }
 
@@ -168,7 +180,7 @@ class KotlinPluginUpdater(val propertiesComponent: PropertiesComponent) : Dispos
     }
 
     private fun initPluginDescriptor(newVersion: String): IdeaPluginDescriptor {
-        val originalPlugin = PluginManager.getPlugin(KotlinPluginUtil.KOTLIN_PLUGIN_ID)!!
+        val originalPlugin = PluginManagerCore.getPlugin(KotlinPluginUtil.KOTLIN_PLUGIN_ID)!!
         return PluginNode(KotlinPluginUtil.KOTLIN_PLUGIN_ID).apply {
             version = newVersion
             name = originalPlugin.name
@@ -188,19 +200,20 @@ class KotlinPluginUpdater(val propertiesComponent: PropertiesComponent) : Dispos
             JDOMUtil.load(it.inputStream)
         }
         if (responseDoc.name != "plugin-repository") {
-            return PluginUpdateStatus.CheckFailed("Unexpected plugin repository response", JDOMUtil.writeElement(responseDoc, "\n"))
+            return PluginUpdateStatus.CheckFailed(
+                KotlinBundle.message("plugin.updater.error.unexpected.repository.response"),
+                JDOMUtil.writeElement(responseDoc, "\n")
+            )
         }
         if (responseDoc.children.isEmpty()) {
             // No plugin version compatible with current IDEA build; don't retry updates
             return PluginUpdateStatus.LatestVersionInstalled
         }
         val newVersion = responseDoc.getChild("category")?.getChild("idea-plugin")?.getChild("version")?.text
-        if (newVersion == null) {
-            return PluginUpdateStatus.CheckFailed(
-                "Couldn't find plugin version in repository response",
+            ?: return PluginUpdateStatus.CheckFailed(
+                KotlinBundle.message("plugin.updater.error.cant.find.plugin.version"),
                 JDOMUtil.writeElement(responseDoc, "\n")
             )
-        }
         val pluginDescriptor = initPluginDescriptor(newVersion)
         return updateIfNotLatest(pluginDescriptor, null)
     }
@@ -209,7 +222,7 @@ class KotlinPluginUpdater(val propertiesComponent: PropertiesComponent) : Dispos
         val plugins = try {
             RepositoryHelper.loadPlugins(host, null)
         } catch (e: Exception) {
-            return PluginUpdateStatus.fromException("Checking custom plugin repository $host failed", e)
+            return PluginUpdateStatus.fromException(KotlinBundle.message("plugin.updater.error.custom.repository", host), e)
         }
 
         val kotlinPlugin = plugins.find { pluginDescriptor ->
@@ -228,21 +241,21 @@ class KotlinPluginUpdater(val propertiesComponent: PropertiesComponent) : Dispos
     }
 
     private fun recordSuccessfulUpdateCheck() {
-        propertiesComponent.setValue(PROPERTY_NAME, System.currentTimeMillis().toString())
+        PropertiesComponent.getInstance().setValue(PROPERTY_NAME, System.currentTimeMillis().toString())
         updateDelay = INITIAL_UPDATE_DELAY
     }
 
     private fun notifyPluginUpdateAvailable(update: PluginUpdateStatus.Update) {
         val notification = notificationGroup.createNotification(
-            "Kotlin",
-            "A new version ${update.pluginDescriptor.version} of the Kotlin plugin is available. <b><a href=\"#\">Install</a></b>",
-            NotificationType.INFORMATION
-        ) { notification, _ ->
-            notification.expire()
-            installPluginUpdate(update) {
-                notifyPluginUpdateAvailable(update)
-            }
-        }
+            KotlinBundle.message("plugin.updater.notification.title"),
+            KotlinBundle.message("plugin.updater.notification.message", update.pluginDescriptor.version),
+            NotificationType.INFORMATION,
+            NotificationListener { notification, _ ->
+                notification.expire()
+                installPluginUpdate(update) {
+                    notifyPluginUpdateAvailable(update)
+                }
+            })
 
         notification.notify(null)
     }
@@ -254,7 +267,7 @@ class KotlinPluginUpdater(val propertiesComponent: PropertiesComponent) : Dispos
         val descriptor = update.pluginDescriptor
         val pluginDownloader = PluginDownloader.createDownloader(descriptor, update.hostToInstallFrom, null)
         ProgressManager.getInstance().run(object : Task.Backgroundable(
-            null, "Downloading plugins", true, PluginManagerUISettings.getInstance()
+            null, KotlinBundle.message("plugin.updater.downloading"), true, PluginManagerUISettings.getInstance()
         ) {
             override fun run(indicator: ProgressIndicator) {
                 var installed = false
@@ -268,14 +281,11 @@ class KotlinPluginUpdater(val propertiesComponent: PropertiesComponent) : Dispos
                 }
 
                 if (prepareResult) {
-                    val pluginDescriptor = pluginDownloader.descriptor
-                    if (pluginDescriptor != null) {
-                        installed = true
-                        pluginDownloader.install()
+                    installed = true
+                    pluginDownloader.install()
 
-                        ApplicationManager.getApplication().invokeLater {
-                            PluginManagerMain.notifyPluginsUpdated(null)
-                        }
+                    ApplicationManager.getApplication().invokeLater {
+                        PluginManagerMain.notifyPluginsUpdated(null)
                     }
                 }
 
@@ -296,17 +306,20 @@ class KotlinPluginUpdater(val propertiesComponent: PropertiesComponent) : Dispos
     }
 
     private fun notifyNotInstalled(message: String?) {
-        val fullMessage = message?.let { ": $it" } ?: ""
         val notification = notificationGroup.createNotification(
-            "Kotlin",
-            "Plugin update was not installed$fullMessage. <a href=\"#\">See the log for more information</a>",
-            NotificationType.INFORMATION
-        ) { notification, _ ->
-            val logFile = File(PathManager.getLogPath(), "idea.log")
-            ShowFilePathAction.openFile(logFile)
+            KotlinBundle.message("plugin.updater.notification.title"),
+            when (message) {
+                null -> KotlinBundle.message("plugin.updater.not.installed")
+                else -> KotlinBundle.message("plugin.updater.not.installed.misc", message)
+            },
+            NotificationType.INFORMATION,
+            NotificationListener { notification, _ ->
+                val logFile = File(PathManager.getLogPath(), "idea.log")
+                RevealFileAction.openFile(logFile)
 
-            notification.expire()
-        }
+                notification.expire()
+            }
+        )
 
         notification.notify(null)
     }
@@ -322,5 +335,52 @@ class KotlinPluginUpdater(val propertiesComponent: PropertiesComponent) : Dispos
         private val LOG = Logger.getInstance(KotlinPluginUpdater::class.java)
 
         fun getInstance(): KotlinPluginUpdater = ServiceManager.getService(KotlinPluginUpdater::class.java)
+
+        class ResponseParseException(message: String, cause: Exception? = null) : IllegalStateException(message, cause)
+
+        @Suppress("SpellCheckingInspection")
+        private class PluginDTO {
+            var cdate: String? = null
+            var channel: String? = null
+
+            // `true` if the version is seen in plugin site and available for download.
+            // Maybe be `false` if author requested version deletion.
+            var listed: Boolean = true
+
+            // `true` if version is approved and verified
+            var approve: Boolean = true
+        }
+
+        @Throws(IOException::class, ResponseParseException::class)
+        fun fetchPluginReleaseDate(pluginId: PluginId, version: String, channel: String?): LocalDate? {
+            val url = "https://plugins.jetbrains.com/api/plugins/${pluginId.idString}/updates?version=$version"
+
+            val pluginDTOs: Array<PluginDTO> = try {
+                HttpRequests.request(url).connect {
+                    GsonBuilder().create().fromJson(it.inputStream.reader(), Array<PluginDTO>::class.java)
+                }
+            } catch (ioException: JsonIOException) {
+                throw IOException(ioException)
+            } catch (syntaxException: JsonSyntaxException) {
+                throw ResponseParseException("Can't parse json response", syntaxException)
+            }
+
+            val selectedPluginDTO = pluginDTOs
+                .firstOrNull {
+                    it.listed && it.approve && (it.channel == channel || (it.channel == "" && channel == null))
+                }
+                ?: return null
+
+            val dateString = selectedPluginDTO.cdate ?: throw ResponseParseException("Empty cdate")
+
+            return try {
+                val dateLong = dateString.toLong()
+                Instant.ofEpochMilli(dateLong).atZone(ZoneOffset.UTC).toLocalDate()
+            } catch (e: NumberFormatException) {
+                throw ResponseParseException("Can't parse long date", e)
+            } catch (e: DateTimeException) {
+                throw ResponseParseException("Can't convert to date", e)
+            }
+        }
     }
 }

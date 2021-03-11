@@ -1,6 +1,6 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2000-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.inspections
@@ -20,6 +20,7 @@ import com.intellij.psi.search.PsiSearchHelper.SearchCostResult.FEW_OCCURRENCES
 import com.intellij.psi.search.PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.quickfix.RemoveValVarFromParameterFix
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.search.isCheapEnoughToSearchConsideringOperators
@@ -83,7 +84,7 @@ class CanBeParameterInspection : AbstractKotlinInspection() {
 
             val useScope = parameter.useScope
             val restrictedScope = if (useScope is GlobalSearchScope) {
-                val psiSearchHelper = PsiSearchHelper.SERVICE.getInstance(parameter.project)
+                val psiSearchHelper = PsiSearchHelper.getInstance(parameter.project)
                 for (accessorName in parameter.getAccessorNames()) {
                     when (psiSearchHelper.isCheapEnoughToSearchConsideringOperators(accessorName, useScope, null, null)) {
                         ZERO_OCCURRENCES -> {
@@ -99,10 +100,10 @@ class CanBeParameterInspection : AbstractKotlinInspection() {
             // Find all references and check them
             val references = ReferencesSearch.search(parameter, restrictedScope)
             if (references.none()) return
-            if (references.any { it.usedAsPropertyIn(klass) }) return
+            if (references.any { it.element.parent is KtCallableReferenceExpression || it.usedAsPropertyIn(klass) }) return
             holder.registerProblem(
                 valOrVar,
-                "Constructor parameter is never used as a property",
+                KotlinBundle.message("constructor.parameter.is.never.used.as.a.property"),
                 ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                 RemoveValVarFix(parameter)
             )

@@ -1,4 +1,3 @@
-// IGNORE_BACKEND: JVM_IR
 // TARGET_BACKEND: JVM
 // WITH_RUNTIME
 // FULL_JDK
@@ -6,7 +5,7 @@
 
 @file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER", "CANNOT_OVERRIDE_INVISIBLE_MEMBER")
 
-package some.long.name
+package some.llong.name
 
 import helpers.*
 import kotlin.coroutines.*
@@ -31,7 +30,7 @@ fun builder(c: suspend () -> Unit) {
 fun box(): String {
     var res = "OK"
     builder {
-        if (Test().getStackTraceElement().className != "some.long.name.Test") {
+        if (Test().getStackTraceElement().className != "some.llong.name.Test") {
             res = Test().getStackTraceElement().className
         }
     }

@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 // !DUMP_DEPENDENCIES
 
 // FILE: external.kt

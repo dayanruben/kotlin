@@ -1,13 +1,13 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.backend.common
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.backend.common.bridges.findInterfaceImplementation
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.diagnostics.DiagnosticSink
 import org.jetbrains.kotlin.diagnostics.Errors
@@ -20,10 +20,12 @@ import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
-import org.jetbrains.kotlin.resolve.checkers.ExpectedActualDeclarationChecker
 import org.jetbrains.kotlin.resolve.multiplatform.ExpectedActualResolver
 import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.util.getExceptionMessage
+import org.jetbrains.kotlin.util.getNonPrivateTraitMembersForDelegation
 import org.jetbrains.kotlin.utils.DFS
+import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
 object CodegenUtil {
     @JvmStatic
@@ -53,14 +55,8 @@ object CodegenUtil {
     @JvmOverloads
     fun getNonPrivateTraitMethods(descriptor: ClassDescriptor, copy: Boolean = true): Map<FunctionDescriptor, FunctionDescriptor> {
         val result = linkedMapOf<FunctionDescriptor, FunctionDescriptor>()
-        for (declaration in DescriptorUtils.getAllDescriptors(descriptor.defaultType.memberScope)) {
-            if (declaration !is CallableMemberDescriptor) continue
 
-            val traitMember = findInterfaceImplementation(declaration)
-            if (traitMember == null ||
-                    Visibilities.isPrivate(traitMember.visibility) ||
-                    traitMember.visibility == Visibilities.INVISIBLE_FAKE) continue
-
+        for ((declaration, traitMember) in getNonPrivateTraitMembersForDelegation(descriptor)) {
             assert(traitMember.modality !== Modality.ABSTRACT) { "Cannot delegate to abstract trait method: $declaration" }
 
             // inheritedMember can be abstract here. In order for FunctionCodegen to generate the method body, we're creating a copy here
@@ -69,7 +65,7 @@ object CodegenUtil {
                 if (copy)
                     copyFunctions(
                         declaration, traitMember, declaration.containingDeclaration, traitMember.modality,
-                        Visibilities.PUBLIC, CallableMemberDescriptor.Kind.DECLARATION, true
+                        DescriptorVisibilities.PUBLIC, CallableMemberDescriptor.Kind.DECLARATION, true
                     )
                 else mapMembers(declaration, traitMember)
             )
@@ -78,33 +74,31 @@ object CodegenUtil {
     }
 
     fun copyFunctions(
-        inheritedMember: CallableMemberDescriptor,
-        traitMember: CallableMemberDescriptor,
-        newOwner: DeclarationDescriptor,
-        modality: Modality,
-        visibility: Visibility,
-        kind: CallableMemberDescriptor.Kind,
-        copyOverrides: Boolean
+            inheritedMember: CallableMemberDescriptor,
+            traitMember: CallableMemberDescriptor,
+            newOwner: DeclarationDescriptor,
+            modality: Modality,
+            visibility: DescriptorVisibility,
+            kind: CallableMemberDescriptor.Kind,
+            copyOverrides: Boolean
     ): Map<FunctionDescriptor, FunctionDescriptor> =
         mapMembers(inheritedMember.copy(newOwner, modality, visibility, kind, copyOverrides), traitMember)
 
     private fun mapMembers(
         inherited: CallableMemberDescriptor,
         traitMember: CallableMemberDescriptor
-    ): LinkedHashMap<FunctionDescriptor, FunctionDescriptor> {
-        val result = linkedMapOf<FunctionDescriptor, FunctionDescriptor>()
-        if (traitMember is SimpleFunctionDescriptor) {
-            result[traitMember] = inherited as FunctionDescriptor
-        } else if (traitMember is PropertyDescriptor) {
+    ): Map<FunctionDescriptor, FunctionDescriptor> = when (traitMember) {
+        is SimpleFunctionDescriptor -> mapOf(traitMember to inherited as FunctionDescriptor)
+        is PropertyDescriptor -> linkedMapOf<FunctionDescriptor, FunctionDescriptor>().also { result ->
             for (traitAccessor in traitMember.accessors) {
                 for (inheritedAccessor in (inherited as PropertyDescriptor).accessors) {
-                    if (inheritedAccessor::class.java == traitAccessor::class.java) { // same accessor kind
-                        result.put(traitAccessor, inheritedAccessor)
+                    if ((inheritedAccessor is PropertyGetterDescriptor) == (traitAccessor is PropertyGetterDescriptor)) {
+                        result[traitAccessor] = inheritedAccessor
                     }
                 }
             }
         }
-        return result
+        else -> error("Unexpected member: $inherited")
     }
 
     @JvmStatic
@@ -169,23 +163,21 @@ object CodegenUtil {
     }
 
     /**
-     * Returns declarations in the given [file] which should be generated by the back-end. This includes all declarations
-     * minus all expected declarations (except annotation classes annotated with @OptionalExpectation).
+     * Returns functions, properties and type aliases in the given [file] which should be generated by the back-end.
      */
     @JvmStatic
-    fun getDeclarationsToGenerate(file: KtFile, bindingContext: BindingContext): List<KtDeclaration> =
-        file.declarations.filter(fun(declaration: KtDeclaration): Boolean {
-            if (!declaration.hasExpectModifier()) return true
+    fun getMemberDeclarationsToGenerate(file: KtFile): List<KtDeclaration> {
+        val declarations = ApplicationManager.getApplication().runReadAction<List<KtDeclaration>> { file.declarations }
+        return declarations.filter { declaration ->
+            !declaration.hasExpectModifier() && (declaration is KtNamedFunction || declaration is KtProperty || declaration is KtTypeAlias)
+        }
+    }
 
-            if (declaration is KtClass) {
-                val descriptor = bindingContext.get(BindingContext.CLASS, declaration)
-                if (descriptor != null && ExpectedActualDeclarationChecker.shouldGenerateExpectClass(descriptor)) {
-                    return true
-                }
-            }
-
-            return false
-        })
+    @JvmStatic
+    fun getMemberDescriptorsToGenerate(file: KtFile, bindingContext: BindingContext): List<MemberDescriptor> =
+        getMemberDeclarationsToGenerate(file).mapNotNull { declaration ->
+            bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR, declaration) as MemberDescriptor?
+        }
 
     @JvmStatic
     fun findExpectedFunctionForActual(descriptor: FunctionDescriptor): FunctionDescriptor? {
@@ -236,6 +228,18 @@ object CodegenUtil {
             listOf(this),
             { current -> current.overriddenDescriptors.map(ValueParameterDescriptor::getOriginal) },
             { it.declaresDefaultValue() }
+        )
+    }
+
+    @JvmStatic
+    fun reportBackendException(exception: Throwable, phase: String, location: String?, additionalMessage: String? = null): Nothing {
+        // CompilationException (the only KotlinExceptionWithAttachments possible here) is already supposed
+        // to have all information about the context.
+        if (exception is KotlinExceptionWithAttachments) throw exception
+        throw BackendException(
+            getExceptionMessage("Backend", "Exception during $phase", exception, location) +
+                    additionalMessage?.let { "\n" + it }.orEmpty(),
+            exception
         )
     }
 }

@@ -4,9 +4,14 @@ plugins {
 }
 
 dependencies {
-    compile(project(":kotlin-stdlib"))
-    compile(files("${System.getProperty("java.home")}/../lib/tools.jar"))
+    compile(kotlinStdlib())
+    compileOnly(toolsJarApi())
+
     testCompile(commonDep("junit:junit"))
+    testCompileOnly(toolsJarApi())
+    testRuntimeOnly(toolsJar())
+
+    testCompileOnly(toolsJarApi())
 }
 
 sourceSets {

@@ -1,0 +1,6 @@
+public open class SeveralSamParameters : R|kotlin/Any| {
+    public open static fun findMaxAndInvokeCallback(comparator: R|ft<@FlexibleNullability java/util/Comparator<ft<@FlexibleNullability kotlin/String, kotlin/String?>!>, java/util/Comparator<ft<@FlexibleNullability kotlin/String, kotlin/String?>!>?>!|, a: R|ft<@FlexibleNullability kotlin/String, kotlin/String?>!|, b: R|ft<@FlexibleNullability kotlin/String, kotlin/String?>!|, afterRunnable: R|ft<@FlexibleNullability java/lang/Runnable, java/lang/Runnable?>!|): R|ft<@FlexibleNullability kotlin/String, kotlin/String?>!|
+
+    public constructor(): R|test/SeveralSamParameters|
+
+}

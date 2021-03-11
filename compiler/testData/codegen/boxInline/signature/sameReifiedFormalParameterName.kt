@@ -1,7 +1,8 @@
-// IGNORE_BACKEND: JVM_IR
+// WITH_REFLECT
+// FULL_JDK
+// NO_CHECK_LAMBDA_INLINING
 // TARGET_BACKEND: JVM
 // FILE: 1.kt
-// WITH_REFLECT
 package test
 
 class B<T>
@@ -24,8 +25,6 @@ open class Test {
 
 // FILE: 2.kt
 
-// NO_CHECK_LAMBDA_INLINING
-// FULL_JDK
 
 import test.*
 import java.util.*

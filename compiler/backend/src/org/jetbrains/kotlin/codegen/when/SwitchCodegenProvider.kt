@@ -20,15 +20,13 @@ import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.codegen.ExpressionCodegen
 import org.jetbrains.kotlin.codegen.binding.CodegenBinding
 import org.jetbrains.kotlin.codegen.state.GenerationState
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtWhenConditionWithExpression
+import org.jetbrains.kotlin.psi.KtWhenEntry
+import org.jetbrains.kotlin.psi.KtWhenExpression
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.constants.ConstantValue
-import org.jetbrains.kotlin.resolve.constants.IntegerValueConstant
-import org.jetbrains.kotlin.resolve.constants.NullValue
-import org.jetbrains.kotlin.resolve.constants.StringValue
+import org.jetbrains.kotlin.resolve.constants.*
 import org.jetbrains.org.objectweb.asm.Type
-
-import java.util.ArrayList
+import java.util.*
 
 class SwitchCodegenProvider
 private constructor(
@@ -81,7 +79,9 @@ private constructor(
             return null
         }
 
-        val subjectType = codegen.expressionType(expression.subjectExpression)
+        val subjectType =
+            expression.subjectVariable?.let { codegen.expressionType(it.initializer) }
+                ?: codegen.expressionType(expression.subjectExpression)
 
         val mapping = codegen.bindingContext.get(CodegenBinding.MAPPING_FOR_WHEN_BY_ENUM, expression)
 
@@ -102,7 +102,7 @@ private constructor(
 
     private fun isIntegralConstantsSwitch(expression: KtWhenExpression, subjectType: Type): Boolean =
         AsmUtil.isIntPrimitive(subjectType) &&
-                checkAllItemsAreConstantsSatisfying(expression) { it is IntegerValueConstant<*> }
+                checkAllItemsAreConstantsSatisfying(expression) { it is IntegerValueConstant<*> || it is UnsignedValueConstant<*> }
 
     private fun isStringConstantsSwitch(expression: KtWhenExpression, subjectType: Type): Boolean =
         subjectType.className == String::class.java.name &&

@@ -17,19 +17,22 @@
 package org.jetbrains.kotlin.idea.refactoring.inline
 
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
-import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.refactoring.JavaRefactoringSettings
+import com.intellij.openapi.help.HelpManager
+import com.intellij.refactoring.HelpID
 import org.jetbrains.kotlin.idea.codeInliner.UsageReplacementStrategy
+import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtWhenExpression
 
 class KotlinInlineValDialog(
-        property: KtProperty,
-        reference: KtSimpleNameReference?,
-        private val replacementStrategy: UsageReplacementStrategy,
-        private val assignmentToDelete: KtBinaryExpression?,
-        withPreview: Boolean = true
+    property: KtProperty,
+    reference: KtSimpleNameReference?,
+    private val replacementStrategy: UsageReplacementStrategy,
+    private val assignmentToDelete: KtBinaryExpression?,
+    withPreview: Boolean = true
 ) : AbstractKotlinInlineDialog(property, reference) {
 
     private val isLocal = (callable as KtProperty).isLocal
@@ -39,7 +42,7 @@ class KotlinInlineValDialog(
     init {
         setPreviewResults(withPreview && shouldBeShown())
         if (simpleLocal) {
-            setDoNotAskOption(object : DialogWrapper.DoNotAskOption {
+            setDoNotAskOption(object : DoNotAskOption {
                 override fun isToBeShown() = EditorSettingsExternalizable.getInstance().isShowInlineLocalDialog
 
                 override fun setToBeShown(value: Boolean, exitCode: Int) {
@@ -50,7 +53,7 @@ class KotlinInlineValDialog(
 
                 override fun shouldSaveOptionsOnCancel() = false
 
-                override fun getDoNotShowMessage() = "Do not show for local variables in future"
+                override fun getDoNotShowMessage() = KotlinBundle.message("message.do.not.show.for.local.variables.in.future")
             })
         }
         init()
@@ -58,17 +61,31 @@ class KotlinInlineValDialog(
 
     fun shouldBeShown() = !simpleLocal || EditorSettingsExternalizable.getInstance().isShowInlineLocalDialog
 
-    override fun isInlineThis() = JavaRefactoringSettings.getInstance().INLINE_LOCAL_THIS
+    override fun doHelpAction() =
+        HelpManager.getInstance().invokeHelp(HelpID.INLINE_VARIABLE)
+
+
+    override fun isInlineThis() = KotlinRefactoringSettings.instance.INLINE_LOCAL_THIS
 
     public override fun doAction() {
+        val isWhenSubjectVariable = (callable.parent as? KtWhenExpression)?.subjectVariable == callable
+        val deleteAfter = !isInlineThisOnly && !isKeepTheDeclaration
         invokeRefactoring(
-                KotlinInlineCallableProcessor(project, replacementStrategy, callable, reference,
-                                              inlineThisOnly = isInlineThisOnly,
-                                              deleteAfter = !isInlineThisOnly && !isKeepTheDeclaration,
-                                              statementToDelete = assignmentToDelete)
+            KotlinInlineCallableProcessor(
+                project, replacementStrategy, callable, reference,
+                inlineThisOnly = isInlineThisOnly,
+                deleteAfter = deleteAfter && !isWhenSubjectVariable,
+                statementToDelete = assignmentToDelete,
+                postAction = { declaration ->
+                    if (deleteAfter && isWhenSubjectVariable) {
+                        val property = declaration as? KtProperty
+                        property?.initializer?.let { property.replace(it) }
+                    }
+                }
+            )
         )
 
-        val settings = JavaRefactoringSettings.getInstance()
+        val settings = KotlinRefactoringSettings.instance
         if (myRbInlineThisOnly.isEnabled && myRbInlineAll.isEnabled) {
             settings.INLINE_LOCAL_THIS = isInlineThisOnly
         }

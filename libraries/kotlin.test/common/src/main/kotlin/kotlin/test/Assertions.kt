@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 /**
@@ -14,6 +14,7 @@ package kotlin.test
 
 import kotlin.contracts.*
 import kotlin.internal.*
+import kotlin.jvm.JvmName
 import kotlin.native.concurrent.ThreadLocal
 import kotlin.reflect.KClass
 
@@ -28,7 +29,12 @@ val asserter: Asserter
 internal var _asserter: Asserter? = null
 
 /** Asserts that the given [block] returns `true`. */
-fun assertTrue(message: String? = null, block: () -> Boolean): Unit = assertTrue(block(), message)
+@JvmName("assertTrueInline")
+@InlineOnly
+inline fun assertTrue(message: String? = null, block: () -> Boolean) {
+    contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
+    assertTrue(block(), message)
+}
 
 /** Asserts that the expression is `true` with an optional [message]. */
 fun assertTrue(actual: Boolean, message: String? = null) {
@@ -37,7 +43,12 @@ fun assertTrue(actual: Boolean, message: String? = null) {
 }
 
 /** Asserts that the given [block] returns `false`. */
-fun assertFalse(message: String? = null, block: () -> Boolean): Unit = assertFalse(block(), message)
+@JvmName("assertFalseInline")
+@InlineOnly
+inline fun assertFalse(message: String? = null, block: () -> Boolean) {
+    contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
+    assertFalse(block(), message)
+}
 
 /** Asserts that the expression is `false` with an optional [message]. */
 fun assertFalse(actual: Boolean, message: String? = null) {
@@ -73,12 +84,11 @@ fun <T : Any> assertNotNull(actual: T?, message: String? = null): T {
 }
 
 /** Asserts that the [actual] value is not `null`, with an optional [message] and a function [block] to process the not-null value. */
-fun <T : Any, R> assertNotNull(actual: T?, message: String? = null, block: (T) -> R) {
+@JvmName("assertNotNullInline")
+@InlineOnly
+inline fun <T : Any, R> assertNotNull(actual: T?, message: String? = null, block: (T) -> R) {
     contract { returns() implies (actual != null) }
-    asserter.assertNotNull(message, actual)
-    if (actual != null) {
-        block(actual)
-    }
+    block(assertNotNull(actual, message))
 }
 
 /** Asserts that the [actual] value is `null`, with an optional [message]. */
@@ -91,13 +101,30 @@ fun fail(message: String? = null): Nothing {
     asserter.fail(message)
 }
 
+/**
+ * Marks a test as having failed if this point in the execution path is reached, with an optional [message]
+ * and [cause] exception.
+ *
+ * The [cause] exception is set as the root cause of the test failure.
+ */
+@SinceKotlin("1.4")
+fun fail(message: String? = null, cause: Throwable? = null): Nothing {
+    asserter.fail(message, cause)
+}
+
 /** Asserts that given function [block] returns the given [expected] value. */
-fun <@OnlyInputTypes T> expect(expected: T, block: () -> T) {
+@JvmName("expectInline")
+@InlineOnly
+inline fun <@OnlyInputTypes T> expect(expected: T, block: () -> T) {
+    contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
     assertEquals(expected, block())
 }
 
 /** Asserts that given function [block] returns the given [expected] value and use the given [message] if it fails. */
-fun <@OnlyInputTypes T> expect(expected: T, message: String?, block: () -> T) {
+@JvmName("expectInline")
+@InlineOnly
+inline fun <@OnlyInputTypes T> expect(expected: T, message: String?, block: () -> T) {
+    contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
     assertEquals(expected, block(), message)
 }
 
@@ -107,7 +134,10 @@ fun <@OnlyInputTypes T> expect(expected: T, message: String?, block: () -> T) {
  * @return An exception that was expected to be thrown and was successfully caught.
  * The returned exception can be inspected further, for example by asserting its property values.
  */
-fun assertFails(block: () -> Unit): Throwable = assertFails(null, block)
+@InlineOnly
+@JvmName("assertFailsInline")
+inline fun assertFails(block: () -> Unit): Throwable =
+    checkResultIsFailure(null, runCatching(block))
 
 /**
  * Asserts that given function [block] fails by throwing an exception.
@@ -118,14 +148,21 @@ fun assertFails(block: () -> Unit): Throwable = assertFails(null, block)
  * The returned exception can be inspected further, for example by asserting its property values.
  */
 @SinceKotlin("1.1")
-fun assertFails(message: String?, block: () -> Unit): Throwable {
-    try {
-        block()
-    } catch (e: Throwable) {
-        assertEquals(e.message, e.message) // success path assertion for qunit
-        return e
-    }
-    asserter.fail(messagePrefix(message) + "Expected an exception to be thrown, but was completed successfully.")
+@InlineOnly
+@JvmName("assertFailsInline")
+inline fun assertFails(message: String?, block: () -> Unit): Throwable =
+    checkResultIsFailure(message, runCatching(block))
+
+@PublishedApi
+internal fun checkResultIsFailure(message: String?, blockResult: Result<Unit>): Throwable {
+    blockResult.fold(
+        onSuccess = {
+            asserter.fail(messagePrefix(message) + "Expected an exception to be thrown, but was completed successfully.")
+        },
+        onFailure = { e ->
+            return e
+        }
+    )
 }
 
 /** Asserts that a [block] fails with a specific exception of type [T] being thrown.
@@ -136,7 +173,7 @@ fun assertFails(message: String?, block: () -> Unit): Throwable {
  * The returned exception can be inspected further, for example by asserting its property values.
  */
 @InlineOnly
-inline fun <reified T : Throwable> assertFailsWith(message: String? = null, noinline block: () -> Unit): T =
+inline fun <reified T : Throwable> assertFailsWith(message: String? = null, block: () -> Unit): T =
     assertFailsWith(T::class, message, block)
 
 /**
@@ -145,8 +182,25 @@ inline fun <reified T : Throwable> assertFailsWith(message: String? = null, noin
  * @return An exception of the expected exception type [T] that successfully caught.
  * The returned exception can be inspected further, for example by asserting its property values.
  */
-fun <T : Throwable> assertFailsWith(exceptionClass: KClass<T>, block: () -> Unit): T = assertFailsWith(exceptionClass, null, block)
+@InlineOnly
+@JvmName("assertFailsWithInline")
+inline fun <T : Throwable> assertFailsWith(exceptionClass: KClass<T>, block: () -> Unit): T = assertFailsWith(exceptionClass, null, block)
 
+/**
+ * Asserts that a [block] fails with a specific exception of type [exceptionClass] being thrown.
+ *
+ * If the assertion fails, the specified [message] is used unless it is null as a prefix for the failure message.
+ *
+ * @return An exception of the expected exception type [T] that successfully caught.
+ * The returned exception can be inspected further, for example by asserting its property values.
+ */
+@InlineOnly
+@JvmName("assertFailsWithInline")
+inline fun <T : Throwable> assertFailsWith(exceptionClass: KClass<T>, message: String?, block: () -> Unit): T =
+    checkResultIsFailure(exceptionClass, message, runCatching(block))
+
+/** Platform-specific construction of AssertionError with cause */
+internal expect fun AssertionErrorWithCause(message: String?, cause: Throwable?): AssertionError
 
 /**
  * Abstracts the logic for performing assertions. Specific implementations of [Asserter] can use JUnit
@@ -159,6 +213,15 @@ interface Asserter {
      * @param message the message to report.
      */
     fun fail(message: String?): Nothing
+
+    /**
+     * Fails the current test with the specified message and cause exception.
+     *
+     * @param message the message to report.
+     * @param cause the exception to set as the root cause of the reported failure.
+     */
+    @SinceKotlin("1.4")
+    fun fail(message: String?, cause: Throwable?): Nothing
 
     /**
      * Asserts that the specified value is `true`.

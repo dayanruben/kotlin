@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.resolve.calls;
@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.config.LanguageFeature;
 import org.jetbrains.kotlin.config.LanguageVersionSettings;
 import org.jetbrains.kotlin.descriptors.*;
 import org.jetbrains.kotlin.descriptors.annotations.Annotations;
+import org.jetbrains.kotlin.diagnostics.DiagnosticFactory0;
 import org.jetbrains.kotlin.name.Name;
 import org.jetbrains.kotlin.progress.ProgressIndicatorAndCompilationCanceledStatus;
 import org.jetbrains.kotlin.psi.*;
@@ -185,8 +186,10 @@ public class CallResolver {
                 NewResolutionOldInference.ResolutionKind.Invoke.INSTANCE);
     }
 
+    // this declaration is used by compiler plugins
+    @SuppressWarnings("WeakerAccess")
     @NotNull
-    private <D extends CallableDescriptor> OverloadResolutionResults<D> computeTasksAndResolveCall(
+    public <D extends CallableDescriptor> OverloadResolutionResults<D> computeTasksAndResolveCall(
             @NotNull BasicCallResolutionContext context,
             @NotNull Name name,
             @NotNull KtReferenceExpression referenceExpression,
@@ -196,8 +199,10 @@ public class CallResolver {
         return computeTasksAndResolveCall(context, name, tracing, kind);
     }
 
+    // this declaration is used by compiler plugins
+    @SuppressWarnings("WeakerAccess")
     @NotNull
-    private <D extends CallableDescriptor> OverloadResolutionResults<D> computeTasksAndResolveCall(
+    public <D extends CallableDescriptor> OverloadResolutionResults<D> computeTasksAndResolveCall(
             @NotNull BasicCallResolutionContext context,
             @NotNull Name name,
             @NotNull TracingStrategy tracing,
@@ -330,8 +335,12 @@ public class CallResolver {
             KtConstructorDelegationCall delegationCall = (KtConstructorDelegationCall) context.call.getCallElement();
             DeclarationDescriptor container = context.scope.getOwnerDescriptor();
             assert container instanceof ConstructorDescriptor : "Trying to resolve JetConstructorDelegationCall not in constructor. scope.ownerDescriptor = " + container;
-            return (OverloadResolutionResults) resolveConstructorDelegationCall(context, delegationCall, (KtConstructorDelegationReferenceExpression) calleeExpression,
-                                                    (ClassConstructorDescriptor) container);
+            return (OverloadResolutionResults) resolveConstructorDelegationCall(
+                    context,
+                    delegationCall,
+                    (KtConstructorDelegationReferenceExpression) calleeExpression,
+                    (ClassDescriptor) container.getContainingDeclaration()
+            );
         }
         else if (calleeExpression == null) {
             return checkArgumentTypesAndFail(context);
@@ -350,7 +359,7 @@ public class CallResolver {
             );
         }
         KotlinType calleeType = expressionTypingServices.safeGetType(
-                context.scope, calleeExpression, expectedType, context.dataFlowInfo, context.trace);
+                context.scope, calleeExpression, expectedType, context.dataFlowInfo, context.inferenceSession, context.trace);
         ExpressionReceiver expressionReceiver = ExpressionReceiver.Companion.create(calleeExpression, calleeType, context.trace.getBindingContext());
 
         Call call = new CallTransformer.CallForImplicitInvoke(context.call.getExplicitReceiver(), expressionReceiver, context.call,
@@ -429,18 +438,28 @@ public class CallResolver {
                 dataFlowValueFactory,
                 InferenceSession.Companion.getDefault());
 
-        if (call.getCalleeExpression() == null) return checkArgumentTypesAndFail(context);
+        KtConstructorDelegationReferenceExpression calleeExpression = call.getCalleeExpression();
+
+        if (calleeExpression == null) return checkArgumentTypesAndFail(context);
+
+        ClassDescriptor currentClassDescriptor = constructorDescriptor.getContainingDeclaration();
 
         if (constructorDescriptor.getConstructedClass().getKind() == ClassKind.ENUM_CLASS && call.isImplicit()) {
+            if (currentClassDescriptor.getUnsubstitutedPrimaryConstructor() != null) {
+                DiagnosticFactory0<PsiElement> warningOrError;
+
+                if (languageVersionSettings.supportsFeature(LanguageFeature.RequiredPrimaryConstructorDelegationCallInEnums)) {
+                    warningOrError = PRIMARY_CONSTRUCTOR_DELEGATION_CALL_EXPECTED; // error
+                } else {
+                    warningOrError = PRIMARY_CONSTRUCTOR_DELEGATION_CALL_EXPECTED_IN_ENUM; // warning
+                }
+                PsiElement reportOn = calcReportOn(calleeExpression);
+                context.trace.report(warningOrError.on(reportOn));
+            }
             return null;
         }
 
-        return resolveConstructorDelegationCall(
-                context,
-                call,
-                call.getCalleeExpression(),
-                constructorDescriptor
-        );
+        return resolveConstructorDelegationCall(context, call, call.getCalleeExpression(), currentClassDescriptor);
     }
 
     @NotNull
@@ -448,11 +467,9 @@ public class CallResolver {
             @NotNull BasicCallResolutionContext context,
             @NotNull KtConstructorDelegationCall call,
             @NotNull KtConstructorDelegationReferenceExpression calleeExpression,
-            @NotNull ClassConstructorDescriptor calleeConstructor
+            @NotNull ClassDescriptor currentClassDescriptor
     ) {
         context.trace.record(BindingContext.LEXICAL_SCOPE, call, context.scope);
-
-        ClassDescriptor currentClassDescriptor = calleeConstructor.getContainingDeclaration();
 
         boolean isThisCall = calleeExpression.isThis();
         if (currentClassDescriptor.getKind() == ClassKind.ENUM_CLASS && !isThisCall) {
@@ -467,9 +484,8 @@ public class CallResolver {
         if (!isThisCall && currentClassDescriptor.getUnsubstitutedPrimaryConstructor() != null) {
             if (DescriptorUtils.canHaveDeclaredConstructors(currentClassDescriptor)) {
                 // Diagnostic is meaningless when reporting on interfaces and object
-                context.trace.report(PRIMARY_CONSTRUCTOR_DELEGATION_CALL_EXPECTED.on(
-                        (KtConstructorDelegationCall) calleeExpression.getParent()
-                ));
+                PsiElement reportOn = calcReportOn(calleeExpression);
+                context.trace.report(PRIMARY_CONSTRUCTOR_DELEGATION_CALL_EXPECTED.on(reportOn));
             }
             if (call.isImplicit()) return OverloadResolutionResultsImpl.nameNotFound();
         }
@@ -480,9 +496,8 @@ public class CallResolver {
         }
 
 
-        KotlinType superType = isThisCall ?
-                                  calleeConstructor.getContainingDeclaration().getDefaultType() :
-                                  DescriptorUtils.getSuperClassType(currentClassDescriptor);
+        KotlinType superType =
+                isThisCall ? currentClassDescriptor.getDefaultType() : DescriptorUtils.getSuperClassType(currentClassDescriptor);
 
         Pair<Collection<ResolutionCandidate<ConstructorDescriptor>>, BasicCallResolutionContext> candidatesAndContext =
                 prepareCandidatesAndContextForConstructorCall(superType, context, syntheticScopes);
@@ -502,6 +517,13 @@ public class CallResolver {
         }
 
         return computeTasksFromCandidatesAndResolvedCall(context, candidates, tracing);
+    }
+
+    @Nullable
+    private PsiElement calcReportOn(@NotNull KtConstructorDelegationReferenceExpression calleeExpression) {
+        PsiElement delegationCall = calleeExpression.getParent();
+        return delegationCall instanceof KtConstructorDelegationCall
+               ? CallResolverUtilKt.reportOnElement((KtConstructorDelegationCall) delegationCall) : delegationCall;
     }
 
     @NotNull
@@ -573,11 +595,13 @@ public class CallResolver {
         NewResolutionOldInference.ResolutionKind resolutionKind = resolutionTask.resolutionKind;
         if (newInferenceEnabled && PSICallResolver.getDefaultResolutionKinds().contains(resolutionKind)) {
             assert resolutionTask.name != null;
+            BindingContextUtilsKt.recordScope(context.trace, context.scope, context.call.getCalleeExpression());
             return PSICallResolver.runResolutionAndInference(context, resolutionTask.name, resolutionKind, tracing);
         }
 
         if (newInferenceEnabled && resolutionKind instanceof NewResolutionOldInference.ResolutionKind.GivenCandidates) {
             assert resolutionTask.givenCandidates != null;
+            BindingContextUtilsKt.recordScope(context.trace, context.scope, context.call.getCalleeExpression());
             return PSICallResolver.runResolutionAndInferenceForGivenCandidates(context, resolutionTask.givenCandidates, tracing);
         }
 

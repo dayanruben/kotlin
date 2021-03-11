@@ -26,31 +26,23 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.PathUtil;
+import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.KtNodeTypes;
 import org.jetbrains.kotlin.TestsCompilerError;
-import org.jetbrains.kotlin.cli.common.script.CliScriptDefinitionProvider;
 import org.jetbrains.kotlin.psi.*;
-import org.jetbrains.kotlin.script.ScriptDefinitionProvider;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.testFramework.KtParsingTestCase;
+import org.jetbrains.kotlin.test.util.KtTestUtil;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
-import kotlin.jvm.functions.Function1;
-
 public abstract class AbstractParsingTest extends KtParsingTestCase {
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        getProject().registerService(ScriptDefinitionProvider.class, CliScriptDefinitionProvider.class);
-    }
 
     @Override
     protected String getTestDataPath() {
-        return KotlinTestUtils.getHomeDirectory();
+        return KtTestUtil.getHomeDirectory();
     }
 
     public AbstractParsingTest() {

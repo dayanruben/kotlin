@@ -1,10 +1,11 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.gradle.logging
 
+import org.gradle.api.Task
 import org.gradle.api.logging.Logger
 import org.jetbrains.kotlin.compilerRunner.KotlinLogger
 
@@ -31,4 +32,17 @@ internal inline fun KotlinLogger.kotlinDebug(fn: () -> String) {
         val msg = fn()
         debug("[KOTLIN] $msg")
     }
+}
+
+internal inline fun <T> KotlinLogger.logTime(action: String, fn: () -> T): T {
+    val startNs = System.nanoTime()
+    val result = fn()
+    val endNs = System.nanoTime()
+
+    val timeNs = endNs - startNs
+    val timeMs = timeNs.toDouble() / 1_000_000
+
+    debug(String.format("%s took %.2f ms", action, timeMs))
+
+    return result
 }

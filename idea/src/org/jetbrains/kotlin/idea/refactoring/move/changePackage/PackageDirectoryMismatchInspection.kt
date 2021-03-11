@@ -1,86 +1,92 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2000-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.refactoring.move.changePackage
 
 import com.intellij.CommonBundle
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.JavaProjectRootsUtil
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiManager
 import com.intellij.refactoring.PackageWrapper
 import com.intellij.refactoring.move.moveClassesOrPackages.AutocreatingSingleSourceRootMoveDestination
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil
 import com.intellij.refactoring.util.RefactoringMessageUtil
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.core.getFqNameByDirectory
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
 import org.jetbrains.kotlin.idea.core.packageMatchesDirectoryOrImplicit
 import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.refactoring.hasIdentifiersOnly
 import org.jetbrains.kotlin.idea.refactoring.isInjectedFragment
+import org.jetbrains.kotlin.idea.roots.getSuitableDestinationSourceRoots
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPackageDirective
-import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.psi.packageDirectiveVisitor
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 class PackageDirectoryMismatchInspection : AbstractKotlinInspection() {
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = packageDirectiveVisitor(fun(directive: KtPackageDirective) {
+        val file = directive.containingKtFile
+        if (file.textLength == 0 || file.isInjectedFragment || file.packageMatchesDirectoryOrImplicit()) return
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession) =
-        object : KtVisitorVoid() {
-            override fun visitPackageDirective(directive: KtPackageDirective) {
-                super.visitPackageDirective(directive)
-                if (directive.text.isEmpty()) return
+        val fixes = mutableListOf<LocalQuickFix>()
+        val qualifiedName = directive.qualifiedName
+        val dirName = if (qualifiedName.isEmpty())
+            KotlinBundle.message("fix.move.file.to.package.dir.name.text")
+        else
+            "'${qualifiedName.replace('.', '/')}'"
 
-                val file = directive.containingKtFile
-                if (file.isInjectedFragment || file.packageMatchesDirectoryOrImplicit()) return
-
-                val fixes = mutableListOf<LocalQuickFix>()
-                val qualifiedName = directive.qualifiedName
-                val dirName = if (qualifiedName.isEmpty()) "source root" else "'${qualifiedName.replace('.', '/')}'"
-                fixes += MoveFileToPackageFix(dirName)
-                val fqNameByDirectory = file.getFqNameByDirectory()
-                when {
-                    fqNameByDirectory.isRoot ->
-                        fixes += ChangePackageFix("source root", fqNameByDirectory)
-                    fqNameByDirectory.hasIdentifiersOnly() ->
-                        fixes += ChangePackageFix("'${fqNameByDirectory.asString()}'", fqNameByDirectory)
-                }
-                val fqNameWithImplicitPrefix = file.parent?.getFqNameWithImplicitPrefix()
-                if (fqNameWithImplicitPrefix != null && fqNameWithImplicitPrefix != fqNameByDirectory) {
-                    fixes += ChangePackageFix("'${fqNameWithImplicitPrefix.asString()}'", fqNameWithImplicitPrefix)
-                }
-
-                holder.registerProblem(
-                    directive,
-                    "Package directive doesn't match file location",
-                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                    *fixes.toTypedArray()
-                )
-            }
+        fixes += MoveFileToPackageFix(dirName)
+        val fqNameByDirectory = file.getFqNameByDirectory()
+        when {
+            fqNameByDirectory.isRoot ->
+                fixes += ChangePackageFix(KotlinBundle.message("fix.move.file.to.package.dir.name.text"), fqNameByDirectory)
+            fqNameByDirectory.hasIdentifiersOnly() ->
+                fixes += ChangePackageFix("'${fqNameByDirectory.asString()}'", fqNameByDirectory)
+        }
+        val fqNameWithImplicitPrefix = file.parent?.getFqNameWithImplicitPrefix()
+        if (fqNameWithImplicitPrefix != null && fqNameWithImplicitPrefix != fqNameByDirectory) {
+            fixes += ChangePackageFix("'${fqNameWithImplicitPrefix.asString()}'", fqNameWithImplicitPrefix)
         }
 
-    private class MoveFileToPackageFix(val dirName: String) : LocalQuickFix {
-        override fun getFamilyName() = "Move file to package-matching directory"
+        val textRange = if (directive.textLength != 0) directive.textRange else file.declarations.firstOrNull()?.let {
+            TextRange.from(it.startOffset, 1)
+        }
+        holder.registerProblem(
+            file,
+            textRange,
+            KotlinBundle.message("text.package.directive.dont.match.file.location"),
+            *fixes.toTypedArray()
+        )
+    })
 
-        override fun getName() = "Move file to $dirName"
+    private class MoveFileToPackageFix(val dirName: String) : LocalQuickFix {
+        override fun getFamilyName() = KotlinBundle.message("fix.move.file.to.package.family")
+
+        override fun getName() = KotlinBundle.message("fix.move.file.to.package.text", dirName)
 
         override fun startInWriteAction() = false
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            val directive = descriptor.psiElement as? KtPackageDirective ?: return
-            val file = directive.containingKtFile
+            val file = descriptor.psiElement as? KtFile ?: return
+            val directive = file.packageDirective ?: return
 
-            val sourceRoots = JavaProjectRootsUtil.getSuitableDestinationSourceRoots(project)
+            val sourceRoots = getSuitableDestinationSourceRoots(project)
             val packageWrapper = PackageWrapper(PsiManager.getInstance(project), directive.qualifiedName)
             val fileToMove = directive.containingFile
             val chosenRoot =
                 sourceRoots.singleOrNull()
-                        ?: MoveClassesOrPackagesUtil.chooseSourceRoot(packageWrapper, sourceRoots, fileToMove.containingDirectory)
-                        ?: return
+                    ?: MoveClassesOrPackagesUtil.chooseSourceRoot(packageWrapper, sourceRoots, fileToMove.containingDirectory)
+                    ?: return
             val targetDirFactory = AutocreatingSingleSourceRootMoveDestination(packageWrapper, chosenRoot)
             targetDirFactory.verify(fileToMove)?.let {
                 Messages.showMessageDialog(project, it, CommonBundle.getErrorTitle(), Messages.getErrorIcon())
@@ -102,13 +108,12 @@ class PackageDirectoryMismatchInspection : AbstractKotlinInspection() {
     }
 
     private class ChangePackageFix(val packageName: String, val packageFqName: FqName) : LocalQuickFix {
-        override fun getFamilyName() = "Change file's package to match directory"
+        override fun getFamilyName() = KotlinBundle.message("fix.change.package.family")
 
-        override fun getName() = "Change file's package to $packageName"
+        override fun getName() = KotlinBundle.message("fix.change.package.text", packageName)
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            val directive = descriptor.psiElement as? KtPackageDirective ?: return
-            val file = directive.containingKtFile
+            val file = descriptor.psiElement as? KtFile ?: return
             KotlinChangePackageRefactoring(file).run(packageFqName)
         }
     }

@@ -30,10 +30,10 @@ fun bar(aInstance: A, bInstance: B) {
         d checkType { _<Short>() }
     }
 
-    <!OI;TYPE_INFERENCE_NO_INFORMATION_FOR_PARAMETER!>foo<!>(bInstance) {
-        <!OI;CANNOT_INFER_PARAMETER_TYPE!>(<!NI;COMPONENT_FUNCTION_MISSING!>a<!>, <!NI;COMPONENT_FUNCTION_MISSING!>b<!>)<!>, (c, d) ->
-        <!DEBUG_INFO_ELEMENT_WITH_ERROR_TYPE!>a<!> <!DEBUG_INFO_ELEMENT_WITH_ERROR_TYPE!>checkType<!> { <!UNRESOLVED_REFERENCE!>_<!><Int>() }
-        <!DEBUG_INFO_ELEMENT_WITH_ERROR_TYPE!>b<!> <!DEBUG_INFO_ELEMENT_WITH_ERROR_TYPE!>checkType<!> { <!UNRESOLVED_REFERENCE!>_<!><String>() }
+    <!NEW_INFERENCE_NO_INFORMATION_FOR_PARAMETER{NI}, TYPE_INFERENCE_NO_INFORMATION_FOR_PARAMETER{OI}!>foo<!>(bInstance) {
+        <!CANNOT_INFER_PARAMETER_TYPE!>(a, b)<!>, (c, d) ->
+        <!DEBUG_INFO_ELEMENT_WITH_ERROR_TYPE!>a<!> <!DEBUG_INFO_ELEMENT_WITH_ERROR_TYPE{OI}, DEBUG_INFO_MISSING_UNRESOLVED{NI}!>checkType<!> { <!UNRESOLVED_REFERENCE!>_<!><Int>() }
+        <!DEBUG_INFO_ELEMENT_WITH_ERROR_TYPE!>b<!> <!DEBUG_INFO_ELEMENT_WITH_ERROR_TYPE{OI}, DEBUG_INFO_MISSING_UNRESOLVED{NI}!>checkType<!> { <!UNRESOLVED_REFERENCE!>_<!><String>() }
         c checkType { _<Double>() }
         d checkType { _<Short>() }
     }

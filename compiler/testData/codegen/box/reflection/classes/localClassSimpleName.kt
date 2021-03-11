@@ -1,6 +1,5 @@
-// IGNORE_BACKEND: JVM_IR
 // IGNORE_BACKEND: NATIVE
-// WITH_REFLECT
+// WITH_RUNTIME
 
 import kotlin.reflect.KClass
 import kotlin.test.assertEquals

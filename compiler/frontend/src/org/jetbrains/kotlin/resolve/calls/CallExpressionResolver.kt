@@ -20,6 +20,7 @@ import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.AstLoadingFilter
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
@@ -59,13 +60,15 @@ import org.jetbrains.kotlin.types.ErrorUtils
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.TypeUtils.NO_EXPECTED_TYPE
+import org.jetbrains.kotlin.types.checker.KotlinTypeRefiner
 import org.jetbrains.kotlin.types.expressions.DataFlowAnalyzer
 import org.jetbrains.kotlin.types.expressions.ExpressionTypingContext
 import org.jetbrains.kotlin.types.expressions.ExpressionTypingServices
 import org.jetbrains.kotlin.types.expressions.KotlinTypeInfo
 import org.jetbrains.kotlin.types.expressions.typeInfoFactory.createTypeInfo
 import org.jetbrains.kotlin.types.expressions.typeInfoFactory.noTypeInfo
-import org.jetbrains.kotlin.util.AstLoadingFilter
+import org.jetbrains.kotlin.types.isError
+import org.jetbrains.kotlin.types.refinement.TypeRefinement
 import javax.inject.Inject
 
 class CallExpressionResolver(
@@ -76,7 +79,8 @@ class CallExpressionResolver(
     private val builtIns: KotlinBuiltIns,
     private val qualifiedExpressionResolver: QualifiedExpressionResolver,
     private val languageVersionSettings: LanguageVersionSettings,
-    private val dataFlowValueFactory: DataFlowValueFactory
+    private val dataFlowValueFactory: DataFlowValueFactory,
+    private val kotlinTypeRefiner: KotlinTypeRefiner
 ) {
     private lateinit var expressionTypingServices: ExpressionTypingServices
 
@@ -301,23 +305,31 @@ class CallExpressionResolver(
 
     private fun KtQualifiedExpression.elementChain(context: ExpressionTypingContext) =
         qualifiedExpressionResolver.resolveQualifierInExpressionAndUnroll(this, context) { nameExpression ->
-            val resolutionResult = resolveSimpleName(context, nameExpression)
+            val temporaryTraceAndCache =
+                TemporaryTraceAndCache.create(context, "trace to resolve as local variable or property", nameExpression)
+            val resolutionResult = resolveSimpleName(context, nameExpression, temporaryTraceAndCache)
 
             if (resolutionResult.isSingleResult && resolutionResult.resultingDescriptor is FakeCallableDescriptorForObject) {
                 false
             } else when (resolutionResult.resultCode) {
                 NAME_NOT_FOUND, CANDIDATES_WITH_WRONG_RECEIVER -> false
-                else -> !context.languageVersionSettings.supportsFeature(LanguageFeature.NewInference) || resolutionResult.isSuccess
+                else -> {
+                    val newInferenceEnabled = context.languageVersionSettings.supportsFeature(LanguageFeature.NewInference)
+                    val success = !newInferenceEnabled || resolutionResult.isSuccess
+                    if (newInferenceEnabled && success) {
+                        temporaryTraceAndCache.commit()
+                    }
+                    success
+                }
             }
         }
 
     private fun resolveSimpleName(
-        context: ExpressionTypingContext, expression: KtSimpleNameExpression
+        context: ExpressionTypingContext, expression: KtSimpleNameExpression, traceAndCache: TemporaryTraceAndCache
     ): OverloadResolutionResults<VariableDescriptor> {
-        val temporaryForVariable = TemporaryTraceAndCache.create(context, "trace to resolve as local variable or property", expression)
         val call = CallMaker.makePropertyCall(null, null, expression)
         val contextForVariable = BasicCallResolutionContext.create(
-            context.replaceTraceAndCache(temporaryForVariable), call, CheckArgumentTypesMode.CHECK_VALUE_ARGUMENTS
+            context.replaceTraceAndCache(traceAndCache), call, CheckArgumentTypesMode.CHECK_VALUE_ARGUMENTS
         )
         return callResolver.resolveSimpleProperty(contextForVariable)
     }
@@ -360,13 +372,20 @@ class CallExpressionResolver(
                 initialDataFlowInfoForArguments = initialDataFlowInfoForArguments.disequate(
                     receiverDataFlowValue, DataFlowValue.nullValue(builtIns), languageVersionSettings
                 )
-            } else if (receiver is ReceiverValue) {
+            } else {
                 reportUnnecessarySafeCall(context.trace, receiver.type, callOperationNode, receiver)
             }
         }
 
         val selector = element.selector
-        var selectorTypeInfo = getUnsafeSelectorTypeInfo(receiver, callOperationNode, selector, context, initialDataFlowInfoForArguments)
+
+        @OptIn(TypeRefinement::class)
+        var selectorTypeInfo =
+            getUnsafeSelectorTypeInfo(receiver, callOperationNode, selector, context, initialDataFlowInfoForArguments)
+                .run {
+                    val type = type ?: return@run this
+                    replaceType(kotlinTypeRefiner.refineType(type))
+                }
 
         if (receiver is Qualifier) {
             resolveDeferredReceiverInQualifiedExpression(receiver, selector, context)
@@ -516,15 +535,17 @@ class CallExpressionResolver(
             } ?: false
 
         fun reportUnnecessarySafeCall(
-            trace: BindingTrace, type: KotlinType,
-            callOperationNode: ASTNode, explicitReceiver: Receiver?
-        ) = trace.report(
+            trace: BindingTrace,
+            type: KotlinType,
+            callOperationNode: ASTNode,
+            explicitReceiver: Receiver?
+        ) {
             if (explicitReceiver is ExpressionReceiver && explicitReceiver.expression is KtSuperExpression) {
-                UNEXPECTED_SAFE_CALL.on(callOperationNode.psi)
-            } else {
-                UNNECESSARY_SAFE_CALL.on(callOperationNode.psi, type)
+                trace.report(UNEXPECTED_SAFE_CALL.on(callOperationNode.psi))
+            } else if (!type.isError) {
+                trace.report(UNNECESSARY_SAFE_CALL.on(callOperationNode.psi, type))
             }
-        )
+        }
 
         private fun checkNestedClassAccess(
             expression: KtQualifiedExpression,

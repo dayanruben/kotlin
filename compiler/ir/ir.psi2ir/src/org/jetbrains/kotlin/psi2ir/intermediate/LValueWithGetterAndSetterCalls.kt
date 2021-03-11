@@ -23,14 +23,14 @@ import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.psi2ir.generators.CallGenerator
 
 class LValueWithGetterAndSetterCalls(
-    val callGenerator: CallGenerator,
-    val descriptor: CallableDescriptor,
-    val getterCall: () -> CallBuilder?,
-    val setterCall: () -> CallBuilder?,
+    private val callGenerator: CallGenerator,
+    private val descriptor: CallableDescriptor,
+    private val getterCall: () -> CallBuilder?,
+    private val setterCall: (IrExpression) -> CallBuilder?,
     override val type: IrType,
-    val startOffset: Int,
-    val endOffset: Int,
-    val origin: IrStatementOrigin? = null
+    private val startOffset: Int,
+    private val endOffset: Int,
+    private val origin: IrStatementOrigin? = null
 ) : LValue {
 
     override fun load(): IrExpression {
@@ -39,8 +39,7 @@ class LValueWithGetterAndSetterCalls(
     }
 
     override fun store(irExpression: IrExpression): IrExpression {
-        val call = setterCall() ?: throw AssertionError("No setter call for $descriptor")
-        call.irValueArgumentsByIndex[call.argumentsCount - 1] = irExpression
+        val call = setterCall(irExpression) ?: throw AssertionError("No setter call for $descriptor")
         return callGenerator.generateCall(startOffset, endOffset, call, origin)
     }
 

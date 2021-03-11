@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// !WITH_NEW_INFERENCE
 // See also KT-5198 / KT-10186
 
 inline fun doCall(f: () -> Unit) = f()
@@ -20,6 +22,6 @@ fun test2() {
 }
 
 fun test3(x: Any?): Boolean =
-    x?.let { 
+    x?.let {
         return true
     } ?: false

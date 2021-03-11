@@ -1,23 +1,23 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2000-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.refactoring.rename
 
-import org.jetbrains.kotlin.statistics.KotlinStatisticsTrigger
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.rename.RenameHandler
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
-import org.jetbrains.kotlin.idea.codeInsight.CodeInsightUtils
+import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.resolve.calls.tower.isSynthesized
-import org.jetbrains.kotlin.statistics.KotlinIdeRefactoringTrigger
 
 class RenameSyntheticDeclarationByReferenceHandler : RenameHandler {
     override fun isAvailableOnDataContext(dataContext: DataContext): Boolean {
@@ -30,8 +30,13 @@ class RenameSyntheticDeclarationByReferenceHandler : RenameHandler {
     override fun isRenaming(dataContext: DataContext) = isAvailableOnDataContext(dataContext)
 
     override fun invoke(project: Project, editor: Editor, file: PsiFile, dataContext: DataContext?) {
-        CodeInsightUtils.showErrorHint(project, editor, "Rename is not applicable to synthetic declaration", "Rename", null)
-        KotlinStatisticsTrigger.trigger(KotlinIdeRefactoringTrigger::class.java, this::class.java.name)
+        CodeInsightUtils.showErrorHint(
+            project,
+            editor,
+            KotlinBundle.message("text.rename.is.not.applicable.to.synthetic.declarations"),
+            RefactoringBundle.message("rename.title"),
+            null
+        )
     }
 
     override fun invoke(project: Project, elements: Array<out PsiElement>, dataContext: DataContext?) {

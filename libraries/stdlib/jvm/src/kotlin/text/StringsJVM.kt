@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 @file:kotlin.jvm.JvmMultifileClass
@@ -9,8 +9,11 @@
 
 package kotlin.text
 
+import java.nio.ByteBuffer
+import java.nio.CharBuffer
 import java.nio.charset.Charset
-import java.util.*
+import java.nio.charset.CodingErrorAction
+import java.util.Locale
 import java.util.regex.Pattern
 
 
@@ -58,10 +61,14 @@ public actual fun String?.equals(other: String?, ignoreCase: Boolean = false): B
  */
 @Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
 public actual fun String.replace(oldChar: Char, newChar: Char, ignoreCase: Boolean = false): String {
-    if (!ignoreCase)
-        return (this as java.lang.String).replace(oldChar, newChar)
-    else
-        return splitToSequence(oldChar, ignoreCase = ignoreCase).joinToString(separator = newChar.toString())
+    // prefer case-insensitive platform implementation
+    if (!ignoreCase) return (this as java.lang.String).replace(oldChar, newChar)
+
+    return buildString(length) {
+        this@replace.forEach { c ->
+            append(if (c.equals(oldChar, ignoreCase)) newChar else c)
+        }
+    }
 }
 
 /**
@@ -69,9 +76,28 @@ public actual fun String.replace(oldChar: Char, newChar: Char, ignoreCase: Boole
  * with the specified [newValue] string.
  */
 @Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
-public actual fun String.replace(oldValue: String, newValue: String, ignoreCase: Boolean = false): String =
-    splitToSequence(oldValue, ignoreCase = ignoreCase).joinToString(separator = newValue)
+public actual fun String.replace(oldValue: String, newValue: String, ignoreCase: Boolean = false): String {
+    run {
+        var occurrenceIndex: Int = indexOf(oldValue, 0, ignoreCase)
+        // FAST PATH: no match
+        if (occurrenceIndex < 0) return this
 
+        val oldValueLength = oldValue.length
+        val searchStep = oldValueLength.coerceAtLeast(1)
+        val newLengthHint = length - oldValueLength + newValue.length
+        if (newLengthHint < 0) throw OutOfMemoryError()
+        val stringBuilder = StringBuilder(newLengthHint)
+
+        var i = 0
+        do {
+            stringBuilder.append(this, i, occurrenceIndex).append(newValue)
+            i = occurrenceIndex + oldValueLength
+            if (occurrenceIndex >= length) break
+            occurrenceIndex = indexOf(oldValue, occurrenceIndex + searchStep, ignoreCase)
+        } while (occurrenceIndex > 0)
+        return stringBuilder.append(this, i, length).toString()
+    }
+}
 
 /**
  * Returns a new string with the first occurrence of [oldChar] replaced with [newChar].
@@ -94,25 +120,181 @@ public actual fun String.replaceFirst(oldValue: String, newValue: String, ignore
 
 /**
  * Returns a copy of this string converted to upper case using the rules of the default locale.
- *
- * @sample samples.text.Strings.toUpperCase
  */
 @kotlin.internal.InlineOnly
 public actual inline fun String.toUpperCase(): String = (this as java.lang.String).toUpperCase()
 
 /**
- * Returns a copy of this string converted to lower case using the rules of the default locale.
+ * Returns a copy of this string converted to upper case using Unicode mapping rules of the invariant locale.
  *
- * @sample samples.text.Strings.toLowerCase
+ * This function supports one-to-many and many-to-one character mapping,
+ * thus the length of the returned string can be different from the length of the original string.
+ *
+ * @sample samples.text.Strings.uppercase
+ */
+@SinceKotlin("1.4")
+@ExperimentalStdlibApi
+@kotlin.internal.InlineOnly
+public actual inline fun String.uppercase(): String = (this as java.lang.String).toUpperCase(Locale.ROOT)
+
+/**
+ * Returns a copy of this string converted to lower case using the rules of the default locale.
  */
 @kotlin.internal.InlineOnly
 public actual inline fun String.toLowerCase(): String = (this as java.lang.String).toLowerCase()
 
 /**
- * Returns a new character array containing the characters from this string.
+ * Returns a copy of this string converted to lower case using Unicode mapping rules of the invariant locale.
+ *
+ * This function supports one-to-many and many-to-one character mapping,
+ * thus the length of the returned string can be different from the length of the original string.
+ *
+ * @sample samples.text.Strings.lowercase
+ */
+@SinceKotlin("1.4")
+@ExperimentalStdlibApi
+@kotlin.internal.InlineOnly
+public actual inline fun String.lowercase(): String = (this as java.lang.String).toLowerCase(Locale.ROOT)
+
+/**
+ * Concatenates characters in this [CharArray] into a String.
+ */
+@SinceKotlin("1.4")
+@WasExperimental(ExperimentalStdlibApi::class)
+public actual fun CharArray.concatToString(): String {
+    return String(this)
+}
+
+/**
+ * Concatenates characters in this [CharArray] or its subrange into a String.
+ *
+ * @param startIndex the beginning (inclusive) of the subrange of characters, 0 by default.
+ * @param endIndex the end (exclusive) of the subrange of characters, size of this array by default.
+ *
+ * @throws IndexOutOfBoundsException if [startIndex] is less than zero or [endIndex] is greater than the size of this array.
+ * @throws IllegalArgumentException if [startIndex] is greater than [endIndex].
+ */
+@SinceKotlin("1.4")
+@WasExperimental(ExperimentalStdlibApi::class)
+@Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
+public actual fun CharArray.concatToString(startIndex: Int = 0, endIndex: Int = this.size): String {
+    AbstractList.checkBoundsIndexes(startIndex, endIndex, this.size)
+    return String(this, startIndex, endIndex - startIndex)
+}
+
+/**
+ * Returns a [CharArray] containing characters of this string or its substring.
+ *
+ * @param startIndex the beginning (inclusive) of the substring, 0 by default.
+ * @param endIndex the end (exclusive) of the substring, length of this string by default.
+ *
+ * @throws IndexOutOfBoundsException if [startIndex] is less than zero or [endIndex] is greater than the length of this string.
+ * @throws IllegalArgumentException if [startIndex] is greater than [endIndex].
+ */
+@SinceKotlin("1.4")
+@WasExperimental(ExperimentalStdlibApi::class)
+@Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
+public actual fun String.toCharArray(startIndex: Int = 0, endIndex: Int = this.length): CharArray {
+    AbstractList.checkBoundsIndexes(startIndex, endIndex, length)
+    return toCharArray(CharArray(endIndex - startIndex), 0, startIndex, endIndex)
+}
+
+/**
+ * Decodes a string from the bytes in UTF-8 encoding in this array.
+ *
+ * Malformed byte sequences are replaced by the replacement char `\uFFFD`.
+ */
+@SinceKotlin("1.4")
+@WasExperimental(ExperimentalStdlibApi::class)
+public actual fun ByteArray.decodeToString(): String {
+    return String(this)
+}
+
+/**
+ * Decodes a string from the bytes in UTF-8 encoding in this array or its subrange.
+ *
+ * @param startIndex the beginning (inclusive) of the subrange to decode, 0 by default.
+ * @param endIndex the end (exclusive) of the subrange to decode, size of this array by default.
+ * @param throwOnInvalidSequence specifies whether to throw an exception on malformed byte sequence or replace it by the replacement char `\uFFFD`.
+ *
+ * @throws IndexOutOfBoundsException if [startIndex] is less than zero or [endIndex] is greater than the size of this array.
+ * @throws IllegalArgumentException if [startIndex] is greater than [endIndex].
+ * @throws CharacterCodingException if the byte array contains malformed UTF-8 byte sequence and [throwOnInvalidSequence] is true.
+ */
+@SinceKotlin("1.4")
+@WasExperimental(ExperimentalStdlibApi::class)
+@Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
+public actual fun ByteArray.decodeToString(
+    startIndex: Int = 0,
+    endIndex: Int = this.size,
+    throwOnInvalidSequence: Boolean = false
+): String {
+    AbstractList.checkBoundsIndexes(startIndex, endIndex, this.size)
+
+    if (!throwOnInvalidSequence) {
+        return String(this, startIndex, endIndex - startIndex)
+    }
+
+    val decoder = Charsets.UTF_8.newDecoder()
+        .onMalformedInput(CodingErrorAction.REPORT)
+        .onUnmappableCharacter(CodingErrorAction.REPORT)
+
+    return decoder.decode(ByteBuffer.wrap(this, startIndex, endIndex - startIndex)).toString()
+}
+
+/**
+ * Encodes this string to an array of bytes in UTF-8 encoding.
+ *
+ * Any malformed char sequence is replaced by the replacement byte sequence.
+ */
+@SinceKotlin("1.4")
+@WasExperimental(ExperimentalStdlibApi::class)
+public actual fun String.encodeToByteArray(): ByteArray {
+    return this.toByteArray(Charsets.UTF_8)
+}
+
+/**
+ * Encodes this string or its substring to an array of bytes in UTF-8 encoding.
+ *
+ * @param startIndex the beginning (inclusive) of the substring to encode, 0 by default.
+ * @param endIndex the end (exclusive) of the substring to encode, length of this string by default.
+ * @param throwOnInvalidSequence specifies whether to throw an exception on malformed char sequence or replace.
+ *
+ * @throws IndexOutOfBoundsException if [startIndex] is less than zero or [endIndex] is greater than the length of this string.
+ * @throws IllegalArgumentException if [startIndex] is greater than [endIndex].
+ * @throws CharacterCodingException if this string contains malformed char sequence and [throwOnInvalidSequence] is true.
+ */
+@SinceKotlin("1.4")
+@WasExperimental(ExperimentalStdlibApi::class)
+@Suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
+public actual fun String.encodeToByteArray(
+    startIndex: Int = 0,
+    endIndex: Int = this.length,
+    throwOnInvalidSequence: Boolean = false
+): ByteArray {
+    AbstractList.checkBoundsIndexes(startIndex, endIndex, length)
+
+    if (!throwOnInvalidSequence) {
+        return this.substring(startIndex, endIndex).toByteArray(Charsets.UTF_8)
+    }
+
+    val encoder = Charsets.UTF_8.newEncoder()
+        .onMalformedInput(CodingErrorAction.REPORT)
+        .onUnmappableCharacter(CodingErrorAction.REPORT)
+
+    val byteBuffer = encoder.encode(CharBuffer.wrap(this, startIndex, endIndex))
+    return if (byteBuffer.hasArray() && byteBuffer.arrayOffset() == 0 && byteBuffer.remaining() == byteBuffer.array()!!.size) {
+        byteBuffer.array()
+    } else {
+        ByteArray(byteBuffer.remaining()).also { byteBuffer.get(it) }
+    }
+}
+
+/**
+ * Returns a [CharArray] containing characters of this string.
  */
 @kotlin.internal.InlineOnly
-public inline fun String.toCharArray(): CharArray = (this as java.lang.String).toCharArray()
+public actual inline fun String.toCharArray(): CharArray = (this as java.lang.String).toCharArray()
 
 /**
  * Copies characters from this string into the [destination] character array and returns that array.
@@ -151,19 +333,47 @@ public inline fun String.Companion.format(format: String, vararg args: Any?): St
  * Uses this string as a format string and returns a string obtained by substituting the specified arguments,
  * using the specified locale.
  */
+@Deprecated("Use Kotlin compiler 1.4 to avoid deprecation warning.")
+@DeprecatedSinceKotlin(hiddenSince = "1.4")
 @kotlin.internal.InlineOnly
 public inline fun String.format(locale: Locale, vararg args: Any?): String = java.lang.String.format(locale, this, *args)
+
+/**
+ * Uses this string as a format string and returns a string obtained by substituting the specified arguments,
+ * using the specified locale. If [locale] is `null` then no localization is applied.
+ */
+@SinceKotlin("1.4")
+@JvmName("formatNullable")
+@kotlin.internal.InlineOnly
+public inline fun String.format(locale: Locale?, vararg args: Any?): String = java.lang.String.format(locale, this, *args)
 
 /**
  * Uses the provided [format] as a format string and returns a string obtained by substituting the specified arguments,
  * using the specified locale.
  */
+@Deprecated("Use Kotlin compiler 1.4 to avoid deprecation warning.")
+@DeprecatedSinceKotlin(hiddenSince = "1.4")
 @kotlin.internal.InlineOnly
 public inline fun String.Companion.format(locale: Locale, format: String, vararg args: Any?): String =
     java.lang.String.format(locale, format, *args)
 
 /**
+ * Uses the provided [format] as a format string and returns a string obtained by substituting the specified arguments,
+ * using the specified locale. If [locale] is `null` then no localization is applied.
+ */
+@SinceKotlin("1.4")
+@JvmName("formatNullable")
+@kotlin.internal.InlineOnly
+public inline fun String.Companion.format(locale: Locale?, format: String, vararg args: Any?): String =
+    java.lang.String.format(locale, format, *args)
+
+/**
  * Splits this char sequence around matches of the given regular expression.
+ *
+ * This function has two notable differences from the method [Pattern.split]:
+ *   - the function returns the result as a `List<String>` rather than an `Array<String>`;
+ *   - when the [limit] is not specified or specified as 0,
+ *   this function doesn't drop trailing empty strings from the result.
 
  * @param limit Non-negative value specifying the maximum number of substrings to return.
  * Zero by default means no limit is set.
@@ -332,16 +542,57 @@ public actual fun String.compareTo(other: String, ignoreCase: Boolean = false): 
 }
 
 /**
- * Returns `true` if this string is equal to the contents of the specified CharSequence.
+ * Returns `true` if this string is equal to the contents of the specified [CharSequence], `false` otherwise.
+ *
+ * Note that if the [CharSequence] argument is a [StringBuffer] then the comparison may be performed in a synchronized block
+ * that acquires that [StringBuffer]'s monitor.
  */
 @kotlin.internal.InlineOnly
 public inline fun String.contentEquals(charSequence: CharSequence): Boolean = (this as java.lang.String).contentEquals(charSequence)
 
 /**
- * Returns `true` if this string is equal to the contents of the specified StringBuffer.
+ * Returns `true` if this string is equal to the contents of the specified [StringBuffer], `false` otherwise.
+ *
+ * This function compares this string and the specified [StringBuffer] in a synchronized block
+ * that acquires that [StringBuffer]'s monitor.
  */
 @kotlin.internal.InlineOnly
 public inline fun String.contentEquals(stringBuilder: StringBuffer): Boolean = (this as java.lang.String).contentEquals(stringBuilder)
+
+/**
+ * Returns `true` if the contents of this char sequence are equal to the contents of the specified [other],
+ * i.e. both char sequences contain the same number of the same characters in the same order.
+ *
+ * If this [CharSequence] is a [String] and [other] is not `null`
+ * then this function behaves the same as [String.contentEquals].
+ *
+ * @sample samples.text.Strings.contentEquals
+ */
+@SinceKotlin("1.5")
+public actual infix fun CharSequence?.contentEquals(other: CharSequence?): Boolean {
+    return if (this is String && other != null)
+        contentEquals(other)
+    else
+        contentEqualsImpl(other)
+}
+
+/**
+ * Returns `true` if the contents of this char sequence are equal to the contents of the specified [other], optionally ignoring case difference.
+ *
+ * If this [CharSequence] is a [String], [other] is not `null` and [ignoreCase] is `false`
+ * then this function behaves the same as [String.contentEquals].
+ *
+ * @param ignoreCase `true` to ignore character case when comparing contents.
+ *
+ * @sample samples.text.Strings.contentEquals
+ */
+@SinceKotlin("1.5")
+public actual fun CharSequence?.contentEquals(other: CharSequence?, ignoreCase: Boolean): Boolean {
+    return if (ignoreCase)
+        contentEqualsIgnoreCaseImpl(other)
+    else
+        contentEquals(other)
+}
 
 /**
  * Returns a canonical representation for this string object.
@@ -351,6 +602,8 @@ public inline fun String.intern(): String = (this as java.lang.String).intern()
 
 /**
  * Returns `true` if this string is empty or consists solely of whitespace characters.
+ *
+ * @sample samples.text.Strings.stringIsBlank
  */
 public actual fun CharSequence.isBlank(): Boolean = length == 0 || indices.all { this[it].isWhitespace() }
 
@@ -392,14 +645,42 @@ public fun String.regionMatches(thisOffset: Int, other: String, otherOffset: Int
 /**
  * Returns a copy of this string converted to lower case using the rules of the specified locale.
  */
+@OptIn(ExperimentalStdlibApi::class)
 @kotlin.internal.InlineOnly
-public inline fun String.toLowerCase(locale: java.util.Locale): String = (this as java.lang.String).toLowerCase(locale)
+public inline fun String.toLowerCase(locale: java.util.Locale): String = lowercase(locale)
+
+/**
+ * Returns a copy of this string converted to lower case using the rules of the specified [locale].
+ *
+ * This function supports one-to-many and many-to-one character mapping,
+ * thus the length of the returned string can be different from the length of the original string.
+ *
+ * @sample samples.text.Strings.lowercaseLocale
+ */
+@SinceKotlin("1.4")
+@ExperimentalStdlibApi
+@kotlin.internal.InlineOnly
+public inline fun String.lowercase(locale: Locale): String = (this as java.lang.String).toLowerCase(locale)
 
 /**
  * Returns a copy of this string converted to upper case using the rules of the specified locale.
  */
+@OptIn(ExperimentalStdlibApi::class)
 @kotlin.internal.InlineOnly
-public inline fun String.toUpperCase(locale: java.util.Locale): String = (this as java.lang.String).toUpperCase(locale)
+public inline fun String.toUpperCase(locale: java.util.Locale): String = uppercase(locale)
+
+/**
+ * Returns a copy of this string converted to upper case using the rules of the specified [locale].
+ *
+ * This function supports one-to-many and many-to-one character mapping,
+ * thus the length of the returned string can be different from the length of the original string.
+ *
+ * @sample samples.text.Strings.uppercaseLocale
+ */
+@SinceKotlin("1.4")
+@ExperimentalStdlibApi
+@kotlin.internal.InlineOnly
+public inline fun String.uppercase(locale: Locale): String = (this as java.lang.String).toUpperCase(locale)
 
 /**
  * Encodes the contents of this string using the specified character set and returns the resulting byte array.
@@ -419,23 +700,67 @@ public inline fun String.toPattern(flags: Int = 0): java.util.regex.Pattern {
 }
 
 /**
- * Returns a copy of this string having its first letter uppercased, or the original string,
- * if it's empty or already starts with an upper case letter.
+ * Returns a copy of this string having its first letter titlecased using the rules of the default locale,
+ * or the original string if it's empty or already starts with a title case letter.
+ *
+ * The title case of a character is usually the same as its upper case with several exceptions.
+ * The particular list of characters with the special title case form depends on the underlying platform.
  *
  * @sample samples.text.Strings.capitalize
  */
 public actual fun String.capitalize(): String {
-    return if (isNotEmpty() && this[0].isLowerCase()) substring(0, 1).toUpperCase() + substring(1) else this
+    return capitalize(Locale.getDefault())
 }
 
 /**
- * Returns a copy of this string having its first letter lowercased, or the original string,
- * if it's empty or already starts with a lower case letter.
+ * Returns a copy of this string having its first letter titlecased using the rules of the specified [locale],
+ * or the original string if it's empty or already starts with a title case letter.
+ *
+ * The title case of a character is usually the same as its upper case with several exceptions.
+ * The particular list of characters with the special title case form depends on the underlying platform.
+ */
+@OptIn(ExperimentalStdlibApi::class)
+@SinceKotlin("1.4")
+@WasExperimental(ExperimentalStdlibApi::class)
+@kotlin.internal.LowPriorityInOverloadResolution // To avoid conflicts in function references, as this function was introduced later than common capitalize()
+public fun String.capitalize(locale: Locale): String {
+    if (isNotEmpty()) {
+        val firstChar = this[0]
+        if (firstChar.isLowerCase()) {
+            return buildString {
+                val titleChar = firstChar.titlecaseChar()
+                if (titleChar != firstChar.uppercaseChar()) {
+                    append(titleChar)
+                } else {
+                    append(this@capitalize.substring(0, 1).uppercase(locale))
+                }
+                append(this@capitalize.substring(1))
+            }
+        }
+    }
+    return this
+}
+
+/**
+ * Returns a copy of this string having its first letter lowercased using the rules of the default locale,
+ * or the original string if it's empty or already starts with a lower case letter.
  *
  * @sample samples.text.Strings.decapitalize
  */
 public actual fun String.decapitalize(): String {
-    return if (isNotEmpty() && this[0].isUpperCase()) substring(0, 1).toLowerCase() + substring(1) else this
+    return if (isNotEmpty() && !this[0].isLowerCase()) substring(0, 1).toLowerCase() + substring(1) else this
+}
+
+/**
+ * Returns a copy of this string having its first letter lowercased using the rules of the specified [locale],
+ * or the original string, if it's empty or already starts with a lower case letter.
+ */
+@OptIn(ExperimentalStdlibApi::class)
+@SinceKotlin("1.4")
+@WasExperimental(ExperimentalStdlibApi::class)
+@kotlin.internal.LowPriorityInOverloadResolution // To avoid conflicts in function references, as this function was introduced later than common decapitalize()
+public fun String.decapitalize(locale: Locale): String {
+    return if (isNotEmpty() && !this[0].isLowerCase()) substring(0, 1).lowercase(locale) + substring(1) else this
 }
 
 /**

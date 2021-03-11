@@ -1,32 +1,18 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.codegen.coroutines
 
-import com.intellij.util.containers.Stack
-import org.jetbrains.kotlin.backend.common.CodegenUtil
-import org.jetbrains.kotlin.codegen.AsmUtil
-import org.jetbrains.kotlin.codegen.ClassBuilder
-import org.jetbrains.kotlin.codegen.StackValue
-import org.jetbrains.kotlin.codegen.TransformationMethodVisitor
+import org.jetbrains.kotlin.codegen.*
 import org.jetbrains.kotlin.codegen.inline.*
-import org.jetbrains.kotlin.codegen.optimization.DeadCodeEliminationMethodTransformer
-import org.jetbrains.kotlin.codegen.optimization.boxing.isPrimitiveUnboxing
 import org.jetbrains.kotlin.codegen.optimization.common.*
 import org.jetbrains.kotlin.codegen.optimization.fixStack.FixStackMethodTransformer
-import org.jetbrains.kotlin.codegen.optimization.transformer.MethodTransformer
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.isReleaseCoroutines
-import org.jetbrains.kotlin.diagnostics.DiagnosticSink
-import org.jetbrains.kotlin.load.java.JvmAbi
-import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.resolve.jvm.AsmTypes
-import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.JvmDeclarationOrigin
-import org.jetbrains.kotlin.utils.addToStdlib.cast
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.sure
 import org.jetbrains.org.objectweb.asm.Label
 import org.jetbrains.org.objectweb.asm.MethodVisitor
@@ -34,9 +20,8 @@ import org.jetbrains.org.objectweb.asm.Opcodes
 import org.jetbrains.org.objectweb.asm.Type
 import org.jetbrains.org.objectweb.asm.commons.InstructionAdapter
 import org.jetbrains.org.objectweb.asm.tree.*
-import org.jetbrains.org.objectweb.asm.tree.analysis.Frame
-import org.jetbrains.org.objectweb.asm.tree.analysis.SourceInterpreter
-import org.jetbrains.org.objectweb.asm.tree.analysis.SourceValue
+import org.jetbrains.org.objectweb.asm.tree.analysis.BasicValue
+import kotlin.math.max
 
 private const val COROUTINES_DEBUG_METADATA_VERSION = 1
 
@@ -48,6 +33,10 @@ private const val COROUTINES_METADATA_INDEX_TO_LABEL_JVM_NAME = "i"
 private const val COROUTINES_METADATA_METHOD_NAME_JVM_NAME = "m"
 private const val COROUTINES_METADATA_CLASS_NAME_JVM_NAME = "c"
 private const val COROUTINES_METADATA_VERSION_JVM_NAME = "v"
+
+const val SUSPEND_FUNCTION_COMPLETION_PARAMETER_NAME = "\$completion"
+const val SUSPEND_CALL_RESULT_NAME = "\$result"
+const val ILLEGAL_STATE_ERROR_MESSAGE = "call to 'resume' before 'invoke' with coroutine"
 
 class CoroutineTransformerMethodVisitor(
     delegate: MethodVisitor,
@@ -61,20 +50,26 @@ class CoroutineTransformerMethodVisitor(
     private val isForNamedFunction: Boolean,
     private val shouldPreserveClassInitialization: Boolean,
     private val languageVersionSettings: LanguageVersionSettings,
+    // Since tail-call optimization of functions with Unit return type relies on ability of call-site to recognize them,
+    // in order to ignore return value and push Unit, when we cannot ensure this ability, for example, when the function overrides function,
+    // returning Any, we need to disable tail-call optimization for these functions.
+    private val disableTailCallOptimizationForFunctionReturningUnit: Boolean,
+    private val reportSuspensionPointInsideMonitor: (String) -> Unit,
+    private val lineNumber: Int,
     private val sourceFile: String,
-    // These two are needed to report diagnostics about suspension points inside critical section
-    private val element: KtElement,
-    private val diagnostics: DiagnosticSink,
     // It's only matters for named functions, may differ from '!isStatic(access)' in case of DefaultImpls
     private val needDispatchReceiver: Boolean = false,
     // May differ from containingClassInternalName in case of DefaultImpls
     private val internalNameForDispatchReceiver: String? = null,
-    // For crossinline lambdas we do not generate DebugMetadata annotation, otherwise it will be generated twice
-    private val isCrossinlineLambda: Boolean = false
+    // JVM_IR backend generates $completion, while old backend does not
+    private val putContinuationParameterToLvt: Boolean = true,
+    // New SourceInterpreter-less analyser can be somewhat unstable, disable it
+    private val useOldSpilledVarTypeAnalysis: Boolean = false,
+    // Parameters of suspend lambda are put to the same fields as spilled variables
+    private val initialVarsCountByType: Map<Type, Int> = emptyMap()
 ) : TransformationMethodVisitor(delegate, access, name, desc, signature, exceptions) {
 
     private val classBuilderForCoroutineState: ClassBuilder by lazy(obtainClassBuilderForCoroutineState)
-    private val lineNumber = element?.let { CodegenUtil.getLineNumberForElement(it, false) } ?: 0
 
     private var continuationIndex = if (isForNamedFunction) -1 else 0
     private var dataIndex = if (isForNamedFunction) -1 else 1
@@ -83,19 +78,21 @@ class CoroutineTransformerMethodVisitor(
     override fun performTransformations(methodNode: MethodNode) {
         removeFakeContinuationConstructorCall(methodNode)
 
+        replaceReturnsUnitMarkersWithPushingUnitOnStack(methodNode)
+
         replaceFakeContinuationsWithRealOnes(
             methodNode,
             if (isForNamedFunction) getLastParameterIndex(methodNode.desc, methodNode.access) else 0
         )
 
         FixStackMethodTransformer().transform(containingClassInternalName, methodNode)
-        RedundantLocalsEliminationMethodTransformer(languageVersionSettings).transform(containingClassInternalName, methodNode)
+        val suspensionPoints = collectSuspensionPoints(methodNode)
+        RedundantLocalsEliminationMethodTransformer(suspensionPoints)
+            .transform(containingClassInternalName, methodNode)
         if (languageVersionSettings.isReleaseCoroutines()) {
             ChangeBoxingMethodTransformer.transform(containingClassInternalName, methodNode)
         }
         updateMaxStack(methodNode)
-
-        val suspensionPoints = collectSuspensionPoints(methodNode)
 
         checkForSuspensionPointInsideMonitor(methodNode, suspensionPoints)
 
@@ -103,10 +100,21 @@ class CoroutineTransformerMethodVisitor(
         val actualCoroutineStart = methodNode.instructions.first
 
         if (isForNamedFunction) {
-            ReturnUnitMethodTransformer.transform(containingClassInternalName, methodNode)
+            if (putContinuationParameterToLvt) {
+                addCompletionParameterToLVT(methodNode)
+            }
 
-            if (allSuspensionPointsAreTailCalls(containingClassInternalName, methodNode, suspensionPoints)) {
-                dropSuspensionMarkers(methodNode, suspensionPoints)
+            val examiner = MethodNodeExaminer(
+                languageVersionSettings,
+                containingClassInternalName,
+                methodNode,
+                suspensionPoints,
+                disableTailCallOptimizationForFunctionReturningUnit
+            )
+            if (examiner.allSuspensionPointsAreTailCalls(suspensionPoints)) {
+                examiner.replacePopsBeforeSafeUnitInstancesWithCoroutineSuspendedChecks()
+                dropSuspensionMarkers(methodNode)
+                dropUnboxInlineClassMarkers(methodNode, suspensionPoints)
                 return
             }
 
@@ -117,8 +125,6 @@ class CoroutineTransformerMethodVisitor(
             continuationIndex = methodNode.maxLocals++
 
             prepareMethodNodePreludeForNamedFunction(methodNode)
-        } else {
-            ReturnUnitMethodTransformer.cleanUpReturnsUnitMarkers(methodNode, ReturnUnitMethodTransformer.findReturnsUnitMarks(methodNode))
         }
 
         for (suspensionPoint in suspensionPoints) {
@@ -128,11 +134,9 @@ class CoroutineTransformerMethodVisitor(
         // Actual max stack might be increased during the previous phases
         updateMaxStack(methodNode)
 
-        // Remove unreachable suspension points
-        // If we don't do this, then relevant frames will not be analyzed, that is unexpected from point of view of next steps (e.g. variable spilling)
-        removeUnreachableSuspensionPointsAndExitPoints(methodNode, suspensionPoints)
-
         UninitializedStoresProcessor(methodNode, shouldPreserveClassInitialization).run()
+
+        updateLvtAccordingToLiveness(methodNode, isForNamedFunction)
 
         val spilledToVariableMapping = spillVariables(suspensionPoints, methodNode)
 
@@ -140,8 +144,11 @@ class CoroutineTransformerMethodVisitor(
 
         val suspensionPointLineNumbers = suspensionPoints.map { findSuspensionPointLineNumber(it) }
 
-        val continuationLabels = suspensionPoints.withIndex().map {
-            transformCallAndReturnContinuationLabel(it.index + 1, it.value, methodNode, suspendMarkerVarIndex)
+        // Create states in state-machine, to which state-machine can jump
+        val stateLabels = suspensionPoints.withIndex().map {
+            transformCallAndReturnStateLabel(
+                it.index + 1, it.value, methodNode, suspendMarkerVarIndex, suspensionPointLineNumbers[it.index]
+            )
         }
 
         methodNode.instructions.apply {
@@ -164,7 +171,7 @@ class CoroutineTransformerMethodVisitor(
                         0,
                         suspensionPoints.size,
                         defaultLabel,
-                        firstStateLabel, *continuationLabels.toTypedArray()
+                        firstStateLabel, *stateLabels.toTypedArray()
                     ),
                     firstStateLabel
                 )
@@ -176,24 +183,123 @@ class CoroutineTransformerMethodVisitor(
             insert(last, defaultLabel)
 
             insert(last, withInstructionAdapter {
-                AsmUtil.genThrow(this, "java/lang/IllegalStateException", "call to 'resume' before 'invoke' with coroutine")
+                AsmUtil.genThrow(this, "java/lang/IllegalStateException", ILLEGAL_STATE_ERROR_MESSAGE)
                 areturn(Type.VOID_TYPE)
             })
         }
 
-        dropSuspensionMarkers(methodNode, suspensionPoints)
+        initializeFakeInlinerVariables(methodNode, stateLabels)
+
+        dropSuspensionMarkers(methodNode)
+        dropUnboxInlineClassMarkers(methodNode, suspensionPoints)
         methodNode.removeEmptyCatchBlocks()
 
-        // The parameters (and 'this') shall live throughout the method, otherwise, d8 emits warning about invalid debug info
-        val startLabel = LabelNode()
-        val endLabel = LabelNode()
-        methodNode.instructions.insertBefore(methodNode.instructions.first, startLabel)
-        methodNode.instructions.insert(methodNode.instructions.last, endLabel)
-
-        fixLvtForParameters(methodNode, startLabel, endLabel)
-
-        if (languageVersionSettings.isReleaseCoroutines() && !isCrossinlineLambda) {
+        if (languageVersionSettings.isReleaseCoroutines()) {
             writeDebugMetadata(methodNode, suspensionPointLineNumbers, spilledToVariableMapping)
+        }
+    }
+
+    // When suspension point is inlined, it is in range of fake inliner variables.
+    // Path from TABLESWITCH into unspilling goes to latter part of the range.
+    // In this case the variables are uninitialized, initialize them
+    private fun initializeFakeInlinerVariables(methodNode: MethodNode, stateLabels: List<LabelNode>) {
+        for (stateLabel in stateLabels) {
+            for (record in methodNode.localVariables) {
+                if (isFakeLocalVariableForInline(record.name) &&
+                    methodNode.instructions.indexOf(record.start) < methodNode.instructions.indexOf(stateLabel) &&
+                    methodNode.instructions.indexOf(stateLabel) < methodNode.instructions.indexOf(record.end)
+                ) {
+                    methodNode.instructions.insert(stateLabel, withInstructionAdapter {
+                        iconst(0)
+                        store(record.index, Type.INT_TYPE)
+                    })
+                }
+            }
+        }
+    }
+
+    private fun addCompletionParameterToLVT(methodNode: MethodNode) {
+        val index =
+            /*  all args */ Type.getMethodType(methodNode.desc).argumentTypes.fold(0) { a, b -> a + b.size } +
+                /* this */ (if (isStatic(methodNode.access)) 0 else 1) -
+                /* only last */ 1
+        val startLabel = with(methodNode.instructions) {
+            if (first is LabelNode) first as LabelNode
+            else LabelNode().also { insertBefore(first, it) }
+        }
+
+        val endLabel = with(methodNode.instructions) {
+            if (last is LabelNode) last as LabelNode
+            else LabelNode().also { insert(last, it) }
+        }
+
+        // When compiling with the old backend against the bytecode generated by JVM IR, $completion may already be in LVT.
+        if (methodNode.localVariables.any {
+                it.name == SUSPEND_FUNCTION_COMPLETION_PARAMETER_NAME &&
+                        areLabelsBeforeSameInsn(startLabel, it.start) &&
+                        areLabelsBeforeSameInsn(endLabel, it.end)
+            }) {
+            return
+        }
+
+        methodNode.localVariables.add(
+            LocalVariableNode(
+                SUSPEND_FUNCTION_COMPLETION_PARAMETER_NAME,
+                languageVersionSettings.continuationAsmType().descriptor,
+                null,
+                startLabel,
+                endLabel,
+                index
+            )
+        )
+    }
+
+    /* Put { POP, GETSTATIC Unit } after suspension point if suspension point is a call of suspend function, that returns Unit.
+     *
+     * Otherwise, upon resume, the function would seem to not return Unit, despite being declared as returning Unit.
+     *
+     * This happens when said function is tail-call and its callee does not return Unit.
+     *
+     * Let's have an example
+     *
+     *   suspend fun int(): Int = suspendCoroutine { ...; 1 }
+     *
+     *   suspend fun unit() {
+     *     int()
+     *   }
+     *
+     *   suspend fun main() {
+     *     println(unit())
+     *   }
+     *
+     * So, in order to understand the necessity of { POP, GETSTATIC Unit } inside `main`, we need to consider two different scenarios
+     *
+     *   1. `unit` is not a tail-call function.
+     *   2. `unit` is a tail-call function.
+     *
+     * When `unit` is a not tail-call function, calling `resumeWith` on its continuation will resume `unit`,
+     * it will hit { GETSTATIC Unit; ARETURN } and this Unit will be the result of the suspend call. `unit`'s continuation will then call
+     * `main` continuation's `resumeWith`, passing the Unit instance. The continuation in turn will resume `main` and the Unit will be
+     * the result of `unit()` call. This result will then printed.
+     *
+     * However, when `unit` is a tail-call function, there is no continuation, generated for it. This is the point of tail-call
+     * optimization. Thus, resume call will skip `unit` and land direcly in `main` continuation's `resumeWith`. And its result is not
+     * Unit. Thus, we must ignore this result on call-site and use Unit instead. In other words, POP the result and GETSTATIC Unit
+     * instead.
+     */
+    private fun replaceReturnsUnitMarkersWithPushingUnitOnStack(methodNode: MethodNode) {
+        for (marker in methodNode.instructions.asSequence().filter(::isReturnsUnitMarker).toList()) {
+            assert(marker.next?.next?.let { isAfterSuspendMarker(it) } == true) {
+                "Expected AfterSuspendMarker after ReturnUnitMarker, got ${marker.next?.next}"
+            }
+            methodNode.instructions.insert(
+                marker.next.next,
+                withInstructionAdapter {
+                    pop()
+                    getstatic("kotlin/Unit", "INSTANCE", "Lkotlin/Unit;")
+                }
+            )
+            methodNode.instructions.removeAll(listOf(marker.previous, marker))
         }
     }
 
@@ -231,41 +337,16 @@ class CoroutineTransformerMethodVisitor(
                     sourceFile,
                     findSuspensionPointLineNumber(suspensionPoint)?.line ?: -1
                 )
-                diagnostics.report(ErrorsJvm.SUSPENSION_POINT_INSIDE_MONITOR.on(element, "$stackTraceElement"))
+                reportSuspensionPointInsideMonitor("$stackTraceElement")
                 return
             }
-        }
-    }
-
-    private fun fixLvtForParameters(methodNode: MethodNode, startLabel: LabelNode, endLabel: LabelNode) {
-        // We need to skip continuation, since the inliner likes to remap variables there.
-        // But this is not a problem, since we have separate $continuation LVT entry
-
-        val paramsNum =
-                /* this */ (if (internalNameForDispatchReceiver != null) 1 else 0) +
-                /* real params */ Type.getArgumentTypes(methodNode.desc).size -
-                /* no continuation */ if (isForNamedFunction) 1 else 0
-
-        for (i in 0..paramsNum) {
-            fixRangeOfLvtRecord(methodNode, i, startLabel, endLabel)
-        }
-    }
-
-    private fun fixRangeOfLvtRecord(methodNode: MethodNode, index: Int, startLabel: LabelNode, endLabel: LabelNode) {
-        val vars = methodNode.localVariables.filter { it.index == index }
-        assert(vars.size <= 1) {
-            "Someone else occupies parameter's slot at $index"
-        }
-        vars.firstOrNull()?.let {
-            it.start = startLabel
-            it.end = endLabel
         }
     }
 
     private fun writeDebugMetadata(
         methodNode: MethodNode,
         suspensionPointLineNumbers: List<LineNumberNode?>,
-        spilledToLocalMapping: List<List<SpilledVariableDescriptor>>
+        spilledToLocalMapping: List<List<SpilledVariableAndField>>
     ) {
         val lines = suspensionPointLineNumbers.map { it?.line ?: -1 }
         val metadata = classBuilderForCoroutineState.newAnnotation(DEBUG_METADATA_ANNOTATION_ASM_TYPE.descriptor, true)
@@ -294,18 +375,28 @@ class CoroutineTransformerMethodVisitor(
 
     // Warning! This is _continuation_, not _completion_, it can be allocated inside the method, thus, it is incorrect to treat it
     // as a parameter
-    private fun addContinuationToLvt(methodNode: MethodNode, startLabel: LabelNode) {
-        val endLabel = LabelNode()
-        methodNode.instructions.insert(methodNode.instructions.last, endLabel)
-        methodNode.localVariables.add(
-            LocalVariableNode(
-                "\$continuation",
-                languageVersionSettings.continuationAsmType().descriptor,
-                null,
-                startLabel,
-                endLabel,
-                continuationIndex
-            )
+    private fun addContinuationAndResultToLvt(
+        methodNode: MethodNode,
+        startLabel: Label,
+        resultStartLabel: Label
+    ) {
+        val endLabel = Label()
+        methodNode.instructions.add(withInstructionAdapter { mark(endLabel) })
+        methodNode.visitLocalVariable(
+            CONTINUATION_VARIABLE_NAME,
+            languageVersionSettings.continuationAsmType().descriptor,
+            null,
+            startLabel,
+            endLabel,
+            continuationIndex
+        )
+        methodNode.visitLocalVariable(
+            SUSPEND_CALL_RESULT_NAME,
+            AsmTypes.OBJECT_TYPE.descriptor,
+            null,
+            resultStartLabel,
+            endLabel,
+            dataIndex
         )
     }
 
@@ -433,11 +524,14 @@ class CoroutineTransformerMethodVisitor(
 
             visitLabel(afterCoroutineStateCreated)
 
-            addContinuationToLvt(methodNode, LabelNode(afterCoroutineStateCreated))
-
             visitVarInsn(Opcodes.ALOAD, continuationIndex)
             getfield(classBuilderForCoroutineState.thisName, languageVersionSettings.dataFieldName(), AsmTypes.OBJECT_TYPE.descriptor)
             visitVarInsn(Opcodes.ASTORE, dataIndex)
+
+            val resultStartLabel = Label()
+            visitLabel(resultStartLabel)
+
+            addContinuationAndResultToLvt(methodNode, afterCoroutineStateCreated, resultStartLabel)
 
             if (!languageVersionSettings.isReleaseCoroutines()) {
                 visitVarInsn(Opcodes.ALOAD, continuationIndex)
@@ -447,67 +541,103 @@ class CoroutineTransformerMethodVisitor(
         })
     }
 
-    private fun removeUnreachableSuspensionPointsAndExitPoints(methodNode: MethodNode, suspensionPoints: MutableList<SuspensionPoint>) {
-        val dceResult = DeadCodeEliminationMethodTransformer().transformWithResult(containingClassInternalName, methodNode)
+    /*
+     * Every suspension point should be surrounded by two markers: before suspension point marker (start marker)
+     * and after suspension point marker (end marker)
+     *
+     * However, if suspension point comes from inline function and its end marker is unreachable, the end marker is removed by
+     * either inliner or bytecode optimization.
+     *
+     * If this happens, we should restore end marker.
+     *
+     * Since in both cases (when end marker is reachable and when it is not) all paths should lead to
+     * either a single end marker or to ATHROWs and ARETURNs, we just compute all paths from start marker until they reach
+     * these instructions.
+     */
+    private fun collectSuspensionPoints(methodNode: MethodNode): List<SuspensionPoint> {
+        // Exception paths lead outside suspension points, thus we should ignore them
+        val cfg = ControlFlowGraph.build(methodNode, followExceptions = false)
 
-        // If the suspension call begin is alive and suspension call end is dead
-        // (e.g., an inlined suspend function call ends with throwing a exception -- see KT-15017),
-        // this is an exit point for the corresponding coroutine.
-        // It doesn't introduce an additional state to the corresponding coroutine's FSM.
-        suspensionPoints.forEach {
-            if (dceResult.isAlive(it.suspensionCallBegin) && dceResult.isRemoved(it.suspensionCallEnd)) {
-                it.removeBeforeSuspendMarker(methodNode)
-            }
-        }
-
-        suspensionPoints.removeAll { dceResult.isRemoved(it.suspensionCallBegin) || dceResult.isRemoved(it.suspensionCallEnd) }
-    }
-
-    private fun collectSuspensionPoints(methodNode: MethodNode): MutableList<SuspensionPoint> {
-        val suspensionPoints = mutableListOf<SuspensionPoint>()
-        val beforeSuspensionPointMarkerStack = Stack<AbstractInsnNode>()
-
-        for (methodInsn in methodNode.instructions.toArray().filterIsInstance<MethodInsnNode>()) {
-            when {
-                isBeforeSuspendMarker(methodInsn) -> {
-                    beforeSuspensionPointMarkerStack.add(methodInsn.previous)
+        // DFS until end marker or ATHROW or ARETURN.
+        // return true if it contains nested suspension points, which happens when we inline suspend lambda
+        // with multiple suspension points via several inlines. See boxInline/state/stateMachine/passLambda.kt as an example.
+        // In this case we simply ignore them.
+        fun collectSuspensionPointEnds(
+            insn: AbstractInsnNode,
+            visited: MutableSet<AbstractInsnNode>,
+            ends: MutableSet<AbstractInsnNode>
+        ): Boolean {
+            if (!visited.add(insn)) return false
+            if (insn.opcode == Opcodes.ARETURN || insn.opcode == Opcodes.ATHROW || isAfterSuspendMarker(insn)) {
+                ends.add(insn)
+            } else {
+                for (index in cfg.getSuccessorsIndices(insn)) {
+                    val succ = methodNode.instructions[index]
+                    if (isBeforeSuspendMarker(succ)) return true
+                    if (collectSuspensionPointEnds(succ, visited, ends)) return true
                 }
-
-                isAfterSuspendMarker(methodInsn) -> {
-                    suspensionPoints.add(SuspensionPoint(beforeSuspensionPointMarkerStack.pop(), methodInsn))
-                }
             }
+            return false
         }
 
-        assert(beforeSuspensionPointMarkerStack.isEmpty()) { "Unbalanced suspension markers stack" }
-
-        return suspensionPoints
+        return methodNode.instructions.asSequence().filter {
+            isBeforeSuspendMarker(it)
+        }.mapNotNull { start ->
+            val ends = mutableSetOf<AbstractInsnNode>()
+            if (collectSuspensionPointEnds(start, mutableSetOf(), ends)) return@mapNotNull null
+            // Ignore suspension points, if the suspension call begin is alive and suspension call end is dead
+            // (e.g., an inlined suspend function call ends with throwing a exception -- see KT-15017),
+            // (also see boxInline/suspend/stateMachine/unreachableSuspendMarker.kt)
+            // this is an exit point for the corresponding coroutine.
+            val end = ends.find { isAfterSuspendMarker(it) } ?: return@mapNotNull null
+            SuspensionPoint(start.previous, end)
+        }.toList()
     }
 
-    private fun dropSuspensionMarkers(methodNode: MethodNode, suspensionPoints: List<SuspensionPoint>) {
-        // Drop markers
-        suspensionPoints.forEach {
-            it.removeBeforeSuspendMarker(methodNode)
-            it.removeAfterSuspendMarker(methodNode)
+    private fun dropSuspensionMarkers(methodNode: MethodNode) {
+        // Drop markers, including ones, which we ignored in recognizing phase
+        for (marker in methodNode.instructions.asSequence().filter { isBeforeSuspendMarker(it) || isAfterSuspendMarker(it) }.toList()) {
+            methodNode.instructions.removeAll(listOf(marker.previous, marker))
         }
     }
 
-    private fun spillVariables(suspensionPoints: List<SuspensionPoint>, methodNode: MethodNode): List<List<SpilledVariableDescriptor>> {
+    private fun dropUnboxInlineClassMarkers(methodNode: MethodNode, suspensionPoints: List<SuspensionPoint>) {
+        for (marker in methodNode.instructions.asSequence().filter { isBeforeUnboxInlineClassMarker(it) }.toList()) {
+            methodNode.instructions.removeAll(listOf(marker.previous, marker))
+        }
+        for (marker in methodNode.instructions.asSequence().filter { isAfterUnboxInlineClassMarker(it) }.toList()) {
+            methodNode.instructions.removeAll(listOf(marker.previous.previous, marker.previous, marker))
+        }
+        for (suspension in suspensionPoints) {
+            methodNode.instructions.removeAll(suspension.unboxInlineClassInstructions)
+        }
+    }
+
+    private fun spillVariables(suspensionPoints: List<SuspensionPoint>, methodNode: MethodNode): List<List<SpilledVariableAndField>> {
         val instructions = methodNode.instructions
-        val frames = performRefinedTypeAnalysis(methodNode, containingClassInternalName)
+        val frames =
+            if (useOldSpilledVarTypeAnalysis) performRefinedTypeAnalysis(methodNode, containingClassInternalName)
+            else performSpilledVariableFieldTypesAnalysis(methodNode, containingClassInternalName)
+
         fun AbstractInsnNode.index() = instructions.indexOf(this)
 
-        fun Int.isInlinerFakeVariable(index: Int) = methodNode.localVariables.any {
-            (it.name.startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT) || it.name.startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION))
-                    && it.index == this
-                    && it.start.index() <= index && index <= it.end.index()
+        val maxVarsCountByType = mutableMapOf<Type, Int>()
+        var initialSpilledVariablesCount = 0
+        for ((type, count) in initialVarsCountByType) {
+            if (type == AsmTypes.OBJECT_TYPE) {
+                initialSpilledVariablesCount = count
+            }
+            maxVarsCountByType[type] = count
         }
 
-        // We postpone these actions because they change instruction indices that we use when obtaining frames
-        val postponedActions = mutableListOf<() -> Unit>()
-        val maxVarsCountByType = mutableMapOf<Type, Int>()
         val livenessFrames = analyzeLiveness(methodNode)
-        val spilledToVariableMapping = arrayListOf<List<SpilledVariableDescriptor>>()
+
+        // References shall be cleaned up after uspill (during spill in next suspension point) to prevent memory leaks,
+        val referencesToSpillBySuspensionPointIndex = arrayListOf<List<ReferenceToSpill>>()
+        // while primitives shall not
+        val primitivesToSpillBySuspensionPointIndex = arrayListOf<List<PrimitiveToSpill>>()
+
+        // Collect information about spillable variables, that we use to determine which variables we need to cleanup
 
         for (suspension in suspensionPoints) {
             val suspensionCallBegin = suspension.suspensionCallBegin
@@ -534,7 +664,8 @@ class CoroutineTransformerMethodVisitor(
             // NB: it's also rather useful for sake of optimization
             val livenessFrame = livenessFrames[suspensionCallBegin.index()]
 
-            val spilledToVariable = arrayListOf<SpilledVariableDescriptor>()
+            val referencesToSpill = arrayListOf<ReferenceToSpill>()
+            val primitivesToSpill = arrayListOf<PrimitiveToSpill>()
 
             // 0 - this
             // 1 - parameter
@@ -542,77 +673,180 @@ class CoroutineTransformerMethodVisitor(
             // k - continuation
             // k + 1 - data
             // k + 2 - exception
-            val variablesToSpill =
-                (0 until localsCount)
-                    .filterNot {
-                        it in setOf(continuationIndex, dataIndex, exceptionIndex) || it.isInlinerFakeVariable(suspensionCallBegin.index())
-                    }.map { Pair(it, frame.getLocal(it)) }
-                    .filter { (index, value) ->
-                        (index == 0 && needDispatchReceiver && isForNamedFunction) ||
-                                (value != StrictBasicValue.UNINITIALIZED_VALUE && livenessFrame.isAlive(index))
-                    }
+            for (slot in 0 until localsCount) {
+                if (slot == continuationIndex || slot == dataIndex || slot == exceptionIndex) continue
+                val value = frame.getLocal(slot)
+                if (value.type == null || !livenessFrame.isAlive(slot)) continue
 
-            for ((index, basicValue) in variablesToSpill) {
-                if (basicValue === StrictBasicValue.NULL_VALUE) {
-                    postponedActions.add {
-                        with(instructions) {
-                            insert(suspension.tryCatchBlockEndLabelAfterSuspensionCall, withInstructionAdapter {
-                                aconst(null)
-                                store(index, AsmTypes.OBJECT_TYPE)
-                            })
-                        }
-                    }
+                if (value == StrictBasicValue.NULL_VALUE) {
+                    referencesToSpill += slot to null
                     continue
                 }
 
-                val type = basicValue.type
+                val type = value.type!!
                 val normalizedType = type.normalize()
 
                 val indexBySort = varsCountByType[normalizedType]?.plus(1) ?: 0
                 varsCountByType[normalizedType] = indexBySort
 
                 val fieldName = normalizedType.fieldNameForVar(indexBySort)
-                localVariableName(methodNode, index, suspension.suspensionCallEnd.next.index())
-                    ?.let { spilledToVariable.add(SpilledVariableDescriptor(fieldName, it)) }
-
-                postponedActions.add {
-                    with(instructions) {
-                        // store variable before suspension call
-                        insertBefore(suspension.suspensionCallBegin, withInstructionAdapter {
-                            load(continuationIndex, AsmTypes.OBJECT_TYPE)
-                            load(index, type)
-                            StackValue.coerce(type, normalizedType, this)
-                            putfield(classBuilderForCoroutineState.thisName, fieldName, normalizedType.descriptor)
-                        })
-
-                        // restore variable after suspension call
-                        insert(suspension.tryCatchBlockEndLabelAfterSuspensionCall, withInstructionAdapter {
-                            load(continuationIndex, AsmTypes.OBJECT_TYPE)
-                            getfield(classBuilderForCoroutineState.thisName, fieldName, normalizedType.descriptor)
-                            StackValue.coerce(normalizedType, type, this)
-                            store(index, type)
-                        })
-                    }
+                if (normalizedType == AsmTypes.OBJECT_TYPE) {
+                    referencesToSpill += slot to SpillableVariable(value, type, normalizedType, fieldName)
+                } else {
+                    primitivesToSpill += slot to SpillableVariable(value, type, normalizedType, fieldName)
                 }
             }
 
-            spilledToVariableMapping.add(spilledToVariable)
+            referencesToSpillBySuspensionPointIndex += referencesToSpill
+            primitivesToSpillBySuspensionPointIndex += primitivesToSpill
 
-            varsCountByType.forEach {
-                maxVarsCountByType[it.key] = Math.max(maxVarsCountByType[it.key] ?: 0, it.value)
+            for ((type, index) in varsCountByType) {
+                maxVarsCountByType[type] = max(maxVarsCountByType[type] ?: 0, index)
             }
         }
 
-        postponedActions.forEach(Function0<Unit>::invoke)
+        // Calculate variables to cleanup
 
-        maxVarsCountByType.forEach { entry ->
+        // Use CFG to calculate amount of spilled variables in previous suspension point (P) and current one (C).
+        // All fields from L$C to L$P should be cleaned. I.e. we should spill ACONST_NULL to them.
+        val cfg = ControlFlowGraph.build(methodNode)
+
+        // Collect all immediately preceding suspension points. I.e. suspension points, from which there is a path
+        // into current one, that does not cross other suspension points.
+        val suspensionPointEnds = suspensionPoints.associateBy { it.suspensionCallEnd }
+        fun findSuspensionPointPredecessors(suspension: SuspensionPoint): List<SuspensionPoint> {
+            val visited = mutableSetOf<AbstractInsnNode>()
+            fun dfs(current: AbstractInsnNode): List<SuspensionPoint> {
+                if (!visited.add(current)) return emptyList()
+                suspensionPointEnds[current]?.let { return listOf(it) }
+                return cfg.getPredecessorsIndices(current).flatMap { dfs(instructions[it]) }
+            }
+            return dfs(suspension.suspensionCallBegin)
+        }
+
+        val predSuspensionPoints = suspensionPoints.associateWith { findSuspensionPointPredecessors(it) }
+
+        // Calculate all pairs SuspensionPoint -> C and P, where P is minimum of all preds' Cs
+        fun countVariablesToSpill(index: Int): Int =
+            referencesToSpillBySuspensionPointIndex[index].count { (_, variable) -> variable != null }
+
+        val referencesToCleanBySuspensionPointIndex = arrayListOf<Pair<Int, Int>>() // current to pred
+        for (suspensionPointIndex in suspensionPoints.indices) {
+            val suspensionPoint = suspensionPoints[suspensionPointIndex]
+            val currentSpilledReferencesCount = countVariablesToSpill(suspensionPointIndex)
+            val preds = predSuspensionPoints[suspensionPoint]
+            val predSpilledReferencesCount =
+                if (preds.isNullOrEmpty()) initialSpilledVariablesCount
+                else preds.maxOf { countVariablesToSpill(suspensionPoints.indexOf(it)) }
+            referencesToCleanBySuspensionPointIndex += currentSpilledReferencesCount to predSpilledReferencesCount
+        }
+
+        // Mutate method node
+
+        fun generateSpillAndUnspill(suspension: SuspensionPoint, slot: Int, spillableVariable: SpillableVariable?) {
+            if (spillableVariable == null) {
+                with(instructions) {
+                    insert(suspension.tryCatchBlockEndLabelAfterSuspensionCall, withInstructionAdapter {
+                        aconst(null)
+                        store(slot, AsmTypes.OBJECT_TYPE)
+                    })
+                }
+                return
+            }
+
+            with(instructions) {
+                // store variable before suspension call
+                insertBefore(suspension.suspensionCallBegin, withInstructionAdapter {
+                    load(continuationIndex, AsmTypes.OBJECT_TYPE)
+                    load(slot, spillableVariable.type)
+                    StackValue.coerce(spillableVariable.type, spillableVariable.normalizedType, this)
+                    putfield(
+                        classBuilderForCoroutineState.thisName,
+                        spillableVariable.fieldName,
+                        spillableVariable.normalizedType.descriptor
+                    )
+                })
+
+                // restore variable after suspension call
+                insert(suspension.tryCatchBlockEndLabelAfterSuspensionCall, withInstructionAdapter {
+                    load(continuationIndex, AsmTypes.OBJECT_TYPE)
+                    getfield(
+                        classBuilderForCoroutineState.thisName,
+                        spillableVariable.fieldName,
+                        spillableVariable.normalizedType.descriptor
+                    )
+                    StackValue.coerce(spillableVariable.normalizedType, spillableVariable.type, this)
+                    store(slot, spillableVariable.type)
+                })
+            }
+        }
+
+        fun cleanUpField(suspension: SuspensionPoint, fieldIndex: Int) {
+            with(instructions) {
+                insertBefore(suspension.suspensionCallBegin, withInstructionAdapter {
+                    load(continuationIndex, AsmTypes.OBJECT_TYPE)
+                    aconst(null)
+                    putfield(
+                        classBuilderForCoroutineState.thisName,
+                        "L\$$fieldIndex",
+                        AsmTypes.OBJECT_TYPE.descriptor
+                    )
+                })
+            }
+        }
+
+        for (suspensionPointIndex in suspensionPoints.indices) {
+            val suspension = suspensionPoints[suspensionPointIndex]
+            for ((slot, referenceToSpill) in referencesToSpillBySuspensionPointIndex[suspensionPointIndex]) {
+                generateSpillAndUnspill(suspension, slot, referenceToSpill)
+            }
+            val (currentSpilledCount, predSpilledCount) = referencesToCleanBySuspensionPointIndex[suspensionPointIndex]
+            if (predSpilledCount > currentSpilledCount) {
+                for (fieldIndex in currentSpilledCount until predSpilledCount) {
+                    cleanUpField(suspension, fieldIndex)
+                }
+            }
+            for ((slot, primitiveToSpill) in primitivesToSpillBySuspensionPointIndex[suspensionPointIndex]) {
+                generateSpillAndUnspill(suspension, slot, primitiveToSpill)
+            }
+        }
+
+        for (entry in maxVarsCountByType) {
             val (type, maxIndex) = entry
-            for (index in 0..maxIndex) {
+            for (index in (initialVarsCountByType[type]?.plus(1) ?: 0)..maxIndex) {
                 classBuilderForCoroutineState.newField(
                     JvmDeclarationOrigin.NO_ORIGIN, AsmUtil.NO_FLAG_PACKAGE_PRIVATE,
                     type.fieldNameForVar(index), type.descriptor, null, null
                 )
             }
+        }
+
+        // Calculate debug metadata mapping
+
+        fun calculateSpilledVariableAndField(
+            suspension: SuspensionPoint,
+            slot: Int,
+            spillableVariable: SpillableVariable?
+        ): SpilledVariableAndField? {
+            if (spillableVariable == null) return null
+            val name = localVariableName(methodNode, slot, suspension.suspensionCallEnd.next.index()) ?: return null
+            return SpilledVariableAndField(spillableVariable.fieldName, name)
+        }
+
+        val spilledToVariableMapping = arrayListOf<List<SpilledVariableAndField>>()
+        for (suspensionPointIndex in suspensionPoints.indices) {
+            val suspension = suspensionPoints[suspensionPointIndex]
+
+            val spilledToVariable = arrayListOf<SpilledVariableAndField>()
+
+            referencesToSpillBySuspensionPointIndex[suspensionPointIndex].mapNotNullTo(spilledToVariable) { (slot, spillableVariable) ->
+                calculateSpilledVariableAndField(suspension, slot, spillableVariable)
+            }
+            primitivesToSpillBySuspensionPointIndex[suspensionPointIndex].mapNotNullTo(spilledToVariable) { (slot, spillableVariable) ->
+                calculateSpilledVariableAndField(suspension, slot, spillableVariable)
+            }
+
+            spilledToVariableMapping += spilledToVariable
         }
         return spilledToVariableMapping
     }
@@ -635,23 +869,24 @@ class CoroutineTransformerMethodVisitor(
     private val SuspensionPoint.tryCatchBlockEndLabelAfterSuspensionCall: LabelNode
         get() {
             assert(suspensionCallEnd.next is LabelNode) {
-                "Next instruction after ${this} should be a label, but " +
+                "Next instruction after $this should be a label, but " +
                         "${suspensionCallEnd.next::class.java}/${suspensionCallEnd.next.opcode} was found"
             }
 
             return suspensionCallEnd.next as LabelNode
         }
 
-    private fun transformCallAndReturnContinuationLabel(
+    private fun transformCallAndReturnStateLabel(
         id: Int,
         suspension: SuspensionPoint,
         methodNode: MethodNode,
-        suspendMarkerVarIndex: Int
+        suspendMarkerVarIndex: Int,
+        suspendPointLineNumber: LineNumberNode?
     ): LabelNode {
-        val continuationLabel = LabelNode()
+        val stateLabel = LabelNode().linkWithLabel()
         val continuationLabelAfterLoadedResult = LabelNode()
         val suspendElementLineNumber = lineNumber
-        val nextLineNumberNode = suspension.suspensionCallEnd.findNextOrNull { it is LineNumberNode } as? LineNumberNode
+        var nextLineNumberNode = nextDefinitelyHitLineNumber(suspension)
         with(methodNode.instructions) {
             // Save state
             insertBefore(
@@ -676,7 +911,7 @@ class CoroutineTransformerMethodVisitor(
                 load(suspendMarkerVarIndex, AsmTypes.OBJECT_TYPE)
                 areturn(AsmTypes.OBJECT_TYPE)
                 // Mark place for continuation
-                visitLabel(continuationLabel.label)
+                visitLabel(stateLabel.label)
             })
 
             // After suspension point there is always three nodes: L1, NOP, L2
@@ -684,50 +919,46 @@ class CoroutineTransformerMethodVisitor(
             // See 'splitTryCatchBlocksContainingSuspensionPoint'
             val possibleTryCatchBlockStart = suspension.tryCatchBlocksContinuationLabel
 
-            // Remove NOP as it's unnecessary anymore
+            // Move NOP, which is inserted in `splitTryCatchBlocksContainingSuspentionPoint`, inside the try catch block,
+            // so the inliner can transform suspend lambdas during inlining
             assert(possibleTryCatchBlockStart.previous.opcode == Opcodes.NOP) {
                 "NOP expected but ${possibleTryCatchBlockStart.previous.opcode} was found"
             }
             remove(possibleTryCatchBlockStart.previous)
 
-            val afterSuspensionPointLineNumber = nextLineNumberNode?.line ?: suspendElementLineNumber
             insert(possibleTryCatchBlockStart, withInstructionAdapter {
+                nop()
                 generateResumeWithExceptionCheck(languageVersionSettings.isReleaseCoroutines(), dataIndex, exceptionIndex)
 
                 // Load continuation argument just like suspending function returns it
                 load(dataIndex, AsmTypes.OBJECT_TYPE)
+                // Unbox inline class, since this is the resume path and unlike the direct path
+                // the class is boxed.
+                for (insn in suspension.unboxInlineClassInstructions) {
+                    insn.accept(this)
+                }
 
                 visitLabel(continuationLabelAfterLoadedResult.label)
 
-                // Extend next instruction linenumber. Can't use line number of suspension point here because both non-suspended execution
-                // and re-entering after suspension passes this label.
-
-                // However, for primitives we generate it separately
-                if (possibleTryCatchBlockStart.next?.isUnboxingSequence() != true) {
-                    visitLineNumber(afterSuspensionPointLineNumber, continuationLabelAfterLoadedResult.label)
+                if (nextLineNumberNode != null) {
+                    // If there is a clear next linenumber instruction, extend it. Can't use line number of suspension point
+                    // here because both non-suspended execution and re-entering after suspension passes this label.
+                    if (possibleTryCatchBlockStart.next?.opcode?.let {
+                            it != Opcodes.ASTORE && it != Opcodes.CHECKCAST && it != Opcodes.INVOKESTATIC &&
+                                    it != Opcodes.INVOKEVIRTUAL && it != Opcodes.INVOKEINTERFACE
+                        } == true
+                    ) {
+                        visitLineNumber(nextLineNumberNode!!.line, continuationLabelAfterLoadedResult.label)
+                    } else {
+                        // But keep the linenumber if the result of the call is used afterwards
+                        nextLineNumberNode = null
+                    }
+                } else if (suspendPointLineNumber != null) {
+                    // If there is no clear next linenumber instruction, the continuation is still on the
+                    // same line as the suspend point.
+                    visitLineNumber(suspendPointLineNumber.line, continuationLabelAfterLoadedResult.label)
                 }
             })
-
-            // In code like val a = suspendReturnsInt()
-            // `a` is coerced from Object to int, and coercion happens before scopeStart's mark:
-            //  LL
-            //   CHECKCAST java/lang/Number
-            //   INVOKEVIRTUAL java/lang/Number.intValue ()I
-            //   ISTORE N
-            //  LM
-            //   /* put lineNumber here */
-            //   ...
-            //  LOCALVARIABLE name LM LK N
-            if (continuationLabelAfterLoadedResult.label.info.safeAs<AbstractInsnNode>()?.next?.isUnboxingSequence() == true) {
-                // Find next label after unboxing and put linenumber there
-                var current = (continuationLabelAfterLoadedResult.label.info as AbstractInsnNode).next
-                while (current != null && current !is LabelNode) {
-                    current = current.next
-                }
-                if (current != null) {
-                    insert(current, LineNumberNode(afterSuspensionPointLineNumber, current.cast()))
-                }
-            }
 
             if (nextLineNumberNode != null) {
                 // Remove the line number instruction as it now covered with line number on continuation label.
@@ -736,11 +967,21 @@ class CoroutineTransformerMethodVisitor(
             }
         }
 
-        return continuationLabel
+        return stateLabel
     }
 
-    private fun AbstractInsnNode.isUnboxingSequence(): Boolean {
-        return opcode == Opcodes.CHECKCAST && next?.isPrimitiveUnboxing() == true
+    // Find the next line number instruction that is defintely hit. That is, a line number
+    // that comes before any branch or method call.
+    private fun nextDefinitelyHitLineNumber(suspension: SuspensionPoint): LineNumberNode? {
+        var next = suspension.suspensionCallEnd.next
+        while (next != null) {
+            when {
+                next.isBranchOrCall -> return null
+                next is LineNumberNode -> return next
+                else -> next = next.next
+            }
+        }
+        return next
     }
 
     // It's necessary to preserve some sensible invariants like there should be no jump in the middle of try-catch-block
@@ -772,29 +1013,40 @@ class CoroutineTransformerMethodVisitor(
         instructions.insert(firstLabel.next, secondLabel)
 
         methodNode.tryCatchBlocks =
-                methodNode.tryCatchBlocks.flatMap {
-                    val isContainingSuspensionPoint =
-                        instructions.indexOf(it.start) < beginIndex && beginIndex < instructions.indexOf(it.end)
+            methodNode.tryCatchBlocks.flatMap {
+                val isContainingSuspensionPoint =
+                    instructions.indexOf(it.start) < beginIndex && beginIndex < instructions.indexOf(it.end)
 
-                    if (isContainingSuspensionPoint) {
-                        assert(instructions.indexOf(it.start) < endIndex && endIndex < instructions.indexOf(it.end)) {
-                            "Try catch block containing marker before suspension point should also contain the marker after suspension point"
-                        }
-                        listOf(
-                            TryCatchBlockNode(it.start, firstLabel, it.handler, it.type),
-                            TryCatchBlockNode(secondLabel, it.end, it.handler, it.type)
-                        )
-                    } else
-                        listOf(it)
-                }
+                if (isContainingSuspensionPoint) {
+                    assert(instructions.indexOf(it.start) < endIndex && endIndex < instructions.indexOf(it.end)) {
+                        "Try catch block ${instructions.indexOf(it.start)}:${instructions.indexOf(it.end)} containing marker before " +
+                                "suspension point $beginIndex should also contain the marker after suspension point $endIndex"
+                    }
+                    listOf(
+                        TryCatchBlockNode(it.start, firstLabel, it.handler, it.type),
+                        TryCatchBlockNode(secondLabel, it.end, it.handler, it.type)
+                    )
+                } else
+                    listOf(it)
+            }
 
         suspensionPoint.tryCatchBlocksContinuationLabel = secondLabel
 
         return
     }
 
-    private data class SpilledVariableDescriptor(val fieldName: String, val variableName: String)
+    private data class SpilledVariableAndField(val fieldName: String, val variableName: String)
 }
+
+private class SpillableVariable(
+    val value: BasicValue,
+    val type: Type,
+    val normalizedType: Type,
+    val fieldName: String
+)
+
+private typealias ReferenceToSpill = Pair<Int, SpillableVariable?>
+private typealias PrimitiveToSpill = Pair<Int, SpillableVariable>
 
 internal fun InstructionAdapter.generateContinuationConstructorCall(
     objectTypeForState: Type?,
@@ -835,23 +1087,20 @@ internal fun InstructionAdapter.generateContinuationConstructorCall(
 
 private fun InstructionAdapter.generateResumeWithExceptionCheck(isReleaseCoroutines: Boolean, dataIndex: Int, exceptionIndex: Int) {
     // Check if resumeWithException has been called
-    load(if (isReleaseCoroutines) dataIndex else exceptionIndex, AsmTypes.OBJECT_TYPE)
-    dup()
-    val noExceptionLabel = Label()
 
     if (isReleaseCoroutines) {
-        instanceOf(AsmTypes.RESULT_FAILURE)
-        ifeq(noExceptionLabel)
-        // TODO: do we need this checkcast?
-        checkcast(AsmTypes.RESULT_FAILURE)
-        getfield(AsmTypes.RESULT_FAILURE.internalName, "exception", AsmTypes.JAVA_THROWABLE_TYPE.descriptor)
+        load(dataIndex, AsmTypes.OBJECT_TYPE)
+        invokestatic("kotlin/ResultKt", "throwOnFailure", "(Ljava/lang/Object;)V", false)
     } else {
+        load(exceptionIndex, AsmTypes.OBJECT_TYPE)
+        dup()
+        val noExceptionLabel = Label()
         ifnull(noExceptionLabel)
-    }
-    athrow()
+        athrow()
 
-    mark(noExceptionLabel)
-    pop()
+        mark(noExceptionLabel)
+        pop()
+    }
 }
 
 private fun Type.fieldNameForVar(index: Int) = descriptor.first() + "$" + index
@@ -864,7 +1113,7 @@ inline fun withInstructionAdapter(block: InstructionAdapter.() -> Unit): InsnLis
     return tmpMethodNode.instructions
 }
 
-private fun Type.normalize() =
+fun Type.normalize() =
     when (sort) {
         Type.ARRAY, Type.OBJECT -> AsmTypes.OBJECT_TYPE
         else -> this
@@ -879,7 +1128,7 @@ private fun Type.normalize() =
  * ICONST_1
  * INVOKESTATIC InlineMarker.mark()
  */
-private class SuspensionPoint(
+internal class SuspensionPoint(
     // ICONST_0
     val suspensionCallBegin: AbstractInsnNode,
     // INVOKESTATIC InlineMarker.mark()
@@ -887,16 +1136,26 @@ private class SuspensionPoint(
 ) {
     lateinit var tryCatchBlocksContinuationLabel: LabelNode
 
-    fun removeBeforeSuspendMarker(methodNode: MethodNode) {
-        methodNode.instructions.remove(suspensionCallBegin.next)
-        methodNode.instructions.remove(suspensionCallBegin)
+    val unboxInlineClassInstructions: List<AbstractInsnNode> = findUnboxInlineClassInstructions()
+
+    private fun findUnboxInlineClassInstructions(): List<AbstractInsnNode> {
+        val beforeMarker = suspensionCallEnd.next?.next ?: return emptyList()
+        if (!isBeforeUnboxInlineClassMarker(beforeMarker)) return emptyList()
+        val afterMarker = beforeMarker.findNextOrNull { isAfterUnboxInlineClassMarker(it) }
+            ?: error("Before unbox inline class marker without after unbox inline class marker")
+        return InsnSequence(beforeMarker.next, afterMarker.previous.previous).toList()
     }
 
-    fun removeAfterSuspendMarker(methodNode: MethodNode) {
-        methodNode.instructions.remove(suspensionCallEnd.previous)
-        methodNode.instructions.remove(suspensionCallEnd)
+    operator fun contains(insn: AbstractInsnNode): Boolean {
+        for (i in InsnSequence(suspensionCallBegin, suspensionCallEnd.next)) {
+            if (i == insn) return true
+        }
+        return false
     }
 }
+
+internal operator fun List<SuspensionPoint>.contains(insn: AbstractInsnNode): Boolean =
+    any { insn in it }
 
 internal fun getLastParameterIndex(desc: String, access: Int) =
     Type.getArgumentTypes(desc).dropLast(1).map { it.size }.sum() + (if (!isStatic(access)) 1 else 0)
@@ -928,107 +1187,134 @@ private fun getAllParameterTypes(desc: String, hasDispatchReceiver: Boolean, thi
     listOfNotNull(if (!hasDispatchReceiver) null else Type.getObjectType(thisName)).toTypedArray() +
             Type.getArgumentTypes(desc)
 
-private fun allSuspensionPointsAreTailCalls(
-    thisName: String,
-    methodNode: MethodNode,
-    suspensionPoints: List<SuspensionPoint>
-): Boolean {
-    val sourceFrames = MethodTransformer.analyze(thisName, methodNode, IgnoringCopyOperationSourceInterpreter())
-    val safelyReachableReturns = findSafelyReachableReturns(methodNode, sourceFrames)
-
-    val instructions = methodNode.instructions
-    return suspensionPoints.all { suspensionPoint ->
-        val beginIndex = instructions.indexOf(suspensionPoint.suspensionCallBegin)
-        val endIndex = instructions.indexOf(suspensionPoint.suspensionCallEnd)
-
-        if (isUnreachable(beginIndex, sourceFrames)) return@all true
-
-        val insideTryBlock = methodNode.tryCatchBlocks.any { block ->
-            val tryBlockStartIndex = instructions.indexOf(block.start)
-            val tryBlockEndIndex = instructions.indexOf(block.end)
-
-            beginIndex in tryBlockStartIndex..tryBlockEndIndex
-        }
-        if (insideTryBlock) return@all false
-
-        safelyReachableReturns[endIndex + 1] != null
-    }
-}
-
-internal class IgnoringCopyOperationSourceInterpreter : SourceInterpreter(Opcodes.API_VERSION) {
-    override fun copyOperation(insn: AbstractInsnNode?, value: SourceValue?) = value
-}
-
-/**
- * Let's call an instruction safe if its execution is always invisible: stack modifications, branching, variable insns (invisible in debug)
- *
- * For some instruction `insn` define the result as following:
- * - if there is a path leading to the non-safe instruction then result is `null`
- * - Otherwise result contains all the reachable ARETURN indices
- *
- * @return indices of safely reachable returns for each instruction in the method node
- */
-private fun findSafelyReachableReturns(methodNode: MethodNode, sourceFrames: Array<Frame<SourceValue?>?>): Array<Set<Int>?> {
-    val controlFlowGraph = ControlFlowGraph.build(methodNode)
-
-    val insns = methodNode.instructions
-    val reachableReturnsIndices = Array<Set<Int>?>(insns.size()) init@ { index ->
-        val insn = insns[index]
-
-        if (insn.opcode == Opcodes.ARETURN) {
-            if (isUnreachable(index, sourceFrames)) return@init null
-            return@init setOf(index)
-        }
-
-        if (!insn.isMeaningful || insn.opcode in SAFE_OPCODES || insn.isInvisibleInDebugVarInsn(methodNode) ||
-            isInlineMarker(insn)) {
-            setOf()
-        } else null
-    }
-
-    var changed: Boolean
-    do {
-        changed = false
-        for (index in 0 until insns.size()) {
-            if (insns[index].opcode == Opcodes.ARETURN) continue
-
-            @Suppress("RemoveExplicitTypeArguments")
-            val newResult =
-                controlFlowGraph
-                    .getSuccessorsIndices(index).plus(index)
-                    .map(reachableReturnsIndices::get)
-                    .fold<Set<Int>?, Set<Int>?>(mutableSetOf<Int>()) { acc, successorsResult ->
-                        if (acc != null && successorsResult != null) acc + successorsResult else null
-                    }
-
-            if (newResult != reachableReturnsIndices[index]) {
-                reachableReturnsIndices[index] = newResult
-                changed = true
-            }
-        }
-    } while (changed)
-
-    return reachableReturnsIndices
-}
-
-// Check whether this instruction is unreachable, i.e. there is no path leading to this instruction
-internal fun isUnreachable(index: Int, sourceFrames: Array<Frame<SourceValue?>?>) = sourceFrames[index] == null
-
-private fun AbstractInsnNode?.isInvisibleInDebugVarInsn(methodNode: MethodNode): Boolean {
-    val insns = methodNode.instructions
-    val index = insns.indexOf(this)
-    return (this is VarInsnNode && methodNode.localVariables.none {
-        it.index == `var` && index in it.start.let(insns::indexOf)..it.end.let(insns::indexOf)
-    })
-}
-
-private val SAFE_OPCODES =
-    ((Opcodes.DUP..Opcodes.DUP2_X2) + Opcodes.NOP + Opcodes.POP + Opcodes.POP2 + (Opcodes.IFEQ..Opcodes.GOTO)).toSet()
-
 internal fun replaceFakeContinuationsWithRealOnes(methodNode: MethodNode, continuationIndex: Int) {
     val fakeContinuations = methodNode.instructions.asSequence().filter(::isFakeContinuationMarker).toList()
     for (fakeContinuation in fakeContinuations) {
         methodNode.instructions.removeAll(listOf(fakeContinuation.previous.previous, fakeContinuation.previous))
         methodNode.instructions.set(fakeContinuation, VarInsnNode(Opcodes.ALOAD, continuationIndex))
+    }
+}
+
+/* We do not want to spill dead variables, thus, we shrink its LVT record to region, where the variable is alive,
+ * so, the variable will not be visible in debugger. User can still prolong life span of the variable by using it.
+ *
+ * This means, that function parameters do not longer span the whole function, including `this`.
+ * This might and will break some bytecode processors, including old versions of R8. See KT-24510.
+ */
+private fun updateLvtAccordingToLiveness(method: MethodNode, isForNamedFunction: Boolean) {
+    val liveness = analyzeLiveness(method)
+
+    fun List<LocalVariableNode>.findRecord(insnIndex: Int, variableIndex: Int): LocalVariableNode? {
+        for (variable in this) {
+            if (variable.index == variableIndex &&
+                method.instructions.indexOf(variable.start) <= insnIndex &&
+                insnIndex < method.instructions.indexOf(variable.end)
+            ) return variable
+        }
+        return null
+    }
+
+    fun isAlive(insnIndex: Int, variableIndex: Int): Boolean =
+        liveness[insnIndex].isAlive(variableIndex)
+
+    fun nextSuspensionPointEndLabel(insn: AbstractInsnNode): LabelNode {
+        val suspensionPoint =
+            InsnSequence(insn, method.instructions.last).firstOrNull { isAfterSuspendMarker(it) } ?: method.instructions.last
+        return suspensionPoint as? LabelNode ?: suspensionPoint.findNextOrNull { it is LabelNode } as LabelNode
+    }
+
+    fun nextSuspensionPointStartLabel(insn: AbstractInsnNode): LabelNode {
+        val suspensionPoint =
+            InsnSequence(insn, method.instructions.last).firstOrNull { isBeforeSuspendMarker(it) } ?: method.instructions.last
+        return suspensionPoint as? LabelNode ?: suspensionPoint.findPreviousOrNull { it is LabelNode } as LabelNode
+    }
+
+    fun min(a: LabelNode, b: LabelNode): LabelNode =
+        if (method.instructions.indexOf(a) < method.instructions.indexOf(b)) a else b
+
+    fun max(a: LabelNode, b: LabelNode): LabelNode =
+        if (method.instructions.indexOf(a) < method.instructions.indexOf(b)) b else a
+
+    fun containsSuspensionPoint(a: LabelNode, b: LabelNode): Boolean =
+        InsnSequence(min(a, b), max(a, b)).none { isBeforeSuspendMarker(it) }
+
+    val oldLvt = arrayListOf<LocalVariableNode>()
+    for (record in method.localVariables) {
+        oldLvt += record
+    }
+    method.localVariables.clear()
+    // Skip `this` for suspend lambda
+    val start = if (isForNamedFunction) 0 else 1
+    val oldLvtNodeToLatestNewLvtNode = mutableMapOf<LocalVariableNode, LocalVariableNode>()
+    for (variableIndex in start until method.maxLocals) {
+        if (oldLvt.none { it.index == variableIndex }) continue
+        var startLabel: LabelNode? = null
+        for (insnIndex in 0 until (method.instructions.size() - 1)) {
+            val insn = method.instructions[insnIndex]
+            if (!isAlive(insnIndex, variableIndex) && isAlive(insnIndex + 1, variableIndex)) {
+                startLabel = insn as? LabelNode ?: insn.findNextOrNull { it is LabelNode } as? LabelNode
+            }
+            if (isAlive(insnIndex, variableIndex) && !isAlive(insnIndex + 1, variableIndex)) {
+                // No variable in LVT -> do not add one
+                val lvtRecord = oldLvt.findRecord(insnIndex, variableIndex) ?: continue
+                if (lvtRecord.name == CONTINUATION_VARIABLE_NAME) continue
+                // Extend lvt record to the next suspension point
+                val endLabel = min(lvtRecord.end, nextSuspensionPointEndLabel(insn))
+                // startLabel can be null in case of parameters
+                @Suppress("NAME_SHADOWING") val startLabel = startLabel ?: lvtRecord.start
+                // Attempt to extend existing local variable node corresponding to the record in
+                // the original local variable table.
+                val recordToExtend: LocalVariableNode? = oldLvtNodeToLatestNewLvtNode[lvtRecord]
+                if (recordToExtend != null && containsSuspensionPoint(recordToExtend.end, startLabel)) {
+                    recordToExtend.end = endLabel
+                } else {
+                    val node = LocalVariableNode(lvtRecord.name, lvtRecord.desc, lvtRecord.signature, startLabel, endLabel, lvtRecord.index)
+                    if (lvtRecord !in oldLvtNodeToLatestNewLvtNode) {
+                        method.localVariables.add(node)
+                    }
+                    oldLvtNodeToLatestNewLvtNode[lvtRecord] = node
+                }
+            }
+        }
+    }
+
+    val deadVariables = arrayListOf<Int>()
+    outer@for (variableIndex in start until method.maxLocals) {
+        if (oldLvt.none { it.index == variableIndex }) continue
+        for (insnIndex in 0 until (method.instructions.size() - 1)) {
+            if (isAlive(insnIndex, variableIndex)) continue@outer
+        }
+        deadVariables += variableIndex
+    }
+
+    for (variable in oldLvt) {
+        // $continuation and $result are dead, but they are used by debugger, as well as fake inliner variables
+        // For example, $continuation is used to create async stack trace
+        if (variable.name == CONTINUATION_VARIABLE_NAME ||
+            variable.name == SUSPEND_CALL_RESULT_NAME ||
+            isFakeLocalVariableForInline(variable.name)
+        ) {
+            method.localVariables.add(variable)
+            continue
+        }
+        // this acts like $continuation for lambdas. For example, it is used by debugger to create async stack trace. Keep it.
+        if (variable.name == "this" && !isForNamedFunction) {
+            method.localVariables.add(variable)
+            continue
+        }
+
+        // Shrink LVT records of dead variables to the next suspension point
+        if (variable.index in deadVariables) {
+            method.localVariables.add(
+                LocalVariableNode(
+                    variable.name,
+                    variable.desc,
+                    variable.signature,
+                    variable.start,
+                    nextSuspensionPointStartLabel(variable.start),
+                    variable.index
+                )
+            )
+        }
     }
 }

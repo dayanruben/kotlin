@@ -1,5 +1,3 @@
-// IGNORE_BACKEND: JVM_IR
-
 class Range<T>(val min: T, val max: T)
 
 class Sprite
@@ -51,4 +49,4 @@ class A {
 
 fun calcRequiredLayoutSize(count: Int, max: Int, toInt: Int) = 0
 
-// 2 ISTORE 10
+// 3 ISTORE 10

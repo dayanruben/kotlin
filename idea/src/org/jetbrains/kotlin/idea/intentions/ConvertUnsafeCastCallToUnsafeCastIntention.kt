@@ -1,23 +1,28 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2000-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.project.platform
-import org.jetbrains.kotlin.js.resolve.JsPlatform
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.platform.js.isJs
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 
 class ConvertUnsafeCastCallToUnsafeCastIntention : SelfTargetingIntention<KtDotQualifiedExpression>(
-    KtDotQualifiedExpression::class.java, "Convert to unsafe cast"
+    KtDotQualifiedExpression::class.java,
+    KotlinBundle.lazyMessage("convert.to.unsafe.cast"),
 ) {
 
     override fun isApplicableTo(element: KtDotQualifiedExpression, caretOffset: Int): Boolean {
-        if (element.platform != JsPlatform) return false
+        if (!element.platform.isJs()) return false
         if ((element.selectorExpression as? KtCallExpression)?.calleeExpression?.text != "unsafeCast") return false
 
         val fqName = element.resolveToCall()?.resultingDescriptor?.fqNameOrNull()?.asString() ?: return false
@@ -25,7 +30,7 @@ class ConvertUnsafeCastCallToUnsafeCastIntention : SelfTargetingIntention<KtDotQ
 
         val type = element.callExpression?.typeArguments?.singleOrNull() ?: return false
 
-        text = "Convert to '${element.receiverExpression.text} as ${type.text}'"
+        setTextGetter(KotlinBundle.lazyMessage("convert.to.0.as.1", element.receiverExpression.text, type.text))
         return true
     }
 

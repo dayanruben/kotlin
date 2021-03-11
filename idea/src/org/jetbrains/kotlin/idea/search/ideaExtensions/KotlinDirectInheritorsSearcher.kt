@@ -21,9 +21,10 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiClass
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch
+import com.intellij.util.Processor
 import org.jetbrains.kotlin.asJava.toLightClassWithBuiltinMapping
-import org.jetbrains.kotlin.compatibility.ExecutorProcessor
-import org.jetbrains.kotlin.idea.caches.lightClasses.KtFakeLightClass
+import org.jetbrains.kotlin.asJava.classes.KtFakeLightClass
+import org.jetbrains.kotlin.asJava.toFakeLightClass
 import org.jetbrains.kotlin.idea.search.fileScope
 import org.jetbrains.kotlin.idea.stubindex.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.stubindex.KotlinSuperClassIndex
@@ -31,7 +32,7 @@ import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasByExpansionShortNameIn
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 
 open class KotlinDirectInheritorsSearcher : QueryExecutorBase<PsiClass, DirectClassInheritorsSearch.SearchParameters>(true) {
-    override fun processQuery(queryParameters: DirectClassInheritorsSearch.SearchParameters, consumer: ExecutorProcessor<PsiClass>) {
+    override fun processQuery(queryParameters: DirectClassInheritorsSearch.SearchParameters, consumer: Processor<in PsiClass>) {
         val baseClass = queryParameters.classToProcess
 
         val name = baseClass.name ?: return
@@ -64,7 +65,7 @@ open class KotlinDirectInheritorsSearcher : QueryExecutorBase<PsiClass, DirectCl
             names.forEach { name ->
                 KotlinSuperClassIndex.getInstance()
                     .get(name, baseClass.project, noLibrarySourceScope).asSequence()
-                    .mapNotNull { candidate -> candidate.toLightClassWithBuiltinMapping() ?: KtFakeLightClass(candidate) }
+                    .mapNotNull { candidate -> candidate.toLightClassWithBuiltinMapping() ?: candidate.toFakeLightClass() }
                     .filter { candidate -> candidate.isInheritor(baseClass, false) }
                     .forEach { candidate -> consumer.process(candidate) }
             }

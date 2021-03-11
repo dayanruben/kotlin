@@ -15,7 +15,6 @@
  */
 
 package org.jetbrains.kotlin.jps.build
-
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
@@ -43,20 +42,27 @@ import org.jetbrains.jps.model.JpsModuleRootModificationUtil
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.sdk.JpsSdk
 import org.jetbrains.jps.util.JpsPathUtil
+import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
+import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2MetadataCompilerArguments
-import org.jetbrains.kotlin.config.IncrementalCompilation
+import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.incremental.LookupSymbol
 import org.jetbrains.kotlin.incremental.testingUtils.*
 import org.jetbrains.kotlin.jps.build.dependeciestxt.ModulesTxt
 import org.jetbrains.kotlin.jps.build.dependeciestxt.ModulesTxtBuilder
-import org.jetbrains.kotlin.jps.incremental.*
+import org.jetbrains.kotlin.jps.build.fixtures.EnableICFixture
+import org.jetbrains.kotlin.jps.incremental.CacheAttributesDiff
+import org.jetbrains.kotlin.jps.incremental.CacheVersionManager
+import org.jetbrains.kotlin.jps.incremental.CompositeLookupsCacheAttributesManager
+import org.jetbrains.kotlin.jps.incremental.getKotlinCache
 import org.jetbrains.kotlin.jps.model.JpsKotlinFacetModuleExtension
+import org.jetbrains.kotlin.jps.model.kotlinCommonCompilerArguments
 import org.jetbrains.kotlin.jps.model.kotlinFacet
 import org.jetbrains.kotlin.jps.targets.KotlinModuleBuildTarget
+import org.jetbrains.kotlin.platform.idePlatformKind
 import org.jetbrains.kotlin.platform.impl.isJavaScript
 import org.jetbrains.kotlin.platform.impl.isJvm
 import org.jetbrains.kotlin.platform.orDefault
-import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.kotlin.utils.Printer
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -76,11 +82,23 @@ abstract class AbstractIncrementalJpsTest(
         private val TEMP_DIRECTORY_TO_USE = File(FileUtilRt.getTempDirectory())
 
         private val DEBUG_LOGGING_ENABLED = System.getProperty("debug.logging.enabled") == "true"
+
+        private const val ARGUMENTS_FILE_NAME = "args.txt"
+
+        private fun parseAdditionalArgs(testDir: File): List<String> {
+            return File(testDir, ARGUMENTS_FILE_NAME)
+                .takeIf { it.exists() }
+                ?.readText()
+                ?.split(" ", "\n")
+                ?.filter { it.isNotBlank() }
+                ?: emptyList()
+        }
     }
 
     protected lateinit var testDataDir: File
     protected lateinit var workDir: File
     protected lateinit var projectDescriptor: ProjectDescriptor
+    protected lateinit var additionalCommandLineArguments: List<String>
     // is used to compare lookup dumps in a human readable way (lookup symbols are hashed in an actual lookup storage)
     protected lateinit var lookupsDuringTest: MutableSet<LookupSymbol>
     private var isJvmICEnabledBackup: Boolean = false
@@ -119,15 +137,13 @@ abstract class AbstractIncrementalJpsTest(
         System.setProperties(props)
     }
 
+    private val enableICFixture = EnableICFixture()
+
     override fun setUp() {
         super.setUp()
 
+        enableICFixture.setUp()
         lookupsDuringTest = hashSetOf()
-        isJvmICEnabledBackup = IncrementalCompilation.isEnabledForJvm()
-        isJsICEnabledBackup = IncrementalCompilation.isEnabledForJs()
-
-        IncrementalCompilation.setIsEnabledForJvm(true)
-        IncrementalCompilation.setIsEnabledForJs(true)
 
         if (DEBUG_LOGGING_ENABLED) {
             enableDebugLogging()
@@ -142,10 +158,7 @@ abstract class AbstractIncrementalJpsTest(
         (AbstractIncrementalJpsTest::systemPropertiesBackup).javaField!![this] = null
 
         lookupsDuringTest.clear()
-
-        IncrementalCompilation.setIsEnabledForJvm(isJvmICEnabledBackup)
-        IncrementalCompilation.setIsEnabledForJs(isJsICEnabledBackup)
-
+        enableICFixture.tearDown()
         super.tearDown()
     }
 
@@ -174,12 +187,14 @@ abstract class AbstractIncrementalJpsTest(
                 BuilderRegistry.getInstance(),
                 myBuildParams,
                 CanceledStatus.NULL,
-                mockConstantSearch,
                 true
             )
             val buildResult = BuildResult()
             builder.addMessageHandler(buildResult)
             val finalScope = scope.build()
+            projectDescriptor.project.kotlinCommonCompilerArguments = projectDescriptor.project.kotlinCommonCompilerArguments.apply {
+                updateCommandLineArguments(this)
+            }
 
             builder.build(finalScope, false)
 
@@ -205,7 +220,7 @@ abstract class AbstractIncrementalJpsTest(
                 return MakeResult(
                     log = logger.log,
                     makeFailed = false,
-                    mappingsDump = createMappingsDump(projectDescriptor),
+                    mappingsDump = createMappingsDump(projectDescriptor, kotlinCompileContext, lookupsDuringTest),
                     name = name
                 )
             }
@@ -234,6 +249,10 @@ abstract class AbstractIncrementalJpsTest(
 
     private fun rebuild(): MakeResult {
         return build(null, CompileScopeTestBuilder.rebuild().allModules())
+    }
+
+    private fun updateCommandLineArguments(arguments: CommonCompilerArguments) {
+        parseCommandLineArguments(additionalCommandLineArguments, arguments)
     }
 
     private fun rebuildAndCheckOutput(makeOverallResult: MakeResult) {
@@ -303,7 +322,8 @@ abstract class AbstractIncrementalJpsTest(
 
     protected open fun doTest(testDataPath: String) {
         testDataDir = File(testDataPath)
-        workDir = FileUtilRt.createTempDirectory(TEMP_DIRECTORY_TO_USE, "jps-build", null)
+        workDir = FileUtilRt.createTempDirectory(TEMP_DIRECTORY_TO_USE, "aijt-jps-build", null)
+        additionalCommandLineArguments = parseAdditionalArgs(File(testDataPath))
         val buildLogFile = buildLogFinder.findBuildLog(testDataDir)
         Disposer.register(testRootDisposable, Disposable { FileUtilRt.delete(workDir) })
 
@@ -322,83 +342,8 @@ abstract class AbstractIncrementalJpsTest(
             UsefulTestCase.assertSameLinesWithFile(buildLogFile.absolutePath, logs)
 
             val lastMakeResult = otherMakeResults.last()
-            rebuildAndCheckOutput(lastMakeResult)
             clearCachesRebuildAndCheckOutput(lastMakeResult)
         }
-    }
-
-    private fun createMappingsDump(
-        project: ProjectDescriptor
-    ) = createKotlinIncrementalCacheDump(project) + "\n\n\n" +
-            createLookupCacheDump(project) + "\n\n\n" +
-            createCommonMappingsDump(project) + "\n\n\n" +
-            createJavaMappingsDump(project)
-
-    private fun createKotlinIncrementalCacheDump(
-        project: ProjectDescriptor
-    ): String {
-        return buildString {
-            for (target in project.allModuleTargets.sortedBy { it.presentableName }) {
-                val kotlinCache = project.dataManager.getKotlinCache(kotlinCompileContext.targetsBinding[target])
-                if (kotlinCache != null) {
-                    append("<target $target>\n")
-                    append(kotlinCache.dump())
-                    append("</target $target>\n\n\n")
-                }
-            }
-        }
-    }
-
-    private fun createLookupCacheDump(project: ProjectDescriptor): String {
-        val sb = StringBuilder()
-        val p = Printer(sb)
-        p.println("Begin of Lookup Maps")
-        p.println()
-
-        project.dataManager.withLookupStorage { lookupStorage ->
-            lookupStorage.forceGC()
-            p.print(lookupStorage.dump(lookupsDuringTest))
-        }
-
-        p.println()
-        p.println("End of Lookup Maps")
-        return sb.toString()
-    }
-
-    private fun createCommonMappingsDump(project: ProjectDescriptor): String {
-        val resultBuf = StringBuilder()
-        val result = Printer(resultBuf)
-
-        result.println("Begin of SourceToOutputMap")
-        result.pushIndent()
-
-        for (target in project.allModuleTargets) {
-            result.println(target)
-            result.pushIndent()
-
-            val mapping = project.dataManager.getSourceToOutputMap(target)
-            mapping.sources.sorted().forEach {
-                val outputs = mapping.getOutputs(it)!!.sorted()
-                if (outputs.isNotEmpty()) {
-                    result.println("source $it -> $outputs")
-                }
-            }
-
-            result.popIndent()
-        }
-
-        result.popIndent()
-        result.println("End of SourceToOutputMap")
-
-        return resultBuf.toString()
-    }
-
-    private fun createJavaMappingsDump(project: ProjectDescriptor): String {
-        val byteArrayOutputStream = ByteArrayOutputStream()
-        PrintStream(byteArrayOutputStream).use {
-            project.dataManager.mappings.toStream(it)
-        }
-        return byteArrayOutputStream.toString()
     }
 
     protected data class MakeResult(
@@ -508,6 +453,8 @@ abstract class AbstractIncrementalJpsTest(
                     val out = getAbsolutePath("${module.name}/out")
                     File(out).mkdirs()
                     compilerArguments.destination = out
+                } else if (compilerArguments is K2JVMCompilerArguments) {
+                    compilerArguments.disableDefaultScriptingPlugin = true
                 }
 
                 module.jpsModule.container.setChild(
@@ -538,7 +485,7 @@ abstract class AbstractIncrementalJpsTest(
 
     private fun configureRequiredLibraries() {
         myProject.modules.forEach { module ->
-            val platformKind = module.kotlinFacet?.settings?.platform?.kind.orDefault()
+            val platformKind = module.kotlinFacet?.settings?.targetPlatform?.idePlatformKind.orDefault()
 
             when {
                 platformKind.isJvm -> {
@@ -558,7 +505,7 @@ abstract class AbstractIncrementalJpsTest(
 
     override fun doGetProjectDir(): File? = workDir
 
-    private class MyLogger(val rootPath: String) : ProjectBuilderLoggerBase(), TestingBuildLogger {
+    internal class MyLogger(val rootPath: String) : ProjectBuilderLoggerBase(), TestingBuildLogger {
         private val markedDirtyBeforeRound = ArrayList<File>()
         private val markedDirtyAfterRound = ArrayList<File>()
         private val customMessages = mutableListOf<String>()
@@ -642,9 +589,92 @@ abstract class AbstractIncrementalJpsTest(
         }
 
         override fun logLine(message: String?) {
-            logBuf.append(KotlinTestUtils.replaceHashWithStar(message!!.replace("^$rootPath/".toRegex(), "  "))).append('\n')
+            logBuf.append(message!!.replace("^$rootPath/".toRegex(), "  ")).append('\n')
         }
     }
+}
+
+private fun createMappingsDump(
+    project: ProjectDescriptor,
+    kotlinContext: KotlinCompileContext,
+    lookupsDuringTest: Set<LookupSymbol>
+) = createKotlinCachesDump(project, kotlinContext, lookupsDuringTest) + "\n\n\n" +
+        createCommonMappingsDump(project) + "\n\n\n" +
+        createJavaMappingsDump(project)
+
+internal fun createKotlinCachesDump(
+    project: ProjectDescriptor,
+    kotlinContext: KotlinCompileContext,
+    lookupsDuringTest: Set<LookupSymbol>
+) = createKotlinIncrementalCacheDump(project, kotlinContext) + "\n\n\n" +
+        createLookupCacheDump(kotlinContext, lookupsDuringTest)
+
+private fun createKotlinIncrementalCacheDump(
+    project: ProjectDescriptor,
+    kotlinContext: KotlinCompileContext
+): String {
+    return buildString {
+        for (target in project.allModuleTargets.sortedBy { it.presentableName }) {
+            val kotlinCache = project.dataManager.getKotlinCache(kotlinContext.targetsBinding[target])
+            if (kotlinCache != null) {
+                append("<target $target>\n")
+                append(kotlinCache.dump())
+                append("</target $target>\n\n\n")
+            }
+        }
+    }
+}
+
+private fun createLookupCacheDump(kotlinContext: KotlinCompileContext, lookupsDuringTest: Set<LookupSymbol>): String {
+    val sb = StringBuilder()
+    val p = Printer(sb)
+    p.println("Begin of Lookup Maps")
+    p.println()
+
+    kotlinContext.lookupStorageManager.withLookupStorage { lookupStorage ->
+        lookupStorage.forceGC()
+        p.print(lookupStorage.dump(lookupsDuringTest))
+    }
+
+    p.println()
+    p.println("End of Lookup Maps")
+    return sb.toString()
+}
+
+private fun createCommonMappingsDump(project: ProjectDescriptor): String {
+    val resultBuf = StringBuilder()
+    val result = Printer(resultBuf)
+
+    result.println("Begin of SourceToOutputMap")
+    result.pushIndent()
+
+    for (target in project.allModuleTargets) {
+        result.println(target)
+        result.pushIndent()
+
+        val mapping = project.dataManager.getSourceToOutputMap(target)
+        mapping.sources.sorted().forEach {
+            val outputs = mapping.getOutputs(it)!!.sorted()
+            if (outputs.isNotEmpty()) {
+                result.println("source $it -> $outputs")
+            }
+        }
+
+        result.popIndent()
+    }
+
+    result.popIndent()
+    result.println("End of SourceToOutputMap")
+
+    return resultBuf.toString()
+}
+
+private fun createJavaMappingsDump(project: ProjectDescriptor): String {
+    val byteArrayOutputStream = ByteArrayOutputStream()
+    PrintStream(byteArrayOutputStream).use {
+        project.dataManager.mappings.toStream(it)
+    }
+    return byteArrayOutputStream.toString()
 }
 
 internal val ProjectDescriptor.allModuleTargets: Collection<ModuleBuildTarget>

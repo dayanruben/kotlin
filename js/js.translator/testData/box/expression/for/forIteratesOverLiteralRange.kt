@@ -1,4 +1,5 @@
-// EXPECTED_REACHABLE_NODES: 1230
+// KJS_WITH_FULL_RUNTIME
+// EXPECTED_REACHABLE_NODES: 1380
 package foo
 
 var global: String = ""

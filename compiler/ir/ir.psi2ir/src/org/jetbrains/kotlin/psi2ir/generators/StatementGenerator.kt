@@ -16,6 +16,7 @@
 
 package org.jetbrains.kotlin.psi2ir.generators
 
+import org.jetbrains.kotlin.backend.common.BackendException
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
@@ -24,7 +25,6 @@ import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.assertCast
 import org.jetbrains.kotlin.ir.builders.Scope
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
-import org.jetbrains.kotlin.ir.declarations.impl.IrTypeAliasImpl
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.expressions.impl.*
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
@@ -37,9 +37,12 @@ import org.jetbrains.kotlin.psi2ir.intermediate.IntermediateValue
 import org.jetbrains.kotlin.psi2ir.intermediate.createTemporaryVariableInBlock
 import org.jetbrains.kotlin.psi2ir.intermediate.setExplicitReceiverValue
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.BindingContext.SMARTCAST
 import org.jetbrains.kotlin.resolve.BindingContextUtils
+import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.VariableAsFunctionResolvedCall
+import org.jetbrains.kotlin.resolve.calls.tasks.isDynamic
 import org.jetbrains.kotlin.resolve.constants.CompileTimeConstant
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
 import org.jetbrains.kotlin.types.KotlinType
@@ -72,7 +75,11 @@ class StatementGenerator(
     private fun KtElement.genStmt(): IrStatement =
         try {
             deparenthesize().accept(this@StatementGenerator, null)
-        } catch (e: Exception) {
+        } catch (e: BackendException) {
+            throw e
+        } catch (e: ErrorExpressionException) {
+            throw e
+        } catch (e: Throwable) {
             ErrorExpressionGenerator(this@StatementGenerator).generateErrorExpression(this, e)
         }
 
@@ -160,7 +167,7 @@ class StatementGenerator(
         val isBlockBody = expression.parent is KtDeclarationWithBody && expression.parent !is KtFunctionLiteral
         if (isBlockBody) throw AssertionError("Use IrBlockBody and corresponding body generator to generate blocks as function bodies")
 
-        val returnType = getInferredTypeWithImplicitCasts(expression) ?: context.builtIns.unitType
+        val returnType = getExpressionTypeWithCoercionToUnitOrFail(expression)
         val irBlock = IrBlockImpl(expression.startOffsetSkippingComments, expression.endOffset, returnType.toIrType())
 
         expression.statements.forEach {
@@ -225,14 +232,14 @@ class StatementGenerator(
         context.constantValueGenerator.generateConstantValueAsExpression(
             expression.startOffsetSkippingComments,
             expression.endOffset,
-            constant.toConstantValue(getInferredTypeWithImplicitCastsOrFail(expression))
+            constant.toConstantValue(getTypeInferredByFrontendOrFail(expression))
         )
 
     override fun visitStringTemplateExpression(expression: KtStringTemplateExpression, data: Nothing?): IrStatement {
         val startOffset = expression.startOffsetSkippingComments
         val endOffset = expression.endOffset
 
-        val resultType = getInferredTypeWithImplicitCastsOrFail(expression).toIrType()
+        val resultType = getTypeInferredByFrontendOrFail(expression).toIrType()
         val entries = expression.entries.map { it.genExpr() }.postprocessStringTemplateEntries()
 
         return when (entries.size) {
@@ -321,7 +328,8 @@ class StatementGenerator(
     ): IrExpression =
         CallGenerator(this).generateValueReference(
             expression.startOffsetSkippingComments, expression.endOffset,
-            descriptor, resolvedCall, null
+            descriptor, resolvedCall, null,
+            context.bindingContext.get(SMARTCAST, expression)?.defaultType?.toIrType()
         )
 
     override fun visitCallExpression(expression: KtCallExpression, data: Nothing?): IrStatement {
@@ -352,10 +360,13 @@ class StatementGenerator(
     override fun visitArrayAccessExpression(expression: KtArrayAccessExpression, data: Nothing?): IrStatement {
         val indexedGetCall = getOrFail(BindingContext.INDEXED_LVALUE_GET, expression)
 
-        return CallGenerator(this).generateCall(
-            expression.startOffsetSkippingComments, expression.endOffset,
-            pregenerateCall(indexedGetCall), IrStatementOrigin.GET_ARRAY_ELEMENT
-        )
+        return if (indexedGetCall.resultingDescriptor.isDynamic())
+            OperatorExpressionGenerator(this).generateDynamicArrayAccess(expression)
+        else
+            CallGenerator(this).generateCall(
+                expression.startOffsetSkippingComments, expression.endOffset,
+                pregenerateCall(indexedGetCall), IrStatementOrigin.GET_ARRAY_ELEMENT
+            )
     }
 
     override fun visitDotQualifiedExpression(expression: KtDotQualifiedExpression, data: Nothing?): IrStatement =
@@ -364,28 +375,53 @@ class StatementGenerator(
     override fun visitSafeQualifiedExpression(expression: KtSafeQualifiedExpression, data: Nothing?): IrStatement =
         expression.selectorExpression!!.accept(this, data)
 
+    private fun isThisForClassPhysicallyAvailable(classDescriptor: ClassDescriptor): Boolean {
+        var scopeDescriptor: DeclarationDescriptor? = scopeOwner
+        while (scopeDescriptor != null) {
+            if (scopeDescriptor == classDescriptor) return true
+            if (scopeDescriptor is ClassDescriptor && !scopeDescriptor.isInner) return false
+            scopeDescriptor = scopeDescriptor.containingDeclaration
+        }
+        return false
+    }
+
+    fun generateThisReceiver(startOffset: Int, endOffset: Int, kotlinType: KotlinType, classDescriptor: ClassDescriptor): IrExpression {
+        val thisAsReceiverParameter = classDescriptor.thisAsReceiverParameter
+        val thisType = kotlinType.toIrType()
+
+        return if (DescriptorUtils.isObject(classDescriptor) && !isThisForClassPhysicallyAvailable(classDescriptor)) {
+            IrGetObjectValueImpl(
+                startOffset, endOffset,
+                thisType,
+                context.symbolTable.referenceClass(classDescriptor)
+            )
+        } else {
+            IrGetValueImpl(
+                startOffset, endOffset,
+                thisType,
+                context.symbolTable.referenceValueParameter(thisAsReceiverParameter)
+            )
+        }
+    }
+
     override fun visitThisExpression(expression: KtThisExpression, data: Nothing?): IrExpression {
         val referenceTarget = getOrFail(BindingContext.REFERENCE_TARGET, expression.instanceReference) { "No reference target for this" }
+        val startOffset = expression.startOffsetSkippingComments
+        val endOffset = expression.endOffset
         return when (referenceTarget) {
-            is ClassDescriptor -> {
-                val thisAsReceiverParameter = referenceTarget.thisAsReceiverParameter
-                val thisType = thisAsReceiverParameter.type.toIrType()
-                IrGetValueImpl(
-                    expression.startOffsetSkippingComments, expression.endOffset,
-                    thisType,
-                    context.symbolTable.referenceValueParameter(thisAsReceiverParameter)
-                )
-            }
+            is ClassDescriptor ->
+                generateThisReceiver(startOffset, endOffset, referenceTarget.thisAsReceiverParameter.type, referenceTarget)
 
             is CallableDescriptor -> {
                 val extensionReceiver = referenceTarget.extensionReceiverParameter ?: TODO("No extension receiver: $referenceTarget")
                 val extensionReceiverType = extensionReceiver.type.toIrType()
                 IrGetValueImpl(
-                    expression.startOffsetSkippingComments, expression.endOffset,
+                    startOffset, endOffset,
                     extensionReceiverType,
                     context.symbolTable.referenceValueParameter(extensionReceiver)
                 )
             }
+
             else ->
                 error("Expected this or receiver: $referenceTarget")
         }
@@ -443,9 +479,10 @@ class StatementGenerator(
         LocalClassGenerator(this).generateLocalClass(classOrObject)
 
     override fun visitTypeAlias(typeAlias: KtTypeAlias, data: Nothing?): IrStatement =
-        IrTypeAliasImpl(
-            typeAlias.startOffsetSkippingComments, typeAlias.endOffset, IrDeclarationOrigin.DEFINED,
-            getOrFail(BindingContext.TYPE_ALIAS, typeAlias)
+        IrBlockImpl(
+            // Compile local type aliases to empty blocks
+            typeAlias.startOffsetSkippingComments, typeAlias.endOffset,
+            context.irBuiltIns.unitType
         )
 
     override fun visitClassLiteralExpression(expression: KtClassLiteralExpression, data: Nothing?): IrStatement =

@@ -1,6 +1,6 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.refactoring.rename;
@@ -12,6 +12,7 @@ import com.intellij.testFramework.LightCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase;
 
+@SuppressWarnings("deprecation")
 public class SimpleNameReferenceRenameTest extends LightCodeInsightTestCase {
 
     @NotNull
@@ -51,7 +52,7 @@ public class SimpleNameReferenceRenameTest extends LightCodeInsightTestCase {
     private void doTest(String newName) throws Exception {
         configureByFile(getTestName(true) + ".kt");
         PsiElement element = TargetElementUtil
-                .findTargetElement(myEditor,
+                .findTargetElement(getEditor(),
                                    TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
         assertNotNull(element);
         new RenameProcessor(getProject(), element, newName, true, true).run();

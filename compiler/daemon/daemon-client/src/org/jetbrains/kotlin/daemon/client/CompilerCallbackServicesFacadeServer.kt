@@ -31,7 +31,6 @@ import org.jetbrains.kotlin.utils.isProcessCanceledException
 import java.io.File
 import java.rmi.server.UnicastRemoteObject
 
-
 open class CompilerCallbackServicesFacadeServer(
     val incrementalCompilationComponents: IncrementalCompilationComponents? = null,
     val lookupTracker: LookupTracker? = null,
@@ -40,7 +39,7 @@ open class CompilerCallbackServicesFacadeServer(
     val incrementalResultsConsumer: IncrementalResultsConsumer? = null,
     val incrementalDataProvider: IncrementalDataProvider? = null,
     port: Int = SOCKET_ANY_FREE_PORT
-) : CompilerCallbackServicesFacade,
+) : @Suppress("DEPRECATION") CompilerCallbackServicesFacade,
     UnicastRemoteObject(
         port,
         LoopbackNetworkInterface.clientLoopbackSocketFactory,
@@ -124,13 +123,18 @@ open class CompilerCallbackServicesFacadeServer(
     override fun incrementalResultsConsumer_processPackagePart(
         sourceFilePath: String,
         packagePartMetadata: ByteArray,
-        binaryAst: ByteArray
+        binaryAst: ByteArray,
+        inlineData: ByteArray
     ) {
-        incrementalResultsConsumer!!.processPackagePart(File(sourceFilePath), packagePartMetadata, binaryAst)
+        incrementalResultsConsumer!!.processPackagePart(File(sourceFilePath), packagePartMetadata, binaryAst, inlineData)
     }
 
     override fun incrementalResultsConsumer_processInlineFunctions(functions: Collection<JsInlineFunctionHash>) {
         incrementalResultsConsumer!!.processInlineFunctions(functions)
+    }
+
+    override fun incrementalResultsConsumer_processPackageMetadata(packageName: String, metadata: ByteArray) {
+        incrementalResultsConsumer!!.processPackageMetadata(packageName, metadata)
     }
 
     override fun incrementalDataProvider_getHeaderMetadata(): ByteArray = incrementalDataProvider!!.headerMetadata
@@ -139,6 +143,11 @@ open class CompilerCallbackServicesFacadeServer(
 
     override fun incrementalDataProvider_getCompiledPackageParts() =
         incrementalDataProvider!!.compiledPackageParts.entries.map {
-            CompiledPackagePart(it.key.path, it.value.metadata, it.value.binaryAst)
+            CompiledPackagePart(it.key.path, it.value.metadata, it.value.binaryAst, it.value.inlineData)
+        }
+
+    override fun incrementalDataProvider_getPackageMetadata(): Collection<PackageMetadata> =
+        incrementalDataProvider!!.packageMetadata.entries.map { (fqName, metadata) ->
+            PackageMetadata(fqName, metadata)
         }
 }

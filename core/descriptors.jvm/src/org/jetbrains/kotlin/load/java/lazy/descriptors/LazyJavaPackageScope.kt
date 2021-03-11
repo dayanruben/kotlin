@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
 import org.jetbrains.kotlin.incremental.components.LookupLocation
-import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.load.java.JavaClassFinder
 import org.jetbrains.kotlin.load.java.lazy.LazyJavaResolverContext
 import org.jetbrains.kotlin.load.java.structure.JavaClass
@@ -56,7 +55,7 @@ class LazyJavaPackageScope(
             val requestClassId = ClassId(ownerDescriptor.fqName, request.name)
 
             val kotlinClassOrClassFileContent =
-            // These branches should be semantically equal, but the first one could be faster
+                // These branches should be semantically equal, but the first one could be faster
                 if (request.javaClass != null)
                     c.components.kotlinClassFinder.findKotlinClassOrContent(request.javaClass)
                 else
@@ -69,9 +68,7 @@ class LazyJavaPackageScope(
             // It happens because KotlinClassFinder searches through a file-based index that does not differ classes containing $-sign and nested ones
             if (classId != null && (classId.isNestedClass || classId.isLocal)) return@classByRequest null
 
-            val kotlinResult = resolveKotlinBinaryClass(kotlinBinaryClass)
-
-            when (kotlinResult) {
+            when (val kotlinResult = resolveKotlinBinaryClass(kotlinBinaryClass)) {
                 is KotlinClassLookupResult.Found -> kotlinResult.descriptor
                 is KotlinClassLookupResult.SyntheticClass -> null
                 is KotlinClassLookupResult.NotFound -> {
@@ -163,20 +160,25 @@ class LazyJavaPackageScope(
         }
     }
 
-    override fun computeFunctionNames(kindFilter: DescriptorKindFilter, nameFilter: ((Name) -> Boolean)?): Set<Name> {
-        return emptySet()
-    }
+    override fun computeFunctionNames(kindFilter: DescriptorKindFilter, nameFilter: ((Name) -> Boolean)?): Set<Name> = emptySet()
 
     override fun computeNonDeclaredFunctions(result: MutableCollection<SimpleFunctionDescriptor>, name: Name) {
     }
 
     override fun computePropertyNames(kindFilter: DescriptorKindFilter, nameFilter: ((Name) -> Boolean)?) = emptySet<Name>()
 
-    // we don't use implementation from super which caches all descriptors and does not use filters
     override fun getContributedDescriptors(
         kindFilter: DescriptorKindFilter,
         nameFilter: (Name) -> Boolean
     ): Collection<DeclarationDescriptor> {
-        return computeDescriptors(kindFilter, nameFilter, NoLookupLocation.WHEN_GET_ALL_DESCRIPTORS)
+        // combined computeDescriptors() and computeClassNames()
+        // computeFunctionNames and computePropertyNames return always emptySet
+        // therefore don't need to check if kindFilter anything else but CLASSIFIERS
+        return if (!kindFilter.acceptsKinds(DescriptorKindFilter.CLASSIFIERS_MASK or DescriptorKindFilter.NON_SINGLETON_CLASSIFIERS_MASK)) {
+            emptyList()
+        } else {
+            // we don't use implementation from super which caches all descriptors and does not use filters
+            allDescriptors().filter { it is ClassDescriptor && nameFilter(it.name) }
+        }
     }
 }

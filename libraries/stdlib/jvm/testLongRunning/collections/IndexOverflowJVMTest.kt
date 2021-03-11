@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package test.collections
@@ -140,6 +140,17 @@ class IndexOverflowJVMTest {
 
 
     @Test
+    fun scanIndexedOverflow() {
+        assertIndexOverflow { maxIndexSequence.scanIndexed("") { index, _, s -> checkIndexPositive(index); s }.forEach { } }
+    }
+
+    @Test
+    fun runningReduceIndexedOverflow() {
+        assertIndexOverflow { maxIndexSequence.runningReduceIndexed { index, _, s -> checkIndexPositive(index); s }.forEach { } }
+    }
+
+
+    @Test
     fun dropTwiceMaxValue() {
 
         val halfMax = (1 shl 30) + 1
@@ -154,6 +165,12 @@ class IndexOverflowJVMTest {
         val dropTake = dropOnce.take(halfMax + 1)
 
         assertEquals(expectedEnd, dropTake.last())
+    }
+
+    @Test
+    fun dropMaxValue() {
+        val range = 0L..Int.MAX_VALUE + 1L
+        assertEquals(listOf(Int.MAX_VALUE.toLong(), Int.MAX_VALUE + 1L), range.drop(Int.MAX_VALUE))
     }
 
 }

@@ -1,5 +1,7 @@
+// DONT_TARGET_EXACT_BACKEND: WASM
+// WASM_MUTE_REASON: STDLIB_COLLECTIONS
+// KJS_WITH_FULL_RUNTIME
 // WITH_RUNTIME
-// IGNORE_BACKEND: JVM_IR
 
 inline class NullableInt(private val holder: Any?) {
     val intValue: Int get() = holder as Int

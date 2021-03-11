@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package kotlin.jvm.internal;
@@ -8,6 +8,9 @@ package kotlin.jvm.internal;
 import kotlin.SinceKotlin;
 import kotlin.reflect.*;
 
+import java.util.List;
+
+@SuppressWarnings("rawtypes")
 public class ReflectionFactory {
     private static final String KOTLIN_JVM_FUNCTIONS = "kotlin.jvm.functions.";
 
@@ -72,5 +75,22 @@ public class ReflectionFactory {
 
     public KMutableProperty2 mutableProperty2(MutablePropertyReference2 p) {
         return p;
+    }
+
+    // typeOf
+
+    @SinceKotlin(version = "1.4")
+    public KType typeOf(KClassifier klass, List<KTypeProjection> arguments, boolean isMarkedNullable) {
+        return new TypeReference(klass, arguments, isMarkedNullable);
+    }
+
+    @SinceKotlin(version = "1.4")
+    public KTypeParameter typeParameter(Object container, String name, KVariance variance, boolean isReified) {
+        return new TypeParameterReference(container, name, variance, isReified);
+    }
+
+    @SinceKotlin(version = "1.4")
+    public void setUpperBounds(KTypeParameter typeParameter, List<KType> bounds) {
+        ((TypeParameterReference) typeParameter).setUpperBounds(bounds);
     }
 }

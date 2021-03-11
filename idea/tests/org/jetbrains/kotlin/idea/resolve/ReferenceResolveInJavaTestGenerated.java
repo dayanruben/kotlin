@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.resolve;
@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.idea.resolve;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.test.KotlinTestUtils;
-import org.jetbrains.kotlin.test.TargetBackend;
+import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.runner.RunWith;
 
@@ -24,11 +24,11 @@ public class ReferenceResolveInJavaTestGenerated extends AbstractReferenceResolv
     @RunWith(JUnit3RunnerWithInners.class)
     public static class BinaryAndSource extends AbstractReferenceResolveInJavaTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, TargetBackend.ANY, testDataFilePath);
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
         public void testAllFilesPresentInBinaryAndSource() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/resolve/referenceInJava/binaryAndSource"), Pattern.compile("^(.+)\\.java$"), TargetBackend.ANY, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/resolve/referenceInJava/binaryAndSource"), Pattern.compile("^(.+)\\.java$"), null, true);
         }
 
         @TestMetadata("Class.java")
@@ -97,11 +97,11 @@ public class ReferenceResolveInJavaTestGenerated extends AbstractReferenceResolv
     @RunWith(JUnit3RunnerWithInners.class)
     public static class SourceOnly extends AbstractReferenceResolveInJavaTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, TargetBackend.ANY, testDataFilePath);
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
         public void testAllFilesPresentInSourceOnly() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/resolve/referenceInJava/sourceOnly"), Pattern.compile("^(.+)\\.java$"), TargetBackend.ANY, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/resolve/referenceInJava/sourceOnly"), Pattern.compile("^(.+)\\.java$"), null, true);
         }
 
         @TestMetadata("AnnotationParameterReference.java")

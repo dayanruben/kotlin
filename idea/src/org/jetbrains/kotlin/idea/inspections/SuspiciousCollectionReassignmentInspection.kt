@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.inspections
@@ -11,16 +11,20 @@ import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.diagnostics.Severity
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.intentions.ReplaceWithOrdinaryAssignmentIntention
 import org.jetbrains.kotlin.idea.project.builtIns
+import org.jetbrains.kotlin.idea.quickfix.ChangeToMutableCollectionFix
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComments
+import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.callUtil.getType
@@ -65,14 +69,14 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
             val operationReference = binaryExpression.operationReference
             holder.registerProblem(
                 operationReference,
-                "'${operationReference.text}' create new $typeText under the hood",
+                KotlinBundle.message("0.creates.new.1.under.the.hood", operationReference.text, typeText),
                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                 *fixes.toTypedArray()
             )
         })
 
     private class ChangeTypeToMutableFix(private val type: KotlinType) : LocalQuickFix {
-        override fun getName() = "Change type to mutable"
+        override fun getName() = KotlinBundle.message("change.type.to.mutable.fix.text")
 
         override fun getFamilyName() = name
 
@@ -81,50 +85,20 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
             val binaryExpression = operationReference.parent as? KtBinaryExpression ?: return
             val left = binaryExpression.left ?: return
             val property = left.mainReference?.resolve() as? KtProperty ?: return
-            val initializer = property.initializer ?: return
-            val fqName = initializer.resolveToCall()?.resultingDescriptor?.fqNameOrNull()?.asString()
-            val psiFactory = KtPsiFactory(binaryExpression)
-            val mutableOf = mutableConversionMap[fqName]
-            if (mutableOf != null) {
-                (initializer as? KtCallExpression)?.calleeExpression?.replaced(psiFactory.createExpression(mutableOf)) ?: return
-            } else {
-                val builtIns = binaryExpression.builtIns
-                val toMutable = when (type.constructor) {
-                    builtIns.list.defaultType.constructor -> "toMutableList"
-                    builtIns.set.defaultType.constructor -> "toMutableSet"
-                    builtIns.map.defaultType.constructor -> "toMutableMap"
-                    else -> null
-                } ?: return
-                val dotQualifiedExpression = initializer.replaced(
-                    psiFactory.createExpressionByPattern("($0).$1()", initializer, toMutable)
-                ) as KtDotQualifiedExpression
-                val receiver = dotQualifiedExpression.receiverExpression
-                val deparenthesize = KtPsiUtil.deparenthesize(dotQualifiedExpression.receiverExpression)
-                if (deparenthesize != null && receiver != deparenthesize) receiver.replace(deparenthesize)
-            }
-            property.typeReference?.also { it.replace(psiFactory.createType("Mutable${it.text}")) }
-            property.valOrVarKeyword.replace(psiFactory.createValKeyword())
+            ChangeToMutableCollectionFix.applyFix(property, type)
+            property.valOrVarKeyword.replace(KtPsiFactory(property).createValKeyword())
             binaryExpression.findExistingEditor()?.caretModel?.moveToOffset(property.endOffset)
         }
 
         companion object {
-
-            private const val COLLECTIONS = "kotlin.collections"
-
-            private val mutableConversionMap = mapOf(
-                "$COLLECTIONS.listOf" to "mutableListOf",
-                "$COLLECTIONS.setOf" to "mutableSetOf",
-                "$COLLECTIONS.mapOf" to "mutableMapOf"
-            )
-
             fun isApplicable(property: KtProperty): Boolean {
-                return property.isLocal && property.initializer != null
+                return ChangeToMutableCollectionFix.isApplicable(property)
             }
         }
     }
 
     private class ReplaceWithFilterFix : LocalQuickFix {
-        override fun getName() = "Replace with filter"
+        override fun getName() = KotlinBundle.message("replace.with.filter.fix.text")
 
         override fun getFamilyName() = name
 
@@ -148,7 +122,7 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
     }
 
     private class ReplaceWithAssignmentFix : LocalQuickFix {
-        override fun getName() = "Replace with assignment (original is empty)"
+        override fun getName() = KotlinBundle.message("replace.with.assignment.fix.text")
 
         override fun getFamilyName() = name
 
@@ -188,7 +162,7 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
     }
 
     private class JoinWithInitializerFix(private val op: KtSingleValueToken) : LocalQuickFix {
-        override fun getName() = "Join with initializer"
+        override fun getName() = KotlinBundle.message("join.with.initializer.fix.text")
 
         override fun getFamilyName() = name
 

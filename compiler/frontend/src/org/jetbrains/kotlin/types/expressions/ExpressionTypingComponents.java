@@ -1,13 +1,13 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2000-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.types.expressions;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns;
-import org.jetbrains.kotlin.builtins.PlatformToKotlinClassMap;
+import org.jetbrains.kotlin.builtins.PlatformToKotlinClassMapper;
 import org.jetbrains.kotlin.config.LanguageVersionSettings;
 import org.jetbrains.kotlin.context.GlobalContext;
 import org.jetbrains.kotlin.contracts.EffectSystem;
@@ -22,7 +22,9 @@ import org.jetbrains.kotlin.resolve.calls.checkers.RttiExpressionChecker;
 import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowValueFactory;
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator;
 import org.jetbrains.kotlin.resolve.deprecation.DeprecationResolver;
+import org.jetbrains.kotlin.extensions.internal.TypeResolutionInterceptor;
 import org.jetbrains.kotlin.types.WrappedTypeFactory;
+import org.jetbrains.kotlin.types.checker.NewKotlinTypeChecker;
 
 import javax.inject.Inject;
 
@@ -31,7 +33,7 @@ public class ExpressionTypingComponents {
     /*package*/ ModuleDescriptor moduleDescriptor;
     /*package*/ ExpressionTypingServices expressionTypingServices;
     /*package*/ CallResolver callResolver;
-    /*package*/ PlatformToKotlinClassMap platformToKotlinClassMap;
+    /*package*/ PlatformToKotlinClassMapper platformToKotlinClassMapper;
     /*package*/ ControlStructureTypingUtils controlStructureTypingUtils;
     /*package*/ ForLoopConventionsChecker forLoopConventionsChecker;
     /*package*/ FakeCallResolver fakeCallResolver;
@@ -62,6 +64,10 @@ public class ExpressionTypingComponents {
     /*package*/ EffectSystem effectSystem;
     /*package*/ ContractParsingServices contractParsingServices;
     /*package*/ DataFlowValueFactory dataFlowValueFactory;
+    /*package*/ NewKotlinTypeChecker kotlinTypeChecker;
+    /*package*/ TypeResolutionInterceptor typeResolutionInterceptor;
+    /*package*/ MissingSupertypesResolver missingSupertypesResolver;
+
 
     @Inject
     public void setGlobalContext(@NotNull GlobalContext globalContext) {
@@ -84,8 +90,8 @@ public class ExpressionTypingComponents {
     }
 
     @Inject
-    public void setPlatformToKotlinClassMap(@NotNull PlatformToKotlinClassMap platformToKotlinClassMap) {
-        this.platformToKotlinClassMap = platformToKotlinClassMap;
+    public void setPlatformToKotlinClassMap(@NotNull PlatformToKotlinClassMapper platformToKotlinClassMapper) {
+        this.platformToKotlinClassMapper = platformToKotlinClassMapper;
     }
 
     @Inject
@@ -236,5 +242,20 @@ public class ExpressionTypingComponents {
     @Inject
     public void setDataFlowValueFactory(@NotNull DataFlowValueFactory dataFlowValueFactory) {
         this.dataFlowValueFactory = dataFlowValueFactory;
+    }
+
+    @Inject
+    public void setKotlinTypeChecker(@NotNull NewKotlinTypeChecker kotlinTypeChecker) {
+        this.kotlinTypeChecker = kotlinTypeChecker;
+    }
+
+    @Inject
+    public void setTypeResolutionInterceptor(@NotNull TypeResolutionInterceptor typeResolutionInterceptor) {
+        this.typeResolutionInterceptor = typeResolutionInterceptor;
+    }
+
+    @Inject
+    public void setMissingSupertypesResolver(@NotNull MissingSupertypesResolver missingSupertypesResolver) {
+        this.missingSupertypesResolver = missingSupertypesResolver;
     }
 }

@@ -26,7 +26,6 @@ import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.jvm.K2JVMCompiler
 import org.jetbrains.kotlin.codegen.forTestCompile.ForTestCompileRuntime
 import org.jetbrains.kotlin.compilerRunner.*
-import org.jetbrains.kotlin.config.IncrementalCompilation
 import org.jetbrains.kotlin.config.Services
 import org.jetbrains.kotlin.incremental.components.LookupInfo
 import org.jetbrains.kotlin.incremental.components.LookupTracker
@@ -39,10 +38,12 @@ import org.jetbrains.kotlin.incremental.testingUtils.TouchPolicy
 import org.jetbrains.kotlin.incremental.testingUtils.copyTestSources
 import org.jetbrains.kotlin.incremental.testingUtils.getModificationsToPerform
 import org.jetbrains.kotlin.incremental.utils.TestMessageCollector
+import org.jetbrains.kotlin.jps.build.fixtures.EnableICFixture
 import org.jetbrains.kotlin.jps.incremental.createTestingCompilerEnvironment
 import org.jetbrains.kotlin.jps.incremental.runJSCompiler
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.kotlin.utils.JsMetadataVersion
+import org.jetbrains.kotlin.utils.PathUtil
 import java.io.*
 import java.util.*
 
@@ -88,6 +89,7 @@ abstract class AbstractJvmLookupTrackerTest : AbstractLookupTrackerTest() {
         )
 
         val args = K2JVMCompilerArguments().apply {
+            disableDefaultScriptingPlugin = true
             buildFile = moduleFile.canonicalPath
             reportOutputFiles = true
         }
@@ -108,21 +110,40 @@ abstract class AbstractJvmLookupTrackerTest : AbstractLookupTrackerTest() {
     }
 }
 
+abstract class AbstractJsKlibLookupTrackerTest : AbstractJsLookupTrackerTest() {
+    override val jsStdlibFile: File
+        get() = File("build/js-ir-runtime/full-runtime.klib")
+
+    override fun configureAdditionalArgs(args: K2JSCompilerArguments) {
+        args.irProduceKlibDir = true
+        args.irOnly = true
+        args.outputFile = outDir.resolve("out.klib").absolutePath
+    }
+}
+
 abstract class AbstractJsLookupTrackerTest : AbstractLookupTrackerTest() {
     private var header: ByteArray? = null
     private val packageParts: MutableMap<File, TranslationResultValue> = hashMapOf()
+    private val serializedIrFiles: MutableMap<File, IrTranslationResultValue> = hashMapOf()
 
     override fun setUp() {
         super.setUp()
         header = null
         packageParts.clear()
+        serializedIrFiles.clear()
     }
 
     override fun Services.Builder.registerAdditionalServices() {
         if (header != null) {
             register(
                 IncrementalDataProvider::class.java,
-                IncrementalDataProviderImpl(header!!, packageParts, JsMetadataVersion.INSTANCE.toArray())
+                IncrementalDataProviderImpl(
+                    headerMetadata = header!!,
+                    compiledPackageParts = packageParts,
+                    metadataVersion = JsMetadataVersion.INSTANCE.toArray(),
+                    packageMetadata = emptyMap(), // TODO pass correct metadata
+                    serializedIrFiles = serializedIrFiles
+                )
             )
         }
 
@@ -130,21 +151,34 @@ abstract class AbstractJsLookupTrackerTest : AbstractLookupTrackerTest() {
     }
 
     override fun markDirty(removedAndModifiedSources: Iterable<File>) {
-        removedAndModifiedSources.forEach { packageParts.remove(it) }
+        removedAndModifiedSources.forEach {
+            packageParts.remove(it)
+            serializedIrFiles.remove(it)
+        }
     }
 
     override fun processCompilationResults(outputItemsCollector: OutputItemsCollectorImpl, services: Services) {
         val incrementalResults = services.get(IncrementalResultsConsumer::class.java) as IncrementalResultsConsumerImpl
         header = incrementalResults.headerMetadata
         packageParts.putAll(incrementalResults.packageParts)
+        serializedIrFiles.putAll(incrementalResults.irFileData)
+    }
+
+    protected open val jsStdlibFile: File
+        get() = PathUtil.kotlinPathsForDistDirectory.jsStdLibJarPath
+
+    protected open fun configureAdditionalArgs(args: K2JSCompilerArguments) {
+        args.outputFile = File(outDir, "out.js").canonicalPath
     }
 
     override fun runCompiler(filesToCompile: Iterable<File>, env: JpsCompilerEnvironment): Any? {
         val args = K2JSCompilerArguments().apply {
-            outputFile = File(outDir, "out.js").canonicalPath
+            val libPaths = arrayListOf(jsStdlibFile.absolutePath) + (libraries ?: "").split(File.pathSeparator)
+            libraries = libPaths.joinToString(File.pathSeparator)
             reportOutputFiles = true
             freeArgs = filesToCompile.map { it.canonicalPath }
         }
+        configureAdditionalArgs(args)
         return runJSCompiler(args, env)
     }
 }
@@ -157,18 +191,17 @@ abstract class AbstractLookupTrackerTest : TestWithWorkingDir() {
 
     protected lateinit var srcDir: File
     protected lateinit var outDir: File
-    private var isICEnabledBackup: Boolean = false
+    private val enableICFixture = EnableICFixture()
 
     override fun setUp() {
         super.setUp()
         srcDir = File(workingDir, "src").apply { mkdirs() }
         outDir = File(workingDir, "out")
-        isICEnabledBackup = IncrementalCompilation.isEnabledForJvm()
-        IncrementalCompilation.setIsEnabledForJvm(true)
+        enableICFixture.setUp()
     }
 
     override fun tearDown() {
-        IncrementalCompilation.setIsEnabledForJvm(isICEnabledBackup)
+        enableICFixture.tearDown()
         super.tearDown()
     }
 
@@ -179,12 +212,12 @@ abstract class AbstractLookupTrackerTest : TestWithWorkingDir() {
     fun doTest(path: String) {
         val sb = StringBuilder()
         fun StringBuilder.indentln(string: String) {
-            appendln("  $string")
+            appendLine("  $string")
         }
         fun CompilerOutput.logOutput(stepName: String) {
-            sb.appendln("==== $stepName ====")
+            sb.appendLine("==== $stepName ====")
 
-            sb.appendln("Compiling files:")
+            sb.appendLine("Compiling files:")
             for (compiledFile in compiledFiles.sortedBy { it.canonicalPath }) {
                 val lookupsFromFile = lookups[compiledFile]
                 val lookupStatus = when {
@@ -196,10 +229,10 @@ abstract class AbstractLookupTrackerTest : TestWithWorkingDir() {
                 sb.indentln("$relativePath$lookupStatus")
             }
 
-            sb.appendln("Exit code: $exitCode")
+            sb.appendLine("Exit code: $exitCode")
             errors.forEach(sb::indentln)
 
-            sb.appendln()
+            sb.appendLine()
         }
 
         val testDir = File(path)
@@ -287,20 +320,21 @@ abstract class AbstractLookupTrackerTest : TestWithWorkingDir() {
                 val end = column - 1
                 parts.add(lineContent.subSequence(start, end))
 
-                val lookups = lookupsFromColumn.distinct().joinToString(separator = " ", prefix = "/*", postfix = "*/") {
+                val lookups = lookupsFromColumn.mapTo(sortedSetOf()) {
                     val rest = lineContent.substring(end)
 
                     val name =
-                            when {
-                                rest.startsWith(it.name) || // same name
-                                rest.startsWith("$" + it.name) || // backing field
-                                DECLARATION_STARTS_WITH.any { rest.startsWith(it) } // it's declaration
-                                -> ""
-                                else -> "(" + it.name + ")"
-                            }
+                        when {
+                            rest.startsWith(it.name) || // same name
+                                    rest.startsWith("$" + it.name) || // backing field
+                                    DECLARATION_STARTS_WITH.any { rest.startsWith(it) } // it's declaration
+                            -> ""
+                            else -> "(" + it.name + ")"
+                        }
 
-                    it.scopeKind.toString()[0].toLowerCase().toString() + ":" + it.scopeFqName.let { if (it.isNotEmpty()) it else "<root>" } + name
-                }
+                    it.scopeKind.toString()[0].toLowerCase()
+                        .toString() + ":" + it.scopeFqName.let { if (it.isNotEmpty()) it else "<root>" } + name
+                }.joinToString(separator = " ", prefix = "/*", postfix = "*/")
 
                 parts.add(lookups)
 

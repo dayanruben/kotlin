@@ -29,10 +29,16 @@ compileIntegrationTestKotlin2Js.dependsOn compileKotlin2Js
 compileKotlin2Js.kotlinOptions.outputFile = "${buildDir}/kotlin2js/main/module.js"
 compileIntegrationTestKotlin2Js.kotlinOptions.outputFile = "${buildDir}/kotlin2js/integrationTest/module-inttests.js"
 
+def isIrBackend = project.findProperty("kotlin.js.useIrBackend")?.toBoolean() ?: false
+if (isIrBackend) {
+    compileKotlin2Js.kotlinOptions.freeCompilerArgs += ["-Xir-produce-klib-dir", "-Xir-only"]
+    compileIntegrationTestKotlin2Js.kotlinOptions.freeCompilerArgs += ["-Xir-produce-js"]
+}
+
 dependencies {
-    compile "org.jetbrains.kotlin:kotlin-stdlib-js:$kotlin_version"
-    integrationTestCompile files(file(compileKotlin2Js.kotlinOptions.outputFile).parent)
-    integrationTestCompile "org.jetbrains.kotlin:kotlin-test-js:$kotlin_version"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-js:$kotlin_version"
+    integrationTestImplementation files(file(compileKotlin2Js.kotlinOptions.outputFile).parent)
+    integrationTestImplementation "org.jetbrains.kotlin:kotlin-test-js:$kotlin_version"
 }
 
 task integrationTestJar(type: Jar) {
@@ -47,5 +53,5 @@ task jarSources(type: Jar) {
     classifier = 'source'
 }
 artifacts {
-    compile jarSources
+    implementation jarSources
 }

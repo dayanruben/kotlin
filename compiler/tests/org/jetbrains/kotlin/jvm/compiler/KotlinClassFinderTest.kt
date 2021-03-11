@@ -60,17 +60,17 @@ class KotlinClassFinderTest : KotlinTestWithEnvironmentManagement() {
         assertNotNull(psiClass, "Psi class not found for $className")
         assertTrue(psiClass !is KtLightClass, "Kotlin light classes are not not expected")
 
-        val binaryClass = VirtualFileFinder.SERVICE.getInstance(project).findKotlinClass(JavaClassImpl(psiClass!!))
+        val binaryClass = VirtualFileFinder.SERVICE.getInstance(project).findKotlinClass(JavaClassImpl(psiClass))
         assertNotNull(binaryClass, "No binary class for $className")
 
-        assertEquals("test/A.B.C", binaryClass?.classId?.toString())
+        assertEquals("test/A.B.C", binaryClass.classId.toString())
     }
 
     private fun createEnvironment(tmpdir: File?): KotlinCoreEnvironment {
         return KotlinCoreEnvironment.createForTests(
-                testRootDisposable,
-                KotlinTestUtils.newConfiguration(ConfigurationKind.ALL, TestJdkKind.MOCK_JDK, tmpdir),
-                EnvironmentConfigFiles.JVM_CONFIG_FILES
+            testRootDisposable,
+            KotlinTestUtils.newConfiguration(ConfigurationKind.ALL, TestJdkKind.MOCK_JDK, tmpdir),
+            EnvironmentConfigFiles.JVM_CONFIG_FILES
         ).apply {
             // Activate Kotlin light class finder
             JvmResolveUtil.analyze(this)

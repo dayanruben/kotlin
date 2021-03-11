@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// !WITH_NEW_INFERENCE
 // FILE: p/Visitor.java
 
 package p;

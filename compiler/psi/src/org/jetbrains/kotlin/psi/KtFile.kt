@@ -21,7 +21,9 @@ import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.psi.*
 import com.intellij.psi.stubs.StubElement
+import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.ArrayFactory
 import com.intellij.util.FileContentUtilCore
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.kotlin.KtNodeTypes
@@ -54,13 +56,16 @@ open class KtFile(viewProvider: FileViewProvider, val isCompiled: Boolean) :
     private var pathCached: String? = null
 
     val importList: KtImportList?
-        get() = findChildByTypeOrClass(KtStubElementTypes.IMPORT_LIST, KtImportList::class.java)
+        get() = importLists.firstOrNull()
+
+    private val importLists: Array<out KtImportList>
+        get() = findChildrenByTypeOrClass(KtStubElementTypes.IMPORT_LIST, KtImportList::class.java)
 
     val fileAnnotationList: KtFileAnnotationList?
         get() = findChildByTypeOrClass(KtStubElementTypes.FILE_ANNOTATION_LIST, KtFileAnnotationList::class.java)
 
     open val importDirectives: List<KtImportDirective>
-        get() = importList?.imports ?: emptyList()
+        get() = importLists.flatMap { it.imports }
 
     // scripts have no package directive, all other files must have package directives
     val packageDirective: KtPackageDirective?
@@ -134,12 +139,12 @@ open class KtFile(viewProvider: FileViewProvider, val isCompiled: Boolean) :
 
     override fun getFileType(): FileType = KotlinFileType.INSTANCE
 
-    override fun toString(): String = "KtFile: " + name
+    override fun toString(): String = "KtFile: $name"
 
     override fun getDeclarations(): List<KtDeclaration> {
         val stub = stub
-        return stub?.getChildrenByType(KtStubElementTypes.DECLARATION_TYPES, KtDeclaration.ARRAY_FACTORY)?.toList()
-                ?: PsiTreeUtil.getChildrenOfTypeAsList(this, KtDeclaration::class.java)
+        return stub?.getChildrenByType(FILE_DECLARATION_TYPES, KtDeclaration.ARRAY_FACTORY)?.toList()
+            ?: PsiTreeUtil.getChildrenOfTypeAsList(this, KtDeclaration::class.java)
     }
 
     fun <T : KtElementImplStub<out StubElement<*>>> findChildByTypeOrClass(
@@ -154,8 +159,25 @@ open class KtFile(viewProvider: FileViewProvider, val isCompiled: Boolean) :
         return findChildByClass(elementClass)
     }
 
+    fun <T : KtElementImplStub<out StubElement<*>>> findChildrenByTypeOrClass(
+        elementType: KtPlaceHolderStubElementType<T>,
+        elementClass: Class<T>
+    ): Array<out T> {
+        val stub = stub
+        if (stub != null) {
+            val arrayFactory: ArrayFactory<T> = elementType.arrayFactory
+            return stub.getChildrenByType(elementType, arrayFactory)
+        }
+        return findChildrenByClass(elementClass)
+    }
+
+
     fun findImportByAlias(name: String): KtImportDirective? =
         importDirectives.firstOrNull { name == it.aliasName }
+
+    fun findAliasByFqName(fqName: FqName): KtImportAlias? = importDirectives.firstOrNull {
+        it.alias != null && fqName == it.importedFqName
+    }?.alias
 
     @Deprecated("") // getPackageFqName should be used instead
     override fun getPackageName(): String {
@@ -242,5 +264,9 @@ open class KtFile(viewProvider: FileViewProvider, val isCompiled: Boolean) :
     override fun shouldChangeModificationCount(place: PsiElement): Boolean {
         // Modification count for Kotlin files is tracked entirely by KotlinCodeBlockModificationListener
         return false
+    }
+
+    companion object {
+        val FILE_DECLARATION_TYPES = TokenSet.orSet(KtStubElementTypes.DECLARATION_TYPES, TokenSet.create(KtStubElementTypes.SCRIPT))
     }
 }

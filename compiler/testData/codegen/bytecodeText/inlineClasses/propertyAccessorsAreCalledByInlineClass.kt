@@ -1,7 +1,7 @@
 // !LANGUAGE: +InlineClasses
-// IGNORE_BACKEND: JVM_IR
 
 // FILE: Z.kt
+@Suppress("RESERVED_VAR_PROPERTY_OF_VALUE_CLASS")
 inline class Z(val x: Int) {
     val aVal: Int
         get() = x

@@ -1,4 +1,4 @@
-// !LANGUAGE: +NestedClassesInAnnotations +InlineClasses
+// !LANGUAGE: +NestedClassesInAnnotations +InlineClasses -JvmInlineValueClasses
 // !DIAGNOSTICS: -UNUSED_PARAMETER -UNUSED_VARIABLE
 
 <!WRONG_ANNOTATION_TARGET!>@kotlin.jvm.JvmField<!>
@@ -17,7 +17,7 @@ abstract class C : I{
     <!WRONG_ANNOTATION_TARGET!>@kotlin.jvm.JvmField<!> private fun foo(s: String = "OK") {
     }
 
-    <!WRONG_ANNOTATION_TARGET!>@JvmField<!> val a: String by lazy { "A" }
+    <!INAPPLICABLE_JVM_FIELD, WRONG_ANNOTATION_TARGET!>@JvmField<!> val a: String by lazy { "A" }
 
     <!INAPPLICABLE_JVM_FIELD!>@JvmField<!> open val b: Int = 3
 

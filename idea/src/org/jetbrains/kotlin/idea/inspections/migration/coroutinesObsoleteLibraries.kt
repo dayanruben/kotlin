@@ -1,12 +1,13 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.inspections.migration
 
 import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.versions.LibInfo
 
 interface VersionUpdater {
@@ -38,7 +39,7 @@ private fun kotlinxCoroutinesDeprecation(name: String): DeprecatedForKotlinLibIn
         lib = LibInfo("org.jetbrains.kotlinx", name),
         sinceKotlinLanguageVersion = LanguageVersion.KOTLIN_1_3,
         versionUpdater = KotlinxVersionUpdater,
-        message = "Library should be updated to be compatible with Kotlin 1.3"
+        message = KotlinBundle.message("library.should.be.updated.to.be.compatible.with.kotlin.1.3")
     )
 }
 

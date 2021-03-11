@@ -1,12 +1,11 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2000-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.resolve.calls.callResolverUtil
 
 import com.google.common.collect.Lists
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.ReflectionTypes
 import org.jetbrains.kotlin.builtins.isSuspendFunctionType
@@ -16,6 +15,7 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.impl.TypeAliasConstructorDescriptor
 import org.jetbrains.kotlin.lexer.KtToken
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingTrace
 import org.jetbrains.kotlin.resolve.calls.CallTransformer
 import org.jetbrains.kotlin.resolve.calls.components.isVararg
@@ -38,6 +38,7 @@ import org.jetbrains.kotlin.types.TypeUtils.DONT_CARE
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.types.typeUtil.contains
+import org.jetbrains.kotlin.utils.SmartList
 
 enum class ResolveArgumentsMode {
     RESOLVE_FUNCTION_ARGUMENTS,
@@ -108,20 +109,19 @@ fun getErasedReceiverType(receiverParameterDescriptor: ReceiverParameterDescript
             receiverType = TypeIntersector.intersectUpperBounds(typeParameter, properUpperBounds)
         }
     }
-    val fakeTypeArguments = ContainerUtil.newSmartList<TypeProjection>()
+    val fakeTypeArguments = SmartList<TypeProjection>()
     for (typeProjection in receiverType.arguments) {
         fakeTypeArguments.add(TypeProjectionImpl(typeProjection.projectionKind, DONT_CARE))
     }
 
-    val receiverTypeConstructor = if (receiverType.constructor is IntersectionTypeConstructor) {
-        val superTypesWithFakeArguments = receiverType.constructor.supertypes.map { supertype ->
+    val oldReceiverTypeConstructor = receiverType.constructor
+    val receiverTypeConstructor = if (oldReceiverTypeConstructor is IntersectionTypeConstructor) {
+        oldReceiverTypeConstructor.transformComponents { supertype ->
             val fakeArguments = supertype.arguments.map { TypeProjectionImpl(it.projectionKind, DONT_CARE) }
             supertype.replace(fakeArguments)
-        }
-
-        IntersectionTypeConstructor(superTypesWithFakeArguments)
+        } ?: oldReceiverTypeConstructor
     } else {
-        receiverType.constructor
+        oldReceiverTypeConstructor
     }
 
     return KotlinTypeFactory.simpleTypeWithNonTrivialMemberScope(
@@ -145,7 +145,7 @@ fun isBinaryRemOperator(call: Call): Boolean {
     val operator = callElement.operationToken
     if (operator !is KtToken) return false
 
-    val name = OperatorConventions.getNameForOperationSymbol(operator, true, true)
+    val name = OperatorConventions.getNameForOperationSymbol(operator, true, true) ?: return false
     return name in OperatorConventions.REM_TO_MOD_OPERATION_NAMES.keys
 }
 
@@ -215,7 +215,10 @@ fun getEffectiveExpectedTypeForSingleArgument(
         return if (parameterDescriptor.varargElementType == null) DONT_CARE else parameterDescriptor.type
     }
 
-    if (arrayAssignmentToVarargInNamedFormInAnnotation(parameterDescriptor, argument, languageVersionSettings, trace)) {
+    if (
+        arrayAssignmentToVarargInNamedFormInAnnotation(parameterDescriptor, argument, languageVersionSettings, trace) ||
+        arrayAssignmentToVarargInNamedFormInFunction(parameterDescriptor, argument, languageVersionSettings, trace)
+    ) {
         return parameterDescriptor.type
     }
 
@@ -234,9 +237,28 @@ private fun arrayAssignmentToVarargInNamedFormInAnnotation(
 ): Boolean {
     if (!languageVersionSettings.supportsFeature(LanguageFeature.AssigningArraysToVarargsInNamedFormInAnnotations)) return false
 
-    if (!isParameterOfAnnotation(parameterDescriptor)) return false
+    val isAllowedAssigningSingleElementsToVarargsInNamedForm =
+        !languageVersionSettings.supportsFeature(LanguageFeature.ProhibitAssigningSingleElementsToVarargsInNamedForm)
 
-    return argument.isNamed() && parameterDescriptor.isVararg && isArrayOrArrayLiteral(argument, trace)
+    if (isAllowedAssigningSingleElementsToVarargsInNamedForm && !isArrayOrArrayLiteral(argument, trace)) return false
+
+    return isParameterOfAnnotation(parameterDescriptor) && argument.isNamed() && parameterDescriptor.isVararg
+}
+
+private fun arrayAssignmentToVarargInNamedFormInFunction(
+    parameterDescriptor: ValueParameterDescriptor,
+    argument: ValueArgument,
+    languageVersionSettings: LanguageVersionSettings,
+    trace: BindingTrace
+): Boolean {
+    if (!languageVersionSettings.supportsFeature(LanguageFeature.AllowAssigningArrayElementsToVarargsInNamedFormForFunctions)) return false
+
+    val isAllowedAssigningSingleElementsToVarargsInNamedForm =
+        !languageVersionSettings.supportsFeature(LanguageFeature.ProhibitAssigningSingleElementsToVarargsInNamedForm)
+
+    if (isAllowedAssigningSingleElementsToVarargsInNamedForm && !isArrayOrArrayLiteral(argument, trace)) return false
+
+    return argument.isNamed() && parameterDescriptor.isVararg
 }
 
 fun isArrayOrArrayLiteral(argument: ValueArgument, trace: BindingTrace): Boolean {
@@ -299,3 +321,7 @@ fun createResolutionCandidatesForConstructors(
         ResolutionCandidate.create(call, it, dispatchReceiver, receiverKind, knownSubstitutor)
     }
 }
+
+internal fun KtConstructorDelegationCall.reportOnElement() = if (this.isImplicit) {
+    this.getStrictParentOfType<KtSecondaryConstructor>()!!
+} else this

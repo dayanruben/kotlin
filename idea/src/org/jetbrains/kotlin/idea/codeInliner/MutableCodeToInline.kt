@@ -72,13 +72,7 @@ internal class MutableCodeToInline(
     val expressions: Collection<KtExpression>
         get() = statementsBefore + listOfNotNull(mainExpression)
 
-    operator fun contains(element: PsiElement): Boolean {
-        return expressions.any { it.isAncestor(element) }
-    }
-
-    fun containsStrictlyInside(element: PsiElement): Boolean {
-        return expressions.any { it.isAncestor(element, strict = true) }
-    }
+    operator fun contains(element: PsiElement): Boolean = expressions.any { it.isAncestor(element) }
 }
 
 internal fun CodeToInline.toMutable(): MutableCodeToInline {
@@ -95,10 +89,10 @@ internal fun MutableCodeToInline.toNonMutable(): CodeToInline {
 }
 
 internal inline fun <reified T : PsiElement> MutableCodeToInline.collectDescendantsOfType(noinline predicate: (T) -> Boolean = { true }): List<T> {
-    return expressions.flatMap { it.collectDescendantsOfType<T>({ true }, predicate) }
+    return expressions.flatMap { it.collectDescendantsOfType({ true }, predicate) }
 }
 
 internal inline fun <reified T : PsiElement> MutableCodeToInline.forEachDescendantOfType(noinline action: (T) -> Unit) {
-    expressions.forEach { it.forEachDescendantOfType<T>(action) }
+    expressions.forEach { it.forEachDescendantOfType(action) }
 }
 

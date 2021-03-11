@@ -1,4 +1,4 @@
-// IGNORE_BACKEND: JVM_IR
+// IGNORE_BACKEND: JS
 // FILE: 1.kt
 
 package test

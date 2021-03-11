@@ -26,6 +26,9 @@ import org.gradle.api.tasks.SourceSet
 import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
 import org.jetbrains.kotlin.gradle.logging.kotlinWarn
 import org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile
+import org.jetbrains.kotlin.gradle.utils.SingleWarningPerBuild
+import org.jetbrains.kotlin.gradle.utils.androidPluginIds
+import java.util.concurrent.atomic.AtomicBoolean
 
 abstract class KotlinPlatformPluginBase(protected val platformName: String) : Plugin<Project> {
     companion object {
@@ -38,6 +41,7 @@ abstract class KotlinPlatformPluginBase(protected val platformName: String) : Pl
 
 open class KotlinPlatformCommonPlugin : KotlinPlatformPluginBase("common") {
     override fun apply(project: Project) {
+        warnAboutKotlin12xMppDeprecation(project)
         project.applyPlugin<KotlinCommonPluginWrapper>()
     }
 }
@@ -51,10 +55,12 @@ const val IMPLEMENT_DEPRECATION_WARNING = "The '$IMPLEMENT_CONFIG_NAME' configur
 open class KotlinPlatformImplementationPluginBase(platformName: String) : KotlinPlatformPluginBase(platformName) {
     private val commonProjects = arrayListOf<Project>()
 
-    protected open fun configurationsForCommonModuleDependency(project: Project): List<Configuration> =
-        listOf(project.configurations.getByName("compile"))
+    private fun configurationsForCommonModuleDependency(project: Project): List<Configuration> =
+        listOf(project.configurations.getByName("api"))
 
     override fun apply(project: Project) {
+        warnAboutKotlin12xMppDeprecation(project)
+
         val implementConfig = project.configurations.create(IMPLEMENT_CONFIG_NAME)
         val expectedByConfig = project.configurations.create(EXPECTED_BY_CONFIG_NAME)
 
@@ -162,12 +168,12 @@ open class KotlinPlatformImplementationPluginBase(platformName: String) : Kotlin
     protected open fun addCommonSourceSetToPlatformSourceSet(commonSourceSet: Named, platformProject: Project) {
         platformProject.whenEvaluated {
             // At the point when the source set in the platform module is created, the task does not exist
-            val platformTask = platformProject.tasks
+            val platformTasks = platformProject.tasks
                 .withType(AbstractKotlinCompile::class.java)
-                .singleOrNull { it.sourceSetName == commonSourceSet.name } // TODO use strict check once this code is not run in K/N
+                .filter { it.sourceSetName == commonSourceSet.name } // TODO use strict check once this code is not run in K/N
 
             val commonSources = getKotlinSourceDirectorySetSafe(commonSourceSet)!!
-            if (platformTask != null) {
+            for (platformTask in platformTasks) {
                 platformTask.source(commonSources)
                 platformTask.commonSourceSet += commonSources
             }
@@ -177,6 +183,7 @@ open class KotlinPlatformImplementationPluginBase(platformName: String) : Kotlin
     private fun getKotlinSourceSetsSafe(project: Project): NamedDomainObjectCollection<out Named> {
         // Access through reflection, because another project's KotlinProjectExtension might be loaded by a different class loader:
         val kotlinExt = project.extensions.getByName("kotlin")
+
         @Suppress("UNCHECKED_CAST")
         val sourceSets = kotlinExt.javaClass.getMethod("getSourceSets").invoke(kotlinExt) as NamedDomainObjectCollection<out Named>
         return sourceSets
@@ -205,8 +212,24 @@ open class KotlinPlatformImplementationPluginBase(platformName: String) : Kotlin
 internal fun <T> Project.whenEvaluated(fn: Project.() -> T) {
     if (state.executed) {
         fn()
-    } else {
-        afterEvaluate { it.fn() }
+        return
+    }
+
+    /* Make sure that all afterEvaluate blocks from the AndroidPlugin get scheduled first */
+    val isDispatched = AtomicBoolean(false)
+    androidPluginIds.forEach { androidPluginId ->
+        pluginManager.withPlugin(androidPluginId) {
+            if (!isDispatched.getAndSet(true)) {
+                afterEvaluate { fn() }
+            }
+        }
+    }
+
+    afterEvaluate {
+        /* If no Android plugin was loaded, then the action was not dispatched and we can freely execute it now */
+        if (!isDispatched.getAndSet(true)) {
+            fn()
+        }
     }
 }
 
@@ -215,10 +238,6 @@ open class KotlinPlatformAndroidPlugin : KotlinPlatformImplementationPluginBase(
         project.applyPlugin<KotlinAndroidPluginWrapper>()
         super.apply(project)
     }
-
-    override fun configurationsForCommonModuleDependency(project: Project): List<Configuration> =
-        (project.configurations.findByName("api"))?.let(::listOf)
-            ?: super.configurationsForCommonModuleDependency(project) // older Android plugins don't have api/implementation configs
 
     override fun namedSourceSetsContainer(project: Project): NamedDomainObjectContainer<*> =
         (project.extensions.getByName("android") as BaseExtension).sourceSets
@@ -243,5 +262,19 @@ open class KotlinPlatformJsPlugin : KotlinPlatformImplementationPluginBase("js")
     override fun apply(project: Project) {
         project.applyPlugin<Kotlin2JsPluginWrapper>()
         super.apply(project)
+    }
+}
+
+internal val KOTLIN_12X_MPP_DEPRECATION_WARNING = "\n" + """
+    The 'org.jetbrains.kotlin.platform.*' plugins are deprecated and will no longer be available in Kotlin 1.4.
+    Please migrate the project to the 'org.jetbrains.kotlin.multiplatform' plugin.
+    See: https://kotlinlang.org/docs/reference/building-mpp-with-gradle.html
+    """.trimIndent()
+
+private const val KOTLIN_12X_MPP_DEPRECATION_SUPPRESS_FLAG = "kotlin.internal.mpp12x.deprecation.suppress"
+
+private fun warnAboutKotlin12xMppDeprecation(project: Project) {
+    if (project.findProperty(KOTLIN_12X_MPP_DEPRECATION_SUPPRESS_FLAG) != "true") {
+        SingleWarningPerBuild.show(project, KOTLIN_12X_MPP_DEPRECATION_WARNING)
     }
 }

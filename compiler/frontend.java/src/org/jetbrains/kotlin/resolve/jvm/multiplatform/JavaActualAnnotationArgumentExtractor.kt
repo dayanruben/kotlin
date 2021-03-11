@@ -1,11 +1,11 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.resolve.jvm.multiplatform
 
-import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.load.java.components.JavaPropertyInitializerEvaluatorImpl
@@ -68,7 +68,7 @@ class JavaActualAnnotationArgumentExtractor : ExpectedActualDeclarationChecker.A
             is JavaPrimitiveType -> {
                 val primitiveType = type.type
                 // void.class is not representable in Kotlin, we approximate it by Unit::class
-                    ?: return KClassValue(ClassId.topLevel(KotlinBuiltIns.FQ_NAMES.unit.toSafe()), 0)
+                    ?: return KClassValue(ClassId.topLevel(StandardNames.FqNames.unit.toSafe()), 0)
                 if (arrayDimensions > 0) {
                     KClassValue(ClassId.topLevel(primitiveType.arrayTypeFqName), arrayDimensions - 1)
                 } else {

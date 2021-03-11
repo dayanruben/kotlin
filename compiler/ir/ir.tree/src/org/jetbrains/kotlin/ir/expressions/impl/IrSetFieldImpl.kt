@@ -16,72 +16,23 @@
 
 package org.jetbrains.kotlin.ir.expressions.impl
 
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrSetField
 import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrFieldSymbol
-import org.jetbrains.kotlin.ir.symbols.impl.IrFieldSymbolImpl
-import org.jetbrains.kotlin.ir.symbols.impl.createClassSymbolOrNull
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformer
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitor
 
 class IrSetFieldImpl(
-    startOffset: Int,
-    endOffset: Int,
-    symbol: IrFieldSymbol,
-    type: IrType,
-    origin: IrStatementOrigin? = null,
-    superQualifierSymbol: IrClassSymbol? = null
-) :
-    IrFieldExpressionBase(
-        startOffset, endOffset,
-        symbol,
-        type,
-        origin,
-        superQualifierSymbol
-    ),
-    IrSetField {
-
-    @Deprecated("Creates unbound symbol")
-    constructor(
-        startOffset: Int,
-        endOffset: Int,
-        propertyDescriptor: PropertyDescriptor,
-        type: IrType,
-        origin: IrStatementOrigin? = null,
-        superQualifier: ClassDescriptor? = null
-    ) : this(
-        startOffset, endOffset,
-        IrFieldSymbolImpl(propertyDescriptor),
-        type,
-        origin,
-        createClassSymbolOrNull(superQualifier)
-    )
-
-    @Deprecated("Creates unbound symbol")
-    constructor(
-        startOffset: Int,
-        endOffset: Int,
-        propertyDescriptor: PropertyDescriptor,
-        receiver: IrExpression?,
-        value: IrExpression,
-        type: IrType,
-        origin: IrStatementOrigin? = null,
-        superQualifier: ClassDescriptor? = null
-    ) : this(
-        startOffset, endOffset,
-        IrFieldSymbolImpl(propertyDescriptor),
-        receiver,
-        value,
-        type,
-        origin,
-        createClassSymbolOrNull(superQualifier)
-    )
-
+    override val startOffset: Int,
+    override val endOffset: Int,
+    override val symbol: IrFieldSymbol,
+    override var type: IrType,
+    override val origin: IrStatementOrigin? = null,
+    override val superQualifierSymbol: IrClassSymbol? = null,
+) : IrSetField() {
     constructor(
         startOffset: Int, endOffset: Int,
         symbol: IrFieldSymbol,

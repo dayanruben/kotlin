@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.fileClasses.isInsideJvmMultifileClassFile
+import org.jetbrains.kotlin.load.java.DescriptorsJvmAbiUtil
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtProperty
@@ -28,7 +29,6 @@ import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.checkers.DeclarationChecker
 import org.jetbrains.kotlin.resolve.checkers.DeclarationCheckerContext
-import org.jetbrains.kotlin.resolve.isInlineClassType
 import org.jetbrains.kotlin.resolve.jvm.annotations.findJvmFieldAnnotation
 import org.jetbrains.kotlin.resolve.jvm.checkers.JvmFieldApplicabilityChecker.Problem.*
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
@@ -63,7 +63,7 @@ class JvmFieldApplicabilityChecker : DeclarationChecker {
             declaration.hasDelegate() -> DELEGATE
             !descriptor.hasBackingField(context.trace.bindingContext) -> return
             descriptor.isOverridable -> NOT_FINAL
-            Visibilities.isPrivate(descriptor.visibility) -> PRIVATE
+            DescriptorVisibilities.isPrivate(descriptor.visibility) -> PRIVATE
             declaration.hasCustomAccessor() -> CUSTOM_ACCESSOR
             descriptor.overriddenDescriptors.isNotEmpty() -> OVERRIDES
             descriptor.isLateInit -> LATEINIT
@@ -92,9 +92,9 @@ class JvmFieldApplicabilityChecker : DeclarationChecker {
         )) {
             if (next !is PropertyDescriptor) continue
 
-            if (next.visibility != Visibilities.PUBLIC || next.isVar || next.modality != Modality.FINAL) return false
+            if (next.visibility != DescriptorVisibilities.PUBLIC || next.isVar || next.modality != Modality.FINAL) return false
 
-            if (!JvmAbi.hasJvmFieldAnnotation(next)) return false
+            if (!DescriptorsJvmAbiUtil.hasJvmFieldAnnotation(next)) return false
         }
         return true
     }
@@ -112,12 +112,4 @@ class JvmFieldApplicabilityChecker : DeclarationChecker {
 
     private fun PropertyDescriptor.hasBackingField(bindingContext: BindingContext) =
         bindingContext.get(BindingContext.BACKING_FIELD_REQUIRED, this) ?: false
-
-    private fun PropertyDescriptor.isInsideCompanionObjectOfInterface(): Boolean {
-        val containingClass = containingDeclaration as? ClassDescriptor ?: return false
-        if (!DescriptorUtils.isCompanionObject(containingClass)) return false
-
-        val outerClassKind = (containingClass.containingDeclaration as? ClassDescriptor)?.kind
-        return outerClassKind == ClassKind.INTERFACE || outerClassKind == ClassKind.ANNOTATION_CLASS
-    }
 }

@@ -1,228 +1,171 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.backend.jvm.lower
 
 import org.jetbrains.kotlin.backend.common.ClassLoweringPass
-import org.jetbrains.kotlin.backend.common.descriptors.KnownClassDescriptor
-import org.jetbrains.kotlin.backend.common.descriptors.KnownPackageFragmentDescriptor
 import org.jetbrains.kotlin.backend.common.lower.createIrBuilder
-import org.jetbrains.kotlin.backend.common.makePhase
+import org.jetbrains.kotlin.backend.common.phaser.makeIrFilePhase
 import org.jetbrains.kotlin.backend.jvm.JvmBackendContext
 import org.jetbrains.kotlin.backend.jvm.JvmLoweredDeclarationOrigin
 import org.jetbrains.kotlin.backend.jvm.codegen.isJvmInterface
-import org.jetbrains.kotlin.builtins.KotlinBuiltIns
-import org.jetbrains.kotlin.codegen.isGenericToArray
-import org.jetbrains.kotlin.codegen.isNonGenericToArray
-import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
+import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.descriptors.SourceElement
-import org.jetbrains.kotlin.descriptors.Visibilities
-import org.jetbrains.kotlin.descriptors.annotations.Annotations
-import org.jetbrains.kotlin.descriptors.impl.SimpleFunctionDescriptorImpl
-import org.jetbrains.kotlin.descriptors.impl.TypeParameterDescriptorImpl
-import org.jetbrains.kotlin.descriptors.impl.ValueParameterDescriptorImpl
-import org.jetbrains.kotlin.incremental.components.NoLookupLocation
-import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
+import org.jetbrains.kotlin.ir.builders.declarations.addDispatchReceiver
+import org.jetbrains.kotlin.ir.builders.declarations.addFunction
+import org.jetbrains.kotlin.ir.builders.declarations.addTypeParameter
+import org.jetbrains.kotlin.ir.builders.declarations.addValueParameter
 import org.jetbrains.kotlin.ir.builders.irBlockBody
 import org.jetbrains.kotlin.ir.builders.irCall
+import org.jetbrains.kotlin.ir.builders.irGet
 import org.jetbrains.kotlin.ir.builders.irReturn
 import org.jetbrains.kotlin.ir.declarations.IrClass
-import org.jetbrains.kotlin.ir.declarations.impl.IrFunctionImpl
-import org.jetbrains.kotlin.ir.expressions.impl.IrGetValueImpl
-import org.jetbrains.kotlin.ir.symbols.impl.IrSimpleFunctionSymbolImpl
-import org.jetbrains.kotlin.ir.types.toIrType
-import org.jetbrains.kotlin.ir.util.createParameterDeclarations
-import org.jetbrains.kotlin.load.java.descriptors.JavaClassDescriptor
-import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
+import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
+import org.jetbrains.kotlin.ir.symbols.IrClassifierSymbol
+import org.jetbrains.kotlin.ir.types.*
+import org.jetbrains.kotlin.ir.util.defaultType
+import org.jetbrains.kotlin.ir.util.functions
+import org.jetbrains.kotlin.ir.util.isClass
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.resolve.DescriptorUtils.isSubclass
-import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
-import org.jetbrains.kotlin.resolve.descriptorUtil.getAllSuperclassesWithoutAny
 import org.jetbrains.kotlin.types.Variance
+import org.jetbrains.kotlin.utils.DFS
 
-class ToArrayLowering(private val context: JvmBackendContext) : ClassLoweringPass {
+internal val toArrayPhase = makeIrFilePhase(
+    ::ToArrayLowering,
+    name = "ToArray",
+    description = "Handle toArray functions"
+)
+
+private class ToArrayLowering(private val context: JvmBackendContext) : ClassLoweringPass {
+    private val symbols = context.ir.symbols
 
     override fun lower(irClass: IrClass) {
-        if (irClass.isJvmInterface) return
+        if (irClass.isJvmInterface || !irClass.isCollectionSubClass) return
 
-        val descriptor = irClass.descriptor
+        val indirectCollectionSubClass = generateSequence(irClass.superClass, IrClass::superClass).firstOrNull {
+            it.origin != IrDeclarationOrigin.IR_EXTERNAL_JAVA_DECLARATION_STUB
+        }?.isCollectionSubClass == true
 
-        val builtIns = descriptor.builtIns
-        if (!isSubclass(descriptor, builtIns.collection)) return
+        irClass.findOrCreate(indirectCollectionSubClass, { it.isGenericToArray(context) }) { bridge ->
+            irClass.addFunction {
+                name = Name.identifier("toArray")
+                origin = JvmLoweredDeclarationOrigin.TO_ARRAY
+                modality = if (bridge != null) Modality.FINAL else Modality.OPEN
+            }.apply {
+                val elementType = addTypeParameter {
+                    name = Name.identifier("T")
+                    origin = JvmLoweredDeclarationOrigin.TO_ARRAY
+                    superTypes.add(context.irBuiltIns.anyNType)
+                }
+                returnType = context.irBuiltIns.arrayClass.typeWith(elementType.defaultType)
+                val receiver = addDispatchReceiver {
+                    type = irClass.defaultType
+                    origin = JvmLoweredDeclarationOrigin.TO_ARRAY
+                }
+                val prototype = addValueParameter("array", returnType, JvmLoweredDeclarationOrigin.TO_ARRAY)
+                body = context.createIrBuilder(symbol).irBlockBody {
+                    if (bridge == null) {
+                        +irReturn(irCall(symbols.genericToArray, symbols.genericToArray.owner.returnType).apply {
+                            putValueArgument(0, irGet(receiver))
+                            putValueArgument(1, irGet(prototype))
+                        })
+                    } else {
+                        +irReturn(irCall(bridge.target.symbol, bridge.target.returnType).apply {
+                            dispatchReceiver = irGet(receiver)
+                            putValueArgument(0, irGet(prototype))
+                        })
+                    }
+                }
+            }
+        }
 
-        if (descriptor.getAllSuperclassesWithoutAny().any { classDescriptor ->
-                classDescriptor !is JavaClassDescriptor && isSubclass(
-                    classDescriptor,
-                    builtIns.collection
-                )
-            }) {
+        irClass.findOrCreate(indirectCollectionSubClass, IrSimpleFunction::isNonGenericToArray) { bridge ->
+            irClass.addFunction {
+                name = Name.identifier("toArray")
+                origin = JvmLoweredDeclarationOrigin.TO_ARRAY
+                modality = if (bridge != null) Modality.FINAL else Modality.OPEN
+                returnType = context.irBuiltIns.arrayClass.typeWith(context.irBuiltIns.anyNType)
+            }.apply {
+                val receiver = addDispatchReceiver {
+                    type = irClass.defaultType
+                    origin = JvmLoweredDeclarationOrigin.TO_ARRAY
+                }
+                body = context.createIrBuilder(symbol).irBlockBody {
+                    if (bridge == null) {
+                        +irReturn(irCall(symbols.nonGenericToArray, symbols.nonGenericToArray.owner.returnType).apply {
+                            putValueArgument(0, irGet(receiver))
+                        })
+                    } else {
+                        +irReturn(irCall(bridge.target.symbol, bridge.target.returnType).apply {
+                            dispatchReceiver = irGet(receiver)
+                        })
+                    }
+                }
+            }
+        }
+    }
+
+    private class ToArrayBridge(
+        val target: IrSimpleFunction
+    )
+
+    private fun IrClass.findOrCreate(
+        indirectSubclass: Boolean,
+        matcher: (IrSimpleFunction) -> Boolean,
+        fallback: (ToArrayBridge?) -> IrSimpleFunction
+    ) {
+        val existing = functions.find(matcher)
+        if (existing != null) {
+            // This is an explicit override of a method defined in `kotlin.collections.AbstractCollection`
+            // or `java.util.Collection`. From here on, the frontend will check the existence of implementations;
+            // we just need to match visibility in the former case to the latter.
+            if (existing.visibility == DescriptorVisibilities.INTERNAL) {
+                // If existing `toArray` is internal, create a public bridge method
+                // to preserve binary compatibility with code generated by the old back-end.
+                // NB This will preserve existing custom `toArray` signature.
+                fallback(ToArrayBridge(existing))
+            } else {
+                existing.visibility = DescriptorVisibilities.PUBLIC
+            }
             return
         }
-
-        val toArrayName = Name.identifier("toArray")
-        val functions = descriptor.defaultType.memberScope.getContributedFunctions(
-            toArrayName, NoLookupLocation.FROM_BACKEND
-        )
-
-        val genericToArray = functions.firstOrNull { it.isGenericToArray() }
-        val nonGenericToArray = functions.firstOrNull { it.isNonGenericToArray() }
-        val arrayType = builtIns.getArrayType(Variance.INVARIANT, builtIns.anyType)
-        if (genericToArray == null) {
-            val toArrayDescriptor = SimpleFunctionDescriptorImpl.create(
-                irClass.descriptor, org.jetbrains.kotlin.descriptors.annotations.Annotations.EMPTY,
-                toArrayName, CallableMemberDescriptor.Kind.SYNTHESIZED, SourceElement.NO_SOURCE
-            )
-            toArrayDescriptor.initialize(
-                null, irClass.descriptor.thisAsReceiverParameter, emptyList(), emptyList(),
-                arrayType, Modality.OPEN, Visibilities.PUBLIC
-            )
-
-            val toArrayUtilDescriptor = createToArrayUtilDescriptor(builtIns, false)
-            val toArrayType = toArrayUtilDescriptor.returnType!!.toIrType()!!
-
-            val irFunction = IrFunctionImpl(
-                UNDEFINED_OFFSET,
-                UNDEFINED_OFFSET,
-                JvmLoweredDeclarationOrigin.TO_ARRAY,
-                toArrayDescriptor,
-                returnType = toArrayType
-            )
-            irFunction.createParameterDeclarations()
-
-            irFunction.body = context.createIrBuilder(irFunction.symbol).irBlockBody {
-                +irReturn(
-                    irCall(IrSimpleFunctionSymbolImpl(toArrayUtilDescriptor), toArrayType).apply {
-                        putValueArgument(
-                            0,
-                            IrGetValueImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, irFunction.dispatchReceiverParameter!!.symbol)
-                        )
-                    })
-            }
-            irClass.declarations.add(irFunction)
-        } else {
-            //TODO patch visibility
+        if (indirectSubclass) {
+            // There's a Kotlin class up the hierarchy that should already have `toArray`.
+            return
         }
-
-        if (nonGenericToArray == null) {
-            val toArrayDescriptor = SimpleFunctionDescriptorImpl.create(
-                irClass.descriptor, org.jetbrains.kotlin.descriptors.annotations.Annotations.EMPTY,
-                toArrayName, CallableMemberDescriptor.Kind.SYNTHESIZED, SourceElement.NO_SOURCE
-            )
-            val createWithDefaultBound = TypeParameterDescriptorImpl.createWithDefaultBound(
-                toArrayDescriptor,
-                Annotations.EMPTY,
-                false,
-                Variance.INVARIANT,
-                Name.identifier("T"),
-                0
-            )
-
-            val genericArrayType = builtIns.getArrayType(Variance.INVARIANT, createWithDefaultBound.defaultType)
-            toArrayDescriptor.initialize(
-                null,
-                irClass.descriptor.thisAsReceiverParameter,
-                listOf(createWithDefaultBound),
-                listOf(
-                    ValueParameterDescriptorImpl(
-                        toArrayDescriptor,
-                        null,
-                        0,
-                        Annotations.EMPTY,
-                        Name.identifier("array"),
-                        genericArrayType,
-                        false,
-                        false,
-                        false,
-                        null,
-                        SourceElement.NO_SOURCE
-                    )
-                ),
-                genericArrayType,
-                Modality.OPEN,
-                Visibilities.PUBLIC
-            )
-
-            val toArrayUtilDescriptor = createToArrayUtilDescriptor(builtIns, true)
-            val toArrayType = toArrayUtilDescriptor.returnType!!.toIrType()!!
-
-            val irFunction = IrFunctionImpl(
-                UNDEFINED_OFFSET,
-                UNDEFINED_OFFSET,
-                JvmLoweredDeclarationOrigin.TO_ARRAY,
-                toArrayDescriptor,
-                toArrayType
-            )
-            irFunction.createParameterDeclarations()
-
-            irFunction.body = context.createIrBuilder(irFunction.symbol).irBlockBody {
-                +irReturn(
-                    irCall(IrSimpleFunctionSymbolImpl(toArrayUtilDescriptor), toArrayType).apply {
-                        putValueArgument(
-                            0,
-                            IrGetValueImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, irFunction.dispatchReceiverParameter!!.symbol)
-                        )
-                        putValueArgument(1, IrGetValueImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, irFunction.valueParameters[0].symbol))
-                    })
-            }
-
-            irClass.declarations.add(irFunction)
-        } else {
-            //TODO patch visibility
-        }
-    }
-
-    private fun createToArrayUtilDescriptor(
-        builtIns: KotlinBuiltIns,
-        isGeneric: Boolean
-    ): SimpleFunctionDescriptorImpl {
-        val kotlinJvmInternalPackage = KnownPackageFragmentDescriptor(builtIns.builtInsModule, FqName("kotlin.jvm.internal"))
-
-        val toArrayUtil = SimpleFunctionDescriptorImpl.create(
-            KnownClassDescriptor.createClass(Name.identifier("CollectionToArray"), kotlinJvmInternalPackage, listOf(builtIns.anyType)),
-            Annotations.EMPTY,
-            Name.identifier("toArray"),
-            CallableMemberDescriptor.Kind.SYNTHESIZED,
-            SourceElement.NO_SOURCE
-        )
-        toArrayUtil.initialize(
-            null,
-            null,
-            emptyList(),
-            listOfNotNull(
-                ValueParameterDescriptorImpl(
-                    toArrayUtil,
-                    null,
-                    0,
-                    Annotations.EMPTY,
-                    Name.identifier("collection"),
-                    builtIns.collection.defaultType,
-                    false,
-                    false,
-                    false,
-                    null,
-                    SourceElement.NO_SOURCE
-                ),
-                if (isGeneric) ValueParameterDescriptorImpl(
-                    toArrayUtil,
-                    null,
-                    1,
-                    Annotations.EMPTY,
-                    Name.identifier("array"),
-                    builtIns.getArrayType(Variance.INVARIANT, builtIns.anyType),
-                    false,
-                    false,
-                    false,
-                    null,
-                    SourceElement.NO_SOURCE
-                ) else null
-            ),
-            builtIns.array.defaultType,
-            Modality.OPEN,
-            Visibilities.PUBLIC
-        )
-        return toArrayUtil
+        fallback(null)
     }
 }
+
+private val IrClass.superClass: IrClass?
+    get() = superTypes.mapNotNull { it.getClass()?.takeIf { superClass -> superClass.isClass } }.singleOrNull()
+
+internal val IrClass.isCollectionSubClass: Boolean
+    get() = DFS.ifAny(superTypes, { it.getClass()?.superTypes ?: listOf() }) { it.isCollection() }
+
+private fun IrType.isArrayOrNullableArrayOf(context: JvmBackendContext, element: IrClassifierSymbol): Boolean =
+    this is IrSimpleType && (isArray() || isNullableArray()) && arguments.size == 1 && element == when (val it = arguments[0]) {
+        is IrStarProjection -> context.irBuiltIns.anyClass
+        is IrTypeProjection -> if (it.variance == Variance.IN_VARIANCE) context.irBuiltIns.anyClass else it.type.classifierOrNull
+        else -> null
+    }
+
+// Match `fun <T> toArray(prototype: Array<T>): Array<T>`
+internal fun IrSimpleFunction.isGenericToArray(context: JvmBackendContext): Boolean =
+    name.asString() == "toArray" && typeParameters.size == 1 && valueParameters.size == 1 &&
+            extensionReceiverParameter == null &&
+            returnType.isArrayOrNullableArrayOf(context, typeParameters[0].symbol) &&
+            valueParameters[0].type.isArrayOrNullableArrayOf(context, typeParameters[0].symbol)
+
+// Match `fun toArray(): Array<...>`.
+// It would be more correct to check that the return type is erased to `Object[]`, however the old backend doesn't do that
+// (see `FunctionDescriptor.isNonGenericToArray` and KT-43111).
+internal fun IrSimpleFunction.isNonGenericToArray(): Boolean =
+    name.asString() == "toArray" && typeParameters.isEmpty() && valueParameters.isEmpty() &&
+            extensionReceiverParameter == null && returnType.isArrayOrNullableArray()
+
+private fun IrType.isArrayOrNullableArray(): Boolean =
+    this is IrSimpleType && (isArray() || isNullableArray())

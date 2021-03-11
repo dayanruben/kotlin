@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.resolve.calls.inference
@@ -39,10 +39,13 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
 import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue
 import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.types.TypeUtils.NO_EXPECTED_TYPE
+import org.jetbrains.kotlin.types.checker.ClassicTypeCheckerContext
+import org.jetbrains.kotlin.types.checker.KotlinTypeRefiner
 import org.jetbrains.kotlin.types.checker.NewKotlinTypeChecker
-import org.jetbrains.kotlin.types.checker.TypeCheckerContext
 import org.jetbrains.kotlin.types.expressions.ExpressionTypingServices
 import org.jetbrains.kotlin.types.expressions.KotlinTypeInfo
+import org.jetbrains.kotlin.types.model.KotlinTypeMarker
+import org.jetbrains.kotlin.types.refinement.TypeRefinement
 import org.jetbrains.kotlin.types.typeUtil.*
 import javax.inject.Inject
 
@@ -63,6 +66,9 @@ class TypeTemplate(
 
     override fun render(renderer: DescriptorRenderer, options: DescriptorRendererOptions) =
         "~${renderer.renderType(typeVariable.type)}"
+
+    @TypeRefinement
+    override fun refine(kotlinTypeRefiner: KotlinTypeRefiner) = this
 }
 
 class CoroutineInferenceData {
@@ -220,14 +226,14 @@ class CoroutineInferenceSupport(
         if (!resultingCall.isReallySuccess()) return
 
         val resultingDescriptor = resultingCall.resultingDescriptor
-        if (!isGoodCall(resultingDescriptor)) {
+        if (!isApplicableCallForBuilderInference(resultingDescriptor, languageVersionSettings)) {
             inferenceData.badCallHappened()
         }
 
         forceInferenceForArguments(context) { valueArgument: ValueArgument, kotlinType: KotlinType ->
             val argumentMatch = resultingCall.getArgumentMapping(valueArgument) as? ArgumentMatch ?: return@forceInferenceForArguments
 
-            with(NewKotlinTypeChecker) {
+            with(NewKotlinTypeChecker.Default) {
                 val parameterType = getEffectiveExpectedType(argumentMatch.valueParameter, valueArgument, context)
                 CoroutineTypeCheckerContext(allowOnlyTrivialConstraints = false).isSubtypeOf(kotlinType.unwrap(), parameterType.unwrap())
             }
@@ -241,7 +247,7 @@ class CoroutineInferenceSupport(
                 false
 
         resultingCall.extensionReceiver?.let { actualReceiver ->
-            with(NewKotlinTypeChecker) {
+            with(NewKotlinTypeChecker.Default) {
                 CoroutineTypeCheckerContext(allowOnlyTrivialConstraints = allowOnlyTrivialConstraintsForReceiver).isSubtypeOf(
                     actualReceiver.type.unwrap(), extensionReceiver.value.type.unwrap()
                 )
@@ -249,37 +255,13 @@ class CoroutineInferenceSupport(
         }
     }
 
-    private fun KotlinType.containsTypeTemplate() = contains { it is TypeTemplate }
-
-    private fun isGoodCall(resultingDescriptor: CallableDescriptor): Boolean {
-        if (!languageVersionSettings.supportsFeature(LanguageFeature.ExperimentalBuilderInference)) {
-            return isGoodCallForOldCoroutines(resultingDescriptor)
-        }
-
-        if (resultingDescriptor.isExtension && !resultingDescriptor.hasBuilderInferenceAnnotation()) {
-            return resultingDescriptor.extensionReceiverParameter?.type?.containsTypeTemplate() == false
-        }
-
-        val returnType = resultingDescriptor.returnType ?: return false
-        return !returnType.containsTypeTemplate()
-    }
-
-    private fun isGoodCallForOldCoroutines(resultingDescriptor: CallableDescriptor): Boolean {
-        val returnType = resultingDescriptor.returnType ?: return false
-        if (returnType.containsTypeTemplate()) return false
-
-        if (resultingDescriptor !is FunctionDescriptor || resultingDescriptor.isSuspend) return true
-
-        if (resultingDescriptor.valueParameters.any { it.type.containsTypeTemplate() }) return false
-
-        return true
-    }
-
     private class CoroutineTypeCheckerContext(
         private val allowOnlyTrivialConstraints: Boolean
-    ) : TypeCheckerContext(errorTypeEqualsToAnything = true) {
+    ) : ClassicTypeCheckerContext(errorTypeEqualsToAnything = true) {
 
-        override fun addSubtypeConstraint(subType: UnwrappedType, superType: UnwrappedType): Boolean? {
+        override fun addSubtypeConstraint(subType: KotlinTypeMarker, superType: KotlinTypeMarker, isFromNullabilityConstraint: Boolean): Boolean? {
+            require(subType is UnwrappedType)
+            require(superType is UnwrappedType)
             val typeTemplate = subType as? TypeTemplate ?: superType as? TypeTemplate
             typeTemplate?.coroutineInferenceData?.addConstraint(subType, superType, allowOnlyTrivialConstraints)
             return null
@@ -315,6 +297,32 @@ class CoroutineInferenceSupport(
 
         return expressionTypingServices.getTypeInfo(expression, context)
     }
+}
+
+private fun KotlinType.containsTypeTemplate() = contains { it is TypeTemplate || it is StubType }
+
+fun isApplicableCallForBuilderInference(descriptor: CallableDescriptor, languageVersionSettings: LanguageVersionSettings): Boolean {
+    if (!languageVersionSettings.supportsFeature(LanguageFeature.ExperimentalBuilderInference)) {
+        return isGoodCallForOldCoroutines(descriptor)
+    }
+
+    if (descriptor.isExtension && !descriptor.hasBuilderInferenceAnnotation()) {
+        return descriptor.extensionReceiverParameter?.type?.containsTypeTemplate() == false
+    }
+
+    val returnType = descriptor.returnType ?: return false
+    return !returnType.containsTypeTemplate()
+}
+
+private fun isGoodCallForOldCoroutines(resultingDescriptor: CallableDescriptor): Boolean {
+    val returnType = resultingDescriptor.returnType ?: return false
+    if (returnType.containsTypeTemplate()) return false
+
+    if (resultingDescriptor !is FunctionDescriptor || resultingDescriptor.isSuspend) return true
+
+    if (resultingDescriptor.valueParameters.any { it.type.containsTypeTemplate() }) return false
+
+    return true
 }
 
 fun isCoroutineCallWithAdditionalInference(

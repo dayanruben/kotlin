@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package kotlinx.metadata.impl
@@ -11,14 +11,22 @@ import org.jetbrains.kotlin.metadata.ProtoBuf
 import org.jetbrains.kotlin.metadata.deserialization.*
 import org.jetbrains.kotlin.metadata.deserialization.Flags as F
 
+/**
+ * Allows to populate [ReadContext] with additional data
+ * that can be used when reading metadata in [MetadataExtensions].
+ */
+interface ReadContextExtension
+
 class ReadContext(
     val strings: NameResolver,
     val types: TypeTable,
     internal val versionRequirements: VersionRequirementTable,
-    private val parent: ReadContext? = null
+    private val parent: ReadContext? = null,
+    val contextExtensions: List<ReadContextExtension> = emptyList()
 ) {
-    internal val extensions = MetadataExtensions.INSTANCES
     private val typeParameterNameToId = mutableMapOf<Int, Int>()
+
+    internal val extensions = MetadataExtensions.INSTANCES
 
     operator fun get(index: Int): String =
         strings.getString(index)
@@ -30,16 +38,24 @@ class ReadContext(
         typeParameterNameToId[name] ?: parent?.getTypeParameterId(name)
 
     fun withTypeParameters(typeParameters: List<ProtoBuf.TypeParameter>): ReadContext =
-        ReadContext(strings, types, versionRequirements, this).apply {
+        ReadContext(strings, types, versionRequirements, this, contextExtensions).apply {
             for (typeParameter in typeParameters) {
                 typeParameterNameToId[typeParameter.name] = typeParameter.id
             }
         }
 }
 
-fun ProtoBuf.Class.accept(v: KmClassVisitor, strings: NameResolver) {
-    val c = ReadContext(strings, TypeTable(typeTable), VersionRequirementTable.create(versionRequirementTable))
-        .withTypeParameters(typeParameterList)
+fun ProtoBuf.Class.accept(
+    v: KmClassVisitor,
+    strings: NameResolver,
+    contextExtensions: List<ReadContextExtension> = emptyList()
+) {
+    val c = ReadContext(
+        strings,
+        TypeTable(typeTable),
+        VersionRequirementTable.create(versionRequirementTable),
+        contextExtensions = contextExtensions
+    ).withTypeParameters(typeParameterList)
 
     v.visit(flags, c.className(fqName))
 
@@ -87,13 +103,47 @@ fun ProtoBuf.Class.accept(v: KmClassVisitor, strings: NameResolver) {
     v.visitEnd()
 }
 
-fun ProtoBuf.Package.accept(v: KmPackageVisitor, strings: NameResolver) {
-    val c = ReadContext(strings, TypeTable(typeTable), VersionRequirementTable.create(versionRequirementTable))
+fun ProtoBuf.Package.accept(
+    v: KmPackageVisitor,
+    strings: NameResolver,
+    contextExtensions: List<ReadContextExtension> = emptyList()
+) {
+    val c = ReadContext(
+        strings,
+        TypeTable(typeTable),
+        VersionRequirementTable.create(versionRequirementTable),
+        contextExtensions = contextExtensions
+    )
 
     v.visitDeclarations(functionList, propertyList, typeAliasList, c)
 
     for (extension in c.extensions) {
         extension.readPackageExtensions(v, this, c)
+    }
+
+    v.visitEnd()
+}
+
+fun ProtoBuf.PackageFragment.accept(
+    v: KmModuleFragmentVisitor,
+    strings: NameResolver,
+    contextExtensions: List<ReadContextExtension> = emptyList()
+) {
+    val c = ReadContext(
+        strings,
+        TypeTable(ProtoBuf.TypeTable.newBuilder().build()),
+        VersionRequirementTable.EMPTY,
+        contextExtensions = contextExtensions
+    )
+
+    v.visitPackage()?.let { `package`.accept(it, strings, contextExtensions) }
+
+    class_List.forEach { clazz ->
+        v.visitClass()?.let { clazz.accept(it, strings, contextExtensions) }
+    }
+
+    for (extension in c.extensions) {
+        extension.readModuleFragmentExtensions(v, this, c)
     }
 
     v.visitEnd()
@@ -232,6 +282,10 @@ private fun ProtoBuf.TypeAlias.accept(v: KmTypeAliasVisitor, outer: ReadContext)
         v.visitVersionRequirement()?.let { acceptVersionRequirementVisitor(versionRequirement, it, c) }
     }
 
+    for (extension in c.extensions) {
+        extension.readTypeAliasExtensions(v, this, c)
+    }
+
     v.visitEnd()
 }
 
@@ -242,6 +296,10 @@ private fun ProtoBuf.ValueParameter.accept(v: KmValueParameterVisitor, c: ReadCo
 
     varargElementType(c.types)?.let { varargElementType ->
         v.visitVarargElementType(varargElementType.typeFlags)?.let { varargElementType.accept(it, c) }
+    }
+
+    for (extension in c.extensions) {
+        extension.readValueParameterExtensions(v, this, c)
     }
 
     v.visitEnd()
@@ -279,7 +337,7 @@ private fun ProtoBuf.Type.accept(v: KmTypeVisitor, c: ReadContext) {
         hasTypeParameter() -> v.visitTypeParameter(typeParameter)
         hasTypeParameterName() -> {
             val id = c.getTypeParameterId(typeParameterName)
-                    ?: throw InconsistentKotlinMetadataException("No type parameter id for ${c[typeParameterName]}")
+                ?: throw InconsistentKotlinMetadataException("No type parameter id for ${c[typeParameterName]}")
             v.visitTypeParameter(id)
         }
         else -> {
@@ -297,7 +355,7 @@ private fun ProtoBuf.Type.accept(v: KmTypeVisitor, c: ReadContext) {
 
         if (variance != null) {
             val argumentType = argument.type(c.types)
-                    ?: throw InconsistentKotlinMetadataException("No type argument for non-STAR projection in Type")
+                ?: throw InconsistentKotlinMetadataException("No type argument for non-STAR projection in Type")
             v.visitArgument(argumentType.typeFlags, variance)?.let { argumentType.accept(it, c) }
         } else {
             v.visitStarProjection()

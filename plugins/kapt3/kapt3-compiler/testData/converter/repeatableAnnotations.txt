@@ -186,10 +186,8 @@ public final class Test {
     @org.jetbrains.annotations.NotNull()
     private final java.lang.String value = "";
 
-    @lib.Anno(value = "3", construct = {"C"})
-    @lib.Anno(value = "2", construct = {"A", "B"})
-    @lib.Anno(value = "1")
-    public static void value$annotations() {
+    public Test() {
+        super();
     }
 
     @org.jetbrains.annotations.NotNull()
@@ -197,8 +195,11 @@ public final class Test {
         return null;
     }
 
-    public Test() {
-        super();
+    @lib.Anno(value = "3", construct = {"C"})
+    @lib.Anno(value = "2", construct = {"A", "B"})
+    @lib.Anno(value = "1")
+    @java.lang.Deprecated()
+    public static void getValue$annotations() {
     }
 }
 

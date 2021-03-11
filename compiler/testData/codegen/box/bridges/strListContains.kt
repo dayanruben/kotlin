@@ -1,5 +1,3 @@
-// IGNORE_BACKEND: JS_IR
-
 class StrList : List<String?> {
     override val size: Int
         get() = throw UnsupportedOperationException()

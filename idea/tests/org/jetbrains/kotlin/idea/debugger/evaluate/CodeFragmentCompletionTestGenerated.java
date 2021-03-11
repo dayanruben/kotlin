@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.debugger.evaluate;
@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.idea.debugger.evaluate;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.test.KotlinTestUtils;
-import org.jetbrains.kotlin.test.TargetBackend;
+import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.runner.RunWith;
 
@@ -22,11 +22,11 @@ import java.util.regex.Pattern;
 @RunWith(JUnit3RunnerWithInners.class)
 public class CodeFragmentCompletionTestGenerated extends AbstractCodeFragmentCompletionTest {
     private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTest, TargetBackend.ANY, testDataFilePath);
+        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
     public void testAllFilesPresentInCodeFragments() throws Exception {
-        KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/idea-completion/testData/basic/codeFragments"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.ANY, true);
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/idea-completion/testData/basic/codeFragments"), Pattern.compile("^(.+)\\.kt$"), null, true);
     }
 
     @TestMetadata("blockCodeFragment.kt")
@@ -74,6 +74,11 @@ public class CodeFragmentCompletionTestGenerated extends AbstractCodeFragmentCom
         runTest("idea/idea-completion/testData/basic/codeFragments/privatesInSecondPressCompletion.kt");
     }
 
+    @TestMetadata("syntheticFieldProperties.kt")
+    public void testSyntheticFieldProperties() throws Exception {
+        runTest("idea/idea-completion/testData/basic/codeFragments/syntheticFieldProperties.kt");
+    }
+
     @TestMetadata("topLevel.kt")
     public void testTopLevel() throws Exception {
         runTest("idea/idea-completion/testData/basic/codeFragments/topLevel.kt");
@@ -84,11 +89,11 @@ public class CodeFragmentCompletionTestGenerated extends AbstractCodeFragmentCom
     @RunWith(JUnit3RunnerWithInners.class)
     public static class RuntimeType extends AbstractCodeFragmentCompletionTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, TargetBackend.ANY, testDataFilePath);
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
         public void testAllFilesPresentInRuntimeType() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/idea-completion/testData/basic/codeFragments/runtimeType"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.ANY, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/idea-completion/testData/basic/codeFragments/runtimeType"), Pattern.compile("^(.+)\\.kt$"), null, true);
         }
 
         @TestMetadata("castWithGenerics.kt")

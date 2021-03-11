@@ -20,33 +20,31 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.psi.*
+import com.intellij.psi.JavaCodeFragment.VisibilityChecker
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.impl.source.tree.FileElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.tree.IElementType
 import com.intellij.testFramework.LightVirtualFile
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.types.KotlinType
 import java.util.*
 
 abstract class KtCodeFragment(
-    private val _project: Project,
+    private val myProject: Project,
     name: String,
     text: CharSequence,
-    imports: String?, // Should be separated by JetCodeFragment.IMPORT_SEPARATOR
+    imports: String?, // Should be separated by KtCodeFragment.IMPORT_SEPARATOR
     elementType: IElementType,
     private val context: PsiElement?
 ) : KtFile(
-    (PsiManager.getInstance(_project) as PsiManagerEx).fileManager.createFileViewProvider(
-        LightVirtualFile(
-            name,
-            KotlinFileType.INSTANCE,
-            text
-        ), true
-    ), false
-), JavaCodeFragment {
-
+    run {
+        val psiManager = PsiManager.getInstance(myProject) as PsiManagerEx
+        psiManager.fileManager.createFileViewProvider(LightVirtualFile(name, KotlinFileType.INSTANCE, text), true)
+    }, false
+), KtCodeFragmentBase {
     private var viewProvider = super.getViewProvider() as SingleRootFileViewProvider
     private var imports = LinkedHashSet<String>()
 
@@ -55,6 +53,7 @@ abstract class KtCodeFragment(
     }
 
     init {
+        @Suppress("LeakingThis")
         getViewProvider().forceCachedPsi(this)
         init(TokenType.CODE_FRAGMENT, elementType)
         if (context != null) {
@@ -62,7 +61,7 @@ abstract class KtCodeFragment(
         }
     }
 
-    override final fun init(elementType: IElementType, contentElementType: IElementType?) {
+    final override fun init(elementType: IElementType, contentElementType: IElementType?) {
         super.init(elementType, contentElementType)
     }
 
@@ -98,14 +97,19 @@ abstract class KtCodeFragment(
     override fun getResolveScope() = context?.resolveScope ?: super.getResolveScope()
 
     override fun clone(): KtCodeFragment {
-        val clone = cloneImpl(calcTreeElement().clone() as FileElement) as KtCodeFragment
-        clone.isPhysical = false
-        clone.myOriginalFile = this
-        clone.imports = imports
-        clone.viewProvider =
-                SingleRootFileViewProvider(PsiManager.getInstance(_project), LightVirtualFile(name, KotlinFileType.INSTANCE, text), false)
-        clone.viewProvider.forceCachedPsi(clone)
-        return clone
+        val elementClone = calcTreeElement().clone() as FileElement
+
+        return (cloneImpl(elementClone) as KtCodeFragment).apply {
+            isPhysical = false
+            myOriginalFile = this@KtCodeFragment
+            imports = this@KtCodeFragment.imports
+            viewProvider = SingleRootFileViewProvider(
+                PsiManager.getInstance(myProject),
+                LightVirtualFile(name, KotlinFileType.INSTANCE, text),
+                false
+            )
+            viewProvider.forceCachedPsi(this)
+        }
     }
 
     final override fun getViewProvider() = viewProvider
@@ -148,7 +152,7 @@ abstract class KtCodeFragment(
     }
 
     fun importsAsImportList(): KtImportList? {
-        if (!imports.isEmpty() && context != null) {
+        if (imports.isNotEmpty() && context != null) {
             return KtPsiFactory(this).createAnalyzableFile("imports_for_codeFragment.kt", imports.joinToString("\n"), context).importList
         }
         return null
@@ -157,9 +161,9 @@ abstract class KtCodeFragment(
     override val importDirectives: List<KtImportDirective>
         get() = importsAsImportList()?.imports ?: emptyList()
 
-    override fun setVisibilityChecker(checker: JavaCodeFragment.VisibilityChecker?) {}
+    override fun setVisibilityChecker(checker: VisibilityChecker?) {}
 
-    override fun getVisibilityChecker() = JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE
+    override fun getVisibilityChecker(): VisibilityChecker = VisibilityChecker.EVERYTHING_VISIBLE
 
     override fun setExceptionHandler(checker: JavaCodeFragment.ExceptionHandler?) {
         exceptionHandler = checker
@@ -167,17 +171,13 @@ abstract class KtCodeFragment(
 
     override fun getExceptionHandler() = exceptionHandler
 
-    override fun importClass(aClass: PsiClass): Boolean {
-        return true
-    }
-
     fun getContextContainingFile(): KtFile? {
-        return getOriginalContext()?.containingKtFile
+        return getOriginalContext()?.takeIf { it.isValid }?.containingKtFile
     }
 
     fun getOriginalContext(): KtElement? {
         val contextElement = getContext() as? KtElement
-        val contextFile = contextElement?.containingKtFile
+        val contextFile = contextElement?.containingFile as? KtFile
         if (contextFile is KtCodeFragment) {
             return contextFile.getOriginalContext()
         }
@@ -185,8 +185,7 @@ abstract class KtCodeFragment(
     }
 
     private fun initImports(imports: String?) {
-        if (imports != null && !imports.isEmpty()) {
-
+        if (imports != null && imports.isNotEmpty()) {
             val importsWithPrefix = imports.split(IMPORT_SEPARATOR).map { it.takeIf { it.startsWith("import ") } ?: "import ${it.trim()}" }
             importsWithPrefix.forEach {
                 addImport(it)
@@ -195,10 +194,12 @@ abstract class KtCodeFragment(
     }
 
     companion object {
-        val IMPORT_SEPARATOR: String = ","
+        const val IMPORT_SEPARATOR: String = ","
         val RUNTIME_TYPE_EVALUATOR: Key<Function1<KtExpression, KotlinType?>> = Key.create("RUNTIME_TYPE_EVALUATOR")
         val FAKE_CONTEXT_FOR_JAVA_FILE: Key<Function0<KtElement>> = Key.create("FAKE_CONTEXT_FOR_JAVA_FILE")
 
         private val LOG = Logger.getInstance(KtCodeFragment::class.java)
     }
 }
+
+var KtCodeFragment.externalDescriptors: List<DeclarationDescriptor>? by CopyablePsiUserDataProperty(Key.create("EXTERNAL_DESCRIPTORS"))

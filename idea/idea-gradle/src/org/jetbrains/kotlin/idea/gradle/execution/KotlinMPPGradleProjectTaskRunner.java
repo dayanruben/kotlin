@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.gradle.execution;
@@ -34,18 +34,21 @@ import com.intellij.util.containers.MultiMap;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
 import org.jetbrains.kotlin.config.KotlinFacetSettings;
+import org.jetbrains.kotlin.idea.KotlinIdeaGradleBundle;
 import org.jetbrains.kotlin.idea.facet.KotlinFacet;
-import org.jetbrains.kotlin.platform.IdePlatform;
-import org.jetbrains.kotlin.platform.impl.CommonIdePlatformUtil;
-import org.jetbrains.kotlin.platform.impl.NativeIdePlatformUtil;
+import org.jetbrains.kotlin.platform.TargetPlatformKt;
+import org.jetbrains.kotlin.platform.TargetPlatform;
+import org.jetbrains.kotlin.platform.konan.NativePlatformKt;
 import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder;
 import org.jetbrains.plugins.gradle.execution.build.GradleProjectTaskRunner;
 import org.jetbrains.plugins.gradle.service.project.GradleBuildSrcProjectsResolver;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
+import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
-import org.jetbrains.plugins.gradle.settings.GradleSystemRunningSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
@@ -76,15 +79,15 @@ class KotlinMPPGradleProjectTaskRunner extends ProjectTaskRunner
                                                                            "}\n";
 
     @Override
-    public void run(@NotNull Project project,
+    public Promise<Result> run(@NotNull Project project,
             @NotNull ProjectTaskContext context,
-            @Nullable ProjectTaskNotification callback,
-            @NotNull Collection<? extends ProjectTask> tasks) {
+            @NotNull ProjectTask ... tasks) {
+        AsyncPromise<Result> resultPromise = new AsyncPromise<>();
         MultiMap<String, String> buildTasksMap = MultiMap.createLinkedSet();
         MultiMap<String, String> cleanTasksMap = MultiMap.createLinkedSet();
         MultiMap<String, String> initScripts = MultiMap.createLinkedSet();
 
-        Map<Class<? extends ProjectTask>, List<ProjectTask>> taskMap = JpsProjectTaskRunner.groupBy(tasks);
+        Map<Class<? extends ProjectTask>, List<ProjectTask>> taskMap = JpsProjectTaskRunner.groupBy(Arrays.asList(tasks));
 
         List<Module> modules = addModulesBuildTasks(taskMap.get(ModuleBuildTask.class), buildTasksMap, initScripts);
         // TODO there should be 'gradle' way to build files instead of related modules entirely
@@ -95,7 +98,7 @@ class KotlinMPPGradleProjectTaskRunner extends ProjectTaskRunner
         AtomicInteger successCounter = new AtomicInteger();
         AtomicInteger errorCounter = new AtomicInteger();
 
-        TaskCallback taskCallback = callback == null ? null : new TaskCallback() {
+        TaskCallback taskCallback = new TaskCallback() {
             @Override
             public void onSuccess() {
                 handle(true);
@@ -120,7 +123,7 @@ class KotlinMPPGradleProjectTaskRunner extends ProjectTaskRunner
                             CompilerUtil.refreshOutputRoots(affectedRoots);
                         }
                     }
-                    callback.finished(new ProjectTaskResult(false, errors, 0));
+                    resultPromise.setResult(errors > 0 ? TaskRunnerResults.FAILURE : TaskRunnerResults.SUCCESS);
                 }
             }
         };
@@ -149,7 +152,7 @@ class KotlinMPPGradleProjectTaskRunner extends ProjectTaskRunner
             else {
                 projectName = projectFile.getName();
             }
-            String executionName = "Build " + projectName;
+            String executionName = KotlinIdeaGradleBundle.message("build.0.project", projectName);
             settings.setExecutionName(executionName);
             settings.setExternalProjectPath(rootProjectPath);
             settings.setTaskNames(ContainerUtil.collect(ContainerUtil.concat(cleanTasks, buildTasks).iterator()));
@@ -168,14 +171,18 @@ class KotlinMPPGradleProjectTaskRunner extends ProjectTaskRunner
             ExternalSystemUtil.runTask(settings, DefaultRunExecutor.EXECUTOR_ID, project, GradleConstants.SYSTEM_ID,
                                        taskCallback, ProgressExecutionMode.IN_BACKGROUND_ASYNC, false, userData);
         }
+        return resultPromise;
     }
 
     @Override
     public boolean canRun(@NotNull ProjectTask projectTask) {
-        if (!GradleSystemRunningSettings.getInstance().isUseGradleAwareMake()) return false;
         if (projectTask instanceof ModuleBuildTask) {
             final ModuleBuildTask moduleBuildTask = (ModuleBuildTask) projectTask;
             final Module module = moduleBuildTask.getModule();
+
+            if (module.getProject().getPresentableUrl() == null || !GradleProjectSettings.isDelegatedBuildEnabled(module)) {
+                return false;
+            }
 
             if (!isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) return false;
 
@@ -292,10 +299,10 @@ class KotlinMPPGradleProjectTaskRunner extends ProjectTaskRunner
         final KotlinFacet kotlinFacet = KotlinFacet.Companion.get(module);
         if (kotlinFacet == null) return false;
 
-        final IdePlatform platform = kotlinFacet.getConfiguration().getSettings().getPlatform();
+        final TargetPlatform platform = kotlinFacet.getConfiguration().getSettings().getTargetPlatform();
         if (platform == null) return false;
 
-        return NativeIdePlatformUtil.isKotlinNative(platform);
+        return NativePlatformKt.isNative(platform);
     }
 
     private static boolean isCommonProductionSourceModule(Module module) {
@@ -305,10 +312,10 @@ class KotlinMPPGradleProjectTaskRunner extends ProjectTaskRunner
         final KotlinFacetSettings facetSettings = kotlinFacet.getConfiguration().getSettings();
         if (facetSettings.isTestModule()) return false;
 
-        final IdePlatform platform = facetSettings.getPlatform();
+        final TargetPlatform platform = facetSettings.getTargetPlatform();
         if (platform == null) return false;
 
-        return CommonIdePlatformUtil.isCommon(platform);
+        return TargetPlatformKt.isCommon(platform);
     }
 
     private static Collection<String> findNativeGradleBuildTasks(Collection<String> gradleTasks, String sourceSetName) {

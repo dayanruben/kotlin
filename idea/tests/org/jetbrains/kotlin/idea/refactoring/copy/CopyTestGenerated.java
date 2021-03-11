@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.refactoring.copy;
@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.idea.refactoring.copy;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.test.KotlinTestUtils;
-import org.jetbrains.kotlin.test.TargetBackend;
+import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.runner.RunWith;
 
@@ -22,11 +22,11 @@ import java.util.regex.Pattern;
 @RunWith(JUnit3RunnerWithInners.class)
 public class CopyTestGenerated extends AbstractCopyTest {
     private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTest, TargetBackend.ANY, testDataFilePath);
+        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
     public void testAllFilesPresentInCopy() throws Exception {
-        KotlinTestUtils.assertAllTestsPresentInSingleGeneratedClass(this.getClass(), new File("idea/testData/refactoring/copy"), Pattern.compile("^(.+)\\.test$"), TargetBackend.ANY);
+        KtTestUtil.assertAllTestsPresentInSingleGeneratedClassWithExcluded(this.getClass(), new File("idea/testData/refactoring/copy"), Pattern.compile("^(.+)\\.test$"), null);
     }
 
     @TestMetadata("copyClassCaretInside/copyClassCaretInside.test")
@@ -69,6 +69,11 @@ public class CopyTestGenerated extends AbstractCopyTest {
         runTest("idea/testData/refactoring/copy/copyFileFromDefaultPackageToDefaultPackage/copyFIleToDefaultPackage.test");
     }
 
+    @TestMetadata("copyFileFromDefaultPackageWithImpicitPrefix/copyFileFromDefaultPackageWithImplicitPrefix.test")
+    public void testCopyFileFromDefaultPackageWithImpicitPrefix_CopyFileFromDefaultPackageWithImplicitPrefix() throws Exception {
+        runTest("idea/testData/refactoring/copy/copyFileFromDefaultPackageWithImpicitPrefix/copyFileFromDefaultPackageWithImplicitPrefix.test");
+    }
+
     @TestMetadata("copyFIleRetainContent/copyFIleRetainContent.test")
     public void testCopyFIleRetainContent_CopyFIleRetainContent() throws Exception {
         runTest("idea/testData/refactoring/copy/copyFIleRetainContent/copyFIleRetainContent.test");
@@ -77,6 +82,11 @@ public class CopyTestGenerated extends AbstractCopyTest {
     @TestMetadata("copyFIleToDefaultPackage/copyFIleToDefaultPackage.test")
     public void testCopyFIleToDefaultPackage_CopyFIleToDefaultPackage() throws Exception {
         runTest("idea/testData/refactoring/copy/copyFIleToDefaultPackage/copyFIleToDefaultPackage.test");
+    }
+
+    @TestMetadata("copyFileToRoot/copyFileToRoot.test")
+    public void testCopyFileToRoot_CopyFileToRoot() throws Exception {
+        runTest("idea/testData/refactoring/copy/copyFileToRoot/copyFileToRoot.test");
     }
 
     @TestMetadata("copyFIleWithPackageAndDirUnmatched/copyFIleWithPackageAndDirUnmatched.test")
@@ -137,6 +147,21 @@ public class CopyTestGenerated extends AbstractCopyTest {
     @TestMetadata("copyMultipleDeclarations/copyMultipleDeclarations.test")
     public void testCopyMultipleDeclarations_CopyMultipleDeclarations() throws Exception {
         runTest("idea/testData/refactoring/copy/copyMultipleDeclarations/copyMultipleDeclarations.test");
+    }
+
+    @TestMetadata("copyMultipleFilesDifferentDirectoriesToNewDirectory/copyMultipleFilesDifferentDirectoriesToNewDirectory.test")
+    public void testCopyMultipleFilesDifferentDirectoriesToNewDirectory_CopyMultipleFilesDifferentDirectoriesToNewDirectory() throws Exception {
+        runTest("idea/testData/refactoring/copy/copyMultipleFilesDifferentDirectoriesToNewDirectory/copyMultipleFilesDifferentDirectoriesToNewDirectory.test");
+    }
+
+    @TestMetadata("copyMultipleFilesDirectoriesToNewDirectoryAsClassOrObject/copyMultipleFilesDifferentDirectoriesToNewDirectory.test")
+    public void testCopyMultipleFilesDirectoriesToNewDirectoryAsClassOrObject_CopyMultipleFilesDifferentDirectoriesToNewDirectory() throws Exception {
+        runTest("idea/testData/refactoring/copy/copyMultipleFilesDirectoriesToNewDirectoryAsClassOrObject/copyMultipleFilesDifferentDirectoriesToNewDirectory.test");
+    }
+
+    @TestMetadata("copyMultipleFilesToNewDirectory/copyMultipleFilesToNewDirectory.test")
+    public void testCopyMultipleFilesToNewDirectory_CopyMultipleFilesToNewDirectory() throws Exception {
+        runTest("idea/testData/refactoring/copy/copyMultipleFilesToNewDirectory/copyMultipleFilesToNewDirectory.test");
     }
 
     @TestMetadata("copyNestedClass/copyNestedClass.test")

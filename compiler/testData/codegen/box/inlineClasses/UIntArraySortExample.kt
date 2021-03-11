@@ -1,5 +1,7 @@
+// DONT_TARGET_EXACT_BACKEND: WASM
+// WASM_MUTE_REASON: UNSIGNED_ARRAYS
+// KJS_WITH_FULL_RUNTIME
 // !LANGUAGE: +InlineClasses
-// IGNORE_BACKEND: JVM_IR
 
 inline class UInt(private val value: Int) : Comparable<UInt> {
     companion object {

@@ -27,7 +27,7 @@ fun foo() {
             z = 34
         }
     }
-    val <!UNUSED_VARIABLE!>f<!>: ()-> Int = <!NI;TYPE_MISMATCH, TYPE_MISMATCH!>r<!>
+    val <!UNUSED_VARIABLE!>f<!>: ()-> Int = <!TYPE_MISMATCH!>r<!>
     val <!UNUSED_VARIABLE!>g<!>: ()-> Any = r
 }
 
@@ -80,7 +80,7 @@ fun testCoercionToUnit() {
             45
         }
     }
-    val <!UNUSED_VARIABLE!>f<!> : () -> String = <!NI;TYPE_MISMATCH, TYPE_MISMATCH!>checkType<!>
+    val <!UNUSED_VARIABLE!>f<!> : () -> String = <!TYPE_MISMATCH!>checkType<!>
 }
 
 fun doSmth(<!UNUSED_PARAMETER!>i<!>: Int) {}
@@ -95,10 +95,8 @@ fun testImplicitCoercion() {
     }
 
     var <!UNUSED_VARIABLE!>u<!> = when(d) {
-        3 -> {
-        <!IMPLICIT_CAST_TO_ANY!><!UNUSED_VALUE!>z =<!> 34<!>
-    }
-        else -> <!UNUSED_CHANGED_VALUE, IMPLICIT_CAST_TO_ANY!>z--<!>
+        3 -> { <!IMPLICIT_CAST_TO_ANY!><!UNUSED_VALUE!>z =<!> 34<!> }
+        else -> <!IMPLICIT_CAST_TO_ANY, UNUSED_CHANGED_VALUE!>z--<!>
     }
 
     var <!UNUSED_VARIABLE!>iff<!> = <!INVALID_IF_AS_EXPRESSION!>if<!> (true) {
@@ -107,10 +105,9 @@ fun testImplicitCoercion() {
     val <!UNUSED_VARIABLE!>g<!> = <!INVALID_IF_AS_EXPRESSION!>if<!> (true) 4
     val <!UNUSED_VARIABLE!>h<!> = if (false) <!IMPLICIT_CAST_TO_ANY!>4<!> else <!IMPLICIT_CAST_TO_ANY!>{}<!>
 
-    bar(<!NI;TYPE_MISMATCH!>if (true) {
-        <!NI;CONSTANT_EXPECTED_TYPE_MISMATCH, CONSTANT_EXPECTED_TYPE_MISMATCH!>4<!>
-    }
-        else {
+    bar(<!TYPE_MISMATCH{NI}!>if (true) {
+        <!CONSTANT_EXPECTED_TYPE_MISMATCH{OI}!>4<!>
+    } else {
         <!UNUSED_VALUE!>z =<!> 342
     }<!>)
 }

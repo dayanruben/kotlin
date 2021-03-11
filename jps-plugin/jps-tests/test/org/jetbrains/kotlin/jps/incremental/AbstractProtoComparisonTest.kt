@@ -58,10 +58,20 @@ abstract class AbstractProtoComparisonTest<PROTO_DATA> : TestWithWorkingDir() {
 
             val rawProtoDifference = when {
                 oldData is ClassProtoData && newData is ClassProtoData -> {
-                    ProtoCompareGenerated(oldData.nameResolver, newData.nameResolver).difference(oldData.proto, newData.proto)
+                    ProtoCompareGenerated(
+                        oldNameResolver = oldData.nameResolver,
+                        newNameResolver = newData.nameResolver,
+                        oldTypeTable = oldData.proto.typeTableOrNull,
+                        newTypeTable = newData.proto.typeTableOrNull
+                    ).difference(oldData.proto, newData.proto)
                 }
                 oldData is PackagePartProtoData && newData is PackagePartProtoData -> {
-                    ProtoCompareGenerated(oldData.nameResolver, newData.nameResolver).difference(oldData.proto, newData.proto)
+                    ProtoCompareGenerated(
+                        oldNameResolver = oldData.nameResolver,
+                        newNameResolver = newData.nameResolver,
+                        oldTypeTable = oldData.proto.typeTableOrNull,
+                        newTypeTable = newData.proto.typeTableOrNull
+                    ).difference(oldData.proto, newData.proto)
                 }
                 else -> null
             }
@@ -80,6 +90,8 @@ abstract class AbstractProtoComparisonTest<PROTO_DATA> : TestWithWorkingDir() {
                 when (it) {
                     is ChangeInfo.SignatureChanged -> "CLASS_SIGNATURE"
                     is ChangeInfo.MembersChanged -> "MEMBERS\n    ${it.names.sorted()}"
+                    is ChangeInfo.ParentsChanged -> "PARENTS\n    ${it.parentsChanged.map { it.asString()}.sorted()}"
+
                 }
             }.sorted()
 

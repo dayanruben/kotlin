@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.inspections.coroutines
 
 import com.intellij.codeInsight.FileModificationService
-import com.intellij.codeInspection.*
-import com.intellij.codeInspection.ProblemHighlightType.*
+import com.intellij.codeInspection.IntentionWrapper
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.codeStyle.CodeStyleManager
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.ReceiverParameterDescriptor
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.ShortenReferences
@@ -116,13 +120,13 @@ class SuspendFunctionOnCoroutineScopeInspection : AbstractKotlinInspection() {
         private val removeReceiver: Boolean,
         private val wrapCallOnly: Boolean
     ) : LocalQuickFix {
-        override fun getFamilyName(): String = "Wrap with coroutineScope"
+        override fun getFamilyName(): String = KotlinBundle.message("wrap.with.coroutine.scope.fix.family.name")
 
         override fun getName(): String =
             when {
-                removeReceiver && !wrapCallOnly -> "Remove receiver & wrap with 'coroutineScope { ... }'"
-                wrapCallOnly -> "Wrap call with 'coroutineScope { ... }'"
-                else -> "Wrap function body with 'coroutineScope { ... }'"
+                removeReceiver && !wrapCallOnly -> KotlinBundle.message("wrap.with.coroutine.scope.fix.text3")
+                wrapCallOnly -> KotlinBundle.message("wrap.with.coroutine.scope.fix.text2")
+                else -> KotlinBundle.message("wrap.with.coroutine.scope.fix.text")
             }
 
         override fun startInWriteAction() = false
@@ -202,7 +206,7 @@ class SuspendFunctionOnCoroutineScopeInspection : AbstractKotlinInspection() {
 
         private const val COROUTINE_CONTEXT = "coroutineContext"
 
-        private const val MESSAGE = "Ambiguous coroutineContext due to CoroutineScope receiver of suspend function"
+        private val MESSAGE get() = KotlinBundle.message("ambiguous.coroutinecontext.due.to.coroutinescope.receiver.of.suspend.function")
 
         private fun KotlinType.isCoroutineScope(): Boolean =
             constructor.declarationDescriptor?.fqNameSafe?.asString() == COROUTINE_SCOPE

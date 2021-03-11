@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.gradle.plugin
@@ -16,6 +16,7 @@ interface KotlinSourceSet : Named, HasKotlinDependencies {
     val resources: SourceDirectorySet
 
     val languageSettings: LanguageSettingsBuilder
+    fun languageSettings(configure: LanguageSettingsBuilder.() -> Unit): LanguageSettingsBuilder
     fun languageSettings(configureClosure: Closure<Any?>): LanguageSettingsBuilder
 
     fun dependsOn(other: KotlinSourceSet)
@@ -41,6 +42,9 @@ interface KotlinSourceSet : Named, HasKotlinDependencies {
     }
 
     val customSourceFilesExtensions: Iterable<String> // lazy iterable expected
+
+    val requiresVisibilityOf: Set<KotlinSourceSet>
+    fun requiresVisibilityOf(other: KotlinSourceSet)
 
     fun addCustomSourceFilesExtensions(extensions: List<String>) {}
 }

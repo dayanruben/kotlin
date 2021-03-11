@@ -47,16 +47,6 @@ Basic primitives for creating and suspending coroutines: [Continuation][kotlin.c
 
 Low-level building blocks for libraries that provide coroutine-based APIs.
 
-# Package kotlin.coroutines.experimental
-
-Deprecated support for experimental coroutines, provided for compatibility.
-It's recommended to migrate to `kotlin.coroutines` API.
-
-# Package kotlin.coroutines.experimental.intrinsics
-
-Deprecated support for experimental coroutines, provided for compatibility.
-It's recommended to migrate to `kotlin.coroutines.intrinsics` API.
-
 # Package kotlin.dom
 
 Utility functions for working with the browser DOM.
@@ -144,6 +134,10 @@ Functions for writing test assertions.
 # Package kotlin.text
 
 Functions for working with text and regular expressions.
+
+# Package kotlin.time
+
+Experimental API for representing [Duration][kotlin.time.Duration] values and measuring time intervals.
 
 # Package org.khronos.webgl
 

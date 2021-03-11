@@ -1,3 +1,6 @@
+// DONT_TARGET_EXACT_BACKEND: WASM
+// WASM_MUTE_REASON: STDLIB_COLLECTIONS
+// KJS_WITH_FULL_RUNTIME
 fun isDigit(a: Int) : String {
     val aa = ArrayList<Int> ()
     aa.add(239)

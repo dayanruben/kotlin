@@ -19,11 +19,24 @@ package org.jetbrains.kotlin.types
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
+import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.resolve.scopes.MemberScope
 import org.jetbrains.kotlin.resolve.scopes.TypeIntersectionScope
+import org.jetbrains.kotlin.types.checker.KotlinTypeRefiner
+import org.jetbrains.kotlin.types.model.IntersectionTypeConstructorMarker
+import org.jetbrains.kotlin.types.refinement.TypeRefinement
 import java.util.*
 
-class IntersectionTypeConstructor(typesToIntersect: Collection<KotlinType>) : TypeConstructor {
+class IntersectionTypeConstructor(typesToIntersect: Collection<KotlinType>) : TypeConstructor, IntersectionTypeConstructorMarker {
+    private var alternative: KotlinType? = null
+
+    private constructor(
+        typesToIntersect: Collection<KotlinType>,
+        alternative: KotlinType?,
+    ) : this(typesToIntersect) {
+        this.alternative = alternative
+    }
+
     init {
         assert(!typesToIntersect.isEmpty()) { "Attempt to create an empty intersection" }
     }
@@ -35,8 +48,9 @@ class IntersectionTypeConstructor(typesToIntersect: Collection<KotlinType>) : Ty
 
     override fun getSupertypes(): Collection<KotlinType> = intersectedTypes
 
+    // Type should not be rendered in scope's debug name. This may cause performance issues in case of complicated intersection types. 
     fun createScopeForKotlinType(): MemberScope =
-        TypeIntersectionScope.create("member scope for intersection type $this", intersectedTypes)
+        TypeIntersectionScope.create("member scope for intersection type", intersectedTypes)
 
     override fun isFinal(): Boolean = false
 
@@ -51,7 +65,7 @@ class IntersectionTypeConstructor(typesToIntersect: Collection<KotlinType>) : Ty
         makeDebugNameForIntersectionType(intersectedTypes)
 
     private fun makeDebugNameForIntersectionType(resultingTypes: Iterable<KotlinType>): String =
-        resultingTypes.joinToString(separator = " & ", prefix = "{", postfix = "}")
+        resultingTypes.sortedBy { it.toString() }.joinToString(separator = " & ", prefix = "{", postfix = "}")
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -60,7 +74,25 @@ class IntersectionTypeConstructor(typesToIntersect: Collection<KotlinType>) : Ty
         return intersectedTypes == other.intersectedTypes
     }
 
+    @OptIn(TypeRefinement::class)
+    fun createType(): SimpleType =
+        KotlinTypeFactory.simpleTypeWithNonTrivialMemberScope(
+            Annotations.EMPTY, this, listOf(), false, this.createScopeForKotlinType()
+        ) { kotlinTypeRefiner ->
+            this.refine(kotlinTypeRefiner).createType()
+        }
+
     override fun hashCode(): Int = hashCode
+
+    @TypeRefinement
+    override fun refine(kotlinTypeRefiner: KotlinTypeRefiner) =
+        transformComponents { it.refine(kotlinTypeRefiner) } ?: this
+
+    fun setAlternative(alternative: KotlinType?): IntersectionTypeConstructor {
+        return IntersectionTypeConstructor(intersectedTypes, alternative)
+    }
+
+    fun getAlternativeType(): KotlinType? = alternative
 }
 
 inline fun IntersectionTypeConstructor.transformComponents(
@@ -79,5 +111,9 @@ inline fun IntersectionTypeConstructor.transformComponents(
 
     if (!changed) return null
 
-    return IntersectionTypeConstructor(newSupertypes)
+    val updatedAlternative = getAlternativeType()?.let { alternative ->
+        if (predicate(alternative)) transform(alternative) else alternative
+    }
+
+    return IntersectionTypeConstructor(newSupertypes).setAlternative(updatedAlternative)
 }

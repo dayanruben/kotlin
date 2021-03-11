@@ -1,0 +1,13 @@
+public final enum class EnumConstructorParameter : R|kotlin/Enum<ft<@FlexibleNullability test/EnumConstructorParameter, test/EnumConstructorParameter?>!>| {
+    public final static enum entry INSTANCE: R|@FlexibleNullability test/EnumConstructorParameter|
+    private constructor(@R|test/EnumConstructorParameter.Anno|(String(string)) s: R|ft<@FlexibleNullability kotlin/String, kotlin/String?>!|): R|test/EnumConstructorParameter|
+
+    private constructor(x: R|kotlin/Int|): R|test/EnumConstructorParameter|
+
+    public final static fun values(): R|kotlin/Array<test/EnumConstructorParameter>| {
+    }
+
+    public final static fun valueOf(value: R|kotlin/String|): R|test/EnumConstructorParameter| {
+    }
+
+}

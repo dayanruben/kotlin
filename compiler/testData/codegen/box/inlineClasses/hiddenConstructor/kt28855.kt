@@ -1,6 +1,8 @@
+// DONT_TARGET_EXACT_BACKEND: WASM
+// WASM_MUTE_REASON: UNSIGNED_ARRAYS
 // !LANGUAGE: +InlineClasses
-// IGNORE_BACKEND: JS_IR, JVM_IR
 // WITH_RUNTIME
+// KJS_WITH_FULL_RUNTIME
 
 class C<T>(val x: T, vararg ys: UInt) {
     val y0 = ys[0]

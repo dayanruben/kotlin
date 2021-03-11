@@ -38,19 +38,22 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtTypeParameter
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 class AddReifiedToTypeParameterOfFunctionFix(
-        typeParameter: KtTypeParameter,
-        val function: KtNamedFunction
-) : AddModifierFix(typeParameter, KtTokens.REIFIED_KEYWORD) {
+    typeParameter: KtTypeParameter,
+    function: KtNamedFunction
+) : AddModifierFixMpp(typeParameter, KtTokens.REIFIED_KEYWORD) {
 
     private val inlineFix = AddInlineToFunctionWithReifiedFix(function)
+    private val elementName = RemoveModifierFix.getElementName(function)
 
-    override fun getText() = element?.let { "Make ${getElementName(it)} reified and ${getElementName(function)} inline" } ?: ""
+    override fun getText() =
+        element?.let { KotlinBundle.message("fix.make.type.parameter.reified", RemoveModifierFix.getElementName(it), elementName) } ?: ""
 
     override fun invokeImpl(project: Project, editor: Editor?, file: PsiFile) {
         super.invokeImpl(project, editor, file)
@@ -61,7 +64,7 @@ class AddReifiedToTypeParameterOfFunctionFix(
         override fun createAction(diagnostic: Diagnostic): IntentionAction? {
             val element = Errors.TYPE_PARAMETER_AS_REIFIED.cast(diagnostic)
             val function = element.psiElement.getStrictParentOfType<KtNamedFunction>()
-            val parameter = function?.typeParameterList?.parameters?.get(element.a.index) ?: return null
+            val parameter = function?.typeParameterList?.parameters?.getOrNull(element.a.index) ?: return null
             return AddReifiedToTypeParameterOfFunctionFix(parameter, function)
         }
     }

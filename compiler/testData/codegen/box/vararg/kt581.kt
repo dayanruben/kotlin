@@ -1,3 +1,6 @@
+// DONT_TARGET_EXACT_BACKEND: WASM
+// WASM_MUTE_REASON: STDLIB_COLLECTIONS
+// KJS_WITH_FULL_RUNTIME
 package whats.the.difference
 
 fun iarray(vararg a : Int) = a // BUG

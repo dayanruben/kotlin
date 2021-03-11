@@ -19,34 +19,40 @@ package org.jetbrains.kotlin.resolve.calls.components
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.resolve.calls.inference.components.ConstraintInjector
-import org.jetbrains.kotlin.resolve.calls.inference.components.SimpleConstraintSystemImpl
 import org.jetbrains.kotlin.resolve.calls.model.KotlinCallArgument
 import org.jetbrains.kotlin.resolve.calls.model.KotlinResolutionCandidate
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCallArgument
-import org.jetbrains.kotlin.resolve.calls.results.FlatSignature
-import org.jetbrains.kotlin.resolve.calls.results.OverloadingConflictResolver
-import org.jetbrains.kotlin.resolve.calls.results.TypeSpecificityComparator
+import org.jetbrains.kotlin.resolve.calls.results.*
 import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.checker.KotlinTypeRefiner
+import org.jetbrains.kotlin.util.CancellationChecker
 import java.util.*
 
 class NewOverloadingConflictResolver(
     builtIns: KotlinBuiltIns,
     module: ModuleDescriptor,
     specificityComparator: TypeSpecificityComparator,
+    platformOverloadsSpecificityComparator: PlatformOverloadsSpecificityComparator,
+    cancellationChecker: CancellationChecker,
     statelessCallbacks: KotlinResolutionStatelessCallbacks,
-    constraintInjector: ConstraintInjector
+    constraintInjector: ConstraintInjector,
+    kotlinTypeRefiner: KotlinTypeRefiner,
 ) : OverloadingConflictResolver<KotlinResolutionCandidate>(
     builtIns,
     module,
     specificityComparator,
+    platformOverloadsSpecificityComparator,
+    cancellationChecker,
     {
         // todo investigate
         it.resolvedCall.candidateDescriptor
     },
-    { SimpleConstraintSystemImpl(constraintInjector, builtIns) },
+    { statelessCallbacks.createConstraintSystemForOverloadResolution(constraintInjector, builtIns) },
     Companion::createFlatSignature,
     { it.variableCandidateIfInvoke },
-    { statelessCallbacks.isDescriptorFromSource(it) }
+    { statelessCallbacks.isDescriptorFromSource(it) },
+    { it.resolvedCall.hasSamConversion },
+    kotlinTypeRefiner,
 ) {
 
     companion object {

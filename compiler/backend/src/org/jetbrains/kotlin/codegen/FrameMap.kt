@@ -21,10 +21,9 @@ import com.intellij.openapi.util.Trinity
 import gnu.trove.TObjectIntHashMap
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.org.objectweb.asm.Type
+import java.util.*
 
-import java.util.ArrayList
-
-class FrameMap : FrameMapBase<DeclarationDescriptor>()
+open class FrameMap : FrameMapBase<DeclarationDescriptor>()
 
 open class FrameMapBase<T : Any> {
     private val myVarIndex = TObjectIntHashMap<T>()
@@ -32,21 +31,21 @@ open class FrameMapBase<T : Any> {
     var currentSize = 0
         private set
 
-    fun enter(descriptor: T, type: Type): Int {
+    open fun enter(key: T, type: Type): Int {
         val index = currentSize
-        myVarIndex.put(descriptor, index)
+        myVarIndex.put(key, index)
         currentSize += type.size
-        myVarSizes.put(descriptor, type.size)
+        myVarSizes.put(key, type.size)
         return index
     }
 
-    fun leave(descriptor: T): Int {
-        val size = myVarSizes.get(descriptor)
+    open fun leave(key: T): Int {
+        val size = myVarSizes.get(key)
         currentSize -= size
-        myVarSizes.remove(descriptor)
-        val oldIndex = myVarIndex.remove(descriptor)
+        myVarSizes.remove(key)
+        val oldIndex = myVarIndex.remove(key)
         if (oldIndex != currentSize) {
-            throw IllegalStateException("Descriptor can be left only if it is last: $descriptor")
+            throw IllegalStateException("Descriptor can be left only if it is last: $key")
         }
         return oldIndex
     }
@@ -61,7 +60,7 @@ open class FrameMapBase<T : Any> {
         currentSize -= type.size
     }
 
-    fun getIndex(descriptor: T): Int {
+    open fun getIndex(descriptor: T): Int {
         return if (myVarIndex.contains(descriptor)) myVarIndex.get(descriptor) else -1
     }
 
@@ -98,7 +97,7 @@ open class FrameMapBase<T : Any> {
         val descriptors = Lists.newArrayList<Trinity<T, Int, Int>>()
 
         for (descriptor0 in myVarIndex.keys()) {
-            val descriptor = descriptor0 as T
+            @Suppress("UNCHECKED_CAST") val descriptor = descriptor0 as T
             val varIndex = myVarIndex.get(descriptor)
             val varSize = myVarSizes.get(descriptor)
             descriptors.add(Trinity.create(descriptor, varIndex, varSize))

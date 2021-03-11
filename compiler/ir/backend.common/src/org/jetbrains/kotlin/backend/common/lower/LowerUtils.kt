@@ -1,27 +1,13 @@
 /*
- * Copyright 2010-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.backend.common.lower
 
 import org.jetbrains.kotlin.backend.common.BackendContext
-import org.jetbrains.kotlin.backend.common.CommonBackendContext
-import org.jetbrains.kotlin.backend.common.atMostOne
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.impl.ValueParameterDescriptorImpl
-import org.jetbrains.kotlin.incremental.components.LookupLocation
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
@@ -34,46 +20,43 @@ import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classifierOrFail
-import org.jetbrains.kotlin.ir.util.defaultType
-import org.jetbrains.kotlin.ir.visitors.IrElementTransformer
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
-import org.jetbrains.kotlin.resolve.scopes.MemberScopeImpl
-import org.jetbrains.kotlin.utils.Printer
 
 class IrLoweringContext(backendContext: BackendContext) : IrGeneratorContextBase(backendContext.irBuiltIns)
 
 class DeclarationIrBuilder(
-    backendContext: BackendContext,
+    generatorContext: IrGeneratorContext,
     symbol: IrSymbol,
     startOffset: Int = UNDEFINED_OFFSET, endOffset: Int = UNDEFINED_OFFSET
 ) : IrBuilderWithScope(
-    IrLoweringContext(backendContext),
+    generatorContext,
     Scope(symbol),
     startOffset,
     endOffset
 )
 
 abstract class AbstractVariableRemapper : IrElementTransformerVoid() {
-    protected abstract fun remapVariable(value: IrValueDeclaration): IrValueParameter?
+    protected abstract fun remapVariable(value: IrValueDeclaration): IrValueDeclaration?
 
     override fun visitGetValue(expression: IrGetValue): IrExpression =
         remapVariable(expression.symbol.owner)?.let {
             IrGetValueImpl(expression.startOffset, expression.endOffset, it.type, it.symbol, expression.origin)
         } ?: expression
+
+    override fun visitSetValue(expression: IrSetValue): IrExpression {
+        expression.transformChildrenVoid()
+        return remapVariable(expression.symbol.owner)?.let {
+            IrSetValueImpl(expression.startOffset, expression.endOffset, it.type, it.symbol, expression.value, expression.origin)
+        } ?: expression
+    }
 }
 
-class VariableRemapper(val mapping: Map<IrValueParameter, IrValueParameter>) : AbstractVariableRemapper() {
-    override fun remapVariable(value: IrValueDeclaration): IrValueParameter? =
+open class VariableRemapper(val mapping: Map<IrValueParameter, IrValueDeclaration>) : AbstractVariableRemapper() {
+    override fun remapVariable(value: IrValueDeclaration): IrValueDeclaration? =
         mapping[value]
-}
-
-class VariableRemapperDesc(val mapping: Map<ValueDescriptor, IrValueParameter>) : AbstractVariableRemapper() {
-    override fun remapVariable(value: IrValueDeclaration): IrValueParameter? =
-        mapping[value.descriptor]
 }
 
 fun BackendContext.createIrBuilder(
@@ -81,7 +64,7 @@ fun BackendContext.createIrBuilder(
     startOffset: Int = UNDEFINED_OFFSET,
     endOffset: Int = UNDEFINED_OFFSET
 ) =
-    DeclarationIrBuilder(this, symbol, startOffset, endOffset)
+    DeclarationIrBuilder(IrLoweringContext(this), symbol, startOffset, endOffset)
 
 
 fun <T : IrBuilder> T.at(element: IrElement) = this.at(element.startOffset, element.endOffset)
@@ -112,21 +95,19 @@ fun IrBuilderWithScope.irIfThen(condition: IrExpression, thenPart: IrExpression)
     }
 
 fun IrBuilderWithScope.irNot(arg: IrExpression) =
-    primitiveOp1(startOffset, endOffset, context.irBuiltIns.booleanNotSymbol, IrStatementOrigin.EXCL, arg)
+    primitiveOp1(startOffset, endOffset, context.irBuiltIns.booleanNotSymbol, context.irBuiltIns.booleanType, IrStatementOrigin.EXCL, arg)
 
 fun IrBuilderWithScope.irThrow(arg: IrExpression) =
     IrThrowImpl(startOffset, endOffset, context.irBuiltIns.nothingType, arg)
 
-fun IrBuilderWithScope.irCatch(catchParameter: IrVariable) =
-    IrCatchImpl(
-        startOffset, endOffset,
-        catchParameter
-    )
+fun IrBuilderWithScope.irCatch(catchParameter: IrVariable, result: IrExpression): IrCatch =
+    IrCatchImpl(startOffset, endOffset, catchParameter, result)
 
 fun IrBuilderWithScope.irImplicitCoercionToUnit(arg: IrExpression) =
     IrTypeOperatorCallImpl(
         startOffset, endOffset, context.irBuiltIns.unitType,
-        IrTypeOperator.IMPLICIT_COERCION_TO_UNIT, context.irBuiltIns.unitType, context.irBuiltIns.unitClass, arg
+        IrTypeOperator.IMPLICIT_COERCION_TO_UNIT, context.irBuiltIns.unitType,
+        arg
     )
 
 open class IrBuildingTransformer(private val context: BackendContext) : IrElementTransformerVoid() {
@@ -163,36 +144,25 @@ open class IrBuildingTransformer(private val context: BackendContext) : IrElemen
             return super.visitAnonymousInitializer(declaration)
         }
     }
-}
 
-class SimpleMemberScope(val members: List<DeclarationDescriptor>) : MemberScopeImpl() {
+    override fun visitEnumEntry(declaration: IrEnumEntry): IrStatement {
+        withBuilder(declaration.symbol) {
+            return super.visitEnumEntry(declaration)
+        }
+    }
 
-    override fun getContributedClassifier(name: Name, location: LookupLocation): ClassifierDescriptor? =
-        members.filterIsInstance<ClassifierDescriptor>()
-            .atMostOne { it.name == name }
-
-    override fun getContributedVariables(name: Name, location: LookupLocation): Collection<PropertyDescriptor> =
-        members.filterIsInstance<PropertyDescriptor>()
-            .filter { it.name == name }
-
-    override fun getContributedFunctions(name: Name, location: LookupLocation): Collection<SimpleFunctionDescriptor> =
-        members.filterIsInstance<SimpleFunctionDescriptor>()
-            .filter { it.name == name }
-
-    override fun getContributedDescriptors(
-        kindFilter: DescriptorKindFilter,
-        nameFilter: (Name) -> Boolean
-    ): Collection<DeclarationDescriptor> =
-        members.filter { kindFilter.accepts(it) && nameFilter(it.name) }
-
-    override fun printScopeStructure(p: Printer) = TODO("not implemented")
+    override fun visitScript(declaration: IrScript): IrStatement {
+        withBuilder(declaration.symbol) {
+            return super.visitScript(declaration)
+        }
+    }
 }
 
 fun IrConstructor.callsSuper(irBuiltIns: IrBuiltIns): Boolean {
     val constructedClass = parent as IrClass
     val superClass = constructedClass.superTypes
         .mapNotNull { it as? IrSimpleType }
-        .firstOrNull { (it.classifier.owner as IrClass).run { kind == ClassKind.CLASS || kind == ClassKind.ANNOTATION_CLASS || kind == ClassKind.ANNOTATION_CLASS } }
+        .firstOrNull { (it.classifier.owner as IrClass).run { kind == ClassKind.CLASS || kind == ClassKind.ANNOTATION_CLASS || kind == ClassKind.ENUM_CLASS } }
         ?: irBuiltIns.anyType
     var callsSuper = false
     var numberOfCalls = 0
@@ -209,12 +179,13 @@ fun IrConstructor.callsSuper(irBuiltIns: IrBuiltIns): Boolean {
             assert(++numberOfCalls == 1) { "More than one delegating constructor call: ${symbol.owner}" }
             val delegatingClass = expression.symbol.owner.parent as IrClass
             // TODO: figure out why Lazy IR multiplies Declarations for descriptors and fix it
-            if (delegatingClass.descriptor == superClass.classifierOrFail.descriptor)
+            // It happens because of IrBuiltIns whose IrDeclarations are different for runtime and test
+            if (delegatingClass.symbol == superClass.classifierOrFail)
                 callsSuper = true
-            else if (delegatingClass.descriptor != constructedClass.descriptor)
+            else if (delegatingClass.symbol != constructedClass.symbol)
                 throw AssertionError(
                     "Expected either call to another constructor of the class being constructed or" +
-                            " call to super class constructor. But was: $delegatingClass"
+                            " call to super class constructor. But was: $delegatingClass with '${delegatingClass.name}' name"
                 )
         }
     })
@@ -238,31 +209,4 @@ fun ParameterDescriptor.copyAsValueParameter(newOwner: CallableDescriptor, index
         source = source
     )
     else -> throw Error("Unexpected parameter descriptor: $this")
-}
-
-fun IrBody.replaceThisByStaticReference(
-    context: CommonBackendContext,
-    irClass: IrClass,
-    oldThisReceiverParameter: IrValueParameter
-): IrBody =
-    transform(ReplaceThisByStaticReference(context, irClass, oldThisReceiverParameter), null)
-
-private class ReplaceThisByStaticReference(
-    val context: CommonBackendContext,
-    val irClass: IrClass,
-    val oldThisReceiverParameter: IrValueParameter
-) : IrElementTransformer<Nothing?> {
-    override fun visitGetValue(expression: IrGetValue, data: Nothing?): IrExpression {
-        val irGetValue = expression
-        if (irGetValue.symbol == oldThisReceiverParameter.symbol) {
-            val instanceField = context.declarationFactory.getFieldForObjectInstance(irClass)
-            return IrGetFieldImpl(
-                expression.startOffset,
-                expression.endOffset,
-                instanceField.symbol,
-                irClass.defaultType
-            )
-        }
-        return super.visitGetValue(irGetValue, data)
-    }
 }

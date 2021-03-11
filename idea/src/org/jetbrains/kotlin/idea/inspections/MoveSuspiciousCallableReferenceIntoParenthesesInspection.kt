@@ -1,6 +1,6 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.inspections
@@ -17,23 +17,28 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.intentions.ConvertLambdaToReferenceIntention
 import org.jetbrains.kotlin.idea.intentions.getCallableDescriptor
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
+import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
+import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.ValueArgument
+import org.jetbrains.kotlin.psi.lambdaExpressionVisitor
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.callUtil.getParameterForArgument
 import org.jetbrains.kotlin.resolve.calls.callUtil.getParentCall
 import org.jetbrains.kotlin.resolve.calls.callUtil.getParentResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
+import org.jetbrains.kotlin.idea.references.resolveToDescriptors
 
 class MoveSuspiciousCallableReferenceIntoParenthesesInspection : AbstractKotlinInspection() {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
-        return lambdaExpressionVisitor(fun(lambdaExpression) {
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor =
+        lambdaExpressionVisitor(fun(lambdaExpression) {
             val callableReference = lambdaExpression.bodyExpression?.statements?.singleOrNull() as? KtCallableReferenceExpression
             if (callableReference != null) {
                 val context = lambdaExpression.analyze()
@@ -50,19 +55,20 @@ class MoveSuspiciousCallableReferenceIntoParenthesesInspection : AbstractKotlinI
                         }
                     }
                 }
+
                 val quickFix = if (canMove(lambdaExpression, callableReference, context))
                     IntentionWrapper(MoveIntoParenthesesIntention(), lambdaExpression.containingFile)
                 else
                     null
+
                 holder.registerProblem(
                     lambdaExpression,
-                    "Suspicious callable reference as the only lambda element",
+                    KotlinBundle.message("suspicious.callable.reference.as.the.only.lambda.element"),
                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                     quickFix
                 )
             }
         })
-    }
 
     private fun canMove(
         lambdaExpression: KtLambdaExpression,
@@ -86,7 +92,7 @@ class MoveSuspiciousCallableReferenceIntoParenthesesInspection : AbstractKotlinI
     }
 
     class MoveIntoParenthesesIntention : ConvertLambdaToReferenceIntention(
-        "Move suspicious callable reference into parentheses '()'"
+        KotlinBundle.lazyMessage("move.suspicious.callable.reference.into.parentheses")
     ) {
         override fun buildReferenceText(element: KtLambdaExpression): String? {
             val callableReferenceExpression =
@@ -103,11 +109,12 @@ class MoveSuspiciousCallableReferenceIntoParenthesesInspection : AbstractKotlinI
                 ) {
                     callableReference.resolveToCall(BodyResolveMode.FULL)
                         ?.let { it.extensionReceiver ?: it.dispatchReceiver }
-                        ?.let { "${it.type}" } ?: ""
+                        ?.let { IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.renderType(it.type) } ?: ""
                 } else {
                     receiverExpression.text
                 }
             }
+
             return "$receiver::${callableReference.text}"
         }
 

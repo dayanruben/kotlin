@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package templates
@@ -54,6 +54,7 @@ enum class PrimitiveType {
     ULong;
 
     val capacity by lazy { descendingByDomainCapacity.indexOf(this).let { if (it < 0) it else descendingByDomainCapacity.size - it } }
+    val capacityUnsigned by lazy { descendingByDomainCapacityUnsigned.indexOf(this).let { if (it < 0) it else descendingByDomainCapacityUnsigned.size - it } }
 
     companion object {
         val unsignedPrimitives = setOf(UInt, ULong, UByte, UShort)
@@ -75,6 +76,22 @@ enum class PrimitiveType {
 fun PrimitiveType.isIntegral(): Boolean = this in PrimitiveType.integralPrimitives
 fun PrimitiveType.isNumeric(): Boolean = this in PrimitiveType.numericPrimitives
 fun PrimitiveType.isFloatingPoint(): Boolean = this in PrimitiveType.floatingPointPrimitives
+fun PrimitiveType.isUnsigned(): Boolean = this in PrimitiveType.unsignedPrimitives
+
+fun PrimitiveType.sumType() = when (this) {
+    PrimitiveType.Byte, PrimitiveType.Short, PrimitiveType.Char -> PrimitiveType.Int
+    PrimitiveType.UByte, PrimitiveType.UShort -> PrimitiveType.UInt
+    else -> this
+}
+
+fun PrimitiveType.zero() = when (this) {
+    PrimitiveType.Double -> "0.0"
+    PrimitiveType.Float -> "0.0f"
+    PrimitiveType.Long -> "0L"
+    PrimitiveType.ULong -> "0uL"
+    in PrimitiveType.unsignedPrimitives -> "0u"
+    else -> "0"
+}
 
 enum class Inline {
     No,
@@ -89,13 +106,14 @@ enum class Platform {
     Common,
     JVM,
     JS,
-    Native
+    Native,
 }
 
 enum class Backend {
     Any,
     Legacy,
-    IR
+    IR,
+    Wasm,
 }
 
 enum class KotlinTarget(val platform: Platform, val backend: Backend) {
@@ -103,6 +121,7 @@ enum class KotlinTarget(val platform: Platform, val backend: Backend) {
     JVM(Platform.JVM, Backend.Any),
     JS(Platform.JS, Backend.Legacy),
     JS_IR(Platform.JS, Backend.IR),
+    WASM(Platform.Native, Backend.Wasm),
     Native(Platform.Native, Backend.IR);
 
     val fullName get() = "Kotlin/$name"
@@ -119,5 +138,11 @@ enum class SequenceClass {
     stateful
 }
 
-data class Deprecation(val message: String, val replaceWith: String? = null, val level: DeprecationLevel = DeprecationLevel.WARNING)
+data class Deprecation(
+    val message: String, val replaceWith: String? = null, val level: DeprecationLevel = DeprecationLevel.WARNING,
+    val warningSince: String? = null, val errorSince: String? = null, val hiddenSince: String? = null)
 val forBinaryCompatibility = Deprecation("Provided for binary compatibility", level = DeprecationLevel.HIDDEN)
+
+data class ThrowsException(val exceptionType: String, val reason: String)
+
+fun String.ifOrEmpty(condition: Boolean): String = if (condition) this else ""

@@ -1,2 +1,0 @@
-val a = 1
-a            // RESULT: res1: kotlin.Int = 1

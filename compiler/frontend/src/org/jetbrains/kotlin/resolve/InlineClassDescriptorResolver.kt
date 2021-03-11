@@ -1,6 +1,6 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2000-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.resolve
@@ -19,12 +19,13 @@ object InlineClassDescriptorResolver {
     @JvmField
     val UNBOX_METHOD_NAME = Name.identifier("unbox")
 
-    private val SPECIALIZED_EQUALS_NAME = Name.identifier("equals-impl0")
+    @JvmField
+    val SPECIALIZED_EQUALS_NAME = Name.identifier("equals-impl0")
 
-    private val BOXING_VALUE_PARAMETER_NAME = Name.identifier("v")
+    val BOXING_VALUE_PARAMETER_NAME = Name.identifier("v")
 
-    private val SPECIALIZED_EQUALS_FIRST_PARAMETER_NAME = Name.identifier("p1")
-    private val SPECIALIZED_EQUALS_SECOND_PARAMETER_NAME = Name.identifier("p2")
+    val SPECIALIZED_EQUALS_FIRST_PARAMETER_NAME = Name.identifier("p1")
+    val SPECIALIZED_EQUALS_SECOND_PARAMETER_NAME = Name.identifier("p2")
 
     @JvmStatic
     fun createBoxFunctionDescriptor(owner: ClassDescriptor): SimpleFunctionDescriptor? =
@@ -74,7 +75,7 @@ object InlineClassDescriptorResolver {
             createValueParametersForSpecializedEquals(functionDescriptor, inlinedValue),
             owner.builtIns.booleanType,
             Modality.FINAL,
-            Visibilities.PUBLIC
+            DescriptorVisibilities.PUBLIC
         )
 
         return functionDescriptor
@@ -101,7 +102,7 @@ object InlineClassDescriptorResolver {
             if (isBoxMethod) listOf(createValueParameterForBoxing(functionDescriptor, inlinedValue)) else emptyList(),
             if (isBoxMethod) owner.defaultType else inlinedValue.returnType,
             Modality.FINAL,
-            Visibilities.PUBLIC
+            DescriptorVisibilities.PUBLIC
         )
 
         return functionDescriptor

@@ -12,7 +12,7 @@ class UpToDateIT : BaseGradleIT() {
         testMutations(
             *propertyMutationChain(
                 "compileKotlin.kotlinOptions.languageVersion",
-                "null", "'1.1'", "'1.0'", "null"
+                "null", "'1.5'", "'1.4'", "null"
             )
         )
     }
@@ -22,7 +22,7 @@ class UpToDateIT : BaseGradleIT() {
         testMutations(
             *propertyMutationChain(
                 "compileKotlin.kotlinOptions.apiVersion",
-                "null", "'1.1'", "'1.0'", "null"
+                "null", "'1.5'", "'1.4'", "null"
             )
         )
     }
@@ -78,7 +78,9 @@ class UpToDateIT : BaseGradleIT() {
         val originalPaths get() = originalCompilerCp.map { it.replace("\\", "/") }.joinToString(", ") { "'$it'" }
 
         override fun initProject(project: Project) = with(project) {
-            buildGradle.appendText("\nprintln 'compiler_cp=' + compileKotlin.getComputedCompilerClasspath\$kotlin_gradle_plugin()")
+            buildGradle.appendText(
+                "\nafterEvaluate { println 'compiler_cp=' + compileKotlin.getComputedCompilerClasspath\$kotlin_gradle_plugin() }"
+            )
             build("clean") { originalCompilerCp = "compiler_cp=\\[(.*)]".toRegex().find(output)!!.groupValues[1].split(", ") }
             buildGradle.appendText("""${'\n'}
                 // Add Kapt to the project to test its input checks as well:
@@ -137,12 +139,7 @@ class UpToDateIT : BaseGradleIT() {
         lateinit var helloWorldKtClass: File
 
         override fun mutateProject(project: Project) = with(project) {
-            val kotlinOutputPath =
-                if (testGradleVersionAtLeast("4.0"))
-                    project.classesDir()
-                else
-                // Before 4.0, we should delete the classes from the temporary dir to make compileKotlin rerun:
-                    "build/kotlin-classes/main/"
+            val kotlinOutputPath = project.classesDir()
 
             helloWorldKtClass = File(projectDir, kotlinOutputPath + "demo/KotlinGreetingJoiner.class")
             Assume.assumeTrue(helloWorldKtClass.exists())

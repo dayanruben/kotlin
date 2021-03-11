@@ -1,6 +1,6 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 @file:Suppress("unused")
@@ -36,22 +36,44 @@ interface SourceCode {
      * @param col source code position column
      * @param absolutePos absolute source code text position, if available
      */
-    data class Position(val line: Int, val col: Int, val absolutePos: Int? = null)
+    data class Position(val line: Int, val col: Int, val absolutePos: Int? = null) : Serializable
 
     /**
      * The source code positions range
      * @param start range start position
      * @param end range end position (after the last char)
      */
-    data class Range(val start: Position, val end: Position)
+    data class Range(val start: Position, val end: Position) : Serializable
 
     /**
      * The source code location, pointing either at a position or at a range
      * @param start location start position
      * @param end optional range location end position (after the last char)
      */
-    data class Location(val start: Position, val end: Position? = null)
+    data class Location(val start: Position, val end: Position? = null) : Serializable
+
+    /**
+     * The source code location including the path to the file
+     * @param codeLocationId the file path or other script location identifier (see [SourceCode.locationId])
+     * @param locationInText concrete location of the source code in file
+     */
+    data class LocationWithId(val codeLocationId: String, val locationInText: Location) : Serializable
 }
+
+/**
+ * Annotation found during script source parsing along with its location
+ */
+data class ScriptSourceAnnotation<out A : Annotation>(
+    /**
+     * Annotation found during script source parsing
+     */
+    val annotation: A,
+
+    /**
+     * Location of annotation is script
+     */
+    val location: SourceCode.LocationWithId?
+)
 
 /**
  * The interface for the source code located externally
@@ -66,7 +88,9 @@ interface ExternalSourceCode : SourceCode {
 /**
  * The source code [range] with the the optional [name]
  */
-data class ScriptSourceNamedFragment(val name: String?, val range: SourceCode.Range)
+data class ScriptSourceNamedFragment(val name: String?, val range: SourceCode.Range) : Serializable {
+    companion object { private const val serialVersionUID: Long = 1L }
+}
 
 /**
  * The general interface to the Script dependency (see platform-specific implementations)
@@ -90,10 +114,69 @@ class ScriptCollectedData(properties: Map<PropertiesCollection.Key<*>, Any>) : P
 val ScriptCollectedDataKeys.foundAnnotations by PropertiesCollection.key<List<Annotation>>()
 
 /**
- * The facade to the script data for refinement callbacks
+ * The script file-level annotations and their locations found during script source parsing
  */
-class ScriptConfigurationRefinementContext(
+val ScriptCollectedDataKeys.collectedAnnotations by PropertiesCollection.key<List<ScriptSourceAnnotation<*>>>(getDefaultValue = {
+    get(ScriptCollectedData.foundAnnotations)?.map { ScriptSourceAnnotation(it, null) }
+})
+
+/**
+ * The facade to the script data for compilation configuration refinement callbacks
+ */
+data class ScriptConfigurationRefinementContext(
     val script: SourceCode,
     val compilationConfiguration: ScriptCompilationConfiguration,
     val collectedData: ScriptCollectedData? = null
+)
+
+interface ScriptEvaluationContextDataKeys
+
+/**
+ * The container for script evaluation context data
+ * Used for transferring data to the evaluation refinement callbacks
+ */
+class ScriptEvaluationContextData(baseConfigurations: Iterable<ScriptEvaluationContextData>, body: Builder.() -> Unit = {}) :
+    PropertiesCollection(Builder(baseConfigurations).apply(body).data) {
+
+    constructor(body: Builder.() -> Unit = {}) : this(emptyList(), body)
+    constructor(
+        vararg baseConfigurations: ScriptEvaluationContextData, body: Builder.() -> Unit = {}
+    ) : this(baseConfigurations.asIterable(), body)
+
+    class Builder internal constructor(baseConfigurations: Iterable<ScriptEvaluationContextData>) :
+        ScriptEvaluationContextDataKeys,
+        PropertiesCollection.Builder(baseConfigurations)
+
+    companion object : ScriptEvaluationContextDataKeys
+}
+
+/**
+ * optimized alternative to the constructor with multiple base configurations
+ */
+fun merge(vararg contexts: ScriptEvaluationContextData?): ScriptEvaluationContextData? {
+    val nonEmpty = ArrayList<ScriptEvaluationContextData>()
+    for (data in contexts) {
+        if (data != null && !data.isEmpty()) {
+            nonEmpty.add(data)
+        }
+    }
+    return when {
+        nonEmpty.isEmpty() -> null
+        nonEmpty.size == 1 -> nonEmpty.first()
+        else -> ScriptEvaluationContextData(nonEmpty.asIterable())
+    }
+}
+
+/**
+ * Command line arguments of the current process, could be provided by an evaluation host
+ */
+val ScriptEvaluationContextDataKeys.commandLineArgs by PropertiesCollection.key<List<String>>()
+
+/**
+ * The facade to the script data for evaluation configuration refinement callbacks
+ */
+data class ScriptEvaluationConfigurationRefinementContext(
+    val compiledScript: CompiledScript,
+    val evaluationConfiguration: ScriptEvaluationConfiguration,
+    val contextData: ScriptEvaluationContextData? = null
 )

@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.codeInsight.gradle
@@ -9,23 +9,22 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.concurrency.FutureResult
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageVersion
-import org.jetbrains.kotlin.idea.configuration.KotlinMigrationProjectComponent
-import org.jetbrains.kotlin.idea.configuration.KotlinMigrationProjectComponent.MigrationTestState
+import org.jetbrains.kotlin.idea.configuration.KotlinMigrationProjectService
+import org.jetbrains.kotlin.idea.configuration.KotlinMigrationProjectService.MigrationTestState
 import org.jetbrains.kotlin.idea.configuration.MigrationInfo
-import org.jetbrains.kotlin.test.testFramework.runInEdtAndWait
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Assert
 import org.junit.Test
-import java.lang.IllegalStateException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
 class GradleMigrateTest : GradleImportingTestCase() {
     @Test
-    @TargetVersions("4.4+")
+    @TargetVersions("5.3+")
     fun testMigrateStdlib() {
         val migrateComponentState = doMigrationTest(
             beforeText = """
@@ -35,17 +34,17 @@ class GradleMigrateTest : GradleImportingTestCase() {
                     mavenCentral()
                 }
                 dependencies {
-                    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.1.0"
+                    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.3.40"
                 }
             }
 
             apply plugin: 'kotlin'
 
             dependencies {
-                compile "org.jetbrains.kotlin:kotlin-stdlib:1.1.0"
+                compile "org.jetbrains.kotlin:kotlin-stdlib:1.3.40"
             }
             """,
-
+            //ToDo: Change 1.4-M3 to 1.4.0 version after release
             afterText =
             """
             buildscript {
@@ -54,14 +53,14 @@ class GradleMigrateTest : GradleImportingTestCase() {
                     mavenCentral()
                 }
                 dependencies {
-                    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.2.0"
+                    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.0-rc"
                 }
             }
 
             apply plugin: 'kotlin'
 
             dependencies {
-                compile "org.jetbrains.kotlin:kotlin-stdlib:1.2.0"
+                compile "org.jetbrains.kotlin:kotlin-stdlib:1.4.0-rc"
             }
             """
         )
@@ -70,12 +69,12 @@ class GradleMigrateTest : GradleImportingTestCase() {
 
         Assert.assertEquals(
             MigrationInfo.create(
-                oldStdlibVersion = "1.1.0",
-                oldApiVersion = ApiVersion.KOTLIN_1_1,
-                oldLanguageVersion = LanguageVersion.KOTLIN_1_1,
-                newStdlibVersion = "1.2.0",
-                newApiVersion = ApiVersion.KOTLIN_1_2,
-                newLanguageVersion = LanguageVersion.KOTLIN_1_2
+                oldStdlibVersion = "1.3.40",
+                oldApiVersion = ApiVersion.KOTLIN_1_3,
+                oldLanguageVersion = LanguageVersion.KOTLIN_1_3,
+                newStdlibVersion = "1.4.0-rc",
+                newApiVersion = ApiVersion.KOTLIN_1_4,
+                newLanguageVersion = LanguageVersion.KOTLIN_1_4
             ),
             migrateComponentState?.migrationInfo
         )
@@ -99,7 +98,7 @@ class GradleMigrateTest : GradleImportingTestCase() {
         }
 
         val importResult = FutureResult<MigrationTestState?>()
-        val migrationProjectComponent = KotlinMigrationProjectComponent.getInstance(myProject)
+        val migrationProjectComponent = KotlinMigrationProjectService.getInstance(myProject)
 
         migrationProjectComponent.setImportFinishListener { migrationState ->
             importResult.set(migrationState)

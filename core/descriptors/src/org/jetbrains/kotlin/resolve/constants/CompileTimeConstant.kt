@@ -17,10 +17,14 @@
 package org.jetbrains.kotlin.resolve.constants
 
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.descriptors.findClassAcrossModuleDependencies
-import org.jetbrains.kotlin.types.*
+import org.jetbrains.kotlin.types.ErrorUtils
+import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.KotlinTypeFactory
+import org.jetbrains.kotlin.types.TypeUtils
 
 interface CompileTimeConstant<out T> {
     val isError: Boolean
@@ -91,13 +95,14 @@ class TypedCompileTimeConstant<out T>(
 fun createIntegerValueTypeConstant(
     value: Number,
     module: ModuleDescriptor,
-    parameters: CompileTimeConstant.Parameters
+    parameters: CompileTimeConstant.Parameters,
+    newInferenceEnabled: Boolean
 ): CompileTimeConstant<*> {
-    return IntegerValueTypeConstant(value, module, parameters)
+    return IntegerValueTypeConstant(value, module, parameters, newInferenceEnabled)
 }
 
 fun hasUnsignedTypesInModuleDependencies(module: ModuleDescriptor): Boolean {
-    return module.findClassAcrossModuleDependencies(KotlinBuiltIns.FQ_NAMES.uInt) != null
+    return module.findClassAcrossModuleDependencies(StandardNames.FqNames.uInt) != null
 }
 
 class UnsignedErrorValueTypeConstant(
@@ -121,6 +126,7 @@ class IntegerValueTypeConstant(
     private val value: Number,
     module: ModuleDescriptor,
     override val parameters: CompileTimeConstant.Parameters,
+    private val newInferenceEnabled: Boolean,
     val convertedFromSigned: Boolean = false
 ) : CompileTimeConstant<Number> {
     companion object {
@@ -136,7 +142,7 @@ class IntegerValueTypeConstant(
                 isConvertableConstVal = parameters.isConvertableConstVal
             )
 
-            return IntegerValueTypeConstant(value, module, newParameters, convertedFromSigned = true)
+            return IntegerValueTypeConstant(value, module, newParameters, newInferenceEnabled, convertedFromSigned = true)
         }
 
         fun IntegerValueTypeConstant.convertToSignedConstant(module: ModuleDescriptor): IntegerValueTypeConstant {
@@ -150,11 +156,16 @@ class IntegerValueTypeConstant(
                 isConvertableConstVal = parameters.isConvertableConstVal
             )
 
-            return IntegerValueTypeConstant(value, module, newParameters, convertedFromSigned = true)
+            return IntegerValueTypeConstant(value, module, newParameters, newInferenceEnabled, convertedFromSigned = true)
         }
     }
 
-    private val typeConstructor = IntegerValueTypeConstructor(value.toLong(), module, parameters)
+    private val typeConstructor =
+        if (newInferenceEnabled) {
+            IntegerLiteralTypeConstructor(value.toLong(), module, parameters)
+        } else {
+            IntegerValueTypeConstructor(value.toLong(), module, parameters)
+        }
 
     override fun toConstantValue(expectedType: KotlinType): ConstantValue<Number> {
         val type = getType(expectedType)
@@ -178,7 +189,12 @@ class IntegerValueTypeConstant(
         ErrorUtils.createErrorScope("Scope for number value type ($typeConstructor)", true)
     )
 
-    fun getType(expectedType: KotlinType): KotlinType = TypeUtils.getPrimitiveNumberType(typeConstructor, expectedType)
+    fun getType(expectedType: KotlinType): KotlinType =
+        if (newInferenceEnabled) {
+            TypeUtils.getPrimitiveNumberType(typeConstructor as IntegerLiteralTypeConstructor, expectedType)
+        } else {
+            TypeUtils.getPrimitiveNumberType(typeConstructor as IntegerValueTypeConstructor, expectedType)
+        }
 
     override fun toString() = typeConstructor.toString()
 

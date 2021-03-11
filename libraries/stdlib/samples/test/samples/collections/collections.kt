@@ -1,17 +1,6 @@
 /*
- * Copyright 2010-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package samples.collections
@@ -333,9 +322,129 @@ class Collections {
             set += listOf(4, 5)
             assertPrints(set, "[1, 2, 4, 5]")
         }
+
+        @Sample
+        fun setOfNotNull() {
+            val empty = setOfNotNull<Any>(null)
+            assertPrints(empty, "[]")
+
+            val singleton = setOfNotNull(42)
+            assertPrints(singleton, "[42]")
+
+            val set = setOfNotNull(1, null, 2, null, 3)
+            assertPrints(set, "[1, 2, 3]")
+        }
+
+        @Sample
+        fun emptyLinkedHashSet() {
+            val set: LinkedHashSet<Int> = linkedSetOf<Int>()
+
+            set.add(1)
+            set.add(3)
+            set.add(2)
+
+            assertPrints(set, "[1, 3, 2]")
+        }
+
+        @Sample
+        fun linkedHashSet() {
+            val set: LinkedHashSet<Int> = linkedSetOf(1, 3, 2)
+
+            assertPrints(set, "[1, 3, 2]")
+
+            set.remove(3)
+            set += listOf(5, 4)
+            assertPrints(set, "[1, 2, 5, 4]")
+        }
     }
 
     class Transformations {
+
+        @Sample
+        fun associate() {
+            val names = listOf("Grace Hopper", "Jacob Bernoulli", "Johann Bernoulli")
+
+            val byLastName = names.associate { it.split(" ").let { (firstName, lastName) -> lastName to firstName } }
+
+            // Jacob Bernoulli does not occur in the map because only the last pair with the same key gets added
+            assertPrints(byLastName, "{Hopper=Grace, Bernoulli=Johann}")
+        }
+
+        @Sample
+        fun associateBy() {
+            data class Person(val firstName: String, val lastName: String) {
+                override fun toString(): String = "$firstName $lastName"
+            }
+
+            val scientists = listOf(Person("Grace", "Hopper"), Person("Jacob", "Bernoulli"), Person("Johann", "Bernoulli"))
+
+            val byLastName = scientists.associateBy { it.lastName }
+
+            // Jacob Bernoulli does not occur in the map because only the last pair with the same key gets added
+            assertPrints(byLastName, "{Hopper=Grace Hopper, Bernoulli=Johann Bernoulli}")
+        }
+
+        @Sample
+        fun associateByWithValueTransform() {
+            data class Person(val firstName: String, val lastName: String)
+
+            val scientists = listOf(Person("Grace", "Hopper"), Person("Jacob", "Bernoulli"), Person("Johann", "Bernoulli"))
+
+            val byLastName = scientists.associateBy({ it.lastName }, { it.firstName })
+
+            // Jacob Bernoulli does not occur in the map because only the last pair with the same key gets added
+            assertPrints(byLastName, "{Hopper=Grace, Bernoulli=Johann}")
+        }
+
+        @Sample
+        fun associateByTo() {
+            data class Person(val firstName: String, val lastName: String) {
+                override fun toString(): String = "$firstName $lastName"
+            }
+
+            val scientists = listOf(Person("Grace", "Hopper"), Person("Jacob", "Bernoulli"), Person("Johann", "Bernoulli"))
+
+            val byLastName = mutableMapOf<String, Person>()
+            assertTrue(byLastName.isEmpty())
+
+            scientists.associateByTo(byLastName) { it.lastName }
+
+            assertTrue(byLastName.isNotEmpty())
+            // Jacob Bernoulli does not occur in the map because only the last pair with the same key gets added
+            assertPrints(byLastName, "{Hopper=Grace Hopper, Bernoulli=Johann Bernoulli}")
+        }
+
+        @Sample
+        fun associateByToWithValueTransform() {
+            data class Person(val firstName: String, val lastName: String)
+
+            val scientists = listOf(Person("Grace", "Hopper"), Person("Jacob", "Bernoulli"), Person("Johann", "Bernoulli"))
+
+            val byLastName = mutableMapOf<String, String>()
+            assertTrue(byLastName.isEmpty())
+
+            scientists.associateByTo(byLastName, { it.lastName }, { it.firstName} )
+
+            assertTrue(byLastName.isNotEmpty())
+            // Jacob Bernoulli does not occur in the map because only the last pair with the same key gets added
+            assertPrints(byLastName, "{Hopper=Grace, Bernoulli=Johann}")
+        }
+
+        @Sample
+        fun associateTo() {
+            data class Person(val firstName: String, val lastName: String)
+
+            val scientists = listOf(Person("Grace", "Hopper"), Person("Jacob", "Bernoulli"), Person("Johann", "Bernoulli"))
+
+            val byLastName = mutableMapOf<String, String>()
+            assertTrue(byLastName.isEmpty())
+
+            scientists.associateTo(byLastName) { it.lastName to it.firstName }
+
+            assertTrue(byLastName.isNotEmpty())
+            // Jacob Bernoulli does not occur in the map because only the last pair with the same key gets added
+            assertPrints(byLastName, "{Hopper=Grace, Bernoulli=Johann}")
+        }
 
         @Sample
         fun associateWith() {
@@ -343,6 +452,30 @@ class Collections {
             val withLength = words.associateWith { it.length }
             assertPrints(withLength.keys, "[a, abc, ab, def, abcd]")
             assertPrints(withLength.values, "[1, 3, 2, 3, 4]")
+        }
+
+        @Sample
+        fun associateWithTo() {
+            data class Person(val firstName: String, val lastName: String) {
+                override fun toString(): String = "$firstName $lastName"
+            }
+
+            val scientists = listOf(Person("Grace", "Hopper"), Person("Jacob", "Bernoulli"), Person("Jacob", "Bernoulli"))
+            val withLengthOfNames = mutableMapOf<Person, Int>()
+            assertTrue(withLengthOfNames.isEmpty())
+
+            scientists.associateWithTo(withLengthOfNames) { it.firstName.length + it.lastName.length }
+
+            assertTrue(withLengthOfNames.isNotEmpty())
+            // Jacob Bernoulli only occurs once in the map because only the last pair with the same key gets added
+            assertPrints(withLengthOfNames, "{Grace Hopper=11, Jacob Bernoulli=14}")
+        }
+
+        @Sample
+        fun distinctAndDistinctBy() {
+            val list = listOf('a', 'A', 'b', 'B', 'A', 'a')
+            assertPrints(list.distinct(), "[a, A, b, B]")
+            assertPrints(list.distinctBy { it.toUpperCase() }, "[a, b]")
         }
 
         @Sample
@@ -391,6 +524,35 @@ class Collections {
 
             val chars = charArrayOf('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q')
             assertPrints(chars.joinToString(limit = 5, truncated = "...!") { it.toUpperCase().toString() }, "A, B, C, D, E, ...!")
+        }
+
+        @Sample
+        fun map() {
+            val numbers = listOf(1, 2, 3)
+            assertPrints(numbers.map { it * it }, "[1, 4, 9]")
+        }
+
+        @Sample
+        fun mapNotNull() {
+            val strings: List<String> = listOf("12a", "45", "", "3")
+            val ints: List<Int> = strings.mapNotNull { it.toIntOrNull() }
+
+            assertPrints(ints, "[45, 3]")
+            assertPrints(ints.sum(), "48")
+        }
+
+        @Sample
+        fun flatMap() {
+            val list = listOf("123", "45")
+            assertPrints(list.flatMap { it.toList() }, "[1, 2, 3, 4, 5]")
+        }
+
+        @Sample
+        fun flatMapIndexed() {
+            val data: List<String> = listOf("Abcd", "efgh", "Klmn")
+            val selected: List<Boolean> = data.map { it.any { c -> c.isUpperCase() } }
+            val result = data.flatMapIndexed { index, s -> if (selected[index]) s.toList() else emptyList() }
+            assertPrints(result, "[A, b, c, d, K, l, m, n]")
         }
 
         @Sample
@@ -499,25 +661,88 @@ class Collections {
         }
 
         @Sample
-        fun maxBy() {
+        fun maxByOrNull() {
             val nameToAge = listOf("Alice" to 42, "Bob" to 28, "Carol" to 51)
-            val oldestPerson = nameToAge.maxBy { it.second }
+            val oldestPerson = nameToAge.maxByOrNull { it.second }
             assertPrints(oldestPerson, "(Carol, 51)")
 
             val emptyList = emptyList<Pair<String, Int>>()
-            val emptyMax = emptyList.maxBy { it.second }
+            val emptyMax = emptyList.maxByOrNull { it.second }
             assertPrints(emptyMax, "null")
         }
 
         @Sample
-        fun minBy() {
+        fun minByOrNull() {
             val list = listOf("abcd", "abc", "ab", "abcde")
-            val shortestString = list.minBy { it.length }
+            val shortestString = list.minByOrNull { it.length }
             assertPrints(shortestString, "ab")
 
             val emptyList = emptyList<String>()
-            val emptyMin = emptyList.minBy { it.length }
+            val emptyMin = emptyList.minByOrNull { it.length }
             assertPrints(emptyMin, "null")
+        }
+
+        @Sample
+        fun reduce() {
+            val strings = listOf("a", "b", "c", "d")
+            assertPrints(strings.reduce { acc, string -> acc + string }, "abcd")
+            assertPrints(strings.reduceIndexed { index, acc, string -> acc + string + index }, "ab1c2d3")
+
+            assertFails { emptyList<Int>().reduce { _, _ -> 0 } }
+        }
+
+        @Sample
+        fun reduceRight() {
+            val strings = listOf("a", "b", "c", "d")
+            assertPrints(strings.reduceRight { string, acc -> acc + string }, "dcba")
+            assertPrints(strings.reduceRightIndexed { index, string, acc -> acc + string + index }, "dc2b1a0")
+
+            assertFails { emptyList<Int>().reduceRight { _, _ -> 0 } }
+        }
+
+        @Sample
+        fun reduceOrNull() {
+            val strings = listOf("a", "b", "c", "d")
+            assertPrints(strings.reduceOrNull { acc, string -> acc + string }, "abcd")
+            assertPrints(strings.reduceIndexedOrNull { index, acc, string -> acc + string + index }, "ab1c2d3")
+
+            assertPrints(emptyList<String>().reduceOrNull { _, _ -> "" }, "null")
+        }
+
+        @Sample
+        fun reduceRightOrNull() {
+            val strings = listOf("a", "b", "c", "d")
+            assertPrints(strings.reduceRightOrNull { string, acc -> acc + string }, "dcba")
+            assertPrints(strings.reduceRightIndexedOrNull { index, string, acc -> acc + string + index }, "dc2b1a0")
+
+            assertPrints(emptyList<String>().reduceRightOrNull { _, _ -> "" }, "null")
+        }
+
+        @Sample
+        fun scan() {
+            val strings = listOf("a", "b", "c", "d")
+            assertPrints(strings.scan("s") { acc, string -> acc + string }, "[s, sa, sab, sabc, sabcd]")
+            assertPrints(strings.scanIndexed("s") { index, acc, string -> acc + string + index }, "[s, sa0, sa0b1, sa0b1c2, sa0b1c2d3]")
+
+            assertPrints(emptyList<String>().scan("s") { _, _ -> "X" }, "[s]")
+        }
+
+        @Sample
+        fun runningFold() {
+            val strings = listOf("a", "b", "c", "d")
+            assertPrints(strings.runningFold("s") { acc, string -> acc + string }, "[s, sa, sab, sabc, sabcd]")
+            assertPrints(strings.runningFoldIndexed("s") { index, acc, string -> acc + string + index }, "[s, sa0, sa0b1, sa0b1c2, sa0b1c2d3]")
+
+            assertPrints(emptyList<String>().runningFold("s") { _, _ -> "X" }, "[s]")
+        }
+
+        @Sample
+        fun runningReduce() {
+            val strings = listOf("a", "b", "c", "d")
+            assertPrints(strings.runningReduce { acc, string -> acc + string }, "[a, ab, abc, abcd]")
+            assertPrints(strings.runningReduceIndexed { index, acc, string -> acc + string + index }, "[a, ab1, ab1c2, ab1c2d3]")
+
+            assertPrints(emptyList<String>().runningReduce { _, _ -> "X" }, "[]")
         }
     }
 
@@ -554,5 +779,224 @@ class Collections {
             val emptyList = emptyList<Int>()
             assertPrints(emptyList.elementAtOrElse(0) { "no int" }, "no int")
         }
+
+        @Sample
+        fun find() {
+            val numbers = listOf(1, 2, 3, 4, 5, 6, 7)
+            val firstOdd = numbers.find { it % 2 != 0 }
+            val lastEven = numbers.findLast { it % 2 == 0 }
+
+            assertPrints(firstOdd, "1")
+            assertPrints(lastEven, "6")
+        }
+
+        @Sample
+        fun getOrNull() {
+            val list = listOf(1, 2, 3)
+            assertPrints(list.getOrNull(0), "1")
+            assertPrints(list.getOrNull(2), "3")
+            assertPrints(list.getOrNull(3), "null")
+
+            val emptyList = emptyList<Int>()
+            assertPrints(emptyList.getOrNull(0), "null")
+        }
+
+        @Sample
+        fun last() {
+            val list = listOf(1, 2, 3, 4)
+            assertPrints(list.last(), "4")
+            assertPrints(list.last { it % 2 == 1 }, "3")
+            assertPrints(list.lastOrNull { it < 0 }, "null")
+            assertFails { list.last { it < 0 } }
+
+            val emptyList = emptyList<Int>()
+            assertPrints(emptyList.lastOrNull(), "null")
+            assertFails { emptyList.last() }
+        }
+    }
+
+    class Sorting {
+
+        @Sample
+        fun sortMutableList() {
+            val mutableList = mutableListOf(4, 3, 2, 1)
+
+            // before sorting
+            assertPrints(mutableList.joinToString(), "4, 3, 2, 1")
+
+            mutableList.sort()
+
+            // after sorting
+            assertPrints(mutableList.joinToString(), "1, 2, 3, 4")
+        }
+
+        @Sample
+        fun sortMutableListWith() {
+            // non-comparable class
+            class Person(val firstName: String, val lastName: String) {
+                override fun toString(): String = "$firstName $lastName"
+            }
+
+            val people = mutableListOf(
+                Person("Ragnar", "Lodbrok"),
+                Person("Bjorn", "Ironside"),
+                Person("Sweyn", "Forkbeard")
+            )
+
+            people.sortWith(compareByDescending { it.firstName })
+
+            // after sorting
+            assertPrints(people.joinToString(), "Sweyn Forkbeard, Ragnar Lodbrok, Bjorn Ironside")
+        }
+
+        @Sample
+        fun sortedBy() {
+            val list = listOf("aaa", "cc", "bbbb")
+            val sorted = list.sortedBy { it.length }
+
+            assertPrints(list, "[aaa, cc, bbbb]")
+            assertPrints(sorted, "[cc, aaa, bbbb]")
+        }
+    }
+
+    class Filtering {
+
+        @Sample
+        fun filter() {
+            val numbers: List<Int> = listOf(1, 2, 3, 4, 5, 6, 7)
+            val evenNumbers = numbers.filter { it % 2 == 0 }
+            val notMultiplesOf3 = numbers.filterNot { number -> number % 3 == 0 }
+
+            assertPrints(evenNumbers, "[2, 4, 6]")
+            assertPrints(notMultiplesOf3, "[1, 2, 4, 5, 7]")
+        }
+
+        @Sample
+        fun filterTo() {
+            val numbers: List<Int> = listOf(1, 2, 3, 4, 5, 6, 7)
+            val evenNumbers = mutableListOf<Int>()
+            val notMultiplesOf3 = mutableListOf<Int>()
+
+            assertPrints(evenNumbers, "[]")
+
+            numbers.filterTo(evenNumbers) { it % 2 == 0 }
+            numbers.filterNotTo(notMultiplesOf3) { number -> number % 3 == 0 }
+
+            assertPrints(evenNumbers, "[2, 4, 6]")
+            assertPrints(notMultiplesOf3, "[1, 2, 4, 5, 7]")
+        }
+
+        @Sample
+        fun filterNotNull() {
+            val numbers: List<Int?> = listOf(1, 2, null, 4)
+            val nonNullNumbers = numbers.filterNotNull()
+
+            assertPrints(nonNullNumbers, "[1, 2, 4]")
+        }
+
+        @Sample
+        fun filterNotNullTo() {
+            val numbers: List<Int?> = listOf(1, 2, null, 4)
+            val nonNullNumbers = mutableListOf<Int>()
+
+            assertPrints(nonNullNumbers, "[]")
+
+            numbers.filterNotNullTo(nonNullNumbers)
+
+            assertPrints(nonNullNumbers, "[1, 2, 4]")
+        }
+
+        @Sample
+        fun filterIndexed() {
+            val numbers: List<Int> = listOf(0, 1, 2, 3, 4, 8, 6)
+            val numbersOnSameIndexAsValue = numbers.filterIndexed { index, i -> index == i }
+
+            assertPrints(numbersOnSameIndexAsValue, "[0, 1, 2, 3, 4, 6]")
+        }
+
+        @Sample
+        fun filterIndexedTo() {
+            val numbers: List<Int> = listOf(0, 1, 2, 3, 4, 8, 6)
+            val numbersOnSameIndexAsValue = mutableListOf<Int>()
+
+            assertPrints(numbersOnSameIndexAsValue, "[]")
+
+            numbers.filterIndexedTo(numbersOnSameIndexAsValue) { index, i -> index == i }
+
+            assertPrints(numbersOnSameIndexAsValue, "[0, 1, 2, 3, 4, 6]")
+        }
+
+        @Sample
+        fun filterIsInstance() {
+            open class Animal(val name: String) {
+                override fun toString(): String {
+                    return name
+                }
+            }
+            class Dog(name: String): Animal(name)
+            class Cat(name: String): Animal(name)
+
+            val animals: List<Animal> = listOf(Cat("Scratchy"), Dog("Poochie"))
+            val cats = animals.filterIsInstance<Cat>()
+
+            assertPrints(cats, "[Scratchy]")
+        }
+
+        @Sample
+        fun filterIsInstanceJVM() {
+            open class Animal(val name: String) {
+                override fun toString(): String {
+                    return name
+                }
+            }
+            class Dog(name: String): Animal(name)
+            class Cat(name: String): Animal(name)
+
+            val animals: List<Animal> = listOf(Cat("Scratchy"), Dog("Poochie"))
+            val cats = animals.filterIsInstance(Cat::class.java)
+
+            assertPrints(cats, "[Scratchy]")
+        }
+
+        @Sample
+        fun filterIsInstanceTo() {
+            open class Animal(val name: String) {
+                override fun toString(): String {
+                    return name
+                }
+            }
+            class Dog(name: String): Animal(name)
+            class Cat(name: String): Animal(name)
+
+            val animals: List<Animal> = listOf(Cat("Scratchy"), Dog("Poochie"))
+            val cats = mutableListOf<Cat>()
+
+            assertPrints(cats, "[]")
+
+            animals.filterIsInstanceTo<Cat, MutableList<Cat>>(cats)
+
+            assertPrints(cats, "[Scratchy]")
+        }
+
+        @Sample
+        fun filterIsInstanceToJVM() {
+            open class Animal(val name: String) {
+                override fun toString(): String {
+                    return name
+                }
+            }
+            class Dog(name: String): Animal(name)
+            class Cat(name: String): Animal(name)
+
+            val animals: List<Animal> = listOf(Cat("Scratchy"), Dog("Poochie"))
+            val cats = mutableListOf<Cat>()
+
+            assertPrints(cats, "[]")
+
+            animals.filterIsInstanceTo(cats, Cat::class.java)
+
+            assertPrints(cats, "[Scratchy]")
+        }
+
     }
 }

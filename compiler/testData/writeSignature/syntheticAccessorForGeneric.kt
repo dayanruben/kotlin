@@ -5,7 +5,7 @@ class MyList<T> {
     fun withSignature(): T? = null
 
     fun removeHeader() {
-        fun a () {
+        {
             noSignature()
         }
     }

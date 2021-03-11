@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.backend.common.lower
@@ -97,7 +97,7 @@ abstract class AbstractValueUsageTransformer(
         with(expression) {
             dispatchReceiver = dispatchReceiver?.useAsDispatchReceiver(expression)
             extensionReceiver = extensionReceiver?.useAsExtensionReceiver(expression)
-            for (index in descriptor.valueParameters.indices) {
+            for (index in 0 until valueArgumentsCount) {
                 val argument = getValueArgument(index) ?: continue
                 val parameter = symbol.owner.valueParameters[index]
                 putValueArgument(index, argument.useAsValueArgument(expression, parameter))
@@ -148,10 +148,10 @@ abstract class AbstractValueUsageTransformer(
         return expression
     }
 
-    override fun visitSetVariable(expression: IrSetVariable): IrExpression {
+    override fun visitSetValue(expression: IrSetValue): IrExpression {
         expression.transformChildrenVoid(this)
 
-        expression.value = expression.value.useForVariable(expression.symbol.owner)
+        expression.value = expression.value.useAsValue(expression.symbol.owner)
 
         return expression
     }

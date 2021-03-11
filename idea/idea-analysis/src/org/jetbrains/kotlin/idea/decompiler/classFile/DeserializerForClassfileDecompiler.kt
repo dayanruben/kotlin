@@ -1,17 +1,6 @@
 /*
- * Copyright 2010-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.decompiler.classFile
@@ -35,8 +24,7 @@ import org.jetbrains.kotlin.load.kotlin.KotlinClassFinder.Result.KotlinClass
 import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.resolve.TargetPlatform
-import org.jetbrains.kotlin.resolve.jvm.platform.JvmPlatform
+import org.jetbrains.kotlin.resolve.sam.SamConversionResolverImpl
 import org.jetbrains.kotlin.serialization.deserialization.ClassData
 import org.jetbrains.kotlin.serialization.deserialization.ClassDataFinder
 import org.jetbrains.kotlin.serialization.deserialization.DeserializationComponents
@@ -45,17 +33,17 @@ import org.jetbrains.kotlin.serialization.deserialization.descriptors.Deserializ
 import java.io.InputStream
 
 fun DeserializerForClassfileDecompiler(classFile: VirtualFile): DeserializerForClassfileDecompiler {
-    val kotlinClassHeaderInfo = IDEKotlinBinaryClassCache.getKotlinBinaryClassHeaderData(classFile)
-                                ?: error("Decompiled data factory shouldn't be called on an unsupported file: " + classFile)
+    val kotlinClassHeaderInfo =
+        IDEKotlinBinaryClassCache.getInstance().getKotlinBinaryClassHeaderData(classFile)
+            ?: error("Decompiled data factory shouldn't be called on an unsupported file: $classFile")
     val packageFqName = kotlinClassHeaderInfo.classId.packageFqName
     return DeserializerForClassfileDecompiler(classFile.parent!!, packageFqName)
 }
 
 class DeserializerForClassfileDecompiler(
-        packageDirectory: VirtualFile,
-        directoryPackageFqName: FqName
+    packageDirectory: VirtualFile,
+    directoryPackageFqName: FqName
 ) : DeserializerForDecompilerBase(directoryPackageFqName) {
-    override val targetPlatform: TargetPlatform get() = JvmPlatform
     override val builtIns: KotlinBuiltIns get() = DefaultBuiltIns.Instance
 
     private val classFinder = DirectoryBasedClassFinder(packageDirectory, directoryPackageFqName)
@@ -66,19 +54,20 @@ class DeserializerForClassfileDecompiler(
         val classDataFinder = DirectoryBasedDataFinder(classFinder, LOG)
         val notFoundClasses = NotFoundClasses(storageManager, moduleDescriptor)
         val annotationAndConstantLoader =
-                BinaryClassAnnotationAndConstantLoaderImpl(moduleDescriptor, notFoundClasses, storageManager, classFinder)
+            BinaryClassAnnotationAndConstantLoaderImpl(moduleDescriptor, notFoundClasses, storageManager, classFinder)
 
         val configuration = object : DeserializationConfiguration {
-            override val readDeserializedContracts: Boolean
-                get() = true
+            override val readDeserializedContracts: Boolean = true
+            override val preserveDeclarationsOrdering: Boolean = true
         }
 
         deserializationComponents = DeserializationComponents(
-                storageManager, moduleDescriptor, configuration, classDataFinder, annotationAndConstantLoader,
-                packageFragmentProvider, ResolveEverythingToKotlinAnyLocalClassifierResolver(builtIns), LoggingErrorReporter(LOG),
-                LookupTracker.DO_NOTHING, JavaFlexibleTypeDeserializer, emptyList(), notFoundClasses,
-                ContractDeserializerImpl(configuration),
-                extensionRegistryLite = JvmProtoBufUtil.EXTENSION_REGISTRY
+            storageManager, moduleDescriptor, configuration, classDataFinder, annotationAndConstantLoader,
+            packageFragmentProvider, ResolveEverythingToKotlinAnyLocalClassifierResolver(builtIns), LoggingErrorReporter(LOG),
+            LookupTracker.DO_NOTHING, JavaFlexibleTypeDeserializer, emptyList(), notFoundClasses,
+            ContractDeserializerImpl(configuration, storageManager),
+            extensionRegistryLite = JvmProtoBufUtil.EXTENSION_REGISTRY,
+            samConversionResolver = SamConversionResolverImpl(storageManager, samWithReceiverResolvers = emptyList())
         )
     }
 
@@ -110,8 +99,8 @@ class DeserializerForClassfileDecompiler(
 }
 
 class DirectoryBasedClassFinder(
-        val packageDirectory: VirtualFile,
-        val directoryPackageFqName: FqName
+    val packageDirectory: VirtualFile,
+    val directoryPackageFqName: FqName
 ) : KotlinClassFinder {
     override fun findKotlinClassOrContent(javaClass: JavaClass) = findKotlinClassOrContent(javaClass.classId!!)
 
@@ -122,7 +111,7 @@ class DirectoryBasedClassFinder(
         val targetName = classId.relativeClassName.pathSegments().joinToString("$", postfix = ".class")
         val virtualFile = packageDirectory.findChild(targetName)
         if (virtualFile != null && isKotlinWithCompatibleAbiVersion(virtualFile)) {
-            return IDEKotlinBinaryClassCache.getKotlinBinaryClass(virtualFile)?.let(::KotlinClass)
+            return IDEKotlinBinaryClassCache.getInstance().getKotlinBinaryClass(virtualFile)?.let(::KotlinClass)
         }
         return null
     }
@@ -138,8 +127,8 @@ class DirectoryBasedClassFinder(
 }
 
 class DirectoryBasedDataFinder(
-        val classFinder: DirectoryBasedClassFinder,
-        val log: Logger
+    val classFinder: DirectoryBasedClassFinder,
+    val log: Logger
 ) : ClassDataFinder {
     override fun findClassData(classId: ClassId): ClassData? {
         val binaryClass = classFinder.findKotlinClass(classId) ?: return null

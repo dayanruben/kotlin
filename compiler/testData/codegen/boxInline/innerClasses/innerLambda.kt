@@ -1,7 +1,6 @@
-// IGNORE_BACKEND: JVM_IR
-// IGNORE_BACKEND: NATIVE
-// FILE: 1.kt
 // WITH_RUNTIME
+// TARGET_BACKEND: JVM
+// FILE: 1.kt
 package test
 
 inline fun foo1() = run {

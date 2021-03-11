@@ -1,6 +1,6 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2000-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.descriptors.impl;
@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.storage.StorageManager;
 import org.jetbrains.kotlin.types.ClassTypeConstructorImpl;
 import org.jetbrains.kotlin.types.KotlinType;
 import org.jetbrains.kotlin.types.TypeConstructor;
+import org.jetbrains.kotlin.types.checker.KotlinTypeRefiner;
 import org.jetbrains.kotlin.utils.Printer;
 
 import java.util.*;
@@ -76,7 +77,7 @@ public class EnumEntrySyntheticClassDescriptor extends ClassDescriptorBase {
 
     @NotNull
     @Override
-    public MemberScope getUnsubstitutedMemberScope() {
+    public MemberScope getUnsubstitutedMemberScope(@NotNull KotlinTypeRefiner kotlinTypeRefiner) {
         return scope;
     }
 
@@ -118,8 +119,8 @@ public class EnumEntrySyntheticClassDescriptor extends ClassDescriptorBase {
 
     @NotNull
     @Override
-    public Visibility getVisibility() {
-        return Visibilities.PUBLIC;
+    public DescriptorVisibility getVisibility() {
+        return DescriptorVisibilities.PUBLIC;
     }
 
     @Override
@@ -134,6 +135,16 @@ public class EnumEntrySyntheticClassDescriptor extends ClassDescriptorBase {
 
     @Override
     public boolean isInline() {
+        return false;
+    }
+
+    @Override
+    public boolean isValue() {
+        return false;
+    }
+
+    @Override
+    public boolean isFun() {
         return false;
     }
 
@@ -244,7 +255,7 @@ public class EnumEntrySyntheticClassDescriptor extends ClassDescriptorBase {
         ) {
             final Set<D> result = new LinkedHashSet<D>();
 
-            OverridingUtil.generateOverridesInFunctionGroup(
+            OverridingUtil.DEFAULT.generateOverridesInFunctionGroup(
                     name, fromSupertypes, Collections.<D>emptySet(), EnumEntrySyntheticClassDescriptor.this,
                     new NonReportingOverrideStrategy() {
                         @Override

@@ -1,17 +1,6 @@
 /*
- * Copyright 2010-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.refactoring.move
@@ -44,19 +33,17 @@ abstract class AbstractMultiModuleMoveTest : KotlinMultiFileTestCase() {
             val withRuntime = config["withRuntime"]?.asBoolean ?: false
             if (withRuntime) {
                 val moduleManager = ModuleManager.getInstance(project)
-                modulesWithJvmRuntime =
-                        (config["modulesWithRuntime"]?.asJsonArray?.map { moduleManager.findModuleByName(it.asString!!)!! }
-                                ?: moduleManager.modules.toList())
+                modulesWithJvmRuntime = (config["modulesWithRuntime"]?.asJsonArray?.map { moduleManager.findModuleByName(it.asString!!)!! }
+                    ?: moduleManager.modules.toList())
                 modulesWithJvmRuntime.forEach { ConfigLibraryUtil.configureKotlinRuntimeAndSdk(it, PluginTestCaseBase.mockJdk()) }
 
                 modulesWithJsRuntime =
-                        (config["modulesWithJsRuntime"]?.asJsonArray?.map { moduleManager.findModuleByName(it.asString!!)!! }
-                                ?: emptyList())
+                    (config["modulesWithJsRuntime"]?.asJsonArray?.map { moduleManager.findModuleByName(it.asString!!)!! } ?: emptyList())
                 modulesWithJsRuntime.forEach { ConfigLibraryUtil.configureKotlinJsRuntimeAndSdk(it, PluginTestCaseBase.mockJdk()) }
 
                 modulesWithCommonRuntime =
-                        (config["modulesWithCommonRuntime"]?.asJsonArray?.map { moduleManager.findModuleByName(it.asString!!)!! }
-                                ?: emptyList())
+                    (config["modulesWithCommonRuntime"]?.asJsonArray?.map { moduleManager.findModuleByName(it.asString!!)!! }
+                        ?: emptyList())
                 modulesWithCommonRuntime.forEach { ConfigLibraryUtil.configureKotlinCommonRuntime(it) }
             } else {
                 modulesWithJvmRuntime = emptyList()
@@ -66,8 +53,7 @@ abstract class AbstractMultiModuleMoveTest : KotlinMultiFileTestCase() {
 
             try {
                 runMoveRefactoring(path, config, rootDir, project)
-            }
-            finally {
+            } finally {
                 modulesWithJvmRuntime.forEach {
                     ConfigLibraryUtil.unConfigureKotlinRuntimeAndSdk(it, PluginTestCaseBase.mockJdk())
                 }

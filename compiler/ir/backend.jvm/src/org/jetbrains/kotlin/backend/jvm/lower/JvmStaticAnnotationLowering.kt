@@ -1,225 +1,175 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.backend.jvm.lower
 
 import org.jetbrains.kotlin.backend.common.ClassLoweringPass
 import org.jetbrains.kotlin.backend.common.FileLoweringPass
+import org.jetbrains.kotlin.backend.common.ir.*
 import org.jetbrains.kotlin.backend.common.lower.createIrBuilder
 import org.jetbrains.kotlin.backend.common.lower.irBlock
-import org.jetbrains.kotlin.backend.common.lower.replaceThisByStaticReference
-import org.jetbrains.kotlin.backend.common.makePhase
+import org.jetbrains.kotlin.backend.common.phaser.makeIrFilePhase
+import org.jetbrains.kotlin.backend.common.phaser.makeIrModulePhase
 import org.jetbrains.kotlin.backend.common.runOnFilePostfix
 import org.jetbrains.kotlin.backend.jvm.JvmBackendContext
 import org.jetbrains.kotlin.backend.jvm.JvmLoweredDeclarationOrigin
-import org.jetbrains.kotlin.backend.jvm.descriptors.JvmFunctionDescriptorImpl
-import org.jetbrains.kotlin.codegen.AsmUtil
-import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
+import org.jetbrains.kotlin.backend.jvm.ir.replaceThisByStaticReference
+import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.descriptors.Visibilities
-import org.jetbrains.kotlin.descriptors.Visibility
-import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
+import org.jetbrains.kotlin.ir.builders.declarations.addFunction
+import org.jetbrains.kotlin.ir.builders.irCall
+import org.jetbrains.kotlin.ir.builders.irExprBody
+import org.jetbrains.kotlin.ir.builders.irGet
+import org.jetbrains.kotlin.ir.builders.irGetField
 import org.jetbrains.kotlin.ir.declarations.*
-import org.jetbrains.kotlin.ir.declarations.impl.IrFunctionImpl
-import org.jetbrains.kotlin.ir.expressions.*
-import org.jetbrains.kotlin.ir.expressions.impl.*
-import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
-import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
-import org.jetbrains.kotlin.ir.symbols.impl.IrSimpleFunctionSymbolImpl
-import org.jetbrains.kotlin.ir.types.classifierOrFail
+import org.jetbrains.kotlin.ir.expressions.IrExpression
+import org.jetbrains.kotlin.ir.expressions.IrMemberAccessExpression
+import org.jetbrains.kotlin.ir.expressions.IrTypeOperator
+import org.jetbrains.kotlin.ir.expressions.impl.IrTypeOperatorCallImpl
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.annotations.JVM_STATIC_ANNOTATION_FQ_NAME
-import org.jetbrains.org.objectweb.asm.Opcodes
 
-/*
- * For @JvmStatic functions within companion objects of classes, we synthesize proxy static functions that redirect
- * to the actual implementation.
- * For @JvmStatic functions within static objects, we make the actual function static and modify all call sites.
- */
-class JvmStaticAnnotationLowering(val context: JvmBackendContext) : IrElementTransformerVoid(), FileLoweringPass {
+internal val jvmStaticInObjectPhase = makeIrModulePhase(
+    ::JvmStaticInObjectLowering,
+    name = "JvmStaticInObject",
+    description = "Make JvmStatic functions in non-companion objects static and replace all call sites in the module"
+)
+
+internal val jvmStaticInCompanionPhase = makeIrFilePhase(
+    ::JvmStaticInCompanionLowering,
+    name = "JvmStaticInCompanion",
+    description = "Synthesize static proxy functions for JvmStatic functions in companion objects"
+)
+
+private class JvmStaticInObjectLowering(val context: JvmBackendContext) : IrElementTransformerVoid(), FileLoweringPass {
     override fun lower(irFile: IrFile) {
-        CompanionObjectJvmStaticLowering(context).runOnFilePostfix(irFile)
-
-        val functionsMadeStatic =
-            SingletonObjectJvmStaticLowering(context).apply { runOnFilePostfix(irFile) }.functionsMadeStatic
-        irFile.transformChildrenVoid(MakeCallsStatic(context, functionsMadeStatic))
+        SingletonObjectJvmStaticLowering(context).runOnFilePostfix(irFile)
+        irFile.transformChildrenVoid(MakeCallsStatic(context))
     }
 }
 
-private class CompanionObjectJvmStaticLowering(val context: JvmBackendContext) : ClassLoweringPass {
+private class JvmStaticInCompanionLowering(val context: JvmBackendContext) : IrElementTransformerVoid(), ClassLoweringPass {
     override fun lower(irClass: IrClass) {
-        val companion = irClass.declarations.find {
-            it is IrClass && it.isCompanion
-        } as IrClass?
+        val companion = irClass.companionObject() ?: return
 
-        companion?.declarations?.filter(::isJvmStaticFunction)?.forEach {
-            val jvmStaticFunction = it as IrSimpleFunction
-            val newName = Name.identifier(context.state.typeMapper.mapFunctionName(jvmStaticFunction.symbol.descriptor, null))
-            if (AsmUtil.getVisibilityAccessFlag(jvmStaticFunction.descriptor) != Opcodes.ACC_PUBLIC) {
-                // TODO: Synthetic accessor creation logic should be supported in SyntheticAccessorLowering in the future.
-                val accessorName = Name.identifier("access\$$newName")
-                val accessor = createProxy(
-                    jvmStaticFunction, companion, companion, accessorName, Visibilities.PUBLIC,
-                    isSynthetic = true
-                )
-                companion.addMember(accessor)
-                val proxy = createProxy(
-                    accessor, irClass, companion, newName, jvmStaticFunction.visibility, isSynthetic = false
-                )
-                irClass.addMember(proxy)
-            } else {
-                val proxy = createProxy(
-                    jvmStaticFunction, irClass, companion, newName, jvmStaticFunction.visibility,
-                    isSynthetic = false
-                )
-                irClass.addMember(proxy)
+        companion.declarations
+            // In case of companion objects, proxy functions for '$default' methods for @JvmStatic functions with default parameters
+            // are not created in the host class.
+            .filter {
+                it.isJvmStaticDeclaration() &&
+                        it.origin != IrDeclarationOrigin.FUNCTION_FOR_DEFAULT_PARAMETER &&
+                        it.origin != JvmLoweredDeclarationOrigin.SYNTHETIC_METHOD_FOR_PROPERTY_OR_TYPEALIAS_ANNOTATIONS
+            }
+            .forEach { declaration ->
+                val jvmStaticFunction = declaration as IrSimpleFunction
+                if (jvmStaticFunction.isExternal) {
+                    // We move external functions to the enclosing class and potentially add accessors there.
+                    // The JVM backend also adds accessors in the companion object, but these are superfluous.
+                    val staticExternal = irClass.addFunction {
+                        updateFrom(jvmStaticFunction)
+                        name = jvmStaticFunction.name
+                        returnType = jvmStaticFunction.returnType
+                    }.apply {
+                        copyTypeParametersFrom(jvmStaticFunction)
+                        copyAnnotationsFrom(jvmStaticFunction)
+                        extensionReceiverParameter = jvmStaticFunction.extensionReceiverParameter?.copyTo(this)
+                        valueParameters = jvmStaticFunction.valueParameters.map { it.copyTo(this) }
+                    }
+                    companion.declarations.remove(jvmStaticFunction)
+                    companion.addProxy(staticExternal, companion, isStatic = false)
+                } else {
+                    irClass.addProxy(jvmStaticFunction, companion)
+                }
+            }
+    }
+
+    private fun IrClass.addProxy(target: IrSimpleFunction, companion: IrClass, isStatic: Boolean = true) =
+        addFunction {
+            returnType = target.returnType
+            origin = JvmLoweredDeclarationOrigin.JVM_STATIC_WRAPPER
+            // The proxy needs to have the same name as what it is targeting. If that is a property accessor,
+            // we need to make sure that the name is mapped correctly. The static method is not a property accessor,
+            // so we do not have a property to link it up to. Therefore, we compute the right name now.
+            name = Name.identifier(context.methodSignatureMapper.mapFunctionName(target))
+            modality = if (isInterface) Modality.OPEN else target.modality
+            // Since we already mangle the name above we need to reset internal visibilities to public in order
+            // to avoid mangling the same name twice.
+            visibility = if (target.visibility == DescriptorVisibilities.INTERNAL) DescriptorVisibilities.PUBLIC else target.visibility
+            isSuspend = target.isSuspend
+        }.apply {
+            copyTypeParametersFrom(target)
+            copyAnnotationsFrom(target)
+            if (!isStatic) {
+                dispatchReceiverParameter = thisReceiver?.copyTo(this, type = defaultType)
+            }
+            extensionReceiverParameter = target.extensionReceiverParameter?.copyTo(this)
+            valueParameters = target.valueParameters.map { it.copyTo(this) }
+
+            val proxy = this
+            val companionInstanceField = context.cachedDeclarations.getFieldForObjectInstance(companion)
+            body = context.createIrBuilder(symbol).run {
+                irExprBody(irCall(target).apply {
+                    passTypeArgumentsFrom(proxy)
+                    if (target.dispatchReceiverParameter != null) {
+                        dispatchReceiver = irGetField(null, companionInstanceField)
+                    }
+                    extensionReceiverParameter?.let { extensionReceiver = irGet(it) }
+                    for ((i, valueParameter) in valueParameters.withIndex()) {
+                        putValueArgument(i, irGet(valueParameter))
+                    }
+                })
             }
         }
-
-    }
-
-    private fun createProxy(
-        target: IrFunction,
-        irClass: IrClass,
-        companion: IrClass,
-        name: Name,
-        visibility: Visibility,
-        isSynthetic: Boolean
-    ): IrFunction {
-        val proxyFunctionSymbol = makeJvmStaticFunctionSymbol(irClass, target.symbol, name, visibility, isSynthetic)
-
-        val proxyIrFunction = IrFunctionImpl(
-            UNDEFINED_OFFSET, UNDEFINED_OFFSET,
-            JvmLoweredDeclarationOrigin.JVM_STATIC_WRAPPER,
-            proxyFunctionSymbol,
-            returnType = target.returnType
-        )
-        proxyIrFunction.createParameterDeclarations()
-
-        proxyIrFunction.body = createProxyBody(target, proxyIrFunction, companion)
-        target.annotations.mapTo(proxyIrFunction.annotations) { it.deepCopyWithSymbols() }
-        return proxyIrFunction
-    }
-
-    private fun createProxyBody(target: IrFunction, proxy: IrFunction, companion: IrClass): IrBody {
-        val companionInstanceField = context.declarationFactory.getFieldForObjectInstance(companion)
-        val companionInstanceFieldSymbol = companionInstanceField.symbol
-        val call = IrCallImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, target.returnType, target.symbol)
-
-        call.dispatchReceiver = IrGetFieldImpl(
-            UNDEFINED_OFFSET,
-            UNDEFINED_OFFSET,
-            companionInstanceFieldSymbol,
-            companion.defaultType
-        )
-        proxy.extensionReceiverParameter?.let { extensionReceiver ->
-            call.extensionReceiver = IrGetValueImpl(
-                UNDEFINED_OFFSET,
-                UNDEFINED_OFFSET,
-                extensionReceiver.symbol
-            )
-        }
-        proxy.valueParameters.mapIndexed { i, valueParameter ->
-            call.putValueArgument(
-                i,
-                IrGetValueImpl(
-                    UNDEFINED_OFFSET,
-                    UNDEFINED_OFFSET,
-                    valueParameter.symbol
-                )
-            )
-        }
-
-        return IrExpressionBodyImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, call)
-    }
 }
 
-private class SingletonObjectJvmStaticLowering(
-    val context: JvmBackendContext
-) : ClassLoweringPass {
-    val functionsMadeStatic: MutableSet<IrFunctionSymbol> = mutableSetOf()
-
+private class SingletonObjectJvmStaticLowering(val context: JvmBackendContext) : ClassLoweringPass {
     override fun lower(irClass: IrClass) {
-        if (!irClass.isObject || irClass.isCompanion) return
+        if (!irClass.isNonCompanionObject) return
 
-        irClass.declarations.filter(::isJvmStaticFunction).forEach {
-            val jvmStaticFunction = it as IrSimpleFunction
-            val oldDispatchReceiverParameter = jvmStaticFunction.dispatchReceiverParameter!!
-            jvmStaticFunction.dispatchReceiverParameter = null
-            modifyBody(jvmStaticFunction, irClass, oldDispatchReceiverParameter)
-            functionsMadeStatic.add(jvmStaticFunction.symbol)
+        for (function in irClass.simpleFunctions()) {
+            if (function.isJvmStaticDeclaration()) {
+                // dispatch receiver parameter is already null for synthetic property annotation methods
+                function.dispatchReceiverParameter?.let { oldDispatchReceiverParameter ->
+                    function.dispatchReceiverParameter = null
+                    function.replaceThisByStaticReference(context.cachedDeclarations, irClass, oldDispatchReceiverParameter)
+                }
+            }
         }
-    }
-
-    fun modifyBody(irFunction: IrFunction, irClass: IrClass, oldDispatchReceiverParameter: IrValueParameter) {
-        irFunction.body = irFunction.body?.replaceThisByStaticReference(context, irClass, oldDispatchReceiverParameter)
     }
 }
 
-private class MakeCallsStatic(
-    val context: JvmBackendContext,
-    val functionsMadeStatic: Set<IrFunctionSymbol>
-) : IrElementTransformerVoid() {
-    override fun visitCall(expression: IrCall): IrExpression {
-        if (functionsMadeStatic.contains(expression.symbol)) {
+internal fun IrDeclaration.isJvmStaticInObject(): Boolean =
+    isJvmStaticDeclaration() && (parent as? IrClass)?.isNonCompanionObject == true
+
+private class MakeCallsStatic(val context: JvmBackendContext) : IrElementTransformerVoid() {
+    override fun visitMemberAccess(expression: IrMemberAccessExpression<*>): IrExpression {
+        val callee = expression.symbol.owner
+        if (callee is IrDeclaration && callee.isJvmStaticInObject() && expression.dispatchReceiver != null) {
             return context.createIrBuilder(expression.symbol, expression.startOffset, expression.endOffset).irBlock(expression) {
                 // OldReceiver has to be evaluated for its side effects.
                 val oldReceiver = super.visitExpression(expression.dispatchReceiver!!)
                 // `coerceToUnit()` is private in InsertImplicitCasts, have to reproduce it here
-                val oldReceiverVoid = IrTypeOperatorCallImpl(
+                +IrTypeOperatorCallImpl(
                     oldReceiver.startOffset, oldReceiver.endOffset,
                     context.irBuiltIns.unitType,
                     IrTypeOperator.IMPLICIT_COERCION_TO_UNIT,
-                    context.irBuiltIns.unitType, context.irBuiltIns.unitType.classifierOrFail,
+                    context.irBuiltIns.unitType,
                     oldReceiver
                 )
-
-                +super.visitExpression(oldReceiverVoid)
                 expression.dispatchReceiver = null
-                +super.visitCall(expression)
+                +super.visitMemberAccess(expression)
             }
         }
-        return super.visitCall(expression)
+        return super.visitMemberAccess(expression)
     }
 }
 
-private fun isJvmStaticFunction(declaration: IrDeclaration): Boolean =
-    declaration is IrSimpleFunction &&
-            (declaration.hasAnnotation(JVM_STATIC_ANNOTATION_FQ_NAME) ||
-                    declaration.correspondingProperty?.hasAnnotation(JVM_STATIC_ANNOTATION_FQ_NAME) == true)
-
-private fun makeJvmStaticFunctionSymbol(
-    ownerClass: IrClass,
-    oldFunctionSymbol: IrFunctionSymbol,
-    newName: Name,
-    visibility: Visibility,
-    isSynthetic: Boolean
-): IrSimpleFunctionSymbol {
-    val proxyDescriptorForIrFunction = JvmFunctionDescriptorImpl(
-        ownerClass.descriptor,
-        null,
-        oldFunctionSymbol.descriptor.annotations,
-        newName,
-        CallableMemberDescriptor.Kind.SYNTHESIZED,
-        oldFunctionSymbol.descriptor.source,
-        extraFlags = if (isSynthetic) Opcodes.ACC_SYNTHETIC else 0
-    )
-
-    proxyDescriptorForIrFunction.initialize(
-        oldFunctionSymbol.descriptor.extensionReceiverParameter?.copy(proxyDescriptorForIrFunction),
-        null,
-        oldFunctionSymbol.descriptor.typeParameters,
-        oldFunctionSymbol.descriptor.valueParameters.map { it.copy(proxyDescriptorForIrFunction, it.name, it.index) },
-        oldFunctionSymbol.descriptor.returnType,
-        // FINAL on static interface members makes JVM unhappy, so remove it.
-        if (ownerClass.isInterface) Modality.OPEN else oldFunctionSymbol.descriptor.modality,
-        visibility
-    )
-
-    return IrSimpleFunctionSymbolImpl(proxyDescriptorForIrFunction)
-}
+private fun IrDeclaration.isJvmStaticDeclaration(): Boolean =
+    hasAnnotation(JVM_STATIC_ANNOTATION_FQ_NAME) ||
+            (this as? IrSimpleFunction)?.correspondingPropertySymbol?.owner?.hasAnnotation(JVM_STATIC_ANNOTATION_FQ_NAME) == true ||
+            (this as? IrProperty)?.getter?.hasAnnotation(JVM_STATIC_ANNOTATION_FQ_NAME) == true

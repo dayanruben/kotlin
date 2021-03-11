@@ -1,4 +1,4 @@
-// IGNORE_BACKEND: JVM_IR
+// NO_CHECK_LAMBDA_INLINING
 // FILE: 1.kt
 
 package test
@@ -17,7 +17,6 @@ inline fun doSmth(a: String): String {
 
 // FILE: 2.kt
 
-//NO_CHECK_LAMBDA_INLINING
 import test.*
 
 fun test1(param: String): String {

@@ -13,7 +13,7 @@ dependencies {
 }
 
 sourceSets {
-    if (Ide.IJ()) {
+    if (Ide.IJ() && Platform[183].orLower()) {
         "main" {
             projectDefault()
         }
@@ -23,8 +23,4 @@ sourceSets {
     "test" {}
 }
 
-runtimeJar {
-    archiveName = "android-output-parser-ide.jar"
-}
-
-ideaPlugin()
+runtimeJar()

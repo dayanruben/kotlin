@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 /*
  * Based on GWT LinkedHashSet
@@ -42,6 +42,14 @@ public actual open class LinkedHashSet<E> : HashSet<E>, MutableSet<E> {
     actual constructor(initialCapacity: Int, loadFactor: Float = 0.0f) : super(LinkedHashMap<E, Any>(initialCapacity, loadFactor))
 
     actual constructor(initialCapacity: Int) : this(initialCapacity, 0.0f)
+
+    @PublishedApi
+    internal fun build(): Set<E> {
+        (map as LinkedHashMap<E, Any>).build()
+        return this
+    }
+
+    internal override fun checkIsMutable(): Unit = map.checkIsMutable()
 
 //    public override fun clone(): Any {
 //        return LinkedHashSet(this)

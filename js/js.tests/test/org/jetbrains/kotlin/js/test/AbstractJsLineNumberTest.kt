@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.js.test
@@ -29,9 +29,13 @@ import org.jetbrains.kotlin.js.test.utils.LineCollector
 import org.jetbrains.kotlin.js.test.utils.LineOutputToStringVisitor
 import org.jetbrains.kotlin.js.util.TextOutputImpl
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.resolve.CompilerEnvironment
 import org.jetbrains.kotlin.serialization.js.ModuleKind
-import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.test.Directives
+import org.jetbrains.kotlin.test.KotlinBaseTest
 import org.jetbrains.kotlin.test.KotlinTestWithEnvironment
+import org.jetbrains.kotlin.test.TestFiles
+import org.jetbrains.kotlin.test.util.KtTestUtil
 import org.jetbrains.kotlin.utils.DFS
 import java.io.ByteArrayOutputStream
 import java.io.Closeable
@@ -45,17 +49,17 @@ abstract class AbstractJsLineNumberTest : KotlinTestWithEnvironment() {
         val sourceCode = file.readText()
 
         TestFileFactoryImpl().use { testFactory ->
-            val inputFiles = KotlinTestUtils.createTestFiles(file.name, sourceCode, testFactory, true, "")
+            val inputFiles = TestFiles.createTestFiles(file.name, sourceCode, testFactory, true)
             val modules = inputFiles
                     .map { it.module }.distinct()
                     .associateBy { it.name }
 
-            val orderedModules = DFS.topologicalOrder(modules.values) { module -> module.dependencies.mapNotNull { modules[it] } }
+            val orderedModules = DFS.topologicalOrder(modules.values) { module -> module.dependenciesSymbols.mapNotNull { modules[it] } }
 
             orderedModules.asReversed().forEach { module ->
                 val baseOutputPath = module.outputFileName(file)
 
-                val translator = K2JSTranslator(createConfig(module, file, modules))
+                val translator = K2JSTranslator(createConfig(module, file, modules), false)
                 val units = module.files.map { TranslationUnit.SourceFile(createPsiFile(it.fileName)) }
                 val translationResult = translator.translateUnits(ExceptionThrowingReporter, units, MainCallParameters.noCall())
 
@@ -109,7 +113,7 @@ abstract class AbstractJsLineNumberTest : KotlinTestWithEnvironment() {
             KotlinCoreEnvironment.createForTests(testRootDisposable, CompilerConfiguration(), EnvironmentConfigFiles.JS_CONFIG_FILES)
 
     private fun createConfig(module: TestModule, inputFile: File, modules: Map<String, TestModule>): JsConfig {
-        val dependencies = module.dependencies
+        val dependencies = module.dependenciesSymbols
                 .mapNotNull { modules[it]?.outputFileName(inputFile) }
                 .map { "$it.meta.js" }
 
@@ -124,7 +128,7 @@ abstract class AbstractJsLineNumberTest : KotlinTestWithEnvironment() {
         configuration.put(JSConfigurationKeys.SOURCE_MAP, true)
         configuration.put(JSConfigurationKeys.META_INFO, true)
 
-        return JsConfig(project, configuration)
+        return JsConfig(project, configuration, CompilerEnvironment)
     }
 
     private fun createPsiFile(fileName: String): KtFile {
@@ -134,22 +138,21 @@ abstract class AbstractJsLineNumberTest : KotlinTestWithEnvironment() {
         return psiManager.findFile(fileSystem.findFileByPath(fileName)!!) as KtFile
     }
 
-    private inner class TestFileFactoryImpl : KotlinTestUtils.TestFileFactory<TestModule, TestFile>, Closeable {
-        private val tmpDir = KotlinTestUtils.tmpDir("js-tests")
-        private val defaultModule = TestModule(BasicBoxTest.TEST_MODULE, emptyList())
+    private inner class TestFileFactoryImpl : TestFiles.TestFileFactory<TestModule, TestFile>, Closeable {
+        private val tmpDir = KtTestUtil.tmpDir("js-tests")
+        private val defaultModule = TestModule(BasicBoxTest.TEST_MODULE, emptyList(), emptyList())
 
-        override fun createFile(module: TestModule?, fileName: String, text: String, directives: Map<String, String>): TestFile? {
+        override fun createFile(module: TestModule?, fileName: String, text: String, directives: Directives): TestFile? {
             val currentModule = module ?: defaultModule
 
             val temporaryFile = File(tmpDir, "${currentModule.name}/$fileName")
-            KotlinTestUtils.mkdirs(temporaryFile.parentFile)
+            KtTestUtil.mkdirs(temporaryFile.parentFile)
             temporaryFile.writeText(text, Charsets.UTF_8)
 
-
-            return TestFile(temporaryFile.absolutePath, currentModule)
+            return TestFile(temporaryFile.absolutePath, text, currentModule, directives)
         }
 
-        override fun createModule(name: String, dependencies: List<String>, friends: List<String>) = TestModule(name, dependencies)
+        override fun createModule(name: String, dependencies: List<String>, friends: List<String>) = TestModule(name, dependencies, friends)
 
         override fun close() {
             FileUtil.delete(tmpDir)
@@ -157,14 +160,15 @@ abstract class AbstractJsLineNumberTest : KotlinTestWithEnvironment() {
     }
 
     private class TestModule(
-            val name: String,
-            dependencies: List<String>
-    ) {
-        val dependencies = dependencies.toMutableList()
+        name: String,
+        dependenciesSymbols: List<String>,
+        friendsSymbols: List<String>
+    ): KotlinBaseTest.TestModule(name, dependenciesSymbols, friendsSymbols) {
         val files = mutableListOf<TestFile>()
     }
 
-    private class TestFile(val fileName: String, val module: TestModule) {
+    private class TestFile(val fileName: String, content: String, val module: TestModule, directives: Directives) :
+        KotlinBaseTest.TestFile(fileName, content, directives) {
         init {
             module.files += this
         }

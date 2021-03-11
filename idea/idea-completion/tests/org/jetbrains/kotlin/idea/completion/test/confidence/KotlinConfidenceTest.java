@@ -1,44 +1,38 @@
 /*
- * Copyright 2010-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.completion.test.confidence;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
-import com.intellij.codeInsight.completion.CompletionType;
-import com.intellij.codeInsight.completion.LightCompletionTestCase;
+import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.lang.Language;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ThreeState;
 import org.apache.commons.lang.SystemUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.completion.test.CompletionTestUtilKt;
 import org.jetbrains.kotlin.idea.test.TestUtilsKt;
 import org.jetbrains.kotlin.test.InTextDirectivesUtils;
+import org.jetbrains.kotlin.test.JUnit3WithIdeaConfigurationRunner;
+import org.junit.runner.RunWith;
 
 import java.io.File;
-import java.lang.reflect.Method;
 import java.util.List;
 
+@RunWith(JUnit3WithIdeaConfigurationRunner.class)
 public class KotlinConfidenceTest extends LightCompletionTestCase {
     private static final String TYPE_DIRECTIVE_PREFIX = "// TYPE:";
     private final ThreadLocal<Boolean> skipComplete = ThreadLocal.withInitial(() -> false);
@@ -110,26 +104,7 @@ public class KotlinConfidenceTest extends LightCompletionTestCase {
             assertFalse("Can't both expect lookup elements and no lookup", !expectedElements.isEmpty() && noLookup);
 
             if (noLookup) {
-                try {
-                    Method m = null; //Looking for shouldSkipAutoPopup method (note, we can't use name because of scrambling in Ultimate)
-                    for (Method method : CodeCompletionHandlerBase.class.getDeclaredMethods()) {
-                        Class<?>[] parameterTypes = method.getParameterTypes();
-                        if (method.getReturnType().equals(Boolean.TYPE) &&
-                            parameterTypes.length == 2 &&
-                            parameterTypes[0].equals(Editor.class) &&
-                            parameterTypes[1].equals(PsiFile.class)) {
-                            assertNull("Only one method with such signature should exist", m);
-                            m = method;
-                        }
-                    }
-                    assertNotNull(m);
-                    m.setAccessible(true);
-                    Object o = m.invoke(null, getEditor(), getFile());
-                    assert o instanceof Boolean;
-                    assertTrue("Should skip autopopup completion", ((Boolean) o).booleanValue());
-                } catch (Throwable e) {
-                    throw new AssertionError(e);
-                }
+                assertTrue("Should skip autopopup completion", shouldSkipAutoPopup(getEditor(), getFile()));
                 return;
             }
 
@@ -178,10 +153,32 @@ public class KotlinConfidenceTest extends LightCompletionTestCase {
     protected void complete() {
         if (skipComplete.get()) return;
         new CodeCompletionHandlerBase(CompletionType.BASIC, false, true, true).invokeCompletion(
-                getProject(), getEditor(), 0, false, false);
+                getProject(), getEditor(), 0, false);
 
-        LookupImpl lookup = (LookupImpl) LookupManager.getActiveLookup(myEditor);
+        LookupImpl lookup = (LookupImpl) LookupManager.getActiveLookup(getEditor());
         myItems = lookup == null ? null : lookup.getItems().toArray(LookupElement.EMPTY_ARRAY);
         myPrefix = lookup == null ? null : lookup.itemPattern(lookup.getItems().get(0));
+    }
+
+    private static boolean shouldSkipAutoPopup(Editor editor, PsiFile psiFile) {
+        int offset = editor.getCaretModel().getOffset();
+        int psiOffset = Math.max(0, offset - 1);
+
+        PsiElement elementAt = InjectedLanguageManager.getInstance(psiFile.getProject()).findInjectedElementAt(psiFile, psiOffset);
+        if (elementAt == null) {
+            elementAt = psiFile.findElementAt(psiOffset);
+        }
+        if (elementAt == null) return true;
+
+        Language language = PsiUtilCore.findLanguageFromElement(elementAt);
+
+        for (CompletionConfidence confidence : CompletionConfidenceEP.forLanguage(language)) {
+            ThreeState result = confidence.shouldSkipAutopopup(elementAt, psiFile, offset);
+            if (result != ThreeState.UNSURE) {
+                return result == ThreeState.YES;
+            }
+        }
+
+        return false;
     }
 }

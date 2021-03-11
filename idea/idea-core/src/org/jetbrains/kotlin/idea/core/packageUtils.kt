@@ -1,6 +1,6 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2000-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.core
@@ -10,40 +10,53 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
+import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModulePackageIndex
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Query
+import com.intellij.util.io.parentSystemIndependentPath
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
-import org.jetbrains.kotlin.config.KotlinSourceRootType
+import org.jetbrains.kotlin.config.SourceKotlinRootType
+import org.jetbrains.kotlin.config.TestSourceKotlinRootType
 import org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService
+import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
+import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.roots.invalidateProjectRoots
 import org.jetbrains.kotlin.idea.util.rootManager
 import org.jetbrains.kotlin.idea.util.sourceRoot
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.utils.addIfNotNull
 import java.io.File
+import java.net.URI
+import java.nio.file.Paths
 
 fun PsiDirectory.getPackage(): PsiPackage? = JavaDirectoryService.getInstance()!!.getPackage(this)
 
-fun PsiFile.getFqNameByDirectory(): FqName {
-    val qualifiedNameByDirectory = parent?.getPackage()?.qualifiedName
-    return qualifiedNameByDirectory?.let(::FqName) ?: FqName.ROOT
-}
+private fun PsiDirectory.getNonRootFqNameOrNull(): FqName? = getPackage()?.qualifiedName?.let(::FqName)
 
-fun PsiDirectory.getFqNameWithImplicitPrefix(): FqName {
-    val packageFqName = getPackage()?.qualifiedName?.let(::FqName) ?: FqName.ROOT
-    sourceRoot?.let { sourceRoot ->
+fun PsiFile.getFqNameByDirectory(): FqName = parent?.getNonRootFqNameOrNull() ?: FqName.ROOT
+
+fun PsiDirectory.getFqNameWithImplicitPrefix(): FqName? {
+    val packageFqName = getNonRootFqNameOrNull() ?: return null
+    sourceRoot?.takeIf { !it.hasExplicitPackagePrefix(project) }?.let { sourceRoot ->
         val implicitPrefix = PerModulePackageCacheService.getInstance(project).getImplicitPackagePrefix(sourceRoot)
         return FqName.fromSegments((implicitPrefix.pathSegments() + packageFqName.pathSegments()).map { it.asString() })
     }
+
     return packageFqName
 }
+
+fun PsiDirectory.getFqNameWithImplicitPrefixOrRoot(): FqName = getFqNameWithImplicitPrefix() ?: FqName.ROOT
+
+private fun VirtualFile.hasExplicitPackagePrefix(project: Project): Boolean =
+    toPsiDirectory(project)?.getPackage()?.qualifiedName?.isNotEmpty() == true
 
 fun KtFile.packageMatchesDirectory(): Boolean = packageFqName == getFqNameByDirectory()
 
@@ -68,7 +81,12 @@ private fun findLongestExistingPackage(module: Module, packageName: String): Psi
     while (true) {
         val vFiles = ModulePackageIndex.getInstance(module).getDirsByPackageName(nameToMatch, false)
         val directory = getWritableModuleDirectory(vFiles, module, manager)
-        if (directory != null) return directory.getPackage()
+        if (directory != null
+            && module.pureKotlinSourceFolders?.any {
+                directory.virtualFile.path.startsWith(it, true)
+            } == true
+        )
+            return directory.getPackage()
 
         val lastDotIndex = nameToMatch.lastIndexOf('.')
         if (lastDotIndex < 0) {
@@ -79,10 +97,15 @@ private fun findLongestExistingPackage(module: Module, packageName: String): Psi
 }
 
 private val kotlinSourceRootTypes: Set<JpsModuleSourceRootType<JavaSourceRootProperties>> =
-    setOf(KotlinSourceRootType.Source, KotlinSourceRootType.TestSource) + JavaModuleSourceRootTypes.SOURCES
+    setOf(SourceKotlinRootType, TestSourceKotlinRootType) + JavaModuleSourceRootTypes.SOURCES
+
+private val Module.pureKotlinSourceFolders: List<String>?
+    get() = KotlinFacet.get(this)?.configuration?.settings?.pureKotlinSourceFolders
 
 private fun Module.getNonGeneratedKotlinSourceRoots(): List<VirtualFile> {
     val result = mutableListOf<VirtualFile>()
+    val modulesToPureKotlinSourceFolders = mutableMapOf(this to pureKotlinSourceFolders)
+
     val rootManager = ModuleRootManager.getInstance(this)
     for (contentEntry in rootManager.contentEntries) {
         val sourceFolders = contentEntry.getSourceFolders(kotlinSourceRootTypes)
@@ -90,7 +113,17 @@ private fun Module.getNonGeneratedKotlinSourceRoots(): List<VirtualFile> {
             if (sourceFolder.jpsElement.getProperties(kotlinSourceRootTypes)?.isForGeneratedSources == true) {
                 continue
             }
-            result.addIfNotNull(sourceFolder.file)
+
+            sourceFolder.file?.let {
+                val moduleForFile = ModuleUtilCore.findModuleForFile(it, project)
+                if (moduleForFile == null) return@let
+
+                val modulePureKotlinSourceFolders =
+                    modulesToPureKotlinSourceFolders.getOrPut(moduleForFile, moduleForFile::pureKotlinSourceFolders)
+                if (modulePureKotlinSourceFolders?.any { pure -> it.path.startsWith(pure, true) } == true) {
+                    result += it
+                }
+            }
         }
     }
     return result
@@ -102,11 +135,19 @@ private fun Module.getOrConfigureKotlinSourceRoots(): List<VirtualFile> {
         return sourceRoots
     }
     return runWriteAction {
-        val rootDir = rootManager.contentRoots.firstOrNull()
-        rootDir?.createChildDirectory(project, "kotlin")
+        getOrCreateRootDirectory()?.createChildDirectory(project, "kotlin")
         project.invalidateProjectRoots()
         getNonGeneratedKotlinSourceRoots()
     }
+}
+
+private fun Module.getOrCreateRootDirectory(): VirtualFile? {
+    val contentEntry = rootManager.contentEntries.firstOrNull() ?: return null
+    contentEntry.file?.let { return it }
+
+    val path = Paths.get(URI.create(contentEntry.url))
+    val rootParent = LocalFileSystem.getInstance().findFileByPath(path.parentSystemIndependentPath)
+    return rootParent?.createChildDirectory(project, name.takeLastWhile { it != '.' })
 }
 
 private fun getPackageDirectoriesInModule(rootPackage: PsiPackage, module: Module): Array<PsiDirectory> =
@@ -117,7 +158,7 @@ fun findOrCreateDirectoryForPackage(module: Module, packageName: String): PsiDir
     val project = module.project
     var existingDirectoryByPackage: PsiDirectory? = null
     var restOfName = packageName
-    if (!packageName.isEmpty()) {
+    if (packageName.isNotEmpty()) {
         val rootPackage = findLongestExistingPackage(module, packageName)
         if (rootPackage != null) {
             val beginIndex = rootPackage.qualifiedName.length + 1
@@ -126,9 +167,23 @@ fun findOrCreateDirectoryForPackage(module: Module, packageName: String): PsiDir
             if (subPackageName.isNotEmpty()) {
                 postfixToShow = File.separatorChar + postfixToShow
             }
+            val modulesToPureKotlinSourceFolders = mutableMapOf(module to module.pureKotlinSourceFolders)
             val moduleDirectories = getPackageDirectoriesInModule(rootPackage, module)
+            val result = mutableListOf<PsiDirectory>()
+
+            moduleDirectories.forEach { directory ->
+                val directoryModule = ModuleUtilCore.findModuleForFile(directory.virtualFile, module.project)
+                if (directoryModule != null) {
+                    val modulePureKotlinSourceFolders =
+                        modulesToPureKotlinSourceFolders.getOrPut(directoryModule, directoryModule::pureKotlinSourceFolders)
+
+                    if (modulePureKotlinSourceFolders?.any { directory.virtualFile.path.startsWith(it, true) } == true) {
+                        result += directory
+                    }
+                }
+            }
             existingDirectoryByPackage =
-                    DirectoryChooserUtil.selectDirectory(project, moduleDirectories, null, postfixToShow) ?: return null
+                DirectoryChooserUtil.selectDirectory(project, result.toTypedArray(), null, postfixToShow) ?: return null
             restOfName = subPackageName
         }
     }

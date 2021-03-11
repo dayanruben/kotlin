@@ -1,12 +1,13 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2000-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.*
 import com.intellij.psi.PsiElementVisitor
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.core.implicitModality
 import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFix
 import org.jetbrains.kotlin.psi.declarationVisitor
@@ -21,11 +22,15 @@ class RedundantModalityModifierInspection : AbstractKotlinInspection(), CleanupL
 
             if (modalityModifierType != implicitModality) return@declarationVisitor
 
-            holder.registerProblem(modalityModifier,
-                                   "Redundant modality modifier",
-                                   ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                                   IntentionWrapper(RemoveModifierFix(declaration, implicitModality, isRedundant = true),
-                                                    declaration.containingFile))
+            holder.registerProblem(
+                modalityModifier,
+                KotlinBundle.message("redundant.modality.modifier"),
+                ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                IntentionWrapper(
+                    RemoveModifierFix(declaration, implicitModality, isRedundant = true),
+                    declaration.containingFile
+                )
+            )
         }
     }
 }

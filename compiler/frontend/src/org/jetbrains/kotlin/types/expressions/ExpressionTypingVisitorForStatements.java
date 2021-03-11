@@ -21,6 +21,7 @@ import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns;
+import org.jetbrains.kotlin.config.LanguageFeature;
 import org.jetbrains.kotlin.descriptors.*;
 import org.jetbrains.kotlin.diagnostics.Errors;
 import org.jetbrains.kotlin.lexer.KtTokens;
@@ -29,15 +30,17 @@ import org.jetbrains.kotlin.psi.*;
 import org.jetbrains.kotlin.resolve.BindingContext;
 import org.jetbrains.kotlin.resolve.BindingContextUtils;
 import org.jetbrains.kotlin.resolve.TemporaryBindingTrace;
+import org.jetbrains.kotlin.resolve.calls.ArgumentTypeResolver;
 import org.jetbrains.kotlin.resolve.calls.context.CallPosition;
+import org.jetbrains.kotlin.resolve.calls.context.ContextDependency;
 import org.jetbrains.kotlin.resolve.calls.context.TemporaryTraceAndCache;
+import org.jetbrains.kotlin.resolve.calls.inference.CoroutineInferenceSession;
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall;
 import org.jetbrains.kotlin.resolve.calls.results.OverloadResolutionResults;
 import org.jetbrains.kotlin.resolve.calls.results.OverloadResolutionResultsImpl;
 import org.jetbrains.kotlin.resolve.calls.results.OverloadResolutionResultsUtil;
 import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowInfo;
 import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowValue;
-import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowValueFactory;
 import org.jetbrains.kotlin.resolve.lazy.ForceResolveUtil;
 import org.jetbrains.kotlin.resolve.scopes.LexicalWritableScope;
 import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver;
@@ -213,6 +216,13 @@ public class ExpressionTypingVisitorForStatements extends ExpressionTypingVisito
             context.trace.report(UNRESOLVED_REFERENCE.on(operationSign, operationSign));
             temporary.commit();
             return rightInfo.clearType();
+        } else if (!ArgumentTypeResolver.isFunctionLiteralOrCallableReference(right, context) &&
+                   !context.languageVersionSettings.supportsFeature(LanguageFeature.NewInference)
+        ) {
+            // Cache the type info for the right hand side so that we don't evaluate it twice if there is no valid plusAssign.
+            // We skip over function literals and references, since ArgumentTypeResolver will only resolve the shape of the
+            // function type before attempting to resolve the call.
+            facade.getTypeInfo(right, context.replaceContextDependency(ContextDependency.DEPENDENT));
         }
         ExpressionReceiver receiver = ExpressionReceiver.Companion.create(left, leftType, context.trace.getBindingContext());
 
@@ -233,9 +243,13 @@ public class ExpressionTypingVisitorForStatements extends ExpressionTypingVisito
         TemporaryTraceAndCache temporaryForBinaryOperation = TemporaryTraceAndCache.create(
                 context, "trace to check binary operation like '+' for", expression);
         TemporaryBindingTrace ignoreReportsTrace = TemporaryBindingTrace.create(context.trace, "Trace for checking assignability");
-        boolean lhsAssignable = basic.checkLValue(ignoreReportsTrace, context, left, right, expression);
+        boolean lhsAssignable = basic.checkLValue(ignoreReportsTrace, context, left, right, expression, false);
         if (assignmentOperationType == null || lhsAssignable) {
             // Check for '+'
+            // We should clear calls info for coroutine inference within right side as here we analyze it a second time in another context
+            if (context.inferenceSession instanceof CoroutineInferenceSession) {
+                ((CoroutineInferenceSession) context.inferenceSession).clearCallsInfoByContainingElement(right);
+            }
             Name counterpartName = OperatorConventions.BINARY_OPERATION_NAMES.get(OperatorConventions.ASSIGNMENT_OPERATION_COUNTERPARTS.get(operationType));
             binaryOperationDescriptors = components.callResolver.resolveBinaryCall(
                     context.replaceTraceAndCache(temporaryForBinaryOperation).replaceScope(scope),
@@ -290,8 +304,8 @@ public class ExpressionTypingVisitorForStatements extends ExpressionTypingVisito
             KotlinType expectedType = refineTypeFromPropertySetterIfPossible(context.trace.getBindingContext(), leftOperand, leftType);
 
             components.dataFlowAnalyzer.checkType(binaryOperationType, expression, context.replaceExpectedType(expectedType)
-                    .replaceDataFlowInfo(rightInfo.getDataFlowInfo()).replaceCallPosition(new CallPosition.PropertyAssignment(left)));
-            basic.checkLValue(context.trace, context, leftOperand, right, expression);
+                    .replaceDataFlowInfo(rightInfo.getDataFlowInfo()).replaceCallPosition(new CallPosition.PropertyAssignment(left, false)));
+            basic.checkLValue(context.trace, context, leftOperand, right, expression, false);
         }
         temporary.commit();
         return rightInfo.replaceType(checkAssignmentType(type, expression, contextWithExpectedType));
@@ -337,17 +351,24 @@ public class ExpressionTypingVisitorForStatements extends ExpressionTypingVisito
             KtArrayAccessExpression arrayAccessExpression = (KtArrayAccessExpression) left;
             if (right == null) return TypeInfoFactoryKt.noTypeInfo(context);
             KotlinTypeInfo typeInfo = basic.resolveArrayAccessSetMethod(arrayAccessExpression, right, context, context.trace);
-            basic.checkLValue(context.trace, context, arrayAccessExpression, right, expression);
+            basic.checkLValue(context.trace, context, arrayAccessExpression, right, expression, true);
             return typeInfo.replaceType(checkAssignmentType(typeInfo.getType(), expression, contextWithExpectedType));
         }
-        KotlinTypeInfo leftInfo = ExpressionTypingUtils.getTypeInfoOrNullType(left, context, facade);
+        KotlinTypeInfo leftInfo = ExpressionTypingUtils.getTypeInfoOrNullType(
+                left,
+                context.replaceCallPosition(new CallPosition.PropertyAssignment(left, true)),
+                facade
+        );
         KotlinType expectedType = refineTypeFromPropertySetterIfPossible(context.trace.getBindingContext(), leftOperand, leftInfo.getType());
         DataFlowInfo dataFlowInfo = leftInfo.getDataFlowInfo();
         KotlinTypeInfo resultInfo;
         if (right != null) {
             resultInfo = facade.getTypeInfo(
-                            right, context.replaceDataFlowInfo(dataFlowInfo).replaceExpectedType(expectedType).replaceCallPosition(
-                                    new CallPosition.PropertyAssignment(leftOperand)));
+                    right,
+                    context.replaceDataFlowInfo(dataFlowInfo)
+                            .replaceExpectedType(expectedType)
+                            .replaceCallPosition(new CallPosition.PropertyAssignment(leftOperand, false))
+            );
 
             dataFlowInfo = resultInfo.getDataFlowInfo();
             KotlinType rightType = resultInfo.getType();
@@ -362,7 +383,7 @@ public class ExpressionTypingVisitorForStatements extends ExpressionTypingVisito
             resultInfo = leftInfo;
         }
         if (expectedType != null && leftOperand != null) { //if expectedType == null, some other error has been generated
-            basic.checkLValue(context.trace, context, leftOperand, right, expression);
+            basic.checkLValue(context.trace, context, leftOperand, right, expression, false);
         }
         return resultInfo.replaceType(components.dataFlowAnalyzer.checkStatementType(expression, contextWithExpectedType));
     }
@@ -403,7 +424,7 @@ public class ExpressionTypingVisitorForStatements extends ExpressionTypingVisito
 
     @Override
     public KotlinTypeInfo visitIfExpression(@NotNull KtIfExpression expression, ExpressionTypingContext context) {
-        return controlStructures.visitIfExpression(expression, context, true);
+        return controlStructures.visitIfExpression(expression, context);
     }
 
     @Override

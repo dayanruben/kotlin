@@ -18,18 +18,19 @@ package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.NewDeclarationNameValidator
 import org.jetbrains.kotlin.idea.refactoring.inline.KotlinInlineValHandler
+import org.jetbrains.kotlin.idea.util.nameIdentifierTextRangeInThis
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespaceAndComments
-import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext.DECLARATION_TO_DESCRIPTOR
 import org.jetbrains.kotlin.resolve.BindingContext.REFERENCE_TARGET
@@ -40,23 +41,23 @@ class UnnecessaryVariableInspection : AbstractApplicabilityBasedInspection<KtPro
 
     override fun isApplicable(element: KtProperty) = statusFor(element) != null
 
-    override fun inspectionTarget(element: KtProperty) = element.nameIdentifier ?: element
+    override fun inspectionHighlightRangeInElement(element: KtProperty) = element.nameIdentifierTextRangeInThis()
 
     override fun inspectionText(element: KtProperty) = when (statusFor(element)) {
-        Status.RETURN_ONLY ->
-            "Variable used only in following return and should be inlined"
-        Status.EXACT_COPY ->
-            "Variable is same as '${(element.initializer as? KtNameReferenceExpression)?.getReferencedName()}' and should be inlined"
+        Status.RETURN_ONLY -> KotlinBundle.message("variable.used.only.in.following.return.and.should.be.inlined")
+        Status.EXACT_COPY -> KotlinBundle.message(
+            "variable.is.same.as.0.and.should.be.inlined",
+            (element.initializer as? KtNameReferenceExpression)?.getReferencedName().toString()
+        )
         else -> ""
     }
 
-    override val defaultFixText = "Inline variable"
+    override val defaultFixText get() = KotlinBundle.message("inline.variable")
 
     override val startFixInWriteAction = false
 
-    override fun applyTo(element: PsiElement, project: Project, editor: Editor?) {
-        val property = element.getParentOfType<KtProperty>(strict = false) ?: return
-        KotlinInlineValHandler(withPrompt = false).inlineElement(project, editor, property)
+    override fun applyTo(element: KtProperty, project: Project, editor: Editor?) {
+        KotlinInlineValHandler(withPrompt = false).inlineElement(project, editor, element)
     }
 
     companion object {
@@ -66,13 +67,14 @@ class UnnecessaryVariableInspection : AbstractApplicabilityBasedInspection<KtPro
         }
 
         private fun statusFor(property: KtProperty): Status? {
+            if (property.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return null
             val enclosingElement = KtPsiUtil.getEnclosingElementForLocalDeclaration(property) ?: return null
             val initializer = property.initializer ?: return null
 
             fun isExactCopy(): Boolean {
                 if (!property.isVar && initializer is KtNameReferenceExpression && property.typeReference == null) {
                     val initializerDescriptor = initializer.resolveToCall(BodyResolveMode.FULL)?.resultingDescriptor as? VariableDescriptor
-                            ?: return false
+                        ?: return false
                     if (initializerDescriptor.isVar) return false
                     if (initializerDescriptor.containingDeclaration !is FunctionDescriptor) return false
 
@@ -90,6 +92,11 @@ class UnnecessaryVariableInspection : AbstractApplicabilityBasedInspection<KtPro
                             )
                         )
                         if (!validator(copyName)) return false
+                        if (containingDeclaration is KtClassOrObject) {
+                            val enclosingBlock = enclosingElement as? KtBlockExpression
+                            val initializerDeclaration = DescriptorToSourceUtils.descriptorToDeclaration(initializerDescriptor)
+                            if (enclosingBlock?.statements?.none { it == initializerDeclaration } == true) return false
+                        }
                     }
                     return true
                 }

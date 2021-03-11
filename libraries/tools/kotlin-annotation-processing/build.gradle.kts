@@ -1,5 +1,4 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-import org.gradle.api.internal.artifacts.publish.ArchivePublishArtifact
 import org.gradle.jvm.tasks.Jar
 
 description = "Kapt - Annotation processing for Kotlin"
@@ -11,27 +10,26 @@ plugins {
 val packedJars by configurations.creating
 
 dependencies {
-    compile(project(":kotlin-stdlib"))
+    api(kotlinStdlib())
     packedJars(project(":kotlin-annotation-processing")) { isTransitive = false }
-    runtime(projectRuntimeJar(":kotlin-compiler-embeddable"))
+    runtimeOnly(projectRuntimeJar(":kotlin-compiler-embeddable"))
 }
 
-projectTest {
+projectTest(parallel = true) {
     workingDir = projectDir
 }
 
-val jar: Jar by tasks
-jar.apply {
+publish()
+
+tasks.named<Jar>("jar").configure {
     classifier = "base"
 }
 
 runtimeJar(rewriteDepsToShadedCompiler(
-    task<ShadowJar>("shadowJar") {
+    tasks.register<ShadowJar>("shadowJar") {
         from(packedJars)
     }
 ))
 
 sourcesJar()
 javadocJar()
-
-publish()

@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.jvm.compiler.javac;
@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.jvm.compiler.javac;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.test.KotlinTestUtils;
-import org.jetbrains.kotlin.test.TargetBackend;
+import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.runner.RunWith;
 
@@ -24,11 +24,11 @@ public class LoadJava8UsingJavacTestGenerated extends AbstractLoadJava8UsingJava
     @RunWith(JUnit3RunnerWithInners.class)
     public static class CompiledJava extends AbstractLoadJava8UsingJavacTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTestCompiledJava, TargetBackend.ANY, testDataFilePath);
+            KotlinTestUtils.runTest(this::doTestCompiledJava, this, testDataFilePath);
         }
 
         public void testAllFilesPresentInCompiledJava() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/loadJava8/compiledJava"), Pattern.compile("^(.+)\\.java$"), TargetBackend.ANY, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/loadJava8/compiledJava"), Pattern.compile("^(.+)\\.java$"), null, true, "typeUseAnnotations", "typeParameterAnnotations");
         }
 
         @TestMetadata("InnerClassTypeAnnotation.java")
@@ -45,16 +45,6 @@ public class LoadJava8UsingJavacTestGenerated extends AbstractLoadJava8UsingJava
         public void testParameterNames() throws Exception {
             runTest("compiler/testData/loadJava8/compiledJava/ParameterNames.java");
         }
-
-        @TestMetadata("TypeAnnotations.java")
-        public void testTypeAnnotations() throws Exception {
-            runTest("compiler/testData/loadJava8/compiledJava/TypeAnnotations.java");
-        }
-
-        @TestMetadata("TypeParameterAnnotations.java")
-        public void testTypeParameterAnnotations() throws Exception {
-            runTest("compiler/testData/loadJava8/compiledJava/TypeParameterAnnotations.java");
-        }
     }
 
     @TestMetadata("compiler/testData/loadJava8/sourceJava")
@@ -62,21 +52,16 @@ public class LoadJava8UsingJavacTestGenerated extends AbstractLoadJava8UsingJava
     @RunWith(JUnit3RunnerWithInners.class)
     public static class SourceJava extends AbstractLoadJava8UsingJavacTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTestSourceJava, TargetBackend.ANY, testDataFilePath);
+            KotlinTestUtils.runTest(this::doTestSourceJava, this, testDataFilePath);
         }
 
         public void testAllFilesPresentInSourceJava() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/loadJava8/sourceJava"), Pattern.compile("^(.+)\\.java$"), TargetBackend.ANY, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/loadJava8/sourceJava"), Pattern.compile("^(.+)\\.java$"), null, true, "typeUseAnnotations", "typeParameterAnnotations");
         }
 
         @TestMetadata("MapRemove.java")
         public void testMapRemove() throws Exception {
             runTest("compiler/testData/loadJava8/sourceJava/MapRemove.java");
-        }
-
-        @TestMetadata("TypeAnnotations.java")
-        public void testTypeAnnotations() throws Exception {
-            runTest("compiler/testData/loadJava8/sourceJava/TypeAnnotations.java");
         }
 
         @TestMetadata("TypeParameterAnnotations.java")

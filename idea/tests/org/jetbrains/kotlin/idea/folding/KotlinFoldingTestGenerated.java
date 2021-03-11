@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.folding;
@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.idea.folding;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.test.KotlinTestUtils;
-import org.jetbrains.kotlin.test.TargetBackend;
+import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.runner.RunWith;
 
@@ -24,11 +24,11 @@ public class KotlinFoldingTestGenerated extends AbstractKotlinFoldingTest {
     @RunWith(JUnit3RunnerWithInners.class)
     public static class NoCollapse extends AbstractKotlinFoldingTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, TargetBackend.ANY, testDataFilePath);
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
         public void testAllFilesPresentInNoCollapse() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/folding/noCollapse"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.ANY, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/folding/noCollapse"), Pattern.compile("^(.+)\\.kt$"), null, true);
         }
 
         @TestMetadata("class.kt")
@@ -77,11 +77,11 @@ public class KotlinFoldingTestGenerated extends AbstractKotlinFoldingTest {
     @RunWith(JUnit3RunnerWithInners.class)
     public static class CheckCollapse extends AbstractKotlinFoldingTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doSettingsFoldingTest, TargetBackend.ANY, testDataFilePath);
+            KotlinTestUtils.runTest(this::doSettingsFoldingTest, this, testDataFilePath);
         }
 
         public void testAllFilesPresentInCheckCollapse() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/folding/checkCollapse"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.ANY, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/folding/checkCollapse"), Pattern.compile("^(.+)\\.kt$"), null, true);
         }
 
         @TestMetadata("collectionFactoryFunctions.kt")
@@ -109,9 +109,24 @@ public class KotlinFoldingTestGenerated extends AbstractKotlinFoldingTest {
             runTest("idea/testData/folding/checkCollapse/customRegionsNotFullBlock.kt");
         }
 
+        @TestMetadata("doubleImportListsError.kt")
+        public void testDoubleImportListsError() throws Exception {
+            runTest("idea/testData/folding/checkCollapse/doubleImportListsError.kt");
+        }
+
         @TestMetadata("functionLiteral.kt")
         public void testFunctionLiteral() throws Exception {
             runTest("idea/testData/folding/checkCollapse/functionLiteral.kt");
+        }
+
+        @TestMetadata("functionWithExpressionBody.kt")
+        public void testFunctionWithExpressionBody() throws Exception {
+            runTest("idea/testData/folding/checkCollapse/functionWithExpressionBody.kt");
+        }
+
+        @TestMetadata("functionWithExpressionBody2.kt")
+        public void testFunctionWithExpressionBody2() throws Exception {
+            runTest("idea/testData/folding/checkCollapse/functionWithExpressionBody2.kt");
         }
 
         @TestMetadata("headerKDoc.kt")
@@ -137,6 +152,11 @@ public class KotlinFoldingTestGenerated extends AbstractKotlinFoldingTest {
         @TestMetadata("primaryConstructor.kt")
         public void testPrimaryConstructor() throws Exception {
             runTest("idea/testData/folding/checkCollapse/primaryConstructor.kt");
+        }
+
+        @TestMetadata("when.kt")
+        public void testWhen() throws Exception {
+            runTest("idea/testData/folding/checkCollapse/when.kt");
         }
     }
 }

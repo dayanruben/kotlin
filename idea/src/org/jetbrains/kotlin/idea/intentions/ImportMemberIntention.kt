@@ -1,60 +1,55 @@
 /*
- * Copyright 2010-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.intentions
 
+import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.openapi.editor.Editor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.ShortenReferences
-import org.jetbrains.kotlin.idea.imports.canBeReferencedViaImport
+import org.jetbrains.kotlin.idea.imports.canBeAddedToImport
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.idea.util.ImportDescriptorResult
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.idea.references.resolveToDescriptors
 
 class ImportMemberIntention : SelfTargetingOffsetIndependentIntention<KtNameReferenceExpression>(
-        KtNameReferenceExpression::class.java,
-        "Add import for member"
-){
-
-    private fun getFullQualifier(element: KtNameReferenceExpression): KtQualifiedExpression?
-            = element.getTopmostParentOfType<KtQualifiedExpression>()
-
+    KtNameReferenceExpression::class.java,
+    KotlinBundle.lazyMessage("add.import.for.member")
+), HighPriorityAction {
     override fun isApplicableTo(element: KtNameReferenceExpression): Boolean {
         if (element.getQualifiedElement() == element) return false //Ignore simple name expressions
 
-        val qualifiedExpression = getFullQualifier(element) ?: element.getQualifiedElement()
+        val qualifiedExpression = element.getQualifiedElement()
 
         if (element.isInImportDirective()) return false
 
-        val fqName = targetFqName(qualifiedExpression) ?: return false
+        val target = target(qualifiedExpression) ?: return false
+        val fqName = target.importableFqName ?: return false
 
-        text = "Add import for '${fqName.asString()}'"
+        val file = element.containingKtFile
+        val project = file.project
+        val dummyFile = KtPsiFactory(project).createAnalyzableFile("Dummy.kt", file.text, file)
+        val helper = ImportInsertHelper.getInstance(project)
+        if (helper.importDescriptor(dummyFile, target) == ImportDescriptorResult.FAIL) return false
+
+        setTextGetter(KotlinBundle.lazyMessage("add.import.for.0", fqName.asString()))
         return true
     }
 
     override fun applyTo(element: KtNameReferenceExpression, editor: Editor?) {
 
-        val qualifiedElement = getFullQualifier(element)
+        val qualifiedElement = element.getQualifiedElement() as? KtQualifiedExpression
 
         // If expression is fqn reference, take full qualified selector, otherwise (Type reference) take element
         val targetElement = qualifiedElement?.selectorExpression?.getQualifiedElementSelector() ?: element
@@ -70,18 +65,18 @@ class ImportMemberIntention : SelfTargetingOffsetIndependentIntention<KtNameRefe
 
         val qualifiedExpressions = file.collectDescendantsOfType<KtDotQualifiedExpression> { qualifiedExpression ->
             val selector = qualifiedExpression.getQualifiedElementSelector() as? KtNameReferenceExpression
-            selector?.getReferencedNameAsName() == fqName.shortName() && targetFqName(qualifiedExpression) == fqName
+            selector?.getReferencedNameAsName() == fqName.shortName() && target(qualifiedExpression)?.importableFqName == fqName
         }
         val userTypes = file.collectDescendantsOfType<KtUserType> { userType ->
             val selector = userType.getQualifiedElementSelector() as? KtNameReferenceExpression
-            selector?.getReferencedNameAsName() == fqName.shortName() && targetFqName(userType) == fqName
+            selector?.getReferencedNameAsName() == fqName.shortName() && target(userType)?.importableFqName == fqName
         }
 
         //TODO: not deep
         ShortenReferences.DEFAULT.process(qualifiedExpressions + userTypes)
     }
 
-    private fun targetFqName(qualifiedElement: KtElement): FqName? {
+    private fun target(qualifiedElement: KtElement): DeclarationDescriptor? {
         val nameExpression = qualifiedElement.getQualifiedElementSelector() as? KtNameReferenceExpression ?: return null
         val receiver = nameExpression.getReceiverExpression() ?: return null
         val bindingContext = qualifiedElement.analyze(BodyResolveMode.PARTIAL)
@@ -89,7 +84,7 @@ class ImportMemberIntention : SelfTargetingOffsetIndependentIntention<KtNameRefe
 
         val targets = nameExpression.mainReference.resolveToDescriptors(bindingContext)
         if (targets.isEmpty()) return null
-        if (!targets.all { it.canBeReferencedViaImport() }) return null
-        return targets.map { it.importableFqName }.singleOrNull()
+        if (!targets.all { it.canBeAddedToImport() }) return null
+        return targets.singleOrNull()
     }
 }

@@ -1,4 +1,4 @@
-// IGNORE_BACKEND: JVM_IR
+// IGNORE_BACKEND_FIR: JVM_IR
 fun box(): String {
     val s = StringBuilder()
 
@@ -18,3 +18,6 @@ fun box(): String {
 // 0 component2
 // 1 length
 // 1 charAt
+
+// The ICONST_0 is for initializing the index in the lowered for-loop.
+// 1 ICONST_0

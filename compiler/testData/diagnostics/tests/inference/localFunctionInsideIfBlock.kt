@@ -1,10 +1,11 @@
+// FIR_IDENTICAL
 // !LANGUAGE: +NewInference
 
 fun bar() {
-    if (true) <!TYPE_MISMATCH!>{
-        <!EXPECTED_TYPE_MISMATCH!>fun local() {
-        }<!>
-    }<!> else {
+    if (true) {
+        fun local() {
+        }
+    } else {
 
     }
 }

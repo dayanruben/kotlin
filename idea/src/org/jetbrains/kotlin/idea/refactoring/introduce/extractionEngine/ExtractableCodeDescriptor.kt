@@ -25,8 +25,9 @@ import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.idea.core.replaced
-import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringBundle
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.OutputValue.*
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference.ShorteningMode
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -56,9 +57,9 @@ interface Parameter {
     val mirrorVarName: String?
     val receiverCandidate: Boolean
 
-    fun getParameterType(allowSpecialClassNames: Boolean): KotlinType
+    val parameterType: KotlinType
 
-    fun getParameterTypeCandidates(allowSpecialClassNames: Boolean): List<KotlinType>
+    fun getParameterTypeCandidates(): List<KotlinType>
 
     fun copy(name: String, parameterType: KotlinType): Parameter
 }
@@ -66,25 +67,25 @@ interface Parameter {
 val Parameter.nameForRef: String get() = mirrorVarName ?: name
 
 data class TypeParameter(
-        val originalDeclaration: KtTypeParameter,
-        val originalConstraints: List<KtTypeConstraint>
+    val originalDeclaration: KtTypeParameter,
+    val originalConstraints: List<KtTypeConstraint>
 )
 
-interface Replacement: Function2<ExtractableCodeDescriptor, KtElement, KtElement>
+interface Replacement : Function2<ExtractableCodeDescriptor, KtElement, KtElement>
 
 interface ParameterReplacement : Replacement {
     val parameter: Parameter
     fun copy(parameter: Parameter): ParameterReplacement
 }
 
-class RenameReplacement(override val parameter: Parameter): ParameterReplacement {
+class RenameReplacement(override val parameter: Parameter) : ParameterReplacement {
     override fun copy(parameter: Parameter) = RenameReplacement(parameter)
 
     override fun invoke(descriptor: ExtractableCodeDescriptor, e: KtElement): KtElement {
-        var expressionToReplace = (e.parent as? KtThisExpression ?: e).let { it.getQualifiedExpressionForSelector() ?: it }
+        val expressionToReplace = (e.parent as? KtThisExpression ?: e).let { it.getQualifiedExpressionForSelector() ?: it }
         val parameterName = KtPsiUtil.unquoteIdentifier(parameter.nameForRef)
         val replacingName =
-                if (e.text.startsWith('`') || !parameterName.isIdentifier()) "`$parameterName`" else parameterName
+            if (e.text.startsWith('`') || !parameterName.isIdentifier()) "`$parameterName`" else parameterName
         val psiFactory = KtPsiFactory(e)
         val replacement = when {
             parameter == descriptor.receiverParameter -> psiFactory.createExpression("this")
@@ -106,19 +107,19 @@ abstract class WrapInWithReplacement : Replacement {
     }
 }
 
-class WrapParameterInWithReplacement(override val parameter: Parameter): WrapInWithReplacement(), ParameterReplacement {
+class WrapParameterInWithReplacement(override val parameter: Parameter) : WrapInWithReplacement(), ParameterReplacement {
     override val argumentText: String
         get() = parameter.name
 
     override fun copy(parameter: Parameter) = WrapParameterInWithReplacement(parameter)
 }
 
-class WrapObjectInWithReplacement(val descriptor: ClassDescriptor): WrapInWithReplacement() {
+class WrapObjectInWithReplacement(val descriptor: ClassDescriptor) : WrapInWithReplacement() {
     override val argumentText: String
         get() = IdeDescriptorRenderers.SOURCE_CODE.renderClassifierName(descriptor)
 }
 
-class AddPrefixReplacement(override val parameter: Parameter): ParameterReplacement {
+class AddPrefixReplacement(override val parameter: Parameter) : ParameterReplacement {
     override fun copy(parameter: Parameter) = AddPrefixReplacement(parameter)
 
     override fun invoke(descriptor: ExtractableCodeDescriptor, e: KtElement): KtElement {
@@ -131,7 +132,7 @@ class AddPrefixReplacement(override val parameter: Parameter): ParameterReplacem
     }
 }
 
-class FqNameReplacement(val fqName: FqName): Replacement {
+class FqNameReplacement(val fqName: FqName) : Replacement {
     override fun invoke(descriptor: ExtractableCodeDescriptor, e: KtElement): KtElement {
         val thisExpr = e.parent as? KtThisExpression
         if (thisExpr != null) {
@@ -148,32 +149,32 @@ interface OutputValue {
     val valueType: KotlinType
 
     class ExpressionValue(
-            val callSiteReturn: Boolean,
-            override val originalExpressions: List<KtExpression>,
-            override val valueType: KotlinType
-    ): OutputValue
+        val callSiteReturn: Boolean,
+        override val originalExpressions: List<KtExpression>,
+        override val valueType: KotlinType
+    ) : OutputValue
 
     class Jump(
-            val elementsToReplace: List<KtExpression>,
-            val elementToInsertAfterCall: KtElement?,
-            val conditional: Boolean,
-            builtIns: KotlinBuiltIns
-    ): OutputValue {
+        val elementsToReplace: List<KtExpression>,
+        val elementToInsertAfterCall: KtElement?,
+        val conditional: Boolean,
+        builtIns: KotlinBuiltIns
+    ) : OutputValue {
         override val originalExpressions: List<KtExpression> get() = elementsToReplace
         override val valueType: KotlinType = with(builtIns) { if (conditional) booleanType else unitType }
     }
 
     class ParameterUpdate(
-            val parameter: Parameter,
-            override val originalExpressions: List<KtExpression>
-    ): OutputValue {
-        override val valueType: KotlinType get() = parameter.getParameterType(false)
+        val parameter: Parameter,
+        override val originalExpressions: List<KtExpression>
+    ) : OutputValue {
+        override val valueType: KotlinType get() = parameter.parameterType
     }
 
     class Initializer(
-            val initializedDeclaration: KtProperty,
-            override val valueType: KotlinType
-    ): OutputValue {
+        val initializedDeclaration: KtProperty,
+        override val valueType: KotlinType
+    ) : OutputValue {
         override val originalExpressions: List<KtExpression> get() = Collections.singletonList(initializedDeclaration)
     }
 }
@@ -216,8 +217,8 @@ abstract class OutputValueBoxer(val outputValues: List<OutputValue>) {
     abstract fun getUnboxingExpressions(boxedText: String): Map<OutputValue, String>
 
     class AsTuple(
-            outputValues: List<OutputValue>,
-            val module: ModuleDescriptor
+        outputValues: List<OutputValue>,
+        val module: ModuleDescriptor
     ) : OutputValueBoxer(outputValues) {
         init {
             assert(outputValues.size <= 3) { "At most 3 output values are supported" }
@@ -271,17 +272,17 @@ abstract class OutputValueBoxer(val outputValues: List<OutputValue>) {
         }
     }
 
-    class AsList(outputValues: List<OutputValue>): OutputValueBoxer(outputValues) {
+    class AsList(outputValues: List<OutputValue>) : OutputValueBoxer(outputValues) {
         override val returnType: KotlinType by lazy {
             assert(outputValues.isNotEmpty())
             val builtIns = outputValues.first().valueType.builtIns
             TypeUtils.substituteParameters(
-                    builtIns.list,
-                    Collections.singletonList(CommonSupertypes.commonSupertype(outputValues.map { it.valueType }))
+                builtIns.list,
+                Collections.singletonList(CommonSupertypes.commonSupertype(outputValues.map { it.valueType }))
             )
         }
 
-        override val boxingRequired: Boolean = outputValues.size > 0
+        override val boxingRequired: Boolean = outputValues.isNotEmpty()
 
         override fun getBoxingExpressionPattern(arguments: List<KtExpression>): String? {
             if (arguments.isEmpty()) return null
@@ -300,9 +301,9 @@ abstract class OutputValueBoxer(val outputValues: List<OutputValue>) {
 }
 
 data class ControlFlow(
-        val outputValues: List<OutputValue>,
-        val boxerFactory: (List<OutputValue>) -> OutputValueBoxer,
-        val declarationsToCopy: List<KtDeclaration>
+    val outputValues: List<OutputValue>,
+    val boxerFactory: (List<OutputValue>) -> OutputValueBoxer,
+    val declarationsToCopy: List<KtDeclaration>
 ) {
     val outputValueBoxer = boxerFactory(outputValues)
 
@@ -337,7 +338,7 @@ val ControlFlow.possibleReturnTypes: List<KotlinType>
     }
 
 fun ControlFlow.toDefault(): ControlFlow =
-        copy(outputValues = outputValues.filterNot { it is Jump || it is ExpressionValue })
+    copy(outputValues = outputValues.filterNot { it is Jump || it is ExpressionValue })
 
 fun ControlFlow.copy(oldToNewParameters: Map<Parameter, Parameter>): ControlFlow {
     val newOutputValues = outputValues.map {
@@ -347,28 +348,29 @@ fun ControlFlow.copy(oldToNewParameters: Map<Parameter, Parameter>): ControlFlow
 }
 
 data class ExtractableCodeDescriptor(
-        val extractionData: ExtractionData,
-        val originalContext: BindingContext,
-        val suggestedNames: List<String>,
-        val visibility: KtModifierKeywordToken?,
-        val parameters: List<Parameter>,
-        val receiverParameter: Parameter?,
-        val typeParameters: List<TypeParameter>,
-        val replacementMap: MultiMap<KtSimpleNameExpression, Replacement>,
-        val controlFlow: ControlFlow,
-        val returnType: KotlinType,
-        val modifiers: List<KtKeywordToken> = emptyList()
+    val extractionData: ExtractionData,
+    val originalContext: BindingContext,
+    val suggestedNames: List<String>,
+    val visibility: KtModifierKeywordToken?,
+    val parameters: List<Parameter>,
+    val receiverParameter: Parameter?,
+    val typeParameters: List<TypeParameter>,
+    val replacementMap: MultiMap<KtSimpleNameExpression, Replacement>,
+    val controlFlow: ControlFlow,
+    val returnType: KotlinType,
+    val modifiers: List<KtKeywordToken> = emptyList(),
+    val annotations: List<AnnotationDescriptor> = emptyList()
 ) {
     val name: String get() = suggestedNames.firstOrNull() ?: ""
     val duplicates: List<DuplicateInfo> by lazy { findDuplicates() }
 }
 
 fun ExtractableCodeDescriptor.copy(
-        newName: String,
-        newVisibility: KtModifierKeywordToken?,
-        oldToNewParameters: Map<Parameter, Parameter>,
-        newReceiver: Parameter?,
-        returnType: KotlinType?
+    newName: String,
+    newVisibility: KtModifierKeywordToken?,
+    oldToNewParameters: Map<Parameter, Parameter>,
+    newReceiver: Parameter?,
+    returnType: KotlinType?
 ): ExtractableCodeDescriptor {
     val newReplacementMap = MultiMap.create<KtSimpleNameExpression, Replacement>()
     for ((ref, replacements) in replacementMap.entrySet()) {
@@ -377,59 +379,60 @@ fun ExtractableCodeDescriptor.copy(
                 val parameter = it.parameter
                 val newParameter = oldToNewParameters[parameter] ?: return@map it
                 it.copy(newParameter)
-            }
-            else it
+            } else it
         }
         newReplacementMap.putValues(ref, newReplacements)
     }
 
     return ExtractableCodeDescriptor(
-            extractionData,
-            originalContext,
-            listOf(newName),
-            newVisibility,
-            oldToNewParameters.values.filter { it != newReceiver },
-            newReceiver,
-            typeParameters,
-            newReplacementMap,
-            controlFlow.copy(oldToNewParameters),
-            returnType ?: this.returnType,
-            modifiers)
+        extractionData,
+        originalContext,
+        listOf(newName),
+        newVisibility,
+        oldToNewParameters.values.filter { it != newReceiver },
+        newReceiver,
+        typeParameters,
+        newReplacementMap,
+        controlFlow.copy(oldToNewParameters),
+        returnType ?: this.returnType,
+        modifiers,
+        annotations
+    )
 }
 
 enum class ExtractionTarget(val targetName: String) {
-    FUNCTION("function") {
+    FUNCTION(KotlinBundle.message("text.function")) {
         override fun isAvailable(descriptor: ExtractableCodeDescriptor) = true
     },
 
-    FAKE_LAMBDALIKE_FUNCTION("lambda parameter") {
+    FAKE_LAMBDALIKE_FUNCTION(KotlinBundle.message("text.lambda.parameter")) {
         override fun isAvailable(descriptor: ExtractableCodeDescriptor): Boolean {
             return checkSimpleControlFlow(descriptor) || descriptor.controlFlow.outputValues.isEmpty()
         }
     },
 
-    PROPERTY_WITH_INITIALIZER("property with initializer") {
+    PROPERTY_WITH_INITIALIZER(KotlinBundle.message("text.property.with.initializer")) {
         override fun isAvailable(descriptor: ExtractableCodeDescriptor): Boolean {
             return checkSignatureAndParent(descriptor)
-                   && checkSimpleControlFlow(descriptor)
-                   && checkSimpleBody(descriptor)
-                   && checkNotTrait(descriptor)
-                   && descriptor.receiverParameter == null
+                    && checkSimpleControlFlow(descriptor)
+                    && checkSimpleBody(descriptor)
+                    && checkNotTrait(descriptor)
+                    && descriptor.receiverParameter == null
         }
     },
 
-    PROPERTY_WITH_GETTER("property with getter") {
+    PROPERTY_WITH_GETTER(KotlinBundle.message("text.property.with.getter")) {
         override fun isAvailable(descriptor: ExtractableCodeDescriptor): Boolean {
             return checkSignatureAndParent(descriptor)
         }
     },
 
-    LAZY_PROPERTY("lazy property") {
+    LAZY_PROPERTY(KotlinBundle.message("text.lazy.property")) {
         override fun isAvailable(descriptor: ExtractableCodeDescriptor): Boolean {
             return checkSignatureAndParent(descriptor)
-                   && checkSimpleControlFlow(descriptor)
-                   && checkNotTrait(descriptor)
-                   && descriptor.receiverParameter == null
+                    && checkSimpleControlFlow(descriptor)
+                    && checkNotTrait(descriptor)
+                    && descriptor.receiverParameter == null
         }
     };
 
@@ -461,39 +464,42 @@ enum class ExtractionTarget(val targetName: String) {
     }
 }
 
-val propertyTargets: List<ExtractionTarget> = listOf(ExtractionTarget.PROPERTY_WITH_INITIALIZER,
-                                                     ExtractionTarget.PROPERTY_WITH_GETTER,
-                                                     ExtractionTarget.LAZY_PROPERTY)
+val propertyTargets: List<ExtractionTarget> = listOf(
+    ExtractionTarget.PROPERTY_WITH_INITIALIZER,
+    ExtractionTarget.PROPERTY_WITH_GETTER,
+    ExtractionTarget.LAZY_PROPERTY
+)
 
 data class ExtractionGeneratorOptions(
-        val inTempFile: Boolean = false,
-        val target: ExtractionTarget = ExtractionTarget.FUNCTION,
-        val dummyName: String? = null,
-        val allowExpressionBody: Boolean = true,
-        val delayInitialOccurrenceReplacement: Boolean = false
+    val inTempFile: Boolean = false,
+    val target: ExtractionTarget = ExtractionTarget.FUNCTION,
+    val dummyName: String? = null,
+    val allowExpressionBody: Boolean = true,
+    val delayInitialOccurrenceReplacement: Boolean = false
 ) {
     companion object {
-        @JvmField val DEFAULT = ExtractionGeneratorOptions()
+        @JvmField
+        val DEFAULT = ExtractionGeneratorOptions()
     }
 }
 
 data class ExtractionGeneratorConfiguration(
-        val descriptor: ExtractableCodeDescriptor,
-        val generatorOptions: ExtractionGeneratorOptions
+    val descriptor: ExtractableCodeDescriptor,
+    val generatorOptions: ExtractionGeneratorOptions
 )
 
 data class ExtractionResult(
-        val config: ExtractionGeneratorConfiguration,
-        val declaration: KtNamedDeclaration,
-        val duplicateReplacers: Map<KotlinPsiRange, () -> Unit>
+    val config: ExtractionGeneratorConfiguration,
+    val declaration: KtNamedDeclaration,
+    val duplicateReplacers: Map<KotlinPsiRange, () -> Unit>
 ) : Disposable {
     override fun dispose() = unmarkReferencesInside(declaration)
 }
 
-class AnalysisResult (
-        val descriptor: ExtractableCodeDescriptor?,
-        val status: Status,
-        val messages: List<ErrorMessage>
+class AnalysisResult(
+    val descriptor: ExtractableCodeDescriptor?,
+    val status: Status,
+    val messages: List<ErrorMessage>
 ) {
     enum class Status {
         SUCCESS,
@@ -522,28 +528,28 @@ class AnalysisResult (
         }
 
         fun renderMessage(): String {
-            val message = KotlinRefactoringBundle.message(
-                    when (this) {
-                        NO_EXPRESSION -> "cannot.refactor.no.expression"
-                        NO_CONTAINER -> "cannot.refactor.no.container"
-                        SYNTAX_ERRORS -> "cannot.refactor.syntax.errors"
-                        SUPER_CALL -> "cannot.extract.super.call"
-                        DENOTABLE_TYPES -> "parameter.types.are.not.denotable"
-                        ERROR_TYPES -> "error.types.in.generated.function"
-                        MULTIPLE_OUTPUT -> "selected.code.fragment.has.multiple.output.values"
-                        OUTPUT_AND_EXIT_POINT -> "selected.code.fragment.has.output.values.and.exit.points"
-                        MULTIPLE_EXIT_POINTS -> "selected.code.fragment.has.multiple.exit.points"
-                        DECLARATIONS_ARE_USED_OUTSIDE -> "declarations.are.used.outside.of.selected.code.fragment"
-                        DECLARATIONS_OUT_OF_SCOPE -> "declarations.will.move.out.of.scope"
-                    }
+            val message = KotlinBundle.message(
+                when (this) {
+                    NO_EXPRESSION -> "cannot.refactor.no.expression"
+                    NO_CONTAINER -> "cannot.refactor.no.container"
+                    SYNTAX_ERRORS -> "cannot.refactor.syntax.errors"
+                    SUPER_CALL -> "cannot.extract.super.call"
+                    DENOTABLE_TYPES -> "parameter.types.are.not.denotable"
+                    ERROR_TYPES -> "error.types.in.generated.function"
+                    MULTIPLE_OUTPUT -> "selected.code.fragment.has.multiple.output.values"
+                    OUTPUT_AND_EXIT_POINT -> "selected.code.fragment.has.output.values.and.exit.points"
+                    MULTIPLE_EXIT_POINTS -> "selected.code.fragment.has.multiple.exit.points"
+                    DECLARATIONS_ARE_USED_OUTSIDE -> "declarations.are.used.outside.of.selected.code.fragment"
+                    DECLARATIONS_OUT_OF_SCOPE -> "declarations.will.move.out.of.scope"
+                }
             )
 
-            return additionalInfo?.let { "$message\n\n${it.joinToString("\n") { StringUtil.htmlEmphasize(it) }}" } ?: message
+            return additionalInfo?.let { "$message\n\n${it.joinToString("\n") { msg -> StringUtil.htmlEmphasize(msg) }}" } ?: message
         }
     }
 }
 
 class ExtractableCodeDescriptorWithConflicts(
-        val descriptor: ExtractableCodeDescriptor,
-        val conflicts: MultiMap<PsiElement, String>
+    val descriptor: ExtractableCodeDescriptor,
+    val conflicts: MultiMap<PsiElement, String>
 )

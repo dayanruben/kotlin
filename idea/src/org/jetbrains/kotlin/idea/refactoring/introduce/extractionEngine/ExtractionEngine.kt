@@ -24,8 +24,10 @@ import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.ui.awt.RelativePoint
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.checkConflictsInteractively
 import org.jetbrains.kotlin.idea.refactoring.introduce.showErrorHint
+import org.jetbrains.kotlin.idea.util.ProgressIndicatorUtils
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import javax.swing.event.HyperlinkEvent
 
@@ -40,23 +42,29 @@ abstract class ExtractionEngineHelper(val operationName: String) {
     open fun validate(descriptor: ExtractableCodeDescriptor): ExtractableCodeDescriptorWithConflicts = descriptor.validate()
 
     abstract fun configureAndRun(
-            project: Project,
-            editor: Editor,
-            descriptorWithConflicts: ExtractableCodeDescriptorWithConflicts,
-            onFinish: (ExtractionResult) -> Unit = {}
+        project: Project,
+        editor: Editor,
+        descriptorWithConflicts: ExtractableCodeDescriptorWithConflicts,
+        onFinish: (ExtractionResult) -> Unit = {}
     )
 }
 
 class ExtractionEngine(
-        val helper: ExtractionEngineHelper
+    val helper: ExtractionEngineHelper
 ) {
-    fun run(editor: Editor,
-            extractionData: ExtractionData,
-            onFinish: (ExtractionResult) -> Unit = {}
+    fun run(
+        editor: Editor,
+        extractionData: ExtractionData,
+        onFinish: (ExtractionResult) -> Unit = {}
     ) {
         val project = extractionData.project
 
-        val analysisResult = helper.adjustExtractionData(extractionData).performAnalysis()
+        val adjustExtractionData = helper.adjustExtractionData(extractionData)
+        val analysisResult = ProgressIndicatorUtils.underModalProgress(project,
+                                                                       KotlinBundle.message("progress.title.analyze.extraction.data")
+        ) {
+            adjustExtractionData.performAnalysis()
+        }
 
         if (ApplicationManager.getApplication()!!.isUnitTestMode && analysisResult.status != AnalysisResult.Status.SUCCESS) {
             throw BaseRefactoringProcessor.ConflictsInTestsException(analysisResult.messages.map { it.renderMessage() })
@@ -68,8 +76,7 @@ class ExtractionEngine(
                 helper.configureAndRun(project, editor, validationResult) {
                     try {
                         onFinish(it)
-                    }
-                    finally {
+                    } finally {
                         it.dispose()
                         extractionData.dispose()
                     }
@@ -85,24 +92,23 @@ class ExtractionEngine(
 
             AnalysisResult.Status.NON_CRITICAL_ERROR -> {
                 val anchorPoint = RelativePoint(
-                        editor.contentComponent,
-                        editor.visualPositionToXY(editor.selectionModel.selectionStartPosition!!)
+                    editor.contentComponent,
+                    editor.visualPositionToXY(editor.selectionModel.selectionStartPosition!!)
                 )
                 JBPopupFactory.getInstance()!!
-                        .createHtmlTextBalloonBuilder(
-                                "$message<br/><br/><a href=\"EXTRACT\">Proceed with extraction</a>",
-                                MessageType.WARNING,
-                                { event ->
-                                    if (event?.eventType == HyperlinkEvent.EventType.ACTIVATED) {
-                                        validateAndRefactor()
-                                    }
-                                }
-                        )
-                        .setHideOnClickOutside(true)
-                        .setHideOnFrameResize(false)
-                        .setHideOnLinkClick(true)
-                        .createBalloon()
-                        .show(anchorPoint, Balloon.Position.below)
+                    .createHtmlTextBalloonBuilder(
+                        "$message<br/><br/><a href=\"EXTRACT\">${KotlinBundle.message("text.proceed.with.extraction")}</a>",
+                        MessageType.WARNING
+                    ) { event ->
+                        if (event?.eventType == HyperlinkEvent.EventType.ACTIVATED) {
+                            validateAndRefactor()
+                        }
+                    }
+                    .setHideOnClickOutside(true)
+                    .setHideOnFrameResize(false)
+                    .setHideOnLinkClick(true)
+                    .createBalloon()
+                    .show(anchorPoint, Balloon.Position.below)
             }
 
             AnalysisResult.Status.SUCCESS -> validateAndRefactor()

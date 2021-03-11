@@ -4,18 +4,20 @@ plugins {
 
 repositories {
     mavenLocal()
-    jcenter()
-    maven { setUrl("http://dl.bintray.com/kotlin/kotlinx.html/") }
+    mavenCentral()
+    maven { setUrl("https://dl.bintray.com/kotlin/kotlinx.html/") }
 }
 
 kotlin {
     val jvmWithoutJava = jvm("jvmWithoutJava")
     val jvmWithJava = targetFromPreset(presets["jvmWithJava"])
-    val js = js()
+    val js = js {
+        nodejs()
+    }
     val macos64 = macosX64("macos64")
     val linux64 = linuxX64("linux64")
     val mingw64 = mingwX64("mingw64")
-    
+
     sourceSets {
         val commonTest by getting {
         	dependencies {
@@ -29,6 +31,7 @@ kotlin {
         configure(listOf(main, jvmWithoutJavaMain)) {
         	dependencies {
         		implementation(kotlin("stdlib"))
+        		implementation(kotlin("script-runtime"))
         	}
         }
 

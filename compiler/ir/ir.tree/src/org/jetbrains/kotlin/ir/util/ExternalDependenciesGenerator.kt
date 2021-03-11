@@ -16,54 +16,47 @@
 
 package org.jetbrains.kotlin.ir.util
 
-import org.jetbrains.kotlin.descriptors.ModuleDescriptor
-import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
-import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
-import org.jetbrains.kotlin.ir.descriptors.IrBuiltIns
-import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.analyzer.CompilationErrorException
+import org.jetbrains.kotlin.ir.declarations.IrDeclaration
+import org.jetbrains.kotlin.ir.linkage.IrProvider
+import org.jetbrains.kotlin.ir.linkage.KotlinIrLinkerInternalException
+import org.jetbrains.kotlin.ir.symbols.IrSymbol
+import org.jetbrains.kotlin.utils.addToStdlib.firstNotNullResult
 
 class ExternalDependenciesGenerator(
-    moduleDescriptor: ModuleDescriptor,
     val symbolTable: SymbolTable,
-    val irBuiltIns: IrBuiltIns
+    private val irProviders: List<IrProvider>
 ) {
-    private val stubGenerator = DeclarationStubGenerator(
-        moduleDescriptor, symbolTable, IrDeclarationOrigin.IR_EXTERNAL_DECLARATION_STUB, irBuiltIns.languageVersionSettings
-    )
+    fun generateUnboundSymbolsAsDependencies() {
+        // There should be at most one DeclarationStubGenerator (none in closed world?)
+        irProviders.singleOrNull { it is DeclarationStubGenerator }?.let {
+            (it as DeclarationStubGenerator).unboundSymbolGeneration = true
+        }
+        /*
+            Deserializing a reference may lead to new unbound references, so we loop until none are left.
+         */
+        var unbound = setOf<IrSymbol>()
+        lateinit var prevUnbound: Set<IrSymbol>
+        try {
+            do {
+                prevUnbound = unbound
+                unbound = symbolTable.allUnbound
 
-    fun generateUnboundSymbolsAsDependencies(irModule: IrModuleFragment, bindingContext: BindingContext? = null) {
-        DependencyGenerationTask(irModule, bindingContext).run()
-    }
-
-    private inner class DependencyGenerationTask(val irModule: IrModuleFragment, val bindingContext: BindingContext?) {
-
-        fun run() {
-            stubGenerator.unboundSymbolGeneration = true
-            ArrayList(symbolTable.unboundClasses).forEach {
-                stubGenerator.generateClassStub(it.descriptor)
-            }
-            ArrayList(symbolTable.unboundConstructors).forEach {
-                stubGenerator.generateConstructorStub(it.descriptor)
-            }
-            ArrayList(symbolTable.unboundEnumEntries).forEach {
-                stubGenerator.generateEnumEntryStub(it.descriptor)
-            }
-            ArrayList(symbolTable.unboundFields).forEach {
-                stubGenerator.generateFieldStub(it.descriptor, bindingContext)
-            }
-            ArrayList(symbolTable.unboundSimpleFunctions).forEach {
-                stubGenerator.generateFunctionStub(it.descriptor)
-            }
-            ArrayList(symbolTable.unboundTypeParameters).forEach {
-                stubGenerator.generateOrGetTypeParameterStub(it.descriptor)
-            }
-
-            assert(symbolTable.unboundClasses.isEmpty())
-            assert(symbolTable.unboundConstructors.isEmpty())
-            assert(symbolTable.unboundEnumEntries.isEmpty())
-            assert(symbolTable.unboundFields.isEmpty())
-            assert(symbolTable.unboundSimpleFunctions.isEmpty())
-            assert(symbolTable.unboundTypeParameters.isEmpty())
+                for (symbol in unbound) {
+                    // Symbol could get bound as a side effect of deserializing other symbols.
+                    if (!symbol.isBound) {
+                        irProviders.getDeclaration(symbol)
+                    }
+                }
+                // We wait for the unbound to stabilize on fake overrides.
+            } while (unbound != prevUnbound)
+        } catch (ex: KotlinIrLinkerInternalException) {
+            throw CompilationErrorException()
         }
     }
 }
+
+fun List<IrProvider>.getDeclaration(symbol: IrSymbol): IrDeclaration? =
+    firstNotNullResult { provider ->
+        provider.getDeclaration(symbol)
+    }

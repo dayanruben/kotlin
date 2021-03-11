@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.filters;
@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.idea.filters;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.test.KotlinTestUtils;
-import org.jetbrains.kotlin.test.TargetBackend;
+import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.runner.RunWith;
 
@@ -22,11 +22,11 @@ import java.util.regex.Pattern;
 @RunWith(JUnit3RunnerWithInners.class)
 public class KotlinExceptionFilterTestGenerated extends AbstractKotlinExceptionFilterTest {
     private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTest, TargetBackend.ANY, testDataFilePath);
+        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
     public void testAllFilesPresentInExceptionFilter() throws Exception {
-        KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/debugger/exceptionFilter"), Pattern.compile("^([^\\.]+)$"), TargetBackend.ANY, false);
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/debugger/exceptionFilter"), Pattern.compile("^([^\\.]+)$"), null, false);
     }
 
     @TestMetadata("breakpointReachedAt")
@@ -37,6 +37,31 @@ public class KotlinExceptionFilterTestGenerated extends AbstractKotlinExceptionF
     @TestMetadata("inlineFunCallInLibrary")
     public void testInlineFunCallInLibrary() throws Exception {
         runTest("idea/testData/debugger/exceptionFilter/inlineFunCallInLibrary/");
+    }
+
+    @TestMetadata("inlineFunCallSite")
+    public void testInlineFunCallSite() throws Exception {
+        runTest("idea/testData/debugger/exceptionFilter/inlineFunCallSite/");
+    }
+
+    @TestMetadata("inlineFunCallSiteInInlineLambda")
+    public void testInlineFunCallSiteInInlineLambda() throws Exception {
+        runTest("idea/testData/debugger/exceptionFilter/inlineFunCallSiteInInlineLambda/");
+    }
+
+    @TestMetadata("inlineFunCallSiteInLambdaInlinedIntoObject")
+    public void testInlineFunCallSiteInLambdaInlinedIntoObject() throws Exception {
+        runTest("idea/testData/debugger/exceptionFilter/inlineFunCallSiteInLambdaInlinedIntoObject/");
+    }
+
+    @TestMetadata("inlineFunCallSiteInRegeneratedObject")
+    public void testInlineFunCallSiteInRegeneratedObject() throws Exception {
+        runTest("idea/testData/debugger/exceptionFilter/inlineFunCallSiteInRegeneratedObject/");
+    }
+
+    @TestMetadata("inlineFunCallSiteNewSmapSyntax")
+    public void testInlineFunCallSiteNewSmapSyntax() throws Exception {
+        runTest("idea/testData/debugger/exceptionFilter/inlineFunCallSiteNewSmapSyntax/");
     }
 
     @TestMetadata("inlineFunFromLibrary")

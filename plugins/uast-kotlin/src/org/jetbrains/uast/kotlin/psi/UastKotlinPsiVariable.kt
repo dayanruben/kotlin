@@ -67,6 +67,8 @@ class UastKotlinPsiVariable private constructor(
         return ktElement == (other as? UastKotlinPsiVariable)?.ktElement
     }
 
+    override fun isEquivalentTo(another: PsiElement?): Boolean = this == another || ktElement.isEquivalentTo(another)
+
     override fun hashCode() = ktElement.hashCode()
 
     companion object {
@@ -76,7 +78,7 @@ class UastKotlinPsiVariable private constructor(
                 containingElement: KotlinUDeclarationsExpression,
                 initializer: KtExpression? = null
         ): PsiLocalVariable {
-            val psi = containingElement.psiAnchor ?: containingElement.psi
+            val psi = containingElement.psiAnchor ?: containingElement.sourcePsi
             val psiParent = psi?.getNonStrictParentOfType<KtDeclaration>() ?: parent
             val initializerExpression = initializer ?: declaration.initializer
             return UastKotlinPsiVariable(

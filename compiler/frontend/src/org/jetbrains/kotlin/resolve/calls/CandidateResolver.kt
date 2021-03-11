@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.resolve.calls
@@ -45,6 +45,7 @@ import org.jetbrains.kotlin.types.expressions.DoubleColonExpressionResolver
 import org.jetbrains.kotlin.types.typeUtil.containsTypeProjectionsInTopLevelArguments
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 import java.util.*
+import kotlin.math.min
 
 class CandidateResolver(
     private val argumentTypeResolver: ArgumentTypeResolver,
@@ -52,7 +53,8 @@ class CandidateResolver(
     private val reflectionTypes: ReflectionTypes,
     private val additionalTypeCheckers: Iterable<AdditionalTypeChecker>,
     private val smartCastManager: SmartCastManager,
-    private val dataFlowValueFactory: DataFlowValueFactory
+    private val dataFlowValueFactory: DataFlowValueFactory,
+    private val upperBoundChecker: UpperBoundChecker
 ) {
     fun <D : CallableDescriptor> performResolutionForCandidateCall(
         context: CallCandidateResolutionContext<D>,
@@ -176,14 +178,14 @@ class CandidateResolver(
     }
 
     private fun CallCandidateResolutionContext<*>.checkVisibilityWithoutReceiver() = checkAndReport {
-        checkVisibilityWithDispatchReceiver(Visibilities.ALWAYS_SUITABLE_RECEIVER, null)
+        checkVisibilityWithDispatchReceiver(DescriptorVisibilities.ALWAYS_SUITABLE_RECEIVER, null)
     }
 
     private fun CallCandidateResolutionContext<*>.checkVisibilityWithDispatchReceiver(
         receiverArgument: ReceiverValue?,
         smartCastType: KotlinType?
     ): ResolutionStatus {
-        val invisibleMember = Visibilities.findInvisibleMember(
+        val invisibleMember = DescriptorVisibilities.findInvisibleMember(
             getReceiverValueWithSmartCast(receiverArgument, smartCastType), candidateDescriptor, scope.ownerDescriptor
         )
         return if (invisibleMember != null) {
@@ -203,7 +205,7 @@ class CandidateResolver(
     private fun CallCandidateResolutionContext<*>.isCandidateVisible(
         receiverArgument: ReceiverValue?,
         smartCastType: KotlinType?
-    ) = Visibilities.findInvisibleMember(
+    ) = DescriptorVisibilities.findInvisibleMember(
         getReceiverValueWithSmartCast(receiverArgument, smartCastType),
         candidateDescriptor, scope.ownerDescriptor
     ) == null
@@ -361,7 +363,7 @@ class CandidateResolver(
                 if (type == null || (type.isError && !type.isFunctionPlaceholder)) {
                     matchStatus = ArgumentMatchStatus.ARGUMENT_HAS_NO_TYPE
                 } else if (!noExpectedType(expectedType)) {
-                    if (!ArgumentTypeResolver.isSubtypeOfForArgumentType(type, expectedType)) {
+                    if (!argumentTypeResolver.isSubtypeOfForArgumentType(type, expectedType)) {
                         val smartCast = smartCastValueArgumentTypeIfPossible(expression, newContext.expectedType, type, newContext)
                         if (smartCast == null) {
                             resultStatus = tryNotNullableArgument(type, expectedType) ?: OTHER_ERROR
@@ -376,7 +378,7 @@ class CandidateResolver(
                     val spreadElement = argument.getSpreadElement()
                     if (spreadElement != null && !type.isFlexible() && type.isMarkedNullable) {
                         val dataFlowValue = dataFlowValueFactory.createDataFlowValue(expression, type, context)
-                        val smartCastResult = SmartCastManager.checkAndRecordPossibleCast(
+                        val smartCastResult = smartCastManager.checkAndRecordPossibleCast(
                             dataFlowValue, expectedType, expression, context,
                             call = null, recordExpressionType = false
                         )
@@ -409,7 +411,7 @@ class CandidateResolver(
         if (!argumentType.isMarkedNullable || parameterType.isMarkedNullable) return null
 
         val notNullableArgumentType = argumentType.makeNotNullable()
-        val isApplicable = ArgumentTypeResolver.isSubtypeOfForArgumentType(notNullableArgumentType, parameterType)
+        val isApplicable = argumentTypeResolver.isSubtypeOfForArgumentType(notNullableArgumentType, parameterType)
         return if (isApplicable) NULLABLE_ARGUMENT_TYPE_MISMATCH else null
     }
 
@@ -473,7 +475,7 @@ class CandidateResolver(
         if (!context.isDebuggerContext
             && candidateCall.dispatchReceiver != null
             // Do not report error if it's already reported when checked without receiver
-            && context.isCandidateVisible(receiverArgument = Visibilities.ALWAYS_SUITABLE_RECEIVER, smartCastType = null)) {
+            && context.isCandidateVisible(receiverArgument = DescriptorVisibilities.ALWAYS_SUITABLE_RECEIVER, smartCastType = null)) {
             resultStatus = resultStatus.combine(
                 context.checkVisibilityWithDispatchReceiver(
                     candidateCall.dispatchReceiver, candidateCall.smartCastDispatchReceiverType
@@ -543,11 +545,10 @@ class CandidateResolver(
         } else if (!nullableImplicitInvokeReceiver && smartCastNeeded) {
             // Look if smart cast has some useful nullability info
 
-            val smartCastResult = SmartCastManager.checkAndRecordPossibleCast(
+            val smartCastResult = smartCastManager.checkAndRecordPossibleCast(
                 dataFlowValue, expectedReceiverParameterType,
-                { possibleSmartCast -> isCandidateVisibleOrExtensionReceiver(receiverArgument, possibleSmartCast, isDispatchReceiver) },
                 expression, this, candidateCall.call, recordExpressionType = true
-            )
+            ) { possibleSmartCast -> isCandidateVisibleOrExtensionReceiver(receiverArgument, possibleSmartCast, isDispatchReceiver) }
 
             if (smartCastResult == null) {
                 if (notNullReceiverExpected) {
@@ -591,12 +592,12 @@ class CandidateResolver(
         }
 
         val typeParameters = functionDescriptor.typeParameters
-        for (i in 0..Math.min(typeParameters.size, ktTypeArguments.size) - 1) {
+        for (i in 0..min(typeParameters.size, ktTypeArguments.size) - 1) {
             val typeParameterDescriptor = typeParameters[i]
             val typeArgument = typeArguments[i]
             val typeReference = ktTypeArguments[i].typeReference
             if (typeReference != null) {
-                DescriptorResolver.checkBounds(typeReference, typeArgument, typeParameterDescriptor, substitutor, trace)
+                upperBoundChecker.checkBounds(typeReference, typeArgument, typeParameterDescriptor, substitutor, trace)
             }
         }
     }
@@ -605,7 +606,8 @@ class CandidateResolver(
         private val callElement: KtElement,
         typeAlias: TypeAliasDescriptor,
         ktTypeArguments: List<KtTypeProjection>,
-        private val trace: BindingTrace
+        private val trace: BindingTrace,
+        private val upperBoundChecker: UpperBoundChecker
     ) : TypeAliasExpansionReportStrategy {
         init {
             assert(!typeAlias.expandedType.isError) { "Incorrect type alias: $typeAlias" }
@@ -634,7 +636,7 @@ class CandidateResolver(
         }
 
         override fun boundsViolationInSubstitution(
-            bound: KotlinType,
+            substitutor: TypeSubstitutor,
             unsubstitutedArgument: KotlinType,
             argument: KotlinType,
             typeParameter: TypeParameterDescriptor
@@ -642,11 +644,8 @@ class CandidateResolver(
             val descriptorForUnsubstitutedArgument = unsubstitutedArgument.constructor.declarationDescriptor
             val argumentElement = argumentsMapping[descriptorForUnsubstitutedArgument]
             val argumentTypeReferenceElement = argumentElement?.typeReference
-            if (argumentTypeReferenceElement != null) {
-                trace.report(UPPER_BOUND_VIOLATED.on(argumentTypeReferenceElement, bound, argument))
-            } else {
-                trace.report(UPPER_BOUND_VIOLATED_IN_TYPEALIAS_EXPANSION.on(callElement, bound, argument, typeParameter))
-            }
+
+            upperBoundChecker.checkBounds(argumentTypeReferenceElement, argument, typeParameter, substitutor, trace, callElement)
         }
     }
 
@@ -664,7 +663,8 @@ class CandidateResolver(
         val unsubstitutedType = typeAliasDescriptor.expandedType
         if (unsubstitutedType.isError) return
 
-        val reportStrategy = TypeAliasSingleStepExpansionReportStrategy(call.callElement, typeAliasDescriptor, ktTypeArguments, trace)
+        val reportStrategy =
+            TypeAliasSingleStepExpansionReportStrategy(call.callElement, typeAliasDescriptor, ktTypeArguments, trace, upperBoundChecker)
 
         // TODO refactor TypeResolver
         //  - perform full type alias expansion
@@ -686,19 +686,19 @@ class CandidateResolver(
         // TODO do not perform substitution for type arguments multiple times
         val substitutedTypeArguments = typeAliasParametersSubstitutor.safeSubstitute(unsubstitutedType, Variance.INVARIANT).arguments
 
-        for (i in 0..Math.min(typeParameters.size, substitutedTypeArguments.size) - 1) {
+        for (i in 0..min(typeParameters.size, substitutedTypeArguments.size) - 1) {
             val substitutedTypeProjection = substitutedTypeArguments[i]
             if (substitutedTypeProjection.isStarProjection) continue
 
             val typeParameter = typeParameters[i]
             val substitutedTypeArgument = substitutedTypeProjection.type
             val unsubstitutedTypeArgument = unsubstitutedType.arguments[i].type
-            DescriptorResolver.checkBoundsInTypeAlias(
-                reportStrategy,
+
+            reportStrategy.boundsViolationInSubstitution(
+                boundsSubstitutor,
                 unsubstitutedTypeArgument,
                 substitutedTypeArgument,
-                typeParameter,
-                boundsSubstitutor
+                typeParameter
             )
 
             checkTypeInTypeAliasSubstitutionRec(

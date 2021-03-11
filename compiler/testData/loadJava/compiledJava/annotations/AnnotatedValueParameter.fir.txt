@@ -1,0 +1,6 @@
+public open class AnnotatedValueParameter : R|kotlin/Any| {
+    public open fun f(@R|test/AnnotatedValueParameter.Anno|(String(non-empty)) parameter: R|ft<@FlexibleNullability kotlin/collections/MutableList<ft<@FlexibleNullability kotlin/String, kotlin/String?>!>, kotlin/collections/List<ft<@FlexibleNullability kotlin/String, kotlin/String?>!>?>!|): R|kotlin/Unit|
+
+    public constructor(): R|test/AnnotatedValueParameter|
+
+}

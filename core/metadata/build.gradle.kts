@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 plugins {
     kotlin("jvm")
     id("jps-compatible")
@@ -10,8 +8,7 @@ javaHome = rootProject.extra["JDK_16"] as String
 
 dependencies {
     compile(protobufLite())
-    compile(project(":kotlin-stdlib"))
-    compileOnly("org.jetbrains:annotations:13.0")
+    compile(kotlinStdlib())
 }
 
 sourceSets {
@@ -20,11 +17,12 @@ sourceSets {
 }
 
 tasks.withType<JavaCompile> {
-    dependsOn(protobufLiteTask)
     sourceCompatibility = "1.6"
     targetCompatibility = "1.6"
 }
 
-tasks.withType<KotlinCompile> {
-    dependsOn(protobufLiteTask)
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    kotlinOptions {
+        freeCompilerArgs += "-Xsuppress-deprecated-jvm-target-warning"
+    }
 }

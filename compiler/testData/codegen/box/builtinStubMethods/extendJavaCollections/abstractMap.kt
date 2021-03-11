@@ -1,5 +1,6 @@
+// DONT_TARGET_EXACT_BACKEND: WASM
+// WASM_MUTE_REASON: STDLIB_COLLECTIONS
 // TARGET_BACKEND: JVM
-// IGNORE_BACKEND: JVM_IR
 
 import java.util.AbstractMap
 import java.util.Collections

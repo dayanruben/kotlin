@@ -1,4 +1,3 @@
-
 description = "Kotlin Gradle Tooling support"
 
 plugins {
@@ -9,9 +8,9 @@ plugins {
 jvmTarget = "1.6"
 
 dependencies {
-    compile(project(":kotlin-stdlib"))
-    compile(project(":compiler:cli-common"))
-    compile(intellijPluginDep("gradle"))
+    compile(kotlinStdlib())
+
+    compileOnly(intellijPluginDep("gradle"))
     compileOnly(intellijDep()) { includeJars("slf4j-api-1.7.25") }
 }
 
@@ -20,6 +19,16 @@ sourceSets {
     "test" {}
 }
 
+tasks.withType<org.jetbrains.kotlin.gradle.dsl.KotlinCompile<*>> {
+    kotlinOptions {
+        freeCompilerArgs += "-Xsuppress-deprecated-jvm-target-warning"
+    }
+}
+
 runtimeJar()
 
-ideaPlugin()
+sourcesJar()
+
+javadocJar()
+
+apply(from = "$rootDir/gradle/kotlinPluginPublication.gradle.kts")

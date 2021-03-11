@@ -4,16 +4,11 @@ plugins {
     id("jps-compatible")
 }
 
-jvmTarget = "1.6"
-
 dependencies {
     compile(project(":core:descriptors"))
-    compile(project(":core:descriptors.jvm"))
     compile(project(":compiler:util"))
     compile(project(":compiler:frontend"))
-    compile(project(":compiler:ir.tree"))
     compileOnly(intellijCoreDep()) { includeJars("intellij-core") }
-    compileOnly("org.jetbrains:annotations:13.0")
 }
 
 sourceSets {

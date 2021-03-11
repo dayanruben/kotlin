@@ -1,57 +1,44 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2000-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.ir.util
 
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
-import org.jetbrains.kotlin.descriptors.PropertyDescriptor
+import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
+import org.jetbrains.kotlin.ir.declarations.DescriptorMetadataSource
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
-import org.jetbrains.kotlin.ir.declarations.IrField
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
-import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.types.impl.IrUninitializedType
+import org.jetbrains.kotlin.resolve.descriptorUtil.isEffectivelyExternal
 
+@ObsoleteDescriptorBasedAPI
 fun SymbolTable.declareSimpleFunctionWithOverrides(
     startOffset: Int,
     endOffset: Int,
     origin: IrDeclarationOrigin,
     descriptor: FunctionDescriptor
 ) =
-    declareSimpleFunction(startOffset, endOffset, origin, descriptor).also { declaration ->
+    declareSimpleFunction(descriptor) {
+        with(descriptor) {
+            irFactory.createFunction(
+                startOffset, endOffset, origin, it, nameProvider.nameForDeclaration(this),
+                visibility, modality, IrUninitializedType, isInline, isEffectivelyExternal(), isTailrec, isSuspend, isOperator, isInfix, isExpect
+            ).also { declaration ->
+                declaration.metadata = DescriptorMetadataSource.Function(this)
+            }
+        }
+    }.also { declaration ->
         generateOverriddenFunctionSymbols(declaration, this)
     }
 
-
+@ObsoleteDescriptorBasedAPI
 fun generateOverriddenFunctionSymbols(
     declaration: IrSimpleFunction,
-    symbolTable: SymbolTable
+    symbolTable: ReferenceSymbolTable
 ) {
-    declaration.descriptor.overriddenDescriptors.mapTo(declaration.overriddenSymbols) {
+    declaration.overriddenSymbols = declaration.descriptor.overriddenDescriptors.map {
         symbolTable.referenceSimpleFunction(it.original)
-    }
-}
-
-fun SymbolTable.declareFieldWithOverrides(
-    startOffset: Int,
-    endOffset: Int,
-    origin: IrDeclarationOrigin,
-    descriptor: PropertyDescriptor,
-    type: IrType,
-    hasBackingField: (PropertyDescriptor) -> Boolean
-) =
-    declareField(startOffset, endOffset, origin, descriptor, type).also { declaration ->
-        generateOverriddenFieldSymbols(declaration, this, hasBackingField)
-    }
-
-fun generateOverriddenFieldSymbols(
-    declaration: IrField,
-    symbolTable: SymbolTable,
-    hasBackingField: (PropertyDescriptor) -> Boolean
-) {
-    declaration.descriptor.overriddenDescriptors.mapNotNullTo(declaration.overriddenSymbols) {
-        if (hasBackingField(it)) {
-            symbolTable.referenceField(it.original)
-        } else null
     }
 }

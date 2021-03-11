@@ -1,6 +1,5 @@
 package org.jetbrains.uast.test.kotlin
 
-import com.intellij.openapi.util.Conditions
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiRecursiveElementVisitor
@@ -8,6 +7,8 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.util.PairProcessor
 import com.intellij.util.ref.DebugReflectionUtil
 import junit.framework.TestCase
+import junit.framework.TestCase.*
+import org.jetbrains.kotlin.cli.jvm.compiler.CliTraceHolder
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.psi.KtElement
@@ -16,19 +17,18 @@ import org.jetbrains.kotlin.utils.addToStdlib.assertedCast
 import org.jetbrains.uast.UAnchorOwner
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UFile
-import org.jetbrains.uast.kotlin.JvmDeclarationUElementPlaceholder
 import org.jetbrains.uast.kotlin.KOTLIN_CACHED_UELEMENT_KEY
 import org.jetbrains.uast.kotlin.KotlinUastLanguagePlugin
 import org.jetbrains.uast.sourcePsiElement
-import org.jetbrains.uast.test.common.RenderLogTestBase
+import org.jetbrains.uast.test.common.kotlin.RenderLogTestBase
 import org.jetbrains.uast.visitor.UastVisitor
 import org.junit.Assert
 import java.io.File
 import java.util.*
 
-abstract class AbstractKotlinRenderLogTest : AbstractKotlinUastTest(), RenderLogTestBase {
+interface AbstractKotlinRenderLogTest : RenderLogTestBase {
     override fun getTestFile(testName: String, ext: String) =
-            File(File(TEST_KOTLIN_MODEL_DIR, testName).canonicalPath + '.' + ext)
+        File(File(TEST_KOTLIN_MODEL_DIR, testName).canonicalPath + '.' + ext)
 
     override fun check(testName: String, file: UFile) {
         check(testName, file, true)
@@ -130,16 +130,13 @@ abstract class AbstractKotlinRenderLogTest : AbstractKotlinUastTest(), RenderLog
                     node.uastAnchor?.let { visitElement(it) }
                 }
 
-                val jvmDeclaration = node as? JvmDeclarationUElementPlaceholder
-                                     ?: throw AssertionError("${node.javaClass} should implement 'JvmDeclarationUElement'")
-
-                jvmDeclaration.sourcePsi?.let {
+                node.sourcePsi?.let {
                     assertTrue("sourcePsi should be physical but ${it.javaClass} found for [${it.text}] " +
-                               "for ${jvmDeclaration.javaClass}->${jvmDeclaration.uastParent?.javaClass}",it is LeafPsiElement || it is KtElement|| it is LeafPsiElement)
+                               "for ${node.javaClass}->${node.uastParent?.javaClass}", it is LeafPsiElement || it is KtElement|| it is LeafPsiElement)
                 }
-                jvmDeclaration.javaPsi?.let {
+                node.javaPsi?.let {
                     assertTrue("javaPsi should be light but ${it.javaClass} found for [${it.text}] " +
-                               "for ${jvmDeclaration.javaClass}->${jvmDeclaration.uastParent?.javaClass}", it !is KtElement)
+                               "for ${node.javaClass}->${node.uastParent?.javaClass}", it !is KtElement)
                 }
 
                 return false
@@ -155,7 +152,7 @@ fun checkDescriptorsLeak(node: UElement) {
         10,
         mapOf(node to node.javaClass.name),
         Any::class.java,
-        Conditions.alwaysTrue(),
+        { it !is CliTraceHolder },
         PairProcessor { value, backLink ->
             descriptorsClasses.find { it.isInstance(value) }?.let {
                 TestCase.fail("""Leaked descriptor ${it.qualifiedName} in ${node.javaClass.name}\n$backLink""")

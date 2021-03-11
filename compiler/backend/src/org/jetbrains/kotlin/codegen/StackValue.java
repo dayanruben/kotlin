@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.codegen;
@@ -20,8 +20,10 @@ import org.jetbrains.kotlin.codegen.coroutines.CoroutineCodegenUtilKt;
 import org.jetbrains.kotlin.codegen.intrinsics.IntrinsicMethods;
 import org.jetbrains.kotlin.codegen.pseudoInsns.PseudoInsnsKt;
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper;
+import org.jetbrains.kotlin.config.LanguageFeature;
 import org.jetbrains.kotlin.descriptors.*;
 import org.jetbrains.kotlin.descriptors.impl.SyntheticFieldDescriptor;
+import org.jetbrains.kotlin.load.java.DescriptorsJvmAbiUtil;
 import org.jetbrains.kotlin.load.java.JvmAbi;
 import org.jetbrains.kotlin.name.Name;
 import org.jetbrains.kotlin.psi.KtExpression;
@@ -46,6 +48,7 @@ import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.commons.InstructionAdapter;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -103,12 +106,16 @@ public abstract class StackValue {
         put(type, kotlinType, v);
     }
 
-    public void put(@NotNull Type type, @Nullable KotlinType kotlinType, @NotNull InstructionAdapter v) {
-        put(type, kotlinType, v, false);
+    public void put(@NotNull InstructionAdapter v) {
+        put(type, null, v, false);
     }
 
     public void put(@NotNull Type type, @NotNull InstructionAdapter v) {
         put(type, null, v, false);
+    }
+
+    public void put(@NotNull Type type, @Nullable KotlinType kotlinType, @NotNull InstructionAdapter v) {
+        put(type, kotlinType, v, false);
     }
 
     public void put(@NotNull Type type, @Nullable KotlinType kotlinType, @NotNull InstructionAdapter v, boolean skipReceiver) {
@@ -445,7 +452,7 @@ public abstract class StackValue {
         v.invokevirtual(methodOwner.getInternalName(), type.getClassName() + "Value", "()" + type.getDescriptor(), false);
     }
 
-    private static void boxInlineClass(@NotNull KotlinType kotlinType, @NotNull InstructionAdapter v) {
+    public static void boxInlineClass(@NotNull KotlinType kotlinType, @NotNull InstructionAdapter v) {
         Type boxedType = KotlinTypeMapper.mapInlineClassTypeAsDeclaration(kotlinType);
         Type underlyingType = KotlinTypeMapper.mapUnderlyingTypeOfInlineClassType(kotlinType);
 
@@ -617,12 +624,16 @@ public abstract class StackValue {
         return false;
     }
 
-    private static boolean isUnboxedInlineClass(@NotNull KotlinType kotlinType, @NotNull Type actualType) {
+    public static boolean isUnboxedInlineClass(@NotNull KotlinType kotlinType, @NotNull Type actualType) {
         return KotlinTypeMapper.mapUnderlyingTypeOfInlineClassType(kotlinType).equals(actualType);
     }
 
     public static void coerce(@NotNull Type fromType, @NotNull Type toType, @NotNull InstructionAdapter v) {
-        if (toType.equals(fromType)) return;
+        coerce(fromType, toType, v, false);
+    }
+
+    public static void coerce(@NotNull Type fromType, @NotNull Type toType, @NotNull InstructionAdapter v, boolean forceSelfCast) {
+        if (toType.equals(fromType) && !forceSelfCast) return;
 
         if (toType.getSort() == Type.VOID) {
             pop(v, fromType);
@@ -631,11 +642,8 @@ public abstract class StackValue {
             if (toType.equals(UNIT_TYPE) || toType.equals(OBJECT_TYPE)) {
                 putUnitInstance(v);
             }
-            else if (toType.getSort() == Type.OBJECT || toType.getSort() == Type.ARRAY) {
-                v.aconst(null);
-            }
             else {
-                pushDefaultPrimitiveValueOnStack(toType, v);
+                pushDefaultValueOnStack(toType, v);
             }
         }
         else if (toType.equals(UNIT_TYPE)) {
@@ -668,8 +676,8 @@ public abstract class StackValue {
                 box(fromType, toType, v);
             }
         }
-        else if (fromType.getSort() == Type.OBJECT) {
-            //toType is primitive here
+        else if (fromType.getSort() == Type.OBJECT || fromType.getSort() == Type.ARRAY) {
+            // here toType is primitive and fromType is reference (object or array)
             Type unboxedType = unboxPrimitiveTypeOrNull(fromType);
             if (unboxedType != null) {
                 unbox(fromType, unboxedType, v);
@@ -771,7 +779,8 @@ public abstract class StackValue {
     ) {
         // Coerce 'this' for the case when it is smart cast.
         // Do not coerce for other cases due to the 'protected' access issues (JVMS 7, 4.9.2 Structural Constraints).
-        boolean coerceType = descriptor.getKind() == ClassKind.INTERFACE || descriptor.isInline() || (castReceiver && !isSuper);
+        boolean coerceType = descriptor.getKind() == ClassKind.INTERFACE || InlineClassesUtilsKt.isInlineClass(descriptor) ||
+                             (castReceiver && !isSuper);
         return new ThisOuter(codegen, descriptor, isSuper, coerceType);
     }
 
@@ -790,8 +799,11 @@ public abstract class StackValue {
             ResolvedCall resolvedCall,
             @NotNull ExpressionCodegen codegen
     ) {
-        if (stackValue instanceof StackValue.Local && Type.INT_TYPE == stackValue.type) {
-            return preIncrementForLocalVar(((StackValue.Local) stackValue).index, delta, stackValue.kotlinType);
+        KotlinType kotlinType = stackValue.kotlinType;
+        if (stackValue instanceof StackValue.Local && Type.INT_TYPE == stackValue.type &&
+            kotlinType != null && KotlinBuiltIns.isPrimitiveType(kotlinType)
+        ) {
+            return preIncrementForLocalVar(((StackValue.Local) stackValue).index, delta, kotlinType);
         }
         return new PrefixIncrement(type, stackValue, resolvedCall, codegen);
     }
@@ -1521,29 +1533,73 @@ public abstract class StackValue {
 
             coerce(topOfStackType, topOfStackKotlinType, lastParameterType, lastParameterKotlinType, v);
 
-            getCallGenerator().putValueIfNeeded(
+            CallGenerator callGenerator = getCallGenerator();
+            callGenerator.putValueIfNeeded(
                     new JvmKotlinType(lastParameterType, lastParameterKotlinType),
                     StackValue.onStack(lastParameterType, lastParameterKotlinType)
             );
 
-            //Convention setter couldn't have default parameters, just getter can have it at last positions
-            //We should remove default parameters of getter from stack*/
-            //Note that it works only for non-inline case
             CollectionElementReceiver collectionElementReceiver = (CollectionElementReceiver) receiver;
+            boolean callDefault = false;
+            boolean properSetterCalls = codegen.getState().getLanguageVersionSettings().supportsFeature(LanguageFeature.ProperArrayConventionSetterWithDefaultCalls);
             if (collectionElementReceiver.isGetter) {
-                List<ResolvedValueArgument> arguments = collectionElementReceiver.valueArguments;
-                List<Type> types = getter.getValueParameterTypes();
-                for (int i = arguments.size() - 1; i >= 0; i--) {
-                    ResolvedValueArgument argument = arguments.get(i);
-                    if (argument instanceof DefaultValueArgument) {
-                        Type defaultType = types.get(i);
-                        AsmUtil.swap(v, lastParameterType, defaultType);
-                        AsmUtil.pop(v, defaultType);
+                //Convention setter/getter could have default parameters at the end of parameter list (in case of setter before last parameter)
+                //We should remove default parameters of getter from stack if they don't match setter ones and regenerate mask for setter
+                //Note that it works only for non-inline cases
+
+                //TODO: try to don't generate defaults at all in CollectionElementReceiver
+
+                List<ResolvedValueArgument> getterArguments = new ArrayList<>(collectionElementReceiver.valueArguments);
+                List<ResolvedValueArgument> getterDefaults = CollectionsKt.takeLastWhile(getterArguments,
+                                                                                         argument -> argument instanceof DefaultValueArgument);
+
+                List<ResolvedValueArgument> setterArguments = resolvedSetCall.getValueArgumentsByIndex();
+                List<ResolvedValueArgument> setterDefaults = CollectionsKt.takeLastWhile(CollectionsKt.dropLast(setterArguments, 1),
+                                                                                         argument -> argument instanceof DefaultValueArgument);
+
+                if (!getterDefaults.isEmpty() || !setterDefaults.isEmpty()) {
+                    Local rhsValue = StackValue.local(codegen.myFrameMap.enterTemp(lastParameterType), lastParameterType);
+                    rhsValue.store(StackValue.onStack(type), v);
+
+                    List<Type> types = getter.getValueParameterTypes();
+                    for (int i = collectionElementReceiver.valueArguments.size() - 1; i >= 0; i--) {
+                        ResolvedValueArgument argument = collectionElementReceiver.valueArguments.get(i);
+                        if (argument instanceof DefaultValueArgument) {
+                            AsmUtil.pop(v, types.get(i));
+                        }
+                    }
+
+                    if (properSetterCalls) {
+                        DefaultCallArgs defaultArgs = new DefaultCallArgs(
+                                CodegenUtilKt.unwrapFrontendVersion(resolvedSetCall.getResultingDescriptor()).getValueParameters().size());
+                        if (!setterDefaults.isEmpty()) {
+                            ArgumentGenerator setterArgumentGenerator = new CallBasedArgumentGenerator(
+                                    codegen,
+                                    callGenerator,
+                                    resolvedSetCall.getResultingDescriptor().getValueParameters(), setter.getValueParameterTypes()
+                            );
+
+                            int defaultIndex = CollectionsKt.getLastIndex(setterArguments) - 1/*rhs value*/ - setterDefaults.size();
+                            for (ResolvedValueArgument aDefault : setterDefaults) {
+                                defaultArgs.mark(++defaultIndex);
+                                setterArgumentGenerator.generateDefault(defaultIndex, (DefaultValueArgument) aDefault);
+                            }
+                            callDefault = true;
+                        }
+                        rhsValue.put(v);
+                        codegen.myFrameMap.leaveTemp(lastParameterType);
+                        defaultArgs.generateOnStackIfNeeded(callGenerator, false);
+                    }
+                    else {
+                        rhsValue.put(v);
+                        codegen.myFrameMap.leaveTemp(lastParameterType);
                     }
                 }
+            } else {
+                callDefault = properSetterCalls && genDefaultMaskIfPresent(callGenerator);
             }
 
-            getCallGenerator().genCall(setter, resolvedSetCall, false, codegen);
+            callGenerator.genCall(setter, resolvedSetCall, callDefault, codegen);
             Type returnType = setter.getReturnType();
             if (returnType != Type.VOID_TYPE) {
                 pop(v, returnType);
@@ -1679,7 +1735,7 @@ public abstract class StackValue {
                 PropertyGetterDescriptor getterDescriptor = descriptor.getGetter();
                 assert getterDescriptor != null : "Getter descriptor should be not null for " + descriptor;
                 if (resolvedCall != null && getterDescriptor.isInline()) {
-                    CallGenerator callGenerator = codegen.getOrCreateCallGenerator(resolvedCall, getterDescriptor);
+                    CallGenerator callGenerator = codegen.getOrCreateCallGenerator(resolvedCall, ((PropertyDescriptor)resolvedCall.getResultingDescriptor()).getGetter());
                     callGenerator.processAndPutHiddenParameters(false);
                     callGenerator.genCall(getter, resolvedCall, false, codegen);
                 }
@@ -1711,7 +1767,7 @@ public abstract class StackValue {
                 // is from a different context), the assertion will be generated on each access, see KT-28331.
                 if (descriptor instanceof AccessorForPropertyBackingField) {
                     PropertyDescriptor property = ((AccessorForPropertyBackingField) descriptor).getCalleeDescriptor();
-                    if (!skipLateinitAssertion && property.isLateInit() && JvmAbi.isPropertyWithBackingFieldInOuterClass(property) &&
+                    if (!skipLateinitAssertion && property.isLateInit() && DescriptorsJvmAbiUtil.isPropertyWithBackingFieldInOuterClass(property) &&
                         !JvmCodegenUtil.couldUseDirectAccessToProperty(property, true, false, codegen.context, false)) {
                         genNonNullAssertForLateinit(v, property.getName().asString());
                     }
@@ -1760,7 +1816,7 @@ public abstract class StackValue {
             PropertySetterDescriptor setterDescriptor = descriptor.getSetter();
             if (resolvedCall != null && setterDescriptor != null && setterDescriptor.isInline()) {
                 assert setter != null : "Setter should be not null for " + descriptor;
-                CallGenerator callGenerator = codegen.getOrCreateCallGenerator(resolvedCall, setterDescriptor);
+                CallGenerator callGenerator = codegen.getOrCreateCallGenerator(resolvedCall, ((PropertyDescriptor)resolvedCall.getResultingDescriptor()).getSetter());
                 if (!skipReceiver) {
                     putReceiver(v, false);
                 }
@@ -2303,8 +2359,8 @@ public abstract class StackValue {
 
         @Nullable private final Label ifNull;
 
-        public SafeFallback(@NotNull Type type, @Nullable Label ifNull, StackValue receiver) {
-            super(type, null, false, false, receiver, true);
+        public SafeFallback(@NotNull Type type, @Nullable KotlinType kotlinType, @Nullable Label ifNull, StackValue receiver) {
+            super(type, kotlinType, false, false, receiver, true);
             this.ifNull = ifNull;
         }
 

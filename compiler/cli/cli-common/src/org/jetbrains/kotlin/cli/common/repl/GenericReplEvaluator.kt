@@ -89,6 +89,9 @@ open class GenericReplEvaluator(
 
             historyActor.addPlaceholder(compileResult.lineId, EvalClassWithInstanceAndLoader(scriptClass.kotlin, null, classLoader, invokeWrapper))
 
+            val savedClassLoader = Thread.currentThread().contextClassLoader
+            Thread.currentThread().contextClassLoader = classLoader
+
             val scriptInstance =
                     try {
                         if (invokeWrapper != null) invokeWrapper.invoke { scriptInstanceConstructor.newInstance(*constructorArgs) }
@@ -104,16 +107,21 @@ open class GenericReplEvaluator(
                     }
                     finally {
                         historyActor.removePlaceholder(compileResult.lineId)
+                        Thread.currentThread().contextClassLoader = savedClassLoader
                     }
 
             historyActor.addFinal(compileResult.lineId, EvalClassWithInstanceAndLoader(scriptClass.kotlin, scriptInstance, classLoader, invokeWrapper))
 
-            val resultFieldName = scriptResultFieldName(compileResult.lineId.no)
-            val resultField = scriptClass.getDeclaredField(resultFieldName).apply { isAccessible = true }
-            val resultValue: Any? = if (!compileResult.isFunctionType) resultField.get(scriptInstance) else "<function>"
+            return if (compileResult.hasResult) {
+                val resultFieldName = scriptResultFieldName(compileResult.lineId.no)
+                val resultField = scriptClass.declaredFields.find { it.name == resultFieldName }?.apply { isAccessible = true }
+                assert(resultField != null) { "compileResult.hasResult == true but resultField is null" }
+                val resultValue: Any? = resultField!!.get(scriptInstance)
 
-            return if (compileResult.hasResult) ReplEvalResult.ValueResult(resultFieldName, resultValue, compileResult.type)
-            else ReplEvalResult.UnitResult()
+                ReplEvalResult.ValueResult(resultFieldName, resultValue, compileResult.type)
+            } else {
+                ReplEvalResult.UnitResult()
+            }
         }
     }
 }

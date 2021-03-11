@@ -2,7 +2,7 @@
 // MODULE: m1-common
 // FILE: common.kt
 
-expect fun foo()
+expect fun <!AMBIGUOUS_ACTUALS{JVM}, AMBIGUOUS_ACTUALS{JS}!>foo<!>()
 
 // MODULE: m2-jvm(m1-common)
 // FILE: jvm.kt

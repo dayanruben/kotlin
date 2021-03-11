@@ -1,6 +1,6 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2000-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.inspections
@@ -14,8 +14,9 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.search.searches.DefinitionsScopedSearch
 import org.jetbrains.kotlin.cfg.LeakingThisDescriptor.*
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
-import org.jetbrains.kotlin.idea.quickfix.AddModifierFix
+import org.jetbrains.kotlin.idea.quickfix.AddModifierFixMpp
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
@@ -35,23 +36,33 @@ class LeakingThisInspection : AbstractKotlinInspection() {
             val leakingThese = context.getSliceContents(LEAKING_THIS)
             these@ for ((expression, leakingThisDescriptor) in leakingThese) {
                 if (leakingThisDescriptor.classOrObject != klass) continue@these
-                val description = when (leakingThisDescriptor) {
+                val description: String = when (leakingThisDescriptor) {
                     is NonFinalClass ->
                         if (expression is KtThisExpression && expression.getStrictParentOfType<KtClassLiteralExpression>() == null) {
-                            if (klass.isEnum()) {
-                                val enumEntries = klass.body?.getChildrenOfType<KtEnumEntry>() ?: continue@these
-                                if (enumEntries.none { it.hasOverriddenMember() }) continue@these
-                                "Leaking 'this' in constructor of enum class ${leakingThisDescriptor.klass.name} (with overridable members)"
-                            } else {
-                                "Leaking 'this' in constructor of non-final class ${leakingThisDescriptor.klass.name}"
-                            }
+                            val name = leakingThisDescriptor.klass.name
+                            klass.createDescription(
+                                KotlinBundle.message("leaking.this.in.constructor.of.non.final.class.0", name),
+                                KotlinBundle.message("leaking.this.in.constructor.of.enum.class.0.with.overridable.members", name)
+                            ) { it.hasOverriddenMember() } ?: continue@these
                         } else {
                             continue@these // Not supported yet
                         }
-                    is NonFinalProperty ->
-                        "Accessing non-final property ${leakingThisDescriptor.property.name} in constructor"
-                    is NonFinalFunction ->
-                        "Calling non-final function ${leakingThisDescriptor.function.name} in constructor"
+                    is NonFinalProperty -> {
+                        val name = leakingThisDescriptor.property.name.asString()
+                        klass.createDescription(KotlinBundle.message("accessing.non.final.property.0.in.constructor", name)) {
+                            it.hasOverriddenMember { owner -> owner.name == name }
+                        } ?: continue@these
+                    }
+                    is NonFinalFunction -> {
+                        val function = leakingThisDescriptor.function
+                        klass.createDescription(KotlinBundle.message("calling.non.final.function.0.in.constructor", function.name)) {
+                            it.hasOverriddenMember { owner ->
+                                owner is KtNamedFunction &&
+                                        owner.name == function.name.asString() &&
+                                        owner.valueParameters.size == function.valueParameters.size
+                            }
+                        } ?: continue@these
+                    }
                     else -> continue@these // Not supported yet
                 }
                 val memberDescriptorToFix = when (leakingThisDescriptor) {
@@ -83,17 +94,37 @@ class LeakingThisInspection : AbstractKotlinInspection() {
         }
     }
 
-    private fun KtEnumEntry.hasOverriddenMember(): Boolean {
-        return body?.getChildrenOfType<KtModifierListOwner>()?.any { it.hasModifier(KtTokens.OVERRIDE_KEYWORD) } == true
-    }
-
     companion object {
         private fun createMakeFinalFix(declaration: KtDeclaration?): IntentionWrapper? {
             declaration ?: return null
             val useScope = declaration.useScope
             if (DefinitionsScopedSearch.search(declaration, useScope).findFirst() != null) return null
             if ((declaration.containingClassOrObject as? KtClass)?.isInterface() == true) return null
-            return IntentionWrapper(AddModifierFix(declaration, KtTokens.FINAL_KEYWORD), declaration.containingFile)
+            return IntentionWrapper(AddModifierFixMpp(declaration, KtTokens.FINAL_KEYWORD), declaration.containingFile)
         }
+    }
+}
+
+private fun KtClass.createDescription(
+    defaultText: String,
+    enumText: String = defaultText,
+    check: (KtClass) -> Boolean
+): String? {
+    return if (isEnum()) {
+        if (check(this)) return null
+        enumText
+    } else {
+        defaultText
+    }
+}
+
+private fun KtEnumEntry.hasOverriddenMember(additionalCheck: (KtDeclaration) -> Boolean): Boolean = declarations.any {
+    it.hasModifier(KtTokens.OVERRIDE_KEYWORD) && additionalCheck(it)
+}
+
+private fun KtClass.hasOverriddenMember(filter: (KtDeclaration) -> Boolean = { true }): Boolean {
+    val enumEntries = body?.getChildrenOfType<KtEnumEntry>() ?: return false
+    return enumEntries.none {
+        it.hasOverriddenMember(filter)
     }
 }

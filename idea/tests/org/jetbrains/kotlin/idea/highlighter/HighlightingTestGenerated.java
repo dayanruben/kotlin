@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.highlighter;
@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.idea.highlighter;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.test.KotlinTestUtils;
-import org.jetbrains.kotlin.test.TargetBackend;
+import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.runner.RunWith;
 
@@ -22,16 +22,26 @@ import java.util.regex.Pattern;
 @RunWith(JUnit3RunnerWithInners.class)
 public class HighlightingTestGenerated extends AbstractHighlightingTest {
     private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTest, TargetBackend.ANY, testDataFilePath);
+        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
     public void testAllFilesPresentInHighlighter() throws Exception {
-        KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/highlighter"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.ANY, true);
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/highlighter"), Pattern.compile("^(.+)\\.kt$"), null, true);
     }
 
     @TestMetadata("Annotations.kt")
     public void testAnnotations() throws Exception {
         runTest("idea/testData/highlighter/Annotations.kt");
+    }
+
+    @TestMetadata("AutoCreatedItParameter.kt")
+    public void testAutoCreatedItParameter() throws Exception {
+        runTest("idea/testData/highlighter/AutoCreatedItParameter.kt");
+    }
+
+    @TestMetadata("DelegatingCtor.kt")
+    public void testDelegatingCtor() throws Exception {
+        runTest("idea/testData/highlighter/DelegatingCtor.kt");
     }
 
     @TestMetadata("Destructuring.kt")
@@ -99,9 +109,24 @@ public class HighlightingTestGenerated extends AbstractHighlightingTest {
         runTest("idea/testData/highlighter/Object.kt");
     }
 
+    @TestMetadata("PropertiesWithPropertyDeclarations.kt")
+    public void testPropertiesWithPropertyDeclarations() throws Exception {
+        runTest("idea/testData/highlighter/PropertiesWithPropertyDeclarations.kt");
+    }
+
+    @TestMetadata("RecursiveTypes.kt")
+    public void testRecursiveTypes() throws Exception {
+        runTest("idea/testData/highlighter/RecursiveTypes.kt");
+    }
+
     @TestMetadata("SmartCast.kt")
     public void testSmartCast() throws Exception {
         runTest("idea/testData/highlighter/SmartCast.kt");
+    }
+
+    @TestMetadata("Suspend.kt")
+    public void testSuspend() throws Exception {
+        runTest("idea/testData/highlighter/Suspend.kt");
     }
 
     @TestMetadata("SyntheticExtensionProperty.kt")
@@ -149,11 +174,11 @@ public class HighlightingTestGenerated extends AbstractHighlightingTest {
     @RunWith(JUnit3RunnerWithInners.class)
     public static class Deprecated extends AbstractHighlightingTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, TargetBackend.ANY, testDataFilePath);
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
         public void testAllFilesPresentInDeprecated() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/highlighter/deprecated"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.ANY, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/highlighter/deprecated"), Pattern.compile("^(.+)\\.kt$"), null, true);
         }
 
         @TestMetadata("Class.kt")

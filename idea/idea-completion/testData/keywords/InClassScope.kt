@@ -1,3 +1,5 @@
+// COMPILER_ARGUMENTS: -XXLanguage:+SealedInterfaces -XXLanguage:+MultiPlatformProjects
+
 class TestClass {
     <caret>
 }
@@ -24,14 +26,15 @@ class TestClass {
 // EXIST:  operator
 // EXIST:  infix
 // EXIST:  sealed class
+// EXIST:  sealed interface
 // EXIST:  lateinit var
 // EXIST:  data class
 // EXIST:  inline
+// EXIST:  value
 // EXIST:  tailrec
 // EXIST:  external
 // EXIST:  annotation class
-// EXIST:  const val
-// EXIST:  suspend
+// EXIST:  suspend fun
 // EXIST:  typealias
 // EXIST:  expect
 // EXIST:  actual

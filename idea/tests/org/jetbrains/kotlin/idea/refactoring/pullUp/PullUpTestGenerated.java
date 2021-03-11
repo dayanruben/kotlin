@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.refactoring.pullUp;
@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.idea.refactoring.pullUp;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.test.KotlinTestUtils;
-import org.jetbrains.kotlin.test.TargetBackend;
+import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.runner.RunWith;
 
@@ -24,7 +24,7 @@ public class PullUpTestGenerated extends AbstractPullUpTest {
     @RunWith(JUnit3RunnerWithInners.class)
     public static class K2K extends AbstractPullUpTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doKotlinTest, TargetBackend.ANY, testDataFilePath);
+            KotlinTestUtils.runTest(this::doKotlinTest, this, testDataFilePath);
         }
 
         @TestMetadata("abstractFromInterfaceToInterface.kt")
@@ -38,7 +38,7 @@ public class PullUpTestGenerated extends AbstractPullUpTest {
         }
 
         public void testAllFilesPresentInK2K() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentInSingleGeneratedClass(this.getClass(), new File("idea/testData/refactoring/pullUp/k2k"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.ANY);
+            KtTestUtil.assertAllTestsPresentInSingleGeneratedClassWithExcluded(this.getClass(), new File("idea/testData/refactoring/pullUp/k2k"), Pattern.compile("^(.+)\\.kt$"), null);
         }
 
         @TestMetadata("clashWithSuper.kt")
@@ -124,6 +124,16 @@ public class PullUpTestGenerated extends AbstractPullUpTest {
         @TestMetadata("fromClassToClassMakeAbstract.kt")
         public void testFromClassToClassMakeAbstract() throws Exception {
             runTest("idea/testData/refactoring/pullUp/k2k/fromClassToClassMakeAbstract.kt");
+        }
+
+        @TestMetadata("fromClassToClassMakeAbstractWithCommentAndAnotherIndent.kt")
+        public void testFromClassToClassMakeAbstractWithCommentAndAnotherIndent() throws Exception {
+            runTest("idea/testData/refactoring/pullUp/k2k/fromClassToClassMakeAbstractWithCommentAndAnotherIndent.kt");
+        }
+
+        @TestMetadata("fromClassToClassMakeAbstractWithCommentAndAnotherIndent2.kt")
+        public void testFromClassToClassMakeAbstractWithCommentAndAnotherIndent2() throws Exception {
+            runTest("idea/testData/refactoring/pullUp/k2k/fromClassToClassMakeAbstractWithCommentAndAnotherIndent2.kt");
         }
 
         @TestMetadata("fromClassToClassWithGenerics.kt")
@@ -312,11 +322,11 @@ public class PullUpTestGenerated extends AbstractPullUpTest {
     @RunWith(JUnit3RunnerWithInners.class)
     public static class K2J extends AbstractPullUpTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doKotlinTest, TargetBackend.ANY, testDataFilePath);
+            KotlinTestUtils.runTest(this::doKotlinTest, this, testDataFilePath);
         }
 
         public void testAllFilesPresentInK2J() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentInSingleGeneratedClass(this.getClass(), new File("idea/testData/refactoring/pullUp/k2j"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.ANY);
+            KtTestUtil.assertAllTestsPresentInSingleGeneratedClassWithExcluded(this.getClass(), new File("idea/testData/refactoring/pullUp/k2j"), Pattern.compile("^(.+)\\.kt$"), null);
         }
 
         @TestMetadata("constructorParameterToClass.kt")
@@ -385,11 +395,11 @@ public class PullUpTestGenerated extends AbstractPullUpTest {
     @RunWith(JUnit3RunnerWithInners.class)
     public static class J2K extends AbstractPullUpTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doJavaTest, TargetBackend.ANY, testDataFilePath);
+            KotlinTestUtils.runTest(this::doJavaTest, this, testDataFilePath);
         }
 
         public void testAllFilesPresentInJ2K() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentInSingleGeneratedClass(this.getClass(), new File("idea/testData/refactoring/pullUp/j2k"), Pattern.compile("^(.+)\\.java$"), TargetBackend.ANY);
+            KtTestUtil.assertAllTestsPresentInSingleGeneratedClassWithExcluded(this.getClass(), new File("idea/testData/refactoring/pullUp/j2k"), Pattern.compile("^(.+)\\.java$"), null);
         }
 
         @TestMetadata("fromClassToClass.java")

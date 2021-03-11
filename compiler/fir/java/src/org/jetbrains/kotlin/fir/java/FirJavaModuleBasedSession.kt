@@ -1,64 +1,42 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.fir.java
 
 import com.intellij.openapi.project.Project
-import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.fir.*
-import org.jetbrains.kotlin.fir.resolve.FirProvider
-import org.jetbrains.kotlin.fir.resolve.FirSymbolProvider
-import org.jetbrains.kotlin.fir.resolve.impl.FirCompositeSymbolProvider
-import org.jetbrains.kotlin.fir.resolve.impl.FirDependenciesSymbolProviderImpl
-import org.jetbrains.kotlin.fir.resolve.impl.FirLibrarySymbolProviderImpl
 
-class FirJavaModuleBasedSession(
+@OptIn(PrivateSessionConstructor::class)
+class FirJavaModuleBasedSession @PrivateSessionConstructor constructor(
     moduleInfo: ModuleInfo,
-    override val sessionProvider: FirProjectSessionProvider,
-    scope: GlobalSearchScope
-) : FirModuleBasedSession(moduleInfo) {
+    sessionProvider: FirProjectSessionProvider,
+) : FirModuleBasedSession(moduleInfo, sessionProvider) {
     init {
-        sessionProvider.sessionCache[moduleInfo] = this
-        registerComponent(
-            FirSymbolProvider::class,
-            FirCompositeSymbolProvider(
-                listOf(
-                    service<FirProvider>(),
-                    JavaSymbolProvider(sessionProvider.project, scope),
-                    FirDependenciesSymbolProviderImpl(this)
-                )
-            )
-        )
+        sessionProvider.registerSession(moduleInfo, this)
     }
 }
 
-class FirLibrarySession(
-    moduleInfo: ModuleInfo,
-    override val sessionProvider: FirProjectSessionProvider,
-    scope: GlobalSearchScope
-) : FirSessionBase() {
+@OptIn(PrivateSessionConstructor::class)
+class FirLibrarySession @PrivateSessionConstructor constructor(
+    override val moduleInfo: ModuleInfo,
+    sessionProvider: FirProjectSessionProvider,
+) : FirSession(sessionProvider) {
     init {
-        sessionProvider.sessionCache[moduleInfo] = this
-        registerComponent(
-            FirSymbolProvider::class,
-            FirCompositeSymbolProvider(
-                listOf(
-                    FirLibrarySymbolProviderImpl(this),
-                    JavaSymbolProvider(sessionProvider.project, scope),
-                    FirDependenciesSymbolProviderImpl(this)
-                )
-            )
-        )
+        sessionProvider.registerSession(moduleInfo, this)
     }
 }
 
-class FirProjectSessionProvider(val project: Project) : FirSessionProvider {
+open class FirProjectSessionProvider : FirSessionProvider {
     override fun getSession(moduleInfo: ModuleInfo): FirSession? {
         return sessionCache[moduleInfo]
     }
 
-    val sessionCache = mutableMapOf<ModuleInfo, FirSession>()
+    fun registerSession(moduleInfo: ModuleInfo, session: FirSession) {
+        sessionCache[moduleInfo] = session
+    }
+
+    protected open val sessionCache: MutableMap<ModuleInfo, FirSession> = mutableMapOf()
 }

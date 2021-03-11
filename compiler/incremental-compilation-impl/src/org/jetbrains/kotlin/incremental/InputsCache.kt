@@ -18,28 +18,30 @@ package org.jetbrains.kotlin.incremental
 
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.build.GeneratedFile
+import org.jetbrains.kotlin.build.report.ICReporter
 import org.jetbrains.kotlin.incremental.snapshots.FileSnapshotMap
-import org.jetbrains.kotlin.incremental.storage.*
+import org.jetbrains.kotlin.incremental.storage.BasicMapsOwner
+import org.jetbrains.kotlin.incremental.storage.FileToPathConverter
+import org.jetbrains.kotlin.incremental.storage.SourceToOutputFilesMap
 import java.io.File
-import java.util.*
-import kotlin.collections.HashSet
 
 class InputsCache(
-        workingDir: File,
-        private val reporter: ICReporter
+    workingDir: File,
+    private val reporter: ICReporter,
+    pathConverter: FileToPathConverter
 ) : BasicMapsOwner(workingDir) {
     companion object {
-        private val SOURCE_SNAPSHOTS = "source-snapshot"
-        private val SOURCE_TO_OUTPUT_FILES = "source-to-output"
+        private const val SOURCE_SNAPSHOTS = "source-snapshot"
+        private const val SOURCE_TO_OUTPUT_FILES = "source-to-output"
     }
 
-    internal val sourceSnapshotMap = registerMap(FileSnapshotMap(SOURCE_SNAPSHOTS.storageFile))
-    private val sourceToOutputMap = registerMap(FilesMap(SOURCE_TO_OUTPUT_FILES.storageFile))
+    internal val sourceSnapshotMap = registerMap(FileSnapshotMap(SOURCE_SNAPSHOTS.storageFile, pathConverter))
+    private val sourceToOutputMap = registerMap(SourceToOutputFilesMap(SOURCE_TO_OUTPUT_FILES.storageFile, pathConverter))
 
     fun removeOutputForSourceFiles(sources: Iterable<File>) {
         for (sourceFile in sources) {
-            sourceToOutputMap.remove(sourceFile).forEach { it ->
-                reporter.report { "Deleting $it on clearing cache for $sourceFile" }
+            sourceToOutputMap.remove(sourceFile).forEach {
+                reporter.reportVerbose { "Deleting $it on clearing cache for $sourceFile" }
                 it.delete()
             }
         }

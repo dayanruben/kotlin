@@ -1,17 +1,6 @@
 /*
- * Copyright 2010-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea;
@@ -22,10 +11,13 @@ import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase;
+import org.jetbrains.kotlin.test.JUnit3WithIdeaConfigurationRunner;
 import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.junit.runner.RunWith;
 
 import java.io.File;
 
+@RunWith(JUnit3WithIdeaConfigurationRunner.class)
 public class WordSelectionTest extends KotlinLightCodeInsightFixtureTestCase {
     private static final String TEST_RELATIVE_DIR = "wordSelection";
 
@@ -46,6 +38,12 @@ public class WordSelectionTest extends KotlinLightCodeInsightFixtureTestCase {
     }
 
     public void testValueParametersInLambda() { doTest(); }
+
+    public void testValueParametersInLambda2() { doTest(); }
+
+    public void testValueParametersInLambda3() { doTest(); }
+
+    public void testValueParametersInLambda4() { doTest(); }
 
     public void testDocComment() { doTest(); }
 
@@ -123,10 +121,15 @@ public class WordSelectionTest extends KotlinLightCodeInsightFixtureTestCase {
         doTest();
     }
 
+    public void testClass() {
+        doTest();
+    }
+
     public void testDeclarationWithComment1() { doTest(); }
     public void testDeclarationWithComment2() { doTest(); }
     public void testDeclarationWithComment3() { doTest(); }
     public void testDeclarationWithComment4() { doTest(); }
+    public void testDeclarationWithDocComment() { doTest(); }
 
     public void testLeftBrace() { doTest(); }
     public void testRightBrace() { doTest(); }
@@ -138,6 +141,8 @@ public class WordSelectionTest extends KotlinLightCodeInsightFixtureTestCase {
     public void testClassMember3() { doTest(); }
     public void testClassMember4() { doTest(); }
     public void testClassMember5() { doTest(); }
+
+    public void testEscapedIdentifier() { doTest(); }
 
     private void doTest() {
         String dirName = getTestName(false);

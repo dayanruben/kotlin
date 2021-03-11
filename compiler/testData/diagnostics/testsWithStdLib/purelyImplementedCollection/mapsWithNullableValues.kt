@@ -1,4 +1,7 @@
 // !DIAGNOSTICS: -UNUSED_VARIABLE
+// !WITH_NEW_INFERENCE
+// FULL_JDK
+
 import java.util.*
 
 fun bar(): String? = null
@@ -11,8 +14,8 @@ fun hashMapTest() {
     x.put(<!TYPE_MISMATCH!>bar()<!>, 1)
     x.put("", 1)
 
-    <!TYPE_INFERENCE_CONFLICTING_SUBSTITUTIONS!>x[null]<!> = 1
-    <!TYPE_INFERENCE_CONFLICTING_SUBSTITUTIONS!>x[bar()]<!> = 1
+    <!TYPE_INFERENCE_CONFLICTING_SUBSTITUTIONS{OI}!>x[<!NULL_FOR_NONNULL_TYPE{NI}!>null<!>]<!> = 1
+    <!TYPE_INFERENCE_CONFLICTING_SUBSTITUTIONS{OI}!>x[<!TYPE_MISMATCH{NI}!>bar()<!>]<!> = 1
     x[""] = nullableInt
     x[""] = 1
 
@@ -35,8 +38,8 @@ fun treeMapTest() {
     x.put(<!TYPE_MISMATCH!>bar()<!>, 1)
     x.put("", 1)
 
-    <!TYPE_INFERENCE_CONFLICTING_SUBSTITUTIONS!>x[null]<!> = 1
-    <!TYPE_INFERENCE_CONFLICTING_SUBSTITUTIONS!>x[bar()]<!> = 1
+    <!TYPE_INFERENCE_CONFLICTING_SUBSTITUTIONS{OI}!>x[<!NULL_FOR_NONNULL_TYPE{NI}!>null<!>]<!> = 1
+    <!TYPE_INFERENCE_CONFLICTING_SUBSTITUTIONS{OI}!>x[<!TYPE_MISMATCH{NI}!>bar()<!>]<!> = 1
     x[""] = nullableInt
     x[""] = 1
 

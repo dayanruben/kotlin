@@ -1,22 +1,26 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.resolve.calls.checkers
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.coroutines.hasSuspendFunctionType
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.diagnostics.DiagnosticSink
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.KtCodeFragment
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtThisExpression
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.calls.callUtil.isCallableReference
+import org.jetbrains.kotlin.resolve.calls.context.CallResolutionContext
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.inline.InlineUtil
@@ -32,13 +36,13 @@ import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 val COROUTINE_CONTEXT_1_2_20_FQ_NAME =
-    DescriptorUtils.COROUTINES_INTRINSICS_PACKAGE_FQ_NAME_EXPERIMENTAL.child(Name.identifier("coroutineContext"))
+    StandardNames.COROUTINES_INTRINSICS_PACKAGE_FQ_NAME_EXPERIMENTAL.child(Name.identifier("coroutineContext"))
 
 val COROUTINE_CONTEXT_1_2_30_FQ_NAME =
-    DescriptorUtils.COROUTINES_PACKAGE_FQ_NAME_EXPERIMENTAL.child(Name.identifier("coroutineContext"))
+    StandardNames.COROUTINES_PACKAGE_FQ_NAME_EXPERIMENTAL.child(Name.identifier("coroutineContext"))
 
 val COROUTINE_CONTEXT_1_3_FQ_NAME =
-    DescriptorUtils.COROUTINES_PACKAGE_FQ_NAME_RELEASE.child(Name.identifier("coroutineContext"))
+    StandardNames.COROUTINES_PACKAGE_FQ_NAME_RELEASE.child(Name.identifier("coroutineContext"))
 
 fun FunctionDescriptor.isBuiltInCoroutineContext(languageVersionSettings: LanguageVersionSettings) =
     (this as? PropertyGetterDescriptor)?.correspondingProperty?.fqNameSafe?.isBuiltInCoroutineContext(languageVersionSettings) == true
@@ -48,11 +52,28 @@ fun PropertyDescriptor.isBuiltInCoroutineContext(languageVersionSettings: Langua
 
 private val ALLOWED_SCOPE_KINDS = setOf(LexicalScopeKind.FUNCTION_INNER_SCOPE, LexicalScopeKind.FUNCTION_HEADER_FOR_DESTRUCTURING)
 
-fun findEnclosingSuspendFunction(context: CallCheckerContext): FunctionDescriptor? = context.scope
-    .parentsWithSelf.firstOrNull {
-    it is LexicalScope && it.kind in ALLOWED_SCOPE_KINDS &&
-            it.ownerDescriptor.safeAs<FunctionDescriptor>()?.isSuspend == true
-}?.cast<LexicalScope>()?.ownerDescriptor?.cast()
+fun findEnclosingSuspendFunction(context: CallCheckerContext, checkingCall: KtElement): FunctionDescriptor? {
+    /*
+     * If checking call isn't equal to call in resolution context, we should look at lexical scope from trace.
+     * It means there is a parent function analysis of which isn't completed yet
+     * and their lexical scope in the resolution context isn't recorded yet (but there is lexical scope with not completed descriptor in trace).
+     * Example (suggest that we're analyzing the last expression of lambda now):
+     *      fun main() {
+     *          runBlocking {
+     *              retry { 1 } // `fun main` lexical scope in the resolution context, `runBlocking { ... }` one in the recorded in trace lexical scope
+     *          }
+     *      }
+     */
+    val scope = if (context.resolutionContext !is CallResolutionContext<*> || context.resolutionContext.call.callElement == checkingCall) {
+        context.scope
+    } else {
+        context.trace.get(BindingContext.LEXICAL_SCOPE, checkingCall) ?: context.scope
+    }
+
+    return scope.parentsWithSelf.firstOrNull {
+        it is LexicalScope && it.kind in ALLOWED_SCOPE_KINDS && it.ownerDescriptor.safeAs<FunctionDescriptor>()?.isSuspend == true
+    }?.cast<LexicalScope>()?.ownerDescriptor?.cast()
+}
 
 object CoroutineSuspendCallChecker : CallChecker {
     override fun check(resolvedCall: ResolvedCall<*>, reportOn: PsiElement, context: CallCheckerContext) {
@@ -67,14 +88,26 @@ object CoroutineSuspendCallChecker : CallChecker {
             else -> return
         }
 
-        val enclosingSuspendFunction = findEnclosingSuspendFunction(context)
+        val callElement = resolvedCall.call.callElement as KtExpression
+        val enclosingSuspendFunction = findEnclosingSuspendFunction(context, callElement)
 
         when {
             enclosingSuspendFunction != null -> {
-                val callElement = resolvedCall.call.callElement as KtExpression
-
                 if (!InlineUtil.checkNonLocalReturnUsage(enclosingSuspendFunction, callElement, context.resolutionContext)) {
-                    context.trace.report(Errors.NON_LOCAL_SUSPENSION_POINT.on(reportOn))
+                    var shouldReport = true
+
+                    // Do not report for KtCodeFragment in a suspend function context
+                    val containingFile = callElement.containingFile
+                    if (containingFile is KtCodeFragment) {
+                        val c = containingFile.context?.getParentOfType<KtExpression>(false)
+                        if (c != null && InlineUtil.checkNonLocalReturnUsage(enclosingSuspendFunction, c, context.resolutionContext)) {
+                            shouldReport = false
+                        }
+                    }
+
+                    if (shouldReport) {
+                        context.trace.report(Errors.NON_LOCAL_SUSPENSION_POINT.on(reportOn))
+                    }
                 } else if (context.scope.parentsWithSelf.any { it.isScopeForDefaultParameterValuesOf(enclosingSuspendFunction) }) {
                     context.trace.report(Errors.UNSUPPORTED.on(reportOn, "suspend function calls in a context of default parameter value"))
                 }

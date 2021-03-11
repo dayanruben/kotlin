@@ -8,7 +8,7 @@ plugins {
 dependencies {
     compile(commonDep("org.apache.ant", "ant"))
     compile(project(":kotlin-preloader"))
-    compile(project(":kotlin-stdlib"))
+    compile(kotlinStdlib())
 }
 
 sourceSets {
@@ -17,8 +17,5 @@ sourceSets {
 }
 
 runtimeJar {
-    manifest.attributes.put("Class-Path", "$compilerManifestClassPath kotlin-preloader.jar")
+    manifest.attributes["Class-Path"] = "$compilerManifestClassPath kotlin-preloader.jar"
 }
-
-dist()
-

@@ -90,6 +90,10 @@ public abstract class JsVisitorWithContext {
     public void endVisit(@NotNull JsCatch x, @NotNull JsContext ctx) {
     }
 
+    public void endVisit(@NotNull JsClass x, @NotNull JsContext ctx) {
+        endVisit((JsExpression) x, ctx);
+    }
+
     public void endVisit(@NotNull JsConditional x, @NotNull JsContext ctx) {
         endVisit((JsExpression) x, ctx);
     }
@@ -207,6 +211,9 @@ public abstract class JsVisitorWithContext {
     public void endVisit(@NotNull JsVars x, @NotNull JsContext ctx) {
     }
 
+    public void endVisit(@NotNull JsSingleLineComment x, @NotNull JsContext ctx) {
+    }
+
     public void endVisit(@NotNull JsWhile x, @NotNull JsContext ctx) {
         endVisit((JsLoop) x, ctx);
     }
@@ -240,6 +247,10 @@ public abstract class JsVisitorWithContext {
     }
 
     public boolean visit(@NotNull JsCatch x, @NotNull JsContext ctx) {
+        return true;
+    }
+
+    public boolean visit(@NotNull JsClass x, @NotNull JsContext ctx) {
         return true;
     }
 
@@ -381,6 +392,10 @@ public abstract class JsVisitorWithContext {
 
     public boolean visit(@NotNull JsWhile x, @NotNull JsContext ctx) {
         return visit((JsLoop) x, ctx);
+    }
+
+    public boolean visit(@NotNull JsSingleLineComment x, @NotNull JsContext ctx) {
+        return true;
     }
 
     protected abstract  <T extends JsNode> T doAccept(T node);

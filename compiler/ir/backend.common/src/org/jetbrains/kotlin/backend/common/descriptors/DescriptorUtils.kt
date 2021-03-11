@@ -16,15 +16,15 @@
 
 package org.jetbrains.kotlin.backend.common.descriptors
 
-import org.jetbrains.kotlin.builtins.functions.FunctionClassDescriptor
-import org.jetbrains.kotlin.builtins.getFunctionalClassKind
-import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.incremental.components.NoLookupLocation
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.descriptors.ParameterDescriptor
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.types.TypeProjectionImpl
-import org.jetbrains.kotlin.types.TypeSubstitutor
-import org.jetbrains.kotlin.types.replace
+
+val String.synthesizedName: Name get() = Name.identifier(this.synthesizedString)
+
+val String.synthesizedString: String get() = "\$$this"
 
 val CallableDescriptor.isSuspend: Boolean
     get() = this is FunctionDescriptor && isSuspend
@@ -32,6 +32,8 @@ val CallableDescriptor.isSuspend: Boolean
 /**
  * @return naturally-ordered list of all parameters available inside the function body.
  */
+// Used in Kotlin/Native
+@Suppress("unused")
 val CallableDescriptor.allParameters: List<ParameterDescriptor>
     get() = if (this is ConstructorDescriptor) {
         listOf(this.constructedClass.thisAsReceiverParameter) + explicitParameters
@@ -57,62 +59,4 @@ val CallableDescriptor.explicitParameters: List<ParameterDescriptor>
         result.addAll(valueParameters)
 
         return result
-    }
-
-fun KotlinType.replace(types: List<KotlinType>) = this.replace(types.map(::TypeProjectionImpl))
-
-fun FunctionDescriptor.substitute(vararg types: KotlinType): FunctionDescriptor {
-    val typeSubstitutor = TypeSubstitutor.create(
-            typeParameters
-                    .withIndex()
-                    .associateBy({ it.value.typeConstructor }, { TypeProjectionImpl(types[it.index]) })
-    )
-    return substitute(typeSubstitutor)!!
-}
-
-fun FunctionDescriptor.substitute(typeArguments: Map<TypeParameterDescriptor, KotlinType>): FunctionDescriptor {
-    val typeSubstitutor = TypeSubstitutor.create(
-            typeParameters.associateBy({ it.typeConstructor }, { TypeProjectionImpl(typeArguments[it]!!) })
-    )
-    return substitute(typeSubstitutor)!!
-}
-
-fun ClassDescriptor.getFunction(name: String, types: List<KotlinType>): FunctionDescriptor {
-    val typeSubstitutor = TypeSubstitutor.create(
-            declaredTypeParameters
-                    .withIndex()
-                    .associateBy({ it.value.typeConstructor }, { TypeProjectionImpl(types[it.index]) })
-    )
-    return unsubstitutedMemberScope
-            .getContributedFunctions(Name.identifier(name), NoLookupLocation.FROM_BACKEND).single().substitute(typeSubstitutor)!!
-}
-
-fun ClassDescriptor.getStaticFunction(name: String, types: List<KotlinType>): FunctionDescriptor {
-    val typeSubstitutor = TypeSubstitutor.create(
-        declaredTypeParameters
-            .withIndex()
-            .associateBy({ it.value.typeConstructor }, { TypeProjectionImpl(types[it.index]) })
-    )
-    return staticScope
-        .getContributedFunctions(Name.identifier(name), NoLookupLocation.FROM_BACKEND).single().substitute(typeSubstitutor)!!
-}
-
-fun ClassDescriptor.getProperty(name: String, types: List<KotlinType>): PropertyDescriptor {
-    val typeSubstitutor = TypeSubstitutor.create(
-        declaredTypeParameters
-            .withIndex()
-            .associateBy({ it.value.typeConstructor }, { TypeProjectionImpl(types[it.index]) })
-    )
-    return unsubstitutedMemberScope
-        .getContributedVariables(
-            Name.identifier(name),
-            NoLookupLocation.FROM_BACKEND
-        ).single().substitute(typeSubstitutor) as PropertyDescriptor
-}
-
-
-val KotlinType.isFunctionOrKFunctionType: Boolean
-    get() {
-        val kind = constructor.declarationDescriptor?.getFunctionalClassKind()
-        return kind == FunctionClassDescriptor.Kind.Function || kind == FunctionClassDescriptor.Kind.KFunction
     }

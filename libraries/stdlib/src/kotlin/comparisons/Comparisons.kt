@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 @file:kotlin.jvm.JvmName("ComparisonsKt")
 @file:kotlin.jvm.JvmMultifileClass
@@ -291,6 +291,7 @@ public fun <T : Comparable<T>> reverseOrder(): Comparator<T> = @Suppress("UNCHEC
  *
  *  @sample samples.comparisons.Comparisons.reversed
  */
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
 public fun <T> Comparator<T>.reversed(): Comparator<T> = when (this) {
     is ReversedComparator -> this.comparator
     NaturalOrderComparator -> @Suppress("UNCHECKED_CAST") (ReverseOrderComparator as Comparator<T>)

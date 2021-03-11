@@ -1,6 +1,6 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2000-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.inspections
@@ -10,6 +10,7 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -66,7 +67,7 @@ class RedundantNotNullExtensionReceiverOfInlineInspection : AbstractKotlinInspec
                         }
                         is KtThisExpression -> {
                             val expectedType = context[BindingContext.EXPECTED_EXPRESSION_TYPE, it]
-                            expectedType != null && !expectedType.isNullable()
+                            it.parent is KtCallExpression || expectedType != null && !expectedType.isNullable()
                         }
                         is KtBinaryExpressionWithTypeRHS -> {
                             val type = context[BindingContext.TYPE, it.right]
@@ -106,7 +107,7 @@ class RedundantNotNullExtensionReceiverOfInlineInspection : AbstractKotlinInspec
 
             holder.registerProblem(
                 receiverTypeReference,
-                "This type probably can be changed to nullable",
+                KotlinBundle.message("this.type.probably.can.be.changed.to.nullable"),
                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING
             )
         })

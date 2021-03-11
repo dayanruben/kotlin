@@ -23,14 +23,16 @@ import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles;
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment;
-import org.jetbrains.kotlin.test.CompilerTestUtil;
-import org.jetbrains.kotlin.test.ConfigurationKind;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
-import org.jetbrains.kotlin.test.TestJdkKind;
+import org.jetbrains.kotlin.test.*;
+import org.jetbrains.kotlin.test.util.JUnit4Assertions;
+import org.jetbrains.kotlin.test.util.KtTestUtil;
 
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
+
+import static org.jetbrains.kotlin.codegen.BytecodeTextUtilsKt.checkGeneratedTextAgainstExpectedOccurrences;
+import static org.jetbrains.kotlin.codegen.BytecodeTextUtilsKt.readExpectedOccurrences;
 
 public abstract class AbstractTopLevelMembersInvocationTest extends AbstractBytecodeTextTest {
     @Override
@@ -54,14 +56,14 @@ public abstract class AbstractTopLevelMembersInvocationTest extends AbstractByte
                 getTestRootDisposable(),
                 KotlinTestUtils.newConfiguration(
                         ConfigurationKind.JDK_ONLY, TestJdkKind.MOCK_JDK,
-                        CollectionsKt.plus(classPath, KotlinTestUtils.getAnnotationsJar()), Collections.emptyList()
+                        CollectionsKt.plus(classPath, KtTestUtil.getAnnotationsJar()), Collections.emptyList()
                 ),
                 EnvironmentConfigFiles.JVM_CONFIG_FILES);
 
         loadFiles(ArrayUtil.toStringArray(sourceFiles));
 
-        List<OccurrenceInfo> expected = readExpectedOccurrences(KotlinTestUtils.getTestDataPathBase() + "/codegen/" + sourceFiles.get(0));
+        List<OccurrenceInfo> expected = readExpectedOccurrences(KtTestUtil.getTestDataPathBase() + "/codegen/" + sourceFiles.get(0));
         String actual = generateToText();
-        Companion.checkGeneratedTextAgainstExpectedOccurrences(actual, expected);
+        checkGeneratedTextAgainstExpectedOccurrences(actual, expected, TargetBackend.ANY, true, JUnit4Assertions.INSTANCE);
     }
 }

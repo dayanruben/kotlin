@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.asJava.elements
@@ -11,7 +11,9 @@ import com.intellij.psi.impl.LanguageConstantExpressionEvaluator
 import com.intellij.psi.impl.light.LightIdentifier
 import com.intellij.psi.impl.light.LightTypeElement
 import org.jetbrains.kotlin.asJava.LightClassGenerationSupport
+import org.jetbrains.kotlin.asJava.classes.cannotModify
 import org.jetbrains.kotlin.asJava.classes.lazyPub
+import org.jetbrains.kotlin.asJava.computeExpression
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.psi.*
@@ -23,7 +25,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class KtLightPsiArrayInitializerMemberValue(
     override val kotlinOrigin: KtElement,
-    val lightParent: PsiElement,
+    private val lightParent: PsiElement,
     private val arguments: (KtLightPsiArrayInitializerMemberValue) -> List<PsiAnnotationMemberValue>
 ) : KtLightElementBase(lightParent), PsiArrayInitializerMemberValue {
     override fun getInitializers(): Array<PsiAnnotationMemberValue> = arguments(this).toTypedArray()
@@ -35,11 +37,10 @@ class KtLightPsiArrayInitializerMemberValue(
 
 open class KtLightPsiLiteral(
     override val kotlinOrigin: KtExpression,
-    val lightParent: PsiElement
+    private val lightParent: PsiElement
 ) : KtLightElementBase(lightParent), PsiLiteralExpression {
 
-    override fun getValue(): Any? =
-        LanguageConstantExpressionEvaluator.INSTANCE.forLanguage(kotlinOrigin.language)?.computeConstantExpression(this, false)
+    override fun getValue(): Any? = computeExpression(this)
 
     override fun getType(): PsiType? {
         val bindingContext = LightClassGenerationSupport.getInstance(this.project).analyze(kotlinOrigin)
@@ -67,8 +68,9 @@ class KtLightPsiClassObjectAccessExpression(override val kotlinOrigin: KtClassLi
     override fun getType(): PsiType {
         val bindingContext = LightClassGenerationSupport.getInstance(this.project).analyze(kotlinOrigin)
         val (classId, arrayDimensions) = bindingContext[BindingContext.COMPILE_TIME_VALUE, kotlinOrigin]
-            ?.toConstantValue(TypeUtils.NO_EXPECTED_TYPE)?.safeAs<KClassValue>()?.value ?: return PsiType.VOID
-        var type = psiType(classId.asSingleFqName().asString(), kotlinOrigin, boxPrimitiveType = arrayDimensions > 0) ?: return PsiType.VOID
+            ?.toConstantValue(TypeUtils.NO_EXPECTED_TYPE)?.safeAs<KClassValue>()?.value
+            ?.safeAs<KClassValue.Value.NormalClass>()?.value ?: return PsiType.VOID
+        var type = psiType(classId.asSingleFqName().asString(), kotlinOrigin, boxPrimitiveType = arrayDimensions > 0)
         repeat(arrayDimensions) {
             type = type.createArrayType()
         }
@@ -105,31 +107,24 @@ internal fun psiType(kotlinFqName: String, context: PsiElement, boxPrimitiveType
     return PsiType.getTypeByName(javaFqName, context.project, context.resolveScope)
 }
 
-class KtLightPsiNameValuePair private constructor(
+class KtLightPsiNameValuePair(
     override val kotlinOrigin: KtElement,
-    val valueArgument: KtValueArgument,
+    private val name: String,
     lightParent: PsiElement,
     private val argument: (KtLightPsiNameValuePair) -> PsiAnnotationMemberValue?
 ) : KtLightElementBase(lightParent),
     PsiNameValuePair {
 
-    constructor(
-        valueArgument: KtValueArgument,
-        lightParent: PsiElement,
-        argument: (KtLightPsiNameValuePair) -> PsiAnnotationMemberValue?
-    ) : this(valueArgument.asElement(), valueArgument, lightParent, argument)
+    override fun setValue(newValue: PsiAnnotationMemberValue): PsiAnnotationMemberValue = cannotModify()
 
-    override fun setValue(newValue: PsiAnnotationMemberValue): PsiAnnotationMemberValue =
-        throw UnsupportedOperationException("can't modify KtLightPsiNameValuePair")
+    override fun getNameIdentifier(): PsiIdentifier? = LightIdentifier(kotlinOrigin.manager, name)
 
-    override fun getNameIdentifier(): PsiIdentifier? = LightIdentifier(kotlinOrigin.manager, valueArgument.name)
-
-    override fun getName(): String? = valueArgument.getArgumentName()?.asName?.asString()
+    override fun getName(): String? = name
 
     private val _value: PsiAnnotationMemberValue? by lazyPub { argument(this) }
 
     override fun getValue(): PsiAnnotationMemberValue? = _value
 
-    override fun getLiteralValue(): String? = (getValue() as? PsiLiteralExpression)?.value?.toString()
+    override fun getLiteralValue(): String? = (value as? PsiLiteralExpression)?.value?.toString()
 
 }

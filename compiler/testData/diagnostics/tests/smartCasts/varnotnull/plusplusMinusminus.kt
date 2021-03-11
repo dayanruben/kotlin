@@ -12,10 +12,10 @@ operator fun Long?.inc() = this?.let { it + 1 }
 fun bar(arg: Long?): Long {
     var i = arg
     if (i++ == 5L) {
-        return i<!UNSAFE_CALL!>--<!> <!DEBUG_INFO_ELEMENT_WITH_ERROR_TYPE!>+<!> i
+        return i<!UNSAFE_CALL!>--<!> <!DEBUG_INFO_ELEMENT_WITH_ERROR_TYPE{OI}, DEBUG_INFO_MISSING_UNRESOLVED{NI}!>+<!> i
     }
     if (i++ == 7L) {
-        return i++ <!NI;NONE_APPLICABLE, OI;UNSAFE_OPERATOR_CALL!>+<!> <!OI;TYPE_MISMATCH!>i<!>
+        return i++ <!UNSAFE_OPERATOR_CALL!>+<!> <!TYPE_MISMATCH!>i<!>
     }
     return 0L
 }

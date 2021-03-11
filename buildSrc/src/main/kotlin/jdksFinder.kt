@@ -4,17 +4,18 @@ import net.rubygrapefruit.platform.Native
 import net.rubygrapefruit.platform.WindowsRegistry
 import org.gradle.api.GradleException
 import org.gradle.api.Project
+import java.nio.file.Paths
 import java.io.File
 import net.rubygrapefruit.platform.WindowsRegistry.Key.HKEY_LOCAL_MACHINE
 import org.gradle.internal.os.OperatingSystem
 
 enum class JdkMajorVersion(private val mandatory: Boolean = true) {
-    JDK_16, JDK_17, JDK_18, JDK_9, JDK_10(false), JDK_11(false);
+    JDK_16, JDK_17, JDK_18, JDK_9, JDK_10(false), JDK_11(false), /*15.0*/JDK_15(false);
 
     fun isMandatory(): Boolean = mandatory
 }
 
-val jdkAlternativeVarNames = mapOf(JdkMajorVersion.JDK_9 to listOf("JDK_19"))
+val jdkAlternativeVarNames = mapOf(JdkMajorVersion.JDK_9 to listOf("JDK_19"), JdkMajorVersion.JDK_15 to listOf("JDK_15_0"))
 
 data class JdkId(val explicit: Boolean, val majorVersion: JdkMajorVersion, var version: String, var homeDir: File)
 
@@ -25,7 +26,7 @@ fun Project.getConfiguredJdks(): List<JdkId> {
                 ?: System.getenv(jdkMajorVersion.name)
                 ?: jdkAlternativeVarNames[jdkMajorVersion]?.mapNotNull { System.getenv(it) }?.firstOrNull()
                 ?: continue
-        val explicitJdk = File(explicitJdkEnvVal)
+        val explicitJdk = Paths.get(explicitJdkEnvVal).toRealPath().toFile()
         if (!explicitJdk.isDirectory) {
             throw GradleException("Invalid environment value $jdkMajorVersion: $explicitJdkEnvVal, expecting JDK home path")
         }
@@ -43,7 +44,7 @@ private val javaVersionRegex = Regex("""(?:1\.)?(\d+)(\.\d+)?([+-_]\w+){0,3}""")
 
 fun MutableCollection<JdkId>.addIfBetter(project: Project, version: String, id: String, homeDir: File): Boolean {
     val matchString = javaMajorVersionRegex.matchEntire(version)?.groupValues?.get(1)
-    val majorJersion = when (matchString) {
+    val majorJdkVersion = when (matchString) {
         "6" -> JdkMajorVersion.JDK_16
         "7" -> JdkMajorVersion.JDK_17
         "8" -> JdkMajorVersion.JDK_18
@@ -53,9 +54,9 @@ fun MutableCollection<JdkId>.addIfBetter(project: Project, version: String, id: 
             return false
         }
     }
-    val prev = find { it.majorVersion == majorJersion }
+    val prev = find { it.majorVersion == majorJdkVersion }
     if (prev == null) {
-        add(JdkId(false, majorJersion, version, homeDir))
+        add(JdkId(false, majorJdkVersion, version, homeDir))
         return true
     }
     if (prev.explicit) return false
@@ -100,8 +101,12 @@ fun MutableCollection<JdkId>.discoverJdks(project: Project) {
     }
 }
 
-private val macOsJavaHomeOutRegexes = listOf(Regex("""\s+(\S+),\s+(\S+):\s+".*?"\s+(.+)"""),
-                                             Regex("""\s+(\S+)\s+\((.*?)\):\s+(.+)"""))
+private val macOsJavaHomeOutRegexes =
+    listOf(
+        Regex("""\s+(\S+),\s+(\S+):\s+".*?"\s+(.+)"""),
+        Regex("""\s+(\S+)\s+\((.*?)\):\s+(.+)"""),
+        Regex("""\s+(\S+)\s+\((.*?)\)\s+"[^"]*"\s+-\s+"[^"]*"\s(.+)"""),
+        Regex("""\s+(\S+)\s+\((.+)\)\s+".+"\s+-\s+".+"\s+(.+)"""))
 
 fun MutableCollection<JdkId>.discoverJdksOnMacOS(project: Project) {
     val procBuilder = ProcessBuilder("/usr/libexec/java_home", "-V").redirectErrorStream(true)

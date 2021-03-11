@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.codeInsight;
@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.idea.codeInsight;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.test.KotlinTestUtils;
-import org.jetbrains.kotlin.test.TargetBackend;
+import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.runner.RunWith;
 
@@ -22,11 +22,11 @@ import java.util.regex.Pattern;
 @RunWith(JUnit3RunnerWithInners.class)
 public class MultiFileInspectionTestGenerated extends AbstractMultiFileInspectionTest {
     private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTest, TargetBackend.ANY, testDataFilePath);
+        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
     public void testAllFilesPresentInMultiFileInspections() throws Exception {
-        KotlinTestUtils.assertAllTestsPresentInSingleGeneratedClass(this.getClass(), new File("idea/testData/multiFileInspections"), Pattern.compile("^(.+)\\.test$"), TargetBackend.ANY);
+        KtTestUtil.assertAllTestsPresentInSingleGeneratedClassWithExcluded(this.getClass(), new File("idea/testData/multiFileInspections"), Pattern.compile("^(.+)\\.test$"), null);
     }
 
     @TestMetadata("fakeJvmFieldConstant/fakeJvmFieldConstant.test")
@@ -44,14 +44,34 @@ public class MultiFileInspectionTestGenerated extends AbstractMultiFileInspectio
         runTest("idea/testData/multiFileInspections/kotlinInternalInJava/kotlinInternalInJava.test");
     }
 
+    @TestMetadata("kotlinInternalInJavaTest/kotlinInternalInJavaTest.test")
+    public void testKotlinInternalInJavaTest_KotlinInternalInJavaTest() throws Exception {
+        runTest("idea/testData/multiFileInspections/kotlinInternalInJavaTest/kotlinInternalInJavaTest.test");
+    }
+
+    @TestMetadata("kotlinSealedInJavaTest/kotlinSealedInJavaTest.test")
+    public void testKotlinSealedInJavaTest_KotlinSealedInJavaTest() throws Exception {
+        runTest("idea/testData/multiFileInspections/kotlinSealedInJavaTest/kotlinSealedInJavaTest.test");
+    }
+
     @TestMetadata("mainInTwoModules/mainInTwoModules.test")
     public void testMainInTwoModules_MainInTwoModules() throws Exception {
         runTest("idea/testData/multiFileInspections/mainInTwoModules/mainInTwoModules.test");
     }
 
+    @TestMetadata("mismatchedPackageDirectoryWithEmptyKts/mismatchedPackageDirectoryWithEmptyKts.test")
+    public void testMismatchedPackageDirectoryWithEmptyKts_MismatchedPackageDirectoryWithEmptyKts() throws Exception {
+        runTest("idea/testData/multiFileInspections/mismatchedPackageDirectoryWithEmptyKts/mismatchedPackageDirectoryWithEmptyKts.test");
+    }
+
     @TestMetadata("mismatchedProjectAndDirectory/mismatchedProjectAndDirectory.test")
     public void testMismatchedProjectAndDirectory_MismatchedProjectAndDirectory() throws Exception {
         runTest("idea/testData/multiFileInspections/mismatchedProjectAndDirectory/mismatchedProjectAndDirectory.test");
+    }
+
+    @TestMetadata("mismatchedProjectAndDirectoryRoot/mismatchedProjectAndDirectoryRoot.test")
+    public void testMismatchedProjectAndDirectoryRoot_MismatchedProjectAndDirectoryRoot() throws Exception {
+        runTest("idea/testData/multiFileInspections/mismatchedProjectAndDirectoryRoot/mismatchedProjectAndDirectoryRoot.test");
     }
 
     @TestMetadata("platformExtensionReceiverOfInline/platformExtensionReceiverOfInline.test")

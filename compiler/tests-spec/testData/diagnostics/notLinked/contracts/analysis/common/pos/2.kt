@@ -1,5 +1,5 @@
+// FIR_IDENTICAL
 // !USE_EXPERIMENTAL: kotlin.contracts.ExperimentalContracts
-// !WITH_CONTRACT_FUNCTIONS
 // SKIP_TXT
 
 /*
@@ -8,6 +8,7 @@
  * SECTIONS: contracts, analysis, common
  * NUMBER: 2
  * DESCRIPTION: Recursion in the lambda of contract function.
+ * HELPERS: contractFunctions
  */
 
 // TESTCASE NUMBER: 1

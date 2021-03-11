@@ -6,20 +6,20 @@ plugins {
     id("jps-compatible")
 }
 
-jvmTarget = "1.6"
-
 dependencies {
+    compile(project(":plugins:android-extensions-compiler"))
+
     testRuntime(intellijDep())
 
-    compile(project(":compiler:util"))
-    compile(project(":compiler:light-classes"))
-    compile(project(":idea:idea-core"))
-    compile(project(":idea"))
-    compile(project(":idea:idea-jvm"))
-    compile(project(":idea:idea-gradle"))
-    compile(project(":plugins:android-extensions-compiler"))
+    compileOnly(project(":compiler:util"))
+    compileOnly(project(":compiler:light-classes"))
+    compileOnly(project(":idea:idea-core"))
+    compileOnly(project(":idea"))
+    compileOnly(project(":idea:idea-jvm"))
+    compileOnly(project(":idea:idea-gradle"))
     compileOnly(project(":kotlin-android-extensions-runtime"))
     compileOnly(intellijPluginDep("android"))
+    compileOnly(intellijPluginDep("gradle"))
     compileOnly(intellijPluginDep("Groovy"))
     compileOnly(intellijDep())
 
@@ -34,8 +34,7 @@ dependencies {
     testCompile(commonDep("junit:junit"))
     testCompile(project(":idea:idea-native")) { isTransitive = false }
     testCompile(project(":idea:idea-gradle-native")) { isTransitive = false }
-    testRuntime(project(":kotlin-native:kotlin-native-library-reader")) { isTransitive = false }
-    testRuntime(project(":kotlin-native:kotlin-native-utils")) { isTransitive = false }
+    testRuntime(project(":native:frontend.native"))
     testRuntime(project(":kotlin-reflect"))
     testCompile(intellijPluginDep("android"))
     testCompile(intellijPluginDep("Groovy"))
@@ -48,6 +47,7 @@ dependencies {
     testRuntime(project(":kotlin-scripting-idea"))
     testRuntime(project(":kotlinx-serialization-ide-plugin"))
     testRuntime(project(":plugins:lint"))
+    testRuntime(project(":plugins:parcelize:parcelize-ide"))
     testRuntime(intellijPluginDep("junit"))
     testRuntime(intellijPluginDep("IntelliLang"))
     testRuntime(intellijPluginDep("properties"))
@@ -57,27 +57,31 @@ dependencies {
     testRuntime(intellijPluginDep("java-decompiler"))
     Ide.IJ {
         testRuntime(intellijPluginDep("maven"))
+        if (Ide.IJ201.orHigher()) {
+            testRuntime(intellijPluginDep("repository-search"))
+        }
     }
     testRuntime(intellijPluginDep("android"))
-    (Platform[181].orHigher.or(Ide.AS31)) {
-        testRuntime(intellijPluginDep("smali"))
+    testRuntime(intellijPluginDep("smali"))
+
+    if (Ide.AS36.orHigher()) {
+        testRuntime(intellijPluginDep("android-layoutlib"))
+    }
+
+    if (Ide.AS41.orHigher()) {
+        testRuntime(intellijPluginDep("platform-images"))
     }
 }
 
 sourceSets {
-    if (Ide.AS33.orHigher()) {
-        "main" { }
-        "test" { }
-    } else {
-        "main" { projectDefault() }
-        "test" { projectDefault() }
-    }
+    "main" { }
+    "test" { }
 }
 
 testsJar {}
 
-projectTest {
-    dependsOn(":kotlin-android-extensions-runtime:dist")
+projectTest(parallel = true) {
+    dependsOn(":dist")
     workingDir = rootDir
     useAndroidSdk()
     useAndroidJar()
@@ -85,4 +89,8 @@ projectTest {
 
 runtimeJar()
 
-ideaPlugin()
+sourcesJar()
+
+javadocJar()
+
+apply(from = "$rootDir/gradle/kotlinPluginPublication.gradle.kts")

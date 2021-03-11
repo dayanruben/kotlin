@@ -40,7 +40,6 @@ public final class DiagnosticFactoryToRendererMap {
     public String toString() {
         return "DiagnosticFactory#" + name;
     }
-    //
 
     private void checkMutability() {
         if (immutable) {
@@ -78,6 +77,11 @@ public final class DiagnosticFactoryToRendererMap {
             @Nullable  DiagnosticParameterRenderer<? super C> rendererC) {
         checkMutability();
         map.put(factory, new DiagnosticWithParameters3Renderer<A, B, C>(message, rendererA, rendererB, rendererC));
+    }
+
+    public void put(@NotNull DiagnosticFactory<?> factory, @NotNull DiagnosticRenderer<?> renderer) {
+        checkMutability();
+        map.put(factory, renderer);
     }
 
     @Nullable

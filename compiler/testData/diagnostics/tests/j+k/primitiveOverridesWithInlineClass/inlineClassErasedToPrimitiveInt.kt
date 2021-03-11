@@ -1,4 +1,5 @@
-// !LANGUAGE: +InlineClasses
+// FIR_IDENTICAL
+// !LANGUAGE: +InlineClasses, -JvmInlineValueClasses
 // FILE: kt1.kt
 package kt
 

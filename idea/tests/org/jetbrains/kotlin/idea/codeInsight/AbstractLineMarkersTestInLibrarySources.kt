@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.codeInsight
@@ -49,7 +49,7 @@ abstract class AbstractLineMarkersTestInLibrarySources : AbstractLineMarkersTest
             override fun configureModule(module: Module, model: ModifiableRootModel) {
                 super.configureModule(module, model)
 
-                val library = model.moduleLibraryTable.getLibraryByName(SdkAndMockLibraryProjectDescriptor.LIBRARY_NAME)!!
+                val library = model.moduleLibraryTable.getLibraryByName(LIBRARY_NAME)!!
                 val modifiableModel = library.modifiableModel
 
                 modifiableModel.addRoot(LocalFileSystem.getInstance().findFileByIoFile(libraryClean!!)!!, OrderRootType.SOURCES)
@@ -65,9 +65,7 @@ abstract class AbstractLineMarkersTestInLibrarySources : AbstractLineMarkersTest
             val project = myFixture.project
             for (file in libraryOriginal.walkTopDown().filter { !it.isDirectory }) {
                 myFixture.openFileInEditor(fileSystem.findFileByPath(file.absolutePath)!!)
-                val data = ExpectedHighlightingData(
-                    myFixture.editor.document, false, false, false, myFixture.file
-                )
+                val data = ExpectedHighlightingData(myFixture.editor.document, false, false, false)
                 data.init()
 
                 val librarySourceFile = libraryClean!!.resolve(file.relativeTo(libraryOriginal).path)
@@ -79,7 +77,7 @@ abstract class AbstractLineMarkersTestInLibrarySources : AbstractLineMarkersTest
                     throw AssertionError("File ${myFixture.file.virtualFile.path} should be in library sources!")
                 }
 
-                doAndCheckHighlighting(document, data, file)
+                doAndCheckHighlighting(myFixture.file, document, data, file)
             }
         }
     }

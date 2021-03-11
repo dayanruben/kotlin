@@ -1,10 +1,11 @@
-// IGNORE_BACKEND: JS_IR
+// IGNORE_BACKEND: JS_IR_ES6
 // EXPECTED_REACHABLE_NODES: 1294
 package foo
 
 var global = ""
 
 open class A {
+    @JsName("foo")
     open fun foo(x: Int = 23) {
         global += "A.foo($x);"
     }

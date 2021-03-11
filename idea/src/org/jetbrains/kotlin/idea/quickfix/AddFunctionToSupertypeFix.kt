@@ -29,14 +29,15 @@ import com.intellij.util.PlatformIcons
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.diagnostics.Diagnostic
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
-import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.TemplateKind
 import org.jetbrains.kotlin.idea.core.getFunctionBodyTextFromTemplate
 import org.jetbrains.kotlin.idea.core.implicitModality
 import org.jetbrains.kotlin.idea.imports.importableFqName
+import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.psi.*
@@ -48,7 +49,7 @@ import org.jetbrains.kotlin.types.typeUtil.supertypes
 
 class AddFunctionToSupertypeFix private constructor(
     element: KtNamedFunction,
-    private val functions: List<AddFunctionToSupertypeFix.FunctionData>
+    private val functions: List<FunctionData>
 ) : KotlinQuickFixAction<KtNamedFunction>(element), LowPriorityAction {
 
     init {
@@ -66,10 +67,10 @@ class AddFunctionToSupertypeFix private constructor(
         return if (single != null)
             actionName(single)
         else
-            "Add function to supertype..."
+            KotlinBundle.message("fix.add.function.supertype.text")
     }
 
-    override fun getFamilyName() = "Add function to supertype"
+    override fun getFamilyName() = KotlinBundle.message("fix.add.function.supertype.family")
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         CommandProcessor.getInstance().runUndoTransparentAction {
@@ -82,7 +83,7 @@ class AddFunctionToSupertypeFix private constructor(
     }
 
     private fun addFunction(functionData: FunctionData, project: Project) {
-        project.executeWriteCommand("Add Function to Type") {
+        project.executeWriteCommand(KotlinBundle.message("fix.add.function.supertype.progress")) {
             val classBody = functionData.targetClass.getOrCreateBody()
 
             val functionElement = KtPsiFactory(project).createFunction(functionData.sourceCode)
@@ -90,7 +91,7 @@ class AddFunctionToSupertypeFix private constructor(
 
             ShortenReferences.DEFAULT.process(insertedFunctionElement)
             val modifierToken = insertedFunctionElement.modalityModifier()?.node?.elementType as? KtModifierKeywordToken
-                    ?: return@executeWriteCommand
+                ?: return@executeWriteCommand
             if (insertedFunctionElement.implicitModality() == modifierToken) {
                 RemoveModifierFix(insertedFunctionElement, modifierToken, true).invoke()
             }
@@ -98,7 +99,7 @@ class AddFunctionToSupertypeFix private constructor(
     }
 
     private fun createFunctionPopup(project: Project): ListPopupStep<*> {
-        return object : BaseListPopupStep<FunctionData>("Choose Type", functions) {
+        return object : BaseListPopupStep<FunctionData>(KotlinBundle.message("fix.add.function.supertype.choose.type"), functions) {
             override fun isAutoSelectionEnabled() = false
 
             override fun onChosen(selectedValue: FunctionData, finalChoice: Boolean): PopupStep<*>? {
@@ -113,7 +114,12 @@ class AddFunctionToSupertypeFix private constructor(
         }
     }
 
-    private fun actionName(functionData: FunctionData) = "Add '${functionData.signaturePreview}' to '${functionData.targetClass.name}'"
+    private fun actionName(functionData: FunctionData): String {
+        return KotlinBundle.message(
+            "fix.add.function.supertype.add.to",
+            functionData.signaturePreview, functionData.targetClass.name.toString()
+        )
+    }
 
     companion object : KotlinSingleIntentionActionFactory() {
         override fun createAction(diagnostic: Diagnostic): IntentionAction? {
@@ -196,7 +202,11 @@ class AddFunctionToSupertypeFix private constructor(
         ): FunctionDescriptor {
             // TODO: support for generics.
 
-            val modality = if (typeDescriptor.kind == ClassKind.INTERFACE) Modality.ABSTRACT else typeDescriptor.modality
+            val modality = if (typeDescriptor.kind == ClassKind.INTERFACE || typeDescriptor.modality == Modality.SEALED) {
+                Modality.ABSTRACT
+            } else {
+                typeDescriptor.modality
+            }
 
             return functionDescriptor.copy(
                 typeDescriptor,

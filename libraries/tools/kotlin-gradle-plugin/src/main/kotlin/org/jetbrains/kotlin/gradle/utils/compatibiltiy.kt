@@ -16,24 +16,26 @@
 
 package org.jetbrains.kotlin.gradle.utils
 
+import org.gradle.api.GradleException
+import org.gradle.api.Project
 import org.gradle.api.Task
-import org.gradle.api.tasks.SourceSetOutput
+import org.gradle.api.file.ArchiveOperations
+import org.gradle.api.file.CopySpec
+import org.gradle.api.file.FileSystemOperations
+import org.gradle.api.file.FileTree
+import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.api.tasks.TaskInputs
 import org.gradle.api.tasks.TaskOutputs
+import org.gradle.api.tasks.WorkResult
+import org.gradle.api.tasks.bundling.AbstractArchiveTask
+import org.gradle.util.GradleVersion
+import java.io.File
+
+const val minSupportedGradleVersion = "6.1"
 
 internal val Task.inputsCompatible: TaskInputs get() = inputs
 
 internal val Task.outputsCompatible: TaskOutputs get() = outputs
-
-private val filesMethod by lazy {
-    TaskInputs::class.java.methods.first {
-        it.name == "files" && it.parameterTypes.contentEquals(arrayOf(Array<Any>::class.java))
-    }
-}
-
-internal fun TaskInputs.filesCompatible(vararg files: Any) {
-    filesMethod(this, files)
-}
 
 private val propertyMethod by lazy {
     TaskInputs::class.java.methods.first {
@@ -43,36 +45,6 @@ private val propertyMethod by lazy {
 
 internal fun TaskInputs.propertyCompatible(name: String, value: Any) {
     propertyMethod(this, name, value)
-}
-
-private val outputsDirMethod by lazy {
-    TaskOutputs::class.java.methods.first {
-        it.name == "dir" && it.parameterTypes.contentEquals(arrayOf(Any::class.java))
-    }
-}
-
-internal fun TaskOutputs.dirCompatible(value: Any) {
-    outputsDirMethod(this, value)
-}
-
-private val outputsFilesMethod by lazy {
-    TaskOutputs::class.java.methods.first {
-        it.name == "files" && it.parameterTypes.contentEquals(arrayOf(Array<Any>::class.java))
-    }
-}
-
-internal fun TaskOutputs.filesCompatible(vararg value: Any) {
-    outputsFilesMethod(this, value)
-}
-
-private val fileMethod by lazy {
-    TaskInputs::class.java.methods.first {
-        it.name == "file" && it.parameterTypes.contentEquals(arrayOf(Any::class.java))
-    }
-}
-
-internal fun TaskInputs.fileCompatible(filePath: Any) {
-    fileMethod(this, filePath)
 }
 
 private val inputsDirMethod by lazy {
@@ -85,12 +57,57 @@ internal fun TaskInputs.dirCompatible(dirPath: Any) {
     inputsDirMethod(this, dirPath)
 }
 
-private val setClassesDirMethod by lazy {
-    SourceSetOutput::class.java.methods.first {
-        it.name == "setClassesDir" && it.parameterTypes.contentEquals(arrayOf(Any::class.java))
+internal fun checkGradleCompatibility(
+    withComponent: String = "the Kotlin Gradle plugin",
+    minSupportedVersion: GradleVersion = GradleVersion.version(minSupportedGradleVersion)
+) {
+    val currentVersion = GradleVersion.current()
+    if (currentVersion < minSupportedVersion) {
+        throw GradleException(
+            "The current Gradle version ${currentVersion.version} is not compatible with $withComponent. " +
+                    "Please use Gradle ${minSupportedVersion.version} or newer, or the previous version of the Kotlin plugin."
+        )
     }
 }
 
-internal fun SourceSetOutput.setClassesDirCompatible(dirPath: Any) {
-    setClassesDirMethod(this, dirPath)
+internal val AbstractArchiveTask.archivePathCompatible: File
+    get() = archiveFile.get().asFile
+
+internal class ArchiveOperationsCompat(@Transient private val project: Project) {
+    private val archiveOperations: Any? = try {
+        (project as ProjectInternal).services.get(ArchiveOperations::class.java)
+    } catch (e: NoClassDefFoundError) {
+        // Gradle version < 6.6
+        null
+    }
+
+    fun zipTree(obj: Any): FileTree {
+        return when (archiveOperations) {
+            is ArchiveOperations -> archiveOperations.zipTree(obj)
+            else -> project.zipTree(obj)
+        }
+    }
+
+    fun tarTree(obj: Any): FileTree {
+        return when (archiveOperations) {
+            is ArchiveOperations -> archiveOperations.tarTree(obj)
+            else -> project.tarTree(obj)
+        }
+    }
+}
+
+internal class FileSystemOperationsCompat(@Transient private val project: Project) {
+    private val fileSystemOperations: Any? = try {
+        (project as ProjectInternal).services.get(FileSystemOperations::class.java)
+    } catch (e: NoClassDefFoundError) {
+        // Gradle version < 6.0
+        null
+    }
+
+    fun copy(action: (CopySpec) -> Unit): WorkResult? {
+        return when (fileSystemOperations) {
+            is FileSystemOperations -> fileSystemOperations.copy(action)
+            else -> project.copy(action)
+        }
+    }
 }

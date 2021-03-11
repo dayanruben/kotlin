@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.jvm.abi
@@ -13,7 +13,10 @@ import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.cli.common.messages.MessageRenderer
 import org.jetbrains.kotlin.cli.common.messages.OutputMessageUtil
 import org.jetbrains.kotlin.cli.common.messages.PrintingMessageCollector
-import org.jetbrains.kotlin.codegen.*
+import org.jetbrains.kotlin.codegen.ClassBuilder
+import org.jetbrains.kotlin.codegen.ClassBuilderFactory
+import org.jetbrains.kotlin.codegen.ClassBuilderMode
+import org.jetbrains.kotlin.codegen.KotlinCodegenFacade
 import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.compilerRunner.OutputItemsCollector
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
@@ -37,13 +40,20 @@ import org.jetbrains.kotlin.resolve.BindingTrace
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.JvmDeclarationOrigin
 import org.jetbrains.kotlin.resolve.jvm.extensions.AnalysisHandlerExtension
-import org.jetbrains.org.objectweb.asm.*
+import org.jetbrains.org.objectweb.asm.ClassReader
+import org.jetbrains.org.objectweb.asm.ClassVisitor
+import org.jetbrains.org.objectweb.asm.ClassWriter
+import org.jetbrains.org.objectweb.asm.Opcodes
 import java.io.File
 import java.util.*
 
 class JvmAbiAnalysisHandlerExtension(
-    private val compilerConfiguration: CompilerConfiguration
+    compilerConfiguration: CompilerConfiguration
 ) : AnalysisHandlerExtension {
+    private val compilerConfiguration: CompilerConfiguration = compilerConfiguration.copy().apply {
+        put(JVMConfigurationKeys.IR, false)
+    }
+
     override fun analysisCompleted(
         project: Project,
         module: ModuleDescriptor,
@@ -66,7 +76,7 @@ class JvmAbiAnalysisHandlerExtension(
             files.toList(),
             compilerConfiguration
         ).targetId(targetId).build()
-        KotlinCodegenFacade.compileCorrectFiles(generationState, CompilationErrorHandler.THROW_EXCEPTION)
+        KotlinCodegenFacade.compileCorrectFiles(generationState)
 
         val outputDir = compilerConfiguration.get(JVMConfigurationKeys.OUTPUT_DIRECTORY)!!
         val outputs = ArrayList<AbiOutput>()
@@ -108,7 +118,7 @@ class JvmAbiAnalysisHandlerExtension(
 
             val visitor = InnerClassesCollectingVisitor()
             output.accept(visitor)
-            val outputInternalName = visitor.ownInternalName!!
+            val outputInternalName = visitor.ownInternalName
             internalNameToFile[outputInternalName] = output.file
             innerClasses[outputInternalName] = visitor.innerClasses
         }

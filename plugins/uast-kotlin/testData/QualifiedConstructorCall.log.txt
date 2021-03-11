@@ -1,8 +1,8 @@
 UFile (package = A.B.C)
     UClass (name = Foo)
-        UAnnotationMethod (name = Foo)
+        UMethod (name = Foo)
     UClass (name = Bar)
-        UAnnotationMethod (name = getFoo)
+        UMethod (name = getFoo)
             UBlockExpression
                 UReturnExpression
                     UQualifiedReferenceExpression
@@ -13,5 +13,5 @@ UFile (package = A.B.C)
                             USimpleNameReferenceExpression (identifier = C)
                         UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))
                             UIdentifier (Identifier (Foo))
-                            USimpleNameReferenceExpression (identifier = <init>)
-        UAnnotationMethod (name = Bar)
+                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Foo)
+        UMethod (name = Bar)

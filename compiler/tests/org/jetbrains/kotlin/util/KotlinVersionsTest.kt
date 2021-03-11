@@ -17,19 +17,20 @@
 package org.jetbrains.kotlin.util
 
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.Processor
 import org.jetbrains.kotlin.codegen.forTestCompile.ForTestCompileRuntime
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.test.WithMutedInDatabaseRunTest
+import org.jetbrains.kotlin.test.runTest
 import org.jetbrains.kotlin.test.testFramework.KtUsefulTestCase
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.junit.Assert
 import org.xml.sax.Attributes
 import org.xml.sax.helpers.DefaultHandler
 import java.io.File
-import java.util.*
 import javax.xml.parsers.SAXParserFactory
 
+@WithMutedInDatabaseRunTest
 class KotlinVersionsTest : KtUsefulTestCase() {
     fun testVersionsAreConsistent() {
         val versionPattern = "(\\d+)\\.(\\d+)(\\.(\\d+)|-SNAPSHOT)?".toRegex()
@@ -89,16 +90,17 @@ class KotlinVersionsTest : KtUsefulTestCase() {
 
         val poms = arrayListOf<Pom>()
 
-        FileUtil.processFilesRecursively(File("libraries"), Processor { file ->
-            if (file.name == "pom.xml") {
+        FileUtil.processFilesRecursively(File("libraries")) { file ->
+            if (file.name == "pom.xml" && file.toPath().none { it.fileName.toString() == "target" }) {
+                println(file.path)
                 if (loadValueFromPomXml(file.path, listOf("project", "parent", "artifactId")) == "kotlin-project") {
                     val version = loadValueFromPomXml(file.path, listOf("project", "parent", "version"))
-                                  ?: error("No version found in pom.xml at $file")
+                        ?: error("No version found in pom.xml at $file")
                     poms.add(Pom(file.path, version))
                 }
             }
             true
-        }, Processor { file -> file.name != "target" })
+        }
 
         Assert.assertTrue(
                 "Too few (<= 10) pom.xml files found. Something must be wrong in the test or in the project structure",
@@ -142,4 +144,8 @@ class KotlinVersionsTest : KtUsefulTestCase() {
     }
 
     private fun Collection<Any>.areEqual(): Boolean = all(first()::equals)
+
+    override fun runTest() {
+        runTest { super.runTest() }
+    }
 }

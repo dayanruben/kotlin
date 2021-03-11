@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package test.io
@@ -12,7 +12,7 @@ import kotlin.random.Random
 
 class IOStreamsTest {
     @Test fun testGetStreamOfFile() {
-        val tmpFile = createTempFile()
+        val tmpFile = @Suppress("DEPRECATION") createTempFile()
         var writer: Writer? = null
         try {
             writer = tmpFile.outputStream().writer()
@@ -46,7 +46,7 @@ class IOStreamsTest {
     }
 
     @Test fun readWriteBytes() {
-        val file = createTempFile("temp", Random.nextLong().toString())
+        val file = @Suppress("DEPRECATION") createTempFile("temp", Random.nextLong().toString())
         try {
             val bytes = Random.nextBytes(256_000)
 

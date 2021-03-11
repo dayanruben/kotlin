@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package templates
@@ -45,7 +45,7 @@ class MemberBuilder(
 
     var doc: String? = null; private set
 
-    val samples = mutableListOf<String>()
+    var samples = listOf<String>()
 
     val sequenceClassification = mutableListOf<SequenceClass>()
     var deprecate: Deprecation? = null; private set
@@ -64,8 +64,9 @@ class MemberBuilder(
     var toNullableT: Boolean = false
 
     var returns: String? = null; private set
+    val throwsExceptions = mutableListOf<ThrowsException>()
     var body: String? = null; private set
-    val annotations: MutableList<String> = mutableListOf()
+    val annotations: MutableSet<String> = mutableSetOf()
     val suppressions: MutableList<String> = mutableListOf()
 
     fun sourceFile(file: SourceFile) { sourceFile = file }
@@ -73,6 +74,11 @@ class MemberBuilder(
     fun deprecate(value: Deprecation) { deprecate = value }
     fun deprecate(value: String) { deprecate = Deprecation(value) }
     fun since(value: String) { since = value }
+    fun sinceAtLeast(value: String) {
+        // TODO: comparing versions as strings, will work only up until Kotlin 1.10 or Kotlin 10.0
+        since = maxOf(since, value, nullsFirst())
+    }
+
     fun platformName(name: String) { platformName = name }
 
     fun visibility(value: String) { visibility = value }
@@ -98,6 +104,8 @@ class MemberBuilder(
     fun returns(type: String) { returns = type }
     @Deprecated("Use specialFor", ReplaceWith("specialFor(*fs) { returns(run(valueBuilder)) }"))
     fun returns(vararg fs: Family, valueBuilder: () -> String) = specialFor(*fs) { returns(run(valueBuilder)) }
+
+    fun throws(exceptionType: String, reason: String) { throwsExceptions += ThrowsException(exceptionType, reason) }
 
     fun typeParam(typeParameterName: String, primary: Boolean = false) {
         typeParams += typeParameterName
@@ -126,8 +134,8 @@ class MemberBuilder(
     @Deprecated("Use specialFor", ReplaceWith("specialFor(*fs) { doc(valueBuilder) }"))
     fun doc(vararg fs: Family, valueBuilder: DocExtensions.() -> String) = specialFor(*fs) { doc(valueBuilder) }
 
-    fun sample(sampleRef: String) {
-        samples += sampleRef
+    fun sample(vararg sampleRef: String) {
+        samples = sampleRef.asList()
     }
 
     fun body(valueBuilder: () -> String) {
@@ -151,7 +159,7 @@ class MemberBuilder(
     }
 
     fun on(backend: Backend, action: () -> Unit) {
-        require(target.platform == Platform.JS)
+        require(target.platform == Platform.JS || target.platform == Platform.Native)
         if (target.backend == backend) action()
     }
 
@@ -194,28 +202,19 @@ class MemberBuilder(
                     "RECEIVER" -> receiver
                     "SELF" -> self
                     "PRIMITIVE" -> primitive?.name ?: token
-                    "SUM" -> {
-                        when (primitive) {
-                            PrimitiveType.Byte, PrimitiveType.Short, PrimitiveType.Char -> "Int"
-                            else -> primitive
-                        }
-                    }
-                    "ZERO" -> when (primitive) {
-                        PrimitiveType.Double -> "0.0"
-                        PrimitiveType.Float -> "0.0f"
-                        PrimitiveType.Long -> "0L"
-                        else -> "0"
-                    }
                     "ONE" -> when (primitive) {
                         PrimitiveType.Double -> "1.0"
                         PrimitiveType.Float -> "1.0f"
                         PrimitiveType.Long -> "1L"
+                        PrimitiveType.ULong -> "1uL"
+                        in PrimitiveType.unsignedPrimitives -> "1u"
                         else -> "1"
                     }
                     "-ONE" -> when (primitive) {
                         PrimitiveType.Double -> "-1.0"
                         PrimitiveType.Float -> "-1.0f"
                         PrimitiveType.Long -> "-1L"
+                        in PrimitiveType.unsignedPrimitives -> error("-ONE is not in the domain of unsigned primitives")
                         else -> "-1"
                     }
                     "TCollection" -> {
@@ -309,9 +308,13 @@ class MemberBuilder(
                 builder.append(" *\n")
                 builder.append(" * The operation is ${sequenceClassification.joinToString(" and ") { "_${it}_" }}.\n")
             }
+            if (throwsExceptions.any()) {
+                builder.append(" * \n")
+                throwsExceptions.forEach { (type, reason) -> builder.append(" * @throws $type $reason\n") }
+            }
             if (samples.any()) {
                 builder.append(" * \n")
-                samples.forEach { builder.append(" * @sample $it\n")}
+                samples.forEach { builder.append(" * @sample $it\n") }
             }
             builder.append(" */\n")
         }
@@ -324,7 +327,15 @@ class MemberBuilder(
                     deprecated.replaceWith?.let { "ReplaceWith(\"$it\")" },
                     deprecated.level.let { if (it != DeprecationLevel.WARNING) "level = DeprecationLevel.$it" else null }
             )
-            builder.append("@Deprecated(${args.joinToString(", ")})\n")
+            builder.appendLine("@Deprecated(${args.joinToString(", ")})")
+            val versionArgs = listOfNotNull(
+                deprecated.warningSince?.let { "warningSince = \"$it\"" },
+                deprecated.errorSince?.let { "errorSince = \"$it\"" },
+                deprecated.hiddenSince?.let { "hiddenSince = \"$it\"" }
+            )
+            if (versionArgs.any()) {
+                builder.appendLine("@DeprecatedSinceKotlin(${versionArgs.joinToString(", ")})")
+            }
         }
 
         if (!f.isPrimitiveSpecialization && primitive != null) {

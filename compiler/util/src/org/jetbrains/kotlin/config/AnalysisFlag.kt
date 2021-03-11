@@ -1,11 +1,10 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.config
 
-import org.jetbrains.kotlin.utils.Jsr305State
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 
@@ -30,16 +29,17 @@ class AnalysisFlag<out T> internal constructor(
             operator fun provideDelegate(instance: Any?, property: KProperty<*>) = Delegate(property.name, false)
         }
 
-        object Jsr305StateWarnByDefault {
-            operator fun provideDelegate(instance: Any?, property: KProperty<*>) = Delegate(property.name, Jsr305State.DEFAULT)
-        }
-
-        object JvmDefaultModeDisabledByDefault {
-            operator fun provideDelegate(instance: Any?, property: KProperty<*>) = Delegate(property.name, JvmDefaultMode.DISABLE)
+        object ApiModeDisabledByDefault {
+            operator fun provideDelegate(instance: Any?, property: KProperty<*>) = Delegate(property.name, ExplicitApiMode.DISABLED)
         }
 
         object ListOfStrings {
             operator fun provideDelegate(instance: Any?, property: KProperty<*>) = Delegate(property.name, emptyList<String>())
+        }
+
+        object ConstraintSystemForOverloadResolution {
+            operator fun provideDelegate(instance: Any?, property: KProperty<*>) =
+                Delegate(property.name, ConstraintSystemForOverloadResolutionMode.CONSTRAINT_SYSTEM_FOR_NEW_INFERENCE)
         }
     }
 }

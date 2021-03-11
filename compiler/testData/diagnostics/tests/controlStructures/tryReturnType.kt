@@ -14,12 +14,12 @@ fun foo() : Int {
 }
 
 fun bar() : Int =
-    try {
-        <!NI;TYPE_MISMATCH, TYPE_MISMATCH!>doSmth()<!>
-    }
-    catch (e: Exception) {
-        <!TYPE_MISMATCH!>""<!>
-    }
+    try <!TYPE_MISMATCH{NI}!>{
+        <!TYPE_MISMATCH{OI}!>doSmth()<!>
+    }<!>
+    catch (e: Exception) <!TYPE_MISMATCH{NI}!>{
+        <!TYPE_MISMATCH{OI}!>""<!>
+    }<!>
     finally {
         <!UNUSED_EXPRESSION!>""<!>
     }

@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.core.platform.impl
@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.idea.core.platform.impl
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
-import org.jetbrains.kotlin.analyzer.common.CommonAnalyzerFacade
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.gradle.KotlinPlatform
@@ -17,9 +16,13 @@ import org.jetbrains.kotlin.idea.framework.CommonLibraryKind
 import org.jetbrains.kotlin.idea.framework.CommonStandardLibraryDescription
 import org.jetbrains.kotlin.idea.framework.getCommonRuntimeLibraryVersion
 import org.jetbrains.kotlin.idea.platform.IdePlatformKindTooling
+import org.jetbrains.kotlin.idea.platform.isCompatibleWith
 import org.jetbrains.kotlin.idea.platform.tooling
 import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.idea.util.module
+import org.jetbrains.kotlin.platform.SimplePlatform
+import org.jetbrains.kotlin.platform.TargetPlatform
+import org.jetbrains.kotlin.platform.idePlatformKind
 import org.jetbrains.kotlin.platform.impl.CommonIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.isCommon
 import org.jetbrains.kotlin.psi.KtFunction
@@ -33,8 +36,6 @@ object CommonIdePlatformKindTooling : IdePlatformKindTooling() {
 
     override fun compilerArgumentsForProject(project: Project): CommonCompilerArguments? = null
 
-    override val resolverForModuleFactory = CommonAnalyzerFacade
-
     override val mavenLibraryIds = listOf(MAVEN_COMMON_STDLIB_ID)
     override val gradlePluginId = "kotlin-platform-common"
     override val gradlePlatformIds: List<KotlinPlatform> get() = listOf(KotlinPlatform.COMMON)
@@ -47,9 +48,14 @@ object CommonIdePlatformKindTooling : IdePlatformKindTooling() {
         return ::getCommonRuntimeLibraryVersion
     }
 
-    override fun getTestIcon(declaration: KtNamedDeclaration, descriptor: DeclarationDescriptor): Icon? {
-        val icons = IdePlatformKindTooling.getInstances()
+    private fun getRelevantToolings(platform: TargetPlatform?): List<IdePlatformKindTooling> {
+        return getInstances()
             .filter { it != this }
+            .filter { platform == null || it.kind.isCompatibleWith(platform) }
+    }
+
+    override fun getTestIcon(declaration: KtNamedDeclaration, descriptor: DeclarationDescriptor): Icon? {
+        val icons = getRelevantToolings(declaration.module?.platform)
             .mapNotNull { it.getTestIcon(declaration, descriptor) }
             .distinct()
 
@@ -62,7 +68,7 @@ object CommonIdePlatformKindTooling : IdePlatformKindTooling() {
     override fun acceptsAsEntryPoint(function: KtFunction): Boolean {
         val module = function.containingKtFile.module ?: return false
         return module.implementingModules.any { implementingModule ->
-            implementingModule.platform?.kind?.takeIf { !it.isCommon }?.tooling?.acceptsAsEntryPoint(function) ?: false
+            implementingModule.platform?.idePlatformKind?.takeIf { !it.isCommon }?.tooling?.acceptsAsEntryPoint(function) ?: false
         }
     }
 }

@@ -1,6 +1,5 @@
 // !LANGUAGE: +PolymorphicSignature
 // TARGET_BACKEND: JVM
-// IGNORE_BACKEND: JVM_IR
 // FULL_JDK
 // SKIP_JDK6
 // WITH_REFLECT
@@ -16,8 +15,10 @@ fun box(): String {
     val mh = MethodHandles.lookup().unreflect(::foo.javaMethod!!)
 
     // TODO: it's unclear whether this should throw or not, see KT-28214.
-    val r1 = mh.invokeExact(Z("OK")) as String
-    if (r1 != "OK") return "Fail r1: $r1"
-
-    return mh.invokeExact("OK") as String
+    return try {
+        mh.invokeExact(Z("OK"))
+        "FAIL"
+    } catch (ignored: java.lang.invoke.WrongMethodTypeException) {
+        "OK"
+    }
 }

@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.completion.test;
@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.idea.completion.test;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.test.KotlinTestUtils;
-import org.jetbrains.kotlin.test.TargetBackend;
+import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.runner.RunWith;
 
@@ -22,7 +22,12 @@ import java.util.regex.Pattern;
 @RunWith(JUnit3RunnerWithInners.class)
 public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTest {
     private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTest, TargetBackend.ANY, testDataFilePath);
+        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    }
+
+    @TestMetadata("AfterClassName.kt")
+    public void testAfterClassName() throws Exception {
+        runTest("idea/idea-completion/testData/keywords/AfterClassName.kt");
     }
 
     @TestMetadata("AfterClassProperty.kt")
@@ -91,7 +96,7 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
     }
 
     public void testAllFilesPresentInKeywords() throws Exception {
-        KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/idea-completion/testData/keywords"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.ANY, false);
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/idea-completion/testData/keywords"), Pattern.compile("^(.+)\\.kt$"), null, false);
     }
 
     @TestMetadata("BeforeClass.kt")
@@ -142,6 +147,11 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
     @TestMetadata("FileKeyword.kt")
     public void testFileKeyword() throws Exception {
         runTest("idea/idea-completion/testData/keywords/FileKeyword.kt");
+    }
+
+    @TestMetadata("FixingLayoutAndReturn.kt")
+    public void testFixingLayoutAndReturn() throws Exception {
+        runTest("idea/idea-completion/testData/keywords/FixingLayoutAndReturn.kt");
     }
 
     @TestMetadata("GlobalPropertyAccessors.kt")
@@ -492,6 +502,66 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
     @TestMetadata("ReturnSet.kt")
     public void testReturnSet() throws Exception {
         runTest("idea/idea-completion/testData/keywords/ReturnSet.kt");
+    }
+
+    @TestMetadata("SealedForAlreadySealed.kt")
+    public void testSealedForAlreadySealed() throws Exception {
+        runTest("idea/idea-completion/testData/keywords/SealedForAlreadySealed.kt");
+    }
+
+    @TestMetadata("SealedForAnnotationClass.kt")
+    public void testSealedForAnnotationClass() throws Exception {
+        runTest("idea/idea-completion/testData/keywords/SealedForAnnotationClass.kt");
+    }
+
+    @TestMetadata("SealedForDataClass.kt")
+    public void testSealedForDataClass() throws Exception {
+        runTest("idea/idea-completion/testData/keywords/SealedForDataClass.kt");
+    }
+
+    @TestMetadata("SealedForDeclaredClass.kt")
+    public void testSealedForDeclaredClass() throws Exception {
+        runTest("idea/idea-completion/testData/keywords/SealedForDeclaredClass.kt");
+    }
+
+    @TestMetadata("SealedForDeclaredInterface.kt")
+    public void testSealedForDeclaredInterface() throws Exception {
+        runTest("idea/idea-completion/testData/keywords/SealedForDeclaredInterface.kt");
+    }
+
+    @TestMetadata("SealedForEnumClass.kt")
+    public void testSealedForEnumClass() throws Exception {
+        runTest("idea/idea-completion/testData/keywords/SealedForEnumClass.kt");
+    }
+
+    @TestMetadata("SealedForFunInterface.kt")
+    public void testSealedForFunInterface() throws Exception {
+        runTest("idea/idea-completion/testData/keywords/SealedForFunInterface.kt");
+    }
+
+    @TestMetadata("SealedForInnerClass.kt")
+    public void testSealedForInnerClass() throws Exception {
+        runTest("idea/idea-completion/testData/keywords/SealedForInnerClass.kt");
+    }
+
+    @TestMetadata("SealedForOpenClass.kt")
+    public void testSealedForOpenClass() throws Exception {
+        runTest("idea/idea-completion/testData/keywords/SealedForOpenClass.kt");
+    }
+
+    @TestMetadata("SealedWithName.kt")
+    public void testSealedWithName() throws Exception {
+        runTest("idea/idea-completion/testData/keywords/SealedWithName.kt");
+    }
+
+    @TestMetadata("SealedWithoutName.kt")
+    public void testSealedWithoutName() throws Exception {
+        runTest("idea/idea-completion/testData/keywords/SealedWithoutName.kt");
+    }
+
+    @TestMetadata("SuspendInParameterTypePosition.kt")
+    public void testSuspendInParameterTypePosition() throws Exception {
+        runTest("idea/idea-completion/testData/keywords/SuspendInParameterTypePosition.kt");
     }
 
     @TestMetadata("SuspendInsideTypeArguments.kt")

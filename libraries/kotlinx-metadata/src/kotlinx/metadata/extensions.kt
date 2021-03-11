@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package kotlinx.metadata
@@ -28,12 +28,26 @@ import kotlin.reflect.KClass
  *
  * In case an extension visitor of an unrelated type is returned, the code using the visitor API must ignore that visitor.
  */
-data class KmExtensionType(val klass: KClass<out KmExtensionVisitor>)
+class KmExtensionType(private val klass: KClass<out KmExtensionVisitor>) {
+    override fun equals(other: Any?): Boolean =
+        other is KmExtensionType && klass == other.klass
+
+    override fun hashCode(): Int =
+        klass.hashCode()
+
+    override fun toString(): String =
+        klass.java.name
+}
 
 /**
  * A base interface for all extension visitors.
  */
-interface KmExtensionVisitor
+interface KmExtensionVisitor {
+    /**
+     * Type of this extension visitor.
+     */
+    val type: KmExtensionType
+}
 
 /**
  * A visitor to visit platform-specific extensions for a declaration container, such as a class or a package fragment.
@@ -49,6 +63,11 @@ interface KmClassExtensionVisitor : KmDeclarationContainerExtensionVisitor
  * A visitor to visit platform-specific extensions for a package fragment.
  */
 interface KmPackageExtensionVisitor : KmDeclarationContainerExtensionVisitor
+
+/**
+ * A visitor to visit platform-specific extensions for a module fragment.
+ */
+interface KmModuleFragmentExtensionVisitor : KmExtensionVisitor
 
 /**
  * A visitor to visit platform-specific extensions for a function.
@@ -74,3 +93,13 @@ interface KmTypeParameterExtensionVisitor : KmExtensionVisitor
  * A visitor to visit platform-specific extensions for a type.
  */
 interface KmTypeExtensionVisitor : KmExtensionVisitor
+
+/**
+ * A visitor to visit platform-specific extensions for a type alias.
+ */
+interface KmTypeAliasExtensionVisitor : KmExtensionVisitor
+
+/**
+ * A visitor to visit platform-specific extensions for a value parameter.
+ */
+interface KmValueParameterExtensionVisitor : KmExtensionVisitor

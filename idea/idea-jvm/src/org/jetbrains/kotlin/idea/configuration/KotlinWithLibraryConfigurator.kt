@@ -1,6 +1,6 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.configuration
@@ -19,19 +19,25 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.Contract
 import org.jetbrains.kotlin.cli.common.arguments.CliArgumentStringBuilder.replaceLanguageFeature
-import org.jetbrains.kotlin.config.*
+import org.jetbrains.kotlin.config.ApiVersion
+import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.idea.KotlinJvmBundle
+import org.jetbrains.kotlin.idea.facet.getCleanRuntimeLibraryVersion
 import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersion
 import org.jetbrains.kotlin.idea.facet.toApiVersion
 import org.jetbrains.kotlin.idea.framework.ui.CreateLibraryDialogWithModules
 import org.jetbrains.kotlin.idea.framework.ui.FileUIUtils
 import org.jetbrains.kotlin.idea.quickfix.askUpdateRuntime
+import org.jetbrains.kotlin.idea.util.ProgressIndicatorUtils.underModalProgress
+import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.projectStructure.sdk
 import org.jetbrains.kotlin.idea.versions.LibraryJarDescriptor
 import org.jetbrains.kotlin.idea.versions.findAllUsedLibraries
 import org.jetbrains.kotlin.idea.versions.findKotlinRuntimeLibrary
 import java.io.File
-import java.util.*
 
 abstract class KotlinWithLibraryConfigurator protected constructor() : KotlinProjectConfigurator {
     protected abstract val libraryName: String
@@ -64,10 +70,13 @@ abstract class KotlinWithLibraryConfigurator protected constructor() : KotlinPro
         val defaultPathToJar = getDefaultPathToJarFile(project)
         val showPathToJarPanel = needToChooseJarPath(project)
 
-        var nonConfiguredModules = if (!ApplicationManager.getApplication().isUnitTestMode)
-            getCanBeConfiguredModules(project, this)
-        else
-            Arrays.asList(*ModuleManager.getInstance(project).modules)
+        var nonConfiguredModules = if (!isUnitTestMode()) {
+            underModalProgress(project, KotlinJvmBundle.message("lookup.modules.configurations.progress.text")) {
+                getCanBeConfiguredModules(project, this)
+            }
+        } else {
+            listOf(*ModuleManager.getInstance(project).modules)
+        }
         nonConfiguredModules -= excludeModules
 
         var modulesToConfigure = nonConfiguredModules
@@ -75,16 +84,16 @@ abstract class KotlinWithLibraryConfigurator protected constructor() : KotlinPro
 
         if (nonConfiguredModules.size > 1 || showPathToJarPanel) {
             val dialog = CreateLibraryDialogWithModules(
-                    project, this, defaultPathToJar, showPathToJarPanel,
-                    dialogTitle,
-                    libraryCaption,
-                    excludeModules)
+                project, this, defaultPathToJar, showPathToJarPanel,
+                dialogTitle,
+                libraryCaption,
+                excludeModules
+            )
 
-            if (!ApplicationManager.getApplication().isUnitTestMode) {
+            if (!isUnitTestMode()) {
                 dialog.show()
                 if (!dialog.isOK) return
-            }
-            else {
+            } else {
                 dialog.close(0)
             }
 
@@ -112,10 +121,10 @@ abstract class KotlinWithLibraryConfigurator protected constructor() : KotlinPro
     }
 
     protected fun configureModule(
-            module: Module,
-            defaultPath: String,
-            pathFromDialog: String?,
-            collector: NotificationMessageCollector
+        module: Module,
+        defaultPath: String,
+        pathFromDialog: String?,
+        collector: NotificationMessageCollector
     ) {
         val classesPath = getPathToCopyFileTo(module.project, OrderRootType.CLASSES, defaultPath, pathFromDialog)
         val sourcesPath = getPathToCopyFileTo(module.project, OrderRootType.SOURCES, defaultPath, pathFromDialog)
@@ -123,30 +132,30 @@ abstract class KotlinWithLibraryConfigurator protected constructor() : KotlinPro
     }
 
     open fun configureModule(
-            module: Module,
-            classesPath: String,
-            sourcesPath: String,
-            collector: NotificationMessageCollector,
-            forceJarState: FileState? = null,
-            useBundled: Boolean = false
+        module: Module,
+        classesPath: String,
+        sourcesPath: String,
+        collector: NotificationMessageCollector,
+        forceJarState: FileState? = null,
+        useBundled: Boolean = false
     ) {
         configureModuleWithLibrary(module, classesPath, sourcesPath, collector, forceJarState, useBundled)
     }
 
     private fun configureModuleWithLibrary(
-            module: Module,
-            classesPath: String,
-            sourcesPath: String,
-            collector: NotificationMessageCollector,
-            forceJarState: FileState? = null,
-            useBundled: Boolean = false
+        module: Module,
+        classesPath: String,
+        sourcesPath: String,
+        collector: NotificationMessageCollector,
+        forceJarState: FileState? = null,
+        useBundled: Boolean = false
     ) {
         val project = module.project
 
         val library = findAndFixBrokenKotlinLibrary(module, collector)
-                      ?: getKotlinLibrary(module)
-                      ?: getKotlinLibrary(project)
-                      ?: createNewLibrary(project, collector)
+            ?: getKotlinLibrary(module)
+            ?: getKotlinLibrary(project)
+            ?: createNewLibrary(project, collector)
 
         val sdk = module.sdk
         val model = library.modifiableModel
@@ -157,9 +166,11 @@ abstract class KotlinWithLibraryConfigurator protected constructor() : KotlinPro
             else
                 classesPath
 
-            val runtimeState = forceJarState ?: getJarState(project,
-                                                            File(dirToCopyJar, descriptor.jarName),
-                                                            descriptor.orderRootType, useBundled)
+            val runtimeState = forceJarState ?: getJarState(
+                project,
+                File(dirToCopyJar, descriptor.jarName),
+                descriptor.orderRootType, useBundled
+            )
 
             configureLibraryJar(model, runtimeState, dirToCopyJar, descriptor, collector)
         }
@@ -170,42 +181,42 @@ abstract class KotlinWithLibraryConfigurator protected constructor() : KotlinPro
 
 
     fun configureLibraryJar(
-            library: Library.ModifiableModel,
-            jarState: FileState,
-            dirToCopyJarTo: String,
-            libraryJarDescriptor: LibraryJarDescriptor,
-            collector: NotificationMessageCollector
+        library: Library.ModifiableModel,
+        jarState: FileState,
+        dirToCopyJarTo: String,
+        libraryJarDescriptor: LibraryJarDescriptor,
+        collector: NotificationMessageCollector
     ) {
-        val jarFile = if (jarState == KotlinWithLibraryConfigurator.FileState.DO_NOT_COPY)
+        val jarFile = if (jarState == FileState.DO_NOT_COPY)
             libraryJarDescriptor.getPathInPlugin()
         else
             File(dirToCopyJarTo, libraryJarDescriptor.jarName)
 
-        if (jarState == KotlinWithLibraryConfigurator.FileState.COPY) {
+        if (jarState == FileState.COPY) {
             copyFileToDir(libraryJarDescriptor.getPathInPlugin(), dirToCopyJarTo, collector)
         }
 
         val jarVFile = LocalFileSystem.getInstance().findFileByIoFile(jarFile)
         if (jarVFile == null) {
-            collector.addMessage("Can't find library JAR file " + jarFile)
+            collector.addMessage(KotlinJvmBundle.message("can.t.find.library.jar.file.0", jarFile))
             return
         }
         val jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(jarVFile)
         if (jarRoot == null) {
-            collector.addMessage("Couldn't configure library; JAR file $jarVFile may be corrupted")
+            collector.addMessage(KotlinJvmBundle.message("couldn.t.configure.library.jar.file.0.may.be.corrupted", jarVFile))
             return
         }
 
         if (jarRoot !in library.getFiles(libraryJarDescriptor.orderRootType)) {
             library.addRoot(jarRoot, libraryJarDescriptor.orderRootType)
 
-            collector.addMessage("Added $jarFile to library configuration")
+            collector.addMessage(KotlinJvmBundle.message("added.0.to.library.configuration", jarFile))
         }
     }
 
     fun getKotlinLibrary(project: Project): Library? {
-        return LibraryTablesRegistrar.getInstance().getLibraryTable(project).libraries.firstOrNull { isKotlinLibrary(it, project) } ?:
-               LibraryTablesRegistrar.getInstance().libraryTable.libraries.firstOrNull { isKotlinLibrary(it, project) }
+        return LibraryTablesRegistrar.getInstance().getLibraryTable(project).libraries.firstOrNull { isKotlinLibrary(it, project) }
+            ?: LibraryTablesRegistrar.getInstance().libraryTable.libraries.firstOrNull { isKotlinLibrary(it, project) }
     }
 
     @Contract("!null, _, _ -> !null")
@@ -214,7 +225,7 @@ abstract class KotlinWithLibraryConfigurator protected constructor() : KotlinPro
 
         val copy = FileUIUtils.copyWithOverwriteDialog(messageForOverrideDialog, toDir, file)
         if (copy != null) {
-            collector.addMessage(file.name + " was copied to " + toDir)
+            collector.addMessage(KotlinJvmBundle.message("0.was.copied.to.1", file.name, toDir))
         }
         return copy
     }
@@ -228,9 +239,8 @@ abstract class KotlinWithLibraryConfigurator protected constructor() : KotlinPro
         val kotlinLibrary = getKotlinLibrary(module)
         if (kotlinLibrary == null) {
             ModuleRootModificationUtil.addDependency(module, library, expectedDependencyScope, false)
-            collector.addMessage(library.name + " library was added to module " + module.name)
-        }
-        else {
+            collector.addMessage(KotlinJvmBundle.message("0.library.was.added.to.module.1", library.name.toString(), module.name))
+        } else {
             val libraryEntry = findLibraryOrderEntry(ModuleRootManager.getInstance(module).orderEntries, kotlinLibrary)
             if (libraryEntry != null) {
                 val libraryDependencyScope = libraryEntry.scope
@@ -238,16 +248,22 @@ abstract class KotlinWithLibraryConfigurator protected constructor() : KotlinPro
                     libraryEntry.scope = expectedDependencyScope
 
                     collector.addMessage(
-                            kotlinLibrary.name + " library scope has changed from " + libraryDependencyScope +
-                            " to " + expectedDependencyScope + " for module " + module.name)
+                        KotlinJvmBundle.message(
+                            "0.library.scope.has.changed.from.1.to.2.for.module.3",
+                            kotlinLibrary.name.toString(),
+                            libraryDependencyScope,
+                            expectedDependencyScope,
+                            module.name
+                        )
+                    )
                 }
             }
         }
     }
 
     fun createNewLibrary(
-            project: Project,
-            collector: NotificationMessageCollector
+        project: Project,
+        collector: NotificationMessageCollector
     ): Library {
         val table = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
         val library = runWriteAction {
@@ -258,13 +274,13 @@ abstract class KotlinWithLibraryConfigurator protected constructor() : KotlinPro
             }
         }
 
-        collector.addMessage(library.name!! + " library was created")
-        return library!!
+        collector.addMessage(KotlinJvmBundle.message("0.library.was.created", library.name.toString()))
+        return library
     }
 
     private fun isProjectLibraryPresent(project: Project): Boolean {
         val library = getKotlinLibrary(project)
-        return library != null && library.getUrls(OrderRootType.CLASSES).size > 0
+        return library != null && library.getUrls(OrderRootType.CLASSES).isNotEmpty()
     }
 
     protected abstract val libraryMatcher: (Library, Project) -> Boolean
@@ -278,7 +294,7 @@ abstract class KotlinWithLibraryConfigurator protected constructor() : KotlinPro
     protected fun needToChooseJarPath(project: Project): Boolean {
         val defaultPath = getDefaultPathToJarFile(project)
         return !isProjectLibraryPresent(project) &&
-               !File(defaultPath, getLibraryJarDescriptors(null).first().jarName).exists()
+                !File(defaultPath, getLibraryJarDescriptors(null).first().jarName).exists()
     }
 
     open fun getDefaultPathToJarFile(project: Project): String {
@@ -292,10 +308,10 @@ abstract class KotlinWithLibraryConfigurator protected constructor() : KotlinPro
     }
 
     protected fun getJarState(
-            project: Project,
-            targetFile: File,
-            jarType: OrderRootType,
-            useBundled: Boolean
+        project: Project,
+        targetFile: File,
+        jarType: OrderRootType,
+        useBundled: Boolean
     ): FileState = when {
         targetFile.exists() -> FileState.EXISTS
         getPathFromLibrary(project, jarType) != null -> FileState.COPY
@@ -304,10 +320,10 @@ abstract class KotlinWithLibraryConfigurator protected constructor() : KotlinPro
     }
 
     private fun getPathToCopyFileTo(
-            project: Project,
-            jarType: OrderRootType,
-            defaultDir: String,
-            pathFromDialog: String?
+        project: Project,
+        jarType: OrderRootType,
+        defaultDir: String,
+        pathFromDialog: String?
     ): String {
         if (pathFromDialog != null) {
             return pathFromDialog
@@ -330,22 +346,6 @@ abstract class KotlinWithLibraryConfigurator protected constructor() : KotlinPro
         return module.getBuildSystemType() == BuildSystemType.JPS
     }
 
-    override fun changeCoroutineConfiguration(module: Module, state: LanguageFeature.State) {
-        val runtimeUpdateRequired = state != LanguageFeature.State.DISABLED &&
-                getRuntimeLibraryVersion(module).toApiVersion() == ApiVersion.KOTLIN_1_0
-
-        if (runtimeUpdateRequired && !askUpdateRuntime(module, LanguageFeature.Coroutines.sinceApiVersion)) {
-            return
-        }
-
-        val facetSettings = KotlinFacetSettingsProvider.getInstance(module.project).getInitializedSettings(module)
-        ModuleRootModificationUtil.updateModel(module) {
-            facetSettings.coroutineSupport = state
-            facetSettings.apiLevel = LanguageVersion.KOTLIN_1_1
-            facetSettings.languageLevel = LanguageVersion.KOTLIN_1_1
-        }
-    }
-
     override fun changeGeneralFeatureConfiguration(
         module: Module,
         feature: LanguageFeature,
@@ -361,17 +361,31 @@ abstract class KotlinWithLibraryConfigurator protected constructor() : KotlinPro
             return
         }
 
-        val facetSettings = KotlinFacetSettingsProvider.getInstance(module.project).getInitializedSettings(module)
-        ModuleRootModificationUtil.updateModel(module) {
-            facetSettings.apiLevel = feature.sinceVersion
-            facetSettings.languageLevel = feature.sinceVersion
-            facetSettings.compilerSettings?.apply {
-                additionalArguments = additionalArguments.replaceLanguageFeature(feature, state, separator = " ", quoted = false)
+        val facetSettings = KotlinFacetSettingsProvider.getInstance(module.project)?.getInitializedSettings(module)
+        if (facetSettings != null) {
+            ModuleRootModificationUtil.updateModel(module) {
+                facetSettings.apiLevel = feature.sinceVersion
+                facetSettings.languageLevel = feature.sinceVersion
+                facetSettings.compilerSettings?.apply {
+                    additionalArguments = additionalArguments.replaceLanguageFeature(
+                        feature,
+                        state,
+                        getCleanRuntimeLibraryVersion(module),
+                        separator = " ",
+                        quoted = false
+                    )
+                }
             }
         }
     }
 
-    override fun updateLanguageVersion(module: Module, languageVersion: String?, apiVersion: String?, requiredStdlibVersion: ApiVersion, forTests: Boolean) {
+    override fun updateLanguageVersion(
+        module: Module,
+        languageVersion: String?,
+        apiVersion: String?,
+        requiredStdlibVersion: ApiVersion,
+        forTests: Boolean
+    ) {
         val runtimeUpdateRequired = getRuntimeLibraryVersion(module)?.let { ApiVersion.parse(it) }?.let { runtimeVersion ->
             runtimeVersion < requiredStdlibVersion
         } ?: false
@@ -380,31 +394,38 @@ abstract class KotlinWithLibraryConfigurator protected constructor() : KotlinPro
             return
         }
 
-        val facetSettings = KotlinFacetSettingsProvider.getInstance(module.project).getInitializedSettings(module)
-        ModuleRootModificationUtil.updateModel(module) {
-            with(facetSettings) {
-                if (languageVersion != null) {
-                    languageLevel = LanguageVersion.fromVersionString(languageVersion)
-                }
-                if (apiVersion != null) {
-                    apiLevel = LanguageVersion.fromVersionString(apiVersion)
+        val facetSettings = KotlinFacetSettingsProvider.getInstance(module.project)?.getInitializedSettings(module)
+        if (facetSettings != null) {
+            ModuleRootModificationUtil.updateModel(module) {
+                with(facetSettings) {
+                    if (languageVersion != null) {
+                        languageLevel = LanguageVersion.fromVersionString(languageVersion)
+                    }
+                    if (apiVersion != null) {
+                        apiLevel = LanguageVersion.fromVersionString(apiVersion)
+                    }
                 }
             }
         }
     }
 
-    override fun addLibraryDependency(module: Module, element: PsiElement, library: ExternalLibraryDescriptor, libraryJarDescriptors: List<LibraryJarDescriptor>) {
+    override fun addLibraryDependency(
+        module: Module,
+        element: PsiElement,
+        library: ExternalLibraryDescriptor,
+        libraryJarDescriptors: List<LibraryJarDescriptor>
+    ) {
         val project = module.project
         val collector = createConfigureKotlinNotificationCollector(project)
 
-        for (library in findAllUsedLibraries(project).keySet()) {
-            val runtimeJar = LibraryJarDescriptor.RUNTIME_JAR.findExistingJar(library) ?: continue
+        for (lib in findAllUsedLibraries(project).keySet()) {
+            val runtimeJar = LibraryJarDescriptor.RUNTIME_JAR.findExistingJar(lib) ?: continue
 
-            val model = library.modifiableModel
+            val model = lib.modifiableModel
             val libFilesDir = VfsUtilCore.virtualToIoFile(runtimeJar).parent
 
             for (libraryJarDescriptor in libraryJarDescriptors) {
-                if (libraryJarDescriptor.findExistingJar(library) != null) continue
+                if (libraryJarDescriptor.findExistingJar(lib) != null) continue
 
                 val libFile = libraryJarDescriptor.getPathInPlugin()
                 if (!libFile.exists()) continue
@@ -412,8 +433,7 @@ abstract class KotlinWithLibraryConfigurator protected constructor() : KotlinPro
                 val libIoFile = File(libFilesDir, libraryJarDescriptor.jarName)
                 if (libIoFile.exists()) {
                     model.addRoot(VfsUtil.getUrlForLibraryRoot(libIoFile), libraryJarDescriptor.orderRootType)
-                }
-                else {
+                } else {
                     val copied = copyFileToDir(libFile, libFilesDir, collector)!!
                     model.addRoot(VfsUtil.getUrlForLibraryRoot(copied), libraryJarDescriptor.orderRootType)
                 }
@@ -426,7 +446,7 @@ abstract class KotlinWithLibraryConfigurator protected constructor() : KotlinPro
     }
 
     companion object {
-        val DEFAULT_LIBRARY_DIR = "lib"
+        const val DEFAULT_LIBRARY_DIR = "lib"
 
         fun getPathFromLibrary(library: Library?, type: OrderRootType): String? {
             if (library == null) return null

@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 @file:kotlin.jvm.JvmName("IntrinsicsKt")
@@ -8,6 +8,7 @@
 
 package kotlin.coroutines.intrinsics
 
+import kotlin.contracts.*
 import kotlin.coroutines.*
 import kotlin.internal.InlineOnly
 
@@ -27,7 +28,7 @@ import kotlin.internal.InlineOnly
  *
  * Invocation of [Continuation.resumeWith] resumes coroutine directly in the invoker's thread without going through the
  * [ContinuationInterceptor] that might be present in the coroutine's [CoroutineContext].
- * It is invoker's responsibility to ensure that the proper invocation context is established.
+ * It is the invoker's responsibility to ensure that a proper invocation context is established.
  * [Continuation.intercepted] can be used to acquire the intercepted continuation.
  *
  * Note that it is not recommended to call either [Continuation.resume] nor [Continuation.resumeWithException] functions synchronously
@@ -37,8 +38,10 @@ import kotlin.internal.InlineOnly
 @SinceKotlin("1.3")
 @InlineOnly
 @Suppress("UNUSED_PARAMETER", "RedundantSuspendModifier")
-public suspend inline fun <T> suspendCoroutineUninterceptedOrReturn(crossinline block: (Continuation<T>) -> Any?): T =
+public suspend inline fun <T> suspendCoroutineUninterceptedOrReturn(crossinline block: (Continuation<T>) -> Any?): T {
+    contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
     throw NotImplementedError("Implementation of suspendCoroutineUninterceptedOrReturn is intrinsic")
+}
 
 /**
  * This value is used as a return value of [suspendCoroutineUninterceptedOrReturn] `block` argument to state that

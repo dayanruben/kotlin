@@ -1,8 +1,8 @@
 // !LANGUAGE: +InlineClasses
 // WITH_RUNTIME
-// IGNORE_BACKEND: JVM_IR
 
 inline class Z(val x: Int) {
+    @Suppress("INNER_CLASS_INSIDE_INLINE_CLASS")
     inner class Inner(val z: Z) {
         val xx = x
     }

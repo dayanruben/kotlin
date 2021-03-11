@@ -27,24 +27,18 @@ import java.io.File
 
 internal fun AbstractCompile.appendClasspathDynamically(file: File) {
     var added = false
-
+    val objects = project.objects
     doFirst {
         if (file !in classpath) {
-            classpath += project.files(file)
+            classpath += objects.fileCollection().from(file)
             added = true
         }
     }
     doLast {
         if (added) {
-            classpath -= project.files(file)
+            classpath -= objects.fileCollection().from(file)
         }
     }
-}
-
-// Extends finalizedBy clause so that finalizing task does not run if finalized task failed
-internal fun Task.finalizedByIfNotFailed(finalizer: Task) {
-    finalizer.onlyIf { this@finalizedByIfNotFailed.state.failure == null }
-    this.finalizedBy(finalizer)
 }
 
 fun AbstractCompile.mapClasspath(fn: () -> FileCollection) {
@@ -56,7 +50,7 @@ internal inline fun <reified T : Any> Any.addConvention(name: String, plugin: T)
 }
 
 internal inline fun <reified T : Any> Any.addExtension(name: String, extension: T) =
-    (this as ExtensionAware).extensions.add(name, extension)
+    (this as ExtensionAware).extensions.add(T::class.java, name, extension)
 
 internal fun Any.getConvention(name: String): Any? =
     (this as HasConvention).convention.plugins[name]

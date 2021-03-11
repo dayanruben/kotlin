@@ -19,10 +19,13 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.cfg.*
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.diagnostics.Diagnostic
+import org.jetbrains.kotlin.diagnostics.WhenMissingCase
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.quoteIfNeeded
@@ -39,7 +42,13 @@ class AddWhenRemainingBranchesFix(
 
     override fun getFamilyName() = text
 
-    override fun getText() = "Add remaining branches" + if (withImport) " with * import" else ""
+    override fun getText(): String {
+        if (withImport) {
+            return KotlinBundle.message("fix.add.remaining.branches.with.star.import")
+        } else {
+            return KotlinBundle.message("fix.add.remaining.branches")
+        }
+    }
 
     override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean {
         return isAvailable(element)
@@ -78,17 +87,20 @@ class AddWhenRemainingBranchesFix(
             val whenCloseBrace = element.closeBrace ?: throw AssertionError("isAvailable should check if close brace exist")
             val elseBranch = element.entries.find { it.isElse }
             val psiFactory = KtPsiFactory(element)
-
+            (whenCloseBrace.prevSibling as? PsiWhiteSpace)?.replace(psiFactory.createNewLine())
             for (case in missingCases) {
                 val branchConditionText = when (case) {
-                    UnknownMissingCase, NullMissingCase, is BooleanMissingCase ->
-                        case.branchConditionText
-                    is ClassMissingCase ->
-                        if (case.classIsSingleton) {
+                    WhenMissingCase.Unknown,
+                    WhenMissingCase.NullIsMissing,
+                    is WhenMissingCase.BooleanIsMissing,
+                    is WhenMissingCase.ConditionTypeIsExpect -> case.branchConditionText
+                    is WhenMissingCase.IsTypeCheckIsMissing ->
+                        if (case.isSingleton) {
                             ""
                         } else {
                             "is "
-                        } + case.descriptor.fqNameSafe.quoteIfNeeded().asString()
+                        } + case.classId.asSingleFqName().quoteIfNeeded().asString()
+                    is WhenMissingCase.EnumCheckIsMissing -> case.callableId.asFqNameForDebugInfo().quoteIfNeeded().asString()
                 }
                 val entry = psiFactory.createWhenEntry("$branchConditionText -> TODO()")
                 if (elseBranch != null) {

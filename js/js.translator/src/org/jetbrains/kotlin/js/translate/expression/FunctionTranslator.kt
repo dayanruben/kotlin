@@ -66,7 +66,9 @@ fun TranslationContext.translateAndAliasParameters(
     for (valueParameter in descriptor.valueParameters) {
         val name = getNameForDescriptor(valueParameter)
         val tmpName = JsScope.declareTemporaryName(name.ident).also { it.descriptor = valueParameter }
-        aliases[valueParameter] = JsAstUtils.pureFqn(tmpName, null)
+        val parameterRef = JsAstUtils.pureFqn(tmpName, null)
+        parameterRef.type = valueParameter.type
+        aliases[valueParameter] = parameterRef
         targetList += JsParameter(tmpName).apply { hasDefaultValue = valueParameter.hasDefaultValue() }
     }
 
@@ -102,9 +104,6 @@ fun TranslationContext.wrapWithInlineMetadata(
 ): JsExpression {
     val sourceInfo = descriptor.source.getPsi()
     return if (descriptor.isInline) {
-        val incrementalResults = config.configuration[JSConfigurationKeys.INCREMENTAL_RESULTS_CONSUMER]
-        incrementalResults?.reportInlineFunction(descriptor, function, sourceInfo)
-
         if (descriptor.shouldBeExported(config)) {
             val metadata = InlineMetadata.compose(function, descriptor, this)
             metadata.functionWithMetadata(outerContext, sourceInfo)
@@ -116,6 +115,9 @@ fun TranslationContext.wrapWithInlineMetadata(
                         JsReturn(function))
                 }
             InlineMetadata.wrapFunction(outerContext, FunctionWithWrapper(function, block), sourceInfo)
+        }.also {
+            val incrementalResults = config.configuration[JSConfigurationKeys.INCREMENTAL_RESULTS_CONSUMER]
+            incrementalResults?.reportInlineFunction(descriptor, it, sourceInfo)
         }
     }
     else {
@@ -131,7 +133,7 @@ private fun IncrementalResultsConsumer.reportInlineFunction(
     val psiFile = (descriptor.source.containingFile as? PsiSourceFile)?.psiFile ?: return
     val file = VfsUtilCore.virtualToIoFile(psiFile.virtualFile)
 
-    if (effectiveVisibility(descriptor.visibility, descriptor, true).privateApi) return
+    if (descriptor.visibility.effectiveVisibility(descriptor, true).privateApi) return
 
     val fqName = when (descriptor) {
         is PropertyGetterDescriptor -> {

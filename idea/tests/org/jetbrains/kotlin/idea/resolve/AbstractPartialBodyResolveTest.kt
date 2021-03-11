@@ -1,75 +1,55 @@
 /*
- * Copyright 2010-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.resolve
 
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
-import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import java.util.HashSet
-import org.jetbrains.kotlin.test.KotlinTestUtils
-import java.io.File
-import org.jetbrains.kotlin.psi.KtBlockExpression
-import org.junit.Assert
-import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.renderer.DescriptorRenderer
-import org.jetbrains.kotlin.descriptors.VariableDescriptor
-import org.jetbrains.kotlin.psi.KtSimpleNameExpression
-import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
-import org.jetbrains.kotlin.psi.psiUtil.parents
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.psi.KtReferenceExpression
-import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.idea.KotlinFileType
 import com.intellij.openapi.util.io.FileUtil
-import org.jetbrains.kotlin.idea.test.configureCompilerOptions
-import org.jetbrains.kotlin.idea.test.rollbackCompilerOptions
+import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.VariableDescriptor
+import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
+import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.renderer.DescriptorRenderer
+import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.types.KotlinType
+import org.junit.Assert
+import java.io.File
+import java.util.*
 
 abstract class AbstractPartialBodyResolveTest : KotlinLightCodeInsightFixtureTestCase() {
-    override fun getTestDataPath() = KotlinTestUtils.getHomeDirectory()
     override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
 
-    fun doTest(testPath: String) {
+    fun doTest(unused: String) {
+        val testPath = testPath()
         val dumpNormal = dump(testPath, BodyResolveMode.PARTIAL)
 
         val testPathNoExt = FileUtil.getNameWithoutExtension(testPath)
-        KotlinTestUtils.assertEqualsToFile(File(testPathNoExt + ".dump"), dumpNormal)
+        KotlinTestUtils.assertEqualsToFile(File("$testPathNoExt.dump"), dumpNormal)
 
         val dumpForCompletion = dump(testPath, BodyResolveMode.PARTIAL_FOR_COMPLETION)
-        val completionDump = File(testPathNoExt + ".completion")
+        val completionDump = File("$testPathNoExt.completion")
         if (dumpForCompletion != dumpNormal) {
             KotlinTestUtils.assertEqualsToFile(completionDump, dumpForCompletion)
-        }
-        else {
+        } else {
             Assert.assertFalse(completionDump.exists())
         }
     }
 
     private fun dump(testPath: String, resolveMode: BodyResolveMode): String {
         myFixture.configureByText(KotlinFileType.INSTANCE, File(testPath).readText())
-        val configured = configureCompilerOptions(myFixture.file.text, project, module)
-
-        try {
+        return withCustomCompilerOptions(myFixture.file.text, project, module) {
             val file = myFixture.file as KtFile
             val editor = myFixture.editor
             val selectionModel = editor.selectionModel
@@ -80,11 +60,11 @@ abstract class AbstractPartialBodyResolveTest : KotlinLightCodeInsightFixtureTes
                     selectionModel.selectionEnd,
                     KtExpression::class.java
                 )
-                    ?: error("No JetExpression at selection range")
+                    ?: error("No KtExpression at selection range")
             } else {
                 val offset = editor.caretModel.offset
                 val element = file.findElementAt(offset)!!
-                element.getNonStrictParentOfType<KtSimpleNameExpression>() ?: error("No JetSimpleNameExpression at caret")
+                element.getNonStrictParentOfType<KtSimpleNameExpression>() ?: error("No KtSimpleNameExpression at caret")
             }
 
             val resolutionFacade = file.getResolutionFacade()
@@ -137,33 +117,28 @@ abstract class AbstractPartialBodyResolveTest : KotlinLightCodeInsightFixtureTes
             Assert.assertEquals(target2.presentation(null), target1.presentation(null))
             Assert.assertEquals(type2.presentation(), type1.presentation())
 
-            return builder.toString()
-        } finally {
-            if (configured) {
-                rollbackCompilerOptions(project, module)
-            }
+            builder.toString()
         }
     }
 
     private data class ResolveData(
-            val target: DeclarationDescriptor?,
-            val type: KotlinType?,
-            val processedStatements: Collection<KtExpression>
+        val target: DeclarationDescriptor?,
+        val type: KotlinType?,
+        val processedStatements: Collection<KtExpression>
     )
 
     private fun doResolve(expression: KtExpression, bindingContext: BindingContext): ResolveData {
         val target = if (expression is KtReferenceExpression) bindingContext[BindingContext.REFERENCE_TARGET, expression] else null
 
         val processedStatements = bindingContext.getSliceContents(BindingContext.PROCESSED)
-                .filter { it.value }
-                .map { it.key }
-                .filter { it.parent is KtBlockExpression }
+            .filter { it.value }
+            .map { it.key }
+            .filter { it.parent is KtBlockExpression }
 
         val receiver = (expression as? KtSimpleNameExpression)?.getReceiverExpression()
         val expressionWithType = if (receiver != null) {
             expression.parent as? KtExpression ?: expression
-        }
-        else {
+        } else {
             expression
         }
         val type = bindingContext.getType(expressionWithType)
@@ -181,8 +156,7 @@ abstract class AbstractPartialBodyResolveTest : KotlinLightCodeInsightFixtureTes
         return "$s smart-cast to ${type.presentation()}"
     }
 
-    private fun KotlinType?.presentation()
-            = if (this != null) DescriptorRenderer.COMPACT.renderType(this) else "unknown type"
+    private fun KotlinType?.presentation() = if (this != null) DescriptorRenderer.COMPACT.renderType(this) else "unknown type"
 
     private fun KtExpression.compactPresentation(): String {
         val text = text

@@ -1,5 +1,6 @@
+// DONT_TARGET_EXACT_BACKEND: WASM
+// WASM_MUTE_REASON: PROPERTY_REFERENCES
 // IGNORE_BACKEND: NATIVE
-// IGNORE_BACKEND: JVM_IR
 //For KT-6020
 import kotlin.reflect.KProperty1
 import kotlin.reflect.KMutableProperty1

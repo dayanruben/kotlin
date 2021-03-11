@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.intentions;
@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.idea.intentions;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.test.KotlinTestUtils;
-import org.jetbrains.kotlin.test.TargetBackend;
+import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.runner.RunWith;
 
@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
 @RunWith(JUnit3RunnerWithInners.class)
 public class MultiFileIntentionTestGenerated extends AbstractMultiFileIntentionTest {
     private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTest, TargetBackend.ANY, testDataFilePath);
+        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
     @TestMetadata("addJvmStaticToCompanionObjectFun/addJvmStaticToCompanionObjectFun.test")
@@ -56,7 +56,7 @@ public class MultiFileIntentionTestGenerated extends AbstractMultiFileIntentionT
     }
 
     public void testAllFilesPresentInMultiFileIntentions() throws Exception {
-        KotlinTestUtils.assertAllTestsPresentInSingleGeneratedClass(this.getClass(), new File("idea/testData/multiFileIntentions"), Pattern.compile("^(.+)\\.test$"), TargetBackend.ANY);
+        KtTestUtil.assertAllTestsPresentInSingleGeneratedClassWithExcluded(this.getClass(), new File("idea/testData/multiFileIntentions"), Pattern.compile("^(.+)\\.test$"), null);
     }
 
     @TestMetadata("convertMemberToExtension/addImports/addImports.test")
@@ -109,6 +109,11 @@ public class MultiFileIntentionTestGenerated extends AbstractMultiFileIntentionT
         runTest("idea/testData/multiFileIntentions/moveDeclarationToSeparateFile/optimizeImports/optimizeImports.test");
     }
 
+    @TestMetadata("moveMemberToTopLevel/function/function.test")
+    public void testMoveMemberToTopLevel_function_Function() throws Exception {
+        runTest("idea/testData/multiFileIntentions/moveMemberToTopLevel/function/function.test");
+    }
+
     @TestMetadata("moveOutOfCompanion/moveClass/moveClass.test")
     public void testMoveOutOfCompanion_moveClass_MoveClass() throws Exception {
         runTest("idea/testData/multiFileIntentions/moveOutOfCompanion/moveClass/moveClass.test");
@@ -137,5 +142,10 @@ public class MultiFileIntentionTestGenerated extends AbstractMultiFileIntentionT
     @TestMetadata("objectLiteralToLambda/objectLiteralToLambda.test")
     public void testObjectLiteralToLambda_ObjectLiteralToLambda() throws Exception {
         runTest("idea/testData/multiFileIntentions/objectLiteralToLambda/objectLiteralToLambda.test");
+    }
+
+    @TestMetadata("specifyTypeExplicitly/specifyTypeExplicitly.test")
+    public void testSpecifyTypeExplicitly_SpecifyTypeExplicitly() throws Exception {
+        runTest("idea/testData/multiFileIntentions/specifyTypeExplicitly/specifyTypeExplicitly.test");
     }
 }

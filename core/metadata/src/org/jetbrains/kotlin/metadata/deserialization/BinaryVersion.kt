@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.metadata.deserialization
@@ -46,6 +46,19 @@ abstract class BinaryVersion(private vararg val numbers: Int) {
         if (this.minor < minor) return false
 
         return this.patch >= patch
+    }
+
+    fun isAtMost(version: BinaryVersion): Boolean =
+        isAtMost(version.major, version.minor, version.patch)
+
+    fun isAtMost(major: Int, minor: Int, patch: Int): Boolean {
+        if (this.major < major) return true
+        if (this.major > major) return false
+
+        if (this.minor < minor) return true
+        if (this.minor > minor) return false
+
+        return this.patch <= patch
     }
 
     override fun toString(): String {

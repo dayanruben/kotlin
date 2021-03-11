@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.codegen;
@@ -189,7 +189,9 @@ public class FunctionReferenceGenerationStrategy extends FunctionGenerationStrat
                 result = codegen.generateNewArray(fakeExpression, referencedFunction.getReturnType(), fakeResolvedCall);
             }
             else {
-                result = codegen.generateConstructorCall(fakeResolvedCall, returnType);
+                //noinspection ConstantConditions
+                Type constructedType = codegen.typeMapper.mapType(referencedFunction.getReturnType());
+                result = codegen.generateConstructorCall(fakeResolvedCall, constructedType);
             }
         }
         else {
@@ -198,7 +200,7 @@ public class FunctionReferenceGenerationStrategy extends FunctionGenerationStrat
         }
 
         InstructionAdapter v = codegen.v;
-        result.put(returnType, v);
+        result.put(returnType, functionDescriptor.getReturnType(), v);
         v.areturn(returnType);
     }
 

@@ -1,17 +1,14 @@
-
 plugins {
     kotlin("jvm")
     id("jps-compatible")
 }
 
-jvmTarget = "1.6"
-
 dependencies {
-    compile(project(":compiler:util"))
+    compile(project(":compiler:resolution"))
     compile(project(":compiler:frontend"))
-    compile(project(":core:descriptors"))
     compile(project(":core:deserialization"))
-    compileOnly("org.jetbrains:annotations:13.0")
+
+    compileOnly(intellijCoreDep()) { includeJars("intellij-core", rootProject = rootProject) }
 }
 
 sourceSets {

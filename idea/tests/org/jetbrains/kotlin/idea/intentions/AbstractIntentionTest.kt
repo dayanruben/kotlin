@@ -1,17 +1,6 @@
 /*
- * Copyright 2010-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.intentions
@@ -33,13 +22,17 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.testFramework.PlatformTestUtil
 import junit.framework.ComparisonFailure
 import junit.framework.TestCase
+import org.jetbrains.annotations.NotNull
+import org.jetbrains.kotlin.formatter.FormatSettingsUtil
 import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.junit.Assert
 import java.io.File
+import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
@@ -47,7 +40,7 @@ import java.util.concurrent.TimeUnit
 abstract class AbstractIntentionTest : KotlinLightCodeInsightFixtureTestCase() {
     protected open fun intentionFileName(): String = ".intention"
 
-    protected open fun afterFileNameSuffix(): String = ".after"
+    protected open fun afterFileNameSuffix(ktFilePath: File): String = ".after"
 
     protected open fun isApplicableDirectiveName(): String = "IS_APPLICABLE"
 
@@ -67,12 +60,16 @@ abstract class AbstractIntentionTest : KotlinLightCodeInsightFixtureTestCase() {
         }
 
         if (candidateFiles.isEmpty()) {
-            throw AssertionError(".intention file is not found for " + testDataFile +
-                                 "\nAdd it to base directory of test data. It should contain fully-qualified name of intention class.")
+            throw AssertionError(
+                ".intention file is not found for " + testDataFile +
+                        "\nAdd it to base directory of test data. It should contain fully-qualified name of intention class."
+            )
         }
         if (candidateFiles.size > 1) {
-            throw AssertionError("Several .intention files are available for " + testDataFile +
-                                 "\nPlease remove some of them\n" + candidateFiles)
+            throw AssertionError(
+                "Several .intention files are available for " + testDataFile +
+                        "\nPlease remove some of them\n" + candidateFiles
+            )
         }
 
         val className = FileUtil.loadFile(candidateFiles[0]).trim { it <= ' ' }
@@ -90,7 +87,7 @@ abstract class AbstractIntentionTest : KotlinLightCodeInsightFixtureTestCase() {
         sourceFilePaths.add(mainFile.name)
         extraFileLoop@ while (true) {
             for (extension in EXTENSIONS) {
-                val extraFile = File(parentDir, mainFileName + "." + i + extension)
+                val extraFile = File(parentDir, "$mainFileName.$i$extension")
                 if (extraFile.exists()) {
                     sourceFilePaths.add(extraFile.name)
                     i++
@@ -104,30 +101,38 @@ abstract class AbstractIntentionTest : KotlinLightCodeInsightFixtureTestCase() {
         val pathToFiles = mapOf(*(sourceFilePaths zip psiFiles).toTypedArray())
 
         val fileText = FileUtil.loadFile(mainFile, true)
-        val configured = configureCompilerOptions(fileText, project, module)
+        withCustomCompilerOptions(fileText, project, module) {
+            ConfigLibraryUtil.configureLibrariesByDirective(module, PlatformTestUtil.getCommunityPath(), fileText)
+            configureCodeStyleAndRun(project, { FormatSettingsUtil.createConfigurator(fileText, it).configureSettings() }) {
+                configureRegistryAndRun(fileText) {
+                    try {
+                        TestCase.assertTrue("\"<caret>\" is missing in file \"$mainFile\"", fileText.contains("<caret>"))
 
-        ConfigLibraryUtil.configureLibrariesByDirective(myModule, PlatformTestUtil.getCommunityPath(), fileText)
+                        val minJavaVersion = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// MIN_JAVA_VERSION: ")
+                        if (minJavaVersion != null && !SystemInfo.isJavaVersionAtLeast(minJavaVersion)) return@configureRegistryAndRun
 
-        try {
-            TestCase.assertTrue("\"<caret>\" is missing in file \"$mainFile\"", fileText.contains("<caret>"))
+                        checkForErrorsBefore(fileText)
 
-            val minJavaVersion = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// MIN_JAVA_VERSION: ")
-            if (minJavaVersion != null && !SystemInfo.isJavaVersionAtLeast(minJavaVersion)) return
+                        doTestFor(mainFile, pathToFiles, intentionAction, fileText)
 
-            if (file is KtFile && !InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_ERRORS_BEFORE")) {
-                DirectiveBasedActionUtils.checkForUnexpectedErrors(file as KtFile)
+                        checkForErrorsAfter(fileText)
+                    } finally {
+                        ConfigLibraryUtil.unconfigureLibrariesByDirective(module, fileText)
+                    }
+                }
             }
+        }
+    }
 
-            doTestFor(mainFile.name, pathToFiles, intentionAction, fileText)
+    protected open fun checkForErrorsAfter(fileText: String) {
+        if (file is KtFile && !InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_ERRORS_AFTER")) {
+            DirectiveBasedActionUtils.checkForUnexpectedErrors(file as KtFile)
+        }
+    }
 
-            if (file is KtFile && !InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_ERRORS_AFTER")) {
-                DirectiveBasedActionUtils.checkForUnexpectedErrors(file as KtFile)
-            }
-        } finally {
-            ConfigLibraryUtil.unconfigureLibrariesByDirective(myModule, fileText)
-            if (configured) {
-                rollbackCompilerOptions(project, module)
-            }
+    protected open fun checkForErrorsBefore(fileText: String) {
+        if (file is KtFile && !InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_ERRORS_BEFORE")) {
+            DirectiveBasedActionUtils.checkForUnexpectedErrors(file as KtFile)
         }
     }
 
@@ -142,26 +147,33 @@ abstract class AbstractIntentionTest : KotlinLightCodeInsightFixtureTestCase() {
             }
             ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, progressIndicator)
             return result.get(10, TimeUnit.SECONDS)
-        }
-        finally {
+        } finally {
             progressIndicator.cancel()
         }
     }
 
     @Throws(Exception::class)
-    private fun doTestFor(mainFilePath: String, pathToFiles: Map<String, PsiFile>, intentionAction: IntentionAction, fileText: String) {
+    protected open fun doTestFor(mainFile: File, pathToFiles: Map<String, PsiFile>, intentionAction: IntentionAction, fileText: String) {
+        val mainFilePath = mainFile.name
         val isApplicableString = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// ${isApplicableDirectiveName()}: ")
         val isApplicableExpected = isApplicableString == null || isApplicableString == "true"
 
-        val isApplicableOnPooled = computeUnderProgressIndicatorAndWait { ApplicationManager.getApplication().runReadAction(Computable { intentionAction.isAvailable(project, editor, file) }) }
+        val isApplicableOnPooled = computeUnderProgressIndicatorAndWait {
+            ApplicationManager.getApplication().runReadAction(Computable { intentionAction.isAvailable(project, editor, file) })
+        }
 
         val isApplicableOnEdt = intentionAction.isAvailable(project, editor, file)
 
-        Assert.assertEquals("There should not be any difference what thread isApplicable is called from", isApplicableOnPooled, isApplicableOnEdt)
+        Assert.assertEquals(
+            "There should not be any difference what thread isApplicable is called from",
+            isApplicableOnPooled,
+            isApplicableOnEdt
+        )
 
         Assert.assertTrue(
-                "isAvailable() for " + intentionAction.javaClass + " should return " + isApplicableExpected,
-                isApplicableExpected == isApplicableOnEdt)
+            "isAvailable() for " + intentionAction.javaClass + " should return " + isApplicableExpected,
+            isApplicableExpected == isApplicableOnEdt
+        )
 
         val intentionTextString = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// " + intentionTextDirectiveName() + ": ")
 
@@ -173,38 +185,34 @@ abstract class AbstractIntentionTest : KotlinLightCodeInsightFixtureTestCase() {
 
         try {
             if (isApplicableExpected) {
-                project.executeWriteCommand(
-                        intentionAction.text, null
-                ) {
-                    intentionAction.invoke(project, editor, file)
-                    null
-                }
+                val action = { intentionAction.invoke(project, editor, file) }
+                if (intentionAction.startInWriteAction())
+                    project.executeWriteCommand(intentionAction.text, action)
+                else
+                    project.executeCommand(intentionAction.text, null, action)
+
                 // Don't bother checking if it should have failed.
                 if (shouldFailString.isEmpty()) {
                     for ((filePath, value) in pathToFiles) {
-                        val canonicalPathToExpectedFile = filePath + afterFileNameSuffix()
+                        val canonicalPathToExpectedFile = filePath + afterFileNameSuffix(mainFile)
                         if (filePath == mainFilePath) {
                             try {
                                 myFixture.checkResultByFile(canonicalPathToExpectedFile)
-                            }
-                            catch (e: ComparisonFailure) {
+                            } catch (e: ComparisonFailure) {
                                 KotlinTestUtils
-                                        .assertEqualsToFile(File(testDataPath, canonicalPathToExpectedFile), editor.document.text)
+                                    .assertEqualsToFile(File(testDataPath, canonicalPathToExpectedFile), editor.document.text)
                             }
 
-                        }
-                        else {
+                        } else {
                             KotlinTestUtils.assertEqualsToFile(File(testDataPath, canonicalPathToExpectedFile), value.text)
                         }
                     }
                 }
             }
             TestCase.assertEquals("Expected test to fail.", "", shouldFailString)
-        }
-        catch (e: BaseRefactoringProcessor.ConflictsInTestsException) {
+        } catch (e: BaseRefactoringProcessor.ConflictsInTestsException) {
             TestCase.assertEquals("Failure message mismatch.", shouldFailString, StringUtil.join(e.messages.sorted(), ", "))
-        }
-        catch (e: CommonRefactoringUtil.RefactoringErrorHintException) {
+        } catch (e: CommonRefactoringUtil.RefactoringErrorHintException) {
             TestCase.assertEquals("Failure message mismatch.", shouldFailString, e.message?.replace('\n', ' '))
         }
     }

@@ -19,39 +19,19 @@
 package org.jetbrains.kotlin.idea.imports
 
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
-import org.jetbrains.kotlin.resolve.ImportPath
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getReferenceTargets
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.getImportableDescriptor
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
-import java.util.*
-
-object ImportPathComparator : Comparator<ImportPath> {
-    override fun compare(import1: ImportPath, import2: ImportPath): Int {
-        // alias imports placed last
-        if (import1.hasAlias() != import2.hasAlias()) {
-            return if (import1.hasAlias()) +1 else -1
-        }
-
-        // standard library imports last
-        val stdlib1 = isJavaOrKotlinStdlibImport(import1)
-        val stdlib2 = isJavaOrKotlinStdlibImport(import2)
-        if (stdlib1 != stdlib2) {
-            return if (stdlib1) +1 else -1
-        }
-
-        return import1.toString().compareTo(import2.toString())
-    }
-
-    private fun isJavaOrKotlinStdlibImport(path: ImportPath): Boolean {
-        val s = path.pathStr
-        return s.startsWith("java.") || s.startsWith("javax.")|| s.startsWith("kotlin.")
-    }
-}
 
 val DeclarationDescriptor.importableFqName: FqName?
     get() {
@@ -62,7 +42,8 @@ val DeclarationDescriptor.importableFqName: FqName?
 fun DeclarationDescriptor.canBeReferencedViaImport(): Boolean {
     if (this is PackageViewDescriptor ||
         DescriptorUtils.isTopLevelDeclaration(this) ||
-        this is CallableDescriptor && DescriptorUtils.isStaticDeclaration(this)) {
+        this is CallableDescriptor && DescriptorUtils.isStaticDeclaration(this)
+    ) {
         return !name.isSpecial
     }
 
@@ -77,6 +58,8 @@ fun DeclarationDescriptor.canBeReferencedViaImport(): Boolean {
     }
 }
 
+fun DeclarationDescriptor.canBeAddedToImport(): Boolean = this !is PackageViewDescriptor && canBeReferencedViaImport()
+
 fun KotlinType.canBeReferencedViaImport(): Boolean {
     val descriptor = constructor.declarationDescriptor
     return descriptor != null && descriptor.canBeReferencedViaImport()
@@ -85,7 +68,12 @@ fun KotlinType.canBeReferencedViaImport(): Boolean {
 // for cases when class qualifier refers companion object treats it like reference to class itself
 fun KtReferenceExpression.getImportableTargets(bindingContext: BindingContext): Collection<DeclarationDescriptor> {
     val targets = bindingContext[BindingContext.SHORT_REFERENCE_TO_COMPANION_OBJECT, this]?.let { listOf(it) }
-                  ?: getReferenceTargets(bindingContext)
+        ?: getReferenceTargets(bindingContext)
     return targets.map { it.getImportableDescriptor() }.toSet()
 }
 
+fun KtImportDirective.canResolve(facade: ResolutionFacade): Boolean {
+    return (importedReference?.getQualifiedElementSelector() as? KtSimpleNameExpression)?.let { nameExpression ->
+        nameExpression.getImportableTargets(facade.analyze(nameExpression, BodyResolveMode.PARTIAL)).isNotEmpty()
+    } ?: false
+}

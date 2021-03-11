@@ -1,17 +1,6 @@
 /*
- * Copyright 2010-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.config
@@ -25,10 +14,13 @@ import org.jdom.Element
 import org.jdom.Text
 import org.jetbrains.kotlin.cli.common.arguments.*
 import org.jetbrains.kotlin.load.java.JvmAbi
-import org.jetbrains.kotlin.platform.IdePlatform
-import org.jetbrains.kotlin.platform.IdePlatformKind
+import org.jetbrains.kotlin.platform.*
+import org.jetbrains.kotlin.platform.impl.FakeK2NativeCompilerArguments
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
-import org.jetbrains.kotlin.platform.orDefault
+import org.jetbrains.kotlin.platform.js.isJs
+import org.jetbrains.kotlin.platform.jvm.JdkPlatform
+import org.jetbrains.kotlin.platform.jvm.isJvm
+import org.jetbrains.kotlin.platform.konan.*
 import java.lang.reflect.Modifier
 import kotlin.reflect.KClass
 import kotlin.reflect.full.superclasses
@@ -39,6 +31,20 @@ private fun Element.getOptionValue(name: String) = getOption(name)?.getAttribute
 
 private fun Element.getOptionBody(name: String) = getOption(name)?.children?.firstOrNull()
 
+fun TargetPlatform.createArguments(init: (CommonCompilerArguments).() -> Unit = {}): CommonCompilerArguments {
+    return when {
+        isCommon() -> K2MetadataCompilerArguments().apply { init() }
+        isJvm() -> K2JVMCompilerArguments().apply {
+            init()
+            // TODO(dsavvinov): review this
+            jvmTarget = (single() as? JdkPlatform)?.targetVersion?.description ?: JvmTarget.DEFAULT.description
+        }
+        isJs() -> K2JSCompilerArguments().apply { init() }
+        isNative() -> FakeK2NativeCompilerArguments().apply { init() }
+        else -> error("Unknown platform $this")
+    }
+}
+
 private fun readV1Config(element: Element): KotlinFacetSettings {
     return KotlinFacetSettings().apply {
         val useProjectSettings = element.getOptionValue("useProjectSettings")?.toBoolean()
@@ -47,9 +53,9 @@ private fun readV1Config(element: Element): KotlinFacetSettings {
         val targetPlatformName = versionInfoElement?.getOptionValue("targetPlatformName")
         val languageLevel = versionInfoElement?.getOptionValue("languageLevel")
         val apiLevel = versionInfoElement?.getOptionValue("apiLevel")
-        val targetPlatform = IdePlatformKind.All_PLATFORMS
-            .firstOrNull { it.description == targetPlatformName }
-            ?: JvmIdePlatformKind.defaultPlatform
+        val targetPlatform = CommonPlatforms.allSimplePlatforms.union(setOf(CommonPlatforms.defaultCommonPlatform))
+            .firstOrNull { it.oldFashionedDescription == targetPlatformName }
+            ?: JvmIdePlatformKind.defaultPlatform // FIXME(dsavvinov): choose proper default
 
         val compilerInfoElement = element.getOptionBody("compilerInfo")
 
@@ -83,8 +89,7 @@ private fun readV1Config(element: Element): KotlinFacetSettings {
 
         if (useProjectSettings != null) {
             this.useProjectSettings = useProjectSettings
-        }
-        else {
+        } else {
             // Migration problem workaround for pre-1.1-beta releases (mainly 1.0.6) -> 1.1-rc+
             // Problematic cases: 1.1-beta/1.1-beta2 -> 1.1-rc+ (useProjectSettings gets reset to false)
             // This heuristic detects old enough configurations:
@@ -95,28 +100,49 @@ private fun readV1Config(element: Element): KotlinFacetSettings {
 
         this.compilerSettings = compilerSettings
         this.compilerArguments = compilerArguments
+        this.targetPlatform = IdePlatformKind.platformByCompilerArguments(compilerArguments)
     }
 }
 
-fun Element.getFacetPlatformByConfigurationElement(): IdePlatform<*, *> {
-    val platformName = getAttributeValue("platform")
-    return IdePlatformKind.All_PLATFORMS
-        .firstOrNull { it.description == platformName }
-        .orDefault()
+// TODO: Introduce new version of facet serialization. See https://youtrack.jetbrains.com/issue/KT-38235
+//  This is necessary to avoid having too much custom logic for platform serialization.
+fun Element.getFacetPlatformByConfigurationElement(): TargetPlatform {
+    val targetPlatform = getAttributeValue("allPlatforms").deserializeTargetPlatformByComponentPlatforms()
+    if (targetPlatform != null) return targetPlatform
+
+    // failed to read list of all platforms. Fallback to legacy algorithm
+    val platformName = getAttributeValue("platform") ?: return DefaultIdeTargetPlatformKindProvider.defaultPlatform
+
+    return CommonPlatforms.allSimplePlatforms.firstOrNull {
+        // first, look for exact match through all simple platforms
+        it.oldFashionedDescription == platformName
+    } ?: CommonPlatforms.defaultCommonPlatform.takeIf {
+        // then, check exact match for the default common platform
+        it.oldFashionedDescription == platformName
+    } ?: NativePlatforms.unspecifiedNativePlatform.takeIf {
+        // if none of the above succeeded, check if it's an old-style record about native platform (without suffix with target name)
+        it.oldFashionedDescription.startsWith(platformName)
+    }.orDefault() // finally, fallback to the default platform
 }
 
 private fun readV2AndLaterConfig(element: Element): KotlinFacetSettings {
     return KotlinFacetSettings().apply {
         element.getAttributeValue("useProjectSettings")?.let { useProjectSettings = it.toBoolean() }
         val targetPlatform = element.getFacetPlatformByConfigurationElement()
-        element.getChild("implements")?.let {
-            val items = it.getChildren("implement")
-            implementedModuleNames = if (items.isNotEmpty()) {
-                items.mapNotNull { (it.content.firstOrNull() as? Text)?.textTrim }
-            } else {
-                listOfNotNull((it.content.firstOrNull() as? Text)?.textTrim)
-            }
+        this.targetPlatform = targetPlatform
+        readElementsList(element, "implements", "implement")?.let { implementedModuleNames = it }
+        readElementsList(element, "dependsOnModuleNames", "dependsOn")?.let { dependsOnModuleNames = it }
+        element.getChild("externalSystemTestTasks")?.let {
+            val testRunTasks = it.getChildren("externalSystemTestTask")
+                .mapNotNull { (it.content.firstOrNull() as? Text)?.textTrim }
+                .mapNotNull { ExternalSystemTestRunTask.fromStringRepresentation(it) }
+            val nativeMainRunTasks = it.getChildren("externalSystemNativeMainRunTask")
+                .mapNotNull { (it.content.firstOrNull() as? Text)?.textTrim }
+                .mapNotNull { ExternalSystemNativeMainRunTask.fromStringRepresentation(it) }
+
+            externalSystemRunTasks = testRunTasks + nativeMainRunTasks
         }
+
         element.getChild("sourceSets")?.let {
             val items = it.getChildren("sourceSet")
             sourceSetNames = items.mapNotNull { (it.content.firstOrNull() as? Text)?.textTrim }
@@ -133,6 +159,8 @@ private fun readV2AndLaterConfig(element: Element): KotlinFacetSettings {
         } ?: KotlinModuleKind.DEFAULT
         isTestModule = element.getAttributeValue("isTestModule")?.toBoolean() ?: false
         externalProjectId = element.getAttributeValue("externalProjectId") ?: ""
+        isHmppEnabled = element.getAttribute("isHmppProject")?.booleanValue ?: false
+        pureKotlinSourceFolders = element.getAttributeValue("pureKotlinSourceFolders")?.split(";")?.toList() ?: emptyList()
         element.getChild("compilerSettings")?.let {
             compilerSettings = CompilerSettings()
             XmlSerializer.deserializeInto(compilerSettings!!, it)
@@ -154,20 +182,24 @@ private fun readV2AndLaterConfig(element: Element): KotlinFacetSettings {
     }
 }
 
-private fun readV2Config(element: Element): KotlinFacetSettings {
-    return readV2AndLaterConfig(element).apply {
-        element.getChild("compilerArguments")?.children?.let { args ->
-            when {
-                args.any { arg -> arg.attributes[0].value == "coroutinesEnable" && arg.attributes[1].booleanValue } ->
-                    compilerArguments!!.coroutinesState = CommonCompilerArguments.ENABLE
-                args.any { arg -> arg.attributes[0].value == "coroutinesWarn" && arg.attributes[1].booleanValue } ->
-                    compilerArguments!!.coroutinesState = CommonCompilerArguments.WARN
-                args.any { arg -> arg.attributes[0].value == "coroutinesError" && arg.attributes[1].booleanValue } ->
-                    compilerArguments!!.coroutinesState = CommonCompilerArguments.ERROR
-                else -> compilerArguments!!.coroutinesState = CommonCompilerArguments.DEFAULT
-            }
+private fun readElementsList(element: Element, rootElementName: String, elementName: String): List<String>? {
+    element.getChild(rootElementName)?.let {
+        val items = it.getChildren(elementName)
+        return if (items.isNotEmpty()) {
+            items.mapNotNull { (it.content.firstOrNull() as? Text)?.textTrim }
+        } else {
+            listOfNotNull((it.content.firstOrNull() as? Text)?.textTrim)
         }
     }
+    return null
+}
+
+private fun readV3Config(element: Element): KotlinFacetSettings {
+    return readV2AndLaterConfig(element)
+}
+
+private fun readV2Config(element: Element): KotlinFacetSettings {
+    return readV2AndLaterConfig(element)
 }
 
 private fun readLatestConfig(element: Element): KotlinFacetSettings {
@@ -175,16 +207,15 @@ private fun readLatestConfig(element: Element): KotlinFacetSettings {
 }
 
 fun deserializeFacetSettings(element: Element): KotlinFacetSettings {
-    val version =
-            try {
-                element.getAttribute("version")?.intValue
-            }
-            catch(e: DataConversionException) {
-                null
-            } ?: KotlinFacetSettings.DEFAULT_VERSION
+    val version = try {
+        element.getAttribute("version")?.intValue
+    } catch (e: DataConversionException) {
+        null
+    } ?: KotlinFacetSettings.DEFAULT_VERSION
     return when (version) {
         1 -> readV1Config(element)
         2 -> readV2Config(element)
+        3 -> readV3Config(element)
         KotlinFacetSettings.CURRENT_VERSION -> readLatestConfig(element)
         else -> return KotlinFacetSettings() // Reset facet configuration if versions don't match
     }.apply { this.version = version }
@@ -251,9 +282,8 @@ private val Class<*>.normalOrdering
 private fun Element.restoreNormalOrdering(bean: Any) {
     val normalOrdering = bean.javaClass.normalOrdering
     val elementsToReorder = this.getContent<Element> { it is Element && it.getAttribute("name")?.value in normalOrdering }
-    elementsToReorder
-            .sortedBy { normalOrdering[it.getAttribute("name")?.value!!] }
-            .forEachIndexed { index, element -> elementsToReorder[index] = element.clone() }
+    elementsToReorder.sortedBy { normalOrdering[it.getAttribute("name")?.value!!] }
+        .forEachIndexed { index, element -> elementsToReorder[index] = element.clone() }
 }
 
 private fun buildChildElement(element: Element, tag: String, bean: Any, filter: SerializationFilter): Element {
@@ -267,24 +297,18 @@ private fun buildChildElement(element: Element, tag: String, bean: Any, filter: 
 private fun KotlinFacetSettings.writeLatestConfig(element: Element) {
     val filter = SkipDefaultsSerializationFilter()
 
-    platform?.let {
-        element.setAttribute("platform", it.description)
+    // TODO: Introduce new version of facet serialization. See https://youtrack.jetbrains.com/issue/KT-38235
+    //  This is necessary to avoid having too much custom logic for platform serialization.
+    targetPlatform?.let { targetPlatform ->
+        element.setAttribute("platform", targetPlatform.oldFashionedDescription)
+        element.setAttribute("allPlatforms", targetPlatform.serializeComponentPlatforms())
     }
     if (!useProjectSettings) {
         element.setAttribute("useProjectSettings", useProjectSettings.toString())
     }
-    if (implementedModuleNames.isNotEmpty()) {
-        element.addContent(
-                Element("implements").apply {
-                    val singleModule = implementedModuleNames.singleOrNull()
-                    if (singleModule != null) {
-                        addContent(singleModule)
-                    } else {
-                        implementedModuleNames.map { addContent(Element("implement").apply { addContent(it) }) }
-                    }
-                }
-        )
-    }
+    saveElementsList(element, implementedModuleNames, "implements", "implement")
+    saveElementsList(element, dependsOnModuleNames, "dependsOnModuleNames", "dependsOn")
+
     if (sourceSetNames.isNotEmpty()) {
         element.addContent(
             Element("sourceSets").apply {
@@ -298,6 +322,32 @@ private fun KotlinFacetSettings.writeLatestConfig(element: Element) {
     }
     if (externalProjectId.isNotEmpty()) {
         element.setAttribute("externalProjectId", externalProjectId)
+    }
+    if (isHmppEnabled) {
+        element.setAttribute("isHmppProject", mppVersion.isHmpp.toString())
+    }
+    if (externalSystemRunTasks.isNotEmpty()) {
+        element.addContent(
+            Element("externalSystemTestTasks").apply {
+                externalSystemRunTasks.forEach { task ->
+                    when(task) {
+                        is ExternalSystemTestRunTask -> {
+                            addContent(
+                                Element("externalSystemTestTask").apply { addContent(task.toStringRepresentation()) }
+                            )
+                        }
+                        is ExternalSystemNativeMainRunTask -> {
+                            addContent(
+                                Element("externalSystemNativeMainRunTask").apply { addContent(task.toStringRepresentation()) }
+                            )
+                        }
+                    }
+                }
+            }
+        )
+    }
+    if (pureKotlinSourceFolders.isNotEmpty()) {
+        element.setAttribute("pureKotlinSourceFolders", pureKotlinSourceFolders.joinToString(";"))
     }
     productionOutputPath?.let {
         if (it != (compilerArguments as? K2JSCompilerArguments)?.outputFile) {
@@ -320,6 +370,21 @@ private fun KotlinFacetSettings.writeLatestConfig(element: Element) {
     }
 }
 
+private fun saveElementsList(element: Element, elementsList: List<String>, rootElementName: String, elementName: String) {
+    if (elementsList.isNotEmpty()) {
+        element.addContent(
+            Element(rootElementName).apply {
+                val singleModule = elementsList.singleOrNull()
+                if (singleModule != null) {
+                    addContent(singleModule)
+                } else {
+                    elementsList.map { addContent(Element(elementName).apply { addContent(it) }) }
+                }
+            }
+        )
+    }
+}
+
 fun CommonCompilerArguments.detectVersionAutoAdvance() {
     autoAdvanceLanguageVersion = languageVersion == null
     autoAdvanceApiVersion = apiVersion == null
@@ -336,34 +401,57 @@ fun Element.dropVersionsIfNecessary(settings: CommonCompilerArguments) {
     }
 }
 
-// Special treatment of v2 may be dropped after transition to IDEA 172
-private fun KotlinFacetSettings.writeV2Config(element: Element) {
-    writeLatestConfig(element)
-    element.getChild("compilerArguments")?.let {
-        it.getOption("coroutinesState")?.detach()
-        val coroutineOption = when (compilerArguments?.coroutinesState) {
-            CommonCompilerArguments.ENABLE -> "coroutinesEnable"
-            CommonCompilerArguments.WARN -> "coroutinesWarn"
-            CommonCompilerArguments.ERROR -> "coroutinesError"
-            else -> null
-        }
-        if (coroutineOption != null) {
-            Element("option").apply {
-                setAttribute("name", coroutineOption)
-                setAttribute("value", "true")
-                it.addContent(this)
-            }
-        }
+fun KotlinFacetSettings.serializeFacetSettings(element: Element) {
+    val versionToWrite = when (version) {
+        2, 3 -> version
+        else -> KotlinFacetSettings.CURRENT_VERSION
     }
+    element.setAttribute("version", versionToWrite.toString())
+    writeLatestConfig(element)
 }
 
-fun KotlinFacetSettings.serializeFacetSettings(element: Element) {
-    val versionToWrite = if (version == 2) version else KotlinFacetSettings.CURRENT_VERSION
-    element.setAttribute("version", versionToWrite.toString())
-    if (versionToWrite == 2) {
-        writeV2Config(element)
-    }
-    else {
-        writeLatestConfig(element)
+private fun TargetPlatform.serializeComponentPlatforms(): String {
+    val componentPlatforms = componentPlatforms
+    val componentPlatformNames = componentPlatforms.mapTo(ArrayList()) { it.serializeToString() }
+
+    // workaround for old Kotlin IDE plugins, KT-38634
+    if (componentPlatforms.any { it is NativePlatform })
+        componentPlatformNames.add(NativePlatformUnspecifiedTarget.legacySerializeToString())
+
+    return componentPlatformNames.sorted().joinToString("/")
+}
+
+private fun String?.deserializeTargetPlatformByComponentPlatforms(): TargetPlatform? {
+    val componentPlatformNames = this?.split('/')?.toSet()
+    if (componentPlatformNames == null || componentPlatformNames.isEmpty())
+        return null
+
+    val knownComponentPlatforms = HashMap<String, SimplePlatform>() // "serialization presentation" to "simple platform name"
+
+    // first, collect serialization presentations for every known simple platform
+    CommonPlatforms.allSimplePlatforms
+        .flatMap { it.componentPlatforms }
+        .forEach { knownComponentPlatforms[it.serializeToString()] = it }
+
+    // next, add legacy aliases for some of the simple platforms; ex: unspecifiedNativePlatform
+    NativePlatformUnspecifiedTarget.let { knownComponentPlatforms[it.legacySerializeToString()] = it }
+
+    val componentPlatforms = componentPlatformNames.mapNotNull(knownComponentPlatforms::get).toSet()
+    return when (componentPlatforms.size) {
+        0 -> {
+            // empty set of component platforms is not allowed, in such case fallback to legacy algorithm
+            null
+        }
+        1 -> TargetPlatform(componentPlatforms)
+        else -> {
+            // workaround for old Kotlin IDE plugins, KT-38634
+            if (componentPlatforms.any { it is NativePlatformUnspecifiedTarget }
+                && componentPlatforms.any { it is NativePlatformWithTarget }
+            ) {
+                TargetPlatform(componentPlatforms - NativePlatformUnspecifiedTarget)
+            } else {
+                TargetPlatform(componentPlatforms)
+            }
+        }
     }
 }

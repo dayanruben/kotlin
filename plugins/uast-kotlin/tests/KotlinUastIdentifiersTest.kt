@@ -1,6 +1,6 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2000-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.uast.test.kotlin
@@ -23,5 +23,20 @@ class KotlinUastIdentifiersTest : AbstractKotlinIdentifiersTest() {
 
     @Test
     fun testAnonymous() = doTest("Anonymous")
+
+    @Test
+    fun testLambdas() = doTest("Lambdas")
+
+    @Test
+    fun testSuperCalls() = doTest("SuperCalls")
+
+    @Test
+    fun testPropertyInitializer() = doTest("PropertyInitializer")
+
+    @Test
+    fun testEnumValuesConstructors() = doTest("EnumValuesConstructors")
+
+    @Test
+    fun testNonTrivialIdentifiers() = doTest("NonTrivialIdentifiers")
 
 }

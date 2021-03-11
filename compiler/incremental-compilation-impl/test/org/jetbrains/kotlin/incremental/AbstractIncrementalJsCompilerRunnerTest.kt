@@ -24,15 +24,18 @@ import org.jetbrains.kotlin.incremental.utils.TestMessageCollector
 import java.io.File
 
 abstract class AbstractIncrementalJsCompilerRunnerTest : AbstractIncrementalCompilerRunnerTestBase<K2JSCompilerArguments>() {
-    override fun make(cacheDir: File, sourceRoots: Iterable<File>, args: K2JSCompilerArguments): TestCompilationResult {
+    override fun make(cacheDir: File, outDir: File, sourceRoots: Iterable<File>, args: K2JSCompilerArguments): TestCompilationResult {
         val reporter = TestICReporter()
         val messageCollector = TestMessageCollector()
-        makeJsIncrementally(cacheDir, sourceRoots, args, reporter = reporter, messageCollector = messageCollector)
+        makeJsIncrementally(cacheDir, sourceRoots, args, buildHistoryFile(cacheDir), messageCollector, reporter, scopeExpansionMode)
         return TestCompilationResult(reporter, messageCollector)
     }
 
     override val buildLogFinder: BuildLogFinder
-        get() = super.buildLogFinder.copy(isJsEnabled = true)
+        get() = super.buildLogFinder.copy(
+            isJsEnabled = true,
+            isScopeExpansionEnabled = scopeExpansionMode != CompileScopeExpansionMode.NEVER
+        )
 
     override fun createCompilerArguments(destinationDir: File, testDir: File): K2JSCompilerArguments =
         K2JSCompilerArguments().apply {
@@ -40,4 +43,6 @@ abstract class AbstractIncrementalJsCompilerRunnerTest : AbstractIncrementalComp
             sourceMap = true
             metaInfo = true
         }
+
+    protected open val scopeExpansionMode = CompileScopeExpansionMode.NEVER
 }

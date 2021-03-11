@@ -18,18 +18,12 @@ package org.jetbrains.kotlin.idea.highlighter
 
 import com.intellij.codeInsight.daemon.ChangeLocalityDetector
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListenerCompat.Companion.getInsideCodeBlockModificationDirtyScope
 
 class KotlinChangeLocalityDetector : ChangeLocalityDetector {
     override fun getChangeHighlightingDirtyScopeFor(element: PsiElement): PsiElement? {
-        val parent = element.parent
-        if (element is KtBlockExpression && parent is KtNamedFunction && parent.name != null) {
-            if (parent.parents.all { it is KtClassBody || it is KtClassOrObject || it is KtFile || it is KtScript }) {
-                return parent
-            }
-        }
-
-        return null
+        // in some cases it returns a bit wider scope for the element as it is not possible to track changes here
+        // e.g.: delete a space in expression `foo( )` results to entire expression `foo()`
+        return getInsideCodeBlockModificationDirtyScope(element)
     }
 }

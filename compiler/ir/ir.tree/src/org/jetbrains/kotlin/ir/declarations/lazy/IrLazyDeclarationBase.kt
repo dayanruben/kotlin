@@ -1,69 +1,73 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.ir.declarations.lazy
 
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.ir.IrElementBase
+import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
-import org.jetbrains.kotlin.ir.declarations.IrDeclaration
-import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
-import org.jetbrains.kotlin.ir.declarations.IrDeclarationParent
-import org.jetbrains.kotlin.ir.declarations.IrValueParameter
-import org.jetbrains.kotlin.ir.declarations.impl.IrValueParameterImpl
-import org.jetbrains.kotlin.ir.expressions.IrCall
+import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.expressions.IrConstructorCall
+import org.jetbrains.kotlin.ir.symbols.impl.IrValueParameterSymbolImpl
+import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.util.DeclarationStubGenerator
 import org.jetbrains.kotlin.ir.util.TypeTranslator
 import org.jetbrains.kotlin.resolve.scopes.MemberScope
 import org.jetbrains.kotlin.types.KotlinType
-import kotlin.reflect.KProperty
+import kotlin.properties.ReadWriteProperty
 
-abstract class IrLazyDeclarationBase(
-    startOffset: Int,
-    endOffset: Int,
-    override val origin: IrDeclarationOrigin,
-    private val stubGenerator: DeclarationStubGenerator,
-    protected val typeTranslator: TypeTranslator
-) : IrElementBase(startOffset, endOffset), IrDeclaration {
+@OptIn(ObsoleteDescriptorBasedAPI::class)
+interface IrLazyDeclarationBase : IrDeclaration {
+    val stubGenerator: DeclarationStubGenerator
+    val typeTranslator: TypeTranslator
 
-    protected fun KotlinType.toIrType() = typeTranslator.translateType(this)
+    override val factory: IrFactory
+        get() = stubGenerator.symbolTable.irFactory
 
-    protected fun ReceiverParameterDescriptor.generateReceiverParameterStub(): IrValueParameter =
-        IrValueParameterImpl(
-            UNDEFINED_OFFSET, UNDEFINED_OFFSET, origin, this,
-            type.toIrType(), null
+    fun KotlinType.toIrType(): IrType =
+        typeTranslator.translateType(this)
+
+    fun ReceiverParameterDescriptor.generateReceiverParameterStub(): IrValueParameter =
+        factory.createValueParameter(
+            UNDEFINED_OFFSET, UNDEFINED_OFFSET, origin, IrValueParameterSymbolImpl(this),
+            name, -1, type.toIrType(), null, isCrossinline = false, isNoinline = false,
+            isHidden = false, isAssignable = false
         )
 
-    protected fun generateMemberStubs(memberScope: MemberScope, container: MutableList<IrDeclaration>) {
+    fun generateMemberStubs(memberScope: MemberScope, container: MutableList<IrDeclaration>) {
         generateChildStubs(memberScope.getContributedDescriptors(), container)
     }
 
-    protected fun generateChildStubs(descriptors: Collection<DeclarationDescriptor>, declarations: MutableList<IrDeclaration>) {
-        descriptors.mapTo(declarations) { generateMemberStub(it) }
+    fun generateChildStubs(descriptors: Collection<DeclarationDescriptor>, declarations: MutableList<IrDeclaration>) {
+        descriptors.mapNotNullTo(declarations) { descriptor ->
+            if (descriptor is DeclarationDescriptorWithVisibility && DescriptorVisibilities.isPrivate(descriptor.visibility)) null
+            else stubGenerator.generateMemberStub(descriptor)
+        }
     }
 
-    private fun generateMemberStub(descriptor: DeclarationDescriptor): IrDeclaration =
-        stubGenerator.generateMemberStub(descriptor)
-
-    override var parent: IrDeclarationParent by lazyVar {
-        createLazyParent()!!
+    fun createLazyAnnotations(): ReadWriteProperty<Any?, List<IrConstructorCall>> = lazyVar {
+        descriptor.annotations.mapNotNull(typeTranslator.constantValueGenerator::generateAnnotationConstructorCall).toMutableList()
     }
 
-    override val annotations: MutableList<IrCall> = arrayListOf()
-
-    private fun createLazyParent(): IrDeclarationParent? {
+    fun createLazyParent(): ReadWriteProperty<Any?, IrDeclarationParent> = lazyVar {
         val currentDescriptor = descriptor
 
         val containingDeclaration =
             ((currentDescriptor as? PropertyAccessorDescriptor)?.correspondingProperty ?: currentDescriptor).containingDeclaration
-        return when (containingDeclaration) {
-            is PackageFragmentDescriptor -> stubGenerator.generateOrGetEmptyExternalPackageFragmentStub(containingDeclaration).also {
-                it.declarations.add(this)
+
+        when (containingDeclaration) {
+            is PackageFragmentDescriptor -> run {
+                val parent = this.takeUnless { it is IrClass }?.let {
+                    stubGenerator.generateOrGetFacadeClass(descriptor)
+                } ?: stubGenerator.generateOrGetEmptyExternalPackageFragmentStub(containingDeclaration)
+                parent.declarations.add(this)
+                parent
             }
             is ClassDescriptor -> stubGenerator.generateClassStub(containingDeclaration)
             is FunctionDescriptor -> stubGenerator.generateFunctionStub(containingDeclaration)
+            is PropertyDescriptor -> stubGenerator.generateFunctionStub(containingDeclaration.run { getter ?: setter!! })
             else -> throw AssertionError("Package or class expected: $containingDeclaration; for $currentDescriptor")
         }
     }

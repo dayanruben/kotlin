@@ -1,31 +1,44 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.ir.backend.js
 
 import org.jetbrains.kotlin.builtins.PrimitiveType
-import org.jetbrains.kotlin.ir.backend.js.ir.JsIrBuilder
 import org.jetbrains.kotlin.ir.backend.js.utils.Namer
+import org.jetbrains.kotlin.ir.builders.declarations.addFunction
+import org.jetbrains.kotlin.ir.builders.declarations.addTypeParameter
+import org.jetbrains.kotlin.ir.builders.declarations.addValueParameter
+import org.jetbrains.kotlin.ir.declarations.IrFactory
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.declarations.impl.IrExternalPackageFragmentImpl
 import org.jetbrains.kotlin.ir.descriptors.IrBuiltIns
-import org.jetbrains.kotlin.ir.symbols.impl.IrExternalPackageFragmentSymbolImpl
+import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
+import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.types.defaultType
+import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeBuilder
+import org.jetbrains.kotlin.ir.types.impl.buildSimpleType
+import org.jetbrains.kotlin.ir.types.isLong
+import org.jetbrains.kotlin.ir.types.typeWithParameters
 import org.jetbrains.kotlin.ir.util.constructors
-import org.jetbrains.kotlin.ir.util.getPropertyGetter
+import org.jetbrains.kotlin.ir.util.findDeclaration
+import org.jetbrains.kotlin.ir.util.kotlinPackageFqn
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi2ir.findSingleFunction
-import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 import java.util.*
 
 class JsIntrinsics(private val irBuiltIns: IrBuiltIns, val context: JsIrBackendContext) {
 
-    private val externalPackageFragmentSymbol = IrExternalPackageFragmentSymbolImpl(context.internalPackageFragmentDescriptor)
-    private val externalPackageFragment = IrExternalPackageFragmentImpl(externalPackageFragmentSymbol)
+    val externalPackageFragment = IrExternalPackageFragmentImpl.createEmptyExternalPackageFragment(
+        context.builtIns.builtInsModule, FqName("kotlin.js.internal")
+    )
+
+    // TODO: Should we drop operator intrinsics in favor of IrDynamicOperatorExpression?
 
     // Equality operations:
 
@@ -81,18 +94,10 @@ class JsIntrinsics(private val irBuiltIns: IrBuiltIns, val context: JsIrBackendC
     val jsBitShiftRU = binOpInt("jsBitShiftRU")
     val jsBitShiftL = binOpInt("jsBitShiftL")
 
-
-    // KFunction operations:
-
-    val jsName = unOp("kCallableName", irBuiltIns.string)
-    val jsPropertyGet = binOp("kPropertyGet")
-    val jsPropertySet = tripleOp("kPropertySet", irBuiltIns.unit)
-
-
     // Type checks:
 
     val jsInstanceOf = binOpBool("jsInstanceOf")
-    val jsTypeOf = unOp("jsTypeOf", irBuiltIns.string)
+    val jsTypeOf = getInternalFunction("jsTypeOf")
 
     // Number conversions:
 
@@ -113,9 +118,11 @@ class JsIntrinsics(private val irBuiltIns: IrBuiltIns, val context: JsIrBackendC
     val isArraySymbol = getInternalFunction("isArray")
     //    val isCharSymbol = getInternalFunction("isChar")
     val isObjectSymbol = getInternalFunction("isObject")
+    val isSuspendFunctionSymbol = getInternalFunction("isSuspendFunction")
 
     val isNumberSymbol = getInternalFunction("isNumber")
     val isComparableSymbol = getInternalFunction("isComparable")
+    val isCharSequenceSymbol = getInternalFunction("isCharSequence")
 
     val isPrimitiveArray = mapOf(
         PrimitiveType.BOOLEAN to getInternalFunction("isBooleanArray"),
@@ -125,7 +132,7 @@ class JsIntrinsics(private val irBuiltIns: IrBuiltIns, val context: JsIrBackendC
         PrimitiveType.INT to getInternalFunction("isIntArray"),
         PrimitiveType.FLOAT to getInternalFunction("isFloatArray"),
         PrimitiveType.LONG to getInternalFunction("isLongArray"),
-        PrimitiveType.DOUBLE to getInternalFunction("isLongArray")
+        PrimitiveType.DOUBLE to getInternalFunction("isDoubleArray")
     )
 
 
@@ -138,29 +145,37 @@ class JsIntrinsics(private val irBuiltIns: IrBuiltIns, val context: JsIrBackendC
     // Other:
 
     val jsObjectCreate = defineObjectCreateIntrinsic() // Object.create
-    val jsGetJSField = defineGetJSPropertyIntrinsic() // till we don't have dynamic type we use intrinsic which sets a field with any name
-    val jsSetJSField = defineSetJSPropertyIntrinsic() // till we don't have dynamic type we use intrinsic which sets a field with any name
     val jsCode = getInternalFunction("js") // js("<code>")
     val jsHashCode = getInternalFunction("hashCode")
+    val jsGetNumberHashCode = getInternalFunction("getNumberHashCode")
     val jsGetObjectHashCode = getInternalFunction("getObjectHashCode")
+    val jsGetStringHashCode = getInternalFunction("getStringHashCode")
     val jsToString = getInternalFunction("toString")
     val jsAnyToString = getInternalFunction("anyToString")
     val jsCompareTo = getInternalFunction("compareTo")
     val jsEquals = getInternalFunction("equals")
+    val jsConstruct = getInternalFunction("construct")
+    val jsNewTarget = unOp("jsNewTarget")
+    val jsEmptyObject = unOp("emptyObject")
+    val jsOpenInitializerBox = binOp("openInitializerBox")
+    val es6DefaultType = defineEs6DefaultTypeIntrinsic().symbol
 
     val jsImul = getInternalFunction("imul")
 
+    val jsUnreachableDeclarationLog = getInternalFunction("unreachableDeclarationLog")
+    val jsUnreachableDeclarationException = getInternalFunction("unreachableDeclarationException")
+
     // Coroutines
 
-    val jsCoroutineContext = context.symbolTable.referenceSimpleFunction(context.coroutineContextProperty.getter!!)
+    val jsCoroutineContext
+        get() = context.ir.symbols.coroutineContextGetter
 
-    val jsGetContinuation = context.run {
-        val f = getInternalFunctions("getContinuation")
-        symbolTable.referenceSimpleFunction(f.single())
-    }
+    val jsGetContinuation = getInternalFunction("getContinuation")
     val jsGetKClass = getInternalWithoutPackage("getKClass")
     val jsGetKClassFromExpression = getInternalWithoutPackage("getKClassFromExpression")
-    val jsClass = getInternalFunction("jsClass")
+
+    private val jsClassClassSymbol = getInternalClassWithoutPackage("kotlin.js.JsClass")
+    val jsClass = defineJsClassIntrinsic().symbol
 
     val jsNumberRangeToNumber = getInternalFunction("numberRangeToNumber")
     val jsNumberRangeToLong = getInternalFunction("numberRangeToLong")
@@ -178,18 +193,33 @@ class JsIntrinsics(private val irBuiltIns: IrBuiltIns, val context: JsIrBackendC
         )
     )
 
+    val longCompareToLong: IrSimpleFunction = longClassSymbol.owner.findDeclaration<IrSimpleFunction> {
+        it.name == Name.identifier("compareTo") && it.valueParameters[0].type.isLong()
+    }!!
+
     val charClassSymbol = getInternalClassWithoutPackage("kotlin.Char")
     val charConstructor = charClassSymbol.constructors.single().owner
 
-    val uByteClassSymbol = getInternalClassWithoutPackage("kotlin.UByte")
-    val uShortClassSymbol = getInternalClassWithoutPackage("kotlin.UShort")
-    val uIntClassSymbol = getInternalClassWithoutPackage("kotlin.UInt")
-    val uLongClassSymbol = getInternalClassWithoutPackage("kotlin.ULong")
+    val stringClassSymbol = getInternalClassWithoutPackage("kotlin.String")
+    val stringConstructorSymbol = stringClassSymbol.constructors.single()
+
+    val anyClassSymbol = getInternalClassWithoutPackage("kotlin.Any")
+    val anyConstructorSymbol = anyClassSymbol.constructors.single()
+
+    val jsObjectClassSymbol = getInternalClassWithoutPackage("kotlin.js.JsObject")
+    val jsObjectConstructorSymbol by context.lazy2 { jsObjectClassSymbol.constructors.single() }
+
+    val uByteClassSymbol by context.lazy2 { getInternalClassWithoutPackage("kotlin.UByte") }
+    val uShortClassSymbol by context.lazy2 { getInternalClassWithoutPackage("kotlin.UShort") }
+    val uIntClassSymbol by context.lazy2 { getInternalClassWithoutPackage("kotlin.UInt") }
+    val uLongClassSymbol by context.lazy2 { getInternalClassWithoutPackage("kotlin.ULong") }
 
     val unreachable = defineUnreachableIntrinsic()
 
     val returnIfSuspended = getInternalFunction("returnIfSuspended")
     val getContinuation = getInternalFunction("getContinuation")
+
+    val jsEnsureNonNull = getFunctionInKotlinPackage("ensureNotNull")
 
     // Arrays:
     val array = context.symbolTable.referenceClass(irBuiltIns.builtIns.array)
@@ -207,9 +237,9 @@ class JsIntrinsics(private val irBuiltIns: IrBuiltIns, val context: JsIrBackendC
     val jsArrayIteratorFunction = getInternalFunction("arrayIterator")
 
     val jsPrimitiveArrayIteratorFunctions =
-        PrimitiveType.values().associate { it to getInternalFunction("${it.typeName.asString().toLowerCase()}ArrayIterator") }
+        PrimitiveType.values().associate { it to getInternalFunction("${it.typeName.asString().toLowerCaseAsciiOnly()}ArrayIterator") }
 
-    val arrayLiteral = unOp("arrayLiteral").symbol
+    val arrayLiteral = unOp("arrayLiteral")
 
     val primitiveToTypedArrayMap = EnumMap(
         mapOf(
@@ -221,39 +251,55 @@ class JsIntrinsics(private val irBuiltIns: IrBuiltIns, val context: JsIrBackendC
         )
     )
 
+    val createKType = getInternalWithoutPackageOrNull("createKType")
+    val createDynamicKType = getInternalWithoutPackageOrNull("createDynamicKType")
+    val createKTypeParameter = getInternalWithoutPackageOrNull("createKTypeParameter")
+    val getStarKTypeProjection = getInternalWithoutPackageOrNull("getStarKTypeProjection")
+    val createCovariantKTypeProjection = getInternalWithoutPackageOrNull("createCovariantKTypeProjection")
+    val createInvariantKTypeProjection = getInternalWithoutPackageOrNull("createInvariantKTypeProjection")
+    val createContravariantKTypeProjection = getInternalWithoutPackageOrNull("createContravariantKTypeProjection")
+
     val primitiveToSizeConstructor =
         PrimitiveType.values().associate { type ->
             type to (primitiveToTypedArrayMap[type]?.let {
-                unOp("${it.toLowerCase()}Array").symbol
-            } ?: getInternalFunction("${type.typeName.asString().toLowerCase()}Array"))
+                unOp("${it.toLowerCaseAsciiOnly()}Array")
+            } ?: getInternalFunction("${type.typeName.asString().toLowerCaseAsciiOnly()}Array"))
         }
 
     val primitiveToLiteralConstructor =
         PrimitiveType.values().associate { type ->
             type to (primitiveToTypedArrayMap[type]?.let {
-                unOp("${it.toLowerCase()}ArrayOf").symbol
-            } ?: getInternalFunction("${type.typeName.asString().toLowerCase()}ArrayOf"))
+                unOp("${it.toLowerCaseAsciiOnly()}ArrayOf")
+            } ?: getInternalFunction("${type.typeName.asString().toLowerCaseAsciiOnly()}ArrayOf"))
         }
 
     val arrayConcat = getInternalWithoutPackage("arrayConcat")
 
     val primitiveArrayConcat = getInternalWithoutPackage("primitiveArrayConcat")
+    val taggedArrayCopy = getInternalWithoutPackage("taggedArrayCopy")
 
-    val jsArraySlice = unOp("slice")
+    val jsArraySlice = defineJsSliceIntrinsic().symbol
 
     val jsBind = defineJsBindIntrinsic()
 
     // TODO move to IntrinsifyCallsLowering
-    val doNotIntrinsifyAnnotationSymbol = context.symbolTable.referenceClass(context.getInternalClass("DoNotIntrinsify"))
+    val doNotIntrinsifyAnnotationSymbol = context.symbolTable.referenceClass(context.getJsInternalClass("DoNotIntrinsify"))
+    val jsFunAnnotationSymbol = context.symbolTable.referenceClass(context.getJsInternalClass("JsFun"))
 
     // TODO move CharSequence-related stiff to IntrinsifyCallsLowering
     val charSequenceClassSymbol = context.symbolTable.referenceClass(context.getClass(FqName("kotlin.CharSequence")))
-    val charSequenceLengthPropertyGetterSymbol =
-        charSequenceClassSymbol.owner.declarations.filterIsInstance<IrProperty>().first { it.name.asString() == "length" }.getter!!.symbol
-    val charSequenceGetFunctionSymbol =
+    val charSequenceLengthPropertyGetterSymbol by context.lazy2 {
+        with(charSequenceClassSymbol.owner.declarations) {
+            filterIsInstance<IrProperty>().firstOrNull { it.name.asString() == "length" }?.getter ?:
+            filterIsInstance<IrFunction>().first { it.name.asString() == "<get-length>" }
+        }.symbol
+    }
+    val charSequenceGetFunctionSymbol by context.lazy2 {
         charSequenceClassSymbol.owner.declarations.filterIsInstance<IrFunction>().single { it.name.asString() == "get" }.symbol
-    val charSequenceSubSequenceFunctionSymbol =
+    }
+    val charSequenceSubSequenceFunctionSymbol by context.lazy2 {
         charSequenceClassSymbol.owner.declarations.filterIsInstance<IrFunction>().single { it.name.asString() == "subSequence" }.symbol
+    }
 
 
     val jsCharSequenceGet = getInternalFunction("charSequenceGet")
@@ -263,95 +309,179 @@ class JsIntrinsics(private val irBuiltIns: IrBuiltIns, val context: JsIrBackendC
     val jsBoxIntrinsic = getInternalFunction("boxIntrinsic")
     val jsUnboxIntrinsic = getInternalFunction("unboxIntrinsic")
 
+    val captureStack = getInternalFunction("captureStack")
+
+    val createSharedBox = defineCreateSharedBox()
+    val readSharedBox = defineReadSharedBox()
+    val writeSharedBox = defineWriteSharedBox()
+
+    val jsUndefined = defineJsUndefinedIntrinsic()
+
     // Helpers:
 
     private fun getInternalFunction(name: String) =
-        context.symbolTable.referenceSimpleFunction(context.getInternalFunctions(name).single())
+        context.symbolTable.referenceSimpleFunction(context.getJsInternalFunction(name))
 
     private fun getInternalWithoutPackage(name: String) =
         context.symbolTable.referenceSimpleFunction(context.getFunctions(FqName(name)).single())
 
+    private fun getInternalWithoutPackageOrNull(name: String): IrSimpleFunctionSymbol? {
+        val descriptor = context.getFunctions(FqName(name)).singleOrNull() ?: return null
+        return context.symbolTable.referenceSimpleFunction(descriptor)
+    }
+
+    private fun getFunctionInKotlinPackage(name: String) =
+        context.symbolTable.referenceSimpleFunction(context.getFunctions(kotlinPackageFqn.child(Name.identifier(name))).single())
+
     private fun getInternalClassWithoutPackage(fqName: String) =
         context.symbolTable.referenceClass(context.getClass(FqName(fqName)))
 
+    private val irFactory: IrFactory get() = context.irFactory
+
     // TODO: unify how we create intrinsic symbols
     private fun defineObjectCreateIntrinsic(): IrSimpleFunction {
-        return JsIrBuilder.buildFunction(
-            "Object\$create",
-            returnType = irBuiltIns.anyType,
-            parent = externalPackageFragment,
-            isInline = true,
+        return irFactory.addFunction(externalPackageFragment) {
+            name = Name.identifier("Object\$create")
             origin = JsLoweredDeclarationOrigin.JS_INTRINSICS_STUB
-        ).also {
-            val typeParameter = JsIrBuilder.buildTypeParameter(Name.identifier("T"), 0, true)
-            typeParameter.parent = it
-            typeParameter.superTypes += irBuiltIns.anyType
-            it.typeParameters += typeParameter
-            externalPackageFragment.declarations += it
+        }.apply {
+            returnType = addTypeParameter("T", irBuiltIns.anyType).defaultType
         }
     }
 
-    private fun defineGetJSPropertyIntrinsic() =
-        JsIrBuilder.buildFunction(
-            "\$getJSProperty\$",
-            returnType = irBuiltIns.anyNType,
-            parent = externalPackageFragment,
+    private fun defineCreateSharedBox(): IrSimpleFunction {
+        return irFactory.addFunction(externalPackageFragment) {
+            name = Name.identifier("\$sharedBox\$create")
             origin = JsLoweredDeclarationOrigin.JS_INTRINSICS_STUB
-        ).also {
-            listOf("receiver", "fieldName").mapIndexedTo(it.valueParameters) { i, p ->
-                JsIrBuilder.buildValueParameter(p, i, irBuiltIns.anyType).also { v -> v.parent = it }
+            returnType = context.dynamicType
+        }.apply {
+            val tp = addTypeParameter("T", irBuiltIns.anyNType)
+            addValueParameter {
+                index = 0
+                name = Name.identifier("v")
+                type = IrSimpleTypeBuilder().run {
+                    classifier = tp.symbol
+                    hasQuestionMark = true
+                    buildSimpleType()
+                }
             }
-            externalPackageFragment.declarations += it
         }
+    }
 
-    private fun defineJsBindIntrinsic() =
-        JsIrBuilder.buildFunction(
-            "\$jsBind\$",
-            returnType = irBuiltIns.anyNType,
-            parent = externalPackageFragment,
+    private fun defineReadSharedBox(): IrSimpleFunction {
+        return irFactory.addFunction(externalPackageFragment) {
+            name = Name.identifier("\$sharedBox\$read")
             origin = JsLoweredDeclarationOrigin.JS_INTRINSICS_STUB
-        ).also {
-            listOf("receiver", "target").mapIndexedTo(it.valueParameters) { i, p ->
-                JsIrBuilder.buildValueParameter(p, i, irBuiltIns.anyType).also { v -> v.parent = it }
+        }.apply {
+            val tp = addTypeParameter("T", irBuiltIns.anyNType)
+            returnType = IrSimpleTypeBuilder().run {
+                classifier = tp.symbol
+                hasQuestionMark = true
+                buildSimpleType()
             }
-            externalPackageFragment.declarations += it
-        }
-
-    private fun defineSetJSPropertyIntrinsic() =
-        JsIrBuilder.buildFunction(
-            "\$setJSProperty\$",
-            returnType = irBuiltIns.unitType,
-            parent = externalPackageFragment,
-            origin = JsLoweredDeclarationOrigin.JS_INTRINSICS_STUB
-        ).also {
-            listOf("receiver", "fieldName", "fieldValue").mapIndexedTo(it.valueParameters) { i, p ->
-                JsIrBuilder.buildValueParameter(p, i, irBuiltIns.anyType).also { v -> v.parent = it }
+            addValueParameter {
+                index = 0
+                name = Name.identifier("box")
+                type = context.dynamicType
             }
-            externalPackageFragment.declarations += it
         }
+    }
 
-    private fun defineUnreachableIntrinsic() =
-        JsIrBuilder.buildFunction(
-            Namer.UNREACHABLE_NAME,
-            returnType = irBuiltIns.nothingType,
-            parent = externalPackageFragment,
+    private fun defineWriteSharedBox(): IrSimpleFunction {
+        return irFactory.addFunction(externalPackageFragment) {
+            name = Name.identifier("\$sharedBox\$write")
             origin = JsLoweredDeclarationOrigin.JS_INTRINSICS_STUB
-        ).also {
-            externalPackageFragment.declarations += it
+            returnType = irBuiltIns.unitType
+        }.apply {
+            val tp = addTypeParameter("T", irBuiltIns.anyNType)
+            addValueParameter {
+                index = 0
+                name = Name.identifier("box")
+                type = context.dynamicType
+            }
+            addValueParameter {
+                index = 1
+                name = Name.identifier("nv")
+                type = IrSimpleTypeBuilder().run {
+                    classifier = tp.symbol
+                    hasQuestionMark = true
+                    buildSimpleType()
+                }
+            }
         }
+    }
 
-    private fun unOp(name: String, returnType: KotlinType = irBuiltIns.anyN) =
-        irBuiltIns.run { defineOperator(name, returnType, listOf(anyN)) }
+    private fun defineJsUndefinedIntrinsic(): IrSimpleFunction {
+        return irFactory.addFunction(externalPackageFragment) {
+            name = Name.identifier("\$undefined")
+        }.apply {
+            returnType = context.irBuiltIns.nothingNType
+        }
+    }
 
-    private fun unOpBool(name: String) = unOp(name, irBuiltIns.bool)
-    private fun unOpInt(name: String) = unOp(name, irBuiltIns.int)
+    private fun defineEs6DefaultTypeIntrinsic(): IrSimpleFunction {
+        return irFactory.addFunction(externalPackageFragment) {
+            name = Name.identifier("DefaultType")
+        }.apply {
+            returnType = addTypeParameter("T", irBuiltIns.anyType).defaultType
+        }
+    }
 
-    private fun binOp(name: String, returnType: KotlinType = irBuiltIns.anyN) =
-        irBuiltIns.run { defineOperator(name, returnType, listOf(anyN, anyN)) }
+    private fun defineJsBindIntrinsic(): IrSimpleFunction {
+        return irFactory.addFunction(externalPackageFragment) {
+            name = Name.identifier("\$jsBind\$")
+            origin = JsLoweredDeclarationOrigin.JS_INTRINSICS_STUB
+            returnType = irBuiltIns.anyNType
+        }.apply {
+            listOf("receiver", "target").forEach { addValueParameter(it, irBuiltIns.anyType) }
+        }
+    }
 
-    private fun tripleOp(name: String, returnType: KotlinType = irBuiltIns.anyN) =
-        irBuiltIns.run { defineOperator(name, returnType, listOf(anyN, anyN, anyN)) }
+    private fun defineJsSliceIntrinsic(): IrSimpleFunction {
+        return irFactory.addFunction(externalPackageFragment) {
+            name = Name.identifier("slice")
+            origin = JsLoweredDeclarationOrigin.JS_INTRINSICS_STUB
+        }.apply {
+            val aType = addTypeParameter("A", irBuiltIns.anyType).defaultType
+            returnType = aType
+            addValueParameter("a", aType)
+        }
+    }
 
-    private fun binOpBool(name: String) = binOp(name, irBuiltIns.bool)
-    private fun binOpInt(name: String) = binOp(name, irBuiltIns.int)
+    private fun defineUnreachableIntrinsic(): IrSimpleFunction {
+        return irFactory.addFunction(externalPackageFragment) {
+            name = Name.identifier(Namer.UNREACHABLE_NAME)
+            origin = JsLoweredDeclarationOrigin.JS_INTRINSICS_STUB
+            returnType = irBuiltIns.nothingType
+        }
+    }
+
+    private fun defineJsClassIntrinsic(): IrSimpleFunction {
+        return irFactory.addFunction(externalPackageFragment) {
+            name = Name.identifier("jsClass")
+            origin = JsLoweredDeclarationOrigin.JS_INTRINSICS_STUB
+            isInline = true
+        }.apply {
+            val typeParameter = addTypeParameter {
+                name = Name.identifier("T")
+                isReified = true
+                superTypes += irBuiltIns.anyType
+            }
+            returnType = jsClassClassSymbol.typeWithParameters(listOf(typeParameter))
+        }
+    }
+
+    private fun unOp(name: String, returnType: IrType = irBuiltIns.anyNType) =
+        irBuiltIns.run { defineOperator(name, returnType, listOf(anyNType)) }
+
+    private fun unOpBool(name: String) = unOp(name, irBuiltIns.booleanType)
+    private fun unOpInt(name: String) = unOp(name, irBuiltIns.intType)
+
+    private fun binOp(name: String, returnType: IrType = irBuiltIns.anyNType) =
+        irBuiltIns.run { defineOperator(name, returnType, listOf(anyNType, anyNType)) }
+
+    private fun tripleOp(name: String, returnType: IrType = irBuiltIns.anyNType) =
+        irBuiltIns.run { defineOperator(name, returnType, listOf(anyNType, anyNType, anyNType)) }
+
+    private fun binOpBool(name: String) = binOp(name, irBuiltIns.booleanType)
+    private fun binOpInt(name: String) = binOp(name, irBuiltIns.intType)
 }

@@ -44,9 +44,10 @@ import org.jetbrains.kotlin.kapt3.base.util.KaptLogger
 import org.jetbrains.kotlin.kapt3.util.MessageCollectorBackedKaptLogger
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.BindingTrace
-import org.jetbrains.kotlin.resolve.TargetPlatform
+import org.jetbrains.kotlin.platform.TargetPlatform
+import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.resolve.jvm.extensions.AnalysisHandlerExtension
-import org.jetbrains.kotlin.resolve.jvm.platform.JvmPlatform
+import org.jetbrains.kotlin.resolve.jvm.extensions.PartialAnalysisHandlerExtension
 import org.jetbrains.kotlin.utils.decodePluginOptions
 import java.io.ByteArrayInputStream
 import java.io.File
@@ -96,6 +97,12 @@ class Kapt3CommandLineProcessor : CommandLineProcessor {
             STUBS_OUTPUT_DIR_OPTION -> stubsOutputDir = File(value)
             INCREMENTAL_DATA_OUTPUT_DIR_OPTION -> incrementalDataOutputDir = File(value)
 
+            CHANGED_FILES -> changedFiles.add(File(value))
+            COMPILED_SOURCES_DIR -> compiledSources.addAll(value.split(File.pathSeparator).map { File(it) })
+            INCREMENTAL_CACHE -> incrementalCache = File(value)
+            CLASSPATH_CHANGES -> classpathChanges.add(value)
+            PROCESS_INCREMENTALLY -> setFlag(KaptFlag.INCREMENTAL_APT, value)
+
             ANNOTATION_PROCESSOR_CLASSPATH_OPTION -> processingClasspath += File(value)
             ANNOTATION_PROCESSORS_OPTION -> processors.addAll(value.split(',').map { it.trim() }.filter { it.isNotEmpty() })
 
@@ -105,9 +112,12 @@ class Kapt3CommandLineProcessor : CommandLineProcessor {
             VERBOSE_MODE_OPTION -> setFlag(KaptFlag.VERBOSE, value)
             USE_LIGHT_ANALYSIS_OPTION -> setFlag(KaptFlag.USE_LIGHT_ANALYSIS, value)
             CORRECT_ERROR_TYPES_OPTION -> setFlag(KaptFlag.CORRECT_ERROR_TYPES, value)
+            DUMP_DEFAULT_PARAMETER_VALUES -> setFlag(KaptFlag.DUMP_DEFAULT_PARAMETER_VALUES, value)
             MAP_DIAGNOSTIC_LOCATIONS_OPTION -> setFlag(KaptFlag.MAP_DIAGNOSTIC_LOCATIONS, value)
             INFO_AS_WARNINGS_OPTION -> setFlag(KaptFlag.INFO_AS_WARNINGS, value)
             STRICT_MODE_OPTION -> setFlag(KaptFlag.STRICT, value)
+            STRIP_METADATA_OPTION -> setFlag(KaptFlag.STRIP_METADATA, value)
+            KEEP_KDOC_COMMENTS_IN_STUBS -> setFlag(KaptFlag.KEEP_KDOC_COMMENTS_IN_STUBS, value)
             SHOW_PROCESSOR_TIMINGS -> setFlag(KaptFlag.SHOW_PROCESSOR_TIMINGS, value)
             INCLUDE_COMPILE_CLASSPATH -> setFlag(KaptFlag.INCLUDE_COMPILE_CLASSPATH, value)
 
@@ -180,7 +190,7 @@ class Kapt3ComponentRegistrar : ComponentRegistrar {
         val kapt3AnalysisCompletedHandlerExtension = ClasspathBasedKapt3Extension(options, logger, configuration)
 
         AnalysisHandlerExtension.registerExtension(project, kapt3AnalysisCompletedHandlerExtension)
-        StorageComponentContainerContributor.registerExtension(project, KaptComponentContributor())
+        StorageComponentContainerContributor.registerExtension(project, KaptComponentContributor(kapt3AnalysisCompletedHandlerExtension))
     }
 
     private fun KaptOptions.Builder.checkOptions(project: MockProject, logger: KaptLogger, configuration: CompilerConfiguration): Boolean {
@@ -229,14 +239,14 @@ class Kapt3ComponentRegistrar : ComponentRegistrar {
         return true
     }
 
-    class KaptComponentContributor : StorageComponentContainerContributor {
+    class KaptComponentContributor(private val analysisExtension: PartialAnalysisHandlerExtension) : StorageComponentContainerContributor {
         override fun registerModuleComponents(
             container: StorageComponentContainer,
             platform: TargetPlatform,
             moduleDescriptor: ModuleDescriptor
         ) {
-            if (platform != JvmPlatform) return
-            container.useInstance(KaptAnonymousTypeTransformer())
+            if (!platform.isJvm()) return
+            container.useInstance(KaptAnonymousTypeTransformer(analysisExtension))
         }
     }
 

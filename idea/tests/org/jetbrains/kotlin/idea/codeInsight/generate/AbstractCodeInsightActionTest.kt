@@ -1,17 +1,6 @@
 /*
- * Copyright 2010-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.codeInsight.generate
@@ -21,19 +10,19 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.refactoring.util.CommonRefactoringUtil
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestActionEvent
 import junit.framework.ComparisonFailure
 import junit.framework.TestCase
-import org.jetbrains.kotlin.analyzer.common.CommonPlatform
 import org.jetbrains.kotlin.idea.project.forcedTargetPlatform
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.js.resolve.JsPlatform
+import org.jetbrains.kotlin.platform.CommonPlatforms
+import org.jetbrains.kotlin.platform.js.JsPlatforms
+import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.resolve.TargetPlatform
-import org.jetbrains.kotlin.resolve.jvm.platform.JvmPlatform
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import java.io.File
@@ -62,7 +51,7 @@ abstract class AbstractCodeInsightActionTest : KotlinLightCodeInsightFixtureTest
     }
 
     protected open fun doTest(path: String) {
-        val fileText = FileUtil.loadFile(File(path), true)
+        val fileText = FileUtil.loadFile(testDataFile(), true)
 
         val conflictFile = File("$path.messages")
         val afterFile = File("$path.after")
@@ -70,29 +59,29 @@ abstract class AbstractCodeInsightActionTest : KotlinLightCodeInsightFixtureTest
         var mainPsiFile: KtFile? = null
 
         try {
-            ConfigLibraryUtil.configureLibrariesByDirective(myModule, PlatformTestUtil.getCommunityPath(), fileText)
+            ConfigLibraryUtil.configureLibrariesByDirective(module, PlatformTestUtil.getCommunityPath(), fileText)
 
-            val mainFile = File(path)
+            val mainFile = testDataFile()
             val mainFileName = mainFile.name
             val fileNameBase = mainFile.nameWithoutExtension + "."
             val rootDir = mainFile.parentFile
             rootDir
-                    .list { _, name ->
-                        name.startsWith(fileNameBase) && name != mainFileName && (name.endsWith(".kt") || name.endsWith(".java"))
-                    }
-                    .forEach {
-                        myFixture.configureByFile(File(rootDir, it).path.replace(File.separator, "/"))
-                    }
+                .list { _, name ->
+                    name.startsWith(fileNameBase) && name != mainFileName && (name.endsWith(".kt") || name.endsWith(".java"))
+                }
+                .forEach {
+                    myFixture.configureByFile(it)
+                }
 
-            configure(path, fileText)
+            configure(fileName(), fileText)
             mainPsiFile = myFixture.file as KtFile
 
             val targetPlatformName = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// PLATFORM: ")
             if (targetPlatformName != null) {
                 val targetPlatform = when (targetPlatformName) {
-                    "JVM" -> JvmPlatform
-                    "JavaScript" -> JsPlatform
-                    "Common" -> CommonPlatform
+                    "JVM" -> JvmPlatforms.unspecifiedJvmPlatform
+                    "JavaScript" -> JsPlatforms.defaultJsPlatform
+                    "Common" -> CommonPlatforms.defaultCommonPlatform
                     else -> error("Unexpected platform name: $targetPlatformName")
                 }
                 mainPsiFile.forcedTargetPlatform = targetPlatform
@@ -115,18 +104,15 @@ abstract class AbstractCodeInsightActionTest : KotlinLightCodeInsightFixtureTest
                 myFixture.checkResult(FileUtil.loadFile(afterFile, true))
                 checkExtra()
             }
-        }
-        catch (e: ComparisonFailure) {
+        } catch (e: ComparisonFailure) {
             KotlinTestUtils.assertEqualsToFile(afterFile, myFixture.editor)
-        }
-        catch (e: CommonRefactoringUtil.RefactoringErrorHintException) {
+        } catch (e: CommonRefactoringUtil.RefactoringErrorHintException) {
             KotlinTestUtils.assertEqualsToFile(conflictFile, e.message!!)
-        }
-        finally {
+        } finally {
             mainPsiFile?.forcedTargetPlatform = null
-            ConfigLibraryUtil.unconfigureLibrariesByDirective(myModule, fileText)
+            ConfigLibraryUtil.unconfigureLibrariesByDirective(module, fileText)
         }
     }
 
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
 }

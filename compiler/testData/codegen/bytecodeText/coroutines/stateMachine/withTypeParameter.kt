@@ -1,4 +1,3 @@
-// IGNORE_BACKEND: JVM_IR
 fun <T> builder(c: suspend () -> T): T = TODO()
 
 class Test {
@@ -21,4 +20,6 @@ class Test {
     }
 }
 
-// 4 TABLESWITCH
+// suspend lambdas: 4
+// suspend lambdas $$forInline: 1
+// 5 TABLESWITCH

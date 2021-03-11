@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 @file:kotlin.jvm.JvmMultifileClass
@@ -53,7 +53,7 @@ internal fun copyOfRangeToIndexCheck(toIndex: Int, size: Int) {
 @SinceKotlin("1.3")
 @PublishedApi
 @kotlin.jvm.JvmName("contentDeepHashCode")
-internal fun <T> Array<out T>.contentDeepHashCodeImpl(): Int =
+internal fun <T> Array<out T>?.contentDeepHashCodeImpl(): Int =
 // returns valid result for unsigned arrays by accident:
 // hash code of an inline class, which an unsigned array is,
 // is calculated structurally as in a data class

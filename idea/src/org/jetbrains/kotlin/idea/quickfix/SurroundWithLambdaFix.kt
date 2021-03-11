@@ -4,12 +4,16 @@ import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.builtins.isFunctionType
+import org.jetbrains.kotlin.builtins.isFunctionOrSuspendFunctionType
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.buildExpression
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.isPrimitiveNumberType
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
@@ -20,7 +24,7 @@ class SurroundWithLambdaFix(
 ) : KotlinQuickFixAction<KtExpression>(expression), HighPriorityAction {
 
     override fun getFamilyName() = text
-    override fun getText() = "Surround with lambda"
+    override fun getText() = KotlinBundle.message("surround.with.lambda")
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val nameReference = element ?: return
@@ -64,7 +68,7 @@ class SurroundWithLambdaFix(
                 }
             }
 
-            if (!expectedType.isFunctionType) return null
+            if (!expectedType.isFunctionOrSuspendFunctionType) return null
             if (expectedType.arguments.size != 1) return null
             val lambdaReturnType = expectedType.arguments[0].type
 

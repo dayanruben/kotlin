@@ -36,7 +36,7 @@ import static org.jetbrains.kotlin.resolve.descriptorUtil.DescriptorUtilsKt.getB
 @SuppressWarnings("deprecation")
 public class PropertyDescriptorImpl extends VariableDescriptorWithInitializerImpl implements PropertyDescriptor {
     private final Modality modality;
-    private Visibility visibility;
+    private DescriptorVisibility visibility;
     private Collection<? extends PropertyDescriptor> overriddenProperties = null;
     private final PropertyDescriptor original;
     private final Kind kind;
@@ -61,7 +61,7 @@ public class PropertyDescriptorImpl extends VariableDescriptorWithInitializerImp
             @Nullable PropertyDescriptor original,
             @NotNull Annotations annotations,
             @NotNull Modality modality,
-            @NotNull Visibility visibility,
+            @NotNull DescriptorVisibility visibility,
             boolean isVar,
             @NotNull Name name,
             @NotNull Kind kind,
@@ -91,7 +91,7 @@ public class PropertyDescriptorImpl extends VariableDescriptorWithInitializerImp
             @NotNull DeclarationDescriptor containingDeclaration,
             @NotNull Annotations annotations,
             @NotNull Modality modality,
-            @NotNull Visibility visibility,
+            @NotNull DescriptorVisibility visibility,
             boolean isVar,
             @NotNull Name name,
             @NotNull Kind kind,
@@ -145,14 +145,19 @@ public class PropertyDescriptorImpl extends VariableDescriptorWithInitializerImp
         this.setterProjectedOut = setterProjectedOut;
     }
 
-    public void setVisibility(@NotNull Visibility visibility) {
+    public void setVisibility(@NotNull DescriptorVisibility visibility) {
         this.visibility = visibility;
     }
 
     @NotNull
     @Override
     public List<TypeParameterDescriptor> getTypeParameters() {
-        return typeParameters;
+        List<TypeParameterDescriptor> parameters = typeParameters;
+        // Diagnostics for EA-212070
+        if (parameters == null) {
+            throw new IllegalStateException("typeParameters == null for " + this.toString());
+        }
+        return parameters;
     }
 
     @Override
@@ -181,7 +186,7 @@ public class PropertyDescriptorImpl extends VariableDescriptorWithInitializerImp
 
     @NotNull
     @Override
-    public Visibility getVisibility() {
+    public DescriptorVisibility getVisibility() {
         return visibility;
     }
 
@@ -250,14 +255,16 @@ public class PropertyDescriptorImpl extends VariableDescriptorWithInitializerImp
     public class CopyConfiguration implements PropertyDescriptor.CopyBuilder<PropertyDescriptor> {
         private DeclarationDescriptor owner = getContainingDeclaration();
         private Modality modality = getModality();
-        private Visibility visibility = getVisibility();
+        private DescriptorVisibility visibility = getVisibility();
         private PropertyDescriptor original = null;
+        private boolean preserveSourceElement = false;
         private Kind kind = getKind();
         private TypeSubstitution substitution = TypeSubstitution.EMPTY;
         private boolean copyOverrides = true;
         private ReceiverParameterDescriptor dispatchReceiverParameter = PropertyDescriptorImpl.this.dispatchReceiverParameter;
         private List<TypeParameterDescriptor> newTypeParameters = null;
         private Name name = getName();
+        private KotlinType returnType = getType();
 
         @NotNull
         @Override
@@ -275,6 +282,20 @@ public class PropertyDescriptorImpl extends VariableDescriptorWithInitializerImp
 
         @NotNull
         @Override
+        public CopyConfiguration setPreserveSourceElement() {
+            preserveSourceElement = true;
+            return this;
+        }
+
+        @NotNull
+        @Override
+        public CopyBuilder<PropertyDescriptor> setReturnType(@NotNull KotlinType type) {
+            returnType = type;
+            return this;
+        }
+
+        @NotNull
+        @Override
         public CopyConfiguration setModality(@NotNull Modality modality) {
             this.modality = modality;
             return this;
@@ -282,7 +303,7 @@ public class PropertyDescriptorImpl extends VariableDescriptorWithInitializerImp
 
         @NotNull
         @Override
-        public CopyConfiguration setVisibility(@NotNull Visibility visibility) {
+        public CopyConfiguration setVisibility(@NotNull DescriptorVisibility visibility) {
             this.visibility = visibility;
             return this;
         }
@@ -334,6 +355,16 @@ public class PropertyDescriptorImpl extends VariableDescriptorWithInitializerImp
         public PropertyDescriptor build() {
             return doSubstitute(this);
         }
+
+        PropertyGetterDescriptor getOriginalGetter() {
+            if (original == null) return null;
+            return original.getGetter();
+        }
+
+        PropertySetterDescriptor getOriginalSetter() {
+            if (original == null) return null;
+            return original.getSetter();
+        }
     }
 
     @NotNull
@@ -342,11 +373,19 @@ public class PropertyDescriptorImpl extends VariableDescriptorWithInitializerImp
         return new CopyConfiguration();
     }
 
+    @NotNull
+    private SourceElement getSourceToUseForCopy(boolean preserveSource, @Nullable PropertyDescriptor original) {
+        return preserveSource
+               ? (original != null ? original : getOriginal()).getSource()
+               : SourceElement.NO_SOURCE;
+    }
+
     @Nullable
     protected PropertyDescriptor doSubstitute(@NotNull CopyConfiguration copyConfiguration) {
         PropertyDescriptorImpl substitutedDescriptor = createSubstitutedCopy(
                 copyConfiguration.owner, copyConfiguration.modality, copyConfiguration.visibility,
-                copyConfiguration.original, copyConfiguration.kind, copyConfiguration.name);
+                copyConfiguration.original, copyConfiguration.kind, copyConfiguration.name,
+                getSourceToUseForCopy(copyConfiguration.preserveSourceElement, copyConfiguration.original));
 
         List<TypeParameterDescriptor> originalTypeParameters =
                 copyConfiguration.newTypeParameters == null ? getTypeParameters() : copyConfiguration.newTypeParameters;
@@ -355,7 +394,7 @@ public class PropertyDescriptorImpl extends VariableDescriptorWithInitializerImp
                 originalTypeParameters, copyConfiguration.substitution, substitutedDescriptor, substitutedTypeParameters
         );
 
-        KotlinType originalOutType = getType();
+        KotlinType originalOutType = copyConfiguration.returnType;
         KotlinType outType = substitutor.substitute(originalOutType, Variance.OUT_VARIANCE);
         if (outType == null) {
             return null; // TODO : tell the user that the property was projected out
@@ -389,7 +428,8 @@ public class PropertyDescriptorImpl extends VariableDescriptorWithInitializerImp
 
         PropertyGetterDescriptorImpl newGetter = getter == null ? null : new PropertyGetterDescriptorImpl(
                 substitutedDescriptor, getter.getAnnotations(), copyConfiguration.modality, normalizeVisibility(getter.getVisibility(), copyConfiguration.kind),
-                getter.isDefault(), getter.isExternal(), getter.isInline(), copyConfiguration.kind, copyConfiguration.original == null ? null : copyConfiguration.original.getGetter(),
+                getter.isDefault(), getter.isExternal(), getter.isInline(), copyConfiguration.kind,
+                copyConfiguration.getOriginalGetter(),
                 SourceElement.NO_SOURCE
         );
         if (newGetter != null) {
@@ -399,7 +439,8 @@ public class PropertyDescriptorImpl extends VariableDescriptorWithInitializerImp
         }
         PropertySetterDescriptorImpl newSetter = setter == null ? null : new PropertySetterDescriptorImpl(
                 substitutedDescriptor, setter.getAnnotations(), copyConfiguration.modality, normalizeVisibility(setter.getVisibility(), copyConfiguration.kind),
-                setter.isDefault(), setter.isExternal(), setter.isInline(), copyConfiguration.kind, copyConfiguration.original == null ? null : copyConfiguration.original.getSetter(),
+                setter.isDefault(), setter.isExternal(), setter.isInline(), copyConfiguration.kind,
+                copyConfiguration.getOriginalSetter(),
                 SourceElement.NO_SOURCE
         );
         if (newSetter != null) {
@@ -451,9 +492,9 @@ public class PropertyDescriptorImpl extends VariableDescriptorWithInitializerImp
         return substitutedDescriptor;
     }
 
-    private static Visibility normalizeVisibility(Visibility prev, Kind kind) {
-        if (kind == Kind.FAKE_OVERRIDE && Visibilities.isPrivate(prev.normalize())) {
-            return Visibilities.INVISIBLE_FAKE;
+    private static DescriptorVisibility normalizeVisibility(DescriptorVisibility prev, Kind kind) {
+        if (kind == Kind.FAKE_OVERRIDE && DescriptorVisibilities.isPrivate(prev.normalize())) {
+            return DescriptorVisibilities.INVISIBLE_FAKE;
         }
         return prev;
     }
@@ -471,13 +512,14 @@ public class PropertyDescriptorImpl extends VariableDescriptorWithInitializerImp
     protected PropertyDescriptorImpl createSubstitutedCopy(
             @NotNull DeclarationDescriptor newOwner,
             @NotNull Modality newModality,
-            @NotNull Visibility newVisibility,
+            @NotNull DescriptorVisibility newVisibility,
             @Nullable PropertyDescriptor original,
             @NotNull Kind kind,
-            @NotNull Name newName
+            @NotNull Name newName,
+            @NotNull SourceElement source
     ) {
         return new PropertyDescriptorImpl(
-                newOwner, original, getAnnotations(), newModality, newVisibility, isVar(), newName, kind, SourceElement.NO_SOURCE,
+                newOwner, original, getAnnotations(), newModality, newVisibility, isVar(), newName, kind, source,
                 isLateInit(), isConst(), isExpect(), isActual(), isExternal(), isDelegated()
         );
     }
@@ -535,7 +577,7 @@ public class PropertyDescriptorImpl extends VariableDescriptorWithInitializerImp
 
     @NotNull
     @Override
-    public PropertyDescriptor copy(DeclarationDescriptor newOwner, Modality modality, Visibility visibility, Kind kind, boolean copyOverrides) {
+    public PropertyDescriptor copy(DeclarationDescriptor newOwner, Modality modality, DescriptorVisibility visibility, Kind kind, boolean copyOverrides) {
         //noinspection ConstantConditions
         return newCopyBuilder()
                 .setOwner(newOwner)

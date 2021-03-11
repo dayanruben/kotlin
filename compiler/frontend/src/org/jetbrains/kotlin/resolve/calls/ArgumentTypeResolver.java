@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.resolve.calls;
@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall;
 import org.jetbrains.kotlin.resolve.calls.results.OverloadResolutionResults;
 import org.jetbrains.kotlin.resolve.calls.results.OverloadResolutionResultsUtil;
 import org.jetbrains.kotlin.resolve.constants.CompileTimeConstant;
+import org.jetbrains.kotlin.resolve.constants.IntegerLiteralTypeConstructor;
 import org.jetbrains.kotlin.resolve.constants.IntegerValueTypeConstant;
 import org.jetbrains.kotlin.resolve.constants.IntegerValueTypeConstructor;
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator;
@@ -54,31 +55,32 @@ import static org.jetbrains.kotlin.types.TypeUtils.NO_EXPECTED_TYPE;
 
 public class ArgumentTypeResolver {
     @NotNull private final TypeResolver typeResolver;
-    @NotNull private final DoubleColonExpressionResolver doubleColonExpressionResolver;
     @NotNull private final KotlinBuiltIns builtIns;
     @NotNull private final ReflectionTypes reflectionTypes;
     @NotNull private final ConstantExpressionEvaluator constantExpressionEvaluator;
     @NotNull private final FunctionPlaceholders functionPlaceholders;
     @NotNull private final ModuleDescriptor moduleDescriptor;
+    @NotNull private final KotlinTypeChecker kotlinTypeChecker;
 
     private ExpressionTypingServices expressionTypingServices;
+    private DoubleColonExpressionResolver doubleColonExpressionResolver;
 
     public ArgumentTypeResolver(
             @NotNull TypeResolver typeResolver,
-            @NotNull DoubleColonExpressionResolver doubleColonExpressionResolver,
             @NotNull KotlinBuiltIns builtIns,
             @NotNull ReflectionTypes reflectionTypes,
             @NotNull ConstantExpressionEvaluator constantExpressionEvaluator,
             @NotNull FunctionPlaceholders functionPlaceholders,
-            @NotNull ModuleDescriptor moduleDescriptor
+            @NotNull ModuleDescriptor moduleDescriptor,
+            @NotNull KotlinTypeChecker kotlinTypeChecker
     ) {
         this.typeResolver = typeResolver;
-        this.doubleColonExpressionResolver = doubleColonExpressionResolver;
         this.builtIns = builtIns;
         this.reflectionTypes = reflectionTypes;
         this.constantExpressionEvaluator = constantExpressionEvaluator;
         this.functionPlaceholders = functionPlaceholders;
         this.moduleDescriptor = moduleDescriptor;
+        this.kotlinTypeChecker = kotlinTypeChecker;
     }
 
     // component dependency cycle
@@ -87,15 +89,20 @@ public class ArgumentTypeResolver {
         this.expressionTypingServices = expressionTypingServices;
     }
 
-    public static boolean isSubtypeOfForArgumentType(
+    @Inject
+    public void setDoubleColonExpressionResolver(@NotNull DoubleColonExpressionResolver doubleColonExpressionResolver) {
+        this.doubleColonExpressionResolver = doubleColonExpressionResolver;
+    }
+
+    public boolean isSubtypeOfForArgumentType(
             @NotNull KotlinType actualType,
             @NotNull KotlinType expectedType
     ) {
         if (FunctionPlaceholdersKt.isFunctionPlaceholder(actualType)) {
             KotlinType functionType = ConstraintSystemBuilderImplKt.createTypeForFunctionPlaceholder(actualType, expectedType);
-            return KotlinTypeChecker.DEFAULT.isSubtypeOf(functionType, expectedType);
+            return kotlinTypeChecker.isSubtypeOf(functionType, expectedType);
         }
-        return KotlinTypeChecker.DEFAULT.isSubtypeOf(actualType, expectedType);
+        return kotlinTypeChecker.isSubtypeOf(actualType, expectedType);
     }
 
     public void checkTypesWithNoCallee(
@@ -142,26 +149,51 @@ public class ArgumentTypeResolver {
     public static boolean isFunctionLiteralArgument(
             @NotNull KtExpression expression, @NotNull ResolutionContext context
     ) {
-        return getFunctionLiteralArgumentIfAny(expression, context) != null;
+        return isFunctionLiteralArgument(expression, context.statementFilter);
+    }
+
+    private static boolean isFunctionLiteralArgument(
+            @NotNull KtExpression expression, @NotNull StatementFilter statementFilter
+    ) {
+        return getFunctionLiteralArgumentIfAny(expression, statementFilter) != null;
     }
 
     public static boolean isCallableReferenceArgument(
             @NotNull KtExpression expression, @NotNull ResolutionContext context
     ) {
-        return getCallableReferenceExpressionIfAny(expression, context) != null;
+        return isCallableReferenceArgument(expression, context.statementFilter);
+    }
+
+    private static boolean isCallableReferenceArgument(
+            @NotNull KtExpression expression, @NotNull StatementFilter statementFilter
+    ) {
+        return getCallableReferenceExpressionIfAny(expression, statementFilter) != null;
     }
 
     public static boolean isFunctionLiteralOrCallableReference(
             @NotNull KtExpression expression, @NotNull ResolutionContext context
     ) {
-        return isFunctionLiteralArgument(expression, context) || isCallableReferenceArgument(expression, context);
+        return isFunctionLiteralOrCallableReference(expression, context.statementFilter);
+    }
+
+    public static boolean isFunctionLiteralOrCallableReference(
+            @NotNull KtExpression expression, @NotNull StatementFilter statementFilter
+    ) {
+        return isFunctionLiteralArgument(expression, statementFilter) || isCallableReferenceArgument(expression, statementFilter);
     }
 
     @Nullable
     public static KtFunction getFunctionLiteralArgumentIfAny(
             @NotNull KtExpression expression, @NotNull ResolutionContext context
     ) {
-        KtExpression deparenthesizedExpression = getLastElementDeparenthesized(expression, context.statementFilter);
+        return getFunctionLiteralArgumentIfAny(expression, context.statementFilter);
+    }
+
+    @Nullable
+    public static KtFunction getFunctionLiteralArgumentIfAny(
+            @NotNull KtExpression expression, @NotNull StatementFilter statementFilter
+    ) {
+        KtExpression deparenthesizedExpression = getLastElementDeparenthesized(expression, statementFilter);
         if (deparenthesizedExpression instanceof KtLambdaExpression) {
             return ((KtLambdaExpression) deparenthesizedExpression).getFunctionLiteral();
         }
@@ -176,7 +208,15 @@ public class ArgumentTypeResolver {
             @NotNull KtExpression expression,
             @NotNull ResolutionContext context
     ) {
-        KtExpression deparenthesizedExpression = getLastElementDeparenthesized(expression, context.statementFilter);
+        return getCallableReferenceExpressionIfAny(expression, context.statementFilter);
+    }
+
+    @Nullable
+    public static KtCallableReferenceExpression getCallableReferenceExpressionIfAny(
+            @NotNull KtExpression expression,
+            @NotNull StatementFilter statementFilter
+    ) {
+        KtExpression deparenthesizedExpression = getLastElementDeparenthesized(expression, statementFilter);
         if (deparenthesizedExpression instanceof KtCallableReferenceExpression) {
             return (KtCallableReferenceExpression) deparenthesizedExpression;
         }
@@ -427,6 +467,12 @@ public class ArgumentTypeResolver {
         if (!typeConstructor.isDenotable()) {
             if (typeConstructor instanceof IntegerValueTypeConstructor) {
                 IntegerValueTypeConstructor constructor = (IntegerValueTypeConstructor) typeConstructor;
+                KotlinType primitiveType = TypeUtils.getPrimitiveNumberType(constructor, expectedType);
+                constantExpressionEvaluator.updateNumberType(primitiveType, expression, statementFilter, trace);
+                return primitiveType;
+            }
+            if (typeConstructor instanceof IntegerLiteralTypeConstructor) {
+                IntegerLiteralTypeConstructor constructor = (IntegerLiteralTypeConstructor) typeConstructor;
                 KotlinType primitiveType = TypeUtils.getPrimitiveNumberType(constructor, expectedType);
                 constantExpressionEvaluator.updateNumberType(primitiveType, expression, statementFilter, trace);
                 return primitiveType;

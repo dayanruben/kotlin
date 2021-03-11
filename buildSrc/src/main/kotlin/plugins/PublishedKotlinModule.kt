@@ -1,12 +1,14 @@
+@file:Suppress("DEPRECATION")
 package plugins
 
 import org.codehaus.groovy.runtime.InvokerHelper
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Dependency
+import org.gradle.api.artifacts.maven.Conf2ScopeMappingContainer
 import org.gradle.api.artifacts.maven.MavenDeployment
 import org.gradle.api.artifacts.maven.MavenResolver
-
+import org.gradle.api.plugins.MavenPluginConvention
 import org.gradle.api.plugins.MavenRepositoryHandlerConvention
 import org.gradle.api.publication.maven.internal.deployer.MavenRemoteRepository
 import org.gradle.api.tasks.Upload
@@ -15,10 +17,8 @@ import org.gradle.plugins.signing.Sign
 import org.gradle.plugins.signing.SigningExtension
 import kotlin.properties.Delegates
 
-
 /**
  * Configures a Kotlin module for publication.
- *
  */
 open class PublishedKotlinModule : Plugin<Project> {
 
@@ -30,6 +30,18 @@ open class PublishedKotlinModule : Plugin<Project> {
 
             plugins.apply("maven")
 
+            configurations.maybeCreate("publishedRuntime").apply {
+                the<MavenPluginConvention>()
+                    .conf2ScopeMappings
+                    .addMapping(0, this, Conf2ScopeMappingContainer.RUNTIME)
+            }
+
+            configurations.maybeCreate("publishedCompile").apply {
+                the<MavenPluginConvention>()
+                    .conf2ScopeMappings
+                    .addMapping(0, this, Conf2ScopeMappingContainer.COMPILE)
+            }
+
             if (!project.hasProperty("prebuiltJar")) {
                 plugins.apply("signing")
 
@@ -39,9 +51,10 @@ open class PublishedKotlinModule : Plugin<Project> {
                 configure<SigningExtension> {
                     isRequired = signingRequired
                     sign(configurations["archives"])
+                    useGpgCmd()
                 }
 
-                (tasks.getByName("signArchives") as Sign).apply {
+                tasks.named<Sign>("signArchives").configure {
                     enabled = signingRequired
                 }
             }
@@ -98,9 +111,9 @@ open class PublishedKotlinModule : Plugin<Project> {
                 }
             }
 
-            val preparePublication = project.rootProject.tasks.getByName("preparePublication")
+            tasks.named<Upload>("uploadArchives").configure {
 
-            val uploadArchives = (tasks.getByName("uploadArchives") as Upload).apply {
+                val preparePublication = project.rootProject.tasks.named("preparePublication").get()
 
                 dependsOn(preparePublication)
 
@@ -152,8 +165,8 @@ open class PublishedKotlinModule : Plugin<Project> {
                 }
             }
 
-            tasks.create("publish") {
-                dependsOn(uploadArchives)
+            tasks.register("publish") {
+                dependsOn(tasks.named("uploadArchives"))
             }
         }
     }

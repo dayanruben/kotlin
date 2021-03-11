@@ -16,6 +16,8 @@
 
 package org.jetbrains.kotlin.serialization
 
+import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationArgumentVisitor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.metadata.ProtoBuf
@@ -25,11 +27,13 @@ import org.jetbrains.kotlin.metadata.deserialization.Flags
 import org.jetbrains.kotlin.resolve.constants.*
 import org.jetbrains.kotlin.resolve.descriptorUtil.annotationClass
 import org.jetbrains.kotlin.types.ErrorUtils
+import org.jetbrains.kotlin.types.KotlinType
 
-class AnnotationSerializer(private val stringTable: DescriptorAwareStringTable) {
-    fun serializeAnnotation(annotation: AnnotationDescriptor): ProtoBuf.Annotation = ProtoBuf.Annotation.newBuilder().apply {
+open class AnnotationSerializer(private val stringTable: DescriptorAwareStringTable) {
+    fun serializeAnnotation(annotation: AnnotationDescriptor): ProtoBuf.Annotation? = ProtoBuf.Annotation.newBuilder().apply {
         val annotationClass = annotation.annotationClass ?: error("Annotation type is not a class: ${annotation.type}")
         if (ErrorUtils.isError(annotationClass)) {
+            if (ignoreAnnotation(annotation.type)) return null
             error("Unresolved annotation type: ${annotation.type} at ${annotation.source.containingFile}")
         }
 
@@ -59,7 +63,7 @@ class AnnotationSerializer(private val stringTable: DescriptorAwareStringTable) 
 
             override fun visitBooleanValue(value: BooleanValue, data: Unit) {
                 type = Type.BOOLEAN
-                setIntValue(if (value.value) 1 else 0)
+                intValue = if (value.value) 1 else 0
             }
 
             override fun visitByteValue(value: ByteValue, data: Unit) {
@@ -99,10 +103,31 @@ class AnnotationSerializer(private val stringTable: DescriptorAwareStringTable) 
 
             override fun visitKClassValue(value: KClassValue, data: Unit) {
                 type = Type.CLASS
-                classId = stringTable.getQualifiedClassNameIndex(value.classId)
 
-                if (value.arrayDimensions > 0) {
-                    arrayDimensionCount = value.arrayDimensions
+                when (val classValue = value.value) {
+                    is KClassValue.Value.NormalClass -> {
+                        classId = stringTable.getQualifiedClassNameIndex(classValue.classId)
+
+                        if (classValue.arrayDimensions > 0) {
+                            arrayDimensionCount = classValue.arrayDimensions
+                        }
+                    }
+                    is KClassValue.Value.LocalClass -> {
+                        var arrayDimensions = 0
+                        var type = classValue.type
+                        while (KotlinBuiltIns.isArray(type)) {
+                            arrayDimensions++
+                            type = type.arguments.single().type
+                        }
+
+                        val descriptor = type.constructor.declarationDescriptor as? ClassDescriptor
+                            ?: error("Type parameters are not allowed in class literal annotation arguments: $classValue")
+                        classId = stringTable.getFqNameIndex(descriptor)
+
+                        if (arrayDimensions > 0) {
+                            arrayDimensionCount = arrayDimensions
+                        }
+                    }
                 }
             }
 
@@ -150,4 +175,6 @@ class AnnotationSerializer(private val stringTable: DescriptorAwareStringTable) 
             }
         }, Unit)
     }
+
+    protected open fun ignoreAnnotation(type: KotlinType): Boolean = false
 }

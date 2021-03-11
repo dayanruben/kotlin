@@ -21,7 +21,7 @@ import kotlin.Unit;
 import kotlin.collections.CollectionsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.builtins.KotlinBuiltIns;
+import org.jetbrains.kotlin.builtins.StandardNames;
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment;
 import org.jetbrains.kotlin.container.ComponentProvider;
 import org.jetbrains.kotlin.container.DslKt;
@@ -37,8 +37,9 @@ import org.jetbrains.kotlin.resolve.TypeResolver;
 import org.jetbrains.kotlin.resolve.lazy.JvmResolveUtil;
 import org.jetbrains.kotlin.resolve.scopes.*;
 import org.jetbrains.kotlin.resolve.scopes.utils.ScopeUtilsKt;
+import org.jetbrains.kotlin.storage.LockBasedStorageManager;
 import org.jetbrains.kotlin.test.ConfigurationKind;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.test.DummyTraces;
 import org.jetbrains.kotlin.test.KotlinTestWithEnvironment;
 
 import java.util.HashMap;
@@ -67,7 +68,7 @@ public class TypeUnifierTest extends KotlinTestWithEnvironment {
         module = DslKt.getService(container, ModuleDescriptor.class);
 
         builtinsImportingScope = ScopeUtilsKt.chainImportingScopes(
-                CollectionsKt.map(KotlinBuiltIns.BUILT_INS_PACKAGE_FQ_NAMES,
+                CollectionsKt.map(StandardNames.BUILT_INS_PACKAGE_FQ_NAMES,
                                   fqName -> ScopeUtilsKt.memberScopeAsImportingScope(module.getPackage(fqName).getMemberScope())), null);
         typeResolver = DslKt.getService(container, TypeResolver.class);
         x = createTypeVariable("X");
@@ -77,7 +78,8 @@ public class TypeUnifierTest extends KotlinTestWithEnvironment {
 
     private TypeParameterDescriptor createTypeVariable(String name) {
         return TypeParameterDescriptorImpl.createWithDefaultBound(
-                module, Annotations.Companion.getEMPTY(), false, Variance.INVARIANT, Name.identifier(name), 0
+                module, Annotations.Companion.getEMPTY(), false, Variance.INVARIANT,
+                Name.identifier(name), 0, LockBasedStorageManager.NO_LOCKS
         );
     }
 
@@ -208,7 +210,7 @@ public class TypeUnifierTest extends KotlinTestWithEnvironment {
 
         KtTypeReference typeReference = projection.getTypeReference();
         assert typeReference != null;
-        KotlinType type = typeResolver.resolveType(withX, typeReference, KotlinTestUtils.DUMMY_TRACE, true);
+        KotlinType type = typeResolver.resolveType(withX, typeReference, DummyTraces.DUMMY_TRACE, true);
 
         return new TypeProjectionImpl(getProjectionKind(typeStr, projection), type);
     }

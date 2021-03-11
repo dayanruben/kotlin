@@ -17,7 +17,6 @@
 package org.jetbrains.kotlin.codegen.context
 
 import org.jetbrains.kotlin.codegen.FieldInfo
-import org.jetbrains.kotlin.codegen.OwnerKind
 import org.jetbrains.kotlin.codegen.StackValue
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
@@ -32,27 +31,26 @@ import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassNotAny
 import org.jetbrains.kotlin.resolve.jvm.AsmTypes
-import org.jetbrains.kotlin.resolve.lazy.descriptors.script.ScriptProvidedPropertiesDescriptor
 import org.jetbrains.org.objectweb.asm.Type
 
 class ScriptContext(
-    val typeMapper: KotlinTypeMapper,
+    typeMapper: KotlinTypeMapper,
     val scriptDescriptor: ScriptDescriptor,
     val earlierScripts: List<ScriptDescriptor>,
     contextDescriptor: ClassDescriptor,
     parentContext: CodegenContext<*>?
-) : ClassContext(typeMapper, contextDescriptor, OwnerKind.IMPLEMENTATION, parentContext, null) {
+) : ScriptLikeContext(typeMapper, contextDescriptor, parentContext) {
     val lastStatement: KtExpression?
 
-    val resultFieldInfo: FieldInfo
+    val resultFieldInfo: FieldInfo?
         get() {
-            assert(state.replSpecific.shouldGenerateScriptResultValue) { "Should not be called unless 'resultFieldName' is set" }
-            val scriptResultFieldName = state.replSpecific.scriptResultFieldName!!
-            val fieldType = state.replSpecific.resultType?.let { state.typeMapper.mapType(it) } ?: AsmTypes.OBJECT_TYPE
+            val resultValue = scriptDescriptor.resultValue ?: return null
+            val scriptResultFieldName = resultValue.name.identifier
+            val fieldType = resultValue.returnType?.let { state.typeMapper.mapType(it) } ?: AsmTypes.OBJECT_TYPE
             return FieldInfo.createForHiddenField(
                 state.typeMapper.mapClass(scriptDescriptor),
                 fieldType,
-                state.replSpecific.resultType,
+                resultValue.returnType,
                 scriptResultFieldName
             )
         }
@@ -69,10 +67,8 @@ class ScriptContext(
         }
     }
 
-    val ctorValueParametersStart = if (earlierScripts.isNotEmpty()) 1 else 0
-
     private val ctorImplicitReceiversParametersStart =
-        ctorValueParametersStart + (scriptDescriptor.getSuperClassNotAny()?.unsubstitutedPrimaryConstructor?.valueParameters?.size ?: 0)
+        (scriptDescriptor.getSuperClassNotAny()?.unsubstitutedPrimaryConstructor?.valueParameters?.size ?: 0)
 
     private val ctorProvidedPropertiesParametersStart =
         ctorImplicitReceiversParametersStart + scriptDescriptor.implicitReceivers.size
@@ -90,8 +86,8 @@ class ScriptContext(
 
     fun getProvidedPropertyType(index: Int): Type = typeMapper.mapType(scriptDescriptor.scriptProvidedProperties[index].type)
 
-    fun getOuterReceiverExpression(prefix: StackValue?, thisOrOuterClass: ClassDescriptor): StackValue {
-        if (thisOrOuterClass is ScriptProvidedPropertiesDescriptor) {
+    override fun getOuterReceiverExpression(prefix: StackValue?, thisOrOuterClass: ClassDescriptor): StackValue {
+        if (thisOrOuterClass.containingDeclaration == scriptDescriptor) {
             return prefix ?: StackValue.LOCAL_0
         }
         receiverDescriptors.forEachIndexed { index, outerReceiver ->

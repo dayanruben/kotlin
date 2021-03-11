@@ -16,8 +16,10 @@
 
 package org.jetbrains.kotlin.js.inline.util
 
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.js.backend.JsToStringGenerationVisitor
 import org.jetbrains.kotlin.js.backend.ast.*
+import org.jetbrains.kotlin.js.backend.ast.metadata.functionDescriptor
 import org.jetbrains.kotlin.js.backend.ast.metadata.imported
 import org.jetbrains.kotlin.js.inline.util.collectors.InstanceCollector
 import org.jetbrains.kotlin.js.translate.expression.InlineMetadata
@@ -81,7 +83,9 @@ fun collectUsedNames(scope: JsNode): Set<JsName> {
     return references
 }
 
-fun collectDefinedNames(scope: JsNode): Set<JsName> {
+fun collectDefinedNames(scope: JsNode) = collectDefinedNames(scope, false)
+
+fun collectDefinedNames(scope: JsNode, skipLabelsAndCatches: Boolean): Set<JsName> {
     val names = mutableSetOf<JsName>()
 
     object : RecursiveJsVisitor() {
@@ -104,8 +108,17 @@ fun collectDefinedNames(scope: JsNode): Set<JsName> {
             super.visitExpressionStatement(x)
         }
 
+        override fun visitLabel(x: JsLabel) {
+            if (!skipLabelsAndCatches) {
+                x.name?.let { names += it }
+            }
+            super.visitLabel(x)
+        }
+
         override fun visitCatch(x: JsCatch) {
-            names += x.parameter.name
+            if (!skipLabelsAndCatches) {
+                names += x.parameter.name
+            }
             super.visitCatch(x)
         }
 
@@ -118,6 +131,7 @@ fun collectDefinedNames(scope: JsNode): Set<JsName> {
 }
 
 fun collectDefinedNamesInAllScopes(scope: JsNode): Set<JsName> {
+    // Order is important for the local declaration deduplication
     val names = mutableSetOf<JsName>()
 
     object : RecursiveJsVisitor() {
@@ -128,8 +142,20 @@ fun collectDefinedNamesInAllScopes(scope: JsNode): Set<JsName> {
 
         override fun visitFunction(x: JsFunction) {
             super.visitFunction(x)
-            x.name?.let { names += it }
+            // The order is important. `function foo` and `var foo = wrapfunction(..)` should yield JsName's in the same order.
+            // TODO make more robust
             names += x.parameters.map { it.name }
+            x.name?.let { names += it }
+        }
+
+        override fun visitLabel(x: JsLabel) {
+            x.name?.let { names += it }
+            super.visitLabel(x)
+        }
+
+        override fun visitCatch(x: JsCatch) {
+            names += x.parameter.name
+            super.visitCatch(x)
         }
     }.accept(scope)
 
@@ -138,7 +164,7 @@ fun collectDefinedNamesInAllScopes(scope: JsNode): Set<JsName> {
 
 fun JsFunction.collectFreeVariables() = collectUsedNames(body) - collectDefinedNames(body) - parameters.map { it.name }
 
-fun JsFunction.collectLocalVariables() = collectDefinedNames(body) + parameters.map { it.name }
+fun JsFunction.collectLocalVariables(skipLabelsAndCatches: Boolean = false) = collectDefinedNames(body, skipLabelsAndCatches) + parameters.map { it.name }
 
 fun collectNamedFunctions(scope: JsNode) = collectNamedFunctionsAndMetadata(scope).mapValues { it.value.first.function }
 
@@ -222,7 +248,7 @@ fun collectAccessors(scope: JsNode): Map<String, FunctionWithWrapper> {
     return accessors
 }
 
-fun collectAccessors(fragments: List<JsProgramFragment>): Map<String, FunctionWithWrapper> {
+fun collectAccessors(fragments: Iterable<JsProgramFragment>): Map<String, FunctionWithWrapper> {
     val result = mutableMapOf<String, FunctionWithWrapper>()
     for (fragment in fragments) {
         result += collectAccessors(fragment.declarationBlock)
@@ -230,12 +256,27 @@ fun collectAccessors(fragments: List<JsProgramFragment>): Map<String, FunctionWi
     return result
 }
 
-fun collectNameBindings(fragments: List<JsProgramFragment>): Map<JsName, String> {
-    val result = mutableMapOf<JsName, String>()
-    for (fragment in fragments) {
-        for (binding in fragment.nameBindings) {
-            result[binding.name] = binding.key
+fun collectLocalFunctions(scope: JsNode): Map<CallableDescriptor, FunctionWithWrapper> {
+    val localFunctions = hashMapOf<CallableDescriptor, FunctionWithWrapper>()
+
+    scope.accept(object : RecursiveJsVisitor() {
+        override fun visitInvocation(invocation: JsInvocation) {
+            InlineMetadata.tryExtractFunction(invocation)?.let {
+                it.function.functionDescriptor?.let { fd ->
+                    localFunctions[fd] = it
+                }
+            }
+            super.visitInvocation(invocation)
         }
+    })
+
+    return localFunctions
+}
+
+fun collectLocalFunctions(fragments: List<JsProgramFragment>): Map<CallableDescriptor, FunctionWithWrapper> {
+    val result = mutableMapOf<CallableDescriptor, FunctionWithWrapper>()
+    for (fragment in fragments) {
+        result += collectLocalFunctions(fragment.declarationBlock)
     }
     return result
 }

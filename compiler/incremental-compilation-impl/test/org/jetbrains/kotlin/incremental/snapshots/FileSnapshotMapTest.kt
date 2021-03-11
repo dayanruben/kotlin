@@ -1,6 +1,13 @@
+/*
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
+ */
+
 package org.jetbrains.kotlin.incremental.snapshots
 
 import org.jetbrains.kotlin.TestWithWorkingDir
+import org.jetbrains.kotlin.incremental.storage.FileToPathConverter
+import org.jetbrains.kotlin.incremental.storage.IncrementalFileToPathConverter
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Before
@@ -10,13 +17,15 @@ import kotlin.properties.Delegates
 
 class FileSnapshotMapTest : TestWithWorkingDir() {
     private var snapshotMap: FileSnapshotMap by Delegates.notNull()
+    private var pathConverter: FileToPathConverter by Delegates.notNull()
 
     @Before
     override fun setUp() {
         super.setUp()
         val caches = File(workingDir, "caches").apply { mkdirs() }
         val snapshotMapFile = File(caches, "snapshots.tab")
-        snapshotMap = FileSnapshotMap(snapshotMapFile)
+        pathConverter = IncrementalFileToPathConverter((workingDir.canonicalFile))
+        snapshotMap = FileSnapshotMap(snapshotMapFile, pathConverter)
     }
 
     @After

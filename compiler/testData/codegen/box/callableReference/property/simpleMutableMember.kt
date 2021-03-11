@@ -1,4 +1,5 @@
-// IGNORE_BACKEND: JVM_IR
+// DONT_TARGET_EXACT_BACKEND: WASM
+// WASM_MUTE_REASON: PROPERTY_REFERENCES
 data class Box(var value: String)
 
 fun box(): String {

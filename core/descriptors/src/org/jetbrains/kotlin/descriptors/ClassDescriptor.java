@@ -1,6 +1,6 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2000-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.descriptors;
@@ -62,13 +62,17 @@ public interface ClassDescriptor extends ClassifierDescriptorWithTypeParameters,
 
     @Override
     @NotNull
-    Visibility getVisibility();
+    DescriptorVisibility getVisibility();
 
     boolean isCompanionObject();
 
     boolean isData();
 
     boolean isInline();
+
+    boolean isFun();
+
+    boolean isValue();
 
     @NotNull
     ReceiverParameterDescriptor getThisAsReceiverParameter();
@@ -96,4 +100,14 @@ public interface ClassDescriptor extends ClassifierDescriptorWithTypeParameters,
     @NotNull
     @Override
     ClassDescriptor getOriginal();
+
+    // Use SingleAbstractMethodUtils.getFunctionTypeForSamInterface() where possible. This is only a fallback
+    @Nullable
+    SimpleType getDefaultFunctionTypeForSamInterface();
+
+    /**
+     * May return false even in case when the class is not SAM interface, but returns true only if it's definitely not a SAM.
+     * But it should work much faster than the exact check.
+     */
+    boolean isDefinitelyNotSamInterface();
 }

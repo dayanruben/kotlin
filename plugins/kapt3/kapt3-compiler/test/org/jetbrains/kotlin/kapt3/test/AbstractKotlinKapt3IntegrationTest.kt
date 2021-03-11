@@ -21,14 +21,16 @@ import org.jetbrains.kotlin.base.kapt3.DetectMemoryLeaksMode
 import org.jetbrains.kotlin.base.kapt3.KaptOptions
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.codegen.ClassBuilderMode
-import org.jetbrains.kotlin.codegen.CodegenTestCase
 import org.jetbrains.kotlin.codegen.GenerationUtils
 import org.jetbrains.kotlin.codegen.OriginCollectingClassBuilderFactory
-import org.jetbrains.kotlin.config.CompilerConfiguration
-import org.jetbrains.kotlin.kapt3.*
+import org.jetbrains.kotlin.kapt3.AbstractKapt3Extension
+import org.jetbrains.kotlin.kapt3.KaptContextForStubGeneration
 import org.jetbrains.kotlin.kapt3.base.KaptContext
 import org.jetbrains.kotlin.kapt3.base.LoadedProcessors
+import org.jetbrains.kotlin.kapt3.base.incremental.DeclaredProcType
+import org.jetbrains.kotlin.kapt3.base.incremental.IncrementalProcessor
 import org.jetbrains.kotlin.kapt3.javac.KaptJavaFileObject
+import org.jetbrains.kotlin.kapt3.prettyPrint
 import org.jetbrains.kotlin.kapt3.stubs.ClassFileToSourceStubConverter
 import org.jetbrains.kotlin.kapt3.stubs.ClassFileToSourceStubConverter.KaptStub
 import org.jetbrains.kotlin.kapt3.util.MessageCollectorBackedKaptLogger
@@ -48,9 +50,8 @@ import javax.lang.model.element.AnnotationMirror
 import javax.lang.model.element.Element
 import javax.lang.model.element.ExecutableElement
 import javax.lang.model.element.TypeElement
-import com.sun.tools.javac.util.List as JavacList
 
-abstract class AbstractKotlinKapt3IntegrationTest : CodegenTestCase() {
+abstract class AbstractKotlinKapt3IntegrationTest : KotlinKapt3TestBase() {
     private companion object {
         val TEST_DATA_DIR = File("plugins/kapt3/kapt3-compiler/testData/kotlinRunner")
     }
@@ -122,12 +123,11 @@ abstract class AbstractKotlinKapt3IntegrationTest : CodegenTestCase() {
         }
     }
 
-    override fun doMultiFileTest(wholeFile: File, files: List<TestFile>, javaFilesDir: File?) {
-        val javaSources = javaFilesDir?.let { arrayOf(it) } ?: emptyArray()
-
+    override fun doMultiFileTest(wholeFile: File, files: List<TestFile>) {
         val txtFile = File(wholeFile.parentFile, wholeFile.nameWithoutExtension + ".it.txt")
 
-        createEnvironmentWithMockJdkAndIdeaAnnotations(ConfigurationKind.ALL, *javaSources)
+        val javaSources = listOfNotNull(writeJavaFiles(files))
+        createEnvironmentWithMockJdkAndIdeaAnnotations(ConfigurationKind.ALL, *javaSources.toTypedArray())
         val project = myEnvironment.project
 
         val options = KaptOptions.Builder().apply {
@@ -141,6 +141,8 @@ abstract class AbstractKotlinKapt3IntegrationTest : CodegenTestCase() {
             incrementalDataOutputDir = Files.createTempDirectory("kaptIncrementalData").toFile()
 
             mutableOptions?.let { processingOptions.putAll(it) }
+            flags.addAll(kaptFlagsToAdd)
+            flags.removeAll(kaptFlagsToRemove)
             detectMemoryLeaks = DetectMemoryLeaksMode.NONE
         }.build()
 
@@ -165,13 +167,15 @@ abstract class AbstractKotlinKapt3IntegrationTest : CodegenTestCase() {
         }
     }
 
-    protected class Kapt3ExtensionForTests(options: KaptOptions, private val processors: List<Processor>) : AbstractKapt3Extension(
-        options, MessageCollectorBackedKaptLogger(options), compilerConfiguration = CompilerConfiguration.EMPTY
+    protected inner class Kapt3ExtensionForTests(options: KaptOptions, private val processors: List<Processor>) : AbstractKapt3Extension(
+        options, MessageCollectorBackedKaptLogger(options), compilerConfiguration = myEnvironment.configuration
     ) {
         internal var savedStubs: String? = null
         internal var savedBindings: Map<String, KaptJavaFileObject>? = null
 
-        override fun loadProcessors() = LoadedProcessors(processors, Kapt3ExtensionForTests::class.java.classLoader)
+        override fun loadProcessors() = LoadedProcessors(
+            processors.map { IncrementalProcessor(it, DeclaredProcType.NON_INCREMENTAL, logger) },
+            Kapt3ExtensionForTests::class.java.classLoader)
 
         override fun saveStubs(kaptContext: KaptContext, stubs: List<KaptStub>) {
             if (this.savedStubs != null) {

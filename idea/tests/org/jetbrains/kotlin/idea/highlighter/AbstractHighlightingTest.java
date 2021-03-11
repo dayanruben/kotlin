@@ -1,17 +1,6 @@
 /*
- * Copyright 2010-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.highlighter;
@@ -20,6 +9,8 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
+import com.intellij.testFramework.ExpectedHighlightingData;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;
 import org.jetbrains.kotlin.test.InTextDirectivesUtils;
 import org.jetbrains.kotlin.test.TagsTestDataUtil;
@@ -29,24 +20,54 @@ import java.util.List;
 
 public abstract class AbstractHighlightingTest extends KotlinLightCodeInsightFixtureTestCase {
 
-    protected void doTest(String filePath) throws Exception {
-        String fileText = FileUtil.loadFile(new File(filePath), true);
-        boolean checkInfos = !InTextDirectivesUtils.isDirectiveDefined(fileText, "// NO_CHECK_INFOS");
-        boolean checkWeakWarnings = !InTextDirectivesUtils.isDirectiveDefined(fileText, "// NO_CHECK_WEAK_WARNINGS");
-        boolean checkWarnings = !InTextDirectivesUtils.isDirectiveDefined(fileText, "// NO_CHECK_WARNINGS");
+    public static final String NO_CHECK_INFOS_PREFIX = "// NO_CHECK_INFOS";
+    public static final String NO_CHECK_WEAK_WARNINGS_PREFIX = "// NO_CHECK_WEAK_WARNINGS";
+    public static final String NO_CHECK_WARNINGS_PREFIX = "// NO_CHECK_WARNINGS";
+    public static final String EXPECTED_DUPLICATED_HIGHLIGHTING_PREFIX = "// EXPECTED_DUPLICATED_HIGHLIGHTING";
 
-        myFixture.configureByFile(filePath);
+    protected void checkHighlighting(@NotNull String fileText) {
+        boolean checkInfos = !InTextDirectivesUtils.isDirectiveDefined(fileText, NO_CHECK_INFOS_PREFIX);
+        boolean checkWeakWarnings = !InTextDirectivesUtils.isDirectiveDefined(fileText, NO_CHECK_WEAK_WARNINGS_PREFIX);
+        boolean checkWarnings = !InTextDirectivesUtils.isDirectiveDefined(fileText, NO_CHECK_WARNINGS_PREFIX);
+
+        myFixture.checkHighlighting(checkWarnings, checkInfos, checkWeakWarnings);
+    }
+
+    protected void doTest(String unused) throws Exception {
+        String fileText = FileUtil.loadFile(new File(testPath()), true);
+        boolean expectedDuplicatedHighlighting = InTextDirectivesUtils.isDirectiveDefined(fileText, EXPECTED_DUPLICATED_HIGHLIGHTING_PREFIX);
+
+        myFixture.configureByFile(fileName());
+
+        withExpectedDuplicatedHighlighting(expectedDuplicatedHighlighting, () -> {
+            try {
+                checkHighlighting(fileText);
+            }
+            catch (FileComparisonFailure e) {
+                List<HighlightInfo> highlights =
+                        DaemonCodeAnalyzerImpl.getHighlights(myFixture.getDocument(myFixture.getFile()), null, myFixture.getProject());
+                String text = myFixture.getFile().getText();
+
+                System.out.println(TagsTestDataUtil.insertInfoTags(highlights, text));
+                throw e;
+            }
+        });
+    }
+
+    private void withExpectedDuplicatedHighlighting(boolean expectedDuplicatedHighlighting, Runnable runnable) {
+        if (!expectedDuplicatedHighlighting) {
+            runnable.run();
+            return;
+        }
 
         try {
-            myFixture.checkHighlighting(checkWarnings, checkInfos, checkWeakWarnings);
-        }
-        catch (FileComparisonFailure e) {
-            List<HighlightInfo> highlights =
-                    DaemonCodeAnalyzerImpl.getHighlights(myFixture.getDocument(myFixture.getFile()), null, myFixture.getProject());
-            String text = myFixture.getFile().getText();
-
-            System.out.println(TagsTestDataUtil.insertInfoTags(highlights, text));
-            throw e;
+            ExpectedHighlightingData.expectedDuplicatedHighlighting(runnable);
+        } catch (IllegalStateException e) {
+            if (isFirPlugin()) {
+                runnable.run();
+            } else {
+                throw e;
+            }
         }
     }
 }

@@ -1,18 +1,17 @@
 apply plugin: 'kotlin'
+apply plugin: 'jps-compatible'
 
-configureJvmProject(project)
 configurePublishing(project)
 
-repositories {
-    mavenLocal()
-    jcenter()
+pill {
+    variant = 'FULL'
 }
 
 dependencies {
     compile project(':kotlin-gradle-plugin-api')
     compile project(':kotlin-gradle-plugin-model')
 
-    compile project(':kotlin-stdlib')
+    compile kotlinStdlib()
     compileOnly project(path: ':kotlin-compiler-embeddable', configuration: 'runtimeJar')
     compileOnly project(':kotlin-allopen-compiler-plugin')
 
@@ -20,28 +19,25 @@ dependencies {
 
     testCompile gradleApi()
     testCompile "junit:junit:4.12"
+
+    embedded(project(":kotlin-allopen-compiler-plugin")) { transitive = false }
 }
 
-evaluationDependsOn(":kotlin-allopen-compiler-plugin")
-
 tasks.withType(project.compileKotlin.class) {
-    kotlinOptions.languageVersion = "1.2"
-    kotlinOptions.apiVersion = "1.2"
-    kotlinOptions.freeCompilerArgs += ["-Xskip-metadata-version-check"]
+    kotlinOptions.languageVersion = "1.3"
+    kotlinOptions.apiVersion = "1.3"
+    kotlinOptions.freeCompilerArgs += [
+            "-Xskip-prerelease-check", "-Xskip-runtime-version-check", "-Xsuppress-version-warnings"
+    ]
 }
 
 jar {
-    from(project(":kotlin-allopen-compiler-plugin").sourceSets.main.output.classesDirs)
-    from(project(":kotlin-allopen-compiler-plugin").sourceSets.main.output.resourcesDir)
     manifestAttributes(manifest, project)
 }
 
-ArtifactsKt.runtimeJar(project, EmbeddableKt.rewriteDepsToShadedCompiler(project, jar, {}), {})
-
-artifacts {
-    archives sourcesJar
-    archives javadocJar
-}
+ArtifactsKt.runtimeJar(project, EmbeddableKt.rewriteDefaultJarDepsToShadedCompiler(project, {}), {})
+configureSourcesJar()
+configureJavadocJar()
 
 pluginBundle {
     plugins {
@@ -55,5 +51,7 @@ pluginBundle {
         }
     }
 }
+
+configurePluginMarkers(project)
 
 test.executable = "${JDK_18}/bin/java"

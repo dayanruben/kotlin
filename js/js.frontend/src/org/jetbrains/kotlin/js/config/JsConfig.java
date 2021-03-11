@@ -30,9 +30,10 @@ import org.jetbrains.kotlin.config.*;
 import org.jetbrains.kotlin.descriptors.PackageFragmentProvider;
 import org.jetbrains.kotlin.descriptors.impl.ModuleDescriptorImpl;
 import org.jetbrains.kotlin.incremental.components.LookupTracker;
-import org.jetbrains.kotlin.js.resolve.JsPlatform;
+import org.jetbrains.kotlin.js.resolve.JsPlatformAnalyzerServices;
 import org.jetbrains.kotlin.name.Name;
 import org.jetbrains.kotlin.resolve.CompilerDeserializationConfiguration;
+import org.jetbrains.kotlin.resolve.TargetEnvironment;
 import org.jetbrains.kotlin.serialization.js.*;
 import org.jetbrains.kotlin.storage.LockBasedStorageManager;
 import org.jetbrains.kotlin.utils.JsMetadataVersion;
@@ -55,7 +56,7 @@ public class JsConfig {
 
     private final Project project;
     private final CompilerConfiguration configuration;
-    private final LockBasedStorageManager storageManager = new LockBasedStorageManager();
+    private final LockBasedStorageManager storageManager = new LockBasedStorageManager("JsConfig");
 
     private final List<KotlinJavascriptMetadata> metadata = new SmartList<>();
     private final List<KotlinJavascriptMetadata> friends = new SmartList<>();
@@ -71,15 +72,22 @@ public class JsConfig {
     @Nullable
     private final Set<String> librariesToSkip;
 
-    public JsConfig(@NotNull Project project, @NotNull CompilerConfiguration configuration) {
-        this(project, configuration, null, null);
+    public final TargetEnvironment targetEnvironment;
+
+    public JsConfig(@NotNull Project project, @NotNull CompilerConfiguration configuration, @NotNull TargetEnvironment targetEnvironment) {
+        this(project, configuration, targetEnvironment, null, null);
     }
 
-    public JsConfig(@NotNull Project project, @NotNull CompilerConfiguration configuration,
+    public JsConfig(
+            @NotNull Project project,
+            @NotNull CompilerConfiguration configuration,
+            @NotNull TargetEnvironment targetEnvironment,
             @Nullable List<JsModuleDescriptor<KotlinJavaScriptLibraryParts>> metadataCache,
-            @Nullable Set<String> librariesToSkip) {
+            @Nullable Set<String> librariesToSkip
+    ) {
         this.project = project;
         this.configuration = configuration.copy();
+        this.targetEnvironment = targetEnvironment;
         this.metadataCache = metadataCache;
         this.librariesToSkip = librariesToSkip;
     }
@@ -164,9 +172,6 @@ public class JsConfig {
             return false;
         }
 
-        VirtualFileSystem fileSystem = VirtualFileManager.getInstance().getFileSystem(StandardFileSystems.FILE_PROTOCOL);
-        VirtualFileSystem jarFileSystem = VirtualFileManager.getInstance().getFileSystem(StandardFileSystems.JAR_PROTOCOL);
-
         Set<String> modules = new HashSet<>();
 
         boolean skipMetadataVersionCheck = getLanguageVersionSettings().getFlag(AnalysisFlags.getSkipMetadataVersionCheck());
@@ -174,23 +179,9 @@ public class JsConfig {
         for (String path : libraries) {
             if (librariesToSkip != null && librariesToSkip.contains(path)) continue;
 
-            VirtualFile file;
-
             File filePath = new File(path);
             if (!filePath.exists()) {
                 report.error("Path '" + path + "' does not exist");
-                return true;
-            }
-
-            if (path.endsWith(".jar") || path.endsWith(".zip")) {
-                file = jarFileSystem.findFileByPath(path + URLUtil.JAR_SEPARATOR);
-            }
-            else {
-                file = fileSystem.findFileByPath(path);
-            }
-
-            if (file == null) {
-                report.error("File '" + path + "' does not exist or could not be read");
                 return true;
             }
 
@@ -251,7 +242,7 @@ public class JsConfig {
             LanguageVersionSettings languageVersionSettings = CommonConfigurationKeysKt.getLanguageVersionSettings(configuration);
             for (JsModuleDescriptor<KotlinJavaScriptLibraryParts> cached : metadataCache) {
                 ModuleDescriptorImpl moduleDescriptor = new ModuleDescriptorImpl(
-                        Name.special("<" + cached.getName() + ">"), storageManager, JsPlatform.INSTANCE.getBuiltIns()
+                        Name.special("<" + cached.getName() + ">"), storageManager, JsPlatformAnalyzerServices.INSTANCE.getBuiltIns()
                 );
 
                 KotlinJavaScriptLibraryParts parts = cached.getData();
@@ -310,7 +301,7 @@ public class JsConfig {
                     "Expected JS metadata version " + JsMetadataVersion.INSTANCE + ", but actual metadata version is " + m.getVersion();
 
             ModuleDescriptorImpl moduleDescriptor = new ModuleDescriptorImpl(
-                    Name.special("<" + m.getModuleName() + ">"), storageManager, JsPlatform.INSTANCE.getBuiltIns()
+                    Name.special("<" + m.getModuleName() + ">"), storageManager, JsPlatformAnalyzerServices.INSTANCE.getBuiltIns()
             );
 
             LookupTracker lookupTracker = configuration.get(CommonConfigurationKeys.LOOKUP_TRACKER, LookupTracker.DO_NOTHING.INSTANCE);
@@ -327,6 +318,6 @@ public class JsConfig {
     }
 
     private static void setDependencies(ModuleDescriptorImpl module, List<ModuleDescriptorImpl> modules) {
-        module.setDependencies(CollectionsKt.plus(modules, JsPlatform.INSTANCE.getBuiltIns().getBuiltInsModule()));
+        module.setDependencies(CollectionsKt.plus(modules, JsPlatformAnalyzerServices.INSTANCE.getBuiltIns().getBuiltInsModule()));
     }
 }

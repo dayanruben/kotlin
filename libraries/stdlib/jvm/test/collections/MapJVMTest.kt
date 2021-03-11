@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package test.collections
@@ -16,6 +16,15 @@ class MapJVMTest {
         assertEquals(2, map["b"])
         assertEquals(3, map["c"])
         assertEquals(listOf("a", "b", "c"), map.keys.toList())
+    }
+
+    @Test fun createSortedMapWithComparator() {
+        val map = sortedMapOf(compareBy<String> { it.length }.thenBy { it }, Pair("c", 3), Pair("bc", 2), Pair("bd", 4), Pair("abc", 1))
+        assertEquals(1, map["abc"])
+        assertEquals(2, map["bc"])
+        assertEquals(3, map["c"])
+        assertEquals(4, map["bd"])
+        assertEquals(listOf("c", "bc", "bd", "abc"), map.keys.toList())
     }
 
     @Test fun toSortedMap() {

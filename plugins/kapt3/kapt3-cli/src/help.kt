@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.kapt.cli
@@ -17,7 +17,7 @@ internal fun printHelp() {
         .filter { it.cliToolOption != null }
         .map { OptionToRender(it.nameArgs(), it.description) }
 
-    val optionNameColumnWidth = options.asSequence().map { it.nameArgs.length }.max()!! + 2
+    val optionNameColumnWidth = options.maxOf { it.nameArgs.length } + 2
     val renderedOptions = options.joinToString("\n|") { it.render(optionNameColumnWidth) }
 
     val message = """

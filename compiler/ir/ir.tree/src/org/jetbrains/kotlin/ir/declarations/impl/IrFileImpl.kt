@@ -17,60 +17,47 @@
 package org.jetbrains.kotlin.ir.declarations.impl
 
 import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
-import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
-import org.jetbrains.kotlin.ir.IrElementBase
-import org.jetbrains.kotlin.ir.SourceManager
+import org.jetbrains.kotlin.ir.IrFileEntry
+import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.declarations.IrDeclaration
 import org.jetbrains.kotlin.ir.declarations.IrFile
-import org.jetbrains.kotlin.ir.expressions.IrCall
+import org.jetbrains.kotlin.ir.declarations.MetadataSource
+import org.jetbrains.kotlin.ir.expressions.IrConstructorCall
 import org.jetbrains.kotlin.ir.symbols.IrFileSymbol
 import org.jetbrains.kotlin.ir.symbols.impl.IrFileSymbolImpl
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformer
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitor
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.utils.SmartList
 
 class IrFileImpl(
-    override val fileEntry: SourceManager.FileEntry,
+    override val fileEntry: IrFileEntry,
     override val symbol: IrFileSymbol,
     override val fqName: FqName
-) :
-    IrElementBase(0, fileEntry.maxOffset),
-    IrFile {
-
+) : IrFile() {
     constructor(
-        fileEntry: SourceManager.FileEntry,
-        symbol: IrFileSymbol
-    ) :
-            this(fileEntry, symbol, symbol.descriptor.fqName)
-
-    constructor(
-        fileEntry: SourceManager.FileEntry,
+        fileEntry: IrFileEntry,
         packageFragmentDescriptor: PackageFragmentDescriptor
-    ) :
-            this(fileEntry, IrFileSymbolImpl(packageFragmentDescriptor), packageFragmentDescriptor.fqName)
-
-    constructor(
-        fileEntry: SourceManager.FileEntry,
-        packageFragmentDescriptor: PackageFragmentDescriptor,
-        fileAnnotations: List<AnnotationDescriptor>,
-        declarations: List<IrDeclaration>
-    ) : this(fileEntry, packageFragmentDescriptor) {
-        this.fileAnnotations.addAll(fileAnnotations)
-        this.declarations.addAll(declarations)
-    }
+    ) : this(fileEntry, IrFileSymbolImpl(packageFragmentDescriptor), packageFragmentDescriptor.fqName)
 
     init {
         symbol.bind(this)
     }
 
-    override val packageFragmentDescriptor: PackageFragmentDescriptor get() = symbol.descriptor
+    override val startOffset: Int
+        get() = 0
 
-    override val fileAnnotations: MutableList<AnnotationDescriptor> = SmartList()
+    override val endOffset: Int
+        get() = fileEntry.maxOffset
+
+    @ObsoleteDescriptorBasedAPI
+    override val packageFragmentDescriptor: PackageFragmentDescriptor
+        get() = symbol.descriptor
 
     override val declarations: MutableList<IrDeclaration> = ArrayList()
 
-    override val annotations: MutableList<IrCall> = ArrayList()
+    override var annotations: List<IrConstructorCall> = emptyList()
+
+    override var metadata: MetadataSource? = null
 
     override fun <R, D> accept(visitor: IrElementVisitor<R, D>, data: D): R =
         visitor.visitFile(this, data)

@@ -53,17 +53,22 @@ data class IrValidatorConfig(
     val abortOnError: Boolean,
     val ensureAllNodesAreDifferent: Boolean,
     val checkTypes: Boolean = true,
-    val checkDescriptors: Boolean = true
+    val checkDescriptors: Boolean = true,
+    val checkProperties: Boolean = false,
+    val checkScopes: Boolean = false,
 )
 
 class IrValidator(val context: CommonBackendContext, val config: IrValidatorConfig) : IrElementVisitorVoid {
 
-    val builtIns = context.builtIns
+    val irBuiltIns = context.irBuiltIns
     var currentFile: IrFile? = null
 
     override fun visitFile(declaration: IrFile) {
         currentFile = declaration
         super.visitFile(declaration)
+        if (config.checkScopes) {
+            ScopeValidator(this::error).check(declaration)
+        }
     }
 
     private fun error(element: IrElement, message: String) {
@@ -75,11 +80,11 @@ class IrValidator(val context: CommonBackendContext, val config: IrValidatorConf
         )
 
         if (config.abortOnError) {
-            error("Validation failed")
+            error("Validation failed in file ${currentFile?.name ?: "???"}")
         }
     }
 
-    private val elementChecker = CheckIrElementVisitor(builtIns, this::error, config)
+    private val elementChecker = CheckIrElementVisitor(irBuiltIns, this::error, config)
 
     override fun visitElement(element: IrElement) {
         element.acceptVoid(elementChecker)
@@ -97,7 +102,7 @@ object CheckDeclarationParentsVisitor : IrElementVisitor<Unit, IrDeclarationPare
         element.acceptChildren(this, element as? IrDeclarationParent ?: data)
     }
 
-    override fun visitDeclaration(declaration: IrDeclaration, data: IrDeclarationParent?) {
+    override fun visitDeclaration(declaration: IrDeclarationBase, data: IrDeclarationParent?) {
         checkParent(declaration, data)
         super.visitDeclaration(declaration, data)
     }
@@ -106,11 +111,11 @@ object CheckDeclarationParentsVisitor : IrElementVisitor<Unit, IrDeclarationPare
         val parent = try {
             declaration.parent
         } catch (e: Throwable) {
-            error("$declaration for ${declaration.descriptor} has no parent")
+            error("$declaration for ${declaration.render()} has no parent")
         }
 
         if (parent != expectedParent) {
-            error("$declaration for ${declaration.descriptor} has unexpected parent $parent")
+            error("$declaration for ${declaration.render()} has unexpected parent $parent")
         }
     }
 }

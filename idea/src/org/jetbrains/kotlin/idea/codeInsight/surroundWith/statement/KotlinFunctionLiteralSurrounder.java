@@ -23,8 +23,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.KotlinBundle;
-import org.jetbrains.kotlin.idea.codeInsight.surroundWith.KotlinSurrounderUtils;
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.MoveDeclarationsOutHelperKt;
+import org.jetbrains.kotlin.idea.core.surroundWith.KotlinSurrounderUtils;
 import org.jetbrains.kotlin.psi.*;
 
 public class KotlinFunctionLiteralSurrounder extends KotlinStatementsSurrounder {
@@ -34,7 +34,7 @@ public class KotlinFunctionLiteralSurrounder extends KotlinStatementsSurrounder 
         statements = MoveDeclarationsOutHelperKt.move(container, statements, true);
 
         if (statements.length == 0) {
-            KotlinSurrounderUtils.showErrorHint(project, editor, KotlinSurrounderUtils.SURROUND_WITH_ERROR);
+            KotlinSurrounderUtils.showErrorHint(project, editor, KotlinSurrounderUtils.SURROUND_WITH_ERROR());
             return null;
         }
 
@@ -62,6 +62,6 @@ public class KotlinFunctionLiteralSurrounder extends KotlinStatementsSurrounder 
 
     @Override
     public String getTemplateDescription() {
-        return KotlinBundle.message("surround.with.function.template");
+        return "{ }";
     }
 }

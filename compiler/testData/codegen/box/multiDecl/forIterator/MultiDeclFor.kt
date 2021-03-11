@@ -1,3 +1,6 @@
+// DONT_TARGET_EXACT_BACKEND: WASM
+// WASM_MUTE_REASON: STDLIB_COLLECTIONS
+// KJS_WITH_FULL_RUNTIME
 class C(val i: Int) {
   operator fun component1() = i + 1
   operator fun component2() = i + 2

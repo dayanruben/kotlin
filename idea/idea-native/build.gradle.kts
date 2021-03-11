@@ -5,16 +5,26 @@ plugins {
 
 dependencies {
     compile(project(":idea"))
+    compileOnly(intellijPluginDep("gradle"))
     compile(project(":idea:idea-core"))
     compile(project(":idea:idea-jvm"))
     compile(project(":compiler:frontend"))
+    compile(project(":native:frontend.native"))
+
     compileOnly(intellijDep())
-    compile(project(":kotlin-native:kotlin-native-library-reader"))
+    compileOnly(intellijPluginDep("java"))
+
+    testCompileOnly(intellijDep())
+    testRuntimeOnly(intellijDep())
 }
 
 sourceSets {
-    "main" { projectDefault() }
-    "test" { none() }
+    "main" {
+        projectDefault()
+        java.srcDir("gen")
+    }
+    "test" { projectDefault() }
+
 }
 
 configureFormInstrumentation()

@@ -25,11 +25,13 @@ import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
+import com.intellij.testFramework.IdeaTestUtil;
 import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.idea.util.IjPlatformUtil;
 import org.jetbrains.kotlin.test.TestJdkKind;
+import org.jetbrains.kotlin.test.util.KtTestUtil;
 
 import java.io.File;
 
@@ -42,18 +44,18 @@ public class PluginTestCaseBase {
 
     @NotNull
     public static String getTestDataPathBase() {
-        return KotlinTestUtils.getHomeDirectory() + TEST_DATA_PROJECT_RELATIVE;
+        return KtTestUtil.getHomeDirectory() + TEST_DATA_PROJECT_RELATIVE;
     }
 
     @NotNull
     @TestOnly
     private static Sdk createMockJdk(@NotNull String name, String path) {
-        return ((JavaSdkImpl)JavaSdk.getInstance()).createMockJdk(name, path, false);
+        return IdeaTestUtil.createMockJdk(name, path, false);
     }
 
     @NotNull
     private static Sdk getSdk(String sdkHome, String name) {
-        ProjectJdkTable table = ProjectJdkTable.getInstance();
+        ProjectJdkTable table = IjPlatformUtil.getProjectJdkTableSafe();
         Sdk existing = table.findJdk(name);
         if (existing != null) {
             return existing;
@@ -93,7 +95,13 @@ public class PluginTestCaseBase {
     @NotNull
     public static Sdk addJdk(@NotNull Disposable disposable, @NotNull Function0<Sdk> getJdk) {
         Sdk jdk = getJdk.invoke();
-        ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(jdk, disposable));
+        Sdk[] allJdks = IjPlatformUtil.getProjectJdkTableSafe().getAllJdks();
+        for (Sdk existingJdk : allJdks) {
+            if (existingJdk == jdk) {
+                return existingJdk;
+            }
+        }
+        ApplicationManager.getApplication().runWriteAction(() -> IjPlatformUtil.getProjectJdkTableSafe().addJdk(jdk, disposable));
         return jdk;
     }
 
@@ -103,7 +111,7 @@ public class PluginTestCaseBase {
             case MOCK_JDK:
                 return mockJdk();
             case FULL_JDK_9:
-                String jre9 = KotlinTestUtils.getJdk9Home().getPath();
+                String jre9 = KtTestUtil.getJdk9Home().getPath();
                 VfsRootAccess.allowRootAccess(jre9);
                 return getSdk(jre9, "Full JDK 9");
             case FULL_JDK:
@@ -120,7 +128,7 @@ public class PluginTestCaseBase {
     @TestOnly
     public static void clearSdkTable(@NotNull Disposable disposable) {
         Disposer.register(disposable, () -> ApplicationManager.getApplication().runWriteAction(() -> {
-            ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
+            ProjectJdkTable jdkTable = IjPlatformUtil.getProjectJdkTableSafe();
             for (Sdk sdk : jdkTable.getAllJdks()) {
                 jdkTable.removeJdk(sdk);
             }

@@ -1,6 +1,6 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2000-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.intentions
@@ -18,6 +18,7 @@ import com.intellij.util.PlatformIcons
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.*
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -25,14 +26,15 @@ import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 class AddAnnotationUseSiteTargetIntention : SelfTargetingIntention<KtAnnotationEntry>(
-    KtAnnotationEntry::class.java, "Add use-site target"
+    KtAnnotationEntry::class.java,
+    KotlinBundle.lazyMessage("add.use.site.target")
 ) {
 
     override fun isApplicableTo(element: KtAnnotationEntry, caretOffset: Int): Boolean {
         val useSiteTargets = element.applicableUseSiteTargets()
         if (useSiteTargets.isEmpty()) return false
         if (useSiteTargets.size == 1) {
-            text = "Add use-site target '${useSiteTargets.first().renderName}'"
+            setTextGetter(KotlinBundle.lazyMessage("text.add.use.site.target.0", useSiteTargets.first().renderName))
         }
         return true
     }
@@ -56,7 +58,7 @@ class AddAnnotationUseSiteTargetIntention : SelfTargetingIntention<KtAnnotationE
         useSiteTargets: List<AnnotationUseSiteTarget>,
         project: Project
     ): ListPopupStep<*> {
-        return object : BaseListPopupStep<AnnotationUseSiteTarget>("Choose use-site target", useSiteTargets) {
+        return object : BaseListPopupStep<AnnotationUseSiteTarget>(KotlinBundle.message("choose.use.site.target"), useSiteTargets) {
             override fun isAutoSelectionEnabled() = false
 
             override fun onChosen(selectedValue: AnnotationUseSiteTarget, finalChoice: Boolean): PopupStep<*>? {
@@ -139,8 +141,8 @@ private fun KtAnnotationEntry.applicableUseSiteTargets(): List<AnnotationUseSite
     }
 }
 
-private fun KtAnnotationEntry.addUseSiteTarget(useSiteTarget: AnnotationUseSiteTarget, project: Project) {
-    project.executeWriteCommand("Add use-site target") {
+fun KtAnnotationEntry.addUseSiteTarget(useSiteTarget: AnnotationUseSiteTarget, project: Project) {
+    project.executeWriteCommand(KotlinBundle.message("add.use.site.target")) {
         replace(KtPsiFactory(this).createAnnotationEntry("@${useSiteTarget.renderName}:$shortName${valueArgumentList?.text ?: ""}"))
     }
 }

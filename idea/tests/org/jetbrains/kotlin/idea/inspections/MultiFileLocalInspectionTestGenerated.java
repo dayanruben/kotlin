@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.inspections;
@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.idea.inspections;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.test.KotlinTestUtils;
-import org.jetbrains.kotlin.test.TargetBackend;
+import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.runner.RunWith;
 
@@ -22,11 +22,11 @@ import java.util.regex.Pattern;
 @RunWith(JUnit3RunnerWithInners.class)
 public class MultiFileLocalInspectionTestGenerated extends AbstractMultiFileLocalInspectionTest {
     private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTest, TargetBackend.ANY, testDataFilePath);
+        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
     public void testAllFilesPresentInMultiFileLocalInspections() throws Exception {
-        KotlinTestUtils.assertAllTestsPresentInSingleGeneratedClass(this.getClass(), new File("idea/testData/multiFileLocalInspections"), Pattern.compile("^(.+)\\.test$"), TargetBackend.ANY);
+        KtTestUtil.assertAllTestsPresentInSingleGeneratedClassWithExcluded(this.getClass(), new File("idea/testData/multiFileLocalInspections"), Pattern.compile("^(.+)\\.test$"), null);
     }
 
     @TestMetadata("convertSealedSubClassToObject/convertCallableReferenceUsages/convertCallableReferenceUsages.test")
@@ -42,6 +42,11 @@ public class MultiFileLocalInspectionTestGenerated extends AbstractMultiFileLoca
     @TestMetadata("moveFileToPackageMatchingDirectory/moveToDefaultDirectory/moveToDefaultDirectory.test")
     public void testMoveFileToPackageMatchingDirectory_moveToDefaultDirectory_MoveToDefaultDirectory() throws Exception {
         runTest("idea/testData/multiFileLocalInspections/moveFileToPackageMatchingDirectory/moveToDefaultDirectory/moveToDefaultDirectory.test");
+    }
+
+    @TestMetadata("moveFileToPackageMatchingDirectory/moveToDefaultDirectoryWithoutPackageKeyword/moveToDefaultDirectoryWithoutPackageKeyword.test")
+    public void testMoveFileToPackageMatchingDirectory_moveToDefaultDirectoryWithoutPackageKeyword_MoveToDefaultDirectoryWithoutPackageKeyword() throws Exception {
+        runTest("idea/testData/multiFileLocalInspections/moveFileToPackageMatchingDirectory/moveToDefaultDirectoryWithoutPackageKeyword/moveToDefaultDirectoryWithoutPackageKeyword.test");
     }
 
     @TestMetadata("moveFileToPackageMatchingDirectory/moveToNonDefaultDirectory/moveToNonDefaultDirectory.test")
@@ -69,6 +74,16 @@ public class MultiFileLocalInspectionTestGenerated extends AbstractMultiFileLoca
         runTest("idea/testData/multiFileLocalInspections/reconcilePackageWithDirectory/changeToNonDefaultPackage/changeToNonDefaultPackage.test");
     }
 
+    @TestMetadata("reconcilePackageWithDirectory/changeToNonDefaultPackageFromRoot/changeToNonDefaultPackageFromRoot.test")
+    public void testReconcilePackageWithDirectory_changeToNonDefaultPackageFromRoot_ChangeToNonDefaultPackageFromRoot() throws Exception {
+        runTest("idea/testData/multiFileLocalInspections/reconcilePackageWithDirectory/changeToNonDefaultPackageFromRoot/changeToNonDefaultPackageFromRoot.test");
+    }
+
+    @TestMetadata("reconcilePackageWithDirectory/changeToNonDefaultPackageFromRootWithPackageKeyword/changeToNonDefaultPackageFromRootWithPackageKeyword.test")
+    public void testReconcilePackageWithDirectory_changeToNonDefaultPackageFromRootWithPackageKeyword_ChangeToNonDefaultPackageFromRootWithPackageKeyword() throws Exception {
+        runTest("idea/testData/multiFileLocalInspections/reconcilePackageWithDirectory/changeToNonDefaultPackageFromRootWithPackageKeyword/changeToNonDefaultPackageFromRootWithPackageKeyword.test");
+    }
+
     @TestMetadata("reconcilePackageWithDirectory/innerClass/innerClass.test")
     public void testReconcilePackageWithDirectory_innerClass_InnerClass() throws Exception {
         runTest("idea/testData/multiFileLocalInspections/reconcilePackageWithDirectory/innerClass/innerClass.test");
@@ -77,6 +92,31 @@ public class MultiFileLocalInspectionTestGenerated extends AbstractMultiFileLoca
     @TestMetadata("reconcilePackageWithDirectory/packageMatchesDirectory/packageMatchesDirectory.test")
     public void testReconcilePackageWithDirectory_packageMatchesDirectory_PackageMatchesDirectory() throws Exception {
         runTest("idea/testData/multiFileLocalInspections/reconcilePackageWithDirectory/packageMatchesDirectory/packageMatchesDirectory.test");
+    }
+
+    @TestMetadata("redundantQualifierName/javaStatic2/fromKotlinTest.test")
+    public void testRedundantQualifierName_javaStatic2_FromKotlinTest() throws Exception {
+        runTest("idea/testData/multiFileLocalInspections/redundantQualifierName/javaStatic2/fromKotlinTest.test");
+    }
+
+    @TestMetadata("redundantQualifierName/javaStatic/fromKotlinTest.test")
+    public void testRedundantQualifierName_javaStatic_FromKotlinTest() throws Exception {
+        runTest("idea/testData/multiFileLocalInspections/redundantQualifierName/javaStatic/fromKotlinTest.test");
+    }
+
+    @TestMetadata("redundantQualifierName/unnecessaryNonDirectParentClassQualifier/fromKotlinTest.test")
+    public void testRedundantQualifierName_unnecessaryNonDirectParentClassQualifier_FromKotlinTest() throws Exception {
+        runTest("idea/testData/multiFileLocalInspections/redundantQualifierName/unnecessaryNonDirectParentClassQualifier/fromKotlinTest.test");
+    }
+
+    @TestMetadata("redundantQualifierName/unnecessaryNonDirectParentClassQualifierAmbiguous/fromKotlinTest.test")
+    public void testRedundantQualifierName_unnecessaryNonDirectParentClassQualifierAmbiguous_FromKotlinTest() throws Exception {
+        runTest("idea/testData/multiFileLocalInspections/redundantQualifierName/unnecessaryNonDirectParentClassQualifierAmbiguous/fromKotlinTest.test");
+    }
+
+    @TestMetadata("redundantQualifierName/unnecessaryNonDirectParentClassQualifierDisabled/fromKotlinTest.test")
+    public void testRedundantQualifierName_unnecessaryNonDirectParentClassQualifierDisabled_FromKotlinTest() throws Exception {
+        runTest("idea/testData/multiFileLocalInspections/redundantQualifierName/unnecessaryNonDirectParentClassQualifierDisabled/fromKotlinTest.test");
     }
 
     @TestMetadata("unusedSymbol/fromKotlinTest/fromKotlinTest.test")

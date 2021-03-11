@@ -1,17 +1,6 @@
 /*
- * Copyright 2010-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.inspections
@@ -19,28 +8,40 @@ package org.jetbrains.kotlin.idea.inspections
 import com.google.common.collect.Lists
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeHighlighting.Pass
+import com.intellij.codeHighlighting.TextEditorHighlightingPass
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
+import com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarEx
 import com.intellij.codeInsight.intention.EmptyIntentionAction
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
+import com.intellij.util.io.outputStream
+import com.intellij.util.io.write
 import junit.framework.ComparisonFailure
 import junit.framework.TestCase
+import org.jdom.Element
+import org.jetbrains.annotations.NotNull
+import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingPassBase
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.configureCompilerOptions
-import org.jetbrains.kotlin.idea.test.rollbackCompilerOptions
+import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.junit.Assert
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import kotlin.io.path.*
+
 
 abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
-    private val inspectionFileName: String
+    protected open val inspectionFileName: String
         get() = ".inspection"
 
     private val afterFileNameSuffix: String
@@ -91,11 +92,9 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         val fileText = FileUtil.loadFile(mainFile, true)
         TestCase.assertTrue("\"<caret>\" is missing in file \"$mainFile\"", fileText.contains("<caret>"))
 
-        val configured = configureCompilerOptions(fileText, project, module)
-
-        try {
+        withCustomCompilerOptions(fileText, project, module) {
             val minJavaVersion = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// MIN_JAVA_VERSION: ")
-            if (minJavaVersion != null && !SystemInfo.isJavaVersionAtLeast(minJavaVersion)) return
+            if (minJavaVersion != null && !SystemInfo.isJavaVersionAtLeast(minJavaVersion)) return@withCustomCompilerOptions
 
             if (file is KtFile && !InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_ERRORS_BEFORE")) {
                 DirectiveBasedActionUtils.checkForUnexpectedErrors(file as KtFile)
@@ -125,23 +124,28 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
 
             myFixture.configureByFiles(*(listOf(mainFile.name) + extraFileNames).toTypedArray()).first()
 
-            doTestFor(mainFile.name, inspection, fileText)
+            if ((myFixture.file as? KtFile)?.isScript() == true) {
+                ScriptConfigurationManager.updateScriptDependenciesSynchronously(myFixture.file)
+            }
+
+            doTestFor(mainFile, inspection, fileText)
 
             if (file is KtFile && !InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_ERRORS_AFTER")) {
-                DirectiveBasedActionUtils.checkForUnexpectedErrors(file as KtFile)
-            }
-        } finally {
-            if (configured) {
-                rollbackCompilerOptions(project, module)
+                checkForUnexpectedErrors(fileText)
             }
         }
+    }
+
+    protected open fun checkForUnexpectedErrors(fileText: String) {
+        DirectiveBasedActionUtils.checkForUnexpectedErrors(file as KtFile)
     }
 
     protected fun runInspectionWithFixesAndCheck(
         inspection: AbstractKotlinInspection,
         expectedProblemString: String?,
         expectedHighlightString: String?,
-        localFixTextString: String?
+        localFixTextString: String?,
+        inspectionSettings: Element? = null
     ): Boolean {
         val problemExpected = expectedProblemString == null || expectedProblemString != "none"
         myFixture.enableInspections(inspection::class.java)
@@ -152,16 +156,27 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         val state = inspectionProfile.getToolDefaultState(inspection.shortName, project)
         state.level = HighlightDisplayLevel.WARNING
 
+        if (inspectionSettings != null) {
+            state.tool.tool.readSettings(inspectionSettings)
+        }
+
+        val passIdsToIgnore = mutableListOf(
+            Pass.LINE_MARKERS,
+            Pass.EXTERNAL_TOOLS,
+            Pass.POPUP_HINTS,
+            Pass.UPDATE_ALL,
+            Pass.UPDATE_FOLDING,
+            Pass.WOLF
+        )
+        val passRegistrar = TextEditorHighlightingPassRegistrarEx.getInstanceEx(myFixture.project)
+        // to exclude AbstractHighlightingPassBase instances based on their ids
+        passRegistrar.instantiatePasses(
+            file, editor, passIdsToIgnore.toIntArray()
+        ).filterIsInstance<AbstractHighlightingPassBase>().map(TextEditorHighlightingPass::getId).forEach(passIdsToIgnore::add)
+
         val caretOffset = myFixture.caretOffset
         val highlightInfos = CodeInsightTestFixtureImpl.instantiateAndRun(
-            file, editor, intArrayOf(
-                Pass.LINE_MARKERS,
-                Pass.EXTERNAL_TOOLS,
-                Pass.POPUP_HINTS,
-                Pass.UPDATE_ALL,
-                Pass.UPDATE_FOLDING,
-                Pass.WOLF
-            ), (file as? KtFile)?.isScript() == true
+            file, editor, passIdsToIgnore.toIntArray(), (file as? KtFile)?.isScript() == true
         ).filter { it.description != null && caretOffset in it.startOffset..it.endOffset }
 
         Assert.assertTrue(
@@ -237,7 +252,8 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         return true
     }
 
-    private fun doTestFor(mainFilePath: String, inspection: AbstractKotlinInspection, fileText: String) {
+    protected open fun doTestFor(mainFile: File, inspection: AbstractKotlinInspection, fileText: String) {
+        val mainFilePath = mainFile.name
         val expectedProblemString = InTextDirectivesUtils.findStringWithPrefixes(
             fileText, "// $expectedProblemDirectiveName: "
         )
@@ -253,6 +269,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         }
 
         val canonicalPathToExpectedFile = mainFilePath + afterFileNameSuffix
+        createAfterFileIfItDoesNotExist(canonicalPathToExpectedFile)
         try {
             myFixture.checkResultByFile(canonicalPathToExpectedFile)
         } catch (e: ComparisonFailure) {
@@ -260,6 +277,16 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
                 File(testDataPath, canonicalPathToExpectedFile),
                 editor.document.text
             )
+        }
+    }
+
+    @OptIn(ExperimentalPathApi::class)
+    private fun createAfterFileIfItDoesNotExist(canonicalPathToExpectedFile: String) {
+        val path = Path(testDataPath) / canonicalPathToExpectedFile
+
+        if (!Files.exists(path)) {
+            path.createFile().write(editor.document.text)
+            error("File $canonicalPathToExpectedFile was not found and thus was generated")
         }
     }
 

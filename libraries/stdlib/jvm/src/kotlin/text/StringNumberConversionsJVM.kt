@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 @file:kotlin.jvm.JvmMultifileClass
@@ -46,10 +46,20 @@ public actual inline fun Int.toString(radix: Int): String = java.lang.Integer.to
 public actual inline fun Long.toString(radix: Int): String = java.lang.Long.toString(this, checkRadix(radix))
 
 /**
- * Returns `true` if the contents of this string is equal to the word "true", ignoring case, and `false` otherwise.
+ * Returns `true` if the content of this string is equal to the word "true", ignoring case, and `false` otherwise.
  */
+@Deprecated("Use Kotlin compiler 1.4 to avoid deprecation warning.")
+@DeprecatedSinceKotlin(hiddenSince = "1.4")
 @kotlin.internal.InlineOnly
-public actual inline fun String.toBoolean(): Boolean = java.lang.Boolean.parseBoolean(this)
+public actual inline fun String.toBoolean(): Boolean = this.toBoolean()
+
+/**
+ * Returns `true` if this string is not `null` and its content is equal to the word "true", ignoring case, and `false` otherwise.
+ */
+@JvmName("toBooleanNullable")
+@SinceKotlin("1.4")
+@kotlin.internal.InlineOnly
+public actual inline fun String?.toBoolean(): Boolean = java.lang.Boolean.parseBoolean(this)
 
 /**
  * Parses the string as a signed [Byte] number and returns the result.

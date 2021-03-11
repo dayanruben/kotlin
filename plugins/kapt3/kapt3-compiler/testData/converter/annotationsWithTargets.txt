@@ -16,9 +16,8 @@ public final class Bar {
     @FieldAnno()
     private final java.lang.String a = "";
 
-    @Anno()
-    @PropertyAnno()
-    public static void a$annotations() {
+    public Bar() {
+        super();
     }
 
     @org.jetbrains.annotations.NotNull()
@@ -26,8 +25,10 @@ public final class Bar {
         return null;
     }
 
-    public Bar() {
-        super();
+    @Anno()
+    @PropertyAnno()
+    @java.lang.Deprecated()
+    public static void getA$annotations() {
     }
 }
 
@@ -39,15 +40,17 @@ import java.lang.System;
 @kotlin.Metadata()
 public final class Baz {
     @org.jetbrains.annotations.NotNull()
+    @kotlin.jvm.JvmField()
     @FieldAnno()
     public final java.lang.String a = "";
 
-    @Anno()
-    public static void a$annotations() {
-    }
-
     public Baz() {
         super();
+    }
+
+    @Anno()
+    @java.lang.Deprecated()
+    public static void getA$annotations() {
     }
 }
 
@@ -74,8 +77,11 @@ public final class Foo {
     @FieldAnno()
     private final java.lang.String a = null;
 
-    @PropertyAnno()
-    public static void a$annotations() {
+    public Foo(@org.jetbrains.annotations.NotNull()
+    @Anno()
+    @ParameterAnno()
+    java.lang.String a) {
+        super();
     }
 
     @org.jetbrains.annotations.NotNull()
@@ -83,11 +89,9 @@ public final class Foo {
         return null;
     }
 
-    public Foo(@org.jetbrains.annotations.NotNull()
-    @Anno()
-    @ParameterAnno()
-    java.lang.String a) {
-        super();
+    @PropertyAnno()
+    @java.lang.Deprecated()
+    public static void getA$annotations() {
     }
 }
 

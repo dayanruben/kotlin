@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.gradle.plugin
@@ -11,6 +11,7 @@ import org.gradle.api.attributes.AttributeContainer
 import org.gradle.api.attributes.HasAttributes
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.FileCollection
+import org.gradle.api.tasks.TaskProvider
 import org.gradle.util.ConfigureUtil
 import org.jetbrains.kotlin.gradle.dsl.KotlinCommonOptions
 import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
@@ -33,6 +34,8 @@ interface KotlinCompilation<out T : KotlinCommonOptions> : Named, HasAttributes,
 
     val allKotlinSourceSets: Set<KotlinSourceSet>
 
+    val defaultSourceSetName: String
+
     val defaultSourceSet: KotlinSourceSet
 
     fun defaultSourceSet(configure: KotlinSourceSet.() -> Unit)
@@ -50,12 +53,14 @@ interface KotlinCompilation<out T : KotlinCommonOptions> : Named, HasAttributes,
 
     val compileKotlinTask: KotlinCompile<T>
 
+    val compileKotlinTaskProvider: TaskProvider<out KotlinCompile<T>>
+
     val kotlinOptions: T
 
     fun kotlinOptions(configure: T.() -> Unit)
     fun kotlinOptions(configure: Closure<*>) = kotlinOptions { ConfigureUtil.configure(configure, this) }
 
-    fun attributes(configure: AttributeContainer.() -> Unit) = configure(attributes)
+    fun attributes(configure: AttributeContainer.() -> Unit) = attributes.configure()
     fun attributes(configure: Closure<*>) = attributes { ConfigureUtil.configure(configure, this) }
 
     val compileAllTaskName: String
@@ -67,10 +72,19 @@ interface KotlinCompilation<out T : KotlinCommonOptions> : Named, HasAttributes,
 
     fun source(sourceSet: KotlinSourceSet)
 
+    fun associateWith(other: KotlinCompilation<*>)
+
+    val associateWith: List<KotlinCompilation<*>>
+
     override fun getName(): String = compilationName
 
     override val relatedConfigurationNames: List<String>
         get() = super.relatedConfigurationNames + compileDependencyConfigurationName
+
+    val moduleName: String
+
+    val disambiguatedName
+        get() = target.disambiguationClassifier + name
 }
 
 interface KotlinCompilationToRunnableFiles<T : KotlinCommonOptions> : KotlinCompilation<T> {

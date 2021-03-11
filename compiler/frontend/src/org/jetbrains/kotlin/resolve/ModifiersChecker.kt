@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.resolve
@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget.*
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
-import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.lexer.KtTokens.*
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
@@ -53,7 +52,7 @@ object ModifierCheckerCore {
         ABSTRACT_KEYWORD to EnumSet.of(CLASS_ONLY, LOCAL_CLASS, INTERFACE, MEMBER_PROPERTY, MEMBER_FUNCTION),
         OPEN_KEYWORD to EnumSet.of(CLASS_ONLY, LOCAL_CLASS, INTERFACE, MEMBER_PROPERTY, MEMBER_FUNCTION),
         FINAL_KEYWORD to EnumSet.of(CLASS_ONLY, LOCAL_CLASS, ENUM_CLASS, OBJECT, MEMBER_PROPERTY, MEMBER_FUNCTION),
-        SEALED_KEYWORD to EnumSet.of(CLASS_ONLY),
+        SEALED_KEYWORD to EnumSet.of(CLASS_ONLY, INTERFACE),
         INNER_KEYWORD to EnumSet.of(CLASS_ONLY),
         OVERRIDE_KEYWORD to EnumSet.of(MEMBER_PROPERTY, MEMBER_FUNCTION),
         PRIVATE_KEYWORD to defaultVisibilityTargets,
@@ -107,7 +106,9 @@ object ModifierCheckerCore {
             ENUM_CLASS,
             ANNOTATION_CLASS,
             TYPEALIAS
-        )
+        ),
+        FUN_KEYWORD to EnumSet.of(INTERFACE),
+        VALUE_KEYWORD to EnumSet.of(CLASS_ONLY)
     )
 
     private val featureDependencies = mapOf(
@@ -117,14 +118,17 @@ object ModifierCheckerCore {
         IMPL_KEYWORD to listOf(LanguageFeature.MultiPlatformProjects),
         EXPECT_KEYWORD to listOf(LanguageFeature.MultiPlatformProjects),
         ACTUAL_KEYWORD to listOf(LanguageFeature.MultiPlatformProjects),
-        LATEINIT_KEYWORD to listOf(LanguageFeature.LateinitTopLevelProperties, LanguageFeature.LateinitLocalVariables)
+        LATEINIT_KEYWORD to listOf(LanguageFeature.LateinitTopLevelProperties, LanguageFeature.LateinitLocalVariables),
+        FUN_KEYWORD to listOf(LanguageFeature.FunctionalInterfaceConversion)
     )
 
     private val featureDependenciesTargets = mapOf(
         LanguageFeature.InlineProperties to setOf(PROPERTY, PROPERTY_GETTER, PROPERTY_SETTER),
         LanguageFeature.LateinitLocalVariables to setOf(LOCAL_VARIABLE),
         LanguageFeature.LateinitTopLevelProperties to setOf(TOP_LEVEL_PROPERTY),
-        LanguageFeature.InlineClasses to setOf(CLASS_ONLY)
+        LanguageFeature.InlineClasses to setOf(CLASS_ONLY),
+        LanguageFeature.JvmInlineValueClasses to setOf(CLASS_ONLY),
+        LanguageFeature.FunctionalInterfaceConversion to setOf(INTERFACE)
     )
 
     // NOTE: deprecated targets must be possible!
@@ -183,12 +187,13 @@ object ModifierCheckerCore {
         result += incompatibilityRegister(PRIVATE_KEYWORD, PROTECTED_KEYWORD, PUBLIC_KEYWORD, INTERNAL_KEYWORD)
         // Abstract + open + final + sealed: incompatible
         result += incompatibilityRegister(ABSTRACT_KEYWORD, OPEN_KEYWORD, FINAL_KEYWORD, SEALED_KEYWORD)
-        // data + open, data + inner, data + abstract, data + sealed, data + inline
+        // data + open, data + inner, data + abstract, data + sealed, data + inline, data + value
         result += incompatibilityRegister(DATA_KEYWORD, OPEN_KEYWORD)
         result += incompatibilityRegister(DATA_KEYWORD, INNER_KEYWORD)
         result += incompatibilityRegister(DATA_KEYWORD, ABSTRACT_KEYWORD)
         result += incompatibilityRegister(DATA_KEYWORD, SEALED_KEYWORD)
         result += incompatibilityRegister(DATA_KEYWORD, INLINE_KEYWORD)
+        result += incompatibilityRegister(DATA_KEYWORD, VALUE_KEYWORD)
         // open is redundant to abstract & override
         result += redundantRegister(ABSTRACT_KEYWORD, OPEN_KEYWORD)
         // abstract is redundant to sealed
@@ -352,6 +357,13 @@ object ModifierCheckerCore {
                 continue
             }
 
+            if (dependency == LanguageFeature.InlineClasses) {
+                if (languageVersionSettings.supportsFeature(LanguageFeature.JvmInlineValueClasses)) {
+                    trace.report(Errors.INLINE_CLASS_DEPRECATED.on(node.psi))
+                    continue
+                }
+            }
+
             val diagnosticData = dependency to languageVersionSettings
             when (featureSupport) {
                 LanguageFeature.State.ENABLED_WITH_WARNING -> {
@@ -412,7 +424,7 @@ object ModifierCheckerCore {
         return false
     }
 
-    private val MODIFIER_KEYWORD_SET = TokenSet.orSet(KtTokens.SOFT_KEYWORDS, TokenSet.create(KtTokens.IN_KEYWORD))
+    private val MODIFIER_KEYWORD_SET = TokenSet.orSet(SOFT_KEYWORDS, TokenSet.create(IN_KEYWORD, FUN_KEYWORD))
 
     private fun checkModifierList(
         list: KtModifierList,

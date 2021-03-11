@@ -76,10 +76,9 @@
       <option name="ERROR_STRIPE_COLOR" value="ff0000"/>
     </value>
   </option>
-  <option name="KOTLIN_ANNOTATION">
+  <option name="KOTLIN_COROUTINE_DEBUGGER_VALUE">
     <value>
-      <option name="FOREGROUND" value="80"/>
-      <option name="FONT_TYPE" value="0" />
+      <option name="FOREGROUND" value="840000" />
     </value>
   </option>
 </list>

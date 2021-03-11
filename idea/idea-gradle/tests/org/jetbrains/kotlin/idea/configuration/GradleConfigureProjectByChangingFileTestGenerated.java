@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.configuration;
@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.idea.configuration;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.test.KotlinTestUtils;
-import org.jetbrains.kotlin.test.TargetBackend;
+import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.runner.RunWith;
 
@@ -24,11 +24,11 @@ public class GradleConfigureProjectByChangingFileTestGenerated extends AbstractG
     @RunWith(JUnit3RunnerWithInners.class)
     public static class Gradle extends AbstractGradleConfigureProjectByChangingFileTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTestGradle, TargetBackend.ANY, testDataFilePath);
+            KotlinTestUtils.runTest(this::doTestGradle, this, testDataFilePath);
         }
 
         public void testAllFilesPresentInGradle() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/configuration/gradle"), Pattern.compile("^([^\\.]+)$"), TargetBackend.ANY, false);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/configuration/gradle"), Pattern.compile("^([^\\.]+)$"), null, false);
         }
 
         @TestMetadata("default")
@@ -82,11 +82,11 @@ public class GradleConfigureProjectByChangingFileTestGenerated extends AbstractG
     @RunWith(JUnit3RunnerWithInners.class)
     public static class Gsk extends AbstractGradleConfigureProjectByChangingFileTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTestGradle, TargetBackend.ANY, testDataFilePath);
+            KotlinTestUtils.runTest(this::doTestGradle, this, testDataFilePath);
         }
 
         public void testAllFilesPresentInGsk() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/configuration/gsk"), Pattern.compile("^([^\\.]+)$"), TargetBackend.ANY, false);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/configuration/gsk"), Pattern.compile("^([^\\.]+)$"), null, false);
         }
 
         @TestMetadata("eap11Version")

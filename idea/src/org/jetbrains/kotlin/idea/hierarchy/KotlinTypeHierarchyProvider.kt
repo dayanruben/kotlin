@@ -1,17 +1,6 @@
 /*
- * Copyright 2010-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.hierarchy
@@ -28,14 +17,15 @@ import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
-import org.jetbrains.kotlin.idea.caches.lightClasses.KtFakeLightClass
+import org.jetbrains.kotlin.asJava.classes.KtFakeLightClass
+import org.jetbrains.kotlin.asJava.toFakeLightClass
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.idea.search.allScope
 import org.jetbrains.kotlin.idea.stubindex.KotlinClassShortNameIndex
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.idea.util.module
-import org.jetbrains.kotlin.platform.impl.isJvm
+import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -46,16 +36,16 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 class KotlinTypeHierarchyProvider : JavaTypeHierarchyProvider() {
     private fun getOriginalPsiClassOrCreateLightClass(classOrObject: KtClassOrObject, module: Module?): PsiClass? {
         val fqName = classOrObject.fqName
-        if (fqName != null && module?.platform.isJvm) {
+        if (fqName != null && module?.platform.isJvm()) {
             val javaClassId = JavaToKotlinClassMap.mapKotlinToJava(fqName.toUnsafe())
             if (javaClassId != null) {
                 return JavaPsiFacade.getInstance(classOrObject.project).findClass(
-                        javaClassId.asSingleFqName().asString(),
-                        GlobalSearchScope.allScope(classOrObject.project)
+                    javaClassId.asSingleFqName().asString(),
+                    GlobalSearchScope.allScope(classOrObject.project)
                 )
             }
         }
-        return classOrObject.toLightClass() ?: KtFakeLightClass(classOrObject)
+        return classOrObject.toLightClass() ?: classOrObject.toFakeLightClass()
     }
 
     private fun getTargetByReference(
@@ -76,7 +66,7 @@ class KotlinTypeHierarchyProvider : JavaTypeHierarchyProvider() {
                 val returnTypeText = DescriptorRenderer.FQ_NAMES_IN_TYPES.renderType(type)
                 if (returnTypeText != functionName) return null
                 val classOrObject = KotlinClassShortNameIndex.getInstance()[functionName, project, project.allScope()].singleOrNull()
-                                    ?: return null
+                    ?: return null
                 getOriginalPsiClassOrCreateLightClass(classOrObject, module)
             }
             else -> null

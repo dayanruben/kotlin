@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package kotlin.collections
@@ -19,6 +19,12 @@ internal fun <T> sortArrayWith(array: Array<out T>, comparator: Comparator<in T>
         array.asDynamic().sort(comparison)
     } else {
         mergeSort(array.unsafeCast<Array<T>>(), 0, array.lastIndex, comparator)
+    }
+}
+
+internal fun <T> sortArrayWith(array: Array<out T>, fromIndex: Int, toIndex: Int, comparator: Comparator<in T>) {
+    if (fromIndex < toIndex - 1) {
+        mergeSort(array.unsafeCast<Array<T>>(), fromIndex, toIndex - 1, comparator)
     }
 }
 
@@ -56,7 +62,7 @@ private fun <T> mergeSort(array: Array<T>, start: Int, endInclusive: Int, compar
     val buffer = arrayOfNulls<Any?>(array.size).unsafeCast<Array<T>>()
     val result = mergeSort(array, buffer, start, endInclusive, comparator)
     if (result !== array) {
-        result.forEachIndexed { i, v -> array[i] = v }
+        for (i in start..endInclusive) array[i] = result[i]
     }
 }
 
@@ -96,6 +102,7 @@ private fun <T> mergeSort(array: Array<T>, buffer: Array<T>, start: Int, end: In
             else /* rightIndex <= end */ -> {
                 target[i] = right[rightIndex]
                 rightIndex++
+                Unit  // TODO: Fix KT-31506
             }
         }
     }

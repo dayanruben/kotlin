@@ -1,6 +1,6 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2000-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.metadata.jvm.deserialization
@@ -19,6 +19,8 @@ object JvmProtoBufUtil {
     val EXTENSION_REGISTRY: ExtensionRegistryLite = ExtensionRegistryLite.newInstance().apply(JvmProtoBuf::registerAllExtensions)
 
     const val PLATFORM_TYPE_ID = "kotlin.jvm.PlatformType"
+
+    const val DEFAULT_MODULE_NAME = "main"
 
     @JvmStatic
     fun readClassDataFrom(data: Array<String>, strings: Array<String>): Pair<JvmNameResolver, ProtoBuf.Class> =
@@ -127,4 +129,8 @@ object JvmProtoBufUtil {
     @JvmStatic
     fun isMovedFromInterfaceCompanion(proto: ProtoBuf.Property): Boolean =
         JvmFlags.IS_MOVED_FROM_INTERFACE_COMPANION.get(proto.getExtension(JvmProtoBuf.flags))
+
+    @JvmStatic
+    fun isNewPlaceForBodyGeneration(proto: ProtoBuf.Class): Boolean =
+        JvmFlags.ARE_INTERFACE_METHOD_BODIES_INSIDE.get(proto.getExtension(JvmProtoBuf.jvmClassFlags))
 }

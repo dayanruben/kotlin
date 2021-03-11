@@ -1,13 +1,12 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2000-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.caches.project
 
 import com.intellij.ide.highlighter.ArchiveFileType
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.fileTypes.FileTypeEvent
 import com.intellij.openapi.fileTypes.FileTypeListener
 import com.intellij.openapi.fileTypes.FileTypeManager
@@ -23,16 +22,17 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
+import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 
 class LibraryModificationTracker(project: Project) : SimpleModificationTracker() {
     companion object {
         @JvmStatic
-        fun getInstance(project: Project) = ServiceManager.getService(project, LibraryModificationTracker::class.java)!!
+        fun getInstance(project: Project): LibraryModificationTracker = project.getServiceSafe()
     }
 
     init {
-        val connection = project.messageBus.connect()
-        connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener.Adapter() {
+        val connection = project.messageBus.connect(project)
+        connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
             override fun after(events: List<VFileEvent>) {
                 events.filter(::isRelevantEvent).let { createEvents ->
                     if (createEvents.isNotEmpty()) {

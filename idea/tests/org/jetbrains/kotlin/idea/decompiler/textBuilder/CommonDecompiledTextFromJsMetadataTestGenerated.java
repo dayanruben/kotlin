@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.decompiler.textBuilder;
@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.idea.decompiler.textBuilder;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.jetbrains.kotlin.test.TargetBackend;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.runner.RunWith;
@@ -26,7 +27,7 @@ public class CommonDecompiledTextFromJsMetadataTestGenerated extends AbstractCom
     }
 
     public void testAllFilesPresentInDecompiledText() throws Exception {
-        KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/decompiler/decompiledText"), Pattern.compile("^([^\\.]+)$"), TargetBackend.JS, true);
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/decompiler/decompiledText"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JS, true);
     }
 
     @TestMetadata("AnnotatedEnumEntry")
@@ -77,6 +78,11 @@ public class CommonDecompiledTextFromJsMetadataTestGenerated extends AbstractCom
     @TestMetadata("Enum")
     public void testEnum() throws Exception {
         runTest("idea/testData/decompiler/decompiledText/Enum/");
+    }
+
+    @TestMetadata("FunInterfaceDeclaration")
+    public void testFunInterfaceDeclaration() throws Exception {
+        runTest("idea/testData/decompiler/decompiledText/FunInterfaceDeclaration/");
     }
 
     @TestMetadata("FunctionTypes")
@@ -143,7 +149,7 @@ public class CommonDecompiledTextFromJsMetadataTestGenerated extends AbstractCom
         }
 
         public void testAllFilesPresentInAnnotatedEnumEntry() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/decompiler/decompiledText/AnnotatedEnumEntry"), Pattern.compile("^([^\\.]+)$"), TargetBackend.JS, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/decompiler/decompiledText/AnnotatedEnumEntry"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JS, true);
         }
     }
 
@@ -156,7 +162,7 @@ public class CommonDecompiledTextFromJsMetadataTestGenerated extends AbstractCom
         }
 
         public void testAllFilesPresentInAnnotatedParameterInEnumConstructor() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/decompiler/decompiledText/AnnotatedParameterInEnumConstructor"), Pattern.compile("^([^\\.]+)$"), TargetBackend.JS, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/decompiler/decompiledText/AnnotatedParameterInEnumConstructor"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JS, true);
         }
     }
 
@@ -169,7 +175,7 @@ public class CommonDecompiledTextFromJsMetadataTestGenerated extends AbstractCom
         }
 
         public void testAllFilesPresentInAnnotatedParameterInInnerClassConstructor() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/decompiler/decompiledText/AnnotatedParameterInInnerClassConstructor"), Pattern.compile("^([^\\.]+)$"), TargetBackend.JS, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/decompiler/decompiledText/AnnotatedParameterInInnerClassConstructor"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JS, true);
         }
     }
 
@@ -182,7 +188,7 @@ public class CommonDecompiledTextFromJsMetadataTestGenerated extends AbstractCom
         }
 
         public void testAllFilesPresentInAnnotations() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/decompiler/decompiledText/Annotations"), Pattern.compile("^([^\\.]+)$"), TargetBackend.JS, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/decompiler/decompiledText/Annotations"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JS, true);
         }
     }
 
@@ -195,7 +201,7 @@ public class CommonDecompiledTextFromJsMetadataTestGenerated extends AbstractCom
         }
 
         public void testAllFilesPresentInAnnotationsOnPrimaryCtr() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/decompiler/decompiledText/AnnotationsOnPrimaryCtr"), Pattern.compile("^([^\\.]+)$"), TargetBackend.JS, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/decompiler/decompiledText/AnnotationsOnPrimaryCtr"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JS, true);
         }
     }
 
@@ -208,7 +214,7 @@ public class CommonDecompiledTextFromJsMetadataTestGenerated extends AbstractCom
         }
 
         public void testAllFilesPresentInClassWithClassObject() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/decompiler/decompiledText/ClassWithClassObject"), Pattern.compile("^([^\\.]+)$"), TargetBackend.JS, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/decompiler/decompiledText/ClassWithClassObject"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JS, true);
         }
     }
 
@@ -221,7 +227,7 @@ public class CommonDecompiledTextFromJsMetadataTestGenerated extends AbstractCom
         }
 
         public void testAllFilesPresentInClassWithNamedClassObject() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/decompiler/decompiledText/ClassWithNamedClassObject"), Pattern.compile("^([^\\.]+)$"), TargetBackend.JS, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/decompiler/decompiledText/ClassWithNamedClassObject"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JS, true);
         }
     }
 
@@ -234,7 +240,7 @@ public class CommonDecompiledTextFromJsMetadataTestGenerated extends AbstractCom
         }
 
         public void testAllFilesPresentInConst() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/decompiler/decompiledText/Const"), Pattern.compile("^([^\\.]+)$"), TargetBackend.JS, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/decompiler/decompiledText/Const"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JS, true);
         }
     }
 
@@ -247,7 +253,7 @@ public class CommonDecompiledTextFromJsMetadataTestGenerated extends AbstractCom
         }
 
         public void testAllFilesPresentInDependencyOnNestedClasses() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/decompiler/decompiledText/DependencyOnNestedClasses"), Pattern.compile("^([^\\.]+)$"), TargetBackend.JS, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/decompiler/decompiledText/DependencyOnNestedClasses"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JS, true);
         }
     }
 
@@ -260,7 +266,7 @@ public class CommonDecompiledTextFromJsMetadataTestGenerated extends AbstractCom
         }
 
         public void testAllFilesPresentInEnum() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/decompiler/decompiledText/Enum"), Pattern.compile("^([^\\.]+)$"), TargetBackend.JS, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/decompiler/decompiledText/Enum"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JS, true);
         }
     }
 
@@ -273,7 +279,20 @@ public class CommonDecompiledTextFromJsMetadataTestGenerated extends AbstractCom
         }
 
         public void testAllFilesPresentInFlexibleTypes() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/decompiler/decompiledText/FlexibleTypes"), Pattern.compile("^([^\\.]+)$"), TargetBackend.JS, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/decompiler/decompiledText/FlexibleTypes"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JS, true);
+        }
+    }
+
+    @TestMetadata("idea/testData/decompiler/decompiledText/FunInterfaceDeclaration")
+    @TestDataPath("$PROJECT_ROOT")
+    @RunWith(JUnit3RunnerWithInners.class)
+    public static class FunInterfaceDeclaration extends AbstractCommonDecompiledTextFromJsMetadataTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, TargetBackend.JS, testDataFilePath);
+        }
+
+        public void testAllFilesPresentInFunInterfaceDeclaration() throws Exception {
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/decompiler/decompiledText/FunInterfaceDeclaration"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JS, true);
         }
     }
 
@@ -286,7 +305,7 @@ public class CommonDecompiledTextFromJsMetadataTestGenerated extends AbstractCom
         }
 
         public void testAllFilesPresentInFunctionTypes() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/decompiler/decompiledText/FunctionTypes"), Pattern.compile("^([^\\.]+)$"), TargetBackend.JS, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/decompiler/decompiledText/FunctionTypes"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JS, true);
         }
     }
 
@@ -299,7 +318,7 @@ public class CommonDecompiledTextFromJsMetadataTestGenerated extends AbstractCom
         }
 
         public void testAllFilesPresentInFunctionalTypeWithNamedArguments() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/decompiler/decompiledText/FunctionalTypeWithNamedArguments"), Pattern.compile("^([^\\.]+)$"), TargetBackend.JS, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/decompiler/decompiledText/FunctionalTypeWithNamedArguments"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JS, true);
         }
     }
 
@@ -312,7 +331,7 @@ public class CommonDecompiledTextFromJsMetadataTestGenerated extends AbstractCom
         }
 
         public void testAllFilesPresentInInherited() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/decompiler/decompiledText/Inherited"), Pattern.compile("^([^\\.]+)$"), TargetBackend.JS, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/decompiler/decompiledText/Inherited"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JS, true);
         }
     }
 
@@ -325,7 +344,7 @@ public class CommonDecompiledTextFromJsMetadataTestGenerated extends AbstractCom
         }
 
         public void testAllFilesPresentInInnerClasses() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/decompiler/decompiledText/InnerClasses"), Pattern.compile("^([^\\.]+)$"), TargetBackend.JS, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/decompiler/decompiledText/InnerClasses"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JS, true);
         }
     }
 
@@ -338,7 +357,7 @@ public class CommonDecompiledTextFromJsMetadataTestGenerated extends AbstractCom
         }
 
         public void testAllFilesPresentInLocalClassAsTypeWithArgument() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/decompiler/decompiledText/LocalClassAsTypeWithArgument"), Pattern.compile("^([^\\.]+)$"), TargetBackend.JS, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/decompiler/decompiledText/LocalClassAsTypeWithArgument"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JS, true);
         }
     }
 
@@ -351,7 +370,7 @@ public class CommonDecompiledTextFromJsMetadataTestGenerated extends AbstractCom
         }
 
         public void testAllFilesPresentInModifiers() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/decompiler/decompiledText/Modifiers"), Pattern.compile("^([^\\.]+)$"), TargetBackend.JS, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/decompiler/decompiledText/Modifiers"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JS, true);
         }
     }
 
@@ -364,7 +383,7 @@ public class CommonDecompiledTextFromJsMetadataTestGenerated extends AbstractCom
         }
 
         public void testAllFilesPresentInNestedClasses() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/decompiler/decompiledText/NestedClasses"), Pattern.compile("^([^\\.]+)$"), TargetBackend.JS, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/decompiler/decompiledText/NestedClasses"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JS, true);
         }
     }
 
@@ -377,7 +396,7 @@ public class CommonDecompiledTextFromJsMetadataTestGenerated extends AbstractCom
         }
 
         public void testAllFilesPresentInObject() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/decompiler/decompiledText/Object"), Pattern.compile("^([^\\.]+)$"), TargetBackend.JS, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/decompiler/decompiledText/Object"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JS, true);
         }
     }
 
@@ -390,7 +409,7 @@ public class CommonDecompiledTextFromJsMetadataTestGenerated extends AbstractCom
         }
 
         public void testAllFilesPresentInSecondaryConstructors() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/decompiler/decompiledText/SecondaryConstructors"), Pattern.compile("^([^\\.]+)$"), TargetBackend.JS, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/decompiler/decompiledText/SecondaryConstructors"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JS, true);
         }
     }
 
@@ -403,7 +422,7 @@ public class CommonDecompiledTextFromJsMetadataTestGenerated extends AbstractCom
         }
 
         public void testAllFilesPresentInSimpleClass() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/decompiler/decompiledText/SimpleClass"), Pattern.compile("^([^\\.]+)$"), TargetBackend.JS, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/decompiler/decompiledText/SimpleClass"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JS, true);
         }
     }
 
@@ -416,7 +435,7 @@ public class CommonDecompiledTextFromJsMetadataTestGenerated extends AbstractCom
         }
 
         public void testAllFilesPresentInTypeModifiers() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/decompiler/decompiledText/TypeModifiers"), Pattern.compile("^([^\\.]+)$"), TargetBackend.JS, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/decompiler/decompiledText/TypeModifiers"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JS, true);
         }
     }
 }

@@ -1,8 +1,9 @@
 // "Change to val" "false"
 // ACTION: Create extension function 'Delegate.getValue', function 'Delegate.setValue'
 // ACTION: Create member function 'Delegate.getValue', function 'Delegate.setValue'
-// ERROR: Missing 'getValue(Nothing?, KProperty<*>)' method on delegate of type 'Delegate'
-// ERROR: Missing 'setValue(Nothing?, KProperty<*>, String)' method on delegate of type 'Delegate'
+// ACTION: Introduce import alias
+// ERROR: Type 'Delegate' has no method 'getValue(Nothing?, KProperty<*>)' and thus it cannot serve as a delegate
+// ERROR: Type 'Delegate' has no method 'setValue(Nothing?, KProperty<*>, String)' and thus it cannot serve as a delegate for var (read-write property)
 import kotlin.reflect.KProperty
 
 fun test() {

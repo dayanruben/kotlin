@@ -16,14 +16,13 @@
 
 package org.jetbrains.kotlin.psi2ir.generators
 
-import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.addMember
 import org.jetbrains.kotlin.ir.expressions.IrSyntheticBodyKind
 import org.jetbrains.kotlin.ir.expressions.impl.IrSyntheticBodyImpl
 import org.jetbrains.kotlin.ir.util.declareSimpleFunctionWithOverrides
-import org.jetbrains.kotlin.psi2ir.findFirstFunction
+import org.jetbrains.kotlin.ir.util.findFirstFunction
 
 class EnumClassMembersGenerator(declarationGenerator: DeclarationGenerator) : DeclarationGeneratorExtension(declarationGenerator) {
     fun generateSpecialMembers(irClass: IrClass) {
@@ -59,7 +58,7 @@ class EnumClassMembersGenerator(declarationGenerator: DeclarationGenerator) : De
 
         irClass.addMember(
             context.symbolTable.declareSimpleFunctionWithOverrides(
-                UNDEFINED_OFFSET, UNDEFINED_OFFSET,
+                irClass.startOffset, irClass.endOffset,
                 IrDeclarationOrigin.ENUM_CLASS_SPECIAL_MEMBER,
                 valueOfFunction
             ).also { irFunction ->

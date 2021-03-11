@@ -1,12 +1,11 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.refactoring
 
 import com.intellij.codeInsight.TargetElementUtil
-import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
@@ -23,9 +22,12 @@ import org.jetbrains.kotlin.idea.refactoring.rename.findElementForRename
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.test.JUnit3WithIdeaConfigurationRunner
+import org.junit.runner.RunWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
+@RunWith(JUnit3WithIdeaConfigurationRunner::class)
 class InplaceRenameTest : LightPlatformCodeInsightTestCase() {
     override fun isRunInWriteAction(): Boolean = false
     override fun getTestDataPath(): String = PluginTestCaseBase.getTestDataPathBase() + "/refactoring/rename/inplace/"
@@ -189,15 +191,17 @@ class InplaceRenameTest : LightPlatformCodeInsightTestCase() {
         val element = file.findElementForRename<KtNameReferenceExpression>(editor.caretModel.offset)!!
         assertNotNull(element)
 
-        val dataContext = SimpleDataContext.getSimpleContext(CommonDataKeys.PSI_ELEMENT.name, element,
-                                                             getCurrentEditorDataContext())
+        val dataContext = SimpleDataContext.getSimpleContext(
+            CommonDataKeys.PSI_ELEMENT.name, element,
+            getCurrentEditorDataContext()
+        )
         val handler = RenameKotlinImplicitLambdaParameter()
 
         assertTrue(handler.isRenaming(dataContext), "In-place rename not allowed for " + element)
 
         val project = editor.project!!
 
-        TemplateManagerImpl.setTemplateTesting(project, testRootDisposable)
+        TemplateManagerImpl.setTemplateTesting(testRootDisposable)
 
         object : WriteCommandAction.Simple<Any>(project) {
             override fun run() {
@@ -229,25 +233,23 @@ class InplaceRenameTest : LightPlatformCodeInsightTestCase() {
     private fun doTestInplaceRename(newName: String?, handler: VariableInplaceRenameHandler = KotlinVariableInplaceRenameHandler()) {
         configureByFile(getTestName(false) + ".kt")
         val element = TargetElementUtil.findTargetElement(
-            LightPlatformCodeInsightTestCase.myEditor,
+            editor,
             TargetElementUtil.ELEMENT_NAME_ACCEPTED or TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED
         )
 
         assertNotNull(element)
 
-        val dataContext = SimpleDataContext.getSimpleContext(CommonDataKeys.PSI_ELEMENT.name, element!!,
-                                                             LightPlatformCodeInsightTestCase.getCurrentEditorDataContext())
+        val dataContext = SimpleDataContext.getSimpleContext(CommonDataKeys.PSI_ELEMENT.name, element!!, currentEditorDataContext)
 
         if (newName == null) {
             assertFalse(handler.isRenaming(dataContext), "In-place rename is allowed for " + element)
-        }
-        else {
+        } else {
             try {
                 assertTrue(handler.isRenaming(dataContext), "In-place rename not allowed for " + element)
-                CodeInsightTestUtil.doInlineRename(handler, newName, LightPlatformCodeInsightTestCase.getEditor(), element)
+                CodeInsightTestUtil.doInlineRename(handler, newName, getEditor(), element)
                 checkResultByFile(getTestName(false) + ".kt.after")
             } catch (e: BaseRefactoringProcessor.ConflictsInTestsException) {
-                val expectedMessage = InTextDirectivesUtils.findStringWithPrefixes(myFile.text, "// SHOULD_FAIL_WITH: ")
+                val expectedMessage = InTextDirectivesUtils.findStringWithPrefixes(file.text, "// SHOULD_FAIL_WITH: ")
                 TestCase.assertEquals(expectedMessage, e.messages.joinToString())
             }
         }

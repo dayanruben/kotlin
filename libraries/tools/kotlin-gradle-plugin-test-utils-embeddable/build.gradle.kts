@@ -1,6 +1,6 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2000-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 
@@ -13,9 +13,12 @@ plugins { `java` }
 
 val packedJars by configurations.creating
 
-val projectsToInclude = listOf(":compiler:tests-common",
-                               ":compiler:incremental-compilation-impl",
-                               ":kotlin-build-common")
+val projectsToInclude = listOf(
+    ":compiler:test-infrastructure-utils",
+    ":compiler:tests-common",
+    ":compiler:incremental-compilation-impl",
+    ":kotlin-build-common"
+)
 
 dependencies {
     for (projectName in projectsToInclude) {
@@ -28,7 +31,7 @@ dependencies {
 }
 
 runtimeJar(rewriteDepsToShadedCompiler(
-    task<ShadowJar>("shadowJar")  {
+    tasks.register<ShadowJar>("shadowJar")  {
         from(packedJars)
     }
 ))

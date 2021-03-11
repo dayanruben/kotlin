@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.quickfix.sealedSubClassToObject
@@ -8,11 +8,12 @@ package org.jetbrains.kotlin.idea.quickfix.sealedSubClassToObject
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtPsiFactory.*
-import org.jetbrains.kotlin.psi.KtPsiFactory.CallableBuilder.Target.*
+import org.jetbrains.kotlin.psi.KtPsiFactory.CallableBuilder
+import org.jetbrains.kotlin.psi.KtPsiFactory.CallableBuilder.Target.FUNCTION
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
 class GenerateIdentityEqualsFix : LocalQuickFix {
@@ -44,5 +45,5 @@ class GenerateIdentityEqualsFix : LocalQuickFix {
         klass.addDeclaration(hashCodeFunction)
     }
 
-    override fun getFamilyName() = "Generate equals & hashCode by identity"
+    override fun getFamilyName() = KotlinBundle.message("generate.identity.equals.fix.family.name")
 }

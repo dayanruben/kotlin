@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.codeStyle.CodeStyleManager
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.formatter.FormattingChange
 import org.jetbrains.kotlin.idea.formatter.FormattingChange.ReplaceWhiteSpace
 import org.jetbrains.kotlin.idea.formatter.FormattingChange.ShiftIndentInsideRange
@@ -37,9 +38,11 @@ class ReformatInspection : LocalInspectionTool() {
     @XmlAttribute
     var processChangedFilesOnly: Boolean = false
 
-    override fun runForWholeFile(): Boolean = true
-
     override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<out ProblemDescriptor>? {
+        return checkFile(file, isOnTheFly)?.toTypedArray()
+    }
+
+    private fun checkFile(file: PsiFile, isOnTheFly: Boolean): List<ProblemDescriptor>? {
         if (file !is KtFile || !file.isWritable || !ProjectRootsUtil.isInProjectSource(file)) {
             return null
         }
@@ -67,24 +70,24 @@ class ReformatInspection : LocalInspectionTool() {
         return elements.map {
             ProblemDescriptorImpl(
                 it, it,
-                "File is not properly formatted",
+                KotlinBundle.message("file.is.not.properly.formatted"),
                 arrayOf(ReformatQuickFix),
                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false, null,
                 isOnTheFly
             )
-        }.toTypedArray()
+        }
     }
 
     override fun createOptionsPanel(): JComponent? {
         return SingleCheckboxOptionsPanel(
-            "Apply only to modified files (for projects under a version control)",
+            KotlinBundle.message("apply.only.to.modified.files.for.projects.under.a.version.control"),
             this,
             "processChangedFilesOnly"
         )
     }
 
     private fun isEmptyLineReformat(whitespace: PsiWhiteSpace, change: FormattingChange): Boolean {
-        if (change !is FormattingChange.ReplaceWhiteSpace) return false
+        if (change !is ReplaceWhiteSpace) return false
 
         val beforeText = whitespace.text
         val afterText = change.whiteSpace
@@ -94,7 +97,7 @@ class ReformatInspection : LocalInspectionTool() {
     }
 
     private object ReformatQuickFix : LocalQuickFix {
-        override fun getFamilyName(): String = "Reformat File"
+        override fun getFamilyName(): String = KotlinBundle.message("reformat.quick.fix.family.name")
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             CodeStyleManager.getInstance(project).reformat(descriptor.psiElement.containingFile)
         }

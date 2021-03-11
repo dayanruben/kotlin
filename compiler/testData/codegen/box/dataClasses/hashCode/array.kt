@@ -1,4 +1,3 @@
-// IGNORE_BACKEND: JVM_IR
 // TARGET_BACKEND: JVM
 
 data class A(val a: IntArray, var b: Array<String>)

@@ -1,6 +1,6 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2000-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.codegen.range.forLoop
@@ -63,12 +63,14 @@ class CharSequenceWithIndexForLoopGenerator(
     }
 
     override fun assignLoopParametersNextValues() {
+        v.load(charSeqVar, charSeqType)
+        v.load(indexVar, Type.INT_TYPE)
+        v.invokeinterface("java/lang/CharSequence", "charAt", "(I)C")
         if (elementLoopComponent != null) {
-            v.load(charSeqVar, charSeqType)
-            v.load(indexVar, Type.INT_TYPE)
-            v.invokeinterface("java/lang/CharSequence", "charAt", "(I)C")
             StackValue.local(elementLoopComponent.parameterVar, elementLoopComponent.parameterType)
                 .store(StackValue.onStack(Type.CHAR_TYPE), v)
+        } else {
+            v.pop()
         }
     }
 

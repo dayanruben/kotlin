@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.gradle.dsl
@@ -8,26 +8,32 @@ package org.jetbrains.kotlin.gradle.dsl
 import groovy.lang.Closure
 import org.gradle.api.InvalidUserCodeException
 import org.gradle.api.NamedDomainObjectCollection
+import org.gradle.api.Project
 import org.gradle.util.ConfigureUtil
-import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
-import org.jetbrains.kotlin.gradle.plugin.KotlinTargetPreset
-import org.jetbrains.kotlin.gradle.plugin.KotlinTargetsContainerWithPresets
+import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
-import org.jetbrains.kotlin.gradle.utils.isGradleVersionAtLeast
 
-open class KotlinMultiplatformExtension : KotlinProjectExtension(), KotlinTargetContainerWithPresetFunctions {
+open class KotlinMultiplatformExtension(project: Project) :
+    KotlinProjectExtension(project),
+    KotlinTargetContainerWithPresetFunctions,
+    KotlinTargetContainerWithJsPresetFunctions,
+    KotlinTargetContainerWithNativeShortcuts {
     override lateinit var presets: NamedDomainObjectCollection<KotlinTargetPreset<*>>
         internal set
 
     override lateinit var targets: NamedDomainObjectCollection<KotlinTarget>
         internal set
 
-    internal var isGradleMetadataAvailable: Boolean = false
-    internal var isGradleMetadataExperimental: Boolean = false
+    override lateinit var defaultJsCompilerType: KotlinJsCompilerType
+        internal set
 
-    fun metadata(configure: KotlinOnlyTarget<KotlinCommonCompilation>.() -> Unit = { }): KotlinOnlyTarget<KotlinCommonCompilation> =
+    @Suppress("unused") // DSL
+    val testableTargets: NamedDomainObjectCollection<KotlinTargetWithTests<*, *>>
+        get() = targets.withType(KotlinTargetWithTests::class.java)
+
+    fun metadata(configure: KotlinOnlyTarget<AbstractKotlinCompilation<*>>.() -> Unit = { }): KotlinOnlyTarget<AbstractKotlinCompilation<*>> =
         @Suppress("UNCHECKED_CAST")
-        (targets.getByName(KotlinMultiplatformPlugin.METADATA_TARGET_NAME) as KotlinOnlyTarget<KotlinCommonCompilation>).also(configure)
+        (targets.getByName(KotlinMultiplatformPlugin.METADATA_TARGET_NAME) as KotlinOnlyTarget<AbstractKotlinCompilation<*>>).also(configure)
 
     fun metadata(configure: Closure<*>) = metadata { ConfigureUtil.configure(configure, this) }
 
@@ -45,11 +51,7 @@ open class KotlinMultiplatformExtension : KotlinProjectExtension(), KotlinTarget
     fun targetFromPreset(preset: KotlinTargetPreset<*>, configure: Closure<*>) = targetFromPreset(preset, preset.name, configure)
 
     internal val rootSoftwareComponent: KotlinSoftwareComponent by lazy {
-        if (isGradleVersionAtLeast(4, 7)) {
-            KotlinSoftwareComponentWithCoordinatesAndPublication("kotlin", targets)
-        } else {
-            KotlinSoftwareComponent("kotlin", targets)
-        }
+        KotlinSoftwareComponentWithCoordinatesAndPublication(project, "kotlin", targets)
     }
 }
 
@@ -77,9 +79,9 @@ internal fun <T : KotlinTarget> KotlinTargetsContainerWithPresets.configureOrCre
         else -> {
             throw InvalidUserCodeException(
                 "The target '$targetName' already exists, but it was not created with the '${targetPreset.name}' preset. " +
-                        "To configure it, access it by name in `kotlin.targets`" +
-                        " or use the preset function '${existingTarget.preset?.name}'"
-                            .takeIf { existingTarget.preset != null }
+                "To configure it, access it by name in `kotlin.targets`" +
+                " or use the preset function '${existingTarget.preset?.name}'."
+                    .takeIf { existingTarget.preset != null } ?: "."
             )
         }
     }

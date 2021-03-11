@@ -43,7 +43,8 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.Qualifier
 import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue
 import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.types.substitutions.getTypeSubstitution
-import java.lang.AssertionError
+import org.jetbrains.kotlin.types.typeUtil.isAnyOrNullableAny
+import org.jetbrains.kotlin.types.typeUtil.isUnit
 import java.util.*
 import org.jetbrains.kotlin.descriptors.ClassKind as ClassDescriptorKind
 
@@ -52,9 +53,9 @@ internal fun String.checkClassName(): Boolean = isNotEmpty() && Character.isUppe
 private fun String.checkPackageName(): Boolean = isNotEmpty() && Character.isLowerCase(first())
 
 internal fun getTargetParentsByQualifier(
-        element: KtElement,
-        isQualified: Boolean,
-        qualifierDescriptor: DeclarationDescriptor?
+    element: KtElement,
+    isQualified: Boolean,
+    qualifierDescriptor: DeclarationDescriptor?
 ): List<PsiElement> {
     val file = element.containingKtFile
     val project = file.project
@@ -66,8 +67,7 @@ internal fun getTargetParentsByQualifier(
         qualifierDescriptor is PackageViewDescriptor ->
             if (qualifierDescriptor.fqName != file.packageFqName) {
                 listOfNotNull(JavaPsiFacade.getInstance(project).findPackage(qualifierDescriptor.fqName.asString()))
-            }
-            else listOf(file)
+            } else listOf(file)
         else ->
             emptyList()
     }
@@ -79,7 +79,11 @@ internal fun getTargetParentsByCall(call: Call, context: BindingContext): List<P
     val receiver = call.explicitReceiver
     return when (receiver) {
         null -> getTargetParentsByQualifier(callElement, false, null)
-        is Qualifier -> getTargetParentsByQualifier(callElement, true, context[BindingContext.REFERENCE_TARGET, receiver.referenceExpression])
+        is Qualifier -> getTargetParentsByQualifier(
+            callElement,
+            true,
+            context[BindingContext.REFERENCE_TARGET, receiver.referenceExpression]
+        )
         is ReceiverValue -> getTargetParentsByQualifier(callElement, true, receiver.type.constructor.declarationDescriptor)
         else -> throw AssertionError("Unexpected receiver: $receiver")
     }
@@ -88,26 +92,31 @@ internal fun getTargetParentsByCall(call: Call, context: BindingContext): List<P
 internal fun isInnerClassExpected(call: Call) = call.explicitReceiver is ReceiverValue
 
 internal fun KtExpression.guessTypeForClass(context: BindingContext, moduleDescriptor: ModuleDescriptor) =
-        guessTypes(context, moduleDescriptor, coerceUnusedToUnit = false).singleOrNull()
+    guessTypes(context, moduleDescriptor, coerceUnusedToUnit = false).singleOrNull()
 
 internal fun KotlinType.toClassTypeInfo(): TypeInfo {
     return TypeInfo.ByType(this, Variance.OUT_VARIANCE).noSubstitutions()
 }
 
 internal fun getClassKindFilter(expectedType: KotlinType, containingDeclaration: PsiElement): (ClassKind) -> Boolean {
+    if (expectedType.isAnyOrNullableAny()) {
+        return { _ -> true }
+    }
+
     val descriptor = expectedType.constructor.declarationDescriptor ?: return { _ -> false }
 
-    val canHaveSubtypes = !(expectedType.constructor.isFinal || expectedType.containsStarProjections())
+    val canHaveSubtypes = !(expectedType.constructor.isFinal || expectedType.containsStarProjections()) || expectedType.isUnit()
     val isEnum = DescriptorUtils.isEnumClass(descriptor)
 
     if (!(canHaveSubtypes || isEnum)
-        || descriptor is TypeParameterDescriptor) return { _ -> false }
+        || descriptor is TypeParameterDescriptor
+    ) return { _ -> false }
 
     return { classKind ->
         when (classKind) {
             ClassKind.ENUM_ENTRY -> isEnum && containingDeclaration == DescriptorToSourceUtils.descriptorToDeclaration(descriptor)
             ClassKind.INTERFACE -> containingDeclaration !is PsiClass
-                                   || (descriptor as? ClassDescriptor)?.kind == ClassDescriptorKind.INTERFACE
+                    || (descriptor as? ClassDescriptor)?.kind == ClassDescriptorKind.INTERFACE
             else -> canHaveSubtypes
         }
     }
@@ -118,11 +127,11 @@ internal fun KtSimpleNameExpression.getCreatePackageFixIfApplicable(targetParent
     if (!name.checkPackageName()) return null
 
     val basePackage: PsiPackage =
-            when (targetParent) {
-                is KtFile -> JavaPsiFacade.getInstance(targetParent.project).findPackage(targetParent.packageFqName.asString())
-                is PsiPackage -> targetParent
-                else -> null
-            }
+        when (targetParent) {
+            is KtFile -> JavaPsiFacade.getInstance(targetParent.project).findPackage(targetParent.packageFqName.asString())
+            is PsiPackage -> targetParent
+            else -> null
+        }
             ?: return null
 
     val baseName = basePackage.qualifiedName
@@ -131,16 +140,16 @@ internal fun KtSimpleNameExpression.getCreatePackageFixIfApplicable(targetParent
     val javaFix = CreateClassOrPackageFix.createFix(fullName, resolveScope, this, basePackage, null, null, null) ?: return null
 
     return object : DelegatingIntentionAction(javaFix) {
-        override fun getFamilyName(): String = KotlinBundle.message("create.from.usage.family")
+        override fun getFamilyName(): String = KotlinBundle.message("fix.create.from.usage.family")
 
-        override fun getText(): String = "Create package '$fullName'"
+        override fun getText(): String = KotlinBundle.message("create.package.0", fullName)
     }
 }
 
 data class UnsubstitutedTypeConstraintInfo(
-        val typeParameter: TypeParameterDescriptor,
-        private val originalSubstitution: Map<TypeConstructor, TypeProjection>,
-        val upperBound: KotlinType
+    val typeParameter: TypeParameterDescriptor,
+    private val originalSubstitution: Map<TypeConstructor, TypeProjection>,
+    val upperBound: KotlinType
 ) {
     fun performSubstitution(vararg substitution: Pair<TypeConstructor, TypeProjection>): TypeConstraintInfo? {
         val currentSubstitution = LinkedHashMap<TypeConstructor, TypeProjection>().apply {
@@ -153,8 +162,8 @@ data class UnsubstitutedTypeConstraintInfo(
 }
 
 data class TypeConstraintInfo(
-        val typeParameter: TypeParameterDescriptor,
-        val upperBound: KotlinType
+    val typeParameter: TypeParameterDescriptor,
+    val upperBound: KotlinType
 )
 
 fun getUnsubstitutedTypeConstraintInfo(element: KtTypeElement): UnsubstitutedTypeConstraintInfo? {

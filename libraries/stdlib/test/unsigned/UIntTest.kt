@@ -1,12 +1,12 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package test.unsigned
 
-import kotlin.math.sign
-import kotlin.random.Random
+import kotlin.math.*
+import kotlin.random.*
 import kotlin.test.*
 
 class UIntTest {
@@ -67,6 +67,42 @@ class UIntTest {
     }
 
     @Test
+    fun operations() {
+        assertEquals(2_147_483_648u, Int.MAX_VALUE.toUInt() + identity(1u))
+        assertEquals(11u, UInt.MAX_VALUE + identity(12u))
+        assertEquals(UInt.MAX_VALUE - 99u, 45u - identity(145u))
+
+        assertEquals(UInt.MAX_VALUE - 1u, Int.MAX_VALUE.toUInt() * identity(2u))
+        assertEquals(2_147_483_645u, Int.MAX_VALUE.toUInt() * identity(3u))
+
+        testMulDivRem(125u, 3u, 41u, 2u)
+        testMulDivRem(210u, 5u, 42u, 0u)
+        testMulDivRem(UInt.MAX_VALUE, 256u, 16777215u, 255u)
+        testMulDivRem(UInt.MAX_VALUE - 1u, UInt.MAX_VALUE, 0u, UInt.MAX_VALUE - 1u)
+        testMulDivRem(UInt.MAX_VALUE, UInt.MAX_VALUE - 1u, 1u, 1u)
+        testMulDivRem(UInt.MAX_VALUE, Int.MAX_VALUE.toUInt(), 2u, 1u)
+    }
+
+
+    private fun testMulDivRem(number: UInt, divisor: UInt, div: UInt, rem: UInt) {
+        assertEquals(div, number / divisor)
+        assertEquals(rem, number % divisor)
+        assertEquals(div, number.floorDiv(divisor))
+        assertEquals(rem, number.mod(divisor))
+
+        assertEquals(number, div * divisor + rem)
+        assertTrue(rem < divisor)
+        assertTrue(div < number)
+    }
+
+    @Test
+    fun divRem() = repeat(1000) {
+        val number = Random.nextUInt()
+        val divisor = Random.nextUInt(until = UInt.MAX_VALUE) + 1u
+        testMulDivRem(number, divisor, number / divisor, number % divisor)
+    }
+
+    @Test
     fun comparisons() {
         fun <T> compare(op1: Comparable<T>, op2: T) = op1.compareTo(op2)
 
@@ -99,6 +135,91 @@ class UIntTest {
     }
 
 
+    @Test
+    fun convertToFloat() {
+        fun testEquals(v1: Float, v2: UInt) = assertEquals(v1, v2.toFloat())
 
+        testEquals(0.0f, zero)
+        testEquals(1.0f, one)
+        testEquals(0xFFFF_FFFF.toFloat(), max)
 
+        repeat(100) {
+            val long = Random.nextLong(0, 0xFFFF_FFFF)
+            testEquals(long.toFloat(), long.toUInt())
+        }
+    }
+
+    @Test
+    fun convertToDouble() {
+        fun testEquals(v1: Double, v2: UInt) = assertEquals(v1, v2.toDouble())
+
+        testEquals(0.0, zero)
+        testEquals(1.0, one)
+        testEquals(max.toLong().toDouble(), max)
+
+        repeat(100) {
+            val long = Random.nextLong(0, max.toLong())
+            testEquals(long.toDouble(), long.toUInt())
+        }
+
+        fun testRounding(from: UInt, count: UInt) {
+            for (x in from..(from + count)) {
+                val double = x.toDouble()
+                val v = double.toUInt()
+                val down = double.nextDown().toUInt()
+                val up = double.nextUp().toUInt()
+
+                assertTrue(down <= x && down <= v)
+                assertTrue(up >= x && up >= v)
+
+                if (v > x) {
+                    assertTrue(v - x <= x - down, "Expected $x being closer to $v than to $down")
+                } else {
+                    assertTrue(x - v <= up - x, "Expected $x being closer to $v than to $up")
+                }
+            }
+        }
+
+        testRounding(0u, 100u)
+        testRounding(Int.MAX_VALUE.toUInt() - 10u, 100u)
+        testRounding(UInt.MAX_VALUE - 100u, 100u)
+    }
+
+    @Test
+    fun convertDoubleToUInt() {
+        fun testEquals(v1: Double, v2: UInt) = assertEquals(v1.toUInt(), v2)
+
+        testEquals(0.0, zero)
+        testEquals(-1.0, zero)
+
+        testEquals(-2_000_000_000_000.0, zero)
+        testEquals(-(2.0.pow(UInt.SIZE_BITS + 12)), zero)
+        testEquals(Double.MIN_VALUE, zero)
+        testEquals(Double.NEGATIVE_INFINITY, zero)
+        testEquals(Double.NaN, zero)
+
+        testEquals(1.0, one)
+
+        testEquals(2_000_000_000_000.0, max)
+        testEquals(max.toDouble(), max)
+        testEquals(2.0.pow(UInt.SIZE_BITS), max)
+        testEquals(2.0.pow(UInt.SIZE_BITS + 12), max)
+        testEquals(Double.MAX_VALUE, max)
+        testEquals(Double.POSITIVE_INFINITY, max)
+
+        repeat(100) {
+            val v = -Random.nextDouble(until = 2.0.pow(UInt.SIZE_BITS + 8))
+            testEquals(v, zero)
+        }
+
+        repeat(100) {
+            val v = Random.nextDouble(from = max.toDouble(), until = 2.0.pow(UInt.SIZE_BITS + 8))
+            testEquals(v, max)
+        }
+
+        repeat(100) {
+            val v = Random.nextDouble(until = max.toDouble())
+            testEquals(v, v.toLong().toUInt())
+        }
+    }
 }

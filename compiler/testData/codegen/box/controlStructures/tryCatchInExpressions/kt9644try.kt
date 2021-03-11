@@ -1,4 +1,5 @@
-// IGNORE_BACKEND: JVM_IR
+// DONT_TARGET_EXACT_BACKEND: WASM
+// WASM_MUTE_REASON: EXCEPTIONS_NOT_IMPLEMENTED
 inline fun doCall(f: () -> Any) = f()
 
 fun test1() {

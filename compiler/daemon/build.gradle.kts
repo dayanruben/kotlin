@@ -1,24 +1,41 @@
+description = "Kotlin Daemon"
 
 plugins {
     kotlin("jvm")
     id("jps-compatible")
 }
 
-jvmTarget = "1.6"
+val ktorExcludesForDaemon : List<Pair<String, String>> by rootProject.extra
 
 dependencies {
-    compile(project(":compiler:cli"))
-    compile(project(":compiler:daemon-common"))
-    compile(project(":compiler:incremental-compilation-impl"))
-    compile(project(":kotlin-build-common"))
     compile(commonDep("org.fusesource.jansi", "jansi"))
     compile(commonDep("org.jline", "jline"))
+
+    compileOnly(project(":compiler:cli"))
+    compileOnly(project(":compiler:cli-js"))
+    compileOnly(project(":compiler:incremental-compilation-impl"))
+    compileOnly(project(":daemon-common-new"))
+
     compileOnly(intellijCoreDep()) { includeJars("intellij-core") }
-    compileOnly("org.jetbrains:annotations:13.0")
-    compileOnly(intellijDep()) { includeIntellijCoreJarDependencies(project) }
+    compileOnly(intellijDep()) { includeJars("trove4j") }
+
+    runtimeOnly(project(":kotlin-reflect"))
+
+    embedded(project(":daemon-common")) { isTransitive = false }
+    api(commonDep("org.jetbrains.kotlinx", "kotlinx-coroutines-core")) {
+        isTransitive = false
+    }
 }
 
 sourceSets {
     "main" { projectDefault() }
     "test" {}
 }
+
+publish()
+
+runtimeJar()
+
+sourcesJar()
+
+javadocJar()

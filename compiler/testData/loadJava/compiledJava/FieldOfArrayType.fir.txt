@@ -1,0 +1,6 @@
+public open class FieldOfArrayType : R|kotlin/Any| {
+    public open field files: R|ft<@FlexibleNullability kotlin/Array<ft<@FlexibleNullability java/io/File, java/io/File?>!>, kotlin/Array<out ft<@FlexibleNullability java/io/File, java/io/File?>!>?>!|
+
+    public constructor(): R|test/FieldOfArrayType|
+
+}

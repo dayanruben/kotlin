@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.highlighter;
@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.idea.highlighter;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.test.KotlinTestUtils;
-import org.jetbrains.kotlin.test.TargetBackend;
+import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.runner.RunWith;
 
@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
 @RunWith(JUnit3RunnerWithInners.class)
 public class DiagnosticMessageTestGenerated extends AbstractDiagnosticMessageTest {
     private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTest, TargetBackend.ANY, testDataFilePath);
+        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
     @TestMetadata("abstractBaseClassMemberNotImplemented.kt")
@@ -31,7 +31,7 @@ public class DiagnosticMessageTestGenerated extends AbstractDiagnosticMessageTes
     }
 
     public void testAllFilesPresentInDiagnosticMessage() throws Exception {
-        KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/diagnosticMessage"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.ANY, false);
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/diagnosticMessage"), Pattern.compile("^(.+)\\.kt$"), null, false);
     }
 
     @TestMetadata("annotationsForResolve.kt")
@@ -42,6 +42,16 @@ public class DiagnosticMessageTestGenerated extends AbstractDiagnosticMessageTes
     @TestMetadata("assignedButNeverAccessedVariable.kt")
     public void testAssignedButNeverAccessedVariable() throws Exception {
         runTest("idea/testData/diagnosticMessage/assignedButNeverAccessedVariable.kt");
+    }
+
+    @TestMetadata("callableReferenceResolutionAmbiguityHtml.kt")
+    public void testCallableReferenceResolutionAmbiguityHtml() throws Exception {
+        runTest("idea/testData/diagnosticMessage/callableReferenceResolutionAmbiguityHtml.kt");
+    }
+
+    @TestMetadata("callableReferenceResolutionAmbiguityTxt.kt")
+    public void testCallableReferenceResolutionAmbiguityTxt() throws Exception {
+        runTest("idea/testData/diagnosticMessage/callableReferenceResolutionAmbiguityTxt.kt");
     }
 
     @TestMetadata("cannotInferVisibility.kt")

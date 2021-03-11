@@ -1,11 +1,11 @@
-// IGNORE_BACKEND: JVM_IR
+// This test depends on line numbers.
 // TARGET_BACKEND: JVM
 // WITH_RUNTIME
 // FULL_JDK
 // WITH_COROUTINES
 
 @file:Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER", "CANNOT_OVERRIDE_INVISIBLE_MEMBER")
-
+package test
 import helpers.*
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.*

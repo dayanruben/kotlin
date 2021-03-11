@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package kotlin.script.experimental.jvm.impl
@@ -22,7 +22,8 @@ import kotlin.script.experimental.jvm.compat.mapToLegacyScriptReportSeverity
 
 class BridgeDependenciesResolver(
     val scriptCompilationConfiguration: ScriptCompilationConfiguration,
-    val onClasspathUpdated: (List<File>) -> Unit = {}
+    val onConfigurationUpdated: (SourceCode, ScriptCompilationConfiguration) -> Unit = { _, _ -> },
+    val getScriptSource: (ScriptContents) -> SourceCode? = { null }
 ) : AsyncDependenciesResolver {
 
     override fun resolve(scriptContents: ScriptContents, environment: Environment): DependenciesResolver.ResolveResult =
@@ -40,28 +41,12 @@ class BridgeDependenciesResolver(
                 )
             )
 
-            val oldClasspath =
-                scriptCompilationConfiguration[ScriptCompilationConfiguration.dependencies].toClassPathOrEmpty()
+            val script = getScriptSource(scriptContents) ?: scriptContents.toScriptSource()
 
-            val defaultImports = scriptCompilationConfiguration[ScriptCompilationConfiguration.defaultImports]?.toList() ?: emptyList()
-
-            fun ScriptCompilationConfiguration.toDependencies(classpath: List<File>): ScriptDependencies =
-                ScriptDependencies(
-                    classpath = classpath,
-                    sources = this[ScriptCompilationConfiguration.ide.dependenciesSources].toClassPathOrEmpty(),
-                    imports = defaultImports,
-                    scripts = this[ScriptCompilationConfiguration.importScripts].toFilesOrEmpty()
-                )
-
-            val refineResults = scriptCompilationConfiguration.refineWith(
-                scriptCompilationConfiguration[ScriptCompilationConfiguration.refineConfigurationOnAnnotations]?.handler,
-                scriptContents, processedScriptData
-            ).onSuccess {
-                it.refineWith(
-                    scriptCompilationConfiguration[ScriptCompilationConfiguration.refineConfigurationBeforeCompiling]?.handler,
-                    scriptContents, processedScriptData
-                )
-            }
+            val refineResults =
+                scriptCompilationConfiguration.refineOnAnnotations(script, processedScriptData).onSuccess {
+                    it.refineBeforeCompiling(script, processedScriptData)
+                }
 
             val refinedConfiguration = when (refineResults) {
                 is ResultWithDiagnostics.Failure ->
@@ -72,11 +57,12 @@ class BridgeDependenciesResolver(
                 }
             }
 
+            if (refinedConfiguration != scriptCompilationConfiguration) {
+                onConfigurationUpdated(script, refinedConfiguration)
+            }
+
             val newClasspath = refinedConfiguration[ScriptCompilationConfiguration.dependencies]
                 ?.flatMap { (it as JvmDependency).classpath } ?: emptyList()
-            if (newClasspath != oldClasspath) {
-                onClasspathUpdated(newClasspath)
-            }
 
             return DependenciesResolver.ResolveResult.Success(
                 // TODO: consider returning only increment from the initial config
@@ -91,6 +77,17 @@ class BridgeDependenciesResolver(
     }
 }
 
+fun ScriptCompilationConfiguration.toDependencies(classpath: List<File>): ScriptDependencies {
+    val defaultImports = this[ScriptCompilationConfiguration.defaultImports]?.toList() ?: emptyList()
+
+    return ScriptDependencies(
+        classpath = classpath,
+        sources = this[ScriptCompilationConfiguration.ide.dependenciesSources].toClassPathOrEmpty(),
+        imports = defaultImports,
+        scripts = this[ScriptCompilationConfiguration.importScripts].toFilesOrEmpty()
+    )
+}
+
 internal fun List<ScriptDiagnostic>.mapScriptReportsToDiagnostics() =
     map { ScriptReport(it.message, mapToLegacyScriptReportSeverity(it.severity), mapToLegacyScriptReportPosition(it.location)) }
 
@@ -100,21 +97,18 @@ internal fun ScriptContents.toScriptSource(): SourceCode = when {
     else -> throw IllegalArgumentException("Unable to convert script contents $this into script source")
 }
 
-internal fun List<ScriptDependency>?.toClassPathOrEmpty() = this?.flatMap { (it as JvmDependency).classpath } ?: emptyList()
+fun List<ScriptDependency>?.toClassPathOrEmpty() = this?.flatMap { (it as? JvmDependency)?.classpath ?: emptyList() } ?: emptyList()
 
 internal fun List<SourceCode>?.toFilesOrEmpty() = this?.map {
     val externalSource = it as? ExternalSourceCode
-    externalSource?.externalLocation?.toFile()
+    externalSource?.externalLocation?.toFileOrNull()
         ?: throw RuntimeException("Unsupported source in requireSources parameter - only local files are supported now (${externalSource?.externalLocation})")
 } ?: emptyList()
 
 fun ScriptCompilationConfiguration.refineWith(
-    handler: RefineScriptCompilationConfigurationHandler?, scriptContents: ScriptContents, processedScriptData: ScriptCollectedData
-): ResultWithDiagnostics<ScriptCompilationConfiguration> {
-
-    if (handler == null) return this.asSuccess()
-
-    return handler(
-        ScriptConfigurationRefinementContext(scriptContents.toScriptSource(), this, processedScriptData)
-    )
-}
+    handler: RefineScriptCompilationConfigurationHandler?,
+    processedScriptData: ScriptCollectedData,
+    script: SourceCode
+): ResultWithDiagnostics<ScriptCompilationConfiguration> =
+    if (handler == null) this.asSuccess()
+    else handler(ScriptConfigurationRefinementContext(script, this, processedScriptData))

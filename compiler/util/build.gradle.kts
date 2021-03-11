@@ -1,18 +1,15 @@
-
 plugins {
     kotlin("jvm")
     id("jps-compatible")
 }
 
-jvmTarget = "1.6"
-
 dependencies {
-    compile(project(":kotlin-stdlib"))
-    compileOnly("org.jetbrains:annotations:13.0")
-    compile(project(":core:deserialization"))
+    api(kotlinStdlib())
+    api(project(":compiler:compiler.version"))
+
     compileOnly(intellijCoreDep()) { includeJars("intellij-core") }
     compileOnly(intellijDep()) { includeIntellijCoreJarDependencies(project) }
-    compileOnly(intellijDep("jps-standalone")) { includeJars("jps-model") }
+    compileOnly(jpsStandalone()) { includeJars("jps-model") }
 }
 
 sourceSets {
@@ -22,4 +19,3 @@ sourceSets {
     }
     "test" {}
 }
-

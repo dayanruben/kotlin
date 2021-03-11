@@ -17,21 +17,37 @@
 package org.jetbrains.kotlin.backend.common
 
 import org.jetbrains.kotlin.ir.IrElement
-import org.jetbrains.kotlin.ir.declarations.IrClass
-import org.jetbrains.kotlin.ir.declarations.IrDeclarationContainer
-import org.jetbrains.kotlin.ir.declarations.IrFile
-import org.jetbrains.kotlin.ir.declarations.IrFunction
+import org.jetbrains.kotlin.ir.IrStatement
+import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.expressions.IrBlockBody
 import org.jetbrains.kotlin.ir.expressions.IrBody
+import org.jetbrains.kotlin.ir.expressions.IrStatementContainer
+import org.jetbrains.kotlin.ir.expressions.IrExpressionBody
+import org.jetbrains.kotlin.ir.util.transformFlat
+import org.jetbrains.kotlin.ir.util.transformSubsetFlat
+import org.jetbrains.kotlin.ir.visitors.IrElementVisitor
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
 
 interface FileLoweringPass {
     fun lower(irFile: IrFile)
+
+    object Empty : FileLoweringPass {
+        override fun lower(irFile: IrFile) {
+            // Do nothing
+        }
+    }
 }
 
 interface ClassLoweringPass : FileLoweringPass {
     fun lower(irClass: IrClass)
+
+    override fun lower(irFile: IrFile) = runOnFilePostfix(irFile)
+}
+
+interface ScriptLoweringPass : FileLoweringPass {
+    fun lower(irScript: IrScript)
 
     override fun lower(irFile: IrFile) = runOnFilePostfix(irFile)
 }
@@ -42,64 +58,205 @@ interface DeclarationContainerLoweringPass : FileLoweringPass {
     override fun lower(irFile: IrFile) = runOnFilePostfix(irFile)
 }
 
-interface FunctionLoweringPass : FileLoweringPass {
-    fun lower(irFunction: IrFunction)
-
-    override fun lower(irFile: IrFile) = runOnFilePostfix(irFile)
-}
-
 interface BodyLoweringPass : FileLoweringPass {
-    fun lower(irBody: IrBody)
+    fun lower(irBody: IrBody, container: IrDeclaration)
 
     override fun lower(irFile: IrFile) = runOnFilePostfix(irFile)
 }
+
+fun FileLoweringPass.lower(moduleFragment: IrModuleFragment) = moduleFragment.files.forEach { lower(it) }
 
 fun ClassLoweringPass.runOnFilePostfix(irFile: IrFile) {
-    irFile.acceptVoid(object : IrElementVisitorVoid {
-        override fun visitElement(element: IrElement) {
-            element.acceptChildrenVoid(this)
-        }
-
-        override fun visitClass(declaration: IrClass) {
-            declaration.acceptChildrenVoid(this)
-            lower(declaration)
-        }
-    })
+    irFile.acceptVoid(ClassLoweringVisitor(this))
 }
 
-fun DeclarationContainerLoweringPass.asClassLoweringPass() = object : ClassLoweringPass {
-    override fun lower(irClass: IrClass) {
-        this@asClassLoweringPass.lower(irClass)
+private class ClassLoweringVisitor(
+    private val loweringPass: ClassLoweringPass
+) : IrElementVisitorVoid {
+    override fun visitElement(element: IrElement) {
+        element.acceptChildrenVoid(this)
+    }
+
+    override fun visitClass(declaration: IrClass) {
+        declaration.acceptChildrenVoid(this)
+        loweringPass.lower(declaration)
+    }
+}
+
+fun ScriptLoweringPass.runOnFilePostfix(irFile: IrFile) {
+    irFile.acceptVoid(ScriptLoweringVisitor(this))
+}
+
+private class ScriptLoweringVisitor(
+    private val loweringPass: ScriptLoweringPass
+) : IrElementVisitorVoid {
+    override fun visitElement(element: IrElement) {
+        element.acceptChildrenVoid(this)
+    }
+
+    override fun visitScript(declaration: IrScript) {
+        declaration.acceptChildrenVoid(this)
+        loweringPass.lower(declaration)
     }
 }
 
 fun DeclarationContainerLoweringPass.runOnFilePostfix(irFile: IrFile) {
-    this.asClassLoweringPass().runOnFilePostfix(irFile)
-    this.lower(irFile as IrDeclarationContainer)
+    irFile.acceptVoid(DeclarationContainerLoweringVisitor(this))
+    lower(irFile as IrDeclarationContainer)
 }
 
-fun BodyLoweringPass.runOnFilePostfix(irFile: IrFile) {
-    irFile.acceptVoid(object : IrElementVisitorVoid {
+private class DeclarationContainerLoweringVisitor(
+    private val loweringPass: DeclarationContainerLoweringPass
+) : IrElementVisitorVoid {
+    override fun visitElement(element: IrElement) {
+        element.acceptChildrenVoid(this)
+    }
+
+    override fun visitClass(declaration: IrClass) {
+        declaration.acceptChildrenVoid(this)
+        loweringPass.lower(declaration)
+    }
+}
+
+fun BodyLoweringPass.runOnFilePostfix(
+    irFile: IrFile,
+    withLocalDeclarations: Boolean = false,
+    allowDeclarationModification: Boolean = false
+) {
+    val visitor = BodyLoweringVisitor(this, withLocalDeclarations, allowDeclarationModification)
+    for (declaration in ArrayList(irFile.declarations)) {
+        declaration.accept(visitor, null)
+    }
+}
+
+private class BodyLoweringVisitor(
+    private val loweringPass: BodyLoweringPass,
+    private val withLocalDeclarations: Boolean,
+    private val allowDeclarationModification: Boolean,
+) : IrElementVisitor<Unit, IrDeclaration?> {
+    override fun visitElement(element: IrElement, data: IrDeclaration?) {
+        element.acceptChildren(this, data)
+    }
+
+    override fun visitDeclaration(declaration: IrDeclarationBase, data: IrDeclaration?) {
+        declaration.acceptChildren(this, declaration)
+    }
+
+    override fun visitClass(declaration: IrClass, data: IrDeclaration?) {
+        declaration.thisReceiver?.accept(this, declaration)
+        declaration.typeParameters.forEach { it.accept(this, declaration) }
+        ArrayList(declaration.declarations).forEach { it.accept(this, declaration) }
+    }
+
+    override fun visitBody(body: IrBody, data: IrDeclaration?) {
+        if (withLocalDeclarations) body.acceptChildren(this, null)
+        if (allowDeclarationModification) {
+            loweringPass.lower(body, data!!)
+        } else {
+            data!!.factory.stageController.bodyLowering {
+                loweringPass.lower(body, data)
+            }
+        }
+    }
+
+    override fun visitScript(declaration: IrScript, data: IrDeclaration?) {
+        declaration.thisReceiver.accept(this, declaration)
+        ArrayList(declaration.statements).forEach { it.accept(this, declaration) }
+    }
+}
+
+interface DeclarationTransformer : FileLoweringPass {
+    fun transformFlat(declaration: IrDeclaration): List<IrDeclaration>?
+
+    val withLocalDeclarations: Boolean
+        get() = false
+
+    override fun lower(irFile: IrFile) {
+        val visitor = Visitor(this)
+        irFile.declarations.transformFlat { declaration ->
+            declaration.acceptVoid(visitor)
+            transformFlatRestricted(declaration)
+        }
+    }
+
+    private fun transformFlatRestricted(declaration: IrDeclaration): List<IrDeclaration>? {
+        return declaration.factory.stageController.restrictTo(declaration) {
+            transformFlat(declaration)
+        }
+    }
+
+    private class Visitor(private val transformer: DeclarationTransformer) : IrElementVisitorVoid {
         override fun visitElement(element: IrElement) {
             element.acceptChildrenVoid(this)
         }
 
         override fun visitBody(body: IrBody) {
-            body.acceptChildrenVoid(this)
-            lower(body)
-        }
-    })
-}
-
-fun FunctionLoweringPass.runOnFilePostfix(irFile: IrFile) {
-    irFile.acceptVoid(object : IrElementVisitorVoid {
-        override fun visitElement(element: IrElement) {
-            element.acceptChildrenVoid(this)
+            if (transformer.withLocalDeclarations) {
+                super.visitBody(body)
+            }
+            // else stop
         }
 
         override fun visitFunction(declaration: IrFunction) {
             declaration.acceptChildrenVoid(this)
-            lower(declaration)
+
+            for (v in declaration.valueParameters) {
+                val result = transformer.transformFlatRestricted(v)
+                if (result != null) error("Don't know how to add value parameters")
+            }
         }
-    })
+
+        override fun visitProperty(declaration: IrProperty) {
+            // TODO This is a hack to allow lowering a getter separately from the enclosing property
+
+            val visitor = this
+
+            fun IrDeclaration.replaceInContainer(container: MutableList<in IrDeclaration>, result: List<IrDeclaration>): Boolean {
+                var index = container.indexOf(this)
+                if (index == -1) {
+                    index = container.indexOf(declaration)
+                } else {
+                    container.removeAt(index)
+                    --index
+                }
+                return container.addAll(index + 1, result)
+            }
+
+            fun IrDeclaration.transform() {
+
+                acceptVoid(visitor)
+
+                val result = transformer.transformFlatRestricted(this)
+                if (result != null) {
+                    when (val parentCopy = parent) {
+                        is IrDeclarationContainer -> replaceInContainer(parentCopy.declarations, result)
+                        is IrStatementContainer -> replaceInContainer(parentCopy.statements, result)
+                    }
+                }
+            }
+
+            declaration.backingField?.transform()
+            declaration.getter?.transform()
+            declaration.setter?.transform()
+        }
+
+        override fun visitClass(declaration: IrClass) {
+            declaration.thisReceiver?.accept(this, null)
+            declaration.typeParameters.forEach { it.accept(this, null) }
+            ArrayList(declaration.declarations).forEach { it.accept(this, null) }
+
+            declaration.declarations.transformFlat(transformer::transformFlatRestricted)
+        }
+
+        override fun visitScript(declaration: IrScript) {
+            ArrayList(declaration.statements).forEach {
+                if (transformer.withLocalDeclarations || it is IrDeclaration) {
+                    it.accept(this, null)
+                }
+            }
+            declaration.statements.transformSubsetFlat(transformer::transformFlatRestricted)
+
+            declaration.thisReceiver.accept(this, null)
+        }
+    }
 }

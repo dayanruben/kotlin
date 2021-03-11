@@ -16,7 +16,7 @@
 
 package org.jetbrains.kotlin.codegen.inline
 
-import org.jetbrains.kotlin.codegen.AsmUtil
+import org.jetbrains.kotlin.codegen.DescriptorAsmUtil
 import org.jetbrains.kotlin.codegen.OwnerKind
 import org.jetbrains.kotlin.codegen.inline.ReifiedTypeInliner.Companion.isNeedClassReificationMarker
 import org.jetbrains.kotlin.codegen.optimization.common.InsnSequence
@@ -50,7 +50,7 @@ fun extractDefaultLambdaOffsetAndDescriptor(
     val kind =
         if (DescriptorUtils.isInterface(containingDeclaration)) OwnerKind.DEFAULT_IMPLS
         else OwnerKind.getMemberOwnerKind(containingDeclaration)
-    val parameterOffsets = parameterOffsets(AsmUtil.isStaticMethod(kind, functionDescriptor), valueParameters)
+    val parameterOffsets = parameterOffsets(DescriptorAsmUtil.isStaticMethod(kind, functionDescriptor), valueParameters)
     val valueParameterOffset = valueParameters.takeWhile { it.kind != JvmMethodParameterKind.VALUE }.size
 
     return functionDescriptor.valueParameters.filter {
@@ -61,13 +61,14 @@ fun extractDefaultLambdaOffsetAndDescriptor(
 }
 
 
-fun expandMaskConditionsAndUpdateVariableNodes(
+fun <T, R : DefaultLambda> expandMaskConditionsAndUpdateVariableNodes(
     node: MethodNode,
     maskStartIndex: Int,
     masks: List<Int>,
     methodHandlerIndex: Int,
-    defaultLambdas: Map<Int, ValueParameterDescriptor>
-): List<DefaultLambda> {
+    defaultLambdas: Map<Int, T>,
+    lambdaConstructor: (Type, Array<Type>, T, Int, Boolean) -> R
+): List<R> {
     fun isMaskIndex(varIndex: Int): Boolean {
         return maskStartIndex <= varIndex && varIndex < maskStartIndex + masks.size
     }
@@ -110,7 +111,7 @@ fun expandMaskConditionsAndUpdateVariableNodes(
     val toDelete = linkedSetOf<AbstractInsnNode>()
     val toInsert = arrayListOf<Pair<AbstractInsnNode, AbstractInsnNode>>()
 
-    val defaultLambdasInfo = extractDefaultLambdasInfo(conditions, defaultLambdas, toDelete, toInsert)
+    val defaultLambdasInfo = extractDefaultLambdasInfo(conditions, defaultLambdas, toDelete, toInsert, lambdaConstructor)
 
     val indexToVarNode = node.localVariables?.filter { it.index < maskStartIndex }?.associateBy { it.index } ?: emptyMap()
     conditions.forEach {
@@ -129,7 +130,9 @@ fun expandMaskConditionsAndUpdateVariableNodes(
         node.instructions.insert(position, newInsn)
     }
 
-    node.localVariables.removeIf { it.start in toDelete && it.end in toDelete }
+    node.localVariables.removeIf {
+        (it.start in toDelete && it.end in toDelete) || defaultLambdas.contains(it.index)
+    }
 
     node.remove(toDelete)
 
@@ -137,12 +140,13 @@ fun expandMaskConditionsAndUpdateVariableNodes(
 }
 
 
-private fun extractDefaultLambdasInfo(
+private fun <T, R : DefaultLambda> extractDefaultLambdasInfo(
     conditions: List<Condition>,
-    defaultLambdas: Map<Int, ValueParameterDescriptor>,
+    defaultLambdas: Map<Int, T>,
     toDelete: MutableCollection<AbstractInsnNode>,
-    toInsert: MutableList<Pair<AbstractInsnNode, AbstractInsnNode>>
-): List<DefaultLambda> {
+    toInsert: MutableList<Pair<AbstractInsnNode, AbstractInsnNode>>,
+    lambdaConstructor: (Type, Array<Type>, T, Int, Boolean) -> R
+): List<R> {
     val defaultLambdaConditions = conditions.filter { it.expandNotDelete && defaultLambdas.contains(it.varIndex) }
     return defaultLambdaConditions.map {
         val varAssignmentInstruction = it.varInsNode!!
@@ -186,7 +190,7 @@ private fun extractDefaultLambdasInfo(
 
         toInsert.add(varAssignmentInstruction to defaultLambdaFakeCallStub(argTypes, it.varIndex))
 
-        DefaultLambda(owner, argTypes, defaultLambdas[it.varIndex]!!, it.varIndex, needReification)
+        lambdaConstructor(owner, argTypes, defaultLambdas[it.varIndex]!!, it.varIndex, needReification)
     }
 }
 

@@ -1,17 +1,6 @@
 /*
- * Copyright 2010-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.codeInsight
@@ -22,8 +11,8 @@ import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.util.RefactoringDescriptionLocation
 import com.intellij.usageView.UsageViewShortNameLocation
-import com.intellij.xml.breadcrumbs.BreadcrumbsInfoProvider
 import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isElseIf
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.unwrapIfLabeled
@@ -34,7 +23,8 @@ import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.calls.callUtil.getValueArgumentsInParentheses
 import kotlin.reflect.KClass
 
-class KotlinBreadcrumbsInfoProvider : BreadcrumbsInfoProvider() {
+// FIX ME WHEN BUNCH 201 REMOVED
+class KotlinBreadcrumbsInfoProvider : BreadcrumbsProviderCompatBase() {
     private abstract class ElementHandler<TElement : KtElement>(val type: KClass<TElement>) {
         abstract fun elementInfo(element: TElement): String
         abstract fun elementTooltip(element: TElement): String
@@ -43,21 +33,21 @@ class KotlinBreadcrumbsInfoProvider : BreadcrumbsInfoProvider() {
     }
 
     private val handlers = listOf<ElementHandler<*>>(
-            LambdaHandler,
-            AnonymousObjectHandler,
-            AnonymousFunctionHandler,
-            PropertyAccessorHandler,
-            DeclarationHandler,
-            IfThenHandler,
-            ElseHandler,
-            TryHandler,
-            CatchHandler,
-            FinallyHandler,
-            WhileHandler,
-            DoWhileHandler,
-            WhenHandler,
-            WhenEntryHandler,
-            ForHandler
+        LambdaHandler,
+        AnonymousObjectHandler,
+        AnonymousFunctionHandler,
+        PropertyAccessorHandler,
+        DeclarationHandler,
+        IfThenHandler,
+        ElseHandler,
+        TryHandler,
+        CatchHandler,
+        FinallyHandler,
+        WhileHandler,
+        DoWhileHandler,
+        WhenHandler,
+        WhenEntryHandler,
+        ForHandler
     )
 
     private object LambdaHandler : ElementHandler<KtFunctionLiteral>(KtFunctionLiteral::class) {
@@ -83,8 +73,7 @@ class KotlinBreadcrumbsInfoProvider : BreadcrumbsInfoProvider() {
 
                             if (callExpression.valueArgumentList != null) {
                                 appendCallArguments(callExpression)
-                            }
-                            else {
+                            } else {
                                 if (label.isNotEmpty()) append(" ")
                             }
                             append(lambdaText)
@@ -149,8 +138,7 @@ class KotlinBreadcrumbsInfoProvider : BreadcrumbsInfoProvider() {
                                 append(",$ellipsis")
                             }
                         }
-                    }
-                    else {
+                    } else {
                         append(superTypeEntries.joinToString(separator = ", ") { it.typeReference?.text ?: "" }.truncateEnd(kind))
                     }
                 }
@@ -166,8 +154,10 @@ class KotlinBreadcrumbsInfoProvider : BreadcrumbsInfoProvider() {
 
         private fun KtNamedFunction.buildText(kind: TextKind): String {
             return "fun(" +
-                   valueParameters.joinToString(separator = ", ") { if (kind == TextKind.INFO) it.name ?: "" else it.text }.truncateEnd(kind) +
-                   ")"
+                    valueParameters.joinToString(separator = ", ") { if (kind == TextKind.INFO) it.name ?: "" else it.text }.truncateEnd(
+                        kind
+                    ) +
+                    ")"
         }
     }
 
@@ -211,19 +201,16 @@ class KotlinBreadcrumbsInfoProvider : BreadcrumbsInfoProvider() {
 
         }
 
-        override fun elementTooltip(element: KtDeclaration): String {
-            try {
-                return ElementDescriptionUtil.getElementDescription(element, RefactoringDescriptionLocation.WITH_PARENT)
-            }
-            catch (e: IndexNotReadyException) {
-                return "Indexing..."
-            }
+        override fun elementTooltip(element: KtDeclaration): String = try {
+            ElementDescriptionUtil.getElementDescription(element, RefactoringDescriptionLocation.WITH_PARENT)
+        } catch (e: IndexNotReadyException) {
+            KotlinBundle.message("breadcrumbs.tooltip.indexing")
         }
     }
 
     private abstract class ConstructWithExpressionHandler<TElement : KtElement>(
-            private val constructName: String,
-            type: KClass<TElement>
+        private val constructName: String,
+        type: KClass<TElement>
     ) : ElementHandler<TElement>(type) {
 
         protected abstract fun extractExpression(element: TElement): KtExpression?
@@ -273,7 +260,7 @@ class KotlinBreadcrumbsInfoProvider : BreadcrumbsInfoProvider() {
     private object ElseHandler : ElementHandler<KtContainerNode>(KtContainerNode::class) {
         override fun accepts(element: KtContainerNode): Boolean {
             return element.node.elementType == KtNodeTypes.ELSE
-                   && (element.parent as KtIfExpression).`else` !is KtIfExpression // filter out "else if"
+                    && (element.parent as KtIfExpression).`else` !is KtIfExpression // filter out "else if"
         }
 
         override fun elementInfo(element: KtContainerNode): String {
@@ -357,20 +344,18 @@ class KotlinBreadcrumbsInfoProvider : BreadcrumbsInfoProvider() {
         override fun elementTooltip(element: KtExpression) = element.buildText(TextKind.TOOLTIP)
 
         private fun KtExpression.buildText(kind: TextKind): String {
-            with (parent as KtWhenEntry) {
+            with(parent as KtWhenEntry) {
                 if (isElse) {
                     return "else ->"
-                }
-                else {
+                } else {
                     val condition = conditions.firstOrNull() ?: return "->"
                     val firstConditionText = condition.buildText(kind)
 
                     return if (conditions.size == 1) {
-                        firstConditionText + " ->"
-                    }
-                    else {
+                        "$firstConditionText ->"
+                    } else {
                         //TODO: show all conditions for tooltip
-                        (if (firstConditionText.endsWith(ellipsis)) firstConditionText else firstConditionText + ",$ellipsis") + " ->"
+                        (if (firstConditionText.endsWith(ellipsis)) firstConditionText else "$firstConditionText,$ellipsis") + " ->"
                     }
                 }
             }
@@ -402,10 +387,10 @@ class KotlinBreadcrumbsInfoProvider : BreadcrumbsInfoProvider() {
         override fun elementTooltip(element: KtContainerNode) = element.buildText(TextKind.TOOLTIP)
 
         private fun KtContainerNode.buildText(kind: TextKind): String {
-            with (bodyOwner() as KtForExpression) {
+            with(bodyOwner() as KtForExpression) {
                 val parameterText = loopParameter?.nameAsName?.render() ?: destructuringDeclaration?.text ?: return "for"
                 val collectionText = loopRange?.text ?: ""
-                val text = (parameterText + " in " + collectionText).truncateEnd(kind)
+                val text = ("$parameterText in $collectionText").truncateEnd(kind)
                 return labelText() + "for($text)"
             }
         }
@@ -468,7 +453,7 @@ class KotlinBreadcrumbsInfoProvider : BreadcrumbsInfoProvider() {
             return if (length > maxLength) ellipsis + substring(length - maxLength - 1) else this
         }
 
-        val ellipsis = "${Typography.ellipsis}"
+        const val ellipsis = "${Typography.ellipsis}"
 
         fun KtContainerNode.bodyOwner(): KtExpression? {
             return if (node.elementType == KtNodeTypes.BODY) parent as KtExpression else null

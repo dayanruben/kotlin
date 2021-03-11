@@ -1,11 +1,11 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2000-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.highlighter
 
-import com.intellij.lang.annotation.AnnotationHolder
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.psi.PsiElement
@@ -23,8 +23,8 @@ import org.jetbrains.kotlin.resolve.calls.tasks.isDynamic
 import org.jetbrains.kotlin.resolve.calls.tower.isSynthesized
 import org.jetbrains.kotlin.utils.addToStdlib.firstNotNullResult
 
-internal class PropertiesHighlightingVisitor(holder: AnnotationHolder, bindingContext: BindingContext)
-    : AfterAnalysisHighlightingVisitor(holder, bindingContext) {
+internal class PropertiesHighlightingVisitor(holder: HighlightInfoHolder, bindingContext: BindingContext) :
+    AfterAnalysisHighlightingVisitor(holder, bindingContext) {
 
     override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
         if (expression.parent is KtThisExpression) {
@@ -42,13 +42,15 @@ internal class PropertiesHighlightingVisitor(holder: AnnotationHolder, bindingCo
         val resolvedCall = expression.getResolvedCall(bindingContext)
 
         val attributesKey = resolvedCall?.let { call ->
+            @Suppress("DEPRECATION")
             Extensions.getExtensions(HighlighterExtension.EP_NAME).firstNotNullResult { extension ->
                 extension.highlightCall(expression, call)
             }
         } ?: attributeKeyByPropertyType(target)
 
-        highlightName(expression, attributesKey)
-
+        if (attributesKey != null) {
+            highlightName(expression, attributesKey)
+        }
     }
 
     override fun visitProperty(property: KtProperty) {
@@ -78,25 +80,35 @@ internal class PropertiesHighlightingVisitor(holder: AnnotationHolder, bindingCo
         elementToHighlight: PsiElement,
         descriptor: PropertyDescriptor
     ) {
-        highlightName(
-            elementToHighlight,
+        val textAttributesKey =
             attributeKeyForDeclarationFromExtensions(elementToHighlight, descriptor) ?: attributeKeyByPropertyType(descriptor)
-        )
+
+        if (textAttributesKey != null) {
+            highlightName(
+                elementToHighlight,
+                textAttributesKey
+            )
+        }
     }
 
-    private fun attributeKeyByPropertyType(descriptor: PropertyDescriptor): TextAttributesKey {
-        return when {
-            descriptor.isDynamic() ->
-                DYNAMIC_PROPERTY_CALL
+    private fun attributeKeyByPropertyType(descriptor: PropertyDescriptor): TextAttributesKey? = when {
+        descriptor.isDynamic() ->
+            // The property is set in VariablesHighlightingVisitor
+            null
 
-            descriptor.extensionReceiverParameter != null ->
-                if (descriptor.isSynthesized) SYNTHETIC_EXTENSION_PROPERTY else EXTENSION_PROPERTY
+        KotlinHighlightingUtil.hasExtensionReceiverParameter(descriptor) ->
+            if (descriptor.isSynthesized) SYNTHETIC_EXTENSION_PROPERTY else EXTENSION_PROPERTY
 
-            DescriptorUtils.isStaticDeclaration(descriptor) ->
+        DescriptorUtils.isStaticDeclaration(descriptor) ->
+            if (KotlinHighlightingUtil.hasCustomPropertyDeclaration(descriptor))
+                PACKAGE_PROPERTY_CUSTOM_PROPERTY_DECLARATION
+            else
                 PACKAGE_PROPERTY
 
-            else ->
+        else ->
+            if (KotlinHighlightingUtil.hasCustomPropertyDeclaration(descriptor))
+                INSTANCE_PROPERTY_CUSTOM_PROPERTY_DECLARATION
+            else
                 INSTANCE_PROPERTY
-        }
     }
 }

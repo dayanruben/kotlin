@@ -1,25 +1,16 @@
 /*
- * Copyright 2010-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.asJava
 
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiType
 import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
@@ -27,8 +18,11 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.test.JUnit3WithIdeaConfigurationRunner
+import org.junit.runner.RunWith
 
 // see KtFileLightClassTest
+@RunWith(JUnit3WithIdeaConfigurationRunner::class)
 class LightClassFromTextTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
 
@@ -38,6 +32,21 @@ class LightClassFromTextTest : KotlinLightCodeInsightFixtureTestCase() {
         assertEquals(2, classes.size)
         assertEquals("C", classes[0].qualifiedName)
         assertEquals("O", classes[1].qualifiedName)
+    }
+
+    fun testLightClassImplementation() {
+        myFixture.configureByText("Dummy.kt", "") as KtFile
+        val classes = classesFromText("import something\nclass C;")
+
+        assertEquals(1, classes.size)
+
+        val classC = classes[0]
+        assertEquals("C", classC.qualifiedName)
+        assertEquals("class C", classC.text)
+        assertEquals(null, classC.textRange)
+        assertEquals(23, classC.textOffset)
+        assertEquals(17, classC.startOffsetInParent)
+        assertTrue(classC.isWritable)
     }
 
     fun testFileClass() {
@@ -59,7 +68,8 @@ class LightClassFromTextTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testMultifileClass() {
         myFixture.configureByFiles("multifile1.kt", "multifile2.kt")
 
-        val facadeClass = classesFromText("""
+        val facadeClass = classesFromText(
+            """
         @file:kotlin.jvm.JvmMultifileClass
         @file:kotlin.jvm.JvmName("Foo")
 
@@ -68,7 +78,8 @@ class LightClassFromTextTest : KotlinLightCodeInsightFixtureTestCase() {
 
         fun boo() {
         }
-         """).single()
+         """
+        ).single()
 
         assertEquals(1, facadeClass.findMethodsByName("jar", false).size)
         assertEquals(1, facadeClass.findMethodsByName("boo", false).size)
@@ -79,7 +90,8 @@ class LightClassFromTextTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testReferenceToOuterContext() {
         val contextFile = myFixture.configureByText("Example.kt", "package foo\n class Example") as KtFile
 
-        val syntheticClass = classesFromText("""
+        val syntheticClass = classesFromText(
+            """
         package bar
 
         import foo.Example
@@ -87,13 +99,35 @@ class LightClassFromTextTest : KotlinLightCodeInsightFixtureTestCase() {
         class Usage {
             fun f(): Example = Example()
         }
-         """).single()
+         """
+        ).single()
 
         val exampleClass = contextFile.classes.single()
         assertEquals("Example", exampleClass.name)
 
         val f = syntheticClass.findMethodsByName("f", false).single()
         assertEquals(exampleClass, (f.returnType as PsiClassType).resolve())
+    }
+
+    // KT-32969
+    fun testDataClassWhichExtendsAbstractWithFinalToString() {
+        myFixture.configureByText(
+            "A.kt",
+            """
+            abstract class A {
+                final override fun toString() = "nya"
+            }
+            """.trimIndent()
+        ) as KtFile
+        val dataClass = classesFromText("data class D(val x: Int): A()").single()
+
+        for (method in dataClass.methods) {
+            if (method is KtLightMethod) {
+                // LazyLightClassMemberMatchingError$WrongMatch will be thrown
+                // if memberIndex conflict will be found
+                method.clsDelegate
+            }
+        }
     }
 
     fun testHeaderDeclarations() {

@@ -16,17 +16,21 @@
 
 package org.jetbrains.kotlin.resolve.calls.tower
 
-import org.jetbrains.kotlin.descriptors.CallableDescriptor
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
+import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.incremental.components.LookupLocation
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.resolve.calls.inference.model.ConstraintSystemError
 import org.jetbrains.kotlin.resolve.calls.model.DiagnosticReporter
 import org.jetbrains.kotlin.resolve.calls.model.KotlinCallDiagnostic
-import org.jetbrains.kotlin.resolve.calls.tower.ResolutionCandidateApplicability.*
-import org.jetbrains.kotlin.resolve.scopes.*
+import org.jetbrains.kotlin.resolve.calls.tower.CandidateApplicability.*
+import org.jetbrains.kotlin.resolve.scopes.LexicalScope
+import org.jetbrains.kotlin.resolve.scopes.MemberScope
+import org.jetbrains.kotlin.resolve.scopes.ResolutionScope
+import org.jetbrains.kotlin.resolve.scopes.SyntheticScopes
 import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValueWithSmartCastInfo
+import org.jetbrains.kotlin.resolve.scopes.utils.parentsWithSelf
 import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.TypeApproximator
 
 interface ImplicitScopeTower {
     val lexicalScope: LexicalScope
@@ -42,6 +46,31 @@ interface ImplicitScopeTower {
     val isDebuggerContext: Boolean
 
     val isNewInferenceEnabled: Boolean
+
+    val typeApproximator: TypeApproximator
+
+    val implicitsResolutionFilter: ImplicitsExtensionsResolutionFilter
+
+    fun allScopesWithImplicitsResolutionInfo(): Sequence<ScopeWithImplicitsExtensionsResolutionInfo> =
+        implicitsResolutionFilter.getScopesWithInfo(lexicalScope.parentsWithSelf)
+
+    fun interceptFunctionCandidates(
+        resolutionScope: ResolutionScope,
+        name: Name,
+        initialResults: Collection<FunctionDescriptor>,
+        location: LookupLocation,
+        dispatchReceiver: ReceiverValueWithSmartCastInfo?,
+        extensionReceiver: ReceiverValueWithSmartCastInfo?
+    ): Collection<FunctionDescriptor>
+
+    fun interceptVariableCandidates(
+        resolutionScope: ResolutionScope,
+        name: Name,
+        initialResults: Collection<VariableDescriptor>,
+        location: LookupLocation,
+        dispatchReceiver: ReceiverValueWithSmartCastInfo?,
+        extensionReceiver: ReceiverValueWithSmartCastInfo?
+    ): Collection<VariableDescriptor>
 }
 
 interface ScopeTowerLevel {
@@ -60,24 +89,15 @@ class CandidateWithBoundDispatchReceiver(
     val diagnostics: List<ResolutionDiagnostic>
 )
 
-fun getResultApplicability(diagnostics: Collection<KotlinCallDiagnostic>) =
-    diagnostics.maxBy { it.candidateApplicability }?.candidateApplicability
-            ?: RESOLVED
+@JvmName("getResultApplicabilityForConstraintErrors")
+fun getResultApplicability(diagnostics: Collection<ConstraintSystemError>): CandidateApplicability =
+    diagnostics.minByOrNull { it.applicability }?.applicability ?: RESOLVED
 
-enum class ResolutionCandidateApplicability {
-    RESOLVED, // call success or has uncompleted inference or in other words possible successful candidate
-    RESOLVED_LOW_PRIORITY,
-    CONVENTION_ERROR, // missing infix, operator etc
-    MAY_THROW_RUNTIME_ERROR, // unsafe call or unstable smart cast
-    RUNTIME_ERROR, // problems with visibility
-    IMPOSSIBLE_TO_GENERATE, // access to outer class from nested
-    INAPPLICABLE, // arguments have wrong types
-    INAPPLICABLE_ARGUMENTS_MAPPING_ERROR, // arguments not mapped to parameters (i.e. different size of arguments and parameters)
-    INAPPLICABLE_WRONG_RECEIVER, // receiver not matched
-    HIDDEN, // removed from resolve
-}
+@JvmName("getResultApplicabilityForCallDiagnostics")
+fun getResultApplicability(diagnostics: Collection<KotlinCallDiagnostic>): CandidateApplicability =
+    diagnostics.minByOrNull { it.candidateApplicability }?.candidateApplicability ?: RESOLVED
 
-abstract class ResolutionDiagnostic(candidateApplicability: ResolutionCandidateApplicability) :
+abstract class ResolutionDiagnostic(candidateApplicability: CandidateApplicability) :
     KotlinCallDiagnostic(candidateApplicability) {
     override fun report(reporter: DiagnosticReporter) {
         // do nothing
@@ -99,6 +119,7 @@ class UsedSmartCastForDispatchReceiver(val smartCastType: KotlinType) : Resoluti
 object ErrorDescriptorDiagnostic : ResolutionDiagnostic(RESOLVED) // todo discuss and change to INAPPLICABLE
 object LowPriorityDescriptorDiagnostic : ResolutionDiagnostic(RESOLVED_LOW_PRIORITY)
 object DynamicDescriptorDiagnostic : ResolutionDiagnostic(RESOLVED_LOW_PRIORITY)
+object ResolvedUsingNewFeatures : ResolutionDiagnostic(RESOLVED_NEED_PRESERVE_COMPATIBILITY)
 object UnstableSmartCastDiagnostic : ResolutionDiagnostic(MAY_THROW_RUNTIME_ERROR)
 object HiddenExtensionRelatedToDynamicTypes : ResolutionDiagnostic(HIDDEN)
 object HiddenDescriptor : ResolutionDiagnostic(HIDDEN)

@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.kapt.cli.test
@@ -33,7 +33,7 @@ class Section(val name: String, val content: String) {
                     saveCurrent()
                     currentName = line.drop(2)
                 } else {
-                    currentContent.appendln(line)
+                    currentContent.appendLine(line)
                 }
             }
 
@@ -45,8 +45,8 @@ class Section(val name: String, val content: String) {
 
 fun List<Section>.render(): String = buildString {
     for (section in this@render) {
-        append(SECTION_INDICATOR).appendln(section.name)
-        appendln(section.content).appendln()
+        append(SECTION_INDICATOR).appendLine(section.name)
+        appendLine(section.content).appendLine()
     }
 }.trim()
 

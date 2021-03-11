@@ -8,19 +8,18 @@ plugins {
     id("jps-compatible")
 }
 
-jvmTarget = "1.6"
-
 dependencies {
     compile(project(":kotlin-build-common"))
     compileOnly(project(":compiler:cli-common"))
     compileOnly(project(":kotlin-preloader"))
     compileOnly(project(":compiler:frontend.java"))
-    compileOnly(project(":compiler:daemon-common"))
+    compileOnly(project(":daemon-common"))
+    compileOnly(project(":daemon-common-new"))
     compile(projectRuntimeJar(":kotlin-daemon-client"))
     compileOnly(project(":compiler:util"))
     compileOnly(intellijCoreDep()) { includeJars("intellij-core") }
-    compileOnly("org.jetbrains:annotations:13.0")
     runtimeOnly(projectRuntimeJar(":kotlin-compiler-embeddable"))
+    compile(commonDep("org.jetbrains.kotlinx", "kotlinx-coroutines-core")) { isTransitive = false }
 }
 
 sourceSets {
@@ -28,10 +27,8 @@ sourceSets {
     "test" {}
 }
 
-val jar: Jar by tasks
+publish()
 
-runtimeJar(rewriteDepsToShadedCompiler(jar))
+runtimeJar(rewriteDefaultJarDepsToShadedCompiler())
 sourcesJar()
 javadocJar()
-
-publish()

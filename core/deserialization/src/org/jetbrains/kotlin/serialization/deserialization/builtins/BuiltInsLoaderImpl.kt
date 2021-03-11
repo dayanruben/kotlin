@@ -1,12 +1,12 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.serialization.deserialization.builtins
 
 import org.jetbrains.kotlin.builtins.BuiltInsLoader
-import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.descriptors.NotFoundClasses
 import org.jetbrains.kotlin.descriptors.PackageFragmentProvider
@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.descriptors.deserialization.ClassDescriptorFactory
 import org.jetbrains.kotlin.descriptors.deserialization.PlatformDependentDeclarationFilter
 import org.jetbrains.kotlin.incremental.components.LookupTracker
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.resolve.sam.SamConversionResolverImpl
 import org.jetbrains.kotlin.serialization.deserialization.*
 import org.jetbrains.kotlin.storage.StorageManager
 import java.io.InputStream
@@ -28,15 +29,17 @@ class BuiltInsLoaderImpl : BuiltInsLoader {
         builtInsModule: ModuleDescriptor,
         classDescriptorFactories: Iterable<ClassDescriptorFactory>,
         platformDependentDeclarationFilter: PlatformDependentDeclarationFilter,
-        additionalClassPartsProvider: AdditionalClassPartsProvider
+        additionalClassPartsProvider: AdditionalClassPartsProvider,
+        isFallback: Boolean
     ): PackageFragmentProvider {
         return createBuiltInPackageFragmentProvider(
             storageManager,
             builtInsModule,
-            KotlinBuiltIns.BUILT_INS_PACKAGE_FQ_NAMES,
+            StandardNames.BUILT_INS_PACKAGE_FQ_NAMES,
             classDescriptorFactories,
             platformDependentDeclarationFilter,
             additionalClassPartsProvider,
+            isFallback,
             resourceLoader::loadResource
         )
     }
@@ -48,12 +51,13 @@ class BuiltInsLoaderImpl : BuiltInsLoader {
         classDescriptorFactories: Iterable<ClassDescriptorFactory>,
         platformDependentDeclarationFilter: PlatformDependentDeclarationFilter,
         additionalClassPartsProvider: AdditionalClassPartsProvider = AdditionalClassPartsProvider.None,
+        isFallback: Boolean,
         loadResource: (String) -> InputStream?
     ): PackageFragmentProvider {
         val packageFragments = packageFqNames.map { fqName ->
             val resourcePath = BuiltInSerializerProtocol.getBuiltInsFilePath(fqName)
             val inputStream = loadResource(resourcePath) ?: throw IllegalStateException("Resource not found in classpath: $resourcePath")
-            BuiltInsPackageFragmentImpl.create(fqName, storageManager, module, inputStream)
+            BuiltInsPackageFragmentImpl.create(fqName, storageManager, module, inputStream, isFallback)
         }
         val provider = PackageFragmentProviderImpl(packageFragments)
 
@@ -75,7 +79,8 @@ class BuiltInsLoaderImpl : BuiltInsLoader {
             ContractDeserializer.DEFAULT,
             additionalClassPartsProvider,
             platformDependentDeclarationFilter,
-            BuiltInSerializerProtocol.extensionRegistry
+            BuiltInSerializerProtocol.extensionRegistry,
+            samConversionResolver = SamConversionResolverImpl(storageManager, samWithReceiverResolvers = emptyList())
         )
 
         for (packageFragment in packageFragments) {

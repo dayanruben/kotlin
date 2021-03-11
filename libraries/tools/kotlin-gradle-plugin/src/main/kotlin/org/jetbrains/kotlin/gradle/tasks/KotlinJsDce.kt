@@ -17,18 +17,17 @@
 package org.jetbrains.kotlin.gradle.tasks
 
 import org.gradle.api.Project
+import org.gradle.api.file.FileCollection
 import org.gradle.api.file.FileTree
-import org.gradle.api.tasks.CacheableTask
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.*
 import org.jetbrains.kotlin.cli.common.arguments.K2JSDceArguments
 import org.jetbrains.kotlin.cli.js.dce.K2JSDce
-import org.jetbrains.kotlin.gradle.logging.GradleKotlinLogger
 import org.jetbrains.kotlin.compilerRunner.runToolInSeparateProcess
 import org.jetbrains.kotlin.gradle.dsl.KotlinJsDce
 import org.jetbrains.kotlin.gradle.dsl.KotlinJsDceOptions
 import org.jetbrains.kotlin.gradle.dsl.KotlinJsDceOptionsImpl
+import org.jetbrains.kotlin.gradle.logging.GradleKotlinLogger
+import org.jetbrains.kotlin.gradle.utils.canonicalPathWithoutExtension
 import java.io.File
 
 @CacheableTask
@@ -38,14 +37,23 @@ open class KotlinJsDce : AbstractKotlinCompileTool<K2JSDceArguments>(), KotlinJs
         cacheOnlyIfEnabledForKotlin()
     }
 
+    @get:Internal
+    internal val objects = project.objects
+
+    override fun localStateDirectories(): FileCollection = project.files()
+
     override fun createCompilerArgs(): K2JSDceArguments = K2JSDceArguments()
 
-    override fun setupCompilerArgs(args: K2JSDceArguments, defaultsOnly: Boolean) {
+    override fun setupCompilerArgs(args: K2JSDceArguments, defaultsOnly: Boolean, ignoreClasspathResolutionErrors: Boolean) {
         dceOptionsImpl.updateArguments(args)
         args.declarationsToKeep = keep.toTypedArray()
     }
 
     private val dceOptionsImpl = KotlinJsDceOptionsImpl()
+
+    // DCE can be broken in case of non-kotlin js files or modules
+    @Internal
+    var kotlinFilesOnly: Boolean = false
 
     @get:Internal
     override val dceOptions: KotlinJsDceOptions
@@ -56,15 +64,22 @@ open class KotlinJsDce : AbstractKotlinCompileTool<K2JSDceArguments>(), KotlinJs
 
     override fun findKotlinCompilerClasspath(project: Project): List<File> = findKotlinJsDceClasspath(project)
 
-    override fun compile() {}
-
     override fun keep(vararg fqn: String) {
         keep += fqn
     }
 
+    @Input
+    var jvmArgs = mutableListOf<String>()
+
+    private val buildDir by lazy {
+        project.buildDir
+    }
+
     @TaskAction
     fun performDce() {
-        val inputFiles = (listOf(getSource()) + classpath.map { project.fileTree(it) })
+        val inputFiles = (listOf(source) + classpath
+            .filter { !kotlinFilesOnly || isDceCandidate(it) }
+            .map { objects.fileCollection().from(it).asFileTree })
             .reduce(FileTree::plus)
             .files.map { it.path }
 
@@ -74,10 +89,28 @@ open class KotlinJsDce : AbstractKotlinCompileTool<K2JSDceArguments>(), KotlinJs
 
         val log = GradleKotlinLogger(logger)
         val allArgs = argsArray + outputDirArgs + inputFiles
+
         val exitCode = runToolInSeparateProcess(
-            allArgs, K2JSDce::class.java.name, computedCompilerClasspath,
-            log
+            allArgs,
+            K2JSDce::class.java.name,
+            computedCompilerClasspath,
+            log,
+            buildDir,
+            jvmArgs
         )
         throwGradleExceptionIfError(exitCode)
+
+    }
+
+    private fun isDceCandidate(file: File): Boolean {
+        if (file.extension == "jar") {
+            return true
+        }
+
+        if (file.extension != "js" || file.name.endsWith(".meta.js")) {
+            return false
+        }
+
+        return File("${file.canonicalPathWithoutExtension()}.meta.js").exists()
     }
 }

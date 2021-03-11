@@ -1,21 +1,13 @@
 description = 'Kotlin Standard Library JDK 7 extension'
 
 apply plugin: 'kotlin'
-apply plugin: 'pill-configurable'
 
 configureJvm6Project(project)
-configureDist(project)
 configurePublishing(project)
+configureSourcesJar()
+configureJavadocJar()
+
 ext.javaHome = JDK_17
-
-pill {
-    importAsLibrary = true
-}
-
-dependencies {
-    compile project(':kotlin-stdlib')
-    testCompile project(':kotlin-test:kotlin-test-junit')
-}
 
 sourceSets {
     main {
@@ -26,11 +18,16 @@ sourceSets {
     test {
         kotlin {
             srcDir 'test'
-            if(!System.properties.'idea.active') {
+            if(!BuildPropertiesKt.getKotlinBuildProperties(project).inIdeaSync) {
                 srcDir '../jvm/test'
                 srcDir '../common/test'
                 srcDir '../test'
             }
+        }
+    }
+    noJdk7Test {
+        kotlin {
+            srcDir 'testNoJdk7'
         }
     }
     java9 {
@@ -40,32 +37,34 @@ sourceSets {
     }
 }
 
-jar {
-    manifestAttributes(manifest, project, 'Main' /*true*/)
-    // TODO: enable as soon as this doesn't cause D8/DX to crash
-    // from sourceSets.java9.output
+configurations {
+    noJdk7TestCompile.extendsFrom(testCompile)
 }
 
-task modularJar(type: Jar) {
+dependencies {
+    compile project(':kotlin-stdlib')
+    testCompile project(':kotlin-test:kotlin-test-junit')
+}
+
+jar {
+    manifestAttributes(manifest, project, 'Main', true)
+    from sourceSets.java9.output
+}
+
+configureModularJar {
     dependsOn(jar)
     manifestAttributes(manifest, project, 'Main', true)
-    classifier = 'modular'
 
     from zipTree(jar.outputs.files.singleFile)
-    from sourceSets.java9.output
 }
 
 
 artifacts {
     archives sourcesJar
-    archives javadocJar
+    sources sourcesJar
+
     archives modularJar
 }
-
-dist {
-    from (jar, sourcesJar)
-}
-
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile) {
     kotlinOptions.jdkHome = JDK_17
@@ -76,13 +75,27 @@ compileKotlin {
             "-Xallow-kotlin-package",
             "-Xmultifile-parts-inherit",
             "-Xnormalize-constructor-calls=enable",
-            "-module-name", project.name
+            "-Xopt-in=kotlin.RequiresOptIn",
+            "-Xopt-in=kotlin.contracts.ExperimentalContracts",
+            "-Xsuppress-deprecated-jvm-target-warning",
     ]
+    kotlinOptions.moduleName = project.name
 }
 
 compileTestKotlin {
-    kotlinOptions.freeCompilerArgs = ["-Xallow-kotlin-package", "-Xmulti-platform", "-Xuse-experimental=kotlin.ExperimentalUnsignedTypes"]
+    kotlinOptions.freeCompilerArgs = [
+            "-Xallow-kotlin-package",
+            "-Xmulti-platform",
+            "-Xopt-in=kotlin.RequiresOptIn",
+            "-Xopt-in=kotlin.ExperimentalUnsignedTypes",
+            "-Xopt-in=kotlin.ExperimentalStdlibApi",
+            "-Xopt-in=kotlin.io.path.ExperimentalPathApi",
+            "-Xcommon-sources=${fileTree('../test').join(',')}",
+            "-Xsuppress-deprecated-jvm-target-warning",
+    ]
 }
+
+configureJvmIrBackend(project)
 
 compileJava9Sources(project, 'kotlin.stdlib.jdk7')
 
@@ -100,9 +113,20 @@ task testJdk6Tests(type: Test) {
         testClassesDirs = project(':kotlin-stdlib').sourceSets.test.output
         classpath = files(
                 testClassesDirs,
-                configurations.testCompile
+                sourceSets.test.compileClasspath
         )
     }
 }
 
-check.dependsOn testJdk6Tests
+task testNoJdk7(type: Test, dependsOn: noJdk7TestClasses) {
+    group = "verification"
+
+    executable = "$JDK_17/bin/java"
+
+    testClassesDirs = sourceSets.noJdk7Test.output.classesDirs
+    classpath = sourceSets.noJdk7Test.runtimeClasspath
+}
+
+
+check.dependsOn testJdk6Tests, testNoJdk7
+

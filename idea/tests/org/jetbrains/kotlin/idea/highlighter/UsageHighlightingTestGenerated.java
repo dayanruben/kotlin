@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.highlighter;
@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.idea.highlighter;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.test.KotlinTestUtils;
-import org.jetbrains.kotlin.test.TargetBackend;
+import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.runner.RunWith;
 
@@ -22,11 +22,11 @@ import java.util.regex.Pattern;
 @RunWith(JUnit3RunnerWithInners.class)
 public class UsageHighlightingTestGenerated extends AbstractUsageHighlightingTest {
     private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTest, TargetBackend.ANY, testDataFilePath);
+        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
     public void testAllFilesPresentInUsageHighlighter() throws Exception {
-        KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/usageHighlighter"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.ANY, true);
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/usageHighlighter"), Pattern.compile("^(.+)\\.kt$"), null, true);
     }
 
     @TestMetadata("implicitIt.kt")
@@ -34,9 +34,39 @@ public class UsageHighlightingTestGenerated extends AbstractUsageHighlightingTes
         runTest("idea/testData/usageHighlighter/implicitIt.kt");
     }
 
+    @TestMetadata("implicitReturnExpressionsFromExplicitReturnInLambdas.kt")
+    public void testImplicitReturnExpressionsFromExplicitReturnInLambdas() throws Exception {
+        runTest("idea/testData/usageHighlighter/implicitReturnExpressionsFromExplicitReturnInLambdas.kt");
+    }
+
+    @TestMetadata("implicitReturnExpressionsInLambdasNoHightlighting.kt")
+    public void testImplicitReturnExpressionsInLambdasNoHightlighting() throws Exception {
+        runTest("idea/testData/usageHighlighter/implicitReturnExpressionsInLambdasNoHightlighting.kt");
+    }
+
     @TestMetadata("importAlias.kt")
     public void testImportAlias() throws Exception {
         runTest("idea/testData/usageHighlighter/importAlias.kt");
+    }
+
+    @TestMetadata("importAliasFromStdLibClass.kt")
+    public void testImportAliasFromStdLibClass() throws Exception {
+        runTest("idea/testData/usageHighlighter/importAliasFromStdLibClass.kt");
+    }
+
+    @TestMetadata("importAliasFromStdLibFunction.kt")
+    public void testImportAliasFromStdLibFunction() throws Exception {
+        runTest("idea/testData/usageHighlighter/importAliasFromStdLibFunction.kt");
+    }
+
+    @TestMetadata("importAliasFromStdLibFunctionFromObject.kt")
+    public void testImportAliasFromStdLibFunctionFromObject() throws Exception {
+        runTest("idea/testData/usageHighlighter/importAliasFromStdLibFunctionFromObject.kt");
+    }
+
+    @TestMetadata("importAliasFromStdLibPropertyFromObject.kt")
+    public void testImportAliasFromStdLibPropertyFromObject() throws Exception {
+        runTest("idea/testData/usageHighlighter/importAliasFromStdLibPropertyFromObject.kt");
     }
 
     @TestMetadata("labeledAnonymousFun.kt")
@@ -52,6 +82,21 @@ public class UsageHighlightingTestGenerated extends AbstractUsageHighlightingTes
     @TestMetadata("labeledLoop.kt")
     public void testLabeledLoop() throws Exception {
         runTest("idea/testData/usageHighlighter/labeledLoop.kt");
+    }
+
+    @TestMetadata("lambdaCallReturnExpressions.kt")
+    public void testLambdaCallReturnExpressions() throws Exception {
+        runTest("idea/testData/usageHighlighter/lambdaCallReturnExpressions.kt");
+    }
+
+    @TestMetadata("lambdaCallReturnExpressionsInline.kt")
+    public void testLambdaCallReturnExpressionsInline() throws Exception {
+        runTest("idea/testData/usageHighlighter/lambdaCallReturnExpressionsInline.kt");
+    }
+
+    @TestMetadata("lambdaCallReturnExpressionsInlineUnit.kt")
+    public void testLambdaCallReturnExpressionsInlineUnit() throws Exception {
+        runTest("idea/testData/usageHighlighter/lambdaCallReturnExpressionsInlineUnit.kt");
     }
 
     @TestMetadata("localVal.kt")

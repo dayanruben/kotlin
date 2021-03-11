@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.inspections.migration
@@ -11,6 +11,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.application.ApplicationManager
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.configuration.MigrationInfo
@@ -95,7 +96,7 @@ class FromClosedRangeMigrationInspection : AbstractKotlinInspection(), Migration
         val problemDescriptor = holder.manager.createProblemDescriptor(
             simpleNameExpression,
             simpleNameExpression,
-            "It's prohibited to call $desc with MIN_VALUE step since 1.3",
+            KotlinBundle.message("it.s.prohibited.to.call.0.with.min.value.step.since.1.3", desc),
             if (isError) ProblemHighlightType.ERROR else ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
             isOnTheFly
         )

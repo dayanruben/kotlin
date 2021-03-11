@@ -9,11 +9,14 @@ plugins {
 dependencies {
     testCompileOnly(intellijCoreDep()) { includeJars("intellij-core") }
     testRuntime(intellijDep())
-    testCompileOnly(intellijDep()) { includeJars("idea", "idea_rt", "openapi") }
-
-    Platform[181].orHigher {
-        testCompileOnly(intellijDep()) { includeJars("platform-api", "platform-impl") }
+    testCompileOnly(intellijDep()) { includeJars("idea", "idea_rt") }
+    Platform[193].orLower {
+        testCompileOnly(intellijDep()) { includeJars("openapi", rootProject = rootProject) }
     }
+
+    testCompileOnly(intellijDep()) { includeJars("platform-api", "platform-impl") }
+
+    testRuntime(intellijPluginDep("java"))
 
     compile(project(":compiler:util"))
     compile(project(":compiler:cli"))
@@ -21,6 +24,8 @@ dependencies {
     compile(project(":compiler:frontend"))
     compile(project(":compiler:frontend.java"))
     compile(project(":compiler:plugin-api"))
+
+    compileOnly(toolsJarApi())
     compileOnly(project(":kotlin-annotation-processing-cli"))
     compileOnly(project(":kotlin-annotation-processing-base"))
     compileOnly(project(":kotlin-annotation-processing-runtime"))
@@ -33,9 +38,12 @@ dependencies {
     testCompile(commonDep("junit:junit"))
     testCompile(project(":kotlin-annotation-processing-runtime"))
 
-    embeddedComponents(project(":kotlin-annotation-processing-runtime")) { isTransitive = false }
-    embeddedComponents(project(":kotlin-annotation-processing-cli")) { isTransitive = false }
-    embeddedComponents(project(":kotlin-annotation-processing-base")) { isTransitive = false }
+    testCompileOnly(toolsJarApi())
+    testRuntimeOnly(toolsJar())
+
+    embedded(project(":kotlin-annotation-processing-runtime")) { isTransitive = false }
+    embedded(project(":kotlin-annotation-processing-cli")) { isTransitive = false }
+    embedded(project(":kotlin-annotation-processing-base")) { isTransitive = false }
 }
 
 sourceSets {
@@ -45,18 +53,14 @@ sourceSets {
 
 testsJar {}
 
-projectTest {
+projectTest(parallel = true) {
     workingDir = rootDir
     dependsOn(":dist")
 }
 
-runtimeJar {
-    fromEmbeddedComponents()
-}
+publish()
+
+runtimeJar()
 
 sourcesJar()
 javadocJar()
-
-dist()
-
-publish()

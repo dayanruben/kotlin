@@ -18,17 +18,20 @@ package org.jetbrains.kotlin.serialization.js.ast
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.js.backend.ast.*
+import org.jetbrains.kotlin.js.backend.ast.JsImportedModule
 import org.jetbrains.kotlin.js.backend.ast.metadata.*
+import org.jetbrains.kotlin.js.backend.ast.metadata.LocalAlias
 import org.jetbrains.kotlin.js.backend.ast.metadata.SpecialFunction
+import org.jetbrains.kotlin.resolve.calls.callUtil.isFakePsiElement
 import org.jetbrains.kotlin.serialization.js.ast.JsAstProtoBuf.*
 import org.jetbrains.kotlin.serialization.js.ast.JsAstProtoBuf.BinaryOperation.Type.*
 import org.jetbrains.kotlin.serialization.js.ast.JsAstProtoBuf.UnaryOperation.Type.*
 import java.io.File
 import java.io.OutputStream
 import java.util.*
-import org.jetbrains.kotlin.resolve.inline.InlineStrategy as KotlinInlineStrategy
 
-class JsAstSerializer(private val pathResolver: (File) -> String) {
+class JsAstSerializer(private val jsAstValidator: ((JsProgramFragment, Set<JsName>) -> Unit)?,
+                      private val pathResolver: (File) -> String) {
     private val nameTableBuilder = NameTable.newBuilder()
     private val stringTableBuilder = StringTable.newBuilder()
     private val nameMap = mutableMapOf<JsName, Int>()
@@ -37,7 +40,7 @@ class JsAstSerializer(private val pathResolver: (File) -> String) {
     private val importedNames = mutableSetOf<JsName>()
 
     fun serialize(fragment: JsProgramFragment, output: OutputStream) {
-        val namesBySignature = fragment.nameBindings.associate { it.key to it.name }
+        val namesBySignature = fragment.nameBindings.associateTo(mutableMapOf()) { it.key to it.name }
         importedNames.clear()
         importedNames += fragment.imports.map { namesBySignature[it.key]!! }
         serialize(fragment).writeTo(output)
@@ -61,6 +64,8 @@ class JsAstSerializer(private val pathResolver: (File) -> String) {
 
     private fun serializeFragment(fragment: JsProgramFragment): Fragment {
         val fragmentBuilder = Fragment.newBuilder()
+
+        fragmentBuilder.packageFqn = fragment.packageFqn
 
         for (importedModule in fragment.importedModules) {
             val importedModuleBuilder = ImportedModule.newBuilder()
@@ -101,6 +106,25 @@ class JsAstSerializer(private val pathResolver: (File) -> String) {
             }
             fragmentBuilder.addInlineModule(inlineModuleBuilder)
         }
+
+        fragment.tests?.let {
+            fragmentBuilder.setTestsInvocation(serialize(it))
+        }
+
+        fragment.mainFunction?.let {
+            fragmentBuilder.setMainInvocation(serialize(it))
+        }
+
+        fragment.inlinedLocalDeclarations.forEach { (tag, block) ->
+            val builder = InlinedLocalDeclarations.newBuilder().apply {
+                setTag(serialize(tag))
+                setBlock(serializeBlock(block))
+            }
+
+            fragmentBuilder.addInlinedLocalDeclarations(builder.build())
+        }
+
+        jsAstValidator?.let { it(fragment, nameMap.keys) }
 
         return fragmentBuilder.build()
     }
@@ -393,13 +417,15 @@ class JsAstSerializer(private val pathResolver: (File) -> String) {
                 val name = nameRef.name
                 val qualifier = nameRef.qualifier
                 if (name != null) {
-                    if (qualifier != null || nameRef.inlineStrategy?.isInline == true) {
+                    if (qualifier != null || nameRef.isInline == true) {
                         val nameRefBuilder = NameReference.newBuilder()
                         nameRefBuilder.nameId = serialize(name)
                         if (qualifier != null) {
                             nameRefBuilder.qualifier = serialize(qualifier)
                         }
-                        nameRef.inlineStrategy?.let { nameRefBuilder.inlineStrategy = map(it) }
+                        nameRef.isInline?.let {
+                            nameRefBuilder.inlineStrategy = if (it) InlineStrategy.IN_PLACE else InlineStrategy.NOT_INLINE
+                        }
                         builder.nameReference = nameRefBuilder.build()
                     }
                     else {
@@ -410,7 +436,9 @@ class JsAstSerializer(private val pathResolver: (File) -> String) {
                     val propertyRefBuilder = PropertyReference.newBuilder()
                     propertyRefBuilder.stringId = serialize(nameRef.ident)
                     qualifier?.let { propertyRefBuilder.qualifier = serialize(it) }
-                    nameRef.inlineStrategy?.let { propertyRefBuilder.inlineStrategy = map(it) }
+                    nameRef.isInline?.let {
+                        propertyRefBuilder.inlineStrategy = if (it) InlineStrategy.IN_PLACE else InlineStrategy.NOT_INLINE
+                    }
                     builder.propertyReference = propertyRefBuilder.build()
                 }
             }
@@ -419,10 +447,8 @@ class JsAstSerializer(private val pathResolver: (File) -> String) {
                 val invocationBuilder = Invocation.newBuilder()
                 invocationBuilder.qualifier = serialize(invocation.qualifier)
                 invocation.arguments.forEach { invocationBuilder.addArgument(serialize(it)) }
-                invocation.inlineStrategy?.let { inlineStrategy ->
-                    if (inlineStrategy != KotlinInlineStrategy.NOT_INLINE) {
-                        invocationBuilder.inlineStrategy = map(inlineStrategy)
-                    }
+                if (invocation.isInline == true) {
+                    invocationBuilder.inlineStrategy = InlineStrategy.IN_PLACE
                 }
                 builder.invocation = invocationBuilder.build()
             }
@@ -446,6 +472,16 @@ class JsAstSerializer(private val pathResolver: (File) -> String) {
         }
 
         return visitor.builder.build()
+    }
+
+    private fun serialize(module: JsImportedModule): JsAstProtoBuf.JsImportedModule {
+        val moduleBuilder = JsAstProtoBuf.JsImportedModule.newBuilder()
+        moduleBuilder.externalName = serialize(module.externalName)
+        moduleBuilder.internalName = serialize(module.internalName)
+        module.plainReference?.let {
+            moduleBuilder.plainReference = serialize(it)
+        }
+        return moduleBuilder.build()
     }
 
     private fun serializeParameter(parameter: JsParameter): Parameter {
@@ -549,12 +585,6 @@ class JsAstSerializer(private val pathResolver: (File) -> String) {
         SideEffectKind.PURE -> SideEffects.PURE
     }
 
-    private fun map(inlineStrategy: KotlinInlineStrategy) = when (inlineStrategy) {
-        KotlinInlineStrategy.AS_FUNCTION -> InlineStrategy.AS_FUNCTION
-        KotlinInlineStrategy.IN_PLACE -> InlineStrategy.IN_PLACE
-        KotlinInlineStrategy.NOT_INLINE -> InlineStrategy.NOT_INLINE
-    }
-
     private fun map(specialFunction: SpecialFunction) = when (specialFunction) {
         SpecialFunction.DEFINE_INLINE_FUNCTION -> JsAstProtoBuf.SpecialFunction.DEFINE_INLINE_FUNCTION
         SpecialFunction.WRAP_FUNCTION -> JsAstProtoBuf.SpecialFunction.WRAP_FUNCTION
@@ -565,6 +595,8 @@ class JsAstSerializer(private val pathResolver: (File) -> String) {
         SpecialFunction.COROUTINE_CONTROLLER -> JsAstProtoBuf.SpecialFunction.COROUTINE_CONTROLLER
         SpecialFunction.COROUTINE_RECEIVER -> JsAstProtoBuf.SpecialFunction.COROUTINE_RECEIVER
         SpecialFunction.SET_COROUTINE_RESULT -> JsAstProtoBuf.SpecialFunction.SET_COROUTINE_RESULT
+        SpecialFunction.GET_KCLASS -> JsAstProtoBuf.SpecialFunction.GET_KCLASS
+        SpecialFunction.GET_REIFIED_TYPE_PARAMETER_KTYPE -> JsAstProtoBuf.SpecialFunction.GET_REIFIED_TYPE_PARAMETER_KTYPE
     }
 
     private fun serialize(name: JsName): Int = nameMap.getOrPut(name) {
@@ -586,6 +618,15 @@ class JsAstSerializer(private val pathResolver: (File) -> String) {
         val result = nameTableBuilder.entryCount
         nameTableBuilder.addEntry(builder)
         result
+    }
+
+    private fun serialize(alias: LocalAlias): JsAstProtoBuf.LocalAlias {
+        val builder = JsAstProtoBuf.LocalAlias.newBuilder()
+        builder.localNameId = serialize(alias.name)
+        alias.tag?.let {
+            builder.tag = serialize(it)
+        }
+        return builder.build()
     }
 
     private fun serialize(string: String) = stringMap.getOrPut(string) {
@@ -622,7 +663,7 @@ class JsAstSerializer(private val pathResolver: (File) -> String) {
         val source = node.source
         return when (source) {
             is JsLocationWithSource -> source.asSimpleLocation()
-            is PsiElement -> extractLocation(source)
+            is PsiElement -> if (!source.isFakePsiElement) extractLocation(source) else null
             else -> null
         }
     }

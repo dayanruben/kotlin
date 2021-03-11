@@ -19,30 +19,36 @@ package org.jetbrains.kotlin.asJava
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.asJava.builder.InvalidLightClassDataHolder
-import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
+import org.jetbrains.kotlin.asJava.builder.LightClassDataProviderForFileFacade
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration
+import org.jetbrains.kotlin.asJava.classes.getOutermostClassOrObject
+import org.jetbrains.kotlin.asJava.classes.safeIsScript
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
-import org.jetbrains.kotlin.diagnostics.DiagnosticFactory.cast
 import org.jetbrains.kotlin.diagnostics.Errors.*
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.ConflictingJvmDeclarationsData
-import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm.*
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.JvmDeclarationOriginKind.*
 
 fun getJvmSignatureDiagnostics(element: PsiElement, otherDiagnostics: Diagnostics, moduleScope: GlobalSearchScope): Diagnostics? {
     fun getDiagnosticsForFileFacade(file: KtFile): Diagnostics? {
         val project = file.project
-        val cache = KtLightClassForFacade.FacadeStubCache.getInstance(project)
+
         val facadeFqName = JvmFileClassUtil.getFileClassInfoNoResolve(file).facadeClassFqName
-        return cache[facadeFqName, moduleScope].value?.extraDiagnostics
+
+        //TODO Maybe it is better to cache this item
+        return LightClassDataProviderForFileFacade.ByProjectSource(project, facadeFqName, moduleScope)
+            .compute()
+            ?.value
+            ?.extraDiagnostics
     }
 
     fun getDiagnosticsForClass(ktClassOrObject: KtClassOrObject): Diagnostics {
-        val lightClassDataHolder = KtLightClassForSourceDeclaration.getLightClassDataHolder(ktClassOrObject)
+        val outermostClass = getOutermostClassOrObject(ktClassOrObject)
+        val lightClassDataHolder = KtLightClassForSourceDeclaration.getLightClassDataHolder(outermostClass)
         if (lightClassDataHolder is InvalidLightClassDataHolder) {
             return Diagnostics.EMPTY
         }
@@ -51,7 +57,7 @@ fun getJvmSignatureDiagnostics(element: PsiElement, otherDiagnostics: Diagnostic
 
     fun doGetDiagnostics(): Diagnostics? {
         //TODO: enable this diagnostic when light classes for scripts are ready
-        if ((element.containingFile as? KtFile)?.isScript() == true) return null
+        if ((element.containingFile as? KtFile)?.safeIsScript() == true) return null
 
         var parent = element.parent
         if (element is KtPropertyAccessor) {
@@ -83,24 +89,27 @@ fun getJvmSignatureDiagnostics(element: PsiElement, otherDiagnostics: Diagnostic
         return null
     }
 
-    val result = doGetDiagnostics()
-    if (result == null) return null
+    val result = doGetDiagnostics() ?: return null
 
     return FilteredJvmDiagnostics(result, otherDiagnostics)
 }
 
 class FilteredJvmDiagnostics(val jvmDiagnostics: Diagnostics, val otherDiagnostics: Diagnostics) : Diagnostics by jvmDiagnostics {
+    companion object {
+        private val higherPriorityDiagnosticFactories =
+            setOf(CONFLICTING_OVERLOADS, REDECLARATION, NOTHING_TO_OVERRIDE, MANY_IMPL_MEMBER_NOT_IMPLEMENTED)
+
+        private val jvmDiagnosticFactories =
+            setOf(CONFLICTING_JVM_DECLARATIONS, ACCIDENTAL_OVERRIDE, CONFLICTING_INHERITED_JVM_DECLARATIONS)
+    }
 
     private fun alreadyReported(psiElement: PsiElement): Boolean {
-        val higherPriority = setOf<DiagnosticFactory<*>>(
-                CONFLICTING_OVERLOADS, REDECLARATION, NOTHING_TO_OVERRIDE, MANY_IMPL_MEMBER_NOT_IMPLEMENTED)
-        return otherDiagnostics.forElement(psiElement).any { it.factory in higherPriority }
+        return otherDiagnostics.forElement(psiElement).any { it.factory in higherPriorityDiagnosticFactories }
                 || psiElement is KtPropertyAccessor && alreadyReported(psiElement.parent)
     }
 
     override fun forElement(psiElement: PsiElement): Collection<Diagnostic> {
-        val jvmDiagnosticFactories = setOf(CONFLICTING_JVM_DECLARATIONS, ACCIDENTAL_OVERRIDE, CONFLICTING_INHERITED_JVM_DECLARATIONS)
-        fun Diagnostic.data() = cast(this, jvmDiagnosticFactories).a
+        fun Diagnostic.data() = DiagnosticFactory.cast(this, jvmDiagnosticFactories).a
         val (conflicting, other) = jvmDiagnostics.forElement(psiElement).partition { it.factory in jvmDiagnosticFactories }
         if (alreadyReported(psiElement)) {
             // CONFLICTING_OVERLOADS already reported, no need to duplicate it
@@ -114,22 +123,19 @@ class FilteredJvmDiagnostics(val jvmDiagnostics: Diagnostics, val otherDiagnosti
             val diagnostics = it.value
             if (diagnostics.size <= 1) {
                 filtered.addAll(diagnostics)
-            }
-            else {
+            } else {
                 filtered.addAll(
-                        diagnostics.filter {
-                            me ->
-                            diagnostics.none {
-                                other ->
-                                me != other && (
-                                        // in case of implementation copied from a super trait there will be both diagnostics on the same signature
-                                        other.factory == ErrorsJvm.CONFLICTING_JVM_DECLARATIONS && (me.factory == ACCIDENTAL_OVERRIDE ||
-                                                                                                    me.factory == CONFLICTING_INHERITED_JVM_DECLARATIONS)
-                                        // there are paris of corresponding signatures that frequently clash simultaneously: multifile class & part, trait and trait-impl
-                                        || other.data().higherThan(me.data())
-                                        )
-                            }
+                    diagnostics.filter { me ->
+                        diagnostics.none { other ->
+                            me != other && (
+                                    // in case of implementation copied from a super trait there will be both diagnostics on the same signature
+                                    other.factory == CONFLICTING_JVM_DECLARATIONS && (me.factory == ACCIDENTAL_OVERRIDE ||
+                                            me.factory == CONFLICTING_INHERITED_JVM_DECLARATIONS)
+                                            // there are paris of corresponding signatures that frequently clash simultaneously: multifile class & part, trait and trait-impl
+                                            || other.data().higherThan(me.data())
+                                    )
                         }
+                    }
                 )
             }
         }

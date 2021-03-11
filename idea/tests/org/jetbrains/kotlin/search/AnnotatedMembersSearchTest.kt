@@ -1,24 +1,14 @@
 /*
- * Copyright 2010-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.search
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.impl.java.stubs.PsiJavaFileStub
-import com.intellij.psi.search.searches.AnnotatedMembersSearch
+import com.intellij.psi.search.searches.AnnotatedElementsSearch
 import com.intellij.testFramework.LightProjectDescriptor
 import junit.framework.TestCase
 import org.jetbrains.kotlin.asJava.builder.LightClassConstructionContext
@@ -28,19 +18,17 @@ import org.jetbrains.kotlin.idea.caches.lightClasses.IDELightClassConstructionCo
 import org.jetbrains.kotlin.idea.completion.test.withServiceRegistered
 import org.jetbrains.kotlin.idea.search.PsiBasedClassResolver
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import org.junit.Assert
-import java.io.File
 
 abstract class AbstractAnnotatedMembersSearchTest : AbstractSearcherTest() {
     override fun getProjectDescriptor(): LightProjectDescriptor {
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
     }
 
-    fun doTest(path: String) {
-        myFixture.configureByFile(path)
-        val fileText = FileUtil.loadFile(File(path), true)
+    fun doTest(unused: String) {
+        myFixture.configureByFile(fileName())
+        val fileText = FileUtil.loadFile(testDataFile(), true)
         val directives = InTextDirectivesUtils.findListWithPrefixes(fileText, "// ANNOTATION: ")
 
         TestCase.assertFalse("Specify ANNOTATION directive in test file", directives.isEmpty())
@@ -51,7 +39,14 @@ abstract class AbstractAnnotatedMembersSearchTest : AbstractSearcherTest() {
             PsiBasedClassResolver.trueHits.set(0)
             PsiBasedClassResolver.falseHits.set(0)
 
-            AbstractSearcherTest.checkResult(path, AnnotatedMembersSearch.search(psiClass, projectScope))
+            checkResult(
+                testPath(),
+                AnnotatedElementsSearch.searchElements(
+                    psiClass,
+                    projectScope,
+                    PsiModifierListOwner::class.java
+                )
+            )
 
             val optimizedTrue = InTextDirectivesUtils.getPrefixedInt(fileText, "// OPTIMIZED_TRUE:")
             if (optimizedTrue != null) {
@@ -65,9 +60,6 @@ abstract class AbstractAnnotatedMembersSearchTest : AbstractSearcherTest() {
 
     }
 
-    override fun getTestDataPath(): String {
-        return File(PluginTestCaseBase.getTestDataPathBase(), "/search/annotations").path + File.separator
-    }
 }
 
 private object NoRealDelegatesComputed : StubComputationTracker {

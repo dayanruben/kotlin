@@ -1,5 +1,5 @@
+// FIR_IDENTICAL
 // !USE_EXPERIMENTAL: kotlin.contracts.ExperimentalContracts
-// !WITH_CONTRACT_FUNCTIONS
 // SKIP_TXT
 
 /*
@@ -8,6 +8,7 @@
  * SECTIONS: contracts, analysis, controlFlow, initialization
  * NUMBER: 1
  * DESCRIPTION: val/var assignments using contract functions with CallsInPlace effect
+ * HELPERS: contractFunctions
  */
 
 // TESTCASE NUMBER: 1

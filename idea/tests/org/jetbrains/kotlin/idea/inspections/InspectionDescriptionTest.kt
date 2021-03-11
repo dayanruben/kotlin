@@ -1,17 +1,6 @@
 /*
- * Copyright 2010-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.inspections
@@ -28,7 +17,10 @@ import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.UsefulTestCase
 import gnu.trove.THashMap
 import org.jetbrains.kotlin.idea.KotlinPluginUtil
+import org.jetbrains.kotlin.test.JUnit3WithIdeaConfigurationRunner
+import org.junit.runner.RunWith
 
+@RunWith(JUnit3WithIdeaConfigurationRunner::class)
 class InspectionDescriptionTest : LightPlatformTestCase() {
 
     fun testDescriptionsAndShortNames() {
@@ -46,9 +38,11 @@ class InspectionDescriptionTest : LightPlatformTestCase() {
             val shortName = toolWrapper.shortName
             val tool = shortNames[shortName]
             if (tool != null) {
-                errors.append("Short names must be unique: " + shortName + "\n" +
-                              "inspection: '" + desc(tool) + "\n" +
-                              "        and '" + desc(toolWrapper))
+                errors.append(
+                    "Short names must be unique: " + shortName + "\n" +
+                            "inspection: '" + desc(tool) + "\n" +
+                            "        and '" + desc(toolWrapper)
+                )
             }
             shortNames.put(shortName, toolWrapper)
         }
@@ -59,32 +53,36 @@ class InspectionDescriptionTest : LightPlatformTestCase() {
     private fun loadKotlinInspections(): List<InspectionToolWrapper<InspectionProfileEntry, InspectionEP>> {
         return InspectionToolRegistrar.getInstance().createTools().filter {
             it.extension.pluginDescriptor.pluginId == KotlinPluginUtil.KOTLIN_PLUGIN_ID
-        }
+        } as List<InspectionToolWrapper<InspectionProfileEntry, InspectionEP>>
     }
 
     private fun loadKotlinInspectionExtensions() =
-            LocalInspectionEP.LOCAL_INSPECTION.extensions.filter {
-                it.pluginDescriptor.pluginId == KotlinPluginUtil.KOTLIN_PLUGIN_ID
-            }
+        LocalInspectionEP.LOCAL_INSPECTION.extensions.filter {
+            it.pluginDescriptor.pluginId == KotlinPluginUtil.KOTLIN_PLUGIN_ID
+        }
 
     private fun desc(tool: InspectionToolWrapper<InspectionProfileEntry, InspectionEP>): String {
         return tool.toString() + " ('" + tool.descriptionContextClass + "') " +
-               "in " + if (tool.extension == null) null else tool.extension.pluginDescriptor
+                "in " + if (tool.extension == null) null else tool.extension.pluginDescriptor
     }
 
     fun testExtensionPoints() {
         val shortNames = THashMap<String, LocalInspectionEP>()
 
+        @Suppress("DEPRECATION")
         val inspectionEPs = Extensions.getExtensions(LocalInspectionEP.LOCAL_INSPECTION)
+
         val tools = inspectionEPs.size
         val errors = StringBuilder()
         for (ep in inspectionEPs) {
             val shortName = ep.getShortName()
             val ep1 = shortNames[shortName]
             if (ep1 != null) {
-                errors.append("Short names must be unique: '" + shortName + "':\n" +
-                              "inspection: '" + ep1.implementationClass + "' in '" + ep1.pluginDescriptor + "'\n" +
-                              ";       and '" + ep.implementationClass + "' in '" + ep.pluginDescriptor + "'")
+                errors.append(
+                    "Short names must be unique: '" + shortName + "':\n" +
+                            "inspection: '" + ep1.implementationClass + "' in '" + ep1.pluginDescriptor + "'\n" +
+                            ";       and '" + ep.implementationClass + "' in '" + ep.pluginDescriptor + "'"
+                )
             }
             shortNames.put(shortName, ep)
         }
@@ -112,8 +110,10 @@ class InspectionDescriptionTest : LightPlatformTestCase() {
                 checkValue(failMessages, toolName, "suppressId", ep.id, ep.getShortName(), tool.id)
                 checkValue(failMessages, toolName, "alternateId", ep.alternativeId, null, tool.alternativeID)
                 checkValue(failMessages, toolName, "shortName", ep.getShortName(), null, tool.shortName)
+                checkValue(failMessages, toolName, "runForWholeFile", null, "false", tool.runForWholeFile().toString())
             }
         }
+
         UsefulTestCase.assertEmpty(StringUtil.join(failMessages, "\n"), failMessages)
     }
 
@@ -128,18 +128,19 @@ class InspectionDescriptionTest : LightPlatformTestCase() {
         UsefulTestCase.assertEmpty(failMessages.joinToString("\n"), failMessages)
     }
 
-    private fun checkValue(failMessages: MutableCollection<String>,
-                           toolName: String,
-                           attributeName: String,
-                           xmlValue: String?,
-                           defaultXmlValue: String?,
-                           javaValue: String?) {
+    private fun checkValue(
+        failMessages: MutableCollection<String>,
+        toolName: String,
+        attributeName: String,
+        xmlValue: String?,
+        defaultXmlValue: String?,
+        javaValue: String?
+    ) {
         if (StringUtil.isNotEmpty(xmlValue)) {
             if (javaValue != xmlValue) {
                 failMessages.add("$toolName: mismatched $attributeName. Xml: $xmlValue; Java: $javaValue")
             }
-        }
-        else if (StringUtil.isNotEmpty(javaValue)) {
+        } else if (StringUtil.isNotEmpty(javaValue)) {
             if (javaValue != defaultXmlValue) {
                 failMessages.add("$toolName: $attributeName overridden in wrong way, will work in tests only. Please set appropriate $attributeName value in XML ($javaValue)")
             }

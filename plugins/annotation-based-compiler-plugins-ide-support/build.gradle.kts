@@ -4,8 +4,6 @@ plugins {
     id("jps-compatible")
 }
 
-jvmTarget = "1.6"
-
 dependencies {
     compile(project(":compiler:util"))
     compile(project(":compiler:frontend"))
@@ -18,7 +16,8 @@ dependencies {
     excludeInAndroidStudio(rootProject) { compileOnly(intellijPluginDep("maven")) }
     compileOnly(intellijPluginDep("gradle"))
     compileOnly(intellijDep())
- }
+    compileOnly(project(":idea:kotlin-gradle-tooling"))
+}
 
 sourceSets {
     "main" { projectDefault() }

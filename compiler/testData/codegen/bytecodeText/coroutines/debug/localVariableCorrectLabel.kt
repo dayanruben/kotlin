@@ -10,12 +10,17 @@ fun main(args: Array<String>) {
     println(s.toList())
 }
 
-@UseExperimental(ExperimentalTypeInference::class)
+@OptIn(ExperimentalTypeInference::class)
 @BuilderInference
 suspend fun SequenceScope<Int>.awaitSeq(): Int = 42
 
-// 1 LOCALVARIABLE a I L19 L23 3
-// 1 LINENUMBER 8 L19
-// Adding ignore flags below the test since the test relies on line numbers.
-// IGNORE_BACKEND: JVM_IR
+// 1 LINENUMBER 9 L19
 
+// JVM_IR_TEMPLATES
+// 1 LOCALVARIABLE a I L[0-9]+ L4
+
+// JVM_TEMPLATES
+// 1 LOCALVARIABLE a I L[0-9]+ L19
+// TODO: Old BE generates LINENUMBER label after suspension point, unlike JVM_BE
+
+// IGNORE_BACKEND_FIR: JVM_IR

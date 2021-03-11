@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtFile
@@ -30,14 +31,13 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.*
 
 class MakeConstructorParameterPropertyFix(
-        element: KtParameter, private val kotlinValVar: KotlinValVar, className: String?
+    element: KtParameter, private val kotlinValVar: KotlinValVar, className: String?
 ) : KotlinQuickFixAction<KtParameter>(element) {
-    override fun getFamilyName() = "Make constructor parameter a property"
+    override fun getFamilyName() = KotlinBundle.message("make.constructor.parameter.a.property.0", "")
 
-    private val suffix = if (className != null) " in class '$className'" else ""
+    private val suffix = if (className != null) KotlinBundle.message("in.class.0", className) else ""
 
-    override fun getText() =
-            "Make constructor parameter a property$suffix"
+    override fun getText() = KotlinBundle.message("make.constructor.parameter.a.property.0", suffix)
 
     override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean {
         val element = element ?: return false
@@ -46,7 +46,7 @@ class MakeConstructorParameterPropertyFix(
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return
-        element.addBefore(kotlinValVar.createKeyword(KtPsiFactory(project))!!, element.firstChild)
+        element.addBefore(kotlinValVar.createKeyword(KtPsiFactory(project))!!, element.nameIdentifier)
         element.addModifier(KtTokens.PRIVATE_KEYWORD)
         element.visibilityModifier()?.let { private ->
             editor?.apply {
@@ -74,6 +74,6 @@ class MakeConstructorParameterPropertyFix(
 
 fun KtNameReferenceExpression.getPrimaryConstructorParameterWithSameName(): KtParameter? {
     return nonStaticOuterClasses()
-            .mapNotNull { it.primaryConstructor?.valueParameters?.firstOrNull { it.name == getReferencedName() } }
-            .firstOrNull()
+        .mapNotNull { it.primaryConstructor?.valueParameters?.firstOrNull { it.name == getReferencedName() } }
+        .firstOrNull()
 }

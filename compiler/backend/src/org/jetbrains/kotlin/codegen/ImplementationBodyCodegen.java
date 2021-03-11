@@ -1,6 +1,6 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.codegen;
@@ -43,6 +43,7 @@ import org.jetbrains.kotlin.resolve.calls.callUtil.CallUtilKt;
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall;
 import org.jetbrains.kotlin.resolve.calls.model.VariableAsFunctionResolvedCall;
 import org.jetbrains.kotlin.resolve.descriptorUtil.DescriptorUtilsKt;
+import org.jetbrains.kotlin.resolve.jvm.annotations.JvmAnnotationUtilKt;
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.JvmDeclarationOrigin;
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.JvmDeclarationOriginKt;
 import org.jetbrains.kotlin.resolve.jvm.jvmSignature.JvmClassSignature;
@@ -62,13 +63,20 @@ import org.jetbrains.org.objectweb.asm.commons.Method;
 
 import java.util.*;
 
-import static org.jetbrains.kotlin.codegen.AsmUtil.*;
+import static org.jetbrains.kotlin.builtins.StandardNames.ENUM_VALUES;
+import static org.jetbrains.kotlin.builtins.StandardNames.ENUM_VALUE_OF;
+import static org.jetbrains.kotlin.codegen.AsmUtil.CAPTURED_THIS_FIELD;
 import static org.jetbrains.kotlin.codegen.CodegenUtilKt.isGenericToArray;
 import static org.jetbrains.kotlin.codegen.CodegenUtilKt.isNonGenericToArray;
+import static org.jetbrains.kotlin.codegen.DescriptorAsmUtil.*;
 import static org.jetbrains.kotlin.codegen.JvmCodegenUtil.*;
 import static org.jetbrains.kotlin.codegen.binding.CodegenBinding.enumEntryNeedSubclass;
-import static org.jetbrains.kotlin.codegen.inline.InlineCodegenUtils2Kt.initDefaultSourceMappingIfNeeded;
-import static org.jetbrains.kotlin.load.java.JvmAbi.*;
+import static org.jetbrains.kotlin.codegen.binding.CodegenBinding.getDelegatedLocalVariableMetadata;
+import static org.jetbrains.kotlin.load.java.DescriptorsJvmAbiUtil.*;
+import static org.jetbrains.kotlin.load.java.JvmAbi.HIDDEN_INSTANCE_FIELD;
+import static org.jetbrains.kotlin.load.java.JvmAbi.INSTANCE_FIELD;
+import static org.jetbrains.kotlin.resolve.BindingContext.INDEXED_LVALUE_GET;
+import static org.jetbrains.kotlin.resolve.BindingContext.INDEXED_LVALUE_SET;
 import static org.jetbrains.kotlin.resolve.BindingContextUtils.getNotNull;
 import static org.jetbrains.kotlin.resolve.DescriptorToSourceUtils.descriptorToDeclaration;
 import static org.jetbrains.kotlin.resolve.DescriptorUtils.*;
@@ -80,7 +88,7 @@ import static org.jetbrains.org.objectweb.asm.Opcodes.*;
 import static org.jetbrains.org.objectweb.asm.Type.getObjectType;
 
 public class ImplementationBodyCodegen extends ClassBodyCodegen {
-    private static final String ENUM_VALUES_FIELD_NAME = "$VALUES";
+    public static final String ENUM_VALUES_FIELD_NAME = "$VALUES";
     private Type superClassAsmType;
     @NotNull
     private SuperClassInfo superClassInfo;
@@ -118,7 +126,8 @@ public class ImplementationBodyCodegen extends ClassBodyCodegen {
                 descriptor, extension,
                 parentCodegen instanceof ImplementationBodyCodegen
                 ? ((ImplementationBodyCodegen) parentCodegen).serializer
-                : DescriptorSerializer.createTopLevel(extension)
+                : DescriptorSerializer.createTopLevel(extension),
+                state.getProject()
         );
 
         this.constructorCodegen = new ConstructorCodegen(
@@ -213,6 +222,10 @@ public class ImplementationBodyCodegen extends ClassBodyCodegen {
             access |= ACC_ENUM;
         }
 
+        if (JvmAnnotationUtilKt.isJvmRecord(descriptor)) {
+            access |= VersionIndependentOpcodes.ACC_RECORD;
+        }
+
         v.defineClass(
                 myClass.getPsiOrParent(),
                 state.getClassFileVersion(),
@@ -225,11 +238,11 @@ public class ImplementationBodyCodegen extends ClassBodyCodegen {
 
         v.visitSource(myClass.getContainingKtFile().getName(), null);
 
-        initDefaultSourceMappingIfNeeded(context, this, state);
+        initDefaultSourceMappingIfNeeded();
 
         writeEnclosingMethod();
 
-        AnnotationCodegen.forClass(v.getVisitor(), this, state).genAnnotations(descriptor, null);
+        AnnotationCodegen.forClass(v.getVisitor(), this, state).genAnnotations(descriptor, null, null);
 
         generateEnumEntries();
     }
@@ -252,7 +265,7 @@ public class ImplementationBodyCodegen extends ClassBodyCodegen {
     @Override
     protected void generateErasedInlineClassIfNeeded() {
         if (!(myClass instanceof KtClass)) return;
-        if (!descriptor.isInline()) return;
+        if (!InlineClassesUtilsKt.isInlineClass(descriptor)) return;
 
         ClassContext erasedInlineClassContext = context.intoWrapperForErasedInlineClass(descriptor, state);
         new ErasedInlineClassBodyCodegen((KtClass) myClass, erasedInlineClassContext, v, state, this).generate();
@@ -261,7 +274,7 @@ public class ImplementationBodyCodegen extends ClassBodyCodegen {
     @Override
     protected void generateUnboxMethodForInlineClass() {
         if (!(myClass instanceof KtClass)) return;
-        if (!descriptor.isInline()) return;
+        if (!InlineClassesUtilsKt.isInlineClass(descriptor)) return;
 
         Type ownerType = typeMapper.mapClass(descriptor);
         ValueParameterDescriptor inlinedValue = InlineClassesUtilsKt.underlyingRepresentation(this.descriptor);
@@ -442,7 +455,7 @@ public class ImplementationBodyCodegen extends ClassBodyCodegen {
         try {
             lookupConstructorExpressionsInClosureIfPresent();
             constructorCodegen.generatePrimaryConstructor(delegationFieldsInfo, superClassAsmType);
-            if (!descriptor.isInline() && !(descriptor instanceof SyntheticClassOrObjectDescriptor)) {
+            if (!InlineClassesUtilsKt.isInlineClass(descriptor) && !(descriptor instanceof SyntheticClassOrObjectDescriptor)) {
                 // Synthetic classes does not have declarations for secondary constructors
                 for (ClassConstructorDescriptor secondaryConstructor : DescriptorUtilsKt.getSecondaryConstructors(descriptor)) {
                     constructorCodegen.generateSecondaryConstructor(secondaryConstructor, superClassAsmType);
@@ -544,7 +557,7 @@ public class ImplementationBodyCodegen extends ClassBodyCodegen {
     }
 
     private void generateFunctionsFromAnyForInlineClasses() {
-        if (!descriptor.isInline()) return;
+        if (!InlineClassesUtilsKt.isInlineClass(descriptor)) return;
         if (!(myClass instanceof KtClassOrObject)) return;
         new FunctionsFromAnyGeneratorImpl(
                 (KtClassOrObject) myClass, bindingContext, descriptor, classAsmType, context, v, state
@@ -769,10 +782,12 @@ public class ImplementationBodyCodegen extends ClassBodyCodegen {
 
         if (isNonCompanionObject(descriptor)) {
             StackValue.Field field = StackValue.createSingletonViaInstance(descriptor, typeMapper, INSTANCE_FIELD);
-            v.newField(JvmDeclarationOriginKt.OtherOriginFromPure(myClass),
-                       ACC_PUBLIC | ACC_STATIC | ACC_FINAL,
-                       field.name, field.type.getDescriptor(), null, null);
-
+            FieldVisitor fv = v.newField(
+                    JvmDeclarationOriginKt.OtherOriginFromPure(myClass),
+                    ACC_PUBLIC | ACC_STATIC | ACC_FINAL,
+                    field.name, field.type.getDescriptor(), null, null
+            );
+            AnnotationCodegen.forField(fv, this, state).visitAnnotation(Type.getDescriptor(NotNull.class), false).visitEnd();
             return;
         }
 
@@ -795,16 +810,14 @@ public class ImplementationBodyCodegen extends ClassBodyCodegen {
                 !properVisibilityForCompanionObjectInstanceField &&
                 (hasPrivateOrProtectedProperVisibility || hasPackagePrivateProperVisibility ||
                  isNonIntrinsicPrivateCompanionObjectInInterface(companionObjectDescriptor));
-        boolean doNotGeneratePublic =
-                properVisibilityForCompanionObjectInstanceField && hasPrivateOrProtectedProperVisibility;
-        int fieldAccessFlags;
-        if (doNotGeneratePublic) {
-            fieldAccessFlags = ACC_STATIC | ACC_FINAL;
+        boolean fieldIsForcedToBePublic =
+                JvmCodegenUtil.isJvmInterface(descriptor) ||
+                !properVisibilityForCompanionObjectInstanceField;
+        int fieldAccessFlags = ACC_STATIC | ACC_FINAL;
+        if (fieldIsForcedToBePublic) {
+            fieldAccessFlags |= ACC_PUBLIC;
         }
         else {
-            fieldAccessFlags = ACC_PUBLIC | ACC_STATIC | ACC_FINAL;
-        }
-        if (properVisibilityForCompanionObjectInstanceField) {
             fieldAccessFlags |= properFieldVisibilityFlag;
         }
         if (fieldShouldBeDeprecated) {
@@ -812,14 +825,17 @@ public class ImplementationBodyCodegen extends ClassBodyCodegen {
         }
         if (properVisibilityForCompanionObjectInstanceField &&
             JvmCodegenUtil.isCompanionObjectInInterfaceNotIntrinsic(companionObjectDescriptor) &&
-            Visibilities.isPrivate(companionObjectDescriptor.getVisibility())) {
+            DescriptorVisibilities.isPrivate(companionObjectDescriptor.getVisibility())) {
             fieldAccessFlags |= ACC_SYNTHETIC;
         }
         StackValue.Field field = StackValue.singleton(companionObjectDescriptor, typeMapper);
-        FieldVisitor fv = v.newField(JvmDeclarationOriginKt.OtherOrigin(companionObject == null ? myClass.getPsiOrParent() : companionObject),
-                                     fieldAccessFlags, field.name, field.type.getDescriptor(), null, null);
+        FieldVisitor fv = v.newField(
+                JvmDeclarationOriginKt.OtherOrigin(companionObject == null ? myClass.getPsiOrParent() : companionObject),
+                fieldAccessFlags, field.name, field.type.getDescriptor(), null, null
+        );
+        AnnotationCodegen.forField(fv, this, state).visitAnnotation(Type.getDescriptor(NotNull.class), false).visitEnd();
         if (fieldShouldBeDeprecated) {
-            AnnotationCodegen.forField(fv, this, state).visitAnnotation("Ljava/lang/Deprecated;", true).visitEnd();
+            AnnotationCodegen.forField(fv, this, state).visitAnnotation(Type.getDescriptor(Deprecated.class), true).visitEnd();
         }
     }
 
@@ -892,19 +908,26 @@ public class ImplementationBodyCodegen extends ClassBodyCodegen {
     }
 
     private void generateCompanionObjectBackingFieldCopies() {
-        if (companionObjectPropertiesToCopy == null) return;
+        if (companionObjectPropertiesToCopy == null || companionObjectPropertiesToCopy.isEmpty()) return;
 
+        boolean isPrivateCompanion =
+                DescriptorVisibilities.isPrivate(
+                        ((ClassDescriptor) companionObjectPropertiesToCopy.get(0).descriptor.getContainingDeclaration()).getVisibility());
+
+        int modifiers = ACC_STATIC | ACC_FINAL | ACC_PUBLIC | (isPrivateCompanion ? ACC_DEPRECATED : 0);
+        List<String> additionalVisibleAnnotations =
+                isPrivateCompanion ? Collections.singletonList(CodegenUtilKt.JAVA_LANG_DEPRECATED) : Collections.emptyList();
         for (PropertyAndDefaultValue info : companionObjectPropertiesToCopy) {
             PropertyDescriptor property = info.descriptor;
 
             Type type = typeMapper.mapType(property);
-            int modifiers = ACC_STATIC | ACC_FINAL | ACC_PUBLIC;
+
             FieldVisitor fv = v.newField(JvmDeclarationOriginKt.Synthetic(DescriptorToSourceUtils.descriptorToDeclaration(property), property),
                                          modifiers, context.getFieldName(property, false),
                                          type.getDescriptor(), typeMapper.mapFieldSignature(property.getType(), property),
                                          info.defaultValue);
 
-            AnnotationCodegen.forField(fv, this, state).genAnnotations(property, type);
+            AnnotationCodegen.forField(fv, this, state).genAnnotations(property, type, null, null, additionalVisibleAnnotations);
 
             //This field are always static and final so if it has constant initializer don't do anything in clinit,
             //field would be initialized via default value in v.newField(...) - see JVM SPEC Ch.4
@@ -912,7 +935,7 @@ public class ImplementationBodyCodegen extends ClassBodyCodegen {
             if (state.getClassBuilderMode().generateBodies && info.defaultValue == null) {
                 ExpressionCodegen codegen = createOrGetClInitCodegen();
                 int companionObjectIndex = putCompanionObjectInLocalVar(codegen);
-                StackValue.local(companionObjectIndex, OBJECT_TYPE).put(OBJECT_TYPE, codegen.v);
+                StackValue.local(companionObjectIndex, OBJECT_TYPE).put(codegen.v);
                 copyFieldFromCompanionObject(property);
             }
         }
@@ -975,7 +998,12 @@ public class ImplementationBodyCodegen extends ClassBodyCodegen {
                         ClassDescriptor classDescriptor = ((ConstructorDescriptor) containingDeclaration).getConstructedClass();
                         if (classDescriptor == ImplementationBodyCodegen.this.descriptor) return;
                     }
-                    lookupInContext(descriptor);
+                    if (lookupInContext(descriptor)) {
+                        if (isDelegatedLocalVariable(descriptor)) {
+                            VariableDescriptor metadata = getDelegatedLocalVariableMetadata((VariableDescriptor) descriptor, bindingContext);
+                            lookupInContext(metadata);
+                        }
+                    }
                 }
             }
 
@@ -998,8 +1026,8 @@ public class ImplementationBodyCodegen extends ClassBodyCodegen {
                 }
             }
 
-            private void lookupInContext(@NotNull DeclarationDescriptor toLookup) {
-                context.lookupInContext(toLookup, StackValue.LOCAL_0, state, true);
+            private boolean lookupInContext(@NotNull DeclarationDescriptor toLookup) {
+                return context.lookupInContext(toLookup, StackValue.LOCAL_0, state, true) != null;
             }
 
             @Override
@@ -1022,6 +1050,22 @@ public class ImplementationBodyCodegen extends ClassBodyCodegen {
             @Override
             public void visitSuperExpression(@NotNull KtSuperExpression expression) {
                 lookupInContext(ExpressionCodegen.getSuperCallLabelTarget(context, expression));
+            }
+
+            @Override
+            public void visitArrayAccessExpression(@NotNull KtArrayAccessExpression expression) {
+                ResolvedCall<FunctionDescriptor> resolvedGetCall = bindingContext.get(INDEXED_LVALUE_GET, expression);
+                if (resolvedGetCall != null) {
+                    ReceiverValue receiver = resolvedGetCall.getDispatchReceiver();
+                    lookupReceiver(receiver);
+                }
+
+                ResolvedCall<FunctionDescriptor> resolvedSetCall = bindingContext.get(INDEXED_LVALUE_SET, expression);
+                if (resolvedSetCall != null) {
+                    ReceiverValue receiver = resolvedSetCall.getDispatchReceiver();
+                    lookupReceiver(receiver);
+                }
+                super.visitArrayAccessExpression(expression);
             }
         };
 
@@ -1065,7 +1109,7 @@ public class ImplementationBodyCodegen extends ClassBodyCodegen {
             int isDeprecated = KotlinBuiltIns.isDeprecated(descriptor) ? ACC_DEPRECATED : 0;
             FieldVisitor fv = v.newField(JvmDeclarationOriginKt.OtherOrigin(enumEntry, descriptor), ACC_PUBLIC | ACC_ENUM | ACC_STATIC | ACC_FINAL | isDeprecated,
                                          descriptor.getName().asString(), classAsmType.getDescriptor(), null, null);
-            AnnotationCodegen.forField(fv, this, state).genAnnotations(descriptor, null);
+            AnnotationCodegen.forField(fv, this, state).genAnnotations(descriptor, null, null);
         }
 
         initializeEnumConstants(enumEntries);
@@ -1154,7 +1198,7 @@ public class ImplementationBodyCodegen extends ClassBodyCodegen {
         if (!fieldInfo.generateField) return;
 
         v.newField(JvmDeclarationOrigin.NO_ORIGIN, ACC_PRIVATE | ACC_FINAL | ACC_SYNTHETIC,
-                   fieldInfo.name, fieldInfo.type.getDescriptor(), /*TODO*/null, null);
+                   fieldInfo.name, fieldInfo.type.getDescriptor(), fieldInfo.genericSignature, null);
     }
 
     private void generateDelegates(

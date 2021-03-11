@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 @file:Suppress("NAMED_ARGUMENTS_NOT_ALLOWED") // for common tests
@@ -32,7 +32,7 @@ class RegexTest {
         assertTrue(p in input)
 
         val first = p.find(input)
-        assertTrue(first != null); first!!
+        assertNotNull(first)
         assertEquals("123", first.value)
 
         val second1 = first.next()!!
@@ -48,11 +48,15 @@ class RegexTest {
 
         val noMatch = last.next()
         assertEquals(null, noMatch)
+
+        assertFailsWith<IndexOutOfBoundsException> { p.find(input, -1) }
+        assertFailsWith<IndexOutOfBoundsException> { p.find(input, input.length + 1) }
+        assertEquals(null, p.find(input, input.length))
     }
 
     @Test fun matchIgnoreCase() {
         for (input in listOf("ascii", "shrödinger"))
-            assertTrue(input.toUpperCase().matches(input.toLowerCase().toRegex(RegexOption.IGNORE_CASE)))
+            assertTrue(input.uppercase().matches(input.lowercase().toRegex(RegexOption.IGNORE_CASE)))
     }
 
     @Test fun matchSequence() {
@@ -67,6 +71,10 @@ class RegexTest {
         assertEquals(expected.drop(1), pattern.findAll(input, startIndex = 3).map { it.value }.toList())
 
         assertEquals(listOf(0..2, 4..6, 8..10), matches.map { it.range }.toList())
+
+        assertFailsWith<IndexOutOfBoundsException> { pattern.findAll(input, -1) }
+        assertFailsWith<IndexOutOfBoundsException> { pattern.findAll(input, input.length + 1) }
+        assertEquals(emptyList(), pattern.findAll(input, input.length).toList())
     }
 
     @Test fun matchAllSequence() {
@@ -76,6 +84,9 @@ class RegexTest {
         assertEquals(input, matches[0].value)
         assertEquals(input, matches.joinToString("") { it.value })
         assertEquals(2, matches.size)
+
+        assertEquals("", pattern.findAll(input, input.length).single().value)
+        assertEquals("", pattern.find(input, input.length)?.value)
     }
 
     @Test fun matchGroups() {

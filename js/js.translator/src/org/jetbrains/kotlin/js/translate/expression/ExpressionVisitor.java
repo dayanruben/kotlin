@@ -23,12 +23,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns;
 import org.jetbrains.kotlin.builtins.functions.FunctionClassDescriptor;
+import org.jetbrains.kotlin.builtins.functions.FunctionClassKind;
 import org.jetbrains.kotlin.config.LanguageVersion;
 import org.jetbrains.kotlin.descriptors.*;
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor;
 import org.jetbrains.kotlin.descriptors.annotations.KotlinRetention;
 import org.jetbrains.kotlin.js.backend.ast.*;
 import org.jetbrains.kotlin.js.backend.ast.metadata.MetadataProperties;
+import org.jetbrains.kotlin.js.backend.ast.metadata.SpecialFunction;
 import org.jetbrains.kotlin.js.naming.NameSuggestion;
 import org.jetbrains.kotlin.js.translate.context.TranslationContext;
 import org.jetbrains.kotlin.js.translate.declaration.ClassTranslator;
@@ -66,7 +68,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.jetbrains.kotlin.descriptors.FindClassInModuleKt.findClassAcrossModuleDependencies;
-import static org.jetbrains.kotlin.js.translate.context.Namer.*;
+import static org.jetbrains.kotlin.js.translate.context.Namer.GET_KCLASS_FROM_EXPRESSION;
+import static org.jetbrains.kotlin.js.translate.context.Namer.getCapturedVarAccessor;
 import static org.jetbrains.kotlin.js.translate.general.Translation.translateAsExpression;
 import static org.jetbrains.kotlin.js.translate.utils.BindingUtils.*;
 import static org.jetbrains.kotlin.js.translate.utils.ErrorReportingUtils.message;
@@ -288,11 +291,17 @@ public final class ExpressionVisitor extends TranslatorVisitor<JsNode> {
     public static JsExpression getObjectKClass(@NotNull TranslationContext context, @Nullable ClassifierDescriptor descriptor) {
         JsExpression primitiveExpression = getPrimitiveClass(context, descriptor);
         if (primitiveExpression != null) return primitiveExpression;
-        return new JsInvocation(context.getReferenceToIntrinsic(GET_KCLASS), UtilsKt.getReferenceToJsClass(descriptor, context));
+
+        // getKClass should be imported as intrinsic when used outside of inline context, otherwise bootstrap fails.
+        // Inside an inline function it should however be marked as SpecialFunction to support T::class when T -> Int (KT-32215)
+        JsName kClassName = context.getNameForIntrinsic(SpecialFunction.GET_KCLASS.getSuggestedName());
+        MetadataProperties.setSpecialFunction(kClassName, SpecialFunction.GET_KCLASS);
+
+        return new JsInvocation(kClassName.makeRef(), UtilsKt.getReferenceToJsClass(descriptor, context));
     }
 
     @Nullable
-    private static JsExpression getPrimitiveClass(@NotNull TranslationContext context, @Nullable ClassifierDescriptor classifierDescriptor) {
+    public static JsExpression getPrimitiveClass(@NotNull TranslationContext context, @Nullable ClassifierDescriptor classifierDescriptor) {
         if (!context.getConfig().isAtLeast(LanguageVersion.KOTLIN_1_2) || findPrimitiveClassesObject(context) == null) return null;
         if (!(classifierDescriptor instanceof ClassDescriptor)) return null;
         ClassDescriptor descriptor = (ClassDescriptor) classifierDescriptor;
@@ -324,7 +333,7 @@ public final class ExpressionVisitor extends TranslatorVisitor<JsNode> {
             default: {
                 if (descriptor instanceof FunctionClassDescriptor) {
                     FunctionClassDescriptor functionClassDescriptor = (FunctionClassDescriptor) descriptor;
-                    if (functionClassDescriptor.getFunctionKind() == FunctionClassDescriptor.Kind.Function) {
+                    if (functionClassDescriptor.getFunctionKind() == FunctionClassKind.Function) {
                         ClassDescriptor primitivesObject = findPrimitiveClassesObject(context);
                         assert primitivesObject != null;
                         FunctionDescriptor function = DescriptorUtils.getFunctionByName(

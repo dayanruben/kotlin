@@ -2,8 +2,9 @@ import java.util.stream.Stream
 
 public final class LambdasKt {
     public static final fun foo() : void {
-        Stream.empty().filter({
-            it.isEmpty()
+        Stream.empty().filter({ var it: java.lang.String ->
+
+            return it.isEmpty()
         })
     }
     public static final fun doSelectItem(@org.jetbrains.annotations.NotNull selectItemFunction: kotlin.jvm.functions.Function0<kotlin.Unit>) : void {
@@ -12,5 +13,9 @@ public final class LambdasKt {
                 <anonymous class>()
         }
         invoke()
+    }
+    public static final fun lambdaInPlaceCall() : void {
+        while (invoke()) {
+        }
     }
 }

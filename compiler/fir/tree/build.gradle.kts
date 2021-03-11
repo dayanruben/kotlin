@@ -1,53 +1,64 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
- */
+import org.jetbrains.kotlin.ideaExt.idea
 
 plugins {
     kotlin("jvm")
     id("jps-compatible")
 }
 
-jvmTarget = "1.6"
-
 dependencies {
-    compile(project(":compiler:frontend.common"))
-    compile(project(":core:descriptors"))
-    compile(project(":compiler:fir:cones"))
-    compile(project(":compiler:ir.tree"))
+    api(project(":compiler:frontend.common"))
+    api(project(":compiler:fir:cones"))
+
     // Necessary only to store bound PsiElement inside FirElement
-    compileOnly(intellijCoreDep()) { includeJars("intellij-core", "annotations") }
+    compileOnly(intellijCoreDep()) { includeJars("intellij-core") }
 }
 
 sourceSets {
     "main" {
         projectDefault()
-        java.srcDir("visitors")
+        this.java.srcDir("gen")
     }
 }
 
 val generatorClasspath by configurations.creating
 
 dependencies {
-    generatorClasspath(project("visitors-generator"))
+    generatorClasspath(project("tree-generator"))
 }
 
-val generateVisitors by tasks.creating(NoDebugJavaExec::class) {
-    val generationRoot = "$projectDir/src/org/jetbrains/kotlin/fir/"
-    val output = "$projectDir/visitors"
+val generationRoot = projectDir.resolve("gen")
 
-    val allSourceFiles = fileTree(generationRoot) {
+val generateTree by tasks.registering(NoDebugJavaExec::class) {
+
+    val generatorRoot = "$projectDir/tree-generator/src/"
+
+    val generatorConfigurationFiles = fileTree(generatorRoot) {
         include("**/*.kt")
     }
 
-    inputs.files(allSourceFiles)
-    outputs.files(output)
+    inputs.files(generatorConfigurationFiles)
+    outputs.dirs(generationRoot)
 
+    args(generationRoot)
+    workingDir = rootDir
     classpath = generatorClasspath
-    args(generationRoot, output)
-    main = "org.jetbrains.kotlin.fir.visitors.generator.VisitorsGeneratorKt"
+    main = "org.jetbrains.kotlin.fir.tree.generator.MainKt"
+    systemProperties["line.separator"] = "\n"
 }
 
 val compileKotlin by tasks
 
-compileKotlin.dependsOn(generateVisitors)
+compileKotlin.dependsOn(generateTree)
+
+tasks.withType<org.jetbrains.kotlin.gradle.dsl.KotlinCompile<*>> {
+    kotlinOptions {
+        freeCompilerArgs += "-Xinline-classes"
+    }
+}
+
+if (kotlinBuildProperties.isInJpsBuildIdeaSync) {
+    apply(plugin = "idea")
+    idea {
+        this.module.generatedSourceDirs.add(generationRoot)
+    }
+}

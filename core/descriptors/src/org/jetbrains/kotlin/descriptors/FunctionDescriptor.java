@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.descriptors;
@@ -54,7 +54,7 @@ public interface FunctionDescriptor extends CallableMemberDescriptor {
 
     @NotNull
     @Override
-    FunctionDescriptor copy(DeclarationDescriptor newOwner, Modality modality, Visibility visibility, Kind kind, boolean copyOverrides);
+    FunctionDescriptor copy(DeclarationDescriptor newOwner, Modality modality, DescriptorVisibility visibility, Kind kind, boolean copyOverrides);
 
     boolean isOperator();
 
@@ -83,7 +83,7 @@ public interface FunctionDescriptor extends CallableMemberDescriptor {
 
         @NotNull
         @Override
-        CopyBuilder<D> setVisibility(@NotNull Visibility visibility);
+        CopyBuilder<D> setVisibility(@NotNull DescriptorVisibility visibility);
 
         @NotNull
         @Override
@@ -105,6 +105,7 @@ public interface FunctionDescriptor extends CallableMemberDescriptor {
         CopyBuilder<D> setTypeParameters(@NotNull List<TypeParameterDescriptor> parameters);
 
         @NotNull
+        @Override
         CopyBuilder<D> setReturnType(@NotNull KotlinType type);
 
         @NotNull
@@ -122,6 +123,7 @@ public interface FunctionDescriptor extends CallableMemberDescriptor {
         CopyBuilder<D> setSignatureChange();
 
         @NotNull
+        @Override
         CopyBuilder<D> setPreserveSourceElement();
 
         @NotNull

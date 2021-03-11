@@ -18,9 +18,9 @@ class A<F> {
     fun <Z : F, W : Z?> bar() {
         // F
         fooInv1<Inv<F>>(Inv<F>())
-        fooInv2<<!UPPER_BOUND_VIOLATED!>Inv<F><!>>(<!NI;TYPE_MISMATCH, NI;TYPE_MISMATCH, NI;TYPE_MISMATCH, NI;TYPE_MISMATCH!>Inv<F>()<!>)
+        fooInv2<<!UPPER_BOUND_VIOLATED!>Inv<F><!>>(Inv<F>())
         fooInv1(Inv<F>())
-        <!OI;TYPE_INFERENCE_UPPER_BOUND_VIOLATED!>fooInv2<!>(<!NI;TYPE_MISMATCH, NI;TYPE_MISMATCH, NI;TYPE_MISMATCH, NI;TYPE_MISMATCH!>Inv<F>()<!>)
+        <!TYPE_INFERENCE_UPPER_BOUND_VIOLATED{OI}!>fooInv2<!>(<!TYPE_MISMATCH{NI}!>Inv<F>()<!>)
 
         fooIn1<In<F?>>(In<F?>())
         fooIn2<In<F?>>(In<F?>())
@@ -33,15 +33,15 @@ class A<F> {
         fooOut2(Out<F>())
 
         // Z
-        fooInv1<<!UPPER_BOUND_VIOLATED!>Inv<Z><!>>(<!NI;TYPE_MISMATCH, NI;TYPE_MISMATCH, NI;TYPE_MISMATCH, NI;TYPE_MISMATCH!>Inv<Z>()<!>)
-        fooInv2<<!UPPER_BOUND_VIOLATED!>Inv<Z><!>>(<!NI;TYPE_MISMATCH, NI;TYPE_MISMATCH, NI;TYPE_MISMATCH, NI;TYPE_MISMATCH!>Inv<Z>()<!>)
-        <!OI;TYPE_INFERENCE_UPPER_BOUND_VIOLATED!>fooInv1<!>(<!NI;TYPE_MISMATCH, NI;TYPE_MISMATCH, NI;TYPE_MISMATCH, NI;TYPE_MISMATCH!>Inv<Z>()<!>)
-        <!OI;TYPE_INFERENCE_UPPER_BOUND_VIOLATED!>fooInv2<!>(<!NI;TYPE_MISMATCH, NI;TYPE_MISMATCH, NI;TYPE_MISMATCH, NI;TYPE_MISMATCH!>Inv<Z>()<!>)
+        fooInv1<<!UPPER_BOUND_VIOLATED!>Inv<Z><!>>(Inv<Z>())
+        fooInv2<<!UPPER_BOUND_VIOLATED!>Inv<Z><!>>(Inv<Z>())
+        <!TYPE_INFERENCE_UPPER_BOUND_VIOLATED{OI}!>fooInv1<!>(<!TYPE_MISMATCH{NI}!>Inv<Z>()<!>)
+        <!TYPE_INFERENCE_UPPER_BOUND_VIOLATED{OI}!>fooInv2<!>(<!TYPE_MISMATCH{NI}!>Inv<Z>()<!>)
 
-        fooIn1<<!UPPER_BOUND_VIOLATED!>In<Z?><!>>(<!NI;TYPE_MISMATCH!>In<Z?>()<!>)
-        fooIn2<<!UPPER_BOUND_VIOLATED!>In<Z?><!>>(<!NI;TYPE_MISMATCH!>In<Z?>()<!>)
-        <!OI;TYPE_INFERENCE_UPPER_BOUND_VIOLATED!>fooIn1<!>(<!NI;TYPE_MISMATCH, NI;TYPE_MISMATCH!>In<Z?>()<!>)
-        <!OI;TYPE_INFERENCE_UPPER_BOUND_VIOLATED!>fooIn2<!>(<!NI;TYPE_MISMATCH, NI;TYPE_MISMATCH!>In<Z?>()<!>)
+        fooIn1<<!UPPER_BOUND_VIOLATED!>In<Z?><!>>(In<Z?>())
+        fooIn2<<!UPPER_BOUND_VIOLATED!>In<Z?><!>>(In<Z?>())
+        <!TYPE_INFERENCE_UPPER_BOUND_VIOLATED{OI}!>fooIn1<!>(<!TYPE_MISMATCH{NI}!>In<Z?>()<!>)
+        <!TYPE_INFERENCE_UPPER_BOUND_VIOLATED{OI}!>fooIn2<!>(<!TYPE_MISMATCH{NI}!>In<Z?>()<!>)
 
         fooOut1<Out<Z>>(Out<Z>())
         fooOut2<Out<Z>>(Out<Z>())
@@ -49,19 +49,19 @@ class A<F> {
         fooOut2(Out<Z>())
 
         // W
-        fooInv1<<!UPPER_BOUND_VIOLATED!>Inv<W><!>>(<!NI;TYPE_MISMATCH, NI;TYPE_MISMATCH, NI;TYPE_MISMATCH, NI;TYPE_MISMATCH, NI;TYPE_MISMATCH!>Inv<W>()<!>)
-        fooInv2<<!UPPER_BOUND_VIOLATED!>Inv<W><!>>(<!NI;TYPE_MISMATCH, NI;TYPE_MISMATCH, NI;TYPE_MISMATCH, NI;TYPE_MISMATCH!>Inv<W>()<!>)
-        <!OI;TYPE_INFERENCE_UPPER_BOUND_VIOLATED!>fooInv1<!>(<!NI;TYPE_MISMATCH, NI;TYPE_MISMATCH, NI;TYPE_MISMATCH, NI;TYPE_MISMATCH, NI;TYPE_MISMATCH!>Inv<W>()<!>)
-        <!OI;TYPE_INFERENCE_UPPER_BOUND_VIOLATED!>fooInv2<!>(<!NI;TYPE_MISMATCH, NI;TYPE_MISMATCH, NI;TYPE_MISMATCH, NI;TYPE_MISMATCH!>Inv<W>()<!>)
+        fooInv1<<!UPPER_BOUND_VIOLATED!>Inv<W><!>>(Inv<W>())
+        fooInv2<<!UPPER_BOUND_VIOLATED!>Inv<W><!>>(Inv<W>())
+        <!TYPE_INFERENCE_UPPER_BOUND_VIOLATED{OI}!>fooInv1<!>(<!TYPE_MISMATCH{NI}!>Inv<W>()<!>)
+        <!TYPE_INFERENCE_UPPER_BOUND_VIOLATED{OI}!>fooInv2<!>(<!TYPE_MISMATCH{NI}!>Inv<W>()<!>)
 
-        fooIn1<<!UPPER_BOUND_VIOLATED!>In<W?><!>>(<!NI;TYPE_MISMATCH!>In<W?>()<!>)
-        fooIn2<<!UPPER_BOUND_VIOLATED!>In<W?><!>>(<!NI;TYPE_MISMATCH!>In<W?>()<!>)
-        <!OI;TYPE_INFERENCE_UPPER_BOUND_VIOLATED!>fooIn1<!>(<!NI;TYPE_MISMATCH, NI;TYPE_MISMATCH!>In<W?>()<!>)
-        <!OI;TYPE_INFERENCE_UPPER_BOUND_VIOLATED!>fooIn2<!>(<!NI;TYPE_MISMATCH, NI;TYPE_MISMATCH!>In<W?>()<!>)
+        fooIn1<<!UPPER_BOUND_VIOLATED!>In<W?><!>>(In<W?>())
+        fooIn2<<!UPPER_BOUND_VIOLATED!>In<W?><!>>(In<W?>())
+        <!TYPE_INFERENCE_UPPER_BOUND_VIOLATED{OI}!>fooIn1<!>(<!TYPE_MISMATCH{NI}!>In<W?>()<!>)
+        <!TYPE_INFERENCE_UPPER_BOUND_VIOLATED{OI}!>fooIn2<!>(<!TYPE_MISMATCH{NI}!>In<W?>()<!>)
 
-        fooOut1<<!UPPER_BOUND_VIOLATED!>Out<W><!>>(<!NI;TYPE_MISMATCH!>Out<W>()<!>)
+        fooOut1<<!UPPER_BOUND_VIOLATED!>Out<W><!>>(Out<W>())
         fooOut2<Out<W>>(Out<W>())
-        <!OI;TYPE_INFERENCE_UPPER_BOUND_VIOLATED!>fooOut1<!>(<!NI;TYPE_MISMATCH, NI;TYPE_MISMATCH!>Out<W>()<!>)
+        <!TYPE_INFERENCE_UPPER_BOUND_VIOLATED{OI}!>fooOut1<!>(<!TYPE_MISMATCH{NI}!>Out<W>()<!>)
         fooOut2(Out<W>())
     }
 }

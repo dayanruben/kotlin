@@ -1,4 +1,3 @@
-// IGNORE_BACKEND: JS_IR
 // EXPECTED_REACHABLE_NODES: 1294
 // LANGUAGE_VERSION: 1.2
 // WITH_RUNTIME
@@ -8,6 +7,7 @@ fun deinitialize(foo: dynamic) {
 }
 
 class Foo {
+    @JsName("bar")
     lateinit var bar: String
 
     fun test(): String {

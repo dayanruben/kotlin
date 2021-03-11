@@ -1,8 +1,10 @@
 // IGNORE_BACKEND: JS_IR
+// IGNORE_BACKEND: JS_IR_ES6
 // TODO: muted automatically, investigate should it be ran for JS or not
 // IGNORE_BACKEND: JS, NATIVE
 
 // WITH_REFLECT
+package test
 
 import kotlin.reflect.full.createType
 import kotlin.reflect.KClass
@@ -22,9 +24,9 @@ fun box(): String {
     fun KClass<*>.inv() = KTypeProjection.invariant(this.createType())
 
     val type = A.B.C::class.createType(listOf(Long::class.inv(), Double::class.inv(), Float::class.inv(), Int::class.inv()))
-    assertEquals("A<kotlin.Int>.B<kotlin.Double, kotlin.Float>.C<kotlin.Long>", type.toString())
+    assertEquals("test.A<kotlin.Int>.B<kotlin.Double, kotlin.Float>.C<kotlin.Long>", type.toString())
 
-    assertEquals("A.D", A.D::class.createType().toString())
+    assertEquals("test.A.D", A.D::class.createType().toString())
 
     return "OK"
 }

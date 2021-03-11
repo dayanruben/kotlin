@@ -1,17 +1,6 @@
 /*
- * Copyright 2010-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.search
@@ -28,10 +17,13 @@ import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.test.JUnit3WithIdeaConfigurationRunner
 import org.junit.Assert
+import org.junit.runner.RunWith
 import java.io.File
 
-class KotlinReferencesSearchTest(): AbstractSearcherTest() {
+@RunWith(JUnit3WithIdeaConfigurationRunner::class)
+class KotlinReferencesSearchTest() : AbstractSearcherTest() {
     override fun getTestDataPath(): String {
         return File(PluginTestCaseBase.getTestDataPathBase(), "/search/references").path + File.separator
     }
@@ -69,7 +61,7 @@ class KotlinReferencesSearchTest(): AbstractSearcherTest() {
     // workaround for KT-9788 AssertionError from backand when we read field from inline function
     private val myFixtureProxy: JavaCodeInsightTestFixture get() = myFixture
 
-    private inline fun <reified T: PsiElement> doTest(): List<PsiReference> {
+    private inline fun <reified T : PsiElement> doTest(): List<PsiReference> {
         val psiFile = myFixtureProxy.configureByFile(fileName)
         val func = myFixtureProxy.elementAtCaret.getParentOfType<T>(false)!!
         val refs = ReferencesSearch.search(func).findAll().sortedBy { it.element.textRange.startOffset }
@@ -79,8 +71,7 @@ class KotlinReferencesSearchTest(): AbstractSearcherTest() {
             ExpressionsOfTypeProcessor.mode = ExpressionsOfTypeProcessor.Mode.PLAIN_WHEN_NEEDED
             val localRefs = ReferencesSearch.search(func, LocalSearchScope(psiFile)).findAll()
             Assert.assertEquals(refs.size, localRefs.size)
-        }
-        finally {
+        } finally {
             ExpressionsOfTypeProcessor.mode = ExpressionsOfTypeProcessor.Mode.ALWAYS_SMART
         }
 

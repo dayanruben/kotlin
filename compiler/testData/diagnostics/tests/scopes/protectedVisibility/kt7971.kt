@@ -1,4 +1,5 @@
 // !CHECK_TYPE
+// !LANGUAGE: -ProhibitProtectedCallFromInline
 // FILE: module1/AbstractModule.java
 package module1;
 
@@ -10,6 +11,8 @@ public abstract class AbstractModule<S> {
 package module2
 
 import module1.*
+import checkType
+import _
 
 fun <T> javaClass(): Class<T> = null!!
 

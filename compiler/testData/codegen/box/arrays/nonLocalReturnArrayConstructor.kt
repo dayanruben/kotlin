@@ -1,4 +1,5 @@
-// IGNORE_BACKEND: JVM_IR
+// DONT_TARGET_EXACT_BACKEND: WASM
+// WASM_MUTE_REASON: UNIT_ISSUES
 typealias ArrayS = Array<String>
 
 fun testArray() {

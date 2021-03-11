@@ -1,23 +1,11 @@
 /*
- * Copyright 2010-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.decompiler.navigation
 
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
+import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.navigation.NavigationTestUtils
@@ -32,17 +20,15 @@ abstract class AbstractNavigateToLibraryTest : KotlinLightCodeInsightFixtureTest
     abstract val expectedFileExt: String
 
     protected fun doTest(path: String) {
-        myFixture.configureByFile(path)
-        NavigationChecker.checkAnnotatedCode(file, File(path.replace(".kt", expectedFileExt)))
+        myFixture.configureByFile(fileName())
+        val pathOfExpect = path.replace(Regex("\\.kt|\\.java"), expectedFileExt)
+        NavigationChecker.checkAnnotatedCode(file, File(pathOfExpect))
     }
 
     override fun tearDown() {
         SourceNavigationHelper.setForceResolve(false)
         super.tearDown()
     }
-
-    override fun getTestDataPath(): String =
-        KotlinTestUtils.getHomeDirectory() + File.separator
 }
 
 abstract class AbstractNavigateToDecompiledLibraryTest : AbstractNavigateToLibraryTest() {
@@ -69,10 +55,22 @@ abstract class AbstractNavigateToLibrarySourceTest : AbstractNavigateToLibraryTe
     }
 }
 
+abstract class AbstractNavigateJavaToLibrarySourceTest : AbstractNavigateToLibraryTest() {
+    override val expectedFileExt: String get() = ".source.expected"
+
+    override fun getProjectDescriptor(): KotlinLightProjectDescriptor = PROJECT_DESCRIPTOR
+
+    protected companion object {
+        val PROJECT_DESCRIPTOR = SdkAndMockLibraryProjectDescriptor(
+            PluginTestCaseBase.getTestDataPathBase() + "/decompiler/navigation/fromJavaSource", true
+        )
+    }
+}
+
 abstract class AbstractNavigateToLibrarySourceTestWithJS : AbstractNavigateToLibrarySourceTest() {
     override fun getProjectDescriptor(): KotlinLightProjectDescriptor = KotlinMultiModuleProjectDescriptor(
         "AbstractNavigateToLibrarySourceTestWithJS",
-        AbstractNavigateToLibrarySourceTest.PROJECT_DESCRIPTOR,
+        PROJECT_DESCRIPTOR,
         KotlinStdJSProjectDescriptor
     )
 }
@@ -82,21 +80,19 @@ class NavigationChecker(val file: PsiFile, val referenceTargetChecker: (PsiEleme
         return NavigationTestUtils.getNavigateElementsText(file.project, collectInterestingNavigationElements())
     }
 
-    private fun collectInterestingNavigationElements() =
-            collectInterestingReferences().map {
-                val target = it.resolve()
-                TestCase.assertNotNull(target)
-                target!!.navigationElement
-            }
+    private fun collectInterestingNavigationElements() = collectInterestingReferences().map {
+        val target = it.resolve()
+        TestCase.assertNotNull(target)
+        target!!.navigationElement
+    }
 
-    private fun collectInterestingReferences(): Collection<KtReference> {
-        val referenceContainersToReferences = LinkedHashMap<PsiElement, KtReference>()
-        for (offset in 0..file.textLength - 1) {
-            val ref = file.findReferenceAt(offset)
-            val refs = when (ref) {
-                is KtReference -> listOf(ref)
+    private fun collectInterestingReferences(): Collection<PsiReference> {
+        val referenceContainersToReferences = LinkedHashMap<PsiElement, PsiReference>()
+        for (offset in 0 until file.textLength) {
+            val refs = when (val ref = file.findReferenceAt(offset)) {
+                is KtReference, is PsiReferenceExpression, is PsiJavaCodeReferenceElement -> listOf(ref)
                 is PsiMultiReference -> ref.references.filterIsInstance<KtReference>()
-                else -> emptyList<KtReference>()
+                else -> emptyList()
             }
 
             refs.forEach { referenceContainersToReferences.addReference(it) }
@@ -104,7 +100,7 @@ class NavigationChecker(val file: PsiFile, val referenceTargetChecker: (PsiEleme
         return referenceContainersToReferences.values
     }
 
-    private fun MutableMap<PsiElement, KtReference>.addReference(ref: KtReference) {
+    private fun MutableMap<PsiElement, PsiReference>.addReference(ref: PsiReference) {
         if (containsKey(ref.element)) return
         val target = ref.resolve() ?: return
 

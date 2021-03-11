@@ -15,8 +15,11 @@
 -dontwarn org.bouncycastle.**
 -dontwarn org.apache.ivy.ant.**
 -dontwarn kotlin.annotations.jvm.**
+# hopefully temporarily, for coroutines
+-dontwarn kotlin.time.**
 
 -keep class org.jetbrains.kotlin.mainKts.** { *; }
 -keep class kotlin.script.experimental.** { *; }
 -keep class org.jetbrains.kotlin.script.util.impl.PathUtilKt { *; }
+-keep class org.apache.ivy.plugins.** { *; }
 

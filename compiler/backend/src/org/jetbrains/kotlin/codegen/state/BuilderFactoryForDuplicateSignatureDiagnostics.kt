@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.codegen.state
@@ -10,7 +10,6 @@ import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.codegen.ClassBuilderFactory
 import org.jetbrains.kotlin.codegen.ClassBuilderMode
 import org.jetbrains.kotlin.codegen.SignatureCollectingClassBuilderFactory
-import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor.Kind.DELEGATION
@@ -24,6 +23,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.overriddenTreeUniqueAsSequenc
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.*
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.utils.addIfNotNull
+import org.jetbrains.org.objectweb.asm.commons.Method
 import java.util.*
 
 private val EXTERNAL_SOURCES_KINDS = arrayOf(
@@ -50,15 +50,16 @@ class BuilderFactoryForDuplicateSignatureDiagnostics(
     private val diagnostics: DiagnosticSink,
     moduleName: String,
     languageVersionSettings: LanguageVersionSettings,
+    useOldInlineClassesManglingScheme: Boolean,
     shouldGenerate: (JvmDeclarationOrigin) -> Boolean,
-    isIrBackend: Boolean
 ) : SignatureCollectingClassBuilderFactory(builderFactory, shouldGenerate) {
 
-    // Avoid errors when some classes are not loaded for some reason
-    private val typeMapper = KotlinTypeMapper(
-        bindingContext, ClassBuilderMode.LIGHT_CLASSES, IncompatibleClassTracker.DoNothing, moduleName, JvmTarget.DEFAULT,
-        languageVersionSettings, isIrBackend
-    )
+    private val mapAsmMethod: (FunctionDescriptor) -> Method = KotlinTypeMapper(
+        // Avoid errors when some classes are not loaded for some reason
+        bindingContext, ClassBuilderMode.LIGHT_CLASSES, moduleName, languageVersionSettings, isIrBackend = false,
+        useOldInlineClassesManglingScheme = useOldInlineClassesManglingScheme
+    )::mapAsmMethod
+
     private val reportDiagnosticsTasks = ArrayList<() -> Unit>()
 
     fun reportDiagnostics() {
@@ -203,7 +204,7 @@ class BuilderFactoryForDuplicateSignatureDiagnostics(
         fun processMember(member: DeclarationDescriptor?) {
             if (member !is CallableMemberDescriptor) return
             // a member of super is not visible: no override
-            if (member.visibility == Visibilities.INVISIBLE_FAKE) return
+            if (member.visibility == DescriptorVisibilities.INVISIBLE_FAKE) return
             // if a signature clashes with a SAM-adapter or something like that, there's no harm
             if (isOrOverridesSamAdapter(member)) return
 
@@ -232,7 +233,7 @@ class BuilderFactoryForDuplicateSignatureDiagnostics(
         descriptor.getParentJavaStaticClassScope()?.run {
             getContributedDescriptors(DescriptorKindFilter.FUNCTIONS)
                     .filter {
-                        it is FunctionDescriptor && Visibilities.isVisibleIgnoringReceiver(it, descriptor)
+                        it is FunctionDescriptor && DescriptorVisibilities.isVisibleIgnoringReceiver(it, descriptor)
                     }
                     .forEach(::processMember)
         }
@@ -241,7 +242,7 @@ class BuilderFactoryForDuplicateSignatureDiagnostics(
     }
 
     private fun FunctionDescriptor.asRawSignature() =
-        with(typeMapper.mapAsmMethod(this)) {
+        with(mapAsmMethod(this)) {
             RawSignature(name, descriptor, MemberKind.METHOD)
         }
 

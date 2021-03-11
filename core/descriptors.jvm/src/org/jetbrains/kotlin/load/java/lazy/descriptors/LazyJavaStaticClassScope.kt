@@ -16,6 +16,7 @@
 
 package org.jetbrains.kotlin.load.java.lazy.descriptors
 
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
@@ -29,15 +30,14 @@ import org.jetbrains.kotlin.load.java.structure.JavaClass
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.DescriptorFactory.createEnumValueOfMethod
 import org.jetbrains.kotlin.resolve.DescriptorFactory.createEnumValuesMethod
-import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.MemberScope
 import org.jetbrains.kotlin.utils.DFS
 
 class LazyJavaStaticClassScope(
-        c: LazyJavaResolverContext,
-        private val jClass: JavaClass,
-        override val ownerDescriptor: LazyJavaClassDescriptor
+    c: LazyJavaResolverContext,
+    private val jClass: JavaClass,
+    override val ownerDescriptor: LazyJavaClassDescriptor
 ) : LazyJavaStaticScope(c) {
 
     override fun computeMemberIndex() = ClassDeclaredMemberIndex(jClass) { it.isStatic }
@@ -46,7 +46,7 @@ class LazyJavaStaticClassScope(
         declaredMemberIndex().getMethodNames().toMutableSet().apply {
             addAll(ownerDescriptor.getParentJavaStaticClassScope()?.getFunctionNames().orEmpty())
             if (jClass.isEnum) {
-                addAll(listOf(DescriptorUtils.ENUM_VALUE_OF, DescriptorUtils.ENUM_VALUES))
+                addAll(listOf(StandardNames.ENUM_VALUE_OF, StandardNames.ENUM_VALUES))
             }
         }
 
@@ -64,12 +64,19 @@ class LazyJavaStaticClassScope(
 
     override fun computeNonDeclaredFunctions(result: MutableCollection<SimpleFunctionDescriptor>, name: Name) {
         val functionsFromSupertypes = getStaticFunctionsFromJavaSuperClasses(name, ownerDescriptor)
-        result.addAll(resolveOverridesForStaticMembers(name, functionsFromSupertypes, result, ownerDescriptor, c.components.errorReporter))
+        result.addAll(resolveOverridesForStaticMembers(
+            name,
+            functionsFromSupertypes,
+            result,
+            ownerDescriptor,
+            c.components.errorReporter,
+            c.components.kotlinTypeChecker.overridingUtil
+        ))
 
         if (jClass.isEnum) {
             when (name) {
-                DescriptorUtils.ENUM_VALUE_OF -> result.add(createEnumValueOfMethod(ownerDescriptor))
-                DescriptorUtils.ENUM_VALUES -> result.add(createEnumValuesMethod(ownerDescriptor))
+                StandardNames.ENUM_VALUE_OF -> result.add(createEnumValueOfMethod(ownerDescriptor))
+                StandardNames.ENUM_VALUES -> result.add(createEnumValuesMethod(ownerDescriptor))
             }
         }
     }
@@ -80,15 +87,24 @@ class LazyJavaStaticClassScope(
         }
 
         if (result.isNotEmpty()) {
-            result.addAll(resolveOverridesForStaticMembers(
-                    name, propertiesFromSupertypes, result, ownerDescriptor, c.components.errorReporter
-            ))
-        }
-        else {
+            result.addAll(
+                resolveOverridesForStaticMembers(
+                    name,
+                    propertiesFromSupertypes,
+                    result,
+                    ownerDescriptor,
+                    c.components.errorReporter,
+                    c.components.kotlinTypeChecker.overridingUtil
+                )
+            )
+        } else {
             result.addAll(propertiesFromSupertypes.groupBy {
                 it.realOriginal
             }.flatMap {
-                resolveOverridesForStaticMembers(name, it.value, result, ownerDescriptor, c.components.errorReporter)
+                resolveOverridesForStaticMembers(
+                    name, it.value, result, ownerDescriptor, c.components.errorReporter,
+                    c.components.kotlinTypeChecker.overridingUtil
+                )
             })
         }
     }
@@ -99,14 +115,14 @@ class LazyJavaStaticClassScope(
     }
 
     private fun <R> flatMapJavaStaticSupertypesScopes(
-            root: ClassDescriptor,
-            result: MutableSet<R>,
-            onJavaStaticScope: (MemberScope) -> Collection<R>
+        root: ClassDescriptor,
+        result: MutableSet<R>,
+        onJavaStaticScope: (MemberScope) -> Collection<R>
     ): Set<R> {
         DFS.dfs(listOf(root),
                 {
-                    it.typeConstructor.supertypes.asSequence().mapNotNull {
-                        supertype -> supertype.constructor.declarationDescriptor as? ClassDescriptor
+                    it.typeConstructor.supertypes.asSequence().mapNotNull { supertype ->
+                        supertype.constructor.declarationDescriptor as? ClassDescriptor
                     }.asIterable()
                 },
                 object : DFS.AbstractNodeHandler<ClassDescriptor, Unit>() {

@@ -1,23 +1,14 @@
 /*
- * Copyright 2010-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.intentions.branchedTransformations
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.KtNodeTypes
@@ -32,12 +23,15 @@ import org.jetbrains.kotlin.idea.intentions.replaceFirstReceiver
 import org.jetbrains.kotlin.idea.refactoring.inline.KotlinInlineValHandler
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.KotlinIntroduceVariableHandler
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.resolve.frontendService
+import org.jetbrains.kotlin.idea.resolve.getDataFlowValueFactory
 import org.jetbrains.kotlin.idea.util.getResolutionScope
+import org.jetbrains.kotlin.idea.util.textRangeIn
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
@@ -45,7 +39,6 @@ import org.jetbrains.kotlin.resolve.calls.callUtil.getType
 import org.jetbrains.kotlin.resolve.calls.resolvedCallUtil.getExplicitReceiverValue
 import org.jetbrains.kotlin.resolve.calls.resolvedCallUtil.getImplicitReceiverValue
 import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowValue
-import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowValueFactory
 import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.resolve.scopes.utils.findVariable
 import org.jetbrains.kotlin.types.TypeUtils
@@ -131,8 +124,7 @@ fun KtExpression.convertToIfStatement(condition: KtExpression, thenClause: KtExp
 
 fun KtIfExpression.introduceValueForCondition(occurrenceInThenClause: KtExpression, editor: Editor?) {
     val project = this.project
-    val condition = condition
-    val occurrenceInConditional = when (condition) {
+    val occurrenceInConditional = when (val condition = condition) {
         is KtBinaryExpression -> condition.left
         is KtIsExpression -> condition.leftHandSide
         else -> throw AssertionError("Only binary / is expressions are supported here: ${condition?.text}")
@@ -146,7 +138,7 @@ fun KtIfExpression.introduceValueForCondition(occurrenceInThenClause: KtExpressi
     )
 }
 
-fun KtNameReferenceExpression.inlineIfDeclaredLocallyAndOnlyUsedOnceWithPrompt(editor: Editor?) {
+fun KtNameReferenceExpression.inlineIfDeclaredLocallyAndOnlyUsedOnce(editor: Editor?, withPrompt: Boolean) {
     val declaration = this.mainReference.resolve() as? KtProperty ?: return
 
     val enclosingElement = KtPsiUtil.getEnclosingElementForLocalDeclaration(declaration)
@@ -157,20 +149,31 @@ fun KtNameReferenceExpression.inlineIfDeclaredLocallyAndOnlyUsedOnceWithPrompt(e
 
     val references = ReferencesSearch.search(declaration, scope).findAll()
     if (references.size == 1) {
-        KotlinInlineValHandler().inlineElement(this.project, editor, declaration)
+        if (!ApplicationManager.getApplication().isUnitTestMode) {
+            ApplicationManager.getApplication().invokeLater {
+                val handler = KotlinInlineValHandler(withPrompt)
+                if (declaration.isValid && handler.canInlineElement(declaration)) {
+                    TransactionGuard.getInstance().submitTransactionAndWait {
+                        handler.inlineElement(this.project, editor, declaration)
+                    }
+                }
+            }
+        } else {
+            KotlinInlineValHandler(withPrompt).inlineElement(this.project, editor, declaration)
+        }
     }
 }
 
-fun KtSafeQualifiedExpression.inlineReceiverIfApplicableWithPrompt(editor: Editor?) {
-    (this.receiverExpression as? KtNameReferenceExpression)?.inlineIfDeclaredLocallyAndOnlyUsedOnceWithPrompt(editor)
+fun KtSafeQualifiedExpression.inlineReceiverIfApplicable(editor: Editor?, withPrompt: Boolean) {
+    (this.receiverExpression as? KtNameReferenceExpression)?.inlineIfDeclaredLocallyAndOnlyUsedOnce(editor, withPrompt)
 }
 
-fun KtBinaryExpression.inlineLeftSideIfApplicableWithPrompt(editor: Editor?) {
-    (this.left as? KtNameReferenceExpression)?.inlineIfDeclaredLocallyAndOnlyUsedOnceWithPrompt(editor)
+fun KtBinaryExpression.inlineLeftSideIfApplicable(editor: Editor?, withPrompt: Boolean) {
+    (this.left as? KtNameReferenceExpression)?.inlineIfDeclaredLocallyAndOnlyUsedOnce(editor, withPrompt)
 }
 
-fun KtPostfixExpression.inlineBaseExpressionIfApplicableWithPrompt(editor: Editor?) {
-    (this.baseExpression as? KtNameReferenceExpression)?.inlineIfDeclaredLocallyAndOnlyUsedOnceWithPrompt(editor)
+fun KtPostfixExpression.inlineBaseExpressionIfApplicable(editor: Editor?, withPrompt: Boolean) {
+    (this.baseExpression as? KtNameReferenceExpression)?.inlineIfDeclaredLocallyAndOnlyUsedOnce(editor, withPrompt)
 }
 
 // I.e. stable val/var/receiver
@@ -186,9 +189,11 @@ fun KtExpression.isStableVal(context: BindingContext = this.analyze()): Boolean 
     return this.toDataFlowValue(context)?.kind == DataFlowValue.Kind.STABLE_VALUE
 }
 
+fun elvisPattern(newLine: Boolean): String = if (newLine) "$0\n?: $1" else "$0 ?: $1"
+
 private fun KtExpression.toDataFlowValue(context: BindingContext): DataFlowValue? {
     val expressionType = this.getType(context) ?: return null
-    val dataFlowValueFactory = this.getResolutionFacade().frontendService<DataFlowValueFactory>()
+    val dataFlowValueFactory = this.getResolutionFacade().getDataFlowValueFactory()
     return dataFlowValueFactory.createDataFlowValue(this, expressionType, context, findModuleDescriptor())
 }
 
@@ -221,14 +226,22 @@ data class IfThenToSelectData(
                         baseClause is KtDotQualifiedExpression -> baseClause.replaceFirstReceiver(
                             factory, newReceiver!!, safeAccess = true
                         )
-                        hasImplicitReceiverReplaceableBySafeCall() -> factory.createExpressionByPattern("$0?.$1", newReceiver!!, baseClause).insertSafeCalls(
+                        hasImplicitReceiverReplaceableBySafeCall() -> factory.createExpressionByPattern(
+                            "$0?.$1",
+                            newReceiver!!,
+                            baseClause
+                        ).insertSafeCalls(
                             factory
                         )
                         baseClause is KtCallExpression -> baseClause.replaceCallWithLet(newReceiver!!, factory)
                         else -> error("Illegal state")
                     }
                 }
-                hasImplicitReceiverReplaceableBySafeCall() -> factory.createExpressionByPattern("$0?.$1", receiverExpression, baseClause).insertSafeCalls(factory)
+                hasImplicitReceiverReplaceableBySafeCall() -> factory.createExpressionByPattern(
+                    "$0?.$1",
+                    receiverExpression,
+                    baseClause
+                ).insertSafeCalls(factory)
                 baseClause is KtCallExpression -> baseClause.replaceCallWithLet(receiverExpression, factory)
                 else -> baseClause.insertSafeCalls(factory)
             }
@@ -308,15 +321,17 @@ internal fun KtIfExpression.buildSelectTransformationData(): IfThenToSelectData?
 internal fun KtExpression?.isClauseTransformableToLetOnly(receiver: KtExpression?) =
     this is KtCallExpression && (resolveToCall()?.getImplicitReceiverValue() == null || receiver !is KtThisExpression)
 
-internal fun KtIfExpression.shouldBeTransformed(): Boolean {
-    val condition = condition
-    return when (condition) {
-        is KtBinaryExpression -> {
-            val baseClause = (if (condition.operationToken == KtTokens.EQEQ) `else` else then)?.unwrapBlockOrParenthesis()
-            !baseClause.isClauseTransformableToLetOnly(condition.checkedExpression())
-        }
-        else -> false
+internal fun KtIfExpression.shouldBeTransformed(): Boolean = when (val condition = condition) {
+    is KtBinaryExpression -> {
+        val baseClause = (if (condition.operationToken == KtTokens.EQEQ) `else` else then)?.unwrapBlockOrParenthesis()
+        !baseClause.isClauseTransformableToLetOnly(condition.checkedExpression())
     }
+    else -> false
+}
+
+fun KtIfExpression.fromIfKeywordToRightParenthesisTextRangeInThis(): TextRange {
+    val rightOffset = rightParenthesis?.endOffset ?: return ifKeyword.textRangeIn(this)
+    return TextRange(ifKeyword.startOffset, rightOffset).shiftLeft(startOffset)
 }
 
 private fun KtExpression.checkedExpression() = when (this) {
@@ -343,14 +358,5 @@ private fun KtExpression.insertSafeCalls(factory: KtPsiFactory): KtExpression {
     replaced.receiverExpression.let { it.replace(it.insertSafeCalls(factory)) }
     return replaced
 }
-
-// Returns -1 if cannot obtain a document
-internal fun KtExpression.lineCount(): Int {
-    val file = containingFile?.virtualFile ?: return -1
-    val document = FileDocumentManager.getInstance().getDocument(file) ?: return -1
-    return document.getLineNumber(textRange.endOffset) - document.getLineNumber(textRange.startOffset) + 1
-}
-
-internal fun KtExpression.isOneLiner(): Boolean = lineCount() == 1
 
 internal fun KtExpression.isElseIf() = parent.node.elementType == KtNodeTypes.ELSE

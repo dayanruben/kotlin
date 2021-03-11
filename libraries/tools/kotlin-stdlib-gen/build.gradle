@@ -33,4 +33,12 @@ task run(type: JavaExec) {
     main 'generators.GenerateStandardLibKt'
     classpath sourceSets.main.runtimeClasspath
     args = ["${rootDir}"]
+    systemProperty 'line.separator', '\n'
+}
+
+task generateUnicodeData(type: JavaExec) {
+    group 'application'
+    main 'generators.unicode.GenerateUnicodeDataKt'
+    classpath sourceSets.main.runtimeClasspath
+    args = ["${rootDir}"]
 }

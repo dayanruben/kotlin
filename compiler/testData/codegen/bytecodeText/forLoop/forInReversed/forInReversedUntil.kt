@@ -1,4 +1,3 @@
-// IGNORE_BACKEND: JVM_IR
 import kotlin.test.*
 
 fun box(): String {
@@ -20,4 +19,25 @@ fun box(): String {
     return "OK"
 }
 
+// JVM non-IR optimizes out all reversed() calls. However, this has a bug (KT-42533).
+// JVM IR optimizes out the 2nd reversed() call.
+
+// 0 iterator
+// 0 getStart
+// 0 getEnd
+
+// JVM_TEMPLATES
 // 0 reversed
+// 0 getFirst
+// 0 getLast
+// 0 getStep
+// 2 IF_ICMPLT
+// 1 IFLT
+// 3 IF
+// 1 LCMP
+
+// JVM_IR_TEMPLATES
+// 3 reversed
+// 3 getFirst
+// 3 getLast
+// 3 getStep

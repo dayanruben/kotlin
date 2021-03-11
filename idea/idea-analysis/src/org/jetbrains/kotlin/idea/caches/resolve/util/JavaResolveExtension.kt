@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.caches.lightClasses.KtLightClassForDecompiledDeclaration
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.application.runReadAction
@@ -34,8 +35,8 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
+import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.resolve.jvm.JavaDescriptorResolver
-import org.jetbrains.kotlin.resolve.jvm.platform.JvmPlatform
 import org.jetbrains.kotlin.resolve.scopes.MemberScope
 
 fun PsiMethod.getJavaMethodDescriptor(): FunctionDescriptor? = javaResolutionFacade()?.let { getJavaMethodDescriptor(it) }
@@ -111,6 +112,7 @@ fun PsiClass.resolveToDescriptor(
     } as? ClassDescriptor
 }
 
+@OptIn(FrontendInternals::class)
 private fun PsiElement.getJavaDescriptorResolver(resolutionFacade: ResolutionFacade): JavaDescriptorResolver? {
     return resolutionFacade.tryGetFrontendService(this, JavaDescriptorResolver::class.java)
 }
@@ -154,7 +156,7 @@ fun PsiElement.hasJavaResolutionFacade(): Boolean = this.originalElement.contain
 fun PsiElement.javaResolutionFacade() =
     KotlinCacheService.getInstance(project).getResolutionFacadeByFile(
         this.originalElement.containingFile ?: reportCouldNotCreateJavaFacade(),
-        JvmPlatform
+        JvmPlatforms.unspecifiedJvmPlatform
     )
 
 private fun PsiElement.reportCouldNotCreateJavaFacade(): Nothing =

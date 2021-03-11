@@ -1,6 +1,6 @@
+// FIR_IDENTICAL
 // !DIAGNOSTICS: -FINAL_UPPER_BOUND
 // !USE_EXPERIMENTAL: kotlin.contracts.ExperimentalContracts
-// !WITH_CLASSES
 
 /*
  * KOTLIN DIAGNOSTICS NOT LINKED SPEC TEST (POSITIVE)
@@ -8,6 +8,7 @@
  * SECTIONS: contracts, declarations, contractBuilder, effects, returns
  * NUMBER: 2
  * DESCRIPTION: Returns effect with complex conditions (using conjunction and disjuntion).
+ * HELPERS: classes
  */
 
 import kotlin.contracts.*

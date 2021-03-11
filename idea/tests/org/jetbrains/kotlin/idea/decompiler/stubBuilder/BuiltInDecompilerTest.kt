@@ -1,36 +1,27 @@
 /*
- * Copyright 2010-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.decompiler.stubBuilder
 
 import com.intellij.psi.stubs.PsiFileStub
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.indexing.FileContentImpl
 import org.jetbrains.kotlin.idea.decompiler.builtIns.KotlinBuiltInDecompiler
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
 import org.jetbrains.kotlin.metadata.builtins.BuiltInsBinaryVersion
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.stubs.elements.KtFileStubBuilder
 import org.jetbrains.kotlin.serialization.deserialization.builtins.BuiltInSerializerProtocol
+import org.jetbrains.kotlin.test.JUnit3WithIdeaConfigurationRunner
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.junit.Assert
+import org.junit.runner.RunWith
 import java.io.File
 
-abstract class AbstractBuiltInDecompilerTest : LightCodeInsightFixtureTestCase() {
+abstract class AbstractBuiltInDecompilerTest : KotlinLightCodeInsightFixtureTestCase() {
     protected fun doTest(packageFqName: String): String {
         val stubTreeFromDecompiler = configureAndBuildFileStub(packageFqName)
         val stubTreeFromDecompiledText = KtFileStubBuilder().buildStubTree(myFixture.file)
@@ -44,6 +35,7 @@ abstract class AbstractBuiltInDecompilerTest : LightCodeInsightFixtureTestCase()
     override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
 }
 
+@RunWith(JUnit3WithIdeaConfigurationRunner::class)
 class BuiltInDecompilerTest : AbstractBuiltInDecompilerTest() {
     override fun configureAndBuildFileStub(packageFqName: String): PsiFileStub<*> {
         val dirInRuntime = findDir(packageFqName, project)
@@ -58,19 +50,20 @@ class BuiltInDecompilerTest : AbstractBuiltInDecompilerTest() {
     }
 }
 
+@RunWith(JUnit3WithIdeaConfigurationRunner::class)
 class BuiltInDecompilerForWrongAbiVersionTest : AbstractBuiltInDecompilerTest() {
     override fun getTestDataPath() = PluginTestCaseBase.TEST_DATA_DIR + "/decompiler/builtins/"
 
     override fun configureAndBuildFileStub(packageFqName: String): PsiFileStub<*> {
-        myFixture.configureByFile(testDataPath + BuiltInSerializerProtocol.getBuiltInsFilePath(FqName(packageFqName)))
+        myFixture.configureByFile(BuiltInSerializerProtocol.getBuiltInsFilePath(FqName(packageFqName)))
         return KotlinBuiltInDecompiler().stubBuilder.buildFileStub(FileContentImpl.createByFile(myFixture.file.virtualFile))!!
     }
 
     fun testStubTreesEqualForIncompatibleAbiVersion() {
         val serializedStub = doTest("test")
         KotlinTestUtils.assertEqualsToFile(
-                File(testDataPath + "test.text"),
-                myFixture.file.text.replace(BuiltInsBinaryVersion.INSTANCE.toString(), "\$VERSION\$")
+            File(testDataPath + "test.text"),
+            myFixture.file.text.replace(BuiltInsBinaryVersion.INSTANCE.toString(), "\$VERSION\$")
         )
         KotlinTestUtils.assertEqualsToFile(File(testDataPath + "test.stubs"), serializedStub)
     }

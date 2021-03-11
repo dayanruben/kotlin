@@ -1,6 +1,3 @@
-
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 plugins {
     kotlin("jvm")
     id("jps-compatible")
@@ -20,11 +17,10 @@ dependencies {
     compile(project(":idea:ide-common"))
     compile(project(":idea:idea-gradle"))
 
-    compile(androidDxJar())
-
     compileOnly(project(":kotlin-android-extensions-runtime"))
     compileOnly(intellijDep())
     compileOnly(intellijPluginDep("android"))
+    compileOnly(intellijPluginDep("gradle"))
 
     testCompile(project(":kotlin-test:kotlin-test-jvm"))
     testCompile(projectTests(":idea:idea-test-framework")) { isTransitive = false }
@@ -37,8 +33,7 @@ dependencies {
 
     testCompile(project(":idea:idea-native")) { isTransitive = false }
     testCompile(project(":idea:idea-gradle-native")) { isTransitive = false }
-    testRuntime(project(":kotlin-native:kotlin-native-library-reader")) { isTransitive = false }
-    testRuntime(project(":kotlin-native:kotlin-native-utils")) { isTransitive = false }
+    testRuntime(project(":native:frontend.native"))
 
     testCompile(intellijDep())
     testCompile(intellijPluginDep("properties"))
@@ -52,12 +47,11 @@ dependencies {
     testRuntime(project(":allopen-ide-plugin"))
     testRuntime(project(":kotlin-scripting-idea"))
     testRuntime(project(":kotlinx-serialization-ide-plugin"))
+    testRuntime(project(":plugins:parcelize:parcelize-ide"))
 
     testRuntime(intellijPluginDep("android"))
 
-    (Platform[181].orHigher.or(Ide.AS31)) {
-        testRuntime(intellijPluginDep("smali"))
-    }
+    testRuntime(intellijPluginDep("smali"))
 
     testRuntime(intellijPluginDep("copyright"))
     testRuntime(intellijPluginDep("coverage"))
@@ -70,30 +64,33 @@ dependencies {
 
     Ide.IJ {
         testRuntime(intellijPluginDep("maven"))
+
+        if (Ide.IJ201.orHigher()) {
+            testRuntime(intellijPluginDep("repository-search"))
+        }
     }
 
     testRuntime(intellijPluginDep("testng"))
-}
 
-sourceSets {
-    if (Ide.AS33.orHigher()) {
-        "main" { }
-        "test" { }
-    } else {
-        "main" { projectDefault() }
-        "test" { projectDefault() }
+    if (Ide.AS36.orHigher()) {
+        testRuntime(intellijPluginDep("android-layoutlib"))
+    }
+
+    if (Ide.AS41.orHigher()) {
+        testRuntime(intellijPluginDep("platform-images"))
     }
 }
 
-projectTest {
+sourceSets {
+    "main" { }
+    "test" { }
+}
+
+projectTest(parallel = true) {
     workingDir = rootDir
     useAndroidSdk()
 }
 
-testsJar {}
+testsJar()
 
-runtimeJar {
-    archiveName = "android-ide.jar"
-}
-
-ideaPlugin()
+runtimeJar()

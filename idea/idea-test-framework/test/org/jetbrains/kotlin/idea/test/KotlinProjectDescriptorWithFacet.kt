@@ -20,23 +20,35 @@ import com.intellij.facet.FacetManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.config.CompilerSettings
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.facet.*
-import org.jetbrains.kotlin.test.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.test.testFramework.runWriteAction
 
 class KotlinProjectDescriptorWithFacet(
     private val languageVersion: LanguageVersion,
     private val multiPlatform: Boolean = false
 ) : KotlinLightProjectDescriptor() {
+
+    private var facetConfig: KotlinFacetConfiguration? = null
+
     override fun configureModule(module: Module, model: ModifiableRootModel, contentEntry: ContentEntry) {
         configureKotlinFacet(module) {
-            settings.languageLevel = languageVersion
-            if (multiPlatform) {
-                settings.compilerSettings = CompilerSettings().apply {
-                    additionalArguments += " -Xmulti-platform"
-                }
+            facetConfig = this
+            toFacetConfig(this)
+        }
+    }
+
+    fun replicateToFacetSettings() {
+        facetConfig?.let { toFacetConfig(it) }
+    }
+
+    private fun toFacetConfig(configuration: KotlinFacetConfiguration) {
+        configuration.settings.languageLevel = languageVersion
+        if (multiPlatform) {
+            configuration.settings.compilerSettings = CompilerSettings().apply {
+                additionalArguments += " -Xmulti-platform"
             }
         }
     }

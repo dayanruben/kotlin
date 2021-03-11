@@ -1,11 +1,12 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.caches.project
 
 import com.intellij.ide.scratch.ScratchFileService
+import com.intellij.ide.scratch.ScratchRootType
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.*
@@ -14,12 +15,13 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analyzer.ModuleInfo
-import org.jetbrains.kotlin.asJava.classes.FakeLightClassForFileOfPackage
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
+import org.jetbrains.kotlin.caches.project.cacheByClassInvalidatingOnRootModifications
+import org.jetbrains.kotlin.caches.project.cacheInvalidatingOnRootModifications
 import org.jetbrains.kotlin.idea.caches.lightClasses.KtLightClassForDecompiledDeclaration
 import org.jetbrains.kotlin.idea.core.isInTestSourceContentKotlinAware
-import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesManager
+import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.scriptRelatedModuleName
 import org.jetbrains.kotlin.idea.highlighter.OutsidersPsiFileSupportUtils
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
@@ -27,7 +29,10 @@ import org.jetbrains.kotlin.idea.util.isInSourceContentWithoutInjected
 import org.jetbrains.kotlin.idea.util.isKotlinBinary
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
+import org.jetbrains.kotlin.scripting.definitions.runReadAction
 import org.jetbrains.kotlin.utils.addIfNotNull
+import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.sure
 import org.jetbrains.kotlin.utils.yieldIfNotNull
 
@@ -38,6 +43,12 @@ fun PsiElement.getModuleInfo(): IdeaModuleInfo = this.collectInfos(ModuleInfoCol
 fun PsiElement.getNullableModuleInfo(): IdeaModuleInfo? = this.collectInfos(ModuleInfoCollector.NullableTakeFirst)
 
 fun PsiElement.getModuleInfos(): Sequence<IdeaModuleInfo> = this.collectInfos(ModuleInfoCollector.ToSequence)
+
+fun ModuleInfo.findSdkAcrossDependencies(): SdkInfo? {
+    val project = (this as? IdeaModuleInfo)?.project ?: return null
+
+    return SdkInfoCache.getInstance(project).findOrGetCachedSdk(this)
+}
 
 fun getModuleInfoByVirtualFile(project: Project, virtualFile: VirtualFile): IdeaModuleInfo? =
     collectInfosByVirtualFile(
@@ -64,12 +75,10 @@ fun getScriptRelatedModuleInfo(project: Project, virtualFile: VirtualFile): Modu
         return moduleRelatedModuleInfo
     }
 
-    if (ScratchFileService.isInScratchRoot(virtualFile)) {
+    return if (ScratchFileService.getInstance().getRootType(virtualFile) is ScratchRootType) {
         val scratchModule = virtualFile.scriptRelatedModuleName?.let { ModuleManager.getInstance(project).findModuleByName(it) }
-        return scratchModule?.testSourceInfo() ?: scratchModule?.productionSourceInfo()
-    }
-
-    return null
+        scratchModule?.testSourceInfo() ?: scratchModule?.productionSourceInfo()
+    } else null
 }
 
 private typealias VirtualFileProcessor<T> = (Project, VirtualFile, Boolean) -> T
@@ -85,14 +94,14 @@ private sealed class ModuleInfoCollector<out T>(
             LOG.error("Could not find correct module information.\nReason: $reason")
             NotUnderContentRootModuleInfo
         },
-        virtualFileProcessor = processor@ { project, virtualFile, isLibrarySource ->
+        virtualFileProcessor = processor@{ project, virtualFile, isLibrarySource ->
             collectInfosByVirtualFile(
                 project,
                 virtualFile,
-                isLibrarySource,
-                {
-                    return@processor it ?: NotUnderContentRootModuleInfo
-                })
+                isLibrarySource
+            ) {
+                return@processor it ?: NotUnderContentRootModuleInfo
+            }
         }
     )
 
@@ -102,12 +111,12 @@ private sealed class ModuleInfoCollector<out T>(
             LOG.warn("Could not find correct module information.\nReason: $reason")
             null
         },
-        virtualFileProcessor = processor@ { project, virtualFile, isLibrarySource ->
+        virtualFileProcessor = processor@{ project, virtualFile, isLibrarySource ->
             collectInfosByVirtualFile(
                 project,
                 virtualFile,
-                isLibrarySource,
-                { return@processor it })
+                isLibrarySource
+            ) { return@processor it }
         }
     )
 
@@ -122,8 +131,8 @@ private sealed class ModuleInfoCollector<out T>(
                 collectInfosByVirtualFile(
                     project,
                     virtualFile,
-                    isLibrarySource,
-                    { yieldIfNotNull(it) })
+                    isLibrarySource
+                ) { yieldIfNotNull(it) }
             }
         }
     )
@@ -161,19 +170,23 @@ private fun <T> PsiElement.collectInfos(c: ModuleInfoCollector<T>): T {
 
     if (containingKtFile is KtCodeFragment) {
         val context = containingKtFile.getContext()
-                ?: return c.onFailure("Analyzing code fragment of type ${containingKtFile::class.java} with no context element\nText:\n${containingKtFile.getText()}")
+            ?: return c.onFailure("Analyzing code fragment of type ${containingKtFile::class.java} with no context element\nText:\n${containingKtFile.getText()}")
         return context.collectInfos(c)
     }
 
     val virtualFile = containingFile.originalFile.virtualFile
-            ?: return c.onFailure("Analyzing element of type ${this::class.java} in non-physical file $containingFile of type ${containingFile::class.java}\nText:\n$text")
+        ?: return c.onFailure("Analyzing element of type ${this::class.java} in non-physical file $containingFile of type ${containingFile::class.java}\nText:\n$text")
 
-    if (containingKtFile?.isScript() == true) {
+    val isScript = runReadAction { containingKtFile?.isScript() == true }
+    if (isScript) {
         getModuleRelatedModuleInfo(project, virtualFile)?.let {
             return c.onResult(it)
         }
-        containingKtFile.script?.kotlinScriptDefinition?.let {
-            return c.onResult(ScriptModuleInfo(project, virtualFile, it))
+        val script = runReadAction { containingKtFile?.script }
+        script?.let {
+            containingKtFile?.findScriptDefinition()?.let {
+                return c.onResult(ScriptModuleInfo(project, virtualFile, it))
+            }
         }
     }
 
@@ -195,7 +208,6 @@ private fun <T> KtLightElement<*, *>.processLightElement(c: ModuleInfoCollector<
     }
 
     val element = kotlinOrigin ?: when (this) {
-        is FakeLightClassForFileOfPackage -> this.getContainingFile()!!
         is KtLightClassForFacade -> this.files.first()
         else -> return c.onFailure("Light element without origin is referenced by resolve:\n$this\n${this.clsDelegate.text}")
     }
@@ -222,15 +234,15 @@ private inline fun <T> collectInfosByVirtualFile(
     }
 
     val isBinary = virtualFile.fileType.isKotlinBinary()
-    val scriptConfigurationManager = ScriptDependenciesManager.getInstance(project)
-    if (isBinary && virtualFile in scriptConfigurationManager.getAllScriptsClasspathScope()) {
+    val scriptConfigurationManager = ScriptConfigurationManager.getInstance(project)
+    if (isBinary && virtualFile in scriptConfigurationManager.getAllScriptsDependenciesClassFilesScope()) {
         if (treatAsLibrarySource) {
             onOccurrence(ScriptDependenciesSourceInfo.ForProject(project))
         } else {
             onOccurrence(ScriptDependenciesInfo.ForProject(project))
         }
     }
-    if (!isBinary && virtualFile in scriptConfigurationManager.getAllLibrarySourcesScope()) {
+    if (!isBinary && virtualFile in scriptConfigurationManager.getAllScriptDependenciesSourcesScope()) {
         onOccurrence(ScriptDependenciesSourceInfo.ForProject(project))
     }
 
@@ -290,4 +302,28 @@ private fun OrderEntry.toIdeaModuleInfo(
         else -> return emptyList()
     }
     return emptyList()
+}
+
+/**
+ * @see [org.jetbrains.kotlin.types.typeUtil.closure].
+ */
+fun <T> Collection<T>.lazyClosure(f: (T) -> Collection<T>): Sequence<T> = sequence<T> {
+    if (size == 0) return@sequence
+    var sizeBeforeIteration = 0
+
+    yieldAll(this@lazyClosure)
+    var yieldedCount = size
+    var elementsToCheck = this@lazyClosure
+
+    while (yieldedCount > sizeBeforeIteration) {
+        val toAdd = hashSetOf<T>()
+        elementsToCheck.forEach {
+            val neighbours = f(it)
+            yieldAll(neighbours)
+            yieldedCount += neighbours.size
+            toAdd.addAll(neighbours)
+        }
+        elementsToCheck = toAdd
+        sizeBeforeIteration = yieldedCount
+    }
 }

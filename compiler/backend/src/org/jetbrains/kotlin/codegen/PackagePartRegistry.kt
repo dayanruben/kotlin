@@ -16,6 +16,15 @@
 
 package org.jetbrains.kotlin.codegen
 
-interface PackagePartRegistry {
-    fun addPart(partInternalName: String, facadeInternalName: String?)
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.metadata.jvm.deserialization.PackageParts
+import org.jetbrains.kotlin.name.FqName
+
+class PackagePartRegistry {
+    val parts = mutableMapOf<FqName, PackageParts>()
+    val optionalAnnotations = mutableListOf<ClassDescriptor>()
+
+    fun addPart(packageFqName: FqName, partInternalName: String, facadeInternalName: String?) {
+        parts.computeIfAbsent(packageFqName) { PackageParts(it.asString()) }.addPart(partInternalName, facadeInternalName)
+    }
 }

@@ -1,5 +1,7 @@
-// IGNORE_BACKEND: JS_IR
-// EXPECTED_REACHABLE_NODES: 1297
+// EXPECTED_REACHABLE_NODES: 1737
+// KJS_WITH_FULL_RUNTIME
+// SKIP_DCE_DRIVEN
+import common.*
 import kotlin.test.Test
 import kotlin.test.BeforeTest
 import kotlin.test.AfterTest

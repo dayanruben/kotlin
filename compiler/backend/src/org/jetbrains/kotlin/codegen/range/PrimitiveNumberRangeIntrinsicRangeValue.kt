@@ -16,10 +16,12 @@
 
 package org.jetbrains.kotlin.codegen.range
 
+import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.codegen.ExpressionCodegen
 import org.jetbrains.kotlin.codegen.StackValue
 import org.jetbrains.kotlin.codegen.range.comparison.getComparisonGeneratorForKotlinType
 import org.jetbrains.kotlin.codegen.range.comparison.getComparisonGeneratorForRangeContainsCall
+import org.jetbrains.kotlin.codegen.range.comparison.getRangeContainsTypeInfo
 import org.jetbrains.kotlin.codegen.range.forLoop.ForInDefinitelySafeSimpleProgressionLoopGenerator
 import org.jetbrains.kotlin.codegen.range.forLoop.ForLoopGenerator
 import org.jetbrains.kotlin.codegen.range.inExpression.CallBasedInExpressionGenerator
@@ -56,26 +58,38 @@ abstract class PrimitiveNumberRangeIntrinsicRangeValue(
         operatorReference: KtSimpleNameExpression,
         resolvedCall: ResolvedCall<out CallableDescriptor>
     ): InExpressionGenerator {
-        val comparisonGenerator = getComparisonGeneratorForRangeContainsCall(codegen, resolvedCall)
-        val comparedType = comparisonGenerator?.comparedType
+        val rangeContainsTypeInfo = getRangeContainsTypeInfo(resolvedCall)
+            ?: return CallBasedInExpressionGenerator(codegen, operatorReference)
+        val comparisonGenerator = getComparisonGeneratorForRangeContainsCall(codegen, rangeContainsTypeInfo)
+            ?: return CallBasedInExpressionGenerator(codegen, operatorReference)
 
-        return when {
-            comparisonGenerator == null -> CallBasedInExpressionGenerator(codegen, operatorReference)
-
-            comparedType == Type.DOUBLE_TYPE || comparedType == Type.FLOAT_TYPE -> {
-                val rangeLiteral = getBoundedValue(codegen) as? SimpleBoundedValue
+        return when (comparisonGenerator.comparedType) {
+            Type.DOUBLE_TYPE, Type.FLOAT_TYPE -> {
+                val rangeLiteral = getBoundedValue(codegen) as? BoundedValue
                     ?: throw AssertionError("Floating point intrinsic range value should be a range literal")
                 InFloatingPointRangeLiteralExpressionGenerator(operatorReference, rangeLiteral, comparisonGenerator, codegen.frameMap)
             }
-
             else ->
                 InIntegralContinuousRangeExpressionGenerator(
-                    operatorReference, getBoundedValue(codegen), comparisonGenerator, codegen.frameMap
+                    operatorReference, rangeContainsTypeInfo, getBoundedValue(codegen), comparisonGenerator, codegen.frameMap
                 )
         }
     }
 
     protected abstract fun getBoundedValue(codegen: ExpressionCodegen): BoundedValue
+
+    protected fun StackValue.coerceToRangeElementTypeIfRequired(): StackValue {
+        val rangeKotlinType = rangeCall.resultingDescriptor.returnType!!
+        val rangeElementKotlinType = getRangeOrProgressionElementType(rangeKotlinType)!!
+        return when {
+            KotlinBuiltIns.isUInt(rangeElementKotlinType) ->
+                coerceUnsignedToUInt(this, rangeElementKotlinType)
+            KotlinBuiltIns.isULong(rangeElementKotlinType) ->
+                coerceUnsignedToULong(this, rangeElementKotlinType)
+            else ->
+                this
+        }
+    }
 
     protected fun createConstBoundedForLoopGeneratorOrNull(
         codegen: ExpressionCodegen,
@@ -169,7 +183,7 @@ abstract class PrimitiveNumberRangeIntrinsicRangeValue(
         )
 
     private fun isProhibitedCharConstEndValue(step: Int, endValue: Char) =
-        endValue == if (step == 1) java.lang.Character.MAX_VALUE else java.lang.Character.MIN_VALUE
+        endValue == if (step == 1) Char.MAX_VALUE else Char.MIN_VALUE
 
     private fun isProhibitedIntConstEndValue(step: Int, endValue: Int) =
         endValue == if (step == 1) Int.MAX_VALUE else Int.MIN_VALUE

@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.jps.targets
@@ -14,10 +14,10 @@ import gnu.trove.THashSet
 import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.builders.java.JavaBuilderUtil
 import org.jetbrains.jps.builders.storage.BuildDataPaths
-import org.jetbrains.jps.incremental.CompileContext
-import org.jetbrains.jps.incremental.ModuleBuildTarget
+import org.jetbrains.jps.incremental.*
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsSdkDependency
+import org.jetbrains.jps.service.JpsServiceManager
 import org.jetbrains.kotlin.build.GeneratedFile
 import org.jetbrains.kotlin.build.GeneratedJvmClass
 import org.jetbrains.kotlin.build.JvmBuildMetaInfo
@@ -46,6 +46,9 @@ import org.jetbrains.kotlin.utils.keysToMap
 import org.jetbrains.org.objectweb.asm.ClassReader
 import java.io.File
 import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 
 private const val JVM_BUILD_META_INFO_FILE_NAME = "jvm-build-meta-info.txt"
 
@@ -55,7 +58,8 @@ class KotlinJvmModuleBuildTarget(kotlinContext: KotlinCompileContext, jpsModuleB
     override val isIncrementalCompilationEnabled: Boolean
         get() = IncrementalCompilation.isEnabledForJvm()
 
-    override fun createCacheStorage(paths: BuildDataPaths) = JpsIncrementalJvmCache(jpsModuleBuildTarget, paths)
+    override fun createCacheStorage(paths: BuildDataPaths) =
+        JpsIncrementalJvmCache(jpsModuleBuildTarget, paths, kotlinContext.fileToPathConverter)
 
     override val buildMetaInfoFactory
         get() = JvmBuildMetaInfo
@@ -148,6 +152,22 @@ class KotlinJvmModuleBuildTarget(kotlinContext: KotlinCompileContext, jpsModuleB
         return true
     }
 
+    override fun registerOutputItems(outputConsumer: ModuleLevelBuilder.OutputConsumer, outputItems: List<GeneratedFile>) {
+        if (kotlinContext.isInstrumentationEnabled) {
+            val (classFiles, nonClassFiles) = outputItems.partition { it is GeneratedJvmClass }
+            super.registerOutputItems(outputConsumer, nonClassFiles)
+
+            for (output in classFiles) {
+                val bytes = output.outputFile.readBytes()
+                val binaryContent = BinaryContent(bytes)
+                val compiledClass = CompiledClass(output.outputFile, output.sourceFiles, ClassReader(bytes).className, binaryContent)
+                outputConsumer.registerCompiledClass(jpsModuleBuildTarget, compiledClass)
+            }
+        } else {
+            super.registerOutputItems(outputConsumer, outputItems)
+        }
+    }
+
     private fun generateChunkModuleDescription(dirtyFilesHolder: KotlinDirtySourceFilesHolder): File? {
         val builder = KotlinModuleXmlBuilder()
 
@@ -170,13 +190,16 @@ class KotlinJvmModuleBuildTarget(kotlinContext: KotlinCompileContext, jpsModuleB
             }
 
             val kotlinModuleId = target.targetId
+            val allFiles = sources.allFiles
+            val commonSourceFiles = sources.crossCompiledFiles
+
             builder.addModule(
                 kotlinModuleId.name,
                 outputDir.absolutePath,
-                sources.allFiles,
+                preprocessSources(allFiles),
                 target.findSourceRoots(dirtyFilesHolder.context),
                 target.findClassPathRoots(),
-                sources.crossCompiledFiles,
+                preprocessSources(commonSourceFiles),
                 target.findModularJdkRoot(),
                 kotlinModuleId.type,
                 isTests,
@@ -193,6 +216,28 @@ class KotlinJvmModuleBuildTarget(kotlinContext: KotlinCompileContext, jpsModuleB
         return scriptFile
     }
 
+    /**
+     * Internal API for source level code preprocessors.
+     *
+     * Currently used in https://plugins.jetbrains.com/plugin/13355-spot-profiler-for-java
+     */
+    interface SourcesPreprocessor {
+        /**
+         * Preprocess some sources and return path to the resulting file.
+         * This function should be pure and should return the same output for given input
+         * (required for incremental compilation).
+         */
+        fun preprocessSources(srcFiles: List<File>): List<File>
+    }
+
+    fun preprocessSources(srcFiles: List<File>): List<File> {
+        var result = srcFiles
+        JpsServiceManager.getInstance().getExtensions(SourcesPreprocessor::class.java).forEach {
+            result = it.preprocessSources(result)
+        }
+        return result
+    }
+
     private fun createTempFileForChunkModuleDesc(): File {
         val readableSuffix = buildString {
             append(StringUtil.sanitizeJavaIdentifier(chunk.representativeTarget.module.name))
@@ -200,14 +245,18 @@ class KotlinJvmModuleBuildTarget(kotlinContext: KotlinCompileContext, jpsModuleB
                 append("-test")
             }
         }
-        val dir = System.getProperty("kotlin.jps.dir.for.module.files")?.let { File(it) }?.takeIf { it.isDirectory }
+
+        fun createTempFile(dir: Path?, prefix: String?, suffix: String?): Path =
+            if (dir != null) Files.createTempFile(dir, prefix, suffix) else Files.createTempFile(prefix, suffix)
+
+        val dir = System.getProperty("kotlin.jps.dir.for.module.files")?.let { Paths.get(it) }?.takeIf { Files.isDirectory(it) }
         return try {
-            File.createTempFile("kjps", readableSuffix + ".script.xml", dir)
+            createTempFile(dir, "kjps", readableSuffix + ".script.xml")
         } catch (e: IOException) {
             // sometimes files cannot be created, because file name is too long (Windows, Mac OS)
             // see https://bugs.openjdk.java.net/browse/JDK-8148023
             try {
-                File.createTempFile("kjps", ".script.xml", dir)
+                createTempFile(dir, "kjps", ".script.xml")
             } catch (e: IOException) {
                 val message = buildString {
                     append("Could not create module file when building chunk $chunk")
@@ -217,7 +266,7 @@ class KotlinJvmModuleBuildTarget(kotlinContext: KotlinCompileContext, jpsModuleB
                 }
                 throw RuntimeException(message, e)
             }
-        }
+        }.toFile()
     }
 
     private fun findClassPathRoots(): Collection<File> {

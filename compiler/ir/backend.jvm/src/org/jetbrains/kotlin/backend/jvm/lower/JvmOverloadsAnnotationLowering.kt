@@ -1,45 +1,43 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.backend.jvm.lower
 
 import org.jetbrains.kotlin.backend.common.ClassLoweringPass
-import org.jetbrains.kotlin.backend.common.makePhase
+import org.jetbrains.kotlin.backend.common.ir.copyAnnotationsFrom
+import org.jetbrains.kotlin.backend.common.ir.copyTo
+import org.jetbrains.kotlin.backend.common.ir.copyTypeParametersFrom
+import org.jetbrains.kotlin.backend.common.phaser.makeIrFilePhase
 import org.jetbrains.kotlin.backend.jvm.JvmBackendContext
 import org.jetbrains.kotlin.backend.jvm.JvmLoweredDeclarationOrigin
-import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
-import org.jetbrains.kotlin.descriptors.ClassConstructorDescriptor
-import org.jetbrains.kotlin.descriptors.FunctionDescriptor
-import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
-import org.jetbrains.kotlin.descriptors.impl.ClassConstructorDescriptorImpl
-import org.jetbrains.kotlin.descriptors.impl.ValueParameterDescriptorImpl
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
-import org.jetbrains.kotlin.ir.declarations.IrClass
-import org.jetbrains.kotlin.ir.declarations.IrConstructor
-import org.jetbrains.kotlin.ir.declarations.IrFunction
-import org.jetbrains.kotlin.ir.declarations.addMember
-import org.jetbrains.kotlin.ir.declarations.impl.IrConstructorImpl
-import org.jetbrains.kotlin.ir.declarations.impl.IrFunctionImpl
-import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
-import org.jetbrains.kotlin.ir.expressions.impl.IrDelegatingConstructorCallImpl
-import org.jetbrains.kotlin.ir.expressions.impl.IrExpressionBodyImpl
-import org.jetbrains.kotlin.ir.expressions.impl.IrGetValueImpl
-import org.jetbrains.kotlin.ir.symbols.IrConstructorSymbol
-import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
-import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
-import org.jetbrains.kotlin.ir.symbols.impl.createFunctionSymbol
-import org.jetbrains.kotlin.ir.util.createParameterDeclarations
-import org.jetbrains.kotlin.ir.util.deepCopyWithSymbols
-import org.jetbrains.kotlin.resolve.calls.components.hasDefaultValue
-import org.jetbrains.kotlin.resolve.jvm.annotations.findJvmOverloadsAnnotation
+import org.jetbrains.kotlin.ir.builders.declarations.buildConstructor
+import org.jetbrains.kotlin.ir.builders.declarations.buildFun
+import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.expressions.impl.*
+import org.jetbrains.kotlin.ir.types.defaultType
+import org.jetbrains.kotlin.ir.util.allTypeParameters
+import org.jetbrains.kotlin.ir.util.hasAnnotation
+import org.jetbrains.kotlin.ir.util.render
+import org.jetbrains.kotlin.resolve.jvm.annotations.JVM_OVERLOADS_FQ_NAME
 
-class JvmOverloadsAnnotationLowering(val context: JvmBackendContext) : ClassLoweringPass {
+internal val jvmOverloadsAnnotationPhase = makeIrFilePhase(
+    ::JvmOverloadsAnnotationLowering,
+    name = "JvmOverloadsAnnotation",
+    description = "Handle JvmOverloads annotations"
+)
+
+// TODO: `IrValueParameter.defaultValue` property does not track default values in super-parameters. See KT-28637.
+
+private class JvmOverloadsAnnotationLowering(val context: JvmBackendContext) : ClassLoweringPass {
 
     override fun lower(irClass: IrClass) {
         val functions = irClass.declarations.filterIsInstance<IrFunction>().filter {
-            it.descriptor.findJvmOverloadsAnnotation() != null
+            it.hasAnnotation(JVM_OVERLOADS_FQ_NAME)
         }
 
         functions.forEach {
@@ -48,37 +46,29 @@ class JvmOverloadsAnnotationLowering(val context: JvmBackendContext) : ClassLowe
     }
 
     private fun generateWrappers(target: IrFunction, irClass: IrClass) {
-        val numDefaultParameters = target.symbol.descriptor.valueParameters.count { it.hasDefaultValue() }
-        for (i in 0 until numDefaultParameters) {
+        val numDefaultParameters = target.valueParameters.count { it.defaultValue != null }
+        for (i in numDefaultParameters - 1 downTo 0) {
             val wrapper = generateWrapper(target, i)
             irClass.addMember(wrapper)
         }
     }
 
     private fun generateWrapper(target: IrFunction, numDefaultParametersToExpect: Int): IrFunction {
-        val wrapperSymbol = generateWrapperSymbol(target.symbol, numDefaultParametersToExpect)
-        val wrapperIrFunction = when (wrapperSymbol) {
-            is IrConstructorSymbol -> IrConstructorImpl(
-                UNDEFINED_OFFSET, UNDEFINED_OFFSET,
-                JvmLoweredDeclarationOrigin.JVM_OVERLOADS_WRAPPER,
-                wrapperSymbol,
-                returnType = target.returnType
-            )
-            is IrSimpleFunctionSymbol -> IrFunctionImpl(
-                UNDEFINED_OFFSET, UNDEFINED_OFFSET,
-                JvmLoweredDeclarationOrigin.JVM_OVERLOADS_WRAPPER,
-                wrapperSymbol,
-                returnType = target.returnType
-            )
-            else -> error("expected IrConstructorSymbol or IrSimpleFunctionSymbol")
+        val wrapperIrFunction = context.irFactory.generateWrapperHeader(target, numDefaultParametersToExpect)
+
+        val call = when (target) {
+            is IrConstructor ->
+                IrDelegatingConstructorCallImpl.fromSymbolOwner(
+                    UNDEFINED_OFFSET, UNDEFINED_OFFSET, context.irBuiltIns.unitType, target.symbol
+                )
+            is IrSimpleFunction ->
+                IrCallImpl.fromSymbolOwner(UNDEFINED_OFFSET, UNDEFINED_OFFSET, target.returnType, target.symbol)
+            else ->
+                error("unknown function kind: ${target.render()}")
         }
-
-        wrapperIrFunction.createParameterDeclarations()
-
-        val call = if (target is IrConstructor)
-            IrDelegatingConstructorCallImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, target.returnType, target.symbol, target.descriptor)
-        else
-            IrCallImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, target.returnType, target.symbol)
+        for (arg in wrapperIrFunction.allTypeParameters) {
+            call.putTypeArgument(arg.index, arg.defaultType)
+        }
         call.dispatchReceiver = wrapperIrFunction.dispatchReceiverParameter?.let { dispatchReceiver ->
             IrGetValueImpl(
                 UNDEFINED_OFFSET, UNDEFINED_OFFSET,
@@ -95,7 +85,7 @@ class JvmOverloadsAnnotationLowering(val context: JvmBackendContext) : ClassLowe
         var parametersCopied = 0
         var defaultParametersCopied = 0
         for ((i, valueParameter) in target.valueParameters.withIndex()) {
-            if ((valueParameter.descriptor as ValueParameterDescriptor).hasDefaultValue()) {
+            if (valueParameter.defaultValue != null) {
                 if (defaultParametersCopied < numDefaultParametersToExpect) {
                     defaultParametersCopied++
                     call.putValueArgument(
@@ -120,82 +110,74 @@ class JvmOverloadsAnnotationLowering(val context: JvmBackendContext) : ClassLowe
 
         }
 
-        wrapperIrFunction.body = IrExpressionBodyImpl(
-            UNDEFINED_OFFSET, UNDEFINED_OFFSET, call
-        )
-
-        target.annotations.mapTo(wrapperIrFunction.annotations) { it.deepCopyWithSymbols() }
+        wrapperIrFunction.body = if (target is IrConstructor) {
+            IrBlockBodyImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, listOf(call))
+        } else {
+            IrExpressionBodyImpl(
+                UNDEFINED_OFFSET, UNDEFINED_OFFSET, call
+            )
+        }
 
         return wrapperIrFunction
     }
 
-    private fun generateWrapperSymbol(oldSymbol: IrFunctionSymbol, numDefaultParametersToExpect: Int): IrFunctionSymbol {
-        val oldDescriptor = oldSymbol.descriptor
-        val newDescriptor = if (oldDescriptor is ClassConstructorDescriptor) {
-            oldDescriptor.copyWithModifiedParameters(numDefaultParametersToExpect)
-        } else {
-            val newParameters = generateNewValueParameters(oldDescriptor, numDefaultParametersToExpect)
-            oldDescriptor.newCopyBuilder()
-                .setValueParameters(newParameters)
-                .setOriginal(null)
-                .setKind(CallableMemberDescriptor.Kind.SYNTHESIZED)
-                .build()!!
+    private fun IrFactory.generateWrapperHeader(oldFunction: IrFunction, numDefaultParametersToExpect: Int): IrFunction {
+        val res = when (oldFunction) {
+            is IrConstructor -> {
+                buildConstructor {
+                    origin = JvmLoweredDeclarationOrigin.JVM_OVERLOADS_WRAPPER
+                    name = oldFunction.name
+                    visibility = oldFunction.visibility
+                    returnType = oldFunction.returnType
+                    isInline = oldFunction.isInline
+                }
+            }
+            is IrSimpleFunction -> buildFun {
+                origin = JvmLoweredDeclarationOrigin.JVM_OVERLOADS_WRAPPER
+                name = oldFunction.name
+                visibility = oldFunction.visibility
+                modality =
+                    if (context.state.languageVersionSettings.supportsFeature(LanguageFeature.GenerateJvmOverloadsAsFinal)) Modality.FINAL
+                    else oldFunction.modality
+                returnType = oldFunction.returnType
+                isInline = oldFunction.isInline
+                isSuspend = oldFunction.isSuspend
+            }
+            else -> error("Unknown kind of IrFunction: $oldFunction")
         }
 
-        return createFunctionSymbol(newDescriptor)
+        res.parent = oldFunction.parent
+        res.copyAnnotationsFrom(oldFunction)
+        res.copyTypeParametersFrom(oldFunction)
+        res.dispatchReceiverParameter = oldFunction.dispatchReceiverParameter?.copyTo(res)
+        res.extensionReceiverParameter = oldFunction.extensionReceiverParameter?.copyTo(res)
+        res.valueParameters += res.generateNewValueParameters(oldFunction, numDefaultParametersToExpect)
+        return res
     }
 
-    private fun ClassConstructorDescriptor.copyWithModifiedParameters(numDefaultParametersToExpect: Int): ClassConstructorDescriptor {
-        val result = ClassConstructorDescriptorImpl.createSynthesized(
-            this.containingDeclaration,
-            annotations,
-            /* isPrimary = */ false,
-            source
-        )
-        // Call the long version of `initialize()`, because otherwise default implementation inserts
-        // an unwanted `dispatchReceiverParameter`.
-        result.initialize(
-            extensionReceiverParameter?.copy(result),
-            dispatchReceiverParameter,
-            typeParameters,
-            generateNewValueParameters(this, numDefaultParametersToExpect),
-            returnType,
-            modality,
-            visibility
-        )
-        return result
-    }
-
-    private fun generateNewValueParameters(
-        oldDescriptor: FunctionDescriptor,
+    private fun IrFunction.generateNewValueParameters(
+        oldFunction: IrFunction,
         numDefaultParametersToExpect: Int
-    ): List<ValueParameterDescriptor> {
+    ): List<IrValueParameter> {
         var parametersCopied = 0
         var defaultParametersCopied = 0
-        val result = mutableListOf<ValueParameterDescriptor>()
-        for (oldValueParameter in oldDescriptor.valueParameters) {
-            if (oldValueParameter.hasDefaultValue() &&
+        val result = mutableListOf<IrValueParameter>()
+        for (oldValueParameter in oldFunction.valueParameters) {
+            if (oldValueParameter.defaultValue != null &&
                 defaultParametersCopied < numDefaultParametersToExpect
             ) {
                 defaultParametersCopied++
                 result.add(
-                    ValueParameterDescriptorImpl(
-                        oldDescriptor,      // to be substituted with newDescriptor
-                        null,
-                        parametersCopied++,
-                        oldValueParameter.annotations,
-                        oldValueParameter.name,
-                        oldValueParameter.type,
-                        declaresDefaultValue = false,
-                        isCrossinline = false,
-                        isNoinline = false,
-                        varargElementType = oldValueParameter.varargElementType,
-                        source = oldValueParameter.source
+                    oldValueParameter.copyTo(
+                        this,
+                        index = parametersCopied++,
+                        defaultValue = null,
+                        isCrossinline = oldValueParameter.isCrossinline,
+                        isNoinline = oldValueParameter.isNoinline
                     )
                 )
-            } else if (!oldValueParameter.hasDefaultValue()) {
-                result.add(oldValueParameter.copy(oldDescriptor, oldValueParameter.name, parametersCopied++))
-
+            } else if (oldValueParameter.defaultValue == null) {
+                result.add(oldValueParameter.copyTo(this, index = parametersCopied++))
             }
         }
         return result

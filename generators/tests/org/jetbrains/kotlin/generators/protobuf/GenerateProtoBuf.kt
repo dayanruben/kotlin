@@ -1,17 +1,6 @@
 /*
- * Copyright 2010-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.generators.protobuf
@@ -21,6 +10,7 @@ import com.intellij.execution.util.ExecUtil
 import com.intellij.util.LineSeparator
 import java.io.File
 import java.util.regex.Pattern
+import kotlin.system.exitProcess
 
 // This file generates protobuf classes from formal description.
 // To run it, you'll need protoc (protobuf compiler) 2.6.1 installed.
@@ -34,7 +24,7 @@ import java.util.regex.Pattern
 // You may need to provide custom path to protoc executable, just modify this constant:
 private const val PROTOC_EXE = "protoc"
 
-class ProtoPath(val file: String) {
+class ProtoPath(val file: String, val generateDebug: Boolean = true) {
     val outPath: String = File(file).parent
     val packageName: String = findFirst(Pattern.compile("package (.+);"))
     val className: String = findFirst(Pattern.compile("option java_outer_classname = \"(.+)\";"))
@@ -50,20 +40,22 @@ class ProtoPath(val file: String) {
 }
 
 val PROTO_PATHS: List<ProtoPath> = listOf(
-        ProtoPath("core/metadata/src/metadata.proto"),
-        ProtoPath("core/metadata/src/builtins.proto"),
-        ProtoPath("js/js.serializer/src/js.proto"),
-        ProtoPath("js/js.serializer/src/js-ast.proto"),
-        ProtoPath("konan/library-reader/src/konan.proto"),
-        ProtoPath("core/metadata.jvm/src/jvm_metadata.proto"),
-        ProtoPath("core/metadata.jvm/src/jvm_module.proto"),
-        ProtoPath("build-common/src/java_descriptors.proto")
+    ProtoPath("core/metadata/src/metadata.proto"),
+    ProtoPath("core/metadata/src/builtins.proto"),
+    ProtoPath("js/js.serializer/src/js.proto"),
+    ProtoPath("js/js.serializer/src/js-ast.proto", false),
+    ProtoPath("core/metadata.jvm/src/jvm_metadata.proto"),
+    ProtoPath("core/metadata.jvm/src/jvm_module.proto"),
+    ProtoPath("build-common/src/java_descriptors.proto"),
+    ProtoPath("compiler/util-klib-metadata/src/KlibMetadataProtoBuf.proto"),
+    ProtoPath("compiler/ir/serialization.common/src/KotlinIr.proto", false),
+    ProtoPath("plugins/kotlin-serialization/kotlin-serialization-compiler/src/class_extensions.proto", generateDebug = false)
 )
 
 private val EXT_OPTIONS_PROTO_PATH = ProtoPath("core/metadata/src/ext_options.proto")
 private val PROTOBUF_PROTO_PATHS = listOf("./", "core/metadata/src")
 
-fun main(args: Array<String>) {
+fun main() {
     try {
         checkVersion()
 
@@ -77,14 +69,12 @@ fun main(args: Array<String>) {
 
         println()
         println("Do not forget to run GenerateProtoBufCompare")
-    }
-    catch (e: Throwable) {
+    } catch (e: Throwable) {
         e.printStackTrace()
         throw e
-    }
-    finally {
+    } finally {
         // Workaround for JVM hanging: IDEA's process handler creates thread pool
-        System.exit(0)
+        exitProcess(0)
     }
 }
 
@@ -102,8 +92,8 @@ private fun checkVersion() {
 
 private fun execProtoc(protoPath: String, outPath: String) {
     val commandLine = GeneralCommandLine(
-            listOf(PROTOC_EXE, protoPath, "--java_out=$outPath") +
-            PROTOBUF_PROTO_PATHS.map { "--proto_path=$it" }
+        listOf(PROTOC_EXE, protoPath, "--java_out=$outPath") +
+                PROTOBUF_PROTO_PATHS.map { "--proto_path=$it" }
     )
     println("running $commandLine")
     val processOutput = ExecUtil.execAndGetOutput(commandLine)
@@ -115,45 +105,66 @@ private fun execProtoc(protoPath: String, outPath: String) {
 
 private fun renamePackages(protoPath: String, outPath: String) {
     fun List<String>.findValue(regex: Regex): String? =
-            mapNotNull { line ->
-                regex.find(line)?.groupValues?.get(1)
-            }.singleOrNull()
+        mapNotNull { line ->
+            regex.find(line)?.groupValues?.get(1)
+        }.singleOrNull()
 
     val protoFileContents = File(protoPath).readLines()
     val packageName = protoFileContents.findValue("package ([\\w.]+);".toRegex())
-                      ?: error("No package directive found in $protoPath")
+        ?: error("No package directive found in $protoPath")
     val className = protoFileContents.findValue("option java_outer_classname = \"(\\w+)\";".toRegex())
-                    ?: error("No java_outer_classname option found in $protoPath")
+        ?: error("No java_outer_classname option found in $protoPath")
 
-    val javaFile = File(outPath, "${packageName.replace('.', '/')}/$className.java")
+    val javaMultipleFiles = protoFileContents.findValue("option java_multiple_files = (\\w+);".toRegex()) == "true"
+
+    if (javaMultipleFiles) {
+        val packageDirectory = File(outPath, packageName.replace('.', '/'))
+        if (!packageDirectory.exists() || !packageDirectory.isDirectory) {
+            throw AssertionError("$protoPath, java_multiple_files mode: '$packageDirectory' doesn't exist or is not a directory")
+        }
+        val javaFiles = packageDirectory.listFiles { f: File -> f.extension == "java" }
+            ?: throw AssertionError("$protoPath, java_multiple_files mode: Can't list directory contents of '$packageDirectory'")
+        for (javaFile in javaFiles) {
+            renamePackagesInSingleFile(javaFile)
+        }
+    } else {
+        renamePackagesInSingleFile(File(outPath, "${packageName.replace('.', '/')}/$className.java"))
+    }
+}
+
+private fun renamePackagesInSingleFile(javaFile: File) {
     if (!javaFile.exists()) {
         throw AssertionError("File does not exist: $javaFile")
     }
 
     javaFile.writeText(
-            javaFile.readLines().map { line ->
-                line.replace("com.google.protobuf", "org.jetbrains.kotlin.protobuf")
-                    // Memory footprint optimizations: do not allocate too big bytes buffers that effectively remain unused
-                    .replace("              unknownFieldsOutput);", "              unknownFieldsOutput, 1);")
-            }.joinToString(LineSeparator.getSystemLineSeparator().separatorString)
+        javaFile.readLines().joinToString(LineSeparator.getSystemLineSeparator().separatorString) { line ->
+            line.replace("com.google.protobuf", "org.jetbrains.kotlin.protobuf")
+                // Memory footprint optimizations: do not allocate too big bytes buffers that effectively remain unused
+                .replace("            unknownFieldsOutput);", "            unknownFieldsOutput, 1);")
+        }
     )
 }
 
 private fun modifyAndExecProtoc(protoPath: ProtoPath) {
-    val debugProtoFile = File(protoPath.file.replace(".proto", ".debug.proto"))
-    debugProtoFile.writeText(modifyForDebug(protoPath))
-    debugProtoFile.deleteOnExit()
+    if (protoPath.generateDebug) {
+        val debugProtoFile = File(protoPath.file.replace(".proto", ".debug.proto"))
+        debugProtoFile.writeText(modifyForDebug(protoPath))
+        debugProtoFile.deleteOnExit()
 
-    val outPath = "build-common/test"
-    execProtoc(debugProtoFile.path, outPath)
-    renamePackages(debugProtoFile.path, outPath)
+        val outPath = "build-common/test"
+        execProtoc(debugProtoFile.path, outPath)
+        renamePackages(debugProtoFile.path, outPath)
+    }
 }
 
 private fun modifyForDebug(protoPath: ProtoPath): String {
     var text = File(protoPath.file).readText()
-            .replace("option java_outer_classname = \"${protoPath.className}\"",
-                     "option java_outer_classname = \"${protoPath.debugClassName}\"") // give different name for class
-            .replace("option optimize_for = LITE_RUNTIME;", "") // using default instead
+        .replace(
+            "option java_outer_classname = \"${protoPath.className}\"",
+            "option java_outer_classname = \"${protoPath.debugClassName}\""
+        ) // give different name for class
+        .replace("option optimize_for = LITE_RUNTIME;", "") // using default instead
     (listOf(EXT_OPTIONS_PROTO_PATH) + PROTO_PATHS).forEach {
         val file = it.file
         val newFile = file.replace(".proto", ".debug.proto")

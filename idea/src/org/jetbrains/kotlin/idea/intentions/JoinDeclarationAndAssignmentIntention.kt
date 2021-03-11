@@ -1,17 +1,6 @@
 /*
- * Copyright 2010-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.intentions
@@ -22,9 +11,11 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReferenceService
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.canOmitDeclaredType
 import org.jetbrains.kotlin.idea.core.moveCaret
+import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.core.unblockDocument
 import org.jetbrains.kotlin.idea.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -36,14 +27,15 @@ import org.jetbrains.kotlin.resolve.calls.callUtil.getType
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeUtils
 
+@Suppress("DEPRECATION")
 class JoinDeclarationAndAssignmentInspection : IntentionBasedInspection<KtProperty>(
     JoinDeclarationAndAssignmentIntention::class,
-    "Can be joined with assignment"
+    KotlinBundle.message("can.be.joined.with.assignment")
 )
 
 class JoinDeclarationAndAssignmentIntention : SelfTargetingRangeIntention<KtProperty>(
     KtProperty::class.java,
-    "Join declaration and assignment"
+    KotlinBundle.lazyMessage("join.declaration.and.assignment")
 ) {
 
     private fun equalNullableTypes(type1: KotlinType?, type2: KotlinType?): Boolean {
@@ -58,13 +50,14 @@ class JoinDeclarationAndAssignmentIntention : SelfTargetingRangeIntention<KtProp
             || element.setter != null
             || element.getter != null
             || element.receiverTypeReference != null
-            || element.name == null) {
+            || element.name == null
+        ) {
             return null
         }
 
         val assignment = findAssignment(element) ?: return null
         if (assignment.right?.let {
-                hasNoLocalDependencies(it, element.parent) && assignment.analyze().let { context ->
+                hasNoLocalDependencies(it, element) && assignment.analyze().let { context ->
                     (element.isVar && !element.isLocal) ||
                             equalNullableTypes(it.getType(context), context[BindingContext.TYPE, element.typeReference])
                 }
@@ -74,25 +67,35 @@ class JoinDeclarationAndAssignmentIntention : SelfTargetingRangeIntention<KtProp
     }
 
     override fun applyTo(element: KtProperty, editor: Editor?) {
-        val typeReference = element.typeReference ?: return
-
+        if (element.typeReference == null) return
         val assignment = findAssignment(element) ?: return
         val initializer = assignment.right ?: return
-        val newInitializer = element.setInitializer(initializer)!!
 
+        element.initializer = initializer
         if (element.hasModifier(KtTokens.LATEINIT_KEYWORD)) element.removeModifier(KtTokens.LATEINIT_KEYWORD)
 
-        val initializerBlock = assignment.parent.parent as? KtAnonymousInitializer
-        assignment.delete()
-        if (initializerBlock != null && (initializerBlock.body as? KtBlockExpression)?.isEmpty() == true) {
-            initializerBlock.delete()
+        val grandParent = assignment.parent.parent
+        val initializerBlock = grandParent as? KtAnonymousInitializer
+        val secondaryConstructor = grandParent as? KtSecondaryConstructor
+        val newProperty = if (!element.isLocal && (initializerBlock != null || secondaryConstructor != null)) {
+            assignment.delete()
+            if ((initializerBlock?.body as? KtBlockExpression)?.isEmpty() == true) initializerBlock.delete()
+            val secondaryConstructorBlock = secondaryConstructor?.bodyBlockExpression
+            if (secondaryConstructorBlock?.isEmpty() == true) secondaryConstructorBlock.delete()
+            element
+        } else {
+            assignment.replaced(element).also {
+                element.delete()
+            }
         }
+        val newInitializer = newProperty.initializer!!
+        val typeReference = newProperty.typeReference!!
 
         editor?.apply {
             unblockDocument()
 
-            if (element.canOmitDeclaredType(newInitializer, canChangeTypeToSubtype = !element.isVar)) {
-                val colon = element.colon!!
+            if (newProperty.canOmitDeclaredType(newInitializer, canChangeTypeToSubtype = !newProperty.isVar)) {
+                val colon = newProperty.colon!!
                 selectionModel.setSelection(colon.startOffset, typeReference.endOffset)
                 moveCaret(typeReference.endOffset, ScrollType.CENTER)
             } else {
@@ -108,8 +111,7 @@ class JoinDeclarationAndAssignmentIntention : SelfTargetingRangeIntention<KtProp
         val assignments = mutableListOf<KtBinaryExpression>()
         fun process(binaryExpr: KtBinaryExpression) {
             if (binaryExpr.operationToken != KtTokens.EQ) return
-            val left = binaryExpr.left
-            val leftReference = when (left) {
+            val leftReference = when (val left = binaryExpr.left) {
                 is KtNameReferenceExpression ->
                     left
                 is KtDotQualifiedExpression ->
@@ -137,7 +139,7 @@ class JoinDeclarationAndAssignmentIntention : SelfTargetingRangeIntention<KtProp
         if (assignments.any { it.parent.invalidParent() }) return null
 
         val firstAssignment = assignments.firstOrNull() ?: return null
-        if (assignments.any { it !== firstAssignment && it.parent.parent is KtSecondaryConstructor}) return null
+        if (assignments.any { it !== firstAssignment && it.parent.parent is KtSecondaryConstructor }) return null
 
         val context = firstAssignment.analyze()
         val propertyDescriptor = context[BindingContext.DECLARATION_TO_DESCRIPTOR, property] ?: return null
@@ -153,15 +155,16 @@ class JoinDeclarationAndAssignmentIntention : SelfTargetingRangeIntention<KtProp
     // a block that only contains comments is not empty
     private fun KtBlockExpression.isEmpty() = contentRange().isEmpty
 
-    private fun hasNoLocalDependencies(element: KtElement, localContext: PsiElement): Boolean {
+    private fun hasNoLocalDependencies(element: KtElement, property: KtProperty): Boolean {
+        val localContext = property.parent
+        val nextSiblings = property.siblings(forward = true, withItself = false)
         return !element.anyDescendantOfType<PsiElement> { child ->
-            child.resolveAllReferences().any { it != null && PsiTreeUtil.isAncestor(localContext, it, false) }
+            child.resolveAllReferences().any { it != null && PsiTreeUtil.isAncestor(localContext, it, false) && it in nextSiblings }
         }
     }
 }
 
-private fun PsiElement.resolveAllReferences(): Sequence<PsiElement?> {
-    return PsiReferenceService.getService().getReferences(this, PsiReferenceService.Hints.NO_HINTS)
+private fun PsiElement.resolveAllReferences(): Sequence<PsiElement?> =
+    PsiReferenceService.getService().getReferences(this, PsiReferenceService.Hints.NO_HINTS)
         .asSequence()
         .map { it.resolve() }
-}

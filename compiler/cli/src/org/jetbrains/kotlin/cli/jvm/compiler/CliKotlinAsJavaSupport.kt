@@ -1,6 +1,6 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2000-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.cli.jvm.compiler
@@ -12,10 +12,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiSearchScopeUtil
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
-import org.jetbrains.kotlin.asJava.classes.KtLightClass
-import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
-import org.jetbrains.kotlin.asJava.classes.KtLightClassForScript
-import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration
+import org.jetbrains.kotlin.asJava.classes.*
 import org.jetbrains.kotlin.descriptors.PackageViewDescriptor
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.load.java.components.FilesByFacadeFqNameIndexer
@@ -38,8 +35,8 @@ class CliKotlinAsJavaSupport(
     override fun getFacadeClassesInPackage(packageFqName: FqName, scope: GlobalSearchScope): Collection<PsiClass> {
         return findFacadeFilesInPackage(packageFqName, scope)
             .groupBy { it.javaFileFacadeFqName }
-            .mapNotNull { (facadeClassFqName, files) ->
-                KtLightClassForFacade.createForFacade(psiManager, facadeClassFqName, scope, files)
+            .mapNotNull { (facadeClassFqName, _) ->
+                KtLightClassForFacade.createForFacade(psiManager, facadeClassFqName, scope)
             }
     }
 
@@ -56,12 +53,7 @@ class CliKotlinAsJavaSupport(
         .orEmpty()
 
     override fun getFacadeClasses(facadeFqName: FqName, scope: GlobalSearchScope): Collection<PsiClass> {
-        val filesForFacade = findFilesForFacade(facadeFqName, scope)
-        if (filesForFacade.isEmpty()) return emptyList()
-
-        return listOfNotNull(
-            KtLightClassForFacade.createForFacade(psiManager, facadeFqName, scope, filesForFacade)
-        )
+        return listOfNotNull(KtLightClassForFacade.createForFacade(psiManager, facadeFqName, scope))
     }
 
     override fun getScriptClasses(scriptFqName: FqName, scope: GlobalSearchScope): Collection<PsiClass> {
@@ -86,6 +78,8 @@ class CliKotlinAsJavaSupport(
         }.orEmpty()
     }
 
+    override fun getFakeLightClass(classOrObject: KtClassOrObject): KtFakeLightClass =
+        KtDescriptorBasedFakeLightClass(classOrObject)
 
     override fun findClassOrObjectDeclarationsInPackage(
         packageFqName: FqName, searchScope: GlobalSearchScope

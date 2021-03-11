@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.run.multiplatform
@@ -28,6 +28,10 @@ class KotlinMultiplatformRunLocationsProvider : MultipleRunLocationsProvider() {
 
     override fun getAlternativeLocations(originalLocation: Location<*>): List<Location<*>> {
         val originalModule = originalLocation.module ?: return emptyList()
+        if (originalModule.isNewMPPModule) {
+            return emptyList()
+        }
+
         val virtualFile = originalLocation.virtualFile ?: return emptyList()
         val sourceType = ModuleRootManager.getInstance(originalModule).fileIndex.getSourceType(virtualFile) ?: return emptyList()
         return modulesToRunFrom(originalModule, sourceType).map { PsiLocation(originalLocation.project, it, originalLocation.psiElement) }

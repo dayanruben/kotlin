@@ -4,33 +4,31 @@ plugins {
     id("jps-compatible")
 }
 
-jvmTarget = "1.6"
+publish()
 
 dependencies {
     compile(project(":kotlin-script-runtime"))
-    compile(project(":kotlin-stdlib"))
+    compile(kotlinStdlib())
     compile(project(":kotlin-scripting-common"))
     compile(project(":kotlin-scripting-jvm"))
-    compile(project(":kotlin-script-util"))
+    compileOnly(project(":kotlin-scripting-compiler"))
     compileOnly(project(":compiler:cli"))
     compileOnly(project(":kotlin-reflect-api"))
-    compileOnly(intellijCoreDep())
-    runtime(projectRuntimeJar(":kotlin-compiler"))
-    runtime(project(":kotlin-reflect"))
-    testCompile(projectTests(":compiler:tests-common"))
-    testCompile(commonDep("junit"))
-    testCompile(project(":compiler:daemon-common")) // TODO: fix import (workaround for jps build)
+    compileOnly(intellijCoreDep()) { includeJars("intellij-core") }
+    publishedRuntime(project(":kotlin-compiler"))
+    publishedRuntime(project(":kotlin-scripting-compiler"))
+    publishedRuntime(project(":kotlin-reflect"))
+    publishedRuntime(commonDep("org.jetbrains.intellij.deps", "trove4j"))
 }
 
 sourceSets {
     "main" { projectDefault() }
-    "test" { projectDefault() }
+    "test" {}
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.dsl.KotlinCompile<*>> {
+    kotlinOptions.freeCompilerArgs += "-Xallow-kotlin-package"
 }
 
 standardPublicJars()
 
-publish()
-
-projectTest {
-    workingDir = rootDir
-}

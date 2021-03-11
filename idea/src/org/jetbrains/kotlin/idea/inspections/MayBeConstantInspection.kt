@@ -1,6 +1,6 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2000-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.inspections
@@ -11,6 +11,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.inspections.MayBeConstantInspection.Status.*
 import org.jetbrains.kotlin.idea.quickfix.AddConstModifierFix
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.propertyVisitor
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.psi.psiUtil.isObjectLiteral
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.constants.ErrorValue
@@ -40,14 +42,16 @@ class MayBeConstantInspection : AbstractKotlinInspection() {
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return propertyVisitor { property ->
-            val status = property.getStatus()
-            when (status) {
+            when (val status = property.getStatus()) {
                 NONE, JVM_FIELD_MIGHT_BE_CONST_NO_INITIALIZER,
                 MIGHT_BE_CONST_ERRONEOUS, JVM_FIELD_MIGHT_BE_CONST_ERRONEOUS -> return@propertyVisitor
                 MIGHT_BE_CONST, JVM_FIELD_MIGHT_BE_CONST -> {
                     holder.registerProblem(
                         property.nameIdentifier ?: property,
-                        if (status == JVM_FIELD_MIGHT_BE_CONST) "'const' might be used instead of '@JvmField'" else "Might be 'const'",
+                        if (status == JVM_FIELD_MIGHT_BE_CONST)
+                            KotlinBundle.message("const.might.be.used.instead.of.jvmfield")
+                        else
+                            KotlinBundle.message("might.be.const"),
                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                         IntentionWrapper(AddConstModifierFix(property), property.containingFile)
                     )
@@ -59,7 +63,7 @@ class MayBeConstantInspection : AbstractKotlinInspection() {
     companion object {
         fun KtProperty.getStatus(): Status {
             if (isLocal || isVar || getter != null ||
-                hasModifier(KtTokens.CONST_KEYWORD) || hasModifier(KtTokens.OVERRIDE_KEYWORD)
+                hasModifier(KtTokens.CONST_KEYWORD) || hasModifier(KtTokens.OVERRIDE_KEYWORD) || hasActualModifier()
             ) {
                 return NONE
             }

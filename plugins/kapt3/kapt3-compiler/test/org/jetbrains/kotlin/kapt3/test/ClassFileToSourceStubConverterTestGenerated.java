@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.kapt3.test;
@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.kapt3.test;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.test.KotlinTestUtils;
-import org.jetbrains.kotlin.test.TargetBackend;
+import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.runner.RunWith;
 
@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
 @RunWith(JUnit3RunnerWithInners.class)
 public class ClassFileToSourceStubConverterTestGenerated extends AbstractClassFileToSourceStubConverterTest {
     private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTest, TargetBackend.ANY, testDataFilePath);
+        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
     @TestMetadata("abstractEnum.kt")
@@ -41,7 +41,7 @@ public class ClassFileToSourceStubConverterTestGenerated extends AbstractClassFi
     }
 
     public void testAllFilesPresentInConverter() throws Exception {
-        KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("plugins/kapt3/kapt3-compiler/testData/converter"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.ANY, true);
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("plugins/kapt3/kapt3-compiler/testData/converter"), Pattern.compile("^(.+)\\.kt$"), null, true);
     }
 
     @TestMetadata("annotationWithFqNames.kt")
@@ -69,9 +69,19 @@ public class ClassFileToSourceStubConverterTestGenerated extends AbstractClassFi
         runTest("plugins/kapt3/kapt3-compiler/testData/converter/annotationsWithTargets.kt");
     }
 
+    @TestMetadata("anonymousDelegate.kt")
+    public void testAnonymousDelegate() throws Exception {
+        runTest("plugins/kapt3/kapt3-compiler/testData/converter/anonymousDelegate.kt");
+    }
+
     @TestMetadata("comments.kt")
     public void testComments() throws Exception {
         runTest("plugins/kapt3/kapt3-compiler/testData/converter/comments.kt");
+    }
+
+    @TestMetadata("commentsRemoved.kt")
+    public void testCommentsRemoved() throws Exception {
+        runTest("plugins/kapt3/kapt3-compiler/testData/converter/commentsRemoved.kt");
     }
 
     @TestMetadata("cyrillicClassName.kt")
@@ -87,6 +97,46 @@ public class ClassFileToSourceStubConverterTestGenerated extends AbstractClassFi
     @TestMetadata("defaultImpls.kt")
     public void testDefaultImpls() throws Exception {
         runTest("plugins/kapt3/kapt3-compiler/testData/converter/defaultImpls.kt");
+    }
+
+    @TestMetadata("defaultPackage.kt")
+    public void testDefaultPackage() throws Exception {
+        runTest("plugins/kapt3/kapt3-compiler/testData/converter/defaultPackage.kt");
+    }
+
+    @TestMetadata("defaultPackageCorrectErrorTypes.kt")
+    public void testDefaultPackageCorrectErrorTypes() throws Exception {
+        runTest("plugins/kapt3/kapt3-compiler/testData/converter/defaultPackageCorrectErrorTypes.kt");
+    }
+
+    @TestMetadata("defaultParameterValueOff.kt")
+    public void testDefaultParameterValueOff() throws Exception {
+        runTest("plugins/kapt3/kapt3-compiler/testData/converter/defaultParameterValueOff.kt");
+    }
+
+    @TestMetadata("defaultParameterValueOn.kt")
+    public void testDefaultParameterValueOn() throws Exception {
+        runTest("plugins/kapt3/kapt3-compiler/testData/converter/defaultParameterValueOn.kt");
+    }
+
+    @TestMetadata("delegateCorrectErrorTypes.kt")
+    public void testDelegateCorrectErrorTypes() throws Exception {
+        runTest("plugins/kapt3/kapt3-compiler/testData/converter/delegateCorrectErrorTypes.kt");
+    }
+
+    @TestMetadata("deprecated.kt")
+    public void testDeprecated() throws Exception {
+        runTest("plugins/kapt3/kapt3-compiler/testData/converter/deprecated.kt");
+    }
+
+    @TestMetadata("enumImports.kt")
+    public void testEnumImports() throws Exception {
+        runTest("plugins/kapt3/kapt3-compiler/testData/converter/enumImports.kt");
+    }
+
+    @TestMetadata("enumInCompanion.kt")
+    public void testEnumInCompanion() throws Exception {
+        runTest("plugins/kapt3/kapt3-compiler/testData/converter/enumInCompanion.kt");
     }
 
     @TestMetadata("enums.kt")
@@ -189,6 +239,31 @@ public class ClassFileToSourceStubConverterTestGenerated extends AbstractClassFi
         runTest("plugins/kapt3/kapt3-compiler/testData/converter/javaKeywordsInPackageNames.kt");
     }
 
+    @TestMetadata("javadoc.kt")
+    public void testJavadoc() throws Exception {
+        runTest("plugins/kapt3/kapt3-compiler/testData/converter/javadoc.kt");
+    }
+
+    @TestMetadata("jvmDefaultAll.kt")
+    public void testJvmDefaultAll() throws Exception {
+        runTest("plugins/kapt3/kapt3-compiler/testData/converter/jvmDefaultAll.kt");
+    }
+
+    @TestMetadata("jvmDefaultAllCompatibility.kt")
+    public void testJvmDefaultAllCompatibility() throws Exception {
+        runTest("plugins/kapt3/kapt3-compiler/testData/converter/jvmDefaultAllCompatibility.kt");
+    }
+
+    @TestMetadata("jvmDefaultDisable.kt")
+    public void testJvmDefaultDisable() throws Exception {
+        runTest("plugins/kapt3/kapt3-compiler/testData/converter/jvmDefaultDisable.kt");
+    }
+
+    @TestMetadata("jvmDefaultEnable.kt")
+    public void testJvmDefaultEnable() throws Exception {
+        runTest("plugins/kapt3/kapt3-compiler/testData/converter/jvmDefaultEnable.kt");
+    }
+
     @TestMetadata("jvmOverloads.kt")
     public void testJvmOverloads() throws Exception {
         runTest("plugins/kapt3/kapt3-compiler/testData/converter/jvmOverloads.kt");
@@ -267,6 +342,16 @@ public class ClassFileToSourceStubConverterTestGenerated extends AbstractClassFi
     @TestMetadata("kt27126.kt")
     public void testKt27126() throws Exception {
         runTest("plugins/kapt3/kapt3-compiler/testData/converter/kt27126.kt");
+    }
+
+    @TestMetadata("kt28306.kt")
+    public void testKt28306() throws Exception {
+        runTest("plugins/kapt3/kapt3-compiler/testData/converter/kt28306.kt");
+    }
+
+    @TestMetadata("kt34569.kt")
+    public void testKt34569() throws Exception {
+        runTest("plugins/kapt3/kapt3-compiler/testData/converter/kt34569.kt");
     }
 
     @TestMetadata("lazyProperty.kt")
@@ -349,6 +434,11 @@ public class ClassFileToSourceStubConverterTestGenerated extends AbstractClassFi
         runTest("plugins/kapt3/kapt3-compiler/testData/converter/primitiveTypes.kt");
     }
 
+    @TestMetadata("properties.kt")
+    public void testProperties() throws Exception {
+        runTest("plugins/kapt3/kapt3-compiler/testData/converter/properties.kt");
+    }
+
     @TestMetadata("propertyAnnotations.kt")
     public void testPropertyAnnotations() throws Exception {
         runTest("plugins/kapt3/kapt3-compiler/testData/converter/propertyAnnotations.kt");
@@ -362,6 +452,11 @@ public class ClassFileToSourceStubConverterTestGenerated extends AbstractClassFi
     @TestMetadata("repeatableAnnotations.kt")
     public void testRepeatableAnnotations() throws Exception {
         runTest("plugins/kapt3/kapt3-compiler/testData/converter/repeatableAnnotations.kt");
+    }
+
+    @TestMetadata("secondaryConstructor.kt")
+    public void testSecondaryConstructor() throws Exception {
+        runTest("plugins/kapt3/kapt3-compiler/testData/converter/secondaryConstructor.kt");
     }
 
     @TestMetadata("severalPackageParts.kt")
@@ -379,6 +474,16 @@ public class ClassFileToSourceStubConverterTestGenerated extends AbstractClassFi
         runTest("plugins/kapt3/kapt3-compiler/testData/converter/strangeNames.kt");
     }
 
+    @TestMetadata("stripMetadata.kt")
+    public void testStripMetadata() throws Exception {
+        runTest("plugins/kapt3/kapt3-compiler/testData/converter/stripMetadata.kt");
+    }
+
+    @TestMetadata("suspendArgName.kt")
+    public void testSuspendArgName() throws Exception {
+        runTest("plugins/kapt3/kapt3-compiler/testData/converter/suspendArgName.kt");
+    }
+
     @TestMetadata("suspendErrorTypes.kt")
     public void testSuspendErrorTypes() throws Exception {
         runTest("plugins/kapt3/kapt3-compiler/testData/converter/suspendErrorTypes.kt");
@@ -387,5 +492,10 @@ public class ClassFileToSourceStubConverterTestGenerated extends AbstractClassFi
     @TestMetadata("topLevel.kt")
     public void testTopLevel() throws Exception {
         runTest("plugins/kapt3/kapt3-compiler/testData/converter/topLevel.kt");
+    }
+
+    @TestMetadata("unsafePropertyInitializers.kt")
+    public void testUnsafePropertyInitializers() throws Exception {
+        runTest("plugins/kapt3/kapt3-compiler/testData/converter/unsafePropertyInitializers.kt");
     }
 }

@@ -1,21 +1,17 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2000-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.refactoring.rename
 
-import org.jetbrains.kotlin.statistics.KotlinStatisticsTrigger
-import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer
 import org.jetbrains.kotlin.idea.core.unquote
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.statistics.KotlinIdeRefactoringTrigger
 
 open class KotlinVariableInplaceRenameHandler : VariableInplaceRenameHandler() {
     companion object {
@@ -40,12 +36,12 @@ open class KotlinVariableInplaceRenameHandler : VariableInplaceRenameHandler() {
     }
 
     protected open class RenamerImpl : VariableInplaceRenamer {
-        constructor(elementToRename: PsiNamedElement, editor: Editor): super(elementToRename, editor)
+        constructor(elementToRename: PsiNamedElement, editor: Editor) : super(elementToRename, editor)
         constructor(
-                elementToRename: PsiNamedElement,
-                editor: Editor,
-                currentName: String,
-                oldName: String
+            elementToRename: PsiNamedElement,
+            editor: Editor,
+            currentName: String,
+            oldName: String
         ) : super(elementToRename, editor, editor.project!!, currentName, oldName)
 
         override fun acceptReference(reference: PsiReference): Boolean {
@@ -72,14 +68,4 @@ open class KotlinVariableInplaceRenameHandler : VariableInplaceRenameHandler() {
 
     override public fun isAvailable(element: PsiElement?, editor: Editor, file: PsiFile) =
         editor.settings.isVariableInplaceRenameEnabled && element != null && isInplaceRenameAvailable(element)
-
-    override fun invoke(project: Project, editor: Editor?, file: PsiFile?, dataContext: DataContext) {
-        super.invoke(project, editor, file, dataContext)
-        KotlinStatisticsTrigger.trigger(KotlinIdeRefactoringTrigger::class.java, this::class.java.name)
-    }
-
-    override fun invoke(project: Project, elements: Array<out PsiElement>, dataContext: DataContext) {
-        super.invoke(project, elements, dataContext)
-        KotlinStatisticsTrigger.trigger(KotlinIdeRefactoringTrigger::class.java, this::class.java.name)
-    }
 }

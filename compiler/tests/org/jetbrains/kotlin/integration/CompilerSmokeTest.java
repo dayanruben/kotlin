@@ -29,6 +29,13 @@ public class CompilerSmokeTest extends CompilerSmokeTestBase {
         run("hello.run", "-cp", jar, "Hello.HelloKt");
     }
 
+    public void testHelloAppIR() throws Exception {
+        String jar = tmpdir.getAbsolutePath() + File.separator + "hello.jar";
+
+        assertEquals("compilation failed", 0, runCompiler("hello.compile", "-include-runtime", "-Xuse-ir", "hello.kt", "-d", jar));
+        run("hello.run", "-cp", jar, "Hello.HelloKt");
+    }
+
     public void testHelloAppFQMain() throws Exception {
         String jar = tmpdir.getAbsolutePath() + File.separator + "hello.jar";
 
@@ -36,10 +43,24 @@ public class CompilerSmokeTest extends CompilerSmokeTestBase {
         run("hello.run", "-cp", jar, "Hello.HelloKt");
     }
 
+    public void testHelloAppFQMainIR() throws Exception {
+        String jar = tmpdir.getAbsolutePath() + File.separator + "hello.jar";
+
+        assertEquals("compilation failed", 0, runCompiler("hello.compile", "-include-runtime", "-Xuse-ir", "hello.kt", "-d", jar));
+        run("hello.run", "-cp", jar, "Hello.HelloKt");
+    }
+
     public void testHelloAppVarargMain() throws Exception {
         String jar = tmpdir.getAbsolutePath() + File.separator + "hello.jar";
 
         assertEquals("compilation failed", 0, runCompiler("hello.compile", "-include-runtime", "hello.kt", "-d", jar));
+        run("hello.run", "-cp", jar, "Hello.HelloKt");
+    }
+
+    public void testHelloAppVarargMainIR() throws Exception {
+        String jar = tmpdir.getAbsolutePath() + File.separator + "hello.jar";
+
+        assertEquals("compilation failed", 0, runCompiler("hello.compile", "-include-runtime", "-Xuse-ir", "hello.kt", "-d", jar));
         run("hello.run", "-cp", jar, "Hello.HelloKt");
     }
 
@@ -57,10 +78,24 @@ public class CompilerSmokeTest extends CompilerSmokeTestBase {
         run("hello.run", "-cp", jar, "Hello.Foo", "O", "K");
     }
 
+    public void testHelloAppSuspendMainInMultifileIR() throws Exception {
+        String jar = tmpdir.getAbsolutePath() + File.separator + "hello.jar";
+
+        assertEquals("compilation failed", 0, runCompiler("hello.compile", "-include-runtime", "-Xuse-ir", "hello.kt", "-d", jar));
+        run("hello.run", "-cp", jar, "Hello.Foo", "O", "K");
+    }
+
     public void testHelloAppParameterlessMain() throws Exception {
         String jar = tmpdir.getAbsolutePath() + File.separator + "hello.jar";
 
         assertEquals("compilation failed", 0, runCompiler("hello.compile", "-include-runtime", "hello.kt", "-d", jar));
+        run("hello.run", "-cp", jar, "Hello.HelloKt");
+    }
+
+    public void testHelloAppParameterlessMainIR() throws Exception {
+        String jar = tmpdir.getAbsolutePath() + File.separator + "hello.jar";
+
+        assertEquals("compilation failed", 0, runCompiler("hello.compile", "-include-runtime", "-Xuse-ir", "hello.kt", "-d", jar));
         run("hello.run", "-cp", jar, "Hello.HelloKt");
     }
 
@@ -71,10 +106,31 @@ public class CompilerSmokeTest extends CompilerSmokeTestBase {
         run("hello.run", "-cp", jar, "Hello.HelloKt");
     }
 
+    public void testHelloAppOldAndParameterlessMainIR() throws Exception {
+        String jar = tmpdir.getAbsolutePath() + File.separator + "hello.jar";
+
+        assertEquals("compilation failed", 0, runCompiler("hello.compile", "-include-runtime", "-Xuse-ir", "hello.kt", "-d", jar));
+        run("hello.run", "-cp", jar, "Hello.HelloKt");
+    }
+
     public void testHelloAppSuspendParameterlessMain() throws Exception {
         String jar = tmpdir.getAbsolutePath() + File.separator + "hello.jar";
 
         assertEquals("compilation failed", 0, runCompiler("hello.compile", "-include-runtime", "hello.kt", "-d", jar));
+        run("hello.run", "-cp", jar, "Hello.HelloKt", "O", "K");
+    }
+
+    public void testHelloAppSuspendParameterlessMainIR() throws Exception {
+        String jar = tmpdir.getAbsolutePath() + File.separator + "hello.jar";
+
+        assertEquals("compilation failed", 0, runCompiler("hello.compile", "-include-runtime", "-Xuse-ir", "hello.kt", "-d", jar));
+        run("hello.run", "-cp", jar, "Hello.HelloKt", "O", "K");
+    }
+
+    public void testSimplestSuspendMainIR() throws Exception {
+        String jar = tmpdir.getAbsolutePath() + File.separator + "hello.jar";
+
+        assertEquals("compilation failed", 0, runCompiler("hello.compile", "-include-runtime", "-Xuse-ir", "hello.kt", "-d", jar));
         run("hello.run", "-cp", jar, "Hello.HelloKt", "O", "K");
     }
 
@@ -130,5 +186,65 @@ public class CompilerSmokeTest extends CompilerSmokeTestBase {
                 AbstractCliTest.replacePathsInBuildXml("-Xbuild-file=" + buildXml, getTestDataDir(), tmpdir.getPath())
         );
         run("buildFile.run", "-cp", tmpdir.getAbsolutePath(), "MainKt");
+    }
+
+    public void testReflect() throws Exception {
+        String jar = tmpdir.getAbsolutePath() + File.separator + "reflect.jar";
+        assertEquals("compilation failed", 0,
+                     runCompiler("reflect.compile", "-include-runtime", "reflect.kt", "-d", jar));
+        run("reflect.run", "-cp", jar, "reflect.ReflectKt");
+    }
+
+    public void testNoReflect() throws Exception {
+        String jar = tmpdir.getAbsolutePath() + File.separator + "noReflect.jar";
+        assertEquals("compilation failed", 0,
+                     runCompiler("noReflect.compile", "-include-runtime", "-no-reflect", "noReflect.kt", "-d", jar));
+        run("noReflect.run", "-cp", jar, "noReflect.NoReflectKt");
+    }
+
+    // related to KT-14772, destination is not a jar, and clashing with an existing file
+    public void testDestinationDirClashingWithExistingFile() throws Exception {
+        String outputDir = tmpdir.getAbsolutePath() + File.separator + "clashingFile";
+        File file = new File(outputDir);
+        file.createNewFile();
+        runCompiler("test.compile", "test.kt", "-d", outputDir);
+    }
+
+    // related to KT-18184, destination is not a jar, and permission denied
+    public void testDestinationDirNoPermission() throws Exception {
+        String outputDir = tmpdir.getAbsolutePath() + File.separator + "noPermissionDir";
+        File file = new File(outputDir, "Test.class");
+        file.getParentFile().mkdirs();
+        file.createNewFile();
+        // file.getParentFile().setReadOnly(); // won't work on Windows
+        file.setReadOnly(); // So we use this one as an alternative
+        runCompiler("test.compile", "test.kt", "-d", outputDir);
+    }
+
+    // related to KT-18184, destination is a jar, and output directory does not exist, we should try to create
+    // output directory for it.
+    public void testDestinationDirDoesNotExist() throws Exception {
+        String jar = tmpdir.getAbsolutePath() + File.separator + "nonExistingDir" + File.separator + "test.jar";
+        runCompiler("test.compile", "test.kt", "-d", jar);
+    }
+
+    // related to KT-18184, destination is a jar, and output directory does not exist, and failed to created
+    // output directory due to clash with existing file.
+    public void testDestinationJarClashingWithExistingFile() throws Exception {
+        String jar = tmpdir.getAbsolutePath() + File.separator + "clashingFile" + File.separator + "test.jar";
+        File file = new File(jar);
+        file.getParentFile().createNewFile();
+        runCompiler("test.compile", "test.kt", "-d", jar);
+    }
+
+    // related to KT-18184, Destination is a jar, and output directory exist, and permission denied to write jar.
+    public void testDestinationJarNoPermission() throws Exception {
+        String outputDir = tmpdir.getAbsolutePath() + File.separator + "noPermissionDir";
+        File jar = new File(outputDir, "test.jar");
+        jar.getParentFile().mkdirs();
+        jar.createNewFile();
+        // jar.getParentFile().setReadOnly(); // won't work on Windows
+        jar.setReadOnly(); // So we use this one as an alternative
+        runCompiler("test.compile", "test.kt", "-d", jar.getCanonicalPath());
     }
 }

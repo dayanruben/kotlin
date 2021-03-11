@@ -1,17 +1,6 @@
 /*
- * Copyright 2010-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.core.overrideImplement
@@ -40,9 +29,12 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.findDocComment.findDocComment
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
-import org.jetbrains.kotlin.renderer.*
+import org.jetbrains.kotlin.renderer.ClassifierNamePolicy
+import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.renderer.DescriptorRenderer.Companion.withOptions
 import org.jetbrains.kotlin.renderer.DescriptorRendererModifier.*
+import org.jetbrains.kotlin.renderer.OverrideRenderingPolicy
+import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.checkers.ExperimentalUsageChecker
 import org.jetbrains.kotlin.resolve.descriptorUtil.setSingleOverridden
 import org.jetbrains.kotlin.util.findCallableMemberBySignature
@@ -152,7 +144,7 @@ fun OverrideMemberChooserObject.generateMember(
     val renderer = baseRenderer.withOptions {
         if (descriptor is ClassConstructorDescriptor && descriptor.isPrimary) {
             val containingClass = descriptor.containingDeclaration
-            if (containingClass.kind == ClassKind.ANNOTATION_CLASS || containingClass.isInline) {
+            if (containingClass.kind == ClassKind.ANNOTATION_CLASS || containingClass.isInline || containingClass.isValue) {
                 renderPrimaryConstructorParametersAsProperties = true
             }
         }
@@ -179,7 +171,8 @@ fun OverrideMemberChooserObject.generateMember(
                     targetClass.resolveToDescriptorIfAny()?.expectedDescriptors()?.filterIsInstance<ClassDescriptor>().orEmpty()
                 if (expectClassDescriptors.any { expectClassDescriptor ->
                         val expectMemberDescriptor = expectClassDescriptor.findCallableMemberBySignature(immediateSuper)
-                        expectMemberDescriptor?.isExpect == true && expectMemberDescriptor.kind != CallableMemberDescriptor.Kind.FAKE_OVERRIDE
+                        expectMemberDescriptor?.isExpect == true &&
+                                expectMemberDescriptor.kind != CallableMemberDescriptor.Kind.FAKE_OVERRIDE
                     }
                 ) {
                     newMember.addModifier(KtTokens.ACTUAL_KEYWORD)
@@ -189,8 +182,7 @@ fun OverrideMemberChooserObject.generateMember(
     }
 
     if (copyDoc) {
-        val superDeclaration = DescriptorToSourceUtilsIde.getAnyDeclaration(project, descriptor)?.navigationElement
-        val kDoc = when (superDeclaration) {
+        val kDoc = when (val superDeclaration = DescriptorToSourceUtilsIde.getAnyDeclaration(project, descriptor)?.navigationElement) {
             is KtDeclaration ->
                 findDocComment(superDeclaration)
             is PsiDocCommentOwner -> {
@@ -218,10 +210,14 @@ private val OVERRIDE_RENDERER = withOptions {
     typeNormalizer = IdeDescriptorRenderers.APPROXIMATE_FLEXIBLE_TYPES
     renderUnabbreviatedType = false
     annotationFilter = {
-        it.type.constructor.declarationDescriptor?.annotations?.hasAnnotation(ExperimentalUsageChecker.EXPERIMENTAL_FQ_NAME) ?: false
+        val annotations = it.type.constructor.declarationDescriptor?.annotations
+        annotations != null && (annotations.hasAnnotation(ExperimentalUsageChecker.REQUIRES_OPT_IN_FQ_NAME) ||
+                annotations.hasAnnotation(ExperimentalUsageChecker.OLD_EXPERIMENTAL_FQ_NAME))
     }
     presentableUnresolvedTypes = true
+    informativeErrorType = false
 }
+
 
 private val EXPECT_RENDERER = OVERRIDE_RENDERER.withOptions {
     modifiers = setOf(VISIBILITY, MODALITY, OVERRIDE, INNER, MEMBER_KIND)
@@ -229,13 +225,11 @@ private val EXPECT_RENDERER = OVERRIDE_RENDERER.withOptions {
     secondaryConstructorsAsPrimary = false
     renderDefaultVisibility = false
     renderDefaultModality = false
-    renderTypeExpansions = true
 }
 
 private val ACTUAL_RENDERER = EXPECT_RENDERER.withOptions {
-    modifiers += ACTUAL
+    modifiers = modifiers + ACTUAL
     actualPropertiesInPrimaryConstructor = true
-    renderTypeExpansions = false
     renderConstructorDelegation = true
 }
 
@@ -342,14 +336,16 @@ private fun generateFunction(
     }
 }
 
+private fun OverrideMemberChooserObject.BodyType.effectiveBodyType(canBeEmpty: Boolean): OverrideMemberChooserObject.BodyType =
+    if (!canBeEmpty && this == EMPTY_OR_TEMPLATE) FROM_TEMPLATE else this
+
 fun generateUnsupportedOrSuperCall(
     project: Project,
     descriptor: CallableMemberDescriptor,
     bodyType: OverrideMemberChooserObject.BodyType,
     canBeEmpty: Boolean = true
 ): String {
-    val effectiveBodyType = if (!canBeEmpty && bodyType == EMPTY_OR_TEMPLATE) FROM_TEMPLATE else bodyType
-    when (effectiveBodyType) {
+    when (bodyType.effectiveBodyType(canBeEmpty)) {
         EMPTY_OR_TEMPLATE -> return ""
         FROM_TEMPLATE -> {
             val templateKind = if (descriptor is FunctionDescriptor) TemplateKind.FUNCTION else TemplateKind.PROPERTY_INITIALIZER
@@ -362,7 +358,7 @@ fun generateUnsupportedOrSuperCall(
             )
         }
         else -> return buildString {
-            if (bodyType is OverrideMemberChooserObject.BodyType.Delegate) {
+            if (bodyType is Delegate) {
                 append(bodyType.receiverName)
             } else {
                 append("super")
@@ -386,7 +382,11 @@ fun generateUnsupportedOrSuperCall(
     }
 }
 
-fun KtNamedDeclaration.makeNotActual() {
+fun KtModifierListOwner.makeNotActual() {
     removeModifier(KtTokens.ACTUAL_KEYWORD)
     removeModifier(KtTokens.IMPL_KEYWORD)
+}
+
+fun KtModifierListOwner.makeActual() {
+    addModifier(KtTokens.ACTUAL_KEYWORD)
 }

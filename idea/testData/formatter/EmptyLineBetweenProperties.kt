@@ -1,3 +1,4 @@
+// test
 val p1 by Some
 val p2 = 1
 val p3: Int get() = 3
@@ -33,4 +34,13 @@ class TwoLines {
 
 
     val p5: Int
+}
+
+class Foo {
+    @Inject
+    lateinit var logger: Logger
+    @Inject
+    lateinit var userService: UserService
+    @Inject
+    override lateinit var configBridge: ConfigBridge
 }

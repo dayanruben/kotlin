@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package kotlin.test
@@ -8,9 +8,10 @@ package kotlin.test
 /**
  * Serves as a bridge to a testing framework.
  *
- * The tests structure is defined using internal functions suite and test, which delegate to correspoding functions of a [FrameworkAdapter].
+ * The tests structure is defined using internal functions suite and test, which delegate to corresponding functions of a [FrameworkAdapter].
  * Sample test layout:
  *
+ * ```js
  * suite('a suite', false, function() {
  *   suite('a subsuite', false, function() {
  *     test('a test', false, function() {...});
@@ -18,6 +19,7 @@ package kotlin.test
  *   });
  *   suite('an ignored/pending test', true, function() {...});
  * });
+ * ```
  *
  */
 public external interface FrameworkAdapter {
@@ -38,5 +40,5 @@ public external interface FrameworkAdapter {
      * @param ignored whether the test is ignored
      * @param testFn contains test body invocation
      */
-    fun test(name: String, ignored: Boolean, testFn: () -> Unit)
+    fun test(name: String, ignored: Boolean, testFn: () -> Any?)
 }

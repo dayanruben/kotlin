@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package templates
@@ -26,6 +26,9 @@ abstract class TemplateGroupBase : TemplateGroup {
                     it.returnType.isSubtypeOf(typeIterableOfMemberTemplates) ->
                         @Suppress("UNCHECKED_CAST")
                         yieldAll(it.call(this) as Iterable<MemberTemplate>)
+                    it.returnType.isSubtypeOf(typeSequenceOfMemberTemplates) ->
+                        @Suppress("UNCHECKED_CAST")
+                        yieldAll(it.call(this) as Sequence<MemberTemplate>)
                     else ->
                         error("Member $it violates naming convention")
                 }
@@ -44,6 +47,7 @@ abstract class TemplateGroupBase : TemplateGroup {
     companion object {
         private val typeMemberTemplate = MemberTemplate::class.createType()
         private val typeIterableOfMemberTemplates = Iterable::class.createType(arguments = listOf(KTypeProjection.invariant(typeMemberTemplate)))
+        private val typeSequenceOfMemberTemplates = Sequence::class.createType(arguments = listOf(KTypeProjection.invariant(typeMemberTemplate)))
     }
 
 }

@@ -17,7 +17,10 @@
 package kotlin.reflect.jvm.internal
 
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.descriptors.impl.DeclarationDescriptorVisitorEmptyBodies
+import org.jetbrains.kotlin.descriptors.runtime.components.RuntimeModuleData
+import org.jetbrains.kotlin.descriptors.runtime.components.tryLoadClass
+import org.jetbrains.kotlin.descriptors.runtime.structure.safeClassLoader
+import org.jetbrains.kotlin.descriptors.runtime.structure.wrapperByPrimitive
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
@@ -25,10 +28,6 @@ import org.jetbrains.kotlin.resolve.scopes.MemberScope
 import java.lang.reflect.Constructor
 import java.lang.reflect.Method
 import kotlin.jvm.internal.ClassBasedDeclarationContainer
-import kotlin.reflect.jvm.internal.components.RuntimeModuleData
-import kotlin.reflect.jvm.internal.structure.createArrayType
-import kotlin.reflect.jvm.internal.structure.safeClassLoader
-import kotlin.reflect.jvm.internal.structure.wrapperByPrimitive
 
 internal abstract class KDeclarationContainerImpl : ClassBasedDeclarationContainer {
     abstract inner class Data {
@@ -50,20 +49,13 @@ internal abstract class KDeclarationContainerImpl : ClassBasedDeclarationContain
     abstract fun getLocalProperty(index: Int): PropertyDescriptor?
 
     protected fun getMembers(scope: MemberScope, belonginess: MemberBelonginess): Collection<KCallableImpl<*>> {
-        val visitor = object : DeclarationDescriptorVisitorEmptyBodies<KCallableImpl<*>, Unit>() {
-            override fun visitPropertyDescriptor(descriptor: PropertyDescriptor, data: Unit): KCallableImpl<*> =
-                createProperty(descriptor)
-
-            override fun visitFunctionDescriptor(descriptor: FunctionDescriptor, data: Unit): KCallableImpl<*> =
-                KFunctionImpl(this@KDeclarationContainerImpl, descriptor)
-
+        val visitor = object : CreateKCallableVisitor(this) {
             override fun visitConstructorDescriptor(descriptor: ConstructorDescriptor, data: Unit): KCallableImpl<*> =
-                throw IllegalStateException("No constructors should appear in this scope: $descriptor")
+                throw IllegalStateException("No constructors should appear here: $descriptor")
         }
-
         return scope.getContributedDescriptors().mapNotNull { descriptor ->
             if (descriptor is CallableMemberDescriptor &&
-                descriptor.visibility != Visibilities.INVISIBLE_FAKE &&
+                descriptor.visibility != DescriptorVisibilities.INVISIBLE_FAKE &&
                 belonginess.accept(descriptor)
             ) descriptor.accept(visitor, Unit) else null
         }.toList()
@@ -75,26 +67,6 @@ internal abstract class KDeclarationContainerImpl : ClassBasedDeclarationContain
 
         fun accept(member: CallableMemberDescriptor): Boolean =
             member.kind.isReal == (this == DECLARED)
-    }
-
-    private fun createProperty(descriptor: PropertyDescriptor): KPropertyImpl<*> {
-        val receiverCount = (descriptor.dispatchReceiverParameter?.let { 1 } ?: 0) +
-                (descriptor.extensionReceiverParameter?.let { 1 } ?: 0)
-
-        when {
-            descriptor.isVar -> when (receiverCount) {
-                0 -> return KMutableProperty0Impl<Any?>(this, descriptor)
-                1 -> return KMutableProperty1Impl<Any?, Any?>(this, descriptor)
-                2 -> return KMutableProperty2Impl<Any?, Any?, Any?>(this, descriptor)
-            }
-            else -> when (receiverCount) {
-                0 -> return KProperty0Impl<Any?>(this, descriptor)
-                1 -> return KProperty1Impl<Any?, Any?>(this, descriptor)
-                2 -> return KProperty2Impl<Any?, Any?, Any?>(this, descriptor)
-            }
-        }
-
-        throw KotlinReflectionInternalError("Unsupported property: $descriptor")
     }
 
     fun findPropertyDescriptor(name: String, signature: String): PropertyDescriptor {
@@ -128,14 +100,14 @@ internal abstract class KDeclarationContainerImpl : ClassBasedDeclarationContain
             val mostVisibleProperties = properties
                 .groupBy { it.visibility }
                 .toSortedMap(Comparator { first, second ->
-                    Visibilities.compare(first, second) ?: 0
+                    DescriptorVisibilities.compare(first, second) ?: 0
                 }).values.last()
             if (mostVisibleProperties.size == 1) {
                 return mostVisibleProperties.first()
             }
 
             val allMembers = getProperties(Name.identifier(name)).joinToString("\n") { descriptor ->
-                DescriptorRenderer.DEBUG_TEXT.render(descriptor) + " | " + RuntimeTypeMapper.mapPropertySignature(descriptor)
+                DescriptorRenderer.DEBUG_TEXT.render(descriptor) + " | " + RuntimeTypeMapper.mapPropertySignature(descriptor).asString()
             }
             throw KotlinReflectionInternalError(
                 "Property '$name' (JVM signature: $signature) not resolved in $this:" +
@@ -154,7 +126,7 @@ internal abstract class KDeclarationContainerImpl : ClassBasedDeclarationContain
 
         if (functions.size != 1) {
             val allMembers = members.joinToString("\n") { descriptor ->
-                DescriptorRenderer.DEBUG_TEXT.render(descriptor) + " | " + RuntimeTypeMapper.mapSignature(descriptor)
+                DescriptorRenderer.DEBUG_TEXT.render(descriptor) + " | " + RuntimeTypeMapper.mapSignature(descriptor).asString()
             }
             throw KotlinReflectionInternalError(
                 "Function '$name' (JVM signature: $signature) not resolved in $this:" +
@@ -165,26 +137,30 @@ internal abstract class KDeclarationContainerImpl : ClassBasedDeclarationContain
         return functions.single()
     }
 
-    private fun Class<*>.lookupMethod(name: String, parameterTypes: List<Class<*>>, returnType: Class<*>): Method? {
-        lookupMethod(name, parameterTypes.toTypedArray(), returnType)?.let { return it }
-
-        // Methods from java.lang.Object (equals, hashCode, toString) cannot be found in the interface via
-        // Class.getMethod/getDeclaredMethod, so for interfaces, we also look in java.lang.Object.
-        if (isInterface) {
-            Any::class.java.lookupMethod(name, parameterTypes.toTypedArray(), returnType)?.let { return it }
+    private fun Class<*>.lookupMethod(
+        name: String, parameterTypes: Array<Class<*>>, returnType: Class<*>, isStaticDefault: Boolean
+    ): Method? {
+        // Static "$default" method in any class takes an instance of that class as the first parameter.
+        if (isStaticDefault) {
+            parameterTypes[0] = this
         }
 
-        return null
-    }
-
-    private fun Class<*>.lookupMethod(name: String, parameterTypes: Array<Class<*>>, returnType: Class<*>): Method? {
         tryGetMethod(name, parameterTypes, returnType)?.let { return it }
 
-        superclass?.lookupMethod(name, parameterTypes, returnType)?.let { return it }
+        superclass?.lookupMethod(name, parameterTypes, returnType, isStaticDefault)?.let { return it }
 
         // TODO: avoid exponential complexity here
         for (superInterface in interfaces) {
-            superInterface.lookupMethod(name, parameterTypes, returnType)?.let { return it }
+            superInterface.lookupMethod(name, parameterTypes, returnType, isStaticDefault)?.let { return it }
+
+            // Static "$default" methods should be looked up in each DefaultImpls class, see KT-33430
+            if (isStaticDefault) {
+                val defaultImpls = superInterface.safeClassLoader.tryLoadClass(superInterface.name + JvmAbi.DEFAULT_IMPLS_SUFFIX)
+                if (defaultImpls != null) {
+                    parameterTypes[0] = superInterface
+                    defaultImpls.tryGetMethod(name, parameterTypes, returnType)?.let { return it }
+                }
+            }
         }
 
         return null
@@ -220,7 +196,17 @@ internal abstract class KDeclarationContainerImpl : ClassBasedDeclarationContain
     fun findMethodBySignature(name: String, desc: String): Method? {
         if (name == "<init>") return null
 
-        return methodOwner.lookupMethod(name, loadParameterTypes(desc), loadReturnType(desc))
+        val parameterTypes = loadParameterTypes(desc).toTypedArray()
+        val returnType = loadReturnType(desc)
+        methodOwner.lookupMethod(name, parameterTypes, returnType, false)?.let { return it }
+
+        // Methods from java.lang.Object (equals, hashCode, toString) cannot be found in the interface via
+        // Class.getMethod/getDeclaredMethod, so for interfaces, we also look in java.lang.Object.
+        if (methodOwner.isInterface) {
+            Any::class.java.lookupMethod(name, parameterTypes, returnType, false)?.let { return it }
+        }
+
+        return null
     }
 
     fun findDefaultMethod(name: String, desc: String, isMember: Boolean): Method? {
@@ -228,11 +214,14 @@ internal abstract class KDeclarationContainerImpl : ClassBasedDeclarationContain
 
         val parameterTypes = arrayListOf<Class<*>>()
         if (isMember) {
+            // Note that this value is replaced inside the lookupMethod call below, for each class/interface in the hierarchy.
             parameterTypes.add(jClass)
         }
         addParametersAndMasks(parameterTypes, desc, false)
 
-        return methodOwner.lookupMethod(name + JvmAbi.DEFAULT_PARAMS_IMPL_SUFFIX, parameterTypes, loadReturnType(desc))
+        return methodOwner.lookupMethod(
+            name + JvmAbi.DEFAULT_PARAMS_IMPL_SUFFIX, parameterTypes.toTypedArray(), loadReturnType(desc), isStaticDefault = isMember
+        )
     }
 
     fun findConstructorBySignature(desc: String): Constructor<*>? =

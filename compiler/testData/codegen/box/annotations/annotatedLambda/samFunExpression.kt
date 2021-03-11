@@ -1,4 +1,3 @@
-// IGNORE_BACKEND: JVM_IR
 // TARGET_BACKEND: JVM
 
 // WITH_RUNTIME
@@ -18,7 +17,7 @@ class Test {
     }
 }
 
-// FILE: test.kt
+// FILE: samFunExpression.kt
 
 import java.lang.reflect.Method
 import kotlin.test.assertEquals

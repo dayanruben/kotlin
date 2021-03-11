@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package kotlin.test.junit5
@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Assertions
 import kotlin.test.*
 
 /**
- * Provides [JUnitAsserter] if `org.junit.Assert` is found in the classpath.
+ * Provides [JUnit5Asserter] if `org.junit.jupiter.api.Assertions` class is found in the classpath.
  */
 class JUnit5Contributor : AsserterContributor {
     override fun contribute(): Asserter? {
@@ -53,8 +53,15 @@ object JUnit5Asserter : Asserter {
     }
 
     override fun fail(message: String?): Nothing {
-        Assertions.fail<Any>(message)
+        Assertions.fail<Any?>(message)
         // should not get here
         throw AssertionError(message)
+    }
+
+    @SinceKotlin("1.4")
+    override fun fail(message: String?, cause: Throwable?): Nothing {
+        Assertions.fail<Any?>(message, cause)
+        // should not get here
+        throw AssertionError(message, cause)
     }
 }

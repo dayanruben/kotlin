@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package kotlin.js
@@ -8,11 +8,11 @@ package kotlin.js
 /**
  * Exposes the JavaScript [Math object](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Math) to Kotlin.
  */
-@Deprecated("Use top-level functions from kotlin.math package instead.", level = DeprecationLevel.WARNING)
+@Deprecated("Use top-level functions from kotlin.math package instead.", level = DeprecationLevel.ERROR)
 public external object Math {
     @Deprecated("Use kotlin.math.PI instead.", ReplaceWith("PI", "kotlin.math.PI"), level = DeprecationLevel.ERROR)
     public val PI: Double
-    @Deprecated("Use Random.nextDouble instead", ReplaceWith("kotlin.random.Random.nextDouble()", "kotlin.random.Random"), level = DeprecationLevel.WARNING)
+    @Deprecated("Use Random.nextDouble instead", ReplaceWith("kotlin.random.Random.nextDouble()", "kotlin.random.Random"), level = DeprecationLevel.ERROR)
     public fun random(): Double
     @Deprecated("Use kotlin.math.abs instead.", ReplaceWith("abs(value)", "kotlin.math.abs"), level = DeprecationLevel.ERROR)
     public fun abs(value: Double): Double
@@ -48,7 +48,7 @@ public external object Math {
     public fun tan(value: Double): Double
     @Deprecated("Use kotlin.math.ln instead.", ReplaceWith("ln(value)", "kotlin.math.ln"), level = DeprecationLevel.ERROR)
     public fun log(value: Double): Double
-    @Deprecated("Use kotlin.math.pow instead.", ReplaceWith("pow(base, exp)", "kotlin.math.pow"), level = DeprecationLevel.ERROR)
+    @Deprecated("Use kotlin.math.pow instead.", ReplaceWith("base.pow(exp)", "kotlin.math.pow"), level = DeprecationLevel.ERROR)
     public fun pow(base: Double, exp: Double): Double
     @Deprecated("Use kotlin.math.round instead.", ReplaceWith("round(value)", "kotlin.math.round"), level = DeprecationLevel.ERROR)
     public fun round(value: Number): Int
@@ -87,18 +87,21 @@ public external object Math {
     internal fun log2(value: Double): Double
     @PublishedApi
     internal fun log1p(value: Double): Double
+
+    @PublishedApi
+    internal fun clz32(value: Int): Int
 }
 
 /**
  * Returns the smaller of two values.
  */
-@Suppress("DEPRECATION")
+@Suppress("DEPRECATION_ERROR")
 @Deprecated("Use minOf or kotlin.math.min instead", ReplaceWith("minOf(a, b)"), level = DeprecationLevel.ERROR)
 public fun Math.min(a: Long, b: Long): Long = if (a <= b) a else b
 
 /**
  * Returns the greater of two values.
  */
-@Suppress("DEPRECATION")
+@Suppress("DEPRECATION_ERROR")
 @Deprecated("Use maxOf or kotlin.math.max instead", ReplaceWith("maxOf(a, b)"), level = DeprecationLevel.ERROR)
 public fun Math.max(a: Long, b: Long): Long = if (a >= b) a else b

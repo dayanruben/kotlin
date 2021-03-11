@@ -31,11 +31,9 @@ import com.intellij.refactoring.extractSuperclass.ExtractSuperClassUtil
 import com.intellij.refactoring.lang.ElementsHandler
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.kotlin.asJava.toLightClass
-import org.jetbrains.kotlin.idea.refactoring.SeparateFileWrapper
-import org.jetbrains.kotlin.idea.refactoring.chooseContainerElementIfNecessary
-import org.jetbrains.kotlin.idea.refactoring.getExtractionContainers
+import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.refactoring.*
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractClass.ui.KotlinExtractSuperDialogBase
-import org.jetbrains.kotlin.idea.refactoring.showWithTransaction
 import org.jetbrains.kotlin.idea.util.isExpectDeclaration
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
@@ -68,11 +66,11 @@ abstract class KotlinExtractSuperHandlerBase(private val isExtractInterface: Boo
 
         getErrorMessage(klass)?.let {
             CommonRefactoringUtil.showErrorHint(
-                    project,
-                    editor,
-                    RefactoringBundle.getCannotRefactorMessage(it),
-                    KotlinExtractSuperclassHandler.REFACTORING_NAME,
-                    HelpID.EXTRACT_SUPERCLASS
+                project,
+                editor,
+                RefactoringBundle.getCannotRefactorMessage(it),
+                KotlinExtractSuperclassHandler.REFACTORING_NAME,
+                HelpID.EXTRACT_SUPERCLASS
             )
             return false
         }
@@ -90,29 +88,32 @@ abstract class KotlinExtractSuperHandlerBase(private val isExtractInterface: Boo
         if (editor == null) return doInvoke(klass, containers.first())
 
         chooseContainerElementIfNecessary(
-                containers,
-                editor,
-                if (containers.first() is KtFile) "Select target file" else "Select target code block / file",
-                true,
-                { it },
-                { doInvoke(klass, if (it is SeparateFileWrapper) klass.containingFile.parent!! else it) }
+            containers,
+            editor,
+            if (containers.first() is KtFile)
+                KotlinBundle.message("text.select.target.file")
+            else
+                KotlinBundle.message("text.select.target.code.block.file"),
+            true,
+            { it },
+            { doInvoke(klass, if (it is SeparateFileWrapper) klass.containingFile.parent!! else it) }
         )
     }
 
     protected fun checkConflicts(originalClass: KtClassOrObject, dialog: KotlinExtractSuperDialogBase): Boolean {
         val conflicts = ExtractSuperRefactoring.collectConflicts(
-                originalClass,
-                dialog.selectedMembers,
-                dialog.selectedTargetParent,
-                dialog.extractedSuperName,
-                isExtractInterface
+            originalClass,
+            dialog.selectedMembers,
+            dialog.selectedTargetParent,
+            dialog.extractedSuperName,
+            isExtractInterface
         )
         return ExtractSuperClassUtil.showConflicts(dialog, conflicts, originalClass.project)
     }
 
     internal open fun getErrorMessage(klass: KtClassOrObject): String? = when {
-        klass.isExpectDeclaration() -> "Extraction from expect class is not yet supported"
-        klass.toLightClass() == null -> "Extraction from non-JVM class is not yet supported"
+        klass.isExpectDeclaration() -> KotlinBundle.message("error.text.extraction.from.expect.class.is.not.yet.supported")
+        klass.toLightClass() == null -> KotlinBundle.message("error.text.extraction.from.non.jvm.class.is.not.yet.supported")
         else -> null
     }
 

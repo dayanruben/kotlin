@@ -16,19 +16,24 @@
 
 package org.jetbrains.kotlin.idea.project;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import kotlin.collections.CollectionsKt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.platform.DefaultIdeTargetPlatformKindProvider;
+import org.jetbrains.kotlin.idea.compiler.IDELanguageSettingsProviderKt;
+import org.jetbrains.kotlin.platform.*;
+import org.jetbrains.kotlin.platform.jvm.JvmPlatforms;
 import org.jetbrains.kotlin.psi.KtCodeFragment;
 import org.jetbrains.kotlin.psi.KtFile;
 import org.jetbrains.kotlin.psi.KtPsiFactoryKt;
-import org.jetbrains.kotlin.resolve.TargetPlatform;
-import org.jetbrains.kotlin.resolve.jvm.platform.JvmPlatform;
+import org.jetbrains.kotlin.scripting.definitions.DefinitionsKt;
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition;
 
 public class TargetPlatformDetector {
     public static final TargetPlatformDetector INSTANCE = new TargetPlatformDetector();
@@ -52,7 +57,14 @@ public class TargetPlatformDetector {
         PsiElement context = KtPsiFactoryKt.getAnalysisContext(file);
         if (context != null) {
             PsiFile contextFile = context.getContainingFile();
-            return contextFile instanceof KtFile ? getPlatform((KtFile) contextFile) : JvmPlatform.INSTANCE;
+            // TODO(dsavvinov): Get default platform with proper target
+            return contextFile instanceof KtFile ? getPlatform((KtFile) contextFile) : JvmPlatforms.INSTANCE.getUnspecifiedJvmPlatform();
+        }
+
+        final ScriptDefinition scriptDefinition =
+                ReadAction.compute(() -> file.isScript() ? DefinitionsKt.findScriptDefinition(file) : null);
+        if (scriptDefinition != null) {
+            return getPlatform4Script(file.getProject(), file.getOriginalFile().getVirtualFile(), scriptDefinition);
         }
 
         VirtualFile virtualFile = file.getOriginalFile().getVirtualFile();
@@ -63,7 +75,7 @@ public class TargetPlatformDetector {
             }
         }
 
-        return DefaultIdeTargetPlatformKindProvider.Companion.getDefaultCompilerPlatform();
+        return DefaultIdeTargetPlatformKindProvider.Companion.getDefaultPlatform();
     }
 
     @NotNull
@@ -71,4 +83,40 @@ public class TargetPlatformDetector {
         return ProjectStructureUtil.getCachedPlatformForModule(module);
     }
 
+    @NotNull
+    public static TargetPlatform getPlatform4Script(
+            @NotNull Project project,
+            @NotNull VirtualFile file,
+            @NotNull ScriptDefinition scriptDefinition
+    ) {
+        TargetPlatformVersion targetPlatformVersion =
+                IDELanguageSettingsProviderKt.getTargetPlatformVersionForScript(project, file, scriptDefinition);
+        return getPlatform4ScriptImpl(targetPlatformVersion, scriptDefinition);
+    }
+
+    @NotNull
+    private static TargetPlatform getPlatform4ScriptImpl(
+            TargetPlatformVersion targetPlatformVersion,
+            @NotNull ScriptDefinition scriptDefinition
+    ) {
+        if (!targetPlatformVersion.equals(TargetPlatformVersion.NoVersion.INSTANCE)) {
+            for (TargetPlatform compilerPlatform : CommonPlatforms.INSTANCE.getAllSimplePlatforms()) {
+                SimplePlatform simplePlatform = CollectionsKt.single(compilerPlatform);
+                if (simplePlatform.getTargetPlatformVersion() == targetPlatformVersion) {
+                    return compilerPlatform;
+                }
+            }
+        }
+
+        String platformNameFromScriptDefinition = scriptDefinition.getPlatform();
+        for (TargetPlatform compilerPlatform : CommonPlatforms.INSTANCE.getAllSimplePlatforms()) {
+            // FIXME(dsavvinov): get rid of matching by name
+            SimplePlatform simplePlatform = CollectionsKt.single(compilerPlatform);
+            if (simplePlatform.getPlatformName().equals(platformNameFromScriptDefinition)) {
+                return compilerPlatform;
+            }
+        }
+
+        return DefaultIdeTargetPlatformKindProvider.Companion.getDefaultPlatform();
+    }
 }

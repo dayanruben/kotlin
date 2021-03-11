@@ -1,12 +1,13 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.cli.serviceLoaderLite
 
 import org.jetbrains.kotlin.cli.jvm.plugins.ServiceLoaderLite
 import org.jetbrains.kotlin.cli.jvm.plugins.ServiceLoaderLite.ServiceLoadingException
+import java.io.File
 import javax.annotation.processing.Processor
 
 class ServiceLoaderLiteTest : AbstractServiceLoaderLiteTest() {
@@ -31,7 +32,7 @@ class ServiceLoaderLiteTest : AbstractServiceLoaderLiteTest() {
     }
 
     fun testSeveralProcessors() {
-        val processorsContent = buildString { appendln("test.Foo").appendln("test.Bar") }
+        val processorsContent = buildString { appendLine("test.Foo").appendLine("test.Bar") }
 
         applyForDirAndJar("test", processors(processorsContent)) { file ->
             val impls = ServiceLoaderLite.findImplementations(Processor::class.java, listOf(file))
@@ -97,11 +98,11 @@ class ServiceLoaderLiteTest : AbstractServiceLoaderLiteTest() {
 
     fun testCommentsAndWhitespaces() {
         val processorsContent = buildString {
-            appendln("  test.Foo #comment")
-            appendln("#comment2")
-            appendln().appendln()
-            appendln("test.Bar #anotherComemnt")
-            appendln("test.Zoo  ")
+            appendLine("  test.Foo #comment")
+            appendLine("#comment2")
+            appendLine().appendLine()
+            appendLine("test.Bar #anotherComemnt")
+            appendLine("test.Zoo  ")
         }
 
         applyForDirAndJar("test", processors(processorsContent)) { file ->
@@ -111,6 +112,12 @@ class ServiceLoaderLiteTest : AbstractServiceLoaderLiteTest() {
             assertTrue("test.Bar" in impls)
             assertTrue("test.Zoo" in impls)
         }
+    }
+
+    fun testWrongJarName() {
+        val file = File(tmpdir, "foo.tar.gz")
+        file.writeText("foobar")
+        ServiceLoaderLite.findImplementations(Processor::class.java, listOf(file))
     }
 }
 

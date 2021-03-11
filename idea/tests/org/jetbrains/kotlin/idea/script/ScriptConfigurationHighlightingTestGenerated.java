@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.script;
@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.idea.script;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.test.KotlinTestUtils;
-import org.jetbrains.kotlin.test.TargetBackend;
+import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.runner.RunWith;
 
@@ -24,7 +24,7 @@ public class ScriptConfigurationHighlightingTestGenerated extends AbstractScript
     @RunWith(JUnit3RunnerWithInners.class)
     public static class Highlighting extends AbstractScriptConfigurationHighlightingTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, TargetBackend.ANY, testDataFilePath);
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
         @TestMetadata("acceptedAnnotations")
@@ -38,7 +38,7 @@ public class ScriptConfigurationHighlightingTestGenerated extends AbstractScript
         }
 
         public void testAllFilesPresentInHighlighting() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/script/definition/highlighting"), Pattern.compile("^([^\\.]+)$"), TargetBackend.ANY, false);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/script/definition/highlighting"), Pattern.compile("^([^\\.]+)$"), null, false);
         }
 
         @TestMetadata("asyncResolver")
@@ -61,9 +61,19 @@ public class ScriptConfigurationHighlightingTestGenerated extends AbstractScript
             runTest("idea/testData/script/definition/highlighting/customExtension/");
         }
 
+        @TestMetadata("customJavaHome")
+        public void testCustomJavaHome() throws Exception {
+            runTest("idea/testData/script/definition/highlighting/customJavaHome/");
+        }
+
         @TestMetadata("customLibrary")
         public void testCustomLibrary() throws Exception {
             runTest("idea/testData/script/definition/highlighting/customLibrary/");
+        }
+
+        @TestMetadata("customLibraryInModuleDeps")
+        public void testCustomLibraryInModuleDeps() throws Exception {
+            runTest("idea/testData/script/definition/highlighting/customLibraryInModuleDeps/");
         }
 
         @TestMetadata("doNotSpeakAboutJava")
@@ -86,14 +96,24 @@ public class ScriptConfigurationHighlightingTestGenerated extends AbstractScript
             runTest("idea/testData/script/definition/highlighting/errorResolver/");
         }
 
-        @TestMetadata("javaNestedClass")
-        public void testJavaNestedClass() throws Exception {
-            runTest("idea/testData/script/definition/highlighting/javaNestedClass/");
+        @TestMetadata("implicitReceiver")
+        public void testImplicitReceiver() throws Exception {
+            runTest("idea/testData/script/definition/highlighting/implicitReceiver/");
         }
 
         @TestMetadata("multiModule")
         public void testMultiModule() throws Exception {
             runTest("idea/testData/script/definition/highlighting/multiModule/");
+        }
+
+        @TestMetadata("multipleScripts")
+        public void testMultipleScripts() throws Exception {
+            runTest("idea/testData/script/definition/highlighting/multipleScripts/");
+        }
+
+        @TestMetadata("nestedClass")
+        public void testNestedClass() throws Exception {
+            runTest("idea/testData/script/definition/highlighting/nestedClass/");
         }
 
         @TestMetadata("noResolver")
@@ -127,11 +147,11 @@ public class ScriptConfigurationHighlightingTestGenerated extends AbstractScript
     @RunWith(JUnit3RunnerWithInners.class)
     public static class Complex extends AbstractScriptConfigurationHighlightingTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doComplexTest, TargetBackend.ANY, testDataFilePath);
+            KotlinTestUtils.runTest(this::doComplexTest, this, testDataFilePath);
         }
 
         public void testAllFilesPresentInComplex() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/script/definition/complex"), Pattern.compile("^([^\\.]+)$"), TargetBackend.ANY, false);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/script/definition/complex"), Pattern.compile("^([^\\.]+)$"), null, false);
         }
 
         @TestMetadata("errorResolver")

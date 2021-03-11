@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.codegen.AsmUtil;
+import org.jetbrains.kotlin.codegen.DescriptorAsmUtil;
 import org.jetbrains.kotlin.codegen.context.EnclosedValueDescriptor;
 import org.jetbrains.kotlin.config.LanguageFeature;
 import org.jetbrains.kotlin.config.LanguageVersionSettings;
@@ -92,7 +93,9 @@ public final class MutableClosure implements CalculatedClosure {
         }
 
         if (captureEnclosingReceiver) {
-            ReceiverParameterDescriptor parameter = getEnclosingReceiverDescriptor();
+            CallableDescriptor descriptor = getEnclosingCallableDescriptorWithReceiver();
+            assert descriptor != null : "Receiver callable descriptor should exist";
+            ReceiverParameterDescriptor parameter = descriptor.getExtensionReceiverParameter();
             assert parameter != null : "Receiver parameter should exist in " + enclosingFunWithReceiverDescriptor;
             return parameter.getType();
         }
@@ -111,7 +114,7 @@ public final class MutableClosure implements CalculatedClosure {
                 return AsmUtil.CAPTURED_RECEIVER_FIELD;
             }
 
-            String labeledThis = AsmUtil.getLabeledThisNameForReceiver(
+            String labeledThis = DescriptorAsmUtil.getNameForCapturedReceiverField(
                     enclosingFunWithReceiverDescriptor, bindingContext, languageVersionSettings);
 
             return AsmUtil.getCapturedFieldName(labeledThis);
@@ -190,7 +193,8 @@ public final class MutableClosure implements CalculatedClosure {
     }
 
     @Nullable
-    public ReceiverParameterDescriptor getEnclosingReceiverDescriptor() {
-        return enclosingFunWithReceiverDescriptor != null ? enclosingFunWithReceiverDescriptor.getExtensionReceiverParameter() : null;
+    @Override
+    public CallableDescriptor getEnclosingCallableDescriptorWithReceiver() {
+        return enclosingFunWithReceiverDescriptor;
     }
 }

@@ -1,7 +1,6 @@
-// IGNORE_BACKEND: JVM_IR
+// WITH_REFLECT
 // TARGET_BACKEND: JVM
 // FILE: 1.kt
-// WITH_REFLECT
 package test
 
 interface Z<T> {

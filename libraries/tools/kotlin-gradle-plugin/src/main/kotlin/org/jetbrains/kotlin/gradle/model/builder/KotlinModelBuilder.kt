@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.gradle.model.builder
@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.gradle.plugin.KOTLIN_JS_DSL_NAME
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.plugin.getConvention
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinAndroidTarget
+import org.jetbrains.kotlin.gradle.plugin.mpp.associateWithTransitiveClosure
 import org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile
 
 /**
@@ -95,7 +96,7 @@ class KotlinModelBuilder(private val kotlinPluginVersion: String, private val an
                     kotlinSourceSet.kotlin.srcDirs,
                     javaSourceSet.resources.srcDirs,
                     destinationDir,
-                    javaSourceSet.output.resourcesDir,
+                    javaSourceSet.output.resourcesDir!!,
                     createCompilerArguments()
                 )
             } else null
@@ -128,7 +129,9 @@ class KotlinModelBuilder(private val kotlinPluginVersion: String, private val an
 
         private fun AbstractKotlinCompile<*>.findFriendSourceSets(): Collection<String> {
             val friendSourceSets = ArrayList<String>()
-            friendTask?.sourceSetName?.let { friendSourceSets.add(it) }
+            taskData.compilation.associateWithTransitiveClosure.forEach { associateCompilation ->
+                friendSourceSets.add(associateCompilation.name)
+            }
             return friendSourceSets
         }
 
@@ -141,7 +144,7 @@ class KotlinModelBuilder(private val kotlinPluginVersion: String, private val an
         }
 
         private fun AbstractKotlinCompile<*>.createExperimentalFeatures(): ExperimentalFeatures {
-            return ExperimentalFeaturesImpl(coroutinesStr)
+            return ExperimentalFeaturesImpl(coroutinesStr.get())
         }
     }
 }

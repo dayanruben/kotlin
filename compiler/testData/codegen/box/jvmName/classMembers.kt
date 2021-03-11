@@ -1,5 +1,4 @@
 // TARGET_BACKEND: JVM
-
 // WITH_RUNTIME
 // See:
 // http://kotlinlang.org/docs/reference/java-interop.html#handling-signature-clashes-with-platformname

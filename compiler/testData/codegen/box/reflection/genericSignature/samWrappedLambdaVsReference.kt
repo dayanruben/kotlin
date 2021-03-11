@@ -1,8 +1,9 @@
 // SKIP_JDK6
-// IGNORE_BACKEND: JVM_IR
 // TARGET_BACKEND: JVM
 // WITH_RUNTIME
 // FULL_JDK
+// IGNORE_DEXING
+// ^ https://issuetracker.google.com/issues/182339153
 
 // FILE: Java.java
 

@@ -23,8 +23,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
+import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
-import org.jetbrains.kotlin.test.testFramework.runInEdtAndWait
+import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 import java.io.File
 import kotlin.reflect.KMutableProperty0
@@ -42,33 +43,33 @@ class GradleUpdateConfigurationQuickFixTest : GradleImportingTestCase() {
 
     override fun tearDownFixtures() {
         codeInsightTestFixture.tearDown()
+        @Suppress("UNCHECKED_CAST")
         (this::codeInsightTestFixture as KMutableProperty0<CodeInsightTestFixture?>).set(null)
         myTestFixture = null
     }
 
     @Test
+    @TargetVersions("4.7 <=> 6.0")
     fun testUpdateLanguageVersion() {
         doTest("Set module language version to 1.1")
     }
 
     @Test
+    @TargetVersions("4.7 <=> 6.0")
     fun testUpdateApiVersion() {
         doTest("Set module API version to 1.1")
     }
 
     @Test
+    @TargetVersions("4.7 <=> 6.0")
     fun testUpdateLanguageAndApiVersion() {
         doTest("Set module language version to 1.1")
     }
 
     @Test
-    fun testEnableCoroutines() {
-        doTest("Enable coroutine support in the current module")
-    }
-
-    @Test
+    @TargetVersions("4.7 <=> 6.0")
     fun testAddKotlinReflect() {
-        doTest("Add kotlin-reflect.jar to the classpath")
+        doTest("Add 'kotlin-reflect.jar' to the classpath")
     }
 
     private fun doTest(intentionName: String) {

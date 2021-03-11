@@ -21,9 +21,10 @@ import com.intellij.openapi.ui.DialogBuilder
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.JBTextField
 import com.intellij.uiDesigner.core.GridLayoutManager
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.actions.internal.benchmark.AbstractCompletionBenchmarkAction.Companion.randomElement
 import org.jetbrains.kotlin.idea.completion.CompletionBenchmarkSink
-import org.jetbrains.kotlin.idea.refactoring.getLineCount
+import org.jetbrains.kotlin.idea.core.util.getLineCount
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
@@ -34,7 +35,10 @@ import kotlin.properties.Delegates
 
 class LocalCompletionBenchmarkAction : AbstractCompletionBenchmarkAction() {
 
-    override fun createBenchmarkScenario(project: Project, benchmarkSink: CompletionBenchmarkSink.Impl): AbstractCompletionBenchmarkScenario? {
+    override fun createBenchmarkScenario(
+        project: Project,
+        benchmarkSink: CompletionBenchmarkSink.Impl
+    ): AbstractCompletionBenchmarkScenario? {
 
         val settings = showSettingsDialog() ?: return null
 
@@ -46,7 +50,7 @@ class LocalCompletionBenchmarkAction : AbstractCompletionBenchmarkAction() {
             }
 
             if (ktFiles.size < settings.files) {
-                showPopup(project, "Number of attempts > then files in project, ${ktFiles.size}")
+                showPopup(project, KotlinBundle.message("number.of.attempts.then.files.in.project.0", ktFiles.size))
                 return null
             }
 
@@ -76,35 +80,36 @@ class LocalCompletionBenchmarkAction : AbstractCompletionBenchmarkAction() {
         val jPanel = JBPanel<JBPanel<*>>(GridLayoutManager(4, 2)).apply {
             var i = 0
 
-            cSeed = addBoxWithLabel("Random seed", default = "0", i = i++)
-            cFiles = addBoxWithLabel("Files to visit", default = "20", i = i++)
-            cFunctions = addBoxWithLabel("Max functions to visit", default = "20", i = i++)
-            cLines = addBoxWithLabel("File lines", default = "100", i = i)
+            cSeed = addBoxWithLabel(KotlinBundle.message("random.seed"), default = "0", i = i++)
+            cFiles = addBoxWithLabel(KotlinBundle.message("files.to.visit"), default = "20", i = i++)
+            cFunctions = addBoxWithLabel(KotlinBundle.message("max.functions.to.visit"), default = "20", i = i++)
+            cLines = addBoxWithLabel(KotlinBundle.message("file.lines"), default = "100", i = i)
         }
         dialogBuilder.centerPanel(jPanel)
         if (!dialogBuilder.showAndGet()) return null
 
-        return Settings(cSeed.text.toLong(),
-                        cLines.text.toInt(),
-                        cFiles.text.toInt(),
-                        cFunctions.text.toInt())
+        return Settings(
+            cSeed.text.toLong(),
+            cLines.text.toInt(),
+            cFiles.text.toInt(),
+            cFunctions.text.toInt()
+        )
     }
 
 }
 
 internal class LocalCompletionBenchmarkScenario(
-        val files: List<KtFile>,
-        val settings: LocalCompletionBenchmarkAction.Settings,
-        project: Project, benchmarkSink: CompletionBenchmarkSink.Impl,
-        random: Random) : AbstractCompletionBenchmarkScenario(project, benchmarkSink, random) {
-    suspend override fun doBenchmark() {
-
+    val files: List<KtFile>,
+    val settings: LocalCompletionBenchmarkAction.Settings,
+    project: Project, benchmarkSink: CompletionBenchmarkSink.Impl,
+    random: Random
+) : AbstractCompletionBenchmarkScenario(project, benchmarkSink, random) {
+    override suspend fun doBenchmark() {
         val allResults = mutableListOf<Result>()
         files.forEach { file ->
             val functions = file.collectDescendantsOfType<KtFunction> { it.hasBlockBody() && it.bodyExpression != null }.toMutableList()
             val randomFunctions = generateSequence { functions.randomElement(random).also { functions.remove(it) } }
-            randomFunctions.take(settings.functions).forEach {
-                function ->
+            randomFunctions.take(settings.functions).forEach { function ->
                 val offset = function.bodyExpression!!.endOffset - 1
                 allResults += typeAtOffsetAndGetResult("listOf(1).", offset, file)
             }

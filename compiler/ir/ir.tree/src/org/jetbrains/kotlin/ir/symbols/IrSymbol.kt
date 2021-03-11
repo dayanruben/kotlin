@@ -17,51 +17,80 @@
 package org.jetbrains.kotlin.ir.symbols
 
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.IrReturnableBlock
+import org.jetbrains.kotlin.ir.util.IdSignature
+import org.jetbrains.kotlin.types.model.TypeConstructorMarker
+import org.jetbrains.kotlin.types.model.TypeParameterMarker
 
 interface IrSymbol {
     val owner: IrSymbolOwner
+
+    @ObsoleteDescriptorBasedAPI
     val descriptor: DeclarationDescriptor
+
+    @ObsoleteDescriptorBasedAPI
+    val hasDescriptor: Boolean
+
     val isBound: Boolean
+
+    val signature: IdSignature?
 }
+
+val IrSymbol.isPublicApi: Boolean
+    get() = signature != null
 
 interface IrBindableSymbol<out D : DeclarationDescriptor, B : IrSymbolOwner> : IrSymbol {
     override val owner: B
+
+    @ObsoleteDescriptorBasedAPI
     override val descriptor: D
 
     fun bind(owner: B)
 }
 
 interface IrPackageFragmentSymbol : IrSymbol {
+    @ObsoleteDescriptorBasedAPI
     override val descriptor: PackageFragmentDescriptor
 }
 
 interface IrFileSymbol : IrPackageFragmentSymbol, IrBindableSymbol<PackageFragmentDescriptor, IrFile>
+
 interface IrExternalPackageFragmentSymbol : IrPackageFragmentSymbol, IrBindableSymbol<PackageFragmentDescriptor, IrExternalPackageFragment>
 
 interface IrAnonymousInitializerSymbol : IrBindableSymbol<ClassDescriptor, IrAnonymousInitializer>
+
 interface IrEnumEntrySymbol : IrBindableSymbol<ClassDescriptor, IrEnumEntry>
 
 interface IrFieldSymbol : IrBindableSymbol<PropertyDescriptor, IrField>
 
-interface IrClassifierSymbol : IrSymbol {
+interface IrClassifierSymbol : IrSymbol, TypeConstructorMarker {
+    @ObsoleteDescriptorBasedAPI
     override val descriptor: ClassifierDescriptor
 }
 
 interface IrClassSymbol : IrClassifierSymbol, IrBindableSymbol<ClassDescriptor, IrClass>
-interface IrTypeParameterSymbol : IrClassifierSymbol, IrBindableSymbol<TypeParameterDescriptor, IrTypeParameter>
+
+interface IrScriptSymbol : IrClassifierSymbol, IrBindableSymbol<ScriptDescriptor, IrScript>
+
+interface IrTypeParameterSymbol : IrClassifierSymbol, IrBindableSymbol<TypeParameterDescriptor, IrTypeParameter>, TypeParameterMarker
 
 interface IrValueSymbol : IrSymbol {
+    @ObsoleteDescriptorBasedAPI
     override val descriptor: ValueDescriptor
+
     override val owner: IrValueDeclaration
 }
 
 interface IrValueParameterSymbol : IrValueSymbol, IrBindableSymbol<ParameterDescriptor, IrValueParameter>
+
 interface IrVariableSymbol : IrValueSymbol, IrBindableSymbol<VariableDescriptor, IrVariable>
 
 interface IrReturnTargetSymbol : IrSymbol {
+    @ObsoleteDescriptorBasedAPI
     override val descriptor: FunctionDescriptor
+
     override val owner: IrReturnTarget
 }
 
@@ -70,6 +99,13 @@ interface IrFunctionSymbol : IrReturnTargetSymbol {
 }
 
 interface IrConstructorSymbol : IrFunctionSymbol, IrBindableSymbol<ClassConstructorDescriptor, IrConstructor>
+
 interface IrSimpleFunctionSymbol : IrFunctionSymbol, IrBindableSymbol<FunctionDescriptor, IrSimpleFunction>
 
 interface IrReturnableBlockSymbol : IrReturnTargetSymbol, IrBindableSymbol<FunctionDescriptor, IrReturnableBlock>
+
+interface IrPropertySymbol : IrBindableSymbol<PropertyDescriptor, IrProperty>
+
+interface IrLocalDelegatedPropertySymbol : IrBindableSymbol<VariableDescriptorWithAccessors, IrLocalDelegatedProperty>
+
+interface IrTypeAliasSymbol : IrBindableSymbol<TypeAliasDescriptor, IrTypeAlias>

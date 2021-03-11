@@ -24,9 +24,9 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.idea.codeInsight.CodeInsightUtils
+import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.chooseContainerElementIfNecessary
-import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringBundle
 import org.jetbrains.kotlin.idea.refactoring.selectElement
 import org.jetbrains.kotlin.idea.util.psi.patternMatching.KotlinPsiRange
 import org.jetbrains.kotlin.psi.*
@@ -38,23 +38,23 @@ fun showErrorHint(project: Project, editor: Editor, message: String, title: Stri
 }
 
 fun showErrorHintByKey(project: Project, editor: Editor, messageKey: String, title: String) {
-    showErrorHint(project, editor, KotlinRefactoringBundle.message(messageKey), title)
+    showErrorHint(project, editor, KotlinBundle.message(messageKey), title)
 }
 
 fun selectElementsWithTargetSibling(
-        operationName: String,
-        editor: Editor,
-        file: KtFile,
-        title: String,
-        elementKinds: Collection<CodeInsightUtils.ElementKind>,
-        elementValidator: (List<PsiElement>) -> String?,
-        getContainers: (elements: List<PsiElement>, commonParent: PsiElement) -> List<PsiElement>,
-        continuation: (elements: List<PsiElement>, targetSibling: PsiElement) -> Unit
+    operationName: String,
+    editor: Editor,
+    file: KtFile,
+    title: String,
+    elementKinds: Collection<CodeInsightUtils.ElementKind>,
+    elementValidator: (List<PsiElement>) -> String?,
+    getContainers: (elements: List<PsiElement>, commonParent: PsiElement) -> List<PsiElement>,
+    continuation: (elements: List<PsiElement>, targetSibling: PsiElement) -> Unit
 ) {
     fun onSelectionComplete(elements: List<PsiElement>, targetContainer: PsiElement) {
         val physicalElements = elements.map { it.substringContextOrThis }
         val parent = PsiTreeUtil.findCommonParent(physicalElements)
-                     ?: throw AssertionError("Should have at least one parent: ${physicalElements.joinToString("\n")}")
+            ?: throw AssertionError("Should have at least one parent: ${physicalElements.joinToString("\n")}")
 
         if (parent == targetContainer) {
             continuation(elements, physicalElements.first())
@@ -74,14 +74,14 @@ fun selectElementsWithTargetSibling(
 }
 
 fun selectElementsWithTargetParent(
-        operationName: String,
-        editor: Editor,
-        file: KtFile,
-        title: String,
-        elementKinds: Collection<CodeInsightUtils.ElementKind>,
-        elementValidator: (List<PsiElement>) -> String?,
-        getContainers: (elements: List<PsiElement>, commonParent: PsiElement) -> List<PsiElement>,
-        continuation: (elements: List<PsiElement>, targetParent: PsiElement) -> Unit
+    operationName: String,
+    editor: Editor,
+    file: KtFile,
+    title: String,
+    elementKinds: Collection<CodeInsightUtils.ElementKind>,
+    elementValidator: (List<PsiElement>) -> String?,
+    getContainers: (elements: List<PsiElement>, commonParent: PsiElement) -> List<PsiElement>,
+    continuation: (elements: List<PsiElement>, targetParent: PsiElement) -> Unit
 ) {
     fun showErrorHintByKey(key: String) {
         showErrorHintByKey(file.project, editor, key, operationName)
@@ -95,7 +95,7 @@ fun selectElementsWithTargetParent(
 
         val physicalElements = elements.map { it.substringContextOrThis }
         val parent = PsiTreeUtil.findCommonParent(physicalElements)
-                     ?: throw AssertionError("Should have at least one parent: ${physicalElements.joinToString("\n")}")
+            ?: throw AssertionError("Should have at least one parent: ${physicalElements.joinToString("\n")}")
 
         val containers = getContainers(physicalElements, parent)
         if (containers.isEmpty()) {
@@ -104,12 +104,12 @@ fun selectElementsWithTargetParent(
         }
 
         chooseContainerElementIfNecessary(
-                containers,
-                editor,
-                title,
-                true,
-                { it },
-                { continuation(elements, it) }
+            containers,
+            editor,
+            title,
+            true,
+            { it },
+            { continuation(elements, it) }
         )
     }
 
@@ -122,7 +122,12 @@ fun selectElementsWithTargetParent(
             return when (elementKinds.singleOrNull()) {
                 CodeInsightUtils.ElementKind.EXPRESSION -> showErrorHintByKey("cannot.refactor.no.expression")
                 CodeInsightUtils.ElementKind.TYPE_ELEMENT -> showErrorHintByKey("cannot.refactor.no.type")
-                else -> showErrorHint(file.project, editor, "Refactoring can't be performed on the selected code element", title)
+                else -> showErrorHint(
+                    file.project,
+                    editor,
+                    KotlinBundle.message("text.refactoring.can.t.be.performed.on.the.selected.code.element"),
+                    title
+                )
             }
         }
 
@@ -133,8 +138,7 @@ fun selectElementsWithTargetParent(
         selectElement(editor, file, false, elementKinds) { expr ->
             if (expr != null) {
                 selectTargetContainer(listOf(expr))
-            }
-            else {
+            } else {
                 if (!editor.selectionModel.hasSelection()) {
                     if (elementKinds.singleOrNull() == CodeInsightUtils.ElementKind.EXPRESSION) {
                         val elementAtCaret = file.findElementAt(editor.caretModel.offset)
@@ -160,8 +164,8 @@ fun PsiElement.findExpressionByCopyableDataAndClearIt(key: Key<Boolean>): KtExpr
     return result
 }
 
-fun PsiElement.findElementByCopyableDataAndClearIt(key: Key<Boolean>): PsiElement {
-    val result = findDescendantOfType<PsiElement> { it.getCopyableUserData(key) != null }!!
+fun PsiElement.findElementByCopyableDataAndClearIt(key: Key<Boolean>): PsiElement? {
+    val result = findDescendantOfType<PsiElement> { it.getCopyableUserData(key) != null } ?: return null
     result.putCopyableUserData(key, null)
     return result
 }
@@ -221,7 +225,7 @@ fun ExtractableSubstringInfo.replaceWith(replacement: KtExpression): KtExpressio
 fun KtExpression.mustBeParenthesizedInInitializerPosition(): Boolean {
     if (this !is KtBinaryExpression) return false
 
-    if (left?.mustBeParenthesizedInInitializerPosition() ?: false) return true
+    if (left?.mustBeParenthesizedInInitializerPosition() == true) return true
     return PsiChildRange(left, operationReference).any { (it is PsiWhiteSpace) && it.textContains('\n') }
 }
 
@@ -236,7 +240,7 @@ fun <T : KtDeclaration> insertDeclaration(declaration: T, targetSibling: PsiElem
         anchorCandidates.add(targetSibling.siblings().last { it is KtEnumEntry })
     }
 
-    val anchor = anchorCandidates.minBy { it.startOffset }!!.parentsWithSelf.first { it.parent == targetParent }
+    val anchor = anchorCandidates.minByOrNull { it.startOffset }!!.parentsWithSelf.first { it.parent == targetParent }
     val targetContainer = anchor.parent!!
 
     @Suppress("UNCHECKED_CAST")
@@ -247,7 +251,7 @@ fun <T : KtDeclaration> insertDeclaration(declaration: T, targetSibling: PsiElem
 
 internal fun validateExpressionElements(elements: List<PsiElement>): String? {
     if (elements.any { it is KtConstructor<*> || it is KtParameter || it is KtTypeAlias || it is KtPropertyAccessor }) {
-        return "Refactoring is not applicable to this code fragment"
+        return KotlinBundle.message("text.refactoring.is.not.applicable.to.this.code.fragment")
     }
     return null
 }

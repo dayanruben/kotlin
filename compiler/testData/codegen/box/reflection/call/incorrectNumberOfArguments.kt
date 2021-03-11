@@ -1,4 +1,4 @@
-// IGNORE_BACKEND: JVM_IR
+// !LANGUAGE: +FunctionReferenceWithDefaultValueAsOtherType
 // TARGET_BACKEND: JVM
 
 // WITH_REFLECT

@@ -1,6 +1,6 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2000-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.codeInsight
@@ -104,9 +104,9 @@ class GotoSuperActionHandler : CodeInsightActionHandler {
 
     private fun getTitle(descriptor: DeclarationDescriptor): String? =
         when (descriptor) {
-            is ClassDescriptor -> KotlinBundle.message("goto.super.class.chooser.title")
-            is PropertyDescriptor -> KotlinBundle.message("goto.super.property.chooser.title")
-            is SimpleFunctionDescriptor -> KotlinBundle.message("goto.super.function.chooser.title")
+            is ClassDescriptor -> KotlinBundle.message("goto.super.chooser.class.title")
+            is PropertyDescriptor -> KotlinBundle.message("goto.super.chooser.property.title")
+            is SimpleFunctionDescriptor -> KotlinBundle.message("goto.super.chooser.function.title")
             else -> null
         }
 

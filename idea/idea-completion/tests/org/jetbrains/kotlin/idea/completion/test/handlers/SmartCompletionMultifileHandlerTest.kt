@@ -1,51 +1,54 @@
 /*
- * Copyright 2010-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.completion.test.handlers
 
 import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.completion.test.COMPLETION_TEST_DATA_BASE_PATH
-import org.jetbrains.kotlin.idea.completion.test.KotlinCompletionTestCase
+import org.jetbrains.kotlin.idea.completion.test.KotlinFixtureCompletionBaseTestCase
+import org.jetbrains.kotlin.platform.TargetPlatform
+import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
+import org.jetbrains.kotlin.test.JUnit3WithIdeaConfigurationRunner
+import org.junit.runner.RunWith
 import java.io.File
 
-class SmartCompletionMultifileHandlerTest : KotlinCompletionTestCase() {
-    fun testImportExtensionFunction() { doTest() }
+@RunWith(JUnit3WithIdeaConfigurationRunner::class)
+class SmartCompletionMultifileHandlerTest : KotlinFixtureCompletionBaseTestCase() {
+    fun testImportExtensionFunction() {
+        doTest()
+    }
 
-    fun testImportExtensionProperty() { doTest() }
+    fun testImportExtensionProperty() {
+        doTest()
+    }
 
-    fun testAnonymousObjectGenericJava() { doTest() }
+    fun testAnonymousObjectGenericJava() {
+        doTest()
+    }
 
-    fun testNestedSamAdapter() { doTest(lookupString = "Nested") }
+    fun testImportAnonymousObject() {
+        doTest()
+    }
 
-    override fun setUp() {
-        setType(CompletionType.SMART)
-        super.setUp()
+    fun testNestedSamAdapter() {
+        doTest(lookupString = "Nested")
     }
 
     private fun doTest(lookupString: String? = null, itemText: String? = null) {
         val fileName = getTestName(false)
 
-        val fileNames = listOf(fileName + "-1.kt", fileName + "-2.kt", fileName + ".java")
+        val fileNames = listOf("$fileName-1.kt", "$fileName-2.kt", "$fileName.java")
 
-        configureByFiles(null, *fileNames.filter { File(testDataPath + it).exists() }.toTypedArray())
+        myFixture.configureByFiles(*fileNames.filter { File(testDataPath + it).exists() }.toTypedArray())
 
-        complete(1)
-        if (myItems != null) {
+        val items = complete(CompletionType.SMART, 1)
+        if (items != null) {
             fun isMatching(lookupElement: LookupElement): Boolean {
                 if (lookupString != null && lookupElement.lookupString != lookupString) return false
 
@@ -56,16 +59,20 @@ class SmartCompletionMultifileHandlerTest : KotlinCompletionTestCase() {
                 return true
             }
 
-            val items = myItems.filter(::isMatching)
-            when (items.size) {
+            val matchedItems = items.filter(::isMatching)
+            when (matchedItems.size) {
                 0 -> fail("No matching items found")
-                1 -> selectItem(myItems[0])
+                1 -> CompletionHandlerTestBase.selectItem(myFixture, items[0], Lookup.NORMAL_SELECT_CHAR)
                 else -> fail("Multiple matching items found")
             }
         }
 
-        checkResultByFile(fileName + ".kt.after")
+        myFixture.checkResultByFile("$fileName.kt.after")
     }
 
     override fun getTestDataPath() = File(COMPLETION_TEST_DATA_BASE_PATH, "/handlers/multifile/smart/").path + File.separator
+
+    override fun defaultCompletionType(): CompletionType = CompletionType.BASIC
+    override fun getPlatform(): TargetPlatform = JvmPlatforms.unspecifiedJvmPlatform
+    override fun getProjectDescriptor() = LightJavaCodeInsightFixtureTestCase.JAVA_LATEST
 }

@@ -1,9 +1,7 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
-
-@file:Suppress("ACTUAL_WITHOUT_EXPECT") // for building kotlin-runtime
 
 package kotlin.jvm
 
@@ -63,7 +61,7 @@ public actual annotation class JvmMultifileClass
 @Retention(AnnotationRetention.SOURCE)
 @MustBeDocumented
 @SinceKotlin("1.2")
-internal annotation class JvmPackageName(val name: String)
+internal actual annotation class JvmPackageName(actual val name: String)
 
 /**
  * Sets `ACC_SYNTHETIC` flag on the annotated target in the Java bytecode.
@@ -135,3 +133,26 @@ public actual annotation class JvmSuppressWildcards(actual val suppress: Boolean
 @Retention(AnnotationRetention.BINARY)
 @MustBeDocumented
 public actual annotation class JvmWildcard
+
+/**
+ * Specifies that given value class is inline class.
+ *
+ * Adding and removing the annotation is binary incompatible change, since inline classes' methods and functions with inline classes
+ * in their signature are mangled.
+ */
+@Suppress("NEWER_VERSION_IN_SINCE_KOTLIN")
+@Target(AnnotationTarget.CLASS)
+@Retention(AnnotationRetention.RUNTIME)
+@MustBeDocumented
+@SinceKotlin("1.5")
+public actual annotation class JvmInline
+
+/**
+ * Instructs compiler to mark the class as a record and generate relevant toString/equals/hashCode methods
+ */
+@Suppress("NEWER_VERSION_IN_SINCE_KOTLIN")
+@Target(AnnotationTarget.CLASS)
+@Retention(AnnotationRetention.SOURCE)
+@MustBeDocumented
+@SinceKotlin("1.5")
+public actual annotation class JvmRecord

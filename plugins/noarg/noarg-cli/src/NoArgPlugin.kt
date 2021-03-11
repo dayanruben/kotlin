@@ -17,10 +17,13 @@
 package org.jetbrains.kotlin.noarg
 
 import com.intellij.mock.MockProject
+import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.codegen.extensions.ExpressionCodegenExtension
 import org.jetbrains.kotlin.compiler.plugin.*
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.CompilerConfigurationKey
+import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.container.StorageComponentContainer
 import org.jetbrains.kotlin.container.useInstance
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
@@ -30,35 +33,43 @@ import org.jetbrains.kotlin.noarg.NoArgConfigurationKeys.ANNOTATION
 import org.jetbrains.kotlin.noarg.NoArgConfigurationKeys.INVOKE_INITIALIZERS
 import org.jetbrains.kotlin.noarg.NoArgConfigurationKeys.PRESET
 import org.jetbrains.kotlin.noarg.diagnostic.CliNoArgDeclarationChecker
-import org.jetbrains.kotlin.resolve.TargetPlatform
-import org.jetbrains.kotlin.resolve.jvm.platform.JvmPlatform
+import org.jetbrains.kotlin.platform.TargetPlatform
+import org.jetbrains.kotlin.platform.jvm.isJvm
 
 object NoArgConfigurationKeys {
     val ANNOTATION: CompilerConfigurationKey<List<String>> =
-            CompilerConfigurationKey.create("annotation qualified name")
+        CompilerConfigurationKey.create("annotation qualified name")
 
     val PRESET: CompilerConfigurationKey<List<String>> = CompilerConfigurationKey.create("annotation preset")
 
     val INVOKE_INITIALIZERS: CompilerConfigurationKey<Boolean> = CompilerConfigurationKey.create(
-            "invoke instance initializers in a no-arg constructor")
+        "invoke instance initializers in a no-arg constructor"
+    )
 }
 
 class NoArgCommandLineProcessor : CommandLineProcessor {
     companion object {
         val SUPPORTED_PRESETS = mapOf(
-                "jpa" to listOf("javax.persistence.Entity", "javax.persistence.Embeddable", "javax.persistence.MappedSuperclass"))
+            "jpa" to listOf("javax.persistence.Entity", "javax.persistence.Embeddable", "javax.persistence.MappedSuperclass")
+        )
 
-        val ANNOTATION_OPTION = CliOption("annotation", "<fqname>", "Annotation qualified names",
-                                          required = false, allowMultipleOccurrences = true)
+        val ANNOTATION_OPTION = CliOption(
+            "annotation", "<fqname>", "Annotation qualified names",
+            required = false, allowMultipleOccurrences = true
+        )
 
-        val PRESET_OPTION = CliOption("preset", "<name>", "Preset name (${SUPPORTED_PRESETS.keys.joinToString()})",
-                                      required = false, allowMultipleOccurrences = true)
+        val PRESET_OPTION = CliOption(
+            "preset", "<name>", "Preset name (${SUPPORTED_PRESETS.keys.joinToString()})",
+            required = false, allowMultipleOccurrences = true
+        )
 
-        val INVOKE_INITIALIZERS_OPTION = CliOption("invokeInitializers", "true/false",
-                                                   "Invoke instance initializers in a no-arg constructor",
-                                                   required = false, allowMultipleOccurrences = false)
+        val INVOKE_INITIALIZERS_OPTION = CliOption(
+            "invokeInitializers", "true/false",
+            "Invoke instance initializers in a no-arg constructor",
+            required = false, allowMultipleOccurrences = false
+        )
 
-        val PLUGIN_ID = "org.jetbrains.kotlin.noarg"
+        const val PLUGIN_ID = "org.jetbrains.kotlin.noarg"
     }
 
     override val pluginId = PLUGIN_ID
@@ -74,25 +85,35 @@ class NoArgCommandLineProcessor : CommandLineProcessor {
 
 class NoArgComponentRegistrar : ComponentRegistrar {
     override fun registerProjectComponents(project: MockProject, configuration: CompilerConfiguration) {
-        val annotations = configuration.get(ANNOTATION)?.toMutableList() ?: mutableListOf()
+        val annotations = configuration.get(ANNOTATION).orEmpty().toMutableList()
         configuration.get(PRESET)?.forEach { preset ->
             SUPPORTED_PRESETS[preset]?.let { annotations += it }
         }
-        if (annotations.isEmpty()) return
+        if (annotations.isNotEmpty()) {
+            registerNoArgComponents(
+                project, annotations, configuration.getBoolean(JVMConfigurationKeys.IR), configuration.getBoolean(INVOKE_INITIALIZERS),
+            )
+        }
+    }
 
-        StorageComponentContainerContributor.registerExtension(project, CliNoArgComponentContainerContributor(annotations))
-
-        val invokeInitializers = configuration[INVOKE_INITIALIZERS] ?: false
-        ExpressionCodegenExtension.registerExtension(project, NoArgExpressionCodegenExtension(invokeInitializers))
+    internal companion object {
+        fun registerNoArgComponents(project: Project, annotations: List<String>, useIr: Boolean, invokeInitializers: Boolean) {
+            StorageComponentContainerContributor.registerExtension(project, CliNoArgComponentContainerContributor(annotations, useIr))
+            ExpressionCodegenExtension.registerExtension(project, CliNoArgExpressionCodegenExtension(annotations, invokeInitializers))
+            IrGenerationExtension.registerExtension(project, NoArgIrGenerationExtension(annotations, invokeInitializers))
+        }
     }
 }
 
-class CliNoArgComponentContainerContributor(val annotations: List<String>) : StorageComponentContainerContributor {
+private class CliNoArgComponentContainerContributor(
+    private val annotations: List<String>,
+    private val useIr: Boolean,
+) : StorageComponentContainerContributor {
     override fun registerModuleComponents(
-            container: StorageComponentContainer, platform: TargetPlatform, moduleDescriptor: ModuleDescriptor
+        container: StorageComponentContainer, platform: TargetPlatform, moduleDescriptor: ModuleDescriptor
     ) {
-        if (platform != JvmPlatform) return
+        if (!platform.isJvm()) return
 
-        container.useInstance(CliNoArgDeclarationChecker(annotations))
+        container.useInstance(CliNoArgDeclarationChecker(annotations, useIr))
     }
 }

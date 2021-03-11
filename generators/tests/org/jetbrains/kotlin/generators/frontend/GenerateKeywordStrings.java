@@ -31,14 +31,14 @@ import java.util.Iterator;
 import java.util.List;
 
 public class GenerateKeywordStrings {
-    public static final File DEST_FILE = new File("core/descriptors/src/org/jetbrains/kotlin/renderer/KeywordStringsGenerated.java");
+    public static final File DEST_FILE = new File("core/compiler.common/src/org/jetbrains/kotlin/renderer/KeywordStringsGenerated.java");
 
     @NotNull
     public static String generate() throws IOException {
         StringBuilder sb = new StringBuilder();
         Printer p = new Printer(sb);
 
-        p.println(FileUtil.loadFile(new File("license/LICENSE.txt")));
+        p.println(FileUtil.loadFile(new File("license/COPYRIGHT.txt")));
         p.println("package org.jetbrains.kotlin.renderer;");
         p.println();
         p.println("import java.util.Arrays;");

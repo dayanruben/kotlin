@@ -24,17 +24,20 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
-import org.jetbrains.kotlin.test.KotlinTestUtils
-import org.jetbrains.kotlin.test.testFramework.runInEdtAndWait
+import com.intellij.testFramework.runInEdtAndWait
+import org.jetbrains.kotlin.test.JUnit3WithIdeaConfigurationRunner
+import org.jetbrains.kotlin.test.util.KtTestUtil
 import org.junit.Test
+import org.junit.runner.RunWith
 import java.io.File
 import kotlin.reflect.KMutableProperty0
 
+@RunWith(JUnit3WithIdeaConfigurationRunner::class)
 class MavenUpdateConfigurationQuickFixTest : MavenImportingTestCase() {
     private lateinit var codeInsightTestFixture: CodeInsightTestFixture
 
     private fun getTestDataPath() =
-        KotlinTestUtils.getHomeDirectory() + "/idea/idea-maven/testData/languageFeature/" + getTestName(true).substringBefore('_')
+        KtTestUtil.getHomeDirectory() + "/idea/idea-maven/testData/languageFeature/" + getTestName(true).substringBefore('_')
 
     override fun setUpFixtures() {
         myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName()).fixture
@@ -70,18 +73,18 @@ class MavenUpdateConfigurationQuickFixTest : MavenImportingTestCase() {
     }
 
     @Test
-    fun testEnableCoroutines() {
-        doTest("Enable coroutine support in the current module")
-    }
-
-    @Test
     fun testEnableInlineClasses() {
         doTest("Enable inline classes support in the current module")
     }
 
     @Test
+    fun testEnableInlineClassesWithXFlag() {
+        doTest("Enable inline classes support in the current module")
+    }
+
+    @Test
     fun testAddKotlinReflect() {
-        doTest("Add kotlin-reflect.jar to the classpath")
+        doTest("Add 'kotlin-reflect.jar' to the classpath")
     }
 
     private fun doTest(intentionName: String) {

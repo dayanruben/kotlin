@@ -18,38 +18,56 @@ package org.jetbrains.kotlin.backend.common.lower
 
 import org.jetbrains.kotlin.backend.common.BackendContext
 import org.jetbrains.kotlin.backend.common.FileLoweringPass
-import org.jetbrains.kotlin.backend.common.makePhase
+import org.jetbrains.kotlin.backend.common.phaser.makeIrFilePhase
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
-import org.jetbrains.kotlin.ir.expressions.IrCall
-import org.jetbrains.kotlin.ir.expressions.IrCallableReference
-import org.jetbrains.kotlin.ir.expressions.IrExpression
+import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.expressions.impl.IrCompositeImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
 import org.jetbrains.kotlin.ir.util.isSubclassOf
+import org.jetbrains.kotlin.ir.util.render
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
+import org.jetbrains.kotlin.name.Name
 
-class KCallableNamePropertyLowering(val context: BackendContext) : FileLoweringPass {
+val kCallableNamePropertyPhase = makeIrFilePhase(
+    ::KCallableNamePropertyLowering,
+    name = "KCallableNameProperty",
+    description = "Replace name references for callables with constants"
+)
+
+private class KCallableNamePropertyLowering(val context: BackendContext) : FileLoweringPass {
     override fun lower(irFile: IrFile) {
         irFile.transformChildrenVoid(KCallableNamePropertyTransformer(this))
     }
 }
 
 private class KCallableNamePropertyTransformer(val lower: KCallableNamePropertyLowering) : IrElementTransformerVoid() {
+    private fun nameForCallableMember(reference: IrCallableReference<*>): Name {
+        return when (reference) {
+            is IrFunctionReference -> reference.symbol.owner.name
+            is IrPropertyReference -> reference.symbol.owner.name
+            is IrLocalDelegatedPropertyReference -> reference.symbol.owner.name
+            else -> error("Unexpected callable reference type ${reference.render()}")
+        }
+    }
 
     override fun visitCall(expression: IrCall): IrExpression {
+        val callableReference = expression.dispatchReceiver as? IrCallableReference<*>
+            ?: return super.visitCall(expression)
 
-        val callableReference = expression.dispatchReceiver as? IrCallableReference ?: return expression
-
-        //TODO rewrite checking
         val directMember = expression.symbol.owner.let {
-            (it as? IrSimpleFunction)?.correspondingProperty ?: it
+            (it as? IrSimpleFunction)?.correspondingPropertySymbol?.owner ?: it
         }
-        val irClass = directMember.parent as? IrClass ?: return expression
-        if (irClass.isSubclassOf(lower.context.irBuiltIns.kCallableClass.owner)) return expression
+
+        val irClass = directMember.parent as? IrClass
+            ?: return super.visitCall(expression)
+        if (!irClass.isSubclassOf(lower.context.irBuiltIns.kCallableClass.owner)) {
+            return super.visitCall(expression)
+        }
+
         val name = when (directMember) {
             is IrSimpleFunction -> directMember.name
             is IrProperty -> directMember.name
@@ -70,7 +88,7 @@ private class KCallableNamePropertyTransformer(val lower: KCallableNamePropertyL
                     expression.startOffset,
                     expression.endOffset,
                     lower.context.irBuiltIns.stringType,
-                    callableReference.descriptor.name.asString()
+                    nameForCallableMember(callableReference).asString()
                 )
             )
         }

@@ -1,19 +1,16 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.resolve
 
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.descriptors.ModuleDescriptor
-import org.jetbrains.kotlin.descriptors.ParameterDescriptor
-import org.jetbrains.kotlin.descriptors.VariableDescriptor
+import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.name.FqName
 
 object ImplicitIntegerCoercion {
 
-    val MODULE_CAPABILITY = ModuleDescriptor.Capability<Boolean>("ImplicitIntegerCoercion")
+    val MODULE_CAPABILITY = ModuleCapability<Boolean>("ImplicitIntegerCoercion")
 
     fun isEnabledForParameter(descriptor: ParameterDescriptor): Boolean = isEnabledFor(descriptor)
 

@@ -1,4 +1,4 @@
-// !LANGUAGE: -ProhibitAssigningSingleElementsToVarargsInNamedForm
+// !LANGUAGE: -ProhibitAssigningSingleElementsToVarargsInNamedForm -AllowAssigningArrayElementsToVarargsInNamedFormForFunctions
 
 fun box(): String {
     if (test1(p = 1) != "1") return "fail 1"

@@ -1,17 +1,6 @@
 /*
- * Copyright 2010-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.completion
@@ -46,18 +35,21 @@ object PackageDirectiveCompletion {
         val prefixLength = parameters.offset - expression.textOffset
         val prefix = expression.text!!
         val prefixMatcher = PlainPrefixMatcher(prefix.substring(0, prefixLength))
-        val result = result.withPrefixMatcher(prefixMatcher)
+        val resultSet = result.withPrefixMatcher(prefixMatcher)
 
         val resolutionFacade = expression.getResolutionFacade()
 
         val packageMemberScope = resolutionFacade.moduleDescriptor.getPackage(file.packageFqName.parent()).memberScope
 
         val variants = packageMemberScope.getContributedDescriptors(DescriptorKindFilter.PACKAGES, prefixMatcher.asNameFilter())
-        val lookupElementFactory = BasicLookupElementFactory(resolutionFacade.project, InsertHandlerProvider(callType = CallType.PACKAGE_DIRECTIVE, expectedInfosCalculator = { emptyList() }))
+        val lookupElementFactory = BasicLookupElementFactory(
+            resolutionFacade.project,
+            InsertHandlerProvider(callType = CallType.PACKAGE_DIRECTIVE, expectedInfosCalculator = { emptyList() })
+        )
         for (variant in variants) {
             val lookupElement = lookupElementFactory.createLookupElement(variant)
             if (!lookupElement.lookupString.contains(DUMMY_IDENTIFIER)) {
-                result.addElement(lookupElement)
+                resultSet.addElement(lookupElement)
             }
         }
 

@@ -1,4 +1,5 @@
-// IGNORE_BACKEND: JS_IR, JS, NATIVE, JVM_IR
+// IGNORE_BACKEND: JS_IR, JS, NATIVE
+// IGNORE_BACKEND: JS_IR_ES6
 // WITH_REFLECT
 import kotlin.test.assertEquals
 
@@ -14,6 +15,7 @@ inline class Z(val x: Int) : IFoo {
 
     override fun fooFun(z: Z): Z = Z(z.x + x)
 
+    @Suppress("RESERVED_VAR_PROPERTY_OF_VALUE_CLASS")
     override var fooVar: Z
         get() = Z(global.x + x)
         set(value) {
@@ -22,6 +24,7 @@ inline class Z(val x: Int) : IFoo {
 
     fun barFun(z: Z): Z = Z(z.x * 100 + x)
 
+    @Suppress("RESERVED_VAR_PROPERTY_OF_VALUE_CLASS")
     var barVar: Z
         get() = Z(global.x * 100 + x)
         set(value) {

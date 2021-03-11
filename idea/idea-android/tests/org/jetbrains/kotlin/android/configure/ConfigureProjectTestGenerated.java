@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.android.configure;
@@ -28,7 +28,7 @@ public class ConfigureProjectTestGenerated extends AbstractConfigureProjectTest 
         }
 
         public void testAllFilesPresentInAndroid_gradle() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/configuration/android-gradle"), Pattern.compile("(\\w+)_before\\.gradle$"), TargetBackend.ANY, true);
+            org.jetbrains.kotlin.test.util.KtTestUtil.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/configuration/android-gradle"), Pattern.compile("(\\w+)_before\\.gradle$"), TargetBackend.ANY, true);
         }
 
         @TestMetadata("androidStudioDefault_before.gradle")
@@ -95,7 +95,7 @@ public class ConfigureProjectTestGenerated extends AbstractConfigureProjectTest 
             }
 
             public void testAllFilesPresentInGradleExamples() throws Exception {
-                KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/configuration/android-gradle/gradleExamples"), Pattern.compile("(\\w+)_before\\.gradle$"), TargetBackend.ANY, true);
+                org.jetbrains.kotlin.test.util.KtTestUtil.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/configuration/android-gradle/gradleExamples"), Pattern.compile("(\\w+)_before\\.gradle$"), TargetBackend.ANY, true);
             }
 
             @TestMetadata("gradleExample0_before.gradle")
@@ -154,7 +154,7 @@ public class ConfigureProjectTestGenerated extends AbstractConfigureProjectTest 
         }
 
         public void testAllFilesPresentInAndroid_gsk() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/configuration/android-gsk"), Pattern.compile("(\\w+)_before\\.gradle.kts$"), TargetBackend.ANY, true);
+            org.jetbrains.kotlin.test.util.KtTestUtil.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/configuration/android-gsk"), Pattern.compile("(\\w+)_before\\.gradle.kts$"), TargetBackend.ANY, true);
         }
 
         @TestMetadata("emptyFile_before.gradle.kts")

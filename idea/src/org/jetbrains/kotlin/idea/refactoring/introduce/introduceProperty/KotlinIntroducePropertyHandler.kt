@@ -24,8 +24,8 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.RefactoringActionHandler
-import org.jetbrains.kotlin.idea.codeInsight.CodeInsightUtils
-import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringBundle
+import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.getExtractionContainers
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.*
 import org.jetbrains.kotlin.idea.refactoring.introduce.selectElementsWithTargetSibling
@@ -40,45 +40,50 @@ import org.jetbrains.kotlin.psi.KtProperty
 import java.util.*
 
 class KotlinIntroducePropertyHandler(
-        val helper: ExtractionEngineHelper = KotlinIntroducePropertyHandler.InteractiveExtractionHelper
-): RefactoringActionHandler {
+    val helper: ExtractionEngineHelper = InteractiveExtractionHelper
+) : RefactoringActionHandler {
     object InteractiveExtractionHelper : ExtractionEngineHelper(INTRODUCE_PROPERTY) {
         private fun getExtractionTarget(descriptor: ExtractableCodeDescriptor) =
-                propertyTargets.firstOrNull { it.isAvailable(descriptor) }
+            propertyTargets.firstOrNull { it.isAvailable(descriptor) }
 
         override fun validate(descriptor: ExtractableCodeDescriptor) =
-                descriptor.validate(getExtractionTarget(descriptor) ?: ExtractionTarget.FUNCTION)
+            descriptor.validate(getExtractionTarget(descriptor) ?: ExtractionTarget.FUNCTION)
 
         override fun configureAndRun(
-                project: Project,
-                editor: Editor,
-                descriptorWithConflicts: ExtractableCodeDescriptorWithConflicts,
-                onFinish: (ExtractionResult) -> Unit
+            project: Project,
+            editor: Editor,
+            descriptorWithConflicts: ExtractableCodeDescriptorWithConflicts,
+            onFinish: (ExtractionResult) -> Unit
         ) {
             val descriptor = descriptorWithConflicts.descriptor
             val target = getExtractionTarget(descriptor)
             if (target != null) {
                 val options = ExtractionGeneratorOptions.DEFAULT.copy(target = target, delayInitialOccurrenceReplacement = true)
                 doRefactor(ExtractionGeneratorConfiguration(descriptor, options), onFinish)
-            }
-            else {
-                showErrorHint(project, editor, "Can't introduce property for this expression", INTRODUCE_PROPERTY)
+            } else {
+                showErrorHint(
+                    project,
+                    editor,
+                    KotlinBundle.message("error.text.can.t.introduce.property.for.this.expression"),
+                    INTRODUCE_PROPERTY
+                )
             }
         }
     }
 
     fun selectElements(editor: Editor, file: KtFile, continuation: (elements: List<PsiElement>, targetSibling: PsiElement) -> Unit) {
         selectElementsWithTargetSibling(
-                INTRODUCE_PROPERTY,
-                editor,
-                file,
-                "Select target code block",
-                listOf(CodeInsightUtils.ElementKind.EXPRESSION),
-                ::validateExpressionElements,
-                { _, parent ->
-                    parent.getExtractionContainers(strict = true, includeAll = true).filter { it is KtClassBody || (it is KtFile && !it.isScript()) }
-                },
-                continuation
+            INTRODUCE_PROPERTY,
+            editor,
+            file,
+            KotlinBundle.message("title.select.target.code.block"),
+            listOf(CodeInsightUtils.ElementKind.EXPRESSION),
+            ::validateExpressionElements,
+            { _, parent ->
+                parent.getExtractionContainers(strict = true, includeAll = true)
+                    .filter { it is KtClassBody || (it is KtFile && !it.isScript()) }
+            },
+            continuation
         )
     }
 
@@ -100,23 +105,21 @@ class KotlinIntroducePropertyHandler(
                     }
 
                     val introducer = KotlinInplacePropertyIntroducer(
-                            property = property,
-                            editor = editor,
-                            project = project,
-                            title = INTRODUCE_PROPERTY,
-                            doNotChangeVar = false,
-                            exprType = descriptor.returnType,
-                            extractionResult = it,
-                            availableTargets = propertyTargets.filter { it.isAvailable(descriptor) }
+                        property = property,
+                        editor = editor,
+                        project = project,
+                        title = INTRODUCE_PROPERTY,
+                        doNotChangeVar = false,
+                        exprType = descriptor.returnType,
+                        extractionResult = it,
+                        availableTargets = propertyTargets.filter { target -> target.isAvailable(descriptor) }
                     )
                     introducer.performInplaceRefactoring(LinkedHashSet(descriptor.suggestedNames))
-                }
-                else {
+                } else {
                     processDuplicatesSilently(it.duplicateReplacers, project)
                 }
             }
-        }
-        else {
+        } else {
             showErrorHintByKey(project, editor, "cannot.refactor.no.expression", INTRODUCE_PROPERTY)
         }
     }
@@ -131,4 +134,4 @@ class KotlinIntroducePropertyHandler(
     }
 }
 
-val INTRODUCE_PROPERTY: String = KotlinRefactoringBundle.message("introduce.property")
+val INTRODUCE_PROPERTY: String = KotlinBundle.message("introduce.property")

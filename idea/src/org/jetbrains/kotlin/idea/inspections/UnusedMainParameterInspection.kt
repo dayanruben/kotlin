@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.inspections
@@ -9,6 +9,7 @@ import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.quickfix.RemoveUnusedFunctionParameterFix
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -26,7 +27,7 @@ class UnusedMainParameterInspection : AbstractKotlinInspection() {
             if (context[UNUSED_MAIN_PARAMETER, parameter] == true) {
                 holder.registerProblem(
                     parameter,
-                    "Since Kotlin 1.3 main parameter is not necessary",
+                    KotlinBundle.message("since.kotlin.1.3.main.parameter.is.not.necessary"),
                     ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                     IntentionWrapper(RemoveUnusedFunctionParameterFix(parameter), parameter.containingFile)
                 )

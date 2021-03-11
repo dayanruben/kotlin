@@ -1,9 +1,6 @@
 package org.jetbrains.kotlin.gradle
 
-import org.jetbrains.kotlin.gradle.util.allKotlinFiles
-import org.jetbrains.kotlin.gradle.util.getFileByName
-import org.jetbrains.kotlin.gradle.util.getFilesByNames
-import org.jetbrains.kotlin.gradle.util.modify
+import org.jetbrains.kotlin.gradle.util.*
 import org.junit.Assert
 import org.junit.Test
 import java.io.File
@@ -27,11 +24,17 @@ class IncrementalCompilationJsMultiProjectIT : BaseIncrementalCompilationMultiPr
 
     override val additionalLibDependencies: String =
         "implementation \"org.jetbrains.kotlin:kotlin-test-js:${'$'}kotlin_version\""
+
+    override val compileKotlinTaskName: String
+        get() = "compileKotlin2Js"
 }
 
 class IncrementalCompilationJvmMultiProjectIT : BaseIncrementalCompilationMultiProjectIT() {
     override val additionalLibDependencies: String =
-        "implementation \"org.jetbrains.kotlin:kotlin-stdlib:${'$'}kotlin_version\""
+        "implementation \"org.jetbrains.kotlin:kotlin-test:${'$'}kotlin_version\""
+
+    override val compileKotlinTaskName: String
+        get() = "compileKotlin"
 
     override fun defaultProject(): Project =
         Project("incrementalMultiproject")
@@ -68,7 +71,8 @@ class IncrementalCompilationJvmMultiProjectIT : BaseIncrementalCompilationMultiP
             apply plugin: 'kotlin'
 
             dependencies {
-                compile 'org.codehaus.groovy:groovy-all:2.4.7'
+                implementation "org.jetbrains.kotlin:kotlin-stdlib:${"$"}kotlin_version"
+                implementation 'org.codehaus.groovy:groovy-all:2.4.8'
             }
             """.trimIndent()
         }
@@ -91,6 +95,44 @@ class IncrementalCompilationJvmMultiProjectIT : BaseIncrementalCompilationMultiP
         project.build("build") {
             assertSuccessful()
             val affectedSources = File(project.projectDir, "app").allKotlinFiles()
+            val relativePaths = project.relativize(affectedSources)
+            assertCompiledKotlinSources(relativePaths)
+        }
+    }
+
+    /** Regression test for KT-43489. Make sure build history mapping is not initialized too early. */
+    @Test
+    fun testBuildHistoryMappingLazilyComputedWithWorkers() {
+        val project = defaultProject()
+        project.setupWorkingDir()
+        project.projectDir.resolve("app/build.gradle").appendText(
+            """
+                // added to force eager configuration
+                tasks.withType(JavaCompile) {
+                    options.encoding = 'UTF-8'
+                }
+            """.trimIndent()
+        )
+        val options = defaultBuildOptions().copy(parallelTasksInProject = true)
+        project.build(options = options, params = arrayOf("build")) {
+            assertSuccessful()
+        }
+
+        val aKt = project.projectDir.getFileByName("A.kt")
+        aKt.writeText(
+            """
+package bar
+
+open class A {
+    fun a() {}
+    fun newA() {}
+}
+"""
+        )
+
+        project.build(options = options, params = arrayOf("build")) {
+            assertSuccessful()
+            val affectedSources = project.projectDir.getFilesByNames("A.kt", "B.kt", "AA.kt", "AAA.kt", "BB.kt")
             val relativePaths = project.relativize(affectedSources)
             assertCompiledKotlinSources(relativePaths)
         }
@@ -203,6 +245,7 @@ open class A {
     }
 
     protected abstract val additionalLibDependencies: String
+    protected abstract val compileKotlinTaskName: String
 
     @Test
     fun testAddDependencyToLib() {
@@ -251,18 +294,83 @@ open class A {
         }
 
         val bKt = project.projectDir.getFileByName("B.kt")
+        val bKtContent = bKt.readText()
         bKt.delete()
+
+        fun runFailingBuild() {
+            project.build("build") {
+                assertFailed()
+                assertContains("B.kt has been removed")
+                assertTasksFailed(":lib:$compileKotlinTaskName")
+                val affectedFiles = project.projectDir.getFilesByNames("barUseAB.kt", "barUseB.kt")
+                assertCompiledKotlinSources(project.relativize(affectedFiles))
+            }
+        }
+
+        runFailingBuild()
+        runFailingBuild()
+
+        bKt.writeText(bKtContent.replace("fun b", "open fun b"))
+
+        project.build("build") {
+            assertSuccessful()
+            val affectedFiles = project.projectDir.getFilesByNames(
+                "B.kt", "barUseAB.kt", "barUseB.kt",
+                "BB.kt", "fooUseB.kt"
+            )
+            assertCompiledKotlinSources(project.relativize(affectedFiles))
+        }
+    }
+
+    @Test
+    fun testRemoveLibFromClasspath() {
+        val project = defaultProject()
+        project.build("build") {
+            assertSuccessful()
+        }
+
+        val appBuildGradle = project.projectDir.resolve("app/build.gradle")
+        val appBuildGradleContent = appBuildGradle.readText()
+        appBuildGradle.modify { it.checkedReplace("implementation project(':lib')", "") }
+        val aaKt = project.projectDir.getFileByName("AA.kt")
+        aaKt.addNewLine()
 
         project.build("build") {
             assertFailed()
         }
 
-        project.projectDir.getFileByName("barUseB.kt").delete()
-        project.projectDir.getFileByName("barUseAB.kt").delete()
+        appBuildGradle.writeText(appBuildGradleContent)
+        aaKt.addNewLine()
 
         project.build("build") {
-            assertFailed()
-            val affectedSources = project.projectDir.allKotlinFiles()
+            assertSuccessful()
+            assertCompiledKotlinSources(project.relativize(aaKt))
+        }
+    }
+
+    /** Regression test for KT-40875. */
+    @Test
+    fun testMoveFunctionFromLibWithRemappedBuildDirs() {
+        val project = defaultProject()
+        project.setupWorkingDir()
+        project.projectDir.resolve("build.gradle").appendText("""
+
+            allprojects {
+                it.buildDir = new File(rootDir,  "../out" + it.path.replace(":", "/") + "/build")
+            }
+        """.trimIndent())
+        project.build("build") {
+            assertSuccessful()
+        }
+
+        val barUseABKt = project.projectDir.getFileByName("barUseAB.kt")
+        val barInApp = File(project.projectDir, "app/src/main/kotlin/bar").apply { mkdirs() }
+        barUseABKt.copyTo(File(barInApp, barUseABKt.name))
+        barUseABKt.delete()
+
+        project.build("build") {
+            assertSuccessful()
+            val affectedSources = project.projectDir.getFilesByNames("fooCallUseAB.kt", "barUseAB.kt")
             val relativePaths = project.relativize(affectedSources)
             assertCompiledKotlinSources(relativePaths)
         }

@@ -50,16 +50,21 @@ import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
+import org.jetbrains.kotlin.idea.test.KotlinSdkCreationChecker;
+import org.jetbrains.kotlin.test.KotlinTestUtils;
+import org.jetbrains.kotlin.test.WithMutedInDatabaseRunTest;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@WithMutedInDatabaseRunTest
 public abstract class MavenImportingTestCase extends MavenTestCase {
     protected MavenProjectsTree myProjectsTree;
     protected MavenProjectsManager myProjectsManager;
     private File myGlobalSettingsFile;
+    protected KotlinSdkCreationChecker sdkCreationChecker;
 
     @Override
     protected void setUp() throws Exception {
@@ -70,6 +75,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
         if (myGlobalSettingsFile != null) {
             VfsRootAccess.allowRootAccess(myGlobalSettingsFile.getAbsolutePath());
         }
+        sdkCreationChecker = new KotlinSdkCreationChecker();
     }
 
     @Override
@@ -82,6 +88,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     @Override
     protected void tearDown() throws Exception {
         try {
+            JavaAwareProjectJdkTableImpl.removeInternalJdkInTests();
             if (myGlobalSettingsFile != null) {
                 VfsRootAccess.disallowRootAccess(myGlobalSettingsFile.getAbsolutePath());
             }
@@ -89,10 +96,16 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
             Messages.setTestDialog(TestDialog.DEFAULT);
             removeFromLocalRepository("test");
             FileUtil.delete(BuildManager.getInstance().getBuildSystemDirectory().toFile());
+            sdkCreationChecker.removeNewKotlinSdk();
         }
         finally {
             super.tearDown();
         }
+    }
+
+    @Override
+    protected void runTest() throws Throwable {
+        KotlinTestUtils.runTestWithThrowable(this, () -> super.runTest());
     }
 
     protected void assertModules(String... expectedNames) {

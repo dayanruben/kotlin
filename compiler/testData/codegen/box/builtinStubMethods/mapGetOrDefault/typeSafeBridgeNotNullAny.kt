@@ -1,5 +1,4 @@
 // SKIP_JDK6
-// IGNORE_BACKEND: JVM_IR
 // TARGET_BACKEND: JVM
 // FULL_JDK
 // WITH_RUNTIME
@@ -48,8 +47,8 @@ class A : MutableMap<Any, Any> {
     }
 
     override fun getOrDefault(key: Any, defaultValue: Any): Any {
-        // this condition can not be true because of checkParameterIsNotNull checks in the begin of every method, but it's left here
-        // to emphasize that we expect these parameters are not null
+        // this condition can not be true because of checkParameterIsNotNull/checkNotNullParameter checks in the begin of every method,
+        // but it's left here to emphasize that we expect these parameters are not null
         if (key == null || defaultValue == null) {
             throw IllegalArgumentException("fail")
         }
@@ -75,7 +74,7 @@ fun box(): String {
         // and returning defaultValue if null was received seems incorrect here
         mm.getOrDefault("abc", null)
         return "fail 7"
-    } catch (e: java.lang.IllegalArgumentException) {
+    } catch (e: java.lang.NullPointerException) {
         // Parameter specified as non-null is null
     }
 

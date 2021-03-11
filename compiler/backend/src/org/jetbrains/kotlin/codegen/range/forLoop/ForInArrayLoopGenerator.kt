@@ -17,7 +17,7 @@
 package org.jetbrains.kotlin.codegen.range.forLoop
 
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
-import org.jetbrains.kotlin.codegen.AsmUtil.boxType
+import org.jetbrains.kotlin.codegen.DescriptorAsmUtil
 import org.jetbrains.kotlin.codegen.ExpressionCodegen
 import org.jetbrains.kotlin.codegen.StackValue
 import org.jetbrains.kotlin.psi.KtForExpression
@@ -79,13 +79,13 @@ class ForInArrayLoopGenerator(
 
     override fun assignToLoopParameter() {
         val arrayElParamType =
-            if (KotlinBuiltIns.isArray(loopRangeType)) boxType(asmElementType, elementType, codegen.state) else asmElementType
+            if (KotlinBuiltIns.isArray(loopRangeType)) DescriptorAsmUtil.boxType(asmElementType, elementType, codegen.state.typeMapper) else asmElementType
 
         v.load(arrayVar, OBJECT_TYPE)
         v.load(indexVar, Type.INT_TYPE)
         v.aload(arrayElParamType)
-        StackValue.onStack(arrayElParamType, elementType).put(asmElementType, elementType, codegen.v)
-        v.store(loopParameterVar, asmElementType)
+        StackValue.local(loopParameterVar, loopParameterType, loopParameterKotlinType)
+            .store(StackValue.onStack(arrayElParamType, elementType), v)
     }
 
     override fun checkPostConditionAndIncrement(loopExit: Label) {

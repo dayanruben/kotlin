@@ -1,6 +1,8 @@
+// DONT_TARGET_EXACT_BACKEND: WASM
+// WASM_MUTE_REASON: WASM_NULL_CAST
+// KJS_WITH_FULL_RUNTIME
 // !LANGUAGE: +InlineClasses
 // WITH_RUNTIME
-// IGNORE_BACKEND: JVM_IR
 
 inline class X(val x: String)
 inline class Y(val y: Number)

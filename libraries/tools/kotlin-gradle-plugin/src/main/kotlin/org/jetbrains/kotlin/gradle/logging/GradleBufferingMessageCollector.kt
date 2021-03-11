@@ -1,25 +1,25 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.gradle.logging
 
-import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocation
+import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSourceLocation
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
-import java.util.ArrayList
+import java.util.*
 
 internal class GradleBufferingMessageCollector : MessageCollector {
     private class MessageData(
         val severity: CompilerMessageSeverity,
         val message: String,
-        val location: CompilerMessageLocation?
+        val location: CompilerMessageSourceLocation?
     )
 
     private val messages = ArrayList<MessageData>()
 
-    override fun report(severity: CompilerMessageSeverity, message: String, location: CompilerMessageLocation?) {
+    override fun report(severity: CompilerMessageSeverity, message: String, location: CompilerMessageSourceLocation?) {
         synchronized(messages) {
             messages.add(MessageData(severity, message, location))
         }

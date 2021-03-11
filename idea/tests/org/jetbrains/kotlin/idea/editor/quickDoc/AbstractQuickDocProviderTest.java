@@ -1,22 +1,14 @@
 /*
- * Copyright 2010-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.editor.quickDoc;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
+import com.intellij.codeInsight.hint.ParameterInfoController;
+import com.intellij.codeInsight.lookup.LookupEx;
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -43,6 +35,22 @@ public abstract class AbstractQuickDocProviderTest extends KotlinLightCodeInsigh
         PsiElement targetElement = documentationManager.findTargetElement(myFixture.getEditor(), myFixture.getFile());
         PsiElement originalElement = DocumentationManager.getOriginalElement(targetElement);
 
+        PsiElement list = ParameterInfoController.findArgumentList(myFixture.getFile(), myFixture.getEditor().getCaretModel().getOffset(), -1);
+        PsiElement expressionList = null;
+        if (list != null) {
+            LookupEx lookup = LookupManager.getInstance(myFixture.getProject()).getActiveLookup();
+            if (lookup != null) {
+                expressionList = null; // take completion variants for documentation then
+            }
+            else {
+                expressionList = list;
+            }
+        }
+
+        if (targetElement == null && expressionList != null) {
+            targetElement = expressionList;
+        }
+
         String info = DocumentationManager.getProviderFromElement(targetElement).generateDoc(targetElement, originalElement);
         if (info != null) {
             info = StringUtil.convertLineSeparators(info);
@@ -53,7 +61,7 @@ public abstract class AbstractQuickDocProviderTest extends KotlinLightCodeInsigh
 
         File testDataFile = new File(path);
         String textData = FileUtil.loadFile(testDataFile, true);
-        List<String> directives = InTextDirectivesUtils.findLinesWithPrefixesRemoved(textData, false, "INFO:");
+        List<String> directives = InTextDirectivesUtils.findLinesWithPrefixesRemoved(textData, false, true, "INFO:");
 
         if (directives.isEmpty()) {
             throw new FileComparisonFailure(

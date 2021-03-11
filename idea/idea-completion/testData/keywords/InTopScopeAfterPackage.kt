@@ -1,3 +1,5 @@
+// COMPILER_ARGUMENTS: -XXLanguage:+SealedInterfaces -XXLanguage:+MultiPlatformProjects
+
 package Test
 
 <caret>
@@ -24,15 +26,18 @@ package Test
 // EXIST:  infix
 // EXIST:  sealed class
 // EXIST:  sealed class InTopScopeAfterPackage
+// EXIST:  sealed interface InTopScopeAfterPackage
+// EXIST:  sealed interface
 // EXIST:  data class
-// EXIST:  data class InTopScopeAfterPackage
+// EXIST:  { "lookupString":"data class", "itemText":"data class", "tailText":" InTopScopeAfterPackage(...)", "attributes":"bold" }
 // EXIST:  inline
+// EXIST:  value
 // EXIST:  tailrec
 // EXIST:  external
 // EXIST:  annotation class
 // EXIST:  annotation class InTopScopeAfterPackage
 // EXIST:  const val
-// EXIST:  suspend
+// EXIST:  suspend fun
 // EXIST:  typealias
 // EXIST:  expect
 // EXIST:  actual

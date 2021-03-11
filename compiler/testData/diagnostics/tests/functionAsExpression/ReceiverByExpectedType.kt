@@ -1,3 +1,3 @@
 // !WITH_NEW_INFERENCE
 fun foo(<!UNUSED_PARAMETER!>f<!>: String.() -> Int) {}
-val test = foo(<!OI;TYPE_MISMATCH!>fun () = <!UNRESOLVED_REFERENCE!>length<!><!>)
+val test = foo(<!TYPE_MISMATCH{NI}, TYPE_MISMATCH{NI}, TYPE_MISMATCH!>fun <!EXPECTED_PARAMETERS_NUMBER_MISMATCH{NI}!>()<!> = <!UNRESOLVED_REFERENCE!>length<!><!>)

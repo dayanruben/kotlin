@@ -1,18 +1,21 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package templates
 
+import templates.DocExtensions.collection
 import templates.Family.*
+import templates.Ordering.appendStableSortNote
+import templates.Ordering.stableSortNote
 
 object ArrayOps : TemplateGroupBase() {
 
     init {
         defaultBuilder {
             specialFor(ArraysOfUnsigned) {
-                since("1.3")
+                sinceAtLeast("1.3")
                 annotation("@ExperimentalUnsignedTypes")
             }
         }
@@ -42,29 +45,53 @@ object ArrayOps : TemplateGroupBase() {
 
 
     val f_lastIndex = pval("lastIndex") {
-        include(ArraysOfObjects, ArraysOfPrimitives)
+        include(ArraysOfObjects, ArraysOfPrimitives, ArraysOfUnsigned)
     } builder {
         doc { "Returns the last valid index for the array." }
         returns("Int")
         body {
             "get() = size - 1"
         }
+        specialFor(ArraysOfUnsigned) {
+            // TODO: Make inlineOnly after KT-30015 is fixed.
+            // InlineOnly properties currently are not inlined and may lead to IllegalAccessException
+            // when accessed from an inline (or inlineOnly) method.
+            // It is because the method body contains access call to inlineOnly property in nonpublic multifile part,
+            // which may be inaccessible from method call site, where method body gets inlined.
+            inline()
+            body { "get() = storage.lastIndex" }
+        }
     }
 
     val f_indices = pval("indices") {
-        include(ArraysOfObjects, ArraysOfPrimitives)
+        include(ArraysOfObjects, ArraysOfPrimitives, ArraysOfUnsigned)
     } builder {
         doc { "Returns the range of valid indices for the array." }
         returns("IntRange")
         body {
             "get() = IntRange(0, lastIndex)"
         }
+        specialFor(ArraysOfUnsigned) {
+            // TODO: Make inlineOnly after KT-30015 is fixed.
+            // InlineOnly properties currently are not inlined and may lead to IllegalAccessException
+            // when accessed from an inline (or inlineOnly) method.
+            // It is because the method body contains access call to inlineOnly property in nonpublic multifile part,
+            // which may be inaccessible from method call site, where method body gets inlined.
+            inline()
+            body { "get() = storage.indices" }
+        }
+    }
+
+    private fun MemberBuilder.deprecatedNonNullArrayFunction() {
+        deprecate("Use Kotlin compiler 1.4 to avoid deprecation warning.")
+        annotation("""@DeprecatedSinceKotlin(hiddenSince = "1.4")""")
     }
 
     val f_contentEquals = fn("contentEquals(other: SELF)") {
         include(ArraysOfObjects, ArraysOfPrimitives, ArraysOfUnsigned)
     } builder {
         since("1.1")
+        deprecatedNonNullArrayFunction()
         infix(true)
         doc {
             """
@@ -73,8 +100,8 @@ object ArrayOps : TemplateGroupBase() {
             """
         }
         returns("Boolean")
-        if (family == ArraysOfUnsigned) {
-            body { "return storage.contentEquals(other.storage)" }
+        body { "return this.contentEquals(other)" }
+        if (f == ArraysOfUnsigned) {
             return@builder
         }
         doc {
@@ -85,6 +112,36 @@ object ArrayOps : TemplateGroupBase() {
         }
         on(Platform.JVM) {
             inlineOnly()
+        }
+    }
+
+    val f_contentEquals_nullable = fn("contentEquals(other: SELF?)") {
+        include(ArraysOfObjects, ArraysOfPrimitives, ArraysOfUnsigned)
+    } builder {
+        since("1.4")
+        infix(true)
+        doc {
+            """
+            Returns `true` if the two specified arrays are *structurally* equal to one another,
+            i.e. contain the same number of the same elements in the same order.
+            """
+        }
+        receiver("SELF?")
+        returns("Boolean")
+        if (family == ArraysOfUnsigned) {
+            body { "return this?.storage.contentEquals(other?.storage)" }
+            return@builder
+        }
+
+        doc {
+            doc + """
+            The elements are compared for equality with the [equals][Any.equals] function.
+            For floating point numbers it means that `NaN` is equal to itself and `-0.0` is not equal to `0.0`.
+            """
+        }
+        on(Platform.JVM) {
+            inlineOnly()
+            annotation("""@JvmName("contentEqualsNullable")""")
             body { "return java.util.Arrays.equals(this, other)" }
         }
 
@@ -106,6 +163,7 @@ object ArrayOps : TemplateGroupBase() {
             body {
                 """
                 if (this === other) return true
+                if (this === null || other === null) return false
                 if (size != other.size) return false
                 for (i in indices) {
                     if (${notEq("this[i]", "other[i]")}) return false
@@ -120,6 +178,7 @@ object ArrayOps : TemplateGroupBase() {
         include(ArraysOfObjects)
     } builder {
         since("1.1")
+        annotation("@kotlin.internal.LowPriorityInOverloadResolution")
         infix(true)
         doc {
             """
@@ -134,9 +193,37 @@ object ArrayOps : TemplateGroupBase() {
             """
         }
         returns("Boolean")
+        body { "return this.contentDeepEquals(other)" }
         on(Platform.JVM) {
             inlineOnly()
             annotation("""@JvmName("contentDeepEqualsInline")""")
+        }
+    }
+
+    val f_contentDeepEquals_nullable = fn("contentDeepEquals(other: SELF?)") {
+        include(ArraysOfObjects)
+    } builder {
+        since("1.4")
+        infix(true)
+        doc {
+            """
+            Returns `true` if the two specified arrays are *deeply* equal to one another,
+            i.e. contain the same number of the same elements in the same order.
+            
+            The specified arrays are also considered deeply equal if both are `null`.
+
+            If two corresponding elements are nested arrays, they are also compared deeply.
+            If any of arrays contains itself on any nesting level the behavior is undefined.
+
+            The elements of other types are compared for equality with the [equals][Any.equals] function.
+            For floating point numbers it means that `NaN` is equal to itself and `-0.0` is not equal to `0.0`.
+            """
+        }
+        receiver("SELF?")
+        returns("Boolean")
+        on(Platform.JVM) {
+            inlineOnly()
+            annotation("""@JvmName("contentDeepEqualsNullable")""")
             body {
                 """
                 if (kotlin.internal.apiVersionIsAtLeast(1, 3, 0))
@@ -165,6 +252,7 @@ object ArrayOps : TemplateGroupBase() {
         include(ArraysOfObjects, ArraysOfPrimitives, ArraysOfUnsigned)
     } builder {
         since("1.1")
+        deprecatedNonNullArrayFunction()
         doc {
             """
             Returns a string representation of the contents of the specified array as if it is [List].
@@ -172,12 +260,35 @@ object ArrayOps : TemplateGroupBase() {
         }
         sample("samples.collections.Arrays.ContentOperations.contentToString")
         returns("String")
-        if (family == ArraysOfUnsigned) {
-            body { """return joinToString(", ", "[", "]")""" }
+        body { "return this.contentToString()" }
+        if (f == ArraysOfUnsigned) {
             return@builder
         }
         on(Platform.JVM) {
             inlineOnly()
+        }
+    }
+
+    val f_contentToString_nullable = fn("contentToString()") {
+        include(ArraysOfObjects, ArraysOfPrimitives, ArraysOfUnsigned)
+    } builder {
+        since("1.4")
+        doc {
+            """
+            Returns a string representation of the contents of the specified array as if it is [List].
+            """
+        }
+        sample("samples.collections.Arrays.ContentOperations.contentToString")
+        receiver("SELF?")
+        returns("String")
+        if (family == ArraysOfUnsigned) {
+            body { """return this?.joinToString(", ", "[", "]") ?: "null"""" }
+            return@builder
+        }
+
+        on(Platform.JVM) {
+            inlineOnly()
+            annotation("""@JvmName("contentToStringNullable")""")
             body { "return java.util.Arrays.toString(this)" }
         }
         on(Platform.JS) {
@@ -186,11 +297,11 @@ object ArrayOps : TemplateGroupBase() {
                 body { "definedExternally" }
             }
             on(Backend.IR) {
-                body { "return arrayToString(this as Array<*>)" }
+                body { """return this?.joinToString(", ", "[", "]") ?: "null"""" }
             }
         }
         on(Platform.Native) {
-            body { """return joinToString(", ", "[", "]")""" }
+            body { """return this?.joinToString(", ", "[", "]") ?: "null"""" }
         }
     }
 
@@ -198,6 +309,7 @@ object ArrayOps : TemplateGroupBase() {
         include(ArraysOfObjects)
     } builder {
         since("1.1")
+        annotation("@kotlin.internal.LowPriorityInOverloadResolution")
         doc {
             """
             Returns a string representation of the contents of this array as if it is a [List].
@@ -209,9 +321,32 @@ object ArrayOps : TemplateGroupBase() {
         }
         sample("samples.collections.Arrays.ContentOperations.contentDeepToString")
         returns("String")
+        body { "return this.contentDeepToString()" }
         on(Platform.JVM) {
             inlineOnly()
             annotation("""@JvmName("contentDeepToStringInline")""")
+        }
+    }
+
+    val f_contentDeepToString_nullable = fn("contentDeepToString()") {
+        include(ArraysOfObjects)
+    } builder {
+        since("1.4")
+        doc {
+            """
+            Returns a string representation of the contents of this array as if it is a [List].
+            Nested arrays are treated as lists too.
+
+            If any of arrays contains itself on any nesting level that reference
+            is rendered as `"[...]"` to prevent recursion.
+            """
+        }
+        sample("samples.collections.Arrays.ContentOperations.contentDeepToString")
+        receiver("SELF?")
+        returns("String")
+        on(Platform.JVM) {
+            inlineOnly()
+            annotation("""@JvmName("contentDeepToStringNullable")""")
             body {
                 """
                 if (kotlin.internal.apiVersionIsAtLeast(1, 3, 0))
@@ -239,16 +374,37 @@ object ArrayOps : TemplateGroupBase() {
         include(ArraysOfObjects, ArraysOfPrimitives, ArraysOfUnsigned)
     } builder {
         since("1.1")
+        deprecatedNonNullArrayFunction()
         doc {
             "Returns a hash code based on the contents of this array as if it is [List]."
         }
         returns("Int")
-        if (family == ArraysOfUnsigned) {
-            body { "return storage.contentHashCode()" }
+        body { "return this.contentHashCode()" }
+        if (f == ArraysOfUnsigned) {
             return@builder
         }
         on(Platform.JVM) {
             inlineOnly()
+        }
+    }
+
+    val f_contentHashCode_nullable = fn("contentHashCode()") {
+        include(ArraysOfObjects, ArraysOfPrimitives, ArraysOfUnsigned)
+    } builder {
+        since("1.4")
+        doc {
+            "Returns a hash code based on the contents of this array as if it is [List]."
+        }
+        receiver("SELF?")
+        returns("Int")
+        if (family == ArraysOfUnsigned) {
+            body { "return this?.storage.contentHashCode()" }
+            return@builder
+        }
+
+        on(Platform.JVM) {
+            inlineOnly()
+            annotation("""@JvmName("contentHashCodeNullable")""")
             body { "return java.util.Arrays.hashCode(this)" }
         }
         on(Platform.JS) {
@@ -263,6 +419,7 @@ object ArrayOps : TemplateGroupBase() {
         on(Platform.Native) {
             body {
                 """
+                if (this === null) return 0
                 var result = 1
                 for (element in this)
                     result = 31 * result + element.hashCode()
@@ -276,6 +433,7 @@ object ArrayOps : TemplateGroupBase() {
         include(ArraysOfObjects)
     } builder {
         since("1.1")
+        annotation("@kotlin.internal.LowPriorityInOverloadResolution")
         doc {
             """
             Returns a hash code based on the contents of this array as if it is [List].
@@ -285,9 +443,30 @@ object ArrayOps : TemplateGroupBase() {
             """
         }
         returns("Int")
+        body { "return this.contentDeepHashCode()" }
         on(Platform.JVM) {
             inlineOnly()
             annotation("""@JvmName("contentDeepHashCodeInline")""")
+        }
+    }
+
+    val f_contentDeepHashCode_nullable = fn("contentDeepHashCode()") {
+        include(ArraysOfObjects)
+    } builder {
+        since("1.4")
+        doc {
+            """
+            Returns a hash code based on the contents of this array as if it is [List].
+            Nested arrays are treated as lists too.
+
+            If any of arrays contains itself on any nesting level the behavior is undefined.
+            """
+        }
+        receiver("SELF?")
+        returns("Int")
+        on(Platform.JVM) {
+            inlineOnly()
+            annotation("""@JvmName("contentDeepHashCodeNullable")""")
             body {
                 """
                 if (kotlin.internal.apiVersionIsAtLeast(1, 3, 0))
@@ -312,26 +491,35 @@ object ArrayOps : TemplateGroupBase() {
     }
 
     val f_toPrimitiveArray = fn("toPrimitiveArray()") {
-        include(ArraysOfObjects, PrimitiveType.defaultPrimitives)
-        include(Collections, PrimitiveType.defaultPrimitives)
+        include(ArraysOfObjects, PrimitiveType.values().toSet())
+        include(Collections, PrimitiveType.values().toSet())
     } builder {
         val primitive = checkNotNull(primitive)
         val arrayType = primitive.name + "Array"
         signature("to$arrayType()")
         returns(arrayType)
+
+        if (primitive in PrimitiveType.unsignedPrimitives) {
+            since("1.3")
+            annotation("@ExperimentalUnsignedTypes")
+        }
+
         // TODO: Use different implementations for JS
         specialFor(ArraysOfObjects) {
+            if (primitive in PrimitiveType.unsignedPrimitives) {
+                sourceFile(SourceFile.UArrays)
+            }
             doc { "Returns an array of ${primitive.name} containing all of the elements of this generic array." }
             body {
                 """
-                val result = $arrayType(size)
-                for (index in indices)
-                    result[index] = this[index]
-                return result
+                return $arrayType(size) { index -> this[index] }
                 """
             }
         }
         specialFor(Collections) {
+            if (primitive in PrimitiveType.unsignedPrimitives) {
+                sourceFile(SourceFile.UCollections)
+            }
             doc { "Returns an array of ${primitive.name} containing all of the elements of this collection." }
             body {
                 """
@@ -452,153 +640,204 @@ object ArrayOps : TemplateGroupBase() {
     }
 
     val f_plus = fn("plus(element: T)") {
-        include(InvariantArraysOfObjects, ArraysOfPrimitives)
+        include(InvariantArraysOfObjects, ArraysOfPrimitives, ArraysOfUnsigned)
     } builderWith { primitive ->
         doc { "Returns an array containing all elements of the original array and then the given [element]." }
         operator()
         returns("SELF")
 
-        on(Platform.JVM) {
+        specialFor(ArraysOfUnsigned) {
+            inlineOnly()
+            val signedPrimitiveName = primitive!!.name.drop(1)
             body {
                 """
-                val index = size
-                val result = java.util.Arrays.copyOf(this, index + 1)
-                result[index] = element
-                return result
+                return SELF(storage + element.to$signedPrimitiveName())
                 """
             }
         }
 
-        on(Platform.JS) {
-            inline(suppressWarning = true)
-            specialFor(InvariantArraysOfObjects) {
-                family = ArraysOfObjects
-                suppress("ACTUAL_WITHOUT_EXPECT") // TODO: KT-21937
-                returns("Array<T>")
+        specialFor(InvariantArraysOfObjects, ArraysOfPrimitives) {
+            on(Platform.JVM) {
+                body {
+                    """
+                    val index = size
+                    val result = java.util.Arrays.copyOf(this, index + 1)
+                    result[index] = element
+                    return result
+                    """
+                }
             }
 
-            body {
-                if (primitive == null)
-                    "return this.asDynamic().concat(arrayOf(element))"
-                else
-                    "return plus(${primitive.name.toLowerCase()}ArrayOf(element))"
+            on(Platform.JS) {
+                inline(suppressWarning = true)
+                specialFor(InvariantArraysOfObjects) {
+                    family = ArraysOfObjects
+                    suppress("ACTUAL_WITHOUT_EXPECT") // TODO: KT-21937
+                    returns("Array<T>")
+                }
+
+                body {
+                    if (primitive == null)
+                        "return this.asDynamic().concat(arrayOf(element))"
+                    else
+                        "return plus(${primitive.name.toLowerCase()}ArrayOf(element))"
+                }
             }
-        }
-        on(Platform.Native) {
-            body {
-                """
-                val index = size
-                val result = copyOfUninitializedElements(index + 1)
-                result[index] = element
-                return result
-                """
+            on(Platform.Native) {
+                body {
+                    """
+                    val index = size
+                    val result = copyOfUninitializedElements(index + 1)
+                    result[index] = element
+                    return result
+                    """
+                }
             }
-        }
-        on(Platform.Common) {
-            specialFor(InvariantArraysOfObjects) {
-                suppress("NO_ACTUAL_FOR_EXPECT") // TODO: KT-21937
+            on(Platform.Common) {
+                specialFor(InvariantArraysOfObjects) {
+                    suppress("NO_ACTUAL_FOR_EXPECT") // TODO: KT-21937
+                }
             }
         }
     }
 
 
     val f_plus_collection = fn("plus(elements: Collection<T>)") {
-        include(InvariantArraysOfObjects, ArraysOfPrimitives)
+        include(InvariantArraysOfObjects, ArraysOfPrimitives, ArraysOfUnsigned)
     } builder {
         operator()
         returns("SELF")
         doc { "Returns an array containing all elements of the original array and then all elements of the given [elements] collection." }
-        on(Platform.JVM) {
+
+        specialFor(ArraysOfUnsigned) {
+            val signedPrimitiveName = primitive!!.name.drop(1)
             body {
                 """
                 var index = size
-                val result = java.util.Arrays.copyOf(this, index + elements.size)
-                for (element in elements) result[index++] = element
-                return result
+                val result = storage.copyOf(size + elements.size)
+                for (element in elements) result[index++] = element.to$signedPrimitiveName()
+                return SELF(result)
                 """
             }
         }
-        on(Platform.JS) {
-            // TODO: inline arrayPlusCollection when @PublishedAPI is available
-//                    inline(Platform.JS, Inline.Yes)
-//                    annotations(Platform.JS, """@Suppress("NOTHING_TO_INLINE")""")
-            specialFor(InvariantArraysOfObjects) {
-                family = ArraysOfObjects
-                suppress("ACTUAL_WITHOUT_EXPECT") // TODO: KT-21937
-                returns("Array<T>")
+        specialFor(InvariantArraysOfObjects, ArraysOfPrimitives) {
+            on(Platform.JVM) {
+                body {
+                    """
+                    var index = size
+                    val result = java.util.Arrays.copyOf(this, index + elements.size)
+                    for (element in elements) result[index++] = element
+                    return result
+                    """
+                }
             }
-            when (primitive) {
-                null, PrimitiveType.Boolean, PrimitiveType.Long ->
-                    body { "return arrayPlusCollection(this, elements)" }
-                else ->
-                    body { "return fillFromCollection(this.copyOf(size + elements.size), this.size, elements)" }
+            on(Platform.JS) {
+                // TODO: inline arrayPlusCollection when @PublishedAPI is available
+//                        inline(Platform.JS, Inline.Yes)
+//                        annotations(Platform.JS, """@Suppress("NOTHING_TO_INLINE")""")
+                specialFor(InvariantArraysOfObjects) {
+                    family = ArraysOfObjects
+                    suppress("ACTUAL_WITHOUT_EXPECT") // TODO: KT-21937
+                    returns("Array<T>")
+                }
+                when (primitive) {
+                    null, PrimitiveType.Boolean, PrimitiveType.Long ->
+                        body { "return arrayPlusCollection(this, elements)" }
+                    else -> {
+                        on(Backend.Legacy) {
+                            body {
+                                "return fillFromCollection(this.copyOf(size + elements.size), this.size, elements)"
+                            }
+                        }
+                        on(Backend.IR) {
+                            // Don't use fillFromCollection because it treats arrays
+                            // as `dynamic` but we need to concrete types to perform
+                            // unboxing of collections elements
+                            body {
+                                """
+                                var index = size
+                                val result = this.copyOf(size + elements.size)
+                                for (element in elements) result[index++] = element
+                                return result
+                                """
+                            }
+                        }
+                    }
+                }
             }
-        }
-        on(Platform.Native) {
-            body {
-                """
-                var index = size
-                val result = copyOfUninitializedElements(index + elements.size)
-                for (element in elements) result[index++] = element
-                return result
-                """
+            on(Platform.Native) {
+                body {
+                    """
+                    var index = size
+                    val result = copyOfUninitializedElements(index + elements.size)
+                    for (element in elements) result[index++] = element
+                    return result
+                    """
+                }
             }
-        }
-        on(Platform.Common) {
-            specialFor(InvariantArraysOfObjects) {
-                suppress("NO_ACTUAL_FOR_EXPECT") // TODO: KT-21937
+            on(Platform.Common) {
+                specialFor(InvariantArraysOfObjects) {
+                    suppress("NO_ACTUAL_FOR_EXPECT") // TODO: KT-21937
+                }
             }
         }
     }
 
     val f_plus_array = fn("plus(elements: SELF)") {
-        include(InvariantArraysOfObjects, ArraysOfPrimitives)
+        include(InvariantArraysOfObjects, ArraysOfPrimitives, ArraysOfUnsigned)
     } builder {
         operator(true)
         doc { "Returns an array containing all elements of the original array and then all elements of the given [elements] array." }
         returns("SELF")
-        specialFor(InvariantArraysOfObjects) {
-            signature("plus(elements: Array<out T>)", notForSorting = true)
-        }
 
-        on(Platform.JVM) {
-            body {
-                """
-                val thisSize = size
-                val arraySize = elements.size
-                val result = java.util.Arrays.copyOf(this, thisSize + arraySize)
-                System.arraycopy(elements, 0, result, thisSize, arraySize)
-                return result
-                """
+        specialFor(ArraysOfUnsigned) {
+            inlineOnly()
+            body { "return SELF(storage + elements.storage)" }
+        }
+        specialFor(InvariantArraysOfObjects, ArraysOfPrimitives) {
+            specialFor(InvariantArraysOfObjects) {
+                signature("plus(elements: Array<out T>)", notForSorting = true)
             }
 
-        }
-        on(Platform.JS) {
-            inline(suppressWarning = true)
-            specialFor(InvariantArraysOfObjects) {
-                family = ArraysOfObjects
-                suppress("ACTUAL_WITHOUT_EXPECT") // TODO: KT-21937
-                returns("Array<T>")
-                body { """return this.asDynamic().concat(elements)""" }
+            on(Platform.JVM) {
+                body {
+                    """
+                    val thisSize = size
+                    val arraySize = elements.size
+                    val result = java.util.Arrays.copyOf(this, thisSize + arraySize)
+                    System.arraycopy(elements, 0, result, thisSize, arraySize)
+                    return result
+                    """
+                }
+
             }
-            specialFor(ArraysOfPrimitives) {
-                body { """return primitiveArrayConcat(this, elements)""" }
+            on(Platform.JS) {
+                inline(suppressWarning = true)
+                specialFor(InvariantArraysOfObjects) {
+                    family = ArraysOfObjects
+                    suppress("ACTUAL_WITHOUT_EXPECT") // TODO: KT-21937
+                    returns("Array<T>")
+                    body { """return this.asDynamic().concat(elements)""" }
+                }
+                specialFor(ArraysOfPrimitives) {
+                    body { """return primitiveArrayConcat(this, elements)""" }
+                }
             }
-        }
-        on(Platform.Native) {
-            body {
-                """
-                val thisSize = size
-                val arraySize = elements.size
-                val result = copyOfUninitializedElements(thisSize + arraySize)
-                elements.copyRangeTo(result, 0, arraySize, thisSize)
-                return result
-                """
+            on(Platform.Native) {
+                body {
+                    """
+                    val thisSize = size
+                    val arraySize = elements.size
+                    val result = copyOfUninitializedElements(thisSize + arraySize)
+                    elements.copyInto(result, thisSize)
+                    return result
+                    """
+                }
             }
-        }
-        on(Platform.Common) {
-            specialFor(InvariantArraysOfObjects) {
-                suppress("NO_ACTUAL_FOR_EXPECT") // TODO: KT-21937
+            on(Platform.Common) {
+                specialFor(InvariantArraysOfObjects) {
+                    suppress("NO_ACTUAL_FOR_EXPECT") // TODO: KT-21937
+                }
             }
         }
     }
@@ -667,9 +906,21 @@ object ArrayOps : TemplateGroupBase() {
                 suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
                 body {
                     """
-                    this.copyRangeTo(destination, startIndex, endIndex, destinationOffset)
+                    arrayCopy(this, startIndex, destination, destinationOffset, endIndex - startIndex)
                     return destination
                     """
+                }
+                specialFor(InvariantArraysOfObjects) {
+                    body {
+                        """
+                        @Suppress("UNCHECKED_CAST")
+                        arrayCopy(this as Array<Any?>, startIndex, destination as Array<Any?>, destinationOffset, endIndex - startIndex)
+                        return destination
+                        """
+                    }
+                }
+                on(Backend.Wasm) {
+                    body { """TODO("Wasm stdlib: $signature")""" }
                 }
             }
         }
@@ -698,9 +949,8 @@ object ArrayOps : TemplateGroupBase() {
         doc {
             """
             Returns a new array which is a copy of the specified range of the original array.
-
-            @param fromIndex the start of the range (inclusive), must be in `0..array.size`
-            @param toIndex the end of the range (exclusive), must be in `fromIndex..array.size`
+            
+            ${rangeDoc(hasDefault = false, action = "copy")}
             """
         }
         returns("SELF")
@@ -746,7 +996,6 @@ object ArrayOps : TemplateGroupBase() {
                 }
             }
             on(Platform.Native) {
-                inlineOnly()
                 body {
                     """
                     checkCopyOfRangeArguments(fromIndex, toIndex, size)
@@ -754,6 +1003,54 @@ object ArrayOps : TemplateGroupBase() {
                     """
                 }
             }
+        }
+    }
+
+    val f_copyOfUninitializedElements_size = fn("copyOfUninitializedElements(newSize: Int)") {
+        include(InvariantArraysOfObjects)
+        include(ArraysOfPrimitives)
+        platforms(Platform.Native)
+    } builder {
+        visibility("internal")
+        returns("SELF")
+        doc {
+            """
+            Returns new array which is a copy of the original array with new elements filled with **lateinit** _uninitialized_ values.
+            Attempts to read _uninitialized_ values from this array work in implementation-dependent manner,
+            either throwing exception or returning some kind of implementation-specific default value.
+            """
+        }
+        body { "return copyOfUninitializedElements(0, newSize)" }
+    }
+
+    val f_copyOfUninitializedElements_range = fn("copyOfUninitializedElements(fromIndex: Int, toIndex: Int)") {
+        include(InvariantArraysOfObjects)
+        include(ArraysOfPrimitives)
+        platforms(Platform.Native)
+    } builder {
+        visibility("internal")
+        returns("SELF")
+        doc {
+            """
+            Returns new array which is a copy of the original array's range between [fromIndex] (inclusive)
+            and [toIndex] (exclusive) with new elements filled with **lateinit** _uninitialized_ values.
+            Attempts to read _uninitialized_ values from this array work in implementation-dependent manner,
+            either throwing exception or returning some kind of implementation-specific default value.
+            """
+        }
+        body {
+            """
+            val newSize = toIndex - fromIndex
+            if (newSize < 0) {
+                throw IllegalArgumentException("${'$'}fromIndex > ${'$'}toIndex")
+            }
+            val result = ${if (f == InvariantArraysOfObjects) "arrayOfUninitializedElements<T>" else "SELF"}(newSize)
+            this.copyInto(result, 0, fromIndex, toIndex.coerceAtMost(size))
+            return result
+            """
+        }
+        on(Backend.Wasm) {
+            body { """TODO("Wasm stdlib: $signature")""" }
         }
     }
 
@@ -800,7 +1097,6 @@ object ArrayOps : TemplateGroupBase() {
                 }
             }
             on(Platform.Native) {
-                inlineOnly()
                 body { "return this.copyOfUninitializedElements(size)" }
             }
         }
@@ -836,14 +1132,13 @@ object ArrayOps : TemplateGroupBase() {
                     PrimitiveType.Char ->
                         body { "return withType(\"CharArray\", fillFrom(this, ${primitive}Array(newSize)))" }
                     PrimitiveType.Long ->
-                        body { "return withType(\"LongArray\", arrayCopyResize(this, newSize, ZERO))" }
+                        body { "return withType(\"LongArray\", arrayCopyResize(this, newSize, ${primitive!!.zero()}))" }
                     else ->
                         body { "return fillFrom(this, ${primitive}Array(newSize))" }
                 }
                 body { newSizeCheck + "\n" + body }
             }
             on(Platform.Native) {
-                inlineOnly()
                 body { "return this.copyOfUninitializedElements(newSize)" }
             }
         }
@@ -864,8 +1159,10 @@ object ArrayOps : TemplateGroupBase() {
                 suppress("NO_ACTUAL_FOR_EXPECT") // TODO: KT-21937
             }
             on(Platform.Native) {
-                inlineOnly()
                 body { "return this.copyOfNulls(newSize)" }
+                on(Backend.Wasm) {
+                    body { """TODO("Wasm stdlib: $signature")""" }
+                }
             }
         }
         specialFor(ArraysOfPrimitives, InvariantArraysOfObjects) {
@@ -880,57 +1177,74 @@ object ArrayOps : TemplateGroupBase() {
 
     val f_sort = fn("sort()") {
         include(ArraysOfPrimitives, PrimitiveType.numericPrimitives + PrimitiveType.Char)
+        include(ArraysOfUnsigned)
         include(ArraysOfObjects)
     } builder {
         typeParam("T : Comparable<T>")
         doc { "Sorts the array in-place according to the natural order of its elements." }
-        specialFor(ArraysOfPrimitives) {
+        appendStableSortNote()
+        specialFor(ArraysOfObjects) {
+            sample("samples.collections.Arrays.Sorting.sortArrayOfComparable")
+        }
+        specialFor(ArraysOfPrimitives, ArraysOfUnsigned) {
             doc { "Sorts the array in-place." }
+            sample("samples.collections.Arrays.Sorting.sortArray")
         }
 
         returns("Unit")
-        on(Platform.JS) {
-            body {
-                """if (size > 1) sortArray(this)"""
+
+        body(ArraysOfUnsigned) {
+            """if (size > 1) sortArray(this, 0, size)"""
+        }
+
+        specialFor(ArraysOfPrimitives, ArraysOfObjects) {
+            on(Platform.JS) {
+                body {
+                    """if (size > 1) sortArray(this)"""
+                }
+                specialFor(ArraysOfPrimitives) {
+                    if (primitive != PrimitiveType.Long) {
+                        on(Backend.Legacy) {
+                            annotation("""@library("primitiveArraySort")""")
+                            body { "definedExternally" }
+                        }
+                        on(Backend.IR) {
+                            if (primitive == PrimitiveType.Char) {
+                                // Requires comparator because default comparator of 'Array.prototype.sort' compares
+                                // string representation of values
+                                body { "this.asDynamic().sort(::primitiveCompareTo)" }
+                            } else {
+                                body { "this.asDynamic().sort()" }
+                            }
+                        }
+                    } else {
+                        body {
+                            """if (size > 1) sort { a: T, b: T -> a.compareTo(b) }"""
+                        }
+                    }
+                }
             }
-            specialFor(ArraysOfPrimitives) {
-                if (primitive != PrimitiveType.Long) {
-                    on(Backend.Legacy) {
-                        annotation("""@library("primitiveArraySort")""")
-                        body { "definedExternally" }
-                    }
-                    on(Backend.IR) {
-                        body { "this.asDynamic().sort()" }
-                    }
-                } else {
+            on(Platform.JVM) {
+                specialFor(ArraysOfObjects) {
+                    inlineOnly()
                     body {
-                        """if (size > 1) sort { a: T, b: T -> a.compareTo(b) }"""
+                        """
+                        @Suppress("UNCHECKED_CAST")
+                        (this as Array<Any?>).sort()
+                        """
+                    }
+                }
+                specialFor(ArraysOfPrimitives) {
+                    body {
+                        "if (size > 1) java.util.Arrays.sort(this)"
                     }
                 }
             }
-        }
-        on(Platform.JVM) {
-            specialFor(ArraysOfObjects) {
-                inlineOnly()
-                body {
-                    """
-                    @Suppress("UNCHECKED_CAST")
-                    (this as Array<Any?>).sort()
-                    """
+            on(Platform.Native) {
+                body { """if (size > 1) sortArray(this, 0, size)""" }
+                on(Backend.Wasm) {
+                    body { """TODO("Wasm stdlib: $signature")""" }
                 }
-            }
-            specialFor(ArraysOfPrimitives) {
-                body {
-                    "if (size > 1) java.util.Arrays.sort(this)"
-                }
-            }
-        }
-        on(Platform.Native) {
-            specialFor(ArraysOfObjects) {
-                body { """if (size > 1) kotlin.util.sortArrayComparable(this)""" }
-            }
-            specialFor(ArraysOfPrimitives) {
-                body { """if (size > 1) kotlin.util.sortArray(this)""" }
             }
         }
     }
@@ -939,6 +1253,7 @@ object ArrayOps : TemplateGroupBase() {
         include(ArraysOfObjects)
     } builder {
         doc { "Sorts the array in-place according to the order specified by the given [comparator]." }
+        appendStableSortNote()
         returns("Unit")
         on(Platform.JVM) {
             body {
@@ -951,7 +1266,10 @@ object ArrayOps : TemplateGroupBase() {
             }
         }
         on(Platform.Native) {
-            body { """if (size > 1) kotlin.util.sortArrayWith(this, 0, size, comparator)""" }
+            body { """if (size > 1) sortArrayWith(this, 0, size, comparator)""" }
+            on(Backend.Wasm) {
+                body { """TODO("Wasm stdlib: $signature")""" }
+            }
         }
     }
 
@@ -968,6 +1286,7 @@ object ArrayOps : TemplateGroupBase() {
             body { "asDynamic().sort(comparison)" }
         }
         specialFor(ArraysOfObjects) {
+            appendStableSortNote()
             body { """if (size > 1) sortArrayWith(this, comparison)""" }
         }
     }
@@ -981,6 +1300,8 @@ object ArrayOps : TemplateGroupBase() {
             """
             Sorts the array in-place according to the natural order of its elements.
 
+            $stableSortNote
+
             @throws ClassCastException if any element of the array is not [Comparable].
             """
         }
@@ -990,33 +1311,178 @@ object ArrayOps : TemplateGroupBase() {
         }
     }
 
-    val f_sort_range = fn("sort(fromIndex: Int = 0, toIndex: Int = size)") {
+    val f_sort_range_jvm = fn("sort(fromIndex: Int = 0, toIndex: Int = size)") {
         platforms(Platform.JVM)
-        include(ArraysOfObjects, ArraysOfPrimitives)
+        include(ArraysOfObjects)
+    } builder {
+        doc {
+            """
+            Sorts a range in the array in-place.
+            
+            $stableSortNote
+            
+            ${rangeDoc(hasDefault = true, action = "sort")}
+            """
+        }
+        sample("samples.collections.Arrays.Sorting.sortRangeOfArrayOfComparable")
+        returns("Unit")
+        body { "java.util.Arrays.sort(this, fromIndex, toIndex)" }
+    }
+
+    val f_sort_range = fn("sort(fromIndex: Int = 0, toIndex: Int = size)") {
+        include(ArraysOfObjects, ArraysOfPrimitives, ArraysOfUnsigned)
         exclude(PrimitiveType.Boolean)
     } builder {
-        doc { "Sorts a range in the array in-place." }
+        on(Platform.Common) { since("1.4") }
+
+        typeParam("T : Comparable<T>")
+        doc {
+            """
+            Sorts a range in the array in-place.
+            ${if (f == ArraysOfObjects) "\n$stableSortNote\n" else ""}
+            ${rangeDoc(hasDefault = true, action = "sort")}
+            """
+        }
+        specialFor(ArraysOfObjects) {
+            sample("samples.collections.Arrays.Sorting.sortRangeOfArrayOfComparable")
+        }
+        specialFor(ArraysOfPrimitives, ArraysOfUnsigned) {
+            sample("samples.collections.Arrays.Sorting.sortRangeOfArray")
+        }
         returns("Unit")
-        body {
-            "java.util.Arrays.sort(this, fromIndex, toIndex)"
+
+        if (f == ArraysOfUnsigned) {
+            since("1.4")
+            body {
+                """
+                AbstractList.checkRangeIndexes(fromIndex, toIndex, size)
+                sortArray(this, fromIndex, toIndex)
+                """
+            }
+            return@builder
+        }
+
+        on(Platform.JVM) {
+            if (f == ArraysOfObjects) since("1.4")
+            suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
+            body {
+                "java.util.Arrays.sort(this, fromIndex, toIndex)"
+            }
+        }
+        on(Platform.Native) {
+            since("1.4")
+            suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
+            body {
+                """
+                AbstractList.checkRangeIndexes(fromIndex, toIndex, size)
+                sortArray(this, fromIndex, toIndex)
+                """
+            }
+            on(Backend.Wasm) {
+                body { """TODO("Wasm stdlib: $signature")""" }
+            }
+        }
+        on(Platform.JS) {
+            since("1.4")
+            suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
+            body {
+                """
+                AbstractList.checkRangeIndexes(fromIndex, toIndex, size)
+                sortArrayWith(this, fromIndex, toIndex, naturalOrder())
+                """
+            }
+            specialFor(ArraysOfPrimitives) {
+                body {
+                    if (primitive == PrimitiveType.Char && target.backend == Backend.IR || primitive == PrimitiveType.Long) {
+                        """
+                        AbstractList.checkRangeIndexes(fromIndex, toIndex, size)
+                        sortArrayWith(this.unsafeCast<Array<T>>(), fromIndex, toIndex, naturalOrder())
+                        """
+                    } else {
+                        """
+                        AbstractList.checkRangeIndexes(fromIndex, toIndex, size)
+                        val subarray = this.asDynamic().subarray(fromIndex, toIndex).unsafeCast<SELF>()
+                        subarray.sort()
+                        """
+                    }
+                }
+            }
         }
     }
 
     val f_sortWith_range = fn("sortWith(comparator: Comparator<in T>, fromIndex: Int = 0, toIndex: Int = size)") {
-        platforms(Platform.JVM)
         include(ArraysOfObjects)
     } builder {
-        doc { "Sorts a range in the array in-place with the given [comparator]." }
+        doc {
+            """
+            Sorts a range in the array in-place with the given [comparator].
+            
+            $stableSortNote
+            
+            ${rangeDoc(hasDefault = true, action = "sort")}
+            """
+        }
         returns("Unit")
-        body {
-            "java.util.Arrays.sort(this, fromIndex, toIndex, comparator)"
+        on(Platform.JVM) {
+            suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
+            body {
+                "java.util.Arrays.sort(this, fromIndex, toIndex, comparator)"
+            }
+        }
+        on(Platform.Native) {
+            suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
+            body {
+                """
+                AbstractList.checkRangeIndexes(fromIndex, toIndex, size)
+                sortArrayWith(this, fromIndex, toIndex, comparator)
+                """
+            }
+            on(Backend.Wasm) {
+                body { """TODO("Wasm stdlib: $signature")""" }
+            }
+        }
+        on(Platform.JS) {
+            since("1.4")
+            suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
+            body {
+                """
+                AbstractList.checkRangeIndexes(fromIndex, toIndex, size)
+                sortArrayWith(this, fromIndex, toIndex, comparator)
+                """
+            }
+        }
+    }
+
+    val f_sortDescending_range = fn("sortDescending(fromIndex: Int, toIndex: Int)") {
+        include(ArraysOfObjects, ArraysOfPrimitives, ArraysOfUnsigned)
+        exclude(PrimitiveType.Boolean)
+    } builder {
+        since("1.4")
+        doc {
+            """
+            Sorts elements of the ${f.collection} in the specified range in-place.
+            The elements are sorted descending according to their natural sort order.
+            ${if (f == ArraysOfObjects) "\n$stableSortNote\n" else ""}
+            ${rangeDoc(hasDefault = false, action = "sort")}
+            """
+        }
+        returns("Unit")
+        typeParam("T : Comparable<T>")
+
+        specialFor(ArraysOfObjects) {
+            body { """sortWith(reverseOrder(), fromIndex, toIndex)""" }
+        }
+        body(ArraysOfPrimitives, ArraysOfUnsigned) {
+            """
+            sort(fromIndex, toIndex)
+            reverse(fromIndex, toIndex)
+            """
         }
     }
 
 
-
     val f_asList = fn("asList()") {
-        include(ArraysOfObjects, ArraysOfPrimitives)
+        include(ArraysOfObjects, ArraysOfPrimitives, ArraysOfUnsigned)
     } builder {
         doc { "Returns a [List] that wraps the original array." }
         returns("List<T>")
@@ -1027,23 +1493,55 @@ object ArrayOps : TemplateGroupBase() {
             body { """return ArrayList<T>(this.unsafeCast<Array<Any?>>())""" }
         }
 
-        val objectLiteralImpl = """
-                        return object : AbstractList<T>(), RandomAccess {
-                            override val size: Int get() = this@asList.size
-                            override fun isEmpty(): Boolean = this@asList.isEmpty()
-                            override fun contains(element: T): Boolean = this@asList.contains(element)
-                            override fun get(index: Int): T = this@asList[index]
-                            override fun indexOf(element: T): Int = this@asList.indexOf(element)
-                            override fun lastIndexOf(element: T): Int = this@asList.lastIndexOf(element)
-                        }
-                        """
-        specialFor(ArraysOfPrimitives) {
+        val objectLiteralImpl = if (primitive in PrimitiveType.floatingPointPrimitives) """
+            return object : AbstractList<T>(), RandomAccess {
+                override val size: Int get() = this@asList.size
+                override fun isEmpty(): Boolean = this@asList.isEmpty()
+                override fun contains(element: T): Boolean = this@asList.any { it.toBits() == element.toBits() }
+                override fun get(index: Int): T = this@asList[index]
+                override fun indexOf(element: T): Int = this@asList.indexOfFirst { it.toBits() == element.toBits() }
+                override fun lastIndexOf(element: T): Int = this@asList.indexOfLast { it.toBits() == element.toBits() }
+            }
+            """
+        else """
+            return object : AbstractList<T>(), RandomAccess {
+                override val size: Int get() = this@asList.size
+                override fun isEmpty(): Boolean = this@asList.isEmpty()
+                override fun contains(element: T): Boolean = this@asList.contains(element)
+                override fun get(index: Int): T = this@asList[index]
+                override fun indexOf(element: T): Int = this@asList.indexOf(element)
+                override fun lastIndexOf(element: T): Int = this@asList.lastIndexOf(element)
+            }
+            """
+        specialFor(ArraysOfPrimitives, ArraysOfUnsigned) {
             on(Platform.JVM) {
                 body { objectLiteralImpl }
             }
             on(Platform.JS) {
-                if (primitive == PrimitiveType.Char) {
-                    body { objectLiteralImpl }
+                if (primitive == PrimitiveType.Char || primitive in PrimitiveType.unsignedPrimitives) {
+                    body {
+                        """
+                        return object : AbstractList<T>(), RandomAccess {
+                            override val size: Int get() = this@asList.size
+                            override fun isEmpty(): Boolean = this@asList.isEmpty()
+                            override fun contains(element: T): Boolean = this@asList.contains(element)
+                            override fun get(index: Int): T {
+                                AbstractList.checkElementIndex(index, size)
+                                return this@asList[index]
+                            }
+                            override fun indexOf(element: T): Int {
+                                @Suppress("USELESS_CAST")
+                                if ((element as Any?) !is T) return -1
+                                return this@asList.indexOf(element)
+                            }
+                            override fun lastIndexOf(element: T): Int {
+                                @Suppress("USELESS_CAST")
+                                if ((element as Any?) !is T) return -1
+                                return this@asList.lastIndexOf(element)
+                            }
+                        }
+                        """
+                    }
                 }
                 else {
                     inlineOnly()
@@ -1089,22 +1587,77 @@ object ArrayOps : TemplateGroupBase() {
         }
     }
 
+    fun MemberBuilder.rangeParamDoc(hasDefault: Boolean, action: String): String = """
+        @param fromIndex the start of the range (inclusive) to $action${if (hasDefault) ", 0 by default" else ""}.
+        @param toIndex the end of the range (exclusive) to $action${if (hasDefault) ", ${f.code.size} of this ${f.collection} by default" else ""}.
+        """.trimIndent()
+
+    fun MemberBuilder.rangeThrowsDoc(): String = """
+        @throws IndexOutOfBoundsException if [fromIndex] is less than zero or [toIndex] is greater than the ${f.code.size} of this ${f.collection}.
+        @throws IllegalArgumentException if [fromIndex] is greater than [toIndex].
+        """.trimIndent()
+
+    fun MemberBuilder.rangeDoc(hasDefault: Boolean, action: String): String = """
+        ${rangeParamDoc(hasDefault, action)}
+        
+        ${rangeThrowsDoc()}
+        """.trimIndent()
+
     val f_fill = fn("fill(element: T, fromIndex: Int = 0, toIndex: Int = size)") {
-        platforms(Platform.JVM)
-        include(InvariantArraysOfObjects, ArraysOfPrimitives)
+        include(InvariantArraysOfObjects, ArraysOfPrimitives, ArraysOfUnsigned)
     } builder {
-        doc { "Fills original array with the provided value." }
+        doc {
+            """
+            Fills this array or its subrange with the specified [element] value.
+            
+            ${rangeDoc(hasDefault = true, action = "fill")}
+            """
+        }
         returns("Unit")
-        body {
-            """
-            java.util.Arrays.fill(this, fromIndex, toIndex, element)
-            """
+
+        specialFor(ArraysOfUnsigned) {
+            val signedPrimitiveName = primitive!!.name.drop(1)
+            body {
+                "storage.fill(element.to$signedPrimitiveName(), fromIndex, toIndex)"
+            }
+        }
+
+        specialFor(InvariantArraysOfObjects, ArraysOfPrimitives) {
+            on(Platform.JVM) {
+                suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
+                body {
+                    "java.util.Arrays.fill(this, fromIndex, toIndex, element)"
+                }
+            }
+            on(Platform.JS) {
+                suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
+                since("1.3")
+                body {
+                    """
+                    AbstractList.checkRangeIndexes(fromIndex, toIndex, size)
+                    this.asDynamic().fill(element, fromIndex, toIndex);
+                    """
+                }
+            }
+            on(Platform.Native) {
+                suppress("ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS")
+                since("1.3")
+                body {
+                    "arrayFill(this, fromIndex, toIndex, element)"
+                }
+                on(Backend.Wasm) {
+                    body { """TODO("Wasm stdlib: $signature")""" }
+                }
+            }
+            on(Platform.Common) {
+                since("1.3")
+            }
         }
     }
 
     val f_binarySearch = fn("binarySearch(element: T, fromIndex: Int = 0, toIndex: Int = size)") {
         platforms(Platform.JVM)
-        include(ArraysOfObjects, ArraysOfPrimitives)
+        include(ArraysOfObjects, ArraysOfPrimitives, ArraysOfUnsigned)
         exclude(PrimitiveType.Boolean)
     } builder {
         doc {
@@ -1113,16 +1666,70 @@ object ArrayOps : TemplateGroupBase() {
             The array is expected to be sorted, otherwise the result is undefined.
 
             If the array contains multiple elements equal to the specified [element], there is no guarantee which one will be found.
+            
+            @param element the to search for.
+            ${rangeParamDoc(hasDefault = true, action = "search in")}
 
             @return the index of the element, if it is contained in the array within the specified range;
             otherwise, the inverted insertion point `(-insertion point - 1)`.
             The insertion point is defined as the index at which the element should be inserted,
             so that the array (or the specified subrange of array) still remains sorted.
+            
+            ${rangeThrowsDoc()}
             """
         }
         returns("Int")
         body {
             "return java.util.Arrays.binarySearch(this, fromIndex, toIndex, element)"
+        }
+
+        specialFor(ArraysOfUnsigned) {
+            val elementConversion: String
+            val midValConversion: String
+            val compareFunction: String
+            when (primitive!!) {
+                PrimitiveType.UByte, PrimitiveType.UShort -> {
+                    elementConversion = ".toInt()"
+                    midValConversion = ".toInt()"
+                    compareFunction = "uintCompare"
+                }
+                PrimitiveType.UInt -> {
+                    elementConversion = ".toInt()"
+                    midValConversion = ""
+                    compareFunction = "uintCompare"
+                }
+                PrimitiveType.ULong -> {
+                    elementConversion = ".toLong()"
+                    midValConversion = ""
+                    compareFunction = "ulongCompare"
+                }
+                else -> error(primitive!!)
+            }
+
+
+            body {
+                """
+                AbstractList.checkRangeIndexes(fromIndex, toIndex, size)
+
+                val signedElement = element$elementConversion
+                var low = fromIndex
+                var high = toIndex - 1
+
+                while (low <= high) {
+                    val mid = (low + high).ushr(1) // safe from overflows
+                    val midVal = storage[mid]
+                    val cmp = $compareFunction(midVal$midValConversion, signedElement)
+
+                    if (cmp < 0)
+                        low = mid + 1
+                    else if (cmp > 0)
+                        high = mid - 1
+                    else
+                        return mid // key found
+                }
+                return -(low + 1)  // key not found
+                """
+            }
         }
     }
 
@@ -1137,10 +1744,16 @@ object ArrayOps : TemplateGroupBase() {
 
             If the array contains multiple elements equal to the specified [element], there is no guarantee which one will be found.
 
+            @param element the element to search for.
+            @param comparator the comparator according to which this array is sorted.
+            ${rangeParamDoc(hasDefault = true, action = "search in")}
+
             @return the index of the element, if it is contained in the array within the specified range;
             otherwise, the inverted insertion point `(-insertion point - 1)`.
             The insertion point is defined as the index at which the element should be inserted,
             so that the array (or the specified subrange of array) still remains sorted according to the specified [comparator].
+
+            ${rangeThrowsDoc()}
             """
         }
         returns("Int")

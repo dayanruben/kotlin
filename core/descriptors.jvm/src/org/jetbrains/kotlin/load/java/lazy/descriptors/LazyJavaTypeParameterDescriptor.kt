@@ -29,32 +29,42 @@ import org.jetbrains.kotlin.types.KotlinTypeFactory
 import org.jetbrains.kotlin.types.Variance
 
 class LazyJavaTypeParameterDescriptor(
-        private val c: LazyJavaResolverContext,
-        val javaTypeParameter: JavaTypeParameter,
-        index: Int,
-        containingDeclaration: DeclarationDescriptor
+    private val c: LazyJavaResolverContext,
+    val javaTypeParameter: JavaTypeParameter,
+    index: Int,
+    containingDeclaration: DeclarationDescriptor
 ) : AbstractLazyTypeParameterDescriptor(
-        c.storageManager,
-        containingDeclaration,
-        javaTypeParameter.name,
-        Variance.INVARIANT,
-        /* isReified = */ false,
-        index,
-        SourceElement.NO_SOURCE, c.components.supertypeLoopChecker
+    c.storageManager,
+    containingDeclaration,
+    javaTypeParameter.name,
+    Variance.INVARIANT,
+    /* isReified = */ false,
+    index,
+    SourceElement.NO_SOURCE, c.components.supertypeLoopChecker
 ) {
     override val annotations = LazyJavaAnnotations(c, javaTypeParameter)
 
     override fun resolveUpperBounds(): List<KotlinType> {
+        return computeNotEnhancedBounds()
+    }
+
+    private fun computeNotEnhancedBounds(): List<KotlinType> {
         val bounds = javaTypeParameter.upperBounds
         if (bounds.isEmpty()) {
-            return listOf(KotlinTypeFactory.flexibleType(
+            return listOf(
+                KotlinTypeFactory.flexibleType(
                     c.module.builtIns.anyType,
                     c.module.builtIns.nullableAnyType
-            ))
+                )
+            )
         }
         return bounds.map {
             c.typeResolver.transformJavaType(it, TypeUsage.COMMON.toAttributes(upperBoundForTypeParameter = this))
         }
+    }
+
+    override fun processBoundsWithoutCycles(bounds: List<KotlinType>): List<KotlinType> {
+        return c.components.signatureEnhancement.enhanceTypeParameterBounds(this, bounds, c)
     }
 
     override fun reportSupertypeLoopError(type: KotlinType) {

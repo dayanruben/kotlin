@@ -1,17 +1,6 @@
 /*
- * Copyright 2010-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.stubindex.resolve
@@ -27,18 +16,17 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.safeNameForLazyResolve
-import org.jetbrains.kotlin.resolve.lazy.ResolveSessionUtils
 import org.jetbrains.kotlin.resolve.lazy.data.KtClassInfoUtil
-import org.jetbrains.kotlin.resolve.lazy.data.KtClassLikeInfo
+import org.jetbrains.kotlin.resolve.lazy.data.KtClassOrObjectInfo
 import org.jetbrains.kotlin.resolve.lazy.data.KtScriptInfo
 import org.jetbrains.kotlin.resolve.lazy.declarations.PackageMemberDeclarationProvider
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import java.util.*
 
 class StubBasedPackageMemberDeclarationProvider(
-        private val fqName: FqName,
-        private val project: Project,
-        private val searchScope: GlobalSearchScope
+    private val fqName: FqName,
+    private val project: Project,
+    private val searchScope: GlobalSearchScope
 ) : PackageMemberDeclarationProvider {
 
     override fun getDeclarations(kindFilter: DescriptorKindFilter, nameFilter: (Name) -> Boolean): List<KtDeclaration> {
@@ -66,25 +54,24 @@ class StubBasedPackageMemberDeclarationProvider(
 
     private val declarationNames_: Set<Name> by lazy(LazyThreadSafetyMode.PUBLICATION) {
         FileBasedIndex.getInstance()
-                .getValues(KotlinPackageSourcesMemberNamesIndex.KEY, fqName.asString(), searchScope)
-                .flatMapTo(hashSetOf()) {
-                    it.map { stringName -> Name.identifier(stringName).safeNameForLazyResolve() }
-                }
+            .getValues(KotlinPackageSourcesMemberNamesIndex.KEY, fqName.asString(), searchScope)
+            .flatMapTo(hashSetOf()) {
+                it.map { stringName -> Name.identifier(stringName).safeNameForLazyResolve() }
+            }
     }
 
     override fun getDeclarationNames() = declarationNames_
 
-    override fun getClassOrObjectDeclarations(name: Name): Collection<KtClassLikeInfo> {
-        val result = ArrayList<KtClassLikeInfo>()
-        runReadAction {
-            KotlinFullClassNameIndex.getInstance().get(childName(name), project, searchScope)
-                    .mapTo(result) { KtClassInfoUtil.createClassLikeInfo(it) }
-
-            KotlinScriptFqnIndex.instance.get(childName(name), project, searchScope)
-                    .mapTo(result, ::KtScriptInfo)
-        }
-        return result
+    override fun getClassOrObjectDeclarations(name: Name): Collection<KtClassOrObjectInfo<*>> = runReadAction {
+        KotlinFullClassNameIndex.getInstance().get(childName(name), project, searchScope)
+            .map { KtClassInfoUtil.createClassOrObjectInfo(it) }
     }
+
+    override fun getScriptDeclarations(name: Name): Collection<KtScriptInfo> = runReadAction {
+        KotlinScriptFqnIndex.instance.get(childName(name), project, searchScope)
+            .map(::KtScriptInfo)
+    }
+
 
     override fun getFunctionDeclarations(name: Name): Collection<KtNamedFunction> {
         return runReadAction {

@@ -32,12 +32,13 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithVisibility
 import org.jetbrains.kotlin.descriptors.EffectiveVisibility
 import org.jetbrains.kotlin.descriptors.effectiveVisibility
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.canBePrivate
 import org.jetbrains.kotlin.idea.core.isInheritable
 import org.jetbrains.kotlin.idea.core.isOverridable
 import org.jetbrains.kotlin.idea.core.toDescriptor
-import org.jetbrains.kotlin.idea.quickfix.AddModifierFix
+import org.jetbrains.kotlin.idea.quickfix.AddModifierFixMpp
 import org.jetbrains.kotlin.idea.refactoring.isConstructorDeclaredProperty
 import org.jetbrains.kotlin.idea.search.isCheapEnoughToSearchConsideringOperators
 import org.jetbrains.kotlin.idea.search.usagesSearch.dataClassComponentFunction
@@ -78,15 +79,15 @@ class MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
         if (declaration.hasModifier(KtTokens.PRIVATE_KEYWORD) || declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return false
         if (declaration.annotationEntries.isNotEmpty()) return false
 
-        val descriptor = (declaration.toDescriptor() as? DeclarationDescriptorWithVisibility) ?: return false
-        when (descriptor.effectiveVisibility()) {
-            EffectiveVisibility.Private, EffectiveVisibility.Local -> return false
-        }
-
         val classOrObject = declaration.containingClassOrObject ?: return false
         val inheritable = classOrObject is KtClass && classOrObject.isInheritable()
         if (!inheritable && declaration.hasModifier(KtTokens.PROTECTED_KEYWORD)) return false //reported by ProtectedInFinalInspection
         if (declaration.isOverridable()) return false
+
+        val descriptor = (declaration.toDescriptor() as? DeclarationDescriptorWithVisibility) ?: return false
+        when (descriptor.effectiveVisibility()) {
+            EffectiveVisibility.Private, EffectiveVisibility.Local -> return false
+        }
 
         val entryPointsManager = EntryPointsManager.getInstance(declaration.project) as EntryPointsManagerBase
         if (UnusedSymbolInspection.checkAnnotatedUsingPatterns(
@@ -102,7 +103,7 @@ class MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
         // properties can be referred by component1/component2, which is too expensive to search, don't analyze them
         if (declaration is KtParameter && declaration.dataClassComponentFunction() != null) return false
 
-        val psiSearchHelper = PsiSearchHelper.SERVICE.getInstance(declaration.project)
+        val psiSearchHelper = PsiSearchHelper.getInstance(declaration.project)
         val useScope = declaration.useScope
         val name = declaration.name ?: return false
         val restrictedScope = if (useScope is GlobalSearchScope) {
@@ -133,7 +134,7 @@ class MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
             val function = usage.getParentOfTypesAndPredicate<KtDeclarationWithBody>(
                 true, KtNamedFunction::class.java, KtPropertyAccessor::class.java
             ) { true }
-            val insideInlineFun = function?.let { it.hasModifier(KtTokens.INLINE_KEYWORD) && !function.isPrivate() } ?: false
+            val insideInlineFun = function.insideInline() || (function as? KtPropertyAccessor)?.property.insideInline()
             if (insideInlineFun) {
                 otherUsageFound = true
                 false
@@ -145,18 +146,20 @@ class MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
         return inClassUsageFound && !otherUsageFound
     }
 
+    private fun KtModifierListOwner?.insideInline() = this?.let { it.hasModifier(KtTokens.INLINE_KEYWORD) && !it.isPrivate() } ?: false
+
     private fun registerProblem(holder: ProblemsHolder, declaration: KtDeclaration) {
         val modifierListOwner = declaration.getParentOfType<KtModifierListOwner>(false) ?: return
         val member = when (declaration) {
-            is KtNamedFunction -> "Function"
-            else -> "Property"
+            is KtNamedFunction -> KotlinBundle.message("text.Function")
+            else -> KotlinBundle.message("text.Property")
         }
         val nameElement = (declaration as? PsiNameIdentifierOwner)?.nameIdentifier ?: return
         holder.registerProblem(
             declaration.visibilityModifier() ?: nameElement,
-            "$member '${declaration.getName()}' could be private",
+            KotlinBundle.message("0.1.could.be.private", member, declaration.getName().toString()),
             ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-            IntentionWrapper(AddModifierFix(modifierListOwner, KtTokens.PRIVATE_KEYWORD), declaration.containingKtFile)
+            IntentionWrapper(AddModifierFixMpp(modifierListOwner, KtTokens.PRIVATE_KEYWORD), declaration.containingKtFile)
         )
     }
 }

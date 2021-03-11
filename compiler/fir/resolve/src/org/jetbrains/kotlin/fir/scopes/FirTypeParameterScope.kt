@@ -1,24 +1,28 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.fir.scopes
 
 import org.jetbrains.kotlin.fir.declarations.FirTypeParameter
-import org.jetbrains.kotlin.fir.symbols.ConeSymbol
+import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
+import org.jetbrains.kotlin.fir.symbols.impl.FirClassifierSymbol
 import org.jetbrains.kotlin.name.Name
 
-interface FirTypeParameterScope : FirScope {
-    val typeParameters: Map<Name, List<FirTypeParameter>>
+abstract class FirTypeParameterScope : FirScope(), FirContainingNamesAwareScope {
+    abstract val typeParameters: Map<Name, List<FirTypeParameter>>
 
-    override fun processClassifiersByName(
+    override fun processClassifiersByNameWithSubstitution(
         name: Name,
-        position: FirPosition,
-        processor: (ConeSymbol) -> Boolean
-    ): Boolean {
-        val matchedTypeParameters = typeParameters[name] ?: return true
+        processor: (FirClassifierSymbol<*>, ConeSubstitutor) -> Unit
+    ) {
+        val matchedTypeParameters = typeParameters[name] ?: return
 
-        return matchedTypeParameters.all { processor(it.symbol) }
+        matchedTypeParameters.forEach { processor(it.symbol, ConeSubstitutor.Empty) }
     }
+
+    override fun getCallableNames(): Set<Name> = emptySet()
+
+    override fun getClassifierNames(): Set<Name> = typeParameters.keys
 }

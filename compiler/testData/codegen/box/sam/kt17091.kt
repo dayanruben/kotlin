@@ -1,7 +1,8 @@
-// IGNORE_BACKEND: JVM_IR
 // TARGET_BACKEND: JVM
 // WITH_RUNTIME
+// SAM_CONVERSIONS: CLASS
 // FILE: Foo.kt
+package foo
 
 class A2 {
     fun doWork(job: () -> Unit) {
@@ -10,6 +11,7 @@ class A2 {
 }
 
 // FILE: kt17091.kt
+import foo.A2
 
 typealias Z = String
 
@@ -25,7 +27,7 @@ fun box(): String {
 
     if (java.lang.Class.forName("Kt17091Kt\$sam\$java_lang_Runnable$0") == null) return "fail: can't find sam wrapper"
 
-    if (java.lang.Class.forName("A2\$sam\$java_lang_Runnable$0") == null) return "fail 2: can't find sam wrapper"
+    if (java.lang.Class.forName("foo.A2\$sam\$java_lang_Runnable$0") == null) return "fail 2: can't find sam wrapper"
 
     return result
 }

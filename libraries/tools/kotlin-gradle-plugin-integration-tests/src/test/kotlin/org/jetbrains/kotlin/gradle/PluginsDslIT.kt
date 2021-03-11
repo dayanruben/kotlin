@@ -50,12 +50,11 @@ class PluginsDslIT : BaseGradleIT() {
     }
 
     companion object {
-        private val GRADLE_VERSION = GradleVersionRequired.AtLeast("4.0")
         private const val DIRECTORY_PREFIX = "pluginsDsl"
 
         private fun BaseGradleIT.projectWithMavenLocalPlugins(
             projectName: String,
-            wrapperVersion: GradleVersionRequired = GRADLE_VERSION,
+            wrapperVersion: GradleVersionRequired = GradleVersionRequired.None,
             directoryPrefix: String? = DIRECTORY_PREFIX,
             minLogLevel: LogLevel = LogLevel.DEBUG
         ): Project = transformProjectWithPluginsDsl(projectName, wrapperVersion, directoryPrefix, minLogLevel)
@@ -63,7 +62,7 @@ class PluginsDslIT : BaseGradleIT() {
 }
 
 private const val MAVEN_LOCAL_URL_PLACEHOLDER = "<mavenLocalUrl>"
-private const val PLUGIN_MARKER_VERSION_PLACEHOLDER = "<pluginMarkerVersion>"
+internal const val PLUGIN_MARKER_VERSION_PLACEHOLDER = "<pluginMarkerVersion>"
 
 internal fun BaseGradleIT.transformProjectWithPluginsDsl(
     projectName: String,
@@ -81,7 +80,10 @@ internal fun BaseGradleIT.transformProjectWithPluginsDsl(
     }
 
     result.projectDir.walkTopDown()
-        .filter { it.isFile && (it.name == "build.gradle" || it.name == "build.gradle.kts") }
+        .filter {
+            it.isFile && (it.name == "build.gradle" || it.name == "build.gradle.kts" ||
+                    it.name == "settings.gradle" || it.name == "settings.gradle.kts")
+        }
         .forEach { buildGradle ->
             buildGradle.modify(::transformBuildScriptWithPluginsDsl)
         }

@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.cli.serviceLoaderLite
@@ -127,7 +127,7 @@ class ServiceLoaderLiteTestWithClassLoader : AbstractServiceLoaderLiteTest() {
     private inline fun <reified Intf : Any> impls(vararg impls: KClass<out Intf>): Entry {
         val content = buildString {
             for (impl in impls) {
-                appendln(impl.java.name)
+                appendLine(impl.java.name)
             }
         }
         return Entry("META-INF/services/" + Intf::class.java.name, content)

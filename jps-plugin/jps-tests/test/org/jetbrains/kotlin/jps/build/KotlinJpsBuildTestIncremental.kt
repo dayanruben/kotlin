@@ -16,32 +16,39 @@
 
 package org.jetbrains.kotlin.jps.build
 
-import com.intellij.openapi.util.io.FileUtil
-import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.jps.builders.JpsBuildTestCase
+import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.compilerRunner.JpsKotlinCompilerRunner
-import org.jetbrains.kotlin.config.IncrementalCompilation
 import org.jetbrains.kotlin.config.LanguageVersion
-import kotlin.reflect.KMutableProperty1
-import org.jetbrains.kotlin.daemon.common.COMPILE_DAEMON_CUSTOM_RUN_FILES_PATH_FOR_TESTS
-import org.jetbrains.kotlin.daemon.common.COMPILE_DAEMON_ENABLED_PROPERTY
 import org.jetbrains.kotlin.daemon.common.isDaemonEnabled
+import org.jetbrains.kotlin.jps.build.fixtures.EnableICFixture
 import org.jetbrains.kotlin.jps.model.kotlinCommonCompilerArguments
 import org.jetbrains.kotlin.jps.model.kotlinCompilerArguments
 import java.io.File
+import kotlin.reflect.KMutableProperty1
 
 class KotlinJpsBuildTestIncremental : KotlinJpsBuildTest() {
-    var isICEnabledBackup: Boolean = false
+    private val enableICFixture = EnableICFixture()
 
     override fun setUp() {
         super.setUp()
-        isICEnabledBackup = IncrementalCompilation.isEnabledForJvm()
-        IncrementalCompilation.setIsEnabledForJvm(true)
+        enableICFixture.setUp()
     }
 
     override fun tearDown() {
-        IncrementalCompilation.setIsEnabledForJvm(isICEnabledBackup)
+        enableICFixture.tearDown()
         super.tearDown()
+    }
+
+    fun testKotlinJavaScriptChangePackage() {
+        initProject(LibraryDependency.JS_STDLIB)
+        buildAllModules().assertSuccessful()
+
+        val class2Kt = File(workDir, "src/Class2.kt")
+        val newClass2KtContent = class2Kt.readText().replace("package2", "package1")
+        JpsBuildTestCase.change(class2Kt.path, newClass2KtContent)
+        buildAllModules().assertSuccessful()
+        checkOutputFilesList(File(workDir, "out/production"))
     }
 
     fun testJpsDaemonIC() {
@@ -63,18 +70,10 @@ class KotlinJpsBuildTestIncremental : KotlinJpsBuildTest() {
             assertCompiled(KotlinBuilder.KOTLIN_BUILDER_NAME, "src/main.kt", "src/Foo.kt")
         }
 
-        val daemonHome = FileUtil.createTempDirectory("daemon-home", "testJpsDaemonIC")
-        try {
-            withSystemProperty(COMPILE_DAEMON_CUSTOM_RUN_FILES_PATH_FOR_TESTS, daemonHome.absolutePath) {
-                withSystemProperty(COMPILE_DAEMON_ENABLED_PROPERTY, "true") {
-                    withSystemProperty(JpsKotlinCompilerRunner.FAIL_ON_FALLBACK_PROPERTY, "true") {
-                        testImpl()
-                    }
-                }
+        withDaemon {
+            withSystemProperty(JpsKotlinCompilerRunner.FAIL_ON_FALLBACK_PROPERTY, "true") {
+                testImpl()
             }
-        }
-        finally {
-            daemonHome.deleteRecursively()
         }
     }
 
@@ -153,7 +152,7 @@ class KotlinJpsBuildTestIncremental : KotlinJpsBuildTest() {
         buildAllModules().assertSuccessful()
         assertCompiled(KotlinBuilder.KOTLIN_BUILDER_NAME)
 
-        setVersion(LanguageVersion.KOTLIN_1_0.versionString)
+        setVersion(LanguageVersion.KOTLIN_1_3.versionString)
         buildAllModules().assertSuccessful()
         assertCompiled(KotlinBuilder.KOTLIN_BUILDER_NAME, "src/Bar.kt", "src/Foo.kt")
     }

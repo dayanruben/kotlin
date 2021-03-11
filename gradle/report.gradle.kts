@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 import org.gradle.api.Task
@@ -94,14 +94,14 @@ private class BuildTimeReporter(
         val totalTimeSec = totalTimeNs.toDouble() / secondInNs
         if (totalTimeSec < 1) return
 
-        log.warn("Build time for tasks:")
+        log.info("Build time for tasks:")
         for (category in TaskCategory.values()) {
             val timeNs = categoryTimeNs[category] ?: 0L
             val timeSec = timeNs.toDouble() / secondInNs
             if (timeSec < 1) continue
 
             val percent = timeSec / totalTimeSec * 100
-            log.warn("${category.description()}: ${timeSec.asShortString()}s (${percent.asShortString()}% of total time)")
+            log.info("${category.description()}: ${timeSec.asShortString()}s (${percent.asShortString()}% of total time)")
         }
     }
 }

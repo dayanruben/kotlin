@@ -1,5 +1,4 @@
-// !LANGUAGE: +NewInference
-// IGNORE_BACKEND: JVM_IR
+// !LANGUAGE: +NewInference +SamConversionPerArgument
 // TARGET_BACKEND: JVM
 // WITH_RUNTIME
 // FILE: Fn.java

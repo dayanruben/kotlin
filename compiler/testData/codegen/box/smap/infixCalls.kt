@@ -1,7 +1,9 @@
+// This test depends on line numbers.
 // TARGET_BACKEND: JVM
 // WITH_RUNTIME
 // FULL_JDK
 package test
+
 fun testProperLineNumber(): String {
     var exceptionCount = 0;
     try {
@@ -11,7 +13,7 @@ fun testProperLineNumber(): String {
     catch(e: AssertionError) {
         val entry = (e as java.lang.Throwable).getStackTrace()!!.get(1)
         val actual = "${entry.getFileName()}:${entry.getLineNumber()}"
-        if ("infixCalls.kt:8" != actual) {
+        if ("infixCalls.kt:10" != actual) {
             return "fail 1: ${actual}"
         }
         exceptionCount++
@@ -24,7 +26,7 @@ fun testProperLineNumber(): String {
     catch(e: AssertionError) {
         val entry = e.stackTrace!![1]
         val actual = "${entry.getFileName()}:${entry.getLineNumber()}"
-        if ("infixCalls.kt:21" != actual) {
+        if ("infixCalls.kt:23" != actual) {
             return "fail 1: ${actual}"
         }
         exceptionCount++
@@ -36,7 +38,7 @@ fun testProperLineNumber(): String {
     catch(e: AssertionError) {
         val entry = e.stackTrace!![1]
         val actual = "${entry.getFileName()}:${entry.getLineNumber()}"
-        if ("infixCalls.kt:34" != actual) {
+        if ("infixCalls.kt:36" != actual) {
             return "fail 1: ${actual}"
         }
         exceptionCount++
@@ -64,4 +66,3 @@ infix fun String.fail(p: String): String {
 fun call(): String {
     return "xxx"
 }
-// IGNORE_BACKEND: JVM_IR

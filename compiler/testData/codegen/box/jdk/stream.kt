@@ -1,6 +1,9 @@
 // JVM_TARGET: 1.8
-// IGNORE_BACKEND: JVM_IR
 // TARGET_BACKEND: JVM
+
+// NoSuchMethodError: java.util.List.stream
+// IGNORE_BACKEND: ANDROID
+
 // FULL_JDK
 // WITH_RUNTIME
 

@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.quickfix
@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.getReturnTypeReference
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -25,7 +26,7 @@ class ChangeSuperTypeListEntryTypeArgumentFix(
     private val typeArgumentIndex: Int
 ) : KotlinQuickFixAction<KtSuperTypeListEntry>(element) {
 
-    override fun getText() = "Change type argument to $type"
+    override fun getText() = KotlinBundle.message("fix.change.type.argument", type)
 
     override fun getFamilyName() = text
 
@@ -55,16 +56,21 @@ class ChangeSuperTypeListEntryTypeArgumentFix(
 
     companion object : KotlinSingleIntentionActionFactory() {
         override fun createAction(diagnostic: Diagnostic): IntentionAction? {
-            val casted = when (diagnostic.factory) {
-                Errors.RETURN_TYPE_MISMATCH_ON_OVERRIDE -> Errors.RETURN_TYPE_MISMATCH_ON_OVERRIDE.cast(diagnostic)
-                Errors.PROPERTY_TYPE_MISMATCH_ON_OVERRIDE -> Errors.PROPERTY_TYPE_MISMATCH_ON_OVERRIDE.cast(diagnostic)
+            val (casted, declaration) = when (diagnostic.factory) {
+                Errors.RETURN_TYPE_MISMATCH_ON_OVERRIDE -> {
+                    val casted = Errors.RETURN_TYPE_MISMATCH_ON_OVERRIDE.cast(diagnostic)
+                    casted to casted.b.declaration
+                }
+                Errors.PROPERTY_TYPE_MISMATCH_ON_OVERRIDE -> {
+                    val casted = Errors.PROPERTY_TYPE_MISMATCH_ON_OVERRIDE.cast(diagnostic)
+                    casted to casted.b
+                }
                 else -> null
             } ?: return null
 
             val type = casted.a.returnType?.toString() ?: return null
-
-            val superClassDescriptor = casted.b.containingDeclaration as? ClassDescriptor ?: return null
-            val superDeclaration = DescriptorToSourceUtils.descriptorToDeclaration(casted.b) as? KtNamedDeclaration ?: return null
+            val superClassDescriptor = declaration.containingDeclaration as? ClassDescriptor ?: return null
+            val superDeclaration = DescriptorToSourceUtils.descriptorToDeclaration(declaration) as? KtNamedDeclaration ?: return null
             val superTypeReference = superDeclaration.getReturnTypeReference()?.text ?: return null
             val typeParameterIndex = superClassDescriptor.declaredTypeParameters.map { it.name.asString() }.indexOf(superTypeReference)
             if (typeParameterIndex < 0) return null
@@ -76,7 +82,8 @@ class ChangeSuperTypeListEntryTypeArgumentFix(
                         (it.typeAsUserType?.referenceExpression?.mainReference?.resolve() as? KtClass)?.descriptor == superClassDescriptor
                     }
                     is KtSuperTypeCallEntry -> {
-                        it.calleeExpression.resolveToCall()?.resultingDescriptor?.returnType?.constructor?.declarationDescriptor == superClassDescriptor
+                        it.calleeExpression.resolveToCall()?.resultingDescriptor?.returnType?.constructor
+                            ?.declarationDescriptor == superClassDescriptor
                     }
                     else -> false
                 }

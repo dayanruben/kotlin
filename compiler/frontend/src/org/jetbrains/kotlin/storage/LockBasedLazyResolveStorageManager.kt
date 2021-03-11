@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.BindingTrace
 import org.jetbrains.kotlin.util.slicedMap.ReadOnlySlice
 import org.jetbrains.kotlin.util.slicedMap.WritableSlice
-import org.jetbrains.kotlin.resolve.TraceEntryFilter
 import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.kotlin.psi.KtExpression
@@ -84,5 +83,9 @@ class LockBasedLazyResolveStorageManager(private val storageManager: StorageMana
         }
 
         override fun wantsDiagnostics() = trace.wantsDiagnostics()
+
+        override fun toString(): String {
+            return "Lock-protected trace of LockBasedLazyResolveStorageManager $storageManager"
+        }
     }
 }

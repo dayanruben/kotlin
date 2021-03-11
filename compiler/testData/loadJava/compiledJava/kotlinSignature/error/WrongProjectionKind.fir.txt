@@ -1,0 +1,6 @@
+public open class WrongProjectionKind : R|kotlin/Any| {
+    public open fun copy(from: R|ft<@FlexibleNullability kotlin/Array<ft<@FlexibleNullability kotlin/Number, kotlin/Number?>!>, kotlin/Array<out ft<@FlexibleNullability kotlin/Number, kotlin/Number?>!>?>!|, to: R|ft<@FlexibleNullability kotlin/Array<ft<@FlexibleNullability kotlin/Number, kotlin/Number?>!>, kotlin/Array<out ft<@FlexibleNullability kotlin/Number, kotlin/Number?>!>?>!|): R|ft<@FlexibleNullability kotlin/collections/MutableList<ft<@FlexibleNullability kotlin/Number, kotlin/Number?>!>, kotlin/collections/List<ft<@FlexibleNullability kotlin/Number, kotlin/Number?>!>?>!|
+
+    public constructor(): R|test/WrongProjectionKind|
+
+}

@@ -1,5 +1,5 @@
 // !USE_EXPERIMENTAL: kotlin.contracts.ExperimentalContracts
-// !WITH_CONTRACT_FUNCTIONS
+// !WITH_NEW_INFERENCE
 // SKIP_TXT
 
 /*
@@ -8,6 +8,7 @@
  * SECTIONS: contracts, analysis, smartcasts
  * NUMBER: 2
  * DESCRIPTION: Smartcasts using Returns effects with complex (conjunction/disjunction) type checking and not-null conditions outside contract (custom condition).
+ * HELPERS: contractFunctions
  */
 
 // TESTCASE NUMBER: 1
@@ -162,7 +163,7 @@ class case_10_class {
 // TESTCASE NUMBER: 11
 fun case_11(value_1: Any?, value_2: Any?, value_3: Any?) {
     funWithReturnsAndInvertCondition(value_1 !is String? || value_2 !is Number && value_3 !is Float)
-    println(<!DEBUG_INFO_SMARTCAST!>value_1<!>!!.<!UNRESOLVED_REFERENCE!>length<!>)
+    println(<!DEBUG_INFO_SMARTCAST!>value_1<!>!!.<!OI;UNRESOLVED_REFERENCE!>length<!>)
     println(value_2.<!UNRESOLVED_REFERENCE_WRONG_RECEIVER!>toByte<!>())
     println(value_3.<!UNRESOLVED_REFERENCE_WRONG_RECEIVER!>dec<!>())
 }

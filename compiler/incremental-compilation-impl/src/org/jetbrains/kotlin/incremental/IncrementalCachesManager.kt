@@ -16,39 +16,47 @@
 
 package org.jetbrains.kotlin.incremental
 
+import org.jetbrains.kotlin.build.report.ICReporter
 import org.jetbrains.kotlin.incremental.storage.BasicMapsOwner
+import org.jetbrains.kotlin.incremental.storage.IncrementalFileToPathConverter
+import org.jetbrains.kotlin.serialization.SerializerExtensionProtocol
 import java.io.File
 
+
 abstract class IncrementalCachesManager<PlatformCache : AbstractIncrementalCache<*>>(
-    protected val cachesRootDir: File,
+    cachesRootDir: File,
+    rootProjectDir: File?,
     protected val reporter: ICReporter
 ) {
+    val pathConverter = IncrementalFileToPathConverter(rootProjectDir)
     private val caches = arrayListOf<BasicMapsOwner>()
+
+    var isClosed = false
+
+    @Synchronized
     protected fun <T : BasicMapsOwner> T.registerCache() {
+        assert(!isClosed) { "Attempted to add new cache into closed storage." }
         caches.add(this)
     }
 
     private val inputSnapshotsCacheDir = File(cachesRootDir, "inputs").apply { mkdirs() }
     private val lookupCacheDir = File(cachesRootDir, "lookups").apply { mkdirs() }
 
-    val inputsCache: InputsCache = InputsCache(inputSnapshotsCacheDir, reporter).apply { registerCache() }
-    val lookupCache: LookupStorage = LookupStorage(lookupCacheDir).apply { registerCache() }
+    val inputsCache: InputsCache = InputsCache(inputSnapshotsCacheDir, reporter, pathConverter).apply { registerCache() }
+    val lookupCache: LookupStorage = LookupStorage(lookupCacheDir, pathConverter).apply { registerCache() }
     abstract val platformCache: PlatformCache
 
-    fun clean() {
-        caches.forEach { it.clean() }
-        cachesRootDir.deleteRecursively()
-    }
-
+    @Synchronized
     fun close(flush: Boolean = false): Boolean {
+        if (isClosed) {
+            return true
+        }
         var successful = true
-
         for (cache in caches) {
             if (flush) {
                 try {
                     cache.flush(false)
-                }
-                catch (e: Throwable) {
+                } catch (e: Throwable) {
                     successful = false
                     reporter.report { "Exception when flushing cache ${cache.javaClass}: $e" }
                 }
@@ -56,32 +64,33 @@ abstract class IncrementalCachesManager<PlatformCache : AbstractIncrementalCache
 
             try {
                 cache.close()
-            }
-            catch (e: Throwable) {
+            } catch (e: Throwable) {
                 successful = false
                 reporter.report { "Exception when closing cache ${cache.javaClass}: $e" }
             }
         }
 
+        isClosed = true
         return successful
     }
 }
 
 class IncrementalJvmCachesManager(
     cacheDirectory: File,
+    rootProjectDir: File?,
     outputDir: File,
     reporter: ICReporter
-) : IncrementalCachesManager<IncrementalJvmCache>(cacheDirectory, reporter) {
-
+) : IncrementalCachesManager<IncrementalJvmCache>(cacheDirectory, rootProjectDir, reporter) {
     private val jvmCacheDir = File(cacheDirectory, "jvm").apply { mkdirs() }
-    override val platformCache = IncrementalJvmCache(jvmCacheDir, outputDir).apply { registerCache() }
+    override val platformCache = IncrementalJvmCache(jvmCacheDir, outputDir, pathConverter).apply { registerCache() }
 }
 
 class IncrementalJsCachesManager(
-        cachesRootDir: File,
-        reporter: ICReporter
-) : IncrementalCachesManager<IncrementalJsCache>(cachesRootDir, reporter) {
-
+    cachesRootDir: File,
+    rootProjectDir: File,
+    reporter: ICReporter,
+    serializerProtocol: SerializerExtensionProtocol
+) : IncrementalCachesManager<IncrementalJsCache>(cachesRootDir, rootProjectDir, reporter) {
     private val jsCacheFile = File(cachesRootDir, "js").apply { mkdirs() }
-    override val platformCache = IncrementalJsCache(jsCacheFile).apply { registerCache() }
+    override val platformCache = IncrementalJsCache(jsCacheFile, pathConverter, serializerProtocol).apply { registerCache() }
 }

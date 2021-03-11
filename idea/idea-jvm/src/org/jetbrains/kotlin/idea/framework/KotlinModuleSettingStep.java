@@ -44,11 +44,13 @@ import kotlin.collections.ArraysKt;
 import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.kotlin.idea.KotlinJvmBundle;
 import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle;
 import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter;
-import org.jetbrains.kotlin.js.resolve.JsPlatform;
-import org.jetbrains.kotlin.resolve.TargetPlatform;
-import org.jetbrains.kotlin.resolve.jvm.platform.JvmPlatform;
+import org.jetbrains.kotlin.platform.TargetPlatform;
+import org.jetbrains.kotlin.platform.TargetPlatformKt;
+import org.jetbrains.kotlin.platform.js.JsPlatformKt;
+import org.jetbrains.kotlin.platform.jvm.JvmPlatformKt;
 
 import javax.swing.*;
 import java.lang.reflect.Field;
@@ -83,7 +85,7 @@ public class KotlinModuleSettingStep extends ModuleWizardStep {
     ) {
         isNewProject = wizardContext != null && wizardContext.isCreatingNewProject();
 
-        if (!(targetPlatform instanceof JvmPlatform)) {
+        if (!(JvmPlatformKt.isJvm(targetPlatform))) {
             KotlinSdkType.Companion.setUpIfNeeded();
         }
 
@@ -139,15 +141,15 @@ public class KotlinModuleSettingStep extends ModuleWizardStep {
 
     @NotNull
     protected String getLibraryLabelText() {
-        if (targetPlatform == JvmPlatform.INSTANCE) return "Kotlin runtime";
-        if (targetPlatform == JsPlatform.INSTANCE) return "Kotlin JS library";
+        if (JvmPlatformKt.isJvm(targetPlatform)) return KotlinJvmBundle.message("library.label.jvm");
+        if (JsPlatformKt.isJs(targetPlatform)) return KotlinJvmBundle.message("library.label.javascript");
         throw new IllegalStateException("Only JS and JVM target are supported");
     }
 
     @NotNull
     protected CustomLibraryDescription getCustomLibraryDescription(@Nullable Project project) {
-        if (targetPlatform == JvmPlatform.INSTANCE) return new JavaRuntimeLibraryDescription(project);
-        if (targetPlatform == JsPlatform.INSTANCE) return new JSLibraryStdDescription(project);
+        if (JvmPlatformKt.isJvm(targetPlatform)) return new JavaRuntimeLibraryDescription(project);
+        if (JsPlatformKt.isJs(targetPlatform)) return new JSLibraryStdDescription(project);
         throw new IllegalStateException("Only JS and JVM target are supported");
     }
 
@@ -166,8 +168,8 @@ public class KotlinModuleSettingStep extends ModuleWizardStep {
         Boolean selected = isLibrarySelected();
         if (selected != null && !selected) {
             if (Messages.showDialog(
-                    "Do you want to continue with no Kotlin Runtime library?",
-                    "No Kotlin Runtime Specified",
+                    KotlinJvmBundle.message("library.no.kotlin.library.question"),
+                    KotlinJvmBundle.message("library.no.kotlin.library.title"),
                     new String[] {CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText()}, 1,
                     Messages.getWarningIcon()) != Messages.YES) {
                 return false;

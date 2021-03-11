@@ -83,7 +83,7 @@ class SignatureDumpingBuilderFactory(
             super.defineClass(origin, version, access, name, signature, superName, interfaces)
         }
 
-        override fun newMethod(origin: JvmDeclarationOrigin, access: Int, name: String, desc: String, signature: String?, exceptions: Array<out String>?): MethodVisitor {
+        override fun newMethod(origin: JvmDeclarationOrigin, access: Int, name: String, desc: String, signature: String?, exceptions: JvmMethodExceptionTypes): MethodVisitor {
             signatures += RawSignature(name, desc, MemberKind.METHOD) to origin.descriptor?.let {
                 if (it is CallableDescriptor) it.unwrapInitialDescriptorForSuspendFunction() else it
             }
@@ -101,7 +101,7 @@ class SignatureDumpingBuilderFactory(
             origin.descriptor?.let {
                 outputStream.append("\t\t").appendNameValue("declaration", TYPE_RENDERER.render(it)).append(",\n")
                 (it as? DeclarationDescriptorWithVisibility)?.visibility?.let {
-                    outputStream.append("\t\t").appendNameValue("visibility", it.displayName).append(",\n")
+                    outputStream.append("\t\t").appendNameValue("visibility", it.internalDisplayName).append(",\n")
                 }
             }
             outputStream.append("\t\t").appendNameValue("class", javaClassName).append(",\n")
@@ -112,7 +112,7 @@ class SignatureDumpingBuilderFactory(
                 append("\t\t\t{")
                 descriptor?.let {
                     (it as? DeclarationDescriptorWithVisibility)?.visibility?.let {
-                        appendNameValue("visibility", it.displayName).append(",\t")
+                        appendNameValue("visibility", it.internalDisplayName).append(",\t")
                     }
                     appendNameValue("declaration", MEMBER_RENDERER.render(it)).append(", ")
 

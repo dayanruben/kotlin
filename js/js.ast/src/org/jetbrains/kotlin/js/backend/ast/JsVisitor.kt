@@ -51,6 +51,9 @@ abstract class JsVisitor {
     open fun visitCatch(x: JsCatch): Unit =
             visitElement(x)
 
+    open fun visitClass(x: JsClass): Unit =
+            visitElement(x)
+
     open fun visitConditional(x: JsConditional): Unit =
             visitElement(x)
 
@@ -157,6 +160,9 @@ abstract class JsVisitor {
             visitLoop(x)
 
     open fun visitDocComment(comment: JsDocComment): Unit =
+            visitElement(comment)
+
+    open fun visitSingleLineComment(comment: JsSingleLineComment): Unit =
             visitElement(comment)
 
     protected open fun visitElement(node: JsNode) {

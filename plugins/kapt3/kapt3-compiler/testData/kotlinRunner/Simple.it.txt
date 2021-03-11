@@ -10,11 +10,15 @@ package test;
 import java.lang.System;
 
 /**
- * * KDoc comment.
+ * KDoc comment.
  */
 @kotlin.Suppress(names = {"UNRESOLVED_REFERENCE"})
 @kotlin.Metadata()
 public final class Simple {
+
+    public Simple() {
+        super();
+    }
 
     @MyAnnotation()
     public final void myMethod() {
@@ -22,10 +26,6 @@ public final class Simple {
 
     public final int heavyMethod() {
         return 0;
-    }
-
-    public Simple() {
-        super();
     }
 }
 

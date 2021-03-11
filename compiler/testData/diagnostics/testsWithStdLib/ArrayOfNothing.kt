@@ -1,4 +1,6 @@
 // !DIAGNOSTICS: -UNUSED_PARAMETER -UNUSED_VARIABLE -UNCHECKED_CAST -USELESS_CAST
+// !LANGUAGE: +ProhibitNonReifiedArraysAsReifiedTypeArguments
+// !WITH_NEW_INFERENCE
 class A<T>
 
 fun test1(
@@ -49,6 +51,6 @@ fun test6() = <!UNSUPPORTED!>foo<!><Nothing>()
 
 class B<T>(val array: Array<T>)
 
-fun <T> bar() = B<Array<T>>(arrayOf())
+fun <T> bar() = B<Array<T>>(<!TYPE_PARAMETER_AS_REIFIED_ARRAY!>arrayOf<!>())
 
 fun test7() = <!UNSUPPORTED!>bar<!><Nothing>()

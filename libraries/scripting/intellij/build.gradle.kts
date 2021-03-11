@@ -4,11 +4,11 @@ plugins {
     id("jps-compatible")
 }
 
-jvmTarget = "1.6"
+jvmTarget = "1.8"
 
 dependencies {
     compile(project(":kotlin-script-runtime"))
-    compile(project(":kotlin-stdlib"))
+    compile(kotlinStdlib())
     compile(project(":kotlin-scripting-common"))
     compileOnly(intellijCoreDep()) { includeJars("intellij-core") }
 }
@@ -18,9 +18,10 @@ sourceSets {
     "test" { }
 }
 
-standardPublicJars()
-
-ideaPlugin()
+tasks.withType<org.jetbrains.kotlin.gradle.dsl.KotlinCompile<*>> {
+    kotlinOptions.freeCompilerArgs += "-Xallow-kotlin-package"
+}
 
 publish()
 
+standardPublicJars()

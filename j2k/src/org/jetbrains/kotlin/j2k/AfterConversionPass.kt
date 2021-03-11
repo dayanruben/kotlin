@@ -16,23 +16,33 @@
 
 package org.jetbrains.kotlin.j2k
 
+import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtFile
 
 class AfterConversionPass(val project: Project, val postProcessor: PostProcessor) {
-    fun run(kotlinFile: KtFile, range: TextRange?) {
-        val rangeMarker = if (range != null) {
-            val document = kotlinFile.viewProvider.document!!
-            val marker = document.createRangeMarker(range.startOffset, range.endOffset)
-            marker.isGreedyToLeft = true
-            marker.isGreedyToRight = true
-            marker
-        }
-        else {
-            null
-        }
-
-        postProcessor.doAdditionalProcessing(kotlinFile, rangeMarker)
+    @JvmOverloads
+    fun run(
+        kotlinFile: KtFile,
+        converterContext: ConverterContext?,
+        range: TextRange?,
+        onPhaseChanged: ((Int, String) -> Unit)? = null
+    ) {
+        postProcessor.doAdditionalProcessing(
+            when {
+                range != null -> JKPieceOfCodePostProcessingTarget(kotlinFile, range.toRangeMarker(kotlinFile))
+                else -> JKMultipleFilesPostProcessingTarget(listOf(kotlinFile))
+            },
+            converterContext,
+            onPhaseChanged
+        )
     }
 }
+
+fun TextRange.toRangeMarker(file: KtFile): RangeMarker =
+    runReadAction { file.viewProvider.document!!.createRangeMarker(startOffset, endOffset) }.apply {
+        isGreedyToLeft = true
+        isGreedyToRight = true
+    }

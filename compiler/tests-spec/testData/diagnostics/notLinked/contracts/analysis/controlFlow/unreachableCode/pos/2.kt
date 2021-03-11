@@ -1,5 +1,5 @@
+// FIR_IDENTICAL
 // !USE_EXPERIMENTAL: kotlin.contracts.ExperimentalContracts
-// !WITH_CONTRACT_FUNCTIONS
 // SKIP_TXT
 
 /*
@@ -8,6 +8,7 @@
  * SECTIONS: contracts, analysis, controlFlow, unreachableCode
  * NUMBER: 2
  * DESCRIPTION: Check for lack of unreachable code report when 'at most once' and 'unknown' invokations in CallsInPlace effect used.
+ * HELPERS: contractFunctions
  */
 
 // TESTCASE NUMBER: 1

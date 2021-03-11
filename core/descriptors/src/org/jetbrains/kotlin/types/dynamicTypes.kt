@@ -17,17 +17,23 @@
 package org.jetbrains.kotlin.types
 
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.container.DefaultImplementation
+import org.jetbrains.kotlin.container.PlatformSpecificExtension
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.renderer.DescriptorRendererOptions
+import org.jetbrains.kotlin.types.checker.KotlinTypeRefiner
+import org.jetbrains.kotlin.types.model.DynamicTypeMarker
+import org.jetbrains.kotlin.types.refinement.TypeRefinement
 import org.jetbrains.kotlin.types.typeUtil.builtIns
 
-open class DynamicTypesSettings {
+@DefaultImplementation(impl = DynamicTypesSettings::class)
+open class DynamicTypesSettings : PlatformSpecificExtension<DynamicTypesSettings> {
     open val dynamicTypesAllowed: Boolean
         get() = false
 }
 
-class DynamicTypesAllowed: DynamicTypesSettings() {
+class DynamicTypesAllowed : DynamicTypesSettings() {
     override val dynamicTypesAllowed: Boolean
         get() = true
 }
@@ -36,7 +42,10 @@ fun KotlinType.isDynamic(): Boolean = unwrap() is DynamicType
 
 fun createDynamicType(builtIns: KotlinBuiltIns) = DynamicType(builtIns, Annotations.EMPTY)
 
-class DynamicType(builtIns: KotlinBuiltIns, override val annotations: Annotations) : FlexibleType(builtIns.nothingType, builtIns.nullableAnyType) {
+class DynamicType(
+    builtIns: KotlinBuiltIns,
+    override val annotations: Annotations
+) : FlexibleType(builtIns.nothingType, builtIns.nullableAnyType), DynamicTypeMarker {
     override val delegate: SimpleType get() = upperBound
 
     // Nullability has no effect on dynamics
@@ -47,4 +56,7 @@ class DynamicType(builtIns: KotlinBuiltIns, override val annotations: Annotation
     override fun replaceAnnotations(newAnnotations: Annotations): DynamicType = DynamicType(delegate.builtIns, newAnnotations)
 
     override fun render(renderer: DescriptorRenderer, options: DescriptorRendererOptions): String = "dynamic"
+
+    @TypeRefinement
+    override fun refine(kotlinTypeRefiner: KotlinTypeRefiner) = this
 }

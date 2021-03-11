@@ -1,35 +1,65 @@
 package org.jetbrains.uast.test.kotlin
 
+import org.jetbrains.uast.UFile
+import org.jetbrains.uast.kotlin.KotlinConverter
 import org.junit.Test
 
-class SimpleKotlinRenderLogTest : AbstractKotlinRenderLogTest() {
-    @Test fun testLocalDeclarations() = doTest("LocalDeclarations")
+class SimpleKotlinRenderLogTest : AbstractKotlinUastTest(), AbstractKotlinRenderLogTest {
 
-    @Test fun testSimple() = doTest("Simple")
+    override fun check(testName: String, file: UFile) = super.check(testName, file)
 
-    @Test fun testWhenIs() = doTest("WhenIs")
+    @Test
+    fun testLocalDeclarations() = doTest("LocalDeclarations")
 
-    @Test fun testDefaultImpls() = doTest("DefaultImpls")
+    @Test
+    fun testSimple() = doTest("Simple")
 
-    @Test fun testElvis() = doTest("Elvis")
+    @Test
+    fun testWhenIs() = doTest("WhenIs")
 
-    @Test fun testPropertyAccessors() = doTest("PropertyAccessors")
+    @Test
+    fun testDefaultImpls() = doTest("DefaultImpls")
 
-    @Test fun testPropertyInitializer() = doTest("PropertyInitializer")
+    @Test
+    fun testBitwise() = doTest("Bitwise")
 
-    @Test fun testPropertyInitializerWithoutSetter() = doTest("PropertyInitializerWithoutSetter")
+    @Test
+    fun testElvis() = doTest("Elvis")
 
-    @Test fun testAnnotationParameters() = doTest("AnnotationParameters")
+    @Test
+    fun testPropertyAccessors() = doTest("PropertyAccessors")
 
-    @Test fun testEnumValueMembers() = doTest("EnumValueMembers")
+    @Test
+    fun testPropertyInitializer() = doTest("PropertyInitializer")
 
-    @Test fun testStringTemplate() = doTest("StringTemplate")
+    @Test
+    fun testPropertyInitializerWithoutSetter() = doTest("PropertyInitializerWithoutSetter")
 
-    @Test fun testStringTemplateComplex() = doTest("StringTemplateComplex")
+    @Test
+    fun testAnnotationParameters() = doTest("AnnotationParameters")
 
-    @Test fun testQualifiedConstructorCall() = doTest("QualifiedConstructorCall")
+    @Test
+    fun testEnumValueMembers() = doTest("EnumValueMembers")
 
-    @Test fun testPropertyDelegate() = doTest("PropertyDelegate")
+    @Test
+    fun testEnumValuesConstructors() = doTest("EnumValuesConstructors")
+
+    @Test
+    fun testStringTemplate() = doTest("StringTemplate")
+
+    @Test
+    fun testStringTemplateComplex() = doTest("StringTemplateComplex")
+
+    @Test
+    fun testStringTemplateComplexForUInjectionHost() = withForceUInjectionHostValue {
+        doTest("StringTemplateComplexForUInjectionHost")
+    }
+
+    @Test
+    fun testQualifiedConstructorCall() = doTest("QualifiedConstructorCall")
+
+    @Test
+    fun testPropertyDelegate() = doTest("PropertyDelegate")
 
     @Test fun testLocalVariableWithAnnotation() = doTest("LocalVariableWithAnnotation")
 
@@ -84,4 +114,53 @@ class SimpleKotlinRenderLogTest : AbstractKotlinRenderLogTest() {
 
     @Test
     fun testLambdas() = doTest("Lambdas")
+
+    @Test
+    fun testTypeReferences() = doTest("TypeReferences")
+
+    @Test
+    fun testDelegate() = doTest("Delegate")
+
+    @Test
+    fun testConstructorDelegate() = doTest("ConstructorDelegate")
+
+    @Test
+    fun testLambdaReturn() = doTest("LambdaReturn")
+
+    @Test
+    fun testReified() = doTest("Reified")
+
+    @Test
+    fun testReifiedReturnType() = doTest("ReifiedReturnType")
+
+    @Test
+    fun testReifiedParameters() = doTest("ReifiedParameters")
+
+    @Test
+    fun testSuspend() = doTest("Suspend")
+
+    @Test
+    fun testDeprecatedHidden() = doTest("DeprecatedHidden")
+
+    @Test
+    fun testTryCatch() = doTest("TryCatch")
+
+    @Test
+    fun testAnnotatedExpressions() = doTest("AnnotatedExpressions")
+
+    @Test
+    fun testNonTrivialIdentifiers() = doTest("NonTrivialIdentifiers")
+
+    @Test
+    fun testTypeAliasExpansionWithOtherAliasInArgument() = doTest("TypeAliasExpansionWithOtherAliasInArgument")
+}
+
+fun withForceUInjectionHostValue(call: () -> Unit) {
+    val prev = KotlinConverter.forceUInjectionHost
+    KotlinConverter.forceUInjectionHost = true
+    try {
+        call.invoke()
+    } finally {
+        KotlinConverter.forceUInjectionHost = prev
+    }
 }

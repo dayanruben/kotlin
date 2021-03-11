@@ -1,16 +1,16 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.ir.declarations.lazy
 
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
-import org.jetbrains.kotlin.ir.declarations.IrClass
-import org.jetbrains.kotlin.ir.declarations.IrDeclaration
+import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.declarations.IrTypeParametersContainer
 import org.jetbrains.kotlin.ir.symbols.IrTypeParameterSymbol
-import org.jetbrains.kotlin.ir.util.*
+import org.jetbrains.kotlin.ir.util.ReferenceSymbolTable
+import org.jetbrains.kotlin.ir.util.TypeParametersResolver
 import java.util.*
 
 class LazyScopedTypeParametersResolver(private val symbolTable: ReferenceSymbolTable) : TypeParametersResolver {
@@ -27,6 +27,7 @@ class LazyScopedTypeParametersResolver(private val symbolTable: ReferenceSymbolT
         typeParameterScopes.removeFirst()
     }
 
+    @ObsoleteDescriptorBasedAPI
     override fun resolveScopedTypeParameter(typeParameterDescriptor: TypeParameterDescriptor): IrTypeParameterSymbol? {
         //Just support accessor scoped symbols resolve in external declaration
         //there should be enough to process only parent typeparameters
@@ -34,6 +35,6 @@ class LazyScopedTypeParametersResolver(private val symbolTable: ReferenceSymbolT
             parent.typeParameters.firstOrNull {
                 it.descriptor == typeParameterDescriptor
             }?.symbol
-        } ?: null
+        }
     }
 }

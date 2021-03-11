@@ -1,12 +1,13 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.gradle.utils
 
 import org.gradle.api.Project
 import java.io.File
+import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.*
 
@@ -15,9 +16,6 @@ internal fun File.isJavaFile() =
 
 internal fun File.isKotlinFile(sourceFilesExtensions: List<String>): Boolean =
     !isJavaFile() && sourceFilesExtensions.any { it.equals(extension, ignoreCase = true) }
-
-internal fun File.isClassFile(): Boolean =
-    extension.equals("class", ignoreCase = true)
 
 internal fun File.relativeOrCanonical(base: File): String =
     relativeToOrNull(base)?.path ?: canonicalPath
@@ -31,10 +29,10 @@ internal fun File.relativeToRoot(project: Project): String =
 internal fun Iterable<File>.toSortedPathsArray(): Array<String> =
     map { it.canonicalPath }.toTypedArray().also { Arrays.sort(it) }
 
-internal fun newTmpFile(prefix: String, suffix: String? = null, directory: File? = null, deleteOnExit: Boolean = true) =
-    File.createTempFile(prefix, suffix, directory).apply {
-        if (deleteOnExit) deleteOnExit()
-    }
+internal fun newTmpFile(prefix: String, suffix: String? = null, directory: File? = null, deleteOnExit: Boolean = true): File =
+    (if (directory == null) Files.createTempFile(prefix, suffix) else Files.createTempFile(directory.toPath(), prefix, suffix))
+        .toFile()
+        .apply { if (deleteOnExit) deleteOnExit() }
 
 internal fun File.isParentOf(childCandidate: File, strict: Boolean = false): Boolean {
     val parentPath = Paths.get(this.absolutePath).normalize()
@@ -46,3 +44,8 @@ internal fun File.isParentOf(childCandidate: File, strict: Boolean = false): Boo
         childCandidatePath.startsWith(parentPath)
     }
 }
+
+internal fun File.canonicalPathWithoutExtension(): String =
+    canonicalPath.substringBeforeLast(".")
+
+internal fun File.listFilesOrEmpty() = (if (exists()) listFiles() else null).orEmpty()

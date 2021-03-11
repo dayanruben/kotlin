@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.serialization.deserialization
@@ -34,7 +34,7 @@ class MemberDeserializer(private val c: DeserializationContext) {
             c.containingDeclaration, null,
             getAnnotations(proto, flags, AnnotatedCallableKind.PROPERTY),
             ProtoEnumFlags.modality(Flags.MODALITY.get(flags)),
-            ProtoEnumFlags.visibility(Flags.VISIBILITY.get(flags)),
+            ProtoEnumFlags.descriptorVisibility(Flags.VISIBILITY.get(flags)),
             Flags.IS_VAR.get(flags),
             c.nameResolver.getName(proto.name),
             ProtoEnumFlags.memberKind(Flags.MEMBER_KIND.get(flags)),
@@ -87,7 +87,7 @@ class MemberDeserializer(private val c: DeserializationContext) {
                     property,
                     annotations,
                     ProtoEnumFlags.modality(Flags.MODALITY.get(getterFlags)),
-                    ProtoEnumFlags.visibility(Flags.VISIBILITY.get(getterFlags)),
+                    ProtoEnumFlags.descriptorVisibility(Flags.VISIBILITY.get(getterFlags)),
                     /* isDefault = */ !isNotDefault,
                     /* isExternal = */ isExternal,
                     isInline,
@@ -113,7 +113,7 @@ class MemberDeserializer(private val c: DeserializationContext) {
                     property,
                     annotations,
                     ProtoEnumFlags.modality(Flags.MODALITY.get(setterFlags)),
-                    ProtoEnumFlags.visibility(Flags.VISIBILITY.get(setterFlags)),
+                    ProtoEnumFlags.descriptorVisibility(Flags.VISIBILITY.get(setterFlags)),
                     /* isDefault = */ !isNotDefault,
                     /* isExternal = */ isExternal,
                     isInline,
@@ -172,15 +172,15 @@ class MemberDeserializer(private val c: DeserializationContext) {
     }
 
     private fun DeserializedSimpleFunctionDescriptor.initializeWithCoroutinesExperimentalityStatus(
-        extensionReceiverParameter: ReceiverParameterDescriptor?,
-        dispatchReceiverParameter: ReceiverParameterDescriptor?,
-        typeParameters: List<TypeParameterDescriptor>,
-        unsubstitutedValueParameters: List<ValueParameterDescriptor>,
-        unsubstitutedReturnType: KotlinType?,
-        modality: Modality?,
-        visibility: Visibility,
-        userDataMap: Map<out CallableDescriptor.UserDataKey<*>, *>,
-        isSuspend: Boolean
+            extensionReceiverParameter: ReceiverParameterDescriptor?,
+            dispatchReceiverParameter: ReceiverParameterDescriptor?,
+            typeParameters: List<TypeParameterDescriptor>,
+            unsubstitutedValueParameters: List<ValueParameterDescriptor>,
+            unsubstitutedReturnType: KotlinType?,
+            modality: Modality?,
+            visibility: DescriptorVisibility,
+            userDataMap: Map<out CallableDescriptor.UserDataKey<*>, *>,
+            isSuspend: Boolean
     ) {
         initialize(
             extensionReceiverParameter,
@@ -230,7 +230,7 @@ class MemberDeserializer(private val c: DeserializationContext) {
 
                 else -> CoroutinesCompatibilityMode.COMPATIBLE
             }
-        }.max() ?: CoroutinesCompatibilityMode.COMPATIBLE
+        }.maxOrNull() ?: CoroutinesCompatibilityMode.COMPATIBLE
 
         return maxOf(
             if (isSuspend)
@@ -272,6 +272,7 @@ class MemberDeserializer(private val c: DeserializationContext) {
             ProtoEnumFlags.memberKind(Flags.MEMBER_KIND.get(flags)), proto, c.nameResolver, c.typeTable, versionRequirementTable,
             c.containerSource
         )
+
         val local = c.childContext(function, proto.typeParameterList)
 
         function.initializeWithCoroutinesExperimentalityStatus(
@@ -283,7 +284,7 @@ class MemberDeserializer(private val c: DeserializationContext) {
             local.memberDeserializer.valueParameters(proto.valueParameterList, proto, AnnotatedCallableKind.FUNCTION),
             local.typeDeserializer.type(proto.returnType(c.typeTable)),
             ProtoEnumFlags.modality(Flags.MODALITY.get(flags)),
-            ProtoEnumFlags.visibility(Flags.VISIBILITY.get(flags)),
+            ProtoEnumFlags.descriptorVisibility(Flags.VISIBILITY.get(flags)),
             emptyMap<CallableDescriptor.UserDataKey<*>, Any?>(),
             Flags.IS_SUSPEND.get(flags)
         )
@@ -294,9 +295,10 @@ class MemberDeserializer(private val c: DeserializationContext) {
         function.isTailrec = Flags.IS_TAILREC.get(flags)
         function.isSuspend = Flags.IS_SUSPEND.get(flags)
         function.isExpect = Flags.IS_EXPECT_FUNCTION.get(flags)
+        function.setHasStableParameterNames(!Flags.IS_FUNCTION_WITH_NON_STABLE_PARAMETER_NAMES.get(flags))
 
         val mapValueForContract =
-            c.components.contractDeserializer.deserializeContractFromFunction(proto, function, c.typeTable, c.typeDeserializer)
+            c.components.contractDeserializer.deserializeContractFromFunction(proto, function, c.typeTable, local.typeDeserializer)
         if (mapValueForContract != null) {
             function.putInUserDataMap(mapValueForContract.first, mapValueForContract.second)
         }
@@ -309,7 +311,7 @@ class MemberDeserializer(private val c: DeserializationContext) {
             proto.annotationList.map { annotationDeserializer.deserializeAnnotation(it, c.nameResolver) }
         )
 
-        val visibility = ProtoEnumFlags.visibility(Flags.VISIBILITY.get(proto.flags))
+        val visibility = ProtoEnumFlags.descriptorVisibility(Flags.VISIBILITY.get(proto.flags))
         val typeAlias = DeserializedTypeAliasDescriptor(
             c.storageManager, c.containingDeclaration, annotations, c.nameResolver.getName(proto.name),
             visibility, proto, c.nameResolver, c.typeTable, c.versionRequirementTable, c.containerSource
@@ -318,8 +320,8 @@ class MemberDeserializer(private val c: DeserializationContext) {
         val local = c.childContext(typeAlias, proto.typeParameterList)
         typeAlias.initialize(
             local.typeDeserializer.ownTypeParameters,
-            local.typeDeserializer.simpleType(proto.underlyingType(c.typeTable)),
-            local.typeDeserializer.simpleType(proto.expandedType(c.typeTable)),
+            local.typeDeserializer.simpleType(proto.underlyingType(c.typeTable), expandTypeAliases = false),
+            local.typeDeserializer.simpleType(proto.expandedType(c.typeTable), expandTypeAliases = false),
             typeAlias.checkExperimentalCoroutine(local.typeDeserializer)
         )
 
@@ -337,12 +339,15 @@ class MemberDeserializer(private val c: DeserializationContext) {
             isPrimary, CallableMemberDescriptor.Kind.DECLARATION, proto, c.nameResolver, c.typeTable, c.versionRequirementTable,
             c.containerSource
         )
+
         val local = c.childContext(descriptor, listOf())
         descriptor.initialize(
             local.memberDeserializer.valueParameters(proto.valueParameterList, proto, AnnotatedCallableKind.FUNCTION),
-            ProtoEnumFlags.visibility(Flags.VISIBILITY.get(proto.flags))
+            ProtoEnumFlags.descriptorVisibility(Flags.VISIBILITY.get(proto.flags))
         )
         descriptor.returnType = classDescriptor.defaultType
+
+        descriptor.setHasStableParameterNames(!Flags.IS_CONSTRUCTOR_WITH_NON_STABLE_PARAMETER_NAMES.get(proto.flags))
 
         val doesClassContainIncompatibility =
             (c.containingDeclaration as? DeserializedClassDescriptor)

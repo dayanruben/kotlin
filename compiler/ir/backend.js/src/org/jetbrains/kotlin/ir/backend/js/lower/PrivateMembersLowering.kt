@@ -1,104 +1,188 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.ir.backend.js.lower
 
-import org.jetbrains.kotlin.backend.common.ClassLoweringPass
-import org.jetbrains.kotlin.backend.common.descriptors.WrappedSimpleFunctionDescriptor
-import org.jetbrains.kotlin.backend.common.descriptors.WrappedValueParameterDescriptor
+import org.jetbrains.kotlin.backend.common.BodyLoweringPass
+import org.jetbrains.kotlin.backend.common.DeclarationTransformer
 import org.jetbrains.kotlin.backend.common.ir.copyTo
-import org.jetbrains.kotlin.descriptors.Visibilities
-import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
+import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.ir.backend.js.JsIrBackendContext
-import org.jetbrains.kotlin.ir.declarations.IrClass
-import org.jetbrains.kotlin.ir.declarations.IrDeclarationOriginImpl
-import org.jetbrains.kotlin.ir.declarations.IrProperty
-import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
-import org.jetbrains.kotlin.ir.declarations.impl.IrFunctionImpl
-import org.jetbrains.kotlin.ir.declarations.impl.IrValueParameterImpl
+import org.jetbrains.kotlin.ir.builders.declarations.buildFun
+import org.jetbrains.kotlin.ir.builders.declarations.buildValueParameter
+import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrFunctionReferenceImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrGetValueImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrPropertyReferenceImpl
-import org.jetbrains.kotlin.ir.symbols.impl.IrSimpleFunctionSymbolImpl
-import org.jetbrains.kotlin.ir.symbols.impl.IrValueParameterSymbolImpl
 import org.jetbrains.kotlin.ir.util.deepCopyWithSymbols
-import org.jetbrains.kotlin.ir.util.transformFlat
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.name.Name
 
-val STATIC_THIS_PARAMETER = object : IrDeclarationOriginImpl("STATIC_THIS_PARAMETER") {}
+private val STATIC_THIS_PARAMETER = object : IrDeclarationOriginImpl("STATIC_THIS_PARAMETER") {}
 
-class PrivateMembersLowering(val context: JsIrBackendContext) : ClassLoweringPass {
-    private val memberMap = mutableMapOf<IrSimpleFunction, IrSimpleFunction>()
+class PrivateMembersLowering(val context: JsIrBackendContext) : DeclarationTransformer {
 
-    override fun lower(irClass: IrClass) {
+    private var IrFunction.correspondingStatic by context.mapping.privateMemberToCorrespondingStatic
 
+    override fun transformFlat(declaration: IrDeclaration): List<IrDeclaration>? {
+        return when (declaration) {
+            is IrSimpleFunction -> transformMemberToStaticFunction(declaration)?.let { staticFunction ->
+                declaration.correspondingStatic = staticFunction
+                listOf(staticFunction)
+            }
+            is IrProperty -> listOf(declaration.apply {
+                // Detach old function from corresponding property
+                this.getter = this.getter?.let { g -> transformAccessor(g) }
+                this.setter = this.setter?.let { s -> transformAccessor(s) }
+            })
+            else -> null
+        }
+    }
 
-        irClass.declarations.transformFlat {
-            when (it) {
-                is IrSimpleFunction -> transformMemberToStaticFunction(it)?.let { staticFunction ->
-                    memberMap[it] = staticFunction
-                    listOf(staticFunction)
-                }
-                is IrProperty -> listOf(it.apply {
-                    getter = getter?.let { g -> transformAccessor(g) }
-                    setter = setter?.let { s -> transformAccessor(s) }
-                })
-                else -> null
+    private fun transformAccessor(accessor: IrSimpleFunction) = transformMemberToStaticFunction(accessor) ?: accessor
+
+    private fun transformMemberToStaticFunction(function: IrSimpleFunction): IrSimpleFunction? {
+
+        if (function.visibility != DescriptorVisibilities.PRIVATE || function.dispatchReceiverParameter == null) return null
+
+        val staticFunction = context.irFactory.buildFun {
+            updateFrom(function)
+            name = function.name
+            returnType = function.returnType
+        }.also {
+            it.parent = function.parent
+            it.correspondingPropertySymbol = function.correspondingPropertySymbol
+        }
+
+        staticFunction.typeParameters += function.typeParameters.map { it.deepCopyWithSymbols(staticFunction) }
+
+        staticFunction.extensionReceiverParameter = function.extensionReceiverParameter?.copyTo(staticFunction)
+        staticFunction.valueParameters += buildValueParameter(staticFunction) {
+            origin = STATIC_THIS_PARAMETER
+            name = Name.identifier("\$this")
+            index = 0
+            type = function.dispatchReceiverParameter!!.type
+        }
+
+        function.correspondingStatic = staticFunction
+
+        staticFunction.valueParameters += function.valueParameters.map {
+            // TODO better way to avoid copying default value
+            it.copyTo(staticFunction, index = it.index + 1, defaultValue = null)
+        }
+
+        val oldParameters =
+            listOfNotNull(function.extensionReceiverParameter, function.dispatchReceiverParameter) + function.valueParameters
+        val newParameters = listOfNotNull(staticFunction.extensionReceiverParameter) + staticFunction.valueParameters
+        assert(oldParameters.size == newParameters.size)
+
+        val parameterMapping = oldParameters.zip(newParameters).toMap()
+
+        val parameterTransformer = object : IrElementTransformerVoid() {
+            override fun visitGetValue(expression: IrGetValue) = parameterMapping[expression.symbol.owner]?.let {
+                expression.run { IrGetValueImpl(startOffset, endOffset, type, it.symbol, origin) }
+            } ?: expression
+        }
+
+        fun IrBody.copyWithParameters(): IrBody {
+            return deepCopyWithSymbols(staticFunction).also {
+                it.transform(parameterTransformer, null)
             }
         }
 
-        irClass.transform(object : IrElementTransformerVoid() {
+        function.valueParameters.forEach {
+            // TODO better way to avoid copying default value
+
+            parameterMapping[it]?.apply {
+                it.defaultValue?.let { originalDefault ->
+                    defaultValue = context.irFactory.createExpressionBody(it.startOffset, it.endOffset) {
+                        expression = (originalDefault.copyWithParameters() as IrExpressionBody).expression
+                    }
+                }
+            }
+        }
+
+        function.body?.let {
+            staticFunction.body = when (it) {
+                is IrBlockBody -> context.irFactory.createBlockBody(it.startOffset, it.endOffset) {
+                    statements += (it.copyWithParameters() as IrBlockBody).statements
+                }
+                is IrExpressionBody -> context.irFactory.createExpressionBody(it.startOffset, it.endOffset) {
+                    expression = (it.copyWithParameters() as IrExpressionBody).expression
+                }
+                is IrSyntheticBody -> it
+                else -> error("Unexpected body kind: ${it.javaClass}")
+            }
+        }
+
+        return staticFunction
+    }
+}
+
+class PrivateMemberBodiesLowering(val context: JsIrBackendContext) : BodyLoweringPass {
+
+    private var IrFunction.correspondingStatic by context.mapping.privateMemberToCorrespondingStatic
+
+    override fun lower(irBody: IrBody, container: IrDeclaration) {
+        irBody.transform(object : IrElementTransformerVoid() {
             override fun visitCall(expression: IrCall): IrExpression {
                 super.visitCall(expression)
 
-                return memberMap[expression.symbol.owner]?.let {
+                return expression.symbol.owner.correspondingStatic?.let {
                     transformPrivateToStaticCall(expression, it)
                 } ?: expression
             }
 
-            override fun visitFunctionReference(expression: IrFunctionReference) = memberMap[expression.symbol.owner]?.let {
-                transformPrivateToStaticReference(expression) {
-                    IrFunctionReferenceImpl(
-                        expression.startOffset, expression.endOffset,
-                        expression.type,
-                        it.symbol, it.descriptor,
-                        expression.typeArgumentsCount, expression.valueArgumentsCount,
-                        expression.origin
-                    )
-                }
-            } ?: expression
+            override fun visitFunctionReference(expression: IrFunctionReference): IrExpression {
+                super.visitFunctionReference(expression)
+
+                return expression.symbol.owner.correspondingStatic?.let {
+                    transformPrivateToStaticReference(expression) {
+                        IrFunctionReferenceImpl(
+                            expression.startOffset, expression.endOffset,
+                            expression.type,
+                            it.symbol, expression.typeArgumentsCount,
+                            expression.valueArgumentsCount, expression.reflectionTarget, expression.origin
+                        )
+                    }
+                } ?: expression
+            }
 
             override fun visitPropertyReference(expression: IrPropertyReference): IrExpression {
-                return if (expression.getter?.owner in memberMap || expression.setter?.owner in memberMap) {
+                super.visitPropertyReference(expression)
+
+                val staticGetter = expression.getter?.owner?.correspondingStatic
+                val staticSetter = expression.setter?.owner?.correspondingStatic
+
+                return if (staticGetter != null || staticSetter != null) {
                     transformPrivateToStaticReference(expression) {
                         IrPropertyReferenceImpl(
                             expression.startOffset, expression.endOffset,
                             expression.type,
-                            expression.descriptor,
+                            expression.symbol, // TODO remap property symbol based on remapped getter/setter?
                             expression.typeArgumentsCount,
                             expression.field,
-                            memberMap[expression.getter?.owner]?.symbol ?: expression.getter,
-                            memberMap[expression.setter?.owner]?.symbol ?: expression.setter,
+                            staticGetter?.symbol ?: expression.getter,
+                            staticSetter?.symbol ?: expression.setter,
                             expression.origin
                         )
                     }
                 } else expression
             }
 
-
             private fun transformPrivateToStaticCall(expression: IrCall, staticTarget: IrSimpleFunction): IrCall {
                 val newExpression = IrCallImpl(
                     expression.startOffset, expression.endOffset,
                     expression.type,
-                    staticTarget.symbol, staticTarget.descriptor,
-                    expression.typeArgumentsCount,
-                    expression.origin,
-                    expression.superQualifierSymbol
+                    staticTarget.symbol,
+                    typeArgumentsCount = expression.typeArgumentsCount,
+                    valueArgumentsCount = expression.valueArgumentsCount + 1,
+                    origin = expression.origin,
+                    superQualifierSymbol = expression.superQualifierSymbol
                 )
 
                 newExpression.extensionReceiver = expression.extensionReceiver
@@ -111,10 +195,11 @@ class PrivateMembersLowering(val context: JsIrBackendContext) : ClassLoweringPas
 
                 return newExpression
             }
+
             private fun transformPrivateToStaticReference(
-                expression: IrCallableReference,
-                builder: () -> IrCallableReference
-            ): IrCallableReference {
+                expression: IrCallableReference<*>,
+                builder: () -> IrCallableReference<*>
+            ): IrCallableReference<*> {
 
                 val newExpression = builder()
 
@@ -130,69 +215,4 @@ class PrivateMembersLowering(val context: JsIrBackendContext) : ClassLoweringPas
             }
         }, null)
     }
-
-    private fun transformAccessor(accessor: IrSimpleFunction) =
-        transformMemberToStaticFunction(accessor)?.also { memberMap[accessor] = it } ?: accessor
-
-    private fun transformMemberToStaticFunction(function: IrSimpleFunction): IrSimpleFunction? {
-
-        if (function.visibility != Visibilities.PRIVATE || function.dispatchReceiverParameter == null) return null
-
-        val descriptor = WrappedSimpleFunctionDescriptor()
-        val symbol = IrSimpleFunctionSymbolImpl(descriptor)
-        val staticFunction = function.run {
-            IrFunctionImpl(
-                startOffset, endOffset, origin,
-                symbol, name, visibility, modality,
-                returnType,
-                isInline, isExternal, isTailrec, isSuspend
-            ).also {
-                descriptor.bind(it)
-                it.parent = parent
-                it.correspondingProperty = correspondingProperty
-            }
-        }
-
-
-        staticFunction.typeParameters += function.typeParameters.map { it.deepCopyWithSymbols(staticFunction) }
-
-        staticFunction.extensionReceiverParameter = function.extensionReceiverParameter?.copyTo(staticFunction)
-        val thisDesc = WrappedValueParameterDescriptor()
-        val thisSymbol = IrValueParameterSymbolImpl(thisDesc)
-        staticFunction.valueParameters += IrValueParameterImpl(
-            UNDEFINED_OFFSET,
-            UNDEFINED_OFFSET,
-            STATIC_THIS_PARAMETER,
-            thisSymbol,
-            Name.identifier("\$this"),
-            0,
-            function.dispatchReceiverParameter!!.type,
-            null,
-            false,
-            false
-        ).also {
-            thisDesc.bind(it)
-            it.parent = staticFunction
-        }
-
-        staticFunction.valueParameters += function.valueParameters.map { it.copyTo(staticFunction, index = it.index + 1) }
-
-        val oldParameters =
-            listOfNotNull(function.extensionReceiverParameter, function.dispatchReceiverParameter) + function.valueParameters
-        val newParameters = listOfNotNull(staticFunction.extensionReceiverParameter) + staticFunction.valueParameters
-        assert(oldParameters.size == newParameters.size)
-
-        val parameterMapping = oldParameters.zip(newParameters).toMap()
-
-        staticFunction.body = function.body?.deepCopyWithSymbols(staticFunction)
-
-        staticFunction.transform(object : IrElementTransformerVoid() {
-            override fun visitGetValue(expression: IrGetValue) = parameterMapping[expression.symbol.owner]?.let {
-                expression.run { IrGetValueImpl(startOffset, endOffset, type, it.symbol, origin) }
-            } ?: expression
-        }, null)
-
-        return staticFunction
-    }
-
 }

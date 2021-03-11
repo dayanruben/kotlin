@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.inspections
@@ -10,7 +10,10 @@ import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
+import org.jetbrains.kotlin.test.JUnit3WithIdeaConfigurationRunner
+import org.junit.runner.RunWith
 
+@RunWith(JUnit3WithIdeaConfigurationRunner::class)
 class CoroutineNonBlockingContextDetectionTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun getTestDataPath(): String = PluginTestCaseBase.getTestDataPathBase() + "/inspections/blockingCallsDetection"
 
@@ -23,27 +26,27 @@ class CoroutineNonBlockingContextDetectionTest : KotlinLightCodeInsightFixtureTe
     }
 
     fun testSimpleCoroutineScope() {
-        myFixture.configureByFile("InsideCoroutine.kt")
-        myFixture.testHighlighting(true, false, false, "InsideCoroutine.kt")
+        doTest("InsideCoroutine.kt")
     }
 
     fun testCoroutineContextCheck() {
-        myFixture.configureByFiles("ContextCheck.kt")
-        myFixture.testHighlighting(true, false, false, "ContextCheck.kt")
+        doTest("ContextCheck.kt")
     }
 
     fun testLambdaReceiverType() {
-        myFixture.configureByFile("LambdaReceiverTypeCheck.kt")
-        myFixture.testHighlighting(true, false, false, "LambdaReceiverTypeCheck.kt")
+        doTest("LambdaReceiverTypeCheck.kt")
     }
 
     fun testNestedFunctionsInsideSuspendLambda() {
-        myFixture.configureByFile("NestedFunctionsInsideSuspendLambda.kt")
-        myFixture.testHighlighting(true, false, false, "NestedFunctionsInsideSuspendLambda.kt")
+        doTest("NestedFunctionsInsideSuspendLambda.kt")
     }
 
     fun testDispatchersTypeDetection() {
-        myFixture.configureByFile("DispatchersTypeCheck.kt")
-        myFixture.testHighlighting(true, false, false, "DispatchersTypeCheck.kt")
+        doTest("DispatchersTypeCheck.kt")
+    }
+
+    private fun doTest(fileName: String) {
+        myFixture.configureByFile(fileName)
+        myFixture.testHighlighting(true, false, false, fileName)
     }
 }

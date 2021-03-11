@@ -20,6 +20,7 @@ import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemDescriptorBase
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.idea.inspections.gradle.DifferentKotlinGradleVersionInspection
 import org.jetbrains.kotlin.idea.inspections.runInspection
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
@@ -28,12 +29,17 @@ import org.junit.Test
 import java.io.File
 
 class GradleInspectionTest : GradleImportingTestCase() {
+
+    // Disable gradle inspection tests in AndroidStudio as they are disabled in distribution
+    override fun isApplicableTest(): Boolean = isGradleInspectionTestApplicable()
+
+
     @Test
     fun testDifferentStdlibGradleVersion() {
         val problems = getInspectionResultFromTestDataProject()
 
         Assert.assertEquals(1, problems.size)
-        Assert.assertEquals("Plugin version (1.0.2) is not the same as library version (1.0.3)", problems.single())
+        Assert.assertEquals("Plugin version (1.3.20) is not the same as library version (1.3.30)", problems.single())
     }
 
     @Test
@@ -41,7 +47,7 @@ class GradleInspectionTest : GradleImportingTestCase() {
         val problems = getInspectionResultFromTestDataProject()
 
         Assert.assertEquals(1, problems.size)
-        Assert.assertEquals("Plugin version (1.0.2) is not the same as library version (1.0.3)", problems.single())
+        Assert.assertEquals("Plugin version (1.3.20) is not the same as library version (1.3.30)", problems.single())
     }
 
     @Test
@@ -49,7 +55,7 @@ class GradleInspectionTest : GradleImportingTestCase() {
         val problems = getInspectionResultFromTestDataProject()
 
         Assert.assertEquals(1, problems.size)
-        Assert.assertEquals("Plugin version (1.1.0-beta-17) is not the same as library version (1.1.0-beta-22)", problems.single())
+        Assert.assertEquals("Plugin version (1.3.20) is not the same as library version (1.3.30)", problems.single())
     }
 
     @Test
@@ -57,7 +63,7 @@ class GradleInspectionTest : GradleImportingTestCase() {
         val problems = getInspectionResultFromTestDataProject()
 
         Assert.assertEquals(1, problems.size)
-        Assert.assertEquals("Plugin version (1.1.0-beta-17) is not the same as library version (1.1.0-beta-22)", problems.single())
+        Assert.assertEquals("Plugin version (1.3.20) is not the same as library version (1.3.30)", problems.single())
     }
 
     @Test
@@ -65,7 +71,7 @@ class GradleInspectionTest : GradleImportingTestCase() {
         val problems = getInspectionResultFromTestDataProject()
 
         Assert.assertEquals(1, problems.size)
-        Assert.assertEquals("Plugin version (1.0.1) is not the same as library version (1.0.3)", problems.single())
+        Assert.assertEquals("Plugin version ($LATEST_STABLE_GRADLE_PLUGIN_VERSION) is not the same as library version (1.3.30)", problems.single())
     }
 
     @Test
@@ -76,18 +82,20 @@ class GradleInspectionTest : GradleImportingTestCase() {
 
         Assert.assertEquals(1, problems.size)
         Assert.assertEquals(
-            "Kotlin version that is used for building with Gradle (1.0.1) differs from the one bundled into the IDE plugin (\$PLUGIN_VERSION)",
+            "Kotlin version that is used for building with Gradle ($LATEST_STABLE_GRADLE_PLUGIN_VERSION) differs from the one bundled into the IDE plugin (\$PLUGIN_VERSION)",
             problems.single()
         )
     }
 
     @Test
+    @TargetVersions("4.9")
     fun testJreInOldVersion() {
         val problems = getInspectionResultFromTestDataProject()
         Assert.assertTrue("The inspection result should be empty but contains the following elements: [$problems].", problems.isEmpty())
     }
 
     @Test
+    @TargetVersions("4.9")
     fun testJreIsDeprecated() {
         val problems = getInspectionResultFromTestDataProject()
 
@@ -99,6 +107,7 @@ class GradleInspectionTest : GradleImportingTestCase() {
     }
 
     @Test
+    @TargetVersions("4.9")
     fun testJreIsDeprecatedWithImplementation() {
         val problems = getInspectionResultFromTestDataProject()
 
@@ -109,7 +118,7 @@ class GradleInspectionTest : GradleImportingTestCase() {
         )
     }
 
-    @TargetVersions("4.9+")
+    @TargetVersions("4.9")
     @Test
     fun testJreIsDeprecatedWithoutImplicitVersion() {
         val problems = getInspectionResultFromTestDataProject()
@@ -136,6 +145,7 @@ class GradleInspectionTest : GradleImportingTestCase() {
     }
 
     @Test
+    @TargetVersions("4.9")
     fun testObsoleteCoroutinesUsage() {
         val problems = getInspectionResultFromTestDataProject()
 
@@ -157,17 +167,18 @@ class GradleInspectionTest : GradleImportingTestCase() {
 
     private fun getInspectionResult(tool: LocalInspectionTool, file: VirtualFile): List<String> {
         val resultRef = Ref<List<String>>()
-        invokeTestRunnable {
-            val presentation = runInspection(tool, myProject, listOf(file))
+        runInEdtAndWait {
+            invokeTestRunnable {
+                val presentation = runInspection(tool, myProject, listOf(file))
 
-            val foundProblems = presentation.problemElements
-                .values
-                .mapNotNull { it as? ProblemDescriptorBase }
-                .map { it.descriptionTemplate }
+                val foundProblems = presentation.problemElements
+                    .values
+                    .mapNotNull { it as? ProblemDescriptorBase }
+                    .map { it.descriptionTemplate }
 
-            resultRef.set(foundProblems)
+                resultRef.set(foundProblems)
+            }
         }
-
         return resultRef.get()
     }
 

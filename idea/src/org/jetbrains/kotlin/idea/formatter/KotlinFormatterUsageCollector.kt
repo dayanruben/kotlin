@@ -1,68 +1,78 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2000-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.formatter
 
-import com.intellij.internal.statistic.AbstractProjectsUsagesCollector
-import com.intellij.internal.statistic.beans.GroupDescriptor
-import com.intellij.internal.statistic.beans.UsageDescriptor
-import com.intellij.internal.statistic.utils.getEnumUsage
+import com.intellij.application.options.CodeStyle
+import com.intellij.internal.statistic.beans.MetricEvent
+import com.intellij.internal.statistic.beans.newMetric
+import com.intellij.internal.statistic.eventLog.FeatureUsageData
+import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import org.jetbrains.kotlin.idea.core.formatter.KotlinCodeStyleSettings
 import org.jetbrains.kotlin.idea.formatter.KotlinFormatterUsageCollector.KotlinFormatterKind.*
 import org.jetbrains.kotlin.idea.util.isDefaultOfficialCodeStyle
 
-class KotlinFormatterUsageCollector : AbstractProjectsUsagesCollector() {
-    override fun getGroupId(): GroupDescriptor = GroupDescriptor.create(GROUP_ID)
+class KotlinFormatterUsageCollector : ProjectUsagesCollector() {
 
-    override fun getProjectUsages(project: Project): Set<UsageDescriptor> {
+    override fun getGroupId() = "kotlin.ide.formatter"
+    override fun getVersion(): Int = 1
+
+    override fun getMetrics(project: Project): Set<MetricEvent> {
         val usedFormatter = getKotlinFormatterKind(project)
 
-        val settings = CodeStyleSettingsManager.getSettings(project)
-        val kotlinCommonSettings = settings.kotlinCommonSettings
-        val kotlinCustomSettings = settings.kotlinCustomSettings
+        val data = FeatureUsageData()
+            .addData("kind", usedFormatter.name)
+            .addData("defaults", getDefaultCodeStyle(project))
 
         return setOf(
-            getEnumUsage("kotlin.formatter.kind", usedFormatter),
-            getEnumStringPropertyUsage(
-                "kotlin.formatter.defaults",
-                kotlinCustomSettings.CODE_STYLE_DEFAULTS ?: kotlinCommonSettings.CODE_STYLE_DEFAULTS
-            )
+            newMetric("settings", data)
         )
     }
 
-    private fun getEnumStringPropertyUsage(key: String, value: String?): UsageDescriptor {
-        return UsageDescriptor(key + "." + value.toString().toLowerCase(java.util.Locale.ENGLISH), 1)
+    private fun getDefaultCodeStyle(project: Project): String {
+
+        val settings = CodeStyle.getSettings(project)
+        val kotlinCommonSettings = settings.kotlinCommonSettings
+        val kotlinCustomSettings = settings.kotlinCustomSettings
+
+        val defaults = kotlinCustomSettings.CODE_STYLE_DEFAULTS ?: kotlinCommonSettings.CODE_STYLE_DEFAULTS
+
+        return defaults ?: "ide_defaults"
     }
 
+
     companion object {
-        private const val GROUP_ID = "kotlin.formatter"
 
         private val KOTLIN_DEFAULT_COMMON = KotlinLanguageCodeStyleSettingsProvider().defaultCommonSettings
             .also { KotlinStyleGuideCodeStyle.applyToCommonSettings(it) }
 
-        private val KOTLIN_DEFAULT_CUSTOM = KotlinCodeStyleSettings.DEFAULT.cloneSettings()
-            .also { KotlinStyleGuideCodeStyle.applyToKotlinCustomSettings(it) }
+        private val KOTLIN_DEFAULT_CUSTOM by lazy {
+            KotlinCodeStyleSettings.defaultSettings().cloneSettings()
+                .also { KotlinStyleGuideCodeStyle.applyToKotlinCustomSettings(it) }
+        }
 
         private val KOTLIN_OBSOLETE_DEFAULT_COMMON = KotlinLanguageCodeStyleSettingsProvider().defaultCommonSettings
             .also { KotlinObsoleteCodeStyle.applyToCommonSettings(it) }
 
-        private val KOTLIN_OBSOLETE_DEFAULT_CUSTOM = KotlinCodeStyleSettings.DEFAULT.cloneSettings()
-            .also { KotlinObsoleteCodeStyle.applyToKotlinCustomSettings(it) }
+        private val KOTLIN_OBSOLETE_DEFAULT_CUSTOM by lazy {
+            KotlinCodeStyleSettings.defaultSettings().cloneSettings()
+                .also { KotlinObsoleteCodeStyle.applyToKotlinCustomSettings(it) }
+        }
 
         fun getKotlinFormatterKind(project: Project): KotlinFormatterKind {
             val isProject = CodeStyleSettingsManager.getInstance(project).USE_PER_PROJECT_SETTINGS
             val isDefaultOfficialCodeStyle = isDefaultOfficialCodeStyle
 
-            val settings = CodeStyleSettingsManager.getSettings(project)
+            val settings = CodeStyle.getSettings(project)
             val kotlinCommonSettings = settings.kotlinCommonSettings
             val kotlinCustomSettings = settings.kotlinCustomSettings
 
             val isDefaultKotlinCommonSettings = kotlinCommonSettings == KotlinLanguageCodeStyleSettingsProvider().defaultCommonSettings
-            val isDefaultKotlinCustomSettings = kotlinCustomSettings == KotlinCodeStyleSettings.DEFAULT
+            val isDefaultKotlinCustomSettings = kotlinCustomSettings == KotlinCodeStyleSettings.defaultSettings()
 
             if (isDefaultKotlinCommonSettings && isDefaultKotlinCustomSettings) {
                 return if (isDefaultOfficialCodeStyle) {

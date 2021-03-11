@@ -1,4 +1,7 @@
-// IGNORE_BACKEND: JS_IR
+// DONT_TARGET_EXACT_BACKEND: WASM
+// WASM_MUTE_REASON: STDLIB_COLLECTIONS
+// KJS_WITH_FULL_RUNTIME
+
 operator fun <K, V> MutableMap<K, V>.set(key : K, value : V) = put(key, value)
 
 fun box() : String {

@@ -2,6 +2,8 @@
  * In this example you can see a crossroads. Traffic light change color by timer,
  * but you can change it manually using controls at the right part of screen.
  */
+@file:Suppress("DEPRECATION_ERROR")
+
 package traffic
 
 import jquery.*
@@ -29,7 +31,7 @@ val context: CanvasRenderingContext2D
     }
 
 
-val PATH_TO_IMAGES = "http://try.kotlinlang.org/static/images/canvas/"
+val PATH_TO_IMAGES = "https://try.kotlinlang.org/static/images/canvas/"
 
 
 val state: CanvasState by lazy { CanvasState(canvas) }

@@ -9,13 +9,17 @@ val testJvm6ServerRuntime by configurations.creating
 
 dependencies {
     testCompile(projectTests(":compiler"))
-    testCompile(projectTests(":compiler:tests-common"))
+    testApi(projectTests(":compiler:test-infrastructure"))
+    testApi(projectTests(":compiler:test-infrastructure-utils"))
+    testApi(projectTests(":compiler:tests-compiler-utils"))
+    testCompile(projectTests(":compiler:tests-common-new"))
+
+    testApiJUnit5(vintageEngine = true, runner = true, suiteApi = true)
+
     testCompileOnly(intellijCoreDep()) { includeJars("intellij-core") }
     testRuntime(project(":kotlin-reflect"))
     testRuntime(intellijDep())
-    testRuntime(intellijDep())
     testJvm6ServerRuntime(projectTests(":compiler:tests-common-jvm6"))
-    compileOnly("org.jetbrains:annotations:13.0")
 }
 
 sourceSets {
@@ -23,19 +27,31 @@ sourceSets {
     "test" { projectDefault() }
 }
 
-fun Project.codegenTest(target: Int, jvm: Int,
-                        jdk: String = "JDK_${if (jvm <= 8) "1" else ""}$jvm",
-                        body: Test.() -> Unit): Test = projectTest("codegenTarget${target}Jvm${jvm}Test") {
-    dependsOn(*testDistProjects.map { "$it:dist" }.toTypedArray())
+fun Project.codegenTest(
+    target: Int, jvm: Int,
+    jdk: String = "JDK_${if (jvm <= 8) "1" else ""}$jvm",
+    body: Test.() -> Unit
+) {
+    codegenTest(target, jvm.toString(), jdk, body = body)
+}
+
+fun Project.codegenTest(
+    target: Int, jvm: String, jdk: String,
+    targetInTestClass: String = "$target",
+    body: Test.() -> Unit
+): TaskProvider<Test> = projectTest("codegenTarget${targetInTestClass}Jvm${jvm}Test", jUnit5Enabled = true) {
+    dependsOn(":dist")
     workingDir = rootDir
 
-    filter.includeTestsMatching("org.jetbrains.kotlin.codegen.jdk.JvmTarget${target}OnJvm${jvm}")
+    val testName = "JvmTarget${targetInTestClass}OnJvm${jvm}"
+    filter.includeTestsMatching("org.jetbrains.kotlin.codegen.jdk.$testName")
 
+    systemProperty("kotlin.test.default.jvm.target", "${if (target <= 8) "1." else ""}$target")
     body()
     doFirst {
         val jdkPath = project.findProperty(jdk) ?: error("$jdk is not optional to run this test")
         executable = "$jdkPath/bin/java"
-        println("Running test with $executable")
+        println("Running tests with $target target and $executable")
     }
     group = "verification"
 }
@@ -43,64 +59,53 @@ fun Project.codegenTest(target: Int, jvm: Int,
 codegenTest(target = 6, jvm = 6, jdk = "JDK_18") {
     dependsOn(testJvm6ServerRuntime)
 
-    val port = project.findProperty("kotlin.compiler.codegen.tests.port")?.toString() ?: "5100"
-    var jdkProcess: Process? = null
-
     doFirst {
-        logger.info("Configuring JDK 6 server...")
-        val jdkPath = project.findProperty("JDK_16") ?: error("JDK_16 is not optional to run this test")
-        val executable = "$jdkPath/bin/java"
-        val main = "org.jetbrains.kotlin.test.clientserver.TestProcessServer"
-        val classpath = testJvm6ServerRuntime.asPath
+        systemProperty("kotlin.test.default.jvm.target", "1.6")
+        systemProperty("kotlin.test.java.compilation.target", "1.6")
 
-        logger.debug("Server classpath: $classpath")
-
-        val builder = ProcessBuilder(executable, "-cp", classpath, main, port)
-        builder.directory(rootDir)
-
-        builder.inheritIO()
-        builder.redirectErrorStream(true)
-
-        logger.info("Starting JDK 6 server $executable")
-        jdkProcess = builder.start()
-
-    }
-    systemProperty("kotlin.test.default.jvm.target", "1.6")
-    systemProperty("kotlin.test.java.compilation.target", "1.6")
-    systemProperty("kotlin.test.box.in.separate.process.port", port)
-
-    doLast {
-        logger.info("Stopping JDK 6 server...")
-        jdkProcess?.destroy()
+        val port = project.findProperty("kotlin.compiler.codegen.tests.port") ?: "5100"
+        systemProperty("kotlin.test.box.in.separate.process.port", port)
+        systemProperty("kotlin.test.box.in.separate.process.server.classpath", testJvm6ServerRuntime.asPath)
     }
 }
 
-codegenTest(target = 6, jvm = 9) {
-    systemProperty("kotlin.test.default.jvm.target", "1.6")
+//JDK 8
+codegenTest(target = 6, jvm = 8) {}
+
+// This is default one and is executed in default build configuration
+codegenTest(target = 8, jvm = 8) {}
+
+//JDK 11
+codegenTest(target = 6, jvm = 11) {}
+
+codegenTest(target = 8, jvm = 11) {}
+
+codegenTest(target = 11, jvm = 11) {}
+
+//JDK 15
+codegenTest(target = 6, jvm = 15) {}
+
+codegenTest(target = 8, jvm = 15) {}
+
+codegenTest(target = 15, jvm = 15) {
+    systemProperty("kotlin.test.box.d8.disable", true)
 }
 
-codegenTest(target = 8, jvm = 8) {
-    systemProperty("kotlin.test.default.jvm.target", "1.8")
-}
+//..also add this two tasks to build after adding fresh jdks to build agents
+val mostRecentJdk = JdkMajorVersion.values().last().name
 
-codegenTest(target = 8, jvm = 9) {
-    systemProperty("kotlin.test.default.jvm.target", "1.8")
-}
+//LAST JDK from JdkMajorVersion available on machine
+codegenTest(target = 6, jvm = "Last", jdk = mostRecentJdk) {}
 
-codegenTest(target = 9, jvm = 9) {
-    systemProperty("kotlin.test.default.jvm.target", "1.8")
-    systemProperty("kotlin.test.substitute.bytecode.1.8.to.1.9", "true")
-}
+codegenTest(target = 8, jvm = "Last", jdk = mostRecentJdk) {}
 
-codegenTest(target = 10, jvm = 10) {
-    systemProperty("kotlin.test.default.jvm.target", "1.8")
-    systemProperty("kotlin.test.substitute.bytecode.1.8.to.10", "true")
+codegenTest(
+    mostRecentJdk.substringAfter('_').toInt(),
+    targetInTestClass = "Last",
+    jvm = "Last",
+    jdk = mostRecentJdk
+) {
+    systemProperty("kotlin.test.box.d8.disable", true)
 }
-
-codegenTest(target = 8, jvm = 11) {
-    systemProperty("kotlin.test.default.jvm.target", "1.8")
-    jvmArgs!!.add( "-XX:-FailOverToOldVerifier")
-}
-
 
 testsJar()

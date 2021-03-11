@@ -1,6 +1,5 @@
-// IGNORE_BACKEND: JVM_IR
-// FILE: 1.kt
 // WITH_RUNTIME
+// FILE: 1.kt
 package test
 
 inline public fun String.run(p1: String? = null): String {

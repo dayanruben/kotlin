@@ -1,6 +1,7 @@
-// !LANGUAGE: -RefinedSamAdaptersPriority
+// !LANGUAGE: -RefinedSamAdaptersPriority -NewInference
 // !DIAGNOSTICS: -UNUSED_PARAMETER
 // !CHECK_TYPE
+// !WITH_NEW_INFERENCE
 
 // FILE: Foo.java
 import kotlin.Unit;

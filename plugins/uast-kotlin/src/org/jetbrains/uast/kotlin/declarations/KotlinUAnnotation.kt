@@ -19,7 +19,8 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.annotationClass
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.ErrorUtils
-import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
+import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.declarations.KotlinUIdentifier
 import org.jetbrains.uast.kotlin.declarations.KotlinUMethod
@@ -62,7 +63,9 @@ abstract class KotlinUAnnotationBase<T : KtCallElement>(
 
     protected abstract fun computeClassDescriptor(): ClassDescriptor?
 
-    override fun resolve(): PsiClass? = computeClassDescriptor()?.toSource()?.getMaybeLightElement(this) as? PsiClass
+    override fun resolve(): PsiClass? = computeClassDescriptor()?.let {
+        sourcePsi.calleeExpression?.let { ktExpression -> resolveToDeclaration(ktExpression, it) }
+    } as? PsiClass
 
     override fun findAttributeValue(name: String?): UExpression? =
         findDeclaredAttributeValue(name) ?: findAttributeDefaultValue(name ?: "value")
@@ -94,9 +97,13 @@ abstract class KotlinUAnnotationBase<T : KtCallElement>(
     }
 
     override fun convertParent(): UElement? {
+        sourcePsi.parent.safeAs<KtAnnotatedExpression>()?.let {
+            return it.baseExpression?.let { KotlinConverter.convertExpression(it, null, DEFAULT_EXPRESSION_TYPES_LIST) }
+        }
+
         val superParent = super.convertParent() ?: return null
         if (annotationUseSiteTarget() == AnnotationUseSiteTarget.RECEIVER) {
-            (superParent.uastParent as? KotlinUMethod)?.uastParameters?.firstIsInstance<KotlinReceiverUParameter>()?.let {
+            (superParent.uastParent as? KotlinUMethod)?.uastParameters?.firstIsInstanceOrNull<KotlinReceiverUParameter>()?.let {
                 return it
             }
         }
@@ -121,9 +128,7 @@ class KotlinUAnnotation(
     override val uastAnchor by lazy {
         KotlinUIdentifier(
             javaPsi?.nameReferenceElement,
-            annotationEntry.typeReference?.typeElement?.let {
-                (it as? KtUserType)?.referenceExpression?.getReferencedNameElement() ?: it.navigationElement
-            },
+            annotationEntry.typeReference?.nameElement,
             this
         )
     }

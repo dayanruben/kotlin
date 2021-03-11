@@ -17,7 +17,7 @@
 package org.jetbrains.kotlin.resolve
 
 import com.intellij.util.SmartList
-import org.jetbrains.kotlin.builtins.PlatformToKotlinClassMap
+import org.jetbrains.kotlin.builtins.PlatformToKotlinClassMapper
 import org.jetbrains.kotlin.builtins.createFunctionType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
@@ -31,16 +31,19 @@ import org.jetbrains.kotlin.diagnostics.Errors.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.codeFragmentUtil.debugTypeInfo
 import org.jetbrains.kotlin.psi.codeFragmentUtil.suppressDiagnosticsInDebugMode
 import org.jetbrains.kotlin.psi.debugText.getDebugText
 import org.jetbrains.kotlin.psi.psiUtil.checkReservedYield
+import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespaceAndComments
+import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComments
+import org.jetbrains.kotlin.psi.psiUtil.hasSuspendModifier
 import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
 import org.jetbrains.kotlin.resolve.PossiblyBareType.bare
 import org.jetbrains.kotlin.resolve.PossiblyBareType.type
 import org.jetbrains.kotlin.resolve.bindingContextUtil.recordScope
 import org.jetbrains.kotlin.resolve.calls.checkers.checkCoroutinesFeature
 import org.jetbrains.kotlin.resolve.calls.tasks.DynamicCallableDescriptors
+import org.jetbrains.kotlin.resolve.checkers.TrailingCommaChecker
 import org.jetbrains.kotlin.resolve.descriptorUtil.findImplicitOuterClassArguments
 import org.jetbrains.kotlin.resolve.scopes.LazyScopeAdapter
 import org.jetbrains.kotlin.resolve.scopes.LexicalScope
@@ -50,13 +53,13 @@ import org.jetbrains.kotlin.resolve.scopes.utils.findFirstFromMeAndParent
 import org.jetbrains.kotlin.resolve.source.KotlinSourceElement
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.resolve.source.toSourceElement
-import org.jetbrains.kotlin.storage.LockBasedStorageManager
 import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.types.Variance.*
 import org.jetbrains.kotlin.types.typeUtil.containsTypeAliasParameters
 import org.jetbrains.kotlin.types.typeUtil.containsTypeAliases
 import org.jetbrains.kotlin.types.typeUtil.isArrayOfNothing
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import kotlin.math.min
 
 class TypeResolver(
     private val annotationResolver: AnnotationResolver,
@@ -66,9 +69,13 @@ class TypeResolver(
     private val dynamicTypesSettings: DynamicTypesSettings,
     private val dynamicCallableDescriptors: DynamicCallableDescriptors,
     private val identifierChecker: IdentifierChecker,
-    private val platformToKotlinClassMap: PlatformToKotlinClassMap,
-    private val languageVersionSettings: LanguageVersionSettings
+    private val platformToKotlinClassMapper: PlatformToKotlinClassMapper,
+    private val languageVersionSettings: LanguageVersionSettings,
+    private val upperBoundChecker: UpperBoundChecker
 ) {
+    private val isNonParenthesizedAnnotationsOnFunctionalTypesEnabled =
+        languageVersionSettings.getFeatureSupport(LanguageFeature.NonParenthesizedAnnotationsOnFunctionalTypes) == LanguageFeature.State.ENABLED
+
     open class TypeTransformerForTests {
         open fun transformType(kotlinType: KotlinType): KotlinType? = null
     }
@@ -113,12 +120,6 @@ class TypeResolver(
 
         val resolvedTypeSlice = if (c.abbreviated) BindingContext.ABBREVIATED_TYPE else BindingContext.TYPE
 
-        val debugType = typeReference.debugTypeInfo
-        if (debugType != null) {
-            c.trace.record(resolvedTypeSlice, typeReference, debugType)
-            return type(debugType)
-        }
-
         val annotations = resolveTypeAnnotations(c, typeReference)
         val type = resolveTypeElement(c, annotations, typeReference.modifierList, typeReference.typeElement)
         c.trace.recordScope(c.scope, typeReference)
@@ -135,11 +136,53 @@ class TypeResolver(
     internal fun KtElementImplStub<*>.getAllModifierLists(): Array<out KtDeclarationModifierList> =
         getStubOrPsiChildren(KtStubElementTypes.MODIFIER_LIST, KtStubElementTypes.MODIFIER_LIST.arrayFactory)
 
+    // TODO: remove this method and its usages in 1.4
+    private fun checkNonParenthesizedAnnotationsOnFunctionalType(
+        typeElement: KtFunctionType,
+        annotationEntries: List<KtAnnotationEntry>,
+        trace: BindingTrace
+    ) {
+        val lastAnnotationEntry = annotationEntries.lastOrNull()
+        val isAnnotationsGroupedUsingBrackets =
+            lastAnnotationEntry?.getNextSiblingIgnoringWhitespaceAndComments()?.node?.elementType == KtTokens.RBRACKET
+        val hasAnnotationParentheses = lastAnnotationEntry?.valueArgumentList != null
+        val isFunctionalTypeStartingWithParentheses = typeElement.firstChild is KtParameterList
+        val hasSuspendModifierBeforeParentheses =
+            typeElement.getPrevSiblingIgnoringWhitespaceAndComments().run { this is KtDeclarationModifierList && hasSuspendModifier() }
+
+        if (lastAnnotationEntry != null &&
+            isFunctionalTypeStartingWithParentheses &&
+            !hasAnnotationParentheses &&
+            !isAnnotationsGroupedUsingBrackets &&
+            !hasSuspendModifierBeforeParentheses
+        ) {
+            trace.report(Errors.NON_PARENTHESIZED_ANNOTATIONS_ON_FUNCTIONAL_TYPES.on(lastAnnotationEntry))
+        }
+    }
+
     private fun resolveTypeAnnotations(c: TypeResolutionContext, modifierListsOwner: KtElementImplStub<*>): Annotations {
         val modifierLists = modifierListsOwner.getAllModifierLists()
 
         var result = Annotations.EMPTY
         var isSplitModifierList = false
+
+        if (!isNonParenthesizedAnnotationsOnFunctionalTypesEnabled) {
+            val targetType = when (modifierListsOwner) {
+                is KtNullableType -> modifierListsOwner.innerType
+                is KtTypeReference -> modifierListsOwner.typeElement
+                else -> null
+            }
+            val annotationEntries = when (modifierListsOwner) {
+                is KtNullableType -> modifierListsOwner.modifierList?.annotationEntries
+                is KtTypeReference -> modifierListsOwner.annotationEntries
+                else -> null
+            }
+
+            // `targetType.stub == null` means that we don't apply this check for files that are built with stubs (that aren't opened in IDE and not in compile time)
+            if (targetType is KtFunctionType && targetType.stub == null && annotationEntries != null) {
+                checkNonParenthesizedAnnotationsOnFunctionalType(targetType, annotationEntries, c.trace)
+            }
+        }
 
         for (modifierList in modifierLists) {
             if (isSplitModifierList) {
@@ -247,6 +290,11 @@ class TypeResolver(
                 val returnType = if (returnTypeRef != null) resolveType(c.noBareTypes(), returnTypeRef)
                 else moduleDescriptor.builtIns.unitType
 
+                val parameterList = type.parameterList
+                if (parameterList?.stub == null) {
+                    TrailingCommaChecker.check(parameterList?.trailingComma, c.trace, languageVersionSettings)
+                }
+
                 result = type(
                     createFunctionType(
                         moduleDescriptor.builtIns, annotations, receiverType,
@@ -277,7 +325,7 @@ class TypeResolver(
                     type: KotlinType,
                     source: SourceElement
                 ) : VariableDescriptorImpl(containingDeclaration, annotations, name, type, source) {
-                    override fun getVisibility() = Visibilities.LOCAL
+                    override fun getVisibility() = DescriptorVisibilities.LOCAL
 
                     override fun substitute(substitutor: TypeSubstitutor): VariableDescriptor? {
                         throw UnsupportedOperationException("Should not be called for descriptor of type ${this::class.java}")
@@ -348,7 +396,7 @@ class TypeResolver(
                 }
 
                 param.valOrVarKeyword?.let {
-                    c.trace.report(Errors.UNSUPPORTED.on(it, "val or val on parameter in function type"))
+                    c.trace.report(Errors.UNSUPPORTED.on(it, "val or var on parameter in function type"))
                 }
             }
         })
@@ -392,9 +440,9 @@ class TypeResolver(
     private fun getScopeForTypeParameter(c: TypeResolutionContext, typeParameterDescriptor: TypeParameterDescriptor): MemberScope {
         return when {
             c.checkBounds -> TypeIntersector.getUpperBoundsAsType(typeParameterDescriptor).memberScope
-            else -> LazyScopeAdapter(LockBasedStorageManager.NO_LOCKS.createLazyValue {
+            else -> LazyScopeAdapter {
                 TypeIntersector.getUpperBoundsAsType(typeParameterDescriptor).memberScope
-            })
+            }
         }
     }
 
@@ -406,6 +454,10 @@ class TypeResolver(
         annotations: Annotations
     ): PossiblyBareType {
         val qualifierParts = qualifierResolutionResult.qualifierParts
+
+        if (element is KtUserType && element.stub == null) {
+            TrailingCommaChecker.check(element.typeArgumentList?.trailingComma, c.trace, languageVersionSettings)
+        }
 
         return when (descriptor) {
             is TypeParameterDescriptor -> {
@@ -473,7 +525,7 @@ class TypeResolver(
                 val typeReference = collectedArgumentAsTypeProjections.getOrNull(i)?.typeReference
 
                 if (typeReference != null) {
-                    DescriptorResolver.checkBounds(typeReference, argument, parameter, substitutor, c.trace)
+                    upperBoundChecker.checkBounds(typeReference, argument, parameter, substitutor, c.trace)
                 }
             }
         }
@@ -545,7 +597,8 @@ class TypeResolver(
             c.trace,
             type, typeAliasQualifierPart.typeArguments ?: typeAliasQualifierPart.expression,
             descriptor, descriptor.declaredTypeParameters,
-            argumentElementsFromUserType // TODO arguments from inner scope
+            argumentElementsFromUserType, // TODO arguments from inner scope
+            upperBoundChecker
         )
 
         if (parameters.size != arguments.size) {
@@ -607,7 +660,8 @@ class TypeResolver(
         val typeArgumentsOrTypeName: KtElement?,
         val typeAliasDescriptor: TypeAliasDescriptor,
         typeParameters: List<TypeParameterDescriptor>,
-        typeArguments: List<KtTypeProjection>
+        typeArguments: List<KtTypeProjection>,
+        val upperBoundChecker: UpperBoundChecker
     ) : TypeAliasExpansionReportStrategy {
 
         private val mappedArguments = typeParameters.zip(typeArguments).toMap()
@@ -638,7 +692,7 @@ class TypeResolver(
         }
 
         override fun boundsViolationInSubstitution(
-            bound: KotlinType,
+            substitutor: TypeSubstitutor,
             unsubstitutedArgument: KotlinType,
             argument: KotlinType,
             typeParameter: TypeParameterDescriptor
@@ -646,11 +700,7 @@ class TypeResolver(
             val descriptorForUnsubstitutedArgument = unsubstitutedArgument.constructor.declarationDescriptor
             val argumentElement = mappedArguments[descriptorForUnsubstitutedArgument]
             val argumentTypeReferenceElement = argumentElement?.typeReference
-            if (argumentTypeReferenceElement != null) {
-                trace.report(UPPER_BOUND_VIOLATED.on(argumentTypeReferenceElement, bound, argument))
-            } else if (type != null) {
-                trace.report(UPPER_BOUND_VIOLATED_IN_TYPEALIAS_EXPANSION.on(type, bound, argument, typeParameter))
-            }
+            upperBoundChecker.checkBounds(argumentTypeReferenceElement, argument, typeParameter, substitutor, trace, type)
         }
 
         override fun repeatedAnnotation(annotation: AnnotationDescriptor) {
@@ -706,7 +756,7 @@ class TypeResolver(
         var wasStatic = false
         val result = SmartList<KtTypeProjection>()
 
-        val classifierChainLastIndex = Math.min(classifierDescriptorChain.size, reversedQualifierParts.size) - 1
+        val classifierChainLastIndex = min(classifierDescriptorChain.size, reversedQualifierParts.size) - 1
 
         for (index in 0..classifierChainLastIndex) {
             val qualifierPart = reversedQualifierParts[index]
@@ -736,7 +786,7 @@ class TypeResolver(
 
         val nonClassQualifierParts =
             reversedQualifierParts.subList(
-                Math.min(classifierChainLastIndex + 1, reversedQualifierParts.size),
+                min(classifierChainLastIndex + 1, reversedQualifierParts.size),
                 reversedQualifierParts.size
             )
 
@@ -880,7 +930,7 @@ class TypeResolver(
         return qualifiedExpressionResolver.resolveDescriptorForType(userType, scope, trace, isDebuggerContext).apply {
             if (classifierDescriptor != null) {
                 PlatformClassesMappedToKotlinChecker.reportPlatformClassMappedToKotlin(
-                    platformToKotlinClassMap, trace, userType, classifierDescriptor
+                    platformToKotlinClassMapper, trace, userType, classifierDescriptor
                 )
             }
         }

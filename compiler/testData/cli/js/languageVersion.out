@@ -1,4 +1,5 @@
-compiler/testData/cli/js/languageVersion.kt:4:5: error: members are not allowed in annotation class
-    class Nested
-    ^
+warning: language version 1.3 is deprecated and its support will be removed in a future version of Kotlin
+compiler/testData/cli/js/languageVersion.kt:6:21: error: 'break' and 'continue' are not allowed in 'when' statements. Consider using labels to continue/break from the outer loop
+            true -> break
+                    ^
 COMPILATION_ERROR

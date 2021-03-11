@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.checkers;
@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.checkers;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.test.KotlinTestUtils;
-import org.jetbrains.kotlin.test.TargetBackend;
+import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.runner.RunWith;
 
@@ -24,11 +24,11 @@ public class JavaAgainstKotlinSourceCheckerTestGenerated extends AbstractJavaAga
     @RunWith(JUnit3RunnerWithInners.class)
     public static class JavaAgainstKotlin extends AbstractJavaAgainstKotlinSourceCheckerTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, TargetBackend.ANY, testDataFilePath);
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
         public void testAllFilesPresentInJavaAgainstKotlin() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/kotlinAndJavaChecker/javaAgainstKotlin"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.ANY, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/kotlinAndJavaChecker/javaAgainstKotlin"), Pattern.compile("^(.+)\\.kt$"), null, true);
         }
 
         @TestMetadata("AssignKotlinClassToObjectInJava.kt")
@@ -111,9 +111,19 @@ public class JavaAgainstKotlinSourceCheckerTestGenerated extends AbstractJavaAga
             runTest("idea/testData/kotlinAndJavaChecker/javaAgainstKotlin/InferenceReturnType_1_8.kt");
         }
 
+        @TestMetadata("Interface.kt")
+        public void testInterface() throws Exception {
+            runTest("idea/testData/kotlinAndJavaChecker/javaAgainstKotlin/Interface.kt");
+        }
+
         @TestMetadata("InterfaceDefaultImpls.kt")
         public void testInterfaceDefaultImpls() throws Exception {
             runTest("idea/testData/kotlinAndJavaChecker/javaAgainstKotlin/InterfaceDefaultImpls.kt");
+        }
+
+        @TestMetadata("InterfaceWithJvmStatic.kt")
+        public void testInterfaceWithJvmStatic() throws Exception {
+            runTest("idea/testData/kotlinAndJavaChecker/javaAgainstKotlin/InterfaceWithJvmStatic.kt");
         }
 
         @TestMetadata("JvmOverloadsFunctions.kt")
@@ -139,6 +149,11 @@ public class JavaAgainstKotlinSourceCheckerTestGenerated extends AbstractJavaAga
         @TestMetadata("ReturnInnerClasses.kt")
         public void testReturnInnerClasses() throws Exception {
             runTest("idea/testData/kotlinAndJavaChecker/javaAgainstKotlin/ReturnInnerClasses.kt");
+        }
+
+        @TestMetadata("ThrowsOnGenericMethod.kt")
+        public void testThrowsOnGenericMethod() throws Exception {
+            runTest("idea/testData/kotlinAndJavaChecker/javaAgainstKotlin/ThrowsOnGenericMethod.kt");
         }
 
         @TestMetadata("TopLevelFunctionInDataFlowInspection.kt")
@@ -192,11 +207,11 @@ public class JavaAgainstKotlinSourceCheckerTestGenerated extends AbstractJavaAga
     @RunWith(JUnit3RunnerWithInners.class)
     public static class JavaWithKotlin extends AbstractJavaAgainstKotlinSourceCheckerTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, TargetBackend.ANY, testDataFilePath);
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
         public void testAllFilesPresentInJavaWithKotlin() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/kotlinAndJavaChecker/javaWithKotlin"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.ANY, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/kotlinAndJavaChecker/javaWithKotlin"), Pattern.compile("^(.+)\\.kt$"), null, true);
         }
 
         @TestMetadata("InnerClassWithoutName.kt")

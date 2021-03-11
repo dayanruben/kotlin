@@ -1,22 +1,10 @@
 /*
- * Copyright 2010-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.refactoring.rename
 
-import org.jetbrains.kotlin.statistics.KotlinStatisticsTrigger
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
@@ -37,7 +25,6 @@ import org.jetbrains.kotlin.psi.psiUtil.plainContent
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.statistics.KotlinIdeRefactoringTrigger
 
 class RenameJvmNameHandler : PsiElementRenameHandler() {
     private fun getStringTemplate(dataContext: DataContext): KtStringTemplateExpression? {
@@ -50,9 +37,9 @@ class RenameJvmNameHandler : PsiElementRenameHandler() {
         val nameExpression = getStringTemplate(dataContext) ?: return false
         if (!nameExpression.isPlain()) return false
         val entry = ((nameExpression.parent as? KtValueArgument)?.parent as? KtValueArgumentList)?.parent as? KtAnnotationEntry
-                    ?: return false
+            ?: return false
         val annotationType = entry.analyze(BodyResolveMode.PARTIAL)[BindingContext.TYPE, entry.typeReference]
-                             ?: return false
+            ?: return false
         return annotationType.constructor.declarationDescriptor?.importableFqName == DescriptorUtils.JVM_NAME
     }
 
@@ -60,15 +47,15 @@ class RenameJvmNameHandler : PsiElementRenameHandler() {
         val nameExpression = getStringTemplate(dataContext) ?: return null
         val name = nameExpression.plainContent
         val entry = nameExpression.getStrictParentOfType<KtAnnotationEntry>() ?: return null
-        val annotationList = PsiTreeUtil.getParentOfType(entry, KtModifierList::class.java, KtFileAnnotationList::class.java)
-        val newElement = when (annotationList) {
-            is KtModifierList ->
-                (annotationList.parent as? KtDeclaration)?.toLightMethods()?.firstOrNull { it.name == name } ?: return null
+        val newElement =
+            when (val annotationList = PsiTreeUtil.getParentOfType(entry, KtModifierList::class.java, KtFileAnnotationList::class.java)) {
+                is KtModifierList -> (annotationList.parent as? KtDeclaration)?.toLightMethods()?.firstOrNull { it.name == name }
+                    ?: return null
 
-            is KtFileAnnotationList -> annotationList.getContainingKtFile().findFacadeClass() ?: return null
+                is KtFileAnnotationList -> annotationList.getContainingKtFile().findFacadeClass() ?: return null
 
-            else -> return null
-        }
+                else -> return null
+            }
         return DataContext { id ->
             if (CommonDataKeys.PSI_ELEMENT.`is`(id)) return@DataContext newElement
             dataContext.getData(id)
@@ -77,11 +64,9 @@ class RenameJvmNameHandler : PsiElementRenameHandler() {
 
     override fun invoke(project: Project, editor: Editor, file: PsiFile, dataContext: DataContext) {
         super.invoke(project, editor, file, wrapDataContext(dataContext) ?: return)
-        KotlinStatisticsTrigger.trigger(KotlinIdeRefactoringTrigger::class.java, this::class.java.name)
     }
 
     override fun invoke(project: Project, elements: Array<out PsiElement>, dataContext: DataContext) {
         super.invoke(project, elements, wrapDataContext(dataContext) ?: return)
-        KotlinStatisticsTrigger.trigger(KotlinIdeRefactoringTrigger::class.java, this::class.java.name)
     }
 }

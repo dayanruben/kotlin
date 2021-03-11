@@ -1,17 +1,6 @@
 /*
- * Copyright 2010-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.refactoring.rename
@@ -85,10 +74,11 @@ enum class RenameType {
 
 abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
     inner class TestContext(
-            val testFile: File,
-            val project: Project = getProject(),
-            val javaFacade: JavaPsiFacade = myFixture.javaFacade,
-            val module: Module = myFixture.module)
+        val testFile: File,
+        val project: Project = getProject(),
+        val javaFacade: JavaPsiFacade = myFixture.javaFacade,
+        val module: Module = myFixture.module
+    )
 
     override fun getProjectDescriptor(): LightProjectDescriptor {
         if (KotlinTestUtils.isAllFilesPresentTest(getTestName(false))) return super.getProjectDescriptor()
@@ -151,23 +141,20 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
                     }
                 }
 
-                for (sourceRoot in ModuleRootManager.getInstance(myModule).sourceRoots) {
+                for (sourceRoot in ModuleRootManager.getInstance(module).sourceRoots) {
                     VfsUtilCore.visitChildrenRecursively(sourceRoot, visitor)
                 }
             }
-        }
-        catch (e : Exception) {
+        } catch (e: Exception) {
             if (e !is RefactoringErrorHintException && e !is ConflictsInTestsException) throw e
 
             val hintExceptionUnquoted = StringUtil.unquoteString(e.message!!)
             if (hintDirective != null) {
                 Assert.assertEquals(hintDirective, hintExceptionUnquoted)
-            }
-            else {
+            } else {
                 Assert.fail("""Unexpected "hint: $hintExceptionUnquoted" """)
             }
-        }
-        finally {
+        } finally {
             fixtureClasses.forEach { TestFixtureExtension.unloadFixture(it) }
         }
     }
@@ -220,15 +207,23 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
     private fun renameKotlinFunctionTest(renameParamsObject: JsonObject, context: TestContext) {
         val oldMethodName = Name.identifier(renameParamsObject.getString("oldName"))
 
-        doRenameInKotlinClassOrPackage(renameParamsObject, context) {
-            _, scope -> scope.getContributedFunctions(oldMethodName, NoLookupLocation.FROM_TEST).first() }
+        doRenameInKotlinClassOrPackage(renameParamsObject, context) { _, scope ->
+            scope.getContributedFunctions(
+                oldMethodName,
+                NoLookupLocation.FROM_TEST
+            ).first()
+        }
     }
 
     private fun renameKotlinPropertyTest(renameParamsObject: JsonObject, context: TestContext) {
         val oldPropertyName = Name.identifier(renameParamsObject.getString("oldName"))
 
-        doRenameInKotlinClassOrPackage(renameParamsObject, context) {
-            _, scope -> scope.getContributedVariables(oldPropertyName, NoLookupLocation.FROM_TEST).first() }
+        doRenameInKotlinClassOrPackage(renameParamsObject, context) { _, scope ->
+            scope.getContributedVariables(
+                oldPropertyName,
+                NoLookupLocation.FROM_TEST
+            ).first()
+        }
     }
 
     private fun renameKotlinClassTest(renameParamsObject: JsonObject, context: TestContext) {
@@ -283,14 +278,15 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     private fun doRenameInKotlinClassOrPackage(
-            renameParamsObject: JsonObject, context: TestContext, findDescriptorToRename: (DeclarationDescriptor, MemberScope) -> DeclarationDescriptor
+        renameParamsObject: JsonObject,
+        context: TestContext,
+        findDescriptorToRename: (DeclarationDescriptor, MemberScope) -> DeclarationDescriptor
     ) {
         val classIdStr = renameParamsObject.getNullableString("classId")
         val packageFqnStr = renameParamsObject.getNullableString("packageFqn")
         if (classIdStr != null && packageFqnStr != null) {
             throw AssertionError("Both classId and packageFqn are defined. Where should I search: in class or in package?")
-        }
-        else if (classIdStr == null && packageFqnStr == null) {
+        } else if (classIdStr == null && packageFqnStr == null) {
             throw AssertionError("Define classId or packageFqn")
         }
 
@@ -302,7 +298,7 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
 
             val module = ktFile.analyzeWithAllCompilerChecks().moduleDescriptor
 
-            val (declaration, scopeToSearch)  = if (classIdStr != null) {
+            val (declaration, scopeToSearch) = if (classIdStr != null) {
                 module.findClassAcrossModuleDependencies(classIdStr.toClassId())!!.let { it to it.defaultType.memberScope }
             } else {
                 module.getPackage(FqName(packageFqnStr!!)).let { it to it.memberScope }
@@ -360,14 +356,13 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
             if (handler is VariableInplaceRenameHandler) {
                 val elementToRename = psiFile.findElementAt(currentCaret.offset)!!.getNonStrictParentOfType<PsiNamedElement>()!!
                 CodeInsightTestUtil.doInlineRename(handler, newName, editor, elementToRename)
-            }
-            else {
+            } else {
                 handler.invoke(project, editor, psiFile, dataContext)
             }
         }
     }
 
-    protected fun getTestDirName(lowercaseFirstLetter : Boolean) : String {
+    protected fun getTestDirName(lowercaseFirstLetter: Boolean): String {
         val testName = getTestName(lowercaseFirstLetter)
         return testName.substring(0, testName.indexOf('_'))
     }
@@ -390,7 +385,7 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 }
 
-private  fun String.toClassId(): ClassId {
+private fun String.toClassId(): ClassId {
     val relativeClassName = FqName(substringAfterLast('/'))
     val packageFqName = FqName(substringBeforeLast('/', "").replace('/', '.'))
     return ClassId(packageFqName, relativeClassName, false)
@@ -405,12 +400,12 @@ fun loadTestConfiguration(testFile: File): JsonObject {
 }
 
 fun runRenameProcessor(
-        project: Project,
-        newName: String,
-        substitution: PsiElement?,
-        renameParamsObject: JsonObject,
-        isSearchInComments: Boolean,
-        isSearchTextOccurrences: Boolean
+    project: Project,
+    newName: String,
+    substitution: PsiElement?,
+    renameParamsObject: JsonObject,
+    isSearchInComments: Boolean,
+    isSearchTextOccurrences: Boolean
 ) {
     if (substitution == null) return
 
@@ -418,7 +413,12 @@ fun runRenameProcessor(
         if (substitution is PsiPackage && substitution !is KtLightPackage) {
             val oldName = substitution.qualifiedName
             if (StringUtil.getPackageName(oldName) != StringUtil.getPackageName(newName)) {
-                return RenamePsiPackageProcessor.createRenameMoveProcessor(newName, substitution, isSearchInComments, isSearchTextOccurrences)
+                return RenamePsiPackageProcessor.createRenameMoveProcessor(
+                    newName,
+                    substitution,
+                    isSearchInComments,
+                    isSearchTextOccurrences
+                )
             }
         }
 
@@ -427,10 +427,11 @@ fun runRenameProcessor(
 
     val processor = createProcessor()
 
-    if (renameParamsObject["overloadRenamer.onlyPrimaryElement"]?.asBoolean ?: false) {
+    if (renameParamsObject["overloadRenamer.onlyPrimaryElement"]?.asBoolean == true) {
         with(AutomaticOverloadsRenamer) { substitution.elementFilter = { false } }
     }
     if (processor is RenameProcessor) {
+        @Suppress("DEPRECATION")
         Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME).forEach { processor.addRenamerFactory(it) }
     }
     processor.run()
@@ -466,8 +467,7 @@ fun doRenameMarkedElement(renameParamsObject: JsonObject, psiFile: PsiFile) {
         }
         val toRename = if (isByRef) {
             TargetElementUtil.findTargetElement(currentEditor, TargetElementUtil.getInstance().allAccepted)!!
-        }
-        else {
+        } else {
             currentFile.findElementAt(marker)!!.getNonStrictParentOfType<PsiNamedElement>()!!
         }
 
@@ -476,8 +476,7 @@ fun doRenameMarkedElement(renameParamsObject: JsonObject, psiFile: PsiFile) {
         val searchInComments = renameParamsObject["searchInComments"]?.asBoolean ?: true
         val searchInTextOccurrences = renameParamsObject["searchInTextOccurrences"]?.asBoolean ?: true
         runRenameProcessor(project, newName, substitution, renameParamsObject, searchInComments, searchInTextOccurrences)
-    }
-    finally {
+    } finally {
         if (shouldReleaseEditor) {
             editorFactory.releaseEditor(editor!!)
         }

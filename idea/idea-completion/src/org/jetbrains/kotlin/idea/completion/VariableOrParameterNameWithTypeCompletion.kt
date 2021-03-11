@@ -16,6 +16,7 @@
 
 package org.jetbrains.kotlin.idea.completion
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 import com.intellij.codeInsight.lookup.*
@@ -23,7 +24,6 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.NameUtil
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
@@ -68,7 +68,7 @@ class VariableOrParameterNameWithTypeCompletion(
             prefixWords.indices.map { index -> if (index == 0) prefix else prefixWords.drop(index).joinToString("") }
 
         userPrefixes = nameSuggestionPrefixes.indices.map { prefixWords.take(it).joinToString("") }
-        classNamePrefixMatchers = nameSuggestionPrefixes.map { CamelHumpMatcher(it.capitalize(), false) }
+        classNamePrefixMatchers = nameSuggestionPrefixes.map { CamelHumpMatcher(it.capitalize(Locale.US), false) }
     }
 
     private val suggestionsByTypesAdded = HashSet<Type>()
@@ -122,8 +122,8 @@ class VariableOrParameterNameWithTypeCompletion(
                     val parameterType = descriptor.type
                     if (parameterType.isVisible(visibilityFilter)) {
                         val lookupElement = MyLookupElement.create(name, ArbitraryType(parameterType), withType, lookupElementFactory)!!
-                        val (count, name) = lookupElementToCount[lookupElement] ?: Pair(0, name)
-                        lookupElementToCount[lookupElement] = Pair(count + 1, name)
+                        val (count, s) = lookupElementToCount[lookupElement] ?: Pair(0, name)
+                        lookupElementToCount[lookupElement] = Pair(count + 1, s)
                     }
                 }
             }
@@ -245,8 +245,7 @@ class VariableOrParameterNameWithTypeCompletion(
                 }
             }
 
-            val settings =
-                CodeStyleSettingsManager.getInstance(context.project).currentSettings.getCustomSettings(KotlinCodeStyleSettings::class.java)
+            val settings = CodeStyle.getCustomSettings(context.file, KotlinCodeStyleSettings::class.java)
             val spaceBefore = if (settings.SPACE_BEFORE_TYPE_COLON) " " else ""
             val spaceAfter = if (settings.SPACE_AFTER_TYPE_COLON) " " else ""
 

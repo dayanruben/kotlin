@@ -1,6 +1,6 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2000-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.codegen
@@ -70,12 +70,6 @@ class CallBasedArgumentGenerator(
         // while its lower bound may be Nothing-typed after approximation
         val lazyVararg = codegen.genVarargs(argument, valueParameters[i].type.upperIfFlexible())
         callGenerator.putValueIfNeeded(getJvmKotlinType(i), lazyVararg, ValueKind.GENERAL_VARARG, i)
-    }
-
-    override fun generateDefaultJava(i: Int, argument: DefaultValueArgument) {
-        val argumentValue = valueParameters[i].findJavaDefaultArgumentValue(valueParameterTypes[i], codegen.typeMapper)
-
-        callGenerator.putValueIfNeeded(getJvmKotlinType(i), argumentValue)
     }
 
     override fun reorderArgumentsIfNeeded(args: List<ArgumentAndDeclIndex>) {

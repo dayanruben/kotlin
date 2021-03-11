@@ -16,6 +16,7 @@
 
 package org.jetbrains.kotlin.idea.configuration
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
@@ -29,8 +30,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
-import com.intellij.openapi.roots.impl.libraries.LibraryImpl
-import com.intellij.openapi.roots.libraries.PersistentLibraryKind
+import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.Key
 import com.intellij.util.PathUtil
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
@@ -40,8 +40,10 @@ import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.extensions.ProjectExtensionDescriptor
 import org.jetbrains.kotlin.gradle.ArgsInfo
 import org.jetbrains.kotlin.gradle.CompilerArgumentsBySourceSet
+import org.jetbrains.kotlin.ide.konan.NativeLibraryKind
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.configuration.GradlePropertiesFileFacade.Companion.KOTLIN_CODE_STYLE_GRADLE_SETTING
+import org.jetbrains.kotlin.idea.configuration.klib.KotlinNativeLibraryNameUtil.KOTLIN_NATIVE_LIBRARY_PREFIX
 import org.jetbrains.kotlin.idea.facet.*
 import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
 import org.jetbrains.kotlin.idea.framework.CommonLibraryKind
@@ -52,6 +54,8 @@ import org.jetbrains.kotlin.idea.inspections.gradle.findKotlinPluginVersion
 import org.jetbrains.kotlin.idea.inspections.gradle.getResolvedVersionByModuleData
 import org.jetbrains.kotlin.idea.platform.tooling
 import org.jetbrains.kotlin.idea.roots.migrateNonJvmSourceFolders
+import org.jetbrains.kotlin.idea.statistics.KotlinGradleFUSLogger
+import org.jetbrains.kotlin.library.KLIB_FILE_EXTENSION
 import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.impl.isCommon
 import org.jetbrains.kotlin.platform.impl.isJavaScript
@@ -88,9 +92,10 @@ class KotlinGradleProjectSettingsDataService : AbstractProjectDataService<Projec
         project: Project,
         modelsProvider: IdeModifiableModelsProvider
     ) {
-        val allSettings = modelsProvider.modules.mapNotNull {
+        val allSettings = modelsProvider.modules.mapNotNull { module ->
+            if (module.isDisposed) return@mapNotNull null
             val settings = modelsProvider
-                .getModifiableFacetModel(it)
+                .getModifiableFacetModel(module)
                 .findFacet(KotlinFacetType.TYPE_ID, KotlinFacetType.INSTANCE.defaultFacetName)
                 ?.configuration
                 ?.settings ?: return@mapNotNull null
@@ -150,6 +155,10 @@ class KotlinGradleProjectDataService : AbstractProjectDataService<ModuleData, Vo
 
         val codeStyleStr = GradlePropertiesFileFacade.forProject(project).readProperty(KOTLIN_CODE_STYLE_GRADLE_SETTING)
         ProjectCodeStyleImporter.apply(project, codeStyleStr)
+
+        ApplicationManager.getApplication().executeOnPooledThread {
+            KotlinGradleFUSLogger.reportStatistics()
+        }
     }
 }
 
@@ -173,37 +182,30 @@ class KotlinGradleLibraryDataService : AbstractProjectDataService<LibraryData, V
             val ideLibrary = modelsProvider.findIdeLibrary(libraryDataNode.data) ?: continue
 
             val modifiableModel = modelsProvider.getModifiableLibraryModel(ideLibrary) as LibraryEx.ModifiableModelEx
-            if (anyNonJvmModules || ideLibrary.name?.looksAsNonJvmLibraryName() == true) {
+            if (anyNonJvmModules || ideLibrary.looksAsNonJvmLibrary()) {
                 detectLibraryKind(modifiableModel.getFiles(OrderRootType.CLASSES))?.let { modifiableModel.kind = it }
-            } else if (ideLibrary is LibraryImpl && (ideLibrary.kind === JSLibraryKind || ideLibrary.kind === CommonLibraryKind)) {
-                resetLibraryKind(modifiableModel)
+            } else if (
+                ideLibrary is LibraryEx &&
+                (ideLibrary.kind === JSLibraryKind || ideLibrary.kind === NativeLibraryKind || ideLibrary.kind === CommonLibraryKind)
+            ) {
+                modifiableModel.kind = null
             }
         }
     }
 
-    private fun String.looksAsNonJvmLibraryName() = nonJvmSuffixes.any { it in this }
-
-    private fun resetLibraryKind(modifiableModel: LibraryEx.ModifiableModelEx) {
-        try {
-            val cls = LibraryImpl::class.java
-            // Don't use name-based lookup because field names are scrambled in IDEA Ultimate
-            for (field in cls.declaredFields) {
-                if (field.type == PersistentLibraryKind::class.java) {
-                    field.isAccessible = true
-                    field.set(modifiableModel, null)
-                    return
-                }
-            }
-            LOG.info("Could not find field of type PersistentLibraryKind in LibraryImpl.class")
-        } catch (e: Exception) {
-            LOG.info("Failed to reset library kind", e)
+    private fun Library.looksAsNonJvmLibrary(): Boolean {
+        name?.let { name ->
+            if (nonJvmSuffixes.any { it in name } || name.startsWith(KOTLIN_NATIVE_LIBRARY_PREFIX))
+                return true
         }
+
+        return getFiles(OrderRootType.CLASSES).firstOrNull()?.extension == KLIB_FILE_EXTENSION
     }
 
     companion object {
         val LOG = Logger.getInstance(KotlinGradleLibraryDataService::class.java)
 
-        val nonJvmSuffixes = listOf("-common", "-js", "-native", "-kjsm")
+        val nonJvmSuffixes = listOf("-common", "-js", "-native", "-kjsm", "-metadata")
     }
 }
 
@@ -220,7 +222,7 @@ fun detectPlatformKindByPlugin(moduleNode: DataNode<ModuleData>): IdePlatformKin
 )
 fun detectPlatformByPlugin(moduleNode: DataNode<ModuleData>): TargetPlatformKind<*>? {
     return when (moduleNode.platformPluginId) {
-        "kotlin-platform-jvm" -> TargetPlatformKind.Jvm[JvmTarget.JVM_1_6]
+        "kotlin-platform-jvm" -> TargetPlatformKind.Jvm[JvmTarget.DEFAULT]
         "kotlin-platform-js" -> TargetPlatformKind.JavaScript
         "kotlin-platform-common" -> TargetPlatformKind.Common
         else -> null
@@ -271,12 +273,12 @@ fun configureFacetByGradleModule(
     // TODO there should be a way to figure out the correct platform version
     val platform = platformKind?.defaultPlatform
 
-    val coroutinesProperty = CoroutineSupport.byCompilerArgument(
-        moduleNode.coroutines ?: findKotlinCoroutinesProperty(ideModule.project)
-    )
-
     val kotlinFacet = ideModule.getOrCreateFacet(modelsProvider, false, GradleConstants.SYSTEM_ID.id)
-    kotlinFacet.configureFacet(compilerVersion, coroutinesProperty, platform, modelsProvider)
+    kotlinFacet.configureFacet(
+        compilerVersion,
+        platform,
+        modelsProvider
+    )
 
     if (sourceSetNode == null) {
         ideModule.compilerArgumentsBySourceSet = moduleNode.compilerArgumentsBySourceSet
@@ -330,9 +332,4 @@ internal fun adjustClasspath(kotlinFacet: KotlinFacet, dependencyClasspath: List
     if (fullClasspath.isEmpty()) return
     val newClasspath = fullClasspath - dependencyClasspath
     arguments.classpath = if (newClasspath.isNotEmpty()) newClasspath.joinToString(File.pathSeparator) else null
-}
-
-internal fun findKotlinCoroutinesProperty(project: Project): String {
-    return GradlePropertiesFileFacade.forProject(project).readProperty("kotlin.coroutines")
-        ?: CoroutineSupport.getCompilerArgument(LanguageFeature.Coroutines.defaultState)
 }

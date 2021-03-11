@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.codeInsight;
@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.idea.codeInsight;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.test.KotlinTestUtils;
-import org.jetbrains.kotlin.test.TargetBackend;
+import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.runner.RunWith;
 
@@ -24,16 +24,11 @@ public class InspectionTestGenerated extends AbstractInspectionTest {
     @RunWith(JUnit3RunnerWithInners.class)
     public static class Intentions extends AbstractInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, TargetBackend.ANY, testDataFilePath);
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
         public void testAllFilesPresentInIntentions() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentInSingleGeneratedClass(this.getClass(), new File("idea/testData/intentions"), Pattern.compile("^(inspections\\.test)$"), TargetBackend.ANY);
-        }
-
-        @TestMetadata("branched/ifThenToElvis/inspectionData/inspections.test")
-        public void testBranched_ifThenToElvis_inspectionData_Inspections_test() throws Exception {
-            runTest("idea/testData/intentions/branched/ifThenToElvis/inspectionData/inspections.test");
+            KtTestUtil.assertAllTestsPresentInSingleGeneratedClassWithExcluded(this.getClass(), new File("idea/testData/intentions"), Pattern.compile("^(inspections\\.test)$"), null);
         }
 
         @TestMetadata("convertToStringTemplate/inspectionData/inspections.test")
@@ -72,7 +67,7 @@ public class InspectionTestGenerated extends AbstractInspectionTest {
     @RunWith(JUnit3RunnerWithInners.class)
     public static class Inspections extends AbstractInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, TargetBackend.ANY, testDataFilePath);
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
         @TestMetadata("addVarianceModifier/inspectionData/inspections.test")
@@ -81,7 +76,7 @@ public class InspectionTestGenerated extends AbstractInspectionTest {
         }
 
         public void testAllFilesPresentInInspections() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentInSingleGeneratedClass(this.getClass(), new File("idea/testData/inspections"), Pattern.compile("^(inspections\\.test)$"), TargetBackend.ANY);
+            KtTestUtil.assertAllTestsPresentInSingleGeneratedClassWithExcluded(this.getClass(), new File("idea/testData/inspections"), Pattern.compile("^(inspections\\.test)$"), null);
         }
 
         @TestMetadata("allOpenSimple/inspectionData/inspections.test")
@@ -319,6 +314,11 @@ public class InspectionTestGenerated extends AbstractInspectionTest {
             runTest("idea/testData/inspections/redundantVisibilityModifier/inspectionData/inspections.test");
         }
 
+        @TestMetadata("redundantVisibilityModifierWithExplicitApi/inspectionData/inspections.test")
+        public void testRedundantVisibilityModifierWithExplicitApi_inspectionData_Inspections_test() throws Exception {
+            runTest("idea/testData/inspections/redundantVisibilityModifierWithExplicitApi/inspectionData/inspections.test");
+        }
+
         @TestMetadata("redundantWith/inspectionData/inspections.test")
         public void testRedundantWith_inspectionData_Inspections_test() throws Exception {
             runTest("idea/testData/inspections/redundantWith/inspectionData/inspections.test");
@@ -372,6 +372,16 @@ public class InspectionTestGenerated extends AbstractInspectionTest {
         @TestMetadata("suspiciousEqualsCombination/inspectionData/inspections.test")
         public void testSuspiciousEqualsCombination_inspectionData_Inspections_test() throws Exception {
             runTest("idea/testData/inspections/suspiciousEqualsCombination/inspectionData/inspections.test");
+        }
+
+        @TestMetadata("trailingCommaOff/inspectionData/inspections.test")
+        public void testTrailingCommaOff_inspectionData_Inspections_test() throws Exception {
+            runTest("idea/testData/inspections/trailingCommaOff/inspectionData/inspections.test");
+        }
+
+        @TestMetadata("trailingCommaOn/inspectionData/inspections.test")
+        public void testTrailingCommaOn_inspectionData_Inspections_test() throws Exception {
+            runTest("idea/testData/inspections/trailingCommaOn/inspectionData/inspections.test");
         }
 
         @TestMetadata("twoSetOfTypeparameters/inspectionData/inspections.test")
@@ -460,11 +470,16 @@ public class InspectionTestGenerated extends AbstractInspectionTest {
     @RunWith(JUnit3RunnerWithInners.class)
     public static class InspectionsLocal extends AbstractInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, TargetBackend.ANY, testDataFilePath);
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
         public void testAllFilesPresentInInspectionsLocal() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentInSingleGeneratedClass(this.getClass(), new File("idea/testData/inspectionsLocal"), Pattern.compile("^(inspections\\.test)$"), TargetBackend.ANY);
+            KtTestUtil.assertAllTestsPresentInSingleGeneratedClassWithExcluded(this.getClass(), new File("idea/testData/inspectionsLocal"), Pattern.compile("^(inspections\\.test)$"), null);
+        }
+
+        @TestMetadata("branched/ifThenToElvis/inspectionData/inspections.test")
+        public void testBranched_ifThenToElvis_inspectionData_Inspections_test() throws Exception {
+            runTest("idea/testData/inspectionsLocal/branched/ifThenToElvis/inspectionData/inspections.test");
         }
 
         @TestMetadata("branched/ifThenToSafeAccess/inspectionData/inspections.test")

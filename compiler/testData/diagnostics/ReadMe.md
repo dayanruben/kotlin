@@ -21,19 +21,18 @@ Several directives can be added to the beginning of a test file with the followi
 
 ### 1. DIAGNOSTICS
 
-This directive allows to exclude some irrelevant diagnostics (e.g. unused parameter) from a certain test, or to test only a specific set of diagnostics.
+This directive allows to exclude some irrelevant diagnostics (e.g. unused parameter) from a certain test or to include others.
 
 The syntax is
 
-    '([ + - ! ] DIAGNOSTIC_FACTORY_NAME | ERROR | WARNING | INFO ) +'
+    '([ + - ] DIAGNOSTIC_FACTORY_NAME | ERROR | WARNING | INFO ) +'
 
   where
 
 * `+` means 'include';
-* `-` means 'exclude';
-* `!` means 'exclude everything but this'.
+* `-` means 'exclude'.
 
-  Directives are applied in the order of appearance, i.e. `!FOO +BAR` means include only `FOO` and `BAR`.
+  Directives are applied in the order of appearance, i.e. `+FOO -BAR` means include `FOO` but not `BAR`.
 
 #### Usage:
 
@@ -97,3 +96,11 @@ Note that if this directive is present, the NEWER_VERSION_IN_SINCE_KOTLIN diagno
 #### Usage:
 
     // !API_VERSION: 1.0
+    
+### 6. RENDER_DIAGNOSTICS_MESSAGES
+
+This directive forces *Diagnostic printer* prints parametrized diagnostics with all parameters.
+
+#### Usage:
+
+    // !RENDER_DIAGNOSTICS_MESSAGES

@@ -43,11 +43,7 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.deleteElementAndCleanParent
-import org.jetbrains.kotlin.idea.refactoring.checkSuperMethods
-import org.jetbrains.kotlin.idea.refactoring.formatClass
-import org.jetbrains.kotlin.idea.refactoring.formatFunction
-import org.jetbrains.kotlin.idea.refactoring.withExpectedActuals
-import org.jetbrains.kotlin.idea.refactoring.isTrueJavaMethod
+import org.jetbrains.kotlin.idea.refactoring.*
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
@@ -84,7 +80,7 @@ class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
 
         fun getIgnoranceCondition() = Condition<PsiElement> {
             if (it is KtFile) return@Condition false
-            deleteSet.any { element -> JavaSafeDeleteProcessor.isInside(it, element.unwrapped) }
+            deleteSet.any { element -> isInside(it, element.unwrapped) }
         }
 
         fun getSearchInfo(element: PsiElement) = NonCodeUsageSearchInfo(getIgnoranceCondition(), element)
@@ -122,7 +118,7 @@ class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
 
         fun findKotlinDeclarationUsages(declaration: KtDeclaration): NonCodeUsageSearchInfo {
             searchKotlinDeclarationReferences(declaration).mapNotNullTo(usages) { reference ->
-                val refElement = reference.element ?: return@mapNotNullTo null
+                val refElement = reference.element
                 refElement.getNonStrictParentOfType<KtImportDirective>()?.let { importDirective ->
                     SafeDeleteImportDirectiveUsageInfo(importDirective, element)
                 } ?: SafeDeleteReferenceSimpleDeleteUsageInfo(refElement, declaration, false)
@@ -132,6 +128,11 @@ class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
                 findKotlinParameterUsages(declaration)
             }
 
+            if (declaration is KtNamedDeclaration && declaration.isPrivateNestedClassOrObject) {
+                declaration.containingKtFile.importDirectives.mapNotNullTo(usages) {
+                    if (it.importedFqName == declaration.fqName) SafeDeleteImportDirectiveUsageInfo(it, declaration) else null
+                }
+            }
             return getSearchInfo(declaration)
         }
 
@@ -249,7 +250,7 @@ class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
                 else -> return
             }
             for (constructor in constructors) {
-                constructor.processDelegationCallConstructorUsages(constructor.useScope) {
+                constructor.processDelegationCallConstructorUsages((constructor as PsiElement).useScope) {
                     if (!getIgnoranceCondition().value(it)) {
                         usages.add(SafeDeleteReferenceSimpleDeleteUsageInfo(it, element, false))
                     }
@@ -323,7 +324,7 @@ class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
     override fun findConflicts(element: PsiElement, allElementsToDelete: Array<out PsiElement>): MutableCollection<String>? {
         if (element is KtNamedFunction || element is KtProperty) {
             val jetClass = element.getNonStrictParentOfType<KtClass>()
-            if (jetClass == null || jetClass.getBody() != element.parent) return null
+            if (jetClass == null || jetClass.body != element.parent) return null
 
             val modifierList = jetClass.modifierList
             if (modifierList != null && modifierList.hasModifier(KtTokens.ABSTRACT_KEYWORD)) return null
@@ -338,7 +339,7 @@ class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
                 .filter { overridenDescriptor -> overridenDescriptor.modality == Modality.ABSTRACT }
                 .mapTo(ArrayList()) { overridenDescriptor ->
                     KotlinBundle.message(
-                        "x.implements.y",
+                        "override.declaration.x.implements.y",
                         formatFunction(declarationDescriptor, true),
                         formatClass(declarationDescriptor.containingDeclaration, true),
                         formatFunction(overridenDescriptor, true),
@@ -367,7 +368,7 @@ class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
             }
         }
 
-        if (!overridingMethodUsages.isEmpty()) {
+        if (overridingMethodUsages.isNotEmpty()) {
             if (ApplicationManager.getApplication()!!.isUnitTestMode) {
                 result.addAll(overridingMethodUsages)
             } else {
@@ -436,7 +437,7 @@ class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
         if (ApplicationManager.getApplication().isUnitTestMode) return parameter.project.ALLOW_LIFTING_ACTUAL_PARAMETER_TO_EXPECTED
 
         return Messages.showYesNoDialog(
-            "Do you want to delete this parameter in expected declaration and all related actual ones?",
+            KotlinBundle.message("do.you.want.to.delete.this.parameter.in.expected.declaration.and.all.related.actual.ones"),
             RefactoringBundle.message("safe.delete.title"),
             Messages.getQuestionIcon()
         ) == Messages.YES
@@ -446,7 +447,7 @@ class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
         if (ApplicationManager.getApplication().isUnitTestMode) return true
 
         return Messages.showYesNoDialog(
-            "Do you want to delete expected declaration together with all related actual ones?",
+            KotlinBundle.message("do.you.want.to.delete.expected.declaration.together.with.all.related.actual.ones"),
             RefactoringBundle.message("safe.delete.title"),
             Messages.getQuestionIcon()
         ) == Messages.YES
@@ -488,7 +489,7 @@ class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
 
         return when (element) {
             is KtNamedFunction, is KtProperty ->
-                checkSuperMethods(element as KtDeclaration, allElementsToDelete, "delete (with usage search)")
+                checkSuperMethods(element as KtDeclaration, allElementsToDelete, KotlinBundle.message("delete.with.usage.search"))
             else ->
                 super.getElementsToSearch(element, module, allElementsToDelete)
         }

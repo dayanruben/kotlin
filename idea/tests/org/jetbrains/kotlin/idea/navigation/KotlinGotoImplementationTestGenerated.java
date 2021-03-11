@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.navigation;
@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.idea.navigation;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.test.KotlinTestUtils;
-import org.jetbrains.kotlin.test.TargetBackend;
+import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.runner.RunWith;
 
@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
 @RunWith(JUnit3RunnerWithInners.class)
 public class KotlinGotoImplementationTestGenerated extends AbstractKotlinGotoImplementationTest {
     private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTest, TargetBackend.ANY, testDataFilePath);
+        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
     @TestMetadata("AbstractClassImplementorsWithDeclaration.kt")
@@ -31,7 +31,7 @@ public class KotlinGotoImplementationTestGenerated extends AbstractKotlinGotoImp
     }
 
     public void testAllFilesPresentInImplementations() throws Exception {
-        KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/navigation/implementations"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.ANY, false);
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/navigation/implementations"), Pattern.compile("^(.+)\\.kt$"), null, false);
     }
 
     @TestMetadata("ClassImplementorsWithDeclaration.kt")
@@ -104,6 +104,11 @@ public class KotlinGotoImplementationTestGenerated extends AbstractKotlinGotoImp
         runTest("idea/testData/navigation/implementations/ImplementGenericWithPrimitives.kt");
     }
 
+    @TestMetadata("ImplementsInInlineClass.kt")
+    public void testImplementsInInlineClass() throws Exception {
+        runTest("idea/testData/navigation/implementations/ImplementsInInlineClass.kt");
+    }
+
     @TestMetadata("ObjectImported.kt")
     public void testObjectImported() throws Exception {
         runTest("idea/testData/navigation/implementations/ObjectImported.kt");
@@ -112,6 +117,11 @@ public class KotlinGotoImplementationTestGenerated extends AbstractKotlinGotoImp
     @TestMetadata("OverridesInEnumEntries.kt")
     public void testOverridesInEnumEntries() throws Exception {
         runTest("idea/testData/navigation/implementations/OverridesInEnumEntries.kt");
+    }
+
+    @TestMetadata("OverridesInInlineClass.kt")
+    public void testOverridesInInlineClass() throws Exception {
+        runTest("idea/testData/navigation/implementations/OverridesInInlineClass.kt");
     }
 
     @TestMetadata("PropertyOverriddenNavigation.kt")

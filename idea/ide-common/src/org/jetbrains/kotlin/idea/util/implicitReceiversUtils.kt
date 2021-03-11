@@ -1,17 +1,6 @@
 /*
- * Copyright 2010-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.util
@@ -42,14 +31,10 @@ interface ReceiverExpressionFactory {
     fun createExpression(psiFactory: KtPsiFactory, shortThis: Boolean = true): KtExpression
 }
 
-fun LexicalScope.getFactoryForImplicitReceiverWithSubtypeOf(receiverType: KotlinType): ReceiverExpressionFactory? {
-    return getImplicitReceiversWithInstanceToExpression()
-            .entries
-            .firstOrNull { (receiverDescriptor, _) ->
-                receiverDescriptor.type.isSubtypeOf(receiverType)
-            }
-            ?.value
-}
+fun LexicalScope.getFactoryForImplicitReceiverWithSubtypeOf(receiverType: KotlinType): ReceiverExpressionFactory? =
+    getImplicitReceiversWithInstanceToExpression().entries.firstOrNull { (receiverDescriptor, _) ->
+        receiverDescriptor.type.isSubtypeOf(receiverType)
+    }?.value
 
 fun LexicalScope.getImplicitReceiversWithInstanceToExpression(
     excludeShadowedByDslMarkers: Boolean = false
@@ -82,7 +67,8 @@ fun LexicalScope.getImplicitReceiversWithInstanceToExpression(
     for ((index, receiver) in receivers.withIndex()) {
         val owner = receiver.containingDeclaration
         if (owner is ScriptDescriptor) {
-            result.put(receiver, null)
+            result[receiver] = null
+            outerDeclarationsWithInstance.addAll(owner.implicitReceivers)
             continue
         }
         val (expressionText, isImmediateThis) = if (owner in outerDeclarationsWithInstance) {
@@ -91,11 +77,9 @@ fun LexicalScope.getImplicitReceiversWithInstanceToExpression(
                 (thisWithLabel ?: "this") to true
             else
                 thisWithLabel to false
-        }
-        else if (owner is ClassDescriptor && owner.kind.isSingleton) {
+        } else if (owner is ClassDescriptor && owner.kind.isSingleton) {
             IdeDescriptorRenderers.SOURCE_CODE.renderClassifierName(owner) to false
-        }
-        else {
+        } else {
             continue
         }
         val factory = if (expressionText != null)
@@ -108,7 +92,7 @@ fun LexicalScope.getImplicitReceiversWithInstanceToExpression(
             }
         else
             null
-        result.put(receiver, factory)
+        result[receiver] = factory
     }
     return result
 }
@@ -123,15 +107,15 @@ private fun thisQualifierName(receiver: ReceiverParameterDescriptor): Name? {
 }
 
 private fun List<ReceiverParameterDescriptor>.shadowedByDslMarkers(): Set<ReceiverParameterDescriptor> {
-    val typesByDslScopes = LinkedHashMap<FqName, MutableList<ReceiverParameterDescriptor>>()
+    val typesByDslScopes = mutableMapOf<FqName, MutableList<ReceiverParameterDescriptor>>()
 
-    this.mapNotNull { receiver ->
+    for (receiver in this) {
         val dslMarkers = DslMarkerUtils.extractDslMarkerFqNames(receiver.value).all()
-        (receiver to dslMarkers).takeIf { dslMarkers.isNotEmpty() }
-    }.forEach { (v, dslMarkers) -> dslMarkers.forEach { typesByDslScopes.getOrPut(it, { mutableListOf() }) += v } }
+        for (marker in dslMarkers) {
+            typesByDslScopes.getOrPut(marker) { mutableListOf() } += receiver
+        }
+    }
 
-    val shadowedDslReceivers = mutableSetOf<ReceiverParameterDescriptor>()
-    typesByDslScopes.flatMapTo(shadowedDslReceivers) { (_, v) -> v.asSequence().drop(1).asIterable() }
-
-    return shadowedDslReceivers
+    // for each DSL marker, all receivers except the closest one are shadowed by it; that is why we drop it
+    return typesByDslScopes.values.flatMapTo(mutableSetOf()) { it.drop(1) }
 }

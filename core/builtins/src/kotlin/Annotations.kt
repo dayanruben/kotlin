@@ -1,17 +1,6 @@
 /*
- * Copyright 2010-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package kotlin
@@ -46,6 +35,27 @@ public annotation class Deprecated(
     val message: String,
     val replaceWith: ReplaceWith = ReplaceWith(""),
     val level: DeprecationLevel = DeprecationLevel.WARNING
+)
+
+/**
+ * Marks the annotated declaration as deprecated. In contrast to [Deprecated], severity of the reported diagnostic is not a constant value,
+ * but differs depending on the API version of the usage (the value of the `-api-version` argument when compiling the module where
+ * the usage is located). If the API version is greater or equal than [hiddenSince], the declaration will not be accessible from the code
+ * (as if it was deprecated with level [DeprecationLevel.HIDDEN]), otherwise if the API version is greater or equal than [errorSince],
+ * the usage will be marked as an error (as with [DeprecationLevel.ERROR]), otherwise if the API version is greater or equal
+ * than [warningSince], the usage will be marked as a warning (as with [DeprecationLevel.WARNING]), otherwise the annotation is ignored.
+ *
+ * @property warningSince the version, since which this deprecation should be reported as a warning.
+ * @property errorSince the version, since which this deprecation should be reported as a error.
+ * @property hiddenSince the version, since which the annotated declaration should not be available in code.
+ */
+@Target(CLASS, FUNCTION, PROPERTY, ANNOTATION_CLASS, CONSTRUCTOR, PROPERTY_SETTER, PROPERTY_GETTER, TYPEALIAS)
+@MustBeDocumented
+@SinceKotlin("1.4")
+public annotation class DeprecatedSinceKotlin(
+    val warningSince: String = "",
+    val errorSince: String = "",
+    val hiddenSince: String = ""
 )
 
 /**
@@ -99,7 +109,7 @@ public annotation class ParameterName(val name: String)
  * Suppresses the given compilation warnings in the annotated element.
  * @property names names of the compiler diagnostics to suppress.
  */
-@Target(CLASS, ANNOTATION_CLASS, PROPERTY, FIELD, LOCAL_VARIABLE, VALUE_PARAMETER,
+@Target(CLASS, ANNOTATION_CLASS, TYPE_PARAMETER, PROPERTY, FIELD, LOCAL_VARIABLE, VALUE_PARAMETER,
         CONSTRUCTOR, FUNCTION, PROPERTY_GETTER, PROPERTY_SETTER, TYPE, EXPRESSION, FILE, TYPEALIAS)
 @Retention(SOURCE)
 public annotation class Suppress(vararg val names: String)
@@ -150,7 +160,7 @@ public annotation class DslMarker
  * makes it effectively public.
  *
  * Public inline functions cannot use non-public API, since if they are inlined, those non-public API references
- * would violate access restrictions at a call site (http://kotlinlang.org/docs/reference/inline-functions.html#public-inline-restrictions).
+ * would violate access restrictions at a call site (https://kotlinlang.org/docs/reference/inline-functions.html#public-inline-restrictions).
  *
  * To overcome this restriction an `internal` declaration can be annotated with the `@PublishedApi` annotation:
  * - this allows to call that declaration from public inline functions;

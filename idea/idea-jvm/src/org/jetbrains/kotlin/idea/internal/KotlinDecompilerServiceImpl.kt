@@ -57,7 +57,7 @@ class KotlinDecompilerServiceImpl : KotlinDecompilerService {
 
             val decompiler = BaseDecompiler(bytecodeProvider, resultSaver, options, IdeaLogger())
             for (path in bytecodeMap.keys) {
-                decompiler.addSpaceEx(path, true)
+                decompiler.addSource(path)
             }
             decompiler.decompileContext()
             return resultSaver.resultText
@@ -100,7 +100,7 @@ class KotlinDecompilerServiceImpl : KotlinDecompilerService {
                 decompiledText.values.singleOrNull()?.let { return it }
                 return buildString {
                     for ((filename, content) in decompiledText) {
-                        appendln("// $filename")
+                        appendLine("// $filename")
                         append(content)
                     }
                 }

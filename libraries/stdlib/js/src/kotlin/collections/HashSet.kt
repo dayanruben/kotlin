@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 /*
  * Based on GWT HashSet
@@ -12,9 +12,11 @@ package kotlin.collections
 /**
  * The implementation of the [MutableSet] interface, backed by a [HashMap] instance.
  */
+// Classes that extend HashSet and implement `build()` (freezing) operation
+// have to make sure mutating methods check `checkIsMutable`.
 public actual open class HashSet<E> : AbstractMutableSet<E>, MutableSet<E> {
 
-    private val map: HashMap<E, Any>
+    internal val map: HashMap<E, Any>
 
     /**
      * Constructs a new empty [HashSet].

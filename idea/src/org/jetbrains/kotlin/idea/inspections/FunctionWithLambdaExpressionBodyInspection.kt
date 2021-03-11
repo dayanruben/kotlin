@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.inspections
@@ -10,8 +10,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.searches.ReferencesSearch
-import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.core.setType
@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.quickfix.SpecifyTypeExplicitlyFix
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.types.typeUtil.isNothing
 
 class FunctionWithLambdaExpressionBodyInspection : AbstractKotlinInspection() {
@@ -48,12 +49,18 @@ class FunctionWithLambdaExpressionBodyInspection : AbstractKotlinInspection() {
             val fixes = listOfNotNull(
                 IntentionWrapper(SpecifyTypeExplicitlyFix(), file),
                 IntentionWrapper(AddArrowIntention(), file),
-                if (!used && lambdaBody.statements.size == 1 && lambdaBody.allChildren.none { it is PsiComment }) RemoveBracesFix() else null,
+                if (!used &&
+                    lambdaBody.statements.size == 1 &&
+                    lambdaBody.allChildren.none { it is PsiComment }
+                )
+                    RemoveBracesFix()
+                else
+                    null,
                 if (!used) WrapRunFix() else null
             )
             holder.registerProblem(
                 lambda,
-                "Function with `= { ... }` and inferred return type",
+                KotlinBundle.message("function.with.and.inferred.return.type"),
                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                 *fixes.toTypedArray()
             )
@@ -65,7 +72,7 @@ class FunctionWithLambdaExpressionBodyInspection : AbstractKotlinInspection() {
     }
 
     private class RemoveBracesFix : LocalQuickFix {
-        override fun getName() = "Remove braces"
+        override fun getName() = KotlinBundle.message("remove.braces.fix.text")
 
         override fun getFamilyName() = name
 
@@ -73,12 +80,12 @@ class FunctionWithLambdaExpressionBodyInspection : AbstractKotlinInspection() {
             val lambda = descriptor.psiElement as? KtLambdaExpression ?: return
             val body = lambda.functionLiteral.bodyExpression ?: return
             val replaced = lambda.replaced(body)
-            replaced.parentOfType<KtCallableDeclaration>()?.setTypeIfNeed()
+            replaced.setTypeIfNeed()
         }
     }
 
     private class WrapRunFix : LocalQuickFix {
-        override fun getName() = "Convert to run { ... }"
+        override fun getName() = KotlinBundle.message("wrap.run.fix.text")
 
         override fun getFamilyName() = name
 
@@ -86,14 +93,15 @@ class FunctionWithLambdaExpressionBodyInspection : AbstractKotlinInspection() {
             val lambda = descriptor.psiElement as? KtLambdaExpression ?: return
             val body = lambda.functionLiteral.bodyExpression ?: return
             val replaced = lambda.replaced(KtPsiFactory(lambda).createExpressionByPattern("run { $0 }", body))
-            replaced.parentOfType<KtCallableDeclaration>()?.setTypeIfNeed()
+            replaced.setTypeIfNeed()
         }
     }
 }
 
-private fun KtCallableDeclaration.setTypeIfNeed() {
-    val type = (resolveToDescriptorIfAny() as? CallableDescriptor)?.returnType
+private fun KtExpression.setTypeIfNeed() {
+    val declaration = getStrictParentOfType<KtCallableDeclaration>() ?: return
+    val type = (declaration.resolveToDescriptorIfAny() as? CallableDescriptor)?.returnType
     if (type?.isNothing() == true) {
-        this.setType(type)
+        declaration.setType(type)
     }
 }

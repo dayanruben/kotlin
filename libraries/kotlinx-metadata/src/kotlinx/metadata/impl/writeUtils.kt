@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package kotlinx.metadata.impl
@@ -24,7 +24,7 @@ fun KmAnnotation.writeAnnotation(strings: StringTable): ProtoBuf.Annotation.Buil
         }
     }
 
-private fun KmAnnotationArgument<*>.writeAnnotationArgument(strings: StringTable): ProtoBuf.Annotation.Argument.Value.Builder =
+fun KmAnnotationArgument<*>.writeAnnotationArgument(strings: StringTable): ProtoBuf.Annotation.Argument.Value.Builder =
     ProtoBuf.Annotation.Argument.Value.newBuilder().apply {
         when (this@writeAnnotationArgument) {
             is KmAnnotationArgument.ByteValue -> {
@@ -76,7 +76,7 @@ private fun KmAnnotationArgument<*>.writeAnnotationArgument(strings: StringTable
             }
             is KmAnnotationArgument.ULongValue -> {
                 this.type = ProtoBuf.Annotation.Argument.Value.Type.LONG
-                this.intValue = value.toLong()
+                this.intValue = value
                 this.flags = Flags.IS_UNSIGNED.toFlags(true)
             }
             is KmAnnotationArgument.StringValue -> {

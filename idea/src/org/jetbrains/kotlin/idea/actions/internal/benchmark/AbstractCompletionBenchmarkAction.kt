@@ -37,14 +37,15 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextField
 import com.intellij.uiDesigner.core.GridConstraints
 import kotlinx.coroutines.*
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.caches.project.ModuleOrigin
 import org.jetbrains.kotlin.idea.caches.project.getNullableModuleInfo
 import org.jetbrains.kotlin.idea.completion.CompletionBenchmarkSink
 import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.core.util.EDT
-import org.jetbrains.kotlin.idea.refactoring.getLineCount
-import org.jetbrains.kotlin.idea.refactoring.toPsiFile
+import org.jetbrains.kotlin.idea.core.util.getLineCount
+import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.psi.KtFile
 import java.util.*
@@ -64,25 +65,26 @@ abstract class AbstractCompletionBenchmarkAction : AnAction() {
         }
     }
 
-    internal abstract fun createBenchmarkScenario(project: Project, benchmarkSink: CompletionBenchmarkSink.Impl): AbstractCompletionBenchmarkScenario?
+    internal abstract fun createBenchmarkScenario(
+        project: Project,
+        benchmarkSink: CompletionBenchmarkSink.Impl
+    ): AbstractCompletionBenchmarkScenario?
 
     companion object {
         fun showPopup(project: Project, text: String) {
             val statusBar = WindowManager.getInstance().getStatusBar(project)
             JBPopupFactory.getInstance()
-                    .createHtmlTextBalloonBuilder(text, MessageType.ERROR, null)
-                    .setFadeoutTime(5000)
-                    .createBalloon().showInCenterOf(statusBar.component)
+                .createHtmlTextBalloonBuilder(text, MessageType.ERROR, null)
+                .setFadeoutTime(5000)
+                .createBalloon().showInCenterOf(statusBar.component)
         }
 
         internal fun <T> List<T>.randomElement(random: Random): T? = if (this.isNotEmpty()) this[random.nextInt(this.size)] else null
-        internal fun <T> Array<T>.randomElement(random: Random): T? = if (this.isNotEmpty()) this[random.nextInt(this.size)] else null
-        internal fun <T : Any> List<T>.shuffledSequence(random: Random): Sequence<T> = generateSequence { this.randomElement(random) }.distinct()
+        internal fun <T : Any> List<T>.shuffledSequence(random: Random): Sequence<T> =
+            generateSequence { this.randomElement(random) }.distinct()
 
         internal fun collectSuitableKotlinFiles(project: Project, filePredicate: (KtFile) -> Boolean): MutableList<KtFile> {
-            val scope = object : DelegatingGlobalSearchScope(GlobalSearchScope.allScope(project)) {
-                override fun isSearchOutsideRootModel(): Boolean = false
-            }
+            val scope = GlobalSearchScope.allScope(project)
 
             fun KtFile.isUsableForBenchmark(): Boolean {
                 val moduleInfo = this.getNullableModuleInfo() ?: return false
@@ -93,12 +95,12 @@ abstract class AbstractCompletionBenchmarkAction : AnAction() {
             val kotlinVFiles = FileTypeIndex.getFiles(KotlinFileType.INSTANCE, scope)
 
             return kotlinVFiles
-                    .asSequence()
-                    .mapNotNull { vfile -> (vfile.toPsiFile(project) as? KtFile) }
-                    .filterTo(mutableListOf()) { it.isUsableForBenchmark() && filePredicate(it) }
+                .asSequence()
+                .mapNotNull { vfile -> (vfile.toPsiFile(project) as? KtFile) }
+                .filterTo(mutableListOf()) { it.isUsableForBenchmark() && filePredicate(it) }
         }
 
-        internal fun JPanel.addBoxWithLabel(tooltip: String, label: String = tooltip + ":", default: String, i: Int): JBTextField {
+        internal fun JPanel.addBoxWithLabel(tooltip: String, label: String = "$tooltip:", default: String, i: Int): JBTextField {
             this.add(JBLabel(label), GridConstraints().apply { row = i; column = 0 })
             val textField = JBTextField().apply {
                 text = default
@@ -115,8 +117,9 @@ abstract class AbstractCompletionBenchmarkAction : AnAction() {
 }
 
 internal abstract class AbstractCompletionBenchmarkScenario(
-        val project: Project, val benchmarkSink: CompletionBenchmarkSink.Impl,
-        val random: Random = Random(), val timeout: Long = 15000) {
+    val project: Project, private val benchmarkSink: CompletionBenchmarkSink.Impl,
+    val random: Random = Random(), private val timeout: Long = 15000
+) {
 
 
     sealed class Result {
@@ -148,8 +151,8 @@ internal abstract class AbstractCompletionBenchmarkScenario(
     protected suspend fun typeAtOffsetAndGetResult(text: String, offset: Int, file: KtFile): Result {
         NavigationUtil.openFileWithPsiElement(file.navigationElement, false, true)
 
-        val document = PsiDocumentManager.getInstance(project).getDocument(file) ?:
-                       return Result.ErrorResult("${file.virtualFile.path}:O$offset")
+        val document =
+            PsiDocumentManager.getInstance(project).getDocument(file) ?: return Result.ErrorResult("${file.virtualFile.path}:O$offset")
 
         val location = "${file.virtualFile.path}:${document.getLineNumber(offset)}"
 
@@ -173,8 +176,7 @@ internal abstract class AbstractCompletionBenchmarkScenario(
 
         val result = try {
             withTimeout(timeout) { collectResult(file, location) }
-        }
-        catch (_: CancellationException) {
+        } catch (_: CancellationException) {
             Result.ErrorResult(location)
         }
 
@@ -189,7 +191,7 @@ internal abstract class AbstractCompletionBenchmarkScenario(
         return result
     }
 
-    protected suspend fun collectResult(file: KtFile, location: String): Result {
+    private suspend fun collectResult(file: KtFile, location: String): Result {
         val results = benchmarkSink.channel.receive()
         return Result.SuccessResult(file.getLineCount(), location, results.firstFlush, results.full)
     }
@@ -200,17 +202,17 @@ internal abstract class AbstractCompletionBenchmarkScenario(
         if (result == JFileChooser.APPROVE_OPTION) {
             val file = jfc.selectedFile
             file.writeText(buildString {
-                appendln("n, file, lines, ff, full")
+                appendLine("n, file, lines, ff, full")
                 var i = 0
                 allResults.forEach {
                     append(i++)
                     append(", ")
                     it.toCSV(this)
-                    appendln()
+                    appendLine()
                 }
             })
         }
-        AbstractCompletionBenchmarkAction.showPopup(project, "Done")
+        AbstractCompletionBenchmarkAction.showPopup(project, KotlinBundle.message("title.done"))
     }
 
     abstract suspend fun doBenchmark()

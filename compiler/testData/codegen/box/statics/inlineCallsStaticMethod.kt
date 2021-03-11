@@ -1,4 +1,4 @@
-// IGNORE_BACKEND: JVM_IR
+// !LANGUAGE: -ProhibitProtectedCallFromInline
 // TARGET_BACKEND: JVM
 
 // FILE: Test.java

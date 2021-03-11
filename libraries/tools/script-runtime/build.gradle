@@ -1,18 +1,12 @@
 description 'Kotlin Script Runtime'
 
 apply plugin: 'kotlin'
-apply plugin: 'pill-configurable'
 
 configureJvm6Project(project)
-configureDist(project)
 configurePublishing(project)
 
-pill {
-    importAsLibrary = true
-}
-
 dependencies {
-    compileOnly project(':kotlin-stdlib')
+    compileOnly kotlinStdlib()
 }
 
 configurations {
@@ -32,21 +26,19 @@ jar {
 }
 
 artifacts {
-    archives sourcesJar
-    archives javadocJar
     mainJar jar
 }
 
-dist {
-    from (jar, sourcesJar)
-}
+configureSourcesJar()
+configureJavadocJar()
 
 compileKotlin {
     kotlinOptions.freeCompilerArgs = [
-            "-Xallow-kotlin-package",
-            "-Xnormalize-constructor-calls=enable",
-            "-module-name", project.name
+        "-Xallow-kotlin-package",
+        "-Xnormalize-constructor-calls=enable",
+        "-Xsuppress-deprecated-jvm-target-warning",
     ]
+    kotlinOptions.moduleName = project.name
 }
 
-
+configureJvmIrBackend(project)

@@ -18,9 +18,12 @@ package org.jetbrains.kotlin.idea.scratch.output
 
 import com.intellij.execution.filters.OpenFileHyperlinkInfo
 import com.intellij.execution.impl.ConsoleViewImpl
+import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.ide.scratch.ScratchFileType
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
@@ -30,24 +33,79 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.psi.PsiFile
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.scratch.ScratchExpression
 import org.jetbrains.kotlin.idea.scratch.ScratchFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
-
-fun getToolwindowHandler(): ScratchOutputHandler {
+/**
+ * Method to retrieve shared instance of scratches ToolWindow output handler.
+ *
+ * [releaseToolWindowHandler] must be called for every output handler received from this method.
+ *
+ * Can be called from EDT only.
+ *
+ * @return new toolWindow output handler if one does not exist, otherwise returns the existing one. When application in test mode,
+ * returns [TestOutputHandler].
+ */
+fun requestToolWindowHandler(): ScratchOutputHandler {
     return if (ApplicationManager.getApplication().isUnitTestMode) {
         TestOutputHandler
     } else {
-        ToolWindowScratchOutputHandler
+        ScratchToolWindowHandlerKeeper.requestOutputHandler()
     }
 }
 
-private object ToolWindowScratchOutputHandler : ScratchOutputHandlerAdapter() {
+/**
+ * Should be called once with the output handler received from the [requestToolWindowHandler] call.
+ *
+ * When release is called for every request, the output handler is actually disposed.
+ *
+ * When application in test mode, does nothing.
+ *
+ * Can be called from EDT only.
+ */
+fun releaseToolWindowHandler(scratchOutputHandler: ScratchOutputHandler) {
+    if (!ApplicationManager.getApplication().isUnitTestMode) {
+        ScratchToolWindowHandlerKeeper.releaseOutputHandler(scratchOutputHandler)
+    }
+}
+
+/**
+ * Implements logic of shared pointer for the toolWindow output handler.
+ *
+ * Not thread safe! Can be used only from the EDT.
+ */
+private object ScratchToolWindowHandlerKeeper {
+    private var toolWindowHandler: ScratchOutputHandler? = null
+    private var toolWindowDisposable = Disposer.newDisposable()
+    private var counter = 0
+
+    fun requestOutputHandler(): ScratchOutputHandler {
+        if (counter == 0) {
+            toolWindowHandler = ToolWindowScratchOutputHandler(toolWindowDisposable)
+        }
+
+        counter += 1
+        return toolWindowHandler!!
+    }
+
+    fun releaseOutputHandler(scratchOutputHandler: ScratchOutputHandler) {
+        require(counter > 0) { "Counter is $counter, nothing to release!" }
+        require(toolWindowHandler === scratchOutputHandler) { "$scratchOutputHandler differs from stored $toolWindowHandler" }
+
+        counter -= 1
+        if (counter == 0) {
+            Disposer.dispose(toolWindowDisposable)
+            toolWindowDisposable = Disposer.newDisposable()
+            toolWindowHandler = null
+        }
+    }
+}
+
+private class ToolWindowScratchOutputHandler(private val parentDisposable: Disposable) : ScratchOutputHandlerAdapter() {
 
     override fun handle(file: ScratchFile, expression: ScratchExpression, output: ScratchOutput) {
-        printToConsole(file.project) {
+        printToConsole(file) {
             val psiFile = file.getPsiFile()
             if (psiFile != null) {
                 printHyperlink(
@@ -65,14 +123,17 @@ private object ToolWindowScratchOutputHandler : ScratchOutputHandlerAdapter() {
     }
 
     override fun error(file: ScratchFile, message: String) {
-        printToConsole(file.project) {
+        printToConsole(file) {
             print(message, ConsoleViewContentType.ERROR_OUTPUT)
         }
     }
 
-    private fun printToConsole(project: Project, print: ConsoleViewImpl.() -> Unit) {
+    private fun printToConsole(file: ScratchFile, print: ConsoleViewImpl.() -> Unit) {
         ApplicationManager.getApplication().invokeLater {
-            val toolWindow = getToolWindow(project) ?: createToolWindow(project)
+            val project = file.project.takeIf { !it.isDisposed } ?: return@invokeLater
+
+            val toolWindow = getToolWindow(project) ?: createToolWindow(file)
+
             val contents = toolWindow.contentManager.contents
             for (content in contents) {
                 val component = content.component
@@ -81,8 +142,14 @@ private object ToolWindowScratchOutputHandler : ScratchOutputHandlerAdapter() {
                     component.print("\n", ConsoleViewContentType.NORMAL_OUTPUT)
                 }
             }
+
             toolWindow.setAvailable(true, null)
-            toolWindow.show(null)
+
+            if (!file.options.isInteractiveMode) {
+                toolWindow.show(null)
+            }
+
+            toolWindow.setIcon(ExecutionUtil.getLiveIndicator(ScratchFileType.INSTANCE.icon))
         }
     }
 
@@ -96,8 +163,12 @@ private object ToolWindowScratchOutputHandler : ScratchOutputHandlerAdapter() {
                     component.clear()
                 }
             }
-            toolWindow.setAvailable(false, null)
-            toolWindow.hide(null)
+
+            if (!file.options.isInteractiveMode) {
+                toolWindow.hide(null)
+            }
+
+            toolWindow.setIcon(ScratchFileType.INSTANCE.icon ?: error("Text icon is expected to be present"))
         }
     }
 
@@ -112,11 +183,18 @@ private object ToolWindowScratchOutputHandler : ScratchOutputHandlerAdapter() {
         return toolWindowManager.getToolWindow(ScratchToolWindowFactory.ID)
     }
 
-    private fun createToolWindow(project: Project): ToolWindow {
+    private fun createToolWindow(file: ScratchFile): ToolWindow {
+        val project = file.project
         val toolWindowManager = ToolWindowManager.getInstance(project)
         toolWindowManager.registerToolWindow(ScratchToolWindowFactory.ID, true, ToolWindowAnchor.BOTTOM)
-        val window = toolWindowManager.getToolWindow(ScratchToolWindowFactory.ID)
+        val window =
+            toolWindowManager.getToolWindow(ScratchToolWindowFactory.ID) ?: error("ScratchToolWindowFactory.ID should be registered")
         ScratchToolWindowFactory().createToolWindowContent(project, window)
+
+        Disposer.register(parentDisposable, Disposable {
+            toolWindowManager.unregisterToolWindow(ScratchToolWindowFactory.ID)
+        })
+
         return window
     }
 }
@@ -131,8 +209,9 @@ private class ScratchToolWindowFactory : ToolWindowFactory {
 
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         val consoleView = ConsoleViewImpl(project, true)
-        toolWindow.isToHideOnEmptyContent = true
-        toolWindow.icon = ScratchFileType.INSTANCE.icon
+        toolWindow.setToHideOnEmptyContent(true)
+        toolWindow.setIcon(ScratchFileType.INSTANCE.icon ?: error("Text icon should be present"))
+        toolWindow.hide(null)
 
         val contentManager = toolWindow.contentManager
         val content = contentManager.factory.createContent(consoleView.component, null, false)
@@ -146,25 +225,48 @@ private class ScratchToolWindowFactory : ToolWindowFactory {
     }
 }
 
-@TestOnly
 private object TestOutputHandler : ScratchOutputHandlerAdapter() {
+    private val errors = arrayListOf<String>()
+    private val inlays = arrayListOf<Pair<ScratchExpression, String>>()
+
     override fun handle(file: ScratchFile, expression: ScratchExpression, output: ScratchOutput) {
-        testPrint(file, output.text, expression)
+        inlays.add(expression to output.text)
     }
 
     override fun error(file: ScratchFile, message: String) {
-        testPrint(file, message)
+        errors.add(message)
     }
 
-    private fun testPrint(file: ScratchFile, output: String, expression: ScratchExpression? = null) {
-        ApplicationManager.getApplication().invokeLater {
-            WriteCommandAction.runWriteCommandAction(file.project) {
-                val psiFile = file.getPsiFile()!!
-                psiFile.addAfter(
-                    KtPsiFactory(file.project).createComment(
-                        "/** ${expression?.let { getLineInfo(psiFile, expression) + " " } ?: ""}$output */"
-                    ),
-                    psiFile.lastChild
+    override fun onFinish(file: ScratchFile) {
+        TransactionGuard.submitTransaction(file.project, Runnable {
+            val psiFile = file.getPsiFile()
+                ?: error(
+                    "PsiFile cannot be found for scratch to render inlays in tests:\n" +
+                            "project.isDisposed = ${file.project.isDisposed}\n" +
+                            "inlays = ${inlays.joinToString { it.second }}\n" +
+                            "errors = ${errors.joinToString()}"
+                )
+
+            if (inlays.isNotEmpty()) {
+                testPrint(psiFile, inlays.map { (expression, text) ->
+                    "/** ${getLineInfo(psiFile, expression)} $text */"
+                })
+                inlays.clear()
+            }
+
+            if (errors.isNotEmpty()) {
+                testPrint(psiFile, listOf(errors.joinToString(prefix = "/** ", postfix = " */")))
+                errors.clear()
+            }
+        })
+    }
+
+    private fun testPrint(file: PsiFile, comments: List<String>) {
+        WriteCommandAction.runWriteCommandAction(file.project) {
+            for (comment in comments) {
+                file.addAfter(
+                    KtPsiFactory(file.project).createComment(comment),
+                    file.lastChild
                 )
             }
         }

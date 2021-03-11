@@ -21,50 +21,62 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.intentions.getArguments
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtBinaryExpression
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.createExpressionByPattern
+import org.jetbrains.kotlin.psi.*
 
 class ReplaceRangeToWithUntilInspection : AbstractPrimitiveRangeToInspection() {
-
     override fun visitRangeToExpression(expression: KtExpression, holder: ProblemsHolder) {
-        if (expression.getArguments()?.second?.isMinusOne() != true) return
-
+        if (!isApplicable(expression)) return
         holder.registerProblem(
-                expression,
-                "'rangeTo' or the '..' call should be replaced with 'until'",
-                ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                ReplaceWithUntilQuickFix()
+            expression,
+            KotlinBundle.message("rangeto.or.the.call.should.be.replaced.with.until"),
+            ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+            ReplaceWithUntilQuickFix()
         )
     }
 
     class ReplaceWithUntilQuickFix : LocalQuickFix {
-
-        override fun getName() = "Replace with until"
+        override fun getName() = KotlinBundle.message("replace.with.until.quick.fix.text")
 
         override fun getFamilyName() = name
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val element = descriptor.psiElement as KtExpression
+            applyFix(element)
+        }
+    }
+
+    companion object {
+        fun applyFixIfApplicable(expression: KtExpression) {
+            if (isApplicable(expression)) applyFix(expression)
+        }
+
+        private fun isApplicable(expression: KtExpression): Boolean {
+            return expression.getArguments()?.second?.deparenthesize()?.isMinusOne() == true
+        }
+
+        private fun applyFix(element: KtExpression) {
             val args = element.getArguments() ?: return
-            element.replace(KtPsiFactory(element).createExpressionByPattern(
+            element.replace(
+                KtPsiFactory(element).createExpressionByPattern(
                     "$0 until $1",
                     args.first ?: return,
-                    (args.second as? KtBinaryExpression)?.left ?: return)
+                    (args.second?.deparenthesize() as? KtBinaryExpression)?.left ?: return
+                )
             )
         }
 
-    }
+        private fun KtExpression.isMinusOne(): Boolean {
+            if (this !is KtBinaryExpression) return false
+            if (operationToken != KtTokens.MINUS) return false
 
-    private fun KtExpression.isMinusOne(): Boolean {
-        if (this !is KtBinaryExpression) return false
-        if (operationToken != KtTokens.MINUS) return false
-
-        val constantValue = right?.constantValueOrNull()
-        val rightValue = (constantValue?.value as? Number)?.toInt() ?: return false
-        return rightValue == 1
+            val constantValue = right?.constantValueOrNull()
+            val rightValue = (constantValue?.value as? Number)?.toInt() ?: return false
+            return rightValue == 1
+        }
     }
 }
+
+private fun KtExpression.deparenthesize() = KtPsiUtil.safeDeparenthesize(this)

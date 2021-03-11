@@ -11,17 +11,14 @@ dependencies {
     compileOnly(project(":compiler:frontend"))
     compileOnly(intellijCoreDep()) { includeJars("intellij-core") }
 
-    runtime(project(":kotlin-stdlib"))
-
-    testRuntimeOnly(intellijDep()) {
-        includeJars("guava", rootProject = rootProject)
-    }
-    testRuntimeOnly(projectRuntimeJar(":kotlin-compiler"))
+    runtimeOnly(kotlinStdlib())
 
     testCompile(project(":compiler:backend"))
     testCompile(project(":compiler:cli"))
     testCompile(projectTests(":compiler:tests-common"))
     testCompile(commonDep("junit:junit"))
+
+    testRuntimeOnly(intellijCoreDep()) { includeJars("intellij-core") }
 }
 
 sourceSets {
@@ -29,16 +26,16 @@ sourceSets {
     "test" { projectDefault() }
 }
 
-val jar = runtimeJar {}
+runtimeJar()
 
-testsJar {}
+sourcesJar()
 
-dist(targetName = the<BasePluginConvention>().archivesBaseName.removePrefix("kotlin-") + ".jar")
+javadocJar()
 
-ideaPlugin {
-    from(jar)
-}
+testsJar()
 
-projectTest {
+projectTest(parallel = true) {
     workingDir = rootDir
 }
+
+apply(from = "$rootDir/gradle/kotlinPluginPublication.gradle.kts")

@@ -16,30 +16,31 @@
 
 package org.jetbrains.kotlin.idea.core.script
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiManager
-import com.intellij.ui.EditorNotifications
-import org.jetbrains.kotlin.script.ScriptReportSink
-import kotlin.script.experimental.dependencies.ScriptReport
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.UserDataProperty
+import org.jetbrains.kotlin.scripting.resolve.ScriptReportSink
+import kotlin.script.experimental.api.ScriptDiagnostic
 
 class IdeScriptReportSink(val project: Project) : ScriptReportSink {
-    override fun attachReports(scriptFile: VirtualFile, reports: List<ScriptReport>) {
-        // TODO: persist errors between launches?
-        scriptFile.putUserData(Reports, reports)
+    override fun attachReports(scriptFile: VirtualFile, reports: List<ScriptDiagnostic>) {
+        if (getReports(scriptFile) == reports) return
 
-        ApplicationManager.getApplication().invokeLater {
-            if (scriptFile.isValid) {
-                PsiManager.getInstance(project).findFile(scriptFile)?.let { psiFile ->
-                    DaemonCodeAnalyzer.getInstance(project).restart(psiFile)
-                    EditorNotifications.getInstance(project).updateNotifications(scriptFile)
-                }
-            }
-        }
+        // TODO: persist errors between launches?
+        scriptFile.scriptDiagnostics = reports
     }
 
-    object Reports : Key<List<ScriptReport>>("KOTLIN_SCRIPT_REPORTS")
+    companion object {
+        fun getReports(file: VirtualFile): List<ScriptDiagnostic> {
+            return file.scriptDiagnostics ?: emptyList()
+        }
+
+        fun getReports(file: KtFile): List<ScriptDiagnostic> {
+            return file.originalFile.virtualFile?.scriptDiagnostics ?: emptyList()
+        }
+
+        private var VirtualFile.scriptDiagnostics: List<ScriptDiagnostic>? by UserDataProperty(Key.create("KOTLIN_SCRIPT_DIAGNOSTICS"))
+    }
 }

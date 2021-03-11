@@ -1,432 +1,465 @@
 /*
- * Copyright 2010-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
+
+@file:Suppress("DEPRECATION")
 
 package org.jetbrains.kotlin.idea.editor
 
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.application.options.CodeStyle
+import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.LightCodeInsightTestCase
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import com.intellij.testFramework.LightPlatformTestCase
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle
+import org.jetbrains.kotlin.idea.formatter.ktCodeStyleSettings
+import org.jetbrains.kotlin.test.JUnit3WithIdeaConfigurationRunner
+import org.junit.runner.RunWith
 
+@Suppress("DEPRECATION")
+@RunWith(JUnit3WithIdeaConfigurationRunner::class)
 class TypedHandlerTest : LightCodeInsightTestCase() {
     private val dollar = '$'
 
-    fun testTypeStringTemplateStart() = doCharTypeTest(
-            '{',
-            """val x = "$<caret>" """,
-            """val x = "$dollar{}" """
+    fun testTypeStringTemplateStart() = doTypeTest(
+        '{',
+        """val x = "$<caret>" """,
+        """val x = "$dollar{}" """
     )
 
-    fun testAutoIndentRightOpenBrace() = doCharTypeTest(
-            '{',
+    fun testAutoIndentRightOpenBrace() = doTypeTest(
+        '{',
 
-            "fun test() {\n" +
-            "<caret>\n" +
-            "}",
+        "fun test() {\n" +
+                "<caret>\n" +
+                "}",
 
-            "fun test() {\n" +
-            "    {<caret>}\n" +
-            "}"
+        "fun test() {\n" +
+                "    {<caret>}\n" +
+                "}"
     )
 
-    fun testAutoIndentLeftOpenBrace() = doCharTypeTest(
-            '{',
+    fun testAutoIndentLeftOpenBrace() = doTypeTest(
+        '{',
 
-            "fun test() {\n" +
-            "      <caret>\n" +
-            "}",
+        "fun test() {\n" +
+                "      <caret>\n" +
+                "}",
 
-            "fun test() {\n" +
-            "    {<caret>}\n" +
-            "}"
+        "fun test() {\n" +
+                "    {<caret>}\n" +
+                "}"
     )
 
-    fun testTypeStringTemplateStartWithCloseBraceAfter() = doCharTypeTest(
-            '{',
-            """fun foo() { "$<caret>" }""",
-            """fun foo() { "$dollar{}" }"""
+    fun testTypeStringTemplateStartWithCloseBraceAfter() = doTypeTest(
+        '{',
+        """fun foo() { "$<caret>" }""",
+        """fun foo() { "$dollar{}" }"""
     )
 
-    fun testTypeStringTemplateStartBeforeString() = doCharTypeTest(
-            '{',
-            """fun foo() { "$<caret>something" }""",
-            """fun foo() { "$dollar{}something" }"""
+    fun testTypeStringTemplateStartBeforeStringWithExistingDollar() = doTypeTest(
+        '{',
+        """fun foo() { "$<caret>something" }""",
+        """fun foo() { "$dollar{something" }"""
     )
 
-    fun testKT3575() = doCharTypeTest(
-            '{',
-            """val x = "$<caret>]" """,
-            """val x = "$dollar{}]" """
+    fun testTypeStringTemplateStartBeforeStringWithNoDollar() = doTypeTest(
+        "$dollar{",
+        """fun foo() { "<caret>something" }""",
+        """fun foo() { "$dollar{<caret>}something" }"""
     )
 
-    fun testAutoCloseRawStringInEnd() = doCharTypeTest(
-            '"',
-            """val x = ""<caret>""",
-            """val x = ""${'"'}<caret>""${'"'}"""
+    fun testTypeStringTemplateWithUnmatchedBrace() = doTypeTest(
+        "$dollar{",
+        """val a = "<caret>bar}foo"""",
+        """val a = "$dollar{<caret>bar}foo""""
     )
 
-    fun testNoAutoCloseRawStringInEnd() = doCharTypeTest(
-            '"',
-            """val x = ""${'"'}<caret>""",
-            """val x = ""${'"'}""""
+    fun testTypeStringTemplateWithUnmatchedBraceComplex() = doTypeTest(
+        "$dollar{",
+        """val a = "<caret>bar + more}foo"""",
+        """val a = "$dollar{<caret>}bar + more}foo""""
     )
 
-    fun testAutoCloseRawStringInMiddle() = doCharTypeTest(
-            '"',
-            """
+    fun testTypeStringTemplateStartInStringWithBraceLiterals() = doTypeTest(
+        "$dollar{",
+        """val test = "{ code <caret>other }"""",
+        """val test = "{ code $dollar{<caret>}other }""""
+    )
+
+    fun testTypeStringTemplateStartInEmptyString() = doTypeTest(
+        '{',
+        """fun foo() { "$<caret>" }""",
+        """fun foo() { "$dollar{<caret>}" }"""
+    )
+
+    fun testKT3575() = doTypeTest(
+        '{',
+        """val x = "$<caret>]" """,
+        """val x = "$dollar{}]" """
+    )
+
+    fun testAutoCloseRawStringInEnd() = doTypeTest(
+        '"',
+        """val x = ""<caret>""",
+        """val x = ""${'"'}<caret>""${'"'}"""
+    )
+
+    fun testNoAutoCloseRawStringInEnd() = doTypeTest(
+        '"',
+        """val x = ""${'"'}<caret>""",
+        """val x = ""${'"'}""""
+    )
+
+    fun testAutoCloseRawStringInMiddle() = doTypeTest(
+        '"',
+        """
             val x = ""<caret>
             val y = 12
             """.trimIndent(),
-            """
+        """
             val x = ""${'"'}<caret>""${'"'}
             val y = 12
             """.trimIndent()
     )
 
-    fun testNoAutoCloseBetweenMultiQuotes() = doCharTypeTest(
-            '"',
-            """val x = ""${'"'}<caret>${'"'}""/**/""",
-            """val x = ""${'"'}${'"'}<caret>""/**/"""
+    fun testNoAutoCloseBetweenMultiQuotes() = doTypeTest(
+        '"',
+        """val x = ""${'"'}<caret>${'"'}""/**/""",
+        """val x = ""${'"'}${'"'}<caret>""/**/"""
     )
 
-    fun testNoAutoCloseBetweenMultiQuotes1() = doCharTypeTest(
-            '"',
-            """val x = ""${'"'}"<caret>"${'"'}/**/""",
-            """val x = ""${'"'}""<caret>${'"'}/**/"""
+    fun testNoAutoCloseBetweenMultiQuotes1() = doTypeTest(
+        '"',
+        """val x = ""${'"'}"<caret>"${'"'}/**/""",
+        """val x = ""${'"'}""<caret>${'"'}/**/"""
     )
 
-    fun testNoAutoCloseAfterEscape() = doCharTypeTest(
+    fun testNoAutoCloseAfterEscape() = doTypeTest(
         '"',
         """val x = "\""<caret>""",
         """val x = "\""${'"'}<caret>""""
     )
 
-    fun testAutoCloseBraceInFunctionDeclaration() = doCharTypeTest(
-            '{',
-            "fun foo() <caret>",
-            "fun foo() {<caret>}"
+    fun testAutoCloseBraceInFunctionDeclaration() = doTypeTest(
+        '{',
+        "fun foo() <caret>",
+        "fun foo() {<caret>}"
     )
 
-    fun testAutoCloseBraceInLocalFunctionDeclaration() = doCharTypeTest(
-            '{',
+    fun testAutoCloseBraceInLocalFunctionDeclaration() = doTypeTest(
+        '{',
 
-            "fun foo() {\n" +
-            "    fun bar() <caret>\n" +
-            "}",
+        "fun foo() {\n" +
+                "    fun bar() <caret>\n" +
+                "}",
 
-            "fun foo() {\n" +
-            "    fun bar() {<caret>}\n" +
-            "}"
+        "fun foo() {\n" +
+                "    fun bar() {<caret>}\n" +
+                "}"
     )
 
-    fun testAutoCloseBraceInAssignment() = doCharTypeTest(
-            '{',
-            "fun foo() {\n" +
-            "    val a = <caret>\n" +
-            "}",
+    fun testAutoCloseBraceInAssignment() = doTypeTest(
+        '{',
+        "fun foo() {\n" +
+                "    val a = <caret>\n" +
+                "}",
 
-            "fun foo() {\n" +
-            "    val a = {<caret>}\n" +
-            "}"
+        "fun foo() {\n" +
+                "    val a = {<caret>}\n" +
+                "}"
     )
 
-    fun testDoNotAutoCloseBraceInUnfinishedIfSurroundOnSameLine() = doCharTypeTest(
-            '{',
+    fun testDoNotAutoCloseBraceInUnfinishedIfSurroundOnSameLine() = doTypeTest(
+        '{',
 
-            "fun foo() {\n" +
-            "    if() <caret>foo()\n" +
-            "}",
+        "fun foo() {\n" +
+                "    if() <caret>foo()\n" +
+                "}",
 
-            "fun foo() {\n" +
-            "    if() {foo()\n" +
-            "}"
+        "fun foo() {\n" +
+                "    if() {foo()\n" +
+                "}"
     )
 
-    fun testDoNotAutoCloseBraceInUnfinishedElseSurroundOnSameLine() = doCharTypeTest(
-            '{',
+    fun testDoNotAutoCloseBraceInUnfinishedElseSurroundOnSameLine() = doTypeTest(
+        '{',
 
-            "fun foo() {\n" +
-            "    if(true) {} else <caret>foo()\n" +
-            "}",
+        "fun foo() {\n" +
+                "    if(true) {} else <caret>foo()\n" +
+                "}",
 
-            "fun foo() {\n" +
-            "    if(true) {} else {foo()\n" +
-            "}"
+        "fun foo() {\n" +
+                "    if(true) {} else {foo()\n" +
+                "}"
     )
 
-    fun testDoNotAutoCloseBraceInUnfinishedTryOnSameLine() = doCharTypeTest(
-            '{',
+    fun testDoNotAutoCloseBraceInUnfinishedTryOnSameLine() = doTypeTest(
+        '{',
 
-            "fun foo() {\n" +
-            "    try <caret>foo()\n" +
-            "}",
+        "fun foo() {\n" +
+                "    try <caret>foo()\n" +
+                "}",
 
-            "fun foo() {\n" +
-            "    try {foo()\n" +
-            "}"
+        "fun foo() {\n" +
+                "    try {foo()\n" +
+                "}"
     )
 
-    fun testDoNotAutoCloseBraceInUnfinishedCatchOnSameLine() = doCharTypeTest(
-            '{',
+    fun testDoNotAutoCloseBraceInUnfinishedCatchOnSameLine() = doTypeTest(
+        '{',
 
-            "fun foo() {\n" +
-            "    try {} catch (e: Exception) <caret>foo()\n" +
-            "}",
+        "fun foo() {\n" +
+                "    try {} catch (e: Exception) <caret>foo()\n" +
+                "}",
 
-            "fun foo() {\n" +
-            "    try {} catch (e: Exception) {foo()\n" +
-            "}"
+        "fun foo() {\n" +
+                "    try {} catch (e: Exception) {foo()\n" +
+                "}"
     )
 
-    fun testDoNotAutoCloseBraceInUnfinishedFinallyOnSameLine() = doCharTypeTest(
-            '{',
+    fun testDoNotAutoCloseBraceInUnfinishedFinallyOnSameLine() = doTypeTest(
+        '{',
 
-            "fun foo() {\n" +
-            "    try {} catch (e: Exception) finally <caret>foo()\n" +
-            "}",
+        "fun foo() {\n" +
+                "    try {} catch (e: Exception) finally <caret>foo()\n" +
+                "}",
 
-            "fun foo() {\n" +
-            "    try {} catch (e: Exception) finally {foo()\n" +
-            "}"
+        "fun foo() {\n" +
+                "    try {} catch (e: Exception) finally {foo()\n" +
+                "}"
     )
 
-    fun testDoNotAutoCloseBraceInUnfinishedWhileSurroundOnSameLine() = doCharTypeTest(
-            '{',
+    fun testDoNotAutoCloseBraceInUnfinishedWhileSurroundOnSameLine() = doTypeTest(
+        '{',
 
-            "fun foo() {\n" +
-            "    while() <caret>foo()\n" +
-            "}",
+        "fun foo() {\n" +
+                "    while() <caret>foo()\n" +
+                "}",
 
-            "fun foo() {\n" +
-            "    while() {foo()\n" +
-            "}"
+        "fun foo() {\n" +
+                "    while() {foo()\n" +
+                "}"
     )
 
-    fun testDoNotAutoCloseBraceInUnfinishedWhileSurroundOnNewLine() = doCharTypeTest(
-            '{',
+    fun testDoNotAutoCloseBraceInUnfinishedWhileSurroundOnNewLine() = doTypeTest(
+        '{',
 
-            "fun foo() {\n" +
-            "    while()\n" +
-            "<caret>\n" +
-            "    foo()\n" +
-            "}",
+        "fun foo() {\n" +
+                "    while()\n" +
+                "<caret>\n" +
+                "    foo()\n" +
+                "}",
 
-            "fun foo() {\n" +
-            "    while()\n" +
-            "    {\n" +
-            "    foo()\n" +
-            "}"
+        "fun foo() {\n" +
+                "    while()\n" +
+                "    {\n" +
+                "    foo()\n" +
+                "}"
     )
 
-    fun testDoNotAutoCloseBraceInUnfinishedIfSurroundOnOtherLine() = doCharTypeTest(
-            '{',
+    fun testDoNotAutoCloseBraceInUnfinishedIfSurroundOnOtherLine() = doTypeTest(
+        '{',
 
-            "fun foo() {\n" +
-            "    if(true) <caret>\n" +
-            "    foo()\n" +
-            "}",
+        "fun foo() {\n" +
+                "    if(true) <caret>\n" +
+                "    foo()\n" +
+                "}",
 
-            "fun foo() {\n" +
-            "    if(true) {<caret>\n" +
-            "    foo()\n" +
-            "}"
+        "fun foo() {\n" +
+                "    if(true) {<caret>\n" +
+                "    foo()\n" +
+                "}"
     )
 
-    fun testDoNotAutoCloseBraceInUnfinishedElseSurroundOnOtherLine() = doCharTypeTest(
-            '{',
+    fun testDoNotAutoCloseBraceInUnfinishedElseSurroundOnOtherLine() = doTypeTest(
+        '{',
 
-            "fun foo() {\n" +
-            "    if(true) {} else <caret>\n" +
-            "    foo()\n" +
-            "}",
+        "fun foo() {\n" +
+                "    if(true) {} else <caret>\n" +
+                "    foo()\n" +
+                "}",
 
-            "fun foo() {\n" +
-            "    if(true) {} else {<caret>\n" +
-            "    foo()\n" +
-            "}"
+        "fun foo() {\n" +
+                "    if(true) {} else {<caret>\n" +
+                "    foo()\n" +
+                "}"
     )
 
-    fun testDoNotAutoCloseBraceInUnfinishedTryOnOtherLine() = doCharTypeTest(
-            '{',
+    fun testDoNotAutoCloseBraceInUnfinishedTryOnOtherLine() = doTypeTest(
+        '{',
 
-            "fun foo() {\n" +
-            "    try <caret>\n" +
-            "    foo()\n" +
-            "}",
+        "fun foo() {\n" +
+                "    try <caret>\n" +
+                "    foo()\n" +
+                "}",
 
-            "fun foo() {\n" +
-            "    try {<caret>\n" +
-            "    foo()\n" +
-            "}"
+        "fun foo() {\n" +
+                "    try {<caret>\n" +
+                "    foo()\n" +
+                "}"
     )
 
-    fun testDoNotAutoCloseBraceInUnfinishedIfSurroundOnNewLine() = doCharTypeTest(
-            '{',
+    fun testDoNotAutoCloseBraceInUnfinishedIfSurroundOnNewLine() = doTypeTest(
+        '{',
 
-            "fun foo() {\n" +
-            "    if(true)\n" +
-            "        <caret>\n" +
-            "    foo()\n" +
-            "}",
+        "fun foo() {\n" +
+                "    if(true)\n" +
+                "        <caret>\n" +
+                "    foo()\n" +
+                "}",
 
-            "fun foo() {\n" +
-            "    if(true)\n" +
-            "    {<caret>\n" +
-            "    foo()\n" +
-            "}"
+        "fun foo() {\n" +
+                "    if(true)\n" +
+                "    {<caret>\n" +
+                "    foo()\n" +
+                "}"
     )
 
-    fun testDoNotAutoCloseBraceInUnfinishedElseSurroundOnNewLine() = doCharTypeTest(
-            '{',
+    fun testDoNotAutoCloseBraceInUnfinishedElseSurroundOnNewLine() = doTypeTest(
+        '{',
 
-            "fun foo() {\n" +
-            "    if(true) {} else\n" +
-            "        <caret>\n" +
-            "    foo()\n" +
-            "}",
+        "fun foo() {\n" +
+                "    if(true) {} else\n" +
+                "        <caret>\n" +
+                "    foo()\n" +
+                "}",
 
-            "fun foo() {\n" +
-            "    if(true) {} else\n" +
-            "    {<caret>\n" +
-            "    foo()\n" +
-            "}"
+        "fun foo() {\n" +
+                "    if(true) {} else\n" +
+                "    {<caret>\n" +
+                "    foo()\n" +
+                "}"
     )
 
-    fun testDoNotAutoCloseBraceInUnfinishedTryOnNewLine() = doCharTypeTest(
-            '{',
+    fun testDoNotAutoCloseBraceInUnfinishedTryOnNewLine() = doTypeTest(
+        '{',
 
-            "fun foo() {\n" +
-            "    try\n" +
-            "        <caret>\n" +
-            "    foo()\n" +
-            "}",
+        "fun foo() {\n" +
+                "    try\n" +
+                "        <caret>\n" +
+                "    foo()\n" +
+                "}",
 
-            "fun foo() {\n" +
-            "    try\n" +
-            "    {<caret>\n" +
-            "    foo()\n" +
-            "}"
+        "fun foo() {\n" +
+                "    try\n" +
+                "    {<caret>\n" +
+                "    foo()\n" +
+                "}"
     )
 
-    fun testAutoCloseBraceInsideFor() = doCharTypeTest(
-            '{',
+    fun testAutoCloseBraceInsideFor() = doTypeTest(
+        '{',
 
-            "fun foo() {\n" +
-            "    for (elem in some.filter <caret>) {\n" +
-            "    }\n" +
-            "}",
+        "fun foo() {\n" +
+                "    for (elem in some.filter <caret>) {\n" +
+                "    }\n" +
+                "}",
 
-            "fun foo() {\n" +
-            "    for (elem in some.filter {<caret>}) {\n" +
-            "    }\n" +
-            "}"
+        "fun foo() {\n" +
+                "    for (elem in some.filter {<caret>}) {\n" +
+                "    }\n" +
+                "}"
     )
 
-    fun testAutoCloseBraceInsideForAfterCloseParen() = doCharTypeTest(
-            '{',
+    fun testAutoCloseBraceInsideForAfterCloseParen() = doTypeTest(
+        '{',
 
-            "fun foo() {\n" +
-            "    for (elem in some.foo(true) <caret>) {\n" +
-            "    }\n" +
-            "}",
+        "fun foo() {\n" +
+                "    for (elem in some.foo(true) <caret>) {\n" +
+                "    }\n" +
+                "}",
 
-            "fun foo() {\n" +
-            "    for (elem in some.foo(true) {<caret>}) {\n" +
-            "    }\n" +
-            "}"
+        "fun foo() {\n" +
+                "    for (elem in some.foo(true) {<caret>}) {\n" +
+                "    }\n" +
+                "}"
     )
 
-    fun testAutoCloseBraceBeforeIf() = doCharTypeTest(
-            '{',
+    fun testAutoCloseBraceBeforeIf() = doTypeTest(
+        '{',
 
-            "fun foo() {\n" +
-            "    <caret>if (true) {}\n" +
-            "}",
+        "fun foo() {\n" +
+                "    <caret>if (true) {}\n" +
+                "}",
 
-            "fun foo() {\n" +
-            "    {<caret>if (true) {}\n" +
-            "}"
+        "fun foo() {\n" +
+                "    {<caret>if (true) {}\n" +
+                "}"
     )
 
-    fun testAutoCloseBraceInIfCondition() = doCharTypeTest(
-            '{',
+    fun testAutoCloseBraceInIfCondition() = doTypeTest(
+        '{',
 
-            "fun foo() {\n" +
-            "    if (some.hello (12) <caret>)\n" +
-            "}",
+        "fun foo() {\n" +
+                "    if (some.hello (12) <caret>)\n" +
+                "}",
 
-            "fun foo() {\n" +
-            "    if (some.hello (12) {<caret>})\n" +
-            "}"
+        "fun foo() {\n" +
+                "    if (some.hello (12) {<caret>})\n" +
+                "}"
     )
 
-    fun testAutoInsertParenInStringLiteral() = doCharTypeTest(
-            '(',
-            """fun f() { println("$dollar{f<caret>}") }""",
-            """fun f() { println("$dollar{f(<caret>)}") }"""
+    fun testInsertSpaceAfterRightBraceOfNestedLambda() = doTypeTest(
+        '{',
+        "val t = Array(100) { Array(200) <caret>}",
+        "val t = Array(100) { Array(200) {<caret>} }"
     )
 
-    fun testAutoInsertParenInCode() = doCharTypeTest(
-            '(',
-            """fun f() { val a = f<caret> }""",
-            """fun f() { val a = f(<caret>) }"""
+    fun testAutoInsertParenInStringLiteral() = doTypeTest(
+        '(',
+        """fun f() { println("$dollar{f<caret>}") }""",
+        """fun f() { println("$dollar{f(<caret>)}") }"""
     )
 
-    fun testSplitStringByEnter() = doCharTypeTest(
-            '\n',
-            """val s = "foo<caret>bar"""",
-            "val s = \"foo\" +\n" +
-            "        \"bar\""
+    fun testAutoInsertParenInCode() = doTypeTest(
+        '(',
+        """fun f() { val a = f<caret> }""",
+        """fun f() { val a = f(<caret>) }"""
     )
 
-    fun testSplitStringByEnterEmpty() = doCharTypeTest(
-            '\n',
-            """val s = "<caret>"""",
-            "val s = \"\" +\n" +
-            "        \"\""
+    fun testSplitStringByEnter() = doTypeTest(
+        '\n',
+        """val s = "foo<caret>bar"""",
+        "val s = \"foo\" +\n" +
+                "        \"bar\""
     )
 
-    fun testSplitStringByEnterBeforeEscapeSequence() = doCharTypeTest(
-            '\n',
-            """val s = "foo<caret>\nbar"""",
-            "val s = \"foo\" +\n" +
-            "        \"\\nbar\""
+    fun testSplitStringByEnterEmpty() = doTypeTest(
+        '\n',
+        """val s = "<caret>"""",
+        "val s = \"\" +\n" +
+                "        \"\""
     )
 
-    fun testSplitStringByEnterBeforeSubstitution() = doCharTypeTest(
-            '\n',
-            """val s = "foo<caret>${dollar}bar"""",
-            "val s = \"foo\" +\n" +
-            "        \"${dollar}bar\""
+    fun testSplitStringByEnterBeforeEscapeSequence() = doTypeTest(
+        '\n',
+        """val s = "foo<caret>\nbar"""",
+        "val s = \"foo\" +\n" +
+                "        \"\\nbar\""
     )
 
-    fun testSplitStringByEnterAddParentheses() = doCharTypeTest(
-            '\n',
-            """val l = "foo<caret>bar".length()""",
-            "val l = (\"foo\" +\n" +
-            "        \"bar\").length()"
+    fun testSplitStringByEnterBeforeSubstitution() = doTypeTest(
+        '\n',
+        """val s = "foo<caret>${dollar}bar"""",
+        "val s = \"foo\" +\n" +
+                "        \"${dollar}bar\""
     )
 
-    fun testSplitStringByEnterExistingParentheses() = doCharTypeTest(
-            '\n',
-            """val l = ("asdf" + "foo<caret>bar").length()""",
-            "val l = (\"asdf\" + \"foo\" +\n" +
-            "        \"bar\").length()"
+    fun testSplitStringByEnterAddParentheses() = doTypeTest(
+        '\n',
+        """val l = "foo<caret>bar".length()""",
+        "val l = (\"foo\" +\n" +
+                "        \"bar\").length()"
+    )
+
+    fun testSplitStringByEnterExistingParentheses() = doTypeTest(
+        '\n',
+        """val l = ("asdf" + "foo<caret>bar").length()""",
+        "val l = (\"asdf\" + \"foo\" +\n" +
+                "        \"bar\").length()"
     )
 
     fun testTypeLtInFunDeclaration() {
@@ -462,130 +495,137 @@ class TypedHandlerTest : LightCodeInsightTestCase() {
     }
 
     fun testColonOfSuperTypeList() {
-        doCharTypeTest(
-                ':',
-                """
+        doTypeTest(
+            ':',
+            """
                 |open class A
                 |class B
                 |<caret>
                 """,
-                """
+            """
                 |open class A
                 |class B
                 |    :<caret>
-                """)
+                """
+        )
     }
 
     fun testColonOfSuperTypeListInObject() {
-        doCharTypeTest(
-                ':',
-                """
+        doTypeTest(
+            ':',
+            """
                 |interface A
                 |object B
                 |<caret>
                 """,
-                """
+            """
                 |interface A
                 |object B
                 |    :<caret>
-                """)
+                """
+        )
     }
 
     fun testColonOfSuperTypeListInCompanionObject() {
-        doCharTypeTest(
-                ':',
-                """
+        doTypeTest(
+            ':',
+            """
                 |interface A
                 |class B {
                 |    companion object
                 |    <caret>
                 |}
                 """,
-                """
+            """
                 |interface A
                 |class B {
                 |    companion object
                 |        :<caret>
                 |}
-                """)
+                """
+        )
     }
 
     fun testColonOfSuperTypeListBeforeBody() {
-        doCharTypeTest(
-                ':',
-                """
+        doTypeTest(
+            ':',
+            """
                 |open class A
                 |class B
                 |<caret> {
                 |}
                 """,
-                """
+            """
                 |open class A
                 |class B
                 |    :<caret> {
                 |}
-                """)
+                """
+        )
     }
 
     fun testColonOfSuperTypeListNotNullIndent() {
-        doCharTypeTest(
-                ':',
-                """
+        doTypeTest(
+            ':',
+            """
                 |fun test() {
                 |    open class A
                 |    class B
                 |    <caret>
                 |}
                 """,
-                """
+            """
                 |fun test() {
                 |    open class A
                 |    class B
                 |        :<caret>
                 |}
-                """)
+                """
+        )
     }
 
     fun testChainCallContinueWithDot() {
-        doCharTypeTest(
-                '.',
-                """
+        doTypeTest(
+            '.',
+            """
                 |class Test{ fun test() = this }
                 |fun some() {
                 |    Test()
                 |    <caret>
                 |}
                 """,
-                """
+            """
                 |class Test{ fun test() = this }
                 |fun some() {
                 |    Test()
                 |            .<caret>
                 |}
-                """)
+                """
+        )
     }
 
     fun testChainCallContinueWithSafeCall() {
-        doCharTypeTest(
-                '.',
-                """
+        doTypeTest(
+            '.',
+            """
                 |class Test{ fun test() = this }
                 |fun some() {
                 |    Test()
                 |    ?<caret>
                 |}
                 """,
-                """
+            """
                 |class Test{ fun test() = this }
                 |fun some() {
                 |    Test()
                 |            ?.<caret>
                 |}
-                """)
+                """
+        )
     }
 
     fun testContinueWithElvis() {
-        doCharTypeTest(
+        doTypeTest(
             ':',
             """
                 |fun test(): Any? = null
@@ -605,7 +645,7 @@ class TypedHandlerTest : LightCodeInsightTestCase() {
     }
 
     fun testContinueWithOr() {
-        doCharTypeTest(
+        doTypeTest(
             '|',
             """
                 |fun some() {
@@ -623,7 +663,7 @@ class TypedHandlerTest : LightCodeInsightTestCase() {
     }
 
     fun testContinueWithAnd() {
-        doCharTypeTest(
+        doTypeTest(
             '&',
             """
                 |fun some() {
@@ -641,21 +681,21 @@ class TypedHandlerTest : LightCodeInsightTestCase() {
     }
 
     fun testSpaceAroundRange() {
-        doCharTypeTest(
-                '.',
-                """
+        doTypeTest(
+            '.',
+            """
                 | val test = 1 <caret>
                 """,
-                """
+            """
                 | val test = 1 .<caret>
                 """
         )
     }
 
     fun testIndentBeforeElseWithBlock() {
-        doCharTypeTest(
-                '\n',
-                """
+        doTypeTest(
+            '\n',
+            """
                 |fun test(b: Boolean) {
                 |    if (b) {
                 |    }<caret>
@@ -663,7 +703,7 @@ class TypedHandlerTest : LightCodeInsightTestCase() {
                 |    }
                 |}
                 """,
-                """
+            """
                 |fun test(b: Boolean) {
                 |    if (b) {
                 |    }
@@ -676,9 +716,9 @@ class TypedHandlerTest : LightCodeInsightTestCase() {
     }
 
     fun testIndentBeforeElseWithoutBlock() {
-        doCharTypeTest(
-                '\n',
-                """
+        doTypeTest(
+            '\n',
+            """
                 |fun test(b: Boolean) {
                 |    if (b)
                 |        foo()<caret>
@@ -686,7 +726,7 @@ class TypedHandlerTest : LightCodeInsightTestCase() {
                 |    }
                 |}
                 """,
-                """
+            """
                 |fun test(b: Boolean) {
                 |    if (b)
                 |        foo()
@@ -699,15 +739,15 @@ class TypedHandlerTest : LightCodeInsightTestCase() {
     }
 
     fun testIndentOnFinishedVariableEndAfterEquals() {
-        doCharTypeTest(
-                '\n',
-                """
+        doTypeTest(
+            '\n',
+            """
                 |fun test() {
                 |    val a =<caret>
                 |    foo()
                 |}
                 """,
-                """
+            """
                 |fun test() {
                 |    val a =
                 |            <caret>
@@ -718,14 +758,14 @@ class TypedHandlerTest : LightCodeInsightTestCase() {
     }
 
     fun testIndentNotFinishedVariableEndAfterEquals() {
-        doCharTypeTest(
-                '\n',
-                """
+        doTypeTest(
+            '\n',
+            """
                 |fun test() {
                 |    val a =<caret>
                 |}
                 """,
-                """
+            """
                 |fun test() {
                 |    val a =
                 |            <caret>
@@ -735,43 +775,184 @@ class TypedHandlerTest : LightCodeInsightTestCase() {
     }
 
     fun testSmartEnterWithTabsOnConstructorParameters() {
-        doCharTypeTest(
-                '\n',
-                """
+        doTypeTest(
+            '\n',
+            """
                 |class A(
                 |		a: Int,<caret>
                 |)
                 """,
-                """
+            """
                 |class A(
                 |		a: Int,
                 |		<caret>
                 |)
                 """,
-                enableSmartEnterWithTabs()
+            enableSmartEnterWithTabs()
         )
     }
 
     fun testSmartEnterWithTabsInMethodParameters() {
-        doCharTypeTest(
-                '\n',
-                """
+        doTypeTest(
+            '\n',
+            """
                 |fun method(
                 |         arg1: String,<caret>
                 |) {}
                 """,
-                """
+            """
                 |fun method(
                 |         arg1: String,
                 |         <caret>
                 |) {}
                 """,
-                enableSmartEnterWithTabs()
+            enableSmartEnterWithTabs()
+        )
+    }
+
+    fun testEnterWithoutLineBreakBeforeClosingBracketInMethodParameters() {
+        doTypeTest(
+            '\n',
+            """
+                |fun method(
+                |         arg1: String,<caret>) {}
+                """,
+            """
+                |fun method(
+                |         arg1: String,
+                |<caret>) {}
+                """,
+            enableSmartEnterWithTabs()
+        )
+    }
+
+    fun testEnterWithTrailingCommaAndWhitespaceBeforeLineBreak() {
+        doTypeTest(
+            '\n',
+            """
+                |fun method(
+                |         arg1: String, <caret>
+                |) {}
+                """,
+            """
+                |fun method(
+                |         arg1: String, 
+                |         <caret>
+                |) {}
+                """,
+            enableSmartEnterWithTabs()
+        )
+    }
+
+    fun testSmartEnterBetweenOpeningAndClosingBrackets() {
+        doTypeTest(
+            '\n',
+            """
+                |fun method(<caret>) {}
+                """,
+            """
+                |fun method(
+                |		<caret>
+                |) {}
+                """,
+            enableSmartEnterWithTabs()
+        )
+    }
+
+    private val settingsWithInvertedAlignWhenMultiline = {
+        val settings = CodeStyleSettings().getCommonSettings(KotlinLanguage.INSTANCE)
+        settings.ALIGN_MULTILINE_PARAMETERS = !settings.ALIGN_MULTILINE_PARAMETERS
+        settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = !settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS
+        enableSmartEnterWithTabs()()
+    }
+
+    fun testSmartEnterWithTabsOnConstructorParametersWithInvertedAlignWhenMultiline() {
+        doTypeTest(
+            '\n',
+            """
+                |class A(
+                |		a: Int,<caret>
+                |)
+                """,
+            """
+                |class A(
+                |		a: Int,
+                |		<caret>
+                |)
+                """,
+            settingsWithInvertedAlignWhenMultiline
+        )
+    }
+
+    fun testSmartEnterWithTabsInMethodParametersWithInvertedAlignWhenMultiline() {
+        doTypeTest(
+            '\n',
+            """
+                |fun method(
+                |         arg1: String,<caret>
+                |) {}
+                """,
+            """
+                |fun method(
+                |         arg1: String,
+                |         <caret>
+                |) {}
+                """,
+            settingsWithInvertedAlignWhenMultiline
+        )
+    }
+
+    fun testEnterWithoutLineBreakBeforeClosingBracketInMethodParametersWithInvertedAlignWhenMultiline() {
+        doTypeTest(
+            '\n',
+            """
+                |fun method(
+                |         arg1: String,<caret>) {}
+                """,
+            """
+                |fun method(
+                |         arg1: String,
+                |<caret>) {}
+                """,
+            settingsWithInvertedAlignWhenMultiline
+        )
+    }
+
+    fun testEnterWithTrailingCommaAndWhitespaceBeforeLineBreakWithInvertedAlignWhenMultiline() {
+        doTypeTest(
+            '\n',
+            """
+                |fun method(
+                |         arg1: String, <caret>
+                |) {}
+                """,
+            """
+                |fun method(
+                |         arg1: String, 
+                |         <caret>
+                |) {}
+                """,
+            settingsWithInvertedAlignWhenMultiline
+        )
+    }
+
+    fun testSmartEnterBetweenOpeningAndClosingBracketsWithInvertedAlignWhenMultiline() {
+        doTypeTest(
+            '\n',
+            """
+                       |fun method(<caret>) {}
+                       """,
+            """
+                       |fun method(
+                       |		<caret>
+                       |) {}
+                       """,
+            settingsWithInvertedAlignWhenMultiline
         )
     }
 
     fun testAutoIndentInWhenClause() {
-        doCharTypeTest(
+        doTypeTest(
             '\n',
             """
             |fun test() {
@@ -791,58 +972,192 @@ class TypedHandlerTest : LightCodeInsightTestCase() {
         )
     }
 
+    fun testValInserterOnClass() =
+        testValInserter(',', """data class xxx(val x: Int<caret>)""", """data class xxx(val x: Int,<caret>)""")
+
+    fun testValInserterOnSimpleDataClass() =
+        testValInserter(',', """data class xxx(x: Int<caret>)""", """data class xxx(val x: Int,<caret>)""")
+
+    fun testValInserterOnValWithComment() =
+        testValInserter(',', """data class xxx(x: Int /*comment*/ <caret>)""", """data class xxx(val x: Int /*comment*/ ,<caret>)""")
+
+    fun testValInserterOnValWithInitializer() =
+        testValInserter(',', """data class xxx(x: Int = 2<caret>)""", """data class xxx(val x: Int = 2,<caret>)""")
+
+    fun testValInserterOnValWithInitializerWithOutType() =
+        testValInserter(',', """data class xxx(x = 2<caret>)""", """data class xxx(x = 2,<caret>)""")
+
+    fun testValInserterOnValWithGenericType() =
+        testValInserter(',', """data class xxx(x: A<B><caret>)""", """data class xxx(val x: A<B>,<caret>)""")
+
+    fun testValInserterOnValWithNoType() =
+        testValInserter(',', """data class xxx(x<caret>)""", """data class xxx(x,<caret>)""")
+
+    fun testValInserterOnValWithIncompleteGenericType() =
+        testValInserter(',', """data class xxx(x: A<B,C<caret>)""", """data class xxx(x: A<B,C,<caret>)""")
+
+    fun testValInserterOnValWithInvalidComma() =
+        testValInserter(',', """data class xxx(x:<caret> A<B>)""", """data class xxx(x:,<caret> A<B>)""")
+
+    fun testValInserterOnValWithInvalidGenericType() =
+        testValInserter(',', """data class xxx(x: A><caret>)""", """data class xxx(x: A>,<caret>)""")
+
+    fun testValInserterOnInMultiline() =
+        testValInserter(
+            ',',
+            """
+                |data class xxx(
+                |  val a: A,
+                |  b: B<caret>
+                |  val c: C
+                |)
+                """,
+            """
+                |data class xxx(
+                |  val a: A,
+                |  val b: B,<caret>
+                |  val c: C
+                |)
+                """
+        )
+
+    fun testValInserterOnValInsertedInsideOtherParameters() =
+        testValInserter(
+            ',',
+            """data class xxx(val a: A, b: A<caret>val c: A)""",
+            """data class xxx(val a: A, val b: A,<caret>val c: A)"""
+        )
+
+    fun testValInserterOnSimpleInlineClass() =
+        testValInserter(')', """inline class xxx(a: A<caret>)""", """inline class xxx(val a: A)<caret>""")
+
+    fun testValInserterOnValInsertedWithSquare() =
+        testValInserter(')', """data class xxx(val a: A, b: A<caret>)""", """data class xxx(val a: A, val b: A)<caret>""")
+
+
+    fun testValInserterOnTypingMissedSquare() =
+        testValInserter(')', """data class xxx(val a: A, b: A<caret>""", """data class xxx(val a: A, val b: A)<caret>""")
+
+    fun testValInserterWithDisabledSetting() =
+        testValInserter(',', """data class xxx(x: Int<caret>)""", """data class xxx(x: Int,<caret>)""", inserterEnabled = false)
+
+    fun testEnterInFunctionWithExpressionBody() {
+        doTypeTest(
+            '\n',
+            """
+            |fun test() =<caret>
+            """,
+            """
+            |fun test() =
+            |    <caret>
+            """,
+            enableKotlinOfficialCodeStyle
+        )
+    }
+
+    fun testEnterInMultiDeclaration() {
+        doTypeTest(
+            '\n',
+            """
+            |fun test() {
+            |    val (a, b) =<caret>
+            |}
+            """,
+            """
+            |fun test() {
+            |    val (a, b) =
+            |        <caret>
+            |}
+            """,
+            enableKotlinOfficialCodeStyle
+        )
+    }
+
+    fun testEnterInVariableDeclaration() {
+        doTypeTest(
+            '\n',
+            """
+            |val test =<caret>
+            """,
+            """
+            |val test =
+            |    <caret>
+            """,
+            enableKotlinOfficialCodeStyle
+        )
+    }
 
     fun testMoveThroughGT() {
-        LightPlatformCodeInsightTestCase.configureFromFileText("a.kt", "val a: List<Set<Int<caret>>>")
-        EditorTestUtil.performTypingAction(LightPlatformCodeInsightTestCase.getEditor(), '>')
-        EditorTestUtil.performTypingAction(LightPlatformCodeInsightTestCase.getEditor(), '>')
+        configureFromFileText("a.kt", "val a: List<Set<Int<caret>>>")
+        EditorTestUtil.performTypingAction(editor, '>')
+        EditorTestUtil.performTypingAction(editor, '>')
         checkResultByText("val a: List<Set<Int>><caret>")
     }
 
     fun testCharClosingQuote() {
-        doCharTypeTest('\'', "val c = <caret>", "val c = ''")
+        doTypeTest('\'', "val c = <caret>", "val c = ''")
     }
 
     private fun enableSmartEnterWithTabs(): () -> Unit = {
-        val project = LightPlatformTestCase.getProject()
-        val indentOptions = CodeStyleSettingsManager.getInstance(project).currentSettings.getIndentOptions(KotlinFileType.INSTANCE)
+        val indentOptions = CodeStyle.getSettings(project).getIndentOptions(KotlinFileType.INSTANCE)
         indentOptions.USE_TAB_CHARACTER = true
         indentOptions.SMART_TABS = true
     }
 
-    private fun doCharTypeTest(ch: Char, beforeText: String, afterText: String, settingsModifier: (() -> Unit)? = null) {
+    private fun doTypeTest(ch: Char, beforeText: String, afterText: String, settingsModifier: (() -> Unit)? = null) {
+        doTypeTest(ch.toString(), beforeText, afterText, settingsModifier)
+    }
+
+    private fun doTypeTest(text: String, beforeText: String, afterText: String, settingsModifier: (() -> Unit)? = null) {
         try {
             if (settingsModifier != null) {
                 settingsModifier()
             }
 
-            LightPlatformCodeInsightTestCase.configureFromFileText("a.kt", beforeText.trimMargin())
-            EditorTestUtil.performTypingAction(LightPlatformCodeInsightTestCase.getEditor(), ch)
+            configureFromFileText("a.kt", beforeText.trimMargin())
+            for (ch in text) {
+                EditorTestUtil.performTypingAction(editor, ch)
+            }
             checkResultByText(afterText.trimMargin())
-        }
-        finally {
+        } finally {
             if (settingsModifier != null) {
-                val project = LightPlatformTestCase.getProject()
-                CodeStyleSettingsManager.getSettings(project).clearCodeStyleSettings()
+                CodeStyle.getSettings(project).clearCodeStyleSettings()
             }
         }
     }
+
+    private fun testValInserter(ch: Char, beforeText: String, afterText: String, inserterEnabled: Boolean = true) {
+        val editorOptions = KotlinEditorOptions.getInstance()
+        val wasEnabled = editorOptions.isAutoAddValKeywordToDataClassParameters
+        try {
+            editorOptions.isAutoAddValKeywordToDataClassParameters = inserterEnabled
+            doTypeTest(ch, beforeText, afterText)
+        } finally {
+            editorOptions.isAutoAddValKeywordToDataClassParameters = wasEnabled
+        }
+    }
+
 
     private fun doLtGtTestNoAutoClose(initText: String) {
         doLtGtTest(initText, false)
     }
 
     private fun doLtGtTest(initText: String, shouldCloseBeInsert: Boolean) {
-        LightPlatformCodeInsightTestCase.configureFromFileText("a.kt", initText)
+        configureFromFileText("a.kt", initText)
 
-        EditorTestUtil.performTypingAction(LightPlatformCodeInsightTestCase.getEditor(), '<')
+        EditorTestUtil.performTypingAction(editor, '<')
         checkResultByText(if (shouldCloseBeInsert) initText.replace("<caret>", "<<caret>>") else initText.replace("<caret>", "<<caret>"))
 
-        EditorTestUtil.performTypingAction(LightPlatformCodeInsightTestCase.getEditor(), EditorTestUtil.BACKSPACE_FAKE_CHAR)
+        EditorTestUtil.performTypingAction(editor, EditorTestUtil.BACKSPACE_FAKE_CHAR)
         checkResultByText(initText)
     }
 
     private fun doLtGtTest(initText: String) {
         doLtGtTest(initText, true)
+    }
+
+    private val enableKotlinOfficialCodeStyle: () -> Unit = {
+        val settings = ktCodeStyleSettings(project)?.all ?: error("No Settings")
+        KotlinStyleGuideCodeStyle.apply(settings)
     }
 }

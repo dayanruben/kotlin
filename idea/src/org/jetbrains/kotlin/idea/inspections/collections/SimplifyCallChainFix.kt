@@ -21,11 +21,13 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.CodeStyleManager
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.formatter.commitAndUnblockDocument
 import org.jetbrains.kotlin.idea.intentions.callExpression
+import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
 
@@ -37,11 +39,12 @@ class SimplifyCallChainFix(
 ) : LocalQuickFix {
     private val shortenedText = conversion.replacement.substringAfterLast(".")
 
-    override fun getName() = "Merge call chain to '$shortenedText'"
+    override fun getName() = KotlinBundle.message("simplify.call.chain.fix.text", shortenedText)
 
     override fun getFamilyName() = name
 
     fun apply(qualifiedExpression: KtQualifiedExpression) {
+        val commentSaver = CommentSaver(qualifiedExpression)
         val factory = KtPsiFactory(qualifiedExpression)
         val firstExpression = qualifiedExpression.receiverExpression
 
@@ -84,7 +87,11 @@ class SimplifyCallChainFix(
 
         val project = qualifiedExpression.project
         val file = qualifiedExpression.containingKtFile
-        val result = qualifiedExpression.replaced(newQualifiedOrCallExpression)
+        var result = qualifiedExpression.replaced(newQualifiedOrCallExpression)
+
+        if (!firstCallHasArguments && !secondCallHasArguments) {
+            commentSaver.restore(result)
+        }
         if (lambdaExpression != null) {
             val callExpression = when (result) {
                 is KtQualifiedExpression -> result.callExpression
@@ -92,6 +99,9 @@ class SimplifyCallChainFix(
                 else -> null
             }
             callExpression?.moveFunctionLiteralOutsideParentheses()
+        }
+        if (conversion.withNotNullAssertion) {
+            result = result.replaced(factory.createExpressionByPattern("$0!!", result))
         }
 
         result.containingKtFile.commitAndUnblockDocument()

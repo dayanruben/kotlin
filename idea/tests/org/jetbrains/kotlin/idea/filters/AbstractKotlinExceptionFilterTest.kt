@@ -1,17 +1,6 @@
 /*
- * Copyright 2010-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.filters
@@ -27,12 +16,13 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.PsiTestUtil
 import org.jetbrains.kotlin.codegen.forTestCompile.ForTestCompileRuntime
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
-import org.jetbrains.kotlin.idea.refactoring.toVirtualFile
+import org.jetbrains.kotlin.idea.core.util.toVirtualFile
 import org.jetbrains.kotlin.idea.test.KotlinCodeInsightTestCase
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.test.MockLibraryUtil
+import org.jetbrains.kotlin.test.MockLibraryUtilExt
 import java.io.File
 import java.lang.reflect.InvocationTargetException
 import java.net.URL
@@ -57,10 +47,11 @@ abstract class AbstractKotlinExceptionFilterTest : KotlinCodeInsightTestCase() {
         }
         PsiTestUtil.setCompilerOutputPath(module, outDir.url, false)
 
+        val extraOptions = InTextDirectivesUtils.findListWithPrefixes(fileText, "// !LANGUAGE: ").map { "-XXLanguage:$it" }
         val classLoader: URLClassLoader
         if (InTextDirectivesUtils.getPrefixedBoolean(fileText, "// WITH_MOCK_LIBRARY: ") ?: false) {
             if (MOCK_LIBRARY_JAR == null) {
-                MOCK_LIBRARY_JAR = MockLibraryUtil.compileJvmLibraryToJar(MOCK_LIBRARY_SOURCES, "mockLibrary", addSources = true)
+                MOCK_LIBRARY_JAR = MockLibraryUtilExt.compileJvmLibraryToJar(MOCK_LIBRARY_SOURCES, "mockLibrary", addSources = true)
             }
 
             val mockLibraryJar = MOCK_LIBRARY_JAR ?: throw AssertionError("Mock library JAR is null")
@@ -76,16 +67,17 @@ abstract class AbstractKotlinExceptionFilterTest : KotlinCodeInsightTestCase() {
                 }
                 moduleModel.commit()
             }
-            MockLibraryUtil.compileKotlin(path, File(outDir.path), extraClasspath = *arrayOf(mockLibraryPath))
+            MockLibraryUtil.compileKotlin(path, File(outDir.path), extraOptions, mockLibraryPath)
             classLoader = URLClassLoader(
-                    arrayOf(URL(outDir.url + "/"), mockLibraryJar.toURI().toURL()),
-                    ForTestCompileRuntime.runtimeJarClassLoader())
-        }
-        else {
-            MockLibraryUtil.compileKotlin(path, File(outDir.path))
+                arrayOf(URL(outDir.url + "/"), mockLibraryJar.toURI().toURL()),
+                ForTestCompileRuntime.runtimeJarClassLoader()
+            )
+        } else {
+            MockLibraryUtil.compileKotlin(path, File(outDir.path), extraOptions)
             classLoader = URLClassLoader(
-                    arrayOf(URL(outDir.url + "/")),
-                    ForTestCompileRuntime.runtimeJarClassLoader())
+                arrayOf(URL(outDir.url + "/")),
+                ForTestCompileRuntime.runtimeJarClassLoader()
+            )
         }
 
         val stackTraceElement = try {
@@ -93,15 +85,16 @@ abstract class AbstractKotlinExceptionFilterTest : KotlinCodeInsightTestCase() {
             val clazz = classLoader.loadClass(className.asString())
             clazz.getMethod("box")?.invoke(null)
             throw AssertionError("class ${className.asString()} should have box() method and throw exception")
-        }
-        catch(e: InvocationTargetException) {
+        } catch (e: InvocationTargetException) {
             e.targetException.stackTrace[0]
         }
 
         val filter = KotlinExceptionFilterFactory().create(GlobalSearchScope.allScope(project))
         val prefix = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// PREFIX: ") ?: "at"
         val stackTraceString = stackTraceElement.toString()
-        var result = filter.applyFilter("$prefix $stackTraceString", 0) ?: throw AssertionError("Couldn't apply filter to $stackTraceElement")
+        val text = "$prefix $stackTraceString"
+        var result = filter.applyFilter(text, text.length)
+            ?: throw AssertionError("Couldn't apply filter to $stackTraceElement")
 
         if (InTextDirectivesUtils.isDirectiveDefined(fileText, "SMAP_APPLIED")) {
             val fileHyperlinkInfo = result.firstHyperlinkInfo as FileHyperlinkInfo
@@ -111,19 +104,24 @@ abstract class AbstractKotlinExceptionFilterTest : KotlinCodeInsightTestCase() {
             val line = descriptor.line + 1
 
             val newStackString = stackTraceString
-                    .replace(mainFile.name, file.name)
-                    .replace(Regex("\\:\\d+\\)"), ":$line)")
+                .replace(mainFile.name, file.name)
+                .replace(Regex(":\\d+\\)"), ":$line)")
 
-            result = filter.applyFilter("$prefix $newStackString", 0) ?: throw AssertionError("Couldn't apply filter to $stackTraceElement")
+            val newLine = "$prefix $newStackString"
+            result = filter.applyFilter(newLine, newLine.length) ?: throw AssertionError("Couldn't apply filter to $stackTraceElement")
         }
 
         val info = result.firstHyperlinkInfo as FileHyperlinkInfo
-        val descriptor = info.descriptor!!
+        val descriptor = if (InTextDirectivesUtils.isDirectiveDefined(fileText, "NAVIGATE_TO_CALL_SITE"))
+            (info as? InlineFunctionHyperLinkInfo)?.callSiteDescriptor
+                ?: throw AssertionError("`$stackTraceString` did not resolve to an inline function call")
+        else
+            info.descriptor!!
 
         val expectedFileName = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// FILE: ")!!
         val expectedVirtualFile = File(rootDir, expectedFileName).toVirtualFile()
-                                        ?: File(MOCK_LIBRARY_SOURCES, expectedFileName).toVirtualFile()
-                                        ?: throw AssertionError("Couldn't find file: name = $expectedFileName")
+            ?: File(MOCK_LIBRARY_SOURCES, expectedFileName).toVirtualFile()
+            ?: throw AssertionError("Couldn't find file: name = $expectedFileName")
         val expectedLineNumber = InTextDirectivesUtils.getPrefixedInt(fileText, "// LINE: ")!!
 
 
@@ -131,6 +129,10 @@ abstract class AbstractKotlinExceptionFilterTest : KotlinCodeInsightTestCase() {
         val expectedOffset = document.getLineStartOffset(expectedLineNumber - 1)
 
         // TODO compare virtual files
-        assertEquals("Wrong result for line $stackTraceElement", expectedFileName + ":" + expectedOffset, descriptor.file.name + ":" + descriptor.offset)
+        assertEquals(
+            "Wrong result for line $stackTraceElement",
+            "$expectedFileName:$expectedOffset",
+            descriptor.file.name + ":" + descriptor.offset
+        )
     }
 }

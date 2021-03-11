@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.gradle.plugin
@@ -32,10 +32,12 @@ enum class KotlinPlatformType: Named, Serializable {
             if (candidateValues == setOf(androidJvm, jvm))
                 closestMatch(androidJvm)
 
-            if (common in candidateValues)
+            if (common in candidateValues && jvm !in candidateValues && androidJvm !in candidateValues) {
                 // then the consumer requests common or requests no platform-specific artifacts,
-                // so common is the best match, KT-26834
+                // so common is the best match, KT-26834; apply this rule only when no JVM variant is available,
+                // as doing otherwise would conflict with Gradle java's disambiguation rules and lead to KT-32239
                 closestMatch(common)
+            }
         }
     }
 
@@ -47,14 +49,9 @@ enum class KotlinPlatformType: Named, Serializable {
 
         fun setupAttributesMatchingStrategy(attributesSchema: AttributesSchema) {
             attributesSchema.attribute(KotlinPlatformType.attribute).run {
-                if (isGradleAtLeast(4, 0)) {
-                    compatibilityRules.add(CompatibilityRule::class.java)
-                    disambiguationRules.add(DisambiguationRule::class.java)
-                }
+                compatibilityRules.add(CompatibilityRule::class.java)
+                disambiguationRules.add(DisambiguationRule::class.java)
             }
         }
     }
 }
-
-private fun isGradleAtLeast(major: Int, minor: Int) =
-    GradleVersion.current() >= GradleVersion.version("$major.$minor")

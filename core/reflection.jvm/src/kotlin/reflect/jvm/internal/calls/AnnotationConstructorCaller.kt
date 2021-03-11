@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package kotlin.reflect.jvm.internal.calls
@@ -10,7 +10,7 @@ import java.lang.reflect.Type
 import java.util.*
 import kotlin.reflect.KClass
 import kotlin.reflect.jvm.internal.KotlinReflectionInternalError
-import kotlin.reflect.jvm.internal.structure.wrapperByPrimitive
+import org.jetbrains.kotlin.descriptors.runtime.structure.wrapperByPrimitive
 import java.lang.reflect.Method as ReflectMethod
 
 internal class AnnotationConstructorCaller(

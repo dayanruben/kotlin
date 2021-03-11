@@ -1,6 +1,6 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2000-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.maven.configuration
@@ -30,14 +30,12 @@ import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenArtifactScope
 import org.jetbrains.kotlin.config.ApiVersion
-import org.jetbrains.kotlin.config.CoroutineSupport
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.configuration.*
 import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersion
 import org.jetbrains.kotlin.idea.facet.toApiVersion
 import org.jetbrains.kotlin.idea.framework.ui.ConfigureDialogWithModulesAndVersion
 import org.jetbrains.kotlin.idea.maven.*
-import org.jetbrains.kotlin.idea.quickfix.ChangeCoroutineSupportFix
 import org.jetbrains.kotlin.idea.quickfix.ChangeGeneralLanguageFeatureSupportFix
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.versions.LibraryJarDescriptor
@@ -59,7 +57,8 @@ protected constructor(
         if (psi == null
             || !psi.isValid
             || psi !is XmlFile
-            || psi.virtualFile == null) {
+            || psi.virtualFile == null
+        ) {
             return ConfigureKotlinStatus.BROKEN
         }
 
@@ -82,7 +81,7 @@ protected constructor(
 
         val kotlinPluginId = kotlinPluginId(null)
         val kotlinPlugin = mavenProject.plugins.find { it.mavenId.equals(kotlinPluginId.groupId, kotlinPluginId.artifactId) }
-                ?: return ConfigureKotlinStatus.CAN_BE_CONFIGURED
+            ?: return ConfigureKotlinStatus.CAN_BE_CONFIGURED
 
         if (kotlinPlugin.executions.any { it.goals.any(this::isRelevantGoal) }) {
             return ConfigureKotlinStatus.CONFIGURED
@@ -113,7 +112,7 @@ protected constructor(
                     configureModule(module, file, dialog.kotlinVersion, collector)
                     OpenFileAction.openFile(file.virtualFile, project)
                 } else {
-                    showErrorMessage(project, "Cannot find pom.xml for module " + module.name)
+                    showErrorMessage(project, KotlinMavenBundle.message("error.cant.find.pom.for.module", module.name))
                 }
             }
             collector.showNotification()
@@ -175,7 +174,7 @@ protected constructor(
 
         CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement<PsiFile>(file)
 
-        collector.addMessage(virtualFile.path + " was modified")
+        collector.addMessage(KotlinMavenBundle.message("file.was.modified", virtualFile.path))
         return true
     }
 
@@ -205,7 +204,7 @@ protected constructor(
         forTests: Boolean
     ) {
         fun doUpdateMavenLanguageVersion(): PsiElement? {
-            val psi = KotlinMavenConfigurator.findModulePomFile(module) as? XmlFile ?: return null
+            val psi = findModulePomFile(module) as? XmlFile ?: return null
             val pom = PomFile.forFileOrNull(psi) ?: return null
             return pom.changeLanguageVersion(
                 languageVersion,
@@ -220,9 +219,8 @@ protected constructor(
         if (runtimeUpdateRequired) {
             Messages.showErrorDialog(
                 module.project,
-                "This language feature requires version $requiredStdlibVersion or later of the Kotlin runtime library. " +
-                        "Please update the version in your build script.",
-                "Update Language Version"
+                KotlinMavenBundle.message("update.language.version.feature", requiredStdlibVersion),
+                KotlinMavenBundle.message("update.language.version.title")
             )
             return
         }
@@ -231,8 +229,8 @@ protected constructor(
         if (element == null) {
             Messages.showErrorDialog(
                 module.project,
-                "Failed to update.pom.xml. Please update the file manually.",
-                "Update Language Version"
+                KotlinMavenBundle.message("error.failed.update.pom"),
+                KotlinMavenBundle.message("update.language.version.title")
             )
         } else {
             OpenFileDescriptor(module.project, element.containingFile.virtualFile, element.textRange.startOffset).navigate(true)
@@ -249,29 +247,6 @@ protected constructor(
         JavaProjectModelModificationService.getInstance(module.project).addDependency(module, library, scope)
     }
 
-    override fun changeCoroutineConfiguration(module: Module, state: LanguageFeature.State) {
-        val runtimeUpdateRequired = state != LanguageFeature.State.DISABLED &&
-                getRuntimeLibraryVersion(module).toApiVersion() == ApiVersion.KOTLIN_1_0
-
-        val messageTitle = ChangeCoroutineSupportFix.getFixText(state)
-        if (runtimeUpdateRequired) {
-            Messages.showErrorDialog(
-                module.project,
-                "Coroutines support requires version 1.1 or later of the Kotlin runtime library. " +
-                        "Please update the version in your build script.",
-                messageTitle
-            )
-            return
-        }
-
-        val element = changeMavenCoroutineConfiguration(module, CoroutineSupport.getCompilerArgument(state), messageTitle)
-
-        if (element != null) {
-            OpenFileDescriptor(module.project, element.containingFile.virtualFile, element.textRange.startOffset).navigate(true)
-        }
-
-    }
-
     override fun changeGeneralFeatureConfiguration(
         module: Module,
         feature: LanguageFeature,
@@ -284,8 +259,7 @@ protected constructor(
         if (state != LanguageFeature.State.DISABLED && getRuntimeLibraryVersion(module).toApiVersion() < sinceVersion) {
             Messages.showErrorDialog(
                 module.project,
-                "${feature.presentableName} support requires version $sinceVersion or later of the Kotlin runtime library. " +
-                        "Please update the version in your build script.",
+                KotlinMavenBundle.message("update.language.version.feature.support", feature.presentableName, sinceVersion),
                 messageTitle
             )
             return
@@ -301,41 +275,19 @@ protected constructor(
 
     }
 
-    private fun changeMavenCoroutineConfiguration(
-        module: Module,
-        value: String,
-        messageTitle: String
-    ): PsiElement? {
-        fun doChangeMavenCoroutineConfiguration(): PsiElement? {
-            val psi = KotlinMavenConfigurator.findModulePomFile(module) as? XmlFile ?: return null
-            val pom = PomFile.forFileOrNull(psi) ?: return null
-            return pom.changeCoroutineConfiguration(value)
-        }
-
-        val element = doChangeMavenCoroutineConfiguration()
-        if (element == null) {
-            Messages.showErrorDialog(
-                module.project,
-                "Failed to update.pom.xml. Please update the file manually.",
-                messageTitle
-            )
-        }
-        return element
-    }
-
     private fun changeMavenFeatureConfiguration(
         module: Module,
         feature: LanguageFeature,
         state: LanguageFeature.State,
         messageTitle: String
     ): PsiElement? {
-        val psi = KotlinMavenConfigurator.findModulePomFile(module) as? XmlFile ?: return null
+        val psi = findModulePomFile(module) as? XmlFile ?: return null
         val pom = PomFile.forFileOrNull(psi) ?: return null
         val element = pom.changeFeatureConfiguration(feature, state)
         if (element == null) {
             Messages.showErrorDialog(
                 module.project,
-                "Failed to update.pom.xml. Please update the file manually.",
+                KotlinMavenBundle.message("error.failed.update.pom"),
                 messageTitle
             )
         }
@@ -368,12 +320,13 @@ protected constructor(
         }
 
         private fun showErrorMessage(project: Project, message: String?) {
+            val cantConfigureAutomatically = KotlinMavenBundle.message("error.cant.configure.maven.automatically")
+            val seeInstructions = KotlinMavenBundle.message("error.see.installation.instructions")
+
             Messages.showErrorDialog(
                 project,
-                "<html>Couldn't configure kotlin-maven plugin automatically.<br/>" +
-                        (if (message != null) "$message</br>" else "") +
-                        "See manual installation instructions <a href=\"http://confluence.jetbrains.com/display/Kotlin/Kotlin+Build+Tools#KotlinBuildTools-Maven\">here</a>.</html>",
-                "Configure Kotlin-Maven Plugin"
+                "<html>$cantConfigureAutomatically<br/>${if (message != null) "$message</br>" else ""}$seeInstructions</html>",
+                KotlinMavenBundle.message("configure.title")
             )
         }
     }

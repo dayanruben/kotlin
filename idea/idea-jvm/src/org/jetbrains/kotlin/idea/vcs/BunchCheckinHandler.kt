@@ -1,12 +1,14 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.vcs
 
 import com.intellij.BundleBase.replaceMnemonicAmpersand
 import com.intellij.CommonBundle
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.Messages.NO
@@ -21,13 +23,20 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.NonFocusableCheckBox
 import com.intellij.util.PairConsumer
+import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 import java.awt.GridLayout
 import java.io.File
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-private var Project.bunchFileCheckEnabled: Boolean by NotNullableUserDataProperty(Key.create("IS_BUNCH_FILE_CHECK_ENABLED"), true)
+private val BUNCH_PLUGIN_ID = PluginId.getId("org.jetbrains.bunch.tool.idea.plugin")
+
+private var Project.bunchFileCheckEnabled: Boolean
+        by NotNullableUserDataProperty(
+            Key.create("IS_BUNCH_FILE_CHECK_ENABLED_KOTLIN"),
+            !PluginManagerCore.isPluginInstalled(BUNCH_PLUGIN_ID)
+        )
 
 class BunchFileCheckInHandlerFactory : CheckinHandlerFactory() {
     override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
@@ -38,9 +47,10 @@ class BunchFileCheckInHandlerFactory : CheckinHandlerFactory() {
         private val project get() = checkInProjectPanel.project
 
         override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent? {
+            if (PluginManagerCore.isPluginInstalled(BUNCH_PLUGIN_ID)) return null
             BunchFileUtils.bunchFile(project) ?: return null
 
-            val bunchFilesCheckBox = NonFocusableCheckBox(replaceMnemonicAmpersand("Check &bunch files"))
+            val bunchFilesCheckBox = NonFocusableCheckBox(replaceMnemonicAmpersand(KotlinJvmBundle.message("check.bunch.files")))
             return object : RefreshableOnComponent {
                 override fun getComponent(): JComponent {
                     val panel = JPanel(GridLayout(1, 0))
@@ -62,10 +72,10 @@ class BunchFileCheckInHandlerFactory : CheckinHandlerFactory() {
         override fun beforeCheckin(
             executor: CommitExecutor?,
             additionalDataConsumer: PairConsumer<Any, Any>?
-        ): CheckinHandler.ReturnResult {
-            if (!project.bunchFileCheckEnabled) return CheckinHandler.ReturnResult.COMMIT
+        ): ReturnResult {
+            if (!project.bunchFileCheckEnabled) return ReturnResult.COMMIT
 
-            val extensions = BunchFileUtils.bunchExtension(project)?.toSet() ?: return CheckinHandler.ReturnResult.COMMIT
+            val extensions = BunchFileUtils.bunchExtension(project)?.toSet() ?: return ReturnResult.COMMIT
 
             val forgottenFiles = HashSet<File>()
             val commitFiles = checkInProjectPanel.files.filter { it.isFile }.toSet()
@@ -82,7 +92,7 @@ class BunchFileCheckInHandlerFactory : CheckinHandlerFactory() {
                 }
             }
 
-            if (forgottenFiles.isEmpty()) return CheckinHandler.ReturnResult.COMMIT
+            if (forgottenFiles.isEmpty()) return ReturnResult.COMMIT
 
             val projectBaseFile = File(project.basePath)
             var filePaths = forgottenFiles.map { it.relativeTo(projectBaseFile).path }.sorted()
@@ -92,16 +102,23 @@ class BunchFileCheckInHandlerFactory : CheckinHandlerFactory() {
 
             when (Messages.showYesNoCancelDialog(
                 project,
-                "Several bunch files haven't been updated:\n\n${filePaths.joinToString("\n")}\n\nDo you want to review them before commit?",
-                "Forgotten Bunch Files", "Review", "Commit", CommonBundle.getCancelButtonText(), Messages.getWarningIcon()
+                KotlinJvmBundle.message(
+                    "several.bunch.files.haven.t.been.updated.0.do.you.want.to.review.them.before.commit",
+                    filePaths.joinToString("\n")
+                ),
+                KotlinJvmBundle.message("button.text.forgotten.bunch.files"),
+                KotlinJvmBundle.message("button.text.review"),
+                KotlinJvmBundle.message("button.text.commit"),
+                CommonBundle.getCancelButtonText(),
+                Messages.getWarningIcon()
             )) {
                 YES -> {
-                    return CheckinHandler.ReturnResult.CLOSE_WINDOW
+                    return ReturnResult.CLOSE_WINDOW
                 }
-                NO -> return CheckinHandler.ReturnResult.COMMIT
+                NO -> return ReturnResult.COMMIT
             }
 
-            return CheckinHandler.ReturnResult.CANCEL
+            return ReturnResult.CANCEL
         }
     }
 }
@@ -117,7 +134,7 @@ object BunchFileUtils {
         val file = File(bunchFile.path)
         if (!file.exists()) return null
 
-        val lines = file.readLines().map { it.trim() }.filter { !it.isEmpty() }
+        val lines = file.readLines().map { it.trim() }.filter { it.isNotEmpty() }
         if (lines.size <= 1) return null
 
         return lines.drop(1).map { it.split('_').first() }

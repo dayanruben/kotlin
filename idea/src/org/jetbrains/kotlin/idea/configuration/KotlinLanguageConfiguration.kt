@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.configuration
@@ -9,13 +9,14 @@ import com.intellij.ide.IdeBundle
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinPluginUpdater
 import org.jetbrains.kotlin.idea.KotlinPluginUtil
 import org.jetbrains.kotlin.idea.PluginUpdateStatus
-import org.jetbrains.kotlin.idea.configuration.ui.ConfigurePluginUpdatesForm
+import org.jetbrains.kotlin.idea.configuration.ui.KotlinLanguageConfigurationForm
 import javax.swing.JComponent
 
-class KotlinUpdatesSettingsConfigurable : SearchableConfigurable, Configurable.NoScroll {
+class KotlinLanguageConfiguration : SearchableConfigurable, Configurable.NoScroll {
     companion object {
         const val ID = "preferences.language.Kotlin"
 
@@ -28,17 +29,20 @@ class KotlinUpdatesSettingsConfigurable : SearchableConfigurable, Configurable.N
 
             UpdateChannel.values().find { it.ordinal == channelOrdinal }?.let { eapChannel ->
                 if (eapChannel != UpdateChannel.STABLE) {
-                    hosts.add(eapChannel.url ?: error("Shouldn't add null urls to custom repositories"))
+                    hosts.add(eapChannel.url ?: error(KotlinBundle.message("configuration.error.text.shouldn.t.add.null.urls.to.custom.repositories")))
                 }
             }
         }
 
         enum class UpdateChannel(val url: String?, val title: String) {
-            STABLE(null, "Stable"),
-            EAP("https://plugins.jetbrains.com/plugins/eap/${KotlinPluginUtil.KOTLIN_PLUGIN_ID.idString}", "Early Access Preview 1.3.x"),
+            STABLE(null, KotlinBundle.message("configuration.title.stable")),
+            EAP(
+                "https://plugins.jetbrains.com/plugins/eap/${KotlinPluginUtil.KOTLIN_PLUGIN_ID.idString}",
+                KotlinBundle.message("configuration.title.early.access.preview.1.4.x")
+            ),
             EAP_NEXT(
                 "https://plugins.jetbrains.com/plugins/eap-next/${KotlinPluginUtil.KOTLIN_PLUGIN_ID.idString}",
-                "Early Access Preview 1.4.x"
+                KotlinBundle.message("configuration.title.early.access.preview.1.5.x")
             );
 
             fun isInHosts(): Boolean {
@@ -48,7 +52,7 @@ class KotlinUpdatesSettingsConfigurable : SearchableConfigurable, Configurable.N
         }
     }
 
-    private val form = ConfigurePluginUpdatesForm()
+    private val form = KotlinLanguageConfigurationForm()
     private var update: PluginUpdateStatus.Update? = null
 
     private var savedChannel = -1
@@ -60,12 +64,15 @@ class KotlinUpdatesSettingsConfigurable : SearchableConfigurable, Configurable.N
 
     override fun getId(): String = ID
 
-    override fun getDisplayName(): String = "Kotlin"
+    override fun getDisplayName(): String = KotlinBundle.message("configuration.name.kotlin")
 
-    override fun isModified() = false
+    override fun isModified() =
+        form.experimentalFeaturesPanel.isModified()
 
     override fun apply() {
         // Selected channel is now saved automatically
+
+        form.experimentalFeaturesPanel.applySelectedChanges()
     }
 
     private fun setInstalledVersion(installedVersion: String?, installingStatus: String?) {
@@ -86,7 +93,7 @@ class KotlinUpdatesSettingsConfigurable : SearchableConfigurable, Configurable.N
             update?.let {
                 form.hideInstallButton()
 
-                setInstalledVersion(it.pluginDescriptor.version, "Installing...")
+                setInstalledVersion(it.pluginDescriptor.version, KotlinBundle.message("configuration.status.text.installing"))
 
                 form.installStatusLabel.text = installingStatus
 
@@ -108,7 +115,7 @@ class KotlinUpdatesSettingsConfigurable : SearchableConfigurable, Configurable.N
                     },
                     errorCallback = {
                         if (versionForInstallation == it.pluginDescriptor.version) {
-                            form.installStatusLabel.text = "Installation failed"
+                            form.installStatusLabel.text = KotlinBundle.message("configuration.status.text.installation.failed")
                             form.showInstallButton()
                             setInstalledVersion(null, null)
                         }
@@ -139,7 +146,7 @@ class KotlinUpdatesSettingsConfigurable : SearchableConfigurable, Configurable.N
         saveChannelSettings()
         form.updateCheckProgressIcon.resume()
         form.resetUpdateStatus()
-        KotlinPluginUpdater.getInstance().runUpdateCheck{ pluginUpdateStatus ->
+        KotlinPluginUpdater.getInstance().runUpdateCheck { pluginUpdateStatus ->
             // Need this to show something is happening when check is very fast
             Thread.sleep(30)
             form.updateCheckProgressIcon.suspend()
@@ -147,7 +154,7 @@ class KotlinUpdatesSettingsConfigurable : SearchableConfigurable, Configurable.N
             when (pluginUpdateStatus) {
                 PluginUpdateStatus.LatestVersionInstalled -> {
                     form.setUpdateStatus(
-                        "You have the latest version of the plugin installed.",
+                        KotlinBundle.message("configuration.message.text.you.have.the.latest.version.of.the.plugin.installed"),
                         false
                     )
                 }
@@ -155,7 +162,12 @@ class KotlinUpdatesSettingsConfigurable : SearchableConfigurable, Configurable.N
                 is PluginUpdateStatus.Update -> {
                     update = pluginUpdateStatus
                     versionForInstallation = update?.pluginDescriptor?.version
-                    form.setUpdateStatus("A new version ${pluginUpdateStatus.pluginDescriptor.version} is available", true)
+                    form.setUpdateStatus(
+                        KotlinBundle.message("configuration.message.text.a.new.version.is.available",
+                            pluginUpdateStatus.pluginDescriptor.version
+                        ),
+                        true
+                    )
                     if (installedVersion != null && installedVersion == versionForInstallation) {
                         // Installation of the plugin has been started or finished
                         form.hideInstallButton()
@@ -164,11 +176,17 @@ class KotlinUpdatesSettingsConfigurable : SearchableConfigurable, Configurable.N
                 }
 
                 is PluginUpdateStatus.CheckFailed ->
-                    form.setUpdateStatus("Update check failed: ${pluginUpdateStatus.message}", false)
+                    form.setUpdateStatus(
+                        KotlinBundle.message("configuration.message.text.update.check.failed", pluginUpdateStatus.message),
+                        false
+                    )
 
                 is PluginUpdateStatus.Unverified -> {
                     val version = pluginUpdateStatus.updateStatus.pluginDescriptor.version
-                    val generalLine = "A new version $version is found but it's not verified by ${pluginUpdateStatus.verifierName}."
+                    val generalLine = KotlinBundle.message("configuration.message.text.a.new.version.is.found",
+                        version,
+                        pluginUpdateStatus.verifierName
+                    )
                     val reasonLine = pluginUpdateStatus.reason ?: ""
                     val message = "<html>$generalLine<br/>$reasonLine</html>"
                     form.setUpdateStatus(message, false)

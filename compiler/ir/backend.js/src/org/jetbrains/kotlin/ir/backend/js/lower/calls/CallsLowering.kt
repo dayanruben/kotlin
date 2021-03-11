@@ -1,47 +1,50 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.ir.backend.js.lower.calls
 
-import org.jetbrains.kotlin.backend.common.FileLoweringPass
+import org.jetbrains.kotlin.backend.common.BodyLoweringPass
+import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.backend.js.JsIrBackendContext
-import org.jetbrains.kotlin.ir.declarations.IrFile
+import org.jetbrains.kotlin.ir.declarations.IrDeclaration
 import org.jetbrains.kotlin.ir.declarations.IrFunction
-import org.jetbrains.kotlin.ir.expressions.IrCall
+import org.jetbrains.kotlin.ir.expressions.IrBody
 import org.jetbrains.kotlin.ir.expressions.IrExpression
+import org.jetbrains.kotlin.ir.expressions.IrFunctionAccessExpression
 import org.jetbrains.kotlin.ir.util.hasAnnotation
-import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
-import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
+import org.jetbrains.kotlin.ir.visitors.IrElementTransformer
 
-class CallsLowering(val context: JsIrBackendContext) : FileLoweringPass {
+class CallsLowering(val context: JsIrBackendContext) : BodyLoweringPass {
     private val transformers = listOf(
         NumberOperatorCallsTransformer(context),
         NumberConversionCallsTransformer(context),
-        DynamicCallsTransformer(context),
         EqualityAndComparisonCallsTransformer(context),
         PrimitiveContainerMemberCallTransformer(context),
         MethodsOfAnyCallsTransformer(context),
         ReflectionCallsTransformer(context),
         EnumIntrinsicsTransformer(context),
-        ExceptionHelperCallsTransformer(context)
+        ExceptionHelperCallsTransformer(context),
+        BuiltInConstructorCalls(context),
+        JsonIntrinsics(context),
+        NativeGetterSetterTransformer(context),
+        ReplaceCallsWithInvalidTypeArgumentForReifiedParameters(context),
     )
 
-    override fun lower(irFile: IrFile) {
-        irFile.transformChildrenVoid(object : IrElementTransformerVoid() {
-            override fun visitFunction(declaration: IrFunction): IrStatement {
-                if (declaration.hasAnnotation(context.intrinsics.doNotIntrinsifyAnnotationSymbol))
-                    return declaration
-                return super.visitFunction(declaration)
+    override fun lower(irBody: IrBody, container: IrDeclaration) {
+        irBody.transformChildren(object : IrElementTransformer<IrDeclaration> {
+            override fun visitFunction(declaration: IrFunction, data: IrDeclaration): IrStatement {
+                return super.visitFunction(declaration, declaration)
             }
 
-            override fun visitCall(expression: IrCall): IrExpression {
-                val call = super.visitCall(expression)
-                if (call is IrCall) {
+            override fun visitFunctionAccess(expression: IrFunctionAccessExpression, data: IrDeclaration): IrElement {
+                val call = super.visitFunctionAccess(expression, data)
+                val doNotIntrinsify = data.hasAnnotation(context.intrinsics.doNotIntrinsifyAnnotationSymbol)
+                if (call is IrFunctionAccessExpression) {
                     for (transformer in transformers) {
-                        val newCall = transformer.transformCall(call)
+                        val newCall = transformer.transformFunctionAccess(call, doNotIntrinsify)
                         if (newCall !== call) {
                             return newCall
                         }
@@ -49,10 +52,10 @@ class CallsLowering(val context: JsIrBackendContext) : FileLoweringPass {
                 }
                 return call
             }
-        })
+        }, container)
     }
 }
 
 interface CallsTransformer {
-    fun transformCall(call: IrCall): IrExpression
+    fun transformFunctionAccess(call: IrFunctionAccessExpression, doNotIntrinsify: Boolean): IrExpression
 }

@@ -1,17 +1,6 @@
 /*
- * Copyright 2010-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations
@@ -33,7 +22,6 @@ import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassHandler
 import com.intellij.refactoring.rename.RenameUtil
 import com.intellij.refactoring.util.NonCodeUsageInfo
 import com.intellij.refactoring.util.RefactoringUIUtil
-import com.intellij.refactoring.util.TextOccurrencesUtil
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewBundle
 import com.intellij.usageView.UsageViewDescriptor
@@ -42,11 +30,14 @@ import com.intellij.util.IncorrectOperationException
 import com.intellij.util.containers.MultiMap
 import gnu.trove.THashMap
 import gnu.trove.TObjectHashingStrategy
+import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
 import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.asJava.toLightElements
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addToBeShortenedDescendantsToWaitingSet
+import org.jetbrains.kotlin.idea.codeInsight.shorten.performDelayedRefactoringRequests
 import org.jetbrains.kotlin.idea.core.deleteSingle
 import org.jetbrains.kotlin.idea.core.quoteIfNeeded
 import org.jetbrains.kotlin.idea.refactoring.broadcastRefactoringExit
@@ -64,8 +55,10 @@ import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.utils.ifEmpty
 import org.jetbrains.kotlin.utils.keysToMap
-import java.lang.AssertionError
 import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.math.max
+import kotlin.math.min
 
 interface Mover : (KtNamedDeclaration, KtElement) -> KtNamedDeclaration {
     object Default : Mover {
@@ -80,10 +73,12 @@ interface Mover : (KtNamedDeclaration, KtElement) -> KtNamedDeclaration {
                 else -> error("Unexpected element: ${targetContainer.getElementTextWithContext()}")
             }.apply {
                 val container = originalElement.containingClassOrObject
-                if (container is KtObjectDeclaration && container.isCompanion() && container.declarations.singleOrNull() == originalElement) {
+                if (container is KtObjectDeclaration &&
+                    container.isCompanion() &&
+                    container.declarations.singleOrNull() == originalElement
+                ) {
                     container.deleteSingle()
-                }
-                else {
+                } else {
                     originalElement.deleteSingle()
                 }
             }
@@ -143,21 +138,25 @@ private object ElementHashingStrategy : TObjectHashingStrategy<PsiElement> {
 }
 
 class MoveKotlinDeclarationsProcessor(
-        val descriptor: MoveDeclarationsDescriptor,
-        val mover: Mover = Mover.Default) : BaseRefactoringProcessor(descriptor.project) {
+    val descriptor: MoveDeclarationsDescriptor,
+    val mover: Mover = Mover.Default,
+    private val throwOnConflicts: Boolean = false
+) : BaseRefactoringProcessor(descriptor.project) {
     companion object {
-        private val REFACTORING_NAME = "Move declarations"
-        val REFACTORING_ID = "move.kotlin.declarations"
+        const val REFACTORING_ID = "move.kotlin.declarations"
     }
 
     val project get() = descriptor.project
 
     private var nonCodeUsages: Array<NonCodeUsageInfo>? = null
     private val moveEntireFile = descriptor.moveSource is MoveSource.File
-    private val elementsToMove = descriptor.moveSource.elementsToMove.filter { e -> e.parent != descriptor.moveTarget.getTargetPsiIfExists(e) }
+    private val elementsToMove = descriptor.moveSource.elementsToMove.filter { e ->
+        e.parent != descriptor.moveTarget.getTargetPsiIfExists(e)
+    }
+
     private val kotlinToLightElementsBySourceFile = elementsToMove
-            .groupBy { it.containingKtFile }
-            .mapValues { it.value.keysToMap { it.toLightElements().ifEmpty { listOf(it) } } }
+        .groupBy { it.containingKtFile }
+        .mapValues { it.value.keysToMap { declaration -> declaration.toLightElements().ifEmpty { listOf(declaration) } } }
     private val conflicts = MultiMap<PsiElement, String>()
 
     override fun getRefactoringId() = REFACTORING_ID
@@ -165,7 +164,7 @@ class MoveKotlinDeclarationsProcessor(
     override fun createUsageViewDescriptor(usages: Array<out UsageInfo>): UsageViewDescriptor {
         val targetContainerFqName = descriptor.moveTarget.targetContainerFqName?.let {
             if (it.isRoot) UsageViewBundle.message("default.package.presentable.name") else it.asString()
-        }
+        } ?: UsageViewBundle.message("default.package.presentable.name")
         return MoveMultipleElementsViewDescriptor(elementsToMove.toTypedArray(), targetContainerFqName)
     }
 
@@ -200,36 +199,70 @@ class MoveKotlinDeclarationsProcessor(
             return null
         }
 
+        fun UsageInfo.intersectsWith(usage: UsageInfo): Boolean {
+            if (element?.containingFile != usage.element?.containingFile) return false
+            val firstSegment = segment ?: return false
+            val secondSegment = usage.segment ?: return false
+            return max(firstSegment.startOffset, secondSegment.startOffset) <= min(firstSegment.endOffset, secondSegment.endOffset)
+        }
+
         fun collectUsages(kotlinToLightElements: Map<KtNamedDeclaration, List<PsiNamedElement>>, result: MutableCollection<UsageInfo>) {
             kotlinToLightElements.values.flatten().flatMapTo(result) { lightElement ->
                 val searchScope = getSearchScope(lightElement) ?: return@flatMapTo emptyList()
-
-                val newFqName = StringUtil.getQualifiedName(newContainerName, lightElement.name)
+                val elementName = lightElement.name ?: return@flatMapTo emptyList()
+                val newFqName = StringUtil.getQualifiedName(newContainerName, elementName)
 
                 val foundReferences = HashSet<PsiReference>()
                 val results = ReferencesSearch
-                        .search(lightElement, searchScope)
-                        .mapNotNullTo(ArrayList()) { ref ->
-                            if (foundReferences.add(ref) && elementsToMove.none { it.isAncestor(ref.element)}) {
-                                createMoveUsageInfoIfPossible(ref, lightElement, true, false)
-                            }
-                            else null
-                        }
+                    .search(lightElement, searchScope)
+                    .mapNotNullTo(ArrayList()) { ref ->
+                        if (foundReferences.add(ref) && elementsToMove.none { it.isAncestor(ref.element) }) {
+                            createMoveUsageInfoIfPossible(ref, lightElement, addImportToOriginalFile = true, isInternal = false)
+                        } else null
+                    }
 
                 val name = lightElement.getKotlinFqName()?.quoteIfNeeded()?.asString()
                 if (name != null) {
-                    TextOccurrencesUtil.findNonCodeUsages(
+                    fun searchForKotlinNameUsages(results: ArrayList<UsageInfo>) {
+                        BunchedDeprecation.findNonCodeUsages(
                             lightElement,
                             name,
                             descriptor.searchInCommentsAndStrings,
                             descriptor.searchInNonCode,
                             FqName(newFqName).quoteIfNeeded().asString(),
                             results
-                    )
+                        )
+                    }
+
+                    val facadeContainer = lightElement.parent as? KtLightClassForFacade
+                    if (facadeContainer != null) {
+                        val oldFqNameWithFacade = StringUtil.getQualifiedName(facadeContainer.qualifiedName, elementName)
+                        val newFqNameWithFacade = StringUtil.getQualifiedName(
+                            StringUtil.getQualifiedName(newContainerName, facadeContainer.name),
+                            elementName
+                        )
+
+                        BunchedDeprecation.findNonCodeUsages(
+                            lightElement,
+                            oldFqNameWithFacade,
+                            descriptor.searchInCommentsAndStrings,
+                            descriptor.searchInNonCode,
+                            FqName(newFqNameWithFacade).quoteIfNeeded().asString(),
+                            results
+                        )
+
+                        ArrayList<UsageInfo>().also { searchForKotlinNameUsages(it) }.forEach { kotlinNonCodeUsage ->
+                            if (results.none { it.intersectsWith(kotlinNonCodeUsage) }) {
+                                results.add(kotlinNonCodeUsage)
+                            }
+                        }
+                    } else {
+                        searchForKotlinNameUsages(results)
+                    }
                 }
 
-                MoveClassHandler.EP_NAME.extensions.forEach { handler ->
-                    if (handler !is MoveKotlinClassHandler) handler.preprocessUsages(results)
+                MoveClassHandler.EP_NAME.extensions.filter { it !is MoveKotlinClassHandler }.forEach { handler ->
+                    handler.preprocessUsages(results)
                 }
 
                 results
@@ -238,11 +271,11 @@ class MoveKotlinDeclarationsProcessor(
 
         val usages = ArrayList<UsageInfo>()
         val conflictChecker = MoveConflictChecker(
-                project,
-                elementsToMove,
-                descriptor.moveTarget,
-                elementsToMove.first(),
-                allElementsToMove = descriptor.allElementsToMove
+            project,
+            elementsToMove,
+            descriptor.moveTarget,
+            elementsToMove.first(),
+            allElementsToMove = descriptor.allElementsToMove
         )
         for ((sourceFile, kotlinToLightElements) in kotlinToLightElementsBySourceFile) {
             val internalUsages = LinkedHashSet<UsageInfo>()
@@ -250,12 +283,11 @@ class MoveKotlinDeclarationsProcessor(
 
             if (moveEntireFile) {
                 val changeInfo = ContainerChangeInfo(
-                        ContainerInfo.Package(sourceFile.packageFqName),
-                        descriptor.moveTarget.targetContainerFqName?.let { ContainerInfo.Package(it) } ?: ContainerInfo.UnknownPackage
+                    ContainerInfo.Package(sourceFile.packageFqName),
+                    descriptor.moveTarget.targetContainerFqName?.let { ContainerInfo.Package(it) } ?: ContainerInfo.UnknownPackage
                 )
                 internalUsages += sourceFile.getInternalReferencesToUpdateOnPackageNameChange(changeInfo)
-            }
-            else {
+            } else {
                 kotlinToLightElements.keys.forEach {
                     val packageNameInfo = descriptor.delegate.getContainerChangeInfo(it, descriptor.moveTarget)
                     internalUsages += it.getInternalReferencesToUpdateOnPackageNameChange(packageNameInfo)
@@ -280,12 +312,17 @@ class MoveKotlinDeclarationsProcessor(
         return showConflicts(conflicts, refUsages.get())
     }
 
+    override fun showConflicts(conflicts: MultiMap<PsiElement, String>, usages: Array<out UsageInfo>?): Boolean {
+        if (throwOnConflicts && !conflicts.isEmpty) throw RefactoringConflictsFoundException()
+        return super.showConflicts(conflicts, usages)
+    }
+
     override fun performRefactoring(usages: Array<out UsageInfo>) = doPerformRefactoring(usages.toList())
 
     internal fun doPerformRefactoring(usages: List<UsageInfo>) {
         fun moveDeclaration(declaration: KtNamedDeclaration, moveTarget: KotlinMoveTarget): KtNamedDeclaration {
             val targetContainer = moveTarget.getOrCreateTargetPsi(declaration)
-                                  ?: throw AssertionError("Couldn't create Kotlin file for: ${declaration::class.java}: ${declaration.text}")
+                ?: throw AssertionError("Couldn't create Kotlin file for: ${declaration::class.java}: ${declaration.text}")
             descriptor.delegate.preprocessDeclaration(descriptor, declaration)
             if (moveEntireFile) return declaration
             return mover(declaration, targetContainer).apply {
@@ -327,7 +364,7 @@ class MoveKotlinDeclarationsProcessor(
                     }
                 }
 
-                if (descriptor.deleteSourceFiles) {
+                if (descriptor.deleteSourceFiles && sourceFile.declarations.isEmpty()) {
                     sourceFile.delete()
                 }
             }
@@ -340,14 +377,12 @@ class MoveKotlinDeclarationsProcessor(
             internalUsageScopes.forEach { newInternalUsages += restoreInternalUsages(it, oldToNewElementsMapping) }
 
             usagesToProcess += newInternalUsages
-
             nonCodeUsages = postProcessMoveUsages(usagesToProcess, oldToNewElementsMapping).toTypedArray()
-        }
-        catch (e: IncorrectOperationException) {
+            performDelayedRefactoringRequests(project)
+        } catch (e: IncorrectOperationException) {
             nonCodeUsages = null
             RefactoringUIUtil.processIncorrectOperation(myProject, e)
-        }
-        finally {
+        } finally {
             cleanUpInternalUsages(newInternalUsages + oldInternalUsages)
         }
     }
@@ -369,5 +404,5 @@ class MoveKotlinDeclarationsProcessor(
         }
     }
 
-    override fun getCommandName(): String = REFACTORING_NAME
+    override fun getCommandName(): String = KotlinBundle.message("text.move.declarations")
 }

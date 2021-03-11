@@ -1,3 +1,4 @@
+// KJS_WITH_FULL_RUNTIME
 // WITH_RUNTIME
 
 open class Content() {
@@ -6,7 +7,7 @@ open class Content() {
 
 interface ContentBox<T : Content> : List<T>
 
-object Impl : ContentBox<Content> , AbstractList<Content>() {
+object Impl : ContentBox<Content>, AbstractList<Content>() {
     override fun get(index: Int) = Content()
 
     override val size: Int

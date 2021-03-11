@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.inspections
@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.formatter.adjustLineIndent
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isElseIf
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.idea.refactoring.getLineNumber
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.types.typeUtil.isNothing
 
 class RedundantElseInIfInspection : AbstractKotlinInspection() {
@@ -33,7 +35,7 @@ class RedundantElseInIfInspection : AbstractKotlinInspection() {
                 holder.manager.createProblemDescriptor(
                     ifExpression,
                     rangeInElement,
-                    "Redundant 'else'",
+                    KotlinBundle.message("redundant.else"),
                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                     isOnTheFly,
                     RemoveRedundantElseFix()
@@ -43,7 +45,7 @@ class RedundantElseInIfInspection : AbstractKotlinInspection() {
 }
 
 private class RemoveRedundantElseFix : LocalQuickFix {
-    override fun getName() = "Remove redundant 'else'"
+    override fun getName() = KotlinBundle.message("remove.redundant.else.fix.text")
 
     override fun getFamilyName() = name
 
@@ -87,7 +89,7 @@ private fun KtIfExpression.lastSingleElseKeyword(): PsiElement? {
 
 private fun KtIfExpression.hasRedundantElse(): Boolean {
     val context = analyze()
-    if (context[BindingContext.USED_AS_EXPRESSION, this] == true) return false
+    if (isUsedAsExpression(context)) return false
     var ifExpression = this
     while (true) {
         if ((ifExpression.then)?.isReturnOrNothing(context) != true) return false

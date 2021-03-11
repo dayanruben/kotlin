@@ -19,27 +19,19 @@ package org.jetbrains.kotlin.backend.common.lower
 import org.jetbrains.kotlin.backend.common.CommonBackendContext
 import org.jetbrains.kotlin.backend.common.FileLoweringPass
 import org.jetbrains.kotlin.backend.common.atMostOne
-import org.jetbrains.kotlin.builtins.PrimitiveType
 import org.jetbrains.kotlin.ir.IrStatement
-import org.jetbrains.kotlin.ir.builders.IrBuilderWithScope
-import org.jetbrains.kotlin.ir.builders.irCall
-import org.jetbrains.kotlin.ir.builders.irGet
-import org.jetbrains.kotlin.ir.builders.irTemporary
-import org.jetbrains.kotlin.ir.declarations.IrDeclaration
-import org.jetbrains.kotlin.ir.declarations.IrFile
-import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
-import org.jetbrains.kotlin.ir.declarations.IrSymbolDeclaration
+import org.jetbrains.kotlin.ir.builders.*
+import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrStringConcatenation
+import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.types.isNullable
 import org.jetbrains.kotlin.ir.types.isNullableAny
-import org.jetbrains.kotlin.ir.types.toKotlinType
 import org.jetbrains.kotlin.ir.util.constructors
 import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.types.KotlinType
-
 
 /**
  * This lowering pass replaces [IrStringConcatenation]s with StringBuilder appends.
@@ -54,10 +46,9 @@ private class StringConcatenationTransformer(val lower: StringConcatenationLower
 
     private val buildersStack = mutableListOf<IrBuilderWithScope>()
     private val context = lower.context
-    private val builtIns = context.builtIns
+    private val irBuiltIns = context.irBuiltIns
 
-    private val typesWithSpecialAppendFunction =
-        PrimitiveType.values().map { builtIns.getPrimitiveKotlinType(it) } + builtIns.stringType
+    private val typesWithSpecialAppendFunction = irBuiltIns.primitiveIrTypes + irBuiltIns.stringType
 
     private val nameToString = Name.identifier("toString")
     private val nameAppend = Name.identifier("append")
@@ -72,23 +63,21 @@ private class StringConcatenationTransformer(val lower: StringConcatenationLower
     private val toStringFunction = stringBuilder.functions.single {
         it.valueParameters.size == 0 && it.name == nameToString
     }
+
     private val defaultAppendFunction = stringBuilder.functions.single {
         it.name == nameAppend &&
                 it.valueParameters.size == 1 &&
                 it.valueParameters.single().type.isNullableAny()
     }
 
-
-    private val appendFunctions: Map<KotlinType, IrSimpleFunction?> =
+    private val appendFunctions: Map<IrType, IrSimpleFunction?> =
         typesWithSpecialAppendFunction.map { type ->
             type to stringBuilder.functions.toList().atMostOne {
-                it.name == nameAppend &&
-                        it.valueParameters.size == 1 &&
-                        it.valueParameters.single().type.toKotlinType() == type
+                it.name == nameAppend && it.valueParameters.singleOrNull()?.type == type
             }
         }.toMap()
 
-    private fun typeToAppendFunction(type: KotlinType): IrSimpleFunction {
+    private fun typeToAppendFunction(type: IrType): IrSimpleFunction {
         return appendFunctions[type] ?: defaultAppendFunction
     }
 
@@ -97,26 +86,41 @@ private class StringConcatenationTransformer(val lower: StringConcatenationLower
 
         expression.transformChildrenVoid(this)
         val blockBuilder = buildersStack.last()
-        return blockBuilder.irBlock(expression) {
-            val stringBuilderImpl = irTemporary(irCall(constructor))
-            expression.arguments.forEach { arg ->
-                val appendFunction = typeToAppendFunction(arg.type.toKotlinType())
-                +irCall(appendFunction).apply {
-                    dispatchReceiver = irGet(stringBuilderImpl)
-                    putValueArgument(0, arg)
+
+        val arguments = expression.arguments
+        return when (arguments.size) {
+            0 -> blockBuilder.irString("")
+            1 -> {
+                val argument = arguments[0]
+                if (argument.type.isNullable())
+                    blockBuilder.irCall(context.ir.symbols.extensionToString).apply {
+                        extensionReceiver = argument
+                    }
+                else blockBuilder.irCall(
+                    context.irBuiltIns.anyClass.functions
+                        .single { it.owner.name.asString() == "toString" }).apply {
+                    dispatchReceiver = argument
                 }
             }
-            +irCall(toStringFunction).apply {
-                dispatchReceiver = irGet(stringBuilderImpl)
+            else -> {
+                blockBuilder.irBlock(expression) {
+                    val stringBuilderImpl = createTmpVariable(irCall(constructor))
+                    expression.arguments.forEach { arg ->
+                        val appendFunction = typeToAppendFunction(arg.type)
+                        +irCall(appendFunction).apply {
+                            dispatchReceiver = irGet(stringBuilderImpl)
+                            putValueArgument(0, arg)
+                        }
+                    }
+                    +irCall(toStringFunction).apply {
+                        dispatchReceiver = irGet(stringBuilderImpl)
+                    }
+                }
             }
         }
     }
 
-    override fun visitDeclaration(declaration: IrDeclaration): IrStatement {
-        if (declaration !is IrSymbolDeclaration<*>) {
-            return super.visitDeclaration(declaration)
-        }
-
+    override fun visitDeclaration(declaration: IrDeclarationBase): IrStatement {
         with(declaration) {
             buildersStack.add(
                 context.createIrBuilder(declaration.symbol, startOffset, endOffset)

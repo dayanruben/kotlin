@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.refactoring.pushDown;
@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.idea.refactoring.pushDown;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.test.KotlinTestUtils;
-import org.jetbrains.kotlin.test.TargetBackend;
+import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.runner.RunWith;
 
@@ -24,7 +24,7 @@ public class PushDownTestGenerated extends AbstractPushDownTest {
     @RunWith(JUnit3RunnerWithInners.class)
     public static class K2K extends AbstractPushDownTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doKotlinTest, TargetBackend.ANY, testDataFilePath);
+            KotlinTestUtils.runTest(this::doKotlinTest, this, testDataFilePath);
         }
 
         @TestMetadata("accidentalOverrides.kt")
@@ -33,7 +33,7 @@ public class PushDownTestGenerated extends AbstractPushDownTest {
         }
 
         public void testAllFilesPresentInK2K() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentInSingleGeneratedClass(this.getClass(), new File("idea/testData/refactoring/pushDown/k2k"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.ANY);
+            KtTestUtil.assertAllTestsPresentInSingleGeneratedClassWithExcluded(this.getClass(), new File("idea/testData/refactoring/pushDown/k2k"), Pattern.compile("^(.+)\\.kt$"), null);
         }
 
         @TestMetadata("clashingMembers.kt")
@@ -137,11 +137,11 @@ public class PushDownTestGenerated extends AbstractPushDownTest {
     @RunWith(JUnit3RunnerWithInners.class)
     public static class K2J extends AbstractPushDownTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doKotlinTest, TargetBackend.ANY, testDataFilePath);
+            KotlinTestUtils.runTest(this::doKotlinTest, this, testDataFilePath);
         }
 
         public void testAllFilesPresentInK2J() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentInSingleGeneratedClass(this.getClass(), new File("idea/testData/refactoring/pushDown/k2j"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.ANY);
+            KtTestUtil.assertAllTestsPresentInSingleGeneratedClassWithExcluded(this.getClass(), new File("idea/testData/refactoring/pushDown/k2j"), Pattern.compile("^(.+)\\.kt$"), null);
         }
 
         @TestMetadata("kotlinToJava.kt")
@@ -155,11 +155,11 @@ public class PushDownTestGenerated extends AbstractPushDownTest {
     @RunWith(JUnit3RunnerWithInners.class)
     public static class J2K extends AbstractPushDownTest {
         private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doJavaTest, TargetBackend.ANY, testDataFilePath);
+            KotlinTestUtils.runTest(this::doJavaTest, this, testDataFilePath);
         }
 
         public void testAllFilesPresentInJ2K() throws Exception {
-            KotlinTestUtils.assertAllTestsPresentInSingleGeneratedClass(this.getClass(), new File("idea/testData/refactoring/pushDown/j2k"), Pattern.compile("^(.+)\\.java$"), TargetBackend.ANY);
+            KtTestUtil.assertAllTestsPresentInSingleGeneratedClassWithExcluded(this.getClass(), new File("idea/testData/refactoring/pushDown/j2k"), Pattern.compile("^(.+)\\.java$"), null);
         }
 
         @TestMetadata("fromClass.java")

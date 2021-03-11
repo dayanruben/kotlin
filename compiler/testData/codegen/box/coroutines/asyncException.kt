@@ -1,14 +1,12 @@
 // SKIP_JDK6
-// IGNORE_BACKEND: JVM_IR
 // TARGET_BACKEND: JVM
 // WITH_RUNTIME
-// COMMON_COROUTINES_TEST
 // FULL_JDK
 // WITH_COROUTINES
 
 import java.util.concurrent.CompletableFuture
-import COROUTINES_PACKAGE.*
-import COROUTINES_PACKAGE.intrinsics.*
+import kotlin.coroutines.*
+import kotlin.coroutines.intrinsics.*
 
 fun exception(v: String): CompletableFuture<String> = CompletableFuture.supplyAsync { throw RuntimeException(v) }
 

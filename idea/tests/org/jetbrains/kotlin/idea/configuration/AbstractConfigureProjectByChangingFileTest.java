@@ -1,17 +1,6 @@
 /*
- * Copyright 2010-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.configuration;
@@ -19,7 +8,6 @@ package org.jetbrains.kotlin.idea.configuration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -33,7 +21,6 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesUpdaterKt;
 import org.jetbrains.kotlin.test.InTextDirectivesUtils;
 import org.jetbrains.kotlin.test.KotlinTestUtils;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -42,7 +29,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Objects;
 
-public abstract class AbstractConfigureProjectByChangingFileTest<C extends KotlinProjectConfigurator> extends LightCodeInsightTestCase {
+@SuppressWarnings("deprecation")
+public abstract class AbstractConfigureProjectByChangingFileTest<C extends KotlinProjectConfigurator>
+        extends LightCodeInsightTestCase {
     private static final String DEFAULT_VERSION = "default_version";
 
     private PsiFile moduleInfoFile;
@@ -53,12 +42,10 @@ public abstract class AbstractConfigureProjectByChangingFileTest<C extends Kotli
         ApplicationManager.getApplication().runWriteAction(
                 () -> FileTypeManager.getInstance().associateExtension(GroovyFileType.GROOVY_FILE_TYPE, "gradle")
         );
-        ScriptDependenciesUpdaterKt.setScriptDependenciesUpdaterDisabled(ApplicationManager.getApplication(), true);
     }
 
     @Override
     protected void tearDown() throws Exception {
-        ScriptDependenciesUpdaterKt.setScriptDependenciesUpdaterDisabled(ApplicationManager.getApplication(), false);
         moduleInfoFile = null;
         super.tearDown();
     }
@@ -125,22 +112,22 @@ public abstract class AbstractConfigureProjectByChangingFileTest<C extends Kotli
     @NotNull
     @Override
     protected LightProjectDescriptor getProjectDescriptor() {
-        return new SimpleLightProjectDescriptor(getModuleType(), getProjectJDK());
+        return new SimpleLightProjectDescriptor(getModuleTypeId(), getProjectJDK());
     }
 
     private static class SimpleLightProjectDescriptor extends LightProjectDescriptor {
-        @NotNull private final ModuleType myModuleType;
+        @NotNull private final String myModuleTypeId;
         @Nullable private final Sdk mySdk;
 
-        SimpleLightProjectDescriptor(@NotNull ModuleType moduleType, @Nullable Sdk sdk) {
-            myModuleType = moduleType;
+        SimpleLightProjectDescriptor(@NotNull String moduleTypeId, @Nullable Sdk sdk) {
+            myModuleTypeId = moduleTypeId;
             mySdk = sdk;
         }
 
         @NotNull
         @Override
-        public ModuleType getModuleType() {
-            return myModuleType;
+        public String getModuleTypeId() {
+            return myModuleTypeId;
         }
 
         @Nullable
@@ -156,13 +143,13 @@ public abstract class AbstractConfigureProjectByChangingFileTest<C extends Kotli
 
             SimpleLightProjectDescriptor that = (SimpleLightProjectDescriptor)o;
 
-            if (!myModuleType.equals(that.myModuleType)) return false;
+            if (!myModuleTypeId.equals(that.myModuleTypeId)) return false;
             return areJdksEqual(that.getSdk());
         }
 
         @Override
         public int hashCode() {
-            return myModuleType.hashCode();
+            return myModuleTypeId.hashCode();
         }
 
         private boolean areJdksEqual(Sdk newSdk) {

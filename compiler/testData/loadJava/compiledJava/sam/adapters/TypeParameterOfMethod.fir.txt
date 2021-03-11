@@ -1,0 +1,10 @@
+public open class TypeParameterOfMethod : R|kotlin/Any| {
+    public open static fun <T : R|ft<kotlin/Any, kotlin/Any?>!|> max(comparator: R|ft<@FlexibleNullability java/util/Comparator<ft<@FlexibleNullability T, T?>!>, java/util/Comparator<ft<@FlexibleNullability T, T?>!>?>!|, value1: R|ft<@FlexibleNullability T, T?>!|, value2: R|ft<@FlexibleNullability T, T?>!|): R|ft<@FlexibleNullability T, T?>!|
+
+    public open static fun <T : R|ft<@FlexibleNullability kotlin/CharSequence, kotlin/CharSequence?>!|> max2(comparator: R|ft<@FlexibleNullability java/util/Comparator<ft<@FlexibleNullability T, T?>!>, java/util/Comparator<ft<@FlexibleNullability T, T?>!>?>!|, value1: R|ft<@FlexibleNullability T, T?>!|, value2: R|ft<@FlexibleNullability T, T?>!|): R|ft<@FlexibleNullability T, T?>!|
+
+    public open static fun <A : R|ft<@FlexibleNullability kotlin/CharSequence, kotlin/CharSequence?>!|, B : R|ft<@FlexibleNullability kotlin/collections/MutableList<ft<@FlexibleNullability A, A?>!>, kotlin/collections/List<ft<@FlexibleNullability A, A?>!>?>!|> method(a: R|ft<@FlexibleNullability java/util/Comparator<ft<@FlexibleNullability A, A?>!>, java/util/Comparator<ft<@FlexibleNullability A, A?>!>?>!|, b: R|ft<@FlexibleNullability B, B?>!|): R|kotlin/Unit|
+
+    public constructor(): R|test/TypeParameterOfMethod|
+
+}

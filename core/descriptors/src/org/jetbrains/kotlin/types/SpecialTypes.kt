@@ -20,9 +20,12 @@ import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.resolve.scopes.MemberScope
 import org.jetbrains.kotlin.storage.StorageManager
+import org.jetbrains.kotlin.types.checker.KotlinTypeRefiner
+import org.jetbrains.kotlin.types.checker.NewCapturedType
 import org.jetbrains.kotlin.types.checker.NewTypeVariableConstructor
 import org.jetbrains.kotlin.types.checker.NullabilityChecker
-import org.jetbrains.kotlin.types.typeUtil.canHaveUndefinedNullability
+import org.jetbrains.kotlin.types.model.DefinitelyNotNullTypeMarker
+import org.jetbrains.kotlin.types.refinement.TypeRefinement
 
 abstract class DelegatingSimpleType : SimpleType() {
     protected abstract val delegate: SimpleType
@@ -32,6 +35,13 @@ abstract class DelegatingSimpleType : SimpleType() {
     override val arguments: List<TypeProjection> get() = delegate.arguments
     override val isMarkedNullable: Boolean get() = delegate.isMarkedNullable
     override val memberScope: MemberScope get() = delegate.memberScope
+
+    @TypeRefinement
+    abstract fun replaceDelegate(delegate: SimpleType): DelegatingSimpleType
+
+    @TypeRefinement
+    override fun refine(kotlinTypeRefiner: KotlinTypeRefiner): SimpleType =
+        replaceDelegate(kotlinTypeRefiner.refineType(delegate) as SimpleType)
 }
 
 class AbbreviatedType(override val delegate: SimpleType, val abbreviation: SimpleType) : DelegatingSimpleType() {
@@ -42,6 +52,17 @@ class AbbreviatedType(override val delegate: SimpleType, val abbreviation: Simpl
 
     override fun makeNullableAsSpecified(newNullability: Boolean)
             = AbbreviatedType(delegate.makeNullableAsSpecified(newNullability), abbreviation.makeNullableAsSpecified(newNullability))
+
+    @TypeRefinement
+    override fun replaceDelegate(delegate: SimpleType) = AbbreviatedType(delegate, abbreviation)
+
+    @TypeRefinement
+    @OptIn(TypeRefinement::class)
+    override fun refine(kotlinTypeRefiner: KotlinTypeRefiner): AbbreviatedType =
+        AbbreviatedType(
+            kotlinTypeRefiner.refineType(delegate) as SimpleType,
+            kotlinTypeRefiner.refineType(abbreviation) as SimpleType
+        )
 }
 
 fun KotlinType.getAbbreviatedType(): AbbreviatedType? = unwrap() as? AbbreviatedType
@@ -52,21 +73,38 @@ fun SimpleType.withAbbreviation(abbreviatedType: SimpleType): SimpleType {
     return AbbreviatedType(this, abbreviatedType)
 }
 
-class LazyWrappedType(storageManager: StorageManager, computation: () -> KotlinType): WrappedType() {
+class LazyWrappedType(
+    private val storageManager: StorageManager,
+    private val computation: () -> KotlinType
+) : WrappedType() {
     private val lazyValue = storageManager.createLazyValue(computation)
 
     override val delegate: KotlinType get() = lazyValue()
 
     override fun isComputed(): Boolean = lazyValue.isComputed()
+
+    @TypeRefinement
+    @OptIn(TypeRefinement::class)
+    override fun refine(kotlinTypeRefiner: KotlinTypeRefiner) = LazyWrappedType(storageManager) {
+        kotlinTypeRefiner.refineType(computation())
+    }
 }
 
-class DefinitelyNotNullType private constructor(val original: SimpleType) : DelegatingSimpleType(), CustomTypeVariable {
+class DefinitelyNotNullType private constructor(
+    val original: SimpleType,
+    private val useCorrectedNullabilityForTypeParameters: Boolean
+) : DelegatingSimpleType(), CustomTypeVariable,
+    DefinitelyNotNullTypeMarker {
+
     companion object {
-        internal fun makeDefinitelyNotNull(type: UnwrappedType): DefinitelyNotNullType? {
+        internal fun makeDefinitelyNotNull(
+            type: UnwrappedType,
+            useCorrectedNullabilityForTypeParameters: Boolean = false
+        ): DefinitelyNotNullType? {
             return when {
                 type is DefinitelyNotNullType -> type
 
-                makesSenseToBeDefinitelyNotNull(type) -> {
+                makesSenseToBeDefinitelyNotNull(type, useCorrectedNullabilityForTypeParameters) -> {
                     if (type is FlexibleType) {
                         assert(type.lowerBound.constructor == type.upperBound.constructor) {
                             "DefinitelyNotNullType for flexible type ($type) can be created only from type variable with the same constructor for bounds"
@@ -74,15 +112,40 @@ class DefinitelyNotNullType private constructor(val original: SimpleType) : Dele
                     }
 
 
-                    DefinitelyNotNullType(type.lowerIfFlexible())
+                    DefinitelyNotNullType(type.lowerIfFlexible(), useCorrectedNullabilityForTypeParameters)
                 }
 
                 else -> null
             }
         }
 
-        private fun makesSenseToBeDefinitelyNotNull(type: UnwrappedType): Boolean =
-            type.canHaveUndefinedNullability() && !NullabilityChecker.isSubtypeOfAny(type)
+        private fun makesSenseToBeDefinitelyNotNull(
+            type: UnwrappedType,
+            useCorrectedNullabilityForFlexibleTypeParameters: Boolean
+        ): Boolean {
+            if (!type.canHaveUndefinedNullability()) return false
+
+            // Replacing `useCorrectedNullabilityForFlexibleTypeParameters` with true for all call-sites seems to be correct
+            // But it seems that it should be a new feature: KT-28785 would be automatically fixed then
+            // (see the tests org.jetbrains.kotlin.spec.checkers.DiagnosticsTestSpecGenerated.NotLinked.Dfa.Pos.test12/13)
+            // So it should be a language feature, but it's hard correctly identify language version settings for all call sites
+            // Thus, we have non-trivial value at org.jetbrains.kotlin.load.java.typeEnhancement.JavaTypeEnhancement.notNullTypeParameter
+            // that run under related language-feature only
+            if (useCorrectedNullabilityForFlexibleTypeParameters && type.constructor.declarationDescriptor is TypeParameterDescriptor) {
+                // Effectively checks if the type is flexible or has nullable bound
+                return TypeUtils.isNullableType(type)
+            }
+
+            // Actually, this code should work for type parameters as well, but it breaks some cases
+            // See KT-40114
+            return !NullabilityChecker.isSubtypeOfAny(type)
+        }
+
+        private fun UnwrappedType.canHaveUndefinedNullability(): Boolean =
+            constructor is NewTypeVariableConstructor ||
+                    constructor.declarationDescriptor is TypeParameterDescriptor ||
+                    this is NewCapturedType
+
     }
 
     override val delegate: SimpleType
@@ -96,27 +159,33 @@ class DefinitelyNotNullType private constructor(val original: SimpleType) : Dele
                 delegate.constructor.declarationDescriptor is TypeParameterDescriptor
 
     override fun substitutionResult(replacement: KotlinType): KotlinType =
-            replacement.unwrap().makeDefinitelyNotNullOrNotNull()
+            replacement.unwrap().makeDefinitelyNotNullOrNotNull(useCorrectedNullabilityForTypeParameters)
 
     override fun replaceAnnotations(newAnnotations: Annotations): DefinitelyNotNullType =
-            DefinitelyNotNullType(delegate.replaceAnnotations(newAnnotations))
+            DefinitelyNotNullType(delegate.replaceAnnotations(newAnnotations), useCorrectedNullabilityForTypeParameters)
 
     override fun makeNullableAsSpecified(newNullability: Boolean): SimpleType =
             if (newNullability) delegate.makeNullableAsSpecified(newNullability) else this
 
     override fun toString(): String = "$delegate!!"
+
+    @TypeRefinement
+    override fun replaceDelegate(delegate: SimpleType) = DefinitelyNotNullType(delegate, useCorrectedNullabilityForTypeParameters)
 }
 
 val KotlinType.isDefinitelyNotNullType: Boolean
     get() = unwrap() is DefinitelyNotNullType
 
-fun SimpleType.makeSimpleTypeDefinitelyNotNullOrNotNull(): SimpleType =
-    DefinitelyNotNullType.makeDefinitelyNotNull(this)
+fun SimpleType.makeSimpleTypeDefinitelyNotNullOrNotNull(useCorrectedNullabilityForTypeParameters: Boolean = false): SimpleType =
+    DefinitelyNotNullType.makeDefinitelyNotNull(this, useCorrectedNullabilityForTypeParameters)
         ?: makeIntersectionTypeDefinitelyNotNullOrNotNull()
         ?: makeNullableAsSpecified(false)
 
-fun UnwrappedType.makeDefinitelyNotNullOrNotNull(): UnwrappedType =
-    DefinitelyNotNullType.makeDefinitelyNotNull(this)
+fun NewCapturedType.withNotNullProjection() =
+    NewCapturedType(captureStatus, constructor, lowerType, annotations, isMarkedNullable, isProjectionNotNull = true)
+
+fun UnwrappedType.makeDefinitelyNotNullOrNotNull(useCorrectedNullabilityForTypeParameters: Boolean = false): UnwrappedType =
+    DefinitelyNotNullType.makeDefinitelyNotNull(this, useCorrectedNullabilityForTypeParameters)
         ?: makeIntersectionTypeDefinitelyNotNullOrNotNull()
         ?: makeNullableAsSpecified(false)
 
@@ -124,13 +193,7 @@ private fun KotlinType.makeIntersectionTypeDefinitelyNotNullOrNotNull(): SimpleT
     val typeConstructor = constructor as? IntersectionTypeConstructor ?: return null
     val definitelyNotNullConstructor = typeConstructor.makeDefinitelyNotNullOrNotNull() ?: return null
 
-    return KotlinTypeFactory.simpleTypeWithNonTrivialMemberScope(
-        annotations,
-        definitelyNotNullConstructor,
-        listOf(),
-        false,
-        definitelyNotNullConstructor.createScopeForKotlinType()
-    )
+    return definitelyNotNullConstructor.createType()
 }
 
 private fun IntersectionTypeConstructor.makeDefinitelyNotNullOrNotNull(): IntersectionTypeConstructor? {

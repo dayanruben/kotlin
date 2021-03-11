@@ -1,6 +1,6 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2000-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.ir.util
@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.declarations.IrDeclaration
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationParent
 import org.jetbrains.kotlin.ir.declarations.IrPackageFragment
-import org.jetbrains.kotlin.ir.declarations.IrProperty
+import org.jetbrains.kotlin.ir.declarations.IrDeclarationBase
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
@@ -39,7 +39,7 @@ class PatchDeclarationParentsVisitor() : IrElementVisitorVoid {
         declarationParentsStack.pop()
     }
 
-    override fun visitDeclaration(declaration: IrDeclaration) {
+    override fun visitDeclaration(declaration: IrDeclarationBase) {
         patchParent(declaration)
 
         if (declaration is IrDeclarationParent) {
@@ -51,14 +51,6 @@ class PatchDeclarationParentsVisitor() : IrElementVisitorVoid {
         if (declaration is IrDeclarationParent) {
             declarationParentsStack.pop()
         }
-    }
-
-    override fun visitProperty(declaration: IrProperty) {
-        declaration.getter?.let { it.correspondingProperty = declaration }
-        declaration.setter?.let { it.correspondingProperty = declaration }
-        declaration.backingField?.let { it.correspondingProperty = declaration }
-
-        super.visitProperty(declaration)
     }
 
     private fun patchParent(declaration: IrDeclaration) {

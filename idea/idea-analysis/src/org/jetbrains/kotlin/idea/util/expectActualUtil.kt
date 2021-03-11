@@ -1,6 +1,6 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2000-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.util
@@ -14,21 +14,23 @@ import org.jetbrains.kotlin.idea.caches.project.implementingDescriptors
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToParameterDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.toDescriptor
-import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
-import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.idea.util.application.executeCommand
+import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.idea.util.application.runReadAction
+import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtParameter
-import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
-import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
+import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.multiplatform.ExpectedActualResolver
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-internal fun MemberDescriptor.expectedDescriptors() = module.implementedDescriptors.mapNotNull { it.declarationOf(this) }
+internal fun MemberDescriptor.expectedDescriptors() =
+    (module.implementedDescriptors + module)
+        .mapNotNull { it.declarationOf(this) }
 
 // TODO: Sort out the cases with multiple expected descriptors
 fun MemberDescriptor.expectedDescriptor() = expectedDescriptors().firstOrNull()
@@ -88,11 +90,20 @@ fun ModuleDescriptor.actualsFor(descriptor: MemberDescriptor, checkCompatible: B
         }
     }.filter { (it as? MemberDescriptor)?.isEffectivelyActual() == true }
 
-private fun DeclarationDescriptor.actualsForExpected(): Collection<DeclarationDescriptor> {
+private fun MemberDescriptor.isEffectivelyActual(checkConstructor: Boolean = true): Boolean =
+    isActual || isEnumEntryInActual() || isConstructorInActual(checkConstructor)
+
+private fun MemberDescriptor.isConstructorInActual(checkConstructor: Boolean) =
+    checkConstructor && this is ClassConstructorDescriptor && containingDeclaration.isEffectivelyActual(checkConstructor)
+
+private fun MemberDescriptor.isEnumEntryInActual() =
+    (DescriptorUtils.isEnumEntry(this) && (containingDeclaration as? MemberDescriptor)?.isActual == true)
+
+fun DeclarationDescriptor.actualsForExpected(): Collection<DeclarationDescriptor> {
     if (this is MemberDescriptor) {
         if (!this.isExpect) return emptyList()
 
-        return module.implementingDescriptors.flatMap { it.actualsFor(this) }
+        return (module.implementingDescriptors + module).flatMap { it.actualsFor(this) }
     }
 
     if (this is ValueParameterDescriptor) {
@@ -101,6 +112,8 @@ private fun DeclarationDescriptor.actualsForExpected(): Collection<DeclarationDe
 
     return emptyList()
 }
+
+fun KtDeclaration.hasAtLeastOneActual() = actualsForExpected().isNotEmpty()
 
 // null means "any platform" here
 fun KtDeclaration.actualsForExpected(module: Module? = null): Set<KtDeclaration> =
@@ -111,34 +124,20 @@ fun KtDeclaration.actualsForExpected(module: Module? = null): Set<KtDeclaration>
             DescriptorToSourceUtils.descriptorToDeclaration(it) as? KtDeclaration
         } ?: emptySet()
 
-
-fun KtDeclaration.isExpectDeclaration(): Boolean {
-    if (hasExpectModifier()) return true
-    if (this is KtClassOrObject) return this.isExpected()
-
-    return containingClassOrObject?.isExpected() == true
-}
-
-private fun KtClassOrObject.isExpected(): Boolean {
-    return this.hasExpectModifier() || this.descriptor.safeAs<ClassDescriptor>()?.isExpect == true
-}
+fun KtDeclaration.isExpectDeclaration(): Boolean = if (hasExpectModifier())
+    true
+else
+    containingClassOrObject?.isExpectDeclaration() == true
 
 fun KtDeclaration.hasMatchingExpected() = (toDescriptor() as? MemberDescriptor)?.expectedDescriptor() != null
 
-fun KtDeclaration.isEffectivelyActual(): Boolean {
-    if (hasActualModifier()) return true
-
-    val descriptor = toDescriptor() as? MemberDescriptor ?: return false
-    return descriptor.isEffectivelyActual()
+fun KtDeclaration.isEffectivelyActual(checkConstructor: Boolean = true): Boolean = when {
+    hasActualModifier() -> true
+    this is KtEnumEntry || checkConstructor && this is KtConstructor<*> -> containingClass()?.hasActualModifier() == true
+    else -> false
 }
 
-private fun MemberDescriptor.isEffectivelyActual(): Boolean =
-    isActual || isEnumEntryInActual() || (this is ClassConstructorDescriptor && containingDeclaration.isEffectivelyActual())
-
-private fun MemberDescriptor.isEnumEntryInActual() =
-    (DescriptorUtils.isEnumEntry(this) && (containingDeclaration as? MemberDescriptor)?.isActual == true)
-
-fun KtDeclaration.runOnExpectAndAllActuals(checkExpect: Boolean = true, f: (KtDeclaration) -> Unit) {
+fun KtDeclaration.runOnExpectAndAllActuals(checkExpect: Boolean = true, useOnSelf: Boolean = false, f: (KtDeclaration) -> Unit) {
     if (hasActualModifier()) {
         val expectElement = liftToExpected()
         expectElement?.actualsForExpected()?.forEach {
@@ -149,5 +148,37 @@ fun KtDeclaration.runOnExpectAndAllActuals(checkExpect: Boolean = true, f: (KtDe
         expectElement?.let { f(it) }
     } else if (!checkExpect || isExpectDeclaration()) {
         actualsForExpected().forEach { f(it) }
+    }
+
+    if (useOnSelf) f(this)
+}
+
+fun KtDeclaration.collectAllExpectAndActualDeclaration(withSelf: Boolean = true): Set<KtDeclaration> = when {
+    isExpectDeclaration() -> actualsForExpected()
+    hasActualModifier() -> liftToExpected()?.let { it.actualsForExpected() + it - this }.orEmpty()
+    else -> emptySet()
+}.let { if (withSelf) it + this else it }
+
+fun KtDeclaration.runCommandOnAllExpectAndActualDeclaration(
+    command: String = "",
+    writeAction: Boolean = false,
+    withSelf: Boolean = true,
+    f: (KtDeclaration) -> Unit
+) {
+    val (pointers, project) = runReadAction {
+        collectAllExpectAndActualDeclaration(withSelf).map { it.createSmartPointer() } to project
+    }
+
+    fun process() {
+        for (pointer in pointers) {
+            val declaration = pointer.element ?: continue
+            f(declaration)
+        }
+    }
+
+    if (writeAction) {
+        project.executeWriteCommand(command, ::process)
+    } else {
+        project.executeCommand(command, command = ::process)
     }
 }

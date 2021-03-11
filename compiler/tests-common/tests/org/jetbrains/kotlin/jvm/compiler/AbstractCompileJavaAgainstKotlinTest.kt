@@ -23,23 +23,27 @@ import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
+import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.javac.JavacWrapper
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.renderer.*
+import org.jetbrains.kotlin.renderer.AnnotationArgumentsRenderingPolicy
+import org.jetbrains.kotlin.renderer.DescriptorRenderer
+import org.jetbrains.kotlin.renderer.DescriptorRendererModifier
+import org.jetbrains.kotlin.renderer.ParameterNameRenderingPolicy
 import org.jetbrains.kotlin.resolve.lazy.JvmResolveUtil
 import org.jetbrains.kotlin.test.ConfigurationKind
 import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.test.KotlinTestUtils.createEnvironmentWithMockJdkAndIdeaAnnotations
+import org.jetbrains.kotlin.test.KotlinTestUtils.newConfiguration
 import org.jetbrains.kotlin.test.TestCaseWithTmpdir
 import org.jetbrains.kotlin.test.TestJdkKind
+import org.jetbrains.kotlin.test.util.KtTestUtil
+import org.jetbrains.kotlin.test.util.RecursiveDescriptorComparatorAdaptor.validateAndCompareDescriptorWithFile
 import org.junit.Assert
-
 import java.io.File
 import java.io.IOException
 import java.lang.annotation.Retention
-
-import org.jetbrains.kotlin.test.KotlinTestUtils.*
-import org.jetbrains.kotlin.test.util.RecursiveDescriptorComparator.validateAndCompareDescriptorWithFile
 
 abstract class AbstractCompileJavaAgainstKotlinTest : TestCaseWithTmpdir() {
 
@@ -73,17 +77,17 @@ abstract class AbstractCompileJavaAgainstKotlinTest : TestCaseWithTmpdir() {
             KotlinTestUtils.compileKotlinWithJava(
                 listOf(javaFile),
                 listOf(ktFile),
-                out, testRootDisposable, javaErrorFile
+                out, testRootDisposable, javaErrorFile, this::updateConfiguration
             )
         }
 
         if (!compiledSuccessfully) return
 
-        val environment = KotlinCoreEnvironment.createForTests(
-            testRootDisposable,
-            newConfiguration(ConfigurationKind.ALL, TestJdkKind.FULL_JDK, getAnnotationsJar(), out),
-            EnvironmentConfigFiles.JVM_CONFIG_FILES
-        )
+        val configuration = newConfiguration(
+            ConfigurationKind.ALL, TestJdkKind.FULL_JDK,
+            KtTestUtil.getAnnotationsJar(), out)
+        configuration.put(JVMConfigurationKeys.USE_PSI_CLASS_FILES_READING, true)
+        val environment = KotlinCoreEnvironment.createForTests(testRootDisposable, configuration, EnvironmentConfigFiles.JVM_CONFIG_FILES)
         setupLanguageVersionSettingsForCompilerTests(ktFile.readText(), environment)
 
         val analysisResult = JvmResolveUtil.analyze(environment)
@@ -93,6 +97,8 @@ abstract class AbstractCompileJavaAgainstKotlinTest : TestCaseWithTmpdir() {
         val expectedFile = File(ktFilePath.replaceFirst("\\.kt$".toRegex(), ".txt"))
         validateAndCompareDescriptorWithFile(packageView, CONFIGURATION, expectedFile)
     }
+
+    open fun updateConfiguration(configuration: CompilerConfiguration) {}
 
     @Throws(IOException::class)
     fun compileKotlinWithJava(
@@ -107,6 +113,7 @@ abstract class AbstractCompileJavaAgainstKotlinTest : TestCaseWithTmpdir() {
         environment.configuration.put(JVMConfigurationKeys.COMPILE_JAVA, true)
         environment.configuration.put(JVMConfigurationKeys.OUTPUT_DIRECTORY, outDir)
         environment.configuration.put(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, MessageCollector.NONE)
+        updateConfiguration(environment.configuration)
         environment.registerJavac(
             javaFiles = javaFiles,
             kotlinFiles = listOf(KotlinTestUtils.loadJetFile(environment.project, ktFiles.first()))
@@ -117,7 +124,6 @@ abstract class AbstractCompileJavaAgainstKotlinTest : TestCaseWithTmpdir() {
             val mkdirs = outDir.mkdirs()
             assert(mkdirs) { "Not created: $outDir" }
         }
-
         return JavacWrapper.getInstance(environment.project).use { it.compile() }
     }
 

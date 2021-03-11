@@ -3,14 +3,16 @@ description = "Kotlin \"main\" script definition tests"
 
 plugins {
     kotlin("jvm")
-    id("jps-compatible")
 }
 
 dependencies {
     testCompile(project(":kotlin-main-kts"))
-    testCompile(project(":kotlin-scripting-jvm-host"))
+    testCompileOnly(project(":compiler:cli"))
+    testCompileOnly(project(":kotlin-scripting-jvm-host-unshaded"))
+    testCompile(kotlinStdlib("jdk8"))
     testCompile(commonDep("junit"))
-    compileOnly("org.apache.ivy:ivy:2.4.0") // for jps/pill
+    testCompile(projectTests(":kotlin-scripting-compiler")) { isTransitive = false }
+    testRuntime(project(":kotlin-compiler-embeddable"))
 }
 
 sourceSets {
@@ -18,3 +20,7 @@ sourceSets {
     "test" { projectDefault() }
 }
 
+projectTest(parallel = true) {
+    dependsOn(":dist")
+    workingDir = rootDir
+}

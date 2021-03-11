@@ -16,18 +16,25 @@
 
 package org.jetbrains.kotlin.resolve.calls.callUtil
 
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.diagnostics.Diagnostic
+import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.incremental.KotlinLookupLocation
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getTextWithLocation
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.BindingContext.CALL
 import org.jetbrains.kotlin.resolve.BindingContext.RESOLVED_CALL
+import org.jetbrains.kotlin.resolve.BindingTrace
+import org.jetbrains.kotlin.resolve.StatementFilter
 import org.jetbrains.kotlin.resolve.calls.ArgumentTypeResolver
 import org.jetbrains.kotlin.resolve.calls.CallTransformer
 import org.jetbrains.kotlin.resolve.calls.context.ResolutionContext
 import org.jetbrains.kotlin.resolve.calls.model.*
+import org.jetbrains.kotlin.resolve.calls.tower.NewResolvedCallImpl
 import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isError
@@ -73,15 +80,20 @@ fun <D : CallableDescriptor> ResolvedCall<D>.usesDefaultArguments(): Boolean {
 
 // call
 
-fun <C : ResolutionContext<C>> Call.hasUnresolvedArguments(context: ResolutionContext<C>): Boolean {
+fun <C : ResolutionContext<C>> Call.hasUnresolvedArguments(context: ResolutionContext<C>): Boolean =
+    hasUnresolvedArguments(context.trace.bindingContext, context.statementFilter)
+
+fun Call.hasUnresolvedArguments(bindingContext: BindingContext, statementFilter: StatementFilter): Boolean {
     val arguments = valueArguments.map { it.getArgumentExpression() }
     return arguments.any(fun(argument: KtExpression?): Boolean {
-        if (argument == null || ArgumentTypeResolver.isFunctionLiteralOrCallableReference(argument, context)) return false
+        if (argument == null || ArgumentTypeResolver.isFunctionLiteralOrCallableReference(argument, statementFilter)) return false
 
-        val resolvedCall = argument.getResolvedCall(context.trace.bindingContext) as MutableResolvedCall<*>?
-        if (resolvedCall != null && !resolvedCall.hasInferredReturnType()) return false
+        when (val resolvedCall = argument.getResolvedCall(bindingContext)) {
+            is MutableResolvedCall<*> -> if (!resolvedCall.hasInferredReturnType()) return false
+            is NewResolvedCallImpl<*> -> if (resolvedCall.resultingDescriptor.returnType?.isError == true) return false
+        }
 
-        val expressionType = context.trace.bindingContext.getType(argument)
+        val expressionType = bindingContext.getType(argument)
         return expressionType == null || expressionType.isError
     })
 }
@@ -243,6 +255,9 @@ val KtElement.isFakeElement: Boolean
         return file is KtFile && file.doNotAnalyze != null
     }
 
+val PsiElement.isFakePsiElement: Boolean
+    get() = this is KtElement && isFakeElement
+
 fun Call.isSafeCall(): Boolean {
     if (this is CallTransformer.CallForImplicitInvoke) {
         //implicit safe 'invoke'
@@ -255,9 +270,11 @@ fun Call.isSafeCall(): Boolean {
 
 fun Call.isCallableReference(): Boolean {
     val callElement = callElement
-    return callElement is KtNameReferenceExpression &&
-            (callElement.parent as? KtCallableReferenceExpression)?.callableReference == callElement
+    return callElement.isCallableReference()
 }
+
+fun KtElement.isCallableReference(): Boolean =
+    this is KtNameReferenceExpression && (parent as? KtCallableReferenceExpression)?.callableReference == this
 
 fun Call.createLookupLocation(): KotlinLookupLocation {
     val calleeExpression = calleeExpression
@@ -267,8 +284,40 @@ fun Call.createLookupLocation(): KotlinLookupLocation {
     return KotlinLookupLocation(element)
 }
 
+fun KtExpression.createLookupLocation(): KotlinLookupLocation? =
+    if (!isFakeElement) KotlinLookupLocation(this) else null
+
 fun ResolvedCall<*>.getFirstArgumentExpression(): KtExpression? =
     valueArgumentsByIndex?.run { get(0).arguments[0].getArgumentExpression() }
 
 fun ResolvedCall<*>.getReceiverExpression(): KtExpression? =
     extensionReceiver.safeAs<ExpressionReceiver>()?.expression ?: dispatchReceiver.safeAs<ExpressionReceiver>()?.expression
+
+val KtLambdaExpression.isTrailingLambdaOnNewLIne
+    get(): Boolean {
+        parent?.safeAs<KtLambdaArgument>()?.let { lambdaArgument ->
+            var prevSibling = lambdaArgument.prevSibling
+
+            while (prevSibling != null && prevSibling !is KtElement) {
+                if (prevSibling is PsiWhiteSpace && prevSibling.textContains('\n'))
+                    return true
+                prevSibling = prevSibling.prevSibling
+            }
+        }
+
+        return false
+    }
+
+
+inline fun BindingTrace.reportTrailingLambdaErrorOr(
+    expression: KtExpression?,
+    originalDiagnostic: (KtExpression) -> Diagnostic
+) {
+    expression?.let { expr ->
+        if (expr is KtLambdaExpression && expr.isTrailingLambdaOnNewLIne) {
+            report(Errors.UNEXPECTED_TRAILING_LAMBDA_ON_A_NEW_LINE.on(expr))
+        } else {
+            report(originalDiagnostic(expr))
+        }
+    }
+}

@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea;
@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.idea;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.test.KotlinTestUtils;
-import org.jetbrains.kotlin.test.TargetBackend;
+import org.jetbrains.kotlin.test.util.KtTestUtil;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.junit.runner.RunWith;
 
@@ -22,11 +22,36 @@ import java.util.regex.Pattern;
 @RunWith(JUnit3RunnerWithInners.class)
 public class SmartSelectionTestGenerated extends AbstractSmartSelectionTest {
     private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTestSmartSelection, TargetBackend.ANY, testDataFilePath);
+        KotlinTestUtils.runTest(this::doTestSmartSelection, this, testDataFilePath);
     }
 
     public void testAllFilesPresentInSmartSelection() throws Exception {
-        KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("idea/testData/smartSelection"), Pattern.compile("^([^.]+)\\.kt$"), TargetBackend.ANY, true);
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/smartSelection"), Pattern.compile("^([^.]+)\\.kt$"), null, true);
+    }
+
+    @TestMetadata("beforeComment.kt")
+    public void testBeforeComment() throws Exception {
+        runTest("idea/testData/smartSelection/beforeComment.kt");
+    }
+
+    @TestMetadata("beforeKDocComment.kt")
+    public void testBeforeKDocComment() throws Exception {
+        runTest("idea/testData/smartSelection/beforeKDocComment.kt");
+    }
+
+    @TestMetadata("beforeRightParenthesis.kt")
+    public void testBeforeRightParenthesis() throws Exception {
+        runTest("idea/testData/smartSelection/beforeRightParenthesis.kt");
+    }
+
+    @TestMetadata("beforeRightParenthesis2.kt")
+    public void testBeforeRightParenthesis2() throws Exception {
+        runTest("idea/testData/smartSelection/beforeRightParenthesis2.kt");
+    }
+
+    @TestMetadata("beforeRightParenthesis3.kt")
+    public void testBeforeRightParenthesis3() throws Exception {
+        runTest("idea/testData/smartSelection/beforeRightParenthesis3.kt");
     }
 
     @TestMetadata("commentsAndExtraSpaces.kt")

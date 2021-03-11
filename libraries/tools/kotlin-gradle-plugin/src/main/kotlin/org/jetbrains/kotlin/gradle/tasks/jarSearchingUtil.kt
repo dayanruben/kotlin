@@ -39,6 +39,7 @@ private val KOTLIN_SCRIPT_ANNOTATION_EXPECTED_CLASS = "kotlin.script.experimenta
 private val KOTLIN_JVM_SCRIPT_COMPILER_EXPECTED_CLASS = "kotlin.script.experimental.jvm.JvmScriptCompiler"
 private val KOTLIN_REFLECT_EXPECTED_CLASS = "kotlin.reflect.full.KClasses"
 private val TROVE4J_EXPECTED_CLASS = "gnu.trove.THashMap"
+private val DAEMON_EXPECTED_CLASS = "org.jetbrains.kotlin.daemon.CompileServiceImpl"
 internal const val KOTLIN_MODULE_GROUP = "org.jetbrains.kotlin"
 private val KOTLIN_GRADLE_PLUGIN = "kotlin-gradle-plugin"
 internal const val KOTLIN_COMPILER_EMBEDDABLE = "kotlin-compiler-embeddable"
@@ -47,6 +48,7 @@ private val KOTLIN_SCRIPT_RUNTIME = "kotlin-script-runtime"
 private val KOTLIN_SCRIPT_COMMON = "kotlin-scripting-common"
 private val KOTLIN_SCRIPT_JVM = "kotlin-scripting-jvm"
 private val KOTLIN_REFLECT = "kotlin-reflect"
+internal const val KOTLIN_KLIB_COMMONIZER_EMBEDDABLE = "kotlin-klib-commonizer-embeddable"
 
 internal fun findKotlinJvmCompilerClasspath(project: Project): List<File> =
     findKotlinModuleJar(project, K2JVM_COMPILER_CLASS, KOTLIN_COMPILER_EMBEDDABLE).let {
@@ -76,31 +78,28 @@ internal fun findKotlinCompilerClasspath(project: Project): List<File> {
     return findKotlinStdlibClasspath(project) +
             findKotlinScriptRuntimeClasspath(project) +
             findKotlinReflectClasspath(project) +
-            listOfNotNull(findTrove4j())
+            listOfNotNull(findTrove4j(), findDaemon())
 }
 
-internal fun findTrove4j(): File? {
+internal fun findJarByClass(classFqName: String): File? {
     val classLoader = Thread.currentThread().contextClassLoader
-    val classFromTrove4j = try {
-        classLoader.loadClass(TROVE4J_EXPECTED_CLASS)
+    val classFromJar = try {
+        classLoader.loadClass(classFqName)
     } catch (e: ClassNotFoundException) {
         null
     } ?: return null
 
-    return findJarByClass(classFromTrove4j)
+    return findJarByClass(classFromJar)
 }
+
+internal fun findTrove4j() = findJarByClass(TROVE4J_EXPECTED_CLASS)
+internal fun findDaemon() = findJarByClass(DAEMON_EXPECTED_CLASS)
 
 internal fun findKotlinStdlibClasspath(project: Project): List<File> =
     findKotlinModuleJar(project, KOTLIN_STDLIB_EXPECTED_CLASS, KOTLIN_STDLIB)
 
 internal fun findKotlinScriptRuntimeClasspath(project: Project): List<File> =
     findKotlinModuleJar(project, KOTLIN_SCRIPT_RUNTIME_EXPECTED_CLASS, KOTLIN_SCRIPT_RUNTIME)
-
-internal fun findKotlinScriptCommonClasspath(project: Project): List<File> =
-    findKotlinModuleJar(project, KOTLIN_SCRIPT_ANNOTATION_EXPECTED_CLASS, KOTLIN_SCRIPT_COMMON)
-
-internal fun findKotlinScriptJvmClasspath(project: Project): List<File> =
-    findKotlinModuleJar(project, KOTLIN_JVM_SCRIPT_COMPILER_EXPECTED_CLASS, KOTLIN_SCRIPT_JVM)
 
 internal fun findKotlinReflectClasspath(project: Project): List<File> =
     findKotlinModuleJar(project, KOTLIN_REFLECT_EXPECTED_CLASS, KOTLIN_REFLECT)
@@ -118,18 +117,6 @@ internal fun findToolsJar(): File? {
             )
         }
     return javacUtilContextClass?.let(::findJarByClass)
-}
-
-internal fun findCoroutinesClasspath(): List<File> {
-    val classLoader = Thread.currentThread().contextClassLoader
-    val prefix = "kotlinx." // because shadow plugin rewrites strings too, so the fqn should be constructed on runtime
-    val clazz = try {
-        classLoader.loadClass(prefix + "coroutines.experimental.BuildersKt")
-    } catch (e: ClassNotFoundException) {
-        null
-    } ?: return emptyList()
-
-    return (findJarByClass(clazz))?.let { listOf(it) } ?: emptyList()
 }
 
 private fun findJarByClass(klass: Class<*>): File? {

@@ -1,33 +1,50 @@
+import org.jetbrains.kotlin.pill.PillExtension
 
 description = "Sample Kotlin JSR 223 scripting jar with daemon (out-of-process) compilation and local (in-process) evaluation"
 
 plugins {
     kotlin("jvm")
+    id("jps-compatible")
 }
 
-val compilerClasspath by configurations.creating
+pill {
+    variant = PillExtension.Variant.FULL
+}
+
+val compilerClasspath by configurations.creating {
+    attributes {
+        attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage.JAVA_RUNTIME))
+        attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.LIBRARY))
+    }
+}
 
 dependencies {
-    testCompile(project(":kotlin-stdlib"))
+    testCompile(kotlinStdlib())
     testCompile(project(":kotlin-script-runtime"))
     testCompile(project(":kotlin-script-util"))
     testCompile(projectRuntimeJar(":kotlin-daemon-client"))
+    testCompile(projectRuntimeJar(":kotlin-daemon-embeddable"))
     testCompile(projectRuntimeJar(":kotlin-compiler-embeddable"))
     testCompile(commonDep("junit:junit"))
     testCompile(project(":kotlin-test:kotlin-test-junit"))
     testRuntime(project(":kotlin-reflect"))
-    compilerClasspath(projectRuntimeJar(":kotlin-compiler-embeddable"))
     compilerClasspath(project(":kotlin-reflect"))
-    compilerClasspath(project(":kotlin-stdlib"))
-    compilerClasspath(project(":kotlin-script-runtime"))
+    compilerClasspath(kotlinStdlib())
     compilerClasspath(commonDep("org.jetbrains.intellij.deps", "trove4j"))
+    compilerClasspath(commonDep("org.jetbrains.kotlinx", "kotlinx-coroutines-core"))
+    compilerClasspath(project(":kotlin-compiler-embeddable"))
+    compilerClasspath(project(":kotlin-scripting-compiler-embeddable"))
+    compilerClasspath(project(":kotlin-scripting-compiler-impl-embeddable"))
+    compilerClasspath(project(":kotlin-script-runtime"))
+    compilerClasspath(project(":kotlin-scripting-jvm"))
     compileOnly(project(":compiler:cli-common")) // TODO: fix import (workaround for jps build)
     testCompileOnly(project(":core:util.runtime")) // TODO: fix import (workaround for jps build)
-    testCompileOnly(project(":compiler:daemon-common")) // TODO: fix import (workaround for jps build)
+    testCompileOnly(project(":daemon-common")) // TODO: fix import (workaround for jps build)
 }
 
 projectTest {
+    dependsOn(compilerClasspath)
     doFirst {
-        systemProperty("kotlin.compiler.classpath", compilerClasspath.asFileTree.asPath)
+        systemProperty("kotlin.compiler.classpath", compilerClasspath.asPath)
     }
 }

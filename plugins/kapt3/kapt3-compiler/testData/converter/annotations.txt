@@ -101,16 +101,16 @@ import java.lang.System;
 public final class TestAnno2 {
     @org.jetbrains.annotations.NotNull()
     @Anno3(value = "field")
-    private java.lang.String b;
+    private java.lang.String b = "property initializer";
+
+    public TestAnno2() {
+        super();
+    }
 
     @Anno1()
     public final void a(@org.jetbrains.annotations.NotNull()
     @Anno3(value = "param-pam-pam")
     java.lang.String param) {
-    }
-
-    @Anno3(value = "property")
-    public static void b$annotations() {
     }
 
     @org.jetbrains.annotations.NotNull()
@@ -119,13 +119,14 @@ public final class TestAnno2 {
         return null;
     }
 
+    @Anno3(value = "property")
+    @java.lang.Deprecated()
+    public static void getB$annotations() {
+    }
+
     @Anno3(value = "setter")
     public final void setB(@org.jetbrains.annotations.NotNull()
     @Anno3(value = "setparam")
     java.lang.String p0) {
-    }
-
-    public TestAnno2() {
-        super();
     }
 }

@@ -1,4 +1,3 @@
-// IGNORE_BACKEND: JVM_IR
 fun box() {
     val x: Any? = "abc"
     val y: Any? = if (1 == 1) x else "cde"
@@ -11,3 +10,4 @@ fun box() {
 // 0 IFNONNULL
 // 0 throwNpe
 // 0 ATHROW
+// 0 checkNotNull

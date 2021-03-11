@@ -1,6 +1,6 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2000-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.inspections
@@ -10,17 +10,19 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.search.LocalSearchScope
+import com.intellij.psi.search.searches.ReferencesSearch
+import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isElseIf
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.unwrapBlockOrParenthesis
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.util.hasNoSideEffects
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.containingClass
-import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
-import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
-import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
 import org.jetbrains.kotlin.resolve.calls.callUtil.getType
@@ -35,7 +37,7 @@ class ConstantConditionIfInspection : AbstractKotlinInspection() {
             val fixes = collectFixes(expression, constantValue)
             holder.registerProblem(
                 expression.condition!!,
-                "Condition is always '$constantValue'",
+                KotlinBundle.message("condition.is.always.0", constantValue),
                 *fixes.toTypedArray()
             )
         }
@@ -86,7 +88,7 @@ class ConstantConditionIfInspection : AbstractKotlinInspection() {
     ) : ConstantConditionIfFix {
         override fun getFamilyName() = name
 
-        override fun getName() = "Simplify expression"
+        override fun getName() = KotlinBundle.message("simplify.fix.text")
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val ifExpression = descriptor.psiElement.getParentOfType<KtIfExpression>(strict = true) ?: return
@@ -104,7 +106,7 @@ class ConstantConditionIfInspection : AbstractKotlinInspection() {
     private class RemoveFix : ConstantConditionIfFix {
         override fun getFamilyName() = name
 
-        override fun getName() = "Delete expression"
+        override fun getName() = KotlinBundle.message("remove.fix.text")
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val ifExpression = descriptor.psiElement.getParentOfType<KtIfExpression>(strict = true) ?: return
@@ -112,6 +114,10 @@ class ConstantConditionIfInspection : AbstractKotlinInspection() {
         }
 
         override fun applyFix(ifExpression: KtIfExpression) {
+            val parent = ifExpression.parent
+            if (parent.node.elementType == KtNodeTypes.ELSE) {
+                (parent.parent as? KtIfExpression)?.elseKeyword?.delete()
+            }
             ifExpression.delete()
         }
     }
@@ -124,6 +130,7 @@ private fun KtExpression.constantBooleanValue(context: BindingContext): Boolean?
     if (enumEntriesComparison != null) {
         return enumEntriesComparison
     }
+    if (anyDescendantOfType<KtNameReferenceExpression> { true }) return null
     val type = getType(context) ?: return null
     val constantValue = ConstantExpressionEvaluator.getConstant(this, context)?.toConstantValue(type)
     return constantValue?.value as? Boolean
@@ -157,27 +164,64 @@ private fun KtExpression.enumEntry(): KtEnumEntry? {
 }
 
 fun KtExpression.replaceWithBranch(branch: KtExpression, isUsedAsExpression: Boolean, keepBraces: Boolean = false) {
-    val lastExpression = when {
-        branch !is KtBlockExpression -> replaced(branch)
+    val caretModel = findExistingEditor()?.caretModel
+
+    val subjectVariable = (this as? KtWhenExpression)?.subjectVariable?.let(fun(property: KtProperty): KtProperty? {
+        if (property.annotationEntries.isNotEmpty()) return property
+        val initializer = property.initializer ?: return property
+        val references = ReferencesSearch.search(property, LocalSearchScope(this)).toList()
+        return when (references.size) {
+            0 -> property.takeUnless { initializer.hasNoSideEffects() }
+            1 -> {
+                if (initializer.hasNoSideEffects()) {
+                    references.first().element.replace(initializer)
+                    null
+                } else
+                    property
+            }
+            else -> property
+        }
+    })
+
+    val factory = KtPsiFactory(this)
+    val parent = this.parent
+    val replaced = when {
+        branch !is KtBlockExpression -> {
+            if (subjectVariable != null) {
+                replaced(KtPsiFactory(this).createExpressionByPattern("run { $0\n$1 }", subjectVariable, branch))
+            } else {
+                replaced(branch)
+            }
+        }
         isUsedAsExpression -> {
-            val factory = KtPsiFactory(this)
+            if (subjectVariable != null) {
+                branch.addAfter(factory.createNewLine(), branch.addBefore(subjectVariable, branch.statements.firstOrNull()))
+            }
             replaced(factory.createExpressionByPattern("run $0", branch.text))
         }
         else -> {
             val firstChildSibling = branch.firstChild.nextSibling
             val lastChild = branch.lastChild
-            if (firstChildSibling != lastChild) {
+            val replaced = if (firstChildSibling != lastChild) {
                 if (keepBraces) {
                     parent.addAfter(branch, this)
                 } else {
-                    parent.addRangeAfter(firstChildSibling, lastChild.prevSibling, this)
+                    if (subjectVariable != null) {
+                        branch.addAfter(subjectVariable, branch.lBrace)
+                        parent.addAfter(KtPsiFactory(this).createExpression("run ${branch.text}"), this)
+                    } else {
+                        parent.addRangeAfter(firstChildSibling, lastChild.prevSibling, this)
+                    }
                 }
+            } else {
+                null
             }
             delete()
-            null
+            replaced
         }
     }
 
-    val caretModel = branch.findExistingEditor()?.caretModel
-    caretModel?.moveToOffset(lastExpression?.startOffset ?: return)
+    if (replaced != null) {
+        caretModel?.moveToOffset(replaced.startOffset)
+    }
 }

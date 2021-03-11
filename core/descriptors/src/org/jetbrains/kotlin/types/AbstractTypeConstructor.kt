@@ -16,11 +16,60 @@
 
 package org.jetbrains.kotlin.types
 
-import org.jetbrains.kotlin.descriptors.SupertypeLoopChecker
+import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.storage.StorageManager
+import org.jetbrains.kotlin.types.checker.KotlinTypeRefiner
+import org.jetbrains.kotlin.types.checker.refineTypes
+import org.jetbrains.kotlin.types.refinement.TypeRefinement
 
 abstract class AbstractTypeConstructor(storageManager: StorageManager) : TypeConstructor {
+    private var hashCode = 0
+
     override fun getSupertypes() = supertypes().supertypesWithoutCycles
+
+    abstract override fun getDeclarationDescriptor(): ClassifierDescriptor
+
+    @TypeRefinement
+    override fun refine(kotlinTypeRefiner: KotlinTypeRefiner): TypeConstructor = ModuleViewTypeConstructor(kotlinTypeRefiner)
+
+    @TypeRefinement
+    private inner class ModuleViewTypeConstructor(
+        private val kotlinTypeRefiner: KotlinTypeRefiner
+    ) : TypeConstructor {
+        /* NB: it is important to use PUBLICATION here instead of 'storageManager.createLazyValue { ... }'
+
+        The reason is that 'storageManager' can be a storage manager from DefaultBuiltIns (e.g. is this type constructor
+        is type constructor of some built-in class like 'Int'). Therefore, call to refined supertypes would result in
+        the following order of acquiring locks: DefaultBuiltIns lock -> Sources lock
+
+        Obviously, a lot of code acquires locks in different order (sources lock first, then built-ins lock), so that would
+        result in deadlock
+         */
+        private val refinedSupertypes by lazy(LazyThreadSafetyMode.PUBLICATION) {
+            @OptIn(TypeRefinement::class)
+            kotlinTypeRefiner.refineTypes(this@AbstractTypeConstructor.getSupertypes())
+        }
+
+        override fun getParameters(): List<TypeParameterDescriptor> = this@AbstractTypeConstructor.parameters
+
+        override fun getSupertypes(): List<KotlinType> = refinedSupertypes
+
+        override fun isFinal(): Boolean = this@AbstractTypeConstructor.isFinal
+        override fun isDenotable(): Boolean = this@AbstractTypeConstructor.isDenotable
+
+        override fun getDeclarationDescriptor() = this@AbstractTypeConstructor.declarationDescriptor
+
+        override fun getBuiltIns(): KotlinBuiltIns = this@AbstractTypeConstructor.builtIns
+
+        override fun refine(kotlinTypeRefiner: KotlinTypeRefiner): TypeConstructor =
+            this@AbstractTypeConstructor.refine(kotlinTypeRefiner)
+
+        override fun equals(other: Any?) = this@AbstractTypeConstructor.equals(other)
+        override fun hashCode() = this@AbstractTypeConstructor.hashCode()
+        override fun toString() = this@AbstractTypeConstructor.toString()
+    }
 
     // In current version diagnostic about loops in supertypes is reported on each vertex (supertype reference) that lies on the cycle.
     // To achieve that we store both versions of supertypes --- before and after loops disconnection.
@@ -51,13 +100,16 @@ abstract class AbstractTypeConstructor(storageManager: StorageManager) : TypeCon
             // We also check if there are a loop with additional edges going from owner of companion to
             // the companion itself.
             // Note that we use already disconnected types to not report two diagnostics on cyclic supertypes
-            supertypeLoopChecker.findLoopsInSupertypesAndDisconnect(
-                this, resultWithoutCycles,
-                { it.computeNeighbours(useCompanions = true) },
-                { reportScopesLoopError(it) }
-            )
+            if (shouldReportCyclicScopeWithCompanionWarning) {
+                supertypeLoopChecker.findLoopsInSupertypesAndDisconnect(
+                    this, resultWithoutCycles,
+                    { it.computeNeighbours(useCompanions = true) },
+                    { reportScopesLoopError(it) }
+                )
+            }
 
-            supertypes.supertypesWithoutCycles = (resultWithoutCycles as? List<KotlinType>) ?: resultWithoutCycles.toList()
+            supertypes.supertypesWithoutCycles =
+                processSupertypesWithoutCycles(resultWithoutCycles as? List<KotlinType> ?: resultWithoutCycles.toList())
         })
 
     private fun TypeConstructor.computeNeighbours(useCompanions: Boolean): Collection<KotlinType> =
@@ -70,12 +122,77 @@ abstract class AbstractTypeConstructor(storageManager: StorageManager) : TypeCon
     protected abstract val supertypeLoopChecker: SupertypeLoopChecker
     protected open fun reportSupertypeLoopError(type: KotlinType) {}
 
+    protected open fun processSupertypesWithoutCycles(supertypes: List<@JvmSuppressWildcards KotlinType>): List<KotlinType> = supertypes
+
     // TODO: overload in AbstractTypeParameterDescriptor?
     protected open fun reportScopesLoopError(type: KotlinType) {}
+    protected open val shouldReportCyclicScopeWithCompanionWarning: Boolean = false
 
     protected open fun getAdditionalNeighboursInSupertypeGraph(useCompanions: Boolean): Collection<KotlinType> = emptyList()
     protected open fun defaultSupertypeIfEmpty(): KotlinType? = null
 
     // Only for debugging
     fun renderAdditionalDebugInformation(): String = "supertypes=${supertypes.renderDebugInformation()}"
+
+    override fun hashCode(): Int {
+        val cachedHashCode = hashCode
+        if (cachedHashCode != 0) return cachedHashCode
+
+        val descriptor = declarationDescriptor
+        val computedHashCode = if (hasMeaningfulFqName(descriptor)) {
+            DescriptorUtils.getFqName(descriptor).hashCode()
+        } else {
+            System.identityHashCode(this)
+        }
+
+        return computedHashCode.also { hashCode = it }
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is TypeConstructor) return false
+
+        // performance optimization: getFqName is slow method
+        // Cast to Any is needed as a workaround for KT-45008.
+        if ((other as Any).hashCode() != hashCode()) return false
+
+        // Sometimes we can get two classes from different modules with different counts of type parameters.
+        // To avoid problems in type checker we suppose that it is different type constructors.
+        if (other.parameters.size != parameters.size) return false
+
+        val myDescriptor = declarationDescriptor
+        val otherDescriptor = other.declarationDescriptor ?: return false
+        if (!hasMeaningfulFqName(myDescriptor) || !hasMeaningfulFqName(otherDescriptor)) {
+            // All error types and local classes have the same descriptor,
+            // but we've already checked identity equality in the beginning of the method
+            return false
+        }
+
+        return isSameClassifier(otherDescriptor)
+    }
+
+    protected abstract fun isSameClassifier(classifier: ClassifierDescriptor): Boolean
+
+    protected fun areFqNamesEqual(first: ClassifierDescriptor, second: ClassifierDescriptor): Boolean {
+        if (first.name != second.name) return false
+        var a: DeclarationDescriptor? = first.containingDeclaration
+        var b: DeclarationDescriptor? = second.containingDeclaration
+        while (a != null && b != null) {
+            when {
+                a is ModuleDescriptor -> return b is ModuleDescriptor
+                b is ModuleDescriptor -> return false
+                a is PackageFragmentDescriptor -> return b is PackageFragmentDescriptor && a.fqName == b.fqName
+                b is PackageFragmentDescriptor -> return false
+                a.name != b.name -> return false
+                else -> {
+                    a = a.containingDeclaration
+                    b = b.containingDeclaration
+                }
+            }
+        }
+        return true
+    }
+
+    private fun hasMeaningfulFqName(descriptor: ClassifierDescriptor): Boolean =
+        !ErrorUtils.isError(descriptor) && !DescriptorUtils.isLocal(descriptor)
 }

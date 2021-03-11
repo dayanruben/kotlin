@@ -27,7 +27,10 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.uast.*
 import java.util.*
 
-class KotlinUFile(override val psi: KtFile, override val languagePlugin: UastLanguagePlugin) : UFile, JvmDeclarationUElementPlaceholder {
+class KotlinUFile(
+    override val psi: KtFile,
+    override val languagePlugin: UastLanguagePlugin = kotlinUastPlugin
+) : UFile {
     override val packageName: String
         get() = psi.packageFqName.asString()
 
@@ -36,7 +39,7 @@ class KotlinUFile(override val psi: KtFile, override val languagePlugin: UastLan
 
     override val javaPsi: PsiElement? = null
 
-    override val sourcePsi: PsiElement? = psi
+    override val sourcePsi: KtFile = psi
 
     override val allCommentsInFile by lz {
         val comments = ArrayList<UComment>(0)

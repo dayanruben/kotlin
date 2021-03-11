@@ -1,21 +1,27 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.gradle.logging
 
 import org.gradle.api.logging.Logger
-import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocation
+import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSourceLocation
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
+import org.jetbrains.kotlin.cli.common.messages.GradleStyleMessageRenderer
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.compilerRunner.KotlinLogger
 
-internal class GradlePrintingMessageCollector(val logger: KotlinLogger) :
+internal class GradlePrintingMessageCollector(
+    val logger: KotlinLogger,
+    private val allWarningsAsErrors: Boolean
+) :
     MessageCollector {
-    constructor(logger: Logger) : this(GradleKotlinLogger(logger))
+    constructor(logger: Logger, allWarningsAsErrors: Boolean) : this(GradleKotlinLogger(logger), allWarningsAsErrors)
 
     private var hasErrors = false
+
+    private val messageRenderer = GradleStyleMessageRenderer()
 
     override fun hasErrors() = hasErrors
 
@@ -23,38 +29,30 @@ internal class GradlePrintingMessageCollector(val logger: KotlinLogger) :
         // Do nothing
     }
 
-    override fun report(severity: CompilerMessageSeverity, message: String, location: CompilerMessageLocation?) {
-        fun formatMsg(prefix: String) =
-            buildString {
-                append("$prefix: ")
-
-                location?.apply {
-                    append("$path: ")
-                    if (line > 0 && column > 0) {
-                        append("($line, $column): ")
-                    }
-                }
-
-                append(message)
-            }
+    override fun report(severity: CompilerMessageSeverity, message: String, location: CompilerMessageSourceLocation?) {
+        val renderedMessage = messageRenderer.render(severity, message, location)
 
         when (severity) {
             CompilerMessageSeverity.ERROR,
             CompilerMessageSeverity.EXCEPTION -> {
                 hasErrors = true
-                logger.error(formatMsg("e"))
+                logger.error(renderedMessage)
             }
 
             CompilerMessageSeverity.WARNING,
             CompilerMessageSeverity.STRONG_WARNING -> {
-                logger.warn(formatMsg("w"))
+                if (allWarningsAsErrors) {
+                    logger.error(renderedMessage)
+                } else {
+                    logger.warn(renderedMessage)
+                }
             }
             CompilerMessageSeverity.INFO -> {
-                logger.info(formatMsg("i"))
+                logger.info(renderedMessage)
             }
             CompilerMessageSeverity.LOGGING,
             CompilerMessageSeverity.OUTPUT -> {
-                logger.debug(formatMsg("v"))
+                logger.debug(renderedMessage)
             }
         }!! // !! is used to force compile-time exhaustiveness
     }

@@ -1,6 +1,6 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2000-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.jvm.compiler
@@ -15,7 +15,7 @@ class ExperimentalIntegrationTest : AbstractKotlinCompilerIntegrationTest() {
     fun testJvmExperimentalModule() {
         val lib = compileLibrary(
             "lib", additionalOptions = listOf(
-                "-Xuse-experimental=kotlin.Experimental",
+                "-Xopt-in=kotlin.RequiresOptIn",
                 "-Xexperimental=lib.ExperimentalAPI"
             ),
             checkKotlinOutput = { output -> assertTrue(output, output.trimEnd().endsWith("OK")) }
@@ -26,7 +26,7 @@ class ExperimentalIntegrationTest : AbstractKotlinCompilerIntegrationTest() {
     fun testJsExperimentalModule() {
         val lib = compileJsLibrary(
             "lib", additionalOptions = listOf(
-                "-Xuse-experimental=kotlin.Experimental",
+                "-Xopt-in=kotlin.RequiresOptIn",
                 "-Xexperimental=lib.ExperimentalAPI"
             ),
             checkKotlinOutput = { output -> assertTrue(output, output.trimEnd().endsWith("OK")) }

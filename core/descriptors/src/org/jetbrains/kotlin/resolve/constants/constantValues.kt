@@ -17,6 +17,7 @@
 package org.jetbrains.kotlin.resolve.constants
 
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
@@ -55,11 +56,13 @@ class AnnotationValue(value: AnnotationDescriptor) : ConstantValue<AnnotationDes
 }
 
 class ArrayValue(
-        value: List<ConstantValue<*>>,
-        private val computeType: (ModuleDescriptor) -> KotlinType
+    value: List<ConstantValue<*>>,
+    private val computeType: (ModuleDescriptor) -> KotlinType
 ) : ConstantValue<List<ConstantValue<*>>>(value) {
     override fun getType(module: ModuleDescriptor): KotlinType = computeType(module).also { type ->
-        assert(KotlinBuiltIns.isArray(type) || KotlinBuiltIns.isPrimitiveArray(type)) { "Type should be an array, but was $type: $value" }
+        assert(KotlinBuiltIns.isArray(type) || KotlinBuiltIns.isPrimitiveArray(type) || KotlinBuiltIns.isUnsignedArrayType(type)) {
+            "Type should be an array, but was $type: $value"
+        }
     }
 
     override fun <R, D> accept(visitor: AnnotationArgumentVisitor<R, D>, data: D) = visitor.visitArrayValue(this, data)
@@ -91,7 +94,7 @@ class CharValue(value: Char) : IntegerValueConstant<Char>(value) {
         //TODO: KT-8507
         12.toChar() -> "\\f"
         '\r' -> "\\r"
-        else -> if (isPrintableUnicode(c)) Character.toString(c) else "?"
+        else -> if (isPrintableUnicode(c)) c.toString() else "?"
     }
 
     private fun isPrintableUnicode(c: Char): Boolean {
@@ -158,9 +161,17 @@ class IntValue(value: Int) : IntegerValueConstant<Int>(value) {
     override fun <R, D> accept(visitor: AnnotationArgumentVisitor<R, D>, data: D) = visitor.visitIntValue(this, data)
 }
 
-class KClassValue(value: ClassLiteralValue) : ConstantValue<ClassLiteralValue>(value) {
-    val classId: ClassId get() = value.classId
-    val arrayDimensions: Int get() = value.arrayNestedness
+class KClassValue(value: Value) : ConstantValue<KClassValue.Value>(value) {
+    sealed class Value {
+        data class NormalClass(val value: ClassLiteralValue) : Value() {
+            val classId: ClassId get() = value.classId
+            val arrayDimensions: Int get() = value.arrayNestedness
+        }
+
+        data class LocalClass(val type: KotlinType) : Value()
+    }
+
+    constructor(value: ClassLiteralValue) : this(Value.NormalClass(value))
 
     constructor(classId: ClassId, arrayDimensions: Int) : this(ClassLiteralValue(classId, arrayDimensions))
 
@@ -168,17 +179,23 @@ class KClassValue(value: ClassLiteralValue) : ConstantValue<ClassLiteralValue>(v
         KotlinTypeFactory.simpleNotNullType(Annotations.EMPTY, module.builtIns.kClass, listOf(TypeProjectionImpl(getArgumentType(module))))
 
     fun getArgumentType(module: ModuleDescriptor): KotlinType {
-        val descriptor = module.findClassAcrossModuleDependencies(classId)
-            ?: return ErrorUtils.createErrorType("Unresolved type: $classId (arrayDimensions=$arrayDimensions)")
+        when (value) {
+            is Value.LocalClass -> return value.type
+            is Value.NormalClass -> {
+                val (classId, arrayDimensions) = value.value
+                val descriptor = module.findClassAcrossModuleDependencies(classId)
+                    ?: return ErrorUtils.createErrorType("Unresolved type: $classId (arrayDimensions=$arrayDimensions)")
 
-        // If this value refers to a class named test.Foo.Bar where both Foo and Bar have generic type parameters,
-        // we're constructing a type `test.Foo<*>.Bar<*>` below
-        var type = descriptor.defaultType.replaceArgumentsWithStarProjections()
-        repeat(arrayDimensions) {
-            type = module.builtIns.getArrayType(Variance.INVARIANT, type)
+                // If this value refers to a class named test.Foo.Bar where both Foo and Bar have generic type parameters,
+                // we're constructing a type `test.Foo<*>.Bar<*>` below
+                var type = descriptor.defaultType.replaceArgumentsWithStarProjections()
+                repeat(arrayDimensions) {
+                    type = module.builtIns.getArrayType(Variance.INVARIANT, type)
+                }
+
+                return type
+            }
         }
-
-        return type
     }
 
     override fun <R, D> accept(visitor: AnnotationArgumentVisitor<R, D>, data: D) = visitor.visitKClassValue(this, data)
@@ -196,15 +213,15 @@ class KClassValue(value: ClassLiteralValue) : ConstantValue<ClassLiteralValue>(v
 
             return when (val descriptor = type.constructor.declarationDescriptor) {
                 is ClassDescriptor -> {
-                    val classId = descriptor.classId ?: return null
+                    val classId = descriptor.classId ?: return KClassValue(KClassValue.Value.LocalClass(argumentType))
                     KClassValue(classId, arrayDimensions)
                 }
                 is TypeParameterDescriptor -> {
-                    // This is possible if a reified type parameter is used in annotation on a local class / anonymous object.
+                    // This is possible before 1.4 if a reified type parameter is used in annotation on a local class / anonymous object.
                     // In JVM class file, we can't represent such literal properly, so we're writing java.lang.Object instead.
                     // This has no effect on the compiler front-end or other back-ends, so we use kotlin.Any for simplicity here.
-                    // Overall, it looks like such code should be disallowed: https://youtrack.jetbrains.com/issue/KT-27799
-                    KClassValue(ClassId.topLevel(KotlinBuiltIns.FQ_NAMES.any.toSafe()), 0)
+                    // See LanguageFeature.ProhibitTypeParametersInClassLiteralsInAnnotationArguments
+                    KClassValue(ClassId.topLevel(StandardNames.FqNames.any.toSafe()), 0)
                 }
                 else -> null
             }
@@ -244,7 +261,7 @@ class StringValue(value: String) : ConstantValue<String>(value) {
 
 class UByteValue(byteValue: Byte) : UnsignedValueConstant<Byte>(byteValue) {
     override fun getType(module: ModuleDescriptor): KotlinType {
-        return module.findClassAcrossModuleDependencies(KotlinBuiltIns.FQ_NAMES.uByte)?.defaultType
+        return module.findClassAcrossModuleDependencies(StandardNames.FqNames.uByte)?.defaultType
                 ?: ErrorUtils.createErrorType("Unsigned type UByte not found")
     }
 
@@ -257,7 +274,7 @@ class UByteValue(byteValue: Byte) : UnsignedValueConstant<Byte>(byteValue) {
 
 class UShortValue(shortValue: Short) : UnsignedValueConstant<Short>(shortValue) {
     override fun getType(module: ModuleDescriptor): KotlinType {
-        return module.findClassAcrossModuleDependencies(KotlinBuiltIns.FQ_NAMES.uShort)?.defaultType
+        return module.findClassAcrossModuleDependencies(StandardNames.FqNames.uShort)?.defaultType
                 ?: ErrorUtils.createErrorType("Unsigned type UShort not found")
     }
 
@@ -270,7 +287,7 @@ class UShortValue(shortValue: Short) : UnsignedValueConstant<Short>(shortValue) 
 
 class UIntValue(intValue: Int) : UnsignedValueConstant<Int>(intValue) {
     override fun getType(module: ModuleDescriptor): KotlinType {
-        return module.findClassAcrossModuleDependencies(KotlinBuiltIns.FQ_NAMES.uInt)?.defaultType
+        return module.findClassAcrossModuleDependencies(StandardNames.FqNames.uInt)?.defaultType
                 ?: ErrorUtils.createErrorType("Unsigned type UInt not found")
     }
 
@@ -283,7 +300,7 @@ class UIntValue(intValue: Int) : UnsignedValueConstant<Int>(intValue) {
 
 class ULongValue(longValue: Long) : UnsignedValueConstant<Long>(longValue) {
     override fun getType(module: ModuleDescriptor): KotlinType {
-        return module.findClassAcrossModuleDependencies(KotlinBuiltIns.FQ_NAMES.uLong)?.defaultType
+        return module.findClassAcrossModuleDependencies(StandardNames.FqNames.uLong)?.defaultType
                 ?: ErrorUtils.createErrorType("Unsigned type ULong not found")
     }
 

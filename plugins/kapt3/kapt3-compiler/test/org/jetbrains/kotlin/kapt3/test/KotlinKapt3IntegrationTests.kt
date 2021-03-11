@@ -28,8 +28,10 @@ import javax.annotation.processing.RoundEnvironment
 import javax.lang.model.element.ElementKind
 import javax.lang.model.element.ExecutableElement
 import javax.lang.model.element.TypeElement
+import javax.lang.model.element.VariableElement
+import kotlin.system.exitProcess
 
-class KotlinKapt3IntegrationTests : AbstractKotlinKapt3IntegrationTest(), Java9TestLauncher {
+class KotlinKapt3IntegrationTests : AbstractKotlinKapt3IntegrationTest(), CustomJdkTestLauncher {
     override fun test(
         name: String,
         vararg supportedAnnotations: String,
@@ -56,9 +58,18 @@ class KotlinKapt3IntegrationTests : AbstractKotlinKapt3IntegrationTest(), Java9T
     fun testComments() = test("Simple", "test.MyAnnotation") { _, _, env ->
         fun commentOf(className: String) = env.elementUtils.getDocComment(env.elementUtils.getTypeElement(className))
 
-        assert(commentOf("test.Simple") == " * KDoc comment.\n")
+        assert(commentOf("test.Simple") == " KDoc comment.\n")
         assert(commentOf("test.EnumClass") == null) // simple comment - not saved
         assert(commentOf("test.MyAnnotation") == null) // multiline comment - not saved
+    }
+
+    @Test
+    fun testParameterNames() {
+        test("DefaultParameterValues", "test.Anno") { set, roundEnv, _ ->
+            val user = roundEnv.getElementsAnnotatedWith(set.single()).single() as TypeElement
+            val nameField = user.enclosedElements.filterIsInstance<VariableElement>().single()
+            assertEquals("John", nameField.constantValue)
+        }
     }
 
     @Test
@@ -149,7 +160,7 @@ internal class SingleJUnitTestRunner {
             val (className, methodName) = args.single().split('#')
             val request = Request.method(Class.forName(className), methodName)
             val result = JUnitCore().run(request)
-            System.exit(if (result.wasSuccessful()) 0 else 1)
+            exitProcess(if (result.wasSuccessful()) 0 else 1)
         }
     }
 }

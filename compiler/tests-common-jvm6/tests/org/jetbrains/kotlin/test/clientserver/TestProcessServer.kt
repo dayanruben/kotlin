@@ -28,26 +28,43 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
-fun getGeneratedClass(classLoader: ClassLoader, className: String): Class<*> {
+private fun ClassLoader.loadClassOrNull(name: String): Class<*>? =
     try {
-        return classLoader.loadClass(className)
+        loadClass(name)
+    } catch (e: ClassNotFoundException) {
+        null
     }
-    catch (e: ClassNotFoundException) {
-        error("No class file was generated for: " + className)
-    }
-}
 
-fun getBoxMethodOrNull(aClass: Class<*>): Method? {
+private fun Class<*>.getMethodOrNull(name: String, vararg parameterTypes: Class<*>): Method? =
     try {
-        return aClass.getMethod("box")
+        getMethod(name, *parameterTypes)
+    } catch (e: NoSuchMethodException) {
+        null
     }
-    catch (e: NoSuchMethodException) {
-        return null
+
+fun getGeneratedClass(classLoader: ClassLoader, className: String): Class<*> =
+    classLoader.loadClassOrNull(className) ?: error("No class file was generated for: $className")
+
+fun getBoxMethodOrNull(aClass: Class<*>): Method? =
+    aClass.getMethodOrNull("box")
+        ?: aClass.classLoader.loadClassOrNull("kotlin.coroutines.Continuation")?.let { aClass.getMethodOrNull("box", it) }
+        ?: aClass.classLoader.loadClassOrNull("kotlin.coroutines.experimental.Continuation")?.let { aClass.getMethodOrNull("box", it) }
+
+fun runBoxMethod(method: Method): String? {
+    if (method.parameterTypes.isEmpty()) {
+        return method.invoke(null) as? String
     }
+    val emptyContinuationClass = method.declaringClass.classLoader.loadClass("helpers.ResultContinuation")
+    val emptyContinuation = emptyContinuationClass.declaredConstructors.single().newInstance()
+    val result = method.invoke(null, emptyContinuation)
+    val resultAfterSuspend = emptyContinuationClass.getField("result").get(emptyContinuation)
+    return (resultAfterSuspend ?: result) as? String
 }
 
 //Use only JDK 1.6 compatible api
 object TestProcessServer {
+
+    const val DEBUG_TEST = "--debugTest"
 
     private val executor = Executors.newFixedThreadPool(1)!!
 
@@ -63,13 +80,21 @@ object TestProcessServer {
 
     private lateinit var serverSocket: ServerSocket
 
+    private var suppressOutput = false
+    private var allocatePort = false
+
     @JvmStatic
     fun main(args: Array<String>) {
-        val portNumber = args[0].toInt()
-        println("Starting server on port $portNumber...")
+        if (args[0] == DEBUG_TEST) {
+            suppressOutput = true
+            allocatePort = true
+        }
 
+        val portNumber = if (allocatePort) 0 else args[0].toInt()
+        println("Starting server on port $portNumber...")
         val serverSocket = ServerSocket(portNumber)
-        sheduleShutdownProcess()
+        println("...server started on port ${serverSocket.localPort}")
+        scheduleShutdownProcess()
 
         try {
             while (true) {
@@ -78,7 +103,7 @@ object TestProcessServer {
                 val clientSocket = serverSocket.accept()
                 isProcessingTask = true
                 println("Socket established...")
-                executor.execute(ServerTest(clientSocket))
+                executor.execute(ServerTest(clientSocket, suppressOutput))
             }
         }
         finally {
@@ -89,7 +114,7 @@ object TestProcessServer {
         }
     }
 
-    private fun sheduleShutdownProcess() {
+    private fun scheduleShutdownProcess() {
         handler = scheduler.scheduleAtFixedRate({
             if (!isProcessingTask && (System.currentTimeMillis() - lastTime) >= 60 * 1000 /*60 sec*/) {
                 println("Stopping server...")
@@ -97,15 +122,21 @@ object TestProcessServer {
             }
         }, 60, 60, TimeUnit.SECONDS)
     }
+
+    private fun printlnTest(text: String) {
+        if (!suppressOutput) {
+            println(text)
+        }
+    }
 }
 
-private class ServerTest(val clientSocket: Socket) : Runnable {
+private class ServerTest(val clientSocket: Socket, val suppressOutput: Boolean) : Runnable {
     private lateinit var className: String
     private lateinit var testMethod: String
 
     override fun run() {
         val input = ObjectInputStream(clientSocket.getInputStream())
-        val output = ObjectOutputStream(clientSocket.getOutputStream())
+        val output = if (suppressOutput) null else ObjectOutputStream(clientSocket.getOutputStream())
         try {
             var message = input.readObject() as MessageHeader
             assert(message == MessageHeader.NEW_TEST, { "New test marker missed, but $message received" })
@@ -119,13 +150,13 @@ private class ServerTest(val clientSocket: Socket) : Runnable {
             val classPath = input.readObject() as Array<URL>
 
             val result = executeTest(URLClassLoader(classPath, JDK_EXT_JARS_CLASS_LOADER))
-            output.writeObject(MessageHeader.RESULT)
-            output.writeObject(result)
+            output?.writeObject(MessageHeader.RESULT)
+            output?.writeObject(result)
         } catch (e: Throwable) {
-            output.writeObject(MessageHeader.ERROR)
-            output.writeObject(e)
+            output?.writeObject(MessageHeader.ERROR)
+            output?.writeObject(e)
         } finally {
-            output.close()
+            output?.close()
             input.close()
             clientSocket.close()
         }
@@ -133,7 +164,7 @@ private class ServerTest(val clientSocket: Socket) : Runnable {
 
     fun executeTest(classLoader: ClassLoader): String {
         val clazz = getGeneratedClass(classLoader, className)
-        return getBoxMethodOrNull(clazz)!!.invoke(null) as String
+        return runBoxMethod(getBoxMethodOrNull(clazz)!!) as String
     }
 
     companion object {

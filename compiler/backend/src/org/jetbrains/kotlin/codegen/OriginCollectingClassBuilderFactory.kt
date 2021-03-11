@@ -1,10 +1,11 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the license/LICENSE.txt file.
+ * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.codegen
 
+import org.jetbrains.kotlin.codegen.state.JvmMethodExceptionTypes
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.JvmDeclarationOrigin
 import org.jetbrains.org.objectweb.asm.*
 import org.jetbrains.org.objectweb.asm.tree.*
@@ -42,7 +43,7 @@ class OriginCollectingClassBuilderFactory(private val builderMode: ClassBuilderM
                 name: String,
                 desc: String,
                 signature: String?,
-                exceptions: Array<out String>?
+                exceptions: JvmMethodExceptionTypes
         ): MethodVisitor {
             val methodNode = super.newMethod(origin, access, name, desc, signature, exceptions) as MethodNode
             origins[methodNode] = origin
@@ -57,7 +58,7 @@ class OriginCollectingClassBuilderFactory(private val builderMode: ClassBuilderM
     }
 
     override fun asBytes(builder: ClassBuilder): ByteArray {
-        val classWriter = ClassWriter(0)
+        val classWriter = ClassWriter(ClassWriter.COMPUTE_FRAMES or ClassWriter.COMPUTE_MAXS)
         (builder as OriginCollectingClassBuilder).classNode.accept(classWriter)
         return classWriter.toByteArray()
     }

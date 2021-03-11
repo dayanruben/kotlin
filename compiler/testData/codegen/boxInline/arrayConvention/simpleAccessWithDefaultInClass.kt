@@ -1,6 +1,5 @@
-// IGNORE_BACKEND: JVM_IR
-// FILE: 1.kt
 // WITH_RUNTIME
+// FILE: 1.kt
 package test
 
 var res = 1

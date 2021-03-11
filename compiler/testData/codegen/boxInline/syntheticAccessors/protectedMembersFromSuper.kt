@@ -1,4 +1,4 @@
-// IGNORE_BACKEND: JVM_IR
+// !LANGUAGE: -ProhibitProtectedCallFromInline
 // FILE: 1.kt
 
 package test

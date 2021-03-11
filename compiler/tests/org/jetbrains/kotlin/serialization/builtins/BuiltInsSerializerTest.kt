@@ -18,6 +18,7 @@ package org.jetbrains.kotlin.serialization.builtins
 
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.codegen.forTestCompile.ForTestCompileRuntime
+import org.jetbrains.kotlin.descriptors.deserialization.AdditionalClassPartsProvider
 import org.jetbrains.kotlin.descriptors.deserialization.PlatformDependentDeclarationFilter
 import org.jetbrains.kotlin.jvm.compiler.LoadDescriptorUtil.TEST_PACKAGE_FQNAME
 import org.jetbrains.kotlin.serialization.deserialization.builtins.BuiltInsLoaderImpl
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.storage.LockBasedStorageManager
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.kotlin.test.TestCaseWithTmpdir
 import org.jetbrains.kotlin.test.util.RecursiveDescriptorComparator
+import org.jetbrains.kotlin.test.util.RecursiveDescriptorComparatorAdaptor
 import java.io.File
 import java.io.FileInputStream
 
@@ -41,19 +43,24 @@ class BuiltInsSerializerTest : TestCaseWithTmpdir() {
         val module = KotlinTestUtils.createEmptyModule("<module>", DefaultBuiltIns.Instance)
 
         val packageFragmentProvider = BuiltInsLoaderImpl().createBuiltInPackageFragmentProvider(
-                LockBasedStorageManager(), module, setOf(TEST_PACKAGE_FQNAME), emptyList(), PlatformDependentDeclarationFilter.All
+            LockBasedStorageManager("BuiltInsSerializerTest"),
+            module,
+            setOf(TEST_PACKAGE_FQNAME),
+            emptyList(),
+            PlatformDependentDeclarationFilter.All,
+            AdditionalClassPartsProvider.None,
+            isFallback = false
         ) {
-            val file = File(tmpdir, it)
-            if (file.exists()) FileInputStream(file) else null
+            File(tmpdir, it).takeIf(File::exists)?.let(::FileInputStream)
         }
 
         module.initialize(packageFragmentProvider)
         module.setDependencies(module, module.builtIns.builtInsModule)
 
-        RecursiveDescriptorComparator.validateAndCompareDescriptorWithFile(
-                module.getPackage(TEST_PACKAGE_FQNAME),
-                RecursiveDescriptorComparator.DONT_INCLUDE_METHODS_OF_OBJECT,
-                File(source.replace(".kt", ".txt"))
+        RecursiveDescriptorComparatorAdaptor.validateAndCompareDescriptorWithFile(
+            module.getPackage(TEST_PACKAGE_FQNAME),
+            RecursiveDescriptorComparator.DONT_INCLUDE_METHODS_OF_OBJECT,
+            File(source.replace(".kt", ".txt"))
         )
     }
 
