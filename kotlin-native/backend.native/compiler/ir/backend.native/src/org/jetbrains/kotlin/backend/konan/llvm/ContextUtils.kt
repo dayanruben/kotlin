@@ -13,7 +13,6 @@ import llvm.*
 import org.jetbrains.kotlin.backend.konan.CachedLibraries
 import org.jetbrains.kotlin.library.resolver.TopologicalLibraryOrder
 import org.jetbrains.kotlin.backend.konan.Context
-import org.jetbrains.kotlin.backend.konan.hash.GlobalHash
 import org.jetbrains.kotlin.backend.konan.ir.llvmSymbolOrigin
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.descriptors.konan.CompiledKlibModuleOrigin
@@ -174,7 +173,7 @@ internal interface ContextUtils : RuntimeAware {
      */
     val IrFunction.llvmFunction: LLVMValueRef
         get() = llvmFunctionOrNull
-                ?: error("$name in $file/${parent.fqNameForIrSerialization}")
+                ?: error("$name in ${file.name}/${parent.fqNameForIrSerialization}")
 
     val IrFunction.llvmFunctionOrNull: LLVMValueRef?
         get() {
@@ -213,45 +212,6 @@ internal interface ContextUtils : RuntimeAware {
      */
     val IrClass.llvmTypeInfoPtr: LLVMValueRef
         get() = typeInfoPtr.llvm
-
-    /**
-     * Returns contents of this [GlobalHash].
-     *
-     * It must be declared identically with [Runtime.globalHashType].
-     */
-    fun GlobalHash.getBytes(): ByteArray {
-        @Suppress("DEPRECATION")
-        val size = GlobalHash.size
-        assert(size == LLVMStoreSizeOfType(llvmTargetData, runtime.globalHashType))
-
-        return this.bits.getBytes(size)
-    }
-
-    /**
-     * Returns global hash of this string contents.
-     */
-    val String.globalHashBytes: ByteArray
-        get() = memScoped {
-            val hash = globalHash(stringAsBytes(this@globalHashBytes), memScope)
-            hash.getBytes()
-        }
-
-    /**
-     * Return base64 representation for global hash of this string contents.
-     */
-    val String.globalHashBase64: String
-        get() {
-            return base64Encode(globalHashBytes)
-        }
-
-    val String.globalHash: ConstValue
-        get() = memScoped {
-            val hashBytes = this@globalHash.globalHashBytes
-            return Struct(runtime.globalHashType, ConstArray(int8Type, hashBytes.map { Int8(it) }))
-        }
-
-    val FqName.globalHash: ConstValue
-        get() = this.toString().globalHash
 
 }
 
@@ -527,6 +487,9 @@ internal class Llvm(val context: Context, val llvmModule: LLVMModuleRef) {
     val getObjCKotlinTypeInfo by lazy { importRtFunction("GetObjCKotlinTypeInfo") }
     val missingInitImp by lazy { importRtFunction("MissingInitImp") }
 
+    val Kotlin_mm_switchThreadStateNative by lazy { importRtFunction("Kotlin_mm_switchThreadStateNative") }
+    val Kotlin_mm_switchThreadStateRunnable by lazy { importRtFunction("Kotlin_mm_switchThreadStateRunnable") }
+
     val Kotlin_Interop_DoesObjectConformToProtocol by lazyRtFunction
     val Kotlin_Interop_IsObjectKindOfClass by lazyRtFunction
 
@@ -537,10 +500,14 @@ internal class Llvm(val context: Context, val llvmModule: LLVMModuleRef) {
     val Kotlin_ObjCExport_GetAssociatedObject by lazyRtFunction
     val Kotlin_ObjCExport_AbstractMethodCalled by lazyRtFunction
     val Kotlin_ObjCExport_RethrowExceptionAsNSError by lazyRtFunction
+    val Kotlin_ObjCExport_WrapExceptionToNSError by lazyRtFunction
     val Kotlin_ObjCExport_RethrowNSErrorAsException by lazyRtFunction
     val Kotlin_ObjCExport_AllocInstanceWithAssociatedObject by lazyRtFunction
     val Kotlin_ObjCExport_createContinuationArgument by lazyRtFunction
     val Kotlin_ObjCExport_resumeContinuation by lazyRtFunction
+
+    private val Kotlin_ObjCExport_NSIntegerTypeProvider by lazyRtFunction
+    private val Kotlin_longTypeProvider by lazyRtFunction
 
     val Kotlin_mm_safePointFunctionEpilogue by lazyRtFunction
     val Kotlin_mm_safePointWhileLoopBody by lazyRtFunction
@@ -633,6 +600,26 @@ internal class Llvm(val context: Context, val llvmModule: LLVMModuleRef) {
     val llvmFloat = floatType
     val llvmDouble = doubleType
     val llvmVector128 = vector128Type
+
+    private fun getSizeOfReturnTypeInBits(functionPointer: LLVMValueRef): Long {
+        // LLVMGetElementType is called because we need to dereference a pointer to function.
+        val nsIntegerType = LLVMGetReturnType(LLVMGetElementType(functionPointer.type))
+        return LLVMSizeOfTypeInBits(runtime.targetData, nsIntegerType)
+    }
+
+    /**
+     * Width of NSInteger in bits.
+     */
+    val nsIntegerTypeWidth: Long by lazy {
+        getSizeOfReturnTypeInBits(Kotlin_ObjCExport_NSIntegerTypeProvider)
+    }
+
+    /**
+     * Width of C long type in bits.
+     */
+    val longTypeWidth: Long by lazy {
+        getSizeOfReturnTypeInBits(Kotlin_longTypeProvider)
+    }
 }
 
 class IrStaticInitializer(val konanLibrary: KotlinLibrary?, val initializer: LLVMValueRef)

@@ -11,10 +11,8 @@ buildscript {
 
     repositories {
         if (cacheRedirectorEnabled) {
-            maven("https://cache-redirector.jetbrains.com/jcenter.bintray.com")
             maven("https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-dependencies")
         } else {
-            jcenter()
             maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-dependencies")
         }
 
@@ -24,7 +22,7 @@ buildscript {
     }
 
     dependencies {
-        classpath("org.jetbrains.kotlin:kotlin-build-gradle-plugin:0.0.25")
+        classpath("org.jetbrains.kotlin:kotlin-build-gradle-plugin:0.0.27")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${project.bootstrapKotlinVersion}")
         classpath("org.jetbrains.kotlin:kotlin-sam-with-receiver:${project.bootstrapKotlinVersion}")
     }
@@ -84,10 +82,9 @@ extra["versions.androidDxSources"] = "5.0.0_r2"
 extra["customDepsOrg"] = "kotlin.build"
 
 repositories {
-    jcenter()
-    maven("https://jetbrains.bintray.com/intellij-third-party-dependencies/")
+    mavenCentral()
+    maven("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
     maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-dependencies")
-    maven("https://kotlin.bintray.com/kotlinx")
     gradlePluginPortal()
 
     extra["bootstrapKotlinRepo"]?.let {
@@ -147,8 +144,8 @@ java {
 dependencies {
     implementation(kotlin("stdlib", embeddedKotlinVersion))
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:${project.bootstrapKotlinVersion}")
-    implementation("org.jetbrains.kotlin:kotlin-build-gradle-plugin:0.0.25")
-    implementation("com.gradle.publish:plugin-publish-plugin:0.12.0")
+    implementation("org.jetbrains.kotlin:kotlin-build-gradle-plugin:0.0.27")
+    implementation("com.gradle.publish:plugin-publish-plugin:0.14.0")
 
     implementation("net.rubygrapefruit:native-platform:${property("versions.native-platform")}")
     implementation("net.rubygrapefruit:native-platform-windows-amd64:${property("versions.native-platform")}")
@@ -161,7 +158,7 @@ dependencies {
 
     implementation("gradle.plugin.org.jetbrains.gradle.plugin.idea-ext:gradle-idea-ext:0.5")
 
-    implementation("org.gradle:test-retry-gradle-plugin:1.1.9")
+    implementation("org.gradle:test-retry-gradle-plugin:1.2.0")
     implementation("com.gradle.enterprise:test-distribution-gradle-plugin:1.2.1")
 
     compileOnly(gradleApi())
@@ -199,6 +196,7 @@ java {
 }
 
 tasks.withType<KotlinCompile>().configureEach {
+    kotlinOptions.allWarningsAsErrors = true
     kotlinOptions.freeCompilerArgs += listOf(
         "-Xopt-in=kotlin.RequiresOptIn",
         "-Xskip-runtime-version-check",

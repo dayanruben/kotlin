@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.load.java.toDescriptorVisibility
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.isValidJavaFqName
 import org.jetbrains.kotlin.resolve.constants.StringValue
+import org.jetbrains.kotlin.resolve.descriptorUtil.classId
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameUnsafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.resolveTopLevelClass
@@ -65,6 +66,10 @@ class LazyJavaClassDescriptor(
         assert(jClass.lightClassOriginKind == null) {
             "Creating LazyJavaClassDescriptor for light class $jClass"
         }
+    }
+
+    val moduleAnnotations by lazy {
+        classId?.let { outerContext.components.javaModuleResolver.getAnnotationsForModuleOwnerOfClass(it) }
     }
 
     private val kind = when {
@@ -208,8 +213,8 @@ class LazyJavaClassDescriptor(
 
             for (javaType in javaTypes) {
                 val kotlinType = c.typeResolver.transformJavaType(javaType, TypeUsage.SUPERTYPE.toAttributes())
-                val areImprovementsEnabled = c.components.settings.typeEnhancementImprovements
-                val enhancedKotlinType = if (areImprovementsEnabled) {
+                val areImprovementsInStrictMode = c.components.settings.typeEnhancementImprovementsInStrictMode
+                val enhancedKotlinType = if (areImprovementsInStrictMode) {
                     c.components.signatureEnhancement.enhanceSuperType(kotlinType, c)
                 } else kotlinType
 

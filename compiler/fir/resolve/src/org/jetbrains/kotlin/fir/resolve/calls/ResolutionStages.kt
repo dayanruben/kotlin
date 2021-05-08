@@ -6,19 +6,22 @@
 package org.jetbrains.kotlin.fir.resolve.calls
 
 import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.fir.*
+import org.jetbrains.kotlin.fir.FirSymbolOwner
+import org.jetbrains.kotlin.fir.FirVisibilityChecker
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.FirQualifiedAccessExpression
 import org.jetbrains.kotlin.fir.expressions.FirResolvedQualifier
 import org.jetbrains.kotlin.fir.references.FirSuperReference
-import org.jetbrains.kotlin.fir.resolve.*
 import org.jetbrains.kotlin.fir.resolve.inference.*
+import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.symbols.SyntheticSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirFunctionSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
+import org.jetbrains.kotlin.fir.typeContext
 import org.jetbrains.kotlin.fir.types.*
+import org.jetbrains.kotlin.fir.visibilityChecker
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -70,6 +73,7 @@ object CheckExtensionReceiver : ResolutionStage() {
         )
         candidate.resolvePlainArgumentType(
             candidate.csBuilder,
+            argumentExtensionReceiverValue.receiverExpression,
             argumentType = argumentType,
             expectedType = expectedType,
             sink = sink,
@@ -105,7 +109,7 @@ object CheckDispatchReceiver : ResolutionStage() {
         val dispatchReceiverValueType = candidate.dispatchReceiverValue?.type ?: return
 
         if (!AbstractNullabilityChecker.isSubtypeOfAny(context.session.typeContext, dispatchReceiverValueType)) {
-            sink.yieldDiagnostic(InapplicableWrongReceiver(actualType = dispatchReceiverValueType))
+            sink.yieldDiagnostic(UnsafeCall(dispatchReceiverValueType))
         }
     }
 }
@@ -143,16 +147,16 @@ internal object CheckArguments : CheckerStage() {
         for (argument in callInfo.arguments) {
             val parameter = argumentMapping[argument]
             candidate.resolveArgument(
+                callInfo,
                 argument,
                 parameter,
                 isReceiver = false,
                 sink = sink,
                 context = context
             )
-            if (candidate.system.hasContradiction) {
-                sink.yieldDiagnostic(InapplicableCandidate)
-            }
-            sink.yieldIfNeed()
+        }
+        if (candidate.system.hasContradiction && callInfo.arguments.isNotEmpty()) {
+            sink.yieldDiagnostic(InapplicableCandidate)
         }
     }
 }
@@ -191,7 +195,7 @@ internal object CheckVisibility : CheckerStage() {
 
         if (declaration is FirConstructor) {
             // TODO: Should be some other form
-            val classSymbol = declaration.returnTypeRef.coneTypeUnsafe<ConeClassLikeType>().lookupTag.toSymbol(declaration.session)
+            val classSymbol = declaration.returnTypeRef.coneTypeUnsafe<ConeClassLikeType>().lookupTag.toSymbol(context.session)
 
             if (classSymbol is FirRegularClassSymbol) {
                 if (classSymbol.fir.classKind.isSingleton) {
@@ -251,7 +255,7 @@ internal object PostponedVariablesInitializerResolutionStage : ResolutionStage()
 
             for (freshVariable in candidate.freshVariables) {
                 if (candidate.csBuilder.isPostponedTypeVariable(freshVariable)) continue
-                if (freshVariable !is TypeParameterBasedTypeVariable) continue
+                if (freshVariable !is ConeTypeParameterBasedTypeVariable) continue
                 val typeParameterSymbol = freshVariable.typeParameterSymbol
                 val typeHasVariable = receiverType.contains {
                     (it as? ConeTypeParameterType)?.lookupTag?.typeParameterSymbol == typeParameterSymbol

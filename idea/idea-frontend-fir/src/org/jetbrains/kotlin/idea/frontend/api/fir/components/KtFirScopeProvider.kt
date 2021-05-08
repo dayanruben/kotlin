@@ -17,17 +17,13 @@ import org.jetbrains.kotlin.fir.scopes.*
 import org.jetbrains.kotlin.fir.scopes.impl.*
 import org.jetbrains.kotlin.idea.fir.low.level.api.api.FirModuleResolveState
 import org.jetbrains.kotlin.idea.fir.low.level.api.api.getTowerDataContextUnsafe
-import org.jetbrains.kotlin.idea.frontend.api.ValidityToken
 import org.jetbrains.kotlin.idea.frontend.api.ValidityTokenOwner
 import org.jetbrains.kotlin.idea.frontend.api.components.KtScopeContext
 import org.jetbrains.kotlin.idea.frontend.api.components.KtScopeProvider
 import org.jetbrains.kotlin.idea.frontend.api.fir.KtFirAnalysisSession
 import org.jetbrains.kotlin.idea.frontend.api.fir.KtSymbolByFirBuilder
 import org.jetbrains.kotlin.idea.frontend.api.fir.scopes.*
-import org.jetbrains.kotlin.idea.frontend.api.fir.symbols.KtFirAnonymousObjectSymbol
-import org.jetbrains.kotlin.idea.frontend.api.fir.symbols.KtFirClassOrObjectSymbol
-import org.jetbrains.kotlin.idea.frontend.api.fir.symbols.KtFirEnumEntrySymbol
-import org.jetbrains.kotlin.idea.frontend.api.fir.symbols.KtFirFileSymbol
+import org.jetbrains.kotlin.idea.frontend.api.fir.symbols.*
 import org.jetbrains.kotlin.idea.frontend.api.fir.types.KtFirType
 import org.jetbrains.kotlin.idea.frontend.api.fir.utils.weakRef
 import org.jetbrains.kotlin.idea.frontend.api.scopes.*
@@ -35,6 +31,7 @@ import org.jetbrains.kotlin.idea.frontend.api.symbols.KtFileSymbol
 import org.jetbrains.kotlin.idea.frontend.api.symbols.KtPackageSymbol
 import org.jetbrains.kotlin.idea.frontend.api.symbols.markers.KtSymbolWithDeclarations
 import org.jetbrains.kotlin.idea.frontend.api.symbols.markers.KtSymbolWithMembers
+import org.jetbrains.kotlin.idea.frontend.api.tokens.ValidityToken
 import org.jetbrains.kotlin.idea.frontend.api.types.KtType
 import org.jetbrains.kotlin.idea.frontend.api.withValidityAssertion
 import org.jetbrains.kotlin.psi.KtElement
@@ -59,8 +56,8 @@ internal class KtFirScopeProvider(
     private val packageMemberScopeCache = IdentityHashMap<KtPackageSymbol, KtPackageScope>()
 
     private inline fun <T> KtSymbolWithMembers.withFirForScope(crossinline body: (FirClass<*>) -> T): T? = when (this) {
-        is KtFirClassOrObjectSymbol -> firRef.withFir(FirResolvePhase.SUPER_TYPES, body)
-        is KtFirAnonymousObjectSymbol -> firRef.withFir(FirResolvePhase.SUPER_TYPES, body)
+        is KtFirNamedClassOrObjectSymbol -> firRef.withFirWithPossibleResolveInside(FirResolvePhase.TYPES, body)
+        is KtFirAnonymousObjectSymbol -> firRef.withFirWithPossibleResolveInside(FirResolvePhase.TYPES, body)
         is KtFirEnumEntrySymbol -> firRef.withFir(FirResolvePhase.IMPLICIT_TYPES_BODY_RESOLVE) {
             val initializer = it.initializer
             check(initializer is FirAnonymousObject)
@@ -73,7 +70,7 @@ internal class KtFirScopeProvider(
         memberScopeCache.getOrPut(classSymbol) {
 
             val firScope = classSymbol.withFirForScope { fir ->
-                val firSession = fir.session
+                val firSession = fir.declarationSiteSession
                 fir.unsubstitutedScope(
                     firSession,
                     ScopeSession(),
@@ -89,7 +86,7 @@ internal class KtFirScopeProvider(
     override fun getDeclaredMemberScope(classSymbol: KtSymbolWithMembers): KtDeclaredMemberScope = withValidityAssertion {
         declaredMemberScopeCache.getOrPut(classSymbol) {
             val firScope = classSymbol.withFirForScope {
-                declaredMemberScope(it)
+                analysisSession.rootModuleSession.declaredMemberScope(it)
             } ?: return@getOrPut KtFirEmptyMemberScope(classSymbol)
 
             firScopeStorage.register(firScope)
@@ -146,7 +143,7 @@ internal class KtFirScopeProvider(
         val towerDataContext = analysisSession.firResolveState.getTowerDataContextUnsafe(positionInFakeFile)
 
         val implicitReceivers = towerDataContext.nonLocalTowerDataElements.mapNotNull { it.implicitReceiver }.distinct()
-        val implicitReceiversTypes = implicitReceivers.map { builder.buildKtType(it.type) }
+        val implicitReceiversTypes = implicitReceivers.map { builder.typeBuilder.buildKtType(it.type) }
 
         val implicitReceiverScopes = implicitReceivers.mapNotNull { it.implicitScope }
         val nonLocalScopes = towerDataContext.nonLocalTowerDataElements.mapNotNull { it.scope }.distinct()

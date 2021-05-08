@@ -16,13 +16,17 @@
 
 package org.jetbrains.kotlin.psi2ir.generators
 
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.descriptors.impl.PropertyGetterDescriptorImpl
+import org.jetbrains.kotlin.descriptors.impl.PropertySetterDescriptorImpl
+import org.jetbrains.kotlin.descriptors.impl.ValueParameterDescriptorImpl
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.IrExpressionBody
 import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
 import org.jetbrains.kotlin.ir.expressions.impl.IrGetValueImpl
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffsetSkippingComments
@@ -96,8 +100,7 @@ class PropertyGenerator(declarationGenerator: DeclarationGenerator) : Declaratio
             irProperty.backingField = generatePropertyBackingField(ktDeclarationContainer, propertyDescriptor, generateInitializer)
 
             val getter = propertyDescriptor.getter
-                ?: if (generateSyntheticAccessors)
-                    // TODO: check if this is the correct way to generate synthetic accessor
+                ?: if (generateSyntheticAccessors) {
                     PropertyGetterDescriptorImpl(
                         propertyDescriptor,
                         Annotations.EMPTY, Modality.FINAL, DescriptorVisibilities.PUBLIC, false, false, false,
@@ -105,16 +108,36 @@ class PropertyGenerator(declarationGenerator: DeclarationGenerator) : Declaratio
                     ).apply {
                         initialize(propertyDescriptor.type)
                     }
-                else throw AssertionError("Property declared in primary constructor has no getter: $propertyDescriptor")
+                } else
+                    throw AssertionError("Property declared in primary constructor has no getter: $propertyDescriptor")
             irProperty.getter =
-                FunctionGenerator(declarationGenerator).generateDefaultAccessorForPrimaryConstructorParameter(getter, ktDeclarationContainer)
+                FunctionGenerator(declarationGenerator).generateDefaultAccessorForPrimaryConstructorParameter(
+                    getter,
+                    ktDeclarationContainer
+                )
 
             if (propertyDescriptor.isVar) {
                 val setter = propertyDescriptor.setter
-                    // TODO: implement setter descriptor generation, if needed
-                    ?: throw AssertionError("Property declared in primary constructor has no setter: $propertyDescriptor")
+                    ?: if (generateSyntheticAccessors) {
+                        PropertySetterDescriptorImpl(
+                            propertyDescriptor,
+                            Annotations.EMPTY, Modality.FINAL, DescriptorVisibilities.PUBLIC, false, false, false,
+                            CallableMemberDescriptor.Kind.SYNTHESIZED, null, propertyDescriptor.source
+                        ).apply {
+                            val setterValueParameter = ValueParameterDescriptorImpl(
+                                this, null, 0, Annotations.EMPTY, Name.identifier("value"), propertyDescriptor.type,
+                                declaresDefaultValue = false, isCrossinline = false, isNoinline = false,
+                                varargElementType = null, source = SourceElement.NO_SOURCE
+                            )
+                            initialize(setterValueParameter)
+                        }
+                    } else
+                        throw AssertionError("Property declared in primary constructor has no setter: $propertyDescriptor")
                 irProperty.setter =
-                    FunctionGenerator(declarationGenerator).generateDefaultAccessorForPrimaryConstructorParameter(setter, ktDeclarationContainer)
+                    FunctionGenerator(declarationGenerator).generateDefaultAccessorForPrimaryConstructorParameter(
+                        setter,
+                        ktDeclarationContainer
+                    )
             }
 
             irProperty.linkCorrespondingPropertySymbol()
@@ -157,17 +180,25 @@ class PropertyGenerator(declarationGenerator: DeclarationGenerator) : Declaratio
             irProperty.backingField =
                 if (propertyDescriptor.actuallyHasBackingField(context.bindingContext))
                     generatePropertyBackingField(ktProperty, propertyDescriptor) { irField ->
-                        ktProperty.initializer?.let { ktInitializer ->
+                        ktProperty.initializer?.let evaluateInitializer@{ ktInitializer ->
                             val compileTimeConst = propertyDescriptor.compileTimeInitializer
-                            if (propertyDescriptor.isConst && compileTimeConst != null)
-                                context.irFactory.createExpressionBody(
-                                    context.constantValueGenerator.generateConstantValueAsExpression(
-                                        ktInitializer.startOffsetSkippingComments, ktInitializer.endOffset,
-                                        compileTimeConst
+                            if (compileTimeConst != null) {
+                                val constantInfo = context.bindingContext.get(BindingContext.COMPILE_TIME_VALUE, ktInitializer)
+                                if (propertyDescriptor.isConst ||
+                                    (constantInfo?.usesNonConstValAsConstant == false &&
+                                            (!constantInfo.usesVariableAsConstant ||
+                                                    context.languageVersionSettings.supportsFeature(LanguageFeature.InlineConstVals)))
+                                ) {
+                                    return@evaluateInitializer context.irFactory.createExpressionBody(
+                                        context.constantValueGenerator.generateConstantValueAsExpression(
+                                            ktInitializer.startOffsetSkippingComments, ktInitializer.endOffset,
+                                            compileTimeConst
+                                        )
                                     )
-                                )
-                            else
-                                declarationGenerator.generateInitializerBody(irField.symbol, ktInitializer)
+                                }
+                            }
+
+                            declarationGenerator.generateInitializerBody(irField.symbol, ktInitializer)
                         }
                     }
                 else

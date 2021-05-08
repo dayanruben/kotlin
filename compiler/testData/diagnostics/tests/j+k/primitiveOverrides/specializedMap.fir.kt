@@ -100,12 +100,12 @@ public class SpecializedMap extends AbstractSpecializedMap {
 // FILE: main.kt
 fun foo(x: SpecializedMap) {
     x.containsKey(1)
-    x.<!INAPPLICABLE_CANDIDATE!>containsKey<!>(null)
+    x.containsKey(<!NULL_FOR_NONNULL_TYPE!>null<!>)
 
-    x.<!AMBIGUITY!>get<!>(2)
+    x.<!OVERLOAD_RESOLUTION_AMBIGUITY!>get<!>(2)
     x.<!NONE_APPLICABLE!>get<!>(null)
 
-    x.<!AMBIGUITY!>remove<!>(3)
+    x.<!OVERLOAD_RESOLUTION_AMBIGUITY!>remove<!>(3)
     x.<!NONE_APPLICABLE!>remove<!>(null)
 
     x.put(4, 5.0)

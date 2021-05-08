@@ -328,7 +328,7 @@ public:
   }
 
   static int toIndex(const ObjHeader* obj, int stack) {
-    if (reinterpret_cast<uintptr_t>(obj) > 1)
+    if (!isNullOrMarker(obj))
         return toIndex(containerFor(obj), stack);
     else
         return 4 + stack * 6;
@@ -465,10 +465,6 @@ ContainerHeader* containerFor(const ObjHeader* obj) {
   if ((bits & OBJECT_TAG_PERMANENT_CONTAINER) != 0)
     return nullptr;
   return (reinterpret_cast<MetaObjHeader*>(clearPointerBits(obj->typeInfoOrMeta_, OBJECT_TAG_MASK)))->container_;
-}
-
-ALWAYS_INLINE bool isFrozen(const ObjHeader* obj) {
-    return containerFor(obj)->frozen();
 }
 
 ALWAYS_INLINE bool isPermanentOrFrozen(const ObjHeader* obj) {
@@ -2158,7 +2154,7 @@ void setHeapRef(ObjHeader** location, const ObjHeader* object) {
 void zeroHeapRef(ObjHeader** location) {
   MEMORY_LOG("ZeroHeapRef %p\n", location)
   auto* value = *location;
-  if (reinterpret_cast<uintptr_t>(value) > 1) {
+  if (!isNullOrMarker(value)) {
     UPDATE_REF_EVENT(memoryState, value, nullptr, location, 0);
     *location = nullptr;
     ReleaseHeapRef(value);
@@ -2186,7 +2182,7 @@ void updateHeapRef(ObjHeader** location, const ObjHeader* object) {
       addHeapRef(object);
     }
     *const_cast<const ObjHeader**>(location) = object;
-    if (reinterpret_cast<uintptr_t>(old) > 1) {
+    if (!isNullOrMarker(old)) {
       releaseHeapRef<Strict>(old);
     }
   }
@@ -2226,7 +2222,7 @@ void updateHeapRefsInsideOneArray(const ArrayHeader* array, int fromIndex, int t
 template <bool Strict>
 void updateStackRef(ObjHeader** location, const ObjHeader* object) {
   UPDATE_REF_EVENT(memoryState, *location, object, location, 1)
-  RuntimeAssert(object != reinterpret_cast<ObjHeader*>(1), "Markers disallowed here");
+  RuntimeAssert(object != kInitializingSingleton, "Markers disallowed here");
   if (Strict) {
     *const_cast<const ObjHeader**>(location) = object;
   } else {
@@ -2397,7 +2393,7 @@ OBJ_GETTER(initSingleton, ObjHeader** location, const TypeInfo* typeInfo, void (
     }
   }
 
-  ObjHeader* initializing = reinterpret_cast<ObjHeader*>(1);
+  ObjHeader* initializing = kInitializingSingleton;
 
   // Spin lock.
   ObjHeader* value = nullptr;
@@ -3327,6 +3323,10 @@ void RestoreMemory(MemoryState* memoryState) {
     ::memoryState = memoryState;
 }
 
+void ClearMemoryForTests(MemoryState*) {
+    // Nothing to do, DeinitMemory will do the job.
+}
+
 OBJ_GETTER(AllocInstanceStrict, const TypeInfo* type_info) {
   RETURN_RESULT_OF(allocInstance<true>, type_info);
 }
@@ -3576,6 +3576,10 @@ RUNTIME_NOTHROW void DisposeStablePointer(KNativePtr pointer) {
   disposeStablePointer(pointer);
 }
 
+RUNTIME_NOTHROW void DisposeStablePointerFor(MemoryState* memoryState, KNativePtr pointer) {
+  DisposeStablePointer(pointer);
+}
+
 OBJ_GETTER(DerefStablePointer, KNativePtr pointer) {
   RETURN_RESULT_OF(derefStablePointer, pointer);
 }
@@ -3715,3 +3719,21 @@ ALWAYS_INLINE ObjHeader* ExceptionObjHolder::GetExceptionObject() noexcept {
     return static_cast<ExceptionObjHolderImpl*>(this)->obj();
 }
 #endif
+
+ALWAYS_INLINE kotlin::ThreadState kotlin::SwitchThreadState(MemoryState* thread, ThreadState newState, bool reentrant) noexcept {
+    // no-op, used by the new MM only.
+    return ThreadState::kRunnable;
+}
+
+ALWAYS_INLINE void kotlin::AssertThreadState(MemoryState* thread, ThreadState expected) noexcept {
+    // no-op, used by the new MM only.
+}
+
+MemoryState* kotlin::mm::GetMemoryState() {
+    return ::memoryState;
+}
+
+kotlin::ThreadState kotlin::GetThreadState(MemoryState* thread) noexcept {
+    // Assume that we are always in the Runnable thread state.
+    return ThreadState::kRunnable;
+}

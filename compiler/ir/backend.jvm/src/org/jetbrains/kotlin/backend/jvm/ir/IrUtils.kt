@@ -66,12 +66,11 @@ fun IrType.eraseTypeParameters() = when (this) {
     is IrErrorType -> this
     is IrSimpleType ->
         when (val owner = classifier.owner) {
-            is IrClass -> IrSimpleTypeImpl(
-                classifier,
-                hasQuestionMark,
-                arguments.map { it.eraseTypeParameters() },
-                annotations
-            )
+            is IrScript -> {
+                assert(arguments.isEmpty()) { "Script can't be generic: " + owner.render() }
+                IrSimpleTypeImpl(classifier, hasQuestionMark, emptyList(), annotations)
+            }
+            is IrClass -> IrSimpleTypeImpl(classifier, hasQuestionMark, arguments.map { it.eraseTypeParameters() }, annotations)
             is IrTypeParameter -> {
                 val upperBound = owner.erasedUpperBound
                 IrSimpleTypeImpl(
@@ -349,10 +348,6 @@ val IrDeclaration.isStaticInlineClassReplacement: Boolean
     get() = origin == JvmLoweredDeclarationOrigin.STATIC_INLINE_CLASS_REPLACEMENT
             || origin == JvmLoweredDeclarationOrigin.STATIC_INLINE_CLASS_CONSTRUCTOR
 
-fun IrDeclaration.isFromJava(): Boolean =
-    origin == IrDeclarationOrigin.IR_EXTERNAL_JAVA_DECLARATION_STUB ||
-            parent is IrDeclaration && (parent as IrDeclaration).isFromJava()
-
 val IrType.upperBound: IrType
     get() = erasedUpperBound.symbol.starProjectedType
 
@@ -400,3 +395,6 @@ fun IrClass.getSingleAbstractMethod(): IrSimpleFunction? =
 
 fun IrFile.getKtFile(): KtFile? =
     (fileEntry as? PsiIrFileEntry)?.psiFile as KtFile?
+
+fun IrType.isInlineClassType(): Boolean =
+    erasedUpperBound.isInline

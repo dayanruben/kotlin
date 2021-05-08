@@ -10,7 +10,7 @@ fun <T: Any, E> T.foo(x : E, y : A) : T   {
   y plus 1
   y + 1.0
 
-  this?.minus<T>(this)
+  this<!UNNECESSARY_SAFE_CALL!>?.<!>minus<T>(this)
 
   return this
 }
@@ -20,7 +20,7 @@ class A
 infix operator fun A.plus(a : Any) {
 
   1.foo()
-  true.<!INAPPLICABLE_CANDIDATE!>foo<!>()
+  true.foo(<!NO_VALUE_FOR_PARAMETER, NO_VALUE_FOR_PARAMETER!>)<!>
 
   1
 }
@@ -70,7 +70,7 @@ import outer.*
             command?.equals1(null)
 
             val c = Command()
-            c?.equals2(null)
+            c<!UNNECESSARY_SAFE_CALL!>?.<!>equals2(null)
 
             if (command == null) 1
         }

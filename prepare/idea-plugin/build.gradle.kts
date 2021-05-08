@@ -6,10 +6,6 @@ plugins {
     java
 }
 
-repositories {
-    maven("https://jetbrains.bintray.com/markdown")
-}
-
 // PILL: used in pill importer
 val projectsToShadow by extra(listOf(
         ":plugins:annotation-based-compiler-plugins-ide-support",
@@ -142,6 +138,7 @@ val libraryProjects = listOf(
     ":kotlin-allopen-compiler-plugin",
     ":kotlin-noarg-compiler-plugin",
     ":kotlin-sam-with-receiver-compiler-plugin",
+    ":plugins:lombok:lombok-compiler-plugin",
     ":plugins:android-extensions-compiler",
     ":plugins:parcelize:parcelize-compiler",
     ":kotlinx-serialization-compiler-plugin",
@@ -197,12 +194,13 @@ dependencies {
     gradleToolingModel(project(":plugins:parcelize:parcelize-ide")) { isTransitive = false }
     gradleToolingModel(project(":noarg-ide-plugin")) { isTransitive = false }
     gradleToolingModel(project(":allopen-ide-plugin")) { isTransitive = false }
+    gradleToolingModel(project(":plugins:lombok:lombok-ide-plugin")) { isTransitive = false }
 
     jpsPlugin(project(":kotlin-jps-plugin")) { isTransitive = false }
 
     (libraries.dependencies + gradleToolingModel.dependencies)
         .map { if (it is ProjectDependency) it.dependencyProject else it }
-        .forEach(::compile)
+        .forEach { compile(it) }
 }
 
 val jar = runtimeJar {

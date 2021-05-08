@@ -19,11 +19,6 @@ namespace {
 
 class ExceptionObjHolderTest : public ::testing::Test {
 public:
-    ~ExceptionObjHolderTest() {
-        auto& stableRefs = mm::StableRefRegistry::Instance();
-        stableRefs.ClearForTests();
-    }
-
     static KStdVector<ObjHeader*> Collect(mm::ThreadData& threadData) {
         auto& stableRefs = mm::StableRefRegistry::Instance();
         stableRefs.ProcessThread(&threadData);
@@ -41,11 +36,11 @@ private:
 } // namespace
 
 TEST_F(ExceptionObjHolderTest, NothingByDefault) {
-    mm::RunInNewThread([](mm::ThreadData& threadData) { EXPECT_THAT(Collect(threadData), testing::IsEmpty()); });
+    RunInNewThread([](mm::ThreadData& threadData) { EXPECT_THAT(Collect(threadData), testing::IsEmpty()); });
 }
 
 TEST_F(ExceptionObjHolderTest, Throw) {
-    mm::RunInNewThread([](mm::ThreadData& threadData) {
+    RunInNewThread([](mm::ThreadData& threadData) {
         ASSERT_THAT(Collect(threadData), testing::IsEmpty());
 
         ObjHeader exception;
@@ -59,7 +54,7 @@ TEST_F(ExceptionObjHolderTest, Throw) {
 }
 
 TEST_F(ExceptionObjHolderTest, ThrowInsideCatch) {
-    mm::RunInNewThread([](mm::ThreadData& threadData) {
+    RunInNewThread([](mm::ThreadData& threadData) {
         ASSERT_THAT(Collect(threadData), testing::IsEmpty());
 
         ObjHeader exception1;
@@ -79,7 +74,7 @@ TEST_F(ExceptionObjHolderTest, ThrowInsideCatch) {
 }
 
 TEST_F(ExceptionObjHolderTest, StoreException) {
-    mm::RunInNewThread([](mm::ThreadData& threadData) {
+    RunInNewThread([](mm::ThreadData& threadData) {
         ASSERT_THAT(Collect(threadData), testing::IsEmpty());
 
         ObjHeader exception1;

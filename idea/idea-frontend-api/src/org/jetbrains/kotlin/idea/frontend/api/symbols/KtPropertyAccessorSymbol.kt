@@ -7,19 +7,23 @@ package org.jetbrains.kotlin.idea.frontend.api.symbols
 
 import org.jetbrains.kotlin.idea.frontend.api.symbols.markers.*
 import org.jetbrains.kotlin.idea.frontend.api.symbols.pointers.KtSymbolPointer
+import org.jetbrains.kotlin.name.CallableId
 
 sealed class KtPropertyAccessorSymbol : KtCallableSymbol(),
     KtPossibleMemberSymbol,
-    KtSymbolWithModality<KtCommonSymbolModality>,
+    KtSymbolWithModality,
     KtSymbolWithVisibility,
-    KtAnnotatedSymbol {
+    KtAnnotatedSymbol,
+    KtSymbolWithKind {
+
+    final override val callableIdIfNonLocal: CallableId? get() = null
 
     abstract val isDefault: Boolean
     abstract val isInline: Boolean
     abstract val isOverride: Boolean
     abstract val hasBody: Boolean
 
-    abstract val symbolKind: KtSymbolKind
+    final override val symbolKind: KtSymbolKind get() = KtSymbolKind.ACCESSOR
 
     abstract override fun createPointer(): KtSymbolPointer<KtPropertyAccessorSymbol>
 }
@@ -29,7 +33,7 @@ abstract class KtPropertyGetterSymbol : KtPropertyAccessorSymbol(), KtTypedSymbo
 }
 
 abstract class KtPropertySetterSymbol : KtPropertyAccessorSymbol() {
-    abstract val parameter: KtSetterParameterSymbol
+    abstract val parameter: KtValueParameterSymbol
 
     abstract override fun createPointer(): KtSymbolPointer<KtPropertySetterSymbol>
 }

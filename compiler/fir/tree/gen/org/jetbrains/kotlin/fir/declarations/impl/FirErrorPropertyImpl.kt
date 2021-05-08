@@ -29,8 +29,8 @@ import org.jetbrains.kotlin.fir.visitors.*
  */
 
 internal class FirErrorPropertyImpl(
-    override var source: FirSourceElement?,
-    override val session: FirSession,
+    override val source: FirSourceElement?,
+    override val declarationSiteSession: FirSession,
     override var resolvePhase: FirResolvePhase,
     override val origin: FirDeclarationOrigin,
     override val attributes: FirDeclarationAttributes,
@@ -69,7 +69,7 @@ internal class FirErrorPropertyImpl(
     }
 
     override fun <D> transformReturnTypeRef(transformer: FirTransformer<D>, data: D): FirErrorPropertyImpl {
-        returnTypeRef = returnTypeRef.transformSingle(transformer, data)
+        returnTypeRef = returnTypeRef.transform(transformer, data)
         return this
     }
 
@@ -106,10 +106,6 @@ internal class FirErrorPropertyImpl(
     override fun <D> transformOtherChildren(transformer: FirTransformer<D>, data: D): FirErrorPropertyImpl {
         transformAnnotations(transformer, data)
         return this
-    }
-
-    override fun replaceSource(newSource: FirSourceElement?) {
-        source = newSource
     }
 
     override fun replaceResolvePhase(newResolvePhase: FirResolvePhase) {

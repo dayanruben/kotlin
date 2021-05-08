@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.fir.resolve.calls
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.expressions.*
+import org.jetbrains.kotlin.fir.lookupTracker
 import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
 import org.jetbrains.kotlin.fir.resolve.*
 import org.jetbrains.kotlin.fir.resolve.inference.*
@@ -16,17 +17,23 @@ import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.resultType
 import org.jetbrains.kotlin.fir.resolve.transformers.ensureResolvedTypeDeclaration
 import org.jetbrains.kotlin.fir.returnExpressions
 import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
-import org.jetbrains.kotlin.fir.symbols.StandardClassIds
+import org.jetbrains.kotlin.fir.symbols.ConeTypeParameterLookupTag
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.fir.typeContext
 import org.jetbrains.kotlin.fir.types.*
+import org.jetbrains.kotlin.fir.types.impl.ConeTypeParameterTypeImpl
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.calls.inference.ConstraintSystemBuilder
 import org.jetbrains.kotlin.resolve.calls.inference.addSubtypeConstraintIfCompatible
+import org.jetbrains.kotlin.resolve.calls.inference.model.ConstraintPosition
 import org.jetbrains.kotlin.resolve.calls.inference.model.SimpleConstraintSystemConstraintPosition
 import org.jetbrains.kotlin.types.AbstractTypeChecker
 import org.jetbrains.kotlin.types.model.CaptureStatus
 import org.jetbrains.kotlin.types.model.TypeSystemCommonSuperTypesContext
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
+
+val SAM_LOOKUP_NAME = Name.special("<SAM-CONSTRUCTOR>")
 
 fun Candidate.resolveArgumentExpression(
     csBuilder: ConstraintSystemBuilder,
@@ -71,6 +78,7 @@ fun Candidate.resolveArgumentExpression(
                 // Assignment
                 checkApplicabilityForArgumentType(
                     csBuilder,
+                    argument,
                     StandardClassIds.Unit.constructClassLikeType(emptyArray(), isNullable = false),
                     expectedType?.type,
                     SimpleConstraintSystemConstraintPosition,
@@ -136,6 +144,7 @@ private fun Candidate.resolveBlockArgument(
     if (returnArguments.isEmpty()) {
         checkApplicabilityForArgumentType(
             csBuilder,
+            block,
             block.typeRef.coneType,
             expectedType?.type,
             SimpleConstraintSystemConstraintPosition,
@@ -170,9 +179,10 @@ fun Candidate.resolveSubCallArgument(
     isDispatch: Boolean,
     useNullableArgumentType: Boolean = false
 ) {
+    require(argument is FirExpression)
     val candidate = argument.candidate() ?: return resolvePlainExpressionArgument(
         csBuilder,
-        argument as FirExpression,
+        argument,
         expectedType,
         sink,
         context,
@@ -186,7 +196,17 @@ fun Candidate.resolveSubCallArgument(
      */
     val type: ConeKotlinType = context.returnTypeCalculator.tryCalculateReturnType(candidate.symbol.firUnsafe()).type
     val argumentType = candidate.substitutor.substituteOrSelf(type)
-    resolvePlainArgumentType(csBuilder, argumentType, expectedType, sink, context, isReceiver, isDispatch, useNullableArgumentType)
+    resolvePlainArgumentType(
+        csBuilder,
+        argument,
+        argumentType,
+        expectedType,
+        sink,
+        context,
+        isReceiver,
+        isDispatch,
+        useNullableArgumentType
+    )
 }
 
 fun Candidate.resolvePlainExpressionArgument(
@@ -199,13 +219,25 @@ fun Candidate.resolvePlainExpressionArgument(
     isDispatch: Boolean,
     useNullableArgumentType: Boolean = false
 ) {
+
     if (expectedType == null) return
     val argumentType = argument.typeRef.coneTypeSafe<ConeKotlinType>() ?: return
-    resolvePlainArgumentType(csBuilder, argumentType, expectedType, sink, context, isReceiver, isDispatch, useNullableArgumentType)
+    resolvePlainArgumentType(
+        csBuilder,
+        argument,
+        argumentType,
+        expectedType,
+        sink,
+        context,
+        isReceiver,
+        isDispatch,
+        useNullableArgumentType
+    )
 }
 
 fun Candidate.resolvePlainArgumentType(
     csBuilder: ConstraintSystemBuilder,
+    argument: FirExpression,
     argumentType: ConeKotlinType,
     expectedType: ConeKotlinType?,
     sink: CheckerSink,
@@ -237,7 +269,7 @@ fun Candidate.resolvePlainArgumentType(
     }
 
     checkApplicabilityForArgumentType(
-        csBuilder, argumentTypeForApplicabilityCheck, expectedType, position, isReceiver, isDispatch, sink, context
+        csBuilder, argument, argumentTypeForApplicabilityCheck, expectedType, position, isReceiver, isDispatch, sink, context
     )
 }
 
@@ -299,6 +331,7 @@ private fun Candidate.captureTypeFromExpressionOrNull(argumentType: ConeKotlinTy
 
 private fun checkApplicabilityForArgumentType(
     csBuilder: ConstraintSystemBuilder,
+    argument: FirExpression,
     argumentType: ConeKotlinType,
     expectedType: ConeKotlinType?,
     position: SimpleConstraintSystemConstraintPosition,
@@ -308,22 +341,66 @@ private fun checkApplicabilityForArgumentType(
     context: ResolutionContext
 ) {
     if (expectedType == null) return
+
+    fun unstableSmartCastOrSubtypeError(
+        unstableType: ConeKotlinType?,
+        actualExpectedType: ConeKotlinType,
+        position: ConstraintPosition
+    ): ResolutionDiagnostic {
+        if (unstableType != null) {
+            if (csBuilder.addSubtypeConstraintIfCompatible(unstableType, actualExpectedType, position)) {
+                return UnstableSmartCast.ResolutionError(argument, unstableType)
+            }
+        }
+
+        if (argument.isNullLiteral && actualExpectedType.nullability == ConeNullability.NOT_NULL) {
+            return NullForNotNullType(argument)
+        }
+
+        fun tryGetConeTypeThatCompatibleWithKtType(type: ConeKotlinType): ConeKotlinType {
+            if (type is ConeTypeVariableType) {
+                val originalTypeParameter =
+                    (type.lookupTag as? ConeTypeVariableTypeConstructor)?.originalTypeParameter as? ConeTypeParameterLookupTag
+
+                if (originalTypeParameter != null)
+                    return ConeTypeParameterTypeImpl(originalTypeParameter, type.isNullable, type.attributes)
+            } else if (type is ConeIntegerLiteralType) {
+                return type.possibleTypes.firstOrNull() ?: type
+            }
+
+            return type
+        }
+
+        return ArgumentTypeMismatch(
+            tryGetConeTypeThatCompatibleWithKtType(actualExpectedType),
+            tryGetConeTypeThatCompatibleWithKtType(argumentType),
+            argument
+        )
+    }
+
     if (isReceiver && isDispatch) {
         if (!expectedType.isNullable && argumentType.isMarkedNullable) {
             sink.reportDiagnostic(InapplicableWrongReceiver(expectedType, argumentType))
         }
         return
     }
+
     if (!csBuilder.addSubtypeConstraintIfCompatible(argumentType, expectedType, position)) {
         if (!isReceiver) {
-            csBuilder.addSubtypeConstraint(argumentType, expectedType, position)
+            sink.reportDiagnosticIfNotNull(
+                unstableSmartCastOrSubtypeError(
+                    unstableType = null, // TODO: handle unstable smartcasts
+                    expectedType,
+                    position
+                )
+            )
             return
         }
 
         val nullableExpectedType = expectedType.withNullability(ConeNullability.NULLABLE, context.session.typeContext)
 
         if (csBuilder.addSubtypeConstraintIfCompatible(argumentType, nullableExpectedType, position)) {
-            sink.reportDiagnostic(InapplicableWrongReceiver(expectedType, argumentType)) // TODO
+            sink.reportDiagnostic(UnsafeCall(argumentType)) // TODO
         } else {
             csBuilder.addSubtypeConstraint(argumentType, expectedType, position)
             sink.reportDiagnostic(InapplicableWrongReceiver(expectedType, argumentType))
@@ -332,6 +409,7 @@ private fun checkApplicabilityForArgumentType(
 }
 
 internal fun Candidate.resolveArgument(
+    callInfo: CallInfo,
     argument: FirExpression,
     parameter: FirValueParameter?,
     isReceiver: Boolean,
@@ -340,7 +418,8 @@ internal fun Candidate.resolveArgument(
 ) {
     argument.resultType.ensureResolvedTypeDeclaration(context.session)
 
-    val expectedType = prepareExpectedType(context.session, context.bodyResolveComponents.scopeSession, argument, parameter, context)
+    val expectedType =
+        prepareExpectedType(context.session, context.bodyResolveComponents.scopeSession, callInfo, argument, parameter, context)
     resolveArgumentExpression(
         this.system.getBuilder(),
         argument,
@@ -356,13 +435,33 @@ internal fun Candidate.resolveArgument(
 private fun Candidate.prepareExpectedType(
     session: FirSession,
     scopeSession: ScopeSession,
+    callInfo: CallInfo,
     argument: FirExpression,
     parameter: FirValueParameter?,
     context: ResolutionContext
 ): ConeKotlinType? {
     if (parameter == null) return null
     val basicExpectedType = argument.getExpectedTypeForSAMConversion(parameter/*, LanguageVersionSettings*/)
-    val expectedType = getExpectedTypeWithSAMConversion(session, scopeSession, argument, basicExpectedType, context) ?: basicExpectedType
+
+    val expectedType =
+        getExpectedTypeWithSAMConversion(session, scopeSession, argument, basicExpectedType, context)?.also {
+            session.lookupTracker?.let { lookupTracker ->
+                parameter.returnTypeRef.coneType.lowerBoundIfFlexible().classId?.takeIf { !it.isLocal }?.let { classId ->
+                    lookupTracker.recordLookup(
+                        SAM_LOOKUP_NAME,
+                        classId.asString(),
+                        callInfo.callSite.source,
+                        callInfo.containingFile.source
+                    )
+                    lookupTracker.recordLookup(
+                        classId.shortClassName,
+                        classId.packageFqName.asString(),
+                        callInfo.callSite.source,
+                        callInfo.containingFile.source
+                    )
+                }
+            }
+        } ?: basicExpectedType
     return this.substitutor.substituteOrSelf(expectedType)
 }
 
@@ -395,7 +494,7 @@ fun FirExpression.isFunctional(
     scopeSession: ScopeSession,
     expectedFunctionType: ConeKotlinType?,
 ): Boolean {
-    when ((this as? FirWrappedArgumentExpression)?.expression ?: this) {
+    when (unwrapArgument()) {
         is FirAnonymousFunction, is FirCallableReferenceAccess -> return true
         else -> {
             // Either a functional type or a subtype of a class that has a contributed `invoke`.
@@ -412,7 +511,7 @@ fun FirExpression.isFunctional(
                     session, scopeSession, classLikeExpectedFunctionType, shouldCalculateReturnTypesOfFakeOverrides = false
                 ) ?: return false
             // Make sure the contributed `invoke` is indeed a wanted functional type by checking if types are compatible.
-            val expectedReturnType = classLikeExpectedFunctionType.returnType(session)!!.lowerBoundIfFlexible()
+            val expectedReturnType = classLikeExpectedFunctionType.returnType(session).lowerBoundIfFlexible()
             val returnTypeCompatible =
                 expectedReturnType is ConeTypeParameterType ||
                         AbstractTypeChecker.isSubtypeOf(
@@ -433,7 +532,7 @@ fun FirExpression.isFunctional(
             val parameterPairs =
                 invokeSymbol.fir.valueParameters.zip(classLikeExpectedFunctionType.valueParameterTypesIncludingReceiver(session))
             return parameterPairs.all { (invokeParameter, expectedParameter) ->
-                val expectedParameterType = expectedParameter!!.lowerBoundIfFlexible()
+                val expectedParameterType = expectedParameter.lowerBoundIfFlexible()
                 expectedParameterType is ConeTypeParameterType ||
                         AbstractTypeChecker.isSubtypeOf(
                             session.inferenceComponents.ctx.newBaseTypeCheckerContext(

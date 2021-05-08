@@ -6,14 +6,12 @@
 package org.jetbrains.kotlin.backend.jvm
 
 import org.jetbrains.kotlin.analyzer.hasJdkCapability
-import org.jetbrains.kotlin.backend.common.CodegenUtil
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContextImpl
 import org.jetbrains.kotlin.backend.common.ir.BuiltinSymbolsBase
 import org.jetbrains.kotlin.backend.common.phaser.PhaseConfig
-import org.jetbrains.kotlin.backend.jvm.codegen.ClassCodegen
+import org.jetbrains.kotlin.backend.common.phaser.invokeToplevel
 import org.jetbrains.kotlin.backend.jvm.ir.getKtFile
-import org.jetbrains.kotlin.backend.jvm.lower.MultifileFacadeFileEntry
 import org.jetbrains.kotlin.backend.jvm.serialization.JvmIdSignatureDescriptor
 import org.jetbrains.kotlin.codegen.CodegenFactory
 import org.jetbrains.kotlin.codegen.state.GenerationState
@@ -25,7 +23,6 @@ import org.jetbrains.kotlin.idea.MainFunctionDetector
 import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmIrLinker
 import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmManglerDesc
 import org.jetbrains.kotlin.ir.builders.TranslationPluginContext
-import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
@@ -38,16 +35,22 @@ import org.jetbrains.kotlin.psi2ir.Psi2IrConfiguration
 import org.jetbrains.kotlin.psi2ir.Psi2IrTranslator
 import org.jetbrains.kotlin.psi2ir.generators.DeclarationStubGeneratorImpl
 import org.jetbrains.kotlin.psi2ir.generators.generateTypicalIrProviderList
+import org.jetbrains.kotlin.psi2ir.preprocessing.SourceDeclarationsPreprocessor
 import org.jetbrains.kotlin.resolve.CleanableBindingContext
 
-class JvmIrCodegenFactory(private val phaseConfig: PhaseConfig) : CodegenFactory {
+open class JvmIrCodegenFactory(
+    private val phaseConfig: PhaseConfig,
+    private val externalMangler: JvmManglerDesc? = null,
+    private val externalSymbolTable: SymbolTable? = null,
+    private val jvmGeneratorExtensions: JvmGeneratorExtensionsImpl = JvmGeneratorExtensionsImpl()
+) : CodegenFactory {
     data class JvmIrBackendInput(
         val state: GenerationState,
         val irModuleFragment: IrModuleFragment,
         val symbolTable: SymbolTable,
         val phaseConfig: PhaseConfig,
         val irProviders: List<IrProvider>,
-        val extensions: JvmGeneratorExtensions,
+        val extensions: JvmGeneratorExtensionsImpl,
         val backendExtension: JvmBackendExtension,
         val notifyCodegenStart: () -> Unit,
     )
@@ -59,18 +62,22 @@ class JvmIrCodegenFactory(private val phaseConfig: PhaseConfig) : CodegenFactory
 
     @JvmOverloads
     fun convertToIr(state: GenerationState, files: Collection<KtFile>, ignoreErrors: Boolean = false): JvmIrBackendInput {
-        val extensions = JvmGeneratorExtensionsImpl()
-        val mangler = JvmManglerDesc(MainFunctionDetector(state.bindingContext, state.languageVersionSettings))
+        val (mangler, symbolTable) =
+            if (externalSymbolTable != null) externalMangler!! to externalSymbolTable
+            else {
+                val mangler = JvmManglerDesc(MainFunctionDetector(state.bindingContext, state.languageVersionSettings))
+                val symbolTable = SymbolTable(JvmIdSignatureDescriptor(mangler), IrFactoryImpl, JvmNameProvider)
+                mangler to symbolTable
+            }
         val psi2ir = Psi2IrTranslator(state.languageVersionSettings, Psi2IrConfiguration(ignoreErrors))
-        val symbolTable = SymbolTable(JvmIdSignatureDescriptor(mangler), IrFactoryImpl, JvmNameProvider)
         val messageLogger = state.configuration[IrMessageLogger.IR_MESSAGE_LOGGER] ?: IrMessageLogger.None
-        val psi2irContext = psi2ir.createGeneratorContext(state.module, state.bindingContext, symbolTable, extensions)
+        val psi2irContext = psi2ir.createGeneratorContext(state.module, state.bindingContext, symbolTable, jvmGeneratorExtensions)
         val pluginExtensions = IrGenerationExtension.getInstances(state.project)
         val functionFactory = IrFunctionFactory(psi2irContext.irBuiltIns, symbolTable)
         psi2irContext.irBuiltIns.functionFactory = functionFactory
 
         val stubGenerator =
-            DeclarationStubGeneratorImpl(psi2irContext.moduleDescriptor, symbolTable, state.languageVersionSettings, extensions)
+            DeclarationStubGeneratorImpl(psi2irContext.moduleDescriptor, symbolTable, state.languageVersionSettings, jvmGeneratorExtensions)
         val frontEndContext = object : TranslationPluginContext {
             override val moduleDescriptor: ModuleDescriptor
                 get() = psi2irContext.moduleDescriptor
@@ -108,6 +115,8 @@ class JvmIrCodegenFactory(private val phaseConfig: PhaseConfig) : CodegenFactory
                 )
             }
         }
+
+        SourceDeclarationsPreprocessor(psi2irContext).run(files)
 
         for (extension in pluginExtensions) {
             psi2ir.addPostprocessingStep { module ->
@@ -153,7 +162,7 @@ class JvmIrCodegenFactory(private val phaseConfig: PhaseConfig) : CodegenFactory
             symbolTable,
             phaseConfig,
             irProviders,
-            extensions,
+            jvmGeneratorExtensions,
             JvmBackendExtension.Default,
         ) {}
     }
@@ -162,8 +171,7 @@ class JvmIrCodegenFactory(private val phaseConfig: PhaseConfig) : CodegenFactory
         val result = LinkedHashSet<ModuleDescriptor>()
         fun collectImpl(descriptor: ModuleDescriptor) {
             val dependencies = descriptor.allDependencyModules
-            dependencies.forEach { if (it !in result) collectImpl(it) }
-            result += dependencies
+            dependencies.forEach { if (result.add(it)) collectImpl(it) }
         }
         collectImpl(this)
         return result.toList()
@@ -172,37 +180,16 @@ class JvmIrCodegenFactory(private val phaseConfig: PhaseConfig) : CodegenFactory
     fun doGenerateFilesInternal(input: JvmIrBackendInput) {
         val (state, irModuleFragment, symbolTable, phaseConfig, irProviders, extensions, backendExtension, notifyCodegenStart) = input
         val context = JvmBackendContext(
-            state, irModuleFragment.irBuiltins, irModuleFragment, symbolTable, phaseConfig, extensions, backendExtension
+            state, irModuleFragment.irBuiltins, irModuleFragment, symbolTable, phaseConfig, extensions, backendExtension,
+            notifyCodegenStart
         )
         /* JvmBackendContext creates new unbound symbols, have to resolve them. */
         ExternalDependenciesGenerator(symbolTable, irProviders).generateUnboundSymbolsAsDependencies()
 
         context.state.factory.registerSourceFiles(irModuleFragment.files.map(IrFile::getKtFile))
 
-        JvmLower(context).lower(irModuleFragment)
+        jvmPhases.invokeToplevel(phaseConfig, context, irModuleFragment)
 
-        notifyCodegenStart()
-
-        for (generateMultifileFacade in listOf(true, false)) {
-            for (irFile in irModuleFragment.files) {
-                // Generate multifile facades first, to compute and store JVM signatures of const properties which are later used
-                // when serializing metadata in the multifile parts.
-                // TODO: consider dividing codegen itself into separate phases (bytecode generation, metadata serialization) to avoid this
-                val isMultifileFacade = irFile.fileEntry is MultifileFacadeFileEntry
-                if (isMultifileFacade != generateMultifileFacade) continue
-
-                try {
-                    for (loweredClass in irFile.declarations) {
-                        if (loweredClass !is IrClass) {
-                            throw AssertionError("File-level declaration should be IrClass after JvmLower, got: " + loweredClass.render())
-                        }
-                        ClassCodegen.getOrCreate(loweredClass, context).generate()
-                    }
-                } catch (e: Throwable) {
-                    CodegenUtil.reportBackendException(e, "code generation", irFile.fileEntry.name)
-                }
-            }
-        }
         // TODO: split classes into groups connected by inline calls; call this after every group
         //       and clear `JvmBackendContext.classCodegens`
         state.afterIndependentPart()
@@ -214,7 +201,7 @@ class JvmIrCodegenFactory(private val phaseConfig: PhaseConfig) : CodegenFactory
         symbolTable: SymbolTable,
         extensions: JvmGeneratorExtensionsImpl,
         backendExtension: JvmBackendExtension,
-        notifyCodegenStart: () -> Unit
+        notifyCodegenStart: () -> Unit = {}
     ) {
         val irProviders = configureBuiltInsAndGenerateIrProvidersInFrontendIRMode(irModuleFragment, symbolTable, extensions)
         doGenerateFilesInternal(

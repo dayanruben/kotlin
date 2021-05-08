@@ -35,7 +35,7 @@ dependencies {
     testCompile(commonDep("junit:junit"))
 
     testImplementation(intellijCoreDep()) { includeJars("intellij-core") }
-    testRuntimeOnly(intellijDep()) { includeJars("jps-model") }
+    testRuntimeOnly(intellijDep()) { includeJars("jps-model", "jna") }
 }
 
 sourceSets {
@@ -62,3 +62,11 @@ projectTest(parallel = true) {
     workingDir = rootDir
     systemProperty("kotlin.test.script.classpath", testSourceSet.output.classesDirs.joinToString(File.pathSeparator))
 }
+
+projectTest(taskName = "testWithIr", parallel = true) {
+    dependsOn(":dist")
+    workingDir = rootDir
+    systemProperty("kotlin.test.script.classpath", testSourceSet.output.classesDirs.joinToString(File.pathSeparator))
+    systemProperty("kotlin.script.test.base.compiler.arguments", "-Xuse-ir")
+}
+

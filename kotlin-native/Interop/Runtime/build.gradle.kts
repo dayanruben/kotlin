@@ -78,7 +78,7 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach 
         freeCompilerArgs = listOf("-Xuse-experimental=kotlin.ExperimentalUnsignedTypes",
                                   "-Xuse-experimental=kotlin.Experimental",
                                   "-Xopt-in=kotlin.RequiresOptIn",
-                                  "-XXLanguage:+InlineClasses",
+                                  "-Xinline-classes",
                                   "-Xskip-prerelease-check")
         allWarningsAsErrors = true
     }
@@ -86,8 +86,9 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach 
 
 
 val nativelibs = project.tasks.create<Copy>("nativelibs") {
-    dependsOn(solib("callbacks"))
+    val callbacksSolib = solib("callbacks")
+    dependsOn(callbacksSolib)
 
-    from("$buildDir/")
+    from("$buildDir/$callbacksSolib")
     into("$buildDir/nativelibs/")
 }

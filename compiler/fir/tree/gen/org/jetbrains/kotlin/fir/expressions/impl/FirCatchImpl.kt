@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.fir.visitors.*
  */
 
 internal class FirCatchImpl(
-    override var source: FirSourceElement?,
+    override val source: FirSourceElement?,
     override var parameter: FirValueParameter,
     override var block: FirBlock,
 ) : FirCatch() {
@@ -34,20 +34,16 @@ internal class FirCatchImpl(
     }
 
     override fun <D> transformParameter(transformer: FirTransformer<D>, data: D): FirCatchImpl {
-        parameter = parameter.transformSingle(transformer, data)
+        parameter = parameter.transform(transformer, data)
         return this
     }
 
     override fun <D> transformBlock(transformer: FirTransformer<D>, data: D): FirCatchImpl {
-        block = block.transformSingle(transformer, data)
+        block = block.transform(transformer, data)
         return this
     }
 
     override fun <D> transformOtherChildren(transformer: FirTransformer<D>, data: D): FirCatchImpl {
         return this
-    }
-
-    override fun replaceSource(newSource: FirSourceElement?) {
-        source = newSource
     }
 }

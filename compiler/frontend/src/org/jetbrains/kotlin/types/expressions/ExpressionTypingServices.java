@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.resolve.*;
 import org.jetbrains.kotlin.resolve.calls.components.InferenceSession;
 import org.jetbrains.kotlin.resolve.calls.context.ContextDependency;
 import org.jetbrains.kotlin.resolve.calls.context.ResolutionContext;
-import org.jetbrains.kotlin.resolve.calls.inference.CoroutineInferenceSession;
+import org.jetbrains.kotlin.resolve.calls.inference.BuilderInferenceSession;
 import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowInfo;
 import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowValue;
 import org.jetbrains.kotlin.resolve.calls.tower.KotlinResolutionCallbacksImpl;
@@ -159,7 +159,7 @@ public class ExpressionTypingServices {
                 trace,
                 functionInnerScope, dataFlowInfo, expectedReturnType != null ? expectedReturnType : NO_EXPECTED_TYPE,
                 getLanguageVersionSettings(), expressionTypingComponents.dataFlowValueFactory,
-                localContext == null ? InferenceSession.Companion.getDefault() : localContext.inferenceSession
+                localContext != null ? localContext.inferenceSession : InferenceSession.Companion.getDefault()
         );
 
         checkFunctionReturnType(function, context);
@@ -221,7 +221,8 @@ public class ExpressionTypingServices {
             @NotNull LexicalScope outerScope,
             @NotNull DataFlowInfo dataFlowInfo,
             @NotNull KtDeclarationWithBody function,
-            @NotNull FunctionDescriptor functionDescriptor
+            @NotNull FunctionDescriptor functionDescriptor,
+            @Nullable InferenceSession inferenceSession
     ) {
         KtExpression bodyExpression = function.getBodyExpression();
         assert bodyExpression != null;
@@ -230,7 +231,7 @@ public class ExpressionTypingServices {
 
         ExpressionTypingContext context = ExpressionTypingContext.newContext(
                 trace, functionInnerScope, dataFlowInfo, NO_EXPECTED_TYPE, getLanguageVersionSettings(),
-                expressionTypingComponents.dataFlowValueFactory
+                expressionTypingComponents.dataFlowValueFactory, inferenceSession
         );
 
         KotlinResolutionCallbacksImpl.LambdaInfo lambdaInfo = getNewInferenceLambdaInfo(context, function);
@@ -429,7 +430,7 @@ public class ExpressionTypingServices {
             @NotNull KtExpression statementExpression,
             @NotNull ExpressionTypingContext context
     ) {
-        if (!context.languageVersionSettings.supportsFeature(LanguageFeature.NewInference) || context.inferenceSession instanceof CoroutineInferenceSession)
+        if (!context.languageVersionSettings.supportsFeature(LanguageFeature.NewInference) || context.inferenceSession instanceof BuilderInferenceSession)
             return null;
         KtFunctionLiteral functionLiteral = PsiUtilsKt.getNonStrictParentOfType(statementExpression, KtFunctionLiteral.class);
         if (functionLiteral != null) {

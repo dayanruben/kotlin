@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.codegen.inline
 
 import com.intellij.psi.PsiElement
-import com.intellij.util.ArrayUtil
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.codegen.*
 import org.jetbrains.kotlin.codegen.AsmUtil.isPrimitive
@@ -108,11 +107,9 @@ abstract class InlineCodegen<out T : BaseExpressionCodegen>(
         )
     }
 
-    protected fun generateStub(resolvedCall: ResolvedCall<*>?, codegen: BaseExpressionCodegen) {
+    protected fun generateStub(text: String, codegen: BaseExpressionCodegen) {
         leaveTemps()
-        assert(resolvedCall != null)
-        val message = "Call is part of inline cycle: " + resolvedCall!!.call.callElement.text
-        AsmUtil.genThrow(codegen.v, "java/lang/UnsupportedOperationException", message)
+        AsmUtil.genThrow(codegen.v, "java/lang/UnsupportedOperationException", "Call is part of inline cycle: $text")
     }
 
     protected fun endCall(result: InlineResult, registerLineNumberAfterwards: Boolean) {
@@ -323,8 +320,7 @@ abstract class InlineCodegen<out T : BaseExpressionCodegen>(
 
                 val splitBy = SimpleInterval(start.info as LabelNode, extension.finallyIntervalEnd)
                 processor.tryBlocksMetaInfo.splitAndRemoveCurrentIntervals(splitBy, true)
-
-                //processor.getLocalVarsMetaInfo().splitAndRemoveIntervalsFromCurrents(splitBy);
+                processor.localVarsMetaInfo.splitAndRemoveCurrentIntervals(splitBy, true);
 
                 mark.dropTo()
             }
@@ -333,8 +329,7 @@ abstract class InlineCodegen<out T : BaseExpressionCodegen>(
         }
 
         processor.substituteTryBlockNodes(intoNode)
-
-        //processor.substituteLocalVarTable(intoNode);
+        processor.substituteLocalVarTable(intoNode);
     }
 
     protected abstract fun generateAssertFieldIfNeeded(info: RootInliningContext)
@@ -483,7 +478,7 @@ abstract class InlineCodegen<out T : BaseExpressionCodegen>(
             assert(constantValue is Int) { "Mask should be of Integer type, but " + constantValue }
             maskValues.add(constantValue as Int)
             if (maskStartIndex == -1) {
-                maskStartIndex = invocationParamBuilder.listAllParams().sumBy {
+                maskStartIndex = invocationParamBuilder.listAllParams().sumOf {
                     if (it is CapturedParamInfo) 0 else it.type.size
                 }
             }
@@ -599,14 +594,6 @@ abstract class InlineCodegen<out T : BaseExpressionCodegen>(
         private fun getDirectMemberAndCallableFromObject(functionDescriptor: FunctionDescriptor): CallableMemberDescriptor {
             val directMember = JvmCodegenUtil.getDirectMember(functionDescriptor)
             return (directMember as? ImportedFromObjectCallableDescriptor<*>)?.callableFromObject ?: directMember
-        }
-
-        private fun cloneMethodNode(methodNode: MethodNode): MethodNode {
-            methodNode.instructions.resetLabels()
-            return MethodNode(
-                Opcodes.API_VERSION, methodNode.access, methodNode.name, methodNode.desc, methodNode.signature,
-                ArrayUtil.toStringArray(methodNode.exceptions)
-            ).also(methodNode::accept)
         }
 
         private fun doCreateMethodNodeFromCompiled(

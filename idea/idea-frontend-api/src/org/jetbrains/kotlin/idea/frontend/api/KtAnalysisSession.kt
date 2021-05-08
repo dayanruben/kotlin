@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.idea.frontend.api
 import org.jetbrains.kotlin.idea.frontend.api.components.*
 import org.jetbrains.kotlin.idea.frontend.api.symbols.*
 import org.jetbrains.kotlin.idea.frontend.api.symbols.pointers.KtSymbolPointer
+import org.jetbrains.kotlin.idea.frontend.api.tokens.ValidityToken
 import org.jetbrains.kotlin.psi.*
 
 /**
@@ -15,12 +16,12 @@ import org.jetbrains.kotlin.psi.*
  * - Should not be accessed from event dispatch thread
  * - Should not be accessed outside read action
  * - Should not be leaked outside read action it was created in
- * - To be sure that session is not leaked it is forbidden to store it in a variable, consider working with it only in [analyze] context
+ * - To be sure that session is not leaked it is forbidden to store it in a variable, consider working with it only in [analyse] context
  * - All entities retrieved from analysis session should not be leaked outside the read action KtAnalysisSession was created in
  *
  * To pass a symbol from one read action to another use [KtSymbolPointer] which can be created from a symbol by [KtSymbol.createPointer]
  *
- * To create analysis session consider using [analyze]
+ * To create analysis session consider using [analyse]
  */
 abstract class KtAnalysisSession(final override val token: ValidityToken) : ValidityTokenOwner,
     KtSmartCastProviderMixIn,
@@ -28,17 +29,21 @@ abstract class KtAnalysisSession(final override val token: ValidityToken) : Vali
     KtDiagnosticProviderMixIn,
     KtScopeProviderMixIn,
     KtCompletionCandidateCheckerMixIn,
-    KtTypeRendererMixIn,
     KtSymbolDeclarationOverridesProviderMixIn,
     KtExpressionTypeProviderMixIn,
     KtTypeProviderMixIn,
+    KtTypeInfoProviderMixIn,
     KtSymbolProviderMixIn,
     KtSymbolContainingDeclarationProviderMixIn,
     KtSubtypingComponentMixIn,
     KtExpressionInfoProviderMixIn,
     KtSymbolsMixIn,
     KtReferenceResolveMixIn,
-    KtReferenceShortenerMixIn {
+    KtReferenceShortenerMixIn,
+    KtSymbolDeclarationRendererMixIn,
+    KtVisibilityCheckerMixIn,
+    KtMemberSymbolProviderMixin
+{
 
     override val analysisSession: KtAnalysisSession get() = this
 
@@ -71,10 +76,8 @@ abstract class KtAnalysisSession(final override val token: ValidityToken) : Vali
     internal val referenceShortener: KtReferenceShortener get() = referenceShortenerImpl
     protected abstract val referenceShortenerImpl: KtReferenceShortener
 
-
-    @Suppress("LeakingThis")
-    protected open val typeRendererImpl: KtTypeRenderer = KtDefaultTypeRenderer(this, token)
-    internal val typeRenderer: KtTypeRenderer get() = typeRendererImpl
+    internal val symbolDeclarationRendererProvider: KtSymbolDeclarationRendererProvider get() = symbolDeclarationRendererProviderImpl
+    protected abstract val symbolDeclarationRendererProviderImpl: KtSymbolDeclarationRendererProvider
 
     internal val expressionTypeProvider: KtExpressionTypeProvider get() = expressionTypeProviderImpl
     protected abstract val expressionTypeProviderImpl: KtExpressionTypeProvider
@@ -82,9 +85,18 @@ abstract class KtAnalysisSession(final override val token: ValidityToken) : Vali
     internal val typeProvider: KtTypeProvider get() = typeProviderImpl
     protected abstract val typeProviderImpl: KtTypeProvider
 
+    internal val typeInfoProvider: KtTypeInfoProvider get() = typeInfoProviderImpl
+    protected abstract val typeInfoProviderImpl: KtTypeInfoProvider
+
     internal val subtypingComponent: KtSubtypingComponent get() = subtypingComponentImpl
     protected abstract val subtypingComponentImpl: KtSubtypingComponent
 
     internal val expressionInfoProvider: KtExpressionInfoProvider get() = expressionInfoProviderImpl
     protected abstract val expressionInfoProviderImpl: KtExpressionInfoProvider
+
+    internal val visibilityChecker: KtVisibilityChecker get() = visibilityCheckerImpl
+    protected abstract val visibilityCheckerImpl: KtVisibilityChecker
+
+    internal val overrideInfoProvider: KtOverrideInfoProvider get() = overrideInfoProviderImpl
+    protected abstract val overrideInfoProviderImpl: KtOverrideInfoProvider
 }

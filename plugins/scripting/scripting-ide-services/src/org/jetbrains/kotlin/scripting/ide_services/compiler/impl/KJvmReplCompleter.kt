@@ -17,25 +17,31 @@ import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.lexer.KtKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.renderer.ClassifierNamePolicy
 import org.jetbrains.kotlin.renderer.ParameterNameRenderingPolicy
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
+import org.jetbrains.kotlin.resolve.annotations.argumentValue
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.LexicalScope
 import org.jetbrains.kotlin.resolve.scopes.MemberScope.Companion.ALL_NAME_FILTER
 import org.jetbrains.kotlin.scripting.ide_services.compiler.completion
 import org.jetbrains.kotlin.scripting.ide_services.compiler.filterOutShadowedDescriptors
 import org.jetbrains.kotlin.scripting.ide_services.compiler.nameFilter
+import org.jetbrains.kotlin.scripting.resolve.classId
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.asFlexibleType
 import org.jetbrains.kotlin.types.isFlexible
 import java.io.File
+import java.lang.IllegalArgumentException
 import java.util.*
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.SourceCodeCompletionVariant
@@ -115,21 +121,35 @@ private class KJvmReplCompleter(
                 ) return@gen
             }
 
+            val containingCallId = simpleExpression.getParentOfType<KtCallExpression>(true)?.calleeExpression?.text
+            fun Name.test(checkAgainstContainingCall: Boolean): Boolean {
+                if (isSpecial) return false
+                if (nameFilter(identifier, prefix)) return true
+                return checkAgainstContainingCall && containingCallId?.let { nameFilter(identifier, it) } == true
+            }
+
             isSortNeeded = false
-            descriptors = ReferenceVariantsHelper(
-                bindingContext,
-                resolutionFacade,
-                moduleDescriptor,
-                VisibilityFilter(inDescriptor)
-            ).getReferenceVariants(
-                simpleExpression,
-                DescriptorKindFilter.ALL,
-                { name: Name -> !name.isSpecial && nameFilter(name.identifier, prefix) },
-                filterOutJavaGettersAndSetters = true,
-                filterOutShadowed = filterOutShadowedDescriptors, // setting to true makes it slower up to 4 times
-                excludeNonInitializedVariable = true,
-                useReceiverType = null
-            )
+            descriptors = ArrayList<DeclarationDescriptor>().also { result ->
+                ReferenceVariantsHelper(
+                    bindingContext,
+                    resolutionFacade,
+                    moduleDescriptor,
+                    VisibilityFilter(inDescriptor)
+                ).getReferenceVariants(
+                    simpleExpression,
+                    DescriptorKindFilter.ALL,
+                    { it.test(true) },
+                    filterOutJavaGettersAndSetters = true,
+                    filterOutShadowed = filterOutShadowedDescriptors, // setting to true makes it slower up to 4 times
+                    excludeNonInitializedVariable = true,
+                    useReceiverType = null
+                ).forEach { descriptor ->
+                    if (descriptor.name.test(false)) result.add(descriptor)
+                    if (descriptor is CallableDescriptor && containingCallId == descriptor.name.identifier) {
+                        descriptor.valueParameters.filterTo(result) { it.name.test(false) }
+                    }
+                }
+            }
 
         } else if (element is KtStringTemplateExpression) {
             if (element.hasInterpolation()) {
@@ -233,19 +253,28 @@ private class KJvmReplCompleter(
                         getPresentation(
                             it
                         )
-                    Triple(it, presentation, (presentation.presentableText + presentation.tailText).toLowerCase())
+                    Triple(it, presentation, (presentation.presentableText + presentation.tailText).lowercase())
                 }
                 .let {
                     if (isSortNeeded) it.sortedBy { descTriple -> descTriple.third } else it
                 }
-                .forEach {
-                    val descriptor = it.first
-                    val (rawName, presentableText, tailText, completionText) = it.second
+                .forEach { resultTriple ->
+                    val descriptor = resultTriple.first
+                    val (rawName, presentableText, tailText, completionText) = resultTriple.second
                     if (nameFilter(rawName, prefix)) {
                         val fullName: String =
                             formatName(
                                 presentableText
                             )
+                        val deprecationLevel = descriptor.annotations
+                            .findAnnotation(FqName("kotlin.Deprecated"))
+                            ?.let { annotationDescriptor ->
+                                val valuePair = annotationDescriptor.argumentValue("level")?.value as? Pair<*, *>
+                                val valueClass = (valuePair?.first as? ClassId)?.takeIf { DeprecationLevel::class.classId == it }
+                                val valueName = (valuePair?.second as? Name)?.identifier
+                                if (valueClass == null || valueName == null) return@let DeprecationLevel.WARNING
+                                DeprecationLevel.valueOf(valueName)
+                            }
                         yield(
                             SourceCodeCompletionVariant(
                                 completionText,
@@ -253,7 +282,8 @@ private class KJvmReplCompleter(
                                 tailText,
                                 getIconFromDescriptor(
                                     descriptor
-                                )
+                                ),
+                                deprecationLevel,
                             )
                         )
                     }
@@ -348,7 +378,7 @@ private class KJvmReplCompleter(
             is ClassDescriptor -> "class"
             is PackageFragmentDescriptor -> "package"
             is PackageViewDescriptor -> "package"
-            is ValueParameterDescriptor -> "genericValue"
+            is ValueParameterDescriptor -> "parameter"
             is TypeParameterDescriptorImpl -> "class"
             else -> ""
         }
@@ -396,13 +426,17 @@ private class KJvmReplCompleter(
                 val outType =
                     descriptor.type
                 typeText = RENDERER.renderType(outType)
+                if (descriptor is ValueParameterDescriptor) {
+                    completionText = "$rawDescriptorName = "
+                }
             } else if (descriptor is ClassDescriptor) {
                 val declaredIn = descriptor.containingDeclaration
                 tailText = " (" + DescriptorUtils.getFqName(declaredIn) + ")"
             } else {
                 typeText = RENDERER.render(descriptor)
             }
-            tailText = if (typeText.isEmpty()) tailText else typeText
+
+            tailText = typeText.ifEmpty { tailText }
 
             if (completionText.isEmpty()) {
                 completionText = presentableText

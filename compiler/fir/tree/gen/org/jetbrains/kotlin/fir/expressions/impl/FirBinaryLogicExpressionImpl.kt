@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.fir.visitors.*
  */
 
 internal class FirBinaryLogicExpressionImpl(
-    override var source: FirSourceElement?,
+    override val source: FirSourceElement?,
     override val annotations: MutableList<FirAnnotationCall>,
     override var leftOperand: FirExpression,
     override var rightOperand: FirExpression,
@@ -48,23 +48,19 @@ internal class FirBinaryLogicExpressionImpl(
     }
 
     override fun <D> transformLeftOperand(transformer: FirTransformer<D>, data: D): FirBinaryLogicExpressionImpl {
-        leftOperand = leftOperand.transformSingle(transformer, data)
+        leftOperand = leftOperand.transform(transformer, data)
         return this
     }
 
     override fun <D> transformRightOperand(transformer: FirTransformer<D>, data: D): FirBinaryLogicExpressionImpl {
-        rightOperand = rightOperand.transformSingle(transformer, data)
+        rightOperand = rightOperand.transform(transformer, data)
         return this
     }
 
     override fun <D> transformOtherChildren(transformer: FirTransformer<D>, data: D): FirBinaryLogicExpressionImpl {
-        typeRef = typeRef.transformSingle(transformer, data)
+        typeRef = typeRef.transform(transformer, data)
         transformAnnotations(transformer, data)
         return this
-    }
-
-    override fun replaceSource(newSource: FirSourceElement?) {
-        source = newSource
     }
 
     override fun replaceTypeRef(newTypeRef: FirTypeRef) {

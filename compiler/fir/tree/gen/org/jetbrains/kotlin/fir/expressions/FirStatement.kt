@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.fir.expressions
 
 import org.jetbrains.kotlin.fir.FirAnnotationContainer
+import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.FirSourceElement
 import org.jetbrains.kotlin.fir.visitors.*
 
@@ -20,7 +21,9 @@ interface FirStatement : FirAnnotationContainer {
 
     override fun <R, D> accept(visitor: FirVisitor<R, D>, data: D): R = visitor.visitStatement(this, data)
 
-    override fun replaceSource(newSource: FirSourceElement?)
+    @Suppress("UNCHECKED_CAST")
+    override fun <E: FirElement, D> transform(transformer: FirTransformer<D>, data: D): E = 
+        transformer.transformStatement(this, data) as E
 
     override fun <D> transformAnnotations(transformer: FirTransformer<D>, data: D): FirStatement
 }

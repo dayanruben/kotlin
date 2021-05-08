@@ -1,11 +1,12 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the LICENSE file.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package kotlin.text
 
 import kotlin.IllegalArgumentException
+import kotlin.native.internal.GCUnsafeCall
 
 /**
  * Returns `true` if this character (Unicode code point) is defined in Unicode.
@@ -77,17 +78,18 @@ public actual fun Char.isDigit(): Boolean {
  * Returns `true` if this character (Unicode code point) should be regarded as an ignorable
  * character in a Java identifier or a Unicode identifier.
  */
-@SymbolName("Kotlin_Char_isIdentifierIgnorable")
+@GCUnsafeCall("Kotlin_Char_isIdentifierIgnorable")
 external public fun Char.isIdentifierIgnorable(): Boolean
 
 /**
  * Returns `true` if this character is an ISO control character.
  *
- * A character is considered to be an ISO control character if its code is in the range `'\u0000'..'\u001F'` or in the range `'\u007F'..'\u009F'`.
+ * A character is considered to be an ISO control character if its [category] is [CharCategory.CONTROL],
+ * meaning the Char is in the range `'\u0000'..'\u001F'` or in the range `'\u007F'..'\u009F'`.
  *
  * @sample samples.text.Chars.isISOControl
  */
-@SymbolName("Kotlin_Char_isISOControl")
+@GCUnsafeCall("Kotlin_Char_isISOControl")
 external public actual fun Char.isISOControl(): Boolean
 
 /**
@@ -150,6 +152,8 @@ public actual fun Char.isTitleCase(): Boolean {
 /**
  * Converts this character to upper case using Unicode mapping rules of the invariant locale.
  */
+@Deprecated("Use uppercaseChar() instead.", ReplaceWith("uppercaseChar()"))
+@DeprecatedSinceKotlin(warningSince = "1.5")
 public actual fun Char.toUpperCase(): Char = uppercaseCharImpl()
 
 /**
@@ -161,8 +165,8 @@ public actual fun Char.toUpperCase(): Char = uppercaseCharImpl()
  *
  * @sample samples.text.Chars.uppercase
  */
-@SinceKotlin("1.4")
-@ExperimentalStdlibApi
+@SinceKotlin("1.5")
+@WasExperimental(ExperimentalStdlibApi::class)
 public actual fun Char.uppercaseChar(): Char = uppercaseCharImpl()
 
 /**
@@ -175,13 +179,15 @@ public actual fun Char.uppercaseChar(): Char = uppercaseCharImpl()
  *
  * @sample samples.text.Chars.uppercase
  */
-@SinceKotlin("1.4")
-@ExperimentalStdlibApi
+@SinceKotlin("1.5")
+@WasExperimental(ExperimentalStdlibApi::class)
 public actual fun Char.uppercase(): String = uppercaseImpl()
 
 /**
  * Converts this character to lower case using Unicode mapping rules of the invariant locale.
  */
+@Deprecated("Use lowercaseChar() instead.", ReplaceWith("lowercaseChar()"))
+@DeprecatedSinceKotlin(warningSince = "1.5")
 public actual fun Char.toLowerCase(): Char = lowercaseCharImpl()
 
 /**
@@ -193,8 +199,8 @@ public actual fun Char.toLowerCase(): Char = lowercaseCharImpl()
  *
  * @sample samples.text.Chars.lowercase
  */
-@SinceKotlin("1.4")
-@ExperimentalStdlibApi
+@SinceKotlin("1.5")
+@WasExperimental(ExperimentalStdlibApi::class)
 public actual fun Char.lowercaseChar(): Char = lowercaseCharImpl()
 
 /**
@@ -207,8 +213,8 @@ public actual fun Char.lowercaseChar(): Char = lowercaseCharImpl()
  *
  * @sample samples.text.Chars.lowercase
  */
-@SinceKotlin("1.4")
-@ExperimentalStdlibApi
+@SinceKotlin("1.5")
+@WasExperimental(ExperimentalStdlibApi::class)
 public actual fun Char.lowercase(): String = lowercaseImpl()
 
 /**
@@ -226,19 +232,19 @@ public actual fun Char.titlecaseChar(): Char = titlecaseCharImpl()
 /**
  * Returns `true` if this character is a Unicode high-surrogate code unit (also known as leading-surrogate code unit).
  */
-@SymbolName("Kotlin_Char_isHighSurrogate")
+@GCUnsafeCall("Kotlin_Char_isHighSurrogate")
 external public actual fun Char.isHighSurrogate(): Boolean
 
 /**
  * Returns `true` if this character is a Unicode low-surrogate code unit (also known as trailing-surrogate code unit).
  */
-@SymbolName("Kotlin_Char_isLowSurrogate")
+@GCUnsafeCall("Kotlin_Char_isLowSurrogate")
 external public actual fun Char.isLowSurrogate(): Boolean
 
 
 internal actual fun digitOf(char: Char, radix: Int): Int = digitOfChecked(char, checkRadix(radix))
 
-@SymbolName("Kotlin_Char_digitOfChecked")
+@GCUnsafeCall("Kotlin_Char_digitOfChecked")
 external internal fun digitOfChecked(char: Char, radix: Int): Int
 
 /**
@@ -264,7 +270,8 @@ internal actual fun checkRadix(radix: Int): Int {
 /** Converts a unicode code point to lower case. */
 internal fun Char.Companion.toLowerCase(codePoint: Int): Int =
     if (codePoint < MIN_SUPPLEMENTARY_CODE_POINT) {
-        codePoint.toChar().toLowerCase().toInt()
+        @Suppress("DEPRECATION")
+        codePoint.toChar().lowercaseChar().toInt()
     } else {
         codePoint // TODO: Implement this transformation for supplementary codepoints.
     }
@@ -272,19 +279,23 @@ internal fun Char.Companion.toLowerCase(codePoint: Int): Int =
 /** Converts a unicode code point to upper case. */
 internal fun Char.Companion.toUpperCase(codePoint: Int): Int =
     if (codePoint < MIN_SUPPLEMENTARY_CODE_POINT) {
-        codePoint.toChar().toUpperCase().toInt()
+        @Suppress("DEPRECATION")
+        codePoint.toChar().uppercaseChar().toInt()
     } else {
         codePoint // TODO: Implement this transformation for supplementary codepoints.
     }
 
 /** Converts a surrogate pair to a unicode code point. Doesn't validate that the characters are a valid surrogate pair. */
+// TODO: Consider removing from public API
 public fun Char.Companion.toCodePoint(high: Char, low: Char): Int =
     (((high - MIN_HIGH_SURROGATE) shl 10) or (low - MIN_LOW_SURROGATE)) + 0x10000
 
 /** Checks if the codepoint specified is a supplementary codepoint or not. */
+// TODO: Consider removing from public API
 public fun Char.Companion.isSupplementaryCodePoint(codepoint: Int): Boolean =
     codepoint in MIN_SUPPLEMENTARY_CODE_POINT..MAX_CODE_POINT
 
+// TODO: Consider removing from public API
 public fun Char.Companion.isSurrogatePair(high: Char, low: Char): Boolean = high.isHighSurrogate() && low.isLowSurrogate()
 
 /**
@@ -292,6 +303,8 @@ public fun Char.Companion.isSurrogatePair(high: Char, low: Char): Boolean = high
  * return an array with one element otherwise it will return an array A with a high surrogate in A[0] and
  * a low surrogate in A[1].
  */
+// TODO: Consider removing from public API
+@Suppress("DEPRECATION")
 public fun Char.Companion.toChars(codePoint: Int): CharArray =
     when {
         codePoint in 0 until MIN_SUPPLEMENTARY_CODE_POINT -> charArrayOf(codePoint.toChar())

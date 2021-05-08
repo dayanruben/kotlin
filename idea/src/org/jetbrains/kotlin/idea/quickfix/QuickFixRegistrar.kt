@@ -77,6 +77,7 @@ class QuickFixRegistrar : QuickFixContributor {
         MUST_BE_INITIALIZED_OR_BE_ABSTRACT.registerFactory(addAbstractModifierFactory)
         ABSTRACT_MEMBER_NOT_IMPLEMENTED.registerFactory(addAbstractModifierFactory)
         ABSTRACT_CLASS_MEMBER_NOT_IMPLEMENTED.registerFactory(addAbstractModifierFactory)
+        ABSTRACT_CLASS_MEMBER_NOT_IMPLEMENTED_WARNING.registerFactory(addAbstractModifierFactory)
 
         MUST_BE_INITIALIZED_OR_BE_ABSTRACT.registerFactory(InitializePropertyQuickFixFactory)
         MUST_BE_INITIALIZED.registerFactory(InitializePropertyQuickFixFactory)
@@ -137,7 +138,7 @@ class QuickFixRegistrar : QuickFixContributor {
             RemoveModifierFix.removeNonRedundantModifier
         )
         REDUNDANT_MODIFIER_IN_GETTER.registerFactory(RemoveModifierFix.removeRedundantModifier)
-        WRONG_MODIFIER_TARGET.registerFactory(RemoveModifierFix.removeNonRedundantModifier, ConstValFactory)
+        WRONG_MODIFIER_TARGET.registerFactory(RemoveModifierFix.removeNonRedundantModifier, ChangeVariableMutabilityFix.CONST_VAL_FACTORY)
         DEPRECATED_MODIFIER.registerFactory(ReplaceModifierFix)
         REDUNDANT_MODIFIER_FOR_TARGET.registerFactory(RemoveModifierFix.removeNonRedundantModifier)
         WRONG_MODIFIER_CONTAINING_DECLARATION.registerFactory(RemoveModifierFix.removeNonRedundantModifier)
@@ -199,7 +200,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         for (exposed in listOf(
             EXPOSED_FUNCTION_RETURN_TYPE, EXPOSED_PARAMETER_TYPE, EXPOSED_PROPERTY_TYPE, EXPOSED_PROPERTY_TYPE_IN_CONSTRUCTOR,
-            EXPOSED_RECEIVER_TYPE, EXPOSED_SUPER_CLASS, EXPOSED_SUPER_INTERFACE, EXPOSED_TYPE_PARAMETER_BOUND
+            EXPOSED_RECEIVER_TYPE, EXPOSED_SUPER_CLASS, EXPOSED_SUPER_INTERFACE, EXPOSED_TYPE_PARAMETER_BOUND, EXPOSED_FROM_PRIVATE_IN_FILE
         )) {
             exposed.registerFactory(ChangeVisibilityOnExposureFactory)
         }
@@ -213,7 +214,9 @@ class QuickFixRegistrar : QuickFixContributor {
         val implementMembersAsParametersHandler = ImplementAsConstructorParameter()
         ABSTRACT_MEMBER_NOT_IMPLEMENTED.registerActions(implementMembersHandler, implementMembersAsParametersHandler)
         ABSTRACT_CLASS_MEMBER_NOT_IMPLEMENTED.registerActions(implementMembersHandler, implementMembersAsParametersHandler)
+        ABSTRACT_CLASS_MEMBER_NOT_IMPLEMENTED_WARNING.registerActions(implementMembersHandler, implementMembersAsParametersHandler)
         MANY_INTERFACES_MEMBER_NOT_IMPLEMENTED.registerActions(implementMembersHandler, implementMembersAsParametersHandler)
+        MANY_INTERFACES_MEMBER_NOT_IMPLEMENTED_WARNING.registerActions(implementMembersHandler, implementMembersAsParametersHandler)
         MANY_IMPL_MEMBER_NOT_IMPLEMENTED.registerActions(implementMembersHandler)
 
         VAL_WITH_SETTER.registerFactory(ChangeVariableMutabilityFix.VAL_WITH_SETTER_FACTORY)
@@ -241,7 +244,7 @@ class QuickFixRegistrar : QuickFixContributor {
         SENSELESS_COMPARISON.registerFactory(SimplifyComparisonFix)
 
         UNNECESSARY_SAFE_CALL.registerFactory(ReplaceWithDotCallFix)
-        UNSAFE_CALL.registerFactory(ReplaceWithSafeCallFix)
+        UNSAFE_CALL.registerFactory(ReplaceWithSafeCallFixFactory)
 
         UNSAFE_CALL.registerFactory(SurroundWithNullCheckFix)
         UNSAFE_IMPLICIT_INVOKE_CALL.registerFactory(SurroundWithNullCheckFix)
@@ -264,7 +267,7 @@ class QuickFixRegistrar : QuickFixContributor {
         UNSAFE_OPERATOR_CALL.registerFactory(ReplaceInfixOrOperatorCallFix)
         UNSAFE_CALL.registerFactory(ReplaceInfixOrOperatorCallFix) // [] only
         UNSAFE_IMPLICIT_INVOKE_CALL.registerFactory(ReplaceInfixOrOperatorCallFix)
-        UNSAFE_CALL.registerFactory(ReplaceWithSafeCallForScopeFunctionFix)
+        UNSAFE_CALL.registerFactory(ReplaceWithSafeCallForScopeFunctionFixFactory)
 
         AMBIGUOUS_ANONYMOUS_TYPE_INFERRED.registerActions(SpecifyTypeExplicitlyFix())
         PROPERTY_WITH_NO_TYPE_NO_INITIALIZER.registerActions(SpecifyTypeExplicitlyFix())
@@ -620,8 +623,8 @@ class QuickFixRegistrar : QuickFixContributor {
 
         NO_SET_METHOD.registerFactory(ChangeToMutableCollectionFix)
 
-        MUST_BE_INITIALIZED_OR_BE_ABSTRACT.registerFactory(AbstractAddAccessorsIntention)
-        MUST_BE_INITIALIZED.registerFactory(AbstractAddAccessorsIntention)
+        MUST_BE_INITIALIZED_OR_BE_ABSTRACT.registerFactory(AddAccessorsIntention)
+        MUST_BE_INITIALIZED.registerFactory(AddAccessorsIntention)
 
         RESTRICTED_RETENTION_FOR_EXPRESSION_ANNOTATION.registerFactory(RestrictedRetentionForExpressionAnnotationFactory)
         RESTRICTED_RETENTION_FOR_EXPRESSION_ANNOTATION_WARNING.registerFactory(RestrictedRetentionForExpressionAnnotationFactory)

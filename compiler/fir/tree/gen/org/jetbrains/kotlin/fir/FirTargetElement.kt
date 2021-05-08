@@ -17,5 +17,7 @@ interface FirTargetElement : FirElement {
 
     override fun <R, D> accept(visitor: FirVisitor<R, D>, data: D): R = visitor.visitTargetElement(this, data)
 
-    override fun replaceSource(newSource: FirSourceElement?)
+    @Suppress("UNCHECKED_CAST")
+    override fun <E: FirElement, D> transform(transformer: FirTransformer<D>, data: D): E = 
+        transformer.transformTargetElement(this, data) as E
 }

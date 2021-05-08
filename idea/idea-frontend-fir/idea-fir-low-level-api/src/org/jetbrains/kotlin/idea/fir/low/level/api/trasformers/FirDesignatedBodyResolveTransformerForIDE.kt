@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.idea.fir.low.level.api.trasformers
 
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.FirDeclaration
+import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.expressions.FirStatement
 import org.jetbrains.kotlin.fir.resolve.ResolutionMode
@@ -14,8 +15,6 @@ import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirBodyResolveTransformer
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.ImplicitBodyResolveComputationSession
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.createReturnTypeCalculatorForIDE
-import org.jetbrains.kotlin.fir.visitors.CompositeTransformResult
-import org.jetbrains.kotlin.fir.visitors.compose
 import org.jetbrains.kotlin.idea.fir.low.level.api.element.builder.FirIdeDesignatedBodyResolveTransformerForReturnTypeCalculator
 import org.jetbrains.kotlin.idea.fir.low.level.api.element.builder.FirTowerDataContextCollector
 
@@ -39,10 +38,14 @@ internal class FirDesignatedBodyResolveTransformerForIDE(
     private val ideDeclarationTransformer = IDEDeclarationTransformer(designation)
 
     @Suppress("NAME_SHADOWING")
-    override fun transformDeclarationContent(declaration: FirDeclaration, data: ResolutionMode): CompositeTransformResult<FirDeclaration> =
+    override fun transformDeclarationContent(declaration: FirDeclaration, data: ResolutionMode): FirDeclaration =
         ideDeclarationTransformer.transformDeclarationContent(this, declaration, data) { declaration, data ->
             super.transformDeclarationContent(declaration, data)
         }
+
+    override fun onBeforeFileContentResolution(file: FirFile) {
+        towerDataContextCollector?.addFileContext(file, context.towerDataContext)
+    }
 
     override fun onBeforeDeclarationContentResolve(declaration: FirDeclaration) {
         towerDataContextCollector?.addDeclarationContext(declaration, context.towerDataContext)

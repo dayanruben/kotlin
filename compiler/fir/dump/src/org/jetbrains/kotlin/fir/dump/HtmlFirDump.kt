@@ -317,7 +317,7 @@ class MultiModuleHtmlFirDump(private val outputRoot: File) {
         require(inModule)
 
         val dumpOutput = index.files[file] ?: error("No location for ${file.name}")
-        val dumper = HtmlFirDump(LinkResolver(dumpOutput), file.session)
+        val dumper = HtmlFirDump(LinkResolver(dumpOutput), file.declarationSiteSession)
         val builder = StringBuilder()
         dumper.generate(file, builder)
 
@@ -520,7 +520,7 @@ class HtmlFirDump internal constructor(private var linkResolver: FirLinkResolver
 
     private fun FlowContent.modality(modality: Modality?) {
         if (modality == null) return
-        keyword(modality.name.toLowerCase())
+        keyword(modality.name.lowercase())
     }
 
     private fun FlowContent.visibility(visibility: Visibility) {
@@ -676,7 +676,7 @@ class HtmlFirDump internal constructor(private var linkResolver: FirLinkResolver
             AbstractStrictEqualityTypeChecker.strictEqualTypes(
                 session.typeContext,
                 flexibleType.lowerBound,
-                flexibleType.upperBound.withNullability(ConeNullability.NOT_NULL)
+                flexibleType.upperBound.withNullability(ConeNullability.NOT_NULL, session.typeContext)
             )
         ) {
             generate(flexibleType.lowerBound)
@@ -1258,7 +1258,7 @@ class HtmlFirDump internal constructor(private var linkResolver: FirLinkResolver
                 +"Ambiguity: "
                 br
                 for (candidate in diagnostic.candidates) {
-                    describeVerbose(candidate)
+                    describeVerbose(candidate.symbol)
                     br
                 }
             }

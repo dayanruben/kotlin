@@ -25,17 +25,18 @@ import org.jetbrains.kotlin.fir.references.impl.FirReferencePlaceholderForResolv
 import org.jetbrains.kotlin.fir.resolve.bindSymbolToLookupTag
 import org.jetbrains.kotlin.fir.resolve.defaultType
 import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeUnresolvedReferenceError
-import org.jetbrains.kotlin.fir.resolve.symbolProvider
+import org.jetbrains.kotlin.fir.resolve.inference.inferenceComponents
 import org.jetbrains.kotlin.fir.resolve.providers.getClassDeclaredPropertySymbols
+import org.jetbrains.kotlin.fir.resolve.symbolProvider
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.expectedConeType
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.firUnsafe
-import org.jetbrains.kotlin.fir.symbols.StandardClassIds
+import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.fir.symbols.impl.ConeClassLikeLookupTagImpl
 import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.builder.buildErrorTypeRef
-import org.jetbrains.kotlin.fir.types.builder.buildImplicitTypeRef
 import org.jetbrains.kotlin.fir.types.builder.buildResolvedTypeRef
 import org.jetbrains.kotlin.fir.types.impl.ConeClassLikeTypeImpl
 import org.jetbrains.kotlin.fir.types.impl.ConeTypeParameterTypeImpl
@@ -80,13 +81,16 @@ internal val JavaClass.classKind: ClassKind
         else -> ClassKind.CLASS
     }
 
+internal fun ClassId.toLookupTag(): ConeClassLikeLookupTag {
+    return ConeClassLikeLookupTagImpl(this)
+}
+
 internal fun ClassId.toConeKotlinType(
     typeArguments: Array<ConeTypeProjection>,
     isNullable: Boolean,
     attributes: ConeAttributes = ConeAttributes.Empty
 ): ConeLookupTagBasedType {
-    val lookupTag = ConeClassLikeLookupTagImpl(this)
-    return ConeClassLikeTypeImpl(lookupTag, typeArguments, isNullable, attributes)
+    return ConeClassLikeTypeImpl(toLookupTag(), typeArguments, isNullable, attributes)
 }
 
 internal fun FirTypeRef.toConeKotlinTypeProbablyFlexible(
@@ -224,7 +228,7 @@ private fun ClassId.toConeFlexibleType(
     toConeKotlinType(
         typeArguments,
         isNullable = false,
-        attributes.withFlexibleUnless { it.hasEnhancedNullability }
+        attributes
     ),
     toConeKotlinType(typeArgumentsForUpper, isNullable = true, attributes)
 )
@@ -264,19 +268,14 @@ private fun JavaClassifierType.toConeKotlinTypeWithoutEnhancement(
     return if (isRaw)
         ConeRawType(lowerBound, upperBound)
     else
-        ConeFlexibleType(
-            lowerBound.withAttributes(
-                lowerBound.attributes.withFlexibleUnless { it.hasEnhancedNullability }
-            ),
-            upperBound
-        )
+        ConeFlexibleType(lowerBound, upperBound)
 }
 
 private fun computeRawProjection(
     session: FirSession,
     parameter: FirTypeParameter,
     attr: TypeComponentPosition,
-    erasedUpperBound: ConeKotlinType = parameter.getErasedUpperBound()
+    erasedUpperBound: ConeKotlinType = parameter.getErasedUpperBound(session)
 ) = when (attr) {
     // Raw(List<T>) => (List<Any?>..List<*>)
     // Raw(Enum<T>) => (Enum<Enum<*>>..Enum<out Enum<*>>)
@@ -308,6 +307,7 @@ private fun computeRawProjection(
 // ErasedUpperBound(T : A) = A // UpperBound(T) is a type A without arguments
 // ErasedUpperBound(T : F) = UpperBound(F) // UB(T) is another type parameter F
 private fun FirTypeParameter.getErasedUpperBound(
+    session: FirSession,
     // Calculation of `potentiallyRecursiveTypeParameter.upperBounds` may recursively depend on `this.getErasedUpperBound`
     // E.g. `class A<T extends A, F extends A>`
     // To prevent recursive calls return defaultValue() instead
@@ -320,10 +320,11 @@ private fun FirTypeParameter.getErasedUpperBound(
 
     val firstUpperBound = this.bounds.first().coneType
 
-    return getErasedVersionOfFirstUpperBound(firstUpperBound, mutableSetOf(this, potentiallyRecursiveTypeParameter), defaultValue)
+    return getErasedVersionOfFirstUpperBound(session, firstUpperBound, mutableSetOf(this, potentiallyRecursiveTypeParameter), defaultValue)
 }
 
 private fun getErasedVersionOfFirstUpperBound(
+    session: FirSession,
     firstUpperBound: ConeKotlinType,
     alreadyVisitedParameters: MutableSet<FirTypeParameter?>,
     defaultValue: () -> ConeKotlinType
@@ -334,20 +335,18 @@ private fun getErasedVersionOfFirstUpperBound(
 
         is ConeFlexibleType -> {
             val lowerBound =
-                getErasedVersionOfFirstUpperBound(firstUpperBound.lowerBound, alreadyVisitedParameters, defaultValue)
+                getErasedVersionOfFirstUpperBound(session, firstUpperBound.lowerBound, alreadyVisitedParameters, defaultValue)
                     .lowerBoundIfFlexible()
             if (firstUpperBound.upperBound is ConeTypeParameterType) {
                 // Avoid exponential complexity
                 ConeFlexibleType(
-                    lowerBound.withAttributes(
-                        lowerBound.attributes.withFlexibleUnless { it.hasEnhancedNullability }
-                    ),
-                    lowerBound.withNullability(ConeNullability.NULLABLE)
+                    lowerBound,
+                    lowerBound.withNullability(ConeNullability.NULLABLE, session.inferenceComponents.ctx)
                 )
             } else {
                 ConeFlexibleType(
                     lowerBound,
-                    getErasedVersionOfFirstUpperBound(firstUpperBound.upperBound, alreadyVisitedParameters, defaultValue)
+                    getErasedVersionOfFirstUpperBound(session, firstUpperBound.upperBound, alreadyVisitedParameters, defaultValue)
                 )
             }
         }
@@ -356,7 +355,7 @@ private fun getErasedVersionOfFirstUpperBound(
 
             if (alreadyVisitedParameters.add(current)) {
                 val nextUpperBound = current.bounds.first().coneType
-                getErasedVersionOfFirstUpperBound(nextUpperBound, alreadyVisitedParameters, defaultValue)
+                getErasedVersionOfFirstUpperBound(session, nextUpperBound, alreadyVisitedParameters, defaultValue)
             } else {
                 defaultValue()
             }
@@ -406,7 +405,7 @@ private fun JavaClassifierType.toConeKotlinTypeForFlexibleBound(
                 } else {
                     val position = if (isLowerBound) TypeComponentPosition.FLEXIBLE_LOWER else TypeComponentPosition.FLEXIBLE_UPPER
 
-                    classSymbol?.fir?.createRawArguments(defaultArgs, position) ?: defaultArgs
+                    classSymbol?.fir?.createRawArguments(session, defaultArgs, position) ?: defaultArgs
                 }
             } else {
                 val typeParameters = runIf(!forTypeParameterBounds && !isForSupertypes) { classSymbol?.fir?.typeParameters } ?: emptyList()
@@ -433,10 +432,11 @@ private fun JavaClassifierType.toConeKotlinTypeForFlexibleBound(
 }
 
 private fun FirRegularClass.createRawArguments(
+    session: FirSession,
     defaultArgs: List<ConeStarProjection>,
     position: TypeComponentPosition
-) = typeParameters.filterIsInstance<FirTypeParameter>().map { typeParameter ->
-    val erasedUpperBound = typeParameter.getErasedUpperBound {
+): List<ConeTypeProjection> = typeParameters.filterIsInstance<FirTypeParameter>().map { typeParameter ->
+    val erasedUpperBound = typeParameter.getErasedUpperBound(session) {
         defaultType().withArguments(defaultArgs.toTypedArray())
     }
     computeRawProjection(session, typeParameter, position, erasedUpperBound)
@@ -557,10 +557,7 @@ internal fun JavaAnnotation.toFirAnnotationCall(
             else -> buildArgumentMapping(session, javaTypeParameterStack, lookupTag!!, arguments)
         } ?: buildArgumentList {
             this@toFirAnnotationCall.arguments.mapTo(arguments) {
-                val expectedArgumentType = buildErrorTypeRef {
-                    diagnostic = ConeSimpleDiagnostic("java annotation argument without expected type")
-                }
-                it.toFirExpression(session, javaTypeParameterStack, expectedArgumentType)
+                it.toFirExpression(session, javaTypeParameterStack, null)
             }
         }
         calleeReference = FirReferencePlaceholderForResolvedAnnotations
@@ -593,7 +590,7 @@ internal fun JavaValueParameter.toFirValueParameter(
 ): FirValueParameter {
     return buildJavaValueParameter {
         source = (this@toFirValueParameter as? JavaElementImpl<*>)?.psi?.toFirPsiSourceElement()
-        this.session = session
+        declarationSiteSession = session
         name = this@toFirValueParameter.name ?: Name.identifier("p$index")
         returnTypeRef = type.toFirJavaTypeRef(session, javaTypeParameterStack)
         isVararg = this@toFirValueParameter.isVararg
@@ -631,15 +628,17 @@ private fun JavaType?.toConeProjectionWithoutEnhancement(
 }
 
 internal fun JavaAnnotationArgument.toFirExpression(
-    session: FirSession, javaTypeParameterStack: JavaTypeParameterStack, expectedTypeRef: FirTypeRef
+    session: FirSession, javaTypeParameterStack: JavaTypeParameterStack, expectedTypeRef: FirTypeRef?
 ): FirExpression {
     return when (this) {
         is JavaLiteralAnnotationArgument -> value.createConstantOrError(session)
         is JavaArrayAnnotationArgument -> buildArrayOfCall {
-            typeRef = expectedTypeRef
-            val argumentTypeRef = buildResolvedTypeRef {
-                type = expectedTypeRef.coneTypeSafe<ConeKotlinType>()?.lowerBoundIfFlexible()?.arrayElementType()
-                    ?: ConeClassErrorType(ConeSimpleDiagnostic("expected type is not array type"))
+            val argumentTypeRef = expectedTypeRef?.let {
+                typeRef = it
+                buildResolvedTypeRef {
+                    type = it.coneTypeSafe<ConeKotlinType>()?.lowerBoundIfFlexible()?.arrayElementType()
+                        ?: ConeClassErrorType(ConeSimpleDiagnostic("expected type is not array type"))
+                }
             }
             argumentList = buildArgumentList {
                 getElements().mapTo(arguments) { it.toFirExpression(session, javaTypeParameterStack, argumentTypeRef) }
@@ -710,6 +709,7 @@ private fun FirConstExpression<*>.setProperType(session: FirSession): FirConstEx
         type = kind.expectedConeType(session)
     }
     replaceTypeRef(typeRef)
+    session.lookupTracker?.recordTypeResolveAsLookup(typeRef, source, null)
     return this
 }
 

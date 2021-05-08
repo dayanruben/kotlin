@@ -3,6 +3,12 @@
  * that can be found in the LICENSE file.
  */
 
+#include <functional>
+#include <thread>
+
+#include "Memory.h"
+#include "Runtime.h"
+
 namespace kotlin {
 
 #if KONAN_WINDOWS
@@ -14,5 +20,37 @@ constexpr int kDefaultThreadCount = 10;
 #else
 constexpr int kDefaultThreadCount = 100;
 #endif
+
+inline MemoryState* InitMemoryForTests() { return InitMemory(false); }
+void DeinitMemoryForTests(MemoryState* memoryState);
+
+// Scopely initializes the memory subsystem of the current thread for tests.
+class ScopedMemoryInit : private kotlin::Pinned {
+public:
+    ScopedMemoryInit() : memoryState_(InitMemoryForTests()) {}
+    ~ScopedMemoryInit() {
+        ClearMemoryForTests(memoryState());
+        DeinitMemoryForTests(memoryState());
+    }
+
+    MemoryState* memoryState() { return memoryState_; }
+private:
+    MemoryState* memoryState_;
+};
+
+// Runs the given function in a separate thread with minimally initialized runtime.
+inline void RunInNewThread(std::function<void(MemoryState*)> f) {
+    std::thread([&f]() {
+        ScopedMemoryInit init;
+        f(init.memoryState());
+    }).join();
+}
+
+// Runs the given function in a separate thread with minimally initialized runtime.
+inline void RunInNewThread(std::function<void()> f) {
+    RunInNewThread([&f](MemoryState* unused) {
+        f();
+    });
+}
 
 } // namespace kotlin

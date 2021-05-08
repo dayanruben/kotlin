@@ -3,7 +3,7 @@ import org.jetbrains.kotlin.gradle.utils.NativeCompilerDownloader
 buildscript {
     val cacheRedirectorEnabled = findProperty("cacheRedirectorEnabled")?.toString()?.toBoolean() ?: false
     dependencies {
-        classpath("org.jetbrains.kotlin:kotlin-build-gradle-plugin:0.0.25")
+        classpath("org.jetbrains.kotlin:kotlin-build-gradle-plugin:0.0.26")
     }
     repositories {
         if (cacheRedirectorEnabled)
@@ -43,7 +43,7 @@ sourceSets {
  * TODO: This version hack on migrating period K/N into repository Kotlin, in new build infrostructure zero maintance claus isn't dropped,
  * so for old builds we need to keep this version to string representation till total switch on new infrostructure.
  */
-val konanVersion = object: org.jetbrains.kotlin.konan.CompilerVersion by NativeCompilerDownloader.DEFAULT_KONAN_VERSION {
+val konanVersion = object : org.jetbrains.kotlin.konan.CompilerVersion by NativeCompilerDownloader.DEFAULT_KONAN_VERSION {
     override fun toString(showMeta: Boolean, showBuild: Boolean) = buildString {
         if (major > 1
             || minor > 5
@@ -71,12 +71,15 @@ val konanVersion = object: org.jetbrains.kotlin.konan.CompilerVersion by NativeC
         }
     }
 
-    override fun toString() = toString(meta != org.jetbrains.kotlin.konan.MetaVersion.RELEASE,
-                                       meta != org.jetbrains.kotlin.konan.MetaVersion.RELEASE)
+    override fun toString() = toString(
+        meta != org.jetbrains.kotlin.konan.MetaVersion.RELEASE,
+        meta != org.jetbrains.kotlin.konan.MetaVersion.RELEASE
+    )
 }
 
 tasks.register("downloadNativeCompiler") {
     doFirst {
+        if (NativeCompilerDownloader(project, konanVersion).compilerDirectory.exists()) return@doFirst
         NativeCompilerDownloader(project, konanVersion).downloadIfNeeded()
     }
 }

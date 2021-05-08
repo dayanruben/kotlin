@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.fir.declarations.impl
 
+import org.jetbrains.kotlin.fir.FirImplementationDetail
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.FirSourceElement
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationAttributes
@@ -29,9 +30,9 @@ import org.jetbrains.kotlin.fir.visitors.*
  * DO NOT MODIFY IT MANUALLY
  */
 
-internal class FirFieldImpl(
-    override var source: FirSourceElement?,
-    override val session: FirSession,
+class FirFieldImpl @FirImplementationDetail constructor(
+    override val source: FirSourceElement?,
+    override val declarationSiteSession: FirSession,
     override var resolvePhase: FirResolvePhase,
     override val origin: FirDeclarationOrigin,
     override val attributes: FirDeclarationAttributes,
@@ -76,7 +77,7 @@ internal class FirFieldImpl(
     }
 
     override fun <D> transformReturnTypeRef(transformer: FirTransformer<D>, data: D): FirFieldImpl {
-        returnTypeRef = returnTypeRef.transformSingle(transformer, data)
+        returnTypeRef = returnTypeRef.transform(transformer, data)
         return this
     }
 
@@ -85,7 +86,7 @@ internal class FirFieldImpl(
     }
 
     override fun <D> transformInitializer(transformer: FirTransformer<D>, data: D): FirFieldImpl {
-        initializer = initializer?.transformSingle(transformer, data)
+        initializer = initializer?.transform(transformer, data)
         return this
     }
 
@@ -112,17 +113,13 @@ internal class FirFieldImpl(
     }
 
     override fun <D> transformStatus(transformer: FirTransformer<D>, data: D): FirFieldImpl {
-        status = status.transformSingle(transformer, data)
+        status = status.transform(transformer, data)
         return this
     }
 
     override fun <D> transformOtherChildren(transformer: FirTransformer<D>, data: D): FirFieldImpl {
         transformAnnotations(transformer, data)
         return this
-    }
-
-    override fun replaceSource(newSource: FirSourceElement?) {
-        source = newSource
     }
 
     override fun replaceResolvePhase(newResolvePhase: FirResolvePhase) {

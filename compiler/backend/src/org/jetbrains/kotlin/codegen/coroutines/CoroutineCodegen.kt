@@ -450,7 +450,7 @@ class CoroutineCodegenForLambda private constructor(
                             if (parameter.type.isInlineClassType()) {
                                 load(cloneIndex, fieldInfoForCoroutineLambdaParameter.ownerType)
                                 load(index, AsmTypes.OBJECT_TYPE)
-                                StackValue.unboxInlineClass(AsmTypes.OBJECT_TYPE, parameter.type, this)
+                                StackValue.unboxInlineClass(AsmTypes.OBJECT_TYPE, parameter.type, this, typeMapper)
                                 putfield(
                                     fieldInfoForCoroutineLambdaParameter.ownerInternalName,
                                     fieldInfoForCoroutineLambdaParameter.fieldName,
@@ -756,7 +756,7 @@ class CoroutineCodegenForNamedFunction private constructor(
                             generateCoroutineSuspendedCheck(languageVersionSettings)
                             // Now we box the inline class
                             StackValue.coerce(AsmTypes.OBJECT_TYPE, typeMapper.mapType(inlineClassToBoxInInvokeSuspend), this)
-                            StackValue.boxInlineClass(inlineClassToBoxInInvokeSuspend, this)
+                            StackValue.boxInlineClass(inlineClassToBoxInInvokeSuspend, this, typeMapper)
                         }
                     }
 

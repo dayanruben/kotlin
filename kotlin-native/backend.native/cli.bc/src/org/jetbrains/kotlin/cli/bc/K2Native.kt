@@ -61,7 +61,6 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
         val project = environment.project
         val messageCollector = configuration.get(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY) ?: MessageCollector.NONE
         configuration.put(CLIConfigurationKeys.PHASE_CONFIG, createPhaseConfig(toplevelPhase, arguments, messageCollector))
-        val konanConfig = KonanConfig(project, configuration)
 
         val enoughArguments = arguments.freeArgs.isNotEmpty() || arguments.isUsefulWithoutFreeArgs
         if (!enoughArguments) {
@@ -75,6 +74,7 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
         }
 
         try {
+            val konanConfig = KonanConfig(project, configuration)
             runTopLevelPhases(konanConfig, environment)
         } catch (e: KonanCompilationException) {
             return ExitCode.COMPILATION_ERROR
@@ -169,6 +169,15 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
                         null
                     }
                 })
+                putIfNotNull(GENERATE_INLINED_FUNCTION_BODY_MARKER, when (val it = arguments.generateInlinedFunctionMarkerString) {
+                    "enable" -> true
+                    "disable" -> false
+                    null -> null
+                    else -> {
+                        configuration.report(ERROR, "Unsupported -Xg-generate-inline-function-body-marker= value: $it. Possible values are 'enable'/'disable'")
+                        null
+                    }
+                })
                 put(STATIC_FRAMEWORK, selectFrameworkType(configuration, arguments, outputKind))
                 put(OVERRIDE_CLANG_OPTIONS, arguments.clangOptions.toNonNullList())
                 put(ALLOCATION_MODE, arguments.allocator)
@@ -180,6 +189,7 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
                 put(PRINT_DESCRIPTORS, arguments.printDescriptors)
                 put(PRINT_LOCATIONS, arguments.printLocations)
                 put(PRINT_BITCODE, arguments.printBitCode)
+                put(PRINT_FILES, arguments.printFiles)
 
                 put(PURGE_USER_LIBS, arguments.purgeUserLibs)
 
@@ -196,7 +206,7 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
 
                 put(ENABLE_ASSERTIONS, arguments.enableAssertions)
 
-                put(MEMORY_MODEL, when (arguments.memoryModel) {
+                val memoryModel = when (arguments.memoryModel) {
                     "relaxed" -> {
                         configuration.report(STRONG_WARNING, "Relaxed memory model is not yet fully functional")
                         MemoryModel.RELAXED
@@ -207,7 +217,9 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
                         configuration.report(ERROR, "Unsupported memory model ${arguments.memoryModel}")
                         MemoryModel.STRICT
                     }
-                })
+                }
+
+                put(MEMORY_MODEL, memoryModel)
 
                 when {
                     arguments.generateWorkerTestRunner -> put(GENERATE_TEST_RUNNER, TestRunnerKind.WORKER)
@@ -259,6 +271,26 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
                     else -> {
                         configuration.report(ERROR, "Unsupported destroy runtime mode ${arguments.destroyRuntimeMode}")
                         DestroyRuntimeMode.ON_SHUTDOWN
+                    }
+                })
+                val assertGcSupported = {
+                    if (memoryModel != MemoryModel.EXPERIMENTAL) {
+                        configuration.report(ERROR, "-Xgc is only supported for -memory-model experimental")
+                    }
+                }
+                put(GARBAGE_COLLECTOR, when (arguments.gc) {
+                    null -> GC.SINGLE_THREAD_MARK_SWEEP
+                    "noop" -> {
+                        assertGcSupported()
+                        GC.NOOP
+                    }
+                    "stms" -> {
+                        assertGcSupported()
+                        GC.SINGLE_THREAD_MARK_SWEEP
+                    }
+                    else -> {
+                        configuration.report(ERROR, "Unsupported GC ${arguments.gc}")
+                        GC.SINGLE_THREAD_MARK_SWEEP
                     }
                 })
             }

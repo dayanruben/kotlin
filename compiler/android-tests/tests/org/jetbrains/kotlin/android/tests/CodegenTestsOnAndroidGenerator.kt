@@ -262,7 +262,7 @@ class CodegenTestsOnAndroidGenerator private constructor(private val pathManager
 
         private fun getFlavorUnitTestFolder(flavourName: String): String {
             return pathManager.srcFolderInAndroidTmpFolder +
-                    "/androidTest${flavourName.capitalize()}/java/" +
+                    "/androidTest${flavourName.replaceFirstChar(Char::uppercaseChar)}/java/" +
                     testClassPackage.replace(".", "/") + "/"
         }
 
@@ -354,8 +354,8 @@ class CodegenTestsOnAndroidGenerator private constructor(private val pathManager
                         extractor.provideConfigurationKeys()
                         extractor.configure(keyConfiguration, module.directives)
                     }
-                    val kind = configuratorForFlags.extractConfigurationKind(module.directives)
-                    val jdkKind = configuratorForFlags.extractJdkKind(module.directives)
+                    val kind = JvmEnvironmentConfigurator.extractConfigurationKind(module.directives)
+                    val jdkKind = JvmEnvironmentConfigurator.extractJdkKind(module.directives)
 
                     keyConfiguration.languageVersionSettings = module.languageVersionSettings
 
@@ -379,7 +379,7 @@ class CodegenTestsOnAndroidGenerator private constructor(private val pathManager
             configure(backend)
             testInfo = KotlinTestInfo(
                 "org.jetbrains.kotlin.android.tests.AndroidRunner",
-                "test${testDataFile.nameWithoutExtension.capitalize()}",
+                "test${testDataFile.nameWithoutExtension.replaceFirstChar(Char::uppercaseChar)}",
                 emptySet()
             )
         }.build(testDataFile.path)

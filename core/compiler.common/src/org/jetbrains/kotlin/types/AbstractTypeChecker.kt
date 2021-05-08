@@ -360,6 +360,24 @@ object AbstractTypeChecker {
         }
     }
 
+    private fun TypeSystemContext.isTypeVariableAgainstStarProjectionForSelfType(
+        subArgumentType: KotlinTypeMarker,
+        superArgumentType: KotlinTypeMarker,
+        selfConstructor: TypeConstructorMarker
+    ): Boolean {
+        val simpleSubArgumentType = subArgumentType.asSimpleType()
+
+        if (simpleSubArgumentType !is CapturedTypeMarker || !simpleSubArgumentType.typeConstructor().projection().isStarProjection())
+            return false
+        // Only 'for subtyping' captured types are approximated before adding constraints (see ConstraintInjector.addNewIncorporatedConstraint)
+        // that can lead to adding problematic constraints like UPPER(Nothing) given by CapturedType(*) <: TypeVariable(A)
+        if (simpleSubArgumentType.captureStatus() != CaptureStatus.FOR_SUBTYPING) return false
+
+        val typeVariableConstructor = superArgumentType.typeConstructor() as? TypeVariableTypeConstructorMarker ?: return false
+
+        return typeVariableConstructor.typeParameter?.hasRecursiveBounds(selfConstructor) == true
+    }
+
     fun AbstractTypeCheckerContext.isSubtypeForSameConstructor(
         capturedSubArguments: TypeArgumentListMarker,
         superType: SimpleTypeMarker
@@ -379,6 +397,7 @@ object AbstractTypeChecker {
 
         for (index in 0 until parametersCount) {
             val superProjection = superType.getArgument(index) // todo error index
+
             if (superProjection.isStarProjection()) continue // A<B> <: A<*>
 
             val superArgumentType = superProjection.getType()
@@ -389,6 +408,21 @@ object AbstractTypeChecker {
 
             val variance = effectiveVariance(superTypeConstructor.getParameter(index).getVariance(), superProjection.getVariance())
                 ?: return isErrorTypeEqualsToAnything // todo exception?
+
+            val isTypeVariableAgainstStarProjectionForSelfType = if (variance == TypeVariance.INV) {
+                isTypeVariableAgainstStarProjectionForSelfType(subArgumentType, superArgumentType, superTypeConstructor) ||
+                        isTypeVariableAgainstStarProjectionForSelfType(superArgumentType, subArgumentType, superTypeConstructor)
+            } else false
+
+            /*
+             * We don't check subtyping between types like CapturedType(*) and TypeVariable(E) if the corresponding type parameter forms self type, for instance, Enum<E: Enum<E>>.
+             * It can return false and produce unwanted constraints like UPPER(Nothing) (by CapturedType(*) <:> TypeVariable(E)) in the type inference context
+             * due to approximation captured types.
+             * Instead this type check we move on self-type level anyway: checking CapturedType(out Enum<*>) against TypeVariable(E).
+             * This subtyping can already be successful and not add unwanted constraints in the type inference context.
+             */
+            if (isTypeVariableAgainstStarProjectionForSelfType)
+                continue
 
             val correctArgument = runWithArgumentsSettings(subArgumentType) {
                 when (variance) {
@@ -463,9 +497,39 @@ object AbstractTypeChecker {
             return superTypeConstructor.supertypes().all { isSubtypeOf(context, subType, it) }
         }
 
+        /*
+         * We handle cases like CapturedType(out Bar) <: Foo<CapturedType(out Bar)> separately here.
+         * If Foo is a self type i.g. Foo<E: Foo<E>>, then argument for E will certainly be subtype of Foo<same_argument_for_E>,
+         * so if CapturedType(out Bar) is the same as a type of Foo's argument and Foo is a self type, then subtyping should return true.
+         * If we don't handle this case separately, subtyping may not converge due to the nature of the capturing.
+         */
+        if (subType is CapturedTypeMarker) {
+            val typeParameter =
+                context.typeSystemContext.getTypeParameterForArgumentInBaseIfItEqualToTarget(baseType = superType, targetType = subType)
+            if (typeParameter != null && typeParameter.hasRecursiveBounds(superType.typeConstructor())) {
+                return true
+            }
+        }
+
         return null
     }
 
+    private fun TypeSystemContext.getTypeParameterForArgumentInBaseIfItEqualToTarget(
+        baseType: KotlinTypeMarker,
+        targetType: KotlinTypeMarker
+    ): TypeParameterMarker? {
+        for (i in 0 until baseType.argumentsCount()) {
+            val typeArgument = baseType.getArgument(i).takeIf { !it.isStarProjection() } ?: continue
+
+            if (typeArgument.getType() == targetType) {
+                return baseType.typeConstructor().getParameter(i)
+            }
+
+            getTypeParameterForArgumentInBaseIfItEqualToTarget(typeArgument.getType(), targetType)?.let { return it }
+        }
+
+        return null
+    }
 
     private fun collectAllSupertypesWithGivenTypeConstructor(
         context: AbstractTypeCheckerContext,

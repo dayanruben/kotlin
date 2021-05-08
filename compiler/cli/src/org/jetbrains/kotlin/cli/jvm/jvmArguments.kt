@@ -54,19 +54,20 @@ fun CompilerConfiguration.setupJvmSpecificArguments(arguments: K2JVMCompilerArgu
         }
     }
 
-    if (arguments.stringConcat != null) {
-        val runtimeStringConcat = JvmStringConcat.fromString(arguments.stringConcat!!)
+    val stringConcat = arguments.stringConcat
+    if (stringConcat != null) {
+        val runtimeStringConcat = JvmStringConcat.fromString(stringConcat)
         if (runtimeStringConcat != null) {
             put(JVMConfigurationKeys.STRING_CONCAT, runtimeStringConcat)
             if (jvmTarget.majorVersion < JvmTarget.JVM_9.majorVersion && runtimeStringConcat != JvmStringConcat.INLINE) {
                 messageCollector.report(
                     WARNING,
-                    "`-Xstring-concat=${arguments.stringConcat}` does nothing with JVM target `${jvmTarget.description}`."
+                    "`-Xstring-concat=$stringConcat` does nothing with JVM target `${jvmTarget.description}`."
                 )
             }
         } else {
             messageCollector.report(
-                ERROR, "Unknown `-Xstring-concat` mode: ${arguments.stringConcat}\n" +
+                ERROR, "Unknown `-Xstring-concat` mode: $stringConcat\n" +
                         "Supported modes: ${JvmStringConcat.values().joinToString { it.description }}"
             )
         }
@@ -202,11 +203,13 @@ fun CompilerConfiguration.configureAdvancedJvmOptions(arguments: K2JVMCompilerAr
 
     put(JVMConfigurationKeys.PARAMETERS_METADATA, arguments.javaParameters)
 
+    // TODO: ignore previous configuration value when we do not need old backend in scripting by default
+    val useOldBackend = arguments.useOldBackend || (!arguments.useIR && get(JVMConfigurationKeys.IR) == false)
     val useIR = arguments.useFir ||
             if (languageVersionSettings.supportsFeature(LanguageFeature.JvmIrEnabledByDefault)) {
-                !arguments.useOldBackend
+                !useOldBackend
             } else {
-                arguments.useIR && !arguments.useOldBackend
+                arguments.useIR && !useOldBackend
             }
 
     if (arguments.useIR && arguments.useOldBackend) {

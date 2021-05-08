@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.backend.jvm.codegen
 
 import org.jetbrains.kotlin.backend.common.ir.allOverridden
+import org.jetbrains.kotlin.backend.common.ir.isFromJava
 import org.jetbrains.kotlin.backend.common.ir.isMethodOfAny
 import org.jetbrains.kotlin.backend.common.ir.isTopLevel
 import org.jetbrains.kotlin.backend.common.lower.parentsWithSelf
@@ -33,7 +34,6 @@ import org.jetbrains.kotlin.ir.declarations.lazy.IrLazyFunction
 import org.jetbrains.kotlin.ir.declarations.lazy.IrLazyFunctionBase
 import org.jetbrains.kotlin.ir.descriptors.IrBasedSimpleFunctionDescriptor
 import org.jetbrains.kotlin.ir.descriptors.toIrBasedDescriptor
-import org.jetbrains.kotlin.ir.descriptors.toIrBasedKotlinType
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.*
@@ -190,7 +190,7 @@ class MethodSignatureMapper(private val context: JvmBackendContext) {
             return typeMapper.mapType(returnType, typeMappingModeFromAnnotation, sw)
         }
 
-        val mappingMode = TypeMappingMode.getOptimalModeForReturnType(returnType.toIrBasedKotlinType(), isAnnotationMethod)
+        val mappingMode = typeSystem.getOptimalModeForReturnType(returnType, isAnnotationMethod)
 
         return typeMapper.mapType(returnType, mappingMode, sw)
     }
@@ -203,7 +203,7 @@ class MethodSignatureMapper(private val context: JvmBackendContext) {
         isBoxMethodForInlineClass(function) ||
                 forceFoxedReturnTypeOnOverride(function) ||
                 forceBoxedReturnTypeOnDefaultImplFun(function) ||
-                function.isFromJava() && function.returnType.isInlined()
+                function.isFromJava() && function.returnType.isInlineClassType()
 
     private fun forceFoxedReturnTypeOnOverride(function: IrFunction) =
         function is IrSimpleFunction &&
@@ -225,7 +225,7 @@ class MethodSignatureMapper(private val context: JvmBackendContext) {
         if (isBoundReceiver) return false
         if (function !is IrSimpleFunction) return false
         if (!function.isInlineCallableReference) return false
-        return type.erasedUpperBound.isInline && !type.isMappedToPrimitive
+        return type.isInlineClassType() && !type.isMappedToPrimitive
     }
 
     fun mapSignatureSkipGeneric(function: IrFunction): JvmMethodSignature =
@@ -341,7 +341,7 @@ class MethodSignatureMapper(private val context: JvmBackendContext) {
 
     private fun writeParameterType(sw: JvmSignatureWriter, type: IrType, declaration: IrDeclaration, isReceiver: Boolean) {
         if (sw.skipGenericSignature()) {
-            if (type.isInlined() &&
+            if (type.isInlineClassType() &&
                 (declaration.isFromJava() || forceBoxedInlineClassParametersForInliner(declaration, type, isReceiver))
             ) {
                 typeMapper.mapType(type, TypeMappingMode.GENERIC_ARGUMENT, sw)
@@ -358,7 +358,7 @@ class MethodSignatureMapper(private val context: JvmBackendContext) {
                 ?: if (declaration.isMethodWithDeclarationSiteWildcards && type.argumentsCount() != 0) {
                     TypeMappingMode.GENERIC_ARGUMENT // Render all wildcards
                 } else {
-                    TypeMappingMode.getOptimalModeForValueParameter(type.toIrBasedKotlinType())
+                    typeSystem.getOptimalModeForValueParameter(type)
                 }
         }
 
@@ -418,7 +418,7 @@ class MethodSignatureMapper(private val context: JvmBackendContext) {
                     ?: mapSignatureSkipGeneric(declaration)
             }
 
-        return IrCallableMethod(owner, invokeOpcode, signature, isInterface)
+        return IrCallableMethod(owner, invokeOpcode, signature, isInterface, declaration.returnType)
     }
 
     // TODO: get rid of this (probably via some special lowering)
@@ -438,7 +438,7 @@ class MethodSignatureMapper(private val context: JvmBackendContext) {
         mapAsmMethod(findSuperDeclaration(function, isSuperCall))
 
     // Copied from KotlinTypeMapper.findSuperDeclaration.
-    private fun findSuperDeclaration(function: IrSimpleFunction, isSuperCall: Boolean): IrSimpleFunction {
+    internal fun findSuperDeclaration(function: IrSimpleFunction, isSuperCall: Boolean): IrSimpleFunction {
         var current = function
         while (current.isFakeOverride) {
             // TODO: probably isJvmInterface instead of isInterface, here and in KotlinTypeMapper

@@ -14,10 +14,10 @@ import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.diagnostics.*
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.resolve.toSymbol
-import org.jetbrains.kotlin.fir.symbols.StandardClassIds
-import org.jetbrains.kotlin.fir.symbols.StandardClassIds.primitiveArrayTypeByElementType
-import org.jetbrains.kotlin.fir.symbols.StandardClassIds.primitiveTypes
-import org.jetbrains.kotlin.fir.symbols.StandardClassIds.unsignedTypes
+import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.name.StandardClassIds.primitiveArrayTypeByElementType
+import org.jetbrains.kotlin.name.StandardClassIds.primitiveTypes
+import org.jetbrains.kotlin.name.StandardClassIds.unsignedTypes
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.name.ClassId
 
@@ -25,6 +25,10 @@ object FirAnnotationClassDeclarationChecker : FirRegularClassChecker() {
     override fun check(declaration: FirRegularClass, context: CheckerContext, reporter: DiagnosticReporter) {
         if (declaration.classKind != ANNOTATION_CLASS) return
         if (declaration.isLocal) reporter.reportOn(declaration.source, FirErrors.LOCAL_ANNOTATION_CLASS_ERROR, context)
+
+        if (declaration.superTypeRefs.size != 1) {
+            reporter.reportOn(declaration.source, FirErrors.SUPERTYPES_FOR_ANNOTATION_CLASS, context)
+        }
 
         for (it in declaration.declarations) {
             when {

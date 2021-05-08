@@ -6,14 +6,11 @@
 package org.jetbrains.kotlin.fir.lightTree.fir
 
 import org.jetbrains.kotlin.fir.*
-import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
-import org.jetbrains.kotlin.fir.declarations.FirProperty
-import org.jetbrains.kotlin.fir.declarations.FirValueParameter
+import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.builder.buildProperty
 import org.jetbrains.kotlin.fir.declarations.impl.FirDeclarationStatusImpl
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyGetter
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertySetter
-import org.jetbrains.kotlin.fir.declarations.isFromVararg
 import org.jetbrains.kotlin.fir.diagnostics.DiagnosticKind
 import org.jetbrains.kotlin.fir.diagnostics.ConeSimpleDiagnostic
 import org.jetbrains.kotlin.fir.expressions.builder.buildQualifiedAccessExpression
@@ -21,6 +18,7 @@ import org.jetbrains.kotlin.fir.lightTree.fir.modifier.Modifier
 import org.jetbrains.kotlin.fir.references.builder.buildPropertyFromParameterResolvedNamedReference
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
+import org.jetbrains.kotlin.fir.types.ConeClassLikeType
 import org.jetbrains.kotlin.fir.types.FirImplicitTypeRef
 import org.jetbrains.kotlin.fir.types.builder.buildErrorTypeRef
 
@@ -35,7 +33,12 @@ class ValueParameter(
         return isVal || isVar
     }
 
-    fun toFirProperty(session: FirSession, callableId: CallableId, isExpect: Boolean): FirProperty {
+    fun toFirProperty(
+        session: FirSession,
+        callableId: CallableId,
+        isExpect: Boolean,
+        currentDispatchReceiver: ConeClassLikeType?
+    ): FirProperty {
         val name = this.firValueParameter.name
         var type = this.firValueParameter.returnTypeRef
         if (type is FirImplicitTypeRef) {
@@ -48,7 +51,7 @@ class ValueParameter(
             source = parameterNode?.toFirLightSourceElement(
                 parameterSource.treeStructure, FirFakeSourceElementKind.PropertyFromParameter
             )
-            this.session = session
+            declarationSiteSession = session
             origin = FirDeclarationOrigin.Source
             returnTypeRef = type.copyWithNewSourceKind(FirFakeSourceElementKind.PropertyFromParameter)
             this.name = name
@@ -61,6 +64,7 @@ class ValueParameter(
             }
             isVar = this@ValueParameter.isVar
             symbol = FirPropertySymbol(callableId)
+            dispatchReceiverType = currentDispatchReceiver
             isLocal = false
             status = FirDeclarationStatusImpl(modifiers.getVisibility(), modifiers.getModality()).apply {
                 this.isExpect = isExpect
@@ -85,7 +89,10 @@ class ValueParameter(
                 modifiers.getVisibility()
             ) else null
         }.apply {
-            this.isFromVararg = firValueParameter.isVararg
+            if (firValueParameter.isVararg) {
+                this.isFromVararg = true
+            }
+            this.fromPrimaryConstructor = true
         }
     }
 }

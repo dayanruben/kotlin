@@ -52,6 +52,7 @@ class JvmBackendContext(
     val phaseConfig: PhaseConfig,
     val generatorExtensions: JvmGeneratorExtensions,
     val backendExtension: JvmBackendExtension,
+    val notifyCodegenStart: () -> Unit,
 ) : CommonBackendContext {
     // If the JVM fqname of a class differs from what is implied by its parent, e.g. if it's a file class
     // annotated with @JvmPackageName, the correct name is recorded here.
@@ -90,7 +91,7 @@ class JvmBackendContext(
 
     internal val isEnclosedInConstructor = ConcurrentHashMap.newKeySet<IrAttributeContainer>()
 
-    internal val classCodegens = mutableMapOf<IrClass, ClassCodegen>()
+    internal val classCodegens = ConcurrentHashMap<IrClass, ClassCodegen>()
 
     val localDelegatedProperties = ConcurrentHashMap<IrAttributeContainer, List<IrLocalDelegatedPropertySymbol>>()
 
@@ -130,6 +131,8 @@ class JvmBackendContext(
     val inlineClassReplacements = MemoizedInlineClassReplacements(state.functionsWithInlineClassReturnTypesMangled, irFactory, this)
 
     internal val continuationClassesVarsCountByType: MutableMap<IrAttributeContainer, Map<Type, Int>> = hashMapOf()
+
+    val inlineMethodGenerationLock = Any()
 
     init {
         state.mapInlineClass = { descriptor ->

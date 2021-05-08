@@ -28,8 +28,8 @@ class FirSyntheticPropertyAccessor(
     override val source: FirSourceElement?
         get() = delegate.source
 
-    override val session: FirSession
-        get() = delegate.session
+    override val declarationSiteSession: FirSession
+        get() = delegate.declarationSiteSession
 
     override val origin: FirDeclarationOrigin
         get() = FirDeclarationOrigin.Synthetic
@@ -145,8 +145,5 @@ class FirSyntheticPropertyAccessor(
 
     override fun replaceControlFlowGraphReference(newControlFlowGraphReference: FirControlFlowGraphReference?) {
         throw AssertionError("Mutation of synthetic property accessor isn't supported")
-    }
-
-    override fun replaceSource(newSource: FirSourceElement?) {
     }
 }

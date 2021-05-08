@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.fir.types
 
+import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.FirSourceElement
 import org.jetbrains.kotlin.fir.diagnostics.ConeDiagnostic
 import org.jetbrains.kotlin.fir.diagnostics.FirDiagnosticHolder
@@ -25,7 +26,9 @@ abstract class FirErrorTypeRef : FirResolvedTypeRef(), FirDiagnosticHolder {
 
     override fun <R, D> accept(visitor: FirVisitor<R, D>, data: D): R = visitor.visitErrorTypeRef(this, data)
 
-    abstract override fun replaceSource(newSource: FirSourceElement?)
+    @Suppress("UNCHECKED_CAST")
+    override fun <E: FirElement, D> transform(transformer: FirTransformer<D>, data: D): E = 
+        transformer.transformErrorTypeRef(this, data) as E
 
     abstract override fun <D> transformAnnotations(transformer: FirTransformer<D>, data: D): FirErrorTypeRef
 }

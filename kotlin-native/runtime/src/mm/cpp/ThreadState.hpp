@@ -9,28 +9,38 @@
 #include <Common.h>
 #include <Utils.hpp>
 
+#include "ThreadData.hpp"
+
 namespace kotlin {
-namespace mm {
 
-enum class ThreadState {
-    kRunnable, kNative
-};
+namespace internal {
 
-// Switches the state of the current thread to `newState` and returns the previous thread state.
-ALWAYS_INLINE ThreadState SwitchThreadState(ThreadData* threadData, ThreadState newState) noexcept;
+ALWAYS_INLINE inline bool isStateSwitchAllowed(ThreadState oldState, ThreadState newState, bool reentrant) noexcept  {
+    return oldState != newState || reentrant;
+}
 
-ALWAYS_INLINE void AssertThreadState(ThreadData* threadData, ThreadState expected) noexcept;
+const char* stateToString(ThreadState state) noexcept;
 
-class ThreadStateGuard final : private Pinned {
-public:
-    explicit ThreadStateGuard(ThreadData* threadData, ThreadState state) noexcept;
-    ~ThreadStateGuard() noexcept;
-private:
-    ThreadData* threadData_;
-    ThreadState oldState_;
-};
+} // namespace internal
 
-} // namespace mm
+// Switches the state of the given thread to `newState` and returns the previous thread state.
+ALWAYS_INLINE inline ThreadState SwitchThreadState(mm::ThreadData* threadData, ThreadState newState, bool reentrant = false) noexcept {
+    auto oldState = threadData->setState(newState);
+    // TODO(perf): Mesaure the impact of this assert in debug and opt modes.
+    RuntimeAssert(internal::isStateSwitchAllowed(oldState, newState, reentrant),
+                  "Illegal thread state switch. Old state: %s. New state: %s.",
+                  internal::stateToString(oldState), internal::stateToString(newState));
+    return oldState;
+}
+
+// Asserts that the given thread is in the given state.
+ALWAYS_INLINE inline void AssertThreadState(mm::ThreadData* threadData, ThreadState expected) noexcept {
+    auto actual = threadData->state();
+    RuntimeAssert(actual == expected,
+                  "Unexpected thread state. Expected: %s. Actual: %s.",
+                  internal::stateToString(expected), internal::stateToString(actual));
+}
+
 } // namespace kotlin
 
 #endif // RUNTIME_MM_THREAD_STATE_H

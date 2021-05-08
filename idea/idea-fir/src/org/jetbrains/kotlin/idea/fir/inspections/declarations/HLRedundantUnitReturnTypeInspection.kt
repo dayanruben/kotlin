@@ -9,12 +9,11 @@ import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.fir.api.*
+import org.jetbrains.kotlin.idea.api.applicator.with
 import org.jetbrains.kotlin.idea.fir.api.applicator.inputProvider
 import org.jetbrains.kotlin.idea.fir.api.applicator.presentation
-import org.jetbrains.kotlin.idea.fir.api.applicator.with
 import org.jetbrains.kotlin.idea.fir.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.fir.applicators.CallableReturnTypeUpdaterApplicator
-import org.jetbrains.kotlin.idea.frontend.api.types.isUnit
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
 internal class HLRedundantUnitReturnTypeInspection :
@@ -35,7 +34,7 @@ internal class HLRedundantUnitReturnTypeInspection :
 
     override val inputProvider = inputProvider<KtNamedFunction, CallableReturnTypeUpdaterApplicator.Type> { function ->
         when {
-            function.getFunctionSymbol().annotatedType.type.isUnit -> CallableReturnTypeUpdaterApplicator.Type.UNIT
+            function.getFunctionLikeSymbol().annotatedType.type.isUnit -> CallableReturnTypeUpdaterApplicator.Type.UNIT
             else -> null
         }
     }

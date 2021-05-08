@@ -6,8 +6,7 @@
 package org.jetbrains.kotlin.fir.resolve.dfa
 
 import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.fir.FirSession
-import org.jetbrains.kotlin.fir.PrivateForInline
+import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.contracts.FirResolvedContractDescription
 import org.jetbrains.kotlin.fir.contracts.description.ConeBooleanConstantReference
 import org.jetbrains.kotlin.fir.contracts.description.ConeConditionalEffectDeclaration
@@ -15,7 +14,6 @@ import org.jetbrains.kotlin.fir.contracts.description.ConeConstantReference
 import org.jetbrains.kotlin.fir.contracts.description.ConeReturnsEffectDeclaration
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.expressions.*
-import org.jetbrains.kotlin.fir.languageVersionSettings
 import org.jetbrains.kotlin.fir.references.FirControlFlowGraphReference
 import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
 import org.jetbrains.kotlin.fir.resolve.*
@@ -23,14 +21,16 @@ import org.jetbrains.kotlin.fir.resolve.dfa.cfg.*
 import org.jetbrains.kotlin.fir.resolve.dfa.contracts.buildContractFir
 import org.jetbrains.kotlin.fir.resolve.dfa.contracts.createArgumentsMapping
 import org.jetbrains.kotlin.fir.resolve.inference.inferenceComponents
+import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
+import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutorByMap
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirAbstractBodyResolveTransformer
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.resultType
 import org.jetbrains.kotlin.fir.symbols.AbstractFirBasedSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirTypeParameterSymbol
 import org.jetbrains.kotlin.name.CallableId
-import org.jetbrains.kotlin.fir.symbols.StandardClassIds
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.fir.symbols.impl.FirVariableSymbol
 import org.jetbrains.kotlin.fir.types.*
-import org.jetbrains.kotlin.fir.visibilityChecker
 import org.jetbrains.kotlin.fir.visitors.transformSingle
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -718,8 +718,8 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
         tryMainBlockEnterNode.mergeIncomingFlow(shouldForkFlow = true)
     }
 
-    fun exitTryMainBlock(tryExpression: FirTryExpression) {
-        graphBuilder.exitTryMainBlock(tryExpression).mergeIncomingFlow()
+    fun exitTryMainBlock() {
+        graphBuilder.exitTryMainBlock().mergeIncomingFlow()
     }
 
     fun enterCatchClause(catch: FirCatch) {
@@ -774,7 +774,7 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
 
         safeCall.receiver.let { receiver ->
             val type = receiver.coneType.takeIf { it.isMarkedNullable }
-                ?.withNullability(ConeNullability.NOT_NULL)
+                ?.withNullability(ConeNullability.NOT_NULL, components.session.typeContext)
                 ?: return@let
 
             val variable = variableStorage.getOrCreateVariable(flow, receiver)
@@ -840,6 +840,12 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
         callNode.mergeIncomingFlow()
     }
 
+    fun exitStringConcatenationCall(call: FirStringConcatenationCall) {
+        val (callNode, unionNode) = graphBuilder.exitStringConcatenationCall(call)
+        unionNode?.let { unionFlowFromArguments(it) }
+        callNode.mergeIncomingFlow()
+    }
+
 
     private fun unionFlowFromArguments(node: UnionFunctionCallArgumentsNode) {
         node.flow = logicSystem.unionFlow(node.previousNodes.map { it.flow }).also {
@@ -865,12 +871,24 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
         val conditionalEffects = contractDescription.effects.map { it.effect }.filterIsInstance<ConeConditionalEffectDeclaration>()
         if (conditionalEffects.isEmpty()) return
         val argumentsMapping = createArgumentsMapping(qualifiedAccess) ?: return
+
+        val typeParameters = (owner as? FirTypeParameterRefsOwner)?.typeParameters
+        val substitutor = if (!typeParameters.isNullOrEmpty()) {
+            @Suppress("UNCHECKED_CAST")
+            val substitutionFromArguments = typeParameters.zip(qualifiedAccess.typeArguments).map { (typeParameterRef, typeArgument) ->
+                typeParameterRef.symbol to typeArgument.toConeTypeProjection().type
+            }.filter { it.second != null }.toMap() as Map<FirTypeParameterSymbol, ConeKotlinType>
+            ConeSubstitutorByMap(substitutionFromArguments, components.session)
+        } else {
+            ConeSubstitutor.Empty
+        }
+
         contractDescriptionVisitingMode = true
         graphBuilder.enterContract(qualifiedAccess).mergeIncomingFlow()
         val lastFlow = graphBuilder.lastNode.flow
         val functionCallVariable = variableStorage.getOrCreateVariable(lastFlow, qualifiedAccess)
         for (conditionalEffect in conditionalEffects) {
-            val fir = conditionalEffect.buildContractFir(argumentsMapping) ?: continue
+            val fir = conditionalEffect.buildContractFir(argumentsMapping, substitutor) ?: continue
             val effect = conditionalEffect.effect as? ConeReturnsEffectDeclaration ?: continue
             fir.transformSingle(components.transformer, ResolutionMode.ContextDependent)
             val argumentVariable = variableStorage.getOrCreateVariable(lastFlow, fir)
@@ -977,7 +995,10 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
 
         if (isAssignment) {
             if (initializer is FirConstExpression<*> && initializer.kind == ConstantValueKind.Null) {
-                flow.addTypeStatement(propertyVariable typeEq property.returnTypeRef.coneType.withNullability(ConeNullability.NULLABLE))
+                flow.addTypeStatement(
+                    propertyVariable typeEq
+                            property.returnTypeRef.coneType.withNullability(ConeNullability.NULLABLE, components.session.typeContext)
+                )
             } else {
                 flow.addTypeStatement(propertyVariable typeEq initializer.typeRef.coneType)
             }

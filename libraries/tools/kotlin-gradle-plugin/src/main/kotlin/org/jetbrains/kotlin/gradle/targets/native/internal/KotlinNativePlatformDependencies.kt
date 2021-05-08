@@ -10,19 +10,13 @@ import org.gradle.api.file.FileCollection
 import org.jetbrains.kotlin.compilerRunner.konanHome
 import org.jetbrains.kotlin.gradle.dsl.multiplatformExtension
 import org.jetbrains.kotlin.gradle.dsl.multiplatformExtensionOrNull
-import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
-import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
-import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider
+import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.Companion.KOTLIN_NATIVE_HOME
-import org.jetbrains.kotlin.gradle.plugin.compareVersionNumbers
-import org.jetbrains.kotlin.gradle.plugin.getKotlinPluginVersion
 import org.jetbrains.kotlin.gradle.plugin.mpp.CompilationSourceSetUtil
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeCompilation
 import org.jetbrains.kotlin.gradle.targets.metadata.getMetadataCompilationForSourceSet
 import org.jetbrains.kotlin.gradle.targets.metadata.isKotlinGranularMetadataEnabled
 import org.jetbrains.kotlin.gradle.targets.native.internal.NativePlatformDependency.*
-import org.jetbrains.kotlin.gradle.tasks.registerTask
-import org.jetbrains.kotlin.gradle.tasks.withType
 import org.jetbrains.kotlin.gradle.utils.SingleWarningPerBuild
 import org.jetbrains.kotlin.konan.library.*
 import org.jetbrains.kotlin.konan.target.KonanTarget
@@ -37,7 +31,7 @@ private val Project.isNativeDependencyPropagationEnabled: Boolean
 @JvmOverloads
 @JvmName("isAllowCommonizer")
 internal fun Project.isAllowCommonizer(
-    kotlinVersion: String = getKotlinPluginVersion()!!
+    kotlinVersion: String = getKotlinPluginVersion()
 ): Boolean {
     multiplatformExtensionOrNull ?: return false
 
@@ -53,11 +47,13 @@ internal fun Project.setUpKotlinNativePlatformDependencies() {
         // not a multiplatform project, nothing to set up
         return
     }
-
-    val kotlinVersion = getKotlinPluginVersion()!!
+    val kotlinVersion = getKotlinPluginVersion()
     val allowCommonizer = isAllowCommonizer(kotlinVersion)
-    val dependencyResolver = NativePlatformDependencyResolver(this, kotlinVersion)
+    if (allowCommonizer && isHierarchicalCommonizationEnabled) {
+        return setUpHierarchicalKotlinNativePlatformDependencies()
+    }
 
+    val dependencyResolver = NativePlatformDependencyResolver(this, kotlinVersion)
     findSourceSetsToAddDependencies(allowCommonizer).forEach { (sourceSet: KotlinSourceSet, sourceSetDeps: Set<NativePlatformDependency>) ->
         sourceSetDeps.forEach { sourceSetDep: NativePlatformDependency ->
             dependencyResolver.addForResolve(sourceSetDep) { resolvedFiles: FileCollection ->
@@ -105,15 +101,9 @@ private class NativePlatformDependencyResolver(val project: Project, val kotlinV
         check(!alreadyResolved)
         alreadyResolved = true
 
-        val targetGroups: List<CommonizedCommon> = dependencies.keys.filterIsInstance<CommonizedCommon>()
-
-        val commonizerTaskProvider = project.registerTask(
-            COMMONIZER_TASK_NAME,
-            CommonizerTask::class.java
-        ) { commonizerTask ->
-            commonizerTask.targetGroups = targetGroups.map { it.targets }.toSet()
+        project.commonizeNativeDistributionTask?.configure { commonizerTask ->
+            commonizerTask.targetGroups = dependencies.keys.filterIsInstance<CommonizedCommon>().map { it.targets }.toSet()
         }
-
 
         // then, resolve dependencies one by one
         dependencies.forEach { (dependency, actions) ->
@@ -144,7 +134,7 @@ private class NativePlatformDependencyResolver(val project: Project, val kotlinV
                     val commonizedLibsDir = project.nativeDistributionCommonizerOutputDirectory(dependency.targets)
                     project.files(Callable {
                         libsInCommonDir(commonizedLibsDir)
-                    }).builtBy(commonizerTaskProvider)
+                    }).builtBy(project.commonizeNativeDistributionTask)
 
                 }
 
@@ -153,7 +143,7 @@ private class NativePlatformDependencyResolver(val project: Project, val kotlinV
                     val commonizedLibsDir = project.nativeDistributionCommonizerOutputDirectory(dependency.common.targets)
                     project.files(Callable {
                         libsInPlatformDir(commonizedLibsDir, dependency.target) + libsInCommonDir(commonizedLibsDir)
-                    }).builtBy(commonizerTaskProvider)
+                    }).builtBy(project.commonizeNativeDistributionTask)
                 }
             }
 

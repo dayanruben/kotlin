@@ -92,9 +92,11 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
 
     inline fun <T> withCapturedTypeParameters(block: () -> T): T {
         val previous = context.capturedTypeParameters
-        val result = block()
-        context.capturedTypeParameters = previous
-        return result
+        return try {
+            block()
+        } finally {
+            context.capturedTypeParameters = previous
+        }
     }
 
     fun addCapturedTypeParameters(typeParameters: List<FirTypeParameterRef>) {
@@ -133,8 +135,8 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
 
 
     /**** Function utils ****/
-    fun <T> MutableList<T>.removeLast() {
-        removeAt(size - 1)
+    fun <T> MutableList<T>.removeLast(): T {
+        return removeAt(size - 1)
     }
 
     fun <T> MutableList<T>.pop(): T? {
@@ -143,11 +145,6 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
             removeAt(size - 1)
         }
         return result
-    }
-
-    /**** Common utils ****/
-    companion object {
-        val ANONYMOUS_OBJECT_NAME = Name.special("<anonymous>")
     }
 
     fun FirExpression.toReturn(
@@ -160,7 +157,7 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
                 bind(
                     buildErrorFunction {
                         source = baseSource
-                        session = this@BaseFirBuilder.baseSession
+                        declarationSiteSession = baseSession
                         origin = FirDeclarationOrigin.Source
                         diagnostic = ConeSimpleDiagnostic(message, kind)
                         symbol = FirErrorFunctionSymbol()
@@ -191,17 +188,17 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
     }
 
     fun T?.toDelegatedSelfType(firClass: FirRegularClassBuilder): FirResolvedTypeRef =
-        toDelegatedSelfType(firClass, firClass.symbol)
+        toDelegatedSelfType(firClass.typeParameters, firClass.symbol)
 
     fun T?.toDelegatedSelfType(firObject: FirAnonymousObjectBuilder): FirResolvedTypeRef =
-        toDelegatedSelfType(firObject, firObject.symbol)
+        toDelegatedSelfType(firObject.typeParameters, firObject.symbol)
 
-    private fun T?.toDelegatedSelfType(firClass: FirClassBuilder, symbol: FirClassLikeSymbol<*>): FirResolvedTypeRef {
+    protected fun T?.toDelegatedSelfType(typeParameters: List<FirTypeParameterRef>, symbol: FirClassLikeSymbol<*>): FirResolvedTypeRef {
         return buildResolvedTypeRef {
             source = this@toDelegatedSelfType?.toFirSourceElement(FirFakeSourceElementKind.ClassSelfTypeRef)
             type = ConeClassLikeTypeImpl(
                 symbol.toLookupTag(),
-                firClass.typeParameters.map { ConeTypeParameterTypeImpl(it.symbol.toLookupTag(), false) }.toTypedArray(),
+                typeParameters.map { ConeTypeParameterTypeImpl(it.symbol.toLookupTag(), false) }.toTypedArray(),
                 false
             )
         }
@@ -214,13 +211,20 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
         }
     }
 
-    fun FirLoopBuilder.configure(generateBlock: () -> FirBlock): FirLoop {
+    fun FirLoopBuilder.prepareTarget(): FirLoopTarget {
         label = context.firLabels.pop()
         val target = FirLoopTarget(label?.name)
         context.firLoopTargets += target
+        return target
+    }
+
+    fun FirLoopBuilder.configure(target: FirLoopTarget, generateBlock: () -> FirBlock): FirLoop {
         block = generateBlock()
         val loop = build()
-        context.firLoopTargets.removeLast()
+        val stackTopTarget = context.firLoopTargets.removeLast()
+        assert(target == stackTopTarget) {
+            "Loop target preparation and loop configuration mismatch"
+        }
         target.bind(loop)
         return loop
     }
@@ -282,20 +286,43 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
         }
         return when (type) {
             INTEGER_CONSTANT -> {
+                var diagnostic: DiagnosticKind = DiagnosticKind.IllegalConstExpression
+                val number: Long?
+
                 val kind = when {
+                    convertedText == null -> {
+                        number = null
+                        diagnostic = DiagnosticKind.IntLiteralOutOfRange
+                        ConstantValueKind.IntegerLiteral
+                    }
+
                     convertedText !is Long -> return reportIncorrectConstant(DiagnosticKind.IllegalConstExpression)
 
                     hasUnsignedLongSuffix(text) -> {
+                        if (text.endsWith("l")) {
+                            diagnostic = DiagnosticKind.WrongLongSuffix
+                            number = null
+                        } else {
+                            number = convertedText
+                        }
                         ConstantValueKind.UnsignedLong
                     }
                     hasLongSuffix(text) -> {
+                        if (text.endsWith("l")) {
+                            diagnostic = DiagnosticKind.WrongLongSuffix
+                            number = null
+                        } else {
+                            number = convertedText
+                        }
                         ConstantValueKind.Long
                     }
                     hasUnsignedSuffix(text) -> {
+                        number = convertedText
                         ConstantValueKind.UnsignedIntegerLiteral
                     }
 
                     else -> {
+                        number = convertedText
                         ConstantValueKind.IntegerLiteral
                     }
                 }
@@ -303,8 +330,8 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
                 buildConstOrErrorExpression(
                     sourceElement,
                     kind,
-                    convertedText,
-                    ConeSimpleDiagnostic("Incorrect integer literal: $text", DiagnosticKind.IllegalConstExpression)
+                    number,
+                    ConeSimpleDiagnostic("Incorrect integer literal: $text", diagnostic)
                 )
             }
             FLOAT_CONSTANT ->
@@ -313,23 +340,28 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
                         sourceElement,
                         ConstantValueKind.Float,
                         convertedText,
-                        ConeSimpleDiagnostic("Incorrect float: $text", DiagnosticKind.IllegalConstExpression)
+                        ConeSimpleDiagnostic("Incorrect float: $text", DiagnosticKind.FloatLiteralOutOfRange)
                     )
                 } else {
                     buildConstOrErrorExpression(
                         sourceElement,
                         ConstantValueKind.Double,
                         convertedText as? Double,
-                        ConeSimpleDiagnostic("Incorrect double: $text", DiagnosticKind.IllegalConstExpression)
+                        ConeSimpleDiagnostic("Incorrect double: $text", DiagnosticKind.FloatLiteralOutOfRange)
                     )
                 }
-            CHARACTER_CONSTANT ->
+            CHARACTER_CONSTANT -> {
+                val characterWithDiagnostic = text.parseCharacter()
                 buildConstOrErrorExpression(
                     sourceElement,
                     ConstantValueKind.Char,
-                    text.parseCharacter(),
-                    ConeSimpleDiagnostic("Incorrect character: $text", DiagnosticKind.IllegalConstExpression)
+                    characterWithDiagnostic.value,
+                    ConeSimpleDiagnostic(
+                        "Incorrect character: $text",
+                        characterWithDiagnostic.getDiagnostic() ?: DiagnosticKind.IllegalConstExpression
+                    )
                 )
+            }
             BOOLEAN_CONSTANT ->
                 buildConstExpression(
                     sourceElement,
@@ -370,16 +402,7 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
                         }
                         SHORT_STRING_TEMPLATE_ENTRY, LONG_STRING_TEMPLATE_ENTRY -> {
                             hasExpressions = true
-                            val firExpression = entry.convertTemplateEntry("Incorrect template argument")
-                            val source = firExpression.source?.fakeElement(FirFakeSourceElementKind.GeneratedToStringCallOnTemplateEntry)
-                            buildFunctionCall {
-                                this.source = source
-                                explicitReceiver = firExpression
-                                calleeReference = buildSimpleNamedReference {
-                                    this.source = source
-                                    name = Name.identifier("toString")
-                                }
-                            }
+                            entry.convertTemplateEntry("Incorrect template argument")
                         }
                         else -> {
                             hasExpressions = true
@@ -878,7 +901,7 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
                 } ?: buildErrorExpression {
                     source = null
                     diagnostic = ConeSimpleDiagnostic(
-                        "Unsupported left value of assignment: ${baseSource?.psi?.text}", DiagnosticKind.ExpressionRequired
+                        "Unsupported left value of assignment: ${baseSource?.psi?.text}", DiagnosticKind.ExpressionExpected
                     )
                 }
                 rightArgument = value
@@ -1084,7 +1107,7 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
                 val parameterSource = sourceNode?.toFirSourceElement()
                 val componentFunction = buildSimpleFunction {
                     source = parameterSource?.fakeElement(FirFakeSourceElementKind.DataClassGeneratedMembers)
-                    session = this@DataClassMembersGenerator.session
+                    declarationSiteSession = session
                     origin = FirDeclarationOrigin.Source
                     returnTypeRef = firProperty.returnTypeRef
                     receiverTypeRef = null
@@ -1107,7 +1130,7 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
                 buildSimpleFunction {
                     val classTypeRef = createClassTypeRefWithSourceKind(FirFakeSourceElementKind.DataClassGeneratedMembers)
                     source = this@DataClassMembersGenerator.source.toFirSourceElement(FirFakeSourceElementKind.DataClassGeneratedMembers)
-                    session = this@DataClassMembersGenerator.session
+                    declarationSiteSession = session
                     origin = FirDeclarationOrigin.Source
                     returnTypeRef = classTypeRef
                     name = copyName
@@ -1121,7 +1144,7 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
                             createParameterTypeRefWithSourceKind(firProperty, FirFakeSourceElementKind.DataClassGeneratedMembers)
                         valueParameters += buildValueParameter {
                             source = parameterSource
-                            session = this@DataClassMembersGenerator.session
+                            declarationSiteSession = session
                             origin = FirDeclarationOrigin.Source
                             returnTypeRef = propertyReturnTypeRef
                             name = propertyName
@@ -1136,6 +1159,20 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
                 }
             )
         }
+    }
+
+    protected fun FirRegularClass.initContainingClassForLocalAttr() {
+        if (isLocal) {
+            val currentDispatchReceiverType = currentDispatchReceiverType()
+            if (currentDispatchReceiverType != null) {
+                containingClassForLocalAttr = currentDispatchReceiverType.lookupTag
+            }
+        }
+    }
+
+    protected fun FirCallableDeclaration<*>.initContainingClassAttr() {
+        val currentDispatchReceiverType = currentDispatchReceiverType() ?: return
+        containingClassAttr = currentDispatchReceiverType.lookupTag
     }
 
     private fun FirVariable<*>.toQualifiedAccess(): FirQualifiedAccessExpression = buildQualifiedAccessExpression {
@@ -1154,5 +1191,14 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
         } finally {
             context.forcedElementSourceKind = currentForced
         }
+    }
+
+    /**** Common utils ****/
+    companion object {
+        val ANONYMOUS_OBJECT_NAME = Name.special("<anonymous>")
+
+        val DESTRUCTURING_NAME = Name.special("<destruct>")
+
+        val ITERATOR_NAME = Name.special("<iterator>")
     }
 }

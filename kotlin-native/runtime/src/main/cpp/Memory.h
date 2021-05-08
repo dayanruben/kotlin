@@ -17,6 +17,8 @@
 #ifndef RUNTIME_MEMORY_H
 #define RUNTIME_MEMORY_H
 
+#include <utility>
+
 #include "KAssert.h"
 #include "Common.h"
 #include "TypeInfo.h"
@@ -64,6 +66,8 @@ struct ObjHeader {
       return createMetaObject(this);
   }
 
+  MetaObjHeader* meta_object_or_null() const noexcept { return AsMetaObject(typeInfoOrMeta_); }
+
   ALWAYS_INLINE ObjHeader** GetWeakCounterLocation();
 
 #ifdef KONAN_OBJC_INTEROP
@@ -107,9 +111,13 @@ struct ArrayHeader {
   uint32_t count_;
 };
 
-ALWAYS_INLINE bool isFrozen(const ObjHeader* obj);
 ALWAYS_INLINE bool isPermanentOrFrozen(const ObjHeader* obj);
 ALWAYS_INLINE bool isShareable(const ObjHeader* obj);
+
+static inline ObjHeader* const kInitializingSingleton = reinterpret_cast<ObjHeader*>(1);
+ALWAYS_INLINE inline bool isNullOrMarker(const ObjHeader* obj) noexcept {
+    return reinterpret_cast<uintptr_t>(obj) <= 1;
+}
 
 class ForeignRefManager;
 typedef ForeignRefManager* ForeignRefContext;
@@ -138,6 +146,7 @@ struct MemoryState;
 MemoryState* InitMemory(bool firstRuntime);
 void DeinitMemory(MemoryState*, bool destroyRuntime);
 void RestoreMemory(MemoryState*);
+void ClearMemoryForTests(MemoryState*);
 
 //
 // Object allocation.
@@ -234,10 +243,13 @@ void LeaveFrame(ObjHeader** start, int parameters, int count) RUNTIME_NOTHROW;
 // checks if subgraph referenced by given root is disjoint from the rest of
 // object graph, i.e. no external references exists.
 bool ClearSubgraphReferences(ObjHeader* root, bool checked) RUNTIME_NOTHROW;
-// Creates stable pointer out of the object.
+// Creates a stable pointer out of the object.
 void* CreateStablePointer(ObjHeader* obj) RUNTIME_NOTHROW;
-// Disposes stable pointer to the object.
+// Disposes a stable pointer to the object.
 void DisposeStablePointer(void* pointer) RUNTIME_NOTHROW;
+// Disposes a stable pointer to the object.
+// Accepts a MemoryState, thus can be called from deinitiliazation methods, when TLS is already deallocated.
+void DisposeStablePointerFor(MemoryState* memoryState, void* pointer) RUNTIME_NOTHROW;
 // Translate stable pointer to object reference.
 OBJ_GETTER(DerefStablePointer, void*) RUNTIME_NOTHROW;
 // Move stable pointer ownership.
@@ -370,5 +382,65 @@ public:
     // Exceptions are not on a hot path, so having virtual dispatch is fine.
     virtual ~ExceptionObjHolder() = default;
 };
+
+namespace kotlin {
+namespace mm {
+
+// Returns the MemoryState for the current thread. The runtime must be initialized.
+// Try not to use it very often, as (1) thread local access can be slow on some platforms,
+// (2) TLS gets deallocated before our thread destruction hooks run.
+MemoryState* GetMemoryState();
+
+} // namespace mm
+
+enum class ThreadState {
+    kRunnable, kNative
+};
+
+ThreadState GetThreadState(MemoryState* thread) noexcept;
+
+inline ThreadState GetThreadState() noexcept {
+    return GetThreadState(mm::GetMemoryState());
+}
+
+// Switches the state of the given thread to `newState` and returns the previous thread state.
+ALWAYS_INLINE ThreadState SwitchThreadState(MemoryState* thread, ThreadState newState, bool reentrant = false) noexcept;
+
+// Asserts that the given thread is in the given state.
+ALWAYS_INLINE void AssertThreadState(MemoryState* thread, ThreadState expected) noexcept;
+
+// Asserts that the current thread is in the the given state.
+ALWAYS_INLINE inline void AssertThreadState(ThreadState expected) noexcept {
+    AssertThreadState(mm::GetMemoryState(), expected);
+}
+
+// Scopely sets the given thread state for the given thread.
+class ThreadStateGuard final : private Pinned {
+public:
+    // Set the state for the given thread.
+    ThreadStateGuard(MemoryState* thread, ThreadState state, bool reentrant = false) noexcept : thread_(thread), reentrant_(reentrant) {
+        oldState_ = SwitchThreadState(thread_, state, reentrant_);
+    }
+
+    // Sets the state for the current thread.
+    explicit ThreadStateGuard(ThreadState state, bool reentrant = false) noexcept
+        : ThreadStateGuard(mm::GetMemoryState(), state, reentrant) {};
+
+    ~ThreadStateGuard() noexcept {
+        SwitchThreadState(thread_, oldState_, reentrant_);
+    }
+private:
+    MemoryState* thread_;
+    ThreadState oldState_;
+    bool reentrant_;
+};
+
+template <ThreadState state, typename R, typename... Args>
+ALWAYS_INLINE inline R CallWithThreadState(R(*function)(Args...), Args... args) {
+    ThreadStateGuard guard(state);
+    return function(std::forward<Args>(args)...);
+}
+
+} // namespace kotlin
 
 #endif // RUNTIME_MEMORY_H

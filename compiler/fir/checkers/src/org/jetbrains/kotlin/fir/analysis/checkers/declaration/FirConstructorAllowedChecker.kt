@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
+import org.jetbrains.kotlin.fir.analysis.checkers.getModifierList
 import org.jetbrains.kotlin.fir.analysis.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.fir.analysis.diagnostics.reportOn
@@ -32,7 +33,7 @@ object FirConstructorAllowedChecker : FirConstructorChecker() {
                 reporter.reportOn(source, FirErrors.NON_PRIVATE_CONSTRUCTOR_IN_ENUM, context)
             }
             ClassKind.CLASS -> if (containingClass is FirRegularClass && containingClass.modality == Modality.SEALED) {
-                val modifierList = with(FirModifierList) { source.getModifierList() } ?: return
+                val modifierList = source.getModifierList() ?: return
                 val hasIllegalModifier = modifierList.modifiers.any {
                     it.token != KtTokens.PROTECTED_KEYWORD && it.token != KtTokens.PRIVATE_KEYWORD
                 }

@@ -43,11 +43,9 @@ class FirEmptyExpressionBlock : FirBlock() {
     }
 
     override fun <D> transformOtherChildren(transformer: FirTransformer<D>, data: D): FirEmptyExpressionBlock {
-        typeRef = typeRef.transformSingle(transformer, data)
+        typeRef = typeRef.transform(transformer, data)
         return this
     }
-
-    override fun replaceSource(newSource: FirSourceElement?) {}
 
     override fun replaceTypeRef(newTypeRef: FirTypeRef) {
         typeRef = newTypeRef

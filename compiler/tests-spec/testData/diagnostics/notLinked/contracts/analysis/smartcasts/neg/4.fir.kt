@@ -20,11 +20,11 @@ fun <T : Number> T.case_2() {
 }
 
 // TESTCASE NUMBER: 3
-fun <T : String> T?.case_3_1() {
+fun <T : <!FINAL_UPPER_BOUND!>String<!>> T?.case_3_1() {
     contract { returns() implies (this@case_3_1 == null) }
     if (!(this@case_3_1 == null)) throw Exception()
 }
-fun <T : String> T?.case_3_2() {
+fun <T : <!FINAL_UPPER_BOUND!>String<!>> T?.case_3_2() {
     contract { returns() implies (this@case_3_2 != null) }
     if (!(this@case_3_2 != null)) throw Exception()
 }
@@ -76,19 +76,19 @@ fun <T : Number> T.case_6_4(): Boolean? {
 }
 
 // TESTCASE NUMBER: 7
-fun <T : String> T?.case_7_1(): Boolean {
+fun <T : <!FINAL_UPPER_BOUND!>String<!>> T?.case_7_1(): Boolean {
     contract { returns(true) implies (this@case_7_1 == null) }
     return this@case_7_1 == null
 }
-fun <T : String> T?.case_7_2(): Boolean {
+fun <T : <!FINAL_UPPER_BOUND!>String<!>> T?.case_7_2(): Boolean {
     contract { returns(false) implies (this@case_7_2 != null) }
     return !(this@case_7_2 != null)
 }
-fun <T : String> T?.case_7_3(): Boolean? {
+fun <T : <!FINAL_UPPER_BOUND!>String<!>> T?.case_7_3(): Boolean? {
     contract { returnsNotNull() implies (this@case_7_3 != null) }
     return if (this@case_7_3 != null) true else null
 }
-fun <T : String> T?.case_7_4(): Boolean? {
+fun <T : <!FINAL_UPPER_BOUND!>String<!>> T?.case_7_4(): Boolean? {
     contract { returns(null) implies (this@case_7_4 != null) }
     return if (this@case_7_4 != null) null else true
 }
@@ -140,13 +140,13 @@ import contracts.*
 // TESTCASE NUMBER: 1
 fun case_1(value_1: Any?) {
     value_1.case_1()
-    <!AMBIGUITY!>println<!>(value_1.<!UNRESOLVED_REFERENCE!>length<!>)
+    <!OVERLOAD_RESOLUTION_AMBIGUITY!>println<!>(value_1.<!UNRESOLVED_REFERENCE!>length<!>)
 }
 
 // TESTCASE NUMBER: 2
 fun case_2(value_1: Number) {
     value_1.case_2()
-    <!AMBIGUITY!>println<!>(value_1.<!UNRESOLVED_REFERENCE!>inv<!>())
+    <!OVERLOAD_RESOLUTION_AMBIGUITY!>println<!>(value_1.<!UNRESOLVED_REFERENCE!>inv<!>())
 }
 
 // TESTCASE NUMBER: 3
@@ -167,18 +167,18 @@ fun case_4(value_1: String?, value_2: String?) {
 
 // TESTCASE NUMBER: 5
 fun case_5(value_1: Any?) {
-    if (value_1.case_5_1()) <!AMBIGUITY!>println<!>(value_1.<!UNRESOLVED_REFERENCE!>length<!>)
-    if (!value_1.case_5_2()) <!AMBIGUITY!>println<!>(value_1.<!UNRESOLVED_REFERENCE!>length<!>)
-    if (value_1.case_5_3() != null) <!AMBIGUITY!>println<!>(value_1.<!UNRESOLVED_REFERENCE!>length<!>)
-    if (value_1.case_5_4() == null) <!AMBIGUITY!>println<!>(value_1.<!UNRESOLVED_REFERENCE!>length<!>)
+    if (value_1.case_5_1()) <!OVERLOAD_RESOLUTION_AMBIGUITY!>println<!>(value_1.<!UNRESOLVED_REFERENCE!>length<!>)
+    if (!value_1.case_5_2()) <!OVERLOAD_RESOLUTION_AMBIGUITY!>println<!>(value_1.<!UNRESOLVED_REFERENCE!>length<!>)
+    if (value_1.case_5_3() != null) <!OVERLOAD_RESOLUTION_AMBIGUITY!>println<!>(value_1.<!UNRESOLVED_REFERENCE!>length<!>)
+    if (value_1.case_5_4() == null) <!OVERLOAD_RESOLUTION_AMBIGUITY!>println<!>(value_1.<!UNRESOLVED_REFERENCE!>length<!>)
 }
 
 // TESTCASE NUMBER: 6
 fun case_6(value_1: Number) {
-    when { value_1.case_6_1() -> <!AMBIGUITY!>println<!>(value_1.<!UNRESOLVED_REFERENCE!>inv<!>()) }
-    when { !value_1.case_6_2() -> <!AMBIGUITY!>println<!>(value_1.<!UNRESOLVED_REFERENCE!>inv<!>()) }
-    when { value_1.case_6_3() != null -> <!AMBIGUITY!>println<!>(value_1.<!UNRESOLVED_REFERENCE!>inv<!>()) }
-    when { value_1.case_6_4() != null -> <!AMBIGUITY!>println<!>(value_1.<!UNRESOLVED_REFERENCE!>inv<!>()) }
+    when { value_1.case_6_1() -> <!OVERLOAD_RESOLUTION_AMBIGUITY!>println<!>(value_1.<!UNRESOLVED_REFERENCE!>inv<!>()) }
+    when { !value_1.case_6_2() -> <!OVERLOAD_RESOLUTION_AMBIGUITY!>println<!>(value_1.<!UNRESOLVED_REFERENCE!>inv<!>()) }
+    when { value_1.case_6_3() != null -> <!OVERLOAD_RESOLUTION_AMBIGUITY!>println<!>(value_1.<!UNRESOLVED_REFERENCE!>inv<!>()) }
+    when { value_1.case_6_4() != null -> <!OVERLOAD_RESOLUTION_AMBIGUITY!>println<!>(value_1.<!UNRESOLVED_REFERENCE!>inv<!>()) }
 }
 
 // TESTCASE NUMBER: 7

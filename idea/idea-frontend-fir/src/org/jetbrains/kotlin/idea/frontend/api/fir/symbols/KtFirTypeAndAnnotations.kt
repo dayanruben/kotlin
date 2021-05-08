@@ -6,8 +6,9 @@
 package org.jetbrains.kotlin.idea.frontend.api.fir.symbols
 
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.resolve.transformers.resolveSupertypesInTheAir
 import org.jetbrains.kotlin.fir.types.*
-import org.jetbrains.kotlin.idea.frontend.api.ValidityToken
+import org.jetbrains.kotlin.idea.frontend.api.tokens.ValidityToken
 import org.jetbrains.kotlin.idea.frontend.api.fir.KtSymbolByFirBuilder
 import org.jetbrains.kotlin.idea.frontend.api.fir.symbols.annotations.KtFirAnnotationCall
 import org.jetbrains.kotlin.idea.frontend.api.fir.utils.FirRefWithValidityCheck
@@ -28,7 +29,7 @@ internal class KtFirTypeAndAnnotations<T : FirDeclaration>(
     override val token: ValidityToken get() = containingDeclaration.token
 
     override val type: KtType by containingDeclaration.withFirAndCache(typeResolvePhase) { fir ->
-        builder.buildKtType(typeRef(fir))
+        builder.typeBuilder.buildKtType(typeRef(fir))
     }
 
     override val annotations: List<KtAnnotationCall> by containingDeclaration.withFirAndCache { fir ->
@@ -49,7 +50,7 @@ internal class KtSimpleFirTypeAndAnnotations(
     private val annotationsListRef by weakRef(annotationsList)
 
     override val type: KtType by cached {
-        builder.buildKtType(coneTypeRef)
+        builder.typeBuilder.buildKtType(coneTypeRef)
     }
 
     override val annotations: List<KtAnnotationCall> get() = annotationsListRef
@@ -57,13 +58,28 @@ internal class KtSimpleFirTypeAndAnnotations(
 
 internal fun FirRefWithValidityCheck<FirClass<*>>.superTypesAndAnnotationsList(builder: KtSymbolByFirBuilder): List<KtTypeAndAnnotations> =
     withFir(FirResolvePhase.SUPER_TYPES) { fir ->
-        fir.superTypeRefs.map { typeRef ->
-            val annotations = typeRef.annotations.map { annotation ->
-                KtFirAnnotationCall(this, annotation)
-            }
-            KtSimpleFirTypeAndAnnotations(typeRef.coneType, annotations, builder, token)
-        }
+        fir.superTypeRefs.mapToTypeAndAnnotations(this, builder)
     }
+
+internal fun FirRefWithValidityCheck<FirRegularClass>.superTypesAndAnnotationsListForRegularClass(builder: KtSymbolByFirBuilder): List<KtTypeAndAnnotations> {
+    return withFir { fir ->
+        if (fir.resolvePhase >= FirResolvePhase.SUPER_TYPES) {
+            fir.superTypeRefs.mapToTypeAndAnnotations(this, builder)
+        } else null
+    } ?: withFirWithPossibleResolveInside { fir ->
+        fir.resolveSupertypesInTheAir(builder.rootSession).mapToTypeAndAnnotations(this, builder)
+    }
+}
+
+private fun List<FirTypeRef>.mapToTypeAndAnnotations(
+    containingDeclaration: FirRefWithValidityCheck<FirClass<*>>,
+    builder: KtSymbolByFirBuilder,
+) = map { typeRef ->
+    val annotations = typeRef.annotations.map { annotation ->
+        KtFirAnnotationCall(containingDeclaration, annotation)
+    }
+    KtSimpleFirTypeAndAnnotations(typeRef.coneType, annotations, builder, containingDeclaration.token)
+}
 
 internal fun FirRefWithValidityCheck<FirTypedDeclaration>.returnTypeAndAnnotations(
     typeResolvePhase: FirResolvePhase,
@@ -81,6 +97,6 @@ internal fun FirRefWithValidityCheck<FirCallableDeclaration<*>>.receiverTypeAndA
 internal fun FirRefWithValidityCheck<FirCallableMemberDeclaration<*>>.dispatchReceiverTypeAndAnnotations(builder: KtSymbolByFirBuilder) =
     withFir { fir ->
         fir.dispatchReceiverType?.let {
-            builder.buildKtType(it)
+            builder.typeBuilder.buildKtType(it)
         }
     }

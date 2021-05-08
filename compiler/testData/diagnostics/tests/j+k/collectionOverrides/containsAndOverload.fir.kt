@@ -12,13 +12,13 @@ abstract class KA : A() {
 }
 
 fun foo(a: A, ka: KA) {
-    a.<!AMBIGUITY!>contains<!>("")
+    a.<!OVERLOAD_RESOLUTION_AMBIGUITY!>contains<!>("")
     a.<!NONE_APPLICABLE!>contains<!>(1)
-    "" <!AMBIGUITY!>in<!> a
+    "" <!OVERLOAD_RESOLUTION_AMBIGUITY!>in<!> a
     1 <!NONE_APPLICABLE!>in<!> a
 
     ka.contains("")
-    ka.<!INAPPLICABLE_CANDIDATE!>contains<!>(1)
+    ka.contains(<!ARGUMENT_TYPE_MISMATCH!>1<!>)
     "" in ka
-    1 <!INAPPLICABLE_CANDIDATE!>in<!> ka
+    <!ARGUMENT_TYPE_MISMATCH!>1<!> in ka
 }

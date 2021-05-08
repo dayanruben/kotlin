@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.backend.common.COROUTINE_SUSPENDED_NAME
 import org.jetbrains.kotlin.backend.common.ir.Ir
 import org.jetbrains.kotlin.backend.common.ir.Symbols
 import org.jetbrains.kotlin.backend.konan.*
+import org.jetbrains.kotlin.backend.konan.descriptors.enumEntries
 import org.jetbrains.kotlin.backend.konan.descriptors.kotlinNativeInternal
 import org.jetbrains.kotlin.backend.konan.llvm.findMainEntryPoint
 import org.jetbrains.kotlin.backend.konan.lower.TestProcessor
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.descriptors.IrBuiltIns
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
+import org.jetbrains.kotlin.ir.symbols.IrEnumEntrySymbol
 import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.types.IrType
@@ -61,6 +63,7 @@ internal class KonanSymbols(
     val nativePointed = symbolTable.referenceClass(context.interopBuiltIns.nativePointed)
     val nativePtrType = nativePtr.typeWith(arguments = emptyList())
     val nonNullNativePtr = symbolTable.referenceClass(context.nonNullNativePtr)
+    val nonNullNativePtrType = nonNullNativePtr.typeWith(arguments = emptyList())
 
     val immutableBlobOf = symbolTable.referenceSimpleFunction(context.immutableBlobOf)
 
@@ -88,7 +91,7 @@ internal class KonanSymbols(
 
     val integerConversions = allIntegerClasses.flatMap { fromClass ->
         allIntegerClasses.map { toClass ->
-            val name = Name.identifier("to${toClass.descriptor.name.asString().capitalize()}")
+            val name = Name.identifier("to${toClass.descriptor.name.asString().replaceFirstChar(Char::uppercaseChar)}")
             val descriptor = if (fromClass in signedIntegerClasses && toClass in unsignedIntegerClasses) {
                 builtInsPackage("kotlin")
                         .getContributedFunctions(name, NoLookupLocation.FROM_BACKEND)
@@ -203,6 +206,10 @@ internal class KonanSymbols(
 
     val nativeMemUtils = symbolTable.referenceClass(context.interopBuiltIns.nativeMemUtils)
 
+    val nativeHeap = symbolTable.referenceClass(context.interopBuiltIns.nativeHeap)
+
+    val interopGetPtr = symbolTable.referenceSimpleFunction(context.interopBuiltIns.interopGetPtr)
+
     val readBits = interopFunction("readBits")
     val writeBits = interopFunction("writeBits")
 
@@ -220,11 +227,11 @@ internal class KonanSymbols(
     val getNativeNullPtr = symbolTable.referenceSimpleFunction(context.getNativeNullPtr)
 
     val boxCachePredicates = BoxCache.values().associate {
-        it to internalFunction("in${it.name.toLowerCase().capitalize()}BoxCache")
+        it to internalFunction("in${it.name.lowercase().replaceFirstChar(Char::uppercaseChar)}BoxCache")
     }
 
     val boxCacheGetters = BoxCache.values().associate {
-        it to internalFunction("getCached${it.name.toLowerCase().capitalize()}Box")
+        it to internalFunction("getCached${it.name.lowercase().replaceFirstChar(Char::uppercaseChar)}Box")
     }
 
     val immutableBlob = symbolTable.referenceClass(
@@ -455,6 +462,14 @@ internal class KonanSymbols(
 
     val kType = symbolTable.referenceClass(context.reflectionTypes.kType)
     val kVariance = symbolTable.referenceClass(context.reflectionTypes.kVariance)
+    val kVarianceIn = getKVarianceEnumEntry("IN")
+    val kVarianceOut = getKVarianceEnumEntry("OUT")
+    val kVarianceInvariant = getKVarianceEnumEntry("INVARIANT")
+
+    private fun getKVarianceEnumEntry(name: String): IrEnumEntrySymbol {
+        val descriptor = context.reflectionTypes.kVariance.enumEntries.single { it.name.asString() == name }
+        return symbolTable.referenceEnumEntry(descriptor)
+    }
 
     val getClassTypeInfo = internalFunction("getClassTypeInfo")
     val getObjectTypeInfo = internalFunction("getObjectTypeInfo")

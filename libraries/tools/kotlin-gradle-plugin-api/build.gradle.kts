@@ -15,7 +15,8 @@ dependencies {
     implementation(project(":native:kotlin-native-utils"))
 
     compileOnly(gradleApi())
-    compileOnly("com.android.tools.build:gradle:0.4.2")
+    compileOnly("com.android.tools.build:gradle:3.4.0")
+    compileOnly(project(":kotlin-project-model"))
 }
 
 pill {
@@ -27,7 +28,9 @@ tasks {
         kotlinOptions.languageVersion = "1.3"
         kotlinOptions.apiVersion = "1.3"
         kotlinOptions.freeCompilerArgs += listOf(
-            "-Xskip-prerelease-check", "-Xsuppress-version-warnings"
+            "-Xskip-prerelease-check",
+            "-Xskip-runtime-version-check",
+            "-Xsuppress-version-warnings"
         )
     }
 

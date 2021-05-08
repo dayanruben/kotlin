@@ -5,11 +5,14 @@
 
 package org.jetbrains.kotlin.idea.util
 
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentsOfType
+import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.cfg.containingDeclarationForPseudocode
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -37,11 +40,15 @@ fun KtElement.getElementTextInContext(): String {
 
 private const val ELEMENT_TAG = "ELEMENT"
 
-fun KtClassOrObject.classIdIfNonLocal(): ClassId? {
-    if (KtPsiUtil.isLocal(this)) return null
-    val packageName = containingKtFile.packageFqName
+fun PsiClass.classIdIfNonLocal(): ClassId? {
+    if (this is KtLightClass) {
+        return this.kotlinOrigin?.getClassId()
+    }
+    val packageName = (containingFile as? PsiJavaFile)?.packageName ?: return null
+    val packageFqName = FqName(packageName)
+
     val classesNames = parentsOfType<KtDeclaration>().map { it.name }.toList().asReversed()
     if (classesNames.any { it == null }) return null
-    return ClassId(packageName, FqName(classesNames.joinToString(separator = ".")), /*local=*/false)
+    return ClassId(packageFqName, FqName(classesNames.joinToString(separator = ".")), false)
 }
 

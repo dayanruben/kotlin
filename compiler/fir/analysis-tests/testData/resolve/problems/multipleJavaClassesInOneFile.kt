@@ -1,4 +1,5 @@
-// FILE: Some.java
+// FIR_IDE_IGNORE
+// FILE: foo/Some.java
 
 package foo;
 
@@ -7,6 +8,7 @@ class Some {}
 class Another {}
 
 // FILE: main.kt
+package foo
 
 fun test() {
     val some = Some()

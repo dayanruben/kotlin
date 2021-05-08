@@ -16,7 +16,7 @@ fun foo() {
     Ann()
     val a = Ann()
 
-    <!INAPPLICABLE_CANDIDATE!>Ann1<!>()
+    Ann1(<!NO_VALUE_FOR_PARAMETER!>)<!>
     Ann1(1)
     bar(Ann())
     bar(a = Ann())
@@ -26,7 +26,7 @@ fun foo() {
 }
 
 fun bar(a: Ann = Ann()) {
-    if (a is Ann) {}
+    if (<!USELESS_IS_CHECK!>a is Ann<!>) {}
 }
 
 operator fun String.invoke() {}

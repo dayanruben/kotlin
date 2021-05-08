@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.js.messageCollectorLogger
 import org.jetbrains.kotlin.ir.backend.js.*
 import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
+import org.jetbrains.kotlin.ir.declarations.persistent.PersistentIrFactory
 import org.jetbrains.kotlin.js.config.JSConfigurationKeys
 import org.jetbrains.kotlin.js.config.JsConfig
 import org.jetbrains.kotlin.js.facade.MainCallParameters
@@ -65,10 +66,10 @@ abstract class BasicIrBoxTest(
 
     private val cachedDependencies = mutableMapOf<String, Collection<String>>()
 
-    override fun doTest(filePath: String, expectedResult: String, mainCallParameters: MainCallParameters, coroutinesPackage: String) {
+    override fun doTest(filePath: String, expectedResult: String, mainCallParameters: MainCallParameters) {
         compilationCache.clear()
         cachedDependencies.clear()
-        super.doTest(filePath, expectedResult, mainCallParameters, coroutinesPackage)
+        super.doTest(filePath, expectedResult, mainCallParameters)
     }
 
     override val testChecker get() = if (runTestInNashorn) NashornIrJsTestChecker() else V8IrJsTestChecker
@@ -136,6 +137,7 @@ abstract class BasicIrBoxTest(
                     analyzer = AnalyzerWithCompilerReport(config.configuration),
                     configuration = config.configuration,
                     phaseConfig = phaseConfig,
+                    irFactory = IrFactoryImpl,
                     allDependencies = resolvedLibraries,
                     friendDependencies = emptyList(),
                     mainArguments = mainCallParameters.run { if (shouldBeGenerated()) arguments() else null },
@@ -165,6 +167,7 @@ abstract class BasicIrBoxTest(
                     analyzer = AnalyzerWithCompilerReport(config.configuration),
                     configuration = config.configuration,
                     phaseConfig = phaseConfig,
+                    irFactory = PersistentIrFactory(),
                     allDependencies = resolvedLibraries,
                     friendDependencies = emptyList(),
                     mainArguments = mainCallParameters.run { if (shouldBeGenerated()) arguments() else null },

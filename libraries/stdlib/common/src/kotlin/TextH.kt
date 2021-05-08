@@ -74,6 +74,7 @@ expect fun Char.isLowSurrogate(): Boolean
  */
 @SinceKotlin("1.2")
 @Deprecated("Use CharArray.concatToString() instead", ReplaceWith("chars.concatToString()"))
+@DeprecatedSinceKotlin(warningSince = "1.4", errorSince = "1.5")
 public expect fun String(chars: CharArray): String
 
 /**
@@ -84,6 +85,7 @@ public expect fun String(chars: CharArray): String
  */
 @SinceKotlin("1.2")
 @Deprecated("Use CharArray.concatToString(startIndex, endIndex) instead", ReplaceWith("chars.concatToString(offset, offset + length)"))
+@DeprecatedSinceKotlin(warningSince = "1.4", errorSince = "1.5")
 public expect fun String(chars: CharArray, offset: Int, length: Int): String
 
 /**
@@ -190,6 +192,11 @@ internal expect fun String.nativeLastIndexOf(str: String, fromIndex: Int): Int
 public expect fun String.substring(startIndex: Int): String
 public expect fun String.substring(startIndex: Int, endIndex: Int): String
 
+/**
+ * Returns a string containing this char sequence repeated [n] times.
+ * @throws [IllegalArgumentException] when n < 0.
+ * @sample samples.text.Strings.repeat
+ */
 public expect fun CharSequence.repeat(n: Int): String
 
 
@@ -279,6 +286,8 @@ public expect fun String.toBoolean(): Boolean
 
 /**
  * Returns `true` if this string is not `null` and its content is equal to the word "true", ignoring case, and `false` otherwise.
+ *
+ * There are also strict versions of the function available on non-nullable String, [toBooleanStrict] and [toBooleanStrictOrNull].
  */
 @SinceKotlin("1.4")
 public expect fun String?.toBoolean(): Boolean

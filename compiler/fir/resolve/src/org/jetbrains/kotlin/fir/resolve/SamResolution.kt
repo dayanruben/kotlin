@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.fir.resolve
 
 import org.jetbrains.kotlin.descriptors.ClassKind
+import org.jetbrains.kotlin.descriptors.EffectiveVisibility
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.containingClassAttr
@@ -14,13 +15,14 @@ import org.jetbrains.kotlin.fir.declarations.builder.FirTypeParameterBuilder
 import org.jetbrains.kotlin.fir.declarations.builder.buildSimpleFunction
 import org.jetbrains.kotlin.fir.declarations.builder.buildValueParameter
 import org.jetbrains.kotlin.fir.declarations.impl.FirDeclarationStatusImpl
+import org.jetbrains.kotlin.fir.declarations.impl.FirResolvedDeclarationStatusImpl
 import org.jetbrains.kotlin.fir.diagnostics.ConeIntermediateDiagnostic
 import org.jetbrains.kotlin.fir.resolve.calls.FirSyntheticFunctionSymbol
 import org.jetbrains.kotlin.fir.resolve.substitution.substitutorByMap
 import org.jetbrains.kotlin.fir.scopes.impl.hasTypeOf
 import org.jetbrains.kotlin.fir.scopes.unsubstitutedScope
 import org.jetbrains.kotlin.name.CallableId
-import org.jetbrains.kotlin.fir.symbols.StandardClassIds
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirTypeParameterSymbol
@@ -94,6 +96,7 @@ class FirSamResolverImpl(
                         Pair(parameterSymbol, typeArgument)
                     }
                     .toMap(),
+                firSession
             )
 
         val result =
@@ -130,7 +133,7 @@ class FirSamResolverImpl(
             val declaredTypeParameter = typeParameter.symbol.fir // TODO: or really declared?
             FirTypeParameterBuilder().apply {
                 source = declaredTypeParameter.source
-                session = firSession
+                declarationSiteSession = firSession
                 origin = FirDeclarationOrigin.SamConstructor
                 name = declaredTypeParameter.name
                 this.symbol = FirTypeParameterSymbol()
@@ -148,6 +151,7 @@ class FirSamResolverImpl(
             firRegularClass.typeParameters
                 .map { it.symbol }
                 .zip(newTypeParameterTypes).toMap(),
+            firSession
         )
 
         for ((newTypeParameter, oldTypeParameter) in newTypeParameters.zip(firRegularClass.typeParameters)) {
@@ -161,11 +165,16 @@ class FirSamResolverImpl(
         }
 
         return buildSimpleFunction {
-            session = firSession
+            declarationSiteSession = firSession
             source = firRegularClass.source
             name = classId.shortClassName
             origin = FirDeclarationOrigin.SamConstructor
-            status = FirDeclarationStatusImpl(firRegularClass.visibility, Modality.FINAL).apply {
+            val visibility = firRegularClass.visibility
+            status = FirResolvedDeclarationStatusImpl(
+                visibility,
+                Modality.FINAL,
+                EffectiveVisibility.Local
+            ).apply {
                 isExpect = firRegularClass.isExpect
                 isActual = firRegularClass.isActual
                 isOverride = false
@@ -191,7 +200,7 @@ class FirSamResolverImpl(
             }
 
             valueParameters += buildValueParameter {
-                session = firSession
+                declarationSiteSession = firSession
                 origin = FirDeclarationOrigin.SamConstructor
                 returnTypeRef = buildResolvedTypeRef {
                     source = firRegularClass.source

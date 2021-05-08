@@ -17,16 +17,18 @@ import org.jetbrains.kotlin.fir.declarations.synthetic.FirSyntheticProperty
 import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
 import org.jetbrains.kotlin.fir.expressions.FirConstExpression
 import org.jetbrains.kotlin.fir.expressions.FirQualifiedAccess
+import org.jetbrains.kotlin.fir.references.FirErrorNamedReference
 import org.jetbrains.kotlin.fir.references.FirReference
 import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
 import org.jetbrains.kotlin.fir.references.FirThisReference
 import org.jetbrains.kotlin.fir.references.impl.FirPropertyFromParameterResolvedNamedReference
 import org.jetbrains.kotlin.fir.resolve.*
-import org.jetbrains.kotlin.fir.resolve.calls.SyntheticPropertySymbol
+import org.jetbrains.kotlin.fir.resolve.calls.FirSyntheticPropertySymbol
 import org.jetbrains.kotlin.fir.resolve.calls.originalConstructorIfTypeAlias
 import org.jetbrains.kotlin.fir.resolve.providers.FirProvider
 import org.jetbrains.kotlin.fir.scopes.*
 import org.jetbrains.kotlin.fir.scopes.impl.delegatedWrapperData
+import org.jetbrains.kotlin.fir.symbols.AbstractFirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.AccessorSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.*
@@ -137,6 +139,17 @@ fun FirClassifierSymbol<*>.toSymbol(
     }
 }
 
+private fun AbstractFirBasedSymbol<*>.toSymbolForCall(
+    session: FirSession,
+    classifierStorage: Fir2IrClassifierStorage,
+    declarationStorage: Fir2IrDeclarationStorage,
+    preferGetter: Boolean
+) = when (this) {
+    is FirCallableSymbol<*> -> unwrapCallRepresentative().toSymbolForCall(declarationStorage, preferGetter)
+    is FirClassifierSymbol<*> -> toSymbol(session, classifierStorage)
+    else -> error("Unknown symbol: $this")
+}
+
 fun FirReference.toSymbolForCall(
     session: FirSession,
     classifierStorage: Fir2IrClassifierStorage,
@@ -145,19 +158,8 @@ fun FirReference.toSymbolForCall(
     preferGetter: Boolean = true
 ): IrSymbol? {
     return when (this) {
-        is FirResolvedNamedReference -> {
-            when (val resolvedSymbol = resolvedSymbol) {
-                is FirCallableSymbol<*> -> {
-                    resolvedSymbol.unwrapCallRepresentative().toSymbolForCall(declarationStorage, preferGetter)
-                }
-                is FirClassifierSymbol<*> -> {
-                    resolvedSymbol.toSymbol(session, classifierStorage)
-                }
-                else -> {
-                    error("Unknown symbol: $resolvedSymbol")
-                }
-            }
-        }
+        is FirResolvedNamedReference -> resolvedSymbol.toSymbolForCall(session, classifierStorage, declarationStorage, preferGetter)
+        is FirErrorNamedReference -> candidateSymbol?.toSymbolForCall(session, classifierStorage, declarationStorage, preferGetter)
         is FirThisReference -> {
             when (val boundSymbol = boundSymbol) {
                 is FirClassSymbol<*> -> classifierStorage.getIrClassSymbol(boundSymbol).owner.thisReceiver?.symbol
@@ -176,7 +178,7 @@ fun FirReference.toSymbolForCall(
 private fun FirCallableSymbol<*>.toSymbolForCall(declarationStorage: Fir2IrDeclarationStorage, preferGetter: Boolean): IrSymbol? =
     when (this) {
         is FirFunctionSymbol<*> -> declarationStorage.getIrFunctionSymbol(this)
-        is SyntheticPropertySymbol -> {
+        is FirSyntheticPropertySymbol -> {
             (fir as? FirSyntheticProperty)?.let { syntheticProperty ->
                 val delegateSymbol = if (preferGetter) {
                     syntheticProperty.getter.delegate.symbol
@@ -393,7 +395,7 @@ internal fun FirReference.statementOrigin(): IrStatementOrigin? {
     return when (this) {
         is FirPropertyFromParameterResolvedNamedReference -> IrStatementOrigin.INITIALIZE_PROPERTY_FROM_PARAMETER
         is FirResolvedNamedReference -> when (val symbol = resolvedSymbol) {
-            is AccessorSymbol, is SyntheticPropertySymbol -> IrStatementOrigin.GET_PROPERTY
+            is AccessorSymbol, is FirSyntheticPropertySymbol -> IrStatementOrigin.GET_PROPERTY
             is FirNamedFunctionSymbol -> when {
                 symbol.callableId.isInvoke() ->
                     IrStatementOrigin.INVOKE

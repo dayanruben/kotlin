@@ -16,7 +16,6 @@ import org.gradle.api.attributes.Usage
 import org.gradle.api.attributes.Usage.USAGE_ATTRIBUTE
 import org.gradle.api.file.FileCollection
 import org.gradle.api.internal.artifacts.ArtifactAttributes
-import org.gradle.api.internal.plugins.DslObject
 import org.gradle.api.plugins.BasePlugin
 import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.plugins.JavaBasePlugin
@@ -272,6 +271,18 @@ abstract class AbstractKotlinTargetConfigurator<KotlinTargetType : KotlinTarget>
             val target = compilation.target
             val configurations = target.project.configurations
 
+            configurations.maybeCreate(compilation.pluginConfigurationName).apply {
+                if (target.platformType == KotlinPlatformType.native) {
+                    extendsFrom(configurations.getByName(NATIVE_COMPILER_PLUGIN_CLASSPATH_CONFIGURATION_NAME))
+                    isTransitive = false
+                } else {
+                    extendsFrom(target.project.commonKotlinPluginClasspath)
+                }
+                isVisible = false
+                isCanBeConsumed = false
+                description = "Kotlin compiler plugins for $compilation"
+            }
+
             val compileConfiguration = configurations.findByName(compilation.deprecatedCompileConfigurationName)?.apply {
                 isCanBeConsumed = false
                 setupAsLocalTargetSpecificConfigurationIfSupported(target)
@@ -305,7 +316,7 @@ abstract class AbstractKotlinTargetConfigurator<KotlinTargetType : KotlinTarget>
                 description = "Compile only dependencies for $compilation."
             }
 
-            val compileClasspathConfiguration = configurations.maybeCreate(compilation.compileDependencyConfigurationName).apply {
+            configurations.maybeCreate(compilation.compileDependencyConfigurationName).apply {
                 extendsFrom(compileOnlyConfiguration, implementationConfiguration)
                 usesPlatformOf(target)
                 isVisible = false
@@ -332,7 +343,7 @@ abstract class AbstractKotlinTargetConfigurator<KotlinTargetType : KotlinTarget>
                     description = "Runtime only dependencies for $compilation."
                 }
 
-                val runtimeClasspathConfiguration = configurations.maybeCreate(compilation.runtimeDependencyConfigurationName).apply {
+                configurations.maybeCreate(compilation.runtimeDependencyConfigurationName).apply {
                     extendsFrom(runtimeOnlyConfiguration, implementationConfiguration)
                     runtimeConfiguration?.let { extendsFrom(it) }
                     usesPlatformOf(target)
@@ -358,8 +369,7 @@ internal val KotlinTarget.testTaskName: String
 
 abstract class KotlinOnlyTargetConfigurator<KotlinCompilationType : KotlinCompilation<*>, KotlinTargetType : KotlinOnlyTarget<KotlinCompilationType>>(
     createDefaultSourceSets: Boolean,
-    createTestCompilation: Boolean,
-    val kotlinPluginVersion: String
+    createTestCompilation: Boolean
 ) : AbstractKotlinTargetConfigurator<KotlinTargetType>(
     createDefaultSourceSets,
     createTestCompilation
@@ -493,3 +503,7 @@ fun Configuration.usesPlatformOf(target: KotlinTarget): Configuration {
     }
     return this
 }
+
+internal val Project.commonKotlinPluginClasspath get() = configurations.getByName(PLUGIN_CLASSPATH_CONFIGURATION_NAME)
+internal val KotlinCompilation<*>.pluginConfigurationName
+    get() = lowerCamelCaseName(PLUGIN_CLASSPATH_CONFIGURATION_NAME, target.disambiguationClassifier, compilationName)

@@ -18,6 +18,14 @@ data class CallableId(
         val PACKAGE_FQ_NAME_FOR_LOCAL = FqName.topLevel(LOCAL_NAME)
     }
 
+    /**
+     * Return `true` if corresponding declaration is itself local or it is a member of local class
+     * Otherwise, returns `false`
+     */
+    val isLocal: Boolean
+        get() = packageName == PACKAGE_FQ_NAME_FOR_LOCAL
+                || classId?.isLocal == true
+
     var classId: ClassId? = null
         get() {
             if (field == null && className != null) {
@@ -46,7 +54,10 @@ data class CallableId(
 
     fun asFqNameForDebugInfo(): FqName {
         if (pathToLocal != null) return pathToLocal.child(callableName)
+        return asSingleFqName()
+    }
 
+    fun asSingleFqName(): FqName {
         return classId?.asSingleFqName()?.child(callableName) ?: packageName.child(callableName)
     }
 

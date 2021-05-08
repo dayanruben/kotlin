@@ -101,7 +101,11 @@ object KotlinCompilerClient {
         fun CompileService.leaseImpl(): CompileServiceSession? {
             // the newJVMOptions could be checked here for additional parameters, if needed
             registerClient(clientAliveFlagFile.absolutePath)
-            reportingTargets.report(DaemonReportCategory.DEBUG, "connected to the daemon")
+            val javaExecutablePath = compilerId.javaExecutable?.absolutePath ?: "'user jvm'"
+            reportingTargets.report(
+                DaemonReportCategory.DEBUG,
+                "connected to the daemon. Daemon is using following 'java' executable to run itself: $javaExecutablePath"
+            )
 
             if (!leaseSession) return CompileServiceSession(this, CompileService.NO_SESSION)
 
@@ -299,7 +303,7 @@ object KotlinCompilerClient {
     }
 
     fun detectCompilerClasspath(): List<String>? =
-            System.getProperty("java.class.path")
+        CompilerSystemProperties.JAVA_CLASS_PATH.value
             ?.split(File.pathSeparator)
             ?.map { File(it).parentFile }
             ?.distinct()
@@ -367,20 +371,26 @@ object KotlinCompilerClient {
     }
 
 
-    private fun startDaemon(compilerId: CompilerId, daemonJVMOptions: DaemonJVMOptions, daemonOptions: DaemonOptions, reportingTargets: DaemonReportingTargets): Boolean {
-        val javaExecutable = File(File(System.getProperty("java.home"), "bin"), "java")
+    private fun startDaemon(
+        compilerId: CompilerId,
+        daemonJVMOptions: DaemonJVMOptions,
+        daemonOptions: DaemonOptions,
+        reportingTargets: DaemonReportingTargets
+    ): Boolean {
+        val daemonJavaExecutable = compilerId.javaExecutable
+            ?: File(File(CompilerSystemProperties.JAVA_HOME.safeValue, "bin"), "java")
         val serverHostname = CompilerSystemProperties.JAVA_RMI_SERVER_HOSTNAME.value ?: error("${CompilerSystemProperties.JAVA_RMI_SERVER_HOSTNAME.property} is not set!")
         val platformSpecificOptions = listOf(
                 // hide daemon window
                 "-Djava.awt.headless=true",
                 "-D$${CompilerSystemProperties.JAVA_RMI_SERVER_HOSTNAME.property}=$serverHostname")
-        val javaVersion = System.getProperty("java.specification.version")?.toIntOrNull()
+        val javaVersion = CompilerSystemProperties.JAVA_VERSION.value?.toIntOrNull()
         val javaIllegalAccessWorkaround =
             if (javaVersion != null && javaVersion >= 16)
                 listOf("--illegal-access=permit")
             else emptyList()
         val args = listOf(
-                   javaExecutable.absolutePath, "-cp", compilerId.compilerClasspath.joinToString(File.pathSeparator)) +
+                   daemonJavaExecutable.absolutePath, "-cp", compilerId.compilerClasspath.joinToString(File.pathSeparator)) +
                    platformSpecificOptions +
                    daemonJVMOptions.mappers.flatMap { it.toArgs("-") } +
                    javaIllegalAccessWorkaround +

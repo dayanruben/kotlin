@@ -17,6 +17,7 @@
 package kotlinx.cinterop
 
 import kotlin.native.*
+import kotlin.native.internal.GCUnsafeCall
 import kotlin.native.internal.Intrinsic
 import kotlin.native.internal.TypedIntrinsic
 import kotlin.native.internal.IntrinsicType
@@ -81,7 +82,7 @@ internal object nativeMemUtils {
         val sourceArray = source.reinterpret<ShortVar>().ptr
         var index = 0
         while (index < length) {
-            dest[index] = sourceArray[index].toChar()
+            dest[index] = sourceArray[index].toInt().toChar()
             ++index
         }
     }
@@ -91,7 +92,7 @@ internal object nativeMemUtils {
         val destArray = dest.reinterpret<ShortVar>().ptr
         var index = 0
         while (index < length) {
-            destArray[index] = source[index].toShort()
+            destArray[index] = source[index].code.toShort()
             ++index
         }
     }
@@ -148,7 +149,7 @@ public fun CPointer<UShortVar>.toKStringFromUtf16(): String {
     val chars = kotlin.CharArray(length)
     var index = 0
     while (index < length) {
-        chars[index] = nativeBytes[index].toShort().toChar()
+        chars[index] = nativeBytes[index].toInt().toChar()
         ++index
     }
     return chars.concatToString()
@@ -158,10 +159,10 @@ public fun CPointer<ShortVar>.toKString(): String = this.toKStringFromUtf16()
 
 public fun CPointer<UShortVar>.toKString(): String = this.toKStringFromUtf16()
 
-@SymbolName("Kotlin_interop_malloc")
+@GCUnsafeCall("Kotlin_interop_malloc")
 private external fun malloc(size: Long, align: Int): NativePtr
 
-@SymbolName("Kotlin_interop_free")
+@GCUnsafeCall("Kotlin_interop_free")
 private external fun cfree(ptr: NativePtr)
 
 @TypedIntrinsic(IntrinsicType.INTEROP_READ_BITS)

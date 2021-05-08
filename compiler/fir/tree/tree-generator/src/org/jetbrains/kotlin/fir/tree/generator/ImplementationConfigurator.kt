@@ -87,10 +87,6 @@ object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() 
         impl(doWhileLoop)
 
         impl(delegatedConstructorCall) {
-            default(
-                "calleeReference",
-                "if (isThis) FirExplicitThisReference(source, null) else FirExplicitSuperReference(source, null, constructedTypeRef)"
-            )
             default("isSuper") {
                 value = "!isThis"
                 withGetter = true
@@ -132,7 +128,7 @@ object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() 
 
         impl(errorLoop) {
             default("block", "FirEmptyExpressionBlock()")
-            default("condition", "FirErrorExpressionImpl(source, ConeStubDiagnostic(diagnostic))")
+            default("condition", "FirErrorExpressionImpl(source, mutableListOf(), ConeStubDiagnostic(diagnostic))")
             useTypes(emptyExpressionBlock, coneStubDiagnosticType)
         }
 
@@ -209,6 +205,7 @@ object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() 
                 value = "!isVar"
                 withGetter = true
             }
+            publicImplementation()
 
             defaultNull("delegateFieldSymbol", "receiverTypeRef", "delegate", "getter", "setter", withGetter = true)
         }
@@ -397,7 +394,6 @@ object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() 
         }
 
         impl(errorExpression) {
-            defaultEmptyList("annotations")
             default("typeRef", "FirErrorTypeRefImpl(source, null, ConeStubDiagnostic(diagnostic))")
             useTypes(errorTypeRefImpl, coneStubDiagnosticType)
         }

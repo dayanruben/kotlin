@@ -26,12 +26,12 @@ fun t1(x: Int) = when(x) {
 }
 
 fun t5(x: Int) = <!NO_ELSE_IN_WHEN!>when<!> (x) {
-    is Int -> 1
+    <!USELESS_IS_CHECK!>is Int<!> -> 1
     2 -> 2
 }
 
 fun foo3(x: Int) = when(x) {
-    else -> 1
+    <!ELSE_MISPLACED_IN_WHEN!>else<!> -> 1
     2 -> 2
 }
 

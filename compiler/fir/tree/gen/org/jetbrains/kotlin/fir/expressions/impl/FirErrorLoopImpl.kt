@@ -22,13 +22,13 @@ import org.jetbrains.kotlin.fir.visitors.*
  */
 
 internal class FirErrorLoopImpl(
-    override var source: FirSourceElement?,
+    override val source: FirSourceElement?,
     override val annotations: MutableList<FirAnnotationCall>,
     override var label: FirLabel?,
     override val diagnostic: ConeDiagnostic,
 ) : FirErrorLoop() {
     override var block: FirBlock = FirEmptyExpressionBlock()
-    override var condition: FirExpression = FirErrorExpressionImpl(source, ConeStubDiagnostic(diagnostic))
+    override var condition: FirExpression = FirErrorExpressionImpl(source, mutableListOf(), ConeStubDiagnostic(diagnostic))
 
     override fun <R, D> acceptChildren(visitor: FirVisitor<R, D>, data: D) {
         annotations.forEach { it.accept(visitor, data) }
@@ -50,22 +50,18 @@ internal class FirErrorLoopImpl(
     }
 
     override fun <D> transformBlock(transformer: FirTransformer<D>, data: D): FirErrorLoopImpl {
-        block = block.transformSingle(transformer, data)
+        block = block.transform(transformer, data)
         return this
     }
 
     override fun <D> transformCondition(transformer: FirTransformer<D>, data: D): FirErrorLoopImpl {
-        condition = condition.transformSingle(transformer, data)
+        condition = condition.transform(transformer, data)
         return this
     }
 
     override fun <D> transformOtherChildren(transformer: FirTransformer<D>, data: D): FirErrorLoopImpl {
         transformAnnotations(transformer, data)
-        label = label?.transformSingle(transformer, data)
+        label = label?.transform(transformer, data)
         return this
-    }
-
-    override fun replaceSource(newSource: FirSourceElement?) {
-        source = newSource
     }
 }

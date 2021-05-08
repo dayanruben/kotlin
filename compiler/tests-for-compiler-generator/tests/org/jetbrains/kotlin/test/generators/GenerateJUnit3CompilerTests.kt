@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.asJava.AbstractCompilerLightClassTest
 import org.jetbrains.kotlin.cfg.AbstractControlFlowTest
 import org.jetbrains.kotlin.cfg.AbstractDataFlowTest
 import org.jetbrains.kotlin.cfg.AbstractPseudoValueTest
-import org.jetbrains.kotlin.checkers.*
+import org.jetbrains.kotlin.checkers.AbstractDiagnosticsTestWithJsStdLibAndBackendCompilation
 import org.jetbrains.kotlin.cli.AbstractCliTest
 import org.jetbrains.kotlin.codegen.*
 import org.jetbrains.kotlin.codegen.debugInformation.AbstractIrLocalVariableTest
@@ -19,7 +19,8 @@ import org.jetbrains.kotlin.codegen.debugInformation.AbstractSteppingTest
 import org.jetbrains.kotlin.codegen.defaultConstructor.AbstractDefaultArgumentsReflectionTest
 import org.jetbrains.kotlin.codegen.flags.AbstractWriteFlagsTest
 import org.jetbrains.kotlin.codegen.ir.*
-import org.jetbrains.kotlin.fir.*
+import org.jetbrains.kotlin.fir.AbstractFirLoadCompiledKotlin
+import org.jetbrains.kotlin.fir.AbstractLazyBodyIsNotTouchedTilContractsPhaseTest
 import org.jetbrains.kotlin.fir.builder.AbstractPartialRawFirBuilderTestCase
 import org.jetbrains.kotlin.fir.builder.AbstractRawFirBuilderLazyBodiesTestCase
 import org.jetbrains.kotlin.fir.builder.AbstractRawFirBuilderSourceElementMappingTestCase
@@ -35,7 +36,6 @@ import org.jetbrains.kotlin.integration.AbstractAntTaskTest
 import org.jetbrains.kotlin.ir.AbstractIrCfgTestCase
 import org.jetbrains.kotlin.ir.AbstractIrJsTextTestCase
 import org.jetbrains.kotlin.ir.AbstractIrSourceRangesTestCase
-import org.jetbrains.kotlin.ir.AbstractIrTextTestCase
 import org.jetbrains.kotlin.jvm.compiler.*
 import org.jetbrains.kotlin.jvm.compiler.ir.AbstractIrCompileJavaAgainstKotlinTest
 import org.jetbrains.kotlin.jvm.compiler.ir.AbstractIrCompileKotlinAgainstJavaTest
@@ -58,8 +58,6 @@ import org.jetbrains.kotlin.resolve.constraintSystem.AbstractConstraintSystemTes
 import org.jetbrains.kotlin.serialization.AbstractLocalClassProtoTest
 import org.jetbrains.kotlin.test.TargetBackend
 import org.jetbrains.kotlin.types.AbstractTypeBindingTest
-import org.jetbrains.kotlin.visualizer.fir.AbstractFirVisualizer
-import org.jetbrains.kotlin.visualizer.psi.AbstractPsiVisualizer
 
 fun generateJUnit3CompilerTests(args: Array<String>) {
     generateTestGroupSuite(args) {
@@ -147,10 +145,6 @@ fun generateJUnit3CompilerTests(args: Array<String>) {
 
             testClass<AbstractIrSourceRangesTestCase> {
                 model("ir/sourceRanges")
-            }
-
-            testClass<AbstractBytecodeListingTest> {
-                model("codegen/bytecodeListing", targetBackend = TargetBackend.JVM)
             }
 
             testClass<AbstractTopLevelMembersInvocationTest> {
@@ -392,10 +386,6 @@ fun generateJUnit3CompilerTests(args: Array<String>) {
                 )
             }
 
-            testClass<AbstractIrBytecodeListingTest> {
-                model("codegen/bytecodeListing", targetBackend = TargetBackend.JVM_IR)
-            }
-
             testClass<AbstractIrCheckLocalVariablesTableTest> {
                 model("checkLocalVariablesTable", targetBackend = TargetBackend.JVM_IR)
             }
@@ -514,26 +504,6 @@ fun generateJUnit3CompilerTests(args: Array<String>) {
         testGroup("compiler/fir/analysis-tests/legacy-fir-tests/tests-gen", "compiler/fir/analysis-tests/testData") {
             testClass<AbstractFirOldFrontendLightClassesTest> {
                 model("lightClasses")
-            }
-        }
-
-        testGroup("compiler/visualizer/tests-gen", "compiler/fir/raw-fir/psi2fir/testData") {
-            testClass<AbstractPsiVisualizer>("PsiVisualizerForRawFirDataGenerated") {
-                model("rawBuilder", testMethod = "doFirBuilderDataTest")
-            }
-
-            testClass<AbstractFirVisualizer>("FirVisualizerForRawFirDataGenerated") {
-                model("rawBuilder", testMethod = "doFirBuilderDataTest")
-            }
-        }
-
-        testGroup("compiler/visualizer/tests-gen", "compiler/visualizer/testData") {
-            testClass<AbstractPsiVisualizer>("PsiVisualizerForUncommonCasesGenerated") {
-                model("uncommonCases/testFiles", testMethod = "doUncommonCasesTest")
-            }
-
-            testClass<AbstractFirVisualizer>("FirVisualizerForUncommonCasesGenerated") {
-                model("uncommonCases/testFiles", testMethod = "doUncommonCasesTest")
             }
         }
     }

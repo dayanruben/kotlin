@@ -9,7 +9,7 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentsOfType
 import org.jetbrains.kotlin.idea.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSession
-import org.jetbrains.kotlin.idea.frontend.api.analyze
+import org.jetbrains.kotlin.idea.frontend.api.analyse
 import org.jetbrains.kotlin.idea.frontend.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.idea.frontend.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.idea.frontend.api.symbols.KtSyntheticJavaPropertySymbol
@@ -23,8 +23,8 @@ import org.jetbrains.kotlin.test.KotlinTestUtils
 abstract class AbstractOverriddenDeclarationProviderTest : AbstractKtIdeaTest() {
     override fun doTestByFileStructure(fileStructure: TestFileStructure) {
         val signatures = executeOnPooledThreadInReadAction {
-            analyze(fileStructure.mainKtFile) {
-                val symbol = getDeclarationAtCaret().getSymbol() as KtCallableSymbol
+            analyse(fileStructure.mainKtFile) {
+                val symbol = getElementOfTypeAtCaret<KtDeclaration>().getSymbol() as KtCallableSymbol
                 val allOverriddenSymbols = symbol.getAllOverriddenSymbols().map { renderSignature(it) }
                 val directlyOverriddenSymbols = symbol.getDirectlyOverriddenSymbols().map { renderSignature(it) }
                 listOf(
@@ -56,7 +56,7 @@ abstract class AbstractOverriddenDeclarationProviderTest : AbstractKtIdeaTest() 
     }
 
     private fun getPath(symbol: KtCallableSymbol): String = when (symbol) {
-        is KtSyntheticJavaPropertySymbol -> symbol.callableIdIfNonLocal?.asString()!!
+        is KtSyntheticJavaPropertySymbol -> symbol.callableIdIfNonLocal?.toString()!!
         else -> {
             val ktDeclaration = symbol.psi as KtDeclaration
             ktDeclaration
@@ -67,9 +67,4 @@ abstract class AbstractOverriddenDeclarationProviderTest : AbstractKtIdeaTest() 
                 .joinToString(separator = ".")
         }
     }
-
-    private fun getDeclarationAtCaret(): KtDeclaration =
-        file.findElementAt(myFixture.caretOffset)
-            ?.parentOfType()
-            ?: error("No KtDeclaration found at caret with position ${myFixture.caretOffset}")
 }

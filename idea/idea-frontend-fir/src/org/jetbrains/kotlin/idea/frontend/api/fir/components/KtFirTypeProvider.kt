@@ -6,20 +6,18 @@
 package org.jetbrains.kotlin.idea.frontend.api.fir.components
 
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
-import org.jetbrains.kotlin.fir.resolve.inference.inferenceComponents
-import org.jetbrains.kotlin.fir.types.ConeKotlinType
 import org.jetbrains.kotlin.fir.types.impl.ConeClassLikeTypeImpl
 import org.jetbrains.kotlin.fir.types.impl.ConeTypeParameterTypeImpl
-import org.jetbrains.kotlin.idea.frontend.api.ValidityToken
+import org.jetbrains.kotlin.idea.frontend.api.tokens.ValidityToken
 import org.jetbrains.kotlin.idea.frontend.api.components.KtBuiltinTypes
 import org.jetbrains.kotlin.idea.frontend.api.components.KtTypeProvider
 import org.jetbrains.kotlin.idea.frontend.api.fir.KtFirAnalysisSession
-import org.jetbrains.kotlin.idea.frontend.api.fir.symbols.KtFirClassOrObjectSymbol
+import org.jetbrains.kotlin.idea.frontend.api.fir.symbols.KtFirNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.idea.frontend.api.fir.types.KtFirType
 import org.jetbrains.kotlin.idea.frontend.api.fir.types.PublicTypeApproximator
 import org.jetbrains.kotlin.idea.frontend.api.symbols.KtClassOrObjectSymbol
+import org.jetbrains.kotlin.idea.frontend.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.idea.frontend.api.types.KtType
-import org.jetbrains.kotlin.types.TypeApproximatorConfiguration
 
 internal class KtFirTypeProvider(
     override val analysisSession: KtFirAnalysisSession,
@@ -40,9 +38,9 @@ internal class KtFirTypeProvider(
     }
 
 
-    override fun buildSelfClassType(symbol: KtClassOrObjectSymbol): KtType {
-        require(symbol is KtFirClassOrObjectSymbol)
-        val type = symbol.firRef.withFir(FirResolvePhase.TYPES) { firClass ->
+    override fun buildSelfClassType(symbol: KtNamedClassOrObjectSymbol): KtType {
+        require(symbol is KtFirNamedClassOrObjectSymbol)
+        val type = symbol.firRef.withFir(FirResolvePhase.SUPER_TYPES) { firClass ->
             ConeClassLikeTypeImpl(
                 firClass.symbol.toLookupTag(),
                 firClass.typeParameters.map { ConeTypeParameterTypeImpl(it.symbol.toLookupTag(), isNullable = false) }.toTypedArray(),

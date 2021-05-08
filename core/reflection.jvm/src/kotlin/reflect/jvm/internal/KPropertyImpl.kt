@@ -155,6 +155,14 @@ internal abstract class KPropertyImpl<out V> private constructor(
         override val caller: Caller<*> by ReflectProperties.lazy {
             computeCallerForAccessor(isGetter = true)
         }
+
+        override fun toString(): String = "getter of $property"
+
+        override fun equals(other: Any?): Boolean =
+            other is Getter<*> && property == other.property
+
+        override fun hashCode(): Int =
+            property.hashCode()
     }
 
     abstract class Setter<V> : Accessor<V, Unit>(), KMutableProperty.Setter<V> {
@@ -168,6 +176,14 @@ internal abstract class KPropertyImpl<out V> private constructor(
         override val caller: Caller<*> by ReflectProperties.lazy {
             computeCallerForAccessor(isGetter = false)
         }
+
+        override fun toString(): String = "setter of $property"
+
+        override fun equals(other: Any?): Boolean =
+            other is Setter<*> && property == other.property
+
+        override fun hashCode(): Int =
+            property.hashCode()
     }
 
     companion object {

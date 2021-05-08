@@ -65,7 +65,8 @@ class FunctionCodegen(
             signature.asmMethod.descriptor,
             signature.genericsSignature
                 .takeIf {
-                    !isSynthetic && irFunction.origin != IrDeclarationOrigin.LOCAL_FUNCTION_FOR_LAMBDA
+                    (irFunction.isInline && irFunction.origin != IrDeclarationOrigin.FUNCTION_FOR_DEFAULT_PARAMETER) ||
+                            !isSynthetic && irFunction.origin != IrDeclarationOrigin.LOCAL_FUNCTION_FOR_LAMBDA
                 },
             getThrownExceptions(irFunction)?.toTypedArray()
         )
@@ -156,18 +157,22 @@ class FunctionCodegen(
         }
 
         val isVararg = valueParameters.lastOrNull()?.varargElementType != null && !isBridge()
-        val modalityFlag = when ((this as? IrSimpleFunction)?.modality) {
-            Modality.FINAL -> when {
-                origin == JvmLoweredDeclarationOrigin.CLASS_STATIC_INITIALIZER -> 0
-                origin == IrDeclarationOrigin.ENUM_CLASS_SPECIAL_MEMBER -> 0
-                parentAsClass.isInterface && body != null -> 0
-                parentAsClass.isAnnotationClass -> if (isStatic) 0 else Opcodes.ACC_ABSTRACT
-                else -> Opcodes.ACC_FINAL
+        val modalityFlag =
+            if (parentAsClass.isAnnotationClass) {
+                if (isStatic) 0 else Opcodes.ACC_ABSTRACT
+            } else {
+                when ((this as? IrSimpleFunction)?.modality) {
+                    Modality.FINAL -> when {
+                        origin == JvmLoweredDeclarationOrigin.CLASS_STATIC_INITIALIZER -> 0
+                        origin == IrDeclarationOrigin.ENUM_CLASS_SPECIAL_MEMBER -> 0
+                        parentAsClass.isInterface && body != null -> 0
+                        else -> Opcodes.ACC_FINAL
+                    }
+                    Modality.ABSTRACT -> Opcodes.ACC_ABSTRACT
+                    // TODO transform interface modality on lowering to DefaultImpls
+                    else -> if (parentAsClass.isJvmInterface && body == null) Opcodes.ACC_ABSTRACT else 0
+                }
             }
-            Modality.ABSTRACT -> Opcodes.ACC_ABSTRACT
-            // TODO transform interface modality on lowering to DefaultImpls
-            else -> if (parentAsClass.isJvmInterface && body == null) Opcodes.ACC_ABSTRACT else 0
-        }
         val isSynthetic = origin.isSynthetic ||
                 hasAnnotation(JVM_SYNTHETIC_ANNOTATION_FQ_NAME) ||
                 isReifiable() ||

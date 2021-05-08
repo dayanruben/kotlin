@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.fir.visitors.*
  */
 
 internal class FirWhenBranchImpl(
-    override var source: FirSourceElement?,
+    override val source: FirSourceElement?,
     override var condition: FirExpression,
     override var result: FirBlock,
 ) : FirWhenBranch() {
@@ -34,20 +34,16 @@ internal class FirWhenBranchImpl(
     }
 
     override fun <D> transformCondition(transformer: FirTransformer<D>, data: D): FirWhenBranchImpl {
-        condition = condition.transformSingle(transformer, data)
+        condition = condition.transform(transformer, data)
         return this
     }
 
     override fun <D> transformResult(transformer: FirTransformer<D>, data: D): FirWhenBranchImpl {
-        result = result.transformSingle(transformer, data)
+        result = result.transform(transformer, data)
         return this
     }
 
     override fun <D> transformOtherChildren(transformer: FirTransformer<D>, data: D): FirWhenBranchImpl {
         return this
-    }
-
-    override fun replaceSource(newSource: FirSourceElement?) {
-        source = newSource
     }
 }

@@ -12,9 +12,7 @@ import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.descriptors.IrBuiltIns
 import org.jetbrains.kotlin.ir.expressions.*
-import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
-import org.jetbrains.kotlin.ir.expressions.impl.IrConstructorCallImpl
-import org.jetbrains.kotlin.ir.expressions.impl.IrTypeOperatorCallImpl
+import org.jetbrains.kotlin.ir.expressions.impl.*
 import org.jetbrains.kotlin.ir.symbols.*
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.name.FqName
@@ -340,6 +338,8 @@ fun ReferenceSymbolTable.referenceClassifier(classifier: ClassifierDescriptor): 
     when (classifier) {
         is TypeParameterDescriptor ->
             referenceTypeParameter(classifier)
+        is ScriptDescriptor ->
+            referenceScript(classifier)
         is ClassDescriptor ->
             referenceClass(classifier)
         else ->
@@ -560,37 +560,48 @@ val IrFunction.originalFunction: IrFunction
 val IrProperty.originalProperty: IrProperty
     get() = attributeOwnerId as? IrProperty ?: this
 
-// TODO: support more cases like built-in operator call and so on
+fun IrExpression.isTrivial() =
+    this is IrConst<*> ||
+            this is IrGetValue ||
+            this is IrGetObjectValue ||
+            this is IrErrorExpressionImpl
 
-fun IrExpression?.isPure(anyVariable: Boolean, checkFields: Boolean = true): Boolean {
-    if (this == null) return true
+fun IrExpression.shallowCopy(): IrExpression =
+    shallowCopyOrNull()
+        ?: error("Not a copyable expression: ${render()}")
 
-    fun IrExpression.isPureImpl(): Boolean {
-        return when (this) {
-            is IrConst<*> -> true
-            is IrGetValue -> {
-                if (anyVariable) return true
-                val valueDeclaration = symbol.owner
-                if (valueDeclaration is IrVariable) !valueDeclaration.isVar
-                else true
-            }
-            is IrGetObjectValue -> type.isUnit()
-            else -> false
-        }
+fun IrExpression.shallowCopyOrNull(): IrExpression? =
+    when (this) {
+        is IrConst<*> -> shallowCopy()
+        is IrGetObjectValue ->
+            IrGetObjectValueImpl(
+                startOffset,
+                endOffset,
+                type,
+                symbol
+            )
+        is IrGetValueImpl ->
+            IrGetValueImpl(
+                startOffset,
+                endOffset,
+                type,
+                symbol,
+                origin
+            )
+        is IrErrorExpressionImpl ->
+            IrErrorExpressionImpl(
+                startOffset,
+                endOffset,
+                type,
+                description
+            )
+        else -> null
     }
 
-    if (isPureImpl()) return true
-
-    if (!checkFields) return false
-
-    if (this is IrGetField) {
-        if (!symbol.owner.isFinal) {
-            if (!anyVariable) {
-                return false
-            }
-        }
-        return receiver.isPure(anyVariable)
-    }
-
-    return false
-}
+internal fun <T> IrConst<T>.shallowCopy() = IrConstImpl(
+    startOffset,
+    endOffset,
+    type,
+    kind,
+    value
+)

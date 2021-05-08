@@ -36,6 +36,7 @@ object JvmPlatformConfigurator : PlatformConfiguratorBase(
         JvmInlineApplicabilityChecker(),
         StrictfpApplicabilityChecker(),
         JvmAnnotationsTargetNonExistentAccessorChecker(),
+        SuspendInFunInterfaceChecker(),
         BadInheritedJavaSignaturesChecker,
         JvmMultifileClassStateChecker,
         SynchronizedOnInlineMethodChecker,
@@ -95,7 +96,7 @@ object JvmPlatformConfigurator : PlatformConfiguratorBase(
 ) {
     override fun configureModuleComponents(container: StorageComponentContainer, languageVersionSettings: LanguageVersionSettings) {
         container.useImplIf<WarningAwareUpperBoundChecker>(
-            !languageVersionSettings.supportsFeature(LanguageFeature.ImprovementsAroundTypeEnhancement)
+            !languageVersionSettings.supportsFeature(LanguageFeature.TypeEnhancementImprovementsInStrictMode)
         )
 
         container.useImpl<JavaNullabilityChecker>()

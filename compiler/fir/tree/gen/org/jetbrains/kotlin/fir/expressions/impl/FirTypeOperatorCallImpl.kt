@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.fir.visitors.*
  */
 
 internal class FirTypeOperatorCallImpl(
-    override var source: FirSourceElement?,
+    override val source: FirSourceElement?,
     override val annotations: MutableList<FirAnnotationCall>,
     override var argumentList: FirArgumentList,
     override val operation: FirOperation,
@@ -47,19 +47,15 @@ internal class FirTypeOperatorCallImpl(
     }
 
     override fun <D> transformConversionTypeRef(transformer: FirTransformer<D>, data: D): FirTypeOperatorCallImpl {
-        conversionTypeRef = conversionTypeRef.transformSingle(transformer, data)
+        conversionTypeRef = conversionTypeRef.transform(transformer, data)
         return this
     }
 
     override fun <D> transformOtherChildren(transformer: FirTransformer<D>, data: D): FirTypeOperatorCallImpl {
-        typeRef = typeRef.transformSingle(transformer, data)
+        typeRef = typeRef.transform(transformer, data)
         transformAnnotations(transformer, data)
-        argumentList = argumentList.transformSingle(transformer, data)
+        argumentList = argumentList.transform(transformer, data)
         return this
-    }
-
-    override fun replaceSource(newSource: FirSourceElement?) {
-        source = newSource
     }
 
     override fun replaceTypeRef(newTypeRef: FirTypeRef) {

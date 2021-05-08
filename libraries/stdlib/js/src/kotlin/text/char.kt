@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -8,7 +8,8 @@ package kotlin.text
 /**
  * Converts this character to lower case using Unicode mapping rules of the invariant locale.
  */
-@OptIn(ExperimentalStdlibApi::class)
+@Deprecated("Use lowercaseChar() instead.", ReplaceWith("lowercaseChar()"))
+@DeprecatedSinceKotlin(warningSince = "1.5")
 @kotlin.internal.InlineOnly
 public actual inline fun Char.toLowerCase(): Char = lowercaseChar()
 
@@ -21,10 +22,10 @@ public actual inline fun Char.toLowerCase(): Char = lowercaseChar()
  *
  * @sample samples.text.Chars.lowercase
  */
-@SinceKotlin("1.4")
-@ExperimentalStdlibApi
+@SinceKotlin("1.5")
+@WasExperimental(ExperimentalStdlibApi::class)
 @kotlin.internal.InlineOnly
-public actual inline fun Char.lowercaseChar(): Char = toString().asDynamic().toLowerCase().charCodeAt(0).unsafeCast<Int>().toChar()
+public actual inline fun Char.lowercaseChar(): Char = lowercase()[0]
 
 /**
  * Converts this character to lower case using Unicode mapping rules of the invariant locale.
@@ -36,15 +37,16 @@ public actual inline fun Char.lowercaseChar(): Char = toString().asDynamic().toL
  *
  * @sample samples.text.Chars.lowercase
  */
-@SinceKotlin("1.4")
-@ExperimentalStdlibApi
+@SinceKotlin("1.5")
+@WasExperimental(ExperimentalStdlibApi::class)
 @kotlin.internal.InlineOnly
-public actual inline fun Char.lowercase(): String = toString().asDynamic().toLowerCase() as String
+public actual inline fun Char.lowercase(): String = toString().asDynamic().toLowerCase().unsafeCast<String>()
 
 /**
  * Converts this character to upper case using Unicode mapping rules of the invariant locale.
  */
-@OptIn(ExperimentalStdlibApi::class)
+@Deprecated("Use uppercaseChar() instead.", ReplaceWith("uppercaseChar()"))
+@DeprecatedSinceKotlin(warningSince = "1.5")
 @kotlin.internal.InlineOnly
 public actual inline fun Char.toUpperCase(): Char = uppercaseChar()
 
@@ -57,8 +59,8 @@ public actual inline fun Char.toUpperCase(): Char = uppercaseChar()
  *
  * @sample samples.text.Chars.uppercase
  */
-@SinceKotlin("1.4")
-@ExperimentalStdlibApi
+@SinceKotlin("1.5")
+@WasExperimental(ExperimentalStdlibApi::class)
 public actual fun Char.uppercaseChar(): Char {
     val uppercase = uppercase()
     return if (uppercase.length > 1) this else uppercase[0]
@@ -74,10 +76,10 @@ public actual fun Char.uppercaseChar(): Char {
  *
  * @sample samples.text.Chars.uppercase
  */
-@SinceKotlin("1.4")
-@ExperimentalStdlibApi
+@SinceKotlin("1.5")
+@WasExperimental(ExperimentalStdlibApi::class)
 @kotlin.internal.InlineOnly
-public actual inline fun Char.uppercase(): String = toString().asDynamic().toUpperCase() as String
+public actual inline fun Char.uppercase(): String = toString().asDynamic().toUpperCase().unsafeCast<String>()
 
 /**
  * Converts this character to title case using Unicode mapping rules of the invariant locale.
@@ -89,7 +91,6 @@ public actual inline fun Char.uppercase(): String = toString().asDynamic().toUpp
  * @sample samples.text.Chars.titlecase
  */
 @SinceKotlin("1.5")
-@ExperimentalStdlibApi
 public actual fun Char.titlecaseChar(): Char = titlecaseCharImpl()
 
 /**
@@ -233,7 +234,8 @@ public actual fun Char.isTitleCase(): Boolean {
 /**
  * Returns `true` if this character is an ISO control character.
  *
- * A character is considered to be an ISO control character if its [category] is [CharCategory.CONTROL].
+ * A character is considered to be an ISO control character if its [category] is [CharCategory.CONTROL],
+ * meaning the Char is in the range `'\u0000'..'\u001F'` or in the range `'\u007F'..'\u009F'`.
  *
  * @sample samples.text.Chars.isISOControl
  */

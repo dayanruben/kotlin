@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinMultiplatformPlugin
 import org.jetbrains.kotlin.gradle.plugin.statistics.KotlinBuildStatsService
 import org.jetbrains.kotlin.gradle.targets.js.dukat.ExternalsOutputFormat
 import org.jetbrains.kotlin.gradle.targets.js.dukat.ExternalsOutputFormat.Companion.externalsOutputFormatProperty
+import org.jetbrains.kotlin.gradle.targets.js.webpack.WebpackMajorVersion
 import org.jetbrains.kotlin.gradle.targets.native.DisabledNativeTargetsReporter
 import org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile
 import org.jetbrains.kotlin.gradle.tasks.Kotlin2JsCompile
@@ -27,13 +28,17 @@ import java.io.File
 import java.util.*
 
 internal fun PropertiesProvider.mapKotlinTaskProperties(task: AbstractKotlinCompile<*>) {
-    coroutines?.let { task.coroutinesFromGradleProperties = it }
     useFallbackCompilerSearch?.let { task.useFallbackCompilerSearch = it }
 
     if (task is KotlinCompile) {
         incrementalJvm?.let { task.incremental = it }
         usePreciseJavaTracking?.let {
             task.usePreciseJavaTracking = it
+        }
+        useFir?.let {
+            if (it == true) {
+                task.kotlinOptions.useFir = true
+            }
         }
     }
 
@@ -88,6 +93,9 @@ internal class PropertiesProvider private constructor(private val project: Proje
     val usePreciseJavaTracking: Boolean?
         get() = booleanProperty("kotlin.incremental.usePreciseJavaTracking")
 
+    val useFir: Boolean?
+        get() = booleanProperty("kotlin.useFir")
+
     private val useFallbackCompilerSearchPropName = "kotlin.useFallbackCompilerSearch"
 
     @Deprecated("Unsupported and will be removed in next major releases")
@@ -116,6 +124,9 @@ internal class PropertiesProvider private constructor(private val project: Proje
 
     val enableCompatibilityMetadataVariant: Boolean
         get() = booleanProperty("kotlin.mpp.enableCompatibilityMetadataVariant") ?: true
+
+    val enableKotlinToolingMetadataArtifact: Boolean
+        get() = booleanProperty("kotlin.mpp.enableKotlinToolingMetadataArtifact") ?: false
 
     val mppStabilityNoWarn: Boolean?
         get() = booleanProperty(KotlinMultiplatformPlugin.STABILITY_NOWARN_FLAG)
@@ -204,7 +215,29 @@ internal class PropertiesProvider private constructor(private val project: Proje
      * Allows a user to specify additional arguments of a JVM executing KLIB commonizer.
      */
     val commonizerJvmArgs: String?
-        get() = property("kotlin.commonizer.jvmArgs")
+        get() = propertyWithDeprecatedVariant("kotlin.mpp.commonizerJvmArgs", "kotlin.commonizer.jvmArgs")
+
+    /**
+     * Enables experimental commonization of user defined c-interop libraries.
+     */
+    val enableCInteropCommonization: Boolean
+        get() = booleanProperty("kotlin.mpp.enableCInteropCommonization") ?: false
+
+
+    val commonizerLogLevel: String?
+        get() = property("kotlin.mpp.commonizerLogLevel")
+
+    /**
+     * Enables experimental commonization of 'higher level' shared native source sets
+     */
+    val enableHierarchicalCommonization: Boolean
+        get() = booleanProperty("kotlin.mpp.enableHierarchicalCommonization") ?: true
+
+    val enableNativeDistributionCommonizationCache: Boolean
+        get() = booleanProperty("kotlin.mpp.enableNativeDistributionCommonizationCache") ?: true
+
+    val enableIntransitiveMetadataConfiguration: Boolean
+        get() = booleanProperty("kotlin.mpp.enableIntransitiveMetadataConfiguration") ?: false
 
     /**
      * Dependencies caching strategy for all targets that support caches.
@@ -241,6 +274,20 @@ internal class PropertiesProvider private constructor(private val project: Proje
      */
     val jsCompiler: KotlinJsCompilerType
         get() = property(jsCompilerProperty)?.let { KotlinJsCompilerType.byArgumentOrNull(it) } ?: KotlinJsCompilerType.LEGACY
+
+    /**
+     * Use Webpack 4 for compatibility
+     */
+    val webpackMajorVersion: WebpackMajorVersion
+        get() = property(WebpackMajorVersion.webpackMajorVersion)?.let { WebpackMajorVersion.byArgument(it) }
+            ?.also { version ->
+                if (!WebpackMajorVersion.webpackVersionWarning && version != WebpackMajorVersion.DEFAULT) {
+                    WebpackMajorVersion.webpackVersionWarning = true
+                    project.logger.warn(WebpackMajorVersion.warningMessage)
+                }
+            }
+            ?: WebpackMajorVersion.DEFAULT
+
 
     /**
      * Default mode of generating of Dukat

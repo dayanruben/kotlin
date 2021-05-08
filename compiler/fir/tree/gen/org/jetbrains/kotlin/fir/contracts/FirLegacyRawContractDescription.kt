@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.fir.contracts
 
+import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.FirSourceElement
 import org.jetbrains.kotlin.fir.expressions.FirFunctionCall
 import org.jetbrains.kotlin.fir.visitors.*
@@ -20,5 +21,7 @@ abstract class FirLegacyRawContractDescription : FirContractDescription() {
 
     override fun <R, D> accept(visitor: FirVisitor<R, D>, data: D): R = visitor.visitLegacyRawContractDescription(this, data)
 
-    abstract override fun replaceSource(newSource: FirSourceElement?)
+    @Suppress("UNCHECKED_CAST")
+    override fun <E: FirElement, D> transform(transformer: FirTransformer<D>, data: D): E = 
+        transformer.transformLegacyRawContractDescription(this, data) as E
 }

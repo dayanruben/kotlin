@@ -15,15 +15,18 @@ import org.jetbrains.kotlin.descriptors.impl.AbstractTypeParameterDescriptor
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.calls.inference.CapturedType
 import org.jetbrains.kotlin.resolve.constants.IntegerLiteralTypeConstructor
 import org.jetbrains.kotlin.resolve.descriptorUtil.*
 import org.jetbrains.kotlin.resolve.isInlineClass
 import org.jetbrains.kotlin.resolve.substitutedUnderlyingType
+import org.jetbrains.kotlin.resolve.unsubstitutedUnderlyingType
 import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.types.model.*
 import org.jetbrains.kotlin.types.typeUtil.asTypeProjection
 import org.jetbrains.kotlin.types.typeUtil.contains
+import org.jetbrains.kotlin.types.typeUtil.hasTypeParameterRecursiveBounds
 import org.jetbrains.kotlin.types.typeUtil.representativeUpperBound
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.types.typeUtil.isSignedOrUnsignedNumberType as classicIsSignedOrUnsignedNumberType
@@ -43,6 +46,12 @@ interface ClassicTypeSystemContext : TypeSystemInferenceExtensionContext, TypeSy
         require(this is TypeConstructor, this::errorMessage)
         return declarationDescriptor?.classId?.isLocal == true
     }
+
+    override val TypeVariableTypeConstructorMarker.typeParameter: TypeParameterMarker?
+        get() {
+            require(this is NewTypeVariableConstructor, this::errorMessage)
+            return this.originalTypeParameter
+        }
 
     override fun SimpleTypeMarker.possibleIntegerTypes(): Collection<KotlinTypeMarker> {
         val typeConstructor = typeConstructor()
@@ -212,6 +221,13 @@ interface ClassicTypeSystemContext : TypeSystemInferenceExtensionContext, TypeSy
         return this.typeConstructor
     }
 
+    override fun TypeParameterMarker.hasRecursiveBounds(selfConstructor: TypeConstructorMarker): Boolean {
+        require(this is TypeParameterDescriptor, this::errorMessage)
+        require(selfConstructor is TypeConstructor, this::errorMessage)
+
+        return hasTypeParameterRecursiveBounds(this, selfConstructor)
+    }
+
     override fun areEqualTypeConstructors(c1: TypeConstructorMarker, c2: TypeConstructorMarker): Boolean {
         require(c1 is TypeConstructor, c1::errorMessage)
         require(c2 is TypeConstructor, c2::errorMessage)
@@ -221,6 +237,11 @@ interface ClassicTypeSystemContext : TypeSystemInferenceExtensionContext, TypeSy
     override fun TypeConstructorMarker.isClassTypeConstructor(): Boolean {
         require(this is TypeConstructor, this::errorMessage)
         return declarationDescriptor is ClassDescriptor
+    }
+
+    override fun TypeConstructorMarker.isInterface(): Boolean {
+        require(this is TypeConstructor, this::errorMessage)
+        return DescriptorUtils.isInterface(declarationDescriptor)
     }
 
     override fun TypeConstructorMarker.isCommonFinalClassConstructor(): Boolean {
@@ -542,7 +563,7 @@ interface ClassicTypeSystemContext : TypeSystemInferenceExtensionContext, TypeSy
 
     override fun KotlinTypeMarker.isSignedOrUnsignedNumberType(): Boolean {
         require(this is KotlinType)
-        return classicIsSignedOrUnsignedNumberType()
+        return classicIsSignedOrUnsignedNumberType() || constructor is IntegerLiteralTypeConstructor
     }
 
     override fun findCommonIntegerLiteralTypesSuperType(explicitSupertypes: List<SimpleTypeMarker>): SimpleTypeMarker? {
@@ -630,6 +651,11 @@ interface ClassicTypeSystemContext : TypeSystemInferenceExtensionContext, TypeSy
     override fun TypeParameterMarker.getRepresentativeUpperBound(): KotlinTypeMarker {
         require(this is TypeParameterDescriptor, this::errorMessage)
         return representativeUpperBound
+    }
+
+    override fun KotlinTypeMarker.getUnsubstitutedUnderlyingType(): KotlinTypeMarker? {
+        require(this is KotlinType, this::errorMessage)
+        return unsubstitutedUnderlyingType()
     }
 
     override fun KotlinTypeMarker.getSubstitutedUnderlyingType(): KotlinTypeMarker? {

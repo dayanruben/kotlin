@@ -519,6 +519,28 @@ __attribute__((swift_name("TestGH3992.B")))
 @end;
 
 __attribute__((objc_subclassing_restricted))
+__attribute__((swift_name("KDocExport")))
+@interface KtKDocExport : KtBase
+- (instancetype)initWithName:(NSString *)name __attribute__((swift_name("init(name:)"))) __attribute__((objc_designated_initializer));
+- (instancetype)init __attribute__((swift_name("init()"))) __attribute__((objc_designated_initializer));
++ (instancetype)new __attribute__((availability(swift, unavailable, message="use object initializers instead")));
+@property (readonly) NSString *xyzzy __attribute__((swift_name("xyzzy")));
+@property (readonly) NSString *foo __attribute__((swift_name("foo")));
+@property int32_t yxxyz __attribute__((swift_name("yxxyz")));
+@end;
+
+__attribute__((objc_subclassing_restricted))
+__attribute__((swift_name("KdocExportKt")))
+@interface KtKdocExportKt : KtBase
+
+/**
+ @note This method converts instances of IllegalArgumentException to errors.
+ Other uncaught Kotlin exceptions are fatal.
+*/
++ (NSString * _Nullable)whateverA:(NSString *)a error:(NSError * _Nullable * _Nullable)error __attribute__((swift_name("whatever(a:)")));
+@end;
+
+__attribute__((objc_subclassing_restricted))
 __attribute__((swift_name("Kt35940Kt")))
 @interface KtKt35940Kt : KtBase
 + (NSString *)testKt35940 __attribute__((swift_name("testKt35940()")));
@@ -754,6 +776,44 @@ __attribute__((swift_name("OverrideMethodsOfAnyKt")))
  @note This method converts all Kotlin exceptions to errors.
 */
 + (BOOL)testObj:(id)obj other:(id)other swift:(BOOL)swift error:(NSError * _Nullable * _Nullable)error __attribute__((swift_name("test(obj:other:swift:)")));
+@end;
+
+__attribute__((objc_subclassing_restricted))
+__attribute__((swift_name("ThrowableAsError")))
+@interface KtThrowableAsError : KtKotlinThrowable
+- (instancetype)init __attribute__((swift_name("init()"))) __attribute__((objc_designated_initializer));
++ (instancetype)new __attribute__((availability(swift, unavailable, message="use object initializers instead")));
+- (instancetype)initWithMessage:(NSString * _Nullable)message __attribute__((swift_name("init(message:)"))) __attribute__((objc_designated_initializer)) __attribute__((unavailable));
+- (instancetype)initWithCause:(KtKotlinThrowable * _Nullable)cause __attribute__((swift_name("init(cause:)"))) __attribute__((objc_designated_initializer)) __attribute__((unavailable));
+- (instancetype)initWithMessage:(NSString * _Nullable)message cause:(KtKotlinThrowable * _Nullable)cause __attribute__((swift_name("init(message:cause:)"))) __attribute__((objc_designated_initializer)) __attribute__((unavailable));
+@end;
+
+__attribute__((swift_name("ThrowsThrowableAsError")))
+@protocol KtThrowsThrowableAsError
+@required
+
+/**
+ @note This method converts all Kotlin exceptions to errors.
+*/
+- (BOOL)throwErrorAndReturnError:(NSError * _Nullable * _Nullable)error __attribute__((swift_name("throwError()")));
+@end;
+
+__attribute__((swift_name("ThrowsThrowableAsErrorSuspend")))
+@protocol KtThrowsThrowableAsErrorSuspend
+@required
+
+/**
+ @note This method converts instances of CancellationException to errors.
+ Other uncaught Kotlin exceptions are fatal.
+*/
+- (void)throwErrorWithCompletionHandler:(void (^)(KtKotlinUnit * _Nullable, NSError * _Nullable))completionHandler __attribute__((swift_name("throwError(completionHandler:)")));
+@end;
+
+__attribute__((objc_subclassing_restricted))
+__attribute__((swift_name("ThrowableAsErrorKt")))
+@interface KtThrowableAsErrorKt : KtBase
++ (KtThrowableAsError * _Nullable)callAndCatchThrowableAsErrorThrowsThrowableAsError:(id<KtThrowsThrowableAsError>)throwsThrowableAsError __attribute__((swift_name("callAndCatchThrowableAsError(throwsThrowableAsError:)")));
++ (KtThrowableAsError * _Nullable)callAndCatchThrowableAsErrorSuspendThrowsThrowableAsErrorSuspend:(id<KtThrowsThrowableAsErrorSuspend>)throwsThrowableAsErrorSuspend __attribute__((swift_name("callAndCatchThrowableAsErrorSuspend(throwsThrowableAsErrorSuspend:)")));
 @end;
 
 __attribute__((objc_subclassing_restricted))

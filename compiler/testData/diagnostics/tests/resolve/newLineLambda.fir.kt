@@ -8,40 +8,40 @@ fun varargFn(vararg args: Int) {}
 
 fun testNoArgs() {
     noArgs()
-    <!INAPPLICABLE_CANDIDATE!>noArgs<!> {}
-    <!INAPPLICABLE_CANDIDATE!>noArgs<!>() {}
+    noArgs <!TOO_MANY_ARGUMENTS!>{}<!>
+    noArgs() <!TOO_MANY_ARGUMENTS!>{}<!>
     noArgs() // {}
-    <!INAPPLICABLE_CANDIDATE!>noArgs<!>() /* */ {}
-    <!INAPPLICABLE_CANDIDATE!>noArgs<!>() /*
+    noArgs() /* */ <!TOO_MANY_ARGUMENTS!>{}<!>
+    noArgs() /*
         block comment, no new line
-    */ {}
-    <!INAPPLICABLE_CANDIDATE!>noArgs<!>()
+    */ <!TOO_MANY_ARGUMENTS!>{}<!>
+    noArgs()
     /*
         block comment with new line
     */
-    {}
-    <!INAPPLICABLE_CANDIDATE!>noArgs<!>() // comment
+    <!TOO_MANY_ARGUMENTS!>{}<!>
+    noArgs() // comment
     // comment
-    {}
-    <!INAPPLICABLE_CANDIDATE!>noArgs<!>() {} {}
-    <!INAPPLICABLE_CANDIDATE!>noArgs<!>() {}
-    {}
+    <!TOO_MANY_ARGUMENTS!>{}<!>
+    noArgs() <!TOO_MANY_ARGUMENTS!>{}<!> <!MANY_LAMBDA_EXPRESSION_ARGUMENTS!>{}<!>
+    noArgs() <!TOO_MANY_ARGUMENTS!>{}<!>
+    <!MANY_LAMBDA_EXPRESSION_ARGUMENTS!>{}<!>
 }
 
 fun testLambdaArg() {
-    <!INAPPLICABLE_CANDIDATE!>oneLambdaArg<!>()
+    oneLambdaArg(<!NO_VALUE_FOR_PARAMETER!>)<!>
     oneLambdaArg {}
     oneLambdaArg()
     {}
-    <!INAPPLICABLE_CANDIDATE!>oneLambdaArg<!>()
+    oneLambdaArg()
     {}
-    {}
-    <!INAPPLICABLE_CANDIDATE!>oneLambdaArg<!>(
+    <!MANY_LAMBDA_EXPRESSION_ARGUMENTS!>{}<!>
+    oneLambdaArg(
         {},
-        {}
+        <!TOO_MANY_ARGUMENTS!>{}<!>
     )
     oneLambdaArg() {}
-    <!INAPPLICABLE_CANDIDATE!>oneLambdaArg<!>() // {}
+    oneLambdaArg(<!NO_VALUE_FOR_PARAMETER!>)<!> // {}
     oneLambdaArg() /* */ {}
     oneLambdaArg() /*
         block
@@ -50,21 +50,21 @@ fun testLambdaArg() {
     oneLambdaArg() // comment
     // comment
     {}
-    <!INAPPLICABLE_CANDIDATE!>oneLambdaArg<!>() {}/*
+    oneLambdaArg() {}/*
         block comment, no new line
-    */ {}
-    <!INAPPLICABLE_CANDIDATE!>oneLambdaArg<!>() {}/*
+    */ <!MANY_LAMBDA_EXPRESSION_ARGUMENTS!>{}<!>
+    oneLambdaArg() {}/*
         block comment with new line
     */
-    {}
-    <!INAPPLICABLE_CANDIDATE!>oneLambdaArg<!>() {}// comment
+    <!MANY_LAMBDA_EXPRESSION_ARGUMENTS!>{}<!>
+    oneLambdaArg() {}// comment
     // comment
-    {}
-    <!INAPPLICABLE_CANDIDATE!>oneLambdaArg<!>() {} {}
-    <!INAPPLICABLE_CANDIDATE!>oneLambdaArg<!>() {}
-    {}
-    <!INAPPLICABLE_CANDIDATE!>oneLambdaArg<!>() {} // comment
-    {}
+    <!MANY_LAMBDA_EXPRESSION_ARGUMENTS!>{}<!>
+    oneLambdaArg() {} <!MANY_LAMBDA_EXPRESSION_ARGUMENTS!>{}<!>
+    oneLambdaArg() {}
+    <!MANY_LAMBDA_EXPRESSION_ARGUMENTS!>{}<!>
+    oneLambdaArg() {} // comment
+    <!MANY_LAMBDA_EXPRESSION_ARGUMENTS!>{}<!>
 }
 
 fun testVararg() {
@@ -83,9 +83,9 @@ fun testVararg() {
     varargFn(1,2,3) // comment
     // comment
     <!VARARG_OUTSIDE_PARENTHESES!>{}<!>
-    varargFn(1,2,3) {} <!VARARG_OUTSIDE_PARENTHESES!>{}<!>
+    varargFn(1,2,3) {} <!MANY_LAMBDA_EXPRESSION_ARGUMENTS!>{}<!>
     varargFn(1,2,3) {}
-    <!VARARG_OUTSIDE_PARENTHESES!>{}<!>
+    <!MANY_LAMBDA_EXPRESSION_ARGUMENTS!>{}<!>
 }
 
 fun testTwoLambdas() {
@@ -96,14 +96,14 @@ fun testTwoLambdas() {
     )
 
     fun bar(): () -> Unit {
-        twoLambdaArgs()
+        twoLambdaArgs(<!NO_VALUE_FOR_PARAMETER!>)<!>
         {}
-        {}
+        <!MANY_LAMBDA_EXPRESSION_ARGUMENTS!>{}<!>
 
         return if (true) {
-            <!INAPPLICABLE_CANDIDATE!>twoLambdaArgs<!>({})
+            twoLambdaArgs({})
             {}
-            {}
+            <!MANY_LAMBDA_EXPRESSION_ARGUMENTS!>{}<!>
         } else {
             {}
         }
@@ -111,8 +111,8 @@ fun testTwoLambdas() {
 }
 
 fun f1(): (() -> Unit) -> (() -> Unit) -> Unit {
-    return { l1 ->
-        <!INAPPLICABLE_CANDIDATE!>l1<!>()
-        { l2 -> <!UNRESOLVED_REFERENCE!>l2<!>() }
-    }
+    return <!RETURN_TYPE_MISMATCH!>{ l1 ->
+        l1()
+        <!TOO_MANY_ARGUMENTS!>{ l2 -> <!UNRESOLVED_REFERENCE!>l2<!>() }<!>
+    }<!>
 }

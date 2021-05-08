@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.config.SourceKotlinRootType
 import org.jetbrains.kotlin.config.TestResourceKotlinRootType
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
-import org.jetbrains.kotlin.idea.codeInsight.gradle.mppImportTestMinVersionForMaster
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
@@ -41,7 +40,7 @@ class HierarchicalMultiplatformProjectImportingTest : MultiplePluginVersionGradl
     }
 
     @Test
-    @PluginTargetVersions(gradleVersionForLatestPlugin = mppImportTestMinVersionForMaster)
+    @PluginTargetVersions()
     fun testImportHMPPFlag() {
         configureByFiles()
         importProject()
@@ -56,7 +55,7 @@ class HierarchicalMultiplatformProjectImportingTest : MultiplePluginVersionGradl
     }
 
     @Test
-    @PluginTargetVersions(gradleVersionForLatestPlugin = mppImportTestMinVersionForMaster)
+    @PluginTargetVersions()
     fun testImportIntermediateModules() {
         configureByFiles()
         importProject()
@@ -232,7 +231,7 @@ class HierarchicalMultiplatformProjectImportingTest : MultiplePluginVersionGradl
     }
 
     @Test
-    @PluginTargetVersions(gradleVersionForLatestPlugin = mppImportTestMinVersionForMaster)
+    @PluginTargetVersions()
     fun testJvmWithJavaOnHMPP() {
         configureByFiles()
         importProject()
@@ -344,7 +343,7 @@ class HierarchicalMultiplatformProjectImportingTest : MultiplePluginVersionGradl
     }
 
     @Test
-    @PluginTargetVersions(gradleVersionForLatestPlugin = mppImportTestMinVersionForMaster)
+    @PluginTargetVersions()
     fun testPrecisePlatformsHmpp() {
         configureByFiles()
         importProject()
@@ -353,6 +352,7 @@ class HierarchicalMultiplatformProjectImportingTest : MultiplePluginVersionGradl
         val anyNative = NativePlatforms.unspecifiedNativePlatform
         val linux = NativePlatforms.nativePlatformBySingleTarget(KonanTarget.LINUX_X64)
         val macos = NativePlatforms.nativePlatformBySingleTarget(KonanTarget.MACOS_X64)
+        val js = JsPlatforms.defaultJsPlatform
 
         checkProjectStructure(exhaustiveModuleList = true, exhaustiveSourceSourceRootList = false, exhaustiveDependencyList = false) {
             module("my-app") {
@@ -377,7 +377,7 @@ class HierarchicalMultiplatformProjectImportingTest : MultiplePluginVersionGradl
     }
 
     @Test
-    @PluginTargetVersions(gradleVersionForLatestPlugin = mppImportTestMinVersionForMaster)
+    @PluginTargetVersions()
     fun testPrecisePlatformsWithUnrelatedModuleHmpp() {
         configureByFiles()
         importProject()
@@ -394,8 +394,8 @@ class HierarchicalMultiplatformProjectImportingTest : MultiplePluginVersionGradl
                 targetPlatform(jvm)
             }
 
-            module("my-app.commonMain") { targetPlatform(jvm, anyNative, js) } // :( should be (jvm, anyNative)
-            module("my-app.commonTest") { targetPlatform(jvm, anyNative, js) } // :( should be (jvm, anyNative)
+            module("my-app.commonMain") { targetPlatform(jvm, anyNative) }
+            module("my-app.commonTest") { targetPlatform(jvm, anyNative) }
 
             module("my-app.jvmAndLinuxMain") { targetPlatform(jvm, anyNative) }
             module("my-app.jvmAndLinuxTest") { targetPlatform(jvm, anyNative) }
@@ -413,8 +413,8 @@ class HierarchicalMultiplatformProjectImportingTest : MultiplePluginVersionGradl
             // submodule
             module("my-app.submodule") { targetPlatform(jvm) }
 
-            module("my-app.submodule.commonMain") { targetPlatform(js, jvm, anyNative) } // :( should be (js, jvm)
-            module("my-app.submodule.commonTest") { targetPlatform(js, jvm, anyNative) } // :( should be (js, jvm)
+            module("my-app.submodule.commonMain") { targetPlatform(js, jvm) }
+            module("my-app.submodule.commonTest") { targetPlatform(js, jvm) }
 
             module("my-app.submodule.jvmMain") { targetPlatform(jvm) }
             module("my-app.submodule.jvmTest") { targetPlatform(jvm) }
@@ -425,7 +425,7 @@ class HierarchicalMultiplatformProjectImportingTest : MultiplePluginVersionGradl
     }
 
     @Test
-    @PluginTargetVersions(gradleVersionForLatestPlugin = mppImportTestMinVersionForMaster)
+    @PluginTargetVersions()
     fun testOrphanSourceSet() {
         configureByFiles()
         importProject()
@@ -450,7 +450,7 @@ class HierarchicalMultiplatformProjectImportingTest : MultiplePluginVersionGradl
     }
 
     @Test
-    @PluginTargetVersions(gradleVersionForLatestPlugin = mppImportTestMinVersionForMaster)
+    @PluginTargetVersions()
     fun testSourceSetIncludedIntoCompilationDirectly() {
         configureByFiles()
         importProject()
@@ -475,7 +475,7 @@ class HierarchicalMultiplatformProjectImportingTest : MultiplePluginVersionGradl
     }
 
     @Test
-    @PluginTargetVersions(gradleVersionForLatestPlugin = mppImportTestMinVersionForMaster)
+    @PluginTargetVersions()
     fun testDefaultSourceSetDependsOnDefaultSourceSet() {
         configureByFiles()
         importProject()
@@ -504,7 +504,7 @@ class HierarchicalMultiplatformProjectImportingTest : MultiplePluginVersionGradl
     }
 
     @Test
-    @PluginTargetVersions(gradleVersionForLatestPlugin = mppImportTestMinVersionForMaster)
+    @PluginTargetVersions()
     fun testDefaultSourceSetIncludedIntoAnotherCompilationDirectly() {
         configureByFiles()
         importProject()
@@ -524,7 +524,7 @@ class HierarchicalMultiplatformProjectImportingTest : MultiplePluginVersionGradl
     }
 
     @Test
-    @PluginTargetVersions(gradleVersionForLatestPlugin = mppImportTestMinVersionForMaster)
+    @PluginTargetVersions()
     fun testSourceSetsWithDependsOnButNotIncludedIntoCompilation() {
         configureByFiles()
         importProject()
@@ -559,7 +559,7 @@ class HierarchicalMultiplatformProjectImportingTest : MultiplePluginVersionGradl
     }
 
     @Test
-    @PluginTargetVersions(gradleVersionForLatestPlugin = mppImportTestMinVersionForMaster)
+    @PluginTargetVersions()
     fun testCustomAddToCompilationPlusDependsOn() {
         configureByFiles()
         importProject()
@@ -574,6 +574,27 @@ class HierarchicalMultiplatformProjectImportingTest : MultiplePluginVersionGradl
             module("my-app.pseudoOrphan") {
                 targetPlatform(jvm) // !
             }
+        }
+    }
+
+    @Test
+    @PluginTargetVersions()
+    fun testCommonMainIsSingleBackend() {
+        configureByFiles()
+        importProject()
+
+        val macosX64 = NativePlatforms.nativePlatformBySingleTarget(KonanTarget.MACOS_X64)
+        val linuxX64 = NativePlatforms.nativePlatformBySingleTarget(KonanTarget.LINUX_X64)
+
+        checkProjectStructure(exhaustiveModuleList = false, exhaustiveSourceSourceRootList = false, exhaustiveDependencyList = false) {
+            module("my-app.commonMain") { targetPlatform(macosX64, linuxX64) }
+            module("my-app.commonTest") { targetPlatform(macosX64, linuxX64) }
+
+            module("my-app.linuxX64Main") { targetPlatform(linuxX64) }
+            module("my-app.linuxX64Test") { targetPlatform(linuxX64) }
+
+            module("my-app.macosX64Test") { targetPlatform(macosX64) }
+            module("my-app.macosX64Main") { targetPlatform(macosX64) }
         }
     }
 
@@ -597,12 +618,9 @@ class HierarchicalMultiplatformProjectImportingTest : MultiplePluginVersionGradl
     override fun importProject() {
         val isUseQualifiedModuleNames = currentExternalProjectSettings.isUseQualifiedModuleNames
         currentExternalProjectSettings.isUseQualifiedModuleNames = true
-        val isCreateEmptyContentRootDirectories = currentExternalProjectSettings.isCreateEmptyContentRootDirectories
-        currentExternalProjectSettings.isCreateEmptyContentRootDirectories = true
         try {
-            super.importProject()
+            super.importProject(true)
         } finally {
-            currentExternalProjectSettings.isCreateEmptyContentRootDirectories = isCreateEmptyContentRootDirectories
             currentExternalProjectSettings.isUseQualifiedModuleNames = isUseQualifiedModuleNames
         }
     }

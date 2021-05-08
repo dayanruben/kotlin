@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.fir.visitors.*
  */
 
 internal class FirErrorResolvedQualifierImpl(
-    override var source: FirSourceElement?,
+    override val source: FirSourceElement?,
     override val annotations: MutableList<FirAnnotationCall>,
     override val packageFqName: FqName,
     override val relativeClassFqName: FqName?,
@@ -42,7 +42,7 @@ internal class FirErrorResolvedQualifierImpl(
     }
 
     override fun <D> transformChildren(transformer: FirTransformer<D>, data: D): FirErrorResolvedQualifierImpl {
-        typeRef = typeRef.transformSingle(transformer, data)
+        typeRef = typeRef.transform(transformer, data)
         transformAnnotations(transformer, data)
         transformTypeArguments(transformer, data)
         return this
@@ -56,10 +56,6 @@ internal class FirErrorResolvedQualifierImpl(
     override fun <D> transformTypeArguments(transformer: FirTransformer<D>, data: D): FirErrorResolvedQualifierImpl {
         typeArguments.transformInplace(transformer, data)
         return this
-    }
-
-    override fun replaceSource(newSource: FirSourceElement?) {
-        source = newSource
     }
 
     override fun replaceTypeRef(newTypeRef: FirTypeRef) {

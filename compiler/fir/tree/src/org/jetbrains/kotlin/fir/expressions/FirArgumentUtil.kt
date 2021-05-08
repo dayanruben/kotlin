@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.fir.FirSourceElement
 import org.jetbrains.kotlin.fir.declarations.FirValueParameter
 import org.jetbrains.kotlin.fir.expressions.builder.buildArgumentList
 import org.jetbrains.kotlin.fir.expressions.impl.FirArraySetArgumentList
+import org.jetbrains.kotlin.fir.expressions.impl.FirPartiallyResolvedArgumentList
 import org.jetbrains.kotlin.fir.expressions.impl.FirResolvedArgumentList
 
 fun buildUnaryArgumentList(argument: FirExpression): FirArgumentList = buildArgumentList {
@@ -23,14 +24,20 @@ fun buildBinaryArgumentList(left: FirExpression, right: FirExpression): FirArgum
 fun buildArraySetArgumentList(rValue: FirExpression, indexes: List<FirExpression>): FirArgumentList =
     FirArraySetArgumentList(rValue, indexes)
 
-fun buildResolvedArgumentList(mapping: LinkedHashMap<FirExpression, FirValueParameter>): FirArgumentList =
+fun buildResolvedArgumentList(mapping: LinkedHashMap<FirExpression, FirValueParameter>): FirResolvedArgumentList =
     FirResolvedArgumentList(mapping)
+
+fun buildPartiallyResolvedArgumentList(
+    original: FirArgumentList,
+    mapping: LinkedHashMap<FirExpression, FirValueParameter>
+): FirArgumentList {
+    return FirPartiallyResolvedArgumentList(
+        original.source,
+        original.arguments.map { key -> key to mapping[key] }.toMap(LinkedHashMap())
+    )
+}
 
 object FirEmptyArgumentList : FirAbstractArgumentList() {
     override val arguments: List<FirExpression>
         get() = emptyList()
-
-
-    override fun replaceSource(newSource: FirSourceElement?) {
-    }
 }

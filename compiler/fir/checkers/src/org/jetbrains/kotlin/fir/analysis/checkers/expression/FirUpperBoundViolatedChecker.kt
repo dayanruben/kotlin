@@ -59,7 +59,8 @@ object FirUpperBoundViolatedChecker : FirQualifiedAccessChecker() {
         // we substitute actual values to the
         // type parameters from the declaration
         val substitutor = substitutorByMap(
-            parameterPairs.mapValues { it.value.coneType }
+            parameterPairs.mapValues { it.value.coneType },
+            context.session
         )
 
         parameterPairs.forEach { (proto, actual) ->
@@ -68,8 +69,9 @@ object FirUpperBoundViolatedChecker : FirQualifiedAccessChecker() {
                 return@forEach
             }
 
-            if (!satisfiesBounds(proto, actual.coneType, substitutor, context.session.typeContext)) {
-                reporter.reportOn(actual.source, proto, actual.coneType, context)
+            val upperBound = getSubstitutedUpperBound(proto, substitutor, context.session.typeContext)
+            if (upperBound != null && !satisfiesBounds(upperBound, actual.coneType, context.session.typeContext)) {
+                reporter.reportOn(actual.source, upperBound, context)
                 return
             }
 
@@ -146,7 +148,8 @@ object FirUpperBoundViolatedChecker : FirQualifiedAccessChecker() {
         // parameters to the ones used in the
         // typealias target
         val declarationSiteSubstitutor = substitutorByMap(
-            constructorsParameterPairs.toMap().mapValues { it.value.type }
+            constructorsParameterPairs.toMap().mapValues { it.value.type },
+            context.session
         )
 
         constructorsParameterPairs.forEach { (proto, actual) ->
@@ -164,7 +167,7 @@ object FirUpperBoundViolatedChecker : FirQualifiedAccessChecker() {
             val satisfiesBounds = AbstractTypeChecker.isSubtypeOf(typeSystemContext, target, intersection)
 
             if (!satisfiesBounds) {
-                reporter.reportOn(functionCall.source, proto, actual, context)
+                reporter.reportOn(functionCall.source, intersection, context)
                 return
             }
         }
@@ -208,13 +211,15 @@ object FirUpperBoundViolatedChecker : FirQualifiedAccessChecker() {
         }
 
         val substitutor = substitutorByMap(
-            parameterPairs.toMap().mapValues { it.value.type }
+            parameterPairs.toMap().mapValues { it.value.type },
+            context.session
         )
 
         parameterPairs.forEach { (proto, actual) ->
-            if (!satisfiesBounds(proto, actual.type, substitutor, typeSystemContext)) {
+            val upperBound = getSubstitutedUpperBound(proto, substitutor, typeSystemContext)
+            if (upperBound != null && !satisfiesBounds(upperBound, actual.type, typeSystemContext)) {
                 // should report on the parameter instead!
-                reporter.reportOn(reportTarget, proto, actual, context)
+                reporter.reportOn(reportTarget, upperBound, context)
                 return true
             }
 
@@ -233,25 +238,30 @@ object FirUpperBoundViolatedChecker : FirQualifiedAccessChecker() {
      * bounds of the prototypeSymbol.
      */
     private fun satisfiesBounds(
-        prototypeSymbol: FirTypeParameterSymbol,
+        upperBound: ConeKotlinType,
         target: ConeKotlinType,
-        substitutor: ConeSubstitutor,
         typeSystemContext: ConeTypeContext
     ): Boolean {
-        var intersection = typeSystemContext.intersectTypes(
-            prototypeSymbol.fir.bounds.map { it.coneType }
-        ).safeAs<ConeKotlinType>() ?: return true
+        return AbstractTypeChecker.isSubtypeOf(typeSystemContext, target, upperBound, stubTypesEqualToAnything = false)
+    }
 
-        intersection = substitutor.substituteOrSelf(intersection)
-        return AbstractTypeChecker.isSubtypeOf(typeSystemContext, target, intersection, stubTypesEqualToAnything = false)
+    private fun getSubstitutedUpperBound(
+        prototypeSymbol: FirTypeParameterSymbol,
+        substitutor: ConeSubstitutor,
+        typeSystemContext: ConeTypeContext
+    ): ConeKotlinType? {
+        val intersection = typeSystemContext.intersectTypes(
+            prototypeSymbol.fir.bounds.map { it.coneType }
+        ).safeAs<ConeKotlinType>() ?: return null
+
+        return substitutor.substituteOrSelf(intersection)
     }
 
     private fun DiagnosticReporter.reportOn(
         source: FirSourceElement?,
-        proto: FirTypeParameterSymbol,
         actual: ConeKotlinType,
         context: CheckerContext
     ) {
-        reportOn(source, FirErrors.UPPER_BOUND_VIOLATED, proto, actual, context)
+        reportOn(source, FirErrors.UPPER_BOUND_VIOLATED, actual, context)
     }
 }

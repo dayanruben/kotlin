@@ -9,12 +9,13 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.TestDataFile
 import org.jetbrains.kotlin.test.model.*
 import org.jetbrains.kotlin.test.services.*
+import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import java.io.IOException
 
 class TestRunner(private val testConfiguration: TestConfiguration) {
     private val failedAssertions = mutableListOf<Throwable>()
 
-    fun runTest(@TestDataFile testDataFileName: String) {
+    fun runTest(@TestDataFile testDataFileName: String, beforeDispose: (TestConfiguration) -> Unit = {}) {
         try {
             runTestImpl(testDataFileName)
         } finally {
@@ -23,6 +24,7 @@ class TestRunner(private val testConfiguration: TestConfiguration) {
             } catch (_: IOException) {
                 // ignored
             }
+            beforeDispose(testConfiguration)
             Disposer.dispose(testConfiguration.rootDisposable)
         }
     }
@@ -92,7 +94,9 @@ class TestRunner(private val testConfiguration: TestConfiguration) {
         }
 
         val filteredFailedAssertions = filterFailedExceptions(failedAssertions)
-
+        filteredFailedAssertions.firstIsInstanceOrNull<ExceptionFromTestError>()?.let {
+            throw it
+        }
         services.assertions.assertAll(filteredFailedAssertions)
     }
 

@@ -3,58 +3,27 @@
  * that can be found in the LICENSE file.
  */
 
+#include "MemoryPrivate.hpp"
 #include "ThreadData.hpp"
 #include "ThreadState.hpp"
 
-using namespace kotlin;
-
-namespace {
-
-ALWAYS_INLINE bool isStateSwitchAllowed(mm::ThreadState oldState, mm::ThreadState newState) noexcept {
-    return oldState != newState;
-}
-
-const char* stateToString(mm::ThreadState state) noexcept {
+const char* kotlin::internal::stateToString(ThreadState state) noexcept {
     switch (state) {
-        case mm::ThreadState::kRunnable:
+        case ThreadState::kRunnable:
             return "RUNNABLE";
-        case mm::ThreadState::kNative:
+        case ThreadState::kNative:
             return "NATIVE";
     }
 }
 
-} // namespace
-
-// Switches the state of the current thread to `newState` and returns the previous state.
-ALWAYS_INLINE mm::ThreadState mm::SwitchThreadState(ThreadData* threadData, ThreadState newState) noexcept {
-    auto oldState = threadData->setState(newState);
-    // TODO(perf): Mesaure the impact of this assert in debug and opt modes.
-    RuntimeAssert(isStateSwitchAllowed(oldState, newState),
-                  "Illegal thread state switch. Old state: %s. New state: %s.",
-                  stateToString(oldState), stateToString(newState));
-    return oldState;
+ALWAYS_INLINE ThreadState kotlin::SwitchThreadState(MemoryState* thread, ThreadState newState, bool reentrant) noexcept {
+    return SwitchThreadState(thread->GetThreadData(), newState, reentrant);
 }
 
-ALWAYS_INLINE void mm::AssertThreadState(ThreadData* threadData, ThreadState expected) noexcept {
-    auto actual = threadData->state();
-    RuntimeAssert(actual == expected,
-                  "Unexpected thread state. Expected: %s. Actual: %s.",
-                  stateToString(expected), stateToString(actual));
+ALWAYS_INLINE void kotlin::AssertThreadState(MemoryState* thread, ThreadState expected) noexcept {
+    AssertThreadState(thread->GetThreadData(), expected);
 }
 
-mm::ThreadStateGuard::ThreadStateGuard(ThreadData* threadData, ThreadState state) noexcept : threadData_(threadData) {
-    oldState_ = SwitchThreadState(threadData, state);
+ThreadState kotlin::GetThreadState(MemoryState* thread) noexcept {
+    return thread->GetThreadData()->state();
 }
-
-mm::ThreadStateGuard::~ThreadStateGuard() noexcept {
-    SwitchThreadState(threadData_, oldState_);
-}
-
-extern "C" ALWAYS_INLINE RUNTIME_NOTHROW void Kotlin_mm_switchThreadStateNative() {
-    mm::SwitchThreadState(mm::ThreadRegistry::Instance().CurrentThreadData(), mm::ThreadState::kNative);
-}
-
-extern "C" ALWAYS_INLINE RUNTIME_NOTHROW void Kotlin_mm_switchThreadStateRunnable() {
-    mm::SwitchThreadState(mm::ThreadRegistry::Instance().CurrentThreadData(), mm::ThreadState::kRunnable);
-}
-

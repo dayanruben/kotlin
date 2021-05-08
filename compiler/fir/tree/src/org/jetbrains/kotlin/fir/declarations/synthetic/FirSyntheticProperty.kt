@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedContainerSource
 
 class FirSyntheticProperty(
-    override val session: FirSession,
+    override val declarationSiteSession: FirSession,
     override val name: Name,
     override val isVar: Boolean,
     override val symbol: FirAccessorSymbol,
@@ -148,8 +148,5 @@ class FirSyntheticProperty(
 
     override fun replaceInitializer(newInitializer: FirExpression?) {
         throw AssertionError("Mutation of synthetic property isn't supported")
-    }
-
-    override fun replaceSource(newSource: FirSourceElement?) {
     }
 }

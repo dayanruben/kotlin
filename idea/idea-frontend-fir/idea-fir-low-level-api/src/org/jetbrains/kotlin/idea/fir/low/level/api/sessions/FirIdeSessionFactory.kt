@@ -13,18 +13,18 @@ import org.jetbrains.kotlin.fir.PrivateSessionConstructor
 import org.jetbrains.kotlin.fir.SessionConfiguration
 import org.jetbrains.kotlin.fir.backend.jvm.FirJvmTypeMapper
 import org.jetbrains.kotlin.fir.caches.FirCachesFactory
-import org.jetbrains.kotlin.fir.checkers.registerCommonCheckers
 import org.jetbrains.kotlin.fir.checkers.registerExtendedCommonCheckers
+import org.jetbrains.kotlin.fir.declarations.SealedClassInheritorsProvider
 import org.jetbrains.kotlin.fir.dependenciesWithoutSelf
 import org.jetbrains.kotlin.fir.java.JavaSymbolProvider
 import org.jetbrains.kotlin.fir.java.deserialization.KotlinDeserializedJvmSymbolsProvider
 import org.jetbrains.kotlin.fir.resolve.symbolProvider
 import org.jetbrains.kotlin.fir.resolve.providers.FirProvider
 import org.jetbrains.kotlin.fir.resolve.providers.FirSymbolProvider
-import org.jetbrains.kotlin.fir.resolve.providers.impl.FirBuiltinSymbolProvider
 import org.jetbrains.kotlin.fir.resolve.providers.impl.FirCloneableSymbolProvider
 import org.jetbrains.kotlin.fir.resolve.providers.impl.FirCompositeSymbolProvider
 import org.jetbrains.kotlin.fir.resolve.scopes.wrapScopeWithJvmMapped
+import org.jetbrains.kotlin.fir.resolve.transformers.FirPhaseCheckingPhaseManager
 import org.jetbrains.kotlin.fir.resolve.transformers.FirPhaseManager
 import org.jetbrains.kotlin.fir.scopes.KotlinScopeProvider
 import org.jetbrains.kotlin.fir.session.*
@@ -33,15 +33,20 @@ import org.jetbrains.kotlin.idea.caches.resolve.IDEPackagePartProvider
 import org.jetbrains.kotlin.idea.fir.low.level.api.FirPhaseRunner
 import org.jetbrains.kotlin.idea.fir.low.level.api.IdeFirPhaseManager
 import org.jetbrains.kotlin.idea.fir.low.level.api.IdeSessionComponents
+import org.jetbrains.kotlin.idea.fir.low.level.api.SealedClassInheritorsProviderIdeImpl
 import org.jetbrains.kotlin.idea.fir.low.level.api.file.builder.FirFileBuilder
 import org.jetbrains.kotlin.idea.fir.low.level.api.file.builder.ModuleFileCacheImpl
 import org.jetbrains.kotlin.idea.fir.low.level.api.fir.caches.FirThreadSafeCachesFactory
 import org.jetbrains.kotlin.idea.fir.low.level.api.lazy.resolve.FirLazyDeclarationResolver
-import org.jetbrains.kotlin.idea.fir.low.level.api.providers.FirModuleWithDependenciesSymbolProvider
+import org.jetbrains.kotlin.idea.fir.low.level.api.providers.*
+import org.jetbrains.kotlin.idea.fir.low.level.api.providers.FirIdeBuiltinsAndCloneableSessionProvider
+import org.jetbrains.kotlin.idea.fir.low.level.api.providers.FirIdeLibrariesSessionProvider
 import org.jetbrains.kotlin.idea.fir.low.level.api.providers.FirIdeProvider
+import org.jetbrains.kotlin.idea.fir.low.level.api.providers.FirModuleWithDependenciesSymbolProvider
 import org.jetbrains.kotlin.idea.fir.low.level.api.providers.FirThreadSafeSymbolProviderWrapper
 import org.jetbrains.kotlin.idea.fir.low.level.api.util.ModuleLibrariesSearchScope
 import org.jetbrains.kotlin.idea.fir.low.level.api.util.checkCanceled
+import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.load.java.JavaClassFinderImpl
 import org.jetbrains.kotlin.load.kotlin.VirtualFileFinderFactory
 
@@ -57,10 +62,10 @@ internal object FirIdeSessionFactory {
         sessionsCache: MutableMap<ModuleSourceInfo, FirIdeSourcesSession>,
         isRootModule: Boolean,
         librariesCache: LibrariesCache,
-        languageVersionSettings: LanguageVersionSettings = LanguageVersionSettingsImpl.DEFAULT,
         configureSession: (FirIdeSession.() -> Unit)? = null
     ): FirIdeSourcesSession {
         sessionsCache[moduleInfo]?.let { return it }
+        val languageVersionSettings = moduleInfo.module.languageVersionSettings
         val scopeProvider = KotlinScopeProvider(::wrapScopeWithJvmMapped)
         val firBuilder = FirFileBuilder(scopeProvider, firPhaseRunner)
         val searchScope = ModuleProductionSourceScope(moduleInfo.module)
@@ -110,6 +115,7 @@ internal object FirIdeSessionFactory {
                                 builtinsAndCloneableSession,
                                 builtinTypes,
                                 librariesCache,
+                                languageVersionSettings = languageVersionSettings,
                                 configureSession = configureSession,
                             ).symbolProvider
                         )
@@ -165,6 +171,7 @@ internal object FirIdeSessionFactory {
         val kotlinClassFinder = VirtualFileFinderFactory.getInstance(project).create(searchScope)
         FirIdeLibrariesSession(moduleInfo, project, searchScope, builtinTypes).apply {
             registerIdeComponents()
+            register(FirPhaseManager::class, FirPhaseCheckingPhaseManager)
             registerCommonComponents(languageVersionSettings)
             registerJavaSpecificResolveComponents()
 
@@ -172,30 +179,29 @@ internal object FirIdeSessionFactory {
 
             val kotlinScopeProvider = KotlinScopeProvider(::wrapScopeWithJvmMapped)
 
-            @OptIn(ExperimentalStdlibApi::class)
-            register(
-                FirSymbolProvider::class,
-                FirCompositeSymbolProvider(
-                    this,
-                    buildList {
-                        add(
-                            FirThreadSafeSymbolProviderWrapper(
-                                KotlinDeserializedJvmSymbolsProvider(
-                                    this@apply,
-                                    project,
-                                    packagePartProvider,
-                                    javaSymbolProvider,
-                                    kotlinClassFinder,
-                                    javaClassFinder,
-                                    kotlinScopeProvider
-                                )
+            val symbolProvider = FirCompositeSymbolProvider(
+                this,
+                @OptIn(ExperimentalStdlibApi::class)
+                buildList {
+                    add(
+                        FirThreadSafeSymbolProviderWrapper(
+                            KotlinDeserializedJvmSymbolsProvider(
+                                this@apply,
+                                project,
+                                packagePartProvider,
+                                javaSymbolProvider,
+                                kotlinClassFinder,
+                                javaClassFinder,
+                                kotlinScopeProvider
                             )
                         )
-                        add(javaSymbolProvider)
-                        addAll((builtinsAndCloneableSession.symbolProvider as FirCompositeSymbolProvider).providers)
-                    }
-                )
+                    )
+                    add(javaSymbolProvider)
+                    addAll((builtinsAndCloneableSession.symbolProvider as FirCompositeSymbolProvider).providers)
+                }
             )
+            register(FirProvider::class, FirIdeLibrariesSessionProvider(symbolProvider))
+            register(FirSymbolProvider::class, symbolProvider)
             register(FirJvmTypeMapper::class, FirJvmTypeMapper(this))
             configureSession?.invoke(this)
         }
@@ -209,19 +215,19 @@ internal object FirIdeSessionFactory {
     ): FirIdeBuiltinsAndCloneableSession {
         return FirIdeBuiltinsAndCloneableSession(project, builtinTypes).apply {
             registerIdeComponents()
+            register(FirPhaseManager::class, FirPhaseCheckingPhaseManager)
             registerCommonComponents(languageVersionSettings)
 
             val kotlinScopeProvider = KotlinScopeProvider(::wrapScopeWithJvmMapped)
-            register(
-                FirSymbolProvider::class,
-                FirCompositeSymbolProvider(
-                    this,
-                    listOf(
-                        FirBuiltinSymbolProvider(this, kotlinScopeProvider),
-                        FirCloneableSymbolProvider(this, kotlinScopeProvider),
-                    )
+            val symbolProvider = FirCompositeSymbolProvider(
+                this,
+                listOf(
+                    FirIdeBuiltinSymbolProvider(this, kotlinScopeProvider),
+                    FirCloneableSymbolProvider(this, kotlinScopeProvider),
                 )
             )
+            register(FirSymbolProvider::class, symbolProvider)
+            register(FirProvider::class, FirIdeBuiltinsAndCloneableSessionProvider(symbolProvider))
             register(FirJvmTypeMapper::class, FirJvmTypeMapper(this))
             configureSession?.invoke(this)
         }
@@ -230,5 +236,6 @@ internal object FirIdeSessionFactory {
     private fun FirIdeSession.registerIdeComponents() {
         register(IdeSessionComponents::class, IdeSessionComponents.create(this))
         register(FirCachesFactory::class, FirThreadSafeCachesFactory)
+        register(SealedClassInheritorsProvider::class, SealedClassInheritorsProviderIdeImpl())
     }
 }

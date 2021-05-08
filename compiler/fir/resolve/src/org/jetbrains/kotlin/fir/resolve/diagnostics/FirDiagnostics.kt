@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.fir.resolve.diagnostics
 
+import kotlinx.collections.immutable.ImmutableList
 import org.jetbrains.kotlin.fir.declarations.FirCallableDeclaration
 import org.jetbrains.kotlin.fir.diagnostics.ConeDiagnostic
 import org.jetbrains.kotlin.fir.render
@@ -13,7 +14,9 @@ import org.jetbrains.kotlin.fir.symbols.AbstractFirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassLikeSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirTypeParameterSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirVariableSymbol
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
+import org.jetbrains.kotlin.fir.types.FirTypeRef
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.calls.tower.CandidateApplicability
@@ -24,6 +27,10 @@ class ConeUnresolvedReferenceError(val name: Name? = null) : ConeDiagnostic() {
 
 class ConeUnresolvedSymbolError(val classId: ClassId) : ConeDiagnostic() {
     override val reason: String get() = "Symbol not found for $classId"
+}
+
+class ConeUnresolvedQualifierError(val qualifier: String) : ConeDiagnostic() {
+    override val reason: String get() = "Symbol not found for $qualifier"
 }
 
 class ConeUnresolvedNameError(val name: Name) : ConeDiagnostic() {
@@ -43,8 +50,16 @@ class ConeInapplicableCandidateError(
     override val reason: String get() = "Inapplicable($applicability): ${describeSymbol(candidate.symbol)}"
 }
 
-class ConeAmbiguityError(val name: Name, val applicability: CandidateApplicability, val candidates: Collection<AbstractFirBasedSymbol<*>>) : ConeDiagnostic() {
-    override val reason: String get() = "Ambiguity: $name, ${candidates.map { describeSymbol(it) }}"
+class ConeArgumentTypeMismatchCandidateError(
+    val expectedType: ConeKotlinType, val actualType: ConeKotlinType
+) : ConeDiagnostic() {
+    override val reason: String
+        get() = "Type mismatch. Expected: $expectedType, Actual: $actualType"
+}
+
+class ConeAmbiguityError(val name: Name, val applicability: CandidateApplicability, val candidates: Collection<Candidate>) :
+    ConeDiagnostic() {
+    override val reason: String get() = "Ambiguity: $name, ${candidates.map { describeSymbol(it.symbol) }}"
 }
 
 class ConeOperatorAmbiguityError(val candidates: Collection<AbstractFirBasedSymbol<*>>) : ConeDiagnostic() {
@@ -53,6 +68,10 @@ class ConeOperatorAmbiguityError(val candidates: Collection<AbstractFirBasedSymb
 
 class ConeVariableExpectedError : ConeDiagnostic() {
     override val reason: String get() = "Variable expected"
+}
+
+class ConeValReassignmentError(val variable: FirVariableSymbol<*>) : ConeDiagnostic() {
+    override val reason: String get() = "Re-assigning a val variable"
 }
 
 class ConeTypeMismatchError(val expectedType: ConeKotlinType, val actualType: ConeKotlinType) : ConeDiagnostic() {
@@ -66,8 +85,20 @@ class ConeIllegalAnnotationError(val name: Name) : ConeDiagnostic() {
     override val reason: String get() = "Not a legal annotation: $name"
 }
 
-class ConeWrongNumberOfTypeArgumentsError(val desiredCount: Int, val type: FirClassLikeSymbol<*>) : ConeDiagnostic() {
+abstract class ConeUnmatchedTypeArgumentsError(val desiredCount: Int, val type: FirClassLikeSymbol<*>) : ConeDiagnostic()
+
+class ConeWrongNumberOfTypeArgumentsError(
+    desiredCount: Int,
+    type: FirClassLikeSymbol<*>
+) : ConeUnmatchedTypeArgumentsError(desiredCount, type) {
     override val reason: String get() = "Wrong number of type arguments"
+}
+
+class ConeNoTypeArgumentsOnRhsError(
+    desiredCount: Int,
+    type: FirClassLikeSymbol<*>
+) : ConeUnmatchedTypeArgumentsError(desiredCount, type) {
+    override val reason: String get() = "No type arguments on RHS"
 }
 
 class ConeInstanceAccessBeforeSuperCall(val target: String) : ConeDiagnostic() {
@@ -80,6 +111,14 @@ class ConeUnsupportedCallableReferenceTarget(val fir: FirCallableDeclaration<*>)
 
 class ConeTypeParameterSupertype(val symbol: FirTypeParameterSymbol) : ConeDiagnostic() {
     override val reason: String get() = "Type parameter ${symbol.fir.name} cannot be a supertype"
+}
+
+class ConeTypeParameterInQualifiedAccess(val symbol: FirTypeParameterSymbol) : ConeDiagnostic() {
+    override val reason: String get() = "Type parameter ${symbol.fir.name} in qualified access"
+}
+
+class ConeCyclicTypeBound(val symbol: FirTypeParameterSymbol, val bounds: ImmutableList<FirTypeRef>) : ConeDiagnostic() {
+    override val reason: String get() = "Type parameter ${symbol.fir.name} has cyclic bounds"
 }
 
 private fun describeSymbol(symbol: AbstractFirBasedSymbol<*>): String {

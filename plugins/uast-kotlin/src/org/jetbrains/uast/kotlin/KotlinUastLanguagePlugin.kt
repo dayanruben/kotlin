@@ -164,26 +164,10 @@ class KotlinUastLanguagePlugin : UastLanguagePlugin {
             element is KtParameter -> KotlinConverter.convertParameter(element, null, requiredTypes) as Sequence<T>
             element is KtClassOrObject -> KotlinConverter.convertClassOrObject(element, null, requiredTypes) as Sequence<T>
             element is UastFakeLightPrimaryConstructor ->
-                KotlinConverter.convertFakeLightConstructorAlternatices(element, null, requiredTypes) as Sequence<T>
+                KotlinConverter.convertFakeLightConstructorAlternatives(element, null, requiredTypes) as Sequence<T>
             else -> sequenceOf(convertElementWithParent(element, requiredTypes.nonEmptyOr(DEFAULT_TYPES_LIST)) as? T).filterNotNull()
         }
 }
-
-internal inline fun <reified ActualT : UElement> Class<*>?.el(f: () -> UElement?): UElement? {
-    return if (this == null || isAssignableFrom(ActualT::class.java)) f() else null
-}
-
-internal inline fun <reified ActualT : UElement> Array<out Class<out UElement>>.el(f: () -> UElement?): UElement? {
-    return if (isAssignableFrom(ActualT::class.java)) f() else null
-}
-
-internal inline fun <reified ActualT : UElement> Array<out Class<out UElement>>.expr(f: () -> UExpression?): UExpression? {
-    return if (isAssignableFrom(ActualT::class.java)) f() else null
-}
-
-internal fun Array<out Class<out UElement>>.isAssignableFrom(cls: Class<*>) = any { it.isAssignableFrom(cls) }
-
-
 
 internal object KotlinConverter {
     internal tailrec fun unwrapElements(element: PsiElement?): PsiElement? = when (element) {
@@ -514,7 +498,7 @@ internal object KotlinConverter {
                         KotlinUMethodWithFakeLightDelegate(ktFunction, original, givenParent)
                 }
                 is UastFakeLightPrimaryConstructor ->
-                    convertFakeLightConstructorAlternatices(original, givenParent, expectedTypes).firstOrNull()
+                    convertFakeLightConstructorAlternatives(original, givenParent, expectedTypes).firstOrNull()
                 is KtLightClass -> when (original.kotlinOrigin) {
                     is KtEnumEntry -> el<UEnumConstant> {
                         convertEnumEntry(original.kotlinOrigin as KtEnumEntry, givenParent)
@@ -593,7 +577,7 @@ internal object KotlinConverter {
         }
     }
 
-    internal fun convertFakeLightConstructorAlternatices(
+    internal fun convertFakeLightConstructorAlternatives(
         original: UastFakeLightPrimaryConstructor,
         givenParent: UElement?,
         expectedTypes: Array<out Class<out UElement>>
@@ -739,23 +723,7 @@ private fun convertVariablesDeclaration(
     return declarationsExpression.apply { declarations = listOf(variable) }
 }
 
-val kotlinUastPlugin get() = UastLanguagePlugin.getInstances().find { it.language == KotlinLanguage.INSTANCE } ?: KotlinUastLanguagePlugin()
-
-private fun expressionTypes(requiredType: Class<out UElement>?) = requiredType?.let { arrayOf(it) } ?: DEFAULT_EXPRESSION_TYPES_LIST
-
-private fun elementTypes(requiredType: Class<out UElement>?) = requiredType?.let { arrayOf(it) } ?: DEFAULT_TYPES_LIST
-
-private fun <T : UElement> Array<out Class<out T>>.nonEmptyOr(default: Array<out Class<out UElement>>) = takeIf { it.isNotEmpty() }
-    ?: default
-
-private fun <U : UElement> Array<out Class<out UElement>>.accommodate(vararg makers: UElementAlternative<out U>): Sequence<UElement> {
-    val makersSeq = makers.asSequence()
-    return this.asSequence()
-        .flatMap { requiredType -> makersSeq.filter { requiredType.isAssignableFrom(it.uType) } }
-        .distinct()
-        .mapNotNull { it.make.invoke() }
+val kotlinUastPlugin: UastLanguagePlugin by lz {
+    UastLanguagePlugin.getInstances().find { it.language == KotlinLanguage.INSTANCE }
+        ?: KotlinUastLanguagePlugin()
 }
-
-private inline fun <reified U : UElement> alternative(noinline make: () -> U?) = UElementAlternative(U::class.java, make)
-
-private class UElementAlternative<U : UElement>(val uType: Class<U>, val make: () -> U?)

@@ -6,24 +6,24 @@ class A() {
 fun f(): Unit {
     var x: Int? = 1
     x = null
-    x <!NONE_APPLICABLE!>+<!> 1
-    x <!NONE_APPLICABLE!>plus<!> 1
-    x <!NONE_APPLICABLE!><<!> 1
-    <!UNRESOLVED_REFERENCE!>x += 1<!>
+    x <!UNSAFE_OPERATOR_CALL!>+<!> 1
+    x <!UNSAFE_CALL!>plus<!> 1
+    x <!UNSAFE_OPERATOR_CALL!><<!> 1
+    x <!UNRESOLVED_REFERENCE!>+=<!> 1
 
     x == 1
     x != 1
 
-    A() == 1
+    <!EQUALITY_NOT_APPLICABLE!>A() == 1<!>
 
-    x === "1"
-    x !== "1"
+    <!EQUALITY_NOT_APPLICABLE!>x === "1"<!>
+    <!EQUALITY_NOT_APPLICABLE!>x !== "1"<!>
 
     x === 1
     x !== 1
 
-    x<!NONE_APPLICABLE!>..<!>2
-    x <!INAPPLICABLE_CANDIDATE!>in<!> 1..2
+    x<!UNSAFE_OPERATOR_CALL!>..<!>2
+    <!ARGUMENT_TYPE_MISMATCH!>x<!> in 1..2
 
     val y : Boolean? = true
     false || y

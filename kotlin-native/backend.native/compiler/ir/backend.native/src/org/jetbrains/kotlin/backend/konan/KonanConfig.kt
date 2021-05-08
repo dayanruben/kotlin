@@ -43,9 +43,11 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
     val debug: Boolean get() = configuration.getBoolean(KonanConfigKeys.DEBUG)
     val lightDebug: Boolean = configuration.get(KonanConfigKeys.LIGHT_DEBUG)
             ?: target.family.isAppleFamily // Default is true for Apple targets.
+    val generateInlinedBodyTrampoline = debug && configuration.get(KonanConfigKeys.GENERATE_INLINED_FUNCTION_BODY_MARKER) ?: false
 
     val memoryModel: MemoryModel get() = configuration.get(KonanConfigKeys.MEMORY_MODEL)!!
     val destroyRuntimeMode: DestroyRuntimeMode get() = configuration.get(KonanConfigKeys.DESTROY_RUNTIME_MODE)!!
+    val gc: GC get() = configuration.get(KonanConfigKeys.GARBAGE_COLLECTOR)!!
 
     val needVerifyIr: Boolean
         get() = configuration.get(KonanConfigKeys.VERIFY_IR) == true
@@ -80,7 +82,9 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
     internal val purgeUserLibs: Boolean
         get() = configuration.getBoolean(KonanConfigKeys.PURGE_USER_LIBS)
 
-    internal val resolve = KonanLibrariesResolveSupport(configuration, target, distribution)
+    internal val resolve = KonanLibrariesResolveSupport(
+            configuration, target, distribution, resolveManifestDependenciesLenient = metadataKlib
+    )
 
     internal val resolvedLibraries get() = resolve.resolvedLibraries
 
@@ -158,7 +162,17 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
                 add("legacy_memory_manager.bc")
             }
             MemoryModel.EXPERIMENTAL -> {
-                add("experimental_memory_manager.bc")
+                add("common_gc.bc")
+                when (gc) {
+                    GC.SINGLE_THREAD_MARK_SWEEP -> {
+                        add("experimental_memory_manager_stms.bc")
+                        add("single_thread_ms_gc.bc")
+                    }
+                    GC.NOOP -> {
+                        add("experimental_memory_manager_noop.bc")
+                        add("noop_gc.bc")
+                    }
+                }
             }
         }
         if (shouldCoverLibraries || shouldCoverSources) add("profileRuntime.bc")
@@ -185,7 +199,7 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
     internal val nativeLibraries: List<String> =
         configuration.getList(KonanConfigKeys.NATIVE_LIBRARY_FILES)
 
-    internal val includeBinaries: List<String> = 
+    internal val includeBinaries: List<String> =
         configuration.getList(KonanConfigKeys.INCLUDED_BINARY_FILES)
 
     internal val languageVersionSettings =
@@ -201,5 +215,5 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
     internal val isInteropStubs: Boolean get() = manifestProperties?.getProperty("interop") == "true"
 }
 
-fun CompilerConfiguration.report(priority: CompilerMessageSeverity, message: String) 
+fun CompilerConfiguration.report(priority: CompilerMessageSeverity, message: String)
     = this.getNotNull(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY).report(priority, message)

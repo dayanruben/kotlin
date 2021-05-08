@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.idea.frontend.api.fir.scopes
 import org.jetbrains.kotlin.fir.declarations.FirProperty
 import org.jetbrains.kotlin.fir.declarations.FirRegularClass
 import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
-import org.jetbrains.kotlin.idea.frontend.api.ValidityToken
+import org.jetbrains.kotlin.idea.frontend.api.tokens.ValidityToken
 import org.jetbrains.kotlin.idea.frontend.api.ValidityTokenOwner
 import org.jetbrains.kotlin.idea.frontend.api.fir.KtSymbolByFirBuilder
 import org.jetbrains.kotlin.idea.frontend.api.fir.symbols.KtFirFileSymbol
@@ -74,7 +74,7 @@ internal class KtFirFileScope(
                     }
 
                     if (callableDeclaration != null) {
-                        yield(builder.buildCallableSymbol(callableDeclaration))
+                        yield(builder.callableBuilder.buildCallableSymbol(callableDeclaration))
                     }
                 }
             }
@@ -87,7 +87,7 @@ internal class KtFirFileScope(
                 it.declarations.forEach { firDeclaration ->
                     val classLikeDeclaration = (firDeclaration as? FirRegularClass)?.takeIf { klass -> nameFilter(klass.name) }
                     if (classLikeDeclaration != null) {
-                        yield(builder.buildClassLikeSymbol(classLikeDeclaration))
+                        yield(builder.classifierBuilder.buildClassLikeSymbol(classLikeDeclaration))
                     }
                 }
             }

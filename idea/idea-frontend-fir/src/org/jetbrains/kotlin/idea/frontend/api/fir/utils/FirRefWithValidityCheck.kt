@@ -10,9 +10,10 @@ import org.jetbrains.kotlin.fir.declarations.FirDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.idea.fir.low.level.api.api.FirModuleResolveState
 import org.jetbrains.kotlin.idea.fir.low.level.api.api.withFirDeclaration
-import org.jetbrains.kotlin.idea.frontend.api.ValidityToken
+import org.jetbrains.kotlin.idea.fir.low.level.api.api.withFirDeclarationInWriteLock
 import org.jetbrains.kotlin.idea.frontend.api.ValidityTokenOwner
-import org.jetbrains.kotlin.idea.frontend.api.assertIsValidAndAccessible
+import org.jetbrains.kotlin.idea.frontend.api.tokens.ValidityToken
+import org.jetbrains.kotlin.idea.frontend.api.tokens.assertIsValidAndAccessible
 import java.lang.ref.WeakReference
 
 internal class FirRefWithValidityCheck<out D : FirDeclaration>(fir: D, resolveState: FirModuleResolveState, val token: ValidityToken) {
@@ -51,6 +52,31 @@ internal class FirRefWithValidityCheck<out D : FirDeclaration>(fir: D, resolveSt
         val fir = firWeakRef.get()
             ?: throw EntityWasGarbageCollectedException("FirElement")
         return action(fir)
+    }
+
+    /**
+     * Runs [action] with fir element with write action hold
+     * Consider using this then [action] may call some resolve
+     */
+    inline fun <R> withFirWithPossibleResolveInside(
+        phase: FirResolvePhase = FirResolvePhase.RAW_FIR,
+        crossinline action: (fir: D) -> R
+    ): R {
+        token.assertIsValidAndAccessible()
+        val fir = firWeakRef.get()
+            ?: throw EntityWasGarbageCollectedException("FirElement")
+        val resolveState = resolveStateWeakRef.get()
+            ?: throw EntityWasGarbageCollectedException("FirModuleResolveState")
+        return when (phase) {
+            FirResolvePhase.BODY_RESOLVE -> {
+                /*
+                 The BODY_RESOLVE phase is the maximum possible phase we can resolve our declaration to
+                 So there is not need to run whole `action` under write lock
+                 */
+                action(fir.withFirDeclarationInWriteLock(resolveState, phase) { it })
+            }
+            else -> fir.withFirDeclarationInWriteLock(resolveState, phase) { action(it) }
+        }
     }
 
     val resolveState

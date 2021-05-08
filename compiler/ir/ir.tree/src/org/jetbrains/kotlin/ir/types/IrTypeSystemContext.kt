@@ -158,6 +158,10 @@ interface IrTypeSystemContext : TypeSystemContext, TypeSystemCommonSuperTypesCon
 
     override fun TypeConstructorMarker.isClassTypeConstructor() = this is IrClassSymbol
 
+    override fun TypeConstructorMarker.isInterface(): Boolean {
+        return (this as? IrClassSymbol)?.owner?.isInterface == true
+    }
+
     override fun TypeParameterMarker.getVariance() = (this as IrTypeParameterSymbol).owner.variance.convertVariance()
 
     private fun getSuperTypes(typeParameterMarker: TypeParameterMarker) = (typeParameterMarker as IrTypeParameterSymbol).owner.superTypes
@@ -167,6 +171,28 @@ interface IrTypeSystemContext : TypeSystemContext, TypeSystemCommonSuperTypesCon
     override fun TypeParameterMarker.getUpperBound(index: Int) = getSuperTypes(this)[index] as KotlinTypeMarker
 
     override fun TypeParameterMarker.getTypeConstructor() = this as IrTypeParameterSymbol
+
+    private fun KotlinTypeMarker.containsTypeConstructor(constructor: TypeConstructorMarker): Boolean {
+        if (this.typeConstructor() == constructor) return true
+
+        for (i in 0 until this.argumentsCount()) {
+            val typeArgument = this.getArgument(i).takeIf { !it.isStarProjection() } ?: continue
+            if (typeArgument.getType().containsTypeConstructor(constructor)) return true
+        }
+
+        return false
+    }
+
+    override fun TypeParameterMarker.hasRecursiveBounds(selfConstructor: TypeConstructorMarker): Boolean {
+        for (i in 0 until this.upperBoundCount()) {
+            val upperBound = this.getUpperBound(i)
+            if (upperBound.containsTypeConstructor(selfConstructor) && upperBound.typeConstructor() == selfConstructor) {
+                return true
+            }
+        }
+
+        return false
+    }
 
     override fun areEqualTypeConstructors(c1: TypeConstructorMarker, c2: TypeConstructorMarker): Boolean =
         if (c1 is IrClassifierSymbol && c2 is IrClassifierSymbol) {
@@ -276,6 +302,9 @@ interface IrTypeSystemContext : TypeSystemContext, TypeSystemCommonSuperTypesCon
         if (this !is IrClassSymbol) return false
         return this.owner.classId?.isLocal == true
     }
+
+    override val TypeVariableTypeConstructorMarker.typeParameter: TypeParameterMarker?
+        get() = error("Type variables is unsupported in IR")
 
     override fun createFlexibleType(lowerBound: SimpleTypeMarker, upperBound: SimpleTypeMarker): KotlinTypeMarker {
         require(lowerBound.isNothing())
@@ -406,20 +435,22 @@ interface IrTypeSystemContext : TypeSystemContext, TypeSystemCommonSuperTypesCon
             irClass.kind != ClassKind.INTERFACE && irClass.kind != ClassKind.ANNOTATION_CLASS
         } ?: owner.superTypes.first()
 
-    override fun KotlinTypeMarker.getSubstitutedUnderlyingType(): KotlinTypeMarker? {
+    override fun KotlinTypeMarker.getUnsubstitutedUnderlyingType(): KotlinTypeMarker? {
         // Code in inlineClassesUtils.kt loads the property with the same name from the scope of the substituted type and takes its type.
         // This code below should have the same effect.
-        val irClass = (this as? IrType)?.classOrNull?.owner?.takeIf { it.isInline } ?: return null
-        val inlineClassParameter = irClass.primaryConstructor?.valueParameters?.singleOrNull()
-        return inlineClassParameter?.let { parameter ->
+        val irClass = (this as? IrType)?.classOrNull?.owner?.takeIf { it.isInline }
+        return irClass?.primaryConstructor?.valueParameters?.singleOrNull()?.type
+    }
+
+    override fun KotlinTypeMarker.getSubstitutedUnderlyingType(): KotlinTypeMarker? =
+        getUnsubstitutedUnderlyingType()?.let { type ->
             // Taking only the type parameters of the class (and not its outer classes) is OK since inner classes are always top level
             IrTypeSubstitutor(
-                irClass.typeParameters.map { it.symbol },
+                (this as IrType).getClass()!!.typeParameters.map { it.symbol },
                 (this as? IrSimpleType)?.arguments.orEmpty(),
                 irBuiltIns
-            ).substitute(parameter.type)
+            ).substitute(type as IrType)
         }
-    }
 
     override fun TypeConstructorMarker.getPrimitiveType(): PrimitiveType? {
         if (this !is IrClassSymbol) return null

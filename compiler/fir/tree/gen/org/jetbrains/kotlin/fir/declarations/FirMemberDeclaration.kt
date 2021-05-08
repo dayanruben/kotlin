@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.fir.declarations
 
+import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.FirSourceElement
 import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
@@ -15,9 +16,9 @@ import org.jetbrains.kotlin.fir.visitors.*
  * DO NOT MODIFY IT MANUALLY
  */
 
-interface FirMemberDeclaration : FirAnnotatedDeclaration, FirTypeParameterRefsOwner {
+sealed interface FirMemberDeclaration : FirAnnotatedDeclaration, FirTypeParameterRefsOwner {
     override val source: FirSourceElement?
-    override val session: FirSession
+    override val declarationSiteSession: FirSession
     override val resolvePhase: FirResolvePhase
     override val origin: FirDeclarationOrigin
     override val attributes: FirDeclarationAttributes
@@ -27,7 +28,9 @@ interface FirMemberDeclaration : FirAnnotatedDeclaration, FirTypeParameterRefsOw
 
     override fun <R, D> accept(visitor: FirVisitor<R, D>, data: D): R = visitor.visitMemberDeclaration(this, data)
 
-    override fun replaceSource(newSource: FirSourceElement?)
+    @Suppress("UNCHECKED_CAST")
+    override fun <E: FirElement, D> transform(transformer: FirTransformer<D>, data: D): E = 
+        transformer.transformMemberDeclaration(this, data) as E
 
     override fun replaceResolvePhase(newResolvePhase: FirResolvePhase)
 

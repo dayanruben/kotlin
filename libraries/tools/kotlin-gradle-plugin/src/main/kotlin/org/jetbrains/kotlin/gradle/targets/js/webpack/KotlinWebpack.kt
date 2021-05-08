@@ -10,6 +10,7 @@ import org.gradle.api.Incubating
 import org.gradle.api.file.FileCollection
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.internal.file.FileResolver
+import org.gradle.api.model.ObjectFactory
 import org.gradle.api.plugins.BasePluginConvention
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.*
@@ -18,6 +19,7 @@ import org.gradle.deployment.internal.DeploymentHandle
 import org.gradle.deployment.internal.DeploymentRegistry
 import org.gradle.process.internal.ExecHandle
 import org.gradle.process.internal.ExecHandleFactory
+import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinJsCompilation
 import org.jetbrains.kotlin.gradle.targets.js.RequiredKotlinJsDependency
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin
@@ -26,7 +28,6 @@ import org.jetbrains.kotlin.gradle.targets.js.npm.npmProject
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig.Mode
 import org.jetbrains.kotlin.gradle.testing.internal.reportsDir
 import org.jetbrains.kotlin.gradle.utils.injected
-import org.jetbrains.kotlin.gradle.utils.newFileProperty
 import org.jetbrains.kotlin.gradle.utils.property
 import java.io.File
 import javax.inject.Inject
@@ -36,10 +37,14 @@ open class KotlinWebpack
 constructor(
     @Internal
     @Transient
-    override val compilation: KotlinJsCompilation
+    override val compilation: KotlinJsCompilation,
+    objects: ObjectFactory
 ) : DefaultTask(), RequiresNpmDependencies {
+    @Transient
     private val nodeJs = NodeJsRootPlugin.apply(project.rootProject)
     private val versions = nodeJs.versions
+    private val resolutionManager = nodeJs.npmResolutionManager
+    private val rootPackageDir by lazy { nodeJs.rootPackageDir }
 
     private val npmProject = compilation.npmProject
 
@@ -58,7 +63,7 @@ constructor(
     val compilationId: String by lazy {
         compilation.let {
             val target = it.target
-            target.project.path + "@" + target.name + ":" + it.compilationName
+            target.project.path + "@" + target.name + ":" + it.compilationPurpose
         }
     }
 
@@ -74,9 +79,7 @@ constructor(
 
     @get:PathSensitive(PathSensitivity.ABSOLUTE)
     @get:InputFile
-    val entryProperty: RegularFileProperty = project.newFileProperty {
-        compilation.compileKotlinTask.outputFile
-    }
+    val entryProperty: RegularFileProperty = objects.fileProperty().fileProvider(compilation.compileKotlinTask.outputFileProperty)
 
     init {
         onlyIf {
@@ -205,6 +208,9 @@ constructor(
     @Nested
     val synthConfig = KotlinWebpackConfig()
 
+    @Input
+    val webpackMajorVersion = PropertiesProvider(project).webpackMajorVersion
+
     fun webpackConfigApplier(body: KotlinWebpackConfig.() -> Unit) {
         synthConfig.body()
         webpackConfigAppliers.add(body)
@@ -227,7 +233,8 @@ constructor(
             devServer = devServer,
             devtool = devtool,
             sourceMaps = sourceMaps,
-            resolveFromModulesFirst = resolveFromModulesFirst
+            resolveFromModulesFirst = resolveFromModulesFirst,
+            webpackMajorVersion = webpackMajorVersion
         )
 
         webpackConfigAppliers
@@ -255,7 +262,7 @@ constructor(
 
     @TaskAction
     fun doExecute() {
-        nodeJs.npmResolutionManager.checkRequiredDependencies(task = this, services = services, logger = logger, projectPath = projectPath)
+        resolutionManager.checkRequiredDependencies(task = this, services = services, logger = logger, projectPath = projectPath)
 
         val runner = createRunner()
 
@@ -274,7 +281,7 @@ constructor(
             runner.copy(
                 config = runner.config.copy(
                     progressReporter = true,
-                    progressReporterPathFilter = nodeJs.rootPackageDir.absolutePath
+                    progressReporterPathFilter = rootPackageDir.absolutePath
                 )
             ).execute(services)
         }

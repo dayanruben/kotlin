@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.fir.visitors.*
  */
 
 internal class FirCheckNotNullCallImpl(
-    override var source: FirSourceElement?,
+    override val source: FirSourceElement?,
     override var typeRef: FirTypeRef,
     override val annotations: MutableList<FirAnnotationCall>,
     override var argumentList: FirArgumentList,
@@ -33,9 +33,9 @@ internal class FirCheckNotNullCallImpl(
     }
 
     override fun <D> transformChildren(transformer: FirTransformer<D>, data: D): FirCheckNotNullCallImpl {
-        typeRef = typeRef.transformSingle(transformer, data)
+        typeRef = typeRef.transform(transformer, data)
         transformAnnotations(transformer, data)
-        argumentList = argumentList.transformSingle(transformer, data)
+        argumentList = argumentList.transform(transformer, data)
         transformCalleeReference(transformer, data)
         return this
     }
@@ -46,12 +46,8 @@ internal class FirCheckNotNullCallImpl(
     }
 
     override fun <D> transformCalleeReference(transformer: FirTransformer<D>, data: D): FirCheckNotNullCallImpl {
-        calleeReference = calleeReference.transformSingle(transformer, data)
+        calleeReference = calleeReference.transform(transformer, data)
         return this
-    }
-
-    override fun replaceSource(newSource: FirSourceElement?) {
-        source = newSource
     }
 
     override fun replaceTypeRef(newTypeRef: FirTypeRef) {

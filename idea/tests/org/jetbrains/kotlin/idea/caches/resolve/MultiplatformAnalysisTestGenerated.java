@@ -44,6 +44,11 @@ public class MultiplatformAnalysisTestGenerated extends AbstractMultiplatformAna
         runTest("idea/testData/multiplatform/callableReferences/");
     }
 
+    @TestMetadata("commonSealedWithPlatformInheritor")
+    public void testCommonSealedWithPlatformInheritor() throws Exception {
+        runTest("idea/testData/multiplatform/commonSealedWithPlatformInheritor/");
+    }
+
     @TestMetadata("constructorsOfExpect")
     public void testConstructorsOfExpect() throws Exception {
         runTest("idea/testData/multiplatform/constructorsOfExpect/");
@@ -164,6 +169,11 @@ public class MultiplatformAnalysisTestGenerated extends AbstractMultiplatformAna
         runTest("idea/testData/multiplatform/jvmDefaultNonMpp/");
     }
 
+    @TestMetadata("jvmInlineValueClass")
+    public void testJvmInlineValueClass() throws Exception {
+        runTest("idea/testData/multiplatform/jvmInlineValueClass/");
+    }
+
     @TestMetadata("kt41218")
     public void testKt41218() throws Exception {
         runTest("idea/testData/multiplatform/kt41218/");
@@ -222,6 +232,16 @@ public class MultiplatformAnalysisTestGenerated extends AbstractMultiplatformAna
     @TestMetadata("recursiveTypes")
     public void testRecursiveTypes() throws Exception {
         runTest("idea/testData/multiplatform/recursiveTypes/");
+    }
+
+    @TestMetadata("sealedInheritorsInComplexModuleStructure1")
+    public void testSealedInheritorsInComplexModuleStructure1() throws Exception {
+        runTest("idea/testData/multiplatform/sealedInheritorsInComplexModuleStructure1/");
+    }
+
+    @TestMetadata("sealedInheritorsInComplexModuleStructure2")
+    public void testSealedInheritorsInComplexModuleStructure2() throws Exception {
+        runTest("idea/testData/multiplatform/sealedInheritorsInComplexModuleStructure2/");
     }
 
     @TestMetadata("simple")

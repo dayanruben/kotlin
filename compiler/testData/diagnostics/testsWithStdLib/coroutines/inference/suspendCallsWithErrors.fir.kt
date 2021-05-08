@@ -16,9 +16,9 @@ fun <S> generate(@BuilderInference g: suspend Controller<S>.() -> Unit): S = TOD
 class A
 
 val test1 = generate {
-    yield(A)
+    yield(<!NO_COMPANION_OBJECT!>A<!>)
 }
 
-val test2: Int = generate {
+val test2: Int = <!INITIALIZER_TYPE_MISMATCH!>generate {
     yield(A())
-}
+}<!>

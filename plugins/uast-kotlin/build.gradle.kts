@@ -11,6 +11,7 @@ dependencies {
     compile(project(":compiler:frontend"))
     compile(project(":compiler:frontend.java"))
     compile(project(":compiler:light-classes"))
+    compile(project(":plugins:uast-kotlin-base"))
 
     // BEWARE: Uast should not depend on IDEA.
     compileOnly(intellijCoreDep()) { includeJars("intellij-core", "asm-all", rootProject = rootProject) }
@@ -50,6 +51,7 @@ dependencies {
     testRuntime(project(":plugins:kapt3-idea"))
     testRuntime(project(":kotlinx-serialization-ide-plugin"))
     testRuntime(project(":plugins:parcelize:parcelize-ide"))
+    testRuntime(project(":plugins:lombok:lombok-ide-plugin"))
     testRuntime(intellijDep())
     testRuntime(intellijPluginDep("junit"))
     testRuntime(intellijPluginDep("gradle"))
@@ -65,5 +67,6 @@ sourceSets {
 testsJar {}
 
 projectTest(parallel = true) {
+    dependsOn(":dist")
     workingDir = rootDir
 }

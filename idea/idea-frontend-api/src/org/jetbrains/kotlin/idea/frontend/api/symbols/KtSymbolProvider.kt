@@ -15,12 +15,12 @@ import org.jetbrains.kotlin.psi.*
 abstract class KtSymbolProvider : KtAnalysisSessionComponent() {
     open fun getSymbol(psi: KtDeclaration): KtSymbol = when (psi) {
         is KtParameter -> getParameterSymbol(psi)
-        is KtNamedFunction -> getFunctionSymbol(psi)
+        is KtNamedFunction -> getFunctionLikeSymbol(psi)
         is KtConstructor<*> -> getConstructorSymbol(psi)
         is KtTypeParameter -> getTypeParameterSymbol(psi)
         is KtTypeAlias -> getTypeAliasSymbol(psi)
         is KtEnumEntry -> getEnumEntrySymbol(psi)
-        is KtLambdaExpression -> getAnonymousFunctionSymbol(psi)
+        is KtFunctionLiteral -> getAnonymousFunctionSymbol(psi)
         is KtProperty -> getVariableSymbol(psi)
         is KtClassOrObject -> {
             val literalExpression = (psi as? KtObjectDeclaration)?.parent as? KtObjectLiteralExpression
@@ -30,18 +30,19 @@ abstract class KtSymbolProvider : KtAnalysisSessionComponent() {
         else -> error("Cannot build symbol for ${psi::class}")
     }
 
-    abstract fun getParameterSymbol(psi: KtParameter): KtParameterSymbol
+    abstract fun getParameterSymbol(psi: KtParameter): KtValueParameterSymbol
     abstract fun getFileSymbol(psi: KtFile): KtFileSymbol
-    abstract fun getFunctionSymbol(psi: KtNamedFunction): KtFunctionSymbol
+    abstract fun getFunctionLikeSymbol(psi: KtNamedFunction): KtFunctionLikeSymbol
     abstract fun getConstructorSymbol(psi: KtConstructor<*>): KtConstructorSymbol
     abstract fun getTypeParameterSymbol(psi: KtTypeParameter): KtTypeParameterSymbol
     abstract fun getTypeAliasSymbol(psi: KtTypeAlias): KtTypeAliasSymbol
     abstract fun getEnumEntrySymbol(psi: KtEnumEntry): KtEnumEntrySymbol
     abstract fun getAnonymousFunctionSymbol(psi: KtNamedFunction): KtAnonymousFunctionSymbol
-    abstract fun getAnonymousFunctionSymbol(psi: KtLambdaExpression): KtAnonymousFunctionSymbol
+    abstract fun getAnonymousFunctionSymbol(psi: KtFunctionLiteral): KtAnonymousFunctionSymbol
     abstract fun getVariableSymbol(psi: KtProperty): KtVariableSymbol
     abstract fun getAnonymousObjectSymbol(psi: KtObjectLiteralExpression): KtAnonymousObjectSymbol
     abstract fun getClassOrObjectSymbol(psi: KtClassOrObject): KtClassOrObjectSymbol
+    abstract fun getNamedClassOrObjectSymbol(psi: KtClassOrObject): KtNamedClassOrObjectSymbol
     abstract fun getPropertyAccessorSymbol(psi: KtPropertyAccessor): KtPropertyAccessorSymbol
 
     abstract fun getClassOrObjectSymbolByClassId(classId: ClassId): KtClassOrObjectSymbol?
@@ -53,11 +54,17 @@ interface KtSymbolProviderMixIn : KtAnalysisSessionMixIn {
     fun KtDeclaration.getSymbol(): KtSymbol =
         analysisSession.symbolProvider.getSymbol(this)
 
-    fun KtParameter.getParameterSymbol(): KtParameterSymbol =
+    fun KtParameter.getParameterSymbol(): KtValueParameterSymbol =
         analysisSession.symbolProvider.getParameterSymbol(this)
 
-    fun KtNamedFunction.getFunctionSymbol(): KtFunctionSymbol =
-        analysisSession.symbolProvider.getFunctionSymbol(this)
+    /**
+     * Creates [KtFunctionLikeSymbol] by [KtNamedFunction]
+     *
+     * If [KtNamedFunction.getName] is `null` then returns [KtAnonymousFunctionSymbol]
+     * Otherwise, returns [KtFunctionSymbol]
+     */
+    fun KtNamedFunction.getFunctionLikeSymbol(): KtFunctionLikeSymbol =
+        analysisSession.symbolProvider.getFunctionLikeSymbol(this)
 
     fun KtConstructor<*>.getConstructorSymbol(): KtConstructorSymbol =
         analysisSession.symbolProvider.getConstructorSymbol(this)
@@ -74,7 +81,7 @@ interface KtSymbolProviderMixIn : KtAnalysisSessionMixIn {
     fun KtNamedFunction.getAnonymousFunctionSymbol(): KtAnonymousFunctionSymbol =
         analysisSession.symbolProvider.getAnonymousFunctionSymbol(this)
 
-    fun KtLambdaExpression.getAnonymousFunctionSymbol(): KtAnonymousFunctionSymbol =
+    fun KtFunctionLiteral.getAnonymousFunctionSymbol(): KtAnonymousFunctionSymbol =
         analysisSession.symbolProvider.getAnonymousFunctionSymbol(this)
 
     fun KtProperty.getVariableSymbol(): KtVariableSymbol =
@@ -85,6 +92,9 @@ interface KtSymbolProviderMixIn : KtAnalysisSessionMixIn {
 
     fun KtClassOrObject.getClassOrObjectSymbol(): KtClassOrObjectSymbol =
         analysisSession.symbolProvider.getClassOrObjectSymbol(this)
+
+    fun KtClassOrObject.getNamedClassOrObjectSymbol(): KtNamedClassOrObjectSymbol =
+        analysisSession.symbolProvider.getNamedClassOrObjectSymbol(this)
 
     fun KtPropertyAccessor.getPropertyAccessorSymbol(): KtPropertyAccessorSymbol =
         analysisSession.symbolProvider.getPropertyAccessorSymbol(this)

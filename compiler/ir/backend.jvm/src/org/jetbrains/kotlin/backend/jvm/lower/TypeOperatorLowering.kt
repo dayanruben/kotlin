@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.backend.jvm.codegen.fileParent
 import org.jetbrains.kotlin.backend.jvm.ir.createJvmIrBuilder
 import org.jetbrains.kotlin.backend.jvm.ir.erasedUpperBound
 import org.jetbrains.kotlin.backend.jvm.ir.getKtFile
+import org.jetbrains.kotlin.backend.jvm.ir.isInlineClassType
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.*
@@ -28,9 +29,7 @@ import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrTypeParameterSymbol
 import org.jetbrains.kotlin.ir.types.*
-import org.jetbrains.kotlin.ir.util.dump
-import org.jetbrains.kotlin.ir.util.isInlined
-import org.jetbrains.kotlin.ir.util.render
+import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
@@ -55,13 +54,13 @@ internal val typeOperatorLowering = makeIrFilePhase(
     description = "Lower IrTypeOperatorCalls to (implicit) casts and instanceof checks"
 )
 
+val IrType.isReifiedTypeParameter: Boolean
+    get() = classifierOrNull?.safeAs<IrTypeParameterSymbol>()?.owner?.isReified == true
+
 private class TypeOperatorLowering(private val context: JvmBackendContext) : FileLoweringPass, IrBuildingTransformer(context) {
     override fun lower(irFile: IrFile) = irFile.transformChildrenVoid()
 
     private fun IrExpression.transformVoid() = transform(this@TypeOperatorLowering, null)
-
-    private val IrType.isReifiedTypeParameter: Boolean
-        get() = classifierOrNull?.safeAs<IrTypeParameterSymbol>()?.owner?.isReified == true
 
     private fun lowerInstanceOf(argument: IrExpression, type: IrType) = with(builder) {
         when {
@@ -294,7 +293,8 @@ private class TypeOperatorLowering(private val context: JvmBackendContext) : Fil
             when (targetFun) {
                 is IrSimpleFunction -> {
                     if (refDispatchReceiver != null) {
-                        addValueParameter("p${syntheticParameterIndex++}", targetFun.dispatchReceiverParameter!!.type)
+                        // Fake overrides may have inexact dispatch receiver type.
+                        addValueParameter("p${syntheticParameterIndex++}", targetFun.parentAsClass.defaultType)
                         dynamicCallArguments.add(refDispatchReceiver)
                     }
                     if (refExtensionReceiver != null) {
@@ -383,7 +383,7 @@ private class TypeOperatorLowering(private val context: JvmBackendContext) : Fil
                         irType = context.irBuiltIns.anyNType
                     ) { valueSymbol ->
                         val thenPart =
-                            if (valueSymbol.owner.type.isInlined())
+                            if (valueSymbol.owner.type.isInlineClassType())
                                 lowerCast(irGet(valueSymbol.owner), expression.typeOperand)
                             else
                                 irGet(valueSymbol.owner)
@@ -408,7 +408,14 @@ private class TypeOperatorLowering(private val context: JvmBackendContext) : Fil
                     "${owner.name.asString()}(...)"
                 } else {
                     val (startOffset, endOffset) = expression.extents()
-                    sourceViewFor(parent as IrDeclaration).subSequence(startOffset, endOffset).toString()
+                    val declarationParent = parent as? IrDeclaration
+                    val sourceView = declarationParent?.let(::sourceViewFor)
+                    if (sourceView != null && startOffset >= 0 && endOffset < sourceView.length) {
+                        sourceView.subSequence(startOffset, endOffset).toString()
+                    } else {
+                        // Fallback for inconsistent line numbers
+                        declarationParent.safeAs<IrDeclarationWithName>()?.name?.asString() ?: "Unknown Declaration"
+                    }
                 }
 
                 irLetS(expression.argument.transformVoid(), irType = context.irBuiltIns.anyNType) { valueSymbol ->
@@ -434,14 +441,14 @@ private class TypeOperatorLowering(private val context: JvmBackendContext) : Fil
                 origin == IrDeclarationOrigin.DELEGATED_MEMBER
 
     private fun IrElement.extents(): Pair<Int, Int> {
-        var startOffset = UNDEFINED_OFFSET
-        var endOffset = UNDEFINED_OFFSET
+        var startOffset = Int.MAX_VALUE
+        var endOffset = 0
         acceptVoid(object : IrElementVisitorVoid {
             override fun visitElement(element: IrElement) {
                 element.acceptChildrenVoid(this)
-                if (startOffset == UNDEFINED_OFFSET || element.startOffset != UNDEFINED_OFFSET && element.startOffset < startOffset)
+                if (element.startOffset in 0 until startOffset)
                     startOffset = element.startOffset
-                if (endOffset == UNDEFINED_OFFSET || element.endOffset != UNDEFINED_OFFSET && endOffset < element.endOffset)
+                if (endOffset < element.endOffset)
                     endOffset = element.endOffset
             }
         })

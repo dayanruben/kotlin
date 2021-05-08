@@ -41,7 +41,7 @@ typealias KotlinExpression = String
 fun String.asSimpleName(): String = if (this in kotlinKeywords || this.contains("$")) {
     "`$this`"
 } else {
-    this
+    this.replace(':', '_')
 }
 
 /**
@@ -71,7 +71,7 @@ fun String.quoteAsKotlinLiteral(): KotlinExpression = buildString {
         when (c) {
             in charactersAllowedInKotlinStringLiterals -> append(c)
             '$' -> append("\\$")
-            else -> append("\\u" + "%04X".format(c.toInt()))
+            else -> append("\\u" + "%04X".format(c.code))
         }
     }
 

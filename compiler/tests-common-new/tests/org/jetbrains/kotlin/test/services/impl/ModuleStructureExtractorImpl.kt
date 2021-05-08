@@ -284,13 +284,14 @@ class ModuleStructureExtractorImpl(
             val moduleDirectives = moduleDirectivesBuilder.build() + testServices.defaultDirectives + globalDirectives
             moduleDirectives.forEach { it.checkDirectiveApplicability(contextIsGlobal = isImplicitModule, contextIsModule = true) }
 
-            currentModuleLanguageVersionSettingsBuilder.configureUsingDirectives(moduleDirectives, environmentConfigurators)
+            val targetBackend = currentModuleTargetBackend ?: defaultsProvider.defaultTargetBackend
+            currentModuleLanguageVersionSettingsBuilder.configureUsingDirectives(moduleDirectives, environmentConfigurators, targetBackend)
             val moduleName = currentModuleName ?: defaultModuleName
             val targetPlatform = currentModuleTargetPlatform ?: parseModulePlatformByName(moduleName) ?: defaultsProvider.defaultPlatform
             val testModule = TestModule(
                 name = moduleName,
                 targetPlatform = targetPlatform,
-                targetBackend = currentModuleTargetBackend ?: defaultsProvider.defaultTargetBackend,
+                targetBackend = targetBackend,
                 frontendKind = currentModuleFrontendKind ?: defaultsProvider.defaultFrontend,
                 binaryKind = defaultsProvider.defaultArtifactKind ?: targetPlatform.toArtifactKind(),
                 files = filesOfCurrentModule,
@@ -315,7 +316,7 @@ class ModuleStructureExtractorImpl(
         }
 
         private fun parseModulePlatformByName(moduleName: String): TargetPlatform? {
-            val nameSuffix = moduleName.substringAfterLast("-", "").toUpperCase()
+            val nameSuffix = moduleName.substringAfterLast("-", "").uppercase()
             return when {
                 nameSuffix == "COMMON" -> CommonPlatforms.defaultCommonPlatform
                 nameSuffix == "JVM" -> JvmPlatforms.unspecifiedJvmPlatform // TODO(dsavvinov): determine JvmTarget precisely

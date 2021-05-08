@@ -6,7 +6,7 @@
 package org.jetbrains.kotlin.idea.frontend.api.components
 
 import org.jetbrains.kotlin.idea.frontend.api.ValidityTokenOwner
-import org.jetbrains.kotlin.idea.frontend.api.symbols.KtClassOrObjectSymbol
+import org.jetbrains.kotlin.idea.frontend.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.idea.frontend.api.types.KtType
 
 abstract class KtTypeProvider : KtAnalysisSessionComponent() {
@@ -14,7 +14,7 @@ abstract class KtTypeProvider : KtAnalysisSessionComponent() {
 
     abstract fun approximateToSuperPublicDenotableType(type: KtType): KtType?
 
-    abstract fun buildSelfClassType(symbol: KtClassOrObjectSymbol): KtType
+    abstract fun buildSelfClassType(symbol: KtNamedClassOrObjectSymbol): KtType
 }
 
 interface KtTypeProviderMixIn : KtAnalysisSessionMixIn {
@@ -30,9 +30,8 @@ interface KtTypeProviderMixIn : KtAnalysisSessionMixIn {
     fun KtType.approximateToSuperPublicDenotable(): KtType? =
         analysisSession.typeProvider.approximateToSuperPublicDenotableType(this)
 
-    fun KtClassOrObjectSymbol.buildSelfClassType(): KtType =
+    fun KtNamedClassOrObjectSymbol.buildSelfClassType(): KtType =
         analysisSession.typeProvider.buildSelfClassType(this)
-
 }
 
 @Suppress("PropertyName")

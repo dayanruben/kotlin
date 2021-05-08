@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.AbstractDataFlowValueRenderingTest
 import org.jetbrains.kotlin.addImport.AbstractAddImportTest
 import org.jetbrains.kotlin.addImportAlias.AbstractAddImportAliasTest
 import org.jetbrains.kotlin.allopen.AbstractBytecodeListingTestForAllOpen
+import org.jetbrains.kotlin.allopen.AbstractIrBytecodeListingTestForAllOpen
 import org.jetbrains.kotlin.android.parcel.AbstractParcelBoxTest
 import org.jetbrains.kotlin.android.parcel.AbstractParcelBytecodeListingTest
 import org.jetbrains.kotlin.android.parcel.AbstractParcelIrBoxTest
@@ -26,6 +27,7 @@ import org.jetbrains.kotlin.formatter.AbstractFormatterTest
 import org.jetbrains.kotlin.formatter.AbstractTypingIndentationTestBase
 import org.jetbrains.kotlin.generators.TestGroup
 import org.jetbrains.kotlin.generators.impl.generateTestGroupSuite
+import org.jetbrains.kotlin.generators.util.TestGeneratorUtil
 import org.jetbrains.kotlin.generators.util.TestGeneratorUtil.KT_OR_KTS
 import org.jetbrains.kotlin.generators.util.TestGeneratorUtil.KT_OR_KTS_WITHOUT_DOTS_IN_NAME
 import org.jetbrains.kotlin.generators.util.TestGeneratorUtil.KT_WITHOUT_DOTS_IN_NAME
@@ -46,16 +48,15 @@ import org.jetbrains.kotlin.idea.codeInsight.postfix.AbstractPostfixTemplateProv
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.AbstractSurroundWithTest
 import org.jetbrains.kotlin.idea.codeInsight.unwrap.AbstractUnwrapRemoveTest
 import org.jetbrains.kotlin.idea.completion.AbstractHighLevelJvmBasicCompletionTest
+import org.jetbrains.kotlin.idea.completion.AbstractHighLevelMultiFileJvmBasicCompletionTest
 import org.jetbrains.kotlin.idea.completion.test.*
 import org.jetbrains.kotlin.idea.completion.test.handlers.*
 import org.jetbrains.kotlin.idea.completion.test.weighers.AbstractBasicCompletionWeigherTest
 import org.jetbrains.kotlin.idea.completion.test.weighers.AbstractSmartCompletionWeigherTest
 import org.jetbrains.kotlin.idea.completion.wheigher.AbstractHighLevelWeigherTest
 import org.jetbrains.kotlin.idea.configuration.AbstractGradleConfigureProjectByChangingFileTest
-import org.jetbrains.kotlin.idea.conversion.copy.AbstractJavaToKotlinCopyPasteConversionTest
 import org.jetbrains.kotlin.idea.conversion.copy.AbstractLiteralKotlinToKotlinCopyPasteTest
 import org.jetbrains.kotlin.idea.conversion.copy.AbstractLiteralTextToKotlinCopyPasteTest
-import org.jetbrains.kotlin.idea.conversion.copy.AbstractTextJavaToKotlinCopyPasteConversionTest
 import org.jetbrains.kotlin.idea.coverage.AbstractKotlinCoverageOutputFilesTest
 import org.jetbrains.kotlin.idea.debugger.evaluate.AbstractCodeFragmentAutoImportTest
 import org.jetbrains.kotlin.idea.debugger.evaluate.AbstractCodeFragmentCompletionHandlerTest
@@ -79,13 +80,17 @@ import org.jetbrains.kotlin.idea.editor.backspaceHandler.AbstractBackspaceHandle
 import org.jetbrains.kotlin.idea.editor.quickDoc.AbstractQuickDocProviderTest
 import org.jetbrains.kotlin.idea.filters.AbstractKotlinExceptionFilterTest
 import org.jetbrains.kotlin.idea.fir.AbstractKtDeclarationAndFirDeclarationEqualityChecker
+import org.jetbrains.kotlin.idea.fir.low.level.api.*
 import org.jetbrains.kotlin.idea.fir.low.level.api.AbstractFirLazyDeclarationResolveTest
 import org.jetbrains.kotlin.idea.fir.low.level.api.AbstractFirLazyResolveTest
 import org.jetbrains.kotlin.idea.fir.low.level.api.AbstractFirMultiModuleLazyResolveTest
 import org.jetbrains.kotlin.idea.fir.low.level.api.AbstractFirMultiModuleResolveTest
 import org.jetbrains.kotlin.idea.fir.low.level.api.diagnostic.AbstractDiagnosticTraversalCounterTest
+import org.jetbrains.kotlin.idea.fir.low.level.api.diagnostic.AbstractFirContextCollectionTest
+import org.jetbrains.kotlin.idea.fir.low.level.api.diagnostic.compiler.based.AbstractDiagnosisCompilerTestDataTest
 import org.jetbrains.kotlin.idea.fir.low.level.api.file.structure.AbstractFileStructureAndOutOfBlockModificationTrackerConsistencyTest
 import org.jetbrains.kotlin.idea.fir.low.level.api.file.structure.AbstractFileStructureTest
+import org.jetbrains.kotlin.idea.fir.low.level.api.resolve.AbstractInnerDeclarationsResolvePhaseTest
 import org.jetbrains.kotlin.idea.fir.low.level.api.sessions.AbstractSessionsInvalidationTest
 import org.jetbrains.kotlin.idea.fir.low.level.api.trackers.AbstractProjectWideOutOfBlockKotlinModificationTrackerTest
 import org.jetbrains.kotlin.idea.folding.AbstractKotlinFoldingTest
@@ -93,6 +98,7 @@ import org.jetbrains.kotlin.idea.frontend.api.components.AbstractExpectedExpress
 import org.jetbrains.kotlin.idea.frontend.api.components.AbstractHLExpressionTypeTest
 import org.jetbrains.kotlin.idea.frontend.api.components.AbstractOverriddenDeclarationProviderTest
 import org.jetbrains.kotlin.idea.frontend.api.components.AbstractReturnExpressionTargetTest
+import org.jetbrains.kotlin.idea.frontend.api.components.AbstractRendererTest
 import org.jetbrains.kotlin.idea.frontend.api.fir.AbstractResolveCallTest
 import org.jetbrains.kotlin.idea.frontend.api.scopes.AbstractFileScopeTest
 import org.jetbrains.kotlin.idea.frontend.api.scopes.AbstractMemberScopeByFqNameTest
@@ -149,9 +155,6 @@ import org.jetbrains.kotlin.idea.stubs.AbstractMultiFileHighlightingTest
 import org.jetbrains.kotlin.idea.stubs.AbstractResolveByStubTest
 import org.jetbrains.kotlin.idea.stubs.AbstractStubBuilderTest
 import org.jetbrains.kotlin.incremental.*
-import org.jetbrains.kotlin.j2k.AbstractJavaToKotlinConverterForWebDemoTest
-import org.jetbrains.kotlin.j2k.AbstractJavaToKotlinConverterMultiFileTest
-import org.jetbrains.kotlin.j2k.AbstractJavaToKotlinConverterSingleFileTest
 import org.jetbrains.kotlin.jps.build.*
 import org.jetbrains.kotlin.jps.build.dependeciestxt.actualizeMppJpsIncTestCaseDirs
 import org.jetbrains.kotlin.jps.incremental.AbstractJsProtoComparisonTest
@@ -165,6 +168,7 @@ import org.jetbrains.kotlin.kapt3.test.AbstractClassFileToSourceStubConverterTes
 import org.jetbrains.kotlin.kapt3.test.AbstractIrClassFileToSourceStubConverterTest
 import org.jetbrains.kotlin.kapt3.test.AbstractIrKotlinKaptContextTest
 import org.jetbrains.kotlin.kapt3.test.AbstractKotlinKaptContextTest
+import org.jetbrains.kotlin.lombok.AbstractLombokCompileTest
 import org.jetbrains.kotlin.nj2k.AbstractNewJavaToKotlinConverterMultiFileTest
 import org.jetbrains.kotlin.nj2k.AbstractNewJavaToKotlinConverterSingleFileTest
 import org.jetbrains.kotlin.nj2k.AbstractNewJavaToKotlinCopyPasteConversionTest
@@ -194,10 +198,17 @@ import org.jetbrains.kotlin.tools.projectWizard.wizard.AbstractYamlNewWizardProj
 import org.jetbrains.kotlinx.serialization.AbstractSerializationIrBytecodeListingTest
 import org.jetbrains.kotlinx.serialization.AbstractSerializationPluginBytecodeListingTest
 import org.jetbrains.kotlinx.serialization.AbstractSerializationPluginDiagnosticTest
+import org.jetbrains.kotlinx.serialization.idea.AbstractSerializationPluginIdeDiagnosticTest
+import org.jetbrains.kotlinx.serialization.idea.AbstractSerializationQuickFixTest
+import org.jetbrains.uast.test.kotlin.AbstractFE1LegacyUastDeclarationTest
+import org.jetbrains.uast.test.kotlin.AbstractFE1UastDeclarationTest
+import org.jetbrains.uast.test.kotlin.AbstractFirLegacyUastDeclarationTest
+import org.jetbrains.uast.test.kotlin.AbstractFirUastDeclarationTest
 
 fun main(args: Array<String>) {
     System.setProperty("java.awt.headless", "true")
     generateTestGroupSuite(args) {
+        val excludedFirTestdataPattern = "^(.+)\\.fir\\.kts?\$"
         testGroup("idea/jvm-debugger/jvm-debugger-test/test", "idea/jvm-debugger/jvm-debugger-test/testData") {
             testClass<AbstractKotlinSteppingTest> {
                 model(
@@ -317,18 +328,18 @@ fun main(args: Array<String>) {
             }
 
             testClass<AbstractKotlinHighlightingPassTest> {
-                model("checker", recursive = false)
-                model("checker/regression")
-                model("checker/recovery")
-                model("checker/rendering")
-                model("checker/scripts", extension = "kts")
-                model("checker/duplicateJvmSignature")
-                model("checker/infos", testMethod = "doTestWithInfos")
-                model("checker/diagnosticsMessage")
+                model("checker", recursive = false, excludedPattern = excludedFirTestdataPattern)
+                model("checker/regression", excludedPattern = excludedFirTestdataPattern)
+                model("checker/recovery", excludedPattern = excludedFirTestdataPattern)
+                model("checker/rendering", excludedPattern = excludedFirTestdataPattern)
+                model("checker/scripts", extension = "kts", excludedPattern = excludedFirTestdataPattern)
+                model("checker/duplicateJvmSignature", excludedPattern = excludedFirTestdataPattern)
+                model("checker/infos", testMethod = "doTestWithInfos", excludedPattern = excludedFirTestdataPattern)
+                model("checker/diagnosticsMessage", excludedPattern = excludedFirTestdataPattern)
             }
 
             testClass<AbstractKotlinHighlightWolfPassTest> {
-                model("checker/wolf")
+                model("checker/wolf", excludedPattern = excludedFirTestdataPattern)
             }
 
             testClass<AbstractJavaAgainstKotlinSourceCheckerTest> {
@@ -718,13 +729,6 @@ fun main(args: Array<String>) {
                 model("dataFlowValueRendering")
             }
 
-            testClass<AbstractJavaToKotlinCopyPasteConversionTest> {
-                model("copyPaste/conversion", pattern = """^([^\.]+)\.java$""")
-            }
-
-            testClass<AbstractTextJavaToKotlinCopyPasteConversionTest> {
-                model("copyPaste/plainTextConversion", pattern = """^([^\.]+)\.txt$""")
-            }
 
             testClass<AbstractLiteralTextToKotlinCopyPasteTest> {
                 model("copyPaste/plainTextLiteral", pattern = """^([^\.]+)\.txt$""")
@@ -1008,28 +1012,24 @@ fun main(args: Array<String>) {
                 model("analysisSession/resolveCall")
             }
 
-            testClass<AbstractSymbolsByPsiBuildingTest> {
-                model("symbolsByPsi")
-            }
-
-            testClass<AbstractSymbolsByFqNameBuildingTest> {
-                model("symbolsByFqName", extension = "txt")
-            }
-
             testClass<AbstractMemberScopeByFqNameTest> {
-                model("memberScopeByFqName", extension = "txt")
+                model("memberScopeByFqName")
             }
 
             testClass<AbstractFileScopeTest> {
                 model("fileScopeTest", extension = "kt")
             }
 
-            testClass<AbstractSymbolFromSourcePointerRestoreTest> {
-                model("symbolPointer", extension = "kt")
+            testClass<AbstractSymbolByPsiTest> {
+                model("symbols/symbolByPsi")
             }
 
-            testClass<AbstractSymbolFromLibraryPointerRestoreTest> {
-                model("resoreSymbolFromLibrary", extension = "txt")
+            testClass<AbstractSymbolByFqNameTest> {
+                model("symbols/symbolByFqName")
+            }
+
+            testClass<AbstractSymbolByReferenceTest> {
+                model("symbols/symbolByReference")
             }
 
             testClass<AbstractMemoryLeakInSymbolsTest> {
@@ -1051,6 +1051,10 @@ fun main(args: Array<String>) {
             testClass<AbstractHLExpressionTypeTest> {
                 model("components/expressionType")
             }
+
+            testClass<AbstractRendererTest> {
+                model("components/declarationRenderer")
+            }
         }
 
         testGroup("idea/idea-frontend-fir/idea-fir-low-level-api/tests", "idea/testData") {
@@ -1063,9 +1067,18 @@ fun main(args: Array<String>) {
             }
         }
 
+        testGroup("idea/idea-frontend-fir/idea-fir-low-level-api/tests", "compiler/fir/raw-fir/psi2fir/testData") {
+            testClass<AbstractFirLazyBodiesCalculatorTest> {
+                model("rawBuilder", testMethod = "doTest")
+            }
+        }
+
         testGroup("idea/idea-frontend-fir/idea-fir-low-level-api/tests", "idea/idea-frontend-fir/idea-fir-low-level-api/testdata") {
             testClass<AbstractFirMultiModuleLazyResolveTest> {
                 model("multiModuleLazyResolve", recursive = false, extension = null)
+            }
+            testClass<AbstractFirSealedInheritorsTest> {
+                model("resolveSealed", recursive = false, extension = null)
             }
             testClass<AbstractFirLazyDeclarationResolveTest> {
                 model("lazyResolve")
@@ -1079,13 +1092,47 @@ fun main(args: Array<String>) {
             testClass<AbstractFileStructureTest> {
                 model("fileStructure")
             }
+            testClass<AbstractFirContextCollectionTest> {
+                model("fileStructure")
+            }
             testClass<AbstractDiagnosticTraversalCounterTest> {
                 model("diagnosticTraversalCounter")
             }
             testClass<AbstractSessionsInvalidationTest> {
                 model("sessionInvalidation", recursive = false, extension = null)
             }
+            testClass<AbstractInnerDeclarationsResolvePhaseTest> {
+                model("innerDeclarationsResolve")
+            }
         }
+
+        testGroup(
+            "idea/idea-frontend-fir/idea-fir-low-level-api/tests",
+            "compiler/fir/analysis-tests/testData",
+        ) {
+            testClass<AbstractDiagnosisCompilerTestDataTest>(suiteTestClassName = "DiagnosisCompilerFirTestdataTestGenerated") {
+                model("resolve", pattern = TestGeneratorUtil.KT_WITHOUT_DOTS_IN_NAME)
+                model("resolveWithStdlib", pattern = TestGeneratorUtil.KT_WITHOUT_DOTS_IN_NAME, )
+            }
+        }
+
+        testGroup(
+            "idea/idea-frontend-fir/idea-fir-low-level-api/tests",
+            "compiler/testData",
+        ) {
+            testClass<AbstractDiagnosisCompilerTestDataTest>(suiteTestClassName = "DiagnosisCompilerTestFE10TestdataTestGenerated") {
+                model(
+                    "diagnostics/tests",
+                    excludedPattern = excludedFirTestdataPattern,
+                )
+                model(
+                    "diagnostics/testsWithStdLib",
+                    excludedPattern = excludedFirTestdataPattern,
+                    excludeDirs = listOf("native")
+                )
+            }
+        }
+
 
         testGroup("idea/idea-fir/tests", "idea") {
             testClass<AbstractFirHighlightingTest> {
@@ -1112,22 +1159,27 @@ fun main(args: Array<String>) {
             }
 
             testClass<AbstractFirKotlinHighlightingPassTest> {
-                model("checker", recursive = false)
-                model("checker/regression")
-                model("checker/recovery")
-                model("checker/rendering")
-                model("checker/infos")
-                model("checker/diagnosticsMessage")
+                model("checker", recursive = false, excludedPattern = excludedFirTestdataPattern)
+                model("checker/regression", excludedPattern = excludedFirTestdataPattern)
+                model("checker/recovery", excludedPattern = excludedFirTestdataPattern)
+                model("checker/rendering", excludedPattern = excludedFirTestdataPattern)
+                model("checker/infos", excludedPattern = excludedFirTestdataPattern)
+                model("checker/diagnosticsMessage", excludedPattern = excludedFirTestdataPattern)
             }
 
 
             testClass<AbstractHighLevelQuickFixTest> {
                 val pattern = "^([\\w\\-_]+)\\.kt$"
                 model("quickfix/abstract", pattern = pattern, filenameStartsLowerCase = true)
+                model("quickfix/expressions", pattern = pattern, filenameStartsLowerCase = true)
                 model("quickfix/lateinit", pattern = pattern, filenameStartsLowerCase = true)
                 model("quickfix/modifiers", pattern = pattern, filenameStartsLowerCase = true, recursive = false)
                 model("quickfix/override/typeMismatchOnOverride", pattern = pattern, filenameStartsLowerCase = true, recursive = false)
-                model("quickfix/variables/changeMutability", pattern = pattern, filenameStartsLowerCase = true, recursive = false)
+                model("quickfix/replaceWithDotCall", pattern = pattern, filenameStartsLowerCase = true)
+                model("quickfix/replaceWithSafeCall", pattern = pattern, filenameStartsLowerCase = true)
+                model("quickfix/variables/changeMutability", pattern = pattern, filenameStartsLowerCase = true)
+                model("quickfix/addInitializer", pattern = pattern, filenameStartsLowerCase = true)
+                model("quickfix/addPropertyAccessors", pattern = pattern, filenameStartsLowerCase = true)
             }
 
             testClass<AbstractHLInspectionTest> {
@@ -1166,6 +1218,10 @@ fun main(args: Array<String>) {
 
             testClass<AbstractHighLevelWeigherTest> {
                 model("weighers/basic", pattern = KT_OR_KTS_WITHOUT_DOTS_IN_NAME)
+            }
+
+            testClass<AbstractHighLevelMultiFileJvmBasicCompletionTest> {
+                model("basic/multifile", extension = null, recursive = false)
             }
         }
 
@@ -1299,8 +1355,8 @@ fun main(args: Array<String>) {
             testClass<AbstractIdeCompiledLightClassTest> {
                 model(
                     "asJava/lightClasses",
-                    excludeDirs = listOf("local", "compilationErrors", "ideRegression"),
-                    pattern = KT_OR_KTS_WITHOUT_DOTS_IN_NAME
+                    excludeDirs = listOf("local", "compilationErrors", "ideRegression", "script"),
+                    pattern = KT_WITHOUT_DOTS_IN_NAME
                 )
             }
         }
@@ -1382,10 +1438,6 @@ fun main(args: Array<String>) {
                 model("basic/multifile", extension = null, recursive = false)
             }
 
-            testClass<AbstractMultiFileJvmBasicCompletionTest>("MultiFilePrimitiveJvmBasicCompletionTestGenerated") {
-                model("basic/multifilePrimitive", extension = null, recursive = false)
-            }
-
             testClass<AbstractMultiFileSmartCompletionTest> {
                 model("smartMultiFile", extension = null, recursive = false)
             }
@@ -1453,21 +1505,6 @@ fun main(args: Array<String>) {
             }
         }
 
-        testGroup("j2k/tests", "j2k/testData") {
-            testClass<AbstractJavaToKotlinConverterSingleFileTest> {
-                model("fileOrElement", extension = "java")
-            }
-        }
-        testGroup("j2k/tests", "j2k/testData") {
-            testClass<AbstractJavaToKotlinConverterMultiFileTest> {
-                model("multiFile", extension = null, recursive = false)
-            }
-        }
-        testGroup("j2k/tests", "j2k/testData") {
-            testClass<AbstractJavaToKotlinConverterForWebDemoTest> {
-                model("fileOrElement", extension = "java")
-            }
-        }
 
         testGroup("nj2k/tests", "nj2k/testData") {
             testClass<AbstractNewJavaToKotlinConverterSingleFileTest> {
@@ -1577,6 +1614,7 @@ fun main(args: Array<String>) {
             }
             testClass<AbstractIncrementalJvmCompilerRunnerTest>(init = incrementalJvmTestData(TargetBackend.JVM_IR))
             testClass<AbstractIncrementalJvmOldBackendCompilerRunnerTest>(init = incrementalJvmTestData(TargetBackend.JVM))
+            testClass<AbstractIncrementalFirJvmCompilerRunnerTest>(init = incrementalJvmTestData(TargetBackend.JVM_IR))
 
             testClass<AbstractIncrementalJsCompilerRunnerTest> {
                 model("incremental/pureKotlin", extension = null, recursive = false)
@@ -1745,6 +1783,9 @@ fun main(args: Array<String>) {
             testClass<AbstractBytecodeListingTestForAllOpen> {
                 model("bytecodeListing", extension = "kt")
             }
+            testClass<AbstractIrBytecodeListingTestForAllOpen> {
+                model("bytecodeListing", extension = "kt")
+            }
         }
 
         testGroup("plugins/noarg/noarg-cli/test", "plugins/noarg/noarg-cli/testData") {
@@ -1787,8 +1828,44 @@ fun main(args: Array<String>) {
             }
         }
 
+        testGroup(
+            "plugins/kotlin-serialization/kotlin-serialization-ide/test",
+            "plugins/kotlin-serialization/kotlin-serialization-ide/testData"
+        ) {
+            testClass<AbstractSerializationPluginIdeDiagnosticTest> {
+                model("diagnostics")
+            }
+            testClass<AbstractSerializationQuickFixTest> {
+                model("quickfix", pattern = "^([\\w\\-_]+)\\.kt$", filenameStartsLowerCase = true)
+            }
+        }
+
         testGroup("plugins/fir/fir-plugin-prototype/tests", "plugins/fir/fir-plugin-prototype/testData") {
             testClass<AbstractFirAllOpenDiagnosticTest> {
+                model("")
+            }
+        }
+
+        testGroup("plugins/uast-kotlin-fir/tests", "plugins/uast-kotlin-fir/testData") {
+            testClass<AbstractFirUastDeclarationTest> {
+                model("declaration")
+            }
+        }
+
+        testGroup("plugins/uast-kotlin-fir/tests", "plugins/uast-kotlin/testData") {
+            testClass<AbstractFirLegacyUastDeclarationTest> {
+                model("")
+            }
+        }
+
+        testGroup("plugins/uast-kotlin-fir/tests", "plugins/uast-kotlin-fir/testData") {
+            testClass<AbstractFE1UastDeclarationTest> {
+                model("declaration")
+            }
+        }
+
+        testGroup("plugins/uast-kotlin-fir/tests", "plugins/uast-kotlin/testData") {
+            testClass<AbstractFE1LegacyUastDeclarationTest> {
                 model("")
             }
         }
@@ -1838,6 +1915,12 @@ fun main(args: Array<String>) {
 
             testClass<AbstractPerformanceCompletionCharFilterTest> {
                 model("handlers/charFilter", testMethod = "doPerfTest", pattern = KT_WITHOUT_DOTS_IN_NAME)
+            }
+        }
+
+        testGroup("plugins/lombok/lombok-compiler-plugin/tests", "plugins/lombok/lombok-compiler-plugin/testData") {
+            testClass<AbstractLombokCompileTest> {
+                model("compile")
             }
         }
 /*

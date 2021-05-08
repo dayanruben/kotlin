@@ -12,11 +12,8 @@ import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.FirRenderer
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.render
-import org.jetbrains.kotlin.fir.renderWithType
 import org.jetbrains.kotlin.fir.symbols.AbstractFirBasedSymbol
-import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
-import org.jetbrains.kotlin.fir.symbols.impl.FirClassLikeSymbol
-import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
+import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
 import org.jetbrains.kotlin.fir.types.render
 
@@ -27,6 +24,7 @@ object FirDiagnosticRenderers {
         when (symbol) {
             is FirClassLikeSymbol<*> -> symbol.classId.asString()
             is FirCallableSymbol<*> -> symbol.callableId.toString()
+            is FirTypeParameterSymbol -> symbol.name.asString()
             else -> "???"
         }
     }
@@ -41,7 +39,7 @@ object FirDiagnosticRenderers {
         element.toString()
     }
 
-    val PROPERTY_NAME = Renderer { symbol: FirPropertySymbol ->
+    val VARIABLE_NAME = Renderer { symbol: FirVariableSymbol<*> ->
         symbol.fir.name.asString()
     }
 
@@ -75,13 +73,19 @@ object FirDiagnosticRenderers {
         name.asString()
     }
 
+    val RENDER_CLASS_OR_OBJECT = Renderer { firClass: FirClass<*> ->
+        val name = firClass.classId.relativeClassName.asString()
+        val classOrObject = if (firClass is FirRegularClass) "Class" else "Object"
+        "$classOrObject $name"
+    }
+
     val RENDER_TYPE = Renderer { t: ConeKotlinType ->
         // TODO: need a way to tune granuality, e.g., without parameter names in functional types.
         t.render()
     }
 
     val FQ_NAMES_IN_TYPES = Renderer { element: FirElement ->
-        element.renderWithType(mode = FirRenderer.RenderMode.WithFqNamesExceptAnnotation)
+        element.render(mode = FirRenderer.RenderMode.WithFqNamesExceptAnnotationAndBody)
     }
 
     val AMBIGUOUS_CALLS = Renderer { candidates: Collection<AbstractFirBasedSymbol<*>> ->

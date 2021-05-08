@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.fir.visitors.*
  */
 
 internal class FirSafeCallExpressionImpl(
-    override var source: FirSourceElement?,
+    override val source: FirSourceElement?,
     override var typeRef: FirTypeRef,
     override val annotations: MutableList<FirAnnotationCall>,
     override var receiver: FirExpression,
@@ -36,7 +36,7 @@ internal class FirSafeCallExpressionImpl(
     }
 
     override fun <D> transformChildren(transformer: FirTransformer<D>, data: D): FirSafeCallExpressionImpl {
-        typeRef = typeRef.transformSingle(transformer, data)
+        typeRef = typeRef.transform(transformer, data)
         transformAnnotations(transformer, data)
         transformReceiver(transformer, data)
         transformRegularQualifiedAccess(transformer, data)
@@ -49,17 +49,13 @@ internal class FirSafeCallExpressionImpl(
     }
 
     override fun <D> transformReceiver(transformer: FirTransformer<D>, data: D): FirSafeCallExpressionImpl {
-        receiver = receiver.transformSingle(transformer, data)
+        receiver = receiver.transform(transformer, data)
         return this
     }
 
     override fun <D> transformRegularQualifiedAccess(transformer: FirTransformer<D>, data: D): FirSafeCallExpressionImpl {
-        regularQualifiedAccess = regularQualifiedAccess.transformSingle(transformer, data)
+        regularQualifiedAccess = regularQualifiedAccess.transform(transformer, data)
         return this
-    }
-
-    override fun replaceSource(newSource: FirSourceElement?) {
-        source = newSource
     }
 
     override fun replaceTypeRef(newTypeRef: FirTypeRef) {

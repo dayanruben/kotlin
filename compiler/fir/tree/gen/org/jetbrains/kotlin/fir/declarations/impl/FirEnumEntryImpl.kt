@@ -30,8 +30,8 @@ import org.jetbrains.kotlin.fir.visitors.*
  */
 
 internal class FirEnumEntryImpl(
-    override var source: FirSourceElement?,
-    override val session: FirSession,
+    override val source: FirSourceElement?,
+    override val declarationSiteSession: FirSession,
     override var resolvePhase: FirResolvePhase,
     override val origin: FirDeclarationOrigin,
     override val attributes: FirDeclarationAttributes,
@@ -76,7 +76,7 @@ internal class FirEnumEntryImpl(
     }
 
     override fun <D> transformReturnTypeRef(transformer: FirTransformer<D>, data: D): FirEnumEntryImpl {
-        returnTypeRef = returnTypeRef.transformSingle(transformer, data)
+        returnTypeRef = returnTypeRef.transform(transformer, data)
         return this
     }
 
@@ -85,7 +85,7 @@ internal class FirEnumEntryImpl(
     }
 
     override fun <D> transformInitializer(transformer: FirTransformer<D>, data: D): FirEnumEntryImpl {
-        initializer = initializer?.transformSingle(transformer, data)
+        initializer = initializer?.transform(transformer, data)
         return this
     }
 
@@ -112,17 +112,13 @@ internal class FirEnumEntryImpl(
     }
 
     override fun <D> transformStatus(transformer: FirTransformer<D>, data: D): FirEnumEntryImpl {
-        status = status.transformSingle(transformer, data)
+        status = status.transform(transformer, data)
         return this
     }
 
     override fun <D> transformOtherChildren(transformer: FirTransformer<D>, data: D): FirEnumEntryImpl {
         transformAnnotations(transformer, data)
         return this
-    }
-
-    override fun replaceSource(newSource: FirSourceElement?) {
-        source = newSource
     }
 
     override fun replaceResolvePhase(newResolvePhase: FirResolvePhase) {

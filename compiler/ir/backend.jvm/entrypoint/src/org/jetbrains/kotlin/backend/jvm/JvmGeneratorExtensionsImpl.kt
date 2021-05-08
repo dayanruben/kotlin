@@ -7,7 +7,7 @@ package org.jetbrains.kotlin.backend.jvm
 
 import org.jetbrains.kotlin.backend.common.ir.createImplicitParameterDeclarationWithWrappedDescriptor
 import org.jetbrains.kotlin.backend.common.ir.createParameterDeclarations
-import org.jetbrains.kotlin.codegen.SamType
+import org.jetbrains.kotlin.codegen.JvmSamTypeFactory
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.FilteredAnnotations
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
@@ -48,7 +48,7 @@ import org.jetbrains.kotlin.serialization.deserialization.descriptors.Deserializ
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.replaceAnnotations
 
-class JvmGeneratorExtensionsImpl(private val generateFacades: Boolean = true) : GeneratorExtensions(), JvmGeneratorExtensions {
+open class JvmGeneratorExtensionsImpl(private val generateFacades: Boolean = true) : GeneratorExtensions(), JvmGeneratorExtensions {
     override val classNameOverride: MutableMap<IrClass, JvmClassName> = mutableMapOf()
 
     override val samConversion: SamConversion
@@ -60,7 +60,7 @@ class JvmGeneratorExtensionsImpl(private val generateFacades: Boolean = true) : 
             JavaSingleAbstractMethodUtils.isSamType(type)
 
         override fun getSamTypeForValueParameter(valueParameter: ValueParameterDescriptor): KotlinType? =
-            SamType.createByValueParameter(valueParameter)?.type
+            JvmSamTypeFactory.createByValueParameter(valueParameter)?.type
 
         companion object Instance : JvmSamConversion()
     }

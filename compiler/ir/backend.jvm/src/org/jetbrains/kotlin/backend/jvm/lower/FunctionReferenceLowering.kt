@@ -132,6 +132,19 @@ internal class FunctionReferenceLowering(private val context: JvmBackendContext)
             FunctionReferenceBuilder(expression).build()
     }
 
+    private fun getDeclarationParentForDelegatingLambda(): IrDeclarationParent {
+        for (s in allScopes.asReversed()) {
+            val scopeOwner = s.scope.scopeOwnerSymbol.owner
+            if (scopeOwner is IrDeclarationParent) {
+                return scopeOwner
+            }
+        }
+        throw AssertionError(
+            "No IrDeclarationParent found in scopes:\n" +
+                    allScopes.joinToString(separator = "\n") { "  " + it.scope.scopeOwnerSymbol.owner.render() }
+        )
+    }
+
     // Handle SAM conversions which wrap a function reference:
     //     class sam$n(private val receiver: R) : Interface { override fun method(...) = receiver.target(...) }
     //
@@ -153,7 +166,7 @@ internal class FunctionReferenceLowering(private val context: JvmBackendContext)
             invokable.statements.last() as IrFunctionReference
         } else if (shouldGenerateIndySamConversions && canGenerateIndySamConversionOnFunctionalExpression(samSuperType, invokable)) {
             val lambdaBlock = SamDelegatingLambdaBuilder(context)
-                .build(invokable, samSuperType, currentScope!!.scope.scopeOwnerSymbol)
+                .build(invokable, samSuperType, currentScope!!.scope.scopeOwnerSymbol, getDeclarationParentForDelegatingLambda())
             val lambdaMetafactoryArguments = LambdaMetafactoryArgumentsBuilder(context, crossinlineLambdas)
                 .getLambdaMetafactoryArgumentsOrNull(lambdaBlock.ref, samSuperType, false)
                 ?: return super.visitTypeOperator(expression)
@@ -174,7 +187,11 @@ internal class FunctionReferenceLowering(private val context: JvmBackendContext)
             }
         }
 
-        return FunctionReferenceBuilder(reference, samSuperType).build()
+        // Erase generic arguments in the SAM type, because they are not easy to approximate correctly otherwise,
+        // and LambdaMetafactory also uses erased type.
+        val erasedSamSuperType = samSuperType.erasedUpperBound.rawType(context)
+
+        return FunctionReferenceBuilder(reference, erasedSamSuperType).build()
     }
 
     private fun canGenerateIndySamConversionOnFunctionalExpression(samSuperType: IrType, expression: IrExpression): Boolean {
@@ -557,13 +574,7 @@ internal class FunctionReferenceLowering(private val context: JvmBackendContext)
         private fun createInvokeMethod(receiverVar: IrValueDeclaration?): IrSimpleFunction =
             functionReferenceClass.addFunction {
                 setSourceRange(if (isLambda) callee else irFunctionReference)
-                name =
-                    if (samSuperType == null && callee.returnType.erasedUpperBound.isInline && context.state.functionsWithInlineClassReturnTypesMangled) {
-                        // For functions with inline class return type we need to mangle the invoke method.
-                        // Otherwise, bridge lowering may fail to generate bridges for inline class types erasing to Any.
-                        val suffix = InlineClassAbi.hashReturnSuffix(callee)
-                        Name.identifier("${superMethod.name.asString()}-${suffix}")
-                    } else superMethod.name
+                name = superMethod.name
                 returnType = callee.returnType
                 isSuspend = callee.isSuspend
             }.apply {

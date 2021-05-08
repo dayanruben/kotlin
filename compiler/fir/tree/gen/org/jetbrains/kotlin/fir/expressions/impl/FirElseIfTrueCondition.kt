@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.fir.visitors.*
  */
 
 class FirElseIfTrueCondition @FirImplementationDetail constructor(
-    override var source: FirSourceElement?,
+    override val source: FirSourceElement?,
     override val annotations: MutableList<FirAnnotationCall>,
 ) : FirExpression() {
     override var typeRef: FirTypeRef = FirImplicitBooleanTypeRef(source?.fakeElement(FirFakeSourceElementKind.ImplicitTypeRef))
@@ -32,7 +32,7 @@ class FirElseIfTrueCondition @FirImplementationDetail constructor(
     }
 
     override fun <D> transformChildren(transformer: FirTransformer<D>, data: D): FirElseIfTrueCondition {
-        typeRef = typeRef.transformSingle(transformer, data)
+        typeRef = typeRef.transform(transformer, data)
         transformAnnotations(transformer, data)
         return this
     }
@@ -40,10 +40,6 @@ class FirElseIfTrueCondition @FirImplementationDetail constructor(
     override fun <D> transformAnnotations(transformer: FirTransformer<D>, data: D): FirElseIfTrueCondition {
         annotations.transformInplace(transformer, data)
         return this
-    }
-
-    override fun replaceSource(newSource: FirSourceElement?) {
-        source = newSource
     }
 
     override fun replaceTypeRef(newTypeRef: FirTypeRef) {

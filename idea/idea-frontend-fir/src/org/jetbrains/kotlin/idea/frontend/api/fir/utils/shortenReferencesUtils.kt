@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.idea.frontend.api.fir.utils
 
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCodeFragment
@@ -16,12 +17,22 @@ import org.jetbrains.kotlin.resolve.ImportPath
 
 private val SimpleImportPathComparator: Comparator<ImportPath> = compareBy(ImportPath::toString)
 
+fun addImportToFile(
+    project: Project,
+    file: KtFile,
+    callableId: CallableId,
+    allUnder: Boolean = false,
+    alias: Name? = null
+) {
+    addImportToFile(project, file, callableId.asSingleFqName(), allUnder, alias)
+}
+
 /**
  * This is a partial copy from `org.jetbrains.kotlin.idea.util.ImportInsertHelperImpl.Companion.addImport`.
  *
  * We want it as a copy because we do not yet care about imports ordering, so we do not need a fancy comparator.
  */
-internal fun addImportToFile(
+fun addImportToFile(
     project: Project,
     file: KtFile,
     fqName: FqName,

@@ -8,23 +8,28 @@ package org.jetbrains.kotlin.fir.resolve
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.FirTypeAlias
 import org.jetbrains.kotlin.fir.declarations.expandedConeType
+import org.jetbrains.kotlin.fir.resolve.inference.inferenceComponents
 import org.jetbrains.kotlin.fir.resolve.substitution.AbstractConeSubstitutor
 import org.jetbrains.kotlin.fir.symbols.impl.FirTypeAliasSymbol
+import org.jetbrains.kotlin.fir.typeContext
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.impl.ConeClassLikeTypeImpl
+import org.jetbrains.kotlin.fir.utils.WeakPair
+import org.jetbrains.kotlin.fir.utils.component1
+import org.jetbrains.kotlin.fir.utils.component2
 
 fun ConeClassLikeType.fullyExpandedType(
     useSiteSession: FirSession,
     expandedConeType: (FirTypeAlias) -> ConeClassLikeType? = FirTypeAlias::expandedConeType,
 ): ConeClassLikeType {
     if (this is ConeClassLikeTypeImpl) {
-        val expandedTypeAndSession = cachedExpandedType
-        if (expandedTypeAndSession != null && expandedTypeAndSession.first === useSiteSession) {
-            return expandedTypeAndSession.second
+        val (cachedSession, cachedExpandedType) = cachedExpandedType
+        if (cachedSession === useSiteSession && cachedExpandedType != null) {
+            return cachedExpandedType
         }
 
         val computedExpandedType = fullyExpandedTypeNoCache(useSiteSession, expandedConeType)
-        cachedExpandedType = Pair(useSiteSession, computedExpandedType)
+        this.cachedExpandedType = WeakPair(useSiteSession, computedExpandedType)
         return computedExpandedType
     }
 
@@ -55,14 +60,17 @@ fun ConeClassLikeType.directExpansionType(
     val typeAliasSymbol = lookupTag.toSymbol(useSiteSession) as? FirTypeAliasSymbol ?: return null
     val typeAlias = typeAliasSymbol.fir
 
-    val resultType = expandedConeType(typeAlias)?.applyNullabilityFrom(this) ?: return null
+    val resultType = expandedConeType(typeAlias)?.applyNullabilityFrom(useSiteSession, this) ?: return null
 
     if (resultType.typeArguments.isEmpty()) return resultType
-    return mapTypeAliasArguments(typeAlias, this, resultType) as? ConeClassLikeType
+    return mapTypeAliasArguments(typeAlias, this, resultType, useSiteSession) as? ConeClassLikeType
 }
 
-private fun ConeClassLikeType.applyNullabilityFrom(abbreviation: ConeClassLikeType): ConeClassLikeType {
-    if (abbreviation.isMarkedNullable) return withNullability(ConeNullability.NULLABLE)
+private fun ConeClassLikeType.applyNullabilityFrom(
+    session: FirSession,
+    abbreviation: ConeClassLikeType
+): ConeClassLikeType {
+    if (abbreviation.isMarkedNullable) return withNullability(ConeNullability.NULLABLE, session.typeContext)
     return this
 }
 
@@ -70,6 +78,7 @@ private fun mapTypeAliasArguments(
     typeAlias: FirTypeAlias,
     abbreviatedType: ConeClassLikeType,
     resultingType: ConeClassLikeType,
+    useSiteSession: FirSession,
 ): ConeKotlinType {
     if (typeAlias.typeParameters.isNotEmpty() && abbreviatedType.typeArguments.isEmpty()) {
         return resultingType.lookupTag.constructClassType(emptyArray(), resultingType.isNullable)
@@ -77,6 +86,9 @@ private fun mapTypeAliasArguments(
     val typeAliasMap = typeAlias.typeParameters.map { it.symbol }.zip(abbreviatedType.typeArguments).toMap()
 
     val substitutor = object : AbstractConeSubstitutor() {
+        override val typeInferenceContext: ConeInferenceContext
+            get() = useSiteSession.inferenceComponents.ctx
+
         override fun substituteType(type: ConeKotlinType): ConeKotlinType? {
             return null
         }

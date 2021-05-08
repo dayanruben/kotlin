@@ -27,7 +27,7 @@ import kotlin.contracts.contract
 @OptIn(FirImplementationDetail::class)
 class FirJavaValueParameter @FirImplementationDetail constructor(
     override val source: FirSourceElement?,
-    override val session: FirSession,
+    override val declarationSiteSession: FirSession,
     override var resolvePhase: FirResolvePhase,
     override val attributes: FirDeclarationAttributes,
     override var returnTypeRef: FirTypeRef,
@@ -141,15 +141,12 @@ class FirJavaValueParameter @FirImplementationDetail constructor(
 
     override fun replaceControlFlowGraphReference(newControlFlowGraphReference: FirControlFlowGraphReference?) {
     }
-
-    override fun replaceSource(newSource: FirSourceElement?) {
-    }
 }
 
 @FirBuilderDsl
 class FirJavaValueParameterBuilder {
     var source: FirSourceElement? = null
-    lateinit var session: FirSession
+    lateinit var declarationSiteSession: FirSession
     var attributes: FirDeclarationAttributes = FirDeclarationAttributes()
     lateinit var returnTypeRef: FirTypeRef
     lateinit var name: Name
@@ -161,7 +158,7 @@ class FirJavaValueParameterBuilder {
     fun build(): FirJavaValueParameter {
         return FirJavaValueParameter(
             source,
-            session,
+            declarationSiteSession,
             resolvePhase = FirResolvePhase.ANALYZED_DEPENDENCIES,
             attributes,
             returnTypeRef,
@@ -185,7 +182,7 @@ inline fun buildJavaValueParameterCopy(original: FirValueParameter, init: FirJav
     }
     val copyBuilder = FirJavaValueParameterBuilder()
     copyBuilder.source = original.source
-    copyBuilder.session = original.session
+    copyBuilder.declarationSiteSession = original.declarationSiteSession
     copyBuilder.attributes = original.attributes.copy()
     copyBuilder.returnTypeRef = original.returnTypeRef
     copyBuilder.name = original.name

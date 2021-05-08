@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.fir.expressions.FirVarargArgumentsExpression
 import org.jetbrains.kotlin.fir.expressions.arguments
 import org.jetbrains.kotlin.fir.resolve.correspondingSupertypesCache
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
+import org.jetbrains.kotlin.fir.resolve.inference.inferenceComponents
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.resolve.substitution.substitutorByMap
 import org.jetbrains.kotlin.fir.resolve.toSymbol
@@ -26,6 +27,7 @@ import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.types.AbstractTypeCheckerContext
 import org.jetbrains.kotlin.types.AbstractTypeCheckerContext.SupertypesPolicy.*
 import org.jetbrains.kotlin.types.TypeSystemCommonBackendContext
@@ -46,6 +48,12 @@ interface ConeTypeContext : TypeSystemContext, TypeSystemOptimizationContext, Ty
         if (this !is ConeClassLikeLookupTag) return false
         return classId.isLocal
     }
+
+    override val TypeVariableTypeConstructorMarker.typeParameter: TypeParameterMarker?
+        get() {
+            require(this is ConeTypeVariableTypeConstructor)
+            return this.originalTypeParameter
+        }
 
     override fun SimpleTypeMarker.possibleIntegerTypes(): Collection<KotlinTypeMarker> {
         return (this as? ConeIntegerLiteralType)?.possibleTypes ?: emptyList()
@@ -121,7 +129,7 @@ interface ConeTypeContext : TypeSystemContext, TypeSystemOptimizationContext, Ty
 
     override fun SimpleTypeMarker.withNullability(nullable: Boolean): SimpleTypeMarker {
         require(this is ConeKotlinType)
-        return withNullability(ConeNullability.create(nullable), this as? ConeInferenceContext)
+        return withNullability(ConeNullability.create(nullable), session.inferenceComponents.ctx)
     }
 
     override fun SimpleTypeMarker.typeConstructor(): TypeConstructorMarker {
@@ -254,6 +262,10 @@ interface ConeTypeContext : TypeSystemContext, TypeSystemOptimizationContext, Ty
         return this is ConeClassLikeLookupTag
     }
 
+    override fun TypeConstructorMarker.isInterface(): Boolean {
+        return ((this as? ConeClassLikeLookupTag)?.toClassLikeSymbol()?.fir as? FirClass)?.classKind == ClassKind.INTERFACE
+    }
+
     override fun TypeParameterMarker.getVariance(): TypeVariance {
         require(this is ConeTypeParameterLookupTag)
         return this.symbol.fir.variance.convertVariance()
@@ -272,6 +284,14 @@ interface ConeTypeContext : TypeSystemContext, TypeSystemOptimizationContext, Ty
     override fun TypeParameterMarker.getTypeConstructor(): TypeConstructorMarker {
         require(this is ConeTypeParameterLookupTag)
         return this
+    }
+
+    override fun TypeParameterMarker.hasRecursiveBounds(selfConstructor: TypeConstructorMarker): Boolean {
+        require(this is ConeTypeParameterLookupTag)
+        return this.typeParameterSymbol.fir.bounds.any { typeRef ->
+            typeRef.coneType.contains { it.typeConstructor() == this.getTypeConstructor() }
+                    && typeRef.coneType.typeConstructor() == selfConstructor
+        }
     }
 
     override fun areEqualTypeConstructors(c1: TypeConstructorMarker, c2: TypeConstructorMarker): Boolean {
@@ -394,17 +414,24 @@ interface ConeTypeContext : TypeSystemContext, TypeSystemOptimizationContext, Ty
         if (this.isMarkedNullable)
             return true
 
-        if (this is ConeFlexibleType && this.upperBound.isNullableType())
-            return true
-
-        if (this is ConeTypeParameterType /* || is TypeVariable */)
-            return hasNullableSuperType(type)
-
-        if (this is ConeIntersectionType && intersectedTypes.any { it.isNullableType() }) {
-            return true
+        return when (this) {
+            is ConeFlexibleType -> this.upperBound.isNullableType()
+            is ConeTypeParameterType -> lookupTag.symbol.allBoundsAreNullable()
+            is ConeTypeVariableType -> {
+                val symbol = lookupTag.toSymbol(session) ?: return false
+                when (symbol) {
+                    is FirClassSymbol -> false
+                    is FirTypeAliasSymbol -> symbol.fir.expandedConeType?.isNullableType() ?: false
+                    is FirTypeParameterSymbol -> symbol.allBoundsAreNullable()
+                }
+            }
+            is ConeIntersectionType -> intersectedTypes.all { it.isNullableType() }
+            else -> false
         }
+    }
 
-        return false
+    private fun FirTypeParameterSymbol.allBoundsAreNullable(): Boolean {
+        return fir.bounds.all { it.coneType.isMarkedNullable }
     }
 
     private fun TypeConstructorMarker.toFirRegularClass(): FirRegularClass? {
@@ -476,6 +503,11 @@ interface ConeTypeContext : TypeSystemContext, TypeSystemOptimizationContext, Ty
             ?: session.builtinTypes.nullableAnyType.type
     }
 
+    override fun KotlinTypeMarker.getUnsubstitutedUnderlyingType(): KotlinTypeMarker? {
+        require(this is ConeKotlinType)
+        return unsubstitutedUnderlyingTypeForInlineClass(session)
+    }
+
     override fun KotlinTypeMarker.getSubstitutedUnderlyingType(): KotlinTypeMarker? {
         require(this is ConeKotlinType)
         return substitutedUnderlyingTypeForInlineClass(session, this@ConeTypeContext)
@@ -538,7 +570,7 @@ class ConeTypeCheckerContext(
                     parameter.symbol to ((argument as? ConeKotlinTypeProjection)?.type
                         ?: session.builtinTypes.nullableAnyType.type)//StandardClassIds.Any(session.firSymbolProvider).constructType(emptyArray(), isNullable = true))
                 }
-            substitutorByMap(substitution)
+            substitutorByMap(substitution, session)
         } else {
             ConeSubstitutor.Empty
         }

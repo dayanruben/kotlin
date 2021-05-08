@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.fir.BuiltinTypes
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.analysis.checkers.cfa.FirControlFlowChecker
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
+import org.jetbrains.kotlin.fir.analysis.checkers.isSupertypeOf
 import org.jetbrains.kotlin.fir.analysis.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.fir.contracts.FirResolvedContractDescription
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.fir.contracts.coneEffects
 import org.jetbrains.kotlin.fir.contracts.description.*
 import org.jetbrains.kotlin.fir.declarations.FirContractDescriptionOwner
 import org.jetbrains.kotlin.fir.declarations.FirFunction
+import org.jetbrains.kotlin.fir.declarations.FirProperty
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.resolve.dfa.*
 import org.jetbrains.kotlin.fir.resolve.dfa.cfg.BlockExitNode
@@ -23,6 +25,7 @@ import org.jetbrains.kotlin.fir.resolve.dfa.cfg.CFGNode
 import org.jetbrains.kotlin.fir.resolve.dfa.cfg.ControlFlowGraph
 import org.jetbrains.kotlin.fir.resolve.dfa.cfg.JumpNode
 import org.jetbrains.kotlin.fir.symbols.AbstractFirBasedSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirPropertyAccessorSymbol
 import org.jetbrains.kotlin.fir.typeContext
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
 import org.jetbrains.kotlin.fir.types.coneType
@@ -30,8 +33,6 @@ import org.jetbrains.kotlin.fir.types.intersectTypesOrNull
 import org.jetbrains.kotlin.fir.types.isNullable
 import org.jetbrains.kotlin.types.AbstractTypeChecker
 import org.jetbrains.kotlin.types.ConstantValueKind
-import org.jetbrains.kotlin.types.model.KotlinTypeMarker
-import org.jetbrains.kotlin.types.model.TypeCheckerProviderContext
 import org.jetbrains.kotlin.utils.addIfNotNull
 
 object FirReturnsImpliesAnalyzer : FirControlFlowChecker() {
@@ -47,7 +48,7 @@ object FirReturnsImpliesAnalyzer : FirControlFlowChecker() {
 
         if (effects.isNullOrEmpty()) return
 
-        val logicSystem = object : PersistentLogicSystem(function.session.typeContext) {
+        val logicSystem = object : PersistentLogicSystem(context.session.typeContext) {
             override fun processUpdatedReceiverVariable(flow: PersistentFlow, variable: RealVariable) =
                 throw IllegalStateException("Receiver variable update is not possible for this logic system")
 
@@ -61,7 +62,7 @@ object FirReturnsImpliesAnalyzer : FirControlFlowChecker() {
 
         effects.forEach { effect ->
             val wrongCondition = graph.exitNode.previousCfgNodes.any {
-                isWrongConditionOnNode(it, effect as ConeConditionalEffectDeclaration, function, logicSystem, dataFlowInfo)
+                isWrongConditionOnNode(it, effect as ConeConditionalEffectDeclaration, function, logicSystem, dataFlowInfo, context)
             }
 
             if (wrongCondition) {
@@ -77,11 +78,12 @@ object FirReturnsImpliesAnalyzer : FirControlFlowChecker() {
         effectDeclaration: ConeConditionalEffectDeclaration,
         function: FirFunction<*>,
         logicSystem: LogicSystem<PersistentFlow>,
-        dataFlowInfo: DataFlowInfo
+        dataFlowInfo: DataFlowInfo,
+        context: CheckerContext
     ): Boolean {
         val effect = effectDeclaration.effect as ConeReturnsEffectDeclaration
-        val builtinTypes = function.session.builtinTypes
-        val typeContext = function.session.typeContext
+        val builtinTypes = context.session.builtinTypes
+        val typeContext = context.session.typeContext
         val flow = dataFlowInfo.flowOnNodes.getValue(node) as PersistentFlow
 
         val isReturn = node is JumpNode && node.fir is FirReturnExpression
@@ -92,7 +94,7 @@ object FirReturnsImpliesAnalyzer : FirControlFlowChecker() {
 
         if (isReturn && resultExpression is FirWhenExpression) {
             return node.collectBranchExits().any {
-                isWrongConditionOnNode(it, effectDeclaration, function, logicSystem, dataFlowInfo)
+                isWrongConditionOnNode(it, effectDeclaration, function, logicSystem, dataFlowInfo, context)
             }
         }
 
@@ -100,7 +102,7 @@ object FirReturnsImpliesAnalyzer : FirControlFlowChecker() {
 
         if (effect.value != ConeConstantReference.WILDCARD) {
             val operation = effect.value.toOperation()
-            if (expressionType != null && expressionType.isInapplicableWith(operation, function.session)) return false
+            if (expressionType != null && expressionType.isInapplicableWith(operation, context.session)) return false
 
             if (resultExpression is FirConstExpression<*>) {
                 if (!resultExpression.isApplicableWith(operation)) return false
@@ -110,15 +112,16 @@ object FirReturnsImpliesAnalyzer : FirControlFlowChecker() {
             }
         }
 
-        val conditionStatements =
-            effectDeclaration.condition.buildTypeStatements(function, logicSystem, dataFlowInfo.variableStorage, flow) ?: return false
+        val conditionStatements = effectDeclaration.condition.buildTypeStatements(
+            function, logicSystem, dataFlowInfo.variableStorage, flow, context
+        ) ?: return false
 
         for ((realVar, requiredTypeStatement) in conditionStatements) {
             val fixedRealVar = typeStatements.keys.find { it.identifier == realVar.identifier } ?: realVar
             val resultTypeStatement = typeStatements[fixedRealVar]
 
             val resultType = mutableListOf<ConeKotlinType>().apply {
-                addIfNotNull(function.getParameterType(fixedRealVar.identifier.symbol))
+                addIfNotNull(function.getParameterType(fixedRealVar.identifier.symbol, context))
                 if (resultTypeStatement != null) addAll(resultTypeStatement.exactType)
             }.let { typeContext.intersectTypesOrNull(it) }
 
@@ -154,11 +157,12 @@ object FirReturnsImpliesAnalyzer : FirControlFlowChecker() {
         function: FirFunction<*>,
         logicSystem: LogicSystem<*>,
         variableStorage: VariableStorage,
-        flow: Flow
+        flow: Flow,
+        context: CheckerContext
     ): MutableTypeStatements? = when (this) {
         is ConeBinaryLogicExpression -> {
-            val left = left.buildTypeStatements(function, logicSystem, variableStorage, flow)
-            val right = right.buildTypeStatements(function, logicSystem, variableStorage, flow)
+            val left = left.buildTypeStatements(function, logicSystem, variableStorage, flow, context)
+            val right = right.buildTypeStatements(function, logicSystem, variableStorage, flow, context)
             if (left != null && right != null) {
                 if (kind == LogicOperationKind.AND) {
                     left.apply { mergeTypeStatements(right) }
@@ -166,16 +170,16 @@ object FirReturnsImpliesAnalyzer : FirControlFlowChecker() {
             } else (left ?: right)
         }
         is ConeIsInstancePredicate -> {
-            val fir = function.getParameterSymbol(arg.parameterIndex).fir
+            val fir = function.getParameterSymbol(arg.parameterIndex, context).fir
             val realVar = variableStorage.getOrCreateRealVariable(flow, fir.symbol, fir)
             realVar?.to(simpleTypeStatement(realVar, !isNegated, type))?.let { mutableMapOf(it) }
         }
         is ConeIsNullPredicate -> {
-            val fir = function.getParameterSymbol(arg.parameterIndex).fir
+            val fir = function.getParameterSymbol(arg.parameterIndex, context).fir
             val realVar = variableStorage.getOrCreateRealVariable(flow, fir.symbol, fir)
-            realVar?.to(simpleTypeStatement(realVar, isNegated, function.session.builtinTypes.anyType.type))?.let { mutableMapOf(it) }
+            realVar?.to(simpleTypeStatement(realVar, isNegated, context.session.builtinTypes.anyType.type))?.let { mutableMapOf(it) }
         }
-        is ConeLogicalNot -> arg.buildTypeStatements(function, logicSystem, variableStorage, flow)
+        is ConeLogicalNot -> arg.buildTypeStatements(function, logicSystem, variableStorage, flow, context)
             ?.mapValuesTo(mutableMapOf()) { (_, value) -> value.invert() }
 
         else -> null
@@ -194,9 +198,6 @@ object FirReturnsImpliesAnalyzer : FirControlFlowChecker() {
         else -> true
     }
 
-    fun KotlinTypeMarker.isSupertypeOf(context: TypeCheckerProviderContext, type: KotlinTypeMarker?) =
-        type != null && AbstractTypeChecker.isSubtypeOf(context, type, this)
-
     private fun simpleTypeStatement(realVar: RealVariable, exactType: Boolean, type: ConeKotlinType): MutableTypeStatement {
         return MutableTypeStatement(
             realVar,
@@ -212,11 +213,31 @@ object FirReturnsImpliesAnalyzer : FirControlFlowChecker() {
         return nodes
     }
 
-    private fun FirFunction<*>.getParameterType(symbol: AbstractFirBasedSymbol<*>): ConeKotlinType? {
-        return (if (this.symbol == symbol) receiverTypeRef else valueParameters.find { it.symbol == symbol }?.returnTypeRef)?.coneType
+    private val CheckerContext.containingProperty: FirProperty?
+        get() = (containingDeclarations.asReversed().firstOrNull { it is FirProperty } as? FirProperty)
+
+    private fun FirFunction<*>.getParameterType(symbol: AbstractFirBasedSymbol<*>, context: CheckerContext): ConeKotlinType? {
+        val typeRef = if (this.symbol == symbol) {
+            if (symbol is FirPropertyAccessorSymbol) {
+                context.containingProperty?.receiverTypeRef
+            } else {
+                receiverTypeRef
+            }
+        } else {
+            valueParameters.find { it.symbol == symbol }?.returnTypeRef
+        }
+        return typeRef?.coneType
     }
 
-    private fun FirFunction<*>.getParameterSymbol(index: Int): AbstractFirBasedSymbol<*> {
-        return if (index == -1) this.symbol else this.valueParameters[index].symbol
+    private fun FirFunction<*>.getParameterSymbol(index: Int, context: CheckerContext): AbstractFirBasedSymbol<*> {
+        return if (index == -1) {
+            if (symbol !is FirPropertyAccessorSymbol) {
+                symbol
+            } else {
+                context.containingProperty?.symbol ?: symbol
+            }
+        } else {
+            this.valueParameters[index].symbol
+        }
     }
 }

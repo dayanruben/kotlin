@@ -36,7 +36,7 @@ fun f10(init : A?) {
   if (!(a is B)) {
     return;
   }
-  if (!(a is B)) {
+  if (!(<!USELESS_IS_CHECK!>a is B<!>)) {
     return;
   }
 }
@@ -58,7 +58,7 @@ fun f11(a : A?) {
     is B -> a.bar()
     is A -> a.foo()
     is Any -> a.foo()
-    is Any? -> a.<!UNRESOLVED_REFERENCE!>bar<!>()
+    <!USELESS_IS_CHECK!>is Any?<!> -> a.<!UNRESOLVED_REFERENCE!>bar<!>()
     else -> a?.foo()
   }
 }
@@ -68,12 +68,12 @@ fun f12(a : A?) {
     is B -> a.bar()
     is A -> a.foo()
     is Any -> a.foo();
-    is Any? -> a.<!UNRESOLVED_REFERENCE!>bar<!>()
+    <!USELESS_IS_CHECK!>is Any?<!> -> a.<!UNRESOLVED_REFERENCE!>bar<!>()
     is C -> a.bar()
     else -> a?.foo()
   }
 
-  if (a is Any?) {
+  if (<!USELESS_IS_CHECK!>a is Any?<!>) {
     a?.<!UNRESOLVED_REFERENCE!>bar<!>()
   }
   if (a is B) {
@@ -89,17 +89,17 @@ fun f13(a : A?) {
   }
   else {
     a?.foo()
-    <!UNRESOLVED_REFERENCE!>c<!>.<!UNRESOLVED_REFERENCE!>bar<!>()
+    <!UNRESOLVED_REFERENCE!>c<!>.bar()
   }
 
   a?.foo()
   if (!(a is B)) {
     a?.foo()
-    <!UNRESOLVED_REFERENCE!>c<!>.<!UNRESOLVED_REFERENCE!>bar<!>()
+    <!UNRESOLVED_REFERENCE!>c<!>.bar()
   }
   else {
     a.foo()
-    <!UNRESOLVED_REFERENCE!>c<!>.<!UNRESOLVED_REFERENCE!>bar<!>()
+    <!UNRESOLVED_REFERENCE!>c<!>.bar()
   }
 
   a?.foo()
@@ -109,7 +109,7 @@ fun f13(a : A?) {
   }
   else {
     a?.foo()
-    <!UNRESOLVED_REFERENCE!>c<!>.<!UNRESOLVED_REFERENCE!>bar<!>()
+    <!UNRESOLVED_REFERENCE!>c<!>.bar()
   }
 
   if (!(a is B) || !(a is C)) {
@@ -149,7 +149,7 @@ fun illegalWhenBody(a: Any): Int = <!NO_ELSE_IN_WHEN!>when<!>(a) {
 fun illegalWhenBlock(a: Any): Int {
     when(a) {
         is Int -> return a
-        is String -> return a
+        is String -> return <!RETURN_TYPE_MISMATCH!>a<!>
     }
 }
 fun declarations(a: Any?) {
@@ -189,16 +189,16 @@ fun returnFunctionLiteralExpressionBody(a: Any?): Function0<Int> =
 
 fun mergeSmartCasts(a: Any?) {
   if (a is String || a is Int) {
-    a.<!INAPPLICABLE_CANDIDATE!>compareTo<!>("")
+    a.compareTo(<!ARGUMENT_TYPE_MISMATCH!>""<!>)
     a.toString()
   }
   if (a is Int || a is String) {
-    a.<!INAPPLICABLE_CANDIDATE!>compareTo<!>("")
+    a.compareTo(<!ARGUMENT_TYPE_MISMATCH!>""<!>)
   }
   when (a) {
     is String, is Any -> a.<!UNRESOLVED_REFERENCE!>compareTo<!>("")
   }
-  if (a is String && a is Any) {
+  if (a is String && <!USELESS_IS_CHECK!>a is Any<!>) {
     val i: Int = a.compareTo("")
   }
   if (a is String && a.compareTo("") == 0) {}
@@ -222,7 +222,7 @@ fun f(): String {
 fun foo(aa: Any?): Int {
     var a = aa
     if (a is Int?) {
-        return a
+        return <!RETURN_TYPE_MISMATCH!>a<!>
     }
     return 1
 }

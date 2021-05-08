@@ -83,7 +83,8 @@ sealed class ConstraintSystemError(val applicability: CandidateApplicability)
 class NewConstraintError(
     val lowerType: KotlinTypeMarker,
     val upperType: KotlinTypeMarker,
-    val position: IncorporationConstraintPosition
+    val position: IncorporationConstraintPosition,
+    val isWarning: Boolean = false
 ) : ConstraintSystemError(if (position.from is ReceiverConstraintPosition<*>) INAPPLICABLE_WRONG_RECEIVER else INAPPLICABLE)
 
 class CapturedTypeFromSubtyping(
@@ -106,3 +107,8 @@ class ConstrainingTypeIsError(
 class OnlyInputTypesDiagnostic(val typeVariable: TypeVariableMarker) : ConstraintSystemError(INAPPLICABLE)
 
 object LowerPriorityToPreserveCompatibility : ConstraintSystemError(RESOLVED_NEED_PRESERVE_COMPATIBILITY)
+
+fun Constraint.isExpectedTypePosition() =
+    position.from is ExpectedTypeConstraintPosition<*> || position.from is DelegatedPropertyConstraintPosition<*>
+
+fun NewConstraintError.transformToWarning() = NewConstraintError(lowerType, upperType, position, isWarning = true)

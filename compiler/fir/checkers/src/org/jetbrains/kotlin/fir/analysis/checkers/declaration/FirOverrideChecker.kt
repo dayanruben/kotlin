@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.fir.analysis.checkers.declaration
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
+import org.jetbrains.kotlin.fir.analysis.checkers.unsubstitutedScope
 import org.jetbrains.kotlin.fir.analysis.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.fir.analysis.diagnostics.reportOn
@@ -18,7 +19,6 @@ import org.jetbrains.kotlin.fir.scopes.FirTypeScope
 import org.jetbrains.kotlin.fir.scopes.getDirectOverriddenFunctions
 import org.jetbrains.kotlin.fir.scopes.getDirectOverriddenProperties
 import org.jetbrains.kotlin.fir.scopes.impl.toConeType
-import org.jetbrains.kotlin.fir.scopes.unsubstitutedScope
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.typeContext
 import org.jetbrains.kotlin.fir.types.*
@@ -34,11 +34,7 @@ object FirOverrideChecker : FirClassChecker() {
             stubTypesEqualToAnything = false
         )
 
-        val firTypeScope = declaration.unsubstitutedScope(
-            context.sessionHolder.session,
-            context.sessionHolder.scopeSession,
-            withForcedTypeCalculator = true
-        )
+        val firTypeScope = declaration.unsubstitutedScope(context)
 
         for (it in declaration.declarations) {
             when (it) {
@@ -63,6 +59,7 @@ object FirOverrideChecker : FirClassChecker() {
     private fun ConeKotlinType.substituteAllTypeParameters(
         overrideDeclaration: FirCallableMemberDeclaration<*>,
         baseDeclaration: FirCallableDeclaration<*>,
+        context: CheckerContext
     ): ConeKotlinType {
         if (overrideDeclaration.typeParameters.isEmpty()) {
             return this
@@ -81,7 +78,7 @@ object FirOverrideChecker : FirClassChecker() {
             map[from.symbol] = to.toConeType()
         }
 
-        return substitutorByMap(map).substituteOrSelf(this)
+        return substitutorByMap(map, context.session).substituteOrSelf(this)
     }
 
     private fun checkModality(
@@ -148,7 +145,7 @@ object FirOverrideChecker : FirClassChecker() {
         for (it in bounds.indices) {
             val overriddenDeclaration = overriddenSymbols[it].fir
 
-            val overriddenReturnType = bounds[it].substituteAllTypeParameters(this, overriddenDeclaration)
+            val overriddenReturnType = bounds[it].substituteAllTypeParameters(this, overriddenDeclaration, context)
 
             val isReturnTypeOkForOverride =
                 if (overriddenDeclaration is FirProperty && overriddenDeclaration.isVar)

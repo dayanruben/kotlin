@@ -95,7 +95,7 @@ class Fir2IrDeclarationStorage(
     private val fakeOverridesInClass = mutableMapOf<IrClass, MutableMap<FirCallableDeclaration<*>, FirCallableDeclaration<*>>>()
 
     // For pure fields (from Java) only
-    private val fieldToPropertyCache = ConcurrentHashMap<FirField, IrProperty>()
+    private val fieldToPropertyCache = ConcurrentHashMap<Pair<FirField, IrDeclarationParent>, IrProperty>()
 
     private val delegatedReverseCache = ConcurrentHashMap<IrDeclaration, FirDeclaration>()
 
@@ -447,6 +447,12 @@ class Fir2IrDeclarationStorage(
             isLambda -> IrDeclarationOrigin.LOCAL_FUNCTION_FOR_LAMBDA
             function.symbol.callableId.isKFunctionInvoke() -> IrDeclarationOrigin.FAKE_OVERRIDE
             simpleFunction?.isStatic == true && simpleFunction.name in ENUM_SYNTHETIC_NAMES -> IrDeclarationOrigin.ENUM_CLASS_SPECIAL_MEMBER
+
+            // Kotlin built-in class and Java originated method (Collection.forEach, etc.)
+            // It's necessary to understand that such methods do not belong to DefaultImpls but actually generated as default
+            // See org.jetbrains.kotlin.backend.jvm.lower.InheritedDefaultMethodsOnClassesLoweringKt.isDefinitelyNotDefaultImplsMethod
+            (irParent as? IrClass)?.origin == IrDeclarationOrigin.IR_EXTERNAL_DECLARATION_STUB &&
+                    function.origin == FirDeclarationOrigin.Enhancement -> IrDeclarationOrigin.IR_EXTERNAL_JAVA_DECLARATION_STUB
             else -> origin
         }
         classifierStorage.preCacheTypeParameters(function)
@@ -719,9 +725,13 @@ class Fir2IrDeclarationStorage(
         field: FirField,
         irParent: IrDeclarationParent
     ): IrProperty {
-        fieldToPropertyCache[field]?.let { return it }
-        return createIrProperty(field.toStubProperty(), irParent).apply {
-            fieldToPropertyCache[field] = this
+        return fieldToPropertyCache.getOrPut(field to irParent) {
+            val containingClassId = (irParent as? IrClass)?.classId
+            createIrProperty(
+                field.toStubProperty(),
+                irParent,
+                containingClass = containingClassId?.let { ConeClassLikeLookupTagImpl(it) }
+            )
         }
     }
 
@@ -729,7 +739,7 @@ class Fir2IrDeclarationStorage(
         val field = this
         return buildProperty {
             source = field.source
-            session = field.session
+            declarationSiteSession = field.declarationSiteSession
             origin = field.origin
             returnTypeRef = field.returnTypeRef
             name = field.name
@@ -866,8 +876,9 @@ class Fir2IrDeclarationStorage(
         irClass: IrClass,
         callableDeclaration: FirCallableDeclaration<*>
     ): FirCallableDeclaration<*>? {
-        // Init lazy class if necessary
-        irClass.declarations
+        if (irClass is Fir2IrLazyClass) {
+            irClass.getFakeOverridesByName(callableDeclaration.symbol.callableId.callableName)
+        }
         return fakeOverridesInClass[irClass]?.get(callableDeclaration)
     }
 
@@ -1144,40 +1155,42 @@ class Fir2IrDeclarationStorage(
         val fir = firSymbol.fir as F
         val irParent by lazy { findIrParent(fir) }
         val signature by lazy { signatureComposer.composeSignature(fir) }
-        getCachedIrDeclaration(fir) {
-            // Parent calculation provokes declaration calculation for some members from IrBuiltIns
-            @Suppress("UNUSED_EXPRESSION") irParent
-            signature
-        }?.let { return it.symbol }
-        val parentOrigin = (irParent as? IrDeclaration)?.origin ?: IrDeclarationOrigin.DEFINED
-        val declarationOrigin = computeDeclarationOrigin(firSymbol, parentOrigin)
-        // TODO: package fragment members (?)
-        when (val parent = irParent) {
-            is Fir2IrLazyClass -> {
-                assert(parentOrigin != IrDeclarationOrigin.DEFINED) {
-                    "Should not have reference to public API uncached property from source code"
+        synchronized(symbolTable.lock) {
+            getCachedIrDeclaration(fir) {
+                // Parent calculation provokes declaration calculation for some members from IrBuiltIns
+                @Suppress("UNUSED_EXPRESSION") irParent
+                signature
+            }?.let { return it.symbol }
+            val parentOrigin = (irParent as? IrDeclaration)?.origin ?: IrDeclarationOrigin.DEFINED
+            val declarationOrigin = computeDeclarationOrigin(firSymbol, parentOrigin)
+            // TODO: package fragment members (?)
+            when (val parent = irParent) {
+                is Fir2IrLazyClass -> {
+                    assert(parentOrigin != IrDeclarationOrigin.DEFINED) {
+                        "Should not have reference to public API uncached property from source code"
+                    }
+                    signature?.let {
+                        return createIrLazyDeclaration(it, parent, declarationOrigin).symbol
+                    }
                 }
-                signature?.let {
-                    return createIrLazyDeclaration(it, parent, declarationOrigin).symbol
-                }
-            }
-            is IrLazyClass -> {
-                val unwrapped = fir.unwrapFakeOverrides()
-                if (unwrapped !== fir) {
-                    when (unwrapped) {
-                        is FirSimpleFunction -> {
-                            return getIrFunctionSymbol(unwrapped.symbol)
-                        }
-                        is FirProperty -> {
-                            return getIrPropertySymbol(unwrapped.symbol)
+                is IrLazyClass -> {
+                    val unwrapped = fir.unwrapFakeOverrides()
+                    if (unwrapped !== fir) {
+                        when (unwrapped) {
+                            is FirSimpleFunction -> {
+                                return getIrFunctionSymbol(unwrapped.symbol)
+                            }
+                            is FirProperty -> {
+                                return getIrPropertySymbol(unwrapped.symbol)
+                            }
                         }
                     }
                 }
             }
+            return createIrDeclaration(irParent, declarationOrigin).apply {
+                (this as IrDeclaration).setAndModifyParent(irParent)
+            }.symbol
         }
-        return createIrDeclaration(irParent, declarationOrigin).apply {
-            (this as IrDeclaration).setAndModifyParent(irParent)
-        }.symbol
     }
 
     private fun computeDeclarationOrigin(
@@ -1223,7 +1236,9 @@ class Fir2IrDeclarationStorage(
 
     private fun getIrVariableSymbol(firVariable: FirVariable<*>): IrVariableSymbol {
         return localStorage.getVariable(firVariable)?.symbol
-            ?: throw IllegalArgumentException("Cannot find variable ${firVariable.render()} in local storage")
+            ?: run {
+                throw IllegalArgumentException("Cannot find variable ${firVariable.render()} in local storage")
+            }
     }
 
     fun getIrValueSymbol(firVariableSymbol: FirVariableSymbol<*>): IrSymbol {

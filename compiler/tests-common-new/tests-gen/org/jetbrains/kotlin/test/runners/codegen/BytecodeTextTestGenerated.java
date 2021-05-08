@@ -743,6 +743,12 @@ public class BytecodeTextTestGenerated extends AbstractBytecodeTextTest {
         }
 
         @Test
+        @TestMetadata("suspendBoxing.kt")
+        public void testSuspendBoxing() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeText/boxingOptimization/suspendBoxing.kt");
+        }
+
+        @Test
         @TestMetadata("unsafeRemoving.kt")
         public void testUnsafeRemoving() throws Exception {
             runTest("compiler/testData/codegen/bytecodeText/boxingOptimization/unsafeRemoving.kt");
@@ -3441,6 +3447,24 @@ public class BytecodeTextTestGenerated extends AbstractBytecodeTextTest {
         }
 
         @Test
+        @TestMetadata("mangledSamWrappers.kt")
+        public void testMangledSamWrappers() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeText/inlineClasses/mangledSamWrappers.kt");
+        }
+
+        @Test
+        @TestMetadata("mangledSamWrappersIndy.kt")
+        public void testMangledSamWrappersIndy() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeText/inlineClasses/mangledSamWrappersIndy.kt");
+        }
+
+        @Test
+        @TestMetadata("mangledSamWrappersOld.kt")
+        public void testMangledSamWrappersOld() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeText/inlineClasses/mangledSamWrappersOld.kt");
+        }
+
+        @Test
         @TestMetadata("noActualCallsOfInlineFunctionsOfInlineClass.kt")
         public void testNoActualCallsOfInlineFunctionsOfInlineClass() throws Exception {
             runTest("compiler/testData/codegen/bytecodeText/inlineClasses/noActualCallsOfInlineFunctionsOfInlineClass.kt");
@@ -4485,6 +4509,12 @@ public class BytecodeTextTestGenerated extends AbstractBytecodeTextTest {
         }
 
         @Test
+        @TestMetadata("safeCallAndElvisChains.kt")
+        public void testSafeCallAndElvisChains() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeText/nullCheckOptimization/safeCallAndElvisChains.kt");
+        }
+
+        @Test
         @TestMetadata("trivialInstanceOf.kt")
         public void testTrivialInstanceOf() throws Exception {
             runTest("compiler/testData/codegen/bytecodeText/nullCheckOptimization/trivialInstanceOf.kt");
@@ -4864,6 +4894,12 @@ public class BytecodeTextTestGenerated extends AbstractBytecodeTextTest {
         @Test
         public void testAllFilesPresentInStoreStackBeforeInline() throws Exception {
             KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/storeStackBeforeInline"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
+        }
+
+        @Test
+        @TestMetadata("arrayConstructor.kt")
+        public void testArrayConstructor() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeText/storeStackBeforeInline/arrayConstructor.kt");
         }
 
         @Test

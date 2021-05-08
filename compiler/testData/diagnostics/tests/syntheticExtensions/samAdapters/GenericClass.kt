@@ -1,7 +1,8 @@
+// FIR_IDE_IGNORE
 // JAVAC_EXPECTED_FILE
 // FILE: KotlinFile.kt
 fun foo(javaClass: JavaClass<String>): String {
-    return javaClass.doSomething("", 1) { <!UNUSED_ANONYMOUS_PARAMETER!>s<!>: String -> "" }
+    return javaClass.doSomething("", 1) { s: String -> "" }
 }
 
 // FILE: JavaClass.java

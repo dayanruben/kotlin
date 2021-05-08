@@ -27,7 +27,11 @@ dependencies {
 // <neededFor>`AbstractFirLazyResolveTest` uses fir implementation of references which are not in classpath otherwise
     testRuntimeOnly(project(":idea:idea-frontend-fir"))
 // </neededFor>
+    testCompile(projectTests(":compiler:test-infrastructure-utils"))
+    testCompile(projectTests(":compiler:test-infrastructure"))
+    testCompile(projectTests(":compiler:tests-common-new"))
 
+    testImplementation("org.opentest4j:opentest4j:1.2.0")
     testCompile(toolsJar())
     testCompile(projectTests(":idea"))
     testCompile(project(":idea:idea-fir"))
@@ -45,11 +49,12 @@ sourceSets {
     "test" { projectDefault() }
 }
 
-projectTest {
+projectTest(parallel = true ) {
     dependsOn(":dist")
     workingDir = rootDir
+    val useFirIdeaPlugin = kotlinBuildProperties.useFirIdeaPlugin
     doFirst {
-        if (!kotlinBuildProperties.useFirIdeaPlugin) {
+        if (!useFirIdeaPlugin) {
             error("Test task in the module should be executed with -Pidea.fir.plugin=true")
         }
     }

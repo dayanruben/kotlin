@@ -25,7 +25,6 @@ import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.Upload
 import org.gradle.api.tasks.javadoc.Javadoc
 import org.gradle.jvm.tasks.Jar
-import org.gradle.api.artifacts.dsl.DependencyHandler
 import org.gradle.kotlin.dsl.*
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSetContainer
 import plugins.KotlinBuildPublishingPlugin
@@ -228,23 +227,6 @@ fun Project.publish(moduleMetadata: Boolean = false, configure: MavenPublication
         ?.publications
         ?.findByName(KotlinBuildPublishingPlugin.PUBLICATION_NAME) as MavenPublication
     publication.configure()
-}
-
-fun Project.publishWithLegacyMavenPlugin(body: Upload.() -> Unit = {}): Upload {
-    apply<plugins.PublishedKotlinModule>()
-
-    if (artifactsRemovedDiagnosticFlag) {
-        error("`publish()` should be called before removing artifacts typically done in `noDefaultJar()` or `runtimeJar()` call")
-    }
-
-    afterEvaluate {
-        if (configurations.findByName("classes-dirs") != null)
-            throw GradleException("classesDirsArtifact() is incompatible with publish(), see sources comments for details")
-    }
-
-    return (tasks.getByName("uploadArchives") as Upload).apply {
-        body()
-    }
 }
 
 fun Project.idePluginDependency(block: () -> Unit) {

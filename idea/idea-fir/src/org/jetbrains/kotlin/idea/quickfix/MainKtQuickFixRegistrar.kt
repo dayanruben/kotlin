@@ -5,11 +5,13 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
+import org.jetbrains.kotlin.idea.core.overrideImplement.MemberNotImplementedQuickfixFactories
 import org.jetbrains.kotlin.idea.fir.api.fixes.KtQuickFixRegistrar
 import org.jetbrains.kotlin.idea.fir.api.fixes.KtQuickFixesList
 import org.jetbrains.kotlin.idea.fir.api.fixes.KtQuickFixesListBuilder
 import org.jetbrains.kotlin.idea.frontend.api.fir.diagnostics.KtFirDiagnostic
-import org.jetbrains.kotlin.idea.quickfix.fixes.ChangeTypeQuickFix
+import org.jetbrains.kotlin.idea.quickfix.fixes.*
+import org.jetbrains.kotlin.idea.quickfix.fixes.InitializePropertyQuickFixFactory
 
 class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
     private val modifiers = KtQuickFixesListBuilder.registerPsiQuickFix {
@@ -48,12 +50,39 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
             KtFirDiagnostic.NestedClassNotAllowed::class,
             AddModifierFix.addInnerModifier
         )
+        registerPsiQuickFixes(
+            KtFirDiagnostic.WrongModifierTarget::class,
+            RemoveModifierFix.removeNonRedundantModifier,
+            ChangeVariableMutabilityFix.CONST_VAL_FACTORY
+        )
+        registerPsiQuickFixes(
+            KtFirDiagnostic.AbstractMemberNotImplemented::class,
+            AddModifierFix.addAbstractModifier
+        )
+        registerPsiQuickFixes(
+            KtFirDiagnostic.AbstractClassMemberNotImplemented::class,
+            AddModifierFix.addAbstractModifier
+        )
+    }
+
+    private val propertyInitialization = KtQuickFixesListBuilder.registerPsiQuickFix {
+        registerPsiQuickFixes(
+            KtFirDiagnostic.MustBeInitializedOrBeAbstract::class,
+            AddModifierFix.addAbstractModifier,
+        )
+        registerApplicator(InitializePropertyQuickFixFactory.initializePropertyFactory)
+        registerApplicator(AddLateInitFactory.addLateInitFactory)
+        registerApplicator(AddAccessorsFactories.addAccessorsToUninitializedProperty)
     }
 
     private val overrides = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerApplicator(ChangeTypeQuickFix.changeFunctionReturnTypeOnOverride)
         registerApplicator(ChangeTypeQuickFix.changePropertyReturnTypeOnOverride)
         registerApplicator(ChangeTypeQuickFix.changeVariableReturnTypeOnOverride)
+        registerApplicator(MemberNotImplementedQuickfixFactories.abstractMemberNotImplemented)
+        registerApplicator(MemberNotImplementedQuickfixFactories.abstractClassMemberNotImplemented)
+        registerApplicator(MemberNotImplementedQuickfixFactories.manyInterfacesMemberNotImplemented)
+        registerApplicator(MemberNotImplementedQuickfixFactories.manyImplMemberNotImplemented)
     }
 
     private val mutability = KtQuickFixesListBuilder.registerPsiQuickFix {
@@ -61,11 +90,20 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
         registerPsiQuickFixes(KtFirDiagnostic.VarAnnotationParameter::class, ChangeVariableMutabilityFix.VAR_ANNOTATION_PARAMETER_FACTORY)
         registerPsiQuickFixes(KtFirDiagnostic.InapplicableLateinitModifier::class, ChangeVariableMutabilityFix.LATEINIT_VAL_FACTORY)
         registerPsiQuickFixes(KtFirDiagnostic.ValWithSetter::class, ChangeVariableMutabilityFix.VAL_WITH_SETTER_FACTORY)
+        registerPsiQuickFixes(KtFirDiagnostic.MustBeInitialized::class, ChangeVariableMutabilityFix.MUST_BE_INITIALIZED_FACTORY)
+    }
+
+    private val expressions = KtQuickFixesListBuilder.registerPsiQuickFix {
+        registerPsiQuickFixes(KtFirDiagnostic.UnnecessarySafeCall::class, ReplaceWithDotCallFix)
+        registerPsiQuickFixes(KtFirDiagnostic.UnnecessaryNotNullAssertion::class, RemoveExclExclCallFix)
+        registerApplicator(ReplaceCallFixFactories.unsafeCallFactory)
     }
 
     override val list: KtQuickFixesList = KtQuickFixesList.createCombined(
         modifiers,
+        propertyInitialization,
         overrides,
         mutability,
+        expressions,
     )
 }

@@ -8,9 +8,6 @@ plugins {
 }
 
 bitcode {
-    create("hash") {
-        dependsOn(":kotlin-native:dependencies:update")
-    }
     create("files"){
         dependsOn(":kotlin-native:dependencies:update")
     }
@@ -19,12 +16,11 @@ bitcode {
 val hostName: String by project
 
 val build by tasks.registering {
-    dependsOn("${hostName}Hash")
     dependsOn("${hostName}Files")
 }
 
 val clean by tasks.registering {
-    doLast {
+    doFirst {
         delete(buildDir)
     }
 }

@@ -8,19 +8,20 @@ package org.jetbrains.kotlin.fir.resolve.inference
 import org.jetbrains.kotlin.fir.FirCallResolver
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.FirStatement
+import org.jetbrains.kotlin.fir.lookupTracker
+import org.jetbrains.kotlin.fir.recordTypeResolveAsLookup
 import org.jetbrains.kotlin.fir.references.builder.buildErrorNamedReference
 import org.jetbrains.kotlin.fir.resolve.calls.*
 import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeUnresolvedReferenceError
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.resolve.transformers.StoreNameReference
 import org.jetbrains.kotlin.fir.types.*
+import org.jetbrains.kotlin.fir.types.builder.buildErrorTypeRef
 import org.jetbrains.kotlin.fir.types.builder.buildResolvedTypeRef
 import org.jetbrains.kotlin.resolve.calls.components.PostponedArgumentsAnalyzerContext
 import org.jetbrains.kotlin.resolve.calls.inference.ConstraintSystemBuilder
 import org.jetbrains.kotlin.resolve.calls.inference.model.CoroutinePosition
 import org.jetbrains.kotlin.resolve.calls.inference.model.SimpleConstraintSystemConstraintPosition
-import org.jetbrains.kotlin.resolve.calls.tower.CandidateApplicability
-import org.jetbrains.kotlin.resolve.calls.tower.isSuccess
 import org.jetbrains.kotlin.types.model.StubTypeMarker
 import org.jetbrains.kotlin.types.model.TypeVariableMarker
 import org.jetbrains.kotlin.types.model.freshTypeConstructor
@@ -74,27 +75,31 @@ class PostponedArgumentsAnalyzer(
         val callableReferenceAccess = atom.reference
         atom.analyzed = true
 
-        resolutionContext.bodyResolveContext.towerDataContextForCallableReferences.remove(callableReferenceAccess)
+        resolutionContext.bodyResolveContext.dropCallableReferenceContext(callableReferenceAccess)
 
-        val (resultingCandidate, applicability) = atom.resultingCandidate
-            ?: Pair(null, CandidateApplicability.INAPPLICABLE)
-
-        val namedReference = when {
-            resultingCandidate == null || !applicability.isSuccess ->
-                buildErrorNamedReference {
-                    source = callableReferenceAccess.source
-                    diagnostic = ConeUnresolvedReferenceError(callableReferenceAccess.calleeReference.name)
-                }
-            else -> FirNamedReferenceWithCandidate(callableReferenceAccess.source, callableReferenceAccess.calleeReference.name, resultingCandidate)
+        val namedReference = atom.resultingReference ?: buildErrorNamedReference {
+            source = callableReferenceAccess.source
+            diagnostic = ConeUnresolvedReferenceError(callableReferenceAccess.calleeReference.name)
         }
 
         callableReferenceAccess.transformCalleeReference(
             StoreNameReference,
             namedReference
         ).apply {
-            if (resultingCandidate != null) {
-                replaceTypeRef(buildResolvedTypeRef { type = resultingCandidate.resultingTypeForCallableReference!! })
+            val typeForCallableReference = atom.resultingTypeForCallableReference
+            val resolvedTypeRef = when {
+                typeForCallableReference != null -> buildResolvedTypeRef {
+                    type = typeForCallableReference
+                }
+                namedReference is FirErrorReferenceWithCandidate -> buildErrorTypeRef {
+                    diagnostic = namedReference.diagnostic
+                }
+                else -> buildErrorTypeRef {
+                    diagnostic = ConeUnresolvedReferenceError(callableReferenceAccess.calleeReference.name)
+                }
             }
+            replaceTypeRef(resolvedTypeRef)
+            resolutionContext.session.lookupTracker?.recordTypeResolveAsLookup(resolvedTypeRef, source, null)
         }
     }
 

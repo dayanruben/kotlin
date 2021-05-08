@@ -50,6 +50,12 @@ public class DiagnosticsTestWithJvmIrBackendGenerated extends AbstractDiagnostic
     }
 
     @Test
+    @TestMetadata("propertyInlineCycle.kt")
+    public void testPropertyInlineCycle() throws Exception {
+        runTest("compiler/testData/diagnostics/testsWithJvmBackend/propertyInlineCycle.kt");
+    }
+
+    @Test
     @TestMetadata("suspendInlineCycle_ir.kt")
     public void testSuspendInlineCycle_ir() throws Exception {
         runTest("compiler/testData/diagnostics/testsWithJvmBackend/suspendInlineCycle_ir.kt");
@@ -638,6 +644,22 @@ public class DiagnosticsTestWithJvmIrBackendGenerated extends AbstractDiagnostic
             public void testTwoTraits_ir() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithJvmBackend/duplicateJvmSignature/traitImpl/twoTraits_ir.kt");
             }
+        }
+    }
+
+    @Nested
+    @TestMetadata("compiler/testData/diagnostics/testsWithJvmBackend/multifileClasses")
+    @TestDataPath("$PROJECT_ROOT")
+    public class MultifileClasses {
+        @Test
+        public void testAllFilesPresentInMultifileClasses() throws Exception {
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/testsWithJvmBackend/multifileClasses"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+        }
+
+        @Test
+        @TestMetadata("jvmSynthetic.kt")
+        public void testJvmSynthetic() throws Exception {
+            runTest("compiler/testData/diagnostics/testsWithJvmBackend/multifileClasses/jvmSynthetic.kt");
         }
     }
 

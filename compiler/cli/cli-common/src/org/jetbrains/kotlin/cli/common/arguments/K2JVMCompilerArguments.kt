@@ -74,7 +74,7 @@ class K2JVMCompilerArguments : CommonCompilerArguments() {
     @Argument(
         value = "-jvm-target",
         valueDescription = "<version>",
-        description = "Target version of the generated JVM bytecode (1.6 (DEPRECATED), 1.8, 9, 10, 11, 12, 13, 14 or 15), default is 1.8"
+        description = "Target version of the generated JVM bytecode (1.6 (DEPRECATED), 1.8, 9, 10, 11, 12, 13, 14, 15 or 16), default is 1.8"
     )
     var jvmTarget: String? by NullableStringFreezableVar(JvmTarget.DEFAULT.description)
 
@@ -84,8 +84,12 @@ class K2JVMCompilerArguments : CommonCompilerArguments() {
 
     // Advanced options
 
+    @DeprecatedOption(removeAfter = "1.5", level = DeprecationLevel.WARNING)
     @GradleOption(DefaultValues.BooleanFalseDefault::class)
-    @Argument(value = "-Xuse-ir", description = "Use the IR backend")
+    @Argument(
+        value = "-Xuse-ir",
+        description = "Use the IR backend. This option has no effect unless the language version less than 1.5 is used"
+    )
     var useIR: Boolean by FreezableVar(false)
 
     @GradleOption(DefaultValues.BooleanFalseDefault::class)
@@ -373,7 +377,7 @@ class K2JVMCompilerArguments : CommonCompilerArguments() {
 default: `indy-with-constants` for JVM target 9 or greater, `inline` otherwise"""
 
     )
-    var stringConcat: String? by NullableStringFreezableVar(JvmStringConcat.INLINE.description)
+    var stringConcat: String? by NullableStringFreezableVar(null)
 
     @Argument(
         value = "-Xsam-conversions",
@@ -467,6 +471,14 @@ default: `indy-with-constants` for JVM target 9 or greater, `inline` otherwise""
     )
     var suppressDeprecatedJvmTargetWarning: Boolean by FreezableVar(false)
 
+    @Argument(
+        value = "-Xtype-enhancement-improvements-strict-mode",
+        description = "Enable strict mode for some improvements in the type enhancement for loaded Java types based on nullability annotations," +
+                "including freshly supported reading of the type use annotations from class files. " +
+                "See KT-45671 for more details"
+    )
+    var typeEnhancementImprovementsInStrictMode: Boolean by FreezableVar(false)
+
     override fun configureAnalysisFlags(collector: MessageCollector): MutableMap<AnalysisFlag<*>, Any> {
         val result = super.configureAnalysisFlags(collector)
         result[JvmAnalysisFlags.strictMetadataVersionSemantics] = strictMetadataVersionSemantics
@@ -489,6 +501,7 @@ default: `indy-with-constants` for JVM target 9 or greater, `inline` otherwise""
         result[JvmAnalysisFlags.enableJvmPreview] = enableJvmPreview
         result[AnalysisFlags.allowUnstableDependencies] = allowUnstableDependencies || useFir
         result[JvmAnalysisFlags.disableUltraLightClasses] = disableUltraLightClasses
+        result[JvmAnalysisFlags.useIR] = !useOldBackend
         return result
     }
 
@@ -496,6 +509,9 @@ default: `indy-with-constants` for JVM target 9 or greater, `inline` otherwise""
         val result = super.configureLanguageFeatures(collector)
         if (strictJavaNullabilityAssertions) {
             result[LanguageFeature.StrictJavaNullabilityAssertions] = LanguageFeature.State.ENABLED
+        }
+        if (typeEnhancementImprovementsInStrictMode) {
+            result[LanguageFeature.TypeEnhancementImprovementsInStrictMode] = LanguageFeature.State.ENABLED
         }
         return result
     }

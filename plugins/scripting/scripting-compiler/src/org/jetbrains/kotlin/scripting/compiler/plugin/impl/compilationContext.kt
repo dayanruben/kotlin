@@ -54,6 +54,8 @@ import kotlin.script.experimental.jvm.jvm
 import kotlin.script.experimental.jvm.util.KotlinJars
 import kotlin.script.experimental.jvm.withUpdatedClasspath
 
+const val SCRIPT_BASE_COMPILER_ARGUMENTS_PROPERTY = "kotlin.script.base.compiler.arguments"
+
 class SharedScriptCompilationContext(
     val disposable: Disposable?,
     val baseScriptCompilationConfiguration: ScriptCompilationConfiguration,
@@ -140,7 +142,13 @@ internal fun createInitialConfigurations(
         createInitialCompilerConfiguration(
             scriptCompilationConfiguration, hostConfiguration, messageCollector, ignoredOptionsReportingState
         )
+    // TODO: replace the default when ready
     kotlinCompilerConfiguration.put(JVMConfigurationKeys.IR, false)
+
+    System.getProperty(SCRIPT_BASE_COMPILER_ARGUMENTS_PROPERTY)?.takeIf { it.isNotBlank() }?.split(' ')?.let {
+        kotlinCompilerConfiguration.updateWithCompilerOptions(it)
+    }
+
     val initialScriptCompilationConfiguration =
         scriptCompilationConfiguration.withUpdatesFromCompilerConfiguration(kotlinCompilerConfiguration)
 
@@ -164,28 +172,32 @@ private fun CompilerConfiguration.updateWithCompilerOptions(
     ignoredOptionsReportingState: IgnoredOptionsReportingState,
     isRefinement: Boolean
 ) {
+    updateWithCompilerOptions(compilerOptions) {
+        validateArguments(it.errors)?.let { error ->
+            messageCollector.report(CompilerMessageSeverity.ERROR, error)
+            false
+        } ?: run {
+            messageCollector.reportArgumentParseProblems(it)
+            val error = reportArgumentsNotAllowed(it, messageCollector, ignoredOptionsReportingState)
+            reportArgumentsIgnoredGenerally(it, messageCollector, ignoredOptionsReportingState)
+            if (isRefinement) {
+                reportArgumentsIgnoredFromRefinement(it, messageCollector, ignoredOptionsReportingState)
+            }
+            !error
+        }
+    }
+}
+
+internal fun CompilerConfiguration.updateWithCompilerOptions(
+    compilerOptions: List<String>,
+    validate: (K2JVMCompilerArguments) -> Boolean = {
+        validateArguments(it.errors)?.let { throw Exception("Error parsing arguments: $it") } ?: true
+    }
+) {
     val compilerArguments = K2JVMCompilerArguments()
     parseCommandLineArguments(compilerOptions, compilerArguments)
 
-    validateArguments(compilerArguments.errors)?.let {
-        messageCollector.report(CompilerMessageSeverity.ERROR, it)
-        return
-    }
-
-    messageCollector.reportArgumentParseProblems(compilerArguments)
-
-    reportArgumentsIgnoredGenerally(
-        compilerArguments,
-        messageCollector,
-        ignoredOptionsReportingState
-    )
-    if (isRefinement) {
-        reportArgumentsIgnoredFromRefinement(
-            compilerArguments,
-            messageCollector,
-            ignoredOptionsReportingState
-        )
-    }
+    if (!validate(compilerArguments)) return
 
     processPluginsCommandLine(compilerArguments)
 
@@ -305,7 +317,6 @@ private fun CompilerConfiguration.updateWithRefinedConfigurations(
             ScriptCompilationConfiguration.compilerOptions
         ) ?: emptyList()
     }
-    updatedCompilerOptions += "-Xuse-old-backend"
     if (updatedCompilerOptions.isNotEmpty() &&
         updatedCompilerOptions != context.baseScriptCompilationConfiguration[ScriptCompilationConfiguration.compilerOptions]
     ) {

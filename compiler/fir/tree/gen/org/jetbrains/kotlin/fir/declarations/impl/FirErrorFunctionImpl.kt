@@ -28,8 +28,8 @@ import org.jetbrains.kotlin.fir.visitors.*
  */
 
 internal class FirErrorFunctionImpl(
-    override var source: FirSourceElement?,
-    override val session: FirSession,
+    override val source: FirSourceElement?,
+    override val declarationSiteSession: FirSession,
     override var resolvePhase: FirResolvePhase,
     override val origin: FirDeclarationOrigin,
     override val attributes: FirDeclarationAttributes,
@@ -59,7 +59,7 @@ internal class FirErrorFunctionImpl(
     override fun <D> transformChildren(transformer: FirTransformer<D>, data: D): FirErrorFunctionImpl {
         transformAnnotations(transformer, data)
         transformReturnTypeRef(transformer, data)
-        controlFlowGraphReference = controlFlowGraphReference?.transformSingle(transformer, data)
+        controlFlowGraphReference = controlFlowGraphReference?.transform(transformer, data)
         transformValueParameters(transformer, data)
         transformTypeParameters(transformer, data)
         return this
@@ -71,7 +71,7 @@ internal class FirErrorFunctionImpl(
     }
 
     override fun <D> transformReturnTypeRef(transformer: FirTransformer<D>, data: D): FirErrorFunctionImpl {
-        returnTypeRef = returnTypeRef.transformSingle(transformer, data)
+        returnTypeRef = returnTypeRef.transform(transformer, data)
         return this
     }
 
@@ -91,10 +91,6 @@ internal class FirErrorFunctionImpl(
     override fun <D> transformTypeParameters(transformer: FirTransformer<D>, data: D): FirErrorFunctionImpl {
         typeParameters.transformInplace(transformer, data)
         return this
-    }
-
-    override fun replaceSource(newSource: FirSourceElement?) {
-        source = newSource
     }
 
     override fun replaceResolvePhase(newResolvePhase: FirResolvePhase) {

@@ -1,17 +1,6 @@
 /*
- * Copyright 2010-2021 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlinx.serialization.compiler.backend.jvm
@@ -35,7 +24,7 @@ import org.jetbrains.kotlinx.serialization.compiler.diagnostic.VersionReader
 import org.jetbrains.kotlinx.serialization.compiler.diagnostic.serializableAnnotationIsUseless
 import org.jetbrains.kotlinx.serialization.compiler.resolve.*
 import org.jetbrains.kotlinx.serialization.compiler.resolve.SerialEntityNames.ARRAY_MASK_FIELD_MISSING_FUNC_NAME
-import org.jetbrains.kotlinx.serialization.compiler.resolve.SerialEntityNames.INITIALIZED_DESCRIPTOR_FIELD_NAME
+import org.jetbrains.kotlinx.serialization.compiler.resolve.SerialEntityNames.CACHED_DESCRIPTOR_FIELD
 import org.jetbrains.kotlinx.serialization.compiler.resolve.SerialEntityNames.SINGLE_MASK_FIELD_MISSING_FUNC_NAME
 import org.jetbrains.org.objectweb.asm.Label
 import org.jetbrains.org.objectweb.asm.Opcodes
@@ -280,12 +269,12 @@ class SerializableCodegenImpl(
             val superProps = bindingContext.serializablePropertiesFor(superClass).serializableProperties
             val creator = buildInternalConstructorDesc(propStartVar, maskVar, classCodegen, superProps)
             invokespecial(superType, "<init>", creator, false)
-            return superProps.size to propStartVar + superProps.sumBy { it.asmType.size }
+            return superProps.size to propStartVar + superProps.sumOf { it.asmType.size }
         }
     }
 
     private fun InstructionAdapter.generateOptimizedGoldenMaskCheck(maskVar: Int) {
-        if (serializableDescriptor.isAbstractSerializableClass() || serializableDescriptor.isSealedSerializableClass()) {
+        if (serializableDescriptor.isAbstractOrSealedSerializableClass()) {
             // for abstract classes fields MUST BE checked in child classes
             return
         }
@@ -354,7 +343,7 @@ class SerializableCodegenImpl(
         } else {
             generateStaticDescriptorField()
 
-            getstatic(thisAsmType.internalName, INITIALIZED_DESCRIPTOR_FIELD_NAME, descType.descriptor)
+            getstatic(thisAsmType.internalName, CACHED_DESCRIPTOR_FIELD, descType.descriptor)
         }
     }
 
@@ -362,7 +351,7 @@ class SerializableCodegenImpl(
         val flags = Opcodes.ACC_PRIVATE or Opcodes.ACC_FINAL or Opcodes.ACC_SYNTHETIC or Opcodes.ACC_STATIC
         classCodegen.v.newField(
             OtherOrigin(classCodegen.myClass.psiOrParent), flags,
-            INITIALIZED_DESCRIPTOR_FIELD_NAME, descType.descriptor, null, null
+            CACHED_DESCRIPTOR_FIELD, descType.descriptor, null, null
         )
 
         val clInit = classCodegen.createOrGetClInitCodegen()
@@ -380,7 +369,7 @@ class SerializableCodegenImpl(
                 invokevirtual(descImplType.internalName, CallingConventions.addElement, "(Ljava/lang/String;Z)V", false)
             }
 
-            putstatic(thisAsmType.internalName, INITIALIZED_DESCRIPTOR_FIELD_NAME, descType.descriptor)
+            putstatic(thisAsmType.internalName, CACHED_DESCRIPTOR_FIELD, descType.descriptor)
         }
     }
 

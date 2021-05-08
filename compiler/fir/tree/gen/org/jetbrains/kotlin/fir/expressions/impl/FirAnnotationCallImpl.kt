@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.fir.visitors.*
  */
 
 internal class FirAnnotationCallImpl(
-    override var source: FirSourceElement?,
+    override val source: FirSourceElement?,
     override val annotations: MutableList<FirAnnotationCall>,
     override var argumentList: FirArgumentList,
     override var calleeReference: FirReference,
@@ -39,7 +39,7 @@ internal class FirAnnotationCallImpl(
 
     override fun <D> transformChildren(transformer: FirTransformer<D>, data: D): FirAnnotationCallImpl {
         transformAnnotations(transformer, data)
-        argumentList = argumentList.transformSingle(transformer, data)
+        argumentList = argumentList.transform(transformer, data)
         transformCalleeReference(transformer, data)
         transformAnnotationTypeRef(transformer, data)
         return this
@@ -51,17 +51,13 @@ internal class FirAnnotationCallImpl(
     }
 
     override fun <D> transformCalleeReference(transformer: FirTransformer<D>, data: D): FirAnnotationCallImpl {
-        calleeReference = calleeReference.transformSingle(transformer, data)
+        calleeReference = calleeReference.transform(transformer, data)
         return this
     }
 
     override fun <D> transformAnnotationTypeRef(transformer: FirTransformer<D>, data: D): FirAnnotationCallImpl {
-        annotationTypeRef = annotationTypeRef.transformSingle(transformer, data)
+        annotationTypeRef = annotationTypeRef.transform(transformer, data)
         return this
-    }
-
-    override fun replaceSource(newSource: FirSourceElement?) {
-        source = newSource
     }
 
     override fun replaceTypeRef(newTypeRef: FirTypeRef) {}

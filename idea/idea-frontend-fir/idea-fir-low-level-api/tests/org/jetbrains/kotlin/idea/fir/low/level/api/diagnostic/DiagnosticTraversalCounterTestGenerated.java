@@ -34,9 +34,39 @@ public class DiagnosticTraversalCounterTestGenerated extends AbstractDiagnosticT
         runTest("idea/idea-frontend-fir/idea-fir-low-level-api/testdata/diagnosticTraversalCounter/constructor.kt");
     }
 
+    @TestMetadata("declarationsInPropertyInit.kt")
+    public void testDeclarationsInPropertyInit() throws Exception {
+        runTest("idea/idea-frontend-fir/idea-fir-low-level-api/testdata/diagnosticTraversalCounter/declarationsInPropertyInit.kt");
+    }
+
+    @TestMetadata("enumClass.kt")
+    public void testEnumClass() throws Exception {
+        runTest("idea/idea-frontend-fir/idea-fir-low-level-api/testdata/diagnosticTraversalCounter/enumClass.kt");
+    }
+
+    @TestMetadata("enumClassWithBody.kt")
+    public void testEnumClassWithBody() throws Exception {
+        runTest("idea/idea-frontend-fir/idea-fir-low-level-api/testdata/diagnosticTraversalCounter/enumClassWithBody.kt");
+    }
+
     @TestMetadata("functionalType.kt")
     public void testFunctionalType() throws Exception {
         runTest("idea/idea-frontend-fir/idea-fir-low-level-api/testdata/diagnosticTraversalCounter/functionalType.kt");
+    }
+
+    @TestMetadata("initBlock.kt")
+    public void testInitBlock() throws Exception {
+        runTest("idea/idea-frontend-fir/idea-fir-low-level-api/testdata/diagnosticTraversalCounter/initBlock.kt");
+    }
+
+    @TestMetadata("lambda.kt")
+    public void testLambda() throws Exception {
+        runTest("idea/idea-frontend-fir/idea-fir-low-level-api/testdata/diagnosticTraversalCounter/lambda.kt");
+    }
+
+    @TestMetadata("localDeclarationsInAccessor.kt")
+    public void testLocalDeclarationsInAccessor() throws Exception {
+        runTest("idea/idea-frontend-fir/idea-fir-low-level-api/testdata/diagnosticTraversalCounter/localDeclarationsInAccessor.kt");
     }
 
     @TestMetadata("localFunctionWithImplicitType.kt")
@@ -59,6 +89,11 @@ public class DiagnosticTraversalCounterTestGenerated extends AbstractDiagnosticT
         runTest("idea/idea-frontend-fir/idea-fir-low-level-api/testdata/diagnosticTraversalCounter/memberProperties.kt");
     }
 
+    @TestMetadata("memberTypeAlias.kt")
+    public void testMemberTypeAlias() throws Exception {
+        runTest("idea/idea-frontend-fir/idea-fir-low-level-api/testdata/diagnosticTraversalCounter/memberTypeAlias.kt");
+    }
+
     @TestMetadata("multipleTopLevelClasses.kt")
     public void testMultipleTopLevelClasses() throws Exception {
         runTest("idea/idea-frontend-fir/idea-fir-low-level-api/testdata/diagnosticTraversalCounter/multipleTopLevelClasses.kt");
@@ -79,6 +114,16 @@ public class DiagnosticTraversalCounterTestGenerated extends AbstractDiagnosticT
         runTest("idea/idea-frontend-fir/idea-fir-low-level-api/testdata/diagnosticTraversalCounter/nestedClases.kt");
     }
 
+    @TestMetadata("nestedClasesWithFun.kt")
+    public void testNestedClasesWithFun() throws Exception {
+        runTest("idea/idea-frontend-fir/idea-fir-low-level-api/testdata/diagnosticTraversalCounter/nestedClasesWithFun.kt");
+    }
+
+    @TestMetadata("propertyAccessors.kt")
+    public void testPropertyAccessors() throws Exception {
+        runTest("idea/idea-frontend-fir/idea-fir-low-level-api/testdata/diagnosticTraversalCounter/propertyAccessors.kt");
+    }
+
     @TestMetadata("propertyWithGetterAndSetter.kt")
     public void testPropertyWithGetterAndSetter() throws Exception {
         runTest("idea/idea-frontend-fir/idea-fir-low-level-api/testdata/diagnosticTraversalCounter/propertyWithGetterAndSetter.kt");
@@ -87,5 +132,10 @@ public class DiagnosticTraversalCounterTestGenerated extends AbstractDiagnosticT
     @TestMetadata("secondaryConstructor.kt")
     public void testSecondaryConstructor() throws Exception {
         runTest("idea/idea-frontend-fir/idea-fir-low-level-api/testdata/diagnosticTraversalCounter/secondaryConstructor.kt");
+    }
+
+    @TestMetadata("typeAlias.kt")
+    public void testTypeAlias() throws Exception {
+        runTest("idea/idea-frontend-fir/idea-fir-low-level-api/testdata/diagnosticTraversalCounter/typeAlias.kt");
     }
 }

@@ -606,6 +606,17 @@ class DelegatedConstructorCallNode(
     }
 }
 
+class StringConcatenationCallNode(
+    owner: ControlFlowGraph,
+    override val fir: FirStringConcatenationCall,
+    level: Int,
+    id: Int
+) : CFGNode<FirStringConcatenationCall>(owner, level, id) {
+    override fun <R, D> accept(visitor: ControlFlowGraphVisitor<R, D>, data: D): R {
+        return visitor.visitStringConcatenationCallNode(this, data)
+    }
+}
+
 class ThrowExceptionNode(
     owner: ControlFlowGraph,
     override val fir: FirThrowExpression,
@@ -731,8 +742,5 @@ object FirStub : FirElement {
 
     override fun <D> transformChildren(transformer: FirTransformer<D>, data: D): FirElement {
         return this
-    }
-
-    override fun replaceSource(newSource: FirSourceElement?) {
     }
 }

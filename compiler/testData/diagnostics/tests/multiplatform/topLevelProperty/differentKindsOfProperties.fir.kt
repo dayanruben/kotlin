@@ -26,9 +26,9 @@ expect var customAccessorVar: String
     get() = "no"
     set(value) {}
 
-expect const val constVal: Int
+expect <!CONST_VAL_WITHOUT_INITIALIZER!>const<!> val constVal: Int
 
-expect lateinit var lateinitVar: String
+expect <!EXPECTED_LATEINIT_PROPERTY!>lateinit<!> var lateinitVar: String
 
 expect val delegated: String by <!EXPECTED_DELEGATED_PROPERTY!>Delegate<!>
 object Delegate { operator fun getValue(x: Any?, y: Any?): String = "" }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -12,18 +12,17 @@ package kotlin.text
  * Returns the numeric value of the decimal digit that this Char represents.
  * Throws an exception if this Char is not a valid decimal digit.
  *
- * A Char is considered to represent a decimal digit if the Char is one of the ASCII decimal digits '0' through '9'.
- * In this case, `this.code - '0'.code` is returned.
+ * A Char is considered to represent a decimal digit if [isDigit] is true for the Char.
+ * In this case, the Unicode decimal digit value of the character is returned.
  *
  * @sample samples.text.Chars.digitToInt
  */
-@ExperimentalStdlibApi
-@SinceKotlin("1.4")
+@SinceKotlin("1.5")
+@WasExperimental(ExperimentalStdlibApi::class)
 public fun Char.digitToInt(): Int {
-    if (this in '0'..'9') {
-        return this - '0'
+    return digitOf(this, 10).also {
+        if (it < 0) throw IllegalArgumentException("Char $this is not a decimal digit")
     }
-    throw IllegalArgumentException("Char $this is not a decimal digit")
 }
 
 /**
@@ -31,14 +30,14 @@ public fun Char.digitToInt(): Int {
  * Throws an exception if the [radix] is not in the range `2..36` or if this Char is not a valid digit in the specified [radix].
  *
  * A Char is considered to represent a digit in the specified [radix] if at least one of the following is true:
- *  - The Char is one of the ASCII decimal digits '0' through '9' and its [code] is less than `radix + '0'.code`. In this case, `this.code - '0'.code` is returned.
+ *  - [isDigit] is `true` for the Char and the Unicode decimal digit value of the character is less than the specified [radix]. In this case the decimal digit value is returned.
  *  - The Char is one of the uppercase Latin letters 'A' through 'Z' and its [code] is less than `radix + 'A'.code - 10`. In this case, `this.code - 'A'.code + 10` is returned.
  *  - The Char is one of the lowercase Latin letters 'a' through 'z' and its [code] is less than `radix + 'a'.code - 10`. In this case, `this.code - 'a'.code + 10` is returned.
  *
  * @sample samples.text.Chars.digitToInt
  */
-@ExperimentalStdlibApi
-@SinceKotlin("1.4")
+@SinceKotlin("1.5")
+@WasExperimental(ExperimentalStdlibApi::class)
 public fun Char.digitToInt(radix: Int): Int {
     return digitToIntOrNull(radix) ?: throw IllegalArgumentException("Char $this is not a digit in the given radix=$radix")
 }
@@ -47,18 +46,15 @@ public fun Char.digitToInt(radix: Int): Int {
  *
  * Returns the numeric value of the decimal digit that this Char represents, or `null` if this Char is not a valid decimal digit.
  *
- * A Char is considered to represent a decimal digit if the Char is one of the ASCII decimal digits '0' through '9'.
- * In this case, `this.code - '0'.code` is returned.
+ * A Char is considered to represent a decimal digit if [isDigit] is true for the Char.
+ * In this case, the Unicode decimal digit value of the character is returned.
  *
  * @sample samples.text.Chars.digitToIntOrNull
  */
-@ExperimentalStdlibApi
-@SinceKotlin("1.4")
+@SinceKotlin("1.5")
+@WasExperimental(ExperimentalStdlibApi::class)
 public fun Char.digitToIntOrNull(): Int? {
-    if (this in '0'..'9') {
-        return this - '0'
-    }
-    return null
+    return digitOf(this, 10).takeIf { it >= 0 }
 }
 
 /**
@@ -66,25 +62,17 @@ public fun Char.digitToIntOrNull(): Int? {
  * Throws an exception if the [radix] is not in the range `2..36`.
  *
  * A Char is considered to represent a digit in the specified [radix] if at least one of the following is true:
- *  - The Char is one of the ASCII decimal digits '0' through '9' and its [code] is less than `radix + '0'.code`. In this case, `this.code - '0'.code` is returned.
+ *  - [isDigit] is `true` for the Char and the Unicode decimal digit value of the character is less than the specified [radix]. In this case the decimal digit value is returned.
  *  - The Char is one of the uppercase Latin letters 'A' through 'Z' and its [code] is less than `radix + 'A'.code - 10`. In this case, `this.code - 'A'.code + 10` is returned.
  *  - The Char is one of the lowercase Latin letters 'a' through 'z' and its [code] is less than `radix + 'a'.code - 10`. In this case, `this.code - 'a'.code + 10` is returned.
  *
  * @sample samples.text.Chars.digitToIntOrNull
  */
-@ExperimentalStdlibApi
-@SinceKotlin("1.4")
+@SinceKotlin("1.5")
+@WasExperimental(ExperimentalStdlibApi::class)
 public fun Char.digitToIntOrNull(radix: Int): Int? {
-    if (radix !in 2..36) {
-        throw IllegalArgumentException("Invalid radix: $radix. Valid radix values are in range 2..36")
-    }
-    if (this in '0'..'9') {
-        val digit = this - '0'
-        return if (digit < radix) digit else null
-    }
-    val a = if (this <= 'Z') 'A' else 'a'
-    val digit = 10 + (this - a)
-    return if (digit in 10 until radix) digit else null
+    checkRadix(radix)
+    return digitOf(this, radix).takeIf { it >= 0 }
 }
 
 /**
@@ -95,8 +83,8 @@ public fun Char.digitToIntOrNull(radix: Int): Int? {
  *
  * @sample samples.text.Chars.digitToChar
  */
-@ExperimentalStdlibApi
-@SinceKotlin("1.4")
+@SinceKotlin("1.5")
+@WasExperimental(ExperimentalStdlibApi::class)
 public fun Int.digitToChar(): Char {
     if (this in 0..9) {
         return '0' + this
@@ -113,8 +101,8 @@ public fun Int.digitToChar(): Char {
  *
  * @sample samples.text.Chars.digitToChar
  */
-@ExperimentalStdlibApi
-@SinceKotlin("1.4")
+@SinceKotlin("1.5")
+@WasExperimental(ExperimentalStdlibApi::class)
 public fun Int.digitToChar(radix: Int): Char {
     if (radix !in 2..36) {
         throw IllegalArgumentException("Invalid radix: $radix. Valid radix values are in range 2..36")
@@ -132,6 +120,8 @@ public fun Int.digitToChar(radix: Int): Char {
 /**
  * Converts this character to lower case using Unicode mapping rules of the invariant locale.
  */
+@Deprecated("Use lowercaseChar() instead.", ReplaceWith("lowercaseChar()"))
+@DeprecatedSinceKotlin(warningSince = "1.5")
 public expect fun Char.toLowerCase(): Char
 
 /**
@@ -143,8 +133,8 @@ public expect fun Char.toLowerCase(): Char
  *
  * @sample samples.text.Chars.lowercase
  */
-@SinceKotlin("1.4")
-@ExperimentalStdlibApi
+@SinceKotlin("1.5")
+@WasExperimental(ExperimentalStdlibApi::class)
 public expect fun Char.lowercaseChar(): Char
 
 /**
@@ -157,13 +147,15 @@ public expect fun Char.lowercaseChar(): Char
  *
  * @sample samples.text.Chars.lowercase
  */
-@SinceKotlin("1.4")
-@ExperimentalStdlibApi
+@SinceKotlin("1.5")
+@WasExperimental(ExperimentalStdlibApi::class)
 public expect fun Char.lowercase(): String
 
 /**
  * Converts this character to upper case using Unicode mapping rules of the invariant locale.
  */
+@Deprecated("Use uppercaseChar() instead.", ReplaceWith("uppercaseChar()"))
+@DeprecatedSinceKotlin(warningSince = "1.5")
 public expect fun Char.toUpperCase(): Char
 
 /**
@@ -175,8 +167,8 @@ public expect fun Char.toUpperCase(): Char
  *
  * @sample samples.text.Chars.uppercase
  */
-@SinceKotlin("1.4")
-@ExperimentalStdlibApi
+@SinceKotlin("1.5")
+@WasExperimental(ExperimentalStdlibApi::class)
 public expect fun Char.uppercaseChar(): Char
 
 /**
@@ -189,8 +181,8 @@ public expect fun Char.uppercaseChar(): Char
  *
  * @sample samples.text.Chars.uppercase
  */
-@SinceKotlin("1.4")
-@ExperimentalStdlibApi
+@SinceKotlin("1.5")
+@WasExperimental(ExperimentalStdlibApi::class)
 public expect fun Char.uppercase(): String
 
 /**
@@ -203,7 +195,6 @@ public expect fun Char.uppercase(): String
  * @sample samples.text.Chars.titlecase
  */
 @SinceKotlin("1.5")
-@ExperimentalStdlibApi
 public expect fun Char.titlecaseChar(): Char
 
 /**
@@ -217,7 +208,6 @@ public expect fun Char.titlecaseChar(): Char
  * @sample samples.text.Chars.titlecase
  */
 @SinceKotlin("1.5")
-@ExperimentalStdlibApi
 public fun Char.titlecase(): String = titlecaseImpl()
 
 /**
@@ -240,14 +230,14 @@ public inline operator fun Char.plus(other: String): String = this.toString() + 
  *
  * @sample samples.text.Chars.equals
  */
-@OptIn(ExperimentalStdlibApi::class)
 public fun Char.equals(other: Char, ignoreCase: Boolean = false): Boolean {
     if (this == other) return true
     if (!ignoreCase) return false
 
-    if (this.uppercaseChar() == other.uppercaseChar()) return true
-    if (this.lowercaseChar() == other.lowercaseChar()) return true
-    return false
+    val thisUpper = this.uppercaseChar()
+    val otherUpper = other.uppercaseChar()
+
+    return thisUpper == otherUpper || thisUpper.lowercaseChar() == otherUpper.lowercaseChar()
 }
 
 /**
@@ -334,7 +324,8 @@ public expect fun Char.isTitleCase(): Boolean
 /**
  * Returns `true` if this character is an ISO control character.
  *
- * A character is considered to be an ISO control character if its [category] is [CharCategory.CONTROL].
+ * A character is considered to be an ISO control character if its [category] is [CharCategory.CONTROL],
+ * meaning the Char is in the range `'\u0000'..'\u001F'` or in the range `'\u007F'..'\u009F'`.
  *
  * @sample samples.text.Chars.isISOControl
  */

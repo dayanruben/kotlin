@@ -7,11 +7,11 @@ package org.jetbrains.kotlin.shortenRefs
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.AbstractImportsTest
-import org.jetbrains.kotlin.idea.frontend.api.analyze
+import org.jetbrains.kotlin.idea.frontend.api.analyse
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.uitls.IgnoreTests
+import org.jetbrains.kotlin.test.utils.IgnoreTests
 
 abstract class AbstractFirShortenRefsTest : AbstractImportsTest() {
     override val captureExceptions: Boolean = false
@@ -24,7 +24,7 @@ abstract class AbstractFirShortenRefsTest : AbstractImportsTest() {
 
         val shortenings = executeOnPooledThread {
             runReadAction {
-                analyze(file) {
+                analyse(file) {
                     collectPossibleReferenceShortenings(file, selection)
                 }
             }

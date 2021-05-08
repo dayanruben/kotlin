@@ -21,5 +21,7 @@ interface FirTypeParameterRef : FirElement {
 
     override fun <R, D> accept(visitor: FirVisitor<R, D>, data: D): R = visitor.visitTypeParameterRef(this, data)
 
-    override fun replaceSource(newSource: FirSourceElement?)
+    @Suppress("UNCHECKED_CAST")
+    override fun <E: FirElement, D> transform(transformer: FirTransformer<D>, data: D): E = 
+        transformer.transformTypeParameterRef(this, data) as E
 }

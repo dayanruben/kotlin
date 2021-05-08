@@ -1,3 +1,4 @@
+// FIR_IDE_IGNORE
 // SKIP_JAVAC
 // FILE: JavaClass.java
 public class JavaClass {
@@ -9,6 +10,6 @@ public class JavaClass {
 // FILE: main.kt
 fun foo() {
     JavaClass().foo(Any())
-    JavaClass().<!INAPPLICABLE_CANDIDATE!>bar<!>(Any())
+    JavaClass().bar(<!ARGUMENT_TYPE_MISMATCH!>Any()<!>)
     JavaClass().bar("")
 }

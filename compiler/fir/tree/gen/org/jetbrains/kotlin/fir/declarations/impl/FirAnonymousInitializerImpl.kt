@@ -22,8 +22,8 @@ import org.jetbrains.kotlin.fir.visitors.*
  */
 
 internal class FirAnonymousInitializerImpl(
-    override var source: FirSourceElement?,
-    override val session: FirSession,
+    override val source: FirSourceElement?,
+    override val declarationSiteSession: FirSession,
     override var resolvePhase: FirResolvePhase,
     override val origin: FirDeclarationOrigin,
     override val attributes: FirDeclarationAttributes,
@@ -42,13 +42,9 @@ internal class FirAnonymousInitializerImpl(
     }
 
     override fun <D> transformChildren(transformer: FirTransformer<D>, data: D): FirAnonymousInitializerImpl {
-        controlFlowGraphReference = controlFlowGraphReference?.transformSingle(transformer, data)
-        body = body?.transformSingle(transformer, data)
+        controlFlowGraphReference = controlFlowGraphReference?.transform(transformer, data)
+        body = body?.transform(transformer, data)
         return this
-    }
-
-    override fun replaceSource(newSource: FirSourceElement?) {
-        source = newSource
     }
 
     override fun replaceResolvePhase(newResolvePhase: FirResolvePhase) {

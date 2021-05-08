@@ -4,6 +4,6 @@ interface Tr
 interface G<T>
 
 fun test(tr: Tr?) {
-    val v = tr as <!WRONG_NUMBER_OF_TYPE_ARGUMENTS!>G<!>
-    <!INAPPLICABLE_CANDIDATE!>checkSubtype<!><G<*>>(v)
+    val v = tr as <!NO_TYPE_ARGUMENTS_ON_RHS!>G<!>
+    checkSubtype<G<*>>(<!ARGUMENT_TYPE_MISMATCH!>v<!>)
 }

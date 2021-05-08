@@ -33,17 +33,14 @@ internal object Android {
 
 class ClangArgs(private val configurables: Configurables) : Configurables by configurables {
 
-    private val targetArg = if (configurables is TargetableConfigurables)
-        configurables.targetArg
-    else null
-
     private val clangArgsSpecificForKonanSources
         get() = runtimeDefinitions.map { "-D$it" }
 
     private val binDir = when (HostManager.host) {
         KonanTarget.LINUX_X64 -> "$absoluteTargetToolchain/bin"
         KonanTarget.MINGW_X64 -> "$absoluteTargetToolchain/bin"
-        KonanTarget.MACOS_X64 -> "$absoluteTargetToolchain/usr/bin"
+        KonanTarget.MACOS_X64,
+        KonanTarget.MACOS_ARM64 -> "$absoluteTargetToolchain/usr/bin"
         else -> throw TargetSupportException("Unexpected host platform")
     }
     // TODO: Use buildList
@@ -52,8 +49,26 @@ class ClangArgs(private val configurables: Configurables) : Configurables by con
         if (configurables is GccConfigurables) {
             add(listOf("--gcc-toolchain=${configurables.absoluteGccToolchain}"))
         }
-        if (configurables is TargetableConfigurables) {
-            add(listOf("-target", configurables.targetArg!!))
+        if (configurables is AppleConfigurables) {
+            val osVersionMin = when (target) {
+                // Here we workaround Clang 8 limitation: macOS major version should be 10.
+                // So we compile runtime with version 10.16 and then override version in BitcodeCompiler.
+                // TODO: Fix with LLVM Update.
+                KonanTarget.MACOS_ARM64 -> "10.16"
+                else -> configurables.osVersionMin
+            }
+            val targetArg = targetTriple.copy(
+                    architecture = when (targetTriple.architecture) {
+                        // TODO: LLVM 8 doesn't support arm64_32.
+                        //  We can use armv7k because they are compatible at bitcode level.
+                        "arm64_32" -> "armv7k"
+                        else -> targetTriple.architecture
+                    },
+                    os = "${targetTriple.os}$osVersionMin"
+            )
+            add(listOf("-target", targetArg.toString()))
+        } else {
+            add(listOf("-target", configurables.targetTriple.toString()))
         }
         val hasCustomSysroot = configurables is ZephyrConfigurables
                 || configurables is WasmConfigurables
@@ -75,83 +90,14 @@ class ClangArgs(private val configurables: Configurables) : Configurables by con
         }
     }.flatten()
 
-    private val osVersionMin: String
-            get() {
-                require(configurables is AppleConfigurables)
-                return configurables.osVersionMin
-            }
-
     private val specificClangArgs: List<String> = when (target) {
-        KonanTarget.LINUX_X64, 
-        KonanTarget.LINUX_MIPS32, KonanTarget.LINUX_MIPSEL32,
-        KonanTarget.LINUX_ARM64,
-        KonanTarget.MINGW_X64, KonanTarget.MINGW_X86 -> emptyList()
-
         KonanTarget.LINUX_ARM32_HFP -> listOf(
                 "-mfpu=vfp", "-mfloat-abi=hard"
         )
 
-        KonanTarget.MACOS_X64 -> listOf(
-                "-mmacosx-version-min=$osVersionMin"
-        )
-
-        // Here we workaround Clang 8 limitation: macOS major version should be 10.
-        // So we compile runtime with version 10.16 and then override version in BitcodeCompiler.
-        // TODO: Fix with LLVM Update.
-        KonanTarget.MACOS_ARM64 -> listOf(
-                "-arch", "arm64",
-                "-mmacosx-version-min=10.16"
-        )
-
-        KonanTarget.IOS_ARM32 -> listOf(
-                "-stdlib=libc++",
-                "-arch", "armv7",
-                "-miphoneos-version-min=$osVersionMin"
-        )
-
-        KonanTarget.IOS_ARM64 -> listOf(
-                "-stdlib=libc++",
-                "-arch", "arm64",
-                "-miphoneos-version-min=$osVersionMin"
-        )
-
-        KonanTarget.IOS_X64 -> listOf(
-                "-stdlib=libc++",
-                "-miphoneos-version-min=$osVersionMin"
-        )
-
-        KonanTarget.TVOS_ARM64 -> listOf(
-                "-stdlib=libc++",
-                "-arch", "arm64",
-                "-mtvos-version-min=$osVersionMin"
-        )
-
-        KonanTarget.TVOS_X64 -> listOf(
-                "-stdlib=libc++",
-                "-mtvos-simulator-version-min=$osVersionMin"
-        )
-
-        KonanTarget.WATCHOS_ARM64,
-        KonanTarget.WATCHOS_ARM32 -> listOf(
-                "-stdlib=libc++",
-                "-arch", "armv7k",
-                "-mwatchos-version-min=$osVersionMin"
-        )
-
-        KonanTarget.WATCHOS_X86 -> listOf(
-                "-stdlib=libc++",
-                "-arch", "i386",
-                "-mwatchos-simulator-version-min=$osVersionMin"
-        )
-
-        KonanTarget.WATCHOS_X64 -> listOf(
-                "-stdlib=libc++",
-                "-mwatchos-simulator-version-min=$osVersionMin"
-        )
-
         KonanTarget.ANDROID_ARM32, KonanTarget.ANDROID_ARM64,
         KonanTarget.ANDROID_X86, KonanTarget.ANDROID_X64 -> {
-            val clangTarget = targetArg!!
+            val clangTarget = targetTriple.withoutVendor()
             val architectureDir = Android.architectureDirForTarget(target)
             val toolchainSysroot = "$absoluteTargetToolchain/sysroot"
             listOf(
@@ -194,6 +140,8 @@ class ClangArgs(private val configurables: Configurables) : Configurables by con
                 "-isystem$absoluteTargetSysRoot/include/libcxx",
                 "-isystem$absoluteTargetSysRoot/include/libc"
         ) + (configurables as ZephyrConfigurables).constructClangArgs()
+
+        else -> emptyList()
     }
 
     val clangPaths = listOf("$absoluteLlvmHome/bin", binDir)
@@ -208,23 +156,58 @@ class ClangArgs(private val configurables: Configurables) : Configurables by con
 
     val hostCompilerArgsForJni = listOf("", HostManager.jniHostPlatformIncludeDir).map { "-I$jdkDir/include/$it" }.toTypedArray()
 
-    val clangArgs = (commonClangArgs + specificClangArgs).toTypedArray()
+    /**
+     * Clang args for Objectice-C and plain C compilation.
+     */
+    val clangArgs: Array<String> = (commonClangArgs + specificClangArgs).toTypedArray()
+
+    /**
+     * Clang args for C++ compilation.
+     */
+    val clangXXArgs: Array<String> = clangArgs + when (configurables) {
+        is AppleConfigurables -> arrayOf(
+                "-stdlib=libc++",
+                // Starting from Xcode 12.5, platform SDKs contain C++ stdlib.
+                // It results in two c++ stdlib in search path (one from LLVM, another from SDK).
+                // We workaround this problem by explicitly specifying path to stdlib.
+                // TODO: Revise after LLVM update.
+                "-nostdinc++", "-isystem", "$absoluteLlvmHome/include/c++/v1"
+        )
+        else -> emptyArray()
+    }
 
     val clangArgsForKonanSources =
-            clangArgs + clangArgsSpecificForKonanSources
+            clangXXArgs + clangArgsSpecificForKonanSources
 
-    val targetLibclangArgs: List<String> =
+    private val libclangSpecificArgs =
             // libclang works not exactly the same way as the clang binary and
             // (in particular) uses different default header search path.
             // See e.g. http://lists.llvm.org/pipermail/cfe-dev/2013-November/033680.html
             // We workaround the problem with -isystem flag below.
-            listOf("-isystem", "$absoluteLlvmHome/lib/clang/$llvmVersion/include", *clangArgs)
+            // TODO: Revise after update to LLVM 10.
+            listOf("-isystem", "$absoluteLlvmHome/lib/clang/$llvmVersion/include")
+
+    /**
+     * libclang args for plain C and Objective-C.
+     *
+     * Note that it's different from [clangArgs].
+     */
+    val libclangArgs: List<String> =
+            libclangSpecificArgs + clangArgs
+
+    /**
+     * libclang args for C++.
+     *
+     * Note that it's different from [clangXXArgs].
+     */
+    val libclangXXArgs: List<String> =
+            libclangSpecificArgs + clangXXArgs
 
     private val targetClangCmd
             = listOf("${absoluteLlvmHome}/bin/clang") + clangArgs
 
     private val targetClangXXCmd
-            = listOf("${absoluteLlvmHome}/bin/clang++") + clangArgs
+            = listOf("${absoluteLlvmHome}/bin/clang++") + clangXXArgs
 
     private val targetArCmd
             = listOf("${absoluteLlvmHome}/bin/llvm-ar")
@@ -235,23 +218,5 @@ class ClangArgs(private val configurables: Configurables) : Configurables by con
     fun clangCXX(vararg userArgs: String) = targetClangXXCmd + userArgs.asList()
 
     fun llvmAr(vararg userArgs: String) = targetArCmd + userArgs.asList()
-
-    companion object {
-        @JvmStatic
-        fun filterGradleNativeSoftwareFlags(args: MutableList<String>) {
-            args.remove("/usr/include") // HACK: over gradle-4.4.
-            args.remove("-nostdinc") // HACK: over gradle-5.1.
-            when (HostManager.host) {
-                KonanTarget.LINUX_X64 -> args.remove("/usr/include/x86_64-linux-gnu")  // HACK: over gradle-4.4.
-                KonanTarget.MACOS_X64 -> {
-                    val indexToRemove = args.indexOf(args.find { it.contains("MacOSX.platform")})  // HACK: over gradle-4.7.
-                    if (indexToRemove != -1) {
-                        args.removeAt(indexToRemove - 1) // drop -I.
-                        args.removeAt(indexToRemove - 1) // drop /Application/Xcode.app/...
-                    }
-                }
-            }
-        }
-    }
 }
 

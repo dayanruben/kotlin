@@ -17,6 +17,7 @@
 package org.jetbrains.kotlin.cli.jvm.compiler
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.*
 import com.intellij.psi.PsiElementFinder
 import com.intellij.psi.PsiJavaModule
@@ -36,8 +37,7 @@ import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.checkKotlinPackageUsage
 import org.jetbrains.kotlin.cli.common.config.addKotlinSourceRoot
 import org.jetbrains.kotlin.cli.common.messages.AnalyzerWithCompilerReport
-import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity.OUTPUT
-import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity.WARNING
+import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity.*
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.common.messages.OutputMessageUtil
 import org.jetbrains.kotlin.cli.common.output.writeAll
@@ -57,12 +57,11 @@ import org.jetbrains.kotlin.fir.analysis.FirAnalyzerFacade
 import org.jetbrains.kotlin.fir.backend.jvm.FirJvmBackendClassResolver
 import org.jetbrains.kotlin.fir.backend.jvm.FirJvmBackendExtension
 import org.jetbrains.kotlin.fir.checkers.registerExtendedCommonCheckers
-import org.jetbrains.kotlin.fir.java.FirProjectSessionProvider
-import org.jetbrains.kotlin.fir.session.FirJvmModuleInfo
-import org.jetbrains.kotlin.fir.session.FirSessionFactory
+import org.jetbrains.kotlin.fir.createSessionWithDependencies
 import org.jetbrains.kotlin.ir.backend.jvm.jvmResolveLibraries
 import org.jetbrains.kotlin.javac.JavacWrapper
 import org.jetbrains.kotlin.load.kotlin.ModuleVisibilityManager
+import org.jetbrains.kotlin.load.kotlin.incremental.IncrementalPackagePartProvider
 import org.jetbrains.kotlin.modules.Module
 import org.jetbrains.kotlin.modules.TargetId
 import org.jetbrains.kotlin.name.FqName
@@ -305,38 +304,59 @@ object KotlinToJVMBytecodeCompiler {
         val project = environment.project
         val performanceManager = environment.configuration.get(CLIConfigurationKeys.PERF_MANAGER)
 
+        environment.messageCollector.report(
+            STRONG_WARNING,
+            "ATTENTION!\n This build uses in-dev FIR: \n  -Xuse-fir"
+        )
+
         PsiElementFinder.EP.getPoint(project).unregisterExtension(JavaElementFinder::class.java)
 
         val projectConfiguration = environment.configuration
         val localFileSystem = VirtualFileManager.getInstance().getFileSystem(StandardFileSystems.FILE_PROTOCOL)
         val outputs = newLinkedHashMapWithExpectedSize<Module, GenerationState>(chunk.size)
+        val targetIds = environment.configuration.get(JVMConfigurationKeys.MODULES)?.map(::TargetId)
+        val incrementalComponents = environment.configuration.get(JVMConfigurationKeys.INCREMENTAL_COMPILATION_COMPONENTS)
         for (module in chunk) {
             performanceManager?.notifyAnalysisStarted()
             ProgressIndicatorAndCompilationCanceledStatus.checkCanceled()
 
             val ktFiles = module.getSourceFiles(environment, localFileSystem, chunk.size > 1, buildFile)
             if (!checkKotlinPackageUsage(environment, ktFiles)) return false
+
+            val syntaxErrors = ktFiles.fold(false) { errorsFound, ktFile ->
+                AnalyzerWithCompilerReport.reportSyntaxErrors(ktFile, environment.messageCollector).isHasErrors or errorsFound
+            }
+
             val moduleConfiguration = projectConfiguration.applyModuleProperties(module, buildFile)
 
-            val scope = GlobalSearchScope.filesScope(project, ktFiles.map { it.virtualFile })
+            val sourceScope = GlobalSearchScope.filesScope(project, ktFiles.map { it.virtualFile })
                 .uniteWith(TopDownAnalyzerFacadeForJVM.AllJavaSourcesInProjectScope(project))
-            val provider = FirProjectSessionProvider()
 
-            val librariesModuleInfo = FirJvmModuleInfo.createForLibraries()
             val librariesScope = ProjectScope.getLibrariesScope(project)
-            FirSessionFactory.createLibrarySession(
-                librariesModuleInfo, provider, librariesScope,
-                project, environment.createPackagePartProvider(librariesScope)
-            )
 
-            val moduleInfo = FirJvmModuleInfo(module, listOf(librariesModuleInfo))
-            val session = FirSessionFactory.createJavaModuleBasedSession(moduleInfo, provider, scope, project) {
+            val languageVersionSettings = moduleConfiguration.languageVersionSettings
+            val session = createSessionWithDependencies(
+                module,
+                project,
+                languageVersionSettings,
+                sourceScope,
+                librariesScope,
+                lookupTracker = environment.configuration.get(CommonConfigurationKeys.LOOKUP_TRACKER),
+                getPackagePartProvider = { environment.createPackagePartProvider(it) },
+                getAdditionalModulePackagePartProvider = {
+                    if (targetIds == null || incrementalComponents == null) null
+                    else IncrementalPackagePartProvider(
+                        environment.createPackagePartProvider(it),
+                        targetIds.map(incrementalComponents::getIncrementalCache)
+                    )
+                }
+            ) {
                 if (extendedAnalysisMode) {
                     registerExtendedCommonCheckers()
                 }
             }
 
-            val firAnalyzerFacade = FirAnalyzerFacade(session, moduleConfiguration.languageVersionSettings, ktFiles)
+            val firAnalyzerFacade = FirAnalyzerFacade(session, languageVersionSettings, ktFiles)
 
             firAnalyzerFacade.runResolution()
             val firDiagnostics = firAnalyzerFacade.runCheckers().values.flatten()
@@ -346,7 +366,7 @@ object KotlinToJVMBytecodeCompiler {
             )
             performanceManager?.notifyAnalysisFinished()
 
-            if (firDiagnostics.any { it.severity == Severity.ERROR }) {
+            if (syntaxErrors || firDiagnostics.any { it.severity == Severity.ERROR }) {
                 return false
             }
 
@@ -412,6 +432,9 @@ object KotlinToJVMBytecodeCompiler {
             performanceManager?.notifyGenerationFinished()
             ProgressIndicatorAndCompilationCanceledStatus.checkCanceled()
             outputs[module] = generationState
+
+            PsiElementFinder.EP.getPoint(project).unregisterExtension(JavaElementFinder::class.java)
+            Disposer.dispose(environment.project)
         }
 
         val mainClassFqName: FqName? =

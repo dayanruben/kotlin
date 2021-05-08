@@ -88,9 +88,11 @@ import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor;
 import org.jetbrains.kotlin.types.*;
 import org.jetbrains.kotlin.types.checker.ClassicTypeSystemContextImpl;
 import org.jetbrains.kotlin.types.expressions.DoubleColonLHS;
+import org.jetbrains.kotlin.types.model.KotlinTypeMarker;
 import org.jetbrains.kotlin.types.model.TypeParameterMarker;
 import org.jetbrains.kotlin.types.typesApproximation.CapturedTypeApproximationKt;
 import org.jetbrains.kotlin.util.OperatorNameConventions;
+import org.jetbrains.kotlin.backend.common.SamType;
 import org.jetbrains.org.objectweb.asm.Label;
 import org.jetbrains.org.objectweb.asm.MethodVisitor;
 import org.jetbrains.org.objectweb.asm.Opcodes;
@@ -263,13 +265,23 @@ public class ExpressionCodegen extends KtVisitor<StackValue, StackValue> impleme
         );
     }
 
-    private static void addReifiedParametersFromSignature(@NotNull MemberCodegen member, @NotNull ClassDescriptor descriptor) {
+    private static void addReifiedParametersFromSignature(@NotNull MemberCodegen<?> member, @NotNull ClassDescriptor descriptor) {
         for (KotlinType type : descriptor.getTypeConstructor().getSupertypes()) {
-            for (TypeProjection supertypeArgument : type.getArguments()) {
-                TypeParameterDescriptor parameterDescriptor = TypeUtils.getTypeParameterDescriptorOrNull(supertypeArgument.getType());
-                if (parameterDescriptor != null && parameterDescriptor.isReified()) {
+            processTypeArguments(member, type);
+        }
+    }
+
+    private static void processTypeArguments(@NotNull MemberCodegen<?> member, KotlinType type) {
+        for (TypeProjection supertypeArgument : type.getArguments()) {
+            if (supertypeArgument.isStarProjection()) continue;
+
+            TypeParameterDescriptor parameterDescriptor = TypeUtils.getTypeParameterDescriptorOrNull(supertypeArgument.getType());
+            if (parameterDescriptor != null) {
+                if (parameterDescriptor.isReified()) {
                     member.getReifiedTypeParametersUsages().addUsedReifiedParameter(parameterDescriptor.getName().asString());
                 }
+            } else {
+                processTypeArguments(member, supertypeArgument.getType());
             }
         }
     }
@@ -3007,7 +3019,7 @@ public class ExpressionCodegen extends KtVisitor<StackValue, StackValue> impleme
     @NotNull
     private KotlinType approximateCapturedType(@NotNull KotlinType type) {
         if (state.getLanguageVersionSettings().supportsFeature(LanguageFeature.NewInference)) {
-            TypeApproximator approximator = new TypeApproximator(state.getModule().getBuiltIns());
+            TypeApproximator approximator = new TypeApproximator(state.getModule().getBuiltIns(), state.getLanguageVersionSettings());
 
             KotlinType approximatedType =
                     TypeUtils.contains(type, (containedType) -> CapturedTypeConstructorKt.isCaptured(containedType)) ?
@@ -5531,5 +5543,12 @@ The "returned" value of try expression with no finally is either the last expres
         if (typeParameterDescriptor.getContainingDeclaration() != context.getContextDescriptor()) {
             parentCodegen.getReifiedTypeParametersUsages().addUsedReifiedParameter(typeParameterDescriptor.getName().asString());
         }
+    }
+
+    @Override
+    public void putReifiedOperationMarkerIfTypeIsReifiedParameter(
+            @NotNull KotlinTypeMarker type, @NotNull ReifiedTypeInliner.OperationKind operationKind
+    ) {
+        BaseExpressionCodegen.DefaultImpls.putReifiedOperationMarkerIfTypeIsReifiedParameter(this, type, operationKind);
     }
 }

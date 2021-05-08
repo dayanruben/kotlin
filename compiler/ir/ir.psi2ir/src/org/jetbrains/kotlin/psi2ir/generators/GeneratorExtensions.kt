@@ -10,10 +10,12 @@ import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.ir.expressions.IrDelegatingConstructorCall
+import org.jetbrains.kotlin.ir.symbols.IrScriptSymbol
 import org.jetbrains.kotlin.ir.util.StubGeneratorExtensions
 import org.jetbrains.kotlin.psi.KtPureClassOrObject
 import org.jetbrains.kotlin.resolve.scopes.MemberScope
 import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.backend.common.SamTypeFactory
 
 open class GeneratorExtensions : StubGeneratorExtensions() {
     open val samConversion: SamConversion
@@ -22,7 +24,8 @@ open class GeneratorExtensions : StubGeneratorExtensions() {
     open class SamConversion {
         open fun isPlatformSamType(type: KotlinType): Boolean = false
 
-        open fun getSamTypeForValueParameter(valueParameter: ValueParameterDescriptor): KotlinType? = null
+        open fun getSamTypeForValueParameter(valueParameter: ValueParameterDescriptor): KotlinType? =
+            SamTypeFactory.INSTANCE.createByValueParameter(valueParameter)?.type
 
         companion object Instance : SamConversion()
     }
@@ -39,4 +42,6 @@ open class GeneratorExtensions : StubGeneratorExtensions() {
 
     open val shouldPreventDeprecatedIntegerValueTypeLiteralConversion: Boolean
         get() = false
+
+    open fun getPreviousScripts(): List<IrScriptSymbol>? = null
 }
