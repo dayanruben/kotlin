@@ -47,6 +47,7 @@ import org.jetbrains.kotlin.idea.codeInsight.moveUpDown.AbstractMoveStatementTes
 import org.jetbrains.kotlin.idea.codeInsight.postfix.AbstractPostfixTemplateProviderTest
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.AbstractSurroundWithTest
 import org.jetbrains.kotlin.idea.codeInsight.unwrap.AbstractUnwrapRemoveTest
+import org.jetbrains.kotlin.idea.completion.AbstractFirKeywordCompletionTest
 import org.jetbrains.kotlin.idea.completion.AbstractHighLevelJvmBasicCompletionTest
 import org.jetbrains.kotlin.idea.completion.AbstractHighLevelMultiFileJvmBasicCompletionTest
 import org.jetbrains.kotlin.idea.completion.test.*
@@ -109,10 +110,7 @@ import org.jetbrains.kotlin.idea.highlighter.*
 import org.jetbrains.kotlin.idea.imports.AbstractJsOptimizeImportsTest
 import org.jetbrains.kotlin.idea.imports.AbstractJvmOptimizeImportsTest
 import org.jetbrains.kotlin.idea.index.AbstractKotlinTypeAliasByExpansionShortNameIndexTest
-import org.jetbrains.kotlin.idea.inspections.AbstractHLInspectionTest
-import org.jetbrains.kotlin.idea.inspections.AbstractHLLocalInspectionTest
-import org.jetbrains.kotlin.idea.inspections.AbstractLocalInspectionTest
-import org.jetbrains.kotlin.idea.inspections.AbstractMultiFileLocalInspectionTest
+import org.jetbrains.kotlin.idea.inspections.*
 import org.jetbrains.kotlin.idea.intentions.*
 import org.jetbrains.kotlin.idea.intentions.declarations.AbstractJoinLinesTest
 import org.jetbrains.kotlin.idea.internal.AbstractBytecodeToolWindowTest
@@ -124,10 +122,7 @@ import org.jetbrains.kotlin.idea.navigation.*
 import org.jetbrains.kotlin.idea.navigationToolbar.AbstractKotlinNavBarTest
 import org.jetbrains.kotlin.idea.parameterInfo.AbstractParameterInfoTest
 import org.jetbrains.kotlin.idea.perf.*
-import org.jetbrains.kotlin.idea.quickfix.AbstractHighLevelQuickFixTest
-import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixMultiFileTest
-import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixMultiModuleTest
-import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixTest
+import org.jetbrains.kotlin.idea.quickfix.*
 import org.jetbrains.kotlin.idea.refactoring.AbstractNameSuggestionProviderTest
 import org.jetbrains.kotlin.idea.refactoring.copy.AbstractCopyTest
 import org.jetbrains.kotlin.idea.refactoring.copy.AbstractMultiModuleCopyTest
@@ -1180,6 +1175,11 @@ fun main(args: Array<String>) {
                 model("quickfix/variables/changeMutability", pattern = pattern, filenameStartsLowerCase = true)
                 model("quickfix/addInitializer", pattern = pattern, filenameStartsLowerCase = true)
                 model("quickfix/addPropertyAccessors", pattern = pattern, filenameStartsLowerCase = true)
+                model("quickfix/when", pattern = pattern, filenameStartsLowerCase = true)
+            }
+
+            testClass<AbstractHighLevelQuickFixMultiFileTest> {
+                model("quickfix/autoImports", pattern = """^(\w+)\.((before\.Main\.\w+))$""", testMethod = "doTestWithExtraFile")
             }
 
             testClass<AbstractHLInspectionTest> {
@@ -1216,12 +1216,20 @@ fun main(args: Array<String>) {
                 model("handlers/basic", pattern = KT_WITHOUT_DOTS_IN_NAME)
             }
 
+            testClass<AbstractFirKeywordCompletionHandlerTest> {
+                model("handlers/keywords", pattern = KT_WITHOUT_DOTS_IN_NAME)
+            }
+
             testClass<AbstractHighLevelWeigherTest> {
                 model("weighers/basic", pattern = KT_OR_KTS_WITHOUT_DOTS_IN_NAME)
             }
 
             testClass<AbstractHighLevelMultiFileJvmBasicCompletionTest> {
                 model("basic/multifile", extension = null, recursive = false)
+            }
+
+            testClass<AbstractFirKeywordCompletionTest> {
+                model("keywords", recursive = false)
             }
         }
 
@@ -1243,6 +1251,13 @@ fun main(args: Array<String>) {
 
             testClass<AbstractKotlinFindUsagesWithStdlibFirTest> {
                 model("stdlibUsages", pattern = """^(.+)\.0\.kt$""")
+            }
+        }
+
+        testGroup("idea/idea-fir-fe10-binding/tests", "idea") {
+            testClass<AbstractFe10BindingIntentionTest> {
+                val pattern = "^([\\w\\-_]+)\\.(kt|kts)$"
+                model("testData/intentions/conventionNameCalls", pattern = pattern)
             }
         }
 

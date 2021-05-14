@@ -120,12 +120,18 @@ object FirErrors {
     val RECURSION_IN_SUPERTYPES by error0<PsiElement>()
     val NOT_A_SUPERTYPE by error0<PsiElement>()
     val SUPERCLASS_NOT_ACCESSIBLE_FROM_INTERFACE by error0<PsiElement>()
-    val QUALIFIED_SUPERTYPE_EXTENDED_BY_OTHER_SUPERTYPE by error1<PsiElement, FirClass<*>>()
-    val SUPERTYPE_INITIALIZED_IN_INTERFACE by error0<PsiElement>()
-    val INTERFACE_WITH_SUPERCLASS by error0<PsiElement>()
-    val CLASS_IN_SUPERTYPE_FOR_ENUM by error0<PsiElement>()
-    val SEALED_SUPERTYPE by error0<PsiElement>()
-    val SEALED_SUPERTYPE_IN_LOCAL_CLASS by error0<PsiElement>()
+    val QUALIFIED_SUPERTYPE_EXTENDED_BY_OTHER_SUPERTYPE by error1<KtTypeReference, FirClass<*>>()
+    val SUPERTYPE_INITIALIZED_IN_INTERFACE by error0<KtTypeReference>()
+    val INTERFACE_WITH_SUPERCLASS by error0<KtTypeReference>()
+    val FINAL_SUPERTYPE by error0<KtTypeReference>()
+    val SUPERTYPE_IS_EXTENSION_FUNCTION_TYPE by error0<KtTypeReference>()
+    val SINGLETON_IN_SUPERTYPE by error0<KtTypeReference>()
+    val NULLABLE_SUPERTYPE by error0<KtTypeReference>(SourceElementPositioningStrategies.QUESTION_MARK_BY_TYPE)
+    val MANY_CLASSES_IN_SUPERTYPE_LIST by error0<KtTypeReference>()
+    val SUPERTYPE_APPEARS_TWICE by error0<KtTypeReference>()
+    val CLASS_IN_SUPERTYPE_FOR_ENUM by error0<KtTypeReference>()
+    val SEALED_SUPERTYPE by error0<KtTypeReference>()
+    val SEALED_SUPERTYPE_IN_LOCAL_CLASS by error0<KtTypeReference>()
     val SUPERTYPE_NOT_A_CLASS_OR_INTERFACE by error1<KtElement, String>()
 
     // Constructor problems
@@ -161,6 +167,13 @@ object FirErrors {
     val VAR_ANNOTATION_PARAMETER by error0<KtParameter>(SourceElementPositioningStrategies.VAL_OR_VAR_NODE)
     val SUPERTYPES_FOR_ANNOTATION_CLASS by error0<KtClass>(SourceElementPositioningStrategies.SUPERTYPES_LIST)
     val ANNOTATION_USED_AS_ANNOTATION_ARGUMENT by error0<KtAnnotation>()
+    val ILLEGAL_KOTLIN_VERSION_STRING_VALUE by error0<KtExpression>()
+    val NEWER_VERSION_IN_SINCE_KOTLIN by warning1<KtExpression, String>()
+    val DEPRECATED_SINCE_KOTLIN_WITH_UNORDERED_VERSIONS by error0<PsiElement>()
+    val DEPRECATED_SINCE_KOTLIN_WITHOUT_ARGUMENTS by error0<PsiElement>()
+    val DEPRECATED_SINCE_KOTLIN_WITHOUT_DEPRECATED by error0<PsiElement>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
+    val DEPRECATED_SINCE_KOTLIN_WITH_DEPRECATED_LEVEL by error0<PsiElement>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
+    val DEPRECATED_SINCE_KOTLIN_OUTSIDE_KOTLIN_SUBPACKAGE by error0<PsiElement>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
 
     // Exposed visibility
     val EXPOSED_TYPEALIAS_EXPANDED_TYPE by error3<KtNamedDeclaration, EffectiveVisibility, FirMemberDeclaration, EffectiveVisibility>(SourceElementPositioningStrategies.DECLARATION_NAME)
@@ -353,7 +366,10 @@ object FirErrors {
     val WRONG_SETTER_PARAMETER_TYPE by error2<KtTypeReference, ConeKotlinType, ConeKotlinType>()
     val INITIALIZER_TYPE_MISMATCH by error2<KtProperty, ConeKotlinType, ConeKotlinType>(SourceElementPositioningStrategies.ASSIGNMENT_VALUE)
     val GETTER_VISIBILITY_DIFFERS_FROM_PROPERTY_VISIBILITY by error0<KtModifierListOwner>(SourceElementPositioningStrategies.VISIBILITY_MODIFIER)
-    val WRONG_SETTER_RETURN_TYPE by error0<KtProperty>()
+    val SETTER_VISIBILITY_INCONSISTENT_WITH_PROPERTY_VISIBILITY by error0<KtModifierListOwner>(SourceElementPositioningStrategies.VISIBILITY_MODIFIER)
+    val WRONG_SETTER_RETURN_TYPE by error0<KtTypeReference>()
+    val WRONG_GETTER_RETURN_TYPE by error2<KtTypeReference, ConeKotlinType, ConeKotlinType>()
+    val ACCESSOR_FOR_DELEGATED_PROPERTY by error0<KtPropertyAccessor>()
 
     // Multi-platform projects
     val EXPECTED_DECLARATION_WITH_BODY by error0<KtDeclaration>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE)
@@ -370,6 +386,7 @@ object FirErrors {
 
     // Control flow diagnostics
     val UNINITIALIZED_VARIABLE by error1<KtSimpleNameExpression, FirPropertySymbol>()
+    val UNINITIALIZED_PARAMETER by error1<KtSimpleNameExpression, FirVariableSymbol<FirValueParameter>>()
     val UNINITIALIZED_ENUM_ENTRY by error1<KtSimpleNameExpression, FirVariableSymbol<FirEnumEntry>>()
     val UNINITIALIZED_ENUM_COMPANION by error1<KtSimpleNameExpression, FirRegularClassSymbol>(SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED)
     val VAL_REASSIGNMENT by error1<KtExpression, FirVariableSymbol<*>>()

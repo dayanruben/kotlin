@@ -501,6 +501,15 @@ object LightTreePositioningStrategies {
             if (node.tokenType == KtNodeTypes.PROPERTY_DELEGATE) {
                 return markElement(tree.findExpressionDeep(node) ?: node, startOffset, endOffset, tree, node)
             }
+            if (node.tokenType == KtNodeTypes.ANNOTATION_ENTRY) {
+                return markElement(
+                    tree.findDescendantByType(node, KtNodeTypes.CONSTRUCTOR_CALLEE) ?: node,
+                    startOffset,
+                    endOffset,
+                    tree,
+                    node
+                )
+            }
             if (node.tokenType in nodeTypesWithOperation) {
                 return markElement(tree.operationReference(node) ?: node, startOffset, endOffset, tree, node)
             }
@@ -675,6 +684,26 @@ object LightTreePositioningStrategies {
                 tree.collectDescendantsOfType(node, KtTokens.IDENTIFIER) { descendant -> descendant.toString().all { it == '_' } }
             if (descendants.isNotEmpty())
                 return descendants.map { markSingleElement(it, it, startOffset, endOffset, tree, node) }
+            return super.mark(node, startOffset, endOffset, tree)
+        }
+    }
+
+    val QUESTION_MARK_BY_TYPE: LightTreePositioningStrategy = object : LightTreePositioningStrategy() {
+        override fun mark(
+            node: LighterASTNode,
+            startOffset: Int,
+            endOffset: Int,
+            tree: FlyweightCapableTreeStructure<LighterASTNode>
+        ): List<TextRange> {
+            if (node.tokenType == KtNodeTypes.TYPE_REFERENCE) {
+                val typeElement = tree.findChildByType(node, KtNodeTypes.NULLABLE_TYPE)
+                if (typeElement != null) {
+                    val question = tree.findChildByType(typeElement, KtTokens.QUEST)
+                    if (question != null) {
+                        return markElement(question, startOffset, endOffset, tree, node)
+                    }
+                }
+            }
             return super.mark(node, startOffset, endOffset, tree)
         }
     }

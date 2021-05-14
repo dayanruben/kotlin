@@ -28,7 +28,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath("org.jetbrains.kotlin:kotlin-build-gradle-plugin:0.0.27")
+        classpath("org.jetbrains.kotlin:kotlin-build-gradle-plugin:0.0.28")
     }
 }
 
@@ -344,6 +344,7 @@ include ":compiler:test-infrastructure",
 include ":idea:idea-frontend-fir:idea-fir-low-level-api"
 include ":idea:idea-frontend-fir:idea-frontend-fir-generator"
 include ":idea:idea-fir-performance-tests"
+include ":idea:idea-fir-fe10-binding"
 
 include ":plugins:parcelize:parcelize-compiler",
         ":plugins:parcelize:parcelize-ide",
@@ -358,8 +359,10 @@ include ":prepare:ide-plugin-dependencies:android-extensions-compiler-plugin-for
         ":prepare:ide-plugin-dependencies:allopen-compiler-plugin-for-ide",
         ":prepare:ide-plugin-dependencies:allopen-compiler-plugin-tests-for-ide",
         ":prepare:ide-plugin-dependencies:incremental-compilation-impl-tests-for-ide",
+        ":prepare:ide-plugin-dependencies:js-ir-runtime-for-ide",
         ":prepare:ide-plugin-dependencies:kotlin-build-common-tests-for-ide",
         ":prepare:ide-plugin-dependencies:kotlin-compiler-for-ide",
+        ":prepare:ide-plugin-dependencies:kotlin-compiler-cli-for-ide",
         ":prepare:ide-plugin-dependencies:kotlin-dist-for-ide",
         ":prepare:ide-plugin-dependencies:kotlin-gradle-statistics-for-ide",
         ":prepare:ide-plugin-dependencies:kotlinx-serialization-compiler-plugin-for-ide",
@@ -368,7 +371,8 @@ include ":prepare:ide-plugin-dependencies:android-extensions-compiler-plugin-for
         ":prepare:ide-plugin-dependencies:parcelize-compiler-plugin-for-ide",
         ":prepare:ide-plugin-dependencies:lombok-compiler-plugin-for-ide",
         ":prepare:ide-plugin-dependencies:tests-common-tests-for-ide",
-        ":prepare:ide-plugin-dependencies:compiler-components-for-jps"
+        ":prepare:ide-plugin-dependencies:compiler-components-for-jps",
+        ":prepare:ide-plugin-dependencies:kotlin-compiler-tests-for-ide"
 
 if (buildProperties.includeCidrPlugins) {
     logger.info("Including CIDR modules in settings.gradle")

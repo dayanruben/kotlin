@@ -591,6 +591,17 @@ object PositioningStrategies {
     }
 
     @JvmField
+    val QUESTION_MARK_BY_TYPE: PositioningStrategy<KtTypeReference> = object : PositioningStrategy<KtTypeReference>() {
+        override fun mark(element: KtTypeReference): List<TextRange> {
+            val typeElement = element.typeElement
+            if (typeElement is KtNullableType) {
+                return markNode(typeElement.questionMarkNode)
+            }
+            return super.mark(element)
+        }
+    }
+
+    @JvmField
     val CALL_EXPRESSION: PositioningStrategy<PsiElement> = object : PositioningStrategy<PsiElement>() {
         override fun mark(element: PsiElement): List<TextRange> {
             if (element is KtCallExpression) {
@@ -885,6 +896,7 @@ object PositioningStrategies {
                 is KtSuperTypeCallEntry -> element.calleeExpression
                 is KtOperationExpression -> element.operationReference
                 is KtWhenConditionInRange -> element.operationReference
+                is KtAnnotationEntry -> element.calleeExpression ?: element
                 else -> element
             }
             while (locateReferencedName && result is KtParenthesizedExpression) {

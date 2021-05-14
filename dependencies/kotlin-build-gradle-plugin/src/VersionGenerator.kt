@@ -76,7 +76,7 @@ open class VersionGenerator: DefaultTask() {
     open val meta = (project.findProperty("konanMetaVersion") as? String ?: kotlinNativeProperties["konanMetaVersion"])?.let{ MetaVersion.valueOf(it.toString().toUpperCase()) } ?: MetaVersion.DEV
 
     private val versionPattern = Pattern.compile(
-        "^(\\d+)\\.(\\d+)(?:\\.(\\d+))?(?:-M(\\p{Digit}))?(?:-(\\p{Alpha}\\p{Alnum}*))?(?:-(\\d+))?$"
+        "^(\\d+)\\.(\\d+)(?:\\.(\\d+))?(?:-(\\p{Alpha}\\p{Alnum}*))?(?:-(\\d+))?$"
     )
 
     fun defaultVersionFileLocation() {
@@ -89,13 +89,12 @@ open class VersionGenerator: DefaultTask() {
     @TaskAction
     open fun generateVersion() {
         val matcher = versionPattern.matcher(konanVersion)
-        require(matcher.matches()) { "Cannot parse Kotlin/Native version: \$konanVersion" }
+        require(matcher.matches()) { "Cannot parse Kotlin/Native version: $konanVersion" }
         val major = matcher.group(1).toInt()
         val minor = matcher.group(2).toInt()
         val maintenanceStr = matcher.group(3)
         val maintenance = maintenanceStr?.toInt() ?: 0
-        val milestoneStr = matcher.group(4)
-        val milestone = milestoneStr?.toInt() ?: -1
+        val milestone = -1
         project.logger.info("BUILD_NUMBER: $buildNumber")
         var build = -1
         if (buildNumber != null) {
@@ -105,8 +104,6 @@ open class VersionGenerator: DefaultTask() {
 
         val versionObject = CompilerVersionImpl(meta, major, minor, maintenance, milestone, build)
         versionObject.serialize()
-
-
     }
 
     private fun CompilerVersion.serialize() {

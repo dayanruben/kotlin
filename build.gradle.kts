@@ -30,7 +30,7 @@ buildscript {
     dependencies {
         bootstrapCompilerClasspath(kotlin("compiler-embeddable", bootstrapKotlinVersion))
 
-        classpath("org.jetbrains.kotlin:kotlin-build-gradle-plugin:0.0.27")
+        classpath("org.jetbrains.kotlin:kotlin-build-gradle-plugin:0.0.28")
         classpath(kotlin("gradle-plugin", bootstrapKotlinVersion))
         classpath(kotlin("serialization", bootstrapKotlinVersion))
         classpath("org.jetbrains.dokka:dokka-gradle-plugin:0.9.17")
@@ -335,6 +335,7 @@ extra["tasksWithWarnings"] = listOf(
     ":kotlin-stdlib:compileTestKotlin",
     ":kotlin-stdlib-jdk7:compileTestKotlin",
     ":kotlin-stdlib-jdk8:compileTestKotlin",
+    ":plugins:uast-kotlin-base:compileKotlin",
     ":plugins:uast-kotlin:compileKotlin",
     ":plugins:uast-kotlin:compileTestKotlin",
     ":plugins:uast-kotlin-fir:compileKotlin",
@@ -850,7 +851,8 @@ tasks {
             ":idea:idea-frontend-api:test",
             ":idea:idea-frontend-fir:test",
             ":idea:idea-frontend-fir:idea-fir-low-level-api:test",
-            ":plugins:uast-kotlin-fir:test"
+            ":plugins:uast-kotlin-fir:test",
+            ":idea:idea-fir-fe10-binding:test"
         )
     }
 
@@ -954,33 +956,38 @@ tasks {
 
     register("publishIdeArtifacts") {
         idePluginDependency {
-            dependsOn(
-                ":prepare:ide-plugin-dependencies:android-extensions-compiler-plugin-for-ide:publish",
-                ":prepare:ide-plugin-dependencies:allopen-compiler-plugin-for-ide:publish",
-                ":prepare:ide-plugin-dependencies:incremental-compilation-impl-tests-for-ide:publish",
-                ":prepare:ide-plugin-dependencies:kotlin-build-common-tests-for-ide:publish",
-                ":prepare:ide-plugin-dependencies:kotlin-compiler-for-ide:publish",
-                ":prepare:ide-plugin-dependencies:kotlin-gradle-statistics-for-ide:publish",
-                ":prepare:ide-plugin-dependencies:kotlinx-serialization-compiler-plugin-for-ide:publish",
-                ":prepare:ide-plugin-dependencies:noarg-compiler-plugin-for-ide:publish",
-                ":prepare:ide-plugin-dependencies:sam-with-receiver-compiler-plugin-for-ide:publish",
-                ":prepare:ide-plugin-dependencies:compiler-components-for-jps:publish",
-                ":prepare:ide-plugin-dependencies:parcelize-compiler-plugin-for-ide:publish",
-                ":prepare:ide-plugin-dependencies:lombok-compiler-plugin-for-ide:publish",
-                ":kotlin-script-runtime:publish",
-                ":kotlin-script-util:publish",
-                ":kotlin-scripting-common:publish",
-                ":kotlin-scripting-jvm:publish",
-                ":kotlin-scripting-compiler:publish",
-                ":kotlin-scripting-compiler-impl:publish",
-                ":kotlin-android-extensions-runtime:publish",
-                ":kotlin-stdlib-common:publish",
-                ":kotlin-stdlib:publish",
-                ":kotlin-stdlib-jdk7:publish",
-                ":kotlin-stdlib-jdk8:publish",
-                ":kotlin-reflect:publish",
-                ":kotlin-main-kts:publish"
+            val projectsToPublish = listOf(
+                ":prepare:ide-plugin-dependencies:android-extensions-compiler-plugin-for-ide",
+                ":prepare:ide-plugin-dependencies:allopen-compiler-plugin-for-ide",
+                ":prepare:ide-plugin-dependencies:incremental-compilation-impl-tests-for-ide",
+                ":prepare:ide-plugin-dependencies:js-ir-runtime-for-ide",
+                ":prepare:ide-plugin-dependencies:kotlin-build-common-tests-for-ide",
+                ":prepare:ide-plugin-dependencies:kotlin-compiler-for-ide",
+                ":prepare:ide-plugin-dependencies:kotlin-compiler-cli-for-ide",
+                ":prepare:ide-plugin-dependencies:kotlin-gradle-statistics-for-ide",
+                ":prepare:ide-plugin-dependencies:kotlinx-serialization-compiler-plugin-for-ide",
+                ":prepare:ide-plugin-dependencies:noarg-compiler-plugin-for-ide",
+                ":prepare:ide-plugin-dependencies:sam-with-receiver-compiler-plugin-for-ide",
+                ":prepare:ide-plugin-dependencies:compiler-components-for-jps",
+                ":prepare:ide-plugin-dependencies:parcelize-compiler-plugin-for-ide",
+                ":prepare:ide-plugin-dependencies:lombok-compiler-plugin-for-ide",
+                ":prepare:ide-plugin-dependencies:kotlin-compiler-tests-for-ide",
+                ":kotlin-script-runtime",
+                ":kotlin-script-util",
+                ":kotlin-scripting-common",
+                ":kotlin-scripting-jvm",
+                ":kotlin-scripting-compiler",
+                ":kotlin-scripting-compiler-impl",
+                ":kotlin-android-extensions-runtime",
+                ":kotlin-stdlib-common",
+                ":kotlin-stdlib",
+                ":kotlin-stdlib-jdk7",
+                ":kotlin-stdlib-jdk8",
+                ":kotlin-reflect",
+                ":kotlin-main-kts"
             )
+
+            dependsOn(projectsToPublish.map { "$it:publish" })
         }
     }
 }

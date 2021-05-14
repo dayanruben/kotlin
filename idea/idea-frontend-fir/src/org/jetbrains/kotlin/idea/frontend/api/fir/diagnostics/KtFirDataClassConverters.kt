@@ -308,6 +308,42 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirErrors.FINAL_SUPERTYPE) { firDiagnostic ->
+        FinalSupertypeImpl(
+            firDiagnostic as FirPsiDiagnostic<*>,
+            token,
+        )
+    }
+    add(FirErrors.SUPERTYPE_IS_EXTENSION_FUNCTION_TYPE) { firDiagnostic ->
+        SupertypeIsExtensionFunctionTypeImpl(
+            firDiagnostic as FirPsiDiagnostic<*>,
+            token,
+        )
+    }
+    add(FirErrors.SINGLETON_IN_SUPERTYPE) { firDiagnostic ->
+        SingletonInSupertypeImpl(
+            firDiagnostic as FirPsiDiagnostic<*>,
+            token,
+        )
+    }
+    add(FirErrors.NULLABLE_SUPERTYPE) { firDiagnostic ->
+        NullableSupertypeImpl(
+            firDiagnostic as FirPsiDiagnostic<*>,
+            token,
+        )
+    }
+    add(FirErrors.MANY_CLASSES_IN_SUPERTYPE_LIST) { firDiagnostic ->
+        ManyClassesInSupertypeListImpl(
+            firDiagnostic as FirPsiDiagnostic<*>,
+            token,
+        )
+    }
+    add(FirErrors.SUPERTYPE_APPEARS_TWICE) { firDiagnostic ->
+        SupertypeAppearsTwiceImpl(
+            firDiagnostic as FirPsiDiagnostic<*>,
+            token,
+        )
+    }
     add(FirErrors.CLASS_IN_SUPERTYPE_FOR_ENUM) { firDiagnostic ->
         ClassInSupertypeForEnumImpl(
             firDiagnostic as FirPsiDiagnostic<*>,
@@ -510,6 +546,49 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
     }
     add(FirErrors.ANNOTATION_USED_AS_ANNOTATION_ARGUMENT) { firDiagnostic ->
         AnnotationUsedAsAnnotationArgumentImpl(
+            firDiagnostic as FirPsiDiagnostic<*>,
+            token,
+        )
+    }
+    add(FirErrors.ILLEGAL_KOTLIN_VERSION_STRING_VALUE) { firDiagnostic ->
+        IllegalKotlinVersionStringValueImpl(
+            firDiagnostic as FirPsiDiagnostic<*>,
+            token,
+        )
+    }
+    add(FirErrors.NEWER_VERSION_IN_SINCE_KOTLIN) { firDiagnostic ->
+        NewerVersionInSinceKotlinImpl(
+            firDiagnostic.a,
+            firDiagnostic as FirPsiDiagnostic<*>,
+            token,
+        )
+    }
+    add(FirErrors.DEPRECATED_SINCE_KOTLIN_WITH_UNORDERED_VERSIONS) { firDiagnostic ->
+        DeprecatedSinceKotlinWithUnorderedVersionsImpl(
+            firDiagnostic as FirPsiDiagnostic<*>,
+            token,
+        )
+    }
+    add(FirErrors.DEPRECATED_SINCE_KOTLIN_WITHOUT_ARGUMENTS) { firDiagnostic ->
+        DeprecatedSinceKotlinWithoutArgumentsImpl(
+            firDiagnostic as FirPsiDiagnostic<*>,
+            token,
+        )
+    }
+    add(FirErrors.DEPRECATED_SINCE_KOTLIN_WITHOUT_DEPRECATED) { firDiagnostic ->
+        DeprecatedSinceKotlinWithoutDeprecatedImpl(
+            firDiagnostic as FirPsiDiagnostic<*>,
+            token,
+        )
+    }
+    add(FirErrors.DEPRECATED_SINCE_KOTLIN_WITH_DEPRECATED_LEVEL) { firDiagnostic ->
+        DeprecatedSinceKotlinWithDeprecatedLevelImpl(
+            firDiagnostic as FirPsiDiagnostic<*>,
+            token,
+        )
+    }
+    add(FirErrors.DEPRECATED_SINCE_KOTLIN_OUTSIDE_KOTLIN_SUBPACKAGE) { firDiagnostic ->
+        DeprecatedSinceKotlinOutsideKotlinSubpackageImpl(
             firDiagnostic as FirPsiDiagnostic<*>,
             token,
         )
@@ -1653,8 +1732,28 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirErrors.SETTER_VISIBILITY_INCONSISTENT_WITH_PROPERTY_VISIBILITY) { firDiagnostic ->
+        SetterVisibilityInconsistentWithPropertyVisibilityImpl(
+            firDiagnostic as FirPsiDiagnostic<*>,
+            token,
+        )
+    }
     add(FirErrors.WRONG_SETTER_RETURN_TYPE) { firDiagnostic ->
         WrongSetterReturnTypeImpl(
+            firDiagnostic as FirPsiDiagnostic<*>,
+            token,
+        )
+    }
+    add(FirErrors.WRONG_GETTER_RETURN_TYPE) { firDiagnostic ->
+        WrongGetterReturnTypeImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.b),
+            firDiagnostic as FirPsiDiagnostic<*>,
+            token,
+        )
+    }
+    add(FirErrors.ACCESSOR_FOR_DELEGATED_PROPERTY) { firDiagnostic ->
+        AccessorForDelegatedPropertyImpl(
             firDiagnostic as FirPsiDiagnostic<*>,
             token,
         )
@@ -1726,6 +1825,13 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
     add(FirErrors.UNINITIALIZED_VARIABLE) { firDiagnostic ->
         UninitializedVariableImpl(
             firSymbolBuilder.variableLikeBuilder.buildVariableSymbol(firDiagnostic.a.fir),
+            firDiagnostic as FirPsiDiagnostic<*>,
+            token,
+        )
+    }
+    add(FirErrors.UNINITIALIZED_PARAMETER) { firDiagnostic ->
+        UninitializedParameterImpl(
+            firSymbolBuilder.variableLikeBuilder.buildVariableLikeSymbol(firDiagnostic.a.fir),
             firDiagnostic as FirPsiDiagnostic<*>,
             token,
         )

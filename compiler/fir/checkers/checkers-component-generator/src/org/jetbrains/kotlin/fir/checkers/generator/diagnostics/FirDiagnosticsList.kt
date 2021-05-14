@@ -100,17 +100,24 @@ object DIAGNOSTICS_LIST : DiagnosticList() {
         val RECURSION_IN_SUPERTYPES by error<PsiElement>()
         val NOT_A_SUPERTYPE by error<PsiElement>()
         val SUPERCLASS_NOT_ACCESSIBLE_FROM_INTERFACE by error<PsiElement>()
-        val QUALIFIED_SUPERTYPE_EXTENDED_BY_OTHER_SUPERTYPE by error<PsiElement> {
+        val QUALIFIED_SUPERTYPE_EXTENDED_BY_OTHER_SUPERTYPE by error<KtTypeReference> {
             parameter<FirClass<*>>("otherSuperType")
         }
-        val SUPERTYPE_INITIALIZED_IN_INTERFACE by error<PsiElement>()
-        val INTERFACE_WITH_SUPERCLASS by error<PsiElement>()
-        val CLASS_IN_SUPERTYPE_FOR_ENUM by error<PsiElement>()
-        val SEALED_SUPERTYPE by error<PsiElement>()
-        val SEALED_SUPERTYPE_IN_LOCAL_CLASS by error<PsiElement>()
+        val SUPERTYPE_INITIALIZED_IN_INTERFACE by error<KtTypeReference>()
+        val INTERFACE_WITH_SUPERCLASS by error<KtTypeReference>()
+        val FINAL_SUPERTYPE by error<KtTypeReference>()
+        val SUPERTYPE_IS_EXTENSION_FUNCTION_TYPE by error<KtTypeReference>()
+        val SINGLETON_IN_SUPERTYPE by error<KtTypeReference>()
+        val NULLABLE_SUPERTYPE by error<KtTypeReference>(PositioningStrategy.QUESTION_MARK_BY_TYPE)
+        val MANY_CLASSES_IN_SUPERTYPE_LIST by error<KtTypeReference>()
+        val SUPERTYPE_APPEARS_TWICE by error<KtTypeReference>()
+        val CLASS_IN_SUPERTYPE_FOR_ENUM by error<KtTypeReference>()
+        val SEALED_SUPERTYPE by error<KtTypeReference>()
+        val SEALED_SUPERTYPE_IN_LOCAL_CLASS by error<KtTypeReference>()
         val SUPERTYPE_NOT_A_CLASS_OR_INTERFACE by error<KtElement> {
             parameter<String>("reason")
         }
+
     }
 
     val CONSTRUCTOR_PROBLEMS by object : DiagnosticGroup("Constructor problems") {
@@ -153,6 +160,15 @@ object DIAGNOSTICS_LIST : DiagnosticList() {
         val VAR_ANNOTATION_PARAMETER by error<KtParameter>(PositioningStrategy.VAL_OR_VAR_NODE)
         val SUPERTYPES_FOR_ANNOTATION_CLASS by error<KtClass>(PositioningStrategy.SUPERTYPES_LIST)
         val ANNOTATION_USED_AS_ANNOTATION_ARGUMENT by error<KtAnnotation>()
+        val ILLEGAL_KOTLIN_VERSION_STRING_VALUE by error<KtExpression>()
+        val NEWER_VERSION_IN_SINCE_KOTLIN by warning<KtExpression> {
+            parameter<String>("specifiedVersion")
+        }
+        val DEPRECATED_SINCE_KOTLIN_WITH_UNORDERED_VERSIONS by error<PsiElement>()
+        val DEPRECATED_SINCE_KOTLIN_WITHOUT_ARGUMENTS by error<PsiElement>()
+        val DEPRECATED_SINCE_KOTLIN_WITHOUT_DEPRECATED by error<PsiElement>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED)
+        val DEPRECATED_SINCE_KOTLIN_WITH_DEPRECATED_LEVEL by error<PsiElement>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED)
+        val DEPRECATED_SINCE_KOTLIN_OUTSIDE_KOTLIN_SUBPACKAGE by error<PsiElement>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED)
     }
 
     val EXPOSED_VISIBILITY by object : DiagnosticGroup("Exposed visibility") {
@@ -569,7 +585,13 @@ object DIAGNOSTICS_LIST : DiagnosticList() {
             parameter<ConeKotlinType>("actual")
         }
         val GETTER_VISIBILITY_DIFFERS_FROM_PROPERTY_VISIBILITY by error<KtModifierListOwner>(PositioningStrategy.VISIBILITY_MODIFIER)
-        val WRONG_SETTER_RETURN_TYPE by error<KtProperty>()
+        val SETTER_VISIBILITY_INCONSISTENT_WITH_PROPERTY_VISIBILITY by error<KtModifierListOwner>(PositioningStrategy.VISIBILITY_MODIFIER)
+        val WRONG_SETTER_RETURN_TYPE by error<KtTypeReference>()
+        val WRONG_GETTER_RETURN_TYPE by error<KtTypeReference> {
+            parameter<ConeKotlinType>("expectedType")
+            parameter<ConeKotlinType>("actualType")
+        }
+        val ACCESSOR_FOR_DELEGATED_PROPERTY by error<KtPropertyAccessor>()
     }
 
     val MPP_PROJECTS by object : DiagnosticGroup("Multi-platform projects") {
@@ -604,6 +626,9 @@ object DIAGNOSTICS_LIST : DiagnosticList() {
     val CONTROL_FLOW by object : DiagnosticGroup("Control flow diagnostics") {
         val UNINITIALIZED_VARIABLE by error<KtSimpleNameExpression> {
             parameter<FirPropertySymbol>("variable")
+        }
+        val UNINITIALIZED_PARAMETER by error<KtSimpleNameExpression> {
+            parameter<FirVariableSymbol<FirValueParameter>>("parameter")
         }
         val UNINITIALIZED_ENUM_ENTRY by error<KtSimpleNameExpression> {
             parameter<FirVariableSymbol<FirEnumEntry>>("enumEntry")

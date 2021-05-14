@@ -55,7 +55,6 @@ object CommonDeclarationCheckers : DeclarationCheckers() {
             FirConstPropertyChecker,
             FirPropertyAccessorChecker,
             FirPropertyTypeParametersChecker,
-            FirPropertyAccessorChecker,
             FirInitializerTypeMismatchChecker,
             FirDelegatedPropertyChecker,
         )
@@ -76,7 +75,7 @@ object CommonDeclarationCheckers : DeclarationCheckers() {
             FirDelegationSuperCallInEnumConstructorChecker,
             FirDelegationInInterfaceSyntaxChecker,
             FirEnumClassSimpleChecker,
-            FirInterfaceWithSuperclassChecker,
+            FirSupertypesChecker,
             FirLocalEntityNotAllowedChecker,
             FirManyCompanionObjectsChecker,
             FirMethodOfAnyImplementedInInterfaceChecker,
@@ -119,5 +118,10 @@ object CommonDeclarationCheckers : DeclarationCheckers() {
             FirTypeParameterVarianceChecker,
             FirReifiedTypeParameterChecker,
             FirTypeParameterSyntaxChecker,
+        )
+
+    override val annotatedDeclarationCheckers: Set<FirAnnotatedDeclarationChecker>
+        get() = setOf(
+            FirAnnotationChecker,
         )
 }

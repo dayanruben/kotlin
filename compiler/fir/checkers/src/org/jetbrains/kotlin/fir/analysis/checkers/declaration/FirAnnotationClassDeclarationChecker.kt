@@ -10,14 +10,13 @@ import org.jetbrains.kotlin.KtNodeTypes.VALUE_PARAMETER
 import org.jetbrains.kotlin.descriptors.ClassKind.ANNOTATION_CLASS
 import org.jetbrains.kotlin.descriptors.ClassKind.ENUM_CLASS
 import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.analysis.checkers.checkConstantArguments
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.diagnostics.*
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.name.StandardClassIds.primitiveArrayTypeByElementType
-import org.jetbrains.kotlin.name.StandardClassIds.primitiveTypes
-import org.jetbrains.kotlin.name.StandardClassIds.unsignedTypes
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.name.ClassId
 
@@ -40,6 +39,10 @@ object FirAnnotationClassDeclarationChecker : FirRegularClassChecker() {
                         } else if (source.hasVar()) {
                             reporter.reportOn(source, FirErrors.VAR_ANNOTATION_PARAMETER, context)
                         }
+                        val defaultValue = parameter.defaultValue
+                        if (defaultValue != null && checkConstantArguments(defaultValue, context.session) != null) {
+                            reporter.reportOn(defaultValue.source, FirErrors.ANNOTATION_PARAMETER_DEFAULT_VALUE_MUST_BE_CONSTANT, context)
+                        }
 
                         val typeRef = parameter.returnTypeRef
                         val coneType = typeRef.coneTypeSafe<ConeLookupTagBasedType>()
@@ -52,10 +55,10 @@ object FirAnnotationClassDeclarationChecker : FirRegularClassChecker() {
                             coneType.isNullable -> {
                                 reporter.reportOn(typeRef.source, FirErrors.NULLABLE_TYPE_OF_ANNOTATION_MEMBER, context)
                             }
-                            classId in primitiveTypes -> {
+                            coneType.isPrimitiveOrNullablePrimitive -> {
                                 // DO NOTHING: primitives are allowed as annotation class parameter
                             }
-                            classId in unsignedTypes -> {
+                            coneType.isUnsignedTypeOrNullableUnsignedType -> {
                                 // TODO: replace with EXPERIMENTAL_UNSIGNED_LITERALS check
                             }
                             classId == StandardClassIds.KClass -> {

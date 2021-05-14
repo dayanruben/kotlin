@@ -12,6 +12,8 @@ import org.jetbrains.kotlin.idea.fir.api.fixes.KtQuickFixesListBuilder
 import org.jetbrains.kotlin.idea.frontend.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.idea.quickfix.fixes.*
 import org.jetbrains.kotlin.idea.quickfix.fixes.InitializePropertyQuickFixFactory
+import org.jetbrains.kotlin.idea.quickfix.fixes.ChangeTypeQuickFix
+import org.jetbrains.kotlin.idea.quickfix.fixes.ReplaceCallFixFactories
 
 class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
     private val modifiers = KtQuickFixesListBuilder.registerPsiQuickFix {
@@ -85,6 +87,10 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
         registerApplicator(MemberNotImplementedQuickfixFactories.manyImplMemberNotImplemented)
     }
 
+    private val imports = KtQuickFixesListBuilder.registerPsiQuickFix {
+        registerApplicator(ImportQuickFix.FACTORY)
+    }
+
     private val mutability = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerPsiQuickFixes(KtFirDiagnostic.VarOverriddenByVal::class, ChangeVariableMutabilityFix.VAR_OVERRIDDEN_BY_VAL_FACTORY)
         registerPsiQuickFixes(KtFirDiagnostic.VarAnnotationParameter::class, ChangeVariableMutabilityFix.VAR_ANNOTATION_PARAMETER_FACTORY)
@@ -97,12 +103,16 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
         registerPsiQuickFixes(KtFirDiagnostic.UnnecessarySafeCall::class, ReplaceWithDotCallFix)
         registerPsiQuickFixes(KtFirDiagnostic.UnnecessaryNotNullAssertion::class, RemoveExclExclCallFix)
         registerApplicator(ReplaceCallFixFactories.unsafeCallFactory)
+
+        // TODO: NON_EXHAUSTIVE_WHEN[_ON_SEALED_CLASS] will be replaced in future. We need to register the fix for those diagnostics as well
+        registerPsiQuickFixes(KtFirDiagnostic.NoElseInWhen::class, AddWhenElseBranchFix)
     }
 
     override val list: KtQuickFixesList = KtQuickFixesList.createCombined(
         modifiers,
         propertyInitialization,
         overrides,
+        imports,
         mutability,
         expressions,
     )

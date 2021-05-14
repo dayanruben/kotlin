@@ -16,8 +16,6 @@ import org.jetbrains.kotlin.backend.jvm.ir.erasedUpperBound
 import org.jetbrains.kotlin.backend.jvm.ir.isInlineClassType
 import org.jetbrains.kotlin.backend.jvm.lower.MultifileFacadeFileEntry
 import org.jetbrains.kotlin.backend.jvm.lower.constantValue
-import org.jetbrains.kotlin.backend.jvm.lower.inlineclasses.isInlineCallableReference
-import org.jetbrains.kotlin.backend.jvm.lower.inlineclasses.isMappedToPrimitive
 import org.jetbrains.kotlin.backend.jvm.lower.inlineclasses.requiresMangling
 import org.jetbrains.kotlin.backend.jvm.lower.inlineclasses.unboxInlineClass
 import org.jetbrains.kotlin.backend.jvm.lower.isMultifileBridge
@@ -145,6 +143,7 @@ class ExpressionCodegen(
     val classCodegen: ClassCodegen,
     val inlinedInto: ExpressionCodegen?,
     val smap: SourceMapper,
+    val reifiedTypeParametersUsages: ReifiedTypeParametersUsages,
 ) : IrElementVisitor<PromisedValue, BlockInfo>, BaseExpressionCodegen {
 
     var finallyDepth = 0
@@ -648,20 +647,7 @@ class ExpressionCodegen(
         val type = frameMap.typeOf(expression.symbol)
         mv.load(findLocalIndex(expression.symbol), type)
         unboxResultIfNeeded(expression)
-        unboxInlineClassArgumentOfInlineCallableReference(expression)
         return MaterialValue(this, type, expression.type)
-    }
-
-    // JVM_IR generates inline callable differently from the old backend:
-    // it generates them as normal functions and not objects.
-    // Thus, we need to unbox inline class argument with reference underlying type.
-    private fun unboxInlineClassArgumentOfInlineCallableReference(arg: IrGetValue) {
-        if (!arg.type.isInlineClassType()) return
-        if (arg.type.isMappedToPrimitive) return
-        if (!irFunction.isInlineCallableReference) return
-        if (irFunction.extensionReceiverParameter?.symbol == arg.symbol) return
-        if (arg.type.isNullable() && arg.type.makeNotNull().unboxInlineClass().isNullable()) return
-        StackValue.unboxInlineClass(OBJECT_TYPE, arg.type.erasedUpperBound.defaultType, mv, typeMapper)
     }
 
     // We do not mangle functions if Result is the only parameter of the function,
@@ -669,6 +655,8 @@ class ExpressionCodegen(
     // bridge to unbox it. Instead, we unbox it in the non-mangled function manually.
     private fun unboxResultIfNeeded(arg: IrGetValue) {
         if (arg.type.erasedUpperBound.fqNameWhenAvailable != StandardNames.RESULT_FQ_NAME) return
+        // Unlike inline callable reference arguments, nullable Result arguments are unboxed during coercion to not-null Result
+        if (arg.type.isNullable()) return
         // Do not unbox arguments of lambda, but unbox arguments of callable references
         if (irFunction.origin == IrDeclarationOrigin.LOCAL_FUNCTION_FOR_LAMBDA) return
         if (!onlyResultInlineClassParameters()) return
@@ -1439,32 +1427,13 @@ class ExpressionCodegen(
 
     override fun consumeReifiedOperationMarker(typeParameter: TypeParameterMarker) {
         require(typeParameter is IrTypeParameterSymbol)
-        // This is a hack to work around the problem in LocalDeclarationsLowering. Specifically, suppose an inline
-        // lambda uses a reified type parameter declared by a function:
-        //
-        //     object {
-        //         inline fun <reified T : Any> f() = run { T::class.java.getName() }
-        //     }
-        //
-        // LocalDeclarationsLowering would extract that lambda into a method of the enclosing type, but will not create
-        // a reified type parameter in it (in fact, the lambda method isn't even marked as inline):
-        //
-        //     object {
-        //         /* static */ private fun `f$lambda-0`() = T::class.java.getName()
-        //         inline fun <reified T : Any> f() = run(::`f$lambda-0`)
-        //     }
-        //
-        // The parent of the type parameter then is not `irFunction` (i.e. the lambda itself), but the function
-        // it is inlined into.
-        //
-        // TODO make LocalDeclarationsLowering handle captured type parameters and only compare with `irFunction`.
-        if (generateSequence(this) { it.inlinedInto }.none { it.irFunction == typeParameter.owner.parent }) {
-            classCodegen.reifiedTypeParametersUsages.addUsedReifiedParameter(typeParameter.owner.name.asString())
+        if (irFunction != typeParameter.owner.parent) {
+            reifiedTypeParametersUsages.addUsedReifiedParameter(typeParameter.owner.name.asString())
         }
     }
 
     override fun propagateChildReifiedTypeParametersUsages(reifiedTypeParametersUsages: ReifiedTypeParametersUsages) {
-        classCodegen.reifiedTypeParametersUsages.propagateChildUsagesWithinContext(reifiedTypeParametersUsages) {
+        this.reifiedTypeParametersUsages.propagateChildUsagesWithinContext(reifiedTypeParametersUsages) {
             irFunction.typeParameters.filter { it.isReified }.map { it.name.asString() }.toSet()
         }
     }

@@ -1982,6 +1982,11 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
                 runTest("compiler/testData/codegen/box/callableReference/function/argumentTypes.kt");
             }
 
+            @TestMetadata("argumentTypesNoinline.kt")
+            public void testArgumentTypesNoinline() throws Exception {
+                runTest("compiler/testData/codegen/box/callableReference/function/argumentTypesNoinline.kt");
+            }
+
             @TestMetadata("booleanNotIntrinsic.kt")
             public void testBooleanNotIntrinsic() throws Exception {
                 runTest("compiler/testData/codegen/box/callableReference/function/booleanNotIntrinsic.kt");
@@ -4164,6 +4169,11 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
         @TestMetadata("inSetWithSmartCast.kt")
         public void testInSetWithSmartCast() throws Exception {
             runTest("compiler/testData/codegen/box/collections/inSetWithSmartCast.kt");
+        }
+
+        @TestMetadata("inheritFromAbstractMutableListInt.kt")
+        public void testInheritFromAbstractMutableListInt() throws Exception {
+            runTest("compiler/testData/codegen/box/collections/inheritFromAbstractMutableListInt.kt");
         }
 
         @TestMetadata("internalRemove.kt")
@@ -10104,6 +10114,11 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             runTest("compiler/testData/codegen/box/enum/ordinal.kt");
         }
 
+        @TestMetadata("overloadedEnumValues.kt")
+        public void testOverloadedEnumValues() throws Exception {
+            runTest("compiler/testData/codegen/box/enum/overloadedEnumValues.kt");
+        }
+
         @TestMetadata("refToThis.kt")
         public void testRefToThis() throws Exception {
             runTest("compiler/testData/codegen/box/enum/refToThis.kt");
@@ -12192,6 +12207,11 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             runTest("compiler/testData/codegen/box/inlineClasses/boundCallableReferencePassedToInlineFunction.kt");
         }
 
+        @TestMetadata("boxImplDoesNotExecuteInSecondaryConstructor.kt")
+        public void testBoxImplDoesNotExecuteInSecondaryConstructor() throws Exception {
+            runTest("compiler/testData/codegen/box/inlineClasses/boxImplDoesNotExecuteInSecondaryConstructor.kt");
+        }
+
         @TestMetadata("boxImplDoesNotExecuteInitBlock.kt")
         public void testBoxImplDoesNotExecuteInitBlock() throws Exception {
             runTest("compiler/testData/codegen/box/inlineClasses/boxImplDoesNotExecuteInitBlock.kt");
@@ -12315,6 +12335,11 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
         @TestMetadata("checkUnboxingResultFromTypeVariable.kt")
         public void testCheckUnboxingResultFromTypeVariable() throws Exception {
             runTest("compiler/testData/codegen/box/inlineClasses/checkUnboxingResultFromTypeVariable.kt");
+        }
+
+        @TestMetadata("classInInlineClassInit.kt")
+        public void testClassInInlineClassInit() throws Exception {
+            runTest("compiler/testData/codegen/box/inlineClasses/classInInlineClassInit.kt");
         }
 
         @TestMetadata("computablePropertyInsideInlineClass.kt")
@@ -12497,9 +12522,19 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             runTest("compiler/testData/codegen/box/inlineClasses/inlineClassEqualityShouldUseTotalOrderForFloatingPointData.kt");
         }
 
+        @TestMetadata("inlineClassFieldHandling.kt")
+        public void testInlineClassFieldHandling() throws Exception {
+            runTest("compiler/testData/codegen/box/inlineClasses/inlineClassFieldHandling.kt");
+        }
+
         @TestMetadata("inlineClassFunctionInvoke.kt")
         public void testInlineClassFunctionInvoke() throws Exception {
             runTest("compiler/testData/codegen/box/inlineClasses/inlineClassFunctionInvoke.kt");
+        }
+
+        @TestMetadata("inlineClassInInitBlock.kt")
+        public void testInlineClassInInitBlock() throws Exception {
+            runTest("compiler/testData/codegen/box/inlineClasses/inlineClassInInitBlock.kt");
         }
 
         @TestMetadata("inlineClassInStringTemplate.kt")
@@ -12765,6 +12800,11 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
         @TestMetadata("kt45991.kt")
         public void testKt45991() throws Exception {
             runTest("compiler/testData/codegen/box/inlineClasses/kt45991.kt");
+        }
+
+        @TestMetadata("kt46554.kt")
+        public void testKt46554() throws Exception {
+            runTest("compiler/testData/codegen/box/inlineClasses/kt46554.kt");
         }
 
         @TestMetadata("mangledDefaultParameterFunction.kt")
@@ -13335,6 +13375,11 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
                 @TestMetadata("intN.kt")
                 public void testIntN() throws Exception {
                     runTest("compiler/testData/codegen/box/inlineClasses/callableReferences/let/intN.kt");
+                }
+
+                @TestMetadata("null.kt")
+                public void testNull() throws Exception {
+                    runTest("compiler/testData/codegen/box/inlineClasses/callableReferences/let/null.kt");
                 }
 
                 @TestMetadata("result.kt")
@@ -14084,6 +14129,11 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
                     runTest("compiler/testData/codegen/box/inlineClasses/unboxGenericParameter/funInterface/ifaceChild.kt");
                 }
 
+                @TestMetadata("nullableResult.kt")
+                public void testNullableResult() throws Exception {
+                    runTest("compiler/testData/codegen/box/inlineClasses/unboxGenericParameter/funInterface/nullableResult.kt");
+                }
+
                 @TestMetadata("primitive.kt")
                 public void testPrimitive() throws Exception {
                     runTest("compiler/testData/codegen/box/inlineClasses/unboxGenericParameter/funInterface/primitive.kt");
@@ -14137,6 +14187,11 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
                     runTest("compiler/testData/codegen/box/inlineClasses/unboxGenericParameter/lambda/ifaceChild.kt");
                 }
 
+                @TestMetadata("nullableResult.kt")
+                public void testNullableResult() throws Exception {
+                    runTest("compiler/testData/codegen/box/inlineClasses/unboxGenericParameter/lambda/nullableResult.kt");
+                }
+
                 @TestMetadata("primitive.kt")
                 public void testPrimitive() throws Exception {
                     runTest("compiler/testData/codegen/box/inlineClasses/unboxGenericParameter/lambda/primitive.kt");
@@ -14188,6 +14243,11 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
                 @TestMetadata("ifaceChild.kt")
                 public void testIfaceChild() throws Exception {
                     runTest("compiler/testData/codegen/box/inlineClasses/unboxGenericParameter/objectLiteral/ifaceChild.kt");
+                }
+
+                @TestMetadata("nullableResult.kt")
+                public void testNullableResult() throws Exception {
+                    runTest("compiler/testData/codegen/box/inlineClasses/unboxGenericParameter/objectLiteral/nullableResult.kt");
                 }
 
                 @TestMetadata("primitive.kt")
