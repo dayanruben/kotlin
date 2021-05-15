@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.idea.fir.low.level.api.diagnostic
 
 import com.intellij.openapi.util.io.FileUtil
 import kotlinx.collections.immutable.PersistentList
-import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.SessionConfiguration
 import org.jetbrains.kotlin.fir.analysis.checkers.context.PersistentCheckerContext
 import org.jetbrains.kotlin.fir.declarations.FirDeclaration
@@ -18,11 +17,14 @@ import org.jetbrains.kotlin.idea.caches.project.getModuleInfo
 import org.jetbrains.kotlin.idea.fir.low.level.api.FirModuleResolveStateImpl
 import org.jetbrains.kotlin.idea.fir.low.level.api.api.DiagnosticCheckerFilter
 import org.jetbrains.kotlin.idea.fir.low.level.api.api.getDiagnostics
-import org.jetbrains.kotlin.idea.fir.low.level.api.api.getFirFile
+import org.jetbrains.kotlin.idea.fir.low.level.api.api.getOrBuildFirFile
 import org.jetbrains.kotlin.idea.fir.low.level.api.createResolveStateForNoCaching
 import org.jetbrains.kotlin.idea.fir.low.level.api.diagnostics.BeforeElementDiagnosticCollectionHandler
 import org.jetbrains.kotlin.idea.fir.low.level.api.diagnostics.fir.PersistenceContextCollector
-import org.jetbrains.kotlin.idea.fir.low.level.api.file.structure.*
+import org.jetbrains.kotlin.idea.fir.low.level.api.file.structure.FileStructureElement
+import org.jetbrains.kotlin.idea.fir.low.level.api.file.structure.NonReanalyzableDeclarationStructureElement
+import org.jetbrains.kotlin.idea.fir.low.level.api.file.structure.ReanalyzableStructureElement
+import org.jetbrains.kotlin.idea.fir.low.level.api.file.structure.RootStructureElement
 import org.jetbrains.kotlin.idea.fir.low.level.api.name
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtFile
@@ -43,7 +45,7 @@ abstract class AbstractFirContextCollectionTest : KotlinLightCodeInsightFixtureT
         val fileStructure = resolveState.fileStructureCache.getFileStructure(ktFile, resolveState.rootModuleSession.cache)
         val allStructureElements = fileStructure.getAllStructureElements()
         handler.elementsToCheckContext = allStructureElements.map { it.getFirDeclaration() }
-        handler.firFile = ktFile.getFirFile(resolveState)
+        handler.firFile = ktFile.getOrBuildFirFile(resolveState)
         ktFile.getDiagnostics(resolveState, DiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
     }
 
@@ -64,7 +66,7 @@ abstract class AbstractFirContextCollectionTest : KotlinLightCodeInsightFixtureT
             }
             if (declaration in elementsToCheckContext) {
                 val collectedContext = PersistenceContextCollector.collectContext(
-                    SessionHolderImpl.createWithEmptyScopeSession(declaration.declarationSiteSession),
+                    SessionHolderImpl.createWithEmptyScopeSession(declaration.moduleData.session),
                     firFile,
                     declaration
                 )

@@ -5,10 +5,8 @@
 
 package org.jetbrains.kotlin.fir.resolve.providers.impl
 
-import org.jetbrains.kotlin.fir.FirSession
-import org.jetbrains.kotlin.fir.ThreadSafeMutableState
+import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.caches.*
-import org.jetbrains.kotlin.fir.dependenciesWithoutSelf
 import org.jetbrains.kotlin.fir.resolve.symbolProvider
 import org.jetbrains.kotlin.fir.resolve.providers.FirSymbolProvider
 import org.jetbrains.kotlin.fir.resolve.providers.FirSymbolProviderInternals
@@ -20,7 +18,6 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.utils.addToStdlib.firstNotNullResult
 
 @ThreadSafeMutableState
 open class FirDependenciesSymbolProviderImpl(session: FirSession) : FirSymbolProvider(session) {
@@ -32,10 +29,10 @@ open class FirDependenciesSymbolProviderImpl(session: FirSession) : FirSymbolPro
 
 
     protected open val dependencyProviders by lazy {
-        val moduleInfo = session.moduleInfo ?: return@lazy emptyList()
-        moduleInfo.dependenciesWithoutSelf().mapNotNull {
+        val moduleData = session.nullableModuleData ?: return@lazy emptyList()
+        (moduleData.dependencies + moduleData.friendDependencies + moduleData.dependsOnDependencies).mapNotNull {
             session.sessionProvider?.getSession(it)?.symbolProvider
-        }.toList()
+        }
     }
 
     @OptIn(FirSymbolProviderInternals::class, ExperimentalStdlibApi::class)
@@ -54,10 +51,10 @@ open class FirDependenciesSymbolProviderImpl(session: FirSession) : FirSymbolPro
     }
 
     private fun computePackage(it: FqName): FqName? =
-        dependencyProviders.firstNotNullResult { provider -> provider.getPackage(it) }
+        dependencyProviders.firstNotNullOfOrNull { provider -> provider.getPackage(it) }
 
     private fun computeClass(classId: ClassId): FirClassLikeSymbol<*>? =
-        dependencyProviders.firstNotNullResult { provider -> provider.getClassLikeSymbolByFqName(classId) }
+        dependencyProviders.firstNotNullOfOrNull { provider -> provider.getClassLikeSymbolByFqName(classId) }
 
 
     @FirSymbolProviderInternals

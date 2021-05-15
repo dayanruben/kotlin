@@ -1075,6 +1075,9 @@ fun main(args: Array<String>) {
             testClass<AbstractFirSealedInheritorsTest> {
                 model("resolveSealed", recursive = false, extension = null)
             }
+            testClass<AbstractFirOnAirResolveTest> {
+                model("onAirResolve")
+            }
             testClass<AbstractFirLazyDeclarationResolveTest> {
                 model("lazyResolve")
             }
@@ -1098,6 +1101,9 @@ fun main(args: Array<String>) {
             }
             testClass<AbstractInnerDeclarationsResolvePhaseTest> {
                 model("innerDeclarationsResolve")
+            }
+            testClass<AbstractPartialRawFirBuilderTestCase> {
+                model("partialRawBuilder", testMethod = "doRawFirTest")
             }
         }
 

@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.idea.fir.low.level.api.api.DiagnosticCheckerFilter
-import org.jetbrains.kotlin.idea.fir.low.level.api.element.builder.FirTowerDataContextCollector
 import org.jetbrains.kotlin.idea.fir.low.level.api.element.builder.getNonLocalContainingOrThisDeclaration
 import org.jetbrains.kotlin.idea.fir.low.level.api.file.builder.FirFileBuilder
 import org.jetbrains.kotlin.idea.fir.low.level.api.file.builder.ModuleFileCache
@@ -28,9 +27,8 @@ internal class FileStructure(
     private val firLazyDeclarationResolver: FirLazyDeclarationResolver,
     private val firFileBuilder: FirFileBuilder,
     private val moduleFileCache: ModuleFileCache,
-    private val collector: FirTowerDataContextCollector
 ) {
-    private val firIdeProvider = firFile.declarationSiteSession.firIdeProvider
+    private val firIdeProvider = firFile.moduleData.session.firIdeProvider
 
     private val structureElements = ConcurrentHashMap<KtAnnotated, FileStructureElement>()
 
@@ -50,7 +48,6 @@ internal class FileStructure(
                         cache = moduleFileCache,
                         firLazyDeclarationResolver = firLazyDeclarationResolver,
                         firIdeProvider = firIdeProvider,
-                        towerDataContextCollector = collector
                     )
                 }
                 else -> structureElement
@@ -112,7 +109,6 @@ internal class FileStructure(
             moduleFileCache,
             FirResolvePhase.BODY_RESOLVE,
             checkPCE = true,
-            towerDataContextCollector = collector
         )
         return moduleFileCache.firFileLockProvider.withReadLock(firFile) {
             FileElementFactory.createFileStructureElement(firDeclaration, declaration, firFile, moduleFileCache.firFileLockProvider)
@@ -129,7 +125,7 @@ internal class FileStructure(
                 scopeSession,
                 checkPCE = true
             )
-            firLazyDeclarationResolver.resolveFileAnnotations(firFile, moduleFileCache, scopeSession)
+            firLazyDeclarationResolver.resolveFileAnnotations(firFile, firFile.annotations, moduleFileCache, scopeSession)
             RootStructureElement(
                 firFile,
                 container,

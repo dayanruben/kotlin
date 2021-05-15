@@ -10,6 +10,8 @@ import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.fir.FirRenderer
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.render
+import org.jetbrains.kotlin.idea.caches.project.ModuleSourceInfo
+import org.jetbrains.kotlin.idea.caches.project.getModuleInfo
 import org.jetbrains.kotlin.idea.fir.low.level.api.api.withFirDeclaration
 import org.jetbrains.kotlin.idea.fir.low.level.api.lazy.resolve.FirLazyDeclarationResolver
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
@@ -36,11 +38,12 @@ abstract class AbstractFirLazyDeclarationResolveTest : KotlinLightCodeInsightFix
         val declarationToResolve = lazyDeclarations.firstOrNull { it.name?.lowercase() == "resolveme" }
             ?: error("declaration with name `resolveMe` was not found")
         resolveWithClearCaches(ktFile) { firModuleResolveState ->
+            check(firModuleResolveState is FirModuleResolveStateImpl)
             val rendered = declarationToResolve.withFirDeclaration(
                 firModuleResolveState,
                 FirResolvePhase.BODY_RESOLVE
             ) @Suppress("UNUSED_ANONYMOUS_PARAMETER") { firDeclaration ->
-                val firFile = firModuleResolveState.getBuiltFirFileOrNull(ktFile)!!
+                val firFile = firModuleResolveState.getOrBuildFirFile(ktFile)
                 firFile.render(FirRenderer.RenderMode.WithResolvePhases)
             }
             val expectedFileName = testDataFile.name.replace(".kt", ".txt")

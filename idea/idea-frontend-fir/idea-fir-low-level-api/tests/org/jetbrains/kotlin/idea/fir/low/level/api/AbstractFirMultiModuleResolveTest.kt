@@ -10,32 +10,32 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.FileTypeIndex
-import org.jetbrains.kotlin.fir.FirRenderer
-import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.builder.RawFirBuilder
 import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
-import org.jetbrains.kotlin.fir.dependenciesWithoutSelf
+import org.jetbrains.kotlin.fir.deserialization.SingleModuleDataProvider
 import org.jetbrains.kotlin.fir.java.*
-import org.jetbrains.kotlin.fir.psi
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.resolve.firProvider
 import org.jetbrains.kotlin.fir.resolve.providers.impl.FirProviderImpl
 import org.jetbrains.kotlin.fir.resolve.transformers.*
+import org.jetbrains.kotlin.fir.session.FirModuleInfoBasedModuleData
 import org.jetbrains.kotlin.fir.session.FirSessionFactory
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.caches.project.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.caches.project.isLibraryClasses
 import org.jetbrains.kotlin.idea.caches.project.productionSourceInfo
 import org.jetbrains.kotlin.idea.caches.resolve.IDEPackagePartProvider
+import org.jetbrains.kotlin.idea.fir.low.level.api.sessions.moduleInfoUnsafe
 import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromDirStructure
 import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.kotlin.test.TestJdkKind
-import org.jetbrains.kotlin.utils.addToStdlib.cast
 import java.io.File
 
 abstract class AbstractFirMultiModuleResolveTest : AbstractMultiModuleTest() {
@@ -56,20 +56,33 @@ abstract class AbstractFirMultiModuleResolveTest : AbstractMultiModuleTest() {
         doFirResolveTest(dirPath)
     }
 
-    private fun createSession(module: Module, provider: FirProjectSessionProvider): FirJavaModuleBasedSession {
+    private fun createSession(module: Module, provider: FirProjectSessionProvider): FirSession {
         val moduleInfo = module.productionSourceInfo()!!
-        return FirSessionFactory.createJavaModuleBasedSession(moduleInfo, provider, moduleInfo.contentScope(), project)
+        return FirSessionFactory.createJavaModuleBasedSession(
+            FirModuleInfoBasedModuleData(moduleInfo),
+            provider,
+            moduleInfo.contentScope(),
+            project,
+            providerAndScopeForIncrementalCompilation = null
+        )
     }
 
-    private fun createLibrarySession(moduleInfo: IdeaModuleInfo, provider: FirProjectSessionProvider): FirLibrarySession {
+    private fun createLibrarySession(moduleInfo: IdeaModuleInfo, provider: FirProjectSessionProvider): FirSession {
         val contentScope = moduleInfo.contentScope()
-        return FirSessionFactory.createLibrarySession(moduleInfo, provider, contentScope, project, IDEPackagePartProvider(contentScope))
+        return FirSessionFactory.createLibrarySession(
+            mainModuleName = Name.identifier(moduleInfo.moduleOrigin.name),
+            provider,
+            SingleModuleDataProvider(FirModuleInfoBasedModuleData(moduleInfo)),
+            contentScope,
+            project,
+            IDEPackagePartProvider(contentScope)
+        )
     }
 
     private fun doFirResolveTest(dirPath: String) {
-        val firFilesPerSession = mutableMapOf<FirJavaModuleBasedSession, List<FirFile>>()
-        val processorsPerSession = mutableMapOf<FirJavaModuleBasedSession, List<FirTransformerBasedResolveProcessor>>()
-        val sessions = mutableListOf<FirJavaModuleBasedSession>()
+        val firFilesPerSession = mutableMapOf<FirSession, List<FirFile>>()
+        val processorsPerSession = mutableMapOf<FirSession, List<FirTransformerBasedResolveProcessor>>()
+        val sessions = mutableListOf<FirSession>()
         val provider = FirProjectSessionProvider()
         for (module in project.allModules().drop(1)) {
             val session = createSession(module, provider)
@@ -79,7 +92,7 @@ abstract class AbstractFirMultiModuleResolveTest : AbstractMultiModuleTest() {
             val builder = RawFirBuilder(session, firProvider.kotlinScopeProvider)
             val psiManager = PsiManager.getInstance(project)
 
-            val ideaModuleInfo = session.moduleInfo.cast<IdeaModuleInfo>()
+            val ideaModuleInfo = session.moduleData.moduleInfoUnsafe<IdeaModuleInfo>()
 
             ideaModuleInfo.dependenciesWithoutSelf().forEach {
                 if (it is IdeaModuleInfo && it.isLibraryClasses()) {

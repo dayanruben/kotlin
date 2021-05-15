@@ -22,8 +22,7 @@ import org.jetbrains.kotlin.fir.deserialization.deserializeClassToSymbol
 import org.jetbrains.kotlin.fir.resolve.defaultType
 import org.jetbrains.kotlin.fir.resolve.providers.FirSymbolProvider
 import org.jetbrains.kotlin.fir.resolve.providers.FirSymbolProviderInternals
-import org.jetbrains.kotlin.fir.scopes.KotlinScopeProvider
-import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.fir.scopes.FirKotlinScopeProvider
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.FirResolvedTypeRef
 import org.jetbrains.kotlin.fir.types.builder.buildResolvedTypeRef
@@ -32,22 +31,22 @@ import org.jetbrains.kotlin.fir.types.impl.ConeTypeParameterTypeImpl
 import org.jetbrains.kotlin.metadata.ProtoBuf
 import org.jetbrains.kotlin.metadata.builtins.BuiltInsBinaryVersion
 import org.jetbrains.kotlin.metadata.deserialization.NameResolverImpl
-import org.jetbrains.kotlin.name.CallableId
-import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.*
 import org.jetbrains.kotlin.serialization.deserialization.ProtoBasedClassDataFinder
 import org.jetbrains.kotlin.serialization.deserialization.builtins.BuiltInSerializerProtocol
 import org.jetbrains.kotlin.serialization.deserialization.getName
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.util.OperatorNameConventions
-import org.jetbrains.kotlin.utils.addToStdlib.firstNotNullResult
 import org.jetbrains.kotlin.utils.addToStdlib.getOrPut
 import java.io.InputStream
 
 //TODO make thread safe
 @ThreadSafeMutableState
-open class FirBuiltinSymbolProvider(session: FirSession, val kotlinScopeProvider: KotlinScopeProvider) : FirSymbolProvider(session) {
+open class FirBuiltinSymbolProvider(
+    session: FirSession,
+    val moduleData: FirModuleData,
+    val kotlinScopeProvider: FirKotlinScopeProvider
+) : FirSymbolProvider(session) {
 
     private data class SyntheticFunctionalInterfaceSymbolKey(val kind: FunctionClassKind, val arity: Int)
 
@@ -62,7 +61,7 @@ open class FirBuiltinSymbolProvider(session: FirSession, val kotlinScopeProvider
         return packageFqNames.map { fqName ->
             val resourcePath = BuiltInSerializerProtocol.getBuiltInsFilePath(fqName)
             val inputStream = streamProvider(resourcePath) ?: throw IllegalStateException("Resource not found in classpath: $resourcePath")
-            BuiltInsPackageFragment(inputStream, fqName, session, kotlinScopeProvider)
+            BuiltInsPackageFragment(inputStream, fqName)
         }
     }
 
@@ -72,7 +71,7 @@ open class FirBuiltinSymbolProvider(session: FirSession, val kotlinScopeProvider
     }
 
     override fun getClassLikeSymbolByFqName(classId: ClassId): FirRegularClassSymbol? {
-        return allPackageFragments[classId.packageFqName]?.firstNotNullResult {
+        return allPackageFragments[classId.packageFqName]?.firstNotNullOfOrNull {
             it.getClassLikeSymbolByFqName(classId)
         } ?: trySyntheticFunctionalInterface(classId)
     }
@@ -86,7 +85,7 @@ open class FirBuiltinSymbolProvider(session: FirSession, val kotlinScopeProvider
             syntheticFunctionalInterfaceSymbols.getOrPut(SyntheticFunctionalInterfaceSymbolKey(kind, arity)) {
                 FirRegularClassSymbol(this).apply symbol@{
                     buildRegularClass klass@{
-                        declarationSiteSession = session
+                        moduleData = this@FirBuiltinSymbolProvider.moduleData
                         origin = FirDeclarationOrigin.BuiltIns
                         name = relativeClassName.shortName()
                         status = FirResolvedDeclarationStatusImpl(
@@ -108,7 +107,7 @@ open class FirBuiltinSymbolProvider(session: FirSession, val kotlinScopeProvider
                         typeParameters.addAll(
                             (1..arity).map {
                                 buildTypeParameter {
-                                    declarationSiteSession = session
+                                    moduleData = this@FirBuiltinSymbolProvider.moduleData
                                     resolvePhase = FirResolvePhase.ANALYZED_DEPENDENCIES
                                     origin = FirDeclarationOrigin.BuiltIns
                                     name = Name.identifier("P$it")
@@ -121,7 +120,7 @@ open class FirBuiltinSymbolProvider(session: FirSession, val kotlinScopeProvider
                         )
                         typeParameters.add(
                             buildTypeParameter {
-                                declarationSiteSession = session
+                                moduleData = this@FirBuiltinSymbolProvider.moduleData
                                 resolvePhase = FirResolvePhase.ANALYZED_DEPENDENCIES
                                 origin = FirDeclarationOrigin.BuiltIns
                                 name = Name.identifier("R")
@@ -197,7 +196,7 @@ open class FirBuiltinSymbolProvider(session: FirSession, val kotlinScopeProvider
                         }
                         addDeclaration(
                             buildSimpleFunction {
-                                declarationSiteSession = session
+                                moduleData = this@FirBuiltinSymbolProvider.moduleData
                                 resolvePhase = FirResolvePhase.ANALYZED_DEPENDENCIES
                                 origin = FirDeclarationOrigin.BuiltIns
                                 returnTypeRef = typeArguments.last()
@@ -210,7 +209,7 @@ open class FirBuiltinSymbolProvider(session: FirSession, val kotlinScopeProvider
                                 valueParameters += typeArguments.dropLast(1).mapIndexed { index, typeArgument ->
                                     val parameterName = Name.identifier("p${index + 1}")
                                     buildValueParameter {
-                                        declarationSiteSession = session
+                                        moduleData = this@FirBuiltinSymbolProvider.moduleData
                                         origin = FirDeclarationOrigin.BuiltIns
                                         resolvePhase = FirResolvePhase.ANALYZED_DEPENDENCIES
                                         returnTypeRef = typeArgument
@@ -255,10 +254,7 @@ open class FirBuiltinSymbolProvider(session: FirSession, val kotlinScopeProvider
     override fun getTopLevelPropertySymbolsTo(destination: MutableList<FirPropertySymbol>, packageFqName: FqName, name: Name) {
     }
 
-    private class BuiltInsPackageFragment(
-        stream: InputStream, val fqName: FqName, val session: FirSession,
-        val kotlinScopeProvider: KotlinScopeProvider,
-    ) {
+    private inner class BuiltInsPackageFragment(stream: InputStream, val fqName: FqName) {
         lateinit var version: BuiltInsBinaryVersion
 
         val packageProto: ProtoBuf.PackageFragment = run {
@@ -283,7 +279,7 @@ open class FirBuiltinSymbolProvider(session: FirSession, val kotlinScopeProvider
 
         private val memberDeserializer by lazy {
             FirDeserializationContext.createForPackage(
-                fqName, packageProto.`package`, nameResolver, session,
+                fqName, packageProto.`package`, nameResolver, moduleData,
                 FirBuiltinAnnotationDeserializer(session),
                 FirConstDeserializer(session),
                 containerSource = null
@@ -306,9 +302,16 @@ open class FirBuiltinSymbolProvider(session: FirSession, val kotlinScopeProvider
                 val classProto = classData.classProto
 
                 deserializeClassToSymbol(
-                    classId, classProto, symbol, nameResolver, session,
-                    null, kotlinScopeProvider, parentContext,
-                    null,
+                    classId,
+                    classProto,
+                    symbol,
+                    nameResolver,
+                    session,
+                    moduleData,
+                    defaultAnnotationDeserializer = null,
+                    kotlinScopeProvider,
+                    parentContext,
+                    containerSource = null,
                     origin = FirDeclarationOrigin.BuiltIns,
                     this::findAndDeserializeClass,
                 )

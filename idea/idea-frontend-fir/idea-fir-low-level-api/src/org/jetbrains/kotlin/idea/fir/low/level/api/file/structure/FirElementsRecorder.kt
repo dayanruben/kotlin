@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.idea.fir.low.level.api.file.structure
 
 import org.jetbrains.kotlin.fir.FirElement
-import org.jetbrains.kotlin.fir.declarations.FirDeclaration
 import org.jetbrains.kotlin.fir.expressions.FirVariableAssignment
 import org.jetbrains.kotlin.fir.realPsi
 import org.jetbrains.kotlin.fir.references.*
@@ -98,7 +97,7 @@ internal open class FirElementsRecorder : FirVisitor<Unit, MutableMap<KtElement,
 
     companion object {
         @OptIn(ExperimentalStdlibApi::class)
-        fun recordElementsFrom(firDeclaration: FirDeclaration, recorder: FirElementsRecorder): Map<KtElement, FirElement> =
-            buildMap { firDeclaration.accept(recorder, this) }
+        fun recordElementsFrom(firElement: FirElement, recorder: FirElementsRecorder): Map<KtElement, FirElement> =
+            buildMap { firElement.accept(recorder, this) }
     }
 }

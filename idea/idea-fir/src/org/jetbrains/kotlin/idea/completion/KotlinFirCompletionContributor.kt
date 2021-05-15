@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.completion.*
-import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.patterns.PsiJavaPatterns
 import com.intellij.util.ProcessingContext
@@ -26,7 +25,6 @@ import org.jetbrains.kotlin.idea.frontend.api.scopes.KtCompositeScope
 import org.jetbrains.kotlin.idea.frontend.api.scopes.KtScope
 import org.jetbrains.kotlin.idea.frontend.api.scopes.KtScopeNameFilter
 import org.jetbrains.kotlin.idea.frontend.api.symbols.*
-import org.jetbrains.kotlin.idea.frontend.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.idea.frontend.api.symbols.markers.KtSymbolWithVisibility
 import org.jetbrains.kotlin.idea.frontend.api.types.KtClassType
 import org.jetbrains.kotlin.idea.frontend.api.types.KtType
@@ -285,9 +283,12 @@ private class TypeNamesProvider(private val indexHelper: IndexHelper) {
     fun KtAnalysisSession.findAllNames(type: KtType): Set<String> {
         if (type !is KtClassType) return emptySet()
 
-        val result = hashSetOf<String>()
-        val typeName = type.classId.shortClassName.identifier
+        val typeName = type.classId.shortClassName.let {
+            if (it.isSpecial) return emptySet()
+            it.identifier
+        }
 
+        val result = hashSetOf<String>()
         result += typeName
         result += indexHelper.getPossibleTypeAliasExpansionNames(typeName)
 

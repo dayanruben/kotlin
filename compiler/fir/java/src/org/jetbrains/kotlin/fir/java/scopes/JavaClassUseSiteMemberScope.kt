@@ -17,8 +17,6 @@ import org.jetbrains.kotlin.fir.scopes.*
 import org.jetbrains.kotlin.fir.scopes.impl.AbstractFirUseSiteMemberScope
 import org.jetbrains.kotlin.fir.scopes.jvm.computeJvmDescriptor
 import org.jetbrains.kotlin.fir.scopes.jvm.computeJvmSignature
-import org.jetbrains.kotlin.name.CallableId
-import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.load.java.BuiltinSpecialProperties
@@ -28,9 +26,10 @@ import org.jetbrains.kotlin.load.java.SpecialGenericSignatures.Companion.ERASED_
 import org.jetbrains.kotlin.load.java.SpecialGenericSignatures.Companion.sameAsBuiltinMethodWithErasedValueParameters
 import org.jetbrains.kotlin.load.java.SpecialGenericSignatures.Companion.sameAsRenamedInJvmBuiltin
 import org.jetbrains.kotlin.load.java.getPropertyNamesCandidatesByAccessorName
+import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.types.AbstractTypeChecker
-import org.jetbrains.kotlin.utils.addToStdlib.firstNotNullResult
 
 class JavaClassUseSiteMemberScope(
     klass: FirJavaClass,
@@ -46,6 +45,8 @@ class JavaClassUseSiteMemberScope(
     private val typeParameterStack = klass.javaTypeParameterStack
     private val specialFunctions = hashMapOf<Name, Collection<FirNamedFunctionSymbol>>()
     private val accessorByNameMap = hashMapOf<Name, FirAccessorSymbol>()
+    
+    private val canUseSpecialGetters: Boolean by lazy { !klass.hasKotlinSuper(session) }
 
     override fun getCallableNames(): Set<Name> {
         return declaredMemberScope.getContainingCallableNamesIfPresent() + superTypesScope.getCallableNames()
@@ -62,7 +63,7 @@ class JavaClassUseSiteMemberScope(
     ): FirAccessorSymbol {
         return accessorByNameMap.getOrPut(property.name) {
             buildSyntheticProperty {
-                declarationSiteSession = session
+                moduleData = session.moduleData
                 name = property.name
                 symbol = FirAccessorSymbol(
                     accessorId = getterSymbol.callableId,
@@ -137,7 +138,7 @@ class JavaClassUseSiteMemberScope(
     private fun FirPropertySymbol.findGetterOverride(
         scope: FirScope,
     ): FirNamedFunctionSymbol? {
-        val specialGetterName = getBuiltinSpecialPropertyGetterName()
+        val specialGetterName = if (canUseSpecialGetters) getBuiltinSpecialPropertyGetterName() else null
         if (specialGetterName != null) {
             return findGetterByName(specialGetterName.asString(), scope)
         }
@@ -151,7 +152,7 @@ class JavaClassUseSiteMemberScope(
     ): FirNamedFunctionSymbol? {
         val propertyFromSupertype = fir
         val expectedReturnType = propertyFromSupertype.returnTypeRef.coneTypeSafe<ConeKotlinType>()
-        return scope.getFunctions(Name.identifier(getterName)).firstNotNullResult factory@{ candidateSymbol ->
+        return scope.getFunctions(Name.identifier(getterName)).firstNotNullOfOrNull factory@{ candidateSymbol ->
             val candidate = candidateSymbol.fir
             if (candidate.valueParameters.isNotEmpty()) return@factory null
 
@@ -168,7 +169,7 @@ class JavaClassUseSiteMemberScope(
         scope: FirScope,
     ): FirNamedFunctionSymbol? {
         val propertyType = fir.returnTypeRef.coneTypeSafe<ConeKotlinType>() ?: return null
-        return scope.getFunctions(Name.identifier(JvmAbi.setterName(fir.name.asString()))).firstNotNullResult factory@{ candidateSymbol ->
+        return scope.getFunctions(Name.identifier(JvmAbi.setterName(fir.name.asString()))).firstNotNullOfOrNull factory@{ candidateSymbol ->
             val candidate = candidateSymbol.fir
             if (candidate.valueParameters.size != 1) return@factory null
 
@@ -447,6 +448,28 @@ class JavaClassUseSiteMemberScope(
         }
 
         return result
+    }
+
+    /**
+     * Checks if class has any kotlin super-types apart from builtins and interfaces
+     */
+    private fun FirRegularClass.hasKotlinSuper(session: FirSession, visited: MutableSet<FirRegularClass> = mutableSetOf()): Boolean =
+        when {
+            !visited.add(this) -> false
+            this is FirJavaClass -> superConeTypes.any { type ->
+                type.toFir(session)?.hasKotlinSuper(session, visited) == true
+            }
+            isInterface || origin == FirDeclarationOrigin.BuiltIns -> false
+            else -> true
+        }
+
+    private fun ConeClassLikeType.toFir(session: FirSession): FirRegularClass? {
+        val symbol = this.toSymbol(session)
+        return if (symbol is FirRegularClassSymbol) {
+            symbol.fir
+        } else {
+            null
+        }
     }
 }
 
