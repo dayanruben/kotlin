@@ -1,4 +1,3 @@
-// !WITH_NEW_INFERENCE
 class A() {
     override fun equals(other : Any?) : Boolean = false
 }
@@ -26,7 +25,7 @@ fun f(): Unit {
     <!ARGUMENT_TYPE_MISMATCH!>x<!> in 1..2
 
     val y : Boolean? = true
-    false || y
-    y && true
-    y && 1
+    false || <!CONDITION_TYPE_MISMATCH!>y<!>
+    <!CONDITION_TYPE_MISMATCH!>y<!> && true
+    <!CONDITION_TYPE_MISMATCH!>y<!> && <!CONDITION_TYPE_MISMATCH!>1<!>
 }

@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation.Companion.MAIN_COMPI
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation.Companion.TEST_COMPILATION_NAME
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.Companion.KOTLIN_NATIVE_IGNORE_INCORRECT_DEPENDENCIES
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
-import org.jetbrains.kotlin.gradle.plugin.mpp.apple.registerAssembleAppleFrameworkTask
+import org.jetbrains.kotlin.gradle.plugin.mpp.apple.registerEmbedAndSignAppleFrameworkTask
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.*
 import org.jetbrains.kotlin.gradle.targets.metadata.isKotlinGranularMetadataEnabled
 import org.jetbrains.kotlin.gradle.targets.native.*
@@ -243,7 +243,7 @@ open class KotlinNativeTargetConfigurator<T : KotlinNativeTarget> : AbstractKotl
         configureCInterops(target)
 
         if (target.konanTarget.family.isAppleFamily) {
-            registerAssembleAppleFrameworkTasks(target)
+            registerEmbedAndSignAppleFrameworkTasks(target)
         }
 
         if (PropertiesProvider(target.project).ignoreIncorrectNativeDependencies != true) {
@@ -360,10 +360,10 @@ open class KotlinNativeTargetConfigurator<T : KotlinNativeTarget> : AbstractKotl
         }
     }
 
-    private fun registerAssembleAppleFrameworkTasks(target: KotlinNativeTarget) {
+    private fun registerEmbedAndSignAppleFrameworkTasks(target: KotlinNativeTarget) {
         val project = target.project
         target.binaries.withType(Framework::class.java).all { framework ->
-            project.registerAssembleAppleFrameworkTask(framework)
+            project.registerEmbedAndSignAppleFrameworkTask(framework)
         }
     }
 
@@ -640,16 +640,15 @@ class KotlinNativeTargetWithSimulatorTestsConfigurator :
         get() = KotlinNativeSimulatorTestRun::class.java
 
     override fun isTestTaskEnabled(target: KotlinNativeTargetWithSimulatorTests): Boolean =
-        HostManager.hostIsMac
+        HostManager.hostIsMac && HostManager.host.architecture == target.konanTarget.architecture
 
     override fun configureTestTask(target: KotlinNativeTargetWithSimulatorTests, testTask: KotlinNativeSimulatorTest) {
         super.configureTestTask(target, testTask)
 
         testTask.deviceId = when (target.konanTarget) {
-            KonanTarget.IOS_X64 -> "iPhone 8"
-            KonanTarget.WATCHOS_X86 -> "Apple Watch Series 5 - 44mm"
-            KonanTarget.WATCHOS_X64 -> "Apple Watch Series 5 - 44mm"
-            KonanTarget.TVOS_X64 -> "Apple TV"
+            KonanTarget.IOS_X64, KonanTarget.IOS_SIMULATOR_ARM64 -> "iPhone 8"
+            KonanTarget.WATCHOS_X86, KonanTarget.WATCHOS_X64, KonanTarget.WATCHOS_SIMULATOR_ARM64 -> "Apple Watch Series 5 - 44mm"
+            KonanTarget.TVOS_X64, KonanTarget.TVOS_SIMULATOR_ARM64 -> "Apple TV"
             else -> error("Simulator tests are not supported for platform ${target.konanTarget.name}")
         }
     }

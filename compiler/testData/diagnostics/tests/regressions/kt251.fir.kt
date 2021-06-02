@@ -1,12 +1,11 @@
-// !WITH_NEW_INFERENCE
 class A() {
     var x: Int = 0
         get() = "s"
         set(value: <!WRONG_SETTER_PARAMETER_TYPE!>String<!>) {
-            field = value
+            field = <!ASSIGNMENT_TYPE_MISMATCH!>value<!>
         }
     val y: Int
-        get(): <!WRONG_GETTER_RETURN_TYPE("Getter return type must be equal to the type of the property, i.e. 'kotlin/Int'")!>String<!> = "s"
+        get(): <!WRONG_GETTER_RETURN_TYPE("kotlin/Int; kotlin/String")!>String<!> = "s"
     val z: Int
         get() {
             return "s"

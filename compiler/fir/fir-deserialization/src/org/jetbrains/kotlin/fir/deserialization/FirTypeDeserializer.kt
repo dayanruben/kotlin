@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.fir.symbols.ConeTypeParameterLookupTag
 import org.jetbrains.kotlin.fir.symbols.impl.ConeClassLikeLookupTagImpl
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassLikeSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirTypeParameterSymbol
+import org.jetbrains.kotlin.fir.typeContext
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.builder.buildResolvedTypeRef
 import org.jetbrains.kotlin.fir.types.impl.ConeClassLikeTypeImpl
@@ -79,7 +80,7 @@ class FirTypeDeserializer(
             for ((index, proto) in typeParameterProtos.withIndex()) {
                 val builder = builders[index]
                 builder.apply {
-                    proto.upperBoundList.mapTo(bounds) {
+                    proto.upperBounds(typeTable).mapTo(bounds) {
                         buildResolvedTypeRef { type = type(it) }
                     }
                     addDefaultBoundIfNecessary()
@@ -137,7 +138,7 @@ class FirTypeDeserializer(
         if (constructor is ConeTypeParameterLookupTag) {
             return ConeTypeParameterTypeImpl(constructor, isNullable = proto.nullable).let {
                 if (Flags.DEFINITELY_NOT_NULL_TYPE.get(proto.flags))
-                    ConeDefinitelyNotNullType.create(it)
+                    ConeDefinitelyNotNullType.create(it, moduleData.session.typeContext)
                 else
                     it
             }

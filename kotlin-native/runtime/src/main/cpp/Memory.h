@@ -287,7 +287,7 @@ void Kotlin_native_internal_GC_setCollectCyclesThreshold(ObjHeader*, int64_t val
 int64_t Kotlin_native_internal_GC_getCollectCyclesThreshold(ObjHeader*);
 void Kotlin_native_internal_GC_setThresholdAllocations(ObjHeader*, int64_t value);
 int64_t Kotlin_native_internal_GC_getThresholdAllocations(ObjHeader*);
-void Kotlin_native_internal_GC_setTuneThreshold(ObjHeader*, int32_t value);
+void Kotlin_native_internal_GC_setTuneThreshold(ObjHeader*, bool value);
 bool Kotlin_native_internal_GC_getTuneThreshold(ObjHeader*);
 OBJ_GETTER(Kotlin_native_internal_GC_detectCycles, ObjHeader*);
 OBJ_GETTER(Kotlin_native_internal_GC_findCycle, ObjHeader*, ObjHeader* root);
@@ -298,10 +298,12 @@ bool Kotlin_Any_isShareable(ObjHeader* thiz);
 void Kotlin_Any_share(ObjHeader* thiz);
 void PerformFullGC(MemoryState* memory) RUNTIME_NOTHROW;
 
+// Only for legacy
 bool TryAddHeapRef(const ObjHeader* object);
-
-void ReleaseHeapRef(const ObjHeader* object) RUNTIME_NOTHROW;
 void ReleaseHeapRefNoCollect(const ObjHeader* object) RUNTIME_NOTHROW;
+
+// Only for experimental
+OBJ_GETTER(TryRef, ObjHeader* object) RUNTIME_NOTHROW;
 
 ForeignRefContext InitLocalForeignRef(ObjHeader* object);
 
@@ -408,9 +410,14 @@ ALWAYS_INLINE ThreadState SwitchThreadState(MemoryState* thread, ThreadState new
 
 // Asserts that the given thread is in the given state.
 ALWAYS_INLINE void AssertThreadState(MemoryState* thread, ThreadState expected) noexcept;
+ALWAYS_INLINE void AssertThreadState(MemoryState* thread, std::initializer_list<ThreadState> expected) noexcept;
 
 // Asserts that the current thread is in the the given state.
 ALWAYS_INLINE inline void AssertThreadState(ThreadState expected) noexcept {
+    AssertThreadState(mm::GetMemoryState(), expected);
+}
+
+ALWAYS_INLINE inline void AssertThreadState(std::initializer_list<ThreadState> expected) noexcept {
     AssertThreadState(mm::GetMemoryState(), expected);
 }
 
@@ -440,6 +447,8 @@ ALWAYS_INLINE inline R CallWithThreadState(R(*function)(Args...), Args... args) 
     ThreadStateGuard guard(state);
     return function(std::forward<Args>(args)...);
 }
+
+extern const bool kSupportsMultipleMutators;
 
 } // namespace kotlin
 

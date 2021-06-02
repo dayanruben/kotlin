@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.backend.jvm.codegen
 
 import org.jetbrains.kotlin.backend.common.ir.allOverridden
-import org.jetbrains.kotlin.backend.common.ir.isFromJava
 import org.jetbrains.kotlin.backend.common.ir.isMethodOfAny
 import org.jetbrains.kotlin.backend.common.ir.isTopLevel
 import org.jetbrains.kotlin.backend.common.lower.parentsWithSelf
@@ -30,6 +29,7 @@ import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.declarations.lazy.IrLazyClass
 import org.jetbrains.kotlin.ir.declarations.lazy.IrLazyFunction
 import org.jetbrains.kotlin.ir.declarations.lazy.IrLazyFunctionBase
+import org.jetbrains.kotlin.ir.declarations.lazy.IrMaybeDeserializedClass
 import org.jetbrains.kotlin.ir.descriptors.IrBasedSimpleFunctionDescriptor
 import org.jetbrains.kotlin.ir.descriptors.toIrBasedDescriptor
 import org.jetbrains.kotlin.ir.expressions.*
@@ -149,7 +149,7 @@ class MethodSignatureMapper(private val context: JvmBackendContext) {
         } else null
 
     private fun getModuleName(function: IrSimpleFunction): String =
-        (if (function is IrLazyFunction)
+        (if (function is IrLazyFunctionBase)
             getJvmModuleNameForDeserialized(function)
         else null) ?: context.state.moduleName
 
@@ -494,7 +494,7 @@ class MethodSignatureMapper(private val context: JvmBackendContext) {
     }
 
     // From org.jetbrains.kotlin.load.kotlin.getJvmModuleNameForDeserializedDescriptor
-    private fun getJvmModuleNameForDeserialized(function: IrLazyFunction): String? {
+    private fun getJvmModuleNameForDeserialized(function: IrLazyFunctionBase): String? {
         var current: IrDeclarationParent? = function.parent
         while (current != null) {
             when (current) {
@@ -505,6 +505,8 @@ class MethodSignatureMapper(private val context: JvmBackendContext) {
                         ?.let(nameResolver::getString)
                         ?: JvmProtoBufUtil.DEFAULT_MODULE_NAME
                 }
+                is IrMaybeDeserializedClass ->
+                    return current.moduleName
                 is IrExternalPackageFragment -> {
                     val source = current.containerSource ?: return null
                     return (source as? JvmPackagePartSource)?.moduleName

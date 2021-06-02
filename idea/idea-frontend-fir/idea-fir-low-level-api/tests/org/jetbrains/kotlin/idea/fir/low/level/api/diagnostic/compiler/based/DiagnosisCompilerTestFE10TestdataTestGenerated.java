@@ -838,9 +838,19 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
                 runTest("compiler/testData/diagnostics/tests/annotations/AnnotationAsDefaultParameter.kt");
             }
 
-            @TestMetadata("AnnotationForClassTypeParameter.kt")
-            public void testAnnotationForClassTypeParameter() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/annotations/AnnotationForClassTypeParameter.kt");
+            @TestMetadata("AnnotationForClassTypeParameter_15.kt")
+            public void testAnnotationForClassTypeParameter_15() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/annotations/AnnotationForClassTypeParameter_15.kt");
+            }
+
+            @TestMetadata("AnnotationForClassTypeParameter_16.kt")
+            public void testAnnotationForClassTypeParameter_16() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/annotations/AnnotationForClassTypeParameter_16.kt");
+            }
+
+            @TestMetadata("AnnotationForClassTypeParameter_typeUseFlag.kt")
+            public void testAnnotationForClassTypeParameter_typeUseFlag() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/annotations/AnnotationForClassTypeParameter_typeUseFlag.kt");
             }
 
             @TestMetadata("AnnotationForFunctionTypeParameter.kt")
@@ -1131,6 +1141,11 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             @TestMetadata("RecursivelyIncorrectlyAnnotatedParameter.kt")
             public void testRecursivelyIncorrectlyAnnotatedParameter() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/annotations/RecursivelyIncorrectlyAnnotatedParameter.kt");
+            }
+
+            @TestMetadata("requireKotlin.kt")
+            public void testRequireKotlin() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/annotations/requireKotlin.kt");
             }
 
             @TestMetadata("RetentionsOfAnnotationWithExpressionTarget_after.kt")
@@ -10993,6 +11008,11 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
                     KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/inference/builderInference"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
                 }
 
+                @TestMetadata("labaledCall.kt")
+                public void testLabaledCall() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/labaledCall.kt");
+                }
+
                 @TestMetadata("simpleLambdaInCallWithAnotherLambdaWithBuilderInference.kt")
                 public void testSimpleLambdaInCallWithAnotherLambdaWithBuilderInference() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/builderInference/simpleLambdaInCallWithAnotherLambdaWithBuilderInference.kt");
@@ -11023,14 +11043,105 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
                     runTest("compiler/testData/diagnostics/tests/inference/builderInference/specialCallsWithCallableReferencesErrorType.kt");
                 }
 
+                @TestMetadata("specialCallsWithCallableReferencesErrorTypeUnrestricted.kt")
+                public void testSpecialCallsWithCallableReferencesErrorTypeUnrestricted() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/specialCallsWithCallableReferencesErrorTypeUnrestricted.kt");
+                }
+
                 @TestMetadata("specialCallsWithCallableReferencesNonStrictOnlyInputTypes.kt")
                 public void testSpecialCallsWithCallableReferencesNonStrictOnlyInputTypes() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/builderInference/specialCallsWithCallableReferencesNonStrictOnlyInputTypes.kt");
                 }
 
+                @TestMetadata("specialCallsWithCallableReferencesUnrestricted.kt")
+                public void testSpecialCallsWithCallableReferencesUnrestricted() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/specialCallsWithCallableReferencesUnrestricted.kt");
+                }
+
                 @TestMetadata("specialCallsWithLambdas.kt")
                 public void testSpecialCallsWithLambdas() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/builderInference/specialCallsWithLambdas.kt");
+                }
+
+                @TestMetadata("compiler/testData/diagnostics/tests/inference/builderInference/constraints")
+                @TestDataPath("$PROJECT_ROOT")
+                @RunWith(JUnit3RunnerWithInners.class)
+                public static class Constraints extends AbstractDiagnosisCompilerTestDataTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                    }
+
+                    public void testAllFilesPresentInConstraints() throws Exception {
+                        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/inference/builderInference/constraints"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
+                    }
+
+                    @TestMetadata("violating.kt")
+                    public void testViolating() throws Exception {
+                        runTest("compiler/testData/diagnostics/tests/inference/builderInference/constraints/violating.kt");
+                    }
+                }
+
+                @TestMetadata("compiler/testData/diagnostics/tests/inference/builderInference/stubTypes")
+                @TestDataPath("$PROJECT_ROOT")
+                @RunWith(JUnit3RunnerWithInners.class)
+                public static class StubTypes extends AbstractDiagnosisCompilerTestDataTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                    }
+
+                    public void testAllFilesPresentInStubTypes() throws Exception {
+                        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/inference/builderInference/stubTypes"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
+                    }
+
+                    @TestMetadata("capturedTypes.kt")
+                    public void testCapturedTypes() throws Exception {
+                        runTest("compiler/testData/diagnostics/tests/inference/builderInference/stubTypes/capturedTypes.kt");
+                    }
+
+                    @TestMetadata("commonSuperType.kt")
+                    public void testCommonSuperType() throws Exception {
+                        runTest("compiler/testData/diagnostics/tests/inference/builderInference/stubTypes/commonSuperType.kt");
+                    }
+
+                    @TestMetadata("commonSuperTypeContravariant.kt")
+                    public void testCommonSuperTypeContravariant() throws Exception {
+                        runTest("compiler/testData/diagnostics/tests/inference/builderInference/stubTypes/commonSuperTypeContravariant.kt");
+                    }
+
+                    @TestMetadata("commonSuperTypeCovariant.kt")
+                    public void testCommonSuperTypeCovariant() throws Exception {
+                        runTest("compiler/testData/diagnostics/tests/inference/builderInference/stubTypes/commonSuperTypeCovariant.kt");
+                    }
+
+                    @TestMetadata("commonSuperTypeInvariant.kt")
+                    public void testCommonSuperTypeInvariant() throws Exception {
+                        runTest("compiler/testData/diagnostics/tests/inference/builderInference/stubTypes/commonSuperTypeInvariant.kt");
+                    }
+
+                    @TestMetadata("commonSuperTypeNullable.kt")
+                    public void testCommonSuperTypeNullable() throws Exception {
+                        runTest("compiler/testData/diagnostics/tests/inference/builderInference/stubTypes/commonSuperTypeNullable.kt");
+                    }
+
+                    @TestMetadata("intersect.kt")
+                    public void testIntersect() throws Exception {
+                        runTest("compiler/testData/diagnostics/tests/inference/builderInference/stubTypes/intersect.kt");
+                    }
+
+                    @TestMetadata("memberScope.kt")
+                    public void testMemberScope() throws Exception {
+                        runTest("compiler/testData/diagnostics/tests/inference/builderInference/stubTypes/memberScope.kt");
+                    }
+
+                    @TestMetadata("nullability.kt")
+                    public void testNullability() throws Exception {
+                        runTest("compiler/testData/diagnostics/tests/inference/builderInference/stubTypes/nullability.kt");
+                    }
+
+                    @TestMetadata("renderingStubTypes.kt")
+                    public void testRenderingStubTypes() throws Exception {
+                        runTest("compiler/testData/diagnostics/tests/inference/builderInference/stubTypes/renderingStubTypes.kt");
+                    }
                 }
             }
 
@@ -11483,6 +11594,11 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
                 @TestMetadata("equalityConstraintUpstairs.kt")
                 public void testEqualityConstraintUpstairs() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/completion/equalityConstraintUpstairs.kt");
+                }
+
+                @TestMetadata("errorAfterCompletion.kt")
+                public void testErrorAfterCompletion() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/completion/errorAfterCompletion.kt");
                 }
 
                 @TestMetadata("flexibleType.kt")
@@ -16316,6 +16432,29 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
                 }
             }
 
+            @TestMetadata("compiler/testData/diagnostics/tests/multiplatform/hmpp")
+            @TestDataPath("$PROJECT_ROOT")
+            @RunWith(JUnit3RunnerWithInners.class)
+            public static class Hmpp extends AbstractDiagnosisCompilerTestDataTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                public void testAllFilesPresentInHmpp() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/multiplatform/hmpp"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
+                }
+
+                @TestMetadata("sealedInheritorsInComplexModuleStructure.kt")
+                public void testSealedInheritorsInComplexModuleStructure() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/hmpp/sealedInheritorsInComplexModuleStructure.kt");
+                }
+
+                @TestMetadata("simple.kt")
+                public void testSimple() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/hmpp/simple.kt");
+                }
+            }
+
             @TestMetadata("compiler/testData/diagnostics/tests/multiplatform/inlineClasses")
             @TestDataPath("$PROJECT_ROOT")
             @RunWith(JUnit3RunnerWithInners.class)
@@ -18661,6 +18800,11 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
                 @TestMetadata("substituteSeveralOtherErasedTypeArguments.kt")
                 public void testSubstituteSeveralOtherErasedTypeArguments() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/platformTypes/rawTypes/substituteSeveralOtherErasedTypeArguments.kt");
+                }
+
+                @TestMetadata("superTypeErasion.kt")
+                public void testSuperTypeErasion() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/platformTypes/rawTypes/superTypeErasion.kt");
                 }
 
                 @TestMetadata("typeEnhancement.kt")
@@ -28211,6 +28355,41 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             public void testCompleteIrrelevantCalls() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/builderInference/completeIrrelevantCalls.kt");
             }
+
+            @TestMetadata("incorrectCalls.kt")
+            public void testIncorrectCalls() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/builderInference/incorrectCalls.kt");
+            }
+
+            @TestMetadata("incorrectCallsWithRestrictions.kt")
+            public void testIncorrectCallsWithRestrictions() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/builderInference/incorrectCallsWithRestrictions.kt");
+            }
+
+            @TestMetadata("inferCoroutineTypeInOldVersion.kt")
+            public void testInferCoroutineTypeInOldVersion() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/builderInference/inferCoroutineTypeInOldVersion.kt");
+            }
+
+            @TestMetadata("resolveUsualCallWithBuilderInference.kt")
+            public void testResolveUsualCallWithBuilderInference() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/builderInference/resolveUsualCallWithBuilderInference.kt");
+            }
+
+            @TestMetadata("resolveUsualCallWithBuilderInferenceWithRestrictions.kt")
+            public void testResolveUsualCallWithBuilderInferenceWithRestrictions() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/builderInference/resolveUsualCallWithBuilderInferenceWithRestrictions.kt");
+            }
+
+            @TestMetadata("useInferenceInformationFromExtension.kt")
+            public void testUseInferenceInformationFromExtension() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/builderInference/useInferenceInformationFromExtension.kt");
+            }
+
+            @TestMetadata("useInferenceInformationFromExtensionWithRestrictions.kt")
+            public void testUseInferenceInformationFromExtensionWithRestrictions() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/builderInference/useInferenceInformationFromExtensionWithRestrictions.kt");
+            }
         }
 
         @TestMetadata("compiler/testData/diagnostics/testsWithStdLib/builtins")
@@ -29296,16 +29475,6 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
                     runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/inference/extensionsWithNonValuableConstraints_1_2.kt");
                 }
 
-                @TestMetadata("incorrectCalls.kt")
-                public void testIncorrectCalls() throws Exception {
-                    runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/inference/incorrectCalls.kt");
-                }
-
-                @TestMetadata("inferCoroutineTypeInOldVersion.kt")
-                public void testInferCoroutineTypeInOldVersion() throws Exception {
-                    runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/inference/inferCoroutineTypeInOldVersion.kt");
-                }
-
                 @TestMetadata("inferenceFromMethodInsideLocalVariable.kt")
                 public void testInferenceFromMethodInsideLocalVariable() throws Exception {
                     runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/inference/inferenceFromMethodInsideLocalVariable.kt");
@@ -29426,11 +29595,6 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
                     runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/inference/recursiveGenerators2.kt");
                 }
 
-                @TestMetadata("resolveUsualCallWithBuilderInference.kt")
-                public void testResolveUsualCallWithBuilderInference() throws Exception {
-                    runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/inference/resolveUsualCallWithBuilderInference.kt");
-                }
-
                 @TestMetadata("returnTypeInference.kt")
                 public void testReturnTypeInference() throws Exception {
                     runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/inference/returnTypeInference.kt");
@@ -29469,11 +29633,6 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
                 @TestMetadata("typeFromReceiver.kt")
                 public void testTypeFromReceiver() throws Exception {
                     runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/inference/typeFromReceiver.kt");
-                }
-
-                @TestMetadata("useInferenceInformationFromExtension.kt")
-                public void testUseInferenceInformationFromExtension() throws Exception {
-                    runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/inference/useInferenceInformationFromExtension.kt");
                 }
 
                 @TestMetadata("variableCallInsideBuilderFunction.kt")

@@ -16,6 +16,14 @@ public object Debugging {
         get() = Debugging_isThreadStateRunnable()
 }
 
+@GCUnsafeCall("Kotlin_Debugging_isPermanent")
+@InternalForKotlinNative
+public external fun Any.isPermanent() : Boolean
+
+@GCUnsafeCall("Kotlin_Debugging_isLocal")
+@InternalForKotlinNative
+public external fun Any.isLocal() : Boolean
+
 @GCUnsafeCall("Kotlin_Debugging_getForceCheckedShutdown")
 private external fun Debugging_getForceCheckedShutdown(): Boolean
 

@@ -1,6 +1,5 @@
 // !USE_EXPERIMENTAL: kotlin.RequiresOptIn
 // !DIAGNOSTICS: -UNUSED_PARAMETER
-// !WITH_NEW_INFERENCE
 // NI_EXPECTED_FILE
 
 @file:OptIn(ExperimentalTypeInference::class)
@@ -19,6 +18,6 @@ val test1 = generate {
     yield(<!NO_COMPANION_OBJECT!>A<!>)
 }
 
-val test2: Int = <!INITIALIZER_TYPE_MISMATCH!>generate {
+val test2: Int = <!INITIALIZER_TYPE_MISMATCH, NEW_INFERENCE_ERROR!>generate {
     yield(A())
 }<!>

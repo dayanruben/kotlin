@@ -6,7 +6,10 @@
 package org.jetbrains.kotlin.backend.jvm.codegen
 
 import org.jetbrains.kotlin.backend.jvm.JvmBackendContext
+import org.jetbrains.kotlin.backend.jvm.ir.isInlineClassType
 import org.jetbrains.kotlin.backend.jvm.ir.isInlineParameter
+import org.jetbrains.kotlin.backend.jvm.lower.inlineclasses.InlineClassAbi
+import org.jetbrains.kotlin.backend.jvm.lower.suspendFunctionOriginal
 import org.jetbrains.kotlin.codegen.IrExpressionLambda
 import org.jetbrains.kotlin.codegen.JvmKotlinType
 import org.jetbrains.kotlin.codegen.StackValue
@@ -14,13 +17,13 @@ import org.jetbrains.kotlin.codegen.ValueKind
 import org.jetbrains.kotlin.codegen.inline.*
 import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
-import org.jetbrains.kotlin.descriptors.FunctionDescriptor
-import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.descriptors.*
 import org.jetbrains.kotlin.ir.expressions.*
+import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
-import org.jetbrains.kotlin.ir.types.classifierOrFail
+import org.jetbrains.kotlin.ir.types.IrTypeProjection
+import org.jetbrains.kotlin.ir.types.typeWith
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.resolve.jvm.AsmTypes
 import org.jetbrains.kotlin.resolve.jvm.jvmSignature.JvmMethodSignature
@@ -59,7 +62,7 @@ class IrInlineCodegen(
 
         when (next) {
             is IrExpressionLambdaImpl -> next.reference.getArgumentsWithIr().forEachIndexed { index, (_, ir) ->
-                putCapturedValueOnStack(ir, next.capturedParamsInDesc[index], index)
+                putCapturedValueOnStack(ir, next.capturedVars[index].type, index)
             }
             is IrDefaultLambda -> rememberCapturedForDefaultLambda(next)
             else -> throw RuntimeException("Unknown lambda: $next")
@@ -85,7 +88,7 @@ class IrInlineCodegen(
             val boundReceiver = irReference.extensionReceiver
             if (boundReceiver != null) {
                 activeLambda = lambdaInfo
-                putCapturedValueOnStack(boundReceiver, lambdaInfo.capturedParamsInDesc.single(), 0)
+                putCapturedValueOnStack(boundReceiver, lambdaInfo.capturedVars.single().type, 0)
                 activeLambda = null
             }
         } else {
@@ -183,7 +186,11 @@ class IrExpressionLambdaImpl(
     override val isBoundCallableReference: Boolean
         get() = reference.extensionReceiver != null
 
-    override val isSuspend: Boolean = function.isSuspend
+    override val isSuspend: Boolean
+        get() = reference.symbol.owner.isSuspend
+
+    override val hasDispatchReceiver: Boolean
+        get() = false
 
     // This name doesn't actually matter: it is used internally to tell this lambda's captured
     // arguments apart from any other scope's. So long as it's unique, any value is fine.
@@ -192,63 +199,81 @@ class IrExpressionLambdaImpl(
     override val lambdaClassType: Type = codegen.context.getLocalClassType(reference)
         ?: throw AssertionError("callable reference ${reference.dump()} has no name in context")
 
-    private val capturedParameters: Map<CapturedParamDesc, IrValueParameter> =
-        reference.getArgumentsWithIr().associate { (param, _) ->
-            capturedParamDesc(param.name.asString(), codegen.typeMapper.mapType(param.type)) to param
-        }
-
-    override val capturedVars: List<CapturedParamDesc> = capturedParameters.keys.toList()
-
-    private val loweredMethod = codegen.methodSignatureMapper.mapAsmMethod(function)
-
-    private val captureParameterIndices: Pair<Int, Int>
-        get() = when {
-            isBoundCallableReference -> 0 to 1 // (bound receiver, real parameters...)
-            isExtensionLambda -> 1 to capturedVars.size + 1 // (unbound receiver, captures..., real parameters...)
-            else -> 0 to capturedVars.size // (captures..., real parameters...)
-        }
-
-    val capturedParamsInDesc: List<Type> =
-        captureParameterIndices.let { (from, to) -> loweredMethod.argumentTypes.take(to).drop(from) }
-
-    override val invokeMethod: Method = loweredMethod.let {
-        val (startCapture, endCapture) = captureParameterIndices
-        Method(it.name, it.returnType, (it.argumentTypes.take(startCapture) + it.argumentTypes.drop(endCapture)).toTypedArray())
-    }
-
+    override val capturedVars: List<CapturedParamDesc>
+    override val invokeMethod: Method
     override val invokeMethodParameters: List<KotlinType?>
-        get() {
-            val allParameters = function.explicitParameters.map { it.type.toIrBasedKotlinType() }
-            val (startCapture, endCapture) = captureParameterIndices
-            return allParameters.take(startCapture) + allParameters.drop(endCapture)
-        }
-
     override val invokeMethodReturnType: KotlinType
-        get() = function.returnType.toIrBasedKotlinType()
 
-    override val hasDispatchReceiver: Boolean = false
-
-    override fun isCapturedSuspend(desc: CapturedParamDesc): Boolean =
-        capturedParameters[desc]?.let { it.isInlineParameter() && it.type.isSuspendFunctionTypeOrSubtype() } == true
+    init {
+        val asmMethod = codegen.methodSignatureMapper.mapAsmMethod(function)
+        val capturedParameters = reference.getArgumentsWithIr()
+        val (startCapture, endCapture) = when {
+            isBoundCallableReference -> 0 to 1 // (bound receiver, real parameters...)
+            isExtensionLambda -> 1 to capturedParameters.size + 1 // (unbound receiver, captures..., real parameters...)
+            else -> 0 to capturedParameters.size // (captures..., real parameters...)
+        }
+        capturedVars = capturedParameters.mapIndexed { index, (parameter, _) ->
+            val isSuspend = parameter.isInlineParameter() && parameter.type.isSuspendFunctionTypeOrSubtype()
+            capturedParamDesc(parameter.name.asString(), asmMethod.argumentTypes[startCapture + index], isSuspend)
+        }
+        // The parameter list should include the continuation if this is a suspend lambda. In the IR backend,
+        // the lambda is suspend iff the inline function's parameter is marked suspend, so FunctionN.invoke call
+        // inside the inline function already has a (real) continuation value as the last argument.
+        val freeParameters = function.explicitParameters.let { it.take(startCapture) + it.drop(endCapture) }
+        val freeAsmParameters = asmMethod.argumentTypes.let { it.take(startCapture) + it.drop(endCapture) }
+        // The return type, on the other hand, should be the original type if this is a suspend lambda that returns
+        // an unboxed inline class value so that the inliner will box it (FunctionN.invoke should return a boxed value).
+        val unboxedReturnType = function.suspendFunctionOriginal().originalReturnTypeOfSuspendFunctionReturningUnboxedInlineClass()
+        val unboxedAsmReturnType = unboxedReturnType?.let(codegen.typeMapper::mapType)
+        invokeMethod = Method(asmMethod.name, unboxedAsmReturnType ?: asmMethod.returnType, freeAsmParameters.toTypedArray())
+        invokeMethodParameters = freeParameters.map { it.type.toIrBasedKotlinType() }
+        invokeMethodReturnType = (unboxedReturnType ?: function.returnType).toIrBasedKotlinType()
+    }
 }
 
 class IrDefaultLambda(
-    lambdaClassType: Type,
+    override val lambdaClassType: Type,
     capturedArgs: Array<Type>,
-    irValueParameter: IrValueParameter,
+    private val irValueParameter: IrValueParameter,
     offset: Int,
     needReification: Boolean
-) : DefaultLambda(
-    lambdaClassType, capturedArgs, irValueParameter.toIrBasedDescriptor() as ValueParameterDescriptor, offset, needReification
-) {
-    private val invoke =
-        (irValueParameter.type.classifierOrFail.owner as IrClass).functions.single { it.name == OperatorNameConventions.INVOKE }
+) : DefaultLambda(capturedArgs, irValueParameter.isCrossinline, offset, needReification) {
+    private lateinit var typeArguments: List<IrType>
 
-    override fun mapAsmSignature(sourceCompiler: SourceCompilerForInline, descriptor: FunctionDescriptor): Method =
-        (sourceCompiler as IrSourceCompilerForInline).codegen.context.methodSignatureMapper.mapSignatureSkipGeneric(invoke).asmMethod
+    override val invokeMethodParameters: List<KotlinType>
+        get() = typeArguments.dropLast(1).map { it.toIrBasedKotlinType() }
 
-    override fun findInvokeMethodDescriptor(isPropertyReference: Boolean): FunctionDescriptor =
-        invoke.toIrBasedDescriptor()
+    override val invokeMethodReturnType: KotlinType
+        get() = typeArguments.last().toIrBasedKotlinType()
+
+    override fun mapAsmMethod(sourceCompiler: SourceCompilerForInline, isPropertyReference: Boolean): Method {
+        val context = (sourceCompiler as IrSourceCompilerForInline).codegen.context
+        typeArguments = (irValueParameter.type as IrSimpleType).arguments.let {
+            if (isPropertyReference) {
+                // Property references: `(A) -> B` => `get(Any?): Any?`
+                List(it.size) { context.irBuiltIns.anyNType }
+            } else {
+                // Non-suspend function references and lambdas: `(A) -> B` => `invoke(A): B`
+                // Suspend function references: `suspend (A) -> B` => `invoke(A, Continuation<B>): Any?`
+                // TODO: default suspend lambdas are currently uninlinable
+                it.mapTo(mutableListOf()) { argument -> (argument as IrTypeProjection).type }.apply {
+                    if (irValueParameter.type.isSuspendFunction()) {
+                        set(size - 1, context.ir.symbols.continuationClass.typeWith(get(size - 1)))
+                        add(context.irBuiltIns.anyNType)
+                    }
+                }
+            }
+        }
+        val base = if (isPropertyReference) OperatorNameConventions.GET.asString() else OperatorNameConventions.INVOKE.asString()
+        val name = InlineClassAbi.hashSuffix(
+            context.state.useOldManglingSchemeForFunctionsWithInlineClassesInSignatures,
+            typeArguments.dropLast(1),
+            typeArguments.last().takeIf { it.isInlineClassType() }
+        )?.let { "$base-$it" } ?: base
+        // TODO: while technically only the number of arguments here matters right now (see DefaultLambdaInfo.generateLambdaBody),
+        //       it would be better to map to a non-erased signature if not a property reference.
+        return Method(name, AsmTypes.OBJECT_TYPE, Array(typeArguments.size - 1) { AsmTypes.OBJECT_TYPE })
+    }
 }
 
 fun IrExpression.isInlineIrExpression() =

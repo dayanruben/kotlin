@@ -6,21 +6,15 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.lang.Language
+import com.intellij.openapi.components.ServiceManager
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtParameter
-import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.uast.DEFAULT_TYPES_LIST
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UastLanguagePlugin
 import org.jetbrains.uast.kotlin.FirKotlinConverter.convertDeclarationOrElement
-
-interface FirKotlinUastResolveProviderService {
-    fun isJvmElement(psiElement: PsiElement): Boolean
-}
 
 class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
     override val priority: Int = 10
@@ -33,7 +27,10 @@ class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
     }
 
     private val PsiElement.isJvmElement: Boolean
-        get() = service.isJvmElement(this)
+        get() {
+            val resolveProvider = ServiceManager.getService(project, FirKotlinUastResolveProviderService::class.java)
+            return resolveProvider.isJvmElement(this)
+        }
 
     override fun convertElement(element: PsiElement, parent: UElement?, requiredType: Class<out UElement>?): UElement? {
         if (!element.isJvmElement) return null

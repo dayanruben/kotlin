@@ -10,6 +10,7 @@
 #include <Utils.hpp>
 
 #include "ThreadData.hpp"
+#include "ThreadSuspension.hpp"
 
 namespace kotlin {
 
@@ -19,9 +20,11 @@ ALWAYS_INLINE inline bool isStateSwitchAllowed(ThreadState oldState, ThreadState
     return oldState != newState || reentrant;
 }
 
-const char* stateToString(ThreadState state) noexcept;
+std::string statesToString(std::initializer_list<ThreadState> states) noexcept;
 
 } // namespace internal
+
+const char* ThreadStateName(ThreadState state) noexcept;
 
 // Switches the state of the given thread to `newState` and returns the previous thread state.
 ALWAYS_INLINE inline ThreadState SwitchThreadState(mm::ThreadData* threadData, ThreadState newState, bool reentrant = false) noexcept {
@@ -29,7 +32,7 @@ ALWAYS_INLINE inline ThreadState SwitchThreadState(mm::ThreadData* threadData, T
     // TODO(perf): Mesaure the impact of this assert in debug and opt modes.
     RuntimeAssert(internal::isStateSwitchAllowed(oldState, newState, reentrant),
                   "Illegal thread state switch. Old state: %s. New state: %s.",
-                  internal::stateToString(oldState), internal::stateToString(newState));
+                  ThreadStateName(oldState), ThreadStateName(newState));
     return oldState;
 }
 
@@ -38,7 +41,14 @@ ALWAYS_INLINE inline void AssertThreadState(mm::ThreadData* threadData, ThreadSt
     auto actual = threadData->state();
     RuntimeAssert(actual == expected,
                   "Unexpected thread state. Expected: %s. Actual: %s.",
-                  internal::stateToString(expected), internal::stateToString(actual));
+                  ThreadStateName(expected), ThreadStateName(actual));
+}
+
+ALWAYS_INLINE inline void AssertThreadState(mm::ThreadData* threadData, std::initializer_list<ThreadState> expected) noexcept {
+    auto actual = threadData->state();
+    RuntimeAssert(std::any_of(expected.begin(), expected.end(), [actual](ThreadState expected) { return expected == actual; }),
+                  "Unexpected thread state. Expected one of: %s. Actual: %s",
+                  internal::statesToString(expected).c_str(), ThreadStateName(actual));
 }
 
 } // namespace kotlin

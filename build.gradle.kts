@@ -30,16 +30,12 @@ buildscript {
     dependencies {
         bootstrapCompilerClasspath(kotlin("compiler-embeddable", bootstrapKotlinVersion))
 
-        classpath("org.jetbrains.kotlin:kotlin-build-gradle-plugin:0.0.28")
+        classpath("org.jetbrains.kotlin:kotlin-build-gradle-plugin:0.0.29")
         classpath(kotlin("gradle-plugin", bootstrapKotlinVersion))
         classpath(kotlin("serialization", bootstrapKotlinVersion))
         classpath("org.jetbrains.dokka:dokka-gradle-plugin:0.9.17")
         classpath("org.jfrog.buildinfo:build-info-extractor-gradle:4.17.2")
     }
-}
-
-if (kotlinBuildProperties.buildScanServer != null) {
-    apply(from = "gradle/buildScanUserData.gradle")
 }
 
 plugins {
@@ -186,7 +182,7 @@ extra["versions.jflex"] = "1.7.0"
 extra["versions.markdown"] = "0.1.25"
 extra["versions.trove4j"] = "1.0.20181211"
 extra["versions.completion-ranking-kotlin"] = "0.1.3"
-extra["versions.r8"] = "2.1.96"
+extra["versions.r8"] = "2.2.64"
 val immutablesVersion = "0.3.1"
 extra["versions.kotlinx-collections-immutable"] = immutablesVersion
 extra["versions.kotlinx-collections-immutable-jvm"] = immutablesVersion
@@ -301,6 +297,7 @@ extra["compilerModules"] = arrayOf(
     ":compiler:fir:java",
     ":compiler:fir:jvm",
     ":compiler:fir:checkers",
+    ":compiler:fir:checkers:checkers.jvm",
     ":compiler:fir:entrypoint",
     ":compiler:fir:analysis-tests",
     ":compiler:fir:analysis-tests:legacy-fir-tests",
@@ -320,7 +317,6 @@ extra["compilerModulesForJps"] = listOf(
     ":core:compiler.common.jvm",
     ":core:descriptors",
     ":core:descriptors.jvm",
-    ":idea:idea-jps-common",
     ":kotlin-preloader",
     ":compiler:util",
     ":compiler:config",
@@ -328,6 +324,37 @@ extra["compilerModulesForJps"] = listOf(
     ":js:js.config",
     ":core:util.runtime",
     ":compiler:compiler.version"
+)
+
+extra["compilerArtifactsForIde"] = listOf(
+    ":prepare:ide-plugin-dependencies:android-extensions-compiler-plugin-for-ide",
+    ":prepare:ide-plugin-dependencies:allopen-compiler-plugin-for-ide",
+    ":prepare:ide-plugin-dependencies:incremental-compilation-impl-tests-for-ide",
+    ":prepare:ide-plugin-dependencies:js-ir-runtime-for-ide",
+    ":prepare:ide-plugin-dependencies:kotlin-build-common-tests-for-ide",
+    ":prepare:ide-plugin-dependencies:kotlin-compiler-for-ide",
+    ":prepare:ide-plugin-dependencies:kotlin-compiler-cli-for-ide",
+    ":prepare:ide-plugin-dependencies:kotlin-gradle-statistics-for-ide",
+    ":prepare:ide-plugin-dependencies:kotlinx-serialization-compiler-plugin-for-ide",
+    ":prepare:ide-plugin-dependencies:noarg-compiler-plugin-for-ide",
+    ":prepare:ide-plugin-dependencies:sam-with-receiver-compiler-plugin-for-ide",
+    ":prepare:ide-plugin-dependencies:compiler-components-for-jps",
+    ":prepare:ide-plugin-dependencies:parcelize-compiler-plugin-for-ide",
+    ":prepare:ide-plugin-dependencies:lombok-compiler-plugin-for-ide",
+    ":prepare:ide-plugin-dependencies:kotlin-compiler-tests-for-ide",
+    ":kotlin-script-runtime",
+    ":kotlin-script-util",
+    ":kotlin-scripting-common",
+    ":kotlin-scripting-jvm",
+    ":kotlin-scripting-compiler",
+    ":kotlin-scripting-compiler-impl",
+    ":kotlin-android-extensions-runtime",
+    ":kotlin-stdlib-common",
+    ":kotlin-stdlib",
+    ":kotlin-stdlib-jdk7",
+    ":kotlin-stdlib-jdk8",
+    ":kotlin-reflect",
+    ":kotlin-main-kts"
 )
 
 // TODO: fix remaining warnings and remove this property.
@@ -403,6 +430,29 @@ val defaultJavaHome = jdkPath(if (Platform[203].orHigher()) "11" else defaultJvm
 val ignoreTestFailures by extra(project.kotlinBuildProperties.ignoreTestFailures)
 
 allprojects {
+    val mirrorRepo: String? = findProperty("maven.repository.mirror")?.toString()
+
+    repositories {
+        kotlinBuildLocalRepo(project)
+        mirrorRepo?.let(::maven)
+
+        internalBootstrapRepo?.let(::maven)
+        bootstrapKotlinRepo?.let(::maven)
+        maven(protobufRepo)
+
+        maven(intellijRepo)
+
+        mavenCentral()
+        maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-dependencies")
+        maven("https://dl.google.com/dl/android/maven2")
+        maven("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
+
+        jcenter()
+    }
+
+    if (path.startsWith(":kotlin-ide.")) {
+        return@allprojects
+    }
 
     configurations.maybeCreate("embedded").apply {
         isCanBeConsumed = false
@@ -431,25 +481,6 @@ allprojects {
     // therefore it is disabled by default
     // buildDir = File(commonBuildDir, project.name)
 
-    val mirrorRepo: String? = findProperty("maven.repository.mirror")?.toString()
-
-    repositories {
-        kotlinBuildLocalRepo(project)
-        mirrorRepo?.let(::maven)
-
-        internalBootstrapRepo?.let(::maven)
-        bootstrapKotlinRepo?.let(::maven)
-        maven(protobufRepo)
-
-        maven(intellijRepo)
-
-        mavenCentral()
-        maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-dependencies")
-        maven("https://dl.google.com/dl/android/maven2")
-        maven("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
-
-        jcenter()
-    }
 
     configureJvmProject(javaHome!!, jvmTarget!!)
 
@@ -525,12 +556,16 @@ allprojects {
         outputs.doNotCacheIf("https://youtrack.jetbrains.com/issue/KTI-112") { true }
     }
 
-    normalization {
-        runtimeClasspath {
-            ignore("META-INF/MANIFEST.MF")
-            ignore("META-INF/compiler.version")
-            ignore("META-INF/plugin.xml")
-            ignore("kotlin/KotlinVersionCurrentValue.class")
+    if (isConfigurationCacheDisabled) {
+        // Custom input normolization isn't supported by configuration cache at the moment
+        // See https://github.com/gradle/gradle/issues/13706
+        normalization {
+            runtimeClasspath {
+                ignore("META-INF/MANIFEST.MF")
+                ignore("META-INF/compiler.version")
+                ignore("META-INF/plugin.xml")
+                ignore("kotlin/KotlinVersionCurrentValue.class")
+            }
         }
     }
 
@@ -956,38 +991,13 @@ tasks {
 
     register("publishIdeArtifacts") {
         idePluginDependency {
-            val projectsToPublish = listOf(
-                ":prepare:ide-plugin-dependencies:android-extensions-compiler-plugin-for-ide",
-                ":prepare:ide-plugin-dependencies:allopen-compiler-plugin-for-ide",
-                ":prepare:ide-plugin-dependencies:incremental-compilation-impl-tests-for-ide",
-                ":prepare:ide-plugin-dependencies:js-ir-runtime-for-ide",
-                ":prepare:ide-plugin-dependencies:kotlin-build-common-tests-for-ide",
-                ":prepare:ide-plugin-dependencies:kotlin-compiler-for-ide",
-                ":prepare:ide-plugin-dependencies:kotlin-compiler-cli-for-ide",
-                ":prepare:ide-plugin-dependencies:kotlin-gradle-statistics-for-ide",
-                ":prepare:ide-plugin-dependencies:kotlinx-serialization-compiler-plugin-for-ide",
-                ":prepare:ide-plugin-dependencies:noarg-compiler-plugin-for-ide",
-                ":prepare:ide-plugin-dependencies:sam-with-receiver-compiler-plugin-for-ide",
-                ":prepare:ide-plugin-dependencies:compiler-components-for-jps",
-                ":prepare:ide-plugin-dependencies:parcelize-compiler-plugin-for-ide",
-                ":prepare:ide-plugin-dependencies:lombok-compiler-plugin-for-ide",
-                ":prepare:ide-plugin-dependencies:kotlin-compiler-tests-for-ide",
-                ":kotlin-script-runtime",
-                ":kotlin-script-util",
-                ":kotlin-scripting-common",
-                ":kotlin-scripting-jvm",
-                ":kotlin-scripting-compiler",
-                ":kotlin-scripting-compiler-impl",
-                ":kotlin-android-extensions-runtime",
-                ":kotlin-stdlib-common",
-                ":kotlin-stdlib",
-                ":kotlin-stdlib-jdk7",
-                ":kotlin-stdlib-jdk8",
-                ":kotlin-reflect",
-                ":kotlin-main-kts"
-            )
+            dependsOn((rootProject.extra["compilerArtifactsForIde"] as List<String>).map { "$it:publish" })
+        }
+    }
 
-            dependsOn(projectsToPublish.map { "$it:publish" })
+    register("installIdeArtifacts") {
+        idePluginDependency {
+            dependsOn((rootProject.extra["compilerArtifactsForIde"] as List<String>).map { "$it:install" })
         }
     }
 }
@@ -1125,7 +1135,7 @@ fun Project.configureJvmProject(javaHome: String, javaVersion: String) {
     }
 
     tasks.withType<KotlinCompile> {
-        kotlinOptions.jdkHome = javaHome
+        kotlinOptions.jdkHome = javaHome.takeUnless { kotlinBuildProperties.suppressJdkHomeWarning }
         kotlinOptions.jvmTarget = javaVersion
         kotlinOptions.freeCompilerArgs += "-Xjvm-default=compatibility"
     }

@@ -42,9 +42,21 @@ private fun Project.ideModuleName() = when (IdeVersionConfigurator.currentIde.ki
     }
 }
 
-private fun Project.ideModuleVersion() = when (IdeVersionConfigurator.currentIde.kind) {
+private fun Project.ideModuleVersion(forIde: Boolean) = when (IdeVersionConfigurator.currentIde.kind) {
     Ide.Kind.AndroidStudio -> rootProject.findProperty("versions.androidStudioBuild")
-    Ide.Kind.IntelliJ -> rootProject.findProperty("versions.intellijSdk")
+    Ide.Kind.IntelliJ -> {
+        if (forIde) {
+            intellijSdkVersionForIde()
+                ?: error("Please specify 'attachedIntellijVersion' in your local.properties")
+        } else {
+            rootProject.findProperty("versions.intellijSdk")
+        }
+    }
+}
+
+fun Project.intellijSdkVersionForIde(): String? {
+    val majorVersion = kotlinBuildProperties.getOrNull("attachedIntellijVersion") as? String ?: return null
+    return rootProject.findProperty("versions.intellijSdk.forIde.$majorVersion") as? String
 }
 
 fun RepositoryHandler.kotlinBuildLocalRepo(project: Project): IvyArtifactRepository = ivy {
@@ -58,6 +70,7 @@ fun RepositoryHandler.kotlinBuildLocalRepo(project: Project): IvyArtifactReposit
 
         artifact("[organisation]/[module]/[revision]/artifacts/lib/[artifact](-[classifier]).[ext]")
         artifact("[organisation]/[module]/[revision]/artifacts/[artifact](-[classifier]).[ext]")
+        artifact("[organisation]/intellij-core/[revision]/artifacts/[artifact](-[classifier]).[ext]")
         artifact("[organisation]/${project.ideModuleName()}/[revision]/artifacts/plugins/[module]/lib/[artifact](-[classifier]).[ext]") // bundled plugins
         artifact("[organisation]/sources/[artifact]-[revision](-[classifier]).[ext]")
         artifact("[organisation]/[module]/[revision]/[artifact](-[classifier]).[ext]")
@@ -68,7 +81,9 @@ fun RepositoryHandler.kotlinBuildLocalRepo(project: Project): IvyArtifactReposit
     }
 }
 
-fun Project.intellijDep(module: String? = null) = "kotlin.build:${module ?: ideModuleName()}:${ideModuleVersion()}"
+@JvmOverloads
+fun Project.intellijDep(module: String? = null, forIde: Boolean = false) =
+    "kotlin.build:${module ?: ideModuleName()}:${ideModuleVersion(forIde)}"
 
 fun Project.intellijCoreDep() = "kotlin.build:intellij-core:${rootProject.extra["versions.intellijSdk"]}"
 
@@ -93,7 +108,7 @@ fun Project.kotlinxCollectionsImmutable() = "org.jetbrains.kotlinx:kotlinx-colle
  */
 fun Project.intellijRuntimeAnnotations() = "kotlin.build:intellij-runtime-annotations:${rootProject.extra["versions.intellijSdk"]}"
 
-fun Project.intellijPluginDep(plugin: String) = intellijDep(plugin)
+fun Project.intellijPluginDep(plugin: String, forIde: Boolean = false) = intellijDep(plugin, forIde)
 
 fun Project.intellijUltimateDep() = intellijDep("ideaIU")
 
@@ -125,7 +140,7 @@ object IntellijRootUtils {
     fun getIntellijRootDir(project: Project): File = with(project.rootProject) {
         return File(
             getRepositoryRootDir(this),
-            "${ideModuleName()}/${ideModuleVersion()}/artifacts"
+            "${ideModuleName()}/${ideModuleVersion(forIde = false)}/artifacts"
         )
     }
 }

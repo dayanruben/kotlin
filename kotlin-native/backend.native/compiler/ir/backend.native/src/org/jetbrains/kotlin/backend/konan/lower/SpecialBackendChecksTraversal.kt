@@ -16,9 +16,9 @@ import org.jetbrains.kotlin.backend.common.push
 import org.jetbrains.kotlin.backend.konan.*
 import org.jetbrains.kotlin.backend.konan.cgen.*
 import org.jetbrains.kotlin.backend.konan.descriptors.allOverriddenFunctions
+import org.jetbrains.kotlin.backend.konan.ir.*
 import org.jetbrains.kotlin.backend.konan.ir.companionObject
 import org.jetbrains.kotlin.backend.konan.ir.getSuperClassNotAny
-import org.jetbrains.kotlin.backend.konan.ir.isReal
 import org.jetbrains.kotlin.backend.konan.llvm.IntrinsicType
 import org.jetbrains.kotlin.backend.konan.llvm.tryGetIntrinsicType
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
@@ -75,10 +75,6 @@ private class BackendChecker(val context: Context, val irFile: IrFile) : IrEleme
     }
 
     override fun visitDeclaration(declaration: IrDeclarationBase) {
-        if (declaration is IrClass && declaration.isKotlinObjCClass()) {
-            checkKotlinObjCClass(declaration)
-        }
-
         outerDeclarations.push(declaration)
         try {
             super.visitDeclaration(declaration)
@@ -587,6 +583,14 @@ private class BackendChecker(val context: Context, val irFile: IrFile) : IrEleme
             reportError(irElement, "Non-reified type parameters with recursive bounds are not supported yet: ${typeParameter.render()}")
         typeParameter.superTypes.forEach { checkIrKType(irElement, it, seenTypeParameters) }
         seenTypeParameters.remove(typeParameter)
+    }
+
+    override fun visitClass(declaration: IrClass) {
+        super.visitClass(declaration)
+
+        if (declaration.isKotlinObjCClass()) {
+            checkKotlinObjCClass(declaration)
+        }
     }
 }
 

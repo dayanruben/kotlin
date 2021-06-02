@@ -12,11 +12,15 @@ import org.jetbrains.kotlin.fir.declarations.builder.buildValueParameter
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.FirResolvable
 import org.jetbrains.kotlin.fir.expressions.FirStatement
+import org.jetbrains.kotlin.fir.expressions.FirVariableAssignment
 import org.jetbrains.kotlin.fir.resolve.ResolutionMode
 import org.jetbrains.kotlin.fir.resolve.calls.Candidate
 import org.jetbrains.kotlin.fir.resolve.calls.FirNamedReferenceWithCandidate
 import org.jetbrains.kotlin.fir.resolve.calls.ResolutionContext
+import org.jetbrains.kotlin.fir.resolve.calls.isUnitOrFlexibleUnit
+import org.jetbrains.kotlin.fir.resolve.expectedType
 import org.jetbrains.kotlin.fir.resolve.inference.model.ConeArgumentConstraintPosition
+import org.jetbrains.kotlin.fir.resolve.inference.model.ConeExpectedTypeConstraintPosition
 import org.jetbrains.kotlin.fir.resolve.initialTypeOfCandidate
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.resolve.transformers.FirCallCompletionResultsWriterTransformer
@@ -27,14 +31,12 @@ import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.resultType
 import org.jetbrains.kotlin.fir.resolve.typeFromCallee
 import org.jetbrains.kotlin.fir.symbols.impl.FirVariableSymbol
 import org.jetbrains.kotlin.fir.types.*
-import org.jetbrains.kotlin.fir.types.builder.buildErrorTypeRef
-import org.jetbrains.kotlin.fir.types.builder.buildResolvedTypeRef
 import org.jetbrains.kotlin.fir.types.impl.ConeClassLikeTypeImpl
 import org.jetbrains.kotlin.fir.visitors.transformSingle
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.resolve.calls.inference.addSubtypeConstraintIfCompatible
 import org.jetbrains.kotlin.resolve.calls.inference.buildAbstractResultingSubstitutor
 import org.jetbrains.kotlin.resolve.calls.inference.components.ConstraintSystemCompletionMode
-import org.jetbrains.kotlin.resolve.calls.inference.model.SimpleConstraintSystemConstraintPosition
 import org.jetbrains.kotlin.types.TypeApproximatorConfiguration
 import org.jetbrains.kotlin.types.model.StubTypeMarker
 import org.jetbrains.kotlin.types.model.TypeVariableMarker
@@ -52,11 +54,35 @@ class FirCallCompleter(
 
     data class CompletionResult<T>(val result: T, val callCompleted: Boolean)
 
-    fun <T> completeCall(call: T, expectedTypeRef: FirTypeRef?): CompletionResult<T>
+    fun <T> completeCall(
+        call: T,
+        expectedTypeRef: FirTypeRef?,
+        expectedTypeMismatchIsReportedInChecker: Boolean = false,
+    ): CompletionResult<T> where T : FirResolvable, T : FirStatement =
+        completeCall(call, expectedTypeRef, mayBeCoercionToUnitApplied = false, expectedTypeMismatchIsReportedInChecker)
+
+    fun <T> completeCall(call: T, data: ResolutionMode): CompletionResult<T> where T : FirResolvable, T : FirStatement =
+        completeCall(
+            call,
+            data.expectedType(components),
+            (data as? ResolutionMode.WithExpectedType)?.mayBeCoercionToUnitApplied == true,
+            (data as? ResolutionMode.WithExpectedType)?.expectedTypeMismatchIsReportedInChecker == true,
+        )
+
+    private fun <T> completeCall(
+        call: T, expectedTypeRef: FirTypeRef?,
+        mayBeCoercionToUnitApplied: Boolean,
+        expectedTypeMismatchIsReportedInChecker: Boolean,
+    ): CompletionResult<T>
             where T : FirResolvable, T : FirStatement {
         val typeRef = components.typeFromCallee(call)
 
+        if (call is FirVariableAssignment) {
+            call.replaceLValueTypeRef(typeRef)
+        }
+
         val reference = call.calleeReference as? FirNamedReferenceWithCandidate ?: return CompletionResult(call, true)
+
         val candidate = reference.candidate
         val initialType = components.initialTypeOfCandidate(candidate, call)
 
@@ -67,7 +93,16 @@ class FirCallCompleter(
         }
 
         if (expectedTypeRef is FirResolvedTypeRef) {
-            candidate.system.addSubtypeConstraint(initialType, expectedTypeRef.type, SimpleConstraintSystemConstraintPosition)
+            val expectedTypeConstraintPosition = ConeExpectedTypeConstraintPosition(expectedTypeMismatchIsReportedInChecker)
+            if (expectedTypeRef.coneType.isUnitOrFlexibleUnit && mayBeCoercionToUnitApplied) {
+                if (candidate.system.notFixedTypeVariables.isNotEmpty()) {
+                    candidate.system.addSubtypeConstraintIfCompatible(
+                        initialType, expectedTypeRef.type, expectedTypeConstraintPosition
+                    )
+                }
+            } else {
+                candidate.system.addSubtypeConstraint(initialType, expectedTypeRef.type, expectedTypeConstraintPosition)
+            }
         }
 
         val completionMode = candidate.computeCompletionMode(session.inferenceComponents, expectedTypeRef, initialType)
@@ -143,7 +178,7 @@ class FirCallCompleter(
             isNullable = functionalType.isNullable,
             functionalType.attributes
         )
-        csBuilder.addSubtypeConstraint(expectedType, functionalType, ConeArgumentConstraintPosition())
+        csBuilder.addSubtypeConstraint(expectedType, functionalType, ConeArgumentConstraintPosition(atom.atom))
         atom.replaceExpectedType(expectedType, returnVariable.defaultType)
         atom.replaceTypeVariableForLambdaReturnType(returnVariable)
     }

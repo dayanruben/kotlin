@@ -15,8 +15,8 @@ import org.jetbrains.kotlin.cli.jvm.config.jvmModularRoots
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.fir.analysis.FirAnalyzerFacade
 import org.jetbrains.kotlin.fir.checkers.registerExtendedCommonCheckers
-import org.jetbrains.kotlin.fir.createSessionWithDependencies
 import org.jetbrains.kotlin.fir.moduleData
+import org.jetbrains.kotlin.fir.session.FirSessionFactory
 import org.jetbrains.kotlin.js.resolve.JsPlatformAnalyzerServices
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -66,7 +66,7 @@ class FirFrontendFacade(
         val librariesScope = ProjectScope.getLibrariesScope(project)
         val sourcesScope = TopDownAnalyzerFacadeForJVM.newModuleSearchScope(project, ktFiles)
 
-        val session = createSessionWithDependencies(
+        val session = FirSessionFactory.createSessionWithDependencies(
             Name.identifier(module.name),
             module.targetPlatform,
             module.targetPlatform.getAnalyzerServices(),
@@ -76,16 +76,17 @@ class FirFrontendFacade(
             sourcesScope,
             librariesScope,
             lookupTracker = null,
+            providerAndScopeForIncrementalCompilation = null,
             getPackagePartProvider = packagePartProviderFactory,
-            getProviderAndScopeForIncrementalCompilation = { null },
             dependenciesConfigurator = {
                 dependencies(configuration.jvmModularRoots.map { it.toPath() })
                 dependencies(configuration.jvmClasspathRoots.map { it.toPath() })
 
                 friendDependencies(configuration[JVMConfigurationKeys.FRIEND_PATHS] ?: emptyList())
 
-                sourceDependencies(moduleInfoProvider.getDependentSourceModules(module))
+                sourceDependencies(moduleInfoProvider.getRegularDependentSourceModules(module))
                 sourceFriendsDependencies(moduleInfoProvider.getDependentFriendSourceModules(module))
+                sourceDependsOnDependencies(moduleInfoProvider.getDependentDependsOnSourceModules(module))
             },
             sessionConfigurator = {
                 if (FirDiagnosticsDirectives.WITH_EXTENDED_CHECKERS in module.directives) {

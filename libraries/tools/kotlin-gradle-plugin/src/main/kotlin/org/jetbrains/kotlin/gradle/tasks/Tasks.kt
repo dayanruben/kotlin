@@ -120,10 +120,17 @@ class GradleCompileTaskProvider(task: Task) {
     val projectName: String = task.project.rootProject.name.normalizeForFlagFile()
     val buildModulesInfo: Provider<out IncrementalModuleInfoProvider> = run {
         val modulesInfo = GradleCompilerRunner.buildModulesInfo(task.project.gradle)
-        task.project.gradle.sharedServices.registerIfAbsent(
-            IncrementalModuleInfoBuildService.getServiceName(), IncrementalModuleInfoBuildService::class.java
-        ) {
-            it.parameters.info.set(modulesInfo)
+        /**
+         * See https://youtrack.jetbrains.com/issue/KT-46820. Build service that holds the incremental info may
+         * be instantiated during execution phase and there could be multiple threads trying to do that. Because the
+         * underlying mechanism does not support multi-threaded access, we need to add external synchronization.
+         */
+        synchronized(task.project.gradle.sharedServices) {
+            task.project.gradle.sharedServices.registerIfAbsent(
+                IncrementalModuleInfoBuildService.getServiceName(), IncrementalModuleInfoBuildService::class.java
+            ) {
+                it.parameters.info.set(modulesInfo)
+            }
         }
     }
 }
@@ -238,16 +245,18 @@ abstract class AbstractKotlinCompile<T : CommonCompilerArguments> : AbstractKotl
 
     private val kotlinLogger by lazy { GradleKotlinLogger(logger) }
 
-    final override val kotlinJavaToolchainProvider: Provider<KotlinJavaToolchainProvider> =
-        objects.propertyWithNewInstance()
+    final override val kotlinJavaToolchainProvider: Provider<KotlinJavaToolchainProvider> = objects
+        .propertyWithNewInstance(
+            project.gradle
+        )
 
     @get:Internal
     internal val compilerRunner: Provider<GradleCompilerRunner> =
         objects.propertyWithConvention(
             kotlinJavaToolchainProvider.map {
                 compilerRunner(
-                    it.javaExecutable.get().asFile,
-                    it.jdkToolsJar.orNull
+                    it.jdkProvider.javaExecutable.get().asFile,
+                    it.jdkProvider.jdkToolsJar.orNull
                 )
             }
         )
@@ -353,11 +362,6 @@ abstract class AbstractKotlinCompile<T : CommonCompilerArguments> : AbstractKotl
             compilerArgumentsConfigurationFlags(defaultsOnly, ignoreClasspathResolutionErrors)
         )
     }
-
-    protected fun hasFilesInTaskBuildDirectory(): Boolean {
-        val taskBuildDir = taskBuildDirectory.get().asFile
-        return taskBuildDir.walk().any { it != taskBuildDir && it.isFile }
-    }
 }
 
 open class KotlinCompileArgumentsProvider<T : AbstractKotlinCompile<out CommonCompilerArguments>>(taskProvider: T) {
@@ -375,7 +379,7 @@ class KotlinJvmCompilerArgumentsProvider
     val friendPaths: FileCollection = taskProvider.friendPaths
     val compileClasspath: Iterable<File> = taskProvider.classpath
     val destinationDir: File = taskProvider.destinationDir
-    internal val kotlinOptions: List<KotlinJvmOptionsImpl?> = listOfNotNull(
+    internal val kotlinOptions: List<KotlinJvmOptionsImpl> = listOfNotNull(
         taskProvider.parentKotlinOptionsImpl.orNull as? KotlinJvmOptionsImpl,
         taskProvider.kotlinOptions as KotlinJvmOptionsImpl
     )
@@ -419,6 +423,9 @@ abstract class KotlinCompile @Inject constructor(
             logger.kotlinDebug { "Set $this.usePreciseJavaTracking=$value" }
         }
 
+    @get:Input
+    abstract val useClasspathSnapshot: Property<Boolean>
+
     init {
         incremental = true
     }
@@ -455,7 +462,7 @@ abstract class KotlinCompile @Inject constructor(
         val icEnv = if (isIncrementalCompilationEnabled()) {
             logger.info(USING_JVM_INCREMENTAL_COMPILATION_MESSAGE)
             IncrementalCompilationEnvironment(
-                if (hasFilesInTaskBuildDirectory()) changedFiles else ChangedFiles.Unknown(),
+                changedFiles,
                 taskBuildDirectory.get().asFile,
                 usePreciseJavaTracking = usePreciseJavaTracking,
                 disableMultiModuleIC = disableMultiModuleIC,
@@ -745,7 +752,7 @@ abstract class Kotlin2JsCompile @Inject constructor(
         val icEnv = if (isIncrementalCompilationEnabled()) {
             logger.info(USING_JS_INCREMENTAL_COMPILATION_MESSAGE)
             IncrementalCompilationEnvironment(
-                if (hasFilesInTaskBuildDirectory()) changedFiles else ChangedFiles.Unknown(),
+                changedFiles,
                 taskBuildDirectory.get().asFile,
                 multiModuleICSettings = multiModuleICSettings
             )

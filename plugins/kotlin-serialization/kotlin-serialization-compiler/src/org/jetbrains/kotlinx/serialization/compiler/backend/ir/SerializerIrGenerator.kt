@@ -156,24 +156,8 @@ open class SerializerIrGenerator(
         receiver: IrVariable,
         method: IrFunctionSymbol
     ) {
-        for (annotationCall in annotations) {
-            val annotationClass = annotationCall.symbol.owner.parentAsClass
-            if (!annotationClass.descriptor.isSerialInfoAnnotation) continue
-
-            val createAnnotation = if (compilerContext.platform.isJvm()) {
-                val implClass = serialInfoJvmGenerator.getImplClass(annotationClass)
-                val ctor = implClass.constructors.singleOrNull { it.valueParameters.size == annotationCall.valueArgumentsCount }
-                    ?: error("No constructor args found for SerialInfo annotation Impl class: ${implClass.render()}")
-                irCall(ctor).apply {
-                    for (i in 0 until annotationCall.valueArgumentsCount) {
-                        putValueArgument(i, annotationCall.getValueArgument(i)!!.deepCopyWithVariables())
-                    }
-                }
-            } else {
-                annotationCall.deepCopyWithVariables()
-            }
-
-            +irInvoke(irGet(receiver), method, createAnnotation)
+        copyAnnotationsFrom(annotations).forEach {
+            +irInvoke(irGet(receiver), method, it)
         }
     }
 
@@ -572,7 +556,7 @@ open class SerializerIrGenerator(
         ) {
             val serializableDesc = getSerializableClassDescriptorBySerializer(irClass.symbol.descriptor) ?: return
             val generator = when {
-                serializableDesc.isSerializableEnum() -> SerializerForEnumsGenerator(irClass, context, bindingContext, serialInfoJvmGenerator)
+                serializableDesc.isInternallySerializableEnum() -> SerializerForEnumsGenerator(irClass, context, bindingContext, serialInfoJvmGenerator)
                 serializableDesc.isInlineClass() -> SerializerForInlineClassGenerator(irClass, context, bindingContext, serialInfoJvmGenerator)
                 else -> SerializerIrGenerator(irClass, context, bindingContext, metadataPlugin, serialInfoJvmGenerator)
             }

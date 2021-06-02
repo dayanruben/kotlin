@@ -1,4 +1,3 @@
-// !WITH_NEW_INFERENCE
 fun trans(n: Int, f: () -> Boolean) = if (f()) n else null
 
 fun foo() {
@@ -9,7 +8,7 @@ fun foo() {
             return true
         }
         <!SMARTCAST_IMPOSSIBLE!>i<!>.hashCode()
-        trans(<!SMARTCAST_IMPOSSIBLE, SMARTCAST_IMPOSSIBLE!>i<!>, ::can)
+        trans(<!SMARTCAST_IMPOSSIBLE!>i<!>, ::can)
         <!SMARTCAST_IMPOSSIBLE!>i<!>.hashCode()
     }
 }

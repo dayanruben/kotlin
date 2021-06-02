@@ -81,7 +81,20 @@ interface ClassicTypeSystemContext : TypeSystemInferenceExtensionContext, TypeSy
 
     override fun SimpleTypeMarker.isStubType(): Boolean {
         require(this is SimpleType, this::errorMessage)
-        return this is AbstractStubType
+        return this is AbstractStubType || isDefNotNullStubType<AbstractStubType>()
+    }
+
+    private inline fun <reified S : AbstractStubType> SimpleTypeMarker.isDefNotNullStubType() =
+        this is DefinitelyNotNullType && this.original is S
+
+    override fun SimpleTypeMarker.isStubTypeForVariableInSubtyping(): Boolean {
+        require(this is SimpleType, this::errorMessage)
+        return this is StubTypeForTypeVariablesInSubtyping || isDefNotNullStubType<StubTypeForTypeVariablesInSubtyping>()
+    }
+
+    override fun SimpleTypeMarker.isStubTypeForBuilderInference(): Boolean {
+        require(this is SimpleType, this::errorMessage)
+        return this is StubTypeForBuilderInference || isDefNotNullStubType<StubTypeForBuilderInference>()
     }
 
     override fun CapturedTypeMarker.lowerType(): KotlinTypeMarker? {
@@ -507,11 +520,6 @@ interface ClassicTypeSystemContext : TypeSystemInferenceExtensionContext, TypeSy
         return this.replace(newArguments as List<TypeProjection>)
     }
 
-    override fun prepareType(type: KotlinTypeMarker): KotlinTypeMarker {
-        require(type is KotlinType, type::errorMessage)
-        return NewKotlinTypeChecker.Default.transformToNewType(type.unwrap())
-    }
-
     override fun DefinitelyNotNullTypeMarker.original(): SimpleTypeMarker {
         require(this is DefinitelyNotNullType, this::errorMessage)
         return this.original
@@ -544,7 +552,11 @@ interface ClassicTypeSystemContext : TypeSystemInferenceExtensionContext, TypeSy
         errorSupportedOnlyInTypeInference()
     }
 
-    override fun createStubType(typeVariable: TypeVariableMarker): StubTypeMarker {
+    override fun createStubTypeForBuilderInference(typeVariable: TypeVariableMarker): StubTypeMarker {
+        errorSupportedOnlyInTypeInference()
+    }
+
+    override fun createStubTypeForTypeVariablesInSubtyping(typeVariable: TypeVariableMarker): StubTypeMarker {
         errorSupportedOnlyInTypeInference()
     }
 
@@ -746,6 +758,13 @@ interface ClassicTypeSystemContext : TypeSystemInferenceExtensionContext, TypeSy
     override fun getKFunctionTypeConstructor(parametersNumber: Int, isSuspend: Boolean): TypeConstructorMarker {
         return getKFunctionDescriptor(builtIns, parametersNumber, isSuspend).typeConstructor
     }
+
+    override fun SimpleTypeMarker.createConstraintPartForLowerBoundAndFlexibleTypeVariable(): KotlinTypeMarker =
+        if (this.isMarkedNullable()) {
+            this
+        } else {
+            createFlexibleType(this, this.withNullability(true))
+        }
 }
 
 fun TypeVariance.convertVariance(): Variance {

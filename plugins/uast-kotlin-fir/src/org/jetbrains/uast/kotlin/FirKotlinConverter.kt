@@ -190,7 +190,7 @@ internal object FirKotlinConverter {
                     convertExpression(element, givenParent, requiredTypes)
                 }
                 is KtImportDirective -> {
-                    el<UImportStatement>(build(::FirKotlinUImportStatement))
+                    el<UImportStatement>(build(::KotlinUImportStatement))
                 }
                 else -> null
             }
@@ -212,7 +212,7 @@ internal object FirKotlinConverter {
 
         return with(requiredTypes) {
             when (expression) {
-                else -> expr<UExpression>(build(::FirUnknownKotlinExpression))
+                else -> expr<UExpression>(build(::UnknownKotlinExpression))
             }
         }
     }

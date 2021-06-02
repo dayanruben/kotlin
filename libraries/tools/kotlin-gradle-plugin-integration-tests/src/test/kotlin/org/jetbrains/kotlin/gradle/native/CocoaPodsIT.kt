@@ -776,7 +776,19 @@ class CocoaPodsIT : BaseGradleIT() {
             test(
                 "syncFramework",
                 "-Pkotlin.native.cocoapods.target=ios_x64,ios_arm64",
-                "-Pkotlin.native.cocoapods.configuration=DEBUG"
+                "-Pkotlin.native.cocoapods.configuration=Debug"
+            )
+        }
+    }
+
+    @Test
+    fun testCustomXcodeConfiguration() {
+        with(project) {
+            gradleBuildScript().appendToCocoapodsBlock("xcodeConfigurationToNativeBuildType[\"CUSTOM\"] = org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType.DEBUG\n")
+            test(
+                "syncFramework",
+                "-Pkotlin.native.cocoapods.target=ios_x64",
+                "-Pkotlin.native.cocoapods.configuration=CUSTOM"
             )
         }
     }

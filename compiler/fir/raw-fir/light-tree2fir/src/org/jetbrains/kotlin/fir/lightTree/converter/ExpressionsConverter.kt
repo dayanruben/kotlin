@@ -86,7 +86,7 @@ class ExpressionsConverter(
                 ANNOTATED_EXPRESSION -> convertAnnotatedExpression(expression)
                 CLASS_LITERAL_EXPRESSION -> convertClassLiteralExpression(expression)
                 CALLABLE_REFERENCE_EXPRESSION -> convertCallableReferenceExpression(expression)
-                in qualifiedAccessTokens -> convertQualifiedExpression(expression)
+                in QUALIFIED_ACCESS -> convertQualifiedExpression(expression)
                 CALL_EXPRESSION -> convertCallExpression(expression)
                 WHEN -> convertWhenExpression(expression)
                 ARRAY_ACCESS_EXPRESSION -> convertArrayAccessExpression(expression)
@@ -267,6 +267,7 @@ class ExpressionsConverter(
                 }
                 explicitReceiver = leftArgAsFir
                 argumentList = buildUnaryArgumentList(rightArgAsFir)
+                origin = if (conventionCallName != null) FirFunctionCallOrigin.Operator else FirFunctionCallOrigin.Infix
             }
         } else {
             val firOperation = operationToken.toFirOperation()
@@ -387,10 +388,11 @@ class ExpressionsConverter(
                 buildFunctionCall {
                     source = unaryExpression.toFirSourceElement()
                     calleeReference = buildSimpleNamedReference {
-                        source = this@buildFunctionCall.source
+                        source = operationReference?.toFirSourceElement() ?: this@buildFunctionCall.source
                         name = conventionCallName
                     }
                     explicitReceiver = receiver
+                    origin = FirFunctionCallOrigin.Operator
                 }
             }
             else -> throw IllegalStateException("Unexpected expression: ${unaryExpression.asText}")
@@ -842,6 +844,7 @@ class ExpressionsConverter(
                 arguments += indices
                 getArgument?.let { arguments += it }
             }
+            origin = FirFunctionCallOrigin.Operator
         }
     }
 

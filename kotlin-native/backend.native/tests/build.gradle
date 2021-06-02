@@ -533,6 +533,12 @@ standaloneTest("function_nothingN_returning_safe_call") {
     source = "codegen/function/nothingNReturningSafeCall.kt"
 }
 
+standaloneTest("unreachable_statement_after_return") {
+    flags = ["-g", "-entry", "codegen.function.unreachable_statement_after_return.main"]
+    source = "codegen/function/unreachableStatementAfterReturn.kt"
+    goldValue = "1\n2\n3\n4\n"
+}
+
 task codegen_controlflow_for_loops(type: KonanLocalTest) {
     source = "codegen/controlflow/for_loops.kt"
     goldValue = "01234\n0123\n43210\n\n024\n02\n420\n\n036\n03\n630\n\n024\n02\n420\n\n"
@@ -1092,8 +1098,11 @@ standaloneTest("leakMemoryWithWorkerTermination") {
     disabled = (project.testTarget == 'wasm32') || // Needs pthreads.
         isExperimentalMM  // Experimental MM doesn't support multiple mutators yet.
     source = "runtime/workers/leak_memory_with_worker_termination.kt"
-    expectedExitStatusChecker = { it != 0 }
-    outputChecker = { s -> s.contains("Memory leaks detected, 1 objects leaked!") }
+
+    if (!isExperimentalMM) { // Experimental MM will not report memory leaks.
+        expectedExitStatusChecker = { it != 0 }
+        outputChecker = { s -> s.contains("Memory leaks detected, 1 objects leaked!") }
+    }
 }
 
 task superFunCall(type: KonanLocalTest) {
@@ -1260,6 +1269,12 @@ linkTest("innerClass_linkTest") {
 task localClass_localHierarchy(type: KonanLocalTest) {
     goldValue = "OK\n"
     source = "codegen/localClass/localHierarchy.kt"
+}
+
+standaloneTest("objectDeclaration_globalConstants") {
+    disabled = (cacheTesting != null) // Cache is not compatible with -opt.
+    flags = ["-opt", "-Xopt-in=kotlin.native.internal.InternalForKotlinNative", "-tr"]
+    source = "codegen/objectDeclaration/globalConstants.kt"
 }
 
 task localClass_objectExpressionInProperty(type: KonanLocalTest) {
@@ -1656,6 +1671,10 @@ task lateinit_globalIsInitialized(type: KonanLocalTest) {
 task lateinit_innerIsInitialized(type: KonanLocalTest) {
     goldValue = "OK\n"
     source = "codegen/lateinit/innerIsInitialized.kt"
+}
+
+task sanity_assertions_enabled_for_local_tests(type: KonanLocalTest) {
+    source = "sanity/assertions_enabled_for_local_tests.kt"
 }
 
 task kclass0(type: KonanLocalTest) {
@@ -2588,24 +2607,21 @@ standaloneTest("args0") {
 }
 
 standaloneTest("devirtualization_lateinitInterface") {
-    disabled = (cacheTesting != null) || // Cache is not compatible with -opt.
-        isExperimentalMM // Experimental MM does not support -opt yet.
+    disabled = (cacheTesting != null) // Cache is not compatible with -opt.
     goldValue = "42\n"
     flags = ["-opt"]
     source = "codegen/devirtualization/lateinitInterface.kt"
 }
 
 standaloneTest("devirtualization_getter_looking_as_box_function") {
-    disabled = (cacheTesting != null) || // Cache is not compatible with -opt.
-        isExperimentalMM // Experimental MM does not support -opt yet.
+    disabled = (cacheTesting != null) // Cache is not compatible with -opt.
     goldValue = "box\n"
     flags = ["-opt"]
     source = "codegen/devirtualization/getter_looking_as_box_function.kt"
 }
 
 standaloneTest("devirtualization_anonymousObject") {
-    disabled = (cacheTesting != null) || // Cache is not compatible with -opt.
-        isExperimentalMM // Experimental MM does not support -opt yet.
+    disabled = (cacheTesting != null) // Cache is not compatible with -opt.
     goldValue = "zzz\n"
     flags = ["-opt"]
     source = "codegen/devirtualization/anonymousObject.kt"
@@ -2614,6 +2630,10 @@ standaloneTest("devirtualization_anonymousObject") {
 task interfaceCallsNCasts_conservativeItable(type: KonanLocalTest) {
     goldValue = "539\n5050\n26551140\n"
     source = "codegen/interfaceCallsNCasts/conservativeItable.kt"
+}
+
+task interfaceCallsNCasts_functionNameClash(type: KonanLocalTest) {
+    source = "codegen/interfaceCallsNCasts/functionNameClash.kt"
 }
 
 standaloneTest("multiargs") {
@@ -2838,6 +2858,14 @@ task codegen_escapeAnalysis_zeroOutObjectOnAlloc(type: KonanLocalTest) {
 
 task codegen_escapeAnalysis_recursion(type: KonanLocalTest) {
     source = "codegen/escapeAnalysis/recursion.kt"
+}
+
+standaloneTest("codegen_escapeAnalysis_stackAllocated") {
+    disabled = (cacheTesting != null) || // Cache is not compatible with -opt.
+        project.globalTestArgs.contains('-g') || // -g and -opt are incompatible
+        isExperimentalMM // TODO: Experimental MM doesn't support stack-allocated objects yet.
+    flags = ['-opt', '-tr', '-Xopt-in=kotlin.native.internal.InternalForKotlinNative']
+    source = "codegen/escapeAnalysis/stackAllocated.kt"
 }
 
 task memory_var1(type: KonanLocalTest) {
@@ -3581,8 +3609,7 @@ tasks.register("driver0", KonanDriverTest) {
 }
 
 tasks.register("driver_opt", KonanDriverTest) {
-    disabled = (cacheTesting != null) || // Cache is not compatible with -opt.
-        isExperimentalMM // Experimental MM does not support -opt yet.
+    disabled = (cacheTesting != null) // Cache is not compatible with -opt.
     goldValue = "Hello, world!\n"
     source = "runtime/basic/driver0.kt"
     flags = ["-opt"]
@@ -3698,6 +3725,10 @@ createInterop("ctoKString") {
 
 createInterop("ctypes") {
     it.defFile 'interop/basics/ctypes.def'
+}
+
+createInterop("structAnonym") {
+    it.defFile 'interop/basics/structAnonym.def'
 }
 
 createInterop("cvalues") {
@@ -4039,6 +4070,12 @@ interopTest("interop_types") {
     interop = 'ctypes'
 }
 
+interopTest("interop_structAnonym") {
+    disabled = (project.testTarget == 'wasm32') // No interop for wasm yet.
+    source = "interop/basics/structAnonym.kt"
+    interop = 'structAnonym'
+}
+
 interopTest("interop_vectors") {
     disabled = (project.testTarget == 'wasm32') // No interop for wasm yet.
     source = "interop/basics/vectors.kt"
@@ -4131,7 +4168,8 @@ interopTest("interop_threadStates") {
 
 interopTest("interop_threadStates_callbacksWithExceptions") {
     disabled = (project.testTarget == 'wasm32') || // No interop for wasm yet.
-            !isExperimentalMM // No thread state switching in the legacy MM.
+            !isExperimentalMM || // No thread state switching in the legacy MM.
+            project.globalTestArgs.contains('-opt') // TODO: Fix this test for -opt.
     source = "interop/threadStates/callbacksWithExceptions.kt"
     interop = "threadStates"
 }
@@ -4284,7 +4322,7 @@ if (PlatformInfo.isAppleTarget(project)) {
     }
 
     interopTestMultifile("interop_objc_tests") {
-        enabled = !isExperimentalMM  // Experimental MM does not support Obj-C weaks and thread state switching for ObjC interop yet.
+        enabled = !isExperimentalMM  // Experimental MM does not support thread state switching for ObjC interop yet.
         source = "interop/objc/tests/"
         interop = 'objcTests'
         flags = ['-tr', '-e', 'main']
@@ -4474,9 +4512,15 @@ standaloneTest("interop_objc_illegal_sharing") {
         isExperimentalMM  // Experimental MM doesn't support multiple mutators and thread state switching for ObjC interop yet.
     source = "interop/objc/illegal_sharing.kt"
     UtilsKt.dependsOnPlatformLibs(it)
-    expectedExitStatusChecker = { it != 0 }
-    outputChecker = {
-      it.startsWith("Before") && !it.contains("After")
+    if (isExperimentalMM) {
+        outputChecker = {
+            it.startsWith("Before") && it.contains("After")
+        }
+    } else {
+        expectedExitStatusChecker = { it != 0 }
+        outputChecker = {
+            it.startsWith("Before") && !it.contains("After")
+        }
     }
 }
 
@@ -4570,7 +4614,8 @@ dynamicTest("interop_cleaners_second_thread") {
 }
 
 dynamicTest("interop_cleaners_leak") {
-    disabled = (project.target.name != project.hostName)
+    disabled = (project.target.name != project.hostName) ||
+        isExperimentalMM  // Experimental MM doesn't support multiple mutators yet.
     source = "interop/cleaners/cleaners.kt"
     cSource = "$projectDir/interop/cleaners/leak.cpp"
     clangTool = "clang++"
@@ -4593,6 +4638,9 @@ dynamicTest("interop_migrating_main_thread") {
         isExperimentalMM  // Experimental MM doesn't support multiple mutators yet.
     source = "interop/migrating_main_thread/lib.kt"
     flags = ['-Xdestroy-runtime-mode=on-shutdown']
+    if (isExperimentalMM) {
+        clangFlags = ['-DEXPERIMENTAL_MM']
+    }
     cSource = "$projectDir/interop/migrating_main_thread/main.cpp"
     clangTool = "clang++"
 }
@@ -4745,7 +4793,7 @@ Task frameworkTest(String name, Closure<FrameworkTest> configurator) {
 
 if (isAppleTarget(project)) {
     frameworkTest('testObjCExport') {
-        enabled = !isExperimentalMM // Experimental MM doesn't support ObjC blocks and thread state switching for ObjC interop yet.
+        enabled = !isExperimentalMM // Experimental MM does not support thread state switching for ObjC interop yet.
         final String frameworkName = 'Kt'
         final String dir = "$testOutputFramework/testObjCExport"
         final File lazyHeader = file("$dir/$target-lazy.h")
@@ -4794,7 +4842,7 @@ if (isAppleTarget(project)) {
     }
 
     frameworkTest('testObjCExportNoGenerics') {
-        enabled = !isExperimentalMM // Experimental MM doesn't support ObjC blocks and thread state switching for ObjC interop yet.
+        enabled = !isExperimentalMM // Experimental MM does not support thread state switching for ObjC interop yet.
         final String frameworkName = 'KtNoGenerics'
         final String frameworkArtifactName = 'Kt'
         final String dir = "$testOutputFramework/testObjCExportNoGenerics"
@@ -4847,7 +4895,7 @@ if (isAppleTarget(project)) {
     }
 
     frameworkTest('testObjCExportStatic') {
-        enabled = !isExperimentalMM // Experimental MM doesn't support ObjC blocks and thread state switching for ObjC interop yet.
+        enabled = !isExperimentalMM // Experimental MM does not support thread state switching for ObjC interop yet.
         final String frameworkName = 'KtStatic'
         final String frameworkArtifactName = 'Kt'
         final String libraryName = frameworkName + "Library"
@@ -4878,6 +4926,7 @@ if (isAppleTarget(project)) {
     }
 
     frameworkTest('testValuesGenericsFramework') {
+        enabled = !isExperimentalMM // Experimental MM does not support thread state switching for ObjC interop yet.
         framework('ValuesGenerics') {
             sources = ['objcexport/values.kt', 'framework/values_generics']
         }
@@ -4885,6 +4934,7 @@ if (isAppleTarget(project)) {
     }
 
     frameworkTest("testStdlibFramework") {
+        enabled = !isExperimentalMM // Experimental MM does not support thread state switching for ObjC interop yet.
         framework('Stdlib') {
             sources = ['framework/stdlib']
             bitcode = true
@@ -4896,6 +4946,7 @@ if (isAppleTarget(project)) {
     if (cacheTesting != null && cacheTesting.isDynamic) {
         // testMultipleFrameworks disabled until https://youtrack.jetbrains.com/issue/KT-34262 is fixed.
     } else frameworkTest("testMultipleFrameworks") {
+        enabled = !isExperimentalMM // Experimental MM does not support thread state switching for ObjC interop yet.
         framework('First') {
             sources = ['framework/multiple/framework1', 'framework/multiple/shared']
             bitcode = true
@@ -4908,6 +4959,7 @@ if (isAppleTarget(project)) {
     }
 
     frameworkTest("testMultipleFrameworksStatic") {
+        enabled = !isExperimentalMM // Experimental MM does not support thread state switching for ObjC interop yet.
         if (cacheTesting != null) {
             // See https://youtrack.jetbrains.com/issue/KT-34261.
             expectedExitStatus = 134
@@ -4941,7 +4993,8 @@ if (isAppleTarget(project)) {
     }
 
     frameworkTest("testKt42397Framework") {
-        enabled = !project.globalTestArgs.contains('-opt')
+        enabled = !project.globalTestArgs.contains('-opt') &&
+            !isExperimentalMM // Experimental MM does not support thread state switching for ObjC interop yet.
         framework("Kt42397") {
             sources = ['framework/kt42397']
         }
@@ -4949,6 +5002,7 @@ if (isAppleTarget(project)) {
     }
 
     frameworkTest("testKt43517Framework") {
+        enabled = !isExperimentalMM // Experimental MM does not support thread state switching for ObjC interop yet.
         framework('Kt43517') {
             sources = ['framework/kt43517']
             library = 'objcKt43517'
@@ -5092,8 +5146,7 @@ tasks.register("metadata_compare_unable_to_import", MetadataComparisonTest) {
 }
 
 standaloneTest("local_ea_arraysfieldwrite") {
-    disabled = (cacheTesting != null) || // Cache is not compatible with -opt.
-        isExperimentalMM // Experimental MM does not support -opt yet.
+    disabled = (cacheTesting != null) // Cache is not compatible with -opt.
     goldValue = "Array (constructor init):\nSize: 2\nContents: [1, 2]\n" +
             "Array (constructor init):\nSize: 2\nContents: [3, 4]\n" +
             "Array (default value init):\nSize: 2\nContents: [1, 2]\n" +
@@ -5176,7 +5229,7 @@ private void configureStdlibTest(KonanGTest task, boolean inWorker) {
  * Builds tests into a single binary with TestRunner
  */
 task buildKonanTests { t ->
-    def compileList = [ "codegen", "datagen", "lower", "runtime", "serialization" ]
+    def compileList = [ "codegen", "datagen", "lower", "runtime", "serialization", "sanity" ]
 
     // These tests should not be built into the TestRunner's test executable
     def excludeList = [ "codegen/inline/returnLocalClassFromBlock.kt" ]
@@ -5197,6 +5250,7 @@ task buildKonanTests { t ->
         program('localTest', targets: [target.name]) {
             srcFiles sources
             baseDir testOutputLocal
+            extraOpts '-ea' // Without this option assertions would remain inactive.
             extraOpts '-tr'
             extraOpts '-Xverify-ir'
             extraOpts project.globalTestArgs

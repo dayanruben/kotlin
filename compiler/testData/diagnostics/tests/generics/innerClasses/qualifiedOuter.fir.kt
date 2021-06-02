@@ -1,4 +1,3 @@
-// !WITH_NEW_INFERENCE
 // !CHECK_TYPE
 // !DIAGNOSTICS: -UNUSED_EXPRESSION -UNUSED_PARAMETER -UNUSED_VALUE -ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE
 
@@ -11,7 +10,7 @@ class Outer<T> {
         z.checkType { _<Inner>() }
         z.checkType { _<Outer<T>.Inner>() }
 
-        inner = x
+        inner = <!ASSIGNMENT_TYPE_MISMATCH!>x<!>
     }
 
     class Nested

@@ -380,7 +380,15 @@ interface ConeTypeContext : TypeSystemContext, TypeSystemOptimizationContext, Ty
     }
 
     override fun SimpleTypeMarker.isStubType(): Boolean {
-        return this is StubTypeMarker
+        return this is ConeStubType // TODO: distinguish stub types for builder inference and for subtyping
+    }
+
+    override fun SimpleTypeMarker.isStubTypeForVariableInSubtyping(): Boolean {
+        return this is ConeStubType // TODO: distinguish stub types for builder inference and for subtyping
+    }
+
+    override fun SimpleTypeMarker.isStubTypeForBuilderInference(): Boolean {
+        return this is ConeStubType // TODO: distinguish stub types for builder inference and for subtyping
     }
 
     override fun intersectTypes(types: List<SimpleTypeMarker>): SimpleTypeMarker {
@@ -391,22 +399,6 @@ interface ConeTypeContext : TypeSystemContext, TypeSystemOptimizationContext, Ty
     override fun intersectTypes(types: List<KotlinTypeMarker>): ConeKotlinType {
         @Suppress("UNCHECKED_CAST")
         return ConeTypeIntersector.intersectTypes(this as ConeInferenceContext, types as List<ConeKotlinType>)
-    }
-
-    override fun prepareType(type: KotlinTypeMarker): KotlinTypeMarker {
-        return when (type) {
-            is ConeClassLikeType -> type.fullyExpandedType(session)
-            is ConeFlexibleType -> {
-                val lowerBound = prepareType(type.lowerBound)
-                if (lowerBound === type.lowerBound) return type
-
-                ConeFlexibleType(
-                    lowerBound as ConeKotlinType,
-                    prepareType(type.upperBound) as ConeKotlinType
-                )
-            }
-            else -> type
-        }
     }
 
     override fun KotlinTypeMarker.isNullableType(): Boolean {
@@ -431,7 +423,7 @@ interface ConeTypeContext : TypeSystemContext, TypeSystemOptimizationContext, Ty
     }
 
     private fun FirTypeParameterSymbol.allBoundsAreNullable(): Boolean {
-        return fir.bounds.all { it.coneType.isMarkedNullable }
+        return fir.bounds.all { it.coneType.isNullableType() }
     }
 
     private fun TypeConstructorMarker.toFirRegularClass(): FirRegularClass? {
@@ -551,7 +543,8 @@ interface ConeTypeContext : TypeSystemContext, TypeSystemOptimizationContext, Ty
 class ConeTypeCheckerContext(
     override val isErrorTypeEqualsToAnything: Boolean,
     override val isStubTypeEqualsToAnything: Boolean,
-    override val typeSystemContext: ConeInferenceContext
+    override val typeSystemContext: ConeInferenceContext,
+    val kotlinTypePreparator: ConeTypePreparator = ConeTypePreparator.getDefault(typeSystemContext.session),
 ) : AbstractTypeCheckerContext() {
 
     val session: FirSession = typeSystemContext.session
@@ -585,7 +578,11 @@ class ConeTypeCheckerContext(
     }
 
     override fun refineType(type: KotlinTypeMarker): KotlinTypeMarker {
-        return typeSystemContext.prepareType(type)
+        return kotlinTypePreparator.prepareType(type)
+    }
+
+    override fun prepareType(type: KotlinTypeMarker): KotlinTypeMarker {
+        return kotlinTypePreparator.prepareType(type)
     }
 
     override val KotlinTypeMarker.isAllowedTypeVariable: Boolean

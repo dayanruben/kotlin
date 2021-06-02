@@ -13,13 +13,13 @@ plugins {
 dependencies {
     compileOnly(intellijCoreDep()) { includeJars("intellij-core", "guava", rootProject = rootProject) }
 
-    testApi(intellijDep())
     testApi(projectTests(":compiler:test-infrastructure"))
     testApi(projectTests(":compiler:test-infrastructure-utils"))
     testApi(projectTests(":compiler:tests-compiler-utils"))
     testApi(projectTests(":compiler:tests-common-new"))
     testApi(project(":compiler:cli"))
     testApi(project(":compiler:fir:checkers"))
+    testApi(project(":compiler:fir:checkers:checkers.jvm"))
     testApi(project(":compiler:fir:fir-serialization"))
     testApi(project(":compiler:fir:entrypoint"))
     testApi(project(":compiler:frontend"))

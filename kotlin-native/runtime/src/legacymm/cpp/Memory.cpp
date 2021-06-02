@@ -3137,7 +3137,7 @@ void ObjHeader::destroyMetaObject(ObjHeader* object) {
   }
 
 #ifdef KONAN_OBJC_INTEROP
-  Kotlin_ObjCExport_releaseAssociatedObject(meta->associatedObject_);
+  Kotlin_ObjCExport_detachAndReleaseAssociatedObject(meta->associatedObject_);
 #endif
 
   konanFreeMemory(meta);
@@ -3284,6 +3284,10 @@ RUNTIME_NOTHROW void ReleaseHeapRefNoCollectStrict(const ObjHeader* object) {
 }
 RUNTIME_NOTHROW void ReleaseHeapRefNoCollectRelaxed(const ObjHeader* object) {
   releaseHeapRef<false, /* CanCollect = */ false>(const_cast<ObjHeader*>(object));
+}
+
+RUNTIME_NOTHROW OBJ_GETTER(TryRef, ObjHeader* object) {
+    RuntimeFail("Only for experimental MM");
 }
 
 ForeignRefContext InitLocalForeignRef(ObjHeader* object) {
@@ -3537,7 +3541,7 @@ KLong Kotlin_native_internal_GC_getThresholdAllocations(KRef) {
 #endif
 }
 
-void Kotlin_native_internal_GC_setTuneThreshold(KRef, KInt value) {
+void Kotlin_native_internal_GC_setTuneThreshold(KRef, KBoolean value) {
 #if USE_GC
   setTuneGCThreshold(value);
 #endif
@@ -3729,6 +3733,10 @@ ALWAYS_INLINE void kotlin::AssertThreadState(MemoryState* thread, ThreadState ex
     // no-op, used by the new MM only.
 }
 
+ALWAYS_INLINE void kotlin::AssertThreadState(MemoryState* thread, std::initializer_list<ThreadState> expected) noexcept {
+    // no-op, used by the new MM only.
+}
+
 MemoryState* kotlin::mm::GetMemoryState() {
     return ::memoryState;
 }
@@ -3737,3 +3745,5 @@ kotlin::ThreadState kotlin::GetThreadState(MemoryState* thread) noexcept {
     // Assume that we are always in the Runnable thread state.
     return ThreadState::kRunnable;
 }
+
+const bool kotlin::kSupportsMultipleMutators = true;

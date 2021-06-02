@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.types.model
 
 import org.jetbrains.kotlin.types.AbstractTypeCheckerContext
 import org.jetbrains.kotlin.types.Variance
-import kotlin.collections.ArrayList
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
@@ -74,7 +73,7 @@ interface TypeSystemBuiltInsContext {
 /**
  * Context that allow construction of types
  */
-interface TypeSystemTypeFactoryContext {
+interface TypeSystemTypeFactoryContext: TypeSystemBuiltInsContext {
     fun createFlexibleType(lowerBound: SimpleTypeMarker, upperBound: SimpleTypeMarker): KotlinTypeMarker
     fun createSimpleType(
         constructor: TypeConstructorMarker,
@@ -169,8 +168,8 @@ interface TypeSystemInferenceExtensionContext : TypeSystemContext, TypeSystemBui
         captureStatus: CaptureStatus
     ): CapturedTypeMarker
 
-    fun createStubType(typeVariable: TypeVariableMarker): StubTypeMarker
-
+    fun createStubTypeForBuilderInference(typeVariable: TypeVariableMarker): StubTypeMarker
+    fun createStubTypeForTypeVariablesInSubtyping(typeVariable: TypeVariableMarker): StubTypeMarker
 
     fun KotlinTypeMarker.removeAnnotations(): KotlinTypeMarker
     fun KotlinTypeMarker.removeExactAnnotation(): KotlinTypeMarker
@@ -238,6 +237,17 @@ interface TypeSystemInferenceExtensionContext : TypeSystemContext, TypeSystemBui
 
     @OptIn(ExperimentalStdlibApi::class)
     fun KotlinTypeMarker.extractTypeVariables() = buildSet { extractTypeVariables(this) }
+
+    /**
+     * For case Foo <: (T..T?) return LowerBound for new constraint LowerBound <: T
+     * In FE 1.0, in case nullable it was just Foo?, so constraint was Foo? <: T
+     * But it's not 100% correct because prevent having not-nullable upper constraint on T while initial (Foo? <: (T..T?)) is not violated
+     *
+     * In FIR, we try to have a correct one: (Foo!!..Foo?) <: T
+     *
+     * In future once we have only FIR (or FE 1.0 behavior is fixed) this method should be inlined to the use-site
+     */
+    fun SimpleTypeMarker.createConstraintPartForLowerBoundAndFlexibleTypeVariable(): KotlinTypeMarker
 }
 
 
@@ -289,6 +299,8 @@ interface TypeSystemContext : TypeSystemOptimizationContext {
     }
 
     fun SimpleTypeMarker.isStubType(): Boolean
+    fun SimpleTypeMarker.isStubTypeForVariableInSubtyping(): Boolean
+    fun SimpleTypeMarker.isStubTypeForBuilderInference(): Boolean
 
     fun KotlinTypeMarker.asTypeArgument(): TypeArgumentMarker
 
@@ -411,8 +423,6 @@ interface TypeSystemContext : TypeSystemOptimizationContext {
     fun intersectTypes(types: List<SimpleTypeMarker>): SimpleTypeMarker
 
     fun KotlinTypeMarker.isSimpleType(): Boolean = asSimpleType() != null
-
-    fun prepareType(type: KotlinTypeMarker): KotlinTypeMarker
 
     fun SimpleTypeMarker.isPrimitiveType(): Boolean
 

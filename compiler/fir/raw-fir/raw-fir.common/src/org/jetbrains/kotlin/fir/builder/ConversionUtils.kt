@@ -193,6 +193,7 @@ fun FirExpression.generateContainsOperation(
             name = OperatorNameConventions.NOT
         }
         explicitReceiver = containsCall
+        origin = FirFunctionCallOrigin.Operator
     }
 }
 
@@ -242,6 +243,7 @@ private fun FirExpression.createConventionCall(
         }
         explicitReceiver = this@createConventionCall
         argumentList = buildUnaryArgumentList(argument)
+        origin = FirFunctionCallOrigin.Operator
     }
 }
 
@@ -396,6 +398,7 @@ fun FirPropertyBuilder.generateAccessorsByDelegate(
             name = PROVIDE_DELEGATE
         }
         argumentList = buildBinaryArgumentList(thisRef(forDispatchReceiver = true), propertyRef())
+        origin = FirFunctionCallOrigin.Operator
     }
     delegate = delegateBuilder.build()
     if (stubMode) return
@@ -421,6 +424,7 @@ fun FirPropertyBuilder.generateAccessorsByDelegate(
                             name = GET_VALUE
                         }
                         argumentList = buildBinaryArgumentList(thisRef(), propertyRef())
+                        origin = FirFunctionCallOrigin.Operator
                     }
                     target = returnTarget
                 }
@@ -473,6 +477,7 @@ fun FirPropertyBuilder.generateAccessorsByDelegate(
                             }
                         }
                     }
+                    origin = FirFunctionCallOrigin.Operator
                 }
             )
             if (annotations != null) {

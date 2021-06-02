@@ -744,6 +744,17 @@ class KotlinGradleIT : BaseGradleIT() {
     }
 
     @Test
+    fun testKotlinPluginDependenciesInBuildSrc() {
+        val project = transformProjectWithPluginsDsl("kotlinPluginDepsInBuildSrc")
+        project.setupWorkingDir()
+        project.build("build") {
+            assertSuccessful()
+            assertContains("Hi from BuildSrc")
+        }
+
+    }
+
+    @Test
     fun testInternalTest() = with(
         Project("internalTest")
     ) {
@@ -1164,7 +1175,7 @@ class KotlinGradleIT : BaseGradleIT() {
     fun testKtKt35942InternalsFromMainInTestViaTransitiveDepsAndroid() = with(
         Project(
             projectName = "kt-35942-android",
-            gradleVersionRequirement = GradleVersionRequired.AtLeast("6.6.1")
+            gradleVersionRequirement = GradleVersionRequired.AtLeast("6.7.1")
         )
     ) {
         build(

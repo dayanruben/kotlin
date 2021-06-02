@@ -133,7 +133,7 @@ class ControlFlowGraphBuilder {
         }
 
         fun CFGNode<*>.extractArgument(): FirElement? = when (this) {
-            is FunctionEnterNode, is TryMainBlockEnterNode, is CatchClauseEnterNode -> null
+            is FunctionEnterNode, is TryMainBlockEnterNode, is FinallyBlockExitNode, is CatchClauseEnterNode -> null
             is StubNode, is BlockExitNode -> firstPreviousNode.extractArgument()
             else -> fir.extractArgument()
         }
@@ -305,9 +305,6 @@ class ControlFlowGraphBuilder {
             EventOccurrencesRange.AT_LEAST_ONCE, EventOccurrencesRange.UNKNOWN -> true
             else -> false
         }
-
-    private val EventOccurrencesRange?.isInPlace: Boolean
-        get() = this != null
 
     fun exitAnonymousFunction(anonymousFunction: FirAnonymousFunction): Triple<FunctionExitNode, PostponedLambdaExitNode?, ControlFlowGraph> {
         val symbol = anonymousFunction.symbol

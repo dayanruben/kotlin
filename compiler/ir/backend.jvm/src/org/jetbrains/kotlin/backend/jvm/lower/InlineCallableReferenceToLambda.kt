@@ -127,7 +127,7 @@ private class InlineCallableReferenceToLambdaTransformer(
     private fun expandInlineFunctionReferenceToLambda(expression: IrCallableReference<*>, referencedFunction: IrFunction): IrExpression {
         val irBuilder = context.createJvmIrBuilder(currentScope!!.scope.scopeOwnerSymbol, expression.startOffset, expression.endOffset)
         return irBuilder.irBlock(expression, IrStatementOrigin.LAMBDA) {
-            val boundReceiver: Pair<IrValueParameter, IrExpression>? = expression.getArgumentsWithIr().singleOrNull()
+            val (receiverParameter, receiverValue) = expression.getArgumentsWithIr().singleOrNull() ?: (null to null)
             val argumentTypes = (expression.type as IrSimpleType).arguments.dropLast(1).map { (it as IrTypeProjection).type }
 
             val function = context.irFactory.buildFun {
@@ -139,8 +139,8 @@ private class InlineCallableReferenceToLambdaTransformer(
                 isSuspend = referencedFunction.isSuspend
             }.apply {
                 parent = currentDeclarationParent!!
-                if (boundReceiver != null) {
-                    addExtensionReceiver(boundReceiver.first.type)
+                if (receiverValue != null) {
+                    addExtensionReceiver(receiverValue.type)
                 }
                 for ((index, argumentType) in argumentTypes.withIndex()) {
                     addValueParameter {
@@ -162,7 +162,7 @@ private class InlineCallableReferenceToLambdaTransformer(
                         var unboundIndex = 0
                         for (parameter in referencedFunction.explicitParameters) {
                             when {
-                                boundReceiver?.first == parameter ->
+                                receiverParameter == parameter ->
                                     irGet(extensionReceiverParameter!!)
                                 parameter.isVararg && unboundIndex < argumentTypes.size && parameter.type == valueParameters[unboundIndex].type ->
                                     irGet(valueParameters[unboundIndex++])
@@ -191,7 +191,7 @@ private class InlineCallableReferenceToLambdaTransformer(
                 origin = IrStatementOrigin.LAMBDA
             ).apply {
                 copyAttributes(expression)
-                extensionReceiver = boundReceiver?.second
+                extensionReceiver = receiverValue
             }
         }
     }

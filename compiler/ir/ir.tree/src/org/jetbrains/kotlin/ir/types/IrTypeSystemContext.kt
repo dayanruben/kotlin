@@ -51,6 +51,10 @@ interface IrTypeSystemContext : TypeSystemContext, TypeSystemCommonSuperTypesCon
 
     override fun SimpleTypeMarker.isStubType() = false
 
+    override fun SimpleTypeMarker.isStubTypeForVariableInSubtyping() = false
+
+    override fun SimpleTypeMarker.isStubTypeForBuilderInference() = false
+
     override fun FlexibleTypeMarker.asDynamicType() = this as? IrDynamicType
 
     override fun FlexibleTypeMarker.asRawType(): RawTypeMarker? = null
@@ -394,8 +398,13 @@ interface IrTypeSystemContext : TypeSystemContext, TypeSystemCommonSuperTypesCon
     override fun createErrorTypeWithCustomConstructor(debugName: String, constructor: TypeConstructorMarker): KotlinTypeMarker =
         TODO("IrTypeSystemContext doesn't support constraint system resolution")
 
-    override fun nullableAnyType(): SimpleTypeMarker =
-        irBuiltIns.anyNType as IrSimpleType
+    override fun nullableAnyType() = irBuiltIns.anyNType as IrSimpleType
+
+    override fun nullableNothingType() = irBuiltIns.nothingNType as IrSimpleType
+
+    override fun nothingType() = irBuiltIns.nothingType as IrSimpleType
+
+    override fun anyType() = irBuiltIns.anyType as IrSimpleType
 
     override fun arrayType(componentType: KotlinTypeMarker): SimpleTypeMarker =
         irBuiltIns.arrayClass.typeWith(componentType as IrType)
@@ -518,10 +527,6 @@ interface IrTypeSystemContext : TypeSystemContext, TypeSystemCommonSuperTypesCon
 
     override fun SimpleTypeMarker.makeSimpleTypeDefinitelyNotNullOrNotNull(): SimpleTypeMarker {
         error("makeSimpleTypeDefinitelyNotNullOrNotNull is not yet supported in IR")
-    }
-
-    override fun prepareType(type: KotlinTypeMarker): KotlinTypeMarker {
-        return type
     }
 }
 

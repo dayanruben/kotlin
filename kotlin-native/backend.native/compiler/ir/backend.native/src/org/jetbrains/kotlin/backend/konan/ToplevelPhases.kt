@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.backend.common.IrValidatorConfig
 import org.jetbrains.kotlin.backend.common.lower.createIrBuilder
 import org.jetbrains.kotlin.backend.common.phaser.*
 import org.jetbrains.kotlin.backend.common.serialization.metadata.KlibMetadataMonolithicSerializer
+import org.jetbrains.kotlin.backend.konan.MemoryModel
 import org.jetbrains.kotlin.backend.konan.llvm.*
 import org.jetbrains.kotlin.backend.konan.lower.ExpectToActualDefaultValueCopier
 import org.jetbrains.kotlin.backend.konan.objcexport.ObjCExport
@@ -217,9 +218,11 @@ internal val allLoweringsPhase = NamedCompilerPhase(
                             delegationPhase,
                             functionReferencePhase,
                             singleAbstractMethodPhase,
+                            enumWhenPhase,
                             builtinOperatorPhase,
                             finallyBlocksPhase,
                             enumClassPhase,
+                            enumUsagePhase,
                             interopPhase,
                             varargPhase,
                             compileTimeEvaluatePhase,
@@ -228,7 +231,6 @@ internal val allLoweringsPhase = NamedCompilerPhase(
                             typeOperatorPhase,
                             bridgesPhase,
                             autoboxPhase,
-                            returnsInsertionPhase,
                         )
                 ),
         actions = setOf(defaultDumper, ::moduleValidationCallback)
@@ -376,6 +378,7 @@ internal val bitcodePhase = NamedCompilerPhase(
                 generateDebugInfoHeaderPhase then
                 propertyAccessorInlinePhase then // Have to run after link dependencies phase, because fields
                                                  // from dependencies can be changed during lowerings.
+                returnsInsertionPhase then
                 escapeAnalysisPhase then
                 localEscapeAnalysisPhase then
                 codegenPhase then
@@ -452,6 +455,8 @@ internal fun PhaseConfig.konanPhasesConfig(config: KonanConfig) {
         disableUnless(buildDFGPhase, getBoolean(KonanConfigKeys.OPTIMIZATION))
         disableUnless(devirtualizationPhase, getBoolean(KonanConfigKeys.OPTIMIZATION))
         disableUnless(escapeAnalysisPhase, getBoolean(KonanConfigKeys.OPTIMIZATION))
+        // TODO: Support escape analysis with experimental MM.
+        disableIf(escapeAnalysisPhase, config.memoryModel == MemoryModel.EXPERIMENTAL)
         // Inline accessors only in optimized builds due to separate compilation and possibility to get broken
         // debug information.
         disableUnless(propertyAccessorInlinePhase, getBoolean(KonanConfigKeys.OPTIMIZATION))

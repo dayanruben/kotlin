@@ -1,4 +1,3 @@
-// !WITH_NEW_INFERENCE
 // !DIAGNOSTICS: -UNUSED_PARAMETER
 
 fun callAny(arg: Any?) {}
@@ -15,7 +14,7 @@ fun testAny() {
 
 fun testAnyCall() {
     callAny {
-        error -> <!UNRESOLVED_REFERENCE!>error<!>()
+        error -> <!ARGUMENT_TYPE_MISMATCH!><!UNRESOLVED_REFERENCE!>error<!>()<!>
     }
 }
 
@@ -27,7 +26,7 @@ fun testParam() {
 
 fun testParamCall() {
     callParam {
-        param -> <!UNRESOLVED_REFERENCE!>param<!>()
+        param -> <!ARGUMENT_TYPE_MISMATCH!><!UNRESOLVED_REFERENCE!>param<!>()<!>
     }
 }
 

@@ -60,7 +60,9 @@ val isTeamcityBuild = project.kotlinBuildProperties.isTeamcityBuild ||
         try {
             project.providers.gradleProperty("gradle.integration.tests.split.tasks").forUseAtConfigurationTime().orNull
                 ?.toBoolean() ?: false
-        } catch (_: Exception) { false }
+        } catch (_: Exception) {
+            false
+        }
 
 
 val cleanTestKitCacheTask = tasks.register<Delete>("cleanTestKitCache") {
@@ -70,24 +72,21 @@ val cleanTestKitCacheTask = tasks.register<Delete>("cleanTestKitCache") {
     delete(project.file(".testKitDir"))
 }
 
-fun Test.includeMppAndAndroid(include: Boolean) {
-    if (isTeamcityBuild) {
-        val mppAndAndroidTestPatterns = listOf("*Multiplatform*", "*Mpp*", "*Android*")
-        val filter = if (include)
-            filter.includePatterns
-        else
-            filter.excludePatterns
-        filter.addAll(mppAndAndroidTestPatterns)
-    }
+fun Test.includeMppAndAndroid(include: Boolean) = includeTestsWithPattern(include) {
+    addAll(listOf("*Multiplatform*", "*Mpp*", "*Android*"))
 }
 
-fun Test.includeNative(include: Boolean) {
+fun Test.includeNative(include: Boolean) = includeTestsWithPattern(include) {
+    addAll(listOf("org.jetbrains.kotlin.gradle.native.*", "*Commonizer*"))
+}
+
+fun Test.includeTestsWithPattern(include: Boolean, patterns: (MutableSet<String>).() -> Unit) {
     if (isTeamcityBuild) {
         val filter = if (include)
             filter.includePatterns
         else
             filter.excludePatterns
-        filter.add("org.jetbrains.kotlin.gradle.native.*")
+        filter.patterns()
     }
 }
 
@@ -159,14 +158,39 @@ if (isTeamcityBuild) {
     }
 }
 
+val KGP_TEST_TASKS_GROUP = "Kotlin Gradle Plugin Verification"
+
+val simpleTestsTask = tasks.register<Test>("kgpSimpleTests") {
+    group = KGP_TEST_TASKS_GROUP
+    description = "Run only simple tests for Kotlin Gradle Plugin"
+    maxParallelForks = (Runtime.getRuntime().availableProcessors() / 4).coerceAtLeast(1)
+
+    useJUnitPlatform {
+        includeTags("SimpleKGP")
+        includeEngines("junit-jupiter")
+    }
+}
+
 tasks.named<Task>("check") {
     dependsOn("testAdvanceGradleVersion")
+    dependsOn(simpleTestsTask)
     if (isTeamcityBuild) {
         dependsOn("testAdvanceGradleVersionMppAndAndroid")
         dependsOn("testMppAndAndroid")
         dependsOn("testNative")
         dependsOn("testAdvanceGradleVersionNative")
         finalizedBy(cleanTestKitCacheTask)
+    }
+}
+
+val kgpJunit5Tests = tasks.register<Test>("kgpJunit5Tests") {
+    group = KGP_TEST_TASKS_GROUP
+    description = "Run only JUnit 5 tests for Kotlin Gradle Plugin"
+    maxParallelForks = (Runtime.getRuntime().availableProcessors() / 4).coerceAtLeast(1)
+
+    useJUnitPlatform {
+        includeTags("JUnit5")
+        includeEngines("junit-jupiter")
     }
 }
 
@@ -197,8 +221,16 @@ tasks.withType<Test> {
 
     useAndroidSdk()
 
-    maxHeapSize = "512m"
-    useJUnitPlatform()
+    val shouldApplyJunitPlatform = name !in setOf(
+        simpleTestsTask.name,
+        kgpJunit5Tests.name
+    )
+    if (shouldApplyJunitPlatform) {
+        maxHeapSize = "512m"
+        useJUnitPlatform {
+            includeEngines("junit-vintage")
+        }
+    }
 
     testLogging {
         // set options for log level LIFECYCLE
@@ -219,7 +251,8 @@ tasks.withType<Test> {
         addTestListener(object : TestListener {
             override fun afterSuite(desc: TestDescriptor, result: TestResult) {
                 if (desc.parent == null) { // will match the outermost suite
-                    val output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
+                    val output =
+                        "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
                     val startItem = "|  "
                     val endItem = "  |"
                     val repeatLength = startItem.length + output.length + endItem.length
@@ -231,16 +264,5 @@ tasks.withType<Test> {
             override fun afterTest(testDescriptor: TestDescriptor, result: TestResult) {}
             override fun beforeTest(testDescriptor: TestDescriptor) {}
         })
-    }
-}
-
-tasks.register<Test>("kgpJunit5Tests") {
-    group = "Verification"
-    description = "Run only JUnit 5 tests for Kotlin Gradle Plugin"
-    maxParallelForks = (Runtime.getRuntime().availableProcessors() / 4).coerceAtLeast(1)
-
-    useJUnitPlatform {
-        includeTags("JUnit5")
-        includeEngines("junit-jupiter")
     }
 }

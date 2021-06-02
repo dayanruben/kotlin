@@ -31,6 +31,10 @@ abstract class AbstractTypeCheckerContext() {
         return type
     }
 
+    open fun prepareType(type: KotlinTypeMarker): KotlinTypeMarker {
+        return type
+    }
+
     open fun customIsSubtypeOf(subType: KotlinTypeMarker, superType: KotlinTypeMarker): Boolean = true
 
     abstract val isErrorTypeEqualsToAnything: Boolean
@@ -160,13 +164,19 @@ object AbstractTypeChecker {
     @JvmField
     var RUN_SLOW_ASSERTIONS = false
 
+    fun prepareType(
+        context: TypeCheckerProviderContext,
+        type: KotlinTypeMarker,
+        stubTypesEqualToAnything: Boolean = true
+    ) = context.newBaseTypeCheckerContext(true, stubTypesEqualToAnything).prepareType(type)
+
     fun isSubtypeOf(
         context: TypeCheckerProviderContext,
         subType: KotlinTypeMarker,
         superType: KotlinTypeMarker,
         stubTypesEqualToAnything: Boolean = true
     ): Boolean {
-        return AbstractTypeChecker.isSubtypeOf(context.newBaseTypeCheckerContext(true, stubTypesEqualToAnything), subType, superType)
+        return isSubtypeOf(context.newBaseTypeCheckerContext(true, stubTypesEqualToAnything), subType, superType)
     }
 
     fun isSubtypeOfClass(
@@ -204,12 +214,7 @@ object AbstractTypeChecker {
 
         if (!context.customIsSubtypeOf(subType, superType)) return false
 
-        return completeIsSubTypeOf(
-            context,
-            context.typeSystemContext.prepareType(context.refineType(subType)),
-            context.typeSystemContext.prepareType(context.refineType(superType)),
-            isFromNullabilityConstraint
-        )
+        return completeIsSubTypeOf(context, subType, superType, isFromNullabilityConstraint)
     }
 
     fun equalTypes(context: AbstractTypeCheckerContext, a: KotlinTypeMarker, b: KotlinTypeMarker): Boolean =
@@ -217,8 +222,8 @@ object AbstractTypeChecker {
             if (a === b) return true
 
             if (isCommonDenotableType(a) && isCommonDenotableType(b)) {
-                val refinedA = context.refineType(a)
-                val refinedB = context.refineType(b)
+                val refinedA = context.prepareType(context.refineType(a))
+                val refinedB = context.prepareType(context.refineType(b))
                 val simpleA = refinedA.lowerBoundIfFlexible()
                 if (!areEqualTypeConstructors(refinedA.typeConstructor(), refinedB.typeConstructor())) return false
                 if (simpleA.argumentsCount() == 0) {
@@ -238,15 +243,18 @@ object AbstractTypeChecker {
         superType: KotlinTypeMarker,
         isFromNullabilityConstraint: Boolean
     ): Boolean = with(context.typeSystemContext) {
-        checkSubtypeForSpecialCases(context, subType.lowerBoundIfFlexible(), superType.upperBoundIfFlexible())?.let {
-            context.addSubtypeConstraint(subType, superType, isFromNullabilityConstraint)
+        val preparedSubType = context.prepareType(context.refineType(subType))
+        val preparedSuperType = context.prepareType(context.refineType(superType))
+
+        checkSubtypeForSpecialCases(context, preparedSubType.lowerBoundIfFlexible(), preparedSuperType.upperBoundIfFlexible())?.let {
+            context.addSubtypeConstraint(preparedSubType, preparedSuperType, isFromNullabilityConstraint)
             return it
         }
 
         // we should add constraints with flexible types, otherwise we never get flexible type as answer in constraint system
-        context.addSubtypeConstraint(subType, superType, isFromNullabilityConstraint)?.let { return it }
+        context.addSubtypeConstraint(preparedSubType, preparedSuperType, isFromNullabilityConstraint)?.let { return it }
 
-        return isSubtypeOfForSingleClassifierType(context, subType.lowerBoundIfFlexible(), superType.upperBoundIfFlexible())
+        return isSubtypeOfForSingleClassifierType(context, preparedSubType.lowerBoundIfFlexible(), preparedSuperType.upperBoundIfFlexible())
     }
 
     private fun checkSubtypeForIntegerLiteralType(
@@ -332,6 +340,7 @@ object AbstractTypeChecker {
         if (superType.typeConstructor().isAnyConstructor()) return true
 
         val supertypesWithSameConstructor = findCorrespondingSupertypes(context, subType, superConstructor)
+            .map { context.prepareType(it).asSimpleType() ?: it }
         when (supertypesWithSameConstructor.size) {
             0 -> return hasNothingSupertype(context, subType) // todo Nothing & Array<Number> <: Array<String>
             1 -> return context.isSubtypeForSameConstructor(supertypesWithSameConstructor.first().asArgumentList(), superType)
@@ -452,6 +461,17 @@ object AbstractTypeChecker {
         return null
     }
 
+    private fun TypeSystemContext.isStubTypeSubtypeOfAnother(a: SimpleTypeMarker, b: SimpleTypeMarker): Boolean {
+        val originalA = a.asDefinitelyNotNullType()?.original() ?: a
+        val originalB = b.asDefinitelyNotNullType()?.original() ?: b
+
+        if (originalA.typeConstructor() !== originalB.typeConstructor()) return false
+        if (!a.isDefinitelyNotNullType() && b.isDefinitelyNotNullType()) return false
+        if (a.isMarkedNullable() && !b.isMarkedNullable()) return false
+
+        return true // A!! == B!!, A? == B? or A == B
+    }
+
     private fun checkSubtypeForSpecialCases(
         context: AbstractTypeCheckerContext,
         subType: SimpleTypeMarker,
@@ -469,7 +489,11 @@ object AbstractTypeChecker {
             )
         }
 
-        if (subType.isStubType() || superType.isStubType()) return context.isStubTypeEqualsToAnything
+        if (subType.isStubTypeForBuilderInference() && superType.isStubTypeForBuilderInference())
+            return isStubTypeSubtypeOfAnother(subType, superType)
+
+        if (subType.isStubType() || superType.isStubType())
+            return context.isStubTypeEqualsToAnything
 
         // superType might be a definitely notNull type (see KT-42824)
         val superOriginalType = superType.asDefinitelyNotNullType()?.original() ?: superType

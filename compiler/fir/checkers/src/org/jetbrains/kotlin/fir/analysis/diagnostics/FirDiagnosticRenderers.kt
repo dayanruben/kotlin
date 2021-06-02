@@ -13,7 +13,10 @@ import org.jetbrains.kotlin.fir.FirRenderer
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.render
 import org.jetbrains.kotlin.fir.symbols.AbstractFirBasedSymbol
-import org.jetbrains.kotlin.fir.symbols.impl.*
+import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirClassLikeSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirTypeParameterSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirVariableSymbol
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
 import org.jetbrains.kotlin.fir.types.render
 
@@ -35,7 +38,7 @@ object FirDiagnosticRenderers {
         }
     }
 
-    val TO_STRING = Renderer { element: Any ->
+    val TO_STRING = Renderer { element: Any? ->
         element.toString()
     }
 
@@ -104,5 +107,9 @@ object FirDiagnosticRenderers {
             val branches = if (missingCases.size > 1) "branches" else "branch"
             "$list $branches or 'else' branch instead"
         }
+    }
+
+    val NOT_RENDERED = Renderer<Any?> {
+        ""
     }
 }

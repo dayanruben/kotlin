@@ -11,11 +11,13 @@ import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
+import org.jetbrains.kotlin.fir.analysis.diagnostics.*
 import org.jetbrains.kotlin.fir.analysis.diagnostics.modalityModifier
 import org.jetbrains.kotlin.fir.analysis.diagnostics.overrideModifier
 import org.jetbrains.kotlin.fir.analysis.diagnostics.visibilityModifier
 import org.jetbrains.kotlin.fir.analysis.getChild
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.FirFunctionCall
 import org.jetbrains.kotlin.fir.expressions.FirQualifiedAccessExpression
 import org.jetbrains.kotlin.fir.expressions.impl.FirEmptyExpressionBlock
@@ -33,8 +35,7 @@ import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.*
 import org.jetbrains.kotlin.psi.KtModifierList
 import org.jetbrains.kotlin.psi.KtParameter.VAL_VAR_TOKEN_SET
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
@@ -291,10 +292,8 @@ fun FirClass<*>.findNonInterfaceSupertype(context: CheckerContext): FirTypeRef? 
 val FirFunctionCall.isIterator
     get() = this.calleeReference.name.asString() == "<iterator>"
 
-internal fun throwableClassLikeType(session: FirSession) = session.builtinTypes.throwableType.type
-
 fun ConeKotlinType.isSubtypeOfThrowable(session: FirSession) =
-    throwableClassLikeType(session).isSupertypeOf(session.typeContext, this.fullyExpandedType(session))
+    session.builtinTypes.throwableType.type.isSupertypeOf(session.typeContext, this.fullyExpandedType(session))
 
 val FirValueParameter.hasValOrVar: Boolean
     get() {
@@ -519,3 +518,63 @@ private val FirSimpleFunction.matchesHashCodeSignature: Boolean
 
 private val FirSimpleFunction.matchesToStringSignature: Boolean
     get() = valueParameters.isEmpty()
+
+fun checkTypeMismatch(
+    lValueOriginalType: ConeKotlinType,
+    rValue: FirExpression,
+    context: CheckerContext,
+    source: FirSourceElement,
+    reporter: DiagnosticReporter,
+    isInitializer: Boolean
+) {
+    var lValueType = lValueOriginalType
+    var rValueType = rValue.typeRef.coneType
+    val typeContext = context.session.typeContext
+
+    val diagnosticFactory = when {
+        isInitializer -> {
+            FirErrors.INITIALIZER_TYPE_MISMATCH
+        }
+        source.kind is FirFakeSourceElementKind.DesugaredIncrementOrDecrement -> {
+            if (!lValueType.isNullable && rValueType.isNullable) {
+                val tempType = rValueType
+                rValueType = lValueType
+                lValueType = tempType
+            }
+            FirErrors.RESULT_TYPE_MISMATCH
+        }
+        else -> {
+            FirErrors.ASSIGNMENT_TYPE_MISMATCH
+        }
+    }
+
+    if (!isSubtypeForTypeMismatch(typeContext, subtype = rValueType, supertype = lValueType)) {
+        if (rValueType is ConeClassLikeType &&
+            rValueType.lookupTag.classId == StandardClassIds.Int &&
+            lValueType.fullyExpandedType(context.session).isIntegerTypeOrNullableIntegerTypeOfAnySize &&
+            rValueType.nullability == ConeNullability.NOT_NULL
+        ) {
+            // val p: Byte = 42 or similar situation
+            // TODO: remove after fix of KT-46047
+            return
+        }
+        if (lValueType.isExtensionFunctionType || rValueType.isExtensionFunctionType) {
+            // TODO: remove after fix of KT-45989
+            return
+        }
+        if (rValue.isNullLiteral && lValueType.nullability == ConeNullability.NOT_NULL) {
+            reporter.reportOn(rValue.source, FirErrors.NULL_FOR_NONNULL_TYPE, context)
+        } else {
+            reporter.report(diagnosticFactory.on(source, lValueType, rValueType), context)
+        }
+    }
+}
+
+internal fun checkCondition(condition: FirExpression, context: CheckerContext, reporter: DiagnosticReporter) {
+    val coneType = condition.typeRef.coneType.lowerBoundIfFlexible()
+    if (coneType !is ConeKotlinErrorType &&
+        !coneType.isSubtypeOf(context.session.typeContext, context.session.builtinTypes.booleanType.type)
+    ) {
+        reporter.reportOn(condition.source, FirErrors.CONDITION_TYPE_MISMATCH, coneType, context)
+    }
+}

@@ -11,12 +11,15 @@ import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.diagnostics.ConeSimpleDiagnostic
 import org.jetbrains.kotlin.fir.diagnostics.DiagnosticKind
 import org.jetbrains.kotlin.fir.expressions.*
+import org.jetbrains.kotlin.fir.references.FirNamedReference
 import org.jetbrains.kotlin.fir.references.builder.buildErrorNamedReference
 import org.jetbrains.kotlin.fir.references.builder.buildResolvedCallableReference
 import org.jetbrains.kotlin.fir.references.builder.buildResolvedNamedReference
 import org.jetbrains.kotlin.fir.resolve.*
 import org.jetbrains.kotlin.fir.resolve.calls.*
 import org.jetbrains.kotlin.fir.resolve.dfa.FirDataFlowAnalyzer
+import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeConstraintSystemHasContradiction
+import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeInapplicableCandidateError
 import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeTypeParameterInQualifiedAccess
 import org.jetbrains.kotlin.fir.resolve.inference.*
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
@@ -35,6 +38,7 @@ import org.jetbrains.kotlin.fir.types.builder.buildStarProjection
 import org.jetbrains.kotlin.fir.types.builder.buildTypeProjectionWithVariance
 import org.jetbrains.kotlin.fir.types.impl.ConeTypeParameterTypeImpl
 import org.jetbrains.kotlin.fir.visitors.*
+import org.jetbrains.kotlin.resolve.calls.tower.isSuccess
 import org.jetbrains.kotlin.types.TypeApproximatorConfiguration
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
@@ -66,7 +70,7 @@ class FirCallCompletionResultsWriterTransformer(
         }
     }
 
-    private fun <T : FirQualifiedAccessExpression> prepareQualifiedTransform(
+    private fun <T : FirQualifiedAccess> prepareQualifiedTransform(
         qualifiedAccessExpression: T, calleeReference: FirNamedReferenceWithCandidate
     ): T {
         val subCandidate = calleeReference.candidate
@@ -111,7 +115,13 @@ class FirCallCompletionResultsWriterTransformer(
             )
             .transformDispatchReceiver(StoreReceiver, subCandidate.dispatchReceiverExpression())
             .transformExtensionReceiver(StoreReceiver, subCandidate.extensionReceiverExpression()) as T
-        result.replaceTypeRef(typeRef)
+
+        if (result is FirQualifiedAccessExpression) {
+            result.replaceTypeRef(typeRef)
+        } else if (result is FirVariableAssignment) {
+            result.replaceLValueTypeRef(typeRef)
+        }
+
         if (declaration !is FirErrorFunction) {
             result.replaceTypeArguments(typeArguments)
         }
@@ -354,13 +364,19 @@ class FirCallCompletionResultsWriterTransformer(
     ): FirStatement {
         val calleeReference = variableAssignment.calleeReference as? FirNamedReferenceWithCandidate
             ?: return variableAssignment
-        val typeArguments = computeTypeArguments(variableAssignment, calleeReference.candidate)
+
+        // Initialize lValueTypeRef
+        val qualifiedTransform = prepareQualifiedTransform(variableAssignment, calleeReference)
+        val lValueTypeRef = qualifiedTransform.lValueTypeRef as FirResolvedTypeRef
+        val resultLValueType = lValueTypeRef.substituteTypeRef(calleeReference.candidate)
+        resultLValueType.ensureResolvedTypeDeclaration(session)
+        variableAssignment.replaceLValueTypeRef(resultLValueType)
+        session.lookupTracker?.recordTypeResolveAsLookup(resultLValueType, variableAssignment.lValue.source, null)
+
         return variableAssignment.transformCalleeReference(
             StoreCalleeReference,
             calleeReference.toResolvedReference(),
-        ).apply {
-            replaceTypeArguments(typeArguments)
-        }
+        )
     }
 
     private inner class TypeUpdaterForDelegateArguments : FirTransformer<Any?>() {
@@ -722,17 +738,32 @@ class FirCallCompletionResultsWriterTransformer(
         return arrayOfCall
     }
 
-    private fun FirNamedReferenceWithCandidate.toResolvedReference() = if (this is FirErrorReferenceWithCandidate) {
-        buildErrorNamedReference {
-            source = this@toResolvedReference.source
-            diagnostic = this@toResolvedReference.diagnostic
-            candidateSymbol = this@toResolvedReference.candidateSymbol
+    private fun FirNamedReferenceWithCandidate.toResolvedReference(): FirNamedReference {
+        val errorDiagnostic = when {
+            this is FirErrorReferenceWithCandidate -> this.diagnostic
+            !candidate.currentApplicability.isSuccess -> ConeInapplicableCandidateError(candidate.currentApplicability, candidate)
+            !candidate.isSuccessful -> {
+                require(candidate.system.hasContradiction) {
+                    "Candidate is not successful, but system has no contradiction"
+                }
+
+                ConeConstraintSystemHasContradiction(candidate)
+            }
+            else -> null
         }
-    } else {
-        buildResolvedNamedReference {
-            source = this@toResolvedReference.source
-            name = this@toResolvedReference.name
-            resolvedSymbol = this@toResolvedReference.candidateSymbol
+
+        return if (errorDiagnostic != null) {
+            buildErrorNamedReference {
+                source = this@toResolvedReference.source
+                diagnostic = errorDiagnostic
+                candidateSymbol = this@toResolvedReference.candidateSymbol
+            }
+        } else {
+            buildResolvedNamedReference {
+                source = this@toResolvedReference.source
+                name = this@toResolvedReference.name
+                resolvedSymbol = this@toResolvedReference.candidateSymbol
+            }
         }
     }
 }

@@ -107,8 +107,9 @@ RuntimeState* initRuntime() {
           result->memoryState = InitMemory(false); // The argument will be ignored for legacy DestroyRuntimeMode
           result->worker = WorkerInit(result->memoryState, true);
           firstRuntime = atomicAdd(&aliveRuntimesCount, 1) == 1;
-          if (CurrentMemoryModel == MemoryModel::kExperimental) {
-              RuntimeCheck(firstRuntime, "Experimental MM does not support multiple mutator threads yet");
+          if (!kotlin::kSupportsMultipleMutators && !firstRuntime) {
+              konan::consoleErrorf("This GC implementation does not support multiple mutator threads.");
+              konan::abort();
           }
           break;
       case DESTROY_RUNTIME_ON_SHUTDOWN:
@@ -120,8 +121,9 @@ RuntimeState* initRuntime() {
               RuntimeAssert(lastStatus != kGlobalRuntimeShutdown, "Kotlin runtime was shut down. Cannot create new runtimes.");
           }
           firstRuntime = lastStatus == kGlobalRuntimeUninitialized;
-          if (CurrentMemoryModel == MemoryModel::kExperimental) {
-              RuntimeCheck(firstRuntime, "Experimental MM does not support multiple mutator threads yet");
+          if (!kotlin::kSupportsMultipleMutators && !firstRuntime) {
+              konan::consoleErrorf("This GC implementation does not support multiple mutator threads.");
+              konan::abort();
           }
           result->memoryState = InitMemory(firstRuntime);
           result->worker = WorkerInit(result->memoryState, true);
@@ -140,6 +142,9 @@ RuntimeState* initRuntime() {
   InitOrDeinitGlobalVariables(INIT_THREAD_LOCAL_GLOBALS, result->memoryState);
   RuntimeAssert(result->status == RuntimeStatus::kUninitialized, "Runtime must still be in the uninitialized state");
   result->status = RuntimeStatus::kRunning;
+
+  kotlin::SwitchThreadState(result->memoryState, kotlin::ThreadState::kNative);
+
   return result;
 }
 
@@ -172,6 +177,8 @@ void deinitRuntime(RuntimeState* state, bool destroyRuntime) {
 
 void Kotlin_deinitRuntimeCallback(void* argument) {
   auto* state = reinterpret_cast<RuntimeState*>(argument);
+  // This callback may be called from any state, make sure it runs in the runnable state.
+  kotlin::SwitchThreadState(state->memoryState, kotlin::ThreadState::kRunnable, /* reentrant = */ true);
   deinitRuntime(state, false);
 }
 
@@ -376,6 +383,24 @@ KBoolean Kotlin_Debugging_isThreadStateRunnable() {
 
 KBoolean Kotlin_Debugging_isThreadStateNative() {
     return kotlin::GetThreadState() == kotlin::ThreadState::kNative;
+}
+
+KBoolean Kotlin_Debugging_isPermanent(KRef obj) {
+    return obj->permanent();
+}
+
+RUNTIME_NOTHROW KBoolean Kotlin_Debugging_isLocal(KRef obj) {
+    return obj->local();
+}
+
+RUNTIME_NOTHROW void Kotlin_initRuntimeIfNeededFromKotlin() {
+    switch (CurrentMemoryModel) {
+        case MemoryModel::kExperimental:
+            return;
+        case MemoryModel::kStrict:
+        case MemoryModel::kRelaxed:
+            Kotlin_initRuntimeIfNeeded();
+    }
 }
 
 }  // extern "C"

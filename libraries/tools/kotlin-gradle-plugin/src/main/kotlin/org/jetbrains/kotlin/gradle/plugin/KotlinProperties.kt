@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile
 import org.jetbrains.kotlin.gradle.tasks.Kotlin2JsCompile
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.gradle.utils.SingleWarningPerBuild
+import org.jetbrains.kotlin.gradle.utils.getSystemProperty
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.konan.target.presetName
 import org.jetbrains.kotlin.statistics.metrics.StringMetrics
@@ -35,6 +36,7 @@ internal fun PropertiesProvider.mapKotlinTaskProperties(task: AbstractKotlinComp
         usePreciseJavaTracking?.let {
             task.usePreciseJavaTracking = it
         }
+        task.useClasspathSnapshot.value(useClasspathSnapshot).disallowChanges()
         useFir?.let {
             if (it == true) {
                 task.kotlinOptions.useFir = true
@@ -96,6 +98,16 @@ internal class PropertiesProvider private constructor(private val project: Proje
     val usePreciseJavaTracking: Boolean?
         get() = booleanProperty("kotlin.incremental.usePreciseJavaTracking")
 
+    val useClasspathSnapshot: Boolean
+        get() {
+            // The feature should be controlled by a Gradle property.
+            // Currently, we also allow it to be controlled by a system property to make it easier to test the feature during development.
+            // TODO: Remove the system property later.
+            val gradleProperty = booleanProperty("kotlin.incremental.useClasspathSnapshot") ?: false
+            val systemProperty = project.getSystemProperty("kotlin.incremental.useClasspathSnapshot")?.toBoolean() ?: false
+            return gradleProperty || systemProperty
+        }
+
     val useFir: Boolean?
         get() = booleanProperty("kotlin.useFir")
 
@@ -140,13 +152,28 @@ internal class PropertiesProvider private constructor(private val project: Proje
     val ignoreIncorrectNativeDependencies: Boolean?
         get() = booleanProperty(KOTLIN_NATIVE_IGNORE_INCORRECT_DEPENDENCIES)
 
+    private val parallelTasksInProjectPropName = "kotlin.parallel.tasks.in.project"
+
     /**
      * Enables parallel tasks execution within a project with Workers API.
      * Does not enable using actual worker proccesses
      * (Kotlin Daemon can be shared which uses less memory)
      */
     val parallelTasksInProject: Boolean?
-        get() = booleanProperty("kotlin.parallel.tasks.in.project")
+        get() {
+            return if (property(parallelTasksInProjectPropName) != null) {
+                SingleWarningPerBuild.show(
+                    project,
+                    """
+                    Project property '$parallelTasksInProjectPropName' is deprecated.
+                    By default it depends on Gradle parallel project execution option value.
+                    """.trimIndent()
+                )
+                booleanProperty(parallelTasksInProjectPropName)
+            } else {
+                return project.gradle.startParameter.isParallelProjectExecutionEnabled
+            }
+        }
 
     /**
      * Enables individual test task reporting for aggregated test tasks.

@@ -153,6 +153,14 @@ object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() 
             kind = OpenClass
         }
 
+        impl(implicitInvokeCall) {
+            default("origin", "FirFunctionCallOrigin.Operator")
+        }
+
+        impl(componentCall) {
+            default("origin", "FirFunctionCallOrigin.Operator")
+        }
+
         impl(qualifiedAccessExpression)
 
         noImpl(expressionWithSmartcast)
@@ -490,6 +498,15 @@ object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() 
         configureFieldInAllImplementations(
             field = "typeRef",
             implementationPredicate = { it.type !in implementationWithConfigurableTypeRef },
+            fieldPredicate = { it.defaultValueInImplementation == null }
+        ) {
+            default(it, "FirImplicitTypeRefImpl(null)")
+            useTypes(implicitTypeRefType)
+        }
+
+        configureFieldInAllImplementations(
+            field = "lValueTypeRef",
+            implementationPredicate = { it.type in "FirVariableAssignmentImpl" },
             fieldPredicate = { it.defaultValueInImplementation == null }
         ) {
             default(it, "FirImplicitTypeRefImpl(null)")

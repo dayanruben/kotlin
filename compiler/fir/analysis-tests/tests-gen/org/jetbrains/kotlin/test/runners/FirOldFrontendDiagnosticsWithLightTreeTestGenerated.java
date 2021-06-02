@@ -990,9 +990,21 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             }
 
             @Test
-            @TestMetadata("AnnotationForClassTypeParameter.kt")
-            public void testAnnotationForClassTypeParameter() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/annotations/AnnotationForClassTypeParameter.kt");
+            @TestMetadata("AnnotationForClassTypeParameter_15.kt")
+            public void testAnnotationForClassTypeParameter_15() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/annotations/AnnotationForClassTypeParameter_15.kt");
+            }
+
+            @Test
+            @TestMetadata("AnnotationForClassTypeParameter_16.kt")
+            public void testAnnotationForClassTypeParameter_16() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/annotations/AnnotationForClassTypeParameter_16.kt");
+            }
+
+            @Test
+            @TestMetadata("AnnotationForClassTypeParameter_typeUseFlag.kt")
+            public void testAnnotationForClassTypeParameter_typeUseFlag() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/annotations/AnnotationForClassTypeParameter_typeUseFlag.kt");
             }
 
             @Test
@@ -1341,6 +1353,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             @TestMetadata("RecursivelyIncorrectlyAnnotatedParameter.kt")
             public void testRecursivelyIncorrectlyAnnotatedParameter() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/annotations/RecursivelyIncorrectlyAnnotatedParameter.kt");
+            }
+
+            @Test
+            @TestMetadata("requireKotlin.kt")
+            public void testRequireKotlin() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/annotations/requireKotlin.kt");
             }
 
             @Test
@@ -12633,6 +12651,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
                 }
 
                 @Test
+                @TestMetadata("labaledCall.kt")
+                public void testLabaledCall() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/labaledCall.kt");
+                }
+
+                @Test
                 @TestMetadata("simpleLambdaInCallWithAnotherLambdaWithBuilderInference.kt")
                 public void testSimpleLambdaInCallWithAnotherLambdaWithBuilderInference() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/builderInference/simpleLambdaInCallWithAnotherLambdaWithBuilderInference.kt");
@@ -12669,15 +12693,113 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
                 }
 
                 @Test
+                @TestMetadata("specialCallsWithCallableReferencesErrorTypeUnrestricted.kt")
+                public void testSpecialCallsWithCallableReferencesErrorTypeUnrestricted() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/specialCallsWithCallableReferencesErrorTypeUnrestricted.kt");
+                }
+
+                @Test
                 @TestMetadata("specialCallsWithCallableReferencesNonStrictOnlyInputTypes.kt")
                 public void testSpecialCallsWithCallableReferencesNonStrictOnlyInputTypes() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/builderInference/specialCallsWithCallableReferencesNonStrictOnlyInputTypes.kt");
                 }
 
                 @Test
+                @TestMetadata("specialCallsWithCallableReferencesUnrestricted.kt")
+                public void testSpecialCallsWithCallableReferencesUnrestricted() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/specialCallsWithCallableReferencesUnrestricted.kt");
+                }
+
+                @Test
                 @TestMetadata("specialCallsWithLambdas.kt")
                 public void testSpecialCallsWithLambdas() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/builderInference/specialCallsWithLambdas.kt");
+                }
+
+                @Nested
+                @TestMetadata("compiler/testData/diagnostics/tests/inference/builderInference/constraints")
+                @TestDataPath("$PROJECT_ROOT")
+                public class Constraints {
+                    @Test
+                    public void testAllFilesPresentInConstraints() throws Exception {
+                        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/inference/builderInference/constraints"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
+                    }
+
+                    @Test
+                    @TestMetadata("violating.kt")
+                    public void testViolating() throws Exception {
+                        runTest("compiler/testData/diagnostics/tests/inference/builderInference/constraints/violating.kt");
+                    }
+                }
+
+                @Nested
+                @TestMetadata("compiler/testData/diagnostics/tests/inference/builderInference/stubTypes")
+                @TestDataPath("$PROJECT_ROOT")
+                public class StubTypes {
+                    @Test
+                    public void testAllFilesPresentInStubTypes() throws Exception {
+                        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/inference/builderInference/stubTypes"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
+                    }
+
+                    @Test
+                    @TestMetadata("capturedTypes.kt")
+                    public void testCapturedTypes() throws Exception {
+                        runTest("compiler/testData/diagnostics/tests/inference/builderInference/stubTypes/capturedTypes.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("commonSuperType.kt")
+                    public void testCommonSuperType() throws Exception {
+                        runTest("compiler/testData/diagnostics/tests/inference/builderInference/stubTypes/commonSuperType.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("commonSuperTypeContravariant.kt")
+                    public void testCommonSuperTypeContravariant() throws Exception {
+                        runTest("compiler/testData/diagnostics/tests/inference/builderInference/stubTypes/commonSuperTypeContravariant.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("commonSuperTypeCovariant.kt")
+                    public void testCommonSuperTypeCovariant() throws Exception {
+                        runTest("compiler/testData/diagnostics/tests/inference/builderInference/stubTypes/commonSuperTypeCovariant.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("commonSuperTypeInvariant.kt")
+                    public void testCommonSuperTypeInvariant() throws Exception {
+                        runTest("compiler/testData/diagnostics/tests/inference/builderInference/stubTypes/commonSuperTypeInvariant.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("commonSuperTypeNullable.kt")
+                    public void testCommonSuperTypeNullable() throws Exception {
+                        runTest("compiler/testData/diagnostics/tests/inference/builderInference/stubTypes/commonSuperTypeNullable.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("intersect.kt")
+                    public void testIntersect() throws Exception {
+                        runTest("compiler/testData/diagnostics/tests/inference/builderInference/stubTypes/intersect.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("memberScope.kt")
+                    public void testMemberScope() throws Exception {
+                        runTest("compiler/testData/diagnostics/tests/inference/builderInference/stubTypes/memberScope.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("nullability.kt")
+                    public void testNullability() throws Exception {
+                        runTest("compiler/testData/diagnostics/tests/inference/builderInference/stubTypes/nullability.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("renderingStubTypes.kt")
+                    public void testRenderingStubTypes() throws Exception {
+                        runTest("compiler/testData/diagnostics/tests/inference/builderInference/stubTypes/renderingStubTypes.kt");
+                    }
                 }
             }
 
@@ -13198,6 +13320,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
                 @TestMetadata("equalityConstraintUpstairs.kt")
                 public void testEqualityConstraintUpstairs() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/completion/equalityConstraintUpstairs.kt");
+                }
+
+                @Test
+                @TestMetadata("errorAfterCompletion.kt")
+                public void testErrorAfterCompletion() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/completion/errorAfterCompletion.kt");
                 }
 
                 @Test
@@ -18634,6 +18762,28 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             }
 
             @Nested
+            @TestMetadata("compiler/testData/diagnostics/tests/multiplatform/hmpp")
+            @TestDataPath("$PROJECT_ROOT")
+            public class Hmpp {
+                @Test
+                public void testAllFilesPresentInHmpp() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/multiplatform/hmpp"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
+                }
+
+                @Test
+                @TestMetadata("sealedInheritorsInComplexModuleStructure.kt")
+                public void testSealedInheritorsInComplexModuleStructure() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/hmpp/sealedInheritorsInComplexModuleStructure.kt");
+                }
+
+                @Test
+                @TestMetadata("simple.kt")
+                public void testSimple() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/hmpp/simple.kt");
+                }
+            }
+
+            @Nested
             @TestMetadata("compiler/testData/diagnostics/tests/multiplatform/inlineClasses")
             @TestDataPath("$PROJECT_ROOT")
             public class InlineClasses {
@@ -21302,6 +21452,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
                 @TestMetadata("substituteSeveralOtherErasedTypeArguments.kt")
                 public void testSubstituteSeveralOtherErasedTypeArguments() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/platformTypes/rawTypes/substituteSeveralOtherErasedTypeArguments.kt");
+                }
+
+                @Test
+                @TestMetadata("superTypeErasion.kt")
+                public void testSuperTypeErasion() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/platformTypes/rawTypes/superTypeErasion.kt");
                 }
 
                 @Test
@@ -32196,6 +32352,48 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             public void testCompleteIrrelevantCalls() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/builderInference/completeIrrelevantCalls.kt");
             }
+
+            @Test
+            @TestMetadata("incorrectCalls.kt")
+            public void testIncorrectCalls() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/builderInference/incorrectCalls.kt");
+            }
+
+            @Test
+            @TestMetadata("incorrectCallsWithRestrictions.kt")
+            public void testIncorrectCallsWithRestrictions() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/builderInference/incorrectCallsWithRestrictions.kt");
+            }
+
+            @Test
+            @TestMetadata("inferCoroutineTypeInOldVersion.kt")
+            public void testInferCoroutineTypeInOldVersion() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/builderInference/inferCoroutineTypeInOldVersion.kt");
+            }
+
+            @Test
+            @TestMetadata("resolveUsualCallWithBuilderInference.kt")
+            public void testResolveUsualCallWithBuilderInference() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/builderInference/resolveUsualCallWithBuilderInference.kt");
+            }
+
+            @Test
+            @TestMetadata("resolveUsualCallWithBuilderInferenceWithRestrictions.kt")
+            public void testResolveUsualCallWithBuilderInferenceWithRestrictions() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/builderInference/resolveUsualCallWithBuilderInferenceWithRestrictions.kt");
+            }
+
+            @Test
+            @TestMetadata("useInferenceInformationFromExtension.kt")
+            public void testUseInferenceInformationFromExtension() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/builderInference/useInferenceInformationFromExtension.kt");
+            }
+
+            @Test
+            @TestMetadata("useInferenceInformationFromExtensionWithRestrictions.kt")
+            public void testUseInferenceInformationFromExtensionWithRestrictions() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/builderInference/useInferenceInformationFromExtensionWithRestrictions.kt");
+            }
         }
 
         @Nested
@@ -33387,18 +33585,6 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
                 }
 
                 @Test
-                @TestMetadata("incorrectCalls.kt")
-                public void testIncorrectCalls() throws Exception {
-                    runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/inference/incorrectCalls.kt");
-                }
-
-                @Test
-                @TestMetadata("inferCoroutineTypeInOldVersion.kt")
-                public void testInferCoroutineTypeInOldVersion() throws Exception {
-                    runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/inference/inferCoroutineTypeInOldVersion.kt");
-                }
-
-                @Test
                 @TestMetadata("inferenceFromMethodInsideLocalVariable.kt")
                 public void testInferenceFromMethodInsideLocalVariable() throws Exception {
                     runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/inference/inferenceFromMethodInsideLocalVariable.kt");
@@ -33543,12 +33729,6 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
                 }
 
                 @Test
-                @TestMetadata("resolveUsualCallWithBuilderInference.kt")
-                public void testResolveUsualCallWithBuilderInference() throws Exception {
-                    runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/inference/resolveUsualCallWithBuilderInference.kt");
-                }
-
-                @Test
                 @TestMetadata("returnTypeInference.kt")
                 public void testReturnTypeInference() throws Exception {
                     runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/inference/returnTypeInference.kt");
@@ -33594,12 +33774,6 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
                 @TestMetadata("typeFromReceiver.kt")
                 public void testTypeFromReceiver() throws Exception {
                     runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/inference/typeFromReceiver.kt");
-                }
-
-                @Test
-                @TestMetadata("useInferenceInformationFromExtension.kt")
-                public void testUseInferenceInformationFromExtension() throws Exception {
-                    runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/inference/useInferenceInformationFromExtension.kt");
                 }
 
                 @Test

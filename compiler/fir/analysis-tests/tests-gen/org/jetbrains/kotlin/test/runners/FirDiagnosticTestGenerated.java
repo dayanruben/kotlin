@@ -660,6 +660,12 @@ public class FirDiagnosticTestGenerated extends AbstractFirDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("integerOverloads.kt")
+            public void testIntegerOverloads() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/arguments/integerOverloads.kt");
+            }
+
+            @Test
             @TestMetadata("invoke.kt")
             public void testInvoke() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolve/arguments/invoke.kt");
@@ -1121,6 +1127,12 @@ public class FirDiagnosticTestGenerated extends AbstractFirDiagnosticTest {
             @TestMetadata("constValWithGetterOrDelegate.kt")
             public void testConstValWithGetterOrDelegate() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolve/constVal/constValWithGetterOrDelegate.kt");
+            }
+
+            @Test
+            @TestMetadata("constValWithTypealiasType.kt")
+            public void testConstValWithTypealiasType() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/constVal/constValWithTypealiasType.kt");
             }
         }
 
@@ -2734,6 +2746,12 @@ public class FirDiagnosticTestGenerated extends AbstractFirDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("elvisAndUnit.kt")
+            public void testElvisAndUnit() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/inference/elvisAndUnit.kt");
+            }
+
+            @Test
             @TestMetadata("extensionCallableReferences.kt")
             public void testExtensionCallableReferences() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolve/inference/extensionCallableReferences.kt");
@@ -2815,6 +2833,12 @@ public class FirDiagnosticTestGenerated extends AbstractFirDiagnosticTest {
             @TestMetadata("typeDepthForTypeAlias.kt")
             public void testTypeDepthForTypeAlias() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolve/inference/typeDepthForTypeAlias.kt");
+            }
+
+            @Test
+            @TestMetadata("unitUpperBound.kt")
+            public void testUnitUpperBound() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/inference/unitUpperBound.kt");
             }
         }
 
@@ -3839,6 +3863,12 @@ public class FirDiagnosticTestGenerated extends AbstractFirDiagnosticTest {
             @TestMetadata("castToBareType.kt")
             public void testCastToBareType() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolve/types/castToBareType.kt");
+            }
+
+            @Test
+            @TestMetadata("typeAliasInArguments.kt")
+            public void testTypeAliasInArguments() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/types/typeAliasInArguments.kt");
             }
         }
 

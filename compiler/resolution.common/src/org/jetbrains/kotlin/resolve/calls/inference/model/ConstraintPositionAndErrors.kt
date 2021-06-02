@@ -18,6 +18,11 @@ abstract class ExplicitTypeParameterConstraintPosition<T>(val typeArgument: T) :
     override fun toString(): String = "TypeParameter $typeArgument"
 }
 
+abstract class InjectedAnotherStubTypeConstraintPosition<T>(private val builderInferenceLambdaOfInjectedStubType: T) : ConstraintPosition(),
+    OnlyInputTypeConstraintPosition {
+    override fun toString(): String = "Injected from $builderInferenceLambdaOfInjectedStubType builder inference call"
+}
+
 abstract class ExpectedTypeConstraintPosition<T>(val topLevelCall: T) : ConstraintPosition(), OnlyInputTypeConstraintPosition {
     override fun toString(): String = "ExpectedType for call $topLevelCall"
 }
@@ -26,7 +31,7 @@ abstract class DeclaredUpperBoundConstraintPosition<T>(val typeParameter: T) : C
     override fun toString(): String = "DeclaredUpperBound $typeParameter"
 }
 
-abstract class ArgumentConstraintPosition<T>(val argument: T) : ConstraintPosition(), OnlyInputTypeConstraintPosition {
+abstract class ArgumentConstraintPosition<out T>(val argument: T) : ConstraintPosition(), OnlyInputTypeConstraintPosition {
     override fun toString(): String = "Argument $argument"
 }
 

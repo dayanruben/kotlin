@@ -90,7 +90,7 @@ class KotlinResolutionCallbacksImpl(
         parameters: List<UnwrappedType>,
         expectedReturnType: UnwrappedType?,
         annotations: Annotations,
-        stubsForPostponedVariables: Map<NewTypeVariable, StubType>,
+        stubsForPostponedVariables: Map<NewTypeVariable, StubTypeForBuilderInference>,
     ): ReturnArgumentsAnalysisResult {
         val psiCallArgument = lambdaArgument.psiCallArgument as PSIFunctionKotlinCallArgument
         val outerCallContext = psiCallArgument.outerCallContext
@@ -167,7 +167,7 @@ class KotlinResolutionCallbacksImpl(
                     callComponents, builtIns, topLevelCallContext, stubsForPostponedVariables, trace,
                     kotlinToResolvedCallTransformer, expressionTypingServices, argumentTypeResolver,
                     doubleColonExpressionResolver, deprecationResolver, moduleDescriptor, typeApproximator,
-                    missingSupertypesResolver
+                    missingSupertypesResolver, lambdaArgument
                 )
             } else {
                 null

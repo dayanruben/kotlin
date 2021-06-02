@@ -1,14 +1,13 @@
-// !WITH_NEW_INFERENCE
 // !DIAGNOSTICS: -UNUSED_PARAMETER -UNUSED_ANONYMOUS_PARAMETER
 
 fun <T, R : Any> foo(body: (R?) -> T): T = fail()
 
 fun test1() {
     foo {
-        true
+        <!ARGUMENT_TYPE_MISMATCH!>true<!>
     }
     foo { x ->
-        true
+        <!ARGUMENT_TYPE_MISMATCH!>true<!>
     }
 }
 
@@ -17,10 +16,10 @@ fun <T, R> bar(body: (R) -> T): T = fail()
 
 fun test2() {
     bar {
-        true
+        <!ARGUMENT_TYPE_MISMATCH!>true<!>
     }
     bar { x ->
-        true
+        <!ARGUMENT_TYPE_MISMATCH!>true<!>
     }
 }
 
@@ -28,10 +27,10 @@ fun <T, R> baz(body: (List<R>) -> T): T = fail()
 
 fun test3() {
     baz {
-        true
+        <!ARGUMENT_TYPE_MISMATCH!>true<!>
     }
     baz { x ->
-        true
+        <!ARGUMENT_TYPE_MISMATCH!>true<!>
     }
 }
 
@@ -39,10 +38,10 @@ fun <T, R : Any> brr(body: (List<R?>) -> T): T = fail()
 
 fun test4() {
     brr {
-        true
+        <!ARGUMENT_TYPE_MISMATCH!>true<!>
     }
     brr { x ->
-        true
+        <!ARGUMENT_TYPE_MISMATCH!>true<!>
     }
 }
 

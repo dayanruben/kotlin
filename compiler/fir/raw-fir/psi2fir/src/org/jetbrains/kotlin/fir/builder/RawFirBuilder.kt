@@ -1889,6 +1889,7 @@ open class RawFirBuilder(
                     }
                     explicitReceiver = leftArgument
                     argumentList = buildUnaryArgumentList(rightArgument)
+                    origin = if (conventionCallName != null) FirFunctionCallOrigin.Operator else FirFunctionCallOrigin.Infix
                 }
             } else {
                 val firOperation = operationToken.toFirOperation()
@@ -1967,6 +1968,7 @@ open class RawFirBuilder(
                             name = conventionCallName
                         }
                         explicitReceiver = receiver
+                        origin = FirFunctionCallOrigin.Operator
                     }
                 }
                 else -> throw IllegalStateException("Unexpected expression: ${expression.text}")
@@ -2063,6 +2065,7 @@ open class RawFirBuilder(
                         arguments += getArgument
                     }
                 }
+                origin = FirFunctionCallOrigin.Operator
             }
         }
 

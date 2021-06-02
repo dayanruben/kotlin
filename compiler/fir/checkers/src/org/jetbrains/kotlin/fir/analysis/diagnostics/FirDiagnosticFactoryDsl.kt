@@ -6,7 +6,7 @@
 package org.jetbrains.kotlin.fir.analysis.diagnostics
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.diagnostics.*
+import org.jetbrains.kotlin.diagnostics.Severity
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 
@@ -16,19 +16,19 @@ fun <P : PsiElement> warning0(
     return DiagnosticFactory0DelegateProvider(Severity.WARNING, positioningStrategy)
 }
 
-fun <P : PsiElement, A : Any> warning1(
+fun <P : PsiElement, A> warning1(
     positioningStrategy: SourceElementPositioningStrategy<P> = SourceElementPositioningStrategy.DEFAULT
 ): DiagnosticFactory1DelegateProvider<P, A> {
     return DiagnosticFactory1DelegateProvider(Severity.WARNING, positioningStrategy)
 }
 
-fun <P : PsiElement, A : Any, B : Any> warning2(
+fun <P : PsiElement, A, B> warning2(
     positioningStrategy: SourceElementPositioningStrategy<P> = SourceElementPositioningStrategy.DEFAULT
 ): DiagnosticFactory2DelegateProvider<P, A, B> {
     return DiagnosticFactory2DelegateProvider(Severity.WARNING, positioningStrategy)
 }
 
-fun <P : PsiElement, A : Any, B : Any, C : Any> warning3(
+fun <P : PsiElement, A, B, C> warning3(
     positioningStrategy: SourceElementPositioningStrategy<P> = SourceElementPositioningStrategy.DEFAULT
 ): DiagnosticFactory3DelegateProvider<P, A, B, C> {
     return DiagnosticFactory3DelegateProvider(Severity.WARNING, positioningStrategy)
@@ -40,24 +40,29 @@ fun <P : PsiElement> error0(
     return DiagnosticFactory0DelegateProvider(Severity.ERROR, positioningStrategy)
 }
 
-fun <P : PsiElement, A : Any> error1(
+fun <P : PsiElement, A> error1(
     positioningStrategy: SourceElementPositioningStrategy<P> = SourceElementPositioningStrategy.DEFAULT
 ): DiagnosticFactory1DelegateProvider<P, A> {
     return DiagnosticFactory1DelegateProvider(Severity.ERROR, positioningStrategy)
 }
 
-fun <P : PsiElement, A : Any, B : Any> error2(
+fun <P : PsiElement, A, B> error2(
     positioningStrategy: SourceElementPositioningStrategy<P> = SourceElementPositioningStrategy.DEFAULT
 ): DiagnosticFactory2DelegateProvider<P, A, B> {
     return DiagnosticFactory2DelegateProvider(Severity.ERROR, positioningStrategy)
 }
 
-fun <P : PsiElement, A : Any, B : Any, C : Any> error3(
+fun <P : PsiElement, A, B, C> error3(
     positioningStrategy: SourceElementPositioningStrategy<P> = SourceElementPositioningStrategy.DEFAULT
 ): DiagnosticFactory3DelegateProvider<P, A, B, C> {
     return DiagnosticFactory3DelegateProvider(Severity.ERROR, positioningStrategy)
 }
 
+fun <P : PsiElement, A, B, C, D> error4(
+    positioningStrategy: SourceElementPositioningStrategy<P> = SourceElementPositioningStrategy.DEFAULT
+): DiagnosticFactory4DelegateProvider<P, A, B, C, D> {
+    return DiagnosticFactory4DelegateProvider(Severity.ERROR, positioningStrategy)
+}
 
 // ------------------------------ Providers ------------------------------
 
@@ -70,7 +75,7 @@ class DiagnosticFactory0DelegateProvider<P : PsiElement>(
     }
 }
 
-class DiagnosticFactory1DelegateProvider<P : PsiElement, A : Any>(
+class DiagnosticFactory1DelegateProvider<P : PsiElement, A>(
     private val severity: Severity,
     private val positioningStrategy: SourceElementPositioningStrategy<P>
 ) {
@@ -79,7 +84,7 @@ class DiagnosticFactory1DelegateProvider<P : PsiElement, A : Any>(
     }
 }
 
-class DiagnosticFactory2DelegateProvider<P : PsiElement, A : Any, B : Any>(
+class DiagnosticFactory2DelegateProvider<P : PsiElement, A, B>(
     private val severity: Severity,
     private val positioningStrategy: SourceElementPositioningStrategy<P>
 ) {
@@ -88,7 +93,7 @@ class DiagnosticFactory2DelegateProvider<P : PsiElement, A : Any, B : Any>(
     }
 }
 
-class DiagnosticFactory3DelegateProvider<P : PsiElement, A : Any, B : Any, C : Any>(
+class DiagnosticFactory3DelegateProvider<P : PsiElement, A, B, C>(
     private val severity: Severity,
     private val positioningStrategy: SourceElementPositioningStrategy<P>
 ) {
@@ -96,6 +101,16 @@ class DiagnosticFactory3DelegateProvider<P : PsiElement, A : Any, B : Any, C : A
         return DummyDelegate(FirDiagnosticFactory3(prop.name, severity, positioningStrategy))
     }
 }
+
+class DiagnosticFactory4DelegateProvider<P : PsiElement, A, B, C, D>(
+    private val severity: Severity,
+    private val positioningStrategy: SourceElementPositioningStrategy<P>
+) {
+    operator fun provideDelegate(thisRef: Any?, prop: KProperty<*>): ReadOnlyProperty<Any?, FirDiagnosticFactory4<P, A, B, C, D>> {
+        return DummyDelegate(FirDiagnosticFactory4(prop.name, severity, positioningStrategy))
+    }
+}
+
 
 private class DummyDelegate<T>(val value: T) : ReadOnlyProperty<Any?, T> {
     override fun getValue(thisRef: Any?, property: KProperty<*>): T {

@@ -16,6 +16,7 @@
 
 package org.jetbrains.uast.kotlin
 
+import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
@@ -34,11 +35,13 @@ import org.jetbrains.uast.kotlin.declarations.KotlinUIdentifier
 import org.jetbrains.uast.kotlin.internal.DelegatedMultiResolve
 import org.jetbrains.uast.visitor.UastVisitor
 
+var PsiElement.destructuringDeclarationInitializer: Boolean? by UserDataProperty(Key.create("kotlin.uast.destructuringDeclarationInitializer"))
+
 open class KotlinUSimpleReferenceExpression(
     override val sourcePsi: KtSimpleNameExpression,
     givenParent: UElement?
 ) : KotlinAbstractUExpression(givenParent), USimpleNameReferenceExpression, KotlinUElementWithType, KotlinEvaluatableUElement {
-    private val resolvedDeclaration: PsiElement? by lz { resolveToDeclaration(sourcePsi) }
+    private val resolvedDeclaration: PsiElement? by lz { baseResolveProviderService.resolveToDeclaration(sourcePsi) }
 
     override val identifier get() = sourcePsi.getReferencedName()
 
@@ -174,7 +177,7 @@ class KotlinClassViaConstructorUSimpleReferenceExpression(
     private val resolved by lazy {
         when (val resultingDescriptor = sourcePsi.getResolvedCall(sourcePsi.analyze())?.descriptorForResolveViaConstructor()) {
             is ConstructorDescriptor -> {
-                sourcePsi.calleeExpression?.let { resolveToDeclaration(it, resultingDescriptor.constructedClass) }
+                sourcePsi.calleeExpression?.let { resolveToDeclarationImpl(it, resultingDescriptor.constructedClass) }
             }
             is SamConstructorDescriptor ->
                 (resultingDescriptor.returnType?.getFunctionalInterfaceType(this, sourcePsi) as? PsiClassType)?.resolve()
