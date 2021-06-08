@@ -12198,6 +12198,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             }
 
             @Test
+            @TestMetadata("expectedTypeWithGenericsSafeCalls.kt")
+            public void testExpectedTypeWithGenericsSafeCalls() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inference/expectedTypeWithGenericsSafeCalls.kt");
+            }
+
+            @Test
             @TestMetadata("extensionLambdasAndArrow.kt")
             public void testExtensionLambdasAndArrow() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/inference/extensionLambdasAndArrow.kt");
@@ -19088,6 +19094,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             }
 
             @Test
+            @TestMetadata("augmentedAssignment.kt")
+            public void testAugmentedAssignment() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/nullabilityAndSmartCasts/augmentedAssignment.kt");
+            }
+
+            @Test
             @TestMetadata("dataFlowInfoAfterExclExcl.kt")
             public void testDataFlowInfoAfterExclExcl() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/nullabilityAndSmartCasts/dataFlowInfoAfterExclExcl.kt");
@@ -20884,6 +20896,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
                 @Test
                 public void testAllFilesPresentInGenericVarianceViolation() throws Exception {
                     KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/platformTypes/genericVarianceViolation"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
+                }
+
+                @Test
+                @TestMetadata("inferenceFrom.kt")
+                public void testInferenceFrom() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/platformTypes/genericVarianceViolation/inferenceFrom.kt");
                 }
 
                 @Test
@@ -34292,6 +34310,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             }
 
             @Test
+            @TestMetadata("implicitUsages.kt")
+            public void testImplicitUsages() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/implicitUsages.kt");
+            }
+
+            @Test
             @TestMetadata("importStatement.kt")
             public void testImportStatement() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/importStatement.kt");
@@ -34310,6 +34334,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             }
 
             @Test
+            @TestMetadata("noRetentionAfter.kt")
+            public void testNoRetentionAfter() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/noRetentionAfter.kt");
+            }
+
+            @Test
             @TestMetadata("override.kt")
             public void testOverride() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/override.kt");
@@ -34319,6 +34349,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             @TestMetadata("overrideDifferentExperimentalities.kt")
             public void testOverrideDifferentExperimentalities() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/overrideDifferentExperimentalities.kt");
+            }
+
+            @Test
+            @TestMetadata("overrideInAnonymousObject.kt")
+            public void testOverrideInAnonymousObject() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/overrideInAnonymousObject.kt");
             }
 
             @Test

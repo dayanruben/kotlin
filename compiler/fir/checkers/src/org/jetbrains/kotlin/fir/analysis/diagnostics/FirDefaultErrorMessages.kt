@@ -53,6 +53,8 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.BOUND_ON_TYPE_ALI
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.BREAK_OR_CONTINUE_OUTSIDE_A_LOOP
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CALLABLE_REFERENCE_LHS_NOT_A_CLASS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CALLABLE_REFERENCE_TO_ANNOTATION_CONSTRUCTOR
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CANNOT_ALL_UNDER_IMPORT_FROM_SINGLETON
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CANNOT_BE_IMPORTED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CANNOT_CHANGE_ACCESS_PRIVILEGE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CANNOT_INFER_PARAMETER_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CANNOT_WEAKEN_ACCESS_PRIVILEGE
@@ -68,8 +70,10 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.COMPONENT_FUNCTIO
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.COMPONENT_FUNCTION_ON_NULLABLE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.COMPONENT_FUNCTION_RETURN_TYPE_MISMATCH
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CONDITION_TYPE_MISMATCH
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CONFLICTING_IMPORT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CONFLICTING_OVERLOADS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CONFLICTING_PROJECTION
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CONFLICTING_PROJECTION_IN_TYPEALIAS_EXPANSION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CONFLICTING_UPPER_BOUNDS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CONSTRUCTOR_IN_INTERFACE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CONSTRUCTOR_IN_OBJECT
@@ -81,6 +85,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CONST_VAL_WITH_NO
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CREATING_AN_INSTANCE_OF_ABSTRACT_CLASS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CYCLIC_CONSTRUCTOR_DELEGATION_CALL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CYCLIC_GENERIC_UPPER_BOUND
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CYCLIC_INHERITANCE_HIERARCHY
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DATA_CLASS_NOT_PROPERTY_PARAMETER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DATA_CLASS_VARARG_PARAMETER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DATA_CLASS_WITHOUT_PARAMETERS
@@ -223,9 +228,11 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NULLABLE_SUPERTYP
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NULLABLE_TYPE_IN_CLASS_LITERAL_LHS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NULLABLE_TYPE_OF_ANNOTATION_MEMBER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ONLY_ONE_CLASS_BOUND_ALLOWED
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.OPERATOR_RENAMED_ON_IMPORT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.OTHER_ERROR
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.OVERLOAD_RESOLUTION_AMBIGUITY
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.OVERRIDING_FINAL_MEMBER
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.PACKAGE_CANNOT_BE_IMPORTED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.PRIMARY_CONSTRUCTOR_DELEGATION_CALL_EXPECTED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.PRIMARY_CONSTRUCTOR_REQUIRED_FOR_DATA_CLASS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.PRIVATE_CLASS_MEMBER_FROM_INLINE
@@ -246,6 +253,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.QUALIFIED_SUPERTY
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.RECURSION_IN_IMPLICIT_TYPES
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.RECURSION_IN_INLINE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.RECURSION_IN_SUPERTYPES
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.RECURSIVE_TYPEALIAS_EXPANSION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REDECLARATION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REDUNDANT_ANNOTATION_TARGET
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REDUNDANT_CALL_OF_CONVERSION_METHOD
@@ -253,6 +261,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REDUNDANT_EXPLICI
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REDUNDANT_MODALITY_MODIFIER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REDUNDANT_MODIFIER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REDUNDANT_OPEN_IN_INTERFACE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REDUNDANT_PROJECTION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REDUNDANT_RETURN_UNIT_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REDUNDANT_SETTER_PARAMETER_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REDUNDANT_SINGLE_EXPRESSION_STRING_TEMPLATE
@@ -436,7 +445,7 @@ class FirDefaultErrorMessages : DefaultErrorMessages.Extension {
             map.put(SEALED_SUPERTYPE, "This type is sealed, so it can be inherited by only its own nested classes or objects")
             map.put(SEALED_SUPERTYPE_IN_LOCAL_CLASS, "Local class cannot extend a sealed class")
             map.put(SUPERTYPE_NOT_A_CLASS_OR_INTERFACE, "Supertype is not a class or interface", TO_STRING)
-
+            map.put(CYCLIC_INHERITANCE_HIERARCHY, "There's a cycle in the inheritance hierarchy for this type")
 
             // Constructor problems
             map.put(CONSTRUCTOR_IN_OBJECT, "Constructors are not allowed for objects")
@@ -608,6 +617,16 @@ class FirDefaultErrorMessages : DefaultErrorMessages.Extension {
             map.put(
                 CONFLICTING_PROJECTION,
                 "Projection is conflicting with variance of the corresponding type parameter of {0}. Remove the projection or replace it with ''*''",
+                RENDER_TYPE
+            )
+            map.put(
+                CONFLICTING_PROJECTION_IN_TYPEALIAS_EXPANSION,
+                "Conflicting projection in type alias expansion in intermediate type '{0}'",
+                RENDER_TYPE
+            )
+            map.put(
+                REDUNDANT_PROJECTION,
+                "Projection is redundant: the corresponding type parameter of {0} has the same variance",
                 RENDER_TYPE
             )
             map.put(
@@ -1097,6 +1116,7 @@ class FirDefaultErrorMessages : DefaultErrorMessages.Extension {
 
             // Type alias
             map.put(TOPLEVEL_TYPEALIASES_ONLY, "Nested and local type aliases are not supported")
+            map.put(RECURSIVE_TYPEALIAS_EXPANSION, "Recursive type alias in expansion")
 
             // Returns
             map.put(RETURN_NOT_ALLOWED, "'return' is not allowed here")
@@ -1143,6 +1163,25 @@ class FirDefaultErrorMessages : DefaultErrorMessages.Extension {
                 SYMBOL
             )
             map.put(SUPER_CALL_FROM_PUBLIC_INLINE, "Accessing super members from public-API inline function is deprecated", SYMBOL)
+
+            //imports
+            map.put(
+                CANNOT_ALL_UNDER_IMPORT_FROM_SINGLETON,
+                "Cannot import-on-demand from object ''{0}''",
+                TO_STRING
+            )
+            map.put(PACKAGE_CANNOT_BE_IMPORTED, "Packages cannot be imported")
+            map.put(
+                CANNOT_BE_IMPORTED,
+                "Cannot import ''{0}'', functions and properties can be imported only from packages or objects",
+                TO_STRING
+            )
+            map.put(
+                CONFLICTING_IMPORT,
+                "Conflicting import, imported name ''{0}'' is ambiguous",
+                TO_STRING
+            )
+            map.put(OPERATOR_RENAMED_ON_IMPORT, "Operator renamed to a different operator on import")
 
             // Extended checkers group
             map.put(REDUNDANT_VISIBILITY_MODIFIER, "Redundant visibility modifier")

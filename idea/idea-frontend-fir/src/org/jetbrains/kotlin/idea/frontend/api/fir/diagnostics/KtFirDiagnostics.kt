@@ -40,6 +40,7 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtIfExpression
+import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
@@ -301,6 +302,10 @@ sealed class KtFirDiagnostic<PSI: PsiElement> : KtDiagnosticWithPsi<PSI> {
     abstract class SupertypeNotAClassOrInterface : KtFirDiagnostic<KtElement>() {
         override val diagnosticClass get() = SupertypeNotAClassOrInterface::class
         abstract val reason: String
+    }
+
+    abstract class CyclicInheritanceHierarchy : KtFirDiagnostic<PsiElement>() {
+        override val diagnosticClass get() = CyclicInheritanceHierarchy::class
     }
 
     abstract class ConstructorInObject : KtFirDiagnostic<KtDeclaration>() {
@@ -770,6 +775,11 @@ sealed class KtFirDiagnostic<PSI: PsiElement> : KtDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = ManyLambdaExpressionArguments::class
     }
 
+    abstract class NewInferenceNoInformationForParameter : KtFirDiagnostic<KtElement>() {
+        override val diagnosticClass get() = NewInferenceNoInformationForParameter::class
+        abstract val name: String
+    }
+
     abstract class OverloadResolutionAmbiguity : KtFirDiagnostic<PsiElement>() {
         override val diagnosticClass get() = OverloadResolutionAmbiguity::class
         abstract val candidates: List<KtSymbol>
@@ -840,8 +850,18 @@ sealed class KtFirDiagnostic<PSI: PsiElement> : KtDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = TypeParametersInEnum::class
     }
 
-    abstract class ConflictingProjection : KtFirDiagnostic<PsiElement>() {
+    abstract class ConflictingProjection : KtFirDiagnostic<KtTypeParameter>() {
         override val diagnosticClass get() = ConflictingProjection::class
+        abstract val type: KtType
+    }
+
+    abstract class ConflictingProjectionInTypealiasExpansion : KtFirDiagnostic<KtTypeParameter>() {
+        override val diagnosticClass get() = ConflictingProjectionInTypealiasExpansion::class
+        abstract val type: KtType
+    }
+
+    abstract class RedundantProjection : KtFirDiagnostic<KtTypeParameter>() {
+        override val diagnosticClass get() = RedundantProjection::class
         abstract val type: KtType
     }
 
@@ -1660,6 +1680,10 @@ sealed class KtFirDiagnostic<PSI: PsiElement> : KtDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = ToplevelTypealiasesOnly::class
     }
 
+    abstract class RecursiveTypealiasExpansion : KtFirDiagnostic<KtTypeAlias>() {
+        override val diagnosticClass get() = RecursiveTypealiasExpansion::class
+    }
+
     abstract class RedundantVisibilityModifier : KtFirDiagnostic<KtModifierListOwner>() {
         override val diagnosticClass get() = RedundantVisibilityModifier::class
     }
@@ -1780,6 +1804,29 @@ sealed class KtFirDiagnostic<PSI: PsiElement> : KtDiagnosticWithPsi<PSI> {
     abstract class SuperCallFromPublicInline : KtFirDiagnostic<KtElement>() {
         override val diagnosticClass get() = SuperCallFromPublicInline::class
         abstract val symbol: KtSymbol
+    }
+
+    abstract class CannotAllUnderImportFromSingleton : KtFirDiagnostic<KtSimpleNameExpression>() {
+        override val diagnosticClass get() = CannotAllUnderImportFromSingleton::class
+        abstract val objectName: Name
+    }
+
+    abstract class PackageCannotBeImported : KtFirDiagnostic<KtSimpleNameExpression>() {
+        override val diagnosticClass get() = PackageCannotBeImported::class
+    }
+
+    abstract class CannotBeImported : KtFirDiagnostic<KtSimpleNameExpression>() {
+        override val diagnosticClass get() = CannotBeImported::class
+        abstract val name: Name
+    }
+
+    abstract class ConflictingImport : KtFirDiagnostic<KtImportDirective>() {
+        override val diagnosticClass get() = ConflictingImport::class
+        abstract val name: Name
+    }
+
+    abstract class OperatorRenamedOnImport : KtFirDiagnostic<KtSimpleNameExpression>() {
+        override val diagnosticClass get() = OperatorRenamedOnImport::class
     }
 
     abstract class ConflictingJvmDeclarations : KtFirDiagnostic<PsiElement>() {

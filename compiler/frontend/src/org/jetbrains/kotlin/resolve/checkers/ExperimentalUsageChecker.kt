@@ -46,6 +46,9 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.annotationClass
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
+import org.jetbrains.kotlin.types.AbbreviatedType
+import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.utils.SmartSet
 import org.jetbrains.kotlin.utils.addIfNotNull
 
@@ -79,9 +82,34 @@ class ExperimentalUsageChecker(project: Project) : CallChecker {
     )
 
     override fun check(resolvedCall: ResolvedCall<*>, reportOn: PsiElement, context: CallCheckerContext) {
-        val experimentalities =
-            resolvedCall.resultingDescriptor.loadExperimentalities(moduleAnnotationsResolver, context.languageVersionSettings)
+        val resultingDescriptor = resolvedCall.resultingDescriptor
+        val experimentalities = resultingDescriptor.loadExperimentalities(moduleAnnotationsResolver, context.languageVersionSettings)
+        if (resultingDescriptor is FunctionDescriptor &&
+            resultingDescriptor.kind == CallableMemberDescriptor.Kind.SYNTHESIZED
+        ) {
+            val propertyDescriptor = resultingDescriptor.findRelevantDataClassPropertyIfAny(context)
+            if (propertyDescriptor != null) {
+                reportNotAcceptedExperimentalities(
+                    experimentalities + propertyDescriptor.loadExperimentalities(
+                        moduleAnnotationsResolver, context.languageVersionSettings
+                    ), reportOn, context
+                )
+                return
+            }
+        }
         reportNotAcceptedExperimentalities(experimentalities, reportOn, context)
+    }
+
+    private fun FunctionDescriptor.findRelevantDataClassPropertyIfAny(context: CallCheckerContext): PropertyDescriptor? {
+        val index = name.asString().removePrefix("component").toIntOrNull()
+        val container = containingDeclaration
+        if (container is ClassDescriptor && container.isData && index != null) {
+            val dataClassParameterDescriptor = container.unsubstitutedPrimaryConstructor?.valueParameters?.getOrNull(index - 1)
+            if (dataClassParameterDescriptor != null) {
+                return context.trace.bindingContext[BindingContext.VALUE_PARAMETER_AS_PROPERTY, dataClassParameterDescriptor]
+            }
+        }
+        return null
     }
 
     companion object {
@@ -145,12 +173,44 @@ class ExperimentalUsageChecker(project: Project) : CallChecker {
 
         fun DeclarationDescriptor.loadExperimentalities(
             moduleAnnotationsResolver: ModuleAnnotationsResolver,
-            languageVersionSettings: LanguageVersionSettings
+            languageVersionSettings: LanguageVersionSettings,
+            visited: MutableSet<DeclarationDescriptor> = mutableSetOf()
         ): Set<Experimentality> {
+            if (!visited.add(this)) return emptySet()
             val result = SmartSet.create<Experimentality>()
+            if (this is CallableMemberDescriptor && kind == CallableMemberDescriptor.Kind.FAKE_OVERRIDE) {
+                for (overridden in overriddenDescriptors) {
+                    result.addAll(overridden.loadExperimentalities(moduleAnnotationsResolver, languageVersionSettings, visited))
+                }
+                return result
+            }
 
             for (annotation in annotations) {
                 result.addIfNotNull(annotation.annotationClass?.loadExperimentalityForMarkerAnnotation())
+            }
+
+            if (this is CallableDescriptor && this !is ClassConstructorDescriptor) {
+                result.addAll(
+                    returnType.loadExperimentalities(moduleAnnotationsResolver, languageVersionSettings, visited)
+                )
+                result.addAll(
+                    extensionReceiverParameter?.type.loadExperimentalities(
+                        moduleAnnotationsResolver, languageVersionSettings, visited
+                    )
+                )
+                if (this is FunctionDescriptor) {
+                    valueParameters.forEach {
+                        result.addAll(
+                            it.type.loadExperimentalities(
+                                moduleAnnotationsResolver, languageVersionSettings, visited
+                            )
+                        )
+                    }
+                }
+            }
+
+            if (this is TypeAliasDescriptor) {
+                result.addAll(expandedType.loadExperimentalities(moduleAnnotationsResolver, languageVersionSettings, visited))
             }
 
             if (annotations.any { it.fqName == WAS_EXPERIMENTAL_FQ_NAME }) {
@@ -162,7 +222,7 @@ class ExperimentalUsageChecker(project: Project) : CallChecker {
 
             val container = containingDeclaration
             if (container is ClassDescriptor && this !is ConstructorDescriptor) {
-                result.addAll(container.loadExperimentalities(moduleAnnotationsResolver, languageVersionSettings))
+                result.addAll(container.loadExperimentalities(moduleAnnotationsResolver, languageVersionSettings, visited))
             }
 
             for (moduleAnnotationClassId in moduleAnnotationsResolver.getAnnotationsOnContainingModule(this)) {
@@ -172,6 +232,26 @@ class ExperimentalUsageChecker(project: Project) : CallChecker {
 
             return result
         }
+
+        private fun KotlinType?.loadExperimentalities(
+            moduleAnnotationsResolver: ModuleAnnotationsResolver,
+            languageVersionSettings: LanguageVersionSettings,
+            visitedClassifiers: MutableSet<DeclarationDescriptor>
+        ): Set<Experimentality> =
+            when {
+                this?.isError != false -> emptySet()
+                this is AbbreviatedType -> abbreviation.constructor.declarationDescriptor?.loadExperimentalities(
+                    moduleAnnotationsResolver, languageVersionSettings, visitedClassifiers
+                ).orEmpty() + expandedType.loadExperimentalities(
+                    moduleAnnotationsResolver, languageVersionSettings, visitedClassifiers
+                )
+                else -> constructor.declarationDescriptor?.loadExperimentalities(
+                    moduleAnnotationsResolver, languageVersionSettings, visitedClassifiers
+                ).orEmpty() + arguments.flatMap {
+                    if (it.isStarProjection) emptySet()
+                    else it.type.loadExperimentalities(moduleAnnotationsResolver, languageVersionSettings, visitedClassifiers)
+                }
+            }
 
         internal fun ClassDescriptor.loadExperimentalityForMarkerAnnotation(): Experimentality? {
             val experimental =
@@ -214,8 +294,7 @@ class ExperimentalUsageChecker(project: Project) : CallChecker {
             if (this !is KtDeclaration) return false
 
             val descriptor = bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR, this)
-            return descriptor != null && !DescriptorUtils.isLocal(descriptor) &&
-                    descriptor.annotations.hasAnnotation(annotationFqName)
+            return descriptor != null && descriptor.annotations.hasAnnotation(annotationFqName)
         }
 
         private fun PsiElement.isElementAnnotatedWithUseExperimentalOf(annotationFqName: FqName, bindingContext: BindingContext): Boolean {
@@ -317,7 +396,15 @@ class ExperimentalUsageChecker(project: Project) : CallChecker {
             }
 
             if (element.getParentOfType<KtImportDirective>(false) == null) {
-                val experimentalities = targetDescriptor.loadExperimentalities(moduleAnnotationsResolver, context.languageVersionSettings)
+                val experimentalities = mutableSetOf<Experimentality>()
+                experimentalities += targetDescriptor.loadExperimentalities(moduleAnnotationsResolver, context.languageVersionSettings)
+                if (targetDescriptor is TypeAliasDescriptor) {
+                    experimentalities.addAll(
+                        targetDescriptor.expandedType.loadExperimentalities(
+                            moduleAnnotationsResolver, context.languageVersionSettings, mutableSetOf(targetDescriptor)
+                        )
+                    )
+                }
                 reportNotAcceptedExperimentalities(experimentalities, element, context)
             }
         }

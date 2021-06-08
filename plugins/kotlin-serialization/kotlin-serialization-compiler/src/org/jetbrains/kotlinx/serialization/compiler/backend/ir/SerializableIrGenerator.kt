@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
 import org.jetbrains.kotlin.util.OperatorNameConventions
+import org.jetbrains.kotlin.util.collectionUtils.filterIsInstanceAnd
 import org.jetbrains.kotlin.utils.getOrPutNullable
 import org.jetbrains.kotlinx.serialization.compiler.backend.common.*
 import org.jetbrains.kotlinx.serialization.compiler.diagnostic.serializableAnnotationIsUseless
@@ -172,10 +173,15 @@ class SerializableIrGenerator(
 
     private fun IrBlockBodyBuilder.getStaticSerialDescriptorExpr(): IrExpression {
         val serializer = serializableDescriptor.classSerializer!!
-        val serialDescriptorGetter = compilerContext.referenceClass(serializer.fqNameSafe)?.getPropertyGetter(SERIAL_DESC_FIELD)
-            ?: throw Exception("No class with name ${serializer.fqNameSafe}")
+        // internally generated serializer always declared inside serializable class
+        val serializerIrClass = irClass.declarations
+            .filterIsInstanceAnd<IrClass> { it.name == serializer.name }
+            .singleOrNull() ?: throw Exception("No class with name ${serializer.fqNameSafe}")
+
+        val serialDescriptorGetter =
+            serializerIrClass.getPropertyGetter(SERIAL_DESC_FIELD)!!
         return irGet(
-            serialDescriptorGetter.owner.returnType,
+            serializerIrClass.defaultType,
             irGetObject(serializer),
             serialDescriptorGetter.owner.symbol
         )
@@ -293,11 +299,22 @@ class SerializableIrGenerator(
                 ignoreIndexTo = bindingContext.serializablePropertiesFor(superClass.descriptor).size
 
                 // call super.writeSelf
-                val superWriteSelfF = superClass.findWriteSelfMethod()
+                var superWriteSelfF = superClass.findWriteSelfMethod()
+
                 if (superWriteSelfF != null) {
+                    // Workaround for incorrect DeserializedClassDescriptor on JVM (see MemberDeserializer#getDispatchReceiverParameter):
+                    // Because Kotlin does not have static functions, descriptors from other modules are deserialized with dispatch receiver,
+                    // even if they were created without it
+                    if (superWriteSelfF.dispatchReceiverParameter != null) {
+                        superWriteSelfF = compilerContext.copiedStaticWriteSelf.getOrPut(superWriteSelfF) {
+                            superWriteSelfF!!.deepCopyWithSymbols(initialParent = superClass).also { it.dispatchReceiverParameter = null }
+                        }
+                    }
+
                     val args = mutableListOf<IrExpression>(irGet(objectToSerialize), irGet(localOutput), irGet(localSerialDesc))
 
-                    val typeArgsForParent = serializableDescriptor.typeConstructor.supertypes.single { it.toClassDescriptor?.isInternalSerializable == true }.arguments
+                    val typeArgsForParent =
+                        serializableDescriptor.typeConstructor.supertypes.single { it.toClassDescriptor?.isInternalSerializable == true }.arguments
                     val parentWriteSelfSerializers = typeArgsForParent.map { arg ->
                         val genericIdx = serializableDescriptor.defaultType.arguments.indexOf(arg).let { if (it == -1) null else it }
                         val serial = findTypeSerializerOrContext(serializableDescriptor.module, arg.type)

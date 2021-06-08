@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtIfExpression
+import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
@@ -403,6 +404,12 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
     add(FirErrors.SUPERTYPE_NOT_A_CLASS_OR_INTERFACE) { firDiagnostic ->
         SupertypeNotAClassOrInterfaceImpl(
             firDiagnostic.a,
+            firDiagnostic as FirPsiDiagnostic<*>,
+            token,
+        )
+    }
+    add(FirErrors.CYCLIC_INHERITANCE_HIERARCHY) { firDiagnostic ->
+        CyclicInheritanceHierarchyImpl(
             firDiagnostic as FirPsiDiagnostic<*>,
             token,
         )
@@ -1076,6 +1083,13 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirErrors.NEW_INFERENCE_NO_INFORMATION_FOR_PARAMETER) { firDiagnostic ->
+        NewInferenceNoInformationForParameterImpl(
+            firDiagnostic.a,
+            firDiagnostic as FirPsiDiagnostic<*>,
+            token,
+        )
+    }
     add(FirErrors.OVERLOAD_RESOLUTION_AMBIGUITY) { firDiagnostic ->
         OverloadResolutionAmbiguityImpl(
             firDiagnostic.a.map { abstractFirBasedSymbol ->
@@ -1188,6 +1202,20 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
     }
     add(FirErrors.CONFLICTING_PROJECTION) { firDiagnostic ->
         ConflictingProjectionImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
+            firDiagnostic as FirPsiDiagnostic<*>,
+            token,
+        )
+    }
+    add(FirErrors.CONFLICTING_PROJECTION_IN_TYPEALIAS_EXPANSION) { firDiagnostic ->
+        ConflictingProjectionInTypealiasExpansionImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
+            firDiagnostic as FirPsiDiagnostic<*>,
+            token,
+        )
+    }
+    add(FirErrors.REDUNDANT_PROJECTION) { firDiagnostic ->
+        RedundantProjectionImpl(
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
             firDiagnostic as FirPsiDiagnostic<*>,
             token,
@@ -2364,6 +2392,12 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirErrors.RECURSIVE_TYPEALIAS_EXPANSION) { firDiagnostic ->
+        RecursiveTypealiasExpansionImpl(
+            firDiagnostic as FirPsiDiagnostic<*>,
+            token,
+        )
+    }
     add(FirErrors.REDUNDANT_VISIBILITY_MODIFIER) { firDiagnostic ->
         RedundantVisibilityModifierImpl(
             firDiagnostic as FirPsiDiagnostic<*>,
@@ -2536,6 +2570,39 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
     add(FirErrors.SUPER_CALL_FROM_PUBLIC_INLINE) { firDiagnostic ->
         SuperCallFromPublicInlineImpl(
             firSymbolBuilder.buildSymbol(firDiagnostic.a.fir as FirDeclaration),
+            firDiagnostic as FirPsiDiagnostic<*>,
+            token,
+        )
+    }
+    add(FirErrors.CANNOT_ALL_UNDER_IMPORT_FROM_SINGLETON) { firDiagnostic ->
+        CannotAllUnderImportFromSingletonImpl(
+            firDiagnostic.a,
+            firDiagnostic as FirPsiDiagnostic<*>,
+            token,
+        )
+    }
+    add(FirErrors.PACKAGE_CANNOT_BE_IMPORTED) { firDiagnostic ->
+        PackageCannotBeImportedImpl(
+            firDiagnostic as FirPsiDiagnostic<*>,
+            token,
+        )
+    }
+    add(FirErrors.CANNOT_BE_IMPORTED) { firDiagnostic ->
+        CannotBeImportedImpl(
+            firDiagnostic.a,
+            firDiagnostic as FirPsiDiagnostic<*>,
+            token,
+        )
+    }
+    add(FirErrors.CONFLICTING_IMPORT) { firDiagnostic ->
+        ConflictingImportImpl(
+            firDiagnostic.a,
+            firDiagnostic as FirPsiDiagnostic<*>,
+            token,
+        )
+    }
+    add(FirErrors.OPERATOR_RENAMED_ON_IMPORT) { firDiagnostic ->
+        OperatorRenamedOnImportImpl(
             firDiagnostic as FirPsiDiagnostic<*>,
             token,
         )

@@ -42,6 +42,7 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtIfExpression
+import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
@@ -469,6 +470,13 @@ internal class SupertypeNotAClassOrInterfaceImpl(
     firDiagnostic: FirPsiDiagnostic<*>,
     override val token: ValidityToken,
 ) : KtFirDiagnostic.SupertypeNotAClassOrInterface(), KtAbstractFirDiagnostic<KtElement> {
+    override val firDiagnostic: FirPsiDiagnostic<*> by weakRef(firDiagnostic)
+}
+
+internal class CyclicInheritanceHierarchyImpl(
+    firDiagnostic: FirPsiDiagnostic<*>,
+    override val token: ValidityToken,
+) : KtFirDiagnostic.CyclicInheritanceHierarchy(), KtAbstractFirDiagnostic<PsiElement> {
     override val firDiagnostic: FirPsiDiagnostic<*> by weakRef(firDiagnostic)
 }
 
@@ -1239,6 +1247,14 @@ internal class ManyLambdaExpressionArgumentsImpl(
     override val firDiagnostic: FirPsiDiagnostic<*> by weakRef(firDiagnostic)
 }
 
+internal class NewInferenceNoInformationForParameterImpl(
+    override val name: String,
+    firDiagnostic: FirPsiDiagnostic<*>,
+    override val token: ValidityToken,
+) : KtFirDiagnostic.NewInferenceNoInformationForParameter(), KtAbstractFirDiagnostic<KtElement> {
+    override val firDiagnostic: FirPsiDiagnostic<*> by weakRef(firDiagnostic)
+}
+
 internal class OverloadResolutionAmbiguityImpl(
     override val candidates: List<KtSymbol>,
     firDiagnostic: FirPsiDiagnostic<*>,
@@ -1358,7 +1374,23 @@ internal class ConflictingProjectionImpl(
     override val type: KtType,
     firDiagnostic: FirPsiDiagnostic<*>,
     override val token: ValidityToken,
-) : KtFirDiagnostic.ConflictingProjection(), KtAbstractFirDiagnostic<PsiElement> {
+) : KtFirDiagnostic.ConflictingProjection(), KtAbstractFirDiagnostic<KtTypeParameter> {
+    override val firDiagnostic: FirPsiDiagnostic<*> by weakRef(firDiagnostic)
+}
+
+internal class ConflictingProjectionInTypealiasExpansionImpl(
+    override val type: KtType,
+    firDiagnostic: FirPsiDiagnostic<*>,
+    override val token: ValidityToken,
+) : KtFirDiagnostic.ConflictingProjectionInTypealiasExpansion(), KtAbstractFirDiagnostic<KtTypeParameter> {
+    override val firDiagnostic: FirPsiDiagnostic<*> by weakRef(firDiagnostic)
+}
+
+internal class RedundantProjectionImpl(
+    override val type: KtType,
+    firDiagnostic: FirPsiDiagnostic<*>,
+    override val token: ValidityToken,
+) : KtFirDiagnostic.RedundantProjection(), KtAbstractFirDiagnostic<KtTypeParameter> {
     override val firDiagnostic: FirPsiDiagnostic<*> by weakRef(firDiagnostic)
 }
 
@@ -2687,6 +2719,13 @@ internal class ToplevelTypealiasesOnlyImpl(
     override val firDiagnostic: FirPsiDiagnostic<*> by weakRef(firDiagnostic)
 }
 
+internal class RecursiveTypealiasExpansionImpl(
+    firDiagnostic: FirPsiDiagnostic<*>,
+    override val token: ValidityToken,
+) : KtFirDiagnostic.RecursiveTypealiasExpansion(), KtAbstractFirDiagnostic<KtTypeAlias> {
+    override val firDiagnostic: FirPsiDiagnostic<*> by weakRef(firDiagnostic)
+}
+
 internal class RedundantVisibilityModifierImpl(
     firDiagnostic: FirPsiDiagnostic<*>,
     override val token: ValidityToken,
@@ -2887,6 +2926,44 @@ internal class SuperCallFromPublicInlineImpl(
     firDiagnostic: FirPsiDiagnostic<*>,
     override val token: ValidityToken,
 ) : KtFirDiagnostic.SuperCallFromPublicInline(), KtAbstractFirDiagnostic<KtElement> {
+    override val firDiagnostic: FirPsiDiagnostic<*> by weakRef(firDiagnostic)
+}
+
+internal class CannotAllUnderImportFromSingletonImpl(
+    override val objectName: Name,
+    firDiagnostic: FirPsiDiagnostic<*>,
+    override val token: ValidityToken,
+) : KtFirDiagnostic.CannotAllUnderImportFromSingleton(), KtAbstractFirDiagnostic<KtSimpleNameExpression> {
+    override val firDiagnostic: FirPsiDiagnostic<*> by weakRef(firDiagnostic)
+}
+
+internal class PackageCannotBeImportedImpl(
+    firDiagnostic: FirPsiDiagnostic<*>,
+    override val token: ValidityToken,
+) : KtFirDiagnostic.PackageCannotBeImported(), KtAbstractFirDiagnostic<KtSimpleNameExpression> {
+    override val firDiagnostic: FirPsiDiagnostic<*> by weakRef(firDiagnostic)
+}
+
+internal class CannotBeImportedImpl(
+    override val name: Name,
+    firDiagnostic: FirPsiDiagnostic<*>,
+    override val token: ValidityToken,
+) : KtFirDiagnostic.CannotBeImported(), KtAbstractFirDiagnostic<KtSimpleNameExpression> {
+    override val firDiagnostic: FirPsiDiagnostic<*> by weakRef(firDiagnostic)
+}
+
+internal class ConflictingImportImpl(
+    override val name: Name,
+    firDiagnostic: FirPsiDiagnostic<*>,
+    override val token: ValidityToken,
+) : KtFirDiagnostic.ConflictingImport(), KtAbstractFirDiagnostic<KtImportDirective> {
+    override val firDiagnostic: FirPsiDiagnostic<*> by weakRef(firDiagnostic)
+}
+
+internal class OperatorRenamedOnImportImpl(
+    firDiagnostic: FirPsiDiagnostic<*>,
+    override val token: ValidityToken,
+) : KtFirDiagnostic.OperatorRenamedOnImport(), KtAbstractFirDiagnostic<KtSimpleNameExpression> {
     override val firDiagnostic: FirPsiDiagnostic<*> by weakRef(firDiagnostic)
 }
 

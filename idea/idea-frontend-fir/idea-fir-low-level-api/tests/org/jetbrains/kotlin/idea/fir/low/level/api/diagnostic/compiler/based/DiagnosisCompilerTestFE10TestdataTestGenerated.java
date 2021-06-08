@@ -10626,6 +10626,11 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
                 runTest("compiler/testData/diagnostics/tests/inference/expectedTypeWithGenerics.kt");
             }
 
+            @TestMetadata("expectedTypeWithGenericsSafeCalls.kt")
+            public void testExpectedTypeWithGenericsSafeCalls() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inference/expectedTypeWithGenericsSafeCalls.kt");
+            }
+
             @TestMetadata("extensionLambdasAndArrow.kt")
             public void testExtensionLambdasAndArrow() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/inference/extensionLambdasAndArrow.kt");
@@ -16741,6 +16746,11 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
                 runTest("compiler/testData/diagnostics/tests/nullabilityAndSmartCasts/AssertNotNull.kt");
             }
 
+            @TestMetadata("augmentedAssignment.kt")
+            public void testAugmentedAssignment() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/nullabilityAndSmartCasts/augmentedAssignment.kt");
+            }
+
             @TestMetadata("dataFlowInfoAfterExclExcl.kt")
             public void testDataFlowInfoAfterExclExcl() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/nullabilityAndSmartCasts/dataFlowInfoAfterExclExcl.kt");
@@ -18308,6 +18318,11 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
 
                 public void testAllFilesPresentInGenericVarianceViolation() throws Exception {
                     KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/platformTypes/genericVarianceViolation"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
+                }
+
+                @TestMetadata("inferenceFrom.kt")
+                public void testInferenceFrom() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/platformTypes/genericVarianceViolation/inferenceFrom.kt");
                 }
 
                 @TestMetadata("listSuperType.kt")
@@ -30111,6 +30126,11 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
                 runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/fullFqNameUsage.kt");
             }
 
+            @TestMetadata("implicitUsages.kt")
+            public void testImplicitUsages() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/implicitUsages.kt");
+            }
+
             @TestMetadata("importStatement.kt")
             public void testImportStatement() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/importStatement.kt");
@@ -30126,6 +30146,11 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
                 runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/incorrectUseExperimental.kt");
             }
 
+            @TestMetadata("noRetentionAfter.kt")
+            public void testNoRetentionAfter() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/noRetentionAfter.kt");
+            }
+
             @TestMetadata("override.kt")
             public void testOverride() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/override.kt");
@@ -30134,6 +30159,11 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             @TestMetadata("overrideDifferentExperimentalities.kt")
             public void testOverrideDifferentExperimentalities() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/overrideDifferentExperimentalities.kt");
+            }
+
+            @TestMetadata("overrideInAnonymousObject.kt")
+            public void testOverrideInAnonymousObject() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/overrideInAnonymousObject.kt");
             }
 
             @TestMetadata("topLevel.kt")

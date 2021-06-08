@@ -134,7 +134,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val SUPERTYPE_NOT_A_CLASS_OR_INTERFACE by error<KtElement> {
             parameter<String>("reason")
         }
-
+        val CYCLIC_INHERITANCE_HIERARCHY by error<PsiElement>()
     }
 
     val CONSTRUCTOR_PROBLEMS by object : DiagnosticGroup("Constructor problems") {
@@ -341,6 +341,10 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         }
 
         val MANY_LAMBDA_EXPRESSION_ARGUMENTS by error<KtValueArgument>()
+
+        val NEW_INFERENCE_NO_INFORMATION_FOR_PARAMETER by error<KtElement> {
+            parameter<String>("name")
+        }
     }
 
     val AMBIGUITY by object : DiagnosticGroup("Ambiguity") {
@@ -380,7 +384,13 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val TYPE_PARAMETERS_IN_OBJECT by error<PsiElement>()
         val ILLEGAL_PROJECTION_USAGE by error<PsiElement>()
         val TYPE_PARAMETERS_IN_ENUM by error<PsiElement>()
-        val CONFLICTING_PROJECTION by error<PsiElement> {
+        val CONFLICTING_PROJECTION by error<KtTypeParameter>(PositioningStrategy.VARIANCE_MODIFIER) {
+            parameter<ConeKotlinType>("type")
+        }
+        val CONFLICTING_PROJECTION_IN_TYPEALIAS_EXPANSION by error<KtTypeParameter>(PositioningStrategy.VARIANCE_MODIFIER) {
+            parameter<ConeKotlinType>("type")
+        }
+        val REDUNDANT_PROJECTION by warning<KtTypeParameter>(PositioningStrategy.VARIANCE_MODIFIER) {
             parameter<ConeKotlinType>("type")
         }
         val VARIANCE_ON_TYPE_PARAMETER_NOT_ALLOWED by error<KtTypeParameter>(PositioningStrategy.VARIANCE_MODIFIER)
@@ -861,6 +871,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
 
     val TYPE_ALIAS by object : DiagnosticGroup("Type alias") {
         val TOPLEVEL_TYPEALIASES_ONLY by error<KtTypeAlias>()
+        val RECURSIVE_TYPEALIAS_EXPANSION by error<KtTypeAlias>()
     }
 
     val EXTENDED_CHECKERS by object : DiagnosticGroup("Extended checkers") {
@@ -928,6 +939,24 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val SUPER_CALL_FROM_PUBLIC_INLINE by warning<KtElement>(PositioningStrategy.REFERENCE_BY_QUALIFIED) {
             parameter<Symbol>("symbol")
         }
+    }
+
+    val IMPORTS by object : DiagnosticGroup("Imports") {
+        val CANNOT_ALL_UNDER_IMPORT_FROM_SINGLETON by error<KtSimpleNameExpression>(PositioningStrategy.IMPORT_LAST_NAME) {
+            parameter<Name>("objectName")
+        }
+
+        val PACKAGE_CANNOT_BE_IMPORTED by error<KtSimpleNameExpression>(PositioningStrategy.IMPORT_LAST_NAME)
+
+        val CANNOT_BE_IMPORTED by error<KtSimpleNameExpression>(PositioningStrategy.IMPORT_LAST_NAME) {
+            parameter<Name>("name")
+        }
+
+        val CONFLICTING_IMPORT by error<KtImportDirective>(PositioningStrategy.IMPORT_LAST_NAME) {
+            parameter<Name>("name")
+        }
+
+        val OPERATOR_RENAMED_ON_IMPORT by error<KtSimpleNameExpression>(PositioningStrategy.IMPORT_LAST_NAME)
     }
 }
 
