@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.idea.fir.low.level.api
 import org.jetbrains.kotlin.fir.ThreadSafeMutableState
 import org.jetbrains.kotlin.fir.declarations.FirDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
+import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.resolve.transformers.FirPhaseManager
 import org.jetbrains.kotlin.fir.symbols.AbstractFirBasedSymbol
 import org.jetbrains.kotlin.idea.fir.low.level.api.file.builder.ModuleFileCache
@@ -26,7 +27,16 @@ internal class IdeFirPhaseManager(
     ) {
         val fir = symbol.fir as FirDeclaration
         try {
-            lazyDeclarationResolver.lazyResolveDeclaration(fir, cache, requiredPhase, checkPCE = true)
+            if (fir.resolvePhase < requiredPhase) { //TODO Make thread safe
+                lazyDeclarationResolver.lazyResolveDeclaration(
+                    firDeclarationToResolve = fir,
+                    moduleFileCache = cache,
+                    scopeSession = ScopeSession(),
+                    toPhase = requiredPhase,
+                    checkPCE = true,
+                    skipLocalDeclaration = true,
+                )
+            }
         } catch (e: Throwable) {
             sessionInvalidator.invalidate(fir.moduleData.session)
             throw e

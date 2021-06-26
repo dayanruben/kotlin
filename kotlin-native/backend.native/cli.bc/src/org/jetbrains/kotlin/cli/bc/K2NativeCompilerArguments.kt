@@ -166,11 +166,11 @@ class K2NativeCompilerArguments : CommonCompilerArguments() {
     var lightDebugDeprecated: Boolean = false
 
     @Argument(
-            value = "-Xg-generate-inline-function-body-marker",
+            value = "-Xg-generate-debug-trampoline",
             valueDescription = "{disable|enable}",
-            description = """generates marker of inlined function body on call site to make debugger breakpoint resolution more accurate"""
+            description = """generates trampolines to make debugger breakpoint resolution more accurate (inlines, when, etc.)"""
     )
-    var generateInlinedFunctionMarkerString: String? = null
+    var generateDebugTrampolineString: String? = null
 
 
     @Argument(
@@ -307,6 +307,9 @@ class K2NativeCompilerArguments : CommonCompilerArguments() {
 
     @Argument(value="-Xgc", valueDescription = "<gc>", description = "GC to use, 'noop' and 'stms' are currently supported. Works only with -memory-model experimental")
     var gc: String? = null
+
+    @Argument(value="-Xgc-aggressive", description = "Make GC agressive. Works only with -memory-model experimental")
+    var gcAggressive: Boolean = false
 
     override fun configureAnalysisFlags(collector: MessageCollector): MutableMap<AnalysisFlag<*>, Any> =
             super.configureAnalysisFlags(collector).also {

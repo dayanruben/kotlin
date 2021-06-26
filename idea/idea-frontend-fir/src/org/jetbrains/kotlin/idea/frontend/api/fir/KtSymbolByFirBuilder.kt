@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirTypeParameterSymbol
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.impl.ConeClassLikeTypeImpl
 import org.jetbrains.kotlin.idea.fir.low.level.api.api.FirModuleResolveState
+import org.jetbrains.kotlin.idea.fir.low.level.api.createPackageProvider
 import org.jetbrains.kotlin.idea.frontend.api.*
 import org.jetbrains.kotlin.idea.frontend.api.fir.symbols.*
 import org.jetbrains.kotlin.idea.frontend.api.fir.types.*
@@ -33,10 +34,10 @@ import org.jetbrains.kotlin.idea.frontend.api.fir.utils.weakRef
 import org.jetbrains.kotlin.idea.frontend.api.symbols.*
 import org.jetbrains.kotlin.idea.frontend.api.tokens.ValidityToken
 import org.jetbrains.kotlin.idea.frontend.api.types.KtType
-import org.jetbrains.kotlin.idea.stubindex.PackageIndexUtil
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.types.Variance
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
@@ -111,10 +112,11 @@ internal class KtSymbolByFirBuilder private constructor(
 
     fun buildFileSymbol(fir: FirFile) = filesCache.cache(fir) { KtFirFileSymbol(fir, resolveState, token) }
 
+    private val packageProvider = project.createPackageProvider( GlobalSearchScope.allScope(project))//todo scope
 
     fun createPackageSymbolIfOneExists(packageFqName: FqName): KtFirPackageSymbol? {
         val exists =
-            PackageIndexUtil.packageExists(packageFqName, GlobalSearchScope.allScope(project), project)
+            packageProvider.isPackageExists(packageFqName)
                     || JavaPsiFacade.getInstance(project).findPackage(packageFqName.asString()) != null
         if (!exists) {
             return null
@@ -316,10 +318,11 @@ internal class KtSymbolByFirBuilder private constructor(
                         else KtFirUsualClassType(coneType, token, this@KtSymbolByFirBuilder)
                     }
                     is ConeTypeParameterType -> KtFirTypeParameterType(coneType, token, this@KtSymbolByFirBuilder)
-                    is ConeClassErrorType -> KtFirErrorType(coneType, token)
+                    is ConeClassErrorType -> KtFirClassErrorType(coneType, token)
                     is ConeFlexibleType -> KtFirFlexibleType(coneType, token, this@KtSymbolByFirBuilder)
                     is ConeIntersectionType -> KtFirIntersectionType(coneType, token, this@KtSymbolByFirBuilder)
-                    is ConeDefinitelyNotNullType -> buildKtType(coneType.original)
+                    is ConeDefinitelyNotNullType -> KtFirDefinitelyNotNullType(coneType, token, this@KtSymbolByFirBuilder)
+                    is ConeCapturedType -> KtFirCapturedType(coneType, token)
                     else -> throwUnexpectedElementError(coneType)
                 }
             }
@@ -335,10 +338,11 @@ internal class KtSymbolByFirBuilder private constructor(
         }
 
         fun buildTypeArgument(coneType: ConeTypeProjection): KtTypeArgument = when (coneType) {
-            is ConeStarProjection -> KtStarProjectionTypeArgument
-            is ConeKotlinTypeProjection -> KtFirTypeArgumentWithVariance(
+            is ConeStarProjection -> KtStarProjectionTypeArgument(token)
+            is ConeKotlinTypeProjection -> KtTypeArgumentWithVariance(
                 buildKtType(coneType.type),
-                coneType.kind.toVariance()
+                coneType.kind.toVariance(),
+                token,
             )
         }
 
@@ -376,7 +380,7 @@ private class BuilderCache<From, To: Any> private constructor(
     private val cache: ConcurrentMap<From, To>,
     private val isReadOnly: Boolean
 ) {
-    constructor() : this(cache = MapMaker().weakKeys().makeMap(), isReadOnly = false)
+    constructor() : this(ConcurrentHashMap<From, To>(), isReadOnly = false)
 
     fun createReadOnlyCopy(): BuilderCache<From, To> {
         check(!isReadOnly) { "Cannot create readOnly BuilderCache from a readonly one" }

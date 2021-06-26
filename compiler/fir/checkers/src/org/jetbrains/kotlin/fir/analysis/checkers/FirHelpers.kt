@@ -49,7 +49,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 private val INLINE_ONLY_ANNOTATION_CLASS_ID = ClassId.topLevel(FqName("kotlin.internal.InlineOnly"))
 
-internal fun FirClass<*>.unsubstitutedScope(context: CheckerContext) =
+fun FirClass<*>.unsubstitutedScope(context: CheckerContext) =
     this.unsubstitutedScope(context.sessionHolder.session, context.sessionHolder.scopeSession, withForcedTypeCalculator = false)
 
 /**
@@ -567,7 +567,7 @@ fun checkTypeMismatch(
         if (rValue.isNullLiteral && lValueType.nullability == ConeNullability.NOT_NULL) {
             reporter.reportOn(rValue.source, FirErrors.NULL_FOR_NONNULL_TYPE, context)
         } else {
-            reporter.report(diagnosticFactory.on(source, lValueType, rValueType), context)
+            reporter.reportOn(source, diagnosticFactory, lValueType, rValueType, context)
         }
     }
 }
@@ -581,7 +581,7 @@ internal fun checkCondition(condition: FirExpression, context: CheckerContext, r
     }
 }
 
-fun extractTypeRefAndSourceFromTypeArgument(typeRef: FirTypeRef?, index: Int): Pair<FirTypeRef, FirSourceElement?>? {
+fun extractArgumentTypeRefAndSource(typeRef: FirTypeRef?, index: Int): FirTypeRefSource? {
     if (typeRef is FirResolvedTypeRef) {
         val delegatedTypeRef = typeRef.delegatedTypeRef
         if (delegatedTypeRef is FirUserTypeRef) {
@@ -601,20 +601,22 @@ fun extractTypeRefAndSourceFromTypeArgument(typeRef: FirTypeRef?, index: Int): P
 
             val typeArgument = currentTypeArguments?.elementAtOrNull(currentIndex)
             if (typeArgument is FirTypeProjectionWithVariance) {
-                return Pair(typeArgument.typeRef, typeArgument.source)
+                return FirTypeRefSource(typeArgument.typeRef, typeArgument.source)
             }
         } else if (delegatedTypeRef is FirFunctionTypeRef) {
             val valueParameters = delegatedTypeRef.valueParameters
             if (index < valueParameters.size) {
                 val valueParamTypeRef = valueParameters.elementAt(index).returnTypeRef
-                return Pair(valueParamTypeRef, valueParamTypeRef.source)
+                return FirTypeRefSource(valueParamTypeRef, valueParamTypeRef.source)
             }
             if (index == valueParameters.size) {
                 val returnTypeRef = delegatedTypeRef.returnTypeRef
-                return Pair(returnTypeRef, returnTypeRef.source)
+                return FirTypeRefSource(returnTypeRef, returnTypeRef.source)
             }
         }
     }
 
     return null
 }
+
+data class FirTypeRefSource(val typeRef: FirTypeRef?, val source: FirSourceElement?)

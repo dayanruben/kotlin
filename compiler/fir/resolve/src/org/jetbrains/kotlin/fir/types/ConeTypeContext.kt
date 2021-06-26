@@ -157,6 +157,8 @@ interface ConeTypeContext : TypeSystemContext, TypeSystemOptimizationContext, Ty
         return this.captureStatus
     }
 
+    override fun CapturedTypeMarker.isOldCapturedType(): Boolean = false
+
     override fun CapturedTypeConstructorMarker.projection(): TypeArgumentMarker {
         require(this is ConeCapturedTypeConstructor)
         return this.projection
@@ -282,6 +284,11 @@ interface ConeTypeContext : TypeSystemContext, TypeSystemOptimizationContext, Ty
         return this.symbol.fir.bounds[index].coneType
     }
 
+    override fun TypeParameterMarker.getUpperBounds(): List<KotlinTypeMarker> {
+        require(this is ConeTypeParameterLookupTag)
+        return this.symbol.fir.bounds.map { it.coneType }
+    }
+
     override fun TypeParameterMarker.getTypeConstructor(): TypeConstructorMarker {
         require(this is ConeTypeParameterLookupTag)
         return this
@@ -377,7 +384,7 @@ interface ConeTypeContext : TypeSystemContext, TypeSystemOptimizationContext, Ty
 
     override fun KotlinTypeMarker.getAnnotations(): List<AnnotationMarker> {
         require(this is ConeKotlinType)
-        return attributes.arrayMap.toList()
+        return attributes.toList()
     }
 
     override fun SimpleTypeMarker.isStubType(): Boolean {

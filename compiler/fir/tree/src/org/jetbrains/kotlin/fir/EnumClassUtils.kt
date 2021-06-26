@@ -56,7 +56,9 @@ fun FirRegularClassBuilder.generateValuesFunction(
         }
         symbol = FirNamedFunctionSymbol(CallableId(packageFqName, classFqName, ENUM_VALUES))
         resolvePhase = FirResolvePhase.BODY_RESOLVE
-        body = buildEmptyExpressionBlock()
+        body = buildEmptyExpressionBlock().also {
+            it.replaceTypeRef(returnTypeRef)
+        }
     }.apply {
         containingClassAttr = this@generateValuesFunction.symbol.toLookupTag()
     }
@@ -95,9 +97,12 @@ fun FirRegularClassBuilder.generateValueOfFunction(
             isCrossinline = false
             isNoinline = false
             isVararg = false
+            resolvePhase = FirResolvePhase.BODY_RESOLVE
         }
         resolvePhase = FirResolvePhase.BODY_RESOLVE
-        body = buildEmptyExpressionBlock()
+        body = buildEmptyExpressionBlock().also {
+            it.replaceTypeRef(returnTypeRef)
+        }
     }.apply {
         containingClassAttr = this@generateValueOfFunction.symbol.toLookupTag()
     }

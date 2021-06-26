@@ -177,6 +177,8 @@ enum class LanguageFeature(
     SamWrapperClassesAreSynthetic(KOTLIN_1_5, defaultState = State.ENABLED, kind = BUG_FIX),
     StrictOnlyInputTypesChecks(KOTLIN_1_5),
 
+    JsEnableExtensionFunctionInExternals(KOTLIN_1_5, defaultState = State.DISABLED, kind = OTHER),
+
     // Disabled until the breaking change is approved by the committee, see KT-10884.
     PackagePrivateFileClassesWithAllPrivateMembers(KOTLIN_1_5, defaultState = State.DISABLED),
 
@@ -209,6 +211,8 @@ enum class LanguageFeature(
     UnrestrictedBuilderInference(KOTLIN_1_6),
     ProperTypeInferenceConstraintsProcessing(KOTLIN_1_6, kind = BUG_FIX),
     ClassTypeParameterAnnotations(KOTLIN_1_6),
+    SafeCallsAreAlwaysNullable(KOTLIN_1_6),
+    ProhibitSimplificationOfNonTrivialConstBooleanExpressions(KOTLIN_1_6),
 
     // Temporarily disabled, see KT-27084/KT-22379
     SoundSmartcastFromLoopConditionForLoopAssignedVariables(sinceVersion = null, kind = BUG_FIX),

@@ -30,11 +30,10 @@ buildscript {
     dependencies {
         bootstrapCompilerClasspath(kotlin("compiler-embeddable", bootstrapKotlinVersion))
 
-        classpath("org.jetbrains.kotlin:kotlin-build-gradle-plugin:0.0.29")
+        classpath("org.jetbrains.kotlin:kotlin-build-gradle-plugin:0.0.30")
         classpath(kotlin("gradle-plugin", bootstrapKotlinVersion))
         classpath(kotlin("serialization", bootstrapKotlinVersion))
         classpath("org.jetbrains.dokka:dokka-gradle-plugin:0.9.17")
-        classpath("org.jfrog.buildinfo:build-info-extractor-gradle:4.17.2")
     }
 }
 
@@ -89,10 +88,8 @@ val distKotlinHomeDir by extra("$distDir/kotlinc")
 val distLibDir = "$distKotlinHomeDir/lib"
 val commonLocalDataDir = "$rootDir/local"
 val ideaSandboxDir = "$commonLocalDataDir/ideaSandbox"
-val ideaUltimateSandboxDir = "$commonLocalDataDir/ideaUltimateSandbox"
 val artifactsDir = "$distDir/artifacts"
 val ideaPluginDir = "$artifactsDir/ideaPlugin/Kotlin"
-val ideaUltimatePluginDir = "$artifactsDir/ideaUltimatePlugin/Kotlin"
 
 extra["ktorExcludesForDaemon"] = listOf(
     "org.jetbrains.kotlin" to "kotlin-reflect",
@@ -110,9 +107,7 @@ extra["distLibDir"] = project.file(distLibDir)
 extra["libsDir"] = project.file(distLibDir)
 extra["commonLocalDataDir"] = project.file(commonLocalDataDir)
 extra["ideaSandboxDir"] = project.file(ideaSandboxDir)
-extra["ideaUltimateSandboxDir"] = project.file(ideaUltimateSandboxDir)
 extra["ideaPluginDir"] = project.file(ideaPluginDir)
-extra["ideaUltimatePluginDir"] = project.file(ideaUltimatePluginDir)
 extra["isSonatypeRelease"] = false
 val kotlinNativeVersionObject = project.kotlinNativeVersionValue()
 subprojects {
@@ -191,10 +186,9 @@ extra["versions.kotlinx-collections-immutable-jvm"] = immutablesVersion
 extra["versions.ktor-network"] = "1.0.1"
 
 if (!project.hasProperty("versions.kotlin-native")) {
-    extra["versions.kotlin-native"] = "1.5.20-dev-5613"
+    extra["versions.kotlin-native"] = "1.5.30-dev-1916"
 }
 
-val intellijUltimateEnabled by extra(project.kotlinBuildProperties.intellijUltimateEnabled)
 val effectSystemEnabled by extra(project.getBooleanProperty("kotlin.compiler.effectSystemEnabled") ?: false)
 val newInferenceEnabled by extra(project.getBooleanProperty("kotlin.compiler.newInferenceEnabled") ?: false)
 val useJvmIrBackend by extra(project.kotlinBuildProperties.useIR)
@@ -206,15 +200,11 @@ extra["intellijSeparateSdks"] = intellijSeparateSdks
 
 extra["IntellijCoreDependencies"] =
     listOf(
-        when {
-            Platform[202].orHigher() -> "asm-all-8.0.1"
-            else -> "asm-all-7.0.1"
-        },
+        "asm-all-8.0.1",
         "guava",
         "jdom",
         "jna",
         "log4j",
-        if (Platform[201].orHigher()) null else "picocontainer",
         "snappy-in-java",
         "streamex",
         "trove4j"
@@ -343,6 +333,11 @@ extra["compilerArtifactsForIde"] = listOf(
     ":prepare:ide-plugin-dependencies:lombok-compiler-plugin-for-ide",
     ":prepare:ide-plugin-dependencies:kotlin-compiler-tests-for-ide",
     ":prepare:ide-plugin-dependencies:kotlin-compiler-testdata-for-ide",
+    ":prepare:ide-plugin-dependencies:kotlin-stdlib-minimal-for-test-for-ide",
+    ":prepare:ide-plugin-dependencies:low-level-api-fir-for-ide",
+    ":prepare:ide-plugin-dependencies:high-level-api-for-ide",
+    ":prepare:ide-plugin-dependencies:high-level-api-fir-for-ide",
+    ":prepare:ide-plugin-dependencies:high-level-api-fir-tests-for-ide",
     ":kotlin-script-runtime",
     ":kotlin-script-util",
     ":kotlin-scripting-common",
@@ -582,6 +577,8 @@ allprojects {
         register("checkBuild")
     }
 
+    apply(from = "$rootDir/gradle/cacheRedirector.gradle.kts")
+
     afterEvaluate {
         if (javaHome != defaultJavaHome || jvmTarget != defaultJvmTarget) {
             logger.info("configuring project $name to compile to the target jvm version $jvmTarget using jdk: $javaHome")
@@ -616,7 +613,6 @@ allprojects {
                 ?.exclude("org.jetbrains.kotlin", "kotlin-scripting-compiler-embeddable")
         }
 
-        apply(from = "$rootDir/gradle/cacheRedirector.gradle.kts")
         apply(from = "$rootDir/gradle/testRetry.gradle.kts")
     }
 }
@@ -779,8 +775,14 @@ tasks {
         dependsOn(":kotlin-scripting-jsr223-test:embeddableTest")
         dependsOn(":kotlin-main-kts-test:test")
         dependsOn(":kotlin-main-kts-test:testWithIr")
-        dependsOn(":kotlin-scripting-ide-services-test:test")
-        dependsOn(":kotlin-scripting-ide-services-test:embeddableTest")
+
+        if (kotlinBuildProperties.getOrNull("attachedIntellijVersion") == null &&
+            !kotlinBuildProperties.getBoolean("disableKotlinPluginModules", false)
+        ) {
+            dependsOn(":kotlin-scripting-ide-services-test:test")
+            dependsOn(":kotlin-scripting-ide-services-test:embeddableTest")
+        }
+
         dependsOn(":kotlin-scripting-js-test:test")
     }
 
@@ -824,6 +826,7 @@ tasks {
 
     register("distTest") {
         dependsOn("compilerTest")
+        dependsOn("frontendApiTests")
         dependsOn("toolsTest")
         dependsOn("gradlePluginTest")
         dependsOn("examplesTest")
@@ -885,13 +888,22 @@ tasks {
         dependsOn("dist")
         dependsOn(
             ":idea:idea-fir:test",
-            ":idea:idea-frontend-api:test",
-            ":idea:idea-frontend-fir:test",
-            ":idea:idea-frontend-fir:idea-fir-low-level-api:test",
+            ":idea:idea-frontend-fir:fir-low-level-api-ide-impl:test",
             ":plugins:uast-kotlin-fir:test",
             ":idea:idea-fir-fe10-binding:test"
         )
     }
+
+    register("frontendApiTests") {
+        dependsOn("dist")
+        dependsOn(
+            ":idea-frontend-api:test",
+            ":idea-frontend-fir:test",
+            ":idea-frontend-fir:idea-fir-low-level-api:test"
+        )
+    }
+    
+    
 
     register("android-ide-tests") {
         dependsOn("dist")
@@ -949,22 +961,6 @@ tasks {
             ":idea:idea-gradle:test",
             ":idea:idea-gradle-native:test"
         )
-    }
-
-    register("kmmTest", AggregateTest::class) {
-        dependsOn(
-            ":idea:idea-gradle:test",
-            ":idea:test",
-            ":compiler:test",
-            ":compiler:container:test",
-            ":js:js.tests:test"
-        )
-
-        dependsOn(":kotlin-gradle-plugin-integration-tests:test")
-        if (Ide.AS40.orHigher())
-            dependsOn(":kotlin-ultimate:ide:android-studio-native:test")
-
-        testPatternFile = file("tests/mpp/kmm-patterns.csv")
     }
 
     register("test") {
@@ -1051,8 +1047,7 @@ val zipTestData by task<Zip> {
 val zipPlugin by task<Zip> {
     val src = when (project.findProperty("pluginArtifactDir") as String?) {
         "Kotlin" -> ideaPluginDir
-        "KotlinUltimate" -> ideaUltimatePluginDir
-        null -> if (project.hasProperty("ultimate")) ideaUltimatePluginDir else ideaPluginDir
+        null -> ideaPluginDir
         else -> error("Unsupported plugin artifact dir")
     }
     val destPath = project.findProperty("pluginZipPath") as String?

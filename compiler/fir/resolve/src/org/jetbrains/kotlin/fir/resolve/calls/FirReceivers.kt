@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.fir.resolve.calls
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.diagnostics.ConeIntermediateDiagnostic
 import org.jetbrains.kotlin.fir.expressions.FirExpression
+import org.jetbrains.kotlin.fir.expressions.FirExpressionWithSmartcast
 import org.jetbrains.kotlin.fir.expressions.FirThisReceiverExpression
 import org.jetbrains.kotlin.fir.expressions.builder.buildExpressionWithSmartcast
 import org.jetbrains.kotlin.fir.expressions.builder.buildThisReceiverExpression
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.fir.renderWithType
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.resolve.constructType
 import org.jetbrains.kotlin.fir.resolve.scope
+import org.jetbrains.kotlin.fir.resolve.smartcastScope
 import org.jetbrains.kotlin.fir.resolvedTypeFromPrototype
 import org.jetbrains.kotlin.fir.scopes.FakeOverrideTypeCalculator
 import org.jetbrains.kotlin.fir.scopes.FirTypeScope
@@ -27,6 +29,7 @@ import org.jetbrains.kotlin.fir.types.ConeKotlinType
 import org.jetbrains.kotlin.fir.types.builder.buildResolvedTypeRef
 import org.jetbrains.kotlin.fir.types.coneType
 import org.jetbrains.kotlin.fir.types.coneTypeSafe
+import org.jetbrains.kotlin.types.SmartcastStability
 
 interface Receiver
 
@@ -56,7 +59,11 @@ abstract class AbstractExplicitReceiverValue<E : FirExpression> : AbstractExplic
 
 class ExpressionReceiverValue(
     override val explicitReceiver: FirExpression
-) : AbstractExplicitReceiverValue<FirExpression>(), ReceiverValue
+) : AbstractExplicitReceiverValue<FirExpression>(), ReceiverValue {
+    override fun scope(useSiteSession: FirSession, scopeSession: ScopeSession): FirTypeScope? =
+        (receiverExpression as? FirExpressionWithSmartcast)?.smartcastScope(useSiteSession, scopeSession)
+            ?: type.scope(useSiteSession, scopeSession, FakeOverrideTypeCalculator.DoNothing)
+}
 
 sealed class ImplicitReceiverValue<S : AbstractFirBasedSymbol<*>>(
     val boundSymbol: S,
@@ -89,8 +96,9 @@ sealed class ImplicitReceiverValue<S : AbstractFirBasedSymbol<*>>(
         } else {
             buildExpressionWithSmartcast {
                 originalExpression = originalReceiverExpression
-                typeRef = originalReceiverExpression.typeRef.resolvedTypeFromPrototype(type)
+                smartcastType = originalReceiverExpression.typeRef.resolvedTypeFromPrototype(type)
                 typesFromSmartCast = listOf(type)
+                smartcastStability = SmartcastStability.STABLE_VALUE
             }
         }
         implicitScope = type.scope(useSiteSession, scopeSession, FakeOverrideTypeCalculator.DoNothing)

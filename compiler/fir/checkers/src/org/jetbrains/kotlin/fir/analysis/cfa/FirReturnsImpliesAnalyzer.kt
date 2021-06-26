@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.checkers.isSupertypeOf
 import org.jetbrains.kotlin.fir.analysis.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
+import org.jetbrains.kotlin.fir.analysis.diagnostics.reportOn
 import org.jetbrains.kotlin.fir.contracts.FirResolvedContractDescription
 import org.jetbrains.kotlin.fir.contracts.coneEffects
 import org.jetbrains.kotlin.fir.contracts.description.*
@@ -63,9 +64,7 @@ object FirReturnsImpliesAnalyzer : FirControlFlowChecker() {
             }
 
             if (wrongCondition) {
-                function.contractDescription.source?.let {
-                    reporter.report(FirErrors.WRONG_IMPLIES_CONDITION.on(it), context)
-                }
+                reporter.reportOn(function.contractDescription.source, FirErrors.WRONG_IMPLIES_CONDITION, context)
             }
         }
     }
@@ -156,30 +155,34 @@ object FirReturnsImpliesAnalyzer : FirControlFlowChecker() {
         variableStorage: VariableStorage,
         flow: Flow,
         context: CheckerContext
-    ): MutableTypeStatements? = when (this) {
-        is ConeBinaryLogicExpression -> {
-            val left = left.buildTypeStatements(function, logicSystem, variableStorage, flow, context)
-            val right = right.buildTypeStatements(function, logicSystem, variableStorage, flow, context)
-            if (left != null && right != null) {
-                if (kind == LogicOperationKind.AND) {
-                    left.apply { mergeTypeStatements(right) }
-                } else logicSystem.orForTypeStatements(left, right)
-            } else (left ?: right)
-        }
-        is ConeIsInstancePredicate -> {
+    ): MutableTypeStatements? {
+        fun buildTypeStatements(arg: ConeValueParameterReference, exactType: Boolean, type: ConeKotlinType): MutableTypeStatements? {
             val fir = function.getParameterSymbol(arg.parameterIndex, context).fir
             val realVar = variableStorage.getOrCreateRealVariable(flow, fir.symbol, fir)
-            realVar?.to(simpleTypeStatement(realVar, !isNegated, type))?.let { mutableMapOf(it) }
+                ?.takeIf {
+                    it.stability == PropertyStability.STABLE_VALUE ||
+                            // TODO: consider removing the part below
+                            it.stability == PropertyStability.LOCAL_VAR
+                }
+            return realVar?.to(simpleTypeStatement(realVar, exactType, type))?.let { mutableMapOf(it) }
         }
-        is ConeIsNullPredicate -> {
-            val fir = function.getParameterSymbol(arg.parameterIndex, context).fir
-            val realVar = variableStorage.getOrCreateRealVariable(flow, fir.symbol, fir)
-            realVar?.to(simpleTypeStatement(realVar, isNegated, context.session.builtinTypes.anyType.type))?.let { mutableMapOf(it) }
-        }
-        is ConeLogicalNot -> arg.buildTypeStatements(function, logicSystem, variableStorage, flow, context)
-            ?.mapValuesTo(mutableMapOf()) { (_, value) -> value.invert() }
+        return when (this) {
+            is ConeBinaryLogicExpression -> {
+                val left = left.buildTypeStatements(function, logicSystem, variableStorage, flow, context)
+                val right = right.buildTypeStatements(function, logicSystem, variableStorage, flow, context)
+                if (left != null && right != null) {
+                    if (kind == LogicOperationKind.AND) {
+                        left.apply { mergeTypeStatements(right) }
+                    } else logicSystem.orForTypeStatements(left, right)
+                } else (left ?: right)
+            }
+            is ConeIsInstancePredicate -> buildTypeStatements(arg, !isNegated, type)
+            is ConeIsNullPredicate -> buildTypeStatements(arg, isNegated, context.session.builtinTypes.anyType.type)
+            is ConeLogicalNot -> arg.buildTypeStatements(function, logicSystem, variableStorage, flow, context)
+                ?.mapValuesTo(mutableMapOf()) { (_, value) -> value.invert() }
 
-        else -> null
+            else -> null
+        }
     }
 
     private fun ConeKotlinType.isInapplicableWith(operation: Operation, session: FirSession): Boolean {

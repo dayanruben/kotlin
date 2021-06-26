@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.idea.frontend.api.fir.symbols
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.resolve.transformers.resolveSupertypesInTheAir
 import org.jetbrains.kotlin.fir.types.*
+import org.jetbrains.kotlin.idea.fir.low.level.api.lazy.resolve.ResolveType
 import org.jetbrains.kotlin.idea.frontend.api.tokens.ValidityToken
 import org.jetbrains.kotlin.idea.frontend.api.fir.KtSymbolByFirBuilder
 import org.jetbrains.kotlin.idea.frontend.api.fir.symbols.annotations.KtFirAnnotationCall
@@ -28,7 +29,7 @@ internal class KtFirTypeAndAnnotations<T : FirDeclaration>(
 
     override val token: ValidityToken get() = containingDeclaration.token
 
-    override val type: KtType by containingDeclaration.withFirAndCache(typeResolvePhase) { fir ->
+    override val type: KtType by containingDeclaration.withFirAndCache(ResolveType.CallableReturnType) { fir ->
         builder.typeBuilder.buildKtType(typeRef(fir))
     }
 
@@ -63,10 +64,10 @@ internal fun FirRefWithValidityCheck<FirClass<*>>.superTypesAndAnnotationsList(b
 
 internal fun FirRefWithValidityCheck<FirRegularClass>.superTypesAndAnnotationsListForRegularClass(builder: KtSymbolByFirBuilder): List<KtTypeAndAnnotations> {
     return withFir { fir ->
-        if (fir.resolvePhase >= FirResolvePhase.SUPER_TYPES) {
+        if(fir.resolvePhase >= FirResolvePhase.SUPER_TYPES) {
             fir.superTypeRefs.mapToTypeAndAnnotations(this, builder)
         } else null
-    } ?: withFirWithPossibleResolveInside { fir ->
+    } ?: withFirWithPossibleResolveInside(ResolveType.NoResolve) { fir ->
         fir.resolveSupertypesInTheAir(builder.rootSession).mapToTypeAndAnnotations(this, builder)
     }
 }

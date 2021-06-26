@@ -12,6 +12,7 @@ object CommonExpressionCheckers : ExpressionCheckers() {
     override val annotationCallCheckers: Set<FirAnnotationCallChecker>
         get() = setOf(
             FirAnnotationArgumentChecker,
+            FirOptInAnnotationCallChecker,
         )
 
     override val basicExpressionCheckers: Set<FirBasicExpressionChecker>
@@ -20,7 +21,7 @@ object CommonExpressionCheckers : ExpressionCheckers() {
             FirExpressionAnnotationChecker,
         )
 
-    override val qualifiedAccessCheckers: Set<FirQualifiedAccessChecker>
+    override val qualifiedAccessExpressionCheckers: Set<FirQualifiedAccessExpressionChecker>
         get() = setOf(
             FirCallableReferenceChecker,
             FirSuperNotAvailableChecker,
@@ -29,7 +30,7 @@ object CommonExpressionCheckers : ExpressionCheckers() {
             FirAbstractSuperCallChecker,
             FirQualifiedSupertypeExtendedByOtherSupertypeChecker,
             FirProjectionsOnNonClassTypeArgumentChecker,
-            FirUpperBoundViolatedChecker,
+            FirUpperBoundViolatedExpressionChecker,
             FirTypeArgumentsNotAllowedExpressionChecker,
             FirTypeParameterInQualifiedAccessChecker,
             FirSealedClassConstructorCallChecker,
@@ -51,7 +52,7 @@ object CommonExpressionCheckers : ExpressionCheckers() {
 
     override val variableAssignmentCheckers: Set<FirVariableAssignmentChecker>
         get() = setOf(
-            FirValReassignmentViaBackingFieldChecker,
+            FirValReassignmentChecker,
             FirAssignmentTypeMismatchChecker
         )
 

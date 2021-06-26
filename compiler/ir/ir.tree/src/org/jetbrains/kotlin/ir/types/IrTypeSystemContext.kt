@@ -106,6 +106,8 @@ interface IrTypeSystemContext : TypeSystemContext, TypeSystemCommonSuperTypesCon
     override fun CapturedTypeMarker.captureStatus(): CaptureStatus =
         (this as IrCapturedType).captureStatus
 
+    override fun CapturedTypeMarker.isOldCapturedType(): Boolean = false
+
     override fun CapturedTypeConstructorMarker.projection(): TypeArgumentMarker =
         (this as IrCapturedType.Constructor).argument
 
@@ -173,6 +175,8 @@ interface IrTypeSystemContext : TypeSystemContext, TypeSystemCommonSuperTypesCon
     override fun TypeParameterMarker.upperBoundCount() = getSuperTypes(this).size
 
     override fun TypeParameterMarker.getUpperBound(index: Int) = getSuperTypes(this)[index] as KotlinTypeMarker
+
+    override fun TypeParameterMarker.getUpperBounds() = getSuperTypes(this) as List<KotlinTypeMarker>
 
     override fun TypeParameterMarker.getTypeConstructor() = this as IrTypeParameterSymbol
 

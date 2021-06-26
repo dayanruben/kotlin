@@ -6,7 +6,9 @@
 package org.jetbrains.kotlin.backend.common.serialization
 
 import org.jetbrains.kotlin.backend.common.serialization.encodings.*
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.InlineClassRepresentation
+import org.jetbrains.kotlin.descriptors.ReceiverParameterDescriptor
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.IrFileEntry
 import org.jetbrains.kotlin.ir.declarations.*
@@ -17,7 +19,10 @@ import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
-import org.jetbrains.kotlin.library.*
+import org.jetbrains.kotlin.library.SerializedDeclaration
+import org.jetbrains.kotlin.library.SerializedIrFile
+import org.jetbrains.kotlin.library.SkippedDeclaration
+import org.jetbrains.kotlin.library.TopLevelDeclaration
 import org.jetbrains.kotlin.library.impl.IrMemoryArrayWriter
 import org.jetbrains.kotlin.library.impl.IrMemoryDeclarationWriter
 import org.jetbrains.kotlin.library.impl.IrMemoryStringWriter
@@ -381,7 +386,8 @@ open class IrFileSerializer(
         val classifier: IrClassifierSymbol?,
         val hasQuestionMark: Boolean?,
         val arguments: List<IrTypeArgumentKey>?,
-        val annotations: List<IrConstructorCall>
+        val annotations: List<IrConstructorCall>,
+        val abbreviation: IrTypeAbbreviation?
     )
 
     data class IrTypeArgumentKey(
@@ -401,7 +407,8 @@ open class IrFileSerializer(
             classifier = this.classifierOrNull,
             hasQuestionMark = (this as? IrSimpleType)?.hasQuestionMark,
             arguments = (this as? IrSimpleType)?.arguments?.map { it.toIrTypeArgumentKey },
-            annotations = this.annotations
+            annotations = this.annotations,
+            abbreviation = (this as? IrSimpleType)?.abbreviation
         )
 
     private val IrTypeArgument.toIrTypeArgumentKey: IrTypeArgumentKey
@@ -526,6 +533,9 @@ open class IrFileSerializer(
             symbol = serializeIrSymbol(call.symbol)
             constructorTypeArgumentsCount = call.constructorTypeArgumentsCount
             memberAccess = serializeMemberAccessCommon(call)
+            call.origin?.let {
+                originName = serializeIrStatementOrigin(it)
+            }
         }.build()
 
     private fun serializeFunctionExpression(functionExpression: IrFunctionExpression): ProtoFunctionExpression =
@@ -791,6 +801,9 @@ open class IrFileSerializer(
     }
 
     private fun serializeLoop(expression: IrLoop): ProtoLoop {
+        val loopIdx = currentLoopIndex++
+        loopIndex[expression] = loopIdx
+
         val proto = ProtoLoop.newBuilder()
             .setCondition(serializeExpression(expression.condition)).apply {
                 expression.origin?.let { setOriginName(serializeIrStatementOrigin(it)) }
@@ -800,8 +813,7 @@ open class IrFileSerializer(
             proto.label = serializeString(it)
         }
 
-        proto.loopId = currentLoopIndex
-        loopIndex[expression] = currentLoopIndex++
+        proto.loopId = loopIdx
 
         val body = expression.body
         if (body != null) {

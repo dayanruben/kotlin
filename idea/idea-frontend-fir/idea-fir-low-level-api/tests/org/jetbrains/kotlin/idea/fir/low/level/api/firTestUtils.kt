@@ -5,8 +5,6 @@
 
 package org.jetbrains.kotlin.idea.fir.low.level.api
 
-import com.intellij.openapi.components.service
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.fir.FirElement
@@ -19,24 +17,18 @@ import org.jetbrains.kotlin.fir.symbols.AbstractFirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirAnonymousInitializerSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassLikeSymbol
-import org.jetbrains.kotlin.idea.caches.project.getModuleInfo
 import org.jetbrains.kotlin.idea.fir.low.level.api.api.FirModuleResolveState
-import org.jetbrains.kotlin.idea.fir.low.level.api.trackers.KotlinFirModificationTrackerService
+import org.jetbrains.kotlin.idea.fir.low.level.api.api.getModuleInfo
+import org.jetbrains.kotlin.idea.fir.low.level.api.api.getResolveState
+import org.jetbrains.kotlin.idea.fir.low.level.api.sessions.FirIdeSession
 import org.jetbrains.kotlin.psi.KtElement
 
 internal fun Project.allModules() = ModuleManager.getInstance(this).modules.toList()
 
-inline fun resolveWithClearCaches(context: KtElement, action: (FirModuleResolveState) -> Unit) {
-    val resolveState = createResolveStateForNoCaching(context.getModuleInfo())
-    action(resolveState)
-}
 
 internal fun FirElement.renderWithClassName(renderMode: FirRenderer.RenderMode = FirRenderer.RenderMode.Normal): String =
     "${this::class.simpleName} `${render(renderMode)}`"
 
-internal fun Module.incModificationTracker() {
-    project.service<KotlinFirModificationTrackerService>().increaseModificationCountForModule(this)
-}
 
 internal fun AbstractFirBasedSymbol<*>.name(): String = when (this) {
     is FirCallableSymbol<*> -> callableId.callableName.asString()
@@ -49,4 +41,13 @@ internal fun FirDeclaration.name(): String = when (this) {
     is FirSymbolOwner<*> -> symbol.name()
     is FirFile -> "<FILE>"
     else -> error("unknown declaration ${this::class.simpleName}")
+}
+
+internal inline fun <R> resolveWithClearCaches(
+    context: KtElement,
+    noinline configureSession: FirIdeSession.() -> Unit = {},
+    action: (FirModuleResolveState) -> R,
+): R {
+    val resolveState = createResolveStateForNoCaching(context.getModuleInfo(), context.project, configureSession)
+    return action(resolveState)
 }

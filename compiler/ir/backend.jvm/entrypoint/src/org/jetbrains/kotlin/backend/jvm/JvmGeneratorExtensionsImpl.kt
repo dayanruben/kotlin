@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.backend.jvm
 
 import org.jetbrains.kotlin.backend.common.ir.createImplicitParameterDeclarationWithWrappedDescriptor
 import org.jetbrains.kotlin.backend.common.ir.createParameterDeclarations
-import org.jetbrains.kotlin.codegen.JvmSamTypeFactory
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.FilteredAnnotations
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
@@ -58,9 +57,6 @@ open class JvmGeneratorExtensionsImpl(private val generateFacades: Boolean = tru
 
         override fun isPlatformSamType(type: KotlinType): Boolean =
             JavaSingleAbstractMethodUtils.isSamType(type)
-
-        override fun getSamTypeForValueParameter(valueParameter: ValueParameterDescriptor): KotlinType? =
-            JvmSamTypeFactory.createByValueParameter(valueParameter)?.type
 
         companion object Instance : JvmSamConversion()
     }

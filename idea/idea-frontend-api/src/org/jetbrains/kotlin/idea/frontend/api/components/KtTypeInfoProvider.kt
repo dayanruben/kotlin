@@ -6,10 +6,9 @@
 package org.jetbrains.kotlin.idea.frontend.api.components
 
 import org.jetbrains.kotlin.builtins.StandardNames
-import org.jetbrains.kotlin.idea.frontend.api.types.KtClassType
-import org.jetbrains.kotlin.idea.frontend.api.types.KtType
-import org.jetbrains.kotlin.idea.frontend.api.types.KtTypeNullability
-import org.jetbrains.kotlin.idea.frontend.api.types.KtTypeWithNullability
+import org.jetbrains.kotlin.idea.frontend.api.symbols.KtClassOrObjectSymbol
+import org.jetbrains.kotlin.idea.frontend.api.symbols.KtTypeAliasSymbol
+import org.jetbrains.kotlin.idea.frontend.api.types.*
 import org.jetbrains.kotlin.name.ClassId
 
 abstract class KtTypeInfoProvider : KtAnalysisSessionComponent() {
@@ -38,21 +37,35 @@ interface KtTypeInfoProviderMixIn : KtAnalysisSessionMixIn {
     val KtType.isChar: Boolean get() = isClassTypeWithClassId(DefaultTypeClassIds.CHAR)
     val KtType.isBoolean: Boolean get() = isClassTypeWithClassId(DefaultTypeClassIds.BOOLEAN)
     val KtType.isString: Boolean get() = isClassTypeWithClassId(DefaultTypeClassIds.STRING)
+    val KtType.isCharSequence: Boolean get() = isClassTypeWithClassId(DefaultTypeClassIds.CHAR_SEQUENCE)
     val KtType.isAny: Boolean get() = isClassTypeWithClassId(DefaultTypeClassIds.ANY)
+    val KtType.isNothing: Boolean get() = isClassTypeWithClassId(DefaultTypeClassIds.NOTHING)
 
     val KtType.isUInt: Boolean get() = isClassTypeWithClassId(StandardNames.FqNames.uInt)
     val KtType.isULong: Boolean get() = isClassTypeWithClassId(StandardNames.FqNames.uLong)
     val KtType.isUShort: Boolean get() = isClassTypeWithClassId(StandardNames.FqNames.uShort)
     val KtType.isUByte: Boolean get() = isClassTypeWithClassId(StandardNames.FqNames.uByte)
 
+    /** Gets the class symbol backing the given type, if available. */
+    val KtType.expandedClassSymbol: KtClassOrObjectSymbol?
+        get() {
+            return when (this) {
+                is KtNonErrorClassType -> when (val classSymbol = classSymbol) {
+                    is KtClassOrObjectSymbol -> classSymbol
+                    is KtTypeAliasSymbol -> classSymbol.expandedType.expandedClassSymbol
+                }
+                else -> null
+            }
+        }
+
     fun KtType.isClassTypeWithClassId(classId: ClassId): Boolean {
-        if (this !is KtClassType) return false
+        if (this !is KtNonErrorClassType) return false
         return this.classId == classId
     }
 
     val KtType.isPrimitive: Boolean
         get() {
-            if (this !is KtClassType) return false
+            if (this !is KtNonErrorClassType) return false
             return this.classId in DefaultTypeClassIds.PRIMITIVES
         }
 
@@ -85,6 +98,8 @@ object DefaultTypeClassIds {
     val CHAR = ClassId.topLevel(StandardNames.FqNames._char.toSafe())
     val BOOLEAN = ClassId.topLevel(StandardNames.FqNames._boolean.toSafe())
     val STRING = ClassId.topLevel(StandardNames.FqNames.string.toSafe())
+    val CHAR_SEQUENCE = ClassId.topLevel(StandardNames.FqNames.charSequence.toSafe())
     val ANY = ClassId.topLevel(StandardNames.FqNames.any.toSafe())
+    val NOTHING = ClassId.topLevel(StandardNames.FqNames.nothing.toSafe())
     val PRIMITIVES = setOf(INT, LONG, SHORT, BYTE, FLOAT, DOUBLE, CHAR, BOOLEAN)
 }

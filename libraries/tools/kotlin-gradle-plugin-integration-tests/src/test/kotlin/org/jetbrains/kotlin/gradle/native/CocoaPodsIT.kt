@@ -697,9 +697,7 @@ class CocoaPodsIT : BaseGradleIT() {
         with(project.gradleBuildScript()) {
             addPod(
                 podName,
-                """source = url("$repo", $flatten)
-                  |moduleName = "Pod_with_dashes"
-            """.trimMargin()
+                "source = url(\"$repo\", $flatten)"
             )
         }
         hooks.addHook {
@@ -790,6 +788,35 @@ class CocoaPodsIT : BaseGradleIT() {
                 "-Pkotlin.native.cocoapods.target=ios_x64",
                 "-Pkotlin.native.cocoapods.configuration=CUSTOM"
             )
+        }
+    }
+
+    @Test
+    fun testUseDynamicFramework() {
+        with(project) {
+            gradleBuildScript().addPod(defaultPodName, produceGitBlock(defaultPodRepo))
+            gradleBuildScript().appendToFrameworkBlock("isStatic=false")
+            hooks.addHook {
+                // Check that an output framework is a dynamic framework
+                val framework = fileInWorkingDir("build/cocoapods/framework/cocoapods.framework/cocoapods")
+                with(runProcess(listOf("file", framework.absolutePath), projectDir)) {
+                    assertTrue(isSuccessful)
+                    assertTrue(output.contains("dynamically linked shared library"))
+                }
+            }
+
+            test(
+                "linkPodDebugFrameworkIOS",
+                "-Pkotlin.native.cocoapods.generate.wrapper=true"
+            )
+        }
+    }
+
+    @Test
+    fun testCocoapodsWithRegularFrameworkDefinition() {
+        with(project) {
+            gradleBuildScript().appendToKotlinBlock("iosX64(\"iOS\") {binaries.framework{}}")
+            testImport()
         }
     }
 
@@ -980,6 +1007,8 @@ class CocoaPodsIT : BaseGradleIT() {
 
     private fun File.appendToCocoapodsBlock(str: String) = appendToKotlinBlock(str.wrap("cocoapods"))
 
+    private fun File.appendToFrameworkBlock(str: String) = appendToCocoapodsBlock(str.wrap("framework"))
+
     private fun String.wrap(s: String): String = """
         |$s {
         |    $this
@@ -1122,15 +1151,7 @@ class CocoaPodsIT : BaseGradleIT() {
 
     private fun Project.useCustomFrameworkName(subproject: String, frameworkName: String, iosAppLocation: String? = null) {
         // Change the name at the Gradle side.
-        gradleBuildScript(subproject).appendText(
-            """
-                |kotlin {
-                |    cocoapods {
-                |        frameworkName = "$frameworkName"
-                |    }
-                |}
-            """.trimMargin()
-        )
+        gradleBuildScript(subproject).appendToFrameworkBlock("baseName = \"$frameworkName\"")
 
         // Change swift sources import if needed.
         if (iosAppLocation != null) {
@@ -1289,7 +1310,6 @@ class CocoaPodsIT : BaseGradleIT() {
                     spec.authors                  = ''
                     spec.license                  = ''
                     spec.summary                  = 'CocoaPods test library'
-                    spec.static_framework         = true
                     spec.vendored_frameworks      = "build/cocoapods/framework/${frameworkName ?: "kotlin_library"}.framework"
                     spec.libraries                = "c++"
                     spec.module_name              = "#{spec.name}_umbrella"
@@ -1333,7 +1353,6 @@ class CocoaPodsIT : BaseGradleIT() {
                     spec.authors                  = ''
                     spec.license                  = ''
                     spec.summary                  = 'CocoaPods test library'
-                    spec.static_framework         = true
                     spec.vendored_frameworks      = "build/cocoapods/framework/${frameworkName ?: "second_library"}.framework"
                     spec.libraries                = "c++"
                     spec.module_name              = "#{spec.name}_umbrella"

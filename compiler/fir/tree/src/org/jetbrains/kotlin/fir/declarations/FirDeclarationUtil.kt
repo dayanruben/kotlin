@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.fir.declarations.builder.FirTypeParameterBuilder
 import org.jetbrains.kotlin.fir.declarations.impl.FirFileImpl
 import org.jetbrains.kotlin.fir.declarations.impl.FirRegularClassImpl
 import org.jetbrains.kotlin.fir.expressions.FirQualifiedAccess
-import org.jetbrains.kotlin.fir.expressions.FirVariableAssignment
 import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
 import org.jetbrains.kotlin.fir.render
 import org.jetbrains.kotlin.fir.symbols.impl.FirAnonymousObjectSymbol
@@ -23,8 +22,6 @@ import org.jetbrains.kotlin.fir.types.ConeClassLikeType
 import org.jetbrains.kotlin.fir.types.ConeFlexibleType
 import org.jetbrains.kotlin.fir.types.builder.buildResolvedTypeRef
 import org.jetbrains.kotlin.fir.types.coneTypeSafe
-import org.jetbrains.kotlin.metadata.ProtoBuf
-import org.jetbrains.kotlin.metadata.deserialization.NameResolver
 
 fun FirTypeParameterBuilder.addDefaultBoundIfNecessary(isFlexible: Boolean = false) {
     if (bounds.isEmpty()) {
@@ -49,15 +46,12 @@ inline val FirClass<*>.isEnumClass: Boolean
 inline val FirRegularClass.modality get() = status.modality
 inline val FirRegularClass.isSealed get() = status.modality == Modality.SEALED
 inline val FirRegularClass.isAbstract get() = status.modality == Modality.ABSTRACT
+inline val FirRegularClass.isFun get() = status.isFun
+inline val FirRegularClass.isCompanion get() = status.isCompanion
+inline val FirRegularClass.isData get() = status.isData
 
 inline val FirRegularClass.canHaveAbstractDeclaration: Boolean
     get() = isAbstract || isSealed || isEnumClass
-
-inline val FirRegularClass.isInner get() = status.isInner
-inline val FirRegularClass.isCompanion get() = status.isCompanion
-inline val FirRegularClass.isData get() = status.isData
-inline val FirRegularClass.isInline get() = status.isInline
-inline val FirRegularClass.isFun get() = status.isFun
 
 inline val FirMemberDeclaration.modality get() = status.modality
 inline val FirMemberDeclaration.isAbstract get() = status.modality == Modality.ABSTRACT
@@ -92,7 +86,6 @@ inline val FirMemberDeclaration.isConst: Boolean get() = status.isConst
 inline val FirMemberDeclaration.isLateInit: Boolean get() = status.isLateInit
 inline val FirMemberDeclaration.isFromSealedClass: Boolean get() = status.isFromSealedClass
 inline val FirMemberDeclaration.isFromEnumClass: Boolean get() = status.isFromEnumClass
-inline val FirMemberDeclaration.isFun: Boolean get() = status.isFun
 
 inline val FirFunction<*>.hasBody get() = body != null
 
@@ -122,6 +115,12 @@ fun FirRegularClassBuilder.addDeclarations(declarations: Collection<FirDeclarati
 }
 
 val FirTypeAlias.expandedConeType: ConeClassLikeType? get() = expandedTypeRef.coneTypeSafe()
+
+val FirClassLikeDeclaration<*>.classId
+    get() = when (this) {
+        is FirClass<*> -> symbol.classId
+        is FirTypeAlias -> symbol.classId
+    }
 
 val FirClass<*>.classId get() = symbol.classId
 
@@ -231,6 +230,8 @@ val FirQualifiedAccess.referredPropertySymbol: FirPropertySymbol?
         return reference.resolvedSymbol as? FirPropertySymbol
     }
 
+inline val FirDeclaration.isJava: Boolean
+    get() = origin == FirDeclarationOrigin.Java
 inline val FirDeclaration.isFromLibrary: Boolean
     get() = origin == FirDeclarationOrigin.Library
 inline val FirDeclaration.isSynthetic: Boolean

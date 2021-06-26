@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.idea.frontend.api.symbols.*
 import org.jetbrains.kotlin.idea.frontend.api.types.KtType
 import org.jetbrains.kotlin.lexer.KtKeywordToken
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.resolve.ForbiddenNamedArgumentsTarget
@@ -144,6 +145,14 @@ private object FirToKtConversionCreator {
             "firSymbolBuilder.classifierBuilder.buildClassLikeSymbol({0})",
             KtClassLikeSymbol::class.createType()
         ),
+        FirRegularClass::class to HLFunctionCallConversion(
+            "firSymbolBuilder.classifierBuilder.buildClassLikeSymbol({0}) as KtNamedClassOrObjectSymbol",
+            KtNamedClassOrObjectSymbol::class.createType(),
+            importsToAdd = listOf(
+                "org.jetbrains.kotlin.fir.declarations.FirRegularClass",
+                "org.jetbrains.kotlin.idea.frontend.api.symbols.KtNamedClassOrObjectSymbol"
+            )
+        ),
         FirExpression::class to HLFunctionCallConversion(
             "{0}.source!!.psi as KtExpression",
             KtExpression::class.createType(),
@@ -244,7 +253,8 @@ private object FirToKtConversionCreator {
         ForbiddenNamedArgumentsTarget::class,
         LanguageFeature::class,
         LanguageVersionSettings::class,
-        Variance::class
+        Variance::class,
+        FqName::class,
     )
 
     private val KType.kClass: KClass<*>
