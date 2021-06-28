@@ -34,6 +34,15 @@ private func testNameClash() throws {
     try assertTrue(object5 === KT43780Enum.Companion())
     let enumEntry : KT43780Enum = KT43780Enum.companion
     try assertEquals(actual: enumEntry.name, expected: "COMPANION")
+    try assertEquals(actual: KT43780Enum.otherEntry.name, expected: "OTHER_ENTRY")
+}
+
+// Reported as https://youtrack.jetbrains.com/issue/KT-47462
+private func testUnexposedCompanion() throws {
+    // Just trying to ensure that the classes are accessible:
+    try assertEquals(actual: 13, expected: ClassWithInternalCompanion().y)
+    try assertEquals(actual: 15, expected: ClassWithPrivateCompanion().y)
+    // and this doesn't make the companions accessible as well.
 }
 
 
@@ -44,5 +53,6 @@ class Kt43780Tests : SimpleTestProvider {
         test("testObject", testObject)
         test("testCompanionObject", testCompanionObject)
         test("testNameClash", testNameClash)
+        test("testUnexposedCompanion", testUnexposedCompanion)
     }
 }

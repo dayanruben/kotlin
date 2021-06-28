@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.gradle.targets.js.yarn
 
+import com.google.gson.Gson
 import org.gradle.api.Project
 import org.gradle.api.logging.Logger
 import org.gradle.internal.service.ServiceRegistry
@@ -17,8 +18,6 @@ import org.jetbrains.kotlin.gradle.targets.js.npm.resolved.KotlinCompilationNpmR
 import java.io.File
 
 class YarnWorkspaces : YarnBasics() {
-    override fun resolveProject(resolvedNpmProject: KotlinCompilationNpmResolution) = Unit
-
     override fun preparedFiles(nodeJs: NodeJsRootExtension): Collection<File> {
         return listOf(
             nodeJs
@@ -74,7 +73,6 @@ class YarnWorkspaces : YarnBasics() {
         nodeJs: NodeJsRootExtension,
         yarnHome: File,
         npmProjects: Collection<KotlinCompilationNpmResolution>,
-        skipExecution: Boolean,
         cliArgs: List<String>
     ) {
         val nodeJsWorldDir = nodeJs.rootPackageDir
@@ -88,7 +86,6 @@ class YarnWorkspaces : YarnBasics() {
             NpmApi.resolveOperationDescription("yarn"),
             cliArgs
         )
-        nodeJs.rootNodeModulesStateFile.writeText(System.currentTimeMillis().toString())
 
         yarnLockReadTransitiveDependencies(nodeJsWorldDir, npmProjects.flatMap { it.externalNpmDependencies })
     }

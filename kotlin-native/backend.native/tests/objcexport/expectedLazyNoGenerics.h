@@ -784,6 +784,7 @@ __attribute__((swift_name("KT43780Enum")))
 + (instancetype)alloc __attribute__((unavailable));
 + (instancetype)allocWithZone:(struct _NSZone *)zone __attribute__((unavailable));
 - (instancetype)initWithName:(NSString *)name ordinal:(int32_t)ordinal __attribute__((swift_name("init(name:ordinal:)"))) __attribute__((objc_designated_initializer)) __attribute__((unavailable));
+@property (class, readonly) KtKT43780Enum *otherEntry __attribute__((swift_name("otherEntry")));
 @property (class, readonly) KtKT43780Enum *companion __attribute__((swift_name("companion")));
 + (KtKotlinArray *)values __attribute__((swift_name("values()")));
 @end;
@@ -796,6 +797,22 @@ __attribute__((swift_name("KT43780Enum.Companion")))
 + (instancetype)companion __attribute__((swift_name("init()")));
 @property (class, readonly, getter=shared) KtKT43780EnumCompanion *shared __attribute__((swift_name("shared")));
 @property (readonly) int32_t x __attribute__((swift_name("x")));
+@end;
+
+__attribute__((objc_subclassing_restricted))
+__attribute__((swift_name("ClassWithInternalCompanion")))
+@interface KtClassWithInternalCompanion : KtBase
+- (instancetype)init __attribute__((swift_name("init()"))) __attribute__((objc_designated_initializer));
++ (instancetype)new __attribute__((availability(swift, unavailable, message="use object initializers instead")));
+@property (readonly) int32_t y __attribute__((swift_name("y")));
+@end;
+
+__attribute__((objc_subclassing_restricted))
+__attribute__((swift_name("ClassWithPrivateCompanion")))
+@interface KtClassWithPrivateCompanion : KtBase
+- (instancetype)init __attribute__((swift_name("init()"))) __attribute__((objc_designated_initializer));
++ (instancetype)new __attribute__((availability(swift, unavailable, message="use object initializers instead")));
+@property (readonly) int32_t y __attribute__((swift_name("y")));
 @end;
 
 __attribute__((swift_name("Host")))
