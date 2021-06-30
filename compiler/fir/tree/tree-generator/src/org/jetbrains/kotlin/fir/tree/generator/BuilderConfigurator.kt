@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.fir.tree.generator.util.traverseParents
 object BuilderConfigurator : AbstractBuilderConfigurator<FirTreeBuilder>(FirTreeBuilder) {
     fun configureBuilders() = with(firTreeBuilder) {
         val declarationBuilder by builder {
-            fields from declaration
+            fields from declaration without "symbol"
         }
 
         val annotationContainerBuilder by builder {
@@ -152,6 +152,10 @@ object BuilderConfigurator : AbstractBuilderConfigurator<FirTreeBuilder>(FirTree
             defaultNull("label")
         }
 
+        builder(errorExpression) {
+            defaultNull("expression")
+        }
+
         builder(errorLoop) {
             defaultNull("label")
         }
@@ -273,7 +277,7 @@ object BuilderConfigurator : AbstractBuilderConfigurator<FirTreeBuilder>(FirTree
         }
 
         builder(valueParameter, type = "FirDefaultSetterValueParameter") {
-            defaultNull("defaultValue", "initializer", "delegate", "receiverTypeRef", "delegateFieldSymbol", "getter", "setter")
+            defaultNull("defaultValue", "initializer", "delegate", "receiverTypeRef", "getter", "setter")
             defaultFalse("isCrossinline", "isNoinline", "isVararg", "isVar")
             defaultTrue("isVal")
         }
@@ -337,7 +341,6 @@ object BuilderConfigurator : AbstractBuilderConfigurator<FirTreeBuilder>(FirTree
         val elementsWithDefaultTypeRef = listOf(
             thisReceiverExpression,
             callableReferenceAccess,
-            anonymousObject,
             qualifiedAccessExpression,
             functionCall,
             anonymousFunction,

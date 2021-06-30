@@ -9,6 +9,9 @@ import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.backend.Fir2IrSignatureComposer
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.declarations.utils.classId
+import org.jetbrains.kotlin.fir.declarations.utils.isExpect
+import org.jetbrains.kotlin.fir.declarations.utils.visibility
 import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
 import org.jetbrains.kotlin.fir.visitors.FirVisitor
 import org.jetbrains.kotlin.ir.util.IdSignature
@@ -59,7 +62,7 @@ class FirBasedSignatureComposer(private val mangler: FirMangler) : Fir2IrSignatu
     override fun composeSignature(declaration: FirDeclaration, containingClass: ConeClassLikeLookupTag?): IdSignature? {
         if (declaration is FirAnonymousObject || declaration is FirAnonymousFunction) return null
         if (declaration is FirRegularClass && declaration.classId.isLocal) return null
-        if (declaration is FirCallableMemberDeclaration<*>) {
+        if (declaration is FirCallableMemberDeclaration) {
             if (declaration.visibility == Visibilities.Local) return null
             if (declaration.dispatchReceiverClassOrNull()?.classId?.isLocal == true || containingClass?.classId?.isLocal == true) return null
         }
@@ -84,7 +87,7 @@ class FirBasedSignatureComposer(private val mangler: FirMangler) : Fir2IrSignatu
                     classId.packageFqName.asString(), classId.relativeClassName.asString(), builder.hashId, builder.mask
                 )
             }
-            is FirCallableMemberDeclaration<*> -> {
+            is FirCallableMemberDeclaration -> {
                 if (declaration.visibility == Visibilities.Private) return null
                 val containingClassId = containingClass?.classId
 

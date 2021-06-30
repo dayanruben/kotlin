@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.fir.resolve.PersistentImplicitReceiverStack
 import org.jetbrains.kotlin.fir.resolve.SessionHolderImpl
 import org.jetbrains.kotlin.idea.fir.low.level.api.FirModuleResolveStateImpl
 import org.jetbrains.kotlin.idea.fir.low.level.api.api.DiagnosticCheckerFilter
-import org.jetbrains.kotlin.idea.fir.low.level.api.api.FirModuleResolveState
 import org.jetbrains.kotlin.idea.fir.low.level.api.api.getDiagnostics
 import org.jetbrains.kotlin.idea.fir.low.level.api.api.getOrBuildFirFile
 import org.jetbrains.kotlin.idea.fir.low.level.api.diagnostics.BeforeElementDiagnosticCollectionHandler
@@ -25,10 +24,8 @@ import org.jetbrains.kotlin.idea.fir.low.level.api.file.structure.ReanalyzableSt
 import org.jetbrains.kotlin.idea.fir.low.level.api.file.structure.RootStructureElement
 import org.jetbrains.kotlin.idea.fir.low.level.api.name
 import org.jetbrains.kotlin.idea.fir.low.level.api.resolveWithClearCaches
-import org.jetbrains.kotlin.idea.fir.low.level.api.sessions.FirIdeSession
 import org.jetbrains.kotlin.idea.fir.low.level.api.test.base.AbstractLowLevelApiSingleFileTest
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.model.TestModule
 import org.jetbrains.kotlin.test.services.AssertionsService
 import org.jetbrains.kotlin.test.services.TestModuleStructure
 import org.jetbrains.kotlin.test.services.TestServices
@@ -59,7 +56,7 @@ abstract class AbstractFirContextCollectionTest : AbstractLowLevelApiSingleFileT
 
     private fun FileStructureElement.getFirDeclaration(): FirDeclaration = when (this) {
         is NonReanalyzableDeclarationStructureElement -> fir
-        is ReanalyzableStructureElement<*, *> -> firSymbol.fir as FirDeclaration
+        is ReanalyzableStructureElement<*, *> -> firSymbol.fir
         is RootStructureElement -> firFile
     }
 

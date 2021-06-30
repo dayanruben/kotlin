@@ -4778,6 +4778,16 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/closures/kt4137.kt");
         }
 
+        @TestMetadata("kt47120.kt")
+        public void testKt47120() throws Exception {
+            runTest("compiler/testData/codegen/box/closures/kt47120.kt");
+        }
+
+        @TestMetadata("kt47120a.kt")
+        public void testKt47120a() throws Exception {
+            runTest("compiler/testData/codegen/box/closures/kt47120a.kt");
+        }
+
         @TestMetadata("kt5589.kt")
         public void testKt5589() throws Exception {
             runTest("compiler/testData/codegen/box/closures/kt5589.kt");
@@ -17872,6 +17882,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             @TestMetadata("kt45779.kt")
             public void testKt45779() throws Exception {
                 runTest("compiler/testData/codegen/box/invokedynamic/sam/kt45779.kt");
+            }
+
+            @TestMetadata("kt47510.kt")
+            public void testKt47510() throws Exception {
+                runTest("compiler/testData/codegen/box/invokedynamic/sam/kt47510.kt");
             }
 
             @TestMetadata("nullabilityAssertions.kt")

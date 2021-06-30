@@ -11,10 +11,12 @@ import org.jetbrains.kotlin.analyzer.ModuleSourceInfoBase
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirPsiDiagnostic
-import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.declarations.FirDeclaration
+import org.jetbrains.kotlin.fir.declarations.FirFile
+import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.realPsi
-import org.jetbrains.kotlin.fir.resolve.symbolProvider
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
+import org.jetbrains.kotlin.fir.resolve.symbolProvider
 import org.jetbrains.kotlin.idea.fir.low.level.api.annotations.InternalForInline
 import org.jetbrains.kotlin.idea.fir.low.level.api.api.DiagnosticCheckerFilter
 import org.jetbrains.kotlin.idea.fir.low.level.api.api.FirModuleResolveState
@@ -31,8 +33,10 @@ import org.jetbrains.kotlin.idea.fir.low.level.api.lazy.resolve.lazyResolveDecla
 import org.jetbrains.kotlin.idea.fir.low.level.api.providers.firIdeProvider
 import org.jetbrains.kotlin.idea.fir.low.level.api.sessions.FirIdeSessionProvider
 import org.jetbrains.kotlin.idea.fir.low.level.api.sessions.FirIdeSourcesSession
-import org.jetbrains.kotlin.idea.fir.low.level.api.util.*
+import org.jetbrains.kotlin.idea.fir.low.level.api.util.FirDeclarationForCompiledElementSearcher
+import org.jetbrains.kotlin.idea.fir.low.level.api.util.FirElementFinder
 import org.jetbrains.kotlin.idea.fir.low.level.api.util.findSourceNonLocalFirDeclaration
+import org.jetbrains.kotlin.idea.fir.low.level.api.util.getElementTextInContext
 import org.jetbrains.kotlin.psi.*
 
 internal class FirModuleResolveStateImpl(
@@ -94,7 +98,6 @@ internal class FirModuleResolveStateImpl(
         require(ktDeclaration.getModuleInfo() is ModuleSourceInfoBase) {
             "Declaration should have ModuleSourceInfo, instead it had ${ktDeclaration.getModuleInfo()}"
         }
-
         val nonLocalNamedDeclaration = ktDeclaration.getNonLocalContainingOrThisDeclaration()
             ?: error("Declaration should have non-local container${ktDeclaration.getElementTextInContext()}")
 

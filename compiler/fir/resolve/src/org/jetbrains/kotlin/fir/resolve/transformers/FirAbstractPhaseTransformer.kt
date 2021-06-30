@@ -31,8 +31,7 @@ abstract class FirAbstractPhaseTransformer<D>(
             file.replaceResolvePhase(transformerPhase)
         }
 
-        @Suppress("UNCHECKED_CAST")
-        return super.transformFile(file, data) as FirFile
+        return super.transformFile(file, data)
     }
 
     override fun transformDeclaration(declaration: FirDeclaration, data: D): FirDeclaration {

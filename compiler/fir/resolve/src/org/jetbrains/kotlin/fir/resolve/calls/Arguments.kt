@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.fir.resolve.calls
 
 import org.jetbrains.kotlin.fir.FirSession
-import org.jetbrains.kotlin.fir.declarations.FirAnonymousFunction
 import org.jetbrains.kotlin.fir.declarations.FirFunction
 import org.jetbrains.kotlin.fir.declarations.FirValueParameter
 import org.jetbrains.kotlin.fir.expressions.*
@@ -107,7 +106,7 @@ fun Candidate.resolveArgumentExpression(
             else
                 preprocessCallableReference(argument, expectedType, context)
         // TODO:!
-        is FirAnonymousFunction -> preprocessLambdaArgument(csBuilder, argument, expectedType, expectedTypeRef, context, sink)
+        is FirAnonymousFunctionExpression -> preprocessLambdaArgument(csBuilder, argument, expectedType, expectedTypeRef, context, sink)
         // TODO:!
         //TODO: Collection literal
         is FirWrappedArgumentExpression -> resolveArgumentExpression(
@@ -487,7 +486,7 @@ private fun Candidate.getExpectedTypeWithSAMConversion(
 ): ConeKotlinType? {
     if (candidateExpectedType.isBuiltinFunctionalType(session)) return null
     // TODO: if (!callComponents.languageVersionSettings.supportsFeature(LanguageFeature.SamConversionPerArgument)) return null
-    val firFunction = symbol.fir as? FirFunction<*> ?: return null
+    val firFunction = symbol.fir as? FirFunction ?: return null
     if (!context.bodyResolveComponents.samResolver.shouldRunSamConversionForFunction(firFunction)) return null
 
     // TODO: resolvedCall.registerArgumentWithSamConversion(argument, SamConversionDescription(convertedTypeByOriginal, convertedTypeByCandidate!!))
@@ -508,7 +507,7 @@ fun FirExpression.isFunctional(
     expectedFunctionType: ConeKotlinType?,
 ): Boolean {
     when (unwrapArgument()) {
-        is FirAnonymousFunction, is FirCallableReferenceAccess -> return true
+        is FirAnonymousFunctionExpression, is FirCallableReferenceAccess -> return true
         else -> {
             // Either a functional type or a subtype of a class that has a contributed `invoke`.
             val coneType = typeRef.coneTypeSafe<ConeKotlinType>() ?: return false

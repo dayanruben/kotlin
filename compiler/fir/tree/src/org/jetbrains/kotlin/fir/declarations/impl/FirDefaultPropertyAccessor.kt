@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.builder.buildDefaultSetterValueParameter
 import org.jetbrains.kotlin.fir.expressions.FirBlock
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertyAccessorSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirValueParameterSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirVariableSymbol
 import org.jetbrains.kotlin.fir.types.FirTypeRef
 import org.jetbrains.kotlin.fir.types.impl.FirImplicitUnitTypeRef
@@ -41,14 +42,14 @@ abstract class FirDefaultPropertyAccessor(
     origin,
     FirDeclarationAttributes(),
     propertyTypeRef,
-    valueParameters,
-    body = null,
     status = if (effectiveVisibility == null)
         FirDeclarationStatusImpl(visibility, Modality.FINAL)
     else
         FirResolvedDeclarationStatusImpl(visibility, Modality.FINAL, effectiveVisibility),
     containerSource = null,
     dispatchReceiverType = null,
+    valueParameters,
+    body = null,
     contractDescription = FirEmptyContractDescription,
     symbol,
     isGetter,
@@ -120,7 +121,7 @@ class FirDefaultPropertySetter(
             this@builder.moduleData = moduleData
             this@builder.origin = origin
             this@builder.returnTypeRef = propertyTypeRef
-            this@builder.symbol = FirVariableSymbol(CallableId(FqName.ROOT, Name.special("<default-setter-parameter>")))
+            this@builder.symbol = FirValueParameterSymbol(Name.special("<default-setter-parameter>"))
         }
     ),
     isGetter = false,

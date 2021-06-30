@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.checkers.utils.TypeOfCall
 import org.jetbrains.kotlin.diagnostics.rendering.Renderers
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.analysis.diagnostics.*
-import org.jetbrains.kotlin.fir.declarations.FirCallableMemberDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.fir.declarations.FirFunction
 import org.jetbrains.kotlin.fir.declarations.FirProperty
@@ -22,7 +21,7 @@ import org.jetbrains.kotlin.fir.expressions.FirFunctionCall
 import org.jetbrains.kotlin.fir.expressions.FirSafeCallExpression
 import org.jetbrains.kotlin.fir.references.FirNamedReference
 import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
-import org.jetbrains.kotlin.fir.symbols.AbstractFirBasedSymbol
+import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassLikeSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirFunctionSymbol
@@ -31,7 +30,6 @@ import org.jetbrains.kotlin.fir.types.FirTypeRef
 import org.jetbrains.kotlin.fir.types.coneTypeSafe
 import org.jetbrains.kotlin.fir.visitors.FirDefaultVisitorVoid
 import org.jetbrains.kotlin.name.FqNameUnsafe
-import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.resolve.AnalyzingUtils
 import org.jetbrains.kotlin.test.directives.AdditionalFilesDirectives
@@ -280,7 +278,7 @@ class FirDiagnosticsHandler(testServices: TestServices) : FirAnalysisHandler(tes
 
     private fun getTypeOfCall(
         reference: FirNamedReference,
-        resolvedSymbol: AbstractFirBasedSymbol<*>?
+        resolvedSymbol: FirBasedSymbol<*>?
     ): String {
         if (resolvedSymbol == null) return TypeOfCall.UNRESOLVED.nameToRender
 
@@ -294,20 +292,18 @@ class FirDiagnosticsHandler(testServices: TestServices) : FirAnalysisHandler(tes
             is FirProperty -> {
                 TypeOfCall.PROPERTY_GETTER.nameToRender
             }
-            is FirFunction<*> -> buildString {
-                if (fir is FirCallableMemberDeclaration<*>) {
-                    if (fir.status.isInline) append("inline ")
-                    if (fir.status.isInfix) append("infix ")
-                    if (fir.status.isOperator) append("operator ")
-                    if (fir.receiverTypeRef != null) append("extension ")
-                }
+            is FirFunction -> buildString {
+                if (fir.status.isInline) append("inline ")
+                if (fir.status.isInfix) append("infix ")
+                if (fir.status.isOperator) append("operator ")
+                if (fir.receiverTypeRef != null) append("extension ")
                 append(TypeOfCall.FUNCTION.nameToRender)
             }
             else -> TypeOfCall.OTHER.nameToRender
         }
     }
 
-    private fun AbstractFirBasedSymbol<*>.fqNameUnsafe(): FqNameUnsafe? = when (this) {
+    private fun FirBasedSymbol<*>.fqNameUnsafe(): FqNameUnsafe? = when (this) {
         is FirClassLikeSymbol<*> -> classId.asSingleFqName().toUnsafe()
         is FirCallableSymbol<*> -> callableId.asFqNameForDebugInfo().toUnsafe()
         else -> null

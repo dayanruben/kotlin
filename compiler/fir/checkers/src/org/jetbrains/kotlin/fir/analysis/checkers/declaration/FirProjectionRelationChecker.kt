@@ -32,7 +32,7 @@ object FirProjectionRelationChecker : FirBasicDeclarationChecker() {
         }
 
         when (declaration) {
-            is FirClass<*> -> {
+            is FirClass -> {
                 for (it in declaration.superTypeRefs) {
                     checkTypeRef(it, context, reporter)
                 }

@@ -6,9 +6,11 @@
 package org.jetbrains.kotlin.fir.resolve.calls
 
 import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.fir.FirSymbolOwner
 import org.jetbrains.kotlin.fir.FirVisibilityChecker
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.declarations.utils.isInfix
+import org.jetbrains.kotlin.fir.declarations.utils.isOperator
+import org.jetbrains.kotlin.fir.declarations.utils.modality
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.references.FirSuperReference
 import org.jetbrains.kotlin.fir.resolve.inference.*
@@ -216,12 +218,12 @@ internal object CheckVisibility : CheckerStage() {
         }
     }
 
-    private suspend fun <T> checkVisibility(
+    private suspend fun <T : FirMemberDeclaration> checkVisibility(
         declaration: T,
         sink: CheckerSink,
         candidate: Candidate,
         visibilityChecker: FirVisibilityChecker
-    ): Boolean where T : FirMemberDeclaration, T : FirSymbolOwner<*> {
+    ): Boolean {
         if (!visibilityChecker.isVisible(declaration, candidate)) {
             sink.yieldDiagnostic(HiddenCandidate)
             return false

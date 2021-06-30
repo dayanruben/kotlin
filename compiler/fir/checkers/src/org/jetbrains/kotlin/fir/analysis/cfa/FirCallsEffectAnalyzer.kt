@@ -32,7 +32,6 @@ import org.jetbrains.kotlin.fir.references.FirThisReference
 import org.jetbrains.kotlin.fir.resolve.dfa.cfg.*
 import org.jetbrains.kotlin.fir.resolve.inference.isBuiltinFunctionalType
 import org.jetbrains.kotlin.fir.resolve.isInvoke
-import org.jetbrains.kotlin.fir.symbols.AbstractFirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirFunctionSymbol
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
@@ -46,11 +45,11 @@ object FirCallsEffectAnalyzer : FirControlFlowChecker() {
 
     override fun analyze(graph: ControlFlowGraph, reporter: DiagnosticReporter, context: CheckerContext) {
         val session = context.session
-        val function = (graph.declaration as? FirFunction<*>) ?: return
+        val function = (graph.declaration as? FirFunction) ?: return
         if (function !is FirContractDescriptionOwner) return
         if (function.contractDescription.coneEffects?.any { it is ConeCallsEffectDeclaration } != true) return
 
-        val functionalTypeEffects = mutableMapOf<AbstractFirBasedSymbol<*>, ConeCallsEffectDeclaration>()
+        val functionalTypeEffects = mutableMapOf<FirBasedSymbol<*>, ConeCallsEffectDeclaration>()
 
         function.valueParameters.forEachIndexed { index, parameter ->
             if (parameter.returnTypeRef.isFunctionalTypeRef(session)) {
@@ -66,7 +65,7 @@ object FirCallsEffectAnalyzer : FirControlFlowChecker() {
 
         if (functionalTypeEffects.isEmpty()) return
 
-        val leakedSymbols = mutableMapOf<AbstractFirBasedSymbol<*>, MutableList<FirSourceElement>>()
+        val leakedSymbols = mutableMapOf<FirBasedSymbol<*>, MutableList<FirSourceElement>>()
         graph.traverse(
             TraverseDirection.Forward,
             CapturedLambdaFinder(function),
@@ -102,7 +101,7 @@ object FirCallsEffectAnalyzer : FirControlFlowChecker() {
 
     private fun investigate(
         info: LambdaInvocationInfo,
-        symbol: AbstractFirBasedSymbol<*>,
+        symbol: FirBasedSymbol<*>,
         requiredRange: EventOccurrencesRange,
         function: FirContractDescriptionOwner,
         reporter: DiagnosticReporter,
@@ -124,8 +123,8 @@ object FirCallsEffectAnalyzer : FirControlFlowChecker() {
     }
 
     private class IllegalScopeContext(
-        private val functionalTypeSymbols: Set<AbstractFirBasedSymbol<*>>,
-        private val leakedSymbols: MutableMap<AbstractFirBasedSymbol<*>, MutableList<FirSourceElement>>,
+        private val functionalTypeSymbols: Set<FirBasedSymbol<*>>,
+        private val leakedSymbols: MutableMap<FirBasedSymbol<*>, MutableList<FirSourceElement>>,
     ) {
         private var scopeDepth: Int = 0
         private var illegalScopeDepth: Int? = null
@@ -154,7 +153,7 @@ object FirCallsEffectAnalyzer : FirControlFlowChecker() {
         }
     }
 
-    private class CapturedLambdaFinder(val rootFunction: FirFunction<*>) : ControlFlowGraphVisitor<Unit, IllegalScopeContext>() {
+    private class CapturedLambdaFinder(val rootFunction: FirFunction) : ControlFlowGraphVisitor<Unit, IllegalScopeContext>() {
 
         override fun visitNode(node: CFGNode<*>, data: IllegalScopeContext) {}
 
@@ -237,7 +236,7 @@ object FirCallsEffectAnalyzer : FirControlFlowChecker() {
     }
 
     private class InvocationDataCollector(
-        val functionalTypeSymbols: Set<AbstractFirBasedSymbol<*>>
+        val functionalTypeSymbols: Set<FirBasedSymbol<*>>
     ) : ControlFlowGraphVisitor<PathAwareLambdaInvocationInfo, Collection<Pair<EdgeLabel, PathAwareLambdaInvocationInfo>>>() {
 
         override fun visitNode(
@@ -304,7 +303,7 @@ object FirCallsEffectAnalyzer : FirControlFlowChecker() {
         return this?.coneTypeSafe<ConeKotlinType>()?.isBuiltinFunctionalType(session) == true
     }
 
-    private val FirFunction<*>.contractDescription: FirContractDescription?
+    private val FirFunction.contractDescription: FirContractDescription?
         get() = (this as? FirContractDescriptionOwner)?.contractDescription
 
     private fun FirContractDescription?.getParameterCallsEffectDeclaration(index: Int): ConeCallsEffectDeclaration? {
@@ -328,13 +327,13 @@ object FirCallsEffectAnalyzer : FirControlFlowChecker() {
         return getParameterCallsEffectDeclaration(index)?.kind
     }
 
-    private fun FirFunction<*>.isInPlaceLambda(): Boolean {
+    private fun FirFunction.isInPlaceLambda(): Boolean {
         return this is FirAnonymousFunction && this.isLambda && this.invocationKind != null
     }
 
     private fun FirExpression?.toQualifiedReference(): FirReference? = (this as? FirQualifiedAccess)?.calleeReference
 
-    private fun referenceToSymbol(reference: FirReference?): AbstractFirBasedSymbol<*>? = when (reference) {
+    private fun referenceToSymbol(reference: FirReference?): FirBasedSymbol<*>? = when (reference) {
         is FirResolvedNamedReference -> reference.resolvedSymbol
         is FirThisReference -> reference.boundSymbol
         else -> null

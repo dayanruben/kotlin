@@ -121,6 +121,10 @@ sealed class KtFirDiagnostic<PSI: PsiElement> : KtDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = DelegationInInterface::class
     }
 
+    abstract class DelegationNotToInterface : KtFirDiagnostic<PsiElement>() {
+        override val diagnosticClass get() = DelegationNotToInterface::class
+    }
+
     abstract class NestedClassNotAllowed : KtFirDiagnostic<KtNamedDeclaration>() {
         override val diagnosticClass get() = NestedClassNotAllowed::class
         abstract val declaration: String
@@ -216,6 +220,16 @@ sealed class KtFirDiagnostic<PSI: PsiElement> : KtDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = CreatingAnInstanceOfAbstractClass::class
     }
 
+    abstract class FunctionCallExpected : KtFirDiagnostic<PsiElement>() {
+        override val diagnosticClass get() = FunctionCallExpected::class
+        abstract val functionName: String
+        abstract val hasValueParameters: Boolean
+    }
+
+    abstract class IllegalSelector : KtFirDiagnostic<PsiElement>() {
+        override val diagnosticClass get() = IllegalSelector::class
+    }
+
     abstract class SuperIsNotAnExpression : KtFirDiagnostic<PsiElement>() {
         override val diagnosticClass get() = SuperIsNotAnExpression::class
     }
@@ -266,6 +280,11 @@ sealed class KtFirDiagnostic<PSI: PsiElement> : KtDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = FinalSupertype::class
     }
 
+    abstract class ClassCannotBeExtendedDirectly : KtFirDiagnostic<KtTypeReference>() {
+        override val diagnosticClass get() = ClassCannotBeExtendedDirectly::class
+        abstract val classSymbol: KtClassLikeSymbol
+    }
+
     abstract class SupertypeIsExtensionFunctionType : KtFirDiagnostic<KtTypeReference>() {
         override val diagnosticClass get() = SupertypeIsExtensionFunctionType::class
     }
@@ -305,6 +324,29 @@ sealed class KtFirDiagnostic<PSI: PsiElement> : KtDiagnosticWithPsi<PSI> {
 
     abstract class CyclicInheritanceHierarchy : KtFirDiagnostic<PsiElement>() {
         override val diagnosticClass get() = CyclicInheritanceHierarchy::class
+    }
+
+    abstract class ExpandedTypeCannotBeInherited : KtFirDiagnostic<KtTypeReference>() {
+        override val diagnosticClass get() = ExpandedTypeCannotBeInherited::class
+        abstract val type: KtType
+    }
+
+    abstract class ProjectionInImmediateArgumentToSupertype : KtFirDiagnostic<KtModifierListOwner>() {
+        override val diagnosticClass get() = ProjectionInImmediateArgumentToSupertype::class
+    }
+
+    abstract class InconsistentTypeParameterValues : KtFirDiagnostic<KtClass>() {
+        override val diagnosticClass get() = InconsistentTypeParameterValues::class
+        abstract val typeParameter: KtTypeParameterSymbol
+        abstract val type: KtClassLikeSymbol
+        abstract val bounds: List<KtType>
+    }
+
+    abstract class InconsistentTypeParameterBounds : KtFirDiagnostic<PsiElement>() {
+        override val diagnosticClass get() = InconsistentTypeParameterBounds::class
+        abstract val typeParameter: KtTypeParameterSymbol
+        abstract val type: KtClassLikeSymbol
+        abstract val bounds: List<KtType>
     }
 
     abstract class ConstructorInObject : KtFirDiagnostic<KtDeclaration>() {
@@ -1755,6 +1797,11 @@ sealed class KtFirDiagnostic<PSI: PsiElement> : KtDiagnosticWithPsi<PSI> {
 
     abstract class RecursiveTypealiasExpansion : KtFirDiagnostic<KtElement>() {
         override val diagnosticClass get() = RecursiveTypealiasExpansion::class
+    }
+
+    abstract class TypealiasShouldExpandToClass : KtFirDiagnostic<KtElement>() {
+        override val diagnosticClass get() = TypealiasShouldExpandToClass::class
+        abstract val expandedType: KtType
     }
 
     abstract class RedundantVisibilityModifier : KtFirDiagnostic<KtModifierListOwner>() {

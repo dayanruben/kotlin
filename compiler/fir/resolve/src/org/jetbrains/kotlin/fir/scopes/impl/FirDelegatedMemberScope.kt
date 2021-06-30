@@ -9,25 +9,30 @@ import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.declarations.utils.modality
+import org.jetbrains.kotlin.fir.declarations.utils.visibility
 import org.jetbrains.kotlin.fir.isIntersectionOverride
 import org.jetbrains.kotlin.fir.isSubstitutionOverride
 import org.jetbrains.kotlin.fir.originalForSubstitutionOverride
 import org.jetbrains.kotlin.fir.resolve.defaultType
 import org.jetbrains.kotlin.fir.scopes.*
 import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
-import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.fir.symbols.impl.*
+import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirVariableSymbol
 import org.jetbrains.kotlin.fir.types.ConeClassLikeType
 import org.jetbrains.kotlin.fir.types.ConeFlexibleType
 import org.jetbrains.kotlin.fir.types.coneType
 import org.jetbrains.kotlin.fir.types.isMarkedNullable
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.StandardClassIds
 
 class FirDelegatedMemberScope(
     private val useSiteScope: FirTypeScope,
     private val session: FirSession,
-    private val containingClass: FirClass<*>,
+    private val containingClass: FirClass,
     private val delegateField: FirField,
     private val declaredMemberScope: FirScope,
 ) : FirTypeScope() {
@@ -138,7 +143,7 @@ class FirDelegatedMemberScope(
         noinline processor: (D, FirTypeScope) -> ProcessorAction,
         processDirectOverriddenCallablesWithBaseScope: FirTypeScope.(D, ((D, FirTypeScope) -> ProcessorAction)) -> ProcessorAction,
     ): ProcessorAction {
-        val wrappedData = (symbol.fir as? FirCallableMemberDeclaration<*>)?.delegatedWrapperData
+        val wrappedData = (symbol.fir as? FirCallableMemberDeclaration)?.delegatedWrapperData
         return when {
             wrappedData == null || wrappedData.containingClass != containingClass.symbol.toLookupTag() -> {
                 useSiteScope.processDirectOverriddenCallablesWithBaseScope(symbol, processor)
@@ -157,19 +162,19 @@ class FirDelegatedMemberScope(
 }
 
 private object DelegatedWrapperDataKey : FirDeclarationDataKey()
-class DelegatedWrapperData<D : FirCallableDeclaration<*>>(
+class DelegatedWrapperData<D : FirCallableDeclaration>(
     val wrapped: D,
     val containingClass: ConeClassLikeLookupTag,
     val delegateField: FirField,
 )
-var <D : FirCallableDeclaration<*>>
+var <D : FirCallableDeclaration>
         D.delegatedWrapperData: DelegatedWrapperData<D>? by FirDeclarationDataRegistry.data(DelegatedWrapperDataKey)
 
-inline fun <reified S : FirCallableSymbol<D>, reified D : FirCallableMemberDeclaration<D>> S.unwrapDelegateTarget(
+inline fun <reified S : FirCallableSymbol<D>, reified D : FirCallableMemberDeclaration> S.unwrapDelegateTarget(
     subClassLookupTag: ConeClassLikeLookupTag,
     noinline directOverridden: S.() -> List<S>,
     firField: FirField,
-    firSubClass: FirClass<*>,
+    firSubClass: FirClass,
 ): D? {
     val unwrappedIntersectionSymbol = this.unwrapIntersectionOverride(directOverridden) ?: return null
 

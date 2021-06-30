@@ -16,8 +16,9 @@ import org.jetbrains.kotlin.idea.fir.low.level.api.api.FirDeclarationDesignation
 import org.jetbrains.kotlin.idea.fir.low.level.api.lazy.resolve.FirLazyBodiesCalculator
 import org.jetbrains.kotlin.idea.fir.low.level.api.transformers.FirLazyTransformerForIDE.Companion.isResolvedForAllDeclarations
 import org.jetbrains.kotlin.idea.fir.low.level.api.transformers.FirLazyTransformerForIDE.Companion.updateResolvedPhaseForDeclarationAndChildren
-import org.jetbrains.kotlin.idea.fir.low.level.api.util.*
+import org.jetbrains.kotlin.idea.fir.low.level.api.util.ensureDesignation
 import org.jetbrains.kotlin.idea.fir.low.level.api.util.ensurePhase
+import org.jetbrains.kotlin.idea.fir.low.level.api.util.isTargetCallableDeclarationAndInPhase
 
 /**
  * Transform designation into CONTRACTS declaration. Affects only for target declaration and it's children
@@ -32,7 +33,7 @@ internal class FirDesignatedContractsResolveTransformerForIDE(
     private val ideDeclarationTransformer = IDEDeclarationTransformer(designation)
 
     override val declarationsTransformer: FirDeclarationsResolveTransformer = object : FirDeclarationsContractResolveTransformer(this) {
-        override fun transformDeclarationContent(firClass: FirClass<*>, data: ResolutionMode) {
+        override fun transformDeclarationContent(firClass: FirClass, data: ResolutionMode) {
             ideDeclarationTransformer.transformDeclarationContent(this, firClass, data) {
                 super.transformDeclarationContent(firClass, data)
                 firClass
@@ -74,7 +75,7 @@ internal class FirDesignatedContractsResolveTransformerForIDE(
                 declaration.getter?.ensurePhase(FirResolvePhase.CONTRACTS)
                 declaration.setter?.ensurePhase(FirResolvePhase.CONTRACTS)
             }
-            is FirClass<*>, is FirTypeAlias, is FirEnumEntry, is FirField -> Unit
+            is FirClass, is FirTypeAlias, is FirEnumEntry, is FirField -> Unit
             else -> error("Unexpected type: ${declaration::class.simpleName}")
         }
     }

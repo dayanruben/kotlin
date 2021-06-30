@@ -7,7 +7,7 @@ package org.jetbrains.kotlin.idea.frontend.api.fir.utils
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.FirCallableDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirRegularClass
-import org.jetbrains.kotlin.fir.declarations.primaryConstructor
+import org.jetbrains.kotlin.fir.declarations.utils.primaryConstructor
 import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
 import org.jetbrains.kotlin.fir.expressions.FirConstExpression
 import org.jetbrains.kotlin.fir.expressions.FirExpression
@@ -30,7 +30,7 @@ internal fun FirNamedReference.getReferencedElementType(): ConeKotlinType {
         is FirErrorNamedReference -> FirReferenceResolveHelper.getFirSymbolsByErrorNamedReference(this)
         else -> error("Unexpected ${this::class}")
     }
-    val firCallableDeclaration = symbols.singleOrNull()?.fir as? FirCallableDeclaration<*>
+    val firCallableDeclaration = symbols.singleOrNull()?.fir as? FirCallableDeclaration
     return firCallableDeclaration?.returnTypeRef?.coneType
         ?: ConeClassErrorType(ConeUnresolvedNameError(name))
 }

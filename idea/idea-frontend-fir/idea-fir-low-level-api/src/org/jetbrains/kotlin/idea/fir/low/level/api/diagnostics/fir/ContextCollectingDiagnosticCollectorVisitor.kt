@@ -8,7 +8,10 @@ package org.jetbrains.kotlin.idea.fir.low.level.api.diagnostics.fir
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.analysis.checkers.context.PersistentCheckerContext
 import org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollectorVisitor
-import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.declarations.FirCallableDeclaration
+import org.jetbrains.kotlin.fir.declarations.FirClassLikeDeclaration
+import org.jetbrains.kotlin.fir.declarations.FirDeclaration
+import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.fir.renderWithType
 import org.jetbrains.kotlin.fir.resolve.SessionHolder
 import org.jetbrains.kotlin.idea.fir.low.level.api.ContextByDesignationCollector
@@ -55,8 +58,8 @@ internal object PersistenceContextCollector {
         declaration: FirDeclaration,
     ): PersistentCheckerContext {
         val isLocal = when (declaration) {
-            is FirClassLikeDeclaration<*> -> declaration.symbol.classId.isLocal
-            is FirCallableDeclaration<*> -> declaration.symbol.callableId.isLocal
+            is FirClassLikeDeclaration -> declaration.symbol.classId.isLocal
+            is FirCallableDeclaration -> declaration.symbol.callableId.isLocal
             else -> error("Unsupported declaration ${declaration.renderWithType()}")
         }
         require(!isLocal) {

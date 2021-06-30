@@ -6822,6 +6822,16 @@ public class IrBoxJsES6TestGenerated extends AbstractIrBoxJsES6Test {
             KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("js/js.translator/testData/box/propertyAccess"), Pattern.compile("^([^_](.+))\\.kt$"), null, TargetBackend.JS_IR_ES6, true);
         }
 
+        @TestMetadata("booleanInExternals.kt")
+        public void testBooleanInExternals() throws Exception {
+            runTest("js/js.translator/testData/box/propertyAccess/booleanInExternals.kt");
+        }
+
+        @TestMetadata("booleanInExternalsWithDiagnostic.kt")
+        public void testBooleanInExternalsWithDiagnostic() throws Exception {
+            runTest("js/js.translator/testData/box/propertyAccess/booleanInExternalsWithDiagnostic.kt");
+        }
+
         @TestMetadata("classUsesPackageProperties.kt")
         public void testClassUsesPackageProperties() throws Exception {
             runTest("js/js.translator/testData/box/propertyAccess/classUsesPackageProperties.kt");

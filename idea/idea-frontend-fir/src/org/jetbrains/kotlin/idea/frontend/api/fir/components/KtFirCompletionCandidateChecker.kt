@@ -5,7 +5,10 @@
 
 package org.jetbrains.kotlin.idea.frontend.api.fir.components
 
-import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.declarations.FirCallableDeclaration
+import org.jetbrains.kotlin.fir.declarations.FirFile
+import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
+import org.jetbrains.kotlin.fir.declarations.FirVariable
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.resolve.calls.ImplicitReceiverValue
 import org.jetbrains.kotlin.fir.resolve.inference.receiverType
@@ -17,13 +20,13 @@ import org.jetbrains.kotlin.idea.fir.low.level.api.resolver.ResolutionParameters
 import org.jetbrains.kotlin.idea.fir.low.level.api.resolver.SingleCandidateResolutionMode
 import org.jetbrains.kotlin.idea.fir.low.level.api.resolver.SingleCandidateResolver
 import org.jetbrains.kotlin.idea.fir.low.level.api.util.getElementTextInContext
-import org.jetbrains.kotlin.idea.frontend.api.tokens.ValidityToken
 import org.jetbrains.kotlin.idea.frontend.api.components.KtCompletionCandidateChecker
 import org.jetbrains.kotlin.idea.frontend.api.components.KtExtensionApplicabilityResult
 import org.jetbrains.kotlin.idea.frontend.api.fir.KtFirAnalysisSession
 import org.jetbrains.kotlin.idea.frontend.api.fir.symbols.KtFirSymbol
 import org.jetbrains.kotlin.idea.frontend.api.fir.utils.weakRef
 import org.jetbrains.kotlin.idea.frontend.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.idea.frontend.api.tokens.ValidityToken
 import org.jetbrains.kotlin.idea.frontend.api.withValidityAssertion
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
@@ -45,13 +48,13 @@ internal class KtFirCompletionCandidateChecker(
         return firSymbolForCandidate.firRef.withFirWithPossibleResolveInside(
             phase = FirResolvePhase.IMPLICIT_TYPES_BODY_RESOLVE
         ) { declaration ->
-            check(declaration is FirCallableDeclaration<*>)
+            check(declaration is FirCallableDeclaration)
             checkExtension(declaration, originalFile, nameExpression, possibleExplicitReceiver)
         }
     }
 
     private fun checkExtension(
-        candidateSymbol: FirCallableDeclaration<*>,
+        candidateSymbol: FirCallableDeclaration,
         originalFile: KtFile,
         nameExpression: KtSimpleNameExpression,
         possibleExplicitReceiver: KtExpression?,
@@ -69,7 +72,7 @@ internal class KtFirCompletionCandidateChecker(
             )
             resolver.resolveSingleCandidate(resolutionParameters)?.let {
                 return when {
-                    candidateSymbol is FirVariable<*> && candidateSymbol.returnTypeRef.coneType.receiverType(rootModuleSession) != null -> {
+                    candidateSymbol is FirVariable && candidateSymbol.returnTypeRef.coneType.receiverType(rootModuleSession) != null -> {
                         KtExtensionApplicabilityResult.ApplicableAsFunctionalVariableCall
                     }
                     else -> {

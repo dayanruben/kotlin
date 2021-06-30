@@ -323,10 +323,10 @@ if (!buildProperties.inJpsBuildIdeaSync) {
 }
 
 void kotlinIde(String imlPath) {
-    File imlFile = new File("kotlin-ide/kotlin/${imlPath}")
-    imlFile = imlFile.exists() ? imlFile : new File("kotlin-ide/${imlPath}")
-    imlFile = imlFile.exists() ? imlFile : new File("kotlin-ide/intellij/community/${imlPath}")
-    imlFile = imlFile.exists() ? imlFile : new File("kotlin-ide/intellij/${imlPath}")
+    File imlFile = new File("${rootDir}/kotlin-ide/kotlin/${imlPath}")
+    imlFile = imlFile.exists() ? imlFile : new File("${rootDir}/kotlin-ide/${imlPath}")
+    imlFile = imlFile.exists() ? imlFile : new File("${rootDir}/kotlin-ide/intellij/community/${imlPath}")
+    imlFile = imlFile.exists() ? imlFile : new File("${rootDir}/kotlin-ide/intellij/${imlPath}")
     assert imlFile.exists()
     String fileName = imlFile.name
     String projectName = ":kotlin-ide.${fileName.substring(0, fileName.length() - ".iml".length())}"
@@ -400,6 +400,7 @@ if (attachedIntellijVersion != null) {
     kotlinIde "tests-common/kotlin.tests-common.iml"
     kotlinIde "uast/uast-kotlin-base/kotlin.uast.uast-kotlin-base.iml"
     kotlinIde "uast/uast-kotlin-idea-base/kotlin.uast.uast-kotlin-idea-base.iml"
+    kotlinIde "uast/uast-kotlin-idea-fir/kotlin.uast.uast-kotlin-idea-fir.iml"
     kotlinIde "uast/uast-kotlin-idea/kotlin.uast.uast-kotlin-idea.iml"
     kotlinIde "uast/uast-kotlin/kotlin.uast.uast-kotlin.iml"
 }

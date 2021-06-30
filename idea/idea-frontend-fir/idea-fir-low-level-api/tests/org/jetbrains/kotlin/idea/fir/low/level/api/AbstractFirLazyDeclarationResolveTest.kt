@@ -5,8 +5,11 @@
 
 package org.jetbrains.kotlin.idea.fir.low.level.api
 
-import org.jetbrains.kotlin.fir.*
+import org.jetbrains.kotlin.fir.FirElement
+import org.jetbrains.kotlin.fir.FirRenderer
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.realPsi
+import org.jetbrains.kotlin.fir.render
 import org.jetbrains.kotlin.fir.visitors.FirVisitorVoid
 import org.jetbrains.kotlin.idea.fir.low.level.api.api.withFirDeclaration
 import org.jetbrains.kotlin.idea.fir.low.level.api.lazy.resolve.ResolveType
@@ -73,8 +76,8 @@ abstract class AbstractFirLazyDeclarationResolveTest : AbstractLowLevelApiSingle
                 when (resolveType) {
                     ResolveType.CallableReturnType,
                     ResolveType.CallableBodyResolve,
-                    ResolveType.CallableContracts -> if (declarationToResolve !is FirCallableDeclaration<*>) return@resolveWithClearCaches
-                    ResolveType.ClassSuperTypes -> if (declarationToResolve !is FirClassLikeDeclaration<*>) return@resolveWithClearCaches
+                    ResolveType.CallableContracts -> if (declarationToResolve !is FirCallableDeclaration) return@resolveWithClearCaches
+                    ResolveType.ClassSuperTypes -> if (declarationToResolve !is FirClassLikeDeclaration) return@resolveWithClearCaches
                     else -> {
                     }
                 }

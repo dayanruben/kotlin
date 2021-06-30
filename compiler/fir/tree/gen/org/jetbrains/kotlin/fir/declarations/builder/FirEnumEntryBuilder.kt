@@ -20,8 +20,7 @@ import org.jetbrains.kotlin.fir.declarations.FirTypeParameterRef
 import org.jetbrains.kotlin.fir.declarations.impl.FirEnumEntryImpl
 import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
 import org.jetbrains.kotlin.fir.expressions.FirExpression
-import org.jetbrains.kotlin.fir.symbols.impl.FirDelegateFieldSymbol
-import org.jetbrains.kotlin.fir.symbols.impl.FirVariableSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirEnumEntrySymbol
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
 import org.jetbrains.kotlin.fir.types.FirTypeRef
 import org.jetbrains.kotlin.fir.visitors.*
@@ -41,14 +40,14 @@ class FirEnumEntryBuilder : FirAnnotationContainerBuilder {
     lateinit var origin: FirDeclarationOrigin
     var attributes: FirDeclarationAttributes = FirDeclarationAttributes()
     lateinit var returnTypeRef: FirTypeRef
-    lateinit var name: Name
-    lateinit var symbol: FirVariableSymbol<FirEnumEntry>
-    var initializer: FirExpression? = null
-    override val annotations: MutableList<FirAnnotationCall> = mutableListOf()
     val typeParameters: MutableList<FirTypeParameterRef> = mutableListOf()
     lateinit var status: FirDeclarationStatus
     var containerSource: DeserializedContainerSource? = null
     var dispatchReceiverType: ConeKotlinType? = null
+    lateinit var name: Name
+    var initializer: FirExpression? = null
+    override val annotations: MutableList<FirAnnotationCall> = mutableListOf()
+    lateinit var symbol: FirEnumEntrySymbol
 
     override fun build(): FirEnumEntry {
         return FirEnumEntryImpl(
@@ -58,14 +57,14 @@ class FirEnumEntryBuilder : FirAnnotationContainerBuilder {
             origin,
             attributes,
             returnTypeRef,
-            name,
-            symbol,
-            initializer,
-            annotations,
             typeParameters,
             status,
             containerSource,
             dispatchReceiverType,
+            name,
+            initializer,
+            annotations,
+            symbol,
         )
     }
 

@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.idea.fir.low.level.api.FirPhaseRunner
 import org.jetbrains.kotlin.idea.fir.low.level.api.api.FirDeclarationDesignationWithFile
 import org.jetbrains.kotlin.idea.fir.low.level.api.transformers.FirLazyTransformerForIDE.Companion.isResolvedForAllDeclarations
 import org.jetbrains.kotlin.idea.fir.low.level.api.transformers.FirLazyTransformerForIDE.Companion.updateResolvedPhaseForDeclarationAndChildren
-import org.jetbrains.kotlin.idea.fir.low.level.api.util.*
+import org.jetbrains.kotlin.idea.fir.low.level.api.util.ensurePhase
 import org.jetbrains.kotlin.idea.fir.low.level.api.util.ensurePhaseForClasses
 
 /**
@@ -33,9 +33,10 @@ internal class FirDesignatedTypeResolverTransformerForIDE(
 
     override fun <E : FirElement> transformElement(element: E, data: Any?): E {
         return if (element is FirDeclaration && (element is FirRegularClass || element is FirFile)) {
+            @Suppress("UNCHECKED_CAST")
             declarationTransformer.transformDeclarationContent(this, element, data) {
                 super.transformElement(element, data)
-            }
+            } as E
         } else {
             super.transformElement(element, data)
         }
@@ -62,7 +63,7 @@ internal class FirDesignatedTypeResolverTransformerForIDE(
             declaration.ensurePhase(FirResolvePhase.TYPES)
         }
         when (declaration) {
-            is FirFunction<*> -> {
+            is FirFunction -> {
                 check(declaration.returnTypeRef is FirResolvedTypeRef || declaration.returnTypeRef is FirImplicitTypeRef)
                 check(declaration.receiverTypeRef?.let { it is FirResolvedTypeRef } ?: true)
                 declaration.valueParameters.forEach {
@@ -76,7 +77,7 @@ internal class FirDesignatedTypeResolverTransformerForIDE(
                 declaration.setter?.run(::ensureResolved)
             }
             is FirField -> check(declaration.returnTypeRef is FirResolvedTypeRef || declaration.returnTypeRef is FirImplicitTypeRef)
-            is FirClass<*>, is FirTypeAlias, is FirAnonymousInitializer -> Unit
+            is FirClass, is FirTypeAlias, is FirAnonymousInitializer -> Unit
             is FirEnumEntry -> check(declaration.returnTypeRef is FirResolvedTypeRef)
             else -> error("Unexpected type: ${declaration::class.simpleName}")
         }

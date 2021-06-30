@@ -15,6 +15,10 @@ import org.jetbrains.kotlin.fir.backend.generators.OperatorExpressionGenerator
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.builder.buildProperty
 import org.jetbrains.kotlin.fir.declarations.impl.FirDeclarationStatusImpl
+import org.jetbrains.kotlin.fir.declarations.utils.expandedConeType
+import org.jetbrains.kotlin.fir.declarations.utils.isSynthetic
+import org.jetbrains.kotlin.fir.declarations.utils.primaryConstructor
+import org.jetbrains.kotlin.fir.declarations.utils.visibility
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.builder.buildBlock
 import org.jetbrains.kotlin.fir.expressions.impl.FirElseIfTrueCondition
@@ -106,7 +110,7 @@ class Fir2IrVisitor(
         if (correspondingClass != null) {
             declarationStorage.enterScope(irEnumEntry)
             classifierStorage.putEnumEntryClassInScope(enumEntry, correspondingClass)
-            val anonymousObject = enumEntry.initializer as FirAnonymousObject
+            val anonymousObject = (enumEntry.initializer as FirAnonymousObjectExpression).anonymousObject
             converter.processAnonymousObjectMembers(anonymousObject, correspondingClass)
             conversionScope.withParent(correspondingClass) {
                 conversionScope.withContainingFirClass(anonymousObject) {
@@ -123,10 +127,10 @@ class Fir2IrVisitor(
                 )
             }
             declarationStorage.leaveScope(irEnumEntry)
-        } else if (initializer is FirAnonymousObject) {
+        } else if (initializer is FirAnonymousObjectExpression) {
             // Otherwise, this is a default-ish enum entry, which doesn't need its own synthetic class.
             // During raw FIR building, we put the delegated constructor call inside an anonymous object.
-            val delegatedConstructor = initializer.primaryConstructor?.delegatedConstructor
+            val delegatedConstructor = initializer.anonymousObject.primaryConstructor?.delegatedConstructor
             if (delegatedConstructor != null) {
                 with(memberGenerator) {
                     irEnumEntry.initializerExpression = irFactory.createExpressionBody(
@@ -157,6 +161,10 @@ class Fir2IrVisitor(
                 memberGenerator.convertClassContent(irClass, regularClass)
             }
         }
+    }
+
+    override fun visitAnonymousObjectExpression(anonymousObjectExpression: FirAnonymousObjectExpression, data: Any?): IrElement {
+        return visitAnonymousObject(anonymousObjectExpression.anonymousObject, data)
     }
 
     override fun visitAnonymousObject(anonymousObject: FirAnonymousObject, data: Any?): IrElement {
@@ -219,6 +227,10 @@ class Fir2IrVisitor(
                 irFunction, simpleFunction, containingClass = conversionScope.containerFirClass()
             )
         }
+    }
+
+    override fun visitAnonymousFunctionExpression(anonymousFunctionExpression: FirAnonymousFunctionExpression, data: Any?): IrElement {
+        return visitAnonymousFunction(anonymousFunctionExpression.anonymousFunction, data)
     }
 
     override fun visitAnonymousFunction(anonymousFunction: FirAnonymousFunction, data: Any?): IrElement {

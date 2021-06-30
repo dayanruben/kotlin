@@ -23,6 +23,10 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.OVERRIDING_FINAL_
 import org.jetbrains.kotlin.fir.analysis.diagnostics.reportOn
 import org.jetbrains.kotlin.fir.containingClass
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.declarations.utils.isEnumClass
+import org.jetbrains.kotlin.fir.declarations.utils.isExpect
+import org.jetbrains.kotlin.fir.declarations.utils.isInterface
+import org.jetbrains.kotlin.fir.declarations.utils.modality
 import org.jetbrains.kotlin.fir.languageVersionSettings
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
@@ -32,7 +36,7 @@ import org.jetbrains.kotlin.util.ImplementationStatus
 
 object FirNotImplementedOverrideChecker : FirClassChecker() {
 
-    override fun check(declaration: FirClass<*>, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
         val source = declaration.source ?: return
         val sourceKind = source.kind
         if (sourceKind is FirFakeSourceElementKind && sourceKind != FirFakeSourceElementKind.EnumInitializer) return
@@ -49,7 +53,7 @@ object FirNotImplementedOverrideChecker : FirClassChecker() {
         val invisibleSymbols = mutableListOf<FirCallableSymbol<*>>()
 
         fun collectSymbol(symbol: FirCallableSymbol<*>) {
-            val fir = symbol.fir as? FirCallableMemberDeclaration<*> ?: return
+            val fir = symbol.fir as? FirCallableMemberDeclaration ?: return
             when (fir.getImplementationStatus(context.sessionHolder, declaration)) {
                 ImplementationStatus.AMBIGUOUSLY_INHERITED -> notImplementedIntersectionSymbols.add(symbol)
                 ImplementationStatus.NOT_IMPLEMENTED -> when {
@@ -140,6 +144,6 @@ object FirNotImplementedOverrideChecker : FirClassChecker() {
         }
     }
 
-    private fun FirCallableDeclaration<*>.isFromInterfaceOrEnum(context: CheckerContext): Boolean =
+    private fun FirCallableDeclaration.isFromInterfaceOrEnum(context: CheckerContext): Boolean =
         (getContainingClass(context) as? FirRegularClass)?.let { it.isInterface || it.isEnumClass } == true
 }

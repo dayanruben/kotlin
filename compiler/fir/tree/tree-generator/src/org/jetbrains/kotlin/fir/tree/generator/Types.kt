@@ -63,7 +63,7 @@ val implicitUnitTypeRefType = generatedType("types.impl", "FirImplicitUnitTypeRe
 val resolvePhaseType = type("fir.declarations", "FirResolvePhase")
 val stubReferenceType = generatedType("references.impl", "FirStubReference")
 
-val abstractFirBasedSymbolType = type("fir.symbols", "AbstractFirBasedSymbol")
+val firBasedSymbolType = type("fir.symbols", "FirBasedSymbol")
 val backingFieldSymbolType = type("fir.symbols.impl", "FirBackingFieldSymbol")
 val delegateFieldSymbolType = type("fir.symbols.impl", "FirDelegateFieldSymbol")
 val classSymbolType = type("fir.symbols.impl", "FirClassSymbol")
@@ -71,7 +71,6 @@ val classLikeSymbolType = type("fir.symbols.impl", "FirClassLikeSymbol<*>")
 val typeParameterSymbolType = type("fir.symbols.impl", "FirTypeParameterSymbol")
 val emptyArgumentListType = type("fir.expressions", "FirEmptyArgumentList")
 val firScopeProviderType = type("fir.scopes", "FirScopeProvider")
-val anonymousInitializerSymbolType = type("fir.symbols.impl", "FirAnonymousInitializerSymbol")
 
 val pureAbstractElementType = generatedType("FirPureAbstractElement")
 val coneEffectDeclarationType = type("fir.contracts.description", "ConeEffectDeclaration")
@@ -90,3 +89,5 @@ val exhaustivenessStatusType = generatedType("expressions", "ExhaustivenessStatu
 val callableReferenceMappedArgumentsType = type("fir.resolve.calls", "CallableReferenceMappedArguments")
 
 val functionCallOrigin = type("fir.expressions", "FirFunctionCallOrigin")
+
+val resolvedDeclarationStatusImplType = type("fir.declarations.impl", "FirResolvedDeclarationStatusImpl")

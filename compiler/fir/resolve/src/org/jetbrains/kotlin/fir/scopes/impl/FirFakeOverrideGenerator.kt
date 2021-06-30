@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.builder.*
 import org.jetbrains.kotlin.fir.declarations.synthetic.FirSyntheticProperty
 import org.jetbrains.kotlin.fir.declarations.synthetic.buildSyntheticProperty
+import org.jetbrains.kotlin.fir.declarations.utils.isExpect
 import org.jetbrains.kotlin.fir.moduleData
 import org.jetbrains.kotlin.fir.originalForSubstitutionOverrideAttr
 import org.jetbrains.kotlin.fir.resolve.substitution.ChainedSubstitutor
@@ -159,7 +160,7 @@ object FirFakeOverrideGenerator {
 
     private fun FirFunctionBuilder.configureAnnotationsTypeParametersAndSignature(
         useSiteSession: FirSession,
-        baseFunction: FirFunction<*>,
+        baseFunction: FirFunction,
         newParameterTypes: List<ConeKotlinType?>?,
         newTypeParameters: List<FirTypeParameterRef>?,
         newReceiverType: ConeKotlinType?,
@@ -186,7 +187,7 @@ object FirFakeOverrideGenerator {
                 }
                 val symbol = baseFunction.symbol
                 val (copiedReceiverType, possibleReturnType) = substituteReceiverAndReturnType(
-                    baseFunction as FirCallableMemberDeclaration<*>, newReceiverType, newReturnType, substitutor
+                    baseFunction as FirCallableMemberDeclaration, newReceiverType, newReturnType, substitutor
                 )
                 val (copiedReturnType, newFakeOverrideSubstitution) = when (possibleReturnType) {
                     is Maybe.Value -> possibleReturnType.value to null
@@ -215,7 +216,7 @@ object FirFakeOverrideGenerator {
     }
 
     private fun FirFunctionBuilder.configureAnnotationsAndSignature(
-        baseFunction: FirFunction<*>,
+        baseFunction: FirFunction,
         newParameterTypes: List<ConeKotlinType?>?,
         newReceiverType: ConeKotlinType?,
         newReturnType: ConeKotlinType?,
@@ -244,7 +245,7 @@ object FirFakeOverrideGenerator {
             buildValueParameterCopy(valueParameter) {
                 origin = FirDeclarationOrigin.SubstitutionOverride
                 returnTypeRef = valueParameter.returnTypeRef.withReplacedConeType(newType)
-                symbol = FirVariableSymbol(valueParameter.symbol.callableId)
+                symbol = FirValueParameterSymbol(valueParameter.name)
             }
         }
     }
@@ -347,7 +348,7 @@ object FirFakeOverrideGenerator {
     }
 
     private fun substituteReceiverAndReturnType(
-        baseCallable: FirCallableMemberDeclaration<*>,
+        baseCallable: FirCallableMemberDeclaration,
         newReceiverType: ConeKotlinType?,
         newReturnType: ConeKotlinType?,
         substitutor: ConeSubstitutor

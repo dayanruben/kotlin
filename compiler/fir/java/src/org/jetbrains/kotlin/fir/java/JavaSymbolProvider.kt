@@ -23,6 +23,9 @@ import org.jetbrains.kotlin.fir.declarations.builder.buildConstructedClassTypePa
 import org.jetbrains.kotlin.fir.declarations.builder.buildEnumEntry
 import org.jetbrains.kotlin.fir.declarations.builder.buildOuterClassTypeParameterRef
 import org.jetbrains.kotlin.fir.declarations.impl.FirResolvedDeclarationStatusImpl
+import org.jetbrains.kotlin.fir.declarations.utils.addDefaultBoundIfNecessary
+import org.jetbrains.kotlin.fir.declarations.utils.effectiveVisibility
+import org.jetbrains.kotlin.fir.declarations.utils.modality
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.java.declarations.*
 import org.jetbrains.kotlin.fir.resolve.constructType
@@ -379,7 +382,7 @@ class JavaSymbolProvider(
             javaField.isEnumEntry -> buildEnumEntry {
                 source = (javaField as? JavaElementImpl<*>)?.psi?.toFirPsiSourceElement()
                 moduleData = this@JavaSymbolProvider.baseModuleData
-                symbol = FirVariableSymbol(fieldId)
+                symbol = FirEnumEntrySymbol(fieldId)
                 name = fieldName
                 status = FirResolvedDeclarationStatusImpl(
                     javaField.visibility,
@@ -452,8 +455,6 @@ class JavaSymbolProvider(
             source = (javaMethod as? JavaElementImpl<*>)?.psi?.toFirPsiSourceElement()
             symbol = methodSymbol
             name = methodName
-            visibility = javaMethod.visibility
-            modality = javaMethod.modality
             returnTypeRef = returnType.toFirJavaTypeRef(this@JavaSymbolProvider.session, javaTypeParameterStack)
             isStatic = javaMethod.isStatic
             typeParameters += javaMethod.typeParameters.convertTypeParameters(javaTypeParameterStack)

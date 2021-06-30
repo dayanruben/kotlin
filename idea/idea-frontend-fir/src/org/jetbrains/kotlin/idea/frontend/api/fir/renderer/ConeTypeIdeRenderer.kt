@@ -9,9 +9,11 @@ import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.containingClass
 import org.jetbrains.kotlin.fir.containingClassForLocal
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.declarations.utils.isInner
+import org.jetbrains.kotlin.fir.declarations.utils.isLocal
 import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
-import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeUnresolvedError
 import org.jetbrains.kotlin.fir.renderWithType
+import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeUnresolvedError
 import org.jetbrains.kotlin.fir.resolve.inference.*
 import org.jetbrains.kotlin.fir.resolve.toFirRegularClass
 import org.jetbrains.kotlin.fir.resolve.toSymbol
@@ -177,10 +179,10 @@ internal class ConeTypeIdeRenderer(
         return null
     }
 
-    private fun FirRegularClass.collectForLocal(): List<FirClassLikeDeclaration<*>> {
+    private fun FirRegularClass.collectForLocal(): List<FirClassLikeDeclaration> {
         require(isLocal)
         var containingClassLookUp = containingClassForLocal()
-        val designation = mutableListOf<FirClassLikeDeclaration<*>>(this)
+        val designation = mutableListOf<FirClassLikeDeclaration>(this)
         while (containingClassLookUp != null && containingClassLookUp.classId.isLocal) {
             val currentClass = containingClassLookUp.toFirRegularClass(moduleData.session) ?: break
             designation.add(currentClass)
@@ -191,9 +193,9 @@ internal class ConeTypeIdeRenderer(
 
     private fun collectDesignationPathForLocal(declaration: FirDeclaration): List<FirDeclaration>? {
         val containingClass = when (declaration) {
-            is FirCallableDeclaration<*> -> declaration.containingClass()?.toFirRegularClass(declaration.moduleData.session)
+            is FirCallableDeclaration -> declaration.containingClass()?.toFirRegularClass(declaration.moduleData.session)
             is FirAnonymousObject -> return listOf(declaration)
-            is FirClassLikeDeclaration<*> -> declaration.let {
+            is FirClassLikeDeclaration -> declaration.let {
                 if (!declaration.isLocal) return null
                 (it as? FirRegularClass)?.containingClassForLocal()?.toFirRegularClass(declaration.moduleData.session)
             }
@@ -326,7 +328,6 @@ internal class ConeTypeIdeRenderer(
 
         val notNullParametersType = type
             .valueParameterTypesIncludingReceiver(session)
-            .filterNotNull()
             .applyIf(receiverType != null) { drop(1) }
 
         notNullParametersType.forEachIndexed { index, typeProjection ->
@@ -337,11 +338,7 @@ internal class ConeTypeIdeRenderer(
         append(") -> ")
 
         val returnType = type.returnType(session)
-        if (returnType != null) {
-            append(renderType(returnType))
-        } else {
-            appendError()
-        }
+        append(renderType(returnType))
 
         if (needParenthesis) append(")")
 

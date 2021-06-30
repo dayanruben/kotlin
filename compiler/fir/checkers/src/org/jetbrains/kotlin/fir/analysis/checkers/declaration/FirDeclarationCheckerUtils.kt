@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.reportOn
 import org.jetbrains.kotlin.fir.containingClassAttr
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyAccessor
+import org.jetbrains.kotlin.fir.declarations.utils.*
 import org.jetbrains.kotlin.fir.symbols.impl.ConeClassLookupTagWithFixedSymbol
 import org.jetbrains.kotlin.fir.types.FirImplicitTypeRef
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -183,7 +184,7 @@ private val FirProperty.hasAccessorImplementation: Boolean
     get() = (getter !is FirDefaultPropertyAccessor && getter?.hasBody == true) ||
             (setter !is FirDefaultPropertyAccessor && setter?.hasBody == true)
 
-internal val FirClass<*>.canHaveOpenMembers: Boolean get() = modality() != Modality.FINAL || classKind == ClassKind.ENUM_CLASS
+internal val FirClass.canHaveOpenMembers: Boolean get() = modality() != Modality.FINAL || classKind == ClassKind.ENUM_CLASS
 
 internal fun FirRegularClass.isInlineOrValueClass(): Boolean {
     if (this.classKind != ClassKind.CLASS) return false
@@ -197,7 +198,7 @@ internal val FirDeclaration.isEnumEntryInitializer: Boolean
         return (containingClassAttr as? ConeClassLookupTagWithFixedSymbol)?.symbol?.fir?.classKind == ClassKind.ENUM_ENTRY
     }
 
-// contract: returns(true) implies (this is FirMemberDeclaration)
+// contract: returns(true) implies (this is FirMemberDeclaration<*>)
 internal val FirDeclaration.isLocalMember: Boolean
     get() = when (this) {
         is FirProperty -> this.isLocal
@@ -206,7 +207,7 @@ internal val FirDeclaration.isLocalMember: Boolean
         else -> false
     }
 
-internal val FirCallableMemberDeclaration<*>.isExtensionMember: Boolean
+internal val FirCallableMemberDeclaration.isExtensionMember: Boolean
     get() {
         return receiverTypeRef != null && dispatchReceiverType != null
     }

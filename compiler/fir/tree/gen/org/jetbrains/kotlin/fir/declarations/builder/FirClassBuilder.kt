@@ -40,5 +40,5 @@ interface FirClassBuilder : FirDeclarationBuilder, FirAnnotationContainerBuilder
     abstract val superTypeRefs: MutableList<FirTypeRef>
     abstract val declarations: MutableList<FirDeclaration>
     abstract var scopeProvider: FirScopeProvider
-    override fun build(): FirClass<*>
+    override fun build(): FirClass
 }

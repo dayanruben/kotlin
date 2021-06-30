@@ -7,7 +7,10 @@ package org.jetbrains.kotlin.idea.fir.low.level.api.element.builder
 
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.FirSession
-import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.declarations.FirConstructor
+import org.jetbrains.kotlin.fir.declarations.FirDeclaration
+import org.jetbrains.kotlin.fir.declarations.FirProperty
+import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
 import org.jetbrains.kotlin.fir.resolve.ResolutionMode
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.resolve.transformers.ReturnTypeCalculator
@@ -67,7 +70,7 @@ class FirIdeDesignatedBodyResolveTransformerForReturnTypeCalculatorImpl(
         return super.transformSimpleFunction(simpleFunction, data)
     }
 
-    override fun transformConstructor(constructor: FirConstructor, data: ResolutionMode): FirDeclaration {
+    override fun transformConstructor(constructor: FirConstructor, data: ResolutionMode): FirConstructor {
         val firDesignation = FirDeclarationDesignation(declarationDesignation, constructor)
         FirLazyBodiesCalculator.calculateLazyBodyForSecondaryConstructor(firDesignation)
         return super.transformConstructor(constructor, data)

@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.fir.declarations.*
 
 object FirUpperBoundViolatedDeclarationChecker : FirBasicDeclarationChecker() {
     override fun check(declaration: FirDeclaration, context: CheckerContext, reporter: DiagnosticReporter) {
-        if (declaration is FirClass<*>) {
+        if (declaration is FirClass) {
             for (typeParameter in declaration.typeParameters) {
                 if (typeParameter is FirTypeParameter) {
                     for (bound in typeParameter.bounds) {
@@ -27,7 +27,7 @@ object FirUpperBoundViolatedDeclarationChecker : FirBasicDeclarationChecker() {
             }
         } else if (declaration is FirTypeAlias) {
             checkUpperBoundViolated(declaration.expandedTypeRef, context, reporter, isIgnoreTypeParameters = true)
-        } else if (declaration is FirCallableDeclaration<*>) {
+        } else if (declaration is FirCallableDeclaration) {
             if (declaration.returnTypeRef.source?.kind !is FirFakeSourceElementKind) {
                 checkUpperBoundViolated(
                     declaration.returnTypeRef, context, reporter,

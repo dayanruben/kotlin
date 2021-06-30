@@ -5,9 +5,10 @@
 
 package org.jetbrains.kotlin.idea.fir.low.level.api.util
 
-import org.jetbrains.kotlin.fir.declarations.*
-import org.jetbrains.kotlin.fir.resolve.transformers.ensureResolved
-import org.jetbrains.kotlin.fir.types.FirResolvedTypeRef
+import org.jetbrains.kotlin.fir.declarations.FirCallableDeclaration
+import org.jetbrains.kotlin.fir.declarations.FirClassLikeDeclaration
+import org.jetbrains.kotlin.fir.declarations.FirDeclaration
+import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.idea.fir.low.level.api.api.FirDeclarationDesignation
 
 internal fun FirDeclaration.ensurePhase(firResolvePhase: FirResolvePhase) =
@@ -24,7 +25,7 @@ internal fun FirDeclarationDesignation.ensureDesignation(firResolvePhase: FirRes
 }
 internal fun FirDeclarationDesignation.ensurePhaseForClasses(firResolvePhase: FirResolvePhase) {
     ensurePathPhase(firResolvePhase)
-    if (declaration is FirClassLikeDeclaration<*>) {
+    if (declaration is FirClassLikeDeclaration) {
         check(declaration.resolvePhase >= firResolvePhase) {
             "Expected $firResolvePhase but found ${declaration.resolvePhase}"
         }
@@ -32,6 +33,6 @@ internal fun FirDeclarationDesignation.ensurePhaseForClasses(firResolvePhase: Fi
 }
 
 internal fun FirDeclarationDesignation.isTargetCallableDeclarationAndInPhase(firResolvePhase: FirResolvePhase): Boolean =
-    (declaration as? FirCallableDeclaration<*>)?.let { it.resolvePhase >= firResolvePhase } ?: false
+    (declaration as? FirCallableDeclaration)?.let { it.resolvePhase >= firResolvePhase } ?: false
 
 internal fun FirDeclarationDesignation.targetContainingDeclaration(): FirDeclaration? = path.lastOrNull()

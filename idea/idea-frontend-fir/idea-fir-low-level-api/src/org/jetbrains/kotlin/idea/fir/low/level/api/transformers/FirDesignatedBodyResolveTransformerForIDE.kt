@@ -10,7 +10,10 @@ import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.resolve.ResolutionMode
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.resolve.transformers.FirProviderInterceptor
-import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.*
+import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirBodyResolveTransformer
+import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirTowerDataContextCollector
+import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.ImplicitBodyResolveComputationSession
+import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.createReturnTypeCalculatorForIDE
 import org.jetbrains.kotlin.idea.fir.low.level.api.FirPhaseRunner
 import org.jetbrains.kotlin.idea.fir.low.level.api.api.FirDeclarationDesignationWithFile
 import org.jetbrains.kotlin.idea.fir.low.level.api.element.builder.FirIdeDesignatedBodyResolveTransformerForReturnTypeCalculator
@@ -59,7 +62,7 @@ internal class FirDesignatedBodyResolveTransformerForIDE(
         designation.declaration.updateResolvedPhaseForDeclarationAndChildren(FirResolvePhase.BODY_RESOLVE)
         if (designation.isTargetCallableDeclarationAndInPhase(FirResolvePhase.BODY_RESOLVE)) return
 
-        (designation.declaration as? FirCallableDeclaration<*>)?.ensurePhase(FirResolvePhase.CONTRACTS)
+        (designation.declaration as? FirCallableDeclaration)?.ensurePhase(FirResolvePhase.CONTRACTS)
         designation.ensurePhaseForClasses(FirResolvePhase.STATUS)
 
         phaseRunner.runPhaseWithCustomResolve(FirResolvePhase.BODY_RESOLVE) {
@@ -82,7 +85,7 @@ internal class FirDesignatedBodyResolveTransformerForIDE(
                 declaration.getter?.ensurePhase(FirResolvePhase.BODY_RESOLVE)
                 declaration.setter?.ensurePhase(FirResolvePhase.BODY_RESOLVE)
             }
-            is FirEnumEntry, is FirClass<*> -> Unit
+            is FirEnumEntry, is FirClass -> Unit
             else -> error("Unexpected type: ${declaration::class.simpleName}")
         }
     }

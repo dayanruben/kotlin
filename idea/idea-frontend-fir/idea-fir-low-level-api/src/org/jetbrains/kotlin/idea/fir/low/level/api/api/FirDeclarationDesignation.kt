@@ -8,6 +8,8 @@ package org.jetbrains.kotlin.idea.fir.low.level.api.api
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.fir.containingClass
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.declarations.utils.classId
+import org.jetbrains.kotlin.fir.declarations.utils.isLocal
 import org.jetbrains.kotlin.fir.render
 import org.jetbrains.kotlin.fir.renderWithType
 import org.jetbrains.kotlin.fir.resolve.firProvider
@@ -54,9 +56,9 @@ private fun FirRegularClass.collectForNonLocal(): List<FirDeclaration> {
 
 private fun collectDesignationPath(declaration: FirDeclaration): List<FirDeclaration>? {
     val containingClass = when (declaration) {
-        is FirCallableDeclaration<*> -> {
+        is FirCallableDeclaration -> {
             if (declaration.symbol.callableId.isLocal) return null
-            if ((declaration as? FirCallableMemberDeclaration<*>)?.status?.visibility == Visibilities.Local) return null
+            if ((declaration as? FirCallableMemberDeclaration)?.status?.visibility == Visibilities.Local) return null
             when (declaration) {
                 is FirSimpleFunction, is FirProperty, is FirField, is FirConstructor -> {
                     val klass = declaration.containingClass() ?: return emptyList()
@@ -66,7 +68,7 @@ private fun collectDesignationPath(declaration: FirDeclaration): List<FirDeclara
                 else -> return null
             }
         }
-        is FirClassLikeDeclaration<*> -> {
+        is FirClassLikeDeclaration -> {
             if (declaration.isLocal) return null
             declaration.symbol.classId.outerClassId?.let(declaration.moduleData.session.firProvider::getFirClassifierByFqName)
         }

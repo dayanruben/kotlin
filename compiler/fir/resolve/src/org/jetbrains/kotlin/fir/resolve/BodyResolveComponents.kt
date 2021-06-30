@@ -217,16 +217,16 @@ fun SessionHolder.collectImplicitReceivers(
 
     val implicitCompanionValues = mutableListOf<ImplicitReceiverValue<*>>()
     val implicitReceiverValue = when (owner) {
-        is FirClass<*> -> {
+        is FirClass -> {
             val towerElementsForClass = collectTowerDataElementsForClass(owner, type)
             implicitCompanionValues.addAll(towerElementsForClass.implicitCompanionValues)
 
             towerElementsForClass.thisReceiver
         }
-        is FirFunction<*> -> {
+        is FirFunction -> {
             ImplicitExtensionReceiverValue(owner.symbol, type, session, scopeSession)
         }
-        is FirVariable<*> -> {
+        is FirVariable -> {
             ImplicitExtensionReceiverValue(owner.symbol, type, session, scopeSession)
         }
         else -> {
@@ -236,7 +236,7 @@ fun SessionHolder.collectImplicitReceivers(
     return ImplicitReceivers(implicitReceiverValue, implicitCompanionValues)
 }
 
-fun SessionHolder.collectTowerDataElementsForClass(owner: FirClass<*>, defaultType: ConeKotlinType): TowerElementsForClass {
+fun SessionHolder.collectTowerDataElementsForClass(owner: FirClass, defaultType: ConeKotlinType): TowerElementsForClass {
     val allImplicitCompanionValues = mutableListOf<ImplicitReceiverValue<*>>()
 
     val companionObject = (owner as? FirRegularClass)?.companionObject
@@ -279,7 +279,7 @@ fun SessionHolder.collectTowerDataElementsForClass(owner: FirClass<*>, defaultTy
     )
 }
 
-private fun FirClass<*>.staticScope(sessionHolder: SessionHolder) =
+private fun FirClass.staticScope(sessionHolder: SessionHolder) =
     scopeProvider.getStaticScope(this, sessionHolder.session, sessionHolder.scopeSession)
 
 class TowerElementsForClass(

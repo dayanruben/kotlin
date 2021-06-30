@@ -13,6 +13,8 @@ import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.builder.*
 import org.jetbrains.kotlin.fir.declarations.impl.FirDeclarationStatusImpl
+import org.jetbrains.kotlin.fir.declarations.utils.addDeclaration
+import org.jetbrains.kotlin.fir.declarations.utils.isLocal
 import org.jetbrains.kotlin.fir.diagnostics.ConeSimpleDiagnostic
 import org.jetbrains.kotlin.fir.diagnostics.DiagnosticKind
 import org.jetbrains.kotlin.fir.expressions.*
@@ -1144,7 +1146,7 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
                             origin = FirDeclarationOrigin.Source
                             returnTypeRef = propertyReturnTypeRef
                             name = propertyName
-                            symbol = FirVariableSymbol(propertyName)
+                            symbol = FirValueParameterSymbol(propertyName)
                             defaultValue = generateComponentAccess(parameterSource, firProperty, classTypeRef, propertyReturnTypeRef)
                             isCrossinline = false
                             isNoinline = false
@@ -1166,12 +1168,12 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
         }
     }
 
-    protected fun FirCallableDeclaration<*>.initContainingClassAttr() {
+    protected fun FirCallableDeclaration.initContainingClassAttr() {
         val currentDispatchReceiverType = currentDispatchReceiverType() ?: return
         containingClassAttr = currentDispatchReceiverType.lookupTag
     }
 
-    private fun FirVariable<*>.toQualifiedAccess(): FirQualifiedAccessExpression = buildQualifiedAccessExpression {
+    private fun FirVariable.toQualifiedAccess(): FirQualifiedAccessExpression = buildQualifiedAccessExpression {
         calleeReference = buildResolvedNamedReference {
             source = this@toQualifiedAccess.source
             name = this@toQualifiedAccess.name

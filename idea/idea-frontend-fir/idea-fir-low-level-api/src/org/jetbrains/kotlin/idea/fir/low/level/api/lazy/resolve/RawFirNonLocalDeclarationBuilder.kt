@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.builder.RawFirBuilder
 import org.jetbrains.kotlin.fir.builder.RawFirBuilderMode
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.declarations.utils.isInner
 import org.jetbrains.kotlin.fir.scopes.FirScopeProvider
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
 import org.jetbrains.kotlin.fir.types.FirResolvedTypeRef
@@ -21,7 +22,7 @@ internal class RawFirNonLocalDeclarationBuilder private constructor(
     session: FirSession,
     baseScopeProvider: FirScopeProvider,
     private val declarationToBuild: KtDeclaration,
-    private val functionsToRebind: Set<FirFunction<*>>? = null,
+    private val functionsToRebind: Set<FirFunction>? = null,
     private val replacementApplier: RawFirReplacement.Applier? = null
 ) : RawFirBuilder(session, baseScopeProvider, RawFirBuilderMode.NORMAL) {
 
@@ -69,7 +70,7 @@ internal class RawFirNonLocalDeclarationBuilder private constructor(
         }
     }
 
-    override fun bindFunctionTarget(target: FirFunctionTarget, function: FirFunction<*>) {
+    override fun bindFunctionTarget(target: FirFunctionTarget, function: FirFunction) {
         val rewrittenTarget = functionsToRebind?.firstOrNull { it.realPsi == function.realPsi } ?: function
         super.bindFunctionTarget(target, rewrittenTarget)
     }

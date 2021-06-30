@@ -14,12 +14,12 @@ import org.jetbrains.kotlin.fir.contracts.*
 import org.jetbrains.kotlin.fir.contracts.description.ConeContractRenderer
 import org.jetbrains.kotlin.fir.contracts.impl.FirEmptyContractDescription
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.declarations.utils.*
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.impl.*
 import org.jetbrains.kotlin.fir.references.*
-import org.jetbrains.kotlin.fir.symbols.AbstractFirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
-import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassLikeSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.visitors.FirVisitorVoid
 import org.jetbrains.kotlin.name.SpecialNames
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 import org.jetbrains.kotlin.utils.Printer
@@ -194,6 +195,10 @@ class FirRenderer(builder: StringBuilder, private val mode: RenderMode = RenderM
         print(")")
     }
 
+    fun renderAnnotations(annotationContainer: FirAnnotationContainer) {
+        annotationContainer.annotations.renderAnnotations()
+    }
+
     private fun List<FirAnnotationCall>.renderAnnotations() {
         if (!mode.renderAnnotation) return
         for (annotation in this) {
@@ -210,11 +215,11 @@ class FirRenderer(builder: StringBuilder, private val mode: RenderMode = RenderM
         }
     }
 
-    override fun <F : FirCallableDeclaration<F>> visitCallableDeclaration(callableDeclaration: FirCallableDeclaration<F>) {
+    override fun visitCallableDeclaration(callableDeclaration: FirCallableDeclaration) {
+        callableDeclaration.annotations.renderAnnotations()
         if (callableDeclaration is FirMemberDeclaration) {
             visitMemberDeclaration(callableDeclaration)
         } else {
-            callableDeclaration.annotations.renderAnnotations()
             visitTypedDeclaration(callableDeclaration)
         }
         val receiverType = callableDeclaration.receiverTypeRef
@@ -231,7 +236,7 @@ class FirRenderer(builder: StringBuilder, private val mode: RenderMode = RenderM
                     print(callableDeclaration.symbol.callableId)
                 }
             }
-            is FirVariable<*> -> {
+            is FirVariable -> {
                 if (!mode.renderCallableFqNames) {
                     print(callableDeclaration.name)
                 } else {
@@ -240,7 +245,7 @@ class FirRenderer(builder: StringBuilder, private val mode: RenderMode = RenderM
             }
         }
 
-        if (callableDeclaration is FirFunction<*>) {
+        if (callableDeclaration is FirFunction) {
             callableDeclaration.valueParameters.renderParameters()
         }
         print(": ")
@@ -270,7 +275,7 @@ class FirRenderer(builder: StringBuilder, private val mode: RenderMode = RenderM
 
     private fun FirMemberDeclaration.modalityAsString(): String {
         return modality?.name?.toLowerCaseAsciiOnly() ?: run {
-            if (this is FirCallableMemberDeclaration<*> && this.isOverride) {
+            if (this is FirCallableMemberDeclaration && this.isOverride) {
                 "open?"
             } else {
                 "final?"
@@ -299,7 +304,6 @@ class FirRenderer(builder: StringBuilder, private val mode: RenderMode = RenderM
     }
 
     override fun visitMemberDeclaration(memberDeclaration: FirMemberDeclaration) {
-        memberDeclaration.annotations.renderAnnotations()
         if (memberDeclaration !is FirProperty || !memberDeclaration.isLocal) {
             // we can't access session.effectiveVisibilityResolver from here!
             // print(memberDeclaration.visibility.asString(memberDeclaration.getEffectiveVisibility(...)) + " ")
@@ -363,9 +367,9 @@ class FirRenderer(builder: StringBuilder, private val mode: RenderMode = RenderM
             print("lateinit ")
         }
 
-        visitDeclaration(memberDeclaration)
+        visitDeclaration(memberDeclaration as FirDeclaration)
         when (memberDeclaration) {
-            is FirClassLikeDeclaration<*> -> {
+            is FirClassLikeDeclaration -> {
                 if (memberDeclaration is FirRegularClass) {
                     print(" " + memberDeclaration.name)
                 }
@@ -374,7 +378,7 @@ class FirRenderer(builder: StringBuilder, private val mode: RenderMode = RenderM
                 }
                 memberDeclaration.typeParameters.renderTypeParameters()
             }
-            is FirCallableDeclaration<*> -> {
+            is FirCallableDeclaration -> {
                 // Name is handled by visitCallableDeclaration
                 if (memberDeclaration.typeParameters.isNotEmpty()) {
                     print(" ")
@@ -466,6 +470,7 @@ class FirRenderer(builder: StringBuilder, private val mode: RenderMode = RenderM
     }
 
     override fun visitRegularClass(regularClass: FirRegularClass) {
+        regularClass.annotations.renderAnnotations()
         visitMemberDeclaration(regularClass)
         renderSupertypes(regularClass)
         regularClass.declarations.renderDeclarations()
@@ -479,6 +484,10 @@ class FirRenderer(builder: StringBuilder, private val mode: RenderMode = RenderM
         }
     }
 
+    override fun visitAnonymousObjectExpression(anonymousObjectExpression: FirAnonymousObjectExpression) {
+        anonymousObjectExpression.anonymousObject.accept(this)
+    }
+
     override fun visitAnonymousObject(anonymousObject: FirAnonymousObject) {
         anonymousObject.annotations.renderAnnotations()
         print("object : ")
@@ -486,7 +495,7 @@ class FirRenderer(builder: StringBuilder, private val mode: RenderMode = RenderM
         anonymousObject.declarations.renderDeclarations()
     }
 
-    override fun <F : FirVariable<F>> visitVariable(variable: FirVariable<F>) {
+    override fun visitVariable(variable: FirVariable) {
         visitCallableDeclaration(variable)
         variable.initializer?.let {
             print(" = ")
@@ -576,6 +585,10 @@ class FirRenderer(builder: StringBuilder, private val mode: RenderMode = RenderM
         propertyAccessor.body?.renderBody()
     }
 
+    override fun visitAnonymousFunctionExpression(anonymousFunctionExpression: FirAnonymousFunctionExpression) {
+        visitAnonymousFunction(anonymousFunctionExpression.anonymousFunction)
+    }
+
     override fun visitAnonymousFunction(anonymousFunction: FirAnonymousFunction) {
         anonymousFunction.renderDeclarationData()
         anonymousFunction.annotations.renderAnnotations()
@@ -603,7 +616,7 @@ class FirRenderer(builder: StringBuilder, private val mode: RenderMode = RenderM
         }
     }
 
-    override fun <F : FirFunction<F>> visitFunction(function: FirFunction<F>) {
+    override fun visitFunction(function: FirFunction) {
         function.valueParameters.renderParameters()
         visitDeclaration(function)
         function.body?.renderBody()
@@ -1043,7 +1056,7 @@ class FirRenderer(builder: StringBuilder, private val mode: RenderMode = RenderM
         print("*")
     }
 
-    private fun AbstractFirBasedSymbol<*>.render(): String {
+    private fun FirBasedSymbol<*>.render(): String {
         return when (this) {
             is FirCallableSymbol<*> -> callableId.toString()
             is FirClassLikeSymbol<*> -> classId.toString()
@@ -1109,7 +1122,7 @@ class FirRenderer(builder: StringBuilder, private val mode: RenderMode = RenderM
         print("|")
     }
 
-    private fun AbstractFirBasedSymbol<*>.unwrapIntersectionOverrides(): AbstractFirBasedSymbol<*> {
+    private fun FirBasedSymbol<*>.unwrapIntersectionOverrides(): FirBasedSymbol<*> {
         (this as? FirCallableSymbol<*>)?.baseForIntersectionOverride?.let { return it.unwrapIntersectionOverrides() }
         return this
     }

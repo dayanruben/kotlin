@@ -126,7 +126,7 @@ object FirModifierChecker : FirBasicDeclarationChecker() {
                 reporter.reportDeprecatedModifierPair(secondModifier, secondToken, firstToken, context)
             }
             CompatibilityType.INCOMPATIBLE, CompatibilityType.COMPATIBLE_FOR_CLASSES -> {
-                if (compatibilityType == CompatibilityType.COMPATIBLE_FOR_CLASSES && owner is FirClass<*>) {
+                if (compatibilityType == CompatibilityType.COMPATIBLE_FOR_CLASSES && owner is FirClass) {
                     return
                 }
                 if (reportedNodes.add(firstModifier)) reporter.reportIncompatibleModifiers(firstModifier, firstToken, secondToken, context)
@@ -158,8 +158,8 @@ object FirModifierChecker : FirBasicDeclarationChecker() {
 
     private fun isDeclarationMappedToSourceCorrectly(declaration: FirDeclaration, source: FirSourceElement): Boolean =
         when (source.elementType) {
-            KtNodeTypes.CLASS -> declaration is FirClass<*>
-            KtNodeTypes.OBJECT_DECLARATION -> declaration is FirClass<*>
+            KtNodeTypes.CLASS -> declaration is FirClass
+            KtNodeTypes.OBJECT_DECLARATION -> declaration is FirClass
             KtNodeTypes.PROPERTY -> declaration is FirProperty
             KtNodeTypes.VALUE_PARAMETER -> declaration is FirValueParameter
             // TODO more FIR-PSI relations possibly have to be added

@@ -8,11 +8,11 @@ package org.jetbrains.kotlin.fir.resolve.transformers
 import kotlinx.collections.immutable.toImmutableList
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.declarations.utils.isFromVararg
 import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
 import org.jetbrains.kotlin.fir.expressions.FirBlock
 import org.jetbrains.kotlin.fir.expressions.FirDelegatedConstructorCall
 import org.jetbrains.kotlin.fir.expressions.FirStatement
-import org.jetbrains.kotlin.fir.resolve.ResolutionMode
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeCyclicTypeBound
 import org.jetbrains.kotlin.fir.scopes.FirScope
@@ -28,7 +28,7 @@ class FirTypeResolveProcessor(
     override val transformer = FirTypeResolveTransformer(session, scopeSession)
 }
 
-fun <F : FirClassLikeDeclaration<F>> F.runTypeResolvePhaseForLocalClass(
+fun <F : FirClassLikeDeclaration> F.runTypeResolvePhaseForLocalClass(
     session: FirSession,
     scopeSession: ScopeSession,
     currentScopeList: List<FirScope>,
@@ -79,21 +79,21 @@ open class FirTypeResolveTransformer(
         return resolveNestedClassesSupertypes(anonymousObject, data)
     }
 
-    override fun transformConstructor(constructor: FirConstructor, data: Any?): FirDeclaration {
+    override fun transformConstructor(constructor: FirConstructor, data: Any?): FirConstructor {
         return withScopeCleanup {
             constructor.addTypeParametersScope()
             transformDeclaration(constructor, data)
-        }
+        } as FirConstructor
     }
 
-    override fun transformTypeAlias(typeAlias: FirTypeAlias, data: Any?): FirDeclaration {
+    override fun transformTypeAlias(typeAlias: FirTypeAlias, data: Any?): FirTypeAlias {
         return withScopeCleanup {
             typeAlias.addTypeParametersScope()
             transformDeclaration(typeAlias, data)
-        }
+        } as FirTypeAlias
     }
 
-    override fun transformEnumEntry(enumEntry: FirEnumEntry, data: Any?): FirDeclaration {
+    override fun transformEnumEntry(enumEntry: FirEnumEntry, data: Any?): FirEnumEntry {
         if (needReplacePhase(enumEntry)) {
             enumEntry.replaceResolvePhase(FirResolvePhase.TYPES)
         }
@@ -103,7 +103,7 @@ open class FirTypeResolveTransformer(
         return enumEntry
     }
 
-    override fun transformProperty(property: FirProperty, data: Any?): FirDeclaration {
+    override fun transformProperty(property: FirProperty, data: Any?): FirProperty {
         return withScopeCleanup {
             property.addTypeParametersScope()
             if (needReplacePhase(property)) {
@@ -129,7 +129,7 @@ open class FirTypeResolveTransformer(
         }
     }
 
-    override fun transformField(field: FirField, data: Any?): FirDeclaration {
+    override fun transformField(field: FirField, data: Any?): FirField {
         return withScopeCleanup {
             if (needReplacePhase(field)) {
                 field.replaceResolvePhase(FirResolvePhase.TYPES)
@@ -139,13 +139,13 @@ open class FirTypeResolveTransformer(
         }
     }
 
-    override fun transformSimpleFunction(simpleFunction: FirSimpleFunction, data: Any?): FirDeclaration {
+    override fun transformSimpleFunction(simpleFunction: FirSimpleFunction, data: Any?): FirSimpleFunction {
         return withScopeCleanup {
             simpleFunction.addTypeParametersScope()
             transformDeclaration(simpleFunction, data).also {
                 unboundCyclesInTypeParametersSupertypes(it as FirTypeParametersOwner)
             }
-        }
+        } as FirSimpleFunction
     }
 
     private fun unboundCyclesInTypeParametersSupertypes(typeParametersOwner: FirTypeParameterRefsOwner) {

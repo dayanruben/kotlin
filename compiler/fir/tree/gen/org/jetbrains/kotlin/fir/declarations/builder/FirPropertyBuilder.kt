@@ -46,20 +46,20 @@ class FirPropertyBuilder : FirDeclarationBuilder, FirTypeParametersOwnerBuilder,
     override var attributes: FirDeclarationAttributes = FirDeclarationAttributes()
     lateinit var returnTypeRef: FirTypeRef
     var receiverTypeRef: FirTypeRef? = null
+    lateinit var status: FirDeclarationStatus
+    var containerSource: DeserializedContainerSource? = null
+    var dispatchReceiverType: ConeKotlinType? = null
     lateinit var name: Name
     var initializer: FirExpression? = null
     var delegate: FirExpression? = null
-    var delegateFieldSymbol: FirDelegateFieldSymbol<FirProperty>? = null
     var isVar: Boolean by kotlin.properties.Delegates.notNull<Boolean>()
     var getter: FirPropertyAccessor? = null
     var setter: FirPropertyAccessor? = null
     override val annotations: MutableList<FirAnnotationCall> = mutableListOf()
-    override val typeParameters: MutableList<FirTypeParameter> = mutableListOf()
-    var containerSource: DeserializedContainerSource? = null
-    var dispatchReceiverType: ConeKotlinType? = null
     lateinit var symbol: FirPropertySymbol
+    var delegateFieldSymbol: FirDelegateFieldSymbol? = null
     var isLocal: Boolean by kotlin.properties.Delegates.notNull<Boolean>()
-    lateinit var status: FirDeclarationStatus
+    override val typeParameters: MutableList<FirTypeParameter> = mutableListOf()
 
     override fun build(): FirProperty {
         return FirPropertyImpl(
@@ -70,20 +70,20 @@ class FirPropertyBuilder : FirDeclarationBuilder, FirTypeParametersOwnerBuilder,
             attributes,
             returnTypeRef,
             receiverTypeRef,
+            status,
+            containerSource,
+            dispatchReceiverType,
             name,
             initializer,
             delegate,
-            delegateFieldSymbol,
             isVar,
             getter,
             setter,
             annotations,
-            typeParameters,
-            containerSource,
-            dispatchReceiverType,
             symbol,
+            delegateFieldSymbol,
             isLocal,
-            status,
+            typeParameters,
         )
     }
 
@@ -110,19 +110,19 @@ inline fun buildPropertyCopy(original: FirProperty, init: FirPropertyBuilder.() 
     copyBuilder.attributes = original.attributes.copy()
     copyBuilder.returnTypeRef = original.returnTypeRef
     copyBuilder.receiverTypeRef = original.receiverTypeRef
+    copyBuilder.status = original.status
+    copyBuilder.containerSource = original.containerSource
+    copyBuilder.dispatchReceiverType = original.dispatchReceiverType
     copyBuilder.name = original.name
     copyBuilder.initializer = original.initializer
     copyBuilder.delegate = original.delegate
-    copyBuilder.delegateFieldSymbol = original.delegateFieldSymbol
     copyBuilder.isVar = original.isVar
     copyBuilder.getter = original.getter
     copyBuilder.setter = original.setter
     copyBuilder.annotations.addAll(original.annotations)
-    copyBuilder.typeParameters.addAll(original.typeParameters)
-    copyBuilder.containerSource = original.containerSource
-    copyBuilder.dispatchReceiverType = original.dispatchReceiverType
     copyBuilder.symbol = original.symbol
+    copyBuilder.delegateFieldSymbol = original.delegateFieldSymbol
     copyBuilder.isLocal = original.isLocal
-    copyBuilder.status = original.status
+    copyBuilder.typeParameters.addAll(original.typeParameters)
     return copyBuilder.apply(init).build()
 }

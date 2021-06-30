@@ -106,7 +106,7 @@ internal object FirLazyBodiesCalculator {
 
 private object FirLazyBodiesCalculatorTransformer : FirTransformer<MutableList<FirDeclaration>>() {
 
-    override fun transformFile(file: FirFile, data: MutableList<FirDeclaration>): FirDeclaration {
+    override fun transformFile(file: FirFile, data: MutableList<FirDeclaration>): FirFile {
         file.declarations.forEach {
             it.transformSingle(this, data)
         }
@@ -128,7 +128,7 @@ private object FirLazyBodiesCalculatorTransformer : FirTransformer<MutableList<F
     override fun transformSimpleFunction(
         simpleFunction: FirSimpleFunction,
         data: MutableList<FirDeclaration>
-    ): FirDeclaration {
+    ): FirSimpleFunction {
         if (simpleFunction.body is FirLazyBlock) {
             val designation = FirDeclarationDesignation(data, simpleFunction)
             FirLazyBodiesCalculator.calculateLazyBodiesForFunction(designation)
@@ -139,7 +139,7 @@ private object FirLazyBodiesCalculatorTransformer : FirTransformer<MutableList<F
     override fun transformConstructor(
         constructor: FirConstructor,
         data: MutableList<FirDeclaration>
-    ): FirDeclaration {
+    ): FirConstructor {
         if (constructor.body is FirLazyBlock) {
             val designation = FirDeclarationDesignation(data, constructor)
             FirLazyBodiesCalculator.calculateLazyBodyForSecondaryConstructor(designation)
@@ -147,7 +147,7 @@ private object FirLazyBodiesCalculatorTransformer : FirTransformer<MutableList<F
         return constructor
     }
 
-    override fun transformProperty(property: FirProperty, data: MutableList<FirDeclaration>): FirDeclaration {
+    override fun transformProperty(property: FirProperty, data: MutableList<FirDeclaration>): FirProperty {
         if (FirLazyBodiesCalculator.needCalculatingLazyBodyForProperty(property)) {
             val designation = FirDeclarationDesignation(data, property)
             FirLazyBodiesCalculator.calculateLazyBodyForProperty(designation)

@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.checkers.declaration.DeclarationCheckers
 import org.jetbrains.kotlin.fir.analysis.checkers.declaration.FirDeclarationChecker
 import org.jetbrains.kotlin.fir.analysis.checkersComponent
-import org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollector
 import org.jetbrains.kotlin.fir.analysis.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.fir.declarations.*
 
@@ -30,7 +29,7 @@ class DeclarationCheckersDiagnosticComponent(
         checkers.allPropertyCheckers.check(property, data, reporter)
     }
 
-    override fun <F : FirClass<F>> visitClass(klass: FirClass<F>, data: CheckerContext) {
+    override fun visitClass(klass: FirClass, data: CheckerContext) {
         checkers.allClassCheckers.check(klass, data, reporter)
     }
 
@@ -43,7 +42,7 @@ class DeclarationCheckersDiagnosticComponent(
     }
 
     override fun visitTypeAlias(typeAlias: FirTypeAlias, data: CheckerContext) {
-        checkers.allMemberDeclarationCheckers.check(typeAlias, data, reporter)
+        checkers.allTypeAliasCheckers.check(typeAlias, data, reporter)
     }
 
     override fun visitConstructor(constructor: FirConstructor, data: CheckerContext) {
