@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.fir.declarations.impl
 
 import org.jetbrains.kotlin.fir.FirModuleData
 import org.jetbrains.kotlin.fir.FirSourceElement
+import org.jetbrains.kotlin.fir.declarations.DeprecationsPerUseSite
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationAttributes
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationStatus
@@ -37,6 +38,7 @@ internal class FirErrorPropertyImpl(
     override var resolvePhase: FirResolvePhase,
     override val origin: FirDeclarationOrigin,
     override val attributes: FirDeclarationAttributes,
+    override var deprecation: DeprecationsPerUseSite?,
     override val containerSource: DeserializedContainerSource?,
     override val dispatchReceiverType: ConeKotlinType?,
     override val name: Name,
@@ -45,9 +47,9 @@ internal class FirErrorPropertyImpl(
     override val symbol: FirErrorPropertySymbol,
 ) : FirErrorProperty() {
     override var returnTypeRef: FirTypeRef = FirErrorTypeRefImpl(null, null, diagnostic)
-    override val receiverTypeRef: FirTypeRef? get() = null
     override val typeParameters: List<FirTypeParameterRef> get() = emptyList()
     override var status: FirDeclarationStatus = FirResolvedDeclarationStatusImpl.DEFAULT_STATUS_FOR_STATUSLESS_DECLARATIONS
+    override val receiverTypeRef: FirTypeRef? get() = null
     override val initializer: FirExpression? get() = null
     override val delegate: FirExpression? get() = null
     override val isVar: Boolean get() = false
@@ -77,16 +79,16 @@ internal class FirErrorPropertyImpl(
         return this
     }
 
-    override fun <D> transformReceiverTypeRef(transformer: FirTransformer<D>, data: D): FirErrorPropertyImpl {
-        return this
-    }
-
     override fun <D> transformTypeParameters(transformer: FirTransformer<D>, data: D): FirErrorPropertyImpl {
         return this
     }
 
     override fun <D> transformStatus(transformer: FirTransformer<D>, data: D): FirErrorPropertyImpl {
         status = status.transform(transformer, data)
+        return this
+    }
+
+    override fun <D> transformReceiverTypeRef(transformer: FirTransformer<D>, data: D): FirErrorPropertyImpl {
         return this
     }
 
@@ -125,6 +127,10 @@ internal class FirErrorPropertyImpl(
     }
 
     override fun replaceReceiverTypeRef(newReceiverTypeRef: FirTypeRef?) {}
+
+    override fun replaceDeprecation(newDeprecation: DeprecationsPerUseSite?) {
+        deprecation = newDeprecation
+    }
 
     override fun replaceInitializer(newInitializer: FirExpression?) {}
 }

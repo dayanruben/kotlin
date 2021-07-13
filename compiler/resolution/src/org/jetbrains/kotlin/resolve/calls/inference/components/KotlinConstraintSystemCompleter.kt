@@ -293,11 +293,13 @@ class KotlinConstraintSystemCompleter(
 
             val variableWithConstraints = notFixedTypeVariables.getValue(variableForFixation.variable)
 
-            if (variableForFixation.hasProperConstraint) {
-                fixVariable(this, variableWithConstraints, topLevelAtoms)
-                return true
-            } else {
-                processVariableWhenNotEnoughInformation(this, variableWithConstraints, topLevelAtoms, diagnosticsHolder)
+            when {
+                variableForFixation.hasProperConstraint -> {
+                    fixVariable(this, variableWithConstraints, topLevelAtoms)
+                    return true
+                }
+
+                else -> processVariableWhenNotEnoughInformation(this, variableWithConstraints, topLevelAtoms, diagnosticsHolder)
             }
         }
 

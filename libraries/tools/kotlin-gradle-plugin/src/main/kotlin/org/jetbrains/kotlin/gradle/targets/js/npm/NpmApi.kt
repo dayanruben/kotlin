@@ -27,14 +27,16 @@ interface NpmApi {
         rootProjectVersion: String,
         logger: Logger,
         subProjects: Collection<KotlinCompilationNpmResolution>,
-        resolutions: Map<String, String>
+        resolutions: Map<String, String>,
+        forceFullResolve: Boolean
     )
 
     fun resolveRootProject(
         services: ServiceRegistry,
         logger: Logger,
         nodeJs: NodeJsRootExtension,
-        yarnHome: File,
+        command: String,
+        isStandalone: Boolean,
         npmProjects: Collection<KotlinCompilationNpmResolution>,
         cliArgs: List<String>
     )

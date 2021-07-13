@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.fir.builder.FirAnnotationContainerBuilder
 import org.jetbrains.kotlin.fir.builder.FirBuilderDsl
 import org.jetbrains.kotlin.fir.contracts.FirContractDescription
 import org.jetbrains.kotlin.fir.contracts.impl.FirEmptyContractDescription
+import org.jetbrains.kotlin.fir.declarations.DeprecationsPerUseSite
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationAttributes
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationStatus
@@ -45,8 +46,9 @@ open class FirSimpleFunctionBuilder : FirFunctionBuilder, FirTypeParametersOwner
     override lateinit var origin: FirDeclarationOrigin
     override var attributes: FirDeclarationAttributes = FirDeclarationAttributes()
     override lateinit var returnTypeRef: FirTypeRef
-    open var receiverTypeRef: FirTypeRef? = null
     override lateinit var status: FirDeclarationStatus
+    open var receiverTypeRef: FirTypeRef? = null
+    override var deprecation: DeprecationsPerUseSite? = null
     override var containerSource: DeserializedContainerSource? = null
     override var dispatchReceiverType: ConeKotlinType? = null
     override val valueParameters: MutableList<FirValueParameter> = mutableListOf()
@@ -65,8 +67,9 @@ open class FirSimpleFunctionBuilder : FirFunctionBuilder, FirTypeParametersOwner
             origin,
             attributes,
             returnTypeRef,
-            receiverTypeRef,
             status,
+            receiverTypeRef,
+            deprecation,
             containerSource,
             dispatchReceiverType,
             valueParameters,
@@ -101,8 +104,9 @@ inline fun buildSimpleFunctionCopy(original: FirSimpleFunction, init: FirSimpleF
     copyBuilder.origin = original.origin
     copyBuilder.attributes = original.attributes.copy()
     copyBuilder.returnTypeRef = original.returnTypeRef
-    copyBuilder.receiverTypeRef = original.receiverTypeRef
     copyBuilder.status = original.status
+    copyBuilder.receiverTypeRef = original.receiverTypeRef
+    copyBuilder.deprecation = original.deprecation
     copyBuilder.containerSource = original.containerSource
     copyBuilder.dispatchReceiverType = original.dispatchReceiverType
     copyBuilder.valueParameters.addAll(original.valueParameters)

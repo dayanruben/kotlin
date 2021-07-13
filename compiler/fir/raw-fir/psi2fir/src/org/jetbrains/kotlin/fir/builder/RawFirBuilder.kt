@@ -195,7 +195,7 @@ open class RawFirBuilder(
                 )
             }
 
-        private fun KtExpression?.toFirExpression(
+        private fun KtElement?.toFirExpression(
             errorReason: String,
             kind: DiagnosticKind = DiagnosticKind.ExpressionExpected,
         ): FirExpression {
@@ -320,8 +320,7 @@ open class RawFirBuilder(
                 )
             }
             val name = this.getArgumentName()?.asName
-            val expression = this.getArgumentExpression()
-            val firExpression = when (expression) {
+            val firExpression = when (val expression = this.getArgumentExpression()) {
                 is KtConstantExpression, is KtStringTemplateExpression -> {
                     expression.accept(this@Visitor, Unit) as FirExpression
                 }
@@ -580,7 +579,7 @@ open class RawFirBuilder(
             container.argumentList = argumentList
         }
 
-        fun KtClassOrObject.extractSuperTypeListEntriesTo(
+        private fun KtClassOrObject.extractSuperTypeListEntriesTo(
             container: FirClassBuilder,
             delegatedSelfTypeRef: FirTypeRef?,
             delegatedEnumSuperTypeRef: FirTypeRef?,
@@ -741,7 +740,10 @@ open class RawFirBuilder(
                 moduleData = baseModuleData
                 origin = FirDeclarationOrigin.Source
                 name = file.name
-                packageFqName = context.packageFqName
+                packageDirective = buildPackageDirective {
+                    packageFqName = context.packageFqName
+                    source = file.packageDirective?.toFirPsiSourceElement()
+                }
                 for (annotationEntry in file.annotationEntries) {
                     annotations += annotationEntry.convert<FirAnnotationCall>()
                 }
@@ -793,7 +795,6 @@ open class RawFirBuilder(
                             scopeProvider = this@RawFirBuilder.baseScopeProvider
                             symbol = FirAnonymousObjectSymbol()
 
-                            extractAnnotationsTo(this)
                             val delegatedEntrySelfType = buildResolvedTypeRef {
                                 type =
                                     ConeClassLikeTypeImpl(this@buildAnonymousObject.symbol.toLookupTag(), emptyArray(), isNullable = false)
@@ -865,7 +866,7 @@ open class RawFirBuilder(
                     isInner = classOrObject.hasModifier(INNER_KEYWORD)
                     isCompanion = (classOrObject as? KtObjectDeclaration)?.isCompanion() == true
                     isData = classOrObject.hasModifier(DATA_KEYWORD)
-                    isInline = classOrObject.hasModifier(INLINE_KEYWORD)
+                    isInline = classOrObject.hasModifier(INLINE_KEYWORD) || classOrObject.hasModifier(VALUE_KEYWORD)
                     isFun = classOrObject.hasModifier(FUN_KEYWORD)
                     isExternal = classOrObject.hasModifier(EXTERNAL_KEYWORD)
                 }
@@ -983,7 +984,8 @@ open class RawFirBuilder(
                         scopeProvider = baseScopeProvider
                         symbol = FirAnonymousObjectSymbol()
                         context.applyToActualCapturedTypeParameters(false) {
-                        typeParameters += buildOuterClassTypeParameterRef { symbol = it } }
+                            typeParameters += buildOuterClassTypeParameterRef { symbol = it }
+                        }
                         val delegatedSelfType = objectDeclaration.toDelegatedSelfType(this)
                         registerSelfType(delegatedSelfType)
                         objectDeclaration.extractAnnotationsTo(this)
@@ -994,7 +996,6 @@ open class RawFirBuilder(
                             ClassKind.CLASS,
                             containerTypeParameters = emptyList()
                         )
-                        this@buildAnonymousObjectExpression.typeRef = delegatedSelfType
 
                         for (declaration in objectDeclaration.declarations) {
                             declarations += declaration.toFirDeclaration(
@@ -1748,10 +1749,15 @@ open class RawFirBuilder(
                                 result = branchBody
                             }
                         } else {
-                            val ktCondition = entry.conditions.first() as? KtWhenConditionWithExpression
+                            val ktCondition = entry.conditions.first()
                             buildWhenBranch {
                                 source = entrySource
-                                condition = ktCondition?.expression.toFirExpression("No expression in condition with expression")
+                                condition = ((ktCondition as? KtWhenConditionWithExpression)?.expression
+                                    ?: ktCondition)
+                                    .toFirExpression(
+                                        "No expression in condition with expression",
+                                        DiagnosticKind.ExpressionExpected
+                                    )
                                 result = branchBody
                             }
                         }

@@ -11,10 +11,10 @@ import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.impl.LocalVariableDescriptor
 import org.jetbrains.kotlin.descriptors.impl.TypeParameterDescriptorImpl
-import org.jetbrains.kotlin.idea.codeInsight.ReferenceVariantsHelper
-import org.jetbrains.kotlin.idea.util.CallTypeAndReceiver
-import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
-import org.jetbrains.kotlin.idea.util.getResolutionScope
+import org.jetbrains.kotlin.scripting.ide_common.idea.codeInsight.ReferenceVariantsHelper
+import org.jetbrains.kotlin.scripting.ide_common.idea.util.CallTypeAndReceiver
+import org.jetbrains.kotlin.scripting.ide_common.idea.util.IdeDescriptorRenderersScripting
+import org.jetbrains.kotlin.scripting.ide_common.idea.util.getResolutionScope
 import org.jetbrains.kotlin.lexer.KtKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
@@ -121,7 +121,6 @@ private class KJvmReplCompleter(
     private val getDescriptorsSimple = ResultGetter { element, options ->
         val expression = element.thisOrParent<KtSimpleNameExpression>() ?: return@ResultGetter null
 
-        val result = DescriptorsResult(targetElement = expression)
         val inDescriptor: DeclarationDescriptor = expression.getResolutionScope(bindingContext, resolutionFacade).ownerDescriptor
         val prefix = element.text.substring(0, cursor - element.startOffset)
 
@@ -131,7 +130,7 @@ private class KJvmReplCompleter(
             if (parentChildren.size == 3 &&
                 parentChildren[1] is KtOperationReferenceExpression &&
                 parentChildren[1].text == INSERTED_STRING
-            ) return@ResultGetter result
+            ) return@ResultGetter DescriptorsResult(targetElement = expression, addKeywords = false)
         }
 
         val containingArgument = expression.thisOrParent<KtValueArgument>()
@@ -303,18 +302,20 @@ private class KJvmReplCompleter(
                         }
                     }
 
-                yieldAll(
-                    keywordsCompletionVariants(
-                        KtTokens.KEYWORDS,
-                        prefix
+                if (result.addKeywords) {
+                    yieldAll(
+                        keywordsCompletionVariants(
+                            KtTokens.KEYWORDS,
+                            prefix
+                        )
                     )
-                )
-                yieldAll(
-                    keywordsCompletionVariants(
-                        KtTokens.SOFT_KEYWORDS,
-                        prefix
+                    yieldAll(
+                        keywordsCompletionVariants(
+                            KtTokens.SOFT_KEYWORDS,
+                            prefix
+                        )
                     )
-                )
+                }
             }
         }
     }
@@ -356,6 +357,7 @@ private class KJvmReplCompleter(
         var sortNeeded: Boolean = true,
         var targetElement: PsiElement,
         val containingCallParameters: MutableList<ValueParameterDescriptor> = mutableListOf(),
+        val addKeywords: Boolean = true,
     )
 
     private class DescriptorsOptions(
@@ -414,11 +416,11 @@ private class KJvmReplCompleter(
         }
 
         private val RENDERER =
-            IdeDescriptorRenderers.SOURCE_CODE.withOptions {
+            IdeDescriptorRenderersScripting.SOURCE_CODE.withOptions {
                 this.classifierNamePolicy =
                     ClassifierNamePolicy.SHORT
                 this.typeNormalizer =
-                    IdeDescriptorRenderers.APPROXIMATE_FLEXIBLE_TYPES
+                    IdeDescriptorRenderersScripting.APPROXIMATE_FLEXIBLE_TYPES
                 this.parameterNameRenderingPolicy =
                     ParameterNameRenderingPolicy.NONE
                 this.renderDefaultAnnotationArguments = false

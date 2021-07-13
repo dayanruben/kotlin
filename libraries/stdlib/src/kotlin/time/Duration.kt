@@ -7,9 +7,7 @@ package kotlin.time
 
 import kotlin.contracts.*
 import kotlin.jvm.JvmInline
-import kotlin.math.abs
-import kotlin.math.roundToInt
-import kotlin.math.sign
+import kotlin.math.*
 
 /**
  * Represents the amount of time one instant of time is away from another instant.
@@ -173,6 +171,63 @@ public value class Duration internal constructor(private val rawValue: Long) : C
         @SinceKotlin("1.5")
         public fun days(value: Double): Duration = value.toDuration(DurationUnit.DAYS)
 
+        /**
+         * Parses a string that represents a duration and returns the parsed [Duration] value.
+         *
+         * The following formats are accepted:
+         *
+         * - ISO-8601 Duration format, e.g. `P1DT2H3M4.058S`, see [toIsoString] and [parseIsoString].
+         * - The format of string returned by the default [Duration.toString] and `toString` in a specific unit,
+         *   e.g. `10s`, `1h 30m` or `-(1h 30m)`.
+         *
+         * @throws IllegalArgumentException if the string doesn't represent a duration in any of the supported formats.
+         */
+        @SinceKotlin("1.5")
+        public fun parse(value: String): Duration = try {
+            parseDuration(value, strictIso = false)
+        } catch (e: IllegalArgumentException) {
+            throw IllegalArgumentException("Invalid duration string format: '$value'.", e)
+        }
+
+        /**
+         * Parses a string that represents a duration in ISO-8601 format and returns the parsed [Duration] value.
+         *
+         * @throws IllegalArgumentException if the string doesn't represent a duration in ISO-8601 format.
+         */
+        @SinceKotlin("1.5")
+        public fun parseIsoString(value: String): Duration = try {
+            parseDuration(value, strictIso = true)
+        } catch (e: IllegalArgumentException) {
+            throw IllegalArgumentException("Invalid ISO duration string format: '$value'.", e)
+        }
+
+        /**
+         * Parses a string that represents a duration and returns the parsed [Duration] value,
+         * or `null` if the string doesn't represent a duration in any of the supported formats.
+         *
+         * The following formats are accepted:
+         *
+         * - ISO-8601 Duration format, e.g. `P1DT2H3M4.058S`, see [toIsoString] and [parseIsoString].
+         * - The format of string returned by the default [Duration.toString] and `toString` in a specific unit,
+         *   e.g. `10s`, `1h 30m` or `-(1h 30m)`.
+         */
+        @SinceKotlin("1.5")
+        public fun parseOrNull(value: String): Duration? = try {
+            parseDuration(value, strictIso = false)
+        } catch (e: IllegalArgumentException) {
+            null
+        }
+
+        /**
+         * Parses a string that represents a duration in ISO-8601 format and returns the parsed [Duration] value,
+         * or `null` if the string doesn't represent a duration in ISO-8601 format.
+         */
+        @SinceKotlin("1.5")
+        public fun parseIsoStringOrNull(value: String): Duration? = try {
+            parseDuration(value, strictIso = true)
+        } catch (e: IllegalArgumentException) {
+            null
+        }
     }
 
     // arithmetic operators
@@ -639,15 +694,25 @@ public value class Duration internal constructor(private val rawValue: Long) : C
     public fun toLongMilliseconds(): Long = inWholeMilliseconds
 
     /**
-     * Returns a string representation of this duration value expressed in the unit which yields the most compact and readable number value.
+     * Returns a string representation of this duration value
+     * expressed as a combination of numeric components, each in its own unit.
+     *
+     * Each component is a number followed by the unit abbreviated name: `d`, `h`, `m`, `s`:
+     * `5h`, `1d 12h`, `1h 0m 30.3340s`.
+     * The last component, usually seconds, can be a number with a fractional part.
+     *
+     * If the duration is less than a second, it is represented as a single number
+     * with one of sub-second units: `ms` (milliseconds), `us` (microseconds), or `ns` (nanoseconds):
+     * `140.884ms`, `500us`, `24ns`.
+     *
+     * A negative duration is prefixed with `-` sign and, if it consists of multiple components, surrounded with parentheses:
+     * `-12m` and `-(1h 30m)`.
      *
      * Special cases:
-     *  - zero duration is formatted as `"0s"`
-     *  - the infinite duration is formatted as `"Infinity"` without unit
-     *  - very small durations (less than 1e-15 s) are expressed in seconds and formatted in scientific notation
-     *  - very big durations (more than 1e+7 days) are expressed in days and formatted in scientific notation
+     *  - an infinite duration is formatted as `"Infinity"` or `"-Infinity"` without a unit.
      *
-     * @return the value of duration in the automatically determined unit followed by that unit abbreviated name: `d`, `h`, `m`, `s`, `ms`, `us`, or `ns`.
+     * It's recommended to use [toIsoString] that uses more strict ISO-8601 format instead of this `toString`
+     * when you want to convert a duration to a string in cases of serialization, interchange, etc.
      *
      * @sample samples.time.Durations.toStringDefault
      */
@@ -656,35 +721,61 @@ public value class Duration internal constructor(private val rawValue: Long) : C
         INFINITE.rawValue -> "Infinity"
         NEG_INFINITE.rawValue -> "-Infinity"
         else -> {
-            val absNs = absoluteValue.toDouble(DurationUnit.NANOSECONDS)
-            var scientific = false
-            var maxDecimals = 0
-            val unit = when {
-                absNs < 1e-6 -> DurationUnit.SECONDS.also { scientific = true }
-                absNs < 1 -> DurationUnit.NANOSECONDS.also { maxDecimals = 7 }
-                absNs < 1e3 -> DurationUnit.NANOSECONDS
-                absNs < 1e6 -> DurationUnit.MICROSECONDS
-                absNs < 1e9 -> DurationUnit.MILLISECONDS
-                absNs < 1000e9 -> DurationUnit.SECONDS
-                absNs < 60_000e9 -> DurationUnit.MINUTES
-                absNs < 3600_000e9 -> DurationUnit.HOURS
-                absNs < 86400e9 * 1e7 -> DurationUnit.DAYS
-                else -> DurationUnit.DAYS.also { scientific = true }
+            val isNegative = isNegative()
+            buildString {
+                if (isNegative) append('-')
+                absoluteValue.run {
+                    toComponents { _, hours, minutes, seconds, nanoseconds ->
+                        val days = inWholeDays
+                        val hasDays = days != 0L
+                        val hasHours = hours != 0
+                        val hasMinutes = minutes != 0
+                        val hasSeconds = seconds != 0 || nanoseconds != 0
+                        var components = 0
+                        if (hasDays) {
+                            append(days).append('d')
+                            components++
+                        }
+                        if (hasHours || (hasDays && (hasMinutes || hasSeconds))) {
+                            if (components++ > 0) append(' ')
+                            append(hours).append('h')
+                        }
+                        if (hasMinutes || (hasSeconds && (hasHours || hasDays))) {
+                            if (components++ > 0) append(' ')
+                            append(minutes).append('m')
+                        }
+                        if (hasSeconds) {
+                            if (components++ > 0) append(' ')
+                            when {
+                                seconds != 0 || hasDays || hasHours || hasMinutes ->
+                                    appendFractional(seconds, nanoseconds, 9, "s", isoZeroes = false)
+                                nanoseconds >= 1_000_000 ->
+                                    appendFractional(nanoseconds / 1_000_000, nanoseconds % 1_000_000, 6, "ms", isoZeroes = false)
+                                nanoseconds >= 1_000 ->
+                                    appendFractional(nanoseconds / 1_000, nanoseconds % 1_000, 3, "us", isoZeroes = false)
+                                else ->
+                                    append(nanoseconds).append("ns")
+                            }
+                        }
+                        if (isNegative && components > 1) insert(1, '(').append(')')
+                    }
+                }
             }
-            val value = toDouble(unit)
-            when {
-                scientific -> formatScientific(value)
-                maxDecimals > 0 -> formatUpToDecimals(value, maxDecimals)
-                else -> formatToExactDecimals(value, precision(abs(value)))
-            } + unit.shortName()
         }
     }
 
-    private fun precision(value: Double): Int = when {
-        value < 1 -> 3
-        value < 10 -> 2
-        value < 100 -> 1
-        else -> 0
+    private fun StringBuilder.appendFractional(whole: Int, fractional: Int, fractionalSize: Int, unit: String, isoZeroes: Boolean) {
+        append(whole)
+        if (fractional != 0) {
+            append('.')
+            val fracString = fractional.toString().padStart(fractionalSize, '0')
+            val nonZeroDigits = fracString.indexOfLast { it != '0' } + 1
+            when {
+                !isoZeroes && nonZeroDigits < 3 -> appendRange(fracString, 0, nonZeroDigits)
+                else -> appendRange(fracString, 0, ((nonZeroDigits + 2) / 3) * 3)
+            }
+        }
+        append(unit)
     }
 
     /**
@@ -692,7 +783,10 @@ public value class Duration internal constructor(private val rawValue: Long) : C
      * and formatted with the specified [decimals] number of digits after decimal point.
      *
      * Special cases:
-     *  - the infinite duration is formatted as `"Infinity"` without unit
+     *  - an infinite duration is formatted as `"Infinity"` or `"-Infinity"` without a unit.
+     *
+     * @param decimals the number of digits after decimal point to show. The value must be non-negative.
+     * No more than 12 decimals will be shown, even if a larger number is requested.
      *
      * @return the value of duration in the specified [unit] followed by that unit abbreviated name: `d`, `h`, `m`, `s`, `ms`, `us`, or `ns`.
      *
@@ -704,10 +798,7 @@ public value class Duration internal constructor(private val rawValue: Long) : C
         require(decimals >= 0) { "decimals must be not negative, but was $decimals" }
         val number = toDouble(unit)
         if (number.isInfinite()) return number.toString()
-        return when {
-            abs(number) < 1e14 -> formatToExactDecimals(number, decimals.coerceAtMost(12))
-            else -> formatScientific(number)
-        } + unit.shortName()
+        return formatToExactDecimals(number, decimals.coerceAtMost(12)) + unit.shortName()
     }
 
 
@@ -728,8 +819,14 @@ public value class Duration internal constructor(private val rawValue: Long) : C
     public fun toIsoString(): String = buildString {
         if (isNegative()) append('-')
         append("PT")
-        absoluteValue.toComponents { hours, minutes, seconds, nanoseconds ->
-            val hasHours = hours != 0
+        val absoluteValue = this@Duration.absoluteValue
+        absoluteValue.toComponents { _, minutes, seconds, nanoseconds ->
+            var hours = absoluteValue.inWholeHours
+            if (isInfinite()) {
+                // use large enough value instead of Long.MAX_VALUE
+                hours = 9_999_999_999_999
+            }
+            val hasHours = hours != 0L
             val hasSeconds = seconds != 0 || nanoseconds != 0
             val hasMinutes = minutes != 0 || (hasSeconds && hasHours)
             if (hasHours) {
@@ -739,17 +836,7 @@ public value class Duration internal constructor(private val rawValue: Long) : C
                 append(minutes).append('M')
             }
             if (hasSeconds || (!hasHours && !hasMinutes)) {
-                append(seconds)
-                if (nanoseconds != 0) {
-                    append('.')
-                    val nss = nanoseconds.toString().padStart(9, '0')
-                    when {
-                        nanoseconds % 1_000_000 == 0 -> appendRange(nss, 0, 3)
-                        nanoseconds % 1_000 == 0 -> appendRange(nss, 0, 6)
-                        else -> append(nss)
-                    }
-                }
-                append('S')
+                appendFractional(seconds, nanoseconds, 9, "S", isoZeroes = true)
             }
         }
     }
@@ -792,11 +879,11 @@ public fun Long.toDuration(unit: DurationUnit): Duration {
 public fun Double.toDuration(unit: DurationUnit): Duration {
     val valueInNs = convertDurationUnit(this, unit, DurationUnit.NANOSECONDS)
     require(!valueInNs.isNaN()) { "Duration value cannot be NaN." }
-    val nanos = valueInNs.toLong()
+    val nanos = valueInNs.roundToLong()
     return if (nanos in -MAX_NANOS..MAX_NANOS) {
         durationOfNanos(nanos)
     } else {
-        val millis = convertDurationUnit(this, unit, DurationUnit.MILLISECONDS).toLong()
+        val millis = convertDurationUnit(this, unit, DurationUnit.MILLISECONDS).roundToLong()
         durationOfMillisNormalized(millis)
     }
 }
@@ -976,6 +1063,121 @@ public inline operator fun Int.times(duration: Duration): Duration = duration * 
 public inline operator fun Double.times(duration: Duration): Duration = duration * this
 
 
+
+@ExperimentalTime
+private fun parseDuration(value: String, strictIso: Boolean): Duration {
+    var length = value.length
+    if (length == 0) throw IllegalArgumentException("The string is empty")
+    var index = 0
+    var result = Duration.ZERO
+    val infinityString = "Infinity"
+    when (value[index]) {
+        '+', '-' -> index++
+    }
+    val hasSign = index > 0
+    val isNegative = hasSign && value.startsWith('-')
+    when {
+        length <= index ->
+            throw IllegalArgumentException("No components")
+        value[index] == 'P' -> {
+            if (++index == length) throw IllegalArgumentException()
+            val nonDigitSymbols = "+-."
+            var isTimeComponent = false
+            var prevUnit: DurationUnit? = null
+            while (index < length) {
+                if (value[index] == 'T') {
+                    if (isTimeComponent || ++index == length) throw IllegalArgumentException()
+                    isTimeComponent = true
+                    continue
+                }
+                val component = value.substringWhile(index) { it in '0'..'9' || it in nonDigitSymbols }
+                if (component.isEmpty()) throw IllegalArgumentException()
+                index += component.length
+                val unitChar = value.getOrElse(index) { throw IllegalArgumentException("Missing unit for value $component") }
+                index++
+                val unit = durationUnitByIsoChar(unitChar, isTimeComponent)
+                if (prevUnit != null && prevUnit <= unit) throw IllegalArgumentException("Unexpected order of duration components")
+                prevUnit = unit
+                val dotIndex = component.indexOf('.')
+                if (unit == DurationUnit.SECONDS && dotIndex > 0) {
+                    val whole = component.substring(0, dotIndex)
+                    result += parseOverLongIsoComponent(whole).toDuration(unit)
+                    result += component.substring(dotIndex).toDouble().toDuration(unit)
+                } else {
+                    result += parseOverLongIsoComponent(component).toDuration(unit)
+                }
+            }
+        }
+        strictIso ->
+            throw IllegalArgumentException()
+        value.regionMatches(index, infinityString, 0, length = maxOf(length - index, infinityString.length), ignoreCase = true) -> {
+            result = Duration.INFINITE
+        }
+        else -> {
+            // parse default string format
+            var prevUnit: DurationUnit? = null
+            var afterFirst = false
+            var allowSpaces = !hasSign
+            if (hasSign && value[index] == '(' && value.last() == ')') {
+                allowSpaces = true
+                if (++index == --length) throw IllegalArgumentException("No components")
+            }
+            while (index < length) {
+                if (afterFirst && allowSpaces) {
+                    index = value.skipWhile(index) { it == ' ' }
+                }
+                afterFirst = true
+                val component = value.substringWhile(index) { it in '0'..'9' || it == '.' }
+                if (component.isEmpty()) throw IllegalArgumentException()
+                index += component.length
+                val unitName = value.substringWhile(index) { it in 'a'..'z' }
+                index += unitName.length
+                val unit = durationUnitByShortName(unitName)
+                if (prevUnit != null && prevUnit <= unit) throw IllegalArgumentException("Unexpected order of duration components")
+                prevUnit = unit
+                val dotIndex = component.indexOf('.')
+                if (dotIndex > 0) {
+                    val whole = component.substring(0, dotIndex)
+                    result += whole.toLong().toDuration(unit)
+                    result += component.substring(dotIndex).toDouble().toDuration(unit)
+                    if (index < length) throw IllegalArgumentException("Fractional component must be last")
+                } else {
+                    result += component.toLong().toDuration(unit)
+                }
+            }
+        }
+    }
+    return if (isNegative) -result else result
+}
+
+
+private fun parseOverLongIsoComponent(value: String): Long {
+    val length = value.length
+    var startIndex = 0
+    if (length > 0 && value[0] in "+-") startIndex++
+    if ((length - startIndex) > 16 && (startIndex..value.lastIndex).all { value[it] in '0'..'9' }) {
+        // all chars are digits, but more than ceiling(log10(MAX_MILLIS / 1000)) of them
+        return if (value[0] == '-') Long.MIN_VALUE else Long.MAX_VALUE
+    }
+    // TODO: replace with just toLong after min JDK becomes 8
+    return if (value.startsWith("+")) value.drop(1).toLong() else value.toLong()
+}
+
+
+
+private inline fun String.substringWhile(startIndex: Int, predicate: (Char) -> Boolean): String =
+    substring(startIndex, skipWhile(startIndex, predicate))
+
+private inline fun String.skipWhile(startIndex: Int, predicate: (Char) -> Boolean): Int {
+    var i = startIndex
+    while (i < length && predicate(this[i])) i++
+    return i
+}
+
+
+
+
+
 // The ranges are chosen so that they are:
 // - symmetric relative to zero: this greatly simplifies operations with sign, e.g. unaryMinus and minus.
 // - non-overlapping, but adjacent: the first value that doesn't fit in nanos range, can be exactly represented in millis.
@@ -1011,4 +1213,3 @@ private fun millisToNanos(millis: Long): Long = millis * NANOS_IN_MILLIS
 
 internal expect fun formatToExactDecimals(value: Double, decimals: Int): String
 internal expect fun formatUpToDecimals(value: Double, decimals: Int): String
-internal expect fun formatScientific(value: Double): String

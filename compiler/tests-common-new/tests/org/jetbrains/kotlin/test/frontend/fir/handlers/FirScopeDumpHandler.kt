@@ -7,13 +7,14 @@ package org.jetbrains.kotlin.test.frontend.fir.handlers
 
 import org.jetbrains.kotlin.fir.FirRenderer
 import org.jetbrains.kotlin.fir.FirSession
-import org.jetbrains.kotlin.fir.declarations.FirCallableMemberDeclaration
+import org.jetbrains.kotlin.fir.declarations.FirCallableDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirRegularClass
 import org.jetbrains.kotlin.fir.render
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.resolve.symbolProvider
 import org.jetbrains.kotlin.fir.scopes.*
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
+import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.fir.types.render
@@ -31,6 +32,7 @@ import org.jetbrains.kotlin.test.utils.withExtension
 import org.jetbrains.kotlin.util.SmartPrinter
 import org.jetbrains.kotlin.util.withIndent
 
+@OptIn(SymbolInternals::class)
 class FirScopeDumpHandler(testServices: TestServices) : FirAnalysisHandler(testServices) {
     private val dumper = MultiModuleInfoDumperImpl()
 
@@ -111,7 +113,7 @@ class FirScopeDumpHandler(testServices: TestServices) : FirAnalysisHandler(testS
         }
     }
 
-    private fun SmartPrinter.printInfo(declaration: FirCallableMemberDeclaration, counter: SymbolCounter) {
+    private fun SmartPrinter.printInfo(declaration: FirCallableDeclaration, counter: SymbolCounter) {
         print("[${declaration.origin}]: ")
         print(declaration.render(FirRenderer.RenderMode.NoBodies).trim())
         print(" from ${declaration.dispatchReceiverType?.render()}")

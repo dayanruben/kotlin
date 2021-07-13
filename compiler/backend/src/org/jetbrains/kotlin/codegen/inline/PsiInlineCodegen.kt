@@ -43,19 +43,17 @@ class PsiInlineCodegen(
     typeParameterMappings: TypeParameterMappings<KotlinType>,
     sourceCompiler: SourceCompilerForInline,
     private val methodOwner: Type,
-    private val actualDispatchReceiver: Type
+    private val actualDispatchReceiver: Type,
+    reportErrorsOn: KtElement,
 ) : InlineCodegen<ExpressionCodegen>(
     codegen, state, signature, typeParameterMappings, sourceCompiler,
     ReifiedTypeInliner(
-        typeParameterMappings, PsiInlineIntrinsicsSupport(state), codegen.typeSystem,
+        typeParameterMappings, PsiInlineIntrinsicsSupport(state, reportErrorsOn), codegen.typeSystem,
         state.languageVersionSettings, state.unifiedNullChecks
     ),
 ), CallGenerator {
-    override fun generateAssertFieldIfNeeded(info: RootInliningContext) {
-        if (info.generateAssertField) {
-            codegen.parentCodegen.generateAssertField()
-        }
-    }
+    override fun generateAssertField() =
+        codegen.parentCodegen.generateAssertField()
 
     override fun genCallInner(
         callableMethod: Callable,
@@ -184,7 +182,7 @@ class PsiInlineCodegen(
         }
     }
 
-    var activeLambda: LambdaInfo? = null
+    var activeLambda: PsiExpressionLambda? = null
         private set
 
     private fun putClosureParametersOnStack(next: PsiExpressionLambda, receiverValue: StackValue?) {
@@ -213,9 +211,9 @@ private val FunctionDescriptor.explicitParameters
 class PsiExpressionLambda(
     expression: KtExpression,
     private val state: GenerationState,
-    isCrossInline: Boolean,
+    val isCrossInline: Boolean,
     override val isBoundCallableReference: Boolean
-) : ExpressionLambda(isCrossInline) {
+) : ExpressionLambda() {
     override val lambdaClassType: Type
 
     override val invokeMethod: Method
@@ -311,7 +309,7 @@ class PsiDefaultLambda(
     offset: Int,
     needReification: Boolean,
     sourceCompiler: SourceCompilerForInline
-) : DefaultLambda(lambdaClassType, capturedArgs, parameterDescriptor.isCrossinline, offset, needReification, sourceCompiler) {
+) : DefaultLambda(lambdaClassType, capturedArgs, offset, needReification, sourceCompiler) {
     private val invokeMethodDescriptor: FunctionDescriptor
 
     override val invokeMethodParameters: List<KotlinType?>

@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.fir.FirModuleData
 import org.jetbrains.kotlin.fir.FirSourceElement
 import org.jetbrains.kotlin.fir.builder.FirAnnotationContainerBuilder
 import org.jetbrains.kotlin.fir.builder.FirBuilderDsl
+import org.jetbrains.kotlin.fir.declarations.DeprecationsPerUseSite
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationAttributes
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationStatus
@@ -45,8 +46,9 @@ class FirPropertyBuilder : FirDeclarationBuilder, FirTypeParametersOwnerBuilder,
     override lateinit var origin: FirDeclarationOrigin
     override var attributes: FirDeclarationAttributes = FirDeclarationAttributes()
     lateinit var returnTypeRef: FirTypeRef
-    var receiverTypeRef: FirTypeRef? = null
     lateinit var status: FirDeclarationStatus
+    var receiverTypeRef: FirTypeRef? = null
+    var deprecation: DeprecationsPerUseSite? = null
     var containerSource: DeserializedContainerSource? = null
     var dispatchReceiverType: ConeKotlinType? = null
     lateinit var name: Name
@@ -59,6 +61,7 @@ class FirPropertyBuilder : FirDeclarationBuilder, FirTypeParametersOwnerBuilder,
     lateinit var symbol: FirPropertySymbol
     var delegateFieldSymbol: FirDelegateFieldSymbol? = null
     var isLocal: Boolean by kotlin.properties.Delegates.notNull<Boolean>()
+    var initializerAndAccessorsAreResolved: Boolean = false
     override val typeParameters: MutableList<FirTypeParameter> = mutableListOf()
 
     override fun build(): FirProperty {
@@ -69,8 +72,9 @@ class FirPropertyBuilder : FirDeclarationBuilder, FirTypeParametersOwnerBuilder,
             origin,
             attributes,
             returnTypeRef,
-            receiverTypeRef,
             status,
+            receiverTypeRef,
+            deprecation,
             containerSource,
             dispatchReceiverType,
             name,
@@ -83,6 +87,7 @@ class FirPropertyBuilder : FirDeclarationBuilder, FirTypeParametersOwnerBuilder,
             symbol,
             delegateFieldSymbol,
             isLocal,
+            initializerAndAccessorsAreResolved,
             typeParameters,
         )
     }
@@ -109,8 +114,9 @@ inline fun buildPropertyCopy(original: FirProperty, init: FirPropertyBuilder.() 
     copyBuilder.origin = original.origin
     copyBuilder.attributes = original.attributes.copy()
     copyBuilder.returnTypeRef = original.returnTypeRef
-    copyBuilder.receiverTypeRef = original.receiverTypeRef
     copyBuilder.status = original.status
+    copyBuilder.receiverTypeRef = original.receiverTypeRef
+    copyBuilder.deprecation = original.deprecation
     copyBuilder.containerSource = original.containerSource
     copyBuilder.dispatchReceiverType = original.dispatchReceiverType
     copyBuilder.name = original.name
@@ -123,6 +129,7 @@ inline fun buildPropertyCopy(original: FirProperty, init: FirPropertyBuilder.() 
     copyBuilder.symbol = original.symbol
     copyBuilder.delegateFieldSymbol = original.delegateFieldSymbol
     copyBuilder.isLocal = original.isLocal
+    copyBuilder.initializerAndAccessorsAreResolved = original.initializerAndAccessorsAreResolved
     copyBuilder.typeParameters.addAll(original.typeParameters)
     return copyBuilder.apply(init).build()
 }

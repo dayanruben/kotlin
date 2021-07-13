@@ -10,12 +10,24 @@ the Kotlin IntelliJ IDEA plugin:
  - Path: compiler/backend/src/org/jetbrains/kotlin/codegen/inline/MaxStackFrameSizeAndLocalsCalculator.java
      - License: BSD ([license/third_party/asm_license.txt][asm])
      - Origin: Derived from ASM: a very small and fast Java bytecode manipulation framework, Copyright (c) 2000-2011 INRIA, France Telecom
-
+   
  - Path: compiler/backend/src/org/jetbrains/kotlin/codegen/inline/MaxLocalsCalculator.java
      - License: BSD ([license/third_party/asm_license.txt][asm])
      - Origin: Derived from ASM: a very small and fast Java bytecode manipulation framework, Copyright (c) 2000-2011 INRIA, France Telecom
 
- - Path: compiler/backend/src/org/jetbrains/kotlin/codegen/optimization/common/MethodAnalyzer.kt
+ - Path: compiler/backend/src/org/jetbrains/kotlin/codegen/optimization/common/FlexibleMethodAnalyzer.kt
+     - License: BSD ([license/third_party/asm_license.txt][asm])
+     - Origin: Derived from ASM: a very small and fast Java bytecode manipulation framework, Copyright (c) 2000-2011 INRIA, France Telecom
+
+ - Path: compiler/backend/src/org/jetbrains/kotlin/codegen/optimization/common/FastMethodAnalyzer.kt
+     - License: BSD ([license/third_party/asm_license.txt][asm])
+     - Origin: Derived from ASM: a very small and fast Java bytecode manipulation framework, Copyright (c) 2000-2011 INRIA, France Telecom
+
+ - Path: compiler/backend/src/org/jetbrains/kotlin/codegen/optimization/common/InstructionLivenessAnalyzer.kt
+     - License: BSD ([license/third_party/asm_license.txt][asm])
+     - Origin: Derived from ASM: a very small and fast Java bytecode manipulation framework, Copyright (c) 2000-2011 INRIA, France Telecom 
+
+ - Path: compiler/backend/src/org/jetbrains/kotlin/codegen/optimization/common/ControlFlowGraph.kt
      - License: BSD ([license/third_party/asm_license.txt][asm])
      - Origin: Derived from ASM: a very small and fast Java bytecode manipulation framework, Copyright (c) 2000-2011 INRIA, France Telecom
 

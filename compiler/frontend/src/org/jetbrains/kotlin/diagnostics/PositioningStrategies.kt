@@ -375,6 +375,9 @@ object PositioningStrategies {
     val SUSPEND_MODIFIER: PositioningStrategy<KtModifierListOwner> = modifierSetPosition(KtTokens.SUSPEND_KEYWORD)
 
     @JvmField
+    val DATA_MODIFIER: PositioningStrategy<KtModifierListOwner> = modifierSetPosition(KtTokens.DATA_KEYWORD)
+
+    @JvmField
     val FOR_REDECLARATION: PositioningStrategy<PsiElement> = object : PositioningStrategy<PsiElement>() {
         override fun mark(element: PsiElement): List<TextRange> {
             val nameIdentifier = when (element) {
@@ -846,6 +849,12 @@ object PositioningStrategies {
         }
     }
 
+    val SPREAD_OPERATOR: PositioningStrategy<PsiElement> = object : PositioningStrategy<PsiElement>() {
+        override fun mark(element: PsiElement): List<TextRange> {
+            return super.mark((element as? KtValueArgument)?.getSpreadElement()?.node?.psi ?: element)
+        }
+    }
+
     @JvmField
     val FUN_INTERFACE: PositioningStrategy<KtDeclaration> = object : PositioningStrategy<KtDeclaration>() {
         override fun mark(element: KtDeclaration): List<TextRange> {
@@ -955,6 +964,7 @@ object PositioningStrategies {
                 is KtOperationExpression -> element.operationReference
                 is KtWhenConditionInRange -> element.operationReference
                 is KtAnnotationEntry -> element.calleeExpression ?: element
+                is KtTypeReference -> (element.typeElement as? KtNullableType)?.innerType ?: element
                 else -> element
             }
             while (locateReferencedName && result is KtParenthesizedExpression) {

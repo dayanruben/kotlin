@@ -21,13 +21,12 @@ import org.jetbrains.kotlin.fir.declarations.FirDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirAnnotatedDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirAnonymousInitializer
 import org.jetbrains.kotlin.fir.declarations.FirTypedDeclaration
-import org.jetbrains.kotlin.fir.declarations.FirCallableDeclaration
-import org.jetbrains.kotlin.fir.declarations.FirTypeParameterRef
-import org.jetbrains.kotlin.fir.declarations.FirTypeParameter
 import org.jetbrains.kotlin.fir.declarations.FirTypeParameterRefsOwner
 import org.jetbrains.kotlin.fir.declarations.FirTypeParametersOwner
 import org.jetbrains.kotlin.fir.declarations.FirMemberDeclaration
-import org.jetbrains.kotlin.fir.declarations.FirCallableMemberDeclaration
+import org.jetbrains.kotlin.fir.declarations.FirCallableDeclaration
+import org.jetbrains.kotlin.fir.declarations.FirTypeParameterRef
+import org.jetbrains.kotlin.fir.declarations.FirTypeParameter
 import org.jetbrains.kotlin.fir.declarations.FirVariable
 import org.jetbrains.kotlin.fir.declarations.FirValueParameter
 import org.jetbrains.kotlin.fir.declarations.FirProperty
@@ -43,6 +42,7 @@ import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
 import org.jetbrains.kotlin.fir.declarations.FirPropertyAccessor
 import org.jetbrains.kotlin.fir.declarations.FirConstructor
 import org.jetbrains.kotlin.fir.declarations.FirFile
+import org.jetbrains.kotlin.fir.FirPackageDirective
 import org.jetbrains.kotlin.fir.declarations.FirAnonymousFunction
 import org.jetbrains.kotlin.fir.expressions.FirAnonymousFunctionExpression
 import org.jetbrains.kotlin.fir.declarations.FirAnonymousObject
@@ -202,18 +202,6 @@ abstract class FirVisitorVoid : FirVisitor<Unit, Nothing?>() {
         visitElement(typedDeclaration)
     }
 
-    open fun visitCallableDeclaration(callableDeclaration: FirCallableDeclaration) {
-        visitElement(callableDeclaration)
-    }
-
-    open fun visitTypeParameterRef(typeParameterRef: FirTypeParameterRef) {
-        visitElement(typeParameterRef)
-    }
-
-    open fun visitTypeParameter(typeParameter: FirTypeParameter) {
-        visitElement(typeParameter)
-    }
-
     open fun visitTypeParameterRefsOwner(typeParameterRefsOwner: FirTypeParameterRefsOwner) {
         visitElement(typeParameterRefsOwner)
     }
@@ -226,8 +214,16 @@ abstract class FirVisitorVoid : FirVisitor<Unit, Nothing?>() {
         visitElement(memberDeclaration)
     }
 
-    open fun visitCallableMemberDeclaration(callableMemberDeclaration: FirCallableMemberDeclaration) {
-        visitElement(callableMemberDeclaration)
+    open fun visitCallableDeclaration(callableDeclaration: FirCallableDeclaration) {
+        visitElement(callableDeclaration)
+    }
+
+    open fun visitTypeParameterRef(typeParameterRef: FirTypeParameterRef) {
+        visitElement(typeParameterRef)
+    }
+
+    open fun visitTypeParameter(typeParameter: FirTypeParameter) {
+        visitElement(typeParameter)
     }
 
     open fun visitVariable(variable: FirVariable) {
@@ -288,6 +284,10 @@ abstract class FirVisitorVoid : FirVisitor<Unit, Nothing?>() {
 
     open fun visitFile(file: FirFile) {
         visitElement(file)
+    }
+
+    open fun visitPackageDirective(packageDirective: FirPackageDirective) {
+        visitElement(packageDirective)
     }
 
     open fun visitAnonymousFunction(anonymousFunction: FirAnonymousFunction) {
@@ -714,18 +714,6 @@ abstract class FirVisitorVoid : FirVisitor<Unit, Nothing?>() {
         visitTypedDeclaration(typedDeclaration)
     }
 
-    final override fun visitCallableDeclaration(callableDeclaration: FirCallableDeclaration, data: Nothing?) {
-        visitCallableDeclaration(callableDeclaration)
-    }
-
-    final override fun visitTypeParameterRef(typeParameterRef: FirTypeParameterRef, data: Nothing?) {
-        visitTypeParameterRef(typeParameterRef)
-    }
-
-    final override fun visitTypeParameter(typeParameter: FirTypeParameter, data: Nothing?) {
-        visitTypeParameter(typeParameter)
-    }
-
     final override fun visitTypeParameterRefsOwner(typeParameterRefsOwner: FirTypeParameterRefsOwner, data: Nothing?) {
         visitTypeParameterRefsOwner(typeParameterRefsOwner)
     }
@@ -738,8 +726,16 @@ abstract class FirVisitorVoid : FirVisitor<Unit, Nothing?>() {
         visitMemberDeclaration(memberDeclaration)
     }
 
-    final override fun visitCallableMemberDeclaration(callableMemberDeclaration: FirCallableMemberDeclaration, data: Nothing?) {
-        visitCallableMemberDeclaration(callableMemberDeclaration)
+    final override fun visitCallableDeclaration(callableDeclaration: FirCallableDeclaration, data: Nothing?) {
+        visitCallableDeclaration(callableDeclaration)
+    }
+
+    final override fun visitTypeParameterRef(typeParameterRef: FirTypeParameterRef, data: Nothing?) {
+        visitTypeParameterRef(typeParameterRef)
+    }
+
+    final override fun visitTypeParameter(typeParameter: FirTypeParameter, data: Nothing?) {
+        visitTypeParameter(typeParameter)
     }
 
     final override fun visitVariable(variable: FirVariable, data: Nothing?) {
@@ -800,6 +796,10 @@ abstract class FirVisitorVoid : FirVisitor<Unit, Nothing?>() {
 
     final override fun visitFile(file: FirFile, data: Nothing?) {
         visitFile(file)
+    }
+
+    final override fun visitPackageDirective(packageDirective: FirPackageDirective, data: Nothing?) {
+        visitPackageDirective(packageDirective)
     }
 
     final override fun visitAnonymousFunction(anonymousFunction: FirAnonymousFunction, data: Nothing?) {

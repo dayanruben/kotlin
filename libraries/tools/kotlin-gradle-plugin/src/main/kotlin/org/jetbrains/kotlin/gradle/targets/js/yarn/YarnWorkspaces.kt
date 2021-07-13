@@ -5,12 +5,10 @@
 
 package org.jetbrains.kotlin.gradle.targets.js.yarn
 
-import com.google.gson.Gson
 import org.gradle.api.Project
 import org.gradle.api.logging.Logger
 import org.gradle.internal.service.ServiceRegistry
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension
-import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmApi
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmProject
 import org.jetbrains.kotlin.gradle.targets.js.npm.PackageJson
@@ -33,10 +31,12 @@ class YarnWorkspaces : YarnBasics() {
         rootProjectVersion: String,
         logger: Logger,
         subProjects: Collection<KotlinCompilationNpmResolution>,
-        resolutions: Map<String, String>
+        resolutions: Map<String, String>,
+        forceFullResolve: Boolean
     ) {
-//        check(rootProject == rootProject.rootProject)
-        rootProject?.let { setup(it) }
+        if (forceFullResolve) {
+            rootProject?.let { setup(it) }
+        }
         return prepareRootPackageJson(
             nodeJs,
             rootProjectName,
@@ -71,7 +71,8 @@ class YarnWorkspaces : YarnBasics() {
         services: ServiceRegistry,
         logger: Logger,
         nodeJs: NodeJsRootExtension,
-        yarnHome: File,
+        command: String,
+        isStandalone: Boolean,
         npmProjects: Collection<KotlinCompilationNpmResolution>,
         cliArgs: List<String>
     ) {
@@ -81,7 +82,8 @@ class YarnWorkspaces : YarnBasics() {
             services,
             logger,
             nodeJs,
-            yarnHome,
+            command,
+            isStandalone,
             nodeJsWorldDir,
             NpmApi.resolveOperationDescription("yarn"),
             cliArgs

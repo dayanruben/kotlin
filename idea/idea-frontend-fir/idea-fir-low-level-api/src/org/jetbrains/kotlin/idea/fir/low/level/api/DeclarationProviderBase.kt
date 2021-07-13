@@ -8,14 +8,13 @@ package org.jetbrains.kotlin.idea.fir.low.level.api
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.analyzer.ModuleInfo
+import org.jetbrains.kotlin.analyzer.ModuleSourceInfoBase
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.psi.KtTypeAlias
+import org.jetbrains.kotlin.psi.*
 
 abstract class DeclarationProvider {
     abstract val searchScope: GlobalSearchScope
@@ -31,6 +30,8 @@ abstract class DeclarationProvider {
 
     abstract fun getPropertyNamesInPackage(packageFqName: FqName): Set<Name>
     abstract fun getFunctionsNamesInPackage(packageFqName: FqName): Set<Name>
+    abstract fun getFacadeFilesInPackage(packageFqName: FqName): Collection<KtFile>
+    abstract fun findFilesForFacade(facadeFqName: FqName): Collection<KtFile>
 }
 
 abstract class KtDeclarationProviderFactory {

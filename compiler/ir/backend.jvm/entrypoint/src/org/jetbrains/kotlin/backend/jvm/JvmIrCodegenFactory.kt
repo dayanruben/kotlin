@@ -20,8 +20,8 @@ import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.descriptors.konan.DeserializedKlibModuleOrigin
 import org.jetbrains.kotlin.descriptors.konan.KlibModuleOrigin
 import org.jetbrains.kotlin.idea.MainFunctionDetector
+import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmDescriptorMangler
 import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmIrLinker
-import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmManglerDesc
 import org.jetbrains.kotlin.ir.builders.TranslationPluginContext
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
@@ -40,7 +40,7 @@ import org.jetbrains.kotlin.resolve.CleanableBindingContext
 
 open class JvmIrCodegenFactory(
     private val phaseConfig: PhaseConfig,
-    private val externalMangler: JvmManglerDesc? = null,
+    private val externalMangler: JvmDescriptorMangler? = null,
     private val externalSymbolTable: SymbolTable? = null,
     private val jvmGeneratorExtensions: JvmGeneratorExtensionsImpl = JvmGeneratorExtensionsImpl()
 ) : CodegenFactory {
@@ -65,7 +65,7 @@ open class JvmIrCodegenFactory(
         val (mangler, symbolTable) =
             if (externalSymbolTable != null) externalMangler!! to externalSymbolTable
             else {
-                val mangler = JvmManglerDesc(MainFunctionDetector(state.bindingContext, state.languageVersionSettings))
+                val mangler = JvmDescriptorMangler(MainFunctionDetector(state.bindingContext, state.languageVersionSettings))
                 val symbolTable = SymbolTable(JvmIdSignatureDescriptor(mangler), IrFactoryImpl, JvmNameProvider)
                 mangler to symbolTable
             }
@@ -91,7 +91,7 @@ open class JvmIrCodegenFactory(
         val irLinker = JvmIrLinker(
             psi2irContext.moduleDescriptor,
             messageLogger,
-            psi2irContext.irBuiltIns,
+            JvmIrTypeSystemContext(psi2irContext.irBuiltIns),
             symbolTable,
             functionFactory,
             frontEndContext,
@@ -139,7 +139,7 @@ open class JvmIrCodegenFactory(
                 // We have to ensure that deserializer for built-ins module is created
                 irLinker.deserializeIrModuleHeader(it.builtIns.builtInsModule, null)
             }
-            irLinker.deserializeIrModuleHeader(it, kotlinLibrary)
+            irLinker.deserializeIrModuleHeader(it, kotlinLibrary, _moduleName = it.name.asString())
         }
         val irProviders = listOf(irLinker)
 

@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.fir.builder.FirAnnotationContainerBuilder
 import org.jetbrains.kotlin.fir.builder.FirBuilderDsl
 import org.jetbrains.kotlin.fir.contracts.FirContractDescription
 import org.jetbrains.kotlin.fir.contracts.impl.FirEmptyContractDescription
+import org.jetbrains.kotlin.fir.declarations.DeprecationsPerUseSite
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationAttributes
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationStatus
@@ -46,6 +47,7 @@ class FirPropertyAccessorBuilder : FirFunctionBuilder, FirAnnotationContainerBui
     override var attributes: FirDeclarationAttributes = FirDeclarationAttributes()
     override lateinit var returnTypeRef: FirTypeRef
     override lateinit var status: FirDeclarationStatus
+    override var deprecation: DeprecationsPerUseSite? = null
     override var containerSource: DeserializedContainerSource? = null
     override var dispatchReceiverType: ConeKotlinType? = null
     override val valueParameters: MutableList<FirValueParameter> = mutableListOf()
@@ -66,6 +68,7 @@ class FirPropertyAccessorBuilder : FirFunctionBuilder, FirAnnotationContainerBui
             attributes,
             returnTypeRef,
             status,
+            deprecation,
             containerSource,
             dispatchReceiverType,
             valueParameters,
@@ -101,6 +104,7 @@ inline fun buildPropertyAccessorCopy(original: FirPropertyAccessor, init: FirPro
     copyBuilder.attributes = original.attributes.copy()
     copyBuilder.returnTypeRef = original.returnTypeRef
     copyBuilder.status = original.status
+    copyBuilder.deprecation = original.deprecation
     copyBuilder.containerSource = original.containerSource
     copyBuilder.dispatchReceiverType = original.dispatchReceiverType
     copyBuilder.valueParameters.addAll(original.valueParameters)

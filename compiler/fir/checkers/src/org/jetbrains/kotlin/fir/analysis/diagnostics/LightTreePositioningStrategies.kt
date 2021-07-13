@@ -20,6 +20,8 @@ import org.jetbrains.kotlin.lexer.KtTokens.VISIBILITY_MODIFIERS
 import org.jetbrains.kotlin.psi.KtParameter.VAL_VAR_TOKEN_SET
 import org.jetbrains.kotlin.psi.stubs.elements.KtConstantExpressionElementType
 import org.jetbrains.kotlin.psi.stubs.elements.KtStringTemplateExpressionElementType
+import org.jetbrains.kotlin.psi.stubs.elements.KtValueArgumentElementType
+import org.jetbrains.kotlin.psi.stubs.elements.KtValueArgumentListElementType
 
 object LightTreePositioningStrategies {
     val DEFAULT = object : LightTreePositioningStrategy() {
@@ -354,6 +356,9 @@ object LightTreePositioningStrategies {
     val INNER_MODIFIER: LightTreePositioningStrategy =
         ModifierSetBasedLightTreePositioningStrategy(TokenSet.create(KtTokens.INNER_KEYWORD))
 
+    val DATA_MODIFIER: LightTreePositioningStrategy =
+        ModifierSetBasedLightTreePositioningStrategy(TokenSet.create(KtTokens.DATA_KEYWORD))
+
     val OPERATOR: LightTreePositioningStrategy = object : LightTreePositioningStrategy() {
         override fun mark(
             node: LighterASTNode,
@@ -521,6 +526,13 @@ object LightTreePositioningStrategies {
             }
             if (node.tokenType in nodeTypesWithOperation) {
                 return markElement(tree.operationReference(node) ?: node, startOffset, endOffset, tree, node)
+            }
+            if (node.tokenType == KtNodeTypes.TYPE_REFERENCE) {
+                val nodeToMark =
+                    tree.findChildByType(node, KtNodeTypes.NULLABLE_TYPE)
+                        ?.let { tree.findChildByType(it, KtNodeTypes.USER_TYPE) }
+                        ?: node
+                return markElement(nodeToMark, startOffset, endOffset, tree, node)
             }
             if (node.tokenType != KtNodeTypes.DOT_QUALIFIED_EXPRESSION &&
                 node.tokenType != KtNodeTypes.SAFE_ACCESS_EXPRESSION &&
@@ -768,6 +780,17 @@ object LightTreePositioningStrategies {
         ): List<TextRange> {
             val nodeToMark = tree.collectDescendantsOfType(node, KtNodeTypes.REFERENCE_EXPRESSION).lastOrNull() ?: node
             return markElement(nodeToMark, startOffset, endOffset, tree, node)
+        }
+    }
+
+    val SPREAD_OPERATOR: LightTreePositioningStrategy = object : LightTreePositioningStrategy() {
+        override fun mark(
+            node: LighterASTNode,
+            startOffset: Int,
+            endOffset: Int,
+            tree: FlyweightCapableTreeStructure<LighterASTNode>
+        ): List<TextRange> {
+            return super.mark(node, startOffset, startOffset + 1, tree)
         }
     }
 }

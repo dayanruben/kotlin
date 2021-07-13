@@ -20,9 +20,11 @@ import org.jetbrains.kotlin.codegen.generateAsCast
 import org.jetbrains.kotlin.codegen.generateIsCheck
 import org.jetbrains.kotlin.codegen.intrinsics.IntrinsicMethods
 import org.jetbrains.kotlin.codegen.optimization.common.intConstant
+import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.isReleaseCoroutines
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.jvm.AsmTypes
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeSystemCommonBackendContext
@@ -63,11 +65,18 @@ class ReifiedTypeInliner<KT : KotlinTypeMarker>(
     }
 
     interface IntrinsicsSupport<KT : KotlinTypeMarker> {
+        val state: GenerationState
+
         fun putClassInstance(v: InstructionAdapter, type: KT)
 
         fun generateTypeParameterContainer(v: InstructionAdapter, typeParameter: TypeParameterMarker)
 
+        fun isMutableCollectionType(type: KT): Boolean
+
         fun toKotlinType(type: KT): KotlinType
+
+        fun reportSuspendTypeUnsupported()
+        fun reportNonReifiedTypeParameterWithRecursiveBoundUnsupported(typeParameterName: Name)
     }
 
     companion object {

@@ -296,6 +296,12 @@ public class IrBytecodeTextTestGenerated extends AbstractIrBytecodeTextTest {
     }
 
     @Test
+    @TestMetadata("kt46615.kt")
+    public void testKt46615() throws Exception {
+        runTest("compiler/testData/codegen/bytecodeText/kt46615.kt");
+    }
+
+    @Test
     @TestMetadata("kt5016.kt")
     public void testKt5016() throws Exception {
         runTest("compiler/testData/codegen/bytecodeText/kt5016.kt");
@@ -4700,6 +4706,12 @@ public class IrBytecodeTextTestGenerated extends AbstractIrBytecodeTextTest {
         @TestMetadata("definedInSources.kt")
         public void testDefinedInSources() throws Exception {
             runTest("compiler/testData/codegen/bytecodeText/optimizedDelegatedProperties/definedInSources.kt");
+        }
+
+        @Test
+        @TestMetadata("delegateToAnother.kt")
+        public void testDelegateToAnother() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeText/optimizedDelegatedProperties/delegateToAnother.kt");
         }
 
         @Test

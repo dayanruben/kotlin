@@ -110,6 +110,9 @@ open class FirTypeResolveTransformer(
                 property.replaceResolvePhase(FirResolvePhase.TYPES)
                 property.getter?.replaceResolvePhase(FirResolvePhase.TYPES)
                 property.setter?.replaceResolvePhase(FirResolvePhase.TYPES)
+                property.setter?.valueParameters?.forEach {
+                    it.replaceResolvePhase(FirResolvePhase.TYPES)
+                }
             }
             property.transformTypeParameters(this, data)
                 .transformReturnTypeRef(this, data)
@@ -178,7 +181,6 @@ open class FirTypeResolveTransformer(
     }
 
     override fun transformImplicitTypeRef(implicitTypeRef: FirImplicitTypeRef, data: Any?): FirTypeRef {
-        if (implicitTypeRef is FirImplicitBuiltinTypeRef) return transformTypeRef(implicitTypeRef, data)
         return implicitTypeRef
     }
 

@@ -200,7 +200,9 @@ internal class KotlinRootNpmResolver internal constructor(
                 logger,
                 allNpmPackages,
                 yarn.resolutions
-                    .associate { it.path to it.toVersionString() })
+                    .associate { it.path to it.toVersionString() },
+                forceFullResolve
+            )
 
             return Installation(
                 projectResolutions
@@ -228,11 +230,13 @@ internal class KotlinRootNpmResolver internal constructor(
                     .values
                     .flatMap { it.npmProjects }
 
+                val yarnConfigured = yarn.requireConfigured()
                 nodeJs.packageManager.resolveRootProject(
                     services,
                     logger,
                     nodeJs,
-                    yarn.requireConfigured().home,
+                    yarnConfigured.executable,
+                    yarnConfigured.standalone,
                     allNpmPackages,
                     args
                 )

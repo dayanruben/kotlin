@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.fir.declarations.builder
 import org.jetbrains.kotlin.fir.FirModuleData
 import org.jetbrains.kotlin.fir.FirSourceElement
 import org.jetbrains.kotlin.fir.builder.FirBuilderDsl
+import org.jetbrains.kotlin.fir.declarations.DeprecationsPerUseSite
 import org.jetbrains.kotlin.fir.declarations.FirConstructor
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationAttributes
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
@@ -41,12 +42,13 @@ interface FirAbstractConstructorBuilder : FirFunctionBuilder {
     abstract override val annotations: MutableList<FirAnnotationCall>
     abstract override var returnTypeRef: FirTypeRef
     abstract override var status: FirDeclarationStatus
+    abstract override var deprecation: DeprecationsPerUseSite?
     abstract override var containerSource: DeserializedContainerSource?
     abstract override var dispatchReceiverType: ConeKotlinType?
     abstract override val valueParameters: MutableList<FirValueParameter>
     abstract override var body: FirBlock?
-    abstract var receiverTypeRef: FirTypeRef?
     abstract val typeParameters: MutableList<FirTypeParameterRef>
+    abstract var receiverTypeRef: FirTypeRef?
     abstract var controlFlowGraphReference: FirControlFlowGraphReference?
     abstract var symbol: FirConstructorSymbol
     abstract var delegatedConstructor: FirDelegatedConstructorCall?

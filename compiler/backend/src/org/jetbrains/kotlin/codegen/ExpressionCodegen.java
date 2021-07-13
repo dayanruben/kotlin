@@ -1264,7 +1264,7 @@ public class ExpressionCodegen extends KtVisitor<StackValue, StackValue> impleme
                 // Thus, do not generate it. Otherwise, it leads to VerifyError on run-time.
                 boolean isCrossinlineLambda = (callGenerator instanceof PsiInlineCodegen) &&
                                               Objects.requireNonNull(((PsiInlineCodegen) callGenerator).getActiveLambda(),
-                                                                     "no active lambda found").isCrossInline;
+                                                                     "no active lambda found").isCrossInline();
                 if (!isCrossinlineLambda) {
                     v.aconst(null);
                 }
@@ -2971,8 +2971,10 @@ public class ExpressionCodegen extends KtVisitor<StackValue, StackValue> impleme
         if (isDefaultCompilation) {
             return new InlineCodegenForDefaultBody(functionDescriptor, this, state, signature, sourceCompiler);
         } else {
-            return new PsiInlineCodegen(this, state, functionDescriptor, signature, typeParameterMappings, sourceCompiler,
-                                        typeMapper.mapImplementationOwner(functionDescriptor), typeMapper.mapOwner(descriptor));
+            return new PsiInlineCodegen(
+                    this, state, functionDescriptor, signature, typeParameterMappings, sourceCompiler,
+                    typeMapper.mapImplementationOwner(functionDescriptor), typeMapper.mapOwner(descriptor), callElement
+            );
         }
     }
 

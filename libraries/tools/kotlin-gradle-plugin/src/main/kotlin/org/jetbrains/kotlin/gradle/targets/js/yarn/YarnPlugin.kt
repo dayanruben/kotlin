@@ -30,8 +30,13 @@ open class YarnPlugin : Plugin<Project> {
         val yarnRootExtension = this.extensions.create(YarnRootExtension.YARN, YarnRootExtension::class.java, this)
         val nodeJs = NodeJsRootPlugin.apply(this)
 
-        registerTask<YarnSetupTask>(YarnSetupTask.NAME) {
+        val setupTask = registerTask<YarnSetupTask>(YarnSetupTask.NAME) {
             it.dependsOn(nodeJs.nodeJsSetupTaskProvider)
+
+            it.configuration = provider {
+                this.project.configurations.detachedConfiguration(this.project.dependencies.create(it.ivyDependency))
+                    .also { conf -> conf.isTransitive = false }
+            }
         }
 
         val rootClean = project.rootProject.tasks.named(BasePlugin.CLEAN_TASK_NAME)
@@ -45,6 +50,7 @@ open class YarnPlugin : Plugin<Project> {
 
         tasks.named(KotlinNpmInstallTask.NAME).configure {
             it.dependsOn(rootPackageJson)
+            it.dependsOn(setupTask)
         }
 
         tasks.register("yarn" + CleanDataTask.NAME_SUFFIX, CleanDataTask::class.java) {

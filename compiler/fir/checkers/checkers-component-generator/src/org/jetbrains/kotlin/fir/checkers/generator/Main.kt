@@ -43,10 +43,16 @@ fun main(args: Array<String>) {
         alias<FirGetClassCall>("GetClassCallChecker")
         alias<FirSafeCallExpression>("SafeCallExpressionChecker")
         alias<FirEqualityOperatorCall>("EqualityOperatorCallChecker")
-        alias<FirAnonymousFunction>("AnonymousFunctionAsExpressionChecker")
         alias<FirStringConcatenationCall>("StringConcatenationCallChecker")
         alias<FirTypeOperatorCall>("TypeOperatorCallChecker")
         alias<FirResolvedQualifier>("ResolvedQualifierChecker")
+        alias<FirConstExpression<*>>("ConstExpressionChecker")
+        alias<FirCallableReferenceAccess>("CallableReferenceAccessChecker")
+        alias<FirThisReceiverExpression>("ThisReceiverExpressionChecker")
+        alias<FirWhileLoop>("WhileLoopChecker")
+        alias<FirDoWhileLoop>("DoWhileLoopChecker")
+        alias<FirArrayOfCall>("ArrayOfCallChecker")
+        alias<FirClassReferenceExpression>("ClassReferenceExpressionChecker")
     }
 
     val declarationPackage = "$basePackage.checkers.declaration"
@@ -62,6 +68,12 @@ fun main(args: Array<String>) {
         alias<FirTypeParameter>("FirTypeParameterChecker")
         alias<FirAnnotatedDeclaration>("FirAnnotatedDeclarationChecker")
         alias<FirTypeAlias>("TypeAliasChecker")
+        alias<FirAnonymousFunction>("AnonymousFunctionChecker")
+        alias<FirPropertyAccessor>("PropertyAccessorChecker")
+        alias<FirValueParameter>("ValueParameterChecker")
+        alias<FirEnumEntry>("EnumEntryChecker")
+        alias<FirAnonymousObject>("AnonymousObjectChecker")
+        alias<FirAnonymousInitializer>("AnonymousInitializerChecker")
 
         additional(
             fieldName = "controlFlowAnalyserCheckers",

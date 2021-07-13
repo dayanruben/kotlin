@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.fir.FirModuleData
 import org.jetbrains.kotlin.fir.FirSourceElement
 import org.jetbrains.kotlin.fir.builder.FirAnnotationContainerBuilder
 import org.jetbrains.kotlin.fir.builder.FirBuilderDsl
+import org.jetbrains.kotlin.fir.declarations.DeprecationsPerUseSite
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationAttributes
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationStatus
@@ -42,6 +43,7 @@ class FirEnumEntryBuilder : FirAnnotationContainerBuilder {
     lateinit var returnTypeRef: FirTypeRef
     val typeParameters: MutableList<FirTypeParameterRef> = mutableListOf()
     lateinit var status: FirDeclarationStatus
+    var deprecation: DeprecationsPerUseSite? = null
     var containerSource: DeserializedContainerSource? = null
     var dispatchReceiverType: ConeKotlinType? = null
     lateinit var name: Name
@@ -59,6 +61,7 @@ class FirEnumEntryBuilder : FirAnnotationContainerBuilder {
             returnTypeRef,
             typeParameters,
             status,
+            deprecation,
             containerSource,
             dispatchReceiverType,
             name,

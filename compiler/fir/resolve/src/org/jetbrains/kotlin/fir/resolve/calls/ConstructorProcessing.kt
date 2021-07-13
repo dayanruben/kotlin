@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.fir.resolve.scope
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.resolve.substitution.substitutorByMap
 import org.jetbrains.kotlin.fir.resolve.toSymbol
-import org.jetbrains.kotlin.fir.resolve.transformers.ensureResolved
+import org.jetbrains.kotlin.fir.symbols.ensureResolved
 import org.jetbrains.kotlin.fir.scopes.FakeOverrideTypeCalculator
 import org.jetbrains.kotlin.fir.scopes.FirScope
 import org.jetbrains.kotlin.fir.scopes.impl.FirFakeOverrideGenerator
@@ -173,7 +173,7 @@ private fun processConstructors(
         if (matchedSymbol != null) {
             val scope = when (matchedSymbol) {
                 is FirTypeAliasSymbol -> {
-                    matchedSymbol.ensureResolved(FirResolvePhase.TYPES, session)
+                    matchedSymbol.ensureResolved(FirResolvePhase.TYPES)
                     val type = matchedSymbol.fir.expandedTypeRef.coneTypeUnsafe<ConeClassLikeType>().fullyExpandedType(session)
                     val basicScope = type.scope(session, bodyResolveComponents.scopeSession, FakeOverrideTypeCalculator.DoNothing)
 

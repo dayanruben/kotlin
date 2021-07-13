@@ -5,16 +5,15 @@
 
 package org.jetbrains.kotlin.fir.analysis.diagnostics
 
-import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.diagnostics.rendering.LanguageFeatureMessageRenderer
 import org.jetbrains.kotlin.diagnostics.rendering.Renderers.RENDER_POSITION_VARIANCE
+import org.jetbrains.kotlin.diagnostics.rendering.Renderers.commaSeparated
 import org.jetbrains.kotlin.diagnostics.rendering.Renderers.STRING
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.AMBIGUOUS_CALLS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.DECLARATION_NAME
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.FIR
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.FQ_NAMES_IN_TYPES
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.FUNCTION_PARAMETERS
-import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.NAME
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.NOT_RENDERED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.NULLABLE_STRING
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.RENDER_CLASS_OR_OBJECT
@@ -61,6 +60,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CANNOT_ALL_UNDER_
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CANNOT_BE_IMPORTED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CANNOT_CHANGE_ACCESS_PRIVILEGE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CANNOT_INFER_PARAMETER_TYPE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CANNOT_OVERRIDE_INVISIBLE_MEMBER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CANNOT_WEAKEN_ACCESS_PRIVILEGE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CAN_BE_REPLACED_WITH_OPERATOR_ASSIGNMENT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CAN_BE_VAL
@@ -76,6 +76,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.COMPONENT_FUNCTIO
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.COMPONENT_FUNCTION_RETURN_TYPE_MISMATCH
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CONDITION_TYPE_MISMATCH
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CONFLICTING_IMPORT
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CONFLICTING_INHERITED_MEMBERS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CONFLICTING_OVERLOADS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CONFLICTING_PROJECTION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CONFLICTING_PROJECTION_IN_TYPEALIAS_EXPANSION
@@ -92,6 +93,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CYCLIC_CONSTRUCTO
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CYCLIC_GENERIC_UPPER_BOUND
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CYCLIC_INHERITANCE_HIERARCHY
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DATA_CLASS_NOT_PROPERTY_PARAMETER
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DATA_CLASS_OVERRIDE_CONFLICT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DATA_CLASS_VARARG_PARAMETER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DATA_CLASS_WITHOUT_PARAMETERS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DELEGATED_PROPERTY_INSIDE_INLINE_CLASS
@@ -110,6 +112,8 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DEPRECATED_SINCE_
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DEPRECATED_SINCE_KOTLIN_WITH_DEPRECATED_LEVEL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DEPRECATED_SINCE_KOTLIN_WITH_UNORDERED_VERSIONS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DEPRECATED_TYPE_PARAMETER_SYNTAX
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DEPRECATION
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DEPRECATION_ERROR
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DESERIALIZATION_ERROR
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DYNAMIC_UPPER_BOUND
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EMPTY_RANGE
@@ -119,6 +123,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EQUALITY_NOT_APPL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ERROR_FROM_JAVA_RESOLUTION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ERROR_IN_CONTRACT_DESCRIPTION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPANDED_TYPE_CANNOT_BE_INHERITED
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPECTED_CONDITION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPECTED_DECLARATION_WITH_BODY
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPECTED_DELEGATED_PROPERTY
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPECTED_LATEINIT_PROPERTY
@@ -264,6 +269,8 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.PROJECTION_IN_IMM
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.PROJECTION_ON_NON_CLASS_TYPE_ARGUMENT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.PROPERTY_INITIALIZER_IN_INTERFACE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.PROPERTY_INITIALIZER_NO_BACKING_FIELD
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.PROPERTY_TYPE_MISMATCH_BY_DELEGATION
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.PROPERTY_TYPE_MISMATCH_ON_INHERITANCE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.PROPERTY_TYPE_MISMATCH_ON_OVERRIDE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.PROPERTY_WITH_BACKING_FIELD_INSIDE_INLINE_CLASS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.PROPERTY_WITH_NO_TYPE_NO_INITIALIZER
@@ -296,14 +303,18 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.RESULT_TYPE_MISMA
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.RETURN_IN_FUNCTION_WITH_EXPRESSION_BODY
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.RETURN_NOT_ALLOWED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.RETURN_TYPE_MISMATCH
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.RETURN_TYPE_MISMATCH_BY_DELEGATION
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.RETURN_TYPE_MISMATCH_ON_INHERITANCE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.RETURN_TYPE_MISMATCH_ON_OVERRIDE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SEALED_CLASS_CONSTRUCTOR_CALL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SEALED_SUPERTYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SEALED_SUPERTYPE_IN_LOCAL_CLASS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SECONDARY_CONSTRUCTOR_WITH_BODY_INSIDE_INLINE_CLASS
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SETTER_PROJECTED_OUT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SETTER_VISIBILITY_INCONSISTENT_WITH_PROPERTY_VISIBILITY
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SINGLETON_IN_SUPERTYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SMARTCAST_IMPOSSIBLE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SPREAD_OF_NULLABLE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SUPERCLASS_NOT_ACCESSIBLE_FROM_INTERFACE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SUPERTYPES_FOR_ANNOTATION_CLASS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SUPERTYPE_APPEARS_TWICE
@@ -378,6 +389,8 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.VARIABLE_NEVER_RE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.VARIANCE_ON_TYPE_PARAMETER_NOT_ALLOWED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.VAR_ANNOTATION_PARAMETER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.VAR_OVERRIDDEN_BY_VAL
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.VAR_OVERRIDDEN_BY_VAL_BY_DELEGATION
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.VAR_TYPE_MISMATCH_ON_INHERITANCE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.VAR_TYPE_MISMATCH_ON_OVERRIDE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.VIRTUAL_MEMBER_HIDDEN
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WRONG_ANNOTATION_TARGET
@@ -425,6 +438,8 @@ class FirDefaultErrorMessages {
             map.put(VAL_OR_VAR_ON_FUN_PARAMETER, "''{0}'' on function parameter is not allowed", TO_STRING)
             map.put(VAL_OR_VAR_ON_CATCH_PARAMETER, "''{0}'' on catch parameter is not allowed", TO_STRING)
             map.put(VAL_OR_VAR_ON_SECONDARY_CONSTRUCTOR_PARAMETER, "''{0}'' on secondary constructor parameter is not allowed", TO_STRING)
+            map.put(DEPRECATION, "''{0}'' is deprecated. {1}", SYMBOL, STRING)
+            map.put(DEPRECATION_ERROR, "''{0}'' is deprecated. {1}", SYMBOL, STRING)
 
             // Unresolved
             map.put(INVISIBLE_REFERENCE, "Symbol {0} is invisible", SYMBOL)
@@ -457,7 +472,7 @@ class FirDefaultErrorMessages {
             map.put(
                 QUALIFIED_SUPERTYPE_EXTENDED_BY_OTHER_SUPERTYPE,
                 "Explicitly qualified supertype is extended by another supertype ''{0}''",
-                TO_STRING
+                SYMBOL
             )
             map.put(SUPERTYPE_INITIALIZED_IN_INTERFACE, "Interfaces cannot initialize supertypes")
             map.put(INTERFACE_WITH_SUPERCLASS, "An interface cannot inherit from a class")
@@ -580,7 +595,7 @@ class FirDefaultErrorMessages {
             map.put(EXPERIMENTAL_OVERRIDE, "{1}", TO_STRING, STRING)
             map.put(EXPERIMENTAL_OVERRIDE_ERROR, "{1}", TO_STRING, STRING)
 
-            map.put(EXPERIMENTAL_IS_NOT_ENABLED, "This class can only be used with the compiler argument '-Xopt-in=kotlin.RequiresOptIn'")
+            map.put(EXPERIMENTAL_IS_NOT_ENABLED, "This class can only be used with the compiler argument '-opt-in=kotlin.RequiresOptIn'")
             map.put(EXPERIMENTAL_CAN_ONLY_BE_USED_AS_ANNOTATION, "This class can only be used as an annotation")
             map.put(
                 EXPERIMENTAL_MARKER_CAN_ONLY_BE_USED_AS_ANNOTATION_OR_ARGUMENT_IN_USE_EXPERIMENTAL,
@@ -653,9 +668,10 @@ class FirDefaultErrorMessages {
             map.put(NON_VARARG_SPREAD, "The spread operator (*foo) may only be applied in a vararg position")
             map.put(TOO_MANY_ARGUMENTS, "Too many arguments for {0}", FQ_NAMES_IN_TYPES)
             map.put(ARGUMENT_PASSED_TWICE, "An argument is already passed for this parameter")
-            map.put(NO_VALUE_FOR_PARAMETER, "No value passed for parameter ''{0}''", NAME)
+            map.put(NO_VALUE_FOR_PARAMETER, "No value passed for parameter ''{0}''", DECLARATION_NAME)
             map.put(NAMED_PARAMETER_NOT_FOUND, "Cannot find a parameter with this name: {0}", TO_STRING)
             map.put(MANY_LAMBDA_EXPRESSION_ARGUMENTS, "Only one lambda expression is allowed outside a parenthesized argument list")
+            map.put(SPREAD_OF_NULLABLE, "The spread operator (*foo) may not be applied to an argument of nullable type")
 
             map.put(TYPE_MISMATCH, "Type mismatch: inferred type is {1} but {0} was expected", TO_STRING, TO_STRING)
             map.put(THROWABLE_TYPE_MISMATCH, "Throwable type mismatch: actual type is {0}", TO_STRING)
@@ -780,7 +796,7 @@ class FirDefaultErrorMessages {
                 NAME_IN_CONSTRAINT_IS_NOT_A_TYPE_PARAMETER,
                 "{0} does not refer to a type parameter of {1}",
                 TO_STRING,
-                NAME
+                DECLARATION_NAME
             )
 
             map.put(BOUND_ON_TYPE_ALIAS_PARAMETER_NOT_ALLOWED, "Bounds are not allowed on type alias parameters")
@@ -808,7 +824,7 @@ class FirDefaultErrorMessages {
             map.put(
                 EXTENSION_IN_CLASS_REFERENCE_NOT_ALLOWED,
                 "''{0}'' is a member and an extension at the same time. References to such elements are not allowed",
-                NAME
+                DECLARATION_NAME
             )
             map.put(CALLABLE_REFERENCE_LHS_NOT_A_CLASS, "Left-hand side of a callable reference cannot be a type parameter")
             map.put(CALLABLE_REFERENCE_TO_ANNOTATION_CONSTRUCTOR, "Annotation class cannot be instantiated")
@@ -846,20 +862,28 @@ class FirDefaultErrorMessages {
 
             // Overrides
             map.put(NOTHING_TO_OVERRIDE, "''{0}'' overrides nothing", DECLARATION_NAME)
-            map.put(OVERRIDING_FINAL_MEMBER, "''{0}'' in ''{1}'' is final and cannot be overridden", NAME, TO_STRING)
+
+            map.put(
+                CANNOT_OVERRIDE_INVISIBLE_MEMBER,
+                "''{0}'' has no access to ''{1}'', so it cannot override it",
+                FQ_NAMES_IN_TYPES,
+                FQ_NAMES_IN_TYPES
+            )
+
+            map.put(OVERRIDING_FINAL_MEMBER, "''{0}'' in ''{1}'' is final and cannot be overridden", DECLARATION_NAME, TO_STRING)
 
             map.put(
                 CANNOT_WEAKEN_ACCESS_PRIVILEGE,
                 "Cannot weaken access privilege ''{0}'' for ''{1}'' in ''{2}''",
                 VISIBILITY,
-                NAME,
+                DECLARATION_NAME,
                 TO_STRING
             )
             map.put(
                 CANNOT_CHANGE_ACCESS_PRIVILEGE,
                 "Cannot change access privilege ''{0}'' for ''{1}'' in ''{2}''",
                 VISIBILITY,
-                NAME,
+                DECLARATION_NAME,
                 TO_STRING
             )
 
@@ -867,25 +891,25 @@ class FirDefaultErrorMessages {
                 ABSTRACT_MEMBER_NOT_IMPLEMENTED,
                 "{0} is not abstract and does not implement abstract member {1}",
                 RENDER_CLASS_OR_OBJECT,
-                NAME
+                DECLARATION_NAME
             )
             map.put(
                 ABSTRACT_CLASS_MEMBER_NOT_IMPLEMENTED,
                 "{0} is not abstract and does not implement abstract base class member {1}",
                 RENDER_CLASS_OR_OBJECT,
-                NAME
+                DECLARATION_NAME
             )
             map.put(
                 MANY_IMPL_MEMBER_NOT_IMPLEMENTED,
                 "{0} must override {1} because it inherits many implementations of it",
                 RENDER_CLASS_OR_OBJECT,
-                NAME
+                DECLARATION_NAME
             )
             map.put(
                 MANY_INTERFACES_MEMBER_NOT_IMPLEMENTED,
                 "{0} must override {1} because it inherits multiple interface methods of it",
                 RENDER_CLASS_OR_OBJECT,
-                NAME
+                DECLARATION_NAME
             )
 
             map.put(
@@ -919,6 +943,12 @@ class FirDefaultErrorMessages {
                 VIRTUAL_MEMBER_HIDDEN, "''{0}'' hides member of supertype ''{1}'' and needs ''override'' modifier", DECLARATION_NAME,
                 DECLARATION_NAME
             )
+            map.put(
+                DATA_CLASS_OVERRIDE_CONFLICT,
+                "Function ''{0}'' generated for the data class conflicts with member of supertype ''{1}''",
+                FQ_NAMES_IN_TYPES,
+                FQ_NAMES_IN_TYPES
+            )
 
             map.put(
                 GENERIC_THROWABLE_SUBCLASS,
@@ -927,6 +957,54 @@ class FirDefaultErrorMessages {
             map.put(
                 INNER_CLASS_OF_GENERIC_THROWABLE_SUBCLASS,
                 "Inner class of generic class extending 'Throwable' is prohibited"
+            )
+
+            map.put(
+                RETURN_TYPE_MISMATCH_ON_INHERITANCE,
+                "''{0}'' clashes with ''{1}'': return types are incompatible",
+                DECLARATION_NAME,
+                DECLARATION_NAME
+            )
+
+            map.put(
+                PROPERTY_TYPE_MISMATCH_ON_INHERITANCE,
+                "''{0}'' clashes with ''{1}'': property types are incompatible",
+                DECLARATION_NAME,
+                DECLARATION_NAME
+            )
+
+            map.put(
+                VAR_TYPE_MISMATCH_ON_INHERITANCE,
+                "''{0}'' clashes with ''{1}'': property types do not match",
+                DECLARATION_NAME,
+                DECLARATION_NAME
+            )
+
+            map.put(
+                RETURN_TYPE_MISMATCH_BY_DELEGATION,
+                "Type of ''{0}'' is not a subtype of overridden by delegation ''{1}''",
+                DECLARATION_NAME,
+                DECLARATION_NAME
+            )
+
+            map.put(
+                PROPERTY_TYPE_MISMATCH_BY_DELEGATION,
+                "Type of property ''{0}'' is not a subtype of overridden by delegation ''{1}''",
+                DECLARATION_NAME,
+                DECLARATION_NAME
+            )
+
+            map.put(
+                VAR_OVERRIDDEN_BY_VAL_BY_DELEGATION,
+                "Val-property ''{0}'' implicitly overrides a var-property ''{1}'' by delegation",
+                DECLARATION_NAME,
+                DECLARATION_NAME
+            )
+
+            map.put(
+                CONFLICTING_INHERITED_MEMBERS,
+                "{0} inherits conflicting members: {1}",
+                commaSeparated(DECLARATION_NAME)
             )
 
             // Redeclarations
@@ -952,7 +1030,7 @@ class FirDefaultErrorMessages {
                 ABSTRACT_FUNCTION_IN_NON_ABSTRACT_CLASS,
                 "Abstract function ''{0}'' in non-abstract class ''{1}''",
                 DECLARATION_NAME,
-                NAME
+                DECLARATION_NAME
             )
             map.put(ABSTRACT_FUNCTION_WITH_BODY, "A function ''{0}'' with body cannot be abstract", DECLARATION_NAME)
             map.put(NON_ABSTRACT_FUNCTION_WITH_NO_BODY, "Function ''{0}'' without a body must be abstract", DECLARATION_NAME)
@@ -988,7 +1066,7 @@ class FirDefaultErrorMessages {
                 ABSTRACT_PROPERTY_IN_NON_ABSTRACT_CLASS,
                 "Abstract property ''{0}'' in non-abstract class ''{1}''",
                 DECLARATION_NAME,
-                NAME
+                DECLARATION_NAME
             )
             map.put(PRIVATE_PROPERTY_IN_INTERFACE, "Abstract property in an interface cannot be private")
 
@@ -1097,6 +1175,11 @@ class FirDefaultErrorMessages {
                 VARIABLE_NAME
             )
             map.put(
+                SETTER_PROJECTED_OUT,
+                "Setter for ''{0}'' is removed by type projection",
+                VARIABLE_NAME
+            )
+            map.put(
                 WRONG_INVOCATION_KIND,
                 "{2} wrong invocation kind: given {3} case, but {4} case is possible",
                 SYMBOL,
@@ -1146,6 +1229,7 @@ class FirDefaultErrorMessages {
             map.put(USELESS_IS_CHECK, "Check for instance is always ''{0}''", TO_STRING)
 
             // When expressions
+            map.put(EXPECTED_CONDITION, "Expected condition of type Boolean")
             map.put(NO_ELSE_IN_WHEN, "''when'' expression must be exhaustive, add necessary {0}", WHEN_MISSING_CASES)
             map.put(INVALID_IF_AS_EXPRESSION, "'if' must have both main and 'else' branches if used as an expression")
 

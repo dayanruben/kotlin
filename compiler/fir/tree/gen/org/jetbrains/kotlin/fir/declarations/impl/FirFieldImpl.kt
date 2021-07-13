@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.fir.declarations.impl
 import org.jetbrains.kotlin.fir.FirImplementationDetail
 import org.jetbrains.kotlin.fir.FirModuleData
 import org.jetbrains.kotlin.fir.FirSourceElement
+import org.jetbrains.kotlin.fir.declarations.DeprecationsPerUseSite
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationAttributes
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationStatus
@@ -38,6 +39,7 @@ class FirFieldImpl @FirImplementationDetail constructor(
     override var returnTypeRef: FirTypeRef,
     override val typeParameters: MutableList<FirTypeParameterRef>,
     override var status: FirDeclarationStatus,
+    override var deprecation: DeprecationsPerUseSite?,
     override val containerSource: DeserializedContainerSource?,
     override val dispatchReceiverType: ConeKotlinType?,
     override val name: Name,
@@ -78,10 +80,6 @@ class FirFieldImpl @FirImplementationDetail constructor(
         return this
     }
 
-    override fun <D> transformReceiverTypeRef(transformer: FirTransformer<D>, data: D): FirFieldImpl {
-        return this
-    }
-
     override fun <D> transformTypeParameters(transformer: FirTransformer<D>, data: D): FirFieldImpl {
         typeParameters.transformInplace(transformer, data)
         return this
@@ -89,6 +87,10 @@ class FirFieldImpl @FirImplementationDetail constructor(
 
     override fun <D> transformStatus(transformer: FirTransformer<D>, data: D): FirFieldImpl {
         status = status.transform(transformer, data)
+        return this
+    }
+
+    override fun <D> transformReceiverTypeRef(transformer: FirTransformer<D>, data: D): FirFieldImpl {
         return this
     }
 
@@ -128,6 +130,10 @@ class FirFieldImpl @FirImplementationDetail constructor(
     }
 
     override fun replaceReceiverTypeRef(newReceiverTypeRef: FirTypeRef?) {}
+
+    override fun replaceDeprecation(newDeprecation: DeprecationsPerUseSite?) {
+        deprecation = newDeprecation
+    }
 
     override fun replaceInitializer(newInitializer: FirExpression?) {
         initializer = newInitializer

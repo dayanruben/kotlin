@@ -3,6 +3,10 @@ plugins {
     id("jps-compatible")
 }
 
+kotlin {
+    explicitApiWarning()
+}
+
 dependencies {
     compileOnly(project(":kotlin-reflect-api"))
 
@@ -13,6 +17,10 @@ dependencies {
     compileOnly(project(":idea-frontend-fir:idea-fir-low-level-api"))
 
     compile(intellijCoreDep()) { includeJars("intellij-core", "guava", rootProject = rootProject) }
+}
+
+kotlin {
+    explicitApi()
 }
 
 sourceSets {

@@ -33,6 +33,7 @@
 #include "ObjCInterop.h"
 #include "ObjCExportPrivate.h"
 #include "ObjCMMAPI.h"
+#include "StackTrace.hpp"
 #include "Types.h"
 #include "Mutex.hpp"
 
@@ -119,7 +120,7 @@ BOOL _tryRetainImp(id self, SEL _cmd) {
     // TODO: Refactor to be more explicit. Instead of relying on an unhandled exception termination
     // (and effectively setting a global to alter its behavior), just call an appropriate termination
     // function by hand.
-    DisallowSourceInfo();
+    kotlin::DisallowSourceInfo();
     std::terminate();
   }
 }
@@ -255,7 +256,7 @@ static void AddMethods(Class clazz, const struct ObjCMethodDescription* methods,
 static kotlin::SpinLock classCreationMutex;
 static int anonymousClassNextId = 0;
 
-static Class allocateClass(const KotlinObjCClassInfo* info) {
+NO_EXTERNAL_CALLS_CHECK static Class allocateClass(const KotlinObjCClassInfo* info) {
   Class superclass = Kotlin_Interop_getObjCClass(info->superclassName);
 
   if (info->exported) {

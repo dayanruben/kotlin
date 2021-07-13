@@ -30,9 +30,10 @@ abstract class FirConstructor : FirFunction(), FirTypeParameterRefsOwner {
     abstract override val origin: FirDeclarationOrigin
     abstract override val attributes: FirDeclarationAttributes
     abstract override val returnTypeRef: FirTypeRef
-    abstract override val receiverTypeRef: FirTypeRef?
     abstract override val typeParameters: List<FirTypeParameterRef>
     abstract override val status: FirDeclarationStatus
+    abstract override val receiverTypeRef: FirTypeRef?
+    abstract override val deprecation: DeprecationsPerUseSite?
     abstract override val containerSource: DeserializedContainerSource?
     abstract override val dispatchReceiverType: ConeKotlinType?
     abstract override val controlFlowGraphReference: FirControlFlowGraphReference?
@@ -55,6 +56,8 @@ abstract class FirConstructor : FirFunction(), FirTypeParameterRefsOwner {
 
     abstract override fun replaceReceiverTypeRef(newReceiverTypeRef: FirTypeRef?)
 
+    abstract override fun replaceDeprecation(newDeprecation: DeprecationsPerUseSite?)
+
     abstract override fun replaceControlFlowGraphReference(newControlFlowGraphReference: FirControlFlowGraphReference?)
 
     abstract override fun replaceValueParameters(newValueParameters: List<FirValueParameter>)
@@ -63,11 +66,11 @@ abstract class FirConstructor : FirFunction(), FirTypeParameterRefsOwner {
 
     abstract override fun <D> transformReturnTypeRef(transformer: FirTransformer<D>, data: D): FirConstructor
 
-    abstract override fun <D> transformReceiverTypeRef(transformer: FirTransformer<D>, data: D): FirConstructor
-
     abstract override fun <D> transformTypeParameters(transformer: FirTransformer<D>, data: D): FirConstructor
 
     abstract override fun <D> transformStatus(transformer: FirTransformer<D>, data: D): FirConstructor
+
+    abstract override fun <D> transformReceiverTypeRef(transformer: FirTransformer<D>, data: D): FirConstructor
 
     abstract override fun <D> transformValueParameters(transformer: FirTransformer<D>, data: D): FirConstructor
 

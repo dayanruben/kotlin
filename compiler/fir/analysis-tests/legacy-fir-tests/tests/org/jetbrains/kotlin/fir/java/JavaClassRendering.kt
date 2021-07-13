@@ -7,7 +7,7 @@ package org.jetbrains.kotlin.fir.java
 
 import org.jetbrains.kotlin.fir.FirRenderer
 import org.jetbrains.kotlin.fir.FirSession
-import org.jetbrains.kotlin.fir.declarations.FirCallableMemberDeclaration
+import org.jetbrains.kotlin.fir.declarations.FirCallableDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirEnumEntry
 import org.jetbrains.kotlin.fir.java.declarations.FirJavaClass
@@ -16,8 +16,10 @@ import org.jetbrains.kotlin.fir.java.declarations.FirJavaField
 import org.jetbrains.kotlin.fir.java.declarations.FirJavaMethod
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.scopes.unsubstitutedScope
+import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
 
+@OptIn(SymbolInternals::class)
 fun renderJavaClass(renderer: FirRenderer, javaClass: FirJavaClass, session: FirSession) {
     val memberScope = javaClass.unsubstitutedScope(session, ScopeSession(), withForcedTypeCalculator = true)
 
@@ -42,7 +44,7 @@ fun renderJavaClass(renderer: FirRenderer, javaClass: FirJavaClass, session: Fir
             if (declaration in renderedDeclarations) continue
 
             val scopeToUse =
-                if (declaration is FirCallableMemberDeclaration && declaration.status.isStatic)
+                if (declaration is FirCallableDeclaration && declaration.status.isStatic)
                     staticScope
                 else
                     memberScope

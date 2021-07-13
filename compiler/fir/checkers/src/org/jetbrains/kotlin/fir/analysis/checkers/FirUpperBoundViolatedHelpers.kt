@@ -10,10 +10,10 @@ import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.fir.analysis.diagnostics.reportOn
-import org.jetbrains.kotlin.fir.declarations.FirRegularClass
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.resolve.substitution.substitutorByMap
 import org.jetbrains.kotlin.fir.resolve.toSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirTypeParameterSymbol
 import org.jetbrains.kotlin.fir.typeContext
 import org.jetbrains.kotlin.fir.types.*
@@ -33,11 +33,7 @@ fun checkUpperBoundViolated(
     isTypeAlias: Boolean = false,
     isIgnoreTypeParameters: Boolean = false
 ) {
-    val type = when (typeRef) {
-        is ConeKotlinType -> typeRef
-        is FirResolvedTypeRef -> typeRef.type
-        else -> return
-    }
+    val type = typeRef?.coneTypeSafe<ConeKotlinType>() ?: return
 
     val typeArgumentsCount = typeArguments?.size ?: type.typeArguments.size
     if (typeArgumentsCount == 0) {
@@ -47,17 +43,14 @@ fun checkUpperBoundViolated(
     val typeParameterSymbols = typeParameters
         ?: if (type is ConeClassLikeType) {
             val fullyExpandedType = type.fullyExpandedType(context.session)
-            val prototypeClass = fullyExpandedType.lookupTag.toSymbol(context.session)
-                ?.fir as? FirRegularClass
-                ?: return
-
+            val prototypeClassSymbol = fullyExpandedType.lookupTag.toSymbol(context.session) as? FirRegularClassSymbol ?: return
             if (type != fullyExpandedType) {
                 // special check for type aliases
                 checkUpperBoundViolated(
                     typeRef,
                     context,
                     reporter,
-                    prototypeClass.typeParameters.map { it.symbol },
+                    prototypeClassSymbol.typeParameterSymbols,
                     fullyExpandedType.typeArguments.toList(),
                     null,
                     isTypeAlias = true,
@@ -66,7 +59,7 @@ fun checkUpperBoundViolated(
                 return
             }
 
-            prototypeClass.typeParameters.map { it.symbol }
+            prototypeClassSymbol.typeParameterSymbols
         } else {
             listOf()
         }
@@ -139,7 +132,7 @@ fun checkUpperBoundViolated(
         if (typeArgument != null && typeArgumentSource != null) {
             if (!isIgnoreTypeParameters || (typeArgument.typeArguments.isEmpty() && typeArgument !is ConeTypeParameterType)) {
                 val intersection =
-                    typeSystemContext.intersectTypes(typeParameterSymbols[index].fir.bounds.map { it.coneType }) as? ConeKotlinType
+                    typeSystemContext.intersectTypes(typeParameterSymbols[index].resolvedBounds.map { it.coneType }) as? ConeKotlinType
                 if (intersection != null) {
                     val upperBound = substitutor.substituteOrSelf(intersection)
                     if (!AbstractTypeChecker.isSubtypeOf(

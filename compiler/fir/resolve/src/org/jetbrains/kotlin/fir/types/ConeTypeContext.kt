@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.resolve.substitution.substitutorByMap
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.firUnsafe
-import org.jetbrains.kotlin.fir.resolve.transformers.ensureResolved
+import org.jetbrains.kotlin.fir.symbols.ensureResolved
 import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
 import org.jetbrains.kotlin.fir.symbols.ConeTypeParameterLookupTag
 import org.jetbrains.kotlin.fir.symbols.impl.*
@@ -177,6 +177,11 @@ interface ConeTypeContext : TypeSystemContext, TypeSystemOptimizationContext, Ty
         return this.typeArguments.getOrNull(index) ?: ConeStarProjection
     }
 
+    override fun KotlinTypeMarker.getArguments(): List<TypeArgumentMarker> {
+        require(this is ConeKotlinType)
+        return this.typeArguments.toList()
+    }
+
     override fun KotlinTypeMarker.asTypeArgument(): TypeArgumentMarker {
         require(this is ConeKotlinType)
         return this
@@ -239,6 +244,15 @@ interface ConeTypeContext : TypeSystemContext, TypeSystemOptimizationContext, Ty
         }
     }
 
+    override fun TypeConstructorMarker.getParameters(): List<TypeParameterMarker> {
+        return when (val symbol = toClassLikeSymbol()) {
+            is FirAnonymousObjectSymbol -> symbol.fir.typeParameters.map { it.symbol.toLookupTag() }
+            is FirRegularClassSymbol -> symbol.fir.typeParameters.map { it.symbol.toLookupTag() }
+            is FirTypeAliasSymbol -> symbol.fir.typeParameters.map { it.symbol.toLookupTag() }
+            else -> emptyList()
+        }
+    }
+
     private fun TypeConstructorMarker.toClassLikeSymbol(): FirClassLikeSymbol<*>? = (this as? ConeClassLikeLookupTag)?.toSymbol(session)
 
     override fun TypeConstructorMarker.supertypes(): Collection<ConeKotlinType> {
@@ -247,7 +261,7 @@ interface ConeTypeContext : TypeSystemContext, TypeSystemOptimizationContext, Ty
             is ConeTypeVariableTypeConstructor -> emptyList()
             is ConeTypeParameterLookupTag -> symbol.fir.bounds.map { it.coneType }
             is ConeClassLikeLookupTag -> {
-                when (val symbol = toClassLikeSymbol().also { it?.ensureResolved(FirResolvePhase.TYPES, session) }) {
+                when (val symbol = toClassLikeSymbol().also { it?.ensureResolved(FirResolvePhase.TYPES) }) {
                     is FirClassSymbol<*> -> symbol.fir.superConeTypes
                     is FirTypeAliasSymbol -> listOfNotNull(symbol.fir.expandedConeType)
                     else -> listOf(session.builtinTypes.anyType.type)
@@ -297,11 +311,11 @@ interface ConeTypeContext : TypeSystemContext, TypeSystemOptimizationContext, Ty
         return this
     }
 
-    override fun TypeParameterMarker.hasRecursiveBounds(selfConstructor: TypeConstructorMarker): Boolean {
+    override fun TypeParameterMarker.hasRecursiveBounds(selfConstructor: TypeConstructorMarker?): Boolean {
         require(this is ConeTypeParameterLookupTag)
         return this.typeParameterSymbol.fir.bounds.any { typeRef ->
             typeRef.coneType.contains { it.typeConstructor() == this.getTypeConstructor() }
-                    && typeRef.coneType.typeConstructor() == selfConstructor
+                    && (selfConstructor == null || typeRef.coneType.typeConstructor() == selfConstructor)
         }
     }
 

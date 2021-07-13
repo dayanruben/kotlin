@@ -31,7 +31,7 @@ buildscript {
     }
 
     dependencies {
-        classpath("org.jetbrains.kotlin:kotlin-build-gradle-plugin:0.0.30")
+        classpath("org.jetbrains.kotlin:kotlin-build-gradle-plugin:0.0.31")
     }
 }
 
@@ -253,6 +253,7 @@ task registerBuild(type: BuildRegister) {
         dist = (new File(dist)).isAbsolute() ? dist : "${project.getProjectDir()}/$dist"
         bundleSize = (new File(dist)).directorySize()
     }
+    buildNumberSuffix = project.findProperty('buildNumberSuffix')
 }
 
 task registerExternalBuild(type: BuildRegister) {

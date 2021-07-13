@@ -23,16 +23,17 @@ import org.jetbrains.kotlin.fir.visitors.*
  * DO NOT MODIFY IT MANUALLY
  */
 
-sealed class FirVariable : FirCallableMemberDeclaration(), FirStatement {
+sealed class FirVariable : FirCallableDeclaration(), FirStatement {
     abstract override val source: FirSourceElement?
     abstract override val moduleData: FirModuleData
     abstract override val resolvePhase: FirResolvePhase
     abstract override val origin: FirDeclarationOrigin
     abstract override val attributes: FirDeclarationAttributes
     abstract override val returnTypeRef: FirTypeRef
-    abstract override val receiverTypeRef: FirTypeRef?
     abstract override val typeParameters: List<FirTypeParameterRef>
     abstract override val status: FirDeclarationStatus
+    abstract override val receiverTypeRef: FirTypeRef?
+    abstract override val deprecation: DeprecationsPerUseSite?
     abstract override val containerSource: DeserializedContainerSource?
     abstract override val dispatchReceiverType: ConeKotlinType?
     abstract val name: Name
@@ -57,15 +58,17 @@ sealed class FirVariable : FirCallableMemberDeclaration(), FirStatement {
 
     abstract override fun replaceReceiverTypeRef(newReceiverTypeRef: FirTypeRef?)
 
+    abstract override fun replaceDeprecation(newDeprecation: DeprecationsPerUseSite?)
+
     abstract fun replaceInitializer(newInitializer: FirExpression?)
 
     abstract override fun <D> transformReturnTypeRef(transformer: FirTransformer<D>, data: D): FirVariable
 
-    abstract override fun <D> transformReceiverTypeRef(transformer: FirTransformer<D>, data: D): FirVariable
-
     abstract override fun <D> transformTypeParameters(transformer: FirTransformer<D>, data: D): FirVariable
 
     abstract override fun <D> transformStatus(transformer: FirTransformer<D>, data: D): FirVariable
+
+    abstract override fun <D> transformReceiverTypeRef(transformer: FirTransformer<D>, data: D): FirVariable
 
     abstract fun <D> transformInitializer(transformer: FirTransformer<D>, data: D): FirVariable
 

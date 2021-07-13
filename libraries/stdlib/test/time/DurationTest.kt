@@ -9,6 +9,7 @@ package test.time
 
 import test.numbers.assertAlmostEquals
 import kotlin.math.nextDown
+import kotlin.math.pow
 import kotlin.native.concurrent.SharedImmutable
 import kotlin.test.*
 import kotlin.time.*
@@ -454,42 +455,75 @@ class DurationTest {
     }
 
     @Test
-    fun toIsoString() {
+    fun parseAndFormatIsoString() {
+        fun test(duration: Duration, vararg isoStrings: String) {
+            assertEquals(isoStrings.first(), duration.toIsoString())
+            for (isoString in isoStrings) {
+                assertEquals(duration, Duration.parseIsoString(isoString), isoString)
+                assertEquals(duration, Duration.parse(isoString), isoString)
+                assertEquals(duration, Duration.parseIsoStringOrNull(isoString), isoString)
+                assertEquals(duration, Duration.parseOrNull(isoString), isoString)
+            }
+        }
+
         // zero
-        assertEquals("PT0S", Duration.ZERO.toIsoString())
+        test(Duration.ZERO, "PT0S", "P0D", "PT0H", "PT0M", "P0DT0H", "PT0H0M", "PT0H0S")
 
         // single unit
-        assertEquals("PT24H", Duration.days(1).toIsoString())
-        assertEquals("PT1H", Duration.hours(1).toIsoString())
-        assertEquals("PT1M", Duration.minutes(1).toIsoString())
-        assertEquals("PT1S", Duration.seconds(1).toIsoString())
-        assertEquals("PT0.001S", Duration.milliseconds(1).toIsoString())
-        assertEquals("PT0.000001S", Duration.microseconds(1).toIsoString())
-        assertEquals("PT0.000000001S", Duration.nanoseconds(1).toIsoString())
+        test(Duration.days(1), "PT24H", "P1D", "PT1440M", "PT86400S")
+        test(Duration.hours(1), "PT1H")
+        test(Duration.minutes(1), "PT1M")
+        test(Duration.seconds(1), "PT1S")
+        test(Duration.milliseconds(1), "PT0.001S")
+        test(Duration.microseconds(1), "PT0.000001S")
+        test(Duration.nanoseconds(1), "PT0.000000001S", "PT0.0000000009S")
+        test(Duration.nanoseconds(0.9), "PT0.000000001S")
 
         // rounded to zero
-        assertEquals("PT0S", Duration.nanoseconds(0.1).toIsoString())
-        assertEquals("PT0S", Duration.nanoseconds(0.9).toIsoString())
+        test(Duration.nanoseconds(0.1), "PT0S")
+        test(Duration.ZERO, "PT0S", "PT0.0000000004S")
 
         // several units combined
-        assertEquals("PT24H1M", (Duration.days(1) + Duration.minutes(1)).toIsoString())
-        assertEquals("PT24H0M1S", (Duration.days(1) + Duration.seconds(1)).toIsoString())
-        assertEquals("PT24H0M0.001S", (Duration.days(1) + Duration.milliseconds(1)).toIsoString())
-        assertEquals("PT1H30M", (Duration.hours(1) + Duration.minutes(30)).toIsoString())
-        assertEquals("PT1H0M0.500S", (Duration.hours(1) + Duration.milliseconds(500)).toIsoString())
-        assertEquals("PT2M0.500S", (Duration.minutes(2) + Duration.milliseconds(500)).toIsoString())
-        assertEquals("PT1M30.500S", (Duration.milliseconds(90_500)).toIsoString())
+        test(Duration.days(1) + Duration.minutes(1), "PT24H1M")
+        test(Duration.days(1) + Duration.seconds(1), "PT24H0M1S")
+        test(Duration.days(1) + Duration.milliseconds(1), "PT24H0M0.001S")
+        test(Duration.hours(1) + Duration.minutes(30), "PT1H30M")
+        test(Duration.hours(1) + Duration.milliseconds(500), "PT1H0M0.500S")
+        test(Duration.minutes(2) + Duration.milliseconds(500), "PT2M0.500S")
+        test(Duration.milliseconds(90_500), "PT1M30.500S")
 
-        // negative
-        assertEquals("-PT23H45M", (-Duration.days(1) + Duration.minutes(15)).toIsoString())
-        assertEquals("-PT24H15M", (-Duration.days(1) - Duration.minutes(15)).toIsoString())
+        // with sign
+        test(-Duration.days(1) + Duration.minutes(15), "-PT23H45M", "PT-23H-45M", "+PT-24H+15M")
+        test(-Duration.days(1) - Duration.minutes(15), "-PT24H15M", "PT-24H-15M", "-PT25H-45M")
+        test(Duration.ZERO, "PT0S", "P1DT-24H", "+PT-1H+60M", "-PT1M-60S")
 
         // infinite
-        assertEquals("PT2147483647H", Duration.INFINITE.toIsoString())
+        test(Duration.INFINITE, "PT9999999999999H", "PT+10000000000000H", "-PT-9999999999999H", "-PT-1234567890123456789012S")
+        test(-Duration.INFINITE, "-PT9999999999999H", "-PT10000000000000H", "PT-1234567890123456789012S")
     }
 
     @Test
-    fun toStringInUnits() {
+    fun parseIsoStringFailing() {
+        for (invalidValue in listOf(
+            "", " ", "P", "PT", "P1DT", "P1", "PT1", "0", "+P", "+", "-", "h", "H", "something",
+            "1m", "1d", "2d 11s", "Infinity", "-Infinity",
+            "P+12+34D", "P12-34D", "PT1234567890-1234567890S",
+            " P1D", "PT1S ",
+            "P1Y", "P1M", "P1S", "PT1D", "PT1Y",
+            "PT1S2S", "PT1S2H",
+            "P9999999999999DT-9999999999999H",
+            "PT1.5H", "PT0.5D", "PT.5S", "PT0.25.25S",
+        )) {
+            assertNull(Duration.parseIsoStringOrNull(invalidValue), invalidValue)
+            assertFailsWith<IllegalArgumentException>(invalidValue) { Duration.parseIsoString(invalidValue) }.let { e ->
+                assertContains(e.message!!, "'$invalidValue'")
+            }
+        }
+
+    }
+
+    @Test
+    fun parseAndFormatInUnits() {
         var d = with(Duration) {
             days(1) + hours(15) + minutes(31) + seconds(45) +
             milliseconds(678) + microseconds(920) + nanoseconds(516.34)
@@ -498,6 +532,13 @@ class DurationTest {
         fun test(unit: DurationUnit, vararg representations: String) {
             assertFails { d.toString(unit, -1) }
             assertEquals(representations.toList(), representations.indices.map { d.toString(unit, it) })
+            for ((decimals, string) in representations.withIndex()) {
+                val d1 = Duration.parse(string)
+                assertEquals(d1, Duration.parseOrNull(string))
+                if (!(d1 == d || (d1 - d).absoluteValue <= (0.5 * 10.0.pow(-decimals)).toDuration(unit))) {
+                    fail("Parsed value $d1 (from $string) is too far from the real value $d")
+                }
+            }
         }
 
         test(DurationUnit.DAYS, "2d", "1.6d", "1.65d", "1.647d")
@@ -522,7 +563,13 @@ class DurationTest {
 
         assertEquals("0.500000000000s", Duration.seconds(0.5).toString(DurationUnit.SECONDS, 100))
         assertEquals("99999000000000.000000000000ns", Duration.seconds(99_999).toString(DurationUnit.NANOSECONDS, 15))
-        assertEquals("1.00e+14ns", Duration.seconds(100_000).toString(DurationUnit.NANOSECONDS, 9))
+        assertContains(
+            listOf(
+                "-4611686018427388000000000.000000000000ns",
+                "-4611686018427387904000000.000000000000ns"
+            ),
+            (-Duration.milliseconds(MAX_MILLIS - 1)).toString(DurationUnit.NANOSECONDS, 15)
+        )
 
         d = Duration.INFINITE
         test(DurationUnit.DAYS, "Infinity", "Infinity")
@@ -532,63 +579,93 @@ class DurationTest {
 
 
     @Test
-    fun toStringDefault() {
-        fun test(duration: Duration, vararg expectedOptions: String) {
-            val actual = duration.toString()
-
-            if (!expectedOptions.contains(actual)) {
-                assertEquals<Any>(expectedOptions.toList(), duration.toString())
-            }
-            if (duration > Duration.ZERO)
-                assertEquals("-$actual", (-duration).toString())
+    fun parseAndFormatDefault() {
+        fun testParsing(string: String, expectedDuration: Duration) {
+            assertEquals(expectedDuration, Duration.parse(string), string)
+            assertEquals(expectedDuration, Duration.parseOrNull(string), string)
         }
 
-        test(Duration.days(101), "101d")
-        test(Duration.days(45.3), "45.3d")
-        test(Duration.days(45), "45.0d")
+        fun test(duration: Duration, vararg expected: String) {
+            val actual = duration.toString()
+            assertEquals(expected.first(), actual)
 
-        test(Duration.days(40.5), "972h")
-        test(Duration.hours(40) + Duration.minutes(15), "40.3h", "40.2h")
-        test(Duration.hours(40), "40.0h")
+            if (duration.isPositive()) {
+                if (' ' in actual) {
+                    assertEquals("-($actual)", (-duration).toString())
+                } else {
+                    assertEquals("-$actual", (-duration).toString())
+                }
+            }
 
-        test(Duration.hours(12.5), "750m")
-        test(Duration.minutes(30), "30.0m")
-        test(Duration.minutes(17.5), "17.5m")
+            for (string in expected) {
+                testParsing(string, duration)
+                if (duration.isPositive() && duration.isFinite()) {
+                    testParsing("+($string)", duration)
+                    testParsing("-($string)", -duration)
+                    if (' ' !in string) {
+                        testParsing("+$string", duration)
+                        testParsing("-$string", -duration)
+                    }
+                }
+            }
+        }
 
-        test(Duration.minutes(16.5), "990s")
-        test(Duration.seconds(90.36), "90.4s")
-        test(Duration.seconds(50), "50.0s")
-        test(Duration.seconds(1.3), "1.30s")
-        test(Duration.seconds(1), "1.00s")
+        test(Duration.days(101), "101d", "2424h")
+        test(Duration.days(45.3), "45d 7h 12m", "45.3d", "45d 7.2h") // 0.3d == 7.2h
+        test(Duration.days(45), "45d")
+
+        test(Duration.days(40.5), "40d 12h", "40.5d", "40d 720m")
+        test(Duration.days(40) + Duration.minutes(20), "40d 0h 20m", "40d 20m", "40d 1200s")
+        test(Duration.days(40) + Duration.seconds(20), "40d 0h 0m 20s", "40d 20s")
+        test(Duration.days(40) + Duration.nanoseconds(100), "40d 0h 0m 0.000000100s", "40d 100ns")
+
+        test(Duration.hours(40) + Duration.minutes(15), "1d 16h 15m", "40h 15m")
+        test(Duration.hours(40), "1d 16h", "40h")
+
+        test(Duration.hours(12.5), "12h 30m")
+        test(Duration.hours(12) + Duration.seconds(15), "12h 0m 15s")
+        test(Duration.hours(12) + Duration.nanoseconds(1), "12h 0m 0.000000001s")
+        test(Duration.minutes(30), "30m")
+        test(Duration.minutes(17.5), "17m 30s")
+
+        test(Duration.minutes(16.5), "16m 30s")
+        test(Duration.seconds(1097.1), "18m 17.1s")
+        test(Duration.seconds(90.36), "1m 30.36s")
+        test(Duration.seconds(50), "50s")
+        test(Duration.seconds(1.3), "1.3s")
+        test(Duration.seconds(1), "1s")
 
         test(Duration.seconds(0.5), "500ms")
         test(Duration.milliseconds(40.2), "40.2ms")
-        test(Duration.milliseconds(4.225), "4.23ms", "4.22ms")
-        test(Duration.milliseconds(4.245), "4.25ms")
-        test(Duration.milliseconds(1), "1.00ms")
+        test(Duration.milliseconds(4.225), "4.225ms")
+        test(Duration.milliseconds(4.24501), "4.245010ms", "4ms 245us 10ns")
+        test(Duration.milliseconds(1), "1ms")
 
         test(Duration.milliseconds(0.75), "750us")
-        test(Duration.microseconds(75.35), "75.4us", "75.3us")
+        test(Duration.microseconds(75.35), "75.35us")
         test(Duration.microseconds(7.25), "7.25us")
-        test(Duration.microseconds(1.035), "1.04us", "1.03us")
-        test(Duration.microseconds(1.005), "1.01us", "1.00us")
+        test(Duration.microseconds(1.035), "1.035us")
+        test(Duration.microseconds(1.005), "1.005us")
+        test(Duration.nanoseconds(1800), "1.8us", "1800ns", "0.0000000005h")
 
-        test(Duration.nanoseconds(950.5), "951ns", "950ns")
-        test(Duration.nanoseconds(85.23), "85.0ns")
-        test(Duration.nanoseconds(8.235), "8.00ns")
-        test(Duration.nanoseconds(1.3), "1.00ns")
+        test(Duration.nanoseconds(950.5), "951ns")
+        test(Duration.nanoseconds(85.23), "85ns")
+        test(Duration.nanoseconds(8.235), "8ns")
+        test(Duration.nanoseconds(1), "1ns", "0.9ns", "0.001us", "0.0009us")
+        test(Duration.nanoseconds(1.3), "1ns")
+        test(Duration.nanoseconds(0.75), "1ns")
+        test(Duration.nanoseconds(0.7512), "1ns")
 
         // equal to zero
-//        test(Duration.nanoseconds(0.75), "0.75ns")
-//        test(Duration.nanoseconds(0.7512), "0.7512ns")
 //        test(Duration.nanoseconds(0.023), "0.023ns")
 //        test(Duration.nanoseconds(0.0034), "0.0034ns")
 //        test(Duration.nanoseconds(0.0000035), "0.0000035ns")
 
-        test(Duration.ZERO, "0s")
+        test(Duration.ZERO, "0s", "0.4ns", "0000.0000ns")
         test(Duration.days(365) * 10000, "3650000d")
-        test(Duration.days(300) * 100000, "3.00e+7d")
-        test(Duration.days(365) * 100000, "3.65e+7d")
+        test(Duration.days(300) * 100000, "30000000d")
+        test(Duration.days(365) * 100000, "36500000d")
+        test(Duration.milliseconds(MAX_MILLIS - 1), "53375995583d 15h 36m 27.902s") // max finite value
 
         // all infinite
 //        val universeAge = Duration.days(365.25) * 13.799e9
@@ -597,7 +674,33 @@ class DurationTest {
 //        test(universeAge, "5.04e+12d")
 //        test(planckTime, "5.40e-44s")
 //        test(Duration.nanoseconds(Double.MAX_VALUE), "2.08e+294d")
-        test(Duration.INFINITE, "Infinity")
+        test(Duration.INFINITE, "Infinity", "53375995583d 20h", "+Infinity")
+        test(-Duration.INFINITE, "-Infinity", "-(53375995583d 20h)")
+    }
+
+    @Test
+    fun parseDefaultFailing() {
+        for (invalidValue in listOf(
+            "", " ", "P", "PT", "P1DT", "P1", "PT1", "0", "+P", "+", "-", "h", "H", "something",
+            "1234567890123456789012ns", "Inf", "-Infinity value",
+            "1s ", " 1s",
+            "1d 1m 1h", "1s 2s",
+            "-12m 15s", "-12m -15s", "-()", "-(12m 30s",
+            "+12m 15s", "+12m +15s", "+()", "+(12m 30s",
+            "()", "(12m 30s)",
+            "12.5m 11.5s", ".2s", "0.1553.39m",
+            "P+12+34D", "P12-34D", "PT1234567890-1234567890S",
+            " P1D", "PT1S ",
+            "P1Y", "P1M", "P1S", "PT1D", "PT1Y",
+            "PT1S2S", "PT1S2H",
+            "P9999999999999DT-9999999999999H",
+            "PT1.5H", "PT0.5D", "PT.5S", "PT0.25.25S",
+        )) {
+            assertNull(Duration.parseOrNull(invalidValue), invalidValue)
+            assertFailsWith<IllegalArgumentException>(invalidValue) { Duration.parse(invalidValue) }.let { e ->
+                assertContains(e.message!!, "'$invalidValue'")
+            }
+        }
     }
 
 }

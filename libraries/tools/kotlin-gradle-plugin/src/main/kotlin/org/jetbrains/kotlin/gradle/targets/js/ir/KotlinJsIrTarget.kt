@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.gradle.plugin.AbstractKotlinTargetConfigurator.Compa
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation.Companion.MAIN_COMPILATION_NAME
 import org.jetbrains.kotlin.gradle.plugin.mpp.DefaultKotlinUsageContext
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinTargetWithBinaries
-import org.jetbrains.kotlin.gradle.plugin.mpp.disambiguateName
 import org.jetbrains.kotlin.gradle.targets.js.JsAggregatingExecutionSource
 import org.jetbrains.kotlin.gradle.targets.js.KotlinJsReportAggregatingTestRun
 import org.jetbrains.kotlin.gradle.targets.js.KotlinJsTarget
@@ -228,5 +227,7 @@ constructor(
 
     private fun KotlinJsOptions.configureCommonJsOptions() {
         moduleKind = "commonjs"
+        sourceMap = true
+        sourceMapEmbedSources = "never"
     }
 }

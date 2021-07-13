@@ -195,6 +195,9 @@ class K2NativeCompilerArguments : CommonCompilerArguments() {
     @Argument(value = "-Xprint-bitcode", deprecatedName = "--print_bitcode", description = "Print llvm bitcode")
     var printBitCode: Boolean = false
 
+    @Argument(value = "-Xcheck-state-at-external-calls", description = "Check all calls of possibly long external functions are done in Native state")
+    var checkExternalCalls: Boolean = false
+
     @Argument(value = "-Xprint-descriptors", deprecatedName = "--print_descriptors", description = "Print descriptor tree")
     var printDescriptors: Boolean = false
 
@@ -311,8 +314,15 @@ class K2NativeCompilerArguments : CommonCompilerArguments() {
     @Argument(value="-Xgc-aggressive", description = "Make GC agressive. Works only with -memory-model experimental")
     var gcAggressive: Boolean = false
 
-    override fun configureAnalysisFlags(collector: MessageCollector): MutableMap<AnalysisFlag<*>, Any> =
-            super.configureAnalysisFlags(collector).also {
+    @Argument(
+            value = "-Xcheck-compatibility-with-lld",
+            valueDescription = "{disable|enable}",
+            description = "Check that linker flags are compatible with LLD."
+    )
+    var checkLldCompatibility: String? = null
+
+    override fun configureAnalysisFlags(collector: MessageCollector, languageVersion: LanguageVersion): MutableMap<AnalysisFlag<*>, Any> =
+            super.configureAnalysisFlags(collector, languageVersion).also {
                 val useExperimental = it[AnalysisFlags.useExperimental] as List<*>
                 it[AnalysisFlags.useExperimental] = useExperimental + listOf("kotlin.ExperimentalUnsignedTypes")
                 if (printIr)

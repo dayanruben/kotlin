@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.ir
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import junit.framework.TestCase
+import org.jetbrains.kotlin.backend.common.serialization.CompatibilityMode
 import org.jetbrains.kotlin.backend.common.serialization.DeserializationStrategy
 import org.jetbrains.kotlin.backend.common.serialization.KlibIrVersion
 import org.jetbrains.kotlin.backend.common.serialization.metadata.KlibMetadataIncrementalSerializer
@@ -63,6 +64,7 @@ abstract class AbstractKlibTextTestCase : CodegenTestCase() {
 
     companion object {
         val SKIP_KLIB_TEST = Regex("""// SKIP_KLIB_TEST""")
+        const val MODULE_NAME = "testModule"
     }
 
     override fun doMultiFileTest(wholeFile: File, files: List<TestFile>) {
@@ -82,7 +84,7 @@ abstract class AbstractKlibTextTestCase : CodegenTestCase() {
             listOfNotNull(writeJavaFiles(files)),
             files
         )
-        configuration.put(CommonConfigurationKeys.MODULE_NAME, "testModule")
+        configuration.put(CommonConfigurationKeys.MODULE_NAME, MODULE_NAME)
         myEnvironment = KotlinCoreEnvironment.createForTests(testRootDisposable, configuration, EnvironmentConfigFiles.JS_CONFIG_FILES)
     }
 
@@ -134,7 +136,7 @@ abstract class AbstractKlibTextTestCase : CodegenTestCase() {
     protected fun serializeModule(irModuleFragment: IrModuleFragment, bindingContext: BindingContext, stdlib: KotlinLibrary, containsErrorCode: Boolean, expectActualSymbols: MutableMap<DeclarationDescriptor, IrSymbol>, skipExpect: Boolean): String {
         val ktFiles = myFiles.psiFiles
         val serializedIr =
-            JsIrModuleSerializer(IrMessageLogger.None, irModuleFragment.irBuiltins, expectActualSymbols, skipExpect).serializedIrModule(
+            JsIrModuleSerializer(IrMessageLogger.None, irModuleFragment.irBuiltins, expectActualSymbols, CompatibilityMode.CURRENT, skipExpect).serializedIrModule(
                 irModuleFragment
             )
 
@@ -193,7 +195,7 @@ abstract class AbstractKlibTextTestCase : CodegenTestCase() {
             metadata = serializedMetadata,
             dataFlowGraph = null,
             manifestProperties = properties,
-            moduleName = irModuleFragment.name.asString(),
+            moduleName = MODULE_NAME,
             nopack = true,
             perFile = false,
             output = klibDir.canonicalPath,

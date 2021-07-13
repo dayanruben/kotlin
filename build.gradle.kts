@@ -1,7 +1,6 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.gradle.crypto.checksum.Checksum
 import org.gradle.plugins.ide.idea.model.IdeaModel
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import proguard.gradle.ProGuardTask
 
 buildscript {
@@ -30,7 +29,7 @@ buildscript {
     dependencies {
         bootstrapCompilerClasspath(kotlin("compiler-embeddable", bootstrapKotlinVersion))
 
-        classpath("org.jetbrains.kotlin:kotlin-build-gradle-plugin:0.0.30")
+        classpath("org.jetbrains.kotlin:kotlin-build-gradle-plugin:0.0.31")
         classpath(kotlin("gradle-plugin", bootstrapKotlinVersion))
         classpath(kotlin("serialization", bootstrapKotlinVersion))
         classpath("org.jetbrains.dokka:dokka-gradle-plugin:0.9.17")
@@ -55,13 +54,6 @@ pill {
 }
 
 val isTeamcityBuild = project.kotlinBuildProperties.isTeamcityBuild
-
-val configuredJdks: List<JdkId> =
-    getConfiguredJdks().also {
-        it.forEach { jdkId ->
-            logger.info("Using ${jdkId.majorVersion} home: ${jdkId.homeDir}")
-        }
-    }
 
 val defaultSnapshotVersion: String by extra
 val buildNumber by extra(findProperty("build.number")?.toString() ?: defaultSnapshotVersion)
@@ -114,37 +106,6 @@ subprojects {
     extra["kotlinNativeVersion"] = kotlinNativeVersionObject
 }
 
-// Work-around necessary to avoid setting null javaHome. Will be removed after support of lazy task configuration
-val jdkNotFoundConst = "JDK NOT FOUND"
-
-if (isTeamcityBuild) {
-    extra["JDK_16"] = jdkPath("1.6")
-    extra["JDK_17"] = jdkPath("1.7")
-} else {
-    extra["JDK_16"] = jdkPath("1.6", "1.8")
-    extra["JDK_17"] = jdkPath("1.7", "1.8")
-}
-extra["JDK_18"] = jdkPath("1.8")
-extra["JDK_9"] = jdkPath("9")
-extra["JDK_10"] = jdkPath("10")
-extra["JDK_11"] = jdkPath("11")
-extra["JDK_15"] = jdkPath("15")
-
-// allow opening the project without setting up all env variables (see KT-26413)
-if (!kotlinBuildProperties.isInIdeaSync) {
-    checkJDK()
-}
-
-fun checkJDK() {
-    val missingEnvVars = JdkMajorVersion.values()
-        .filter { it.isMandatory() && extra[it.name] == jdkNotFoundConst }
-        .mapTo(ArrayList()) { it.name }
-
-    if (missingEnvVars.isNotEmpty()) {
-        throw GradleException("Required environment variables are missing: ${missingEnvVars.joinToString()}")
-    }
-}
-
 rootProject.apply {
     from(rootProject.file("gradle/versions.gradle.kts"))
     from(rootProject.file("gradle/report.gradle.kts"))
@@ -167,8 +128,9 @@ extra["versions.junit"] = "4.12"
 extra["versions.javaslang"] = "2.0.6"
 extra["versions.ant"] = "1.10.7"
 extra["versions.android"] = "2.3.1"
-extra["versions.kotlinx-coroutines-core"] = "1.3.8"
-extra["versions.kotlinx-coroutines-jdk8"] = "1.3.8"
+extra["versions.kotlinx-coroutines-core"] = "1.5.0"
+extra["versions.kotlinx-coroutines-core-jvm"] = "1.5.0"
+extra["versions.kotlinx-coroutines-jdk8"] = "1.5.0"
 extra["versions.json"] = "20160807"
 extra["versions.native-platform"] = "0.14"
 extra["versions.robolectric"] = "4.0"
@@ -186,12 +148,11 @@ extra["versions.kotlinx-collections-immutable-jvm"] = immutablesVersion
 extra["versions.ktor-network"] = "1.0.1"
 
 if (!project.hasProperty("versions.kotlin-native")) {
-    extra["versions.kotlin-native"] = "1.5.30-dev-1916"
+    extra["versions.kotlin-native"] = "1.6.0-dev-248"
 }
 
 val effectSystemEnabled by extra(project.getBooleanProperty("kotlin.compiler.effectSystemEnabled") ?: false)
 val newInferenceEnabled by extra(project.getBooleanProperty("kotlin.compiler.newInferenceEnabled") ?: false)
-val useJvmIrBackend by extra(project.kotlinBuildProperties.useIR)
 val useJvmFir by extra(project.kotlinBuildProperties.useFir)
 
 val intellijSeparateSdks = project.getBooleanProperty("intellijSeparateSdks") ?: false
@@ -200,7 +161,11 @@ extra["intellijSeparateSdks"] = intellijSeparateSdks
 
 extra["IntellijCoreDependencies"] =
     listOf(
-        "asm-all-8.0.1",
+        when {
+            Platform[203].orHigher() -> "asm-all-9.0"
+            Platform[202].orHigher() -> "asm-all-8.0.1"
+            else -> "asm-all-7.0.1"
+        },
         "guava",
         "jdom",
         "jna",
@@ -389,7 +354,12 @@ val coreLibProjects = listOfNotNull(
 val projectsWithDisabledFirBootstrap = coreLibProjects + listOf(
     ":kotlin-gradle-plugin",
     ":kotlinx-metadata",
-    ":kotlinx-metadata-jvm"
+    ":kotlinx-metadata-jvm",
+    // For some reason stdlib isn't imported correctly for this module
+    // Probably it's related to kotlin-test module usage
+    ":kotlin-gradle-statistics",
+    // Requires serialization plugin
+    ":wasm:wasm.ir"
 )
 
 val gradlePluginProjects = listOf(
@@ -423,8 +393,6 @@ fun Task.listConfigurationContents(configName: String) {
     }
 }
 
-val defaultJvmTarget = "1.8"
-val defaultJavaHome = jdkPath(if (Platform[203].orHigher()) "11" else defaultJvmTarget)
 val ignoreTestFailures by extra(project.kotlinBuildProperties.ignoreTestFailures)
 
 allprojects {
@@ -470,17 +438,16 @@ allprojects {
         }
     }
 
-    jvmTarget = defaultJvmTarget
-    javaHome = defaultJavaHome
-
     // There are problems with common build dir:
     //  - some tests (in particular js and binary-compatibility-validator depend on the fixed (default) location
     //  - idea seems unable to exclude common buildDir from indexing
     // therefore it is disabled by default
     // buildDir = File(commonBuildDir, project.name)
 
-
-    configureJvmProject(javaHome!!, jvmTarget!!)
+    project.configureJvmDefaultToolchain()
+    plugins.withId("java-base") {
+        project.configureShadowJarSubstitutionInCompileClasspath()
+    }
 
     val commonCompilerArgs = listOfNotNull(
         "-Xopt-in=kotlin.RequiresOptIn",
@@ -507,11 +474,7 @@ allprojects {
         kotlinOptions {
             freeCompilerArgs = commonCompilerArgs + jvmCompilerArgs
 
-            if (useJvmIrBackend) {
-                useIR = true
-            }
-
-            if (useJvmFir && this@allprojects.name !in projectsWithDisabledFirBootstrap) {
+            if (useJvmFir && this@allprojects.path !in projectsWithDisabledFirBootstrap) {
                 freeCompilerArgs += "-Xuse-fir"
                 freeCompilerArgs += "-Xabi-stability=stable"
             }
@@ -581,11 +544,6 @@ allprojects {
     apply(from = "$rootDir/gradle/cacheRedirector.gradle.kts")
 
     afterEvaluate {
-        if (javaHome != defaultJavaHome || jvmTarget != defaultJvmTarget) {
-            logger.info("configuring project $name to compile to the target jvm version $jvmTarget using jdk: $javaHome")
-            configureJvmProject(javaHome!!, jvmTarget!!)
-        } // else we will actually fail during the first task execution. We could not fail before configuration is done due to impact on import in IDE
-
         fun File.toProjectRootRelativePathOrSelf() = (relativeToOrNull(rootDir)?.takeUnless { it.startsWith("..") } ?: this).path
 
         fun FileCollection.printClassPath(role: String) =
@@ -903,8 +861,8 @@ tasks {
             ":idea-frontend-fir:idea-fir-low-level-api:test"
         )
     }
-    
-    
+
+
 
     register("android-ide-tests") {
         dependsOn("dist")
@@ -1102,66 +1060,6 @@ configure<IdeaModel> {
             "dist",
             "tmp"
         ).toSet()
-    }
-}
-
-fun jdkPathOrNull(version: String): String? {
-    val jdkName = "JDK_${version.replace(".", "")}"
-    val jdkMajorVersion = JdkMajorVersion.valueOf(jdkName)
-    return configuredJdks.find { it.majorVersion == jdkMajorVersion }?.homeDir?.canonicalPath
-}
-
-fun jdkPath(version: String, vararg replacementVersions: String): String {
-    return jdkPathOrNull(version) ?: run {
-        replacementVersions.asSequence().map { jdkPathOrNull(it) }.find { it != null }
-    } ?: jdkNotFoundConst
-}
-
-fun Project.configureJvmProject(javaHome: String, javaVersion: String) {
-    val currentJavaHome = File(System.getProperty("java.home")!!).canonicalPath
-    val shouldFork = !currentJavaHome.startsWith(File(javaHome).canonicalPath)
-
-    tasks.withType<JavaCompile> {
-        if (name != "compileJava9Java") {
-            sourceCompatibility = javaVersion
-            targetCompatibility = javaVersion
-            options.isFork = shouldFork
-            options.forkOptions.javaHome = file(javaHome)
-            options.compilerArgs.add("-proc:none")
-            options.encoding = "UTF-8"
-        }
-    }
-
-    tasks.withType<KotlinCompile> {
-        kotlinOptions.jdkHome = javaHome.takeUnless { kotlinBuildProperties.suppressJdkHomeWarning }
-        kotlinOptions.jvmTarget = javaVersion
-        kotlinOptions.freeCompilerArgs += "-Xjvm-default=compatibility"
-    }
-
-    tasks.withType<Test> {
-        executable = File(javaHome, "bin/java").canonicalPath
-    }
-
-    plugins.withId("java-base") {
-        configureShadowJarSubstitutionInCompileClasspath()
-    }
-}
-
-fun Project.configureShadowJarSubstitutionInCompileClasspath() {
-    val substitutionMap = mapOf(":kotlin-reflect" to ":kotlin-reflect-api")
-
-    fun configureSubstitution(substitution: DependencySubstitution) {
-        val requestedProject = (substitution.requested as? ProjectComponentSelector)?.projectPath ?: return
-        val replacementProject = substitutionMap[requestedProject] ?: return
-        substitution.useTarget(project(replacementProject), "Non-default shadow jars should not be used in compile classpath")
-    }
-
-    sourceSets.all {
-        for (configName in listOf(compileOnlyConfigurationName, compileClasspathConfigurationName)) {
-            configurations.getByName(configName).resolutionStrategy.dependencySubstitution {
-                all(::configureSubstitution)
-            }
-        }
     }
 }
 

@@ -17,11 +17,14 @@ import org.jetbrains.kotlin.fir.render
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.scopes.ProcessorAction
 import org.jetbrains.kotlin.fir.scopes.unsubstitutedScope
+import org.jetbrains.kotlin.fir.symbols.ensureResolved
+import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
 import org.jetbrains.kotlin.fir.toEffectiveVisibility
 import org.jetbrains.kotlin.fir.typeContext
 import org.jetbrains.kotlin.fir.types.ConeClassLikeType
 import org.jetbrains.kotlin.fir.types.coneTypeSafe
 import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.utils.addToStdlib.runIf
 
 class FirStatusResolver(
     val session: FirSession,
@@ -81,7 +84,7 @@ class FirStatusResolver(
         return resolveStatus(function, function.status, containingClass, null, isLocal) l@{
             if (containingClass == null) return@l emptyList()
             @Suppress("RemoveExplicitTypeArguments") // Workaround for KT-42175
-            buildList<FirCallableMemberDeclaration> {
+            buildList<FirCallableDeclaration> {
                 val scope = containingClass.unsubstitutedScope(session, scopeSession, withForcedTypeCalculator = false)
                 val symbol = function.symbol
                 scope.processFunctionsByName(function.name) {}
@@ -179,17 +182,26 @@ class FirStatusResolver(
         )
         val effectiveVisibility = parentEffectiveVisibility.lowerBound(selfEffectiveVisibility, session.typeContext)
         val annotations = ((containingProperty ?: declaration) as? FirAnnotatedDeclaration)?.annotations ?: emptyList()
-        if (annotations.any { it.typeRef.coneTypeSafe<ConeClassLikeType>()?.lookupTag?.classId == StandardClassIds.PublishedApi }) {
-            val publishedApiSelfEffectiveVisibility = visibility.toEffectiveVisibility(
+
+        val hasPublishedApiAnnotation = annotations.any {
+            it.typeRef.coneTypeSafe<ConeClassLikeType>()?.lookupTag?.classId == StandardClassIds.PublishedApi
+        }
+
+        var selfPublishedEffectiveVisibility = runIf(hasPublishedApiAnnotation) {
+            visibility.toEffectiveVisibility(
                 containingClass?.symbol?.toLookupTag(), forClass = declaration is FirClass, ownerIsPublishedApi = true
             )
-            val parentPublishedEffectiveVisibility = when {
-                containingProperty != null -> containingProperty.publishedApiEffectiveVisibility
-                containingClass is FirRegularClass -> containingClass.publishedApiEffectiveVisibility
-                else -> null
-            } ?: parentEffectiveVisibility
+        }
+        var parentPublishedEffectiveVisibility = when {
+            containingProperty != null -> containingProperty.publishedApiEffectiveVisibility
+            containingClass is FirRegularClass -> containingClass.publishedApiEffectiveVisibility
+            else -> null
+        }
+        if (selfPublishedEffectiveVisibility != null || parentPublishedEffectiveVisibility != null) {
+            selfPublishedEffectiveVisibility = selfPublishedEffectiveVisibility ?: selfEffectiveVisibility
+            parentPublishedEffectiveVisibility = parentPublishedEffectiveVisibility ?: parentEffectiveVisibility
             declaration.publishedApiEffectiveVisibility = parentPublishedEffectiveVisibility.lowerBound(
-                publishedApiSelfEffectiveVisibility,
+                selfPublishedEffectiveVisibility,
                 session.typeContext
             )
         }
@@ -227,7 +239,7 @@ class FirStatusResolver(
     ): Modality {
         return when (declaration) {
             is FirRegularClass -> if (declaration.classKind == ClassKind.INTERFACE) Modality.ABSTRACT else Modality.FINAL
-            is FirCallableMemberDeclaration -> {
+            is FirCallableDeclaration -> {
                 when {
                     containingClass == null -> Modality.FINAL
                     containingClass.classKind == ClassKind.INTERFACE -> {
@@ -268,3 +280,9 @@ private fun FirDeclaration.hasOwnBodyOrAccessorBody(): Boolean {
 
 private object PublishedApiEffectiveVisibilityKey : FirDeclarationDataKey()
 var FirDeclaration.publishedApiEffectiveVisibility: EffectiveVisibility? by FirDeclarationDataRegistry.data(PublishedApiEffectiveVisibilityKey)
+
+inline val FirCallableSymbol<*>.publishedApiEffectiveVisibility: EffectiveVisibility?
+    get() {
+        ensureResolved(FirResolvePhase.STATUS)
+        return fir.publishedApiEffectiveVisibility
+    }

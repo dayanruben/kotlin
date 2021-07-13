@@ -5,8 +5,11 @@
 
 package org.jetbrains.kotlin.resolve.calls.inference.components
 
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.resolve.calls.NewCommonSuperTypeCalculator
 import org.jetbrains.kotlin.resolve.calls.inference.components.TypeVariableDirectionCalculator.ResolveDirection
+import org.jetbrains.kotlin.resolve.calls.inference.extractTypeForGivenRecursiveTypeParameter
 import org.jetbrains.kotlin.resolve.calls.inference.model.*
 import org.jetbrains.kotlin.types.AbstractTypeApproximator
 import org.jetbrains.kotlin.types.AbstractTypeChecker
@@ -15,7 +18,8 @@ import org.jetbrains.kotlin.types.model.*
 
 class ResultTypeResolver(
     val typeApproximator: AbstractTypeApproximator,
-    val trivialConstraintTypeInferenceOracle: TrivialConstraintTypeInferenceOracle
+    val trivialConstraintTypeInferenceOracle: TrivialConstraintTypeInferenceOracle,
+    private val languageVersionSettings: LanguageVersionSettings
 ) {
     interface Context : TypeSystemInferenceExtensionContext {
         fun isProperType(type: KotlinTypeMarker): Boolean
@@ -23,13 +27,41 @@ class ResultTypeResolver(
         fun isReified(variable: TypeVariableMarker): Boolean
     }
 
+    private val isTypeInferenceForSelfTypesSupported: Boolean
+        get() = languageVersionSettings.supportsFeature(LanguageFeature.TypeInferenceOnCallsWithSelfTypes)
+
+    private fun Context.getDefaultTypeForSelfType(
+        constraints: List<Constraint>,
+        typeVariable: TypeVariableMarker
+    ): KotlinTypeMarker? {
+        val typeVariableConstructor = typeVariable.freshTypeConstructor() as TypeVariableTypeConstructorMarker
+        val typesForRecursiveTypeParameters = constraints.mapNotNull { constraint ->
+            if (constraint.position.from !is DeclaredUpperBoundConstraintPosition<*>) return@mapNotNull null
+            val typeParameter = typeVariableConstructor.typeParameter ?: return@mapNotNull null
+            extractTypeForGivenRecursiveTypeParameter(constraint.type, typeParameter)
+        }.takeIf { it.isNotEmpty() } ?: return null
+
+        return createCapturedStarProjectionForSelfType(typeVariableConstructor, typesForRecursiveTypeParameters)
+    }
+
+    @OptIn(ExperimentalStdlibApi::class)
+    private fun Context.getDefaultType(
+        direction: ResolveDirection,
+        constraints: List<Constraint>,
+        typeVariable: TypeVariableMarker
+    ): KotlinTypeMarker {
+        if (isTypeInferenceForSelfTypesSupported) {
+            getDefaultTypeForSelfType(constraints, typeVariable)?.let { return it }
+        }
+
+        return if (direction == ResolveDirection.TO_SUBTYPE) nothingType() else nullableAnyType()
+    }
+
     fun findResultType(c: Context, variableWithConstraints: VariableWithConstraints, direction: ResolveDirection): KotlinTypeMarker {
         findResultTypeOrNull(c, variableWithConstraints, direction)?.let { return it }
 
         // no proper constraints
-        return run {
-            if (direction == ResolveDirection.TO_SUBTYPE) c.nothingType() else c.nullableAnyType()
-        }
+        return c.getDefaultType(direction, variableWithConstraints.constraints, variableWithConstraints.typeVariable)
     }
 
     private fun findResultTypeOrNull(

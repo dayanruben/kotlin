@@ -283,6 +283,17 @@ class K2JVMCompilerArguments : CommonCompilerArguments() {
     var jsr305: Array<String>? by FreezableVar(null)
 
     @Argument(
+        value = "-Xnullability-annotations",
+        valueDescription = "@<fq.name>:{ignore/strict/warn}",
+        description = "Specify behavior for specific Java nullability annotations (provided with fully qualified package name)\n" +
+                "Modes:\n" +
+                "  * ignore\n" +
+                "  * strict\n" +
+                "  * warn (report a warning)"
+    )
+    var nullabilityAnnotations: Array<String>? by FreezableVar(null)
+
+    @Argument(
         value = "-Xsupport-compatqual-checker-framework-annotations",
         valueDescription = "enable|disable",
         description = "Specify behavior for Checker Framework compatqual annotations (NullableDecl/NonNullDecl).\n" +
@@ -441,9 +452,9 @@ default: `indy-with-constants` for JVM target 9 or greater, `inline` otherwise""
     @Argument(
         value = "-Xprofile",
         valueDescription = "<profilerPath:command:outputDir>",
-        description = "Debug option: Run compiler with async profiler, save snapshots to outputDir, command is passed to async-profiler on start\n" +
-                "You'll have to provide async-profiler.jar on classpath to use this\n" +
-                "profilerPath is a path to libasyncProfiler.so\n" +
+        description = "Debug option: Run compiler with async profiler and save snapshots to `outputDir`; `command` is passed to async-profiler on start.\n" +
+                "`profilerPath` is a path to libasyncProfiler.so; async-profiler.jar should be on the compiler classpath.\n" +
+                "If it's not on the classpath, the compiler will attempt to load async-profiler.jar from the containing directory of profilerPath.\n" +
                 "Example: -Xprofile=<PATH_TO_ASYNC_PROFILER>/async-profiler/build/libasyncProfiler.so:event=cpu,interval=1ms,threads,start,framebuf=50000000:<SNAPSHOT_DIR_PATH>"
     )
     var profileCompilerCommand: String? by NullableStringFreezableVar(null)
@@ -488,14 +499,11 @@ default: `indy-with-constants` for JVM target 9 or greater, `inline` otherwise""
     )
     var typeEnhancementImprovementsInStrictMode: Boolean by FreezableVar(false)
 
-    override fun configureAnalysisFlags(collector: MessageCollector): MutableMap<AnalysisFlag<*>, Any> {
-        val result = super.configureAnalysisFlags(collector)
+    override fun configureAnalysisFlags(collector: MessageCollector, languageVersion: LanguageVersion): MutableMap<AnalysisFlag<*>, Any> {
+        val result = super.configureAnalysisFlags(collector, languageVersion)
         result[JvmAnalysisFlags.strictMetadataVersionSemantics] = strictMetadataVersionSemantics
-        result[JvmAnalysisFlags.javaTypeEnhancementState] = JavaTypeEnhancementStateParser(collector).parse(
-            jsr305,
-            supportCompatqualCheckerFrameworkAnnotations,
-            jspecifyAnnotations
-        )
+        result[JvmAnalysisFlags.javaTypeEnhancementState] = JavaTypeEnhancementStateParser(collector, languageVersion.toKotlinVersion())
+            .parse(jsr305, supportCompatqualCheckerFrameworkAnnotations, jspecifyAnnotations, nullabilityAnnotations)
         result[AnalysisFlags.ignoreDataFlowInAssert] = JVMAssertionsMode.fromString(assertionsMode) != JVMAssertionsMode.LEGACY
         JvmDefaultMode.fromStringOrNull(jvmDefault)?.let {
             result[JvmAnalysisFlags.jvmDefaultMode] = it

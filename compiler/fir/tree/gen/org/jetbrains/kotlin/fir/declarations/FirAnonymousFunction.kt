@@ -32,8 +32,9 @@ abstract class FirAnonymousFunction : FirFunction(), FirTypeParametersOwner {
     abstract override val attributes: FirDeclarationAttributes
     abstract override val annotations: List<FirAnnotationCall>
     abstract override val returnTypeRef: FirTypeRef
-    abstract override val receiverTypeRef: FirTypeRef?
     abstract override val status: FirDeclarationStatus
+    abstract override val receiverTypeRef: FirTypeRef?
+    abstract override val deprecation: DeprecationsPerUseSite?
     abstract override val containerSource: DeserializedContainerSource?
     abstract override val dispatchReceiverType: ConeKotlinType?
     abstract override val controlFlowGraphReference: FirControlFlowGraphReference?
@@ -59,6 +60,8 @@ abstract class FirAnonymousFunction : FirFunction(), FirTypeParametersOwner {
 
     abstract override fun replaceReceiverTypeRef(newReceiverTypeRef: FirTypeRef?)
 
+    abstract override fun replaceDeprecation(newDeprecation: DeprecationsPerUseSite?)
+
     abstract override fun replaceControlFlowGraphReference(newControlFlowGraphReference: FirControlFlowGraphReference?)
 
     abstract override fun replaceValueParameters(newValueParameters: List<FirValueParameter>)
@@ -75,9 +78,9 @@ abstract class FirAnonymousFunction : FirFunction(), FirTypeParametersOwner {
 
     abstract override fun <D> transformReturnTypeRef(transformer: FirTransformer<D>, data: D): FirAnonymousFunction
 
-    abstract override fun <D> transformReceiverTypeRef(transformer: FirTransformer<D>, data: D): FirAnonymousFunction
-
     abstract override fun <D> transformStatus(transformer: FirTransformer<D>, data: D): FirAnonymousFunction
+
+    abstract override fun <D> transformReceiverTypeRef(transformer: FirTransformer<D>, data: D): FirAnonymousFunction
 
     abstract override fun <D> transformValueParameters(transformer: FirTransformer<D>, data: D): FirAnonymousFunction
 

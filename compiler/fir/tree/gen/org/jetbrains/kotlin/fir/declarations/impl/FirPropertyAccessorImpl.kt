@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.fir.FirImplementationDetail
 import org.jetbrains.kotlin.fir.FirModuleData
 import org.jetbrains.kotlin.fir.FirSourceElement
 import org.jetbrains.kotlin.fir.contracts.FirContractDescription
+import org.jetbrains.kotlin.fir.declarations.DeprecationsPerUseSite
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationAttributes
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationStatus
@@ -39,6 +40,7 @@ open class FirPropertyAccessorImpl @FirImplementationDetail constructor(
     override val attributes: FirDeclarationAttributes,
     override var returnTypeRef: FirTypeRef,
     override var status: FirDeclarationStatus,
+    override var deprecation: DeprecationsPerUseSite?,
     override val containerSource: DeserializedContainerSource?,
     override val dispatchReceiverType: ConeKotlinType?,
     override val valueParameters: MutableList<FirValueParameter>,
@@ -85,12 +87,12 @@ open class FirPropertyAccessorImpl @FirImplementationDetail constructor(
         return this
     }
 
-    override fun <D> transformReceiverTypeRef(transformer: FirTransformer<D>, data: D): FirPropertyAccessorImpl {
+    override fun <D> transformStatus(transformer: FirTransformer<D>, data: D): FirPropertyAccessorImpl {
+        status = status.transform(transformer, data)
         return this
     }
 
-    override fun <D> transformStatus(transformer: FirTransformer<D>, data: D): FirPropertyAccessorImpl {
-        status = status.transform(transformer, data)
+    override fun <D> transformReceiverTypeRef(transformer: FirTransformer<D>, data: D): FirPropertyAccessorImpl {
         return this
     }
 
@@ -128,6 +130,10 @@ open class FirPropertyAccessorImpl @FirImplementationDetail constructor(
     }
 
     override fun replaceReceiverTypeRef(newReceiverTypeRef: FirTypeRef?) {}
+
+    override fun replaceDeprecation(newDeprecation: DeprecationsPerUseSite?) {
+        deprecation = newDeprecation
+    }
 
     override fun replaceControlFlowGraphReference(newControlFlowGraphReference: FirControlFlowGraphReference?) {
         controlFlowGraphReference = newControlFlowGraphReference

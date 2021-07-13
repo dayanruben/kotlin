@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.util.IdSignature
 import org.jetbrains.kotlin.library.IrLibrary
+import org.jetbrains.kotlin.library.KotlinAbiVersion
 import org.jetbrains.kotlin.protobuf.CodedInputStream
 import org.jetbrains.kotlin.protobuf.ExtensionRegistryLite
 
@@ -25,9 +26,10 @@ abstract class BasicIrModuleDeserializer(
     moduleDescriptor: ModuleDescriptor,
     override val klib: IrLibrary,
     override val strategy: DeserializationStrategy,
-    private val containsErrorCode: Boolean = false,
+    libraryAbiVersion: KotlinAbiVersion,
+    private val containsErrorCode: Boolean = false
 ) :
-    IrModuleDeserializer(moduleDescriptor) {
+    IrModuleDeserializer(moduleDescriptor, libraryAbiVersion) {
 
     private val fileToDeserializerMap = mutableMapOf<IrFile, IrFileDeserializer>()
 
@@ -84,8 +86,6 @@ abstract class BasicIrModuleDeserializer(
     override fun contains(idSig: IdSignature): Boolean = idSig in moduleReversedFileIndex
 
     override fun deserializeIrSymbol(idSig: IdSignature, symbolKind: BinarySymbolData.SymbolKind): IrSymbol {
-        assert(idSig.isPublic)
-
         val topLevelSignature = idSig.topLevelSignature()
         val fileLocalDeserializationState = moduleReversedFileIndex[topLevelSignature]
             ?: error("No file for $topLevelSignature (@ $idSig) in module $moduleDescriptor")

@@ -30,7 +30,7 @@ import org.jetbrains.kotlin.fir.resolve.inference.inferenceComponents
 import org.jetbrains.kotlin.fir.resolve.inference.isBuiltinFunctionalType
 import org.jetbrains.kotlin.fir.resolve.providers.getSymbolByTypeRef
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.resultType
-import org.jetbrains.kotlin.fir.resolve.transformers.ensureResolved
+import org.jetbrains.kotlin.fir.symbols.ensureResolved
 import org.jetbrains.kotlin.fir.scopes.impl.delegatedWrapperData
 import org.jetbrains.kotlin.fir.scopes.impl.importedFromObjectData
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
@@ -140,7 +140,7 @@ fun BodyResolveComponents.typeForQualifier(resolvedQualifier: FirResolvedQualifi
     val classSymbol = resolvedQualifier.symbol
     val resultType = resolvedQualifier.resultType
     if (classSymbol != null) {
-        classSymbol.ensureResolved(FirResolvePhase.DECLARATIONS, session)
+        classSymbol.ensureResolved(FirResolvePhase.DECLARATIONS)
         val declaration = classSymbol.fir
         if (declaration !is FirTypeAlias || resolvedQualifier.typeArguments.isEmpty()) {
             typeForQualifierByDeclaration(declaration, resultType, session)?.let { return it }

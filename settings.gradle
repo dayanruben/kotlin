@@ -28,17 +28,17 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath("org.jetbrains.kotlin:kotlin-build-gradle-plugin:0.0.30")
+        classpath("org.jetbrains.kotlin:kotlin-build-gradle-plugin:0.0.31")
     }
 }
 
 plugins {
-    id "com.gradle.enterprise" version "3.6.2"
+    id "com.gradle.enterprise" version "3.6.3"
+    id "com.gradle.enterprise.test-distribution" version "2.1"
     id "com.gradle.common-custom-user-data-gradle-plugin" version "1.4" apply false
 }
 
 def buildProperties = BuildPropertiesKt.getKotlinBuildPropertiesForSettings(settings)
-def projectVersions = file("./gradle/versions.properties").text
 
 if (buildProperties.buildScanServer != null) {
     apply plugin: com.gradle.CommonCustomUserDataGradlePlugin
@@ -262,7 +262,8 @@ include ":benchmarks",
         ":wasm:wasm.ir"
 
 
-include ":compiler:fir:cones",
+include ":compiler:fir",
+        ":compiler:fir:cones",
         ":compiler:fir:tree",
         ":compiler:fir:tree:tree-generator",
         ":compiler:fir:raw-fir:raw-fir.common",
@@ -283,6 +284,11 @@ include ":compiler:fir:cones",
         ":compiler:fir:entrypoint",
         ":compiler:fir:analysis-tests",
         ":compiler:fir:analysis-tests:legacy-fir-tests"
+
+include ":kotlin-scripting-ide-services-unshaded",
+        ":kotlin-scripting-ide-services-test",
+        ":kotlin-scripting-ide-services",
+        ":kotlin-scripting-ide-common"
 
 include ":compiler:test-infrastructure",
         ":compiler:test-infrastructure-utils",
@@ -461,9 +467,6 @@ if (!buildProperties.getBoolean("disableKotlinPluginModules", false) && attached
             ":noarg-ide-plugin",
             ":allopen-ide-plugin",
             ":jps-plugin",
-            ":kotlin-scripting-ide-services-unshaded",
-            ":kotlin-scripting-ide-services-test",
-            ":kotlin-scripting-ide-services",
             ":kotlinx-serialization-ide-plugin",
             ":kotlin-jps-plugin",
             ":generators:idea-generator",
@@ -492,9 +495,6 @@ if (!buildProperties.getBoolean("disableKotlinPluginModules", false) && attached
     project(':plugins:kapt3-idea').projectDir = "$rootDir/plugins/kapt3/kapt3-idea" as File
     project(':allopen-ide-plugin').projectDir = "$rootDir/plugins/allopen/allopen-ide" as File
     project(':noarg-ide-plugin').projectDir = "$rootDir/plugins/noarg/noarg-ide" as File
-    project(':kotlin-scripting-ide-services-unshaded').projectDir = "$rootDir/plugins/scripting/scripting-ide-services" as File
-    project(':kotlin-scripting-ide-services-test').projectDir = "$rootDir/plugins/scripting/scripting-ide-services-test" as File
-    project(':kotlin-scripting-ide-services').projectDir = "$rootDir/plugins/scripting/scripting-ide-services-embeddable" as File
     project(':kotlinx-serialization-ide-plugin').projectDir = file("$rootDir/plugins/kotlin-serialization/kotlin-serialization-ide")
     project(':kotlin-jps-plugin').projectDir = "$rootDir/prepare/jps-plugin" as File
     project(':sam-with-receiver-ide-plugin').projectDir = "$rootDir/plugins/sam-with-receiver/sam-with-receiver-ide" as File
@@ -690,6 +690,10 @@ project(":idea-frontend-fir:idea-frontend-fir-generator").projectDir = "$rootDir
 project(":idea-frontend-fir").projectDir = "$rootDir/idea/idea-frontend-fir" as File
 project(":idea-frontend-api").projectDir = "$rootDir/idea/idea-frontend-api" as File
 
+project(':kotlin-scripting-ide-services-unshaded').projectDir = "$rootDir/plugins/scripting/scripting-ide-services" as File
+project(':kotlin-scripting-ide-services-test').projectDir = "$rootDir/plugins/scripting/scripting-ide-services-test" as File
+project(':kotlin-scripting-ide-services').projectDir = "$rootDir/plugins/scripting/scripting-ide-services-embeddable" as File
+project(':kotlin-scripting-ide-common').projectDir = "$rootDir/plugins/scripting/scripting-ide-common" as File
 
 // Uncomment to use locally built protobuf-relocated
 // includeBuild("dependencies/protobuf")

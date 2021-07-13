@@ -20,17 +20,17 @@ class Durations {
         assertPrints(Duration.seconds(86420).toIsoString(), "PT24H0M20S")
         assertPrints(Duration.days(2).toIsoString(), "PT48H")
         assertPrints(Duration.ZERO.toIsoString(), "PT0S")
-        assertPrints(Duration.INFINITE.toIsoString(), "PT2147483647H")
+        assertPrints(Duration.INFINITE.toIsoString(), "PT9999999999999H")
     }
 
     @Sample
     fun toStringDefault() {
-        assertPrints(Duration.days(45), "45.0d")
-        assertPrints(Duration.days(1.5), "36.0h")
-        assertPrints(Duration.minutes(1230), "20.5h")
-        assertPrints(Duration.minutes(920), "920m")
-        assertPrints(Duration.seconds(1.546), "1.55s")
-        assertPrints(Duration.milliseconds(25.12), "25.1ms")
+        assertPrints(Duration.days(45), "45d")
+        assertPrints(Duration.days(1.5), "1d 12h")
+        assertPrints(Duration.minutes(1230), "20h 30m")
+        assertPrints(Duration.minutes(920), "15h 20m")
+        assertPrints(Duration.seconds(1.546), "1.546s")
+        assertPrints(Duration.milliseconds(25.12), "25.12ms")
     }
 
     @Sample

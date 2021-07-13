@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.declarations.*
-import org.jetbrains.kotlin.fir.declarations.comparators.FirCallableMemberDeclarationComparator
+import org.jetbrains.kotlin.fir.declarations.comparators.FirCallableDeclarationComparator
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyAccessor
 import org.jetbrains.kotlin.fir.declarations.utils.*
 import org.jetbrains.kotlin.fir.deserialization.CONTINUATION_INTERFACE_CLASS_ID
@@ -29,7 +29,6 @@ import org.jetbrains.kotlin.fir.resolve.calls.varargElementType
 import org.jetbrains.kotlin.fir.resolve.inference.isSuspendFunctionType
 import org.jetbrains.kotlin.fir.resolve.inference.suspendFunctionTypeToFunctionTypeWithContinuation
 import org.jetbrains.kotlin.fir.scopes.FakeOverrideTypeCalculator
-import org.jetbrains.kotlin.fir.scopes.impl.delegatedWrapperData
 import org.jetbrains.kotlin.fir.scopes.processAllFunctions
 import org.jetbrains.kotlin.fir.scopes.processAllProperties
 import org.jetbrains.kotlin.fir.serialization.constant.EnumValue
@@ -37,7 +36,6 @@ import org.jetbrains.kotlin.fir.serialization.constant.IntValue
 import org.jetbrains.kotlin.fir.serialization.constant.StringValue
 import org.jetbrains.kotlin.fir.serialization.constant.toConstantValue
 import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
-import org.jetbrains.kotlin.fir.symbols.impl.FirIntersectionCallableSymbol
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.builder.buildResolvedTypeRef
 import org.jetbrains.kotlin.fir.types.impl.FirImplicitNullableAnyTypeRef
@@ -145,7 +143,7 @@ class FirElementSerializer private constructor(
         val callableMembers =
             extension.customClassMembersProducer?.getCallableMembers(klass)
                 ?: klass.declarations()
-                    .sortedWith(FirCallableMemberDeclarationComparator)
+                    .sortedWith(FirCallableDeclarationComparator)
 
         for (declaration in callableMembers) {
             if (declaration !is FirEnumEntry && declaration.isStatic) continue // ??? Miss values() & valueOf()
@@ -218,36 +216,14 @@ class FirElementSerializer private constructor(
     }
 
     @OptIn(ExperimentalStdlibApi::class)
-    private fun FirClass.declarations(): List<FirCallableMemberDeclaration> = buildList {
+    private fun FirClass.declarations(): List<FirCallableDeclaration> = buildList {
         val memberScope =
             defaultType().scope(session, scopeSession, FakeOverrideTypeCalculator.DoNothing)
                 ?: error("Null scope for $this")
 
         fun addDeclarationIfNeeded(symbol: FirCallableSymbol<*>) {
-            val declaration = symbol.fir as? FirCallableMemberDeclaration ?: return
-            if (declaration.isIntersectionOverride) {
-                // This part is a kind of hack for case like
-                //
-                // interface A {
-                //    fun foo(): String?
-                // }
-                //
-                // interface B : A {
-                //     override fun foo(): String?
-                // }
-                //
-                // abstract class C(a: A) : B, A by a
-                // We should serialize C::foo as it works almost like real declarations, but currently it's hidden behind intersection scope
-                // UseSiteScope(C) = DeclaredScope(C) + FirIntersectionScope(UseSiteScope(B), DelegatedScope(a))
-                //
-                // That should be fixed by putting delegated members closer to declared scope
-                // See KT-47413
-                (declaration.symbol as? FirIntersectionCallableSymbol)?.intersections?.firstOrNull {
-                    it.fir.delegatedWrapperData != null
-                }?.let(::addDeclarationIfNeeded)
-                return
-            }
-            if (declaration.isSubstitutionOverride) return
+            val declaration = symbol.fir
+            if (declaration.isSubstitutionOrIntersectionOverride) return
 
             // non-intersection or substitution fake override
             if (!declaration.isStatic && declaration.dispatchReceiverClassOrNull() != this@declarations.symbol.toLookupTag()) return
@@ -259,7 +235,7 @@ class FirElementSerializer private constructor(
         memberScope.processAllProperties(::addDeclarationIfNeeded)
 
         for (declaration in declarations) {
-            if (declaration is FirCallableMemberDeclaration && declaration.isStatic) {
+            if (declaration is FirCallableDeclaration && declaration.isStatic) {
                 add(declaration)
             }
         }
@@ -841,7 +817,7 @@ class FirElementSerializer private constructor(
 
     private fun FirCallableDeclaration.isSuspendOrHasSuspendTypesInSignature(): Boolean {
         // TODO (types in signature)
-        return this is FirCallableMemberDeclaration && this.isSuspend
+        return this.isSuspend
     }
 
     private fun writeVersionRequirementForInlineClasses(

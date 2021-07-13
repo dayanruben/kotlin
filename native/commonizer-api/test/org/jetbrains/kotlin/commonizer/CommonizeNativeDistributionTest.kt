@@ -7,7 +7,9 @@ package org.jetbrains.kotlin.commonizer
 
 import org.jetbrains.kotlin.commonizer.CommonizerOutputFileLayout.resolveCommonizedDirectory
 import org.jetbrains.kotlin.commonizer.utils.konanHome
+import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.KonanTarget.*
+import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -62,6 +64,42 @@ class CommonizeNativeDistributionTest {
         assertTrue(
             resolveCommonizedDirectory(temporaryOutputDirectory.root, unixTarget).isDirectory,
             "Expected directory for $unixTarget"
+        )
+    }
+
+    @Test
+    fun `commonize - apple platforms`() {
+        assumeTrue("Test is only supported on macos", HostManager.hostIsMac)
+        val iosTarget = CommonizerTarget(IOS_ARM64, IOS_X64, IOS_SIMULATOR_ARM64)
+        val watchosTarget = CommonizerTarget(WATCHOS_ARM64, WATCHOS_X64, WATCHOS_SIMULATOR_ARM64)
+        val macosTarget = CommonizerTarget(MACOS_X64, MACOS_ARM64)
+        val appleTarget = SharedCommonizerTarget(iosTarget.konanTargets + watchosTarget.konanTargets + macosTarget.konanTargets)
+
+        CliCommonizer(this::class.java.classLoader).commonizeNativeDistribution(
+            konanHome = konanHome,
+            outputTargets = setOf(iosTarget, watchosTarget, macosTarget, appleTarget),
+            outputDirectory = temporaryOutputDirectory.root,
+            logLevel = CommonizerLogLevel.Info
+        )
+
+        assertTrue(
+            resolveCommonizedDirectory(temporaryOutputDirectory.root, iosTarget).isDirectory,
+            "Expected directory for $iosTarget"
+        )
+
+        assertTrue(
+            resolveCommonizedDirectory(temporaryOutputDirectory.root, watchosTarget).isDirectory,
+            "Expected directory for $watchosTarget"
+        )
+
+        assertTrue(
+            resolveCommonizedDirectory(temporaryOutputDirectory.root, macosTarget).isDirectory,
+            "Expected directory for $macosTarget"
+        )
+
+        assertTrue(
+            resolveCommonizedDirectory(temporaryOutputDirectory.root, appleTarget).isDirectory,
+            "Expected directory for $appleTarget"
         )
     }
 

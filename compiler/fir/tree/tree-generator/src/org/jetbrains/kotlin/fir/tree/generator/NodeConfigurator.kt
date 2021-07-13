@@ -85,10 +85,9 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
 
         callableDeclaration.configure {
             +field("receiverTypeRef", typeRef, nullable = true, withReplace = true).withTransform()
+            +field("deprecation", deprecationsPerUseSiteType, nullable = true).withReplace().apply { isMutable = true }
             +symbol("FirCallableSymbol", "out FirCallableDeclaration")
-        }
 
-        callableMemberDeclaration.configure {
             +field("containerSource", type(DeserializedContainerSource::class), nullable = true)
             +field("dispatchReceiverType", coneKotlinTypeType, nullable = true)
         }
@@ -233,6 +232,7 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
 
         classLikeDeclaration.configure {
             +symbol("FirClassLikeSymbol", "out FirClassLikeDeclaration")
+            +field("deprecation", deprecationsPerUseSiteType, nullable = true).withReplace().apply { isMutable = true}
         }
 
         klass.configure {
@@ -311,6 +311,7 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
             +field("backingFieldSymbol", backingFieldSymbolType)
             +field("delegateFieldSymbol", delegateFieldSymbolType, nullable = true)
             +booleanField("isLocal")
+            +booleanField("initializerAndAccessorsAreResolved", withReplace = true)
             +typeParameters
         }
 
@@ -388,11 +389,15 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
         }
 
         file.configure {
+            +field("packageDirective", packageDirective)
             +fieldList(import).withTransform()
             +declarations.withTransform()
             +stringField("name")
-            +field("packageFqName", fqNameType)
             +symbol("FirFileSymbol")
+        }
+
+        packageDirective.configure {
+            +field("packageFqName", fqNameType)
         }
 
         import.configure {

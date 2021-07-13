@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.fir.analysis.checkers
 
+import org.jetbrains.kotlin.fir.analysis.checkers.declaration.FirAnonymousFunctionChecker
 import org.jetbrains.kotlin.fir.analysis.checkers.expression.*
 import org.jetbrains.kotlin.fir.analysis.checkers.syntax.FirAnonymousFunctionSyntaxChecker
 
@@ -19,6 +20,7 @@ object CommonExpressionCheckers : ExpressionCheckers() {
         get() = setOf(
             FirReservedUnderscoreExpressionChecker,
             FirExpressionAnnotationChecker,
+            FirDeprecationChecker,
         )
 
     override val qualifiedAccessExpressionCheckers: Set<FirQualifiedAccessExpressionChecker>
@@ -43,6 +45,7 @@ object CommonExpressionCheckers : ExpressionCheckers() {
             FirConventionFunctionCallChecker,
             FirDivisionByZeroChecker,
             FirConstructorCallChecker,
+            FirSpreadOfNullableChecker
         )
 
     override val tryExpressionCheckers: Set<FirTryExpressionChecker>
@@ -60,6 +63,7 @@ object CommonExpressionCheckers : ExpressionCheckers() {
         get() = setOf(
             FirExhaustiveWhenChecker,
             FirWhenConditionChecker,
+            FirWhenSubjectChecker,
         )
 
     override val loopExpressionCheckers: Set<FirLoopExpressionChecker>
@@ -101,12 +105,6 @@ object CommonExpressionCheckers : ExpressionCheckers() {
     override val safeCallExpressionCheckers: Set<FirSafeCallExpressionChecker>
         get() = setOf(
             FirUnnecessarySafeCallChecker,
-        )
-
-    override val anonymousFunctionAsExpressionCheckers: Set<FirAnonymousFunctionAsExpressionChecker>
-        get() = setOf(
-            FirAnonymousFunctionChecker,
-            FirAnonymousFunctionSyntaxChecker,
         )
 
     override val typeOperatorCallCheckers: Set<FirTypeOperatorCallChecker>

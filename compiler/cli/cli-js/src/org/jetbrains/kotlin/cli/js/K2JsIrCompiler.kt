@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -23,7 +23,6 @@ import org.jetbrains.kotlin.cli.common.config.addKotlinSourceRoot
 import org.jetbrains.kotlin.cli.common.extensions.ScriptEvaluationExtension
 import org.jetbrains.kotlin.cli.common.messages.AnalyzerWithCompilerReport
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity.*
-import org.jetbrains.kotlin.cli.common.messages.GroupingMessageCollector
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.common.messages.MessageUtil
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
@@ -48,7 +47,6 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.CompilerEnvironment
 import org.jetbrains.kotlin.serialization.js.ModuleKind
-import org.jetbrains.kotlin.util.Logger
 import org.jetbrains.kotlin.utils.KotlinPaths
 import org.jetbrains.kotlin.utils.PathUtil
 import org.jetbrains.kotlin.utils.fileUtils.withReplacedExtensionOrNull
@@ -181,17 +179,6 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
         // TODO: Handle non-empty main call arguments
         val mainCallArguments = if (K2JsArgumentConstants.NO_CALL == arguments.main) null else emptyList<String>()
 
-        val resolvedLibraries = jsResolveLibraries(
-            libraries,
-            configuration[JSConfigurationKeys.REPOSITORIES] ?: emptyList(),
-            messageCollectorLogger(configuration[CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY] ?: error("Could not find message collector"))
-        )
-
-        val friendAbsolutePaths = friendLibraries.map { File(it).absolutePath }
-        val friendDependencies = resolvedLibraries.getFullList().filter {
-            it.libraryFile.absolutePath in friendAbsolutePaths
-        }
-
         if (arguments.irProduceKlibDir || arguments.irProduceKlibFile) {
             if (arguments.irProduceKlibFile) {
                 require(outputFile.extension == KLIB_FILE_EXTENSION) { "Please set up .klib file as output" }
@@ -202,8 +189,8 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
                 files = sourcesFiles,
                 analyzer = AnalyzerWithCompilerReport(config.configuration),
                 configuration = config.configuration,
-                allDependencies = resolvedLibraries,
-                friendDependencies = friendDependencies,
+                dependencies = libraries,
+                friendDependencies = friendLibraries,
                 irFactory = PersistentIrFactory(), // TODO IrFactoryImpl?
                 outputKlibPath = outputFile.path,
                 nopack = arguments.irProduceKlibDir,
@@ -220,9 +207,10 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
                 if (sourcesFiles.isNotEmpty()) {
                     messageCollector.report(ERROR, "Source files are not supported when -Xinclude is present")
                 }
-                val allLibraries = resolvedLibraries.getFullList()
-                val mainLib = allLibraries.find { it.libraryFile.absolutePath == File(includes).absolutePath }!!
-                MainModule.Klib(mainLib)
+                val includesPath = File(includes).canonicalPath
+                val mainLibPath = libraries.find { File(it).canonicalPath == includesPath }
+                    ?: error("No library with name $includes ($includesPath) found")
+                MainModule.Klib(mainLibPath)
             } else {
                 MainModule.SourceFiles(sourcesFiles)
             }
@@ -235,8 +223,8 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
                     config.configuration,
                     PhaseConfig(wasmPhases),
                     IrFactoryImpl,
-                    allDependencies = resolvedLibraries,
-                    friendDependencies = friendDependencies,
+                    dependencies = libraries,
+                    friendDependencies = friendLibraries,
                     exportedDeclarations = setOf(FqName("main"))
                 )
                 val outputWasmFile = outputFile.withReplacedExtensionOrNull(outputFile.extension, "wasm")!!
@@ -262,8 +250,8 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
                 config.configuration,
                 phaseConfig,
                 if (arguments.irDceDriven) PersistentIrFactory() else IrFactoryImpl,
-                allDependencies = resolvedLibraries,
-                friendDependencies = friendDependencies,
+                dependencies = libraries,
+                friendDependencies = friendLibraries,
                 mainArguments = mainCallArguments,
                 generateFullJs = !arguments.irDce,
                 generateDceJs = arguments.irDce,
@@ -284,10 +272,10 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
                 ),
             )
 
-            val jsCode = if (arguments.irDce && !arguments.irDceDriven) compiledModule.dceJsCode!! else compiledModule.jsCode!!
-            outputFile.writeText(jsCode.mainModule)
-            jsCode.dependencies.forEach { (name, content) ->
-                outputFile.resolveSibling("$name.js").writeText(content)
+            val outputs = if (arguments.irDce && !arguments.irDceDriven) compiledModule.outputsAfterDce!! else compiledModule.outputs!!
+            outputFile.write(outputs)
+            outputs.dependencies.forEach { (name, content) ->
+                outputFile.resolveSibling("$name.js").write(content)
             }
             if (arguments.generateDts) {
                 val dtsFile = outputFile.withReplacedExtensionOrNull(outputFile.extension, "d.ts")!!
@@ -296,6 +284,15 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
         }
 
         return OK
+    }
+
+    private fun File.write(outputs: CompilationOutputs) {
+        writeText(outputs.jsCode)
+        outputs.sourceMap?.let {
+            val mapFile = resolveSibling("$name.map")
+            appendText("\n//# sourceMappingURL=${mapFile.name}")
+            mapFile.writeText(it)
+        }
     }
 
     override fun setupPlatformSpecificArgumentsAndServices(
@@ -310,9 +307,22 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
         }
         configuration.put(JSConfigurationKeys.TARGET, EcmaVersion.defaultVersion())
 
-        // TODO: Support source maps
         if (arguments.sourceMap) {
-            messageCollector.report(WARNING, "source-map argument is not supported yet", null)
+            configuration.put(JSConfigurationKeys.SOURCE_MAP, true)
+            if (arguments.sourceMapPrefix != null) {
+                configuration.put(JSConfigurationKeys.SOURCE_MAP_PREFIX, arguments.sourceMapPrefix!!)
+            }
+
+            var sourceMapSourceRoots = arguments.sourceMapBaseDirs
+            if (sourceMapSourceRoots == null && StringUtil.isNotEmpty(arguments.sourceMapPrefix)) {
+                sourceMapSourceRoots = K2JSCompiler.calculateSourceMapSourceRoot(messageCollector, arguments)
+            }
+
+            if (sourceMapSourceRoots != null) {
+                val sourceMapSourceRootList = StringUtil.split(sourceMapSourceRoots, File.pathSeparator)
+                configuration.put(JSConfigurationKeys.SOURCE_MAP_SOURCE_ROOTS, sourceMapSourceRootList)
+            }
+
         } else {
             if (arguments.sourceMapPrefix != null) {
                 messageCollector.report(WARNING, "source-map-prefix argument has no effect without source map", null)
@@ -451,17 +461,6 @@ fun RuntimeDiagnostic.Companion.resolve(
     else -> {
         messageCollector.report(STRONG_WARNING, "Unknown runtime diagnostic '$value'")
         null
-    }
-}
-
-fun messageCollectorLogger(collector: MessageCollector) = object : Logger {
-    override fun warning(message: String) = collector.report(STRONG_WARNING, message)
-    override fun error(message: String) = collector.report(ERROR, message)
-    override fun log(message: String) = collector.report(LOGGING, message)
-    override fun fatal(message: String): Nothing {
-        collector.report(ERROR, message)
-        (collector as? GroupingMessageCollector)?.flush()
-        kotlin.error(message)
     }
 }
 

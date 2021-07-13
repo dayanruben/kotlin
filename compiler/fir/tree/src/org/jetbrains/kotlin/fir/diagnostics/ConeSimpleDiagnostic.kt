@@ -51,5 +51,5 @@ enum class DiagnosticKind {
     FloatLiteralOutOfRange,
     WrongLongSuffix,
 
-    Other
+    Other,
 }

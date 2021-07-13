@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.fir.declarations.FirRegularClass
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.expressions.FirExpressionWithSmartcast
 import org.jetbrains.kotlin.fir.resolve.substitution.substitutorByMap
-import org.jetbrains.kotlin.fir.resolve.transformers.ensureResolved
+import org.jetbrains.kotlin.fir.symbols.ensureResolved
 import org.jetbrains.kotlin.fir.scopes.FakeOverrideTypeCalculator
 import org.jetbrains.kotlin.fir.scopes.FirTypeScope
 import org.jetbrains.kotlin.fir.scopes.FirUnstableSmartcastTypeScope
@@ -63,7 +63,7 @@ private fun ConeKotlinType.scope(useSiteSession: FirSession, scopeSession: Scope
             val fullyExpandedType = fullyExpandedType(useSiteSession)
             val fir = fullyExpandedType.lookupTag.toSymbol(useSiteSession)?.fir as? FirClass ?: return null
 
-            fir.symbol.ensureResolved(requiredPhase, useSiteSession)
+            fir.symbol.ensureResolved(requiredPhase)
 
             val substitution = createSubstitution(fir.typeParameters, fullyExpandedType, useSiteSession)
 

@@ -5,17 +5,15 @@
 
 package org.jetbrains.kotlin.fir.backend.generators
 
-import org.jetbrains.kotlin.fir.backend.Fir2IrComponents
-import org.jetbrains.kotlin.fir.backend.generateOverriddenAccessorSymbols
-import org.jetbrains.kotlin.fir.backend.generateOverriddenFunctionSymbols
-import org.jetbrains.kotlin.fir.backend.generateOverriddenPropertySymbols
-import org.jetbrains.kotlin.fir.declarations.FirClass
-import org.jetbrains.kotlin.fir.declarations.FirField
-import org.jetbrains.kotlin.fir.declarations.FirProperty
-import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
+import org.jetbrains.kotlin.fir.backend.*
+import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.isJavaDefault
-import org.jetbrains.kotlin.fir.scopes.*
-import org.jetbrains.kotlin.fir.scopes.impl.unwrapDelegateTarget
+import org.jetbrains.kotlin.fir.scopes.impl.delegatedWrapperData
+import org.jetbrains.kotlin.fir.scopes.processAllFunctions
+import org.jetbrains.kotlin.fir.scopes.processAllProperties
+import org.jetbrains.kotlin.fir.scopes.unsubstitutedScope
+import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
+import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.IrBlockBody
@@ -45,7 +43,7 @@ internal class DelegatedMemberGenerator(
         subClassScope.processAllFunctions { functionSymbol ->
             val unwrapped =
                 functionSymbol
-                    .unwrapDelegateTarget(subClassLookupTag, subClassScope::getDirectOverriddenFunctions, firField, firSubClass)
+                    .unwrapDelegateTarget(subClassLookupTag, firField)
                     ?: return@processAllFunctions
 
             val member =
@@ -69,7 +67,7 @@ internal class DelegatedMemberGenerator(
 
             val unwrapped =
                 propertySymbol
-                    .unwrapDelegateTarget(subClassLookupTag, subClassScope::getDirectOverriddenProperties, firField, firSubClass)
+                    .unwrapDelegateTarget(subClassLookupTag, firField)
                     ?: return@processAllProperties
 
             val member = declarationStorage.getIrPropertySymbol(unwrapped.symbol).owner as? IrProperty
@@ -201,4 +199,23 @@ internal class DelegatedMemberGenerator(
         return delegateProperty
     }
 
+}
+
+private fun <S : FirCallableSymbol<D>, D : FirCallableDeclaration> S.unwrapDelegateTarget(
+    subClassLookupTag: ConeClassLikeLookupTag,
+    firField: FirField,
+): D? {
+    val callable = this.fir as? D ?: return null
+
+    val delegatedWrapperData = callable.delegatedWrapperData ?: return null
+    if (delegatedWrapperData.containingClass != subClassLookupTag) return null
+    if (delegatedWrapperData.delegateField != firField) return null
+
+    val wrapped = delegatedWrapperData.wrapped as? D ?: return null
+
+    @Suppress("UNCHECKED_CAST")
+    val wrappedSymbol = wrapped.symbol as? S ?: return null
+
+    @Suppress("UNCHECKED_CAST")
+    return wrappedSymbol.unwrapCallRepresentative().fir as D
 }

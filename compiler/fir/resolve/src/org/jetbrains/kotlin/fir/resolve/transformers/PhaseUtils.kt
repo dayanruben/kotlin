@@ -6,37 +6,17 @@
 package org.jetbrains.kotlin.fir.resolve.transformers
 
 import org.jetbrains.kotlin.fir.FirSession
-import org.jetbrains.kotlin.fir.declarations.FirDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
+import org.jetbrains.kotlin.fir.symbols.ensureResolved
 import org.jetbrains.kotlin.fir.types.ConeClassLikeType
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
 import org.jetbrains.kotlin.fir.types.FirTypeRef
 import org.jetbrains.kotlin.fir.types.coneTypeSafe
 
-fun FirBasedSymbol<*>.ensureResolved(
-    requiredPhase: FirResolvePhase,
-    // TODO: Currently, the parameter is unused but it's needed to guarantee that all call-sites are able to supply use-site session
-    // TODO: Decide which one session should be used and probably get rid of the parameter if use-site session is not needed
-    @Suppress("UNUSED_PARAMETER") useSiteSession: FirSession,
-) {
-    val session = fir.moduleData.session
-    val phaseManager = session.phaseManager
-    phaseManager.ensureResolved(this, requiredPhase)
-}
-
-fun FirDeclaration.ensureResolved(
-    requiredPhase: FirResolvePhase,
-    useSiteSession: FirSession,
-) {
-    symbol.ensureResolved(requiredPhase, useSiteSession)
-}
-
-fun FirBasedSymbol<*>.ensureResolvedForCalls(
-    useSiteSession: FirSession,
-) {
+fun FirBasedSymbol<*>.ensureResolvedForCalls() {
     if (fir.resolvePhase >= FirResolvePhase.DECLARATIONS) return
 
 //    val requiredPhase = when (fir) {
@@ -53,7 +33,7 @@ fun FirBasedSymbol<*>.ensureResolvedForCalls(
 
     val requiredPhase = FirResolvePhase.DECLARATIONS
 
-    ensureResolved(requiredPhase, useSiteSession)
+    ensureResolved(requiredPhase)
 }
 
 fun ConeKotlinType.ensureResolvedTypeDeclaration(
@@ -62,8 +42,8 @@ fun ConeKotlinType.ensureResolvedTypeDeclaration(
 ) {
     if (this !is ConeClassLikeType) return
 
-    lookupTag.toSymbol(useSiteSession)?.ensureResolved(requiredPhase, useSiteSession)
-    fullyExpandedType(useSiteSession).lookupTag.toSymbol(useSiteSession)?.ensureResolved(requiredPhase, useSiteSession)
+    lookupTag.toSymbol(useSiteSession)?.ensureResolved(requiredPhase)
+    fullyExpandedType(useSiteSession).lookupTag.toSymbol(useSiteSession)?.ensureResolved(requiredPhase)
 }
 
 fun FirTypeRef.ensureResolvedTypeDeclaration(

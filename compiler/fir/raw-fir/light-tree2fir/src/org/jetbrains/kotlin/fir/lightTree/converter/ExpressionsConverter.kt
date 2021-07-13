@@ -704,7 +704,12 @@ class ExpressionsConverter(
 
         @OptIn(FirContractViolation::class)
         val subject = FirExpressionRef<FirWhenExpression>()
-        whenEntryNodes.mapTo(whenEntries) { convertWhenEntry(it, subject.takeIf { hasSubject }) }
+        whenEntryNodes.mapTo(whenEntries) {
+            convertWhenEntry(
+                it,
+                subject.takeIf { hasSubject }
+            )
+        }
         return buildWhenExpression {
             source = whenExpression.toFirSourceElement()
             this.subject = subjectExpression
@@ -748,7 +753,10 @@ class ExpressionsConverter(
      * @see org.jetbrains.kotlin.parsing.KotlinExpressionParsing.parseWhenEntry
      * @see org.jetbrains.kotlin.parsing.KotlinExpressionParsing.parseWhenEntryNotElse
      */
-    private fun convertWhenEntry(whenEntry: LighterASTNode, whenRefWithSubject: FirExpressionRef<FirWhenExpression>?): WhenEntry {
+    private fun convertWhenEntry(
+        whenEntry: LighterASTNode,
+        whenRefWithSubject: FirExpressionRef<FirWhenExpression>?
+    ): WhenEntry {
         var isElse = false
         var firBlock: FirBlock = buildEmptyExpressionBlock()
         val conditions = mutableListOf<FirExpression>()
@@ -825,7 +833,10 @@ class ExpressionsConverter(
         } else {
             return buildErrorExpression {
                 source = whenCondition.toFirSourceElement()
-                diagnostic = ConeSimpleDiagnostic("No expression in condition with expression", DiagnosticKind.Syntax)
+                diagnostic = ConeSimpleDiagnostic(
+                    "No expression in condition with expression",
+                    DiagnosticKind.ExpressionExpected
+                )
             }
         }
 
@@ -863,7 +874,10 @@ class ExpressionsConverter(
         } else {
             return buildErrorExpression {
                 source = whenCondition.toFirSourceElement()
-                diagnostic = ConeSimpleDiagnostic("No expression in condition with expression", DiagnosticKind.Syntax)
+                diagnostic = ConeSimpleDiagnostic(
+                    "No expression in condition with expression",
+                    DiagnosticKind.ExpressionExpected
+                )
             }
         }
 

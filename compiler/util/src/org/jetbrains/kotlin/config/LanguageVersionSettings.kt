@@ -213,6 +213,8 @@ enum class LanguageFeature(
     ClassTypeParameterAnnotations(KOTLIN_1_6),
     SafeCallsAreAlwaysNullable(KOTLIN_1_6),
     ProhibitSimplificationOfNonTrivialConstBooleanExpressions(KOTLIN_1_6),
+    TypeInferenceOnCallsWithSelfTypes(KOTLIN_1_6),
+    OptInRelease(KOTLIN_1_6),
 
     // Temporarily disabled, see KT-27084/KT-22379
     SoundSmartcastFromLoopConditionForLoopAssignedVariables(sinceVersion = null, kind = BUG_FIX),
@@ -358,6 +360,8 @@ enum class LanguageVersion(val major: Int, val minor: Int) : DescriptionAware {
 
 fun LanguageVersion.isStableOrReadyForPreview(): Boolean =
     isStable || this == KOTLIN_1_5
+
+fun LanguageVersion.toKotlinVersion() = KotlinVersion(major, minor)
 
 interface LanguageVersionSettings {
     fun getFeatureSupport(feature: LanguageFeature): LanguageFeature.State

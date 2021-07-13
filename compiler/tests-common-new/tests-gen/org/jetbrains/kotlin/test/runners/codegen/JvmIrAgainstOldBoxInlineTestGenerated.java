@@ -883,6 +883,12 @@ public class JvmIrAgainstOldBoxInlineTestGenerated extends AbstractJvmIrAgainstO
         }
 
         @Test
+        @TestMetadata("jvmCrossinlineRedundant.kt")
+        public void testJvmCrossinlineRedundant() throws Exception {
+            runTest("compiler/testData/codegen/boxInline/assert/jvmCrossinlineRedundant.kt");
+        }
+
+        @Test
         @TestMetadata("jvmCrossinlineSAMDeclarationSite.kt")
         public void testJvmCrossinlineSAMDeclarationSite() throws Exception {
             runTest("compiler/testData/codegen/boxInline/assert/jvmCrossinlineSAMDeclarationSite.kt");
@@ -892,6 +898,12 @@ public class JvmIrAgainstOldBoxInlineTestGenerated extends AbstractJvmIrAgainstO
         @TestMetadata("jvmDoubleInline.kt")
         public void testJvmDoubleInline() throws Exception {
             runTest("compiler/testData/codegen/boxInline/assert/jvmDoubleInline.kt");
+        }
+
+        @Test
+        @TestMetadata("jvmInlineIntoTwoMethods.kt")
+        public void testJvmInlineIntoTwoMethods() throws Exception {
+            runTest("compiler/testData/codegen/boxInline/assert/jvmInlineIntoTwoMethods.kt");
         }
 
         @Test

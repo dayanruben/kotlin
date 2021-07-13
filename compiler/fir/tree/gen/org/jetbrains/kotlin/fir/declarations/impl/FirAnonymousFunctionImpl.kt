@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.contracts.description.EventOccurrencesRange
 import org.jetbrains.kotlin.fir.FirLabel
 import org.jetbrains.kotlin.fir.FirModuleData
 import org.jetbrains.kotlin.fir.FirSourceElement
+import org.jetbrains.kotlin.fir.declarations.DeprecationsPerUseSite
 import org.jetbrains.kotlin.fir.declarations.FirAnonymousFunction
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationAttributes
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
@@ -40,6 +41,7 @@ internal class FirAnonymousFunctionImpl(
     override val annotations: MutableList<FirAnnotationCall>,
     override var returnTypeRef: FirTypeRef,
     override var receiverTypeRef: FirTypeRef?,
+    override var deprecation: DeprecationsPerUseSite?,
     override val containerSource: DeserializedContainerSource?,
     override val dispatchReceiverType: ConeKotlinType?,
     override var controlFlowGraphReference: FirControlFlowGraphReference?,
@@ -63,8 +65,8 @@ internal class FirAnonymousFunctionImpl(
     override fun <R, D> acceptChildren(visitor: FirVisitor<R, D>, data: D) {
         annotations.forEach { it.accept(visitor, data) }
         returnTypeRef.accept(visitor, data)
-        receiverTypeRef?.accept(visitor, data)
         status.accept(visitor, data)
+        receiverTypeRef?.accept(visitor, data)
         controlFlowGraphReference?.accept(visitor, data)
         valueParameters.forEach { it.accept(visitor, data) }
         body?.accept(visitor, data)
@@ -76,8 +78,8 @@ internal class FirAnonymousFunctionImpl(
     override fun <D> transformChildren(transformer: FirTransformer<D>, data: D): FirAnonymousFunctionImpl {
         transformAnnotations(transformer, data)
         transformReturnTypeRef(transformer, data)
-        transformReceiverTypeRef(transformer, data)
         transformStatus(transformer, data)
+        transformReceiverTypeRef(transformer, data)
         controlFlowGraphReference = controlFlowGraphReference?.transform(transformer, data)
         transformValueParameters(transformer, data)
         transformBody(transformer, data)
@@ -97,13 +99,13 @@ internal class FirAnonymousFunctionImpl(
         return this
     }
 
-    override fun <D> transformReceiverTypeRef(transformer: FirTransformer<D>, data: D): FirAnonymousFunctionImpl {
-        receiverTypeRef = receiverTypeRef?.transform(transformer, data)
+    override fun <D> transformStatus(transformer: FirTransformer<D>, data: D): FirAnonymousFunctionImpl {
+        status = status.transform(transformer, data)
         return this
     }
 
-    override fun <D> transformStatus(transformer: FirTransformer<D>, data: D): FirAnonymousFunctionImpl {
-        status = status.transform(transformer, data)
+    override fun <D> transformReceiverTypeRef(transformer: FirTransformer<D>, data: D): FirAnonymousFunctionImpl {
+        receiverTypeRef = receiverTypeRef?.transform(transformer, data)
         return this
     }
 
@@ -132,6 +134,10 @@ internal class FirAnonymousFunctionImpl(
 
     override fun replaceReceiverTypeRef(newReceiverTypeRef: FirTypeRef?) {
         receiverTypeRef = newReceiverTypeRef
+    }
+
+    override fun replaceDeprecation(newDeprecation: DeprecationsPerUseSite?) {
+        deprecation = newDeprecation
     }
 
     override fun replaceControlFlowGraphReference(newControlFlowGraphReference: FirControlFlowGraphReference?) {

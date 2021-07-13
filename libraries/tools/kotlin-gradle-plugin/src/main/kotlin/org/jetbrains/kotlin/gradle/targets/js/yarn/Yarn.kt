@@ -33,7 +33,8 @@ class Yarn : NpmApi {
         rootProjectVersion: String,
         logger: Logger,
         subProjects: Collection<KotlinCompilationNpmResolution>,
-        resolutions: Map<String, String>
+        resolutions: Map<String, String>,
+        forceFullResolve: Boolean
     ) = yarnWorkspaces
         .prepareRootProject(
             rootProject,
@@ -42,14 +43,16 @@ class Yarn : NpmApi {
             rootProjectVersion,
             logger,
             subProjects,
-            resolutions
+            resolutions,
+            forceFullResolve
         )
 
     override fun resolveRootProject(
         services: ServiceRegistry,
         logger: Logger,
         nodeJs: NodeJsRootExtension,
-        yarnHome: File,
+        command: String,
+        isStandalone: Boolean,
         npmProjects: Collection<KotlinCompilationNpmResolution>,
         cliArgs: List<String>
     ) {
@@ -58,7 +61,8 @@ class Yarn : NpmApi {
                 services,
                 logger,
                 nodeJs,
-                yarnHome,
+                command,
+                isStandalone,
                 npmProjects,
                 cliArgs
             )

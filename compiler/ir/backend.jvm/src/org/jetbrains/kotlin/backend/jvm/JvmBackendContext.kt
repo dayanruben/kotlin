@@ -35,6 +35,7 @@ import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrFunctionReference
 import org.jetbrains.kotlin.ir.symbols.*
 import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.types.IrTypeSystemContext
 import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.util.SymbolTable
 import org.jetbrains.kotlin.name.FqName
@@ -46,7 +47,7 @@ class JvmBackendContext(
     val state: GenerationState,
     override val irBuiltIns: IrBuiltIns,
     irModuleFragment: IrModuleFragment,
-    private val symbolTable: SymbolTable,
+    val symbolTable: SymbolTable,
     val phaseConfig: PhaseConfig,
     val generatorExtensions: JvmGeneratorExtensions,
     val backendExtension: JvmBackendExtension,
@@ -62,6 +63,7 @@ class JvmBackendContext(
     override val scriptMode: Boolean = false
 
     override val builtIns = state.module.builtIns
+    override val typeSystem: IrTypeSystemContext = JvmIrTypeSystemContext(irBuiltIns)
     val typeMapper = IrTypeMapper(this)
     val methodSignatureMapper = MethodSignatureMapper(this)
 
@@ -131,6 +133,8 @@ class JvmBackendContext(
     internal val continuationClassesVarsCountByType: MutableMap<IrAttributeContainer, Map<Type, Int>> = hashMapOf()
 
     val inlineMethodGenerationLock = Any()
+
+    val directInvokedLambdas = mutableListOf<IrAttributeContainer>()
 
     init {
         state.mapInlineClass = { descriptor ->

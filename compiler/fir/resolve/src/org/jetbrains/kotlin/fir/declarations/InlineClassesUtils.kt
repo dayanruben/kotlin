@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.fir.declarations.utils.primaryConstructor
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.resolve.substitution.createTypeSubstitutorByTypeConstructor
 import org.jetbrains.kotlin.fir.resolve.toSymbol
-import org.jetbrains.kotlin.fir.resolve.transformers.ensureResolved
+import org.jetbrains.kotlin.fir.symbols.ensureResolved
 import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
 import org.jetbrains.kotlin.fir.types.ConeLookupTagBasedType
@@ -30,7 +30,7 @@ internal fun ConeKotlinType.unsubstitutedUnderlyingTypeForInlineClass(session: F
         ?.lookupTag
         ?.toSymbol(session) as? FirRegularClassSymbol
         ?: return null
-    symbol.ensureResolved(FirResolvePhase.STATUS, session)
+    symbol.ensureResolved(FirResolvePhase.STATUS)
     return symbol.fir.getInlineClassUnderlyingParameter()?.returnTypeRef?.coneType
 }
 

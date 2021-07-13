@@ -115,8 +115,8 @@ internal val vector128Type get() = LLVMVectorType(floatType, 4)!!
 
 internal val voidType get() = LLVMVoidTypeInContext(llvmContext)!!
 
-internal class Int1(val value: Byte) : ConstValue {
-    override val llvm = LLVMConstInt(int1Type, value.toLong(), 1)!!
+internal class Int1(val value: Boolean) : ConstValue {
+    override val llvm = LLVMConstInt(int1Type, if (value) 1 else 0, 1)!!
 }
 
 internal class Int8(val value: Byte) : ConstValue {
@@ -229,6 +229,16 @@ internal fun RuntimeAware.isObjectType(type: LLVMTypeRef): Boolean {
  */
 internal fun CArrayPointer<ByteVar>.getBytes(size: Long) =
         (0 .. size-1).map { this[it] }.toByteArray()
+
+internal fun LLVMValueRef.getAsCString() : String {
+    memScoped {
+        val lengthPtr = alloc<size_tVar>()
+        val data = LLVMGetAsString(this@getAsCString, lengthPtr.ptr)!!
+        require(lengthPtr.value >= 1 && data[lengthPtr.value - 1] == 0.toByte()) { "Expected null-terminated string from llvm"}
+        return data.toKString()
+    }
+}
+
 
 internal fun getFunctionType(ptrToFunction: LLVMValueRef): LLVMTypeRef {
     return getGlobalType(ptrToFunction)

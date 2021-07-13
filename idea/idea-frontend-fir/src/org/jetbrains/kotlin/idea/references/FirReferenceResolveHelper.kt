@@ -6,9 +6,7 @@
 package org.jetbrains.kotlin.idea.references
 
 import com.intellij.psi.tree.TokenSet
-import org.jetbrains.kotlin.fir.FirFakeSourceElementKind
-import org.jetbrains.kotlin.fir.FirSession
-import org.jetbrains.kotlin.fir.ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE
+import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.builder.buildImport
 import org.jetbrains.kotlin.fir.declarations.synthetic.FirSyntheticProperty
@@ -17,7 +15,6 @@ import org.jetbrains.kotlin.fir.declarations.utils.isCompanion
 import org.jetbrains.kotlin.fir.declarations.utils.isLocal
 import org.jetbrains.kotlin.fir.declarations.utils.isStatic
 import org.jetbrains.kotlin.fir.expressions.*
-import org.jetbrains.kotlin.fir.psi
 import org.jetbrains.kotlin.fir.references.*
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.resolve.calls.FirSyntheticPropertySymbol
@@ -46,7 +43,6 @@ import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
-import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.psi.psiUtil.unwrapNullability
 import org.jetbrains.kotlin.utils.addIfNotNull
@@ -77,7 +73,7 @@ internal object FirReferenceResolveHelper {
         val classLikeDeclaration = ConeClassLikeLookupTagImpl(this).toSymbol(session)?.fir
         if (classLikeDeclaration is FirRegularClass) {
             if (calleeReference is FirResolvedNamedReference) {
-                val callee = calleeReference.resolvedSymbol.fir as? FirCallableMemberDeclaration
+                val callee = calleeReference.resolvedSymbol.fir as? FirCallableDeclaration
                 // TODO: check callee owner directly?
                 if (callee !is FirConstructor && callee?.isStatic != true) {
                     classLikeDeclaration.companionObject?.let { return it.buildSymbol(symbolBuilder) }
@@ -102,9 +98,9 @@ internal object FirReferenceResolveHelper {
                             syntheticProperty.setter!!.delegate
                         }
                     }
-                    else -> symbol.fir as? FirDeclaration
+                    else -> symbol.fir
                 }
-                listOfNotNull(fir?.buildSymbol(symbolBuilder))
+                listOfNotNull(fir.buildSymbol(symbolBuilder))
             }
             is FirResolvedCallableReference -> {
                 listOfNotNull(resolvedSymbol.fir.buildSymbol(symbolBuilder))
@@ -116,7 +112,7 @@ internal object FirReferenceResolveHelper {
                 listOfNotNull((superTypeRef as? FirResolvedTypeRef)?.toTargetSymbol(session, symbolBuilder))
             }
             is FirErrorNamedReference -> {
-                getCandidateSymbols().mapNotNull { it.fir.buildSymbol(symbolBuilder) }
+                getCandidateSymbols().map { it.fir.buildSymbol(symbolBuilder) }
             }
             else -> emptyList()
         }
@@ -184,7 +180,8 @@ internal object FirReferenceResolveHelper {
                 getSymbolsForResolvedQualifier(fir, expression, session, symbolBuilder)
             is FirAnnotationCall -> getSymbolsForAnnotationCall(fir, session, symbolBuilder)
             is FirResolvedImport -> getSymbolsByResolvedImport(expression, symbolBuilder, fir, session)
-            is FirFile -> getSymbolsByFirFile(expression, symbolBuilder, fir)
+            is FirPackageDirective -> getSymbolsForPackageDirective(expression, symbolBuilder)
+            is FirFile -> getSymbolsByFirFile(symbolBuilder, fir)
             is FirArrayOfCall -> {
                 // We can't yet find PsiElement for arrayOf, intArrayOf, etc.
                 emptyList()
@@ -198,6 +195,14 @@ internal object FirReferenceResolveHelper {
             else -> handleUnknownFirElement(expression, analysisSession, session, symbolBuilder)
         }
     }
+
+    private fun getSymbolsForPackageDirective(
+        expression: KtSimpleNameExpression,
+        symbolBuilder: KtSymbolByFirBuilder
+    ): List<KtFirPackageSymbol> {
+        return listOfNotNull(getPackageSymbolFor(expression, symbolBuilder, forQualifiedType = false))
+    }
+
 
     private fun getSymbolByResolvedNameReference(
         fir: FirResolvedNamedReference,
@@ -295,7 +300,7 @@ internal object FirReferenceResolveHelper {
         fir: FirErrorNamedReference,
         symbolBuilder: KtSymbolByFirBuilder
     ): List<KtSymbol> =
-        getFirSymbolsByErrorNamedReference(fir).mapNotNull { it.fir.buildSymbol(symbolBuilder) }
+        getFirSymbolsByErrorNamedReference(fir).map { it.fir.buildSymbol(symbolBuilder) }
 
 
     fun getFirSymbolsByErrorNamedReference(
@@ -319,14 +324,9 @@ internal object FirReferenceResolveHelper {
     }
 
     private fun getSymbolsByFirFile(
-        expression: KtSimpleNameExpression,
         symbolBuilder: KtSymbolByFirBuilder,
         fir: FirFile
     ): List<KtSymbol> {
-        if (expression.getNonStrictParentOfType<KtPackageDirective>() != null) {
-            // Special: package reference in the middle of package directive
-            return listOfNotNull(getPackageSymbolFor(expression, symbolBuilder, forQualifiedType = false))
-        }
         return listOf(symbolBuilder.buildSymbol(fir))
     }
 

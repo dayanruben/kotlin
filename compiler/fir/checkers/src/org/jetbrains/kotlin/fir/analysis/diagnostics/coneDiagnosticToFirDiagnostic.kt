@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.fir.FirFakeSourceElementKind
 import org.jetbrains.kotlin.fir.FirSourceElement
 import org.jetbrains.kotlin.fir.analysis.getChild
-import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
 import org.jetbrains.kotlin.fir.declarations.utils.isInfix
 import org.jetbrains.kotlin.fir.declarations.utils.isOperator
 import org.jetbrains.kotlin.fir.diagnostics.*
@@ -19,9 +18,9 @@ import org.jetbrains.kotlin.fir.resolve.inference.ConeTypeParameterBasedTypeVari
 import org.jetbrains.kotlin.fir.resolve.inference.ConeTypeVariableForLambdaReturnType
 import org.jetbrains.kotlin.fir.resolve.inference.model.ConeArgumentConstraintPosition
 import org.jetbrains.kotlin.fir.resolve.inference.model.ConeExpectedTypeConstraintPosition
-import org.jetbrains.kotlin.fir.resolve.inference.model.ConeExplicitTypeParameterConstraintPosition
 import org.jetbrains.kotlin.fir.resolve.inference.model.ConeLambdaArgumentConstraintPosition
 import org.jetbrains.kotlin.fir.symbols.impl.FirBackingFieldSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
 import org.jetbrains.kotlin.fir.typeContext
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -30,7 +29,6 @@ import org.jetbrains.kotlin.resolve.calls.tower.CandidateApplicability
 import org.jetbrains.kotlin.resolve.calls.tower.isSuccess
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 private fun ConeDiagnostic.toFirDiagnostic(
     source: FirSourceElement,
@@ -64,10 +62,10 @@ private fun ConeDiagnostic.toFirDiagnostic(
     is ConeOperatorAmbiguityError -> FirErrors.ASSIGN_OPERATOR_AMBIGUITY.createOn(source, this.candidates)
     is ConeVariableExpectedError -> FirErrors.VARIABLE_EXPECTED.createOn(source)
     is ConeValReassignmentError -> when (val symbol = this.variable) {
-        is FirBackingFieldSymbol -> FirErrors.VAL_REASSIGNMENT_VIA_BACKING_FIELD_ERROR.createOn(source, symbol.fir.symbol)
+        is FirBackingFieldSymbol -> FirErrors.VAL_REASSIGNMENT_VIA_BACKING_FIELD_ERROR.createOn(source, symbol)
         else -> FirErrors.VAL_REASSIGNMENT.createOn(source, symbol)
     }
-    is ConeUnexpectedTypeArgumentsError -> FirErrors.TYPE_ARGUMENTS_NOT_ALLOWED.createOn(this.source.safeAs() ?: source)
+    is ConeUnexpectedTypeArgumentsError -> FirErrors.TYPE_ARGUMENTS_NOT_ALLOWED.createOn(this.source ?: source)
     is ConeIllegalAnnotationError -> FirErrors.NOT_AN_ANNOTATION_CLASS.createOn(source, this.name.asString())
     is ConeWrongNumberOfTypeArgumentsError ->
         FirErrors.WRONG_NUMBER_OF_TYPE_ARGUMENTS.createOn(qualifiedAccessSource ?: source, this.desiredCount, this.type)
@@ -110,13 +108,13 @@ private fun mapUnsafeCallError(
         return FirErrors.UNSAFE_IMPLICIT_INVOKE_CALL.createOn(source, rootCause.actualType)
     }
 
-    val candidateFunction = candidate.symbol.fir as? FirSimpleFunction
-    val candidateFunctionName = candidateFunction?.name
+    val candidateFunctionSymbol = candidate.symbol as? FirNamedFunctionSymbol
+    val candidateFunctionName = candidateFunctionSymbol?.name
     val receiverExpression = candidate.callInfo.explicitReceiver
     val singleArgument = candidate.callInfo.argumentList.arguments.singleOrNull()
     if (receiverExpression != null && singleArgument != null &&
         (source.elementType == KtNodeTypes.OPERATION_REFERENCE || source.elementType == KtNodeTypes.BINARY_EXPRESSION) &&
-        (candidateFunction?.isOperator == true || candidateFunction?.isInfix == true)
+        (candidateFunctionSymbol?.isOperator == true || candidateFunctionSymbol?.isInfix == true)
     ) {
         // For augmented assignment operations (e.g., `a += b`), the source is the entire binary expression (BINARY_EXPRESSION).
         // TODO: No need to check for source.elementType == BINARY_EXPRESSION if we use operator as callee reference source
@@ -175,8 +173,8 @@ private fun mapInapplicableCandidateError(
             )
             is NonVarargSpread -> FirErrors.NON_VARARG_SPREAD.createOn(rootCause.argument.source?.getChild(KtTokens.MUL, depth = 1)!!)
             is ArgumentPassedTwice -> FirErrors.ARGUMENT_PASSED_TWICE.createOn(rootCause.argument.source)
-            is TooManyArguments -> FirErrors.TOO_MANY_ARGUMENTS.createOn(rootCause.argument.source ?: source, rootCause.function)
-            is NoValueForParameter -> FirErrors.NO_VALUE_FOR_PARAMETER.createOn(qualifiedAccessSource ?: source, rootCause.valueParameter)
+            is TooManyArguments -> FirErrors.TOO_MANY_ARGUMENTS.createOn(rootCause.argument.source ?: source, rootCause.function.symbol)
+            is NoValueForParameter -> FirErrors.NO_VALUE_FOR_PARAMETER.createOn(qualifiedAccessSource ?: source, rootCause.valueParameter.symbol)
             is NameNotFound -> FirErrors.NAMED_PARAMETER_NOT_FOUND.createOn(
                 rootCause.argument.source ?: source,
                 rootCause.argument.name.asString()
@@ -185,7 +183,7 @@ private fun mapInapplicableCandidateError(
             is ManyLambdaExpressionArguments -> FirErrors.MANY_LAMBDA_EXPRESSION_ARGUMENTS.createOn(rootCause.argument.source ?: source)
             is InfixCallOfNonInfixFunction -> FirErrors.INFIX_MODIFIER_REQUIRED.createOn(source, rootCause.function)
             is OperatorCallOfNonOperatorFunction ->
-                FirErrors.OPERATOR_MODIFIER_REQUIRED.createOn(source, rootCause.function, rootCause.function.fir.name.asString())
+                FirErrors.OPERATOR_MODIFIER_REQUIRED.createOn(source, rootCause.function, rootCause.function.name.asString())
             is UnstableSmartCast -> FirErrors.SMARTCAST_IMPOSSIBLE.createOn(
                 rootCause.argument.source,
                 rootCause.targetType,
@@ -341,6 +339,7 @@ private fun ConeSimpleDiagnostic.getFactory(source: FirSourceElement): FirDiagno
         DiagnosticKind.ExpressionExpected -> when (source.elementType) {
             KtNodeTypes.BINARY_EXPRESSION -> FirErrors.ASSIGNMENT_IN_EXPRESSION_CONTEXT
             KtNodeTypes.FUN -> FirErrors.ANONYMOUS_FUNCTION_WITH_NAME
+            KtNodeTypes.WHEN_CONDITION_IN_RANGE, KtNodeTypes.WHEN_CONDITION_IS_PATTERN -> FirErrors.EXPECTED_CONDITION
             else -> FirErrors.EXPRESSION_EXPECTED
         }
         DiagnosticKind.JumpOutsideLoop -> FirErrors.BREAK_OR_CONTINUE_OUTSIDE_A_LOOP

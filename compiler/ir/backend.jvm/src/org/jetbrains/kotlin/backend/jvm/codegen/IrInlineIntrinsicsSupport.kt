@@ -9,15 +9,23 @@ import org.jetbrains.kotlin.backend.common.ir.allParametersCount
 import org.jetbrains.kotlin.backend.jvm.JvmBackendContext
 import org.jetbrains.kotlin.backend.jvm.intrinsics.SignatureString
 import org.jetbrains.kotlin.backend.jvm.lower.FunctionReferenceLowering
+import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.codegen.inline.ReifiedTypeInliner
+import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.descriptors.toIrBasedKotlinType
+import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.symbols.IrTypeParameterSymbol
 import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.types.classOrNull
 import org.jetbrains.kotlin.ir.util.defaultType
+import org.jetbrains.kotlin.ir.util.fqNameWhenAvailable
 import org.jetbrains.kotlin.ir.util.render
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.jvm.AsmTypes.*
+import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm.TYPEOF_NON_REIFIED_TYPE_PARAMETER_WITH_RECURSIVE_BOUND
+import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm.TYPEOF_SUSPEND_TYPE
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.model.TypeParameterMarker
 import org.jetbrains.org.objectweb.asm.Type
@@ -27,8 +35,13 @@ import org.jetbrains.org.objectweb.asm.commons.InstructionAdapter
 
 class IrInlineIntrinsicsSupport(
     private val context: JvmBackendContext,
-    private val typeMapper: IrTypeMapper
+    private val typeMapper: IrTypeMapper,
+    private val reportErrorsOn: IrExpression,
+    private val containingFile: IrFile,
 ) : ReifiedTypeInliner.IntrinsicsSupport<IrType> {
+    override val state: GenerationState
+        get() = context.state
+
     override fun putClassInstance(v: InstructionAdapter, type: IrType) {
         ExpressionCodegen.generateClassInstance(v, type, typeMapper)
     }
@@ -94,5 +107,19 @@ class IrInlineIntrinsicsSupport(
         )
     }
 
+    override fun isMutableCollectionType(type: IrType): Boolean {
+        val classifier = type.classOrNull
+        return classifier != null && JavaToKotlinClassMap.isMutable(classifier.owner.fqNameWhenAvailable?.toUnsafe())
+    }
+
     override fun toKotlinType(type: IrType): KotlinType = type.toIrBasedKotlinType()
+
+    override fun reportSuspendTypeUnsupported() {
+        context.psiErrorBuilder.at(reportErrorsOn, containingFile).report(TYPEOF_SUSPEND_TYPE)
+    }
+
+    override fun reportNonReifiedTypeParameterWithRecursiveBoundUnsupported(typeParameterName: Name) {
+        context.psiErrorBuilder.at(reportErrorsOn, containingFile)
+            .report(TYPEOF_NON_REIFIED_TYPE_PARAMETER_WITH_RECURSIVE_BOUND, typeParameterName.asString())
+    }
 }

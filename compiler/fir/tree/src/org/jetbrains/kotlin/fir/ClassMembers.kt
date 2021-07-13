@@ -16,15 +16,12 @@ import org.jetbrains.kotlin.fir.types.ConeIntersectionType
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
 
 fun FirCallableSymbol<*>.dispatchReceiverTypeOrNull(): ConeKotlinType? =
-    (fir as? FirCallableMemberDeclaration)?.dispatchReceiverType
+    fir.dispatchReceiverType
 
 fun FirCallableSymbol<*>.dispatchReceiverClassOrNull(): ConeClassLikeLookupTag? =
-    (fir as? FirCallableMemberDeclaration)?.dispatchReceiverClassOrNull()
+    fir.dispatchReceiverClassOrNull()
 
-fun FirCallableDeclaration.dispatchReceiverClassOrNull(): ConeClassLikeLookupTag? =
-    (this as? FirCallableMemberDeclaration)?.dispatchReceiverClassOrNull()
-
-fun FirCallableMemberDeclaration.dispatchReceiverClassOrNull(): ConeClassLikeLookupTag? {
+fun FirCallableDeclaration.dispatchReceiverClassOrNull(): ConeClassLikeLookupTag? {
     if (dispatchReceiverType is ConeIntersectionType && isIntersectionOverride) return symbol.baseForIntersectionOverride!!.fir.dispatchReceiverClassOrNull()
 
     return (dispatchReceiverType as? ConeClassLikeType)?.lookupTag
@@ -35,9 +32,6 @@ fun FirCallableDeclaration.containingClass(): ConeClassLikeLookupTag? {
     return (containingClassAttr ?: dispatchReceiverClassOrNull())
 }
 
-fun FirCallableMemberDeclaration.containingClass(): ConeClassLikeLookupTag? {
-    return (containingClassAttr ?: dispatchReceiverClassOrNull())
-}
 fun FirRegularClass.containingClassForLocal(): ConeClassLikeLookupTag? =
     if (isLocal) containingClassForLocalAttr else null
 
@@ -45,9 +39,13 @@ private object ContainingClassKey : FirDeclarationDataKey()
 var FirCallableDeclaration.containingClassAttr: ConeClassLikeLookupTag? by FirDeclarationDataRegistry.data(ContainingClassKey)
 var FirRegularClass.containingClassForLocalAttr: ConeClassLikeLookupTag? by FirDeclarationDataRegistry.data(ContainingClassKey)
 
-val FirCallableDeclaration.isIntersectionOverride get() = origin == FirDeclarationOrigin.IntersectionOverride
-val FirCallableDeclaration.isSubstitutionOverride get() = origin == FirDeclarationOrigin.SubstitutionOverride
-val FirCallableDeclaration.isSubstitutionOrIntersectionOverride get() = isSubstitutionOverride || isIntersectionOverride
+val FirCallableDeclaration.isIntersectionOverride: Boolean get() = origin == FirDeclarationOrigin.IntersectionOverride
+val FirCallableDeclaration.isSubstitutionOverride: Boolean get() = origin == FirDeclarationOrigin.SubstitutionOverride
+val FirCallableDeclaration.isSubstitutionOrIntersectionOverride: Boolean get() = isSubstitutionOverride || isIntersectionOverride
+
+val FirCallableSymbol<*>.isIntersectionOverride: Boolean get() = origin == FirDeclarationOrigin.IntersectionOverride
+val FirCallableSymbol<*>.isSubstitutionOverride: Boolean get() = origin == FirDeclarationOrigin.SubstitutionOverride
+val FirCallableSymbol<*>.isSubstitutionOrIntersectionOverride: Boolean get() = isSubstitutionOverride || isIntersectionOverride
 
 inline val <reified D : FirCallableDeclaration> D.originalForSubstitutionOverride: D?
     get() = if (isSubstitutionOverride) originalForSubstitutionOverrideAttr else null

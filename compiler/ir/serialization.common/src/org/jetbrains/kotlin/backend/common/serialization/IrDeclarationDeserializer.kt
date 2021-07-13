@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.descriptors.InlineClassRepresentation
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.declarations.impl.IrVariableImpl
+import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.descriptors.IrBuiltIns
 import org.jetbrains.kotlin.ir.expressions.IrBlockBody
 import org.jetbrains.kotlin.ir.expressions.IrBody
@@ -24,6 +25,7 @@ import org.jetbrains.kotlin.ir.expressions.IrStatementOriginImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrErrorExpressionImpl
 import org.jetbrains.kotlin.ir.symbols.*
 import org.jetbrains.kotlin.ir.symbols.impl.IrPublicSymbolBase
+import org.jetbrains.kotlin.ir.symbols.impl.IrTypeParameterPublicSymbolImpl
 import org.jetbrains.kotlin.ir.symbols.impl.IrTypeParameterSymbolImpl
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.types.impl.*
@@ -32,6 +34,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.protobuf.CodedInputStream
 import org.jetbrains.kotlin.protobuf.ExtensionRegistryLite
 import org.jetbrains.kotlin.types.Variance
+import kotlin.collections.set
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrAnonymousInit as ProtoAnonymousInit
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrClass as ProtoClass
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrConstructor as ProtoConstructor
@@ -73,6 +76,7 @@ class IrDeclarationDeserializer(
     private val skipMutableState: Boolean = false,
     additionalStatementOriginIndex: Map<String, IrStatementOrigin> = emptyMap(),
     allowErrorStatementOrigins: Boolean = false,
+    private val compatibilityMode: CompatibilityMode
 ) {
 
     val bodyDeserializer = IrBodyDeserializer(builtIns, allowErrorNodes, irFactory, fileReader, this, statementOriginIndex + additionalStatementOriginIndex, allowErrorStatementOrigins)
@@ -259,10 +263,10 @@ class IrDeclarationDeserializer(
                 sig = p.second
                 declareGlobalTypeParameter(sig, { symbol }, factory)
             } else {
-                val symbolData = BinarySymbolData
-                    .decode(proto.base.symbol)
+                val symbolData = BinarySymbolData.decode(proto.base.symbol)
                 sig = symbolDeserializer.deserializeIdSignature(symbolData.signatureId)
-                declareScopedTypeParameter(sig, { IrTypeParameterSymbolImpl() }, factory)
+                declareScopedTypeParameter(sig, {
+                    if (it.isPubliclyVisible) IrTypeParameterPublicSymbolImpl(it) else IrTypeParameterSymbolImpl() }, factory)
             }
         }
 
@@ -334,7 +338,7 @@ class IrDeclarationDeserializer(
                         else -> computeMissingInlineClassRepresentationForCompatibility(this)
                     }
 
-                    fakeOverrideBuilder.enqueueClass(this, signature)
+                    fakeOverrideBuilder.enqueueClass(this, signature, compatibilityMode)
                 }
             }
         }
@@ -433,7 +437,11 @@ class IrDeclarationDeserializer(
      */
     private fun IrType.checkObjectLeak(): Boolean {
         return if (this is IrSimpleType) {
-            classifier.let { !it.isPublicApi && it !is IrTypeParameterSymbol } || arguments.any { it.typeOrNull?.checkObjectLeak() == true }
+            val signature = classifier.signature
+
+            val possibleLeakedClassifier = (signature == null || signature.isLocal) && classifier !is IrTypeParameterSymbol
+
+            possibleLeakedClassifier || arguments.any { it.typeOrNull?.checkObjectLeak() == true }
         } else false
     }
 
@@ -747,7 +755,7 @@ class IrDeclarationDeserializer(
             else -> return false
         }
         if (symbol !is IrPublicSymbolBase<*>) return false
-        if (!symbol.signature.isPublic) return false
+        if (!symbol.signature.isPubliclyVisible) return false
 
         return when (proto.declaratorCase!!) {
             IR_FUNCTION -> FunctionFlags.decode(proto.irFunction.base.base.flags).isFakeOverride

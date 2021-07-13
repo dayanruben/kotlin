@@ -46,13 +46,11 @@ class IrInlineCodegen(
     InlineCodegen<ExpressionCodegen>(codegen, state, signature, typeParameterMappings, sourceCompiler, reifiedTypeInliner),
     IrInlineCallGenerator {
 
-    override fun generateAssertFieldIfNeeded(info: RootInliningContext) {
-        if (info.generateAssertField) {
-            // May be inlining code into `<clinit>`, in which case it's too late to modify the IR and
-            // `generateAssertFieldIfNeeded` will return a statement for which we need to emit bytecode.
-            val isClInit = info.callSiteInfo.method.name == "<clinit>"
-            codegen.classCodegen.generateAssertFieldIfNeeded(isClInit)?.accept(codegen, BlockInfo())?.discard()
-        }
+    override fun generateAssertField() {
+        // May be inlining code into `<clinit>`, in which case it's too late to modify the IR and
+        // `generateAssertFieldIfNeeded` will return a statement for which we need to emit bytecode.
+        val isClInit = sourceCompiler.inlineCallSiteInfo.method.name == "<clinit>"
+        codegen.classCodegen.generateAssertFieldIfNeeded(isClInit)?.accept(codegen, BlockInfo())?.discard()
     }
 
     override fun genValueAndPut(
@@ -135,7 +133,7 @@ class IrExpressionLambdaImpl(
     codegen: ExpressionCodegen,
     val reference: IrFunctionReference,
     irValueParameter: IrValueParameter
-) : ExpressionLambda(irValueParameter.isCrossinline), IrExpressionLambda {
+) : ExpressionLambda(), IrExpressionLambda {
     override val isExtensionLambda: Boolean = irValueParameter.type.isExtensionFunctionType
 
     val function: IrFunction
@@ -196,7 +194,7 @@ class IrDefaultLambda(
     offset: Int,
     needReification: Boolean,
     sourceCompiler: IrSourceCompilerForInline
-) : DefaultLambda(lambdaClassType, capturedArgs, irValueParameter.isCrossinline, offset, needReification, sourceCompiler) {
+) : DefaultLambda(lambdaClassType, capturedArgs, offset, needReification, sourceCompiler) {
 
     private val typeArguments: MutableList<IrType>
 

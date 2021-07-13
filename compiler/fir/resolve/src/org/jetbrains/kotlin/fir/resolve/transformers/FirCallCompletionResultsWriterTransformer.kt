@@ -113,7 +113,6 @@ class FirCallCompletionResultsWriterTransformer(
                 diagnostic =
                     when (declaration) {
                         is FirTypeParameter -> ConeTypeParameterInQualifiedAccess(declaration.symbol)
-                        is FirResolvedReifiedParameterReference -> ConeTypeParameterInQualifiedAccess(declaration.symbol)
                         else -> ConeSimpleDiagnostic("Callee reference to candidate without return type: ${declaration.render()}")
                     }
             }
@@ -498,7 +497,7 @@ class FirCallCompletionResultsWriterTransformer(
     private fun computeTypeArgumentTypes(
         candidate: Candidate,
     ): List<ConeKotlinType> {
-        val declaration = candidate.symbol.fir as? FirCallableMemberDeclaration ?: return emptyList()
+        val declaration = candidate.symbol.fir as? FirCallableDeclaration ?: return emptyList()
 
         return declaration.typeParameters.map { ConeTypeParameterTypeImpl(it.symbol.toLookupTag(), false) }
             .map { candidate.substitutor.substituteOrSelf(it) }

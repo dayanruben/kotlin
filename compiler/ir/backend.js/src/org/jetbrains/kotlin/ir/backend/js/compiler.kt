@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -22,17 +22,19 @@ import org.jetbrains.kotlin.ir.declarations.persistent.PersistentIrFactory
 import org.jetbrains.kotlin.ir.util.ExternalDependenciesGenerator
 import org.jetbrains.kotlin.ir.util.noUnboundLeft
 import org.jetbrains.kotlin.js.config.RuntimeDiagnostic
-import org.jetbrains.kotlin.library.KotlinLibrary
-import org.jetbrains.kotlin.library.resolver.KotlinLibraryResolveResult
 import org.jetbrains.kotlin.name.FqName
 
 class CompilerResult(
-    val jsCode: JsCode?,
-    val dceJsCode: JsCode?,
+    val outputs: CompilationOutputs?,
+    val outputsAfterDce: CompilationOutputs?,
     val tsDefinitions: String? = null
 )
 
-class JsCode(val mainModule: String, val dependencies: Iterable<Pair<String, String>> = emptyList())
+class CompilationOutputs(
+    val jsCode: String,
+    val sourceMap: String? = null,
+    val dependencies: Iterable<Pair<String, CompilationOutputs>> = emptyList()
+)
 
 fun compile(
     project: Project,
@@ -41,8 +43,8 @@ fun compile(
     configuration: CompilerConfiguration,
     phaseConfig: PhaseConfig,
     irFactory: IrFactory,
-    allDependencies: KotlinLibraryResolveResult,
-    friendDependencies: List<KotlinLibrary>,
+    dependencies: Collection<String>,
+    friendDependencies: Collection<String>,
     mainArguments: List<String>?,
     exportedDeclarations: Set<FqName> = emptySet(),
     generateFullJs: Boolean = true,
@@ -53,6 +55,7 @@ fun compile(
     multiModule: Boolean = false,
     relativeRequirePath: Boolean = false,
     propertyLazyInitialization: Boolean,
+    verifySignatures: Boolean = true,
     legacyPropertyAccess: Boolean = false,
     baseClassIntoMetadata: Boolean = false,
     lowerPerModule: Boolean = false,
@@ -60,7 +63,7 @@ fun compile(
     safeExternalBooleanDiagnostic: RuntimeDiagnostic? = null,
 ): CompilerResult {
     val (moduleFragment: IrModuleFragment, dependencyModules, irBuiltIns, symbolTable, deserializer, moduleToName) =
-        loadIr(project, mainModule, analyzer, configuration, allDependencies, friendDependencies, irFactory)
+        loadIr(project, mainModule, analyzer, configuration, dependencies, friendDependencies, irFactory, verifySignatures)
 
     val moduleDescriptor = moduleFragment.descriptor
 
@@ -173,5 +176,5 @@ fun generateJsCode(
     jsPhases.invokeToplevel(PhaseConfig(jsPhases), context, listOf(moduleFragment))
 
     val transformer = IrModuleToJsTransformer(context, null, true, nameTables)
-    return transformer.generateModule(listOf(moduleFragment)).jsCode!!.mainModule
+    return transformer.generateModule(listOf(moduleFragment)).outputs!!.jsCode
 }

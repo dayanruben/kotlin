@@ -3610,6 +3610,12 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
             }
 
             @Test
+            @TestMetadata("isAlwaysFalse.kt")
+            public void testIsAlwaysFalse() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/cast/isAlwaysFalse.kt");
+            }
+
+            @Test
             @TestMetadata("IsErasedAllowForDerivedWithOneSubstitutedAndOneSameGeneric.kt")
             public void testIsErasedAllowForDerivedWithOneSubstitutedAndOneSameGeneric() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/cast/IsErasedAllowForDerivedWithOneSubstitutedAndOneSameGeneric.kt");
@@ -3829,6 +3835,12 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
             @TestMetadata("kt15161.kt")
             public void testKt15161() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/cast/kt15161.kt");
+            }
+
+            @Test
+            @TestMetadata("kt47685.kt")
+            public void testKt47685() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/cast/kt47685.kt");
             }
 
             @Test
@@ -12486,6 +12498,12 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
             }
 
             @Test
+            @TestMetadata("kt47316.kt")
+            public void testKt47316() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inference/kt47316.kt");
+            }
+
+            @Test
             @TestMetadata("kt6175.kt")
             public void testKt6175() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/inference/kt6175.kt");
@@ -14168,6 +14186,72 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
                 @TestMetadata("twoTypeConstructors.kt")
                 public void testTwoTypeConstructors() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/recursiveTypes/twoTypeConstructors.kt");
+                }
+
+                @Nested
+                @TestMetadata("compiler/testData/diagnostics/tests/inference/recursiveTypes/selfTypes")
+                @TestDataPath("$PROJECT_ROOT")
+                public class SelfTypes {
+                    @Test
+                    public void testAllFilesPresentInSelfTypes() throws Exception {
+                        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/inference/recursiveTypes/selfTypes"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
+                    }
+
+                    @Nested
+                    @TestMetadata("compiler/testData/diagnostics/tests/inference/recursiveTypes/selfTypes/disabledInferenceOnSelfTypes")
+                    @TestDataPath("$PROJECT_ROOT")
+                    public class DisabledInferenceOnSelfTypes {
+                        @Test
+                        public void testAllFilesPresentInDisabledInferenceOnSelfTypes() throws Exception {
+                            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/inference/recursiveTypes/selfTypes/disabledInferenceOnSelfTypes"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
+                        }
+
+                        @Test
+                        @TestMetadata("basicInferenceForImplicitSelfType.kt")
+                        public void testBasicInferenceForImplicitSelfType() throws Exception {
+                            runTest("compiler/testData/diagnostics/tests/inference/recursiveTypes/selfTypes/disabledInferenceOnSelfTypes/basicInferenceForImplicitSelfType.kt");
+                        }
+
+                        @Test
+                        @TestMetadata("recursiveTypeWithTwoTypeParams.kt")
+                        public void testRecursiveTypeWithTwoTypeParams() throws Exception {
+                            runTest("compiler/testData/diagnostics/tests/inference/recursiveTypes/selfTypes/disabledInferenceOnSelfTypes/recursiveTypeWithTwoTypeParams.kt");
+                        }
+
+                        @Test
+                        @TestMetadata("writerAppenderExampleRecursive.kt")
+                        public void testWriterAppenderExampleRecursive() throws Exception {
+                            runTest("compiler/testData/diagnostics/tests/inference/recursiveTypes/selfTypes/disabledInferenceOnSelfTypes/writerAppenderExampleRecursive.kt");
+                        }
+                    }
+
+                    @Nested
+                    @TestMetadata("compiler/testData/diagnostics/tests/inference/recursiveTypes/selfTypes/enabledInferenceOnSelfTypes")
+                    @TestDataPath("$PROJECT_ROOT")
+                    public class EnabledInferenceOnSelfTypes {
+                        @Test
+                        public void testAllFilesPresentInEnabledInferenceOnSelfTypes() throws Exception {
+                            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/inference/recursiveTypes/selfTypes/enabledInferenceOnSelfTypes"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
+                        }
+
+                        @Test
+                        @TestMetadata("basicInferenceForImplicitSelfType.kt")
+                        public void testBasicInferenceForImplicitSelfType() throws Exception {
+                            runTest("compiler/testData/diagnostics/tests/inference/recursiveTypes/selfTypes/enabledInferenceOnSelfTypes/basicInferenceForImplicitSelfType.kt");
+                        }
+
+                        @Test
+                        @TestMetadata("recursiveTypeWithTwoTypeParams.kt")
+                        public void testRecursiveTypeWithTwoTypeParams() throws Exception {
+                            runTest("compiler/testData/diagnostics/tests/inference/recursiveTypes/selfTypes/enabledInferenceOnSelfTypes/recursiveTypeWithTwoTypeParams.kt");
+                        }
+
+                        @Test
+                        @TestMetadata("writerAppenderExampleRecursive.kt")
+                        public void testWriterAppenderExampleRecursive() throws Exception {
+                            runTest("compiler/testData/diagnostics/tests/inference/recursiveTypes/selfTypes/enabledInferenceOnSelfTypes/writerAppenderExampleRecursive.kt");
+                        }
+                    }
                 }
             }
 
@@ -30930,6 +31014,12 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
             public void testLackOfInvisibleSetterOfJavaClassInSamePackage() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/visibility/lackOfInvisibleSetterOfJavaClassInSamePackage.kt");
             }
+
+            @Test
+            @TestMetadata("protectedInternal.kt")
+            public void testProtectedInternal() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/visibility/protectedInternal.kt");
+            }
         }
 
         @Nested
@@ -34433,6 +34523,18 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
             @TestMetadata("errors.kt")
             public void testErrors() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/errors.kt");
+            }
+
+            @Test
+            @TestMetadata("experimentalAfterRelease.kt")
+            public void testExperimentalAfterRelease() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/experimentalAfterRelease.kt");
+            }
+
+            @Test
+            @TestMetadata("experimentalAnnotationOnConstructorProperty.kt")
+            public void testExperimentalAnnotationOnConstructorProperty() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/experimentalAnnotationOnConstructorProperty.kt");
             }
 
             @Test

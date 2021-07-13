@@ -528,7 +528,9 @@ object AbstractTypeChecker {
          * so if CapturedType(out Bar) is the same as a type of Foo's argument and Foo is a self type, then subtyping should return true.
          * If we don't handle this case separately, subtyping may not converge due to the nature of the capturing.
          */
-        if (subType is CapturedTypeMarker) {
+        val subTypeConstructor = subType.typeConstructor()
+        if (subType is CapturedTypeMarker
+            || (subTypeConstructor.isIntersection() && subTypeConstructor.supertypes().all { it is CapturedTypeMarker })) {
             val typeParameter =
                 context.typeSystemContext.getTypeParameterForArgumentInBaseIfItEqualToTarget(baseType = superType, targetType = subType)
             if (typeParameter != null && typeParameter.hasRecursiveBounds(superType.typeConstructor())) {
@@ -544,13 +546,15 @@ object AbstractTypeChecker {
         targetType: KotlinTypeMarker
     ): TypeParameterMarker? {
         for (i in 0 until baseType.argumentsCount()) {
-            val typeArgument = baseType.getArgument(i).takeIf { !it.isStarProjection() } ?: continue
+            val typeArgument = baseType.getArgument(i).takeIf { !it.isStarProjection() }?.getType() ?: continue
+            val areBothTypesCaptured =
+                typeArgument.lowerBoundIfFlexible().isCapturedType() && targetType.lowerBoundIfFlexible().isCapturedType()
 
-            if (typeArgument.getType() == targetType) {
+            if (typeArgument == targetType || (areBothTypesCaptured && typeArgument.typeConstructor() == targetType.typeConstructor())) {
                 return baseType.typeConstructor().getParameter(i)
             }
 
-            getTypeParameterForArgumentInBaseIfItEqualToTarget(typeArgument.getType(), targetType)?.let { return it }
+            getTypeParameterForArgumentInBaseIfItEqualToTarget(typeArgument, targetType)?.let { return it }
         }
 
         return null
