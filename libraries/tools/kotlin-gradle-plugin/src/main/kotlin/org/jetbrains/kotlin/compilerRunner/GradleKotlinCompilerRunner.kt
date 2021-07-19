@@ -11,10 +11,13 @@ import org.gradle.api.logging.Logger
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.bundling.AbstractArchiveTask
 import org.gradle.jvm.tasks.Jar
+import org.gradle.workers.WorkQueue
 import org.jetbrains.kotlin.cli.common.arguments.*
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.daemon.client.CompileServiceSession
 import org.jetbrains.kotlin.daemon.common.CompilerId
+import org.jetbrains.kotlin.daemon.common.configureDaemonJVMOptions
+import org.jetbrains.kotlin.daemon.common.filterExtractProps
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.dsl.multiplatformExtensionOrNull
 import org.jetbrains.kotlin.gradle.logging.kotlinDebug
@@ -58,7 +61,8 @@ is not assignable to 'org.gradle.api.tasks.TaskProvider'" exception
  */
 internal open class GradleCompilerRunner(
     protected val taskProvider: GradleCompileTaskProvider,
-    protected val jdkToolsJar: File?
+    protected val jdkToolsJar: File?,
+    protected val kotlinDaemonJvmArgs: List<String>?
 ) {
 
     internal val pathProvider = taskProvider.path.get()
@@ -82,14 +86,14 @@ internal open class GradleCompilerRunner(
         args: K2JVMCompilerArguments,
         environment: GradleCompilerEnvironment,
         jdkHome: File
-    ) {
+    ): WorkQueue? {
         args.freeArgs += sourcesToCompile.map { it.absolutePath }
         args.commonSources = commonSources.map { it.absolutePath }.toTypedArray()
         args.javaSourceRoots = javaSourceRoots.map { it.absolutePath }.toTypedArray()
         args.javaPackagePrefix = javaPackagePrefix
         if (args.jdkHome == null) args.jdkHome = jdkHome.absolutePath
         loggerProvider.kotlinInfo("Kotlin compilation 'jdkHome' argument: ${args.jdkHome}")
-        runCompilerAsync(KotlinCompilerClass.JVM, args, environment)
+        return runCompilerAsync(KotlinCompilerClass.JVM, args, environment)
     }
 
     /**
@@ -101,10 +105,10 @@ internal open class GradleCompilerRunner(
         kotlinCommonSources: List<File>,
         args: K2JSCompilerArguments,
         environment: GradleCompilerEnvironment
-    ) {
+    ): WorkQueue? {
         args.freeArgs += kotlinSources.map { it.absolutePath }
         args.commonSources = kotlinCommonSources.map { it.absolutePath }.toTypedArray()
-        runCompilerAsync(KotlinCompilerClass.JS, args, environment)
+        return runCompilerAsync(KotlinCompilerClass.JS, args, environment)
     }
 
     /**
@@ -115,16 +119,16 @@ internal open class GradleCompilerRunner(
         kotlinSources: List<File>,
         args: K2MetadataCompilerArguments,
         environment: GradleCompilerEnvironment
-    ) {
+    ): WorkQueue? {
         args.freeArgs += kotlinSources.map { it.absolutePath }
-        runCompilerAsync(KotlinCompilerClass.METADATA, args, environment)
+        return runCompilerAsync(KotlinCompilerClass.METADATA, args, environment)
     }
 
     private fun runCompilerAsync(
         compilerClassName: String,
         compilerArgs: CommonCompilerArguments,
         environment: GradleCompilerEnvironment
-    ) {
+    ): WorkQueue? {
         if (compilerArgs.version) {
             loggerProvider.lifecycle(
                 "Kotlin version " + loadCompilerVersion(environment.compilerClasspath) +
@@ -184,15 +188,17 @@ internal open class GradleCompilerRunner(
             taskPath = pathProvider,
             reportingSettings = environment.reportingSettings,
             kotlinScriptExtensions = environment.kotlinScriptExtensions,
-            allWarningsAsErrors = compilerArgs.allWarningsAsErrors
+            allWarningsAsErrors = compilerArgs.allWarningsAsErrors,
+            daemonJvmArgs = kotlinDaemonJvmArgs
         )
         TaskLoggers.put(pathProvider, loggerProvider)
-        runCompilerAsync(workArgs)
+        return runCompilerAsync(workArgs)
     }
 
-    protected open fun runCompilerAsync(workArgs: GradleKotlinCompilerWorkArguments) {
+    protected open fun runCompilerAsync(workArgs: GradleKotlinCompilerWorkArguments): WorkQueue? {
         val kotlinCompilerRunnable = GradleKotlinCompilerWork(workArgs)
         kotlinCompilerRunnable.run()
+        return null
     }
 
     companion object {
@@ -202,15 +208,27 @@ internal open class GradleCompilerRunner(
             sessionIsAliveFlagFile: File,
             compilerFullClasspath: List<File>,
             messageCollector: MessageCollector,
+            daemonJvmArgs: List<String>?,
             isDebugEnabled: Boolean
         ): CompileServiceSession? {
             val compilerId = CompilerId.makeCompilerId(compilerFullClasspath)
-            val additionalJvmParams = arrayListOf<String>()
+            val daemonJvmOptions = configureDaemonJVMOptions(
+                inheritMemoryLimits = true,
+                inheritOtherJvmOptions = false,
+                inheritAdditionalProperties = true
+            ).also { opts ->
+                if (!daemonJvmArgs.isNullOrEmpty()) {
+                    opts.jvmParams.addAll(
+                        daemonJvmArgs.filterExtractProps(opts.mappers, "", opts.restMapper)
+                    )
+                }
+            }
+
             return KotlinCompilerRunnerUtils.newDaemonConnection(
                 compilerId, clientIsAliveFlagFile, sessionIsAliveFlagFile,
                 messageCollector = messageCollector,
                 isDebugEnabled = isDebugEnabled,
-                additionalJvmParams = additionalJvmParams.toTypedArray()
+                daemonJVMOptions = daemonJvmOptions
             )
         }
 

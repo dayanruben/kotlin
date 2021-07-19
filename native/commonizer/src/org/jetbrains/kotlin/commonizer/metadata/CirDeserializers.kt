@@ -73,7 +73,7 @@ object CirDeserializers {
 
     private val ALWAYS_HAS_ANNOTATIONS: Flags = flagsOf(Flag.Common.HAS_ANNOTATIONS)
 
-    private fun typeParameter(source: KmTypeParameter, typeResolver: CirTypeResolver): CirTypeParameter = CirTypeParameter.create(
+    private fun typeParameter(source: KmTypeParameter, typeResolver: CirTypeResolver): CirTypeParameter = CirTypeParameter(
         annotations = annotations(ALWAYS_HAS_ANNOTATIONS, typeResolver, source::annotations),
         name = CirName.create(source.name),
         isReified = Flag.TypeParameter.IS_REIFIED(source.flags),
@@ -84,7 +84,7 @@ object CirDeserializers {
     private fun extensionReceiver(
         receiverParameterType: KmType,
         typeResolver: CirTypeResolver
-    ): CirExtensionReceiver = CirExtensionReceiver.create(
+    ): CirExtensionReceiver = CirExtensionReceiver(
         annotations = emptyList(), // TODO nowhere to read receiver annotations from, see KT-42490
         type = type(receiverParameterType, typeResolver)
     )
@@ -97,7 +97,7 @@ object CirDeserializers {
             )
         } else CirConstantValue.NullValue
 
-        return CirProperty.create(
+        return CirProperty(
             annotations = annotations(source.flags, typeResolver, source::annotations),
             name = name,
             typeParameters = source.typeParameters.compactMap { typeParameter(it, typeResolver) },
@@ -169,7 +169,7 @@ object CirDeserializers {
         }
 
     fun function(name: CirName, source: KmFunction, containingClass: CirContainingClass?, typeResolver: CirTypeResolver): CirFunction =
-        CirFunction.create(
+        CirFunction(
             annotations = annotations(source.flags, typeResolver, source::annotations),
             name = name,
             typeParameters = source.typeParameters.compactMap { typeParameter(it, typeResolver) },

@@ -37,7 +37,7 @@ class ClassicFrontend2IrConverter(
 
         val files = psiFiles.values.toList()
         val phaseConfig = configuration.get(CLIConfigurationKeys.PHASE_CONFIG) ?: PhaseConfig(jvmPhases)
-        val codegenFactory = JvmIrCodegenFactory(phaseConfig)
+        val codegenFactory = JvmIrCodegenFactory(configuration, phaseConfig)
         val state = GenerationState.Builder(
             project, ClassBuilderFactories.TEST, analysisResult.moduleDescriptor, analysisResult.bindingContext,
             files, configuration

@@ -10,24 +10,29 @@ import org.jetbrains.kotlin.commonizer.cir.CirProperty
 import org.jetbrains.kotlin.commonizer.cir.CirPropertyGetter
 import org.jetbrains.kotlin.commonizer.core.PropertyCommonizer.ConstCommonizationState.*
 import org.jetbrains.kotlin.commonizer.mergedtree.CirKnownClassifiers
+import org.jetbrains.kotlin.descriptors.Modality
 
 class PropertyCommonizer(classifiers: CirKnownClassifiers) : AbstractFunctionOrPropertyCommonizer<CirProperty>(classifiers) {
-    private val setter = PropertySetterCommonizer()
+    private val setter = PropertySetterCommonizer.asNullableCommonizer()
     private var isExternal = true
     private lateinit var constCommonizationState: ConstCommonizationState
 
     override fun commonizationResult(): CirProperty {
-        val setter = setter.result
+        val modality = modality.result
+
+        val setter = setter.result?.takeIf { setter ->
+            setter !== PropertySetterCommonizer.privateFallbackSetter || modality == Modality.FINAL
+        }
 
         val constCommonizationState = constCommonizationState
         val constCompileTimeInitializer = (constCommonizationState as? ConstSameValue)?.compileTimeInitializer
 
-        return CirProperty.create(
+        return CirProperty(
             annotations = emptyList(),
             name = name,
             typeParameters = typeParameters.result,
             visibility = visibility.result,
-            modality = modality.result,
+            modality = modality,
             containingClass = null, // does not matter
             isExternal = isExternal,
             extensionReceiver = extensionReceiver.result,

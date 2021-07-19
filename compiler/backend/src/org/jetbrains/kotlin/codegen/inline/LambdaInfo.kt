@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.codegen.inline
 
 import org.jetbrains.kotlin.codegen.AsmUtil
+import org.jetbrains.kotlin.codegen.coroutines.isCoroutineSuperClass
 import org.jetbrains.kotlin.resolve.jvm.AsmTypes.*
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.org.objectweb.asm.ClassReader
@@ -17,10 +18,6 @@ import org.jetbrains.org.objectweb.asm.tree.FieldInsnNode
 interface FunctionalArgument
 
 abstract class LambdaInfo : FunctionalArgument {
-    abstract val isBoundCallableReference: Boolean
-
-    abstract val isSuspend: Boolean
-
     abstract val lambdaClassType: Type
 
     abstract val invokeMethod: Method
@@ -38,11 +35,17 @@ abstract class LambdaInfo : FunctionalArgument {
 
     val reifiedTypeParametersUsages = ReifiedTypeParametersUsages()
 
-    open val hasDispatchReceiver = true
+    open val hasDispatchReceiver
+        get() = true
 
     fun addAllParameters(remapper: FieldRemapper): Parameters {
-        val builder = ParametersBuilder.initializeBuilderFrom(OBJECT_TYPE, invokeMethod.descriptor, this)
-
+        val builder = ParametersBuilder.newBuilder()
+        if (hasDispatchReceiver) {
+            builder.addThis(lambdaClassType, skipped = true).functionalArgument = this
+        }
+        for (type in Type.getArgumentTypes(invokeMethod.descriptor)) {
+            builder.addNextParameter(type, skipped = false)
+        }
         for (info in capturedVars) {
             val field = remapper.findField(FieldInsnNode(0, info.containingLambdaName, info.fieldName, ""))
                 ?: error("Captured field not found: " + info.containingLambdaName + "." + info.fieldName)
@@ -64,6 +67,7 @@ abstract class LambdaInfo : FunctionalArgument {
 
 object NonInlineableArgumentForInlineableParameterCalledInSuspend : FunctionalArgument
 object NonInlineableArgumentForInlineableSuspendParameter : FunctionalArgument
+object DefaultValueOfInlineParameter : FunctionalArgument
 
 abstract class ExpressionLambda : LambdaInfo() {
     fun generateLambdaBody(sourceCompiler: SourceCompilerForInline) {
@@ -72,67 +76,64 @@ abstract class ExpressionLambda : LambdaInfo() {
     }
 }
 
-abstract class DefaultLambda(
-    final override val lambdaClassType: Type,
-    capturedArgs: Array<Type>,
-    val offset: Int,
-    val needReification: Boolean,
-    sourceCompiler: SourceCompilerForInline
-) : LambdaInfo() {
-    final override val isSuspend
-        get() = false // TODO: it should probably be true sometimes, but it never was
-    final override val isBoundCallableReference: Boolean
-    final override val capturedVars: List<CapturedParamDesc>
+class DefaultLambda(info: ExtractedDefaultLambda, sourceCompiler: SourceCompilerForInline) : LambdaInfo() {
+    val isBoundCallableReference: Boolean
 
-    final override val invokeMethod: Method
+    override val lambdaClassType: Type = info.type
+    override val capturedVars: List<CapturedParamDesc>
+
+    override val invokeMethod: Method
         get() = Method(node.node.name, node.node.desc)
+
+    private val nullableAnyType = sourceCompiler.state.module.builtIns.nullableAnyType
+
+    override val invokeMethodParameters: List<KotlinType>
+        get() = List(invokeMethod.argumentTypes.size) { nullableAnyType }
+
+    override val invokeMethodReturnType: KotlinType
+        get() = nullableAnyType
 
     val originalBoundReceiverType: Type?
 
-    protected val isPropertyReference: Boolean
-    protected val isFunctionReference: Boolean
-
     init {
-        val classBytes = loadClass(sourceCompiler)
+        val classBytes =
+            sourceCompiler.state.inlineCache.classBytes.getOrPut(lambdaClassType.internalName) {
+                loadClassBytesByInternalName(sourceCompiler.state, lambdaClassType.internalName)
+            }
         val superName = ClassReader(classBytes).superName
-        isPropertyReference = superName in PROPERTY_REFERENCE_SUPER_CLASSES
-        isFunctionReference = superName == FUNCTION_REFERENCE.internalName || superName == FUNCTION_REFERENCE_IMPL.internalName
-
-        val constructorDescriptor = Type.getMethodDescriptor(Type.VOID_TYPE, *capturedArgs)
-        val constructor = getMethodNode(classBytes, "<init>", constructorDescriptor, lambdaClassType)?.node
-        assert(constructor != null || capturedArgs.isEmpty()) {
-            "Can't find non-default constructor <init>$constructorDescriptor for default lambda $lambdaClassType"
+        // TODO: suspend lambdas are their own continuations, so the body is pre-inlined into `invokeSuspend`
+        //   and thus can't be detangled from the state machine. To make them inlinable, this needs to be redesigned.
+        //   See `SuspendLambdaLowering`.
+        require(!sourceCompiler.state.languageVersionSettings.isCoroutineSuperClass(superName)) {
+            "suspend default lambda ${lambdaClassType.internalName} cannot be inlined; use a function reference instead"
         }
+
+        val constructorMethod = Method("<init>", Type.VOID_TYPE, info.capturedArgs)
+        val constructor = getMethodNode(classBytes, lambdaClassType, constructorMethod)?.node
+        assert(constructor != null || info.capturedArgs.isEmpty()) {
+            "can't find constructor '$constructorMethod' for default lambda '${lambdaClassType.internalName}'"
+        }
+
+        val isPropertyReference = superName in PROPERTY_REFERENCE_SUPER_CLASSES
+        val isReference = isPropertyReference ||
+                superName == FUNCTION_REFERENCE.internalName || superName == FUNCTION_REFERENCE_IMPL.internalName
         // This only works for primitives but not inline classes, since information about the Kotlin type of the bound
         // receiver is not present anywhere. This is why with JVM_IR the constructor argument of bound references
         // is already `Object`, and this field is never used.
         originalBoundReceiverType =
-            capturedArgs.singleOrNull()?.takeIf { (isFunctionReference || isPropertyReference) && AsmUtil.isPrimitive(it) }
+            info.capturedArgs.singleOrNull()?.takeIf { isReference && AsmUtil.isPrimitive(it) }
         capturedVars =
-            if (isFunctionReference || isPropertyReference)
-                capturedArgs.singleOrNull()?.let {
-                    listOf(capturedParamDesc(AsmUtil.RECEIVER_PARAMETER_NAME, AsmUtil.boxType(it), isSuspend = false))
+            if (isReference)
+                info.capturedArgs.singleOrNull()?.let {
+                    // See `InlinedLambdaRemapper`
+                    listOf(capturedParamDesc(AsmUtil.RECEIVER_PARAMETER_NAME, OBJECT_TYPE, isSuspend = false))
                 } ?: emptyList()
             else
                 constructor?.findCapturedFieldAssignmentInstructions()?.map { fieldNode ->
                     capturedParamDesc(fieldNode.name, Type.getType(fieldNode.desc), isSuspend = false)
                 }?.toList() ?: emptyList()
-        isBoundCallableReference = (isFunctionReference || isPropertyReference) && capturedVars.isNotEmpty()
-    }
-
-    private fun loadClass(sourceCompiler: SourceCompilerForInline): ByteArray =
-        sourceCompiler.state.inlineCache.classBytes.getOrPut(lambdaClassType.internalName) {
-            loadClassBytesByInternalName(sourceCompiler.state, lambdaClassType.internalName)
-        }
-
-    // Returns whether the loaded invoke is erased, i.e. the name equals the fallback and all types are `Object`.
-    protected fun loadInvoke(sourceCompiler: SourceCompilerForInline, erasedName: String, actualMethod: Method): Boolean {
-        val classBytes = loadClass(sourceCompiler)
-        // TODO: `signatureAmbiguity = true` ignores the argument types from `invokeMethod` and only looks at the count.
-        node = getMethodNode(classBytes, actualMethod.name, actualMethod.descriptor, lambdaClassType, signatureAmbiguity = true)
-            ?: getMethodNode(classBytes, erasedName, actualMethod.descriptor, lambdaClassType, signatureAmbiguity = true)
-                    ?: error("Can't find method '$actualMethod' in '${lambdaClassType.internalName}'")
-        return invokeMethod.run { name == erasedName && returnType == OBJECT_TYPE && argumentTypes.all { it == OBJECT_TYPE } }
+        isBoundCallableReference = isReference && capturedVars.isNotEmpty()
+        node = loadDefaultLambdaBody(classBytes, lambdaClassType, isPropertyReference)
     }
 
     private companion object {

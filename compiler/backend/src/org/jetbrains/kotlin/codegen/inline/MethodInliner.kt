@@ -92,10 +92,6 @@ class MethodInliner(
     ): InlineResult {
         //analyze body
         var transformedNode = markPlacesForInlineAndRemoveInlinable(node, returnLabels, finallyDeepShift)
-        if (inliningContext.isInliningLambda && isDefaultLambdaWithReification(inliningContext.lambdaInfo!!)) {
-            //TODO maybe move reification in one place
-            inliningContext.root.inlineMethodReifier.reifyInstructions(transformedNode)
-        }
 
         //substitute returns with "goto end" instruction to keep non local returns in lambdas
         val end = linkedLabel()
@@ -232,7 +228,7 @@ class MethodInliner(
                     val expectedParameters = info.invokeMethod.argumentTypes
                     val expectedKotlinParameters = info.invokeMethodParameters
                     val argumentCount = Type.getArgumentTypes(desc).size.let {
-                        if (!inliningContext.root.state.isIrBackend && info.isSuspend && it < expectedParameters.size) {
+                        if (info is PsiExpressionLambda && info.invokeMethodDescriptor.isSuspend && it < expectedParameters.size) {
                             // Inlining suspend lambda into a function that takes a non-suspend lambda.
                             // In the IR backend, this cannot happen as inline lambdas are not lowered.
                             addFakeContinuationMarker(this)
@@ -321,10 +317,11 @@ class MethodInliner(
                     } else {
                         super.visitMethodInsn(opcode, owner, name, desc, itf)
                     }
-                } else if ((!inliningContext.isInliningLambda || isDefaultLambdaWithReification(inliningContext.lambdaInfo!!)) &&
-                    ReifiedTypeInliner.isNeedClassReificationMarker(MethodInsnNode(opcode, owner, name, desc, false))
-                ) {
-                    //we shouldn't process here content of inlining lambda it should be reified at external level except default lambdas
+                } else if (ReifiedTypeInliner.isNeedClassReificationMarker(MethodInsnNode(opcode, owner, name, desc, false))) {
+                    // If objects are reified, the marker will be recreated by `handleAnonymousObjectRegeneration` above.
+                    if (!inliningContext.shouldReifyTypeParametersInObjects) {
+                        super.visitMethodInsn(opcode, owner, name, desc, itf)
+                    }
                 } else {
                     super.visitMethodInsn(opcode, owner, name, desc, itf)
                 }
@@ -348,9 +345,6 @@ class MethodInliner(
         surroundInvokesWithSuspendMarkersIfNeeded(resultNode)
         return resultNode
     }
-
-    private fun isDefaultLambdaWithReification(lambdaInfo: LambdaInfo) =
-        lambdaInfo is DefaultLambda && lambdaInfo.needReification
 
     private fun prepareNode(node: MethodNode, finallyDeepShift: Int): MethodNode {
         node.instructions.resetLabels()
@@ -381,10 +375,7 @@ class MethodInliner(
             private fun getNewIndex(`var`: Int): Int {
                 val lambdaInfo = inliningContext.lambdaInfo
                 if (reorderIrLambdaParameters && lambdaInfo is IrExpressionLambda) {
-                    val extensionSize =
-                        if (lambdaInfo.isExtensionLambda && !lambdaInfo.isBoundCallableReference)
-                            lambdaInfo.invokeMethod.argumentTypes[0].size
-                        else 0
+                    val extensionSize = if (lambdaInfo.isExtensionLambda) lambdaInfo.invokeMethod.argumentTypes[0].size else 0
                     return when {
                         //                v-- extensionSize     v-- argsSizeOnStack
                         // |- extension -|- captured -|- real -|- locals -|    old descriptor
@@ -637,9 +628,8 @@ class MethodInliner(
     private fun replaceContinuationAccessesWithFakeContinuationsIfNeeded(processingNode: MethodNode) {
         // in ir backend inline suspend lambdas do not use ALOAD 0 to get continuation, since they are generated as static functions
         // instead they get continuation from parameter.
-        if (inliningContext.state.isIrBackend) return
         val lambdaInfo = inliningContext.lambdaInfo ?: return
-        if (!lambdaInfo.isSuspend) return
+        if (lambdaInfo !is PsiExpressionLambda || !lambdaInfo.invokeMethodDescriptor.isSuspend) return
         val sources = analyzeMethodNodeWithInterpreter(processingNode, Aload0Interpreter(processingNode))
         val cfg = ControlFlowGraph.build(processingNode)
         val aload0s = processingNode.instructions.asSequence().filter { it.opcode == Opcodes.ALOAD && it.safeAs<VarInsnNode>()?.`var` == 0 }

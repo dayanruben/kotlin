@@ -110,6 +110,10 @@ fun generateJUnit5CompilerTests(args: Array<String>) {
                 model("codegen/boxInline")
             }
 
+            testClass<AbstractIrSerializeCompileKotlinAgainstInlineKotlinTest> {
+                model("codegen/boxInline")
+            }
+
             testClass<AbstractJvmIrAgainstOldBoxInlineTest> {
                 model("codegen/boxInline")
             }
@@ -154,6 +158,20 @@ fun generateJUnit5CompilerTests(args: Array<String>) {
 
             testClass<AbstractIrInterpreterAfterFir2IrTest> {
                 model("ir/interpreter", excludeDirs = listOf("helpers"))
+            }
+        }
+
+        testGroup(testsRoot = "compiler/fir/fir2ir/tests-gen", testDataRoot = "compiler/fir/fir2ir/testData") {
+            testClass<AbstractFirBlackBoxCodegenTest>(
+                suiteTestClassName = "FirSpecificBlackBoxCodegenTestGenerated"
+            ) {
+                model("codegen/box")
+            }
+
+            testClass<AbstractFir2IrTextTest>(
+                suiteTestClassName = "Fir2IrSpecificTextTestGenerated"
+            ) {
+                model("ir/irText")
             }
         }
 

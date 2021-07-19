@@ -113,6 +113,7 @@ where advanced options include:
                              problems with parentheses in identifiers on certain platforms
   -Xscript-resolver-environment=<key=value[,]>
                              Script resolver environment in key-value pairs (the value could be quoted and escaped)
+  -Xserialize-ir             Save IR to metadata (EXPERIMENTAL)
   -Xsingle-module            Combine modules for source files and binary dependencies into a single module
   -Xskip-runtime-version-check Allow Kotlin runtime libraries of incompatible versions in the classpath
   -Xstrict-java-nullability-assertions
@@ -146,6 +147,7 @@ where advanced options include:
   -Xuse-type-table           Use type table in metadata serialization
   -Xallow-kotlin-package     Allow compiling code in package 'kotlin' and allow not requiring kotlin.stdlib in module-info
   -Xallow-result-return-type Allow compiling code when `kotlin.Result` is used as a return type
+  -Xbuiltins-from-sources    Compile builtIns from sources
   -Xcheck-phase-conditions   Check pre- and postconditions on phases
   -Xcheck-sticky-phase-conditions
                              Run sticky condition checks on subsequent phases as well. Implies -Xcheck-phase-conditions
@@ -160,7 +162,6 @@ where advanced options include:
   -Xdump-perf=<path>         Dump detailed performance statistics to the specified file
   -Xeffect-system            Enable experimental language feature: effect system
   -Xexpect-actual-linker     Enable experimental expect/actual linker
-  -Xexperimental=<fq.name>   Enable and propagate usages of experimental API for marker annotation with the given fully qualified name
   -Xexplicit-api={strict|warning|disable}
                              Force compiler to report errors on all public API declarations without explicit visibility or return type.
                              Use 'warning' level to issue warnings instead of errors.
@@ -204,4 +205,3 @@ where advanced options include:
 
 Advanced options are non-standard and may be changed or removed without any notice.
 OK
-

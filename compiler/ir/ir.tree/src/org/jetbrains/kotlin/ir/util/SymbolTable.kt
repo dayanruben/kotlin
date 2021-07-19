@@ -77,6 +77,7 @@ class SymbolTable(
         abstract fun get(d: D): S?
         abstract fun set(s: S)
         abstract fun get(sig: IdSignature): S?
+        abstract fun set(sig: IdSignature, s: S)
 
         inline fun declare(d: D, createSymbol: () -> S, createOwner: (S) -> B): B {
             synchronized(lock) {
@@ -155,6 +156,27 @@ class SymbolTable(
             }
         }
 
+        inline fun declareIfNotExists(sig: IdSignature, d: D?, createSymbol: () -> S, createOwner: (S) -> B): B {
+            synchronized(lock) {
+                @Suppress("UNCHECKED_CAST")
+                val d0 = d?.original as D
+                assert(d0 === d) {
+                    "Non-original descriptor in declaration: $d\n\tExpected: $d0"
+                }
+                val existing = get(sig)
+                val symbol = if (existing == null) {
+                    val new = createSymbol()
+                    set(new)
+                    new
+                } else {
+                    if (!existing.isBound) unboundSymbols.remove(existing)
+                    existing
+                }
+                return if (symbol.isBound) symbol.owner else createOwner(symbol)
+            }
+        }
+
+
         inline fun referenced(d: D, orElse: () -> S): S {
             synchronized(lock) {
                 @Suppress("UNCHECKED_CAST")
@@ -217,6 +239,10 @@ class SymbolTable(
         }
 
         override fun get(sig: IdSignature): S? = idSigToSymbol[sig]
+
+        override fun set(sig: IdSignature, s: S) {
+            idSigToSymbol[sig] = s
+        }
     }
 
     private inner class EnumEntrySymbolTable : FlatSymbolTable<ClassDescriptor, IrEnumEntry, IrEnumEntrySymbol>() {
@@ -265,6 +291,10 @@ class SymbolTable(
 
             operator fun get(sig: IdSignature): S? = idSigToSymbol[sig] ?: parent?.get(sig)
 
+            operator fun set(sig: IdSignature, s: S) {
+                idSigToSymbol[sig] = s
+            }
+
             fun dumpTo(stringBuilder: StringBuilder): StringBuilder =
                 stringBuilder.also {
                     it.append("owner=")
@@ -294,6 +324,11 @@ class SymbolTable(
         override fun get(sig: IdSignature): S? {
             val scope = currentScope ?: return null
             return scope[sig]
+        }
+
+        override fun set(sig: IdSignature, s: S) {
+            val scope = currentScope ?: throw AssertionError("No active scope")
+            scope[sig] = s
         }
 
         inline fun declareLocal(d: D, createSymbol: () -> S, createOwner: (S) -> B): B {
@@ -468,6 +503,13 @@ class SymbolTable(
     override fun referenceClass(descriptor: ClassDescriptor) =
         classSymbolTable.referenced(descriptor) { createClassSymbol(descriptor) }
 
+    fun referenceClass(
+        sig: IdSignature,
+        symbolFactory: () -> IrClassSymbol,
+        classFactory: (IrClassSymbol) -> IrClass
+    ) =
+        classSymbolTable.referenced(sig) { declareClass(sig, symbolFactory, classFactory).symbol }
+
     fun referenceClassIfAny(sig: IdSignature): IrClassSymbol? =
         classSymbolTable.get(sig)
 
@@ -513,6 +555,10 @@ class SymbolTable(
             { createConstructorSymbol(descriptor) },
             constructorFactory
         )
+
+    fun declareConstructorWithSignature(sig: IdSignature, symbol: IrConstructorSymbol) {
+        constructorSymbolTable.set(sig, symbol)
+    }
 
     override fun referenceConstructor(descriptor: ClassConstructorDescriptor) =
         constructorSymbolTable.referenced(descriptor) { createConstructorSymbol(descriptor) }

@@ -94,7 +94,6 @@ abstract class AbstractKotlinCompileTool<T : CommonToolArguments>
         project.objects.fileCollection()
 
     @get:Classpath
-    @get:InputFiles
     internal val computedCompilerClasspath: FileCollection = project.objects.fileCollection().from({
         when {
             useFallbackCompilerSearch -> findKotlinCompilerClasspath(project)
@@ -167,7 +166,8 @@ abstract class GradleCompileTaskProvider @Inject constructor(
     )
 }
 
-abstract class AbstractKotlinCompile<T : CommonCompilerArguments> : AbstractKotlinCompileTool<T>() {
+abstract class AbstractKotlinCompile<T : CommonCompilerArguments> : AbstractKotlinCompileTool<T>(),
+    CompileUsingKotlinDaemonWithNormalization {
 
     open class Configurator<T : AbstractKotlinCompile<*>>(protected val compilation: KotlinCompilationData<*>) : TaskConfigurator<T> {
         override fun configure(task: T) {
@@ -197,6 +197,8 @@ abstract class AbstractKotlinCompile<T : CommonCompilerArguments> : AbstractKotl
                 project.layout.buildDirectory.dir("$KOTLIN_BUILD_DIR_NAME/${task.name}")
             ).disallowChanges()
             task.localStateDirectories.from(task.taskBuildDirectory).disallowChanges()
+
+            PropertiesProvider(task.project).mapKotlinDaemonProperties(task)
         }
     }
 
@@ -242,7 +244,6 @@ abstract class AbstractKotlinCompile<T : CommonCompilerArguments> : AbstractKotl
     protected val multiModuleICSettings: MultiModuleICSettings
         get() = MultiModuleICSettings(buildHistoryFile.get().asFile, useModuleDetection.get())
 
-    @get:InputFiles
     @get:Classpath
     open val pluginClasspath: ConfigurableFileCollection = objects.fileCollection()
 
@@ -271,6 +272,7 @@ abstract class AbstractKotlinCompile<T : CommonCompilerArguments> : AbstractKotl
     internal val sourceSetName: Property<String> = objects.property(String::class.java)
 
     @get:InputFiles
+    @get:IgnoreEmptyDirectories
     @get:PathSensitive(PathSensitivity.RELATIVE)
     internal val commonSourceSet: ConfigurableFileCollection = objects.fileCollection()
 
@@ -295,6 +297,8 @@ abstract class AbstractKotlinCompile<T : CommonCompilerArguments> : AbstractKotl
 
     private val kotlinLogger by lazy { GradleKotlinLogger(logger) }
 
+    abstract override val kotlinDaemonJvmArguments: ListProperty<String>
+
     @get:Internal
     protected val gradleCompileTaskProvider: Provider<GradleCompileTaskProvider> = objects
         .property(
@@ -305,7 +309,7 @@ abstract class AbstractKotlinCompile<T : CommonCompilerArguments> : AbstractKotl
     internal open val compilerRunner: Provider<GradleCompilerRunner> =
         objects.propertyWithConvention(
             gradleCompileTaskProvider.map {
-                GradleCompilerRunner(it, null)
+                GradleCompilerRunner(it, null, normalizedKotlinDaemonJvmArguments.orNull)
             }
         )
 
@@ -496,7 +500,8 @@ abstract class KotlinCompile @Inject constructor(
             objects.property(gradleCompileTaskProvider.map {
                 GradleCompilerRunner(
                     it,
-                    toolchain.currentJvmJdkToolsJar.orNull
+                    toolchain.currentJvmJdkToolsJar.orNull,
+                    normalizedKotlinDaemonJvmArguments.orNull
                 )
             })
         }
@@ -644,6 +649,7 @@ internal abstract class KotlinCompileWithWorkers @Inject constructor(
                 GradleCompilerRunnerWithWorkers(
                     it,
                     null,
+                    normalizedKotlinDaemonJvmArguments.orNull,
                     workerExecutor
                 ) as GradleCompilerRunner
             }
@@ -662,6 +668,7 @@ internal abstract class Kotlin2JsCompileWithWorkers @Inject constructor(
                 GradleCompilerRunnerWithWorkers(
                     it,
                     null,
+                    normalizedKotlinDaemonJvmArguments.orNull,
                     workerExecutor
                 ) as GradleCompilerRunner
             }
@@ -679,6 +686,7 @@ internal abstract class KotlinCompileCommonWithWorkers @Inject constructor(
                 GradleCompilerRunnerWithWorkers(
                     it,
                     null,
+                    normalizedKotlinDaemonJvmArguments.orNull,
                     workerExecutor
                 ) as GradleCompilerRunner
             }
@@ -799,6 +807,7 @@ abstract class Kotlin2JsCompile @Inject constructor(
     override fun getSourceRoots() = SourceRoots.KotlinOnly.create(getSource(), sourceFilesExtensions.get())
 
     @get:InputFiles
+    @get:IgnoreEmptyDirectories
     @get:Optional
     @get:PathSensitive(PathSensitivity.RELATIVE)
     internal val friendDependencies: FileCollection = objectFactory
@@ -813,6 +822,7 @@ abstract class Kotlin2JsCompile @Inject constructor(
 
     @Suppress("unused")
     @get:InputFiles
+    @get:IgnoreEmptyDirectories
     @get:Optional
     @get:PathSensitive(PathSensitivity.RELATIVE)
     internal val sourceMapBaseDirs: FileCollection?
@@ -927,7 +937,6 @@ abstract class Kotlin2JsCompile @Inject constructor(
 }
 
 data class KotlinCompilerPluginData(
-    @get:InputFiles
     @get:Classpath
     val classpath: FileCollection,
 
@@ -945,6 +954,7 @@ data class KotlinCompilerPluginData(
         val inputs: Map<String, String>,
 
         @get:InputFiles
+        @get:IgnoreEmptyDirectories
         @get:PathSensitive(PathSensitivity.RELATIVE)
         val inputFiles: Set<File>,
 

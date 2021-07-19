@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.fir.expressions.builder.*
 import org.jetbrains.kotlin.fir.expressions.impl.FirSingleExpressionBlock
 import org.jetbrains.kotlin.fir.references.builder.*
 import org.jetbrains.kotlin.fir.scopes.FirScopeProvider
+import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.builder.*
@@ -48,23 +49,30 @@ import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
 
 open class RawFirBuilder(
-    session: FirSession, val baseScopeProvider: FirScopeProvider, builderMode: RawFirBuilderMode = RawFirBuilderMode.NORMAL
+    session: FirSession,
+    val baseScopeProvider: FirScopeProvider,
+    private val psiMode: PsiHandlingMode,
+    bodyBuildingMode: BodyBuildingMode = BodyBuildingMode.NORMAL
 ) : BaseFirBuilder<PsiElement>(session) {
 
-    private val stubMode get() = mode == RawFirBuilderMode.STUBS
+    @Deprecated("Please replace with primary constructor call")
+    constructor(session: FirSession, baseScopeProvider: FirScopeProvider, mode: BodyBuildingMode = BodyBuildingMode.NORMAL) :
+            this(session, baseScopeProvider, psiMode = PsiHandlingMode.IDE, bodyBuildingMode = mode)
+
+    private val stubMode get() = mode == BodyBuildingMode.STUBS
 
     protected open fun bindFunctionTarget(target: FirFunctionTarget, function: FirFunction) = target.bind(function)
 
-    var mode: RawFirBuilderMode = builderMode
+    var mode: BodyBuildingMode = bodyBuildingMode
         private set
 
     private inline fun <T> disabledLazyMode(body: () -> T): T {
-        if (mode != RawFirBuilderMode.LAZY_BODIES) return body()
+        if (mode != BodyBuildingMode.LAZY_BODIES) return body()
         return try {
-            mode = RawFirBuilderMode.NORMAL
+            mode = BodyBuildingMode.NORMAL
             body()
         } finally {
-            mode = RawFirBuilderMode.LAZY_BODIES
+            mode = BodyBuildingMode.LAZY_BODIES
         }
     }
 
@@ -289,7 +297,7 @@ open class RawFirBuilder(
             when {
                 !hasBody() ->
                     null to null
-                mode == RawFirBuilderMode.LAZY_BODIES -> {
+                mode == BodyBuildingMode.LAZY_BODIES -> {
                     val block = buildLazyBlock {
                         source = bodyExpression?.toFirSourceElement()
                             ?: error("hasBody() == true but body is null")
@@ -525,16 +533,53 @@ open class RawFirBuilder(
             extractAnnotationsTo(container.annotations)
         }
 
-        private fun KtTypeParameterListOwner.extractTypeParametersTo(container: FirTypeParameterRefsOwnerBuilder) {
+        private fun KtTypeParameterListOwner.extractTypeParametersTo(
+            container: FirTypeParameterRefsOwnerBuilder,
+            declarationSymbol: FirBasedSymbol<*>
+        ) {
             for (typeParameter in typeParameters) {
-                container.typeParameters += typeParameter.convert<FirTypeParameter>()
+                container.typeParameters += extractTypeParameter(typeParameter, declarationSymbol)
             }
         }
 
-        private fun KtTypeParameterListOwner.extractTypeParametersTo(container: FirTypeParametersOwnerBuilder) {
+        private fun KtTypeParameterListOwner.extractTypeParametersTo(
+            container: FirTypeParametersOwnerBuilder,
+            declarationSymbol: FirBasedSymbol<*>
+        ) {
             for (typeParameter in typeParameters) {
-                container.typeParameters += typeParameter.convert<FirTypeParameter>()
+                container.typeParameters += extractTypeParameter(typeParameter, declarationSymbol)
             }
+        }
+
+        private fun extractTypeParameter(parameter: KtTypeParameter, declarationSymbol: FirBasedSymbol<*>): FirTypeParameter {
+            val parameterName = parameter.nameAsSafeName
+            return buildTypeParameter {
+                source = parameter.toFirSourceElement()
+                moduleData = baseModuleData
+                origin = FirDeclarationOrigin.Source
+                name = parameterName
+                symbol = FirTypeParameterSymbol()
+                containingDeclarationSymbol = declarationSymbol
+                variance = parameter.variance
+                isReified = parameter.hasModifier(REIFIED_KEYWORD)
+                parameter.extractAnnotationsTo(this)
+                val extendsBound = parameter.extendsBound
+                if (extendsBound != null) {
+                    bounds += extendsBound.convert<FirTypeRef>()
+                }
+                val owner = parameter.getStrictParentOfType<KtTypeParameterListOwner>() ?: return@buildTypeParameter
+                for (typeConstraint in owner.typeConstraints) {
+                    val subjectName = typeConstraint.subjectTypeParameterName?.getReferencedNameAsName()
+                    if (subjectName == parameterName) {
+                        bounds += typeConstraint.boundTypeReference.toFirOrErrorType()
+                    }
+                }
+                addDefaultBoundIfNecessary()
+            }
+        }
+
+        override fun visitTypeParameter(parameter: KtTypeParameter, data: Unit?): FirElement {
+            throw AssertionError("KtTypeParameter should be process via extractTypeParameter")
         }
 
         private fun <T> KtTypeParameterListOwner.fillDanglingConstraintsTo(to: T) where T : FirDeclaration, T : FirTypeParameterRefsOwner {
@@ -734,7 +779,7 @@ open class RawFirBuilder(
         }
 
         override fun visitKtFile(file: KtFile, data: Unit): FirElement {
-            context.packageFqName = file.packageFqName
+            context.packageFqName = if (psiMode == PsiHandlingMode.COMPILER) file.packageFqNameByTree else file.packageFqName
             return buildFile {
                 source = file.toFirSourceElement()
                 moduleData = baseModuleData
@@ -883,7 +928,7 @@ open class RawFirBuilder(
                         symbol = FirRegularClassSymbol(context.currentClassId)
 
                         classOrObject.extractAnnotationsTo(this)
-                        classOrObject.extractTypeParametersTo(this)
+                        classOrObject.extractTypeParametersTo(this, symbol)
 
                         context.applyToActualCapturedTypeParameters(true) {
                             typeParameters += buildOuterClassTypeParameterRef { symbol = it }
@@ -1025,7 +1070,7 @@ open class RawFirBuilder(
                     symbol = FirTypeAliasSymbol(context.currentClassId)
                     expandedTypeRef = typeAlias.getTypeReference().toFirOrErrorType()
                     typeAlias.extractAnnotationsTo(this)
-                    typeAlias.extractTypeParametersTo(this)
+                    typeAlias.extractTypeParametersTo(this, symbol)
                 }
             }
         }
@@ -1083,7 +1128,7 @@ open class RawFirBuilder(
                 context.firFunctionTargets += target
                 function.extractAnnotationsTo(this)
                 if (this is FirSimpleFunctionBuilder) {
-                    function.extractTypeParametersTo(this)
+                    function.extractTypeParametersTo(this, symbol)
                 }
                 for (valueParameter in function.valueParameters) {
                     valueParameters += valueParameter.convert<FirValueParameter>()
@@ -1317,10 +1362,10 @@ open class RawFirBuilder(
             val isVar = isVar
             val propertyInitializer = when {
                 !hasInitializer() -> null
-                mode == RawFirBuilderMode.LAZY_BODIES -> buildLazyExpression {
+                mode == BodyBuildingMode.LAZY_BODIES -> buildLazyExpression {
                     source = initializer?.toFirSourceElement()
                 }
-                mode == RawFirBuilderMode.STUBS -> buildExpressionStub()
+                mode == BodyBuildingMode.STUBS -> buildExpressionStub()
                 else -> initializer.toFirExpression("Should have initializer")
 
             }
@@ -1366,16 +1411,16 @@ open class RawFirBuilder(
                     receiverTypeRef = receiverTypeReference.convertSafe()
                     symbol = FirPropertySymbol(callableIdForName(propertyName))
                     dispatchReceiverType = currentDispatchReceiverType()
-                    extractTypeParametersTo(this)
+                    extractTypeParametersTo(this, symbol)
                     withCapturedTypeParameters(true, this.typeParameters) {
                         val delegateBuilder = if (hasDelegate()) {
                             FirWrappedDelegateExpressionBuilder().apply {
                                 source =
                                     if (stubMode) null else delegateExpression?.toFirSourceElement(FirFakeSourceElementKind.WrappedDelegate)
                                 expression = when (mode) {
-                                    RawFirBuilderMode.NORMAL -> delegateExpression.toFirExpression("Should have delegate")
-                                    RawFirBuilderMode.STUBS -> buildExpressionStub()
-                                    RawFirBuilderMode.LAZY_BODIES -> buildLazyExpression {
+                                    BodyBuildingMode.NORMAL -> delegateExpression.toFirExpression("Should have delegate")
+                                    BodyBuildingMode.STUBS -> buildExpressionStub()
+                                    BodyBuildingMode.LAZY_BODIES -> buildLazyExpression {
                                         source = delegateExpression!!.toFirSourceElement()
                                     }
                                 }
@@ -1482,8 +1527,9 @@ open class RawFirBuilder(
 
                             do {
                                 val firQualifier = FirQualifierPartImpl(
+                                    referenceExpression!!.toFirSourceElement(),
                                     referenceExpression!!.getReferencedNameAsName(),
-                                    FirTypeArgumentListImpl(source).apply {
+                                    FirTypeArgumentListImpl(ktQualifier?.typeArgumentList?.toFirPsiSourceElement() ?: source).apply {
                                         for (typeArgument in ktQualifier!!.typeArguments) {
                                             typeArguments += typeArgument.convert<FirTypeProjection>()
                                         }
@@ -1546,32 +1592,6 @@ open class RawFirBuilder(
                     source = (annotationEntry.typeReference?.typeElement as? KtUserType)?.referenceExpression?.toFirSourceElement()
                     this.name = name
                 }
-            }
-        }
-
-        override fun visitTypeParameter(parameter: KtTypeParameter, data: Unit): FirElement {
-            val parameterName = parameter.nameAsSafeName
-            return buildTypeParameter {
-                source = parameter.toFirSourceElement()
-                moduleData = baseModuleData
-                origin = FirDeclarationOrigin.Source
-                name = parameterName
-                symbol = FirTypeParameterSymbol()
-                variance = parameter.variance
-                isReified = parameter.hasModifier(REIFIED_KEYWORD)
-                parameter.extractAnnotationsTo(this)
-                val extendsBound = parameter.extendsBound
-                if (extendsBound != null) {
-                    bounds += extendsBound.convert<FirTypeRef>()
-                }
-                val owner = parameter.getStrictParentOfType<KtTypeParameterListOwner>() ?: return@buildTypeParameter
-                for (typeConstraint in owner.typeConstraints) {
-                    val subjectName = typeConstraint.subjectTypeParameterName?.getReferencedNameAsName()
-                    if (subjectName == parameterName) {
-                        bounds += typeConstraint.boundTypeReference.toFirOrErrorType()
-                    }
-                }
-                addDefaultBoundIfNecessary()
             }
         }
 
@@ -2284,7 +2304,7 @@ open class RawFirBuilder(
     }
 }
 
-enum class RawFirBuilderMode {
+enum class BodyBuildingMode {
     /**
      * Build every expression and every body
      */
@@ -2302,10 +2322,25 @@ enum class RawFirBuilderMode {
     LAZY_BODIES;
 
     companion object {
-        fun lazyBodies(lazyBodies: Boolean): RawFirBuilderMode =
+        fun lazyBodies(lazyBodies: Boolean): BodyBuildingMode =
             if (lazyBodies) LAZY_BODIES else NORMAL
 
-        fun stubs(stubs: Boolean): RawFirBuilderMode =
+        fun stubs(stubs: Boolean): BodyBuildingMode =
             if (stubs) STUBS else NORMAL
     }
+}
+
+@Deprecated("Please replace with BodyBuildingMode")
+typealias RawFirBuilderMode = BodyBuildingMode
+
+enum class PsiHandlingMode {
+    /**
+     * Do not build any stubs while handling PSI
+     */
+    COMPILER,
+
+    /**
+     * Build stubs if possible while handling PSI
+     */
+    IDE;
 }

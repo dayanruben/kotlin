@@ -11,10 +11,10 @@ import org.jetbrains.kotlin.backend.wasm.lower.wasmSignature
 import org.jetbrains.kotlin.backend.wasm.utils.*
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.backend.js.utils.realOverrideTarget
 import org.jetbrains.kotlin.ir.declarations.*
-import org.jetbrains.kotlin.ir.descriptors.IrBuiltIns
 import org.jetbrains.kotlin.ir.expressions.IrBlockBody
 import org.jetbrains.kotlin.ir.expressions.IrExpressionBody
 import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
@@ -211,7 +211,7 @@ class DeclarationGenerator(val context: WasmModuleCodegenContext) : IrElementVis
 
             context.defineGcType(symbol, structType)
 
-            var depth = 2
+            var depth = 0
             val metadata = context.getClassMetadata(symbol)
             var subMetadata = metadata
             while (true) {
@@ -222,22 +222,21 @@ class DeclarationGenerator(val context: WasmModuleCodegenContext) : IrElementVis
             val initBody = mutableListOf<WasmInstr>()
             val wasmExpressionGenerator = WasmIrExpressionBuilder(initBody)
 
+            val wasmGcType = context.referenceGcType(symbol)
             val superClass = metadata.superClass
             if (superClass != null) {
                 val superRTT = context.referenceClassRTT(superClass.klass.symbol)
                 wasmExpressionGenerator.buildGetGlobal(superRTT)
+                wasmExpressionGenerator.buildRttSub(wasmGcType)
             } else {
-                wasmExpressionGenerator.buildRttCanon(WasmRefType(WasmHeapType.Simple.Eq))
+                wasmExpressionGenerator.buildRttCanon(wasmGcType)
             }
 
-            wasmExpressionGenerator.buildRttSub(
-                WasmRefType(WasmHeapType.Type(WasmSymbol(structType)))
-            )
 
             val rtt = WasmGlobal(
                 name = "rtt_of_$nameStr",
                 isMutable = false,
-                type = WasmRtt(depth, WasmHeapType.Type(WasmSymbol(structType))),
+                type = WasmRtt(depth, WasmSymbol(structType)),
                 init = initBody
             )
 

@@ -21,10 +21,7 @@ import org.jetbrains.kotlin.fir.expressions.FirStatement
 import org.jetbrains.kotlin.fir.extensions.*
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.resolve.fqName
-import org.jetbrains.kotlin.fir.resolve.transformers.FirAbstractPhaseTransformer
-import org.jetbrains.kotlin.fir.resolve.transformers.FirImportResolveTransformer
-import org.jetbrains.kotlin.fir.resolve.transformers.FirSpecificTypeResolverTransformer
-import org.jetbrains.kotlin.fir.resolve.transformers.FirTransformerBasedResolveProcessor
+import org.jetbrains.kotlin.fir.resolve.transformers.*
 import org.jetbrains.kotlin.name.FqName
 
 class FirPluginAnnotationsResolveProcessor(session: FirSession, scopeSession: ScopeSession) : FirTransformerBasedResolveProcessor(session, scopeSession) {
@@ -93,6 +90,7 @@ private class FirAnnotationResolveTransformer(
     )
 
     private var owners: PersistentList<FirAnnotatedDeclaration> = persistentListOf()
+    private val classDeclarationsStack = ArrayDeque<FirRegularClass>()
 
     override fun beforeChildren(declaration: FirAnnotatedDeclaration): PersistentList<FirAnnotatedDeclaration> {
         val current = owners
@@ -109,18 +107,23 @@ private class FirAnnotationResolveTransformer(
         annotationCall: FirAnnotationCall,
         data: Multimap<AnnotationFqn, FirRegularClass>
     ): FirStatement {
-        return annotationCall.transformAnnotationTypeRef(typeResolverTransformer, scope)
+        return annotationCall.transformAnnotationTypeRef(
+            typeResolverTransformer,
+            ScopeClassDeclaration(scope, classDeclarationsStack.lastOrNull())
+        )
     }
 
     override fun transformRegularClass(
         regularClass: FirRegularClass,
         data: Multimap<AnnotationFqn, FirRegularClass>
     ): FirStatement {
-        return super.transformRegularClass(regularClass, data).also {
-            if (regularClass.classKind == ClassKind.ANNOTATION_CLASS && metaAnnotations.isNotEmpty()) {
-                val annotations = regularClass.annotations.mapNotNull { it.fqName(session) }
-                for (annotation in annotations.filter { it in metaAnnotations }) {
-                    data.put(annotation, regularClass)
+        withClassDeclarationCleanup(classDeclarationsStack, classDeclarationsStack.last()) {
+            return super.transformRegularClass(regularClass, data).also {
+                if (regularClass.classKind == ClassKind.ANNOTATION_CLASS && metaAnnotations.isNotEmpty()) {
+                    val annotations = regularClass.annotations.mapNotNull { it.fqName(session) }
+                    for (annotation in annotations.filter { it in metaAnnotations }) {
+                        data.put(annotation, regularClass)
+                    }
                 }
             }
         }

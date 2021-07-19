@@ -6,11 +6,7 @@
 package org.jetbrains.kotlin.backend.jvm.ir
 
 import org.jetbrains.kotlin.backend.common.ir.ir2string
-import org.jetbrains.kotlin.backend.common.lower.IrLoweringContext
-import org.jetbrains.kotlin.backend.jvm.JvmBackendContext
-import org.jetbrains.kotlin.backend.jvm.JvmCachedDeclarations
-import org.jetbrains.kotlin.backend.jvm.JvmLoweredDeclarationOrigin
-import org.jetbrains.kotlin.backend.jvm.JvmSymbols
+import org.jetbrains.kotlin.backend.jvm.*
 import org.jetbrains.kotlin.backend.jvm.codegen.isInlineOnly
 import org.jetbrains.kotlin.backend.jvm.codegen.isJvmInterface
 import org.jetbrains.kotlin.backend.jvm.codegen.representativeUpperBound
@@ -21,15 +17,16 @@ import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.deserialization.PLATFORM_DEPENDENT_ANNOTATION_FQ_NAME
+import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.PsiIrFileEntry
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.IrBuilderWithScope
+import org.jetbrains.kotlin.ir.builders.IrGeneratorContextBase
 import org.jetbrains.kotlin.ir.builders.Scope
 import org.jetbrains.kotlin.ir.builders.declarations.buildProperty
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.declarations.lazy.IrLazyClass
-import org.jetbrains.kotlin.ir.descriptors.IrBuiltIns
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
@@ -194,7 +191,7 @@ class JvmIrBuilder(
     startOffset: Int = UNDEFINED_OFFSET,
     endOffset: Int = UNDEFINED_OFFSET
 ) : IrBuilderWithScope(
-    IrLoweringContext(backendContext),
+    IrGeneratorContextBase(backendContext.irBuiltIns),
     Scope(symbol),
     startOffset,
     endOffset
@@ -232,7 +229,7 @@ fun IrExpression.isSmartcastFromHigherThanNullable(context: JvmBackendContext): 
 }
 
 fun IrElement.replaceThisByStaticReference(
-    cachedDeclarations: JvmCachedDeclarations,
+    cachedFields: CachedFieldsForObjectInstances,
     irClass: IrClass,
     oldThisReceiverParameter: IrValueParameter
 ) {
@@ -242,7 +239,7 @@ fun IrElement.replaceThisByStaticReference(
                 IrGetFieldImpl(
                     expression.startOffset,
                     expression.endOffset,
-                    cachedDeclarations.getPrivateFieldForObjectInstance(irClass).symbol,
+                    cachedFields.getPrivateFieldForObjectInstance(irClass).symbol,
                     irClass.defaultType
                 )
             } else super.visitGetValue(expression)

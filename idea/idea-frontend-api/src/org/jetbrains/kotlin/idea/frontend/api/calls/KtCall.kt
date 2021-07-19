@@ -7,7 +7,9 @@ package org.jetbrains.kotlin.idea.frontend.api.calls
 
 import org.jetbrains.kotlin.idea.frontend.api.diagnostics.KtDiagnostic
 import org.jetbrains.kotlin.idea.frontend.api.symbols.KtFunctionLikeSymbol
+import org.jetbrains.kotlin.idea.frontend.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.idea.frontend.api.symbols.KtVariableLikeSymbol
+import org.jetbrains.kotlin.psi.KtValueArgument
 
 /**
  * Represents direct or indirect (via invoke) function call from Kotlin code
@@ -54,11 +56,49 @@ public class KtVariableWithInvokeFunctionCall(
 ) : KtDeclaredFunctionCall()
 
 /**
+ * Represents a direct function call with arguments
+ */
+public sealed class KtCallWithArguments : KtDeclaredFunctionCall() {
+    public abstract val argumentMapping: LinkedHashMap<KtValueArgument, KtValueParameterSymbol>
+}
+
+/**
  * Simple function call, e.g.,
  *
  * x.toString() // function call
  */
-public data class KtFunctionCall(override val targetFunction: KtCallTarget) : KtDeclaredFunctionCall()
+public class KtFunctionCall(
+    override val argumentMapping: LinkedHashMap<KtValueArgument, KtValueParameterSymbol>,
+    override val targetFunction: KtCallTarget
+) : KtCallWithArguments()
+
+/**
+ * Annotation call, e.g.,
+ *
+ * @Retention(AnnotationRetention.SOURCE) // annotation call
+ * annotation class Ann
+ */
+public class KtAnnotationCall(
+    override val argumentMapping: LinkedHashMap<KtValueArgument, KtValueParameterSymbol>,
+    override val targetFunction: KtCallTarget
+) : KtCallWithArguments()
+// TODO: Add other properties, e.g., useSiteTarget
+
+/**
+ * Delegated constructor call, e.g.,
+ *
+ * open class A(a: Int)
+ * class B(b: Int) : A(b) { // delegated constructor call (kind = SUPER_CALL)
+ *   constructor() : this(1) // delegated constructor call (kind = THIS_CALL)
+ * }
+ */
+public class KtDelegatedConstructorCall(
+    override val argumentMapping: LinkedHashMap<KtValueArgument, KtValueParameterSymbol>,
+    override val targetFunction: KtCallTarget,
+    public val kind: KtDelegatedConstructorCallKind
+) : KtCallWithArguments()
+
+public enum class KtDelegatedConstructorCallKind { SUPER_CALL, THIS_CALL }
 
 /**
  * Represents function(s) in which call was resolved,

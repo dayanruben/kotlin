@@ -77,6 +77,7 @@ abstract class KotlinJsIrLink @Inject constructor(
     private val buildDir = project.buildDir
 
     @get:SkipWhenEmpty
+    @get:IgnoreEmptyDirectories
     @get:InputDirectory
     @get:PathSensitive(PathSensitivity.RELATIVE)
     internal abstract val entryModule: DirectoryProperty
@@ -281,6 +282,23 @@ internal class CacheBuilder(
         if (file in visitedFiles) return
         val compilerArgs = compilerArgsFactory()
         kotlinOptions.copyFreeCompilerArgsToArgs(compilerArgs)
+        var prevIndex: Int? = null
+        compilerArgs.freeArgs = compilerArgs.freeArgs
+            .filterIndexed { index, arg ->
+                !listOf("-source-map-base-dirs", "-source-map-prefix").any {
+                    if (prevIndex != null) {
+                        prevIndex = null
+                        return@any true
+                    }
+                    if (arg.startsWith(it)) {
+                        prevIndex = index
+                        return@any true
+                    }
+
+                    false
+                }
+            }
+
         compilerArgs.freeArgs = compilerArgs.freeArgs
             .filterNot { arg ->
                 IGNORED_ARGS.any {
@@ -318,7 +336,7 @@ internal class CacheBuilder(
                 emptyList(),
                 compilerArgs,
                 environment
-            )
+            )?.await()
     }
 
     companion object {

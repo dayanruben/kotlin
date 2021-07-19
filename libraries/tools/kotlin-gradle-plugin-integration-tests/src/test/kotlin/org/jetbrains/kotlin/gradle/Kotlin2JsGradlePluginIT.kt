@@ -12,7 +12,10 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.plugin.KotlinJsCompilerType
 import org.jetbrains.kotlin.gradle.plugin.sources.METADATA_CONFIGURATION_NAME_SUFFIX
 import org.jetbrains.kotlin.gradle.targets.js.ir.KLIB_TYPE
-import org.jetbrains.kotlin.gradle.targets.js.npm.*
+import org.jetbrains.kotlin.gradle.targets.js.npm.NpmProject
+import org.jetbrains.kotlin.gradle.targets.js.npm.NpmProjectModules
+import org.jetbrains.kotlin.gradle.targets.js.npm.PackageJson
+import org.jetbrains.kotlin.gradle.targets.js.npm.fromSrcPackageJson
 import org.jetbrains.kotlin.gradle.tasks.USING_JS_INCREMENTAL_COMPILATION_MESSAGE
 import org.jetbrains.kotlin.gradle.tasks.USING_JS_IR_BACKEND_MESSAGE
 import org.jetbrains.kotlin.gradle.util.*
@@ -119,6 +122,26 @@ class Kotlin2JsIrGradlePluginIT : AbstractKotlin2JsGradlePluginIT(true) {
                 val libAsyncVersion = asyncVersion("build/js/node_modules/lib2", "async")
                 assertEquals("2.6.2", libAsyncVersion)
             }
+        }
+    }
+
+    @Test
+    fun testJsIrIncrementalInParallel() = with(Project("kotlin-js-browser-project")) {
+        setupWorkingDir()
+        gradleBuildScript().modify(::transformBuildScriptWithPluginsDsl)
+        gradleSettingsScript().modify(::transformBuildScriptWithPluginsDsl)
+        gradleProperties().appendText("\nkotlin.incremental.js.ir=true")
+        gradleProperties().appendText("\norg.gradle.parallel=true")
+
+        build(
+            "assemble",
+            options = defaultBuildOptions()
+                .copy(
+                    jsCompilerType = KotlinJsCompilerType.IR,
+                    warningMode = WarningMode.Fail
+                )
+        ) {
+            assertSuccessful()
         }
     }
 }
@@ -899,6 +922,40 @@ abstract class AbstractKotlin2JsGradlePluginIT(val irBackend: Boolean) : BaseGra
                 assertFileExists("build/js/packages/js-dynamic-webpack-config-d")
                 assertFileContains("build/js/packages/js-dynamic-webpack-config-d/webpack.config.js", "// hello from patch.js")
             }
+        }
+    }
+
+    @Test
+    fun testBrowserNoTasksConfigurationOnHelp() = with(transformProjectWithPluginsDsl("kotlin-js-browser-project")) {
+        gradleBuildScript().appendText(
+            "\n" + """
+            allprojects {
+                tasks.configureEach {
+                    if (this is org.gradle.configuration.Help) return@configureEach
+                    throw GradleException("Task ${'$'}{path} shouldn't be configured")
+                }
+            }
+        """.trimIndent()
+        )
+        build {
+            assertSuccessful()
+        }
+    }
+
+    @Test
+    fun testNodeJsNoTasksConfigurationOnHelp() = with(transformProjectWithPluginsDsl("kotlin-js-nodejs-project")) {
+        gradleBuildScript().appendText(
+            "\n" + """
+            allprojects {
+                tasks.configureEach {
+                    if (it instanceof org.gradle.configuration.Help) return
+                    throw new GradleException("Task ${'$'}{path} shouldn't be configured")
+                }
+            }
+        """.trimIndent()
+        )
+        build {
+            assertSuccessful()
         }
     }
 

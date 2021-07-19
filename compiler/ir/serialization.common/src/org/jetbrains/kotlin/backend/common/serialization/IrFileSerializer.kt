@@ -6,9 +6,7 @@
 package org.jetbrains.kotlin.backend.common.serialization
 
 import org.jetbrains.kotlin.backend.common.serialization.encodings.*
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.descriptors.InlineClassRepresentation
-import org.jetbrains.kotlin.descriptors.ReceiverParameterDescriptor
+import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.IrFileEntry
 import org.jetbrains.kotlin.ir.declarations.*
@@ -139,19 +137,19 @@ open class IrFileSerializer(
     // The same type can be used multiple times in a file
     // so use this index to store type data only once.
     private val protoTypeMap = mutableMapOf<IrTypeKey, Int>()
-    private val protoTypeArray = arrayListOf<ProtoType>()
+    protected val protoTypeArray = arrayListOf<ProtoType>()
 
     private val protoStringMap = mutableMapOf<String, Int>()
-    private val protoStringArray = arrayListOf<String>()
+    protected val protoStringArray = arrayListOf<String>()
 
     // The same signature could be used multiple times in a file
     // so use this index to store signature only once.
     private val protoIdSignatureMap = mutableMapOf<IdSignature, Int>()
-    private val protoIdSignatureArray = arrayListOf<ProtoIdSignature>()
+    protected val protoIdSignatureArray = arrayListOf<ProtoIdSignature>()
 
-    private val protoBodyArray = mutableListOf<XStatementOrExpression>()
+    protected val protoBodyArray = mutableListOf<XStatementOrExpression>()
 
-    private val protoDebugInfoArray = arrayListOf<String>()
+    protected val protoDebugInfoArray = arrayListOf<String>()
 
     sealed class XStatementOrExpression {
         abstract fun toByteArray(): ByteArray
@@ -361,7 +359,9 @@ open class IrFileSerializer(
             is IrReturnableBlockSymbol ->
                 BinarySymbolData.SymbolKind.RETURNABLE_BLOCK_SYMBOL
             is IrFieldSymbol ->
-                if (symbol.owner.correspondingPropertySymbol?.owner.let { it == null || it.isDelegated })
+                if (symbol.owner.correspondingPropertySymbol?.owner.let {
+                        it == null || it.isDelegated || it.getter == null && it.setter == null
+                    })
                     BinarySymbolData.SymbolKind.STANDALONE_FIELD_SYMBOL
                 else
                     BinarySymbolData.SymbolKind.FIELD_SYMBOL
@@ -394,10 +394,10 @@ open class IrFileSerializer(
 
     /* ------- IrTypes ---------------------------------------------------------- */
 
-    private fun serializeAnnotations(annotations: List<IrConstructorCall>) =
+    protected fun serializeAnnotations(annotations: List<IrConstructorCall>) =
         annotations.map { serializeConstructorCall(it) }
 
-    private fun serializeFqName(fqName: String): List<Int> = fqName.split(".").map(::serializeString)
+    protected fun serializeFqName(fqName: String): List<Int> = fqName.split(".").map(::serializeString)
 
     private fun serializeIrStarProjection() = BinaryTypeProjection.STAR_CODE
 
@@ -1290,7 +1290,7 @@ open class IrFileSerializer(
         val proto = ProtoField.newBuilder()
             .setBase(serializeIrDeclarationBase(field, FieldFlags.encode(field)))
             .setNameType(serializeNameAndType(field.name, field.type))
-        if (!skipMutableState) {
+        if (!skipMutableState && !(bodiesOnlyForInlines && (field.parent as? IrDeclarationWithVisibility)?.visibility != DescriptorVisibilities.LOCAL)) {
             val initializer = field.initializer?.expression
             if (initializer != null) {
                 proto.initializer = serializeIrExpressionBody(initializer)
@@ -1307,7 +1307,7 @@ open class IrFileSerializer(
         return proto.build()
     }
 
-    private fun serializeIrClass(clazz: IrClass): ProtoClass {
+    protected fun serializeIrClass(clazz: IrClass): ProtoClass {
         val proto = ProtoClass.newBuilder()
             .setBase(serializeIrDeclarationBase(clazz, ClassFlags.encode(clazz)))
             .setName(serializeName(clazz.name))
@@ -1429,8 +1429,11 @@ open class IrFileSerializer(
     open fun backendSpecificSerializeAllMembers(irClass: IrClass) = false
 
     fun memberNeedsSerialization(member: IrDeclaration): Boolean {
-        assert(member.parent is IrClass)
-        if (backendSpecificSerializeAllMembers(member.parent as IrClass)) return true
+        val parent = member.parent
+        require(parent is IrClass)
+        if (backendSpecificSerializeAllMembers(parent)) return true
+        if (bodiesOnlyForInlines && member is IrAnonymousInitializer && parent.visibility != DescriptorVisibilities.LOCAL)
+            return false
 
         return (!member.isFakeOverride)
     }

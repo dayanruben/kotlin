@@ -11,17 +11,11 @@ import org.jetbrains.kotlin.backend.common.serialization.encodings.*
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrDeclaration.DeclaratorCase.*
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrType.KindCase.*
 import org.jetbrains.kotlin.descriptors.InlineClassRepresentation
+import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.declarations.impl.IrVariableImpl
 import org.jetbrains.kotlin.ir.expressions.*
-import org.jetbrains.kotlin.ir.descriptors.IrBuiltIns
-import org.jetbrains.kotlin.ir.expressions.IrBlockBody
-import org.jetbrains.kotlin.ir.expressions.IrBody
-import org.jetbrains.kotlin.ir.expressions.IrConstructorCall
-import org.jetbrains.kotlin.ir.expressions.IrExpressionBody
-import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
-import org.jetbrains.kotlin.ir.expressions.IrStatementOriginImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrErrorExpressionImpl
 import org.jetbrains.kotlin.ir.symbols.*
 import org.jetbrains.kotlin.ir.symbols.impl.IrPublicSymbolBase
@@ -66,7 +60,7 @@ class IrDeclarationDeserializer(
     private val symbolTable: SymbolTable,
     val irFactory: IrFactory,
     private val fileReader: IrLibraryFile,
-    private val file: IrFile,
+    private val parent: IrDeclarationParent,
     val allowErrorNodes: Boolean,
     private val deserializeInlineFunctions: Boolean,
     private var deserializeBodies: Boolean,
@@ -166,7 +160,7 @@ class IrDeclarationDeserializer(
         }
     }
 
-    private var currentParent: IrDeclarationParent = file
+    private var currentParent: IrDeclarationParent = parent
 
     private inline fun <T : IrDeclarationParent> T.usingParent(block: T.() -> Unit): T =
         this.apply {
@@ -227,7 +221,7 @@ class IrDeclarationDeserializer(
                 coordinates.startOffset, coordinates.endOffset,
                 deserializeIrDeclarationOrigin(proto.originName), proto.flags
             )
-            result.annotations += deserializeAnnotations(proto.annotationList)
+            result.annotations = deserializeAnnotations(proto.annotationList)
             if (!skipMutableState) {
                 result.parent = currentParent
             }
@@ -298,7 +292,7 @@ class IrDeclarationDeserializer(
             }
         }
 
-    private fun deserializeIrClass(proto: ProtoClass): IrClass =
+    fun deserializeIrClass(proto: ProtoClass): IrClass =
         withDeserializedIrDeclarationBase(proto.base) { symbol, signature, startOffset, endOffset, origin, fcode ->
             val flags = ClassFlags.decode(fcode)
 
@@ -325,9 +319,11 @@ class IrDeclarationDeserializer(
                     superTypes = proto.superTypeList.map { deserializeIrType(it) }
 
                     withExternalValue(isExternal) {
+                        val oldDeclarations = declarations.toSet()
                         proto.declarationList
                             .filterNot { isSkippableFakeOverride(it, this) }
-                            .mapTo(declarations) { deserializeDeclaration(it) }
+                            // On JVM, deserialization may fill bodies of existing declarations, so avoid adding duplicates.
+                            .mapNotNullTo(declarations) { declProto -> deserializeDeclaration(declProto).takeIf { it !in oldDeclarations } }
                     }
 
                     thisReceiver = deserializeIrValueParameter(proto.thisReceiver, -1)
@@ -518,13 +514,15 @@ class IrDeclarationDeserializer(
 
                     withBodyGuard {
                         valueParameters = deserializeValueParameters(proto.valueParameterList)
-                        if (proto.hasDispatchReceiver())
-                            dispatchReceiverParameter = deserializeIrValueParameter(proto.dispatchReceiver, -1)
-                        if (proto.hasExtensionReceiver())
-                            extensionReceiverParameter = deserializeIrValueParameter(proto.extensionReceiver, -1)
-                        if (proto.hasBody()) {
-                            body = deserializeStatementBody(proto.body) as IrBody
-                        }
+                        dispatchReceiverParameter =
+                            if (proto.hasDispatchReceiver()) deserializeIrValueParameter(proto.dispatchReceiver, -1)
+                            else null
+                        extensionReceiverParameter =
+                            if (proto.hasExtensionReceiver()) deserializeIrValueParameter(proto.extensionReceiver, -1)
+                            else null
+                        body =
+                            if (proto.hasBody()) deserializeStatementBody(proto.body) as IrBody
+                            else null
                     }
                 }
             }

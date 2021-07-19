@@ -19,10 +19,8 @@ package org.jetbrains.kotlin.backend.common.overrides
 import org.jetbrains.kotlin.backend.common.serialization.CompatibilityMode
 import org.jetbrains.kotlin.backend.common.serialization.DeclarationTable
 import org.jetbrains.kotlin.backend.common.serialization.GlobalDeclarationTable
-import org.jetbrains.kotlin.backend.common.serialization.signature.IdSignatureSerializer
-import org.jetbrains.kotlin.backend.common.serialization.signature.PublicIdSignatureComputer
+import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.declarations.*
-import org.jetbrains.kotlin.ir.descriptors.IrBuiltIns
 import org.jetbrains.kotlin.ir.overrides.FakeOverrideBuilderStrategy
 import org.jetbrains.kotlin.ir.overrides.IrOverridingUtil
 import org.jetbrains.kotlin.ir.symbols.IrPropertySymbol
@@ -42,7 +40,7 @@ class FakeOverrideGlobalDeclarationTable(
     fun clear() = table.clear()
 }
 
-class FakeOverrideDeclarationTable(
+open class FakeOverrideDeclarationTable(
     mangler: KotlinMangler.IrMangler,
     globalTable: FakeOverrideGlobalDeclarationTable = FakeOverrideGlobalDeclarationTable(mangler)
 ) : DeclarationTable(globalTable) {
@@ -71,14 +69,13 @@ class FakeOverrideBuilder(
     val symbolTable: SymbolTable,
     mangler: KotlinMangler.IrMangler,
     typeSystem: IrTypeSystemContext,
-    val platformSpecificClassFilter: FakeOverrideClassFilter = DefaultFakeOverrideClassFilter
+    val platformSpecificClassFilter: FakeOverrideClassFilter = DefaultFakeOverrideClassFilter,
+    // TODO: The declaration table is needed for the signaturer.
+    private val fakeOverrideDeclarationTable: DeclarationTable = FakeOverrideDeclarationTable(mangler),
 ) : FakeOverrideBuilderStrategy() {
     private val haveFakeOverrides = mutableSetOf<IrClass>()
 
     private val irOverridingUtil = IrOverridingUtil(typeSystem, this)
-
-    // TODO: The declaration table is needed for the signaturer.
-    private val fakeOverrideDeclarationTable = FakeOverrideDeclarationTable(mangler)
 
 //    private class CompatibilityMode(val oldSignatures: Boolean)
 
@@ -169,7 +166,7 @@ class FakeOverrideBuilder(
         }
     }
 
-    private fun provideFakeOverrides(klass: IrClass, compatibleMode: CompatibilityMode) {
+    fun provideFakeOverrides(klass: IrClass, compatibleMode: CompatibilityMode) {
         buildFakeOverrideChainsForClass(klass, compatibleMode)
         irOverridingUtil.clear()
         haveFakeOverrides.add(klass)

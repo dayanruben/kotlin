@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.declarations.lazy.*
+import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.expressions.impl.IrErrorExpressionImpl
 import org.jetbrains.kotlin.ir.linkage.IrProvider
 import org.jetbrains.kotlin.ir.symbols.IrFieldSymbol
@@ -41,9 +42,14 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 abstract class DeclarationStubGenerator(
     val moduleDescriptor: ModuleDescriptor,
     val symbolTable: SymbolTable,
+    val irBuiltIns: IrBuiltIns,
     val extensions: StubGeneratorExtensions = StubGeneratorExtensions.EMPTY,
 ) : IrProvider {
     protected val lazyTable = symbolTable.lazyWrapper
+
+    init {
+        extensions.registerDeclarations(symbolTable)
+    }
 
     val lock: IrLock
         get() = symbolTable.lock
@@ -89,7 +95,7 @@ abstract class DeclarationStubGenerator(
         val packageFragment = directMember.containingDeclaration as? PackageFragmentDescriptor ?: return null
         val containerSource = directMember.safeAs<DescriptorWithContainerSource>()?.containerSource ?: return null
         return facadeClassMap.getOrPut(containerSource) {
-            extensions.generateFacadeClass(symbolTable.irFactory, containerSource)?.also { facade ->
+            extensions.generateFacadeClass(symbolTable.irFactory, containerSource, this)?.also { facade ->
                 val packageStub = generateOrGetEmptyExternalPackageFragmentStub(packageFragment)
                 facade.parent = packageStub
                 packageStub.declarations.add(facade)
@@ -147,7 +153,8 @@ abstract class DeclarationStubGenerator(
                 descriptor.name, descriptor.visibility, descriptor.modality,
                 descriptor.isVar, descriptor.isConst, descriptor.isLateInit,
                 descriptor.isDelegated, descriptor.isEffectivelyExternal(), descriptor.isExpect,
-                isFakeOverride = (origin == IrDeclarationOrigin.FAKE_OVERRIDE),
+                isFakeOverride = (origin == IrDeclarationOrigin.FAKE_OVERRIDE)
+                        || descriptor.kind == CallableMemberDescriptor.Kind.FAKE_OVERRIDE,
                 stubGenerator = this, typeTranslator,
             )
         }
@@ -159,7 +166,9 @@ abstract class DeclarationStubGenerator(
             return referenced.owner
         }
 
-        return symbolTable.declareField(UNDEFINED_OFFSET, UNDEFINED_OFFSET, computeOrigin(descriptor), descriptor.original, descriptor.type.toIrType()) {
+        return symbolTable.declareField(
+            UNDEFINED_OFFSET, UNDEFINED_OFFSET, computeOrigin(descriptor), descriptor.original, descriptor.type.toIrType()
+        ) {
             IrLazyField(
                 UNDEFINED_OFFSET, UNDEFINED_OFFSET, computeOrigin(descriptor),
                 it, descriptor,

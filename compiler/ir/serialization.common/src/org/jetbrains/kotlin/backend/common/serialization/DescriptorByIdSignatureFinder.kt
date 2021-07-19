@@ -43,6 +43,7 @@ class DescriptorByIdSignatureFinder(
         when (signature) {
             is IdSignature.AccessorSignature -> findDescriptorForAccessorSignature(signature)
             is IdSignature.CommonSignature -> findDescriptorForPublicSignature(signature)
+            is IdSignature.CompositeSignature -> findDescriptorBySignature(signature.nearestPublicSig())
             else -> error("only PublicSignature or AccessorSignature should reach this point, got $signature")
         }
 
@@ -117,8 +118,8 @@ class DescriptorByIdSignatureFinder(
                             if (isConstructorName(current)) addAll(classDescriptor.constructors)
                             addAll(memberScope.getContributedFunctions(current, NoLookupLocation.FROM_BACKEND))
                             addAll(memberScope.getContributedVariables(current, NoLookupLocation.FROM_BACKEND))
-                            addAll(classDescriptor.staticScope.getContributedDescriptors { it == current })
                         }
+                        addAll(classDescriptor.staticScope.getContributedDescriptors().filter { it.name == current })
                     }
                 }
             }
