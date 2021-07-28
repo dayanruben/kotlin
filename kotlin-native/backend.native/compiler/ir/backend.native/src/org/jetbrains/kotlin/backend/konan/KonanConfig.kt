@@ -49,6 +49,7 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
     val destroyRuntimeMode: DestroyRuntimeMode get() = configuration.get(KonanConfigKeys.DESTROY_RUNTIME_MODE)!!
     val gc: GC get() = configuration.get(KonanConfigKeys.GARBAGE_COLLECTOR)!!
     val gcAggressive: Boolean get() = configuration.get(KonanConfigKeys.GARBAGE_COLLECTOR_AGRESSIVE)!!
+    val runtimeAssertsMode: RuntimeAssertsMode get() = configuration.get(KonanConfigKeys.RUNTIME_ASSERTS_MODE)!!
 
     val needVerifyIr: Boolean
         get() = configuration.get(KonanConfigKeys.VERIFY_IR) == true
@@ -105,8 +106,14 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
 
     val outputFile get() = outputFiles.mainFile
 
+    private val implicitModuleName: String
+        get() = File(outputFiles.outputName).name
+
+    val fullExportedNamePrefix: String
+        get() = configuration.get(KonanConfigKeys.FULL_EXPORTED_NAME_PREFIX) ?: implicitModuleName
+
     val moduleId: String
-        get() = configuration.get(KonanConfigKeys.MODULE_NAME) ?: File(outputFiles.outputName).name
+        get() = configuration.get(KonanConfigKeys.MODULE_NAME) ?: implicitModuleName
 
     val shortModuleName: String?
         get() = configuration.get(KonanConfigKeys.SHORT_MODULE_NAME)

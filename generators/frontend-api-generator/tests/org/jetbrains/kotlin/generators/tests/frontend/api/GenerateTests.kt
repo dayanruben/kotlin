@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.generators.tests.frontend.api
 
 import org.jetbrains.kotlin.generators.util.TestGeneratorUtil
+import org.jetbrains.kotlin.idea.fir.frontend.api.AbstractReferenceResolveTest
 import org.jetbrains.kotlin.idea.fir.frontend.api.components.AbstractExpectedExpressionTypeTest
 import org.jetbrains.kotlin.idea.fir.frontend.api.components.AbstractHLExpressionTypeTest
 import org.jetbrains.kotlin.idea.fir.frontend.api.components.AbstractOverriddenDeclarationProviderTest
@@ -16,10 +17,7 @@ import org.jetbrains.kotlin.idea.fir.frontend.api.scopes.AbstractMemberScopeByFq
 import org.jetbrains.kotlin.idea.fir.frontend.api.symbols.AbstractSymbolByFqNameTest
 import org.jetbrains.kotlin.idea.fir.frontend.api.symbols.AbstractSymbolByPsiTest
 import org.jetbrains.kotlin.idea.fir.frontend.api.symbols.AbstractSymbolByReferenceTest
-import org.jetbrains.kotlin.idea.fir.low.level.api.AbstractFirLazyBodiesCalculatorTest
-import org.jetbrains.kotlin.idea.fir.low.level.api.AbstractFirLazyDeclarationResolveTest
-import org.jetbrains.kotlin.idea.fir.low.level.api.AbstractFirOnAirResolveTest
-import org.jetbrains.kotlin.idea.fir.low.level.api.AbstractPartialRawFirBuilderTestCase
+import org.jetbrains.kotlin.idea.fir.low.level.api.*
 import org.jetbrains.kotlin.idea.fir.low.level.api.diagnostic.AbstractDiagnosticTraversalCounterTest
 import org.jetbrains.kotlin.idea.fir.low.level.api.diagnostic.AbstractFirContextCollectionTest
 import org.jetbrains.kotlin.idea.fir.low.level.api.diagnostic.compiler.based.AbstractDiagnosisCompilerTestDataSpecTest
@@ -59,10 +57,9 @@ fun main(args: Array<String>) {
                 model("symbols/symbolByFqName")
             }
 
-            // todo
-//            testClass<AbstractSymbolByReferenceTest> {
-//                model("symbols/symbolByReference")
-//            }
+            testClass<AbstractSymbolByReferenceTest> {
+                model("symbols/symbolByReference")
+            }
 
             testClass<AbstractExpectedExpressionTypeTest> {
                 model("components/expectedExpressionType")
@@ -78,6 +75,10 @@ fun main(args: Array<String>) {
 
             testClass<AbstractRendererTest> {
                 model("components/declarationRenderer")
+            }
+
+            testClass<AbstractReferenceResolveTest> {
+                model("referenceResolve", pattern = TestGeneratorUtil.KT_WITHOUT_DOTS_IN_NAME)
             }
         }
 
@@ -114,6 +115,10 @@ fun main(args: Array<String>) {
 
             testClass<AbstractPartialRawFirBuilderTestCase> {
                 model("partialRawBuilder", testMethod = "doRawFirTest")
+            }
+
+            testClass<AbstractGetOrBuildFirTest> {
+                model("getOrBuildFir")
             }
         }
 

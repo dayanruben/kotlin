@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirTowerDataCo
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.ImplicitBodyResolveComputationSession
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.createReturnTypeCalculatorForIDE
 import org.jetbrains.kotlin.idea.fir.low.level.api.FirPhaseRunner
-import org.jetbrains.kotlin.idea.fir.low.level.api.element.builder.FirIdeDesignatedBodyResolveTransformerForReturnTypeCalculator
+import org.jetbrains.kotlin.idea.fir.low.level.api.element.builder.FirIdeDesignatedImpliciteTypesBodyResolveTransformerForReturnTypeCalculator
 
 internal class FirFileAnnotationsResolveTransformer(
     private val firFile: FirFile,
@@ -31,7 +31,7 @@ internal class FirFileAnnotationsResolveTransformer(
         session,
         scopeSession,
         implicitBodyResolveComputationSession,
-        ::FirIdeDesignatedBodyResolveTransformerForReturnTypeCalculator
+        ::FirIdeDesignatedImpliciteTypesBodyResolveTransformerForReturnTypeCalculator
     ),
     firTowerDataContextCollector = firTowerDataContextCollector
 ), FirLazyTransformerForIDE {
@@ -55,6 +55,4 @@ internal class FirFileAnnotationsResolveTransformer(
     }
 
     override fun ensureResolved(declaration: FirDeclaration) = error("Not implemented")
-
-    override fun needReplacePhase(firDeclaration: FirDeclaration): Boolean = false
 }

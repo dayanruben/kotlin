@@ -18,8 +18,8 @@ import org.jetbrains.kotlin.idea.fir.low.level.api.file.builder.ModuleFileCache
 import org.jetbrains.kotlin.idea.fir.low.level.api.file.structure.FileStructureCache
 import org.jetbrains.kotlin.idea.fir.low.level.api.file.structure.FileStructureElement
 import org.jetbrains.kotlin.idea.fir.low.level.api.lazy.resolve.FirLazyDeclarationResolver
-import org.jetbrains.kotlin.idea.fir.low.level.api.util.getElementTextInContext
 import org.jetbrains.kotlin.idea.fir.low.level.api.lazy.resolve.declarationCanBeLazilyResolved
+import org.jetbrains.kotlin.idea.fir.low.level.api.util.getElementTextInContext
 import org.jetbrains.kotlin.idea.fir.low.level.api.util.isNonAnonymousClassOrObject
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
@@ -32,7 +32,7 @@ import org.jetbrains.kotlin.psi2ir.deparenthesize
  */
 @ThreadSafe
 internal class FirElementBuilder {
-    fun getPsiAsFirElementSource(element: KtElement): KtElement {
+    fun getPsiAsFirElementSource(element: KtElement): KtElement? {
         val deparenthesized = if (element is KtPropertyDelegate) element.deparenthesize() else element
         return when {
             deparenthesized is KtParenthesizedExpression -> deparenthesized.deparenthesize()
@@ -44,8 +44,20 @@ internal class FirElementBuilder {
                  */
                 deparenthesized.selectorExpression ?: error("Incomplete code:\n${element.getElementTextInContext()}")
             }
+            deparenthesized is KtValueArgument -> {
+                // null will be return in case of invalid KtValueArgument
+                deparenthesized.getArgumentExpression()
+            }
+            deparenthesized is KtObjectLiteralExpression -> deparenthesized.objectDeclaration
+            deparenthesized is KtStringTemplateEntryWithExpression -> deparenthesized.expression
+            deparenthesized is KtUserType && deparenthesized.parent is KtNullableType -> deparenthesized.parent as KtNullableType
             else -> deparenthesized
         }
+    }
+
+    fun doKtElementHasCorrespondingFirElement(ktElement: KtElement): Boolean = when (ktElement) {
+        is KtImportList -> false
+        else -> true
     }
 
     fun getOrBuildFirFor(
@@ -55,7 +67,7 @@ internal class FirElementBuilder {
         fileStructureCache: FileStructureCache,
         firLazyDeclarationResolver: FirLazyDeclarationResolver,
         state: FirModuleResolveState,
-    ): FirElement = when (element) {
+    ): FirElement? = when (element) {
         is KtFile -> getOrBuildFirForKtFile(element, firFileBuilder, moduleFileCache, firLazyDeclarationResolver)
         else -> getOrBuildFirForNonKtFileElement(element, fileStructureCache, moduleFileCache, state)
     }
@@ -82,13 +94,18 @@ internal class FirElementBuilder {
         fileStructureCache: FileStructureCache,
         moduleFileCache: ModuleFileCache,
         state: FirModuleResolveState,
-    ): FirElement {
+    ): FirElement? {
         require(element !is KtFile)
+
+        if (!doKtElementHasCorrespondingFirElement(element)) {
+            return null
+        }
+
         val firFile = element.containingKtFile
         val fileStructure = fileStructureCache.getFileStructure(firFile, moduleFileCache)
 
         val mappings = fileStructure.getStructureElementFor(element).mappings
-        val psi = getPsiAsFirElementSource(element)
+        val psi = getPsiAsFirElementSource(element) ?: return null
         return mappings.getFirOfClosestParent(psi, state)
             ?: state.getOrBuildFirFile(firFile)
     }

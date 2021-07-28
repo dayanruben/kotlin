@@ -140,6 +140,10 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
                 put(LINKER_ARGS, arguments.linkerArguments.toNonNullList() +
                         arguments.singleLinkerArguments.toNonNullList())
                 arguments.moduleName?.let{ put(MODULE_NAME, it) }
+
+                // TODO: allow overriding the prefix directly.
+                arguments.moduleName?.let { put(FULL_EXPORTED_NAME_PREFIX, it) }
+
                 arguments.target?.let{ put(TARGET, it) }
 
                 put(INCLUDED_BINARY_FILES,
@@ -319,6 +323,15 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
                     else -> {
                         configuration.report(ERROR, "Unsupported '-Xcheck-compatibility-with-lld' value: $it. Possible values are 'enable'/'disable'")
                         true
+                    }
+                })
+                put(RUNTIME_ASSERTS_MODE, when (arguments.runtimeAssertsMode) {
+                    "ignore" -> RuntimeAssertsMode.IGNORE
+                    "log" -> RuntimeAssertsMode.LOG
+                    "panic" -> RuntimeAssertsMode.PANIC
+                    else -> {
+                        configuration.report(ERROR, "Unsupported runtime asserts mode ${arguments.runtimeAssertsMode}")
+                        RuntimeAssertsMode.IGNORE
                     }
                 })
             }

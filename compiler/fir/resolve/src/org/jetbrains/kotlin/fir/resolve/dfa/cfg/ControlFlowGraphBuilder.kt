@@ -95,6 +95,7 @@ class ControlFlowGraphBuilder {
 
     private val exitSafeCallNodes: Stack<ExitSafeCallNode> = stackOf()
     private val exitElvisExpressionNodes: Stack<ElvisExitNode> = stackOf()
+    private val elvisRhsEnterNodes: Stack<ElvisRhsEnterNode> = stackOf()
 
     /*
      * ignoredFunctionCalls is needed for resolve of += operator:
@@ -135,7 +136,8 @@ class ControlFlowGraphBuilder {
 
         fun CFGNode<*>.extractArgument(): FirElement? = when (this) {
             is FunctionEnterNode, is TryMainBlockEnterNode, is FinallyBlockExitNode, is CatchClauseEnterNode -> null
-            is StubNode, is BlockExitNode -> firstPreviousNode.extractArgument()
+            is BlockExitNode -> if (function.isLambda || isDead) firstPreviousNode.extractArgument() else null
+            is StubNode -> firstPreviousNode.extractArgument()
             else -> fir.extractArgument()
         }
 
@@ -602,7 +604,7 @@ class ControlFlowGraphBuilder {
             is FirBreakExpression -> loopExitNodes[jump.target.labeledElement]
             else -> throw IllegalArgumentException("Unknown jump type: ${jump.render()}")
         }
-        addNodeWithJump(node, nextNode, isBack = jump is FirContinueExpression)
+        addNodeWithJump(node, nextNode, isBack = jump is FirContinueExpression, isBreak = jump is FirBreakExpression)
         return node
     }
 
@@ -928,6 +930,10 @@ class ControlFlowGraphBuilder {
             val tryExitNode = tryExitNodes.top()
             // a flow where either there wasn't any exception or caught if any.
             addEdge(it, tryExitNode)
+            if (tryExitNode.isDead) {
+                //refresh forward links, which were created before finalizing try expression (eg created by `break`)
+                propagateDeadnessForward(tryExitNode)
+            }
             // a flow that exits to the exit target while there was an uncaught exception.
             addEdge(it, exitTargetsForTry.top(), propagateDeadness = false, label = UncaughtExceptionPath)
             // TODO: differentiate flows that return/(re)throw in try main block and/or catch clauses
@@ -1032,7 +1038,12 @@ class ControlFlowGraphBuilder {
         checkNotNullCall: FirCheckNotNullCall,
         callCompleted: Boolean
     ): Pair<CheckNotNullCallNode, UnionFunctionCallArgumentsNode?> {
-        val node = createCheckNotNullCallNode(checkNotNullCall).also { addNewSimpleNode(it) }
+        val node = createCheckNotNullCallNode(checkNotNullCall)
+        if (checkNotNullCall.resultType.isNothing) {
+            addNodeThatReturnsNothing(node)
+        } else {
+            addNewSimpleNode(node)
+        }
         val unionNode = processUnionOfArguments(node, callCompleted).second
         return node to unionNode
     }
@@ -1110,6 +1121,10 @@ class ControlFlowGraphBuilder {
         return createCallableReferenceNode(callableReferenceAccess).also { addNewSimpleNode(it) }
     }
 
+    fun exitGetClassCall(getClassCall: FirGetClassCall): GetClassCallNode {
+        return createGetClassCallNode(getClassCall).also { addNewSimpleNode(it) }
+    }
+
     // ----------------------------------- Block -----------------------------------
 
     fun enterInitBlock(initBlock: FirAnonymousInitializer): Pair<InitBlockEnterNode, CFGNode<*>?> {
@@ -1160,7 +1175,15 @@ class ControlFlowGraphBuilder {
         val exitNode = createExitSafeCallNode(safeCall)
         exitSafeCallNodes.push(exitNode)
         addEdge(lastNode, enterNode)
-        addEdge(lastNode, exitNode)
+        if (elvisRhsEnterNodes.topOrNull()?.fir?.lhs === safeCall) {
+            //if this is safe call in lhs of elvis, we make two edges
+            // 1. Df-only edge to exit node, to get not null implications there
+            // 2. Cf-only edge to elvis rhs
+            addEdge(lastNode, exitNode, preferredKind = EdgeKind.DfgForward)
+            addEdge(lastNode, elvisRhsEnterNodes.top(), preferredKind = EdgeKind.CfgForward)
+        } else {
+            addEdge(lastNode, exitNode)
+        }
         return enterNode
     }
 
@@ -1179,6 +1202,10 @@ class ControlFlowGraphBuilder {
 
     // ----------------------------------- Elvis -----------------------------------
 
+    fun enterElvis(elvisExpression: FirElvisExpression) {
+        elvisRhsEnterNodes.push(createElvisRhsEnterNode(elvisExpression))
+    }
+
     fun exitElvisLhs(elvisExpression: FirElvisExpression): Triple<ElvisLhsExitNode, ElvisLhsIsNotNullNode, ElvisRhsEnterNode> {
         val exitNode = createElvisExitNode(elvisExpression).also {
             exitElvisExpressionNodes.push(it)
@@ -1193,7 +1220,7 @@ class ControlFlowGraphBuilder {
             addEdge(it, exitNode)
         }
 
-        val rhsEnterNode = createElvisRhsEnterNode(elvisExpression).also {
+        val rhsEnterNode = elvisRhsEnterNodes.pop().also {
             addEdge(lhsExitNode, it)
         }
         lastNodes.push(rhsEnterNode)
@@ -1313,6 +1340,7 @@ class ControlFlowGraphBuilder {
         preferredKind: EdgeKind = EdgeKind.Forward,
         isBack: Boolean = false,
         label: EdgeLabel = NormalPath,
+        isBreak: Boolean = false
     ) {
         popAndAddEdge(node, preferredKind)
         if (targetNode != null) {
@@ -1324,12 +1352,25 @@ class ControlFlowGraphBuilder {
                     addBackEdge(node, targetNode, label = label)
                 }
             } else {
-                addEdge(node, targetNode, propagateDeadness = false, label = label)
+                //TODO this supports single try-finally block only
+                //need to get all try-finally up to target
+                val finallyNodes = finallyBefore(targetNode)
+                if (finallyNodes != null && isBreak) {
+                    val (finallyEnter, finallyExit) = finallyNodes
+                    addEdge(node, finallyEnter, propagateDeadness = false, label = label)
+                    addEdge(finallyExit, targetNode, propagateDeadness = false, label = label)
+                } else {
+                    addEdge(node, targetNode, propagateDeadness = false, label = label)
+                }
             }
         }
         val stub = createStubNode()
         addEdge(node, stub)
         lastNodes.push(stub)
+    }
+
+    private fun finallyBefore(target: CFGNode<*>): Pair<FinallyBlockEnterNode, TryExpressionExitNode>? {
+        return finallyEnterNodes.topOrNull()?.takeIf { it.level > target.level }?.let { it to tryExitNodes.top() }
     }
 
     private fun popAndAddEdge(to: CFGNode<*>, preferredKind: EdgeKind = EdgeKind.Forward) {
@@ -1358,6 +1399,16 @@ class ControlFlowGraphBuilder {
         label: EdgeLabel = NormalPath
     ) {
         addEdge(from, to, propagateDeadness = false, isDead = isDead, isBack = true, preferredKind = EdgeKind.CfgBackward, label = label)
+    }
+
+    private fun propagateDeadnessForward(node: CFGNode<*>) {
+        if (!node.isDead) return
+        node.followingNodes
+            .filter { node.outgoingEdges.getValue(it).kind == EdgeKind.Forward }
+            .forEach { target ->
+                CFGNode.addJustKindEdge(node, target, EdgeKind.DeadForward, false)
+                target.updateDeadStatus()
+            }
     }
 
     // ----------------------------------- Utils -----------------------------------

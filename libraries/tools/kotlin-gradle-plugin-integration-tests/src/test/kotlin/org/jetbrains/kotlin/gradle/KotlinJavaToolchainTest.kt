@@ -590,6 +590,87 @@ class KotlinJavaToolchainTest : KGPBaseTest() {
         }
     }
 
+    @DisplayName("Should correctly validate JVM targets in mixed Kotlin/Java projects that are using <JDK1.8")
+    @GradleTestVersions(minVersion = "6.7.1")
+    @GradleTest
+    internal fun oldJdkMixedJavaKotlinTargetVerification(gradleVersion: GradleVersion) {
+        project(
+            projectName = "kotlinJavaProject".fullProjectName,
+            gradleVersion = gradleVersion
+        ) {
+            //language=groovy
+            rootBuildGradle.append(
+                """
+                
+                java {
+                    toolchain {
+                        languageVersion.set(JavaLanguageVersion.of(8))
+                    }
+                }
+                
+                """.trimIndent()
+            )
+            //language=properties
+            gradleProperties.append(
+                """
+                kotlin.jvm.target.validation.mode = error
+                """.trimIndent()
+            )
+
+            build("build")
+        }
+    }
+
+    @DisplayName("Build should not produce warninings when '-no-jdk' option is present")
+    @GradleTestVersions(minVersion = "6.7.1")
+    @GradleTest
+    internal fun noWarningOnNoJdkOptionPresent(gradleVersion: GradleVersion) {
+        project(
+            projectName = "simple".fullProjectName,
+            gradleVersion = gradleVersion
+        ) {
+            useToolchainToCompile(11)
+
+            //language=groovy
+            rootBuildGradle.append(
+                """
+                
+                import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+                
+                tasks
+                    .withType(KotlinCompile.class)
+                    .configureEach {
+                        kotlinOptions {
+                            noJdk = true
+                        }                
+                    }
+                """.trimIndent()
+            )
+
+            build("build") {
+                assertOutputDoesNotContain("w: The '-jdk-home' option is ignored because '-no-jdk' is specified")
+            }
+        }
+    }
+
+    @DisplayName("Toolchain should take into account kotlin options that are set via android extension")
+    @GradleTestVersions(minVersion = "6.7.1")
+    @GradleTest
+    internal fun kotlinOptionsAndroidAndToolchain(gradleVersion: GradleVersion) {
+        project("android".fullProjectName, gradleVersion) {
+            useToolchainExtension(11)
+
+            //language=properties
+            gradleProperties.append(
+                """
+                kotlin.jvm.target.validation.mode = error
+                """.trimIndent()
+            )
+
+            build("assembleDebug", "-Pagp_version=${TestVersions.AGP.AGP_42}")
+        }
+    }
+
     private fun BuildResult.assertJdkHomeIsUsingJdk(
         javaexecPath: String
     ) = assertOutputContains("[KOTLIN] Kotlin compilation 'jdkHome' argument: $javaexecPath")

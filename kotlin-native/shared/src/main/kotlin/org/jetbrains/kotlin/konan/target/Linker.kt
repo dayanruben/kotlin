@@ -184,7 +184,10 @@ class MacOSBasedLinker(targetProperties: AppleConfigurables)
             Family.OSX -> "osx"
             else -> error("Target $target is unsupported")
         }
-        val suffix = if (libraryName.isNotEmpty() && targetTriple.isSimulator) {
+        // TODO: remove after `minimalXcodeVersion` will be 12.
+        // Separate libclang_rt version for simulator appeared in Xcode 12.
+        val compilerRtForSimulatorExists = Xcode.current.version.substringBefore('.').toInt() >= 12
+        val suffix = if ((libraryName.isNotEmpty() || compilerRtForSimulatorExists) && targetTriple.isSimulator) {
             "sim"
         } else {
             ""
@@ -420,7 +423,7 @@ class MingwLinker(targetProperties: MingwConfigurables)
     : LinkerFlags(targetProperties), MingwConfigurables by targetProperties {
 
     private val ar = "$absoluteTargetToolchain/bin/ar"
-    private val linker = "$absoluteTargetToolchain/bin/clang++"
+    private val linker = "$absoluteLlvmHome/bin/clang++"
 
     override val useCompilerDriverAsLinker: Boolean get() = true
 
@@ -461,6 +464,8 @@ class MingwLinker(targetProperties: MingwConfigurables)
                 additionalArguments: List<String> = listOf(),
                 skipDefaultArguments: List<String> = listOf()
         ): Command = apply {
+            +listOf("--sysroot", absoluteTargetSysRoot)
+            +listOf("-target", targetTriple.toString())
             +listOf("-o", executable)
             +objectFiles
             // --gc-sections flag may affect profiling.
@@ -498,7 +503,9 @@ class MingwLinker(targetProperties: MingwConfigurables)
         return listOf(when {
             HostManager.hostIsMingw -> Command(linker)
             else -> Command("wine64", "$linker.exe")
-        }.constructLinkerArguments())
+        }.constructLinkerArguments(
+                additionalArguments = listOf("-fuse-ld=${absoluteTargetToolchain}/bin/ld.exe")
+        ))
     }
 }
 

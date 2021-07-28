@@ -30,7 +30,9 @@ dependencies {
 
     testCompileOnly(project(":kotlin-reflect-api"))
     testRuntimeOnly(project(":kotlin-reflect"))
+    testRuntimeOnly(project(":core:deserialization"))
     testRuntimeOnly(project(":core:descriptors.runtime"))
+    testRuntimeOnly(project(":core:descriptors.jvm"))
     testRuntimeOnly(project(":compiler:fir:fir2ir:jvm-backend"))
     testRuntimeOnly(project(":generators"))
 
@@ -41,12 +43,7 @@ dependencies {
         includeJars("jna", rootProject = rootProject)
     }
 
-    Platform[202] {
-        testRuntimeOnly(intellijDep()) { includeJars("intellij-deps-fastutil-8.3.1-1") }
-    }
-    Platform[203].orHigher {
-        testRuntimeOnly(intellijDep()) { includeJars("intellij-deps-fastutil-8.4.1-4") }
-    }
+    testRuntimeOnly(intellijDep()) { includeJars("intellij-deps-fastutil-8.4.1-4") }
 }
 
 val generationRoot = projectDir.resolve("tests-gen")

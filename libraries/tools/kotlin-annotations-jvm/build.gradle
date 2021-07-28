@@ -3,7 +3,6 @@ description = 'Kotlin annotations for JVM'
 apply plugin: 'kotlin'
 
 JvmToolchain.configureJvmToolchain(project, JdkMajorVersion.JDK_1_6)
-LibrariesCommon.disableDeprecatedJvmTargetWarning(project)
 
 configurePublishing(project)
 
@@ -25,7 +24,6 @@ configureJavadocJar()
 compileKotlin {
     kotlinOptions.freeCompilerArgs = [
             "-Xallow-kotlin-package",
-            "-Xnormalize-constructor-calls=enable",
     ]
     kotlinOptions.moduleName = project.name
 }

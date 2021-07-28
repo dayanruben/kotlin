@@ -315,6 +315,7 @@ class NewMultiplatformIT : BaseGradleIT() {
                     IR -> {
                         groupDir.resolve(jsJarName).exists()
                     }
+                    BOTH -> {}
                 }
 
                 val metadataJarEntries = ZipFile(groupDir.resolve(metadataJarName)).entries().asSequence().map { it.name }.toSet()
@@ -705,8 +706,8 @@ class NewMultiplatformIT : BaseGradleIT() {
                 "\n" + """
             kotlin.sourceSets.all {
                 languageSettings {
-                    languageVersion = "1.3"
-                    apiVersion = "1.3" 
+                    languageVersion = "1.4"
+                    apiVersion = "1.4" 
                 }
             }
         """.trimIndent()
@@ -716,7 +717,7 @@ class NewMultiplatformIT : BaseGradleIT() {
                 build(it) {
                     assertSuccessful()
                     assertTasksExecuted(":$it")
-                    assertContains("-language-version 1.3", "-api-version 1.3")
+                    assertContains("-language-version 1.4", "-api-version 1.4")
                 }
             }
         }
@@ -727,11 +728,11 @@ class NewMultiplatformIT : BaseGradleIT() {
             "\n" + """
                 kotlin.sourceSets.all {
                     it.languageSettings {
-                        // languageVersion = '1.3' // can't do this with Kotlin/Native 1.4+, done below for non-Native tasks
-                        // apiVersion = '1.3' // can't do this with Kotlin/Native 1.4+, done below for non-Native tasks
+                        // languageVersion = '1.4'
+                        // apiVersion = '1.4'
                         enableLanguageFeature('InlineClasses')
-                        optInAnnotation('kotlin.ExperimentalUnsignedTypes')
-                        optInAnnotation('kotlin.contracts.ExperimentalContracts')
+                        optIn('kotlin.ExperimentalUnsignedTypes')
+                        optIn('kotlin.contracts.ExperimentalContracts')
                         progressiveMode = true
                     }
                     project.ext.set("kotlin.mpp.freeCompilerArgsForSourceSet.${'$'}name", ["-Xno-inline"])
@@ -747,8 +748,8 @@ class NewMultiplatformIT : BaseGradleIT() {
                 assertTasksExecuted(":$it")
                 assertContains(
                     "-XXLanguage:+InlineClasses",
-                    "-progressive", "-Xopt-in=kotlin.ExperimentalUnsignedTypes",
-                    "-Xopt-in=kotlin.contracts.ExperimentalContracts",
+                    "-progressive", "-opt-in=kotlin.ExperimentalUnsignedTypes",
+                    "-opt-in=kotlin.contracts.ExperimentalContracts",
                     "-Xno-inline"
                 )
             }
@@ -758,8 +759,8 @@ class NewMultiplatformIT : BaseGradleIT() {
             "\n" + """
             kotlin.sourceSets.all {
                 it.languageSettings {
-                    languageVersion = '1.3'
-                    apiVersion = '1.3' 
+                    languageVersion = '1.4'
+                    apiVersion = '1.4' 
                 }
             }
         """.trimIndent()
@@ -769,7 +770,7 @@ class NewMultiplatformIT : BaseGradleIT() {
             build(it) {
                 assertSuccessful()
                 assertTasksExecuted(":$it")
-                assertContains("-language-version 1.3", "-api-version 1.3")
+                assertContains("-language-version 1.4", "-api-version 1.4")
             }
         }
     }
@@ -824,7 +825,7 @@ class NewMultiplatformIT : BaseGradleIT() {
         )
 
         testMonotonousCheck(
-            "languageSettings.optInAnnotation('kotlin.ExperimentalUnsignedTypes')",
+            "languageSettings.optIn('kotlin.ExperimentalUnsignedTypes')",
             "The dependent source set must use all opt-in annotations that its dependency uses."
         )
 

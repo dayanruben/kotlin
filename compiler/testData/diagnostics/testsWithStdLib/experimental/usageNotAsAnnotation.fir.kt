@@ -21,11 +21,11 @@ annotation class M
 
 // Usages as types should be errors
 
-fun f1(e: RequiresOptIn) {}
-fun f2(u: OptIn?) {}
+fun f1(e: <!EXPERIMENTAL_CAN_ONLY_BE_USED_AS_ANNOTATION!>RequiresOptIn<!>) {}
+fun f2(u: <!EXPERIMENTAL_CAN_ONLY_BE_USED_AS_ANNOTATION!>OptIn?<!>) {}
 
-typealias Experimental0 = RequiresOptIn
-typealias OptIn0 = OptIn
+typealias Experimental0 = <!EXPERIMENTAL_CAN_ONLY_BE_USED_AS_ANNOTATION!>RequiresOptIn<!>
+typealias OptIn0 = <!EXPERIMENTAL_CAN_ONLY_BE_USED_AS_ANNOTATION!>OptIn<!>
 fun f3(e: Experimental0 /* TODO */) {}
 fun f4(u: OptIn0 /* TODO */) {}
 
@@ -54,11 +54,11 @@ annotation class Marker {
     }
 }
 
-fun f6(m: Marker) {}
-fun f7(): List<Marker>? = null
-fun f8(): test.Marker? = null
+fun f6(m: <!EXPERIMENTAL_MARKER_CAN_ONLY_BE_USED_AS_ANNOTATION_OR_ARGUMENT_IN_USE_EXPERIMENTAL!>Marker<!>) {}
+fun f7(): List<<!EXPERIMENTAL_MARKER_CAN_ONLY_BE_USED_AS_ANNOTATION_OR_ARGUMENT_IN_USE_EXPERIMENTAL!>Marker<!>>? = null
+fun f8(): <!EXPERIMENTAL_MARKER_CAN_ONLY_BE_USED_AS_ANNOTATION_OR_ARGUMENT_IN_USE_EXPERIMENTAL!>test.Marker?<!> = null
 
-typealias Marker0 = Marker
+typealias Marker0 = <!EXPERIMENTAL_MARKER_CAN_ONLY_BE_USED_AS_ANNOTATION_OR_ARGUMENT_IN_USE_EXPERIMENTAL!>Marker<!>
 
 fun f9(m: Marker0) {}
 

@@ -5,9 +5,7 @@
 
 package org.jetbrains.kotlin.mainKts
 
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.mainKts.impl.Directories
-import org.jetbrains.kotlin.mainKts.impl.IvyResolver
 import java.io.File
 import java.nio.ByteBuffer
 import java.security.MessageDigest
@@ -16,9 +14,11 @@ import kotlin.script.dependencies.ScriptDependenciesResolver
 import kotlin.script.experimental.annotations.KotlinScript
 import kotlin.script.experimental.api.*
 import kotlin.script.experimental.dependencies.*
+import kotlin.script.experimental.dependencies.maven.MavenDependenciesResolver
 import kotlin.script.experimental.host.FileBasedScriptSource
 import kotlin.script.experimental.host.FileScriptSource
 import kotlin.script.experimental.host.ScriptingHostConfiguration
+import kotlin.script.experimental.impl.internalScriptingRunSuspend
 import kotlin.script.experimental.jvm.*
 import kotlin.script.experimental.jvm.compat.mapLegacyDiagnosticSeverity
 import kotlin.script.experimental.jvm.compat.mapLegacyScriptPosition
@@ -101,7 +101,7 @@ fun configureConstructorArgsFromMainArgs(context: ScriptEvaluationConfigurationR
 }
 
 class MainKtsConfigurator : RefineScriptCompilationConfigurationHandler {
-    private val resolver = CompoundDependenciesResolver(FileSystemDependenciesResolver(), IvyResolver())
+    private val resolver = CompoundDependenciesResolver(FileSystemDependenciesResolver(), MavenDependenciesResolver())
 
     override operator fun invoke(context: ScriptConfigurationRefinementContext): ResultWithDiagnostics<ScriptCompilationConfiguration> =
         processAnnotations(context)
@@ -135,7 +135,8 @@ class MainKtsConfigurator : RefineScriptCompilationConfigurationHandler {
         }
 
         val resolveResult = try {
-            runBlocking {
+            @Suppress("DEPRECATION_ERROR")
+            internalScriptingRunSuspend {
                 resolver.resolveFromScriptSourceAnnotations(annotations.filter { it.annotation is DependsOn || it.annotation is Repository })
             }
         } catch (e: Throwable) {

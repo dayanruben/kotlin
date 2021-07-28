@@ -11,6 +11,8 @@ import org.jetbrains.kotlin.backend.common.lower
 import org.jetbrains.kotlin.backend.common.phaser.PhaseConfig
 import org.jetbrains.kotlin.backend.common.phaser.invokeToplevel
 import org.jetbrains.kotlin.config.CompilerConfiguration
+import org.jetbrains.kotlin.ir.backend.js.ic.SerializedIcData
+import org.jetbrains.kotlin.ir.backend.js.ic.icCompile
 import org.jetbrains.kotlin.ir.backend.js.lower.generateTests
 import org.jetbrains.kotlin.ir.backend.js.lower.moveBodilessDeclarationsToSeparatePlace
 import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.IrModuleToJsTransformer
@@ -61,7 +63,36 @@ fun compile(
     lowerPerModule: Boolean = false,
     safeExternalBoolean: Boolean = false,
     safeExternalBooleanDiagnostic: RuntimeDiagnostic? = null,
+    useStdlibCache: Boolean = false,
+    icCache: Map<String, SerializedIcData> = emptyMap(),
 ): CompilerResult {
+
+    if (lowerPerModule) {
+        return icCompile(
+            project,
+            mainModule,
+            analyzer,
+            configuration,
+            dependencies,
+            friendDependencies,
+            mainArguments,
+            exportedDeclarations,
+            generateFullJs,
+            generateDceJs,
+            dceRuntimeDiagnostic,
+            es6mode,
+            multiModule,
+            relativeRequirePath,
+            propertyLazyInitialization,
+            baseClassIntoMetadata,
+            legacyPropertyAccess,
+            safeExternalBoolean,
+            safeExternalBooleanDiagnostic,
+            useStdlibCache,
+            icCache,
+        )
+    }
+
     val (moduleFragment: IrModuleFragment, dependencyModules, irBuiltIns, symbolTable, deserializer, moduleToName) =
         loadIr(project, mainModule, analyzer, configuration, dependencies, friendDependencies, irFactory, verifySignatures)
 
@@ -125,6 +156,7 @@ fun compile(
         )
         return transformer.generateModule(allModules)
     } else {
+        // TODO is this reachable when lowerPerModule == true?
         if (lowerPerModule) {
             val controller = WholeWorldStageController()
             check(irFactory is PersistentIrFactory)
@@ -132,6 +164,7 @@ fun compile(
             allModules.forEach {
                 lowerPreservingIcData(it, context, controller)
             }
+            irFactory.stageController = object : StageController(irFactory.stageController.currentStage) {}
         } else {
             jsPhases.invokeToplevel(phaseConfig, context, allModules)
         }
@@ -160,7 +193,7 @@ fun lowerPreservingIcData(module: IrModuleFragment, context: JsIrBackendContext,
                 lowering.declarationTransformer(context).lower(module)
             is BodyLowering ->
                 lowering.bodyLowering(context).lower(module)
-            // else -> TODO what about other lowerings?
+            is ModuleLowering -> { /*TODO what about other lowerings? */ }
         }
     }
 

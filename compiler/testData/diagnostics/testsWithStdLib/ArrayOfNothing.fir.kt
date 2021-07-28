@@ -39,8 +39,8 @@ fun test4(
 ) {}
 
 fun test5() {
-    arrayOf<Nothing>()
-    Array<Nothing>(10) { throw Exception() }
+    arrayOf<<!REIFIED_TYPE_FORBIDDEN_SUBSTITUTION!>Nothing<!>>()
+    Array<<!REIFIED_TYPE_FORBIDDEN_SUBSTITUTION!>Nothing<!>>(10) { throw Exception() }
 }
 
 fun <T> foo(): Array<T> = (object {} as Any) as Array<T>
@@ -50,6 +50,6 @@ fun test6() = foo<Nothing>()
 
 class B<T>(val array: Array<T>)
 
-fun <T> bar() = B<Array<T>>(arrayOf())
+fun <T> bar() = B<Array<T>>(<!TYPE_PARAMETER_AS_REIFIED_ARRAY!>arrayOf<!>())
 
 fun test7() = bar<Nothing>()

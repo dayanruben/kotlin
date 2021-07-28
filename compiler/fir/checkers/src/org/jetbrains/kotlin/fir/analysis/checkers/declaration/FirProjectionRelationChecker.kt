@@ -24,10 +24,6 @@ object FirProjectionRelationChecker : FirBasicDeclarationChecker() {
         }
 
         if (declaration is FirTypedDeclaration) {
-            // The body of function contract is not fully resolved.
-            if (declaration.resolvePhase == FirResolvePhase.CONTRACTS) {
-                return
-            }
             checkTypeRef(declaration.returnTypeRef, context, reporter)
         }
 
@@ -39,6 +35,7 @@ object FirProjectionRelationChecker : FirBasicDeclarationChecker() {
             }
             is FirTypeAlias ->
                 checkTypeRef(declaration.expandedTypeRef, context, reporter)
+            else -> {}
         }
     }
 

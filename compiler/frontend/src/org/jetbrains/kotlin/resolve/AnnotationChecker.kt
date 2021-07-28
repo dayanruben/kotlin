@@ -101,6 +101,12 @@ class AnnotationChecker(
 
     fun checkExpression(expression: KtExpression, trace: BindingTrace) {
         checkEntries(expression.getAnnotationEntries(), getActualTargetList(expression, null, trace.bindingContext), trace)
+        if (expression is KtCallElement && languageVersionSettings.supportsFeature(ProperCheckAnnotationsTargetInTypeUsePositions)) {
+            val typeArguments = expression.typeArguments.mapNotNull { it.typeReference }
+            for (typeArgument in typeArguments) {
+                checkEntries(typeArgument.annotationEntries, getActualTargetList(typeArgument, null, trace.bindingContext), trace)
+            }
+        }
         if (expression is KtLambdaExpression) {
             for (parameter in expression.valueParameters) {
                 parameter.typeReference?.let { check(it, trace) }
@@ -224,7 +230,7 @@ class AnnotationChecker(
         }
 
         for (checker in additionalCheckers) {
-            checker.checkEntries(entries, actualTargets.defaultTargets, trace)
+            checker.checkEntries(entries, actualTargets.defaultTargets, trace, languageVersionSettings)
         }
     }
 
@@ -375,5 +381,10 @@ private typealias TargetLists = AnnotationTargetLists
 private typealias TargetList = AnnotationTargetList
 
 interface AdditionalAnnotationChecker {
-    fun checkEntries(entries: List<KtAnnotationEntry>, actualTargets: List<KotlinTarget>, trace: BindingTrace)
+    fun checkEntries(
+        entries: List<KtAnnotationEntry>,
+        actualTargets: List<KotlinTarget>,
+        trace: BindingTrace,
+        languageVersionSettings: LanguageVersionSettings
+    )
 }

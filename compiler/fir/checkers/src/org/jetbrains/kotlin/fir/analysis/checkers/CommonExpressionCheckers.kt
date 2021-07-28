@@ -5,9 +5,7 @@
 
 package org.jetbrains.kotlin.fir.analysis.checkers
 
-import org.jetbrains.kotlin.fir.analysis.checkers.declaration.FirAnonymousFunctionChecker
 import org.jetbrains.kotlin.fir.analysis.checkers.expression.*
-import org.jetbrains.kotlin.fir.analysis.checkers.syntax.FirAnonymousFunctionSyntaxChecker
 
 object CommonExpressionCheckers : ExpressionCheckers() {
     override val annotationCallCheckers: Set<FirAnnotationCallChecker>
@@ -20,7 +18,12 @@ object CommonExpressionCheckers : ExpressionCheckers() {
         get() = setOf(
             FirReservedUnderscoreExpressionChecker,
             FirExpressionAnnotationChecker,
-            FirDeprecationChecker,
+            FirDeprecationChecker
+        )
+
+    override val qualifiedAccessCheckers: Set<FirQualifiedAccessChecker>
+        get() = setOf(
+            FirOptInUsageAccessChecker,
         )
 
     override val qualifiedAccessExpressionCheckers: Set<FirQualifiedAccessExpressionChecker>
@@ -37,7 +40,8 @@ object CommonExpressionCheckers : ExpressionCheckers() {
             FirTypeParameterInQualifiedAccessChecker,
             FirSealedClassConstructorCallChecker,
             FirUninitializedEnumChecker,
-            FirFunInterfaceConstructorReferenceChecker
+            FirFunInterfaceConstructorReferenceChecker,
+            FirReifiedChecker
         )
 
     override val functionCallCheckers: Set<FirFunctionCallChecker>
@@ -69,6 +73,11 @@ object CommonExpressionCheckers : ExpressionCheckers() {
     override val loopExpressionCheckers: Set<FirLoopExpressionChecker>
         get() = setOf(
             FirLoopConditionChecker,
+        )
+
+    override val loopJumpCheckers: Set<FirLoopJumpChecker>
+        get() = setOf(
+            FirBreakOrContinueJumpsAcrossFunctionBoundaryChecker
         )
 
     override val logicExpressionCheckers: Set<FirLogicExpressionChecker>
@@ -115,6 +124,8 @@ object CommonExpressionCheckers : ExpressionCheckers() {
     override val resolvedQualifierCheckers: Set<FirResolvedQualifierChecker>
         get() = setOf(
             FirStandaloneQualifierChecker,
+            FirOptInUsageQualifierChecker,
+            FirDeprecatedQualifierChecker,
         )
 
     override val equalityOperatorCallCheckers: Set<FirEqualityOperatorCallChecker>

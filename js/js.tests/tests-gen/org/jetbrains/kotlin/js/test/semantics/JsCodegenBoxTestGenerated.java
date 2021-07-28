@@ -80,6 +80,19 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             }
         }
 
+        @TestMetadata("compiler/testData/codegen/box/annotations/instances")
+        @TestDataPath("$PROJECT_ROOT")
+        @RunWith(JUnit3RunnerWithInners.class)
+        public static class Instances extends AbstractJsCodegenBoxTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS, testDataFilePath);
+            }
+
+            public void testAllFilesPresentInInstances() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/annotations/instances"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JS, true);
+            }
+        }
+
         @TestMetadata("compiler/testData/codegen/box/annotations/kClassMapping")
         @TestDataPath("$PROJECT_ROOT")
         @RunWith(JUnit3RunnerWithInners.class)
@@ -3761,6 +3774,11 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
         @TestMetadata("kt4137.kt")
         public void testKt4137() throws Exception {
             runTest("compiler/testData/codegen/box/closures/kt4137.kt");
+        }
+
+        @TestMetadata("kt47840.kt")
+        public void testKt47840() throws Exception {
+            runTest("compiler/testData/codegen/box/closures/kt47840.kt");
         }
 
         @TestMetadata("kt5589.kt")
@@ -8972,6 +8990,11 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             runTest("compiler/testData/codegen/box/delegatedProperty/delegateToAnotherWithSideEffects.kt");
         }
 
+        @TestMetadata("delegateToConstructorParameter.kt")
+        public void testDelegateToConstructorParameter() throws Exception {
+            runTest("compiler/testData/codegen/box/delegatedProperty/delegateToConstructorParameter.kt");
+        }
+
         @TestMetadata("delegateToOpenProperty.kt")
         public void testDelegateToOpenProperty() throws Exception {
             runTest("compiler/testData/codegen/box/delegatedProperty/delegateToOpenProperty.kt");
@@ -13106,6 +13129,11 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
         @TestMetadata("kt46554.kt")
         public void testKt46554() throws Exception {
             runTest("compiler/testData/codegen/box/inlineClasses/kt46554.kt");
+        }
+
+        @TestMetadata("kt47762.kt")
+        public void testKt47762() throws Exception {
+            runTest("compiler/testData/codegen/box/inlineClasses/kt47762.kt");
         }
 
         @TestMetadata("mangledDefaultParameterFunction.kt")
@@ -27819,6 +27847,11 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
         @TestMetadata("kt43286a.kt")
         public void testKt43286a() throws Exception {
             runTest("compiler/testData/codegen/box/unsignedTypes/kt43286a.kt");
+        }
+
+        @TestMetadata("kt47716.kt")
+        public void testKt47716() throws Exception {
+            runTest("compiler/testData/codegen/box/unsignedTypes/kt47716.kt");
         }
 
         @TestMetadata("literalEqualsNullableUnsigned.kt")

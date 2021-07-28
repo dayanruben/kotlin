@@ -148,11 +148,9 @@ extra["versions.kotlinx-collections-immutable-jvm"] = immutablesVersion
 extra["versions.ktor-network"] = "1.0.1"
 
 if (!project.hasProperty("versions.kotlin-native")) {
-    extra["versions.kotlin-native"] = "1.6.0-dev-248"
+    extra["versions.kotlin-native"] = "1.6.0-dev-1728"
 }
 
-val effectSystemEnabled by extra(project.getBooleanProperty("kotlin.compiler.effectSystemEnabled") ?: false)
-val newInferenceEnabled by extra(project.getBooleanProperty("kotlin.compiler.newInferenceEnabled") ?: false)
 val useJvmFir by extra(project.kotlinBuildProperties.useFir)
 
 val intellijSeparateSdks = project.getBooleanProperty("intellijSeparateSdks") ?: false
@@ -161,11 +159,7 @@ extra["intellijSeparateSdks"] = intellijSeparateSdks
 
 extra["IntellijCoreDependencies"] =
     listOf(
-        when {
-            Platform[203].orHigher() -> "asm-all-9.0"
-            Platform[202].orHigher() -> "asm-all-8.0.1"
-            else -> "asm-all-7.0.1"
-        },
+        "asm-all-9.0",
         "guava",
         "jdom",
         "jna",
@@ -451,7 +445,6 @@ allprojects {
 
     val commonCompilerArgs = listOfNotNull(
         "-Xopt-in=kotlin.RequiresOptIn",
-        "-Xread-deserialized-contracts",
         "-progressive".takeIf { hasProperty("test.progressive.mode") }
     )
 
@@ -467,7 +460,7 @@ allprojects {
         "-Xjvm-default=compatibility",
         "-Xno-optimized-callable-references",
         "-Xno-kotlin-nothing-value-exception",
-        "-Xnormalize-constructor-calls=enable"
+        "-Xsuppress-deprecated-jvm-target-warning" // Remove as soon as there are no modules for JDK 1.6 & 1.7
     )
 
     tasks.withType<org.jetbrains.kotlin.gradle.dsl.KotlinJvmCompile> {
@@ -481,7 +474,7 @@ allprojects {
         }
     }
 
-    if (!kotlinBuildProperties.isInJpsBuildIdeaSync && !kotlinBuildProperties.useFir && !kotlinBuildProperties.disableWerror) {
+    if (!kotlinBuildProperties.disableWerror) {
         // For compiler and stdlib, allWarningsAsErrors is configured in the corresponding "root" projects
         // (compiler/build.gradle.kts and libraries/commonConfiguration.gradle).
         val projectsWithWarningsAsErrors = listOf("core", "plugins").map { File(it).absoluteFile }
@@ -734,14 +727,8 @@ tasks {
         dependsOn(":kotlin-scripting-jsr223-test:embeddableTest")
         dependsOn(":kotlin-main-kts-test:test")
         dependsOn(":kotlin-main-kts-test:testWithIr")
-
-        if (kotlinBuildProperties.getOrNull("attachedIntellijVersion") == null &&
-            !kotlinBuildProperties.getBoolean("disableKotlinPluginModules", false)
-        ) {
-            dependsOn(":kotlin-scripting-ide-services-test:test")
-            dependsOn(":kotlin-scripting-ide-services-test:embeddableTest")
-        }
-
+        dependsOn(":kotlin-scripting-ide-services-test:test")
+        dependsOn(":kotlin-scripting-ide-services-test:embeddableTest")
         dependsOn(":kotlin-scripting-js-test:test")
     }
 

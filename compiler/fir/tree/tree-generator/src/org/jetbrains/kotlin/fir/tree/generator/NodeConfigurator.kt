@@ -73,7 +73,7 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
         declaration.configure {
             +symbolWithPackage("fir.symbols", "FirBasedSymbol", "out FirDeclaration")
             +field("moduleData", firModuleDataType)
-            +field("resolvePhase", resolvePhaseType, withReplace = true).apply { isMutable = true }
+            +field("resolvePhase", resolvePhaseType, withReplace = true).apply { isMutable = true; isVolatile = true }
             +field("origin", declarationOriginType)
             +field("attributes", declarationAttributesType)
             shouldBeAbstractClass()
@@ -289,7 +289,9 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
         typeParameter.configure {
             +name
             +symbol("FirTypeParameterSymbol")
-            +field("containingDeclarationSymbol", firBasedSymbolType, "*", nullable = true)
+            +field("containingDeclarationSymbol", firBasedSymbolType, "*", nullable = true).apply {
+                withBindThis = false
+            }
             +field(varianceType)
             +booleanField("isReified")
             +fieldList("bounds", typeRef, withReplace = true)
@@ -503,6 +505,7 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
             +field("symbol", classLikeSymbolType, nullable = true)
             +booleanField("isNullableLHSForCallableReference", withReplace = true)
             +booleanField("resolvedToCompanionObject", withReplace = true)
+            +fieldList("nonFatalDiagnostics", coneDiagnosticType)
             +typeArguments.withTransform()
         }
 

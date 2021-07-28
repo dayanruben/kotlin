@@ -93,7 +93,7 @@ inline fun <reified F : FirDeclaration, R> KtDeclaration.withFirDeclarationOfTyp
     phase: FirResolvePhase = FirResolvePhase.RAW_FIR,
     action: (F) -> R
 ): R = withFirDeclaration(resolveState, phase) { firDeclaration ->
-    if (firDeclaration !is F) throw InvalidFirElementTypeException(this, F::class, firDeclaration::class)
+    if (firDeclaration !is F) throwUnexpectedFirElementError(firDeclaration, this, F::class)
     action(firDeclaration)
 }
 
@@ -111,7 +111,7 @@ inline fun <reified F : FirDeclaration, R> KtLambdaExpression.withFirDeclaration
     action: (F) -> R
 ): R {
     val firDeclaration = resolveState.findSourceFirDeclaration(this)
-    if (firDeclaration !is F) throw InvalidFirElementTypeException(this, F::class, firDeclaration::class)
+    if (firDeclaration !is F) throwUnexpectedFirElementError(firDeclaration, this, F::class)
     return action(firDeclaration)
 }
 
@@ -125,7 +125,7 @@ fun <D : FirDeclaration, R> D.withFirDeclaration(
     action: (D) -> R,
 ): R {
     resolvedFirToPhase(phase, resolveState)
-    return resolveState.withLock(this, DeclarationLockType.READ_LOCK, action)
+    return action(this)
 }
 
 /**
@@ -138,31 +138,7 @@ fun <D : FirDeclaration, R> D.withFirDeclaration(
     action: (D) -> R,
 ): R {
     resolvedFirToType(type, resolveState)
-    return resolveState.withLock(this, DeclarationLockType.READ_LOCK, action)
-}
-
-/**
- * Executes [action] with given [FirDeclaration] under write lock, so resolve **is possible** inside [action]
- */
-fun <D : FirDeclaration, R> D.withFirDeclarationInWriteLock(
-    resolveState: FirModuleResolveState,
-    phase: FirResolvePhase = FirResolvePhase.RAW_FIR,
-    action: (D) -> R,
-): R {
-    resolvedFirToPhase(phase, resolveState)
-    return resolveState.withLock(this, DeclarationLockType.WRITE_LOCK, action)
-}
-
-/**
- * Executes [action] with given [FirDeclaration] under write lock, so resolve **is possible** inside [action]
- */
-fun <D : FirDeclaration, R> D.withFirDeclarationInWriteLock(
-    resolveState: FirModuleResolveState,
-    resolveType: ResolveType = ResolveType.BodyResolveWithChildren,
-    action: (D) -> R,
-): R {
-    resolvedFirToType(resolveType, resolveState)
-    return resolveState.withLock(this, DeclarationLockType.WRITE_LOCK, action)
+    return action(this)
 }
 
 /**
@@ -208,11 +184,13 @@ fun <D : FirDeclaration> D.resolvedFirToType(
 /**
  * Get a [FirElement] which was created by [KtElement]
  * Returned [FirElement] is guaranteed to be resolved to [FirResolvePhase.BODY_RESOLVE] phase
- * This operation could be performance affective because it create FIleStructureElement and resolve non-local declaration into BODY phase
+ * This operation could be performance affective because it create FIleStructureElement and resolve non-local declaration into BODY phase.
+ *
+ * The `null` value is returned iff FIR tree does not have corresponding element
  */
 fun KtElement.getOrBuildFir(
     resolveState: FirModuleResolveState,
-): FirElement = resolveState.getOrBuildFirFor(this)
+): FirElement? = resolveState.getOrBuildFirFor(this)
 
 /**
  * Get a [FirElement] which was created by [KtElement], but only if it is subtype of [E], `null` otherwise
@@ -233,7 +211,7 @@ inline fun <reified E : FirElement> KtElement.getOrBuildFirOfType(
 ): E {
     val fir = this.getOrBuildFir(resolveState)
     if (fir is E) return fir
-    throw InvalidFirElementTypeException(this, E::class, fir::class)
+    throwUnexpectedFirElementError(fir, this, E::class)
 }
 
 /**
@@ -242,9 +220,3 @@ inline fun <reified E : FirElement> KtElement.getOrBuildFirOfType(
  */
 fun KtFile.getOrBuildFirFile(resolveState: FirModuleResolveState): FirFile =
     resolveState.getOrBuildFirFile(this)
-
-class InvalidFirElementTypeException(
-    ktElement: KtElement,
-    expectedFirClass: KClass<out FirElement>,
-    actualFirClass: KClass<out FirElement>
-) : IllegalStateException("For $ktElement with text `${ktElement.text}` the $expectedFirClass expected, but $actualFirClass found")

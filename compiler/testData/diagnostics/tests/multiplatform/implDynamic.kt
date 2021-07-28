@@ -1,4 +1,3 @@
-// FIR_IDENTICAL
 // !LANGUAGE: +MultiPlatformProjects
 // !DIAGNOSTICS: -UNSUPPORTED
 // MODULE: m1-common

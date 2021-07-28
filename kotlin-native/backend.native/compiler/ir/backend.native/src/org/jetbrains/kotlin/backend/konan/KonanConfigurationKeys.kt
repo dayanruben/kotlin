@@ -32,6 +32,8 @@ class KonanConfigKeys {
                 = CompilerConfigurationKey.create("fully qualified main() name")
         val EXPORTED_LIBRARIES: CompilerConfigurationKey<List<String>>
                 = CompilerConfigurationKey.create<List<String>>("libraries included into produced framework API")
+        val FULL_EXPORTED_NAME_PREFIX: CompilerConfigurationKey<String?>
+                = CompilerConfigurationKey.create("prefix used when exporting Kotlin names to other languages")
         val LIBRARIES_TO_CACHE: CompilerConfigurationKey<List<String>>
                 = CompilerConfigurationKey.create<List<String>>("paths to libraries that to be compiled to cache")
         val LIBRARY_TO_ADD_TO_CACHE: CompilerConfigurationKey<String?>
@@ -159,6 +161,7 @@ class KonanConfigKeys {
         val GARBAGE_COLLECTOR: CompilerConfigurationKey<GC> = CompilerConfigurationKey.create("gc")
         val GARBAGE_COLLECTOR_AGRESSIVE: CompilerConfigurationKey<Boolean> = CompilerConfigurationKey.create("turn on agressive GC mode")
         val CHECK_LLD_COMPATIBILITY: CompilerConfigurationKey<Boolean> = CompilerConfigurationKey.create("check compatibility with LLD")
+        val RUNTIME_ASSERTS_MODE: CompilerConfigurationKey<RuntimeAssertsMode> = CompilerConfigurationKey.create("enable runtime asserts")
     }
 }
 

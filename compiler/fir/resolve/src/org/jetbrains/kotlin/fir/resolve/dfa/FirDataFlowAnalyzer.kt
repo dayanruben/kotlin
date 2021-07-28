@@ -1288,6 +1288,10 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
 
     // ----------------------------------- Elvis -----------------------------------
 
+    fun enterElvis(elvisExpression: FirElvisExpression) {
+        graphBuilder.enterElvis(elvisExpression)
+    }
+
     fun exitElvisLhs(elvisExpression: FirElvisExpression) {
         val (lhsExitNode, lhsIsNotNullNode, rhsEnterNode) = graphBuilder.exitElvisLhs(elvisExpression)
         lhsExitNode.mergeIncomingFlow()
@@ -1336,6 +1340,10 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
 
     fun exitCallableReference(callableReferenceAccess: FirCallableReferenceAccess) {
         graphBuilder.exitCallableReference(callableReferenceAccess).mergeIncomingFlow()
+    }
+
+    fun exitGetClassCall(getClassCall: FirGetClassCall) {
+        graphBuilder.exitGetClassCall(getClassCall).mergeIncomingFlow()
     }
 
     // ------------------------------------------------------ Utils ------------------------------------------------------

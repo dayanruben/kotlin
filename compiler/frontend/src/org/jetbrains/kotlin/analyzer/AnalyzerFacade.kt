@@ -117,6 +117,9 @@ interface TrackableModuleInfo : ModuleInfo {
     fun createModificationTracker(): ModificationTracker
 }
 
+interface LibraryModuleSourceInfoBase : ModuleInfo
+interface NonSourceModuleInfoBase : ModuleInfo
+
 interface LibraryModuleInfo : ModuleInfo {
     override val platform: TargetPlatform
 

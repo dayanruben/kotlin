@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.resolve.VarianceConflictDiagnosticData;
 import org.jetbrains.kotlin.resolve.calls.inference.InferenceErrorData;
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall;
 import org.jetbrains.kotlin.resolve.calls.tower.WrongResolutionToClassifier;
-import org.jetbrains.kotlin.resolve.multiplatform.ExpectedActualResolver.Compatibility.Incompatible;
+import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualCompatibility.Incompatible;
 import org.jetbrains.kotlin.serialization.deserialization.IncompatibleVersionErrorData;
 import org.jetbrains.kotlin.types.KotlinType;
 
@@ -276,6 +276,7 @@ public interface Errors {
 
     DiagnosticFactory2<PsiElement, FqName, String> EXPERIMENTAL_API_USAGE = DiagnosticFactory2.create(WARNING);
     DiagnosticFactory2<PsiElement, FqName, String> EXPERIMENTAL_API_USAGE_ERROR = DiagnosticFactory2.create(ERROR);
+    DiagnosticFactory2<PsiElement, FqName, String> EXPERIMENTAL_API_USAGE_FUTURE_ERROR = DiagnosticFactory2.create(WARNING);
 
     DiagnosticFactory2<PsiElement, FqName, String> EXPERIMENTAL_OVERRIDE = DiagnosticFactory2.create(WARNING);
     DiagnosticFactory2<PsiElement, FqName, String> EXPERIMENTAL_OVERRIDE_ERROR = DiagnosticFactory2.create(ERROR);
@@ -292,6 +293,7 @@ public interface Errors {
 
     DiagnosticFactory1<KtAnnotationEntry, String> EXPERIMENTAL_ANNOTATION_ON_WRONG_TARGET = DiagnosticFactory1.create(ERROR);
     DiagnosticFactory0<KtAnnotationEntry> EXPERIMENTAL_ANNOTATION_ON_OVERRIDE = DiagnosticFactory0.create(ERROR);
+    DiagnosticFactory0<KtAnnotationEntry> EXPERIMENTAL_ANNOTATION_ON_OVERRIDE_WARNING = DiagnosticFactory0.create(WARNING);
 
     DiagnosticFactory1<PsiElement, String> EXPERIMENTAL_UNSIGNED_LITERALS = DiagnosticFactory1.create(WARNING);
     DiagnosticFactory1<PsiElement, String> EXPERIMENTAL_UNSIGNED_LITERALS_ERROR = DiagnosticFactory1.create(ERROR);
@@ -704,10 +706,10 @@ public interface Errors {
     DiagnosticFactory0<PsiElement> EXPECTED_FUNCTION_SOURCE_WITH_DEFAULT_ARGUMENTS_NOT_FOUND = DiagnosticFactory0.create(ERROR);
 
     DiagnosticFactory3<KtNamedDeclaration, MemberDescriptor, ModuleDescriptor,
-            Map<Incompatible, Collection<MemberDescriptor>>> NO_ACTUAL_FOR_EXPECT =
+            Map<Incompatible<MemberDescriptor>, Collection<MemberDescriptor>>> NO_ACTUAL_FOR_EXPECT =
             DiagnosticFactory3.create(ERROR, INCOMPATIBLE_DECLARATION);
     DiagnosticFactory2<KtNamedDeclaration, MemberDescriptor,
-            Map<Incompatible, Collection<MemberDescriptor>>> ACTUAL_WITHOUT_EXPECT =
+            Map<Incompatible<MemberDescriptor>, Collection<MemberDescriptor>>> ACTUAL_WITHOUT_EXPECT =
             DiagnosticFactory2.create(ERROR, INCOMPATIBLE_DECLARATION);
     DiagnosticFactory2<KtNamedDeclaration, DeclarationDescriptor, Collection<ModuleDescriptor>> AMBIGUOUS_ACTUALS =
             DiagnosticFactory2.create(ERROR, INCOMPATIBLE_DECLARATION);
@@ -715,7 +717,7 @@ public interface Errors {
             DiagnosticFactory2.create(ERROR, INCOMPATIBLE_DECLARATION);
 
     DiagnosticFactory2<KtNamedDeclaration, ClassDescriptor,
-            List<Pair<MemberDescriptor, Map<Incompatible, Collection<MemberDescriptor>>>>> NO_ACTUAL_CLASS_MEMBER_FOR_EXPECTED_CLASS =
+            List<Pair<MemberDescriptor, Map<Incompatible<MemberDescriptor>, Collection<MemberDescriptor>>>>> NO_ACTUAL_CLASS_MEMBER_FOR_EXPECTED_CLASS =
             DiagnosticFactory2.create(ERROR, ACTUAL_DECLARATION_NAME);
     DiagnosticFactory0<KtNamedDeclaration> ACTUAL_MISSING = DiagnosticFactory0.create(ERROR, ACTUAL_DECLARATION_NAME);
 
@@ -1080,6 +1082,7 @@ public interface Errors {
     DiagnosticFactory0<KtWhenEntry> REDUNDANT_ELSE_IN_WHEN = DiagnosticFactory0.create(WARNING, ELSE_ENTRY);
     DiagnosticFactory1<KtWhenExpression, List<WhenMissingCase>> NO_ELSE_IN_WHEN = DiagnosticFactory1.create(ERROR, WHEN_EXPRESSION);
     DiagnosticFactory1<KtWhenExpression, List<WhenMissingCase>> NON_EXHAUSTIVE_WHEN = DiagnosticFactory1.create(WARNING, WHEN_EXPRESSION);
+    DiagnosticFactory2<KtWhenExpression, String, List<WhenMissingCase>> NON_EXHAUSTIVE_WHEN_STATEMENT = DiagnosticFactory2.create(WARNING, WHEN_EXPRESSION);
     DiagnosticFactory1<KtWhenExpression, List<WhenMissingCase>>
             NON_EXHAUSTIVE_WHEN_ON_SEALED_CLASS = DiagnosticFactory1.create(INFO, WHEN_EXPRESSION);
     DiagnosticFactory1<KtWhenExpression, String> EXPECT_TYPE_IN_WHEN_WITHOUT_ELSE = DiagnosticFactory1.create(ERROR, WHEN_EXPRESSION);
@@ -1176,7 +1179,7 @@ public interface Errors {
     DiagnosticFactory0<PsiElement> ILLEGAL_RESTRICTED_SUSPENDING_FUNCTION_CALL = DiagnosticFactory0.create(ERROR);
     DiagnosticFactory0<PsiElement> NON_MODIFIER_FORM_FOR_BUILT_IN_SUSPEND = DiagnosticFactory0.create(ERROR);
     DiagnosticFactory0<KtReturnExpression> RETURN_FOR_BUILT_IN_SUSPEND = DiagnosticFactory0.create(ERROR);
-    DiagnosticFactory0<PsiElement> MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND = DiagnosticFactory0.create(WARNING);
+    DiagnosticFactory0<PsiElement> MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND = DiagnosticFactory0.create(ERROR);
 
     DiagnosticFactory1<PsiElement, RenderedDiagnostic<?>> PLUGIN_ERROR = DiagnosticFactory1.create(ERROR);
     DiagnosticFactory1<PsiElement, RenderedDiagnostic<?>> PLUGIN_WARNING = DiagnosticFactory1.create(WARNING);

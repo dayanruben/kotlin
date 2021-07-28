@@ -1104,6 +1104,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             }
 
             @Test
+            @TestMetadata("ConstructorCallAllowed.kt")
+            public void testConstructorCallAllowed() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/annotations/ConstructorCallAllowed.kt");
+            }
+
+            @Test
             @TestMetadata("DanglingMixed.kt")
             public void testDanglingMixed() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/annotations/DanglingMixed.kt");
@@ -1185,24 +1191,6 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             @TestMetadata("JavaAnnotationConstructors.kt")
             public void testJavaAnnotationConstructors() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/annotations/JavaAnnotationConstructors.kt");
-            }
-
-            @Test
-            @TestMetadata("javaRepeatable.kt")
-            public void testJavaRepeatable() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/annotations/javaRepeatable.kt");
-            }
-
-            @Test
-            @TestMetadata("javaRepeatableRetention.kt")
-            public void testJavaRepeatableRetention() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/annotations/javaRepeatableRetention.kt");
-            }
-
-            @Test
-            @TestMetadata("javaUnrepeatable.kt")
-            public void testJavaUnrepeatable() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/annotations/javaUnrepeatable.kt");
             }
 
             @Test
@@ -1586,12 +1574,6 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
                 @TestMetadata("prefix.kt")
                 public void testPrefix() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/annotations/options/prefix.kt");
-                }
-
-                @Test
-                @TestMetadata("repeatable.kt")
-                public void testRepeatable() throws Exception {
-                    runTest("compiler/testData/diagnostics/tests/annotations/options/repeatable.kt");
                 }
 
                 @Test
@@ -2104,6 +2086,34 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             }
 
             @Nested
+            @TestMetadata("compiler/testData/diagnostics/tests/annotations/repeatable")
+            @TestDataPath("$PROJECT_ROOT")
+            public class Repeatable {
+                @Test
+                public void testAllFilesPresentInRepeatable() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/annotations/repeatable"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
+                }
+
+                @Test
+                @TestMetadata("javaRepeatable.kt")
+                public void testJavaRepeatable() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/annotations/repeatable/javaRepeatable.kt");
+                }
+
+                @Test
+                @TestMetadata("javaUnrepeatable.kt")
+                public void testJavaUnrepeatable() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/annotations/repeatable/javaUnrepeatable.kt");
+                }
+
+                @Test
+                @TestMetadata("kotlinRepeatable.kt")
+                public void testKotlinRepeatable() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/annotations/repeatable/kotlinRepeatable.kt");
+                }
+            }
+
+            @Nested
             @TestMetadata("compiler/testData/diagnostics/tests/annotations/typeUse")
             @TestDataPath("$PROJECT_ROOT")
             public class TypeUse {
@@ -2134,6 +2144,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
                 @TestMetadata("kt46173.kt")
                 public void testKt46173() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/annotations/typeUse/kt46173.kt");
+                }
+
+                @Test
+                @TestMetadata("kt47772.kt")
+                public void testKt47772() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/annotations/typeUse/kt47772.kt");
                 }
 
                 @Test
@@ -31676,6 +31692,24 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             }
 
             @Test
+            @TestMetadata("nonExhaustiveWhenStatement_1_5.kt")
+            public void testNonExhaustiveWhenStatement_1_5() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/when/nonExhaustiveWhenStatement_1_5.kt");
+            }
+
+            @Test
+            @TestMetadata("nonExhaustiveWhenStatement_1_6.kt")
+            public void testNonExhaustiveWhenStatement_1_6() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/when/nonExhaustiveWhenStatement_1_6.kt");
+            }
+
+            @Test
+            @TestMetadata("nonExhaustiveWhenStatement_1_7.kt")
+            public void testNonExhaustiveWhenStatement_1_7() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/when/nonExhaustiveWhenStatement_1_7.kt");
+            }
+
+            @Test
             @TestMetadata("NonExhaustiveWithNullabilityCheck.kt")
             public void testNonExhaustiveWithNullabilityCheck() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/when/NonExhaustiveWithNullabilityCheck.kt");
@@ -34834,6 +34868,18 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             }
 
             @Test
+            @TestMetadata("experimentalOnOverrideWarning.kt")
+            public void testExperimentalOnOverrideWarning() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/experimentalOnOverrideWarning.kt");
+            }
+
+            @Test
+            @TestMetadata("experimentalSetter.kt")
+            public void testExperimentalSetter() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/experimentalSetter.kt");
+            }
+
+            @Test
             @TestMetadata("fullFqNameUsage.kt")
             public void testFullFqNameUsage() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/fullFqNameUsage.kt");
@@ -34843,6 +34889,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             @TestMetadata("implicitUsages.kt")
             public void testImplicitUsages() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/implicitUsages.kt");
+            }
+
+            @Test
+            @TestMetadata("implicitUsagesFuture.kt")
+            public void testImplicitUsagesFuture() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/implicitUsagesFuture.kt");
             }
 
             @Test
@@ -34915,6 +34967,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             @TestMetadata("useExperimentalOnFileWithVeryExperimentalMarker.kt")
             public void testUseExperimentalOnFileWithVeryExperimentalMarker() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/useExperimentalOnFileWithVeryExperimentalMarker.kt");
+            }
+
+            @Test
+            @TestMetadata("useExperimentalOnStatement.kt")
+            public void testUseExperimentalOnStatement() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/useExperimentalOnStatement.kt");
             }
 
             @Test

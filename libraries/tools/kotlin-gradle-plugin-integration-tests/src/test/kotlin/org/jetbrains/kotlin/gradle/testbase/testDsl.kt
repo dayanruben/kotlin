@@ -8,6 +8,8 @@ package org.jetbrains.kotlin.gradle.testbase
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.util.GradleVersion
+import org.jetbrains.kotlin.gradle.BaseGradleIT.Companion.acceptAndroidSdkLicenses
+import org.jetbrains.kotlin.test.util.KtTestUtil
 import java.io.File
 import java.nio.file.*
 import java.nio.file.Files.copy
@@ -40,24 +42,23 @@ fun KGPBaseTest.project(
     )
     projectPath.addDefaultBuildFiles()
     projectPath.enableCacheRedirector()
+    projectPath.enableAndroidSdk()
     if (addHeapDumpOptions) projectPath.addHeapDumpOptions()
 
     val gradleRunner = GradleRunner
         .create()
-        .withDebug(enableGradleDebug)
         .withProjectDir(projectPath.toFile())
         .withTestKitDir(testKitDir.toAbsolutePath().toFile())
         .withGradleVersion(gradleVersion.version)
-        .also {
-            if (forceOutput) it.forwardOutput()
-        }
 
     val testProject = TestProject(
         gradleRunner,
         projectName,
         buildOptions,
         projectPath,
-        gradleVersion
+        gradleVersion,
+        enableGradleDebug,
+        forceOutput
     )
     testProject.test()
     return testProject
@@ -68,11 +69,16 @@ fun KGPBaseTest.project(
  */
 fun TestProject.build(
     vararg buildArguments: String,
-    forceOutput: Boolean = false,
-    enableGradleDebug: Boolean = false,
+    forceOutput: Boolean = this.forceOutput,
+    enableGradleDebug: Boolean = this.enableGradleDebug,
+    buildOptions: KGPBaseTest.BuildOptions = this.buildOptions,
     assertions: BuildResult.() -> Unit = {}
 ) {
-    val allBuildArguments = commonBuildSetup(buildArguments.toList())
+    val allBuildArguments = commonBuildSetup(
+        buildArguments.toList(),
+        buildOptions,
+        gradleVersion
+    )
     val gradleRunnerForBuild = gradleRunner
         .also { if (forceOutput) it.forwardOutput() }
         .withDebug(enableGradleDebug)
@@ -88,11 +94,16 @@ fun TestProject.build(
  */
 fun TestProject.buildAndFail(
     vararg buildArguments: String,
-    forceOutput: Boolean = false,
-    enableGradleDebug: Boolean = false,
+    forceOutput: Boolean = this.forceOutput,
+    enableGradleDebug: Boolean = this.enableGradleDebug,
+    buildOptions: KGPBaseTest.BuildOptions = this.buildOptions,
     assertions: BuildResult.() -> Unit = {}
 ) {
-    val allBuildArguments = commonBuildSetup(buildArguments.toList())
+    val allBuildArguments = commonBuildSetup(
+        buildArguments.toList(),
+        buildOptions,
+        gradleVersion
+    )
     val gradleRunnerForBuild = gradleRunner
         .also { if (forceOutput) it.forwardOutput() }
         .withDebug(enableGradleDebug)
@@ -130,15 +141,29 @@ class TestProject(
     val projectName: String,
     val buildOptions: KGPBaseTest.BuildOptions,
     val projectPath: Path,
-    val gradleVersion: GradleVersion
+    val gradleVersion: GradleVersion,
+    val enableGradleDebug: Boolean,
+    val forceOutput: Boolean
 ) {
     val rootBuildGradle: Path get() = projectPath.resolve("build.gradle")
     val settingsGradle: Path get() = projectPath.resolve("settings.gradle")
     val gradleProperties: Path get() = projectPath.resolve("gradle.properties")
+    val localProperties: Path get() = projectPath.resolve("local.properties")
+
+    fun classesDir(
+        sourceSet: String = "main",
+        language: String = "kotlin"
+    ): Path = projectPath.resolve("build/classes/$language/$sourceSet/")
+
+    fun kotlinClassesDir(
+        sourceSet: String = "main"
+    ): Path = classesDir(sourceSet, language = "kotlin")
 }
 
-private fun TestProject.commonBuildSetup(
-    buildArguments: List<String>
+private fun commonBuildSetup(
+    buildArguments: List<String>,
+    buildOptions: KGPBaseTest.BuildOptions,
+    gradleVersion: GradleVersion
 ): List<String> {
     val buildOptionsArguments = buildOptions.toArguments(gradleVersion)
     return buildOptionsArguments + buildArguments + "--full-stacktrace"
@@ -162,6 +187,11 @@ private fun TestProject.withBuildSummary(
  */
 private val testKitDir get() = Paths.get(".").resolve(".testKitDir")
 
+private val hashAlphabet: List<Char> = ('a'..'z') + ('A'..'Z') + ('0'..'9')
+private fun randomHash(length: Int = 15): String {
+    return List(length) { hashAlphabet.random() }.joinToString("")
+}
+
 private fun setupProjectFromTestResources(
     projectName: String,
     gradleVersion: GradleVersion,
@@ -173,8 +203,9 @@ private fun setupProjectFromTestResources(
     assertTrue("Test project path is a directory") { Files.isDirectory(testProjectPath) }
 
     return tempDir
-        .resolve(projectName)
         .resolve(gradleVersion.version)
+        .resolve(randomHash())
+        .resolve(projectName)
         .resolve(optionalSubDir)
         .also {
             testProjectPath.copyRecursively(it)
@@ -203,6 +234,19 @@ private fun Path.addDefaultBuildFiles() {
             }
         }
     }
+}
+
+@OptIn(ExperimentalPathApi::class)
+internal fun Path.enableAndroidSdk() {
+    val androidSdk = KtTestUtil.findAndroidSdk()
+    resolve("local.properties")
+        .also { if (!it.exists()) it.createFile() }
+        .appendText(
+            """
+            sdk.dir=${androidSdk.absolutePath.replace('\\', '/')}
+            """.trimIndent()
+        )
+    acceptAndroidSdkLicenses(androidSdk)
 }
 
 @OptIn(ExperimentalPathApi::class)

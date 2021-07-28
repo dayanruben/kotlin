@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -214,7 +214,15 @@ enum class LanguageFeature(
     SafeCallsAreAlwaysNullable(KOTLIN_1_6),
     ProhibitSimplificationOfNonTrivialConstBooleanExpressions(KOTLIN_1_6),
     TypeInferenceOnCallsWithSelfTypes(KOTLIN_1_6),
-    OptInRelease(KOTLIN_1_6),
+    WarnAboutNonExhaustiveWhenOnAlgebraicTypes(KOTLIN_1_6, kind = BUG_FIX),
+    InstantiationOfAnnotationClasses(KOTLIN_1_6),
+    OptInOnOverrideForbidden(KOTLIN_1_6, kind = BUG_FIX),
+    OptInContagiousSignatures(KOTLIN_1_6, kind = BUG_FIX),
+
+    // 1.7
+
+    OptInRelease(KOTLIN_1_7),
+    ProhibitNonExhaustiveWhenOnAlgebraicTypes(KOTLIN_1_7, kind = BUG_FIX),
 
     // Temporarily disabled, see KT-27084/KT-22379
     SoundSmartcastFromLoopConditionForLoopAssignedVariables(sinceVersion = null, kind = BUG_FIX),
@@ -315,6 +323,7 @@ enum class LanguageVersion(val major: Int, val minor: Int) : DescriptionAware {
     KOTLIN_1_4(1, 4),
     KOTLIN_1_5(1, 5),
     KOTLIN_1_6(1, 6),
+    KOTLIN_1_7(1, 7),
     ;
 
     val isStable: Boolean

@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.fir.analysis.diagnostics
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.fir.FirFakeSourceElementKind
 import org.jetbrains.kotlin.fir.FirSourceElement
+import org.jetbrains.kotlin.fir.analysis.checkers.declaration.isLocalMember
 import org.jetbrains.kotlin.fir.analysis.getChild
 import org.jetbrains.kotlin.fir.declarations.utils.isInfix
 import org.jetbrains.kotlin.fir.declarations.utils.isOperator
@@ -29,6 +30,7 @@ import org.jetbrains.kotlin.resolve.calls.tower.CandidateApplicability
 import org.jetbrains.kotlin.resolve.calls.tower.isSuccess
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
+import org.jetbrains.kotlin.utils.addToStdlib.runIf
 
 private fun ConeDiagnostic.toFirDiagnostic(
     source: FirSourceElement,
@@ -86,6 +88,8 @@ private fun ConeDiagnostic.toFirDiagnostic(
     is ConeNotAnnotationContainer -> null
     is ConeImportFromSingleton -> FirErrors.CANNOT_ALL_UNDER_IMPORT_FROM_SINGLETON.createOn(source, this.name)
     is ConeUnsupportedDynamicType -> FirErrors.UNSUPPORTED.createOn(source, this.reason)
+    is ConeLocalVariableNoTypeOrInitializer ->
+        runIf(variable.isLocalMember) { FirErrors.VARIABLE_WITH_NO_TYPE_NO_INITIALIZER.createOn(source) }
     else -> throw IllegalArgumentException("Unsupported diagnostic type: ${this.javaClass}")
 }
 
@@ -333,8 +337,6 @@ private fun ConeSimpleDiagnostic.getFactory(source: FirSourceElement): FirDiagno
         DiagnosticKind.IllegalUnderscore -> FirErrors.ILLEGAL_UNDERSCORE
         DiagnosticKind.DeserializationError -> FirErrors.DESERIALIZATION_ERROR
         DiagnosticKind.InferenceError -> FirErrors.INFERENCE_ERROR
-        DiagnosticKind.EnumAsSupertype -> FirErrors.ENUM_AS_SUPERTYPE
-        DiagnosticKind.RecursionInSupertypes -> FirErrors.RECURSION_IN_SUPERTYPES
         DiagnosticKind.RecursionInImplicitTypes -> FirErrors.RECURSION_IN_IMPLICIT_TYPES
         DiagnosticKind.Java -> FirErrors.ERROR_FROM_JAVA_RESOLUTION
         DiagnosticKind.SuperNotAllowed -> FirErrors.SUPER_IS_NOT_AN_EXPRESSION
@@ -349,7 +351,6 @@ private fun ConeSimpleDiagnostic.getFactory(source: FirSourceElement): FirDiagno
         DiagnosticKind.VariableExpected -> FirErrors.VARIABLE_EXPECTED
         DiagnosticKind.ValueParameterWithNoTypeAnnotation -> FirErrors.VALUE_PARAMETER_WITH_NO_TYPE_ANNOTATION
         DiagnosticKind.CannotInferParameterType -> FirErrors.CANNOT_INFER_PARAMETER_TYPE
-        DiagnosticKind.UnknownCallableKind -> FirErrors.UNKNOWN_CALLABLE_KIND
         DiagnosticKind.IllegalProjectionUsage -> FirErrors.ILLEGAL_PROJECTION_USAGE
         DiagnosticKind.MissingStdlibClass -> FirErrors.MISSING_STDLIB_CLASS
         DiagnosticKind.IntLiteralOutOfRange -> FirErrors.INT_LITERAL_OUT_OF_RANGE
@@ -362,6 +363,8 @@ private fun ConeSimpleDiagnostic.getFactory(source: FirSourceElement): FirDiagno
         DiagnosticKind.RecursiveTypealiasExpansion -> FirErrors.RECURSIVE_TYPEALIAS_EXPANSION
         DiagnosticKind.LoopInSupertype -> FirErrors.CYCLIC_INHERITANCE_HIERARCHY
         DiagnosticKind.IllegalSelector -> FirErrors.ILLEGAL_SELECTOR
+        DiagnosticKind.IsEnumEntry -> FirErrors.IS_ENUM_ENTRY
+        DiagnosticKind.EnumEntryAsType -> FirErrors.ENUM_ENTRY_AS_TYPE
         DiagnosticKind.UnresolvedSupertype,
         DiagnosticKind.UnresolvedExpandedType,
         DiagnosticKind.Other -> FirErrors.OTHER_ERROR

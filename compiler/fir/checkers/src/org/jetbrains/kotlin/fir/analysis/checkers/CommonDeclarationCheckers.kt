@@ -30,13 +30,15 @@ object CommonDeclarationCheckers : DeclarationCheckers() {
             FirInfixFunctionDeclarationChecker,
             FirExposedVisibilityDeclarationChecker,
             FirCyclicTypeBoundsChecker,
+            FirExpectActualDeclarationChecker
         )
 
     override val functionCheckers: Set<FirFunctionChecker>
         get() = setOf(
             FirContractChecker,
             FirFunctionParameterChecker,
-            FirInlineDeclarationChecker
+            FirInlineDeclarationChecker,
+            FirFunctionReturnChecker,
         )
 
     override val simpleFunctionCheckers: Set<FirSimpleFunctionChecker>
@@ -88,7 +90,8 @@ object CommonDeclarationCheckers : DeclarationCheckers() {
             FirFunInterfaceDeclarationChecker,
             FirNestedClassChecker,
             FirInlineClassDeclarationChecker,
-            FirOuterClassArgumentsRequiredChecker
+            FirOuterClassArgumentsRequiredChecker,
+            FirPropertyInitializationChecker,
         )
 
     override val constructorCheckers: Set<FirConstructorChecker>
@@ -137,5 +140,10 @@ object CommonDeclarationCheckers : DeclarationCheckers() {
         get() = setOf(
             FirAnonymousFunctionParametersChecker,
             FirAnonymousFunctionSyntaxChecker,
+        )
+
+    override val anonymousInitializerCheckers: Set<FirAnonymousInitializerChecker>
+        get() = setOf(
+            FirAnonymousInitializerInInterfaceChecker
         )
 }

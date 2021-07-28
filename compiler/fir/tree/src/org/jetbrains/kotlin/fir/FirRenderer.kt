@@ -62,6 +62,7 @@ class FirRenderer(builder: StringBuilder, private val mode: RenderMode = RenderM
         val renderPropertyAccessors: Boolean = true,
         val renderDeclarationAttributes: Boolean = false,
         val renderDeclarationOrigin: Boolean = false,
+        val renderPackageDirective: Boolean = false,
     ) {
         companion object {
             val Normal = RenderMode(
@@ -239,6 +240,7 @@ class FirRenderer(builder: StringBuilder, private val mode: RenderMode = RenderM
                     print(callableDeclaration.symbol.callableId)
                 }
             }
+            else -> {}
         }
 
         if (callableDeclaration is FirFunction) {
@@ -381,6 +383,7 @@ class FirRenderer(builder: StringBuilder, private val mode: RenderMode = RenderM
                     memberDeclaration.typeParameters.renderTypeParameters()
                 }
             }
+            else -> {}
         }
     }
 
@@ -1367,5 +1370,11 @@ class FirRenderer(builder: StringBuilder, private val mode: RenderMode = RenderM
 
     override fun visitContractDescription(contractDescription: FirContractDescription) {
         require(contractDescription is FirEmptyContractDescription)
+    }
+
+    override fun visitPackageDirective(packageDirective: FirPackageDirective) {
+        if (mode.renderPackageDirective) {
+            println("package ${packageDirective.packageFqName.asString()}")
+        }
     }
 }

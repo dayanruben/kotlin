@@ -31,8 +31,8 @@ object FirClassLiteralChecker : FirGetClassCallChecker() {
         if (source.kind is FirFakeSourceElementKind) return
         val argument = expression.argument
         if (argument is FirResolvedQualifier) {
-            val fqName = argument.classId?.asSingleFqName()
-            if (fqName in OptInNames.EXPERIMENTAL_FQ_NAMES || fqName in OptInNames.USE_EXPERIMENTAL_FQ_NAMES) {
+            val classId = argument.classId
+            if (classId == OptInNames.REQUIRES_OPT_IN_CLASS_ID || classId == OptInNames.OPT_IN_CLASS_ID) {
                 reporter.reportOn(argument.source, FirErrors.EXPERIMENTAL_CAN_ONLY_BE_USED_AS_ANNOTATION, context)
             }
         }

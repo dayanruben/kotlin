@@ -11,20 +11,21 @@ import kotlin.collections.CollectionsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.config.LanguageVersion;
+import org.jetbrains.kotlin.descriptors.MemberDescriptor;
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory;
 import org.jetbrains.kotlin.diagnostics.Errors;
 import org.jetbrains.kotlin.diagnostics.UnboundDiagnostic;
 import org.jetbrains.kotlin.metadata.deserialization.VersionRequirement;
 import org.jetbrains.kotlin.resolve.VarianceConflictDiagnosticData;
+import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualCompatibility;
+import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualCompatibility.Incompatible;
 import org.jetbrains.kotlin.types.KotlinTypeKt;
 import org.jetbrains.kotlin.util.OperatorNameConventions;
 import org.jetbrains.kotlin.utils.addToStdlib.AddToStdlibKt;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.Collections;
-import java.util.List;
-import java.util.ServiceLoader;
+import java.util.*;
 
 import static org.jetbrains.kotlin.diagnostics.Errors.*;
 import static org.jetbrains.kotlin.diagnostics.rendering.Renderers.*;
@@ -158,6 +159,7 @@ public class DefaultErrorMessages {
 
         MAP.put(EXPERIMENTAL_API_USAGE, "{1}", TO_STRING, STRING);
         MAP.put(EXPERIMENTAL_API_USAGE_ERROR, "{1}", TO_STRING, STRING);
+        MAP.put(EXPERIMENTAL_API_USAGE_FUTURE_ERROR, "{1}", TO_STRING, STRING);
 
         MAP.put(EXPERIMENTAL_OVERRIDE, "{1}", TO_STRING, STRING);
         MAP.put(EXPERIMENTAL_OVERRIDE_ERROR, "{1}", TO_STRING, STRING);
@@ -173,6 +175,7 @@ public class DefaultErrorMessages {
 
         MAP.put(EXPERIMENTAL_ANNOTATION_ON_WRONG_TARGET, "Opt-in requirement marker annotation cannot be used on {0}", STRING);
         MAP.put(EXPERIMENTAL_ANNOTATION_ON_OVERRIDE, "Opt-in requirement marker annotation on override requires the same marker on base declaration");
+        MAP.put(EXPERIMENTAL_ANNOTATION_ON_OVERRIDE_WARNING, "Opt-in requirement marker annotation on override requires the same marker on base declaration (will be an error in 1.6)");
 
         MAP.put(EXPERIMENTAL_UNSIGNED_LITERALS, "{0}", STRING);
         MAP.put(EXPERIMENTAL_UNSIGNED_LITERALS_ERROR, "{0}", STRING);
@@ -307,16 +310,16 @@ public class DefaultErrorMessages {
                 "Please add the corresponding file to compilation sources");
 
         MAP.put(NO_ACTUAL_FOR_EXPECT, "Expected {0} has no actual declaration in module {1}{2}", DECLARATION_NAME_WITH_KIND,
-                MODULE_WITH_PLATFORM, PlatformIncompatibilityDiagnosticRenderer.TEXT);
+                MODULE_WITH_PLATFORM, adaptGenerics1(PlatformIncompatibilityDiagnosticRenderer.TEXT));
         MAP.put(ACTUAL_WITHOUT_EXPECT, "{0} has no corresponding expected declaration{1}", CAPITALIZED_DECLARATION_NAME_WITH_KIND_AND_PLATFORM,
-                PlatformIncompatibilityDiagnosticRenderer.TEXT);
+                adaptGenerics1(PlatformIncompatibilityDiagnosticRenderer.TEXT));
         MAP.put(AMBIGUOUS_ACTUALS, "{0} has several compatible actual declarations in modules {1}", CAPITALIZED_DECLARATION_NAME_WITH_KIND_AND_PLATFORM, commaSeparated(
                 MODULE));
         MAP.put(AMBIGUOUS_EXPECTS, "{0} has several compatible expect declarations in modules {1}", CAPITALIZED_DECLARATION_NAME_WITH_KIND_AND_PLATFORM, commaSeparated(
                 MODULE));
 
         MAP.put(NO_ACTUAL_CLASS_MEMBER_FOR_EXPECTED_CLASS, "Actual class ''{0}'' has no corresponding members for expected class members:{1}",
-                NAME, IncompatibleExpectedActualClassScopesRenderer.TEXT);
+                NAME, adaptGenerics2(IncompatibleExpectedActualClassScopesRenderer.TEXT));
         MAP.put(ACTUAL_MISSING, "Declaration must be marked with 'actual'");
 
         MAP.put(OPTIONAL_EXPECTATION_NOT_ON_EXPECTED, "'@OptionalExpectation' can only be used on an expected annotation class");
@@ -630,6 +633,7 @@ public class DefaultErrorMessages {
 
         MAP.put(NO_ELSE_IN_WHEN, "''when'' expression must be exhaustive, add necessary {0}", RENDER_WHEN_MISSING_CASES);
         MAP.put(NON_EXHAUSTIVE_WHEN, "''when'' expression on enum is recommended to be exhaustive, add {0}", RENDER_WHEN_MISSING_CASES);
+        MAP.put(NON_EXHAUSTIVE_WHEN_STATEMENT, "Non exhaustive ''when'' statements on {0} will be prohibited in 1.7, add {1}", STRING, RENDER_WHEN_MISSING_CASES);
         MAP.put(NON_EXHAUSTIVE_WHEN_ON_SEALED_CLASS, "''when'' expression on sealed classes is recommended to be exhaustive, add {0}", RENDER_WHEN_MISSING_CASES);
         MAP.put(EXPECT_TYPE_IN_WHEN_WITHOUT_ELSE, "'when' with expect {0} as subject can not be exhaustive without else branch", STRING);
 
@@ -1098,6 +1102,15 @@ public class DefaultErrorMessages {
                 }
             }
         }
+    }
+
+    // Those methods are needed to fix problems with java type system and kotlin variance
+    public static DiagnosticParameterRenderer<Map<Incompatible<MemberDescriptor>, Collection<MemberDescriptor>>> adaptGenerics1(DiagnosticParameterRenderer<Map<Incompatible<? extends MemberDescriptor>, ? extends Collection<? extends MemberDescriptor>>> renderer) {
+        return (obj, renderingContext) -> renderer.render((Map)obj, renderingContext);
+    }
+
+    public static DiagnosticParameterRenderer<List<Pair<MemberDescriptor, Map<Incompatible<MemberDescriptor>, Collection<MemberDescriptor>>>>> adaptGenerics2(DiagnosticParameterRenderer<List<? extends Pair<? extends MemberDescriptor, ? extends Map<ExpectActualCompatibility.Incompatible<? extends MemberDescriptor>, ? extends Collection<? extends MemberDescriptor>>>>> renderer) {
+        return (obj, renderingContext) -> renderer.render((List)obj, renderingContext);
     }
 
     private DefaultErrorMessages() {

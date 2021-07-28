@@ -12,25 +12,6 @@ val otherCompilerModules = compilerModules.filter { it != path }
 
 val tasksWithWarnings: List<String> by rootProject.extra
 
-val effectSystemEnabled: Boolean by rootProject.extra
-val newInferenceEnabled: Boolean by rootProject.extra
-
-configureFreeCompilerArg(effectSystemEnabled, "-Xeffect-system")
-configureFreeCompilerArg(newInferenceEnabled, "-Xnew-inference")
-configureFreeCompilerArg(true, "-Xuse-mixed-named-arguments")
-
-fun configureFreeCompilerArg(isEnabled: Boolean, compilerArgument: String) {
-    if (isEnabled) {
-        allprojects {
-            tasks.withType<KotlinCompile<*>> {
-                kotlinOptions {
-                    freeCompilerArgs += listOf(compilerArgument)
-                }
-            }
-        }
-    }
-}
-
 val antLauncherJar by configurations.creating
 
 dependencies {
@@ -85,7 +66,9 @@ if (kotlinBuildProperties.isInJpsBuildIdeaSync) {
     idea {
         this.module.generatedSourceDirs.add(generationRoot)
     }
-} else if (!kotlinBuildProperties.useFir && !kotlinBuildProperties.disableWerror) {
+}
+
+if (!kotlinBuildProperties.disableWerror) {
     allprojects {
         tasks.withType<KotlinCompile<*>> {
             if (path !in tasksWithWarnings) {

@@ -21,10 +21,11 @@ dependencies {
     testCompile(kotlinStdlib("jdk8"))
     testCompile(project(":kotlin-scripting-ide-services-unshaded"))
     testCompile(project(":kotlin-scripting-compiler"))
-    testCompile(project(":kotlin-scripting-dependencies"))
-    testCompile(project(":kotlin-main-kts"))
+    testCompile(project(":kotlin-scripting-dependencies-maven"))
     testCompile(project(":compiler:cli"))
 
+    testImplementation(commonDep("org.jetbrains.kotlinx", "kotlinx-coroutines-core"))
+    testImplementation(commonDep("org.jetbrains.kotlinx", "kotlinx-coroutines-core-jvm"))
     testRuntimeOnly(project(":kotlin-compiler"))
     testRuntimeOnly(commonDep("org.jetbrains.intellij.deps", "trove4j"))
     testRuntimeOnly(project(":kotlin-scripting-ide-common")) { isTransitive = false }
@@ -32,10 +33,11 @@ dependencies {
     embeddableTestRuntime(project(":kotlin-scripting-ide-services", configuration="runtimeElements"))
     embeddableTestRuntime(project(":kotlin-scripting-compiler-impl-embeddable", configuration="runtimeElements"))
     embeddableTestRuntime(project(":kotlin-scripting-dependencies", configuration="runtimeElements"))
-    // For tests with IvyResolver
-    embeddableTestRuntime(project(":kotlin-main-kts"))
+    embeddableTestRuntime(project(":kotlin-scripting-dependencies-maven-all"))
     embeddableTestRuntime(kotlinStdlib("jdk8"))
     embeddableTestRuntime(testSourceSet.output)
+    embeddableTestRuntime(commonDep("org.jetbrains.kotlinx", "kotlinx-coroutines-core"))
+    embeddableTestRuntime(commonDep("org.jetbrains.kotlinx", "kotlinx-coroutines-core-jvm"))
 }
 
 sourceSets {

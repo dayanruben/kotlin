@@ -381,6 +381,76 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         }
 
         @Nested
+        @TestMetadata("compiler/testData/codegen/box/annotations/instances")
+        @TestDataPath("$PROJECT_ROOT")
+        public class Instances {
+            @Test
+            public void testAllFilesPresentInInstances() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/annotations/instances"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            }
+
+            @Test
+            @TestMetadata("annotationEnclosingName.kt")
+            public void testAnnotationEnclosingName() throws Exception {
+                runTest("compiler/testData/codegen/box/annotations/instances/annotationEnclosingName.kt");
+            }
+
+            @Test
+            @TestMetadata("annotationEqHc.kt")
+            public void testAnnotationEqHc() throws Exception {
+                runTest("compiler/testData/codegen/box/annotations/instances/annotationEqHc.kt");
+            }
+
+            @Test
+            @TestMetadata("annotationInstances.kt")
+            public void testAnnotationInstances() throws Exception {
+                runTest("compiler/testData/codegen/box/annotations/instances/annotationInstances.kt");
+            }
+
+            @Test
+            @TestMetadata("annotationInstancesEmptyDefault.kt")
+            public void testAnnotationInstancesEmptyDefault() throws Exception {
+                runTest("compiler/testData/codegen/box/annotations/instances/annotationInstancesEmptyDefault.kt");
+            }
+
+            @Test
+            @TestMetadata("annotationToString.kt")
+            public void testAnnotationToString() throws Exception {
+                runTest("compiler/testData/codegen/box/annotations/instances/annotationToString.kt");
+            }
+
+            @Test
+            @TestMetadata("annotationType.kt")
+            public void testAnnotationType() throws Exception {
+                runTest("compiler/testData/codegen/box/annotations/instances/annotationType.kt");
+            }
+
+            @Test
+            @TestMetadata("javaAnnotation.kt")
+            public void testJavaAnnotation() throws Exception {
+                runTest("compiler/testData/codegen/box/annotations/instances/javaAnnotation.kt");
+            }
+
+            @Test
+            @TestMetadata("multifileEqHc.kt")
+            public void testMultifileEqHc() throws Exception {
+                runTest("compiler/testData/codegen/box/annotations/instances/multifileEqHc.kt");
+            }
+
+            @Test
+            @TestMetadata("multimoduleInlining.kt")
+            public void testMultimoduleInlining() throws Exception {
+                runTest("compiler/testData/codegen/box/annotations/instances/multimoduleInlining.kt");
+            }
+
+            @Test
+            @TestMetadata("multiplatformInstantiation.kt")
+            public void testMultiplatformInstantiation() throws Exception {
+                runTest("compiler/testData/codegen/box/annotations/instances/multiplatformInstantiation.kt");
+            }
+        }
+
+        @Nested
         @TestMetadata("compiler/testData/codegen/box/annotations/kClassMapping")
         @TestDataPath("$PROJECT_ROOT")
         public class KClassMapping {
@@ -5537,6 +5607,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         }
 
         @Test
+        @TestMetadata("kt47840.kt")
+        public void testKt47840() throws Exception {
+            runTest("compiler/testData/codegen/box/closures/kt47840.kt");
+        }
+
+        @Test
         @TestMetadata("kt5589.kt")
         public void testKt5589() throws Exception {
             runTest("compiler/testData/codegen/box/closures/kt5589.kt");
@@ -8110,6 +8186,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         @TestMetadata("quicksort.kt")
         public void testQuicksort() throws Exception {
             runTest("compiler/testData/codegen/box/controlStructures/quicksort.kt");
+        }
+
+        @Test
+        @TestMetadata("slowHtmlLikeDsl.kt")
+        public void testSlowHtmlLikeDsl() throws Exception {
+            runTest("compiler/testData/codegen/box/controlStructures/slowHtmlLikeDsl.kt");
         }
 
         @Test
@@ -13232,6 +13314,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         @TestMetadata("delegateToAnotherWithSideEffects.kt")
         public void testDelegateToAnotherWithSideEffects() throws Exception {
             runTest("compiler/testData/codegen/box/delegatedProperty/delegateToAnotherWithSideEffects.kt");
+        }
+
+        @Test
+        @TestMetadata("delegateToConstructorParameter.kt")
+        public void testDelegateToConstructorParameter() throws Exception {
+            runTest("compiler/testData/codegen/box/delegatedProperty/delegateToConstructorParameter.kt");
         }
 
         @Test
@@ -18902,6 +18990,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         @TestMetadata("kt47609.kt")
         public void testKt47609() throws Exception {
             runTest("compiler/testData/codegen/box/inlineClasses/kt47609.kt");
+        }
+
+        @Test
+        @TestMetadata("kt47762.kt")
+        public void testKt47762() throws Exception {
+            runTest("compiler/testData/codegen/box/inlineClasses/kt47762.kt");
         }
 
         @Test
@@ -42446,6 +42540,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         @TestMetadata("kt43286a.kt")
         public void testKt43286a() throws Exception {
             runTest("compiler/testData/codegen/box/unsignedTypes/kt43286a.kt");
+        }
+
+        @Test
+        @TestMetadata("kt47716.kt")
+        public void testKt47716() throws Exception {
+            runTest("compiler/testData/codegen/box/unsignedTypes/kt47716.kt");
         }
 
         @Test

@@ -41,6 +41,10 @@ class ExpressionCheckersDiagnosticComponent(
         checkers.allFunctionCallCheckers.check(functionCall, data, reporter)
     }
 
+    override fun visitImplicitInvokeCall(implicitInvokeCall: FirImplicitInvokeCall, data: CheckerContext) {
+        checkers.allFunctionCallCheckers.check(implicitInvokeCall, data, reporter)
+    }
+
     override fun visitCallableReferenceAccess(callableReferenceAccess: FirCallableReferenceAccess, data: CheckerContext) {
         checkers.allCallableReferenceAccessCheckers.check(callableReferenceAccess, data, reporter)
     }
@@ -115,6 +119,14 @@ class ExpressionCheckersDiagnosticComponent(
 
     override fun visitReturnExpression(returnExpression: FirReturnExpression, data: CheckerContext) {
         checkers.allReturnExpressionCheckers.check(returnExpression, data, reporter)
+    }
+
+    override fun visitBreakExpression(breakExpression: FirBreakExpression, data: CheckerContext) {
+        checkers.allLoopJumpCheckers.check(breakExpression, data, reporter)
+    }
+
+    override fun visitContinueExpression(continueExpression: FirContinueExpression, data: CheckerContext) {
+        checkers.allLoopJumpCheckers.check(continueExpression, data, reporter)
     }
 
     override fun visitBlock(block: FirBlock, data: CheckerContext) {

@@ -9,6 +9,7 @@ import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.PersistentSet
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
+import org.jetbrains.kotlin.fir.FirAnnotationContainer
 import org.jetbrains.kotlin.fir.declarations.FirDeclaration
 import org.jetbrains.kotlin.fir.expressions.FirGetClassCall
 import org.jetbrains.kotlin.fir.expressions.FirStatement
@@ -23,15 +24,17 @@ class PersistentCheckerContext private constructor(
     override val containingDeclarations: PersistentList<FirDeclaration>,
     override val qualifiedAccessOrAnnotationCalls: PersistentList<FirStatement>,
     override val getClassCalls: PersistentList<FirGetClassCall>,
-    override val sessionHolder: SessionHolder,
-    override val returnTypeCalculator: ReturnTypeCalculator,
+    override val annotationContainers: PersistentList<FirAnnotationContainer>,
+    sessionHolder: SessionHolder,
+    returnTypeCalculator: ReturnTypeCalculator,
     override val suppressedDiagnostics: PersistentSet<String>,
-    override val allInfosSuppressed: Boolean,
-    override val allWarningsSuppressed: Boolean,
-    override val allErrorsSuppressed: Boolean
-) : CheckerContext() {
+    allInfosSuppressed: Boolean,
+    allWarningsSuppressed: Boolean,
+    allErrorsSuppressed: Boolean
+) : AbstractCheckerContext(sessionHolder, returnTypeCalculator, allInfosSuppressed, allWarningsSuppressed, allErrorsSuppressed) {
     constructor(sessionHolder: SessionHolder, returnTypeCalculator: ReturnTypeCalculator) : this(
         PersistentImplicitReceiverStack(),
+        persistentListOf(),
         persistentListOf(),
         persistentListOf(),
         persistentListOf(),
@@ -43,12 +46,13 @@ class PersistentCheckerContext private constructor(
         allErrorsSuppressed = false
     )
 
-    fun addImplicitReceiver(name: Name?, value: ImplicitReceiverValue<*>): PersistentCheckerContext {
+    override fun addImplicitReceiver(name: Name?, value: ImplicitReceiverValue<*>): PersistentCheckerContext {
         return PersistentCheckerContext(
             implicitReceiverStack.add(name, value),
             containingDeclarations,
             qualifiedAccessOrAnnotationCalls,
             getClassCalls,
+            annotationContainers,
             sessionHolder,
             returnTypeCalculator,
             suppressedDiagnostics,
@@ -58,12 +62,13 @@ class PersistentCheckerContext private constructor(
         )
     }
 
-    fun addDeclaration(declaration: FirDeclaration): PersistentCheckerContext {
+    override fun addDeclaration(declaration: FirDeclaration): PersistentCheckerContext {
         return PersistentCheckerContext(
             implicitReceiverStack,
             containingDeclarations.add(declaration),
             qualifiedAccessOrAnnotationCalls,
             getClassCalls,
+            annotationContainers,
             sessionHolder,
             returnTypeCalculator,
             suppressedDiagnostics,
@@ -73,12 +78,16 @@ class PersistentCheckerContext private constructor(
         )
     }
 
-    fun addQualifiedAccessOrAnnotationCall(qualifiedAccessOrAnnotationCall: FirStatement): PersistentCheckerContext {
+    override fun dropDeclaration() {
+    }
+
+    override fun addQualifiedAccessOrAnnotationCall(qualifiedAccessOrAnnotationCall: FirStatement): PersistentCheckerContext {
         return PersistentCheckerContext(
             implicitReceiverStack,
             containingDeclarations,
             this.qualifiedAccessOrAnnotationCalls.add(qualifiedAccessOrAnnotationCall),
             getClassCalls,
+            annotationContainers,
             sessionHolder,
             returnTypeCalculator,
             suppressedDiagnostics,
@@ -88,12 +97,16 @@ class PersistentCheckerContext private constructor(
         )
     }
 
-    fun addGetClassCall(getClassCall: FirGetClassCall): PersistentCheckerContext {
+    override fun dropQualifiedAccessOrAnnotationCall() {
+    }
+
+    override fun addGetClassCall(getClassCall: FirGetClassCall): PersistentCheckerContext {
         return PersistentCheckerContext(
             implicitReceiverStack,
             containingDeclarations,
             qualifiedAccessOrAnnotationCalls,
             getClassCalls.add(getClassCall),
+            annotationContainers,
             sessionHolder,
             returnTypeCalculator,
             suppressedDiagnostics,
@@ -101,6 +114,28 @@ class PersistentCheckerContext private constructor(
             allWarningsSuppressed,
             allErrorsSuppressed
         )
+    }
+
+    override fun dropGetClassCall() {
+    }
+
+    override fun addAnnotationContainer(annotationContainer: FirAnnotationContainer): PersistentCheckerContext {
+        return PersistentCheckerContext(
+            implicitReceiverStack,
+            containingDeclarations,
+            qualifiedAccessOrAnnotationCalls,
+            getClassCalls,
+            annotationContainers.add(annotationContainer),
+            sessionHolder,
+            returnTypeCalculator,
+            suppressedDiagnostics,
+            allInfosSuppressed,
+            allWarningsSuppressed,
+            allErrorsSuppressed
+        )
+    }
+
+    override fun dropAnnotationContainer() {
     }
 
     override fun addSuppressedDiagnostics(
@@ -115,6 +150,7 @@ class PersistentCheckerContext private constructor(
             containingDeclarations,
             qualifiedAccessOrAnnotationCalls,
             getClassCalls,
+            annotationContainers,
             sessionHolder,
             returnTypeCalculator,
             suppressedDiagnostics.addAll(diagnosticNames),

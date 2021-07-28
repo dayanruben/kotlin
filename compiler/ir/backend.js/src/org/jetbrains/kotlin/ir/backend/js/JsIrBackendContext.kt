@@ -25,7 +25,6 @@ import org.jetbrains.kotlin.ir.builders.declarations.addFunction
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.declarations.impl.IrExternalPackageFragmentImpl
 import org.jetbrains.kotlin.ir.declarations.impl.IrFileImpl
-import org.jetbrains.kotlin.ir.descriptors.IrBuiltInsOverDescriptors
 import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrClassifierSymbol
@@ -61,6 +60,7 @@ class JsIrBackendContext(
     val baseClassIntoMetadata: Boolean = false,
     val safeExternalBoolean: Boolean = false,
     val safeExternalBooleanDiagnostic: RuntimeDiagnostic? = null,
+    override val mapping: JsMapping = JsMapping(symbolTable.irFactory)
 ) : JsCommonBackendContext {
     val fileToInitializationFuns: MutableMap<IrFile, IrSimpleFunction?> = mutableMapOf()
     val fileToInitializerPureness: MutableMap<IrFile, Boolean> = mutableMapOf()
@@ -138,8 +138,6 @@ class JsIrBackendContext(
     val testRoots: Map<IrModuleFragment, IrSimpleFunction>
         get() = testContainerFuns
 
-    override val mapping = JsMapping(irFactory)
-
     override val inlineClassesUtils = JsInlineClassesUtils(this)
 
     val innerClassesSupport = JsInnerClassesSupport(mapping, irFactory)
@@ -178,8 +176,7 @@ class JsIrBackendContext(
     private val coroutineIntrinsicsPackage = module.getPackage(COROUTINE_INTRINSICS_PACKAGE_FQNAME)
 
     val dynamicType: IrDynamicType = IrDynamicTypeImpl(null, emptyList(), Variance.INVARIANT)
-    @OptIn(ObsoleteDescriptorBasedAPI::class)
-    val intrinsics = JsIntrinsics(irBuiltIns as IrBuiltInsOverDescriptors, this)
+    val intrinsics = JsIntrinsics(irBuiltIns, this)
 
     override val sharedVariablesManager = JsSharedVariablesManager(this)
 
@@ -246,6 +243,14 @@ class JsIrBackendContext(
 
             override val functionAdapter: IrClassSymbol
                 get() = TODO("Not implemented")
+
+            override fun functionN(n: Int): IrClassSymbol {
+                return irFactory.stageController.withInitialIr { super.functionN(n) }
+            }
+
+            override fun suspendFunctionN(n: Int): IrClassSymbol {
+                return irFactory.stageController.withInitialIr { super.suspendFunctionN(n) }
+            }
         }
 
         override fun unfoldInlineClassType(irType: IrType): IrType? {

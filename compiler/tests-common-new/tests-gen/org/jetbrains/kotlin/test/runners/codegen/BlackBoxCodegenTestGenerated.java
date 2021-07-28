@@ -381,6 +381,16 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         }
 
         @Nested
+        @TestMetadata("compiler/testData/codegen/box/annotations/instances")
+        @TestDataPath("$PROJECT_ROOT")
+        public class Instances {
+            @Test
+            public void testAllFilesPresentInInstances() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/annotations/instances"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
+            }
+        }
+
+        @Nested
         @TestMetadata("compiler/testData/codegen/box/annotations/kClassMapping")
         @TestDataPath("$PROJECT_ROOT")
         public class KClassMapping {
@@ -5537,6 +5547,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         }
 
         @Test
+        @TestMetadata("kt47840.kt")
+        public void testKt47840() throws Exception {
+            runTest("compiler/testData/codegen/box/closures/kt47840.kt");
+        }
+
+        @Test
         @TestMetadata("kt5589.kt")
         public void testKt5589() throws Exception {
             runTest("compiler/testData/codegen/box/closures/kt5589.kt");
@@ -8110,6 +8126,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         @TestMetadata("quicksort.kt")
         public void testQuicksort() throws Exception {
             runTest("compiler/testData/codegen/box/controlStructures/quicksort.kt");
+        }
+
+        @Test
+        @TestMetadata("slowHtmlLikeDsl.kt")
+        public void testSlowHtmlLikeDsl() throws Exception {
+            runTest("compiler/testData/codegen/box/controlStructures/slowHtmlLikeDsl.kt");
         }
 
         @Test
@@ -13232,6 +13254,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         @TestMetadata("delegateToAnotherWithSideEffects.kt")
         public void testDelegateToAnotherWithSideEffects() throws Exception {
             runTest("compiler/testData/codegen/box/delegatedProperty/delegateToAnotherWithSideEffects.kt");
+        }
+
+        @Test
+        @TestMetadata("delegateToConstructorParameter.kt")
+        public void testDelegateToConstructorParameter() throws Exception {
+            runTest("compiler/testData/codegen/box/delegatedProperty/delegateToConstructorParameter.kt");
         }
 
         @Test
@@ -18860,6 +18888,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         @TestMetadata("kt47609.kt")
         public void testKt47609() throws Exception {
             runTest("compiler/testData/codegen/box/inlineClasses/kt47609.kt");
+        }
+
+        @Test
+        @TestMetadata("kt47762.kt")
+        public void testKt47762() throws Exception {
+            runTest("compiler/testData/codegen/box/inlineClasses/kt47762.kt");
         }
 
         @Test
@@ -42404,6 +42438,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         @TestMetadata("kt43286a.kt")
         public void testKt43286a() throws Exception {
             runTest("compiler/testData/codegen/box/unsignedTypes/kt43286a.kt");
+        }
+
+        @Test
+        @TestMetadata("kt47716.kt")
+        public void testKt47716() throws Exception {
+            runTest("compiler/testData/codegen/box/unsignedTypes/kt47716.kt");
         }
 
         @Test
