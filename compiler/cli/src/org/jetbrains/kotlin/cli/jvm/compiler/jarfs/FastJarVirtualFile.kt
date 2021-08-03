@@ -16,14 +16,20 @@ import java.io.OutputStream
 internal class FastJarVirtualFile(
     private val myHandler: FastJarHandler,
     private val myName: CharSequence,
-    private val myLength: Long,
-    private val myTimestamp: Long,
-    parent: FastJarVirtualFile?
+    private val myLength: Int,
+    private val myParent: FastJarVirtualFile?
 ) : VirtualFile() {
-    private val myParent: VirtualFile? = parent
-    private var myChildren = EMPTY_ARRAY
-    fun setChildren(children: Array<VirtualFile>) {
-        myChildren = children
+
+    private var myChildrenArray = EMPTY_ARRAY
+    private val myChildrenList: MutableList<VirtualFile> = mutableListOf()
+
+    init {
+        myParent?.myChildrenList?.add(this)
+    }
+
+    fun initChildrenArrayFromList() {
+        myChildrenArray = myChildrenList.toTypedArray()
+        myChildrenList.clear()
     }
 
     override fun getName(): String {
@@ -69,7 +75,7 @@ internal class FastJarVirtualFile(
     }
 
     override fun getChildren(): Array<VirtualFile> {
-        return myChildren
+        return myChildrenArray
     }
 
     @Throws(IOException::class)
@@ -85,15 +91,12 @@ internal class FastJarVirtualFile(
         return myHandler.contentsToByteArray(pair.second)
     }
 
-    override fun getTimeStamp(): Long {
-        return myTimestamp
-    }
+    override fun getTimeStamp(): Long = 0
 
-    override fun getLength(): Long {
-        return myLength
-    }
+    override fun getLength(): Long = myLength.toLong()
 
     override fun refresh(asynchronous: Boolean, recursive: Boolean, postRunnable: Runnable?) {}
+
     @Throws(IOException::class)
     override fun getInputStream(): InputStream {
         return BufferExposingByteArrayInputStream(contentsToByteArray())

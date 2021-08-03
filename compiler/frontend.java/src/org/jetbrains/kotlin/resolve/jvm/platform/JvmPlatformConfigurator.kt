@@ -73,7 +73,6 @@ object JvmPlatformConfigurator : PlatformConfiguratorBase(
     ),
 
     additionalAnnotationCheckers = listOf(
-        RepeatableAnnotationChecker,
         FileClassAnnotationsChecker,
         ExplicitMetadataChecker
     ),
@@ -115,6 +114,7 @@ object JvmPlatformConfigurator : PlatformConfiguratorBase(
         container.useImpl<JvmSamConversionOracle>()
         container.useImpl<JvmAdditionalClassPartsProvider>()
         container.useImpl<JvmRecordApplicabilityChecker>()
+        container.useImpl<JvmPlatformAnnotationFeaturesSupport>()
 
         container.useInstance(FunctionWithBigAritySupport.LanguageVersionDependent)
         container.useInstance(GenericArrayClassLiteralSupport.Enabled)
@@ -124,5 +124,6 @@ object JvmPlatformConfigurator : PlatformConfiguratorBase(
     override fun configureModuleDependentCheckers(container: StorageComponentContainer) {
         super.configureModuleDependentCheckers(container)
         container.useImpl<ExpectedActualDeclarationChecker>()
+        container.useImpl<RepeatableAnnotationChecker>()
     }
 }

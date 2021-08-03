@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 interface A {
     fun foo(): Any
 }
@@ -8,11 +9,11 @@ interface B {
 
 open class D: B
 
-open <!MANY_INTERFACES_MEMBER_NOT_IMPLEMENTED_WARNING!>class C<!>: D(), A
+open <!MANY_INTERFACES_MEMBER_NOT_IMPLEMENTED!>class C<!>: D(), A
 
 // ------------
 
-<!MANY_INTERFACES_MEMBER_NOT_IMPLEMENTED_WARNING!>class Test<!>: Impl(), CProvider
+<!MANY_INTERFACES_MEMBER_NOT_IMPLEMENTED!>class Test<!>: Impl(), CProvider
 
 open class CC
 

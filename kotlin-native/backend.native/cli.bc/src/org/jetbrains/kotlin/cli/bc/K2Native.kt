@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.cli.bc
 import com.intellij.openapi.Disposable
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
+import org.jetbrains.kotlin.analyzer.CompilationErrorException
 import org.jetbrains.kotlin.backend.common.serialization.metadata.KlibMetadataVersion
 import org.jetbrains.kotlin.backend.konan.*
 import org.jetbrains.kotlin.cli.common.*
@@ -78,9 +79,10 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
             val konanConfig = KonanConfig(project, configuration)
             ensureModuleName(konanConfig, environment)
             runTopLevelPhases(konanConfig, environment)
-        } catch (e: KonanCompilationException) {
-            return ExitCode.COMPILATION_ERROR
         } catch (e: Throwable) {
+            if (e is KonanCompilationException || e is CompilationErrorException)
+                return ExitCode.COMPILATION_ERROR
+
             configuration.report(ERROR, """
                 |Compilation failed: ${e.message}
 
@@ -251,6 +253,7 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
                     CHECK_DEPENDENCIES,
                     configuration.kotlinSourceRoots.isNotEmpty()
                             || !arguments.includes.isNullOrEmpty()
+                            || outputKind.isCache
                             || arguments.checkDependencies
                 )
                 if (arguments.friendModules != null)
@@ -316,15 +319,6 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
                     configuration.report(ERROR, "-Xgc-aggressive is only supported for -memory-model experimental")
                 }
                 put(GARBAGE_COLLECTOR_AGRESSIVE, arguments.gcAggressive)
-                put(CHECK_LLD_COMPATIBILITY, when (val it = arguments.checkLldCompatibility) {
-                    "enable" -> true
-                    "disable" -> false
-                    null -> true
-                    else -> {
-                        configuration.report(ERROR, "Unsupported '-Xcheck-compatibility-with-lld' value: $it. Possible values are 'enable'/'disable'")
-                        true
-                    }
-                })
                 put(RUNTIME_ASSERTS_MODE, when (arguments.runtimeAssertsMode) {
                     "ignore" -> RuntimeAssertsMode.IGNORE
                     "log" -> RuntimeAssertsMode.LOG
@@ -334,6 +328,7 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
                         RuntimeAssertsMode.IGNORE
                     }
                 })
+                put(PROPERTY_LAZY_INITIALIZATION, arguments.propertyLazyInitialization)
             }
         }
     }

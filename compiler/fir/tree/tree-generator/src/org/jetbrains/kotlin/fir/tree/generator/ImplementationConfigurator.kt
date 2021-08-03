@@ -45,7 +45,7 @@ object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() 
         impl(import)
 
         impl(resolvedImport) {
-            delegateFields(listOf("aliasName", "importedFqName", "isAllUnder"), "delegate")
+            delegateFields(listOf("aliasName", "aliasSource", "importedFqName", "isAllUnder"), "delegate")
 
             default("source") {
                 delegate = "delegate"
@@ -168,7 +168,9 @@ object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() 
             default("origin", "FirFunctionCallOrigin.Operator")
         }
 
-        impl(qualifiedAccessExpression)
+        impl(qualifiedAccessExpression) {
+            publicImplementation()
+        }
 
         noImpl(expressionWithSmartcast)
         noImpl(expressionWithSmartcastToNull)

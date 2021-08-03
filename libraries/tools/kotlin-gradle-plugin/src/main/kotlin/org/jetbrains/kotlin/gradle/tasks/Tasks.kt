@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.gradle.tasks
 import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.artifacts.Configuration
 import org.gradle.api.file.*
 import org.gradle.api.invocation.Gradle
 import org.gradle.api.attributes.Attribute
@@ -776,16 +777,16 @@ internal abstract class KotlinCompileWithWorkers @Inject constructor(
     workerExecutor: WorkerExecutor
 ) : KotlinCompile(kotlinOptions) {
     override val compilerRunner: Provider<GradleCompilerRunner> =
-        objects.propertyWithConvention(
-            gradleCompileTaskProvider.map {
+        defaultKotlinJavaToolchain.flatMap { toolchain ->
+            objects.property(gradleCompileTaskProvider.map {
                 GradleCompilerRunnerWithWorkers(
                     it,
-                    null,
+                    toolchain.currentJvmJdkToolsJar.orNull,
                     normalizedKotlinDaemonJvmArguments.orNull,
                     workerExecutor
                 ) as GradleCompilerRunner
-            }
-        )
+            })
+        }
 }
 
 @CacheableTask
@@ -992,7 +993,9 @@ abstract class Kotlin2JsCompile @Inject constructor(
     private val libraryFilterBody: (File) -> Boolean
         get() = if (kotlinOptions.isIrBackendEnabled()) {
             if (kotlinOptions.isPreIrBackendDisabled()) {
-                ::isKotlinLibrary
+                //::isKotlinLibrary
+                // Workaround for KT-47797
+                { isKotlinLibrary(it) }
             } else {
                 ::isHybridKotlinJsLibrary
             }

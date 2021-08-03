@@ -27,7 +27,7 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
     }
 
     public void testAllFilesPresentInBox() throws Exception {
-        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true, "ranges/stepped", "compileKotlinAgainstKotlin");
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true, "ranges/stepped", "compileKotlinAgainstKotlin", "testsWithJava9", "testsWithJava15", "testsWithJava17");
     }
 
     @TestMetadata("compiler/testData/codegen/box/annotations")
@@ -388,6 +388,19 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             @TestMetadata("varargClassParameterOnJavaClass.kt")
             public void testVarargClassParameterOnJavaClass() throws Exception {
                 runTest("compiler/testData/codegen/box/annotations/kClassMapping/varargClassParameterOnJavaClass.kt");
+            }
+        }
+
+        @TestMetadata("compiler/testData/codegen/box/annotations/repeatable")
+        @TestDataPath("$PROJECT_ROOT")
+        @RunWith(JUnit3RunnerWithInners.class)
+        public static class Repeatable extends AbstractLightAnalysisModeTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM, testDataFilePath);
+            }
+
+            public void testAllFilesPresentInRepeatable() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/annotations/repeatable"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
             }
         }
 
@@ -18892,6 +18905,16 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
     @TestDataPath("$PROJECT_ROOT")
     @RunWith(JUnit3RunnerWithInners.class)
     public static class JavaInterop extends AbstractLightAnalysisModeTest {
+        @TestMetadata("conflictingOverloadsForThrowableInheritors.kt")
+        public void ignoreConflictingOverloadsForThrowableInheritors() throws Exception {
+            runTest("compiler/testData/codegen/box/javaInterop/conflictingOverloadsForThrowableInheritors.kt");
+        }
+
+        @TestMetadata("conflictingOverloadsForThrowableInheritors2.kt")
+        public void ignoreConflictingOverloadsForThrowableInheritors2() throws Exception {
+            runTest("compiler/testData/codegen/box/javaInterop/conflictingOverloadsForThrowableInheritors2.kt");
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM, testDataFilePath);
         }
@@ -18903,16 +18926,6 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("ambiguousJavaVararg.kt")
         public void testAmbiguousJavaVararg() throws Exception {
             runTest("compiler/testData/codegen/box/javaInterop/ambiguousJavaVararg.kt");
-        }
-
-        @TestMetadata("conflictingOverloadsForThrowableInheritors.kt")
-        public void testConflictingOverloadsForThrowableInheritors() throws Exception {
-            runTest("compiler/testData/codegen/box/javaInterop/conflictingOverloadsForThrowableInheritors.kt");
-        }
-
-        @TestMetadata("conflictingOverloadsForThrowableInheritors2.kt")
-        public void testConflictingOverloadsForThrowableInheritors2() throws Exception {
-            runTest("compiler/testData/codegen/box/javaInterop/conflictingOverloadsForThrowableInheritors2.kt");
         }
 
         @TestMetadata("genericSamProjectedOut.kt")
@@ -22593,6 +22606,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
     @TestDataPath("$PROJECT_ROOT")
     @RunWith(JUnit3RunnerWithInners.class)
     public static class NotNullAssertions extends AbstractLightAnalysisModeTest {
+        @TestMetadata("inFunctionWithExpressionBodyWithJavaGeneric.kt")
+        public void ignoreInFunctionWithExpressionBodyWithJavaGeneric() throws Exception {
+            runTest("compiler/testData/codegen/box/notNullAssertions/inFunctionWithExpressionBodyWithJavaGeneric.kt");
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM, testDataFilePath);
         }
@@ -23753,6 +23771,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("kt14989.kt")
         public void testKt14989() throws Exception {
             runTest("compiler/testData/codegen/box/platformTypes/kt14989.kt");
+        }
+
+        @TestMetadata("kt47785.kt")
+        public void testKt47785() throws Exception {
+            runTest("compiler/testData/codegen/box/platformTypes/kt47785.kt");
         }
 
         @TestMetadata("rawTypeWithNestedClass.kt")
@@ -27599,6 +27622,19 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                 @TestMetadata("differentPositions.kt")
                 public void testDifferentPositions() throws Exception {
                     runTest("compiler/testData/codegen/box/reflection/annotations/onTypes/differentPositions.kt");
+                }
+            }
+
+            @TestMetadata("compiler/testData/codegen/box/reflection/annotations/repeatable")
+            @TestDataPath("$PROJECT_ROOT")
+            @RunWith(JUnit3RunnerWithInners.class)
+            public static class Repeatable extends AbstractLightAnalysisModeTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM, testDataFilePath);
+                }
+
+                public void testAllFilesPresentInRepeatable() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/reflection/annotations/repeatable"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
                 }
             }
         }
@@ -33190,12 +33226,22 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestDataPath("$PROJECT_ROOT")
         @RunWith(JUnit3RunnerWithInners.class)
         public static class ProtectedJavaFieldAccessor extends AbstractLightAnalysisModeTest {
+            @TestMetadata("kt44855.kt")
+            public void ignoreKt44855() throws Exception {
+                runTest("compiler/testData/codegen/box/syntheticAccessors/protectedJavaFieldAccessor/kt44855.kt");
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM, testDataFilePath);
             }
 
             public void testAllFilesPresentInProtectedJavaFieldAccessor() throws Exception {
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/syntheticAccessors/protectedJavaFieldAccessor"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
+            }
+
+            @TestMetadata("kt44855a.kt")
+            public void testKt44855a() throws Exception {
+                runTest("compiler/testData/codegen/box/syntheticAccessors/protectedJavaFieldAccessor/kt44855a.kt");
             }
 
             @TestMetadata("kt46578_anonObject.kt")

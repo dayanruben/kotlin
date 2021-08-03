@@ -681,6 +681,12 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
         }
 
         @Test
+        @TestMetadata("SafeCallNonNullReceiver2.kt")
+        public void testSafeCallNonNullReceiver2() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/SafeCallNonNullReceiver2.kt");
+        }
+
+        @Test
         @TestMetadata("SafeCallNonNullReceiverReturnNull.kt")
         public void testSafeCallNonNullReceiverReturnNull() throws Exception {
             runTest("compiler/testData/diagnostics/tests/SafeCallNonNullReceiverReturnNull.kt");
@@ -1131,12 +1137,6 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
             @TestMetadata("Deprecated.kt")
             public void testDeprecated() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/annotations/Deprecated.kt");
-            }
-
-            @Test
-            @TestMetadata("deprecatedRepeatable.kt")
-            public void testDeprecatedRepeatable() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/annotations/deprecatedRepeatable.kt");
             }
 
             @Test
@@ -2095,21 +2095,99 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
                 }
 
                 @Test
-                @TestMetadata("javaRepeatable.kt")
-                public void testJavaRepeatable() throws Exception {
-                    runTest("compiler/testData/diagnostics/tests/annotations/repeatable/javaRepeatable.kt");
+                @TestMetadata("containerAndAnnotationAreBothApplied_1_5.kt")
+                public void testContainerAndAnnotationAreBothApplied_1_5() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/annotations/repeatable/containerAndAnnotationAreBothApplied_1_5.kt");
                 }
 
                 @Test
-                @TestMetadata("javaUnrepeatable.kt")
-                public void testJavaUnrepeatable() throws Exception {
-                    runTest("compiler/testData/diagnostics/tests/annotations/repeatable/javaUnrepeatable.kt");
+                @TestMetadata("containerAndAnnotationAreBothApplied_1_6.kt")
+                public void testContainerAndAnnotationAreBothApplied_1_6() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/annotations/repeatable/containerAndAnnotationAreBothApplied_1_6.kt");
                 }
 
                 @Test
-                @TestMetadata("kotlinRepeatable.kt")
-                public void testKotlinRepeatable() throws Exception {
-                    runTest("compiler/testData/diagnostics/tests/annotations/repeatable/kotlinRepeatable.kt");
+                @TestMetadata("containerArguments_1_5.kt")
+                public void testContainerArguments_1_5() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/annotations/repeatable/containerArguments_1_5.kt");
+                }
+
+                @Test
+                @TestMetadata("containerArguments_1_6.kt")
+                public void testContainerArguments_1_6() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/annotations/repeatable/containerArguments_1_6.kt");
+                }
+
+                @Test
+                @TestMetadata("containerRetention_1_5.kt")
+                public void testContainerRetention_1_5() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/annotations/repeatable/containerRetention_1_5.kt");
+                }
+
+                @Test
+                @TestMetadata("containerRetention_1_6.kt")
+                public void testContainerRetention_1_6() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/annotations/repeatable/containerRetention_1_6.kt");
+                }
+
+                @Test
+                @TestMetadata("containerTarget_1_6.kt")
+                public void testContainerTarget_1_6() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/annotations/repeatable/containerTarget_1_6.kt");
+                }
+
+                @Test
+                @TestMetadata("javaRepeatableJvmTarget6.kt")
+                public void testJavaRepeatableJvmTarget6() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/annotations/repeatable/javaRepeatableJvmTarget6.kt");
+                }
+
+                @Test
+                @TestMetadata("javaRepeatable_1_5.kt")
+                public void testJavaRepeatable_1_5() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/annotations/repeatable/javaRepeatable_1_5.kt");
+                }
+
+                @Test
+                @TestMetadata("javaRepeatable_1_6.kt")
+                public void testJavaRepeatable_1_6() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/annotations/repeatable/javaRepeatable_1_6.kt");
+                }
+
+                @Test
+                @TestMetadata("javaUnrepeatable_1_5.kt")
+                public void testJavaUnrepeatable_1_5() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/annotations/repeatable/javaUnrepeatable_1_5.kt");
+                }
+
+                @Test
+                @TestMetadata("javaUnrepeatable_1_6.kt")
+                public void testJavaUnrepeatable_1_6() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/annotations/repeatable/javaUnrepeatable_1_6.kt");
+                }
+
+                @Test
+                @TestMetadata("kotlinRepeatable_1_5.kt")
+                public void testKotlinRepeatable_1_5() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/annotations/repeatable/kotlinRepeatable_1_5.kt");
+                }
+
+                @Test
+                @TestMetadata("kotlinRepeatable_1_6.kt")
+                public void testKotlinRepeatable_1_6() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/annotations/repeatable/kotlinRepeatable_1_6.kt");
+                }
+
+                @Test
+                @TestMetadata("nestedClassContainer_1_5.kt")
+                public void testNestedClassContainer_1_5() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/annotations/repeatable/nestedClassContainer_1_5.kt");
+                }
+
+                @Test
+                @TestMetadata("nestedClassContainer_1_6.kt")
+                public void testNestedClassContainer_1_6() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/annotations/repeatable/nestedClassContainer_1_6.kt");
                 }
             }
 
@@ -4723,6 +4801,226 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
             @TestMetadata("resolveToFunctionFromBuiltIns.kt")
             public void testResolveToFunctionFromBuiltIns() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/collectionLiterals/resolveToFunctionFromBuiltIns.kt");
+            }
+        }
+
+        @Nested
+        @TestMetadata("compiler/testData/diagnostics/tests/constantEvaluator")
+        @TestDataPath("$PROJECT_ROOT")
+        public class ConstantEvaluator {
+            @Test
+            public void testAllFilesPresentInConstantEvaluator() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/constantEvaluator"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
+            }
+
+            @Nested
+            @TestMetadata("compiler/testData/diagnostics/tests/constantEvaluator/constant")
+            @TestDataPath("$PROJECT_ROOT")
+            public class Constant {
+                @Test
+                public void testAllFilesPresentInConstant() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/constantEvaluator/constant"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
+                }
+
+                @Test
+                @TestMetadata("classObjectProperty.kt")
+                public void testClassObjectProperty() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/constantEvaluator/constant/classObjectProperty.kt");
+                }
+
+                @Test
+                @TestMetadata("compareTo.kt")
+                public void testCompareTo() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/constantEvaluator/constant/compareTo.kt");
+                }
+
+                @Test
+                @TestMetadata("differentTypes.kt")
+                public void testDifferentTypes() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/constantEvaluator/constant/differentTypes.kt");
+                }
+
+                @Test
+                @TestMetadata("divideByZero.kt")
+                public void testDivideByZero() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/constantEvaluator/constant/divideByZero.kt");
+                }
+
+                @Test
+                @TestMetadata("equals.kt")
+                public void testEquals() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/constantEvaluator/constant/equals.kt");
+                }
+
+                @Test
+                @TestMetadata("exceptionWhenEvaluate.kt")
+                public void testExceptionWhenEvaluate() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/constantEvaluator/constant/exceptionWhenEvaluate.kt");
+                }
+
+                @Test
+                @TestMetadata("finalProperty.kt")
+                public void testFinalProperty() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/constantEvaluator/constant/finalProperty.kt");
+                }
+
+                @Test
+                @TestMetadata("float.kt")
+                public void testFloat() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/constantEvaluator/constant/float.kt");
+                }
+
+                @Test
+                @TestMetadata("floatsAndDoubles.kt")
+                public void testFloatsAndDoubles() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/constantEvaluator/constant/floatsAndDoubles.kt");
+                }
+
+                @Test
+                @TestMetadata("integer.kt")
+                public void testInteger() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/constantEvaluator/constant/integer.kt");
+                }
+
+                @Test
+                @TestMetadata("integerOperations.kt")
+                public void testIntegerOperations() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/constantEvaluator/constant/integerOperations.kt");
+                }
+
+                @Test
+                @TestMetadata("integers.kt")
+                public void testIntegers() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/constantEvaluator/constant/integers.kt");
+                }
+
+                @Test
+                @TestMetadata("localVal.kt")
+                public void testLocalVal() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/constantEvaluator/constant/localVal.kt");
+                }
+
+                @Test
+                @TestMetadata("localVar.kt")
+                public void testLocalVar() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/constantEvaluator/constant/localVar.kt");
+                }
+
+                @Test
+                @TestMetadata("nonFinalProperty.kt")
+                public void testNonFinalProperty() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/constantEvaluator/constant/nonFinalProperty.kt");
+                }
+
+                @Test
+                @TestMetadata("objectProperty.kt")
+                public void testObjectProperty() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/constantEvaluator/constant/objectProperty.kt");
+                }
+
+                @Test
+                @TestMetadata("strings.kt")
+                public void testStrings() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/constantEvaluator/constant/strings.kt");
+                }
+
+                @Test
+                @TestMetadata("topLevelVal.kt")
+                public void testTopLevelVal() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/constantEvaluator/constant/topLevelVal.kt");
+                }
+
+                @Test
+                @TestMetadata("topLevelVar.kt")
+                public void testTopLevelVar() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/constantEvaluator/constant/topLevelVar.kt");
+                }
+
+                @Test
+                @TestMetadata("unaryMinusIndepWoExpType.kt")
+                public void testUnaryMinusIndepWoExpType() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/constantEvaluator/constant/unaryMinusIndepWoExpType.kt");
+                }
+
+                @Test
+                @TestMetadata("unaryMinusIndependentExpType.kt")
+                public void testUnaryMinusIndependentExpType() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/constantEvaluator/constant/unaryMinusIndependentExpType.kt");
+                }
+            }
+
+            @Nested
+            @TestMetadata("compiler/testData/diagnostics/tests/constantEvaluator/isPure")
+            @TestDataPath("$PROJECT_ROOT")
+            public class IsPure {
+                @Test
+                public void testAllFilesPresentInIsPure() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/constantEvaluator/isPure"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
+                }
+
+                @Test
+                @TestMetadata("innerToType.kt")
+                public void testInnerToType() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/constantEvaluator/isPure/innerToType.kt");
+                }
+
+                @Test
+                @TestMetadata("namedConstants.kt")
+                public void testNamedConstants() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/constantEvaluator/isPure/namedConstants.kt");
+                }
+
+                @Test
+                @TestMetadata("toType.kt")
+                public void testToType() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/constantEvaluator/isPure/toType.kt");
+                }
+
+                @Test
+                @TestMetadata("unaryMinusIndepWoExpType.kt")
+                public void testUnaryMinusIndepWoExpType() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/constantEvaluator/isPure/unaryMinusIndepWoExpType.kt");
+                }
+
+                @Test
+                @TestMetadata("unaryMinusIndependentExpType.kt")
+                public void testUnaryMinusIndependentExpType() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/constantEvaluator/isPure/unaryMinusIndependentExpType.kt");
+                }
+            }
+
+            @Nested
+            @TestMetadata("compiler/testData/diagnostics/tests/constantEvaluator/usesVariableAsConstant")
+            @TestDataPath("$PROJECT_ROOT")
+            public class UsesVariableAsConstant {
+                @Test
+                public void testAllFilesPresentInUsesVariableAsConstant() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/constantEvaluator/usesVariableAsConstant"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
+                }
+
+                @Test
+                @TestMetadata("binaryTypes.kt")
+                public void testBinaryTypes() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/constantEvaluator/usesVariableAsConstant/binaryTypes.kt");
+                }
+
+                @Test
+                @TestMetadata("NamedConstants.kt")
+                public void testNamedConstants() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/constantEvaluator/usesVariableAsConstant/NamedConstants.kt");
+                }
+
+                @Test
+                @TestMetadata("OtherTypes.kt")
+                public void testOtherTypes() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/constantEvaluator/usesVariableAsConstant/OtherTypes.kt");
+                }
+
+                @Test
+                @TestMetadata("simpleTypes.kt")
+                public void testSimpleTypes() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/constantEvaluator/usesVariableAsConstant/simpleTypes.kt");
+                }
             }
         }
 
@@ -21827,6 +22125,18 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
                 }
 
                 @Test
+                @TestMetadata("interdependentTypeParameters.kt")
+                public void testInterdependentTypeParameters() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/platformTypes/rawTypes/interdependentTypeParameters.kt");
+                }
+
+                @Test
+                @TestMetadata("interdependentTypeParametersFromKotlin.kt")
+                public void testInterdependentTypeParametersFromKotlin() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/platformTypes/rawTypes/interdependentTypeParametersFromKotlin.kt");
+                }
+
+                @Test
                 @TestMetadata("intermediateRecursion.kt")
                 public void testIntermediateRecursion() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/platformTypes/rawTypes/intermediateRecursion.kt");
@@ -29576,38 +29886,48 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
                     runTest("compiler/testData/diagnostics/tests/testsWithJava15/jvmRecord/supertypesCheck.kt");
                 }
             }
+        }
+
+        @Nested
+        @TestMetadata("compiler/testData/diagnostics/tests/testsWithJava17")
+        @TestDataPath("$PROJECT_ROOT")
+        public class TestsWithJava17 {
+            @Test
+            public void testAllFilesPresentInTestsWithJava17() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/testsWithJava17"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
+            }
 
             @Nested
-            @TestMetadata("compiler/testData/diagnostics/tests/testsWithJava15/sealedClasses")
+            @TestMetadata("compiler/testData/diagnostics/tests/testsWithJava17/sealedClasses")
             @TestDataPath("$PROJECT_ROOT")
             public class SealedClasses {
                 @Test
                 public void testAllFilesPresentInSealedClasses() throws Exception {
-                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/testsWithJava15/sealedClasses"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/testsWithJava17/sealedClasses"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
                 }
 
                 @Test
                 @TestMetadata("javaSealedClassExhaustiveness.kt")
                 public void testJavaSealedClassExhaustiveness() throws Exception {
-                    runTest("compiler/testData/diagnostics/tests/testsWithJava15/sealedClasses/javaSealedClassExhaustiveness.kt");
+                    runTest("compiler/testData/diagnostics/tests/testsWithJava17/sealedClasses/javaSealedClassExhaustiveness.kt");
                 }
 
                 @Test
                 @TestMetadata("javaSealedInterfaceExhaustiveness.kt")
                 public void testJavaSealedInterfaceExhaustiveness() throws Exception {
-                    runTest("compiler/testData/diagnostics/tests/testsWithJava15/sealedClasses/javaSealedInterfaceExhaustiveness.kt");
+                    runTest("compiler/testData/diagnostics/tests/testsWithJava17/sealedClasses/javaSealedInterfaceExhaustiveness.kt");
                 }
 
                 @Test
                 @TestMetadata("kotlinInheritsJavaClass.kt")
                 public void testKotlinInheritsJavaClass() throws Exception {
-                    runTest("compiler/testData/diagnostics/tests/testsWithJava15/sealedClasses/kotlinInheritsJavaClass.kt");
+                    runTest("compiler/testData/diagnostics/tests/testsWithJava17/sealedClasses/kotlinInheritsJavaClass.kt");
                 }
 
                 @Test
                 @TestMetadata("kotlinInheritsJavaInterface.kt")
                 public void testKotlinInheritsJavaInterface() throws Exception {
-                    runTest("compiler/testData/diagnostics/tests/testsWithJava15/sealedClasses/kotlinInheritsJavaInterface.kt");
+                    runTest("compiler/testData/diagnostics/tests/testsWithJava17/sealedClasses/kotlinInheritsJavaInterface.kt");
                 }
             }
         }

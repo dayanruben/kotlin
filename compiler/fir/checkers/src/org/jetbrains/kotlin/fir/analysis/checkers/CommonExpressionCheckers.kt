@@ -16,7 +16,7 @@ object CommonExpressionCheckers : ExpressionCheckers() {
 
     override val basicExpressionCheckers: Set<FirBasicExpressionChecker>
         get() = setOf(
-            FirReservedUnderscoreExpressionChecker,
+            FirUnderscoreChecker,
             FirExpressionAnnotationChecker,
             FirDeprecationChecker
         )
@@ -41,7 +41,8 @@ object CommonExpressionCheckers : ExpressionCheckers() {
             FirSealedClassConstructorCallChecker,
             FirUninitializedEnumChecker,
             FirFunInterfaceConstructorReferenceChecker,
-            FirReifiedChecker
+            FirReifiedChecker,
+            FirSuspendCallChecker,
         )
 
     override val functionCallCheckers: Set<FirFunctionCallChecker>

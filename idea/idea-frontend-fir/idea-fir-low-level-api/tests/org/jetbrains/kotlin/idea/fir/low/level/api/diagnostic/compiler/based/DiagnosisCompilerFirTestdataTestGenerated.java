@@ -27,6 +27,12 @@ public class DiagnosisCompilerFirTestdataTestGenerated extends AbstractDiagnosis
         }
 
         @Test
+        @TestMetadata("annotationOnDeclarationWithDifferentArguments.kt")
+        public void testAnnotationOnDeclarationWithDifferentArguments() throws Exception {
+            runTest("compiler/fir/analysis-tests/testData/resolve/annotationOnDeclarationWithDifferentArguments.kt");
+        }
+
+        @Test
         @TestMetadata("annotationUsedAsAnnotationArgument.kt")
         public void testAnnotationUsedAsAnnotationArgument() throws Exception {
             runTest("compiler/fir/analysis-tests/testData/resolve/annotationUsedAsAnnotationArgument.kt");
@@ -2926,6 +2932,12 @@ public class DiagnosisCompilerFirTestdataTestGenerated extends AbstractDiagnosis
             }
 
             @Test
+            @TestMetadata("anonymousInAnonymous.kt")
+            public void testAnonymousInAnonymous() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/localClasses/anonymousInAnonymous.kt");
+            }
+
+            @Test
             @TestMetadata("implicitInAnonymous.kt")
             public void testImplicitInAnonymous() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolve/localClasses/implicitInAnonymous.kt");
@@ -5001,6 +5013,12 @@ public class DiagnosisCompilerFirTestdataTestGenerated extends AbstractDiagnosis
             @Test
             public void testAllFilesPresentInJ_k() throws Exception {
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolveWithStdlib/j+k"), Pattern.compile("^([^.]+)\\.kt$"), null, true);
+            }
+
+            @Test
+            @TestMetadata("AnnotationWithEnum.kt")
+            public void testAnnotationWithEnum() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/j+k/AnnotationWithEnum.kt");
             }
 
             @Test

@@ -146,7 +146,7 @@ fun BodyResolveComponents.typeForQualifier(resolvedQualifier: FirResolvedQualifi
     val classSymbol = resolvedQualifier.symbol
     val resultType = resolvedQualifier.resultType
     if (classSymbol != null) {
-        classSymbol.ensureResolved(FirResolvePhase.DECLARATIONS)
+        classSymbol.ensureResolved(FirResolvePhase.TYPES)
         val declaration = classSymbol.fir
         if (declaration !is FirTypeAlias || resolvedQualifier.typeArguments.isEmpty()) {
             typeForQualifierByDeclaration(declaration, resultType, session)?.let { return it }
@@ -407,7 +407,7 @@ private fun initialTypeOfCandidate(candidate: Candidate, typeRef: FirResolvedTyp
     return candidate.substitutor.substituteOrSelf(typeRef.type)
 }
 
-fun FirCallableDeclaration.getContainingClass(session: FirSession): FirRegularClass? = this.containingClassAttr?.let { lookupTag ->
+fun FirCallableDeclaration.getContainingClass(session: FirSession): FirRegularClass? = this.containingClassForStaticMemberAttr?.let { lookupTag ->
     session.symbolProvider.getSymbolByLookupTag(lookupTag)?.fir as? FirRegularClass
 }
 

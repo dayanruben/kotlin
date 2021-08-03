@@ -423,6 +423,58 @@ public class IrBytecodeListingTestGenerated extends AbstractIrBytecodeListingTes
         public void testUnsignedTypes() throws Exception {
             runTest("compiler/testData/codegen/bytecodeListing/annotations/unsignedTypes.kt");
         }
+
+        @Nested
+        @TestMetadata("compiler/testData/codegen/bytecodeListing/annotations/repeatable")
+        @TestDataPath("$PROJECT_ROOT")
+        public class Repeatable {
+            @Test
+            public void testAllFilesPresentInRepeatable() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeListing/annotations/repeatable"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            }
+
+            @Test
+            @TestMetadata("javaAnnotation.kt")
+            public void testJavaAnnotation() throws Exception {
+                runTest("compiler/testData/codegen/bytecodeListing/annotations/repeatable/javaAnnotation.kt");
+            }
+
+            @Test
+            @TestMetadata("kotlinAnnotation.kt")
+            public void testKotlinAnnotation() throws Exception {
+                runTest("compiler/testData/codegen/bytecodeListing/annotations/repeatable/kotlinAnnotation.kt");
+            }
+
+            @Test
+            @TestMetadata("kotlinAnnotationWithBothRepeatables.kt")
+            public void testKotlinAnnotationWithBothRepeatables() throws Exception {
+                runTest("compiler/testData/codegen/bytecodeListing/annotations/repeatable/kotlinAnnotationWithBothRepeatables.kt");
+            }
+
+            @Test
+            @TestMetadata("kotlinSpecificTargets.kt")
+            public void testKotlinSpecificTargets() throws Exception {
+                runTest("compiler/testData/codegen/bytecodeListing/annotations/repeatable/kotlinSpecificTargets.kt");
+            }
+
+            @Test
+            @TestMetadata("multipleRepeatableOrder.kt")
+            public void testMultipleRepeatableOrder() throws Exception {
+                runTest("compiler/testData/codegen/bytecodeListing/annotations/repeatable/multipleRepeatableOrder.kt");
+            }
+
+            @Test
+            @TestMetadata("nonRepeatedAnnotationWithItsContainer.kt")
+            public void testNonRepeatedAnnotationWithItsContainer() throws Exception {
+                runTest("compiler/testData/codegen/bytecodeListing/annotations/repeatable/nonRepeatedAnnotationWithItsContainer.kt");
+            }
+
+            @Test
+            @TestMetadata("retentionAndTarget.kt")
+            public void testRetentionAndTarget() throws Exception {
+                runTest("compiler/testData/codegen/bytecodeListing/annotations/repeatable/retentionAndTarget.kt");
+            }
+        }
     }
 
     @Nested

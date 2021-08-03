@@ -29,6 +29,11 @@ public class LazyBodyIsNotTouchedTilContractsPhaseTestGenerated extends Abstract
         KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolve"), Pattern.compile("^([^.]+)\\.kt$"), null, true);
     }
 
+    @TestMetadata("annotationOnDeclarationWithDifferentArguments.kt")
+    public void testAnnotationOnDeclarationWithDifferentArguments() throws Exception {
+        runTest("compiler/fir/analysis-tests/testData/resolve/annotationOnDeclarationWithDifferentArguments.kt");
+    }
+
     @TestMetadata("annotationUsedAsAnnotationArgument.kt")
     public void testAnnotationUsedAsAnnotationArgument() throws Exception {
         runTest("compiler/fir/analysis-tests/testData/resolve/annotationUsedAsAnnotationArgument.kt");
@@ -2578,6 +2583,11 @@ public class LazyBodyIsNotTouchedTilContractsPhaseTestGenerated extends Abstract
 
         public void testAllFilesPresentInLocalClasses() throws Exception {
             KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolve/localClasses"), Pattern.compile("^([^.]+)\\.kt$"), null, true);
+        }
+
+        @TestMetadata("anonymousInAnonymous.kt")
+        public void testAnonymousInAnonymous() throws Exception {
+            runTest("compiler/fir/analysis-tests/testData/resolve/localClasses/anonymousInAnonymous.kt");
         }
 
         @TestMetadata("implicitInAnonymous.kt")

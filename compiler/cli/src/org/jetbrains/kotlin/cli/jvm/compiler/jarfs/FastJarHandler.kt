@@ -4,18 +4,15 @@
  */
 package org.jetbrains.kotlin.cli.jvm.compiler.jarfs
 
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.impl.ZipHandler
-import com.intellij.util.containers.FactoryMap
-import com.intellij.util.text.ByteArrayCharSequence
+import java.io.File
 import java.io.FileNotFoundException
-import java.io.IOException
 import java.io.RandomAccessFile
 import java.nio.channels.FileChannel
 
-class FastJarHandler(val fileSystem: FastJarFileSystem, path: String) : ZipHandler(path) {
+class FastJarHandler(val fileSystem: FastJarFileSystem, path: String) {
     private val myRoot: VirtualFile?
+    internal val file = File(path)
 
     private val ourEntryMap: Map<String, ZipEntryDescription>
     private val cachedManifest: ByteArray?
@@ -33,112 +30,64 @@ class FastJarHandler(val fileSystem: FastJarFileSystem, path: String) : ZipHandl
             }
         }
 
-        val entries: MutableMap<EntryInfo, FastJarVirtualFile> = HashMap()
-        val entriesMap = entriesMap
-        val childrenMap = FactoryMap.create<FastJarVirtualFile, MutableList<VirtualFile>> { ArrayList() }
-        for (info in entriesMap.values) {
-            val file = getOrCreateFile(info, entries)
-            val parent = file.parent
-            if (parent != null) {
-                childrenMap[parent]?.add(file)
+        myRoot = FastJarVirtualFile(this, "", -1, null)
+
+        val filesByRelativePath = HashMap<String, FastJarVirtualFile>(ourEntryMap.size)
+        filesByRelativePath[""] = myRoot
+
+        for (entryDescription in ourEntryMap.values) {
+            if (!entryDescription.isDirectory) {
+                createFile(entryDescription, filesByRelativePath)
+            } else {
+                getOrCreateDirectory(entryDescription.relativePath, filesByRelativePath)
             }
         }
 
-        val rootInfo = getEntryInfo("")
-        myRoot = rootInfo?.let { getOrCreateFile(it, entries) }
-
-        for ((key, childList) in childrenMap) {
-            key.children = childList.toTypedArray()
+        for (node in filesByRelativePath.values) {
+            node.initChildrenArrayFromList()
         }
     }
 
-    private fun getOrCreateFile(info: EntryInfo, entries: MutableMap<EntryInfo, FastJarVirtualFile>): FastJarVirtualFile {
-        var file = entries[info]
-        if (file == null) {
-            val parent = info.parent
-            file = FastJarVirtualFile(this, info.shortName,
-                                      if (info.isDirectory) -1 else info.length,
-                                      info.timestamp,
-                                      parent?.let { getOrCreateFile(it, entries) })
-            entries[info] = file
+    private fun createFile(entry: ZipEntryDescription, directories: MutableMap<String, FastJarVirtualFile>): FastJarVirtualFile {
+        val (parentName, shortName) = entry.relativePath.splitPath()
+
+        val parentFile = getOrCreateDirectory(parentName, directories)
+        if ("." == shortName) {
+            return parentFile
         }
-        return file
+
+        return FastJarVirtualFile(
+            this, shortName,
+            if (entry.isDirectory) -1 else entry.uncompressedSize,
+            parentFile
+        )
+    }
+
+    private fun getOrCreateDirectory(entryName: String, directories: MutableMap<String, FastJarVirtualFile>): FastJarVirtualFile {
+        return directories.getOrPut(entryName) {
+            val (parentPath, shortName) = entryName.splitPath()
+            val parentFile = getOrCreateDirectory(parentPath, directories)
+
+            FastJarVirtualFile(this, shortName, -1, parentFile)
+        }
+    }
+
+    private fun String.splitPath(): Pair<String, String> {
+        var slashIndex = this.length - 1
+
+        while (slashIndex >= 0 && this[slashIndex] != '/') {
+            slashIndex--
+        }
+
+        if (slashIndex == -1) return Pair("", this)
+        return Pair(substring(0, slashIndex), substring(slashIndex + 1))
     }
 
     fun findFileByPath(pathInJar: String): VirtualFile? {
         return myRoot?.findFileByRelativePath(pathInJar)
     }
 
-    @Throws(IOException::class)
-    override fun createEntriesMap(): Map<String, EntryInfo> {
-        val mapToEntryInfo = mutableMapOf<String, EntryInfo>()
-        mapToEntryInfo[""] = EntryInfo("", true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, null)
-        for (zipEntry in ourEntryMap.values) {
-            getOrCreate(zipEntry, mapToEntryInfo)
-        }
-
-        return mapToEntryInfo
-    }
-
-    private fun getOrCreate(entry: ZipEntryDescription, map: MutableMap<String, EntryInfo>): EntryInfo {
-        var isDirectory = entry.isDirectory
-        var entryName = entry.relativePath
-        if (StringUtil.endsWithChar(entryName, '/')) {
-            entryName = entryName.substring(0, entryName.length - 1)
-            isDirectory = true
-        }
-        if (StringUtil.startsWithChar(entryName, '/') || StringUtil.startsWithChar(entryName, '\\')) {
-            entryName = entryName.substring(1)
-        }
-
-        var info = map[entryName]
-        if (info != null) return info
-
-        val path = splitPathAndFix(entryName)
-
-        val parentInfo = getOrCreateDirectory(path.first, map)
-        if ("." == path.second) {
-            return parentInfo
-        }
-        info = store(map, parentInfo, path.second, isDirectory, entry.uncompressedSize.toLong(), 0, path.third)
-        return info
-    }
-
-    private fun getOrCreateDirectory(entryName: String, map: MutableMap<String, EntryInfo>): EntryInfo {
-        var info = map[entryName]
-
-        if (info == null) {
-            val entry = ourEntryMap["$entryName/"]
-            if (entry != null) {
-                return getOrCreate(entry, map)
-            }
-            val path = splitPathAndFix(entryName)
-            require(entryName != path.first) {
-                "invalid entry name: '" + entryName + "' in " + this.file.absolutePath + "; after split: " + path
-            }
-            val parentInfo = getOrCreateDirectory(path.first, map)
-            info = store(map, parentInfo, path.second, true, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, path.third)
-        }
-
-        return info
-    }
-
-    private fun store(
-        map: MutableMap<String, EntryInfo>,
-        parentInfo: EntryInfo?,
-        shortName: CharSequence,
-        isDirectory: Boolean,
-        size: Long,
-        time: Long,
-        entryName: String
-    ): EntryInfo {
-        val sequence = ByteArrayCharSequence.convertToBytesIfPossible(shortName)
-        val info = EntryInfo(sequence, isDirectory, size, time, parentInfo)
-        map[entryName] = info
-        return info
-    }
-
-    override fun contentsToByteArray(relativePath: String): ByteArray {
+    fun contentsToByteArray(relativePath: String): ByteArray {
         if (relativePath == MANIFEST_PATH) return cachedManifest ?: throw FileNotFoundException("$file!/$relativePath")
         val zipEntryDescription = ourEntryMap[relativePath] ?: throw FileNotFoundException("$file!/$relativePath")
         return fileSystem.cachedOpenFileHandles[file].use {
@@ -150,5 +99,3 @@ class FastJarHandler(val fileSystem: FastJarFileSystem, path: String) : ZipHandl
 }
 
 private const val MANIFEST_PATH = "META-INF/MANIFEST.MF"
-
-

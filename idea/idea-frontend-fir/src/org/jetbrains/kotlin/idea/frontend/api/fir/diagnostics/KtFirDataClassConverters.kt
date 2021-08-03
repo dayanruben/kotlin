@@ -41,6 +41,7 @@ import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtIfExpression
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtModifierListOwner
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtParameter
@@ -317,6 +318,27 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
     }
     add(FirErrors.ILLEGAL_SELECTOR) { firDiagnostic ->
         IllegalSelectorImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.NO_RECEIVER_ALLOWED) { firDiagnostic ->
+        NoReceiverAllowedImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.FUNCTION_EXPECTED) { firDiagnostic ->
+        FunctionExpectedImpl(
+            firDiagnostic.a,
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.b),
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.RESOLUTION_TO_CLASSIFIER) { firDiagnostic ->
+        ResolutionToClassifierImpl(
+            firSymbolBuilder.classifierBuilder.buildClassLikeSymbol(firDiagnostic.a.fir),
             firDiagnostic as FirPsiDiagnostic,
             token,
         )
@@ -716,14 +738,26 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
-    add(FirErrors.ANNOTATION_ON_SUPERCLASS) { firDiagnostic ->
-        AnnotationOnSuperclassImpl(
+    add(FirErrors.ANNOTATION_ON_SUPERCLASS.errorFactory) { firDiagnostic ->
+        AnnotationOnSuperclassErrorImpl(
             firDiagnostic as FirPsiDiagnostic,
             token,
         )
     }
-    add(FirErrors.RESTRICTED_RETENTION_FOR_EXPRESSION_ANNOTATION) { firDiagnostic ->
-        RestrictedRetentionForExpressionAnnotationImpl(
+    add(FirErrors.ANNOTATION_ON_SUPERCLASS.warningFactory) { firDiagnostic ->
+        AnnotationOnSuperclassWarningImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.RESTRICTED_RETENTION_FOR_EXPRESSION_ANNOTATION.errorFactory) { firDiagnostic ->
+        RestrictedRetentionForExpressionAnnotationErrorImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.RESTRICTED_RETENTION_FOR_EXPRESSION_ANNOTATION.warningFactory) { firDiagnostic ->
+        RestrictedRetentionForExpressionAnnotationWarningImpl(
             firDiagnostic as FirPsiDiagnostic,
             token,
         )
@@ -1441,14 +1475,14 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
-    add(FirErrors.TYPE_PARAMETER_AS_REIFIED_ARRAY) { firDiagnostic ->
-        TypeParameterAsReifiedArrayImpl(
+    add(FirErrors.TYPE_PARAMETER_AS_REIFIED_ARRAY.errorFactory) { firDiagnostic ->
+        TypeParameterAsReifiedArrayErrorImpl(
             firSymbolBuilder.classifierBuilder.buildTypeParameterSymbol(firDiagnostic.a.fir),
             firDiagnostic as FirPsiDiagnostic,
             token,
         )
     }
-    add(FirErrors.TYPE_PARAMETER_AS_REIFIED_ARRAY_WARNING) { firDiagnostic ->
+    add(FirErrors.TYPE_PARAMETER_AS_REIFIED_ARRAY.warningFactory) { firDiagnostic ->
         TypeParameterAsReifiedArrayWarningImpl(
             firSymbolBuilder.classifierBuilder.buildTypeParameterSymbol(firDiagnostic.a.fir),
             firDiagnostic as FirPsiDiagnostic,
@@ -1770,15 +1804,15 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
-    add(FirErrors.INVISIBLE_ABSTRACT_MEMBER_FROM_SUPER) { firDiagnostic ->
-        InvisibleAbstractMemberFromSuperImpl(
+    add(FirErrors.INVISIBLE_ABSTRACT_MEMBER_FROM_SUPER.errorFactory) { firDiagnostic ->
+        InvisibleAbstractMemberFromSuperErrorImpl(
             firSymbolBuilder.classifierBuilder.buildClassLikeSymbol(firDiagnostic.a.fir),
             firSymbolBuilder.callableBuilder.buildCallableSymbol(firDiagnostic.b.fir),
             firDiagnostic as FirPsiDiagnostic,
             token,
         )
     }
-    add(FirErrors.INVISIBLE_ABSTRACT_MEMBER_FROM_SUPER_WARNING) { firDiagnostic ->
+    add(FirErrors.INVISIBLE_ABSTRACT_MEMBER_FROM_SUPER.warningFactory) { firDiagnostic ->
         InvisibleAbstractMemberFromSuperWarningImpl(
             firSymbolBuilder.classifierBuilder.buildClassLikeSymbol(firDiagnostic.a.fir),
             firSymbolBuilder.callableBuilder.buildCallableSymbol(firDiagnostic.b.fir),
@@ -2491,15 +2525,15 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
-    add(FirErrors.VAL_REASSIGNMENT_VIA_BACKING_FIELD) { firDiagnostic ->
-        ValReassignmentViaBackingFieldImpl(
+    add(FirErrors.VAL_REASSIGNMENT_VIA_BACKING_FIELD.errorFactory) { firDiagnostic ->
+        ValReassignmentViaBackingFieldErrorImpl(
             firSymbolBuilder.variableLikeBuilder.buildVariableSymbol(firDiagnostic.a.fir),
             firDiagnostic as FirPsiDiagnostic,
             token,
         )
     }
-    add(FirErrors.VAL_REASSIGNMENT_VIA_BACKING_FIELD_ERROR) { firDiagnostic ->
-        ValReassignmentViaBackingFieldErrorImpl(
+    add(FirErrors.VAL_REASSIGNMENT_VIA_BACKING_FIELD.warningFactory) { firDiagnostic ->
+        ValReassignmentViaBackingFieldWarningImpl(
             firSymbolBuilder.variableLikeBuilder.buildVariableSymbol(firDiagnostic.a.fir),
             firDiagnostic as FirPsiDiagnostic,
             token,
@@ -2846,6 +2880,26 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirErrors.RESOLVED_TO_UNDERSCORE_NAMED_CATCH_PARAMETER) { firDiagnostic ->
+        ResolvedToUnderscoreNamedCatchParameterImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.INVALID_CHARACTERS) { firDiagnostic ->
+        InvalidCharactersImpl(
+            firDiagnostic.a,
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.DANGEROUS_CHARACTERS) { firDiagnostic ->
+        DangerousCharactersImpl(
+            firDiagnostic.a,
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
     add(FirErrors.EQUALITY_NOT_APPLICABLE) { firDiagnostic ->
         EqualityNotApplicableImpl(
             firDiagnostic.a,
@@ -3108,6 +3162,50 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
     }
     add(FirErrors.OPERATOR_RENAMED_ON_IMPORT) { firDiagnostic ->
         OperatorRenamedOnImportImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.ILLEGAL_SUSPEND_FUNCTION_CALL) { firDiagnostic ->
+        IllegalSuspendFunctionCallImpl(
+            firSymbolBuilder.buildSymbol(firDiagnostic.a.fir),
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.ILLEGAL_SUSPEND_PROPERTY_ACCESS) { firDiagnostic ->
+        IllegalSuspendPropertyAccessImpl(
+            firSymbolBuilder.buildSymbol(firDiagnostic.a.fir),
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.NON_LOCAL_SUSPENSION_POINT) { firDiagnostic ->
+        NonLocalSuspensionPointImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.ILLEGAL_RESTRICTED_SUSPENDING_FUNCTION_CALL) { firDiagnostic ->
+        IllegalRestrictedSuspendingFunctionCallImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.NON_MODIFIER_FORM_FOR_BUILT_IN_SUSPEND) { firDiagnostic ->
+        NonModifierFormForBuiltInSuspendImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND) { firDiagnostic ->
+        ModifierFormForNonBuiltInSuspendImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.RETURN_FOR_BUILT_IN_SUSPEND) { firDiagnostic ->
+        ReturnForBuiltInSuspendImpl(
             firDiagnostic as FirPsiDiagnostic,
             token,
         )

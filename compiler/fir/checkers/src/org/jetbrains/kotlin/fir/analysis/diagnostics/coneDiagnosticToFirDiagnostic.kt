@@ -41,6 +41,8 @@ private fun ConeDiagnostic.toFirDiagnostic(
     is ConeUnresolvedNameError -> FirErrors.UNRESOLVED_REFERENCE.createOn(source, this.name.asString())
     is ConeUnresolvedQualifierError -> FirErrors.UNRESOLVED_REFERENCE.createOn(source, this.qualifier)
     is ConeFunctionCallExpectedError -> FirErrors.FUNCTION_CALL_EXPECTED.createOn(source, this.name.asString(), this.hasValueParameters)
+    is ConeFunctionExpectedError -> FirErrors.FUNCTION_EXPECTED.createOn(source, this.expression, this.type)
+    is ConeResolutionToClassifierError -> FirErrors.RESOLUTION_TO_CLASSIFIER.createOn(source, this.classSymbol)
     is ConeHiddenCandidateError -> FirErrors.INVISIBLE_REFERENCE.createOn(source, this.candidateSymbol)
     is ConeAmbiguityError -> when {
         applicability.isSuccess -> FirErrors.OVERLOAD_RESOLUTION_AMBIGUITY.createOn(source, this.candidates.map { it.symbol })
@@ -64,13 +66,13 @@ private fun ConeDiagnostic.toFirDiagnostic(
     is ConeOperatorAmbiguityError -> FirErrors.ASSIGN_OPERATOR_AMBIGUITY.createOn(source, this.candidates)
     is ConeVariableExpectedError -> FirErrors.VARIABLE_EXPECTED.createOn(source)
     is ConeValReassignmentError -> when (val symbol = this.variable) {
-        is FirBackingFieldSymbol -> FirErrors.VAL_REASSIGNMENT_VIA_BACKING_FIELD_ERROR.createOn(source, symbol)
+        is FirBackingFieldSymbol -> FirErrors.VAL_REASSIGNMENT_VIA_BACKING_FIELD.errorFactory.createOn(source, symbol)
         else -> FirErrors.VAL_REASSIGNMENT.createOn(source, symbol)
     }
     is ConeUnexpectedTypeArgumentsError -> FirErrors.TYPE_ARGUMENTS_NOT_ALLOWED.createOn(this.source ?: source)
     is ConeIllegalAnnotationError -> FirErrors.NOT_AN_ANNOTATION_CLASS.createOn(source, this.name.asString())
     is ConeWrongNumberOfTypeArgumentsError ->
-        FirErrors.WRONG_NUMBER_OF_TYPE_ARGUMENTS.createOn(this.source ?: qualifiedAccessSource ?: source, this.desiredCount, this.symbol)
+        FirErrors.WRONG_NUMBER_OF_TYPE_ARGUMENTS.createOn(this.source, this.desiredCount, this.symbol)
     is ConeOuterClassArgumentsRequired ->
         FirErrors.OUTER_CLASS_ARGUMENTS_REQUIRED.createOn(qualifiedAccessSource ?: source, this.symbol)
     is ConeNoTypeArgumentsOnRhsError ->
@@ -90,6 +92,8 @@ private fun ConeDiagnostic.toFirDiagnostic(
     is ConeUnsupportedDynamicType -> FirErrors.UNSUPPORTED.createOn(source, this.reason)
     is ConeLocalVariableNoTypeOrInitializer ->
         runIf(variable.isLocalMember) { FirErrors.VARIABLE_WITH_NO_TYPE_NO_INITIALIZER.createOn(source) }
+    is ConeUnderscoreIsReserved -> FirErrors.UNDERSCORE_IS_RESERVED.createOn(this.source)
+    is ConeUnderscoreUsageWithoutBackticks -> FirErrors.UNDERSCORE_USAGE_WITHOUT_BACKTICKS.createOn(this.source)
     else -> throw IllegalArgumentException("Unsupported diagnostic type: ${this.javaClass}")
 }
 
@@ -363,6 +367,7 @@ private fun ConeSimpleDiagnostic.getFactory(source: FirSourceElement): FirDiagno
         DiagnosticKind.RecursiveTypealiasExpansion -> FirErrors.RECURSIVE_TYPEALIAS_EXPANSION
         DiagnosticKind.LoopInSupertype -> FirErrors.CYCLIC_INHERITANCE_HIERARCHY
         DiagnosticKind.IllegalSelector -> FirErrors.ILLEGAL_SELECTOR
+        DiagnosticKind.NoReceiverAllowed -> FirErrors.NO_RECEIVER_ALLOWED
         DiagnosticKind.IsEnumEntry -> FirErrors.IS_ENUM_ENTRY
         DiagnosticKind.EnumEntryAsType -> FirErrors.ENUM_ENTRY_AS_TYPE
         DiagnosticKind.UnresolvedSupertype,

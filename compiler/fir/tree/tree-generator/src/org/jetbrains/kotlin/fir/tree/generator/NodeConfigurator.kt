@@ -192,6 +192,10 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
             +field("source", sourceElementType, nullable = true, withReplace = true)
         }
 
+        qualifiedAccessExpression.configure {
+            +fieldList("nonFatalDiagnostics", coneDiagnosticType)
+        }
+
         constExpression.configure {
             withArg("T")
             +field("kind", constKindType.withArgs("T"), withReplace = true)
@@ -407,6 +411,7 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
             +field("importedFqName", fqNameType, nullable = true)
             +booleanField("isAllUnder")
             +field("aliasName", nameType, nullable = true)
+            +field("aliasSource", sourceElementType, nullable = true)
         }
 
         resolvedImport.configure {

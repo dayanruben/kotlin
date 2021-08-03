@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.fir.lightTree.converter
 import com.intellij.lang.LighterASTNode
 import com.intellij.psi.TokenType
 import com.intellij.util.diff.FlyweightCapableTreeStructure
-import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.KtNodeTypes.*
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
@@ -20,9 +19,7 @@ import org.jetbrains.kotlin.fir.declarations.builder.buildAnonymousFunction
 import org.jetbrains.kotlin.fir.declarations.builder.buildProperty
 import org.jetbrains.kotlin.fir.declarations.builder.buildValueParameter
 import org.jetbrains.kotlin.fir.declarations.impl.FirDeclarationStatusImpl
-import org.jetbrains.kotlin.fir.diagnostics.ConeNotAnnotationContainer
-import org.jetbrains.kotlin.fir.diagnostics.ConeSimpleDiagnostic
-import org.jetbrains.kotlin.fir.diagnostics.DiagnosticKind
+import org.jetbrains.kotlin.fir.diagnostics.*
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.builder.*
 import org.jetbrains.kotlin.fir.expressions.impl.FirSingleExpressionBlock
@@ -128,7 +125,7 @@ class ExpressionsConverter(
         var block: LighterASTNode? = null
         lambdaExpression.getChildNodesByType(FUNCTION_LITERAL).first().forEachChildren {
             when (it.tokenType) {
-                VALUE_PARAMETER_LIST -> valueParameterList += declarationsConverter.convertValueParameters(it)
+                VALUE_PARAMETER_LIST -> valueParameterList += declarationsConverter.convertValueParameters(it, ValueParameterDeclaration.LAMBDA)
                 BLOCK -> block = it
             }
         }
@@ -144,7 +141,10 @@ class ExpressionsConverter(
             symbol = FirAnonymousFunctionSymbol()
             isLambda = true
             label = context.firLabels.pop() ?: context.calleeNamesForLambda.lastOrNull()?.let {
-                buildLabel { name = it.asString() }
+                buildLabel {
+                    source = expressionSource.fakeElement(FirFakeSourceElementKind.GeneratedLambdaLabel)
+                    name = it.asString()
+                }
             }
             target = FirFunctionTarget(labelName = label?.name, isLambda = true)
             context.firFunctionTargets += target
@@ -329,22 +329,29 @@ class ExpressionsConverter(
      * @see org.jetbrains.kotlin.fir.builder.RawFirBuilder.Visitor.visitLabeledExpression
      */
     private fun convertLabeledExpression(labeledExpression: LighterASTNode): FirElement {
-        val size = context.firLabels.size
         var firExpression: FirElement? = null
+        val previousLabelsSize = context.firLabels.size
+        var errorLabelSource: FirSourceElement? = null
+
         labeledExpression.forEachChildren {
             when (it.tokenType) {
-                LABEL_QUALIFIER -> context.firLabels += buildLabel { name = it.toString().replace("@", "") }
+                LABEL_QUALIFIER -> {
+                    val rawName = it.toString()
+                    val pair = buildLabelAndErrorSource(rawName.substring(0, rawName.length - 1), it.toFirSourceElement())
+                    context.firLabels += pair.first
+                    errorLabelSource = pair.second
+                }
                 BLOCK -> firExpression = declarationsConverter.convertBlock(it)
                 PROPERTY -> firExpression = declarationsConverter.convertPropertyDeclaration(it)
                 else -> if (it.isExpression()) firExpression = getAsFirExpression(it)
             }
         }
 
-        if (size != context.firLabels.size) {
+        if (context.firLabels.size != previousLabelsSize) {
             context.firLabels.removeLast()
-            //println("Unused label: ${labeledExpression.getAsString()}")
         }
-        return firExpression ?: buildErrorExpression(null, ConeSimpleDiagnostic("Empty label", DiagnosticKind.Syntax))
+
+        return buildExpressionWithErrorLabel(firExpression, errorLabelSource, labeledExpression.toFirSourceElement())
     }
 
     /**
@@ -504,15 +511,18 @@ class ExpressionsConverter(
                     val firExpression =
                         getAsFirExpression<FirExpression>(it, "Incorrect ${if (isEffectiveSelector) "selector" else "receiver"} expression")
                     if (isEffectiveSelector) {
+                        val callExpressionCallee = if (it.tokenType == CALL_EXPRESSION) it.getFirstChildExpressionUnwrapped() else null
                         firSelector =
-                            if (it.tokenType is KtNameReferenceExpressionElementType || it.tokenType == KtNodeTypes.CALL_EXPRESSION) {
+                            if (it.tokenType is KtNameReferenceExpressionElementType ||
+                                (it.tokenType == CALL_EXPRESSION && callExpressionCallee?.tokenType != LAMBDA_EXPRESSION)
+                            ) {
                                 firExpression
                             } else {
                                 buildErrorExpression {
-                                    source = it.toFirSourceElement()
+                                    source = callExpressionCallee?.toFirSourceElement() ?: it.toFirSourceElement()
                                     diagnostic = ConeSimpleDiagnostic(
                                         "The expression cannot be a selector (occur after a dot)",
-                                        DiagnosticKind.IllegalSelector
+                                        if (callExpressionCallee == null) DiagnosticKind.IllegalSelector else DiagnosticKind.NoReceiverAllowed
                                     )
                                     expression = firExpression
                                 }
@@ -956,9 +966,16 @@ class ExpressionsConverter(
     private fun convertSimpleNameExpression(referenceExpression: LighterASTNode): FirQualifiedAccessExpression {
         return buildQualifiedAccessExpression {
             source = referenceExpression.toFirSourceElement()
+
+            val nameSource = this@buildQualifiedAccessExpression.source
+            val rawText = referenceExpression.asText
+            if (nameSource != null && rawText.isUnderscore) {
+                nonFatalDiagnostics.add(ConeUnderscoreUsageWithoutBackticks(nameSource))
+            }
+
             calleeReference = buildSimpleNamedReference {
-                source = this@buildQualifiedAccessExpression.source
-                name = referenceExpression.asText.nameAsSafeName()
+                source = nameSource
+                name = rawText.nameAsSafeName()
             }
         }
     }
@@ -1157,7 +1174,8 @@ class ExpressionsConverter(
         var blockNode: LighterASTNode? = null
         catchClause.forEachChildren {
             when (it.tokenType) {
-                VALUE_PARAMETER_LIST -> valueParameter = declarationsConverter.convertValueParameters(it).firstOrNull() ?: return null
+                VALUE_PARAMETER_LIST -> valueParameter = declarationsConverter.convertValueParameters(it, ValueParameterDeclaration.CATCH)
+                    .firstOrNull() ?: return null
                 BLOCK -> blockNode = it
             }
         }

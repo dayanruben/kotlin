@@ -12,6 +12,8 @@ import org.jetbrains.kotlin.fir.declarations.FirCallableDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirRegularClass
 import org.jetbrains.kotlin.fir.declarations.FirVariable
 import org.jetbrains.kotlin.fir.diagnostics.ConeDiagnostic
+import org.jetbrains.kotlin.fir.expressions.FirExpression
+import org.jetbrains.kotlin.fir.diagnostics.ConeDiagnosticWithSource
 import org.jetbrains.kotlin.fir.render
 import org.jetbrains.kotlin.fir.resolve.calls.Candidate
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
@@ -47,6 +49,14 @@ class ConeUnresolvedNameError(val name: Name) : ConeUnresolvedError() {
 
 class ConeFunctionCallExpectedError(val name: Name, val hasValueParameters: Boolean) : ConeDiagnostic() {
     override val reason: String get() = "Function call expected: $name(${if (hasValueParameters) "..." else ""})"
+}
+
+class ConeFunctionExpectedError(val expression: String, val type: ConeKotlinType) : ConeDiagnostic() {
+    override val reason: String get() = "Expression '$expression' of type '$type' cannot be invoked as a function"
+}
+
+class ConeResolutionToClassifierError(val classSymbol: FirRegularClassSymbol) : ConeDiagnostic() {
+    override val reason: String get() = "Resolution to classifier"
 }
 
 class ConeHiddenCandidateError(
@@ -103,8 +113,8 @@ abstract class ConeUnmatchedTypeArgumentsError(val desiredCount: Int, val type: 
 class ConeWrongNumberOfTypeArgumentsError(
     val desiredCount: Int,
     val symbol: FirRegularClassSymbol,
-    val source: FirSourceElement?
-) : ConeDiagnostic() {
+    source: FirSourceElement
+) : ConeDiagnosticWithSource(source) {
     override val reason: String get() = "Wrong number of type arguments"
 }
 

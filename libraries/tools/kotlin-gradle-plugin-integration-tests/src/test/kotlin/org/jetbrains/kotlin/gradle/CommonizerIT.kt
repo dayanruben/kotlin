@@ -5,9 +5,14 @@
 
 package org.jetbrains.kotlin.gradle
 
+import org.gradle.api.logging.LogLevel.INFO
 import org.gradle.internal.os.OperatingSystem
+import org.jetbrains.kotlin.commonizer.CommonizerTarget
 import org.jetbrains.kotlin.gradle.internals.DISABLED_NATIVE_TARGETS_REPORTER_WARNING_PREFIX
+import org.jetbrains.kotlin.gradle.util.reportSourceSetCommonizerDependencies
 import org.jetbrains.kotlin.incremental.testingUtils.assertEqualDirectories
+import org.jetbrains.kotlin.konan.target.HostManager
+import org.jetbrains.kotlin.konan.target.KonanTarget.*
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -135,10 +140,10 @@ class CommonizerIT : BaseGradleIT() {
             val expectedOutputDirectoryForBuild = projectDir.resolve("build/classes/kotlin/commonizer")
 
             build(":copyCommonizeCInteropForIde") {
+                assertSuccessful()
                 assertTasksExecuted(":cinteropCurlTargetA")
                 assertTasksExecuted(":cinteropCurlTargetB")
                 assertTasksExecuted(":commonizeCInterop")
-                assertSuccessful()
 
                 assertTrue(expectedOutputDirectoryForIde.isDirectory, "Missing output directory for IDE")
                 assertTrue(expectedOutputDirectoryForBuild.isDirectory, "Missing output directory for build")
@@ -345,6 +350,190 @@ class CommonizerIT : BaseGradleIT() {
         with(Project("commonize-kt-46856-all-targets")) {
             build(":commonize", options = BuildOptions(forceOutputToStdout = true)) {
                 assertSuccessful()
+            }
+        }
+    }
+
+    @Test
+    fun `test multiple cinterops with test source sets and compilations - test source sets depending on main`() {
+        `test multiple cinterops with test source sets and compilations`(true)
+    }
+
+    @Test
+    fun `test multiple cinterops with test source sets and compilations`() {
+        `test multiple cinterops with test source sets and compilations`(false)
+    }
+
+    private fun `test multiple cinterops with test source sets and compilations`(testSourceSetsDependingOnMain: Boolean) {
+        with(Project("commonizeMultipleCInteropsWithTests", minLogLevel = INFO)) {
+
+            val isUnix = HostManager.hostIsMac || HostManager.hostIsLinux
+            val isMac = HostManager.hostIsMac
+            val isWindows = HostManager.hostIsMingw
+
+            val testSourceSetsDependingOnMainParameter = "-PtestSourceSetsDependingOnMain=$testSourceSetsDependingOnMain"
+
+            fun CompiledProject.assertTestSourceSetsDependingOnMainParameter() {
+                val message = "testSourceSetsDependingOnMain is set"
+                if (testSourceSetsDependingOnMain) assertContains(message) else assertNotContains(message)
+            }
+
+            reportSourceSetCommonizerDependencies(this, testSourceSetsDependingOnMainParameter) {
+                it.assertTestSourceSetsDependingOnMainParameter()
+                getCommonizerDependencies("nativeMain").onlyCInterops().apply {
+                    assertDependencyFilesMatches(".*nativeHelper", ".*unixHelper".takeIf { isUnix })
+                    assertTargetOnAllDependencies(
+                        CommonizerTarget(IOS_X64, IOS_ARM64, LINUX_X64, LINUX_ARM64, MACOS_X64, MINGW_X64, MINGW_X86)
+                    )
+                }
+
+                getCommonizerDependencies("nativeTest").onlyCInterops().apply {
+                    assertDependencyFilesMatches(".*nativeHelper", ".*unixHelper".takeIf { isUnix }, ".*nativeTestHelper")
+                    assertTargetOnAllDependencies(
+                        CommonizerTarget(IOS_X64, IOS_ARM64, LINUX_X64, LINUX_ARM64, MACOS_X64, MINGW_X64, MINGW_X86)
+                    )
+                }
+
+                if (isUnix) {
+                    getCommonizerDependencies("unixMain").onlyCInterops().apply {
+                        assertDependencyFilesMatches(".*nativeHelper", ".*unixHelper")
+                        assertTargetOnAllDependencies(CommonizerTarget(IOS_X64, IOS_ARM64, LINUX_X64, LINUX_ARM64, MACOS_X64))
+                    }
+
+                    getCommonizerDependencies("unixTest").onlyCInterops().apply {
+                        assertDependencyFilesMatches(".*nativeHelper", ".*unixHelper", ".*nativeTestHelper")
+                        assertTargetOnAllDependencies(CommonizerTarget(IOS_X64, IOS_ARM64, LINUX_X64, LINUX_ARM64, MACOS_X64))
+                    }
+
+                    getCommonizerDependencies("linuxMain").onlyCInterops().apply {
+                        assertDependencyFilesMatches(".*nativeHelper", ".*unixHelper")
+                        assertTargetOnAllDependencies(CommonizerTarget(LINUX_X64, LINUX_ARM64))
+                    }
+
+                    getCommonizerDependencies("linuxTest").onlyCInterops().apply {
+                        assertDependencyFilesMatches(".*nativeHelper", ".*unixHelper", ".*nativeTestHelper")
+                        assertTargetOnAllDependencies(CommonizerTarget(LINUX_X64, LINUX_ARM64))
+                    }
+
+                    getCommonizerDependencies("linuxX64Main").assertEmpty()
+                    getCommonizerDependencies("linuxArm64Main").assertEmpty()
+                    getCommonizerDependencies("linuxX64Test").assertEmpty()
+                    getCommonizerDependencies("linuxArm64Test").assertEmpty()
+                }
+
+                if (isMac) {
+                    getCommonizerDependencies("appleMain").onlyCInterops().apply {
+                        assertDependencyFilesMatches(".*nativeHelper", ".*unixHelper", ".*appleHelper")
+                        assertTargetOnAllDependencies(CommonizerTarget(IOS_X64, IOS_ARM64, MACOS_X64))
+                    }
+
+                    getCommonizerDependencies("appleTest").onlyCInterops().apply {
+                        assertDependencyFilesMatches(".*nativeHelper", ".*unixHelper", ".*appleHelper", ".*nativeTestHelper")
+                        assertTargetOnAllDependencies(CommonizerTarget(IOS_X64, IOS_ARM64, MACOS_X64))
+                    }
+
+                    getCommonizerDependencies("iosMain").onlyCInterops().apply {
+                        assertDependencyFilesMatches(".*nativeHelper", ".*unixHelper", ".*appleHelper")
+                        assertTargetOnAllDependencies(CommonizerTarget(IOS_X64, IOS_ARM64))
+                    }
+
+                    getCommonizerDependencies("iosTest").onlyCInterops().apply {
+                        assertDependencyFilesMatches(
+                            ".*nativeHelper", ".*unixHelper", ".*appleHelper", ".*nativeTestHelper", ".*iosTestHelper"
+                        )
+                        assertTargetOnAllDependencies(CommonizerTarget(IOS_X64, IOS_ARM64))
+                    }
+
+                    getCommonizerDependencies("macosMain").assertEmpty()
+                    getCommonizerDependencies("macosTest").assertEmpty()
+                    getCommonizerDependencies("iosX64Main").assertEmpty()
+                    getCommonizerDependencies("iosX64Test").assertEmpty()
+                    getCommonizerDependencies("iosArm64Main").assertEmpty()
+                    getCommonizerDependencies("iosArm64Test").assertEmpty()
+                }
+
+                if (isWindows) {
+                    getCommonizerDependencies("windowsMain").onlyCInterops().apply {
+                        assertDependencyFilesMatches(".*nativeHelper", ".*windowsHelper")
+                        assertTargetOnAllDependencies(CommonizerTarget(MINGW_X86, MINGW_X64))
+                    }
+
+                    getCommonizerDependencies("windowsTest").onlyCInterops().apply {
+                        assertDependencyFilesMatches(".*nativeHelper", ".*windowsHelper", ".*nativeTestHelper")
+                        assertTargetOnAllDependencies(CommonizerTarget(MINGW_X86, MINGW_X64))
+                    }
+
+                    getCommonizerDependencies("windowsX64Main").assertEmpty()
+                    getCommonizerDependencies("windowsX64Test").assertEmpty()
+                    getCommonizerDependencies("windowsX86Main").assertEmpty()
+                    getCommonizerDependencies("windowsX86Test").assertEmpty()
+                }
+            }
+
+            build(":assemble", testSourceSetsDependingOnMainParameter) {
+                assertTestSourceSetsDependingOnMainParameter()
+                assertSuccessful()
+                assertTasksUpToDate(":commonizeNativeDistribution")
+                assertTasksUpToDate(":commonizeCInterop")
+            }
+
+            build(":compileNativeMainKotlinMetadata", testSourceSetsDependingOnMainParameter) {
+                assertTestSourceSetsDependingOnMainParameter()
+                assertSuccessful()
+            }
+
+            if (isUnix) {
+                build(":compileUnixMainKotlinMetadata", testSourceSetsDependingOnMainParameter) {
+                    assertTestSourceSetsDependingOnMainParameter()
+                    assertSuccessful()
+                }
+
+                build(":compileLinuxMainKotlinMetadata", testSourceSetsDependingOnMainParameter) {
+                    assertTestSourceSetsDependingOnMainParameter()
+                    assertSuccessful()
+                }
+            }
+
+            if (isMac) {
+                build(":compileAppleMainKotlinMetadata", testSourceSetsDependingOnMainParameter) {
+                    assertTestSourceSetsDependingOnMainParameter()
+                    assertSuccessful()
+                }
+
+                build(":compileIosMainKotlinMetadata", testSourceSetsDependingOnMainParameter) {
+                    assertTestSourceSetsDependingOnMainParameter()
+                    assertSuccessful()
+                }
+            }
+
+            if (isWindows) {
+                build(":compileWindowsMainKotlinMetadata", testSourceSetsDependingOnMainParameter) {
+                    assertTestSourceSetsDependingOnMainParameter()
+                    assertSuccessful()
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `test KT-47641 commonizing c-interops does not depend on any source compilation`() {
+        with(Project("commonize-kt-47641-cinterops-compilation-dependency")) {
+            build("commonizeCInterop", options = BuildOptions(forceOutputToStdout = true)) {
+                assertTasksExecuted(":p1:commonizeCInterop")
+                assertTasksExecuted(":p2:commonizeCInterop")
+
+                assertTasksExecuted(":p1:cinteropTestWithPosix.*")
+                assertTasksExecuted(":p2:cinteropTestWithPosix.*")
+                assertTasksExecuted(":p2:cinteropTestWithPosixP2.*")
+
+                /* Make sure that we correctly reference any compile tasks in this test (test is useless otherwise) */
+                assertTasksRegisteredRegex(":p1.*compile.*")
+                assertTasksRegisteredRegex(":p2.*compile.*")
+
+                /* CInterops *shall not* require any compilation */
+                assertTasksNotExecuted(":p0.*compile.*")
+                assertTasksNotExecuted(":p1.*compile.*")
+                assertTasksNotExecuted(":p2.*compile.*")
             }
         }
     }

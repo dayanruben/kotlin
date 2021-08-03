@@ -497,6 +497,46 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         }
 
         @Nested
+        @TestMetadata("compiler/testData/codegen/box/annotations/repeatable")
+        @TestDataPath("$PROJECT_ROOT")
+        public class Repeatable {
+            @Test
+            public void testAllFilesPresentInRepeatable() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/annotations/repeatable"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            }
+
+            @Test
+            @TestMetadata("javaAnnotation.kt")
+            public void testJavaAnnotation() throws Exception {
+                runTest("compiler/testData/codegen/box/annotations/repeatable/javaAnnotation.kt");
+            }
+
+            @Test
+            @TestMetadata("jvmRepeatableKotlinAnnotation.kt")
+            public void testJvmRepeatableKotlinAnnotation() throws Exception {
+                runTest("compiler/testData/codegen/box/annotations/repeatable/jvmRepeatableKotlinAnnotation.kt");
+            }
+
+            @Test
+            @TestMetadata("kotlinAnnotation.kt")
+            public void testKotlinAnnotation() throws Exception {
+                runTest("compiler/testData/codegen/box/annotations/repeatable/kotlinAnnotation.kt");
+            }
+
+            @Test
+            @TestMetadata("kotlinAnnotationInJava.kt")
+            public void testKotlinAnnotationInJava() throws Exception {
+                runTest("compiler/testData/codegen/box/annotations/repeatable/kotlinAnnotationInJava.kt");
+            }
+
+            @Test
+            @TestMetadata("kotlinAnnotationWithBothRepeatables.kt")
+            public void testKotlinAnnotationWithBothRepeatables() throws Exception {
+                runTest("compiler/testData/codegen/box/annotations/repeatable/kotlinAnnotationWithBothRepeatables.kt");
+            }
+        }
+
+        @Nested
         @TestMetadata("compiler/testData/codegen/box/annotations/typeAnnotations")
         @TestDataPath("$PROJECT_ROOT")
         public class TypeAnnotations {
@@ -26791,6 +26831,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         }
 
         @Test
+        @TestMetadata("inFunctionWithExpressionBodyWithJavaGeneric.kt")
+        public void testInFunctionWithExpressionBodyWithJavaGeneric() throws Exception {
+            runTest("compiler/testData/codegen/box/notNullAssertions/inFunctionWithExpressionBodyWithJavaGeneric.kt");
+        }
+
+        @Test
         @TestMetadata("messageLength.kt")
         public void testMessageLength() throws Exception {
             runTest("compiler/testData/codegen/box/notNullAssertions/messageLength.kt");
@@ -28076,6 +28122,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         @TestMetadata("kt14989.kt")
         public void testKt14989() throws Exception {
             runTest("compiler/testData/codegen/box/platformTypes/kt14989.kt");
+        }
+
+        @Test
+        @TestMetadata("kt47785.kt")
+        public void testKt47785() throws Exception {
+            runTest("compiler/testData/codegen/box/platformTypes/kt47785.kt");
         }
 
         @Test
@@ -35068,6 +35120,40 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
                     runTest("compiler/testData/codegen/box/reflection/annotations/onTypes/differentPositions.kt");
                 }
             }
+
+            @Nested
+            @TestMetadata("compiler/testData/codegen/box/reflection/annotations/repeatable")
+            @TestDataPath("$PROJECT_ROOT")
+            public class Repeatable {
+                @Test
+                public void testAllFilesPresentInRepeatable() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/reflection/annotations/repeatable"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+                }
+
+                @Test
+                @TestMetadata("javaAnnotation.kt")
+                public void testJavaAnnotation() throws Exception {
+                    runTest("compiler/testData/codegen/box/reflection/annotations/repeatable/javaAnnotation.kt");
+                }
+
+                @Test
+                @TestMetadata("jvmRepeatableKotlinAnnotation.kt")
+                public void testJvmRepeatableKotlinAnnotation() throws Exception {
+                    runTest("compiler/testData/codegen/box/reflection/annotations/repeatable/jvmRepeatableKotlinAnnotation.kt");
+                }
+
+                @Test
+                @TestMetadata("kotlinAnnotation.kt")
+                public void testKotlinAnnotation() throws Exception {
+                    runTest("compiler/testData/codegen/box/reflection/annotations/repeatable/kotlinAnnotation.kt");
+                }
+
+                @Test
+                @TestMetadata("nonRepeatedAnnotationWithItsContainer.kt")
+                public void testNonRepeatedAnnotationWithItsContainer() throws Exception {
+                    runTest("compiler/testData/codegen/box/reflection/annotations/repeatable/nonRepeatedAnnotationWithItsContainer.kt");
+                }
+            }
         }
 
         @Nested
@@ -41407,6 +41493,18 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
             @Test
             public void testAllFilesPresentInProtectedJavaFieldAccessor() throws Exception {
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/syntheticAccessors/protectedJavaFieldAccessor"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            }
+
+            @Test
+            @TestMetadata("kt44855.kt")
+            public void testKt44855() throws Exception {
+                runTest("compiler/testData/codegen/box/syntheticAccessors/protectedJavaFieldAccessor/kt44855.kt");
+            }
+
+            @Test
+            @TestMetadata("kt44855a.kt")
+            public void testKt44855a() throws Exception {
+                runTest("compiler/testData/codegen/box/syntheticAccessors/protectedJavaFieldAccessor/kt44855a.kt");
             }
 
             @Test

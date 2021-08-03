@@ -169,10 +169,10 @@ class DeclarationsConverter(
         }
     }
 
-    private fun convertImportAlias(importAlias: LighterASTNode): String? {
+    private fun convertImportAlias(importAlias: LighterASTNode): Pair<String, FirSourceElement>? {
         importAlias.forEachChildren {
             when (it.tokenType) {
-                IDENTIFIER -> return it.asText
+                IDENTIFIER -> return Pair(it.asText, it.toFirSourceElement())
             }
         }
 
@@ -186,11 +186,18 @@ class DeclarationsConverter(
         var importedFqName: FqName? = null
         var isAllUnder = false
         var aliasName: String? = null
+        var aliasSource: FirSourceElement? = null
         importDirective.forEachChildren {
             when (it.tokenType) {
                 DOT_QUALIFIED_EXPRESSION, REFERENCE_EXPRESSION -> importedFqName = FqName(it.asText)
                 MUL -> isAllUnder = true
-                IMPORT_ALIAS -> aliasName = convertImportAlias(it)
+                IMPORT_ALIAS -> {
+                    val importAlias = convertImportAlias(it)
+                    if (importAlias != null) {
+                        aliasName = importAlias.first
+                        aliasSource = importAlias.second
+                    }
+                }
             }
         }
 
@@ -199,6 +206,7 @@ class DeclarationsConverter(
             this.importedFqName = importedFqName
             this.isAllUnder = isAllUnder
             this.aliasName = aliasName?.let { Name.identifier(it) }
+            this.aliasSource = aliasSource
         }
     }
 
@@ -623,7 +631,11 @@ class DeclarationsConverter(
                     )
                     //parse primary constructor
                     convertPrimaryConstructor(
-                        primaryConstructor, delegatedSelfType.source, classWrapper, delegatedConstructorSource, containingClassIsExpectClass = false
+                        primaryConstructor,
+                        delegatedSelfType.source,
+                        classWrapper,
+                        delegatedConstructorSource,
+                        containingClassIsExpectClass = false
                     )?.let { this.declarations += it.firConstructor }
                     delegateFields?.let { this.declarations += it }
 
@@ -710,7 +722,7 @@ class DeclarationsConverter(
                             enumClassWrapper,
                             superTypeCallEntry?.toFirSourceElement(),
                             isEnumEntry = true,
-                        containingClassIsExpectClass = false
+                            containingClassIsExpectClass = false
                         )?.let { declarations += it.firConstructor }
                         classBodyNode?.also {
                             // Use ANONYMOUS_OBJECT_NAME for the owner class id of enum entry declarations
@@ -722,7 +734,7 @@ class DeclarationsConverter(
                 }
             }
         }.also {
-            it.containingClassAttr = currentDispatchReceiverType()!!.lookupTag
+            it.containingClassForStaticMemberAttr = currentDispatchReceiverType()!!.lookupTag
         }
     }
 
@@ -836,7 +848,7 @@ class DeclarationsConverter(
                 delegatedConstructor = firDelegatedCall
                 this.body = null
             }.apply {
-                containingClassAttr = currentDispatchReceiverType()!!.lookupTag
+                containingClassForStaticMemberAttr = currentDispatchReceiverType()!!.lookupTag
             }, valueParameters
         )
     }
@@ -908,7 +920,7 @@ class DeclarationsConverter(
             this.body = body
             context.firFunctionTargets.removeLast()
         }.also {
-            it.containingClassAttr = currentDispatchReceiverType()!!.lookupTag
+            it.containingClassForStaticMemberAttr = currentDispatchReceiverType()!!.lookupTag
             target.bind(it)
         }
     }
@@ -1117,7 +1129,11 @@ class DeclarationsConverter(
                     val convertedAccessors = accessors.map { convertGetterOrSetter(it, returnType, propertyVisibility, modifiers) }
                     this.getter = convertedAccessors.find { it.isGetter }
                         ?: FirDefaultPropertyGetter(
-                            null, moduleData, FirDeclarationOrigin.Source, returnType, propertyVisibility
+                            property.toFirSourceElement(FirFakeSourceElementKind.DefaultAccessor),
+                            moduleData,
+                            FirDeclarationOrigin.Source,
+                            returnType,
+                            propertyVisibility
                         ).also {
                             it.status = defaultAccessorStatus()
                             it.initContainingClassAttr()
@@ -1126,7 +1142,11 @@ class DeclarationsConverter(
                     this.setter = convertedAccessors.find { it.isSetter }
                         ?: if (isVar) {
                             FirDefaultPropertySetter(
-                                null, moduleData, FirDeclarationOrigin.Source, returnType, propertyVisibility
+                                property.toFirSourceElement(FirFakeSourceElementKind.DefaultAccessor),
+                                moduleData,
+                                FirDeclarationOrigin.Source,
+                                returnType,
+                                propertyVisibility
                             ).also {
                                 it.status = defaultAccessorStatus()
                                 it.initContainingClassAttr()
@@ -1989,10 +2009,13 @@ class DeclarationsConverter(
     /**
      * @see org.jetbrains.kotlin.parsing.KotlinParsing.parseValueParameterList
      */
-    fun convertValueParameters(valueParameters: LighterASTNode): List<ValueParameter> {
+    fun convertValueParameters(
+        valueParameters: LighterASTNode,
+        valueParameterDeclaration: ValueParameterDeclaration = ValueParameterDeclaration.OTHER
+    ): List<ValueParameter> {
         return valueParameters.forEachChildrenReturnList { node, container ->
             when (node.tokenType) {
-                VALUE_PARAMETER -> container += convertValueParameter(node)
+                VALUE_PARAMETER -> container += convertValueParameter(node, valueParameterDeclaration)
             }
         }
     }
@@ -2000,7 +2023,10 @@ class DeclarationsConverter(
     /**
      * @see org.jetbrains.kotlin.parsing.KotlinParsing.parseValueParameter
      */
-    fun convertValueParameter(valueParameter: LighterASTNode): ValueParameter {
+    fun convertValueParameter(
+        valueParameter: LighterASTNode,
+        valueParameterDeclaration: ValueParameterDeclaration = ValueParameterDeclaration.OTHER
+    ): ValueParameter {
         var modifiers = Modifier()
         var isVal = false
         var isVar = false
@@ -2020,7 +2046,7 @@ class DeclarationsConverter(
             }
         }
 
-        val name = identifier.nameAsSafeName()
+        val name = convertValueParameterName(identifier.nameAsSafeName(), identifier, valueParameterDeclaration)
         val firValueParameter = buildValueParameter {
             source = valueParameter.toFirSourceElement()
             moduleData = baseModuleData

@@ -83,10 +83,9 @@ abstract class AbstractCompilerBasedTest : AbstractKotlinCompilerTest() {
 
         configureTest()
         defaultConfiguration(this)
-        unregisterAllFacades()
+
         useAdditionalService(::TestModuleInfoProvider)
         usePreAnalysisHandlers(::ModuleRegistrarPreAnalysisHandler.bind(disposable))
-        useFrontendFacades(::LowLevelFirFrontendFacade)
     }
 
     open fun TestConfigurationBuilder.configureTest() {}
@@ -96,7 +95,7 @@ abstract class AbstractCompilerBasedTest : AbstractKotlinCompilerTest() {
         testServices: TestServices
     ) : FrontendFacade<FirOutputArtifact>(testServices, FrontendKinds.FIR) {
 
-        override val additionalDirectives: List<DirectivesContainer>
+        override val directiveContainers: List<DirectivesContainer>
             get() = listOf(FirDiagnosticsDirectives)
 
         override fun analyze(module: TestModule): FirOutputArtifact {

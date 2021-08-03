@@ -81,6 +81,12 @@ public class ForeignAnnotationsCompiledJavaTestGenerated extends AbstractForeign
         }
 
         @Test
+        @TestMetadata("kt47920.kt")
+        public void testKt47920() throws Exception {
+            runTest("compiler/testData/diagnostics/foreignAnnotationsTests/tests/kt47920.kt");
+        }
+
+        @Test
         @TestMetadata("lombokSimple.kt")
         public void testLombokSimple() throws Exception {
             runTest("compiler/testData/diagnostics/foreignAnnotationsTests/tests/lombokSimple.kt");
@@ -631,6 +637,18 @@ public class ForeignAnnotationsCompiledJavaTestGenerated extends AbstractForeign
                 }
 
                 @Test
+                @TestMetadata("Captured.kt")
+                public void testCaptured() throws Exception {
+                    runTest("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jspecify/strictMode/Captured.kt");
+                }
+
+                @Test
+                @TestMetadata("Captured.fir.kt")
+                public void testCaptured_fir() throws Exception {
+                    runTest("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jspecify/strictMode/Captured.fir.kt");
+                }
+
+                @Test
                 @TestMetadata("Defaults.kt")
                 public void testDefaults() throws Exception {
                     runTest("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jspecify/strictMode/Defaults.kt");
@@ -652,6 +670,24 @@ public class ForeignAnnotationsCompiledJavaTestGenerated extends AbstractForeign
                 @TestMetadata("IgnoreAnnotations.fir.kt")
                 public void testIgnoreAnnotations_fir() throws Exception {
                     runTest("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jspecify/strictMode/IgnoreAnnotations.fir.kt");
+                }
+
+                @Test
+                @TestMetadata("kt47396.kt")
+                public void testKt47396() throws Exception {
+                    runTest("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jspecify/strictMode/kt47396.kt");
+                }
+
+                @Test
+                @TestMetadata("kt47422.kt")
+                public void testKt47422() throws Exception {
+                    runTest("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jspecify/strictMode/kt47422.kt");
+                }
+
+                @Test
+                @TestMetadata("kt47437.kt")
+                public void testKt47437() throws Exception {
+                    runTest("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jspecify/strictMode/kt47437.kt");
                 }
 
                 @Test
@@ -761,6 +797,18 @@ public class ForeignAnnotationsCompiledJavaTestGenerated extends AbstractForeign
                 }
 
                 @Test
+                @TestMetadata("Captured.kt")
+                public void testCaptured() throws Exception {
+                    runTest("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jspecify/warnMode/Captured.kt");
+                }
+
+                @Test
+                @TestMetadata("Captured.fir.kt")
+                public void testCaptured_fir() throws Exception {
+                    runTest("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jspecify/warnMode/Captured.fir.kt");
+                }
+
+                @Test
                 @TestMetadata("Defaults.kt")
                 public void testDefaults() throws Exception {
                     runTest("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jspecify/warnMode/Defaults.kt");
@@ -782,6 +830,12 @@ public class ForeignAnnotationsCompiledJavaTestGenerated extends AbstractForeign
                 @TestMetadata("IgnoreAnnotations.fir.kt")
                 public void testIgnoreAnnotations_fir() throws Exception {
                     runTest("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jspecify/warnMode/IgnoreAnnotations.fir.kt");
+                }
+
+                @Test
+                @TestMetadata("kt47899.kt")
+                public void testKt47899() throws Exception {
+                    runTest("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jspecify/warnMode/kt47899.kt");
                 }
 
                 @Test

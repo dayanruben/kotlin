@@ -107,6 +107,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CREATING_AN_INSTA
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CYCLIC_CONSTRUCTOR_DELEGATION_CALL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CYCLIC_GENERIC_UPPER_BOUND
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CYCLIC_INHERITANCE_HIERARCHY
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DANGEROUS_CHARACTERS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DATA_CLASS_NOT_PROPERTY_PARAMETER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DATA_CLASS_OVERRIDE_CONFLICT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DATA_CLASS_VARARG_PARAMETER
@@ -177,6 +178,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.FINAL_UPPER_BOUND
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.FORBIDDEN_VARARG_PARAMETER_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.FUNCTION_CALL_EXPECTED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.FUNCTION_DECLARATION_WITH_NO_NAME
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.FUNCTION_EXPECTED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.FUN_INTERFACE_ABSTRACT_METHOD_WITH_DEFAULT_VALUE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.FUN_INTERFACE_ABSTRACT_METHOD_WITH_TYPE_PARAMETERS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.FUN_INTERFACE_CANNOT_HAVE_ABSTRACT_PROPERTIES
@@ -188,7 +190,10 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.GETTER_VISIBILITY
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.HAS_NEXT_FUNCTION_AMBIGUITY
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ILLEGAL_CONST_EXPRESSION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ILLEGAL_KOTLIN_VERSION_STRING_VALUE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ILLEGAL_RESTRICTED_SUSPENDING_FUNCTION_CALL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ILLEGAL_SELECTOR
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ILLEGAL_SUSPEND_FUNCTION_CALL
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ILLEGAL_SUSPEND_PROPERTY_ACCESS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ILLEGAL_UNDERSCORE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.IMPLEMENTATION_BY_DELEGATION_IN_EXPECT_CLASS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.INAPPLICABLE_CANDIDATE
@@ -223,6 +228,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.INNER_CLASS_INSID
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.INNER_CLASS_OF_GENERIC_THROWABLE_SUBCLASS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.INSTANCE_ACCESS_BEFORE_SUPER_CALL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.INTERFACE_WITH_SUPERCLASS
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.INVALID_CHARACTERS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.INVALID_IF_AS_EXPRESSION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.INVALID_TYPE_OF_ANNOTATION_MEMBER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.INVISIBLE_REFERENCE
@@ -241,6 +247,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MANY_LAMBDA_EXPRE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.METHOD_OF_ANY_IMPLEMENTED_IN_INTERFACE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MISPLACED_TYPE_PARAMETER_CONSTRAINTS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MISSING_VAL_ON_ANNOTATION_PARAMETER
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MULTIPLE_VARARG_PARAMETERS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MUST_BE_INITIALIZED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MUST_BE_INITIALIZED_OR_BE_ABSTRACT
@@ -256,7 +263,9 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_EXHAUSTIVE_WH
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_FINAL_MEMBER_IN_FINAL_CLASS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_FINAL_MEMBER_IN_OBJECT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_LOCAL_RETURN_NOT_ALLOWED
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_LOCAL_SUSPENSION_POINT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_MEMBER_FUNCTION_NO_BODY
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_MODIFIER_FORM_FOR_BUILT_IN_SUSPEND
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_PRIVATE_CONSTRUCTOR_IN_ENUM
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_PRIVATE_OR_PROTECTED_CONSTRUCTOR_IN_SEALED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_PUBLIC_CALL_FROM_PUBLIC_INLINE
@@ -272,6 +281,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NO_ACTUAL_FOR_EXP
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NO_COMPANION_OBJECT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NO_ELSE_IN_WHEN
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NO_GET_METHOD
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NO_RECEIVER_ALLOWED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NO_RETURN_IN_FUNCTION_WITH_BLOCK_BODY
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NO_SET_METHOD
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NO_THIS
@@ -327,7 +337,10 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REIFIED_TYPE_PARA
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REPEATED_BOUND
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REPEATED_MODIFIER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.RESERVED_MEMBER_INSIDE_INLINE_CLASS
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.RESOLUTION_TO_CLASSIFIER
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.RESOLVED_TO_UNDERSCORE_NAMED_CATCH_PARAMETER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.RESULT_TYPE_MISMATCH
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.RETURN_FOR_BUILT_IN_SUSPEND
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.RETURN_IN_FUNCTION_WITH_EXPRESSION_BODY
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.RETURN_NOT_ALLOWED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.RETURN_TYPE_MISMATCH
@@ -368,13 +381,14 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TYPE_PARAMETERS_I
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TYPE_PARAMETERS_NOT_ALLOWED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TYPE_PARAMETER_AS_REIFIED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TYPE_PARAMETER_AS_REIFIED_ARRAY
-import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TYPE_PARAMETER_AS_REIFIED_ARRAY_WARNING
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TYPE_PARAMETER_IN_CATCH_CLAUSE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TYPE_PARAMETER_IS_NOT_AN_EXPRESSION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TYPE_PARAMETER_OF_PROPERTY_NOT_USED_IN_RECEIVER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TYPE_PARAMETER_ON_LHS_OF_DOT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TYPE_VARIANCE_CONFLICT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TYPE_VARIANCE_CONFLICT_IN_EXPANDED_TYPE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNDERSCORE_IS_RESERVED
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNDERSCORE_USAGE_WITHOUT_BACKTICKS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNEXPECTED_SAFE_CALL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNINITIALIZED_ENUM_COMPANION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNINITIALIZED_ENUM_ENTRY
@@ -411,7 +425,6 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.VAL_OR_VAR_ON_LOO
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.VAL_OR_VAR_ON_SECONDARY_CONSTRUCTOR_PARAMETER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.VAL_REASSIGNMENT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.VAL_REASSIGNMENT_VIA_BACKING_FIELD
-import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.VAL_REASSIGNMENT_VIA_BACKING_FIELD_ERROR
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.VAL_WITH_SETTER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.VARARG_OUTSIDE_PARENTHESES
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.VARIABLE_EXPECTED
@@ -433,6 +446,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WRONG_MODIFIER_TA
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WRONG_NUMBER_OF_TYPE_ARGUMENTS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WRONG_SETTER_PARAMETER_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WRONG_SETTER_RETURN_TYPE
+import org.jetbrains.kotlin.name.StandardClassIds
 
 @Suppress("unused")
 class FirDefaultErrorMessages {
@@ -495,7 +509,17 @@ class FirDefaultErrorMessages {
             )
             map.put(CREATING_AN_INSTANCE_OF_ABSTRACT_CLASS, "Cannot create an instance of an abstract class")
             map.put(FUNCTION_CALL_EXPECTED, "Function invocation ''{0}({1})'' expected", TO_STRING, FUNCTION_PARAMETERS)
+            map.put(
+                FUNCTION_EXPECTED,
+                "Expression ''{0}'' of type {1} cannot be invoked as a function. The function 'invoke()' is not found", TO_STRING, RENDER_TYPE
+            )
+            map.put(
+                RESOLUTION_TO_CLASSIFIER,
+                "Constructor of inner class {0} can be called only with receiver of containing class",
+                SYMBOL
+            )
             map.put(ILLEGAL_SELECTOR, "The expression cannot be a selector (occur after a dot)")
+            map.put(NO_RECEIVER_ALLOWED, "No receiver can be passed to this function or property")
 
             // Supertypes
             map.put(NOT_A_SUPERTYPE, "Not an immediate supertype")
@@ -789,11 +813,6 @@ class FirDefaultErrorMessages {
             map.put(TYPE_PARAMETER_AS_REIFIED, "Cannot use ''{0}'' as reified type parameter. Use a class instead", SYMBOL)
             map.put(
                 TYPE_PARAMETER_AS_REIFIED_ARRAY,
-                "Cannot use ''{0}'' as reified type parameter, since the array type parameter is not reified.",
-                SYMBOL
-            )
-            map.put(
-                TYPE_PARAMETER_AS_REIFIED_ARRAY_WARNING,
                 "Cannot use ''{0}'' as reified type parameter, since the array type parameter is not reified.",
                 SYMBOL
             )
@@ -1239,8 +1258,7 @@ class FirDefaultErrorMessages {
             map.put(UNINITIALIZED_ENUM_ENTRY, "Enum entry ''{0}'' is uninitialized here", VARIABLE_NAME)
             map.put(UNINITIALIZED_ENUM_COMPANION, "Companion object of enum class ''{0}'' is uninitialized here", SYMBOL)
             map.put(VAL_REASSIGNMENT, "Val cannot be reassigned", VARIABLE_NAME)
-            map.put(VAL_REASSIGNMENT_VIA_BACKING_FIELD, "Reassignment of read-only property via backing field is deprecated", VARIABLE_NAME)
-            map.put(VAL_REASSIGNMENT_VIA_BACKING_FIELD_ERROR, "Reassignment of read-only property via backing field", VARIABLE_NAME)
+            map.put(VAL_REASSIGNMENT_VIA_BACKING_FIELD, "Reassignment of read-only property via backing field", VARIABLE_NAME)
             map.put(
                 CAPTURED_VAL_INITIALIZATION,
                 "Captured values initialization is forbidden due to possible reassignment",
@@ -1365,6 +1383,28 @@ class FirDefaultErrorMessages {
                 RENDER_TYPE,
             )
             map.put(
+                UNDERSCORE_IS_RESERVED,
+                "Names _, __, ___, ..., are reserved in Kotlin"
+            )
+            map.put(
+                UNDERSCORE_USAGE_WITHOUT_BACKTICKS,
+                "Names _, __, ___, ... can be used only in back-ticks (`_`, `__`, `___`, ...)"
+            )
+            map.put(
+                RESOLVED_TO_UNDERSCORE_NAMED_CATCH_PARAMETER,
+                "Referencing to an underscore-named parameter is deprecated. It will be an error in a future release."
+            )
+            map.put(
+                INVALID_CHARACTERS,
+                "Name {0}",
+                STRING
+            )
+            map.put(
+                DANGEROUS_CHARACTERS,
+                "Name contains characters which can cause problems on Windows: {0}",
+                STRING
+            )
+            map.put(
                 EQUALITY_NOT_APPLICABLE,
                 "Operator ''{0}'' cannot be applied to ''{1}'' and ''{2}''",
                 TO_STRING,
@@ -1459,6 +1499,32 @@ class FirDefaultErrorMessages {
                 TO_STRING
             )
             map.put(OPERATOR_RENAMED_ON_IMPORT, "Operator renamed to a different operator on import")
+
+            // Suspend
+            map.put(
+                ILLEGAL_SUSPEND_FUNCTION_CALL,
+                "Suspend function ''{0}'' should be called only from a coroutine or another suspend function",
+                SYMBOL
+            )
+            map.put(
+                ILLEGAL_SUSPEND_PROPERTY_ACCESS,
+                "Suspend property ''{0}'' should be accessed only from a coroutine or suspend function",
+                SYMBOL
+            )
+            map.put(NON_LOCAL_SUSPENSION_POINT, "Suspension functions can be called only within coroutine body")
+            map.put(
+                ILLEGAL_RESTRICTED_SUSPENDING_FUNCTION_CALL,
+                "Restricted suspending functions can only invoke member or extension suspending functions on their restricted coroutine scope"
+            )
+            map.put(
+                NON_MODIFIER_FORM_FOR_BUILT_IN_SUSPEND,
+                "''suspend'' function can only be called in a form of modifier of a lambda: suspend { ... }"
+            )
+            map.put(
+                MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND,
+                "Calls having a form of ''suspend {}'' are deprecated because ''suspend'' in the context will have a meaning of a modifier. Add empty argument list to the call: ''suspend() { ... }''"
+            )
+            map.put(RETURN_FOR_BUILT_IN_SUSPEND, "Using implicit label for this lambda is prohibited")
 
             // Extended checkers group
             map.put(REDUNDANT_VISIBILITY_MODIFIER, "Redundant visibility modifier")

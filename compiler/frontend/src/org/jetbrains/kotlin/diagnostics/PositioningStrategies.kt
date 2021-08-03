@@ -837,28 +837,18 @@ object PositioningStrategies {
         }
     }
 
-    val RESERVED_UNDERSCORE: PositioningStrategy<PsiElement> = object : PositioningStrategy<PsiElement>() {
+    val NAME_IDENTIFIER: PositioningStrategy<PsiElement> = object : PositioningStrategy<PsiElement>() {
         override fun mark(element: PsiElement): List<TextRange> {
             if (element is PsiNameIdentifierOwner) {
                 val nameIdentifier = element.nameIdentifier
                 if (nameIdentifier != null) {
                     return super.mark(nameIdentifier)
                 }
-            } else if (element is KtImportDirective) {
-                return super.mark(element.alias?.nameIdentifier ?: element)
-            } else if (element is KtReturnExpression) {
-                val prevSibling = element.getPrevSiblingIgnoringWhitespace()
-                if (prevSibling is KtContainerNode) {
-                    return mark(prevSibling)
-                }
-            } else if (element !is LeafPsiElement) {
-                val ranges = element.collectDescendantsOfType<LeafPsiElement> { descendant -> descendant.text.all { it == '_' } }
-                    .map { markSingleElement(it) }
-                if (ranges.isNotEmpty()) {
-                    return ranges
-                }
+            } else if (element is KtLabelReferenceExpression) {
+                return super.mark(element.getReferencedNameElement())
             }
-            return super.mark(element)
+
+            return DEFAULT.mark(element)
         }
     }
 

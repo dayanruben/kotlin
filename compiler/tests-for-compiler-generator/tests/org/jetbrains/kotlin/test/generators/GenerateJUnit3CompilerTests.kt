@@ -47,7 +47,6 @@ import org.jetbrains.kotlin.repl.AbstractReplInterpreterTest
 import org.jetbrains.kotlin.resolve.AbstractResolveTest
 import org.jetbrains.kotlin.resolve.calls.AbstractResolvedCallsTest
 import org.jetbrains.kotlin.resolve.calls.AbstractResolvedConstructorDelegationCallsTests
-import org.jetbrains.kotlin.resolve.constants.evaluate.AbstractCompileTimeConstantEvaluatorTest
 import org.jetbrains.kotlin.resolve.constraintSystem.AbstractConstraintSystemTest
 import org.jetbrains.kotlin.serialization.AbstractLocalClassProtoTest
 import org.jetbrains.kotlin.test.TargetBackend
@@ -93,7 +92,13 @@ fun generateJUnit3CompilerTests(args: Array<String>) {
                     "codegen/box",
                     targetBackend = TargetBackend.JVM,
                     skipIgnored = true,
-                    excludeDirs = listOf("ranges/stepped", "compileKotlinAgainstKotlin")
+                    excludeDirs = listOf(
+                        "ranges/stepped",
+                        "compileKotlinAgainstKotlin",
+                        "testsWithJava9",
+                        "testsWithJava15",
+                        "testsWithJava17"
+                    )
                 )
             }
 
@@ -103,22 +108,6 @@ fun generateJUnit3CompilerTests(args: Array<String>) {
 
             testClass<AbstractAsmLikeInstructionListingTest> {
                 model("codegen/asmLike", targetBackend = TargetBackend.JVM)
-            }
-
-            testClass<AbstractJdk15BlackBoxCodegenTest> {
-                model("codegen/java15/box")
-            }
-
-            testClass<AbstractJdk15IrBlackBoxCodegenTest> {
-                model("codegen/java15/box", targetBackend = TargetBackend.JVM_IR)
-            }
-
-            testClass<AbstractJdk9BlackBoxCodegenTest> {
-                model("codegen/java9/box")
-            }
-
-            testClass<AbstractJdk9IrBlackBoxCodegenTest> {
-                model("codegen/java9/box", targetBackend = TargetBackend.JVM_IR)
             }
 
             testClass<AbstractScriptCodegenTest> {
@@ -256,14 +245,6 @@ fun generateJUnit3CompilerTests(args: Array<String>) {
                 )
             }
 
-            testClass<AbstractCompileKotlinAgainstKotlinJdk15Test> {
-                model("compileKotlinAgainstKotlinJdk15")
-            }
-
-            testClass<AbstractIrCompileKotlinAgainstKotlinJdk15Test> {
-                model("compileKotlinAgainstKotlinJdk15", targetBackend = TargetBackend.JVM_IR)
-            }
-
             testClass<AbstractModuleXmlParserTest> {
                 model("modules.xml", extension = "xml")
             }
@@ -302,12 +283,6 @@ fun generateJUnit3CompilerTests(args: Array<String>) {
                 model("cfgWithStdLib", testMethod = "doTestWithStdLib")
                 model("cfg-variables")
                 model("cfgVariablesWithStdLib", testMethod = "doTestWithStdLib")
-            }
-
-            testClass<AbstractCompileTimeConstantEvaluatorTest> {
-                model("evaluate/constant", testMethod = "doConstantTest")
-                model("evaluate/isPure", testMethod = "doIsPureTest")
-                model("evaluate/usesVariableAsConstant", testMethod = "doUsesVariableAsConstantTest")
             }
 
             testClass<AbstractCompilerLightClassTest> {

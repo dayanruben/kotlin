@@ -3,54 +3,53 @@
  * that can be found in the LICENSE file.
  */
 
+#include "KAssert.h"
+
+#include <array>
 #include <cstdarg>
 
-#include "Porting.h"
+#include "cpp_support/Span.hpp"
+#include "Format.h"
 #include "StackTrace.hpp"
 
 using namespace kotlin;
 
 namespace {
 
-// TODO: Enable stacktraces for asserts when stacktrace printing is more mature.
-inline constexpr bool kEnableStacktraces = false;
-
-void PrintAssert(const char* location, const char* format, std::va_list args) noexcept {
-    char buf[1024];
-    int written = -1;
+void PrintAssert(bool allowStacktrace, const char* location, const char* format, std::va_list args) noexcept {
+    std::array<char, 1024> bufferStorage;
+    std_support::span<char> buffer(bufferStorage);
 
     // Write the title with a source location.
     if (location != nullptr) {
-        written = konan::snprintf(buf, sizeof(buf), "%s: runtime assert: ", location);
+        buffer = FormatToSpan(buffer, "%s: runtime assert: ", location);
     } else {
-        written = konan::snprintf(buf, sizeof(buf), "runtime assert: ");
+        buffer = FormatToSpan(buffer, "runtime assert: ");
     }
 
     // Write the message.
-    if (written >= 0 && static_cast<size_t>(written) < sizeof(buf)) {
-        konan::vsnprintf(buf + written, sizeof(buf) - written, format, args);
-    }
+    buffer = VFormatToSpan(buffer, format, args);
 
-    konan::consoleErrorUtf8(buf, konan::strnlen(buf, sizeof(buf)));
+    konan::consoleErrorUtf8(bufferStorage.data(), bufferStorage.size() - buffer.size());
     konan::consoleErrorf("\n");
-    if constexpr (kEnableStacktraces) {
+    if (allowStacktrace) {
         kotlin::PrintStackTraceStderr();
     }
 }
 
 } // namespace
 
-void internal::RuntimeAssertFailedLog(const char* location, const char* format, ...) {
+void internal::RuntimeAssertFailedLog(bool allowStacktrace, const char* location, const char* format, ...) {
     std::va_list args;
     va_start(args, format);
-    PrintAssert(location, format, args);
+    PrintAssert(allowStacktrace, location, format, args);
     va_end(args);
 }
 
-RUNTIME_NORETURN void internal::RuntimeAssertFailedPanic(const char* location, const char* format, ...) {
+RUNTIME_NORETURN void internal::RuntimeAssertFailedPanic(bool allowStacktrace, const char* location, const char* format, ...) {
     std::va_list args;
     va_start(args, format);
-    PrintAssert(location, format, args);
+    PrintAssert(allowStacktrace, location, format, args);
     va_end(args);
     konan::abort();
 }

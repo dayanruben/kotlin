@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.fir.builder
 
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.KtNodeTypes.*
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.fir.*
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.fir.declarations.impl.FirDeclarationStatusImpl
 import org.jetbrains.kotlin.fir.declarations.utils.addDeclaration
 import org.jetbrains.kotlin.fir.declarations.utils.isLocal
 import org.jetbrains.kotlin.fir.diagnostics.ConeSimpleDiagnostic
+import org.jetbrains.kotlin.fir.diagnostics.ConeUnderscoreIsReserved
 import org.jetbrains.kotlin.fir.diagnostics.DiagnosticKind
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.builder.*
@@ -34,7 +36,9 @@ import org.jetbrains.kotlin.lexer.KtTokens.OPEN_QUOTE
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.parsing.*
+import org.jetbrains.kotlin.psi.KtPsiUtil
 import org.jetbrains.kotlin.types.ConstantValueKind
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
@@ -1174,7 +1178,7 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
 
     protected fun FirCallableDeclaration.initContainingClassAttr() {
         val currentDispatchReceiverType = currentDispatchReceiverType() ?: return
-        containingClassAttr = currentDispatchReceiverType.lookupTag
+        containingClassForStaticMemberAttr = currentDispatchReceiverType.lookupTag
     }
 
     private fun FirVariable.toQualifiedAccess(): FirQualifiedAccessExpression = buildQualifiedAccessExpression {
@@ -1195,6 +1199,52 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
         }
     }
 
+    protected fun buildLabelAndErrorSource(rawName: String, source: FirSourceElement): Pair<FirLabel, FirSourceElement?> {
+        val firLabel = buildLabel {
+            name = KtPsiUtil.unquoteIdentifier(rawName)
+            this.source = source
+        }
+
+        return Pair(firLabel, if (rawName.isUnderscore) firLabel.source else null)
+    }
+
+    protected fun buildExpressionWithErrorLabel(
+        element: FirElement?,
+        errorLabelSource: FirSourceElement?,
+        elementSource: FirSourceElement
+    ): FirElement {
+        return if (element != null) {
+            if (errorLabelSource != null) {
+                buildErrorExpression {
+                    this.source = element.source
+                    this.expression = element as? FirExpression
+                    diagnostic = ConeUnderscoreIsReserved(errorLabelSource)
+                }
+            } else {
+                element
+            }
+        } else {
+            buildErrorExpression(elementSource, ConeSimpleDiagnostic("Empty label", DiagnosticKind.Syntax))
+        }
+    }
+
+    protected fun convertValueParameterName(
+        safeName: Name,
+        rawName: String?,
+        valueParameterDeclaration: ValueParameterDeclaration
+    ): Name {
+        return if (valueParameterDeclaration == ValueParameterDeclaration.LAMBDA && rawName == "_"
+            ||
+            valueParameterDeclaration == ValueParameterDeclaration.CATCH &&
+            safeName.asString() == "_" &&
+            baseSession.safeLanguageVersionSettings?.supportsFeature(LanguageFeature.ForbidReferencingToUnderscoreNamedParameterOfCatchBlock) == true
+        ) {
+            SpecialNames.UNDERSCORE_FOR_UNUSED_VAR
+        } else {
+            safeName
+        }
+    }
+
     /**** Common utils ****/
     companion object {
         val ANONYMOUS_OBJECT_NAME = Name.special("<anonymous>")
@@ -1202,5 +1252,11 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
         val DESTRUCTURING_NAME = Name.special("<destruct>")
 
         val ITERATOR_NAME = Name.special("<iterator>")
+    }
+
+    enum class ValueParameterDeclaration {
+        OTHER,
+        LAMBDA,
+        CATCH
     }
 }

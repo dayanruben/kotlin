@@ -8,6 +8,11 @@ package org.jetbrains.kotlin.fir.analysis.diagnostics
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.config.LanguageFeature.ProhibitInvisibleAbstractMethodsInSuperclasses
+import org.jetbrains.kotlin.config.LanguageFeature.ProhibitNonReifiedArraysAsReifiedTypeArguments
+import org.jetbrains.kotlin.config.LanguageFeature.ProhibitUseSiteTargetAnnotationsOnSuperTypes
+import org.jetbrains.kotlin.config.LanguageFeature.RestrictRetentionForExpressionAnnotations
+import org.jetbrains.kotlin.config.LanguageFeature.RestrictionOfValReassignmentViaBackingField
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.contracts.description.EventOccurrencesRange
 import org.jetbrains.kotlin.descriptors.EffectiveVisibility
@@ -56,6 +61,7 @@ import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtIfExpression
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtModifierListOwner
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtParameter
@@ -132,6 +138,9 @@ object FirErrors {
     val CREATING_AN_INSTANCE_OF_ABSTRACT_CLASS by error0<KtExpression>()
     val FUNCTION_CALL_EXPECTED by error2<PsiElement, String, Boolean>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
     val ILLEGAL_SELECTOR by error0<PsiElement>()
+    val NO_RECEIVER_ALLOWED by error0<PsiElement>()
+    val FUNCTION_EXPECTED by error2<PsiElement, String, ConeKotlinType>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
+    val RESOLUTION_TO_CLASSIFIER by error1<PsiElement, FirRegularClassSymbol>()
 
     // Super
     val SUPER_IS_NOT_AN_EXPRESSION by error0<PsiElement>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
@@ -203,8 +212,8 @@ object FirErrors {
     val DEPRECATED_SINCE_KOTLIN_WITHOUT_DEPRECATED by error0<PsiElement>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
     val DEPRECATED_SINCE_KOTLIN_WITH_DEPRECATED_LEVEL by error0<PsiElement>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
     val DEPRECATED_SINCE_KOTLIN_OUTSIDE_KOTLIN_SUBPACKAGE by error0<PsiElement>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
-    val ANNOTATION_ON_SUPERCLASS by error0<KtAnnotationEntry>()
-    val RESTRICTED_RETENTION_FOR_EXPRESSION_ANNOTATION by error0<PsiElement>()
+    val ANNOTATION_ON_SUPERCLASS by deprecationError0<KtAnnotationEntry>(ProhibitUseSiteTargetAnnotationsOnSuperTypes)
+    val RESTRICTED_RETENTION_FOR_EXPRESSION_ANNOTATION by deprecationError0<PsiElement>(RestrictRetentionForExpressionAnnotations)
     val WRONG_ANNOTATION_TARGET by error1<KtAnnotationEntry, String>()
     val WRONG_ANNOTATION_TARGET_WITH_USE_SITE_TARGET by error2<KtAnnotationEntry, String, String>()
     val INAPPLICABLE_TARGET_ON_PROPERTY by error1<KtAnnotationEntry, String>()
@@ -320,8 +329,7 @@ object FirErrors {
     val INNER_CLASS_OF_GENERIC_THROWABLE_SUBCLASS by error0<KtClassOrObject>(SourceElementPositioningStrategies.DECLARATION_NAME)
     val KCLASS_WITH_NULLABLE_TYPE_PARAMETER_IN_SIGNATURE by error1<KtNamedDeclaration, FirTypeParameterSymbol>(SourceElementPositioningStrategies.DECLARATION_NAME)
     val TYPE_PARAMETER_AS_REIFIED by error1<PsiElement, FirTypeParameterSymbol>()
-    val TYPE_PARAMETER_AS_REIFIED_ARRAY by error1<PsiElement, FirTypeParameterSymbol>()
-    val TYPE_PARAMETER_AS_REIFIED_ARRAY_WARNING by warning1<PsiElement, FirTypeParameterSymbol>()
+    val TYPE_PARAMETER_AS_REIFIED_ARRAY by deprecationError1<PsiElement, FirTypeParameterSymbol>(ProhibitNonReifiedArraysAsReifiedTypeArguments)
     val REIFIED_TYPE_FORBIDDEN_SUBSTITUTION by error1<PsiElement, ConeKotlinType>()
     val FINAL_UPPER_BOUND by warning1<KtTypeReference, ConeKotlinType>()
     val UPPER_BOUND_IS_EXTENSION_FUNCTION_TYPE by error0<KtTypeReference>()
@@ -369,8 +377,7 @@ object FirErrors {
     val CONFLICTING_INHERITED_MEMBERS by error1<KtClassOrObject, List<FirCallableSymbol<*>>>(SourceElementPositioningStrategies.DECLARATION_NAME)
     val ABSTRACT_MEMBER_NOT_IMPLEMENTED by error2<KtClassOrObject, FirClassSymbol<*>, FirCallableSymbol<*>>(SourceElementPositioningStrategies.DECLARATION_NAME)
     val ABSTRACT_CLASS_MEMBER_NOT_IMPLEMENTED by error2<KtClassOrObject, FirClassSymbol<*>, FirCallableSymbol<*>>(SourceElementPositioningStrategies.DECLARATION_NAME)
-    val INVISIBLE_ABSTRACT_MEMBER_FROM_SUPER by error2<KtClassOrObject, FirClassSymbol<*>, FirCallableSymbol<*>>(SourceElementPositioningStrategies.DECLARATION_NAME)
-    val INVISIBLE_ABSTRACT_MEMBER_FROM_SUPER_WARNING by warning2<KtClassOrObject, FirClassSymbol<*>, FirCallableSymbol<*>>(SourceElementPositioningStrategies.DECLARATION_NAME)
+    val INVISIBLE_ABSTRACT_MEMBER_FROM_SUPER by deprecationError2<KtClassOrObject, FirClassSymbol<*>, FirCallableSymbol<*>>(ProhibitInvisibleAbstractMethodsInSuperclasses, SourceElementPositioningStrategies.DECLARATION_NAME)
     val MANY_IMPL_MEMBER_NOT_IMPLEMENTED by error2<KtClassOrObject, FirClassSymbol<*>, FirCallableSymbol<*>>(SourceElementPositioningStrategies.DECLARATION_NAME)
     val MANY_INTERFACES_MEMBER_NOT_IMPLEMENTED by error2<KtClassOrObject, FirClassSymbol<*>, FirCallableSymbol<*>>(SourceElementPositioningStrategies.DECLARATION_NAME)
     val OVERRIDING_FINAL_MEMBER_BY_DELEGATION by error2<KtClassOrObject, FirCallableSymbol<*>, FirCallableSymbol<*>>(SourceElementPositioningStrategies.DECLARATION_NAME)
@@ -489,8 +496,7 @@ object FirErrors {
     val UNINITIALIZED_ENUM_ENTRY by error1<KtSimpleNameExpression, FirEnumEntrySymbol>()
     val UNINITIALIZED_ENUM_COMPANION by error1<KtSimpleNameExpression, FirRegularClassSymbol>(SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED)
     val VAL_REASSIGNMENT by error1<KtExpression, FirVariableSymbol<*>>()
-    val VAL_REASSIGNMENT_VIA_BACKING_FIELD by warning1<KtExpression, FirBackingFieldSymbol>()
-    val VAL_REASSIGNMENT_VIA_BACKING_FIELD_ERROR by error1<KtExpression, FirBackingFieldSymbol>()
+    val VAL_REASSIGNMENT_VIA_BACKING_FIELD by deprecationError1<KtExpression, FirBackingFieldSymbol>(RestrictionOfValReassignmentViaBackingField)
     val CAPTURED_VAL_INITIALIZATION by error1<KtExpression, FirPropertySymbol>()
     val CAPTURED_MEMBER_VAL_INITIALIZATION by error1<KtExpression, FirPropertySymbol>()
     val SETTER_PROJECTED_OUT by error1<KtBinaryExpression, FirPropertySymbol>(SourceElementPositioningStrategies.ASSIGNMENT_LHS)
@@ -549,8 +555,11 @@ object FirErrors {
     val DELEGATE_SPECIAL_FUNCTION_AMBIGUITY by error2<KtExpression, String, Collection<FirBasedSymbol<*>>>()
     val DELEGATE_SPECIAL_FUNCTION_NONE_APPLICABLE by error2<KtExpression, String, Collection<FirBasedSymbol<*>>>()
     val DELEGATE_SPECIAL_FUNCTION_RETURN_TYPE_MISMATCH by error3<KtExpression, String, ConeKotlinType, ConeKotlinType>()
-    val UNDERSCORE_IS_RESERVED by error0<KtElement>(SourceElementPositioningStrategies.RESERVED_UNDERSCORE)
-    val UNDERSCORE_USAGE_WITHOUT_BACKTICKS by error0<KtElement>(SourceElementPositioningStrategies.RESERVED_UNDERSCORE)
+    val UNDERSCORE_IS_RESERVED by error0<PsiElement>(SourceElementPositioningStrategies.NAME_IDENTIFIER)
+    val UNDERSCORE_USAGE_WITHOUT_BACKTICKS by error0<PsiElement>(SourceElementPositioningStrategies.NAME_IDENTIFIER)
+    val RESOLVED_TO_UNDERSCORE_NAMED_CATCH_PARAMETER by warning0<KtNameReferenceExpression>()
+    val INVALID_CHARACTERS by error1<KtNamedDeclaration, String>(SourceElementPositioningStrategies.NAME_IDENTIFIER)
+    val DANGEROUS_CHARACTERS by warning1<KtNamedDeclaration, String>(SourceElementPositioningStrategies.NAME_IDENTIFIER)
     val EQUALITY_NOT_APPLICABLE by error3<KtBinaryExpression, String, ConeKotlinType, ConeKotlinType>()
     val EQUALITY_NOT_APPLICABLE_WARNING by warning3<KtBinaryExpression, String, ConeKotlinType, ConeKotlinType>()
     val INCOMPATIBLE_ENUM_COMPARISON_ERROR by error2<KtElement, ConeKotlinType, ConeKotlinType>()
@@ -601,5 +610,14 @@ object FirErrors {
     val CANNOT_BE_IMPORTED by error1<KtImportDirective, Name>(SourceElementPositioningStrategies.IMPORT_LAST_NAME)
     val CONFLICTING_IMPORT by error1<KtImportDirective, Name>(SourceElementPositioningStrategies.IMPORT_LAST_NAME)
     val OPERATOR_RENAMED_ON_IMPORT by error0<KtImportDirective>(SourceElementPositioningStrategies.IMPORT_LAST_NAME)
+
+    // Suspend errors
+    val ILLEGAL_SUSPEND_FUNCTION_CALL by error1<PsiElement, FirBasedSymbol<*>>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
+    val ILLEGAL_SUSPEND_PROPERTY_ACCESS by error1<PsiElement, FirBasedSymbol<*>>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
+    val NON_LOCAL_SUSPENSION_POINT by error0<PsiElement>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
+    val ILLEGAL_RESTRICTED_SUSPENDING_FUNCTION_CALL by error0<PsiElement>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
+    val NON_MODIFIER_FORM_FOR_BUILT_IN_SUSPEND by error0<PsiElement>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
+    val MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND by error0<PsiElement>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
+    val RETURN_FOR_BUILT_IN_SUSPEND by error0<KtReturnExpression>()
 
 }
