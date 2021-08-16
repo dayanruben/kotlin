@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.fir.expressions
 
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.FirSourceElement
-import org.jetbrains.kotlin.fir.diagnostics.ConeDiagnostic
 import org.jetbrains.kotlin.fir.references.FirReference
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
 import org.jetbrains.kotlin.fir.types.FirTypeProjection
@@ -30,12 +29,12 @@ abstract class FirExpressionWithSmartcastToNull : FirExpressionWithSmartcast() {
     abstract override val explicitReceiver: FirExpression?
     abstract override val dispatchReceiver: FirExpression
     abstract override val extensionReceiver: FirExpression
-    abstract override val nonFatalDiagnostics: List<ConeDiagnostic>
     abstract override val isStable: Boolean
     abstract override val originalExpression: FirQualifiedAccessExpression
     abstract override val typesFromSmartCast: Collection<ConeKotlinType>
     abstract override val originalType: FirTypeRef
     abstract override val smartcastType: FirTypeRef
+    abstract val smartcastTypeWithoutNullableNothing: FirTypeRef
     abstract override val smartcastStability: SmartcastStability
 
     override fun <R, D> accept(visitor: FirVisitor<R, D>, data: D): R = visitor.visitExpressionWithSmartcastToNull(this, data)

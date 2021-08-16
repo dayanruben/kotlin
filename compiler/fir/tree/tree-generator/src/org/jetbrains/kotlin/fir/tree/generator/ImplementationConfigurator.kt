@@ -22,6 +22,7 @@ object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() 
         }
 
         impl(constructor, "FirPrimaryConstructor") {
+            publicImplementation()
             defaultTrue("isPrimary", withGetter = true)
         }
 
@@ -168,7 +169,7 @@ object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() 
             default("origin", "FirFunctionCallOrigin.Operator")
         }
 
-        impl(qualifiedAccessExpression) {
+        impl(propertyAccessExpression) {
             publicImplementation()
         }
 
@@ -541,7 +542,7 @@ object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() 
             "FirTypeProjectionWithVarianceImpl",
             "FirCallableReferenceAccessImpl",
             "FirThisReceiverExpressionImpl",
-            "FirQualifiedAccessExpressionImpl",
+            "FirPropertyAccessExpressionImpl",
             "FirFunctionCallImpl",
             "FirAnonymousFunctionImpl",
             "FirWhenExpressionImpl",

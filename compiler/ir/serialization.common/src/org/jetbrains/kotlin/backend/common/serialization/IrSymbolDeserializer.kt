@@ -7,14 +7,15 @@ package org.jetbrains.kotlin.backend.common.serialization
 
 import org.jetbrains.kotlin.backend.common.serialization.encodings.BinarySymbolData
 import org.jetbrains.kotlin.backend.common.serialization.proto.Actual
-import org.jetbrains.kotlin.backend.common.serialization.proto.IdSignature.IdsigCase.*
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.descriptors.ParameterDescriptor
-import org.jetbrains.kotlin.ir.declarations.IrAnonymousInitializer
-import org.jetbrains.kotlin.ir.declarations.IrValueParameter
-import org.jetbrains.kotlin.ir.declarations.path
-import org.jetbrains.kotlin.ir.symbols.*
-import org.jetbrains.kotlin.ir.symbols.impl.*
+import org.jetbrains.kotlin.backend.common.serialization.proto.IdSignature.IdSigCase.*
+import org.jetbrains.kotlin.ir.symbols.IrFileSymbol
+import org.jetbrains.kotlin.ir.symbols.IrPropertySymbol
+import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
+import org.jetbrains.kotlin.ir.symbols.IrSymbol
+import org.jetbrains.kotlin.ir.symbols.impl.IrAnonymousInitializerSymbolImpl
+import org.jetbrains.kotlin.ir.symbols.impl.IrLocalDelegatedPropertySymbolImpl
+import org.jetbrains.kotlin.ir.symbols.impl.IrValueParameterSymbolImpl
+import org.jetbrains.kotlin.ir.symbols.impl.IrVariableSymbolImpl
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.protobuf.CodedInputStream
 import org.jetbrains.kotlin.protobuf.ExtensionRegistryLite
@@ -26,7 +27,6 @@ import org.jetbrains.kotlin.backend.common.serialization.proto.FileSignature as 
 import org.jetbrains.kotlin.backend.common.serialization.proto.IdSignature as ProtoIdSignature
 import org.jetbrains.kotlin.backend.common.serialization.proto.LocalSignature as ProtoLocalSignature
 import org.jetbrains.kotlin.backend.common.serialization.proto.LoweredIdSignature as ProtoLoweredIdSignature
-import org.jetbrains.kotlin.backend.common.serialization.proto.ScopeLocalIdSignature as ProtoScopeLocalIdSignature
 
 class IrSymbolDeserializer(
     val symbolTable: ReferenceSymbolTable,
@@ -36,7 +36,6 @@ class IrSymbolDeserializer(
     val enqueueLocalTopLevelDeclaration: (IdSignature) -> Unit,
     val handleExpectActualMapping: (IdSignature, IrSymbol) -> IrSymbol,
     private val enqueueAllDeclarations: Boolean = false,
-    private val useGlobalSignatures: Boolean = false,
     val deserializedSymbols: MutableMap<IdSignature, IrSymbol> = mutableMapOf(), // Per-file signature cache. TODO: do we really need it?
     val deserializePublicSymbol: (IdSignature, BinarySymbolData.SymbolKind) -> IrSymbol,
 ) {
@@ -53,10 +52,10 @@ class IrSymbolDeserializer(
 
     private fun referenceDeserializedSymbol(symbolKind: BinarySymbolData.SymbolKind, idSig: IdSignature): IrSymbol = symbolTable.run {
         when (symbolKind) {
-            BinarySymbolData.SymbolKind.ANONYMOUS_INIT_SYMBOL -> if (useGlobalSignatures) IrAnonymousInitializerPublicSymbolImpl(idSig) else IrAnonymousInitializerSymbolImpl()
+            BinarySymbolData.SymbolKind.ANONYMOUS_INIT_SYMBOL -> IrAnonymousInitializerSymbolImpl()
             BinarySymbolData.SymbolKind.CLASS_SYMBOL -> referenceClassFromLinker(idSig)
             BinarySymbolData.SymbolKind.CONSTRUCTOR_SYMBOL -> referenceConstructorFromLinker(idSig)
-            BinarySymbolData.SymbolKind.TYPE_PARAMETER_SYMBOL -> referenceTypeParameterFromLinker(idSig)
+            BinarySymbolData.SymbolKind.TYPE_PARAMETER_SYMBOL -> referenceGlobalTypeParameterFromLinker(idSig)
             BinarySymbolData.SymbolKind.ENUM_ENTRY_SYMBOL -> referenceEnumEntryFromLinker(idSig)
             BinarySymbolData.SymbolKind.STANDALONE_FIELD_SYMBOL -> referenceFieldFromLinker(idSig)
             BinarySymbolData.SymbolKind.FIELD_SYMBOL -> referenceFieldFromLinker(idSig)
@@ -64,19 +63,17 @@ class IrSymbolDeserializer(
             BinarySymbolData.SymbolKind.TYPEALIAS_SYMBOL -> referenceTypeAliasFromLinker(idSig)
             BinarySymbolData.SymbolKind.PROPERTY_SYMBOL -> referencePropertyFromLinker(idSig)
             BinarySymbolData.SymbolKind.VARIABLE_SYMBOL -> IrVariableSymbolImpl()
-            BinarySymbolData.SymbolKind.VALUE_PARAMETER_SYMBOL -> if (useGlobalSignatures) IrValueParameterPublicSymbolImpl(idSig) else IrValueParameterSymbolImpl()
-            BinarySymbolData.SymbolKind.RECEIVER_PARAMETER_SYMBOL -> if (useGlobalSignatures) IrValueParameterPublicSymbolImpl(idSig) else IrValueParameterSymbolImpl()
+            BinarySymbolData.SymbolKind.VALUE_PARAMETER_SYMBOL -> IrValueParameterSymbolImpl()
+            BinarySymbolData.SymbolKind.RECEIVER_PARAMETER_SYMBOL -> IrValueParameterSymbolImpl()
             BinarySymbolData.SymbolKind.LOCAL_DELEGATED_PROPERTY_SYMBOL ->
                 IrLocalDelegatedPropertySymbolImpl()
-            BinarySymbolData.SymbolKind.FILE_SYMBOL -> (idSig as IdSignature.FileSignature).fileSymbol
+            BinarySymbolData.SymbolKind.FILE_SYMBOL -> fileSymbol
             else -> error("Unexpected classifier symbol kind: $symbolKind for signature $idSig")
         }
     }
 
     fun referenceLocalIrSymbol(symbol: IrSymbol, signature: IdSignature) {
-//        assert(signature.isLocal)
-        deserializedSymbols.putIfAbsent(signature, symbol)
-        if (enqueueAllDeclarations) enqueueLocalTopLevelDeclaration(signature)
+        deserializedSymbols.put(signature, symbol)
     }
 
     fun referenceSimpleFunctionByLocalSignature(idSignature: IdSignature) : IrSimpleFunctionSymbol =
@@ -86,7 +83,7 @@ class IrSymbolDeserializer(
         deserializeIrSymbolData(idSignature, BinarySymbolData.SymbolKind.PROPERTY_SYMBOL) as IrPropertySymbol
 
     private fun deserializeIrSymbolData(idSignature: IdSignature, symbolKind: BinarySymbolData.SymbolKind): IrSymbol {
-        if (idSignature.isLocal) {
+        if (!idSignature.isPubliclyVisible) {
             return deserializedSymbols.getOrPut(idSignature) {
                 if (enqueueAllDeclarations) {
                     enqueueLocalTopLevelDeclaration(idSignature)
@@ -160,28 +157,11 @@ class IrSymbolDeserializer(
     }
 
     private fun deserializeFileLocalIdSignature(proto: ProtoFileLocalIdSignature): IdSignature {
-        if (useGlobalSignatures) {
-            val fp = if (proto.hasFile()) fileReader.deserializeString(proto.file) else fileSymbol.owner.path
-            return IdSignature.GlobalFileLocalSignature(deserializeIdSignature(proto.container), proto.localId, fp)
-        } else {
-            return IdSignature.FileLocalSignature(deserializeIdSignature(proto.container), proto.localId)
-        }
+        return IdSignature.FileLocalSignature(deserializeIdSignature(proto.container), proto.localId)
     }
 
     private fun deserializeScopeLocalIdSignature(proto: Int): IdSignature {
-        if (useGlobalSignatures) {
-            return IdSignature.GlobalScopeLocalDeclaration(proto, filePath = fileSymbol.owner.path)
-        } else {
-            return IdSignature.ScopeLocalDeclaration(proto)
-        }
-    }
-
-    private fun deserializeExternalScopeLocalIdSignature(proto: ProtoScopeLocalIdSignature): IdSignature {
-        if (useGlobalSignatures) {
-            return IdSignature.GlobalScopeLocalDeclaration(proto.id, filePath = fileReader.deserializeString(proto.file))
-        } else {
-            return IdSignature.ScopeLocalDeclaration(proto.id)
-        }
+        return IdSignature.ScopeLocalDeclaration(proto)
     }
 
     private fun deserializeLoweredDeclarationSignature(proto: ProtoLoweredIdSignature): IdSignature.LoweredDeclarationSignature {
@@ -205,7 +185,7 @@ class IrSymbolDeserializer(
     private fun deserializeFileIdSignature(proto: ProtoFileSignature): IdSignature.FileSignature = fileSignature
 
     fun deserializeSignatureData(proto: ProtoIdSignature): IdSignature {
-        return when (proto.idsigCase) {
+        return when (proto.idSigCase) {
             PUBLIC_SIG -> deserializePublicIdSignature(proto.publicSig)
             ACCESSOR_SIG -> deserializeAccessorIdSignature(proto.accessorSig)
             PRIVATE_SIG -> deserializeFileLocalIdSignature(proto.privateSig)
@@ -215,17 +195,7 @@ class IrSymbolDeserializer(
             FILE_SIG -> deserializeFileIdSignature(proto.fileSig)
             // IR IC part
             IC_SIG -> deserializeLoweredDeclarationSignature(proto.icSig)
-            EXTERNAL_SCOPED_LOCAL_SIG -> deserializeExternalScopeLocalIdSignature(proto.externalScopedLocalSig)
-            else -> error("Unexpected IdSignature kind: ${proto.idsigCase}")
+            else -> error("Unexpected IdSignature kind: ${proto.idSigCase}")
         }
     }
 }
-
-// TODO: make internal and move to deserializer
-private class IrAnonymousInitializerPublicSymbolImpl(sig: IdSignature, descriptor: ClassDescriptor? = null) :
-    IrBindablePublicSymbolBase<ClassDescriptor, IrAnonymousInitializer>(sig, descriptor),
-    IrAnonymousInitializerSymbol
-
-private class IrValueParameterPublicSymbolImpl(sig: IdSignature, descriptor: ParameterDescriptor? = null) :
-    IrBindablePublicSymbolBase<ParameterDescriptor, IrValueParameter>(sig, descriptor),
-    IrValueParameterSymbol

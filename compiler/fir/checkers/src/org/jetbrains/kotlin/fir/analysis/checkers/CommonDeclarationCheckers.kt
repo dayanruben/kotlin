@@ -56,6 +56,8 @@ object CommonDeclarationCheckers : DeclarationCheckers() {
             FirPropertyTypeParametersChecker,
             FirInitializerTypeMismatchChecker,
             FirDelegatedPropertyChecker,
+            FirInlinePropertyChecker,
+            FirPropertyFromParameterChecker,
         )
 
     override val classCheckers: Set<FirClassChecker>
@@ -129,6 +131,7 @@ object CommonDeclarationCheckers : DeclarationCheckers() {
     override val annotatedDeclarationCheckers: Set<FirAnnotatedDeclarationChecker>
         get() = setOf(
             FirAnnotationChecker,
+            FirPublishedApiChecker,
         )
 
     override val typeAliasCheckers: Set<FirTypeAliasChecker>

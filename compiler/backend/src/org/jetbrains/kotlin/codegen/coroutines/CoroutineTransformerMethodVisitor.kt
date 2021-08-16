@@ -9,15 +9,10 @@ import org.jetbrains.kotlin.codegen.*
 import org.jetbrains.kotlin.codegen.inline.*
 import org.jetbrains.kotlin.codegen.optimization.common.*
 import org.jetbrains.kotlin.codegen.optimization.fixStack.FixStackMethodTransformer
-import org.jetbrains.kotlin.config.LanguageVersionSettings
-import org.jetbrains.kotlin.config.isReleaseCoroutines
 import org.jetbrains.kotlin.resolve.jvm.AsmTypes
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.JvmDeclarationOrigin
 import org.jetbrains.kotlin.utils.sure
-import org.jetbrains.org.objectweb.asm.Label
-import org.jetbrains.org.objectweb.asm.MethodVisitor
-import org.jetbrains.org.objectweb.asm.Opcodes
-import org.jetbrains.org.objectweb.asm.Type
+import org.jetbrains.org.objectweb.asm.*
 import org.jetbrains.org.objectweb.asm.commons.InstructionAdapter
 import org.jetbrains.org.objectweb.asm.tree.*
 import org.jetbrains.org.objectweb.asm.tree.analysis.BasicValue
@@ -49,7 +44,6 @@ class CoroutineTransformerMethodVisitor(
     obtainClassBuilderForCoroutineState: () -> ClassBuilder,
     private val isForNamedFunction: Boolean,
     private val shouldPreserveClassInitialization: Boolean,
-    private val languageVersionSettings: LanguageVersionSettings,
     // Since tail-call optimization of functions with Unit return type relies on ability of call-site to recognize them,
     // in order to ignore return value and push Unit, when we cannot ensure this ability, for example, when the function overrides function,
     // returning Any, we need to disable tail-call optimization for these functions.
@@ -73,7 +67,6 @@ class CoroutineTransformerMethodVisitor(
 
     private var continuationIndex = if (isForNamedFunction) -1 else 0
     private var dataIndex = if (isForNamedFunction) -1 else 1
-    private var exceptionIndex = if (isForNamedFunction || languageVersionSettings.isReleaseCoroutines()) -1 else 2
 
     override fun performTransformations(methodNode: MethodNode) {
         removeFakeContinuationConstructorCall(methodNode)
@@ -89,9 +82,7 @@ class CoroutineTransformerMethodVisitor(
         val suspensionPoints = collectSuspensionPoints(methodNode)
         RedundantLocalsEliminationMethodTransformer(suspensionPoints)
             .transform(containingClassInternalName, methodNode)
-        if (languageVersionSettings.isReleaseCoroutines()) {
-            ChangeBoxingMethodTransformer.transform(containingClassInternalName, methodNode)
-        }
+        ChangeBoxingMethodTransformer.transform(containingClassInternalName, methodNode)
         updateMaxStack(methodNode)
 
         checkForSuspensionPointInsideMonitor(methodNode, suspensionPoints)
@@ -105,7 +96,6 @@ class CoroutineTransformerMethodVisitor(
             }
 
             val examiner = MethodNodeExaminer(
-                languageVersionSettings,
                 containingClassInternalName,
                 methodNode,
                 suspensionPoints,
@@ -119,9 +109,6 @@ class CoroutineTransformerMethodVisitor(
             }
 
             dataIndex = methodNode.maxLocals++
-            if (!languageVersionSettings.isReleaseCoroutines()) {
-                exceptionIndex = methodNode.maxLocals++
-            }
             continuationIndex = methodNode.maxLocals++
 
             prepareMethodNodePreludeForNamedFunction(methodNode)
@@ -158,7 +145,7 @@ class CoroutineTransformerMethodVisitor(
             insertBefore(
                 actualCoroutineStart,
                 insnListOf(
-                    *withInstructionAdapter { loadCoroutineSuspendedMarker(languageVersionSettings) }.toArray(),
+                    *withInstructionAdapter { loadCoroutineSuspendedMarker() }.toArray(),
                     tableSwitchLabel,
                     // Allow debugger to stop on enter into suspend function
                     LineNumberNode(lineNumber, tableSwitchLabel),
@@ -176,7 +163,7 @@ class CoroutineTransformerMethodVisitor(
             )
 
             insert(firstStateLabel, withInstructionAdapter {
-                generateResumeWithExceptionCheck(languageVersionSettings.isReleaseCoroutines(), dataIndex, exceptionIndex)
+                generateResumeWithExceptionCheck(dataIndex)
             })
             insert(last, defaultLabel)
 
@@ -192,11 +179,9 @@ class CoroutineTransformerMethodVisitor(
         dropUnboxInlineClassMarkers(methodNode, suspensionPoints)
         methodNode.removeEmptyCatchBlocks()
 
-        updateLvtAccordingToLiveness(methodNode, isForNamedFunction)
+        updateLvtAccordingToLiveness(methodNode, isForNamedFunction, stateLabels)
 
-        if (languageVersionSettings.isReleaseCoroutines()) {
-            writeDebugMetadata(methodNode, suspensionPointLineNumbers, spilledToVariableMapping)
-        }
+        writeDebugMetadata(methodNode, suspensionPointLineNumbers, spilledToVariableMapping)
     }
 
     // When suspension point is inlined, it is in range of fake inliner variables.
@@ -263,7 +248,7 @@ class CoroutineTransformerMethodVisitor(
         methodNode.localVariables.add(
             LocalVariableNode(
                 SUSPEND_FUNCTION_COMPLETION_PARAMETER_NAME,
-                languageVersionSettings.continuationAsmType().descriptor,
+                CONTINUATION_ASM_TYPE.descriptor,
                 null,
                 startLabel,
                 endLabel,
@@ -402,7 +387,7 @@ class CoroutineTransformerMethodVisitor(
         methodNode.instructions.add(withInstructionAdapter { mark(endLabel) })
         methodNode.visitLocalVariable(
             CONTINUATION_VARIABLE_NAME,
-            languageVersionSettings.continuationAsmType().descriptor,
+            CONTINUATION_ASM_TYPE.descriptor,
             null,
             startLabel,
             endLabel,
@@ -430,33 +415,17 @@ class CoroutineTransformerMethodVisitor(
     }
 
     private fun InstructionAdapter.getLabel() {
-        if (isForNamedFunction && !languageVersionSettings.isReleaseCoroutines())
-            invokevirtual(
-                classBuilderForCoroutineState.thisName,
-                "getLabel",
-                Type.getMethodDescriptor(Type.INT_TYPE),
-                false
-            )
-        else
-            getfield(
-                computeLabelOwner(languageVersionSettings, classBuilderForCoroutineState.thisName).internalName,
-                COROUTINE_LABEL_FIELD_NAME, Type.INT_TYPE.descriptor
-            )
+        getfield(
+            Type.getObjectType(classBuilderForCoroutineState.thisName).internalName,
+            COROUTINE_LABEL_FIELD_NAME, Type.INT_TYPE.descriptor
+        )
     }
 
     private fun InstructionAdapter.setLabel() {
-        if (isForNamedFunction && !languageVersionSettings.isReleaseCoroutines())
-            invokevirtual(
-                classBuilderForCoroutineState.thisName,
-                "setLabel",
-                Type.getMethodDescriptor(Type.VOID_TYPE, Type.INT_TYPE),
-                false
-            )
-        else
-            putfield(
-                computeLabelOwner(languageVersionSettings, classBuilderForCoroutineState.thisName).internalName,
-                COROUTINE_LABEL_FIELD_NAME, Type.INT_TYPE.descriptor
-            )
+        putfield(
+            Type.getObjectType(classBuilderForCoroutineState.thisName).internalName,
+            COROUTINE_LABEL_FIELD_NAME, Type.INT_TYPE.descriptor
+        )
     }
 
     private fun updateMaxStack(methodNode: MethodNode) {
@@ -534,8 +503,7 @@ class CoroutineTransformerMethodVisitor(
                 needDispatchReceiver,
                 internalNameForDispatchReceiver,
                 containingClassInternalName,
-                classBuilderForCoroutineState,
-                languageVersionSettings
+                classBuilderForCoroutineState
             )
 
             visitVarInsn(Opcodes.ASTORE, continuationIndex)
@@ -543,19 +511,13 @@ class CoroutineTransformerMethodVisitor(
             visitLabel(afterCoroutineStateCreated)
 
             visitVarInsn(Opcodes.ALOAD, continuationIndex)
-            getfield(classBuilderForCoroutineState.thisName, languageVersionSettings.dataFieldName(), AsmTypes.OBJECT_TYPE.descriptor)
+            getfield(classBuilderForCoroutineState.thisName, CONTINUATION_RESULT_FIELD_NAME, AsmTypes.OBJECT_TYPE.descriptor)
             visitVarInsn(Opcodes.ASTORE, dataIndex)
 
             val resultStartLabel = Label()
             visitLabel(resultStartLabel)
 
             addContinuationAndResultToLvt(methodNode, afterCoroutineStateCreated, resultStartLabel)
-
-            if (!languageVersionSettings.isReleaseCoroutines()) {
-                visitVarInsn(Opcodes.ALOAD, continuationIndex)
-                getfield(classBuilderForCoroutineState.thisName, EXCEPTION_FIELD_NAME, AsmTypes.JAVA_THROWABLE_TYPE.descriptor)
-                visitVarInsn(Opcodes.ASTORE, exceptionIndex)
-            }
         })
     }
 
@@ -692,7 +654,7 @@ class CoroutineTransformerMethodVisitor(
             // k + 1 - data
             // k + 2 - exception
             for (slot in 0 until localsCount) {
-                if (slot == continuationIndex || slot == dataIndex || slot == exceptionIndex) continue
+                if (slot == continuationIndex || slot == dataIndex) continue
                 val value = frame.getLocal(slot)
                 if (value.type == null || !livenessFrame.isAlive(slot)) continue
 
@@ -992,7 +954,7 @@ class CoroutineTransformerMethodVisitor(
 
             insert(possibleTryCatchBlockStart, withInstructionAdapter {
                 nop()
-                generateResumeWithExceptionCheck(languageVersionSettings.isReleaseCoroutines(), dataIndex, exceptionIndex)
+                generateResumeWithExceptionCheck(dataIndex)
 
                 // Load continuation argument just like suspending function returns it
                 load(dataIndex, AsmTypes.OBJECT_TYPE)
@@ -1118,8 +1080,7 @@ internal fun InstructionAdapter.generateContinuationConstructorCall(
     needDispatchReceiver: Boolean,
     internalNameForDispatchReceiver: String?,
     containingClassInternalName: String,
-    classBuilderForCoroutineState: ClassBuilder,
-    languageVersionSettings: LanguageVersionSettings
+    classBuilderForCoroutineState: ClassBuilder
 ) {
     anew(objectTypeForState)
     dup()
@@ -1128,8 +1089,7 @@ internal fun InstructionAdapter.generateContinuationConstructorCall(
         getParameterTypesIndicesForCoroutineConstructor(
             methodNode.desc,
             methodNode.access,
-            needDispatchReceiver, internalNameForDispatchReceiver ?: containingClassInternalName,
-            languageVersionSettings
+            needDispatchReceiver, internalNameForDispatchReceiver ?: containingClassInternalName
         )
     for ((type, index) in parameterTypesAndIndices) {
         load(index, type)
@@ -1149,22 +1109,11 @@ internal fun InstructionAdapter.generateContinuationConstructorCall(
     )
 }
 
-private fun InstructionAdapter.generateResumeWithExceptionCheck(isReleaseCoroutines: Boolean, dataIndex: Int, exceptionIndex: Int) {
+private fun InstructionAdapter.generateResumeWithExceptionCheck(dataIndex: Int) {
     // Check if resumeWithException has been called
 
-    if (isReleaseCoroutines) {
-        load(dataIndex, AsmTypes.OBJECT_TYPE)
-        invokestatic("kotlin/ResultKt", "throwOnFailure", "(Ljava/lang/Object;)V", false)
-    } else {
-        load(exceptionIndex, AsmTypes.OBJECT_TYPE)
-        dup()
-        val noExceptionLabel = Label()
-        ifnull(noExceptionLabel)
-        athrow()
-
-        mark(noExceptionLabel)
-        pop()
-    }
+    load(dataIndex, AsmTypes.OBJECT_TYPE)
+    invokestatic("kotlin/ResultKt", "throwOnFailure", "(Ljava/lang/Object;)V", false)
 }
 
 private fun Type.fieldNameForVar(index: Int) = descriptor.first() + "$" + index
@@ -1235,16 +1184,15 @@ private fun getParameterTypesIndicesForCoroutineConstructor(
     desc: String,
     containingFunctionAccess: Int,
     needDispatchReceiver: Boolean,
-    thisName: String,
-    languageVersionSettings: LanguageVersionSettings
+    thisName: String
 ): Collection<Pair<Type, Int>> {
     return mutableListOf<Pair<Type, Int>>().apply {
         if (needDispatchReceiver) {
             add(Type.getObjectType(thisName) to 0)
         }
         val continuationIndex =
-            getAllParameterTypes(desc, !isStatic(containingFunctionAccess), thisName).dropLast(1).map(Type::getSize).sum()
-        add(languageVersionSettings.continuationAsmType() to continuationIndex)
+            getAllParameterTypes(desc, !isStatic(containingFunctionAccess), thisName).dropLast(1).sumOf(Type::getSize)
+        add(CONTINUATION_ASM_TYPE to continuationIndex)
     }
 }
 
@@ -1269,7 +1217,7 @@ private fun MethodNode.nodeTextWithLiveness(liveness: List<VariableLivenessFrame
  * This means, that function parameters do not longer span the whole function, including `this`.
  * This might and will break some bytecode processors, including old versions of R8. See KT-24510.
  */
-private fun updateLvtAccordingToLiveness(method: MethodNode, isForNamedFunction: Boolean) {
+private fun updateLvtAccordingToLiveness(method: MethodNode, isForNamedFunction: Boolean, suspensionPoints: List<LabelNode>) {
     val liveness = analyzeLiveness(method)
 
     fun List<LocalVariableNode>.findRecord(insnIndex: Int, variableIndex: Int): LocalVariableNode? {
@@ -1288,8 +1236,8 @@ private fun updateLvtAccordingToLiveness(method: MethodNode, isForNamedFunction:
     fun nextLabel(node: AbstractInsnNode?): LabelNode? {
         var current = node
         while (current != null) {
-            if (current is LabelNode) return current as LabelNode
-            current = current!!.next
+            if (current is LabelNode) return current
+            current = current.next
         }
         return null
     }
@@ -1346,33 +1294,17 @@ private fun updateLvtAccordingToLiveness(method: MethodNode, isForNamedFunction:
 
                 // Attempt to extend existing local variable node corresponding to the record in
                 // the original local variable table, if there is no back-edge
-                val recordToExtend: LocalVariableNode? = oldLvtNodeToLatestNewLvtNode[lvtRecord]
-                var recordExtended = false
-                if (recordToExtend != null) {
-                    var hasBackEdgeOrStore = false
-                    var current: AbstractInsnNode? = recordToExtend.end
-                    while (current != null && current != endLabel) {
-                        if (current is JumpInsnNode) {
-                            if (method.instructions.indexOf((current as JumpInsnNode).label) < method.instructions.indexOf(current)) {
-                                hasBackEdgeOrStore = true
-                                break
-                            }
-                        }
-                        if (current!!.isStoreOperation() && (current as VarInsnNode).`var` == recordToExtend.index) {
-                            hasBackEdgeOrStore = true
-                            break
-                        }
-                        current = current!!.next
-                    }
-                    if (!hasBackEdgeOrStore) {
-                        recordToExtend.end = endLabel
-                        recordExtended = true
-                    }
-                }
-                if (!recordExtended) {
-                    val node = LocalVariableNode(lvtRecord.name, lvtRecord.desc, lvtRecord.signature, startLabel, endLabel, lvtRecord.index)
-                    method.localVariables.add(node)
-                    oldLvtNodeToLatestNewLvtNode[lvtRecord] = node
+                val latest = oldLvtNodeToLatestNewLvtNode[lvtRecord]
+                // if we can extend the previous range to where the local variable dies, we do not need a
+                // new entry, we know we cannot extend it to the lvt.endOffset, if we could we would have
+                // done so when we added it below.
+                val extended = latest?.extendRecordIfPossible(method, suspensionPoints, lvtRecord.end) ?: false
+                if (!extended) {
+                    val new = LocalVariableNode(lvtRecord.name, lvtRecord.desc, lvtRecord.signature, startLabel, endLabel, lvtRecord.index)
+                    oldLvtNodeToLatestNewLvtNode[lvtRecord] = new
+                    method.localVariables.add(new)
+                    // see if we can extend it all the way to the old end
+                    new.extendRecordIfPossible(method, suspensionPoints, lvtRecord.end)
                 }
             }
         }
@@ -1394,4 +1326,36 @@ private fun updateLvtAccordingToLiveness(method: MethodNode, isForNamedFunction:
             continue
         }
     }
+}
+
+/* We cannot extend a record if there is STORE instruction or a back-edge.
+ * STORE instructions can signify a unspilling operation, in which case, the variable will become visible before it unspilled,
+ * back-edges occur in loops.
+ *
+ * @return true if the range has been extended
+ */
+private fun LocalVariableNode.extendRecordIfPossible(
+    method: MethodNode,
+    suspensionPoints: List<LabelNode>,
+    endLabel: LabelNode
+): Boolean {
+    val nextSuspensionPointLabel = suspensionPoints.find { it in InsnSequence(end, endLabel) } ?: endLabel
+
+    var current: AbstractInsnNode? = end
+    while (current != null && current != nextSuspensionPointLabel) {
+        if (current is JumpInsnNode) {
+            if (method.instructions.indexOf(current.label) < method.instructions.indexOf(current)) {
+                return false
+            }
+        }
+        // TODO: HACK
+        // TODO: Find correct label, which is OK to be used as end label.
+        if (current.opcode == Opcodes.ARETURN && nextSuspensionPointLabel != endLabel) return false
+        if (current.isStoreOperation() && (current as VarInsnNode).`var` == index) {
+            return false
+        }
+        current = current.next
+    }
+    end = nextSuspensionPointLabel
+    return true
 }

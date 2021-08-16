@@ -39,6 +39,7 @@ import org.jetbrains.kotlin.fir.types.impl.FirTypePlaceholderProjection
 import org.jetbrains.kotlin.lexer.KtTokens.*
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
@@ -495,7 +496,7 @@ open class RawFirBuilder(
                 returnTypeRef = type.copyWithNewSourceKind(FirFakeSourceElementKind.PropertyFromParameter)
                 receiverTypeRef = null
                 name = propertyName
-                initializer = buildQualifiedAccessExpression {
+                initializer = buildPropertyAccessExpression {
                     source = propertySource
                     calleeReference = buildPropertyFromParameterResolvedNamedReference {
                         source = propertySource
@@ -821,6 +822,8 @@ open class RawFirBuilder(
                     }
                 }
                 for (declaration in file.declarations) {
+                    // TODO: scripts aren't supported yet
+                    if (declaration is KtScript) continue
                     declarations += declaration.convert<FirDeclaration>()
                 }
             }
@@ -880,7 +883,7 @@ open class RawFirBuilder(
                                 typeParameters
                             )
                             // Use ANONYMOUS_OBJECT_NAME for the owner class id for enum entry declarations (see KT-42351)
-                            withChildClassName(ANONYMOUS_OBJECT_NAME, forceLocalContext = true, isExpect = false) {
+                            withChildClassName(SpecialNames.ANONYMOUS, forceLocalContext = true, isExpect = false) {
                                 for (declaration in ktEnumEntry.declarations) {
                                     declarations += declaration.toFirDeclaration(
                                         correctedEnumSelfTypeRef,
@@ -1040,7 +1043,7 @@ open class RawFirBuilder(
 
         override fun visitObjectLiteralExpression(expression: KtObjectLiteralExpression, data: Unit): FirElement {
             val objectDeclaration = expression.objectDeclaration
-            return withChildClassName(ANONYMOUS_OBJECT_NAME, forceLocalContext = true, isExpect = false) {
+            return withChildClassName(SpecialNames.ANONYMOUS, forceLocalContext = true, isExpect = false) {
                 buildAnonymousObjectExpression {
                     val sourceElement = objectDeclaration.toFirSourceElement()
                     source = sourceElement
@@ -1110,8 +1113,8 @@ open class RawFirBuilder(
             val receiverType = function.receiverTypeReference.convertSafe<FirTypeRef>()
 
             val labelName: String?
-            val functionIsAnonymousFunction = function.name == null && !function.parent.let { it is KtFile || it is KtClassBody }
-            val functionBuilder = if (functionIsAnonymousFunction) {
+            val isAnonymousFunction = function.name == null && !function.parent.let { it is KtFile || it is KtClassBody }
+            val functionBuilder = if (isAnonymousFunction) {
                 FirAnonymousFunctionBuilder().apply {
                     receiverTypeRef = receiverType
                     symbol = FirAnonymousFunctionSymbol()
@@ -1156,7 +1159,11 @@ open class RawFirBuilder(
                     function.extractTypeParametersTo(this, symbol)
                 }
                 for (valueParameter in function.valueParameters) {
-                    valueParameters += valueParameter.convert<FirValueParameter>()
+                    valueParameters += convertValueParameter(
+                        valueParameter,
+                        null,
+                        if (isAnonymousFunction) ValueParameterDeclaration.LAMBDA else ValueParameterDeclaration.OTHER
+                    )
                 }
                 val actualTypeParameters = if (this is FirSimpleFunctionBuilder)
                     this.typeParameters
@@ -1231,7 +1238,7 @@ open class RawFirBuilder(
                 for (valueParameter in literal.valueParameters) {
                     val multiDeclaration = valueParameter.destructuringDeclaration
                     valueParameters += if (multiDeclaration != null) {
-                        val name = DESTRUCTURING_NAME
+                        val name = SpecialNames.DESTRUCT
                         val multiParameter = buildValueParameter {
                             source = valueParameter.toFirSourceElement()
                             moduleData = baseModuleData
@@ -1871,10 +1878,11 @@ open class RawFirBuilder(
             val target: FirLoopTarget
             return FirWhileLoopBuilder().apply {
                 source = expression.toFirSourceElement()
+                val label = stashLabel() //get label of while, otherwise if condition has lambda, it will steal the label
                 condition = expression.condition.toFirExpression("No condition in while loop")
                 // break/continue in the while loop condition will refer to an outer loop if any.
                 // So, prepare the loop target after building the condition.
-                target = prepareTarget()
+                target = prepareTarget(label)
             }.configure(target) { expression.body.toFirBlock() }
         }
 
@@ -1888,7 +1896,7 @@ open class RawFirBuilder(
                 source = fakeSource
                 val rangeSource = expression.loopRange?.toFirSourceElement(FirFakeSourceElementKind.DesugaredForLoop)
                 val iteratorVal = generateTemporaryVariable(
-                    baseModuleData, rangeSource, ITERATOR_NAME,
+                    baseModuleData, rangeSource, SpecialNames.ITERATOR,
                     buildFunctionCall {
                         source = fakeSource
                         calleeReference = buildSimpleNamedReference {
@@ -1926,7 +1934,7 @@ open class RawFirBuilder(
                         val multiDeclaration = ktParameter.destructuringDeclaration
                         val firLoopParameter = generateTemporaryVariable(
                             moduleData = baseModuleData, source = expression.loopParameter?.toFirSourceElement(),
-                            name = if (multiDeclaration != null) DESTRUCTURING_NAME else ktParameter.nameAsSafeName,
+                            name = if (multiDeclaration != null) SpecialNames.DESTRUCT else ktParameter.nameAsSafeName,
                             initializer = buildFunctionCall {
                                 source = fakeSource
                                 calleeReference = buildSimpleNamedReference {
@@ -2142,7 +2150,7 @@ open class RawFirBuilder(
             val (calleeReference, explicitReceiver, isImplicitInvoke) = splitToCalleeAndReceiver(expression.calleeExpression, source)
 
             val result: FirQualifiedAccessBuilder = if (expression.valueArgumentList == null && expression.lambdaArguments.isEmpty()) {
-                FirQualifiedAccessExpressionBuilder().apply {
+                FirPropertyAccessExpressionBuilder().apply {
                     this.source = source
                     this.calleeReference = calleeReference
                 }
@@ -2219,7 +2227,7 @@ open class RawFirBuilder(
                 val sourceElement = expression.toFirSourceElement()
                 source = sourceElement
                 calleeReference = buildExplicitThisReference {
-                    source = sourceElement.fakeElement(FirFakeSourceElementKind.ExplicitThisOrSuperReference)
+                    source = sourceElement.fakeElement(FirFakeSourceElementKind.ReferenceInAtomicQualifiedAccess)
                     labelName = expression.getLabelName()
                 }
             }
@@ -2228,10 +2236,10 @@ open class RawFirBuilder(
         override fun visitSuperExpression(expression: KtSuperExpression, data: Unit): FirElement {
             val superType = expression.superTypeQualifier
             val theSource = expression.toFirSourceElement()
-            return buildQualifiedAccessExpression {
+            return buildPropertyAccessExpression {
                 this.source = theSource
                 calleeReference = buildExplicitSuperReference {
-                    source = theSource.fakeElement(FirFakeSourceElementKind.ExplicitThisOrSuperReference)
+                    source = theSource.fakeElement(FirFakeSourceElementKind.ReferenceInAtomicQualifiedAccess)
                     labelName = expression.getLabelName()
                     superTypeRef = superType.toFirOrImplicitType()
                 }

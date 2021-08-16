@@ -4,6 +4,7 @@
  */
 package org.jetbrains.kotlin.cli.jvm.compiler.jarfs
 
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import java.io.File
 import java.io.FileNotFoundException
@@ -14,15 +15,17 @@ class FastJarHandler(val fileSystem: FastJarFileSystem, path: String) {
     private val myRoot: VirtualFile?
     internal val file = File(path)
 
-    private val ourEntryMap: Map<String, ZipEntryDescription>
     private val cachedManifest: ByteArray?
 
     init {
+        val entries: List<ZipEntryDescription>
         RandomAccessFile(file, "r").use { randomAccessFile ->
             val mappedByteBuffer = randomAccessFile.channel.map(FileChannel.MapMode.READ_ONLY, 0, randomAccessFile.length())
             try {
-                ourEntryMap = mappedByteBuffer.parseCentralDirectory().associateBy { it.relativePath }
-                cachedManifest = ourEntryMap[MANIFEST_PATH]?.let(mappedByteBuffer::contentsToByteArray)
+                entries = mappedByteBuffer.parseCentralDirectory()
+                cachedManifest =
+                    entries.singleOrNull { StringUtil.equals(MANIFEST_PATH, it.relativePath) }
+                        ?.let(mappedByteBuffer::contentsToByteArray)
             } finally {
                 with(fileSystem) {
                     mappedByteBuffer.unmapBuffer()
@@ -30,12 +33,14 @@ class FastJarHandler(val fileSystem: FastJarFileSystem, path: String) {
             }
         }
 
-        myRoot = FastJarVirtualFile(this, "", -1, null)
+        myRoot = FastJarVirtualFile(this, "", -1, parent = null, entryDescription = null)
 
-        val filesByRelativePath = HashMap<String, FastJarVirtualFile>(ourEntryMap.size)
+        // ByteArrayCharSequence should not be used instead of String
+        // because the former class does not support equals/hashCode properly
+        val filesByRelativePath = HashMap<String, FastJarVirtualFile>(entries.size)
         filesByRelativePath[""] = myRoot
 
-        for (entryDescription in ourEntryMap.values) {
+        for (entryDescription in entries) {
             if (!entryDescription.isDirectory) {
                 createFile(entryDescription, filesByRelativePath)
             } else {
@@ -59,20 +64,21 @@ class FastJarHandler(val fileSystem: FastJarFileSystem, path: String) {
         return FastJarVirtualFile(
             this, shortName,
             if (entry.isDirectory) -1 else entry.uncompressedSize,
-            parentFile
+            parentFile,
+            entry,
         )
     }
 
-    private fun getOrCreateDirectory(entryName: String, directories: MutableMap<String, FastJarVirtualFile>): FastJarVirtualFile {
-        return directories.getOrPut(entryName) {
+    private fun getOrCreateDirectory(entryName: CharSequence, directories: MutableMap<String, FastJarVirtualFile>): FastJarVirtualFile {
+        return directories.getOrPut(entryName.toString()) {
             val (parentPath, shortName) = entryName.splitPath()
             val parentFile = getOrCreateDirectory(parentPath, directories)
 
-            FastJarVirtualFile(this, shortName, -1, parentFile)
+            FastJarVirtualFile(this, shortName, -1, parentFile, entryDescription = null)
         }
     }
 
-    private fun String.splitPath(): Pair<String, String> {
+    private fun CharSequence.splitPath(): Pair<CharSequence, CharSequence> {
         var slashIndex = this.length - 1
 
         while (slashIndex >= 0 && this[slashIndex] != '/') {
@@ -80,16 +86,16 @@ class FastJarHandler(val fileSystem: FastJarFileSystem, path: String) {
         }
 
         if (slashIndex == -1) return Pair("", this)
-        return Pair(substring(0, slashIndex), substring(slashIndex + 1))
+        return Pair(subSequence(0, slashIndex), subSequence(slashIndex + 1, this.length))
     }
 
     fun findFileByPath(pathInJar: String): VirtualFile? {
         return myRoot?.findFileByRelativePath(pathInJar)
     }
 
-    fun contentsToByteArray(relativePath: String): ByteArray {
-        if (relativePath == MANIFEST_PATH) return cachedManifest ?: throw FileNotFoundException("$file!/$relativePath")
-        val zipEntryDescription = ourEntryMap[relativePath] ?: throw FileNotFoundException("$file!/$relativePath")
+    fun contentsToByteArray(zipEntryDescription: ZipEntryDescription): ByteArray {
+        val relativePath = zipEntryDescription.relativePath
+        if (StringUtil.equals(relativePath, MANIFEST_PATH)) return cachedManifest ?: throw FileNotFoundException("$file!/$relativePath")
         return fileSystem.cachedOpenFileHandles[file].use {
             synchronized(it) {
                 it.get().second.contentsToByteArray(zipEntryDescription)

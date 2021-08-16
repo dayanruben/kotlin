@@ -11,6 +11,7 @@ KtFirKotlinPropertySymbol:
   initializer: 10
   isConst: false
   isExtension: false
+  isFromPrimaryConstructor: false
   isLateInit: false
   isOverride: false
   isStatic: false
@@ -61,7 +62,9 @@ KtFirNamedClassOrObjectSymbol:
   modality: FINAL
   name: A
   origin: SOURCE
-  superTypes: [[] kotlin/Any]
+  superTypes: [
+    [] kotlin/Any
+  ]
   symbolKind: TOP_LEVEL
   typeParameters: []
   visibility: Public

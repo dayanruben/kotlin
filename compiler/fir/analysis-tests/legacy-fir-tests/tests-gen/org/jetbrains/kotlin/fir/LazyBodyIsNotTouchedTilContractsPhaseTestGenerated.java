@@ -621,6 +621,11 @@ public class LazyBodyIsNotTouchedTilContractsPhaseTestGenerated extends Abstract
             runTest("compiler/fir/analysis-tests/testData/resolve/arguments/namedArrayInAnnotation.kt");
         }
 
+        @TestMetadata("nestedClassInAnnotationArgument.kt")
+        public void testNestedClassInAnnotationArgument() throws Exception {
+            runTest("compiler/fir/analysis-tests/testData/resolve/arguments/nestedClassInAnnotationArgument.kt");
+        }
+
         @TestMetadata("noParameterForName.kt")
         public void testNoParameterForName() throws Exception {
             runTest("compiler/fir/analysis-tests/testData/resolve/arguments/noParameterForName.kt");
@@ -2696,6 +2701,11 @@ public class LazyBodyIsNotTouchedTilContractsPhaseTestGenerated extends Abstract
             runTest("compiler/fir/analysis-tests/testData/resolve/overrides/protobufExt.kt");
         }
 
+        @TestMetadata("sameValueParametersDifferentReceiver.kt")
+        public void testSameValueParametersDifferentReceiver() throws Exception {
+            runTest("compiler/fir/analysis-tests/testData/resolve/overrides/sameValueParametersDifferentReceiver.kt");
+        }
+
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             runTest("compiler/fir/analysis-tests/testData/resolve/overrides/simple.kt");
@@ -3057,6 +3067,11 @@ public class LazyBodyIsNotTouchedTilContractsPhaseTestGenerated extends Abstract
         @TestMetadata("equalsAndIdentity.kt")
         public void testEqualsAndIdentity() throws Exception {
             runTest("compiler/fir/analysis-tests/testData/resolve/smartcasts/equalsAndIdentity.kt");
+        }
+
+        @TestMetadata("incorrectSmartcastToNothing.kt")
+        public void testIncorrectSmartcastToNothing() throws Exception {
+            runTest("compiler/fir/analysis-tests/testData/resolve/smartcasts/incorrectSmartcastToNothing.kt");
         }
 
         @TestMetadata("kt10240.kt")

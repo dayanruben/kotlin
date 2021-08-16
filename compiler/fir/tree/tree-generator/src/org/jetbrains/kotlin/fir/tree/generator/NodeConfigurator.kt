@@ -192,7 +192,7 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
             +field("source", sourceElementType, nullable = true, withReplace = true)
         }
 
-        qualifiedAccessExpression.configure {
+        propertyAccessExpression.configure {
             +fieldList("nonFatalDiagnostics", coneDiagnosticType)
         }
 
@@ -466,6 +466,7 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
             +field("typesFromSmartCast", "Collection<ConeKotlinType>", null, customType = coneKotlinTypeType)
             +field("originalType", typeRef)
             +field("smartcastType", typeRef)
+            +field("smartcastTypeWithoutNullableNothing", typeRef)
             +smartcastStability
         }
 

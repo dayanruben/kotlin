@@ -732,6 +732,12 @@ public class FirDiagnosticsWithLightTreeTestGenerated extends AbstractFirDiagnos
             }
 
             @Test
+            @TestMetadata("nestedClassInAnnotationArgument.kt")
+            public void testNestedClassInAnnotationArgument() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/arguments/nestedClassInAnnotationArgument.kt");
+            }
+
+            @Test
             @TestMetadata("noParameterForName.kt")
             public void testNoParameterForName() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolve/arguments/noParameterForName.kt");
@@ -3054,6 +3060,12 @@ public class FirDiagnosticsWithLightTreeTestGenerated extends AbstractFirDiagnos
             }
 
             @Test
+            @TestMetadata("sameValueParametersDifferentReceiver.kt")
+            public void testSameValueParametersDifferentReceiver() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/overrides/sameValueParametersDifferentReceiver.kt");
+            }
+
+            @Test
             @TestMetadata("simple.kt")
             public void testSimple() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolve/overrides/simple.kt");
@@ -3453,6 +3465,12 @@ public class FirDiagnosticsWithLightTreeTestGenerated extends AbstractFirDiagnos
             @TestMetadata("equalsAndIdentity.kt")
             public void testEqualsAndIdentity() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolve/smartcasts/equalsAndIdentity.kt");
+            }
+
+            @Test
+            @TestMetadata("incorrectSmartcastToNothing.kt")
+            public void testIncorrectSmartcastToNothing() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/smartcasts/incorrectSmartcastToNothing.kt");
             }
 
             @Test
@@ -5003,6 +5021,52 @@ public class FirDiagnosticsWithLightTreeTestGenerated extends AbstractFirDiagnos
             @TestMetadata("fromLocalMembers.kt")
             public void testFromLocalMembers() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/initialization/fromLocalMembers.kt");
+            }
+        }
+
+        @Nested
+        @TestMetadata("compiler/fir/analysis-tests/testData/resolveWithStdlib/intellij")
+        @TestDataPath("$PROJECT_ROOT")
+        public class Intellij {
+            @Test
+            public void testAllFilesPresentInIntellij() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolveWithStdlib/intellij"), Pattern.compile("^([^.]+)\\.kt$"), null, true);
+            }
+
+            @Test
+            @TestMetadata("DailyAggregatedDoubleFactor.kt")
+            public void testDailyAggregatedDoubleFactor() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/intellij/DailyAggregatedDoubleFactor.kt");
+            }
+
+            @Test
+            @TestMetadata("EnumWithToString.kt")
+            public void testEnumWithToString() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/intellij/EnumWithToString.kt");
+            }
+
+            @Test
+            @TestMetadata("IntersectionWithJavaString.kt")
+            public void testIntersectionWithJavaString() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/intellij/IntersectionWithJavaString.kt");
+            }
+
+            @Test
+            @TestMetadata("PersistentStateComponent.kt")
+            public void testPersistentStateComponent() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/intellij/PersistentStateComponent.kt");
+            }
+
+            @Test
+            @TestMetadata("UastPatterns.kt")
+            public void testUastPatterns() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/intellij/UastPatterns.kt");
+            }
+
+            @Test
+            @TestMetadata("WithSpeedSearch.kt")
+            public void testWithSpeedSearch() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/intellij/WithSpeedSearch.kt");
             }
         }
 

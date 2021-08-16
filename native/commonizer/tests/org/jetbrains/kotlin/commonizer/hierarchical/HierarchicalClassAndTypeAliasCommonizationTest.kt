@@ -39,7 +39,7 @@ class HierarchicalClassAndTypeAliasCommonizationTest : AbstractInlineSourcesComm
             simpleSingleSourceTarget("d", "typealias X = Short")
         }
 
-        result.assertCommonized("(a, b)", "expect class X")
+        result.assertCommonized("(a, b)", "expect class X: Number")
         result.assertCommonized("(c, d)", "expect class X")
         result.assertCommonized("((a, b), (c, d))", "expect class X")
     }
@@ -558,7 +558,7 @@ class HierarchicalClassAndTypeAliasCommonizationTest : AbstractInlineSourcesComm
 
         result.assertCommonized(
             "(c, d)", """
-                expect class Proxy
+                expect class Proxy: Number
                 typealias X = Proxy
                 expect val x: X
             """.trimIndent()
@@ -566,9 +566,63 @@ class HierarchicalClassAndTypeAliasCommonizationTest : AbstractInlineSourcesComm
 
         result.assertCommonized(
             "(a, b, c, d)", """
-                expect class Proxy
+                expect class Proxy: Number
                 typealias X = Proxy
                 expect val x: X
+            """.trimIndent()
+        )
+    }
+
+    fun `test supertypes being retained`() {
+        val result = commonize {
+            outputTarget("(a, b)")
+            simpleSingleSourceTarget(
+                "a", """
+                    interface SuperInterface
+                    class X: SuperInterface
+                """.trimIndent()
+            )
+            simpleSingleSourceTarget(
+                "b", """
+                    interface SuperInterface
+                    class B: SuperInterface
+                    typealias X = B
+                """.trimIndent()
+            )
+        }
+
+        result.assertCommonized(
+            "(a, b)", """
+                expect interface SuperInterface
+                expect class X(): SuperInterface
+            """.trimIndent()
+        )
+    }
+
+    fun `test supertypes being retained from dependencies`() {
+        val result = commonize {
+            outputTarget("(a, b)")
+
+            registerDependency("a", "b", "(a, b)") {
+                source("""interface SuperInterface""")
+            }
+
+            simpleSingleSourceTarget(
+                "a", """
+                    class X: SuperInterface
+                """.trimIndent()
+            )
+            simpleSingleSourceTarget(
+                "b", """
+                    class B: SuperInterface
+                    typealias X = B
+                """.trimIndent()
+            )
+        }
+
+        result.assertCommonized(
+            "(a, b)", """
+                expect class X(): SuperInterface
             """.trimIndent()
         )
     }

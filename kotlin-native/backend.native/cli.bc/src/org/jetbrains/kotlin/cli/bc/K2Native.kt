@@ -160,7 +160,7 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
 
                 arguments.outputName ?.let { put(OUTPUT, it) }
                 val outputKind = CompilerOutputKind.valueOf(
-                    (arguments.produce ?: "program").toUpperCase())
+                    (arguments.produce ?: "program").uppercase())
                 put(PRODUCE, outputKind)
                 put(METADATA_KLIB, arguments.metadataKlib)
 
@@ -329,6 +329,17 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
                     }
                 })
                 put(PROPERTY_LAZY_INITIALIZATION, arguments.propertyLazyInitialization)
+                put(WORKER_EXCEPTION_HANDLING, when (arguments.workerExceptionHandling) {
+                    null -> if (memoryModel == MemoryModel.EXPERIMENTAL) WorkerExceptionHandling.USE_HOOK else WorkerExceptionHandling.LEGACY
+                    "legacy" -> WorkerExceptionHandling.LEGACY
+                    "use-hook" -> WorkerExceptionHandling.USE_HOOK
+                    else -> {
+                        configuration.report(ERROR, "Unsupported worker exception handling mode ${arguments.workerExceptionHandling}")
+                        WorkerExceptionHandling.LEGACY
+                    }
+                })
+
+                arguments.externalDependencies?.let { put(EXTERNAL_DEPENDENCIES, it) }
             }
         }
     }
@@ -370,7 +381,7 @@ private fun selectFrameworkType(
         configuration.report(
             STRONG_WARNING,
             "'$STATIC_FRAMEWORK_FLAG' is only supported when producing frameworks, " +
-            "but the compiler is producing ${outputKind.name.toLowerCase()}"
+            "but the compiler is producing ${outputKind.name.lowercase()}"
         )
         false
     } else {
@@ -421,7 +432,7 @@ private fun selectExportedLibraries(
             outputKind != CompilerOutputKind.STATIC && outputKind != CompilerOutputKind.DYNAMIC) {
         configuration.report(STRONG_WARNING,
                 "-Xexport-library is only supported when producing frameworks or native libraries, " +
-                "but the compiler is producing ${outputKind.name.toLowerCase()}")
+                "but the compiler is producing ${outputKind.name.lowercase()}")
 
         emptyList()
     } else {
@@ -439,7 +450,7 @@ private fun selectIncludes(
     return if (includes.isNotEmpty() && outputKind == CompilerOutputKind.LIBRARY) {
         configuration.report(
             ERROR,
-            "The $INCLUDE_ARG flag is not supported when producing ${outputKind.name.toLowerCase()}"
+            "The $INCLUDE_ARG flag is not supported when producing ${outputKind.name.lowercase()}"
         )
         emptyList()
     } else {
@@ -508,7 +519,7 @@ private fun parseShortModuleName(
         configuration.report(
                 STRONG_WARNING,
                 "$SHORT_MODULE_NAME_ARG is only supported when producing a Kotlin library, " +
-                    "but the compiler is producing ${outputKind.name.toLowerCase()}"
+                    "but the compiler is producing ${outputKind.name.lowercase()}"
         )
         null
     } else {

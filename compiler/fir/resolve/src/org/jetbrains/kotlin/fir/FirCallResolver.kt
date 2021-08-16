@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.fir.diagnostics.ConeDiagnostic
 import org.jetbrains.kotlin.fir.diagnostics.ConeStubDiagnostic
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.builder.buildResolvedReifiedParameterReference
-import org.jetbrains.kotlin.fir.expressions.impl.FirQualifiedAccessExpressionImpl
 import org.jetbrains.kotlin.fir.references.*
 import org.jetbrains.kotlin.fir.references.builder.buildBackingFieldReference
 import org.jetbrains.kotlin.fir.references.builder.buildResolvedNamedReference
@@ -38,6 +37,7 @@ import org.jetbrains.kotlin.fir.types.builder.buildResolvedTypeRef
 import org.jetbrains.kotlin.fir.types.builder.buildStarProjection
 import org.jetbrains.kotlin.fir.types.builder.buildTypeProjectionWithVariance
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.resolve.calls.inference.ConstraintSystemBuilder
 import org.jetbrains.kotlin.resolve.calls.results.TypeSpecificityComparator
 import org.jetbrains.kotlin.resolve.calls.tasks.ExplicitReceiverKind
@@ -286,7 +286,7 @@ class FirCallResolver(
                         nameReference.source,
                         qualifiedAccess.explicitReceiver,
                         referencedSymbol,
-                        (qualifiedAccess as? FirQualifiedAccessExpressionImpl)?.nonFatalDiagnostics
+                        (qualifiedAccess as? FirPropertyAccessExpression)?.nonFatalDiagnostics
                     )
                 )
             }
@@ -338,7 +338,7 @@ class FirCallResolver(
     fun resolveCallableReference(
         constraintSystemBuilder: ConstraintSystemBuilder,
         resolvedCallableReferenceAtom: ResolvedCallableReferenceAtom,
-    ): Boolean {
+    ): Pair<CandidateApplicability, Boolean> {
         val callableReferenceAccess = resolvedCallableReferenceAtom.reference
         val lhs = resolvedCallableReferenceAtom.lhs
         val coneSubstitutor = constraintSystemBuilder.buildCurrentSubstitutor() as ConeSubstitutor
@@ -365,7 +365,7 @@ class FirCallResolver(
         val reducedCandidates = if (noSuccessfulCandidates) {
             bestCandidates.toSet()
         } else {
-            conflictResolver.chooseMaximallySpecificCandidates(bestCandidates, discriminateGenerics = false)
+            conflictResolver.chooseMaximallySpecificCandidates(bestCandidates, discriminateGenerics = true)
         }
 
         (callableReferenceAccess.explicitReceiver as? FirResolvedQualifier)?.replaceResolvedToCompanionObject(
@@ -382,7 +382,7 @@ class FirCallResolver(
                     callableReferenceAccess.source
                 )
                 resolvedCallableReferenceAtom.resultingReference = errorReference
-                return false
+                return applicability to false
             }
             reducedCandidates.size > 1 -> {
                 if (resolvedCallableReferenceAtom.hasBeenPostponed) {
@@ -392,10 +392,10 @@ class FirCallResolver(
                         callableReferenceAccess.source
                     )
                     resolvedCallableReferenceAtom.resultingReference = errorReference
-                    return false
+                    return applicability to false
                 }
                 resolvedCallableReferenceAtom.hasBeenPostponed = true
-                return true
+                return applicability to true
             }
         }
 
@@ -416,14 +416,14 @@ class FirCallResolver(
         resolvedCallableReferenceAtom.resultingReference = reference
         resolvedCallableReferenceAtom.resultingTypeForCallableReference = chosenCandidate.resultingTypeForCallableReference
 
-        return true
+        return applicability to true
     }
 
     fun resolveDelegatingConstructorCall(
         delegatedConstructorCall: FirDelegatedConstructorCall,
         constructedType: ConeClassLikeType
     ): FirDelegatedConstructorCall {
-        val name = Name.special("<init>")
+        val name = SpecialNames.INIT
         val symbol = constructedType.lookupTag.toSymbol(components.session)
         val typeArguments =
             constructedType.typeArguments.take((symbol?.fir as? FirRegularClass)?.typeParameters?.count { it is FirTypeParameter } ?: 0)

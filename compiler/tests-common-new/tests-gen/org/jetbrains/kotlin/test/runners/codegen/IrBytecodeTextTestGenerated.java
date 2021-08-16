@@ -92,6 +92,12 @@ public class IrBytecodeTextTestGenerated extends AbstractIrBytecodeTextTest {
     }
 
     @Test
+    @TestMetadata("checkcastOnThrow.kt")
+    public void testCheckcastOnThrow() throws Exception {
+        runTest("compiler/testData/codegen/bytecodeText/checkcastOnThrow.kt");
+    }
+
+    @Test
     @TestMetadata("collectionStubs.kt")
     public void testCollectionStubs() throws Exception {
         runTest("compiler/testData/codegen/bytecodeText/collectionStubs.kt");
@@ -728,6 +734,12 @@ public class IrBytecodeTextTestGenerated extends AbstractIrBytecodeTextTest {
         @TestMetadata("safeCallWithElvis.kt")
         public void testSafeCallWithElvis() throws Exception {
             runTest("compiler/testData/codegen/bytecodeText/boxingOptimization/safeCallWithElvis.kt");
+        }
+
+        @Test
+        @TestMetadata("safeCallWithElvisMultipleFiles.kt")
+        public void testSafeCallWithElvisMultipleFiles() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeText/boxingOptimization/safeCallWithElvisMultipleFiles.kt");
         }
 
         @Test
@@ -3283,6 +3295,30 @@ public class IrBytecodeTextTestGenerated extends AbstractIrBytecodeTextTest {
         }
 
         @Test
+        @TestMetadata("noFakeVariableForInlineOnlyFun.kt")
+        public void testNoFakeVariableForInlineOnlyFun() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeText/inline/noFakeVariableForInlineOnlyFun.kt");
+        }
+
+        @Test
+        @TestMetadata("noFakeVariableForInlineOnlyFunFromStdlib.kt")
+        public void testNoFakeVariableForInlineOnlyFunFromStdlib() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeText/inline/noFakeVariableForInlineOnlyFunFromStdlib.kt");
+        }
+
+        @Test
+        @TestMetadata("noFakeVariableForInlineOnlyFunMap.kt")
+        public void testNoFakeVariableForInlineOnlyFunMap() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeText/inline/noFakeVariableForInlineOnlyFunMap.kt");
+        }
+
+        @Test
+        @TestMetadata("noFakeVariableForInlineOnlyFunWithLambda.kt")
+        public void testNoFakeVariableForInlineOnlyFunWithLambda() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeText/inline/noFakeVariableForInlineOnlyFunWithLambda.kt");
+        }
+
+        @Test
         @TestMetadata("noSynAccessor.kt")
         public void testNoSynAccessor() throws Exception {
             runTest("compiler/testData/codegen/bytecodeText/inline/noSynAccessor.kt");
@@ -3356,6 +3392,28 @@ public class IrBytecodeTextTestGenerated extends AbstractIrBytecodeTextTest {
             public void testSimple() throws Exception {
                 runTest("compiler/testData/codegen/bytecodeText/inline/property/simple.kt");
             }
+        }
+    }
+
+    @Nested
+    @TestMetadata("compiler/testData/codegen/bytecodeText/inlineArgsInPlace")
+    @TestDataPath("$PROJECT_ROOT")
+    public class InlineArgsInPlace {
+        @Test
+        public void testAllFilesPresentInInlineArgsInPlace() throws Exception {
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/inlineArgsInPlace"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+        }
+
+        @Test
+        @TestMetadata("println.kt")
+        public void testPrintln() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeText/inlineArgsInPlace/println.kt");
+        }
+
+        @Test
+        @TestMetadata("sin.kt")
+        public void testSin() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeText/inlineArgsInPlace/sin.kt");
         }
     }
 

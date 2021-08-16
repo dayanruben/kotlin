@@ -41,6 +41,7 @@ internal class KtToFirMapping(firElement: FirElement, recorder: FirElementsRecor
 
     private val userTypeMapping = ConcurrentHashMap<KtUserType, FirElement>()
     fun getElement(ktElement: KtElement, state: FirModuleResolveState): FirElement? {
+
         mapping[ktElement]?.let { return it }
 
         val userType = when (ktElement) {
@@ -94,7 +95,7 @@ internal sealed class ReanalyzableStructureElement<KT : KtDeclaration, S : FirBa
     override val diagnostics = FileStructureElementDiagnostics(
         firFile,
         lockProvider,
-        SingleNonLocalDeclarationDiagnosticRetriever(firSymbol.fir as FirDeclaration)
+        SingleNonLocalDeclarationDiagnosticRetriever(firSymbol.fir)
     )
 
     companion object {

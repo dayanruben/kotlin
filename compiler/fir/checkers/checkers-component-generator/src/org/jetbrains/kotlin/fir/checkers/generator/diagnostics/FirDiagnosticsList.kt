@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.descriptors.EffectiveVisibility
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.diagnostics.WhenMissingCase
 import org.jetbrains.kotlin.fir.FirModuleData
+import org.jetbrains.kotlin.fir.FirSourceElement
 import org.jetbrains.kotlin.fir.PrivateForInline
 import org.jetbrains.kotlin.fir.checkers.generator.diagnostics.model.*
 import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
@@ -95,7 +96,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val UNRESOLVED_REFERENCE by error<PsiElement>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED) {
             parameter<String>("reference")
         }
-        val UNRESOLVED_LABEL by error<PsiElement>()
+        val UNRESOLVED_LABEL by error<PsiElement>(PositioningStrategy.LABEL)
         val DESERIALIZATION_ERROR by error<PsiElement>()
         val ERROR_FROM_JAVA_RESOLUTION by error<PsiElement>()
         val MISSING_STDLIB_CLASS by error<PsiElement>()
@@ -140,6 +141,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
 
     val SUPERTYPES by object : DiagnosticGroup("Supertypes") {
         val NOT_A_SUPERTYPE by error<PsiElement>()
+        val TYPE_ARGUMENTS_REDUNDANT_IN_SUPER_QUALIFIER by warning<KtElement>()
         val SUPERCLASS_NOT_ACCESSIBLE_FROM_INTERFACE by error<PsiElement>()
         val QUALIFIED_SUPERTYPE_EXTENDED_BY_OTHER_SUPERTYPE by error<KtTypeReference> {
             parameter<Symbol>("otherSuperType")
@@ -176,6 +178,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<FirRegularClassSymbol>("type")
             parameter<Collection<ConeKotlinType>>("bounds")
         }
+        val AMBIGUOUS_SUPER by error<KtSuperExpression>()
     }
 
     val CONSTRUCTOR_PROBLEMS by object : DiagnosticGroup("Constructor problems") {
@@ -298,23 +301,35 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
     val MODIFIERS by object : DiagnosticGroup("Modifiers") {
         val INAPPLICABLE_INFIX_MODIFIER by error<PsiElement>()
         val REPEATED_MODIFIER by error<PsiElement> {
-            parameter<KtModifierKeywordToken>("modifier")
+            parameter<String>("modifier")
         }
         val REDUNDANT_MODIFIER by error<PsiElement> {
-            parameter<KtModifierKeywordToken>("redundantModifier")
-            parameter<KtModifierKeywordToken>("conflictingModifier")
+            parameter<String>("redundantModifier")
+            parameter<String>("conflictingModifier")
+        }
+        val DEPRECATED_MODIFIER by warning<PsiElement> {
+            parameter<String>("deprecatedModifier")
+            parameter<String>("actualModifier")
         }
         val DEPRECATED_MODIFIER_PAIR by error<PsiElement> {
-            parameter<KtModifierKeywordToken>("deprecatedModifier")
-            parameter<KtModifierKeywordToken>("conflictingModifier")
+            parameter<String>("deprecatedModifier")
+            parameter<String>("conflictingModifier")
+        }
+        val DEPRECATED_MODIFIER_FOR_TARGET by warning<PsiElement> {
+            parameter<String>("deprecatedModifier")
+            parameter<String>("target")
+        }
+        val REDUNDANT_MODIFIER_FOR_TARGET by warning<PsiElement> {
+            parameter<String>("redundantModifier")
+            parameter<String>("target")
         }
         val INCOMPATIBLE_MODIFIERS by error<PsiElement> {
-            parameter<KtModifierKeywordToken>("modifier1")
-            parameter<KtModifierKeywordToken>("modifier2")
+            parameter<String>("modifier1")
+            parameter<String>("modifier2")
         }
         val REDUNDANT_OPEN_IN_INTERFACE by warning<KtModifierListOwner>(PositioningStrategy.OPEN_MODIFIER)
         val WRONG_MODIFIER_TARGET by error<PsiElement> {
-            parameter<KtModifierKeywordToken>("modifier")
+            parameter<String>("modifier")
             parameter<String>("target")
         }
         val OPERATOR_MODIFIER_REQUIRED by error<PsiElement> {
@@ -323,6 +338,14 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         }
         val INFIX_MODIFIER_REQUIRED by error<PsiElement> {
             parameter<FirNamedFunctionSymbol>("functionSymbol")
+        }
+        val WRONG_MODIFIER_CONTAINING_DECLARATION by error<PsiElement> {
+            parameter<String>("modifier")
+            parameter<String>("target")
+        }
+        val DEPRECATED_MODIFIER_CONTAINING_DECLARATION by warning<PsiElement> {
+            parameter<String>("modifier")
+            parameter<String>("target")
         }
     }
 
@@ -713,7 +736,10 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val CONFLICTING_OVERLOADS by error<PsiElement>(PositioningStrategy.DECLARATION_SIGNATURE_OR_DEFAULT) {
             parameter<Collection<Symbol>>("conflictingOverloads")
         }
-        val REDECLARATION by error<PsiElement> {
+        val REDECLARATION by error<KtNamedDeclaration>(PositioningStrategy.NAME_IDENTIFIER) {
+            parameter<Collection<Symbol>>("conflictingDeclarations")
+        }
+        val PACKAGE_OR_CLASSIFIER_REDECLARATION by error<KtNamedDeclaration>(PositioningStrategy.ACTUAL_DECLARATION_NAME) {
             parameter<Collection<Symbol>>("conflictingDeclarations")
         }
         val METHOD_OF_ANY_IMPLEMENTED_IN_INTERFACE by error<PsiElement>()
@@ -825,6 +851,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<ConeKotlinType>("actualType")
         }
         val ACCESSOR_FOR_DELEGATED_PROPERTY by error<KtPropertyAccessor>()
+        val ABSTRACT_PROPERTY_IN_PRIMARY_CONSTRUCTOR_PARAMETERS by error<KtModifierListOwner>(PositioningStrategy.ABSTRACT_MODIFIER)
     }
 
     val MPP_PROJECTS by object : DiagnosticGroup("Multi-platform projects") {
@@ -943,6 +970,15 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val INITIALIZATION_BEFORE_DECLARATION by error<KtExpression>() {
             parameter<Symbol>("property")
         }
+        val UNREACHABLE_CODE by warning<KtElement>(PositioningStrategy.UNREACHABLE_CODE) {
+            parameter<Set<FirSourceElement>>("reachable")
+            parameter<Set<FirSourceElement>>("unreachable")
+        }
+        val SENSELESS_COMPARISON by warning<KtExpression> {
+            parameter<FirExpression>("expression")
+            parameter<Boolean>("compareResult")
+        }
+        val SENSELESS_NULL_IN_WHEN by warning<KtElement>()
     }
 
     val NULLABILITY by object : DiagnosticGroup("Nullability") {
@@ -1002,6 +1038,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val ILLEGAL_DECLARATION_IN_WHEN_SUBJECT by error<KtElement> {
             parameter<String>("illegalReason")
         }
+        val COMMA_IN_WHEN_CONDITION_WITHOUT_ARGUMENT by error<PsiElement>(PositioningStrategy.COMMAS)
     }
 
     val CONTEXT_TRACKING by object : DiagnosticGroup("Context tracking") {
@@ -1078,6 +1115,11 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<ConeKotlinType>("leftType")
             parameter<ConeKotlinType>("rightType")
         }
+        val INC_DEC_SHOULD_NOT_RETURN_UNIT by error<KtExpression>(PositioningStrategy.OPERATOR)
+        val ASSIGNMENT_OPERATOR_SHOULD_RETURN_UNIT by error<KtExpression>(PositioningStrategy.OPERATOR) {
+            parameter<FirNamedFunctionSymbol>("functionSymbol")
+            parameter<String>("operator")
+        }
     }
 
     val TYPE_ALIAS by object : DiagnosticGroup("Type alias") {
@@ -1124,6 +1166,17 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<Symbol>("parameter")
         }
 
+        val NOT_YET_SUPPORTED_IN_INLINE by error<KtDeclaration>(PositioningStrategy.NOT_SUPPORTED_IN_INLINE_MOST_RELEVANT) {
+            parameter<String>("message")
+        }
+
+        val NOTHING_TO_INLINE by warning<KtDeclaration>(PositioningStrategy.NOT_SUPPORTED_IN_INLINE_MOST_RELEVANT)
+
+        val NULLABLE_INLINE_PARAMETER by error<KtDeclaration>() {
+            parameter<FirValueParameterSymbol>("parameter")
+            parameter<Symbol>("function")
+        }
+
         val RECURSION_IN_INLINE by error<KtElement>(PositioningStrategy.REFERENCE_BY_QUALIFIED) {
             parameter<Symbol>("symbol")
         }
@@ -1156,6 +1209,27 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val SUPER_CALL_FROM_PUBLIC_INLINE by warning<KtElement>(PositioningStrategy.REFERENCE_BY_QUALIFIED) {
             parameter<Symbol>("symbol")
         }
+
+        val DECLARATION_CANT_BE_INLINED by error<KtDeclaration>(PositioningStrategy.DECLARATION_SIGNATURE)
+
+        val OVERRIDE_BY_INLINE by warning<KtDeclaration>(PositioningStrategy.DECLARATION_SIGNATURE)
+
+        val NON_INTERNAL_PUBLISHED_API by error<KtElement>()
+
+        val INVALID_DEFAULT_FUNCTIONAL_PARAMETER_FOR_INLINE by error<KtElement>() {
+            parameter<FirExpression>("defaultValue")
+            parameter<FirValueParameterSymbol>("parameter")
+        }
+
+        val REIFIED_TYPE_PARAMETER_IN_OVERRIDE by error<KtElement>(PositioningStrategy.REIFIED_MODIFIER)
+
+        val INLINE_PROPERTY_WITH_BACKING_FIELD by error<KtDeclaration>(PositioningStrategy.DECLARATION_SIGNATURE)
+
+        val ILLEGAL_INLINE_PARAMETER_MODIFIER by error<KtElement>(PositioningStrategy.INLINE_PARAMETER_MODIFIER)
+
+        val INLINE_SUSPEND_FUNCTION_TYPE_UNSUPPORTED by error<KtParameter>()
+
+        val REDUNDANT_INLINE_SUSPEND_FUNCTION_TYPE by warning<KtElement>(PositioningStrategy.SUSPEND_MODIFIER)
     }
 
     val IMPORTS by object : DiagnosticGroup("Imports") {

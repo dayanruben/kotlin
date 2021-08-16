@@ -380,6 +380,11 @@ class CommonizerIT : BaseGradleIT() {
 
             reportSourceSetCommonizerDependencies(this, testSourceSetsDependingOnMainParameter) {
                 it.assertTestSourceSetsDependingOnMainParameter()
+
+                /* this source sets are also shared with a jvm target */
+                getCommonizerDependencies("commonMain").assertEmpty()
+                getCommonizerDependencies("commonTest").assertEmpty()
+
                 getCommonizerDependencies("nativeMain").onlyCInterops().apply {
                     assertDependencyFilesMatches(".*nativeHelper", ".*unixHelper".takeIf { isUnix })
                     assertTargetOnAllDependencies(
@@ -516,6 +521,29 @@ class CommonizerIT : BaseGradleIT() {
     }
 
     @Test
+    fun `test KT-48118 c-interops available in commonMain`() {
+        with(Project("commonize-kt-48118-c-interop-in-common-main")) {
+            reportSourceSetCommonizerDependencies(this) {
+                val upperMain = getCommonizerDependencies("upperMain")
+                upperMain.onlyCInterops().assertDependencyFilesMatches(".*cinterop-dummy")
+                upperMain.onlyNativeDistribution().assertNotEmpty()
+
+                val commonMain = getCommonizerDependencies("commonMain")
+                commonMain.onlyCInterops().assertDependencyFilesMatches(".*cinterop-dummy")
+                commonMain.onlyNativeDistribution().assertNotEmpty()
+            }
+
+            build(":compileCommonMainKotlinMetadata") {
+                assertSuccessful()
+            }
+
+            build(":compileUpperMainKotlinMetadata") {
+                assertSuccessful()
+            }
+        }
+    }
+
+    @Test
     fun `test KT-47641 commonizing c-interops does not depend on any source compilation`() {
         with(Project("commonize-kt-47641-cinterops-compilation-dependency")) {
             build("commonizeCInterop", options = BuildOptions(forceOutputToStdout = true)) {
@@ -534,6 +562,23 @@ class CommonizerIT : BaseGradleIT() {
                 assertTasksNotExecuted(":p0.*compile.*")
                 assertTasksNotExecuted(":p1.*compile.*")
                 assertTasksNotExecuted(":p2.*compile.*")
+            }
+        }
+    }
+
+    @Test
+    fun `test KT-48138 commonizing c-interops when nativeTest and nativeMain have different targets`() {
+        with(Project("commonize-kt-48138-nativeMain-nativeTest-different-targets")) {
+            reportSourceSetCommonizerDependencies(this) {
+                val nativeMain = getCommonizerDependencies("nativeMain")
+                nativeMain.onlyCInterops().assertDependencyFilesMatches(".*cinterop-dummy")
+                nativeMain.onlyNativeDistribution().assertNotEmpty()
+                nativeMain.assertTargetOnAllDependencies(CommonizerTarget(LINUX_X64, LINUX_ARM64, LINUX_ARM32_HFP))
+
+                val nativeTest = getCommonizerDependencies("nativeTest")
+                nativeTest.onlyNativeDistribution().assertNotEmpty()
+                nativeTest.onlyCInterops().assertDependencyFilesMatches(".*cinterop-dummy")
+                nativeTest.assertTargetOnAllDependencies(CommonizerTarget(LINUX_X64, LINUX_ARM64))
             }
         }
     }

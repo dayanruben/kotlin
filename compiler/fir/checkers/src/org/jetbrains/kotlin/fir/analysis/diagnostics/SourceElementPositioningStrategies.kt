@@ -272,8 +272,36 @@ object SourceElementPositioningStrategies {
         LightTreePositioningStrategies.DECLARATION_WITH_BODY,
         PositioningStrategies.DECLARATION_WITH_BODY
     )
+    val COMMAS = SourceElementPositioningStrategy(
+        LightTreePositioningStrategies.COMMAS,
+        PositioningStrategies.COMMAS
+    )
+
+    val UNREACHABLE_CODE = SourceElementPositioningStrategy(
+        LightTreePositioningStrategies.UNREACHABLE_CODE,
+        FirPsiPositioningStrategies.UNREACHABLE_CODE
+    )
+
+    val ACTUAL_DECLARATION_NAME = SourceElementPositioningStrategy(
+        LightTreePositioningStrategies.ACTUAL_DECLARATION_NAME,
+        PositioningStrategies.ACTUAL_DECLARATION_NAME
+    )
+
+    val LABEL = SourceElementPositioningStrategy(
+        LightTreePositioningStrategies.LABEL,
+        PositioningStrategies.LABEL
+    )
 
     // TODO
-    val ACTUAL_DECLARATION_NAME = DEFAULT
     val INCOMPATIBLE_DECLARATION = DEFAULT
+
+    val NOT_SUPPORTED_IN_INLINE_MOST_RELEVANT = SourceElementPositioningStrategy(
+        LightTreePositioningStrategies.NOT_SUPPORTED_IN_INLINE_MOST_RELEVANT,
+        PositioningStrategies.NOT_SUPPORTED_IN_INLINE_MOST_RELEVANT
+    )
+
+    val INLINE_PARAMETER_MODIFIER = SourceElementPositioningStrategy(
+        LightTreePositioningStrategies.INLINE_PARAMETER_MODIFIER,
+        PositioningStrategies.INLINE_PARAMETER_MODIFIER
+    )
 }

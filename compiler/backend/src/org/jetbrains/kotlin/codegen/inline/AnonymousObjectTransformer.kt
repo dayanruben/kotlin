@@ -62,7 +62,7 @@ class AnonymousObjectTransformer(
         createClassReader().accept(object : ClassVisitor(Opcodes.API_VERSION, classBuilder.visitor) {
             override fun visit(version: Int, access: Int, name: String, signature: String?, superName: String, interfaces: Array<String>) {
                 classBuilder.defineClass(null, maxOf(version, state.classFileVersion), access, name, signature, superName, interfaces)
-                if (languageVersionSettings.isCoroutineSuperClass(superName)) {
+                if (superName.isCoroutineSuperClass()) {
                     inliningContext.isContinuation = true
                 }
                 superClassName = superName
@@ -320,7 +320,8 @@ class AnonymousObjectTransformer(
                 inliningContext.callSiteInfo.isInlineOrInsideInline,
                 inliningContext.callSiteInfo.file,
                 inliningContext.callSiteInfo.lineNumber
-            ), null
+            ),
+            null
         ).doInline(deferringVisitor, LocalVarRemapper(parameters, 0), false, mapOf())
         reifiedTypeParametersUsages?.let(result.reifiedTypeParametersUsages::mergeAll)
         deferringVisitor.visitMaxs(-1, -1)

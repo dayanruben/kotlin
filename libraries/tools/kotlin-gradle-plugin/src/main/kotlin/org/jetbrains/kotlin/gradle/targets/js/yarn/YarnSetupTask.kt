@@ -10,8 +10,10 @@ import org.gradle.api.artifacts.Configuration
 import org.gradle.api.file.FileSystemOperations
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.*
+import org.gradle.internal.hash.FileHasher
 import org.jetbrains.kotlin.gradle.logging.kotlinInfo
 import org.jetbrains.kotlin.gradle.plugin.statistics.KotlinBuildStatsService
+import org.jetbrains.kotlin.gradle.targets.js.calculateDirHash
 import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin
 import org.jetbrains.kotlin.gradle.utils.ArchiveOperationsCompat
 import org.jetbrains.kotlin.statistics.metrics.NumericalMetrics
@@ -30,6 +32,10 @@ open class YarnSetupTask : DefaultTask() {
     private val archiveOperations = ArchiveOperationsCompat(project)
 
     @get:Inject
+    internal open val fileHasher: FileHasher
+        get() = error("Should be injected")
+
+    @get:Inject
     internal open val fs: FileSystemOperations
         get() = error("Should be injected")
 
@@ -40,6 +46,9 @@ open class YarnSetupTask : DefaultTask() {
     @Suppress("MemberVisibilityCanBePrivate")
     val destination: File
         @OutputDirectory get() = env.home
+
+    val destinationHashFile: File
+        @OutputFile get() = destination.parentFile.resolve("${destination.name}.hash")
 
     init {
         group = NodeJsRootPlugin.TASKS_GROUP_NAME
@@ -53,10 +62,6 @@ open class YarnSetupTask : DefaultTask() {
     @get:Internal
     internal lateinit var configuration: Provider<Configuration>
 
-    private val _yarnDist by lazy {
-        configuration.get().files.single()
-    }
-
     @get:Classpath
     val yarnDist: File by lazy {
         val repo = project.repositories.ivy { repo ->
@@ -69,7 +74,7 @@ open class YarnSetupTask : DefaultTask() {
             repo.content { it.includeModule("com.yarnpkg", "yarn") }
         }
         val startDownloadTime = System.currentTimeMillis()
-        val dist = _yarnDist
+        val dist = configuration.get().files.single()
         val downloadDuration = System.currentTimeMillis() - startDownloadTime
         if (downloadDuration > 0) {
             KotlinBuildStatsService.getInstance()
@@ -89,7 +94,34 @@ open class YarnSetupTask : DefaultTask() {
     fun setup() {
         logger.kotlinInfo("Using yarn distribution from '$yarnDist'")
 
-        extract(yarnDist, destination.parentFile) // parent because archive contains name already
+        var dirHash: String? = null
+        val upToDate = destinationHashFile.let { file ->
+            if (file.exists()) {
+                file.useLines {
+                    it.single() == (fileHasher.calculateDirHash(destination).also { dirHash = it })
+                }
+            } else false
+        }
+
+        val tmpDir = temporaryDir
+        extract(yarnDist, tmpDir) // parent because archive contains name already
+
+        if (upToDate && fileHasher.calculateDirHash(tmpDir.resolve(destination.name))!! == dirHash) return
+
+        if (destination.isDirectory) {
+            destination.deleteRecursively()
+        }
+
+        fs.copy {
+            it.from(tmpDir)
+            it.into(destination.parentFile)
+        }
+
+        tmpDir.deleteRecursively()
+
+        destinationHashFile.writeText(
+            fileHasher.calculateDirHash(destination)!!
+        )
     }
 
     private fun extract(archive: File, destination: File) {

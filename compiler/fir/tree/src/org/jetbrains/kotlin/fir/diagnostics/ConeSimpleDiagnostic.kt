@@ -46,6 +46,9 @@ enum class DiagnosticKind {
     CannotInferParameterType,
     IllegalProjectionUsage,
     MissingStdlibClass,
+    NotASupertype,
+    SuperNotAvailable,
+    AmbiguousSuper,
 
     LoopInSupertype,
     RecursiveTypealiasExpansion,

@@ -4,7 +4,6 @@
  */
 package org.jetbrains.kotlin.cli.jvm.compiler.jarfs
 
-import com.intellij.openapi.util.Couple
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -14,17 +13,18 @@ import java.io.InputStream
 import java.io.OutputStream
 
 internal class FastJarVirtualFile(
-    private val myHandler: FastJarHandler,
-    private val myName: CharSequence,
-    private val myLength: Int,
-    private val myParent: FastJarVirtualFile?
+    private val handler: FastJarHandler,
+    private val name: CharSequence,
+    private val length: Int,
+    private val parent: FastJarVirtualFile?,
+    private val entryDescription: ZipEntryDescription?,
 ) : VirtualFile() {
 
     private var myChildrenArray = EMPTY_ARRAY
     private val myChildrenList: MutableList<VirtualFile> = mutableListOf()
 
     init {
-        myParent?.myChildrenList?.add(this)
+        parent?.myChildrenList?.add(this)
     }
 
     fun initChildrenArrayFromList() {
@@ -33,28 +33,28 @@ internal class FastJarVirtualFile(
     }
 
     override fun getName(): String {
-        return myName.toString()
+        return name.toString()
     }
 
     override fun getNameSequence(): CharSequence {
-        return myName
+        return name
     }
 
     override fun getFileSystem(): VirtualFileSystem {
-        return myHandler.fileSystem
+        return handler.fileSystem
     }
 
     override fun getPath(): String {
-        if (myParent == null) {
-            return FileUtil.toSystemIndependentName(myHandler.file.path) + "!/"
+        if (parent == null) {
+            return FileUtil.toSystemIndependentName(handler.file.path) + "!/"
         }
-        val parentPath = myParent.path
-        val answer = StringBuilder(parentPath.length + 1 + myName.length)
+        val parentPath = parent.path
+        val answer = StringBuilder(parentPath.length + 1 + name.length)
         answer.append(parentPath)
         if (answer[answer.length - 1] != '/') {
             answer.append('/')
         }
-        answer.append(myName)
+        answer.append(name)
         return answer.toString()
     }
 
@@ -63,7 +63,7 @@ internal class FastJarVirtualFile(
     }
 
     override fun isDirectory(): Boolean {
-        return myLength < 0
+        return length < 0
     }
 
     override fun isValid(): Boolean {
@@ -71,7 +71,7 @@ internal class FastJarVirtualFile(
     }
 
     override fun getParent(): VirtualFile? {
-        return myParent
+        return parent
     }
 
     override fun getChildren(): Array<VirtualFile> {
@@ -85,15 +85,13 @@ internal class FastJarVirtualFile(
 
     @Throws(IOException::class)
     override fun contentsToByteArray(): ByteArray {
-        val pair: Couple<String> = FastJarFileSystem.splitPath(
-            path
-        )
-        return myHandler.contentsToByteArray(pair.second)
+        if (entryDescription == null) return EMPTY_BYTE_ARRAY
+        return handler.contentsToByteArray(entryDescription)
     }
 
     override fun getTimeStamp(): Long = 0
 
-    override fun getLength(): Long = myLength.toLong()
+    override fun getLength(): Long = length.toLong()
 
     override fun refresh(asynchronous: Boolean, recursive: Boolean, postRunnable: Runnable?) {}
 
@@ -106,3 +104,5 @@ internal class FastJarVirtualFile(
         return 0
     }
 }
+
+private val EMPTY_BYTE_ARRAY = ByteArray(0)

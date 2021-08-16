@@ -12,12 +12,12 @@ import java.util.zip.Inflater
 
 
 class ZipEntryDescription(
-    val relativePath: String,
+    val relativePath: CharSequence,
     val compressedSize: Int,
     val uncompressedSize: Int,
     val offsetInFile: Int,
     val compressionKind: CompressionKind,
-    val fileNameSize: Int
+    val fileNameSize: Int,
 ) {
 
     enum class CompressionKind {
@@ -62,9 +62,11 @@ fun MappedByteBuffer.contentsToByteArray(
 fun MappedByteBuffer.parseCentralDirectory(): List<ZipEntryDescription> {
     order(ByteOrder.LITTLE_ENDIAN)
 
-    val endOfCentralDirectoryOffset = (capacity() - END_OF_CENTRAL_DIR_SIZE downTo 0).first { offset ->
+    var endOfCentralDirectoryOffset = capacity() - END_OF_CENTRAL_DIR_SIZE
+    while (endOfCentralDirectoryOffset >= 0) {
         // header of "End of central directory"
-        getInt(offset) == 0x06054b50
+        if (getInt(endOfCentralDirectoryOffset) == 0x06054b50) break
+        endOfCentralDirectoryOffset--
     }
 
     val entriesNumber = getUnsignedShort(endOfCentralDirectoryOffset + 10)
@@ -99,7 +101,7 @@ fun MappedByteBuffer.parseCentralDirectory(): List<ZipEntryDescription> {
 
         val name =
             if (bytesForName.all { it >= 0 })
-                String(bytesForName.asASCICharArray())
+                ByteArrayCharSequence(bytesForName)
             else
                 String(bytesForName, Charsets.UTF_8)
 
@@ -123,7 +125,5 @@ fun MappedByteBuffer.parseCentralDirectory(): List<ZipEntryDescription> {
 
     return result
 }
-
-private fun ByteArray.asASCICharArray(): CharArray = CharArray(size) { this@asASCICharArray[it].toChar() }
 
 private fun ByteBuffer.getUnsignedShort(offset: Int): Int = java.lang.Short.toUnsignedInt(getShort(offset))

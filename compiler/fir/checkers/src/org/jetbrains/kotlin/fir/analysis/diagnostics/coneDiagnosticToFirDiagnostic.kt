@@ -76,9 +76,9 @@ private fun ConeDiagnostic.toFirDiagnostic(
     is ConeOuterClassArgumentsRequired ->
         FirErrors.OUTER_CLASS_ARGUMENTS_REQUIRED.createOn(qualifiedAccessSource ?: source, this.symbol)
     is ConeNoTypeArgumentsOnRhsError ->
-        FirErrors.NO_TYPE_ARGUMENTS_ON_RHS.createOn(qualifiedAccessSource ?: source, this.desiredCount, this.type)
-    is ConeSimpleDiagnostic -> when (source.kind) {
-        is FirFakeSourceElementKind -> null
+        FirErrors.NO_TYPE_ARGUMENTS_ON_RHS.createOn(qualifiedAccessSource ?: source, this.desiredCount, this.symbol)
+    is ConeSimpleDiagnostic -> when {
+        source.kind is FirFakeSourceElementKind && source.kind != FirFakeSourceElementKind.ReferenceInAtomicQualifiedAccess -> null
         else -> this.getFactory(source).createOn(qualifiedAccessSource ?: source)
     }
     is ConeInstanceAccessBeforeSuperCall -> FirErrors.INSTANCE_ACCESS_BEFORE_SUPER_CALL.createOn(source, this.target)
@@ -370,12 +370,15 @@ private fun ConeSimpleDiagnostic.getFactory(source: FirSourceElement): FirDiagno
         DiagnosticKind.NoReceiverAllowed -> FirErrors.NO_RECEIVER_ALLOWED
         DiagnosticKind.IsEnumEntry -> FirErrors.IS_ENUM_ENTRY
         DiagnosticKind.EnumEntryAsType -> FirErrors.ENUM_ENTRY_AS_TYPE
+        DiagnosticKind.NotASupertype -> FirErrors.NOT_A_SUPERTYPE
+        DiagnosticKind.SuperNotAvailable -> FirErrors.SUPER_NOT_AVAILABLE
+        DiagnosticKind.AmbiguousSuper -> FirErrors.AMBIGUOUS_SUPER
         DiagnosticKind.UnresolvedSupertype,
         DiagnosticKind.UnresolvedExpandedType,
         DiagnosticKind.Other -> FirErrors.OTHER_ERROR
-        else -> throw IllegalArgumentException("Unsupported diagnostic kind: $kind at $javaClass")
     }
 }
+
 
 @OptIn(InternalDiagnosticFactoryMethod::class)
 private fun FirDiagnosticFactory0.createOn(

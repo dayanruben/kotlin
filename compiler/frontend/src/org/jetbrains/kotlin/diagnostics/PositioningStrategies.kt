@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.diagnostics
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
-import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.tree.TokenSet
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.cfg.UnreachableCode
@@ -497,6 +496,10 @@ object PositioningStrategies {
         ModifierSetBasedPositioningStrategy(TokenSet.create(KtTokens.INNER_KEYWORD))
 
     @JvmField
+    val INLINE_PARAMETER_MODIFIER: PositioningStrategy<KtModifierListOwner> =
+        ModifierSetBasedPositioningStrategy(TokenSet.create(KtTokens.NOINLINE_KEYWORD, KtTokens.CROSSINLINE_KEYWORD))
+
+    @JvmField
     val VARIANCE_IN_PROJECTION: PositioningStrategy<KtTypeProjection> = object : PositioningStrategy<KtTypeProjection>() {
         override fun mark(element: KtTypeProjection): List<TextRange> {
             return markElement(element.projectionToken!!)
@@ -933,6 +936,25 @@ object PositioningStrategies {
                 return super.mark(element.importedReference ?: element)
             }
             return super.mark(element)
+        }
+    }
+
+    val LABEL: PositioningStrategy<KtElement> = object : PositioningStrategy<KtElement>() {
+        override fun mark(element: KtElement): List<TextRange> {
+            return super.mark((element as? KtExpressionWithLabel)?.labelQualifier ?: element)
+        }
+    }
+
+    @OptIn(ExperimentalStdlibApi::class)
+    val COMMAS: PositioningStrategy<PsiElement> = object : PositioningStrategy<PsiElement>() {
+        override fun mark(element: PsiElement): List<TextRange> {
+            return buildList {
+                for (child in element.allChildren) {
+                    if (child.node.elementType == KtTokens.COMMA) {
+                        add(markSingleElement(child))
+                    }
+                }
+            }
         }
     }
 

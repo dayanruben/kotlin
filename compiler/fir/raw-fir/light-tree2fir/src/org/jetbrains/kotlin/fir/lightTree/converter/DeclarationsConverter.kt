@@ -104,6 +104,9 @@ class DeclarationsConverter(
                 PROPERTY -> firDeclarationList += convertPropertyDeclaration(it)
                 TYPEALIAS -> firDeclarationList += convertTypeAlias(it)
                 OBJECT_DECLARATION -> firDeclarationList += convertClass(it)
+                SCRIPT -> {
+                    // TODO: scripts aren't supported yet
+                }
             }
         }
 
@@ -569,7 +572,7 @@ class DeclarationsConverter(
      * @see org.jetbrains.kotlin.fir.builder.RawFirBuilder.Visitor.visitObjectLiteralExpression
      */
     fun convertObjectLiteral(objectLiteral: LighterASTNode): FirElement {
-        return withChildClassName(ANONYMOUS_OBJECT_NAME, isExpect = false) {
+        return withChildClassName(SpecialNames.ANONYMOUS, isExpect = false) {
             buildAnonymousObjectExpression {
                 val objectDeclaration = objectLiteral.getChildNodesByType(OBJECT_DECLARATION).first()
                 val sourceElement = objectDeclaration.toFirSourceElement()
@@ -726,7 +729,7 @@ class DeclarationsConverter(
                         )?.let { declarations += it.firConstructor }
                         classBodyNode?.also {
                             // Use ANONYMOUS_OBJECT_NAME for the owner class id of enum entry declarations
-                            withChildClassName(ANONYMOUS_OBJECT_NAME, forceLocalContext = true, isExpect = false) {
+                            withChildClassName(SpecialNames.ANONYMOUS, forceLocalContext = true, isExpect = false) {
                                 declarations += convertClassBody(it, enumClassWrapper)
                             }
                         }
@@ -1376,7 +1379,7 @@ class DeclarationsConverter(
         }
 
         return buildValueParameter {
-            source = setterParameter.toFirSourceElement()
+            source = firValueParameter.source
             moduleData = baseModuleData
             origin = FirDeclarationOrigin.Source
             returnTypeRef = if (firValueParameter.returnTypeRef == implicitType) propertyTypeRef else firValueParameter.returnTypeRef
@@ -1433,7 +1436,8 @@ class DeclarationsConverter(
         val target: FirFunctionTarget
         val functionSource = functionDeclaration.toFirSourceElement()
         val functionSymbol: FirFunctionSymbol<*>
-        val functionBuilder = if (identifier == null && isLocal) {
+        val isAnonymousFunction = identifier == null && isLocal
+        val functionBuilder = if (isAnonymousFunction) {
             val labelName = functionDeclaration.getLabelName() ?: context.calleeNamesForLambda.lastOrNull()?.identifier
             target = FirFunctionTarget(labelName = labelName, isLambda = false)
             functionSymbol = FirAnonymousFunctionSymbol()
@@ -1491,7 +1495,12 @@ class DeclarationsConverter(
             }
 
             withCapturedTypeParameters(true, actualTypeParameters) {
-                valueParametersList?.let { list -> valueParameters += convertValueParameters(list).map { it.firValueParameter } }
+                valueParametersList?.let { list ->
+                    valueParameters += convertValueParameters(
+                        list,
+                        if (isAnonymousFunction) ValueParameterDeclaration.LAMBDA else ValueParameterDeclaration.OTHER
+                    ).map { it.firValueParameter }
+                }
 
                 val hasContractEffectList = outerContractDescription != null
                 val bodyWithContractDescription = convertFunctionBody(block, expression, hasContractEffectList)

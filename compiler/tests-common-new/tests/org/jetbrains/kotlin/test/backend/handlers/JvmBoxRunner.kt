@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.codegen.forTestCompile.ForTestCompileRuntime
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil.getFileClassInfoNoResolve
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.TestJdkKind
+import org.jetbrains.kotlin.test.backend.codegenSuppressionChecker
 import org.jetbrains.kotlin.test.clientserver.TestProxy
 import org.jetbrains.kotlin.test.directives.CodegenTestDirectives
 import org.jetbrains.kotlin.test.directives.CodegenTestDirectives.ATTACH_DEBUGGER
@@ -53,7 +54,7 @@ class JvmBoxRunner(testServices: TestServices) : JvmBinaryArtifactHandler(testSe
 
     override fun processModule(module: TestModule, info: BinaryArtifacts.Jvm) {
         val ktFiles = info.classFileFactory.inputFiles.ifEmpty { return }
-        val reportProblems = module.targetBackend !in module.directives[CodegenTestDirectives.IGNORE_BACKEND]
+        val reportProblems = !testServices.codegenSuppressionChecker.failuresInModuleAreIgnored(module)
         val classLoader = createAndVerifyClassLoader(module, info.classFileFactory, reportProblems)
         try {
             for (ktFile in ktFiles) {
@@ -210,12 +211,23 @@ class JvmBoxRunner(testServices: TestServices) : JvmBinaryArtifactHandler(testSe
             classPath.joinToString(File.pathSeparator, transform = { File(it.toURI()).absolutePath }),
             mainFqName,
         )
-        val process = ProcessBuilder(command).inheritIO().start()
+        val process = ProcessBuilder(command).start()
         process.waitFor(1, TimeUnit.MINUTES)
-        process.outputStream.flush()
-        return when (process.exitValue()) {
-            0 -> "OK"
-            else -> "External process completed with error. Check the build log"
+        return try {
+            when (process.exitValue()) {
+                0 -> "OK"
+                else -> buildString {
+                    for (stream in listOfNotNull(process.inputStream, process.errorStream)) {
+                        stream.bufferedReader().lines().forEach { appendLine(it) }
+                    }
+
+                    if (this.isEmpty()) {
+                        appendLine("External process completed with error. Check the build log")
+                    }
+                }
+            }
+        } finally {
+            process.outputStream.flush()
         }
     }
 

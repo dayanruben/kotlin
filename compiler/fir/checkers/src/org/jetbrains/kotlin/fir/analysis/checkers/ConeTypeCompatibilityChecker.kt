@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.fir.analysis.checkers
 
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.*
 import org.jetbrains.kotlin.fir.isPrimitiveType
 import org.jetbrains.kotlin.fir.languageVersionSettings
@@ -16,6 +15,7 @@ import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
 import org.jetbrains.kotlin.fir.symbols.ConeTypeParameterLookupTag
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.*
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.types.Variance
 
@@ -63,7 +63,23 @@ internal object ConeTypeCompatibilityChecker {
         HARD_INCOMPATIBLE,
     }
 
-    fun Collection<ConeKotlinType>.areCompatible(ctx: ConeInferenceContext): Compatibility {
+    fun ConeInferenceContext.isCompatible(a: ConeKotlinType, b: ConeKotlinType): Compatibility {
+        val aUnwrap = unwrap(a)
+        val bUnwrap = unwrap(b)
+        if (aUnwrap.containsAll(bUnwrap) || bUnwrap.containsAll(aUnwrap)) {
+            return Compatibility.COMPATIBLE
+        }
+
+        val intersectionType = intersectTypesOrNull(listOf(a, b)) as? ConeIntersectionType ?: return Compatibility.COMPATIBLE
+        return intersectionType.intersectedTypes.areCompatible(this)
+    }
+
+    private fun unwrap(type: ConeKotlinType): Collection<ConeKotlinType> = when (type) {
+        is ConeIntersectionType -> type.intersectedTypes
+        else -> listOf(type)
+    }
+
+    private fun Collection<ConeKotlinType>.areCompatible(ctx: ConeInferenceContext): Compatibility {
         // If all types are nullable, then `null` makes the given types compatible.
         if (all { with(ctx) { it.isNullableType() } }) return Compatibility.COMPATIBLE
 
@@ -197,10 +213,10 @@ internal object ConeTypeCompatibilityChecker {
         val classes = classesOrInterfaces.filter { !it.isInterface }
         // Java force single inheritance, so any pair of unrelated classes are incompatible.
         if (classes.size >= 2) {
-            return if (classes.any { it.getHasPredefinedEqualityContract(this) }) {
-                compatibilityUpperBound
-            } else {
-                Compatibility.SOFT_INCOMPATIBLE
+            return when {
+                classes.any { it.firClass.classId.packageFqName.startsWith(Name.identifier("java")) } -> Compatibility.SOFT_INCOMPATIBLE
+                classes.any { it.getHasPredefinedEqualityContract(this) } -> compatibilityUpperBound
+                else -> Compatibility.SOFT_INCOMPATIBLE
             }
         }
         val finalClass = classes.firstOrNull { it.isFinal } ?: return null

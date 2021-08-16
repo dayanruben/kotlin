@@ -29,7 +29,7 @@ buildscript {
     dependencies {
         bootstrapCompilerClasspath(kotlin("compiler-embeddable", bootstrapKotlinVersion))
 
-        classpath("org.jetbrains.kotlin:kotlin-build-gradle-plugin:0.0.31")
+        classpath("org.jetbrains.kotlin:kotlin-build-gradle-plugin:0.0.32")
         classpath(kotlin("gradle-plugin", bootstrapKotlinVersion))
         classpath(kotlin("serialization", bootstrapKotlinVersion))
         classpath("org.jetbrains.dokka:dokka-gradle-plugin:0.9.17")
@@ -315,15 +315,7 @@ extra["compilerArtifactsForIde"] = listOf(
 
 // TODO: fix remaining warnings and remove this property.
 extra["tasksWithWarnings"] = listOf(
-    ":kotlin-stdlib:compileTestKotlin",
-    ":kotlin-stdlib-jdk7:compileTestKotlin",
-    ":kotlin-stdlib-jdk8:compileTestKotlin",
-    ":plugins:uast-kotlin-base:compileKotlin",
-    ":plugins:uast-kotlin-base:compileTestKotlin",
-    ":plugins:uast-kotlin:compileKotlin",
-    ":plugins:uast-kotlin:compileTestKotlin",
-    ":plugins:uast-kotlin-fir:compileKotlin",
-    ":plugins:uast-kotlin-fir:compileTestKotlin"
+    ":kotlin-gradle-plugin:compileKotlin"
 )
 
 val tasksWithWarnings: List<String> by extra
@@ -443,6 +435,12 @@ allprojects {
         project.configureShadowJarSubstitutionInCompileClasspath()
     }
 
+    tasks.withType<JavaCompile> {
+        options.compilerArgs.add("-Xlint:deprecation")
+        options.compilerArgs.add("-Xlint:unchecked")
+        options.compilerArgs.add("-Werror")
+    }
+
     val commonCompilerArgs = listOfNotNull(
         "-Xopt-in=kotlin.RequiresOptIn",
         "-progressive".takeIf { hasProperty("test.progressive.mode") }
@@ -460,6 +458,7 @@ allprojects {
         "-Xjvm-default=compatibility",
         "-Xno-optimized-callable-references",
         "-Xno-kotlin-nothing-value-exception",
+        "-Xskip-runtime-version-check",
         "-Xsuppress-deprecated-jvm-target-warning" // Remove as soon as there are no modules for JDK 1.6 & 1.7
     )
 
@@ -475,15 +474,10 @@ allprojects {
     }
 
     if (!kotlinBuildProperties.disableWerror) {
-        // For compiler and stdlib, allWarningsAsErrors is configured in the corresponding "root" projects
-        // (compiler/build.gradle.kts and libraries/commonConfiguration.gradle).
-        val projectsWithWarningsAsErrors = listOf("core", "plugins").map { File(it).absoluteFile }
-        if (projectsWithWarningsAsErrors.any(projectDir::startsWith)) {
-            tasks.withType<org.jetbrains.kotlin.gradle.dsl.KotlinJvmCompile> {
-                if (path !in tasksWithWarnings) {
-                    kotlinOptions {
-                        allWarningsAsErrors = true
-                    }
+        tasks.withType<org.jetbrains.kotlin.gradle.dsl.KotlinJvmCompile> {
+            if (path !in tasksWithWarnings) {
+                kotlinOptions {
+                    allWarningsAsErrors = true
                 }
             }
         }

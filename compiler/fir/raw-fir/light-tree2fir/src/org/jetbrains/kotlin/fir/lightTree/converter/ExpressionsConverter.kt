@@ -38,6 +38,7 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirValueParameterSymbol
 import org.jetbrains.kotlin.fir.types.FirTypeProjection
 import org.jetbrains.kotlin.fir.types.FirTypeRef
 import org.jetbrains.kotlin.lexer.KtTokens.*
+import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.stubs.elements.KtConstantExpressionElementType
 import org.jetbrains.kotlin.psi.stubs.elements.KtNameReferenceExpressionElementType
 import org.jetbrains.kotlin.types.ConstantValueKind
@@ -152,7 +153,7 @@ class ExpressionsConverter(
             for (valueParameter in valueParameterList) {
                 val multiDeclaration = valueParameter.destructuringDeclaration
                 valueParameters += if (multiDeclaration != null) {
-                    val name = DESTRUCTURING_NAME
+                    val name = SpecialNames.DESTRUCT
                     val multiParameter = buildValueParameter {
                         source = valueParameter.firValueParameter.source
                         moduleData = baseModuleData
@@ -467,7 +468,7 @@ class ExpressionsConverter(
         var isReceiver = true
         var hasQuestionMarkAtLHS = false
         var firReceiverExpression: FirExpression? = null
-        lateinit var firCallableReference: FirQualifiedAccess
+        lateinit var namedReference: FirNamedReference
         callableReferenceExpression.forEachChildren {
             when (it.tokenType) {
                 COLONCOLON -> isReceiver = false
@@ -476,7 +477,7 @@ class ExpressionsConverter(
                     if (isReceiver) {
                         firReceiverExpression = getAsFirExpression(it, "Incorrect receiver expression")
                     } else {
-                        firCallableReference = convertSimpleNameExpression(it)
+                        namedReference = createSimpleNamedReference(it.toFirSourceElement(), it)
                     }
                 }
             }
@@ -484,7 +485,7 @@ class ExpressionsConverter(
 
         return buildCallableReferenceAccess {
             source = callableReferenceExpression.toFirSourceElement()
-            calleeReference = firCallableReference.calleeReference as FirNamedReference
+            calleeReference = namedReference
             explicitReceiver = firReceiverExpression
             this.hasQuestionMarkAtLHS = hasQuestionMarkAtLHS
         }
@@ -644,7 +645,7 @@ class ExpressionsConverter(
                 context.calleeNamesForLambda.removeLast()
             }
         } else {
-            FirQualifiedAccessExpressionBuilder().apply {
+            FirPropertyAccessExpressionBuilder().apply {
                 this.source = source
                 this.calleeReference = calleeReference
             }
@@ -964,19 +965,29 @@ class ExpressionsConverter(
      * @see org.jetbrains.kotlin.fir.builder.RawFirBuilder.Visitor.visitSimpleNameExpression
      */
     private fun convertSimpleNameExpression(referenceExpression: LighterASTNode): FirQualifiedAccessExpression {
-        return buildQualifiedAccessExpression {
-            source = referenceExpression.toFirSourceElement()
-
-            val nameSource = this@buildQualifiedAccessExpression.source
+        val nameSource = referenceExpression.toFirSourceElement()
+        val referenceSourceElement = if (nameSource.kind is FirFakeSourceElementKind) {
+            nameSource
+        } else {
+            nameSource.fakeElement(FirFakeSourceElementKind.ReferenceInAtomicQualifiedAccess)
+        }
+        return buildPropertyAccessExpression {
             val rawText = referenceExpression.asText
-            if (nameSource != null && rawText.isUnderscore) {
+            if (rawText.isUnderscore) {
                 nonFatalDiagnostics.add(ConeUnderscoreUsageWithoutBackticks(nameSource))
             }
+            source = nameSource
+            calleeReference = createSimpleNamedReference(referenceSourceElement, referenceExpression)
+        }
+    }
 
-            calleeReference = buildSimpleNamedReference {
-                source = nameSource
-                name = rawText.nameAsSafeName()
-            }
+    private fun createSimpleNamedReference(
+        sourceElement: FirSourceElement,
+        referenceExpression: LighterASTNode
+    ): FirNamedReference {
+        return buildSimpleNamedReference {
+            source = sourceElement
+            name = referenceExpression.asText.nameAsSafeName()
         }
     }
 
@@ -1011,6 +1022,7 @@ class ExpressionsConverter(
     private fun convertWhile(whileLoop: LighterASTNode): FirElement {
         var block: LighterASTNode? = null
         var firCondition: FirExpression? = null
+        val label = stashLabel() //get label of while, otherwise if condition has lambda, it will steal the label
         whileLoop.forEachChildren {
             when (it.tokenType) {
                 BODY -> block = it
@@ -1025,7 +1037,7 @@ class ExpressionsConverter(
                 firCondition ?: buildErrorExpression(null, ConeSimpleDiagnostic("No condition in while loop", DiagnosticKind.Syntax))
             // break/continue in the while loop condition will refer to an outer loop if any.
             // So, prepare the loop target after building the condition.
-            target = prepareTarget()
+            target = prepareTarget(label)
         }.configure(target) { convertLoopBody(block) }
     }
 
@@ -1055,7 +1067,7 @@ class ExpressionsConverter(
             val iteratorVal = generateTemporaryVariable(
                 baseModuleData,
                 calculatedRangeExpression.source?.fakeElement(FirFakeSourceElementKind.DesugaredForLoop),
-                ITERATOR_NAME,
+                SpecialNames.ITERATOR,
                 buildFunctionCall {
                     source = fakeSource
                     calleeReference = buildSimpleNamedReference {
@@ -1089,7 +1101,7 @@ class ExpressionsConverter(
                     val firLoopParameter = generateTemporaryVariable(
                         baseModuleData,
                         valueParameter.firValueParameter.source,
-                        if (multiDeclaration != null) DESTRUCTURING_NAME else valueParameter.firValueParameter.name,
+                        if (multiDeclaration != null) SpecialNames.DESTRUCT else valueParameter.firValueParameter.name,
                         buildFunctionCall {
                             source = fakeSource
                             calleeReference = buildSimpleNamedReference {
@@ -1338,7 +1350,7 @@ class ExpressionsConverter(
             }
         }
 
-        return buildQualifiedAccessExpression {
+        return buildPropertyAccessExpression {
             source = superExpression.toFirSourceElement()
             calleeReference = buildExplicitSuperReference {
                 labelName = label

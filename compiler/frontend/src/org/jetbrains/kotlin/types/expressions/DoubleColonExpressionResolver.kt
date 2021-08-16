@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.diagnostics.Errors.*
 import org.jetbrains.kotlin.diagnostics.reportDiagnosticOnce
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.codeFragmentUtil.suppressDiagnosticsInDebugMode
 import org.jetbrains.kotlin.psi.psiUtil.checkReservedYield
@@ -668,7 +669,7 @@ class DoubleColonExpressionResolver(
         mutable: Boolean = true
     ) {
         val localVariable = LocalVariableDescriptor(
-            context.scope.ownerDescriptor, Annotations.EMPTY, Name.special("<anonymous>"), referenceType,
+            context.scope.ownerDescriptor, Annotations.EMPTY, SpecialNames.ANONYMOUS, referenceType,
             mutable, false, expression.toSourceElement()
         )
 
@@ -699,7 +700,7 @@ class DoubleColonExpressionResolver(
     ) {
         val descriptor =
             if (resolutionResults?.isSingleResult == true) resolutionResults.resultingDescriptor else null
-        if (descriptor is PropertyDescriptor && descriptor.isBuiltInCoroutineContext(languageVersionSettings)) {
+        if (descriptor is PropertyDescriptor && descriptor.isBuiltInCoroutineContext()) {
             context.trace.report(UNSUPPORTED.on(expression.callableReference, "Callable reference to suspend property"))
         } else if (descriptor is FunctionDescriptor && descriptor.isSuspend
             && !context.languageVersionSettings.supportsFeature(LanguageFeature.ReleaseCoroutines)

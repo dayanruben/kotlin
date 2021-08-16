@@ -2312,6 +2312,22 @@ public class FirBlackBoxInlineCodegenTestGenerated extends AbstractFirBlackBoxIn
     }
 
     @Nested
+    @TestMetadata("compiler/testData/codegen/boxInline/inlineArgsInplace")
+    @TestDataPath("$PROJECT_ROOT")
+    public class InlineArgsInplace {
+        @Test
+        public void testAllFilesPresentInInlineArgsInplace() throws Exception {
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/boxInline/inlineArgsInplace"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+        }
+
+        @Test
+        @TestMetadata("callArgumentReordering.kt")
+        public void testCallArgumentReordering() throws Exception {
+            runTest("compiler/testData/codegen/boxInline/inlineArgsInplace/callArgumentReordering.kt");
+        }
+    }
+
+    @Nested
     @TestMetadata("compiler/testData/codegen/boxInline/inlineClasses")
     @TestDataPath("$PROJECT_ROOT")
     public class InlineClasses {
@@ -4086,6 +4102,34 @@ public class FirBlackBoxInlineCodegenTestGenerated extends AbstractFirBlackBoxIn
         @TestMetadata("typeParametersSubstitution2.kt")
         public void testTypeParametersSubstitution2() throws Exception {
             runTest("compiler/testData/codegen/boxInline/signature/typeParametersSubstitution2.kt");
+        }
+    }
+
+    @Nested
+    @TestMetadata("compiler/testData/codegen/boxInline/signatureMangling")
+    @TestDataPath("$PROJECT_ROOT")
+    public class SignatureMangling {
+        @Test
+        public void testAllFilesPresentInSignatureMangling() throws Exception {
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/boxInline/signatureMangling"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+        }
+
+        @Test
+        @TestMetadata("flexibleType.kt")
+        public void testFlexibleType() throws Exception {
+            runTest("compiler/testData/codegen/boxInline/signatureMangling/flexibleType.kt");
+        }
+
+        @Test
+        @TestMetadata("indices.kt")
+        public void testIndices() throws Exception {
+            runTest("compiler/testData/codegen/boxInline/signatureMangling/indices.kt");
+        }
+
+        @Test
+        @TestMetadata("rawType.kt")
+        public void testRawType() throws Exception {
+            runTest("compiler/testData/codegen/boxInline/signatureMangling/rawType.kt");
         }
     }
 

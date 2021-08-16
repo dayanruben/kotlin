@@ -142,6 +142,15 @@ class K2NativeCompilerArguments : CommonCompilerArguments() {
     )
     var exportedLibraries: Array<String>? = null
 
+    @Argument(
+            value = "-Xexternal-dependencies",
+            valueDescription = "<path>",
+            description = "Path to the file containing external dependencies.\n" +
+                    "External dependencies are required for verbose output in case of IR linker errors,\n" +
+                    "but they do not affect compilation at all."
+    )
+    var externalDependencies: String? = null
+
     @Argument(value="-Xfake-override-validator", description = "Enable IR fake override validator")
     var fakeOverrideValidator: Boolean = false
 
@@ -319,6 +328,14 @@ class K2NativeCompilerArguments : CommonCompilerArguments() {
 
     @Argument(value="-Xruntime-asserts-mode", valueDescription = "<mode>", description = "Enable asserts in runtime. Possible values: 'ignore', 'log', 'panic'")
     var runtimeAssertsMode: String? = "ignore"
+
+    // TODO: Remove when legacy MM is gone.
+    @Argument(
+            value = "-Xworker-exception-handling",
+            valueDescription = "<mode>",
+            description = "Unhandled exception processing in Worker.executeAfter. Possible values: 'legacy', 'use-hook'. The default value is 'legacy', for -memory-model experimental the default value is 'use-hook'"
+    )
+    var workerExceptionHandling: String? = null
 
     override fun configureAnalysisFlags(collector: MessageCollector, languageVersion: LanguageVersion): MutableMap<AnalysisFlag<*>, Any> =
             super.configureAnalysisFlags(collector, languageVersion).also {

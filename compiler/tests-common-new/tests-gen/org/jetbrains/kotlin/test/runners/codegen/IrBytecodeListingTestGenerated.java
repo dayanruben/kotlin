@@ -470,6 +470,12 @@ public class IrBytecodeListingTestGenerated extends AbstractIrBytecodeListingTes
             }
 
             @Test
+            @TestMetadata("propertyGetterUseSiteTarget.kt")
+            public void testPropertyGetterUseSiteTarget() throws Exception {
+                runTest("compiler/testData/codegen/bytecodeListing/annotations/repeatable/propertyGetterUseSiteTarget.kt");
+            }
+
+            @Test
             @TestMetadata("retentionAndTarget.kt")
             public void testRetentionAndTarget() throws Exception {
                 runTest("compiler/testData/codegen/bytecodeListing/annotations/repeatable/retentionAndTarget.kt");
@@ -2295,6 +2301,12 @@ public class IrBytecodeListingTestGenerated extends AbstractIrBytecodeListingTes
             @TestMetadata("implementsJavaMap.kt")
             public void testImplementsJavaMap() throws Exception {
                 runTest("compiler/testData/codegen/bytecodeListing/specialBridges/signatures/implementsJavaMap.kt");
+            }
+
+            @Test
+            @TestMetadata("implementsJavaMapWithCustomEntries.kt")
+            public void testImplementsJavaMapWithCustomEntries() throws Exception {
+                runTest("compiler/testData/codegen/bytecodeListing/specialBridges/signatures/implementsJavaMapWithCustomEntries.kt");
             }
 
             @Test

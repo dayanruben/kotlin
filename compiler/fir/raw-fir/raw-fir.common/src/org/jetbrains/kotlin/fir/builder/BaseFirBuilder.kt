@@ -112,7 +112,7 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
 
     fun callableIdForName(name: Name) =
         when {
-            context.className.shortNameOrSpecial() == ANONYMOUS_OBJECT_NAME -> CallableId(ANONYMOUS_CLASS_ID, name)
+            context.className.shortNameOrSpecial() == SpecialNames.ANONYMOUS -> CallableId(ANONYMOUS_CLASS_ID, name)
             context.className.isRoot && !context.inLocalContext -> CallableId(context.packageFqName, name)
             context.inLocalContext -> {
                 val pathFqName =
@@ -213,8 +213,12 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
         }
     }
 
-    fun FirLoopBuilder.prepareTarget(): FirLoopTarget {
-        label = context.firLabels.pop()
+    fun FirLoopBuilder.prepareTarget(): FirLoopTarget = prepareTarget(context.firLabels.pop())
+
+    fun stashLabel(): FirLabel? = context.firLabels.pop()
+
+    fun FirLoopBuilder.prepareTarget(label: FirLabel?): FirLoopTarget {
+        this.label = label
         val target = FirLoopTarget(label?.name)
         context.firLoopTargets += target
         return target
@@ -491,7 +495,7 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
             val initialValueVar = generateTemporaryVariable(
                 baseModuleData,
                 desugaredSource,
-                Name.special("<unary>"),
+                SpecialNames.UNARY,
                 unwrappedArgument.convert()
             )
 
@@ -629,7 +633,7 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
             val initialValueVar = generateTemporaryVariable(
                 baseModuleData,
                 desugaredSource,
-                Name.special("<unary>"),
+                SpecialNames.UNARY,
                 firArgument
             )
 
@@ -769,7 +773,7 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
             val initialValueVar = generateTemporaryVariable(
                 baseModuleData,
                 desugaredSource,
-                Name.special("<unary>"),
+                SpecialNames.UNARY,
                 firArgument
             )
 
@@ -1087,7 +1091,7 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
             classTypeRefWithCorrectSourceKind: FirTypeRef,
             firPropertyReturnTypeRefWithCorrectSourceKind: FirTypeRef
         ) =
-            buildQualifiedAccessExpression {
+             buildPropertyAccessExpression {
                 source = parameterSource
                 typeRef = firPropertyReturnTypeRefWithCorrectSourceKind
                 dispatchReceiver = buildThisReceiverExpression {
@@ -1181,9 +1185,9 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
         containingClassForStaticMemberAttr = currentDispatchReceiverType.lookupTag
     }
 
-    private fun FirVariable.toQualifiedAccess(): FirQualifiedAccessExpression = buildQualifiedAccessExpression {
+    private fun FirVariable.toQualifiedAccess(): FirQualifiedAccessExpression = buildPropertyAccessExpression {
         calleeReference = buildResolvedNamedReference {
-            source = this@toQualifiedAccess.source
+            source = this@toQualifiedAccess.source?.fakeElement(FirFakeSourceElementKind.ReferenceInAtomicQualifiedAccess)
             name = this@toQualifiedAccess.name
             resolvedSymbol = this@toQualifiedAccess.symbol
         }
@@ -1243,15 +1247,6 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
         } else {
             safeName
         }
-    }
-
-    /**** Common utils ****/
-    companion object {
-        val ANONYMOUS_OBJECT_NAME = Name.special("<anonymous>")
-
-        val DESTRUCTURING_NAME = Name.special("<destruct>")
-
-        val ITERATOR_NAME = Name.special("<iterator>")
     }
 
     enum class ValueParameterDeclaration {
