@@ -725,9 +725,21 @@ public class FirBytecodeTextTestGenerated extends AbstractFirBytecodeTextTest {
         }
 
         @Test
-        @TestMetadata("safeCallToPrimitiveEquality.kt")
-        public void testSafeCallToPrimitiveEquality() throws Exception {
-            runTest("compiler/testData/codegen/bytecodeText/boxingOptimization/safeCallToPrimitiveEquality.kt");
+        @TestMetadata("safeCallToPrimitiveEquality1.kt")
+        public void testSafeCallToPrimitiveEquality1() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeText/boxingOptimization/safeCallToPrimitiveEquality1.kt");
+        }
+
+        @Test
+        @TestMetadata("safeCallToPrimitiveEquality2.kt")
+        public void testSafeCallToPrimitiveEquality2() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeText/boxingOptimization/safeCallToPrimitiveEquality2.kt");
+        }
+
+        @Test
+        @TestMetadata("safeCallToPrimitiveEquality3.kt")
+        public void testSafeCallToPrimitiveEquality3() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeText/boxingOptimization/safeCallToPrimitiveEquality3.kt");
         }
 
         @Test
@@ -4997,6 +5009,12 @@ public class FirBytecodeTextTestGenerated extends AbstractFirBytecodeTextTest {
         }
 
         @Test
+        @TestMetadata("samWrapperInInlineLambda2.kt")
+        public void testSamWrapperInInlineLambda2() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeText/sam/samWrapperInInlineLambda2.kt");
+        }
+
+        @Test
         @TestMetadata("samWrapperOfLambda.kt")
         public void testSamWrapperOfLambda() throws Exception {
             runTest("compiler/testData/codegen/bytecodeText/sam/samWrapperOfLambda.kt");
@@ -5358,6 +5376,46 @@ public class FirBytecodeTextTestGenerated extends AbstractFirBytecodeTextTest {
         @TestMetadata("useAppendCharForOneCharStringUsingPlus.kt")
         public void testUseAppendCharForOneCharStringUsingPlus() throws Exception {
             runTest("compiler/testData/codegen/bytecodeText/stringOperations/useAppendCharForOneCharStringUsingPlus.kt");
+        }
+    }
+
+    @Nested
+    @TestMetadata("compiler/testData/codegen/bytecodeText/temporaryVals")
+    @TestDataPath("$PROJECT_ROOT")
+    public class TemporaryVals {
+        @Test
+        public void testAllFilesPresentInTemporaryVals() throws Exception {
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/temporaryVals"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+        }
+
+        @Test
+        @TestMetadata("arrayCompoundAssignment.kt")
+        public void testArrayCompoundAssignment() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeText/temporaryVals/arrayCompoundAssignment.kt");
+        }
+
+        @Test
+        @TestMetadata("safeCallChain1.kt")
+        public void testSafeCallChain1() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeText/temporaryVals/safeCallChain1.kt");
+        }
+
+        @Test
+        @TestMetadata("safeCallChain2.kt")
+        public void testSafeCallChain2() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeText/temporaryVals/safeCallChain2.kt");
+        }
+
+        @Test
+        @TestMetadata("safeCallChainMemberExt1.kt")
+        public void testSafeCallChainMemberExt1() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeText/temporaryVals/safeCallChainMemberExt1.kt");
+        }
+
+        @Test
+        @TestMetadata("safeCallChainMemberExt2.kt")
+        public void testSafeCallChainMemberExt2() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeText/temporaryVals/safeCallChainMemberExt2.kt");
         }
     }
 

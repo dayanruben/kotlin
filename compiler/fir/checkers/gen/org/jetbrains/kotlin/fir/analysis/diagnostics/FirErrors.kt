@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.fir.analysis.diagnostics
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.config.LanguageFeature.ProhibitAssigningSingleElementsToVarargsInNamedForm
 import org.jetbrains.kotlin.config.LanguageFeature.ProhibitInvisibleAbstractMethodsInSuperclasses
 import org.jetbrains.kotlin.config.LanguageFeature.ProhibitNonReifiedArraysAsReifiedTypeArguments
 import org.jetbrains.kotlin.config.LanguageFeature.ProhibitUseSiteTargetAnnotationsOnSuperTypes
@@ -37,6 +38,7 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirValueParameterSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirVariableSymbol
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
 import org.jetbrains.kotlin.lexer.KtKeywordToken
+import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
@@ -134,6 +136,7 @@ object FirErrors {
     val NO_THIS by error0<PsiElement>()
     val DEPRECATION_ERROR by error2<PsiElement, FirBasedSymbol<*>, String>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
     val DEPRECATION by warning2<PsiElement, FirBasedSymbol<*>, String>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
+    val UNRESOLVED_REFERENCE_WRONG_RECEIVER by error1<PsiElement, Collection<FirBasedSymbol<*>>>()
 
     // Call resolution
     val CREATING_AN_INSTANCE_OF_ABSTRACT_CLASS by error0<KtExpression>()
@@ -166,6 +169,9 @@ object FirErrors {
     val CLASS_IN_SUPERTYPE_FOR_ENUM by error0<KtTypeReference>()
     val SEALED_SUPERTYPE by error0<KtTypeReference>()
     val SEALED_SUPERTYPE_IN_LOCAL_CLASS by error0<KtTypeReference>()
+    val SEALED_INHERITOR_IN_DIFFERENT_PACKAGE by error0<KtTypeReference>()
+    val SEALED_INHERITOR_IN_DIFFERENT_MODULE by error0<KtTypeReference>()
+    val CLASS_INHERITS_JAVA_SEALED_CLASS by error0<KtTypeReference>()
     val SUPERTYPE_NOT_A_CLASS_OR_INTERFACE by error1<KtElement, String>()
     val CYCLIC_INHERITANCE_HIERARCHY by error0<PsiElement>()
     val EXPANDED_TYPE_CANNOT_BE_INHERITED by error1<KtTypeReference, ConeKotlinType>()
@@ -253,19 +259,20 @@ object FirErrors {
 
     // Modifiers
     val INAPPLICABLE_INFIX_MODIFIER by error0<PsiElement>()
-    val REPEATED_MODIFIER by error1<PsiElement, String>()
-    val REDUNDANT_MODIFIER by error2<PsiElement, String, String>()
-    val DEPRECATED_MODIFIER by warning2<PsiElement, String, String>()
-    val DEPRECATED_MODIFIER_PAIR by error2<PsiElement, String, String>()
-    val DEPRECATED_MODIFIER_FOR_TARGET by warning2<PsiElement, String, String>()
-    val REDUNDANT_MODIFIER_FOR_TARGET by warning2<PsiElement, String, String>()
-    val INCOMPATIBLE_MODIFIERS by error2<PsiElement, String, String>()
+    val REPEATED_MODIFIER by error1<PsiElement, KtModifierKeywordToken>()
+    val REDUNDANT_MODIFIER by error2<PsiElement, KtModifierKeywordToken, KtModifierKeywordToken>()
+    val DEPRECATED_MODIFIER by warning2<PsiElement, KtModifierKeywordToken, KtModifierKeywordToken>()
+    val DEPRECATED_MODIFIER_PAIR by error2<PsiElement, KtModifierKeywordToken, KtModifierKeywordToken>()
+    val DEPRECATED_MODIFIER_FOR_TARGET by warning2<PsiElement, KtModifierKeywordToken, String>()
+    val REDUNDANT_MODIFIER_FOR_TARGET by warning2<PsiElement, KtModifierKeywordToken, String>()
+    val INCOMPATIBLE_MODIFIERS by error2<PsiElement, KtModifierKeywordToken, KtModifierKeywordToken>()
     val REDUNDANT_OPEN_IN_INTERFACE by warning0<KtModifierListOwner>(SourceElementPositioningStrategies.OPEN_MODIFIER)
-    val WRONG_MODIFIER_TARGET by error2<PsiElement, String, String>()
+    val WRONG_MODIFIER_TARGET by error2<PsiElement, KtModifierKeywordToken, String>()
     val OPERATOR_MODIFIER_REQUIRED by error2<PsiElement, FirNamedFunctionSymbol, String>()
     val INFIX_MODIFIER_REQUIRED by error1<PsiElement, FirNamedFunctionSymbol>()
-    val WRONG_MODIFIER_CONTAINING_DECLARATION by error2<PsiElement, String, String>()
-    val DEPRECATED_MODIFIER_CONTAINING_DECLARATION by warning2<PsiElement, String, String>()
+    val WRONG_MODIFIER_CONTAINING_DECLARATION by error2<PsiElement, KtModifierKeywordToken, String>()
+    val DEPRECATED_MODIFIER_CONTAINING_DECLARATION by warning2<PsiElement, KtModifierKeywordToken, String>()
+    val INAPPLICABLE_OPERATOR_MODIFIER by error1<PsiElement, String>(SourceElementPositioningStrategies.OPERATOR_MODIFIER)
 
     // Inline classes
     val INLINE_CLASS_NOT_TOP_LEVEL by error0<KtDeclaration>(SourceElementPositioningStrategies.INLINE_OR_VALUE_MODIFIER)
@@ -305,6 +312,8 @@ object FirErrors {
     val MANY_LAMBDA_EXPRESSION_ARGUMENTS by error0<KtValueArgument>()
     val NEW_INFERENCE_NO_INFORMATION_FOR_PARAMETER by error1<KtElement, String>()
     val SPREAD_OF_NULLABLE by error0<PsiElement>(SourceElementPositioningStrategies.SPREAD_OPERATOR)
+    val ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_FUNCTION by deprecationError0<KtExpression>(ProhibitAssigningSingleElementsToVarargsInNamedForm)
+    val ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_ANNOTATION by deprecationError0<KtExpression>(ProhibitAssigningSingleElementsToVarargsInNamedForm)
 
     // Ambiguity
     val OVERLOAD_RESOLUTION_AMBIGUITY by error1<PsiElement, Collection<FirBasedSymbol<*>>>(SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED)

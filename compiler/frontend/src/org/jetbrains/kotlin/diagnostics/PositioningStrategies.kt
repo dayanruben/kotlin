@@ -378,6 +378,12 @@ object PositioningStrategies {
     val DATA_MODIFIER: PositioningStrategy<KtModifierListOwner> = modifierSetPosition(KtTokens.DATA_KEYWORD)
 
     @JvmField
+    val OPERATOR_MODIFIER: PositioningStrategy<KtModifierListOwner> = modifierSetPosition(KtTokens.OPERATOR_KEYWORD)
+
+    @JvmField
+    val ENUM_MODIFIER: PositioningStrategy<KtModifierListOwner> = modifierSetPosition(KtTokens.ENUM_KEYWORD)
+
+    @JvmField
     val FOR_REDECLARATION: PositioningStrategy<PsiElement> = object : PositioningStrategy<PsiElement>() {
         override fun mark(element: PsiElement): List<TextRange> {
             val nameIdentifier = when (element) {
@@ -957,6 +963,9 @@ object PositioningStrategies {
             }
         }
     }
+
+    val NON_FINAL_MODIFIER_OR_NAME: PositioningStrategy<KtModifierListOwner> =
+        ModifierSetBasedPositioningStrategy(TokenSet.create(KtTokens.ABSTRACT_KEYWORD, KtTokens.OPEN_KEYWORD, KtTokens.SEALED_KEYWORD))
 
     /**
      * @param locateReferencedName whether to remove any nested parentheses while locating the reference element. This is useful for

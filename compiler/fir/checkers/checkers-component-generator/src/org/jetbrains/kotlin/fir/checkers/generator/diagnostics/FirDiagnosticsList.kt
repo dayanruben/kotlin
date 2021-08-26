@@ -111,6 +111,10 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<Symbol>("reference")
             parameter<String>("message")
         }
+
+        val UNRESOLVED_REFERENCE_WRONG_RECEIVER by error<PsiElement> {
+            parameter<Collection<Symbol>>("candidates")
+        }
     }
 
     val CALL_RESOLUTION by object : DiagnosticGroup("Call resolution") {
@@ -160,6 +164,9 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val CLASS_IN_SUPERTYPE_FOR_ENUM by error<KtTypeReference>()
         val SEALED_SUPERTYPE by error<KtTypeReference>()
         val SEALED_SUPERTYPE_IN_LOCAL_CLASS by error<KtTypeReference>()
+        val SEALED_INHERITOR_IN_DIFFERENT_PACKAGE by error<KtTypeReference>()
+        val SEALED_INHERITOR_IN_DIFFERENT_MODULE by error<KtTypeReference>()
+        val CLASS_INHERITS_JAVA_SEALED_CLASS by error<KtTypeReference>()
         val SUPERTYPE_NOT_A_CLASS_OR_INTERFACE by error<KtElement> {
             parameter<String>("reason")
         }
@@ -301,35 +308,35 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
     val MODIFIERS by object : DiagnosticGroup("Modifiers") {
         val INAPPLICABLE_INFIX_MODIFIER by error<PsiElement>()
         val REPEATED_MODIFIER by error<PsiElement> {
-            parameter<String>("modifier")
+            parameter<KtModifierKeywordToken>("modifier")
         }
         val REDUNDANT_MODIFIER by error<PsiElement> {
-            parameter<String>("redundantModifier")
-            parameter<String>("conflictingModifier")
+            parameter<KtModifierKeywordToken>("redundantModifier")
+            parameter<KtModifierKeywordToken>("conflictingModifier")
         }
         val DEPRECATED_MODIFIER by warning<PsiElement> {
-            parameter<String>("deprecatedModifier")
-            parameter<String>("actualModifier")
+            parameter<KtModifierKeywordToken>("deprecatedModifier")
+            parameter<KtModifierKeywordToken>("actualModifier")
         }
         val DEPRECATED_MODIFIER_PAIR by error<PsiElement> {
-            parameter<String>("deprecatedModifier")
-            parameter<String>("conflictingModifier")
+            parameter<KtModifierKeywordToken>("deprecatedModifier")
+            parameter<KtModifierKeywordToken>("conflictingModifier")
         }
         val DEPRECATED_MODIFIER_FOR_TARGET by warning<PsiElement> {
-            parameter<String>("deprecatedModifier")
+            parameter<KtModifierKeywordToken>("deprecatedModifier")
             parameter<String>("target")
         }
         val REDUNDANT_MODIFIER_FOR_TARGET by warning<PsiElement> {
-            parameter<String>("redundantModifier")
+            parameter<KtModifierKeywordToken>("redundantModifier")
             parameter<String>("target")
         }
         val INCOMPATIBLE_MODIFIERS by error<PsiElement> {
-            parameter<String>("modifier1")
-            parameter<String>("modifier2")
+            parameter<KtModifierKeywordToken>("modifier1")
+            parameter<KtModifierKeywordToken>("modifier2")
         }
         val REDUNDANT_OPEN_IN_INTERFACE by warning<KtModifierListOwner>(PositioningStrategy.OPEN_MODIFIER)
         val WRONG_MODIFIER_TARGET by error<PsiElement> {
-            parameter<String>("modifier")
+            parameter<KtModifierKeywordToken>("modifier")
             parameter<String>("target")
         }
         val OPERATOR_MODIFIER_REQUIRED by error<PsiElement> {
@@ -340,12 +347,15 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<FirNamedFunctionSymbol>("functionSymbol")
         }
         val WRONG_MODIFIER_CONTAINING_DECLARATION by error<PsiElement> {
-            parameter<String>("modifier")
+            parameter<KtModifierKeywordToken>("modifier")
             parameter<String>("target")
         }
         val DEPRECATED_MODIFIER_CONTAINING_DECLARATION by warning<PsiElement> {
-            parameter<String>("modifier")
+            parameter<KtModifierKeywordToken>("modifier")
             parameter<String>("target")
+        }
+        val INAPPLICABLE_OPERATOR_MODIFIER by error<PsiElement>(PositioningStrategy.OPERATOR_MODIFIER) {
+            parameter<String>("message")
         }
     }
 
@@ -442,6 +452,9 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         }
 
         val SPREAD_OF_NULLABLE by error<PsiElement>(PositioningStrategy.SPREAD_OPERATOR)
+
+        val ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_FUNCTION by deprecationError<KtExpression>(LanguageFeature.ProhibitAssigningSingleElementsToVarargsInNamedForm)
+        val ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_ANNOTATION by deprecationError<KtExpression>(LanguageFeature.ProhibitAssigningSingleElementsToVarargsInNamedForm)
     }
 
     val AMBIGUITY by object : DiagnosticGroup("Ambiguity") {

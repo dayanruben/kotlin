@@ -44,6 +44,8 @@ private fun ConeDiagnostic.toFirDiagnostic(
     is ConeFunctionExpectedError -> FirErrors.FUNCTION_EXPECTED.createOn(source, this.expression, this.type)
     is ConeResolutionToClassifierError -> FirErrors.RESOLUTION_TO_CLASSIFIER.createOn(source, this.classSymbol)
     is ConeHiddenCandidateError -> FirErrors.INVISIBLE_REFERENCE.createOn(source, this.candidateSymbol)
+    is ConeInapplicableWrongReceiver -> FirErrors.UNRESOLVED_REFERENCE_WRONG_RECEIVER.createOn(source, this.candidates)
+    is ConeNoCompanionObject -> FirErrors.NO_COMPANION_OBJECT.createOn(source, this.symbol)
     is ConeAmbiguityError -> when {
         applicability.isSuccess -> FirErrors.OVERLOAD_RESOLUTION_AMBIGUITY.createOn(source, this.candidates.map { it.symbol })
         applicability == CandidateApplicability.UNSAFE_CALL -> {
@@ -89,7 +91,7 @@ private fun ConeDiagnostic.toFirDiagnostic(
     is ConeTypeParameterInQualifiedAccess -> null // reported in various checkers instead
     is ConeNotAnnotationContainer -> null
     is ConeImportFromSingleton -> FirErrors.CANNOT_ALL_UNDER_IMPORT_FROM_SINGLETON.createOn(source, this.name)
-    is ConeUnsupportedDynamicType -> FirErrors.UNSUPPORTED.createOn(source, this.reason)
+    is ConeUnsupported -> FirErrors.UNSUPPORTED.createOn(this.source ?: source, this.reason)
     is ConeLocalVariableNoTypeOrInitializer ->
         runIf(variable.isLocalMember) { FirErrors.VARIABLE_WITH_NO_TYPE_NO_INITIALIZER.createOn(source) }
     is ConeUnderscoreIsReserved -> FirErrors.UNDERSCORE_IS_RESERVED.createOn(this.source)

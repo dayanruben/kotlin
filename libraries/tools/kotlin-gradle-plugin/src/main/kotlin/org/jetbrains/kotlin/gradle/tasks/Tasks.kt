@@ -345,6 +345,18 @@ abstract class AbstractKotlinCompile<T : CommonCompilerArguments> : AbstractKotl
 
             try {
                 executeImpl(inputChanges)
+                metrics.measure(BuildTime.CALCULATE_OUTPUT_SIZE) {
+                    metrics.addMetric(
+                        BuildPerformanceMetric.SNAPSHOT_SIZE,
+                        taskBuildDirectory.file("build-history.bin").get().asFile.length() +
+                                taskBuildDirectory.file("last-build.bin").get().asFile.length() +
+                                taskBuildDirectory.file("abi-snapshot.bin").get().asFile.length()
+                    )
+                    metrics.addMetric(BuildPerformanceMetric.OUTPUT_SIZE,
+                                      taskBuildDirectory.dir("caches-jvm").get().asFileTree.files.filter { it.isFile }.map { it.length() }
+                                          .sum()
+                    )
+                }
             } catch (t: Throwable) {
                 if (outputsBackup != null) {
                     metrics.measure(BuildTime.RESTORE_OUTPUT_FROM_BACKUP) {
@@ -640,6 +652,11 @@ abstract class KotlinCompile @Inject constructor(
                 ignoreClasspathResolutionErrors
             )
         )
+
+        // This method could be called on configuration phase to calculate `filteredArgumentsMap` property
+        if (state.executing) {
+            defaultKotlinJavaToolchain.get().updateJvmTarget(this, args)
+        }
     }
 
     @get:Internal
@@ -773,8 +790,8 @@ abstract class KotlinCompile @Inject constructor(
         val currentSnapshotFiles = classpathSnapshotProperties.classpathSnapshot.files.toList()
         val previousSnapshotFiles = getClasspathSnapshotFilesInDir(classpathSnapshotProperties.classpathSnapshotDir.get().asFile)
 
-        val currentSnapshot = ClasspathSnapshotSerializer.readFromFiles(currentSnapshotFiles)
-        val previousSnapshot = ClasspathSnapshotSerializer.readFromFiles(previousSnapshotFiles)
+        val currentSnapshot = ClasspathSnapshotSerializer.load(currentSnapshotFiles)
+        val previousSnapshot = ClasspathSnapshotSerializer.load(previousSnapshotFiles)
 
         return ClasspathChangesComputer.getChanges(currentSnapshot, previousSnapshot)
     }

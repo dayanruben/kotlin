@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.codegen.optimization.boxing.RedundantBoxingMethodTra
 import org.jetbrains.kotlin.codegen.optimization.boxing.StackPeepholeOptimizationsTransformer
 import org.jetbrains.kotlin.codegen.optimization.common.prepareForEmitting
 import org.jetbrains.kotlin.codegen.optimization.nullCheck.RedundantNullCheckMethodTransformer
+import org.jetbrains.kotlin.codegen.optimization.temporaryVals.TemporaryVariablesEliminationTransformer
 import org.jetbrains.kotlin.codegen.optimization.transformer.CompositeMethodTransformer
 import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.org.objectweb.asm.MethodVisitor
@@ -52,6 +53,7 @@ class OptimizationMethodVisitor(
         RedundantCheckCastEliminationMethodTransformer(),
         ConstantConditionEliminationMethodTransformer(),
         RedundantBoxingMethodTransformer(generationState),
+        TemporaryVariablesEliminationTransformer(generationState),
         StackPeepholeOptimizationsTransformer(),
         PopBackwardPropagationTransformer(),
         DeadCodeEliminationMethodTransformer(),
@@ -74,7 +76,7 @@ class OptimizationMethodVisitor(
     }
 
     companion object {
-        private const val MEMORY_LIMIT_BY_METHOD_MB = 50
+        const val MEMORY_LIMIT_BY_METHOD_MB = 50
         private const val TRY_CATCH_BLOCKS_SOFT_LIMIT = 16
 
         fun canBeOptimized(node: MethodNode): Boolean {

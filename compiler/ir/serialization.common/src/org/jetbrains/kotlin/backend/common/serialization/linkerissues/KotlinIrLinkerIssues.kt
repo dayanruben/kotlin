@@ -67,6 +67,7 @@ class SignatureIdNotFoundInModuleWithDependencies(
             allModules = allModules,
             problemModuleIds = setOf(problemModuleId),
             problemCause = "This module requires symbol ${idSignature.render()}",
+            sourceCodeModuleId = userVisibleIrModulesSupport.sourceCodeModuleId,
             moduleIdComparator = userVisibleIrModulesSupport.moduleIdComparator
         )
     }
@@ -113,6 +114,7 @@ class SymbolTypeMismatch(
                 potentiallyConflictingDependencies = findPotentiallyConflictingIncomingDependencies(
                     problemModuleId = declaringModuleId,
                     allModules = allModules,
+                    sourceCodeModuleId = userVisibleIrModulesSupport.sourceCodeModuleId,
                 ),
                 moduleIdComparator = userVisibleIrModulesSupport.moduleIdComparator
             )
@@ -125,6 +127,7 @@ class SymbolTypeMismatch(
             problemCause = "This module contains ${
                 idSignature?.render()?.let { "symbol $it" } ?: "a symbol"
             } that is the cause of the conflict",
+            sourceCodeModuleId = userVisibleIrModulesSupport.sourceCodeModuleId,
             moduleIdComparator = userVisibleIrModulesSupport.moduleIdComparator
         )
     }
@@ -159,6 +162,7 @@ private fun StringBuilder.appendProjectDependencies(
     allModules: Map<ResolvedDependencyId, ResolvedDependency>,
     problemModuleIds: Set<ResolvedDependencyId>,
     problemCause: String,
+    sourceCodeModuleId: ResolvedDependencyId,
     moduleIdComparator: Comparator<ResolvedDependencyId>
 ) {
     append("\n\nProject dependencies:")
@@ -195,8 +199,7 @@ private fun StringBuilder.appendProjectDependencies(
             append('\n').append(data.regularLinePrefix)
             append(module.id)
 
-            val incomingDependencyId: ResolvedDependencyId = parentData?.incomingDependencyId
-                ?: ResolvedDependencyId.SOURCE_CODE_MODULE_ID
+            val incomingDependencyId: ResolvedDependencyId = parentData?.incomingDependencyId ?: sourceCodeModuleId
             val requestedVersion: ResolvedDependencyVersion = module.requestedVersionsByIncomingDependencies.getValue(incomingDependencyId)
             if (!requestedVersion.isEmpty() || !module.selectedVersion.isEmpty()) {
                 append(": ")
@@ -240,8 +243,7 @@ private fun StringBuilder.appendProjectDependencies(
     }
 
     // Find first-level dependencies. I.e. the modules that the source code module directly depends on.
-    val firstLevelDependencies: Collection<ResolvedDependency> =
-        incomingDependencyIdToDependencies.getValue(ResolvedDependencyId.SOURCE_CODE_MODULE_ID)
+    val firstLevelDependencies: Collection<ResolvedDependency> = incomingDependencyIdToDependencies.getValue(sourceCodeModuleId)
 
     renderModules(firstLevelDependencies, parentData = null)
 
@@ -257,9 +259,9 @@ private class Data(val parent: Data?, val incomingDependencyId: ResolvedDependen
         get() {
             return generateSequence(this) { it.parent }.map {
                 if (it === this) {
-                    if (it.isLast) "\u2514\u2500\u2500\u2500 " /* └─── */ else "\u251C\u2500\u2500\u2500 " /* ├─── */
+                    if (it.isLast) "\\--- " else "+--- "
                 } else {
-                    if (it.isLast) "     " else "\u2502    " /* │ */
+                    if (it.isLast) "     " else "|    "
                 }
             }.toList().asReversed().joinToString(separator = "")
         }
@@ -267,7 +269,7 @@ private class Data(val parent: Data?, val incomingDependencyId: ResolvedDependen
     val errorLinePrefix: String
         get() {
             return generateSequence(this) { it.parent }.map {
-                if (it.isLast) "     " else "\u2502    " /* │ */
+                if (it.isLast) "     " else "|    "
             }.toList().asReversed().joinToString(separator = "")
         }
 }
@@ -375,7 +377,8 @@ private fun findPotentiallyConflictingOutgoingDependencies(
  */
 private fun findPotentiallyConflictingIncomingDependencies(
     problemModuleId: ResolvedDependencyId,
-    allModules: Map<ResolvedDependencyId, ResolvedDependency>
+    allModules: Map<ResolvedDependencyId, ResolvedDependency>,
+    sourceCodeModuleId: ResolvedDependencyId
 ): Map<ResolvedDependencyId, PotentialConflictDescription> {
 
     val dependencyStatesMap: MutableMap<ResolvedDependencyId, MutableSet<DependencyState>> = mutableMapOf()
@@ -384,7 +387,7 @@ private fun findPotentiallyConflictingIncomingDependencies(
         val module = allModules.findMatchingModule(moduleId)
 
         module.requestedVersionsByIncomingDependencies.forEach { (incomingDependencyId, requestedVersion) ->
-            if (incomingDependencyId == ResolvedDependencyId.SOURCE_CODE_MODULE_ID) return@forEach
+            if (incomingDependencyId == sourceCodeModuleId) return@forEach
 
             val dependencyState: DependencyState = when {
                 aboveConflictingDependency -> {

@@ -304,4 +304,19 @@ object SourceElementPositioningStrategies {
         LightTreePositioningStrategies.INLINE_PARAMETER_MODIFIER,
         PositioningStrategies.INLINE_PARAMETER_MODIFIER
     )
+
+    val OPERATOR_MODIFIER = SourceElementPositioningStrategy(
+        LightTreePositioningStrategies.OPERATOR_MODIFIER,
+        PositioningStrategies.OPERATOR_MODIFIER
+    )
+
+    val NON_FINAL_MODIFIER_OR_NAME = SourceElementPositioningStrategy(
+        LightTreePositioningStrategies.NON_FINAL_MODIFIER_OR_NAME,
+        PositioningStrategies.NON_FINAL_MODIFIER_OR_NAME
+    )
+
+    val ENUM_MODIFIER = SourceElementPositioningStrategy(
+        LightTreePositioningStrategies.ENUM_MODIFIER,
+        PositioningStrategies.ENUM_MODIFIER
+    )
 }

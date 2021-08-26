@@ -148,7 +148,7 @@ extra["versions.kotlinx-collections-immutable-jvm"] = immutablesVersion
 extra["versions.ktor-network"] = "1.0.1"
 
 if (!project.hasProperty("versions.kotlin-native")) {
-    extra["versions.kotlin-native"] = "1.6.0-dev-1728"
+    extra["versions.kotlin-native"] = "1.6.0-dev-3399"
 }
 
 val useJvmFir by extra(project.kotlinBuildProperties.useFir)
@@ -298,6 +298,8 @@ extra["compilerArtifactsForIde"] = listOf(
     ":prepare:ide-plugin-dependencies:high-level-api-for-ide",
     ":prepare:ide-plugin-dependencies:high-level-api-fir-for-ide",
     ":prepare:ide-plugin-dependencies:high-level-api-fir-tests-for-ide",
+    ":prepare:ide-plugin-dependencies:analysis-api-providers-for-ide",
+    ":prepare:ide-plugin-dependencies:symbol-light-classes-for-ide",
     ":kotlin-script-runtime",
     ":kotlin-script-util",
     ":kotlin-scripting-common",
@@ -704,7 +706,7 @@ tasks {
         dependsOn("compiler:visualizer:test")
     }
 
-    register("scriptingTest") {
+    register("scriptingJvmTest") {
         dependsOn("dist")
         dependsOn(":kotlin-script-util:test")
         dependsOn(":kotlin-scripting-compiler:test")
@@ -723,6 +725,10 @@ tasks {
         dependsOn(":kotlin-main-kts-test:testWithIr")
         dependsOn(":kotlin-scripting-ide-services-test:test")
         dependsOn(":kotlin-scripting-ide-services-test:embeddableTest")
+    }
+
+    register("scriptingTest") {
+        dependsOn("scriptingJvmTest")
         dependsOn(":kotlin-scripting-js-test:test")
     }
 

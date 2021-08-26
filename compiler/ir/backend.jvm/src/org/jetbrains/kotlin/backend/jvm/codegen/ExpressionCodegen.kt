@@ -596,16 +596,10 @@ class ExpressionCodegen(
         val owner = typeMapper.mapClass(callee.constructedClass)
         val signature = methodSignatureMapper.mapSignatureSkipGeneric(callee)
 
-        closureReifiedMarkers[expression.symbol.owner.parentAsClass]?.let {
-            if (it.wereUsedReifiedParameters()) {
-                putNeedClassReificationMarker(mv)
-                propagateChildReifiedTypeParametersUsages(it)
-            }
-        }
-
         // IR constructors have no receiver and return the new instance, but on JVM they are void-returning
         // instance methods named <init>.
         markLineNumber(expression)
+        putNeedClassReificationMarker(callee.constructedClass)
         mv.anew(owner)
         mv.dup()
 
@@ -735,6 +729,9 @@ class ExpressionCodegen(
             assert(expression.type.isUnit())
             unitValue
         } else {
+            if (expression.symbol.owner.origin == IrDeclarationOrigin.FIELD_FOR_OBJECT_INSTANCE) {
+                putNeedClassReificationMarker(expression.symbol.owner.parentAsClass)
+            }
             mv.visitFieldInsn(if (isStatic) Opcodes.GETSTATIC else Opcodes.GETFIELD, ownerName, fieldName, fieldType.descriptor)
             MaterialValue(this, fieldType, callee.type)
         }
@@ -769,7 +766,7 @@ class ExpressionCodegen(
         val index = frameMap.getIndex(irSymbol)
         if (index >= 0)
             return index
-        throw AssertionError("Non-mapped local declaration: $irSymbol\n in ${irFunction.dump()}")
+        throw AssertionError("Non-mapped local declaration: ${irSymbol.owner.dump()}\n in ${irFunction.dump()}")
     }
 
     private fun handlePlusMinus(expression: IrSetValue, value: IrExpression?, isMinus: Boolean): Boolean {
@@ -912,6 +909,14 @@ class ExpressionCodegen(
             closureReifiedMarkers[declaration] = childCodegen.reifiedTypeParametersUsages
         }
         return unitValue
+    }
+
+    private fun putNeedClassReificationMarker(declaration: IrClass) {
+        val reifiedTypeParameters = closureReifiedMarkers[declaration] ?: return
+        if (reifiedTypeParameters.wereUsedReifiedParameters()) {
+            putNeedClassReificationMarker(mv)
+            propagateChildReifiedTypeParametersUsages(reifiedTypeParameters)
+        }
     }
 
     private fun generateGlobalReturnFlagIfPossible(expression: IrExpression, label: String) {
@@ -1159,6 +1164,11 @@ class ExpressionCodegen(
 
     override fun visitBreakContinue(jump: IrBreakContinue, data: BlockInfo): PromisedValue {
         jump.markLineNumber(startOffset = true)
+        // Make sure that the line number has an instruction so that the debugger can always
+        // break on the break/continue. As an example, unwindBlockStack could otherwise
+        // generate a new line number immediately which would lead to the line number for
+        // the break/continue being ignored.
+        mv.nop()
         val endLabel = Label()
         val stackElement = unwindBlockStack(endLabel, data) { it.loop == jump.loop }
         if (stackElement == null) {
@@ -1214,7 +1224,7 @@ class ExpressionCodegen(
             val afterStore = markNewLabel()
 
             val catchBody = clause.result
-            var catchBlockInfo = BlockInfo(data)
+            val catchBlockInfo = BlockInfo(data)
             catchBlockInfo.variables.add(VariableInfo(parameter, index, descriptorType, afterStore))
 
             val catchResult = catchBody.accept(this, catchBlockInfo)
@@ -1239,6 +1249,10 @@ class ExpressionCodegen(
             // Generate `try { ... } catch (e: Any?) { <finally>; throw e }` around every part of
             // the try-catch that is not a copy-pasted `finally` block.
             val defaultCatchStart = markNewLabel()
+            // Make sure the ASTORE generated below has the line number of the
+            // finally block and does not take over the line number of whatever
+            // was generated before.
+            tryInfo.onExit.markLineNumber(true)
             // While keeping this value on the stack should be enough, the bytecode validator will
             // complain if a catch block does not start with ASTORE.
             val savedException = frameMap.enterTemp(AsmTypes.JAVA_THROWABLE_TYPE)

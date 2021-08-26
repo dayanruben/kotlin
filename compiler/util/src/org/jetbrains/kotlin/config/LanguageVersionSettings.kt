@@ -220,11 +220,14 @@ enum class LanguageFeature(
     OptInContagiousSignatures(KOTLIN_1_6, kind = BUG_FIX),
     RepeatableAnnotations(KOTLIN_1_6),
     RepeatableAnnotationContainerConstraints(KOTLIN_1_6, kind = BUG_FIX),
+    UseBuilderInferenceOnlyIfNeeded(KOTLIN_1_6),
 
     // 1.7
 
     OptInRelease(KOTLIN_1_7),
     ProhibitNonExhaustiveWhenOnAlgebraicTypes(KOTLIN_1_7, kind = BUG_FIX),
+    UseBuilderInferenceWithoutAnnotation(KOTLIN_1_7),
+    ProhibitSmartcastsOnPropertyFromAlienBaseClass(KOTLIN_1_7, kind = BUG_FIX),
 
     // Temporarily disabled, see KT-27084/KT-22379
     SoundSmartcastFromLoopConditionForLoopAssignedVariables(sinceVersion = null, kind = BUG_FIX),
@@ -431,7 +434,7 @@ class LanguageVersionSettingsImpl @JvmOverloads constructor(
         }
     }
 
-    override fun isPreRelease(): Boolean = languageVersion.isPreRelease() ||
+    override fun isPreRelease(): Boolean = !languageVersion.isStable ||
             specificFeatures.any { (feature, state) ->
                 state == LanguageFeature.State.ENABLED && feature.forcesPreReleaseBinariesIfEnabled()
             }
@@ -440,12 +443,6 @@ class LanguageVersionSettingsImpl @JvmOverloads constructor(
         @JvmField
         val DEFAULT = LanguageVersionSettingsImpl(LanguageVersion.LATEST_STABLE, ApiVersion.LATEST_STABLE)
     }
-}
-
-fun LanguageVersion.isPreRelease(): Boolean {
-    if (!isStable) return true
-
-    return KotlinCompilerVersion.isPreRelease() && this == LanguageVersion.LATEST_STABLE
 }
 
 fun LanguageFeature.forcesPreReleaseBinariesIfEnabled(): Boolean {

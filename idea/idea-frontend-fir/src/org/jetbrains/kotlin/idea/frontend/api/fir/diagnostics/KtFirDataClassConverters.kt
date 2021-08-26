@@ -304,6 +304,15 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirErrors.UNRESOLVED_REFERENCE_WRONG_RECEIVER) { firDiagnostic ->
+        UnresolvedReferenceWrongReceiverImpl(
+            firDiagnostic.a.map { firBasedSymbol ->
+                firSymbolBuilder.buildSymbol(firBasedSymbol.fir)
+            },
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
     add(FirErrors.CREATING_AN_INSTANCE_OF_ABSTRACT_CLASS) { firDiagnostic ->
         CreatingAnInstanceOfAbstractClassImpl(
             firDiagnostic as FirPsiDiagnostic,
@@ -345,26 +354,8 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
-    add(FirErrors.SUPER_IS_NOT_AN_EXPRESSION) { firDiagnostic ->
-        SuperIsNotAnExpressionImpl(
-            firDiagnostic as FirPsiDiagnostic,
-            token,
-        )
-    }
-    add(FirErrors.SUPER_NOT_AVAILABLE) { firDiagnostic ->
-        SuperNotAvailableImpl(
-            firDiagnostic as FirPsiDiagnostic,
-            token,
-        )
-    }
-    add(FirErrors.ABSTRACT_SUPER_CALL) { firDiagnostic ->
-        AbstractSuperCallImpl(
-            firDiagnostic as FirPsiDiagnostic,
-            token,
-        )
-    }
-    add(FirErrors.INSTANCE_ACCESS_BEFORE_SUPER_CALL) { firDiagnostic ->
-        InstanceAccessBeforeSuperCallImpl(
+    add(FirJvmErrors.SUPER_CALL_WITH_DEFAULT_PARAMETERS) { firDiagnostic ->
+        SuperCallWithDefaultParametersImpl(
             firDiagnostic.a,
             firDiagnostic as FirPsiDiagnostic,
             token,
@@ -464,6 +455,24 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
     }
     add(FirErrors.SEALED_SUPERTYPE_IN_LOCAL_CLASS) { firDiagnostic ->
         SealedSupertypeInLocalClassImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.SEALED_INHERITOR_IN_DIFFERENT_PACKAGE) { firDiagnostic ->
+        SealedInheritorInDifferentPackageImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.SEALED_INHERITOR_IN_DIFFERENT_MODULE) { firDiagnostic ->
+        SealedInheritorInDifferentModuleImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.CLASS_INHERITS_JAVA_SEALED_CLASS) { firDiagnostic ->
+        ClassInheritsJavaSealedClassImpl(
             firDiagnostic as FirPsiDiagnostic,
             token,
         )
@@ -1099,6 +1108,13 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirErrors.INAPPLICABLE_OPERATOR_MODIFIER) { firDiagnostic ->
+        InapplicableOperatorModifierImpl(
+            firDiagnostic.a,
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
     add(FirErrors.INLINE_CLASS_NOT_TOP_LEVEL) { firDiagnostic ->
         InlineClassNotTopLevelImpl(
             firDiagnostic as FirPsiDiagnostic,
@@ -1328,6 +1344,30 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
     }
     add(FirErrors.SPREAD_OF_NULLABLE) { firDiagnostic ->
         SpreadOfNullableImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_FUNCTION.errorFactory) { firDiagnostic ->
+        AssigningSingleElementToVarargInNamedFormFunctionErrorImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_FUNCTION.warningFactory) { firDiagnostic ->
+        AssigningSingleElementToVarargInNamedFormFunctionWarningImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_ANNOTATION.errorFactory) { firDiagnostic ->
+        AssigningSingleElementToVarargInNamedFormAnnotationErrorImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_ANNOTATION.warningFactory) { firDiagnostic ->
+        AssigningSingleElementToVarargInNamedFormAnnotationWarningImpl(
             firDiagnostic as FirPsiDiagnostic,
             token,
         )
@@ -3412,6 +3452,188 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
         JavaTypeMismatchImpl(
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.b),
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.UPPER_BOUND_CANNOT_BE_ARRAY) { firDiagnostic ->
+        UpperBoundCannotBeArrayImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.STRICTFP_ON_CLASS) { firDiagnostic ->
+        StrictfpOnClassImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.VOLATILE_ON_VALUE) { firDiagnostic ->
+        VolatileOnValueImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.VOLATILE_ON_DELEGATE) { firDiagnostic ->
+        VolatileOnDelegateImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.SYNCHRONIZED_ON_ABSTRACT) { firDiagnostic ->
+        SynchronizedOnAbstractImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.SYNCHRONIZED_IN_INTERFACE) { firDiagnostic ->
+        SynchronizedInInterfaceImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.SYNCHRONIZED_ON_INLINE) { firDiagnostic ->
+        SynchronizedOnInlineImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.OVERLOADS_WITHOUT_DEFAULT_ARGUMENTS) { firDiagnostic ->
+        OverloadsWithoutDefaultArgumentsImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.OVERLOADS_ABSTRACT) { firDiagnostic ->
+        OverloadsAbstractImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.OVERLOADS_INTERFACE) { firDiagnostic ->
+        OverloadsInterfaceImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.OVERLOADS_LOCAL) { firDiagnostic ->
+        OverloadsLocalImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.OVERLOADS_ANNOTATION_CLASS_CONSTRUCTOR.errorFactory) { firDiagnostic ->
+        OverloadsAnnotationClassConstructorErrorImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.OVERLOADS_ANNOTATION_CLASS_CONSTRUCTOR.warningFactory) { firDiagnostic ->
+        OverloadsAnnotationClassConstructorWarningImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.OVERLOADS_PRIVATE) { firDiagnostic ->
+        OverloadsPrivateImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.DEPRECATED_JAVA_ANNOTATION) { firDiagnostic ->
+        DeprecatedJavaAnnotationImpl(
+            firDiagnostic.a,
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.JVM_PACKAGE_NAME_CANNOT_BE_EMPTY) { firDiagnostic ->
+        JvmPackageNameCannotBeEmptyImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.JVM_PACKAGE_NAME_MUST_BE_VALID_NAME) { firDiagnostic ->
+        JvmPackageNameMustBeValidNameImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.JVM_PACKAGE_NAME_NOT_SUPPORTED_IN_FILES_WITH_CLASSES) { firDiagnostic ->
+        JvmPackageNameNotSupportedInFilesWithClassesImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.LOCAL_JVM_RECORD) { firDiagnostic ->
+        LocalJvmRecordImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.NON_FINAL_JVM_RECORD) { firDiagnostic ->
+        NonFinalJvmRecordImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.ENUM_JVM_RECORD) { firDiagnostic ->
+        EnumJvmRecordImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.JVM_RECORD_WITHOUT_PRIMARY_CONSTRUCTOR_PARAMETERS) { firDiagnostic ->
+        JvmRecordWithoutPrimaryConstructorParametersImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.NON_DATA_CLASS_JVM_RECORD) { firDiagnostic ->
+        NonDataClassJvmRecordImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.JVM_RECORD_NOT_VAL_PARAMETER) { firDiagnostic ->
+        JvmRecordNotValParameterImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.JVM_RECORD_NOT_LAST_VARARG_PARAMETER) { firDiagnostic ->
+        JvmRecordNotLastVarargParameterImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.INNER_JVM_RECORD) { firDiagnostic ->
+        InnerJvmRecordImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.FIELD_IN_JVM_RECORD) { firDiagnostic ->
+        FieldInJvmRecordImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.DELEGATION_BY_IN_JVM_RECORD) { firDiagnostic ->
+        DelegationByInJvmRecordImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.JVM_RECORD_EXTENDS_CLASS) { firDiagnostic ->
+        JvmRecordExtendsClassImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.ILLEGAL_JAVA_LANG_RECORD_SUPERTYPE) { firDiagnostic ->
+        IllegalJavaLangRecordSupertypeImpl(
             firDiagnostic as FirPsiDiagnostic,
             token,
         )

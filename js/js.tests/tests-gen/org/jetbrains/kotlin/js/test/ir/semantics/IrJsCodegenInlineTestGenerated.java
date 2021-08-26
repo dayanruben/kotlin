@@ -1002,6 +1002,16 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
             runTest("compiler/testData/codegen/boxInline/capture/generics.kt");
         }
 
+        @TestMetadata("kt48230.kt")
+        public void testKt48230() throws Exception {
+            runTest("compiler/testData/codegen/boxInline/capture/kt48230.kt");
+        }
+
+        @TestMetadata("kt48230_2.kt")
+        public void testKt48230_2() throws Exception {
+            runTest("compiler/testData/codegen/boxInline/capture/kt48230_2.kt");
+        }
+
         @TestMetadata("simpleCapturingInClass.kt")
         public void testSimpleCapturingInClass() throws Exception {
             runTest("compiler/testData/codegen/boxInline/capture/simpleCapturingInClass.kt");
@@ -1356,6 +1366,11 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
                 runTest("compiler/testData/codegen/boxInline/defaultValues/lambdaInlining/checkStaticObjectClassIsPresent.kt");
             }
 
+            @TestMetadata("defaultAfterCapturing.kt")
+            public void testDefaultAfterCapturing() throws Exception {
+                runTest("compiler/testData/codegen/boxInline/defaultValues/lambdaInlining/defaultAfterCapturing.kt");
+            }
+
             @TestMetadata("defaultCallInDefaultLambda.kt")
             public void testDefaultCallInDefaultLambda() throws Exception {
                 runTest("compiler/testData/codegen/boxInline/defaultValues/lambdaInlining/defaultCallInDefaultLambda.kt");
@@ -1439,6 +1454,11 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
             @TestMetadata("receiverClashInClass2.kt")
             public void testReceiverClashInClass2() throws Exception {
                 runTest("compiler/testData/codegen/boxInline/defaultValues/lambdaInlining/receiverClashInClass2.kt");
+            }
+
+            @TestMetadata("reordering.kt")
+            public void testReordering() throws Exception {
+                runTest("compiler/testData/codegen/boxInline/defaultValues/lambdaInlining/reordering.kt");
             }
 
             @TestMetadata("simple.kt")
@@ -1541,6 +1561,11 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
                 @TestMetadata("constuctorReference.kt")
                 public void testConstuctorReference() throws Exception {
                     runTest("compiler/testData/codegen/boxInline/defaultValues/lambdaInlining/callableReferences/constuctorReference.kt");
+                }
+
+                @TestMetadata("defaultAfterBoundReference.kt")
+                public void testDefaultAfterBoundReference() throws Exception {
+                    runTest("compiler/testData/codegen/boxInline/defaultValues/lambdaInlining/callableReferences/defaultAfterBoundReference.kt");
                 }
 
                 @TestMetadata("differentInvokeSignature.kt")
@@ -3129,6 +3154,11 @@ public class IrJsCodegenInlineTestGenerated extends AbstractIrJsCodegenInlineTes
         @TestMetadata("nonCapturingObjectInLambda.kt")
         public void testNonCapturingObjectInLambda() throws Exception {
             runTest("compiler/testData/codegen/boxInline/reified/nonCapturingObjectInLambda.kt");
+        }
+
+        @TestMetadata("singletonLambda.kt")
+        public void testSingletonLambda() throws Exception {
+            runTest("compiler/testData/codegen/boxInline/reified/singletonLambda.kt");
         }
 
         @TestMetadata("compiler/testData/codegen/boxInline/reified/checkCast")

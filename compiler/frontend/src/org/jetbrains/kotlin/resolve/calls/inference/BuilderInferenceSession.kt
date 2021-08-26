@@ -339,6 +339,8 @@ class BuilderInferenceSession(
         val callSubstitutor = storage.buildResultingSubstitutor(commonSystem, transformTypeVariablesToErrorTypes = false)
 
         for (initialConstraint in storage.initialConstraints) {
+            if (initialConstraint.position is BuilderInferencePosition) continue
+
             val substitutedConstraint = initialConstraint.substitute(callSubstitutor)
             val (lower, upper) = substituteNotFixedVariables(
                 substitutedConstraint.a as KotlinType,
@@ -365,7 +367,7 @@ class BuilderInferenceSession(
             for ((variableConstructor, type) in storage.fixedTypeVariables) {
                 val typeVariable = storage.allTypeVariables.getValue(variableConstructor)
                 commonSystem.registerVariable(typeVariable)
-                commonSystem.addEqualityConstraint((typeVariable as NewTypeVariable).defaultType, type, CoroutinePosition)
+                commonSystem.addEqualityConstraint((typeVariable as NewTypeVariable).defaultType, type, BuilderInferencePosition)
             }
         }
     }

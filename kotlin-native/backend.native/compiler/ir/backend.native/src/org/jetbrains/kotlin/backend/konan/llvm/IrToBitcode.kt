@@ -70,6 +70,12 @@ internal val IrField.storageKind: FieldStorageKind get() {
     }
 }
 
+internal fun IrField.needsGCRegistration(context: Context) =
+        context.memoryModel == MemoryModel.EXPERIMENTAL && // only for the new MM
+                type.binaryTypeIsReference() && // only for references
+                (initializer?.expression !is IrConst<*>? || // which are initialized from heap object
+                        !isFinal) // or are not final
+
 internal fun IrClass.storageKind(context: Context): ObjectStorageKind = when {
     this.annotations.hasAnnotation(KonanFqNames.threadLocal) &&
             context.config.threadsAreAllowed -> ObjectStorageKind.THREAD_LOCAL
@@ -341,12 +347,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
         } else {
             null
         }
-        val needRegistration =
-                context.memoryModel == MemoryModel.EXPERIMENTAL && // only for the new MM
-                        irField.type.binaryTypeIsReference() && // only for references
-                        (initialValue != null || // which are initialized from heap object
-                                !irField.isFinal) // or are not final
-        if (needRegistration) {
+        if (irField.needsGCRegistration(context)) {
             call(context.llvm.initAndRegisterGlobalFunction, listOf(address, initialValue
                     ?: kNullObjHeaderPtr))
         } else if (initialValue != null) {
@@ -370,7 +371,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
                     using(parameterScope) usingParameterScope@{
                         using(VariableScope()) usingVariableScope@{
                             context.llvm.initializersGenerationState.topLevelFields
-                                    .filter { it.storageKind == FieldStorageKind.SHARED_FROZEN }
+                                    .filter { it.storageKind != FieldStorageKind.THREAD_LOCAL }
                                     .filterNot { it.shouldBeInitializedEagerly }
                                     .forEach { initGlobalField(it) }
                             ret(null)
@@ -386,16 +387,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
                     val parameterScope = ParameterScope(fileInitFunction, functionGenerationContext)
                     using(parameterScope) usingParameterScope@{
                         using(VariableScope()) usingVariableScope@{
-                            val bbInitGlobals = basicBlock("label_init_global", null, null)
-                            val bbInitThreadLocals = basicBlock("label_init_thread_local", null, null)
-                            condBr(param(0), bbInitGlobals, bbInitThreadLocals)
-                            positionAtEnd(bbInitGlobals)
-                            context.llvm.initializersGenerationState.topLevelFields
-                                    .filter { it.storageKind == FieldStorageKind.GLOBAL }
-                                    .filterNot { it.shouldBeInitializedEagerly }
-                                    .forEach { initGlobalField(it) }
-                            br(bbInitThreadLocals)
-                            positionAtEnd(bbInitThreadLocals)
+                            // TODO: remove unused parameter.
                             context.llvm.initializersGenerationState.topLevelFields
                                     .filter { it.storageKind == FieldStorageKind.THREAD_LOCAL }
                                     .filterNot { it.shouldBeInitializedEagerly }
@@ -2598,6 +2590,10 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
 
         setRuntimeConstGlobal("KonanNeedDebugInfo", Int32(if (context.shouldContainDebugInfo()) 1 else 0))
         setRuntimeConstGlobal("Kotlin_runtimeAssertsMode", Int32(context.config.runtimeAssertsMode.value))
+        val runtimeLogs = context.config.runtimeLogs?.let {
+            context.llvm.staticData.cStringLiteral(it)
+        } ?: NullPointer(int8Type)
+        setRuntimeConstGlobal("Kotlin_runtimeLogs", runtimeLogs)
     }
 
     // Globals set this way cannot be const, but are overridable when producing final executable.

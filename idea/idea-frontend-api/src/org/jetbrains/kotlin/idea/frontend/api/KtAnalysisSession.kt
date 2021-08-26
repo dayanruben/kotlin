@@ -6,10 +6,13 @@
 package org.jetbrains.kotlin.idea.frontend.api
 
 import org.jetbrains.kotlin.idea.frontend.api.components.*
-import org.jetbrains.kotlin.idea.frontend.api.symbols.*
+import org.jetbrains.kotlin.idea.frontend.api.symbols.KtSymbol
+import org.jetbrains.kotlin.idea.frontend.api.symbols.KtSymbolProvider
+import org.jetbrains.kotlin.idea.frontend.api.symbols.KtSymbolProviderMixIn
 import org.jetbrains.kotlin.idea.frontend.api.symbols.pointers.KtSymbolPointer
 import org.jetbrains.kotlin.idea.frontend.api.tokens.ValidityToken
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
 
 /**
  * The entry point into all frontend-related work. Has the following contracts:
@@ -32,10 +35,12 @@ public abstract class KtAnalysisSession(final override val token: ValidityToken)
     KtSymbolDeclarationOverridesProviderMixIn,
     KtExpressionTypeProviderMixIn,
     KtPsiTypeProviderMixIn,
+    KtJvmTypeMapperMixIn,
     KtTypeProviderMixIn,
     KtTypeInfoProviderMixIn,
     KtSymbolProviderMixIn,
     KtSymbolContainingDeclarationProviderMixIn,
+    KtSymbolInfoProviderMixIn,
     KtSubtypingComponentMixIn,
     KtExpressionInfoProviderMixIn,
     KtCompileTimeConstantProviderMixIn,
@@ -88,6 +93,9 @@ public abstract class KtAnalysisSession(final override val token: ValidityToken)
     internal val psiTypeProvider: KtPsiTypeProvider get() = psiTypeProviderImpl
     protected abstract val psiTypeProviderImpl: KtPsiTypeProvider
 
+    internal val jvmTypeMapper: KtJvmTypeMapper get() = jvmTypeMapperImpl
+    protected abstract val jvmTypeMapperImpl: KtJvmTypeMapper
+
     internal val typeProvider: KtTypeProvider get() = typeProviderImpl
     protected abstract val typeProviderImpl: KtTypeProvider
 
@@ -111,6 +119,9 @@ public abstract class KtAnalysisSession(final override val token: ValidityToken)
 
     internal val inheritorsProvider: KtInheritorsProvider get() = inheritorsProviderImpl
     protected abstract val inheritorsProviderImpl: KtInheritorsProvider
+
+    internal val symbolInfoProvider: KtSymbolInfoProvider get() = symbolInfoProviderImpl
+    protected abstract val symbolInfoProviderImpl: KtSymbolInfoProvider
 
     @PublishedApi
     internal val typesCreator: KtTypeCreator

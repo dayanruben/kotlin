@@ -373,6 +373,12 @@ object LightTreePositioningStrategies {
     val DATA_MODIFIER: LightTreePositioningStrategy =
         ModifierSetBasedLightTreePositioningStrategy(TokenSet.create(KtTokens.DATA_KEYWORD))
 
+    val OPERATOR_MODIFIER: LightTreePositioningStrategy =
+        ModifierSetBasedLightTreePositioningStrategy(TokenSet.create(KtTokens.OPERATOR_KEYWORD))
+
+    val ENUM_MODIFIER: LightTreePositioningStrategy =
+        ModifierSetBasedLightTreePositioningStrategy(TokenSet.create(KtTokens.ENUM_KEYWORD))
+
     val INLINE_PARAMETER_MODIFIER: LightTreePositioningStrategy =
         ModifierSetBasedLightTreePositioningStrategy(TokenSet.create(KtTokens.NOINLINE_KEYWORD, KtTokens.CROSSINLINE_KEYWORD))
 
@@ -930,6 +936,14 @@ object LightTreePositioningStrategies {
             }
         }
     }
+
+    val NON_FINAL_MODIFIER_OR_NAME: LightTreePositioningStrategy = ModifierSetBasedLightTreePositioningStrategy(
+        TokenSet.create(
+            KtTokens.ABSTRACT_KEYWORD,
+            KtTokens.OPEN_KEYWORD,
+            KtTokens.SEALED_KEYWORD
+        )
+    )
 }
 
 fun FirSourceElement.hasValOrVar(): Boolean =

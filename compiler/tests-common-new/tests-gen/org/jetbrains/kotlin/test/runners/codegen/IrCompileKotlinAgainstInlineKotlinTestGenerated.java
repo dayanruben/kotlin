@@ -1319,6 +1319,18 @@ public class IrCompileKotlinAgainstInlineKotlinTestGenerated extends AbstractIrC
         }
 
         @Test
+        @TestMetadata("kt48230.kt")
+        public void testKt48230() throws Exception {
+            runTest("compiler/testData/codegen/boxInline/capture/kt48230.kt");
+        }
+
+        @Test
+        @TestMetadata("kt48230_2.kt")
+        public void testKt48230_2() throws Exception {
+            runTest("compiler/testData/codegen/boxInline/capture/kt48230_2.kt");
+        }
+
+        @Test
         @TestMetadata("simpleCapturingInClass.kt")
         public void testSimpleCapturingInClass() throws Exception {
             runTest("compiler/testData/codegen/boxInline/capture/simpleCapturingInClass.kt");
@@ -1728,6 +1740,12 @@ public class IrCompileKotlinAgainstInlineKotlinTestGenerated extends AbstractIrC
             }
 
             @Test
+            @TestMetadata("defaultAfterCapturing.kt")
+            public void testDefaultAfterCapturing() throws Exception {
+                runTest("compiler/testData/codegen/boxInline/defaultValues/lambdaInlining/defaultAfterCapturing.kt");
+            }
+
+            @Test
             @TestMetadata("defaultCallInDefaultLambda.kt")
             public void testDefaultCallInDefaultLambda() throws Exception {
                 runTest("compiler/testData/codegen/boxInline/defaultValues/lambdaInlining/defaultCallInDefaultLambda.kt");
@@ -1839,6 +1857,12 @@ public class IrCompileKotlinAgainstInlineKotlinTestGenerated extends AbstractIrC
             @TestMetadata("receiverClashInClass2.kt")
             public void testReceiverClashInClass2() throws Exception {
                 runTest("compiler/testData/codegen/boxInline/defaultValues/lambdaInlining/receiverClashInClass2.kt");
+            }
+
+            @Test
+            @TestMetadata("reordering.kt")
+            public void testReordering() throws Exception {
+                runTest("compiler/testData/codegen/boxInline/defaultValues/lambdaInlining/reordering.kt");
             }
 
             @Test
@@ -1956,6 +1980,12 @@ public class IrCompileKotlinAgainstInlineKotlinTestGenerated extends AbstractIrC
                 @TestMetadata("constuctorReference.kt")
                 public void testConstuctorReference() throws Exception {
                     runTest("compiler/testData/codegen/boxInline/defaultValues/lambdaInlining/callableReferences/constuctorReference.kt");
+                }
+
+                @Test
+                @TestMetadata("defaultAfterBoundReference.kt")
+                public void testDefaultAfterBoundReference() throws Exception {
+                    runTest("compiler/testData/codegen/boxInline/defaultValues/lambdaInlining/callableReferences/defaultAfterBoundReference.kt");
                 }
 
                 @Test
@@ -3882,6 +3912,12 @@ public class IrCompileKotlinAgainstInlineKotlinTestGenerated extends AbstractIrC
         @TestMetadata("packages.kt")
         public void testPackages() throws Exception {
             runTest("compiler/testData/codegen/boxInline/reified/packages.kt");
+        }
+
+        @Test
+        @TestMetadata("singletonLambda.kt")
+        public void testSingletonLambda() throws Exception {
+            runTest("compiler/testData/codegen/boxInline/reified/singletonLambda.kt");
         }
 
         @Nested

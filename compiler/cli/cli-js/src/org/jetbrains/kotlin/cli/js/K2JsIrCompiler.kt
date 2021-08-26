@@ -38,6 +38,7 @@ import org.jetbrains.kotlin.incremental.js.IncrementalDataProvider
 import org.jetbrains.kotlin.incremental.js.IncrementalNextRoundChecker
 import org.jetbrains.kotlin.incremental.js.IncrementalResultsConsumer
 import org.jetbrains.kotlin.ir.backend.js.*
+import org.jetbrains.kotlin.ir.backend.js.ic.actualizeCacheForModule
 import org.jetbrains.kotlin.ir.backend.js.ic.buildCache
 import org.jetbrains.kotlin.ir.backend.js.ic.checkCaches
 import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
@@ -65,12 +66,15 @@ enum class ProduceKind {
 
 class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
 
-    override val performanceManager: CommonCompilerPerformanceManager =
+    override val defaultPerformanceManager: CommonCompilerPerformanceManager =
         object : CommonCompilerPerformanceManager("Kotlin to JS (IR) Compiler") {}
 
     override fun createArguments(): K2JSCompilerArguments {
         return K2JSCompilerArguments()
     }
+
+    @Suppress("UNUSED_PARAMETER")
+    private fun usePerFileInvalidator(configuration: CompilerConfiguration): Boolean = false
 
     override fun doExecute(
         arguments: K2JSCompilerArguments,
@@ -139,7 +143,7 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
 
         configurationJs.put(CLIConfigurationKeys.ALLOW_KOTLIN_PACKAGE, arguments.allowKotlinPackage)
 
-        if (!checkKotlinPackageUsage(environmentForJS, sourcesFiles)) return ExitCode.COMPILATION_ERROR
+        if (!checkKotlinPackageUsage(environmentForJS.configuration, sourcesFiles)) return ExitCode.COMPILATION_ERROR
 
         val outputFilePath = arguments.outputFile
         if (outputFilePath == null) {
@@ -201,8 +205,14 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
                 MainModule.Klib(includes)
             }
 
+            val perFileCache = usePerFileInvalidator(configuration)
+
             val start = System.currentTimeMillis()
-            if (buildCache(
+
+            val updated = if (perFileCache) {
+                actualizeCacheForModule(includes, outputFilePath, configuration, libraries, icCaches)
+            } else {
+                buildCache(
                     cachePath = outputFilePath,
                     project = projectJs,
                     mainModule = mainModule,
@@ -211,10 +221,13 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
                     friendDependencies = friendLibraries,
                     icCache = checkCaches(libraries, icCaches, skipLib = mainModule.libPath)
                 )
-            ) {
-                messageCollector.report(INFO, "IC cache building duration: ${System.currentTimeMillis() - start}ms")
+            }
+
+            val invalidationType = if (perFileCache) "per-file" else "per-module"
+            if (updated) {
+                messageCollector.report(INFO, "IC $invalidationType cache building duration: ${System.currentTimeMillis() - start}ms")
             } else {
-                messageCollector.report(INFO, "IC cache up-to-date check duration: ${System.currentTimeMillis() - start}ms")
+                messageCollector.report(INFO, "IC $invalidationType cache up-to-date check duration: ${System.currentTimeMillis() - start}ms")
             }
             return OK
         }

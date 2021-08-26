@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.backend.common.lower.createIrBuilder
 import org.jetbrains.kotlin.backend.konan.Context
 import org.jetbrains.kotlin.backend.konan.KonanFqNames
 import org.jetbrains.kotlin.backend.konan.llvm.FieldStorageKind
+import org.jetbrains.kotlin.backend.konan.llvm.needsGCRegistration
 import org.jetbrains.kotlin.backend.konan.llvm.storageKind
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.ir.IrStatement
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.ir.builders.declarations.buildFun
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.IrBlockBody
 import org.jetbrains.kotlin.ir.expressions.IrConst
+import org.jetbrains.kotlin.ir.expressions.IrConstKind
 import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
 import org.jetbrains.kotlin.ir.util.SYNTHETIC_OFFSET
 import org.jetbrains.kotlin.ir.util.hasAnnotation
@@ -52,25 +54,19 @@ internal class FileInitializersLowering(val context: Context) : FileLoweringPass
     override fun lower(irFile: IrFile) {
         var requireGlobalInitializer = false
         var requireThreadLocalInitializer = false
-        var kPropertiesField: IrField? = null
         for (declaration in irFile.declarations) {
             val irField = (declaration as? IrField) ?: (declaration as? IrProperty)?.backingField
-            if (irField == null || !irField.hasNonConstInitializer || irField.shouldBeInitializedEagerly) continue
-            when {
-                irField.origin == DECLARATION_ORIGIN_KPROPERTIES_FOR_DELEGATION -> {
-                    require(kPropertiesField == null) { "Expected at most one kProperties field" }
-                    kPropertiesField = irField
-                }
-                irField.storageKind == FieldStorageKind.SHARED_FROZEN -> requireGlobalInitializer = true
-                else -> requireThreadLocalInitializer = true // Either marked with thread local or only main thread visible.
+            if (irField == null || !irField.needsInitializationAtRuntime || irField.shouldBeInitializedEagerly) continue
+            if (irField.storageKind != FieldStorageKind.THREAD_LOCAL) {
+                requireGlobalInitializer = true
+            } else {
+                requireThreadLocalInitializer = true // Either marked with thread local or only main thread visible.
             }
         }
         // TODO: think about pure initializers.
         if (!requireGlobalInitializer && !requireThreadLocalInitializer) {
-            kPropertiesField?.let { transformKPropertiesInitializerToModuleInitializer(irFile, it) }
             return
         }
-        kPropertiesField?.let { requireGlobalInitializer = true }
 
         val globalInitFunction =
                 if (requireGlobalInitializer)
@@ -101,25 +97,6 @@ internal class FileInitializersLowering(val context: Context) : FileLoweringPass
         })
     }
 
-    private fun transformKPropertiesInitializerToModuleInitializer(irFile: IrFile, irField: IrField) {
-        val initializer = context.irFactory.buildFun {
-            startOffset = irField.startOffset
-            endOffset = irField.endOffset
-            origin = DECLARATION_ORIGIN_MODULE_GLOBAL_INITIALIZER
-            name = Name.identifier("\$kProperties_init")
-            visibility = DescriptorVisibilities.PRIVATE
-            returnType = context.irBuiltIns.unitType
-        }.apply {
-            val function = this
-            parent = irFile
-            body = context.createIrBuilder(symbol, startOffset, endOffset).irBlockBody {
-                +irSetField(null, irField, irField.initializer!!.expression.also { it.setDeclarationsParent(function) })
-            }
-        }
-        irField.initializer = null
-        irFile.declarations.add(initializer)
-    }
-
     private fun buildInitFileFunction(irFile: IrFile, name: String, origin: IrDeclarationOrigin) = context.irFactory.buildFun {
         startOffset = SYNTHETIC_OFFSET
         endOffset = SYNTHETIC_OFFSET
@@ -133,6 +110,14 @@ internal class FileInitializersLowering(val context: Context) : FileLoweringPass
         irFile.declarations.add(0, this)
     }
 
+    private val IrField.needsInitializationAtRuntime: Boolean
+        get() = hasNonConstInitializer || needsGCRegistration(context)
+
     private val IrField.hasNonConstInitializer: Boolean
-        get() = initializer?.expression.let { it != null && it !is IrConst<*> }
+        get() {
+            val it = initializer?.expression ?: return false
+            if (it !is IrConst<*>) return true
+            if (it.kind != IrConstKind.Null && it.type != this.type) return true // Might be boxed, so codegen won't treat it as const.
+            return false
+        }
 }
