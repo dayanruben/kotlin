@@ -1057,6 +1057,10 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = TypeParametersInObject::class
     }
 
+    abstract class TypeParametersInAnonymousObject : KtFirDiagnostic<PsiElement>() {
+        override val diagnosticClass get() = TypeParametersInAnonymousObject::class
+    }
+
     abstract class IllegalProjectionUsage : KtFirDiagnostic<PsiElement>() {
         override val diagnosticClass get() = IllegalProjectionUsage::class
     }
@@ -1680,6 +1684,14 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
 
     abstract class AbstractPropertyInPrimaryConstructorParameters : KtFirDiagnostic<KtModifierListOwner>() {
         override val diagnosticClass get() = AbstractPropertyInPrimaryConstructorParameters::class
+    }
+
+    abstract class LocalVariableWithTypeParametersWarning : KtFirDiagnostic<KtProperty>() {
+        override val diagnosticClass get() = LocalVariableWithTypeParametersWarning::class
+    }
+
+    abstract class LocalVariableWithTypeParameters : KtFirDiagnostic<KtProperty>() {
+        override val diagnosticClass get() = LocalVariableWithTypeParameters::class
     }
 
     abstract class ExpectedDeclarationWithBody : KtFirDiagnostic<KtDeclaration>() {

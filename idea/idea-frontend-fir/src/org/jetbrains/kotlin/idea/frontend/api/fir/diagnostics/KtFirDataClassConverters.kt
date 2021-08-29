@@ -1486,6 +1486,12 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirErrors.TYPE_PARAMETERS_IN_ANONYMOUS_OBJECT) { firDiagnostic ->
+        TypeParametersInAnonymousObjectImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
     add(FirErrors.ILLEGAL_PROJECTION_USAGE) { firDiagnostic ->
         IllegalProjectionUsageImpl(
             firDiagnostic as FirPsiDiagnostic,
@@ -2375,6 +2381,18 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
     }
     add(FirErrors.ABSTRACT_PROPERTY_IN_PRIMARY_CONSTRUCTOR_PARAMETERS) { firDiagnostic ->
         AbstractPropertyInPrimaryConstructorParametersImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.LOCAL_VARIABLE_WITH_TYPE_PARAMETERS_WARNING) { firDiagnostic ->
+        LocalVariableWithTypeParametersWarningImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.LOCAL_VARIABLE_WITH_TYPE_PARAMETERS) { firDiagnostic ->
+        LocalVariableWithTypeParametersImpl(
             firDiagnostic as FirPsiDiagnostic,
             token,
         )

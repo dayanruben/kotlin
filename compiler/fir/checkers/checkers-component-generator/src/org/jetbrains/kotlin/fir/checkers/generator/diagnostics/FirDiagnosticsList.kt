@@ -499,7 +499,8 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val OUTER_CLASS_ARGUMENTS_REQUIRED by error<PsiElement> {
             parameter<FirRegularClassSymbol>("outer")
         }
-        val TYPE_PARAMETERS_IN_OBJECT by error<PsiElement>()
+        val TYPE_PARAMETERS_IN_OBJECT by error<PsiElement>(PositioningStrategy.TYPE_PARAMETERS_LIST)
+        val TYPE_PARAMETERS_IN_ANONYMOUS_OBJECT by error<PsiElement>(PositioningStrategy.TYPE_PARAMETERS_LIST)
         val ILLEGAL_PROJECTION_USAGE by error<PsiElement>()
         val TYPE_PARAMETERS_IN_ENUM by error<PsiElement>()
         val CONFLICTING_PROJECTION by error<KtTypeProjection>(PositioningStrategy.VARIANCE_MODIFIER) {
@@ -865,6 +866,8 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         }
         val ACCESSOR_FOR_DELEGATED_PROPERTY by error<KtPropertyAccessor>()
         val ABSTRACT_PROPERTY_IN_PRIMARY_CONSTRUCTOR_PARAMETERS by error<KtModifierListOwner>(PositioningStrategy.ABSTRACT_MODIFIER)
+        val LOCAL_VARIABLE_WITH_TYPE_PARAMETERS_WARNING by warning<KtProperty>(PositioningStrategy.TYPE_PARAMETERS_LIST)
+        val LOCAL_VARIABLE_WITH_TYPE_PARAMETERS by error<KtProperty>(PositioningStrategy.TYPE_PARAMETERS_LIST)
     }
 
     val MPP_PROJECTS by object : DiagnosticGroup("Multi-platform projects") {

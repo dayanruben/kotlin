@@ -8,6 +8,16 @@
 #include "ObjectTestSupport.hpp"
 #include "Types.h"
 
+using kotlin::test_support::internal::createCleanerWorkerMock;
+using kotlin::test_support::internal::shutdownCleanerWorkerMock;
+using kotlin::test_support::internal::reportUnhandledExceptionMock;
+using kotlin::test_support::internal::Kotlin_runUnhandledExceptionHookMock;
+
+testing::MockFunction<KInt()>* kotlin::test_support::internal::createCleanerWorkerMock = nullptr;
+testing::MockFunction<void(KInt, bool)>* kotlin::test_support::internal::shutdownCleanerWorkerMock = nullptr;
+testing::MockFunction<void(KRef)>* kotlin::test_support::internal::reportUnhandledExceptionMock = nullptr;
+testing::MockFunction<void(KRef)>* kotlin::test_support::internal::Kotlin_runUnhandledExceptionHookMock = nullptr;
+
 namespace {
 
 struct EmptyPayload {
@@ -48,11 +58,6 @@ struct KBox {
     ObjHeader header;
     const T value;
 };
-
-testing::StrictMock<testing::MockFunction<KInt()>>* createCleanerWorkerMock = nullptr;
-testing::StrictMock<testing::MockFunction<void(KInt, bool)>>* shutdownCleanerWorkerMock = nullptr;
-testing::StrictMock<testing::MockFunction<void(KRef)>>* reportUnhandledExceptionMock = nullptr;
-testing::StrictMock<testing::MockFunction<void(KRef)>>* Kotlin_runUnhandledExceptionHookMock = nullptr;
 
 } // namespace
 
@@ -267,6 +272,46 @@ extern KBox<KLong> LONG_CACHE[] = {
         {{}, 1},
 };
 
+OBJ_GETTER(Kotlin_boxByte, KByte value) {
+    throw std::runtime_error("Not implemented for tests");
+}
+
+OBJ_GETTER(Kotlin_boxShort, KShort value) {
+    throw std::runtime_error("Not implemented for tests");
+}
+
+OBJ_GETTER(Kotlin_boxInt, KInt value) {
+    throw std::runtime_error("Not implemented for tests");
+}
+
+OBJ_GETTER(Kotlin_boxLong, KLong value) {
+    throw std::runtime_error("Not implemented for tests");
+}
+
+OBJ_GETTER(Kotlin_boxUByte, KUByte value) {
+    throw std::runtime_error("Not implemented for tests");
+}
+
+OBJ_GETTER(Kotlin_boxUShort, KUShort value) {
+    throw std::runtime_error("Not implemented for tests");
+}
+
+OBJ_GETTER(Kotlin_boxUInt, KUInt value) {
+    throw std::runtime_error("Not implemented for tests");
+}
+
+OBJ_GETTER(Kotlin_boxULong, KULong value) {
+    throw std::runtime_error("Not implemented for tests");
+}
+
+OBJ_GETTER(Kotlin_boxFloat, KFloat value) {
+    throw std::runtime_error("Not implemented for tests");
+}
+
+OBJ_GETTER(Kotlin_boxDouble, KDouble value) {
+    throw std::runtime_error("Not implemented for tests");
+}
+
 RUNTIME_NORETURN OBJ_GETTER(Kotlin_Throwable_getMessage, KRef throwable) {
     throw std::runtime_error("Not implemented for tests");
 }
@@ -285,18 +330,3 @@ KInt Kotlin_CleanerImpl_createCleanerWorker() {
 
 } // extern "C"
 
-ScopedStrictMockFunction<KInt()> ScopedCreateCleanerWorkerMock() {
-    return ScopedStrictMockFunction<KInt()>(&createCleanerWorkerMock);
-}
-
-ScopedStrictMockFunction<void(KInt, bool)> ScopedShutdownCleanerWorkerMock() {
-    return ScopedStrictMockFunction<void(KInt, bool)>(&shutdownCleanerWorkerMock);
-}
-
-ScopedStrictMockFunction<void(KRef)> ScopedReportUnhandledExceptionMock() {
-    return ScopedStrictMockFunction<void(KRef)>(&reportUnhandledExceptionMock);
-}
-
-ScopedStrictMockFunction<void(KRef)> ScopedKotlin_runUnhandledExceptionHookMock() {
-    return ScopedStrictMockFunction<void(KRef)>(&Kotlin_runUnhandledExceptionHookMock);
-}

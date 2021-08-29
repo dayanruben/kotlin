@@ -296,6 +296,12 @@ public class BytecodeTextTestGenerated extends AbstractBytecodeTextTest {
     }
 
     @Test
+    @TestMetadata("kt48367.kt")
+    public void testKt48367() throws Exception {
+        runTest("compiler/testData/codegen/bytecodeText/kt48367.kt");
+    }
+
+    @Test
     @TestMetadata("kt5016.kt")
     public void testKt5016() throws Exception {
         runTest("compiler/testData/codegen/bytecodeText/kt5016.kt");
@@ -1568,6 +1574,12 @@ public class BytecodeTextTestGenerated extends AbstractBytecodeTextTest {
         @TestMetadata("inlinePrimaryDefaults.kt")
         public void testInlinePrimaryDefaults() throws Exception {
             runTest("compiler/testData/codegen/bytecodeText/constructors/inlinePrimaryDefaults.kt");
+        }
+
+        @Test
+        @TestMetadata("innerClassConstructor.kt")
+        public void testInnerClassConstructor() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeText/constructors/innerClassConstructor.kt");
         }
 
         @Test
@@ -3796,6 +3808,12 @@ public class BytecodeTextTestGenerated extends AbstractBytecodeTextTest {
         @TestMetadata("javaPrimitiveType.kt")
         public void testJavaPrimitiveType() throws Exception {
             runTest("compiler/testData/codegen/bytecodeText/intrinsics/javaPrimitiveType.kt");
+        }
+
+        @Test
+        @TestMetadata("postfixIncrDecr.kt")
+        public void testPostfixIncrDecr() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeText/intrinsics/postfixIncrDecr.kt");
         }
     }
 

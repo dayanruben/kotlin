@@ -55,7 +55,7 @@ fun ConeDefinitelyNotNullType.Companion.create(
     return when {
         original is ConeDefinitelyNotNullType -> original
         typeContext
-            .newBaseTypeCheckerContext(errorTypesEqualToAnything = false, stubTypesEqualToAnything = false)
+            .newTypeCheckerState(errorTypesEqualToAnything = false, stubTypesEqualToAnything = false)
             .makesSenseToBeDefinitelyNotNull(original, useCorrectedNullabilityForFlexibleTypeParameters) ->
 
             ConeDefinitelyNotNullType(
@@ -156,7 +156,8 @@ fun <T : ConeKotlinType> T.withNullability(
             ConeNullability.UNKNOWN -> this // TODO: is that correct?
             ConeNullability.NOT_NULL -> this
         }
-        is ConeStubType -> ConeStubType(variable, nullability)
+        is ConeStubTypeForBuilderInference -> ConeStubTypeForBuilderInference(variable, nullability)
+        is ConeStubTypeForTypeVariableInSubtyping -> ConeStubTypeForTypeVariableInSubtyping(variable, nullability)
         is ConeDefinitelyNotNullType -> when (nullability) {
             ConeNullability.NOT_NULL -> this
             ConeNullability.NULLABLE -> original.withNullability(nullability, typeContext)

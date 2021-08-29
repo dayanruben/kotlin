@@ -990,6 +990,11 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             runTest("compiler/testData/codegen/box/boxingOptimization/kt46859.kt");
         }
 
+        @TestMetadata("kt48394.kt")
+        public void testKt48394() throws Exception {
+            runTest("compiler/testData/codegen/box/boxingOptimization/kt48394.kt");
+        }
+
         @TestMetadata("kt5493.kt")
         public void testKt5493() throws Exception {
             runTest("compiler/testData/codegen/box/boxingOptimization/kt5493.kt");
@@ -6135,6 +6140,11 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             runTest("compiler/testData/codegen/box/coroutines/suspendFunctionAsSupertype.kt");
         }
 
+        @TestMetadata("suspendFunctionAsSupertypeCall.kt")
+        public void testSuspendFunctionAsSupertypeCall() throws Exception {
+            runTest("compiler/testData/codegen/box/coroutines/suspendFunctionAsSupertypeCall.kt");
+        }
+
         @TestMetadata("suspendFunctionMethodReference.kt")
         public void testSuspendFunctionMethodReference() throws Exception {
             runTest("compiler/testData/codegen/box/coroutines/suspendFunctionMethodReference.kt");
@@ -6218,6 +6228,11 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
         @TestMetadata("varValueConflictsWithTableSameSort.kt")
         public void testVarValueConflictsWithTableSameSort() throws Exception {
             runTest("compiler/testData/codegen/box/coroutines/varValueConflictsWithTableSameSort.kt");
+        }
+
+        @TestMetadata("varargCallFromSuspend.kt")
+        public void testVarargCallFromSuspend() throws Exception {
+            runTest("compiler/testData/codegen/box/coroutines/varargCallFromSuspend.kt");
         }
 
         @TestMetadata("compiler/testData/codegen/box/coroutines/bridges")
@@ -19708,6 +19723,11 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/ranges/contains"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JS, true);
             }
 
+            @TestMetadata("charInCharRangeWithPossibleOverflow.kt")
+            public void testCharInCharRangeWithPossibleOverflow() throws Exception {
+                runTest("compiler/testData/codegen/box/ranges/contains/charInCharRangeWithPossibleOverflow.kt");
+            }
+
             @TestMetadata("comparisonWithRangeBoundEliminated.kt")
             public void testComparisonWithRangeBoundEliminated() throws Exception {
                 runTest("compiler/testData/codegen/box/ranges/contains/comparisonWithRangeBoundEliminated.kt");
@@ -19888,9 +19908,29 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
                 runTest("compiler/testData/codegen/box/ranges/contains/inUntilMinValueNonConst.kt");
             }
 
+            @TestMetadata("intInByteRangeWithPossibleOverflow.kt")
+            public void testIntInByteRangeWithPossibleOverflow() throws Exception {
+                runTest("compiler/testData/codegen/box/ranges/contains/intInByteRangeWithPossibleOverflow.kt");
+            }
+
+            @TestMetadata("intInIntRangeWithPossibleOverflow.kt")
+            public void testIntInIntRangeWithPossibleOverflow() throws Exception {
+                runTest("compiler/testData/codegen/box/ranges/contains/intInIntRangeWithPossibleOverflow.kt");
+            }
+
+            @TestMetadata("intInShortRangeWithPossibleOverflow.kt")
+            public void testIntInShortRangeWithPossibleOverflow() throws Exception {
+                runTest("compiler/testData/codegen/box/ranges/contains/intInShortRangeWithPossibleOverflow.kt");
+            }
+
             @TestMetadata("kt20106.kt")
             public void testKt20106() throws Exception {
                 runTest("compiler/testData/codegen/box/ranges/contains/kt20106.kt");
+            }
+
+            @TestMetadata("longInLongRangeWithPossibleOverflow.kt")
+            public void testLongInLongRangeWithPossibleOverflow() throws Exception {
+                runTest("compiler/testData/codegen/box/ranges/contains/longInLongRangeWithPossibleOverflow.kt");
             }
 
             @TestMetadata("nullableInPrimitiveRange.kt")
@@ -19906,6 +19946,26 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             @TestMetadata("smartCastOnBothEnds.kt")
             public void testSmartCastOnBothEnds() throws Exception {
                 runTest("compiler/testData/codegen/box/ranges/contains/smartCastOnBothEnds.kt");
+            }
+
+            @TestMetadata("uintInUByteRangeWithPossibleOverflow.kt")
+            public void testUintInUByteRangeWithPossibleOverflow() throws Exception {
+                runTest("compiler/testData/codegen/box/ranges/contains/uintInUByteRangeWithPossibleOverflow.kt");
+            }
+
+            @TestMetadata("uintInUIntRangeWithPossibleOverflow.kt")
+            public void testUintInUIntRangeWithPossibleOverflow() throws Exception {
+                runTest("compiler/testData/codegen/box/ranges/contains/uintInUIntRangeWithPossibleOverflow.kt");
+            }
+
+            @TestMetadata("uintInUShortRangeWithPossibleOverflow.kt")
+            public void testUintInUShortRangeWithPossibleOverflow() throws Exception {
+                runTest("compiler/testData/codegen/box/ranges/contains/uintInUShortRangeWithPossibleOverflow.kt");
+            }
+
+            @TestMetadata("ulongInULongRangeWithPossibleOverflow.kt")
+            public void testUlongInULongRangeWithPossibleOverflow() throws Exception {
+                runTest("compiler/testData/codegen/box/ranges/contains/ulongInULongRangeWithPossibleOverflow.kt");
             }
 
             @TestMetadata("userDefinedContainsExtension.kt")

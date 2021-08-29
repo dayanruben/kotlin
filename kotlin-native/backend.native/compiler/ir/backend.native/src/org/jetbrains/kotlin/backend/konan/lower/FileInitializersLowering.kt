@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.backend.konan.lower
 
 import org.jetbrains.kotlin.backend.common.FileLoweringPass
+import org.jetbrains.kotlin.backend.common.ir.simpleFunctions
 import org.jetbrains.kotlin.backend.common.lower.createIrBuilder
 import org.jetbrains.kotlin.backend.konan.Context
 import org.jetbrains.kotlin.backend.konan.KonanFqNames
@@ -41,7 +42,7 @@ internal val IrFunction.isFileInitializer: Boolean
             || origin == DECLARATION_ORIGIN_FILE_STANDALONE_THREAD_LOCAL_INITIALIZER
 
 internal fun IrBuilderWithScope.irCallFileInitializer(initializer: IrFunctionSymbol) =
-        irCall(initializer).apply { putValueArgument(0, irFalse()) }
+        irCall(initializer)
 
 internal val IrField.shouldBeInitializedEagerly: Boolean
     get() {
@@ -81,20 +82,16 @@ internal class FileInitializersLowering(val context: Context) : FileLoweringPass
                     )
                 else null
 
-        irFile.transformChildrenVoid(object: IrElementTransformerVoid() {
-            override fun visitFunction(declaration: IrFunction): IrStatement {
-                declaration.transformChildrenVoid(this)
-                val body = declaration.body ?: return declaration
-                val statements = (body as IrBlockBody).statements
-                context.createIrBuilder(declaration.symbol, SYNTHETIC_OFFSET, SYNTHETIC_OFFSET).run {
-                    // The order of calling initializers: first global, then thread-local.
-                    // It is ok for a thread local top level property to reference a global, but not vice versa.
-                    threadLocalInitFunction?.let { statements.add(0, irCallFileInitializer(it.symbol)) }
-                    globalInitFunction?.let { statements.add(0, irCallFileInitializer(it.symbol)) }
-                }
-                return declaration
+        irFile.simpleFunctions().forEach {
+            val body = it.body ?: return@forEach
+            val statements = (body as IrBlockBody).statements
+            context.createIrBuilder(it.symbol, SYNTHETIC_OFFSET, SYNTHETIC_OFFSET).run {
+                // The order of calling initializers: first global, then thread-local.
+                // It is ok for a thread local top level property to reference a global, but not vice versa.
+                threadLocalInitFunction?.let { statements.add(0, irCallFileInitializer(it.symbol)) }
+                globalInitFunction?.let { statements.add(0, irCallFileInitializer(it.symbol)) }
             }
-        })
+        }
     }
 
     private fun buildInitFileFunction(irFile: IrFile, name: String, origin: IrDeclarationOrigin) = context.irFactory.buildFun {
@@ -106,7 +103,6 @@ internal class FileInitializersLowering(val context: Context) : FileLoweringPass
         returnType = context.irBuiltIns.unitType
     }.apply {
         parent = irFile
-        addValueParameter("isMainThread", context.irBuiltIns.booleanType)
         irFile.declarations.add(0, this)
     }
 

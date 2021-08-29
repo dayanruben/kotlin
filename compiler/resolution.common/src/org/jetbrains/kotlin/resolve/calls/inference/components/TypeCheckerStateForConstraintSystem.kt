@@ -5,23 +5,21 @@
 
 package org.jetbrains.kotlin.resolve.calls.inference.components
 
-import org.jetbrains.kotlin.types.AbstractNullabilityChecker
-import org.jetbrains.kotlin.types.AbstractTypeChecker
-import org.jetbrains.kotlin.types.AbstractTypeCheckerContext
+import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.types.model.*
 
-abstract class AbstractTypeCheckerContextForConstraintSystem(override val typeSystemContext: TypeSystemInferenceExtensionContext) :
-    AbstractTypeCheckerContext() {
-
-    override val KotlinTypeMarker.isAllowedTypeVariable: Boolean
-        get() = false
-
-    override val isErrorTypeEqualsToAnything: Boolean
-        get() = true
-
-    override val isStubTypeEqualsToAnything: Boolean
-        get() = true
-
+abstract class TypeCheckerStateForConstraintSystem(
+    val extensionTypeContext: TypeSystemInferenceExtensionContext,
+    kotlinTypePreparator: AbstractTypePreparator,
+    kotlinTypeRefiner: AbstractTypeRefiner
+) : TypeCheckerState(
+    isErrorTypeEqualsToAnything = true,
+    isStubTypeEqualsToAnything = true,
+    allowedTypeVariable = false,
+    typeSystemContext = extensionTypeContext,
+    kotlinTypePreparator,
+    kotlinTypeRefiner
+) {
     abstract val isInferenceCompatibilityEnabled: Boolean
 
     abstract fun isMyTypeVariable(type: SimpleTypeMarker): Boolean
@@ -38,7 +36,7 @@ abstract class AbstractTypeCheckerContextForConstraintSystem(override val typeSy
     abstract fun addEqualityConstraint(typeVariable: TypeConstructorMarker, type: KotlinTypeMarker)
 
     override fun getLowerCapturedTypePolicy(subType: SimpleTypeMarker, superType: CapturedTypeMarker): LowerCapturedTypePolicy =
-        with(typeSystemContext) {
+        with(extensionTypeContext) {
             return when {
                 isMyTypeVariable(subType) -> {
                     val projection = superType.typeConstructorProjection()
@@ -73,10 +71,10 @@ abstract class AbstractTypeCheckerContextForConstraintSystem(override val typeSy
         // we should strip annotation's because we have incorporation operation and they should be not affected
         val mySubType =
             if (hasExact) extractTypeForProjectedType(subType, out = true)
-                ?: with(typeSystemContext) { subType.removeExactAnnotation() } else subType
+                ?: with(extensionTypeContext) { subType.removeExactAnnotation() } else subType
         val mySuperType =
             if (hasExact) extractTypeForProjectedType(superType, out = false)
-                ?: with(typeSystemContext) { superType.removeExactAnnotation() } else superType
+                ?: with(extensionTypeContext) { superType.removeExactAnnotation() } else superType
 
         val result = internalAddSubtypeConstraint(mySubType, mySuperType, isFromNullabilityConstraint)
         if (!hasExact) return result
@@ -87,7 +85,7 @@ abstract class AbstractTypeCheckerContextForConstraintSystem(override val typeSy
         return (result ?: true) && (result2 ?: true)
     }
 
-    private fun extractTypeForProjectedType(type: KotlinTypeMarker, out: Boolean): KotlinTypeMarker? = with(typeSystemContext) {
+    private fun extractTypeForProjectedType(type: KotlinTypeMarker, out: Boolean): KotlinTypeMarker? = with(extensionTypeContext) {
         val typeMarker = type.asSimpleType()?.asCapturedType() ?: return null
 
         val projection = typeMarker.typeConstructorProjection()
@@ -99,10 +97,10 @@ abstract class AbstractTypeCheckerContextForConstraintSystem(override val typeSy
     }
 
     private fun KotlinTypeMarker.isTypeVariableWithExact() =
-        with(typeSystemContext) { hasExactAnnotation() } && anyBound(this@AbstractTypeCheckerContextForConstraintSystem::isMyTypeVariable)
+        with(extensionTypeContext) { hasExactAnnotation() } && anyBound(this@TypeCheckerStateForConstraintSystem::isMyTypeVariable)
 
     private fun KotlinTypeMarker.isTypeVariableWithNoInfer() =
-        with(typeSystemContext) { hasNoInferAnnotation() } && anyBound(this@AbstractTypeCheckerContextForConstraintSystem::isMyTypeVariable)
+        with(extensionTypeContext) { hasNoInferAnnotation() } && anyBound(this@TypeCheckerStateForConstraintSystem::isMyTypeVariable)
 
     private fun internalAddSubtypeConstraint(
         subType: KotlinTypeMarker,
@@ -130,7 +128,7 @@ abstract class AbstractTypeCheckerContextForConstraintSystem(override val typeSy
 
     // extract type variable only from type like Captured(out T)
     private fun extractTypeVariableForSubtype(subType: KotlinTypeMarker, superType: KotlinTypeMarker): KotlinTypeMarker? =
-        with(typeSystemContext) {
+        with(extensionTypeContext) {
 
             val typeMarker = subType.asSimpleType()?.asCapturedType() ?: return null
 
@@ -198,7 +196,7 @@ abstract class AbstractTypeCheckerContextForConstraintSystem(override val typeSy
         typeVariable: KotlinTypeMarker,
         subType: KotlinTypeMarker,
         isFromNullabilityConstraint: Boolean = false
-    ): Boolean = with(typeSystemContext) {
+    ): Boolean = with(extensionTypeContext) {
         val lowerConstraint = when (typeVariable) {
             is SimpleTypeMarker ->
                 /*
@@ -265,7 +263,7 @@ abstract class AbstractTypeCheckerContextForConstraintSystem(override val typeSy
      * T? <: Foo <=> T <: Foo && Nothing? <: Foo
      * T  <: Foo -- leave as is
      */
-    private fun simplifyUpperConstraint(typeVariable: KotlinTypeMarker, superType: KotlinTypeMarker): Boolean = with(typeSystemContext) {
+    private fun simplifyUpperConstraint(typeVariable: KotlinTypeMarker, superType: KotlinTypeMarker): Boolean = with(extensionTypeContext) {
         val typeVariableLowerBound = typeVariable.lowerBoundIfFlexible()
         val simplifiedSuperType = if (typeVariableLowerBound.isDefinitelyNotNullType()) {
             superType.withNullability(true)
@@ -285,7 +283,7 @@ abstract class AbstractTypeCheckerContextForConstraintSystem(override val typeSy
     }
 
     private fun simplifyConstraintForPossibleIntersectionSubType(subType: KotlinTypeMarker, superType: KotlinTypeMarker): Boolean? =
-        with(typeSystemContext) {
+        with(extensionTypeContext) {
             @Suppress("NAME_SHADOWING")
             val subType = subType.lowerBoundIfFlexible()
 
@@ -333,7 +331,7 @@ abstract class AbstractTypeCheckerContextForConstraintSystem(override val typeSy
         }
 
     private fun isSubtypeOfByTypeChecker(subType: KotlinTypeMarker, superType: KotlinTypeMarker) =
-        AbstractTypeChecker.isSubtypeOf(this as AbstractTypeCheckerContext, subType, superType)
+        AbstractTypeChecker.isSubtypeOf(this as TypeCheckerState, subType, superType)
 
     private fun assertInputTypes(subType: KotlinTypeMarker, superType: KotlinTypeMarker) = with(typeSystemContext) {
         if (!AbstractTypeChecker.RUN_SLOW_ASSERTIONS) return
