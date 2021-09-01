@@ -203,8 +203,6 @@ enum class LanguageFeature(
     ProhibitSelfCallsInNestedObjects(KOTLIN_1_6, kind = BUG_FIX),
     ApproximateIntegerLiteralTypesInReceiverPosition(KOTLIN_1_6),
     ProperCheckAnnotationsTargetInTypeUsePositions(KOTLIN_1_6, kind = BUG_FIX),
-    DefinitelyNotNullTypeParameters(KOTLIN_1_6),
-    ProhibitUsingNullableTypeParameterAgainstNotNullAnnotated(KOTLIN_1_6, kind = BUG_FIX),
     AbstractClassMemberNotImplementedWithIntermediateAbstractClass(KOTLIN_1_6, kind = BUG_FIX),
 
     SuspendFunctionAsSupertype(KOTLIN_1_6),
@@ -224,10 +222,14 @@ enum class LanguageFeature(
 
     // 1.7
 
+    ProhibitUsingNullableTypeParameterAgainstNotNullAnnotated(KOTLIN_1_7, kind = BUG_FIX),
     OptInRelease(KOTLIN_1_7),
     ProhibitNonExhaustiveWhenOnAlgebraicTypes(KOTLIN_1_7, kind = BUG_FIX),
     UseBuilderInferenceWithoutAnnotation(KOTLIN_1_7),
     ProhibitSmartcastsOnPropertyFromAlienBaseClass(KOTLIN_1_7, kind = BUG_FIX),
+    ProhibitInvalidCharsInNativeIdentifiers(KOTLIN_1_7, kind = BUG_FIX),
+    DefinitelyNotNullTypeParameters(KOTLIN_1_7),
+    DefinitelyNonNullableTypes(KOTLIN_1_7),
 
     // Temporarily disabled, see KT-27084/KT-22379
     SoundSmartcastFromLoopConditionForLoopAssignedVariables(sinceVersion = null, kind = BUG_FIX),

@@ -159,8 +159,9 @@ public interface Errors {
     DiagnosticFactory2<KtTypeReference, KotlinType, KotlinType> UPPER_BOUND_VIOLATED = DiagnosticFactory2.create(ERROR);
     DiagnosticFactory2<KtTypeReference, KotlinType, KotlinType> UPPER_BOUND_VIOLATED_WARNING = DiagnosticFactory2.create(WARNING);
     DiagnosticFactory0<KtNullableType> REDUNDANT_NULLABLE = DiagnosticFactory0.create(WARNING, NULLABLE_TYPE);
-    DiagnosticFactory0<KtDefinitelyNotNullType> DEFINITELY_NOT_NULLABLE_NOT_APPLICABLE = DiagnosticFactory0.create(ERROR);
     DiagnosticFactory0<KtNullableType> NULLABLE_ON_DEFINITELY_NOT_NULLABLE = DiagnosticFactory0.create(ERROR);
+    DiagnosticFactory0<KtTypeReference> INCORRECT_LEFT_COMPONENT_OF_INTERSECTION = DiagnosticFactory0.create(ERROR);
+    DiagnosticFactory0<KtTypeReference> INCORRECT_RIGHT_COMPONENT_OF_INTERSECTION = DiagnosticFactory0.create(ERROR);
     DiagnosticFactory2<KtElement, Integer, DeclarationDescriptor> WRONG_NUMBER_OF_TYPE_ARGUMENTS = DiagnosticFactory2.create(ERROR);
     DiagnosticFactory1<KtElement, ClassDescriptor> OUTER_CLASS_ARGUMENTS_REQUIRED = DiagnosticFactory1.create(ERROR);
     DiagnosticFactory1<KtElement, String> TYPE_ARGUMENTS_NOT_ALLOWED = DiagnosticFactory1.create(ERROR);
@@ -787,6 +788,7 @@ public interface Errors {
     DiagnosticFactory1<PsiElement, Collection<? extends CallableDescriptor>> CALLABLE_REFERENCE_RESOLUTION_AMBIGUITY = DiagnosticFactory1.create(ERROR);
 
     DiagnosticFactory1<PsiElement, TypeParameterDescriptor> TYPE_PARAMETER_AS_REIFIED = DiagnosticFactory1.create(ERROR);
+    DiagnosticFactory0<PsiElement> DEFINITELY_NON_NULLABLE_AS_REIFIED = DiagnosticFactory0.create(ERROR);
     DiagnosticFactoryForDeprecation1<PsiElement, TypeParameterDescriptor> TYPE_PARAMETER_AS_REIFIED_ARRAY = DiagnosticFactoryForDeprecation1.create(LanguageFeature.ProhibitNonReifiedArraysAsReifiedTypeArguments);
     DiagnosticFactory1<PsiElement, KotlinType> REIFIED_TYPE_FORBIDDEN_SUBSTITUTION = DiagnosticFactory1.create(ERROR);
     DiagnosticFactory1<PsiElement, KotlinType> REIFIED_TYPE_UNSAFE_SUBSTITUTION = DiagnosticFactory1.create(WARNING);

@@ -4357,6 +4357,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 }
 
                 @Test
+                @TestMetadata("SupertypeChain.kt")
+                public void testSupertypeChain() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/cast/bare/SupertypeChain.kt");
+                }
+
+                @Test
                 @TestMetadata("ToErrorType.kt")
                 public void testToErrorType() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/cast/bare/ToErrorType.kt");
@@ -4435,6 +4441,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("arrayAccessSet.kt")
             public void testArrayAccessSet() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/checkArguments/arrayAccessSet.kt");
+            }
+
+            @Test
+            @TestMetadata("arrayAccessSetNotEnoughArgs.kt")
+            public void testArrayAccessSetNotEnoughArgs() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/checkArguments/arrayAccessSetNotEnoughArgs.kt");
             }
 
             @Test
@@ -10047,66 +10059,78 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         }
 
         @Nested
-        @TestMetadata("compiler/testData/diagnostics/tests/explicitDefinitelyNotNull")
+        @TestMetadata("compiler/testData/diagnostics/tests/explicitDefinitelyNotNullableViaIntersection")
         @TestDataPath("$PROJECT_ROOT")
-        public class ExplicitDefinitelyNotNull {
+        public class ExplicitDefinitelyNotNullableViaIntersection {
             @Test
-            public void testAllFilesPresentInExplicitDefinitelyNotNull() throws Exception {
-                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/explicitDefinitelyNotNull"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
+            public void testAllFilesPresentInExplicitDefinitelyNotNullableViaIntersection() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/explicitDefinitelyNotNullableViaIntersection"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
             }
 
             @Test
             @TestMetadata("approximation.kt")
             public void testApproximation() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/explicitDefinitelyNotNull/approximation.kt");
+                runTest("compiler/testData/diagnostics/tests/explicitDefinitelyNotNullableViaIntersection/approximation.kt");
+            }
+
+            @Test
+            @TestMetadata("bareTypes.kt")
+            public void testBareTypes() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/explicitDefinitelyNotNullableViaIntersection/bareTypes.kt");
             }
 
             @Test
             @TestMetadata("disabledFeature.kt")
             public void testDisabledFeature() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/explicitDefinitelyNotNull/disabledFeature.kt");
+                runTest("compiler/testData/diagnostics/tests/explicitDefinitelyNotNullableViaIntersection/disabledFeature.kt");
             }
 
             @Test
             @TestMetadata("inference.kt")
             public void testInference() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/explicitDefinitelyNotNull/inference.kt");
+                runTest("compiler/testData/diagnostics/tests/explicitDefinitelyNotNullableViaIntersection/inference.kt");
             }
 
             @Test
             @TestMetadata("isAsOperators.kt")
             public void testIsAsOperators() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/explicitDefinitelyNotNull/isAsOperators.kt");
+                runTest("compiler/testData/diagnostics/tests/explicitDefinitelyNotNullableViaIntersection/isAsOperators.kt");
             }
 
             @Test
             @TestMetadata("isAsOperatorsEnabled.kt")
             public void testIsAsOperatorsEnabled() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/explicitDefinitelyNotNull/isAsOperatorsEnabled.kt");
+                runTest("compiler/testData/diagnostics/tests/explicitDefinitelyNotNullableViaIntersection/isAsOperatorsEnabled.kt");
             }
 
             @Test
             @TestMetadata("notApplicable.kt")
             public void testNotApplicable() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/explicitDefinitelyNotNull/notApplicable.kt");
+                runTest("compiler/testData/diagnostics/tests/explicitDefinitelyNotNullableViaIntersection/notApplicable.kt");
             }
 
             @Test
             @TestMetadata("overrides.kt")
             public void testOverrides() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/explicitDefinitelyNotNull/overrides.kt");
+                runTest("compiler/testData/diagnostics/tests/explicitDefinitelyNotNullableViaIntersection/overrides.kt");
             }
 
             @Test
             @TestMetadata("overridesJavaAnnotated.kt")
             public void testOverridesJavaAnnotated() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/explicitDefinitelyNotNull/overridesJavaAnnotated.kt");
+                runTest("compiler/testData/diagnostics/tests/explicitDefinitelyNotNullableViaIntersection/overridesJavaAnnotated.kt");
+            }
+
+            @Test
+            @TestMetadata("reifiedArguments.kt")
+            public void testReifiedArguments() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/explicitDefinitelyNotNullableViaIntersection/reifiedArguments.kt");
             }
 
             @Test
             @TestMetadata("simple.kt")
             public void testSimple() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/explicitDefinitelyNotNull/simple.kt");
+                runTest("compiler/testData/diagnostics/tests/explicitDefinitelyNotNullableViaIntersection/simple.kt");
             }
         }
 
@@ -25695,6 +25719,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 }
 
                 @Test
+                @TestMetadata("generic.kt")
+                public void testGeneric() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/scopes/protectedVisibility/generic.kt");
+                }
+
+                @Test
                 @TestMetadata("innerClassInJava.kt")
                 public void testInnerClassInJava() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/scopes/protectedVisibility/innerClassInJava.kt");
@@ -36229,6 +36259,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("synchronizedOnInline.kt")
             public void testSynchronizedOnInline() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/inline/synchronizedOnInline.kt");
+            }
+
+            @Test
+            @TestMetadata("synchronizedOnSuspend.kt")
+            public void testSynchronizedOnSuspend() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/inline/synchronizedOnSuspend.kt");
             }
         }
 

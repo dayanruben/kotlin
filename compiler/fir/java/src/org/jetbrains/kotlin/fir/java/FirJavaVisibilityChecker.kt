@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.fir.declarations.FirDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.fir.resolve.calls.ReceiverValue
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.*
 
 @NoMutableState
 object FirJavaVisibilityChecker : FirVisibilityChecker() {
@@ -28,8 +29,11 @@ object FirJavaVisibilityChecker : FirVisibilityChecker() {
                 if (symbol.packageFqName() == useSiteFile.packageFqName) {
                     true
                 } else {
-                    val ownerId = symbol.getOwnerId()
-                    ownerId != null && canSeeProtectedMemberOf(containingDeclarations, dispatchReceiver, ownerId, session)
+                    val ownerLookupTag = symbol.getOwnerLookupTag()
+                    ownerLookupTag != null && canSeeProtectedMemberOf(
+                        containingDeclarations, dispatchReceiver, ownerLookupTag, session,
+                        isVariableOrNamedFunction = symbol is FirVariableSymbol || symbol is FirNamedFunctionSymbol
+                    )
                 }
             }
 

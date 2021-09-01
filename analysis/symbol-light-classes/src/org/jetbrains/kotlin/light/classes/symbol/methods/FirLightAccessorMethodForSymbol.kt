@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.frontend.api.symbols.KtPropertyAccessorSymbol
 import org.jetbrains.kotlin.idea.frontend.api.symbols.KtPropertyGetterSymbol
 import org.jetbrains.kotlin.idea.frontend.api.symbols.KtPropertySetterSymbol
 import org.jetbrains.kotlin.idea.frontend.api.symbols.KtPropertySymbol
+import org.jetbrains.kotlin.light.classes.symbol.parameters.FirLightParameterList
 import org.jetbrains.kotlin.light.classes.symbol.parameters.FirLightSetterParameterForSymbol
 import org.jetbrains.kotlin.load.java.JvmAbi.getterName
 import org.jetbrains.kotlin.load.java.JvmAbi.setterName
@@ -57,8 +58,8 @@ internal class FirLightAccessorMethodForSymbol(
 
     override fun isVarArgs(): Boolean = false
 
-    override val kotlinOrigin: KtDeclaration? =
-        (propertyAccessorSymbol.psi ?: containingPropertySymbol.psi) as? KtDeclaration
+    override val kotlinOrigin: KtDeclaration?
+        get() = lightMemberOrigin?.originalElement
 
     private val accessorSite
         get() =
@@ -168,25 +169,18 @@ internal class FirLightAccessorMethodForSymbol(
 
 
     private val _parametersList by lazyPub {
-        val builder = LightParameterListBuilder(manager, language)
-
-        FirLightParameterForReceiver.tryGet(containingPropertySymbol, this)?.let {
-            builder.addParameter(it)
-        }
-
-        val propertyParameter = (propertyAccessorSymbol as? KtPropertySetterSymbol)?.parameter
-
-        if (propertyParameter != null) {
-            builder.addParameter(
-                FirLightSetterParameterForSymbol(
-                    parameterSymbol = propertyParameter,
-                    containingPropertySymbol = containingPropertySymbol,
-                    containingMethod = this@FirLightAccessorMethodForSymbol
+        FirLightParameterList(this, containingPropertySymbol) { builder ->
+            val propertyParameter = (propertyAccessorSymbol as? KtPropertySetterSymbol)?.parameter
+            if (propertyParameter != null) {
+                builder.addParameter(
+                    FirLightSetterParameterForSymbol(
+                        parameterSymbol = propertyParameter,
+                        containingPropertySymbol = containingPropertySymbol,
+                        containingMethod = this@FirLightAccessorMethodForSymbol
+                    )
                 )
-            )
+            }
         }
-
-        builder
     }
 
     override fun getParameterList(): PsiParameterList = _parametersList

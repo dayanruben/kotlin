@@ -1,4 +1,4 @@
-// !LANGUAGE: +StrictJavaNullabilityAssertions +ProhibitUsingNullableTypeParameterAgainstNotNullAnnotated
+// !LANGUAGE: +StrictJavaNullabilityAssertions +ProhibitUsingNullableTypeParameterAgainstNotNullAnnotated +DefinitelyNonNullableTypes
 // TARGET_BACKEND: JVM
 // IGNORE_BACKEND: JVM
 // IGNORE_LIGHT_ANALYSIS

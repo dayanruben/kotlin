@@ -642,6 +642,9 @@ object PositioningStrategies {
     @JvmField
     val VALUE_ARGUMENTS: PositioningStrategy<KtElement> = object : PositioningStrategy<KtElement>() {
         override fun mark(element: KtElement): List<TextRange> {
+            if (element is KtBinaryExpression && element.operationToken in KtTokens.ALL_ASSIGNMENTS) {
+                element.left.let { left -> left.unwrapParenthesesLabelsAndAnnotations()?.let { return markElement(it) } }
+            }
             val qualifiedAccess = when (element) {
                 is KtQualifiedExpression -> element.selectorExpression ?: element
                 else -> element
@@ -841,7 +844,6 @@ object PositioningStrategies {
         return when (this) {
             is KtUserType -> referenceExpression
             is KtNullableType -> innerType?.getReferencedTypeExpression()
-            is KtDefinitelyNotNullType -> innerType?.getReferencedTypeExpression()
             else -> null
         }
     }

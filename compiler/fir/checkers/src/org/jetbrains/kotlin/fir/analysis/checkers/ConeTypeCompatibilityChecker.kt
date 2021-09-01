@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
 import org.jetbrains.kotlin.fir.symbols.ConeTypeParameterLookupTag
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.*
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.types.Variance
 
@@ -64,19 +63,15 @@ internal object ConeTypeCompatibilityChecker {
     }
 
     fun ConeInferenceContext.isCompatible(a: ConeKotlinType, b: ConeKotlinType): Compatibility {
-        val aUnwrap = unwrap(a)
-        val bUnwrap = unwrap(b)
-        if (aUnwrap.containsAll(bUnwrap) || bUnwrap.containsAll(aUnwrap)) {
-            return Compatibility.COMPATIBLE
+        if (a is ConeIntersectionType) {
+            return a.intersectedTypes.minOf { isCompatible(it, b) }
+        }
+        if (b is ConeIntersectionType) {
+            return b.intersectedTypes.minOf { isCompatible(a, it) }
         }
 
         val intersectionType = intersectTypesOrNull(listOf(a, b)) as? ConeIntersectionType ?: return Compatibility.COMPATIBLE
         return intersectionType.intersectedTypes.areCompatible(this)
-    }
-
-    private fun unwrap(type: ConeKotlinType): Collection<ConeKotlinType> = when (type) {
-        is ConeIntersectionType -> type.intersectedTypes
-        else -> listOf(type)
     }
 
     private fun Collection<ConeKotlinType>.areCompatible(ctx: ConeInferenceContext): Compatibility {
@@ -213,10 +208,10 @@ internal object ConeTypeCompatibilityChecker {
         val classes = classesOrInterfaces.filter { !it.isInterface }
         // Java force single inheritance, so any pair of unrelated classes are incompatible.
         if (classes.size >= 2) {
-            return when {
-                classes.any { it.firClass.classId.packageFqName.startsWith(Name.identifier("java")) } -> Compatibility.SOFT_INCOMPATIBLE
-                classes.any { it.getHasPredefinedEqualityContract(this) } -> compatibilityUpperBound
-                else -> Compatibility.SOFT_INCOMPATIBLE
+            return if (classes.any { it.getHasPredefinedEqualityContract(this) }) {
+                compatibilityUpperBound
+            } else {
+                Compatibility.SOFT_INCOMPATIBLE
             }
         }
         val finalClass = classes.firstOrNull { it.isFinal } ?: return null

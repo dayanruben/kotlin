@@ -33,13 +33,22 @@ class HierarchicalClassAndTypeAliasCommonizationTest : AbstractInlineSourcesComm
     fun `test commonization of typeAlias and class hierarchically`() {
         val result = commonize {
             outputTarget("(a, b)", "(c, d)", "(a, b, c, d)")
-            simpleSingleSourceTarget("a", "typealias X = Int")
-            simpleSingleSourceTarget("b", "typealias X = Long")
+            registerDependency("a", "b", "c", "d", "(a, b)", "(c, d)", "(a, b, c, d)") {
+                source(
+                    """
+                    interface A
+                    interface B: A
+                    interface C: A
+                    """.trimIndent()
+                )
+            }
+            simpleSingleSourceTarget("a", "typealias X = B")
+            simpleSingleSourceTarget("b", "typealias X = C")
             simpleSingleSourceTarget("c", "class X")
             simpleSingleSourceTarget("d", "typealias X = Short")
         }
 
-        result.assertCommonized("(a, b)", "expect class X: Number")
+        result.assertCommonized("(a, b)", "expect class X: A")
         result.assertCommonized("(c, d)", "expect class X")
         result.assertCommonized("((a, b), (c, d))", "expect class X")
     }
@@ -514,6 +523,9 @@ class HierarchicalClassAndTypeAliasCommonizationTest : AbstractInlineSourcesComm
     fun `test typealias to numbers`() {
         val result = commonize {
             outputTarget("(a, b)", "(c, d)", "(a, b, c, d)")
+            registerDependency("(a, b)", "(c, d)", "(a, b, c, d)") {
+                unsafeNumberAnnotationSource()
+            }
 
             simpleSingleSourceTarget(
                 "a", """
@@ -558,7 +570,9 @@ class HierarchicalClassAndTypeAliasCommonizationTest : AbstractInlineSourcesComm
 
         result.assertCommonized(
             "(c, d)", """
-                expect class Proxy: Number
+                @UnsafeNumber(["c: kotlin.Int", "d: kotlin.Short"])
+                typealias Proxy = Short
+                @UnsafeNumber(["c: kotlin.Int", "d: kotlin.Short"])
                 typealias X = Proxy
                 expect val x: X
             """.trimIndent()
@@ -566,7 +580,9 @@ class HierarchicalClassAndTypeAliasCommonizationTest : AbstractInlineSourcesComm
 
         result.assertCommonized(
             "(a, b, c, d)", """
-                expect class Proxy: Number
+                @UnsafeNumber(["a: kotlin.Long", "b: kotlin.Long", "c: kotlin.Int", "d: kotlin.Short"])
+                typealias Proxy = Short
+                @UnsafeNumber(["a: kotlin.Long", "b: kotlin.Long", "c: kotlin.Int", "d: kotlin.Short"])
                 typealias X = Proxy
                 expect val x: X
             """.trimIndent()

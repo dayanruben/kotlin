@@ -437,6 +437,16 @@ object LightTreePositioningStrategies {
             endOffset: Int,
             tree: FlyweightCapableTreeStructure<LighterASTNode>
         ): List<TextRange> {
+            if (node.tokenType == KtNodeTypes.BINARY_EXPRESSION &&
+                tree.findDescendantByTypes(node, KtTokens.ALL_ASSIGNMENTS) != null
+            ) {
+                val lhs = tree.firstChildExpression(node)
+                lhs?.let {
+                    tree.unwrapParenthesesLabelsAndAnnotations(it)?.let { unwrapped ->
+                        return markElement(unwrapped, startOffset, endOffset, tree, node)
+                    }
+                }
+            }
             val nodeToStart = when (node.tokenType) {
                 in KtTokens.QUALIFIED_ACCESS -> tree.findLastChildByType(node, KtNodeTypes.CALL_EXPRESSION) ?: node
                 else -> node
@@ -509,7 +519,7 @@ object LightTreePositioningStrategies {
         return when (node.tokenType) {
             KtNodeTypes.USER_TYPE -> findChildByType(node, KtNodeTypes.REFERENCE_EXPRESSION)
                 ?: findChildByType(node, KtNodeTypes.ENUM_ENTRY_SUPERCLASS_REFERENCE_EXPRESSION)
-            KtNodeTypes.NULLABLE_TYPE, KtNodeTypes.DEFINITELY_NOT_NULL_TYPE -> findChildByType(node, KtStubElementTypes.TYPE_ELEMENT_TYPES)
+            KtNodeTypes.NULLABLE_TYPE -> findChildByType(node, KtStubElementTypes.TYPE_ELEMENT_TYPES)
                 ?.let { referencedTypeExpression(it) }
             else -> null
         }

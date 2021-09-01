@@ -56,7 +56,7 @@ internal object FirReferenceResolveHelper {
 
         val symbol = resolvedSymbol ?: run {
             val diagnostic = (this as? FirErrorTypeRef)?.diagnostic
-            (diagnostic as? ConeUnmatchedTypeArgumentsError)?.symbol
+            (diagnostic as? ConeUnmatchedTypeArgumentsError)?.candidateSymbol
         }
 
         return symbol?.fir?.buildSymbol(symbolBuilder)
@@ -312,18 +312,7 @@ internal object FirReferenceResolveHelper {
         fir: FirErrorNamedReference,
         symbolBuilder: KtSymbolByFirBuilder
     ): List<KtSymbol> =
-        getFirSymbolsByErrorNamedReference(fir).map { it.fir.buildSymbol(symbolBuilder) }
-
-
-    fun getFirSymbolsByErrorNamedReference(
-        errorNamedReference: FirErrorNamedReference,
-    ): Collection<FirBasedSymbol<*>> = when (val diagnostic = errorNamedReference.diagnostic) {
-        is ConeAmbiguityError -> diagnostic.candidates.map { it.symbol }
-        is ConeOperatorAmbiguityError -> diagnostic.candidates
-        is ConeInapplicableCandidateError -> listOf(diagnostic.candidate.symbol)
-        else -> emptyList()
-    }
-
+        fir.getCandidateSymbols().map { it.fir.buildSymbol(symbolBuilder) }
 
     private fun getSymbolsByReturnExpression(
         expression: KtSimpleNameExpression,
@@ -410,13 +399,10 @@ internal object FirReferenceResolveHelper {
         val referencedClass = referencedSymbol.fir
         val referencedSymbolsByFir = listOfNotNull(symbolBuilder.buildSymbol(referencedClass))
         val firSourcePsi = fir.source.psi ?: referencedSymbolsByFir
-        // The source of an `FirResolvedQualifier` is either a KtNamedReferenceExpression or a KtDotQualifiedExpression. In the former case,
-        // it implies the qualifier is an atomic reference and therefore, it should be identical with the `expression`. In the latter case,
-        // we need to manually break up the qualified access and resolve individual parts of it because in FIR, the entire qualified access
-        // is one element.
-        if (firSourcePsi === expression) return referencedSymbolsByFir
-        require(firSourcePsi is KtDotQualifiedExpression)
+        if (firSourcePsi !is KtDotQualifiedExpression) return referencedSymbolsByFir
 
+        // When the source of an `FirResolvedQualifier` is a KtDotQualifiedExpression, we need to manually break up the qualified access and
+        // resolve individual parts of it because in FIR, the entire qualified access is one element.
         if (referencedClass.isLocal) {
             // TODO: handle local classes after KT-47135 is fixed
             return referencedSymbolsByFir
