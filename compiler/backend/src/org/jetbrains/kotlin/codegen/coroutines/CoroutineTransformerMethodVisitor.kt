@@ -12,7 +12,10 @@ import org.jetbrains.kotlin.codegen.optimization.fixStack.FixStackMethodTransfor
 import org.jetbrains.kotlin.resolve.jvm.AsmTypes
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.JvmDeclarationOrigin
 import org.jetbrains.kotlin.utils.sure
-import org.jetbrains.org.objectweb.asm.*
+import org.jetbrains.org.objectweb.asm.Label
+import org.jetbrains.org.objectweb.asm.MethodVisitor
+import org.jetbrains.org.objectweb.asm.Opcodes
+import org.jetbrains.org.objectweb.asm.Type
 import org.jetbrains.org.objectweb.asm.commons.InstructionAdapter
 import org.jetbrains.org.objectweb.asm.tree.*
 import org.jetbrains.org.objectweb.asm.tree.analysis.BasicValue
@@ -43,7 +46,6 @@ class CoroutineTransformerMethodVisitor(
     private val containingClassInternalName: String,
     obtainClassBuilderForCoroutineState: () -> ClassBuilder,
     private val isForNamedFunction: Boolean,
-    private val shouldPreserveClassInitialization: Boolean,
     // Since tail-call optimization of functions with Unit return type relies on ability of call-site to recognize them,
     // in order to ignore return value and push Unit, when we cannot ensure this ability, for example, when the function overrides function,
     // returning Any, we need to disable tail-call optimization for these functions.
@@ -57,8 +59,6 @@ class CoroutineTransformerMethodVisitor(
     private val internalNameForDispatchReceiver: String? = null,
     // JVM_IR backend generates $completion, while old backend does not
     private val putContinuationParameterToLvt: Boolean = true,
-    // New SourceInterpreter-less analyser can be somewhat unstable, disable it
-    private val useOldSpilledVarTypeAnalysis: Boolean = false,
     // Parameters of suspend lambda are put to the same fields as spilled variables
     private val initialVarsCountByType: Map<Type, Int> = emptyMap()
 ) : TransformationMethodVisitor(delegate, access, name, desc, signature, exceptions) {
@@ -121,7 +121,7 @@ class CoroutineTransformerMethodVisitor(
         // Actual max stack might be increased during the previous phases
         methodNode.updateMaxStack()
 
-        UninitializedStoresProcessor(methodNode, shouldPreserveClassInitialization).run()
+        UninitializedStoresProcessor(methodNode).run()
 
         val spilledToVariableMapping = spillVariables(suspensionPoints, methodNode)
 
@@ -581,9 +581,7 @@ class CoroutineTransformerMethodVisitor(
 
     private fun spillVariables(suspensionPoints: List<SuspensionPoint>, methodNode: MethodNode): List<List<SpilledVariableAndField>> {
         val instructions = methodNode.instructions
-        val frames =
-            if (useOldSpilledVarTypeAnalysis) performRefinedTypeAnalysis(methodNode, containingClassInternalName)
-            else performSpilledVariableFieldTypesAnalysis(methodNode, containingClassInternalName)
+        val frames = performSpilledVariableFieldTypesAnalysis(methodNode, containingClassInternalName)
 
         fun AbstractInsnNode.index() = instructions.indexOf(this)
 
@@ -1112,7 +1110,7 @@ inline fun withInstructionAdapter(block: InstructionAdapter.() -> Unit): InsnLis
     return tmpMethodNode.instructions
 }
 
-fun Type.normalize() =
+fun Type.normalize(): Type =
     when (sort) {
         Type.ARRAY, Type.OBJECT -> AsmTypes.OBJECT_TYPE
         else -> this
@@ -1158,7 +1156,7 @@ internal operator fun List<SuspensionPoint>.contains(insn: AbstractInsnNode): Bo
     any { insn in it }
 
 internal fun getLastParameterIndex(desc: String, access: Int) =
-    Type.getArgumentTypes(desc).dropLast(1).map { it.size }.sum() + (if (!isStatic(access)) 1 else 0)
+    Type.getArgumentTypes(desc).dropLast(1).sumOf { it.size } + (if (!isStatic(access)) 1 else 0)
 
 private fun getParameterTypesForCoroutineConstructor(desc: String, hasDispatchReceiver: Boolean, thisName: String) =
     listOfNotNull(if (!hasDispatchReceiver) null else Type.getObjectType(thisName)).toTypedArray() +
@@ -1194,6 +1192,7 @@ internal fun replaceFakeContinuationsWithRealOnes(methodNode: MethodNode, contin
     }
 }
 
+@Suppress("unused")
 private fun MethodNode.nodeTextWithLiveness(liveness: List<VariableLivenessFrame>): String =
     liveness.zip(this.instructions.asSequence().toList()).joinToString("\n") { (a, b) -> "$a|${b.insnText}" }
 

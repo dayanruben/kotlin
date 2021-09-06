@@ -678,3 +678,55 @@ internal fun LabelNode.linkWithLabel(): LabelNode {
 }
 
 fun linkedLabel(): Label = LabelNode().linkWithLabel().label
+
+// Strings in constant pool contain at most 2^16-1 = 65535 bytes.
+const val STRING_UTF8_ENCODING_BYTE_LIMIT: Int = 65535
+
+//Each CHAR could be encoded maximum in 3 bytes
+fun String.isDefinitelyFitEncodingLimit() = length <= STRING_UTF8_ENCODING_BYTE_LIMIT / 3
+
+fun splitStringConstant(value: String): List<String> {
+    return if (value.isDefinitelyFitEncodingLimit()) {
+        listOf(value)
+    } else {
+        val result = arrayListOf<String>()
+
+        // Split strings into parts, each of which satisfies JVM class file constant pool constraints.
+        // Note that even if we split surrogate pairs between parts, they will be joined on concatenation.
+        var accumulatedSize = 0
+        var charOffsetInString = 0
+        var lastStringBeginning = 0
+        val length = value.length
+        while (charOffsetInString < length) {
+            val charCode = value[charOffsetInString].code
+            val encodedCharSize = when {
+                charCode in 1..127 -> 1
+                charCode <= 2047 -> 2
+                else -> 3
+            }
+            if (accumulatedSize + encodedCharSize > STRING_UTF8_ENCODING_BYTE_LIMIT) {
+                result.add(value.substring(lastStringBeginning, charOffsetInString))
+                lastStringBeginning = charOffsetInString
+                accumulatedSize = 0
+            }
+            accumulatedSize += encodedCharSize
+            ++charOffsetInString
+        }
+        result.add(value.substring(lastStringBeginning, charOffsetInString))
+
+        result
+    }
+}
+
+fun String.encodedUTF8Size(): Int {
+    var result = 0
+    for (char in this) {
+        val charCode = char.code
+        when {
+            charCode in 1..127 -> result++
+            charCode <= 2047 -> result += 2
+            else -> result += 3
+        }
+    }
+    return result
+}

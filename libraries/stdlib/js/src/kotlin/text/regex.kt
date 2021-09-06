@@ -153,7 +153,7 @@ public actual class Regex actual constructor(pattern: String, options: Set<Regex
      * the given function [transform] that takes [MatchResult] and returns a string to be used as a
      * replacement for that match.
      */
-    public actual inline fun replace(input: CharSequence, transform: (MatchResult) -> CharSequence): String {
+    public actual fun replace(input: CharSequence, transform: (MatchResult) -> CharSequence): String {
         var match = find(input)
         if (match == null) return input.toString()
 
@@ -272,17 +272,6 @@ public actual class Regex actual constructor(pattern: String, options: Set<Regex
         private val replacementEscape = RegExp("""\$""", "g")
     }
 }
-
-/** Creates a regular expression from the specified [pattern] string and the specified single [option].  */
-@Deprecated("Provided for binary compatibility", level = DeprecationLevel.HIDDEN)
-@JsName("Regex_sb3q2\$")
-public fun Regex_0(pattern: String, option: RegexOption): Regex = Regex(pattern, setOf(option))
-
-/** Creates a regular expression from the specified [pattern] string and the default options.  */
-@Deprecated("Provided for binary compatibility", level = DeprecationLevel.HIDDEN)
-@JsName("Regex_61zpoe\$")
-public fun Regex_1(pattern: String): Regex = Regex(pattern, emptySet())
-
 
 
 

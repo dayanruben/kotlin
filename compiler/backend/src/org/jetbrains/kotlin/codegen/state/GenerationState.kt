@@ -248,11 +248,7 @@ class GenerationState private constructor(
         isIrBackend
     )
     val canReplaceStdlibRuntimeApiBehavior = languageVersionSettings.apiVersion <= ApiVersion.parse(KotlinVersion.CURRENT.toString())!!
-    val intrinsics: IntrinsicMethods = run {
-        val shouldUseConsistentEquals = languageVersionSettings.supportsFeature(LanguageFeature.ThrowNpeOnExplicitEqualsForBoxedNull) &&
-                !configuration.getBoolean(JVMConfigurationKeys.NO_EXCEPTION_ON_EXPLICIT_EQUALS_FOR_BOXED_NULL)
-        IntrinsicMethods(target, canReplaceStdlibRuntimeApiBehavior, shouldUseConsistentEquals)
-    }
+    val intrinsics: IntrinsicMethods = IntrinsicMethods(target, canReplaceStdlibRuntimeApiBehavior)
     val generateOptimizedCallableReferenceSuperClasses =
         languageVersionSettings.apiVersion >= ApiVersion.KOTLIN_1_4 &&
                 !configuration.getBoolean(JVMConfigurationKeys.NO_OPTIMIZED_CALLABLE_REFERENCES)
@@ -311,14 +307,6 @@ class GenerationState private constructor(
     val generateParametersMetadata: Boolean = configuration.getBoolean(JVMConfigurationKeys.PARAMETERS_METADATA)
 
     val shouldInlineConstVals = languageVersionSettings.supportsFeature(LanguageFeature.InlineConstVals)
-
-    val constructorCallNormalizationMode =
-        configuration.get(JVMConfigurationKeys.CONSTRUCTOR_CALL_NORMALIZATION_MODE) ?: run {
-            if (languageVersionSettings.supportsFeature(LanguageFeature.NormalizeConstructorCalls))
-                JVMConstructorCallNormalizationMode.ENABLE
-            else
-                JVMConstructorCallNormalizationMode.DISABLE
-        }
 
     val jvmDefaultMode = languageVersionSettings.getFlag(JvmAnalysisFlags.jvmDefaultMode)
 

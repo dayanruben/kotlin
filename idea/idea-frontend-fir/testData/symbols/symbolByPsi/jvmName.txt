@@ -1,0 +1,152 @@
+KtFirKotlinPropertySymbol:
+  annotatedType: [] kotlin/Int
+  annotationClassIds: [
+    kotlin/jvm/JvmName
+    kotlin/jvm/JvmName
+  ]
+  annotations: [
+    kotlin/jvm/JvmName(name = getMyI)
+      psi: KtAnnotationEntry
+    kotlin/jvm/JvmName(name = setMyI)
+      psi: KtAnnotationEntry
+  ]
+  callableIdIfNonLocal: /Foo.i
+  dispatchType: Foo
+  getter: KtFirPropertyGetterSymbol(<getter>)
+  hasBackingField: true
+  hasGetter: true
+  hasSetter: true
+  initializer: null
+  isConst: false
+  isExtension: false
+  isFromPrimaryConstructor: false
+  isLateInit: false
+  isOverride: false
+  isStatic: false
+  isVal: false
+  modality: FINAL
+  name: i
+  origin: SOURCE
+  receiverType: null
+  setter: KtFirPropertySetterSymbol(<setter>)
+  symbolKind: MEMBER
+  visibility: Public
+  deprecationStatus: null
+  getterDeprecationStatus: null
+  javaGetterName: getMyI
+  javaSetterName: setMyI
+  setterDeprecationStatus: null
+
+KtFirPropertyGetterSymbol:
+  annotatedType: [] kotlin/Int
+  annotationClassIds: [
+    kotlin/jvm/JvmName
+  ]
+  annotations: [
+    kotlin/jvm/JvmName(name = getMyJ)
+      psi: KtAnnotationEntry
+  ]
+  callableIdIfNonLocal: null
+  dispatchType: null
+  hasBody: true
+  isDefault: false
+  isExtension: false
+  isInline: false
+  isOverride: false
+  modality: FINAL
+  origin: SOURCE
+  receiverType: null
+  symbolKind: ACCESSOR
+  visibility: Public
+  deprecationStatus: null
+
+KtFirValueParameterSymbol:
+  annotatedType: [] kotlin/Int
+  annotationClassIds: []
+  annotations: []
+  callableIdIfNonLocal: null
+  hasDefaultValue: false
+  isExtension: false
+  isVararg: false
+  name: value
+  origin: SOURCE
+  receiverType: null
+  symbolKind: LOCAL
+  deprecationStatus: null
+
+KtFirPropertySetterSymbol:
+  annotatedType: [] kotlin/Unit
+  annotationClassIds: [
+    kotlin/jvm/JvmName
+  ]
+  annotations: [
+    kotlin/jvm/JvmName(name = setMyJ)
+      psi: KtAnnotationEntry
+  ]
+  callableIdIfNonLocal: null
+  dispatchType: null
+  hasBody: true
+  isDefault: false
+  isExtension: false
+  isInline: false
+  isOverride: false
+  modality: FINAL
+  origin: SOURCE
+  parameter: KtFirValueParameterSymbol(value)
+  receiverType: null
+  symbolKind: ACCESSOR
+  visibility: Public
+  deprecationStatus: null
+
+KtFirKotlinPropertySymbol:
+  annotatedType: [] kotlin/Int
+  annotationClassIds: []
+  annotations: []
+  callableIdIfNonLocal: /Foo.j
+  dispatchType: Foo
+  getter: KtFirPropertyGetterSymbol(<getter>)
+  hasBackingField: false
+  hasGetter: true
+  hasSetter: true
+  initializer: null
+  isConst: false
+  isExtension: false
+  isFromPrimaryConstructor: false
+  isLateInit: false
+  isOverride: false
+  isStatic: false
+  isVal: false
+  modality: FINAL
+  name: j
+  origin: SOURCE
+  receiverType: null
+  setter: KtFirPropertySetterSymbol(<setter>)
+  symbolKind: MEMBER
+  visibility: Public
+  deprecationStatus: null
+  getterDeprecationStatus: null
+  javaGetterName: getMyJ
+  javaSetterName: setMyJ
+  setterDeprecationStatus: null
+
+KtFirNamedClassOrObjectSymbol:
+  annotationClassIds: []
+  annotations: []
+  classIdIfNonLocal: Foo
+  classKind: CLASS
+  companionObject: null
+  isData: false
+  isExternal: false
+  isFun: false
+  isInline: false
+  isInner: false
+  modality: FINAL
+  name: Foo
+  origin: SOURCE
+  superTypes: [
+    [] kotlin/Any
+  ]
+  symbolKind: TOP_LEVEL
+  typeParameters: []
+  visibility: Public
+  deprecationStatus: null

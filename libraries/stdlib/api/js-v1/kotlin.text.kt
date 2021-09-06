@@ -8,14 +8,6 @@ public val kotlin.CharSequence.indices: kotlin.ranges.IntRange { get; }
 
 public val kotlin.CharSequence.lastIndex: kotlin.Int { get; }
 
-@kotlin.Deprecated(level = DeprecationLevel.HIDDEN, message = "Provided for binary compatibility")
-@kotlin.js.JsName(name = "Regex_sb3q2$")
-public fun Regex_0(pattern: kotlin.String, option: kotlin.text.RegexOption): kotlin.text.Regex
-
-@kotlin.Deprecated(level = DeprecationLevel.HIDDEN, message = "Provided for binary compatibility")
-@kotlin.js.JsName(name = "Regex_61zpoe$")
-public fun Regex_1(pattern: kotlin.String): kotlin.text.Regex
-
 @kotlin.SinceKotlin(version = "1.2")
 @kotlin.Deprecated(message = "Use CharArray.concatToString() instead", replaceWith = kotlin.ReplaceWith(expression = "chars.concatToString()", imports = {}))
 @kotlin.DeprecatedSinceKotlin(errorSince = "1.5", warningSince = "1.4")
@@ -149,6 +141,8 @@ public fun kotlin.CharSequence.commonSuffixWith(other: kotlin.CharSequence, igno
 @kotlin.SinceKotlin(version = "1.2")
 public fun kotlin.String.compareTo(other: kotlin.String, ignoreCase: kotlin.Boolean = ...): kotlin.Int
 
+@kotlin.Deprecated(message = "Use String.plus() instead", replaceWith = kotlin.ReplaceWith(expression = "this + str", imports = {}))
+@kotlin.DeprecatedSinceKotlin(warningSince = "1.6")
 @kotlin.internal.InlineOnly
 public inline fun kotlin.String.concat(str: kotlin.String): kotlin.String
 
@@ -484,12 +478,16 @@ public inline fun <R : kotlin.Any, C : kotlin.collections.MutableCollection<in R
 
 public inline fun <R, C : kotlin.collections.MutableCollection<in R>> kotlin.CharSequence.mapTo(destination: C, transform: (kotlin.Char) -> R): C
 
+@kotlin.Deprecated(message = "Use Regex.findAll() instead or invoke matches() on String dynamically: this.asDynamic().match(regex)")
+@kotlin.DeprecatedSinceKotlin(warningSince = "1.6")
 @kotlin.internal.InlineOnly
 public inline fun kotlin.String.match(regex: kotlin.String): kotlin.Array<kotlin.String>?
 
 @kotlin.internal.InlineOnly
 public inline infix fun kotlin.CharSequence.matches(regex: kotlin.text.Regex): kotlin.Boolean
 
+@kotlin.Deprecated(message = "Use Regex.matches() instead", replaceWith = kotlin.ReplaceWith(expression = "regex.toRegex().matches(this)", imports = {}))
+@kotlin.DeprecatedSinceKotlin(warningSince = "1.6")
 public fun kotlin.String.matches(regex: kotlin.String): kotlin.Boolean
 
 @kotlin.Deprecated(message = "Use maxOrNull instead.", replaceWith = kotlin.ReplaceWith(expression = "this.maxOrNull()", imports = {}))
@@ -1426,7 +1424,7 @@ public final class Regex {
     @kotlin.ExperimentalStdlibApi
     public final fun matchesAt(input: kotlin.CharSequence, index: kotlin.Int): kotlin.Boolean
 
-    public final inline fun replace(input: kotlin.CharSequence, transform: (kotlin.text.MatchResult) -> kotlin.CharSequence): kotlin.String
+    public final fun replace(input: kotlin.CharSequence, transform: (kotlin.text.MatchResult) -> kotlin.CharSequence): kotlin.String
 
     public final fun replace(input: kotlin.CharSequence, replacement: kotlin.String): kotlin.String
 

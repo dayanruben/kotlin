@@ -212,13 +212,20 @@ fun CompilerConfiguration.configureAdvancedJvmOptions(arguments: K2JVMCompilerAr
                 arguments.useIR && !useOldBackend
             }
 
-    if (arguments.useIR && arguments.useOldBackend) {
+    if (arguments.useOldBackend) {
         messageCollector.report(
             STRONG_WARNING,
-            "Both -Xuse-ir and -Xuse-old-backend are passed. This is an inconsistent configuration. " +
-                    "The compiler will use the ${if (useIR) "JVM IR" else "old JVM"} backend"
+            "-Xuse-old-backend is deprecated and will be removed in a future release"
         )
+        if (arguments.useIR) {
+            messageCollector.report(
+                STRONG_WARNING,
+                "Both -Xuse-ir and -Xuse-old-backend are passed. This is an inconsistent configuration. " +
+                        "The compiler will use the ${if (useIR) "JVM IR" else "old JVM"} backend"
+            )
+        }
     }
+
     messageCollector.report(LOGGING, "Using ${if (useIR) "JVM IR" else "old JVM"} backend")
 
     put(JVMConfigurationKeys.IR, useIR)
@@ -241,10 +248,6 @@ fun CompilerConfiguration.configureAdvancedJvmOptions(arguments: K2JVMCompilerAr
     put(JVMConfigurationKeys.DISABLE_CALL_ASSERTIONS, arguments.noCallAssertions)
     put(JVMConfigurationKeys.DISABLE_RECEIVER_ASSERTIONS, arguments.noReceiverAssertions)
     put(JVMConfigurationKeys.DISABLE_PARAM_ASSERTIONS, arguments.noParamAssertions)
-    put(
-        JVMConfigurationKeys.NO_EXCEPTION_ON_EXPLICIT_EQUALS_FOR_BOXED_NULL,
-        arguments.noExceptionOnExplicitEqualsForBoxedNull
-    )
     put(JVMConfigurationKeys.DISABLE_OPTIMIZATION, arguments.noOptimize)
     put(JVMConfigurationKeys.EMIT_JVM_TYPE_ANNOTATIONS, arguments.emitJvmTypeAnnotations)
     put(JVMConfigurationKeys.NO_OPTIMIZED_CALLABLE_REFERENCES, arguments.noOptimizedCallableReferences)
@@ -256,19 +259,6 @@ fun CompilerConfiguration.configureAdvancedJvmOptions(arguments: K2JVMCompilerAr
 
     put(JVMConfigurationKeys.VALIDATE_IR, arguments.validateIr)
     put(JVMConfigurationKeys.VALIDATE_BYTECODE, arguments.validateBytecode)
-
-    if (!JVMConstructorCallNormalizationMode.isSupportedValue(arguments.constructorCallNormalizationMode)) {
-        messageCollector.report(
-            ERROR,
-            "Unknown constructor call normalization mode: ${arguments.constructorCallNormalizationMode}, " +
-                    "supported modes: ${JVMConstructorCallNormalizationMode.values().map { it.description }}"
-        )
-    }
-
-    val constructorCallNormalizationMode = JVMConstructorCallNormalizationMode.fromStringOrNull(arguments.constructorCallNormalizationMode)
-    if (constructorCallNormalizationMode != null) {
-        put(JVMConfigurationKeys.CONSTRUCTOR_CALL_NORMALIZATION_MODE, constructorCallNormalizationMode)
-    }
 
     val assertionsMode =
         JVMAssertionsMode.fromStringOrNull(arguments.assertionsMode)
@@ -295,7 +285,6 @@ fun CompilerConfiguration.configureAdvancedJvmOptions(arguments: K2JVMCompilerAr
 
     put(CLIConfigurationKeys.ALLOW_KOTLIN_PACKAGE, arguments.allowKotlinPackage)
     put(JVMConfigurationKeys.USE_SINGLE_MODULE, arguments.singleModule)
-    put(JVMConfigurationKeys.USE_OLD_SPILLED_VAR_TYPE_ANALYSIS, arguments.useOldSpilledVarTypeAnalysis)
     put(JVMConfigurationKeys.USE_OLD_INLINE_CLASSES_MANGLING_SCHEME, arguments.useOldInlineClassesManglingScheme)
     put(JVMConfigurationKeys.ENABLE_JVM_PREVIEW, arguments.enableJvmPreview)
 

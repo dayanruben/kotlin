@@ -10,9 +10,7 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.provider.Provider
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.Optional
-import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.*
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 import org.gradle.process.ExecSpec
 import org.jetbrains.kotlin.konan.exec.Command
@@ -222,25 +220,68 @@ open class KonanLocalTest : KonanTest() {
     var expectedFail = false
 
     /**
-     * Used to validate output as a gold value.
+     * Used to validate output against the golden data.
      */
     @Input
     @Optional
-    var goldValue: String? = null
+    var useGoldenData: Boolean = false
+
+    @get:InputFile
+    @get:Optional
+    open val goldenDataFile: File?
+        get() {
+            val goldenDataFile = computeGoldenDataFile()
+            return if (useGoldenData) {
+                check(goldenDataFile.isFile) { "Task $name. Golden data file does not exist: $goldenDataFile" }
+                goldenDataFile
+            } else {
+                check(!goldenDataFile.exists()) { "Task $name. Golden data file should not exist: $goldenDataFile" }
+                null
+            }
+        }
+
+    @Internal
+    protected open fun computeGoldenDataFile(): File {
+        val sourceFile = project.file(source)
+        return sourceFile.parentFile.resolve(sourceFile.nameWithoutExtension + ".out")
+    }
+
+    private val goldenData: String?
+        get() = goldenDataFile?.readText(Charsets.UTF_8)
 
     /**
      * Checks test's output against gold value and returns true if the output matches the expectation.
      */
     @Input
     @Optional
-    var outputChecker: (String) -> Boolean = { str -> goldValue == null || goldValue == str }
+    var outputChecker: (String) -> Boolean = { output ->
+        if (useGoldenData) goldenData == output else true
+    }
 
     /**
-     * Input test data to be passed to process' stdin.
+     * Input test data to be passed to process stdin.
      */
     @Input
     @Optional
-    var testData: String? = null
+    var useTestData: Boolean = false
+
+    @get:InputFile
+    @get:Optional
+    val testDataFile: File?
+        get() {
+            val sourceFile = project.file(source)
+            val testDataFile = sourceFile.parentFile.resolve(sourceFile.nameWithoutExtension + ".in")
+            return if (useTestData) {
+                check(testDataFile.isFile) { "Task $name. Test data file does not exist: $testDataFile" }
+                testDataFile
+            } else {
+                check(!testDataFile.exists()) { "Task $name. Test data file should not exist: $testDataFile" }
+                null
+            }
+        }
+
+    private val testData: String?
+        get() = testDataFile?.readText(Charsets.UTF_8)
 
     /**
      * Should compiler message be read and validated with output checker or gold value.
@@ -264,8 +305,9 @@ open class KonanLocalTest : KonanTest() {
         var output = ProcessOutput("", "", 0)
         for (i in 1..times) {
             val args = arguments + (multiArguments?.get(i - 1) ?: emptyList())
+            val testData = this.testData
             output += if (testData != null)
-                runProcessWithInput({ project.executor.execute(it) }, executable, args, testData!!)
+                runProcessWithInput({ project.executor.execute(it) }, executable, args, testData)
             else
                 runProcess({ project.executor.execute(it) }, executable, args)
         }
@@ -307,23 +349,21 @@ open class KonanLocalTest : KonanTest() {
             println("Expected failure. $message")
         }
 
-        val result = stdOut + stdErr
-        val goldValueMismatch = !outputChecker(result.replace(System.lineSeparator(), "\n"))
-        if (goldValueMismatch) {
-            val message = if (goldValue != null)
-                "Expected output: $goldValue, actual output: $result"
-            else
-                "Actual output doesn't match with output checker: $result"
+        val output = stdOut + stdErr
+        val outputMismatch = !outputChecker(output.replace(System.lineSeparator(), "\n"))
+        if (outputMismatch) {
+            val message = goldenData?.let { goldenData -> "Expected output: $goldenData, actual output: $output" }
+                    ?: "Actual output doesn't match with output checker: $output"
 
             check(expectedFail) { "Test failed. $message" }
             println("Expected failure. $message")
         }
 
-        check((exitCodeMismatch || goldValueMismatch) || !expectedFail) {
+        check((exitCodeMismatch || outputMismatch) || !expectedFail) {
             """
             |Unexpected pass:
             | * exit code mismatch: $exitCodeMismatch
-            | * gold value mismatch: $goldValueMismatch
+            | * gold value mismatch: $outputMismatch
             | * expected fail: $expectedFail
             """.trimMargin()
         }
@@ -462,6 +502,12 @@ open class KonanDynamicTest : KonanStandaloneTest() {
     @Input
     @Optional
     var interop: String? = null
+
+    override fun computeGoldenDataFile(): File {
+        val sourceFile = project.file(source)
+        val cSourceFile = File(cSource)
+        return sourceFile.parentFile.resolve(sourceFile.nameWithoutExtension + "-" + cSourceFile.nameWithoutExtension + ".out")
+    }
 
     // Replace testlib_api.h and all occurrences of the testlib with the actual name of the test
     private fun processCSource(): String {

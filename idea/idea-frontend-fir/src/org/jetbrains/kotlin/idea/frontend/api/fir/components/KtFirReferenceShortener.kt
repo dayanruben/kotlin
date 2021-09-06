@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.analysis.checkers.toRegularClassSymbol
 import org.jetbrains.kotlin.fir.declarations.FirDeclaration
-import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
 import org.jetbrains.kotlin.fir.declarations.FirRegularClass
 import org.jetbrains.kotlin.fir.declarations.FirResolvedImport
 import org.jetbrains.kotlin.fir.declarations.builder.buildImport
@@ -51,6 +50,7 @@ import org.jetbrains.kotlin.idea.frontend.api.components.ShortenCommand
 import org.jetbrains.kotlin.idea.frontend.api.components.ShortenOption
 import org.jetbrains.kotlin.idea.frontend.api.fir.KtFirAnalysisSession
 import org.jetbrains.kotlin.idea.frontend.api.fir.utils.addImportToFile
+import org.jetbrains.kotlin.idea.frontend.api.fir.utils.computeImportableName
 import org.jetbrains.kotlin.idea.frontend.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.idea.frontend.api.symbols.KtClassLikeSymbol
 import org.jetbrains.kotlin.idea.frontend.api.tokens.ValidityToken
@@ -251,24 +251,8 @@ private class FirShorteningContext(val firResolveState: FirModuleResolveState) {
     fun toClassSymbol(classId: ClassId) =
         firSession.symbolProvider.getClassLikeSymbolByFqName(classId)
 
-    fun convertToImportableName(callableId: CallableId): FqName? {
-        val classId = callableId.classId
-        return if (classId == null) {
-            callableId.packageName.child(callableId.callableName)
-        } else {
-            // Java static members, enums, and object members can be imported
-            val containingClass = firSession.symbolProvider.getClassLikeSymbolByFqName(classId)?.fir as? FirRegularClass ?: return null
-            if (containingClass.origin == FirDeclarationOrigin.Java ||
-                containingClass.classKind == ClassKind.ENUM_CLASS ||
-                containingClass.classKind == ClassKind.OBJECT
-            ) {
-                callableId.asSingleFqName()
-            } else {
-                null
-            }
-        }
-    }
-
+    fun convertToImportableName(callableSymbol: FirCallableSymbol<*>): FqName? =
+        callableSymbol.computeImportableName(firSession)
 }
 
 private sealed class ElementToShorten {
@@ -482,18 +466,13 @@ private class ElementsToShortenCollector(
     ) {
         val option = callableShortenOption(calledSymbol)
         if (option == ShortenOption.DO_NOT_SHORTEN) return
-        val callableId = calledSymbol.callableId
 
         val scopes = shorteningContext.findScopesAtPosition(expressionToGetScope, namesToImport, towerContextProvider) ?: return
-        val availableCallables = findCallableInScopes(scopes, callableId.callableName)
+        val availableCallables = findCallableInScopes(scopes, calledSymbol.name)
 
-        val nameToImport = if (calledSymbol is FirConstructorSymbol) {
-            // A constructor is imported by the class name.
-            calledSymbol.containingClass()?.classId?.asSingleFqName()
-        } else {
-            shorteningContext.convertToImportableName(callableId)
-        }
-        val (matchedCallables, otherCallables) = availableCallables.partition { it.symbol.callableId == callableId }
+        val nameToImport = shorteningContext.convertToImportableName(calledSymbol)
+
+        val (matchedCallables, otherCallables) = availableCallables.partition { it.symbol.callableId == calledSymbol.callableId }
         val callToShorten = when {
             // TODO: instead of allowing import only if the other callables are all with kind `DEFAULT_STAR`, we should allow import if
             //  the requested import kind has higher priority than the available symbols.
@@ -635,7 +614,7 @@ private fun KtUserType.hasFakeRootPrefix(): Boolean =
 private fun KtDotQualifiedExpression.hasFakeRootPrefix(): Boolean =
     (receiverExpression as? KtNameReferenceExpression)?.getReferencedName() == ROOT_PREFIX_FOR_IDE_RESOLUTION_MODE
 
-private fun KtElement.getDotQualifiedExpressionForSelector(): KtDotQualifiedExpression? =
+internal fun KtElement.getDotQualifiedExpressionForSelector(): KtDotQualifiedExpression? =
     getQualifiedExpressionForSelector() as? KtDotQualifiedExpression
 
 private fun KtDotQualifiedExpression.deleteQualifier(): KtExpression? {

@@ -6,11 +6,8 @@
 package org.jetbrains.kotlin.cli.common.arguments
 
 import org.jetbrains.kotlin.cli.common.arguments.K2JsArgumentConstants.*
-import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
-import org.jetbrains.kotlin.config.ApiVersion
-import org.jetbrains.kotlin.config.LanguageVersion
-import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.config.LanguageFeature
 
 class K2JSCompilerArguments : CommonCompilerArguments() {
     companion object {
@@ -214,6 +211,12 @@ class K2JSCompilerArguments : CommonCompilerArguments() {
     )
     var friendModules: String? by NullableStringFreezableVar(null)
 
+    @Argument(
+        value = "-Xenable-extension-functions-in-externals",
+        description = "Enable extensions functions members in external interfaces"
+    )
+    var extensionFunctionsInExternals: Boolean by FreezableVar(false)
+
     @Argument(value = "-Xmetadata-only", description = "Generate *.meta.js and *.kjsm files only")
     var metadataOnly: Boolean by FreezableVar(false)
 
@@ -229,16 +232,11 @@ class K2JSCompilerArguments : CommonCompilerArguments() {
     @Argument(value = "-Xwasm", description = "Use experimental WebAssembly compiler backend")
     var wasm: Boolean by FreezableVar(false)
 
-    override fun checkIrSupport(languageVersionSettings: LanguageVersionSettings, collector: MessageCollector) {
-        if (!isIrBackendEnabled()) return
-
-        if (languageVersionSettings.languageVersion < LanguageVersion.KOTLIN_1_4
-            || languageVersionSettings.apiVersion < ApiVersion.KOTLIN_1_4
-        ) {
-            collector.report(
-                CompilerMessageSeverity.ERROR,
-                "IR backend cannot be used with language or API version below 1.4"
-            )
+    override fun configureLanguageFeatures(collector: MessageCollector): MutableMap<LanguageFeature, LanguageFeature.State> {
+        return super.configureLanguageFeatures(collector).apply {
+            if (extensionFunctionsInExternals) {
+                this[LanguageFeature.JsEnableExtensionFunctionInExternals] = LanguageFeature.State.ENABLED
+            }
         }
     }
 }

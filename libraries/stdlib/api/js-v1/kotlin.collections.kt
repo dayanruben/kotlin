@@ -8341,6 +8341,8 @@ public fun kotlin.UShortArray.sliceArray(indices: kotlin.ranges.IntRange): kotli
 
 public fun <T : kotlin.Comparable<T>> kotlin.Array<out T>.sort(): kotlin.Unit
 
+@kotlin.Deprecated(message = "Use sortWith instead", replaceWith = kotlin.ReplaceWith(expression = "this.sortWith(Comparator(comparison))", imports = {}))
+@kotlin.DeprecatedSinceKotlin(warningSince = "1.6")
 public fun <T> kotlin.Array<out T>.sort(comparison: (a: T, b: T) -> kotlin.Int): kotlin.Unit
 
 @kotlin.SinceKotlin(version = "1.4")
@@ -8349,6 +8351,8 @@ public fun <T : kotlin.Comparable<T>> kotlin.Array<out T>.sort(fromIndex: kotlin
 /*∆*/ @kotlin.js.library(name = "primitiveArraySort")
 public fun kotlin.ByteArray.sort(): kotlin.Unit
 
+@kotlin.Deprecated(message = "Use other sorting functions from the Standard Library")
+@kotlin.DeprecatedSinceKotlin(warningSince = "1.6")
 @kotlin.internal.InlineOnly
 public inline fun kotlin.ByteArray.sort(noinline comparison: (a: kotlin.Byte, b: kotlin.Byte) -> kotlin.Int): kotlin.Unit
 
@@ -8358,6 +8362,8 @@ public fun kotlin.ByteArray.sort(fromIndex: kotlin.Int = ..., toIndex: kotlin.In
 /*∆*/ @kotlin.js.library(name = "primitiveArraySort")
 public fun kotlin.CharArray.sort(): kotlin.Unit
 
+@kotlin.Deprecated(message = "Use other sorting functions from the Standard Library")
+@kotlin.DeprecatedSinceKotlin(warningSince = "1.6")
 @kotlin.internal.InlineOnly
 public inline fun kotlin.CharArray.sort(noinline comparison: (a: kotlin.Char, b: kotlin.Char) -> kotlin.Int): kotlin.Unit
 
@@ -8367,6 +8373,8 @@ public fun kotlin.CharArray.sort(fromIndex: kotlin.Int = ..., toIndex: kotlin.In
 /*∆*/ @kotlin.js.library(name = "primitiveArraySort")
 public fun kotlin.DoubleArray.sort(): kotlin.Unit
 
+@kotlin.Deprecated(message = "Use other sorting functions from the Standard Library")
+@kotlin.DeprecatedSinceKotlin(warningSince = "1.6")
 @kotlin.internal.InlineOnly
 public inline fun kotlin.DoubleArray.sort(noinline comparison: (a: kotlin.Double, b: kotlin.Double) -> kotlin.Int): kotlin.Unit
 
@@ -8376,6 +8384,8 @@ public fun kotlin.DoubleArray.sort(fromIndex: kotlin.Int = ..., toIndex: kotlin.
 /*∆*/ @kotlin.js.library(name = "primitiveArraySort")
 public fun kotlin.FloatArray.sort(): kotlin.Unit
 
+@kotlin.Deprecated(message = "Use other sorting functions from the Standard Library")
+@kotlin.DeprecatedSinceKotlin(warningSince = "1.6")
 @kotlin.internal.InlineOnly
 public inline fun kotlin.FloatArray.sort(noinline comparison: (a: kotlin.Float, b: kotlin.Float) -> kotlin.Int): kotlin.Unit
 
@@ -8385,6 +8395,8 @@ public fun kotlin.FloatArray.sort(fromIndex: kotlin.Int = ..., toIndex: kotlin.I
 /*∆*/ @kotlin.js.library(name = "primitiveArraySort")
 public fun kotlin.IntArray.sort(): kotlin.Unit
 
+@kotlin.Deprecated(message = "Use other sorting functions from the Standard Library")
+@kotlin.DeprecatedSinceKotlin(warningSince = "1.6")
 @kotlin.internal.InlineOnly
 public inline fun kotlin.IntArray.sort(noinline comparison: (a: kotlin.Int, b: kotlin.Int) -> kotlin.Int): kotlin.Unit
 
@@ -8393,6 +8405,8 @@ public fun kotlin.IntArray.sort(fromIndex: kotlin.Int = ..., toIndex: kotlin.Int
 
 public fun kotlin.LongArray.sort(): kotlin.Unit
 
+@kotlin.Deprecated(message = "Use other sorting functions from the Standard Library")
+@kotlin.DeprecatedSinceKotlin(warningSince = "1.6")
 @kotlin.internal.InlineOnly
 public inline fun kotlin.LongArray.sort(noinline comparison: (a: kotlin.Long, b: kotlin.Long) -> kotlin.Int): kotlin.Unit
 
@@ -8402,6 +8416,8 @@ public fun kotlin.LongArray.sort(fromIndex: kotlin.Int = ..., toIndex: kotlin.In
 /*∆*/ @kotlin.js.library(name = "primitiveArraySort")
 public fun kotlin.ShortArray.sort(): kotlin.Unit
 
+@kotlin.Deprecated(message = "Use other sorting functions from the Standard Library")
+@kotlin.DeprecatedSinceKotlin(warningSince = "1.6")
 @kotlin.internal.InlineOnly
 public inline fun kotlin.ShortArray.sort(noinline comparison: (a: kotlin.Short, b: kotlin.Short) -> kotlin.Int): kotlin.Unit
 
@@ -10296,8 +10312,9 @@ public abstract class AbstractMutableCollection<E> : kotlin.collections.Abstract
 
     public open override fun retainAll(elements: kotlin.collections.Collection<E>): kotlin.Boolean
 
+    @kotlin.Deprecated(level = DeprecationLevel.HIDDEN, message = "Provided so that subclasses inherit this function")
     @kotlin.js.JsName(name = "toJSON")
-    public open fun toJSON(): kotlin.Any
+    protected final fun toJSON(): kotlin.Any
 }
 
 public abstract class AbstractMutableList<E> : kotlin.collections.AbstractMutableCollection<E>, kotlin.collections.MutableList<E> {
@@ -10615,8 +10632,6 @@ public open class HashMap<K, V> : kotlin.collections.AbstractMutableMap<K, V>, k
 
     public open override fun containsValue(value: V): kotlin.Boolean
 
-    protected open fun createEntrySet(): kotlin.collections.MutableSet<kotlin.collections.MutableMap.MutableEntry<K, V>>
-
     public open override operator fun get(key: K): V?
 
     public open override fun put(key: K, value: V): V?
@@ -10720,8 +10735,6 @@ public open class LinkedHashMap<K, V> : kotlin.collections.HashMap<K, V>, kotlin
     public open override fun containsKey(key: K): kotlin.Boolean
 
     public open override fun containsValue(value: V): kotlin.Boolean
-
-    protected open override fun createEntrySet(): kotlin.collections.MutableSet<kotlin.collections.MutableMap.MutableEntry<K, V>>
 
     public open override operator fun get(key: K): V?
 

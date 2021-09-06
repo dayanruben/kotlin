@@ -3,6 +3,8 @@ where advanced options include:
   -Xcache-directories=<path> A path to cache directories
   -Xenable-js-scripting      Enable experimental support of .kts files using K/JS (with -Xir only)
   -Xerror-tolerance-policy   Set up error tolerance policy (NONE, SEMANTIC, SYNTAX, ALL)
+  -Xenable-extension-functions-in-externals
+                             Enable extensions functions members in external interfaces
   -Xfake-override-validator  Enable IR fake override validator
   -Xfriend-modules=<path>    Paths to friend modules
   -Xfriend-modules-disabled  Disable internal declaration export
@@ -75,7 +77,6 @@ where advanced options include:
   -Xphases-to-validate-after Validate backend state after these phases
   -Xphases-to-validate-before Validate backend state before these phases
   -Xplugin=<path>            Load plugins from the given classpath
-  -Xpolymorphic-signature    Enable experimental support for @PolymorphicSignature (MethodHandle/VarHandle)
   -Xprofile-phases           Profile backend phases
   -Xproper-ieee754-comparisons Generate proper IEEE 754 comparisons in all cases if values are statically known to be of primitive numeric types
   -Xread-deserialized-contracts Enable reading of contracts from metadata

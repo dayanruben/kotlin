@@ -64,6 +64,8 @@ private constructor(
 
     override val referenceShortenerImpl = KtFirReferenceShortener(this, token, firResolveState)
 
+    override val importOptimizerImpl: KtImportOptimizer = KtFirImportOptimizer(token, firResolveState)
+
     override val symbolDeclarationRendererProviderImpl: KtSymbolDeclarationRendererProvider =
         KtFirSymbolDeclarationRendererProvider(this, token)
 

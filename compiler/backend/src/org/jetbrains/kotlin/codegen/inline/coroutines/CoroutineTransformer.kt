@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.codegen.coroutines.*
 import org.jetbrains.kotlin.codegen.inline.*
 import org.jetbrains.kotlin.codegen.optimization.common.asSequence
 import org.jetbrains.kotlin.codegen.optimization.transformer.MethodTransformer
-import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.resolve.jvm.AsmTypes
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.JvmDeclarationOrigin
 import org.jetbrains.org.objectweb.asm.MethodVisitor
@@ -31,6 +30,7 @@ class CoroutineTransformer(
     private val superClassName: String
 ) {
     private val state = inliningContext.state
+
     // If we inline into inline function, we should generate both method with state-machine for Java interop and method without
     // state-machine for further transformation/inlining.
     private val generateForInline = inliningContext.callSiteInfo.isInlineOrInsideInline
@@ -87,13 +87,11 @@ class CoroutineTransformer(
                 containingClassInternalName = classBuilder.thisName,
                 obtainClassBuilderForCoroutineState = { classBuilder },
                 isForNamedFunction = false,
-                shouldPreserveClassInitialization = state.constructorCallNormalizationMode.shouldPreserveClassInitialization,
                 disableTailCallOptimizationForFunctionReturningUnit = false,
                 reportSuspensionPointInsideMonitor = { sourceCompilerForInline.reportSuspensionPointInsideMonitor(it) },
                 // TODO: this linenumbers might not be correct and since they are used only for step-over, check them.
                 lineNumber = inliningContext.callSiteInfo.lineNumber,
                 sourceFile = inliningContext.callSiteInfo.file?.name ?: "",
-                useOldSpilledVarTypeAnalysis = state.configuration.getBoolean(JVMConfigurationKeys.USE_OLD_SPILLED_VAR_TYPE_ANALYSIS)
             )
 
             if (generateForInline)
@@ -121,7 +119,6 @@ class CoroutineTransformer(
                 containingClassInternalName = classBuilder.thisName,
                 obtainClassBuilderForCoroutineState = { (inliningContext as RegeneratedClassContext).continuationBuilders[continuationClassName]!! },
                 isForNamedFunction = true,
-                shouldPreserveClassInitialization = state.constructorCallNormalizationMode.shouldPreserveClassInitialization,
                 disableTailCallOptimizationForFunctionReturningUnit = disableTailCallOptimization,
                 reportSuspensionPointInsideMonitor = { sourceCompilerForInline.reportSuspensionPointInsideMonitor(it) },
                 lineNumber = inliningContext.callSiteInfo.lineNumber,
@@ -129,7 +126,6 @@ class CoroutineTransformer(
                 needDispatchReceiver = true,
                 internalNameForDispatchReceiver = classBuilder.thisName,
                 putContinuationParameterToLvt = !state.isIrBackend,
-                useOldSpilledVarTypeAnalysis = state.configuration.getBoolean(JVMConfigurationKeys.USE_OLD_SPILLED_VAR_TYPE_ANALYSIS)
             )
 
             if (generateForInline)
@@ -157,7 +153,7 @@ class CoroutineTransformer(
         context.continuationBuilders[continuationClassName] = classBuilder
     }
 
-    fun unregisterClassBuilder(continuationClassName: String) =
+    private fun unregisterClassBuilder(continuationClassName: String): ClassBuilder? =
         (inliningContext as RegeneratedClassContext).continuationBuilders.remove(continuationClassName)
 
     // If tail-call optimization took place, we do not need continuation class anymore, unless it is used by $$forInline method
