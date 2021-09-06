@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.fir.declarations.FirRegularClass
 import org.jetbrains.kotlin.fir.declarations.utils.collectEnumEntries
 import org.jetbrains.kotlin.fir.declarations.utils.isStatic
 import org.jetbrains.kotlin.fir.declarations.utils.modality
-import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.builder.buildConstExpression
 import org.jetbrains.kotlin.fir.expressions.builder.buildPropertyAccessExpression
@@ -23,121 +22,61 @@ import org.jetbrains.kotlin.fir.references.builder.buildResolvedNamedReference
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
 import org.jetbrains.kotlin.fir.symbols.ConeClassifierLookupTag
-import org.jetbrains.kotlin.fir.symbols.ConeTypeParameterLookupTag
 import org.jetbrains.kotlin.fir.symbols.impl.ConeClassLikeLookupTagImpl
 import org.jetbrains.kotlin.fir.typeContext
 import org.jetbrains.kotlin.fir.types.*
-import org.jetbrains.kotlin.fir.types.builder.buildResolvedTypeRef
-import org.jetbrains.kotlin.fir.types.builder.buildStarProjection
-import org.jetbrains.kotlin.fir.types.builder.buildTypeProjectionWithVariance
-import org.jetbrains.kotlin.fir.types.jvm.FirJavaTypeRef
-import org.jetbrains.kotlin.load.java.JavaDefaultQualifiers
-import org.jetbrains.kotlin.load.java.structure.JavaClassifierType
-import org.jetbrains.kotlin.load.java.structure.JavaType
 import org.jetbrains.kotlin.load.java.typeEnhancement.*
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.types.AbstractStrictEqualityTypeChecker
 import org.jetbrains.kotlin.types.ConstantValueKind
-import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.extractRadix
 
-internal class IndexedJavaTypeQualifiers(private val data: Array<JavaTypeQualifiers>) {
-    constructor(size: Int, compute: (Int) -> JavaTypeQualifiers) : this(Array(size) { compute(it) })
+internal fun ConeKotlinType.enhance(session: FirSession, qualifiers: IndexedJavaTypeQualifiers): ConeKotlinType? =
+    enhanceConeKotlinType(session, qualifiers, 0, mutableListOf<Int>().apply { computeSubtreeSizes(this) })
 
-    operator fun invoke(index: Int): JavaTypeQualifiers = data.getOrElse(index) { JavaTypeQualifiers.NONE }
-
-    val size: Int get() = data.size
-}
-
-internal fun FirJavaTypeRef.enhance(
-    session: FirSession,
-    qualifiers: IndexedJavaTypeQualifiers,
-    typeWithoutEnhancement: ConeKotlinType,
-): FirResolvedTypeRef {
-    return typeWithoutEnhancement.enhancePossiblyFlexible(session, annotations, qualifiers, 0)
-}
-
-// The index in the lambda is the position of the type component:
-// Example: for `A<B, C<D, E>>`, indices go as follows: `0 - A<...>, 1 - B, 2 - C<D, E>, 3 - D, 4 - E`,
-// which corresponds to the left-to-right breadth-first walk of the tree representation of the type.
-// For flexible types, both bounds are indexed in the same way: `(A<B>..C<D>)` gives `0 - (A<B>..C<D>), 1 - B and D`.
-private fun ConeKotlinType.enhancePossiblyFlexible(
-    session: FirSession,
-    annotations: List<FirAnnotationCall>,
-    qualifiers: IndexedJavaTypeQualifiers,
-    index: Int
-): FirResolvedTypeRef {
-    val enhanced = enhanceConeKotlinType(session, qualifiers, index)
-
-    return buildResolvedTypeRef {
-        this.type = enhanced
-        this.annotations += annotations
+// The index in the lambda is the position of the type component in a depth-first walk of the tree.
+// Example: A<B<C, D>, E<F>> - 0<1<2, 3>, 4<5>>. For flexible types, some arguments in the lower bound
+// may be replaced with star projections in the upper bound, but otherwise corresponding arguments
+// have the same index: (A<B<C>, D>..E<*, F>) -> (0<1<2>, 3>..0<1, 3>). This function precomputes
+// the size of each subtree so that we can quickly skip to the next type argument; e.g. result[1] will
+// give 3 for B<C, D>, indicating that E<F> is at 1 + 3 = 4.
+private fun ConeKotlinType.computeSubtreeSizes(result: MutableList<Int>): Int {
+    val index = result.size
+    result.add(0) // reserve space at index
+    result[index] = 1 + typeArguments.sumOf {
+        // Star projections take up one (empty) entry.
+        it.type?.computeSubtreeSizes(result) ?: 1.also { result.add(1) }
     }
+    return result[index]
 }
 
 private fun ConeKotlinType.enhanceConeKotlinType(
     session: FirSession,
     qualifiers: IndexedJavaTypeQualifiers,
-    index: Int
-): ConeKotlinType {
+    index: Int,
+    subtreeSizes: List<Int>
+): ConeKotlinType? {
     return when (this) {
         is ConeFlexibleType -> {
-            val isRawType = this is ConeRawType
-
             val lowerResult = lowerBound.enhanceInflexibleType(
-                session, TypeComponentPosition.FLEXIBLE_LOWER, qualifiers, index, isRawType
+                session, TypeComponentPosition.FLEXIBLE_LOWER, qualifiers, index, subtreeSizes
             )
             val upperResult = upperBound.enhanceInflexibleType(
-                session, TypeComponentPosition.FLEXIBLE_UPPER, qualifiers, index, isRawType
+                session, TypeComponentPosition.FLEXIBLE_UPPER, qualifiers, index, subtreeSizes
             )
 
             when {
-                lowerResult === lowerBound && upperResult === upperBound -> this
-                this is ConeRawType -> ConeRawType(lowerResult, upperResult)
-                else -> coneFlexibleOrSimpleType(
-                    session, lowerResult, upperResult, isNotNullTypeParameter = qualifiers(index).isNotNullTypeParameter
-                )
+                lowerResult == null && upperResult == null -> null
+                this is ConeRawType -> ConeRawType(lowerResult ?: lowerBound, upperResult ?: upperBound)
+                else -> coneFlexibleOrSimpleType(session.typeContext, lowerResult ?: lowerBound, upperResult ?: upperBound)
             }
         }
         is ConeSimpleKotlinType -> enhanceInflexibleType(
-            session, TypeComponentPosition.INFLEXIBLE, qualifiers, index, isBoundOfRawType = false
+            session, TypeComponentPosition.INFLEXIBLE, qualifiers, index, subtreeSizes
         )
-        else -> this
+        else -> null
     }
-}
-
-private fun ConeKotlinType.subtreeSize(): Int {
-    return 1 + typeArguments.sumOf { ((it as? ConeKotlinType)?.subtreeSize() ?: 0) + 1 }
-}
-
-private fun coneFlexibleOrSimpleType(
-    session: FirSession,
-    lowerBound: ConeKotlinType,
-    upperBound: ConeKotlinType,
-    isNotNullTypeParameter: Boolean
-): ConeKotlinType {
-    if (AbstractStrictEqualityTypeChecker.strictEqualTypes(session.typeContext, lowerBound, upperBound)) {
-        val lookupTag = (lowerBound as? ConeLookupTagBasedType)?.lookupTag
-        if (isNotNullTypeParameter && lookupTag is ConeTypeParameterLookupTag && !lowerBound.isMarkedNullable) {
-            // TODO: we need enhancement for type parameter bounds for this code to work properly
-            // At this moment, this condition is always true
-            if (lookupTag.typeParameterSymbol.fir.bounds.any {
-                    val type = it.coneType
-                    type is ConeTypeParameterType || type.isNullable
-                }
-            ) {
-                return ConeDefinitelyNotNullType.create(
-                    lowerBound,
-                    session.typeContext,
-                    useCorrectedNullabilityForFlexibleTypeParameters = true
-                ) ?: lowerBound
-            }
-        }
-        return lowerBound
-    }
-    return ConeFlexibleType(lowerBound, upperBound)
 }
 
 private val KOTLIN_COLLECTIONS = FqName("kotlin.collections")
@@ -163,70 +102,51 @@ private fun ConeKotlinType.enhanceInflexibleType(
     position: TypeComponentPosition,
     qualifiers: IndexedJavaTypeQualifiers,
     index: Int,
-    @Suppress("UNUSED_PARAMETER") isBoundOfRawType: Boolean,
-): ConeKotlinType {
+    subtreeSizes: List<Int>,
+): ConeKotlinType? {
     require(this !is ConeFlexibleType) { "$this should not be flexible" }
     val shouldEnhance = position.shouldEnhance()
-    if (!shouldEnhance && typeArguments.isEmpty() || this !is ConeLookupTagBasedType) {
-        return this
+    if ((!shouldEnhance && typeArguments.isEmpty()) || this !is ConeLookupTagBasedType) {
+        return null
     }
 
-    val originalTag = lookupTag
-
     val effectiveQualifiers = qualifiers(index)
-    val enhancedTag = originalTag.enhanceMutability(effectiveQualifiers, position)
+    val enhancedTag = lookupTag.enhanceMutability(effectiveQualifiers, position)
 
-    var wereChangesInArgs = false
+    // TODO: implement warnings
+    val nullabilityFromQualifiers = effectiveQualifiers.nullability
+        .takeIf { shouldEnhance && !effectiveQualifiers.isNullabilityQualifierForWarning }
+    val enhancedNullability = when (nullabilityFromQualifiers) {
+        NullabilityQualifier.NULLABLE -> true
+        NullabilityQualifier.NOT_NULL -> false
+        else -> isNullable
+    }
 
     var globalArgIndex = index + 1
     val enhancedArguments = typeArguments.map { arg ->
-        if (arg.kind != ProjectionKind.INVARIANT) {
-            globalArgIndex++
-            arg
-        } else {
-            require(arg is ConeKotlinType) { "Should be invariant type: $arg" }
-            globalArgIndex += arg.subtreeSize()
-
-            val enhanced = arg.enhanceConeKotlinType(session, qualifiers, globalArgIndex)
-            wereChangesInArgs = wereChangesInArgs || enhanced !== arg
-            enhanced.type
+        val argIndex = globalArgIndex.also { globalArgIndex += subtreeSizes[it] }
+        arg.type?.enhanceConeKotlinType(session, qualifiers, argIndex, subtreeSizes)?.let {
+            when (arg.kind) {
+                ProjectionKind.IN -> ConeKotlinTypeProjectionIn(it)
+                ProjectionKind.OUT -> ConeKotlinTypeProjectionOut(it)
+                ProjectionKind.STAR -> ConeStarProjection
+                ProjectionKind.INVARIANT -> it
+            }
         }
-    }.toTypedArray()
-
-    val (enhancedNullability, enhancedNullabilityAttribute) = getEnhancedNullability(effectiveQualifiers, position)
-    wereChangesInArgs = wereChangesInArgs || (enhancedNullabilityAttribute != null && !this.hasEnhancedNullability)
-
-    if (!wereChangesInArgs && originalTag == enhancedTag && enhancedNullability == isNullable) {
-        return this
     }
 
-    var attributes = this.attributes
-    enhancedNullabilityAttribute?.let { attributes += it }
-
-    // TODO: why all of these is needed
-//    val enhancement = if (effectiveQualifiers.isNotNullTypeParameter) NotNullTypeParameter(enhancedType) else enhancedType
-//    val nullabilityForWarning = nullabilityChanged && effectiveQualifiers.isNullabilityQualifierForWarning
-//    val result = if (nullabilityForWarning) wrapEnhancement(enhancement) else enhancement
-
-    return enhancedTag.constructType(enhancedArguments, enhancedNullability, attributes)
-}
-
-private data class EnhancementResult<out T>(val result: T, val enhancementAttribute: ConeAttribute<*>?)
-
-private fun <T> T.noChange(): EnhancementResult<T> = EnhancementResult(this, null)
-private fun <T> T.enhancedNullability(): EnhancementResult<T> = EnhancementResult(this, CompilerConeAttributes.EnhancedNullability)
-
-private fun ConeKotlinType.getEnhancedNullability(
-    qualifiers: JavaTypeQualifiers,
-    position: TypeComponentPosition
-): EnhancementResult<Boolean> {
-    if (!position.shouldEnhance()) return this.isMarkedNullable.noChange()
-
-    return when (qualifiers.nullability) {
-        NullabilityQualifier.NULLABLE -> true.noChange()
-        NullabilityQualifier.NOT_NULL -> false.enhancedNullability()
-        else -> this.isMarkedNullable.noChange()
+    val shouldAddAttribute = nullabilityFromQualifiers == NullabilityQualifier.NOT_NULL && !hasEnhancedNullability
+    if (lookupTag == enhancedTag && enhancedNullability == isNullable && !shouldAddAttribute && enhancedArguments.all { it == null }) {
+        return null // absolutely no changes
     }
+
+    val mergedArguments = Array(typeArguments.size) { enhancedArguments[it] ?: typeArguments[it] }
+    val mergedAttributes = if (shouldAddAttribute) attributes + CompilerConeAttributes.EnhancedNullability else attributes
+    val enhancedType = enhancedTag.constructType(mergedArguments, enhancedNullability, mergedAttributes)
+    return if (effectiveQualifiers.isNotNullTypeParameter)
+        ConeDefinitelyNotNullType.create(enhancedType, session.typeContext) ?: enhancedType
+    else
+        enhancedType
 }
 
 private fun ConeClassifierLookupTag.enhanceMutability(
@@ -254,43 +174,6 @@ private fun ConeClassifierLookupTag.enhanceMutability(
 
     return this
 }
-
-
-internal data class TypeAndDefaultQualifiers(
-    val type: FirTypeRef?, // null denotes '*' here
-    val defaultQualifiers: JavaDefaultQualifiers?
-)
-
-internal fun FirTypeRef.typeArguments(): List<FirTypeProjection> = when (this) {
-    is FirUserTypeRef -> qualifier.lastOrNull()?.typeArgumentList?.typeArguments.orEmpty()
-    is FirResolvedTypeRef -> type.typeArguments.map {
-        when (it) {
-            is ConeStarProjection -> buildStarProjection {}
-            else -> {
-                val kind = it.kind
-                val type = when (it) {
-                    is ConeKotlinTypeProjection -> it.type
-                    is ConeKotlinType -> it
-                    else -> error("Should not be here")
-                }
-                buildTypeProjectionWithVariance {
-                    variance = when (kind) {
-                        ProjectionKind.IN -> Variance.IN_VARIANCE
-                        ProjectionKind.OUT -> Variance.OUT_VARIANCE
-                        ProjectionKind.INVARIANT -> Variance.INVARIANT
-                        else -> error("Should not be here")
-                    }
-                    typeRef = buildResolvedTypeRef {
-                        this.type = type
-                    }
-                }
-            }
-        }
-    }
-    else -> emptyList()
-}
-
-internal fun JavaType.typeArguments(): List<JavaType?> = (this as? JavaClassifierType)?.typeArguments.orEmpty()
 
 internal fun ConeKotlinType.lexicalCastFrom(session: FirSession, value: String): FirExpression? {
     val lookupTagBasedType = when (this) {
@@ -342,16 +225,3 @@ internal fun ConeKotlinType.lexicalCastFrom(session: FirSession, value: String):
         else -> null
     }
 }
-
-internal fun List<FirAnnotationCall>.computeTypeAttributesForJavaType(): ConeAttributes =
-    computeTypeAttributes { classId ->
-        when (classId) {
-            CompilerConeAttributes.EnhancedNullability.ANNOTATION_CLASS_ID -> add(CompilerConeAttributes.EnhancedNullability)
-            in NOT_NULL_ANNOTATION_IDS -> add(CompilerConeAttributes.EnhancedNullability)
-            JAVAX_NONNULL_ANNOTATION_ID,
-            JAVAX_CHECKFORNULL_ANNOTATION_ID,
-            COMPATQUAL_NONNULL_ANNOTATION_ID,
-            ANDROIDX_RECENTLY_NON_NULL_ANNOTATION_ID
-            -> add(CompilerConeAttributes.EnhancedNullability)
-        }
-    }

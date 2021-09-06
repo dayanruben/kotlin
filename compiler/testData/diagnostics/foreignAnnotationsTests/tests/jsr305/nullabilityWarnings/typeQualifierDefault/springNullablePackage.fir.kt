@@ -78,7 +78,7 @@ fun main(a: test.A) {
     a.field?.length
     a.field.length
 
-    a.baz()<!UNSAFE_CALL!>.<!>get(0)
+    a.baz().get(0)
     a.baz()!!.get(0).get(0)
     a.baz()!!.get(0)?.get(0)
 }

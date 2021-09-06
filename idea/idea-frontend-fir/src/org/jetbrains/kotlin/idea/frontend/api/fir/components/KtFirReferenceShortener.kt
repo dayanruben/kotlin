@@ -335,21 +335,18 @@ private class ElementsToShortenCollector(
     private fun findTypeToShorten(wholeClassifierId: ClassId, wholeTypeElement: KtUserType): ElementToShorten? {
         val positionScopes = shorteningContext.findScopesAtPosition(wholeTypeElement, namesToImport, towerContextProvider) ?: return null
         val allClassIds = wholeClassifierId.outerClassesWithSelf
-        val allTypeElements = wholeTypeElement.qualifiersWithSelf
+        val allQualifiedTypeElements = wholeTypeElement.qualifiedTypesWithSelf
         return findClassifierElementsToShorten(
             positionScopes,
             allClassIds,
-            allTypeElements,
+            allQualifiedTypeElements,
             ::ShortenType,
             this::findFakePackageToShorten
-        ) {
-            it.qualifier != null
-        }
+        )
     }
 
     private fun findFakePackageToShorten(typeElement: KtUserType): ShortenType? {
-        val deepestTypeWithQualifier = typeElement.qualifiersWithSelf.last().parent as? KtUserType
-            ?: error("Type element should have at least one qualifier, instead it was ${typeElement.text}")
+        val deepestTypeWithQualifier = typeElement.qualifiedTypesWithSelf.last()
 
         return if (deepestTypeWithQualifier.hasFakeRootPrefix()) ShortenType(deepestTypeWithQualifier) else null
     }
@@ -374,7 +371,7 @@ private class ElementsToShortenCollector(
         val positionScopes: List<FirScope> =
             shorteningContext.findScopesAtPosition(wholeQualifierElement, namesToImport, towerContextProvider) ?: return null
         val allClassIds: Sequence<ClassId> = wholeClassQualifier.outerClassesWithSelf
-        val allQualifiers: Sequence<KtDotQualifiedExpression> = wholeQualifierElement.qualifiersWithSelf
+        val allQualifiers: Sequence<KtDotQualifiedExpression> = wholeQualifierElement.qualifiedExpressionsWithSelf
         return findClassifierElementsToShorten(
             positionScopes,
             allClassIds,
@@ -387,14 +384,12 @@ private class ElementsToShortenCollector(
     private inline fun <E> findClassifierElementsToShorten(
         positionScopes: List<FirScope>,
         allClassIds: Sequence<ClassId>,
-        allElements: Sequence<E>,
+        allQualifiedElements: Sequence<E>,
         createElementToShorten: (E, nameToImport: FqName?, importAllInParent: Boolean) -> ElementToShorten,
         findFakePackageToShortenFn: (E) -> ElementToShorten?,
-        elementFilter: (E) -> Boolean = { true },
     ): ElementToShorten? {
 
-        for ((classId, element) in allClassIds.zip(allElements)) {
-            if (!elementFilter(element)) return null
+        for ((classId, element) in allClassIds.zip(allQualifiedElements)) {
             val option = classShortenOption(shorteningContext.toClassSymbol(classId) ?: return null)
             if (option == ShortenOption.DO_NOT_SHORTEN) continue
 
@@ -434,7 +429,7 @@ private class ElementsToShortenCollector(
                 }
             }
         }
-        return findFakePackageToShortenFn(allElements.last())
+        return findFakePackageToShortenFn(allQualifiedElements.last())
     }
 
     private fun processPropertyReference(resolvedNamedReference: FirResolvedNamedReference) {
@@ -542,7 +537,7 @@ private class ElementsToShortenCollector(
     }
 
     private fun findFakePackageToShorten(wholeQualifiedExpression: KtDotQualifiedExpression): ShortenQualifier? {
-        val deepestQualifier = wholeQualifiedExpression.qualifiersWithSelf.last()
+        val deepestQualifier = wholeQualifiedExpression.qualifiedExpressionsWithSelf.last()
         return if (deepestQualifier.hasFakeRootPrefix()) ShortenQualifier(deepestQualifier) else null
     }
 
@@ -565,10 +560,21 @@ private class ElementsToShortenCollector(
     private val ClassId.outerClassesWithSelf: Sequence<ClassId>
         get() = generateSequence(this) { it.outerClassId }
 
-    private val KtUserType.qualifiersWithSelf: Sequence<KtUserType>
-        get() = generateSequence(this) { it.qualifier }
+    /**
+     * Note: The resulting sequence does not contain non-qualified types!
+     *
+     * For type `A.B.C.D` it will return sequence of [`A.B.C.D`, `A.B.C`, `A.B`] (**without** `A`).
+     */
+    private val KtUserType.qualifiedTypesWithSelf: Sequence<KtUserType>
+        get() {
+            require(qualifier != null) {
+                "Type element should have at least one qualifier, instead it was $text"
+            }
 
-    private val KtDotQualifiedExpression.qualifiersWithSelf: Sequence<KtDotQualifiedExpression>
+            return generateSequence(this) { it.qualifier }.takeWhile { it.qualifier != null }
+        }
+
+    private val KtDotQualifiedExpression.qualifiedExpressionsWithSelf: Sequence<KtDotQualifiedExpression>
         get() = generateSequence(this) { it.receiverExpression as? KtDotQualifiedExpression }
 }
 

@@ -35,8 +35,8 @@ fun main(
 ): Unit {
     a.bar(aNotNullNotNullNotNull)
     a.bar(aNotNullNotNullNull)
-    a.bar(<!ARGUMENT_TYPE_MISMATCH!>aNotNullNullNotNull<!>)
-    a.bar(<!ARGUMENT_TYPE_MISMATCH!>aNotNullNullNull<!>)
+    a.bar(aNotNullNullNotNull)
+    a.bar(aNotNullNullNull)
 
     b.bar(aNotNullNotNullNotNull)
     b.bar(aNotNullNotNullNull)

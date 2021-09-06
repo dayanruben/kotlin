@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.incremental.components.LookupTracker
 import org.jetbrains.kotlin.load.java.AnnotationTypeQualifierResolver
 import org.jetbrains.kotlin.load.java.JavaClassFinder
 import org.jetbrains.kotlin.load.java.JavaClassesTracker
+import org.jetbrains.kotlin.load.java.JavaModuleAnnotationsProvider
 import org.jetbrains.kotlin.load.java.JavaTypeEnhancementState
 import org.jetbrains.kotlin.load.java.components.JavaPropertyInitializerEvaluator
 import org.jetbrains.kotlin.load.java.components.JavaResolverCache
@@ -155,20 +156,14 @@ fun makeLazyJavaPackageFragmentProvider(
     singleModuleClassResolver: ModuleClassResolver,
     packagePartProvider: PackagePartProvider = PackagePartProvider.Empty
 ): LazyJavaPackageFragmentProvider {
-    val annotationTypeQualifierResolver = AnnotationTypeQualifierResolver(storageManager, JavaTypeEnhancementState.DEFAULT)
-    val javaTypeEnhancementState = JavaTypeEnhancementState.DEFAULT
     val javaResolverComponents = JavaResolverComponents(
         storageManager, javaClassFinder, reflectKotlinClassFinder, deserializedDescriptorResolver,
         SignaturePropagator.DO_NOTHING, errorReporter, JavaResolverCache.EMPTY,
         JavaPropertyInitializerEvaluator.DoNothing, SamConversionResolverImpl(storageManager, emptyList()), javaSourceElementFactory,
         singleModuleClassResolver, packagePartProvider, SupertypeLoopChecker.EMPTY, LookupTracker.DO_NOTHING, module,
-        ReflectionTypes(module, notFoundClasses), annotationTypeQualifierResolver,
-        SignatureEnhancement(
-            annotationTypeQualifierResolver,
-            JavaTypeEnhancementState.DEFAULT,
-            JavaTypeEnhancement(JavaResolverSettings.Default)
-        ),
-        JavaClassesTracker.Default, JavaResolverSettings.Default, NewKotlinTypeChecker.Default, javaTypeEnhancementState,
+        ReflectionTypes(module, notFoundClasses), AnnotationTypeQualifierResolver(JavaTypeEnhancementState.DEFAULT),
+        SignatureEnhancement(JavaTypeEnhancement(JavaResolverSettings.Default)),
+        JavaClassesTracker.Default, JavaResolverSettings.Default, NewKotlinTypeChecker.Default, JavaTypeEnhancementState.DEFAULT,
         object : JavaModuleAnnotationsProvider {
             override fun getAnnotationsForModuleOwnerOfClass(classId: ClassId): List<JavaAnnotation>? = null
         }

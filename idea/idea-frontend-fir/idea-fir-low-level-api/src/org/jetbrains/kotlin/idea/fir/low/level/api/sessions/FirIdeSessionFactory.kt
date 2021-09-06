@@ -46,7 +46,6 @@ import org.jetbrains.kotlin.idea.fir.low.level.api.providers.FirIdeBuiltinsAndCl
 import org.jetbrains.kotlin.idea.fir.low.level.api.providers.FirIdeLibrariesSessionProvider
 import org.jetbrains.kotlin.idea.fir.low.level.api.providers.FirIdeProvider
 import org.jetbrains.kotlin.idea.fir.low.level.api.providers.FirModuleWithDependenciesSymbolProvider
-import org.jetbrains.kotlin.idea.fir.low.level.api.providers.FirThreadSafeSymbolProviderWrapper
 import org.jetbrains.kotlin.idea.fir.low.level.api.util.checkCanceled
 import org.jetbrains.kotlin.load.java.JavaClassFinder
 import org.jetbrains.kotlin.load.java.JavaClassFinderImpl
@@ -56,6 +55,7 @@ import org.jetbrains.kotlin.load.kotlin.VirtualFileFinderFactory
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
+import org.jetbrains.kotlin.resolve.jvm.modules.JavaModuleResolver
 import org.jetbrains.kotlin.resolve.jvm.platform.JvmPlatformAnalyzerServices
 
 @OptIn(PrivateSessionConstructor::class, SessionConfiguration::class)
@@ -92,7 +92,7 @@ internal object FirIdeSessionFactory {
 
             registerIdeComponents(project)
             registerCommonComponents(languageVersionSettings)
-            registerCommonJavaComponents()
+            registerCommonJavaComponents(JavaModuleResolver.getInstance(project))
             registerResolveComponents()
 
             val provider = FirIdeProvider(
@@ -194,10 +194,8 @@ internal object FirIdeSessionFactory {
             registerIdeComponents(project)
             register(FirPhaseManager::class, FirPhaseCheckingPhaseManager)
             registerCommonComponents(languageVersionSettings)
-            registerCommonJavaComponents()
+            registerCommonJavaComponents(JavaModuleResolver.getInstance(project))
             registerJavaSpecificResolveComponents()
-
-            val javaSymbolProvider = JavaSymbolProvider(this, mainModuleData, project, searchScope)
 
             val kotlinScopeProvider = FirKotlinScopeProvider(::wrapScopeWithJvmMapped)
 
@@ -210,19 +208,16 @@ internal object FirIdeSessionFactory {
                 @OptIn(ExperimentalStdlibApi::class)
                 buildList {
                     add(
-                        FirThreadSafeSymbolProviderWrapper(
-                            KotlinDeserializedJvmSymbolsProviderForIde(
-                                this@session,
-                                moduleDataProvider,
-                                kotlinScopeProvider,
-                                packagePartProvider,
-                                kotlinClassFinder,
-                                javaSymbolProvider,
-                                javaClassFinder
-                            )
+                        KotlinDeserializedJvmSymbolsProviderForIde(
+                            this@session,
+                            moduleDataProvider,
+                            kotlinScopeProvider,
+                            packagePartProvider,
+                            kotlinClassFinder,
+                            javaClassFinder
                         )
                     )
-                    add(javaSymbolProvider)
+                    add(JavaSymbolProvider(this@session, mainModuleData, project, searchScope))
                     addAll((builtinsAndCloneableSession.symbolProvider as FirCompositeSymbolProvider).providers)
                 }
             )
@@ -244,11 +239,10 @@ internal object FirIdeSessionFactory {
         kotlinScopeProvider: FirKotlinScopeProvider,
         packagePartProvider: PackagePartProvider,
         kotlinClassFinder: KotlinClassFinder,
-        javaSymbolProvider: JavaSymbolProvider,
         javaClassFinder: JavaClassFinder
     ) : KotlinDeserializedJvmSymbolsProvider(
         session, moduleDataProvider, kotlinScopeProvider, packagePartProvider, kotlinClassFinder,
-        javaSymbolProvider, javaClassFinder
+        javaClassFinder
     ) {
         override fun getClass(
             classId: ClassId,

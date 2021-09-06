@@ -18,22 +18,23 @@ import org.jetbrains.kotlin.fir.caches.createCache
 import org.jetbrains.kotlin.fir.caches.firCachesFactory
 import org.jetbrains.kotlin.fir.caches.getValue
 import org.jetbrains.kotlin.fir.declarations.*
-import org.jetbrains.kotlin.fir.declarations.builder.FirTypeParameterBuilder
 import org.jetbrains.kotlin.fir.declarations.builder.buildConstructedClassTypeParameterRef
 import org.jetbrains.kotlin.fir.declarations.builder.buildEnumEntry
 import org.jetbrains.kotlin.fir.declarations.builder.buildOuterClassTypeParameterRef
+import org.jetbrains.kotlin.fir.declarations.builder.buildTypeParameter
 import org.jetbrains.kotlin.fir.declarations.impl.FirResolvedDeclarationStatusImpl
-import org.jetbrains.kotlin.fir.declarations.utils.addDefaultBoundIfNecessary
 import org.jetbrains.kotlin.fir.declarations.utils.effectiveVisibility
 import org.jetbrains.kotlin.fir.declarations.utils.modality
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.java.declarations.*
+import org.jetbrains.kotlin.fir.java.enhancement.FirSignatureEnhancement
 import org.jetbrains.kotlin.fir.resolve.constructType
 import org.jetbrains.kotlin.fir.resolve.defaultType
 import org.jetbrains.kotlin.fir.resolve.providers.FirSymbolProvider
 import org.jetbrains.kotlin.fir.resolve.providers.FirSymbolProviderInternals
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.ConeClassLikeType
+import org.jetbrains.kotlin.fir.types.ConeFlexibleType
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
 import org.jetbrains.kotlin.fir.types.builder.buildResolvedTypeRef
 import org.jetbrains.kotlin.fir.types.impl.ConeTypeParameterTypeImpl
@@ -41,7 +42,7 @@ import org.jetbrains.kotlin.load.java.JavaClassFinder
 import org.jetbrains.kotlin.load.java.JvmAnnotationNames
 import org.jetbrains.kotlin.load.java.structure.*
 import org.jetbrains.kotlin.load.java.structure.impl.JavaElementImpl
-import org.jetbrains.kotlin.load.kotlin.KotlinClassFinder
+import org.jetbrains.kotlin.load.java.structure.impl.JavaPackageImpl
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -62,14 +63,22 @@ class JavaSymbolProvider(
     }
 
     private val classCache =
-        session.firCachesFactory.createCacheWithPostCompute(
-            createValue = ::findAndConvertJavaClass,
+        session.firCachesFactory.createCacheWithPostCompute<ClassId, FirRegularClassSymbol?, Nothing?, JavaClass?>(
+            createValue = { classId, _ ->
+                val foundClass = findClass(classId)
+                if (foundClass == null) {
+                    null to null
+                } else {
+                    FirRegularClassSymbol(classId) to foundClass
+                }
+            },
             postCompute = { _, classSymbol, javaClass ->
                 if (classSymbol != null && javaClass != null) {
                     convertJavaClassToFir(classSymbol, javaClass)
                 }
             }
         )
+
     private val packageCache = session.firCachesFactory.createCache(::findPackage)
     private val knownClassNamesInPackage = session.firCachesFactory.createCache<FqName, Set<String>?>(::getKnownClassNames)
 
@@ -79,10 +88,9 @@ class JavaSymbolProvider(
     private val parentClassTypeParameterStackCache = mutableMapOf<FirRegularClassSymbol, JavaTypeParameterStack>()
     private val parentClassEffectiveVisibilityCache = mutableMapOf<FirRegularClassSymbol, EffectiveVisibility>()
 
-    private fun findClass(
-        classId: ClassId,
-        content: KotlinClassFinder.Result.ClassFileContent?,
-    ): JavaClass? = facade.findClass(JavaClassFinder.Request(classId, previouslyFoundClassFileContent = content?.content), searchScope)
+    private fun findClass(classId: ClassId): JavaClass? =
+        facade.findClass(JavaClassFinder.Request(classId), searchScope)
+            ?.takeIf { !it.hasDifferentClassId(classId) && !it.hasMetadataAnnotation() }
 
     @FirSymbolProviderInternals
     override fun getTopLevelCallableSymbolsTo(destination: MutableList<FirCallableSymbol<*>>, packageFqName: FqName, name: Name) {
@@ -96,55 +104,32 @@ class JavaSymbolProvider(
     override fun getTopLevelPropertySymbolsTo(destination: MutableList<FirPropertySymbol>, packageFqName: FqName, name: Name) {
     }
 
-    private fun JavaTypeParameter.toFirTypeParameterSymbol(
-        javaTypeParameterStack: JavaTypeParameterStack
-    ): Pair<FirTypeParameterSymbol, Boolean> {
-        val stored = javaTypeParameterStack.safeGet(this)
-        if (stored != null) return stored to true
-        val firSymbol = FirTypeParameterSymbol()
-        javaTypeParameterStack.addParameter(this, firSymbol)
-        return firSymbol to false
-    }
-
-    private fun JavaTypeParameter.toFirTypeParameter(
-        firSymbol: FirTypeParameterSymbol,
-        javaTypeParameterStack: JavaTypeParameterStack
-    ): FirTypeParameter {
-        return FirTypeParameterBuilder().apply {
+    private fun JavaTypeParameter.toFirTypeParameter(javaTypeParameterStack: JavaTypeParameterStack): FirTypeParameter {
+        return buildTypeParameter {
             moduleData = this@JavaSymbolProvider.baseModuleData
             origin = FirDeclarationOrigin.Java
             resolvePhase = FirResolvePhase.ANALYZED_DEPENDENCIES
-            this.name = this@toFirTypeParameter.name
-            symbol = firSymbol
+            name = this@toFirTypeParameter.name
+            symbol = FirTypeParameterSymbol()
             variance = INVARIANT
             isReified = false
-            addBounds(this@toFirTypeParameter, javaTypeParameterStack)
-        }.build()
-    }
-
-    private fun FirTypeParameterBuilder.addBounds(
-        javaTypeParameter: JavaTypeParameter,
-        stack: JavaTypeParameterStack
-    ) {
-        for (upperBound in javaTypeParameter.upperBounds) {
-            bounds += upperBound.toFirResolvedTypeRef(
-                this@JavaSymbolProvider.session,
-                stack,
-                isForSupertypes = false,
-                forTypeParameterBounds = true
-            )
-        }
-        addDefaultBoundIfNecessary(isFlexible = true)
-    }
-
-    private fun List<JavaTypeParameter>.convertTypeParameters(stack: JavaTypeParameterStack): List<FirTypeParameter> {
-        return map { it.toFirTypeParameterSymbol(stack) }.mapIndexed { index, (symbol, initialized) ->
-            // This nasty logic is required, because type parameter bound can refer other type parameter from the list
-            // So we have to create symbols first, and type parameters themselves after them
-            if (initialized) symbol.fir
-            else this[index].toFirTypeParameter(symbol, stack)
+            javaTypeParameterStack.addParameter(this@toFirTypeParameter, symbol)
+            // TODO: should be lazy (in case annotations refer to the containing class)
+            annotations.addFromJava(session, this@toFirTypeParameter, javaTypeParameterStack)
+            for (upperBound in this@toFirTypeParameter.upperBounds) {
+                bounds += upperBound.toFirJavaTypeRef(session, javaTypeParameterStack)
+            }
+            if (bounds.isEmpty()) {
+                val builtinTypes = baseModuleData.session.builtinTypes
+                bounds += buildResolvedTypeRef {
+                    type = ConeFlexibleType(builtinTypes.anyType.type, builtinTypes.nullableAnyType.type)
+                }
+            }
         }
     }
+
+    private fun List<JavaTypeParameter>.convertTypeParameters(stack: JavaTypeParameterStack): List<FirTypeParameter> =
+        map { it.toFirTypeParameter(stack) }
 
     override fun getClassLikeSymbolByFqName(classId: ClassId): FirRegularClassSymbol? {
         return try {
@@ -155,27 +140,10 @@ class JavaSymbolProvider(
         }
     }
 
-    fun getFirJavaClass(classId: ClassId, content: KotlinClassFinder.Result.ClassFileContent? = null): FirRegularClassSymbol? {
+    private fun getFirJavaClass(classId: ClassId): FirRegularClassSymbol? {
         // Enforce loading of outer class first
         classId.outerClassId?.let { getFirJavaClass(it) }
-
-        return classCache.getValue(classId, content)
-    }
-
-    private fun findAndConvertJavaClass(
-        classId: ClassId,
-        content: KotlinClassFinder.Result.ClassFileContent?
-    ): Pair<FirRegularClassSymbol?, JavaClass?> {
-        val foundClass = findClass(classId, content)
-        return if (foundClass == null ||
-            foundClass.hasDifferentClassId(classId) ||
-            foundClass.hasMetadataAnnotation()
-        ) {
-            null to null
-        } else {
-            val symbol = FirRegularClassSymbol(classId)
-            symbol to foundClass
-        }
+        return classCache.getValue(classId, null)
     }
 
     private fun JavaClass.hasDifferentClassId(lookupClassId: ClassId): Boolean =
@@ -214,21 +182,16 @@ class JavaSymbolProvider(
         val firJavaClass = createFirJavaClass(javaClass, classSymbol, outerClassId, parentClassSymbol, classId, javaTypeParameterStack)
         parentClassTypeParameterStackCache.remove(classSymbol)
         parentClassEffectiveVisibilityCache.remove(classSymbol)
-        firJavaClass.convertSuperTypes(javaClass, javaTypeParameterStack)
-        firJavaClass.addAnnotationsFrom(this@JavaSymbolProvider.session, javaClass, javaTypeParameterStack)
+
+        // There's a bit of an ordering restriction here:
+        // 1. annotations should be added after the symbol is bound, as annotations can refer to the class itself;
+        // 2. type enhancement requires annotations to be already present (and supertypes can refer to type parameters).
+        firJavaClass.annotations.addFromJava(session, javaClass, javaTypeParameterStack)
+        val enhancement = FirSignatureEnhancement(firJavaClass, session) { emptyList() }
+        enhancement.enhanceTypeParameterBounds(firJavaClass.typeParameters)
+        firJavaClass.superTypeRefs.replaceAll { enhancement.enhanceSuperType(it) }
         firJavaClass.replaceDeprecation(firJavaClass.getDeprecationInfos(session.languageVersionSettings.apiVersion))
         return firJavaClass
-    }
-
-    private fun FirJavaClass.convertSuperTypes(
-        javaClass: JavaClass,
-        javaTypeParameterStack: JavaTypeParameterStack
-    ) {
-        replaceSuperTypeRefs(
-            javaClass.supertypes.map { supertype ->
-                supertype.toFirResolvedTypeRef(session, javaTypeParameterStack, isForSupertypes = true, forTypeParameterBounds = false)
-            }
-        )
     }
 
     private fun createFirJavaClass(
@@ -252,6 +215,7 @@ class JavaSymbolProvider(
             modality = if (classKind == ClassKind.ANNOTATION_CLASS || classKind == ClassKind.ENUM_CLASS) Modality.FINAL else javaClass.modality
             this.isTopLevel = outerClassId == null
             isStatic = javaClass.isStatic
+            javaPackage = packageCache.getValue(classSymbol.classId.packageFqName)
             this.javaTypeParameterStack = javaTypeParameterStack
             existingNestedClassifierNames += javaClass.innerClassNames
             scopeProvider = this@JavaSymbolProvider.scopeProvider
@@ -270,6 +234,7 @@ class JavaSymbolProvider(
                     buildOuterClassTypeParameterRef { symbol = it.symbol }
                 }
             }
+            javaClass.supertypes.mapTo(superTypeRefs) { it.toFirJavaTypeRef(session, javaTypeParameterStack) }
 
             val dispatchReceiver = classId.defaultType(typeParameters.map { it.symbol })
 
@@ -402,7 +367,8 @@ class JavaSymbolProvider(
                 returnTypeRef = returnType.toFirJavaTypeRef(this@JavaSymbolProvider.session, javaTypeParameterStack)
                 resolvePhase = FirResolvePhase.ANALYZED_DEPENDENCIES
                 origin = FirDeclarationOrigin.Java
-                addAnnotationsFrom(this@JavaSymbolProvider.session, javaField, javaTypeParameterStack)
+                // TODO: check if this works properly with annotations that take the enum class as an argument
+                annotations.addFromJava(this@JavaSymbolProvider.session, javaField, javaTypeParameterStack)
             }.apply {
                 containingClassForStaticMemberAttr = ConeClassLikeLookupTagImpl(classId)
             }
@@ -426,7 +392,7 @@ class JavaSymbolProvider(
                 returnTypeRef = returnType.toFirJavaTypeRef(this@JavaSymbolProvider.session, javaTypeParameterStack)
                 isVar = !javaField.isFinal
                 isStatic = javaField.isStatic
-                annotationBuilder = { javaField.annotations.map { it.toFirAnnotationCall(session, javaTypeParameterStack) } }
+                annotationBuilder = { javaField.convertAnnotationsToFir(session, javaTypeParameterStack) }
                 initializer = convertJavaInitializerToFir(javaField.initializerValue)
 
                 if (!javaField.isStatic) {
@@ -468,7 +434,7 @@ class JavaSymbolProvider(
                     this@JavaSymbolProvider.session, moduleData, index, javaTypeParameterStack,
                 )
             }
-            annotationBuilder = { javaMethod.annotations.map { it.toFirAnnotationCall(session, javaTypeParameterStack) } }
+            annotationBuilder = { javaMethod.convertAnnotationsToFir(session, javaTypeParameterStack) }
             status = FirResolvedDeclarationStatusImpl(
                 javaMethod.visibility,
                 javaMethod.modality,
@@ -544,7 +510,7 @@ class JavaSymbolProvider(
 
             if (javaConstructor != null) {
                 this.typeParameters += javaConstructor.typeParameters.convertTypeParameters(javaTypeParameterStack)
-                annotationBuilder = { javaConstructor.annotations.map { it.toFirAnnotationCall(session, javaTypeParameterStack) } }
+                annotationBuilder = { javaConstructor.convertAnnotationsToFir(session, javaTypeParameterStack) }
                 for ((index, valueParameter) in javaConstructor.valueParameters.withIndex()) {
                     valueParameters += valueParameter.toFirValueParameter(
                         this@JavaSymbolProvider.session, moduleData, index, javaTypeParameterStack,
@@ -590,14 +556,14 @@ class JavaSymbolProvider(
     )
 
     override fun getPackage(fqName: FqName): FqName? {
-        return packageCache.getValue(fqName)
+        return packageCache.getValue(fqName)?.fqName
     }
 
-    private fun findPackage(fqName: FqName): FqName? {
+    private fun findPackage(fqName: FqName): JavaPackage? {
         return try {
             val facade = KotlinJavaPsiFacade.getInstance(project)
             val javaPackage = facade.findPackage(fqName.asString(), searchScope) ?: return null
-            FqName(javaPackage.qualifiedName)
+            JavaPackageImpl(javaPackage, searchScope)
         } catch (e: ProcessCanceledException) {
             return null
         }
