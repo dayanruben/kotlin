@@ -1,4 +1,4 @@
-// !USE_EXPERIMENTAL: kotlin.RequiresOptIn
+// !OPT_IN: kotlin.RequiresOptIn
 // FILE: api.kt
 
 package api
@@ -23,5 +23,5 @@ class Derived : Base() {
 }
 
 fun test(b: Base) {
-    b.<!EXPERIMENTAL_API_USAGE_ERROR!>foo<!>()
+    b.<!OPT_IN_USAGE_ERROR!>foo<!>()
 }

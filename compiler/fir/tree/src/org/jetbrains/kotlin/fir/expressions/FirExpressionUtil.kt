@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.fir.expressions.builder.buildConstExpression
 import org.jetbrains.kotlin.fir.expressions.builder.buildErrorExpression
 import org.jetbrains.kotlin.fir.expressions.builder.buildErrorLoop
 import org.jetbrains.kotlin.fir.expressions.impl.FirBlockImpl
-import org.jetbrains.kotlin.fir.expressions.impl.FirPartiallyResolvedArgumentList
 import org.jetbrains.kotlin.fir.expressions.impl.FirResolvedArgumentList
 import org.jetbrains.kotlin.fir.expressions.impl.FirSingleExpressionBlock
 import org.jetbrains.kotlin.fir.references.FirReference
@@ -26,10 +25,10 @@ import org.jetbrains.kotlin.fir.visitors.transformInplace
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.types.ConstantValueKind
 
-inline val FirAnnotationCall.coneClassLikeType: ConeClassLikeType?
+inline val FirAnnotation.coneClassLikeType: ConeClassLikeType?
     get() = ((annotationTypeRef as? FirResolvedTypeRef)?.type as? ConeClassLikeType)
 
-inline val FirAnnotationCall.classId: ClassId?
+inline val FirAnnotation.classId: ClassId?
     get() = coneClassLikeType?.lookupTag?.classId
 
 fun <T> buildConstOrErrorExpression(source: FirSourceElement?, kind: ConstantValueKind<T>, value: T?, diagnostic: ConeDiagnostic): FirExpression =
@@ -53,7 +52,6 @@ inline val FirCall.resolvedArgumentMapping: Map<FirExpression, FirValueParameter
 inline val FirCall.argumentMapping: LinkedHashMap<FirExpression, FirValueParameter>?
     get() = when (val argumentList = argumentList) {
         is FirResolvedArgumentList -> argumentList.mapping
-        is FirPartiallyResolvedArgumentList -> argumentList.mapping
         else -> null
     }
 

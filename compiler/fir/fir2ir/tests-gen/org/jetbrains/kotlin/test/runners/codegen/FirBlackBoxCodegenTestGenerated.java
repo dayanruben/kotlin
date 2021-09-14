@@ -420,6 +420,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
             }
 
             @Test
+            @TestMetadata("annotationJvmHashCode.kt")
+            public void testAnnotationJvmHashCode() throws Exception {
+                runTest("compiler/testData/codegen/box/annotations/instances/annotationJvmHashCode.kt");
+            }
+
+            @Test
             @TestMetadata("annotationToString.kt")
             public void testAnnotationToString() throws Exception {
                 runTest("compiler/testData/codegen/box/annotations/instances/annotationToString.kt");
@@ -810,6 +816,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         @TestMetadata("collectionGetMultiIndex.kt")
         public void testCollectionGetMultiIndex() throws Exception {
             runTest("compiler/testData/codegen/box/arrays/collectionGetMultiIndex.kt");
+        }
+
+        @Test
+        @TestMetadata("constantArrayOfAny.kt")
+        public void testConstantArrayOfAny() throws Exception {
+            runTest("compiler/testData/codegen/box/arrays/constantArrayOfAny.kt");
         }
 
         @Test
@@ -15995,6 +16007,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         }
 
         @Test
+        @TestMetadata("someStuff.kt")
+        public void testSomeStuff() throws Exception {
+            runTest("compiler/testData/codegen/box/finally/someStuff.kt");
+        }
+
+        @Test
         @TestMetadata("tryFinally.kt")
         public void testTryFinally() throws Exception {
             runTest("compiler/testData/codegen/box/finally/tryFinally.kt");
@@ -18155,6 +18173,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
             @TestMetadata("kt47744.kt")
             public void testKt47744() throws Exception {
                 runTest("compiler/testData/codegen/box/inference/builderInference/kt47744.kt");
+            }
+
+            @Test
+            @TestMetadata("kt48445.kt")
+            public void testKt48445() throws Exception {
+                runTest("compiler/testData/codegen/box/inference/builderInference/kt48445.kt");
             }
 
             @Test
@@ -28804,6 +28828,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         @TestMetadata("kt46864_long.kt")
         public void testKt46864_long() throws Exception {
             runTest("compiler/testData/codegen/box/primitiveTypes/kt46864_long.kt");
+        }
+
+        @Test
+        @TestMetadata("kt48659_identityEqualsWithCastToAny.kt")
+        public void testKt48659_identityEqualsWithCastToAny() throws Exception {
+            runTest("compiler/testData/codegen/box/primitiveTypes/kt48659_identityEqualsWithCastToAny.kt");
         }
 
         @Test
@@ -41577,6 +41607,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         }
 
         @Test
+        @TestMetadata("basicSuspendConversionDefault.kt")
+        public void testBasicSuspendConversionDefault() throws Exception {
+            runTest("compiler/testData/codegen/box/suspendConversion/basicSuspendConversionDefault.kt");
+        }
+
+        @Test
         @TestMetadata("basicSuspendConversionForCallableReference.kt")
         public void testBasicSuspendConversionForCallableReference() throws Exception {
             runTest("compiler/testData/codegen/box/suspendConversion/basicSuspendConversionForCallableReference.kt");
@@ -42870,6 +42906,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         @TestMetadata("nullableUnitInWhen3.kt")
         public void testNullableUnitInWhen3() throws Exception {
             runTest("compiler/testData/codegen/box/unit/nullableUnitInWhen3.kt");
+        }
+
+        @Test
+        @TestMetadata("sillyThings.kt")
+        public void testSillyThings() throws Exception {
+            runTest("compiler/testData/codegen/box/unit/sillyThings.kt");
         }
 
         @Test

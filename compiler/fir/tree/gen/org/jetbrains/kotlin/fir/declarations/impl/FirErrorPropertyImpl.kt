@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.fir.declarations.impl
 import org.jetbrains.kotlin.fir.FirModuleData
 import org.jetbrains.kotlin.fir.FirSourceElement
 import org.jetbrains.kotlin.fir.declarations.DeprecationsPerUseSite
+import org.jetbrains.kotlin.fir.declarations.FirBackingField
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationAttributes
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationStatus
@@ -17,7 +18,7 @@ import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.declarations.FirTypeParameterRef
 import org.jetbrains.kotlin.fir.declarations.impl.FirResolvedDeclarationStatusImpl
 import org.jetbrains.kotlin.fir.diagnostics.ConeDiagnostic
-import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
+import org.jetbrains.kotlin.fir.expressions.FirAnnotation
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.symbols.impl.FirErrorPropertySymbol
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
@@ -43,7 +44,8 @@ internal class FirErrorPropertyImpl(
     override val containerSource: DeserializedContainerSource?,
     override val dispatchReceiverType: ConeKotlinType?,
     override val name: Name,
-    override val annotations: MutableList<FirAnnotationCall>,
+    override var backingField: FirBackingField?,
+    override val annotations: MutableList<FirAnnotation>,
     override val diagnostic: ConeDiagnostic,
     override val symbol: FirErrorPropertySymbol,
 ) : FirErrorProperty() {
@@ -65,12 +67,14 @@ internal class FirErrorPropertyImpl(
     override fun <R, D> acceptChildren(visitor: FirVisitor<R, D>, data: D) {
         returnTypeRef.accept(visitor, data)
         status.accept(visitor, data)
+        backingField?.accept(visitor, data)
         annotations.forEach { it.accept(visitor, data) }
     }
 
     override fun <D> transformChildren(transformer: FirTransformer<D>, data: D): FirErrorPropertyImpl {
         transformReturnTypeRef(transformer, data)
         transformStatus(transformer, data)
+        transformBackingField(transformer, data)
         transformOtherChildren(transformer, data)
         return this
     }
@@ -109,6 +113,11 @@ internal class FirErrorPropertyImpl(
         return this
     }
 
+    override fun <D> transformBackingField(transformer: FirTransformer<D>, data: D): FirErrorPropertyImpl {
+        backingField = backingField?.transform(transformer, data)
+        return this
+    }
+
     override fun <D> transformAnnotations(transformer: FirTransformer<D>, data: D): FirErrorPropertyImpl {
         annotations.transformInplace(transformer, data)
         return this
@@ -134,4 +143,8 @@ internal class FirErrorPropertyImpl(
     }
 
     override fun replaceInitializer(newInitializer: FirExpression?) {}
+
+    override fun replaceGetter(newGetter: FirPropertyAccessor?) {}
+
+    override fun replaceSetter(newSetter: FirPropertyAccessor?) {}
 }

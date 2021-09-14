@@ -15,7 +15,10 @@ import org.jetbrains.kotlin.fir.resolve.ResolutionMode
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.resolve.calls.ResolutionContext
 import org.jetbrains.kotlin.fir.resolve.dfa.DataFlowAnalyzerContext
-import org.jetbrains.kotlin.fir.resolve.transformers.*
+import org.jetbrains.kotlin.fir.resolve.transformers.FirProviderInterceptor
+import org.jetbrains.kotlin.fir.resolve.transformers.ReturnTypeCalculator
+import org.jetbrains.kotlin.fir.resolve.transformers.ReturnTypeCalculatorForFullBodyResolve
+import org.jetbrains.kotlin.fir.resolve.transformers.ScopeClassDeclaration
 import org.jetbrains.kotlin.fir.scopes.FirCompositeScope
 import org.jetbrains.kotlin.fir.scopes.impl.createCurrentScopeList
 import org.jetbrains.kotlin.fir.types.FirImplicitTypeRef
@@ -203,6 +206,10 @@ open class FirBodyResolveTransformer(
         return expressionsTransformer.transformConstExpression(constExpression, data)
     }
 
+    override fun transformAnnotation(annotation: FirAnnotation, data: ResolutionMode): FirStatement {
+        return expressionsTransformer.transformAnnotation(annotation, data)
+    }
+
     override fun transformAnnotationCall(annotationCall: FirAnnotationCall, data: ResolutionMode): FirStatement {
         return expressionsTransformer.transformAnnotationCall(annotationCall, data)
     }
@@ -264,6 +271,13 @@ open class FirBodyResolveTransformer(
 
     override fun transformProperty(property: FirProperty, data: ResolutionMode): FirProperty {
         return declarationsTransformer.transformProperty(property, data)
+    }
+
+    override fun transformBackingField(
+        backingField: FirBackingField,
+        data: ResolutionMode
+    ): FirStatement {
+        return declarationsTransformer.transformBackingField(backingField, data)
     }
 
     override fun transformField(field: FirField, data: ResolutionMode): FirField {

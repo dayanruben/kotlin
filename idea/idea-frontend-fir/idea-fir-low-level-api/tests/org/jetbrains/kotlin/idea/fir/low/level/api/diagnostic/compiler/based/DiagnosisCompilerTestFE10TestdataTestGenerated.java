@@ -22486,6 +22486,22 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             }
 
             @Nested
+            @TestMetadata("compiler/testData/diagnostics/tests/properties/backingField")
+            @TestDataPath("$PROJECT_ROOT")
+            public class BackingField {
+                @Test
+                public void testAllFilesPresentInBackingField() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/properties/backingField"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
+                }
+
+                @Test
+                @TestMetadata("trivialExplicitBackingFIeld.kt")
+                public void testTrivialExplicitBackingFIeld() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/properties/backingField/trivialExplicitBackingFIeld.kt");
+                }
+            }
+
+            @Nested
             @TestMetadata("compiler/testData/diagnostics/tests/properties/inferenceFromGetters")
             @TestDataPath("$PROJECT_ROOT")
             public class InferenceFromGetters {
@@ -30654,6 +30670,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             }
 
             @Test
+            @TestMetadata("intToLongApproximationThroughTypeAlias.kt")
+            public void testIntToLongApproximationThroughTypeAlias() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/typealias/intToLongApproximationThroughTypeAlias.kt");
+            }
+
+            @Test
             @TestMetadata("isAsWithTypeAlias.kt")
             public void testIsAsWithTypeAlias() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/typealias/isAsWithTypeAlias.kt");
@@ -32093,6 +32115,18 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             @TestMetadata("kt47922.kt")
             public void testKt47922() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/when/kt47922.kt");
+            }
+
+            @Test
+            @TestMetadata("kt48653_after.kt")
+            public void testKt48653_after() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/when/kt48653_after.kt");
+            }
+
+            @Test
+            @TestMetadata("kt48653_before.kt")
+            public void testKt48653_before() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/when/kt48653_before.kt");
             }
 
             @Test

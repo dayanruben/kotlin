@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.fir.expressions.FirConstExpression
 import org.jetbrains.kotlin.fir.expressions.FirQualifiedAccessExpression
 import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
-import org.jetbrains.kotlin.fir.resolve.toFirRegularClass
+import org.jetbrains.kotlin.fir.resolve.toFirRegularClassSymbol
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.scopes.ProcessorAction
 import org.jetbrains.kotlin.fir.scopes.processDirectlyOverriddenFunctions
@@ -132,7 +132,7 @@ object FirOptInUsageBaseChecker {
             val annotationType = annotation.annotationTypeRef.coneTypeSafe<ConeClassLikeType>()
             if (annotation.useSiteTarget != AnnotationUseSiteTarget.PROPERTY_SETTER || fromSetter) {
                 result.addIfNotNull(
-                    annotationType?.lookupTag?.toFirRegularClass(
+                    annotationType?.lookupTag?.toFirRegularClassSymbol(
                         session
                     )?.loadExperimentalityForMarkerAnnotation()
                 )
@@ -191,8 +191,8 @@ object FirOptInUsageBaseChecker {
         for ((annotationClassId, severity, message) in experimentalities) {
             if (!isExperimentalityAcceptableInContext(annotationClassId, context)) {
                 val diagnostic = when (severity) {
-                    Experimentality.Severity.WARNING -> FirErrors.EXPERIMENTAL_API_USAGE
-                    Experimentality.Severity.ERROR -> FirErrors.EXPERIMENTAL_API_USAGE_ERROR
+                    Experimentality.Severity.WARNING -> FirErrors.OPT_IN_USAGE
+                    Experimentality.Severity.ERROR -> FirErrors.OPT_IN_USAGE_ERROR
                 }
                 val reportedMessage = message ?: when (severity) {
                     Experimentality.Severity.WARNING -> "This declaration is experimental and its usage should be marked"
@@ -209,7 +209,7 @@ object FirOptInUsageBaseChecker {
     ): Boolean {
         val languageVersionSettings = context.session.languageVersionSettings
         val fqNameAsString = annotationClassId.asFqNameString()
-        if (fqNameAsString in languageVersionSettings.getFlag(AnalysisFlags.useExperimental)) {
+        if (fqNameAsString in languageVersionSettings.getFlag(AnalysisFlags.optIn)) {
             return true
         }
         for (annotationContainer in context.annotationContainers) {

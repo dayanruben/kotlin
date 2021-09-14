@@ -25,19 +25,19 @@ class FirAnnotationTypeQualifierResolver(
     private val session: FirSession,
     javaTypeEnhancementState: JavaTypeEnhancementState,
     private val javaModuleAnnotationsProvider: JavaModuleAnnotationsProvider,
-) : AbstractAnnotationTypeQualifierResolver<FirAnnotationCall>(javaTypeEnhancementState), FirSessionComponent {
+) : AbstractAnnotationTypeQualifierResolver<FirAnnotation>(javaTypeEnhancementState), FirSessionComponent {
 
-    override val FirAnnotationCall.metaAnnotations: Iterable<FirAnnotationCall>
+    override val FirAnnotation.metaAnnotations: Iterable<FirAnnotation>
         get() = coneClassLikeType?.lookupTag?.toSymbol(session)?.fir?.annotations.orEmpty()
 
-    override val FirAnnotationCall.key: Any
+    override val FirAnnotation.key: Any
         get() = coneClassLikeType!!.lookupTag
 
-    override val FirAnnotationCall.fqName: FqName?
+    override val FirAnnotation.fqName: FqName?
         get() = coneClassLikeType?.lookupTag?.classId?.asSingleFqName()
 
-    override fun FirAnnotationCall.enumArguments(onlyValue: Boolean): Iterable<String> =
-        arguments.flatMap { argument ->
+    override fun FirAnnotation.enumArguments(onlyValue: Boolean): Iterable<String> =
+        argumentMapping.mapping.values.flatMap { argument ->
             if (!onlyValue || argument !is FirNamedArgumentExpression || argument.name == DEFAULT_ANNOTATION_MEMBER_NAME)
                 argument.toEnumNames()
             else
@@ -47,6 +47,7 @@ class FirAnnotationTypeQualifierResolver(
     private fun FirExpression.toEnumNames(): List<String> =
         when (this) {
             is FirArrayOfCall -> arguments.flatMap { it.toEnumNames() }
+            is FirVarargArgumentsExpression -> arguments.flatMap { it.toEnumNames() }
             else -> listOfNotNull(toResolvedCallableSymbol()?.callableId?.callableName?.asString())
         }
 
@@ -54,7 +55,7 @@ class FirAnnotationTypeQualifierResolver(
         val classId = firClass.symbol.classId
         val outerClassId = classId.outerClassId
         val parentQualifiers = if (outerClassId != null) {
-            (session.symbolProvider.getClassLikeSymbolByFqName(outerClassId)?.fir as? FirRegularClass)
+            (session.symbolProvider.getClassLikeSymbolByClassId(outerClassId)?.fir as? FirRegularClass)
                 ?.let { extractDefaultQualifiers(it) }
         } else {
             val forModule = javaModuleAnnotationsProvider.getAnnotationsForModuleOwnerOfClass(classId)

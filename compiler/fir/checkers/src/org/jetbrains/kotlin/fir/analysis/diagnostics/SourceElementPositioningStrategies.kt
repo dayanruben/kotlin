@@ -284,7 +284,7 @@ object SourceElementPositioningStrategies {
 
     val ACTUAL_DECLARATION_NAME = SourceElementPositioningStrategy(
         LightTreePositioningStrategies.ACTUAL_DECLARATION_NAME,
-        PositioningStrategies.ACTUAL_DECLARATION_NAME
+        FirPsiPositioningStrategies.ACTUAL_DECLARATION_NAME
     )
 
     val LABEL = SourceElementPositioningStrategy(
@@ -318,5 +318,10 @@ object SourceElementPositioningStrategies {
     val ENUM_MODIFIER = SourceElementPositioningStrategy(
         LightTreePositioningStrategies.ENUM_MODIFIER,
         PositioningStrategies.ENUM_MODIFIER
+    )
+
+    val FIELD_KEYWORD = SourceElementPositioningStrategy(
+        LightTreePositioningStrategies.FIELD_KEYWORD,
+        PositioningStrategies.FIELD_KEYWORD
     )
 }

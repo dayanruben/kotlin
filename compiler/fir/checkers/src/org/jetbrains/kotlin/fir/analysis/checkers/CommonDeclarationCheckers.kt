@@ -27,7 +27,7 @@ object CommonDeclarationCheckers : DeclarationCheckers() {
             FirExposedVisibilityDeclarationChecker,
             FirCyclicTypeBoundsChecker,
             FirExpectActualDeclarationChecker,
-            FirInvalidAndDangerousCharactersChecker
+            FirInvalidAndDangerousCharactersChecker,
         )
 
     override val functionCheckers: Set<FirFunctionChecker>
@@ -54,9 +54,15 @@ object CommonDeclarationCheckers : DeclarationCheckers() {
             FirPropertyTypeParametersChecker,
             FirInitializerTypeMismatchChecker,
             FirDelegatedPropertyChecker,
+            FirPropertyFieldTypeChecker,
             FirInlinePropertyChecker,
             FirPropertyFromParameterChecker,
             FirLocalVariableTypeParametersSyntaxChecker,
+        )
+
+    override val backingFieldCheckers: Set<FirBackingFieldChecker>
+        get() = setOf(
+            FirExplicitBackingFieldForbiddenChecker,
         )
 
     override val classCheckers: Set<FirClassChecker>

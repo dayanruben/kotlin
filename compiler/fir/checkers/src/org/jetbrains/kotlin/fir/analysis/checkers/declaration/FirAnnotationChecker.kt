@@ -6,27 +6,26 @@
 package org.jetbrains.kotlin.fir.analysis.checkers.declaration
 
 import org.jetbrains.kotlin.descriptors.ClassKind
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
+import org.jetbrains.kotlin.fir.FirAnnotationContainer
 import org.jetbrains.kotlin.fir.FirFakeSourceElementKind
+import org.jetbrains.kotlin.fir.analysis.checkers.*
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.checkers.context.findClosest
-import org.jetbrains.kotlin.fir.analysis.checkers.getActualTargetList
-import org.jetbrains.kotlin.fir.analysis.checkers.getAllowedAnnotationTargets
 import org.jetbrains.kotlin.fir.analysis.diagnostics.*
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.hasBackingField
-import org.jetbrains.kotlin.fir.declarations.utils.isCompanion
-import org.jetbrains.kotlin.fir.declarations.utils.isInner
-import org.jetbrains.kotlin.fir.declarations.utils.isLocal
-import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
+import org.jetbrains.kotlin.fir.expressions.FirAnnotation
 import org.jetbrains.kotlin.fir.expressions.argumentMapping
+import org.jetbrains.kotlin.fir.languageVersionSettings
 import org.jetbrains.kotlin.fir.packageFqName
 import org.jetbrains.kotlin.fir.resolve.fqName
+import org.jetbrains.kotlin.fir.types.ConeKotlinType
+import org.jetbrains.kotlin.fir.types.coneType
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.resolve.AnnotationTargetList
-import org.jetbrains.kotlin.resolve.AnnotationTargetLists
 
 object FirAnnotationChecker : FirAnnotatedDeclarationChecker() {
     private val deprecatedClassId = FqName("kotlin.Deprecated")
@@ -37,30 +36,39 @@ object FirAnnotationChecker : FirAnnotatedDeclarationChecker() {
         context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
-        var deprecatedCall: FirAnnotationCall? = null
-        var deprecatedSinceKotlinCall: FirAnnotationCall? = null
+        var deprecated: FirAnnotation? = null
+        var deprecatedSinceKotlin: FirAnnotation? = null
 
         for (annotation in declaration.annotations) {
-            val fqName = annotation.fqName(context.session)
+            val fqName = annotation.fqName(context.session) ?: continue
             if (fqName == deprecatedClassId) {
-                deprecatedCall = annotation
+                deprecated = annotation
             } else if (fqName == deprecatedSinceKotlinClassId) {
-                deprecatedSinceKotlinCall = annotation
+                deprecatedSinceKotlin = annotation
             }
+
             withSuppressedDiagnostics(annotation, context) {
                 checkAnnotationTarget(declaration, annotation, context, reporter)
             }
         }
-        if (deprecatedSinceKotlinCall != null) {
-            withSuppressedDiagnostics(deprecatedSinceKotlinCall, context) {
-                checkDeprecatedCalls(deprecatedSinceKotlinCall, deprecatedCall, context, reporter)
+        if (deprecatedSinceKotlin != null) {
+            withSuppressedDiagnostics(deprecatedSinceKotlin, context) {
+                checkDeprecatedCalls(deprecatedSinceKotlin, deprecated, context, reporter)
             }
+        }
+
+        checkRepeatedAnnotations(declaration, context, reporter)
+        if (declaration is FirProperty) {
+            checkRepeatedAnnotationsInProperty(declaration, context, reporter)
+        } else if (declaration is FirTypeAlias) {
+            checkRepeatedAnnotations(declaration.expandedTypeRef, context, reporter)
+            // TODO: KT-48652, implement after KT-48651
         }
     }
 
     private fun checkAnnotationTarget(
         declaration: FirAnnotatedDeclaration,
-        annotation: FirAnnotationCall,
+        annotation: FirAnnotation,
         context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
@@ -112,7 +120,7 @@ object FirAnnotationChecker : FirAnnotatedDeclarationChecker() {
 
     private fun checkAnnotationUseSiteTarget(
         annotated: FirAnnotatedDeclaration,
-        annotation: FirAnnotationCall,
+        annotation: FirAnnotation,
         target: AnnotationUseSiteTarget,
         context: CheckerContext,
         reporter: DiagnosticReporter
@@ -169,32 +177,81 @@ object FirAnnotationChecker : FirAnnotatedDeclarationChecker() {
     }
 
     private fun checkDeprecatedCalls(
-        deprecatedSinceKotlinCall: FirAnnotationCall,
-        deprecatedCall: FirAnnotationCall?,
+        deprecatedSinceKotlin: FirAnnotation,
+        deprecated: FirAnnotation?,
         context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         val closestFirFile = context.findClosest<FirFile>()
         if (closestFirFile != null && !closestFirFile.packageFqName.startsWith(StandardClassIds.BASE_KOTLIN_PACKAGE.shortName())) {
             reporter.reportOn(
-                deprecatedSinceKotlinCall.source,
+                deprecatedSinceKotlin.source,
                 FirErrors.DEPRECATED_SINCE_KOTLIN_OUTSIDE_KOTLIN_SUBPACKAGE,
                 context
             )
         }
 
-        if (deprecatedCall == null) {
-            reporter.reportOn(deprecatedSinceKotlinCall.source, FirErrors.DEPRECATED_SINCE_KOTLIN_WITHOUT_DEPRECATED, context)
+        if (deprecated == null) {
+            reporter.reportOn(deprecatedSinceKotlin.source, FirErrors.DEPRECATED_SINCE_KOTLIN_WITHOUT_DEPRECATED, context)
         } else {
-            val argumentMapping = deprecatedCall.argumentMapping ?: return
-            for (value in argumentMapping.values) {
-                if (value.name.identifier == "level") {
+            val argumentMapping = deprecated.argumentMapping.mapping
+            for (name in argumentMapping.keys) {
+                if (name.identifier == "level") {
                     reporter.reportOn(
-                        deprecatedSinceKotlinCall.source,
+                        deprecatedSinceKotlin.source,
                         FirErrors.DEPRECATED_SINCE_KOTLIN_WITH_DEPRECATED_LEVEL,
                         context
                     )
                     break
+                }
+            }
+        }
+    }
+
+    private fun checkRepeatedAnnotations(
+        annotationContainer: FirAnnotationContainer,
+        context: CheckerContext,
+        reporter: DiagnosticReporter
+    ) {
+        val annotationsMap = hashMapOf<ConeKotlinType, MutableList<AnnotationUseSiteTarget?>>()
+
+        for (annotation in annotationContainer.annotations) {
+            val useSiteTarget = annotation.useSiteTarget ?: annotationContainer.getDefaultUseSiteTarget(annotation, context)
+            val existingTargetsForAnnotation = annotationsMap.getOrPut(annotation.annotationTypeRef.coneType) { arrayListOf() }
+
+            withSuppressedDiagnostics(annotation, context) {
+                checkRepeatedAnnotation(useSiteTarget, existingTargetsForAnnotation, annotation, context, reporter)
+            }
+
+            existingTargetsForAnnotation.add(useSiteTarget)
+        }
+    }
+
+    private fun checkRepeatedAnnotationsInProperty(
+        property: FirProperty,
+        context: CheckerContext,
+        reporter: DiagnosticReporter
+    ) {
+        fun FirAnnotationContainer?.getAnnotationTypes(): List<ConeKotlinType> {
+            return this?.annotations?.map { it.annotationTypeRef.coneType } ?: listOf()
+        }
+
+        val propertyAnnotations = mapOf(
+            AnnotationUseSiteTarget.PROPERTY_GETTER to property.getter?.getAnnotationTypes(),
+            AnnotationUseSiteTarget.PROPERTY_SETTER to property.setter?.getAnnotationTypes(),
+            AnnotationUseSiteTarget.SETTER_PARAMETER to property.setter?.valueParameters?.single().getAnnotationTypes()
+        )
+
+        val isError = context.session.languageVersionSettings.supportsFeature(LanguageFeature.ProhibitRepeatedUseSiteTargetAnnotations)
+
+        for (annotation in property.annotations) {
+            val useSiteTarget = annotation.useSiteTarget ?: property.getDefaultUseSiteTarget(annotation, context)
+            val existingAnnotations = propertyAnnotations[useSiteTarget] ?: continue
+
+            if (annotation.annotationTypeRef.coneType in existingAnnotations && !annotation.isRepeatable(context.session)) {
+                val factory = if (isError) FirErrors.REPEATED_ANNOTATION else FirErrors.REPEATED_ANNOTATION_WARNING
+                if (annotation.source?.kind !is FirFakeSourceElementKind) {
+                    reporter.reportOn(annotation.source, factory, context)
                 }
             }
         }

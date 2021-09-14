@@ -37,6 +37,12 @@ public class SymbolByPsiTestGenerated extends AbstractSymbolByPsiTest {
     }
 
     @Test
+    @TestMetadata("backingField.kt")
+    public void testBackingField() throws Exception {
+        runTest("idea/idea-frontend-fir/testData/symbols/symbolByPsi/backingField.kt");
+    }
+
+    @Test
     @TestMetadata("class.kt")
     public void testClass() throws Exception {
         runTest("idea/idea-frontend-fir/testData/symbols/symbolByPsi/class.kt");
@@ -172,5 +178,11 @@ public class SymbolByPsiTestGenerated extends AbstractSymbolByPsiTest {
     @TestMetadata("typeAnnotations.kt")
     public void testTypeAnnotations() throws Exception {
         runTest("idea/idea-frontend-fir/testData/symbols/symbolByPsi/typeAnnotations.kt");
+    }
+
+    @Test
+    @TestMetadata("varargFunctions.kt")
+    public void testVarargFunctions() throws Exception {
+        runTest("idea/idea-frontend-fir/testData/symbols/symbolByPsi/varargFunctions.kt");
     }
 }

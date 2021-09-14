@@ -455,6 +455,11 @@ class IrBuiltInsOverFir(
             it.owner.name == OperatorNameConventions.TIMES && it.owner.valueParameters[0].type == intType
         }
 
+    override val intXorSymbol: IrSimpleFunctionSymbol
+        get() = intClass.functions.single {
+            it.owner.name == OperatorNameConventions.XOR && it.owner.valueParameters[0].type == intType
+        }
+
     override val extensionToString: IrSimpleFunctionSymbol by lazy {
         findFunctions(kotlinPackage, Name.identifier("toString")).first { function ->
             function.owner.extensionReceiverParameter?.let { receiver -> receiver.type == anyNType } ?: false
@@ -670,7 +675,7 @@ class IrBuiltInsOverFir(
         referenceClassByClassId(ClassId(packageName, Name.identifier(identifier)))
 
     private fun referenceClassByClassId(classId: ClassId): IrClassSymbol? {
-        val firSymbol = components.session.symbolProvider.getClassLikeSymbolByFqName(classId) ?: return null
+        val firSymbol = components.session.symbolProvider.getClassLikeSymbolByClassId(classId) ?: return null
         val firClassSymbol = firSymbol as? FirClassSymbol ?: return null
         return components.classifierStorage.getIrClassSymbol(firClassSymbol)
     }

@@ -747,6 +747,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         }
 
         @Test
+        @TestMetadata("constantArrayOfAny.kt")
+        public void testConstantArrayOfAny() throws Exception {
+            runTest("compiler/testData/codegen/box/arrays/constantArrayOfAny.kt");
+        }
+
+        @Test
         @TestMetadata("forEachBooleanArray.kt")
         public void testForEachBooleanArray() throws Exception {
             runTest("compiler/testData/codegen/box/arrays/forEachBooleanArray.kt");
@@ -15923,6 +15929,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         }
 
         @Test
+        @TestMetadata("someStuff.kt")
+        public void testSomeStuff() throws Exception {
+            runTest("compiler/testData/codegen/box/finally/someStuff.kt");
+        }
+
+        @Test
         @TestMetadata("tryFinally.kt")
         public void testTryFinally() throws Exception {
             runTest("compiler/testData/codegen/box/finally/tryFinally.kt");
@@ -18035,6 +18047,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
             @TestMetadata("kt47744.kt")
             public void testKt47744() throws Exception {
                 runTest("compiler/testData/codegen/box/inference/builderInference/kt47744.kt");
+            }
+
+            @Test
+            @TestMetadata("kt48445.kt")
+            public void testKt48445() throws Exception {
+                runTest("compiler/testData/codegen/box/inference/builderInference/kt48445.kt");
             }
 
             @Test
@@ -28678,6 +28696,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         @TestMetadata("kt46864_long.kt")
         public void testKt46864_long() throws Exception {
             runTest("compiler/testData/codegen/box/primitiveTypes/kt46864_long.kt");
+        }
+
+        @Test
+        @TestMetadata("kt48659_identityEqualsWithCastToAny.kt")
+        public void testKt48659_identityEqualsWithCastToAny() throws Exception {
+            runTest("compiler/testData/codegen/box/primitiveTypes/kt48659_identityEqualsWithCastToAny.kt");
         }
 
         @Test
@@ -41427,6 +41451,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         }
 
         @Test
+        @TestMetadata("basicSuspendConversionDefault.kt")
+        public void testBasicSuspendConversionDefault() throws Exception {
+            runTest("compiler/testData/codegen/box/suspendConversion/basicSuspendConversionDefault.kt");
+        }
+
+        @Test
         @TestMetadata("basicSuspendConversionForCallableReference.kt")
         public void testBasicSuspendConversionForCallableReference() throws Exception {
             runTest("compiler/testData/codegen/box/suspendConversion/basicSuspendConversionForCallableReference.kt");
@@ -42720,6 +42750,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         @TestMetadata("nullableUnitInWhen3.kt")
         public void testNullableUnitInWhen3() throws Exception {
             runTest("compiler/testData/codegen/box/unit/nullableUnitInWhen3.kt");
+        }
+
+        @Test
+        @TestMetadata("sillyThings.kt")
+        public void testSillyThings() throws Exception {
+            runTest("compiler/testData/codegen/box/unit/sillyThings.kt");
         }
 
         @Test

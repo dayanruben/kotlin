@@ -372,6 +372,10 @@ class Fir2IrVisitor(
         return calleeReference.resolvedSymbol as? FirNamedFunctionSymbol
     }
 
+    override fun visitAnnotation(annotation: FirAnnotation, data: Any?): IrElement {
+        return callGenerator.convertToIrConstructorCall(annotation)
+    }
+
     override fun visitAnnotationCall(annotationCall: FirAnnotationCall, data: Any?): IrElement {
         return callGenerator.convertToIrConstructorCall(annotationCall)
     }

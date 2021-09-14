@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.asJava.classes
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
@@ -170,11 +169,12 @@ abstract class KtLightClassForSourceDeclaration(
         val aClass = other as KtLightClassForSourceDeclaration
 
         if (classOrObject != aClass.classOrObject) return false
+        if (jvmDefaultMode != aClass.jvmDefaultMode) return false
 
         return true
     }
 
-    override fun hashCode(): Int = classOrObject.hashCode()
+    override fun hashCode(): Int = classOrObject.hashCode() * 31 + jvmDefaultMode.hashCode()
 
     override fun getContainingClass(): PsiClass? {
         if (classOrObject.parent === classOrObject.containingFile) return null
@@ -222,18 +222,24 @@ abstract class KtLightClassForSourceDeclaration(
             psiModifiers.add(PsiModifier.PUBLIC)
         }
 
-
-        // FINAL
-        if (isAbstract() || isSealed()) {
-            psiModifiers.add(PsiModifier.ABSTRACT)
-        } else if (!(classOrObject.hasModifier(OPEN_KEYWORD) || (classOrObject is KtClass && classOrObject.isEnum()))) {
-            val descriptor = lazy { getDescriptor() }
-            var modifier = PsiModifier.FINAL
-            project.applyCompilerPlugins {
-                modifier = it.interceptModalityBuilding(kotlinOrigin, descriptor, modifier)
+        // ABSTRACT | FINAL
+        when {
+            isAbstract() || isSealed() -> {
+                psiModifiers.add(PsiModifier.ABSTRACT)
             }
-            if (modifier == PsiModifier.FINAL) {
-                psiModifiers.add(PsiModifier.FINAL)
+            isEnum -> {
+                // Enum class should not be `final`, since its enum entries extend it.
+                // It could be either `abstract` w/o ctor, or empty modality w/ private ctor.
+            }
+            !(classOrObject.hasModifier(OPEN_KEYWORD)) -> {
+                val descriptor = lazy { getDescriptor() }
+                var modifier = PsiModifier.FINAL
+                project.applyCompilerPlugins {
+                    modifier = it.interceptModalityBuilding(kotlinOrigin, descriptor, modifier)
+                }
+                if (modifier == PsiModifier.FINAL) {
+                    psiModifiers.add(PsiModifier.FINAL)
+                }
             }
         }
 

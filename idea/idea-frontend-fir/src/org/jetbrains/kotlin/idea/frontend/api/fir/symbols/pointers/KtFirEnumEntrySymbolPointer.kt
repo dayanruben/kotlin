@@ -6,16 +6,12 @@
 package org.jetbrains.kotlin.idea.frontend.api.fir.symbols.pointers
 
 import org.jetbrains.kotlin.descriptors.ClassKind
-import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.FirEnumEntry
 import org.jetbrains.kotlin.fir.declarations.FirRegularClass
-import org.jetbrains.kotlin.fir.resolve.symbolProvider
-import org.jetbrains.kotlin.fir.scopes.FirScope
 import org.jetbrains.kotlin.idea.frontend.api.KtAnalysisSession
 import org.jetbrains.kotlin.idea.frontend.api.fir.KtFirAnalysisSession
 import org.jetbrains.kotlin.idea.frontend.api.symbols.KtEnumEntrySymbol
 import org.jetbrains.kotlin.idea.frontend.api.symbols.pointers.KtSymbolPointer
-import org.jetbrains.kotlin.ir.util.IdSignature
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 
@@ -34,7 +30,7 @@ internal class KtFirEnumEntrySymbolPointer(
     }
 
     private fun getEnumClass(analysisSession: KtFirAnalysisSession, classId: ClassId): FirRegularClass? {
-        val enumClass = analysisSession.firSymbolProvider.getClassLikeSymbolByFqName(classId)?.fir as? FirRegularClass
+        val enumClass = analysisSession.firSymbolProvider.getClassLikeSymbolByClassId(classId)?.fir as? FirRegularClass
             ?: return null
         if (enumClass.classKind != ClassKind.ENUM_CLASS) return null
         return enumClass

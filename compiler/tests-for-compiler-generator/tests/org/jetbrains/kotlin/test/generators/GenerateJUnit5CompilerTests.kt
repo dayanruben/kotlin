@@ -203,12 +203,19 @@ fun generateJUnit5CompilerTests(args: Array<String>) {
                 suiteTestClassName = "FirSpecificBlackBoxCodegenTestGenerated"
             ) {
                 model("codegen/box")
+                model("codegen/boxWithStdLib")
             }
 
             testClass<AbstractFir2IrTextTest>(
                 suiteTestClassName = "Fir2IrSpecificTextTestGenerated"
             ) {
                 model("ir/irText")
+            }
+
+            testClass<AbstractFirBytecodeListingTest>(
+                suiteTestClassName = "Fir2IrSpecificBytecodeListingTestGenerated"
+            ) {
+                model("codegen/bytecodeListing")
             }
         }
 

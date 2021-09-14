@@ -40,6 +40,7 @@ import org.jetbrains.kotlin.fir.declarations.FirFunction
 import org.jetbrains.kotlin.fir.declarations.FirContractDescriptionOwner
 import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
 import org.jetbrains.kotlin.fir.declarations.FirPropertyAccessor
+import org.jetbrains.kotlin.fir.declarations.FirBackingField
 import org.jetbrains.kotlin.fir.declarations.FirConstructor
 import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.fir.FirPackageDirective
@@ -69,7 +70,9 @@ import org.jetbrains.kotlin.fir.types.FirStarProjection
 import org.jetbrains.kotlin.fir.types.FirTypeProjectionWithVariance
 import org.jetbrains.kotlin.fir.expressions.FirArgumentList
 import org.jetbrains.kotlin.fir.expressions.FirCall
+import org.jetbrains.kotlin.fir.expressions.FirAnnotation
 import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
+import org.jetbrains.kotlin.fir.expressions.FirAnnotationArgumentMapping
 import org.jetbrains.kotlin.fir.expressions.FirComparisonExpression
 import org.jetbrains.kotlin.fir.expressions.FirTypeOperatorCall
 import org.jetbrains.kotlin.fir.expressions.FirAssignmentOperatorStatement
@@ -279,6 +282,10 @@ abstract class FirVisitorVoid : FirVisitor<Unit, Nothing?>() {
         visitElement(propertyAccessor)
     }
 
+    open fun visitBackingField(backingField: FirBackingField) {
+        visitElement(backingField)
+    }
+
     open fun visitConstructor(constructor: FirConstructor) {
         visitElement(constructor)
     }
@@ -395,8 +402,16 @@ abstract class FirVisitorVoid : FirVisitor<Unit, Nothing?>() {
         visitElement(call)
     }
 
+    open fun visitAnnotation(annotation: FirAnnotation) {
+        visitElement(annotation)
+    }
+
     open fun visitAnnotationCall(annotationCall: FirAnnotationCall) {
         visitElement(annotationCall)
+    }
+
+    open fun visitAnnotationArgumentMapping(annotationArgumentMapping: FirAnnotationArgumentMapping) {
+        visitElement(annotationArgumentMapping)
     }
 
     open fun visitComparisonExpression(comparisonExpression: FirComparisonExpression) {
@@ -795,6 +810,10 @@ abstract class FirVisitorVoid : FirVisitor<Unit, Nothing?>() {
         visitPropertyAccessor(propertyAccessor)
     }
 
+    final override fun visitBackingField(backingField: FirBackingField, data: Nothing?) {
+        visitBackingField(backingField)
+    }
+
     final override fun visitConstructor(constructor: FirConstructor, data: Nothing?) {
         visitConstructor(constructor)
     }
@@ -911,8 +930,16 @@ abstract class FirVisitorVoid : FirVisitor<Unit, Nothing?>() {
         visitCall(call)
     }
 
+    final override fun visitAnnotation(annotation: FirAnnotation, data: Nothing?) {
+        visitAnnotation(annotation)
+    }
+
     final override fun visitAnnotationCall(annotationCall: FirAnnotationCall, data: Nothing?) {
         visitAnnotationCall(annotationCall)
+    }
+
+    final override fun visitAnnotationArgumentMapping(annotationArgumentMapping: FirAnnotationArgumentMapping, data: Nothing?) {
+        visitAnnotationArgumentMapping(annotationArgumentMapping)
     }
 
     final override fun visitComparisonExpression(comparisonExpression: FirComparisonExpression, data: Nothing?) {

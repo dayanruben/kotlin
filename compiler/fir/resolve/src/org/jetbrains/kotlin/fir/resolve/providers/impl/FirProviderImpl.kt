@@ -29,6 +29,9 @@ class FirProviderImpl(val session: FirSession, val kotlinScopeProvider: FirKotli
         symbol.originalIfFakeOverride()?.let {
             return getFirCallableContainerFile(it)
         }
+        if (symbol is FirBackingFieldSymbol) {
+            return getFirCallableContainerFile(symbol.fir.propertySymbol)
+        }
         if (symbol is FirAccessorSymbol) {
             val fir = symbol.fir
             if (fir is FirSyntheticProperty) {
@@ -51,7 +54,7 @@ class FirProviderImpl(val session: FirSession, val kotlinScopeProvider: FirKotli
     }
 
     private inner class SymbolProvider : FirSymbolProvider(session) {
-        override fun getClassLikeSymbolByFqName(classId: ClassId): FirClassLikeSymbol<*>? {
+        override fun getClassLikeSymbolByClassId(classId: ClassId): FirClassLikeSymbol<*>? {
             return getFirClassifierByFqName(classId)?.symbol
         }
 
@@ -99,7 +102,7 @@ class FirProviderImpl(val session: FirSession, val kotlinScopeProvider: FirKotli
         state.fileMap.merge(packageName, listOf(file)) { a, b -> a + b }
         file.acceptChildren(FirRecorder, FirRecorderData(state, file, session.nameConflictsTracker))
     }
-    
+
     private class FirRecorderData(
         val state: State,
         val file: FirFile,

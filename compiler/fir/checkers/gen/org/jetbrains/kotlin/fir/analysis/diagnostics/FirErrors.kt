@@ -44,6 +44,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtAnonymousInitializer
 import org.jetbrains.kotlin.psi.KtArrayAccessExpression
+import org.jetbrains.kotlin.psi.KtBackingField
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtBinaryExpressionWithTypeRHS
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -234,19 +235,21 @@ object FirErrors {
     val INAPPLICABLE_PARAM_TARGET by error0<KtAnnotationEntry>()
     val REDUNDANT_ANNOTATION_TARGET by warning1<KtAnnotationEntry, String>()
     val INAPPLICABLE_FILE_TARGET by error0<KtAnnotationEntry>(SourceElementPositioningStrategies.ANNOTATION_USE_SITE)
+    val REPEATED_ANNOTATION by error0<KtAnnotationEntry>()
+    val REPEATED_ANNOTATION_WARNING by warning0<KtAnnotationEntry>()
 
-    // OptIn-related
-    val EXPERIMENTAL_API_USAGE by warning2<PsiElement, FqName, String>(SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED)
-    val EXPERIMENTAL_API_USAGE_ERROR by warning2<PsiElement, FqName, String>(SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED)
-    val EXPERIMENTAL_OVERRIDE by warning2<PsiElement, FqName, String>()
-    val EXPERIMENTAL_OVERRIDE_ERROR by error2<PsiElement, FqName, String>()
-    val EXPERIMENTAL_IS_NOT_ENABLED by warning0<KtAnnotationEntry>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
-    val EXPERIMENTAL_CAN_ONLY_BE_USED_AS_ANNOTATION by error0<PsiElement>()
-    val EXPERIMENTAL_MARKER_CAN_ONLY_BE_USED_AS_ANNOTATION_OR_ARGUMENT_IN_USE_EXPERIMENTAL by error0<PsiElement>()
-    val USE_EXPERIMENTAL_WITHOUT_ARGUMENTS by warning0<KtAnnotationEntry>()
-    val USE_EXPERIMENTAL_ARGUMENT_IS_NOT_MARKER by warning1<KtAnnotationEntry, FqName>()
-    val EXPERIMENTAL_ANNOTATION_WITH_WRONG_TARGET by error1<KtAnnotationEntry, String>()
-    val EXPERIMENTAL_ANNOTATION_WITH_WRONG_RETENTION by error0<KtAnnotationEntry>()
+    // OptIn
+    val OPT_IN_USAGE by warning2<PsiElement, FqName, String>(SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED)
+    val OPT_IN_USAGE_ERROR by warning2<PsiElement, FqName, String>(SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED)
+    val OPT_IN_OVERRIDE by warning2<PsiElement, FqName, String>()
+    val OPT_IN_OVERRIDE_ERROR by error2<PsiElement, FqName, String>()
+    val OPT_IN_IS_NOT_ENABLED by warning0<KtAnnotationEntry>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
+    val OPT_IN_CAN_ONLY_BE_USED_AS_ANNOTATION by error0<PsiElement>()
+    val OPT_IN_MARKER_CAN_ONLY_BE_USED_AS_ANNOTATION_OR_ARGUMENT_IN_OPT_IN by error0<PsiElement>()
+    val OPT_IN_WITHOUT_ARGUMENTS by warning0<KtAnnotationEntry>()
+    val OPT_IN_ARGUMENT_IS_NOT_MARKER by warning1<KtAnnotationEntry, FqName>()
+    val OPT_IN_MARKER_WITH_WRONG_TARGET by error1<KtAnnotationEntry, String>()
+    val OPT_IN_MARKER_WITH_WRONG_RETENTION by error0<KtAnnotationEntry>()
 
     // Exposed visibility
     val EXPOSED_TYPEALIAS_EXPANDED_TYPE by error3<KtNamedDeclaration, EffectiveVisibility, FirBasedSymbol<*>, EffectiveVisibility>(SourceElementPositioningStrategies.DECLARATION_NAME)
@@ -477,6 +480,18 @@ object FirErrors {
     val WRONG_SETTER_RETURN_TYPE by error0<KtTypeReference>()
     val WRONG_GETTER_RETURN_TYPE by error2<KtTypeReference, ConeKotlinType, ConeKotlinType>()
     val ACCESSOR_FOR_DELEGATED_PROPERTY by error0<KtPropertyAccessor>()
+    val PROPERTY_INITIALIZER_WITH_EXPLICIT_FIELD_DECLARATION by error0<KtExpression>()
+    val PROPERTY_FIELD_DECLARATION_MISSING_INITIALIZER by error0<KtBackingField>()
+    val LATEINIT_PROPERTY_FIELD_DECLARATION_WITH_INITIALIZER by error0<KtBackingField>(SourceElementPositioningStrategies.LATEINIT_MODIFIER)
+    val LATEINIT_FIELD_IN_VAL_PROPERTY by error0<KtBackingField>(SourceElementPositioningStrategies.LATEINIT_MODIFIER)
+    val LATEINIT_NULLABLE_BACKING_FIELD by error0<KtBackingField>(SourceElementPositioningStrategies.LATEINIT_MODIFIER)
+    val BACKING_FIELD_FOR_DELEGATED_PROPERTY by error0<KtBackingField>(SourceElementPositioningStrategies.FIELD_KEYWORD)
+    val PROPERTY_MUST_HAVE_GETTER by error0<KtProperty>()
+    val PROPERTY_MUST_HAVE_SETTER by error0<KtProperty>()
+    val EXPLICIT_BACKING_FIELD_IN_INTERFACE by error0<KtBackingField>(SourceElementPositioningStrategies.FIELD_KEYWORD)
+    val EXPLICIT_BACKING_FIELD_IN_ABSTRACT_PROPERTY by error0<KtBackingField>(SourceElementPositioningStrategies.FIELD_KEYWORD)
+    val EXPLICIT_BACKING_FIELD_IN_EXTENSION by error0<KtBackingField>(SourceElementPositioningStrategies.FIELD_KEYWORD)
+    val REDUNDANT_EXPLICIT_BACKING_FIELD by warning0<KtBackingField>(SourceElementPositioningStrategies.FIELD_KEYWORD)
     val ABSTRACT_PROPERTY_IN_PRIMARY_CONSTRUCTOR_PARAMETERS by error0<KtModifierListOwner>(SourceElementPositioningStrategies.ABSTRACT_MODIFIER)
     val LOCAL_VARIABLE_WITH_TYPE_PARAMETERS_WARNING by warning0<KtProperty>(SourceElementPositioningStrategies.TYPE_PARAMETERS_LIST)
     val LOCAL_VARIABLE_WITH_TYPE_PARAMETERS by error0<KtProperty>(SourceElementPositioningStrategies.TYPE_PARAMETERS_LIST)
@@ -561,6 +576,7 @@ object FirErrors {
     val ELSE_MISPLACED_IN_WHEN by error0<KtWhenEntry>(SourceElementPositioningStrategies.ELSE_ENTRY)
     val ILLEGAL_DECLARATION_IN_WHEN_SUBJECT by error1<KtElement, String>()
     val COMMA_IN_WHEN_CONDITION_WITHOUT_ARGUMENT by error0<PsiElement>(SourceElementPositioningStrategies.COMMAS)
+    val DUPLICATE_LABEL_IN_WHEN by warning0<KtElement>()
 
     // Context tracking
     val TYPE_PARAMETER_IS_NOT_AN_EXPRESSION by error1<KtSimpleNameExpression, FirTypeParameterSymbol>()
@@ -593,6 +609,7 @@ object FirErrors {
     val INCOMPATIBLE_ENUM_COMPARISON_ERROR by error2<KtElement, ConeKotlinType, ConeKotlinType>()
     val INC_DEC_SHOULD_NOT_RETURN_UNIT by error0<KtExpression>(SourceElementPositioningStrategies.OPERATOR)
     val ASSIGNMENT_OPERATOR_SHOULD_RETURN_UNIT by error2<KtExpression, FirNamedFunctionSymbol, String>(SourceElementPositioningStrategies.OPERATOR)
+    val PROPERTY_AS_OPERATOR by error1<PsiElement, FirPropertySymbol>(SourceElementPositioningStrategies.OPERATOR)
 
     // Type alias
     val TOPLEVEL_TYPEALIASES_ONLY by error0<KtTypeAlias>()

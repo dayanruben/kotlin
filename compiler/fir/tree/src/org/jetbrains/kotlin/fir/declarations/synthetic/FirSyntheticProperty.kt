@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.fir.declarations.synthetic
 import org.jetbrains.kotlin.fir.FirModuleData
 import org.jetbrains.kotlin.fir.FirSourceElement
 import org.jetbrains.kotlin.fir.declarations.*
-import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
+import org.jetbrains.kotlin.fir.expressions.FirAnnotation
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.references.FirControlFlowGraphReference
 import org.jetbrains.kotlin.fir.symbols.impl.FirAccessorSymbol
@@ -30,6 +30,7 @@ class FirSyntheticProperty(
     override var resolvePhase: FirResolvePhase,
     override val getter: FirSyntheticPropertyAccessor,
     override val setter: FirSyntheticPropertyAccessor? = null,
+    override val backingField: FirBackingField? = null,
     override val deprecation: DeprecationsPerUseSite? = null
 ) : FirProperty() {
     init {
@@ -66,7 +67,7 @@ class FirSyntheticProperty(
     override val isVal: Boolean
         get() = !isVar
 
-    override val annotations: List<FirAnnotationCall>
+    override val annotations: List<FirAnnotation>
         get() = emptyList()
 
     override val typeParameters: List<FirTypeParameter>
@@ -79,11 +80,8 @@ class FirSyntheticProperty(
 
     override val attributes: FirDeclarationAttributes = FirDeclarationAttributes()
 
-    // ???
-    override val backingFieldSymbol: FirBackingFieldSymbol = FirBackingFieldSymbol(symbol.callableId)
-
-    override val initializerAndAccessorsAreResolved: Boolean
-        get() = true
+    override val bodyResolveState: FirPropertyBodyResolveState
+        get() = FirPropertyBodyResolveState.EVERYTHING_RESOLVED
 
     override fun <R, D> acceptChildren(visitor: FirVisitor<R, D>, data: D) {
         returnTypeRef.accept(visitor, data)
@@ -119,6 +117,10 @@ class FirSyntheticProperty(
     }
 
     override fun <D> transformSetter(transformer: FirTransformer<D>, data: D): FirSyntheticProperty {
+        throw AssertionError("Transformation of synthetic property isn't supported")
+    }
+
+    override fun <D> transformBackingField(transformer: FirTransformer<D>, data: D): FirSyntheticProperty {
         throw AssertionError("Transformation of synthetic property isn't supported")
     }
 
@@ -158,7 +160,15 @@ class FirSyntheticProperty(
         throw AssertionError("Mutation of synthetic property isn't supported")
     }
 
-    override fun replaceInitializerAndAccessorsAreResolved(newInitializerAndAccessorsAreResolved: Boolean) {
+    override fun replaceBodyResolveState(newBodyResolveState: FirPropertyBodyResolveState) {
+        throw AssertionError("Mutation of synthetic property isn't supported")
+    }
+
+    override fun replaceGetter(newGetter: FirPropertyAccessor?) {
+        throw AssertionError("Mutation of synthetic property isn't supported")
+    }
+
+    override fun replaceSetter(newSetter: FirPropertyAccessor?) {
         throw AssertionError("Mutation of synthetic property isn't supported")
     }
 }

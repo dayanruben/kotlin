@@ -113,15 +113,16 @@ object BuilderConfigurator : AbstractBuilderConfigurator<FirTreeBuilder>(FirTree
             default("argumentList") {
                 value = "FirEmptyArgumentList"
             }
-            default("resolveStatus", "FirAnnotationResolveStatus.Unresolved")
-            useTypes(emptyArgumentListType)
+            default("argumentMapping", "FirEmptyAnnotationArgumentMapping")
+            default("annotationTypeRef", "FirImplicitTypeRefImpl(null)")
+            useTypes(emptyArgumentListType, emptyAnnotationArgumentMappingType, implicitTypeRefType)
         }
 
         builder(arrayOfCall) {
             parents += callBuilder
         }
 
-        builder(arraySetCall) {
+        builder(augmentedArraySetCall) {
             default("calleeReference", "FirStubReference")
             useTypes(stubReferenceType)
         }
@@ -202,7 +203,7 @@ object BuilderConfigurator : AbstractBuilderConfigurator<FirTreeBuilder>(FirTree
             parents += typeParametersOwnerBuilder
             defaultNull("getter", "setter", "containerSource", "delegateFieldSymbol")
             default("resolvePhase", "FirResolvePhase.RAW_FIR")
-            defaultFalse("initializerAndAccessorsAreResolved")
+            default("bodyResolveState", "FirPropertyBodyResolveState.NOTHING_RESOLVED")
             withCopy()
         }
 

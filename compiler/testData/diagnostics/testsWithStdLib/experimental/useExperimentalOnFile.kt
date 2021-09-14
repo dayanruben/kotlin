@@ -1,5 +1,5 @@
 // FIR_IDENTICAL
-// !USE_EXPERIMENTAL: kotlin.RequiresOptIn
+// !OPT_IN: kotlin.RequiresOptIn
 // FILE: api.kt
 
 package api
@@ -29,12 +29,12 @@ import api.*
 
 fun use() {
     compilation()
-    <!EXPERIMENTAL_API_USAGE!>runtime<!>()
+    <!OPT_IN_USAGE!>runtime<!>()
 }
 
 class Use {
     fun use() {
         compilation()
-        <!EXPERIMENTAL_API_USAGE!>runtime<!>()
+        <!OPT_IN_USAGE!>runtime<!>()
     }
 }

@@ -15,15 +15,12 @@ import org.jetbrains.kotlin.backend.wasm.WasmSymbols
 import org.jetbrains.kotlin.backend.wasm.utils.*
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.IrElement
-import org.jetbrains.kotlin.ir.IrStatement
+import org.jetbrains.kotlin.ir.backend.js.utils.findUnitGetInstanceFunction
 import org.jetbrains.kotlin.ir.backend.js.utils.realOverrideTarget
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.types.*
-import org.jetbrains.kotlin.ir.util.defaultType
-import org.jetbrains.kotlin.ir.util.getInlineClassBackingField
-import org.jetbrains.kotlin.ir.util.isInterface
-import org.jetbrains.kotlin.ir.util.parentAsClass
+import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
 import org.jetbrains.kotlin.wasm.ir.*
@@ -36,13 +33,67 @@ class BodyGenerator(val context: WasmFunctionCodegenContext) : IrElementVisitorV
     private val wasmSymbols: WasmSymbols = backendContext.wasmSymbols
     private val irBuiltIns: IrBuiltIns = backendContext.irBuiltIns
 
+    private val unitGetInstance by lazy { backendContext.findUnitGetInstanceFunction() }
+    fun WasmExpressionBuilder.buildGetUnit() {
+        buildCall(context.referenceFunction(unitGetInstance.symbol))
+    }
+
+    // Generates code for the given IR element and *always* leaves something on the stack
+    private fun generateExpression(elem: IrElement) {
+        assert(elem is IrExpression || elem is IrVariable) { "Unsupported statement kind" }
+
+        elem.acceptVoid(this)
+
+        if (elem is IrExpression && elem.type == irBuiltIns.nothingType) {
+            body.buildUnreachable()
+        }
+    }
+
+    // Generates code for the given IR element but *never* leaves anything on the stack
+    private fun generateStatement(statement: IrElement) {
+        assert(statement is IrExpression || statement is IrVariable) { "Unsupported statement kind" }
+
+        generateExpression(statement)
+        body.buildDrop()
+    }
+
     override fun visitElement(element: IrElement) {
         error("Unexpected element of type ${element::class}")
     }
 
+    override fun visitThrow(expression: IrThrow) {
+        generateExpression(expression.value)
+        body.buildThrow(context.tagIdx)
+    }
+
+    override fun visitTry(aTry: IrTry) {
+        assert(aTry.isCanonical(irBuiltIns)) { "expected canonical try/catch" }
+
+        val resultType = context.transformBlockResultType(aTry.type)
+        body.buildTry(null, resultType)
+        generateExpression(aTry.tryResult)
+
+        body.buildCatch(context.tagIdx)
+
+        // Exception object is on top of the stack, store it into the local
+        aTry.catches.single().catchParameter.symbol.let {
+            context.defineLocal(it)
+            body.buildSetLocal(context.referenceLocal(it))
+        }
+        generateExpression(aTry.catches.single().result)
+
+        body.buildEnd()
+    }
+
     override fun visitTypeOperator(expression: IrTypeOperatorCall) {
-        require(expression.operator == IrTypeOperator.REINTERPRET_CAST) { "Other types of casts must be lowered" }
-        generateExpression(expression.argument)
+        when (expression.operator) {
+            IrTypeOperator.REINTERPRET_CAST -> generateExpression(expression.argument)
+            IrTypeOperator.IMPLICIT_COERCION_TO_UNIT -> {
+                generateStatement(expression.argument)
+                body.buildGetUnit()
+            }
+            else -> assert(false) { "Other types of casts must be lowered" }
+        }
     }
 
     override fun <T> visitConst(expression: IrConst<T>) {
@@ -116,6 +167,8 @@ class BodyGenerator(val context: WasmFunctionCodegenContext) : IrElementVisitorV
             generateExpression(expression.value)
             body.buildSetGlobal(context.referenceGlobal(expression.symbol))
         }
+
+        body.buildGetUnit()
     }
 
     override fun visitGetValue(expression: IrGetValue) {
@@ -125,6 +178,7 @@ class BodyGenerator(val context: WasmFunctionCodegenContext) : IrElementVisitorV
     override fun visitSetValue(expression: IrSetValue) {
         generateExpression(expression.value)
         body.buildSetLocal(context.referenceLocal(expression.symbol))
+        body.buildGetUnit()
     }
 
     override fun visitCall(expression: IrCall) {
@@ -172,6 +226,7 @@ class BodyGenerator(val context: WasmFunctionCodegenContext) : IrElementVisitorV
 
         // Don't delegate constructors of Any to Any.
         if (klass.defaultType.isAny()) {
+            body.buildGetUnit()
             return
         }
 
@@ -204,6 +259,8 @@ class BodyGenerator(val context: WasmFunctionCodegenContext) : IrElementVisitorV
         val function: IrFunction = call.symbol.owner.realOverrideTarget
 
         if (tryToGenerateIntrinsicCall(call, function)) {
+            if (function.returnType == irBuiltIns.unitType)
+                body.buildGetUnit()
             return
         }
 
@@ -246,6 +303,10 @@ class BodyGenerator(val context: WasmFunctionCodegenContext) : IrElementVisitorV
                 body.buildRefCast()
             }
         }
+
+        // Unit types don't cross function boundaries
+        if (function.returnType == irBuiltIns.unitType && function.symbol != unitGetInstance.symbol)
+            body.buildGetUnit()
     }
 
     private fun generateTypeRTT(type: IrType) {
@@ -321,42 +382,45 @@ class BodyGenerator(val context: WasmFunctionCodegenContext) : IrElementVisitorV
         return true
     }
 
+    override fun visitBlockBody(body: IrBlockBody) {
+        body.statements.forEach(::generateStatement)
+    }
+
     override fun visitContainerExpression(expression: IrContainerExpression) {
         val statements = expression.statements
-        if (statements.isEmpty()) return
+        if (statements.isEmpty()) {
+            assert(expression.type == irBuiltIns.unitType) { "Empty block with non-unit return type" }
+            body.buildGetUnit()
+            return
+        }
 
         statements.dropLast(1).forEach {
-            statementToWasmInstruction(it)
+            generateStatement(it)
         }
 
-        if (expression.type != irBuiltIns.unitType) {
-            generateExpression(statements.last() as IrExpression)
-        } else {
-            statementToWasmInstruction(statements.last())
-        }
+        generateExpression(statements.last())
     }
 
     override fun visitBreak(jump: IrBreak) {
+        assert(jump.type == irBuiltIns.nothingType)
         body.buildBr(context.referenceLoopLevel(jump.loop, LoopLabelType.BREAK))
     }
 
     override fun visitContinue(jump: IrContinue) {
+        assert(jump.type == irBuiltIns.nothingType)
         body.buildBr(context.referenceLoopLevel(jump.loop, LoopLabelType.CONTINUE))
     }
 
     override fun visitReturn(expression: IrReturn) {
-        generateExpression(expression.value)
+        if (expression.returnTargetSymbol.owner.returnType(backendContext) == irBuiltIns.unitType &&
+            expression.returnTargetSymbol.owner != unitGetInstance) {
+            generateStatement(expression.value)
+        } else {
+            generateExpression(expression.value)
+        }
 
-        // FIXME: Hack for "returning" Unit from functions with generic return type.
-        //        Common case -- lambdas returning unit.
-        if (expression.value.type == irBuiltIns.unitType &&
-            expression.returnTargetSymbol.owner.returnType(backendContext) != irBuiltIns.unitType
-        ) {
-            val irReturnType = expression.returnTargetSymbol.owner.returnType(backendContext)
-
-            if (irReturnType != irBuiltIns.unitType) {
-                generateDefaultInitializerForType(context.transformType(irReturnType), body)
-            }
+        if (context.irFunction is IrConstructor) {
+            body.buildGetLocal(context.referenceLocal(0))
         }
 
         // Handle complex exported parameters.
@@ -371,27 +435,10 @@ class BodyGenerator(val context: WasmFunctionCodegenContext) : IrElementVisitorV
     }
 
     override fun visitWhen(expression: IrWhen) {
-        if (expression.type == irBuiltIns.unitType) {
-            var ifCount = 0
-            for (branch in expression.branches) {
-                if (!isElseBranch(branch)) {
-                    generateExpression(branch.condition)
-                    body.buildIf(label = null, resultType = null)
-                    statementToWasmInstruction(branch.result)
-                    body.buildElse()
-                    ifCount++
-                } else {
-                    statementToWasmInstruction(branch.result)
-                    break
-                }
-            }
-
-            repeat(ifCount) { body.buildEnd() }
-            return
-        }
-
         val resultType = context.transformBlockResultType(expression.type)
         var ifCount = 0
+        var seenElse = false
+
         for (branch in expression.branches) {
             if (!isElseBranch(branch)) {
                 generateExpression(branch.condition)
@@ -407,8 +454,16 @@ class BodyGenerator(val context: WasmFunctionCodegenContext) : IrElementVisitorV
                 if (expression.type == irBuiltIns.nothingType) {
                     body.buildUnreachable()
                 }
+                seenElse = true
                 break
             }
+        }
+
+        // Always generate the last else to make verifier happy. If this when expression is exhaustive we will never reach the last else.
+        // If it's not exhaustive it must be used as a statement (per kotlin spec) and so the result value of the last else will never be used.
+        if (!seenElse && resultType != null) {
+            assert(expression.type != irBuiltIns.nothingType)
+            generateDefaultInitializerForType(resultType, body)
         }
 
         repeat(ifCount) { body.buildEnd() }
@@ -434,12 +489,14 @@ class BodyGenerator(val context: WasmFunctionCodegenContext) : IrElementVisitorV
         context.defineLoopLevel(loop, LoopLabelType.BREAK, wasmBreakBlock)
         context.defineLoopLevel(loop, LoopLabelType.CONTINUE, wasmContinueBlock)
 
-        loop.body?.let { statementToWasmInstruction(it) }
+        loop.body?.let { generateStatement(it) }
         body.buildEnd()
         generateExpression(loop.condition)
         body.buildBrIf(wasmLoop)
         body.buildEnd()
         body.buildEnd()
+
+        body.buildGetUnit()
     }
 
     override fun visitWhileLoop(loop: IrWhileLoop) {
@@ -464,36 +521,26 @@ class BodyGenerator(val context: WasmFunctionCodegenContext) : IrElementVisitorV
         body.buildInstr(WasmOp.I32_EQZ)
         body.buildBrIf(wasmBreakBlock)
         loop.body?.let {
-            statementToWasmInstruction(it)
+            generateStatement(it)
         }
         body.buildBr(wasmLoop)
         body.buildEnd()
         body.buildEnd()
+
+        body.buildGetUnit()
     }
 
-    fun generateExpression(expression: IrExpression) {
-        expression.acceptVoid(this)
-
-        if (expression.type == irBuiltIns.nothingType) {
-            body.buildUnreachable()
-        }
-    }
-
-    fun statementToWasmInstruction(statement: IrStatement) {
-        if (statement is IrVariable) {
-            context.defineLocal(statement.symbol)
-            val init = statement.initializer ?: return
-            generateExpression(init)
-            val varName = context.referenceLocal(statement.symbol)
-            body.buildSetLocal(varName)
+    override fun visitVariable(declaration: IrVariable) {
+        context.defineLocal(declaration.symbol)
+        if (declaration.initializer == null) {
+            body.buildGetUnit()
             return
         }
-
-        generateExpression(statement as IrExpression)
-
-        if (statement.type != irBuiltIns.unitType && statement.type != irBuiltIns.nothingType) {
-            body.buildInstr(WasmOp.DROP)
-        }
+        val init = declaration.initializer!!
+        generateExpression(init)
+        val varName = context.referenceLocal(declaration.symbol)
+        body.buildSetLocal(varName)
+        body.buildGetUnit()
     }
 
     // Return true if function is recognized as intrinsic.

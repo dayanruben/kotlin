@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.fir.FirImplementationDetail
 import org.jetbrains.kotlin.fir.FirModuleData
 import org.jetbrains.kotlin.fir.FirSourceElement
 import org.jetbrains.kotlin.fir.declarations.DeprecationsPerUseSite
+import org.jetbrains.kotlin.fir.declarations.FirBackingField
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationAttributes
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationStatus
@@ -16,7 +17,7 @@ import org.jetbrains.kotlin.fir.declarations.FirField
 import org.jetbrains.kotlin.fir.declarations.FirPropertyAccessor
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.declarations.FirTypeParameterRef
-import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
+import org.jetbrains.kotlin.fir.expressions.FirAnnotation
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.symbols.impl.FirFieldSymbol
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
@@ -46,7 +47,8 @@ class FirFieldImpl @FirImplementationDetail constructor(
     override val name: Name,
     override var initializer: FirExpression?,
     override val isVar: Boolean,
-    override val annotations: MutableList<FirAnnotationCall>,
+    override var backingField: FirBackingField?,
+    override val annotations: MutableList<FirAnnotation>,
     override val symbol: FirFieldSymbol,
 ) : FirField() {
     override val receiverTypeRef: FirTypeRef? get() = null
@@ -64,6 +66,7 @@ class FirFieldImpl @FirImplementationDetail constructor(
         typeParameters.forEach { it.accept(visitor, data) }
         status.accept(visitor, data)
         initializer?.accept(visitor, data)
+        backingField?.accept(visitor, data)
         annotations.forEach { it.accept(visitor, data) }
     }
 
@@ -72,6 +75,7 @@ class FirFieldImpl @FirImplementationDetail constructor(
         transformTypeParameters(transformer, data)
         transformStatus(transformer, data)
         transformInitializer(transformer, data)
+        transformBackingField(transformer, data)
         transformOtherChildren(transformer, data)
         return this
     }
@@ -112,6 +116,11 @@ class FirFieldImpl @FirImplementationDetail constructor(
         return this
     }
 
+    override fun <D> transformBackingField(transformer: FirTransformer<D>, data: D): FirFieldImpl {
+        backingField = backingField?.transform(transformer, data)
+        return this
+    }
+
     override fun <D> transformAnnotations(transformer: FirTransformer<D>, data: D): FirFieldImpl {
         annotations.transformInplace(transformer, data)
         return this
@@ -139,4 +148,8 @@ class FirFieldImpl @FirImplementationDetail constructor(
     override fun replaceInitializer(newInitializer: FirExpression?) {
         initializer = newInitializer
     }
+
+    override fun replaceGetter(newGetter: FirPropertyAccessor?) {}
+
+    override fun replaceSetter(newSetter: FirPropertyAccessor?) {}
 }

@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.fir.declarations
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.FirModuleData
 import org.jetbrains.kotlin.fir.FirSourceElement
-import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
+import org.jetbrains.kotlin.fir.expressions.FirAnnotation
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.FirStatement
 import org.jetbrains.kotlin.fir.symbols.impl.FirVariableSymbol
@@ -44,7 +44,8 @@ sealed class FirVariable : FirCallableDeclaration(), FirStatement {
     abstract val isVal: Boolean
     abstract val getter: FirPropertyAccessor?
     abstract val setter: FirPropertyAccessor?
-    abstract override val annotations: List<FirAnnotationCall>
+    abstract val backingField: FirBackingField?
+    abstract override val annotations: List<FirAnnotation>
 
     override fun <R, D> accept(visitor: FirVisitor<R, D>, data: D): R = visitor.visitVariable(this, data)
 
@@ -62,6 +63,10 @@ sealed class FirVariable : FirCallableDeclaration(), FirStatement {
 
     abstract fun replaceInitializer(newInitializer: FirExpression?)
 
+    abstract fun replaceGetter(newGetter: FirPropertyAccessor?)
+
+    abstract fun replaceSetter(newSetter: FirPropertyAccessor?)
+
     abstract override fun <D> transformReturnTypeRef(transformer: FirTransformer<D>, data: D): FirVariable
 
     abstract override fun <D> transformTypeParameters(transformer: FirTransformer<D>, data: D): FirVariable
@@ -77,6 +82,8 @@ sealed class FirVariable : FirCallableDeclaration(), FirStatement {
     abstract fun <D> transformGetter(transformer: FirTransformer<D>, data: D): FirVariable
 
     abstract fun <D> transformSetter(transformer: FirTransformer<D>, data: D): FirVariable
+
+    abstract fun <D> transformBackingField(transformer: FirTransformer<D>, data: D): FirVariable
 
     abstract override fun <D> transformAnnotations(transformer: FirTransformer<D>, data: D): FirVariable
 

@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.fir.declarations
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.FirModuleData
 import org.jetbrains.kotlin.fir.FirSourceElement
-import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
+import org.jetbrains.kotlin.fir.expressions.FirAnnotation
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.symbols.impl.FirFieldSymbol
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
@@ -42,7 +42,8 @@ abstract class FirField : FirVariable() {
     abstract override val isVal: Boolean
     abstract override val getter: FirPropertyAccessor?
     abstract override val setter: FirPropertyAccessor?
-    abstract override val annotations: List<FirAnnotationCall>
+    abstract override val backingField: FirBackingField?
+    abstract override val annotations: List<FirAnnotation>
     abstract override val symbol: FirFieldSymbol
 
     override fun <R, D> accept(visitor: FirVisitor<R, D>, data: D): R = visitor.visitField(this, data)
@@ -61,6 +62,10 @@ abstract class FirField : FirVariable() {
 
     abstract override fun replaceInitializer(newInitializer: FirExpression?)
 
+    abstract override fun replaceGetter(newGetter: FirPropertyAccessor?)
+
+    abstract override fun replaceSetter(newSetter: FirPropertyAccessor?)
+
     abstract override fun <D> transformReturnTypeRef(transformer: FirTransformer<D>, data: D): FirField
 
     abstract override fun <D> transformTypeParameters(transformer: FirTransformer<D>, data: D): FirField
@@ -76,6 +81,8 @@ abstract class FirField : FirVariable() {
     abstract override fun <D> transformGetter(transformer: FirTransformer<D>, data: D): FirField
 
     abstract override fun <D> transformSetter(transformer: FirTransformer<D>, data: D): FirField
+
+    abstract override fun <D> transformBackingField(transformer: FirTransformer<D>, data: D): FirField
 
     abstract override fun <D> transformAnnotations(transformer: FirTransformer<D>, data: D): FirField
 

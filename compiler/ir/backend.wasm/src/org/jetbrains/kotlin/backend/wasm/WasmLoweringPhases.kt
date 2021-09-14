@@ -291,6 +291,13 @@ private val excludeDeclarationsFromCodegenPhase = makeCustomWasmModulePhase(
     description = "Move excluded declarations to separate place"
 )
 
+private val tryCatchCanonicalization = makeWasmModulePhase(
+    ::TryCatchCanonicalization,
+    name = "TryCatchCanonicalization",
+    description = "Transforms try/catch statements into canonical form supported by the wasm codegen",
+    prerequisite = setOf(functionInliningPhase)
+)
+
 private val returnableBlockLoweringPhase = makeWasmModulePhase(
     ::ReturnableBlockLowering,
     name = "ReturnableBlockLowering",
@@ -338,12 +345,6 @@ private val wasmVarargExpressionLoweringPhase = makeWasmModulePhase(
     ::WasmVarargExpressionLowering,
     name = "WasmVarargExpressionLowering",
     description = "Lower varargs"
-)
-
-private val wasmThrowDebugLoweringPhase = makeWasmModulePhase(
-    ::WasmThrowDebugLowering,
-    name = "WasmThrowDebugLowering",
-    description = "Instrument throws with debug print information"
 )
 
 private val fieldInitializersLoweringPhase = makeWasmModulePhase(
@@ -413,6 +414,12 @@ private val propertyAccessorInlinerLoweringPhase = makeWasmModulePhase(
     description = "[Optimization] Inline property accessors"
 )
 
+private val expressionBodyTransformer = makeWasmModulePhase(
+    ::ExpressionBodyTransformer,
+    name = "ExpressionBodyTransformer",
+    description = "Replace IrExpressionBody with IrBlockBody"
+)
+
 val wasmPhases = NamedCompilerPhase(
     name = "IrModuleLowering",
     description = "IR module lowering",
@@ -460,6 +467,7 @@ val wasmPhases = NamedCompilerPhase(
 //            suspendFunctionsLoweringPhase then
 
             stringConstructorLowering then
+            tryCatchCanonicalization then
             returnableBlockLoweringPhase then
 
             forLoopsLoweringPhase then
@@ -484,6 +492,7 @@ val wasmPhases = NamedCompilerPhase(
             objectDeclarationLoweringPhase then
             fieldInitializersLoweringPhase then
             genericReturnTypeLowering then
+            expressionBodyTransformer then
 
             // Replace builtins before autoboxing
             builtInsLoweringPhase0 then
@@ -496,7 +505,6 @@ val wasmPhases = NamedCompilerPhase(
             builtInsLoweringPhase then
 
             virtualDispatchReceiverExtractionPhase then
-            wasmThrowDebugLoweringPhase then
             staticMembersLoweringPhase then
             wasmNullSpecializationLowering then
             validateIrAfterLowering

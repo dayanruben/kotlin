@@ -21,11 +21,8 @@ import org.jetbrains.kotlin.fir.expressions.FirFunctionCall
 import org.jetbrains.kotlin.fir.expressions.FirVariableAssignment
 import org.jetbrains.kotlin.fir.expressions.impl.FirEmptyExpressionBlock
 import org.jetbrains.kotlin.fir.expressions.toResolvedCallableSymbol
-import org.jetbrains.kotlin.fir.resolve.SessionHolder
-import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
+import org.jetbrains.kotlin.fir.resolve.*
 import org.jetbrains.kotlin.fir.resolve.inference.isBuiltinFunctionalType
-import org.jetbrains.kotlin.fir.resolve.symbolProvider
-import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.scopes.FirTypeScope
 import org.jetbrains.kotlin.fir.scopes.ProcessorAction
 import org.jetbrains.kotlin.fir.scopes.impl.multipleDelegatesWithTheSameSignature
@@ -132,7 +129,22 @@ fun FirBasedSymbol<*>.getContainingClassSymbol(session: FirSession): FirClassLik
 fun FirClassLikeSymbol<*>.outerClassSymbol(context: CheckerContext): FirClassLikeSymbol<*>? {
     if (this !is FirClassSymbol<*>) return null
     val outerClassId = classId.outerClassId ?: return null
-    return context.session.symbolProvider.getClassLikeSymbolByFqName(outerClassId)
+    return context.session.symbolProvider.getClassLikeSymbolByClassId(outerClassId)
+}
+
+@OptIn(SymbolInternals::class)
+fun FirClassSymbol<*>.getContainingDeclarationSymbol(session: FirSession): FirClassLikeSymbol<*>? {
+    if (isLocal) {
+        return (this as FirRegularClassSymbol).fir.containingClassForLocalAttr?.toFirRegularClassSymbol(session)
+    } else {
+        val parentId = classId.relativeClassName.parent()
+        if (!parentId.isRoot) {
+            val containingDeclarationId = ClassId(classId.packageFqName, parentId, false)
+            return session.symbolProvider.getClassLikeSymbolByClassId(containingDeclarationId)
+        }
+    }
+
+    return null
 }
 
 /**
@@ -171,7 +183,14 @@ fun CheckerContext.findClosestClassOrObject(): FirClass? {
  * Returns the list of functions that overridden by given
  */
 fun FirSimpleFunction.overriddenFunctions(
-    containingClass: FirClass,
+    containingClass: FirClassSymbol<*>,
+    context: CheckerContext
+): List<FirFunctionSymbol<*>> {
+    return symbol.overriddenFunctions(containingClass, context)
+}
+
+fun FirNamedFunctionSymbol.overriddenFunctions(
+    containingClass: FirClassSymbol<*>,
     context: CheckerContext
 ): List<FirFunctionSymbol<*>> {
     val firTypeScope = containingClass.unsubstitutedScope(
@@ -181,8 +200,8 @@ fun FirSimpleFunction.overriddenFunctions(
     )
 
     val overriddenFunctions = mutableListOf<FirFunctionSymbol<*>>()
-    firTypeScope.processFunctionsByName(symbol.callableId.callableName) { }
-    firTypeScope.processOverriddenFunctions(symbol) {
+    firTypeScope.processFunctionsByName(callableId.callableName) { }
+    firTypeScope.processOverriddenFunctions(this) {
         overriddenFunctions.add(it)
         ProcessorAction.NEXT
     }
@@ -730,6 +749,7 @@ fun getActualTargetList(annotated: FirDeclaration): AnnotationTargetList {
         }
         is FirTypeAlias -> TargetLists.T_TYPEALIAS
         is FirPropertyAccessor -> if (annotated.isGetter) TargetLists.T_PROPERTY_GETTER else TargetLists.T_PROPERTY_SETTER
+        is FirBackingField -> TargetLists.T_BACKING_FIELD
         is FirFile -> TargetLists.T_FILE
         is FirTypeParameter -> TargetLists.T_TYPE_PARAMETER
         is FirAnonymousInitializer -> TargetLists.T_INITIALIZER

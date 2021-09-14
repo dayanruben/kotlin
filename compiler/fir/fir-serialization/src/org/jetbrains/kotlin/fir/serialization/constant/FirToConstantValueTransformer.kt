@@ -9,7 +9,10 @@ import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.declarations.FirEnumEntry
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.render
-import org.jetbrains.kotlin.fir.types.*
+import org.jetbrains.kotlin.fir.types.ConeClassLikeType
+import org.jetbrains.kotlin.fir.types.classId
+import org.jetbrains.kotlin.fir.types.coneTypeSafe
+import org.jetbrains.kotlin.fir.types.coneTypeUnsafe
 import org.jetbrains.kotlin.fir.visitors.FirDefaultVisitor
 import org.jetbrains.kotlin.types.ConstantValueKind
 
@@ -55,11 +58,15 @@ internal object FirToConstantValueTransformer : FirDefaultVisitor<ConstantValue<
         return ArrayValue(arrayOfCall.argumentList.arguments.mapNotNull { it.accept(this, null) })
     }
 
-    override fun visitAnnotationCall(
-        annotationCall: FirAnnotationCall,
+    override fun visitAnnotation(
+        annotation: FirAnnotation,
         data: Nothing?
     ): ConstantValue<*> {
-        return AnnotationValue(annotationCall)
+        return AnnotationValue(annotation)
+    }
+
+    override fun visitAnnotationCall(annotationCall: FirAnnotationCall, data: Nothing?): ConstantValue<*> {
+        return visitAnnotation(annotationCall, data)
     }
 
     override fun visitGetClassCall(

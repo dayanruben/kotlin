@@ -9,7 +9,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.providers.getModuleInfo
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.declarations.*
-import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
+import org.jetbrains.kotlin.fir.expressions.FirAnnotation
 import org.jetbrains.kotlin.fir.realPsi
 import org.jetbrains.kotlin.fir.resolve.FirTowerDataContext
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.idea.fir.low.level.api.file.structure.FirElementsRec
 import org.jetbrains.kotlin.idea.fir.low.level.api.file.structure.KtToFirMapping
 import org.jetbrains.kotlin.idea.fir.low.level.api.lazy.resolve.RawFirNonLocalDeclarationBuilder
 import org.jetbrains.kotlin.idea.fir.low.level.api.lazy.resolve.RawFirReplacement
+import org.jetbrains.kotlin.idea.fir.low.level.api.lazy.resolve.ResolveTreeBuilder
 import org.jetbrains.kotlin.idea.fir.low.level.api.lazy.resolve.buildFileFirAnnotation
 import org.jetbrains.kotlin.idea.fir.low.level.api.lazy.resolve.buildFirUserTypeRef
 import org.jetbrains.kotlin.idea.fir.low.level.api.providers.firIdeProvider
@@ -189,7 +190,7 @@ object LowLevelFirApiFacadeForResolveOnAir {
         replacement: RawFirReplacement,
         firFile: FirFile,
         collector: FirTowerDataContextCollector? = null,
-    ): FirAnnotationCall {
+    ): FirAnnotation {
         val annotationCall = buildFileFirAnnotation(
             session = firFile.moduleData.session,
             baseScopeProvider = firFile.moduleData.session.firIdeProvider.kotlinScopeProvider,
@@ -267,13 +268,15 @@ object LowLevelFirApiFacadeForResolveOnAir {
                 declaration = copiedFirDeclaration,
                 firFile = originalFirFile
             )
-            state.firLazyDeclarationResolver.runLazyDesignatedOnAirResolveToBodyWithoutLock(
-                designation = onAirDesignation,
-                moduleFileCache = state.rootModuleSession.cache,
-                checkPCE = true,
-                onAirCreatedDeclaration = onAirCreatedDeclaration,
-                towerDataContextCollector = collector,
-            )
+            ResolveTreeBuilder.resolveEnsure(onAirDesignation.declaration, FirResolvePhase.BODY_RESOLVE) {
+                state.firLazyDeclarationResolver.runLazyDesignatedOnAirResolveToBodyWithoutLock(
+                    designation = onAirDesignation,
+                    moduleFileCache = state.rootModuleSession.cache,
+                    checkPCE = true,
+                    onAirCreatedDeclaration = onAirCreatedDeclaration,
+                    towerDataContextCollector = collector,
+                )
+            }
             copiedFirDeclaration
         }
 

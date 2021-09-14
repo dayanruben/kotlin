@@ -1,17 +1,6 @@
 /*
- * Copyright 2010-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.asJava.elements
@@ -127,7 +116,8 @@ class KtLightAnnotationForSourceEntry(
             (kotlinOrigin as? KtAnnotationEntry)?.typeReference?.reference
                 ?: (kotlinOrigin.calleeExpression?.nameReference)?.references?.firstOrNull()
         },
-        { lazyClsDelegate?.value?.nameReferenceElement }
+        { lazyClsDelegate?.value?.nameReferenceElement },
+        if (qualifiedName == CommonClassNames.JAVA_LANG_ANNOTATION_REPEATABLE) JAVA_LANG_ANNOTATION_REPEATABLE_SHORT_NAME else null,
     )
 
     private val ktLightAnnotationParameterList by lazyPub { KtLightAnnotationParameterList() }
@@ -287,51 +277,53 @@ open class KtLightNullabilityAnnotation<D : KtLightElement<*, PsiModifierListOwn
 
     override fun findAttributeValue(attributeName: String?): PsiAnnotationMemberValue? = null
 
-    override fun getQualifiedName(): String? {
+    private val _qualifiedName: String? by lazy {
         val annotatedElement = member.takeIf(::isFromSources)?.kotlinOrigin
             ?: // it is out of our hands
-            return getClsNullabilityAnnotation(member)?.qualifiedName
+            return@lazy getClsNullabilityAnnotation(member)?.qualifiedName
 
-        if (!fastCheckIsNullabilityApplied(member)) return null
+        if (!fastCheckIsNullabilityApplied(member)) return@lazy null
 
         // all data-class generated members are not-null
-        if (annotatedElement is KtClass && annotatedElement.isData()) return NotNull::class.java.name
+        if (annotatedElement is KtClass && annotatedElement.isData()) return@lazy NotNull::class.java.name
 
         // objects and companion objects have NotNull annotation (if annotated element is implicit ctor then skip annotation)
         if (annotatedElement is KtObjectDeclaration) {
-            if ((parent.parent as? PsiMethod)?.isConstructor == true) return null
-            return NotNull::class.java.name
+            if ((parent.parent as? PsiMethod)?.isConstructor == true) return@lazy null
+            return@lazy NotNull::class.java.name
         }
 
         // don't annotate property setters
-        if (annotatedElement is KtValVarKeywordOwner && member is KtLightMethod && member.returnType == PsiType.VOID) return null
+        if (annotatedElement is KtValVarKeywordOwner && member is KtLightMethod && member.returnType == PsiType.VOID) return@lazy null
 
         if (annotatedElement is KtNamedFunction && annotatedElement.modifierList?.hasSuspendModifier() == true) {
-            return Nullable::class.java.name
+            return@lazy Nullable::class.java.name
         }
 
-        val kotlinType = getTargetType(annotatedElement) ?: return null
+        val kotlinType = getTargetType(annotatedElement) ?: return@lazy null
 
         if (KotlinBuiltIns.isPrimitiveType(kotlinType) && (annotatedElement as? KtParameter)?.isVarArg != true) {
             // no need to annotate them explicitly except the case when overriding reference-type makes it non-primitive for Jvm
-            if (!(annotatedElement is KtCallableDeclaration && annotatedElement.hasModifier(KtTokens.OVERRIDE_KEYWORD))) return null
+            if (!(annotatedElement is KtCallableDeclaration && annotatedElement.hasModifier(KtTokens.OVERRIDE_KEYWORD))) return@lazy null
 
             val overriddenDescriptors =
                 (annotatedElement.analyze()[BindingContext.DECLARATION_TO_DESCRIPTOR, annotatedElement] as? CallableMemberDescriptor)?.overriddenDescriptors
-            if (overriddenDescriptors?.all { it.returnType == kotlinType } == true) return null
+            if (overriddenDescriptors?.all { it.returnType == kotlinType } == true) return@lazy null
         }
-        if (kotlinType.isUnit() && (annotatedElement !is KtValVarKeywordOwner)) return null // not annotate unit-functions
+        if (kotlinType.isUnit() && (annotatedElement !is KtValVarKeywordOwner)) return@lazy null // not annotate unit-functions
         if (kotlinType.isTypeParameter()) {
-            if (!TypeUtils.hasNullableSuperType(kotlinType)) return NotNull::class.java.name
-            if (!kotlinType.isMarkedNullable) return null
+            if (!TypeUtils.hasNullableSuperType(kotlinType)) return@lazy NotNull::class.java.name
+            if (!kotlinType.isMarkedNullable) return@lazy null
         }
 
-        return when (kotlinType.nullability()) {
+        when (kotlinType.nullability()) {
             TypeNullability.NOT_NULL -> NotNull::class.java.name
             TypeNullability.NULLABLE -> Nullable::class.java.name
             TypeNullability.FLEXIBLE -> null
         }
     }
+
+    override fun getQualifiedName(): String? = _qualifiedName
 
     internal fun KtTypeReference.getType(): KotlinType? = analyze()[BindingContext.TYPE, this]
 

@@ -267,36 +267,38 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<String>("useSiteDescription")
         }
         val INAPPLICABLE_FILE_TARGET by error<KtAnnotationEntry>(PositioningStrategy.ANNOTATION_USE_SITE)
+        val REPEATED_ANNOTATION by error<KtAnnotationEntry>()
+        val REPEATED_ANNOTATION_WARNING by warning<KtAnnotationEntry>()
     }
 
-    val EXPERIMENTAL by object : DiagnosticGroup("OptIn-related") {
-        val EXPERIMENTAL_API_USAGE by warning<PsiElement>(PositioningStrategy.REFERENCE_BY_QUALIFIED) {
+    val OPT_IN by object : DiagnosticGroup("OptIn") {
+        val OPT_IN_USAGE by warning<PsiElement>(PositioningStrategy.REFERENCE_BY_QUALIFIED) {
             parameter<FqName>("optInMarkerFqName")
             parameter<String>("message")
         }
-        val EXPERIMENTAL_API_USAGE_ERROR by warning<PsiElement>(PositioningStrategy.REFERENCE_BY_QUALIFIED) {
+        val OPT_IN_USAGE_ERROR by warning<PsiElement>(PositioningStrategy.REFERENCE_BY_QUALIFIED) {
             parameter<FqName>("optInMarkerFqName")
             parameter<String>("message")
         }
-        val EXPERIMENTAL_OVERRIDE by warning<PsiElement> {
+        val OPT_IN_OVERRIDE by warning<PsiElement> {
             parameter<FqName>("optInMarkerFqName")
             parameter<String>("message")
         }
-        val EXPERIMENTAL_OVERRIDE_ERROR by error<PsiElement> {
+        val OPT_IN_OVERRIDE_ERROR by error<PsiElement> {
             parameter<FqName>("optInMarkerFqName")
             parameter<String>("message")
         }
-        val EXPERIMENTAL_IS_NOT_ENABLED by warning<KtAnnotationEntry>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED)
-        val EXPERIMENTAL_CAN_ONLY_BE_USED_AS_ANNOTATION by error<PsiElement>()
-        val EXPERIMENTAL_MARKER_CAN_ONLY_BE_USED_AS_ANNOTATION_OR_ARGUMENT_IN_USE_EXPERIMENTAL by error<PsiElement>()
-        val USE_EXPERIMENTAL_WITHOUT_ARGUMENTS by warning<KtAnnotationEntry>()
-        val USE_EXPERIMENTAL_ARGUMENT_IS_NOT_MARKER by warning<KtAnnotationEntry> {
+        val OPT_IN_IS_NOT_ENABLED by warning<KtAnnotationEntry>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED)
+        val OPT_IN_CAN_ONLY_BE_USED_AS_ANNOTATION by error<PsiElement>()
+        val OPT_IN_MARKER_CAN_ONLY_BE_USED_AS_ANNOTATION_OR_ARGUMENT_IN_OPT_IN by error<PsiElement>()
+        val OPT_IN_WITHOUT_ARGUMENTS by warning<KtAnnotationEntry>()
+        val OPT_IN_ARGUMENT_IS_NOT_MARKER by warning<KtAnnotationEntry> {
             parameter<FqName>("notMarkerFqName")
         }
-        val EXPERIMENTAL_ANNOTATION_WITH_WRONG_TARGET by error<KtAnnotationEntry> {
+        val OPT_IN_MARKER_WITH_WRONG_TARGET by error<KtAnnotationEntry> {
             parameter<String>("target")
         }
-        val EXPERIMENTAL_ANNOTATION_WITH_WRONG_RETENTION by error<KtAnnotationEntry>()
+        val OPT_IN_MARKER_WITH_WRONG_RETENTION by error<KtAnnotationEntry>()
     }
 
     val EXPOSED_VISIBILITY by object : DiagnosticGroup("Exposed visibility") {
@@ -871,6 +873,18 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<ConeKotlinType>("actualType")
         }
         val ACCESSOR_FOR_DELEGATED_PROPERTY by error<KtPropertyAccessor>()
+        val PROPERTY_INITIALIZER_WITH_EXPLICIT_FIELD_DECLARATION by error<KtExpression>()
+        val PROPERTY_FIELD_DECLARATION_MISSING_INITIALIZER by error<KtBackingField>()
+        val LATEINIT_PROPERTY_FIELD_DECLARATION_WITH_INITIALIZER by error<KtBackingField>(PositioningStrategy.LATEINIT_MODIFIER)
+        val LATEINIT_FIELD_IN_VAL_PROPERTY by error<KtBackingField>(PositioningStrategy.LATEINIT_MODIFIER)
+        val LATEINIT_NULLABLE_BACKING_FIELD by error<KtBackingField>(PositioningStrategy.LATEINIT_MODIFIER)
+        val BACKING_FIELD_FOR_DELEGATED_PROPERTY by error<KtBackingField>(PositioningStrategy.FIELD_KEYWORD)
+        val PROPERTY_MUST_HAVE_GETTER by error<KtProperty>()
+        val PROPERTY_MUST_HAVE_SETTER by error<KtProperty>()
+        val EXPLICIT_BACKING_FIELD_IN_INTERFACE by error<KtBackingField>(PositioningStrategy.FIELD_KEYWORD)
+        val EXPLICIT_BACKING_FIELD_IN_ABSTRACT_PROPERTY by error<KtBackingField>(PositioningStrategy.FIELD_KEYWORD)
+        val EXPLICIT_BACKING_FIELD_IN_EXTENSION by error<KtBackingField>(PositioningStrategy.FIELD_KEYWORD)
+        val REDUNDANT_EXPLICIT_BACKING_FIELD by warning<KtBackingField>(PositioningStrategy.FIELD_KEYWORD)
         val ABSTRACT_PROPERTY_IN_PRIMARY_CONSTRUCTOR_PARAMETERS by error<KtModifierListOwner>(PositioningStrategy.ABSTRACT_MODIFIER)
         val LOCAL_VARIABLE_WITH_TYPE_PARAMETERS_WARNING by warning<KtProperty>(PositioningStrategy.TYPE_PARAMETERS_LIST)
         val LOCAL_VARIABLE_WITH_TYPE_PARAMETERS by error<KtProperty>(PositioningStrategy.TYPE_PARAMETERS_LIST)
@@ -1061,6 +1075,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<String>("illegalReason")
         }
         val COMMA_IN_WHEN_CONDITION_WITHOUT_ARGUMENT by error<PsiElement>(PositioningStrategy.COMMAS)
+        val DUPLICATE_LABEL_IN_WHEN by warning<KtElement>()
     }
 
     val CONTEXT_TRACKING by object : DiagnosticGroup("Context tracking") {
@@ -1141,6 +1156,9 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val ASSIGNMENT_OPERATOR_SHOULD_RETURN_UNIT by error<KtExpression>(PositioningStrategy.OPERATOR) {
             parameter<FirNamedFunctionSymbol>("functionSymbol")
             parameter<String>("operator")
+        }
+        val PROPERTY_AS_OPERATOR by error<PsiElement>(PositioningStrategy.OPERATOR) {
+            parameter<FirPropertySymbol>("property")
         }
     }
 

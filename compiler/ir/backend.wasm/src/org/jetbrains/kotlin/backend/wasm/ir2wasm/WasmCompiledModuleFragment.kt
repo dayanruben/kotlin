@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.backend.wasm.ir2wasm
 
 import org.jetbrains.kotlin.backend.common.push
 import org.jetbrains.kotlin.backend.wasm.lower.WasmSignature
+import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationWithName
 import org.jetbrains.kotlin.ir.declarations.IrExternalPackageFragment
 import org.jetbrains.kotlin.ir.symbols.*
@@ -14,7 +15,7 @@ import org.jetbrains.kotlin.ir.util.fqNameWhenAvailable
 import org.jetbrains.kotlin.ir.util.getPackageFragment
 import org.jetbrains.kotlin.wasm.ir.*
 
-class WasmCompiledModuleFragment {
+class WasmCompiledModuleFragment(val irBuiltIns: IrBuiltIns) {
     val functions =
         ReferencableAndDefinable<IrFunctionSymbol, WasmFunction>()
     val globals =
@@ -36,6 +37,16 @@ class WasmCompiledModuleFragment {
 
     val runtimeTypes =
         ReferencableAndDefinable<IrClassSymbol, WasmGlobal>()
+
+    val tagFuncType = WasmFunctionType(
+        "ex_handling_tag",
+        listOf(
+            WasmRefNullType(WasmHeapType.Type(gcTypes.reference(irBuiltIns.throwableClass)))
+        ),
+        emptyList()
+    )
+    val tag = WasmTag(tagFuncType)
+
 
     val classes = mutableListOf<IrClassSymbol>()
     val interfaces = mutableListOf<IrClassSymbol>()
@@ -250,7 +261,7 @@ class WasmCompiledModuleFragment {
         val sortedRttGlobals = runtimeTypes.elements.sortedBy { (it.type as WasmRtt).depth }
 
         val module = WasmModule(
-            functionTypes = functionTypes.elements,
+            functionTypes = functionTypes.elements + tagFuncType,
             gcTypes = gcTypes.elements,
             importsInOrder = importedFunctions,
             importedFunctions = importedFunctions,
@@ -261,7 +272,8 @@ class WasmCompiledModuleFragment {
             exports = exports,
             startFunction = startFunction!!,
             elements = listOf(elements) + interfaceTableElements,
-            data = data
+            data = data,
+            tags = listOf(tag)
         )
         module.calculateIds()
         return module

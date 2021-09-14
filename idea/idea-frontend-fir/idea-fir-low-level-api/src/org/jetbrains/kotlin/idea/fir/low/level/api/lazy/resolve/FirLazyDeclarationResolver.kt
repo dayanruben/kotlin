@@ -9,8 +9,7 @@ import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.synthetic.FirSyntheticProperty
 import org.jetbrains.kotlin.fir.declarations.synthetic.FirSyntheticPropertyAccessor
-import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
-import org.jetbrains.kotlin.fir.expressions.FirAnnotationResolveStatus
+import org.jetbrains.kotlin.fir.expressions.FirAnnotation
 import org.jetbrains.kotlin.fir.realPsi
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.resolve.firProvider
@@ -38,13 +37,13 @@ internal class FirLazyDeclarationResolver(private val firFileBuilder: FirFileBui
      */
     fun resolveFileAnnotations(
         firFile: FirFile,
-        annotations: List<FirAnnotationCall>,
+        annotations: List<FirAnnotation>,
         moduleFileCache: ModuleFileCache,
         scopeSession: ScopeSession,
         checkPCE: Boolean,
         collector: FirTowerDataContextCollector? = null,
     ) {
-        if (firFile.resolvePhase >= FirResolvePhase.IMPORTS && annotations.all { it.resolveStatus == FirAnnotationResolveStatus.Resolved }) return
+        if (firFile.resolvePhase >= FirResolvePhase.IMPORTS && annotations.all { it.resolved }) return
         moduleFileCache.firFileLockProvider.runCustomResolveUnderLock(firFile, checkPCE) {
             resolveFileAnnotationsWithoutLock(
                 firFile = firFile,
@@ -61,7 +60,7 @@ internal class FirLazyDeclarationResolver(private val firFileBuilder: FirFileBui
      */
     private fun resolveFileAnnotationsWithoutLock(
         firFile: FirFile,
-        annotations: List<FirAnnotationCall>,
+        annotations: List<FirAnnotation>,
         scopeSession: ScopeSession,
         collector: FirTowerDataContextCollector? = null,
     ) {
@@ -69,7 +68,7 @@ internal class FirLazyDeclarationResolver(private val firFileBuilder: FirFileBui
             resolveFileToImportsWithoutLock(firFile, false)
         }
 
-        if (!annotations.all { it.resolveStatus == FirAnnotationResolveStatus.Resolved }) {
+        if (!annotations.all { it.resolved }) {
             FirFileAnnotationsResolveTransformer(
                 firFile = firFile,
                 annotations = annotations,
@@ -121,13 +120,15 @@ internal class FirLazyDeclarationResolver(private val firFileBuilder: FirFileBui
         if (toPhase == FirResolvePhase.IMPORTS) return
         if (firFile.resolvePhase >= toPhase) return
         moduleFileCache.firFileLockProvider.runCustomResolveUnderLock(firFile, checkPCE) {
-            lazyResolveFileDeclarationWithoutLock(
-                firFile = firFile,
-                moduleFileCache = moduleFileCache,
-                toPhase = toPhase,
-                scopeSession = scopeSession,
-                checkPCE = checkPCE,
-            )
+            ResolveTreeBuilder.resolveEnsure(firFile, toPhase) {
+                lazyResolveFileDeclarationWithoutLock(
+                    firFile = firFile,
+                    moduleFileCache = moduleFileCache,
+                    toPhase = toPhase,
+                    scopeSession = scopeSession,
+                    checkPCE = checkPCE,
+                )
+            }
         }
     }
 
@@ -289,13 +290,16 @@ internal class FirLazyDeclarationResolver(private val firFileBuilder: FirFileBui
         }
 
         moduleFileCache.firFileLockProvider.runCustomResolveUnderLock(designation.firFile, checkPCE) {
-            runLazyDesignatedResolveWithoutLock(
-                designation = designation,
-                moduleFileCache = moduleFileCache,
-                scopeSession = scopeSession,
-                toPhase = neededPhase,
-                checkPCE = checkPCE,
-            )
+            ResolveTreeBuilder.resolveEnsure(designation.declaration, neededPhase) {
+                runLazyDesignatedResolveWithoutLock(
+                    designation = designation,
+                    moduleFileCache = moduleFileCache,
+                    scopeSession = scopeSession,
+                    toPhase = neededPhase,
+                    checkPCE = checkPCE,
+                )
+                designation.declaration
+            }
         }
 
         if (!isLocalDeclarationResolveRequested) return firDeclarationToResolve

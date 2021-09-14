@@ -33,7 +33,7 @@ object FirClassLiteralChecker : FirGetClassCallChecker() {
         if (argument is FirResolvedQualifier) {
             val classId = argument.classId
             if (classId == OptInNames.REQUIRES_OPT_IN_CLASS_ID || classId == OptInNames.OPT_IN_CLASS_ID) {
-                reporter.reportOn(argument.source, FirErrors.EXPERIMENTAL_CAN_ONLY_BE_USED_AS_ANNOTATION, context)
+                reporter.reportOn(argument.source, FirErrors.OPT_IN_CAN_ONLY_BE_USED_AS_ANNOTATION, context)
             }
         }
 
@@ -80,7 +80,7 @@ object FirClassLiteralChecker : FirGetClassCallChecker() {
             @OptIn(SymbolInternals::class)
             val typeParameters = (symbol?.fir as? FirTypeParameterRefsOwner)?.typeParameters
             // Among type parameter references, only count actual type parameter while discarding [FirOuterClassTypeParameterRef]
-            val expectedTypeArgumentSize = typeParameters?.filterIsInstance<FirTypeParameter>()?.size ?: 0
+            val expectedTypeArgumentSize = typeParameters?.count { it is FirTypeParameter } ?: 0
             if (expectedTypeArgumentSize != argument.typeArguments.size) {
                 // Will be reported as WRONG_NUMBER_OF_TYPE_ARGUMENTS
                 return

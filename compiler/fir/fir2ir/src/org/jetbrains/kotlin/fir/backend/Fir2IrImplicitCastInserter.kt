@@ -38,6 +38,8 @@ class Fir2IrImplicitCastInserter(
         TODO("Should not be here: ${element::class}: ${element.render()}")
     }
 
+    override fun visitAnnotation(annotation: FirAnnotation, data: IrElement): IrElement = data
+
     override fun visitAnnotationCall(annotationCall: FirAnnotationCall, data: IrElement): IrElement = data
 
     override fun visitAnonymousObjectExpression(anonymousObjectExpression: FirAnonymousObjectExpression, data: IrElement): IrElement = data

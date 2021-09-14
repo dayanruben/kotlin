@@ -24,10 +24,7 @@ import org.jetbrains.kotlin.fir.expressions.FirConstExpression
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.FirQualifiedAccess
 import org.jetbrains.kotlin.fir.expressions.impl.FirExpressionStub
-import org.jetbrains.kotlin.fir.lazy.Fir2IrLazyClass
-import org.jetbrains.kotlin.fir.lazy.Fir2IrLazyConstructor
-import org.jetbrains.kotlin.fir.lazy.Fir2IrLazyProperty
-import org.jetbrains.kotlin.fir.lazy.Fir2IrLazySimpleFunction
+import org.jetbrains.kotlin.fir.lazy.*
 import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
 import org.jetbrains.kotlin.fir.resolve.firProvider
 import org.jetbrains.kotlin.fir.resolve.inference.isSuspendFunctionType
@@ -696,6 +693,7 @@ class Fir2IrDeclarationStorage(
 
     private val FirProperty.fieldVisibility: Visibility
         get() = when {
+            hasExplicitBackingField -> backingField?.visibility ?: status.visibility
             isLateInit -> setter?.visibility ?: status.visibility
             isConst -> status.visibility
             hasJvmFieldAnnotation -> status.visibility
@@ -795,7 +793,6 @@ class Fir2IrDeclarationStorage(
                         parent = irParent
                     }
                     val type = property.returnTypeRef.toIrType()
-                    val initializer = property.initializer
                     val delegate = property.delegate
                     val getter = property.getter
                     val setter = property.setter
@@ -807,14 +804,21 @@ class Fir2IrDeclarationStorage(
                                 Name.identifier("${property.name}\$delegate"), true, delegate
                             )
                         } else {
+                            val initializer = property.backingField?.initializer ?: property.initializer
+                            // There are cases when we get here for properties
+                            // that have no backing field. For example, in the
+                            // funExpression.kt test there's an attempt
+                            // to access the `javaClass` property of the `foo0`'s
+                            // `block` argument
+                            val typeToUse = property.backingField?.returnTypeRef?.toIrType() ?: type
                             createBackingField(
                                 property, IrDeclarationOrigin.PROPERTY_BACKING_FIELD,
                                 components.visibilityConverter.convertToDescriptorVisibility(property.fieldVisibility),
-                                property.name, property.isVal, initializer, type
+                                property.name, property.isVal, initializer, typeToUse
                             ).also { field ->
                                 if (initializer is FirConstExpression<*>) {
                                     // TODO: Normally we shouldn't have error type here
-                                    val constType = initializer.typeRef.toIrType().takeIf { it !is IrErrorType } ?: type
+                                    val constType = initializer.typeRef.toIrType().takeIf { it !is IrErrorType } ?: typeToUse
                                     field.initializer = factory.createExpressionBody(initializer.toIrConst(constType))
                                 }
                             }
@@ -1223,8 +1227,16 @@ class Fir2IrDeclarationStorage(
         return irProperty.symbol
     }
 
-    fun getIrBackingFieldSymbol(firVariableSymbol: FirVariableSymbol<*>): IrSymbol {
-        return when (val fir = firVariableSymbol.fir) {
+    fun getIrBackingFieldSymbol(firBackingFieldSymbol: FirBackingFieldSymbol): IrSymbol {
+        return getIrPropertyForwardedSymbol(firBackingFieldSymbol.fir.propertySymbol.fir)
+    }
+
+    fun getIrDelegateFieldSymbol(firVariableSymbol: FirVariableSymbol<*>): IrSymbol {
+        return getIrPropertyForwardedSymbol(firVariableSymbol.fir)
+    }
+
+    fun getIrPropertyForwardedSymbol(fir: FirVariable): IrSymbol {
+        return when (fir) {
             is FirProperty -> {
                 if (fir.isLocal) {
                     return localStorage.getDelegatedProperty(fir)?.delegate?.symbol ?: getIrVariableSymbol(fir)

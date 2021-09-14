@@ -375,6 +375,13 @@ abstract class CommonCompilerArguments : CommonToolArguments() {
     var unrestrictedBuilderInference: Boolean by FreezableVar(false)
 
     @Argument(
+        value = "-Xenable-builder-inference",
+        description = "Use the builder inference by default, for all calls with lambdas which can't be resolved without it.\n" +
+                "The corresponding calls' declarations may not be marked with @BuilderInference."
+    )
+    var enableBuilderInference: Boolean by FreezableVar(false)
+
+    @Argument(
         value = "-Xself-upper-bound-inference",
         description = "Support inferring type arguments based on only self upper bounds of the corresponding type parameters"
     )
@@ -398,7 +405,7 @@ abstract class CommonCompilerArguments : CommonToolArguments() {
 //                    WARNING, "'-Xopt-in' is deprecated and will be removed in a future release, please use -opt-in instead"
 //                )
             }
-            put(AnalysisFlags.useExperimental, useExperimentalFqNames + optInDeprecatedFqNames + optIn?.toList().orEmpty())
+            put(AnalysisFlags.optIn, useExperimentalFqNames + optInDeprecatedFqNames + optIn?.toList().orEmpty())
             put(AnalysisFlags.expectActualLinker, expectActualLinker)
             put(AnalysisFlags.explicitApiVersion, apiVersion != null)
             put(AnalysisFlags.allowResultReturnType, allowResultReturnType)
@@ -420,6 +427,10 @@ abstract class CommonCompilerArguments : CommonToolArguments() {
 
             if (unrestrictedBuilderInference) {
                 put(LanguageFeature.UnrestrictedBuilderInference, LanguageFeature.State.ENABLED)
+            }
+
+            if (enableBuilderInference) {
+                put(LanguageFeature.UseBuilderInferenceWithoutAnnotation, LanguageFeature.State.ENABLED)
             }
 
             if (selfUpperBoundInference) {

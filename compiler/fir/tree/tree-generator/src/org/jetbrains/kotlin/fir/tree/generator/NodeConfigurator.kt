@@ -315,19 +315,32 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
 
         property.configure {
             +symbol("FirPropertySymbol")
-            +field("backingFieldSymbol", backingFieldSymbolType)
             +field("delegateFieldSymbol", delegateFieldSymbolType, nullable = true)
             +booleanField("isLocal")
-            +booleanField("initializerAndAccessorsAreResolved", withReplace = true)
+            +field("bodyResolveState", propertyBodyResolveStateType, withReplace = true)
             +typeParameters
         }
 
         propertyAccessor.configure {
             +symbol("FirPropertyAccessorSymbol")
+            +field("propertySymbol", firPropertySymbolType, nullable = true).apply {
+                withBindThis = false
+            }
             +booleanField("isGetter")
             +booleanField("isSetter")
             +annotations
             +typeParameters
+        }
+
+        backingField.configure {
+            +field("symbol", backingFieldSymbolType)
+            +field("propertySymbol", firPropertySymbolType).apply {
+                withBindThis = false
+            }
+            +initializer.withTransform().withReplace()
+            +annotations
+            +typeParameters
+            +status.withTransform()
         }
 
         declarationStatus.configure {
@@ -372,8 +385,9 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
             +initializer.withTransform().withReplace()
             +field("delegate", expression, nullable = true).withTransform()
             generateBooleanFields("var", "val")
-            +field("getter", propertyAccessor, nullable = true).withTransform()
-            +field("setter", propertyAccessor, nullable = true).withTransform()
+            +field("getter", propertyAccessor, nullable = true, withReplace = true).withTransform()
+            +field("setter", propertyAccessor, nullable = true, withReplace = true).withTransform()
+            +field("backingField", backingField, nullable = true).withTransform()
             +annotations
             needTransformOtherChildren()
         }
@@ -430,13 +444,21 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
             +field("delegate", import)
         }
 
-        annotationCall.configure {
+        annotation.configure {
             +field("useSiteTarget", annotationUseSiteTargetType, nullable = true)
             +field("annotationTypeRef", typeRef).withTransform()
-            +field("resolveStatus", annotationResolveStatusType, withReplace = true)
+            +field("argumentMapping", annotationArgumentMapping, withReplace = true)
         }
 
-        arraySetCall.configure {
+        annotationCall.configure {
+            +field("argumentMapping", annotationArgumentMapping, withReplace = true)
+        }
+
+        annotationArgumentMapping.configure {
+            +field("mapping", type("Map") to listOf(nameType, expression))
+        }
+
+        augmentedArraySetCall.configure {
             +field("assignCall", functionCall)
             +field("setGetBlock", block)
             +field("operation", operationType)

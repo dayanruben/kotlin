@@ -20,7 +20,8 @@ import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.fir.declarations.FirTypeParameter
 import org.jetbrains.kotlin.fir.declarations.FirValueParameter
 import org.jetbrains.kotlin.fir.declarations.impl.FirResolvedDeclarationStatusImpl
-import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
+import org.jetbrains.kotlin.fir.expressions.FirAnnotation
+import org.jetbrains.kotlin.fir.expressions.FirAnnotationArgumentMapping
 import org.jetbrains.kotlin.fir.expressions.FirEmptyArgumentList
 import org.jetbrains.kotlin.fir.expressions.impl.FirNoReceiverExpression
 import org.jetbrains.kotlin.fir.expressions.impl.FirStubStatement
@@ -131,7 +132,7 @@ abstract class AbstractRawFirBuilderTestCase : KtParsingTestCase(
         val visitedChildren = visitChildren()
         children.removeAll(visitedChildren)
         if (children.isNotEmpty()) {
-            val element = children.first()
+            val element = children.firstOrNull { it !is FirAnnotationArgumentMapping } ?: return
             val elementDump = element.render()
             throw AssertionError("FirElement ${element.javaClass} is not visited: $elementDump")
         }
@@ -142,7 +143,7 @@ abstract class AbstractRawFirBuilderTestCase : KtParsingTestCase(
         val transformedChildren = transformChildren()
         children.removeAll(transformedChildren)
         if (children.isNotEmpty()) {
-            val element = children.first()
+            val element = children.firstOrNull { it !is FirAnnotationArgumentMapping } ?: return
             val elementDump = element.render()
             throw AssertionError("FirElement ${element.javaClass} is not transformed: $elementDump")
         }
@@ -183,7 +184,7 @@ abstract class AbstractRawFirBuilderTestCase : KtParsingTestCase(
 
 private fun throwTwiceVisitingError(element: FirElement) {
     if (element is FirTypeRef || element is FirNoReceiverExpression || element is FirTypeParameter ||
-        element is FirTypeProjection || element is FirValueParameter || element is FirAnnotationCall ||
+        element is FirTypeProjection || element is FirValueParameter || element is FirAnnotation ||
         element is FirEmptyContractDescription ||
         element is FirStubReference || element.isExtensionFunctionAnnotation || element is FirEmptyArgumentList ||
         element is FirStubStatement || element === FirResolvedDeclarationStatusImpl.DEFAULT_STATUS_FOR_STATUSLESS_DECLARATIONS
@@ -196,4 +197,4 @@ private fun throwTwiceVisitingError(element: FirElement) {
 
 
 private val FirElement.isExtensionFunctionAnnotation: Boolean
-    get() = (this as? FirAnnotationCall)?.isExtensionFunctionAnnotationCall == true
+    get() = (this as? FirAnnotation)?.isExtensionFunctionAnnotationCall == true

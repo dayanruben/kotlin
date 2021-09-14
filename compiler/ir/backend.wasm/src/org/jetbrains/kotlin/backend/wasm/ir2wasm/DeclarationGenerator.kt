@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.IrElement
+import org.jetbrains.kotlin.ir.backend.js.utils.findUnitGetInstanceFunction
 import org.jetbrains.kotlin.ir.backend.js.utils.realOverrideTarget
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.IrBlockBody
@@ -28,6 +29,8 @@ class DeclarationGenerator(val context: WasmModuleCodegenContext) : IrElementVis
     // Shortcuts
     private val backendContext: WasmBackendContext = context.backendContext
     private val irBuiltIns: IrBuiltIns = backendContext.irBuiltIns
+
+    private val unitGetInstanceFunction: IrSimpleFunction by lazy { backendContext.findUnitGetInstanceFunction() }
 
     override fun visitElement(element: IrElement) {
         error("Unexpected element of type ${element::class}")
@@ -68,10 +71,12 @@ class DeclarationGenerator(val context: WasmModuleCodegenContext) : IrElementVis
         val irParameters = declaration.getEffectiveValueParameters()
         // TODO: Exported types should be transformed in a separate lowering by creating shim functions for each export.
         val resultType =
-            if (declaration.isExported(context.backendContext))
-                context.transformExportedResultType(declaration.returnType)
-            else
-                context.transformResultType(declaration.returnType)
+            when {
+                declaration.isExported(context.backendContext) -> context.transformExportedResultType(declaration.returnType)
+                // Unit_getInstance returns true Unit reference instead of "void"
+                declaration == unitGetInstanceFunction -> context.transformType(declaration.returnType)
+                else -> context.transformResultType(declaration.returnType)
+            }
         val wasmFunctionType =
             WasmFunctionType(
                 name = watName,
@@ -84,8 +89,11 @@ class DeclarationGenerator(val context: WasmModuleCodegenContext) : IrElementVis
                     }
                 },
                 resultTypes = listOfNotNull(
-                    resultType.let {
-                        if (importedName != null && it is WasmRefNullType) WasmEqRef else it
+                    run {
+                        if (importedName != null && resultType is WasmRefNullType)
+                            WasmEqRef
+                        else
+                            resultType
                     }
                 )
             )
@@ -129,17 +137,8 @@ class DeclarationGenerator(val context: WasmModuleCodegenContext) : IrElementVis
         val exprGen = functionCodegenContext.bodyGen
         val bodyBuilder = BodyGenerator(functionCodegenContext)
 
-        when (val body = declaration.body) {
-            is IrBlockBody ->
-                for (statement in body.statements) {
-                    bodyBuilder.statementToWasmInstruction(statement)
-                }
-
-            is IrExpressionBody ->
-                bodyBuilder.generateExpression(body.expression)
-
-            else -> error("Unexpected body $body")
-        }
+        require(declaration.body is IrBlockBody) { "Only IrBlockBody is supported" }
+        declaration.body?.acceptVoid(bodyBuilder)
 
         // Return implicit this from constructions to avoid extra tmp
         // variables on constructor call sites.
@@ -150,8 +149,8 @@ class DeclarationGenerator(val context: WasmModuleCodegenContext) : IrElementVis
         }
 
         // Add unreachable if function returns something but not as a last instruction.
-        if (wasmFunctionType.resultTypes.isNotEmpty() && declaration.body is IrBlockBody) {
-            // TODO: Add unreachable only if needed
+        // We can do a separate lowering which adds explicit returns everywhere instead.
+        if (wasmFunctionType.resultTypes.isNotEmpty()) {
             exprGen.buildUnreachable()
         }
 

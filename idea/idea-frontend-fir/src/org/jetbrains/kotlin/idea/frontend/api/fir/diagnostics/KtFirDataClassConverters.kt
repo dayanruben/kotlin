@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.fir.psi
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtAnonymousInitializer
 import org.jetbrains.kotlin.psi.KtArrayAccessExpression
+import org.jetbrains.kotlin.psi.KtBackingField
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtBinaryExpressionWithTypeRHS
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -357,6 +358,12 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
     add(FirJvmErrors.SUPER_CALL_WITH_DEFAULT_PARAMETERS) { firDiagnostic ->
         SuperCallWithDefaultParametersImpl(
             firDiagnostic.a,
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.INTERFACE_CANT_CALL_DEFAULT_METHOD_VIA_SUPER) { firDiagnostic ->
+        InterfaceCantCallDefaultMethodViaSuperImpl(
             firDiagnostic as FirPsiDiagnostic,
             token,
         )
@@ -853,78 +860,90 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
-    add(FirErrors.EXPERIMENTAL_API_USAGE) { firDiagnostic ->
-        ExperimentalApiUsageImpl(
+    add(FirErrors.REPEATED_ANNOTATION) { firDiagnostic ->
+        RepeatedAnnotationImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.REPEATED_ANNOTATION_WARNING) { firDiagnostic ->
+        RepeatedAnnotationWarningImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.OPT_IN_USAGE) { firDiagnostic ->
+        OptInUsageImpl(
             firDiagnostic.a,
             firDiagnostic.b,
             firDiagnostic as FirPsiDiagnostic,
             token,
         )
     }
-    add(FirErrors.EXPERIMENTAL_API_USAGE_ERROR) { firDiagnostic ->
-        ExperimentalApiUsageErrorImpl(
+    add(FirErrors.OPT_IN_USAGE_ERROR) { firDiagnostic ->
+        OptInUsageErrorImpl(
             firDiagnostic.a,
             firDiagnostic.b,
             firDiagnostic as FirPsiDiagnostic,
             token,
         )
     }
-    add(FirErrors.EXPERIMENTAL_OVERRIDE) { firDiagnostic ->
-        ExperimentalOverrideImpl(
+    add(FirErrors.OPT_IN_OVERRIDE) { firDiagnostic ->
+        OptInOverrideImpl(
             firDiagnostic.a,
             firDiagnostic.b,
             firDiagnostic as FirPsiDiagnostic,
             token,
         )
     }
-    add(FirErrors.EXPERIMENTAL_OVERRIDE_ERROR) { firDiagnostic ->
-        ExperimentalOverrideErrorImpl(
+    add(FirErrors.OPT_IN_OVERRIDE_ERROR) { firDiagnostic ->
+        OptInOverrideErrorImpl(
             firDiagnostic.a,
             firDiagnostic.b,
             firDiagnostic as FirPsiDiagnostic,
             token,
         )
     }
-    add(FirErrors.EXPERIMENTAL_IS_NOT_ENABLED) { firDiagnostic ->
-        ExperimentalIsNotEnabledImpl(
+    add(FirErrors.OPT_IN_IS_NOT_ENABLED) { firDiagnostic ->
+        OptInIsNotEnabledImpl(
             firDiagnostic as FirPsiDiagnostic,
             token,
         )
     }
-    add(FirErrors.EXPERIMENTAL_CAN_ONLY_BE_USED_AS_ANNOTATION) { firDiagnostic ->
-        ExperimentalCanOnlyBeUsedAsAnnotationImpl(
+    add(FirErrors.OPT_IN_CAN_ONLY_BE_USED_AS_ANNOTATION) { firDiagnostic ->
+        OptInCanOnlyBeUsedAsAnnotationImpl(
             firDiagnostic as FirPsiDiagnostic,
             token,
         )
     }
-    add(FirErrors.EXPERIMENTAL_MARKER_CAN_ONLY_BE_USED_AS_ANNOTATION_OR_ARGUMENT_IN_USE_EXPERIMENTAL) { firDiagnostic ->
-        ExperimentalMarkerCanOnlyBeUsedAsAnnotationOrArgumentInUseExperimentalImpl(
+    add(FirErrors.OPT_IN_MARKER_CAN_ONLY_BE_USED_AS_ANNOTATION_OR_ARGUMENT_IN_OPT_IN) { firDiagnostic ->
+        OptInMarkerCanOnlyBeUsedAsAnnotationOrArgumentInOptInImpl(
             firDiagnostic as FirPsiDiagnostic,
             token,
         )
     }
-    add(FirErrors.USE_EXPERIMENTAL_WITHOUT_ARGUMENTS) { firDiagnostic ->
-        UseExperimentalWithoutArgumentsImpl(
+    add(FirErrors.OPT_IN_WITHOUT_ARGUMENTS) { firDiagnostic ->
+        OptInWithoutArgumentsImpl(
             firDiagnostic as FirPsiDiagnostic,
             token,
         )
     }
-    add(FirErrors.USE_EXPERIMENTAL_ARGUMENT_IS_NOT_MARKER) { firDiagnostic ->
-        UseExperimentalArgumentIsNotMarkerImpl(
+    add(FirErrors.OPT_IN_ARGUMENT_IS_NOT_MARKER) { firDiagnostic ->
+        OptInArgumentIsNotMarkerImpl(
             firDiagnostic.a,
             firDiagnostic as FirPsiDiagnostic,
             token,
         )
     }
-    add(FirErrors.EXPERIMENTAL_ANNOTATION_WITH_WRONG_TARGET) { firDiagnostic ->
-        ExperimentalAnnotationWithWrongTargetImpl(
+    add(FirErrors.OPT_IN_MARKER_WITH_WRONG_TARGET) { firDiagnostic ->
+        OptInMarkerWithWrongTargetImpl(
             firDiagnostic.a,
             firDiagnostic as FirPsiDiagnostic,
             token,
         )
     }
-    add(FirErrors.EXPERIMENTAL_ANNOTATION_WITH_WRONG_RETENTION) { firDiagnostic ->
-        ExperimentalAnnotationWithWrongRetentionImpl(
+    add(FirErrors.OPT_IN_MARKER_WITH_WRONG_RETENTION) { firDiagnostic ->
+        OptInMarkerWithWrongRetentionImpl(
             firDiagnostic as FirPsiDiagnostic,
             token,
         )
@@ -2387,6 +2406,78 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirErrors.PROPERTY_INITIALIZER_WITH_EXPLICIT_FIELD_DECLARATION) { firDiagnostic ->
+        PropertyInitializerWithExplicitFieldDeclarationImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.PROPERTY_FIELD_DECLARATION_MISSING_INITIALIZER) { firDiagnostic ->
+        PropertyFieldDeclarationMissingInitializerImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.LATEINIT_PROPERTY_FIELD_DECLARATION_WITH_INITIALIZER) { firDiagnostic ->
+        LateinitPropertyFieldDeclarationWithInitializerImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.LATEINIT_FIELD_IN_VAL_PROPERTY) { firDiagnostic ->
+        LateinitFieldInValPropertyImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.LATEINIT_NULLABLE_BACKING_FIELD) { firDiagnostic ->
+        LateinitNullableBackingFieldImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.BACKING_FIELD_FOR_DELEGATED_PROPERTY) { firDiagnostic ->
+        BackingFieldForDelegatedPropertyImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.PROPERTY_MUST_HAVE_GETTER) { firDiagnostic ->
+        PropertyMustHaveGetterImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.PROPERTY_MUST_HAVE_SETTER) { firDiagnostic ->
+        PropertyMustHaveSetterImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.EXPLICIT_BACKING_FIELD_IN_INTERFACE) { firDiagnostic ->
+        ExplicitBackingFieldInInterfaceImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.EXPLICIT_BACKING_FIELD_IN_ABSTRACT_PROPERTY) { firDiagnostic ->
+        ExplicitBackingFieldInAbstractPropertyImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.EXPLICIT_BACKING_FIELD_IN_EXTENSION) { firDiagnostic ->
+        ExplicitBackingFieldInExtensionImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.REDUNDANT_EXPLICIT_BACKING_FIELD) { firDiagnostic ->
+        RedundantExplicitBackingFieldImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
     add(FirErrors.ABSTRACT_PROPERTY_IN_PRIMARY_CONSTRUCTOR_PARAMETERS) { firDiagnostic ->
         AbstractPropertyInPrimaryConstructorParametersImpl(
             firDiagnostic as FirPsiDiagnostic,
@@ -2662,14 +2753,14 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
     }
     add(FirErrors.VAL_REASSIGNMENT_VIA_BACKING_FIELD.errorFactory) { firDiagnostic ->
         ValReassignmentViaBackingFieldErrorImpl(
-            firSymbolBuilder.variableLikeBuilder.buildVariableSymbol(firDiagnostic.a.fir),
+            firSymbolBuilder.variableLikeBuilder.buildVariableSymbol(firDiagnostic.a.fir.propertySymbol.fir),
             firDiagnostic as FirPsiDiagnostic,
             token,
         )
     }
     add(FirErrors.VAL_REASSIGNMENT_VIA_BACKING_FIELD.warningFactory) { firDiagnostic ->
         ValReassignmentViaBackingFieldWarningImpl(
-            firSymbolBuilder.variableLikeBuilder.buildVariableSymbol(firDiagnostic.a.fir),
+            firSymbolBuilder.variableLikeBuilder.buildVariableSymbol(firDiagnostic.a.fir.propertySymbol.fir),
             firDiagnostic as FirPsiDiagnostic,
             token,
         )
@@ -2915,6 +3006,12 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirErrors.DUPLICATE_LABEL_IN_WHEN) { firDiagnostic ->
+        DuplicateLabelInWhenImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
     add(FirErrors.TYPE_PARAMETER_IS_NOT_AN_EXPRESSION) { firDiagnostic ->
         TypeParameterIsNotAnExpressionImpl(
             firSymbolBuilder.classifierBuilder.buildTypeParameterSymbol(firDiagnostic.a.fir),
@@ -3103,6 +3200,13 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
         AssignmentOperatorShouldReturnUnitImpl(
             firSymbolBuilder.functionLikeBuilder.buildFunctionSymbol(firDiagnostic.a.fir),
             firDiagnostic.b,
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.PROPERTY_AS_OPERATOR) { firDiagnostic ->
+        PropertyAsOperatorImpl(
+            firSymbolBuilder.variableLikeBuilder.buildVariableSymbol(firDiagnostic.a.fir),
             firDiagnostic as FirPsiDiagnostic,
             token,
         )
@@ -3474,6 +3578,72 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirJvmErrors.OVERRIDE_CANNOT_BE_STATIC) { firDiagnostic ->
+        OverrideCannotBeStaticImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.JVM_STATIC_NOT_IN_OBJECT_OR_CLASS_COMPANION) { firDiagnostic ->
+        JvmStaticNotInObjectOrClassCompanionImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.JVM_STATIC_NOT_IN_OBJECT_OR_COMPANION) { firDiagnostic ->
+        JvmStaticNotInObjectOrCompanionImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.JVM_STATIC_ON_NON_PUBLIC_MEMBER) { firDiagnostic ->
+        JvmStaticOnNonPublicMemberImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.JVM_STATIC_ON_CONST_OR_JVM_FIELD) { firDiagnostic ->
+        JvmStaticOnConstOrJvmFieldImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.JVM_STATIC_ON_EXTERNAL_IN_INTERFACE) { firDiagnostic ->
+        JvmStaticOnExternalInInterfaceImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.INAPPLICABLE_JVM_NAME) { firDiagnostic ->
+        InapplicableJvmNameImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.ILLEGAL_JVM_NAME) { firDiagnostic ->
+        IllegalJvmNameImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.FUNCTION_DELEGATE_MEMBER_NAME_CLASH) { firDiagnostic ->
+        FunctionDelegateMemberNameClashImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.VALUE_CLASS_WITHOUT_JVM_INLINE_ANNOTATION) { firDiagnostic ->
+        ValueClassWithoutJvmInlineAnnotationImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.JVM_INLINE_WITHOUT_VALUE_CLASS) { firDiagnostic ->
+        JvmInlineWithoutValueClassImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
     add(FirJvmErrors.JAVA_TYPE_MISMATCH) { firDiagnostic ->
         JavaTypeMismatchImpl(
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
@@ -3591,6 +3761,12 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirJvmErrors.POSITIONED_VALUE_ARGUMENT_FOR_JAVA_ANNOTATION) { firDiagnostic ->
+        PositionedValueArgumentForJavaAnnotationImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
     add(FirJvmErrors.LOCAL_JVM_RECORD) { firDiagnostic ->
         LocalJvmRecordImpl(
             firDiagnostic as FirPsiDiagnostic,
@@ -3660,6 +3836,255 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
     }
     add(FirJvmErrors.ILLEGAL_JAVA_LANG_RECORD_SUPERTYPE) { firDiagnostic ->
         IllegalJavaLangRecordSupertypeImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.JVM_DEFAULT_NOT_IN_INTERFACE) { firDiagnostic ->
+        JvmDefaultNotInInterfaceImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.JVM_DEFAULT_IN_JVM6_TARGET) { firDiagnostic ->
+        JvmDefaultInJvm6TargetImpl(
+            firDiagnostic.a,
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.JVM_DEFAULT_REQUIRED_FOR_OVERRIDE) { firDiagnostic ->
+        JvmDefaultRequiredForOverrideImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.JVM_DEFAULT_IN_DECLARATION) { firDiagnostic ->
+        JvmDefaultInDeclarationImpl(
+            firDiagnostic.a,
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.JVM_DEFAULT_THROUGH_INHERITANCE) { firDiagnostic ->
+        JvmDefaultThroughInheritanceImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.USAGE_OF_JVM_DEFAULT_THROUGH_SUPER_CALL) { firDiagnostic ->
+        UsageOfJvmDefaultThroughSuperCallImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.NON_JVM_DEFAULT_OVERRIDES_JAVA_DEFAULT) { firDiagnostic ->
+        NonJvmDefaultOverridesJavaDefaultImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.EXTERNAL_DECLARATION_CANNOT_BE_ABSTRACT) { firDiagnostic ->
+        ExternalDeclarationCannotBeAbstractImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.EXTERNAL_DECLARATION_CANNOT_HAVE_BODY) { firDiagnostic ->
+        ExternalDeclarationCannotHaveBodyImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.EXTERNAL_DECLARATION_IN_INTERFACE) { firDiagnostic ->
+        ExternalDeclarationInInterfaceImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.EXTERNAL_DECLARATION_CANNOT_BE_INLINED) { firDiagnostic ->
+        ExternalDeclarationCannotBeInlinedImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.NON_SOURCE_REPEATED_ANNOTATION) { firDiagnostic ->
+        NonSourceRepeatedAnnotationImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.REPEATED_ANNOTATION_TARGET6) { firDiagnostic ->
+        RepeatedAnnotationTarget6Impl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.REPEATED_ANNOTATION_WITH_CONTAINER) { firDiagnostic ->
+        RepeatedAnnotationWithContainerImpl(
+            firDiagnostic.a,
+            firDiagnostic.b,
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.REPEATABLE_CONTAINER_MUST_HAVE_VALUE_ARRAY.errorFactory) { firDiagnostic ->
+        RepeatableContainerMustHaveValueArrayErrorImpl(
+            firDiagnostic.a,
+            firDiagnostic.b,
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.REPEATABLE_CONTAINER_MUST_HAVE_VALUE_ARRAY.warningFactory) { firDiagnostic ->
+        RepeatableContainerMustHaveValueArrayWarningImpl(
+            firDiagnostic.a,
+            firDiagnostic.b,
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.REPEATABLE_CONTAINER_HAS_NON_DEFAULT_PARAMETER.errorFactory) { firDiagnostic ->
+        RepeatableContainerHasNonDefaultParameterErrorImpl(
+            firDiagnostic.a,
+            firDiagnostic.b,
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.REPEATABLE_CONTAINER_HAS_NON_DEFAULT_PARAMETER.warningFactory) { firDiagnostic ->
+        RepeatableContainerHasNonDefaultParameterWarningImpl(
+            firDiagnostic.a,
+            firDiagnostic.b,
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.REPEATABLE_CONTAINER_HAS_SHORTER_RETENTION.errorFactory) { firDiagnostic ->
+        RepeatableContainerHasShorterRetentionErrorImpl(
+            firDiagnostic.a,
+            firDiagnostic.b,
+            firDiagnostic.c,
+            firDiagnostic.d,
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.REPEATABLE_CONTAINER_HAS_SHORTER_RETENTION.warningFactory) { firDiagnostic ->
+        RepeatableContainerHasShorterRetentionWarningImpl(
+            firDiagnostic.a,
+            firDiagnostic.b,
+            firDiagnostic.c,
+            firDiagnostic.d,
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.REPEATABLE_CONTAINER_TARGET_SET_NOT_A_SUBSET.errorFactory) { firDiagnostic ->
+        RepeatableContainerTargetSetNotASubsetErrorImpl(
+            firDiagnostic.a,
+            firDiagnostic.b,
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.REPEATABLE_CONTAINER_TARGET_SET_NOT_A_SUBSET.warningFactory) { firDiagnostic ->
+        RepeatableContainerTargetSetNotASubsetWarningImpl(
+            firDiagnostic.a,
+            firDiagnostic.b,
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.REPEATABLE_ANNOTATION_HAS_NESTED_CLASS_NAMED_CONTAINER.errorFactory) { firDiagnostic ->
+        RepeatableAnnotationHasNestedClassNamedContainerErrorImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.REPEATABLE_ANNOTATION_HAS_NESTED_CLASS_NAMED_CONTAINER.warningFactory) { firDiagnostic ->
+        RepeatableAnnotationHasNestedClassNamedContainerWarningImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.SUSPENSION_POINT_INSIDE_CRITICAL_SECTION) { firDiagnostic ->
+        SuspensionPointInsideCriticalSectionImpl(
+            firSymbolBuilder.callableBuilder.buildCallableSymbol(firDiagnostic.a.fir),
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.INAPPLICABLE_JVM_FIELD) { firDiagnostic ->
+        InapplicableJvmFieldImpl(
+            firDiagnostic.a,
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.INAPPLICABLE_JVM_FIELD_WARNING) { firDiagnostic ->
+        InapplicableJvmFieldWarningImpl(
+            firDiagnostic.a,
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.JVM_SYNTHETIC_ON_DELEGATE) { firDiagnostic ->
+        JvmSyntheticOnDelegateImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.DEFAULT_METHOD_CALL_FROM_JAVA6_TARGET.errorFactory) { firDiagnostic ->
+        DefaultMethodCallFromJava6TargetErrorImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.DEFAULT_METHOD_CALL_FROM_JAVA6_TARGET.warningFactory) { firDiagnostic ->
+        DefaultMethodCallFromJava6TargetWarningImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.INTERFACE_STATIC_METHOD_CALL_FROM_JAVA6_TARGET.errorFactory) { firDiagnostic ->
+        InterfaceStaticMethodCallFromJava6TargetErrorImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.INTERFACE_STATIC_METHOD_CALL_FROM_JAVA6_TARGET.warningFactory) { firDiagnostic ->
+        InterfaceStaticMethodCallFromJava6TargetWarningImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.SUBCLASS_CANT_CALL_COMPANION_PROTECTED_NON_STATIC) { firDiagnostic ->
+        SubclassCantCallCompanionProtectedNonStaticImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.CONCURRENT_HASH_MAP_CONTAINS_OPERATOR.errorFactory) { firDiagnostic ->
+        ConcurrentHashMapContainsOperatorErrorImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.CONCURRENT_HASH_MAP_CONTAINS_OPERATOR.warningFactory) { firDiagnostic ->
+        ConcurrentHashMapContainsOperatorWarningImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.SPREAD_ON_SIGNATURE_POLYMORPHIC_CALL.errorFactory) { firDiagnostic ->
+        SpreadOnSignaturePolymorphicCallErrorImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.SPREAD_ON_SIGNATURE_POLYMORPHIC_CALL.warningFactory) { firDiagnostic ->
+        SpreadOnSignaturePolymorphicCallWarningImpl(
             firDiagnostic as FirPsiDiagnostic,
             token,
         )

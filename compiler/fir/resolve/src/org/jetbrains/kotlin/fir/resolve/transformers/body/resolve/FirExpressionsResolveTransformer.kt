@@ -16,6 +16,8 @@ import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.builder.buildErrorExpression
 import org.jetbrains.kotlin.fir.expressions.builder.buildFunctionCall
 import org.jetbrains.kotlin.fir.expressions.builder.buildVariableAssignment
+import org.jetbrains.kotlin.fir.expressions.impl.FirResolvedArgumentList
+import org.jetbrains.kotlin.fir.expressions.impl.toAnnotationArgumentMapping
 import org.jetbrains.kotlin.fir.references.*
 import org.jetbrains.kotlin.fir.references.builder.buildErrorNamedReference
 import org.jetbrains.kotlin.fir.references.builder.buildExplicitSuperReference
@@ -875,7 +877,8 @@ open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransform
                 val integerLiteralType =
                     ConeIntegerLiteralTypeImpl(constExpression.value as Long, isUnsigned = kind == ConstantValueKind.UnsignedIntegerLiteral)
                 if (data.expectedType != null) {
-                    val approximatedType = integerLiteralType.getApproximatedType(data.expectedType?.coneTypeSafe())
+                    val coneType = data.expectedType?.coneTypeSafe<ConeKotlinType>()?.fullyExpandedType(session)
+                    val approximatedType = integerLiteralType.getApproximatedType(coneType)
                     val newConstKind = approximatedType.toConstKind()
                     @Suppress("UNCHECKED_CAST")
                     constExpression.replaceKind(newConstKind as ConstantValueKind<T>)
@@ -892,24 +895,23 @@ open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransform
         return constExpression
     }
 
-    override fun transformAnnotationCall(annotationCall: FirAnnotationCall, data: ResolutionMode): FirStatement {
-        if (annotationCall.resolveStatus == FirAnnotationResolveStatus.Resolved) return annotationCall
-        return resolveAnnotationCall(annotationCall, FirAnnotationResolveStatus.Resolved)
+    override fun transformAnnotation(annotation: FirAnnotation, data: ResolutionMode): FirStatement {
+        if (annotation.resolved) return annotation
+        annotation.transformAnnotationTypeRef(transformer, ResolutionMode.ContextIndependent)
+        return annotation
     }
 
-    protected fun resolveAnnotationCall(
-        annotationCall: FirAnnotationCall,
-        status: FirAnnotationResolveStatus
-    ): FirAnnotationCall {
+    override fun transformAnnotationCall(annotationCall: FirAnnotationCall, data: ResolutionMode): FirStatement {
+        if (annotationCall.resolved) return annotationCall
+        annotationCall.transformAnnotationTypeRef(transformer, ResolutionMode.ContextIndependent)
         return withFirArrayOfCallTransformer {
-            annotationCall.transformAnnotationTypeRef(transformer, ResolutionMode.ContextIndependent)
-            if (status == FirAnnotationResolveStatus.PartiallyResolved) return annotationCall
-            dataFlowAnalyzer.enterAnnotationCall(annotationCall)
+            dataFlowAnalyzer.enterAnnotation(annotationCall)
             val result = callResolver.resolveAnnotationCall(annotationCall)
-            dataFlowAnalyzer.exitAnnotationCall(result ?: annotationCall)
+            dataFlowAnalyzer.exitAnnotation(result ?: annotationCall)
             if (result == null) return annotationCall
             callCompleter.completeCall(result, noExpectedType)
-            result.replaceResolveStatus(status)
+            // TODO: FirBlackBoxCodegenTestGenerated.Annotations.testDelegatedPropertySetter, it fails with hard cast
+            (result.argumentList as? FirResolvedArgumentList)?.let { annotationCall.replaceArgumentMapping((it).toAnnotationArgumentMapping()) }
             annotationCall
         }
     }

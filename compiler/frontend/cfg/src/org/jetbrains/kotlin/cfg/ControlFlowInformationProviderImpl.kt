@@ -797,15 +797,17 @@ class ControlFlowInformationProviderImpl private constructor(
     ////////////////////////////////////////////////////////////////////////////////
     // Statements
 
-    private fun markStatements() = pseudocode.traverse(TraversalOrder.FORWARD) { instruction ->
-        val value = (instruction as? InstructionWithValue)?.outputValue
-        val pseudocode = instruction.owner
-        val usages = pseudocode.getUsages(value)
-        val isUsedAsExpression = usages.isNotEmpty()
-        val isUsedAsResultOfLambda = isUsedAsResultOfLambda(usages)
-        for (element in pseudocode.getValueElements(value)) {
-            trace.record(USED_AS_EXPRESSION, element, isUsedAsExpression)
-            trace.record(USED_AS_RESULT_OF_LAMBDA, element, isUsedAsResultOfLambda)
+    private fun markStatements() {
+        pseudocode.traverseIncludingDeadCode { instruction ->
+            val value = (instruction as? InstructionWithValue)?.outputValue
+            val pseudocode = instruction.owner
+            val usages = pseudocode.getUsages(value)
+            val isUsedAsExpression = usages.isNotEmpty()
+            val isUsedAsResultOfLambda = isUsedAsResultOfLambda(usages)
+            for (element in pseudocode.getValueElements(value)) {
+                trace.record(USED_AS_EXPRESSION, element, isUsedAsExpression)
+                trace.record(USED_AS_RESULT_OF_LAMBDA, element, isUsedAsResultOfLambda)
+            }
         }
     }
 
@@ -1002,7 +1004,7 @@ class ControlFlowInformationProviderImpl private constructor(
                         trace.report(EXPECT_TYPE_IN_WHEN_WITHOUT_ELSE.on(element, it.typeOfDeclaration))
                     }
                 } else if (subjectExpression != null) {
-                    val subjectType = trace.getType(subjectExpression)
+                    val subjectType = WhenChecker.whenSubjectType(element, trace.bindingContext)
                     if (elseEntry != null) {
                         if (missingCases.isEmpty() && subjectType != null && !subjectType.isFlexible()) {
                             val subjectClass = subjectType.constructor.declarationDescriptor as? ClassDescriptor
@@ -1016,9 +1018,6 @@ class ControlFlowInformationProviderImpl private constructor(
                             }
                         }
                         continue
-                    }
-                    if (!usedAsExpression) {
-
                     }
                     if (!usedAsExpression) {
                         if (languageVersionSettings.supportsFeature(LanguageFeature.WarnAboutNonExhaustiveWhenOnAlgebraicTypes)) {

@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.visitors.FirVisitorVoid
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.types.Variance
@@ -200,10 +201,10 @@ class FirRenderer(builder: StringBuilder, private val mode: RenderMode = RenderM
         annotationContainer.annotations.renderAnnotations()
     }
 
-    private fun List<FirAnnotationCall>.renderAnnotations() {
+    private fun List<FirAnnotation>.renderAnnotations() {
         if (!mode.renderAnnotation) return
         for (annotation in this) {
-            visitAnnotationCall(annotation)
+            visitAnnotation(annotation)
         }
     }
 
@@ -939,17 +940,51 @@ class FirRenderer(builder: StringBuilder, private val mode: RenderMode = RenderM
     }
 
     override fun visitAnnotationCall(annotationCall: FirAnnotationCall) {
+        visitAnnotation(annotationCall)
+    }
+
+    override fun visitAnnotation(annotation: FirAnnotation) {
         print("@")
-        annotationCall.useSiteTarget?.let {
+        annotation.useSiteTarget?.let {
             print(it.name)
             print(":")
         }
-        annotationCall.annotationTypeRef.accept(this)
-        visitCall(annotationCall)
-        if (annotationCall.useSiteTarget == AnnotationUseSiteTarget.FILE) {
+        annotation.annotationTypeRef.accept(this)
+        when (annotation) {
+            is FirAnnotationCall -> if (annotation.calleeReference.let { it is FirResolvedNamedReference || it is FirErrorNamedReference }) {
+                annotation.renderArgumentMapping()
+            } else {
+                visitCall(annotation)
+            }
+            else -> annotation.renderArgumentMapping()
+        }
+        if (annotation.useSiteTarget == AnnotationUseSiteTarget.FILE) {
             println()
         } else {
             print(" ")
+        }
+    }
+
+    private fun FirAnnotation.renderArgumentMapping() {
+        print("(")
+        if (mode.renderCallArguments) {
+            argumentMapping.mapping.renderSeparated()
+        } else {
+            if (argumentMapping.mapping.isNotEmpty()) {
+                print("...")
+            }
+        }
+        print(")")
+    }
+
+    private fun Map<Name, FirElement>.renderSeparated() {
+        for ((index, element) in this.entries.withIndex()) {
+            val (name, argument) = element
+            if (index > 0) {
+                print(", ")
+            }
+            print("$name = ")
+            argument.accept(this@FirRenderer)
         }
     }
 
@@ -1074,7 +1109,7 @@ class FirRenderer(builder: StringBuilder, private val mode: RenderMode = RenderM
 
     override fun visitBackingFieldReference(backingFieldReference: FirBackingFieldReference) {
         print("F|")
-        print(backingFieldReference.resolvedSymbol.callableId)
+        print(backingFieldReference.resolvedSymbol.fir.propertySymbol.callableId)
         print("|")
     }
 

@@ -29,7 +29,7 @@ fun ConeClassLikeLookupTag.toSymbol(useSiteSession: FirSession): FirClassLikeSym
     val firSymbolProvider = useSiteSession.symbolProvider
     (this as? ConeClassLikeLookupTagImpl)?.boundSymbol?.takeIf { it.first === useSiteSession }?.let { return it.second }
 
-    return firSymbolProvider.getClassLikeSymbolByFqName(classId).also {
+    return firSymbolProvider.getClassLikeSymbolByClassId(classId).also {
         (this as? ConeClassLikeLookupTagImpl)?.bindSymbolToLookupTag(useSiteSession, it)
     }
 }
@@ -39,14 +39,18 @@ fun ConeClassLikeLookupTag.toSymbolOrError(useSiteSession: FirSession): FirClass
     toSymbol(useSiteSession)
         ?: error("Class symbol with classId $classId was not found")
 
-
-fun ConeClassLikeLookupTag.toFirRegularClass(session: FirSession): FirRegularClass? =
-    session.symbolProvider.getSymbolByLookupTag(this)?.fir as? FirRegularClass
+@OptIn(LookupTagInternals::class)
+fun ConeClassLikeLookupTag.toFirRegularClassSymbol(session: FirSession): FirRegularClassSymbol? =
+    session.symbolProvider.getSymbolByLookupTag(this) as? FirRegularClassSymbol
 
 @OptIn(LookupTagInternals::class)
 fun ConeClassLikeLookupTagImpl.bindSymbolToLookupTag(session: FirSession, symbol: FirClassLikeSymbol<*>?) {
     boundSymbol = WeakPair(session, symbol)
 }
+
+@LookupTagInternals
+fun ConeClassLikeLookupTag.toFirRegularClass(session: FirSession): FirRegularClass? =
+    session.symbolProvider.getSymbolByLookupTag(this)?.fir as? FirRegularClass
 
 fun FirSymbolProvider.getSymbolByLookupTag(lookupTag: ConeClassifierLookupTag): FirClassifierSymbol<*>? {
     return lookupTag.toSymbol(session)

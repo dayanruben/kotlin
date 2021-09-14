@@ -8,10 +8,9 @@ package org.jetbrains.kotlin.fir.declarations
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.FirModuleData
 import org.jetbrains.kotlin.fir.FirSourceElement
-import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
+import org.jetbrains.kotlin.fir.expressions.FirAnnotation
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.references.FirControlFlowGraphReference
-import org.jetbrains.kotlin.fir.symbols.impl.FirBackingFieldSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirDelegateFieldSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
@@ -44,13 +43,13 @@ abstract class FirProperty : FirVariable(), FirTypeParametersOwner, FirControlFl
     abstract override val isVal: Boolean
     abstract override val getter: FirPropertyAccessor?
     abstract override val setter: FirPropertyAccessor?
-    abstract override val annotations: List<FirAnnotationCall>
+    abstract override val backingField: FirBackingField?
+    abstract override val annotations: List<FirAnnotation>
     abstract override val controlFlowGraphReference: FirControlFlowGraphReference?
     abstract override val symbol: FirPropertySymbol
-    abstract val backingFieldSymbol: FirBackingFieldSymbol
     abstract val delegateFieldSymbol: FirDelegateFieldSymbol?
     abstract val isLocal: Boolean
-    abstract val initializerAndAccessorsAreResolved: Boolean
+    abstract val bodyResolveState: FirPropertyBodyResolveState
     abstract override val typeParameters: List<FirTypeParameter>
 
     override fun <R, D> accept(visitor: FirVisitor<R, D>, data: D): R = visitor.visitProperty(this, data)
@@ -69,9 +68,13 @@ abstract class FirProperty : FirVariable(), FirTypeParametersOwner, FirControlFl
 
     abstract override fun replaceInitializer(newInitializer: FirExpression?)
 
+    abstract override fun replaceGetter(newGetter: FirPropertyAccessor?)
+
+    abstract override fun replaceSetter(newSetter: FirPropertyAccessor?)
+
     abstract override fun replaceControlFlowGraphReference(newControlFlowGraphReference: FirControlFlowGraphReference?)
 
-    abstract fun replaceInitializerAndAccessorsAreResolved(newInitializerAndAccessorsAreResolved: Boolean)
+    abstract fun replaceBodyResolveState(newBodyResolveState: FirPropertyBodyResolveState)
 
     abstract override fun <D> transformReturnTypeRef(transformer: FirTransformer<D>, data: D): FirProperty
 
@@ -86,6 +89,8 @@ abstract class FirProperty : FirVariable(), FirTypeParametersOwner, FirControlFl
     abstract override fun <D> transformGetter(transformer: FirTransformer<D>, data: D): FirProperty
 
     abstract override fun <D> transformSetter(transformer: FirTransformer<D>, data: D): FirProperty
+
+    abstract override fun <D> transformBackingField(transformer: FirTransformer<D>, data: D): FirProperty
 
     abstract override fun <D> transformAnnotations(transformer: FirTransformer<D>, data: D): FirProperty
 

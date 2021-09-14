@@ -54,7 +54,7 @@ internal class KtSymbolByFirBuilder private constructor(
     val withReadOnlyCaching: Boolean,
     private val symbolsCache: BuilderCache<FirDeclaration, KtSymbol>,
     private val filesCache: BuilderCache<FirFile, KtFileSymbol>,
-    private val backingFieldCache: BuilderCache<FirBackingFieldSymbol, KtBackingFieldSymbol>,
+    private val backingFieldCache: BuilderCache<FirBackingField, KtBackingFieldSymbol>,
     private val typesCache: BuilderCache<ConeKotlinType, KtType>,
 ) : ValidityTokenOwner {
     private val resolveState by weakRef(resolveState)
@@ -178,7 +178,7 @@ internal class KtSymbolByFirBuilder private constructor(
         }
 
         fun buildClassLikeSymbolByClassId(classId: ClassId): KtClassLikeSymbol? {
-            val firClassLikeSymbol = firProvider.getClassLikeSymbolByFqName(classId) ?: return null
+            val firClassLikeSymbol = firProvider.getClassLikeSymbolByClassId(classId) ?: return null
             return buildClassLikeSymbol(firClassLikeSymbol.fir)
         }
 
@@ -200,6 +200,7 @@ internal class KtSymbolByFirBuilder private constructor(
                 }
                 is FirConstructor -> buildConstructorSymbol(fir)
                 is FirAnonymousFunction -> buildAnonymousFunctionSymbol(fir)
+                is FirPropertyAccessor -> buildPropertyAccessorSymbol(fir)
                 else -> throwUnexpectedElementError(fir)
             }
         }
@@ -224,6 +225,16 @@ internal class KtSymbolByFirBuilder private constructor(
             check(fir.origin == FirDeclarationOrigin.SamConstructor)
             return symbolsCache.cache(fir) { KtFirSamConstructorSymbol(fir, resolveState, token, this@KtSymbolByFirBuilder) }
         }
+
+        fun buildPropertyAccessorSymbol(fir: FirPropertyAccessor): KtFunctionLikeSymbol {
+            return symbolsCache.cache(fir) {
+                if (fir.isGetter) {
+                    KtFirPropertyGetterSymbol(fir, resolveState, token, this@KtSymbolByFirBuilder)
+                } else {
+                    KtFirPropertySetterSymbol(fir, resolveState, token, this@KtSymbolByFirBuilder)
+                }
+            }
+        }
     }
 
     inner class VariableLikeSymbolBuilder {
@@ -233,7 +244,9 @@ internal class KtSymbolByFirBuilder private constructor(
                 is FirValueParameter -> buildValueParameterSymbol(fir)
                 is FirField -> buildFieldSymbol(fir)
                 is FirEnumEntry -> buildEnumEntrySymbol(fir) // TODO enum entry should not be callable
-                else -> throwUnexpectedElementError(fir)
+                is FirBackingField -> buildBackingFieldSymbol(fir)
+
+                is FirErrorProperty -> throwUnexpectedElementError(fir)
             }
         }
 
@@ -278,12 +291,15 @@ internal class KtSymbolByFirBuilder private constructor(
             return symbolsCache.cache(fir) { KtFirJavaFieldSymbol(fir, resolveState, token, this@KtSymbolByFirBuilder) }
         }
 
-        fun buildBackingFieldSymbol(fir: FirBackingFieldSymbol): KtFirBackingFieldSymbol {
-            return backingFieldCache.cache(fir) { KtFirBackingFieldSymbol(fir.fir, resolveState, token, this@KtSymbolByFirBuilder) }
+        fun buildBackingFieldSymbol(fir: FirBackingField): KtFirBackingFieldSymbol {
+            return backingFieldCache.cache(fir) {
+                KtFirBackingFieldSymbol(fir.propertySymbol.fir, resolveState, token, this@KtSymbolByFirBuilder)
+            }
         }
 
         fun buildBackingFieldSymbolByProperty(fir: FirProperty): KtFirBackingFieldSymbol {
-            val backingFieldSymbol = fir.backingFieldSymbol
+            val backingFieldSymbol = fir.backingField
+                ?: error("FirProperty backingField is null")
             return buildBackingFieldSymbol(backingFieldSymbol)
         }
 

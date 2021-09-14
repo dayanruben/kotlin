@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.fir
 
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.declarations.utils.hasExplicitBackingField
 import org.jetbrains.kotlin.fir.declarations.utils.isInner
 import org.jetbrains.kotlin.fir.declarations.utils.isReferredViaField
 import org.jetbrains.kotlin.fir.diagnostics.ConeDiagnostic
@@ -44,7 +45,7 @@ import org.jetbrains.kotlin.resolve.calls.tasks.ExplicitReceiverKind
 import org.jetbrains.kotlin.resolve.calls.tower.CandidateApplicability
 import org.jetbrains.kotlin.resolve.calls.tower.isSuccess
 import org.jetbrains.kotlin.types.Variance
-import java.lang.annotation.ElementType
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class FirCallResolver(
     private val components: FirAbstractBodyResolveTransformer.BodyResolveTransformerComponents,
@@ -85,11 +86,11 @@ class FirCallResolver(
 
         return components.context.withIncrementedQualifierPartIndex {
             val name = functionCall.calleeReference.name
-            val result = collectCandidates(functionCall, name)
+            val result = collectCandidates(functionCall, name, origin = functionCall.origin)
 
             var forceCandidates: Collection<Candidate>? = null
             if (result.candidates.isEmpty()) {
-                val newResult = collectCandidates(functionCall, name, CallKind.VariableAccess)
+                val newResult = collectCandidates(functionCall, name, CallKind.VariableAccess, origin = functionCall.origin)
                 if (newResult.candidates.isNotEmpty()) {
                     forceCandidates = newResult.candidates
                 }
@@ -115,12 +116,12 @@ class FirCallResolver(
 
             // We need desugaring
             val resultFunctionCall = if (candidate != null && candidate.callInfo != result.info) {
-                functionCall.copy(
-                    explicitReceiver = candidate.callInfo.explicitReceiver,
-                    dispatchReceiver = candidate.dispatchReceiverExpression(),
-                    extensionReceiver = candidate.extensionReceiverExpression(),
-                    argumentList = candidate.callInfo.argumentList,
-                )
+                functionCall.copyAsImplicitInvokeCall {
+                    explicitReceiver = candidate.callInfo.explicitReceiver
+                    dispatchReceiver = candidate.dispatchReceiverExpression()
+                    extensionReceiver = candidate.extensionReceiverExpression()
+                    argumentList = candidate.callInfo.argumentList
+                }
             } else {
                 resultExpression
             }
@@ -153,7 +154,8 @@ class FirCallResolver(
     private fun <T : FirQualifiedAccess> collectCandidates(
         qualifiedAccess: T,
         name: Name,
-        forceCallKind: CallKind? = null
+        forceCallKind: CallKind? = null,
+        origin: FirFunctionCallOrigin = FirFunctionCallOrigin.Regular
     ): ResolutionResult {
         val explicitReceiver = qualifiedAccess.explicitReceiver
         val argumentList = (qualifiedAccess as? FirFunctionCall)?.argumentList ?: FirEmptyArgumentList
@@ -173,6 +175,7 @@ class FirCallResolver(
             session,
             components.file,
             transformer.components.containingDeclarations,
+            origin = origin
         )
         towerResolver.reset()
         val result = towerResolver.runResolver(info, transformer.resolutionContext)
@@ -486,16 +489,16 @@ class FirCallResolver(
         }
     }
 
-    fun resolveAnnotationCall(annotationCall: FirAnnotationCall): FirAnnotationCall? {
-        val reference = annotationCall.calleeReference as? FirSimpleNamedReference ?: return null
-        annotationCall.argumentList.transformArguments(transformer, ResolutionMode.ContextDependent)
+    fun resolveAnnotationCall(annotation: FirAnnotationCall): FirAnnotationCall? {
+        val reference = annotation.calleeReference as? FirSimpleNamedReference ?: return null
+        annotation.argumentList.transformArguments(transformer, ResolutionMode.ContextDependent)
 
         val callInfo = CallInfo(
-            annotationCall,
+            annotation,
             CallKind.Function,
             name = reference.name,
             explicitReceiver = null,
-            annotationCall.argumentList,
+            annotation.argumentList,
             isPotentialQualifierPart = false,
             isImplicitInvoke = false,
             typeArguments = emptyList(),
@@ -504,7 +507,7 @@ class FirCallResolver(
             components.containingDeclarations
         )
 
-        val annotationClassSymbol = annotationCall.getCorrespondingClassSymbolOrNull(session)
+        val annotationClassSymbol = annotation.getCorrespondingClassSymbolOrNull(session)
         val resolvedReference = if (annotationClassSymbol != null && annotationClassSymbol.fir.classKind == ClassKind.ANNOTATION_CLASS) {
             val resolutionResult = createCandidateForAnnotationCall(annotationClassSymbol, callInfo)
                 ?: ResolutionResult(callInfo, CandidateApplicability.HIDDEN, emptyList())
@@ -526,7 +529,7 @@ class FirCallResolver(
             )
         }
 
-        return annotationCall.transformCalleeReference(StoreNameReference, resolvedReference)
+        return annotation.transformCalleeReference(StoreNameReference, resolvedReference)
     }
 
     private fun createCandidateForAnnotationCall(
@@ -720,11 +723,16 @@ class FirCallResolver(
                 val candidate = candidates.single()
                 val coneSymbol = candidate.symbol
                 if (coneSymbol is FirBackingFieldSymbol) {
-                    coneSymbol.fir.isReferredViaField = true
+                    coneSymbol.fir.propertySymbol.fir.isReferredViaField = true
                     return buildBackingFieldReference {
                         this.source = source
                         resolvedSymbol = coneSymbol
                     }
+                }
+                if (coneSymbol.safeAs<FirPropertySymbol>()?.hasExplicitBackingField == true) {
+                    return FirPropertyWithExplicitBackingFieldResolvedNamedReference(
+                        source, name, candidate.symbol, candidate.hasVisibleBackingField
+                    )
                 }
                 /*
                  * This `if` is an optimization for local variables and properties without type parameters

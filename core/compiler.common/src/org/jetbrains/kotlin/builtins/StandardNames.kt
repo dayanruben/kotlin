@@ -16,6 +16,10 @@ import org.jetbrains.kotlin.utils.newHashSetWithExpectedSize
 
 @Suppress("Reformat")
 object StandardNames {
+    @JvmField val BACKING_FIELD = Name.identifier("field")
+
+    @JvmField val DEFAULT_VALUE_PARAMETER = Name.identifier("value")
+
     @JvmField val ENUM_VALUES = Name.identifier("values")
 
     @JvmField val ENUM_VALUE_OF = Name.identifier("valueOf")
@@ -107,10 +111,13 @@ object StandardNames {
         @JvmField val parameterName: FqName = fqName("ParameterName")
         @JvmField val annotation: FqName = fqName("Annotation")
         @JvmField val target: FqName = annotationName("Target")
+        @JvmField val targetClassId: ClassId = ClassId.topLevel(target)
         @JvmField val annotationTarget: FqName = annotationName("AnnotationTarget")
         @JvmField val annotationRetention: FqName = annotationName("AnnotationRetention")
         @JvmField val retention: FqName = annotationName("Retention")
+        @JvmField val retentionClassId: ClassId = ClassId.topLevel(retention)
         @JvmField val repeatable: FqName = annotationName("Repeatable")
+        @JvmField val repeatableClassId: ClassId = ClassId.topLevel(repeatable)
         @JvmField val mustBeDocumented: FqName = annotationName("MustBeDocumented")
         @JvmField val unsafeVariance: FqName = fqName("UnsafeVariance")
         @JvmField val publishedApi: FqName = fqName("PublishedApi")

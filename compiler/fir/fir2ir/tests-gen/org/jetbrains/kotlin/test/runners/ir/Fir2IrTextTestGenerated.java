@@ -516,6 +516,12 @@ public class Fir2IrTextTestGenerated extends AbstractFir2IrTextTest {
             }
 
             @Test
+            @TestMetadata("annotationOnClassWithInitializer.kt")
+            public void testAnnotationOnClassWithInitializer() throws Exception {
+                runTest("compiler/testData/ir/irText/declarations/annotations/annotationOnClassWithInitializer.kt");
+            }
+
+            @Test
             @TestMetadata("annotationsInAnnotationArguments.kt")
             public void testAnnotationsInAnnotationArguments() throws Exception {
                 runTest("compiler/testData/ir/irText/declarations/annotations/annotationsInAnnotationArguments.kt");
@@ -1446,6 +1452,12 @@ public class Fir2IrTextTestGenerated extends AbstractFir2IrTextTest {
         @TestMetadata("kt47450.kt")
         public void testKt47450() throws Exception {
             runTest("compiler/testData/ir/irText/expressions/kt47450.kt");
+        }
+
+        @Test
+        @TestMetadata("kt48708.kt")
+        public void testKt48708() throws Exception {
+            runTest("compiler/testData/ir/irText/expressions/kt48708.kt");
         }
 
         @Test

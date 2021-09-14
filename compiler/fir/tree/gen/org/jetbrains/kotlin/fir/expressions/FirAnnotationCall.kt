@@ -17,15 +17,15 @@ import org.jetbrains.kotlin.fir.visitors.*
  * DO NOT MODIFY IT MANUALLY
  */
 
-abstract class FirAnnotationCall : FirExpression(), FirCall, FirResolvable {
+abstract class FirAnnotationCall : FirAnnotation(), FirCall, FirResolvable {
     abstract override val source: FirSourceElement?
     abstract override val typeRef: FirTypeRef
-    abstract override val annotations: List<FirAnnotationCall>
+    abstract override val annotations: List<FirAnnotation>
+    abstract override val useSiteTarget: AnnotationUseSiteTarget?
+    abstract override val annotationTypeRef: FirTypeRef
     abstract override val argumentList: FirArgumentList
     abstract override val calleeReference: FirReference
-    abstract val useSiteTarget: AnnotationUseSiteTarget?
-    abstract val annotationTypeRef: FirTypeRef
-    abstract val resolveStatus: FirAnnotationResolveStatus
+    abstract override val argumentMapping: FirAnnotationArgumentMapping
 
     override fun <R, D> accept(visitor: FirVisitor<R, D>, data: D): R = visitor.visitAnnotationCall(this, data)
 
@@ -39,11 +39,11 @@ abstract class FirAnnotationCall : FirExpression(), FirCall, FirResolvable {
 
     abstract override fun replaceCalleeReference(newCalleeReference: FirReference)
 
-    abstract fun replaceResolveStatus(newResolveStatus: FirAnnotationResolveStatus)
+    abstract override fun replaceArgumentMapping(newArgumentMapping: FirAnnotationArgumentMapping)
 
     abstract override fun <D> transformAnnotations(transformer: FirTransformer<D>, data: D): FirAnnotationCall
 
-    abstract override fun <D> transformCalleeReference(transformer: FirTransformer<D>, data: D): FirAnnotationCall
+    abstract override fun <D> transformAnnotationTypeRef(transformer: FirTransformer<D>, data: D): FirAnnotationCall
 
-    abstract fun <D> transformAnnotationTypeRef(transformer: FirTransformer<D>, data: D): FirAnnotationCall
+    abstract override fun <D> transformCalleeReference(transformer: FirTransformer<D>, data: D): FirAnnotationCall
 }

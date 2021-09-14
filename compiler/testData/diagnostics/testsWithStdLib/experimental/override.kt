@@ -1,4 +1,4 @@
-// !USE_EXPERIMENTAL: kotlin.RequiresOptIn
+// !OPT_IN: kotlin.RequiresOptIn
 // FILE: api.kt
 
 package api
@@ -13,7 +13,7 @@ open class Base {
 }
 
 class DerivedInSameModule : Base() {
-    override fun <!EXPERIMENTAL_OVERRIDE!>foo<!>() {}
+    override fun <!OPT_IN_OVERRIDE!>foo<!>() {}
 }
 
 // FILE: usage-propagate.kt
@@ -41,5 +41,5 @@ package usage2
 import api.*
 
 class Derived : Base() {
-    override fun <!EXPERIMENTAL_OVERRIDE!>foo<!>() {}
+    override fun <!OPT_IN_OVERRIDE!>foo<!>() {}
 }

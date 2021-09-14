@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.descriptors.impl.ModuleDescriptorImpl
 import org.jetbrains.kotlin.incremental.components.LookupTracker
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
+import org.jetbrains.kotlin.ir.backend.js.ic.ICCache
 import org.jetbrains.kotlin.ir.backend.js.ic.SerializedIcData
 import org.jetbrains.kotlin.ir.backend.js.lower.serialization.ir.JsIrLinker
 import org.jetbrains.kotlin.ir.backend.js.lower.serialization.ir.JsIrModuleSerializer
@@ -288,7 +289,7 @@ fun loadIr(
                 irLinker.deserializeIrModuleHeader(
                     depsDescriptors.getModuleDescriptor(klib),
                     klib,
-                    deserializationStrategy = DeserializationStrategy.EXPLICITLY_EXPORTED
+                    deserializationStrategy = { DeserializationStrategy.EXPLICITLY_EXPORTED }
                 ).also { moduleFragment ->
                     klib.manifestProperties.getProperty(KLIB_PROPERTY_JS_OUTPUT_NAME)?.let {
                         moduleFragmentToUniqueName[moduleFragment] = it
@@ -359,19 +360,21 @@ fun loadIr(
                 it.library.libraryFile.canonicalPath == mainPath
             }
 
-            val deserializedModuleFragments = sortDependencies(reachableDependencies.getFullResolvedList(), depsDescriptors.descriptors).map { klib ->
-                val strategy =
-                    if (klib == mainModuleLib)
-                        DeserializationStrategy.ALL
-                    else
-                        DeserializationStrategy.EXPLICITLY_EXPORTED
+            val deserializedModuleFragments =
+                sortDependencies(reachableDependencies.getFullResolvedList(), depsDescriptors.descriptors).map { klib ->
+                    val strategy =
+                        if (klib == mainModuleLib)
+                            DeserializationStrategy.ALL
+                        else
+                            DeserializationStrategy.EXPLICITLY_EXPORTED
 
-                irLinker.deserializeIrModuleHeader(depsDescriptors.getModuleDescriptor(klib), klib, strategy).also { moduleFragment ->
-                    klib.manifestProperties.getProperty(KLIB_PROPERTY_JS_OUTPUT_NAME)?.let {
-                        moduleFragmentToUniqueName[moduleFragment] = it
-                    }
+                    irLinker.deserializeIrModuleHeader(depsDescriptors.getModuleDescriptor(klib), klib, { strategy })
+                        .also { moduleFragment ->
+                            klib.manifestProperties.getProperty(KLIB_PROPERTY_JS_OUTPUT_NAME)?.let {
+                                moduleFragmentToUniqueName[moduleFragment] = it
+                            }
+                        }
                 }
-            }
 
             val moduleFragment = deserializedModuleFragments.last()
 
@@ -394,7 +397,7 @@ fun prepareAnalyzedSourceModule(
     analyzer: AbstractAnalyzerWithCompilerReport,
     icUseGlobalSignatures: Boolean = false,
     icUseStdlibCache: Boolean = false,
-    icCache: Map<String, SerializedIcData> = emptyMap(),
+    icCache: Map<String, ICCache> = emptyMap(),
     errorPolicy: ErrorTolerancePolicy = configuration.get(JSConfigurationKeys.ERROR_TOLERANCE_POLICY) ?: ErrorTolerancePolicy.DEFAULT,
 ): ModulesStructure {
     val mainModule = MainModule.SourceFiles(files)
@@ -488,12 +491,12 @@ class ModulesStructure(
     friendDependenciesPaths: Collection<String>,
     val icUseGlobalSignatures: Boolean,
     val icUseStdlibCache: Boolean,
-    val icCache: Map<String, SerializedIcData>,
+    val icCache: Map<String, ICCache>,
 ) {
     val loweringsCacheProvider: LoweringsCacheProvider = when {
         icUseStdlibCache -> object : LoweringsCacheProvider {
             override fun cacheByPath(path: String): SerializedIcData? {
-                return icCache[path]
+                return icCache[path]?.serializedIcData
             }
         }
         icUseGlobalSignatures -> EmptyLoweringsCacheProvider

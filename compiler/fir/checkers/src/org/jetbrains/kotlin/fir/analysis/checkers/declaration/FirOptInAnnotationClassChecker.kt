@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.fir.analysis.diagnostics.reportOn
 import org.jetbrains.kotlin.fir.declarations.FirRegularClass
+import org.jetbrains.kotlin.fir.declarations.getAnnotationByClassId
 import org.jetbrains.kotlin.resolve.checkers.Experimentality
 import org.jetbrains.kotlin.resolve.checkers.OptInNames
 
@@ -22,7 +23,7 @@ object FirOptInAnnotationClassChecker : FirRegularClassChecker() {
         if (declaration.getAnnotationByClassId(OptInNames.REQUIRES_OPT_IN_CLASS_ID) == null) return
         if (declaration.getRetention() == AnnotationRetention.SOURCE) {
             val target = declaration.getRetentionAnnotation()
-            reporter.reportOn(target?.source, FirErrors.EXPERIMENTAL_ANNOTATION_WITH_WRONG_RETENTION, context)
+            reporter.reportOn(target?.source, FirErrors.OPT_IN_MARKER_WITH_WRONG_RETENTION, context)
 
         }
         val wrongTargets = declaration.getAllowedAnnotationTargets().intersect(Experimentality.WRONG_TARGETS_FOR_MARKER)
@@ -30,7 +31,7 @@ object FirOptInAnnotationClassChecker : FirRegularClassChecker() {
             val target = declaration.getTargetAnnotation()
             reporter.reportOn(
                 target?.source,
-                FirErrors.EXPERIMENTAL_ANNOTATION_WITH_WRONG_TARGET,
+                FirErrors.OPT_IN_MARKER_WITH_WRONG_TARGET,
                 wrongTargets.joinToString(transform = KotlinTarget::description),
                 context
             )

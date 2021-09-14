@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticFactory0
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.fir.analysis.diagnostics.reportOn
-import org.jetbrains.kotlin.fir.declarations.FirValueParameter
 import org.jetbrains.kotlin.fir.declarations.findArgumentByName
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.languageVersionSettings
@@ -35,9 +34,9 @@ object FirAnnotationArgumentChecker : FirAnnotationCallChecker() {
     )
 
     override fun check(expression: FirAnnotationCall, context: CheckerContext, reporter: DiagnosticReporter) {
-        val argumentMapping = expression.argumentMapping ?: return
+        val argumentMapping = expression.argumentMapping.mapping
         val fqName = expression.fqName(context.session)
-        for ((arg, _) in argumentMapping) {
+        for (arg in argumentMapping.values) {
             val argExpression = (arg as? FirNamedArgumentExpression)?.expression ?: arg
             checkAnnotationArgumentWithSubElements(argExpression, context.session, reporter, context)
                 ?.let { reporter.reportOn(argExpression.source, it, context) }
@@ -130,12 +129,12 @@ object FirAnnotationArgumentChecker : FirAnnotationCallChecker() {
 
     private fun checkAnnotationsWithVersion(
         fqName: FqName?,
-        annotationCall: FirAnnotationCall,
+        annotation: FirAnnotation,
         context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         if (!annotationFqNamesWithVersion.contains(fqName)) return
-        val versionExpression = annotationCall.findArgumentByName(versionArgumentName) ?: return
+        val versionExpression = annotation.findArgumentByName(versionArgumentName) ?: return
         val version = parseVersionExpressionOrReport(versionExpression, context, reporter) ?: return
         if (fqName == sinceKotlinFqName) {
             val specified = context.session.languageVersionSettings.apiVersion
@@ -148,7 +147,7 @@ object FirAnnotationArgumentChecker : FirAnnotationCallChecker() {
     private fun checkDeprecatedSinceKotlin(
         source: FirSourceElement?,
         fqName: FqName?,
-        argumentMapping: LinkedHashMap<FirExpression, FirValueParameter>,
+        argumentMapping: Map<Name, FirExpression>,
         context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
@@ -162,10 +161,10 @@ object FirAnnotationArgumentChecker : FirAnnotationCallChecker() {
         var warningSince: ApiVersion? = null
         var errorSince: ApiVersion? = null
         var hiddenSince: ApiVersion? = null
-        for (argument in argumentMapping) {
-            val identifier = argument.value.name.identifier
+        for ((name, argument) in argumentMapping) {
+            val identifier = name.identifier
             if (identifier == "warningSince" || identifier == "errorSince" || identifier == "hiddenSince") {
-                val version = parseVersionExpressionOrReport(argument.key, context, reporter)
+                val version = parseVersionExpressionOrReport(argument, context, reporter)
                 if (version != null) {
                     when (identifier) {
                         "warningSince" -> warningSince = version

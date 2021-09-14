@@ -147,7 +147,7 @@ val featureDependenciesTargets = mapOf(
 val defaultVisibilityTargets: EnumSet<KotlinTarget> = EnumSet.of(
     KotlinTarget.CLASS_ONLY, KotlinTarget.OBJECT, KotlinTarget.INTERFACE, KotlinTarget.ENUM_CLASS, KotlinTarget.ANNOTATION_CLASS,
     KotlinTarget.MEMBER_FUNCTION, KotlinTarget.TOP_LEVEL_FUNCTION, KotlinTarget.PROPERTY_GETTER, KotlinTarget.PROPERTY_SETTER,
-    KotlinTarget.MEMBER_PROPERTY, KotlinTarget.TOP_LEVEL_PROPERTY, KotlinTarget.CONSTRUCTOR, KotlinTarget.TYPEALIAS
+    KotlinTarget.MEMBER_PROPERTY, KotlinTarget.TOP_LEVEL_PROPERTY, KotlinTarget.CONSTRUCTOR, KotlinTarget.TYPEALIAS,
 )
 
 val possibleTargetMap = mapOf(
@@ -177,9 +177,9 @@ val possibleTargetMap = mapOf(
     SEALED_KEYWORD to EnumSet.of(KotlinTarget.CLASS_ONLY, KotlinTarget.INTERFACE),
     INNER_KEYWORD to EnumSet.of(KotlinTarget.CLASS_ONLY),
     OVERRIDE_KEYWORD to EnumSet.of(KotlinTarget.MEMBER_PROPERTY, KotlinTarget.MEMBER_FUNCTION),
-    PRIVATE_KEYWORD to defaultVisibilityTargets,
+    PRIVATE_KEYWORD to defaultVisibilityTargets + KotlinTarget.BACKING_FIELD,
     PUBLIC_KEYWORD to defaultVisibilityTargets,
-    INTERNAL_KEYWORD to defaultVisibilityTargets,
+    INTERNAL_KEYWORD to defaultVisibilityTargets + KotlinTarget.BACKING_FIELD,
     PROTECTED_KEYWORD to EnumSet.of(
         KotlinTarget.CLASS_ONLY,
         KotlinTarget.OBJECT,
@@ -198,7 +198,12 @@ val possibleTargetMap = mapOf(
     REIFIED_KEYWORD to EnumSet.of(KotlinTarget.TYPE_PARAMETER),
     VARARG_KEYWORD to EnumSet.of(KotlinTarget.VALUE_PARAMETER, KotlinTarget.PROPERTY_PARAMETER),
     COMPANION_KEYWORD to EnumSet.of(KotlinTarget.OBJECT),
-    LATEINIT_KEYWORD to EnumSet.of(KotlinTarget.MEMBER_PROPERTY, KotlinTarget.TOP_LEVEL_PROPERTY, KotlinTarget.LOCAL_VARIABLE),
+    LATEINIT_KEYWORD to EnumSet.of(
+        KotlinTarget.MEMBER_PROPERTY,
+        KotlinTarget.TOP_LEVEL_PROPERTY,
+        KotlinTarget.LOCAL_VARIABLE,
+        KotlinTarget.BACKING_FIELD
+    ),
     DATA_KEYWORD to EnumSet.of(KotlinTarget.CLASS_ONLY, KotlinTarget.LOCAL_CLASS),
     INLINE_KEYWORD to EnumSet.of(
         KotlinTarget.FUNCTION,

@@ -9,6 +9,8 @@ import com.intellij.lang.LighterASTNode
 import com.intellij.psi.TokenType
 import com.intellij.util.diff.FlyweightCapableTreeStructure
 import org.jetbrains.kotlin.KtNodeTypes.*
+import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.builtins.StandardNames.DEFAULT_VALUE_PARAMETER
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
@@ -20,15 +22,13 @@ import org.jetbrains.kotlin.fir.contracts.FirContractDescription
 import org.jetbrains.kotlin.fir.contracts.builder.buildRawContractDescription
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.builder.*
-import org.jetbrains.kotlin.fir.declarations.impl.FirDeclarationStatusImpl
-import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyAccessor
-import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyGetter
-import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertySetter
+import org.jetbrains.kotlin.fir.declarations.impl.*
 import org.jetbrains.kotlin.fir.declarations.utils.*
 import org.jetbrains.kotlin.fir.diagnostics.ConeSimpleDiagnostic
 import org.jetbrains.kotlin.fir.diagnostics.DiagnosticKind
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.builder.*
+import org.jetbrains.kotlin.fir.expressions.impl.FirEmptyAnnotationArgumentMapping
 import org.jetbrains.kotlin.fir.expressions.impl.FirSingleExpressionBlock
 import org.jetbrains.kotlin.fir.lightTree.LightTree2Fir
 import org.jetbrains.kotlin.fir.lightTree.fir.*
@@ -56,7 +56,6 @@ import org.jetbrains.kotlin.utils.addToStdlib.runIf
 class DeclarationsConverter(
     session: FirSession,
     private val baseScopeProvider: FirScopeProvider,
-    private val stubMode: Boolean,
     tree: FlyweightCapableTreeStructure<LighterASTNode>,
     offset: Int = 0,
     context: Context<LighterASTNode> = Context()
@@ -75,7 +74,7 @@ class DeclarationsConverter(
         }
     }
 
-    private val expressionConverter = ExpressionsConverter(session, stubMode, tree, this, context)
+    private val expressionConverter = ExpressionsConverter(session, tree, this, context)
 
     /**
      * [org.jetbrains.kotlin.parsing.KotlinParsing.parseFile]
@@ -87,7 +86,7 @@ class DeclarationsConverter(
             throw Exception()
         }
 
-        val fileAnnotationList = mutableListOf<FirAnnotationCall>()
+        val fileAnnotationList = mutableListOf<FirAnnotation>()
         val importList = mutableListOf<FirImport>()
         val firDeclarationList = mutableListOf<FirDeclaration>()
         context.packageFqName = FqName.ROOT
@@ -289,7 +288,7 @@ class DeclarationsConverter(
     /**
      * [org.jetbrains.kotlin.parsing.KotlinParsing.parseFileAnnotationList]
      */
-    private fun convertFileAnnotationList(fileAnnotationList: LighterASTNode): List<FirAnnotationCall> {
+    private fun convertFileAnnotationList(fileAnnotationList: LighterASTNode): List<FirAnnotation> {
         return fileAnnotationList.forEachChildrenReturnList { node, container ->
             when (node.tokenType) {
                 ANNOTATION -> container += convertAnnotation(node)
@@ -301,7 +300,7 @@ class DeclarationsConverter(
     /**
      * @see org.jetbrains.kotlin.parsing.KotlinParsing.parseAnnotationOrList
      */
-    fun convertAnnotation(annotationNode: LighterASTNode): List<FirAnnotationCall> {
+    fun convertAnnotation(annotationNode: LighterASTNode): List<FirAnnotation> {
         var annotationTarget: AnnotationUseSiteTarget? = null
         return annotationNode.forEachChildrenReturnList { node, container ->
             when (node.tokenType) {
@@ -340,7 +339,7 @@ class DeclarationsConverter(
     fun convertAnnotationEntry(
         unescapedAnnotation: LighterASTNode,
         defaultAnnotationUseSiteTarget: AnnotationUseSiteTarget? = null
-    ): FirAnnotationCall {
+    ): FirAnnotation {
         var annotationUseSiteTarget: AnnotationUseSiteTarget? = null
         lateinit var constructorCalleePair: Pair<FirTypeRef, List<FirExpression>>
         unescapedAnnotation.forEachChildren {
@@ -363,7 +362,7 @@ class DeclarationsConverter(
                     ?.toFirSourceElement()
                 this.name = name
             }
-            extractArgumentsFrom(constructorCalleePair.second, stubMode)
+            extractArgumentsFrom(constructorCalleePair.second)
         }
     }
 
@@ -822,7 +821,7 @@ class DeclarationsConverter(
 
                 superTypeRef = this@buildDelegatedConstructorCall.constructedTypeRef
             }
-            extractArgumentsFrom(classWrapper.superTypeCallEntry, stubMode)
+            extractArgumentsFrom(classWrapper.superTypeCallEntry)
         }
 
         val explicitVisibility = runIf(primaryConstructor != null) {
@@ -872,7 +871,7 @@ class DeclarationsConverter(
             source = anonymousInitializer.toFirSourceElement()
             moduleData = baseModuleData
             origin = FirDeclarationOrigin.Source
-            body = if (stubMode) buildEmptyExpressionBlock() else firBlock ?: buildEmptyExpressionBlock()
+            body = firBlock ?: buildEmptyExpressionBlock()
         }
     }
 
@@ -976,7 +975,7 @@ class DeclarationsConverter(
                     superTypeRef = this@buildDelegatedConstructorCall.constructedTypeRef
                 }
             }
-            extractArgumentsFrom(firValueArguments, stubMode)
+            extractArgumentsFrom(firValueArguments)
         }
     }
 
@@ -1040,6 +1039,7 @@ class DeclarationsConverter(
         val accessors = mutableListOf<LighterASTNode>()
         var propertyInitializer: FirExpression? = null
         var typeParameterList: LighterASTNode? = null
+        var fieldDeclaration: LighterASTNode? = null
         property.forEachChildren {
             when (it.tokenType) {
                 MODIFIER_LIST -> modifiers = convertModifierList(it)
@@ -1053,6 +1053,7 @@ class DeclarationsConverter(
                 PROPERTY_ACCESSOR -> {
                     accessors += it
                 }
+                BACKING_FIELD -> fieldDeclaration = it
                 else -> if (it.isExpression()) propertyInitializer = expressionConverter.getAsFirExpression(it, "Should have initializer")
             }
         }
@@ -1081,6 +1082,8 @@ class DeclarationsConverter(
 
             typeParameterList?.let { firTypeParameters += convertTypeParameters(it, typeConstraints, symbol) }
 
+            backingField = fieldDeclaration.convertBackingField(symbol, modifiers, returnType, isVar)
+
             if (isLocal) {
                 this.isLocal = true
                 val delegateBuilder = delegateExpression?.let {
@@ -1103,7 +1106,6 @@ class DeclarationsConverter(
                     classWrapper?.classBuilder?.ownerRegularOrAnonymousObjectSymbol,
                     classWrapper?.classBuilder?.ownerRegularClassTypeParametersCount,
                     isExtension = false,
-                    stubMode = stubMode,
                     receiver = receiver
                 )
             } else {
@@ -1129,14 +1131,12 @@ class DeclarationsConverter(
                             isExternal = modifiers.hasExternal()
                         }
 
-                    val convertedAccessors = accessors.map { convertGetterOrSetter(it, returnType, propertyVisibility, modifiers) }
+                    val convertedAccessors = accessors.map {
+                        convertGetterOrSetter(it, returnType, propertyVisibility, symbol, modifiers)
+                    }
                     this.getter = convertedAccessors.find { it.isGetter }
                         ?: FirDefaultPropertyGetter(
-                            property.toFirSourceElement(FirFakeSourceElementKind.DefaultAccessor),
-                            moduleData,
-                            FirDeclarationOrigin.Source,
-                            returnType,
-                            propertyVisibility
+                            property.toFirSourceElement(FirFakeSourceElementKind.DefaultAccessor), moduleData, FirDeclarationOrigin.Source, returnType, propertyVisibility, symbol,
                         ).also {
                             it.status = defaultAccessorStatus()
                             it.initContainingClassAttr()
@@ -1149,7 +1149,7 @@ class DeclarationsConverter(
                                 moduleData,
                                 FirDeclarationOrigin.Source,
                                 returnType,
-                                propertyVisibility
+                                propertyVisibility, symbol,
                             ).also {
                                 it.status = defaultAccessorStatus()
                                 it.initContainingClassAttr()
@@ -1174,7 +1174,6 @@ class DeclarationsConverter(
                         classWrapper?.classBuilder?.ownerRegularOrAnonymousObjectSymbol,
                         classWrapper?.classBuilder?.ownerRegularClassTypeParametersCount,
                         isExtension = receiverType != null,
-                        stubMode = stubMode,
                         receiver = receiver
                     )
                 }
@@ -1245,13 +1244,14 @@ class DeclarationsConverter(
     }
 
     /**
-     * @see org.jetbrains.kotlin.parsing.KotlinParsing.parsePropertyGetterOrSetter
+     * @see org.jetbrains.kotlin.parsing.KotlinParsing.parsePropertyComponent
      */
     private fun convertGetterOrSetter(
         getterOrSetter: LighterASTNode,
         propertyTypeRef: FirTypeRef,
         propertyVisibility: Visibility,
-        propertyModifiers: Modifier
+        propertySymbol: FirPropertySymbol,
+        propertyModifiers: Modifier,
     ): FirPropertyAccessor {
         var modifiers = Modifier()
         var isGetter = true
@@ -1261,7 +1261,7 @@ class DeclarationsConverter(
             moduleData = baseModuleData
             origin = FirDeclarationOrigin.Source
             returnTypeRef = propertyTypeRefToUse
-            symbol = FirValueParameterSymbol(NAME_FOR_DEFAULT_VALUE_PARAMETER)
+            symbol = FirValueParameterSymbol(DEFAULT_VALUE_PARAMETER)
         }
         var block: LighterASTNode? = null
         var expression: LighterASTNode? = null
@@ -1298,6 +1298,7 @@ class DeclarationsConverter(
                     FirDeclarationOrigin.Source,
                     propertyTypeRefToUse,
                     accessorVisibility,
+                    propertySymbol,
                     isGetter
                 )
                 .also { accessor ->
@@ -1330,9 +1331,77 @@ class DeclarationsConverter(
                 this.contractDescription = it
             }
             context.firFunctionTargets.removeLast()
+            this.propertySymbol = propertySymbol
         }.also {
             target.bind(it)
             it.initContainingClassAttr()
+        }
+    }
+
+    /**
+     * @see org.jetbrains.kotlin.parsing.KotlinParsing.parsePropertyComponent
+     */
+    private fun LighterASTNode?.convertBackingField(
+        propertySymbol: FirPropertySymbol,
+        propertyModifiers: Modifier,
+        propertyReturnType: FirTypeRef,
+        isVar: Boolean,
+    ): FirBackingField {
+        var modifiers = Modifier()
+        var returnType: FirTypeRef = implicitType
+        var backingFieldInitializer: FirExpression? = null
+        this?.forEachChildren {
+            when {
+                it.tokenType == MODIFIER_LIST -> modifiers = convertModifierList(it)
+                it.tokenType == TYPE_REFERENCE -> returnType = convertType(it)
+                it.isExpression() -> {
+                    backingFieldInitializer = expressionConverter.getAsFirExpression(it, "Should have initializer")
+                }
+            }
+        }
+        var componentVisibility = modifiers.getVisibility()
+        if (componentVisibility == Visibilities.Unknown) {
+            componentVisibility = Visibilities.Private
+        }
+        val status = obtainPropertyComponentStatus(componentVisibility, modifiers, propertyModifiers)
+        val sourceElement = this?.toFirSourceElement()
+        return if (this != null) {
+            buildBackingField {
+                source = sourceElement
+                moduleData = baseModuleData
+                origin = FirDeclarationOrigin.Source
+                returnTypeRef = returnType
+                name = StandardNames.BACKING_FIELD
+                symbol = FirBackingFieldSymbol(CallableId(name))
+                this.status = status
+                annotations += modifiers.annotations
+                this.propertySymbol = propertySymbol
+                this.initializer = backingFieldInitializer
+                this.isVar = isVar
+                this.isVal = !isVar
+            }
+        } else {
+            FirDefaultPropertyBackingField(
+                moduleData = baseModuleData,
+                annotations = modifiers.annotations,
+                returnTypeRef = propertyReturnType.copyWithNewSourceKind(FirFakeSourceElementKind.DefaultAccessor),
+                isVar = isVar,
+                propertySymbol = propertySymbol,
+                status = status,
+            )
+        }
+    }
+
+    private fun obtainPropertyComponentStatus(
+        componentVisibility: Visibility,
+        modifiers: Modifier,
+        propertyModifiers: Modifier,
+    ): FirDeclarationStatus {
+        // Downward propagation of `inline` and `external` modifiers (from property to its accessors)
+        return FirDeclarationStatusImpl(componentVisibility, modifiers.getModality(isClassOrObject = false)).apply {
+            isInline = propertyModifiers.hasInline() || modifiers.hasInline()
+            isExternal = propertyModifiers.hasExternal() || modifiers.hasExternal()
+            isLateInit = modifiers.hasLateinit()
         }
     }
 
@@ -1565,17 +1634,11 @@ class DeclarationsConverter(
                 expressionConverter.getAsFirExpression(block)
             )
         }
-        return if (!stubMode) {
-            val blockTree = LightTree2Fir.buildLightTreeBlockExpression(block.asText)
-            return DeclarationsConverter(
-                baseSession, baseScopeProvider, stubMode, blockTree, offset = offset + tree.getStartOffset(block), context
-            ).convertBlockExpression(blockTree.root)
-        } else {
-            val firExpression = buildExpressionStub()
-            FirSingleExpressionBlock(
-                firExpression.toReturn(baseSource = firExpression.source)
-            )
-        }
+
+        val blockTree = LightTree2Fir.buildLightTreeBlockExpression(block.asText)
+        return DeclarationsConverter(
+            baseSession, baseScopeProvider, blockTree, offset = offset + tree.getStartOffset(block), context
+        ).convertBlockExpression(blockTree.root)
     }
 
     /**
@@ -1713,7 +1776,7 @@ class DeclarationsConverter(
         lateinit var identifier: String
         lateinit var firType: FirTypeRef
         lateinit var referenceExpression: LighterASTNode
-        val annotations = mutableListOf<FirAnnotationCall>()
+        val annotations = mutableListOf<FirAnnotation>()
         typeConstraint.forEachChildren {
             when (it.tokenType) {
                 //annotations will be saved later, on mapping stage with type parameters
@@ -1828,7 +1891,7 @@ class DeclarationsConverter(
         }
 
         for (modifierList in allTypeModifiers) {
-            (calculatedFirType.annotations as MutableList<FirAnnotationCall>) += modifierList.annotations
+            (calculatedFirType.annotations as MutableList<FirAnnotation>) += modifierList.annotations
         }
         return calculatedFirType
     }
@@ -2054,7 +2117,7 @@ class DeclarationsConverter(
         return ValueParameter(isVal, isVar, modifiers, firValueParameter, destructuringDeclaration)
     }
 
-    private val extensionFunctionAnnotation = buildAnnotationCall {
+    private val extensionFunctionAnnotation = buildAnnotation {
         annotationTypeRef = buildResolvedTypeRef {
             type = ConeClassLikeTypeImpl(
                 ConeClassLikeLookupTagImpl(EXTENSION_FUNCTION_ANNOTATION),
@@ -2062,7 +2125,7 @@ class DeclarationsConverter(
                 false
             )
         }
-        calleeReference = FirReferencePlaceholderForResolvedAnnotations
+        argumentMapping = FirEmptyAnnotationArgumentMapping
     }
 
     private fun <T> fillDanglingConstraintsTo(

@@ -27,12 +27,8 @@ object LanguageSettingsDirectives : SimpleDirectivesContainer() {
     )
     // --------------------- Analysis Flags ---------------------
 
-    val USE_EXPERIMENTAL by stringDirective(
-        description = "List of opted in annotations (AnalysisFlags.useExperimental)"
-    )
-
-    val EXPERIMENTAL by stringDirective(
-        description = "Require opt in for specified annotations (AnalysisFlags.experimental)"
+    val OPT_IN by stringDirective(
+        description = "List of opted in annotations (AnalysisFlags.optIn)"
     )
 
     val IGNORE_DATA_FLOW_IN_ASSERT by directive(

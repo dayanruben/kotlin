@@ -61,6 +61,7 @@ val implicitNothingTypeRefType = generatedType("types.impl", "FirImplicitNothing
 val implicitStringTypeRefType = generatedType("types.impl", "FirImplicitStringTypeRef")
 val implicitUnitTypeRefType = generatedType("types.impl", "FirImplicitUnitTypeRef")
 val resolvePhaseType = type("fir.declarations", "FirResolvePhase")
+val propertyBodyResolveStateType = type("fir.declarations", "FirPropertyBodyResolveState")
 val stubReferenceType = generatedType("references.impl", "FirStubReference")
 
 val firBasedSymbolType = type("fir.symbols", "FirBasedSymbol")
@@ -82,7 +83,6 @@ val dslBuilderAnnotationType = generatedType("builder", "FirBuilderDsl")
 val firImplementationDetailType = generatedType("FirImplementationDetail")
 val declarationOriginType = generatedType("declarations", "FirDeclarationOrigin")
 val declarationAttributesType = generatedType("declarations", "FirDeclarationAttributes")
-val annotationResolveStatusType = generatedType("expressions", "FirAnnotationResolveStatus")
 
 val exhaustivenessStatusType = generatedType("expressions", "ExhaustivenessStatus")
 
@@ -93,3 +93,7 @@ val functionCallOrigin = type("fir.expressions", "FirFunctionCallOrigin")
 val resolvedDeclarationStatusImplType = type("fir.declarations.impl", "FirResolvedDeclarationStatusImpl")
 
 val deprecationsPerUseSiteType = type("fir.declarations", "DeprecationsPerUseSite")
+val emptyAnnotationArgumentMappingType = type("fir.expressions.impl", "FirEmptyAnnotationArgumentMapping")
+
+val firPropertySymbolType = type("fir.symbols.impl", "FirPropertySymbol")
+

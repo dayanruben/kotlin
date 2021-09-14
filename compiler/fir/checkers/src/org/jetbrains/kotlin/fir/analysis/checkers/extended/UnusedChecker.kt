@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.fir.analysis.diagnostics.reportOn
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.declarations.utils.isLocal
+import org.jetbrains.kotlin.fir.expressions.FirAnnotation
 import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
 import org.jetbrains.kotlin.fir.expressions.FirFunctionCall
 import org.jetbrains.kotlin.fir.expressions.FirQualifiedAccess
@@ -251,10 +252,14 @@ object UnusedChecker : FirControlFlowChecker() {
 
         private fun visitAnnotation(
             dataForNode: PathAwareVariableStatusInfo,
-            annotation: FirAnnotationCall,
+            annotation: FirAnnotation,
         ): PathAwareVariableStatusInfo {
-            val qualifiedAccesses = annotation.argumentList.arguments.mapNotNull { it as? FirQualifiedAccess }.toTypedArray()
-            return visitQualifiedAccesses(dataForNode, *qualifiedAccesses)
+            return if (annotation is FirAnnotationCall) {
+                val qualifiedAccesses = annotation.argumentList.arguments.mapNotNull { it as? FirQualifiedAccess }.toTypedArray()
+                visitQualifiedAccesses(dataForNode, *qualifiedAccesses)
+            } else {
+                dataForNode
+            }
         }
 
         private fun visitQualifiedAccesses(

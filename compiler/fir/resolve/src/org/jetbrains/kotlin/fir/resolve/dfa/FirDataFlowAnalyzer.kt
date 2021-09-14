@@ -1267,12 +1267,12 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
 
     // ----------------------------------- Annotations -----------------------------------
 
-    fun enterAnnotationCall(annotationCall: FirAnnotationCall) {
-        graphBuilder.enterAnnotationCall(annotationCall).mergeIncomingFlow()
+    fun enterAnnotation(annotation: FirAnnotation) {
+        graphBuilder.enterAnnotation(annotation).mergeIncomingFlow()
     }
 
-    fun exitAnnotationCall(annotationCall: FirAnnotationCall) {
-        graphBuilder.exitAnnotationCall(annotationCall).mergeIncomingFlow()
+    fun exitAnnotation(annotation: FirAnnotation) {
+        graphBuilder.exitAnnotation(annotation).mergeIncomingFlow()
     }
 
     // ----------------------------------- Init block -----------------------------------

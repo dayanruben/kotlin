@@ -106,7 +106,6 @@ inline fun Int.appendHashCode(array: Array<*>?): Int = 31 * this + hashCode(arra
  * Note: This implementation therefore is unsafe when mutating the collection at the same time!!!
  */
 inline fun <T> List<T>.fastForEach(action: (T) -> Unit) {
-    val size = this.size
     for (index in 0 until size) {
         action(this[index])
     }
@@ -117,8 +116,25 @@ inline fun <T> List<T>.fastForEach(action: (T) -> Unit) {
  * Note: This implementation therefore is unsafe when mutating the collection at the same time!!!
  */
 inline fun <T> Array<T>.fastForEach(action: (T) -> Unit) {
-    val size = this.size
     for (index in 0 until size) {
         action(this[index])
     }
+}
+
+@Suppress("unchecked_cast")
+internal inline fun <T, reified R> List<T>.safeCastValues(): List<R>? {
+    fastForEach { if (it !is R) return null }
+    return this as List<R>
+}
+
+
+internal fun <T : Any> List<T>.singleDistinctValueOrNull(): T? = singleDistinctValueOrNull { it }
+
+internal inline fun <T : Any, R> List<T>.singleDistinctValueOrNull(selector: (T) -> R): R? {
+    if (isEmpty()) return null
+    val value = selector(this[0])
+    for (index in 1 until size) {
+        if (value != selector(this[index])) return null
+    }
+    return value
 }

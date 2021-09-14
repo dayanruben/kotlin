@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.fir.declarations.FirProperty
 import org.jetbrains.kotlin.fir.diagnostics.ConeSimpleDiagnostic
 import org.jetbrains.kotlin.fir.diagnostics.DiagnosticKind
 import org.jetbrains.kotlin.fir.expressions.FirFunctionCall
+import org.jetbrains.kotlin.fir.expressions.FirImplicitInvokeCall
 import org.jetbrains.kotlin.fir.expressions.arguments
 import org.jetbrains.kotlin.fir.references.FirErrorNamedReference
 import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeAmbiguityError
@@ -52,11 +53,22 @@ object FirDelegatedPropertyChecker : FirPropertyChecker() {
             override fun visitElement(element: FirElement) = element.acceptChildren(this)
 
             override fun visitFunctionCall(functionCall: FirFunctionCall) {
-                val hasReferenceError = hasFunctionReferenceErrors(functionCall)
+                checkFunctionCall(functionCall)
+            }
+
+            override fun visitImplicitInvokeCall(implicitInvokeCall: FirImplicitInvokeCall) {
+                checkFunctionCall(implicitInvokeCall)
+            }
+
+            private fun checkFunctionCall(functionCall: FirFunctionCall) {
+                val hasReferenceError = checkFunctionReferenceErrors(functionCall)
                 if (isGet && !hasReferenceError) checkReturnType(functionCall)
             }
 
-            private fun hasFunctionReferenceErrors(functionCall: FirFunctionCall): Boolean {
+            /**
+             * @return true if any error was reported; false otherwise.
+             */
+            private fun checkFunctionReferenceErrors(functionCall: FirFunctionCall): Boolean {
                 val errorNamedReference = functionCall.calleeReference as? FirErrorNamedReference ?: return false
                 if (errorNamedReference.source?.kind != FirFakeSourceElementKind.DelegatedPropertyAccessor) return false
                 val expectedFunctionSignature =

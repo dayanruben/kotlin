@@ -29,7 +29,7 @@ class TotalKotlinTest : AbstractRawFirBuilderTestCase() {
         if (onlyPsi) {
             DebugUtil.psiTreeToString(ktFile, false)
         } else {
-            val firFile = ktFile.toFirFile(BodyBuildingMode.STUBS)
+            val firFile = ktFile.toFirFile()
             StringBuilder().also { FirRenderer(it).visitFile(firFile) }.toString()
         }
     }
@@ -51,8 +51,7 @@ class TotalKotlinTest : AbstractRawFirBuilderTestCase() {
 
         val lightTreeConverter = LightTree2Fir(
             session = FirSessionFactory.createEmptySession(),
-            scopeProvider = StubFirScopeProvider,
-            stubMode = true
+            scopeProvider = StubFirScopeProvider
         )
 
         if (onlyLightTree) println("LightTree generation") else println("Fir from LightTree converter")

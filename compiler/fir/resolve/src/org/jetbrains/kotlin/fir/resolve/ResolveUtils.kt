@@ -11,8 +11,11 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.declarations.utils.canNarrowDownGetterType
 import org.jetbrains.kotlin.fir.declarations.utils.expandedConeType
+import org.jetbrains.kotlin.fir.declarations.utils.isFinal
 import org.jetbrains.kotlin.fir.declarations.utils.isInner
+import org.jetbrains.kotlin.fir.declarations.utils.isLocal
 import org.jetbrains.kotlin.fir.diagnostics.ConeDiagnostic
 import org.jetbrains.kotlin.fir.diagnostics.ConeSimpleDiagnostic
 import org.jetbrains.kotlin.fir.diagnostics.ConeStubDiagnostic
@@ -25,6 +28,7 @@ import org.jetbrains.kotlin.fir.references.FirSuperReference
 import org.jetbrains.kotlin.fir.references.FirThisReference
 import org.jetbrains.kotlin.fir.resolve.calls.Candidate
 import org.jetbrains.kotlin.fir.resolve.calls.FirNamedReferenceWithCandidate
+import org.jetbrains.kotlin.fir.resolve.calls.FirPropertyWithExplicitBackingFieldResolvedNamedReference
 import org.jetbrains.kotlin.fir.resolve.calls.ImplicitDispatchReceiverValue
 import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeUnresolvedNameError
 import org.jetbrains.kotlin.fir.resolve.inference.inferenceComponents
@@ -44,6 +48,7 @@ import org.jetbrains.kotlin.fir.types.impl.ConeClassLikeTypeImpl
 import org.jetbrains.kotlin.name.*
 import org.jetbrains.kotlin.resolve.ForbiddenNamedArgumentsTarget
 import org.jetbrains.kotlin.types.SmartcastStability
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 fun List<FirQualifierPart>.toTypeProjections(): Array<ConeTypeProjection> =
     asReversed().flatMap { it.typeArgumentList.typeArguments.map { typeArgument -> typeArgument.toConeTypeProjection() } }.toTypedArray()
@@ -184,6 +189,30 @@ internal fun typeForQualifierByDeclaration(declaration: FirDeclaration, resultTy
     return null
 }
 
+private fun FirPropertyWithExplicitBackingFieldResolvedNamedReference.getNarrowedDownSymbol(): FirBasedSymbol<*> {
+    val propertyReceiver = resolvedSymbol.safeAs<FirPropertySymbol>()
+        ?: return resolvedSymbol
+
+    // This can happen in case of 2 properties referencing
+    // each other recursively. See: Jet81.fir.kt
+    if (
+        propertyReceiver.fir.returnTypeRef is FirImplicitTypeRef ||
+        propertyReceiver.fir.backingField?.returnTypeRef is FirImplicitTypeRef
+    ) {
+        return resolvedSymbol
+    }
+
+    if (
+        propertyReceiver.isFinal &&
+        hasVisibleBackingField &&
+        propertyReceiver.canNarrowDownGetterType
+    ) {
+        return propertyReceiver.fir.backingField?.symbol ?: resolvedSymbol
+    }
+
+    return resolvedSymbol
+}
+
 fun <T : FirResolvable> BodyResolveComponents.typeFromCallee(access: T): FirResolvedTypeRef {
     return when (val newCallee = access.calleeReference) {
         is FirErrorNamedReference ->
@@ -193,6 +222,10 @@ fun <T : FirResolvable> BodyResolveComponents.typeFromCallee(access: T): FirReso
             }
         is FirNamedReferenceWithCandidate -> {
             typeFromSymbol(newCallee.candidateSymbol, false)
+        }
+        is FirPropertyWithExplicitBackingFieldResolvedNamedReference -> {
+            val symbol = newCallee.getNarrowedDownSymbol()
+            typeFromSymbol(symbol, false)
         }
         is FirResolvedNamedReference -> {
             typeFromSymbol(newCallee.resolvedSymbol, false)
@@ -333,7 +366,7 @@ fun CallableId.isIteratorHasNext(): Boolean =
 fun CallableId.isIterator(): Boolean =
     callableName.asString() == "iterator" && packageName.asString() in arrayOf("kotlin.collections", "kotlin.ranges")
 
-fun FirAnnotationCall.fqName(session: FirSession): FqName? {
+fun FirAnnotation.fqName(session: FirSession): FqName? {
     val symbol = session.symbolProvider.getSymbolByTypeRef<FirRegularClassSymbol>(annotationTypeRef) ?: return null
     return symbol.classId.asSingleFqName()
 }
@@ -386,13 +419,13 @@ private fun FirQualifiedAccess.expressionTypeOrUnitForAssignment(): ConeKotlinTy
     return StandardClassIds.Unit.constructClassLikeType(emptyArray(), isNullable = false)
 }
 
-fun FirAnnotationCall.getCorrespondingClassSymbolOrNull(session: FirSession): FirRegularClassSymbol? {
+fun FirAnnotation.getCorrespondingClassSymbolOrNull(session: FirSession): FirRegularClassSymbol? {
     return annotationTypeRef.coneType.fullyExpandedType(session).classId?.let {
         if (it.isLocal) {
             // TODO: How to retrieve local annotaiton's constructor?
             null
         } else {
-            (session.symbolProvider.getClassLikeSymbolByFqName(it) as? FirRegularClassSymbol)
+            (session.symbolProvider.getClassLikeSymbolByClassId(it) as? FirRegularClassSymbol)
         }
     }
 }
@@ -487,28 +520,32 @@ fun isValidTypeParameterFromOuterClass(
     return containsTypeParameter(classDeclaration)
 }
 
-fun getOuterClassAndActualTypeParametersCount(klass: FirRegularClass, session: FirSession): Pair<FirRegularClass?, Int> {
-    var result = klass.typeParameters.size
+fun FirRegularClass.getActualTypeParametersCount(session: FirSession): Int {
+    var result = typeParameters.size
 
-    if (!klass.isInner) {
-        return Pair(null, result)
+    if (!isInner) {
+        return result
     }
 
-    val outerClass = getOuterClass(klass, session)
-    if (outerClass != null) {
-        result -= outerClass.typeParameters.size
+    val containingClass = getContainingDeclaration(session) as? FirRegularClass
+    if (containingClass != null) {
+        result -= containingClass.typeParameters.size
     }
 
-    return Pair(outerClass, result)
+    return result
 }
 
-fun getOuterClass(klass: FirClassLikeDeclaration, session: FirSession): FirRegularClass? {
-    val classId = klass.symbol.classId
-    val parentId = classId.relativeClassName.parent()
-    if (!parentId.isRoot) {
-        val outerClassId = ClassId(classId.packageFqName, parentId, false)
-        val parentSymbol = session.symbolProvider.getClassLikeSymbolByFqName(outerClassId)
-        return (parentSymbol as? FirRegularClassSymbol)?.fir
+fun FirClassLikeDeclaration.getContainingDeclaration(session: FirSession): FirClassLikeDeclaration? {
+    if (isLocal) {
+        @OptIn(LookupTagInternals::class)
+        return (this as? FirRegularClass)?.containingClassForLocalAttr?.toFirRegularClass(session)
+    } else {
+        val classId = symbol.classId
+        val parentId = classId.relativeClassName.parent()
+        if (!parentId.isRoot) {
+            val containingDeclarationId = ClassId(classId.packageFqName, parentId, false)
+            return session.symbolProvider.getClassLikeSymbolByClassId(containingDeclarationId)?.fir
+        }
     }
 
     return null

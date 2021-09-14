@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.calls.tasks.ExplicitReceiverKind
 import org.jetbrains.kotlin.resolve.descriptorUtil.HIDES_MEMBERS_NAME_LIST
 
-
 internal class TowerDataElementsForName(
     name: Name,
     towerDataContext: FirTowerDataContext

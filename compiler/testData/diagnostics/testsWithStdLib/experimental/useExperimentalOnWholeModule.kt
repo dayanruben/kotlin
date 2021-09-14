@@ -1,6 +1,5 @@
 // FIR_IDENTICAL
-// FIR_IDE_IGNORE
-// !USE_EXPERIMENTAL: kotlin.RequiresOptIn api.ExperimentalAPI
+// !OPT_IN: kotlin.RequiresOptIn api.ExperimentalAPI
 // MODULE: api
 // FILE: api.kt
 

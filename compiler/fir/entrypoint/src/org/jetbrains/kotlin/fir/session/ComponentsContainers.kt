@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.fir.extensions.FirPredicateBasedProvider
 import org.jetbrains.kotlin.fir.extensions.FirRegisteredPluginAnnotations
 import org.jetbrains.kotlin.fir.java.FirJavaVisibilityChecker
 import org.jetbrains.kotlin.fir.java.enhancement.FirAnnotationTypeQualifierResolver
+import org.jetbrains.kotlin.fir.java.FirJvmDefaultModeComponent
 import org.jetbrains.kotlin.fir.resolve.*
 import org.jetbrains.kotlin.fir.resolve.calls.ConeCallConflictResolverFactory
 import org.jetbrains.kotlin.fir.resolve.calls.FirSyntheticNamesProvider
@@ -33,6 +34,8 @@ import org.jetbrains.kotlin.fir.resolve.transformers.FirPhaseCheckingPhaseManage
 import org.jetbrains.kotlin.fir.symbols.FirPhaseManager
 import org.jetbrains.kotlin.fir.resolve.transformers.plugin.GeneratedClassIndex
 import org.jetbrains.kotlin.fir.scopes.impl.FirDeclaredMemberScopeProvider
+import org.jetbrains.kotlin.fir.scopes.impl.FirIntersectionOverrideStorage
+import org.jetbrains.kotlin.fir.scopes.impl.FirSubstitutionOverrideStorage
 import org.jetbrains.kotlin.fir.types.FirCorrespondingSupertypesCache
 import org.jetbrains.kotlin.incremental.components.LookupTracker
 import org.jetbrains.kotlin.resolve.jvm.modules.JavaModuleResolver
@@ -52,6 +55,10 @@ fun FirSession.registerCommonComponents(languageVersionSettings: LanguageVersion
     register(FirRegisteredPluginAnnotations::class, FirRegisteredPluginAnnotations.create(this))
     register(FirPredicateBasedProvider::class, FirPredicateBasedProvider.create(this))
     register(GeneratedClassIndex::class, GeneratedClassIndex.create())
+
+    register(FirSubstitutionOverrideStorage::class, FirSubstitutionOverrideStorage(this))
+    register(FirIntersectionOverrideStorage::class, FirIntersectionOverrideStorage(this))
+    register(FirSamConstructorStorage::class, FirSamConstructorStorage(this))
 }
 
 @OptIn(SessionConfiguration::class)
@@ -65,6 +72,10 @@ fun FirSession.registerCliCompilerOnlyComponents() {
 fun FirSession.registerCommonJavaComponents(javaModuleResolver: JavaModuleResolver) {
     val jsr305State = languageVersionSettings.getFlag(JvmAnalysisFlags.javaTypeEnhancementState)
     register(FirAnnotationTypeQualifierResolver::class, FirAnnotationTypeQualifierResolver(this, jsr305State, javaModuleResolver))
+    register(
+        FirJvmDefaultModeComponent::class,
+        FirJvmDefaultModeComponent(languageVersionSettings.getFlag(JvmAnalysisFlags.jvmDefaultMode))
+    )
 }
 
 // -------------------------- Resolve components --------------------------
