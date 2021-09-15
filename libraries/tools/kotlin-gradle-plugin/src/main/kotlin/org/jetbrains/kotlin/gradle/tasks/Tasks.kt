@@ -345,18 +345,6 @@ abstract class AbstractKotlinCompile<T : CommonCompilerArguments> : AbstractKotl
 
             try {
                 executeImpl(inputChanges)
-                metrics.measure(BuildTime.CALCULATE_OUTPUT_SIZE) {
-                    metrics.addMetric(
-                        BuildPerformanceMetric.SNAPSHOT_SIZE,
-                        taskBuildDirectory.file("build-history.bin").get().asFile.length() +
-                                taskBuildDirectory.file("last-build.bin").get().asFile.length() +
-                                taskBuildDirectory.file("abi-snapshot.bin").get().asFile.length()
-                    )
-                    metrics.addMetric(BuildPerformanceMetric.OUTPUT_SIZE,
-                                      taskBuildDirectory.dir("caches-jvm").get().asFileTree.files.filter { it.isFile }.map { it.length() }
-                                          .sum()
-                    )
-                }
             } catch (t: Throwable) {
                 if (outputsBackup != null) {
                     metrics.measure(BuildTime.RESTORE_OUTPUT_FROM_BACKUP) {
@@ -396,11 +384,7 @@ abstract class AbstractKotlinCompile<T : CommonCompilerArguments> : AbstractKotl
         sourceRoots.log(this.name, logger)
         val args = prepareCompilerArguments()
         taskBuildDirectory.get().asFile.mkdirs()
-        callCompilerAsync(
-            args,
-            sourceRoots,
-            getChangedFiles(inputChanges, incrementalProps)
-        )
+        callCompilerAsync(args, sourceRoots, inputChanges)
     }
 
     protected fun getChangedFiles(
@@ -432,7 +416,7 @@ abstract class AbstractKotlinCompile<T : CommonCompilerArguments> : AbstractKotl
      * Compiler might be executed asynchronously. Do not do anything requiring end of compilation after this function is called.
      * @see [GradleKotlinCompilerWork]
      */
-    internal abstract fun callCompilerAsync(args: T, sourceRoots: SourceRoots, changedFiles: ChangedFiles)
+    internal abstract fun callCompilerAsync(args: T, sourceRoots: SourceRoots, inputChanges: InputChanges)
 
     @get:Input
     internal val multiPlatformEnabled: Property<Boolean> = objects.property(Boolean::class.java)
@@ -556,7 +540,9 @@ abstract class KotlinCompile @Inject constructor(
                         it.attributes.attribute(ARTIFACT_TYPE_ATTRIBUTE, CLASSPATH_ENTRY_SNAPSHOT_ARTIFACT_TYPE)
                     }.files
                 )
-                task.classpathSnapshotProperties.classpathSnapshotDir.value(getClasspathSnapshotDir(task)).disallowChanges()
+                val classpathSnapshotDir = getClasspathSnapshotDir(task)
+                task.classpathSnapshotProperties.classpathSnapshotDir.value(classpathSnapshotDir).disallowChanges()
+                task.classpathSnapshotProperties.classpathSnapshotDirFileCollection.from(classpathSnapshotDir)
             }
         }
     }
@@ -604,6 +590,14 @@ abstract class KotlinCompile @Inject constructor(
         @get:OutputDirectory
         @get:Optional // Set if useClasspathSnapshot == true
         abstract val classpathSnapshotDir: DirectoryProperty
+
+        /**
+         * [FileCollection] containing a single file which is [classpathSnapshotDir], used when a [FileCollection] is required instead of a
+         * [DirectoryProperty].
+         */
+        // Set if useClasspathSnapshot == true
+        @get:Internal
+        abstract val classpathSnapshotDirFileCollection: ConfigurableFileCollection
     }
 
     @get:Internal
@@ -669,7 +663,7 @@ abstract class KotlinCompile @Inject constructor(
 
     override fun getSourceRoots(): SourceRoots.ForJvm = jvmSourceRoots
 
-    override fun callCompilerAsync(args: K2JVMCompilerArguments, sourceRoots: SourceRoots, changedFiles: ChangedFiles) {
+    override fun callCompilerAsync(args: K2JVMCompilerArguments, sourceRoots: SourceRoots, inputChanges: InputChanges) {
         sourceRoots as SourceRoots.ForJvm
 
         validateKotlinAndJavaHasSameTargetCompatibility(args)
@@ -681,15 +675,12 @@ abstract class KotlinCompile @Inject constructor(
         val icEnv = if (isIncrementalCompilationEnabled()) {
             val classpathChanges = when {
                 !classpathSnapshotProperties.useClasspathSnapshot.get() -> ClasspathChanges.NotAvailable.ClasspathSnapshotIsDisabled
-                else -> when (changedFiles) {
-                    is ChangedFiles.Known -> getClasspathChanges()
-                    is ChangedFiles.Unknown -> ClasspathChanges.NotAvailable.ForNonIncrementalRun
-                    is ChangedFiles.Dependencies -> error("Unexpected type: ${changedFiles.javaClass.name}")
-                }
+                inputChanges.isIncremental -> getClasspathChanges(inputChanges)
+                else -> ClasspathChanges.NotAvailable.ForNonIncrementalRun
             }
             logger.info(USING_JVM_INCREMENTAL_COMPILATION_MESSAGE)
             IncrementalCompilationEnvironment(
-                changedFiles = changedFiles,
+                changedFiles = getChangedFiles(inputChanges, incrementalProps),
                 classpathChanges = classpathChanges,
                 workingDir = taskBuildDirectory.get().asFile,
                 usePreciseJavaTracking = usePreciseJavaTracking,
@@ -698,9 +689,16 @@ abstract class KotlinCompile @Inject constructor(
             )
         } else null
 
+        with(classpathSnapshotProperties) {
+            if (isIncrementalCompilationEnabled() && useClasspathSnapshot.get()) {
+                copyClasspathSnapshotFilesToDir(classpathSnapshot.files.toList(), classpathSnapshotDir.get().asFile)
+            }
+        }
+
         val environment = GradleCompilerEnvironment(
             defaultCompilerClasspath, messageCollector, outputItemCollector,
-            outputFiles = allOutputFiles(),
+            // The compiler runner should not manage (read, modify, or delete) classpathSnapshotDir
+            outputFiles = allOutputFiles().minus(classpathSnapshotProperties.classpathSnapshotDirFileCollection),
             reportingSettings = reportingSettings,
             incrementalCompilationEnvironment = icEnv,
             kotlinScriptExtensions = sourceFilesExtensions.get().toTypedArray()
@@ -714,12 +712,6 @@ abstract class KotlinCompile @Inject constructor(
             environment,
             defaultKotlinJavaToolchain.get().providedJvm.get().javaHome
         )
-
-        with(classpathSnapshotProperties) {
-            if (isIncrementalCompilationEnabled() && useClasspathSnapshot.get()) {
-                copyClasspathSnapshotFilesToDir(classpathSnapshot.files.toList(), classpathSnapshotDir.get().asFile)
-            }
-        }
     }
 
     private fun validateKotlinAndJavaHasSameTargetCompatibility(args: K2JVMCompilerArguments) {
@@ -786,14 +778,17 @@ abstract class KotlinCompile @Inject constructor(
         return super.source(*sources)
     }
 
-    private fun getClasspathChanges(): ClasspathChanges {
+    private fun getClasspathChanges(@Suppress("UNUSED_PARAMETER") inputChanges: InputChanges): ClasspathChanges {
         val currentSnapshotFiles = classpathSnapshotProperties.classpathSnapshot.files.toList()
         val previousSnapshotFiles = getClasspathSnapshotFilesInDir(classpathSnapshotProperties.classpathSnapshotDir.get().asFile)
 
+        // TODO: Compute changes for the changed snapshot files only, ignoring unchanged ones.
+        // We'll need to be careful when the classpath contains duplicate classes, as we'll need to look at the entire classpath in order to
+        // detect them.
         val currentSnapshot = ClasspathSnapshotSerializer.load(currentSnapshotFiles)
         val previousSnapshot = ClasspathSnapshotSerializer.load(previousSnapshotFiles)
 
-        return ClasspathChangesComputer.getChanges(currentSnapshot, previousSnapshot)
+        return ClasspathChangesComputer.compute(currentSnapshot, previousSnapshot)
     }
 
     /**
@@ -1069,7 +1064,7 @@ abstract class Kotlin2JsCompile @Inject constructor(
     override val incrementalProps: List<FileCollection>
         get() = super.incrementalProps + listOf(friendDependencies)
 
-    override fun callCompilerAsync(args: K2JSCompilerArguments, sourceRoots: SourceRoots, changedFiles: ChangedFiles) {
+    override fun callCompilerAsync(args: K2JSCompilerArguments, sourceRoots: SourceRoots, inputChanges: InputChanges) {
         sourceRoots as SourceRoots.KotlinOnly
 
         logger.debug("Calling compiler")
@@ -1104,7 +1099,7 @@ abstract class Kotlin2JsCompile @Inject constructor(
         val icEnv = if (isIncrementalCompilationEnabled()) {
             logger.info(USING_JS_INCREMENTAL_COMPILATION_MESSAGE)
             IncrementalCompilationEnvironment(
-                changedFiles,
+                getChangedFiles(inputChanges, incrementalProps),
                 ClasspathChanges.NotAvailable.ForJSCompiler,
                 taskBuildDirectory.get().asFile,
                 multiModuleICSettings = multiModuleICSettings

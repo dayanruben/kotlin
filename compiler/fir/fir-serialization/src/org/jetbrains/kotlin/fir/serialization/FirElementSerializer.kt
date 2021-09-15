@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.comparators.FirCallableDeclarationComparator
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyAccessor
 import org.jetbrains.kotlin.fir.declarations.utils.*
-import org.jetbrains.kotlin.fir.deserialization.CONTINUATION_INTERFACE_CLASS_ID
 import org.jetbrains.kotlin.fir.deserialization.projection
 import org.jetbrains.kotlin.fir.expressions.FirAnnotation
 import org.jetbrains.kotlin.fir.expressions.FirArgumentList
@@ -299,13 +298,12 @@ class FirElementSerializer private constructor(
             }
         }
 
-        val hasConstant = property.isConst // TODO: this is only correct with LanguageFeature.NoConstantValueAttributeForNonConstVals
         val flags = Flags.getPropertyFlags(
             hasAnnotations,
             ProtoEnumFlags.visibility(normalizeVisibility(property)),
             ProtoEnumFlags.modality(modality),
             ProtoBuf.MemberKind.DECLARATION,
-            property.isVar, hasGetter, hasSetter, hasConstant, property.isConst, property.isLateInit,
+            property.isVar, hasGetter, hasSetter, property.isConst, property.isConst, property.isLateInit,
             property.isExternal, property.delegateFieldSymbol != null, property.isExpect
         )
         if (flags != builder.flags) {
@@ -643,7 +641,7 @@ class FirElementSerializer private constructor(
             is ConeClassLikeType -> {
                 if (type.isSuspendFunctionType(session)) {
                     val runtimeFunctionType = type.suspendFunctionTypeToFunctionTypeWithContinuation(
-                        session, CONTINUATION_INTERFACE_CLASS_ID
+                        session, StandardClassIds.Continuation
                     )
                     val functionType = typeProto(runtimeFunctionType)
                     functionType.flags = Flags.getTypeFlags(true, false)
@@ -658,7 +656,7 @@ class FirElementSerializer private constructor(
             }
             is ConeTypeParameterType -> {
                 val typeParameter = type.lookupTag.typeParameterSymbol.fir
-                if (typeParameter in (containingDeclaration as? FirMemberDeclaration)?.typeParameters ?: emptyList()) {
+                if (typeParameter in ((containingDeclaration as? FirMemberDeclaration)?.typeParameters ?: emptyList())) {
                     builder.typeParameterName = getSimpleNameIndex(typeParameter.name)
                 } else {
                     builder.typeParameter = getTypeParameterId(typeParameter)

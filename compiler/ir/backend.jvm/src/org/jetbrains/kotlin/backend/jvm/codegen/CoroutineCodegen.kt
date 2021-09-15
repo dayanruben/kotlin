@@ -8,32 +8,24 @@ package org.jetbrains.kotlin.backend.jvm.codegen
 import org.jetbrains.kotlin.backend.common.CodegenUtil
 import org.jetbrains.kotlin.backend.common.ir.allOverridden
 import org.jetbrains.kotlin.backend.common.lower.LocalDeclarationsLowering
-import org.jetbrains.kotlin.backend.jvm.JvmBackendContext
-import org.jetbrains.kotlin.backend.jvm.JvmLoweredDeclarationOrigin
+import org.jetbrains.kotlin.backend.jvm.*
 import org.jetbrains.kotlin.backend.jvm.ir.erasedUpperBound
 import org.jetbrains.kotlin.backend.jvm.ir.isStaticInlineClassReplacement
-import org.jetbrains.kotlin.backend.jvm.lower.inlineclasses.InlineClassAbi
-import org.jetbrains.kotlin.backend.jvm.lower.inlineclasses.unboxInlineClass
-import org.jetbrains.kotlin.backend.jvm.lower.isMultifileBridge
-import org.jetbrains.kotlin.backend.jvm.lower.suspendFunctionOriginal
+import org.jetbrains.kotlin.backend.jvm.ir.suspendFunctionOriginal
 import org.jetbrains.kotlin.codegen.ClassBuilder
 import org.jetbrains.kotlin.codegen.coroutines.CoroutineTransformerMethodVisitor
 import org.jetbrains.kotlin.codegen.coroutines.INVOKE_SUSPEND_METHOD_NAME
 import org.jetbrains.kotlin.codegen.coroutines.SUSPEND_IMPL_NAME_SUFFIX
 import org.jetbrains.kotlin.codegen.coroutines.reportSuspensionPointInsideMonitor
 import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
-import org.jetbrains.kotlin.ir.expressions.impl.IrErrorExpressionImpl
 import org.jetbrains.kotlin.ir.types.*
-import org.jetbrains.kotlin.ir.types.impl.makeTypeProjection
 import org.jetbrains.kotlin.ir.util.file
 import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.isSuspend
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.org.objectweb.asm.MethodVisitor
 import org.jetbrains.org.objectweb.asm.Type
 import org.jetbrains.org.objectweb.asm.tree.MethodNode
@@ -112,7 +104,7 @@ internal fun IrFunction.continuationClass(): IrClass? =
     (body as? IrBlockBody)?.statements?.find { it is IrClass && it.origin == JvmLoweredDeclarationOrigin.CONTINUATION_CLASS }
             as IrClass?
 
-internal fun IrFunction.continuationParameter(): IrValueParameter? = when {
+fun IrFunction.continuationParameter(): IrValueParameter? = when {
     isInvokeSuspendOfLambda() || isInvokeSuspendForInlineOfLambda() -> dispatchReceiverParameter
     else -> valueParameters.singleOrNull { it.origin == JvmLoweredDeclarationOrigin.CONTINUATION_CLASS }
 }
@@ -124,7 +116,7 @@ private fun IrFunction.isInvokeSuspendForInlineOfLambda(): Boolean =
     origin == JvmLoweredDeclarationOrigin.FOR_INLINE_STATE_MACHINE_TEMPLATE
             && parentAsClass.origin == JvmLoweredDeclarationOrigin.SUSPEND_LAMBDA
 
-internal fun IrFunction.isInvokeSuspendOfContinuation(): Boolean =
+fun IrFunction.isInvokeSuspendOfContinuation(): Boolean =
     name.asString() == INVOKE_SUSPEND_METHOD_NAME && parentAsClass.origin == JvmLoweredDeclarationOrigin.CONTINUATION_CLASS
 
 private fun IrFunction.isInvokeOfSuspendCallableReference(): Boolean =
@@ -150,8 +142,6 @@ private val BRIDGE_ORIGINS = setOf(
     JvmLoweredDeclarationOrigin.SUPER_INTERFACE_METHOD_BRIDGE,
     IrDeclarationOrigin.BRIDGE,
     IrDeclarationOrigin.BRIDGE_SPECIAL,
-    IrDeclarationOrigin.ADAPTER_FOR_CALLABLE_REFERENCE,
-    IrDeclarationOrigin.ADAPTER_FOR_SUSPEND_CONVERSION
 )
 
 // These functions contain a single `suspend` tail call, the value of which should be returned as is
@@ -159,7 +149,7 @@ private val BRIDGE_ORIGINS = setOf(
 internal fun IrFunction.isNonBoxingSuspendDelegation(): Boolean =
     origin in BRIDGE_ORIGINS || isMultifileBridge() || isBridgeToSuspendImplMethod()
 
-internal fun IrFunction.shouldContainSuspendMarkers(): Boolean = !isNonBoxingSuspendDelegation() &&
+fun IrFunction.shouldContainSuspendMarkers(): Boolean = !isNonBoxingSuspendDelegation() &&
         // These functions also contain a single `suspend` tail call, but if it returns an unboxed inline class value,
         // the return of it should be checked for a suspension and potentially boxed to satisfy an interface.
         origin != IrDeclarationOrigin.DELEGATED_MEMBER &&
@@ -167,15 +157,15 @@ internal fun IrFunction.shouldContainSuspendMarkers(): Boolean = !isNonBoxingSus
         !isInvokeOfSuspendCallableReference() &&
         !isStaticInlineClassReplacementDelegatingCall()
 
-internal fun IrFunction.hasContinuation(): Boolean = isInvokeSuspendOfLambda() ||
+fun IrFunction.hasContinuation(): Boolean = isInvokeSuspendOfLambda() ||
         isSuspend && shouldContainSuspendMarkers() &&
         // These are templates for the inliner; the continuation is borrowed from the caller method.
         !isEffectivelyInlineOnly() &&
-        origin != IrDeclarationOrigin.LOCAL_FUNCTION_FOR_LAMBDA &&
+        origin != JvmLoweredDeclarationOrigin.INLINE_LAMBDA &&
         origin != JvmLoweredDeclarationOrigin.FOR_INLINE_STATE_MACHINE_TEMPLATE &&
         origin != JvmLoweredDeclarationOrigin.FOR_INLINE_STATE_MACHINE_TEMPLATE_CAPTURES_CROSSINLINE
 
-internal fun IrExpression?.isReadOfCrossinline(): Boolean = when (this) {
+fun IrExpression?.isReadOfCrossinline(): Boolean = when (this) {
     is IrGetValue -> (symbol.owner as? IrValueParameter)?.isCrossinline == true
     is IrGetField -> symbol.owner.origin == LocalDeclarationsLowering.DECLARATION_ORIGIN_FIELD_FOR_CROSSINLINE_CAPTURED_VALUE
     else -> false
@@ -183,13 +173,6 @@ internal fun IrExpression?.isReadOfCrossinline(): Boolean = when (this) {
 
 internal fun IrExpression?.isReadOfInlineLambda(): Boolean = isReadOfCrossinline() ||
         (this is IrGetValue && origin == IrStatementOrigin.VARIABLE_AS_FUNCTION && (symbol.owner as? IrValueParameter)?.isNoinline == false)
-
-internal fun createFakeContinuation(context: JvmBackendContext): IrExpression = IrErrorExpressionImpl(
-    UNDEFINED_OFFSET,
-    UNDEFINED_OFFSET,
-    context.ir.symbols.continuationClass.createType(true, listOf(makeTypeProjection(context.irBuiltIns.anyNType, Variance.INVARIANT))),
-    "FAKE_CONTINUATION"
-)
 
 internal fun IrFunction.originalReturnTypeOfSuspendFunctionReturningUnboxedInlineClass(): IrType? {
     if (this !is IrSimpleFunction || !isSuspend) return null

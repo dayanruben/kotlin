@@ -5,10 +5,10 @@
 
 package org.jetbrains.kotlin.fir.types
 
-import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.StandardClassIds
 import kotlin.reflect.KClass
 
 object CompilerConeAttributes {
@@ -17,6 +17,8 @@ object CompilerConeAttributes {
 
         override fun union(other: Exact?): Exact? = null
         override fun intersect(other: Exact?): Exact? = null
+        override fun add(other: Exact?): Exact = this
+
         override fun isSubtypeOf(other: Exact?): Boolean = true
 
         override val key: KClass<out Exact> = Exact::class
@@ -29,6 +31,7 @@ object CompilerConeAttributes {
 
         override fun union(other: NoInfer?): NoInfer? = null
         override fun intersect(other: NoInfer?): NoInfer? = null
+        override fun add(other: NoInfer?): NoInfer = this
         override fun isSubtypeOf(other: NoInfer?): Boolean = true
 
         override val key: KClass<out NoInfer> = NoInfer::class
@@ -37,10 +40,12 @@ object CompilerConeAttributes {
     }
 
     object EnhancedNullability : ConeAttribute<EnhancedNullability>() {
-        val ANNOTATION_CLASS_ID = StandardClassIds.EnhancedNullability
+        val ANNOTATION_CLASS_ID = StandardClassIds.Annotations.EnhancedNullability
 
         override fun union(other: EnhancedNullability?): EnhancedNullability? = other
         override fun intersect(other: EnhancedNullability?): EnhancedNullability = this
+        override fun add(other: EnhancedNullability?): EnhancedNullability = this
+
         override fun isSubtypeOf(other: EnhancedNullability?): Boolean = true
 
         override val key: KClass<out EnhancedNullability> = EnhancedNullability::class
@@ -53,6 +58,8 @@ object CompilerConeAttributes {
 
         override fun union(other: ExtensionFunctionType?): ExtensionFunctionType? = other
         override fun intersect(other: ExtensionFunctionType?): ExtensionFunctionType = this
+        override fun add(other: ExtensionFunctionType?): ExtensionFunctionType = this
+
         override fun isSubtypeOf(other: ExtensionFunctionType?): Boolean = true
 
         override val key: KClass<out ExtensionFunctionType> = ExtensionFunctionType::class
@@ -65,6 +72,8 @@ object CompilerConeAttributes {
 
         override fun union(other: UnsafeVariance?): UnsafeVariance? = null
         override fun intersect(other: UnsafeVariance?): UnsafeVariance? = null
+        override fun add(other: UnsafeVariance?): UnsafeVariance = this
+
         override fun isSubtypeOf(other: UnsafeVariance?): Boolean = true
 
         override val key: KClass<out UnsafeVariance> = UnsafeVariance::class

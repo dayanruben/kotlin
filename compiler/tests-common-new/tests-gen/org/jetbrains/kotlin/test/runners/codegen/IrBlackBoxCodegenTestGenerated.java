@@ -2950,6 +2950,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
             }
 
             @Test
+            @TestMetadata("suspendUnitConversion.kt")
+            public void testSuspendUnitConversion() throws Exception {
+                runTest("compiler/testData/codegen/box/callableReference/adaptedReferences/suspendUnitConversion.kt");
+            }
+
+            @Test
             @TestMetadata("toStringNoReflect.kt")
             public void testToStringNoReflect() throws Exception {
                 runTest("compiler/testData/codegen/box/callableReference/adaptedReferences/toStringNoReflect.kt");
@@ -14585,6 +14591,18 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
                 }
 
                 @Test
+                @TestMetadata("tailrecWithExplicitCompanionObjectDispatcher.kt")
+                public void testTailrecWithExplicitCompanionObjectDispatcher() throws Exception {
+                    runTest("compiler/testData/codegen/box/diagnostics/functions/tailRecursion/tailrecWithExplicitCompanionObjectDispatcher.kt");
+                }
+
+                @Test
+                @TestMetadata("tailrecWithExplicitObjectDispatcher.kt")
+                public void testTailrecWithExplicitObjectDispatcher() throws Exception {
+                    runTest("compiler/testData/codegen/box/diagnostics/functions/tailRecursion/tailrecWithExplicitObjectDispatcher.kt");
+                }
+
+                @Test
                 @TestMetadata("thisReferences.kt")
                 public void testThisReferences() throws Exception {
                     runTest("compiler/testData/codegen/box/diagnostics/functions/tailRecursion/thisReferences.kt");
@@ -22944,6 +22962,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         @TestMetadata("genericSamSmartcast.kt")
         public void testGenericSamSmartcast() throws Exception {
             runTest("compiler/testData/codegen/box/javaInterop/genericSamSmartcast.kt");
+        }
+
+        @Test
+        @TestMetadata("javaOuterClassDependsOnInner.kt")
+        public void testJavaOuterClassDependsOnInner() throws Exception {
+            runTest("compiler/testData/codegen/box/javaInterop/javaOuterClassDependsOnInner.kt");
         }
 
         @Test
@@ -41876,6 +41900,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         @TestMetadata("packagePrivate.kt")
         public void testPackagePrivate() throws Exception {
             runTest("compiler/testData/codegen/box/syntheticAccessors/packagePrivate.kt");
+        }
+
+        @Test
+        @TestMetadata("packagePrivateInPrivateInline.kt")
+        public void testPackagePrivateInPrivateInline() throws Exception {
+            runTest("compiler/testData/codegen/box/syntheticAccessors/packagePrivateInPrivateInline.kt");
         }
 
         @Test

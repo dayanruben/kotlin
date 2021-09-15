@@ -49,7 +49,6 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class FirCallResolver(
     private val components: FirAbstractBodyResolveTransformer.BodyResolveTransformerComponents,
-    private val qualifiedResolver: FirQualifiedNameResolver,
 ) {
     private val session = components.session
     private val overloadByLambdaReturnTypeResolver = FirOverloadByLambdaReturnTypeResolver(components)
@@ -72,65 +71,62 @@ class FirCallResolver(
 
     @OptIn(PrivateForInline::class)
     fun resolveCallAndSelectCandidate(functionCall: FirFunctionCall): FirFunctionCall {
-        qualifiedResolver.reset()
         @Suppress("NAME_SHADOWING")
         val functionCall = if (needTransformArguments) {
-            components.context.withIncrementedQualifierPartIndex { functionCall.transformExplicitReceiver() }
-                .also {
-                    components.dataFlowAnalyzer.enterQualifiedAccessExpression()
-                    functionCall.argumentList.transformArguments(transformer, ResolutionMode.ContextDependent)
-                }
+            functionCall.transformExplicitReceiver().also {
+                components.dataFlowAnalyzer.enterQualifiedAccessExpression()
+                functionCall.argumentList.transformArguments(transformer, ResolutionMode.ContextDependent)
+            }
         } else {
             functionCall
         }
 
-        return components.context.withIncrementedQualifierPartIndex {
-            val name = functionCall.calleeReference.name
-            val result = collectCandidates(functionCall, name, origin = functionCall.origin)
+        val name = functionCall.calleeReference.name
+        val result = collectCandidates(functionCall, name, origin = functionCall.origin)
 
-            var forceCandidates: Collection<Candidate>? = null
-            if (result.candidates.isEmpty()) {
-                val newResult = collectCandidates(functionCall, name, CallKind.VariableAccess, origin = functionCall.origin)
-                if (newResult.candidates.isNotEmpty()) {
-                    forceCandidates = newResult.candidates
-                }
+        var forceCandidates: Collection<Candidate>? = null
+        if (result.candidates.isEmpty()) {
+            val newResult = collectCandidates(functionCall, name, CallKind.VariableAccess, origin = functionCall.origin)
+            if (newResult.candidates.isNotEmpty()) {
+                forceCandidates = newResult.candidates
             }
-
-            val nameReference = createResolvedNamedReference(
-                functionCall.calleeReference,
-                name,
-                result.info,
-                result.candidates,
-                result.applicability,
-                functionCall.explicitReceiver,
-                expectedCallKind = if (forceCandidates != null) CallKind.VariableAccess else null,
-                expectedCandidates = forceCandidates
-            )
-
-            val resultExpression = functionCall.transformCalleeReference(StoreNameReference, nameReference)
-            val candidate = (nameReference as? FirNamedReferenceWithCandidate)?.candidate
-            val resolvedReceiver = functionCall.explicitReceiver
-            if (candidate != null && resolvedReceiver is FirResolvedQualifier) {
-                resolvedReceiver.replaceResolvedToCompanionObject(candidate.isFromCompanionObjectTypeScope)
-            }
-
-            // We need desugaring
-            val resultFunctionCall = if (candidate != null && candidate.callInfo != result.info) {
-                functionCall.copyAsImplicitInvokeCall {
-                    explicitReceiver = candidate.callInfo.explicitReceiver
-                    dispatchReceiver = candidate.dispatchReceiverExpression()
-                    extensionReceiver = candidate.extensionReceiverExpression()
-                    argumentList = candidate.callInfo.argumentList
-                }
-            } else {
-                resultExpression
-            }
-            val typeRef = components.typeFromCallee(resultFunctionCall)
-            if (typeRef.type is ConeKotlinErrorType) {
-                resultFunctionCall.resultType = typeRef
-            }
-            return@withIncrementedQualifierPartIndex resultFunctionCall
         }
+
+        val nameReference = createResolvedNamedReference(
+            functionCall.calleeReference,
+            name,
+            result.info,
+            result.candidates,
+            result.applicability,
+            functionCall.explicitReceiver,
+            expectedCallKind = if (forceCandidates != null) CallKind.VariableAccess else null,
+            expectedCandidates = forceCandidates
+        )
+
+        val resultExpression = functionCall.transformCalleeReference(StoreNameReference, nameReference)
+        val candidate = (nameReference as? FirNamedReferenceWithCandidate)?.candidate
+        val resolvedReceiver = functionCall.explicitReceiver
+        if (candidate != null && resolvedReceiver is FirResolvedQualifier) {
+            resolvedReceiver.replaceResolvedToCompanionObject(candidate.isFromCompanionObjectTypeScope)
+        }
+
+        // We need desugaring
+        val resultFunctionCall = if (candidate != null && candidate.callInfo != result.info) {
+            functionCall.copyAsImplicitInvokeCall {
+                explicitReceiver = candidate.callInfo.explicitReceiver
+                dispatchReceiver = candidate.dispatchReceiverExpression()
+                extensionReceiver = candidate.extensionReceiverExpression()
+                argumentList = candidate.callInfo.argumentList
+            }
+        } else {
+            resultExpression
+        }
+        val typeRef = components.typeFromCallee(resultFunctionCall)
+        if (typeRef.type is ConeKotlinErrorType) {
+            resultFunctionCall.resultType = typeRef
+        }
+
+        return resultFunctionCall
     }
 
     private inline fun <reified Q : FirQualifiedAccess> Q.transformExplicitReceiver(): Q {
@@ -138,13 +134,22 @@ class FirCallResolver(
             explicitReceiver as? FirQualifiedAccessExpression
                 ?: return transformExplicitReceiver(transformer, ResolutionMode.ContextIndependent) as Q
 
-        val callee =
-            explicitReceiver.calleeReference as? FirSuperReference
-                ?: return transformExplicitReceiver(transformer, ResolutionMode.ContextIndependent) as Q
+        (explicitReceiver.calleeReference as? FirSuperReference)?.let {
+            transformer.transformSuperReceiver(it, explicitReceiver, this)
+            return this
+        }
 
-        transformer.transformSuperReceiver(callee, explicitReceiver, this)
+        if (explicitReceiver is FirPropertyAccessExpression) {
+            this.replaceExplicitReceiver(
+                transformer.transformQualifiedAccessExpression(
+                    explicitReceiver, ResolutionMode.ContextIndependent,
+                    isUsedAsReceiver = true
+                ) as FirExpression
+            )
+            return this
+        }
 
-        return this
+        return transformExplicitReceiver(transformer, ResolutionMode.ContextIndependent) as Q
     }
 
     private data class ResolutionResult(
@@ -167,9 +172,6 @@ class FirCallResolver(
             name,
             explicitReceiver,
             argumentList,
-            isPotentialQualifierPart = qualifiedAccess !is FirFunctionCall &&
-                    qualifiedAccess.explicitReceiver is FirResolvedQualifier &&
-                    qualifiedResolver.isPotentialQualifierPartPosition(),
             isImplicitInvoke = qualifiedAccess is FirImplicitInvokeCall,
             typeArguments,
             session,
@@ -205,12 +207,15 @@ class FirCallResolver(
         return ResolutionResult(info, result.currentApplicability, reducedCandidates)
     }
 
-    fun <T : FirQualifiedAccess> resolveVariableAccessAndSelectCandidate(qualifiedAccess: T): FirStatement {
-        return resolveVariableAccessAndSelectCandidateImpl(qualifiedAccess) { true }
+    fun <T : FirQualifiedAccess> resolveVariableAccessAndSelectCandidate(qualifiedAccess: T, isUsedAsReceiver: Boolean): FirStatement {
+        return resolveVariableAccessAndSelectCandidateImpl(qualifiedAccess, isUsedAsReceiver) { true }
     }
 
-    fun resolveOnlyEnumOrQualifierAccessAndSelectCandidate(qualifiedAccess: FirQualifiedAccessExpression): FirStatement {
-        return resolveVariableAccessAndSelectCandidateImpl(qualifiedAccess) accept@{ candidates ->
+    fun resolveOnlyEnumOrQualifierAccessAndSelectCandidate(
+        qualifiedAccess: FirQualifiedAccessExpression,
+        isUsedAsReceiver: Boolean,
+    ): FirStatement {
+        return resolveVariableAccessAndSelectCandidateImpl(qualifiedAccess, isUsedAsReceiver) accept@{ candidates ->
             val symbol = candidates.singleOrNull()?.symbol ?: return@accept false
             symbol is FirEnumEntrySymbol || symbol is FirRegularClassSymbol
         }
@@ -218,129 +223,125 @@ class FirCallResolver(
 
     private fun <T : FirQualifiedAccess> resolveVariableAccessAndSelectCandidateImpl(
         qualifiedAccess: T,
+        isUsedAsReceiver: Boolean,
         acceptCandidates: (Collection<Candidate>) -> Boolean
     ): FirStatement {
         val callee = qualifiedAccess.calleeReference as? FirSimpleNamedReference ?: return qualifiedAccess
 
-        return components.context.withIncrementedQualifierPartIndex {
-            qualifiedResolver.initProcessingQualifiedAccess(callee, qualifiedAccess.typeArguments)
+        @Suppress("NAME_SHADOWING")
+        val qualifiedAccess = qualifiedAccess.transformExplicitReceiver<FirQualifiedAccess>()
+        val nonFatalDiagnosticFromExpression = (qualifiedAccess as? FirPropertyAccessExpression)?.nonFatalDiagnostics
 
-            @Suppress("NAME_SHADOWING")
-            val qualifiedAccess = qualifiedAccess.transformExplicitReceiver<FirQualifiedAccess>()
-            qualifiedResolver.replacedQualifier(qualifiedAccess)?.let { resolvedQualifierPart ->
-                return@withIncrementedQualifierPartIndex resolvedQualifierPart
+        val basicResult by lazy(LazyThreadSafetyMode.NONE) {
+            collectCandidates(qualifiedAccess, callee.name)
+        }
+
+        // Even if it's not receiver, it makes sense to continue qualifier if resolution is unsuccessful
+        // just to try to resolve to package/class and then report meaningful error at FirStandaloneQualifierChecker
+        if (isUsedAsReceiver || !basicResult.applicability.isSuccess) {
+            (qualifiedAccess.explicitReceiver as? FirResolvedQualifier)
+                ?.continueQualifier(
+                    callee,
+                    qualifiedAccess.source,
+                    qualifiedAccess.typeArguments,
+                    nonFatalDiagnosticFromExpression,
+                    components
+                )
+                ?.let { return it }
+        }
+
+        var result = basicResult
+
+        if (qualifiedAccess.explicitReceiver == null) {
+            // Even if we successfully resolved to some companion/named object, we should re-try with qualifier resolution
+            // import D.*
+            // class A {
+            //     object B
+            // }
+            // class D {
+            //     object A
+            // }
+            // fun main() {
+            //     A // should resolved to D.A
+            //     A.B // should be resolved to A.B
+            // }
+            if (!result.applicability.isSuccess || (isUsedAsReceiver && result.candidates.all { it.symbol is FirRegularClassSymbol })) {
+                components.resolveRootPartOfQualifier(
+                    callee, qualifiedAccess.source, qualifiedAccess.typeArguments, nonFatalDiagnosticFromExpression,
+                )?.let { return it }
             }
+        }
 
-            var result = collectCandidates(qualifiedAccess, callee.name)
-
-            if (qualifiedAccess.explicitReceiver == null) {
-                if (!result.applicability.isSuccess) {
-                    // We should run QualifierResolver if no successful candidates are available
-                    // Otherwise expression (even ambiguous) beat qualifier
-                    qualifiedResolver.tryResolveAsQualifier(qualifiedAccess.source)?.let { resolvedQualifier ->
-                        return@withIncrementedQualifierPartIndex resolvedQualifier
-                    }
-                }
-                qualifiedResolver.reset()
+        var functionCallExpected = false
+        if (result.candidates.isEmpty() && qualifiedAccess !is FirFunctionCall) {
+            val newResult = collectCandidates(qualifiedAccess, callee.name, CallKind.Function)
+            if (newResult.candidates.isNotEmpty()) {
+                result = newResult
+                functionCallExpected = true
             }
+        }
 
-            var functionCallExpected = false
-            if (result.candidates.isEmpty() && qualifiedAccess !is FirFunctionCall) {
-                val newResult = collectCandidates(qualifiedAccess, callee.name, CallKind.Function)
-                if (newResult.candidates.isNotEmpty()) {
-                    result = newResult
-                    functionCallExpected = true
-                }
-            }
+        val reducedCandidates = result.candidates
+        if (!acceptCandidates(reducedCandidates)) return qualifiedAccess
 
-            val reducedCandidates = result.candidates
-            if (!acceptCandidates(reducedCandidates)) return@withIncrementedQualifierPartIndex qualifiedAccess
+        val nameReference = createResolvedNamedReference(
+            callee,
+            callee.name,
+            result.info,
+            reducedCandidates,
+            result.applicability,
+            qualifiedAccess.explicitReceiver,
+            expectedCallKind = if (functionCallExpected) CallKind.Function else null
+        )
 
-            val nameReference = createResolvedNamedReference(
-                callee,
-                callee.name,
-                result.info,
-                reducedCandidates,
-                result.applicability,
-                qualifiedAccess.explicitReceiver,
-                expectedCallKind = if (functionCallExpected) CallKind.Function else null
-            )
+        val referencedSymbol = when (nameReference) {
+            is FirResolvedNamedReference -> nameReference.resolvedSymbol
+            is FirNamedReferenceWithCandidate -> nameReference.candidateSymbol
+            else -> null
+        }
 
-            val referencedSymbol = when (nameReference) {
-                is FirResolvedNamedReference -> nameReference.resolvedSymbol
-                is FirNamedReferenceWithCandidate -> nameReference.candidateSymbol
-                else -> null
-            }
+        val diagnostic = when (nameReference) {
+            is FirErrorReferenceWithCandidate -> nameReference.diagnostic
+            is FirErrorNamedReference -> nameReference.diagnostic
+            else -> null
+        }
 
-            val diagnostic = when (nameReference) {
-                is FirErrorReferenceWithCandidate -> nameReference.diagnostic
-                is FirErrorNamedReference -> nameReference.diagnostic
-                else -> null
-            }
+        (qualifiedAccess.explicitReceiver as? FirResolvedQualifier)?.replaceResolvedToCompanionObject(
+            reducedCandidates.isNotEmpty() && reducedCandidates.all { it.isFromCompanionObjectTypeScope }
+        )
 
-            (qualifiedAccess.explicitReceiver as? FirResolvedQualifier)?.replaceResolvedToCompanionObject(
-                reducedCandidates.isNotEmpty() && reducedCandidates.all { it.isFromCompanionObjectTypeScope }
-            )
-
-            when {
-                referencedSymbol is FirClassLikeSymbol<*> -> {
-                    return@withIncrementedQualifierPartIndex components.buildResolvedQualifierForClass(
-                        referencedSymbol,
+        when {
+            referencedSymbol is FirClassLikeSymbol<*> -> {
+                return components.buildResolvedQualifierForClass(
+                    referencedSymbol,
+                    qualifiedAccess.source,
+                    qualifiedAccess.typeArguments,
+                    diagnostic,
+                    nonFatalDiagnostics = extractNonFatalDiagnostics(
                         nameReference.source,
-                        qualifiedAccess.typeArguments,
-                        diagnostic,
-                        nonFatalDiagnostics = extractNonFatalDiagnostics(
-                            nameReference.source,
-                            qualifiedAccess.explicitReceiver,
-                            referencedSymbol,
-                            (qualifiedAccess as? FirPropertyAccessExpression)?.nonFatalDiagnostics
-                        )
+                        qualifiedAccess.explicitReceiver,
+                        referencedSymbol,
+                        nonFatalDiagnosticFromExpression,
                     )
+                )
+            }
+            referencedSymbol is FirTypeParameterSymbol && referencedSymbol.fir.isReified -> {
+                return buildResolvedReifiedParameterReference {
+                    source = nameReference.source
+                    symbol = referencedSymbol
+                    typeRef = typeForReifiedParameterReference(this)
                 }
-                referencedSymbol is FirTypeParameterSymbol && referencedSymbol.fir.isReified -> {
-                    return@withIncrementedQualifierPartIndex buildResolvedReifiedParameterReference {
-                        source = nameReference.source
-                        symbol = referencedSymbol
-                        typeRef = typeForReifiedParameterReference(this)
-                    }
-                }
             }
-
-            var resultExpression = qualifiedAccess.transformCalleeReference(StoreNameReference, nameReference)
-            if (reducedCandidates.size == 1) {
-                val candidate = reducedCandidates.single()
-                resultExpression = resultExpression.transformDispatchReceiver(StoreReceiver, candidate.dispatchReceiverExpression())
-                resultExpression = resultExpression.transformExtensionReceiver(StoreReceiver, candidate.extensionReceiverExpression())
-            }
-            if (resultExpression is FirExpression) transformer.storeTypeFromCallee(resultExpression)
-            return@withIncrementedQualifierPartIndex resultExpression
-        }
-    }
-
-    private fun extractNonFatalDiagnostics(
-        source: FirSourceElement?,
-        explicitReceiver: FirExpression?,
-        symbol: FirClassLikeSymbol<*>,
-        extraNotFatalDiagnostics: List<ConeDiagnostic>?
-    ): List<ConeDiagnostic> {
-        val prevDiagnostics = (explicitReceiver as? FirResolvedQualifier)?.nonFatalDiagnostics ?: emptyList()
-        var result: MutableList<ConeDiagnostic>? = null
-
-        val deprecation = symbol.fir.deprecation?.forUseSite()
-        if (deprecation != null) {
-            result = mutableListOf()
-            result.addAll(prevDiagnostics)
-            result.add(ConeDeprecated(source, symbol, deprecation))
-        }
-        if (extraNotFatalDiagnostics != null && extraNotFatalDiagnostics.isNotEmpty()) {
-            if (result == null) {
-                result = mutableListOf()
-                result.addAll(prevDiagnostics)
-            }
-            result.addAll(extraNotFatalDiagnostics)
         }
 
-        return result?.toList() ?: prevDiagnostics
+        var resultExpression = qualifiedAccess.transformCalleeReference(StoreNameReference, nameReference)
+        if (reducedCandidates.size == 1) {
+            val candidate = reducedCandidates.single()
+            resultExpression = resultExpression.transformDispatchReceiver(StoreReceiver, candidate.dispatchReceiverExpression())
+            resultExpression = resultExpression.transformExtensionReceiver(StoreReceiver, candidate.extensionReceiverExpression())
+        }
+        if (resultExpression is FirExpression) transformer.storeTypeFromCallee(resultExpression)
+        return resultExpression
     }
 
     fun resolveCallableReference(
@@ -450,7 +451,6 @@ class FirCallResolver(
             name,
             explicitReceiver = null,
             delegatedConstructorCall.argumentList,
-            isPotentialQualifierPart = false,
             isImplicitInvoke = false,
             typeArguments = typeArguments,
             session,
@@ -499,7 +499,6 @@ class FirCallResolver(
             name = reference.name,
             explicitReceiver = null,
             annotation.argumentList,
-            isPotentialQualifierPart = false,
             isImplicitInvoke = false,
             typeArguments = emptyList(),
             session,
@@ -610,7 +609,6 @@ class FirCallResolver(
             callableReferenceAccess.calleeReference.name,
             callableReferenceAccess.explicitReceiver,
             FirEmptyArgumentList,
-            isPotentialQualifierPart = false,
             isImplicitInvoke = false,
             emptyList(),
             session,

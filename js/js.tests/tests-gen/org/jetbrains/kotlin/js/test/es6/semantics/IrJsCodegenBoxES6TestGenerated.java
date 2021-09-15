@@ -1728,6 +1728,11 @@ public class IrJsCodegenBoxES6TestGenerated extends AbstractIrJsCodegenBoxES6Tes
                 runTest("compiler/testData/codegen/box/callableReference/adaptedReferences/simpleEmptyVararg.kt");
             }
 
+            @TestMetadata("suspendUnitConversion.kt")
+            public void testSuspendUnitConversion() throws Exception {
+                runTest("compiler/testData/codegen/box/callableReference/adaptedReferences/suspendUnitConversion.kt");
+            }
+
             @TestMetadata("unboundReferences.kt")
             public void testUnboundReferences() throws Exception {
                 runTest("compiler/testData/codegen/box/callableReference/adaptedReferences/unboundReferences.kt");
@@ -10584,6 +10589,16 @@ public class IrJsCodegenBoxES6TestGenerated extends AbstractIrJsCodegenBoxES6Tes
                 @TestMetadata("tailRecursionInFinally.kt")
                 public void testTailRecursionInFinally() throws Exception {
                     runTest("compiler/testData/codegen/box/diagnostics/functions/tailRecursion/tailRecursionInFinally.kt");
+                }
+
+                @TestMetadata("tailrecWithExplicitCompanionObjectDispatcher.kt")
+                public void testTailrecWithExplicitCompanionObjectDispatcher() throws Exception {
+                    runTest("compiler/testData/codegen/box/diagnostics/functions/tailRecursion/tailrecWithExplicitCompanionObjectDispatcher.kt");
+                }
+
+                @TestMetadata("tailrecWithExplicitObjectDispatcher.kt")
+                public void testTailrecWithExplicitObjectDispatcher() throws Exception {
+                    runTest("compiler/testData/codegen/box/diagnostics/functions/tailRecursion/tailrecWithExplicitObjectDispatcher.kt");
                 }
 
                 @TestMetadata("thisReferences.kt")

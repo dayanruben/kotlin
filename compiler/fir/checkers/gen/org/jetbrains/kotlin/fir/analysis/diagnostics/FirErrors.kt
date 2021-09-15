@@ -66,6 +66,7 @@ import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtPrimaryConstructor
@@ -319,6 +320,8 @@ object FirErrors {
     val SPREAD_OF_NULLABLE by error0<PsiElement>(SourceElementPositioningStrategies.SPREAD_OPERATOR)
     val ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_FUNCTION by deprecationError0<KtExpression>(ProhibitAssigningSingleElementsToVarargsInNamedForm)
     val ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_ANNOTATION by deprecationError0<KtExpression>(ProhibitAssigningSingleElementsToVarargsInNamedForm)
+    val REDUNDANT_SPREAD_OPERATOR_IN_NAMED_FORM_IN_ANNOTATION by warning0<KtExpression>()
+    val REDUNDANT_SPREAD_OPERATOR_IN_NAMED_FORM_IN_FUNCTION by warning0<KtExpression>()
 
     // Ambiguity
     val OVERLOAD_RESOLUTION_AMBIGUITY by error1<PsiElement, Collection<FirBasedSymbol<*>>>(SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED)
@@ -438,6 +441,10 @@ object FirErrors {
     val FORBIDDEN_VARARG_PARAMETER_TYPE by error1<KtParameter, ConeKotlinType>(SourceElementPositioningStrategies.PARAMETER_VARARG_MODIFIER)
     val VALUE_PARAMETER_WITH_NO_TYPE_ANNOTATION by error0<KtParameter>()
     val CANNOT_INFER_PARAMETER_TYPE by error0<KtElement>()
+    val NO_TAIL_CALLS_FOUND by warning0<KtNamedFunction>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE)
+    val TAILREC_ON_VIRTUAL_MEMBER_ERROR by error0<KtNamedFunction>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE)
+    val NON_TAIL_RECURSIVE_CALL by warning0<PsiElement>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
+    val TAIL_RECURSION_IN_TRY_IS_NOT_SUPPORTED by warning0<PsiElement>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
 
     // Fun interfaces
     val FUN_INTERFACE_CONSTRUCTOR_REFERENCE by error0<KtExpression>(SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED)

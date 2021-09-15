@@ -298,6 +298,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_MODIFIER_FORM
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_PRIVATE_CONSTRUCTOR_IN_ENUM
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_PRIVATE_OR_PROTECTED_CONSTRUCTOR_IN_SEALED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_PUBLIC_CALL_FROM_PUBLIC_INLINE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_TAIL_RECURSIVE_CALL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NON_VARARG_SPREAD
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NOTHING_TO_INLINE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NOTHING_TO_OVERRIDE
@@ -315,6 +316,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NO_GET_METHOD
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NO_RECEIVER_ALLOWED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NO_RETURN_IN_FUNCTION_WITH_BLOCK_BODY
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NO_SET_METHOD
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NO_TAIL_CALLS_FOUND
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NO_THIS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NO_VALUE_FOR_PARAMETER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NULLABLE_INLINE_PARAMETER
@@ -372,6 +374,8 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REDUNDANT_PROJECT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REDUNDANT_RETURN_UNIT_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REDUNDANT_SETTER_PARAMETER_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REDUNDANT_SINGLE_EXPRESSION_STRING_TEMPLATE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REDUNDANT_SPREAD_OPERATOR_IN_NAMED_FORM_IN_ANNOTATION
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REDUNDANT_SPREAD_OPERATOR_IN_NAMED_FORM_IN_FUNCTION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REDUNDANT_VISIBILITY_MODIFIER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REIFIED_TYPE_FORBIDDEN_SUBSTITUTION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.REIFIED_TYPE_IN_CATCH_CLAUSE
@@ -418,6 +422,8 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SUPER_CALL_FROM_P
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SUPER_IS_NOT_AN_EXPRESSION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SUPER_NOT_AVAILABLE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.SYNTAX
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TAILREC_ON_VIRTUAL_MEMBER_ERROR
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TAIL_RECURSION_IN_TRY_IS_NOT_SUPPORTED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.THROWABLE_TYPE_MISMATCH
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TOO_MANY_ARGUMENTS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.TOPLEVEL_TYPEALIASES_ONLY
@@ -802,6 +808,8 @@ class FirDefaultErrorMessages {
             map.put(SPREAD_OF_NULLABLE, "The spread operator (*foo) may not be applied to an argument of nullable type")
             map.put(ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_FUNCTION, "Assigning single elements to varargs in named form is forbidden")
             map.put(ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_ANNOTATION, "Assigning single elements to varargs in named form is forbidden")
+            map.put(REDUNDANT_SPREAD_OPERATOR_IN_NAMED_FORM_IN_ANNOTATION, "Redundant spread (*) operator");
+            map.put(REDUNDANT_SPREAD_OPERATOR_IN_NAMED_FORM_IN_FUNCTION, "Redundant spread (*) operator");
 
             map.put(TYPE_MISMATCH, "Type mismatch: inferred type is {1} but {0} was expected", TO_STRING, TO_STRING)
             map.put(THROWABLE_TYPE_MISMATCH, "Throwable type mismatch: actual type is {0}", TO_STRING)
@@ -1218,6 +1226,10 @@ class FirDefaultErrorMessages {
             map.put(FORBIDDEN_VARARG_PARAMETER_TYPE, "Forbidden vararg parameter type: {0}", RENDER_TYPE)
             map.put(VALUE_PARAMETER_WITH_NO_TYPE_ANNOTATION, "A type annotation is required on a value parameter")
             map.put(CANNOT_INFER_PARAMETER_TYPE, "cannot infer a type for this parameter. Please specify it explicitly.")
+            map.put(NO_TAIL_CALLS_FOUND, "A function is marked as tail-recursive but no tail calls are found.")
+            map.put(TAILREC_ON_VIRTUAL_MEMBER_ERROR, "Tailrec is not allowed on open members");
+            map.put(NON_TAIL_RECURSIVE_CALL, "Recursive call is not a tail call");
+            map.put(TAIL_RECURSION_IN_TRY_IS_NOT_SUPPORTED, "Tail recursion optimization inside try/catch/finally is not supported");
 
             // Fun interfaces
             map.put(FUN_INTERFACE_CONSTRUCTOR_REFERENCE, "Functional/SAM interface constructor references are prohibited")

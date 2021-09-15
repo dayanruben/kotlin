@@ -12,8 +12,7 @@ import org.jetbrains.kotlin.backend.common.lower.parentsWithSelf
 import org.jetbrains.kotlin.backend.jvm.JvmBackendContext
 import org.jetbrains.kotlin.backend.jvm.JvmLoweredDeclarationOrigin
 import org.jetbrains.kotlin.backend.jvm.ir.*
-import org.jetbrains.kotlin.backend.jvm.lower.inlineclasses.unboxInlineClass
-import org.jetbrains.kotlin.backend.jvm.lower.suspendFunctionOriginal
+import org.jetbrains.kotlin.backend.jvm.unboxInlineClass
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.codegen.JvmCodegenUtil
@@ -27,12 +26,12 @@ import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.declarations.lazy.IrLazyClass
-import org.jetbrains.kotlin.ir.declarations.lazy.IrLazyFunction
 import org.jetbrains.kotlin.ir.declarations.lazy.IrLazyFunctionBase
 import org.jetbrains.kotlin.ir.declarations.lazy.IrMaybeDeserializedClass
 import org.jetbrains.kotlin.ir.descriptors.IrBasedSimpleFunctionDescriptor
 import org.jetbrains.kotlin.ir.descriptors.toIrBasedDescriptor
-import org.jetbrains.kotlin.ir.expressions.*
+import org.jetbrains.kotlin.ir.expressions.IrCall
+import org.jetbrains.kotlin.ir.expressions.IrConst
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.load.java.*
@@ -309,7 +308,7 @@ class MethodSignatureMapper(private val context: JvmBackendContext) {
 
     // Boxing is only necessary for 'remove(E): Boolean' of a MutableCollection<Int> implementation.
     // Otherwise this method might clash with 'remove(I): E' defined in the java.util.List JDK interface (mapped to kotlin 'removeAt').
-    internal fun shouldBoxSingleValueParameterForSpecialCaseOfRemove(irFunction: IrFunction): Boolean {
+    fun shouldBoxSingleValueParameterForSpecialCaseOfRemove(irFunction: IrFunction): Boolean {
         if (irFunction !is IrSimpleFunction) return false
         if (irFunction.name.asString() != "remove" && !irFunction.name.asString().startsWith("remove-")) return false
         if (irFunction.isFromJava()) return false
@@ -426,7 +425,7 @@ class MethodSignatureMapper(private val context: JvmBackendContext) {
         return null
     }
 
-    internal fun mapCalleeToAsmMethod(function: IrSimpleFunction, isSuperCall: Boolean = false): Method =
+    fun mapCalleeToAsmMethod(function: IrSimpleFunction, isSuperCall: Boolean = false): Method =
         mapAsmMethod(findSuperDeclaration(function, isSuperCall))
 
     // Copied from KotlinTypeMapper.findSuperDeclaration.

@@ -1,3 +1,4 @@
+// COMPARE_WITH_LIGHT_TREE
 package foo
 
 class X {}
@@ -16,7 +17,7 @@ fun main() {
     <!EXPRESSION_EXPECTED_PACKAGE_FOUND!>java<!> = null
     <!NO_COMPANION_OBJECT!>System<!> = null
     <!NO_COMPANION_OBJECT!>System<!>!!
-    java.lang.<!NO_COMPANION_OBJECT!>System<!> = null
+    <!NO_COMPANION_OBJECT{LT}!>java.lang.<!NO_COMPANION_OBJECT{PSI}!>System<!><!> = null
     java.lang.<!NO_COMPANION_OBJECT!>System<!>!!
     <!NO_COMPANION_OBJECT!>System<!> is Int
     <!INVISIBLE_REFERENCE!>System<!>()

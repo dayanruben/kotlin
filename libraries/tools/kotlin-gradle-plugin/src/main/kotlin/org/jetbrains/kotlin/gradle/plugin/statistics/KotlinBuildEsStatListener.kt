@@ -32,7 +32,14 @@ class KotlinBuildEsStatListener(val projectName: String, val reportStatistics: L
     OperationCompletionListener, AutoCloseable, TaskExecutionListener {
 
     val label by lazy { CompilerSystemProperties.KOTLIN_STAT_LABEl_PROPERTY.value }
-    val hostName by lazy { InetAddress.getLocalHost().hostName }
+    val hostName: String? by lazy {
+        try {
+            InetAddress.getLocalHost().hostName
+        } catch (_: Exception) {
+            //do nothing
+            null
+        }
+    }
 
     override fun onFinish(event: FinishEvent?) {
         if (event is TaskFinishEvent) {
@@ -61,8 +68,7 @@ class KotlinBuildEsStatListener(val projectName: String, val reportStatistics: L
         }
         val taskExecutionResult = TaskExecutionResults[taskPath]
         val timeData = taskExecutionResult?.buildMetrics?.buildTimes?.asMap()?.filterValues { value -> value != 0L } ?: emptyMap()
-        val perfData = taskExecutionResult?.buildMetrics?.buildPerformanceMetrics?.asMap()?.mapValues { it.value / 1000 }
-            ?.filterValues { value -> value != 0L } ?: emptyMap()
+        val perfData = taskExecutionResult?.buildMetrics?.buildPerformanceMetrics?.asMap()?.filterValues { value -> value != 0L } ?: emptyMap()
         val changes = when (val changedFiles = taskExecutionResult?.taskInfo?.changedFiles) {
             is ChangedFiles.Known -> changedFiles.modified.map { it.absolutePath } + changedFiles.removed.map { it.absolutePath }
             is ChangedFiles.Dependencies -> changedFiles.modified.map { it.absolutePath } + changedFiles.removed.map { it.absolutePath }

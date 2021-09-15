@@ -463,6 +463,8 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
 
         val ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_FUNCTION by deprecationError<KtExpression>(LanguageFeature.ProhibitAssigningSingleElementsToVarargsInNamedForm)
         val ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_ANNOTATION by deprecationError<KtExpression>(LanguageFeature.ProhibitAssigningSingleElementsToVarargsInNamedForm)
+        val REDUNDANT_SPREAD_OPERATOR_IN_NAMED_FORM_IN_ANNOTATION by warning<KtExpression>()
+        val REDUNDANT_SPREAD_OPERATOR_IN_NAMED_FORM_IN_FUNCTION by warning<KtExpression>()
     }
 
     val AMBIGUITY by object : DiagnosticGroup("Ambiguity") {
@@ -809,6 +811,11 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
 
         // TODO: replace with KtParameter
         val CANNOT_INFER_PARAMETER_TYPE by error<KtElement>()
+
+        val NO_TAIL_CALLS_FOUND by warning<KtNamedFunction>(PositioningStrategy.DECLARATION_SIGNATURE)
+        val TAILREC_ON_VIRTUAL_MEMBER_ERROR by error<KtNamedFunction>(PositioningStrategy.DECLARATION_SIGNATURE)
+        val NON_TAIL_RECURSIVE_CALL by warning<PsiElement>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED)
+        val TAIL_RECURSION_IN_TRY_IS_NOT_SUPPORTED by warning<PsiElement>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED)
     }
 
     val FUN_INTERFACES by object : DiagnosticGroup("Fun interfaces") {

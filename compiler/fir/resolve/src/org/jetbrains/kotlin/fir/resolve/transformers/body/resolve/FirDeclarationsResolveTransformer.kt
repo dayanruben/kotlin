@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.fir.resolve.constructFunctionalTypeRef
 import org.jetbrains.kotlin.fir.resolve.dfa.FirControlFlowGraphReferenceImpl
 import org.jetbrains.kotlin.fir.resolve.dfa.unwrapSmartcastExpression
 import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeLocalVariableNoTypeOrInitializer
+import org.jetbrains.kotlin.fir.resolve.inference.ResolvedLambdaAtom
 import org.jetbrains.kotlin.fir.resolve.inference.extractLambdaInfoFromFunctionalType
 import org.jetbrains.kotlin.fir.resolve.inference.isSuspendFunctionType
 import org.jetbrains.kotlin.fir.resolve.mode
@@ -139,6 +140,7 @@ open class FirDeclarationsResolveTransformer(transformer: FirBodyResolveTransfor
         val shouldResolveEverything = !implicitTypeOnly
         return withFullBodyResolve {
             val initializerIsAlreadyResolved = bodyResolveState >= FirPropertyBodyResolveState.INITIALIZER_RESOLVED
+            var backingFieldIsAlreadyResolved = false
             context.withProperty(property) {
                 context.forPropertyInitializer {
                     property.transformDelegate(transformer, ResolutionMode.ContextDependentDelegate)
@@ -149,7 +151,11 @@ open class FirDeclarationsResolveTransformer(transformer: FirBodyResolveTransfor
                     if (property.initializer != null) {
                         storeVariableReturnType(property)
                     }
-                    property.transformBackingField(transformer, withExpectedType(property.returnTypeRef))
+                    val canResolveBackingFieldEarly = property.hasExplicitBackingField || property.returnTypeRef is FirResolvedTypeRef
+                    if (!initializerIsAlreadyResolved && canResolveBackingFieldEarly) {
+                        property.transformBackingField(transformer, withExpectedType(property.returnTypeRef))
+                        backingFieldIsAlreadyResolved = true
+                    }
                 }
                 val delegate = property.delegate
                 if (delegate != null) {
@@ -162,7 +168,8 @@ open class FirDeclarationsResolveTransformer(transformer: FirBodyResolveTransfor
                     val hasNonDefaultAccessors = property.getter != null && property.getter !is FirDefaultPropertyAccessor ||
                             property.setter != null && property.setter !is FirDefaultPropertyAccessor
                     val mayResolveSetter = shouldResolveEverything || !hasNonDefaultAccessors
-                    val mayResolveGetter = mayResolveSetter || property.initializer == null
+                    val propertyTypeIsKnown = property.returnTypeRef is FirResolvedTypeRef || property.returnTypeRef is FirErrorTypeRef
+                    val mayResolveGetter = mayResolveSetter || !propertyTypeIsKnown
                     if (mayResolveGetter) {
                         property.transformAccessors(mayResolveSetter)
                         property.replaceBodyResolveState(
@@ -173,6 +180,9 @@ open class FirDeclarationsResolveTransformer(transformer: FirBodyResolveTransfor
                 }
             }
             if (!initializerIsAlreadyResolved) {
+                if (!backingFieldIsAlreadyResolved) {
+                    property.transformBackingField(transformer, withExpectedType(property.returnTypeRef))
+                }
                 dataFlowAnalyzer.exitProperty(property)?.let {
                     property.replaceControlFlowGraphReference(FirControlFlowGraphReferenceImpl(it))
                 }
@@ -696,111 +706,124 @@ open class FirDeclarationsResolveTransformer(transformer: FirBodyResolveTransfor
                         buildImplicitTypeRef()
                     }
                 }
-                val resolvedLambdaAtom = (expectedTypeRef as? FirResolvedTypeRef)?.let {
-                    extractLambdaInfoFromFunctionalType(
-                        it.type, it, anonymousFunction, returnTypeVariable = null, components, candidate = null
-                    )
-                }
-                var lambda = anonymousFunction
-                val valueParameters = when (resolvedLambdaAtom) {
-                    null -> lambda.valueParameters
-                    else -> {
-                        val singleParameterType = resolvedLambdaAtom.parameters.singleOrNull()
-                        when {
-                            lambda.valueParameters.isEmpty() && singleParameterType != null -> {
-                                val name = Name.identifier("it")
-                                val itParam = buildValueParameter {
-                                    source = lambda.source?.fakeElement(FirFakeSourceElementKind.ItLambdaParameter)
-                                    moduleData = session.moduleData
-                                    origin = FirDeclarationOrigin.Source
-                                    returnTypeRef = singleParameterType.toFirResolvedTypeRef()
-                                    this.name = name
-                                    symbol = FirValueParameterSymbol(name)
-                                    isCrossinline = false
-                                    isNoinline = false
-                                    isVararg = false
-                                }
-                                listOf(itParam)
-                            }
-
-                            else -> {
-                                lambda.valueParameters.mapIndexed { index, param ->
-                                    if (param.returnTypeRef is FirResolvedTypeRef) {
-                                        param
-                                    } else {
-                                        val resolvedType =
-                                            param.returnTypeRef.resolvedTypeFromPrototype(resolvedLambdaAtom.parameters[index])
-                                        param.replaceReturnTypeRef(resolvedType)
-                                        param
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                val returnTypeRefFromResolvedAtom =
-                    resolvedLambdaAtom?.returnType?.let { lambda.returnTypeRef.resolvedTypeFromPrototype(it) }
-                lambda = lambda.copy(
-                    receiverTypeRef = lambda.receiverTypeRef?.takeIf { it !is FirImplicitTypeRef }
-                        ?: resolvedLambdaAtom?.receiver?.let { lambda.receiverTypeRef?.resolvedTypeFromPrototype(it) },
-                    valueParameters = valueParameters,
-                    returnTypeRef = (lambda.returnTypeRef as? FirResolvedTypeRef)
-                        ?: returnTypeRefFromResolvedAtom
-                        ?: lambda.returnTypeRef
-                )
-                lambda = lambda.transformValueParameters(ImplicitToErrorTypeTransformer, null)
-                val bodyExpectedType = returnTypeRefFromResolvedAtom ?: expectedTypeRef
-                context.withAnonymousFunction(lambda, components, data) {
-                    withFullBodyResolve {
-                        lambda = transformFunction(lambda, withExpectedType(bodyExpectedType)) as FirAnonymousFunction
-                    }
-                }
-                // To separate function and separate commit
-                val writer = FirCallCompletionResultsWriterTransformer(
-                    session,
-                    ConeSubstitutor.Empty,
-                    components.returnTypeCalculator,
-                    inferenceComponents.approximator,
-                    dataFlowAnalyzer,
-                )
-                lambda.transformSingle(writer, expectedTypeRef.coneTypeSafe<ConeKotlinType>()?.toExpectedType())
-
-                val returnStatements = dataFlowAnalyzer.returnExpressionsOfAnonymousFunction(lambda)
-                val returnExpressionsExceptLast =
-                    if (returnStatements.size > 1)
-                        returnStatements - lambda.body?.statements?.lastOrNull()
-                    else
-                        returnStatements
-                val implicitReturns = returnExpressionsExceptLast.filter {
-                    (it as? FirExpression)?.typeRef is FirImplicitUnitTypeRef
-                }
-                val returnType =
-                    if (implicitReturns.isNotEmpty()) {
-                        // i.e., early return, e.g., l@{ ... return@l ... }
-                        // Note that the last statement will be coerced to Unit if needed.
-                        session.builtinTypes.unitType.type
-                    } else {
-                        // Otherwise, compute the common super type of all possible return expressions
-                        inferenceComponents.ctx.commonSuperTypeOrNull(
-                            returnStatements.mapNotNull { (it as? FirExpression)?.resultType?.coneType }
-                        ) ?: session.builtinTypes.unitType.type
-                    }
-                lambda.replaceReturnTypeRef(
-                    lambda.returnTypeRef.resolvedTypeFromPrototype(returnType).also {
-                        session.lookupTracker?.recordTypeResolveAsLookup(it, lambda.source, null)
-                    }
-                )
-                lambda.replaceTypeRef(
-                    lambda.constructFunctionalTypeRef(
-                        isSuspend = expectedTypeRef.coneTypeSafe<ConeKotlinType>()?.isSuspendFunctionType(session) == true
-                    ).also {
-                        session.lookupTracker?.recordTypeResolveAsLookup(it, lambda.source, null)
-                    }
-                )
-                lambda.addReturn()
+                transformAnonymousFunctionWithExpectedType(anonymousFunction, expectedTypeRef, data)
             }
             is ResolutionMode.WithStatus, is ResolutionMode.WithExpectedTypeFromCast -> {
                 throw AssertionError("Should not be here in WithStatus/WithExpectedTypeFromCast mode")
+            }
+        }
+    }
+
+    private fun transformAnonymousFunctionWithExpectedType(
+        anonymousFunction: FirAnonymousFunction,
+        expectedTypeRef: FirTypeRef,
+        data: ResolutionMode
+    ): FirAnonymousFunction {
+        val resolvedLambdaAtom = (expectedTypeRef as? FirResolvedTypeRef)?.let {
+            extractLambdaInfoFromFunctionalType(
+                it.type, it, anonymousFunction, returnTypeVariable = null, components, candidate = null
+            )
+        }
+        var lambda = anonymousFunction
+        val valueParameters = when {
+            resolvedLambdaAtom != null -> obtainValueParametersFromResolvedLambdaAtom(resolvedLambdaAtom, lambda)
+            else -> lambda.valueParameters
+        }
+        val returnTypeRefFromResolvedAtom =
+            resolvedLambdaAtom?.returnType?.let { lambda.returnTypeRef.resolvedTypeFromPrototype(it) }
+        lambda = lambda.copy(
+            receiverTypeRef = lambda.receiverTypeRef?.takeIf { it !is FirImplicitTypeRef }
+                ?: resolvedLambdaAtom?.receiver?.let { lambda.receiverTypeRef?.resolvedTypeFromPrototype(it) },
+            valueParameters = valueParameters,
+            returnTypeRef = (lambda.returnTypeRef as? FirResolvedTypeRef)
+                ?: returnTypeRefFromResolvedAtom
+                ?: lambda.returnTypeRef
+        )
+        lambda = lambda.transformValueParameters(ImplicitToErrorTypeTransformer, null)
+        val bodyExpectedType = returnTypeRefFromResolvedAtom ?: expectedTypeRef
+        context.withAnonymousFunction(lambda, components, data) {
+            withFullBodyResolve {
+                lambda = transformFunction(lambda, withExpectedType(bodyExpectedType)) as FirAnonymousFunction
+            }
+        }
+        // To separate function and separate commit
+        val writer = FirCallCompletionResultsWriterTransformer(
+            session,
+            ConeSubstitutor.Empty,
+            components.returnTypeCalculator,
+            inferenceComponents.approximator,
+            dataFlowAnalyzer,
+        )
+        lambda.transformSingle(writer, expectedTypeRef.coneTypeSafe<ConeKotlinType>()?.toExpectedType())
+
+        val returnStatements = dataFlowAnalyzer.returnExpressionsOfAnonymousFunction(lambda)
+        val returnExpressionsExceptLast =
+            if (returnStatements.size > 1)
+                returnStatements - lambda.body?.statements?.lastOrNull()
+            else
+                returnStatements
+        val implicitReturns = returnExpressionsExceptLast.filter {
+            (it as? FirExpression)?.typeRef is FirImplicitUnitTypeRef
+        }
+        val returnType =
+            if (implicitReturns.isNotEmpty()) {
+                // i.e., early return, e.g., l@{ ... return@l ... }
+                // Note that the last statement will be coerced to Unit if needed.
+                session.builtinTypes.unitType.type
+            } else {
+                // Otherwise, compute the common super type of all possible return expressions
+                inferenceComponents.ctx.commonSuperTypeOrNull(
+                    returnStatements.mapNotNull { (it as? FirExpression)?.resultType?.coneType }
+                ) ?: session.builtinTypes.unitType.type
+            }
+        lambda.replaceReturnTypeRef(
+            lambda.returnTypeRef.resolvedTypeFromPrototype(returnType).also {
+                session.lookupTracker?.recordTypeResolveAsLookup(it, lambda.source, null)
+            }
+        )
+        lambda.replaceTypeRef(
+            lambda.constructFunctionalTypeRef(
+                isSuspend = expectedTypeRef.coneTypeSafe<ConeKotlinType>()?.isSuspendFunctionType(session) == true
+            ).also {
+                session.lookupTracker?.recordTypeResolveAsLookup(it, lambda.source, null)
+            }
+        )
+        return lambda.addReturn()
+    }
+
+    private fun obtainValueParametersFromResolvedLambdaAtom(
+        resolvedLambdaAtom: ResolvedLambdaAtom,
+        lambda: FirAnonymousFunction,
+    ): List<FirValueParameter> {
+        val singleParameterType = resolvedLambdaAtom.parameters.singleOrNull()
+        return when {
+            lambda.valueParameters.isEmpty() && singleParameterType != null -> {
+                val name = Name.identifier("it")
+                val itParam = buildValueParameter {
+                    source = lambda.source?.fakeElement(FirFakeSourceElementKind.ItLambdaParameter)
+                    moduleData = session.moduleData
+                    origin = FirDeclarationOrigin.Source
+                    returnTypeRef = singleParameterType.toFirResolvedTypeRef()
+                    this.name = name
+                    symbol = FirValueParameterSymbol(name)
+                    isCrossinline = false
+                    isNoinline = false
+                    isVararg = false
+                }
+                listOf(itParam)
+            }
+
+            else -> {
+                lambda.valueParameters.mapIndexed { index, param ->
+                    if (param.returnTypeRef is FirResolvedTypeRef) {
+                        param
+                    } else {
+                        val resolvedType =
+                            param.returnTypeRef.resolvedTypeFromPrototype(resolvedLambdaAtom.parameters[index])
+                        param.replaceReturnTypeRef(resolvedType)
+                        param
+                    }
+                }
             }
         }
     }
@@ -866,7 +889,7 @@ open class FirDeclarationsResolveTransformer(transformer: FirBodyResolveTransfor
             return backingField
         }
         val inferredType = if (backingField is FirDefaultPropertyBackingField) {
-            data.expectedType
+            propertyType
         } else {
             backingField.initializer?.unwrapSmartcastExpression()?.typeRef
         }

@@ -121,16 +121,18 @@ val LLVMValueRef.isConst:Boolean
     get() = (LLVMIsConstant(this) == 1)
 
 
-internal inline fun<R> generateFunction(codegen: CodeGenerator,
-                                        function: IrFunction,
-                                        startLocation: LocationInfo?,
-                                        endLocation: LocationInfo?,
-                                        code: FunctionGenerationContext.(FunctionGenerationContext) -> R) {
+internal inline fun generateFunction(
+        codegen: CodeGenerator,
+        function: IrFunction,
+        startLocation: LocationInfo?,
+        endLocation: LocationInfo?,
+        code: FunctionGenerationContext.() -> Unit
+) {
     val llvmFunction = codegen.llvmFunction(function)
 
     val isCToKotlinBridge = function.origin == CBridgeOrigin.C_TO_KOTLIN_BRIDGE
 
-    val functionGenerationContext = FunctionGenerationContext(
+    val functionGenerationContext = DefaultFunctionGenerationContext(
             llvmFunction,
             codegen,
             startLocation,
@@ -155,12 +157,25 @@ internal inline fun<R> generateFunction(codegen: CodeGenerator,
         LLVMVerifyFunction(llvmFunction, LLVMVerifierFailureAction.LLVMAbortProcessAction)
 }
 
+internal inline fun <T : FunctionGenerationContext> FunctionGenerationContextBuilder<T>.generate(code: T.() -> Unit): LLVMValueRef {
+    val functionGenerationContext = this.build()
+    return try {
+        generateFunctionBody(functionGenerationContext, code)
+        functionGenerationContext.function
+    } finally {
+        functionGenerationContext.dispose()
+    }
+}
 
-internal inline fun<R> generateFunction(codegen: CodeGenerator, function: LLVMValueRef,
-                                        startLocation: LocationInfo? = null, endLocation: LocationInfo? = null,
-                                        switchToRunnable: Boolean = false,
-                                        code:FunctionGenerationContext.(FunctionGenerationContext) -> R) {
-    val functionGenerationContext = FunctionGenerationContext(
+internal inline fun generateFunction(
+        codegen: CodeGenerator,
+        function: LLVMValueRef,
+        startLocation: LocationInfo? = null,
+        endLocation: LocationInfo? = null,
+        switchToRunnable: Boolean = false,
+        code: FunctionGenerationContext.() -> Unit
+) {
+    val functionGenerationContext = DefaultFunctionGenerationContext(
             function,
             codegen,
             startLocation,
@@ -179,7 +194,7 @@ internal inline fun generateFunction(
         functionType: LLVMTypeRef,
         name: String,
         switchToRunnable: Boolean = false,
-        block: FunctionGenerationContext.(FunctionGenerationContext) -> Unit
+        block: FunctionGenerationContext.() -> Unit
 ): LLVMValueRef {
     val function = addLlvmFunctionWithDefaultAttributes(
             codegen.context,
@@ -192,12 +207,12 @@ internal inline fun generateFunction(
 }
 
 // TODO: Consider using different abstraction than `FunctionGenerationContext` for `generateFunctionNoRuntime`.
-internal inline fun <R> generateFunctionNoRuntime(
+internal inline fun generateFunctionNoRuntime(
         codegen: CodeGenerator,
         function: LLVMValueRef,
-        code: FunctionGenerationContext.(FunctionGenerationContext) -> R,
+        code: FunctionGenerationContext.() -> Unit,
 ) {
-    val functionGenerationContext = FunctionGenerationContext(function, codegen, null, null, switchToRunnable = false)
+    val functionGenerationContext = DefaultFunctionGenerationContext(function, codegen, null, null, switchToRunnable = false)
     try {
         functionGenerationContext.forbidRuntime = true
         require(!functionGenerationContext.isObjectType(functionGenerationContext.returnType!!)) {
@@ -214,7 +229,7 @@ internal inline fun generateFunctionNoRuntime(
         codegen: CodeGenerator,
         functionType: LLVMTypeRef,
         name: String,
-        code: FunctionGenerationContext.(FunctionGenerationContext) -> Unit,
+        code: FunctionGenerationContext.() -> Unit,
 ): LLVMValueRef {
     val function = addLlvmFunctionWithDefaultAttributes(
             codegen.context,
@@ -226,11 +241,11 @@ internal inline fun generateFunctionNoRuntime(
     return function
 }
 
-private inline fun <R> generateFunctionBody(
-        functionGenerationContext: FunctionGenerationContext,
-        code: FunctionGenerationContext.(FunctionGenerationContext) -> R) {
+private inline fun <T : FunctionGenerationContext> generateFunctionBody(
+        functionGenerationContext: T,
+        code: T.() -> Unit) {
     functionGenerationContext.prologue()
-    functionGenerationContext.code(functionGenerationContext)
+    functionGenerationContext.code()
     if (!functionGenerationContext.isAfterTerminator())
         functionGenerationContext.unreachable()
     functionGenerationContext.epilogue()
@@ -387,12 +402,46 @@ internal class StackLocalsManagerImpl(
     }
 }
 
-internal class FunctionGenerationContext(val function: LLVMValueRef,
-                                         val codegen: CodeGenerator,
-                                         private val startLocation: LocationInfo?,
-                                         private val endLocation: LocationInfo?,
-                                         private val switchToRunnable: Boolean,
-                                         internal val irFunction: IrFunction? = null): ContextUtils {
+internal abstract class FunctionGenerationContextBuilder<T : FunctionGenerationContext>(
+        val function: LLVMValueRef,
+        val codegen: CodeGenerator
+) {
+    constructor(functionType: LLVMTypeRef, functionName: String, codegen: CodeGenerator) :
+            this(
+                    addLlvmFunctionWithDefaultAttributes(
+                            codegen.context,
+                            codegen.context.llvmModule!!,
+                            functionName,
+                            functionType
+                    ),
+                    codegen
+            )
+
+    var startLocation: LocationInfo? = null
+    var endLocation: LocationInfo? = null
+    var switchToRunnable = false
+    var irFunction: IrFunction? = null
+
+    abstract fun build(): T
+}
+
+internal abstract class FunctionGenerationContext(
+        val function: LLVMValueRef,
+        val codegen: CodeGenerator,
+        private val startLocation: LocationInfo?,
+        private val endLocation: LocationInfo?,
+        private val switchToRunnable: Boolean,
+        internal val irFunction: IrFunction? = null
+) : ContextUtils {
+
+    constructor(builder: FunctionGenerationContextBuilder<*>) : this(
+            function = builder.function,
+            codegen = builder.codegen,
+            startLocation = builder.startLocation,
+            endLocation = builder.endLocation,
+            switchToRunnable = builder.switchToRunnable,
+            irFunction = builder.irFunction
+    )
 
     override val context = codegen.context
     val vars = VariableManager(this)
@@ -404,7 +453,6 @@ internal class FunctionGenerationContext(val function: LLVMValueRef,
     }
 
     var returnType: LLVMTypeRef? = LLVMGetReturnType(getFunctionType(function))
-    private val returns: MutableMap<LLVMBasicBlockRef, LLVMValueRef> = mutableMapOf()
     val constructedClass: IrClass?
         get() = (irFunction as? IrConstructor)?.constructedClass
     private var returnSlot: LLVMValueRef? = null
@@ -421,8 +469,7 @@ internal class FunctionGenerationContext(val function: LLVMValueRef,
     private val localsInitBb = basicBlockInFunction("locals_init", null)
     private val stackLocalsInitBb = basicBlockInFunction("stack_locals_init", null)
     private val entryBb = basicBlockInFunction("entry", startLocation)
-    private val epilogueBb = basicBlockInFunction("epilogue", endLocation)
-    private val cleanupLandingpad = basicBlockInFunction("cleanup_landingpad", endLocation)
+    protected val cleanupLandingpad = basicBlockInFunction("cleanup_landingpad", endLocation)
 
     val stackLocalsManager = StackLocalsManagerImpl(this, stackLocalsInitBb)
 
@@ -460,7 +507,7 @@ internal class FunctionGenerationContext(val function: LLVMValueRef,
         currentPositionHolder.dispose()
     }
 
-    private fun basicBlockInFunction(name: String, locationInfo: LocationInfo?): LLVMBasicBlockRef {
+    protected fun basicBlockInFunction(name: String, locationInfo: LocationInfo?): LLVMBasicBlockRef {
         val bb = LLVMAppendBasicBlockInContext(llvmContext, function, name)!!
         update(bb, locationInfo)
         return bb
@@ -502,19 +549,7 @@ internal class FunctionGenerationContext(val function: LLVMValueRef,
     }
 
 
-    fun ret(value: LLVMValueRef?): LLVMValueRef {
-        val res = LLVMBuildBr(builder, epilogueBb)!!
-        if (returns.containsKey(currentBlock)) {
-            // TODO: enable error throwing.
-            throw Error("ret() in the same basic block twice! in ${function.name}")
-        }
-
-        if (value != null)
-            returns[currentBlock] = value
-
-        currentPositionHolder.setAfterTerminator()
-        return res
-    }
+    abstract fun ret(value: LLVMValueRef?): LLVMValueRef
 
     fun param(index: Int): LLVMValueRef = LLVMGetParam(this.function, index)!!
 
@@ -1328,7 +1363,6 @@ internal class FunctionGenerationContext(val function: LLVMValueRef,
     }
 
     internal fun prologue() {
-        assert(returns.isEmpty())
         if (isObjectType(returnType!!)) {
             returnSlot = LLVMGetParam(function, numParameters(function.type) - 1)
         }
@@ -1398,28 +1432,7 @@ internal class FunctionGenerationContext(val function: LLVMValueRef,
             br(entryBb)
         }
 
-        appendingTo(epilogueBb) {
-            when {
-                returnType == voidType -> {
-                    releaseVars()
-                    assert(returnSlot == null)
-                    handleEpilogueForExperimentalMM(context.llvm.Kotlin_mm_safePointFunctionEpilogue)
-                    LLVMBuildRetVoid(builder)
-                }
-                returns.isNotEmpty() -> {
-                    val returnPhi = phi(returnType!!)
-                    addPhiIncoming(returnPhi, *returns.toList().toTypedArray())
-                    if (returnSlot != null) {
-                        updateReturnRef(returnPhi, returnSlot!!)
-                    }
-                    releaseVars()
-                    handleEpilogueForExperimentalMM(context.llvm.Kotlin_mm_safePointFunctionEpilogue)
-                    LLVMBuildRet(builder, returnPhi)
-                }
-                // Do nothing, all paths throw.
-                else -> LLVMBuildUnreachable(builder)
-            }
-        }
+        processReturns()
 
         val shouldHaveCleanupLandingpad = forwardingForeignExceptionsTerminatedWith != null ||
                 needSlots ||
@@ -1477,10 +1490,36 @@ internal class FunctionGenerationContext(val function: LLVMValueRef,
             LLVMDeleteBasicBlock(cleanupLandingpad)
         }
 
-        returns.clear()
         vars.clear()
         returnSlot = null
         slotsPhi = null
+    }
+
+    protected abstract fun processReturns()
+
+    protected fun retValue(value: LLVMValueRef): LLVMValueRef {
+        if (returnSlot != null) {
+            updateReturnRef(value, returnSlot!!)
+        }
+        onReturn()
+        return rawRet(value)
+    }
+
+    protected fun rawRet(value: LLVMValueRef): LLVMValueRef = LLVMBuildRet(builder, value)!!.also {
+        currentPositionHolder.setAfterTerminator()
+    }
+
+    protected fun retVoid(): LLVMValueRef {
+        check(returnSlot == null)
+        onReturn()
+        return LLVMBuildRetVoid(builder)!!.also {
+            currentPositionHolder.setAfterTerminator()
+        }
+    }
+
+    protected fun onReturn() {
+        releaseVars()
+        handleEpilogueForExperimentalMM(context.llvm.Kotlin_mm_safePointFunctionEpilogue)
     }
 
     private fun handleEpilogueForExperimentalMM(safePointFunction: LLVMValueRef) {
@@ -1632,5 +1671,58 @@ internal class FunctionGenerationContext(val function: LLVMValueRef,
     }
 }
 
+internal class DefaultFunctionGenerationContext(
+        function: LLVMValueRef,
+        codegen: CodeGenerator,
+        startLocation: LocationInfo?,
+        endLocation: LocationInfo?,
+        switchToRunnable: Boolean,
+        irFunction: IrFunction? = null
+) : FunctionGenerationContext(
+        function,
+        codegen,
+        startLocation,
+        endLocation,
+        switchToRunnable,
+        irFunction
+) {
+    // Note: return handling can be extracted to a separate class.
 
+    private val returns: MutableMap<LLVMBasicBlockRef, LLVMValueRef> = mutableMapOf()
 
+    private val epilogueBb = basicBlockInFunction("epilogue", endLocation).also {
+        LLVMMoveBasicBlockBefore(it, cleanupLandingpad) // Just to make the produced code a bit more readable.
+    }
+
+    override fun ret(value: LLVMValueRef?): LLVMValueRef {
+        val res = br(epilogueBb)
+
+        if (returns.containsKey(currentBlock)) {
+            // TODO: enable error throwing.
+            throw Error("ret() in the same basic block twice! in ${function.name}")
+        }
+
+        if (value != null)
+            returns[currentBlock] = value
+
+        return res
+    }
+
+    override fun processReturns() {
+        appendingTo(epilogueBb) {
+            when {
+                returnType == voidType -> {
+                    retVoid()
+                }
+                returns.isNotEmpty() -> {
+                    val returnPhi = phi(returnType!!)
+                    addPhiIncoming(returnPhi, *returns.toList().toTypedArray())
+                    retValue(returnPhi)
+                }
+                // Do nothing, all paths throw.
+                else -> unreachable()
+            }
+        }
+        returns.clear()
+    }
+}

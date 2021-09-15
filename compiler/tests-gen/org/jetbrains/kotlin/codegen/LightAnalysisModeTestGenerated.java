@@ -2523,6 +2523,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                 runTest("compiler/testData/codegen/box/callableReference/adaptedReferences/simpleEmptyVararg.kt");
             }
 
+            @TestMetadata("suspendUnitConversion.kt")
+            public void testSuspendUnitConversion() throws Exception {
+                runTest("compiler/testData/codegen/box/callableReference/adaptedReferences/suspendUnitConversion.kt");
+            }
+
             @TestMetadata("toStringNoReflect.kt")
             public void testToStringNoReflect() throws Exception {
                 runTest("compiler/testData/codegen/box/callableReference/adaptedReferences/toStringNoReflect.kt");
@@ -11684,6 +11689,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                     runTest("compiler/testData/codegen/box/diagnostics/functions/tailRecursion/recursiveCallInInlineLambdaWithCapture.kt");
                 }
 
+                @TestMetadata("tailrecWithExplicitCompanionObjectDispatcher.kt")
+                public void ignoreTailrecWithExplicitCompanionObjectDispatcher() throws Exception {
+                    runTest("compiler/testData/codegen/box/diagnostics/functions/tailRecursion/tailrecWithExplicitCompanionObjectDispatcher.kt");
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM, testDataFilePath);
                 }
@@ -11865,6 +11875,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                 @TestMetadata("tailRecursionInFinally.kt")
                 public void testTailRecursionInFinally() throws Exception {
                     runTest("compiler/testData/codegen/box/diagnostics/functions/tailRecursion/tailRecursionInFinally.kt");
+                }
+
+                @TestMetadata("tailrecWithExplicitObjectDispatcher.kt")
+                public void testTailrecWithExplicitObjectDispatcher() throws Exception {
+                    runTest("compiler/testData/codegen/box/diagnostics/functions/tailRecursion/tailrecWithExplicitObjectDispatcher.kt");
                 }
 
                 @TestMetadata("thisReferences.kt")
@@ -19134,6 +19149,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("genericSamSmartcast.kt")
         public void testGenericSamSmartcast() throws Exception {
             runTest("compiler/testData/codegen/box/javaInterop/genericSamSmartcast.kt");
+        }
+
+        @TestMetadata("javaOuterClassDependsOnInner.kt")
+        public void testJavaOuterClassDependsOnInner() throws Exception {
+            runTest("compiler/testData/codegen/box/javaInterop/javaOuterClassDependsOnInner.kt");
         }
 
         @TestMetadata("kt43217.kt")
@@ -33561,6 +33581,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("kt9958Interface.kt")
         public void testKt9958Interface() throws Exception {
             runTest("compiler/testData/codegen/box/syntheticAccessors/kt9958Interface.kt");
+        }
+
+        @TestMetadata("packagePrivateInPrivateInline.kt")
+        public void testPackagePrivateInPrivateInline() throws Exception {
+            runTest("compiler/testData/codegen/box/syntheticAccessors/packagePrivateInPrivateInline.kt");
         }
 
         @TestMetadata("protectedFromLambda.kt")

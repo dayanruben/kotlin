@@ -9,14 +9,13 @@ import org.jetbrains.kotlin.backend.common.lower.ANNOTATION_IMPLEMENTATION
 import org.jetbrains.kotlin.backend.common.psi.PsiSourceManager
 import org.jetbrains.kotlin.backend.jvm.JvmBackendContext
 import org.jetbrains.kotlin.backend.jvm.JvmLoweredDeclarationOrigin
-import org.jetbrains.kotlin.backend.jvm.ir.isInPublicInlineScope
-import org.jetbrains.kotlin.backend.jvm.ir.isSyntheticSingleton
-import org.jetbrains.kotlin.backend.jvm.lower.MultifileFacadeFileEntry
-import org.jetbrains.kotlin.backend.jvm.lower.buildAssertionsDisabledField
-import org.jetbrains.kotlin.backend.jvm.lower.hasAssertionsDisabledField
-import org.jetbrains.kotlin.backend.jvm.lower.isReifiedTypeParameter
-import org.jetbrains.kotlin.codegen.*
+import org.jetbrains.kotlin.backend.jvm.MultifileFacadeFileEntry
+import org.jetbrains.kotlin.backend.jvm.ir.*
+import org.jetbrains.kotlin.codegen.DescriptorAsmUtil
+import org.jetbrains.kotlin.codegen.VersionIndependentOpcodes
+import org.jetbrains.kotlin.codegen.addRecordComponent
 import org.jetbrains.kotlin.codegen.inline.*
+import org.jetbrains.kotlin.codegen.writeKotlinMetadata
 import org.jetbrains.kotlin.config.JvmAnalysisFlags
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
@@ -137,7 +136,7 @@ class ClassCodegen private constructor(
         val smap = context.getSourceMapper(irClass)
         // 1. Any method other than `<clinit>` can add a field and a `<clinit>` statement:
         for (method in irClass.declarations.filterIsInstance<IrFunction>()) {
-            if (method.name.asString() != "<clinit>") {
+            if (method.name.asString() != "<clinit>" && method.origin != JvmLoweredDeclarationOrigin.INLINE_LAMBDA) {
                 generateMethod(method, smap)
             }
         }

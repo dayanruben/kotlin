@@ -9,23 +9,16 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import org.jetbrains.kotlin.descriptors.SourceElement
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.ThreadSafeMutableState
-import org.jetbrains.kotlin.fir.caches.createCache
-import org.jetbrains.kotlin.fir.caches.firCachesFactory
-import org.jetbrains.kotlin.fir.caches.getValue
 import org.jetbrains.kotlin.fir.declarations.getDeprecationInfos
 import org.jetbrains.kotlin.fir.deserialization.*
 import org.jetbrains.kotlin.fir.expressions.FirAnnotation
-import org.jetbrains.kotlin.fir.java.JavaSymbolProvider
-import org.jetbrains.kotlin.fir.java.topLevelName
+import org.jetbrains.kotlin.fir.java.JavaClassConverter
 import org.jetbrains.kotlin.fir.languageVersionSettings
 import org.jetbrains.kotlin.fir.scopes.FirKotlinScopeProvider
 import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.load.java.JavaClassFinder
 import org.jetbrains.kotlin.load.kotlin.*
 import org.jetbrains.kotlin.load.kotlin.header.KotlinClassHeader
-import org.jetbrains.kotlin.metadata.ProtoBuf
-import org.jetbrains.kotlin.metadata.deserialization.Flags
-import org.jetbrains.kotlin.metadata.deserialization.NameResolver
 import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmMetadataVersion
 import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
 import org.jetbrains.kotlin.name.ClassId
@@ -35,22 +28,25 @@ import org.jetbrains.kotlin.serialization.deserialization.IncompatibleVersionErr
 import java.nio.file.Path
 import java.nio.file.Paths
 
+// This symbol provider loads JVM classes, reading extra info from Kotlin `@Metadata` annotations
+// if present. Use it for library and incremental compilation sessions. For source sessions use
+// `JavaSymbolProvider`, as Kotlin classes should be parsed first.
 @ThreadSafeMutableState
-open class KotlinDeserializedJvmSymbolsProvider(
+class KotlinDeserializedJvmSymbolsProvider(
     session: FirSession,
     moduleDataProvider: ModuleDataProvider,
     kotlinScopeProvider: FirKotlinScopeProvider,
     private val packagePartProvider: PackagePartProvider,
     private val kotlinClassFinder: KotlinClassFinder,
-    javaClassFinder: JavaClassFinder,
+    javaClassFinder: JavaClassFinder
 ) : AbstractFirDeserializedSymbolsProvider(session, moduleDataProvider, kotlinScopeProvider) {
-    private val knownNameInPackageCache = KnownNameInPackageCache(session, javaClassFinder)
+    private val javaClassConverter = JavaClassConverter(session, moduleDataProvider.allModuleData.last(), javaClassFinder)
     private val annotationsLoader = AnnotationsLoader(session, kotlinClassFinder)
 
     override fun computePackagePartsInfos(packageFqName: FqName): List<PackagePartsCacheData> {
         return packagePartProvider.findPackageParts(packageFqName.asString()).mapNotNull { partName ->
             val classId = ClassId.topLevel(JvmClassName.byInternalName(partName).fqNameForTopLevelClassMaybeWithDollars)
-            if (knownNameInPackageCache.hasNoTopLevelClassOf(classId)) return@mapNotNull null
+            if (!javaClassConverter.hasTopLevelClassOf(classId)) return@mapNotNull null
             val (kotlinJvmBinaryClass, byteContent) =
                 kotlinClassFinder.findKotlinClassOrContent(classId) as? KotlinClassFinder.Result.KotlinClass ?: return@mapNotNull null
 
@@ -92,40 +88,54 @@ open class KotlinDeserializedJvmSymbolsProvider(
     private val KotlinJvmBinaryClass.isPreReleaseInvisible: Boolean
         get() = classHeader.isPreRelease
 
+    private fun loadJavaClass(classId: ClassId, content: ByteArray?): ClassMetadataFindResult? {
+        val javaClass = try {
+            javaClassConverter.findClass(classId, content) ?: return null
+        } catch (e: ProcessCanceledException) {
+            return null
+        }
+        return ClassMetadataFindResult.NoMetadata { symbol ->
+            javaClassConverter.convertJavaClassToFir(symbol, classId.outerClassId?.let(::getClass), javaClass)
+        }
+    }
+
     override fun extractClassMetadata(classId: ClassId, parentContext: FirDeserializationContext?): ClassMetadataFindResult? {
-        if (knownNameInPackageCache.hasNoTopLevelClassOf(classId)) return null
+        // Kotlin classes are annotated Java classes, so this check also looks for them.
+        if (!javaClassConverter.hasTopLevelClassOf(classId)) return null
+
         val result = try {
             kotlinClassFinder.findKotlinClassOrContent(classId)
         } catch (e: ProcessCanceledException) {
             return null
         }
         val kotlinClass = when (result) {
-            is KotlinClassFinder.Result.KotlinClass -> result
-            is KotlinClassFinder.Result.ClassFileContent -> return null
-            null -> return ClassMetadataFindResult.ShouldDeserializeViaParent
+            is KotlinClassFinder.Result.KotlinClass -> result.kotlinJvmBinaryClass
+            is KotlinClassFinder.Result.ClassFileContent -> return loadJavaClass(classId, result.content)
+            null -> return loadJavaClass(classId, null)
         }
-        if (kotlinClass.kotlinJvmBinaryClass.classHeader.kind != KotlinClassHeader.Kind.CLASS) return null
-        val (nameResolver, classProto) = kotlinClass.extractMetadata() ?: return null
-
-        if (parentContext == null && Flags.CLASS_KIND.get(classProto.flags) == ProtoBuf.Class.Kind.COMPANION_OBJECT) {
-            return ClassMetadataFindResult.ShouldDeserializeViaParent
-        }
+        if (kotlinClass.classHeader.kind != KotlinClassHeader.Kind.CLASS) return null
+        val data = kotlinClass.classHeader.data ?: return null
+        val strings = kotlinClass.classHeader.strings ?: return null
+        val (nameResolver, classProto) = JvmProtoBufUtil.readClassDataFrom(data, strings)
 
         return ClassMetadataFindResult.Metadata(
             nameResolver,
             classProto,
-            JvmBinaryAnnotationDeserializer(session, kotlinClass.kotlinJvmBinaryClass, kotlinClassFinder, kotlinClass.byteContent),
-            kotlinClass.kotlinJvmBinaryClass.containingLibrary.toPath(),
-            KotlinJvmBinarySourceElement(kotlinClass.kotlinJvmBinaryClass),
-            classPostProcessor = { loadAnnotationsFromClassFile(kotlinClass, it) }
+            JvmBinaryAnnotationDeserializer(session, kotlinClass, kotlinClassFinder, result.byteContent),
+            kotlinClass.containingLibrary.toPath(),
+            KotlinJvmBinarySourceElement(kotlinClass),
+            classPostProcessor = { loadAnnotationsFromClassFile(result, it) }
         )
     }
+
+    override fun getPackage(fqName: FqName): FqName? =
+        javaClassConverter.getPackage(fqName)
 
     private fun loadAnnotationsFromClassFile(
         kotlinClass: KotlinClassFinder.Result.KotlinClass,
         symbol: FirRegularClassSymbol
     ) {
-        val annotations = mutableListOf<FirAnnotation>()
+        val annotations = symbol.fir.annotations as MutableList<FirAnnotation>
         kotlinClass.kotlinJvmBinaryClass.loadClassAnnotations(
             object : KotlinJvmBinaryClass.AnnotationVisitor {
                 override fun visitAnnotation(classId: ClassId, source: SourceElement): KotlinJvmBinaryClass.AnnotationArgumentVisitor? {
@@ -137,30 +147,7 @@ open class KotlinDeserializedJvmSymbolsProvider(
             },
             kotlinClass.byteContent,
         )
-        (symbol.fir.annotations as MutableList<FirAnnotation>) += annotations
         symbol.fir.replaceDeprecation(symbol.fir.getDeprecationInfos(session.languageVersionSettings.apiVersion))
-    }
-
-    private fun KotlinClassFinder.Result.KotlinClass.extractMetadata(): Pair<NameResolver, ProtoBuf.Class>? {
-        val data = kotlinJvmBinaryClass.classHeader.data ?: return null
-        val strings = kotlinJvmBinaryClass.classHeader.strings ?: return null
-        return JvmProtoBufUtil.readClassDataFrom(data, strings)
-    }
-
-    private class KnownNameInPackageCache(
-        session: FirSession,
-        private val javaClassFinder: JavaClassFinder
-    ) {
-        private val knownClassNamesInPackage = session.firCachesFactory.createCache(javaClassFinder::knownClassNamesInPackage)
-
-        /**
-         * This function returns true if we are sure that no top-level class with this id is available
-         * If it returns false, it means we can say nothing about this id
-         */
-        fun hasNoTopLevelClassOf(classId: ClassId): Boolean {
-            val knownNames = knownClassNamesInPackage.getValue(classId.packageFqName) ?: return false
-            return classId.relativeClassName.topLevelName() !in knownNames
-        }
     }
 
     private fun String?.toPath(): Path? {

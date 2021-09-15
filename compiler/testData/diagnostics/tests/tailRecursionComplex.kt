@@ -1,5 +1,6 @@
+// FIR_IDENTICAL
 object O {
-    // This is correct, foo is the same
+    // tailrec since `O` is a singleton
     tailrec fun foo(i: Int): Int = if (i < 0) 0 else O.foo(i - 1)
 }
 

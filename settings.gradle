@@ -116,7 +116,8 @@ include ":benchmarks",
         ":compiler:backend.js",
         ":compiler:backend.wasm",
         ":compiler:backend.jvm",
-        ":compiler:backend.jvm:backend.jvm.entrypoint",
+        ":compiler:backend.jvm.lower",
+        ":compiler:backend.jvm.entrypoint",
         ":compiler:backend-common",
         ":compiler:backend",
         ":compiler:plugin-api",
@@ -328,7 +329,11 @@ if (!buildProperties.inJpsBuildIdeaSync) {
             ":prepare:ide-plugin-dependencies:high-level-api-fir-for-ide",
             ":prepare:ide-plugin-dependencies:high-level-api-fir-tests-for-ide",
             ":prepare:ide-plugin-dependencies:analysis-api-providers-for-ide",
-            ":prepare:ide-plugin-dependencies:symbol-light-classes-for-ide"
+            ":prepare:ide-plugin-dependencies:symbol-light-classes-for-ide",
+            ":prepare:ide-plugin-dependencies:kotlin-compiler-ir-for-ide",
+            ":prepare:ide-plugin-dependencies:kotlin-compiler-common-for-ide",
+            ":prepare:ide-plugin-dependencies:kotlin-compiler-fe10-for-ide",
+            ":prepare:ide-plugin-dependencies:kotlin-compiler-fir-for-ide"
 }
 
 void intellij(String imlPath) {
@@ -438,11 +443,11 @@ if (attachedIntellijVersion == "212") { // Latest available platform in scope of
     intellij "jvm-run-configurations/kotlin.jvm-run-configurations.iml"
 }
 
-include ":generators:frontend-api-generator",
-        ":idea-frontend-fir:idea-fir-low-level-api",
-        ":idea-frontend-fir:idea-frontend-fir-generator",
-        ":idea-frontend-fir",
-        ":idea-frontend-api",
+include ":generators:analysis-api-generator",
+        ":analysis:low-level-api-fir",
+        ":analysis:analysis-api-fir:analysis-api-fir-generator",
+        ":analysis:analysis-api-fir",
+        ":analysis:analysis-api",
         ":analysis:analysis-api-providers",
         ":analysis:symbol-light-classes"
 
@@ -534,7 +539,8 @@ project(':compiler:ir.backend.common').projectDir = "$rootDir/compiler/ir/backen
 project(':compiler:backend.js').projectDir = "$rootDir/compiler/ir/backend.js" as File
 project(':compiler:backend.wasm').projectDir = "$rootDir/compiler/ir/backend.wasm" as File
 project(':compiler:backend.jvm').projectDir = "$rootDir/compiler/ir/backend.jvm" as File
-project(':compiler:backend.jvm:backend.jvm.entrypoint').projectDir = "$rootDir/compiler/ir/backend.jvm/entrypoint" as File
+project(':compiler:backend.jvm.lower').projectDir = "$rootDir/compiler/ir/backend.jvm/lower" as File
+project(':compiler:backend.jvm.entrypoint').projectDir = "$rootDir/compiler/ir/backend.jvm/entrypoint" as File
 project(':compiler:ir.serialization.common').projectDir = "$rootDir/compiler/ir/serialization.common" as File
 project(':compiler:ir.serialization.jvm').projectDir = "$rootDir/compiler/ir/serialization.jvm" as File
 project(':compiler:ir.serialization.js').projectDir = "$rootDir/compiler/ir/serialization.js" as File
@@ -622,11 +628,6 @@ project(':js:js.engines').projectDir = "$rootDir/js/js.engines" as File
 project(':kotlinx-serialization-compiler-plugin').projectDir = file("$rootDir/plugins/kotlin-serialization/kotlin-serialization-compiler")
 project(':kotlin-serialization').projectDir = file("$rootDir/libraries/tools/kotlin-serialization")
 project(':kotlin-serialization-unshaded').projectDir = file("$rootDir/libraries/tools/kotlin-serialization-unshaded")
-
-project(":idea-frontend-fir:idea-fir-low-level-api").projectDir = "$rootDir/idea/idea-frontend-fir/idea-fir-low-level-api" as File
-project(":idea-frontend-fir:idea-frontend-fir-generator").projectDir = "$rootDir/idea/idea-frontend-fir/idea-frontend-fir-generator" as File
-project(":idea-frontend-fir").projectDir = "$rootDir/idea/idea-frontend-fir" as File
-project(":idea-frontend-api").projectDir = "$rootDir/idea/idea-frontend-api" as File
 
 project(':kotlin-scripting-ide-services-unshaded').projectDir = "$rootDir/plugins/scripting/scripting-ide-services" as File
 project(':kotlin-scripting-ide-services-test').projectDir = "$rootDir/plugins/scripting/scripting-ide-services-test" as File
