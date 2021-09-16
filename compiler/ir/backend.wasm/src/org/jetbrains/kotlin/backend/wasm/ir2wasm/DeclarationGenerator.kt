@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.IrElement
+import org.jetbrains.kotlin.ir.backend.js.utils.isJsExport
 import org.jetbrains.kotlin.ir.backend.js.utils.findUnitGetInstanceFunction
 import org.jetbrains.kotlin.ir.backend.js.utils.realOverrideTarget
 import org.jetbrains.kotlin.ir.declarations.*
@@ -49,7 +50,12 @@ class DeclarationGenerator(val context: WasmModuleCodegenContext) : IrElementVis
         if (declaration is IrConstructor && backendContext.inlineClassesUtils.isClassInlineLike(declaration.parentAsClass))
             return
 
-        val jsCode = declaration.getJsFunAnnotation()
+        val isIntrinsic = declaration.hasWasmNoOpCastAnnotation() || declaration.getWasmOpAnnotation() != null
+        if (isIntrinsic) {
+            return
+        }
+
+        val jsCode = declaration.getJsFunAnnotation() ?: if (declaration.isExternal) declaration.name.asString() else null
         val importedName = if (jsCode != null) {
             val jsCodeName = jsCodeName(declaration)
             context.addJsFun(jsCodeName, jsCode)
@@ -58,10 +64,6 @@ class DeclarationGenerator(val context: WasmModuleCodegenContext) : IrElementVis
             declaration.getWasmImportAnnotation()
         }
 
-        val isIntrinsic = declaration.hasWasmNoOpCastAnnotation() || declaration.getWasmOpAnnotation() != null
-        if (isIntrinsic) {
-            return
-        }
 
         if (declaration.isFakeOverride)
             return
@@ -70,30 +72,30 @@ class DeclarationGenerator(val context: WasmModuleCodegenContext) : IrElementVis
         val watName = declaration.fqNameWhenAvailable.toString()
         val irParameters = declaration.getEffectiveValueParameters()
         // TODO: Exported types should be transformed in a separate lowering by creating shim functions for each export.
+        val isExported = declaration.isExported(context.backendContext)
         val resultType =
             when {
-                declaration.isExported(context.backendContext) -> context.transformExportedResultType(declaration.returnType)
+                isExported -> context.transformExportedResultType(declaration.returnType)
                 // Unit_getInstance returns true Unit reference instead of "void"
                 declaration == unitGetInstanceFunction -> context.transformType(declaration.returnType)
                 else -> context.transformResultType(declaration.returnType)
             }
+
+        val isExportedOrImported = isExported || importedName != null
         val wasmFunctionType =
             WasmFunctionType(
                 name = watName,
                 parameterTypes = irParameters.map {
                     val t = context.transformValueParameterType(it)
-                    if (importedName != null && t is WasmRefNullType) {
-                        WasmEqRef
+                    if (isExportedOrImported && t is WasmRefNullType) {
+                        WasmRefNullType(WasmHeapType.Simple.Data)
                     } else {
                         t
                     }
                 },
                 resultTypes = listOfNotNull(
-                    run {
-                        if (importedName != null && resultType is WasmRefNullType)
-                            WasmEqRef
-                        else
-                            resultType
+                    resultType.let {
+                        if (isExportedOrImported && it is WasmRefNullType) WasmRefNullType(WasmHeapType.Simple.Data) else it
                     }
                 )
             )
@@ -172,6 +174,7 @@ class DeclarationGenerator(val context: WasmModuleCodegenContext) : IrElementVis
 
     override fun visitClass(declaration: IrClass) {
         if (declaration.isAnnotationClass) return
+        if (declaration.isExternal) return
         val symbol = declaration.symbol
 
 
@@ -376,4 +379,4 @@ fun IrFunction.getEffectiveValueParameters(): List<IrValueParameter> {
 }
 
 fun IrFunction.isExported(context: WasmBackendContext): Boolean =
-    visibility == DescriptorVisibilities.PUBLIC && fqNameWhenAvailable in context.additionalExportedDeclarations
+    fqNameWhenAvailable in context.additionalExportedDeclarations || isJsExport()

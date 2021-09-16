@@ -655,6 +655,33 @@ class KotlinJavaToolchainTest : KGPBaseTest() {
         }
     }
 
+    @DisplayName("Should fail the build if verification mode is 'error' and kotlin and java targets are different with no kotlin sources")
+    @GradleTestVersions(minVersion = "6.7.1")
+    @GradleTest
+    internal fun shouldFailBuildIfJavaAndKotlinJvmTargetsAreDifferentWithNoKotlinSources(gradleVersion: GradleVersion) {
+        project(
+            projectName = "kotlinJavaProject".fullProjectName,
+            gradleVersion = gradleVersion
+        ) {
+            setJavaCompilationCompatibility(JavaVersion.VERSION_1_8)
+            useToolchainToCompile(11)
+            //language=properties
+            gradleProperties.append(
+                """
+                kotlin.jvm.target.validation.mode = error
+                """.trimIndent()
+            )
+            projectPath.resolve("src/main/kotlin").toFile().deleteRecursively()
+
+            buildAndFail("assemble") {
+                assertOutputContains(
+                    "'compileJava' task (current target is 1.8) and 'compileKotlin' task (current target is 11) jvm target compatibility " +
+                            "should be set to the same Java version."
+                )
+            }
+        }
+    }
+
     @DisplayName("Build should not produce warninings when '-no-jdk' option is present")
     @GradleTestVersions(minVersion = "6.7.1")
     @GradleTest
@@ -716,6 +743,32 @@ class KotlinJavaToolchainTest : KGPBaseTest() {
         ) {
             useToolchainExtension(8)
 
+            build("assemble")
+        }
+    }
+
+    @DisplayName("JVM target shouldn't be changed when toolchain is not configured")
+    @GradleTestVersions(minVersion = "6.7.1")
+    @GradleTest
+    internal fun shouldNotChangeJvmTargetWithNoToolchain(gradleVersion: GradleVersion) {
+        project(
+            projectName = "simple".fullProjectName,
+            gradleVersion = gradleVersion,
+            buildJdk = getJdk11().javaHome
+        ) {
+            //language=Groovy
+            rootBuildGradle.append(
+                """
+                tasks.named("compileKotlin") {
+                    doLast {
+                        def actualJvmTarget = filteredArgumentsMap['jvmTarget']
+                        if (actualJvmTarget != "1.8") {
+                            throw new GradleException("Expected `jvmTarget` value is '1.8' but the actual value was ${'$'}actualJvmTarget")
+                        }
+                    }
+                }
+                """.trimIndent()
+            )
             build("assemble")
         }
     }

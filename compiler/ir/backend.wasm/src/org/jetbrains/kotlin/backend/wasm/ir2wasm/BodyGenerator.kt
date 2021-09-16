@@ -35,10 +35,10 @@ class BodyGenerator(val context: WasmFunctionCodegenContext) : IrElementVisitorV
 
     private val unitGetInstance by lazy { backendContext.findUnitGetInstanceFunction() }
     fun WasmExpressionBuilder.buildGetUnit() {
-        buildCall(context.referenceFunction(unitGetInstance.symbol))
+        buildInstr(WasmOp.GET_UNIT, WasmImmediate.FuncIdx(context.referenceFunction(unitGetInstance.symbol)))
     }
 
-    // Generates code for the given IR element and *always* leaves something on the stack
+    // Generates code for the given IR element. Leaves something on the stack unless expression was of the type Void.
     private fun generateExpression(elem: IrElement) {
         assert(elem is IrExpression || elem is IrVariable) { "Unsupported statement kind" }
 
@@ -49,12 +49,14 @@ class BodyGenerator(val context: WasmFunctionCodegenContext) : IrElementVisitorV
         }
     }
 
-    // Generates code for the given IR element but *never* leaves anything on the stack
+    // Generates code for the given IR element but *never* leaves anything on the stack.
     private fun generateStatement(statement: IrElement) {
         assert(statement is IrExpression || statement is IrVariable) { "Unsupported statement kind" }
 
         generateExpression(statement)
-        body.buildDrop()
+        if (statement is IrExpression && statement.type != wasmSymbols.voidType) {
+            body.buildDrop()
+        }
     }
 
     override fun visitElement(element: IrElement) {
@@ -172,7 +174,21 @@ class BodyGenerator(val context: WasmFunctionCodegenContext) : IrElementVisitorV
     }
 
     override fun visitGetValue(expression: IrGetValue) {
-        body.buildGetLocal(context.referenceLocal(expression.symbol))
+        val valueSymbol = expression.symbol
+        body.buildGetLocal(context.referenceLocal(valueSymbol))
+
+        val valueDeclaration = valueSymbol.owner
+        if (valueSymbol.owner is IrValueParameter) {
+            val parent = valueDeclaration.parent
+            if (parent is IrFunction && parent.isExported(backendContext)) {
+                val type = context.transformType(valueDeclaration.type)
+                if (type is WasmRefNullType) {
+                    // TODO: Add these casts as IR-2-IR lowering instead
+                    generateTypeRTT(valueDeclaration.type)
+                    body.buildRefCast()
+                }
+            }
+        }
     }
 
     override fun visitSetValue(expression: IrSetValue) {
@@ -250,6 +266,12 @@ class BodyGenerator(val context: WasmFunctionCodegenContext) : IrElementVisitorV
             return
         }
 
+        // Get unit is a special case because it is the only function which returns the real unit instance.
+        if (call.symbol == unitGetInstance.symbol) {
+            body.buildGetUnit()
+            return
+        }
+
         call.dispatchReceiver?.let { generateExpression(it) }
         call.extensionReceiver?.let { generateExpression(it) }
         for (i in 0 until call.valueArgumentsCount) {
@@ -296,7 +318,7 @@ class BodyGenerator(val context: WasmFunctionCodegenContext) : IrElementVisitorV
 
         // Return types of imported functions cannot have concrete struct/array references.
         // Non-primitive return types are represented as eqref which need to be casted back to expected type on call site.
-        if (function.getWasmImportAnnotation() != null || function.getJsFunAnnotation() != null) {
+        if (function.getWasmImportAnnotation() != null || function.getJsFunAnnotation() != null || function.isExternal || function.isExported(backendContext)) {
             val resT = context.transformResultType(function.returnType)
             if (resT is WasmRefNullType) {
                 generateTypeRTT(function.returnType)
@@ -305,7 +327,7 @@ class BodyGenerator(val context: WasmFunctionCodegenContext) : IrElementVisitorV
         }
 
         // Unit types don't cross function boundaries
-        if (function.returnType == irBuiltIns.unitType && function.symbol != unitGetInstance.symbol)
+        if (function.returnType == irBuiltIns.unitType)
             body.buildGetUnit()
     }
 
@@ -388,9 +410,10 @@ class BodyGenerator(val context: WasmFunctionCodegenContext) : IrElementVisitorV
 
     override fun visitContainerExpression(expression: IrContainerExpression) {
         val statements = expression.statements
+
         if (statements.isEmpty()) {
-            assert(expression.type == irBuiltIns.unitType) { "Empty block with non-unit return type" }
-            body.buildGetUnit()
+            if (expression.type == irBuiltIns.unitType)
+                body.buildGetUnit()
             return
         }
 
@@ -399,6 +422,12 @@ class BodyGenerator(val context: WasmFunctionCodegenContext) : IrElementVisitorV
         }
 
         generateExpression(statements.last())
+
+        // This handles cases where the last statement of a block is declaration which doesn't produce any value,
+        // but the block itself marked with the unit type.
+        if (statements.last() !is IrExpression && expression.type != wasmSymbols.voidType) {
+            body.buildGetUnit()
+        }
     }
 
     override fun visitBreak(jump: IrBreak) {
@@ -533,14 +562,12 @@ class BodyGenerator(val context: WasmFunctionCodegenContext) : IrElementVisitorV
     override fun visitVariable(declaration: IrVariable) {
         context.defineLocal(declaration.symbol)
         if (declaration.initializer == null) {
-            body.buildGetUnit()
             return
         }
         val init = declaration.initializer!!
         generateExpression(init)
         val varName = context.referenceLocal(declaration.symbol)
         body.buildSetLocal(varName)
-        body.buildGetUnit()
     }
 
     // Return true if function is recognized as intrinsic.
