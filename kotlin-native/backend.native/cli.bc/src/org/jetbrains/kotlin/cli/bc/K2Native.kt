@@ -99,7 +99,7 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
 
     val K2NativeCompilerArguments.isUsefulWithoutFreeArgs: Boolean
         get() = listTargets || listPhases || checkDependencies || !includes.isNullOrEmpty() ||
-                !librariesToCache.isNullOrEmpty() || libraryToAddToCache != null
+                !librariesToCache.isNullOrEmpty() || libraryToAddToCache != null || !exportedLibraries.isNullOrEmpty()
 
     fun Array<String>?.toNonNullList(): List<String> {
         return this?.asList<String>() ?: listOf<String>()
@@ -259,6 +259,7 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
                     CHECK_DEPENDENCIES,
                     configuration.kotlinSourceRoots.isNotEmpty()
                             || !arguments.includes.isNullOrEmpty()
+                            || !arguments.exportedLibraries.isNullOrEmpty()
                             || outputKind.isCache
                             || arguments.checkDependencies
                 )
@@ -379,6 +380,7 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
                     }
                 })
                 putIfNotNull(RUNTIME_LOGS, arguments.runtimeLogs)
+                putIfNotNull(BUNDLE_ID, parseBundleId(arguments, outputKind, configuration))
             }
         }
     }
@@ -641,7 +643,20 @@ private fun parseKeyValuePairs(
     }
 }?.toMap()
 
-
+private fun parseBundleId(
+        arguments: K2NativeCompilerArguments,
+        outputKind: CompilerOutputKind,
+        configuration: CompilerConfiguration
+): String? {
+    val argumentValue = arguments.bundleId
+    return if (argumentValue != null && outputKind != CompilerOutputKind.FRAMEWORK) {
+        configuration.report(STRONG_WARNING, "Setting a bundle ID is only supported when producing a framework " +
+                "but the compiler is producing ${outputKind.name.lowercase()}")
+        null
+    } else {
+        argumentValue
+    }
+}
 
 fun main(args: Array<String>) = K2Native.main(args)
 fun mainNoExitWithGradleRenderer(args: Array<String>) = K2Native.mainNoExitWithGradleRenderer(args)

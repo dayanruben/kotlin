@@ -87,38 +87,38 @@ public inline fun <T> arrayListOf(): kotlin.collections.ArrayList<T>
 
 public fun <T> arrayListOf(vararg elements: T): kotlin.collections.ArrayList<T>
 
-@kotlin.SinceKotlin(version = "1.3")
-@kotlin.ExperimentalStdlibApi
+@kotlin.SinceKotlin(version = "1.6")
+@kotlin.WasExperimental(markerClass = {kotlin.ExperimentalStdlibApi::class})
 @kotlin.internal.InlineOnly
 public inline fun <E> buildList(capacity: kotlin.Int, @kotlin.BuilderInference
 builderAction: kotlin.collections.MutableList<E>.() -> kotlin.Unit): kotlin.collections.List<E>
 
-@kotlin.SinceKotlin(version = "1.3")
-@kotlin.ExperimentalStdlibApi
+@kotlin.SinceKotlin(version = "1.6")
+@kotlin.WasExperimental(markerClass = {kotlin.ExperimentalStdlibApi::class})
 @kotlin.internal.InlineOnly
 public inline fun <E> buildList(@kotlin.BuilderInference
 builderAction: kotlin.collections.MutableList<E>.() -> kotlin.Unit): kotlin.collections.List<E>
 
-@kotlin.SinceKotlin(version = "1.3")
-@kotlin.ExperimentalStdlibApi
+@kotlin.SinceKotlin(version = "1.6")
+@kotlin.WasExperimental(markerClass = {kotlin.ExperimentalStdlibApi::class})
 @kotlin.internal.InlineOnly
 public inline fun <K, V> buildMap(capacity: kotlin.Int, @kotlin.BuilderInference
 builderAction: kotlin.collections.MutableMap<K, V>.() -> kotlin.Unit): kotlin.collections.Map<K, V>
 
-@kotlin.SinceKotlin(version = "1.3")
-@kotlin.ExperimentalStdlibApi
+@kotlin.SinceKotlin(version = "1.6")
+@kotlin.WasExperimental(markerClass = {kotlin.ExperimentalStdlibApi::class})
 @kotlin.internal.InlineOnly
 public inline fun <K, V> buildMap(@kotlin.BuilderInference
 builderAction: kotlin.collections.MutableMap<K, V>.() -> kotlin.Unit): kotlin.collections.Map<K, V>
 
-@kotlin.SinceKotlin(version = "1.3")
-@kotlin.ExperimentalStdlibApi
+@kotlin.SinceKotlin(version = "1.6")
+@kotlin.WasExperimental(markerClass = {kotlin.ExperimentalStdlibApi::class})
 @kotlin.internal.InlineOnly
 public inline fun <E> buildSet(capacity: kotlin.Int, @kotlin.BuilderInference
 builderAction: kotlin.collections.MutableSet<E>.() -> kotlin.Unit): kotlin.collections.Set<E>
 
-@kotlin.SinceKotlin(version = "1.3")
-@kotlin.ExperimentalStdlibApi
+@kotlin.SinceKotlin(version = "1.6")
+@kotlin.WasExperimental(markerClass = {kotlin.ExperimentalStdlibApi::class})
 @kotlin.internal.InlineOnly
 public inline fun <E> buildSet(@kotlin.BuilderInference
 builderAction: kotlin.collections.MutableSet<E>.() -> kotlin.Unit): kotlin.collections.Set<E>
@@ -10461,7 +10461,7 @@ public final class ArrayDeque<E> : kotlin.collections.AbstractMutableList<E> {
 public open class ArrayList<E> : kotlin.collections.AbstractMutableList<E>, kotlin.collections.MutableList<E>, kotlin.collections.RandomAccess {
     public constructor ArrayList<E>()
 
-    public constructor ArrayList<E>(initialCapacity: kotlin.Int = ...)
+    public constructor ArrayList<E>(initialCapacity: kotlin.Int)
 
     public constructor ArrayList<E>(elements: kotlin.collections.Collection<E>)
 
@@ -10618,7 +10618,7 @@ public open class HashMap<K, V> : kotlin.collections.AbstractMutableMap<K, V>, k
 
     public constructor HashMap<K, V>(initialCapacity: kotlin.Int)
 
-    public constructor HashMap<K, V>(initialCapacity: kotlin.Int, loadFactor: kotlin.Float = ...)
+    public constructor HashMap<K, V>(initialCapacity: kotlin.Int, loadFactor: kotlin.Float)
 
     public constructor HashMap<K, V>(original: kotlin.collections.Map<out K, V>)
 
@@ -10644,7 +10644,7 @@ public open class HashSet<E> : kotlin.collections.AbstractMutableSet<E>, kotlin.
 
     public constructor HashSet<E>(initialCapacity: kotlin.Int)
 
-    public constructor HashSet<E>(initialCapacity: kotlin.Int, loadFactor: kotlin.Float = ...)
+    public constructor HashSet<E>(initialCapacity: kotlin.Int, loadFactor: kotlin.Float)
 
     public constructor HashSet<E>(elements: kotlin.collections.Collection<E>)
 
@@ -10724,7 +10724,7 @@ public open class LinkedHashMap<K, V> : kotlin.collections.HashMap<K, V>, kotlin
 
     public constructor LinkedHashMap<K, V>(initialCapacity: kotlin.Int)
 
-    public constructor LinkedHashMap<K, V>(initialCapacity: kotlin.Int, loadFactor: kotlin.Float = ...)
+    public constructor LinkedHashMap<K, V>(initialCapacity: kotlin.Int, loadFactor: kotlin.Float)
 
     public constructor LinkedHashMap<K, V>(original: kotlin.collections.Map<out K, V>)
 
@@ -10748,7 +10748,7 @@ public open class LinkedHashSet<E> : kotlin.collections.HashSet<E>, kotlin.colle
 
     public constructor LinkedHashSet<E>(initialCapacity: kotlin.Int)
 
-    public constructor LinkedHashSet<E>(initialCapacity: kotlin.Int, loadFactor: kotlin.Float = ...)
+    public constructor LinkedHashSet<E>(initialCapacity: kotlin.Int, loadFactor: kotlin.Float)
 
     public constructor LinkedHashSet<E>(elements: kotlin.collections.Collection<E>)
 }

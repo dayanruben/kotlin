@@ -14,6 +14,9 @@ import java.security.MessageDigest
 private const val inlineGraphFile = "inline.graph"
 private const val inlineFunctionsFile = "inline.functions"
 private const val fileInfoFile = "file.info"
+private const val fileBinaryAst = "binary.ast"
+private const val fileBinaryDts = "binary.dst"
+private const val fileSourceMap = "source.map"
 
 typealias Hash = Long // Any long hash
 typealias FlatHash = Hash // Hash of inline function without its underlying inline call tree
@@ -27,6 +30,9 @@ private fun createFileCacheId(fileName: String): String = md5.digest(fileName.en
 
 class ICCache(val dataProvider: PersistentCacheProvider, val dataConsumer: PersistentCacheConsumer, val serializedIcData: SerializedIcData)
 
+class FileCache(val name: String, var ast: ByteArray?, var dts: ByteArray?, var sourceMap: ByteArray?)
+class ModuleCache(val name: String, val asts: Map<String, FileCache>)
+
 interface PersistentCacheProvider {
     fun fileFingerPrint(path: String): Hash
 
@@ -38,7 +44,11 @@ interface PersistentCacheProvider {
 
     fun allInlineHashes(sigResolver: (String, Int) -> IdSignature): Map<IdSignature, TransHash>
 
-    fun binaryAst(path: String): ByteArray
+    fun binaryAst(path: String): ByteArray?
+
+    fun dts(path: String): ByteArray?
+
+    fun sourceMap(path: String): ByteArray?
 
     companion object {
         val EMPTY = object : PersistentCacheProvider {
@@ -66,6 +76,13 @@ interface PersistentCacheProvider {
                 return ByteArray(0)
             }
 
+            override fun dts(path: String): ByteArray? {
+                return null
+            }
+
+            override fun sourceMap(path: String): ByteArray? {
+                return null
+            }
         }
     }
 }
@@ -131,22 +148,36 @@ class PersistentCacheProviderImpl(private val cachePath: String) : PersistentCac
     override fun allInlineHashes(sigResolver: (String, Int) -> IdSignature): Map<IdSignature, TransHash> {
         val result = mutableMapOf<IdSignature, TransHash>()
         val cachePath = File(cachePath)
-        cachePath.listFiles { file: File -> file.isDirectory }!!.forEach {
-            val fileInfo = File(it, fileInfoFile)
+        cachePath.listFiles { file: File -> file.isDirectory }!!.forEach { f ->
+            val fileInfo = File(f, fileInfoFile)
             if (fileInfo.exists()) {
                 val fileName = fileInfo.readLines()[0]
-                parseHashList(it, inlineFunctionsFile) { id -> sigResolver(fileName, id) }.forEach {
-                    result[it.first] = it.second
+                parseHashList(f, inlineFunctionsFile) { id -> sigResolver(fileName, id) }.forEach { (sig, hash) ->
+                    result[sig] = hash
                 }
             }
         }
         return result
     }
 
-    override fun binaryAst(path: String): ByteArray {
-        TODO("Not yet implemented")
+    private fun readBytesFromCacheFile(fileName: String, cacheName: String): ByteArray? {
+        val cachePath = fileName.fileDir
+        val cacheFile = File(cachePath, cacheName)
+        if (cacheFile.exists()) return cacheFile.readBytes()
+        return null
     }
 
+    override fun binaryAst(path: String): ByteArray? {
+        return readBytesFromCacheFile(path, fileBinaryAst)
+    }
+
+    override fun dts(path: String): ByteArray? {
+        return readBytesFromCacheFile(path, fileBinaryDts)
+    }
+
+    override fun sourceMap(path: String): ByteArray? {
+        return readBytesFromCacheFile(path, fileSourceMap)
+    }
 }
 
 interface PersistentCacheConsumer {
@@ -155,7 +186,11 @@ interface PersistentCacheConsumer {
     fun commitInlineGraph(path: String, hashes: Collection<Pair<IdSignature, TransHash>>, sigResolver: (IdSignature) -> Int)
     fun commitICCacheData(path: String, icData: SerializedIcDataForFile)
     fun commitBinaryAst(path: String, astData: ByteArray)
+    fun commitBinaryDts(path: String, dstData: ByteArray)
+    fun commitSourceMap(path: String, mapData: ByteArray)
     fun invalidateForFile(path: String)
+
+    fun commitLibraryPath(libraryPath: String)
 
     companion object {
         val EMPTY = object : PersistentCacheConsumer {
@@ -186,6 +221,17 @@ interface PersistentCacheConsumer {
 
             }
 
+            override fun commitLibraryPath(libraryPath: String) {
+
+            }
+
+            override fun commitBinaryDts(path: String, dstData: ByteArray) {
+
+            }
+
+            override fun commitSourceMap(path: String, mapData: ByteArray) {
+
+            }
         }
     }
 }
@@ -248,11 +294,42 @@ class PersistentCacheConsumerImpl(private val cachePath: String) : PersistentCac
         File(fileDir, inlineFunctionsFile).delete()
         File(fileDir, inlineGraphFile).delete()
         File(fileDir, fileInfoFile).delete()
+        File(fileDir, fileBinaryAst).delete()
         // TODO: once per-file invalidation is integrated into IC delete the whole directory including PIR parts
         //fileDir.deleteRecursively()
     }
 
+    private fun commitByteArrayToCacheFile(fileName: String, cacheName: String, data: ByteArray) {
+        val fileId = createFileCacheId(fileName)
+        val cacheDir = File(File(cachePath), fileId)
+        val cacheFile = File(cacheDir, cacheName)
+        if (cacheFile.exists()) cacheFile.delete()
+        cacheFile.createNewFile()
+        cacheFile.writeBytes(data)
+    }
+
     override fun commitBinaryAst(path: String, astData: ByteArray) {
-        TODO("Not yet implemented")
+        commitByteArrayToCacheFile(path, fileBinaryAst, astData)
+    }
+
+    override fun commitBinaryDts(path: String, dstData: ByteArray) {
+        commitByteArrayToCacheFile(path, fileBinaryDts, dstData)
+    }
+
+    override fun commitSourceMap(path: String, mapData: ByteArray) {
+        commitByteArrayToCacheFile(path, fileSourceMap, mapData)
+    }
+
+    override fun commitLibraryPath(libraryPath: String) {
+        val infoFile = File(File(cachePath), "info")
+        if (infoFile.exists()) {
+            infoFile.delete()
+        }
+        infoFile.createNewFile()
+
+        PrintWriter(infoFile).use {
+            it.println(libraryPath)
+            it.println("0")
+        }
     }
 }

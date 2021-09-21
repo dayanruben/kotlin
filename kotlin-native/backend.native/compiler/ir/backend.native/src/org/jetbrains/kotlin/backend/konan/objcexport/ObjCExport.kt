@@ -7,14 +7,17 @@ package org.jetbrains.kotlin.backend.konan.objcexport
 
 import org.jetbrains.kotlin.backend.konan.*
 import org.jetbrains.kotlin.backend.konan.Context
+import org.jetbrains.kotlin.backend.konan.KonanConfigKeys.Companion.BUNDLE_ID
 import org.jetbrains.kotlin.backend.konan.descriptors.getPackageFragments
 import org.jetbrains.kotlin.backend.konan.descriptors.isInterface
 import org.jetbrains.kotlin.backend.konan.getExportedDependencies
 import org.jetbrains.kotlin.backend.konan.llvm.CodeGenerator
 import org.jetbrains.kotlin.backend.konan.llvm.objcexport.ObjCExportBlockCodeGenerator
 import org.jetbrains.kotlin.backend.konan.llvm.objcexport.ObjCExportCodeGenerator
+import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.descriptors.SourceFile
 import org.jetbrains.kotlin.ir.util.SymbolTable
 import org.jetbrains.kotlin.konan.exec.Command
@@ -157,9 +160,7 @@ internal class ObjCExport(val context: Context, symbolTable: SymbolTable) {
         }
 
         val file = directory.child("Info.plist")
-        val pkg = guessMainPackage() // TODO: consider showing warning if it is root.
-        val bundleId = pkg.child(Name.identifier(name)).asString()
-
+        val bundleId = guessBundleID(name)
         val platform = properties.platformName()
         val minimumOsVersion = properties.osVersionMin
 
@@ -291,8 +292,12 @@ internal class ObjCExport(val context: Context, symbolTable: SymbolTable) {
         }
     }
 
-    private fun guessMainPackage(): FqName {
-        val allPackages = (context.getIncludedLibraryDescriptors() + context.moduleDescriptor).flatMap {
+    private fun guessMainPackage(modules: List<ModuleDescriptor>): FqName? {
+        if (modules.isEmpty()) {
+            return null
+        }
+
+        val allPackages = modules.flatMap {
             it.getPackageFragments() // Includes also all parent packages, e.g. the root one.
         }
 
@@ -303,6 +308,30 @@ internal class ObjCExport(val context: Context, symbolTable: SymbolTable) {
         return allPackages.map { it.fqName }.distinct()
             .filter { candidate -> nonEmptyPackages.all { it.isSubpackageOf(candidate) } }
             // Now there are all common ancestors of non-empty packages. Longest of them is the least common accessor:
-            .maxByOrNull { it.asString().length }!!
+            .maxByOrNull { it.asString().length }
+    }
+
+    private fun guessBundleID(bundleName: String): String {
+        val configuration = context.configuration
+        configuration[BUNDLE_ID]?.let {
+            return it
+        }
+
+        // Consider exported libraries only if we cannot infer the package from sources or included libs.
+        val mainPackage = guessMainPackage(context.getIncludedLibraryDescriptors() + context.moduleDescriptor)
+                ?: guessMainPackage(context.getExportedDependencies())
+                ?: FqName.ROOT
+
+        val bundleID = mainPackage.child(Name.identifier(bundleName)).asString()
+
+        if (mainPackage.isRoot) {
+            configuration.report(
+                    CompilerMessageSeverity.STRONG_WARNING,
+                    "Cannot infer a bundle ID from packages of source files and exported dependencies, " +
+                            "use the bundle name instead: $bundleName. " +
+                            "Please specify the bundle ID explicitly using the -Xbundle-id compiler flag."
+            )
+        }
+        return bundleID
     }
 }

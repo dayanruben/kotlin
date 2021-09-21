@@ -94,6 +94,11 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
             else -> freezingMode
         }
     }
+    val sourceInfoType: SourceInfoType
+        get() = configuration.get(BinaryOptions.sourceInfoType)
+                ?: SourceInfoType.CORESYMBOLICATION.takeIf { debug && target.family.isAppleFamily }
+                ?: SourceInfoType.NOOP
+
 
     val needVerifyIr: Boolean
         get() = configuration.get(KonanConfigKeys.VERIFY_IR) == true
@@ -174,6 +179,7 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
     val infoArgsOnly = configuration.kotlinSourceRoots.isEmpty()
             && configuration[KonanConfigKeys.INCLUDED_LIBRARIES].isNullOrEmpty()
             && librariesToCache.isEmpty()
+            && configuration[KonanConfigKeys.EXPORTED_LIBRARIES].isNullOrEmpty()
 
     fun librariesWithDependencies(moduleDescriptor: ModuleDescriptor?): List<KonanLibrary> {
         if (moduleDescriptor == null) error("purgeUnneeded() only works correctly after resolve is over, and we have successfully marked package files as needed or not needed.")
@@ -184,7 +190,7 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
     private val shouldCoverLibraries = !configuration.getList(KonanConfigKeys.LIBRARIES_TO_COVER).isNullOrEmpty()
 
     internal val runtimeNativeLibraries: List<String> = mutableListOf<String>().apply {
-        add(if (debug) "debug.bc" else "release.bc")
+        if (debug) add("debug.bc")
         val useMimalloc = if (configuration.get(KonanConfigKeys.ALLOCATION_MODE) == "mimalloc") {
             if (target.supportsMimallocAllocator()) {
                 true
@@ -220,6 +226,11 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
             }
         }
         if (shouldCoverLibraries || shouldCoverSources) add("profileRuntime.bc")
+        add("source_info_core_symbolication.bc")
+        if (target.supportsLibBacktrace()) {
+            add("source_info_libbacktrace.bc")
+            add("libbacktrace.bc")
+        }
         if (useMimalloc) {
             add("opt_alloc.bc")
             add("mimalloc.bc")

@@ -1,3 +1,5 @@
-KtFunctionCall:
+KtVariableWithInvokeFunctionCall:
+target = x: kotlin.Int
 argumentMapping = {  }
-targetFunction = /invoke(<receiver>: kotlin.Int): kotlin.String
+targetFunction = /invoke(<extension receiver>: kotlin.Int): kotlin.String
+substitutor = <empty substitutor>

@@ -150,7 +150,7 @@ class NativePlatformLibsIT : BaseGradleIT() {
         deleteInstalledCompilers()
 
         val unsupportedTarget = when {
-            HostManager.hostIsMac -> KonanTarget.MINGW_X64
+            HostManager.hostIsMac -> KonanTarget.LINUX_MIPSEL32
             else -> KonanTarget.IOS_X64
         }
 
@@ -185,7 +185,8 @@ class NativePlatformLibsIT : BaseGradleIT() {
             }
         }
         when {
-            HostManager.hostIsMac -> buildPlatformLibrariesWithoutAndWithCaches(KonanTarget.IOS_X64)
+            HostManager.host == KonanTarget.MACOS_ARM64 -> buildPlatformLibrariesWithoutAndWithCaches(KonanTarget.IOS_ARM64)
+            HostManager.host == KonanTarget.MACOS_X64 -> buildPlatformLibrariesWithoutAndWithCaches(KonanTarget.IOS_X64)
             HostManager.hostIsLinux -> buildPlatformLibrariesWithoutAndWithCaches(KonanTarget.LINUX_X64)
         }
     }
@@ -208,7 +209,7 @@ class NativePlatformLibsIT : BaseGradleIT() {
             assertSuccessful()
             assertContains("Warning: Project property 'kotlin.native.restrictedDistribution' is deprecated. Please use 'kotlin.native.distribution.type=light' instead")
 
-            val osName = simpleOsName(currentCompilerVersion)
+            val osName = simpleOsName(CompilerVersion.fromString(oldCompilerVersion))
             val regex = "Kotlin/Native distribution: .*kotlin-native-restricted-$osName".toRegex()
             // Restricted distribution is available for Mac hosts only.
             if (HostManager.hostIsMac) {

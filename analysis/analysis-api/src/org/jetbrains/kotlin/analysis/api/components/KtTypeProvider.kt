@@ -27,6 +27,8 @@ public abstract class KtTypeProvider : KtAnalysisSessionComponent() {
     public abstract fun getReceiverTypeForDoubleColonExpression(expression: KtDoubleColonExpression): KtType?
 
     public abstract fun withNullability(type: KtType, newNullability: KtTypeNullability): KtType
+
+    public abstract fun haveCommonSubtype(a: KtType, b: KtType): Boolean
 }
 
 public interface KtTypeProviderMixIn : KtAnalysisSessionMixIn {
@@ -76,6 +78,9 @@ public interface KtTypeProviderMixIn : KtAnalysisSessionMixIn {
 
     public fun KtType.upperBoundIfFlexible(): KtType = (this as? KtFlexibleType)?.upperBound ?: this
     public fun KtType.lowerBoundIfFlexible(): KtType = (this as? KtFlexibleType)?.lowerBound ?: this
+
+    /** Check whether this type is compatible with that type. If they are compatible, it means they can have a common subtype. */
+    public fun KtType.hasCommonSubTypeWith(that: KtType): Boolean = analysisSession.typeProvider.haveCommonSubtype(this, that)
 }
 
 @Suppress("PropertyName")
@@ -95,6 +100,8 @@ public abstract class KtBuiltinTypes : ValidityTokenOwner {
     public abstract val UNIT: KtType
     public abstract val NOTHING: KtType
     public abstract val ANY: KtType
+
+    public abstract val THROWABLE: KtType
 
     public abstract val NULLABLE_ANY: KtType
     public abstract val NULLABLE_NOTHING: KtType

@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.fir.declarations.utils.modality
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.references.FirSuperReference
 import org.jetbrains.kotlin.fir.resolve.inference.*
+import org.jetbrains.kotlin.fir.resolve.isTypeMismatchDueToNullability
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.scopes.FirUnstableSmartcastTypeScope
 import org.jetbrains.kotlin.fir.symbols.SyntheticSymbol
@@ -32,6 +33,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.calls.tasks.ExplicitReceiverKind.*
 import org.jetbrains.kotlin.resolve.calls.tower.CandidateApplicability
 import org.jetbrains.kotlin.types.AbstractNullabilityChecker
+import org.jetbrains.kotlin.types.TypeApproximatorConfiguration
 
 abstract class ResolutionStage {
     abstract suspend fun check(candidate: Candidate, callInfo: CallInfo, sink: CheckerSink, context: ResolutionContext)
@@ -121,7 +123,21 @@ object CheckDispatchReceiver : ResolutionStage() {
             !explicitReceiverExpression.isStable &&
             (isCandidateFromUnstableSmartcast || (isReceiverNullable && !explicitReceiverExpression.smartcastType.canBeNull))
         ) {
-            sink.yieldDiagnostic(UnstableSmartCast(explicitReceiverExpression, explicitReceiverExpression.smartcastType.coneType))
+            val dispatchReceiverType = (candidate.symbol as? FirCallableSymbol<*>)?.dispatchReceiverType?.let {
+                context.session.inferenceComponents.approximator.approximateToSuperType(
+                    it,
+                    TypeApproximatorConfiguration.FinalApproximationAfterResolutionAndInference
+                ) ?: it
+            }
+            val targetType =
+                dispatchReceiverType ?: explicitReceiverExpression.smartcastType.coneType
+            sink.yieldDiagnostic(
+                UnstableSmartCast(
+                    explicitReceiverExpression,
+                    targetType,
+                    context.session.typeContext.isTypeMismatchDueToNullability(explicitReceiverExpression.originalType.coneType, targetType)
+                )
+            )
         } else if (isReceiverNullable) {
             sink.yieldDiagnostic(UnsafeCall(dispatchReceiverValueType))
         }

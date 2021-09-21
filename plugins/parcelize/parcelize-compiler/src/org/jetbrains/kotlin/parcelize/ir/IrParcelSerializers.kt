@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.*
-import org.jetbrains.kotlin.parcelize.serializers.ParcelizeExtensionBase.Companion.CREATOR_NAME
 
 interface IrParcelSerializer {
     fun AndroidIrBuilder.readParcel(parcel: IrValueDeclaration): IrExpression
@@ -189,13 +188,7 @@ class IrCharSequenceParcelSerializer : IrParcelSerializer {
 // Parcel serializer for Parcelables in the same module, which accesses the writeToParcel/createFromParcel methods without reflection.
 class IrEfficientParcelableParcelSerializer(private val irClass: IrClass) : IrParcelSerializer {
     override fun AndroidIrBuilder.readParcel(parcel: IrValueDeclaration): IrExpression {
-        val creator: IrExpression = irClass.fields.find { it.name == CREATOR_NAME }?.let { creatorField ->
-            irGetField(null, creatorField)
-        } ?: irCall(irClass.creatorGetter!!).apply {
-            dispatchReceiver = irGetObject(irClass.companionObject()!!.symbol)
-        }
-
-        return parcelableCreatorCreateFromParcel(creator, irGet(parcel))
+        return parcelableCreatorCreateFromParcel(getParcelableCreator(irClass), irGet(parcel))
     }
 
     override fun AndroidIrBuilder.writeParcel(parcel: IrValueDeclaration, flags: IrValueDeclaration, value: IrExpression): IrExpression {
@@ -215,15 +208,25 @@ class IrGenericParcelableParcelSerializer(private val parcelizeType: IrType) : I
     }
 }
 
-// Fallback parcel serializer for unknown types using Parcel.readValue/writeValue.
+// Creates a serializer from a pair of parcel methods of the form reader(ClassLoader)T and writer(T)V.
 // This needs a reference to the parcelize type itself in order to find the correct class loader to use, see KT-20027.
-class IrGenericValueParcelSerializer(private val parcelizeType: IrType) : IrParcelSerializer {
+class IrParcelSerializerWithClassLoader(
+    private val parcelizeType: IrType,
+    private val reader: IrSimpleFunctionSymbol,
+    private val writer: IrSimpleFunctionSymbol
+) : IrParcelSerializer {
     override fun AndroidIrBuilder.readParcel(parcel: IrValueDeclaration): IrExpression {
-        return parcelReadValue(irGet(parcel), classGetClassLoader(javaClassReference(parcelizeType)))
+        return irCall(reader).apply {
+            dispatchReceiver = irGet(parcel)
+            putValueArgument(0, classGetClassLoader(javaClassReference(parcelizeType)))
+        }
     }
 
     override fun AndroidIrBuilder.writeParcel(parcel: IrValueDeclaration, flags: IrValueDeclaration, value: IrExpression): IrExpression {
-        return parcelWriteValue(irGet(parcel), value)
+        return irCall(writer).apply {
+            dispatchReceiver = irGet(parcel)
+            putValueArgument(0, value)
+        }
     }
 }
 

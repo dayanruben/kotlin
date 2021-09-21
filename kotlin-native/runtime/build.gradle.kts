@@ -5,8 +5,8 @@
 import org.jetbrains.kotlin.*
 import org.jetbrains.kotlin.testing.native.*
 import org.jetbrains.kotlin.bitcode.CompileToBitcode
-import org.jetbrains.kotlin.bitcode.CompileToBitcodeExtension
 import org.jetbrains.kotlin.konan.target.*
+import org.jetbrains.kotlin.konan.target.Architecture as TargetArchitecture
 
 plugins {
     id("compile-to-bitcode")
@@ -32,9 +32,11 @@ bitcode {
             "${target}StdAlloc",
             "${target}OptAlloc",
             "${target}Mimalloc",
+            "${target}Libbacktrace",
             "${target}Launcher",
             "${target}Debug",
-            "${target}Release",
+            "${target}SourceInfoCoreSymbolication",
+            "${target}SourceInfoLibbacktrace",
             "${target}Strict",
             "${target}Relaxed",
             "${target}ProfileRuntime",
@@ -63,6 +65,45 @@ bitcode {
         onlyIf { targetSupportsMimallocAllocator(target) }
     }
 
+    create("libbacktrace") {
+        val targetInfo = HostManager().targetByName(target)
+        language = CompileToBitcode.Language.C
+        val useMachO = targetInfo.family.isAppleFamily
+        val useElf = targetInfo.family in listOf(Family.LINUX, Family.ANDROID)
+        includeFiles = listOfNotNull(
+                "atomic.c",
+                "backtrace.c",
+                "dwarf.c",
+                "elf.c".takeIf { useElf },
+                "fileline.c",
+                "macho.c".takeIf { useMachO },
+                "mmap.c",
+                "mmapio.c",
+                "posix.c",
+                "print.c",
+                "simple.c",
+                "sort.c",
+                "state.c"
+        )
+        srcDirs = files("$srcRoot/c")
+        val elfSize = when (targetInfo.architecture) {
+            TargetArchitecture.X64, TargetArchitecture.ARM64 -> 64
+            TargetArchitecture.X86, TargetArchitecture.ARM32,
+            TargetArchitecture.MIPS32, TargetArchitecture.MIPSEL32,
+            TargetArchitecture.WASM32 -> 32
+        }
+        compilerArgs.addAll(listOfNotNull(
+                "-funwind-tables",
+                "-W", "-Wall", "-Wwrite-strings", "-Wstrict-prototypes", "-Wmissing-prototypes",
+                "-Wold-style-definition", "-Wmissing-format-attribute", "-Wcast-qual", "-O2",
+                "-DBACKTRACE_ELF_SIZE=$elfSize".takeIf { useElf }
+        ))
+        headersDirs = files("$srcRoot/c/include")
+
+        onlyIf { targetSupportsLibBacktrace(target) }
+    }
+
+
     create("launcher") {
         includeRuntime()
     }
@@ -78,8 +119,13 @@ bitcode {
         includeRuntime()
     }
 
-    create("release") {
+    create("source_info_core_symbolication", file("src/source_info/core_symbolication")) {
         includeRuntime()
+    }
+    create("source_info_libbacktrace", file("src/source_info/libbacktrace")) {
+        includeRuntime()
+        headersDirs += files("src/libbacktrace/c/include")
+        onlyIf { targetSupportsLibBacktrace(target) }
     }
 
     create("strict") {
@@ -143,7 +189,6 @@ targetList.forEach { targetName ->
                 "${targetName}Runtime",
                 "${targetName}LegacyMemoryManager",
                 "${targetName}Strict",
-                "${targetName}Release",
                 "${targetName}StdAlloc",
                 "${targetName}Objc"
             )
@@ -159,7 +204,6 @@ targetList.forEach { targetName ->
                 "${targetName}Runtime",
                 "${targetName}LegacyMemoryManager",
                 "${targetName}Strict",
-                "${targetName}Release",
                 "${targetName}Mimalloc",
                 "${targetName}OptAlloc",
                 "${targetName}Objc"
@@ -177,7 +221,6 @@ targetList.forEach { targetName ->
                 "${targetName}ExperimentalMemoryManagerStms",
                 "${targetName}CommonGc",
                 "${targetName}SameThreadMsGc",
-                "${targetName}Release",
                 "${targetName}Mimalloc",
                 "${targetName}OptAlloc",
                 "${targetName}Objc"
@@ -196,7 +239,6 @@ targetList.forEach { targetName ->
                 "${targetName}ExperimentalMemoryManagerStms",
                 "${targetName}CommonGc",
                 "${targetName}SameThreadMsGc",
-                "${targetName}Release",
                 "${targetName}StdAlloc",
                 "${targetName}Objc"
             )
@@ -214,7 +256,6 @@ targetList.forEach { targetName ->
                 "${targetName}ExperimentalMemoryManagerNoop",
                 "${targetName}CommonGc",
                 "${targetName}NoopGc",
-                "${targetName}Release",
                 "${targetName}Mimalloc",
                 "${targetName}OptAlloc",
                 "${targetName}Objc"
@@ -233,7 +274,6 @@ targetList.forEach { targetName ->
                 "${targetName}ExperimentalMemoryManagerNoop",
                 "${targetName}CommonGc",
                 "${targetName}NoopGc",
-                "${targetName}Release",
                 "${targetName}StdAlloc",
                 "${targetName}Objc"
             )

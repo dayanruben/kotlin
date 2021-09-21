@@ -30,6 +30,11 @@ public class ParcelizeBytecodeListingTestGenerated extends AbstractParcelizeByte
         KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("plugins/parcelize/parcelize-compiler/testData/codegen"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
     }
 
+    @TestMetadata("classLoaderValues.kt")
+    public void testClassLoaderValues() throws Exception {
+        runTest("plugins/parcelize/parcelize-compiler/testData/codegen/classLoaderValues.kt");
+    }
+
     @TestMetadata("customDescribeContents.kt")
     public void testCustomDescribeContents() throws Exception {
         runTest("plugins/parcelize/parcelize-compiler/testData/codegen/customDescribeContents.kt");
@@ -98,6 +103,11 @@ public class ParcelizeBytecodeListingTestGenerated extends AbstractParcelizeByte
     @TestMetadata("parcelable.kt")
     public void testParcelable() throws Exception {
         runTest("plugins/parcelize/parcelize-compiler/testData/codegen/parcelable.kt");
+    }
+
+    @TestMetadata("parcelableCreator.kt")
+    public void testParcelableCreator() throws Exception {
+        runTest("plugins/parcelize/parcelize-compiler/testData/codegen/parcelableCreator.kt");
     }
 
     @TestMetadata("serializable.kt")

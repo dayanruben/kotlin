@@ -17,20 +17,15 @@
 #ifndef RUNTIME_SOURCEINFO_H
 #define RUNTIME_SOURCEINFO_H
 
-struct SourceInfo {
-    const char* fileName;
-    int lineNumber;
-    int column;
+#include <string>
+
+class SourceInfo {
+    std::string fileName;
+public:
+    int lineNumber = -1;
+    int column = -1;
+    std::string& getFileName() { return fileName; }
+    void setFilename(const char *newFileName) { fileName = newFileName ?: ""; }
 };
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-struct SourceInfo Kotlin_getSourceInfo(void* addr);
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
 
 #endif // RUNTIME_SOURCEINFO_H
