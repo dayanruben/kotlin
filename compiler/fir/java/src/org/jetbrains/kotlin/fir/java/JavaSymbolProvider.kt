@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.fir.java
 
 import com.intellij.openapi.progress.ProcessCanceledException
-import org.jetbrains.kotlin.fir.FirModuleData
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.caches.firCachesFactory
 import org.jetbrains.kotlin.fir.resolve.providers.FirSymbolProvider
@@ -15,7 +14,6 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
-import org.jetbrains.kotlin.load.java.JavaClassFinder
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -24,28 +22,30 @@ import org.jetbrains.kotlin.name.Name
 // Use it in application sessions for loading classes from Java files listed on the command line.
 // For library and incremental compilation sessions use `KotlinDeserializedJvmSymbolsProvider`
 // in order to load Kotlin classes as well.
-class JavaSymbolProvider(session: FirSession, baseModuleData: FirModuleData, facade: JavaClassFinder) : FirSymbolProvider(session) {
-    private val javaClassConverter = JavaClassConverter(session, baseModuleData, facade)
+class JavaSymbolProvider(
+    session: FirSession,
+    private val javaFacade: FirJavaFacade,
+) : FirSymbolProvider(session) {
 
     private val classCache =
         session.firCachesFactory.createCacheWithPostCompute(
             createValue = { classId: ClassId, parentClassSymbol: FirRegularClassSymbol? ->
-                javaClassConverter.findClass(classId)?.let { FirRegularClassSymbol(classId) to (it to parentClassSymbol) }
+                javaFacade.findClass(classId)?.let { FirRegularClassSymbol(classId) to (it to parentClassSymbol) }
                     ?: null to (null to null)
             },
             postCompute = { _, classSymbol, (javaClass, parentClassSymbol) ->
                 if (classSymbol != null && javaClass != null) {
-                    javaClassConverter.convertJavaClassToFir(classSymbol, parentClassSymbol, javaClass)
+                    javaFacade.convertJavaClassToFir(classSymbol, parentClassSymbol, javaClass)
                 }
             }
         )
 
     override fun getPackage(fqName: FqName): FqName? =
-        javaClassConverter.getPackage(fqName)
+        javaFacade.getPackage(fqName)
 
     override fun getClassLikeSymbolByClassId(classId: ClassId): FirRegularClassSymbol? =
         try {
-            if (javaClassConverter.hasTopLevelClassOf(classId)) getFirJavaClass(classId) else null
+            if (javaFacade.hasTopLevelClassOf(classId)) getFirJavaClass(classId) else null
         } catch (e: ProcessCanceledException) {
             null
         }

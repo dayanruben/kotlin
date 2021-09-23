@@ -11,18 +11,13 @@ import com.android.build.gradle.api.UnitTestVariant
 import org.gradle.api.InvalidUserDataException
 import org.gradle.api.Project
 import org.gradle.api.Task
-import org.gradle.api.artifacts.Configuration
-import org.gradle.api.artifacts.Dependency
-import org.gradle.api.artifacts.DependencySet
-import org.gradle.api.artifacts.ExternalDependency
-import org.gradle.api.artifacts.ProjectDependency
+import org.gradle.api.artifacts.*
 import org.gradle.api.tasks.testing.AbstractTestTask
 import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.testing.junit.JUnitOptions
 import org.gradle.api.tasks.testing.junitplatform.JUnitPlatformOptions
 import org.gradle.api.tasks.testing.testng.TestNGOptions
 import org.jetbrains.kotlin.gradle.dsl.*
-import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
 import org.jetbrains.kotlin.gradle.execution.KotlinAggregateExecutionSource
 import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider
@@ -31,13 +26,12 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinGradleFragment
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinGradleModule
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinPm20ProjectExtension
 import org.jetbrains.kotlin.gradle.plugin.sources.KotlinDependencyScope
-import org.jetbrains.kotlin.gradle.plugin.sources.withAllDependsOnSourceSets
 import org.jetbrains.kotlin.gradle.plugin.sources.resolveAllDependsOnSourceSets
 import org.jetbrains.kotlin.gradle.plugin.sources.sourceSetDependencyConfigurationByScope
+import org.jetbrains.kotlin.gradle.plugin.sources.withAllDependsOnSourceSets
 import org.jetbrains.kotlin.gradle.targets.jvm.JvmCompilationsTestRunSource
 import org.jetbrains.kotlin.gradle.tasks.locateTask
 import org.jetbrains.kotlin.gradle.testing.KotlinTaskTestRun
-import org.jetbrains.kotlin.gradle.utils.isGradleVersionAtLeast
 import org.jetbrains.kotlin.gradle.utils.lowerCamelCaseName
 
 internal const val KOTLIN_MODULE_GROUP = "org.jetbrains.kotlin"
@@ -202,7 +196,8 @@ private fun chooseAndAddStdlibDependency(
 
         // If the exact same module is added in the source sets hierarchy, possibly even with a different scope, we don't add it
         val moduleAddedInHierarchy = hierarchySourceSetsDependencyConfigurations.any {
-            it.allNonProjectDependencies().any { dependency -> dependency.group == KOTLIN_MODULE_GROUP && dependency.name == stdlibModuleName }
+            it.allNonProjectDependencies()
+                .any { dependency -> dependency.group == KOTLIN_MODULE_GROUP && dependency.name == stdlibModuleName }
         }
 
         if (stdlibModuleName != null && !moduleAddedInHierarchy)
@@ -286,7 +281,8 @@ internal fun configureKotlinTestDependency(project: Project) {
 
             project.tryWithDependenciesIfUnresolved(configuration) { dependencies ->
                 val parentOrOwnVersions: List<String?> =
-                    kotlinSourceSet.withAllDependsOnSourceSets().filter(versionOrNullBySourceSet::contains).map(versionOrNullBySourceSet::get)
+                    kotlinSourceSet.withAllDependsOnSourceSets().filter(versionOrNullBySourceSet::contains)
+                        .map(versionOrNullBySourceSet::get)
 
                 finalizingDependencies = true
 
@@ -313,6 +309,7 @@ internal fun configureKotlinTestDependency(project: Project) {
 private fun kotlinTestCapabilityForJvmSourceSet(project: Project, kotlinSourceSet: KotlinSourceSet): String? {
     val compilations = CompilationSourceSetUtil.compilationsBySourceSets(project).getValue(kotlinSourceSet)
         .filter { it.target !is KotlinMetadataTarget }
+        .ifEmpty { return null }
 
     val platformTypes = compilations.map { it.platformType }
     // TODO: Extract jvmPlatformTypes to public constant?
@@ -348,10 +345,9 @@ private fun kotlinTestCapabilityForJvmSourceSet(project: Project, kotlinSourceSe
                 KotlinTestJvmFramework.junit
         }
     }
-    return when {
-        frameworks.size > 1 -> null
-        else -> "$KOTLIN_MODULE_GROUP:$KOTLIN_TEST_ROOT_MODULE_NAME-framework-${frameworks.single()}"
-    }
+
+    // TODO: Review Sergey Igushkin: https://youtrack.jetbrains.com/issue/KT-48885
+    return "$KOTLIN_MODULE_GROUP:$KOTLIN_TEST_ROOT_MODULE_NAME-framework-${frameworks.singleOrNull() ?: return null}"
 }
 
 internal const val KOTLIN_TEST_ROOT_MODULE_NAME = "kotlin-test"
