@@ -41,9 +41,13 @@ internal fun mockClassType(
 ): CirClassType = CirClassType.createInterned(
     classId = createValidClassifierId(classId),
     outerType = null,
-    visibility = Visibilities.Public,
     arguments = emptyList(),
     isMarkedNullable = nullable
+)
+
+internal fun mockExtensionReceiver(receiverClassId: String) = CirExtensionReceiver(
+    annotations = emptyList(),
+    type = mockClassType(receiverClassId)
 )
 
 private fun createValidClassifierId(classifierId: String): CirEntityId {

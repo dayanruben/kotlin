@@ -5,12 +5,53 @@
 
 package org.jetbrains.kotlin.analysis.api.symbols.markers
 
+import org.jetbrains.kotlin.name.CallableId
+import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.types.ConstantValueKind
 
-public sealed class KtConstantValue
+/**
+ * Annotation values are expected to be compile-time constants. According to the
+ * [spec](https://kotlinlang.org/spec/annotations.html#annotation-values),
+ * allowed kinds are:
+ *   * integer types,
+ *   * string type,
+ *   * enum types,
+ *   * other annotation types, and
+ *   * array of aforementioned types
+ *
+ *  [KtLiteralConstantValue] covers first two kinds;
+ *  [KtEnumEntryConstantValue] corresponds to enum types;
+ *  [KtAnnotationConstantValue] represents annotation types (with annotation fq name and arguments); and
+ *  [KtArrayConstantValue] abstracts an array of [KtConstantValue]s.
+ */
+public sealed class KtConstantValue(
+    public open val sourcePsi: KtElement? = null
+)
 public object KtUnsupportedConstantValue : KtConstantValue()
 
-public data class KtSimpleConstantValue<T>(val constantValueKind: ConstantValueKind<T>, val value: T) : KtConstantValue() {
+public class KtArrayConstantValue(
+    public val values: Collection<KtConstantValue>,
+    override val sourcePsi: KtElement?,
+) : KtConstantValue()
+
+public class KtAnnotationConstantValue(
+    public val classId: ClassId?,
+    public val arguments: List<KtNamedConstantValue>,
+    override val sourcePsi: KtCallElement?,
+) : KtConstantValue()
+
+public class KtEnumEntryConstantValue(
+    public val callableId: CallableId?,
+    override val sourcePsi: KtElement?,
+) : KtConstantValue()
+
+public class KtLiteralConstantValue<T>(
+    public val constantValueKind: ConstantValueKind<T>,
+    public val value: T,
+    override val sourcePsi: KtElement?,
+) : KtConstantValue() {
     public fun toConst(): Any? {
         return (value as? Long)?.let {
             when (constantValueKind) {

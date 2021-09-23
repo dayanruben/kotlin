@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.commonizer.transformer
 import org.jetbrains.kotlin.commonizer.AbstractInlineSourcesCommonizationTest
 import org.jetbrains.kotlin.commonizer.assertCommonized
 
-class UnderscoredTypeAliasTypeSubstitutorTest : AbstractInlineSourcesCommonizationTest() {
+class UnderscoredTypeAliasTypeSubstitutonTest : AbstractInlineSourcesCommonizationTest() {
 
     fun `test inlined underscored typealias - single platform`() {
         val result = commonize {
@@ -61,6 +61,7 @@ class UnderscoredTypeAliasTypeSubstitutorTest : AbstractInlineSourcesCommonizati
             "(a, b)", """
                 typealias X = Int
                 typealias __X = X
+                /* No hard requirement. Picking X over __X seems equally fine here */
                 expect fun x(x: X)
             """.trimIndent()
         )

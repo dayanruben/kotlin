@@ -1273,6 +1273,16 @@ public class IrJsCodegenBoxES6TestGenerated extends AbstractIrJsCodegenBoxES6Tes
             runTest("compiler/testData/codegen/box/bridges/kt42137.kt");
         }
 
+        @TestMetadata("kt46389.kt")
+        public void testKt46389() throws Exception {
+            runTest("compiler/testData/codegen/box/bridges/kt46389.kt");
+        }
+
+        @TestMetadata("kt46389_jvmDefault.kt")
+        public void testKt46389_jvmDefault() throws Exception {
+            runTest("compiler/testData/codegen/box/bridges/kt46389_jvmDefault.kt");
+        }
+
         @TestMetadata("longChainOneBridge.kt")
         public void testLongChainOneBridge() throws Exception {
             runTest("compiler/testData/codegen/box/bridges/longChainOneBridge.kt");
@@ -10027,6 +10037,11 @@ public class IrJsCodegenBoxES6TestGenerated extends AbstractIrJsCodegenBoxES6Tes
                 runTest("compiler/testData/codegen/box/delegatedProperty/optimizedDelegatedProperties/kt42253.kt");
             }
 
+            @TestMetadata("kt48825.kt")
+            public void testKt48825() throws Exception {
+                runTest("compiler/testData/codegen/box/delegatedProperty/optimizedDelegatedProperties/kt48825.kt");
+            }
+
             @TestMetadata("lazy.kt")
             public void testLazy() throws Exception {
                 runTest("compiler/testData/codegen/box/delegatedProperty/optimizedDelegatedProperties/lazy.kt");
@@ -12136,6 +12151,11 @@ public class IrJsCodegenBoxES6TestGenerated extends AbstractIrJsCodegenBoxES6Tes
         @TestMetadata("nothisnoclosure.kt")
         public void testNothisnoclosure() throws Exception {
             runTest("compiler/testData/codegen/box/functions/nothisnoclosure.kt");
+        }
+
+        @TestMetadata("overloadByInterfaceType.kt")
+        public void testOverloadByInterfaceType() throws Exception {
+            runTest("compiler/testData/codegen/box/functions/overloadByInterfaceType.kt");
         }
 
         @TestMetadata("prefixRecursiveCall.kt")

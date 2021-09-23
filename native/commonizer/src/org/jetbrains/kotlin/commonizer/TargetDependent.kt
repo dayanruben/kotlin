@@ -7,6 +7,8 @@
 
 package org.jetbrains.kotlin.commonizer
 
+import gnu.trove.THashMap
+
 sealed interface TargetDependent<T> : Iterable<T> {
     val size: Int get() = targets.size
     val targets: List<CommonizerTarget>
@@ -66,6 +68,14 @@ internal fun <T, R> TargetDependent<T>.mapValue(mapper: (T) -> R): TargetDepende
     return TargetDependent(targets) { target -> this@mapValue.get(target).let(mapper) }
 }
 
+internal inline fun <T, R> TargetDependent<T>.mapValueEager(mapper: (T) -> R): TargetDependent<R> {
+    return EagerTargetDependent(targets) { target -> mapper(this[target]) }
+}
+
+internal inline fun <T, R> TargetDependent<T>.mapValueEagerWithTarget(mapper: (target: CommonizerTarget, T) -> R): TargetDependent<R> {
+    return EagerTargetDependent(targets) { target -> mapper(target, this[target]) }
+}
+
 internal fun <T, R> TargetDependent<T>.mapTargets(mapper: (CommonizerTarget) -> R): TargetDependent<R> {
     return TargetDependent(targets) { target -> mapper(target) }
 }
@@ -84,7 +94,9 @@ internal fun <T> TargetDependent(keys: Iterable<CommonizerTarget>, factory: (tar
 
 internal fun <T> TargetDependent(vararg pairs: Pair<CommonizerTarget, T>) = pairs.toMap().toTargetDependent()
 
-internal fun <T> EagerTargetDependent(keys: Iterable<CommonizerTarget>, factory: (target: CommonizerTarget) -> T): TargetDependent<T> {
+internal inline fun <T> EagerTargetDependent(
+    keys: Iterable<CommonizerTarget>, factory: (target: CommonizerTarget) -> T
+): TargetDependent<T> {
     return keys.associateWith(factory).toTargetDependent()
 }
 
@@ -101,27 +113,24 @@ private class FactoryBasedTargetDependent<T>(
     private var factory: ((target: CommonizerTarget) -> T)?
 ) : TargetDependent<T> {
 
+    private object Null
     private object Uninitialized
 
-    private val values: Array<Any?> = Array(targets.size) { Uninitialized }
+    private val values = targets.associateWithTo(THashMap<CommonizerTarget, Any>(targets.size)) { Uninitialized }
 
     @Suppress("UNCHECKED_CAST")
     override fun get(target: CommonizerTarget): T {
-        val indexOfTarget = indexOf(target)
-        if (indexOfTarget < 0) throwMissingTarget(target)
-        val storedValue = values[indexOfTarget]
-        if (storedValue == Uninitialized) {
-            val producedValue = factory?.invoke(target)
-            values[indexOfTarget] = producedValue
-
-            /* All values initialized. Factory can be released */
-            if (values.none { it === Uninitialized }) {
+        val value = values[target] ?: throwMissingTarget(target)
+        if (value === Null) return null as T
+        if (value === Uninitialized) {
+            val initializedValue = checkNotNull(factory)(target)
+            values[target] = initializedValue ?: Null
+            if (values.none { it.value !== Uninitialized }) {
                 factory = null
             }
-            return producedValue as T
+            return initializedValue
         }
-
-        return storedValue as T
+        return value as T
     }
 }
 

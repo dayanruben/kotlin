@@ -110,6 +110,11 @@ public class ParcelizeBytecodeListingTestGenerated extends AbstractParcelizeByte
         runTest("plugins/parcelize/parcelize-compiler/testData/codegen/parcelableCreator.kt");
     }
 
+    @TestMetadata("primitiveArrays.kt")
+    public void testPrimitiveArrays() throws Exception {
+        runTest("plugins/parcelize/parcelize-compiler/testData/codegen/primitiveArrays.kt");
+    }
+
     @TestMetadata("serializable.kt")
     public void testSerializable() throws Exception {
         runTest("plugins/parcelize/parcelize-compiler/testData/codegen/serializable.kt");
@@ -133,5 +138,10 @@ public class ParcelizeBytecodeListingTestGenerated extends AbstractParcelizeByte
     @TestMetadata("size.kt")
     public void testSize() throws Exception {
         runTest("plugins/parcelize/parcelize-compiler/testData/codegen/size.kt");
+    }
+
+    @TestMetadata("unsignedPrimitiveArrays.kt")
+    public void testUnsignedPrimitiveArrays() throws Exception {
+        runTest("plugins/parcelize/parcelize-compiler/testData/codegen/unsignedPrimitiveArrays.kt");
     }
 }

@@ -12,13 +12,12 @@ import org.jetbrains.kotlin.commonizer.cir.CirName
 import org.jetbrains.kotlin.commonizer.cir.CirValueParameter
 import org.jetbrains.kotlin.commonizer.core.CallableValueParametersCommonizer.CallableToPatch.Companion.doNothing
 import org.jetbrains.kotlin.commonizer.core.CallableValueParametersCommonizer.CallableToPatch.Companion.patchCallables
-import org.jetbrains.kotlin.commonizer.mergedtree.CirKnownClassifiers
 import org.jetbrains.kotlin.commonizer.utils.compactMapIndexed
 import org.jetbrains.kotlin.commonizer.utils.isObjCInteropCallableAnnotation
 
 class CallableValueParametersCommonizer(
-    classifiers: CirKnownClassifiers
-) : Commonizer<CirCallableMemberWithParameters, CallableValueParametersCommonizer.Result> {
+    typeCommonizer: TypeCommonizer,
+) : Commonizer<CirCallableMemberWithParameters, CallableValueParametersCommonizer.Result?> {
     class Result(
         val hasStableParameterNames: Boolean,
         val valueParameters: List<CirValueParameter>,
@@ -116,13 +115,13 @@ class CallableValueParametersCommonizer(
         }
     }
 
-    private val valueParameters = ValueParameterListCommonizer(classifiers)
+    private val valueParameters = ValueParameterListCommonizer(typeCommonizer)
     private val callables: MutableList<CallableToPatch> = mutableListOf()
     private var hasStableParameterNames = true
     private var valueParameterNames: ValueParameterNames? = null
     private var error = false
 
-    override val result: Result
+    override val result: Result?
         get() {
             // don't inline `patchCallables` property;
             // valueParameters.overwriteNames() should be called strongly before valueParameters.result
@@ -142,7 +141,7 @@ class CallableValueParametersCommonizer(
 
             return Result(
                 hasStableParameterNames = hasStableParameterNames,
-                valueParameters = valueParameters.result,
+                valueParameters = valueParameters.result ?: return null,
                 patchCallables = patchCallables
             )
         }

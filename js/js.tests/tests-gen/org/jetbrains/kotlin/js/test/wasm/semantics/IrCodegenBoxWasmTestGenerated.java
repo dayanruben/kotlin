@@ -1138,6 +1138,16 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
             runTest("compiler/testData/codegen/box/bridges/kt42137.kt");
         }
 
+        @TestMetadata("kt46389.kt")
+        public void testKt46389() throws Exception {
+            runTest("compiler/testData/codegen/box/bridges/kt46389.kt");
+        }
+
+        @TestMetadata("kt46389_jvmDefault.kt")
+        public void testKt46389_jvmDefault() throws Exception {
+            runTest("compiler/testData/codegen/box/bridges/kt46389_jvmDefault.kt");
+        }
+
         @TestMetadata("longChainOneBridge.kt")
         public void testLongChainOneBridge() throws Exception {
             runTest("compiler/testData/codegen/box/bridges/longChainOneBridge.kt");
@@ -1283,6 +1293,11 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
             @TestMetadata("differentErasureInSuperClass.kt")
             public void testDifferentErasureInSuperClass() throws Exception {
                 runTest("compiler/testData/codegen/box/bridges/substitutionInSuperClass/differentErasureInSuperClass.kt");
+            }
+
+            @TestMetadata("differentErasureInSuperClassComplex.kt")
+            public void testDifferentErasureInSuperClassComplex() throws Exception {
+                runTest("compiler/testData/codegen/box/bridges/substitutionInSuperClass/differentErasureInSuperClassComplex.kt");
             }
 
             @TestMetadata("enum.kt")
@@ -1948,6 +1963,11 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
                 @TestMetadata("constructorWithInitializer.kt")
                 public void testConstructorWithInitializer() throws Exception {
                     runTest("compiler/testData/codegen/box/callableReference/function/local/constructorWithInitializer.kt");
+                }
+
+                @TestMetadata("enumExtendsTrait.kt")
+                public void testEnumExtendsTrait() throws Exception {
+                    runTest("compiler/testData/codegen/box/callableReference/function/local/enumExtendsTrait.kt");
                 }
 
                 @TestMetadata("extension.kt")
@@ -6611,6 +6631,11 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
         @TestMetadata("nothisnoclosure.kt")
         public void testNothisnoclosure() throws Exception {
             runTest("compiler/testData/codegen/box/functions/nothisnoclosure.kt");
+        }
+
+        @TestMetadata("overloadByInterfaceType.kt")
+        public void testOverloadByInterfaceType() throws Exception {
+            runTest("compiler/testData/codegen/box/functions/overloadByInterfaceType.kt");
         }
 
         @TestMetadata("prefixRecursiveCall.kt")
@@ -14969,6 +14994,11 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
         @TestMetadata("kt39088.kt")
         public void testKt39088() throws Exception {
             runTest("compiler/testData/codegen/box/regressions/kt39088.kt");
+        }
+
+        @TestMetadata("kt4142.kt")
+        public void testKt4142() throws Exception {
+            runTest("compiler/testData/codegen/box/regressions/kt4142.kt");
         }
 
         @TestMetadata("kt4281.kt")

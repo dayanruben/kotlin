@@ -9,10 +9,7 @@ import kotlinx.metadata.KmType
 import org.jetbrains.kotlin.commonizer.utils.Interner
 import org.jetbrains.kotlin.commonizer.utils.appendHashCode
 import org.jetbrains.kotlin.commonizer.utils.hashCode
-import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.types.Variance
-
-typealias CirTypeSignature = String
 
 /**
  * The hierarchy of [CirType]:
@@ -42,8 +39,8 @@ data class CirFlexibleType(val lowerBound: CirSimpleType, val upperBound: CirSim
 /**
  * Note: Annotations at simple types are not preserved. After commonization all annotations assigned to types will be lost.
  */
-sealed class CirSimpleType : CirType() {
-    abstract val isMarkedNullable: Boolean
+sealed class CirSimpleType : CirType(), AnyType {
+    abstract override val isMarkedNullable: Boolean
 
     override fun appendDescriptionTo(builder: StringBuilder) {
         if (isMarkedNullable) builder.append('?')
@@ -73,8 +70,8 @@ abstract class CirTypeParameterType : CirSimpleType() {
     }
 }
 
-sealed class CirClassOrTypeAliasType : CirSimpleType() {
-    abstract val classifierId: CirEntityId
+sealed class CirClassOrTypeAliasType : CirSimpleType(), AnyClassOrTypeAliasType {
+    abstract override val classifierId: CirEntityId
     abstract val arguments: List<CirTypeProjection>
 
     override fun appendDescriptionTo(builder: StringBuilder) = appendDescriptionTo(builder, shortNameOnly = false)
@@ -88,7 +85,7 @@ sealed class CirClassOrTypeAliasType : CirSimpleType() {
     abstract fun withArguments(arguments: List<CirTypeProjection>): CirClassOrTypeAliasType
 }
 
-abstract class CirClassType : CirClassOrTypeAliasType(), CirHasVisibility {
+abstract class CirClassType : CirClassOrTypeAliasType() {
     abstract val outerType: CirClassType?
 
     override fun appendDescriptionTo(builder: StringBuilder, shortNameOnly: Boolean) {
@@ -101,27 +98,20 @@ abstract class CirClassType : CirClassOrTypeAliasType(), CirHasVisibility {
     }
 
     override fun withArguments(arguments: List<CirTypeProjection>): CirClassOrTypeAliasType {
-        return createInterned(
-            classId = classifierId,
-            outerType = outerType,
-            visibility = visibility,
-            arguments = arguments,
-            isMarkedNullable = isMarkedNullable
-        )
+        if (arguments == this.arguments) return this
+        return copyInterned(arguments = arguments)
     }
 
     companion object {
         fun createInterned(
             classId: CirEntityId,
             outerType: CirClassType?,
-            visibility: Visibility,
             arguments: List<CirTypeProjection>,
             isMarkedNullable: Boolean
         ): CirClassType = interner.intern(
             CirClassTypeInternedImpl(
                 classifierId = classId,
                 outerType = outerType,
-                visibility = visibility,
                 arguments = arguments,
                 isMarkedNullable = isMarkedNullable
             )
@@ -130,14 +120,12 @@ abstract class CirClassType : CirClassOrTypeAliasType(), CirHasVisibility {
         fun CirClassType.copyInterned(
             classifierId: CirEntityId = this.classifierId,
             outerType: CirClassType? = this.outerType,
-            visibility: Visibility = this.visibility,
             arguments: List<CirTypeProjection> = this.arguments,
             isMarkedNullable: Boolean = this.isMarkedNullable
         ): CirClassType {
             return createInterned(
                 classId = classifierId,
                 outerType = outerType,
-                visibility = visibility,
                 arguments = arguments,
                 isMarkedNullable = isMarkedNullable
             )
@@ -163,12 +151,13 @@ abstract class CirTypeAliasType : CirClassOrTypeAliasType() {
     }
 
     override fun withArguments(arguments: List<CirTypeProjection>): CirClassOrTypeAliasType {
-        return createInterned(
-            typeAliasId = classifierId,
-            underlyingType = underlyingType,
-            arguments = arguments,
-            isMarkedNullable = isMarkedNullable
-        )
+        if (this.arguments == arguments) return this
+        return copyInterned(arguments = arguments)
+    }
+
+    fun withUnderlyingType(underlyingType: CirClassOrTypeAliasType): CirClassOrTypeAliasType {
+        if (this.underlyingType == underlyingType) return this
+        return copyInterned(underlyingType = underlyingType)
     }
 
     companion object {
@@ -226,33 +215,21 @@ private data class CirTypeParameterTypeInternedImpl(
 private class CirClassTypeInternedImpl(
     override val classifierId: CirEntityId,
     override val outerType: CirClassType?,
-    override val visibility: Visibility, // visibility of the class descriptor
     override val arguments: List<CirTypeProjection>,
     override val isMarkedNullable: Boolean,
 ) : CirClassType() {
-    // See also org.jetbrains.kotlin.types.KotlinType.cachedHashCode
-    private var cachedHashCode = 0
 
-    private fun computeHashCode() = hashCode(classifierId)
+    private val hashCode = hashCode(classifierId)
         .appendHashCode(outerType)
-        .appendHashCode(visibility)
         .appendHashCode(arguments)
         .appendHashCode(isMarkedNullable)
 
-    override fun hashCode(): Int {
-        var currentHashCode = cachedHashCode
-        if (currentHashCode != 0) return currentHashCode
-
-        currentHashCode = computeHashCode()
-        cachedHashCode = currentHashCode
-        return currentHashCode
-    }
+    override fun hashCode(): Int = hashCode
 
     override fun equals(other: Any?): Boolean = when {
         other === this -> true
         other is CirClassType -> classifierId == other.classifierId
                 && isMarkedNullable == other.isMarkedNullable
-                && visibility == other.visibility
                 && arguments == other.arguments
                 && outerType == other.outerType
         else -> false
@@ -266,28 +243,22 @@ private class CirTypeAliasTypeInternedImpl(
     override val isMarkedNullable: Boolean
 ) : CirTypeAliasType() {
     // See also org.jetbrains.kotlin.types.KotlinType.cachedHashCode
-    private var cachedHashCode = 0
-
-    private fun computeHashCode() = hashCode(classifierId)
+    private val hashCode = hashCode(classifierId)
         .appendHashCode(underlyingType)
         .appendHashCode(arguments)
         .appendHashCode(isMarkedNullable)
 
-    override fun hashCode(): Int {
-        var currentHashCode = cachedHashCode
-        if (currentHashCode != 0) return currentHashCode
 
-        currentHashCode = computeHashCode()
-        cachedHashCode = currentHashCode
-        return currentHashCode
-    }
+    override fun hashCode(): Int = hashCode
 
     override fun equals(other: Any?): Boolean = when {
         other === this -> true
-        other is CirTypeAliasType -> classifierId == other.classifierId
-                && underlyingType == other.underlyingType
-                && isMarkedNullable == other.isMarkedNullable
-                && arguments == other.arguments
+        other is CirTypeAliasType ->
+            hashCode == other.hashCode() &&
+                    classifierId == other.classifierId
+                    && underlyingType == other.underlyingType
+                    && isMarkedNullable == other.isMarkedNullable
+                    && arguments == other.arguments
         else -> false
     }
 }

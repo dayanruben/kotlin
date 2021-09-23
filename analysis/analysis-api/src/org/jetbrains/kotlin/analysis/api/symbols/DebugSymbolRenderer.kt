@@ -87,6 +87,7 @@ public object DebugSymbolRenderer {
                 is KtFunctionSymbol -> renderValue(value.callableIdIfNonLocal ?: "<local>/${value.name}")
                 is KtSamConstructorSymbol -> renderValue(value.callableIdIfNonLocal ?: "<local>/${value.name}")
                 is KtConstructorSymbol -> "<constructor>"
+                is KtEnumEntrySymbol -> renderValue(value.callableIdIfNonLocal ?: "<local>/${value.name}")
                 is KtNamedSymbol -> renderValue(value.name)
                 is KtPropertyGetterSymbol -> "<getter>"
                 is KtPropertySetterSymbol -> "<setter>"
@@ -94,7 +95,8 @@ public object DebugSymbolRenderer {
             }
             "${value::class.simpleName!!}($symbolTag)"
         }
-        is KtSimpleConstantValue<*> -> renderValue(value.value)
+        is KtLiteralConstantValue<*> -> renderValue(value.value)
+        is KtEnumEntryConstantValue -> "KtEnumEntryConstantValue(${renderValue(value.callableId)})"
         is KtNamedConstantValue -> "${renderValue(value.name)} = ${renderValue(value.expression)}"
         is KtAnnotationCall -> buildString {
             append(renderValue(value.classId))

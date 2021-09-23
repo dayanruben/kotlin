@@ -17,13 +17,13 @@ import org.jetbrains.kotlin.fir.declarations.utils.*
 import org.jetbrains.kotlin.analysis.api.fir.findPsi
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.FirModuleResolveState
 import org.jetbrains.kotlin.analysis.api.fir.KtSymbolByFirBuilder
+import org.jetbrains.kotlin.analysis.api.fir.evaluate.KtFirConstantValueConverter
 import org.jetbrains.kotlin.analysis.api.fir.symbols.annotations.containsAnnotation
 import org.jetbrains.kotlin.analysis.api.fir.symbols.annotations.getAnnotationClassIds
 import org.jetbrains.kotlin.analysis.api.fir.symbols.annotations.toAnnotationsList
 import org.jetbrains.kotlin.analysis.api.fir.symbols.pointers.KtFirMemberPropertySymbolPointer
 import org.jetbrains.kotlin.analysis.api.fir.symbols.pointers.createSignature
 import org.jetbrains.kotlin.analysis.api.fir.utils.cached
-import org.jetbrains.kotlin.analysis.api.fir.utils.convertConstantExpression
 import org.jetbrains.kotlin.analysis.api.fir.utils.firRef
 import org.jetbrains.kotlin.analysis.api.fir.utils.weakRef
 import org.jetbrains.kotlin.analysis.api.symbols.KtKotlinPropertySymbol
@@ -71,7 +71,9 @@ internal class KtFirKotlinPropertySymbol(
     }
 
     override val isExtension: Boolean get() = firRef.withFir { it.receiverTypeRef != null }
-    override val initializer: KtConstantValue? by firRef.withFirAndCache(FirResolvePhase.BODY_RESOLVE) { fir -> fir.initializer?.convertConstantExpression() }
+    override val initializer: KtConstantValue? by firRef.withFirAndCache(FirResolvePhase.BODY_RESOLVE) { fir ->
+        fir.initializer?.let { KtFirConstantValueConverter.toConstantValue(it, resolveState.rootModuleSession) }
+    }
     override val symbolKind: KtSymbolKind
         get() = firRef.withFir { fir ->
             when (fir.containingClass()?.classId) {

@@ -15,7 +15,6 @@ fun <T : CirSimpleType> T.makeNullable(): T {
         is CirClassType -> CirClassType.createInterned(
             classId = classifierId,
             outerType = outerType,
-            visibility = visibility,
             arguments = arguments,
             isMarkedNullable = true
         )
@@ -68,7 +67,6 @@ fun CirClassOrTypeAliasType.unabbreviate(): CirClassType = when (this) {
             CirClassType.createInterned(
                 classId = classifierId,
                 outerType = unabbreviatedOuterType,
-                visibility = visibility,
                 arguments = unabbreviatedArguments,
                 isMarkedNullable = isMarkedNullable
             )
@@ -85,3 +83,28 @@ internal tailrec fun computeExpandedType(underlyingType: CirClassOrTypeAliasType
 
 @Suppress("unused", "NOTHING_TO_INLINE")
 internal inline fun CirDeclaration.unsupported(): Nothing = error("This method should never be called on ${this::class.java}, $this")
+
+internal fun CirClassOrTypeAliasType.withParentArguments(
+    parentArguments: List<CirTypeProjection>, parentIsMarkedNullable: Boolean
+): CirClassOrTypeAliasType {
+    val newIsMarkedNullable = isMarkedNullable || parentIsMarkedNullable
+
+    val newArguments = arguments.map { oldArgument ->
+        if (oldArgument !is CirRegularTypeProjection) return@map oldArgument
+        if (oldArgument.type !is CirTypeParameterType) return@map oldArgument
+        parentArguments[oldArgument.type.index]
+    }
+
+    return when (val newUnderlyingType = makeNullableIfNecessary(newIsMarkedNullable).withArguments(newArguments)) {
+        this -> this
+        is CirClassType -> newUnderlyingType
+        is CirTypeAliasType -> newUnderlyingType.withUnderlyingType(
+            newUnderlyingType.underlyingType.withParentArguments(parentArguments, newIsMarkedNullable)
+        )
+    }
+}
+
+internal tailrec fun CirClassOrTypeAliasType.expandedType(): CirClassType = when (this) {
+    is CirClassType -> this
+    is CirTypeAliasType -> this.underlyingType.expandedType()
+}

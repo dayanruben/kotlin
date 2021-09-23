@@ -9,21 +9,25 @@ import org.jetbrains.kotlin.commonizer.CommonizerTarget
 import org.jetbrains.kotlin.commonizer.allLeaves
 import org.jetbrains.kotlin.commonizer.cir.*
 import org.jetbrains.kotlin.commonizer.mergedtree.CirKnownClassifiers
-import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 class TypeAliasCommonizer(
-    private val classifiers: CirKnownClassifiers
+    typeCommonizer: TypeCommonizer,
+    private val classifiers: CirKnownClassifiers,
 ) : NullableSingleInvocationCommonizer<CirTypeAlias> {
+
+    private val typeCommonizer = typeCommonizer.withOptions {
+        withBackwardsTypeAliasSubstitutionEnabled(false).withOptimisticNumberTypeCommonizationEnabled(true)
+    }
+
     override fun invoke(values: List<CirTypeAlias>): CirTypeAlias? {
         if (values.isEmpty()) return null
 
         val name = values.map { it.name }.distinct().singleOrNull() ?: return null
 
-        val typeParameters = TypeParameterListCommonizer(classifiers).commonize(values.map { it.typeParameters }) ?: return null
+        val typeParameters = TypeParameterListCommonizer(typeCommonizer).commonize(values.map { it.typeParameters }) ?: return null
 
-        val underlyingType = TypeCommonizer(classifiers, TypeCommonizer.Options.default.withOptimisticNumberTypeCommonizationEnabled())
-            .asCommonizer().commonize(values.map { it.underlyingType }) as? CirClassOrTypeAliasType ?: return null
+        val underlyingType = typeCommonizer.invoke(values.map { it.underlyingType }) as? CirClassOrTypeAliasType ?: return null
 
         val visibility = VisibilityCommonizer.lowering().commonize(values) ?: return null
 
@@ -85,7 +89,6 @@ private class UnsafeNumberAnnotation(val actualPlatformTypes: Map<String, CirEnt
         private val type = CirClassType.createInterned(
             classId = CirEntityId.create("kotlinx/cinterop/UnsafeNumber"),
             outerType = null,
-            visibility = Visibilities.Public,
             arguments = emptyList(),
             isMarkedNullable = false
         )

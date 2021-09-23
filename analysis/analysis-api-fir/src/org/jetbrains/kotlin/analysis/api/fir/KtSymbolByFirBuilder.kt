@@ -84,7 +84,6 @@ internal class KtSymbolByFirBuilder private constructor(
         filesCache = BuilderCache(),
     )
 
-
     fun createReadOnlyCopy(newResolveState: FirModuleResolveState): KtSymbolByFirBuilder {
         check(!withReadOnlyCaching) { "Cannot create readOnly KtSymbolByFirBuilder from a readonly one" }
         return KtSymbolByFirBuilder(
@@ -99,7 +98,6 @@ internal class KtSymbolByFirBuilder private constructor(
         )
     }
 
-
     fun buildSymbol(fir: FirDeclaration): KtSymbol {
         return when (fir) {
             is FirClassLikeDeclaration -> classifierBuilder.buildClassLikeSymbol(fir)
@@ -109,9 +107,7 @@ internal class KtSymbolByFirBuilder private constructor(
         }
     }
 
-
     fun buildEnumEntrySymbol(fir: FirEnumEntry) = symbolsCache.cache(fir) { KtFirEnumEntrySymbol(fir, resolveState, token, this) }
-
 
     fun buildFileSymbol(fir: FirFile) = filesCache.cache(fir) { KtFirFileSymbol(fir, resolveState, token) }
 
@@ -119,7 +115,7 @@ internal class KtSymbolByFirBuilder private constructor(
 
     fun createPackageSymbolIfOneExists(packageFqName: FqName): KtFirPackageSymbol? {
         val exists =
-            packageProvider.isPackageExists(packageFqName)
+            packageProvider.doKotlinPackageExists(packageFqName)
                     || JavaPsiFacade.getInstance(project).findPackage(packageFqName.asString()) != null
         if (!exists) {
             return null

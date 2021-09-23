@@ -350,6 +350,11 @@ public class ParcelizeIrBoxTestGenerated extends AbstractParcelizeIrBoxTest {
         runTest("plugins/parcelize/parcelize-compiler/testData/box/sealedClass.kt");
     }
 
+    @TestMetadata("shortArray.kt")
+    public void testShortArray() throws Exception {
+        runTest("plugins/parcelize/parcelize-compiler/testData/box/shortArray.kt");
+    }
+
     @TestMetadata("simple.kt")
     public void testSimple() throws Exception {
         runTest("plugins/parcelize/parcelize-compiler/testData/box/simple.kt");
@@ -373,6 +378,11 @@ public class ParcelizeIrBoxTestGenerated extends AbstractParcelizeIrBoxTest {
     @TestMetadata("typeParameters.kt")
     public void testTypeParameters() throws Exception {
         runTest("plugins/parcelize/parcelize-compiler/testData/box/typeParameters.kt");
+    }
+
+    @TestMetadata("unsignedArrays.kt")
+    public void testUnsignedArrays() throws Exception {
+        runTest("plugins/parcelize/parcelize-compiler/testData/box/unsignedArrays.kt");
     }
 
     @TestMetadata("valueClassWrapper.kt")

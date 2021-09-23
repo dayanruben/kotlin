@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.commonizer.cir.CirTypeParameter
 import org.jetbrains.kotlin.commonizer.utils.MOCK_CLASSIFIERS
 import org.junit.Test
 
-class TypeParameterListCommonizerTest : AbstractCommonizerTest<List<CirTypeParameter>, List<CirTypeParameter>>() {
+class TypeParameterListCommonizerTest : AbstractCommonizerTest<List<CirTypeParameter>, List<CirTypeParameter>?>() {
 
     @Test
     fun emptyValueParameters() = doTestSuccess(
@@ -108,7 +108,7 @@ class TypeParameterListCommonizerTest : AbstractCommonizerTest<List<CirTypeParam
         )
     )
 
-    override fun createCommonizer() = TypeParameterListCommonizer(MOCK_CLASSIFIERS)
+    override fun createCommonizer() = TypeParameterListCommonizer(TypeCommonizer(MOCK_CLASSIFIERS))
 
     private companion object {
         fun mockTypeParams(vararg params: Pair<String, String>): List<CirTypeParameter> {

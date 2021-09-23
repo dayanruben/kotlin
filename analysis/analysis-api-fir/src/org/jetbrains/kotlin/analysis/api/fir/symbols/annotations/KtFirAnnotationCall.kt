@@ -5,6 +5,8 @@
 
 package org.jetbrains.kotlin.analysis.api.fir.symbols.annotations
 
+import org.jetbrains.kotlin.analysis.api.fir.KtSymbolByFirBuilder
+import org.jetbrains.kotlin.analysis.api.fir.evaluate.KtFirConstantValueConverter
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.fir.declarations.FirDeclaration
 import org.jetbrains.kotlin.fir.expressions.FirAnnotation
@@ -19,7 +21,7 @@ import org.jetbrains.kotlin.psi.KtCallElement
 
 internal class KtFirAnnotationCall(
     private val containingDeclaration: FirRefWithValidityCheck<FirDeclaration>,
-    annotation: FirAnnotation
+    annotation: FirAnnotation,
 ) : KtAnnotationCall() {
 
     private val annotationCallRef by weakRef(annotation)
@@ -39,9 +41,10 @@ internal class KtFirAnnotationCall(
     override val useSiteTarget: AnnotationUseSiteTarget? get() = annotationCallRef.useSiteTarget
 
     override val arguments: List<KtNamedConstantValue> by containingDeclaration.withFirAndCache(ResolveType.AnnotationsArguments) { fir ->
-        mapAnnotationParameters(annotationCallRef, fir.moduleData.session).map { (name, expression) ->
-            KtNamedConstantValue(name, expression.convertConstantExpression())
-        }
+        KtFirConstantValueConverter.toNamedConstantValue(
+            mapAnnotationParameters(annotationCallRef, fir.moduleData.session),
+            fir.moduleData.session,
+        )
     }
 
     override fun equals(other: Any?): Boolean {

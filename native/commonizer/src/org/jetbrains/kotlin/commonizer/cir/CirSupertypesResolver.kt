@@ -6,10 +6,8 @@
 package org.jetbrains.kotlin.commonizer.cir
 
 import org.jetbrains.kotlin.commonizer.mergedtree.CirClassifierIndex
-import org.jetbrains.kotlin.commonizer.mergedtree.CirProvided
 import org.jetbrains.kotlin.commonizer.mergedtree.CirProvidedClassifiers
 import org.jetbrains.kotlin.commonizer.mergedtree.findClass
-import org.jetbrains.kotlin.descriptors.Visibilities
 
 internal interface CirSupertypesResolver {
     /**
@@ -36,7 +34,7 @@ internal class SimpleCirSupertypesResolver(
 
         dependencies.classifier(type.classifierId)?.let { classifier ->
             if (classifier is CirProvided.Class) {
-                return supertypesFromProvidedClass(type, classifier)
+                return dependencies.supertypesFromProvidedClass(type, classifier)
             }
         }
         return emptySet()
@@ -48,9 +46,9 @@ internal class SimpleCirSupertypesResolver(
             .toSet()
     }
 
-    private fun supertypesFromProvidedClass(type: CirClassType, classifier: CirProvided.Class): Set<CirClassType> {
+    private fun CirProvidedClassifiers.supertypesFromProvidedClass(type: CirClassType, classifier: CirProvided.Class): Set<CirClassType> {
         return classifier.supertypes.filterIsInstance<CirProvided.ClassType>()
-            .mapNotNull { superType -> superType.toCirClassTypeOrNull() }
+            .mapNotNull { superType -> superType.toCirClassTypeOrNull(this) }
             .mapNotNull { superType -> buildSupertypeFromClassifierSupertype(type, superType) }
             .toSet()
     }
@@ -61,25 +59,5 @@ internal class SimpleCirSupertypesResolver(
         }
 
         return null
-    }
-}
-
-private fun CirProvided.ClassType.toCirClassTypeOrNull(): CirClassType? {
-    return CirClassType.createInterned(
-        classId = this.classId,
-        outerType = this.outerType?.let { it.toCirClassTypeOrNull() ?: return null },
-        isMarkedNullable = this.isMarkedNullable,
-        arguments = this.arguments.map { it.toCirTypeProjection() ?: return null },
-        visibility = Visibilities.Public,
-    )
-}
-
-private fun CirProvided.TypeProjection.toCirTypeProjection(): CirTypeProjection? {
-    return when (this) {
-        is CirProvided.StarTypeProjection -> CirStarTypeProjection
-        is CirProvided.RegularTypeProjection -> CirRegularTypeProjection(
-            projectionKind = variance,
-            type = (type as? CirProvided.ClassType)?.toCirClassTypeOrNull() ?: return null
-        )
     }
 }

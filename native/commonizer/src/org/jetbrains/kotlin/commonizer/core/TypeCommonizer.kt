@@ -7,23 +7,27 @@ package org.jetbrains.kotlin.commonizer.core
 
 import org.jetbrains.kotlin.commonizer.cir.*
 import org.jetbrains.kotlin.commonizer.mergedtree.CirKnownClassifiers
-
+import org.jetbrains.kotlin.commonizer.utils.safeCastValues
 
 class TypeCommonizer(
     private val classifiers: CirKnownClassifiers,
-    private val options: Options = Options.default
-) : AssociativeCommonizer<CirType> {
-    override fun commonize(first: CirType, second: CirType): CirType? {
-        if (first is CirClassOrTypeAliasType && second is CirClassOrTypeAliasType) {
-            return ClassOrTypeAliasTypeCommonizer(classifiers, options).commonize(first, second)
+    val options: Options = Options.default
+) : NullableSingleInvocationCommonizer<CirType> {
+
+    private val classOrTypeAliasTypeCommonizer = ClassOrTypeAliasTypeCommonizer(this, classifiers)
+    private val flexibleTypeCommonizer = FlexibleTypeAssociativeCommonizer(this)
+
+    override fun invoke(values: List<CirType>): CirType? {
+        values.safeCastValues<CirType, CirClassOrTypeAliasType>()?.let { types ->
+            return classOrTypeAliasTypeCommonizer(types)
         }
 
-        if (first is CirTypeParameterType && second is CirTypeParameterType) {
-            return TypeParameterTypeCommonizer.commonize(first, second)
+        values.safeCastValues<CirType, CirTypeParameterType>()?.let { types ->
+            return TypeParameterTypeCommonizer.commonize(types)
         }
 
-        if (first is CirFlexibleType && second is CirFlexibleType) {
-            return FlexibleTypeAssociativeCommonizer(classifiers, options).commonize(first, second)
+        values.safeCastValues<CirType, CirFlexibleType>()?.let { types ->
+            return flexibleTypeCommonizer(types)
         }
 
         return null
@@ -31,7 +35,9 @@ class TypeCommonizer(
 
     data class Options(
         val enableOptimisticNumberTypeCommonization: Boolean = false,
-        val enableCovariantNullabilityCommonization: Boolean = false
+        val enableCovariantNullabilityCommonization: Boolean = false,
+        val enableForwardTypeAliasSubstitution: Boolean = true,
+        val enableBackwardsTypeAliasSubstitution: Boolean = true,
     ) {
 
         fun withOptimisticNumberTypeCommonizationEnabled(enabled: Boolean = true): Options {
@@ -44,9 +50,32 @@ class TypeCommonizer(
             else copy(enableCovariantNullabilityCommonization = enabled)
         }
 
+        fun withForwardTypeAliasSubstitutionEnabled(enabled: Boolean = true): Options {
+            return if (enableForwardTypeAliasSubstitution == enabled) this
+            else copy(enableForwardTypeAliasSubstitution = enabled)
+        }
+
+        fun withBackwardsTypeAliasSubstitutionEnabled(enabled: Boolean = true): Options {
+            return if (enableBackwardsTypeAliasSubstitution == enabled) this
+            else copy(enableBackwardsTypeAliasSubstitution = enabled)
+        }
+
+        fun withTypeAliasSubstitutionEnabled(enabled: Boolean = true): Options {
+            return withForwardTypeAliasSubstitutionEnabled(enabled).withBackwardsTypeAliasSubstitutionEnabled(enabled)
+        }
+
         companion object {
             val default = Options()
         }
+    }
+
+    fun withOptions(options: Options): TypeCommonizer {
+        return if (this.options == options) this
+        else TypeCommonizer(classifiers, options)
+    }
+
+    inline fun withOptions(createNewOptions: Options.() -> Options): TypeCommonizer {
+        return withOptions(options.createNewOptions())
     }
 }
 
@@ -60,14 +89,11 @@ private object TypeParameterTypeCommonizer : AssociativeCommonizer<CirTypeParame
 }
 
 private class FlexibleTypeAssociativeCommonizer(
-    private val classifiers: CirKnownClassifiers,
-    private val options: TypeCommonizer.Options
-) : AssociativeCommonizer<CirFlexibleType> {
-    override fun commonize(first: CirFlexibleType, second: CirFlexibleType): CirFlexibleType? {
-
-        val lowerBound = TypeCommonizer(classifiers, options).commonize(first.lowerBound, second.lowerBound) ?: return null
-        val upperBound = TypeCommonizer(classifiers, options).commonize(first.upperBound, second.upperBound) ?: return null
-
+    private val typeCommonizer: TypeCommonizer
+) : NullableSingleInvocationCommonizer<CirFlexibleType> {
+    override fun invoke(values: List<CirFlexibleType>): CirFlexibleType? {
+        val lowerBound = typeCommonizer(values.map { it.lowerBound }) ?: return null
+        val upperBound = typeCommonizer(values.map { it.upperBound }) ?: return null
         return CirFlexibleType(
             lowerBound = lowerBound as CirSimpleType,
             upperBound = upperBound as CirSimpleType

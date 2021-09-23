@@ -10,18 +10,16 @@ import com.intellij.psi.impl.light.LightIdentifier
 import org.jetbrains.kotlin.asJava.classes.cannotModify
 import org.jetbrains.kotlin.asJava.classes.lazyPub
 import org.jetbrains.kotlin.asJava.elements.KtLightElementBase
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtAnnotationCall
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedConstantValue
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSimpleConstantValue
 import org.jetbrains.kotlin.psi.KtElement
 
 internal class FirAnnotationParameterList(
     parent: FirLightAbstractAnnotation,
-    private val annotationCall: KtAnnotationCall,
+    private val arguments: List<KtNamedConstantValue>,
 ) : KtLightElementBase(parent), PsiAnnotationParameterList {
 
     private val _attributes: Array<PsiNameValuePair> by lazyPub {
-        annotationCall.arguments.map {
+        arguments.map {
             FirNameValuePairForAnnotationArgument(it, this)
         }.toTypedArray()
     }
@@ -41,7 +39,7 @@ private class FirNameValuePairForAnnotationArgument(
     override val kotlinOrigin: KtElement? get() = null
 
     private val _value by lazyPub {
-        (constantValue.expression as? KtSimpleConstantValue<*>)?.createPsiLiteral(this)
+        constantValue.expression.toAnnotationMemberValue(this)
     }
 
     override fun setValue(p0: PsiAnnotationMemberValue) = cannotModify()

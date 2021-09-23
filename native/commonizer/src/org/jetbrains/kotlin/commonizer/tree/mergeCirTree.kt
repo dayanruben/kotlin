@@ -81,28 +81,37 @@ internal fun CirNodeWithMembers<*, *>.buildClass(
 internal fun CirNodeWithMembers<*, *>.buildFunction(
     context: TargetBuildingContext, function: CirFunction, parent: CirNode<*, *>? = null
 ) {
-    val functionNode = functions.getOrPut(FunctionApproximationKey.create(context.memberContext, function)) {
+    val functionNode = functions.getOrPut(
+        FunctionApproximationKey.create(function, SignatureBuildingContext(context.memberContext, function))
+    ) {
         buildFunctionNode(context.storageManager, context.targets, context.classifiers, ParentNode(parent))
     }
-    functionNode.targetDeclarations[context.targetIndex] = function
+    /* Multiple type substitutions could in result in the same commonization result */
+    functionNode.targetDeclarations.set(context.targetIndex, function)
 }
 
 internal fun CirNodeWithMembers<*, *>.buildProperty(
     context: TargetBuildingContext, property: CirProperty, parent: CirNode<*, *>? = null
 ) {
-    val propertyNode = properties.getOrPut(PropertyApproximationKey.create(context.memberContext, property)) {
+    val propertyNode = properties.getOrPut(
+        PropertyApproximationKey.create(property, SignatureBuildingContext(context.memberContext, property))
+    ) {
         buildPropertyNode(context.storageManager, context.targets, context.classifiers, ParentNode(parent))
     }
-    propertyNode.targetDeclarations[context.targetIndex] = property
+    /* Multiple type substitutions could in result in the same commonization result */
+    propertyNode.targetDeclarations.set(context.targetIndex, property)
 }
 
 internal fun CirClassNode.buildConstructor(
     context: TargetBuildingContext, constructor: CirClassConstructor, parent: CirNode<*, *>
 ) {
-    val constructorNode = constructors.getOrPut(ConstructorApproximationKey.create(context.memberContext, constructor)) {
+    val constructorNode = constructors.getOrPut(
+        ConstructorApproximationKey.create(constructor, SignatureBuildingContext(context.memberContext, constructor))
+    ) {
         buildClassConstructorNode(context.storageManager, context.targets, context.classifiers, ParentNode(parent))
     }
-    constructorNode.targetDeclarations[context.targetIndex] = constructor
+    /* Multiple type substitutions could in result in the same commonization result */
+    constructorNode.targetDeclarations.set(context.targetIndex, constructor)
 }
 
 internal fun CirPackageNode.buildTypeAlias(context: TargetBuildingContext, treeTypeAlias: CirTreeTypeAlias) {

@@ -6,7 +6,7 @@
 package org.jetbrains.kotlin.commonizer.metadata
 
 import org.jetbrains.kotlin.commonizer.cir.*
-import org.jetbrains.kotlin.commonizer.mergedtree.CirProvided
+import org.jetbrains.kotlin.commonizer.cir.CirProvided
 import org.jetbrains.kotlin.commonizer.utils.compactMapIndexed
 import org.jetbrains.kotlin.types.Variance
 
@@ -110,8 +110,8 @@ object CirTypeAliasExpander {
         expansion: CirTypeAliasExpansion,
         type: CirProvided.TypeAliasType
     ): CirTypeAliasType {
-        val typeAlias: CirProvided.TypeAlias = expansion.typeResolver.resolveClassifier(type.typeAliasId)
-        checkArgumentsCount(typeAlias, type.typeAliasId, type.arguments)
+        val typeAlias: CirProvided.TypeAlias = expansion.typeResolver.resolveClassifier(type.classifierId)
+        checkArgumentsCount(typeAlias, type.classifierId, type.arguments)
 
         val expandedArguments = type.arguments.compactMapIndexed { index, argument ->
             val projection = expandTypeProjection(expansion, argument, typeAlias.typeParameters[index].variance)
@@ -122,7 +122,7 @@ object CirTypeAliasExpander {
         val nestedExpandedType = expand(nestedExpansion)
 
         return CirTypeAliasType.createInterned(
-            typeAliasId = type.typeAliasId,
+            typeAliasId = type.classifierId,
             underlyingType = nestedExpandedType,
             arguments = expandedArguments,
             isMarkedNullable = type.isMarkedNullable
@@ -133,8 +133,8 @@ object CirTypeAliasExpander {
         expansion: CirTypeAliasExpansion,
         type: CirProvided.ClassType
     ): CirClassType {
-        val clazz: CirProvided.Class = expansion.typeResolver.resolveClassifier(type.classId)
-        checkArgumentsCount(clazz, type.classId, type.arguments)
+        val clazz: CirProvided.Class = expansion.typeResolver.resolveClassifier(type.classifierId)
+        checkArgumentsCount(clazz, type.classifierId, type.arguments)
 
         val expandedArguments = type.arguments.compactMapIndexed { index, argument ->
             val projection = expandTypeProjection(expansion, argument, clazz.typeParameters[index].variance)
@@ -142,9 +142,8 @@ object CirTypeAliasExpander {
         }
 
         return CirClassType.createInterned(
-            classId = type.classId,
+            classId = type.classifierId,
             outerType = type.outerType?.let { expandClassType(expansion, it) },
-            visibility = clazz.visibility,
             arguments = expandedArguments,
             isMarkedNullable = type.isMarkedNullable
         )
