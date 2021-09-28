@@ -24,8 +24,8 @@ fun test(): Int {
 // 1 IF
 
 // JVM_IR_TEMPLATES
-// 5 ILOAD
-// 4 ISTORE
+// 4 ILOAD
+// 3 ISTORE
 // 1 IADD
 // 0 ISUB
 // 1 IINC

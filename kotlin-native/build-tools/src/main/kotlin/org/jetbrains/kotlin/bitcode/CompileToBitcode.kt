@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.bitcode
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.FileCollection
 import org.gradle.api.tasks.*
+import org.gradle.kotlin.dsl.getByType
 import org.jetbrains.kotlin.ExecClang
 import org.jetbrains.kotlin.konan.target.Family
 import org.jetbrains.kotlin.konan.target.HostManager
@@ -17,10 +18,10 @@ import java.io.File
 import javax.inject.Inject
 
 open class CompileToBitcode @Inject constructor(
-        val srcRoot: File,
-        val folderName: String,
-        val target: String,
-        val outputGroup: String
+        @Internal val srcRoot: File,
+        @Input val folderName: String,
+        @Input val target: String,
+        @Input val outputGroup: String
 ) : DefaultTask() {
 
     enum class Language {
@@ -28,22 +29,27 @@ open class CompileToBitcode @Inject constructor(
     }
 
     // Compiler args are part of compilerFlags so we don't register them as an input.
+    @Internal
     val compilerArgs = mutableListOf<String>()
     @Input
     val linkerArgs = mutableListOf<String>()
+    @Input
     var excludeFiles: List<String> = listOf(
             "**/*Test.cpp",
             "**/*TestSupport.cpp",
             "**/*Test.mm",
             "**/*TestSupport.mm"
     )
+    @Input
     var includeFiles: List<String> = listOf(
             "**/*.cpp",
             "**/*.mm"
     )
 
     // Source files and headers are registered as inputs by the `inputFiles` and `headers` properties.
+    @Internal
     var srcDirs: FileCollection = project.files(srcRoot.resolve("cpp"))
+    @Internal
     var headersDirs: FileCollection = srcDirs + project.files(srcRoot.resolve("headers"))
 
     @Input
@@ -62,13 +68,14 @@ open class CompileToBitcode @Inject constructor(
             return project.buildDir.resolve("bitcode/$outputGroup/$target$sanitizerSuffix")
         }
 
-    @get:Input
+    @get:Internal
     val objDir
         get() = File(targetDir, folderName)
 
     private val KonanTarget.isMINGW
         get() = this.family == Family.MINGW
 
+    @get:Internal
     val executable
         get() = when (language) {
             Language.C -> "clang"
@@ -90,6 +97,7 @@ open class CompileToBitcode @Inject constructor(
                     listOf("-std=gnu11", "-O3", "-Wall", "-Wextra", "-Werror")
                 Language.CPP ->
                     listOfNotNull("-std=c++17", "-Werror", "-O2",
+                            "-fno-aligned-allocation", // TODO: Remove when all targets support aligned allocation in C++ runtime.
                             "-Wall", "-Wextra",
                             "-Wno-unused-parameter"  // False positives with polymorphic functions.
                     )
@@ -155,7 +163,7 @@ open class CompileToBitcode @Inject constructor(
     @TaskAction
     fun compile() {
         objDir.mkdirs()
-        val plugin = project.convention.getPlugin(ExecClang::class.java)
+        val plugin = project.extensions.getByType<ExecClang>()
 
         plugin.execKonanClang(target) {
             workingDir = objDir

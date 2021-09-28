@@ -11,6 +11,7 @@ import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.*
+import org.gradle.kotlin.dsl.getByType
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 import org.gradle.process.ExecSpec
 import org.jetbrains.kotlin.konan.exec.Command
@@ -31,6 +32,7 @@ abstract class KonanTest : DefaultTask(), KonanTestExecutable {
         SILENT    // Prints no log of passed/failed tests
     }
 
+    @get:Input
     var disabled: Boolean
         get() = !enabled
         set(value) {
@@ -40,11 +42,13 @@ abstract class KonanTest : DefaultTask(), KonanTestExecutable {
     /**
      * Test output directory. Used to store processed sources and binary artifacts.
      */
+    @get:OutputDirectory
     abstract val outputDirectory: String
 
     /**
      * Test logger to be used for the test built with TestRunner (`-tr` option).
      */
+    @get:Internal
     abstract var testLogger: Logger
 
     /**
@@ -61,6 +65,7 @@ abstract class KonanTest : DefaultTask(), KonanTestExecutable {
     /**
      * Test source.
      */
+    @Internal
     lateinit var source: String
 
     /**
@@ -74,14 +79,13 @@ abstract class KonanTest : DefaultTask(), KonanTestExecutable {
      * As this run task comes after the build task all actions for doFirst
      * should be done before the build and not run.
      */
-    @Input
-    @Optional
+    @Internal
     override var doBeforeBuild: Action<in Task>? = null
 
-    @Input
-    @Optional
+    @Internal
     override var doBeforeRun: Action<in Task>? = null
 
+    @get:Internal
     override val buildTasks: List<Task>
         get() = listOf(project.findKonanBuildTask(name, project.testTarget))
 
@@ -151,9 +155,11 @@ open class KonanGTest : KonanTest() {
     // Use GTEST logger to parse test results later
     override var testLogger = Logger.GTEST
 
+    @get:Internal
     override val executable: String
         get() = "$outputDirectory/${project.testTarget.name}/$name.${project.testTarget.family.exeSuffix}"
 
+    @Internal
     var statistics = Statistics()
 
     @TaskAction
@@ -199,6 +205,7 @@ open class KonanLocalTest : KonanTest() {
     override val outputDirectory = project.testOutputLocal
 
     // local tests built into a single binary with the known name
+    @get:Internal
     override val executable: String
         get() = "$outputDirectory/${project.testTarget.name}/localTest.${project.testTarget.family.exeSuffix}"
 
@@ -208,22 +215,19 @@ open class KonanLocalTest : KonanTest() {
     @Optional
     var expectedExitStatus: Int? = null
 
-    @Input
-    @Optional
+    @Internal
     var expectedExitStatusChecker: (Int) -> Boolean = { it == (expectedExitStatus ?: 0) }
 
     /**
      * Should this test fail or not.
      */
     @Input
-    @Optional
     var expectedFail = false
 
     /**
      * Used to validate output against the golden data.
      */
     @Input
-    @Optional
     var useGoldenData: Boolean = false
 
     @get:InputFile
@@ -240,7 +244,6 @@ open class KonanLocalTest : KonanTest() {
             }
         }
 
-    @Internal
     protected open fun computeGoldenDataFile(): File {
         val sourceFile = project.file(source)
         return sourceFile.parentFile.resolve(sourceFile.nameWithoutExtension + ".out")
@@ -252,8 +255,7 @@ open class KonanLocalTest : KonanTest() {
     /**
      * Checks test's output against gold value and returns true if the output matches the expectation.
      */
-    @Input
-    @Optional
+    @Internal
     var outputChecker: (String) -> Boolean = { output ->
         if (useGoldenData) goldenData == output else true
     }
@@ -262,7 +264,6 @@ open class KonanLocalTest : KonanTest() {
      * Input test data to be passed to process stdin.
      */
     @Input
-    @Optional
     var useTestData: Boolean = false
 
     @get:InputFile
@@ -287,11 +288,9 @@ open class KonanLocalTest : KonanTest() {
      * Should compiler message be read and validated with output checker or gold value.
      */
     @Input
-    @Optional
     var compilerMessages = false
 
     @Input
-    @Optional
     var multiRuns = false
 
     @Input
@@ -388,16 +387,15 @@ open class KonanStandaloneTest : KonanLocalTest() {
         get() = "$outputDirectory/${project.testTarget.name}/$name.${project.testTarget.family.exeSuffix}"
 
     @Input
-    @Optional
     var enableKonanAssertions = true
 
     @Input
-    @Optional
     var verifyIr = true
 
     /**
      * Compiler flags used to build a test.
      */
+    @Internal
     var flags: List<String> = listOf()
         get() {
             val result = field.toMutableList()
@@ -408,6 +406,7 @@ open class KonanStandaloneTest : KonanLocalTest() {
             return result
         }
 
+    @Internal
     fun getSources(): Provider<List<String>> = project.provider {
         val sources = buildCompileList(project.file(source).toPath(), outputDirectory)
         sources.forEach { it.writeTextToFile() }
@@ -490,7 +489,7 @@ open class KonanDynamicTest : KonanStandaloneTest() {
     /**
      * File path to the C source.
      */
-    @Input
+    @get:Input
     lateinit var cSource: String
 
     @Input
@@ -527,7 +526,7 @@ open class KonanDynamicTest : KonanStandaloneTest() {
 
     private fun clang() {
         val log = ByteArrayOutputStream()
-        val plugin = project.convention.getPlugin(ExecClang::class.java)
+        val plugin = project.extensions.getByType<ExecClang>()
         val artifactsDir = "$outputDirectory/${project.testTarget}"
 
         fun flagsContain(opt: String) = project.globalTestArgs.contains(opt) || flags.contains(opt)

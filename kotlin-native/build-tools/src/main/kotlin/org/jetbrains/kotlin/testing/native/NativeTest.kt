@@ -11,6 +11,7 @@ import javax.inject.Inject
 import org.gradle.api.*
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.tasks.*
+import org.gradle.kotlin.dsl.getByType
 import org.jetbrains.kotlin.ExecClang
 import org.jetbrains.kotlin.bitcode.CompileToBitcode
 import org.jetbrains.kotlin.bitcode.CompileToBitcodeExtension
@@ -29,7 +30,6 @@ open class CompileNativeTest @Inject constructor(
     @Input @Optional
     var sanitizer: SanitizerKind? = null
 
-    @Input
     private val sanitizerFlags = when (sanitizer) {
         null -> listOf()
         SanitizerKind.ADDRESS -> listOf("-fsanitize=address")
@@ -38,7 +38,7 @@ open class CompileNativeTest @Inject constructor(
 
     @TaskAction
     fun compile() {
-        val plugin = project.convention.getPlugin(ExecClang::class.java)
+        val plugin = project.extensions.getByType<ExecClang>()
         val args = clangArgs + sanitizerFlags + listOf(inputFile.absolutePath, "-o", outputFile.absolutePath)
         if (target.family.isAppleFamily) {
             plugin.execToolchainClang(target) {
@@ -55,14 +55,14 @@ open class CompileNativeTest @Inject constructor(
 }
 
 open class LlvmLinkNativeTest @Inject constructor(
-        val baseName: String,
+        baseName: String,
         @Input val target: String,
         @InputFile val mainFile: File
 ) : DefaultTask() {
 
     @SkipWhenEmpty
     @InputFiles
-    var inputFiles: ConfigurableFileCollection = project.files()
+    val inputFiles: ConfigurableFileCollection = project.files()
 
     @OutputFile
     var outputFile: File = project.buildDir.resolve("bitcode/test/$target/$baseName.bc")
@@ -265,7 +265,7 @@ private fun createTestTask(
             testName, target, testSupportTask.outFile
     ).apply {
         val tasksToLink = (compileToBitcodeTasks + testedTasks + testFrameworkTasks)
-        inputFiles = project.files(tasksToLink.map { it.outFile })
+        inputFiles.setFrom(tasksToLink.map { it.outFile })
         dependsOn(testSupportTask)
         dependsOn(tasksToLink)
     }

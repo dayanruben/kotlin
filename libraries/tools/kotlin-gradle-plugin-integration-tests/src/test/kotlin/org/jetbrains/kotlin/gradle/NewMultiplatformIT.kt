@@ -5,7 +5,7 @@
 package org.jetbrains.kotlin.gradle
 
 import org.gradle.api.logging.LogLevel
-import org.jetbrains.kotlin.gradle.native.GeneralNativeIT.Companion.checkNativeCommandLineArguments
+import org.jetbrains.kotlin.gradle.native.GeneralNativeIT.Companion.withNativeCommandLineArguments
 import org.jetbrains.kotlin.gradle.native.GeneralNativeIT.Companion.containsSequentially
 import org.gradle.api.logging.configuration.WarningMode
 import org.gradle.util.GradleVersion
@@ -155,7 +155,7 @@ class NewMultiplatformIT : BaseGradleIT() {
                 assertFileExists("build/bin/linux64/mainDebugExecutable/$nativeExeName")
 
                 // Check that linker options were correctly passed to the K/N compiler.
-                checkNativeCommandLineArguments(":linkMainDebugExecutableLinux64") { arguments ->
+                withNativeCommandLineArguments(":linkMainDebugExecutableLinux64") { arguments ->
                     assertTrue(arguments.containsSequentially("-linker-option", "-L."))
                 }
             }
@@ -1844,6 +1844,30 @@ class NewMultiplatformIT : BaseGradleIT() {
             build("help") {
                 assertSuccessful()
                 assertNotContains("A compileOnly dependency is used in the Kotlin/Native target '${detectNativeEnabledCompilation()}':")
+            }
+        }
+    }
+
+    @Test
+    fun testErrorInClasspathMode() {
+        val classpathModeOptions = defaultBuildOptions().copy(
+            freeCommandLineArgs = listOf("-Dorg.gradle.kotlin.dsl.provider.mode=classpath")
+        )
+
+        with(Project("kotlin-mpp-classpathMode")) {
+            build("tasks") {
+                assertFailed()
+                assertContains("ERROR DURING CONFIGURATION PHASE")
+            }
+
+            build("tasks", options = classpathModeOptions) {
+                assertSuccessful()
+            }
+
+            build("listCollectedErrors", options = classpathModeOptions) {
+                assertSuccessful()
+                assertContains("Collected 1 exception(s)")
+                assertContains("ERROR DURING CONFIGURATION PHASE")
             }
         }
     }

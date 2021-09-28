@@ -16,8 +16,6 @@ configure<GradlePluginDevelopmentExtension> {
     isAutomatedPublishing = false
 }
 
-val jarContents by configurations.creating
-
 repositories {
     google()
     maven("https://plugins.gradle.org/m2/")
@@ -28,6 +26,7 @@ pill {
 }
 
 dependencies {
+    compileOnly(gradleKotlinDsl())
     api(project(":kotlin-gradle-plugin-api"))
     api(project(":kotlin-gradle-plugin-model"))
     compileOnly(project(":compiler"))
@@ -66,14 +65,14 @@ dependencies {
     compileOnly(project(":kotlin-reflect"))
     compileOnly(intellijCoreDep()) { includeJars("intellij-core") }
 
-    runtimeOnly(projectRuntimeJar(":kotlin-compiler-embeddable"))
-    runtimeOnly(projectRuntimeJar(":kotlin-annotation-processing-gradle"))
-    runtimeOnly(projectRuntimeJar(":kotlin-android-extensions"))
-    runtimeOnly(projectRuntimeJar(":kotlin-compiler-runner"))
-    runtimeOnly(projectRuntimeJar(":kotlin-scripting-compiler-embeddable"))
-    runtimeOnly(projectRuntimeJar(":kotlin-scripting-compiler-impl-embeddable"))
+    runtimeOnly(project(":kotlin-compiler-embeddable"))
+    runtimeOnly(project(":kotlin-annotation-processing-gradle"))
+    runtimeOnly(project(":kotlin-android-extensions"))
+    runtimeOnly(project(":kotlin-compiler-runner"))
+    runtimeOnly(project(":kotlin-scripting-compiler-embeddable"))
+    runtimeOnly(project(":kotlin-scripting-compiler-impl-embeddable"))
 
-    jarContents(compileOnly(intellijDep()) {
+    embedded(compileOnly(intellijDep()) {
         includeJars("asm-all", "gson", "guava", "serviceMessages", rootProject = rootProject)
     })
 
@@ -84,6 +83,8 @@ dependencies {
     functionalTestImplementation("com.android.tools.build:gradle:4.0.1") {
         because("Functional tests are using APIs from Android. Latest Version is used to avoid NoClassDefFoundError")
     }
+
+    functionalTestImplementation(gradleKotlinDsl())
 
     testImplementation(intellijDep()) { includeJars("junit", "serviceMessages", rootProject = rootProject) }
 
@@ -102,20 +103,10 @@ dependencies {
 }
 
 if (kotlinBuildProperties.isInJpsBuildIdeaSync) {
-    configurations.compile.get().exclude("com.android.tools.external.com-intellij", "intellij-core")
+    configurations.api.get().exclude("com.android.tools.external.com-intellij", "intellij-core")
 }
 
-noDefaultJar()
-runtimeJar(rewriteDefaultJarDepsToShadedCompiler()).configure {
-    dependsOn(jarContents)
-
-    from {
-        jarContents.asFileTree.map {
-            if (it.endsWith(".jar")) zipTree(it)
-            else it
-        }
-    }
-}
+runtimeJar(rewriteDefaultJarDepsToShadedCompiler())
 
 tasks {
     named<ProcessResources>("processResources") {

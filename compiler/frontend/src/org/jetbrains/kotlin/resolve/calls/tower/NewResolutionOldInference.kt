@@ -32,10 +32,10 @@ import org.jetbrains.kotlin.resolve.TemporaryBindingTrace
 import org.jetbrains.kotlin.resolve.calls.CallResolver
 import org.jetbrains.kotlin.resolve.calls.CallTransformer
 import org.jetbrains.kotlin.resolve.calls.CandidateResolver
-import org.jetbrains.kotlin.resolve.calls.callResolverUtil.isBinaryRemOperator
-import org.jetbrains.kotlin.resolve.calls.callResolverUtil.isConventionCall
-import org.jetbrains.kotlin.resolve.calls.callResolverUtil.isInfixCall
-import org.jetbrains.kotlin.resolve.calls.callUtil.createLookupLocation
+import org.jetbrains.kotlin.resolve.calls.util.isBinaryRemOperator
+import org.jetbrains.kotlin.resolve.calls.util.isConventionCall
+import org.jetbrains.kotlin.resolve.calls.util.isInfixCall
+import org.jetbrains.kotlin.resolve.calls.util.createLookupLocation
 import org.jetbrains.kotlin.resolve.calls.context.*
 import org.jetbrains.kotlin.resolve.calls.inference.BuilderInferenceSupport
 import org.jetbrains.kotlin.resolve.calls.model.KotlinCallDiagnostic
@@ -225,7 +225,7 @@ class NewResolutionOldInference(
     fun <D : CallableDescriptor> runResolutionForGivenCandidates(
         basicCallContext: BasicCallResolutionContext,
         tracing: TracingStrategy,
-        candidates: Collection<ResolutionCandidate<D>>
+        candidates: Collection<OldResolutionCandidate<D>>
     ): OverloadResolutionResultsImpl<D> {
         val resolvedCandidates = candidates.map { candidate ->
             val candidateTrace = TemporaryBindingTrace.create(basicCallContext.trace, "Context for resolve candidate")
@@ -485,6 +485,10 @@ class NewResolutionOldInference(
                 candidateCall.performRemainingTasks()
                 createDiagnosticsForCandidate(towerCandidate, candidateCall)
             }
+        }
+
+        override fun createErrorCandidate(): MyCandidate {
+            throw IllegalStateException("Not supported creating error candidate for the old type inference candidate factory")
         }
 
         private fun createDiagnosticsForCandidate(

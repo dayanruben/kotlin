@@ -21,43 +21,44 @@ import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.*
 import org.gradle.api.tasks.compile.AbstractCompile
 import org.jetbrains.kotlin.compilerRunner.*
+import org.jetbrains.kotlin.compilerRunner.KotlinNativeCInteropRunner.Companion.run
 import org.jetbrains.kotlin.gradle.dsl.KotlinCommonOptions
 import org.jetbrains.kotlin.gradle.dsl.KotlinCommonToolOptions
 import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
 import org.jetbrains.kotlin.gradle.dsl.NativeCacheKind
 import org.jetbrains.kotlin.gradle.internal.ensureParentDirsCreated
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
+import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider
 import org.jetbrains.kotlin.gradle.plugin.cocoapods.asValidFrameworkName
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinNativeCompilationData
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinNativeFragmentMetadataCompilationData
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.isMainCompilationData
 import org.jetbrains.kotlin.gradle.plugin.sources.DefaultLanguageSettingsBuilder
+import org.jetbrains.kotlin.gradle.targets.native.KonanPropertiesBuildService
 import org.jetbrains.kotlin.gradle.targets.native.internal.isAllowCommonizer
+import org.jetbrains.kotlin.gradle.targets.native.tasks.createExecutionContext
 import org.jetbrains.kotlin.gradle.utils.*
-import org.jetbrains.kotlin.gradle.utils.klibModuleName
 import org.jetbrains.kotlin.gradle.utils.listFilesOrEmpty
 import org.jetbrains.kotlin.konan.CompilerVersion
 import org.jetbrains.kotlin.konan.library.KLIB_INTEROP_IR_PROVIDER_IDENTIFIER
-import org.jetbrains.kotlin.konan.properties.resolvablePropertyList
 import org.jetbrains.kotlin.konan.properties.saveToFile
 import org.jetbrains.kotlin.konan.target.CompilerOutputKind
 import org.jetbrains.kotlin.konan.target.CompilerOutputKind.*
 import org.jetbrains.kotlin.konan.target.Distribution
-import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.library.*
 import org.jetbrains.kotlin.project.model.LanguageSettings
-import org.jetbrains.kotlin.utils.ResolvedDependency as KResolvedDependency
-import org.jetbrains.kotlin.utils.ResolvedDependencyId as KResolvedDependencyId
-import org.jetbrains.kotlin.utils.ResolvedDependencies as KResolvedDependencies
-import org.jetbrains.kotlin.utils.ResolvedDependenciesSupport as KResolvedDependenciesSupport
-import org.jetbrains.kotlin.utils.ResolvedDependencyArtifactPath as KResolvedDependencyArtifactPath
-import org.jetbrains.kotlin.utils.ResolvedDependencyVersion as KResolvedDependencyVersion
 import java.io.File
 import java.nio.file.Files
 import javax.inject.Inject
 import org.jetbrains.kotlin.konan.file.File as KFile
+import org.jetbrains.kotlin.utils.ResolvedDependencies as KResolvedDependencies
+import org.jetbrains.kotlin.utils.ResolvedDependenciesSupport as KResolvedDependenciesSupport
+import org.jetbrains.kotlin.utils.ResolvedDependency as KResolvedDependency
+import org.jetbrains.kotlin.utils.ResolvedDependencyArtifactPath as KResolvedDependencyArtifactPath
+import org.jetbrains.kotlin.utils.ResolvedDependencyId as KResolvedDependencyId
+import org.jetbrains.kotlin.utils.ResolvedDependencyVersion as KResolvedDependencyVersion
 
 // TODO: It's just temporary tasks used while KN isn't integrated with Big Kotlin compilation infrastructure.
 // region Useful extensions
@@ -590,17 +591,7 @@ constructor(
         @Input get() = binary.linkerOpts
 
     val binaryOptions: Map<String, String>
-        @Input get() = binary.binaryOptions
-
-    val projectWideBinaryOptions: Map<String, String>
-        @Input get() = project.properties.mapNotNull { (name, value) ->
-            val prefix = KOTLIN_NATIVE_BINARY_OPTION_PREFIX
-            if (name.startsWith(prefix) && value is String) {
-                name.removePrefix(prefix) to value
-            } else {
-                null
-            }
-        }.toMap()
+        @Input get() = PropertiesProvider(project).nativeBinaryOptions + binary.binaryOptions
 
     val processTests: Boolean
         @Input get() = binary is TestExecutable
@@ -645,7 +636,7 @@ constructor(
         linkerOpts.forEach {
             addArg("-linker-option", it)
         }
-        (projectWideBinaryOptions + binaryOptions).forEach { (name, value) ->
+        binaryOptions.forEach { (name, value) ->
             add("-Xbinary=$name=$value")
         }
         exportLibraries.files.filterKlibsPassedToCompiler().forEach {
@@ -709,10 +700,6 @@ constructor(
         validatedExportedLibraries()
         super.compile()
     }
-
-    private companion object {
-        const val KOTLIN_NATIVE_BINARY_OPTION_PREFIX = "kotlin.native.binary."
-    }
 }
 
 private class ExternalDependenciesBuilder(
@@ -730,8 +717,12 @@ private class ExternalDependenciesBuilder(
     private val sourceCodeModuleId: KResolvedDependencyId =
         intermediateLibraryName?.let { KResolvedDependencyId(it) } ?: KResolvedDependencyId.DEFAULT_SOURCE_CODE_MODULE_ID
 
+    private val konanPropertiesService: KonanPropertiesBuildService
+        get() = KonanPropertiesBuildService.registerIfAbsent(project.gradle).get()
+
     fun buildCompilerArgs(): List<String> {
-        val konanVersion = Distribution(project.konanHome).compilerVersion?.let(CompilerVersion.Companion::fromString)
+        val compilerVersion = Distribution.getCompilerVersion(konanPropertiesService.compilerVersion, project.konanHome)
+        val konanVersion = compilerVersion?.let(CompilerVersion.Companion::fromString)
             ?: project.konanVersion
 
         if (konanVersion.isAtLeast(1, 6, 0)) {
@@ -907,6 +898,9 @@ internal class CacheBuilder(
     private val debuggable: Boolean
         get() = binary.debuggable
 
+    private val konanPropertiesService: KonanPropertiesBuildService
+        get() = KonanPropertiesBuildService.registerIfAbsent(project.gradle).get()
+
     private val konanCacheKind: NativeCacheKind
         get() = project.getKonanCacheKind(konanTarget)
 
@@ -986,13 +980,7 @@ internal class CacheBuilder(
             )
             if (debuggable)
                 args += "-g"
-            // It's a dirty workaround, but we need a Gradle Build Service for a proper solution,
-            // which is too big to put in 1.6.0, so let's use ad-hoc solution for now.
-            // TODO: https://youtrack.jetbrains.com/issue/KT-48553.
-            if (konanTarget == KonanTarget.IOS_ARM64) {
-                // See https://youtrack.jetbrains.com/issue/KT-48552
-                args += "-Xembed-bitcode-marker"
-            }
+            args += konanPropertiesService.additionalCacheFlags(konanTarget)
             args += externalDependenciesArgs
             args += "-Xadd-cache=${library.libraryFile.absolutePath}"
             args += "-Xcache-directory=${cacheDirectory.absolutePath}"
@@ -1071,7 +1059,7 @@ internal class CacheBuilder(
     }
 
     fun buildCompilerArgs(): List<String> = mutableListOf<String>().apply {
-        if (konanCacheKind != NativeCacheKind.NONE && !optimized && cacheWorksFor(konanTarget, project)) {
+        if (konanCacheKind != NativeCacheKind.NONE && !optimized && konanPropertiesService.cacheWorksFor(konanTarget)) {
             rootCacheDirectory.mkdirs()
             ensureCompilerProvidedLibsPrecached()
             add("-Xcache-directory=${rootCacheDirectory.absolutePath}")
@@ -1102,36 +1090,6 @@ internal class CacheBuilder(
             cacheKind.outputKind?.let {
                 "${baseName}-cache"
             } ?: error("No output for kind $cacheKind")
-
-        private fun getCacheableTargets(project: Project) =
-            Distribution(project.konanHome)
-                .properties
-                .resolvablePropertyList("cacheableTargets", HostManager.hostName)
-                .map { KonanTarget.predefinedTargets.getValue(it) }
-
-        // Targets with well-tested static caches that can be enabled by default.
-        // TODO: There is a corresponding property in konan.properties (optInCacheableTargets),
-        //  but naïve implementation makes build slower because it makes reading of konan.properties significantly more frequent.
-        //  One possible solution is to use [Gradle Build service](https://docs.gradle.org/current/userguide/build_services.html).
-        //  Tracking issue: https://youtrack.jetbrains.com/issue/KT-47529
-        private val targetsWithStableStaticCaches = setOf(
-                KonanTarget.IOS_X64,
-                KonanTarget.MACOS_X64,
-                KonanTarget.IOS_SIMULATOR_ARM64,
-                KonanTarget.MACOS_ARM64,
-                KonanTarget.IOS_ARM64,
-                KonanTarget.LINUX_X64
-            )
-
-        internal fun cacheWorksFor(target: KonanTarget, project: Project) =
-            target in getCacheableTargets(project)
-
-        internal fun defaultCacheKindForTarget(target: KonanTarget): NativeCacheKind =
-            if (target in targetsWithStableStaticCaches) {
-                NativeCacheKind.STATIC
-            } else {
-                NativeCacheKind.NONE
-            }
     }
 }
 
@@ -1166,6 +1124,10 @@ open class CInteropProcess @Inject constructor(@get:Internal val settings: Defau
     @get:Internal
     val outputFile: File
         get() = outputFileProvider.get()
+
+    init {
+        outputs.upToDateWhen { outputFile.exists() }
+    }
 
     // Inputs and outputs.
 
@@ -1245,6 +1207,6 @@ open class CInteropProcess @Inject constructor(@get:Internal val settings: Defau
         }
 
         outputFile.parentFile.mkdirs()
-        KotlinNativeCInteropRunner(project).run(args)
+        KotlinNativeCInteropRunner.createExecutionContext(this).run(args)
     }
 }

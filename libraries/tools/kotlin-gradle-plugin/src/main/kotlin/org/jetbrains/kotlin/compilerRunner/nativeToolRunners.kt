@@ -11,10 +11,9 @@ import org.jetbrains.kotlin.gradle.dsl.NativeCacheKind
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider
 import org.jetbrains.kotlin.gradle.plugin.mpp.isAtLeast
 import org.jetbrains.kotlin.gradle.plugin.mpp.nativeUseEmbeddableCompilerJar
-import org.jetbrains.kotlin.gradle.tasks.CacheBuilder
+import org.jetbrains.kotlin.gradle.targets.native.KonanPropertiesBuildService
 import org.jetbrains.kotlin.gradle.utils.NativeCompilerDownloader
 import org.jetbrains.kotlin.konan.CompilerVersion
-import org.jetbrains.kotlin.konan.file.File
 import org.jetbrains.kotlin.konan.properties.resolvablePropertyString
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.KonanTarget
@@ -42,7 +41,7 @@ internal fun Project.getKonanCacheKind(target: KonanTarget): NativeCacheKind {
     return when {
         targetCacheKind != null -> targetCacheKind
         commonCacheKind != null -> commonCacheKind
-        else -> CacheBuilder.defaultCacheKindForTarget(target)
+        else -> KonanPropertiesBuildService.registerIfAbsent(gradle).get().defaultCacheKindForTarget(target)
     }
 }
 
@@ -72,8 +71,8 @@ internal abstract class KotlinNativeToolRunner(
         }
 
         listOfNotNull(
-                if (konanHomeRequired) "konan.home" to project.konanHome else null,
-                MessageRenderer.PROPERTY_KEY to MessageRenderer.GRADLE_STYLE.name
+            if (konanHomeRequired) "konan.home" to project.konanHome else null,
+            MessageRenderer.PROPERTY_KEY to MessageRenderer.GRADLE_STYLE.name
         ).toMap()
     }
 
@@ -141,7 +140,19 @@ internal abstract class AbstractKotlinNativeCInteropRunner(toolName: String, pro
 }
 
 /** Kotlin/Native C-interop tool runner */
-internal class KotlinNativeCInteropRunner(project: Project) : AbstractKotlinNativeCInteropRunner("cinterop", project)
+internal class KotlinNativeCInteropRunner private constructor(project: Project) : AbstractKotlinNativeCInteropRunner("cinterop", project) {
+    interface ExecutionContext {
+        val project: Project
+        fun runWithContext(action: () -> Unit)
+    }
+
+    companion object {
+        fun ExecutionContext.run(args: List<String>) {
+            val runner = KotlinNativeCInteropRunner(project)
+            runWithContext { runner.run(args) }
+        }
+    }
+}
 
 /** Kotlin/Native compiler runner */
 internal class KotlinNativeCompilerRunner(project: Project) : KotlinNativeToolRunner("konanc", project) {
@@ -173,8 +184,7 @@ internal class KotlinNativeKlibRunner(project: Project) : KotlinNativeToolRunner
 
 /** Platform libraries generation tool. Runs the cinterop tool under the hood. */
 internal class KotlinNativeLibraryGenerationRunner(project: Project) :
-    AbstractKotlinNativeCInteropRunner("generatePlatformLibraries", project)
-{
+    AbstractKotlinNativeCInteropRunner("generatePlatformLibraries", project) {
     // The library generator works for a long time so enabling C2 can improve performance.
     override val disableC2: Boolean = false
 }

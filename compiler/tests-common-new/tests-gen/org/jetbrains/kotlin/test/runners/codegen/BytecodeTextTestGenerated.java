@@ -2343,6 +2343,12 @@ public class BytecodeTextTestGenerated extends AbstractBytecodeTextTest {
         }
 
         @Test
+        @TestMetadata("forInDownToLongConstNoUnderflow.kt")
+        public void testForInDownToLongConstNoUnderflow() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeText/forLoop/forInDownToLongConstNoUnderflow.kt");
+        }
+
+        @Test
         @TestMetadata("forInDownToLongMinValue.kt")
         public void testForInDownToLongMinValue() throws Exception {
             runTest("compiler/testData/codegen/bytecodeText/forLoop/forInDownToLongMinValue.kt");
@@ -2997,6 +3003,24 @@ public class BytecodeTextTestGenerated extends AbstractBytecodeTextTest {
             @TestMetadata("forInRangeToULongMaxValue.kt")
             public void testForInRangeToULongMaxValue() throws Exception {
                 runTest("compiler/testData/codegen/bytecodeText/forLoop/unsigned/forInRangeToULongMaxValue.kt");
+            }
+
+            @Test
+            @TestMetadata("forInUnsignedArray.kt")
+            public void testForInUnsignedArray() throws Exception {
+                runTest("compiler/testData/codegen/bytecodeText/forLoop/unsigned/forInUnsignedArray.kt");
+            }
+
+            @Test
+            @TestMetadata("forInUnsignedArrayIndices.kt")
+            public void testForInUnsignedArrayIndices() throws Exception {
+                runTest("compiler/testData/codegen/bytecodeText/forLoop/unsigned/forInUnsignedArrayIndices.kt");
+            }
+
+            @Test
+            @TestMetadata("forInUnsignedArrayWithIndex.kt")
+            public void testForInUnsignedArrayWithIndex() throws Exception {
+                runTest("compiler/testData/codegen/bytecodeText/forLoop/unsigned/forInUnsignedArrayWithIndex.kt");
             }
 
             @Test

@@ -24,13 +24,9 @@ import org.gradle.api.artifacts.Configuration
 import org.gradle.api.file.FileCollection
 import org.gradle.api.internal.AbstractNamedDomainObjectContainer
 import org.gradle.api.internal.CollectionCallbackActionDecorator
-import org.gradle.api.internal.file.AbstractFileCollection
 import org.gradle.api.tasks.JavaExec
 import org.gradle.api.tasks.SourceSet
-import org.gradle.api.tasks.TaskDependency
 import org.gradle.internal.reflect.Instantiator
-import org.jetbrains.kotlin.konan.target.*
-import org.jetbrains.kotlin.konan.util.*
 
 class NamedNativeInteropConfig implements Named {
 
@@ -189,11 +185,11 @@ class NamedNativeInteropConfig implements Named {
             interopStubs.kotlin.srcDirs generatedSrcDir
 
             project.dependencies {
-                add interopStubs.getCompileConfigurationName(), project(path: ':kotlin-native:Interop:Runtime')
-                add interopStubs.getCompileConfigurationName(), "org.jetbrains.kotlin:kotlin-stdlib:${project.bootstrapKotlinVersion}"
+                add interopStubs.getApiConfigurationName(), project(path: ':kotlin-native:Interop:Runtime')
+                add interopStubs.getApiConfigurationName(), "org.jetbrains.kotlin:kotlin-stdlib:${project.bootstrapKotlinVersion}"
             }
 
-            this.configuration.extendsFrom project.configurations[interopStubs.runtimeConfigurationName]
+            this.configuration.extendsFrom project.configurations[interopStubs.getRuntimeClasspathConfigurationName()]
             project.dependencies.add(this.configuration.name, interopStubs.output)
         }
 
@@ -255,7 +251,7 @@ class NamedNativeInteropConfig implements Named {
                 }
 
                 // TODO: the interop plugin should probably be reworked to execute clang from build scripts directly
-                environment['PATH'] = project.files(project.hostPlatform.clang.clangPaths).asPath +
+                environment['PATH'] = project.files(project.extensions.platformManager.hostPlatform.clang.clangPaths).asPath +
                         File.pathSeparator + environment['PATH']
 
                 args compilerOpts.collectMany { ['-compiler-option', it] }

@@ -108,8 +108,6 @@ fun Project.kotlinBuiltins(forJvm: Boolean): Any =
     else dependencies.project(":core:builtins", configuration = "runtimeElementsJvm".takeIf { forJvm })
 
 fun DependencyHandler.projectTests(name: String): ProjectDependency = project(name, configuration = "tests-jar")
-fun DependencyHandler.projectRuntimeJar(name: String): ProjectDependency = project(name, configuration = "runtimeJar")
-fun DependencyHandler.projectArchives(name: String): ProjectDependency = project(name, configuration = "archives")
 
 enum class JpsDepScope {
     COMPILE, TEST, RUNTIME, PROVIDED
@@ -142,14 +140,14 @@ fun DependencyHandler.jpsLikeJarDependency(
         JpsDepScope.COMPILE -> {
             if (exported) {
                 add("api", dependencyNotation, dependencyConfiguration)
-                add("testCompile", dependencyNotation, dependencyConfiguration)
+                add("testApi", dependencyNotation, dependencyConfiguration)
             } else {
                 add("implementation", dependencyNotation, dependencyConfiguration)
             }
         }
         JpsDepScope.TEST -> {
             if (exported) {
-                add("testCompile", dependencyNotation, dependencyConfiguration)
+                add("testApi", dependencyNotation, dependencyConfiguration)
             } else {
                 add("testImplementation", dependencyNotation, dependencyConfiguration)
             }
@@ -160,7 +158,7 @@ fun DependencyHandler.jpsLikeJarDependency(
         JpsDepScope.PROVIDED -> {
             if (exported) {
                 add("compileOnlyApi", dependencyNotation, dependencyConfiguration)
-                add("testCompile", dependencyNotation, dependencyConfiguration)
+                add("testApi", dependencyNotation, dependencyConfiguration)
             } else {
                 add("compileOnly", dependencyNotation, dependencyConfiguration)
                 add("testImplementation", dependencyNotation, dependencyConfiguration)
@@ -174,14 +172,14 @@ fun DependencyHandler.jpsLikeModuleDependency(moduleName: String, scope: JpsDepS
     when (scope) {
         JpsDepScope.COMPILE -> {
             if (exported) {
-                add("testCompile", projectTests(moduleName))
+                add("testApi", projectTests(moduleName))
             } else {
                 add("testImplementation", projectTests(moduleName))
             }
         }
         JpsDepScope.TEST -> {
             if (exported) {
-                add("testCompile", projectTests(moduleName))
+                add("testApi", projectTests(moduleName))
             } else {
                 add("testImplementation", projectTests(moduleName))
             }
@@ -191,7 +189,7 @@ fun DependencyHandler.jpsLikeModuleDependency(moduleName: String, scope: JpsDepS
         }
         JpsDepScope.PROVIDED -> {
             if (exported) {
-                add("testCompile", projectTests(moduleName))
+                add("testApi", projectTests(moduleName))
             } else {
                 add("testImplementation", projectTests(moduleName))
             }

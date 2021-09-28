@@ -6,17 +6,17 @@ plugins {
 val testJvm6ServerRuntime by configurations.creating
 
 dependencies {
-    testCompile(projectTests(":compiler"))
+    testApi(projectTests(":compiler"))
     testApi(projectTests(":compiler:test-infrastructure"))
     testApi(projectTests(":compiler:test-infrastructure-utils"))
     testApi(projectTests(":compiler:tests-compiler-utils"))
-    testCompile(projectTests(":compiler:tests-common-new"))
+    testApi(projectTests(":compiler:tests-common-new"))
 
     testApiJUnit5(vintageEngine = true, runner = true, suiteApi = true)
 
     testImplementation(intellijCoreDep()) { includeJars("intellij-core") }
-    testRuntime(project(":kotlin-reflect"))
-    testRuntime(intellijDep())
+    testRuntimeOnly(project(":kotlin-reflect"))
+    testRuntimeOnly(intellijDep())
     testJvm6ServerRuntime(projectTests(":compiler:tests-common-jvm6"))
 }
 
@@ -84,15 +84,6 @@ codegenTest(target = 6, jdk = JdkMajorVersion.JDK_11)
 codegenTest(target = 8, jdk = JdkMajorVersion.JDK_11)
 
 codegenTest(target = 11, jdk = JdkMajorVersion.JDK_11)
-
-//JDK 15 (TODO: remove)
-codegenTest(target = 6, jdk = JdkMajorVersion.JDK_15)
-
-codegenTest(target = 8, jdk = JdkMajorVersion.JDK_15)
-
-codegenTest(target = 15, jdk = JdkMajorVersion.JDK_15) {
-    systemProperty("kotlin.test.box.d8.disable", true)
-}
 
 //JDK 17
 codegenTest(target = 6, jdk = JdkMajorVersion.JDK_17)

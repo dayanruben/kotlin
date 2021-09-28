@@ -3040,6 +3040,11 @@ public class IrBoxJsTestGenerated extends AbstractIrBoxJsTest {
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("js/js.translator/testData/box/expression/when"), Pattern.compile("^([^_](.+))\\.kt$"), null, TargetBackend.JS_IR, true);
             }
 
+            @TestMetadata("constantsInWhen.kt")
+            public void testConstantsInWhen() throws Exception {
+                runTest("js/js.translator/testData/box/expression/when/constantsInWhen.kt");
+            }
+
             @TestMetadata("doWhileWithOneStmWhen.kt")
             public void testDoWhileWithOneStmWhen() throws Exception {
                 runTest("js/js.translator/testData/box/expression/when/doWhileWithOneStmWhen.kt");
@@ -7967,6 +7972,11 @@ public class IrBoxJsTestGenerated extends AbstractIrBoxJsTest {
         @TestMetadata("jsExternalVarargFun.kt")
         public void testJsExternalVarargFun() throws Exception {
             runTest("js/js.translator/testData/box/vararg/jsExternalVarargFun.kt");
+        }
+
+        @TestMetadata("jsExternalVarargSuspend.kt")
+        public void testJsExternalVarargSuspend() throws Exception {
+            runTest("js/js.translator/testData/box/vararg/jsExternalVarargSuspend.kt");
         }
     }
 }

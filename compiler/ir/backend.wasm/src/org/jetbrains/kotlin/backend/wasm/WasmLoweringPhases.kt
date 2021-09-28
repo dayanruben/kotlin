@@ -179,6 +179,12 @@ private val sharedVariablesLoweringPhase = makeWasmModulePhase(
     description = "Box captured mutable variables"
 )
 
+private val propertyReferenceLowering = makeWasmModulePhase(
+    ::WasmPropertyReferenceLowering,
+    name = "WasmPropertyReferenceLowering",
+    description = "Lower property references"
+)
+
 private val callableReferencePhase = makeWasmModulePhase(
     ::WasmCallableReferenceLowering,
     name = "WasmCallableReferenceLowering",
@@ -335,6 +341,13 @@ private val wasmNullSpecializationLowering = makeWasmModulePhase(
     description = "Specialize assigning Nothing? values to other types."
 )
 
+private val wasmFunctionInterfaceReplacer = makeWasmModulePhase(
+    ::WasmFunctionInterfaceReplacer,
+    name = "WasmFunctionInterfaceReplacer",
+    description = "Replace function interface with concrete runtime interfaces"
+)
+
+
 private val staticMembersLoweringPhase = makeWasmModulePhase(
     ::StaticMembersLowering,
     name = "StaticMembersLowering",
@@ -447,6 +460,7 @@ val wasmPhases = NamedCompilerPhase(
             enumClassConstructorBodyLoweringPhase then
 
             sharedVariablesLoweringPhase then
+            propertyReferenceLowering then
             callableReferencePhase then
             localDelegatedPropertiesLoweringPhase then
             localDeclarationsLoweringPhase then
@@ -513,6 +527,7 @@ val wasmPhases = NamedCompilerPhase(
 
             virtualDispatchReceiverExtractionPhase then
             staticMembersLoweringPhase then
+            wasmFunctionInterfaceReplacer then
             wasmNullSpecializationLowering then
             validateIrAfterLowering
 )

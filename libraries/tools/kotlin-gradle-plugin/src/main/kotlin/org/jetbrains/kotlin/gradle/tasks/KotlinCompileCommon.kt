@@ -21,8 +21,11 @@ import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.*
 import org.gradle.work.InputChanges
+import org.gradle.workers.WorkerExecutor
 import org.jetbrains.kotlin.cli.common.arguments.K2MetadataCompilerArguments
 import org.jetbrains.kotlin.compilerRunner.GradleCompilerEnvironment
+import org.jetbrains.kotlin.compilerRunner.GradleCompilerRunner
+import org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers
 import org.jetbrains.kotlin.compilerRunner.OutputItemsCollectorImpl
 import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.internal.tasks.allOutputFiles
@@ -36,12 +39,14 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinCompilationData
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinMetadataCompilationData
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.refinesClosure
 import org.jetbrains.kotlin.gradle.plugin.sources.resolveAllDependsOnSourceSets
+import org.jetbrains.kotlin.gradle.utils.propertyWithConvention
 import java.io.File
 import javax.inject.Inject
 
 @CacheableTask
 abstract class KotlinCompileCommon @Inject constructor(
-    override val kotlinOptions: KotlinMultiplatformCommonOptions
+    override val kotlinOptions: KotlinMultiplatformCommonOptions,
+    workerExecutor: WorkerExecutor
 ) : AbstractKotlinCompile<K2MetadataCompilerArguments>(), KotlinCommonCompile {
 
     class Configurator(compilation: KotlinCompilationData<*>) : AbstractKotlinCompile.Configurator<KotlinCompileCommon>(compilation) {
@@ -76,6 +81,19 @@ abstract class KotlinCompileCommon @Inject constructor(
             }
         }
     }
+
+    override val compilerRunner: Provider<GradleCompilerRunner> =
+        objects.propertyWithConvention(
+            gradleCompileTaskProvider.map {
+                GradleCompilerRunnerWithWorkers(
+                    it,
+                    null,
+                    normalizedKotlinDaemonJvmArguments.orNull,
+                    metrics.get(),
+                    workerExecutor
+                )
+            }
+        )
 
     override fun createCompilerArgs(): K2MetadataCompilerArguments =
         K2MetadataCompilerArguments()
@@ -116,7 +134,12 @@ abstract class KotlinCompileCommon @Inject constructor(
     @get:Internal
     internal val expectActualLinker = objects.property(Boolean::class.java)
 
-    override fun callCompilerAsync(args: K2MetadataCompilerArguments, sourceRoots: SourceRoots, inputChanges: InputChanges) {
+    override fun callCompilerAsync(
+        args: K2MetadataCompilerArguments,
+        sourceRoots: SourceRoots,
+        inputChanges: InputChanges,
+        taskOutputsBackup: TaskOutputsBackup?
+    ) {
         val messageCollector = GradlePrintingMessageCollector(logger, args.allWarningsAsErrors)
         val outputItemCollector = OutputItemsCollectorImpl()
         val compilerRunner = compilerRunner.get()

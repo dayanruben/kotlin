@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.getPropertyGetter
 import org.jetbrains.kotlin.ir.util.isPrimitiveArray
+import org.jetbrains.kotlin.ir.util.isUnsignedArray
 import org.jetbrains.kotlin.name.FqName
 
 /** Builds a [HeaderInfo] for progressions built using the `indices` extension property. */
@@ -75,9 +76,14 @@ internal class CollectionIndicesHandler(context: CommonBackendContext) : Indices
 }
 
 internal class ArrayIndicesHandler(context: CommonBackendContext) : IndicesHandler(context) {
+    private val supportsUnsignedArrays = context.optimizeLoopsOverUnsignedArrays
 
     override val matcher = SimpleCalleeMatcher {
-        extensionReceiver { it != null && it.type.run { isArray() || isPrimitiveArray() } }
+        extensionReceiver {
+            it != null && it.type.run {
+                isArray() || isPrimitiveArray() || (supportsUnsignedArrays && isUnsignedArray())
+            }
+        }
         fqName { it == FqName("kotlin.collections.<get-indices>") }
         parameterCount { it == 0 }
     }

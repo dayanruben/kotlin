@@ -14,11 +14,10 @@ dependencies {
     compileOnly project(':compiler')
     compileOnly project(':kotlin-sam-with-receiver-compiler-plugin')
 
-    testCompile gradleApi()
-    testCompile "junit:junit:4.12"
+    testApi gradleApi()
+    testApi "junit:junit:4.12"
 
     embedded(project(":kotlin-sam-with-receiver-compiler-plugin")) { transitive = false }
 }
 
-ArtifactsKt.noDefaultJar(project)
 ArtifactsKt.runtimeJar(project, EmbeddableKt.rewriteDefaultJarDepsToShadedCompiler(project, {}), {})

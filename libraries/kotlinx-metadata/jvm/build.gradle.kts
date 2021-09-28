@@ -37,7 +37,7 @@ val shadows by configurations.creating {
     isTransitive = false
 }
 configurations.getByName("compileOnly").extendsFrom(shadows)
-configurations.getByName("testCompile").extendsFrom(shadows)
+configurations.getByName("testApi").extendsFrom(shadows)
 
 dependencies {
     api(kotlinStdlib())
@@ -55,8 +55,6 @@ dependencies {
 if (deployVersion != null) {
     publish()
 }
-
-noDefaultJar()
 
 runtimeJar(tasks.register<ShadowJar>("shadowJar")) {
     callGroovy("manifestAttributes", manifest, project)

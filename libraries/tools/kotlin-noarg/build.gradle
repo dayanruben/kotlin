@@ -14,13 +14,12 @@ dependencies {
     compileOnly project(':compiler')
     compileOnly project(':kotlin-noarg-compiler-plugin')
 
-    testCompile gradleApi()
-    testCompile "junit:junit:4.12"
+    testApi gradleApi()
+    testApi "junit:junit:4.12"
 
     embedded(project(":kotlin-noarg-compiler-plugin")) { transitive = false }
 }
 
-ArtifactsKt.noDefaultJar(project)
 ArtifactsKt.runtimeJar(project, EmbeddableKt.rewriteDefaultJarDepsToShadedCompiler(project, {}), {})
 
 pluginBundle {
