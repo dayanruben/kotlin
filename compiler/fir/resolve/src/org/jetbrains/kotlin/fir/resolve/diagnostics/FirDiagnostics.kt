@@ -73,6 +73,12 @@ class ConeResolutionToClassifierError(override val candidateSymbol: FirRegularCl
 class ConeHiddenCandidateError(
     override val candidateSymbol: FirBasedSymbol<*>
 ) : ConeDiagnosticWithSingleCandidate {
+    override val reason: String get() = "HIDDEN: ${describeSymbol(candidateSymbol)} is deprecated with DeprecationLevel.HIDDEN"
+}
+
+class ConeVisibilityError(
+    override val candidateSymbol: FirBasedSymbol<*>
+) : ConeDiagnosticWithSingleCandidate {
     override val reason: String get() = "HIDDEN: ${describeSymbol(candidateSymbol)} is invisible"
 }
 
@@ -208,6 +214,10 @@ class ConeLocalVariableNoTypeOrInitializer(val variable: FirVariable) : ConeDiag
 
 class ConePropertyAsOperator(val symbol: FirPropertySymbol) : ConeDiagnostic {
     override val reason: String get() = "Cannot use a property as an operator"
+}
+
+class ConeUnknownLambdaParameterTypeDiagnostic : ConeDiagnostic {
+    override val reason: String get() = "Unknown return lambda parameter type"
 }
 
 private fun describeSymbol(symbol: FirBasedSymbol<*>): String {

@@ -25,6 +25,12 @@ public class OverriddenDeclarationProviderTestGenerated extends AbstractOverridd
     }
 
     @Test
+    @TestMetadata("inAnonymousClass.kt")
+    public void testInAnonymousClass() throws Exception {
+        runTest("analysis/analysis-api/testData/components/overridenDeclarations/inAnonymousClass.kt");
+    }
+
+    @Test
     @TestMetadata("inLocalClass.kt")
     public void testInLocalClass() throws Exception {
         runTest("analysis/analysis-api/testData/components/overridenDeclarations/inLocalClass.kt");
@@ -58,6 +64,12 @@ public class OverriddenDeclarationProviderTestGenerated extends AbstractOverridd
     @TestMetadata("multipleInterfaces.kt")
     public void testMultipleInterfaces() throws Exception {
         runTest("analysis/analysis-api/testData/components/overridenDeclarations/multipleInterfaces.kt");
+    }
+
+    @Test
+    @TestMetadata("onEnumEntry.kt")
+    public void testOnEnumEntry() throws Exception {
+        runTest("analysis/analysis-api/testData/components/overridenDeclarations/onEnumEntry.kt");
     }
 
     @Test

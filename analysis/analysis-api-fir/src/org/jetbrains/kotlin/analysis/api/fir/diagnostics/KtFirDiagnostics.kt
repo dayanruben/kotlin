@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.fir.FirModuleData
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.lexer.KtKeywordToken
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
+import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -201,6 +202,13 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
     abstract class ValOrVarOnSecondaryConstructorParameter : KtFirDiagnostic<KtParameter>() {
         override val diagnosticClass get() = ValOrVarOnSecondaryConstructorParameter::class
         abstract val valOrVar: KtKeywordToken
+    }
+
+    abstract class InvisibleSetter : KtFirDiagnostic<PsiElement>() {
+        override val diagnosticClass get() = InvisibleSetter::class
+        abstract val property: KtVariableSymbol
+        abstract val visibility: Visibility
+        abstract val callableId: CallableId
     }
 
     abstract class InvisibleReference : KtFirDiagnostic<PsiElement>() {
@@ -680,6 +688,19 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
 
     abstract class OptInMarkerWithWrongRetention : KtFirDiagnostic<KtAnnotationEntry>() {
         override val diagnosticClass get() = OptInMarkerWithWrongRetention::class
+    }
+
+    abstract class OptInMarkerOnWrongTarget : KtFirDiagnostic<KtAnnotationEntry>() {
+        override val diagnosticClass get() = OptInMarkerOnWrongTarget::class
+        abstract val target: String
+    }
+
+    abstract class OptInMarkerOnOverride : KtFirDiagnostic<KtAnnotationEntry>() {
+        override val diagnosticClass get() = OptInMarkerOnOverride::class
+    }
+
+    abstract class OptInMarkerOnOverrideWarning : KtFirDiagnostic<KtAnnotationEntry>() {
+        override val diagnosticClass get() = OptInMarkerOnOverrideWarning::class
     }
 
     abstract class ExposedTypealiasExpandedType : KtFirDiagnostic<KtNamedDeclaration>() {
@@ -2356,6 +2377,10 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
 
     abstract class ReturnNotAllowed : KtFirDiagnostic<KtReturnExpression>() {
         override val diagnosticClass get() = ReturnNotAllowed::class
+    }
+
+    abstract class NotAFunctionLabel : KtFirDiagnostic<KtReturnExpression>() {
+        override val diagnosticClass get() = NotAFunctionLabel::class
     }
 
     abstract class ReturnInFunctionWithExpressionBody : KtFirDiagnostic<KtReturnExpression>() {

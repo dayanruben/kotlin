@@ -2748,6 +2748,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             }
 
             @Test
+            @TestMetadata("kt49038.kt")
+            public void testKt49038() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/callableReference/kt49038.kt");
+            }
+
+            @Test
             @TestMetadata("kt7430_wrongClassOnLHS.kt")
             public void testKt7430_wrongClassOnLHS() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/callableReference/kt7430_wrongClassOnLHS.kt");
@@ -6272,6 +6278,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             }
 
             @Test
+            @TestMetadata("nestedLoopsWithMultipleLabels.kt")
+            public void testNestedLoopsWithMultipleLabels() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/controlStructures/nestedLoopsWithMultipleLabels.kt");
+            }
+
+            @Test
             @TestMetadata("notAFunctionLabel_after.kt")
             public void testNotAFunctionLabel_after() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/controlStructures/notAFunctionLabel_after.kt");
@@ -8356,6 +8368,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             }
 
             @Test
+            @TestMetadata("kt44843.kt")
+            public void testKt44843() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/delegation/kt44843.kt");
+            }
+
+            @Test
             @TestMetadata("kt8154.kt")
             public void testKt8154() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/delegation/kt8154.kt");
@@ -8589,6 +8607,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             @TestMetadata("annotationUsage.kt")
             public void testAnnotationUsage() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/deprecated/annotationUsage.kt");
+            }
+
+            @Test
+            @TestMetadata("candidateBehindHiddenPropertyAccessors.kt")
+            public void testCandidateBehindHiddenPropertyAccessors() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/deprecated/candidateBehindHiddenPropertyAccessors.kt");
             }
 
             @Test
@@ -13747,6 +13771,18 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
                 }
 
                 @Test
+                @TestMetadata("kt46727.kt")
+                public void testKt46727() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/kt46727.kt");
+                }
+
+                @Test
+                @TestMetadata("kt46727Warnings.kt")
+                public void testKt46727Warnings() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/kt46727Warnings.kt");
+                }
+
+                @Test
                 @TestMetadata("memberScopeOfCaptured.kt")
                 public void testMemberScopeOfCaptured() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/memberScopeOfCaptured.kt");
@@ -15790,6 +15826,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             }
 
             @Test
+            @TestMetadata("kt21177Warning.kt")
+            public void testKt21177Warning() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inline/kt21177Warning.kt");
+            }
+
+            @Test
             @TestMetadata("kt4869.kt")
             public void testKt4869() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/inline/kt4869.kt");
@@ -15916,9 +15958,33 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             }
 
             @Test
+            @TestMetadata("superCall.kt")
+            public void testSuperCall() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inline/superCall.kt");
+            }
+
+            @Test
             @TestMetadata("superCallDepecation.kt")
             public void testSuperCallDepecation() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/inline/superCallDepecation.kt");
+            }
+
+            @Test
+            @TestMetadata("superCallDepecationWarning.kt")
+            public void testSuperCallDepecationWarning() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inline/superCallDepecationWarning.kt");
+            }
+
+            @Test
+            @TestMetadata("superCallFromMultipleSubclasses.kt")
+            public void testSuperCallFromMultipleSubclasses() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inline/superCallFromMultipleSubclasses.kt");
+            }
+
+            @Test
+            @TestMetadata("superProperty.kt")
+            public void testSuperProperty() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inline/superProperty.kt");
             }
 
             @Test
@@ -17840,6 +17906,18 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
                 @TestMetadata("notNullTypeParameterWithKotlinNullableWarnings.kt")
                 public void testNotNullTypeParameterWithKotlinNullableWarnings() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/j+k/types/notNullTypeParameterWithKotlinNullableWarnings.kt");
+                }
+
+                @Test
+                @TestMetadata("notNullTypeParameterWithKotlinOverridesDefinitelyNonNullable.kt")
+                public void testNotNullTypeParameterWithKotlinOverridesDefinitelyNonNullable() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/j+k/types/notNullTypeParameterWithKotlinOverridesDefinitelyNonNullable.kt");
+                }
+
+                @Test
+                @TestMetadata("notNullTypeParameterWithKotlinOverridesWarning.kt")
+                public void testNotNullTypeParameterWithKotlinOverridesWarning() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/j+k/types/notNullTypeParameterWithKotlinOverridesWarning.kt");
                 }
 
                 @Test
@@ -22527,6 +22605,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
                 runTest("compiler/testData/diagnostics/tests/properties/lateinitOnTopLevel.kt");
             }
 
+            @Test
+            @TestMetadata("protectedGetterWithPublicSetter.kt")
+            public void testProtectedGetterWithPublicSetter() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/properties/protectedGetterWithPublicSetter.kt");
+            }
+
             @Nested
             @TestMetadata("compiler/testData/diagnostics/tests/properties/backingField")
             @TestDataPath("$PROJECT_ROOT")
@@ -25397,6 +25481,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
                 runTest("compiler/testData/diagnostics/tests/scopes/VisibilityInheritModifier.kt");
             }
 
+            @Test
+            @TestMetadata("visibleSetterFromSyntheticProperty.kt")
+            public void testVisibleSetterFromSyntheticProperty() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/scopes/visibleSetterFromSyntheticProperty.kt");
+            }
+
             @Nested
             @TestMetadata("compiler/testData/diagnostics/tests/scopes/classHeader")
             @TestDataPath("$PROJECT_ROOT")
@@ -25834,6 +25924,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
                 @TestMetadata("protectedCallOnSubClass.kt")
                 public void testProtectedCallOnSubClass() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/scopes/protectedVisibility/protectedCallOnSubClass.kt");
+                }
+
+                @Test
+                @TestMetadata("protectedPropertyInPrimaryConstructor.kt")
+                public void testProtectedPropertyInPrimaryConstructor() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/scopes/protectedVisibility/protectedPropertyInPrimaryConstructor.kt");
                 }
 
                 @Test
@@ -31615,6 +31711,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             @TestMetadata("kt422.kt")
             public void testKt422() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/varargs/kt422.kt");
+            }
+
+            @Test
+            @TestMetadata("kt48162.kt")
+            public void testKt48162() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/varargs/kt48162.kt");
             }
 
             @Test

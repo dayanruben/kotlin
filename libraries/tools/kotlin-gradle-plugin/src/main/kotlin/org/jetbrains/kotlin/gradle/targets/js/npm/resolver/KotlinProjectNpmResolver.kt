@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.gradle.targets.js.KotlinJsTarget
 import org.jetbrains.kotlin.gradle.targets.js.npm.RequiresNpmDependencies
 import org.jetbrains.kotlin.gradle.targets.js.npm.resolved.KotlinProjectNpmResolution
 import org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTest
+import org.jetbrains.kotlin.gradle.utils.unavailableValueError
 import java.io.Serializable
 import kotlin.reflect.KClass
 
@@ -55,7 +56,7 @@ internal class KotlinProjectNpmResolver(
         addContainerListeners()
 
         project.whenEvaluated {
-            val nodeJs = resolver.nodeJs
+            val nodeJs = resolver.nodeJs ?: unavailableValueError("resolver.nodeJs")
             project.tasks.implementing(RequiresNpmDependencies::class)
                 .configureEach { task ->
                     if (task.enabled) {
@@ -89,7 +90,8 @@ internal class KotlinProjectNpmResolver(
     private fun addTargetListeners(target: KotlinTarget) {
         check(!closed) { resolver.alreadyResolvedMessage("add target $target") }
 
-        if (target.platformType == KotlinPlatformType.js) {
+        if (target.platformType == KotlinPlatformType.js ||
+            target.platformType == KotlinPlatformType.wasm) {
             target.compilations.all { compilation ->
                 if (compilation is KotlinJsCompilation) {
                     // compilation may be KotlinWithJavaTarget for old Kotlin2JsPlugin
@@ -122,7 +124,7 @@ internal class KotlinProjectNpmResolver(
         return KotlinProjectNpmResolution(
             projectPath,
             byCompilation.values.mapNotNull { it.close() },
-            resolver.nodeJs.taskRequirements.byTask
+            resolver.taskRequirements.byTask
         )
     }
 }

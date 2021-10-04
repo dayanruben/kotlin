@@ -1644,6 +1644,31 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
             runTest("compiler/testData/codegen/box/callableReference/arrayOf.kt");
         }
 
+        @TestMetadata("callableReferenceOfCompanionConst.kt")
+        public void testCallableReferenceOfCompanionConst() throws Exception {
+            runTest("compiler/testData/codegen/box/callableReference/callableReferenceOfCompanionConst.kt");
+        }
+
+        @TestMetadata("callableReferenceOfCompanionMethod.kt")
+        public void testCallableReferenceOfCompanionMethod() throws Exception {
+            runTest("compiler/testData/codegen/box/callableReference/callableReferenceOfCompanionMethod.kt");
+        }
+
+        @TestMetadata("callableReferenceOfCompanionProperty.kt")
+        public void testCallableReferenceOfCompanionProperty() throws Exception {
+            runTest("compiler/testData/codegen/box/callableReference/callableReferenceOfCompanionProperty.kt");
+        }
+
+        @TestMetadata("callableReferenceOfKotlinNestedClass.kt")
+        public void testCallableReferenceOfKotlinNestedClass() throws Exception {
+            runTest("compiler/testData/codegen/box/callableReference/callableReferenceOfKotlinNestedClass.kt");
+        }
+
+        @TestMetadata("callableReferenceOfObjectMethod.kt")
+        public void testCallableReferenceOfObjectMethod() throws Exception {
+            runTest("compiler/testData/codegen/box/callableReference/callableReferenceOfObjectMethod.kt");
+        }
+
         @TestMetadata("charArrayOf.kt")
         public void testCharArrayOf() throws Exception {
             runTest("compiler/testData/codegen/box/callableReference/charArrayOf.kt");
@@ -1814,6 +1839,11 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
             @TestMetadata("unboundReferences.kt")
             public void testUnboundReferences() throws Exception {
                 runTest("compiler/testData/codegen/box/callableReference/adaptedReferences/unboundReferences.kt");
+            }
+
+            @TestMetadata("varargFromBaseClass.kt")
+            public void testVarargFromBaseClass() throws Exception {
+                runTest("compiler/testData/codegen/box/callableReference/adaptedReferences/varargFromBaseClass.kt");
             }
 
             @TestMetadata("varargViewedAsArray.kt")
@@ -2842,6 +2872,11 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
         @TestMetadata("kt22714.kt")
         public void testKt22714() throws Exception {
             runTest("compiler/testData/codegen/box/casts/kt22714.kt");
+        }
+
+        @TestMetadata("kt48927_privateMethodOnDerivedCastToBase.kt")
+        public void testKt48927_privateMethodOnDerivedCastToBase() throws Exception {
+            runTest("compiler/testData/codegen/box/casts/kt48927_privateMethodOnDerivedCastToBase.kt");
         }
 
         @TestMetadata("lambdaToUnitCast.kt")
@@ -8638,6 +8673,11 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
             runTest("compiler/testData/codegen/box/defaultArguments/callDefaultFromInitializer.kt");
         }
 
+        @TestMetadata("captureInTailrec.kt")
+        public void testCaptureInTailrec() throws Exception {
+            runTest("compiler/testData/codegen/box/defaultArguments/captureInTailrec.kt");
+        }
+
         @TestMetadata("complexInheritance.kt")
         public void testComplexInheritance() throws Exception {
             runTest("compiler/testData/codegen/box/defaultArguments/complexInheritance.kt");
@@ -8731,6 +8771,11 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
         @TestMetadata("useNextParamInLambda.kt")
         public void testUseNextParamInLambda() throws Exception {
             runTest("compiler/testData/codegen/box/defaultArguments/useNextParamInLambda.kt");
+        }
+
+        @TestMetadata("useNextParamInLambdaTailrec.kt")
+        public void testUseNextParamInLambdaTailrec() throws Exception {
+            runTest("compiler/testData/codegen/box/defaultArguments/useNextParamInLambdaTailrec.kt");
         }
 
         @TestMetadata("useThisInLambda.kt")
@@ -11306,6 +11351,11 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
             runTest("compiler/testData/codegen/box/funInterface/kt46512_indyFunInterfaceOverCallableReference.kt");
         }
 
+        @TestMetadata("kt46908_functionSupertype.kt")
+        public void testKt46908_functionSupertype() throws Exception {
+            runTest("compiler/testData/codegen/box/funInterface/kt46908_functionSupertype.kt");
+        }
+
         @TestMetadata("multimodule.kt")
         public void testMultimodule() throws Exception {
             runTest("compiler/testData/codegen/box/funInterface/multimodule.kt");
@@ -12439,6 +12489,11 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
         @TestMetadata("kt42130.kt")
         public void testKt42130() throws Exception {
             runTest("compiler/testData/codegen/box/inference/kt42130.kt");
+        }
+
+        @TestMetadata("kt45118.kt")
+        public void testKt45118() throws Exception {
+            runTest("compiler/testData/codegen/box/inference/kt45118.kt");
         }
 
         @TestMetadata("lambdaWithStarReturn.kt")
@@ -13805,6 +13860,11 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
                 runTest("compiler/testData/codegen/box/inlineClasses/boxReturnValueOnOverride/relatedReturnTypes2b.kt");
             }
 
+            @TestMetadata("uncastInlineClassToAnyAndBack.kt")
+            public void testUncastInlineClassToAnyAndBack() throws Exception {
+                runTest("compiler/testData/codegen/box/inlineClasses/boxReturnValueOnOverride/uncastInlineClassToAnyAndBack.kt");
+            }
+
             @TestMetadata("unrelatedGenerics.kt")
             public void testUnrelatedGenerics() throws Exception {
                 runTest("compiler/testData/codegen/box/inlineClasses/boxReturnValueOnOverride/unrelatedGenerics.kt");
@@ -14989,6 +15049,11 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
             runTest("compiler/testData/codegen/box/innerNested/kt3927.kt");
         }
 
+        @TestMetadata("kt46829.kt")
+        public void testKt46829() throws Exception {
+            runTest("compiler/testData/codegen/box/innerNested/kt46829.kt");
+        }
+
         @TestMetadata("kt5363.kt")
         public void testKt5363() throws Exception {
             runTest("compiler/testData/codegen/box/innerNested/kt5363.kt");
@@ -15529,9 +15594,24 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
             runTest("compiler/testData/codegen/box/ir/kt41765.kt");
         }
 
+        @TestMetadata("lambdaWithLoop.kt")
+        public void testLambdaWithLoop() throws Exception {
+            runTest("compiler/testData/codegen/box/ir/lambdaWithLoop.kt");
+        }
+
         @TestMetadata("objectClass.kt")
         public void testObjectClass() throws Exception {
             runTest("compiler/testData/codegen/box/ir/objectClass.kt");
+        }
+
+        @TestMetadata("recursiveGeneric.kt")
+        public void testRecursiveGeneric() throws Exception {
+            runTest("compiler/testData/codegen/box/ir/recursiveGeneric.kt");
+        }
+
+        @TestMetadata("recursiveGeneric2.kt")
+        public void testRecursiveGeneric2() throws Exception {
+            runTest("compiler/testData/codegen/box/ir/recursiveGeneric2.kt");
         }
 
         @TestMetadata("simple.kt")
@@ -17542,6 +17622,11 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
             runTest("compiler/testData/codegen/box/objects/initializationOrder.kt");
         }
 
+        @TestMetadata("initializationOrderConsts.kt")
+        public void testInitializationOrderConsts() throws Exception {
+            runTest("compiler/testData/codegen/box/objects/initializationOrderConsts.kt");
+        }
+
         @TestMetadata("initializerBlockResetToDefault.kt")
         public void testInitializerBlockResetToDefault() throws Exception {
             runTest("compiler/testData/codegen/box/objects/initializerBlockResetToDefault.kt");
@@ -19176,6 +19261,21 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
         @TestMetadata("complexPropertyInitializer.kt")
         public void testComplexPropertyInitializer() throws Exception {
             runTest("compiler/testData/codegen/box/properties/complexPropertyInitializer.kt");
+        }
+
+        @TestMetadata("eagerInitializationGlobal1.kt")
+        public void testEagerInitializationGlobal1() throws Exception {
+            runTest("compiler/testData/codegen/box/properties/eagerInitializationGlobal1.kt");
+        }
+
+        @TestMetadata("eagerInitializationGlobal2.kt")
+        public void testEagerInitializationGlobal2() throws Exception {
+            runTest("compiler/testData/codegen/box/properties/eagerInitializationGlobal2.kt");
+        }
+
+        @TestMetadata("eagerInitializationGlobal3.kt")
+        public void testEagerInitializationGlobal3() throws Exception {
+            runTest("compiler/testData/codegen/box/properties/eagerInitializationGlobal3.kt");
         }
 
         @TestMetadata("field.kt")
@@ -26259,6 +26359,11 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
             runTest("compiler/testData/codegen/box/safeCall/safeCallEqPrimitive.kt");
         }
 
+        @TestMetadata("safeCallIOnUninitializedNonNullValue.kt")
+        public void testSafeCallIOnUninitializedNonNullValue() throws Exception {
+            runTest("compiler/testData/codegen/box/safeCall/safeCallIOnUninitializedNonNullValue.kt");
+        }
+
         @TestMetadata("safeCallNotEqPrimitive.kt")
         public void testSafeCallNotEqPrimitive() throws Exception {
             runTest("compiler/testData/codegen/box/safeCall/safeCallNotEqPrimitive.kt");
@@ -26267,6 +26372,11 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
         @TestMetadata("safeCallOnLong.kt")
         public void testSafeCallOnLong() throws Exception {
             runTest("compiler/testData/codegen/box/safeCall/safeCallOnLong.kt");
+        }
+
+        @TestMetadata("safeCallWithElvisFolding.kt")
+        public void testSafeCallWithElvisFolding() throws Exception {
+            runTest("compiler/testData/codegen/box/safeCall/safeCallWithElvisFolding.kt");
         }
     }
 
@@ -27160,6 +27270,21 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
         @TestMetadata("surrogatePair.kt")
         public void testSurrogatePair() throws Exception {
             runTest("compiler/testData/codegen/box/strings/surrogatePair.kt");
+        }
+
+        @TestMetadata("twoArgumentNullableStringOperatorPlus.kt")
+        public void testTwoArgumentNullableStringOperatorPlus() throws Exception {
+            runTest("compiler/testData/codegen/box/strings/twoArgumentNullableStringOperatorPlus.kt");
+        }
+
+        @TestMetadata("twoArgumentNullableStringPlus.kt")
+        public void testTwoArgumentNullableStringPlus() throws Exception {
+            runTest("compiler/testData/codegen/box/strings/twoArgumentNullableStringPlus.kt");
+        }
+
+        @TestMetadata("twoArgumentStringTemplate.kt")
+        public void testTwoArgumentStringTemplate() throws Exception {
+            runTest("compiler/testData/codegen/box/strings/twoArgumentStringTemplate.kt");
         }
     }
 

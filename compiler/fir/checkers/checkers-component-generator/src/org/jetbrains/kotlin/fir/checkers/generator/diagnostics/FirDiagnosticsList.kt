@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
 import org.jetbrains.kotlin.lexer.KtKeywordToken
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
+import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
@@ -87,6 +88,11 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         }
         val VAL_OR_VAR_ON_SECONDARY_CONSTRUCTOR_PARAMETER by warning<KtParameter>(PositioningStrategy.VAL_OR_VAR_NODE) {
             parameter<KtKeywordToken>("valOrVar")
+        }
+        val INVISIBLE_SETTER by error<PsiElement>(PositioningStrategy.ASSIGNMENT_LHS) {
+            parameter<FirPropertySymbol>("property")
+            parameter<Visibility>("visibility")
+            parameter<CallableId>("callableId")
         }
     }
 
@@ -276,21 +282,23 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<FqName>("optInMarkerFqName")
             parameter<String>("message")
         }
-        val OPT_IN_USAGE_ERROR by warning<PsiElement>(PositioningStrategy.REFERENCE_BY_QUALIFIED) {
+        val OPT_IN_USAGE_ERROR by error<PsiElement>(PositioningStrategy.REFERENCE_BY_QUALIFIED) {
             parameter<FqName>("optInMarkerFqName")
             parameter<String>("message")
         }
-        val OPT_IN_OVERRIDE by warning<PsiElement> {
+        val OPT_IN_OVERRIDE by warning<PsiElement>(PositioningStrategy.DECLARATION_NAME) {
             parameter<FqName>("optInMarkerFqName")
             parameter<String>("message")
         }
-        val OPT_IN_OVERRIDE_ERROR by error<PsiElement> {
+        val OPT_IN_OVERRIDE_ERROR by error<PsiElement>(PositioningStrategy.DECLARATION_NAME) {
             parameter<FqName>("optInMarkerFqName")
             parameter<String>("message")
         }
+
         val OPT_IN_IS_NOT_ENABLED by warning<KtAnnotationEntry>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED)
         val OPT_IN_CAN_ONLY_BE_USED_AS_ANNOTATION by error<PsiElement>()
         val OPT_IN_MARKER_CAN_ONLY_BE_USED_AS_ANNOTATION_OR_ARGUMENT_IN_OPT_IN by error<PsiElement>()
+
         val OPT_IN_WITHOUT_ARGUMENTS by warning<KtAnnotationEntry>()
         val OPT_IN_ARGUMENT_IS_NOT_MARKER by warning<KtAnnotationEntry> {
             parameter<FqName>("notMarkerFqName")
@@ -299,6 +307,12 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<String>("target")
         }
         val OPT_IN_MARKER_WITH_WRONG_RETENTION by error<KtAnnotationEntry>()
+
+        val OPT_IN_MARKER_ON_WRONG_TARGET by error<KtAnnotationEntry> {
+            parameter<String>("target")
+        }
+        val OPT_IN_MARKER_ON_OVERRIDE by error<KtAnnotationEntry>()
+        val OPT_IN_MARKER_ON_OVERRIDE_WARNING by warning<KtAnnotationEntry>()
     }
 
     val EXPOSED_VISIBILITY by object : DiagnosticGroup("Exposed visibility") {
@@ -821,8 +835,8 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         // TODO: replace with KtParameter
         val CANNOT_INFER_PARAMETER_TYPE by error<KtElement>()
 
-        val NO_TAIL_CALLS_FOUND by warning<KtNamedFunction>(PositioningStrategy.DECLARATION_SIGNATURE)
-        val TAILREC_ON_VIRTUAL_MEMBER_ERROR by error<KtNamedFunction>(PositioningStrategy.DECLARATION_SIGNATURE)
+        val NO_TAIL_CALLS_FOUND by warning<KtNamedFunction>(PositioningStrategy.TAILREC_MODIFIER)
+        val TAILREC_ON_VIRTUAL_MEMBER_ERROR by error<KtNamedFunction>(PositioningStrategy.TAILREC_MODIFIER)
         val NON_TAIL_RECURSIVE_CALL by warning<PsiElement>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED)
         val TAIL_RECURSION_IN_TRY_IS_NOT_SUPPORTED by warning<PsiElement>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED)
     }
@@ -1208,6 +1222,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
 
     val RETURNS by object : DiagnosticGroup("Returns") {
         val RETURN_NOT_ALLOWED by error<KtReturnExpression>(PositioningStrategy.RETURN_WITH_LABEL)
+        val NOT_A_FUNCTION_LABEL by error<KtReturnExpression>(PositioningStrategy.RETURN_WITH_LABEL)
         val RETURN_IN_FUNCTION_WITH_EXPRESSION_BODY by error<KtReturnExpression>(PositioningStrategy.RETURN_WITH_LABEL)
         val NO_RETURN_IN_FUNCTION_WITH_BLOCK_BODY by error<KtDeclarationWithBody>(PositioningStrategy.DECLARATION_WITH_BODY)
 
@@ -1263,7 +1278,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<Symbol>("referencedDeclaration")
         }
 
-        val SUPER_CALL_FROM_PUBLIC_INLINE by warning<KtElement>(PositioningStrategy.REFERENCE_BY_QUALIFIED) {
+        val SUPER_CALL_FROM_PUBLIC_INLINE by error<KtElement>(PositioningStrategy.REFERENCE_BY_QUALIFIED) {
             parameter<Symbol>("symbol")
         }
 

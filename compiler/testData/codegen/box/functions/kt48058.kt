@@ -1,4 +1,3 @@
-// DONT_TARGET_EXACT_BACKEND: WASM
 
 fun doCall(block: Any  ):Int {
     (block as () -> Unit)()

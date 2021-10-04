@@ -49,7 +49,7 @@ class K2JVMCompilerArguments : CommonCompilerArguments() {
     @Argument(value = "-no-jdk", description = "Don't automatically include the Java runtime into the classpath")
     var noJdk: Boolean by FreezableVar(false)
 
-    @DeprecatedOption(removeAfter = "1.5", level = DeprecationLevel.ERROR)
+    @DeprecatedOption(removeAfter = "1.6", level = DeprecationLevel.ERROR)
     @GradleOption(DefaultValues.BooleanTrueDefault::class)
     @Argument(
         value = "-no-stdlib",
@@ -533,5 +533,27 @@ default: `indy-with-constants` for JVM target 9 or greater, `inline` otherwise""
             result[LanguageFeature.TypeEnhancementImprovementsInStrictMode] = LanguageFeature.State.ENABLED
         }
         return result
+    }
+
+    override fun defaultLanguageVersion(collector: MessageCollector): LanguageVersion =
+        if (useOldBackend) {
+            if (!suppressVersionWarnings) {
+                collector.report(
+                    CompilerMessageSeverity.STRONG_WARNING,
+                    "Language version is automatically inferred to ${LanguageVersion.KOTLIN_1_5.versionString} when using " +
+                            "the old JVM backend. Consider specifying -language-version explicitly, or remove -Xuse-old-backend"
+                )
+            }
+            LanguageVersion.KOTLIN_1_5
+        } else super.defaultLanguageVersion(collector)
+
+    override fun checkPlatformSpecificSettings(languageVersionSettings: LanguageVersionSettings, collector: MessageCollector) {
+        if (useOldBackend && languageVersionSettings.languageVersion >= LanguageVersion.KOTLIN_1_6) {
+            collector.report(
+                CompilerMessageSeverity.ERROR,
+                "Old JVM backend does not support language version 1.6 or above. " +
+                        "Please use language version 1.5 or below, or remove -Xuse-old-backend"
+            )
+        }
     }
 }

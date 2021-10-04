@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.fir.analysis.checkers
 
-import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
@@ -17,6 +16,7 @@ import org.jetbrains.kotlin.fir.analysis.checkers.context.findClosest
 import org.jetbrains.kotlin.fir.analysis.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.fir.analysis.diagnostics.reportOn
+import org.jetbrains.kotlin.fir.analysis.diagnostics.withSuppressedDiagnostics
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.impl.FirPrimaryConstructor
 import org.jetbrains.kotlin.fir.expressions.*
@@ -25,27 +25,18 @@ import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.resolve.symbolProvider
 import org.jetbrains.kotlin.fir.resolve.toSymbol
-import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.fir.symbols.ensureResolved
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassLikeSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.fir.types.ConeClassLikeType
+import org.jetbrains.kotlin.fir.types.ConeKotlinType
 import org.jetbrains.kotlin.fir.types.FirErrorTypeRef
 import org.jetbrains.kotlin.fir.types.coneType
+import org.jetbrains.kotlin.fir.types.coneTypeSafe
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.name.StandardClassIds.Annotations.ParameterNames
 import org.jetbrains.kotlin.resolve.UseSiteTargetsList
-
-
-@OptIn(SymbolInternals::class)
-fun FirAnnotation.getRetention(session: FirSession): AnnotationRetention {
-    val annotationClassSymbol =
-        (this.annotationTypeRef.coneType as? ConeClassLikeType)?.lookupTag?.toSymbol(session) as? FirRegularClassSymbol
-            ?: return AnnotationRetention.RUNTIME
-    annotationClassSymbol.ensureResolved(FirResolvePhase.BODY_RESOLVE)
-    val annotationClass = annotationClassSymbol.fir
-    return annotationClass.getRetention()
-}
+import org.jetbrains.kotlin.resolve.checkers.OptInNames
 
 fun FirRegularClass.getRetention(): AnnotationRetention {
     return getRetentionAnnotation()?.getRetention() ?: AnnotationRetention.RUNTIME
@@ -67,6 +58,15 @@ fun FirAnnotation.getAllowedAnnotationTargets(session: FirSession): Set<KotlinTa
         ?.fullyExpandedType(session)?.lookupTag?.toSymbol(session) ?: return defaultAnnotationTargets
     annotationClassSymbol.ensureResolved(FirResolvePhase.BODY_RESOLVE)
     return annotationClassSymbol.getAllowedAnnotationTargets()
+}
+
+internal fun FirAnnotation.getAnnotationClassForOptInMarker(session: FirSession): FirRegularClassSymbol? {
+    val lookupTag = annotationTypeRef.coneTypeSafe<ConeClassLikeType>()?.lookupTag ?: return null
+    val annotationClassSymbol = lookupTag.toSymbol(session) as? FirRegularClassSymbol ?: return null
+    if (annotationClassSymbol.getAnnotationByClassId(OptInNames.REQUIRES_OPT_IN_CLASS_ID) == null) {
+        return null
+    }
+    return annotationClassSymbol
 }
 
 fun FirRegularClass.getAllowedAnnotationTargets(): Set<KotlinTarget> {
@@ -172,6 +172,28 @@ private fun FirExpression.unfoldArrayOrVararg(): List<FirExpression> {
         is FirVarargArgumentsExpression -> arguments
         is FirArrayOfCall -> arguments
         else -> return emptyList()
+    }
+}
+
+fun checkRepeatedAnnotation(
+    annotationContainer: FirAnnotationContainer?,
+    annotations: List<FirAnnotation>,
+    context: CheckerContext,
+    reporter: DiagnosticReporter
+) {
+    if (annotations.size <= 1) return
+
+    val annotationsMap = hashMapOf<ConeKotlinType, MutableList<AnnotationUseSiteTarget?>>()
+
+    for (annotation in annotations) {
+        val useSiteTarget = annotation.useSiteTarget ?: annotationContainer?.getDefaultUseSiteTarget(annotation, context)
+        val existingTargetsForAnnotation = annotationsMap.getOrPut(annotation.annotationTypeRef.coneType) { arrayListOf() }
+
+        withSuppressedDiagnostics(annotation, context) {
+            checkRepeatedAnnotation(useSiteTarget, existingTargetsForAnnotation, annotation, context, reporter)
+        }
+
+        existingTargetsForAnnotation.add(useSiteTarget)
     }
 }
 

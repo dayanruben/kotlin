@@ -29,7 +29,18 @@ fun KonanTarget.supportsMimallocAllocator(): Boolean =
     }
 
 fun KonanTarget.supportsLibBacktrace(): Boolean =
-        this.family.isAppleFamily || this.family == Family.LINUX || this.family == Family.ANDROID
+        this.family.isAppleFamily ||
+                // MIPS architectures have issues, see KT-48949
+                (this.family == Family.LINUX && this.architecture !in listOf(Architecture.MIPS32, Architecture.MIPSEL32)) ||
+                this.family == Family.ANDROID
+
+fun KonanTarget.supportsCoreSymbolication(): Boolean =
+        this in listOf(
+                KonanTarget.MACOS_X64, KonanTarget.MACOS_ARM64, KonanTarget.IOS_X64,
+                KonanTarget.IOS_SIMULATOR_ARM64, KonanTarget.TVOS_X64, KonanTarget.TVOS_SIMULATOR_ARM64,
+                KonanTarget.WATCHOS_X86, KonanTarget.WATCHOS_X64, KonanTarget.WATCHOS_SIMULATOR_ARM64
+        )
+
 
 fun KonanTarget.supportsThreads(): Boolean =
      when(this) {

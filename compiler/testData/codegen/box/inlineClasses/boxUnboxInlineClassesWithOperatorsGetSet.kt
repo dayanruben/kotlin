@@ -1,5 +1,3 @@
-// DONT_TARGET_EXACT_BACKEND: WASM
-// WASM_MUTE_REASON: UNSIGNED_ARRAYS
 // !LANGUAGE: +InlineClasses
 
 inline class UInt(private val value: Int) {

@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.contracts.FirContractDescription
 import org.jetbrains.kotlin.fir.contracts.builder.buildLegacyRawContractDescription
+import org.jetbrains.kotlin.fir.declarations.FirCallableDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
 import org.jetbrains.kotlin.fir.declarations.FirVariable
 import org.jetbrains.kotlin.fir.declarations.builder.*
@@ -29,6 +30,7 @@ import org.jetbrains.kotlin.fir.references.builder.buildResolvedNamedReference
 import org.jetbrains.kotlin.fir.references.builder.buildSimpleNamedReference
 import org.jetbrains.kotlin.fir.symbols.constructStarProjectedType
 import org.jetbrains.kotlin.fir.symbols.impl.*
+import org.jetbrains.kotlin.fir.types.ConeClassLikeType
 import org.jetbrains.kotlin.fir.types.ConeStarProjection
 import org.jetbrains.kotlin.fir.types.FirTypeRef
 import org.jetbrains.kotlin.fir.types.builder.buildImplicitTypeRef
@@ -36,6 +38,7 @@ import org.jetbrains.kotlin.fir.types.builder.buildResolvedTypeRef
 import org.jetbrains.kotlin.fir.types.impl.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.KtAnnotated
 import org.jetbrains.kotlin.types.ConstantValueKind
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.util.OperatorNameConventions
@@ -279,7 +282,12 @@ fun generateResolvedAccessExpression(source: FirSourceElement?, variable: FirVar
     }
 
 fun generateTemporaryVariable(
-    moduleData: FirModuleData, source: FirSourceElement?, name: Name, initializer: FirExpression, typeRef: FirTypeRef? = null,
+    moduleData: FirModuleData,
+    source: FirSourceElement?,
+    name: Name,
+    initializer: FirExpression,
+    typeRef: FirTypeRef? = null,
+    extractedAnnotations: Collection<FirAnnotation>? = null,
 ): FirVariable =
     buildProperty {
         this.source = source
@@ -294,11 +302,28 @@ fun generateTemporaryVariable(
         isVar = false
         isLocal = true
         status = FirDeclarationStatusImpl(Visibilities.Local, Modality.FINAL)
+        if (extractedAnnotations != null) {
+            // LT extracts annotations ahead.
+            // PSI extracts annotations on demand. Use a similar util in [PsiConversionUtils]
+            annotations.addAll(extractedAnnotations)
+        }
     }
 
 fun generateTemporaryVariable(
-    moduleData: FirModuleData, source: FirSourceElement?, specialName: String, initializer: FirExpression,
-): FirVariable = generateTemporaryVariable(moduleData, source, Name.special("<$specialName>"), initializer)
+    moduleData: FirModuleData,
+    source: FirSourceElement?,
+    specialName: String,
+    initializer: FirExpression,
+    extractedAnnotations: Collection<FirAnnotation>? = null,
+): FirVariable =
+    generateTemporaryVariable(
+        moduleData,
+        source,
+        Name.special("<$specialName>"),
+        initializer,
+        null,
+        extractedAnnotations,
+    )
 
 val FirClassBuilder.ownerRegularOrAnonymousObjectSymbol
     get() = when (this) {
@@ -310,11 +335,12 @@ val FirClassBuilder.ownerRegularOrAnonymousObjectSymbol
 val FirClassBuilder.ownerRegularClassTypeParametersCount
     get() = if (this is FirRegularClassBuilder) typeParameters.size else null
 
-fun FirPropertyBuilder.generateAccessorsByDelegate(
+fun <T> FirPropertyBuilder.generateAccessorsByDelegate(
     delegateBuilder: FirWrappedDelegateExpressionBuilder?,
     moduleData: FirModuleData,
     ownerRegularOrAnonymousObjectSymbol: FirClassSymbol<*>?,
     ownerRegularClassTypeParametersCount: Int?,
+    context: Context<T>,
     isExtension: Boolean,
     receiver: FirExpression?
 ) {
@@ -443,6 +469,7 @@ fun FirPropertyBuilder.generateAccessorsByDelegate(
             propertySymbol = this@generateAccessorsByDelegate.symbol
         }.also {
             returnTarget.bind(it)
+            it.initContainingClassAttr(context)
         }
     }
     if (isVar && (setter == null || setter is FirDefaultPropertyAccessor)) {
@@ -495,6 +522,8 @@ fun FirPropertyBuilder.generateAccessorsByDelegate(
                 this.annotations.addAll(annotations)
             }
             propertySymbol = this@generateAccessorsByDelegate.symbol
+        }.also {
+            it.initContainingClassAttr(context)
         }
     }
 }
@@ -549,6 +578,14 @@ fun FirQualifiedAccess.wrapWithSafeCall(receiver: FirExpression, source: FirSour
         this.regularQualifiedAccess = this@wrapWithSafeCall
         this.source = source
     }
+}
+
+fun <T> FirCallableDeclaration.initContainingClassAttr(context: Context<T>) {
+    containingClassForStaticMemberAttr = currentDispatchReceiverType(context)?.lookupTag ?: return
+}
+
+fun <T> currentDispatchReceiverType(context: Context<T>): ConeClassLikeType? {
+    return context.dispatchReceiverTypesStack.lastOrNull()
 }
 
 val CharSequence.isUnderscore: Boolean

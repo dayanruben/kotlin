@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.backend.common.CommonBackendContext
 import org.jetbrains.kotlin.backend.common.BodyAndScriptBodyLoweringPass
 import org.jetbrains.kotlin.backend.common.descriptors.synthesizedString
 import org.jetbrains.kotlin.backend.common.ir.*
+import org.jetbrains.kotlin.backend.common.lower.inline.isInlineParameter
 import org.jetbrains.kotlin.backend.common.runOnFilePostfix
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.Modality
@@ -16,14 +17,15 @@ import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.ir.*
 import org.jetbrains.kotlin.ir.builders.declarations.buildConstructor
-import org.jetbrains.kotlin.ir.builders.declarations.buildField
 import org.jetbrains.kotlin.ir.builders.declarations.buildFun
 import org.jetbrains.kotlin.ir.builders.declarations.buildValueParameter
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.expressions.impl.*
+import org.jetbrains.kotlin.ir.symbols.IrFieldSymbol
 import org.jetbrains.kotlin.ir.symbols.IrValueParameterSymbol
 import org.jetbrains.kotlin.ir.symbols.IrValueSymbol
+import org.jetbrains.kotlin.ir.symbols.impl.IrFieldSymbolImpl
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
@@ -79,6 +81,7 @@ class LocalDeclarationsLowering(
     val localNameProvider: LocalNameProvider = LocalNameProvider.DEFAULT,
     val visibilityPolicy: VisibilityPolicy = VisibilityPolicy.DEFAULT,
     val suggestUniqueNames: Boolean = true, // When `true` appends a `-#index` suffix to lifted declaration names
+    val forceFieldsForInlineCaptures: Boolean = false // See `LocalClassContext`
 ) :
     BodyAndScriptBodyLoweringPass {
 
@@ -163,36 +166,62 @@ class LocalDeclarationsLowering(
         override lateinit var transformedDeclaration: IrConstructor
     }
 
-    private class LocalClassContext(val declaration: IrClass, val inInlineFunctionScope: Boolean) : LocalContext() {
+    private class PotentiallyUnusedField {
+        var symbolIfUsed: IrFieldSymbol? = null
+            private set
+
+        val symbol: IrFieldSymbol
+            get() = symbolIfUsed ?: IrFieldSymbolImpl().also { symbolIfUsed = it }
+    }
+
+    private inner class LocalClassContext(
+        val declaration: IrClass,
+        val inInlineFunctionScope: Boolean,
+        val constructorContext: LocalContext?
+    ) : LocalContext() {
         lateinit var closure: Closure
 
         // NOTE: This map is iterated over in `rewriteClassMembers` and we're relying on
         // the deterministic iteration order that `mutableMapOf` provides.
-        val capturedValueToField: MutableMap<IrValueDeclaration, IrField> = mutableMapOf()
+        val capturedValueToField: MutableMap<IrValueDeclaration, PotentiallyUnusedField> = mutableMapOf()
 
         override fun irGet(startOffset: Int, endOffset: Int, valueDeclaration: IrValueDeclaration): IrExpression? {
-            val field = capturedValueToField[valueDeclaration] ?: return null
+            // On the JVM backend, `AnonymousObjectTransformer` in the bytecode inliner uses field assignment
+            // instructions to find captured parameters. Most of the time this is unimportant, as captured
+            // parameters are effectively indistinguishable from normal ones; the exception is ones that can
+            // take an inline lambda value, as the parameter needs to be replaced with the lambda's capture.
+            // Thus we cannot erase the field - the inliner won't handle the inline lambda without it.
+            // (Most of the time this is inconsequential - if the object really is instantiated with an inline
+            // lambda, the field will be erased completely regardless of whether it's used.)
+            if (!forceFieldsForInlineCaptures || !valueDeclaration.isInlineDeclaration()) {
+                // We're in the initializer scope, which will be moved to a primary constructor later.
+                // Thus we can directly use that constructor's context and read from a parameter instead of a field.
+                constructorContext?.irGet(startOffset, endOffset, valueDeclaration)?.let { return it }
+            }
 
+            val field = capturedValueToField[valueDeclaration] ?: return null
             val receiver = declaration.thisReceiver!!
             return IrGetFieldImpl(
-                startOffset, endOffset, field.symbol, field.type,
+                startOffset, endOffset, field.symbol, valueDeclaration.type,
                 receiver = IrGetValueImpl(startOffset, endOffset, receiver.type, receiver.symbol)
             )
         }
+
+        private fun IrValueDeclaration.isInlineDeclaration() =
+            this is IrValueParameter && parent.let { it is IrFunction && it.isInline } && isInlineParameter()
     }
 
-    private class LocalClassMemberContext(val member: IrFunction, val classContext: LocalClassContext) : LocalContext() {
+    private class LocalClassMemberContext(val member: IrDeclaration, val classContext: LocalClassContext) : LocalContext() {
         override fun irGet(startOffset: Int, endOffset: Int, valueDeclaration: IrValueDeclaration): IrExpression? {
             val field = classContext.capturedValueToField[valueDeclaration] ?: return null
-
-            val receiver = member.dispatchReceiverParameter
+            // This lowering does not process accesses to outer `this`.
+            val receiver = (if (member is IrFunction) member.dispatchReceiverParameter else classContext.declaration.thisReceiver)
                 ?: error("No dispatch receiver parameter for ${member.render()}")
             return IrGetFieldImpl(
-                startOffset, endOffset, field.symbol, field.type,
+                startOffset, endOffset, field.symbol, valueDeclaration.type,
                 receiver = IrGetValueImpl(startOffset, endOffset, receiver.type, receiver.symbol)
             )
         }
-
     }
 
     private fun LocalContext.remapType(type: IrType): IrType {
@@ -259,40 +288,39 @@ class LocalDeclarationsLowering(
                 // Both accessors extracted as closures.
                 declaration.delegate.transformStatement(this)
 
-            override fun visitClass(declaration: IrClass) = if (declaration in localClasses) {
-                localClasses[declaration]!!.declaration
-            } else {
-                super.visitClass(declaration)
-            }
+            override fun visitClass(declaration: IrClass) =
+                localClasses[declaration]?.declaration
+                    ?: visitMember(declaration)
+                    ?: super.visitClass(declaration)
 
-            override fun visitFunction(declaration: IrFunction): IrStatement {
-                return if (declaration in localFunctions) {
+            override fun visitFunction(declaration: IrFunction): IrStatement =
+                if (declaration in localFunctions) {
                     // Replace local function definition with an empty composite.
                     IrCompositeImpl(declaration.startOffset, declaration.endOffset, context.irBuiltIns.unitType)
                 } else {
-                    if (localContext is LocalClassContext && declaration.parent == localContext.declaration) {
-                        declaration.apply {
-                            val classMemberLocalContext = LocalClassMemberContext(declaration, localContext)
-                            transformChildrenVoid(FunctionBodiesRewriter(classMemberLocalContext))
-                        }
-                    } else {
-                        super.visitFunction(declaration)
-                    }
+                    visitMember(declaration) ?: super.visitFunction(declaration)
                 }
-            }
+
+            private fun visitMember(declaration: IrDeclaration): IrStatement? =
+                if (localContext is LocalClassContext && declaration.parent == localContext.declaration) {
+                    val classMemberLocalContext = LocalClassMemberContext(declaration, localContext)
+                    declaration.apply { transformChildrenVoid(FunctionBodiesRewriter(classMemberLocalContext)) }
+                } else {
+                    null
+                }
 
             override fun visitConstructor(declaration: IrConstructor): IrStatement {
                 // Body is transformed separately. See loop over constructors in rewriteDeclarations().
 
-                val constructorContext = localClassConstructors[declaration]
-                return constructorContext?.transformedDeclaration?.apply {
+                val constructorContext = localClassConstructors[declaration] ?: return super.visitConstructor(declaration)
+                return constructorContext.transformedDeclaration.apply {
                     this.body = declaration.body!!
 
                     declaration.valueParameters.filter { it.defaultValue != null }.forEach { argument ->
                         oldParameterToNew[argument]!!.defaultValue = argument.defaultValue
                     }
                     acceptChildren(SetDeclarationsParentVisitor, this)
-                } ?: super.visitConstructor(declaration)
+                }
             }
 
             override fun visitGetValue(expression: IrGetValue): IrExpression {
@@ -470,6 +498,8 @@ class LocalDeclarationsLowering(
 
             if (isScriptMode && constructors.isEmpty()) return
 
+            // NOTE: if running before InitializersLowering, we can instead look for constructors that have
+            //   IrInstanceInitializerCall. However, Native runs these two lowerings in opposite order.
             val constructorsCallingSuper = constructors
                 .asSequence()
                 .map { localClassConstructors[it]!! }
@@ -478,10 +508,11 @@ class LocalDeclarationsLowering(
 
             assert(constructorsCallingSuper.any()) { "Expected at least one constructor calling super; class: $irClass" }
 
-            irClass.declarations += localClassContext.capturedValueToField.values
+            val usedCaptureFields = createFieldsForCapturedValues(localClassContext)
+            irClass.declarations += usedCaptureFields
 
             context.mapping.capturedFields[irClass] =
-                (context.mapping.capturedFields[irClass] ?: emptyList()) + localClassContext.capturedValueToField.values
+                (context.mapping.capturedFields[irClass] ?: emptyList()) + usedCaptureFields
 
             for (constructorContext in constructorsCallingSuper) {
                 val blockBody = constructorContext.declaration.body as? IrBlockBody
@@ -491,9 +522,10 @@ class LocalDeclarationsLowering(
                 // since `AnonymousObjectTransformer` relies on this ordering.
                 blockBody.statements.addAll(
                     0,
-                    localClassContext.capturedValueToField.map { (capturedValue, field) ->
+                    localClassContext.capturedValueToField.mapNotNull { (capturedValue, field) ->
+                        val symbol = field.symbolIfUsed ?: return@mapNotNull null
                         IrSetFieldImpl(
-                            UNDEFINED_OFFSET, UNDEFINED_OFFSET, field.symbol,
+                            UNDEFINED_OFFSET, UNDEFINED_OFFSET, symbol,
                             IrGetValueImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, irClass.thisReceiver!!.symbol),
                             constructorContext.irGet(UNDEFINED_OFFSET, UNDEFINED_OFFSET, capturedValue)!!,
                             context.irBuiltIns.unitType,
@@ -558,9 +590,10 @@ class LocalDeclarationsLowering(
             }
 
             localClasses.values.forEach {
-                val localClassVisibility = visibilityPolicy.forClass(it.declaration, it.inInlineFunctionScope)
-                it.declaration.visibility = localClassVisibility
-                createFieldsForCapturedValues(it)
+                it.declaration.visibility = visibilityPolicy.forClass(it.declaration, it.inInlineFunctionScope)
+                it.closure.capturedValues.associateTo(it.capturedValueToField) { capturedValue ->
+                    capturedValue.owner to PotentiallyUnusedField()
+                }
             }
 
             localClassConstructors.values.forEach {
@@ -742,46 +775,27 @@ class LocalDeclarationsLowering(
             context.mapping.capturedConstructors[oldDeclaration] = newDeclaration
         }
 
-        private fun createFieldForCapturedValue(
-            startOffset: Int,
-            endOffset: Int,
-            name: Name,
-            visibility: DescriptorVisibility,
-            parent: IrClass,
-            fieldType: IrType,
-            isCrossinline: Boolean
-        ): IrField =
-            context.irFactory.buildField {
-                this.startOffset = startOffset
-                this.endOffset = endOffset
-                this.origin =
-                    if (isCrossinline) DECLARATION_ORIGIN_FIELD_FOR_CROSSINLINE_CAPTURED_VALUE
-                    else DECLARATION_ORIGIN_FIELD_FOR_CAPTURED_VALUE
-                this.name = name
-                this.type = fieldType
-                this.visibility = visibility
-                this.isFinal = true
-            }.also {
-                it.parent = parent
-            }
-
-        private fun createFieldsForCapturedValues(localClassContext: LocalClassContext) {
+        private fun createFieldsForCapturedValues(localClassContext: LocalClassContext): List<IrField> {
             val classDeclaration = localClassContext.declaration
             val generatedNames = mutableSetOf<String>()
-            localClassContext.closure.capturedValues.forEach { capturedValue ->
-
-                val owner = capturedValue.owner
-                val irField = createFieldForCapturedValue(
+            return localClassContext.capturedValueToField.mapNotNull { (capturedValue, field) ->
+                val symbol = field.symbolIfUsed ?: return@mapNotNull null
+                val origin = if (capturedValue is IrValueParameter && capturedValue.isCrossinline)
+                    DECLARATION_ORIGIN_FIELD_FOR_CROSSINLINE_CAPTURED_VALUE
+                else
+                    DECLARATION_ORIGIN_FIELD_FOR_CAPTURED_VALUE
+                context.irFactory.createField(
                     classDeclaration.startOffset,
                     classDeclaration.endOffset,
-                    suggestNameForCapturedValue(owner, generatedNames),
-                    visibilityPolicy.forCapturedField(capturedValue),
-                    classDeclaration,
-                    owner.type,
-                    owner is IrValueParameter && owner.isCrossinline
-                )
-
-                localClassContext.capturedValueToField[owner] = irField
+                    origin,
+                    symbol,
+                    suggestNameForCapturedValue(capturedValue, generatedNames),
+                    capturedValue.type,
+                    visibilityPolicy.forCapturedField(capturedValue.symbol),
+                    isFinal = true, isExternal = false, isStatic = false,
+                ).also {
+                    it.parent = classDeclaration
+                }
             }
         }
 
@@ -939,6 +953,8 @@ class LocalDeclarationsLowering(
                     super.visitConstructor(declaration, data)
 
                     if (!isScriptMode && !declaration.constructedClass.isLocalNotInner()) return
+                    // Inner classes in scripts are handled properly in the InnerClassesLowering
+                    if (isScriptMode && declaration.constructedClass.isInner) return
                     // LDL doesn't work on the enums because local enums are not allowed, so skipping them in scripts too
                     if (isScriptMode && declaration.constructedClass.kind == ClassKind.ENUM_CLASS) return
 
@@ -950,10 +966,23 @@ class LocalDeclarationsLowering(
                     super.visitClass(declaration, data.withCurrentClass(declaration))
 
                     if (!isScriptMode && !declaration.isLocalNotInner()) return
+                    // Inner classes in scripts are handled properly in the InnerClassesLowering
+                    if (isScriptMode && declaration.isInner) return
                     // LDL doesn't work on the enums because local enums are not allowed, so skipping them in scripts too
                     if (isScriptMode && declaration.kind == ClassKind.ENUM_CLASS) return
 
-                    localClasses[declaration] = LocalClassContext(declaration, data.inInlineFunctionScope)
+                    // If there are many non-delegating constructors, each copy of the initializer requires different remapping:
+                    //   class C {
+                    //     constructor() {}
+                    //     constructor(x: Int) {}
+                    //     val x = y // which constructor's parameter?
+                    //   }
+                    // TODO: this should ideally run after initializers are added to constructors, but that'd place
+                    //   other restrictions on IR (e.g. after the initializers are moved you can no longer create fields
+                    //   with initializers) which makes that hard to implement.
+                    val constructorContext = declaration.constructors.mapNotNull { localClassConstructors[it] }
+                        .singleOrNull { it.declaration.callsSuper(context.irBuiltIns) }
+                    localClasses[declaration] = LocalClassContext(declaration, data.inInlineFunctionScope, constructorContext)
                 }
 
                 private val Data.inInlineFunctionScope: Boolean

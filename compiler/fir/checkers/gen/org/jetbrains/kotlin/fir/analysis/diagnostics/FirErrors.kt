@@ -39,6 +39,7 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirVariableSymbol
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
 import org.jetbrains.kotlin.lexer.KtKeywordToken
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
+import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
@@ -128,6 +129,7 @@ object FirErrors {
     val VAL_OR_VAR_ON_FUN_PARAMETER by warning1<KtParameter, KtKeywordToken>(SourceElementPositioningStrategies.VAL_OR_VAR_NODE)
     val VAL_OR_VAR_ON_CATCH_PARAMETER by warning1<KtParameter, KtKeywordToken>(SourceElementPositioningStrategies.VAL_OR_VAR_NODE)
     val VAL_OR_VAR_ON_SECONDARY_CONSTRUCTOR_PARAMETER by warning1<KtParameter, KtKeywordToken>(SourceElementPositioningStrategies.VAL_OR_VAR_NODE)
+    val INVISIBLE_SETTER by error3<PsiElement, FirPropertySymbol, Visibility, CallableId>(SourceElementPositioningStrategies.ASSIGNMENT_LHS)
 
     // Unresolved
     val INVISIBLE_REFERENCE by error1<PsiElement, FirBasedSymbol<*>>(SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED)
@@ -241,9 +243,9 @@ object FirErrors {
 
     // OptIn
     val OPT_IN_USAGE by warning2<PsiElement, FqName, String>(SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED)
-    val OPT_IN_USAGE_ERROR by warning2<PsiElement, FqName, String>(SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED)
-    val OPT_IN_OVERRIDE by warning2<PsiElement, FqName, String>()
-    val OPT_IN_OVERRIDE_ERROR by error2<PsiElement, FqName, String>()
+    val OPT_IN_USAGE_ERROR by error2<PsiElement, FqName, String>(SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED)
+    val OPT_IN_OVERRIDE by warning2<PsiElement, FqName, String>(SourceElementPositioningStrategies.DECLARATION_NAME)
+    val OPT_IN_OVERRIDE_ERROR by error2<PsiElement, FqName, String>(SourceElementPositioningStrategies.DECLARATION_NAME)
     val OPT_IN_IS_NOT_ENABLED by warning0<KtAnnotationEntry>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
     val OPT_IN_CAN_ONLY_BE_USED_AS_ANNOTATION by error0<PsiElement>()
     val OPT_IN_MARKER_CAN_ONLY_BE_USED_AS_ANNOTATION_OR_ARGUMENT_IN_OPT_IN by error0<PsiElement>()
@@ -251,6 +253,9 @@ object FirErrors {
     val OPT_IN_ARGUMENT_IS_NOT_MARKER by warning1<KtAnnotationEntry, FqName>()
     val OPT_IN_MARKER_WITH_WRONG_TARGET by error1<KtAnnotationEntry, String>()
     val OPT_IN_MARKER_WITH_WRONG_RETENTION by error0<KtAnnotationEntry>()
+    val OPT_IN_MARKER_ON_WRONG_TARGET by error1<KtAnnotationEntry, String>()
+    val OPT_IN_MARKER_ON_OVERRIDE by error0<KtAnnotationEntry>()
+    val OPT_IN_MARKER_ON_OVERRIDE_WARNING by warning0<KtAnnotationEntry>()
 
     // Exposed visibility
     val EXPOSED_TYPEALIAS_EXPANDED_TYPE by error3<KtNamedDeclaration, EffectiveVisibility, FirBasedSymbol<*>, EffectiveVisibility>(SourceElementPositioningStrategies.DECLARATION_NAME)
@@ -442,8 +447,8 @@ object FirErrors {
     val FORBIDDEN_VARARG_PARAMETER_TYPE by error1<KtParameter, ConeKotlinType>(SourceElementPositioningStrategies.PARAMETER_VARARG_MODIFIER)
     val VALUE_PARAMETER_WITH_NO_TYPE_ANNOTATION by error0<KtParameter>()
     val CANNOT_INFER_PARAMETER_TYPE by error0<KtElement>()
-    val NO_TAIL_CALLS_FOUND by warning0<KtNamedFunction>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE)
-    val TAILREC_ON_VIRTUAL_MEMBER_ERROR by error0<KtNamedFunction>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE)
+    val NO_TAIL_CALLS_FOUND by warning0<KtNamedFunction>(SourceElementPositioningStrategies.TAILREC_MODIFIER)
+    val TAILREC_ON_VIRTUAL_MEMBER_ERROR by error0<KtNamedFunction>(SourceElementPositioningStrategies.TAILREC_MODIFIER)
     val NON_TAIL_RECURSIVE_CALL by warning0<PsiElement>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
     val TAIL_RECURSION_IN_TRY_IS_NOT_SUPPORTED by warning0<PsiElement>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
 
@@ -644,6 +649,7 @@ object FirErrors {
 
     // Returns
     val RETURN_NOT_ALLOWED by error0<KtReturnExpression>(SourceElementPositioningStrategies.RETURN_WITH_LABEL)
+    val NOT_A_FUNCTION_LABEL by error0<KtReturnExpression>(SourceElementPositioningStrategies.RETURN_WITH_LABEL)
     val RETURN_IN_FUNCTION_WITH_EXPRESSION_BODY by error0<KtReturnExpression>(SourceElementPositioningStrategies.RETURN_WITH_LABEL)
     val NO_RETURN_IN_FUNCTION_WITH_BLOCK_BODY by error0<KtDeclarationWithBody>(SourceElementPositioningStrategies.DECLARATION_WITH_BODY)
     val ANONYMOUS_INITIALIZER_IN_INTERFACE by error0<KtAnonymousInitializer>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE)
@@ -660,7 +666,7 @@ object FirErrors {
     val PROTECTED_CALL_FROM_PUBLIC_INLINE_ERROR by error2<KtElement, FirBasedSymbol<*>, FirBasedSymbol<*>>(SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED)
     val PROTECTED_CALL_FROM_PUBLIC_INLINE by warning2<KtElement, FirBasedSymbol<*>, FirBasedSymbol<*>>(SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED)
     val PRIVATE_CLASS_MEMBER_FROM_INLINE by error2<KtElement, FirBasedSymbol<*>, FirBasedSymbol<*>>(SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED)
-    val SUPER_CALL_FROM_PUBLIC_INLINE by warning1<KtElement, FirBasedSymbol<*>>(SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED)
+    val SUPER_CALL_FROM_PUBLIC_INLINE by error1<KtElement, FirBasedSymbol<*>>(SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED)
     val DECLARATION_CANT_BE_INLINED by error0<KtDeclaration>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE)
     val OVERRIDE_BY_INLINE by warning0<KtDeclaration>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE)
     val NON_INTERNAL_PUBLISHED_API by error0<KtElement>()

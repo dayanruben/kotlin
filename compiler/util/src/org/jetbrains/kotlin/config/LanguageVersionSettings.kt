@@ -214,6 +214,8 @@ enum class LanguageFeature(
     RepeatableAnnotationContainerConstraints(KOTLIN_1_6, kind = BUG_FIX),
     UseBuilderInferenceOnlyIfNeeded(KOTLIN_1_6),
     SuspendConversion(KOTLIN_1_6),
+    ProhibitSuperCallsFromPublicInline(KOTLIN_1_6),
+    ProhibitProtectedConstructorCallFromPublicInline(KOTLIN_1_6),
 
     // 1.7
 
@@ -225,16 +227,19 @@ enum class LanguageFeature(
     ProhibitInvalidCharsInNativeIdentifiers(KOTLIN_1_7, kind = BUG_FIX),
     DefinitelyNotNullTypeParameters(KOTLIN_1_7),
     DefinitelyNonNullableTypes(KOTLIN_1_7),
+    ReportNonVarargSpreadOnGenericCalls(KOTLIN_1_7, kind = BUG_FIX),
     ProhibitSimplificationOfNonTrivialConstBooleanExpressions(KOTLIN_1_7),
     SafeCallsAreAlwaysNullable(KOTLIN_1_7),
-    ApproximateIntegerLiteralTypesInReceiverPosition(KOTLIN_1_7),
     StopPropagatingDeprecationThroughOverrides(KOTLIN_1_7),
     AbstractClassMemberNotImplementedWithIntermediateAbstractClass(KOTLIN_1_7, kind = BUG_FIX),
+    RefineTypeCheckingOnAssignmentsToJavaFields(KOTLIN_1_7),
 
     // Temporarily disabled, see KT-27084/KT-22379
     SoundSmartcastFromLoopConditionForLoopAssignedVariables(sinceVersion = null, kind = BUG_FIX),
     // Disabled for indefinite time. See KT-48535 and related discussion
     OptInOnOverrideForbidden(sinceVersion = null, kind = BUG_FIX),
+    ApproximateIntegerLiteralTypesInReceiverPosition(sinceVersion = null),
+    ReportChangingIntegerOperatorResolve(sinceVersion = null),
 
     // Experimental features
 
@@ -325,7 +330,7 @@ enum class LanguageFeature(
     }
 }
 
-enum class LanguageVersion(val major: Int, val minor: Int) : DescriptionAware {
+enum class LanguageVersion(val major: Int, val minor: Int) : DescriptionAware, LanguageOrApiVersion {
     KOTLIN_1_0(1, 0),
     KOTLIN_1_1(1, 1),
     KOTLIN_1_2(1, 2),
@@ -336,25 +341,17 @@ enum class LanguageVersion(val major: Int, val minor: Int) : DescriptionAware {
     KOTLIN_1_7(1, 7),
     ;
 
-    val isStable: Boolean
+    override val isStable: Boolean
         get() = this <= LATEST_STABLE
 
-    val isDeprecated: Boolean
-        get() = OLDEST_DEPRECATED <= this && this < FIRST_SUPPORTED
+    override val isDeprecated: Boolean
+        get() = FIRST_SUPPORTED <= this && this < FIRST_NON_DEPRECATED
 
-    val isUnsupported: Boolean
-        get() = this < OLDEST_DEPRECATED
+    override val isUnsupported: Boolean
+        get() = this < FIRST_SUPPORTED
 
-    val versionString: String
+    override val versionString: String
         get() = "$major.$minor"
-
-    override val description: String
-        get() = when {
-            !isStable -> "$versionString (EXPERIMENTAL)"
-            isDeprecated -> "$versionString (DEPRECATED)"
-            isUnsupported -> "$versionString (UNSUPPORTED)"
-            else -> versionString
-        }
 
     override fun toString() = versionString
 
@@ -366,15 +363,41 @@ enum class LanguageVersion(val major: Int, val minor: Int) : DescriptionAware {
         fun fromFullVersionString(str: String) =
             str.split(".", "-").let { if (it.size >= 2) fromVersionString("${it[0]}.${it[1]}") else null }
 
-        @JvmField
-        val OLDEST_DEPRECATED = KOTLIN_1_4
+        // Version status
+        //            1.0  1.1  1.2   1.3  1.4           1.5  1.6     1.7
+        // Language:  UNSUPPORTED -------> DEPRECATED -> STABLE ---> EXPERIMENTAL
+        // API:       UNSUPPORTED --> DEPRECATED ------> STABLE ---> EXPERIMENTAL
 
         @JvmField
-        val FIRST_SUPPORTED = KOTLIN_1_5
+        val FIRST_API_SUPPORTED = KOTLIN_1_3
+
+        @JvmField
+        val FIRST_SUPPORTED = KOTLIN_1_4
+
+        @JvmField
+        val FIRST_NON_DEPRECATED = KOTLIN_1_5
 
         @JvmField
         val LATEST_STABLE = KOTLIN_1_6
     }
+}
+
+interface LanguageOrApiVersion : DescriptionAware {
+    val versionString: String
+
+    val isStable: Boolean
+
+    val isDeprecated: Boolean
+
+    val isUnsupported: Boolean
+
+    override val description: String
+        get() = when {
+            !isStable -> "$versionString (EXPERIMENTAL)"
+            isDeprecated -> "$versionString (DEPRECATED)"
+            isUnsupported -> "$versionString (UNSUPPORTED)"
+            else -> versionString
+        }
 }
 
 fun LanguageVersion.isStableOrReadyForPreview(): Boolean =

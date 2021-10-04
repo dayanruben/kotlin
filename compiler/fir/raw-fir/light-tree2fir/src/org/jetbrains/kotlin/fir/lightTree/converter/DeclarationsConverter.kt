@@ -519,7 +519,8 @@ class DeclarationsConverter(
                                     baseModuleData,
                                     callableIdForName(it.firValueParameter.name),
                                     classWrapper.hasExpect(),
-                                    currentDispatchReceiverType()
+                                    currentDispatchReceiverType(),
+                                    context
                                 )
                             }
                         addDeclarations(properties)
@@ -1106,7 +1107,8 @@ class DeclarationsConverter(
                     classWrapper?.classBuilder?.ownerRegularOrAnonymousObjectSymbol,
                     classWrapper?.classBuilder?.ownerRegularClassTypeParametersCount,
                     isExtension = false,
-                    receiver = receiver
+                    receiver = receiver,
+                    context = context
                 )
             } else {
                 this.isLocal = false
@@ -1173,6 +1175,7 @@ class DeclarationsConverter(
                         baseModuleData,
                         classWrapper?.classBuilder?.ownerRegularOrAnonymousObjectSymbol,
                         classWrapper?.classBuilder?.ownerRegularClassTypeParametersCount,
+                        context,
                         isExtension = receiverType != null,
                         receiver = receiver
                     )
@@ -1188,12 +1191,14 @@ class DeclarationsConverter(
      * @see org.jetbrains.kotlin.fir.builder.RawFirBuilder.Visitor.visitDestructuringDeclaration
      */
     private fun convertDestructingDeclaration(destructingDeclaration: LighterASTNode): DestructuringDeclaration {
+        var modifiers = Modifier()
         var isVar = false
         val entries = mutableListOf<FirVariable?>()
         val source = destructingDeclaration.toFirSourceElement()
         var firExpression: FirExpression? = null
         destructingDeclaration.forEachChildren {
             when (it.tokenType) {
+                MODIFIER_LIST -> modifiers = convertModifierList(it)
                 VAR_KEYWORD -> isVar = true
                 DESTRUCTURING_DECLARATION_ENTRY -> entries += convertDestructingDeclarationEntry(it)
                 else -> if (it.isExpression()) firExpression =
@@ -1208,7 +1213,8 @@ class DeclarationsConverter(
                 null,
                 ConeSimpleDiagnostic("Initializer required for destructuring declaration", DiagnosticKind.Syntax)
             ),
-            source
+            source,
+            modifiers
         )
     }
 
@@ -1507,14 +1513,15 @@ class DeclarationsConverter(
         val functionSymbol: FirFunctionSymbol<*>
         val isAnonymousFunction = identifier == null && isLocal
         val functionBuilder = if (isAnonymousFunction) {
-            val labelName = functionDeclaration.getLabelName() ?: context.calleeNamesForLambda.lastOrNull()?.identifier
-            target = FirFunctionTarget(labelName = labelName, isLambda = false)
             functionSymbol = FirAnonymousFunctionSymbol()
             FirAnonymousFunctionBuilder().apply {
                 source = functionSource
                 receiverTypeRef = receiverType
                 symbol = functionSymbol
                 isLambda = false
+                label = context.getLastLabel(functionDeclaration)
+                val labelName = label?.name ?: context.calleeNamesForLambda.lastOrNull()?.identifier
+                target = FirFunctionTarget(labelName = labelName, isLambda = false)
             }
         } else {
             val functionName = identifier.nameAsSafeName()

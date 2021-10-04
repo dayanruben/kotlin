@@ -163,12 +163,7 @@ internal abstract class KotlinSourceSetProcessor<T : AbstractKotlinCompile<*>>(
         // that has a name composed as '<IDE module name>Classes`, where the IDE module name is the default source set name:
         val expectedClassesTaskName = "${kotlinCompilation.defaultSourceSetName}Classes"
         project.tasks.run {
-            var shouldCreateTask = false
-            try {
-                named(expectedClassesTaskName)
-            } catch (e: UnknownDomainObjectException) {
-                shouldCreateTask = true
-            }
+            val shouldCreateTask = expectedClassesTaskName !in names
             if (shouldCreateTask) {
                 project.registerTask(expectedClassesTaskName, IDEClassesTask::class.java) {
                     it.dependsOn(getByName(kotlinCompilation.compileAllTaskName))
@@ -462,7 +457,13 @@ internal abstract class AbstractKotlinPlugin(
                                 .call(mavenResolver)!!
                             mavenPom::class
                                 .functions
-                                .first { it.name == "withXml" }
+                                .first { func ->
+                                    // On older Gradle versions there were two 'withXml' method - one with 'Closure' and one with 'Action'
+                                    func.name == "withXml" &&
+                                            func.parameters.any {
+                                                it.type.toString() == "org.gradle.api.Action<org.gradle.api.XmlProvider!>!"
+                                            }
+                                }
                                 .call(mavenPom, Action<XmlProvider> { xml ->
                                     if (shouldRewritePoms.get()) {
                                         pomRewriter.rewritePomMppDependenciesToActualTargetModules(xml)

@@ -627,6 +627,12 @@ public class ForeignAnnotationsCompiledJavaWithPsiClassReadingTestGenerated exte
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jspecify"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
             }
 
+            @Test
+            @TestMetadata("default.kt")
+            public void testDefault() throws Exception {
+                runTest("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jspecify/default.kt");
+            }
+
             @Nested
             @TestMetadata("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jspecify/strictMode")
             @TestDataPath("$PROJECT_ROOT")
@@ -779,6 +785,12 @@ public class ForeignAnnotationsCompiledJavaWithPsiClassReadingTestGenerated exte
                 }
 
                 @Test
+                @TestMetadata("OverrideOfAnnotated.kt")
+                public void testOverrideOfAnnotated() throws Exception {
+                    runTest("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jspecify/warnMode/OverrideOfAnnotated.kt");
+                }
+
+                @Test
                 @TestMetadata("SelfType.kt")
                 public void testSelfType() throws Exception {
                     runTest("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jspecify/warnMode/SelfType.kt");
@@ -835,6 +847,18 @@ public class ForeignAnnotationsCompiledJavaWithPsiClassReadingTestGenerated exte
             @TestMetadata("defaultAnnotationAppliedToTypeForCompiledJava.kt")
             public void testDefaultAnnotationAppliedToTypeForCompiledJava() throws Exception {
                 runTest("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jsr305/defaultAnnotationAppliedToTypeForCompiledJava.kt");
+            }
+
+            @Test
+            @TestMetadata("overrideWithTypeUseInClasspath.kt")
+            public void testOverrideWithTypeUseInClasspath() throws Exception {
+                runTest("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jsr305/overrideWithTypeUseInClasspath.kt");
+            }
+
+            @Test
+            @TestMetadata("overrideWithTypeUseInClasspathWithArray.kt")
+            public void testOverrideWithTypeUseInClasspathWithArray() throws Exception {
+                runTest("compiler/testData/diagnostics/foreignAnnotationsTests/java8Tests/jsr305/overrideWithTypeUseInClasspathWithArray.kt");
             }
 
             @Test

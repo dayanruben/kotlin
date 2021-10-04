@@ -5,22 +5,22 @@
 
 package org.jetbrains.kotlin.fir
 
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.declarations.synthetic.FirSyntheticPropertyAccessor
 import org.jetbrains.kotlin.fir.declarations.utils.*
 import org.jetbrains.kotlin.fir.expressions.FirPropertyAccessExpression
+import org.jetbrains.kotlin.fir.expressions.FirVariableAssignment
 import org.jetbrains.kotlin.fir.references.FirSuperReference
 import org.jetbrains.kotlin.fir.resolve.*
-import org.jetbrains.kotlin.fir.resolve.calls.Candidate
-import org.jetbrains.kotlin.fir.resolve.calls.ExpressionReceiverValue
-import org.jetbrains.kotlin.fir.resolve.calls.FirSyntheticFunctionSymbol
-import org.jetbrains.kotlin.fir.resolve.calls.ReceiverValue
+import org.jetbrains.kotlin.fir.resolve.calls.*
 import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
-import org.jetbrains.kotlin.fir.symbols.impl.FirBackingFieldSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.*
-import org.jetbrains.kotlin.fir.types.*
+import org.jetbrains.kotlin.fir.types.ConeClassLikeType
+import org.jetbrains.kotlin.fir.types.coneType
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.types.AbstractTypeChecker
@@ -47,7 +47,8 @@ abstract class FirVisibilityChecker : FirSessionComponent {
             useSiteFile: FirFile,
             containingDeclarations: List<FirDeclaration>,
             dispatchReceiver: ReceiverValue?,
-            session: FirSession
+            session: FirSession,
+            isCallToPropertySetter: Boolean,
         ): Boolean {
             return true
         }
@@ -90,7 +91,14 @@ abstract class FirVisibilityChecker : FirSessionComponent {
             return true
         }
 
-        val visible = isVisible(declaration, session, useSiteFile, containingDeclarations, candidate.dispatchReceiverValue)
+        val visible = isVisible(
+            declaration,
+            session,
+            useSiteFile,
+            containingDeclarations,
+            candidate.dispatchReceiverValue,
+            candidate.callInfo.callSite is FirVariableAssignment
+        )
         val backingField = declaration.getBackingFieldIfApplicable()
 
         if (visible && backingField != null) {
@@ -100,6 +108,7 @@ abstract class FirVisibilityChecker : FirSessionComponent {
                 useSiteFile,
                 containingDeclarations,
                 candidate.dispatchReceiverValue,
+                candidate.callInfo.callSite is FirVariableAssignment,
             )
         }
 
@@ -111,7 +120,8 @@ abstract class FirVisibilityChecker : FirSessionComponent {
         session: FirSession,
         useSiteFile: FirFile,
         containingDeclarations: List<FirDeclaration>,
-        dispatchReceiver: ReceiverValue?
+        dispatchReceiver: ReceiverValue?,
+        isCallToPropertySetter: Boolean = false,
     ): Boolean {
         require(declaration is FirDeclaration)
         val provider = session.firProvider
@@ -156,7 +166,8 @@ abstract class FirVisibilityChecker : FirSessionComponent {
                 val ownerId = symbol.getOwnerLookupTag()
                 ownerId != null && canSeeProtectedMemberOf(
                     containingDeclarations, dispatchReceiver, ownerId, session,
-                    isVariableOrNamedFunction = symbol is FirVariableSymbol || symbol is FirNamedFunctionSymbol
+                    isVariableOrNamedFunction = symbol is FirVariableSymbol || symbol is FirNamedFunctionSymbol || symbol is FirPropertyAccessorSymbol,
+                    symbol.fir is FirSyntheticPropertyAccessor
                 )
             }
 
@@ -166,7 +177,8 @@ abstract class FirVisibilityChecker : FirSessionComponent {
                 useSiteFile,
                 containingDeclarations,
                 dispatchReceiver,
-                session
+                session,
+                isCallToPropertySetter,
             )
         }
     }
@@ -177,7 +189,8 @@ abstract class FirVisibilityChecker : FirSessionComponent {
         useSiteFile: FirFile,
         containingDeclarations: List<FirDeclaration>,
         dispatchReceiver: ReceiverValue?,
-        session: FirSession
+        session: FirSession,
+        isCallToPropertySetter: Boolean,
     ): Boolean
 
     private fun canSeePrivateMemberOf(
@@ -220,7 +233,8 @@ abstract class FirVisibilityChecker : FirSessionComponent {
         dispatchReceiver: ReceiverValue?,
         ownerLookupTag: ConeClassLikeLookupTag,
         session: FirSession,
-        isVariableOrNamedFunction: Boolean
+        isVariableOrNamedFunction: Boolean,
+        isSyntheticProperty: Boolean
     ): Boolean {
         dispatchReceiver?.ownerIfCompanion(session)?.let { companionOwnerLookupTag ->
             if (containingUseSiteClass.isSubClass(companionOwnerLookupTag, session)) return true
@@ -228,7 +242,13 @@ abstract class FirVisibilityChecker : FirSessionComponent {
 
         return when {
             !containingUseSiteClass.isSubClass(ownerLookupTag, session) -> false
-            isVariableOrNamedFunction -> doesReceiverFitForProtectedVisibility(dispatchReceiver, containingUseSiteClass, session)
+            isVariableOrNamedFunction -> doesReceiverFitForProtectedVisibility(
+                dispatchReceiver,
+                containingUseSiteClass,
+                ownerLookupTag,
+                isSyntheticProperty,
+                session
+            )
             else -> true
         }
     }
@@ -236,6 +256,8 @@ abstract class FirVisibilityChecker : FirSessionComponent {
     private fun doesReceiverFitForProtectedVisibility(
         dispatchReceiver: ReceiverValue?,
         containingUseSiteClass: FirClass,
+        ownerLookupTag: ConeClassLikeLookupTag,
+        isSyntheticProperty: Boolean,
         session: FirSession
     ): Boolean {
         if (dispatchReceiver == null) return true
@@ -251,9 +273,21 @@ abstract class FirVisibilityChecker : FirSessionComponent {
             errorTypesEqualToAnything = false,
             stubTypesEqualToAnything = false
         )
-        return AbstractTypeChecker.isSubtypeOf(
-            typeCheckerState, dispatchReceiverType.fullyExpandedType(session), containingUseSiteClass.typeWithStarProjections()
-        )
+        if (AbstractTypeChecker.isSubtypeOf(
+                typeCheckerState, dispatchReceiverType.fullyExpandedType(session), containingUseSiteClass.typeWithStarProjections()
+            )
+        ) {
+            return true
+        }
+
+        if (isSyntheticProperty) {
+            return if (session.languageVersionSettings.supportsFeature(LanguageFeature.ImproveReportingDiagnosticsOnProtectedMembersOfBaseClass))
+                containingUseSiteClass.classId.packageFqName == ownerLookupTag.classId.packageFqName
+            else
+                true
+        }
+
+        return false
     }
 
     private fun FirClass.isSubClass(ownerLookupTag: ConeClassLikeLookupTag, session: FirSession): Boolean {
@@ -282,14 +316,31 @@ abstract class FirVisibilityChecker : FirSessionComponent {
         dispatchReceiver: ReceiverValue?,
         ownerLookupTag: ConeClassLikeLookupTag,
         session: FirSession,
-        isVariableOrNamedFunction: Boolean
+        isVariableOrNamedFunction: Boolean,
+        isSyntheticProperty: Boolean
     ): Boolean {
         if (canSeePrivateMemberOf(containingDeclarationOfUseSite, ownerLookupTag, session)) return true
 
         for (containingDeclaration in containingDeclarationOfUseSite) {
-            if (containingDeclaration !is FirClass) continue
-            val boundSymbol = containingDeclaration.symbol
-            if (canSeeProtectedMemberOf(boundSymbol.fir, dispatchReceiver, ownerLookupTag, session, isVariableOrNamedFunction)) return true
+            if (containingDeclaration is FirClass) {
+                val boundSymbol = containingDeclaration.symbol
+                if (canSeeProtectedMemberOf(
+                        boundSymbol.fir,
+                        dispatchReceiver,
+                        ownerLookupTag,
+                        session,
+                        isVariableOrNamedFunction,
+                        isSyntheticProperty
+                    )
+                ) return true
+            } else if (containingDeclaration is FirFile) {
+                if (isSyntheticProperty &&
+                    session.languageVersionSettings.supportsFeature(LanguageFeature.ImproveReportingDiagnosticsOnProtectedMembersOfBaseClass) &&
+                    containingDeclaration.packageFqName == ownerLookupTag.classId.packageFqName
+                ) {
+                    return true
+                }
+            }
         }
 
         return false

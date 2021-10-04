@@ -129,7 +129,7 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
             else -> CallableId(context.packageFqName, context.className, name)
         }
 
-    fun currentDispatchReceiverType(): ConeClassLikeType? = context.dispatchReceiverTypesStack.lastOrNull()
+    fun currentDispatchReceiverType(): ConeClassLikeType? = currentDispatchReceiverType(context)
 
     fun callableIdForClassConstructor() =
         if (context.className == FqName.ROOT) CallableId(context.packageFqName, Name.special("<anonymous-init>"))
@@ -183,7 +183,11 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
                     }
                 }
                 target = FirFunctionTarget(labelName, false).apply {
-                    bindToErrorFunction("Cannot bind label $labelName to a function", DiagnosticKind.UnresolvedLabel)
+                    if (context.firLabels.any { it.name == labelName }) {
+                        bindToErrorFunction("Label $labelName does not target a function", DiagnosticKind.NotAFunctionLabel)
+                    } else {
+                        bindToErrorFunction("Cannot bind label $labelName to a function", DiagnosticKind.UnresolvedLabel)
+                    }
                 }
             }
         }
@@ -213,9 +217,7 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
         }
     }
 
-    fun FirLoopBuilder.prepareTarget(): FirLoopTarget = prepareTarget(context.firLabels.pop())
-
-    fun stashLabel(): FirLabel? = context.firLabels.pop()
+    fun FirLoopBuilder.prepareTarget(firLabelUser: Any): FirLoopTarget = prepareTarget(context.getLastLabel(firLabelUser))
 
     fun FirLoopBuilder.prepareTarget(label: FirLabel?): FirLoopTarget {
         this.label = label
@@ -1181,8 +1183,7 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
     }
 
     protected fun FirCallableDeclaration.initContainingClassAttr() {
-        val currentDispatchReceiverType = currentDispatchReceiverType() ?: return
-        containingClassForStaticMemberAttr = currentDispatchReceiverType.lookupTag
+        initContainingClassAttr(context)
     }
 
     private fun FirVariable.toQualifiedAccess(): FirQualifiedAccessExpression = buildPropertyAccessExpression {

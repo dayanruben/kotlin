@@ -379,6 +379,9 @@ object LightTreePositioningStrategies {
     val ENUM_MODIFIER: LightTreePositioningStrategy =
         ModifierSetBasedLightTreePositioningStrategy(TokenSet.create(KtTokens.ENUM_KEYWORD))
 
+    val TAILREC_MODIFIER: LightTreePositioningStrategy =
+        ModifierSetBasedLightTreePositioningStrategy(TokenSet.create(KtTokens.TAILREC_KEYWORD))
+
     val FIELD_KEYWORD: LightTreePositioningStrategy = object : LightTreePositioningStrategy() {
         override fun mark(
             node: LighterASTNode,
@@ -581,6 +584,12 @@ object LightTreePositioningStrategies {
             tree: FlyweightCapableTreeStructure<LighterASTNode>
         ): List<TextRange> {
             when {
+                node.tokenType == KtNodeTypes.BINARY_EXPRESSION && tree.findDescendantByType(node, KtTokens.EQ) != null -> {
+                    // Look for reference in LHS of variable assignment.
+                    tree.findExpressionDeep(node)?.let {
+                        return markElement(it, startOffset, endOffset, tree, node)
+                    }
+                }
                 node.tokenType == KtNodeTypes.CALL_EXPRESSION || node.tokenType == KtNodeTypes.CONSTRUCTOR_DELEGATION_CALL -> {
                     return markElement(tree.referenceExpression(node, locateReferencedName) ?: node, startOffset, endOffset, tree, node)
                 }

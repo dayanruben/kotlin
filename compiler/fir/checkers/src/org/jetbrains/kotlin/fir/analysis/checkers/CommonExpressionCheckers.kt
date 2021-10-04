@@ -67,7 +67,7 @@ object CommonExpressionCheckers : ExpressionCheckers() {
 
     override val variableAssignmentCheckers: Set<FirVariableAssignmentChecker>
         get() = setOf(
-            FirValReassignmentChecker,
+            FirReassignmentAndInvisibleSetterChecker,
             FirAssignmentTypeMismatchChecker
         )
 
@@ -96,7 +96,7 @@ object CommonExpressionCheckers : ExpressionCheckers() {
 
     override val returnExpressionCheckers: Set<FirReturnExpressionChecker>
         get() = setOf(
-            FirReturnAllowedChecker,
+            FirReturnSyntaxAndLabelChecker,
             FirFunctionReturnTypeMismatchChecker
         )
 

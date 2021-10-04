@@ -293,6 +293,9 @@ object PositioningStrategies {
     val ENUM_MODIFIER: PositioningStrategy<KtModifierListOwner> = modifierSetPosition(KtTokens.ENUM_KEYWORD)
 
     @JvmField
+    val TAILREC_MODIFIER: PositioningStrategy<KtModifierListOwner> = modifierSetPosition(KtTokens.TAILREC_KEYWORD)
+
+    @JvmField
     val FIELD_KEYWORD: PositioningStrategy<KtBackingField> = object : DeclarationHeader<KtBackingField>() {
         override fun mark(element: KtBackingField): List<TextRange> {
             return markElement(element.fieldKeyword)
@@ -893,6 +896,10 @@ object PositioningStrategies {
      */
     class FindReferencePositioningStrategy(val locateReferencedName: Boolean) : PositioningStrategy<PsiElement>() {
         override fun mark(element: PsiElement): List<TextRange> {
+            if (element is KtBinaryExpression && element.operationToken == KtTokens.EQ) {
+                // Look for reference in LHS of variable assignment.
+                element.left?.let { return mark(it) }
+            }
             var result: PsiElement = when (element) {
                 is KtQualifiedExpression -> {
                     when (val selectorExpression = element.selectorExpression) {

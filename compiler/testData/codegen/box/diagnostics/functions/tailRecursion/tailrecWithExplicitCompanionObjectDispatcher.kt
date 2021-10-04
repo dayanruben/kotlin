@@ -1,4 +1,4 @@
-// DONT_TARGET_EXACT_BACKEND: WASM
+// IGNORE_BACKEND: WASM
 // WASM_MUTE_REASON: IGNORED_IN_JS
 // IGNORE_BACKEND: JS_IR
 // IGNORE_BACKEND: JS_IR_ES6
@@ -12,7 +12,7 @@
 
 class C {
     companion object {
-        <!NO_TAIL_CALLS_FOUND!>tailrec fun rec(i: Int)<!> {
+        <!NO_TAIL_CALLS_FOUND!>tailrec<!> fun rec(i: Int) {
             if (i <= 0) return
             C.<!NON_TAIL_RECURSIVE_CALL!>rec<!>(i - 1)
         }

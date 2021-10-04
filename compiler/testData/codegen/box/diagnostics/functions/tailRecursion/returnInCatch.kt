@@ -1,4 +1,4 @@
-// DONT_TARGET_EXACT_BACKEND: WASM
+// IGNORE_BACKEND: WASM
 // WASM_MUTE_REASON: IGNORED_IN_JS
 // IGNORE_BACKEND: JS_IR
 // IGNORE_BACKEND: JS_IR_ES6
@@ -6,7 +6,7 @@
 // DONT_RUN_GENERATED_CODE: JS
 // IGNORE_BACKEND: JS
 
-<!NO_TAIL_CALLS_FOUND!>tailrec fun test(counter : Int) : Int<!> {
+<!NO_TAIL_CALLS_FOUND!>tailrec<!> fun test(counter : Int) : Int {
     if (counter == 0) return 0
 
     try {

@@ -96,19 +96,19 @@ fun use(
         diff: Diff
 ) {
     warningDeprecated.<!DEPRECATION!>p<!>
-    warningDeprecated.p <!DEPRECATION!>=<!> 1
+    warningDeprecated.<!DEPRECATION!>p<!> = 1
 
     errorDeprecated.<!DEPRECATION_ERROR!>p<!>
-    errorDeprecated.p <!DEPRECATION_ERROR!>=<!> 1
+    errorDeprecated.<!DEPRECATION_ERROR!>p<!> = 1
 
     getterDeprecated.<!DEPRECATION!>p<!>
     getterDeprecated.p = 1
 
     setterDeprecated.p
-    setterDeprecated.p <!DEPRECATION!>=<!> 1
+    setterDeprecated.<!DEPRECATION!>p<!> = 1
 
-    hiddenDeprecated.<!INVISIBLE_REFERENCE!>p<!>
-    hiddenDeprecated.<!INVISIBLE_REFERENCE!>p<!> = 1
+    hiddenDeprecated.<!UNRESOLVED_REFERENCE!>p<!>
+    hiddenDeprecated.<!UNRESOLVED_REFERENCE!>p<!> = 1
 
     wd.p
     wd.p = 1
@@ -132,5 +132,5 @@ fun use(
     ned.p = 1
 
     diff.<!DEPRECATION_ERROR!>p<!>
-    diff.<!INVISIBLE_REFERENCE!>p<!> = 1
+    diff.<!UNRESOLVED_REFERENCE!>p<!> = 1
 }

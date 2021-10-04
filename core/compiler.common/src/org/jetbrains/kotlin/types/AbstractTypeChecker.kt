@@ -202,6 +202,7 @@ object AbstractTypeChecker {
         return equalTypes(context.newTypeCheckerState(false, stubTypesEqualToAnything), a, b)
     }
 
+    @JvmOverloads
     fun isSubtypeOf(
         state: TypeCheckerState,
         subType: KotlinTypeMarker,
@@ -444,9 +445,10 @@ object AbstractTypeChecker {
         return true
     }
 
+    @OptIn(ObsoleteTypeKind::class)
     private fun TypeSystemContext.isCommonDenotableType(type: KotlinTypeMarker): Boolean =
         type.typeConstructor().isDenotable() &&
-                !type.isDynamic() && !type.isDefinitelyNotNullType() &&
+                !type.isDynamic() && !type.isDefinitelyNotNullType() && !type.isNotNullTypeParameter() &&
                 type.lowerBoundIfFlexible().typeConstructor() == type.upperBoundIfFlexible().typeConstructor()
 
     fun effectiveVariance(declared: TypeVariance, useSite: TypeVariance): TypeVariance? {
@@ -701,7 +703,8 @@ object AbstractNullabilityChecker {
             if (superType.isMarkedNullable()) return true
 
             // i.e. subType is definitely not null
-            if (subType.isDefinitelyNotNullType()) return true
+            @OptIn(ObsoleteTypeKind::class)
+            if (subType.isDefinitelyNotNullType() || subType.isNotNullTypeParameter()) return true
 
             // i.e. subType is captured type, projection of which is marked not-null
             if (subType is CapturedTypeMarker && subType.isProjectionNotNull()) return true

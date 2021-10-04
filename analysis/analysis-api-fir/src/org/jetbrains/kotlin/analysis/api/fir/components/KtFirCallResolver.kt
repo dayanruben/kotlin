@@ -36,13 +36,11 @@ import org.jetbrains.kotlin.fir.references.FirSuperReference
 import org.jetbrains.kotlin.fir.references.impl.FirSimpleNamedReference
 import org.jetbrains.kotlin.fir.resolve.calls.FirErrorReferenceWithCandidate
 import org.jetbrains.kotlin.fir.resolve.substitution.substitutorByMap
-import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
-import org.jetbrains.kotlin.fir.symbols.impl.FirTypeParameterSymbol
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.idea.references.FirReferenceResolveHelper
-import org.jetbrains.kotlin.idea.references.readWriteAccess
+import org.jetbrains.kotlin.idea.references.readWriteAccessWithFullExpressionWithPossibleResolve
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.findAssignment
@@ -61,7 +59,11 @@ internal class KtFirCallResolver(
         when (val fir = call.getOrBuildFir(firResolveState)) {
             is FirResolvedNamedReference -> {
                 val propertySymbol = fir.resolvedSymbol as? FirPropertySymbol ?: return null
-                val access = call.readWriteAccess(useResolveForReadWrite = false)
+
+                @Suppress("DEPRECATION")
+                val access =
+                    call.readWriteAccessWithFullExpressionWithPossibleResolve(readWriteAccessWithFullExpressionByResolve = { null }).first
+
                 val setterValue = findAssignment(call)?.right
                 val accessor = when {
                     access.isWrite -> propertySymbol.setterSymbol?.fir
@@ -226,26 +228,8 @@ internal class KtFirCallResolver(
     }
 
     private fun FirFunctionCall.asSimpleFunctionCall(): KtFunctionCall? {
-        val calleeReference = this.calleeReference
-        val target = calleeReference.createCallTarget() ?: return null
-        val symbol = when (calleeReference) {
-            is FirResolvedNamedReference -> calleeReference.resolvedSymbol as? FirCallableSymbol<*>
-            is FirErrorNamedReference -> calleeReference.candidateSymbol as? FirCallableSymbol<*>
-            else -> null
-        } ?: return null
-        return KtFunctionCall(createArgumentMapping(), target, createSubstitutorFromTypeArguments(symbol), token)
-    }
-
-    private fun FirFunctionCall.createSubstitutorFromTypeArguments(functionSymbol: FirCallableSymbol<*>): KtSubstitutor {
-        val typeArgumentMap = mutableMapOf<FirTypeParameterSymbol, ConeKotlinType>()
-        for (i in typeArguments.indices) {
-            val type = typeArguments[i].safeAs<FirTypeProjectionWithVariance>()?.typeRef?.coneType
-            if (type != null) {
-                typeArgumentMap[functionSymbol.typeParameterSymbols[i]] = type
-            }
-        }
-        val coneSubstitutor = substitutorByMap(typeArgumentMap, rootModuleSession)
-        return firSymbolBuilder.typeBuilder.buildSubstitutor(coneSubstitutor)
+        val target = this.calleeReference.createCallTarget() ?: return null
+        return KtFunctionCall(createArgumentMapping(), target, createSubstitutorFromTypeArguments() ?: return null, token)
     }
 
     private fun FirAnnotationCall.asAnnotationCall(): KtAnnotationCall? {

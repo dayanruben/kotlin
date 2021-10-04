@@ -41,7 +41,8 @@ object JvmPlatformConfigurator : PlatformConfiguratorBase(
         JvmMultifileClassStateChecker,
         DefaultCheckerInTailrec,
         FunctionDelegateMemberNameClashChecker,
-        ClassInheritsJavaSealedClassChecker
+        ClassInheritsJavaSealedClassChecker,
+        JavaOverrideWithWrongNullabilityOverrideChecker,
     ),
 
     additionalCallCheckers = listOf(
@@ -93,11 +94,8 @@ object JvmPlatformConfigurator : PlatformConfiguratorBase(
 
     declarationReturnTypeSanitizer = JvmDeclarationReturnTypeSanitizer
 ) {
-    override fun configureModuleComponents(container: StorageComponentContainer, languageVersionSettings: LanguageVersionSettings) {
-        container.useImplIf<WarningAwareUpperBoundChecker>(
-            !languageVersionSettings.supportsFeature(LanguageFeature.TypeEnhancementImprovementsInStrictMode)
-        )
-
+    override fun configureModuleComponents(container: StorageComponentContainer) {
+        container.useImpl<WarningAwareUpperBoundChecker>()
         container.useImpl<JavaNullabilityChecker>()
         container.useImpl<JvmStaticChecker>()
         container.useImpl<JvmReflectionAPICallChecker>()

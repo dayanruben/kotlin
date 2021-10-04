@@ -246,6 +246,15 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirErrors.INVISIBLE_SETTER) { firDiagnostic ->
+        InvisibleSetterImpl(
+            firSymbolBuilder.variableLikeBuilder.buildVariableSymbol(firDiagnostic.a.fir),
+            firDiagnostic.b,
+            firDiagnostic.c,
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
     add(FirErrors.INVISIBLE_REFERENCE) { firDiagnostic ->
         InvisibleReferenceImpl(
             firSymbolBuilder.buildSymbol(firDiagnostic.a.fir),
@@ -945,6 +954,25 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
     }
     add(FirErrors.OPT_IN_MARKER_WITH_WRONG_RETENTION) { firDiagnostic ->
         OptInMarkerWithWrongRetentionImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.OPT_IN_MARKER_ON_WRONG_TARGET) { firDiagnostic ->
+        OptInMarkerOnWrongTargetImpl(
+            firDiagnostic.a,
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.OPT_IN_MARKER_ON_OVERRIDE) { firDiagnostic ->
+        OptInMarkerOnOverrideImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.OPT_IN_MARKER_ON_OVERRIDE_WARNING) { firDiagnostic ->
+        OptInMarkerOnOverrideWarningImpl(
             firDiagnostic as FirPsiDiagnostic,
             token,
         )
@@ -3381,6 +3409,12 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
     }
     add(FirErrors.RETURN_NOT_ALLOWED) { firDiagnostic ->
         ReturnNotAllowedImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.NOT_A_FUNCTION_LABEL) { firDiagnostic ->
+        NotAFunctionLabelImpl(
             firDiagnostic as FirPsiDiagnostic,
             token,
         )

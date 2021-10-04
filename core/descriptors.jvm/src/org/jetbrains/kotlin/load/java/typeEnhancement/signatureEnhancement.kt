@@ -16,6 +16,7 @@
 
 package org.jetbrains.kotlin.load.java.typeEnhancement
 
+import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotated
@@ -253,10 +254,12 @@ private class SignatureParts(
         get() = TypeUtils.getClassDescriptor(this as KotlinType)?.let { DescriptorUtils.getFqName(it) }
 
     override val KotlinTypeMarker.isNotNullTypeParameterCompat: Boolean
-        get() = (this as KotlinType).unwrap() is NotNullTypeParameter
+        get() = (this as KotlinType).unwrap() is NotNullTypeParameterImpl
 
     override fun KotlinTypeMarker.isEqual(other: KotlinTypeMarker): Boolean =
         containerContext.components.kotlinTypeChecker.equalTypes(this as KotlinType, other as KotlinType)
+
+    override fun KotlinTypeMarker.isArrayOrPrimitiveArray(): Boolean = KotlinBuiltIns.isArrayOrPrimitiveArray(this as KotlinType)
 
     override val TypeParameterMarker.isFromJava: Boolean
         get() = this is LazyJavaTypeParameterDescriptor

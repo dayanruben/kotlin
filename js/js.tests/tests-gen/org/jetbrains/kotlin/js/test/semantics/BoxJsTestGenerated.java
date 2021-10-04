@@ -5175,6 +5175,16 @@ public class BoxJsTestGenerated extends AbstractBoxJsTest {
             runTest("js/js.translator/testData/box/jsCode/literal.kt");
         }
 
+        @TestMetadata("literalInVal.kt")
+        public void testLiteralInVal() throws Exception {
+            runTest("js/js.translator/testData/box/jsCode/literalInVal.kt");
+        }
+
+        @TestMetadata("literalInValField.kt")
+        public void testLiteralInValField() throws Exception {
+            runTest("js/js.translator/testData/box/jsCode/literalInValField.kt");
+        }
+
         @TestMetadata("numberLiteralOverflow.kt")
         public void testNumberLiteralOverflow() throws Exception {
             runTest("js/js.translator/testData/box/jsCode/numberLiteralOverflow.kt");
@@ -6998,6 +7008,11 @@ public class BoxJsTestGenerated extends AbstractBoxJsTest {
         @TestMetadata("checkSupertypeOrder.kt")
         public void testCheckSupertypeOrder() throws Exception {
             runTest("js/js.translator/testData/box/propertyOverride/checkSupertypeOrder.kt");
+        }
+
+        @TestMetadata("exportedBaseClass.kt")
+        public void testExportedBaseClass() throws Exception {
+            runTest("js/js.translator/testData/box/propertyOverride/exportedBaseClass.kt");
         }
 
         @TestMetadata("initOverrideInConstructor.kt")

@@ -280,9 +280,19 @@ class DiagnosticReporterByTrackingStrategy(
     override fun onCallArgumentSpread(callArgument: KotlinCallArgument, diagnostic: KotlinCallDiagnostic) {
         when (diagnostic.javaClass) {
             NonVarargSpread::class.java -> {
-                val spreadElement = callArgument.safeAs<ExpressionKotlinCallArgumentImpl>()?.valueArgument?.getSpreadElement()
-                if (spreadElement != null) {
-                    trace.report(NON_VARARG_SPREAD.on(spreadElement))
+                val castedPsiCallArgument = callArgument.safeAs<PSIKotlinCallArgument>()
+                val castedCallArgument = callArgument.safeAs<ExpressionKotlinCallArgumentImpl>()
+
+                if (castedCallArgument != null) {
+                    val spreadElement = castedCallArgument.valueArgument.getSpreadElement()
+                    if (spreadElement != null) {
+                        trace.report(NON_VARARG_SPREAD.onError(spreadElement))
+                    }
+                } else if (castedPsiCallArgument != null) {
+                    val spreadElement = castedPsiCallArgument.valueArgument.getSpreadElement()
+                    if (spreadElement != null) {
+                        trace.report(NON_VARARG_SPREAD.on(context.languageVersionSettings, spreadElement))
+                    }
                 }
             }
         }
@@ -369,7 +379,6 @@ class DiagnosticReporterByTrackingStrategy(
             when (position) {
                 is ArgumentConstraintPositionImpl -> position.argument
                 is ReceiverConstraintPositionImpl -> position.argument
-                is LHSArgumentConstraintPositionImpl -> position.argument
                 is LambdaArgumentConstraintPositionImpl -> position.lambda.atom
                 else -> null
             }

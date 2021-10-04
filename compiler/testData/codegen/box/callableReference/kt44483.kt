@@ -1,4 +1,3 @@
-// DONT_TARGET_EXACT_BACKEND: WASM
 // WITH_RUNTIME
 
 fun <K, V> f(vararg p: Pair<K, V>): K = p[0].first

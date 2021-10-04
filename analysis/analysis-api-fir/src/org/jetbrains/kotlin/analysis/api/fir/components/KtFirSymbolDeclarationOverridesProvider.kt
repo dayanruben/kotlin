@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.analysis.api.fir.components
 import org.jetbrains.kotlin.fir.analysis.checkers.toRegularClassSymbol
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.superConeTypes
+import org.jetbrains.kotlin.fir.java.declarations.FirJavaField
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.scopes.*
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
@@ -18,6 +19,7 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirIntersectionOverridePropertySymb
 import org.jetbrains.kotlin.analysis.low.level.api.fir.lazy.resolve.ResolveType
 import org.jetbrains.kotlin.analysis.api.components.KtSymbolDeclarationOverridesProvider
 import org.jetbrains.kotlin.analysis.api.fir.KtFirAnalysisSession
+import org.jetbrains.kotlin.analysis.api.fir.symbols.KtFirAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.fir.symbols.KtFirNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.fir.symbols.KtFirSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
@@ -56,7 +58,7 @@ internal class KtFirSymbolDeclarationOverridesProvider(
     private fun FirTypeScope.processCallableByName(declaration: FirDeclaration) = when (declaration) {
         is FirSimpleFunction -> processFunctionsByName(declaration.name) { }
         is FirProperty -> processPropertiesByName(declaration.name) { }
-        else -> error { "Invalid FIR symbol to process: ${declaration::class}" }
+        else -> Unit
     }
 
     private fun FirTypeScope.processAllOverriddenDeclarations(
@@ -71,7 +73,7 @@ internal class KtFirSymbolDeclarationOverridesProvider(
             processor.invoke(symbol.fir)
             ProcessorAction.NEXT
         }
-        else -> error { "Invalid FIR symbol to process: ${declaration::class}" }
+        else -> ProcessorAction.STOP
     }
 
     private fun FirTypeScope.processDirectOverriddenDeclarations(
@@ -86,7 +88,7 @@ internal class KtFirSymbolDeclarationOverridesProvider(
             processor.invoke(symbol.fir)
             ProcessorAction.NEXT
         }
-        else -> error { "Invalid FIR symbol to process: ${declaration::class}" }
+        else -> ProcessorAction.STOP
     }
 
     private inline fun <T : KtSymbol> processOverrides(
@@ -97,13 +99,15 @@ internal class KtFirSymbolDeclarationOverridesProvider(
         val containingDeclaration = with(analysisSession) {
             (callableSymbol as? KtCallableSymbol)?.originalContainingClassForOverride
         } ?: return
-        check(containingDeclaration is KtFirNamedClassOrObjectSymbol)
-
-        processOverrides(containingDeclaration, callableSymbol, process)
+        when (containingDeclaration) {
+            is KtFirNamedClassOrObjectSymbol -> processOverrides(containingDeclaration, callableSymbol, process)
+            is KtFirAnonymousObjectSymbol -> processOverrides(containingDeclaration, callableSymbol, process)
+            else -> throw IllegalStateException("Expected $containingDeclaration to be a KtFirNamedClassOrObjectSymbol or KtFirAnonymousObjectSymbol")
+        }
     }
 
     private inline fun processOverrides(
-        containingDeclaration: KtFirNamedClassOrObjectSymbol,
+        containingDeclaration: KtFirSymbol<FirClass>,
         callableSymbol: KtFirSymbol<*>,
         crossinline process: (FirTypeScope, FirDeclaration) -> Unit
     ) {
