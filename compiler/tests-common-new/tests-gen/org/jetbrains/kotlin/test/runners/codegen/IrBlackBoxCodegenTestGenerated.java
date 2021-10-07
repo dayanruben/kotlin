@@ -19165,6 +19165,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         }
 
         @Test
+        @TestMetadata("inlineToString.kt")
+        public void testInlineToString() throws Exception {
+            runTest("compiler/testData/codegen/box/inlineClasses/inlineToString.kt");
+        }
+
+        @Test
         @TestMetadata("iterateOverArrayOfInlineClassValues.kt")
         public void testIterateOverArrayOfInlineClassValues() throws Exception {
             runTest("compiler/testData/codegen/box/inlineClasses/iterateOverArrayOfInlineClassValues.kt");
@@ -23272,6 +23278,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
             runTest("compiler/testData/codegen/box/javaInterop/superCallOfPrintStackTrace.kt");
         }
 
+        @Test
+        @TestMetadata("unresolvedJavaClassInDifferentFile.kt")
+        public void testUnresolvedJavaClassInDifferentFile() throws Exception {
+            runTest("compiler/testData/codegen/box/javaInterop/unresolvedJavaClassInDifferentFile.kt");
+        }
+
         @Nested
         @TestMetadata("compiler/testData/codegen/box/javaInterop/generics")
         @TestDataPath("$PROJECT_ROOT")
@@ -24818,6 +24830,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
                 @TestMetadata("suspendFunction.kt")
                 public void testSuspendFunction() throws Exception {
                     runTest("compiler/testData/codegen/box/jvm8/defaults/noDefaultImpls/suspendFunction.kt");
+                }
+
+                @Test
+                @TestMetadata("suspendSuperCall.kt")
+                public void testSuspendSuperCall() throws Exception {
+                    runTest("compiler/testData/codegen/box/jvm8/defaults/noDefaultImpls/suspendSuperCall.kt");
                 }
 
                 @Nested

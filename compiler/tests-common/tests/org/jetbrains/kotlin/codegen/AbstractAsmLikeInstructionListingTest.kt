@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.codegen
 
+import org.jetbrains.kotlin.ObsoleteTestInfrastructure
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.Label
@@ -20,6 +21,7 @@ import java.io.File
 
 private val LINE_SEPARATOR = System.getProperty("line.separator")
 
+@ObsoleteTestInfrastructure
 abstract class AbstractAsmLikeInstructionListingTest : CodegenTestCase() {
     private companion object {
         const val CURIOUS_ABOUT_DIRECTIVE = "// CURIOUS_ABOUT "

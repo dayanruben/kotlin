@@ -390,7 +390,7 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
         when (val operation = typeOperatorCall.operation) {
             FirOperation.IS, FirOperation.NOT_IS -> {
                 val expressionVariable = variableStorage.createSyntheticVariable(typeOperatorCall)
-                val isNotNullCheck = type.nullability == ConeNullability.NOT_NULL
+                val isNotNullCheck = !type.canBeNull
                 val isRegularIs = operation == FirOperation.IS
                 if (operandVariable.isReal()) {
                     val hasTypeInfo = operandVariable typeEq type
@@ -654,16 +654,32 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
         // Add `Any` to the set of possible types; the intersection type `T? & Any` will be reduced to `T` after smartcast.
         val (node, unionNode) = graphBuilder.exitCheckNotNullCall(checkNotNullCall, callCompleted)
         node.mergeIncomingFlow()
-        val argument = checkNotNullCall.argument
-        variableStorage.getOrCreateRealVariable(node.previousFlow, argument.symbol, argument)?.let { operandVariable ->
-            node.flow.addTypeStatement(operandVariable typeEq any)
-            logicSystem.approveStatementsInsideFlow(
-                node.flow,
-                operandVariable notEq null,
-                shouldRemoveSynthetics = true,
-                shouldForkFlow = false
-            )
+
+        fun FirExpression.propagateNotNullInfo() {
+            val symbol = this.symbol
+            if (symbol != null) {
+                variableStorage.getOrCreateRealVariable(node.previousFlow, symbol, this)?.let { operandVariable ->
+                    node.flow.addTypeStatement(operandVariable typeEq any)
+                    logicSystem.approveStatementsInsideFlow(
+                        node.flow,
+                        operandVariable notEq null,
+                        shouldRemoveSynthetics = true,
+                        shouldForkFlow = false
+                    )
+                }
+            }
+            when (this) {
+                is FirSafeCallExpression -> receiver.propagateNotNullInfo()
+                is FirTypeOperatorCall -> {
+                    if (operation == FirOperation.AS || operation == FirOperation.SAFE_AS) {
+                        argument.propagateNotNullInfo()
+                    }
+                }
+            }
         }
+
+        checkNotNullCall.argument.propagateNotNullInfo()
+
         unionNode?.let { unionFlowFromArguments(it) }
     }
 

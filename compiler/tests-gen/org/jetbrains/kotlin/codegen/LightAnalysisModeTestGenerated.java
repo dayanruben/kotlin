@@ -19417,6 +19417,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/javaInterop/superCallOfPrintStackTrace.kt");
         }
 
+        @TestMetadata("unresolvedJavaClassInDifferentFile.kt")
+        public void testUnresolvedJavaClassInDifferentFile() throws Exception {
+            runTest("compiler/testData/codegen/box/javaInterop/unresolvedJavaClassInDifferentFile.kt");
+        }
+
         @TestMetadata("compiler/testData/codegen/box/javaInterop/generics")
         @TestDataPath("$PROJECT_ROOT")
         @RunWith(JUnit3RunnerWithInners.class)
@@ -20616,6 +20621,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                 @TestMetadata("kt42967_all.kt")
                 public void ignoreKt42967_all() throws Exception {
                     runTest("compiler/testData/codegen/box/jvm8/defaults/noDefaultImpls/kt42967_all.kt");
+                }
+
+                @TestMetadata("suspendSuperCall.kt")
+                public void ignoreSuspendSuperCall() throws Exception {
+                    runTest("compiler/testData/codegen/box/jvm8/defaults/noDefaultImpls/suspendSuperCall.kt");
                 }
 
                 private void runTest(String testDataFilePath) throws Exception {

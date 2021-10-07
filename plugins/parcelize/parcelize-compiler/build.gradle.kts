@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.ideaExt.idea
+
 description = "Parcelize compiler plugin"
 
 plugins {
@@ -22,6 +24,8 @@ dependencies {
     compileOnly(intellijCoreDep()) { includeJars("intellij-core") }
     compileOnly(intellijDep()) { includeJars("asm-all", rootProject = rootProject) }
 
+    testApiJUnit5()
+
     testApi(project(":compiler:util"))
     testApi(project(":compiler:backend"))
     testApi(project(":compiler:ir.backend.common"))
@@ -29,8 +33,12 @@ dependencies {
     testApi(project(":compiler:cli"))
     testApi(project(":plugins:parcelize:parcelize-runtime"))
     testApi(project(":kotlin-android-extensions-runtime"))
-    testApi(projectTests(":compiler:tests-common"))
     testApi(project(":kotlin-test:kotlin-test-jvm"))
+
+    testApi(projectTests(":compiler:tests-common-new"))
+    testApi(projectTests(":compiler:test-infrastructure"))
+    testApi(projectTests(":compiler:test-infrastructure-utils"))
+
     testApi(commonDep("junit:junit"))
 
     testRuntimeOnly(intellijPluginDep("junit"))
@@ -44,9 +52,21 @@ dependencies {
     parcelizeRuntimeForTests(project(":kotlin-android-extensions-runtime")) { isTransitive = false }
 }
 
+val generationRoot = projectDir.resolve("tests-gen")
+
 sourceSets {
     "main" { projectDefault() }
-    "test" { projectDefault() }
+    "test" {
+        projectDefault()
+        this.java.srcDir(generationRoot.name)
+    }
+}
+
+if (kotlinBuildProperties.isInJpsBuildIdeaSync) {
+    apply(plugin = "idea")
+    idea {
+        this.module.generatedSourceDirs.add(generationRoot)
+    }
 }
 
 runtimeJar()
@@ -55,7 +75,8 @@ sourcesJar()
 
 testsJar()
 
-projectTest {
+projectTest(jUnit5Enabled = true) {
+    useJUnitPlatform()
     dependsOn(parcelizeRuntimeForTests)
     dependsOn(":dist")
     workingDir = rootDir
@@ -69,5 +90,10 @@ projectTest {
     doFirst {
         systemProperty("parcelizeRuntime.classpath", parcelizeRuntimeForTestsProvider.get())
         systemProperty("robolectric.classpath", robolectricClasspathProvider.get())
+    }
+    doLast {
+        println(filter)
+        println(filter.excludePatterns)
+        println(filter.includePatterns)
     }
 }
