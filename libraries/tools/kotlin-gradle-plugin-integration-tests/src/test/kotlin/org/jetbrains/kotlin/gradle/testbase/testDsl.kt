@@ -28,7 +28,7 @@ import kotlin.test.assertTrue
 fun KGPBaseTest.project(
     projectName: String,
     gradleVersion: GradleVersion,
-    buildOptions: KGPBaseTest.BuildOptions = defaultBuildOptions,
+    buildOptions: BuildOptions = defaultBuildOptions,
     forceOutput: Boolean = false,
     enableBuildScan: Boolean = false,
     addHeapDumpOptions: Boolean = true,
@@ -57,8 +57,8 @@ fun KGPBaseTest.project(
     val testProject = TestProject(
         gradleRunner,
         projectName,
-        buildOptions,
         projectPath,
+        buildOptions,
         gradleVersion,
         enableGradleDebug,
         forceOutput,
@@ -80,7 +80,7 @@ fun TestProject.build(
     enableGradleDebug: Boolean = this.enableGradleDebug,
     enableBuildCacheDebug: Boolean = false,
     enableBuildScan: Boolean = this.enableBuildScan,
-    buildOptions: KGPBaseTest.BuildOptions = this.buildOptions,
+    buildOptions: BuildOptions = this.buildOptions,
     assertions: BuildResult.() -> Unit = {}
 ) {
     if (enableBuildScan) agreeToBuildScanService()
@@ -112,7 +112,7 @@ fun TestProject.buildAndFail(
     enableGradleDebug: Boolean = this.enableGradleDebug,
     enableBuildCacheDebug: Boolean = false,
     enableBuildScan: Boolean = this.enableBuildScan,
-    buildOptions: KGPBaseTest.BuildOptions = this.buildOptions,
+    buildOptions: BuildOptions = this.buildOptions,
     assertions: BuildResult.() -> Unit = {}
 ) {
     if (enableBuildScan) agreeToBuildScanService()
@@ -151,20 +151,15 @@ fun TestProject.enableLocalBuildCache(
     )
 }
 
-class TestProject(
-    val gradleRunner: GradleRunner,
+open class GradleProject(
     val projectName: String,
-    val buildOptions: KGPBaseTest.BuildOptions,
-    val projectPath: Path,
-    val gradleVersion: GradleVersion,
-    val enableGradleDebug: Boolean,
-    val forceOutput: Boolean,
-    val enableBuildScan: Boolean
+    val projectPath: Path
 ) {
-    val rootBuildGradle: Path get() = projectPath.resolve("build.gradle")
+    val buildGradle: Path get() = projectPath.resolve("build.gradle")
+    val buildGradleKts: Path get() = projectPath.resolve("build.gradle.kts")
     val settingsGradle: Path get() = projectPath.resolve("settings.gradle")
+    val settingsGradleKts: Path get() = projectPath.resolve("settings.gradle.kts")
     val gradleProperties: Path get() = projectPath.resolve("gradle.properties")
-    val localProperties: Path get() = projectPath.resolve("local.properties")
 
     fun classesDir(
         sourceSet: String = "main",
@@ -174,11 +169,32 @@ class TestProject(
     fun kotlinClassesDir(
         sourceSet: String = "main"
     ): Path = classesDir(sourceSet, language = "kotlin")
+
+    fun kotlinSourcesDir(
+        sourceSet: String = "main"
+    ): Path = projectPath.resolve("src/$sourceSet/kotlin")
+
+    fun javaSourcesDir(
+        sourceSet: String = "main"
+    ): Path = projectPath.resolve("src/$sourceSet/java")
+}
+
+class TestProject(
+    val gradleRunner: GradleRunner,
+    projectName: String,
+    projectPath: Path,
+    val buildOptions: BuildOptions,
+    val gradleVersion: GradleVersion,
+    val enableGradleDebug: Boolean,
+    val forceOutput: Boolean,
+    val enableBuildScan: Boolean
+) : GradleProject(projectName, projectPath) {
+    fun subProject(name: String) = GradleProject(name, projectPath.resolve(name))
 }
 
 private fun commonBuildSetup(
     buildArguments: List<String>,
-    buildOptions: KGPBaseTest.BuildOptions,
+    buildOptions: BuildOptions,
     enableBuildCacheDebug: Boolean,
     enableBuildScan: Boolean,
     gradleVersion: GradleVersion
@@ -264,9 +280,8 @@ private fun Path.addDefaultBuildFiles() {
     }
 }
 
-@OptIn(ExperimentalPathApi::class)
 private fun TestProject.agreeToBuildScanService() {
-    settingsGradle.appendText(
+    settingsGradle.append(
         """
             
         gradleEnterprise {

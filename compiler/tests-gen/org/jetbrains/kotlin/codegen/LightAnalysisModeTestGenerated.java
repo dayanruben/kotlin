@@ -13128,6 +13128,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/fakeOverride/function.kt");
         }
 
+        @TestMetadata("internalFromFriendModule.kt")
+        public void testInternalFromFriendModule() throws Exception {
+            runTest("compiler/testData/codegen/box/fakeOverride/internalFromFriendModule.kt");
+        }
+
         @TestMetadata("privateFakeOverrides0.kt")
         public void testPrivateFakeOverrides0() throws Exception {
             runTest("compiler/testData/codegen/box/fakeOverride/privateFakeOverrides0.kt");
@@ -13395,6 +13400,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("NameHighlighter.kt")
         public void testNameHighlighter() throws Exception {
             runTest("compiler/testData/codegen/box/fir/NameHighlighter.kt");
+        }
+
+        @TestMetadata("notFoundClasses.kt")
+        public void testNotFoundClasses() throws Exception {
+            runTest("compiler/testData/codegen/box/fir/notFoundClasses.kt");
         }
     }
 
@@ -23187,6 +23197,16 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("kt22410.kt")
         public void testKt22410() throws Exception {
             runTest("compiler/testData/codegen/box/nullCheckOptimization/kt22410.kt");
+        }
+
+        @TestMetadata("kt49136.kt")
+        public void testKt49136() throws Exception {
+            runTest("compiler/testData/codegen/box/nullCheckOptimization/kt49136.kt");
+        }
+
+        @TestMetadata("kt49136a.kt")
+        public void testKt49136a() throws Exception {
+            runTest("compiler/testData/codegen/box/nullCheckOptimization/kt49136a.kt");
         }
 
         @TestMetadata("kt7774.kt")

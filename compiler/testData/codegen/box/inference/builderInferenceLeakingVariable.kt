@@ -1,8 +1,5 @@
-// IGNORE_BACKEND: WASM
-// WASM_MUTE_REASON: COROUTINES
 // Issues: KT-33542, KT-33544
 // WITH_RUNTIME
-// KJS_WITH_FULL_RUNTIME
 // !LANGUAGE: +NewInference
 
 import kotlin.experimental.ExperimentalTypeInference
