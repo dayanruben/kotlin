@@ -1,8 +1,10 @@
-// !LANGUAGE: +InlineClasses
+// WITH_RUNTIME
 
 var global = "wrong"
 
-inline class Foo(val x: Int) {
+@Suppress("OPTIONAL_DECLARATION_USAGE_IN_NON_COMMON_SOURCE")
+@kotlin.jvm.JvmInline
+value class Foo(val x: Int) {
     constructor(y: String) : this(y.length)
 
     constructor(z: Long) : this(z.toInt() + 1)

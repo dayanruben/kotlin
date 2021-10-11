@@ -6567,6 +6567,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         }
 
         @Test
+        @TestMetadata("genericLambdaOnStringCompanion.kt")
+        public void testGenericLambdaOnStringCompanion() throws Exception {
+            runTest("compiler/testData/codegen/box/companion/genericLambdaOnStringCompanion.kt");
+        }
+
+        @Test
         @TestMetadata("inlineFunctionCompanionPropertyAccess.kt")
         public void testInlineFunctionCompanionPropertyAccess() throws Exception {
             runTest("compiler/testData/codegen/box/companion/inlineFunctionCompanionPropertyAccess.kt");
@@ -12164,6 +12170,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
             }
 
             @Test
+            @TestMetadata("deferredAwaitSuspendImpl.kt")
+            public void testDeferredAwaitSuspendImpl() throws Exception {
+                runTest("compiler/testData/codegen/box/coroutines/tailCallOptimizations/deferredAwaitSuspendImpl.kt");
+            }
+
+            @Test
             @TestMetadata("inlineWithStateMachine.kt")
             public void testInlineWithStateMachine() throws Exception {
                 runTest("compiler/testData/codegen/box/coroutines/tailCallOptimizations/inlineWithStateMachine.kt");
@@ -15073,6 +15085,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         }
 
         @Test
+        @TestMetadata("getEnumEntityByOrdinal.kt")
+        public void testGetEnumEntityByOrdinal() throws Exception {
+            runTest("compiler/testData/codegen/box/enum/getEnumEntityByOrdinal.kt");
+        }
+
+        @Test
         @TestMetadata("inPackage.kt")
         public void testInPackage() throws Exception {
             runTest("compiler/testData/codegen/box/enum/inPackage.kt");
@@ -15334,6 +15352,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         @TestMetadata("ordinal.kt")
         public void testOrdinal() throws Exception {
             runTest("compiler/testData/codegen/box/enum/ordinal.kt");
+        }
+
+        @Test
+        @TestMetadata("ordinalsWithEnumEntitiesOverrides.kt")
+        public void testOrdinalsWithEnumEntitiesOverrides() throws Exception {
+            runTest("compiler/testData/codegen/box/enum/ordinalsWithEnumEntitiesOverrides.kt");
         }
 
         @Test
@@ -39464,6 +39488,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         @TestMetadata("asOnPlatformType.kt")
         public void testAsOnPlatformType() throws Exception {
             runTest("compiler/testData/codegen/box/reified/asOnPlatformType.kt");
+        }
+
+        @Test
+        @TestMetadata("callableReferenceInlinedFun.kt")
+        public void testCallableReferenceInlinedFun() throws Exception {
+            runTest("compiler/testData/codegen/box/reified/callableReferenceInlinedFun.kt");
         }
 
         @Test

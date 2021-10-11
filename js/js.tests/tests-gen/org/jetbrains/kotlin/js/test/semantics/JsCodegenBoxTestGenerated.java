@@ -4423,6 +4423,11 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             runTest("compiler/testData/codegen/box/companion/delegatedPropertyOnCompanion.kt");
         }
 
+        @TestMetadata("genericLambdaOnStringCompanion.kt")
+        public void testGenericLambdaOnStringCompanion() throws Exception {
+            runTest("compiler/testData/codegen/box/companion/genericLambdaOnStringCompanion.kt");
+        }
+
         @TestMetadata("inlineFunctionCompanionPropertyAccess.kt")
         public void testInlineFunctionCompanionPropertyAccess() throws Exception {
             runTest("compiler/testData/codegen/box/companion/inlineFunctionCompanionPropertyAccess.kt");
@@ -10407,6 +10412,11 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             runTest("compiler/testData/codegen/box/enum/enumWithLambdaParameter.kt");
         }
 
+        @TestMetadata("getEnumEntityByOrdinal.kt")
+        public void testGetEnumEntityByOrdinal() throws Exception {
+            runTest("compiler/testData/codegen/box/enum/getEnumEntityByOrdinal.kt");
+        }
+
         @TestMetadata("inPackage.kt")
         public void testInPackage() throws Exception {
             runTest("compiler/testData/codegen/box/enum/inPackage.kt");
@@ -10595,6 +10605,11 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
         @TestMetadata("ordinal.kt")
         public void testOrdinal() throws Exception {
             runTest("compiler/testData/codegen/box/enum/ordinal.kt");
+        }
+
+        @TestMetadata("ordinalsWithEnumEntitiesOverrides.kt")
+        public void testOrdinalsWithEnumEntitiesOverrides() throws Exception {
+            runTest("compiler/testData/codegen/box/enum/ordinalsWithEnumEntitiesOverrides.kt");
         }
 
         @TestMetadata("overloadedEnumValues.kt")
@@ -17469,6 +17484,11 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
 
             public void testAllFilesPresentInMultiModule() throws Exception {
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/multiplatform/multiModule"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JS, true);
+            }
+
+            @TestMetadata("defaultArgument.kt")
+            public void testDefaultArgument() throws Exception {
+                runTest("compiler/testData/codegen/box/multiplatform/multiModule/defaultArgument.kt");
             }
 
             @TestMetadata("expectActualLink.kt")
@@ -26114,6 +26134,11 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
 
         public void testAllFilesPresentInReified() throws Exception {
             KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/reified"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JS, true);
+        }
+
+        @TestMetadata("callableReferenceInlinedFun.kt")
+        public void testCallableReferenceInlinedFun() throws Exception {
+            runTest("compiler/testData/codegen/box/reified/callableReferenceInlinedFun.kt");
         }
 
         @TestMetadata("checkcast.kt")

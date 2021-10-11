@@ -1,7 +1,8 @@
-// !LANGUAGE: +InlineClasses
 // WITH_RUNTIME
 
-inline class Z(val x: Int) {
+@Suppress("OPTIONAL_DECLARATION_USAGE_IN_NON_COMMON_SOURCE")
+@kotlin.jvm.JvmInline
+value class Z(val x: Int) {
     @Suppress("INNER_CLASS_INSIDE_INLINE_CLASS")
     inner class Inner(val z: Z) {
         val xx = x

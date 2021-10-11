@@ -5728,6 +5728,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/companion/delegatedPropertyOnCompanion.kt");
         }
 
+        @TestMetadata("genericLambdaOnStringCompanion.kt")
+        public void testGenericLambdaOnStringCompanion() throws Exception {
+            runTest("compiler/testData/codegen/box/companion/genericLambdaOnStringCompanion.kt");
+        }
+
         @TestMetadata("inlineFunctionCompanionPropertyAccess.kt")
         public void testInlineFunctionCompanionPropertyAccess() throws Exception {
             runTest("compiler/testData/codegen/box/companion/inlineFunctionCompanionPropertyAccess.kt");
@@ -9784,6 +9789,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                 runTest("compiler/testData/codegen/box/coroutines/tailCallOptimizations/crossinline.kt");
             }
 
+            @TestMetadata("deferredAwaitSuspendImpl.kt")
+            public void testDeferredAwaitSuspendImpl() throws Exception {
+                runTest("compiler/testData/codegen/box/coroutines/tailCallOptimizations/deferredAwaitSuspendImpl.kt");
+            }
+
             @TestMetadata("inlineWithStateMachine.kt")
             public void testInlineWithStateMachine() throws Exception {
                 runTest("compiler/testData/codegen/box/coroutines/tailCallOptimizations/inlineWithStateMachine.kt");
@@ -12367,6 +12377,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/enum/enumWithLambdaParameter.kt");
         }
 
+        @TestMetadata("getEnumEntityByOrdinal.kt")
+        public void testGetEnumEntityByOrdinal() throws Exception {
+            runTest("compiler/testData/codegen/box/enum/getEnumEntityByOrdinal.kt");
+        }
+
         @TestMetadata("inPackage.kt")
         public void testInPackage() throws Exception {
             runTest("compiler/testData/codegen/box/enum/inPackage.kt");
@@ -12585,6 +12600,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("ordinal.kt")
         public void testOrdinal() throws Exception {
             runTest("compiler/testData/codegen/box/enum/ordinal.kt");
+        }
+
+        @TestMetadata("ordinalsWithEnumEntitiesOverrides.kt")
+        public void testOrdinalsWithEnumEntitiesOverrides() throws Exception {
+            runTest("compiler/testData/codegen/box/enum/ordinalsWithEnumEntitiesOverrides.kt");
         }
 
         @TestMetadata("overloadedEnumValues.kt")
@@ -31578,6 +31598,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("asOnPlatformType.kt")
         public void testAsOnPlatformType() throws Exception {
             runTest("compiler/testData/codegen/box/reified/asOnPlatformType.kt");
+        }
+
+        @TestMetadata("callableReferenceInlinedFun.kt")
+        public void testCallableReferenceInlinedFun() throws Exception {
+            runTest("compiler/testData/codegen/box/reified/callableReferenceInlinedFun.kt");
         }
 
         @TestMetadata("checkcast.kt")

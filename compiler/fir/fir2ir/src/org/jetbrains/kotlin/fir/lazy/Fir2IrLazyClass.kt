@@ -6,10 +6,8 @@
 package org.jetbrains.kotlin.fir.lazy
 
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.fir.backend.Fir2IrComponents
-import org.jetbrains.kotlin.fir.backend.computeInlineClassRepresentation
+import org.jetbrains.kotlin.fir.backend.*
 import org.jetbrains.kotlin.fir.backend.declareThisReceiverParameter
-import org.jetbrains.kotlin.fir.backend.toIrType
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.*
 import org.jetbrains.kotlin.fir.dispatchReceiverClassOrNull
@@ -24,6 +22,7 @@ import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.declarations.lazy.IrMaybeDeserializedClass
 import org.jetbrains.kotlin.ir.declarations.lazy.lazyVar
 import org.jetbrains.kotlin.ir.expressions.IrConstructorCall
+import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
@@ -100,6 +99,14 @@ class Fir2IrLazyClass(
 
     override var superTypes: List<IrType> by lazyVar(lock) {
         fir.superTypeRefs.map { it.toIrType(typeConverter) }
+    }
+
+    override var sealedSubclasses: List<IrClassSymbol> by lazyVar(lock) {
+        if (fir.isSealed) {
+            fir.getIrSymbolsForSealedSubclasses(components)
+        } else {
+            emptyList()
+        }
     }
 
     override var thisReceiver: IrValueParameter? by lazyVar(lock) {

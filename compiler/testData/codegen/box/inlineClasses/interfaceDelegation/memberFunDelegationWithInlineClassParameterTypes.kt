@@ -1,7 +1,9 @@
 // WITH_RUNTIME
 import kotlin.test.assertEquals
 
-inline class S(val x: String)
+@Suppress("OPTIONAL_DECLARATION_USAGE_IN_NON_COMMON_SOURCE")
+@kotlin.jvm.JvmInline
+value class S(val x: String)
 
 interface IFoo<T> {
     fun memberFun(s1: S, s2: String): String

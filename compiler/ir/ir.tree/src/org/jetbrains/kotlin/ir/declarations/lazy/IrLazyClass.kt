@@ -12,11 +12,7 @@ import org.jetbrains.kotlin.ir.expressions.IrConstructorCall
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
-import org.jetbrains.kotlin.ir.util.DeclarationStubGenerator
-import org.jetbrains.kotlin.ir.util.DeserializableClass
-import org.jetbrains.kotlin.ir.util.TypeTranslator
-import org.jetbrains.kotlin.ir.util.isObject
-import org.jetbrains.kotlin.ir.util.render
+import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.metadata.ProtoBuf
 import org.jetbrains.kotlin.metadata.deserialization.NameResolver
 import org.jetbrains.kotlin.name.Name
@@ -65,10 +61,8 @@ class IrLazyClass(
                 generateChildStubs(descriptor.defaultType.memberScope.getContributedDescriptors(), it)
                 generateChildStubs(descriptor.staticScope.getContributedDescriptors(), it)
             }
-        }.also {
-            it.forEach {
-                it.parent = this //initialize parent for non lazy cases
-            }
+        }.onEach {
+            it.parent = this //initialize parent for non lazy cases
         }
     }
 
@@ -98,6 +92,13 @@ class IrLazyClass(
         }
     }
 
+    override var sealedSubclasses: List<IrClassSymbol> by lazyVar(stubGenerator.lock) {
+        descriptor.sealedSubclasses.map { sealedSubclassDescriptor ->
+            // NB 'generateClassStub' would return an existing class if it's already present in symbol table
+            stubGenerator.generateClassStub(sealedSubclassDescriptor).symbol
+        }
+    }
+
     override var inlineClassRepresentation: InlineClassRepresentation<IrSimpleType>? by lazyVar(stubGenerator.lock) {
         descriptor.inlineClassRepresentation?.mapUnderlyingType {
             it.toIrType() as? IrSimpleType ?: error("Inline class underlying type is not a simple type: ${render()}")
@@ -118,9 +119,7 @@ class IrLazyClass(
 
     override fun loadIr(): Boolean {
         assert(parent is IrPackageFragment)
-        irLoaded?.let { return it }
-        return stubGenerator.extensions.deserializeLazyClass(
-            this, stubGenerator, parent, allowErrorNodes = false
-        ).also { irLoaded = it }
+        return irLoaded ?:
+            stubGenerator.extensions.deserializeClass(this, stubGenerator, parent, allowErrorNodes = false).also { irLoaded = it }
     }
 }

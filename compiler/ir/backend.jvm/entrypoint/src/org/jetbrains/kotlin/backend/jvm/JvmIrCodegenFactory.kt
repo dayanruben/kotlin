@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.codegen.CodegenFactory
 import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
+import org.jetbrains.kotlin.config.JvmSerializeIrMode
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.descriptors.konan.DeserializedKlibModuleOrigin
 import org.jetbrains.kotlin.descriptors.konan.KlibModuleOrigin
@@ -55,7 +56,7 @@ open class JvmIrCodegenFactory(
         val irProviders: List<IrProvider>,
         val extensions: JvmGeneratorExtensionsImpl,
         val backendExtension: JvmBackendExtension,
-        val notifyCodegenStart: () -> Unit,
+        val notifyCodegenStart: () -> Unit
     ) : CodegenFactory.BackendInput
 
     override fun convertToIr(input: CodegenFactory.IrConversionInput): JvmIrBackendInput {
@@ -209,13 +210,15 @@ open class JvmIrCodegenFactory(
     override fun generateModule(state: GenerationState, input: CodegenFactory.BackendInput) {
         val (irModuleFragment, symbolTable, customPhaseConfig, irProviders, extensions, backendExtension, notifyCodegenStart) =
             input as JvmIrBackendInput
-        val irSerializer = if (state.configuration.getBoolean(JVMConfigurationKeys.SERIALIZE_IR))
+        val irSerializer = if (
+            state.configuration.get(JVMConfigurationKeys.SERIALIZE_IR, JvmSerializeIrMode.NONE) != JvmSerializeIrMode.NONE
+        )
             JvmIrSerializerImpl(state.configuration)
         else null
         val phaseConfig = customPhaseConfig ?: PhaseConfig(jvmPhases)
         val context = JvmBackendContext(
             state, irModuleFragment.irBuiltins, irModuleFragment, symbolTable, phaseConfig, extensions, backendExtension, irSerializer,
-            notifyCodegenStart
+            notifyCodegenStart,
         )
         /* JvmBackendContext creates new unbound symbols, have to resolve them. */
         ExternalDependenciesGenerator(symbolTable, irProviders).generateUnboundSymbolsAsDependencies()
@@ -241,7 +244,8 @@ open class JvmIrCodegenFactory(
         generateModule(
             state,
             JvmIrBackendInput(
-                irModuleFragment, symbolTable, phaseConfig, irProviders, extensions, backendExtension, notifyCodegenStart
+                irModuleFragment, symbolTable, phaseConfig, irProviders, extensions, backendExtension,
+                notifyCodegenStart
             )
         )
     }

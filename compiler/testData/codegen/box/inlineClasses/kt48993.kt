@@ -1,7 +1,9 @@
 // TARGET_BACKEND: JVM
 // WITH_RUNTIME
 // FILE: 1.kt
-inline class C(val x: String)
+@Suppress("OPTIONAL_DECLARATION_USAGE_IN_NON_COMMON_SOURCE")
+@kotlin.jvm.JvmInline
+value class C(val x: String)
 
 // FILE: 2.kt
 @file:JvmMultifileClass

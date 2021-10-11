@@ -1,6 +1,8 @@
-// !LANGUAGE: +InlineClasses
+// WITH_RUNTIME
 
-inline class Foo(val s: Any) {
+@Suppress("OPTIONAL_DECLARATION_USAGE_IN_NON_COMMON_SOURCE")
+@kotlin.jvm.JvmInline
+value class Foo(val s: Any) {
     fun isString(): Boolean = s is String
 }
 
