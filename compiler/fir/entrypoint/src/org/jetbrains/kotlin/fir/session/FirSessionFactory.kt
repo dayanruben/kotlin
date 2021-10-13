@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.fir.checkers.registerJvmCheckers
 import org.jetbrains.kotlin.fir.deserialization.ModuleDataProvider
 import org.jetbrains.kotlin.fir.deserialization.SingleModuleDataProvider
 import org.jetbrains.kotlin.fir.extensions.BunchOfRegisteredExtensions
+import org.jetbrains.kotlin.fir.extensions.FirExtensionDeclarationsSymbolProvider
 import org.jetbrains.kotlin.fir.extensions.extensionService
 import org.jetbrains.kotlin.fir.extensions.registerExtensions
 import org.jetbrains.kotlin.fir.java.FirCliSession
@@ -142,6 +143,7 @@ object FirSessionFactory {
             registerJavaSpecificResolveComponents()
 
             val kotlinScopeProvider = FirKotlinScopeProvider(::wrapScopeWithJvmMapped)
+            register(FirKotlinScopeProvider::class, kotlinScopeProvider)
 
             val firProvider = FirProviderImpl(this, kotlinScopeProvider)
             register(FirProvider::class, firProvider)
@@ -157,6 +159,12 @@ object FirSessionFactory {
                 )
             }
 
+            FirSessionConfigurator(this).apply {
+                registerCommonCheckers()
+                registerJvmCheckers()
+                init()
+            }.configure()
+
             val dependenciesSymbolProvider = FirDependenciesSymbolProviderImpl(this)
             register(
                 FirSymbolProvider::class,
@@ -165,6 +173,7 @@ object FirSessionFactory {
                     listOfNotNull(
                         firProvider.symbolProvider,
                         symbolProviderForBinariesFromIncrementalCompilation,
+                        FirExtensionDeclarationsSymbolProvider.create(this),
                         JavaSymbolProvider(this, projectEnvironment.getFirJavaFacade(this, moduleData, scope)),
                         dependenciesSymbolProvider,
                     )
@@ -177,11 +186,6 @@ object FirSessionFactory {
             )
 
             FirJvmDefaultErrorMessages.installJvmErrorMessages()
-            FirSessionConfigurator(this).apply {
-                registerCommonCheckers()
-                registerJvmCheckers()
-                init()
-            }.configure()
             projectEnvironment.registerAsJavaElementFinder(this)
         }
     }
@@ -206,6 +210,7 @@ object FirSessionFactory {
             registerCommonJavaComponents(projectEnvironment.getJavaModuleResolver())
 
             val kotlinScopeProvider = FirKotlinScopeProvider(::wrapScopeWithJvmMapped)
+            register(FirKotlinScopeProvider::class, kotlinScopeProvider)
 
             val classFileBasedSymbolProvider = JvmClassFileBasedSymbolProvider(
                 this,

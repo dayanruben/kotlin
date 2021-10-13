@@ -8,12 +8,11 @@ package org.jetbrains.kotlin.fir.declarations.impl
 import org.jetbrains.kotlin.descriptors.EffectiveVisibility
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibility
-import org.jetbrains.kotlin.fir.FirImplementationDetail
-import org.jetbrains.kotlin.fir.FirModuleData
-import org.jetbrains.kotlin.fir.FirSourceElement
+import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.contracts.impl.FirEmptyContractDescription
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.builder.buildDefaultSetterValueParameter
+import org.jetbrains.kotlin.fir.expressions.FirAnnotation
 import org.jetbrains.kotlin.fir.expressions.FirBlock
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertyAccessorSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
@@ -74,12 +73,16 @@ abstract class FirDefaultPropertyAccessor(
             propertyTypeRef: FirTypeRef,
             visibility: Visibility,
             propertySymbol: FirPropertySymbol,
-            isGetter: Boolean
+            isGetter: Boolean,
+            parameterAnnotations: List<FirAnnotation> = emptyList(),
         ): FirDefaultPropertyAccessor {
             return if (isGetter) {
                 FirDefaultPropertyGetter(source, moduleData, origin, propertyTypeRef, visibility, propertySymbol, Modality.FINAL)
             } else {
-                FirDefaultPropertySetter(source, moduleData, origin, propertyTypeRef, visibility, propertySymbol, Modality.FINAL)
+                FirDefaultPropertySetter(
+                    source, moduleData, origin, propertyTypeRef, visibility, propertySymbol, Modality.FINAL,
+                    parameterAnnotations = parameterAnnotations
+                )
             }
         }
     }
@@ -118,7 +121,8 @@ class FirDefaultPropertySetter(
     propertySymbol: FirPropertySymbol,
     modality: Modality = Modality.FINAL,
     effectiveVisibility: EffectiveVisibility? = null,
-    symbol: FirPropertyAccessorSymbol = FirPropertyAccessorSymbol()
+    symbol: FirPropertyAccessorSymbol = FirPropertyAccessorSymbol(),
+    parameterAnnotations: List<FirAnnotation> = emptyList(),
 ) : FirDefaultPropertyAccessor(
     source,
     moduleData,
@@ -126,11 +130,12 @@ class FirDefaultPropertySetter(
     FirImplicitUnitTypeRef(source),
     valueParameters = mutableListOf(
         buildDefaultSetterValueParameter builder@{
-            this@builder.source = source
+            this@builder.source = source?.fakeElement(FirFakeSourceElementKind.DefaultAccessor)
             this@builder.moduleData = moduleData
             this@builder.origin = origin
             this@builder.returnTypeRef = propertyTypeRef
             this@builder.symbol = FirValueParameterSymbol(Name.special("<default-setter-parameter>"))
+            this@builder.annotations += parameterAnnotations
         }
     ),
     propertySymbol,

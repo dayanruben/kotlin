@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.backend.js.JsStatementOrigins
 import org.jetbrains.kotlin.ir.backend.js.utils.*
+import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.expressions.*
@@ -76,9 +77,7 @@ fun translateFunction(declaration: IrFunction, name: JsName?, context: JsGenerat
 
     declaration.extensionReceiverParameter?.let { function.addParameter(functionContext.getNameForValueDeclaration(it)) }
     functionParams.forEach { function.addParameter(it) }
-    if (declaration.isSuspend) {
-        function.addParameter(JsName(Namer.CONTINUATION)) // TODO: Use namer?
-    }
+    check(!declaration.isSuspend) { "All Suspend functions should be lowered" }
 
     return function
 }
@@ -129,17 +128,22 @@ fun translateCall(
     }
 
     expression.superQualifierSymbol?.let { superQualifier ->
-        val (target, klass) = if (superQualifier.owner.isInterface) {
+        val (target: IrSimpleFunction, klass: IrClass) = if (superQualifier.owner.isInterface) {
             val impl = function.resolveFakeOverride()!!
             Pair(impl, impl.parentAsClass)
         } else {
             Pair(function, superQualifier.owner)
         }
 
-        val qualifierName = context.getNameForClass(klass).makeRef()
-        val targetName = context.getNameForMemberFunction(target)
-        val qPrototype = JsNameRef(targetName, prototypeOf(qualifierName))
-        val callRef = JsNameRef(Namer.CALL_FUNCTION, qPrototype)
+        val callRef = if (klass.isInterface && target.body != null) {
+            JsNameRef(Namer.CALL_FUNCTION, JsNameRef(context.getNameForStaticDeclaration(target)))
+        } else {
+            val qualifierName = context.getNameForClass(klass).makeRef()
+            val targetName = context.getNameForMemberFunction(target)
+            val qPrototype = JsNameRef(targetName, prototypeOf(qualifierName))
+            JsNameRef(Namer.CALL_FUNCTION, qPrototype)
+        }
+
         return JsInvocation(callRef, jsDispatchReceiver?.let { receiver -> listOf(receiver) + arguments } ?: arguments)
     }
 
@@ -195,20 +199,15 @@ fun translateCall(
                     "VarargIIFE"
                 )
 
-                val iifeFunHasContext = (jsDispatchReceiver as? JsNameRef)?.qualifier is JsThisRef
-                if (iifeFunHasContext) {
-                    JsInvocation(
-                        // Create scope for temporary variable holding dispatch receiver
-                        // It is used both during method reference and passing `this` value to `apply` function.
-                        JsNameRef(
-                            "call",
-                            iifeFun
-                        ),
-                        JsThisRef()
-                    )
-                } else {
-                    JsInvocation(iifeFun)
-                }
+                JsInvocation(
+                    // Create scope for temporary variable holding dispatch receiver
+                    // It is used both during method reference and passing `this` value to `apply` function.
+                    JsNameRef(
+                        "call",
+                        iifeFun
+                    ),
+                    JsThisRef()
+                )
             }
         } else {
             if (argumentsAsSingleArray is JsArrayLiteral) {
@@ -336,9 +335,8 @@ fun translateCallArguments(
         .dropLastWhile { it == null }
         .map { it ?: JsPrefixOperation(JsUnaryOperator.VOID, JsIntLiteral(1)) }
 
-    return if (expression.symbol.isSuspend) {
-        arguments + context.continuation
-    } else arguments
+    check(!expression.symbol.isSuspend) { "Suspend functions should be lowered" }
+    return arguments
 }
 
 private fun IrMemberAccessExpression<*>.validWithNullArgs() =

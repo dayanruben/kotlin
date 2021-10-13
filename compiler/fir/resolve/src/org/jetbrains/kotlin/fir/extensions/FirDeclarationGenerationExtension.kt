@@ -6,10 +6,12 @@
 package org.jetbrains.kotlin.fir.extensions
 
 import org.jetbrains.kotlin.fir.FirSession
-import org.jetbrains.kotlin.fir.declarations.FirAnnotatedDeclaration
-import org.jetbrains.kotlin.fir.declarations.FirDeclaration
-import org.jetbrains.kotlin.fir.declarations.FirRegularClass
-import org.jetbrains.kotlin.fir.resolve.transformers.plugin.GeneratedClass
+import org.jetbrains.kotlin.fir.declarations.FirClass
+import org.jetbrains.kotlin.fir.symbols.impl.*
+import org.jetbrains.kotlin.name.CallableId
+import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.Name
 import kotlin.reflect.KClass
 
 /*
@@ -26,19 +28,25 @@ abstract class FirDeclarationGenerationExtension(session: FirSession) : FirPredi
 
     final override val extensionType: KClass<out FirExtension> = FirDeclarationGenerationExtension::class
 
-    abstract fun generateClasses(
-        annotatedDeclaration: FirDeclaration,
-        owners: List<FirAnnotatedDeclaration>
-    ): List<GeneratedDeclaration<FirRegularClass>>
+    abstract fun needToGenerateAdditionalMembersInClass(klass: FirClass): Boolean
+    abstract fun needToGenerateNestedClassifiersInClass(klass: FirClass): Boolean
 
-    abstract fun generateMembersForGeneratedClass(generatedClass: GeneratedClass): List<FirDeclaration>
+    // Can be called on SUPERTYPES stage
+    open fun generateClassLikeDeclaration(classId: ClassId): FirClassLikeSymbol<*>? = null
 
-    abstract fun generateMembers(
-        annotatedDeclaration: FirDeclaration,
-        owners: List<FirAnnotatedDeclaration>
-    ): List<GeneratedDeclaration<*>>
+    // Can be called on STATUS stage
+    open fun generateFunctions(callableId: CallableId, owner: FirClassSymbol<*>?): List<FirNamedFunctionSymbol> = emptyList()
+    open fun generateProperties(callableId: CallableId, owner: FirClassSymbol<*>?): List<FirPropertySymbol> = emptyList()
+    open fun generateConstructors(callableId: CallableId): List<FirConstructorSymbol> = emptyList()
 
-    data class GeneratedDeclaration<out T : FirDeclaration>(val newDeclaration: T, val owner: FirAnnotatedDeclaration)
+    // Can be called on IMPORTS stage
+    open fun hasPackage(packageFqName: FqName): Boolean = false
+
+    // Can be called after BODY_RESOLVE stage (checkers and fir2ir)
+    open fun getCallableNamesForClass(classSymbol: FirClassSymbol<*>): Set<Name> = emptySet()
+    open fun getNestedClassifiersNames(classSymbol: FirClassSymbol<*>): Set<Name> = emptySet()
+    open fun getTopLevelCallableIds(): Set<CallableId> = emptySet()
+    open fun getTopLevelClassIds(): Set<ClassId> = emptySet()
 
     fun interface Factory : FirExtension.Factory<FirDeclarationGenerationExtension>
 }

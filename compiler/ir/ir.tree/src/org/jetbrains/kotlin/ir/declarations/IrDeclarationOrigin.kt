@@ -78,6 +78,8 @@ interface IrDeclarationOrigin {
     object SYNTHETIC_JAVA_PROPERTY_DELEGATE : IrDeclarationOriginImpl("SYNTHETIC_JAVA_PROPERTY_DELEGATE", isSynthetic = true)
 
     object FIELD_FOR_OUTER_THIS : IrDeclarationOriginImpl("FIELD_FOR_OUTER_THIS", isSynthetic = true)
+    object CONTINUATION : IrDeclarationOriginImpl("CONTINUATION", isSynthetic = true)
+    object LOWERED_SUSPEND_FUNCTION : IrDeclarationOriginImpl("LOWERED_SUSPEND_FUNCTION", isSynthetic = true)
 
     val isSynthetic: Boolean get() = false
 }

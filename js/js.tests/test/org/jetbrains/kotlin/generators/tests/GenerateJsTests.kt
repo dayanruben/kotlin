@@ -47,11 +47,6 @@ fun main(args: Array<String>) {
                 model("typescript-export/", pattern = "^([^_](.+))\\.kt$", targetBackend = TargetBackend.JS_IR_ES6)
             }
 
-            testClass<AbstractLegacyJsTypeScriptExportTest> {
-                model("typescript-export/", pattern = "^([^_](.+))\\.kt$", targetBackend = TargetBackend.JS)
-            }
-
-
             testClass<AbstractSourceMapGenerationSmokeTest> {
                 model("sourcemap/", pattern = "^([^_](.+))\\.kt$", targetBackend = TargetBackend.JS)
             }
@@ -100,9 +95,6 @@ fun main(args: Array<String>) {
 
                         // TODO: ArrayList
                         "ranges/stepped/unsigned",
-
-                        // TODO: Support coroutines
-                        "coroutines", "parametersMetadata",
 
                         // TODO: Support delegated properties
                         "delegatedProperty",

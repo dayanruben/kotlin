@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.fir.analysis
 
+import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.jvm.serialization.JvmIdSignatureDescriptor
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.fir.FirSession
@@ -45,7 +46,9 @@ class FirAnalyzerFacade(
     val languageVersionSettings: LanguageVersionSettings,
     val ktFiles: Collection<KtFile> = emptyList(), // may be empty if light tree mode enabled
     val originalFiles: Collection<File> = emptyList(), // may be empty if light tree mode disabled
-    val useLightTree: Boolean = false
+    val irGeneratorExtensions: Collection<IrGenerationExtension>,
+    val useLightTree: Boolean = false,
+    val enablePluginPhases: Boolean = false,
 ) : AbstractFirAnalyzerFacade() {
     private var firFiles: List<FirFile>? = null
     private var _scopeSession: ScopeSession? = null
@@ -77,7 +80,7 @@ class FirAnalyzerFacade(
     override fun runResolution(): List<FirFile> {
         if (firFiles == null) buildRawFir()
         if (_scopeSession != null) return firFiles!!
-        val resolveProcessor = FirTotalResolveProcessor(session)
+        val resolveProcessor = FirTotalResolveProcessor(session, enablePluginPhases)
         resolveProcessor.process(firFiles!!)
         _scopeSession = resolveProcessor.scopeSession
         return firFiles!!
@@ -112,7 +115,8 @@ class FirAnalyzerFacade(
             languageVersionSettings, signaturer,
             extensions, FirJvmKotlinMangler(session), IrFactoryImpl,
             FirJvmVisibilityConverter,
-            Fir2IrJvmSpecialAnnotationSymbolProvider()
+            Fir2IrJvmSpecialAnnotationSymbolProvider(),
+            irGeneratorExtensions
         )
     }
 }

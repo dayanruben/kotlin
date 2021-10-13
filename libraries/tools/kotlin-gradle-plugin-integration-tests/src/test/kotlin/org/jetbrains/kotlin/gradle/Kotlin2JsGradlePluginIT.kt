@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.gradle.tasks.USING_JS_IR_BACKEND_MESSAGE
 import org.jetbrains.kotlin.gradle.util.*
 import org.junit.Assert
 import org.junit.Assume.assumeFalse
+import org.junit.Ignore
 import org.junit.Test
 import java.io.File
 import java.io.FileFilter
@@ -126,6 +127,7 @@ class Kotlin2JsIrGradlePluginIT : AbstractKotlin2JsGradlePluginIT(true) {
     }
 
     @Test
+    @Ignore  // Persistent IR is no longer supported
     fun testJsIrIncrementalInParallel() = with(Project("kotlin-js-browser-project")) {
         setupWorkingDir()
         gradleBuildScript().modify(::transformBuildScriptWithPluginsDsl)
@@ -1026,6 +1028,52 @@ class GeneralKotlin2JsGradlePluginIT : BaseGradleIT() {
 
         build("checkIfLastModifiedNotNow", "--rerun-tasks") {
             assertSuccessful()
+        }
+    }
+
+    @Test
+    fun testIncrementalDceDevModeOnExternalDependency() = with(transformProjectWithPluginsDsl("kotlin-js-browser-project")) {
+        val libBuildscript = projectDir.resolve("lib/build.gradle.kts")
+
+        build(":base:assemble") {
+            assertSuccessful()
+            fileInWorkingDir("base/build/libs/base-legacy.jar").copyTo(fileInWorkingDir("base.1.jar"))
+        }
+
+        projectFile("Base.kt").appendText("\nfun bestRandom() = 4")
+
+        build(":base:assemble") {
+            assertSuccessful()
+            fileInWorkingDir("base/build/libs/base-legacy.jar").copyTo(fileInWorkingDir("base.2.jar"))
+        }
+
+        libBuildscript.modify {
+            it.replace("implementation(project(\":base\"))", "implementation(files(\"../base.1.jar\"))")
+        }
+        libBuildscript.appendText("""
+            kotlin.js().browser {
+                dceTask {
+                    dceOptions.devMode = true 
+                }
+            }
+        """.trimIndent())
+
+        val baseDceFile = "build/js/packages/kotlin-js-browser-lib/kotlin-dce/kotlin-js-browser-base-js-legacy.js"
+
+        build(":lib:assemble") {
+            assertSuccessful()
+            assertFileExists(baseDceFile)
+            assert(!fileInWorkingDir(baseDceFile).readText().contains("bestRandom"))
+        }
+
+        libBuildscript.modify {
+            it.replace("../base.1.jar", "../base.2.jar")
+        }
+
+        build(":lib:assemble") {
+            assertSuccessful()
+            assertFileExists(baseDceFile)
+            assert(fileInWorkingDir(baseDceFile).readText().contains("bestRandom"))
         }
     }
 }

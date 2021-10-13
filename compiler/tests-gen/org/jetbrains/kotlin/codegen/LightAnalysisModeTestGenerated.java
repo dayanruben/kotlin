@@ -14588,6 +14588,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/ieee754/inline.kt");
         }
 
+        @TestMetadata("kt48648_genericField.kt")
+        public void testKt48648_genericField() throws Exception {
+            runTest("compiler/testData/codegen/box/ieee754/kt48648_genericField.kt");
+        }
+
         @TestMetadata("lessDouble.kt")
         public void testLessDouble() throws Exception {
             runTest("compiler/testData/codegen/box/ieee754/lessDouble.kt");
@@ -18495,6 +18500,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                 runTest("compiler/testData/codegen/box/invokedynamic/sam/genericFunInterfaceWithPrimitive.kt");
             }
 
+            @TestMetadata("inlineFunWithPrivateMethod.kt")
+            public void testInlineFunWithPrivateMethod() throws Exception {
+                runTest("compiler/testData/codegen/box/invokedynamic/sam/inlineFunWithPrivateMethod.kt");
+            }
+
             @TestMetadata("inlineOnly.kt")
             public void testInlineOnly() throws Exception {
                 runTest("compiler/testData/codegen/box/invokedynamic/sam/inlineOnly.kt");
@@ -18533,6 +18543,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             @TestMetadata("primitiveVsWrapperInSam.kt")
             public void testPrimitiveVsWrapperInSam() throws Exception {
                 runTest("compiler/testData/codegen/box/invokedynamic/sam/primitiveVsWrapperInSam.kt");
+            }
+
+            @TestMetadata("reifiedTypeParameter.kt")
+            public void testReifiedTypeParameter() throws Exception {
+                runTest("compiler/testData/codegen/box/invokedynamic/sam/reifiedTypeParameter.kt");
             }
 
             @TestMetadata("samConversionInsideSamConvertedLambda.kt")
@@ -18705,6 +18720,41 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                     runTest("compiler/testData/codegen/box/invokedynamic/sam/functionRefToJavaInterface/enhancedNullability.kt");
                 }
 
+                @TestMetadata("genericBoundInnerConstructorRef.kt")
+                public void testGenericBoundInnerConstructorRef() throws Exception {
+                    runTest("compiler/testData/codegen/box/invokedynamic/sam/functionRefToJavaInterface/genericBoundInnerConstructorRef.kt");
+                }
+
+                @TestMetadata("genericFunRef.kt")
+                public void testGenericFunRef() throws Exception {
+                    runTest("compiler/testData/codegen/box/invokedynamic/sam/functionRefToJavaInterface/genericFunRef.kt");
+                }
+
+                @TestMetadata("genericInnerConstructorRef.kt")
+                public void testGenericInnerConstructorRef() throws Exception {
+                    runTest("compiler/testData/codegen/box/invokedynamic/sam/functionRefToJavaInterface/genericInnerConstructorRef.kt");
+                }
+
+                @TestMetadata("highOrderFunRef.kt")
+                public void testHighOrderFunRef() throws Exception {
+                    runTest("compiler/testData/codegen/box/invokedynamic/sam/functionRefToJavaInterface/highOrderFunRef.kt");
+                }
+
+                @TestMetadata("inlineFunRef.kt")
+                public void testInlineFunRef() throws Exception {
+                    runTest("compiler/testData/codegen/box/invokedynamic/sam/functionRefToJavaInterface/inlineFunRef.kt");
+                }
+
+                @TestMetadata("inlineFunWithReifiedTypeParameterRef.kt")
+                public void testInlineFunWithReifiedTypeParameterRef() throws Exception {
+                    runTest("compiler/testData/codegen/box/invokedynamic/sam/functionRefToJavaInterface/inlineFunWithReifiedTypeParameterRef.kt");
+                }
+
+                @TestMetadata("inlineHighOrderFunRef.kt")
+                public void testInlineHighOrderFunRef() throws Exception {
+                    runTest("compiler/testData/codegen/box/invokedynamic/sam/functionRefToJavaInterface/inlineHighOrderFunRef.kt");
+                }
+
                 @TestMetadata("innerConstructorRef.kt")
                 public void testInnerConstructorRef() throws Exception {
                     runTest("compiler/testData/codegen/box/invokedynamic/sam/functionRefToJavaInterface/innerConstructorRef.kt");
@@ -18748,6 +18798,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                 @TestMetadata("multifileClassMemberFromStdlib.kt")
                 public void testMultifileClassMemberFromStdlib() throws Exception {
                     runTest("compiler/testData/codegen/box/invokedynamic/sam/functionRefToJavaInterface/multifileClassMemberFromStdlib.kt");
+                }
+
+                @TestMetadata("multipleProxyWrappersForSameFunction.kt")
+                public void testMultipleProxyWrappersForSameFunction() throws Exception {
+                    runTest("compiler/testData/codegen/box/invokedynamic/sam/functionRefToJavaInterface/multipleProxyWrappersForSameFunction.kt");
                 }
 
                 @TestMetadata("nonTrivialReceiver.kt")
@@ -18825,6 +18880,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                     @TestMetadata("enumValues.kt")
                     public void testEnumValues() throws Exception {
                         runTest("compiler/testData/codegen/box/invokedynamic/sam/functionRefToJavaInterface/specialFunctions/enumValues.kt");
+                    }
+
+                    @TestMetadata("intArrayOf.kt")
+                    public void testIntArrayOf() throws Exception {
+                        runTest("compiler/testData/codegen/box/invokedynamic/sam/functionRefToJavaInterface/specialFunctions/intArrayOf.kt");
                     }
 
                     @TestMetadata("intPlus.kt")
@@ -19065,6 +19125,16 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                 @TestMetadata("specializedWithCharClass.kt")
                 public void testSpecializedWithCharClass() throws Exception {
                     runTest("compiler/testData/codegen/box/invokedynamic/sam/specializedGenerics/specializedWithCharClass.kt");
+                }
+
+                @TestMetadata("specializedWithReifiedTypeParameter.kt")
+                public void testSpecializedWithReifiedTypeParameter() throws Exception {
+                    runTest("compiler/testData/codegen/box/invokedynamic/sam/specializedGenerics/specializedWithReifiedTypeParameter.kt");
+                }
+
+                @TestMetadata("specializedWithString.kt")
+                public void testSpecializedWithString() throws Exception {
+                    runTest("compiler/testData/codegen/box/invokedynamic/sam/specializedGenerics/specializedWithString.kt");
                 }
 
                 @TestMetadata("voidReturnTypeAsGeneric.kt")
@@ -33432,6 +33502,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("surrogatePair.kt")
         public void testSurrogatePair() throws Exception {
             runTest("compiler/testData/codegen/box/strings/surrogatePair.kt");
+        }
+
+        @TestMetadata("trimOptimization.kt")
+        public void testTrimOptimization() throws Exception {
+            runTest("compiler/testData/codegen/box/strings/trimOptimization.kt");
         }
 
         @TestMetadata("twoArgumentNullableStringOperatorPlus.kt")

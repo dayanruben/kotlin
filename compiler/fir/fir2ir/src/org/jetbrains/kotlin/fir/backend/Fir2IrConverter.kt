@@ -5,40 +5,53 @@
 
 package org.jetbrains.kotlin.fir.backend
 
+import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
+import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
+import org.jetbrains.kotlin.backend.common.ir.BuiltinSymbolsBase
 import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.backend.evaluate.evaluateConstants
 import org.jetbrains.kotlin.fir.backend.generators.*
+import org.jetbrains.kotlin.fir.backend.generators.DataClassMembersGenerator
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.isLocal
 import org.jetbrains.kotlin.fir.declarations.utils.isSynthetic
-import org.jetbrains.kotlin.fir.declarations.utils.primaryConstructor
+import org.jetbrains.kotlin.fir.declarations.primaryConstructorIfAny
 import org.jetbrains.kotlin.fir.descriptors.FirModuleDescriptor
+import org.jetbrains.kotlin.fir.extensions.declarationGenerators
+import org.jetbrains.kotlin.fir.extensions.extensionService
+import org.jetbrains.kotlin.fir.extensions.generatedMembers
+import org.jetbrains.kotlin.fir.extensions.generatedNestedClassifiers
+import org.jetbrains.kotlin.fir.moduleData
 import org.jetbrains.kotlin.fir.packageFqName
 import org.jetbrains.kotlin.fir.psi
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.signaturer.FirBasedSignatureComposer
 import org.jetbrains.kotlin.fir.signaturer.FirMangler
-import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
-import org.jetbrains.kotlin.ir.PsiIrFileEntry
+import org.jetbrains.kotlin.ir.*
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.declarations.impl.IrFileImpl
 import org.jetbrains.kotlin.ir.declarations.impl.IrModuleFragmentImpl
-import org.jetbrains.kotlin.ir.util.DeclarationStubGenerator
-import org.jetbrains.kotlin.ir.util.ExternalDependenciesGenerator
-import org.jetbrains.kotlin.ir.util.IdSignatureComposer
-import org.jetbrains.kotlin.ir.util.SymbolTable
+import org.jetbrains.kotlin.ir.linkage.IrDeserializer
+import org.jetbrains.kotlin.ir.symbols.*
+import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi2ir.generators.GeneratorExtensions
 import org.jetbrains.kotlin.psi2ir.generators.generateTypicalIrProviderList
+import org.jetbrains.kotlin.resolve.BindingContext
 
 class Fir2IrConverter(
     private val moduleDescriptor: FirModuleDescriptor,
     private val components: Fir2IrComponents
 ) : Fir2IrComponents by components {
+
+    private val generatorExtensions = session.extensionService.declarationGenerators
 
     fun processLocalClassAndNestedClasses(regularClass: FirRegularClass, parent: IrDeclarationParent) {
         val irClass = registerClassAndNestedClasses(regularClass, parent)
@@ -57,8 +70,30 @@ class Fir2IrConverter(
     }
 
     fun registerFileAndClasses(file: FirFile, moduleFragment: IrModuleFragment) {
+        val fileEntry = when (file.origin) {
+            FirDeclarationOrigin.Source -> PsiIrFileEntry(file.psi as KtFile)
+            FirDeclarationOrigin.Synthetic -> object : IrFileEntry {
+                override val name = file.name
+                override val maxOffset = UNDEFINED_OFFSET
+
+                override fun getSourceRangeInfo(beginOffset: Int, endOffset: Int): SourceRangeInfo =
+                    SourceRangeInfo(
+                        "",
+                        UNDEFINED_OFFSET,
+                        UNDEFINED_OFFSET,
+                        UNDEFINED_OFFSET,
+                        UNDEFINED_OFFSET,
+                        UNDEFINED_OFFSET,
+                        UNDEFINED_OFFSET
+                    )
+
+                override fun getLineNumber(offset: Int) = UNDEFINED_OFFSET
+                override fun getColumnNumber(offset: Int) = UNDEFINED_OFFSET
+            }
+            else -> error("Unsupported file origin: ${file.origin}")
+        }
         val irFile = IrFileImpl(
-            PsiIrFileEntry(file.psi as KtFile),
+            fileEntry,
             moduleDescriptor.getPackage(file.packageFqName).fragments.first(),
             moduleFragment
         )
@@ -93,9 +128,9 @@ class Fir2IrConverter(
         anonymousObject: FirAnonymousObject,
         irClass: IrClass = classifierStorage.getCachedIrClass(anonymousObject)!!
     ): IrClass {
-        anonymousObject.primaryConstructor?.let {
+        anonymousObject.primaryConstructorIfAny(session)?.let {
             irClass.declarations += declarationStorage.createIrConstructor(
-                it, irClass, isLocal = true
+                it.fir, irClass, isLocal = true
             )
         }
         val processedCallableNames = mutableSetOf<Name>()
@@ -130,14 +165,20 @@ class Fir2IrConverter(
         regularClass: FirRegularClass,
         irClass: IrClass = classifierStorage.getCachedIrClass(regularClass)!!
     ): IrClass {
-        val irConstructor = regularClass.primaryConstructor?.let {
-            declarationStorage.getOrCreateIrConstructor(it, irClass, isLocal = regularClass.isLocal)
+        val allDeclarations = mutableListOf<FirDeclaration>().apply {
+            addAll(regularClass.declarations.toMutableList())
+            if (generatorExtensions.isNotEmpty()) {
+                addAll(regularClass.generatedMembers(session))
+                addAll(regularClass.generatedNestedClassifiers(session))
+            }
+        }
+        val irConstructor = (allDeclarations.firstOrNull { it is FirConstructor && it.isPrimary })?.let {
+            declarationStorage.getOrCreateIrConstructor(it as FirConstructor, irClass, isLocal = regularClass.isLocal)
         }
         if (irConstructor != null) {
             irClass.declarations += irConstructor
         }
-        val allDeclarations = regularClass.declarations.toMutableList()
-        for (declaration in syntheticPropertiesLast(regularClass.declarations)) {
+        for (declaration in syntheticPropertiesLast(allDeclarations)) {
             val irDeclaration = processMemberDeclaration(declaration, regularClass, irClass) ?: continue
             irClass.declarations += irDeclaration
         }
@@ -186,6 +227,13 @@ class Fir2IrConverter(
                 registerClassAndNestedClasses(it, irClass)
             }
         }
+        if (generatorExtensions.isNotEmpty()) {
+            regularClass.generatedNestedClassifiers(session).forEach {
+                if (it is FirRegularClass) {
+                    registerClassAndNestedClasses(it, irClass)
+                }
+            }
+        }
         return irClass
     }
 
@@ -194,6 +242,13 @@ class Fir2IrConverter(
         regularClass.declarations.forEach {
             if (it is FirRegularClass) {
                 processClassAndNestedClassHeaders(it)
+            }
+        }
+        if (generatorExtensions.isNotEmpty()) {
+            regularClass.generatedNestedClassifiers(session).forEach {
+                if (it is FirRegularClass) {
+                    processClassAndNestedClassHeaders(it)
+                }
             }
         }
     }
@@ -261,7 +316,8 @@ class Fir2IrConverter(
             mangler: FirMangler,
             irFactory: IrFactory,
             visibilityConverter: Fir2IrVisibilityConverter,
-            specialSymbolProvider: Fir2IrSpecialSymbolProvider?
+            specialSymbolProvider: Fir2IrSpecialSymbolProvider?,
+            irGenerationExtensions: Collection<IrGenerationExtension>
         ): Fir2IrResult {
             val moduleDescriptor = FirModuleDescriptor(session)
             val symbolTable = SymbolTable(signaturer, irFactory)
@@ -294,7 +350,12 @@ class Fir2IrConverter(
             components.callGenerator = callGenerator
 
             val irModuleFragment = IrModuleFragmentImpl(moduleDescriptor, irBuiltIns)
-            for (firFile in firFiles) {
+
+            val allFirFiles = buildList {
+                addAll(firFiles)
+                addAll(session.createFilesWithGeneratedDeclarations())
+            }
+            for (firFile in allFirFiles) {
                 converter.registerFileAndClasses(firFile, irModuleFragment)
             }
             val irProviders =
@@ -306,14 +367,14 @@ class Fir2IrConverter(
             // Necessary call to generate built-in IR classes
             externalDependenciesGenerator.generateUnboundSymbolsAsDependencies()
             classifierStorage.preCacheBuiltinClasses()
-            for (firFile in firFiles) {
+            for (firFile in allFirFiles) {
                 converter.processClassHeaders(firFile)
             }
-            for (firFile in firFiles) {
+            for (firFile in allFirFiles) {
                 converter.processFileAndClassMembers(firFile)
             }
 
-            for (firFile in firFiles) {
+            for (firFile in allFirFiles) {
                 firFile.accept(fir2irVisitor, null)
             }
 
@@ -323,7 +384,73 @@ class Fir2IrConverter(
 
             evaluateConstants(irModuleFragment)
 
+            if (irGenerationExtensions.isNotEmpty()) {
+                val pluginContext = Fir2IrPluginContext(
+                    languageVersionSettings,
+                    BuiltinSymbolsBase(irBuiltIns, symbolTable),
+                    session.moduleData.platform,
+                    irBuiltIns,
+                    symbolTable
+                )
+                for (extension in irGenerationExtensions) {
+                    extension.generate(irModuleFragment, pluginContext)
+                }
+            }
+
             return Fir2IrResult(irModuleFragment, symbolTable, components)
+        }
+    }
+
+    private class Fir2IrPluginContext(
+        override val languageVersionSettings: LanguageVersionSettings,
+        override val symbols: BuiltinSymbolsBase,
+        override val platform: TargetPlatform?,
+        override val irBuiltIns: IrBuiltIns,
+        @property:ObsoleteDescriptorBasedAPI
+        override val symbolTable: SymbolTable
+    ) : IrPluginContext {
+        @ObsoleteDescriptorBasedAPI
+        override val moduleDescriptor: ModuleDescriptor
+            get() = error("Should not be called")
+
+        @ObsoleteDescriptorBasedAPI
+        override val bindingContext: BindingContext
+            get() = error("Should not be called")
+
+        @ObsoleteDescriptorBasedAPI
+        override val typeTranslator: TypeTranslator
+            get() = error("Should not be called")
+
+        override fun createDiagnosticReporter(pluginId: String): IrMessageLogger {
+            error("Should not be called")
+        }
+
+        override fun referenceClass(fqName: FqName): IrClassSymbol? {
+            error("Should not be called")
+        }
+
+        override fun referenceTypeAlias(fqName: FqName): IrTypeAliasSymbol? {
+            error("Should not be called")
+        }
+
+        override fun referenceConstructors(classFqn: FqName): Collection<IrConstructorSymbol> {
+            error("Should not be called")
+        }
+
+        override fun referenceFunctions(fqName: FqName): Collection<IrSimpleFunctionSymbol> {
+            error("Should not be called")
+        }
+
+        override fun referenceProperties(fqName: FqName): Collection<IrPropertySymbol> {
+            error("Should not be called")
+        }
+
+        override fun referenceTopLevel(
+            signature: IdSignature,
+            kind: IrDeserializer.TopLevelSymbolKind,
+            moduleDescriptor: ModuleDescriptor
+        ): IrSymbol? {
+            error("Should not be called")
         }
     }
 }

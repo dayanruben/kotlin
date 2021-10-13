@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.fir.declarations.FirTypeParameterRef
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutorByMap
 import org.jetbrains.kotlin.fir.scopes.FirContainingNamesAwareScope
-import org.jetbrains.kotlin.fir.scopes.FirScope
 import org.jetbrains.kotlin.fir.symbols.ConeTypeParameterLookupTag
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassifierSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
@@ -21,7 +20,26 @@ import org.jetbrains.kotlin.fir.types.ConeKotlinType
 import org.jetbrains.kotlin.fir.types.impl.ConeTypeParameterTypeImpl
 import org.jetbrains.kotlin.name.Name
 
-class FirNestedClassifierScope(val klass: FirClass, val useSiteSession: FirSession) : FirScope(), FirContainingNamesAwareScope {
+abstract class FirNestedClassifierScope(val klass: FirClass, val useSiteSession: FirSession) : FirContainingNamesAwareScope() {
+    protected abstract fun getNestedClassSymbol(name: Name): FirRegularClassSymbol?
+
+    override fun processClassifiersByNameWithSubstitution(
+        name: Name,
+        processor: (FirClassifierSymbol<*>, ConeSubstitutor) -> Unit
+    ) {
+        val matchedClass = getNestedClassSymbol(name) ?: return
+        val substitution = klass.typeParameters.associate {
+            it.symbol to it.toConeType()
+        }
+        processor(matchedClass, ConeSubstitutorByMap(substitution, useSiteSession))
+    }
+
+    abstract fun isEmpty(): Boolean
+
+    override fun getCallableNames(): Set<Name> = emptySet()
+}
+
+class FirNestedClassifierScopeImpl(klass: FirClass, useSiteSession: FirSession) : FirNestedClassifierScope(klass, useSiteSession) {
     private val classIndex: Map<Name, FirRegularClassSymbol> = run {
         val result = mutableMapOf<Name, FirRegularClassSymbol>()
         for (declaration in klass.declarations) {
@@ -32,22 +50,35 @@ class FirNestedClassifierScope(val klass: FirClass, val useSiteSession: FirSessi
         result
     }
 
-    fun isEmpty() = classIndex.isEmpty()
-
-    override fun processClassifiersByNameWithSubstitution(
-        name: Name,
-        processor: (FirClassifierSymbol<*>, ConeSubstitutor) -> Unit
-    ) {
-        val matchedClass = classIndex[name] ?: return
-        val substitution = klass.typeParameters.associate {
-            it.symbol to it.toConeType()
-        }
-        processor(matchedClass, ConeSubstitutorByMap(substitution, useSiteSession))
+    override fun getNestedClassSymbol(name: Name): FirRegularClassSymbol? {
+        return classIndex[name]
     }
 
-    override fun getClassifierNames(): Set<Name> = classIndex.keys
+    override fun isEmpty(): Boolean = classIndex.isEmpty()
 
-    override fun getCallableNames(): Set<Name> = emptySet()
+    override fun getClassifierNames(): Set<Name> = classIndex.keys
+}
+
+class FirCompositeNestedClassifierScope(
+    val scopes: List<FirNestedClassifierScope>,
+    klass: FirClass,
+    useSiteSession: FirSession
+) : FirNestedClassifierScope(klass, useSiteSession) {
+    override fun getNestedClassSymbol(name: Name): FirRegularClassSymbol? {
+        error("Should not be called")
+    }
+
+    override fun processClassifiersByNameWithSubstitution(name: Name, processor: (FirClassifierSymbol<*>, ConeSubstitutor) -> Unit) {
+        scopes.forEach { it.processClassifiersByNameWithSubstitution(name, processor) }
+    }
+
+    override fun isEmpty(): Boolean {
+        return scopes.all { it.isEmpty() }
+    }
+
+    override fun getClassifierNames(): Set<Name> {
+        return scopes.flatMapTo(mutableSetOf()) { it.getClassifierNames() }
+    }
 }
 
 fun FirTypeParameterRef.toConeType(): ConeKotlinType = symbol.toConeType()

@@ -87,7 +87,6 @@ internal class KtFirScopeProvider(
         val firScope = symbol.withFirForScope { fir ->
             fir.scopeProvider.getStaticScope(fir, analysisSession.rootModuleSession, ScopeSession())
         } ?: return KtFirEmptyMemberScope(symbol)
-        check(firScope is FirContainingNamesAwareScope)
         return KtFirDelegatingScopeImpl(firScope, builder, token)
     }
 
@@ -199,8 +198,8 @@ internal class KtFirScopeProvider(
     }
 }
 
-private class KtFirDelegatingScopeImpl<S>(
+private class KtFirDelegatingScopeImpl<S : FirContainingNamesAwareScope>(
     override val firScope: S,
     builder: KtSymbolByFirBuilder,
     token: ValidityToken
-) : KtFirDelegatingScope<S>(builder, token), ValidityTokenOwner where S : FirContainingNamesAwareScope, S : FirScope
+) : KtFirDelegatingScope<S>(builder, token), ValidityTokenOwner

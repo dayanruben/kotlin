@@ -13,7 +13,9 @@ import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.backend.generators.FakeOverrideGenerator
+import org.jetbrains.kotlin.fir.builder.buildPackageDirective
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.declarations.builder.buildFile
 import org.jetbrains.kotlin.fir.declarations.synthetic.FirSyntheticProperty
 import org.jetbrains.kotlin.fir.declarations.utils.isInline
 import org.jetbrains.kotlin.fir.declarations.utils.isJava
@@ -21,6 +23,8 @@ import org.jetbrains.kotlin.fir.declarations.utils.visibility
 import org.jetbrains.kotlin.fir.expressions.FirAnnotation
 import org.jetbrains.kotlin.fir.expressions.FirConstExpression
 import org.jetbrains.kotlin.fir.expressions.FirQualifiedAccess
+import org.jetbrains.kotlin.fir.extensions.declarationGenerators
+import org.jetbrains.kotlin.fir.extensions.extensionService
 import org.jetbrains.kotlin.fir.references.FirErrorNamedReference
 import org.jetbrains.kotlin.fir.references.FirReference
 import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
@@ -488,7 +492,10 @@ internal fun IrDeclarationParent.declareThisReceiverParameter(
 fun FirClass.irOrigin(firProvider: FirProvider): IrDeclarationOrigin = when {
     firProvider.getFirClassifierContainerFileIfAny(symbol) != null -> IrDeclarationOrigin.DEFINED
     isJava -> IrDeclarationOrigin.IR_EXTERNAL_JAVA_DECLARATION_STUB
-    else -> IrDeclarationOrigin.IR_EXTERNAL_DECLARATION_STUB
+    else -> when (val origin = origin) {
+        is FirDeclarationOrigin.Plugin -> IrPluginDeclarationOrigin(origin.key)
+        else -> IrDeclarationOrigin.IR_EXTERNAL_DECLARATION_STUB
+    }
 }
 
 val IrType.isSamType: Boolean
@@ -554,7 +561,7 @@ fun Fir2IrComponents.createTemporaryVariableForSafeCallConstruction(
 // TODO: implement inlineClassRepresentation in FirRegularClass instead.
 fun Fir2IrComponents.computeInlineClassRepresentation(klass: FirRegularClass): InlineClassRepresentation<IrSimpleType>? {
     if (!klass.isInline) return null
-    val parameter = klass.getInlineClassUnderlyingParameter() ?: error("Inline class has no underlying parameter: ${klass.render()}")
+    val parameter = klass.getInlineClassUnderlyingParameter(session) ?: error("Inline class has no underlying parameter: ${klass.render()}")
     val underlyingType = parameter.returnTypeRef.toIrType(typeConverter)
     return InlineClassRepresentation(
         parameter.name,
@@ -568,4 +575,35 @@ fun FirRegularClass.getIrSymbolsForSealedSubclasses(components: Fir2IrComponents
     return getSealedClassInheritors(session).mapNotNull {
         symbolProvider.getClassLikeSymbolByClassId(it)?.toSymbol(session, components.classifierStorage)
     }.filterIsInstance<IrClassSymbol>()
+}
+
+fun FirSession.createFilesWithGeneratedDeclarations(): List<FirFile> {
+    val symbolProvider = symbolProvider
+    val declarationGenerators = extensionService.declarationGenerators
+    val topLevelClasses = declarationGenerators.flatMap { it.getTopLevelClassIds() }.groupBy { it.packageFqName }
+    val topLevelCallables = declarationGenerators.flatMap { it.getTopLevelCallableIds() }.groupBy { it.packageName }
+
+    return buildList {
+        for (packageFqName in (topLevelClasses.keys + topLevelCallables.keys)) {
+            this += buildFile {
+                origin = FirDeclarationOrigin.Synthetic
+                moduleData = this@createFilesWithGeneratedDeclarations.moduleData
+                packageDirective = buildPackageDirective {
+                    this.packageFqName = packageFqName
+                }
+                name = "__GENERATED DECLARATIONS__.kt"
+                declarations += topLevelCallables.getOrDefault(packageFqName, emptyList())
+                    .flatMap { symbolProvider.getTopLevelCallableSymbols(packageFqName, it.callableName) }
+                    .map { it.fir }
+                declarations += topLevelClasses.getOrDefault(packageFqName, emptyList())
+                    .mapNotNull { symbolProvider.getClassLikeSymbolByClassId(it)?.fir }
+            }
+        }
+    }
+}
+
+fun FirDeclaration?.computeIrOrigin(predefinedOrigin: IrDeclarationOrigin? = null): IrDeclarationOrigin {
+    return predefinedOrigin
+        ?: (this?.origin as? FirDeclarationOrigin.Plugin)?.let { IrPluginDeclarationOrigin(it.key) }
+        ?: IrDeclarationOrigin.DEFINED
 }

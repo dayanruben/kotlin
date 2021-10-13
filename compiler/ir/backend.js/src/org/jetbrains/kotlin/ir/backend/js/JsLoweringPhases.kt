@@ -16,11 +16,11 @@ import org.jetbrains.kotlin.backend.common.lower.optimizations.FoldConstantLower
 import org.jetbrains.kotlin.backend.common.lower.optimizations.PropertyAccessorInlineLowering
 import org.jetbrains.kotlin.backend.common.phaser.*
 import org.jetbrains.kotlin.ir.IrElement
+import org.jetbrains.kotlin.ir.backend.js.codegen.JsGenerationGranularity
 import org.jetbrains.kotlin.ir.backend.js.lower.*
 import org.jetbrains.kotlin.ir.backend.js.lower.calls.CallsLowering
 import org.jetbrains.kotlin.ir.backend.js.lower.cleanup.CleanupLowering
-import org.jetbrains.kotlin.ir.backend.js.lower.coroutines.JsSuspendArityStoreLowering
-import org.jetbrains.kotlin.ir.backend.js.lower.coroutines.JsSuspendFunctionsLowering
+import org.jetbrains.kotlin.ir.backend.js.lower.coroutines.*
 import org.jetbrains.kotlin.ir.backend.js.lower.inline.*
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
@@ -398,7 +398,7 @@ private val removeInitializersForLazyProperties = makeDeclarationTransformerPhas
 )
 
 private val propertyAccessorInlinerLoweringPhase = makeBodyLoweringPhase(
-    ::PropertyAccessorInlineLowering,
+    ::JsPropertyAccessorInlineLowering,
     name = "PropertyAccessorInlineLowering",
     description = "[Optimization] Inline property accessors"
 )
@@ -422,6 +422,12 @@ private val foldConstantLoweringPhase = makeBodyLoweringPhase(
     description = "[Optimization] Constant Folding",
     prerequisite = setOf(propertyAccessorInlinerLoweringPhase)
 )
+
+private val computeStringTrimPhase = makeJsModulePhase(
+    ::StringTrimLowering,
+    name = "StringTrimLowering",
+    description = "Compute trimIndent and trimMargin operations on constant strings"
+).toModuleLowering()
 
 private val localDelegatedPropertiesLoweringPhase = makeBodyLoweringPhase(
     { LocalDelegatedPropertiesLowering() },
@@ -466,6 +472,29 @@ private val suspendFunctionsLoweringPhase = makeBodyLoweringPhase(
     ::JsSuspendFunctionsLowering,
     name = "SuspendFunctionsLowering",
     description = "Transform suspend functions into CoroutineImpl instance and build state machine"
+)
+
+private val addContinuationToNonLocalSuspendFunctionsLoweringPhase = makeDeclarationTransformerPhase(
+    ::AddContinuationToNonLocalSuspendFunctionsLowering,
+    name = "AddContinuationToNonLocalSuspendFunctionsLowering",
+    description = "Add explicit continuation as last parameter of non-local suspend functions"
+)
+
+private val addContinuationToLocalSuspendFunctionsLoweringPhase = makeBodyLoweringPhase(
+    ::AddContinuationToLocalSuspendFunctionsLowering,
+    name = "AddContinuationToLocalSuspendFunctionsLowering",
+    description = "Add explicit continuation as last parameter of local suspend functions"
+)
+
+
+private val addContinuationToFunctionCallsLoweringPhase = makeBodyLoweringPhase(
+    ::AddContinuationToFunctionCallsLowering,
+    name = "AddContinuationToFunctionCallsLowering",
+    description = "Replace suspend function calls with calls with continuation",
+    prerequisite = setOf(
+        addContinuationToLocalSuspendFunctionsLoweringPhase,
+        addContinuationToNonLocalSuspendFunctionsLoweringPhase,
+    )
 )
 
 private val privateMembersLoweringPhase = makeDeclarationTransformerPhase(
@@ -747,6 +776,14 @@ private val cleanupLoweringPhase = makeBodyLoweringPhase(
     name = "CleanupLowering",
     description = "Clean up IR before codegen"
 )
+private val moveOpenClassesToSeparatePlaceLowering = makeCustomJsModulePhase(
+    { context, module ->
+        if (context.granularity == JsGenerationGranularity.PER_FILE)
+            moveOpenClassesToSeparateFiles(module)
+    },
+    name = "MoveOpenClassesToSeparateFiles",
+    description = "Move open classes to separate files"
+).toModuleLowering()
 
 private val jsSuspendArityStorePhase = makeDeclarationTransformerPhase(
     ::JsSuspendArityStoreLowering,
@@ -806,6 +843,10 @@ private val loweringList = listOf<Lowering>(
     suspendFunctionsLoweringPhase,
     propertyReferenceLoweringPhase,
     interopCallableReferenceLoweringPhase,
+    jsSuspendArityStorePhase,
+    addContinuationToNonLocalSuspendFunctionsLoweringPhase,
+    addContinuationToLocalSuspendFunctionsLoweringPhase,
+    addContinuationToFunctionCallsLoweringPhase,
     returnableBlockLoweringPhase,
     rangeContainsLoweringPhase,
     forLoopsLoweringPhase,
@@ -816,6 +857,7 @@ private val loweringList = listOf<Lowering>(
     copyPropertyAccessorBodiesLoweringPass,
     booleanPropertyInExternalLowering,
     foldConstantLoweringPhase,
+    computeStringTrimPhase,
     privateMembersLoweringPhase,
     privateMemberUsagesLoweringPhase,
     exportedDefaultParameterStubPhase,
@@ -847,8 +889,10 @@ private val loweringList = listOf<Lowering>(
     captureStackTraceInThrowablesPhase,
     callsLoweringPhase,
     cleanupLoweringPhase,
+    // Currently broken due to static members lowering making single-open-class
+    // files non-recognizable as single-class files
+    // moveOpenClassesToSeparatePlaceLowering,
     validateIrAfterLowering,
-    jsSuspendArityStorePhase
 )
 
 // TODO comment? Eliminate ModuleLowering's? Don't filter them here?

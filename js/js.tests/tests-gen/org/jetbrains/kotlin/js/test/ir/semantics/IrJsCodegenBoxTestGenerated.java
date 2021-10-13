@@ -19551,11 +19551,6 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
             runTest("compiler/testData/codegen/box/properties/lazyInitializationOrder.kt");
         }
 
-        @TestMetadata("lazyInitializationPure.kt")
-        public void testLazyInitializationPure() throws Exception {
-            runTest("compiler/testData/codegen/box/properties/lazyInitializationPure.kt");
-        }
-
         @TestMetadata("lazyInitializationSplitPerModule.kt")
         public void testLazyInitializationSplitPerModule() throws Exception {
             runTest("compiler/testData/codegen/box/properties/lazyInitializationSplitPerModule.kt");
@@ -27328,6 +27323,11 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
         @TestMetadata("surrogatePair.kt")
         public void testSurrogatePair() throws Exception {
             runTest("compiler/testData/codegen/box/strings/surrogatePair.kt");
+        }
+
+        @TestMetadata("trimOptimization.kt")
+        public void testTrimOptimization() throws Exception {
+            runTest("compiler/testData/codegen/box/strings/trimOptimization.kt");
         }
 
         @TestMetadata("twoArgumentNullableStringOperatorPlus.kt")
