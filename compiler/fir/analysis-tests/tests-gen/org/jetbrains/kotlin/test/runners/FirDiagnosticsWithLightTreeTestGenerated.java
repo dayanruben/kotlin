@@ -5058,9 +5058,21 @@ public class FirDiagnosticsWithLightTreeTestGenerated extends AbstractFirDiagnos
             }
 
             @Test
+            @TestMetadata("arrayOfImports.kt")
+            public void testArrayOfImports() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/intellij/arrayOfImports.kt");
+            }
+
+            @Test
             @TestMetadata("DailyAggregatedDoubleFactor.kt")
             public void testDailyAggregatedDoubleFactor() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/intellij/DailyAggregatedDoubleFactor.kt");
+            }
+
+            @Test
+            @TestMetadata("defaultParameterFromBase.kt")
+            public void testDefaultParameterFromBase() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/intellij/defaultParameterFromBase.kt");
             }
 
             @Test
@@ -5073,6 +5085,12 @@ public class FirDiagnosticsWithLightTreeTestGenerated extends AbstractFirDiagnos
             @TestMetadata("FieldVsSyntheticAccessor.kt")
             public void testFieldVsSyntheticAccessor() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/intellij/FieldVsSyntheticAccessor.kt");
+            }
+
+            @Test
+            @TestMetadata("InnerClassOfThrowableOnObject.kt")
+            public void testInnerClassOfThrowableOnObject() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/intellij/InnerClassOfThrowableOnObject.kt");
             }
 
             @Test
@@ -5091,6 +5109,12 @@ public class FirDiagnosticsWithLightTreeTestGenerated extends AbstractFirDiagnos
             @TestMetadata("PersistentStateComponent.kt")
             public void testPersistentStateComponent() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/intellij/PersistentStateComponent.kt");
+            }
+
+            @Test
+            @TestMetadata("typeAliasAmbiguity.kt")
+            public void testTypeAliasAmbiguity() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/intellij/typeAliasAmbiguity.kt");
             }
 
             @Test

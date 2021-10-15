@@ -2943,6 +2943,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         @TestDataPath("$PROJECT_ROOT")
         public class AdaptedReferences {
             @Test
+            @TestMetadata("adaptedArrayOf.kt")
+            public void testAdaptedArrayOf() throws Exception {
+                runTest("compiler/testData/codegen/box/callableReference/adaptedReferences/adaptedArrayOf.kt");
+            }
+
+            @Test
             @TestMetadata("adaptedVarargFunImportedFromObject.kt")
             public void testAdaptedVarargFunImportedFromObject() throws Exception {
                 runTest("compiler/testData/codegen/box/callableReference/adaptedReferences/adaptedVarargFunImportedFromObject.kt");
@@ -16334,6 +16340,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         @TestMetadata("Fir2IrClassifierStorage.kt")
         public void testFir2IrClassifierStorage() throws Exception {
             runTest("compiler/testData/codegen/box/fir/Fir2IrClassifierStorage.kt");
+        }
+
+        @Test
+        @TestMetadata("flexibleIntegerLiterals.kt")
+        public void testFlexibleIntegerLiterals() throws Exception {
+            runTest("compiler/testData/codegen/box/fir/flexibleIntegerLiterals.kt");
         }
 
         @Test
@@ -30137,6 +30149,18 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         }
 
         @Test
+        @TestMetadata("kt49203_lateinit.kt")
+        public void testKt49203_lateinit() throws Exception {
+            runTest("compiler/testData/codegen/box/properties/kt49203_lateinit.kt");
+        }
+
+        @Test
+        @TestMetadata("kt49203_var.kt")
+        public void testKt49203_var() throws Exception {
+            runTest("compiler/testData/codegen/box/properties/kt49203_var.kt");
+        }
+
+        @Test
         @TestMetadata("kt613.kt")
         public void testKt613() throws Exception {
             runTest("compiler/testData/codegen/box/properties/kt613.kt");
@@ -40235,6 +40259,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         }
 
         @Test
+        @TestMetadata("kt49226.kt")
+        public void testKt49226() throws Exception {
+            runTest("compiler/testData/codegen/box/sam/kt49226.kt");
+        }
+
+        @Test
         @TestMetadata("nonInlinedSamWrapper.kt")
         public void testNonInlinedSamWrapper() throws Exception {
             runTest("compiler/testData/codegen/box/sam/nonInlinedSamWrapper.kt");
@@ -43902,6 +43932,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         @TestMetadata("spreadCopiesArray.kt")
         public void testSpreadCopiesArray() throws Exception {
             runTest("compiler/testData/codegen/box/vararg/spreadCopiesArray.kt");
+        }
+
+        @Test
+        @TestMetadata("useSuspendFunResultAsVararg.kt")
+        public void testUseSuspendFunResultAsVararg() throws Exception {
+            runTest("compiler/testData/codegen/box/vararg/useSuspendFunResultAsVararg.kt");
         }
 
         @Test

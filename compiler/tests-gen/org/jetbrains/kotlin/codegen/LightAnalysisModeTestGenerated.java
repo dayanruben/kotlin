@@ -2522,6 +2522,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                 KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM, testDataFilePath);
             }
 
+            @TestMetadata("adaptedArrayOf.kt")
+            public void testAdaptedArrayOf() throws Exception {
+                runTest("compiler/testData/codegen/box/callableReference/adaptedReferences/adaptedArrayOf.kt");
+            }
+
             @TestMetadata("adaptedVarargFunImportedFromObject.kt")
             public void testAdaptedVarargFunImportedFromObject() throws Exception {
                 runTest("compiler/testData/codegen/box/callableReference/adaptedReferences/adaptedVarargFunImportedFromObject.kt");
@@ -13349,6 +13354,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
     @TestDataPath("$PROJECT_ROOT")
     @RunWith(JUnit3RunnerWithInners.class)
     public static class Fir extends AbstractLightAnalysisModeTest {
+        @TestMetadata("flexibleIntegerLiterals.kt")
+        public void ignoreFlexibleIntegerLiterals() throws Exception {
+            runTest("compiler/testData/codegen/box/fir/flexibleIntegerLiterals.kt");
+        }
+
         @TestMetadata("SuspendExtension.kt")
         public void ignoreSuspendExtension() throws Exception {
             runTest("compiler/testData/codegen/box/fir/SuspendExtension.kt");
@@ -25501,6 +25511,16 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/properties/kt4383.kt");
         }
 
+        @TestMetadata("kt49203_lateinit.kt")
+        public void testKt49203_lateinit() throws Exception {
+            runTest("compiler/testData/codegen/box/properties/kt49203_lateinit.kt");
+        }
+
+        @TestMetadata("kt49203_var.kt")
+        public void testKt49203_var() throws Exception {
+            runTest("compiler/testData/codegen/box/properties/kt49203_var.kt");
+        }
+
         @TestMetadata("kt613.kt")
         public void testKt613() throws Exception {
             runTest("compiler/testData/codegen/box/properties/kt613.kt");
@@ -32099,6 +32119,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/sam/kt4753_2.kt");
         }
 
+        @TestMetadata("kt49226.kt")
+        public void testKt49226() throws Exception {
+            runTest("compiler/testData/codegen/box/sam/kt49226.kt");
+        }
+
         @TestMetadata("nonInlinedSamWrapper.kt")
         public void testNonInlinedSamWrapper() throws Exception {
             runTest("compiler/testData/codegen/box/sam/nonInlinedSamWrapper.kt");
@@ -35328,6 +35353,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("spreadCopiesArray.kt")
         public void testSpreadCopiesArray() throws Exception {
             runTest("compiler/testData/codegen/box/vararg/spreadCopiesArray.kt");
+        }
+
+        @TestMetadata("useSuspendFunResultAsVararg.kt")
+        public void testUseSuspendFunResultAsVararg() throws Exception {
+            runTest("compiler/testData/codegen/box/vararg/useSuspendFunResultAsVararg.kt");
         }
 
         @TestMetadata("varargInFunParam.kt")

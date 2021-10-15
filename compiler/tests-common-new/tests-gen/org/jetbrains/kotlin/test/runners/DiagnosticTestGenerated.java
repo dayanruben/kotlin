@@ -25262,6 +25262,18 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("samPriorityVsGeneric.kt")
+            public void testSamPriorityVsGeneric() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/samConversions/samPriorityVsGeneric.kt");
+            }
+
+            @Test
+            @TestMetadata("samPriorityVsGenericCompatibilityDisabled.kt")
+            public void testSamPriorityVsGenericCompatibilityDisabled() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/samConversions/samPriorityVsGenericCompatibilityDisabled.kt");
+            }
+
+            @Test
             @TestMetadata("sameCandidatesFromKotlinAndJavaInOneScope.kt")
             public void testSameCandidatesFromKotlinAndJavaInOneScope() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/samConversions/sameCandidatesFromKotlinAndJavaInOneScope.kt");
@@ -34702,6 +34714,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("nonModifierFormForBuiltInWithFun.kt")
+            public void testNonModifierFormForBuiltInWithFun() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/nonModifierFormForBuiltInWithFun.kt");
+            }
+
+            @Test
             @TestMetadata("operators.kt")
             public void testOperators() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/operators.kt");
@@ -36881,6 +36899,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @Test
             public void testAllFilesPresentInResolve() throws Exception {
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/testsWithStdLib/resolve"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
+            }
+
+            @Test
+            @TestMetadata("forEachInLocalClass.kt")
+            public void testForEachInLocalClass() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/resolve/forEachInLocalClass.kt");
             }
 
             @Test
