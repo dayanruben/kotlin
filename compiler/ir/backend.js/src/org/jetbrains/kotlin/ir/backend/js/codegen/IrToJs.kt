@@ -167,22 +167,14 @@ class IrToJs(
             globalNameScope = nameGenerator.staticNames
         )
 
-        val rootContext = JsGenerationContext(
-            currentFunction = null,
-            currentFile = null,
-            staticContext = staticContext,
-            localNames = LocalNameGenerator(NameTable())
-        )
-
-
         val declarationStatements: List<JsStatement> = unit.packageFragments.flatMap {
             StaticMembersLowering(backendContext).lower(it as IrFile)
-            it.accept(IrFileToJsTransformer(), rootContext).statements
+            it.accept(IrFileToJsTransformer(), staticContext).statements
         }
 
         val preDeclarationBlock = JsGlobalBlock()
         val postDeclarationBlock = JsGlobalBlock()
-        processClassModels(rootContext.staticContext.classModels, preDeclarationBlock, postDeclarationBlock)
+        processClassModels(staticContext.classModels, preDeclarationBlock, postDeclarationBlock)
 
         val statements = mutableListOf<JsStatement>()
         statements += nameGenerator.internalImports.values
@@ -192,7 +184,7 @@ class IrToJs(
 
         // Generate module initialization
 
-        val initializerBlock = rootContext.staticContext.initializerBlock
+        val initializerBlock = staticContext.initializerBlock
         when (unit) {
             is WholeProgramUnit, is ModuleUnit -> {
                 // Run initialization during ES module initialization
@@ -203,7 +195,7 @@ class IrToJs(
                 // Postpone initialization by putting it into a separate function
                 // Will be called later in proper order after class model is initialized
                 val initFunction = JsFunction(emptyScope, JsBlock(initializerBlock.statements), "init fun")
-                initFunction.name = JsName(unit.initFunctionName)
+                initFunction.name = JsName(unit.initFunctionName, false)
                 statements += initFunction.makeStmt()
                 statements += JsExport(initFunction.name)
             }
@@ -213,7 +205,7 @@ class IrToJs(
 
         val internalExports = mutableListOf<JsExport.Element>()
         fun export(declaration: IrDeclarationWithName) {
-            internalExports += JsExport.Element(nameGenerator.getNameForStaticDeclaration(declaration), JsName(guid(declaration)))
+            internalExports += JsExport.Element(nameGenerator.getNameForStaticDeclaration(declaration), JsName(guid(declaration), false))
         }
 
         for (fragment in unit.packageFragments) {
@@ -327,9 +319,10 @@ class IrToJs(
             }
         }
 
-        backendContext.testRoots[module]?.let { testContainer ->
-            statements += invokeFunctionFromEntryJsFileAsStatements(testContainer)
-        }
+        // TODO: tests
+//        backendContext.testRoots[module]?.let { testContainer ->
+//            statements += invokeFunctionFromEntryJsFileAsStatements(testContainer)
+//        }
     }
 
     fun generateModule(
@@ -353,7 +346,7 @@ class IrToJs(
 
                     val importElements = JsImport.Element(unit.initFunctionName, null)
                     indexJsStatements += JsImport("./$pathToSubModule", mutableListOf(importElements))
-                    indexJsStatements += JsInvocation(JsNameRef(JsName(unit.initFunctionName))).makeStmt()
+                    indexJsStatements += JsInvocation(JsNameRef(JsName(unit.initFunctionName, false))).makeStmt()
 
                     exportedDeclarations += generatedUnit.exportedDeclarations
 

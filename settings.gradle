@@ -297,6 +297,8 @@ include ":compiler:fir",
         ":compiler:fir:raw-fir:light-tree2fir",
         ":compiler:fir:fir2ir",
         ":compiler:fir:fir2ir:jvm-backend",
+        ":compiler:fir:providers",
+        ":compiler:fir:semantics",
         ":compiler:fir:resolve",
         ":compiler:fir:fir-serialization",
         ":compiler:fir:fir-deserialization",
@@ -351,6 +353,8 @@ if (!buildProperties.inJpsBuildIdeaSync) {
             ":prepare:ide-plugin-dependencies:high-level-api-for-ide",
             ":prepare:ide-plugin-dependencies:high-level-api-fir-for-ide",
             ":prepare:ide-plugin-dependencies:high-level-api-fir-tests-for-ide",
+            ":prepare:ide-plugin-dependencies:high-level-api-fe10-for-ide",
+            ":prepare:ide-plugin-dependencies:high-level-api-fe10-tests-for-ide",
             ":prepare:ide-plugin-dependencies:analysis-api-providers-for-ide",
             ":prepare:ide-plugin-dependencies:analysis-project-structure-for-ide",
             ":prepare:ide-plugin-dependencies:symbol-light-classes-for-ide",
@@ -472,9 +476,12 @@ include ":generators:analysis-api-generator",
         ":analysis:analysis-api-fir:analysis-api-fir-generator",
         ":analysis:analysis-api-fir",
         ":analysis:analysis-api",
+        ":analysis:analysis-api-impl-barebone",
+        ":analysis:analysis-api-impl-base",
         ":analysis:analysis-api-providers",
         ":analysis:symbol-light-classes",
-        ":analysis:project-structure"
+        ":analysis:project-structure",
+        ":analysis:analysis-api-fe10"
 
 
 if (buildProperties.inJpsBuildIdeaSync) {

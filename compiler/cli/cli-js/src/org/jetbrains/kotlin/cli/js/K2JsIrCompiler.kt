@@ -218,7 +218,7 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
             val start = System.currentTimeMillis()
 
             val updated = if (perFileCache) {
-                actualizeCacheForModule(includes, outputFilePath, configuration, libraries, icCaches)
+                actualizeCacheForModule(includes, outputFilePath, configuration, libraries, icCaches, IrFactoryImpl)
             } else {
                 buildCache(
                     cachePath = outputFilePath,
@@ -323,9 +323,8 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
                 val runner = """
                     export default WebAssembly.instantiateStreaming(fetch('${outputWasmFile.name}'), { runtime, js_code }).then((it) => {
                         wasmInstance = it.instance;
-                        
+                        wasmInstance.exports.__init?.();
                         wasmInstance.exports.startUnitTests?.();
-                        wasmInstance.exports.main?.();
                         
                         return it.instance.exports;
                     });

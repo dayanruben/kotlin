@@ -17,11 +17,12 @@ import org.jetbrains.kotlin.fir.diagnostics.ConeSimpleDiagnostic
 import org.jetbrains.kotlin.fir.diagnostics.DiagnosticKind
 import org.jetbrains.kotlin.fir.expressions.FirStatement
 import org.jetbrains.kotlin.fir.extensions.extensionService
-import org.jetbrains.kotlin.fir.extensions.predicateBasedProvider
 import org.jetbrains.kotlin.fir.extensions.supertypeGenerators
 import org.jetbrains.kotlin.fir.resolve.*
 import org.jetbrains.kotlin.fir.resolve.dfa.cfg.isLocalClassOrAnonymousObject
 import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeTypeParameterSupertype
+import org.jetbrains.kotlin.fir.resolve.providers.firProvider
+import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.LocalClassesNavigationInfo
 import org.jetbrains.kotlin.fir.scopes.FirCompositeScope
 import org.jetbrains.kotlin.fir.scopes.FirScope
@@ -160,7 +161,7 @@ open class FirApplySupertypesTransformer(
 }
 
 private fun FirClassLikeDeclaration.typeParametersScope(): FirScope? {
-    if (this !is FirMemberDeclaration || typeParameters.isEmpty()) return null
+    if (typeParameters.isEmpty()) return null
     return FirMemberTypeParameterScope(this)
 }
 
@@ -567,10 +568,6 @@ class SupertypeComputationSession {
     }
 }
 
-internal fun FirTypeRef.firClassLike(session: FirSession): FirClassLikeDeclaration? {
-    val type = coneTypeSafe<ConeClassLikeType>() ?: return null
-    return type.lookupTag.toSymbol(session)?.fir
-}
 
 sealed class SupertypeComputationStatus {
     object NotComputed : SupertypeComputationStatus()

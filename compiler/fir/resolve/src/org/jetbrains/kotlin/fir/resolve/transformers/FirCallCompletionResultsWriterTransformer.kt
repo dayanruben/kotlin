@@ -24,7 +24,6 @@ import org.jetbrains.kotlin.fir.references.builder.buildResolvedNamedReference
 import org.jetbrains.kotlin.fir.resolve.calls.Candidate
 import org.jetbrains.kotlin.fir.resolve.calls.FirErrorReferenceWithCandidate
 import org.jetbrains.kotlin.fir.resolve.calls.FirNamedReferenceWithCandidate
-import org.jetbrains.kotlin.fir.resolve.calls.varargElementType
 import org.jetbrains.kotlin.fir.resolve.constructFunctionalTypeRef
 import org.jetbrains.kotlin.fir.resolve.createFunctionalType
 import org.jetbrains.kotlin.fir.resolve.dfa.FirDataFlowAnalyzer
@@ -32,9 +31,9 @@ import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeConstraintSystemHasContr
 import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeInapplicableCandidateError
 import org.jetbrains.kotlin.fir.resolve.diagnostics.ConePropertyAsOperator
 import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeTypeParameterInQualifiedAccess
-import org.jetbrains.kotlin.fir.resolve.firProvider
 import org.jetbrains.kotlin.fir.resolve.inference.*
 import org.jetbrains.kotlin.fir.resolve.propagateTypeFromQualifiedAccessAfterNullCheck
+import org.jetbrains.kotlin.fir.resolve.providers.firProvider
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirArrayOfCallTransformer
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.remapArgumentsWithVararg
@@ -781,7 +780,7 @@ class FirCallCompletionResultsWriterTransformer(
         val expectedArrayElementType = expectedArrayType?.arrayElementType()
         arrayOfCall.transformChildren(this, expectedArrayElementType?.toExpectedType())
         val arrayElementType =
-            session.inferenceComponents.ctx.commonSuperTypeOrNull(arrayOfCall.arguments.map { it.typeRef.coneType })?.let {
+            session.typeContext.commonSuperTypeOrNull(arrayOfCall.arguments.map { it.typeRef.coneType })?.let {
                 typeApproximator.approximateToSuperType(it, TypeApproximatorConfiguration.FinalApproximationAfterResolutionAndInference)
                     ?: it
             } ?: expectedArrayElementType ?: session.builtinTypes.nullableAnyType.type

@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.reportOnWithSuppression
 import org.jetbrains.kotlin.fir.analysis.diagnostics.withSuppressedDiagnostics
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.*
-import org.jetbrains.kotlin.fir.resolve.calls.isPotentiallyArray
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.resolve.lookupSuperTypes
 import org.jetbrains.kotlin.fir.symbols.impl.FirConstructorSymbol
@@ -219,7 +218,8 @@ object FirInlineClassDeclarationChecker : FirRegularClassChecker() {
     private fun FirRegularClass.isSubtypeOfCloneable(session: FirSession): Boolean {
         if (classId.isCloneableId()) return true
 
-        return lookupSuperTypes(this, lookupInterfaces = true, deep = true, session).any { superType ->
+        return lookupSuperTypes(this, lookupInterfaces = true, deep = true, session, substituteTypes = false).any { superType ->
+            // Note: We check just classId here, so type substitution isn't needed   ^ (we aren't interested in type arguments)
             (superType as? ConeClassLikeType)?.fullyExpandedType(session)?.lookupTag?.classId?.isCloneableId() == true
         }
     }

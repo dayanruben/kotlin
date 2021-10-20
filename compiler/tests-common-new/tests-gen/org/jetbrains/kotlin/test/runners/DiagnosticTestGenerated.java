@@ -17222,6 +17222,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("rawOverride.kt")
+            public void testRawOverride() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/j+k/rawOverride.kt");
+            }
+
+            @Test
             @TestMetadata("recursionWithJavaSyntheticProperty.kt")
             public void testRecursionWithJavaSyntheticProperty() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/j+k/recursionWithJavaSyntheticProperty.kt");
@@ -27586,6 +27592,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("toInvisible.kt")
+            public void testToInvisible() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/smartCasts/toInvisible.kt");
+            }
+
+            @Test
             @TestMetadata("twoImplicitReceivers.kt")
             public void testTwoImplicitReceivers() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/smartCasts/twoImplicitReceivers.kt");
@@ -29371,6 +29383,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("extFunctionTypeAsSuperType.kt")
             public void testExtFunctionTypeAsSuperType() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/subtyping/extFunctionTypeAsSuperType.kt");
+            }
+
+            @Test
+            @TestMetadata("extFunctionTypeAsSuperTypeRestrictionLifted.kt")
+            public void testExtFunctionTypeAsSuperTypeRestrictionLifted() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/subtyping/extFunctionTypeAsSuperTypeRestrictionLifted.kt");
             }
 
             @Test
@@ -32107,6 +32125,18 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("lackOfInvisibleSetterOfJavaClassInSamePackage.kt")
             public void testLackOfInvisibleSetterOfJavaClassInSamePackage() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/visibility/lackOfInvisibleSetterOfJavaClassInSamePackage.kt");
+            }
+
+            @Test
+            @TestMetadata("overrideOfMemberInPackagePrivateClass.kt")
+            public void testOverrideOfMemberInPackagePrivateClass() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/visibility/overrideOfMemberInPackagePrivateClass.kt");
+            }
+
+            @Test
+            @TestMetadata("privateCompanionInSuperClass.kt")
+            public void testPrivateCompanionInSuperClass() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/visibility/privateCompanionInSuperClass.kt");
             }
 
             @Test

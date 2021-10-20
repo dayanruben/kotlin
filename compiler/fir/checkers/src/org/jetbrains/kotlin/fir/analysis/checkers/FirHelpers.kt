@@ -21,8 +21,11 @@ import org.jetbrains.kotlin.fir.expressions.FirFunctionCall
 import org.jetbrains.kotlin.fir.expressions.FirVariableAssignment
 import org.jetbrains.kotlin.fir.expressions.impl.FirEmptyExpressionBlock
 import org.jetbrains.kotlin.fir.expressions.toResolvedCallableSymbol
-import org.jetbrains.kotlin.fir.resolve.*
-import org.jetbrains.kotlin.fir.resolve.inference.isBuiltinFunctionalType
+import org.jetbrains.kotlin.fir.resolve.SessionHolder
+import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
+import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
+import org.jetbrains.kotlin.fir.resolve.toFirRegularClassSymbol
+import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.scopes.FirTypeScope
 import org.jetbrains.kotlin.fir.scopes.ProcessorAction
 import org.jetbrains.kotlin.fir.scopes.impl.multipleDelegatesWithTheSameSignature
@@ -244,7 +247,6 @@ fun FirMemberDeclaration.implicitModality(context: CheckerContext): Modality {
         && klass.classKind == ClassKind.INTERFACE
         && tree.visibilityModifier(source.lighterASTNode)?.tokenType != KtTokens.PRIVATE_KEYWORD
     ) {
-        require(this is FirDeclaration)
         return if (this.hasBody()) Modality.OPEN else Modality.ABSTRACT
     }
 

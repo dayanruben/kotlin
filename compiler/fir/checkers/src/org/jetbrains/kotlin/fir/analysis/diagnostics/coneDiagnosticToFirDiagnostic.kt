@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.fir.analysis.diagnostics
 
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.fir.FirFakeSourceElementKind
+import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.FirSourceElement
 import org.jetbrains.kotlin.fir.analysis.checkers.declaration.isLocalMember
 import org.jetbrains.kotlin.fir.analysis.getChild
@@ -20,11 +21,9 @@ import org.jetbrains.kotlin.fir.resolve.inference.ConeTypeVariableForLambdaRetur
 import org.jetbrains.kotlin.fir.resolve.inference.model.ConeArgumentConstraintPosition
 import org.jetbrains.kotlin.fir.resolve.inference.model.ConeExpectedTypeConstraintPosition
 import org.jetbrains.kotlin.fir.resolve.inference.model.ConeLambdaArgumentConstraintPosition
-import org.jetbrains.kotlin.fir.resolve.isTypeMismatchDueToNullability
 import org.jetbrains.kotlin.fir.symbols.impl.FirBackingFieldSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
-import org.jetbrains.kotlin.fir.typeContext
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.SpecialNames
@@ -64,13 +63,13 @@ private fun ConeDiagnostic.toFirDiagnostic(
     is ConeAmbiguityError -> when {
         applicability.isSuccess -> FirErrors.OVERLOAD_RESOLUTION_AMBIGUITY.createOn(source, this.candidates.map { it.symbol })
         applicability == CandidateApplicability.UNSAFE_CALL -> {
-            val candidate = candidates.first { it.currentApplicability == CandidateApplicability.UNSAFE_CALL }
+            val candidate = candidates.first { it.applicability == CandidateApplicability.UNSAFE_CALL }
             val unsafeCall = candidate.diagnostics.firstIsInstance<UnsafeCall>()
             mapUnsafeCallError(candidate, unsafeCall, source, qualifiedAccessSource)
         }
         applicability == CandidateApplicability.UNSTABLE_SMARTCAST -> {
             val unstableSmartcast =
-                this.candidates.first { it.currentApplicability == CandidateApplicability.UNSTABLE_SMARTCAST }.diagnostics.firstIsInstance<UnstableSmartCast>()
+                this.candidates.first { it.applicability == CandidateApplicability.UNSTABLE_SMARTCAST }.diagnostics.firstIsInstance<UnstableSmartCast>()
             FirErrors.SMARTCAST_IMPOSSIBLE.createOn(
                 unstableSmartcast.argument.source,
                 unstableSmartcast.targetType,
@@ -112,22 +111,24 @@ private fun ConeDiagnostic.toFirDiagnostic(
         runIf(variable.isLocalMember) { FirErrors.VARIABLE_WITH_NO_TYPE_NO_INITIALIZER.createOn(source) }
     is ConeUnderscoreIsReserved -> FirErrors.UNDERSCORE_IS_RESERVED.createOn(this.source)
     is ConeUnderscoreUsageWithoutBackticks -> FirErrors.UNDERSCORE_USAGE_WITHOUT_BACKTICKS.createOn(this.source)
+    is ConeAmbiguousSuper -> FirErrors.AMBIGUOUS_SUPER.createOn(source, this.candidateTypes)
     else -> throw IllegalArgumentException("Unsupported diagnostic type: ${this.javaClass}")
 }
 
 fun ConeDiagnostic.toFirDiagnostics(
+    session: FirSession,
     source: FirSourceElement,
     qualifiedAccessSource: FirSourceElement?
 ): List<FirDiagnostic> {
     return when (this) {
-        is ConeInapplicableCandidateError -> mapInapplicableCandidateError(this, source, qualifiedAccessSource)
-        is ConeConstraintSystemHasContradiction -> mapSystemHasContradictionError(this, source, qualifiedAccessSource)
+        is ConeInapplicableCandidateError -> mapInapplicableCandidateError(session, this, source, qualifiedAccessSource)
+        is ConeConstraintSystemHasContradiction -> mapSystemHasContradictionError(session, this, source, qualifiedAccessSource)
         else -> listOfNotNull(toFirDiagnostic(source, qualifiedAccessSource))
     }
 }
 
 private fun mapUnsafeCallError(
-    candidate: Candidate,
+    candidate: AbstractCandidate,
     rootCause: UnsafeCall,
     source: FirSourceElement,
     qualifiedAccessSource: FirSourceElement?,
@@ -176,6 +177,7 @@ private fun mapUnsafeCallError(
 }
 
 private fun mapInapplicableCandidateError(
+    session: FirSession,
     diagnostic: ConeInapplicableCandidateError,
     source: FirSourceElement,
     qualifiedAccessSource: FirSourceElement?,
@@ -191,7 +193,7 @@ private fun mapInapplicableCandidateError(
                 rootCause.forbiddenNamedArgumentsTarget
             )
             is ArgumentTypeMismatch -> {
-                val typeContext = diagnostic.candidate.callInfo.session.typeContext
+                val typeContext = session.typeContext
                 FirErrors.ARGUMENT_TYPE_MISMATCH.createOn(
                     rootCause.argument.source ?: source,
                     rootCause.expectedType.removeTypeVariableTypes(typeContext),
@@ -239,6 +241,7 @@ private fun mapInapplicableCandidateError(
 
 @OptIn(ExperimentalStdlibApi::class)
 private fun mapSystemHasContradictionError(
+    session: FirSession,
     diagnostic: ConeConstraintSystemHasContradiction,
     source: FirSourceElement,
     qualifiedAccessSource: FirSourceElement?,
@@ -250,7 +253,7 @@ private fun mapSystemHasContradictionError(
                 error.toDiagnostic(
                     source,
                     qualifiedAccessSource,
-                    diagnostic.candidate.callInfo.session.typeContext,
+                    session.typeContext,
                     errorsToIgnore,
                     diagnostic.candidate,
                 )
@@ -286,7 +289,7 @@ private fun ConstraintSystemError.toDiagnostic(
     qualifiedAccessSource: FirSourceElement?,
     typeContext: ConeTypeContext,
     errorsToIgnore: MutableSet<ConstraintSystemError>,
-    candidate: Candidate,
+    candidate: AbstractCandidate,
 ): FirDiagnostic? {
     return when (this) {
         is NewConstraintError -> {
@@ -405,7 +408,6 @@ private fun ConeSimpleDiagnostic.getFactory(source: FirSourceElement): FirDiagno
         DiagnosticKind.EnumEntryAsType -> FirErrors.ENUM_ENTRY_AS_TYPE
         DiagnosticKind.NotASupertype -> FirErrors.NOT_A_SUPERTYPE
         DiagnosticKind.SuperNotAvailable -> FirErrors.SUPER_NOT_AVAILABLE
-        DiagnosticKind.AmbiguousSuper -> FirErrors.AMBIGUOUS_SUPER
         DiagnosticKind.UnresolvedSupertype,
         DiagnosticKind.UnresolvedExpandedType,
         DiagnosticKind.Other -> FirErrors.OTHER_ERROR

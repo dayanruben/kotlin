@@ -5,15 +5,18 @@
 
 package org.jetbrains.kotlin.fir.resolve.transformers
 
+import org.jetbrains.kotlin.descriptors.EffectiveVisibility
+import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.declarations.impl.FirResolvedDeclarationStatusImpl
 import org.jetbrains.kotlin.fir.declarations.utils.isLocal
 import org.jetbrains.kotlin.fir.expressions.FirBlock
 import org.jetbrains.kotlin.fir.expressions.FirStatement
 import org.jetbrains.kotlin.fir.languageVersionSettings
 import org.jetbrains.kotlin.fir.render
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
-import org.jetbrains.kotlin.fir.resolve.firProvider
+import org.jetbrains.kotlin.fir.resolve.providers.firProvider
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.LocalClassesNavigationInfo
 import org.jetbrains.kotlin.fir.scopes.FirCompositeScope
 import org.jetbrains.kotlin.fir.scopes.FirScope
@@ -316,6 +319,14 @@ abstract class AbstractFirStatusResolveTransformer(
         anonymousObject: FirAnonymousObject,
         data: FirResolvedDeclarationStatus?
     ): FirStatement {
+        anonymousObject.transformStatus(
+            this,
+            FirResolvedDeclarationStatusImpl(
+                anonymousObject.status.visibility,
+                anonymousObject.status.modality ?: Modality.FINAL,
+                EffectiveVisibility.Local
+            )
+        )
         @Suppress("UNCHECKED_CAST")
         return transformClass(anonymousObject, data)
     }

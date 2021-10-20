@@ -425,6 +425,7 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
 
     abstract class AmbiguousSuper : KtFirDiagnostic<KtSuperExpression>() {
         override val diagnosticClass get() = AmbiguousSuper::class
+        abstract val candidates: List<KtType>
     }
 
     abstract class ConstructorInObject : KtFirDiagnostic<KtDeclaration>() {
@@ -1747,6 +1748,14 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = WrongSetterParameterType::class
         abstract val expectedType: KtType
         abstract val actualType: KtType
+    }
+
+    abstract class DelegateUsesExtensionPropertyTypeParameter : KtFirDiagnostic<KtProperty>() {
+        override val diagnosticClass get() = DelegateUsesExtensionPropertyTypeParameter::class
+    }
+
+    abstract class DelegateUsesExtensionPropertyTypeParameterWarning : KtFirDiagnostic<KtProperty>() {
+        override val diagnosticClass get() = DelegateUsesExtensionPropertyTypeParameterWarning::class
     }
 
     abstract class InitializerTypeMismatch : KtFirDiagnostic<KtProperty>() {

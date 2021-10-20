@@ -14,17 +14,18 @@ import org.jetbrains.kotlin.fir.declarations.utils.effectiveVisibility
 import org.jetbrains.kotlin.fir.declarations.utils.isExpect
 import org.jetbrains.kotlin.fir.declarations.utils.isOverride
 import org.jetbrains.kotlin.fir.declarations.utils.visibility
-import org.jetbrains.kotlin.fir.extensions.*
+import org.jetbrains.kotlin.fir.extensions.FirStatusTransformerExtension
+import org.jetbrains.kotlin.fir.extensions.extensionService
+import org.jetbrains.kotlin.fir.extensions.statusTransformerExtensions
 import org.jetbrains.kotlin.fir.render
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.scopes.ProcessorAction
 import org.jetbrains.kotlin.fir.scopes.unsubstitutedScope
 import org.jetbrains.kotlin.fir.symbols.ensureResolved
-import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
 import org.jetbrains.kotlin.fir.toEffectiveVisibility
-import org.jetbrains.kotlin.fir.typeContext
 import org.jetbrains.kotlin.fir.types.ConeClassLikeType
 import org.jetbrains.kotlin.fir.types.coneTypeSafe
+import org.jetbrains.kotlin.fir.types.typeContext
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
 
@@ -47,9 +48,9 @@ class FirStatusResolver(
 
     private val extensionStatusTransformers = session.extensionService.statusTransformerExtensions
 
-    private inline fun <T> T.applyExtensionTransformers(
+    private inline fun FirMemberDeclaration.applyExtensionTransformers(
         operation: FirStatusTransformerExtension.(FirDeclarationStatus) -> FirDeclarationStatus
-    ): FirDeclarationStatus where T : FirMemberDeclaration, T : FirAnnotatedDeclaration {
+    ): FirDeclarationStatus {
         if (extensionStatusTransformers.isEmpty()) return status
         val declaration = this
         return extensionStatusTransformers.fold(status) { acc, it ->
@@ -325,12 +326,3 @@ private fun FirDeclaration.hasOwnBodyOrAccessorBody(): Boolean {
         else -> true
     }
 }
-
-private object PublishedApiEffectiveVisibilityKey : FirDeclarationDataKey()
-var FirDeclaration.publishedApiEffectiveVisibility: EffectiveVisibility? by FirDeclarationDataRegistry.data(PublishedApiEffectiveVisibilityKey)
-
-inline val FirCallableSymbol<*>.publishedApiEffectiveVisibility: EffectiveVisibility?
-    get() {
-        ensureResolved(FirResolvePhase.STATUS)
-        return fir.publishedApiEffectiveVisibility
-    }

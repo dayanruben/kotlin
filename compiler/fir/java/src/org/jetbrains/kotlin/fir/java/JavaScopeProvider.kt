@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.fir.declarations.utils.superConeTypes
 import org.jetbrains.kotlin.fir.java.declarations.FirJavaClass
 import org.jetbrains.kotlin.fir.java.scopes.*
 import org.jetbrains.kotlin.fir.resolve.*
+import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.scopes.FirContainingNamesAwareScope
 import org.jetbrains.kotlin.fir.scopes.FirScopeProvider
 import org.jetbrains.kotlin.fir.scopes.FirTypeScope
@@ -87,7 +88,9 @@ object JavaScopeProvider : FirScopeProvider() {
                 if (regularClass.isThereLoopInSupertypes(useSiteSession))
                     listOf(StandardClassIds.Any.constructClassLikeType(emptyArray(), isNullable = false))
                 else
-                    lookupSuperTypes(regularClass, lookupInterfaces = true, deep = false, useSiteSession = useSiteSession)
+                    lookupSuperTypes(
+                        regularClass, lookupInterfaces = true, deep = false, useSiteSession = useSiteSession, substituteTypes = true
+                    )
 
             val superTypeScopes = superTypes.mapNotNull {
                 it.scopeForSupertype(useSiteSession, scopeSession, subClass = regularClass)

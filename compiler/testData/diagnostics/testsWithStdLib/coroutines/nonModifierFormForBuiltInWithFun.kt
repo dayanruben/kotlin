@@ -1,10 +1,9 @@
-// FIR_IDENTICAL
 // SKIP_TXT
 
 infix fun Int.suspend(c: () -> Unit) { c() }
 
 fun bar() {
-    1 <!MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND!>suspend<!> fun() {
+    1 <!MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND_FUN!>suspend<!> fun() {
         println()
     }
 
@@ -12,7 +11,7 @@ fun bar() {
         println()
     }
 
-    1 <!MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND!>suspend<!> @Ann fun() {
+    1 <!MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND_FUN!>suspend<!> @Ann fun() {
         println()
     }
 }
@@ -22,7 +21,7 @@ fun bar() {
 annotation class Ann
 
 fun main(suspend: WLambdaInvoke) {
-    1 <!MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND!>suspend<!> fun() {}
+    1 <!MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND_FUN!>suspend<!> fun() {}
 }
 
 class WLambdaInvoke {

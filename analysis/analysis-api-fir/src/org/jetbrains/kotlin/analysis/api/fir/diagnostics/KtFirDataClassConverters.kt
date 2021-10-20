@@ -569,6 +569,9 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
     }
     add(FirErrors.AMBIGUOUS_SUPER) { firDiagnostic ->
         AmbiguousSuperImpl(
+            firDiagnostic.a.map { coneKotlinType ->
+                firSymbolBuilder.typeBuilder.buildKtType(coneKotlinType)
+            },
             firDiagnostic as FirPsiDiagnostic,
             token,
         )
@@ -2467,6 +2470,18 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
         WrongSetterParameterTypeImpl(
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.b),
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.DELEGATE_USES_EXTENSION_PROPERTY_TYPE_PARAMETER) { firDiagnostic ->
+        DelegateUsesExtensionPropertyTypeParameterImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.DELEGATE_USES_EXTENSION_PROPERTY_TYPE_PARAMETER_WARNING) { firDiagnostic ->
+        DelegateUsesExtensionPropertyTypeParameterWarningImpl(
             firDiagnostic as FirPsiDiagnostic,
             token,
         )

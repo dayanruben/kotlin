@@ -10,10 +10,7 @@ import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.builtins.StandardNames.BACKING_FIELD
 import org.jetbrains.kotlin.builtins.StandardNames.DEFAULT_VALUE_PARAMETER
-import org.jetbrains.kotlin.descriptors.ClassKind
-import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.descriptors.Visibilities
-import org.jetbrains.kotlin.descriptors.Visibility
+import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.*
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.contracts.FirContractDescription
@@ -966,6 +963,7 @@ open class RawFirBuilder(
                             classKind = ClassKind.ENUM_ENTRY
                             scopeProvider = this@RawFirBuilder.baseScopeProvider
                             symbol = FirAnonymousObjectSymbol()
+                            status = FirDeclarationStatusImpl(Visibilities.Local, Modality.FINAL)
 
                             val delegatedEntrySelfType = buildResolvedTypeRef {
                                 type =
@@ -1158,6 +1156,7 @@ open class RawFirBuilder(
                         classKind = ClassKind.OBJECT
                         scopeProvider = baseScopeProvider
                         symbol = FirAnonymousObjectSymbol()
+                        status = FirDeclarationStatusImpl(Visibilities.Local, Modality.FINAL)
                         context.applyToActualCapturedTypeParameters(false) {
                             typeParameters += buildOuterClassTypeParameterRef { symbol = it }
                         }
@@ -1223,6 +1222,7 @@ open class RawFirBuilder(
                     receiverTypeRef = receiverType
                     symbol = FirAnonymousFunctionSymbol()
                     isLambda = false
+                    hasExplicitParameterList = true
                     label = context.getLastLabel(function)
                     labelName = label?.name ?: context.calleeNamesForLambda.lastOrNull()?.identifier
                 }
@@ -1338,6 +1338,7 @@ open class RawFirBuilder(
                 receiverTypeRef = receiverType
                 symbol = FirAnonymousFunctionSymbol()
                 isLambda = true
+                hasExplicitParameterList = expression.functionLiteral.arrow != null
 
                 val destructuringStatements = mutableListOf<FirStatement>()
                 for (valueParameter in literal.valueParameters) {

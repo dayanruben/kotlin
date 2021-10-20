@@ -32,6 +32,7 @@ object FirIdeDeserializedDeclarationSourceProvider {
             is FirClass -> provideSourceForClass(fir, project)
             is FirTypeAlias -> provideSourceForTypeAlias(fir, project)
             is FirConstructor -> provideSourceForConstructor(fir, project)
+            is FirEnumEntry -> provideSourceForEnumEntry(fir, project)
             else -> null
         }
     }
@@ -97,6 +98,17 @@ object FirIdeDeserializedDeclarationSourceProvider {
         return null
     }
 
+    private fun provideSourceForEnumEntry(
+        enumEntry: FirEnumEntry,
+        project: Project
+    ): PsiElement? {
+        val candidates = enumEntry.containingKtClass(project)?.body?.enumEntries
+            ?.filter { it.name == enumEntry.name.asString() }
+            .orEmpty()
+
+        return candidates.firstOrNull(KtElement::isCompiled)
+    }
+
     private fun FirDeclaration.scope(project: Project): GlobalSearchScope {
         return GlobalSearchScope.allScope(project)
         /* TODO:
@@ -125,6 +137,7 @@ object FirIdeDeserializedDeclarationSourceProvider {
 private fun KtElement.isCompiled(): Boolean = containingKtFile.isCompiled
 
 private val allowedFakeElementKinds = setOf(
+    FirFakeSourceElementKind.FromUseSiteTarget,
     FirFakeSourceElementKind.PropertyFromParameter,
     FirFakeSourceElementKind.ItLambdaParameter,
     FirFakeSourceElementKind.DataClassGeneratedMembers,

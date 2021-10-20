@@ -28,10 +28,10 @@ import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.impl.FirFieldImpl
 import org.jetbrains.kotlin.fir.declarations.synthetic.FirSyntheticProperty
 import org.jetbrains.kotlin.fir.java.declarations.FirJavaField
-import org.jetbrains.kotlin.fir.resolve.calls.originalConstructorIfTypeAlias
 import org.jetbrains.kotlin.fir.resolve.getSymbolByLookupTag
+import org.jetbrains.kotlin.fir.resolve.originalConstructorIfTypeAlias
+import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
-import org.jetbrains.kotlin.fir.resolve.symbolProvider
 import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
 import org.jetbrains.kotlin.fir.symbols.ConeTypeParameterLookupTag
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassifierSymbol
@@ -39,10 +39,10 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirTypeParameterSymbol
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.impl.ConeClassLikeTypeImpl
 import org.jetbrains.kotlin.analysis.api.fir.symbols.KtFirClassInitializerSymbol
+import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutorByMap
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.types.Variance
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
@@ -392,7 +392,10 @@ internal class KtSymbolByFirBuilder private constructor(
 
         fun buildSubstitutor(substitutor: ConeSubstitutor): KtSubstitutor {
             if (substitutor == ConeSubstitutor.Empty) return KtSubstitutor.Empty(token)
-            return KtFirSubstitutor(substitutor, this@KtSymbolByFirBuilder, token)
+            return when (substitutor) {
+                is ConeSubstitutorByMap -> KtFirMapBackedSubstitutor(substitutor, this@KtSymbolByFirBuilder, token)
+                else -> KtFirGenericSubstitutor(substitutor, this@KtSymbolByFirBuilder, token)
+            }
         }
     }
 

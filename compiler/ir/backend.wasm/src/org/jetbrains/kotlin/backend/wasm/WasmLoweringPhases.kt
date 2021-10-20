@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.ir.backend.js.lower.coroutines.AddContinuationToNonL
 import org.jetbrains.kotlin.ir.backend.js.lower.coroutines.JsSuspendFunctionsLowering
 import org.jetbrains.kotlin.ir.backend.js.lower.inline.RemoveInlineDeclarationsWithReifiedTypeParametersLowering
 import org.jetbrains.kotlin.ir.backend.js.lower.inline.WrapInlineDeclarationsWithReifiedTypeParametersLowering
+import org.jetbrains.kotlin.ir.backend.wasm.lower.generateMainFunctionCalls
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.util.patchDeclarationParents
 
@@ -269,6 +270,12 @@ private val addContinuationToFunctionCallsLoweringPhase = makeWasmModulePhase(
     )
 )
 
+private val addMainFunctionCallsLowering = makeCustomWasmModulePhase(
+    ::generateMainFunctionCalls,
+    name = "GenerateMainFunctionCalls",
+    description = "Generate main function calls into start function",
+)
+
 private val defaultArgumentStubGeneratorPhase = makeWasmModulePhase(
     ::DefaultArgumentStubGenerator,
     name = "DefaultArgumentStubGenerator",
@@ -414,7 +421,8 @@ private val builtInsLoweringPhase = makeWasmModulePhase(
 private val objectDeclarationLoweringPhase = makeWasmModulePhase(
     ::ObjectDeclarationLowering,
     name = "ObjectDeclarationLowering",
-    description = "Create lazy object instance generator functions"
+    description = "Create lazy object instance generator functions",
+    prerequisite = setOf(enumClassCreateInitializerLoweringPhase)
 )
 
 private val objectUsageLoweringPhase = makeWasmModulePhase(
@@ -521,6 +529,7 @@ val wasmPhases = NamedCompilerPhase(
 
             addContinuationToNonLocalSuspendFunctionsLoweringPhase then
             addContinuationToFunctionCallsLoweringPhase then
+            addMainFunctionCallsLowering then
 
             tryCatchCanonicalization then
             returnableBlockLoweringPhase then

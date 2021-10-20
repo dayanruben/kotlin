@@ -8,10 +8,7 @@ package org.jetbrains.kotlin.fir.resolve.transformers.body.resolve
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.declarations.*
-import org.jetbrains.kotlin.fir.diagnostics.ConeDiagnostic
-import org.jetbrains.kotlin.fir.diagnostics.ConeSimpleDiagnostic
-import org.jetbrains.kotlin.fir.diagnostics.ConeStubDiagnostic
-import org.jetbrains.kotlin.fir.diagnostics.DiagnosticKind
+import org.jetbrains.kotlin.fir.diagnostics.*
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.builder.buildErrorExpression
 import org.jetbrains.kotlin.fir.expressions.builder.buildFunctionCall
@@ -28,11 +25,9 @@ import org.jetbrains.kotlin.fir.resolve.calls.*
 import org.jetbrains.kotlin.fir.resolve.dfa.unwrapSmartcastExpression
 import org.jetbrains.kotlin.fir.resolve.diagnostics.*
 import org.jetbrains.kotlin.fir.resolve.inference.FirStubInferenceSession
-import org.jetbrains.kotlin.fir.resolve.inference.inferenceComponents
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.resolve.transformers.InvocationKindTransformer
 import org.jetbrains.kotlin.fir.resolve.transformers.StoreReceiver
-import org.jetbrains.kotlin.fir.resolve.transformers.firClassLike
 import org.jetbrains.kotlin.fir.symbols.impl.FirVariableSymbol
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.builder.buildErrorTypeRef
@@ -268,7 +263,7 @@ open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransform
                     }
                     else -> buildErrorTypeRef {
                         source = superReferenceContainer.source
-                        diagnostic = ConeSimpleDiagnostic("Ambiguous supertype", DiagnosticKind.AmbiguousSuper)
+                        diagnostic = ConeAmbiguousSuper(types)
                     }
                 }
                 superReferenceContainer.resultType =
@@ -610,7 +605,7 @@ open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransform
         if (type.typeArguments.isNotEmpty()) return this
 
         val firClass = type.lookupTag.toSymbol(session)?.fir ?: return this
-        if (firClass !is FirTypeParameterRefsOwner || firClass.typeParameters.isEmpty()) return this
+        if (firClass.typeParameters.isEmpty()) return this
 
         val originalType = argument.unwrapSmartcastExpression().typeRef.coneTypeSafe<ConeKotlinType>() ?: return this
         val newType = components.computeRepresentativeTypeForBareType(type, originalType) ?: return buildErrorTypeRef {
@@ -1152,7 +1147,7 @@ open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransform
     internal fun <T> storeTypeFromCallee(access: T) where T : FirQualifiedAccess, T : FirExpression {
         val typeFromCallee = components.typeFromCallee(access)
         access.resultType = typeFromCallee.withReplacedConeType(
-            session.inferenceComponents.approximator.approximateToSuperType(
+            session.typeApproximator.approximateToSuperType(
                 typeFromCallee.type, TypeApproximatorConfiguration.FinalApproximationAfterResolutionAndInference
             )
         )

@@ -5,6 +5,8 @@
 
 package org.jetbrains.kotlin.analysis.api.fir.renderer
 
+import org.jetbrains.kotlin.analysis.api.components.KtTypeRendererOptions
+import org.jetbrains.kotlin.analysis.low.level.api.fir.api.tryCollectDesignation
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.containingClass
 import org.jetbrains.kotlin.fir.containingClassForLocal
@@ -14,14 +16,11 @@ import org.jetbrains.kotlin.fir.declarations.utils.isLocal
 import org.jetbrains.kotlin.fir.expressions.FirAnnotation
 import org.jetbrains.kotlin.fir.renderWithType
 import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeUnresolvedError
-import org.jetbrains.kotlin.fir.resolve.inference.*
 import org.jetbrains.kotlin.fir.resolve.toFirRegularClass
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.LookupTagInternals
 import org.jetbrains.kotlin.fir.types.*
-import org.jetbrains.kotlin.analysis.low.level.api.fir.api.tryCollectDesignation
-import org.jetbrains.kotlin.analysis.api.components.KtTypeRendererOptions
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.renderer.render
@@ -85,6 +84,11 @@ internal class ConeTypeIdeRenderer(
             is ConeFlexibleType -> {
                 renderAnnotationList(annotations)
                 append(renderFlexibleType(renderType(type.lowerBound), renderType(type.upperBound)))
+            }
+            is ConeCapturedType -> {
+                renderAnnotationList(annotations)
+                append(type.render())
+                renderNullability(type.type)
             }
             else -> appendError("Unexpected cone type ${type::class.qualifiedName}")
         }
@@ -232,7 +236,7 @@ internal class ConeTypeIdeRenderer(
 
         if (classSymbolToRender !is FirRegularClassSymbol) {
             append(classSymbolToRender.classId.shortClassName)
-            if (type.typeArguments.any()) {
+            if (options.renderTypeArguments && type.typeArguments.any()) {
                 type.typeArguments.joinTo(this, ", ", prefix = "<", postfix = ">") {
                     renderTypeProjection(it)
                 }
@@ -259,7 +263,7 @@ internal class ConeTypeIdeRenderer(
             if (index != 0) append(".")
             append(currentClass.name)
 
-            if (needToRenderTypeParameters(index)) {
+            if (options.renderTypeArguments && needToRenderTypeParameters(index)) {
                 val typeParametersCount = currentClass.typeParameters.count { it is FirTypeParameter }
                 val begin = typeParametersLeft - typeParametersCount
                 val end = typeParametersLeft

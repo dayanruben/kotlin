@@ -45,6 +45,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.DescriptorUtilsKt;
 import org.jetbrains.kotlin.resolve.lazy.ForceResolveUtil;
 import org.jetbrains.kotlin.resolve.multiplatform.ExpectedActualResolver;
 import org.jetbrains.kotlin.resolve.scopes.*;
+import org.jetbrains.kotlin.resolve.source.KotlinSourceElementKt;
 import org.jetbrains.kotlin.types.*;
 import org.jetbrains.kotlin.types.expressions.ExpressionTypingContext;
 import org.jetbrains.kotlin.types.expressions.ExpressionTypingServices;
@@ -583,7 +584,9 @@ public class BodyResolver {
             if (classDescriptor != null) {
                 if (ErrorUtils.isError(classDescriptor)) continue;
 
-                if (FunctionTypesKt.isExtensionFunctionType(supertype)) {
+                if (FunctionTypesKt.isExtensionFunctionType(supertype) &&
+                    !languageVersionSettings.supportsFeature(LanguageFeature.FunctionalTypeWithExtensionAsSupertype)
+                ) {
                     trace.report(SUPERTYPE_IS_EXTENSION_FUNCTION_TYPE.on(typeReference));
                 }
                 else if (FunctionTypesKt.isSuspendFunctionType(supertype) &&
@@ -1011,7 +1014,8 @@ public class BodyResolver {
         if (functionDescriptor instanceof PropertyAccessorDescriptor && functionDescriptor.getExtensionReceiverParameter() == null) {
             PropertyAccessorDescriptor accessorDescriptor = (PropertyAccessorDescriptor) functionDescriptor;
             KtProperty property = (KtProperty) function.getParent();
-            SyntheticFieldDescriptor fieldDescriptor = new SyntheticFieldDescriptor(accessorDescriptor, property);
+            SourceElement propertySourceElement = KotlinSourceElementKt.toSourceElement(property);
+            SyntheticFieldDescriptor fieldDescriptor = new SyntheticFieldDescriptor(accessorDescriptor, propertySourceElement);
             innerScope = new LexicalScopeImpl(innerScope, functionDescriptor, true, null,
                                               LexicalScopeKind.PROPERTY_ACCESSOR_BODY,
                                               LocalRedeclarationChecker.DO_NOTHING.INSTANCE, handler -> {

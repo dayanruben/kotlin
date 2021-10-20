@@ -26,7 +26,6 @@ import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
 import org.jetbrains.kotlin.fir.resolve.substitution.substitutorByMap
 import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirTypeParameterSymbol
-import org.jetbrains.kotlin.fir.typeContext
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.types.TypeCheckerState
 import org.jetbrains.kotlin.types.model.convertVariance
@@ -50,7 +49,7 @@ internal interface KtFirAnalysisSessionComponent {
         qualifiedAccessSource: FirSourceElement?,
         diagnosticCache: MutableList<FirDiagnostic>
     ): KtDiagnosticWithPsi<*>? {
-        val firDiagnostic = toFirDiagnostics(source, qualifiedAccessSource).firstOrNull() ?: return null
+        val firDiagnostic = toFirDiagnostics(analysisSession.rootModuleSession, source, qualifiedAccessSource).firstOrNull() ?: return null
         diagnosticCache += firDiagnostic
         check(firDiagnostic is FirPsiDiagnostic)
         return firDiagnostic.asKtDiagnostic()
