@@ -6296,6 +6296,18 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("nonExhaustiveIfInElvis_after.kt")
+            public void testNonExhaustiveIfInElvis_after() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/controlStructures/nonExhaustiveIfInElvis_after.kt");
+            }
+
+            @Test
+            @TestMetadata("nonExhaustiveIfInElvis_before.kt")
+            public void testNonExhaustiveIfInElvis_before() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/controlStructures/nonExhaustiveIfInElvis_before.kt");
+            }
+
+            @Test
             @TestMetadata("notAFunctionLabel_after.kt")
             public void testNotAFunctionLabel_after() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/controlStructures/notAFunctionLabel_after.kt");
@@ -26362,6 +26374,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("sealedInheritorErrorMessage.kt")
+            public void testSealedInheritorErrorMessage() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/sealed/sealedInheritorErrorMessage.kt");
+            }
+
+            @Test
             @TestMetadata("TreeWhen.kt")
             public void testTreeWhen() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/sealed/TreeWhen.kt");
@@ -32189,6 +32207,24 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("CommaInWhenConditionWithoutArgument.kt")
             public void testCommaInWhenConditionWithoutArgument() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/when/CommaInWhenConditionWithoutArgument.kt");
+            }
+
+            @Test
+            @TestMetadata("deprecatedSyntaxInConditionsNoSubject.kt")
+            public void testDeprecatedSyntaxInConditionsNoSubject() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/when/deprecatedSyntaxInConditionsNoSubject.kt");
+            }
+
+            @Test
+            @TestMetadata("deprecatedSyntaxInConditions_after.kt")
+            public void testDeprecatedSyntaxInConditions_after() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/when/deprecatedSyntaxInConditions_after.kt");
+            }
+
+            @Test
+            @TestMetadata("deprecatedSyntaxInConditions_before.kt")
+            public void testDeprecatedSyntaxInConditions_before() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/when/deprecatedSyntaxInConditions_before.kt");
             }
 
             @Test

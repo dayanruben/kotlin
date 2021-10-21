@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.contracts.description.EventOccurrencesRange
+import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.EffectiveVisibility
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.diagnostics.WhenMissingCase
@@ -442,6 +443,8 @@ internal class SealedSupertypeImpl(
 ) : KtFirDiagnostic.SealedSupertype(), KtAbstractFirDiagnostic<KtTypeReference>
 
 internal class SealedSupertypeInLocalClassImpl(
+    override val declarationType: String,
+    override val sealedClassKind: ClassKind,
     override val firDiagnostic: FirPsiDiagnostic,
     override val token: ValidityToken,
 ) : KtFirDiagnostic.SealedSupertypeInLocalClass(), KtAbstractFirDiagnostic<KtTypeReference>
@@ -1035,6 +1038,26 @@ internal class InapplicableOperatorModifierImpl(
     override val firDiagnostic: FirPsiDiagnostic,
     override val token: ValidityToken,
 ) : KtFirDiagnostic.InapplicableOperatorModifier(), KtAbstractFirDiagnostic<PsiElement>
+
+internal class NoExplicitVisibilityInApiModeImpl(
+    override val firDiagnostic: FirPsiDiagnostic,
+    override val token: ValidityToken,
+) : KtFirDiagnostic.NoExplicitVisibilityInApiMode(), KtAbstractFirDiagnostic<KtDeclaration>
+
+internal class NoExplicitVisibilityInApiModeWarningImpl(
+    override val firDiagnostic: FirPsiDiagnostic,
+    override val token: ValidityToken,
+) : KtFirDiagnostic.NoExplicitVisibilityInApiModeWarning(), KtAbstractFirDiagnostic<KtDeclaration>
+
+internal class NoExplicitReturnTypeInApiModeImpl(
+    override val firDiagnostic: FirPsiDiagnostic,
+    override val token: ValidityToken,
+) : KtFirDiagnostic.NoExplicitReturnTypeInApiMode(), KtAbstractFirDiagnostic<KtDeclaration>
+
+internal class NoExplicitReturnTypeInApiModeWarningImpl(
+    override val firDiagnostic: FirPsiDiagnostic,
+    override val token: ValidityToken,
+) : KtFirDiagnostic.NoExplicitReturnTypeInApiModeWarning(), KtAbstractFirDiagnostic<KtDeclaration>
 
 internal class InlineClassNotTopLevelImpl(
     override val firDiagnostic: FirPsiDiagnostic,
@@ -2634,6 +2657,16 @@ internal class DuplicateLabelInWhenImpl(
     override val firDiagnostic: FirPsiDiagnostic,
     override val token: ValidityToken,
 ) : KtFirDiagnostic.DuplicateLabelInWhen(), KtAbstractFirDiagnostic<KtElement>
+
+internal class ConfusingBranchConditionErrorImpl(
+    override val firDiagnostic: FirPsiDiagnostic,
+    override val token: ValidityToken,
+) : KtFirDiagnostic.ConfusingBranchConditionError(), KtAbstractFirDiagnostic<PsiElement>
+
+internal class ConfusingBranchConditionWarningImpl(
+    override val firDiagnostic: FirPsiDiagnostic,
+    override val token: ValidityToken,
+) : KtFirDiagnostic.ConfusingBranchConditionWarning(), KtAbstractFirDiagnostic<PsiElement>
 
 internal class TypeParameterIsNotAnExpressionImpl(
     override val typeParameter: KtTypeParameterSymbol,

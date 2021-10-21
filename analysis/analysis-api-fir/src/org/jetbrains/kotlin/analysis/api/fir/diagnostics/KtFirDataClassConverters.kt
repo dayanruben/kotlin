@@ -497,6 +497,8 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
     }
     add(FirErrors.SEALED_SUPERTYPE_IN_LOCAL_CLASS) { firDiagnostic ->
         SealedSupertypeInLocalClassImpl(
+            firDiagnostic.a,
+            firDiagnostic.b,
             firDiagnostic as FirPsiDiagnostic,
             token,
         )
@@ -1195,6 +1197,30 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
     add(FirErrors.INAPPLICABLE_OPERATOR_MODIFIER) { firDiagnostic ->
         InapplicableOperatorModifierImpl(
             firDiagnostic.a,
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.NO_EXPLICIT_VISIBILITY_IN_API_MODE) { firDiagnostic ->
+        NoExplicitVisibilityInApiModeImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.NO_EXPLICIT_VISIBILITY_IN_API_MODE_WARNING) { firDiagnostic ->
+        NoExplicitVisibilityInApiModeWarningImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.NO_EXPLICIT_RETURN_TYPE_IN_API_MODE) { firDiagnostic ->
+        NoExplicitReturnTypeInApiModeImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.NO_EXPLICIT_RETURN_TYPE_IN_API_MODE_WARNING) { firDiagnostic ->
+        NoExplicitReturnTypeInApiModeWarningImpl(
             firDiagnostic as FirPsiDiagnostic,
             token,
         )
@@ -3129,6 +3155,18 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
     }
     add(FirErrors.DUPLICATE_LABEL_IN_WHEN) { firDiagnostic ->
         DuplicateLabelInWhenImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.CONFUSING_BRANCH_CONDITION.errorFactory) { firDiagnostic ->
+        ConfusingBranchConditionErrorImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.CONFUSING_BRANCH_CONDITION.warningFactory) { firDiagnostic ->
+        ConfusingBranchConditionWarningImpl(
             firDiagnostic as FirPsiDiagnostic,
             token,
         )

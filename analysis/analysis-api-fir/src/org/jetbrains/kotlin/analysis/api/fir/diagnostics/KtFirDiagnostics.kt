@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.contracts.description.EventOccurrencesRange
+import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.EffectiveVisibility
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.diagnostics.WhenMissingCase
@@ -377,6 +378,8 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
 
     abstract class SealedSupertypeInLocalClass : KtFirDiagnostic<KtTypeReference>() {
         override val diagnosticClass get() = SealedSupertypeInLocalClass::class
+        abstract val declarationType: String
+        abstract val sealedClassKind: ClassKind
     }
 
     abstract class SealedInheritorInDifferentPackage : KtFirDiagnostic<KtTypeReference>() {
@@ -865,6 +868,22 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
     abstract class InapplicableOperatorModifier : KtFirDiagnostic<PsiElement>() {
         override val diagnosticClass get() = InapplicableOperatorModifier::class
         abstract val message: String
+    }
+
+    abstract class NoExplicitVisibilityInApiMode : KtFirDiagnostic<KtDeclaration>() {
+        override val diagnosticClass get() = NoExplicitVisibilityInApiMode::class
+    }
+
+    abstract class NoExplicitVisibilityInApiModeWarning : KtFirDiagnostic<KtDeclaration>() {
+        override val diagnosticClass get() = NoExplicitVisibilityInApiModeWarning::class
+    }
+
+    abstract class NoExplicitReturnTypeInApiMode : KtFirDiagnostic<KtDeclaration>() {
+        override val diagnosticClass get() = NoExplicitReturnTypeInApiMode::class
+    }
+
+    abstract class NoExplicitReturnTypeInApiModeWarning : KtFirDiagnostic<KtDeclaration>() {
+        override val diagnosticClass get() = NoExplicitReturnTypeInApiModeWarning::class
     }
 
     abstract class InlineClassNotTopLevel : KtFirDiagnostic<KtDeclaration>() {
@@ -2185,6 +2204,14 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
 
     abstract class DuplicateLabelInWhen : KtFirDiagnostic<KtElement>() {
         override val diagnosticClass get() = DuplicateLabelInWhen::class
+    }
+
+    abstract class ConfusingBranchConditionError : KtFirDiagnostic<PsiElement>() {
+        override val diagnosticClass get() = ConfusingBranchConditionError::class
+    }
+
+    abstract class ConfusingBranchConditionWarning : KtFirDiagnostic<PsiElement>() {
+        override val diagnosticClass get() = ConfusingBranchConditionWarning::class
     }
 
     abstract class TypeParameterIsNotAnExpression : KtFirDiagnostic<KtSimpleNameExpression>() {

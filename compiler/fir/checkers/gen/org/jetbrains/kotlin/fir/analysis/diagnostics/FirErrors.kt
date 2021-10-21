@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageFeature.ProhibitAssigningSingleElementsToVarargsInNamedForm
+import org.jetbrains.kotlin.config.LanguageFeature.ProhibitConfusingSyntaxInWhenBranches
 import org.jetbrains.kotlin.config.LanguageFeature.ProhibitInvisibleAbstractMethodsInSuperclasses
 import org.jetbrains.kotlin.config.LanguageFeature.ProhibitNonReifiedArraysAsReifiedTypeArguments
 import org.jetbrains.kotlin.config.LanguageFeature.ProhibitUseSiteTargetAnnotationsOnSuperTypes
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.config.LanguageFeature.RestrictRetentionForExpressio
 import org.jetbrains.kotlin.config.LanguageFeature.RestrictionOfValReassignmentViaBackingField
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.contracts.description.EventOccurrencesRange
+import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.EffectiveVisibility
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.diagnostics.WhenMissingCase
@@ -173,7 +175,7 @@ object FirErrors {
     val SUPERTYPE_APPEARS_TWICE by error0<KtTypeReference>()
     val CLASS_IN_SUPERTYPE_FOR_ENUM by error0<KtTypeReference>()
     val SEALED_SUPERTYPE by error0<KtTypeReference>()
-    val SEALED_SUPERTYPE_IN_LOCAL_CLASS by error0<KtTypeReference>()
+    val SEALED_SUPERTYPE_IN_LOCAL_CLASS by error2<KtTypeReference, String, ClassKind>()
     val SEALED_INHERITOR_IN_DIFFERENT_PACKAGE by error0<KtTypeReference>()
     val SEALED_INHERITOR_IN_DIFFERENT_MODULE by error0<KtTypeReference>()
     val CLASS_INHERITS_JAVA_SEALED_CLASS by error0<KtTypeReference>()
@@ -284,6 +286,10 @@ object FirErrors {
     val WRONG_MODIFIER_CONTAINING_DECLARATION by error2<PsiElement, KtModifierKeywordToken, String>()
     val DEPRECATED_MODIFIER_CONTAINING_DECLARATION by warning2<PsiElement, KtModifierKeywordToken, String>()
     val INAPPLICABLE_OPERATOR_MODIFIER by error1<PsiElement, String>(SourceElementPositioningStrategies.OPERATOR_MODIFIER)
+    val NO_EXPLICIT_VISIBILITY_IN_API_MODE by warning0<KtDeclaration>(SourceElementPositioningStrategies.DECLARATION_START_TO_NAME)
+    val NO_EXPLICIT_VISIBILITY_IN_API_MODE_WARNING by warning0<KtDeclaration>(SourceElementPositioningStrategies.DECLARATION_START_TO_NAME)
+    val NO_EXPLICIT_RETURN_TYPE_IN_API_MODE by error0<KtDeclaration>(SourceElementPositioningStrategies.DECLARATION_NAME)
+    val NO_EXPLICIT_RETURN_TYPE_IN_API_MODE_WARNING by warning0<KtDeclaration>(SourceElementPositioningStrategies.DECLARATION_NAME)
 
     // Inline classes
     val INLINE_CLASS_NOT_TOP_LEVEL by error0<KtDeclaration>(SourceElementPositioningStrategies.INLINE_OR_VALUE_MODIFIER)
@@ -592,6 +598,7 @@ object FirErrors {
     val ILLEGAL_DECLARATION_IN_WHEN_SUBJECT by error1<KtElement, String>()
     val COMMA_IN_WHEN_CONDITION_WITHOUT_ARGUMENT by error0<PsiElement>(SourceElementPositioningStrategies.COMMAS)
     val DUPLICATE_LABEL_IN_WHEN by warning0<KtElement>()
+    val CONFUSING_BRANCH_CONDITION by deprecationError0<PsiElement>(ProhibitConfusingSyntaxInWhenBranches)
 
     // Context tracking
     val TYPE_PARAMETER_IS_NOT_AN_EXPRESSION by error1<KtSimpleNameExpression, FirTypeParameterSymbol>()
@@ -684,7 +691,7 @@ object FirErrors {
     val CANNOT_ALL_UNDER_IMPORT_FROM_SINGLETON by error1<KtImportDirective, Name>(SourceElementPositioningStrategies.IMPORT_LAST_NAME)
     val PACKAGE_CANNOT_BE_IMPORTED by error0<KtImportDirective>(SourceElementPositioningStrategies.IMPORT_LAST_NAME)
     val CANNOT_BE_IMPORTED by error1<KtImportDirective, Name>(SourceElementPositioningStrategies.IMPORT_LAST_NAME)
-    val CONFLICTING_IMPORT by error1<KtImportDirective, Name>(SourceElementPositioningStrategies.IMPORT_LAST_NAME)
+    val CONFLICTING_IMPORT by error1<KtImportDirective, Name>(SourceElementPositioningStrategies.IMPORT_ALIAS)
     val OPERATOR_RENAMED_ON_IMPORT by error0<KtImportDirective>(SourceElementPositioningStrategies.IMPORT_LAST_NAME)
 
     // Suspend errors

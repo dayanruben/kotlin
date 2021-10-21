@@ -1780,6 +1780,11 @@ public class BoxJsTestGenerated extends AbstractBoxJsTest {
             KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("js/js.translator/testData/box/export"), Pattern.compile("^([^_](.+))\\.kt$"), null, TargetBackend.JS, true);
         }
 
+        @TestMetadata("defaultInlineClassConstructorParam.kt")
+        public void testDefaultInlineClassConstructorParam() throws Exception {
+            runTest("js/js.translator/testData/box/export/defaultInlineClassConstructorParam.kt");
+        }
+
         @TestMetadata("exportAllFile.kt")
         public void testExportAllFile() throws Exception {
             runTest("js/js.translator/testData/box/export/exportAllFile.kt");
@@ -6375,6 +6380,11 @@ public class BoxJsTestGenerated extends AbstractBoxJsTest {
         @TestMetadata("exception.kt")
         public void testException() throws Exception {
             runTest("js/js.translator/testData/box/native/exception.kt");
+        }
+
+        @TestMetadata("externalNestedEnum.kt")
+        public void testExternalNestedEnum() throws Exception {
+            runTest("js/js.translator/testData/box/native/externalNestedEnum.kt");
         }
 
         @TestMetadata("inheritanceFromNativeClass.kt")

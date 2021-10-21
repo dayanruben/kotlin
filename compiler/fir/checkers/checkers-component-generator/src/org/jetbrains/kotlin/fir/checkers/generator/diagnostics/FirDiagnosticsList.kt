@@ -10,6 +10,7 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.contracts.description.EventOccurrencesRange
+import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.EffectiveVisibility
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.diagnostics.WhenMissingCase
@@ -170,7 +171,10 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val SUPERTYPE_APPEARS_TWICE by error<KtTypeReference>()
         val CLASS_IN_SUPERTYPE_FOR_ENUM by error<KtTypeReference>()
         val SEALED_SUPERTYPE by error<KtTypeReference>()
-        val SEALED_SUPERTYPE_IN_LOCAL_CLASS by error<KtTypeReference>()
+        val SEALED_SUPERTYPE_IN_LOCAL_CLASS by error<KtTypeReference> {
+            parameter<String>("declarationType")
+            parameter<ClassKind>("sealedClassKind")
+        }
         val SEALED_INHERITOR_IN_DIFFERENT_PACKAGE by error<KtTypeReference>()
         val SEALED_INHERITOR_IN_DIFFERENT_MODULE by error<KtTypeReference>()
         val CLASS_INHERITS_JAVA_SEALED_CLASS by error<KtTypeReference>()
@@ -381,6 +385,12 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val INAPPLICABLE_OPERATOR_MODIFIER by error<PsiElement>(PositioningStrategy.OPERATOR_MODIFIER) {
             parameter<String>("message")
         }
+
+        val NO_EXPLICIT_VISIBILITY_IN_API_MODE by warning<KtDeclaration>(PositioningStrategy.DECLARATION_START_TO_NAME)
+        val NO_EXPLICIT_VISIBILITY_IN_API_MODE_WARNING by warning<KtDeclaration>(PositioningStrategy.DECLARATION_START_TO_NAME)
+
+        val NO_EXPLICIT_RETURN_TYPE_IN_API_MODE by error<KtDeclaration>(PositioningStrategy.DECLARATION_NAME)
+        val NO_EXPLICIT_RETURN_TYPE_IN_API_MODE_WARNING by warning<KtDeclaration>(PositioningStrategy.DECLARATION_NAME)
     }
 
     val INLINE_CLASSES by object : DiagnosticGroup("Inline classes") {
@@ -1111,6 +1121,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         }
         val COMMA_IN_WHEN_CONDITION_WITHOUT_ARGUMENT by error<PsiElement>(PositioningStrategy.COMMAS)
         val DUPLICATE_LABEL_IN_WHEN by warning<KtElement>()
+        val CONFUSING_BRANCH_CONDITION by deprecationError<PsiElement>(LanguageFeature.ProhibitConfusingSyntaxInWhenBranches)
     }
 
     val CONTEXT_TRACKING by object : DiagnosticGroup("Context tracking") {
@@ -1322,7 +1333,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<Name>("name")
         }
 
-        val CONFLICTING_IMPORT by error<KtImportDirective>(PositioningStrategy.IMPORT_LAST_NAME) {
+        val CONFLICTING_IMPORT by error<KtImportDirective>(PositioningStrategy.IMPORT_ALIAS) {
             parameter<Name>("name")
         }
 
