@@ -6086,6 +6086,11 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
             runTest("compiler/testData/codegen/box/coroutines/simpleSuspendCallableReference.kt");
         }
 
+        @TestMetadata("simpleWithDefaultValue.kt")
+        public void testSimpleWithDefaultValue() throws Exception {
+            runTest("compiler/testData/codegen/box/coroutines/simpleWithDefaultValue.kt");
+        }
+
         @TestMetadata("simpleWithHandleResult.kt")
         public void testSimpleWithHandleResult() throws Exception {
             runTest("compiler/testData/codegen/box/coroutines/simpleWithHandleResult.kt");
@@ -12139,6 +12144,16 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
         @TestMetadata("kotlinReflect.kt")
         public void testKotlinReflect() throws Exception {
             runTest("compiler/testData/codegen/box/inlineArgsInPlace/kotlinReflect.kt");
+        }
+
+        @TestMetadata("kt49370.kt")
+        public void testKt49370() throws Exception {
+            runTest("compiler/testData/codegen/box/inlineArgsInPlace/kt49370.kt");
+        }
+
+        @TestMetadata("kt49407.kt")
+        public void testKt49407() throws Exception {
+            runTest("compiler/testData/codegen/box/inlineArgsInPlace/kt49407.kt");
         }
 
         @TestMetadata("mapSet.kt")
@@ -19944,6 +19959,11 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
             @TestMetadata("forInDownToWithPossibleUnderflow.kt")
             public void testForInDownToWithPossibleUnderflow() throws Exception {
                 runTest("compiler/testData/codegen/box/ranges/forInDownTo/forInDownToWithPossibleUnderflow.kt");
+            }
+
+            @TestMetadata("forInSumDownToSum.kt")
+            public void testForInSumDownToSum() throws Exception {
+                runTest("compiler/testData/codegen/box/ranges/forInDownTo/forInSumDownToSum.kt");
             }
 
             @TestMetadata("forIntInDownTo.kt")

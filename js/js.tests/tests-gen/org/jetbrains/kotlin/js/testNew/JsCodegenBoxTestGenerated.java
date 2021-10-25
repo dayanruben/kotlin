@@ -7083,6 +7083,12 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
         }
 
         @Test
+        @TestMetadata("simpleWithDefaultValue.kt")
+        public void testSimpleWithDefaultValue() throws Exception {
+            runTest("compiler/testData/codegen/box/coroutines/simpleWithDefaultValue.kt");
+        }
+
+        @Test
         @TestMetadata("simpleWithHandleResult.kt")
         public void testSimpleWithHandleResult() throws Exception {
             runTest("compiler/testData/codegen/box/coroutines/simpleWithHandleResult.kt");
@@ -14522,6 +14528,18 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
         @TestMetadata("kotlinReflect.kt")
         public void testKotlinReflect() throws Exception {
             runTest("compiler/testData/codegen/box/inlineArgsInPlace/kotlinReflect.kt");
+        }
+
+        @Test
+        @TestMetadata("kt49370.kt")
+        public void testKt49370() throws Exception {
+            runTest("compiler/testData/codegen/box/inlineArgsInPlace/kt49370.kt");
+        }
+
+        @Test
+        @TestMetadata("kt49407.kt")
+        public void testKt49407() throws Exception {
+            runTest("compiler/testData/codegen/box/inlineArgsInPlace/kt49407.kt");
         }
 
         @Test
@@ -23303,6 +23321,12 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             @TestMetadata("forInDownToWithPossibleUnderflow.kt")
             public void testForInDownToWithPossibleUnderflow() throws Exception {
                 runTest("compiler/testData/codegen/box/ranges/forInDownTo/forInDownToWithPossibleUnderflow.kt");
+            }
+
+            @Test
+            @TestMetadata("forInSumDownToSum.kt")
+            public void testForInSumDownToSum() throws Exception {
+                runTest("compiler/testData/codegen/box/ranges/forInDownTo/forInSumDownToSum.kt");
             }
 
             @Test
