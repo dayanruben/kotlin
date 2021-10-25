@@ -31,13 +31,12 @@ import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
 import org.jetbrains.kotlin.fir.references.FirThisReference
 import org.jetbrains.kotlin.fir.references.impl.FirPropertyFromParameterResolvedNamedReference
 import org.jetbrains.kotlin.fir.resolve.*
-import org.jetbrains.kotlin.fir.resolve.calls.FirSyntheticPropertySymbol
+import org.jetbrains.kotlin.fir.resolve.calls.FirSimpleSyntheticPropertySymbol
 import org.jetbrains.kotlin.fir.resolve.providers.FirProvider
 import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.scopes.FirTypeScope
 import org.jetbrains.kotlin.fir.scopes.ProcessorAction
 import org.jetbrains.kotlin.fir.scopes.unsubstitutedScope
-import org.jetbrains.kotlin.fir.symbols.AccessorSymbol
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.*
@@ -189,7 +188,7 @@ fun FirReference.toSymbolForCall(
 private fun FirCallableSymbol<*>.toSymbolForCall(declarationStorage: Fir2IrDeclarationStorage, preferGetter: Boolean): IrSymbol? =
     when (this) {
         is FirFunctionSymbol<*> -> declarationStorage.getIrFunctionSymbol(this)
-        is FirSyntheticPropertySymbol -> {
+        is FirSimpleSyntheticPropertySymbol -> {
             (fir as? FirSyntheticProperty)?.let { syntheticProperty ->
                 val delegateSymbol = if (preferGetter) {
                     syntheticProperty.getter.delegate.symbol
@@ -452,7 +451,7 @@ internal fun FirReference.statementOrigin(): IrStatementOrigin? {
     return when (this) {
         is FirPropertyFromParameterResolvedNamedReference -> IrStatementOrigin.INITIALIZE_PROPERTY_FROM_PARAMETER
         is FirResolvedNamedReference -> when (val symbol = resolvedSymbol) {
-            is AccessorSymbol, is FirSyntheticPropertySymbol -> IrStatementOrigin.GET_PROPERTY
+            is FirSyntheticPropertySymbol -> IrStatementOrigin.GET_PROPERTY
             is FirNamedFunctionSymbol -> when {
                 symbol.callableId.isInvoke() ->
                     IrStatementOrigin.INVOKE

@@ -27,10 +27,16 @@ val testJsRuntime by configurations.creating {
 }
 
 dependencies {
+    testApiJUnit5(vintageEngine = true)
     testRuntimeOnly(intellijDep())
 
     testApi(protobufFull())
     testApi(projectTests(":compiler:tests-common"))
+    testApi(projectTests(":compiler:test-infrastructure"))
+    testApi(projectTests(":compiler:test-infrastructure-utils"))
+    testApi(projectTests(":compiler:tests-compiler-utils"))
+    testApi(projectTests(":compiler:tests-common-new"))
+
     testCompileOnly(project(":compiler:frontend"))
     testCompileOnly(project(":compiler:cli"))
     testCompileOnly(project(":compiler:cli-js"))
@@ -237,9 +243,10 @@ fun Test.setUpBoxTests() {
 
 val testDataDir = project(":js:js.translator").projectDir.resolve("testData")
 
-projectTest(parallel = true) {
+projectTest(parallel = true, jUnitMode = JUnitMode.Mix) {
     setUpJsBoxTests(jsEnabled = true, jsIrEnabled = true)
     systemProperty("kotlin.js.ir.pir", "false")
+    maxHeapSize = "3g"
 
     inputs.dir(rootDir.resolve("compiler/cli/cli-common/resources")) // compiler.xml
 
@@ -256,10 +263,12 @@ projectTest(parallel = true) {
     configureTestDistribution()
 }
 
-projectTest("jsTest", true) {
+projectTest("jsTest", parallel = true, jUnitMode = JUnitMode.Mix) {
     // PIR temporary disabled
     systemProperty("kotlin.js.ir.pir", "false")
     setUpJsBoxTests(jsEnabled = true, jsIrEnabled = false)
+    maxHeapSize = "3g"
+    useJUnitPlatform()
 }
 
 projectTest("jsIrTest", true) {
@@ -294,9 +303,11 @@ projectTest("jsPirTest", true) {
     setUpJsBoxTests(jsEnabled = false, jsIrEnabled = true)
 }
 
-projectTest("quickTest", true) {
+projectTest("quickTest", parallel = true, jUnitMode = JUnitMode.Mix) {
     setUpJsBoxTests(jsEnabled = true, jsIrEnabled = false)
+    maxHeapSize = "3g"
     systemProperty("kotlin.js.skipMinificationTest", "true")
+    useJUnitPlatform()
 }
 
 testsJar {}

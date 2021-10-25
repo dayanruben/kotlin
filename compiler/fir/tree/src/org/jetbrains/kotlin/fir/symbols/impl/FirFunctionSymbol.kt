@@ -11,8 +11,6 @@ import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.expressions.FirDelegatedConstructorCall
 import org.jetbrains.kotlin.fir.references.FirControlFlowGraphReference
 import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
-import org.jetbrains.kotlin.fir.symbols.AccessorSymbol
-import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.ensureResolved
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.FqName
@@ -82,10 +80,19 @@ class FirConstructorSymbol(
         get() = fir.delegatedConstructor?.isSuper ?: false
 }
 
-open class FirAccessorSymbol(
-    callableId: CallableId,
-    override val accessorId: CallableId
-) : FirPropertySymbol(callableId), AccessorSymbol
+/**
+ * This is a property symbol which is always bound to FirSyntheticProperty.
+ *
+ * Synthetic property symbol is effectively a combination of
+ * a property (which never exists in sources) and
+ * a getter which exists in sources and is either from Java or overrides another getter from Java.
+ */
+abstract class FirSyntheticPropertySymbol(
+    propertyId: CallableId,
+    val getterId: CallableId
+) : FirPropertySymbol(propertyId) {
+    abstract fun copy(): FirSyntheticPropertySymbol
+}
 
 // ------------------------ unnamed ------------------------
 
@@ -98,7 +105,5 @@ class FirAnonymousFunctionSymbol : FirFunctionWithoutNameSymbol<FirAnonymousFunc
 }
 
 class FirPropertyAccessorSymbol : FirFunctionWithoutNameSymbol<FirPropertyAccessor>(Name.identifier("accessor"))
-
-class FirPropertyFieldDeclarationSymbol() : FirBasedSymbol<FirBackingField>()
 
 class FirErrorFunctionSymbol : FirFunctionWithoutNameSymbol<FirErrorFunction>(Name.identifier("error"))

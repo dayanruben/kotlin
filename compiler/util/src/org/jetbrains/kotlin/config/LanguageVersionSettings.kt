@@ -234,8 +234,11 @@ enum class LanguageFeature(
     RefineTypeCheckingOnAssignmentsToJavaFields(KOTLIN_1_7),
     JvmPermittedSubclassesAttributeForSealed(KOTLIN_1_7),
     ForbidUsingExtensionPropertyTypeParameterInDelegate(KOTLIN_1_7, kind = BUG_FIX),
-    ProhibitConfusingSyntaxInWhenBranches(KOTLIN_1_7, kind = BUG_FIX), // KT-48385
     ProhibitNonExhaustiveIfInRhsOfElvis(KOTLIN_1_7, kind = BUG_FIX), // KT-44705
+
+    // 1.8
+
+    ProhibitConfusingSyntaxInWhenBranches(KOTLIN_1_8, kind = BUG_FIX), // KT-48385
 
     // Temporarily disabled, see KT-27084/KT-22379
     SoundSmartcastFromLoopConditionForLoopAssignedVariables(sinceVersion = null, kind = BUG_FIX),
@@ -343,6 +346,7 @@ enum class LanguageVersion(val major: Int, val minor: Int) : DescriptionAware, L
     KOTLIN_1_5(1, 5),
     KOTLIN_1_6(1, 6),
     KOTLIN_1_7(1, 7),
+    KOTLIN_1_8(1, 8),
     ;
 
     override val isStable: Boolean
@@ -368,7 +372,7 @@ enum class LanguageVersion(val major: Int, val minor: Int) : DescriptionAware, L
             str.split(".", "-").let { if (it.size >= 2) fromVersionString("${it[0]}.${it[1]}") else null }
 
         // Version status
-        //            1.0  1.1  1.2   1.3  1.4           1.5  1.6     1.7
+        //            1.0  1.1  1.2   1.3  1.4           1.5  1.6     1.7  1.8
         // Language:  UNSUPPORTED -------> DEPRECATED -> STABLE ---> EXPERIMENTAL
         // API:       UNSUPPORTED --> DEPRECATED ------> STABLE ---> EXPERIMENTAL
 
