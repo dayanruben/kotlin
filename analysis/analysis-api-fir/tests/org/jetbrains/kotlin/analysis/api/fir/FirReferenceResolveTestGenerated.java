@@ -217,6 +217,24 @@ public class FirReferenceResolveTestGenerated extends AbstractFirReferenceResolv
     }
 
     @Test
+    @TestMetadata("implicitExtensionInvoke.kt")
+    public void testImplicitExtensionInvoke() throws Exception {
+        runTest("analysis/analysis-api/testData/referenceResolve/implicitExtensionInvoke.kt");
+    }
+
+    @Test
+    @TestMetadata("implicitFunctionInvoke.kt")
+    public void testImplicitFunctionInvoke() throws Exception {
+        runTest("analysis/analysis-api/testData/referenceResolve/implicitFunctionInvoke.kt");
+    }
+
+    @Test
+    @TestMetadata("implicitFunctionalInterfaceInvoke.kt")
+    public void testImplicitFunctionalInterfaceInvoke() throws Exception {
+        runTest("analysis/analysis-api/testData/referenceResolve/implicitFunctionalInterfaceInvoke.kt");
+    }
+
+    @Test
     @TestMetadata("ImportFromRootScope.kt")
     public void testImportFromRootScope() throws Exception {
         runTest("analysis/analysis-api/testData/referenceResolve/ImportFromRootScope.kt");
@@ -457,9 +475,45 @@ public class FirReferenceResolveTestGenerated extends AbstractFirReferenceResolv
     }
 
     @Test
+    @TestMetadata("superWithLabel_caretAtLabel.kt")
+    public void testSuperWithLabel_caretAtLabel() throws Exception {
+        runTest("analysis/analysis-api/testData/referenceResolve/superWithLabel_caretAtLabel.kt");
+    }
+
+    @Test
+    @TestMetadata("superWithLabel_caretAtSuper.kt")
+    public void testSuperWithLabel_caretAtSuper() throws Exception {
+        runTest("analysis/analysis-api/testData/referenceResolve/superWithLabel_caretAtSuper.kt");
+    }
+
+    @Test
     @TestMetadata("SyntheticProperty.kt")
     public void testSyntheticProperty() throws Exception {
         runTest("analysis/analysis-api/testData/referenceResolve/SyntheticProperty.kt");
+    }
+
+    @Test
+    @TestMetadata("thisWithLabelToFunction_caretAtLabel.kt")
+    public void testThisWithLabelToFunction_caretAtLabel() throws Exception {
+        runTest("analysis/analysis-api/testData/referenceResolve/thisWithLabelToFunction_caretAtLabel.kt");
+    }
+
+    @Test
+    @TestMetadata("thisWithLabelToFunction_caretAtThis.kt")
+    public void testThisWithLabelToFunction_caretAtThis() throws Exception {
+        runTest("analysis/analysis-api/testData/referenceResolve/thisWithLabelToFunction_caretAtThis.kt");
+    }
+
+    @Test
+    @TestMetadata("thisWithLabelToProperty_caretAtLabel.kt")
+    public void testThisWithLabelToProperty_caretAtLabel() throws Exception {
+        runTest("analysis/analysis-api/testData/referenceResolve/thisWithLabelToProperty_caretAtLabel.kt");
+    }
+
+    @Test
+    @TestMetadata("thisWithLabelToProperty_caretAtThis.kt")
+    public void testThisWithLabelToProperty_caretAtThis() throws Exception {
+        runTest("analysis/analysis-api/testData/referenceResolve/thisWithLabelToProperty_caretAtThis.kt");
     }
 
     @Test

@@ -2748,6 +2748,12 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
             }
 
             @Test
+            @TestMetadata("kt46437.kt")
+            public void testKt46437() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/callableReference/kt46437.kt");
+            }
+
+            @Test
             @TestMetadata("kt49038.kt")
             public void testKt49038() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/callableReference/kt49038.kt");
@@ -13807,6 +13813,12 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
                 }
 
                 @Test
+                @TestMetadata("kt49101.kt")
+                public void testKt49101() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/kt49101.kt");
+                }
+
+                @Test
                 @TestMetadata("memberScopeOfCaptured.kt")
                 public void testMemberScopeOfCaptured() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/memberScopeOfCaptured.kt");
@@ -17234,6 +17246,18 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
             }
 
             @Test
+            @TestMetadata("rawTypeScope.kt")
+            public void testRawTypeScope() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/j+k/rawTypeScope.kt");
+            }
+
+            @Test
+            @TestMetadata("rawUpperBounds.kt")
+            public void testRawUpperBounds() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/j+k/rawUpperBounds.kt");
+            }
+
+            @Test
             @TestMetadata("recursionWithJavaSyntheticProperty.kt")
             public void testRecursionWithJavaSyntheticProperty() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/j+k/recursionWithJavaSyntheticProperty.kt");
@@ -17255,6 +17279,12 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
             @TestMetadata("recursiveRawUpperBound3.kt")
             public void testRecursiveRawUpperBound3() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/j+k/recursiveRawUpperBound3.kt");
+            }
+
+            @Test
+            @TestMetadata("safeCallDefinitelyNotNull.kt")
+            public void testSafeCallDefinitelyNotNull() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/j+k/safeCallDefinitelyNotNull.kt");
             }
 
             @Test
@@ -17972,6 +18002,12 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
                 @TestMetadata("typeParameter.kt")
                 public void testTypeParameter() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/j+k/types/typeParameter.kt");
+                }
+
+                @Test
+                @TestMetadata("varargOverride.kt")
+                public void testVarargOverride() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/j+k/types/varargOverride.kt");
                 }
             }
         }
@@ -29860,6 +29896,18 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
                 @TestMetadata("KotlinOverridesJava5.kt")
                 public void testKotlinOverridesJava5() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/syntheticExtensions/javaProperties/KotlinOverridesJava5.kt");
+                }
+
+                @Test
+                @TestMetadata("nonAsciiSecondChar.kt")
+                public void testNonAsciiSecondChar() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/syntheticExtensions/javaProperties/nonAsciiSecondChar.kt");
+                }
+
+                @Test
+                @TestMetadata("nonValidFirstChar.kt")
+                public void testNonValidFirstChar() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/syntheticExtensions/javaProperties/nonValidFirstChar.kt");
                 }
 
                 @Test

@@ -3902,6 +3902,12 @@ public class FirDiagnosticsWithLightTreeTestGenerated extends AbstractFirDiagnos
             }
 
             @Test
+            @TestMetadata("bareWithFlexibleArg.kt")
+            public void testBareWithFlexibleArg() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/types/bareWithFlexibleArg.kt");
+            }
+
+            @Test
             @TestMetadata("bareWithSubjectTypeAlias.kt")
             public void testBareWithSubjectTypeAlias() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolve/types/bareWithSubjectTypeAlias.kt");
@@ -4100,6 +4106,12 @@ public class FirDiagnosticsWithLightTreeTestGenerated extends AbstractFirDiagnos
         @TestMetadata("enumValuesDeserialized.kt")
         public void testEnumValuesDeserialized() throws Exception {
             runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/enumValuesDeserialized.kt");
+        }
+
+        @Test
+        @TestMetadata("errorsInUnreachable.kt")
+        public void testErrorsInUnreachable() throws Exception {
+            runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/errorsInUnreachable.kt");
         }
 
         @Test

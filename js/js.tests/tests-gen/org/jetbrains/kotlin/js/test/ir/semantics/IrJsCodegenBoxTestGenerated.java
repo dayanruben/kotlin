@@ -12691,6 +12691,16 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
                 runTest("compiler/testData/codegen/box/inference/builderInference/kt48445.kt");
             }
 
+            @TestMetadata("kt48633.kt")
+            public void testKt48633() throws Exception {
+                runTest("compiler/testData/codegen/box/inference/builderInference/kt48633.kt");
+            }
+
+            @TestMetadata("kt49285.kt")
+            public void testKt49285() throws Exception {
+                runTest("compiler/testData/codegen/box/inference/builderInference/kt49285.kt");
+            }
+
             @TestMetadata("labaledCall.kt")
             public void testLabaledCall() throws Exception {
                 runTest("compiler/testData/codegen/box/inference/builderInference/labaledCall.kt");
@@ -16665,6 +16675,11 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
         @TestMetadata("localClassInParameterInitializer.kt")
         public void testLocalClassInParameterInitializer() throws Exception {
             runTest("compiler/testData/codegen/box/localClasses/localClassInParameterInitializer.kt");
+        }
+
+        @TestMetadata("localClassUsedBeforeDeclaration.kt")
+        public void testLocalClassUsedBeforeDeclaration() throws Exception {
+            runTest("compiler/testData/codegen/box/localClasses/localClassUsedBeforeDeclaration.kt");
         }
 
         @TestMetadata("localDataClass.kt")

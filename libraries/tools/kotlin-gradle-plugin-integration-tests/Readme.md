@@ -60,6 +60,8 @@ For each test method add `@GradleTest` annotation and `gradleVersion: GradleVers
 All tests annotated with `@GradleTest` are [parameterized tests](https://junit.org/junit5/docs/current/user-guide/#writing-tests-parameterized-tests),
 where provided parameter is Gradle version. By default, test will receive minimal and latest supported Gradle versions. It is possible 
 to modify/add additional Gradle versions by adding `@GradleTestVersions` annotation either to the whole suite or to the specific test method.
+Prefer using [TestVersions](src/test/kotlin/org/jetbrains/kotlin/gradle/testbase/TestVersions.kt) to define required versions instead of
+writing them directly as String.
 
 Use test DSL defined [here](src/test/kotlin/org/jetbrains/kotlin/gradle/testbase/testDsl.kt) to write actual test case:
 ```kotlin
@@ -82,6 +84,23 @@ plugins {
 
 A bunch of additional useful assertions available to use, such as file assertions, output assertions and task assertions. If you want to
 add a new assertion, add as a reviewer someone from Kotlin build tools team.
+
+##### Additional test helpers
+
+Whenever you need to test combination of different JDKs and Gradle versions - you could use `@GradleWithJdkTest` instead of `@GradleTest`. 
+Then test method will receive requires JDKs as a second parameter:
+```kotlin
+@JdkVersions(version = [JavaVersion.VERSION_11, JavaVersion.VERSION_17])
+@GradleWithJdkTest
+fun someTest(
+    gradleVersion: GradleVersion, 
+    providedJdk: JdkVersions.ProvidedJdk
+) {
+    project("simple", gradleVersion, buildJdk = providedJdk.location) {
+        build("assemble")
+    }
+}
+```
 
 ##### Deprecated tests setup
 
