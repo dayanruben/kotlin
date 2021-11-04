@@ -32,7 +32,6 @@ import org.jetbrains.kotlin.fir.backend.jvm.jvmTypeMapper
 import org.jetbrains.kotlin.fir.declarations.FirClass
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.declarations.utils.superConeTypes
-import org.jetbrains.kotlin.fir.psi
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.resolve.substitution.AbstractConeSubstitutor
 import org.jetbrains.kotlin.fir.resolve.toSymbol
@@ -40,6 +39,7 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.load.kotlin.TypeMappingMode
 import org.jetbrains.kotlin.name.SpecialNames
+import org.jetbrains.kotlin.psi
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.types.model.SimpleTypeMarker
 import java.text.StringCharacterIterator
@@ -73,24 +73,32 @@ private fun ConeKotlinType.simplifyType(
         currentType = currentType.fullyExpandedType(session)
         currentType = currentType.upperBoundIfFlexible()
         currentType = substitutor.substituteOrSelf(currentType)
-        if (shouldHideLocalType(visibilityForApproximation, isInlineFunction)) {
-            val localTypes: List<ConeKotlinType> = if (isLocal(session)) listOf(this) else {
-                typeArguments.mapNotNull {
-                    if (it is ConeKotlinTypeProjection && it.type.isLocal(session)) {
-                        it.type
-                    } else null
-                }
-            }
-            val unavailableLocalTypes = localTypes.filterNot { it.isLocalButAvailableAtPosition(session, useSitePosition) }
-            // Need to approximate if there are local types that are not available in this scope
-            val needsApproximation = localTypes.isNotEmpty() && unavailableLocalTypes.isNotEmpty()
-            if (needsApproximation) {
-                // TODO: can we approximate local types in type arguments *selectively* ?
-                currentType = PublicTypeApproximator.approximateTypeToPublicDenotable(currentType, session) ?: currentType
-            }
-        }
+        val needLocalTypeApproximation = needLocalTypeApproximation(visibilityForApproximation, isInlineFunction, session, useSitePosition)
+        // TODO: can we approximate local types in type arguments *selectively* ?
+        currentType = PublicTypeApproximator.approximateTypeToPublicDenotable(currentType, session, needLocalTypeApproximation)
+            ?: currentType
+
     } while (oldType !== currentType)
     return currentType
+}
+
+private fun ConeKotlinType.needLocalTypeApproximation(
+    visibilityForApproximation: Visibility,
+    isInlineFunction: Boolean,
+    session: FirSession,
+    useSitePosition: PsiElement
+): Boolean {
+    if (!shouldHideLocalType(visibilityForApproximation, isInlineFunction)) return false
+    val localTypes: List<ConeKotlinType> = if (isLocal(session)) listOf(this) else {
+        typeArguments.mapNotNull {
+            if (it is ConeKotlinTypeProjection && it.type.isLocal(session)) {
+                it.type
+            } else null
+        }
+    }
+    val unavailableLocalTypes = localTypes.filterNot { it.isLocalButAvailableAtPosition(session, useSitePosition) }
+    // Need to approximate if there are local types that are not available in this scope
+    return localTypes.isNotEmpty() && unavailableLocalTypes.isNotEmpty()
 }
 
 // Mimic FirDeclaration.visibilityForApproximation

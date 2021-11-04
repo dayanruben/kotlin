@@ -1,4 +1,3 @@
-// FIR_IDENTICAL
 fun testEquals(x: Int) {
     if (<!SENSELESS_COMPARISON!>x == null<!>) {}
     if (<!SENSELESS_COMPARISON!>x == (null)<!>) {}

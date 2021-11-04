@@ -5752,6 +5752,18 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             }
 
             @Test
+            @TestMetadata("uninitializedCompanionOfEnum_after.kt")
+            public void testUninitializedCompanionOfEnum_after() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/uninitializedCompanionOfEnum_after.kt");
+            }
+
+            @Test
+            @TestMetadata("uninitializedCompanionOfEnum_before.kt")
+            public void testUninitializedCompanionOfEnum_before() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/uninitializedCompanionOfEnum_before.kt");
+            }
+
+            @Test
             @TestMetadata("UninitializedEnumCompanionVals.kt")
             public void testUninitializedEnumCompanionVals() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/UninitializedEnumCompanionVals.kt");
@@ -10378,6 +10390,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             }
 
             @Test
+            @TestMetadata("propertyInPrivateConstructorError.kt")
+            public void testPropertyInPrivateConstructorError() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/exposed/propertyInPrivateConstructorError.kt");
+            }
+
+            @Test
             @TestMetadata("propertyInSimpleConstructor.kt")
             public void testPropertyInSimpleConstructor() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/exposed/propertyInSimpleConstructor.kt");
@@ -12472,6 +12490,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             }
 
             @Test
+            @TestMetadata("InaccessiblePrivateInFile.kt")
+            public void testInaccessiblePrivateInFile() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/imports/InaccessiblePrivateInFile.kt");
+            }
+
+            @Test
             @TestMetadata("invisibleFakeReferenceInImport.kt")
             public void testInvisibleFakeReferenceInImport() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/imports/invisibleFakeReferenceInImport.kt");
@@ -12838,6 +12862,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             }
 
             @Test
+            @TestMetadata("annotatedUnderscoredTypeArgument.kt")
+            public void testAnnotatedUnderscoredTypeArgument() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inference/annotatedUnderscoredTypeArgument.kt");
+            }
+
+            @Test
             @TestMetadata("cannotCompleteResolveAmbiguity.kt")
             public void testCannotCompleteResolveAmbiguity() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/inference/cannotCompleteResolveAmbiguity.kt");
@@ -13051,6 +13081,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             @TestMetadata("hasErrorInConstrainingTypes.kt")
             public void testHasErrorInConstrainingTypes() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/inference/hasErrorInConstrainingTypes.kt");
+            }
+
+            @Test
+            @TestMetadata("illegalUnderscoredTypeArgument.kt")
+            public void testIllegalUnderscoredTypeArgument() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inference/illegalUnderscoredTypeArgument.kt");
             }
 
             @Test
@@ -13441,6 +13477,18 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             @TestMetadata("typeParameterInConstructor.kt")
             public void testTypeParameterInConstructor() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/inference/typeParameterInConstructor.kt");
+            }
+
+            @Test
+            @TestMetadata("underscoredTypeArgument.kt")
+            public void testUnderscoredTypeArgument() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inference/underscoredTypeArgument.kt");
+            }
+
+            @Test
+            @TestMetadata("underscoredTypeInForbiddenPositions.kt")
+            public void testUnderscoredTypeInForbiddenPositions() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inference/underscoredTypeInForbiddenPositions.kt");
             }
 
             @Test
@@ -15832,6 +15880,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             }
 
             @Test
+            @TestMetadata("inlinedReturnInBranch.kt")
+            public void testInlinedReturnInBranch() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inline/inlinedReturnInBranch.kt");
+            }
+
+            @Test
             @TestMetadata("invoke.kt")
             public void testInvoke() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/inline/invoke.kt");
@@ -16511,6 +16565,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             @TestMetadata("reservedMembersAndConstructsInsideInlineClass.kt")
             public void testReservedMembersAndConstructsInsideInlineClass() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/inlineClasses/reservedMembersAndConstructsInsideInlineClass.kt");
+            }
+
+            @Test
+            @TestMetadata("synchronizedForbidden.kt")
+            public void testSynchronizedForbidden() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inlineClasses/synchronizedForbidden.kt");
             }
 
             @Test
@@ -30262,6 +30322,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             }
 
             @Test
+            @TestMetadata("localFunctions.kt")
+            public void testLocalFunctions() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/testsWithExplicitApi/localFunctions.kt");
+            }
+
+            @Test
             @TestMetadata("mustBeEffectivelyPublic.kt")
             public void testMustBeEffectivelyPublic() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/testsWithExplicitApi/mustBeEffectivelyPublic.kt");
@@ -32576,6 +32642,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             }
 
             @Test
+            @TestMetadata("whenOnClass.kt")
+            public void testWhenOnClass() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/when/whenOnClass.kt");
+            }
+
+            @Test
             @TestMetadata("whenOnNothing.kt")
             public void testWhenOnNothing() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/when/whenOnNothing.kt");
@@ -32852,6 +32924,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
         @TestMetadata("overrideWithFunctionalType.kt")
         public void testOverrideWithFunctionalType() throws Exception {
             runTest("compiler/testData/diagnostics/testsWithStdLib/overrideWithFunctionalType.kt");
+        }
+
+        @Test
+        @TestMetadata("pairReference.kt")
+        public void testPairReference() throws Exception {
+            runTest("compiler/testData/diagnostics/testsWithStdLib/pairReference.kt");
         }
 
         @Test
@@ -35330,6 +35408,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
                 @TestMetadata("extensions.kt")
                 public void testExtensions() throws Exception {
                     runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/restrictSuspension/extensions.kt");
+                }
+
+                @Test
+                @TestMetadata("invokeExtension.kt")
+                public void testInvokeExtension() throws Exception {
+                    runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/restrictSuspension/invokeExtension.kt");
                 }
 
                 @Test

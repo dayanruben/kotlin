@@ -1,4 +1,3 @@
-// FIR_IDENTICAL
 // !LANGUAGE: +ExpectedTypeFromCast
 
 @Target(AnnotationTarget.EXPRESSION)

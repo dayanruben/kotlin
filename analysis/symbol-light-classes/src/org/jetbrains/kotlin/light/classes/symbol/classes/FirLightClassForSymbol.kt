@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
 import org.jetbrains.kotlin.asJava.builder.LightMemberOriginForDeclaration
 import org.jetbrains.kotlin.asJava.classes.METHOD_INDEX_BASE
+import org.jetbrains.kotlin.asJava.classes.METHOD_INDEX_FOR_NON_ORIGIN_METHOD
 import org.jetbrains.kotlin.asJava.classes.lazyPub
 import org.jetbrains.kotlin.asJava.elements.KtLightField
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
@@ -20,13 +21,14 @@ import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.light.classes.symbol.classes.*
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.resolve.DataClassResolver
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.JvmDeclarationOriginKind
 import org.jetbrains.kotlin.util.OperatorNameConventions.EQUALS
 import org.jetbrains.kotlin.util.OperatorNameConventions.TO_STRING
 import org.jetbrains.kotlin.utils.addToStdlib.applyIf
 
-internal class FirLightClassForSymbol(
+internal open class FirLightClassForSymbol(
     private val classOrObjectSymbol: KtNamedClassOrObjectSymbol,
     manager: PsiManager
 ) : FirLightClassForClassOrObjectSymbol(classOrObjectSymbol, manager) {
@@ -100,7 +102,7 @@ internal class FirLightClassForSymbol(
                 filterNot { function ->
                     function is KtFunctionSymbol && function.name.asString().let { it == "values" || it == "valueOf" }
                 }
-            }.applyIf(classOrObjectSymbol.classKind == KtClassKind.OBJECT) {
+            }.applyIf(classOrObjectSymbol.isObject) {
                 filterNot {
                     it is KtKotlinPropertySymbol && it.isConst
                 }
@@ -112,7 +114,7 @@ internal class FirLightClassForSymbol(
                 }
             }
 
-            val suppressStatic = classOrObjectSymbol.classKind == KtClassKind.COMPANION_OBJECT
+            val suppressStatic = classOrObjectSymbol.isCompanionObject
             createMethods(visibleDeclarations, result, suppressStaticForMethods = suppressStatic)
 
             createConstructors(declaredMemberScope.getConstructors(), result)
@@ -121,6 +123,7 @@ internal class FirLightClassForSymbol(
         addMethodsFromCompanionIfNeeded(result)
 
         addMethodsFromDataClass(result)
+        addDelegatesToInterfaceMethods(result)
 
         result
     }
@@ -183,31 +186,50 @@ internal class FirLightClassForSymbol(
     private val Name.isFromAny: Boolean
         get() = this == EQUALS || this == HASHCODE_NAME || this == TO_STRING
 
+    private fun addDelegatesToInterfaceMethods(result: MutableList<KtLightMethod>) {
+
+        fun createDelegateMethod(ktFunctionSymbol: KtFunctionSymbol) {
+            val kotlinOrigin = ktFunctionSymbol.psi as? KtDeclaration ?: kotlinOrigin!!
+            val lightMemberOrigin = LightMemberOriginForDeclaration(kotlinOrigin, JvmDeclarationOriginKind.DELEGATION)
+            result.add(
+                FirLightSimpleMethodForSymbol(
+                    functionSymbol = ktFunctionSymbol,
+                    lightMemberOrigin = lightMemberOrigin,
+                    containingClass = this,
+                    isTopLevel = false,
+                    methodIndex = METHOD_INDEX_FOR_NON_ORIGIN_METHOD,
+                    suppressStatic = false
+                )
+            )
+        }
+
+        analyzeWithSymbolAsContext(classOrObjectSymbol) {
+            classOrObjectSymbol.getDelegatedMemberScope().getCallableSymbols().forEach { functionSymbol ->
+                if (functionSymbol is KtFunctionSymbol) {
+                    createDelegateMethod(functionSymbol)
+                }
+            }
+        }
+    }
+
     private val _ownFields: List<KtLightField> by lazyPub {
 
         val result = mutableListOf<KtLightField>()
 
+        // First, add static fields: companion object and fields from companion object
         addCompanionObjectFieldIfNeeded(result)
-        addInstanceFieldIfNeeded(result)
-
         addFieldsFromCompanionIfNeeded(result)
+
+        // Then, add instance fields: properties from parameters, and then member properties
         addPropertyBackingFields(result)
 
-        result
-    }
+        // Next, add INSTANCE field if non-local named object
+        addInstanceFieldIfNeeded(result)
 
-    private fun addInstanceFieldIfNeeded(result: MutableList<KtLightField>) {
-        val isNamedObject = classOrObjectSymbol.classKind == KtClassKind.OBJECT
-        if (isNamedObject && classOrObjectSymbol.symbolKind != KtSymbolKind.LOCAL) {
-            result.add(
-                FirLightFieldForObjectSymbol(
-                    objectSymbol = classOrObjectSymbol,
-                    containingClass = this@FirLightClassForSymbol,
-                    name = JvmAbi.INSTANCE_FIELD,
-                    lightMemberOrigin = null
-                )
-            )
-        }
+        // Last, add fields for enum entries
+        addFieldsForEnumEntries(result)
+
+        result
     }
 
     private fun addFieldsFromCompanionIfNeeded(result: MutableList<KtLightField>) {
@@ -235,22 +257,21 @@ internal class FirLightClassForSymbol(
         analyzeWithSymbolAsContext(classOrObjectSymbol) {
             val propertySymbols = classOrObjectSymbol.getDeclaredMemberScope().getCallableSymbols()
                 .filterIsInstance<KtPropertySymbol>()
-                .applyIf(classOrObjectSymbol.classKind == KtClassKind.COMPANION_OBJECT) {
+                .applyIf(classOrObjectSymbol.isCompanionObject) {
                     filterNot { it.hasJvmFieldAnnotation() || it is KtKotlinPropertySymbol && it.isConst }
                 }
+            val propertyGroups = propertySymbols.groupBy { it.isFromPrimaryConstructor }
 
             val nameGenerator = FirLightField.FieldNameGenerator()
-            val isObject = classOrObjectSymbol.classKind == KtClassKind.OBJECT
-            val isCompanionObject = classOrObjectSymbol.classKind == KtClassKind.COMPANION_OBJECT
 
-            for (propertySymbol in propertySymbols) {
+            fun addPropertyBackingField(propertySymbol: KtPropertySymbol) {
                 val isJvmField = propertySymbol.hasJvmFieldAnnotation()
                 val isJvmStatic = propertySymbol.hasJvmStaticAnnotation()
                 val isLateInit = (propertySymbol as? KtKotlinPropertySymbol)?.isLateInit == true
 
-                val forceStatic =
-                    isObject && (propertySymbol is KtKotlinPropertySymbol && propertySymbol.isConst || isJvmStatic || isJvmField)
-                val takePropertyVisibility = !isCompanionObject && (isLateInit || isJvmField || forceStatic)
+                val forceStatic = classOrObjectSymbol.isObject &&
+                        (propertySymbol is KtKotlinPropertySymbol && propertySymbol.isConst || isJvmStatic || isJvmField)
+                val takePropertyVisibility = !classOrObjectSymbol.isCompanionObject && (isLateInit || isJvmField || forceStatic)
 
                 createField(
                     declaration = propertySymbol,
@@ -262,6 +283,28 @@ internal class FirLightClassForSymbol(
                 )
             }
 
+            // First, properties from parameters
+            propertyGroups[true]?.forEach(::addPropertyBackingField)
+            // Then, regular member properties
+            propertyGroups[false]?.forEach(::addPropertyBackingField)
+        }
+    }
+
+    private fun addInstanceFieldIfNeeded(result: MutableList<KtLightField>) {
+        if (classOrObjectSymbol.isNamedObject && !classOrObjectSymbol.isLocal) {
+            result.add(
+                FirLightFieldForObjectSymbol(
+                    objectSymbol = classOrObjectSymbol,
+                    containingClass = this@FirLightClassForSymbol,
+                    name = JvmAbi.INSTANCE_FIELD,
+                    lightMemberOrigin = null
+                )
+            )
+        }
+    }
+
+    private fun addFieldsForEnumEntries(result: MutableList<KtLightField>) {
+        analyzeWithSymbolAsContext(classOrObjectSymbol) {
             if (isEnum) {
                 classOrObjectSymbol.getDeclaredMemberScope().getCallableSymbols()
                     .filterIsInstance<KtEnumEntrySymbol>()
@@ -269,6 +312,18 @@ internal class FirLightClassForSymbol(
             }
         }
     }
+
+    private val KtClassOrObjectSymbol.isObject: Boolean
+        get() = classKind == KtClassKind.OBJECT
+
+    private val KtClassOrObjectSymbol.isCompanionObject: Boolean
+        get() = classKind == KtClassKind.COMPANION_OBJECT
+
+    private val KtClassOrObjectSymbol.isNamedObject: Boolean
+        get() = isObject && !isCompanionObject
+
+    private val KtClassOrObjectSymbol.isLocal: Boolean
+        get() = symbolKind == KtSymbolKind.LOCAL
 
     override fun hashCode(): Int = classOrObjectSymbol.hashCode()
 

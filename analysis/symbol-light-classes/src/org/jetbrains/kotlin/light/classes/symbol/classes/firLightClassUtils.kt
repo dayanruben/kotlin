@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.light.classes.symbol.*
+import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
@@ -69,7 +70,11 @@ fun createFirLightClassNoCache(classOrObject: KtClassOrObject): KtLightClass? = 
 
     return when {
         classOrObject is KtEnumEntry -> lightClassForEnumEntry(classOrObject)
-        classOrObject.hasModifier(KtTokens.INLINE_KEYWORD) -> return null //TODO
+        classOrObject.hasModifier(KtTokens.INLINE_KEYWORD) -> {
+            analyseForLightClasses(classOrObject) {
+                classOrObject.getNamedClassOrObjectSymbol()?.let { FirLightInlineClass(it, classOrObject.manager) }
+            }
+        }
         else -> {
             analyseForLightClasses(classOrObject) {
                 classOrObject.getClassOrObjectSymbol().createLightClassNoCache(classOrObject.manager)
@@ -190,74 +195,7 @@ internal fun FirLightClassBase.createMethods(
                     }
                 }
             }
-            is KtPropertySymbol -> {
-
-                if (declaration is KtKotlinPropertySymbol && declaration.isConst) return
-
-                if (declaration.visibility.isPrivateOrPrivateToThis() &&
-                    declaration.getter?.hasBody == false &&
-                    declaration.setter?.hasBody == false
-                ) return
-
-                if (declaration.hasJvmFieldAnnotation()) return
-
-                fun KtPropertyAccessorSymbol.needToCreateAccessor(siteTarget: AnnotationUseSiteTarget): Boolean {
-                    if (isInline) return false
-                    if (!hasBody && visibility.isPrivateOrPrivateToThis()) return false
-                    if (declaration.isHiddenOrSynthetic(project, siteTarget)) return false
-                    if (isHiddenOrSynthetic(project)) return false
-                    return true
-                }
-
-                val originalElement = declaration.psi as? KtDeclaration
-
-                val getter = declaration.getter?.takeIf {
-                    it.needToCreateAccessor(AnnotationUseSiteTarget.PROPERTY_GETTER)
-                }
-
-                if (getter != null) {
-                    val lightMemberOrigin = originalElement?.let {
-                        LightMemberOriginForDeclaration(
-                            originalElement = it,
-                            originKind = JvmDeclarationOriginKind.OTHER,
-                            auxiliaryOriginalElement = getter.psi as? KtDeclaration
-                        )
-                    }
-
-                    result.add(
-                        FirLightAccessorMethodForSymbol(
-                            propertyAccessorSymbol = getter,
-                            containingPropertySymbol = declaration,
-                            lightMemberOrigin = lightMemberOrigin,
-                            containingClass = this@createMethods,
-                            isTopLevel = isTopLevel
-                        )
-                    )
-                }
-
-                val setter = declaration.setter?.takeIf {
-                    !isAnnotationType && it.needToCreateAccessor(AnnotationUseSiteTarget.PROPERTY_SETTER)
-                }
-
-                if (setter != null) {
-                    val lightMemberOrigin = originalElement?.let {
-                        LightMemberOriginForDeclaration(
-                            originalElement = it,
-                            originKind = JvmDeclarationOriginKind.OTHER,
-                            auxiliaryOriginalElement = setter.psi as? KtDeclaration
-                        )
-                    }
-                    result.add(
-                        FirLightAccessorMethodForSymbol(
-                            propertyAccessorSymbol = setter,
-                            containingPropertySymbol = declaration,
-                            lightMemberOrigin = lightMemberOrigin,
-                            containingClass = this@createMethods,
-                            isTopLevel = isTopLevel
-                        )
-                    )
-                }
-            }
+            is KtPropertySymbol -> createPropertyAccessors(result, declaration, isTopLevel)
             is KtConstructorSymbol -> error("Constructors should be handled separately and not passed to this function")
         }
     }
@@ -269,6 +207,79 @@ internal fun FirLightClassBase.createMethods(
     // Then, properties from the primary constructor parameters
     declarationGroups[true]?.forEach {
         handleDeclaration(it)
+    }
+}
+
+internal fun FirLightClassBase.createPropertyAccessors(
+    result: MutableList<KtLightMethod>,
+    declaration: KtPropertySymbol,
+    isTopLevel: Boolean,
+    isMutable: Boolean = !declaration.isVal,
+) {
+    if (declaration is KtKotlinPropertySymbol && declaration.isConst) return
+
+    if (declaration.visibility.isPrivateOrPrivateToThis() &&
+        declaration.getter?.hasBody == false &&
+        declaration.setter?.hasBody == false
+    ) return
+
+    if (declaration.hasJvmFieldAnnotation()) return
+
+    fun KtPropertyAccessorSymbol.needToCreateAccessor(siteTarget: AnnotationUseSiteTarget): Boolean {
+        if (isInline) return false
+        if (!hasBody && visibility.isPrivateOrPrivateToThis()) return false
+        if (declaration.isHiddenOrSynthetic(project, siteTarget)) return false
+        if (isHiddenOrSynthetic(project)) return false
+        return true
+    }
+
+    val originalElement = declaration.psi as? KtDeclaration
+
+    val getter = declaration.getter?.takeIf {
+        it.needToCreateAccessor(AnnotationUseSiteTarget.PROPERTY_GETTER)
+    }
+
+    if (getter != null) {
+        val lightMemberOrigin = originalElement?.let {
+            LightMemberOriginForDeclaration(
+                originalElement = it,
+                originKind = JvmDeclarationOriginKind.OTHER,
+                auxiliaryOriginalElement = getter.psi as? KtDeclaration
+            )
+        }
+
+        result.add(
+            FirLightAccessorMethodForSymbol(
+                propertyAccessorSymbol = getter,
+                containingPropertySymbol = declaration,
+                lightMemberOrigin = lightMemberOrigin,
+                containingClass = this@createPropertyAccessors,
+                isTopLevel = isTopLevel
+            )
+        )
+    }
+
+    val setter = declaration.setter?.takeIf {
+        !isAnnotationType && it.needToCreateAccessor(AnnotationUseSiteTarget.PROPERTY_SETTER)
+    }
+
+    if (isMutable && setter != null) {
+        val lightMemberOrigin = originalElement?.let {
+            LightMemberOriginForDeclaration(
+                originalElement = it,
+                originKind = JvmDeclarationOriginKind.OTHER,
+                auxiliaryOriginalElement = setter.psi as? KtDeclaration
+            )
+        }
+        result.add(
+            FirLightAccessorMethodForSymbol(
+                propertyAccessorSymbol = setter,
+                containingPropertySymbol = declaration,
+                lightMemberOrigin = lightMemberOrigin,
+                containingClass = this@createPropertyAccessors,
+                isTopLevel = isTopLevel
+            )
+        )
     }
 }
 
@@ -287,7 +298,8 @@ internal fun FirLightClassBase.createField(
             property.modality == Modality.ABSTRACT -> false
             property.isHiddenOrSynthetic(project) -> false
             property.isLateInit -> true
-            //TODO Fix it when KtFirConstructorValueParameterSymbol be ready
+            property.isDelegatedProperty -> true
+            property.isFromPrimaryConstructor -> true
             property.psi.let { it == null || it is KtParameter } -> true
             property.hasJvmSyntheticAnnotation(AnnotationUseSiteTarget.FIELD) -> false
             else -> property.hasBackingField
@@ -296,10 +308,15 @@ internal fun FirLightClassBase.createField(
 
     if (!hasBackingField(declaration)) return
 
+    val isDelegated = (declaration as? KtKotlinPropertySymbol)?.isDelegatedProperty == true
+    val fieldName = nameGenerator.generateUniqueFieldName(
+        declaration.name.asString() + (if (isDelegated) JvmAbi.DELEGATED_PROPERTY_NAME_SUFFIX else "")
+    )
+
     result.add(
         FirLightFieldForPropertySymbol(
             propertySymbol = declaration,
-            fieldName = nameGenerator.generateUniqueFieldName(declaration.name.asString()),
+            fieldName = fieldName,
             containingClass = this,
             lightMemberOrigin = null,
             isTopLevel = isTopLevel,

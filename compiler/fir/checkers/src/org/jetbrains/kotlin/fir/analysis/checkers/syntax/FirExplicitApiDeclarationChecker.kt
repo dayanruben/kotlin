@@ -5,16 +5,18 @@
 
 package org.jetbrains.kotlin.fir.analysis.checkers.syntax
 
+import org.jetbrains.kotlin.KtFakeSourceElementKind
 import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.KtRealSourceElementKind
+import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.ExplicitApiMode
 import org.jetbrains.kotlin.descriptors.ClassKind
-import org.jetbrains.kotlin.fir.*
+import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
+import org.jetbrains.kotlin.diagnostics.reportOn
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.checkers.declaration.isLocalMember
-import org.jetbrains.kotlin.fir.analysis.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
-import org.jetbrains.kotlin.fir.analysis.diagnostics.reportOn
 import org.jetbrains.kotlin.fir.analysis.getChild
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.impl.FirPrimaryConstructor
@@ -31,16 +33,16 @@ object FirExplicitApiDeclarationChecker : FirDeclarationSyntaxChecker<FirDeclara
 
     override fun checkPsiOrLightTree(
         element: FirDeclaration,
-        source: FirSourceElement,
+        source: KtSourceElement,
         context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
-        if ((source.kind !is FirRealSourceElementKind && source.kind != FirFakeSourceElementKind.PropertyFromParameter) ||
+        if ((source.kind !is KtRealSourceElementKind && source.kind != KtFakeSourceElementKind.PropertyFromParameter) ||
             element !is FirMemberDeclaration
         ) {
             return
         }
-        val state = context.session.languageVersionSettings.getFlag(AnalysisFlags.explicitApiMode)
+        val state = context.languageVersionSettings.getFlag(AnalysisFlags.explicitApiMode)
         if (state == ExplicitApiMode.DISABLED) return
         // Enum entries do not have visibilities
         if (element is FirEnumEntry) return
@@ -53,7 +55,7 @@ object FirExplicitApiDeclarationChecker : FirDeclarationSyntaxChecker<FirDeclara
     private fun checkVisibilityModifier(
         state: ExplicitApiMode,
         declaration: FirMemberDeclaration,
-        source: FirSourceElement,
+        source: KtSourceElement,
         context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
@@ -76,6 +78,8 @@ object FirExplicitApiDeclarationChecker : FirDeclarationSyntaxChecker<FirDeclara
      * 4. Getters and setters (because getters can't change visibility and setter-only explicit visibility looks ugly)
      * 5. Properties of annotations in public API
      * 6. Value parameter declaration
+     * 7. An anonymous function
+     * 8. A local named function
      *
      * TODO: Do we need something like @PublicApiFile to disable (or invert) this inspection per-file?
      */
@@ -86,7 +90,9 @@ object FirExplicitApiDeclarationChecker : FirDeclarationSyntaxChecker<FirDeclara
             // 4
             is FirPropertyAccessor,
             // 6
-            is FirValueParameter -> true
+            is FirValueParameter,
+            // 7
+            is FirAnonymousFunction -> true
             is FirCallableDeclaration -> {
                 val containingClass = context.containingDeclarations.lastOrNull() as? FirRegularClass
                 // 2, 5
@@ -97,8 +103,8 @@ object FirExplicitApiDeclarationChecker : FirDeclarationSyntaxChecker<FirDeclara
                     return true
                 }
 
-                // 3
-                declaration.isOverride
+                // 3, 8
+                declaration.isOverride || declaration.isLocalMember
             }
             else -> false
         }
@@ -107,7 +113,7 @@ object FirExplicitApiDeclarationChecker : FirDeclarationSyntaxChecker<FirDeclara
     private fun checkExplicitReturnType(
         state: ExplicitApiMode,
         declaration: FirMemberDeclaration,
-        source: FirSourceElement,
+        source: KtSourceElement,
         context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
@@ -125,7 +131,7 @@ object FirExplicitApiDeclarationChecker : FirDeclarationSyntaxChecker<FirDeclara
         }
     }
 
-    private fun returnTypeCheckIsApplicable(source: FirSourceElement, context: CheckerContext): Boolean {
+    private fun returnTypeCheckIsApplicable(source: KtSourceElement, context: CheckerContext): Boolean {
         // Note that by default getChild uses `depth = -1`, which would find all descendents.
         if (source.getChild(KtNodeTypes.TYPE_REFERENCE, depth = 1) != null) return false
         // Do not check if the containing file is not a physical file.

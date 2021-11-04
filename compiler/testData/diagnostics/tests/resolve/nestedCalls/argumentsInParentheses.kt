@@ -1,4 +1,3 @@
-// FIR_IDENTICAL
 interface Foo<T>
 
 class Bar {

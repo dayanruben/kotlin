@@ -2834,6 +2834,11 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
             runTest("compiler/testData/codegen/box/casts/castGenericNull.kt");
         }
 
+        @TestMetadata("castToDefinitelyNotNullType.kt")
+        public void testCastToDefinitelyNotNullType() throws Exception {
+            runTest("compiler/testData/codegen/box/casts/castToDefinitelyNotNullType.kt");
+        }
+
         @TestMetadata("dontCreateInconsistentTypeDuringStarProjectionSubstitution.kt")
         public void testDontCreateInconsistentTypeDuringStarProjectionSubstitution() throws Exception {
             runTest("compiler/testData/codegen/box/casts/dontCreateInconsistentTypeDuringStarProjectionSubstitution.kt");
@@ -11073,6 +11078,11 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
             runTest("compiler/testData/codegen/box/fakeOverride/internalFromFriendModule.kt");
         }
 
+        @TestMetadata("kt49371.kt")
+        public void testKt49371() throws Exception {
+            runTest("compiler/testData/codegen/box/fakeOverride/kt49371.kt");
+        }
+
         @TestMetadata("privateFakeOverrides0.kt")
         public void testPrivateFakeOverrides0() throws Exception {
             runTest("compiler/testData/codegen/box/fakeOverride/privateFakeOverrides0.kt");
@@ -16226,6 +16236,19 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
 
                 public void testAllFilesPresentInNoDelegation() throws Exception {
                     KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/jvm8/defaults/noDelegation"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JS_IR, true);
+                }
+            }
+
+            @TestMetadata("compiler/testData/codegen/box/jvm8/defaults/nonDefaultInheritance")
+            @TestDataPath("$PROJECT_ROOT")
+            @RunWith(JUnit3RunnerWithInners.class)
+            public static class NonDefaultInheritance extends AbstractIrJsCodegenBoxTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS_IR, testDataFilePath);
+                }
+
+                public void testAllFilesPresentInNonDefaultInheritance() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/jvm8/defaults/nonDefaultInheritance"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JS_IR, true);
                 }
             }
 
@@ -27778,6 +27801,11 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
             runTest("compiler/testData/codegen/box/syntheticAccessors/kt21258_simple.kt");
         }
 
+        @TestMetadata("kt49316.kt")
+        public void testKt49316() throws Exception {
+            runTest("compiler/testData/codegen/box/syntheticAccessors/kt49316.kt");
+        }
+
         @TestMetadata("kt9717.kt")
         public void testKt9717() throws Exception {
             runTest("compiler/testData/codegen/box/syntheticAccessors/kt9717.kt");
@@ -28387,6 +28415,39 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
         @TestMetadata("longOverflow.kt")
         public void testLongOverflow() throws Exception {
             runTest("compiler/testData/codegen/box/unaryOp/longOverflow.kt");
+        }
+    }
+
+    @TestMetadata("compiler/testData/codegen/box/underscoredTypeArguments")
+    @TestDataPath("$PROJECT_ROOT")
+    @RunWith(JUnit3RunnerWithInners.class)
+    public static class UnderscoredTypeArguments extends AbstractIrJsCodegenBoxTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS_IR, testDataFilePath);
+        }
+
+        public void testAllFilesPresentInUnderscoredTypeArguments() throws Exception {
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/underscoredTypeArguments"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JS_IR, true);
+        }
+
+        @TestMetadata("backTicked.kt")
+        public void testBackTicked() throws Exception {
+            runTest("compiler/testData/codegen/box/underscoredTypeArguments/backTicked.kt");
+        }
+
+        @TestMetadata("lambdaInputType.kt")
+        public void testLambdaInputType() throws Exception {
+            runTest("compiler/testData/codegen/box/underscoredTypeArguments/lambdaInputType.kt");
+        }
+
+        @TestMetadata("react.kt")
+        public void testReact() throws Exception {
+            runTest("compiler/testData/codegen/box/underscoredTypeArguments/react.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("compiler/testData/codegen/box/underscoredTypeArguments/simple.kt");
         }
     }
 

@@ -170,6 +170,20 @@ val unzipV8 by task<Copy> {
     into(unpackedDir)
 }
 
+val testDataDir = project(":js:js.translator").projectDir.resolve("testData")
+
+val installTsDependencies by task<NpmTask> {
+    workingDir.set(testDataDir)
+    args.set(listOf("install"))
+}
+
+val generateTypeScriptTests by task<NpmTask>  {
+    dependsOn(installTsDependencies)
+
+    workingDir.set(testDataDir)
+    args.set(listOf("run", "generateTypeScriptTests"))
+}
+
 fun Test.setupV8() {
     dependsOn(unzipV8)
     val v8Path = unzipV8.get().destinationDir
@@ -190,6 +204,11 @@ fun Test.setUpJsBoxTests(jsEnabled: Boolean, jsIrEnabled: Boolean) {
     inputs.files(rootDir.resolve("js/js.engines/src/org/jetbrains/kotlin/js/engine/repl.js"))
 
     dependsOn(":dist")
+
+    if (!project.hasProperty("teamcity")) {
+        dependsOn(generateTypeScriptTests)
+    }
+
     if (jsEnabled) {
         dependsOn(testJsRuntime)
         inputs.files(testJsRuntime)
@@ -240,8 +259,6 @@ fun Test.setUpBoxTests() {
         }
     }
 }
-
-val testDataDir = project(":js:js.translator").projectDir.resolve("testData")
 
 projectTest(parallel = true, jUnitMode = JUnitMode.Mix) {
     setUpJsBoxTests(jsEnabled = true, jsIrEnabled = true)
@@ -354,11 +371,11 @@ projectTest("wasmTest", true) {
 
     include("org/jetbrains/kotlin/js/test/wasm/semantics/*")
 
-    dependsOn(":kotlin-stdlib-wasm:compileKotlinJs")
-    systemProperty("kotlin.wasm.stdlib.path", "libraries/stdlib/wasm/build/classes/kotlin/js/main")
+    dependsOn(":kotlin-stdlib-wasm:compileKotlinWasm")
+    systemProperty("kotlin.wasm.stdlib.path", "libraries/stdlib/wasm/build/classes/kotlin/wasm/main")
 
-    dependsOn(":kotlin-test:kotlin-test-wasm:compileKotlinJs")
-    systemProperty("kotlin.wasm.kotlin.test.path", "libraries/kotlin.test/wasm/build/classes/kotlin/js/main")
+    dependsOn(":kotlin-test:kotlin-test-wasm:compileKotlinWasm")
+    systemProperty("kotlin.wasm.kotlin.test.path", "libraries/kotlin.test/wasm/build/classes/kotlin/wasm/main")
 
     setUpBoxTests()
 }

@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.analysis.api.fir.components
 
 import com.intellij.openapi.project.Project
+import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.FirClass
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
@@ -37,6 +38,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
 import org.jetbrains.kotlin.analysis.api.tokens.ValidityToken
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.withValidityAssertion
+import org.jetbrains.kotlin.fir.declarations.utils.delegateFields
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import java.util.*
@@ -54,6 +56,7 @@ internal class KtFirScopeProvider(
 
     private val memberScopeCache = IdentityHashMap<KtSymbolWithMembers, KtMemberScope>()
     private val declaredMemberScopeCache = IdentityHashMap<KtSymbolWithMembers, KtDeclaredMemberScope>()
+    private val delegatedMemberScopeCache = IdentityHashMap<KtSymbolWithMembers, KtDelegatedMemberScope>()
     private val fileScopeCache = IdentityHashMap<KtFileSymbol, KtDeclarationScope<KtSymbolWithDeclarations>>()
     private val packageMemberScopeCache = IdentityHashMap<KtPackageSymbol, KtPackageScope>()
 
@@ -101,6 +104,27 @@ internal class KtFirScopeProvider(
         }
     }
 
+    override fun getDelegatedMemberScope(classSymbol: KtSymbolWithMembers): KtDelegatedMemberScope = withValidityAssertion {
+        val declaredScope = (getDeclaredMemberScope(classSymbol) as? KtFirDeclaredMemberScope)?.firScope
+            ?: return delegatedMemberScopeCache.getOrPut(classSymbol) { KtFirEmptyMemberScope(classSymbol) }
+        delegatedMemberScopeCache.getOrPut(classSymbol) {
+            val firScope = classSymbol.withFirForScope { fir ->
+                val delegateFields = fir.delegateFields
+                if (delegateFields.isNotEmpty()) {
+                    FirDelegatedMemberScope(
+                        analysisSession.rootModuleSession,
+                        ScopeSession(),
+                        fir,
+                        declaredScope,
+                        delegateFields
+                    )
+                } else null
+            } ?: return@getOrPut KtFirEmptyMemberScope(classSymbol)
+
+            KtFirDelegatedMemberScope(classSymbol, firScope, token, builder)
+        }
+    }
+
     override fun getFileScope(fileSymbol: KtFileSymbol): KtDeclarationScope<KtSymbolWithDeclarations> = withValidityAssertion {
         fileScopeCache.getOrPut(fileSymbol) {
             check(fileSymbol is KtFirFileSymbol) { "KtFirScopeProvider can only work with KtFirFileSymbol, but ${fileSymbol::class} was provided" }
@@ -115,8 +139,8 @@ internal class KtFirScopeProvider(
                 project,
                 builder,
                 token,
-                analysisSession.searchScope,
-                analysisSession.targetPlatform
+                GlobalSearchScope.allScope(project), // TODO
+                analysisSession.targetPlatform,
             )
         }
     }
@@ -189,7 +213,7 @@ internal class KtFirScopeProvider(
                 project,
                 builder,
                 token,
-                analysisSession.searchScope,
+                GlobalSearchScope.allScope(project), // todo
                 analysisSession.targetPlatform
             )
             is FirContainingNamesAwareScope -> KtFirDelegatingScopeImpl(firScope, builder, token)

@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.fir.checkers.generator.diagnostics
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
+import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.contracts.description.EventOccurrencesRange
@@ -15,7 +16,6 @@ import org.jetbrains.kotlin.descriptors.EffectiveVisibility
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.diagnostics.WhenMissingCase
 import org.jetbrains.kotlin.fir.FirModuleData
-import org.jetbrains.kotlin.fir.FirSourceElement
 import org.jetbrains.kotlin.fir.PrivateForInline
 import org.jetbrains.kotlin.fir.checkers.generator.diagnostics.model.*
 import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
@@ -326,7 +326,9 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val EXPOSED_FUNCTION_RETURN_TYPE by exposedVisibilityError<KtNamedDeclaration>(PositioningStrategy.DECLARATION_NAME)
         val EXPOSED_RECEIVER_TYPE by exposedVisibilityError<KtTypeReference>()
         val EXPOSED_PROPERTY_TYPE by exposedVisibilityError<KtNamedDeclaration>(PositioningStrategy.DECLARATION_NAME)
-        val EXPOSED_PROPERTY_TYPE_IN_CONSTRUCTOR by exposedVisibilityWarning<KtNamedDeclaration>(PositioningStrategy.DECLARATION_NAME)
+        val EXPOSED_PROPERTY_TYPE_IN_CONSTRUCTOR by exposedVisibilityDeprecationError<KtNamedDeclaration>(
+            LanguageFeature.ForbidExposingTypesInPrimaryConstructorProperties, PositioningStrategy.DECLARATION_NAME
+        )
         val EXPOSED_PARAMETER_TYPE by exposedVisibilityError<KtParameter>(/* // NB: for parameter FE 1.0 reports not on a name for some reason */)
         val EXPOSED_SUPER_INTERFACE by exposedVisibilityError<KtTypeReference>()
         val EXPOSED_SUPER_CLASS by exposedVisibilityError<KtTypeReference>()
@@ -386,7 +388,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<String>("message")
         }
 
-        val NO_EXPLICIT_VISIBILITY_IN_API_MODE by warning<KtDeclaration>(PositioningStrategy.DECLARATION_START_TO_NAME)
+        val NO_EXPLICIT_VISIBILITY_IN_API_MODE by error<KtDeclaration>(PositioningStrategy.DECLARATION_START_TO_NAME)
         val NO_EXPLICIT_VISIBILITY_IN_API_MODE_WARNING by warning<KtDeclaration>(PositioningStrategy.DECLARATION_START_TO_NAME)
 
         val NO_EXPLICIT_RETURN_TYPE_IN_API_MODE by error<KtDeclaration>(PositioningStrategy.DECLARATION_NAME)
@@ -491,7 +493,9 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
 
         val SPREAD_OF_NULLABLE by error<PsiElement>(PositioningStrategy.SPREAD_OPERATOR)
 
-        val ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_FUNCTION by deprecationError<KtExpression>(LanguageFeature.ProhibitAssigningSingleElementsToVarargsInNamedForm)
+        val ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_FUNCTION by deprecationError<KtExpression>(LanguageFeature.ProhibitAssigningSingleElementsToVarargsInNamedForm) {
+            parameter<ConeKotlinType>("expectedArrayType")
+        }
         val ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_ANNOTATION by deprecationError<KtExpression>(LanguageFeature.ProhibitAssigningSingleElementsToVarargsInNamedForm)
         val REDUNDANT_SPREAD_OPERATOR_IN_NAMED_FORM_IN_ANNOTATION by warning<KtExpression>()
         val REDUNDANT_SPREAD_OPERATOR_IN_NAMED_FORM_IN_FUNCTION by warning<KtExpression>()
@@ -1019,7 +1023,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val UNINITIALIZED_ENUM_ENTRY by error<KtSimpleNameExpression> {
             parameter<FirEnumEntrySymbol>("enumEntry")
         }
-        val UNINITIALIZED_ENUM_COMPANION by error<KtSimpleNameExpression>(PositioningStrategy.REFERENCE_BY_QUALIFIED) {
+        val UNINITIALIZED_ENUM_COMPANION by error<KtExpression>(PositioningStrategy.REFERENCE_BY_QUALIFIED) {
             parameter<FirRegularClassSymbol>("enumClass")
         }
         val VAL_REASSIGNMENT by error<KtExpression> {
@@ -1052,8 +1056,8 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<Symbol>("property")
         }
         val UNREACHABLE_CODE by warning<KtElement>(PositioningStrategy.UNREACHABLE_CODE) {
-            parameter<Set<FirSourceElement>>("reachable")
-            parameter<Set<FirSourceElement>>("unreachable")
+            parameter<Set<KtSourceElement>>("reachable")
+            parameter<Set<KtSourceElement>>("unreachable")
         }
         val SENSELESS_COMPARISON by warning<KtExpression> {
             parameter<FirExpression>("expression")
@@ -1084,6 +1088,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val UNNECESSARY_SAFE_CALL by warning<PsiElement>(PositioningStrategy.SAFE_ACCESS) {
             parameter<ConeKotlinType>("receiverType")
         }
+        val SAFE_CALL_WILL_CHANGE_NULLABILITY by warning<KtSafeQualifiedExpression>()
         val UNEXPECTED_SAFE_CALL by error<PsiElement>(PositioningStrategy.SAFE_ACCESS)
         val UNNECESSARY_NOT_NULL_ASSERTION by warning<KtExpression>(PositioningStrategy.OPERATOR) {
             parameter<ConeKotlinType>("receiverType")
@@ -1375,6 +1380,13 @@ private inline fun <reified P : PsiElement> AbstractDiagnosticGroup.exposedVisib
     positioningStrategy: PositioningStrategy = PositioningStrategy.DEFAULT
 ): PropertyDelegateProvider<Any?, ReadOnlyProperty<AbstractDiagnosticGroup, RegularDiagnosticData>> {
     return warning<P>(positioningStrategy, exposedVisibilityDiagnosticInit)
+}
+
+private inline fun <reified P : PsiElement> AbstractDiagnosticGroup.exposedVisibilityDeprecationError(
+    languageFeature: LanguageFeature,
+    positioningStrategy: PositioningStrategy = PositioningStrategy.DEFAULT
+): PropertyDelegateProvider<Any?, ReadOnlyProperty<AbstractDiagnosticGroup, DeprecationDiagnosticData>> {
+    return deprecationError<P>(languageFeature, positioningStrategy, exposedVisibilityDiagnosticInit)
 }
 
 typealias Symbol = FirBasedSymbol<*>

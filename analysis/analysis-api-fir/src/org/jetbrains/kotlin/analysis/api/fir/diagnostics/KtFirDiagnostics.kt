@@ -64,6 +64,7 @@ import org.jetbrains.kotlin.psi.KtPrimaryConstructor
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.KtReturnExpression
+import org.jetbrains.kotlin.psi.KtSafeQualifiedExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtSuperExpression
 import org.jetbrains.kotlin.psi.KtTypeAlias
@@ -753,8 +754,15 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         abstract val restrictingVisibility: EffectiveVisibility
     }
 
-    abstract class ExposedPropertyTypeInConstructor : KtFirDiagnostic<KtNamedDeclaration>() {
-        override val diagnosticClass get() = ExposedPropertyTypeInConstructor::class
+    abstract class ExposedPropertyTypeInConstructorError : KtFirDiagnostic<KtNamedDeclaration>() {
+        override val diagnosticClass get() = ExposedPropertyTypeInConstructorError::class
+        abstract val elementVisibility: EffectiveVisibility
+        abstract val restrictingDeclaration: KtSymbol
+        abstract val restrictingVisibility: EffectiveVisibility
+    }
+
+    abstract class ExposedPropertyTypeInConstructorWarning : KtFirDiagnostic<KtNamedDeclaration>() {
+        override val diagnosticClass get() = ExposedPropertyTypeInConstructorWarning::class
         abstract val elementVisibility: EffectiveVisibility
         abstract val restrictingDeclaration: KtSymbol
         abstract val restrictingVisibility: EffectiveVisibility
@@ -1054,10 +1062,12 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
 
     abstract class AssigningSingleElementToVarargInNamedFormFunctionError : KtFirDiagnostic<KtExpression>() {
         override val diagnosticClass get() = AssigningSingleElementToVarargInNamedFormFunctionError::class
+        abstract val expectedArrayType: KtType
     }
 
     abstract class AssigningSingleElementToVarargInNamedFormFunctionWarning : KtFirDiagnostic<KtExpression>() {
         override val diagnosticClass get() = AssigningSingleElementToVarargInNamedFormFunctionWarning::class
+        abstract val expectedArrayType: KtType
     }
 
     abstract class AssigningSingleElementToVarargInNamedFormAnnotationError : KtFirDiagnostic<KtExpression>() {
@@ -2018,7 +2028,7 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         abstract val enumEntry: KtSymbol
     }
 
-    abstract class UninitializedEnumCompanion : KtFirDiagnostic<KtSimpleNameExpression>() {
+    abstract class UninitializedEnumCompanion : KtFirDiagnostic<KtExpression>() {
         override val diagnosticClass get() = UninitializedEnumCompanion::class
         abstract val enumClass: KtClassLikeSymbol
     }
@@ -2126,6 +2136,10 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
     abstract class UnnecessarySafeCall : KtFirDiagnostic<PsiElement>() {
         override val diagnosticClass get() = UnnecessarySafeCall::class
         abstract val receiverType: KtType
+    }
+
+    abstract class SafeCallWillChangeNullability : KtFirDiagnostic<KtSafeQualifiedExpression>() {
+        override val diagnosticClass get() = SafeCallWillChangeNullability::class
     }
 
     abstract class UnexpectedSafeCall : KtFirDiagnostic<PsiElement>() {
