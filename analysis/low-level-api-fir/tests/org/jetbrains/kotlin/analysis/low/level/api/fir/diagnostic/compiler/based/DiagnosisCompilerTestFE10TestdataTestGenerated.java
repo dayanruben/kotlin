@@ -2604,6 +2604,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             }
 
             @Test
+            @TestMetadata("callableReferenceAssignmentToVar.kt")
+            public void testCallableReferenceAssignmentToVar() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/callableReference/callableReferenceAssignmentToVar.kt");
+            }
+
+            @Test
             @TestMetadata("classVsPackage.kt")
             public void testClassVsPackage() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/callableReference/classVsPackage.kt");
@@ -4087,6 +4093,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             @TestMetadata("IsErasedAllowFromOut2.kt")
             public void testIsErasedAllowFromOut2() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/cast/IsErasedAllowFromOut2.kt");
+            }
+
+            @Test
+            @TestMetadata("IsErasedAllowFromOut3.kt")
+            public void testIsErasedAllowFromOut3() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/cast/IsErasedAllowFromOut3.kt");
             }
 
             @Test
@@ -6423,6 +6435,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             @TestMetadata("suspendInvokeWithReceiver.kt")
             public void testSuspendInvokeWithReceiver() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/coroutines/suspendInvokeWithReceiver.kt");
+            }
+
+            @Test
+            @TestMetadata("suspendLambdaFromExpectedType.kt")
+            public void testSuspendLambdaFromExpectedType() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/coroutines/suspendLambdaFromExpectedType.kt");
             }
 
             @Nested
@@ -10551,6 +10569,22 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
         }
 
         @Nested
+        @TestMetadata("compiler/testData/diagnostics/tests/external")
+        @TestDataPath("$PROJECT_ROOT")
+        public class External {
+            @Test
+            public void testAllFilesPresentInExternal() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/external"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
+            }
+
+            @Test
+            @TestMetadata("noExternalModifierInheritance.kt")
+            public void testNoExternalModifierInheritance() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/external/noExternalModifierInheritance.kt");
+            }
+        }
+
+        @Nested
         @TestMetadata("compiler/testData/diagnostics/tests/funInterface")
         @TestDataPath("$PROJECT_ROOT")
         public class FunInterface {
@@ -11315,6 +11349,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             @TestMetadata("kt9985.kt")
             public void testKt9985() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/generics/kt9985.kt");
+            }
+
+            @Test
+            @TestMetadata("localClassWithTypeArgumentFromFunction.kt")
+            public void testLocalClassWithTypeArgumentFromFunction() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/generics/localClassWithTypeArgumentFromFunction.kt");
             }
 
             @Test
@@ -24494,6 +24534,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             }
 
             @Test
+            @TestMetadata("superInvoke.kt")
+            public void testSuperInvoke() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/resolve/superInvoke.kt");
+            }
+
+            @Test
             @TestMetadata("typeParameterInDefaultValueInLocalFunction.kt")
             public void testTypeParameterInDefaultValueInLocalFunction() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/resolve/typeParameterInDefaultValueInLocalFunction.kt");
@@ -25668,6 +25714,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
                 @TestMetadata("classParents.kt")
                 public void testClassParents() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/scopes/classHeader/classParents.kt");
+                }
+
+                @Test
+                @TestMetadata("companionNestedVsOuter.kt")
+                public void testCompanionNestedVsOuter() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/scopes/classHeader/companionNestedVsOuter.kt");
                 }
 
                 @Test

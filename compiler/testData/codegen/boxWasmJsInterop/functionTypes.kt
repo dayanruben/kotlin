@@ -2,6 +2,7 @@
 // Char issues
 // IGNORE_BACKEND: JS_IR
 
+// MODULE: main
 // FILE: externals.js
 
 function apply7(f) {
@@ -19,18 +20,18 @@ function is123Array(ei) {
 }
 
 function externalWithLambdas2(
-    boolean, // () -> Boolean,
-    byte, // () -> Byte,
-    short, // () -> Short,
-    char, // () -> Char,
-    int, // () -> Int,
-    long, // () -> Long,
-    float, // () -> Float,
-    double, // () -> Double,
-    string, // () -> String,
-    ei, // () -> EI,
-    dc, // () -> DC,
-    dcGetY, // (DC) -> Int
+boolean, // () -> Boolean,
+byte, // () -> Byte,
+short, // () -> Short,
+char, // () -> Char,
+int, // () -> Int,
+long, // () -> Long,
+float, // () -> Float,
+double, // () -> Double,
+string, // () -> String,
+ei, // () -> EI,
+dc, // () -> DC,
+dcGetY, // (DC) -> Int
 ) {
     let result = 0
     function test(boolean) {
@@ -54,17 +55,17 @@ function externalWithLambdas2(
 function createJsLambda() {
     return (
             boolean,
-            byte,
-            short,
-            char,
-            int,
-            long,
-            float,
-            double,
-            string,
-            ei,
-            dc,
-            dcGetY
+    byte,
+    short,
+    char,
+    int,
+    long,
+    float,
+    double,
+    string,
+    ei,
+    dc,
+    dcGetY
     ) => {
         let result = 0;
         function test(x) {
@@ -86,7 +87,6 @@ function createJsLambda() {
     };
 }
 
-// MODULE: main
 // FILE: externals.kt
 
 external fun createJsLambda(): (Boolean, Byte, Short, Char, Int, Long, Float, Double, String, EI, DC, (DC) -> Int) -> Int
@@ -199,25 +199,42 @@ fun box(): String {
     )
     if (externalWithLambdas2Count != 11) return "Fail externalWithLambdas2"
 
-
-    val jsLambda = createJsLambda()
-
-    val jsLambdaCount = jsLambda(
-        true,
-        100.toByte(),
-        200.toShort(),
-        'я',
-        300,
-        400L,
-        500.5f,
-        600.5,
-        "700",
-        create123Array(),
-        DC(800, 800),
+    val externalWithLambdas2Ref = ::externalWithLambdas2
+    val externalWithLambdas2RefCount = externalWithLambdas2Ref.invoke(
+        { true },
+        { 100.toByte() },
+        { 200.toShort() },
+        { 'я' },
+        { 300 },
+        { 400L },
+        { 500.5f },
+        { 600.5 },
+        { "700" },
+        { create123Array() },
+        { DC(800, 800) },
         { it.y }
     )
-    if (jsLambdaCount != 11)
-        return "Fail 3"
+    if (externalWithLambdas2RefCount != 11) return "Fail externalWithLambdas2"
+
+    val createJsLambdaRef = ::createJsLambda
+    for (jsLambda in arrayOf(createJsLambda(), createJsLambdaRef.invoke())) {
+        val jsLambdaCount = jsLambda(
+            true,
+            100.toByte(),
+            200.toShort(),
+            'я',
+            300,
+            400L,
+            500.5f,
+            600.5,
+            "700",
+            create123Array(),
+            DC(800, 800),
+            { it.y }
+        )
+        if (jsLambdaCount != 11)
+            return "Fail 3"
+    }
 
     complexHigherOrerTest()
 

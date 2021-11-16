@@ -122,6 +122,18 @@ private val tailrecLoweringPhase = makeWasmModulePhase(
     description = "Replace `tailrec` call sites with equivalent loop"
 )
 
+private val complexExternalDeclarationsToTopLevelFunctionsLowering = makeWasmModulePhase(
+    ::ComplexExternalDeclarationsToTopLevelFunctionsLowering,
+    name = "ComplexExternalDeclarationsToTopLevelFunctionsLowering",
+    description = "Lower complex external declarations to top-level functions",
+)
+
+private val complexExternalDeclarationsUsagesLowering = makeWasmModulePhase(
+    ::ComplexExternalDeclarationsUsageLowering,
+    name = "ComplexExternalDeclarationsUsageLowering",
+    description = "Lower usages of complex external declarations",
+)
+
 private val jsInteropFunctionsLowering = makeWasmModulePhase(
     ::JsInteropFunctionsLowering,
     name = "JsInteropFunctionsLowering",
@@ -404,6 +416,12 @@ private val staticMembersLoweringPhase = makeWasmModulePhase(
     description = "Move static member declarations to top-level"
 )
 
+private val classReferenceLoweringPhase = makeWasmModulePhase(
+    ::ClassReferenceLowering,
+    name = "ClassReferenceLowering",
+    description = "Handle class references"
+)
+
 private val wasmVarargExpressionLoweringPhase = makeWasmModulePhase(
     ::WasmVarargExpressionLowering,
     name = "WasmVarargExpressionLowering",
@@ -504,14 +522,13 @@ val wasmPhases = NamedCompilerPhase(
             excludeDeclarationsFromCodegenPhase then
             expectDeclarationsRemovingPhase then
 
-            jsInteropFunctionsLowering then
-            jsInteropFunctionCallsLowering then
-
             // TODO: Need some helpers from stdlib
             // arrayConstructorPhase then
             wrapInlineDeclarationsWithReifiedTypeParametersPhase then
 
             functionInliningPhase then
+            removeInlineDeclarationsWithReifiedTypeParametersLoweringPhase then
+
             lateinitNullableFieldsPhase then
             lateinitDeclarationLoweringPhase then
             lateinitUsageLoweringPhase then
@@ -534,6 +551,12 @@ val wasmPhases = NamedCompilerPhase(
             primaryConstructorLoweringPhase then
             delegateToPrimaryConstructorLoweringPhase then
             // Common prefix ends
+
+            complexExternalDeclarationsToTopLevelFunctionsLowering then
+            complexExternalDeclarationsUsagesLowering then
+
+            jsInteropFunctionsLowering then
+            jsInteropFunctionCallsLowering then
 
             enumEntryInstancesLoweringPhase then
             enumEntryInstancesBodyLoweringPhase then
@@ -562,11 +585,10 @@ val wasmPhases = NamedCompilerPhase(
             defaultArgumentPatchOverridesPhase then
             defaultParameterInjectorPhase then
             defaultParameterCleanerPhase then
-            removeInlineDeclarationsWithReifiedTypeParametersLoweringPhase then
 
 //            TODO:
 //            multipleCatchesLoweringPhase then
-//            classReferenceLoweringPhase then
+            classReferenceLoweringPhase then
 
             wasmVarargExpressionLoweringPhase then
             inlineClassDeclarationLoweringPhase then

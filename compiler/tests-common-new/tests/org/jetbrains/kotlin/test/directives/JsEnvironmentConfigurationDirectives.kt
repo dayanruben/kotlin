@@ -86,12 +86,12 @@ object JsEnvironmentConfigurationDirectives : SimpleDirectivesContainer() {
         applicability = DirectiveApplicability.Global
     )
 
-    val SKIP_DCE_DRIVEN by directive(
+    val SPLIT_PER_MODULE by directive(
         description = "",
         applicability = DirectiveApplicability.Global
     )
 
-    val SPLIT_PER_MODULE by directive(
+    val SPLIT_PER_FILE by directive(
         description = "",
         applicability = DirectiveApplicability.Global
     )
@@ -183,13 +183,55 @@ object JsEnvironmentConfigurationDirectives : SimpleDirectivesContainer() {
         applicability = DirectiveApplicability.Global
     )
 
+    val GENERATE_DTS by directive(
+        description = "Will generate corresponding dts files",
+        applicability = DirectiveApplicability.Global
+    )
+
+    val UPDATE_REFERENCE_DTS_FILES by directive(
+        description = "",
+        applicability = DirectiveApplicability.Global
+    )
+
+    // Directives for IR tests
+
     val RUN_IR_DCE by directive(
         description = "Enables dead code elimination on IR",
         applicability = DirectiveApplicability.Global
     )
 
-    val RUN_IR_PIR by directive(
-        description = "Enables pir on IR", // TODO what `pir` stands for?
+    val RUN_IC by directive(
+        description = "",
+        applicability = DirectiveApplicability.Global
+    )
+
+    val SKIP_IR_INCREMENTAL_CHECKS by directive(
+        description = "",
+        applicability = DirectiveApplicability.Global
+    )
+
+    val LOWER_PER_MODULE by directive(
+        description = "",
+        applicability = DirectiveApplicability.Global
+    )
+
+    val KLIB_MAIN_MODULE by directive(
+        description = "Specify that main module is actually a klib",
+        applicability = DirectiveApplicability.Global
+    )
+
+    val ES_MODULES by directive(
+        description = "",
+        applicability = DirectiveApplicability.Global
+    )
+
+    val ENTRY_ES_MODULE by directive(
+        description = "",
+        applicability = DirectiveApplicability.File
+    )
+
+    val PER_MODULE by directive(
+        description = "",
         applicability = DirectiveApplicability.Global
     )
 }

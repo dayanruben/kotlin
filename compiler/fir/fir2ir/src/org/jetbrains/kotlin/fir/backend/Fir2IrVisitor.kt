@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.fir.declarations.utils.isSynthetic
 import org.jetbrains.kotlin.fir.declarations.utils.visibility
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.impl.FirElseIfTrueCondition
+import org.jetbrains.kotlin.fir.expressions.impl.FirNoReceiverExpression
 import org.jetbrains.kotlin.fir.expressions.impl.FirStubStatement
 import org.jetbrains.kotlin.fir.expressions.impl.FirUnitExpression
 import org.jetbrains.kotlin.fir.references.FirReference
@@ -114,7 +115,7 @@ class Fir2IrVisitor(
             declarationStorage.enterScope(irEnumEntry)
             classifierStorage.putEnumEntryClassInScope(enumEntry, correspondingClass)
             val anonymousObject = (enumEntry.initializer as FirAnonymousObjectExpression).anonymousObject
-            converter.processAnonymousObjectMembers(anonymousObject, correspondingClass)
+            converter.processAnonymousObjectMembers(anonymousObject, correspondingClass, processHeaders = true)
             conversionScope.withParent(correspondingClass) {
                 conversionScope.withContainingFirClass(anonymousObject) {
                     memberGenerator.convertClassContent(correspondingClass, anonymousObject)
@@ -151,7 +152,6 @@ class Fir2IrVisitor(
             // NB: for implicit types it is possible that local class is already cached
             val irClass = classifierStorage.getCachedIrClass(regularClass)?.apply { this.parent = irParent }
             if (irClass != null) {
-                converter.processRegisteredLocalClassAndNestedClasses(regularClass, irClass)
                 return conversionScope.withParent(irClass) {
                     memberGenerator.convertClassContent(irClass, regularClass)
                 }
@@ -177,8 +177,9 @@ class Fir2IrVisitor(
         val irParent = conversionScope.parentFromStack()
         // NB: for implicit types it is possible that anonymous object is already cached
         val irAnonymousObject = classifierStorage.getCachedIrClass(anonymousObject)?.apply { this.parent = irParent }
-            ?: classifierStorage.createIrAnonymousObject(anonymousObject, irParent = irParent)
-        converter.processAnonymousObjectMembers(anonymousObject, irAnonymousObject)
+            ?: classifierStorage.createIrAnonymousObject(anonymousObject, irParent = irParent).also { irClass ->
+                converter.processAnonymousObjectMembers(anonymousObject, irClass, processHeaders = true)
+            }
         conversionScope.withParent(irAnonymousObject) {
             conversionScope.withContainingFirClass(anonymousObject) {
                 memberGenerator.convertClassContent(irAnonymousObject, anonymousObject)
@@ -443,7 +444,7 @@ class Fir2IrVisitor(
                 }
             }
         } else if (boundSymbol is FirCallableSymbol) {
-            val receiverSymbol = calleeReference.toSymbolForCall(session, classifierStorage, declarationStorage, conversionScope)
+            val receiverSymbol = calleeReference.toSymbolForCall(FirNoReceiverExpression, session, classifierStorage, declarationStorage, conversionScope)
             val receiver = (receiverSymbol?.owner as? IrSimpleFunction)?.extensionReceiverParameter
             if (receiver != null) {
                 return thisReceiverExpression.convertWithOffsets { startOffset, endOffset ->

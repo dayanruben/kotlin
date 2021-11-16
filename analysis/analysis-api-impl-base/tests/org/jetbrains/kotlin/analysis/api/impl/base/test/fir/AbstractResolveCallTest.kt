@@ -37,18 +37,13 @@ abstract class AbstractResolveCallTest(configurator: FrontendApiTestConfigurator
 
         val actual = executeOnPooledThreadInReadAction {
             analyseForTest(expression) {
-                resolveCall(expression)?.stringRepresentation()
+                resolveCall(expression)?.let { stringRepresentation(it) }
             }
         } ?: "null"
-        testServices.assertions.assertEqualsToFile(testDataFileSibling(".txt"), actual)
+        testServices.assertions.assertEqualsToTestDataFileSibling(actual)
     }
 
     private fun KtAnalysisSession.resolveCall(element: PsiElement): KtCall? = when (element) {
-        is KtCallElement -> element.resolveCall()
-        is KtBinaryExpression -> element.resolveCall()
-        is KtUnaryExpression -> element.resolveCall()
-        is KtArrayAccessExpression -> element.resolveCall()
-        is KtSimpleNameExpression -> element.resolveAccessorCall()
         is KtValueArgument -> resolveCall(element.getArgumentExpression()!!)
         is KtDeclarationModifierList -> {
             val annotationEntry = element.annotationEntries.singleOrNull()
@@ -60,13 +55,15 @@ abstract class AbstractResolveCallTest(configurator: FrontendApiTestConfigurator
                 ?: error("Only single annotation entry is supported for now")
             annotationEntry.resolveCall()
         }
+        is KtSimpleNameExpression -> element.resolveAccessorCall()
+        is KtElement -> element.resolveCallIfPossible()
         else -> error("Selected element type (${element::class.simpleName}) is not supported for resolveCall()")
     }
 
 }
 
-private fun KtCall.stringRepresentation(): String {
-    fun KtType.render() = substitutor.substituteOrSelf(this).asStringForDebugging().replace('/', '.')
+private fun KtAnalysisSession.stringRepresentation(call: KtCall): String {
+    fun KtType.render() = call.substitutor.substituteOrSelf(this).asStringForDebugging().replace('/', '.')
     fun Any.stringValue(): String = when (this) {
         is KtFunctionLikeSymbol -> buildString {
             append(
@@ -84,7 +81,9 @@ private fun KtCall.stringRepresentation(): String {
                 append("<extension receiver>: ${receiver.type.render()}")
                 if (valueParameters.isNotEmpty()) append(", ")
             }
-            (this@stringValue as? KtPossibleMemberSymbol)?.dispatchType?.let { dispatchReceiverType ->
+
+            @Suppress("DEPRECATION")
+            (this@stringValue as? KtPossibleMemberSymbol)?.getDispatchReceiverType()?.let { dispatchReceiverType ->
                 append("<dispatch receiver>: ${dispatchReceiverType.render()}")
                 if (valueParameters.isNotEmpty()) append(", ")
             }
@@ -111,7 +110,7 @@ private fun KtCall.stringRepresentation(): String {
         else -> error("unexpected parameter type ${this::class}")
     }
 
-    val callInfoClass = this::class
+    val callInfoClass = call::class
     return buildString {
         append(callInfoClass.simpleName!!)
         append(":\n")
@@ -121,7 +120,7 @@ private fun KtCall.stringRepresentation(): String {
             .filter { it.name != "token" }
             .joinTo(this, separator = "\n") { parameter ->
                 val name = parameter.name!!.removePrefix("_")
-                val value = propertyByName[name]!!.javaGetter!!(this@stringRepresentation)?.stringValue()
+                val value = propertyByName[name]!!.javaGetter!!(call)?.stringValue()
                 "$name = $value"
             }
     }

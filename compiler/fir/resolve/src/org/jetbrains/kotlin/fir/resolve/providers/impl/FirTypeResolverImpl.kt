@@ -78,6 +78,7 @@ class FirTypeResolverImpl(private val session: FirSession) : FirTypeResolver() {
     private fun FirBasedSymbol<*>?.isVisible(
         useSiteFile: FirFile?,
         containingDeclarations: List<FirDeclaration>,
+        supertypeSupplier: SupertypeSupplier
     ): Boolean {
         val declaration = this?.fir
         return if (useSiteFile != null && declaration is FirMemberDeclaration) {
@@ -86,8 +87,9 @@ class FirTypeResolverImpl(private val session: FirSession) : FirTypeResolver() {
                 session,
                 useSiteFile,
                 containingDeclarations,
-                null,
-                false,
+                dispatchReceiver = null,
+                isCallToPropertySetter = false,
+                supertypeSupplier = supertypeSupplier
             )
         } else {
             true
@@ -98,6 +100,7 @@ class FirTypeResolverImpl(private val session: FirSession) : FirTypeResolver() {
         typeRef: FirTypeRef,
         scopeClassDeclaration: ScopeClassDeclaration,
         useSiteFile: FirFile?,
+        supertypeSupplier: SupertypeSupplier
     ): Pair<FirBasedSymbol<*>?, ConeSubstitutor?> {
         return when (typeRef) {
             is FirResolvedTypeRef -> {
@@ -125,7 +128,7 @@ class FirTypeResolverImpl(private val session: FirSession) : FirTypeResolver() {
 
                         val resolvedSymbol = resolveSymbol(symbol, qualifier, qualifierResolver)
 
-                        if (resolvedSymbol.isVisible(useSiteFile, containingDeclarations)) {
+                        if (resolvedSymbol.isVisible(useSiteFile, containingDeclarations, supertypeSupplier)) {
                             acceptedSymbol = resolvedSymbol
                             substitutor = substitutorFromScope
                         } else {
@@ -196,7 +199,7 @@ class FirTypeResolverImpl(private val session: FirSession) : FirTypeResolver() {
         symbol: FirBasedSymbol<*>?,
         substitutor: ConeSubstitutor?,
         areBareTypesAllowed: Boolean,
-        topDeclaration: FirRegularClass?,
+        topContainer: FirDeclaration?,
         isOperandOfIsOperator: Boolean
     ): ConeKotlinType {
         if (symbol == null || symbol !is FirClassifierSymbol<*>) {
@@ -238,14 +241,26 @@ class FirTypeResolverImpl(private val session: FirSession) : FirTypeResolver() {
             val isPossibleBareType = areBareTypesAllowed && allTypeArguments.isEmpty()
             if (!isPossibleBareType) {
                 val actualSubstitutor = substitutor ?: ConeSubstitutor.Empty
-                val typeParameters = symbol.fir.typeParameters
 
-                val (typeParametersAlignedToQualifierParts, outerClasses) = getClassesAlignedToQualifierParts(symbol, qualifier, session)
+                val originalTypeParameters = symbol.fir.typeParameters
 
-                for ((index, typeParameter) in typeParameters.withIndex()) {
+                val (typeParametersAlignedToQualifierParts, outerDeclarations) = getClassesAlignedToQualifierParts(
+                    symbol,
+                    qualifier,
+                    session
+                )
+
+                val actualTypeParametersCount =
+                    when (symbol) {
+                        is FirTypeAliasSymbol ->
+                            outerDeclarations.sumOf { it?.let { d -> getActualTypeParametersCount(d) } ?: 0 }
+                        else -> symbol.typeParameterSymbols.size
+                    }
+
+                for ((typeParameterIndex, typeParameter) in originalTypeParameters.withIndex()) {
                     val (parameterClass, qualifierPartIndex) = typeParametersAlignedToQualifierParts[typeParameter.symbol] ?: continue
 
-                    if (index < typeArgumentsCount) {
+                    if (typeParameterIndex < typeArgumentsCount) {
                         // Check if type argument matches type parameter in respective qualifier part
                         val qualifierPartArgumentsCount = qualifier[qualifierPartIndex].typeArgumentList.typeArguments.size
                         createDiagnosticsIfExists(
@@ -259,12 +274,18 @@ class FirTypeResolverImpl(private val session: FirSession) : FirTypeResolver() {
                     }
 
                     if (typeParameter !is FirOuterClassTypeParameterRef ||
-                        isValidTypeParameterFromOuterClass(typeParameter.symbol, topDeclaration, session)
+                        isValidTypeParameterFromOuterDeclaration(typeParameter.symbol, topContainer, session)
                     ) {
                         val type = ConeTypeParameterTypeImpl(ConeTypeParameterLookupTag(typeParameter.symbol), isNullable = false)
                         val substituted = actualSubstitutor.substituteOrNull(type)
                         if (substituted == null) {
-                            createDiagnosticsIfExists(parameterClass, qualifierPartIndex, symbol, typeRef)?.let { return it }
+                            createDiagnosticsIfExists(
+                                parameterClass,
+                                qualifierPartIndex,
+                                symbol,
+                                typeRef,
+                                qualifierPartArgumentsCount = null
+                            )?.let { return it }
                         } else {
                             allTypeArguments.add(substituted)
                         }
@@ -274,15 +295,16 @@ class FirTypeResolverImpl(private val session: FirSession) : FirTypeResolver() {
                 }
 
                 // Check rest type arguments
-                if (typeArgumentsCount > typeParameters.size) {
+                if (typeArgumentsCount > actualTypeParametersCount) {
                     for (index in qualifier.indices) {
                         if (qualifier[index].typeArgumentList.typeArguments.isNotEmpty()) {
-                            val parameterClass = outerClasses.elementAtOrNull(index)
+                            val parameterClass = outerDeclarations.elementAtOrNull(index)
                             createDiagnosticsIfExists(
                                 parameterClass,
                                 index,
                                 symbol,
-                                typeRef
+                                typeRef,
+                                qualifierPartArgumentsCount = null
                             )?.let { return it }
                         }
                     }
@@ -304,39 +326,44 @@ class FirTypeResolverImpl(private val session: FirSession) : FirTypeResolver() {
 
     @OptIn(SymbolInternals::class)
     private fun getClassesAlignedToQualifierParts(
-        symbol: FirRegularClassSymbol,
+        symbol: FirClassLikeSymbol<*>,
         qualifier: List<FirQualifierPart>,
         session: FirSession
     ): ParametersMapAndOuterClasses {
-        var currentClass: FirRegularClass? = null
-        val outerClasses = mutableListOf<FirRegularClass?>()
+        var currentClassLikeDeclaration: FirClassLikeDeclaration? = null
+        val outerDeclarations = mutableListOf<FirClassLikeDeclaration?>()
 
         // Try to get at least qualifier.size classes that match qualifier parts
         var qualifierPartIndex = 0
-        while (qualifierPartIndex < qualifier.size || currentClass != null) {
+        while (qualifierPartIndex < qualifier.size || currentClassLikeDeclaration != null) {
             if (qualifierPartIndex == 0) {
-                currentClass = symbol.fir
+                currentClassLikeDeclaration = symbol.fir
             } else {
-                if (currentClass != null) {
-                    currentClass = currentClass.getContainingDeclaration(session) as? FirRegularClass
+                if (currentClassLikeDeclaration != null) {
+                    currentClassLikeDeclaration = currentClassLikeDeclaration.getContainingDeclaration(session)
                 }
             }
 
-            outerClasses.add(currentClass)
+            outerDeclarations.add(currentClassLikeDeclaration)
             qualifierPartIndex++
         }
 
-        val outerArgumentsCount = outerClasses.size - qualifier.size
-        val reversedOuterClasses = outerClasses.asReversed()
+        val outerArgumentsCount = outerDeclarations.size - qualifier.size
+        val reversedOuterClasses = outerDeclarations.asReversed()
         val result = mutableMapOf<FirTypeParameterSymbol, ClassWithQualifierPartIndex>()
 
         for (index in reversedOuterClasses.indices) {
-            currentClass = reversedOuterClasses[index]
-            if (currentClass != null) {
-                for (typeParameter in currentClass.typeParameters) {
+            currentClassLikeDeclaration = reversedOuterClasses[index]
+            val typeParameters = when (currentClassLikeDeclaration) {
+                is FirTypeAlias -> currentClassLikeDeclaration.typeParameters
+                is FirClass -> currentClassLikeDeclaration.typeParameters
+                else -> null
+            }
+            if (currentClassLikeDeclaration != null && typeParameters != null) {
+                for (typeParameter in typeParameters) {
                     val typeParameterSymbol = typeParameter.symbol
                     if (!result.containsKey(typeParameterSymbol)) {
-                        result[typeParameterSymbol] = ClassWithQualifierPartIndex(currentClass, index - outerArgumentsCount)
+                        result[typeParameterSymbol] = ClassWithQualifierPartIndex(currentClassLikeDeclaration, index - outerArgumentsCount)
                     }
                 }
             }
@@ -347,24 +374,24 @@ class FirTypeResolverImpl(private val session: FirSession) : FirTypeResolver() {
 
     private data class ParametersMapAndOuterClasses(
         val parameters: Map<FirTypeParameterSymbol, ClassWithQualifierPartIndex>,
-        val outerClasses: List<FirRegularClass?>
+        val outerClasses: List<FirClassLikeDeclaration?>
     )
 
     private data class ClassWithQualifierPartIndex(
-        val klass: FirRegularClass,
+        val klass: FirClassLikeDeclaration,
         val index: Int
     )
 
     @OptIn(SymbolInternals::class)
     private fun createDiagnosticsIfExists(
-        parameterClass: FirRegularClass?,
+        parameterClass: FirClassLikeDeclaration?,
         qualifierPartIndex: Int,
-        symbol: FirRegularClassSymbol,
+        symbol: FirClassLikeSymbol<*>,
         userTypeRef: FirUserTypeRef,
-        qualifierPartArgumentsCount: Int? = null
+        qualifierPartArgumentsCount: Int?
     ): ConeClassErrorType? {
         // TODO: It should be TYPE_ARGUMENTS_NOT_ALLOWED diagnostics when parameterClass is null
-        val actualTypeParametersCount = (parameterClass ?: symbol.fir).getActualTypeParametersCount(session)
+        val actualTypeParametersCount = getActualTypeParametersCount(parameterClass ?: symbol.fir)
 
         if (qualifierPartArgumentsCount == null || actualTypeParametersCount != qualifierPartArgumentsCount) {
             val source = getTypeArgumentsOrNameSource(userTypeRef, qualifierPartIndex)
@@ -380,6 +407,11 @@ class FirTypeResolverImpl(private val session: FirSession) : FirTypeResolver() {
         }
 
         return null
+    }
+
+    private fun getActualTypeParametersCount(element: FirClassLikeDeclaration): Int {
+        return (element as FirTypeParameterRefsOwner).typeParameters
+            .count { it !is FirOuterClassTypeParameterRef }
     }
 
     private fun getTypeArgumentsOrNameSource(typeRef: FirUserTypeRef, qualifierIndex: Int?): KtSourceElement? {
@@ -422,17 +454,18 @@ class FirTypeResolverImpl(private val session: FirSession) : FirTypeResolver() {
         areBareTypesAllowed: Boolean,
         isOperandOfIsOperator: Boolean,
         useSiteFile: FirFile?,
+        supertypeSupplier: SupertypeSupplier
     ): ConeKotlinType {
         return when (typeRef) {
             is FirResolvedTypeRef -> typeRef.type
             is FirUserTypeRef -> {
-                val (symbol, substitutor) = resolveToSymbol(typeRef, scopeClassDeclaration, useSiteFile)
+                val (symbol, substitutor) = resolveToSymbol(typeRef, scopeClassDeclaration, useSiteFile, supertypeSupplier)
                 resolveUserType(
                     typeRef,
                     symbol,
                     substitutor,
                     areBareTypesAllowed,
-                    scopeClassDeclaration.containingDeclarations.lastOrNull(),
+                    scopeClassDeclaration.topContainer ?: scopeClassDeclaration.containingDeclarations.lastOrNull(),
                     isOperandOfIsOperator
                 )
             }

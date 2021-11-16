@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
+import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.types.isLong
 import org.jetbrains.kotlin.ir.util.constructors
@@ -169,10 +170,6 @@ class JsIntrinsics(private val irBuiltIns: IrBuiltIns, val context: JsIrBackendC
         getInternalWithoutPackage("kotlin.coroutines.intrinsics.invokeSuspendSuperTypeWithReceiver")
     val jsInvokeSuspendSuperTypeWithReceiverAndParam =
         getInternalWithoutPackage("kotlin.coroutines.intrinsics.invokeSuspendSuperTypeWithReceiverAndParam")
-    val jsGetKClass = getInternalWithoutPackage("getKClass")
-    val jsGetKClassFromExpression = getInternalWithoutPackage("getKClassFromExpression")
-
-    val jsClass = getInternalFunction("jsClassIntrinsic")
 
     val jsNumberRangeToNumber = getInternalFunction("numberRangeToNumber")
     val jsNumberRangeToLong = getInternalFunction("numberRangeToLong")
@@ -235,7 +232,25 @@ class JsIntrinsics(private val irBuiltIns: IrBuiltIns, val context: JsIrBackendC
     val jsPrimitiveArrayIteratorFunctions =
         PrimitiveType.values().associate { it to getInternalFunction("${it.typeName.asString().toLowerCaseAsciiOnly()}ArrayIterator") }
 
-    val arrayLiteral = getInternalFunction("arrayLiteral")
+    val jsClass = getInternalFunction("jsClassIntrinsic")
+    val arrayLiteral: IrSimpleFunctionSymbol = getInternalFunction("arrayLiteral")
+
+    internal inner class JsReflectionSymbols : ReflectionSymbols {
+        override val createKType = getInternalWithoutPackageOrNull("createKType")
+        override val createDynamicKType = getInternalWithoutPackageOrNull("createDynamicKType")
+        override val createKTypeParameter = getInternalWithoutPackageOrNull("createKTypeParameter")
+        override val getStarKTypeProjection = getInternalWithoutPackageOrNull("getStarKTypeProjection")
+        override val createCovariantKTypeProjection = getInternalWithoutPackageOrNull("createCovariantKTypeProjection")
+        override val createInvariantKTypeProjection = getInternalWithoutPackageOrNull("createInvariantKTypeProjection")
+        override val createContravariantKTypeProjection = getInternalWithoutPackageOrNull("createContravariantKTypeProjection")
+        override val getKClass = getInternalWithoutPackage("getKClass")
+        override val getKClassFromExpression = getInternalWithoutPackage("getKClassFromExpression")
+        override val primitiveClassesObject = context.getIrClass(FqName("kotlin.reflect.js.internal.PrimitiveClasses"))
+        override val kTypeClass: IrClassSymbol = context.getIrClass(FqName("kotlin.reflect.KType"))
+        override val getClassData: IrSimpleFunctionSymbol get() = jsClass
+    }
+
+    internal val reflectionSymbols: JsReflectionSymbols = JsReflectionSymbols()
 
     val primitiveToTypedArrayMap = EnumMap(
         mapOf(
@@ -246,14 +261,6 @@ class JsIntrinsics(private val irBuiltIns: IrBuiltIns, val context: JsIrBackendC
             PrimitiveType.DOUBLE to "Float64"
         )
     )
-
-    val createKType = getInternalWithoutPackageOrNull("createKType")
-    val createDynamicKType = getInternalWithoutPackageOrNull("createDynamicKType")
-    val createKTypeParameter = getInternalWithoutPackageOrNull("createKTypeParameter")
-    val getStarKTypeProjection = getInternalWithoutPackageOrNull("getStarKTypeProjection")
-    val createCovariantKTypeProjection = getInternalWithoutPackageOrNull("createCovariantKTypeProjection")
-    val createInvariantKTypeProjection = getInternalWithoutPackageOrNull("createInvariantKTypeProjection")
-    val createContravariantKTypeProjection = getInternalWithoutPackageOrNull("createContravariantKTypeProjection")
 
     val primitiveToSizeConstructor =
         PrimitiveType.values().associate { type ->
@@ -314,8 +321,6 @@ class JsIntrinsics(private val irBuiltIns: IrBuiltIns, val context: JsIrBackendC
     val writeSharedBox = getInternalFunction("sharedBoxWrite")
 
     val jsUndefined = getInternalFunction("jsUndefined")
-
-    // Helpers:
 
     private fun getInternalFunction(name: String) =
         context.symbolTable.referenceSimpleFunction(context.getJsInternalFunction(name))

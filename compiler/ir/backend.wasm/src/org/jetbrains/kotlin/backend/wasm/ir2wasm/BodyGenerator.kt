@@ -64,17 +64,6 @@ class BodyGenerator(val context: WasmFunctionCodegenContext) : IrElementVisitorV
         error("Unexpected element of type ${element::class}")
     }
 
-    override fun visitClassReference(expression: IrClassReference) {
-        body.buildCall(context.referenceFunction(wasmSymbols.throwISE))
-        body.buildUnreachable()
-    }
-
-    override fun visitGetClass(expression: IrGetClass) {
-        body.buildCall(context.referenceFunction(wasmSymbols.throwISE))
-        body.buildUnreachable()
-    }
-
-
     override fun visitThrow(expression: IrThrow) {
         generateExpression(expression.value)
         body.buildThrow(context.tagIdx)
@@ -267,6 +256,7 @@ class BodyGenerator(val context: WasmFunctionCodegenContext) : IrElementVisitorV
             val klassId = context.referenceClassId(klass.symbol)
 
             body.buildConstI32Symbol(klassId)
+            body.buildConstI32(0) // Any::_hashCode
             generateExpression(call.getValueArgument(0)!!)
             body.buildGetGlobal(context.referenceClassRTT(klass.symbol))
             body.buildStructNew(structTypeName)
@@ -344,11 +334,6 @@ class BodyGenerator(val context: WasmFunctionCodegenContext) : IrElementVisitorV
         }
 
         when (function.symbol) {
-            wasmSymbols.typeOf -> {
-                body.buildCall(context.referenceFunction(wasmSymbols.throwISE))
-                body.buildGetUnit()
-            }
-
             wasmSymbols.wasmClassId -> {
                 val klass = call.getTypeArgument(0)!!.getClass()
                     ?: error("No class given for wasmClassId intrinsic")

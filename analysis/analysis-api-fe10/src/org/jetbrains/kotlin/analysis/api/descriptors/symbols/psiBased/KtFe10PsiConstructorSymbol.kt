@@ -5,10 +5,9 @@
 
 package org.jetbrains.kotlin.analysis.api.descriptors.symbols.psiBased
 
+import org.jetbrains.kotlin.analysis.api.descriptors.Fe10AnalysisContext
 import org.jetbrains.kotlin.analysis.api.descriptors.Fe10AnalysisFacade.AnalysisMode
-import org.jetbrains.kotlin.analysis.api.descriptors.KtFe10AnalysisSession
 import org.jetbrains.kotlin.analysis.api.descriptors.symbols.descriptorBased.base.ktVisibility
-import org.jetbrains.kotlin.analysis.api.descriptors.symbols.descriptorBased.base.toKtType
 import org.jetbrains.kotlin.analysis.api.descriptors.symbols.descriptorBased.base.toKtTypeAndAnnotations
 import org.jetbrains.kotlin.analysis.api.descriptors.symbols.pointers.KtFe10NeverRestoringSymbolPointer
 import org.jetbrains.kotlin.analysis.api.descriptors.symbols.psiBased.base.KtFe10PsiSymbol
@@ -21,9 +20,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtTypeAndAnnotations
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtPsiBasedSymbolPointer
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtSymbolPointer
-import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.withValidityAssertion
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.Visibility
@@ -34,10 +31,10 @@ import org.jetbrains.kotlin.resolve.BindingContext
 
 internal class KtFe10PsiConstructorSymbol(
     override val psi: KtConstructor<*>,
-    override val analysisSession: KtFe10AnalysisSession
+    override val analysisContext: Fe10AnalysisContext
 ) : KtConstructorSymbol(), KtFe10PsiSymbol<KtConstructor<*>, ConstructorDescriptor> {
     override val descriptor: ConstructorDescriptor? by cached {
-        val bindingContext = analysisSession.analyze(psi, AnalysisMode.PARTIAL)
+        val bindingContext = analysisContext.analyze(psi, AnalysisMode.PARTIAL)
         bindingContext[BindingContext.CONSTRUCTOR, psi]
     }
 
@@ -48,27 +45,21 @@ internal class KtFe10PsiConstructorSymbol(
         get() = withValidityAssertion { psi.getContainingClassOrObject().getClassId() }
 
     override val valueParameters: List<KtValueParameterSymbol>
-        get() = withValidityAssertion { psi.valueParameters.map { KtFe10PsiValueParameterSymbol(it, analysisSession) } }
+        get() = withValidityAssertion { psi.valueParameters.map { KtFe10PsiValueParameterSymbol(it, analysisContext) } }
 
     override val hasStableParameterNames: Boolean
         get() = withValidityAssertion { true }
 
     override val annotatedType: KtTypeAndAnnotations
         get() = withValidityAssertion {
-            descriptor?.returnType?.toKtTypeAndAnnotations(analysisSession) ?: createErrorTypeAndAnnotations()
-        }
-
-    override val dispatchType: KtType?
-        get() = withValidityAssertion {
-            val containingClass = descriptor?.constructedClass?.containingDeclaration as? ClassDescriptor ?: return null
-            return containingClass.defaultType.toKtType(analysisSession)
+            descriptor?.returnType?.toKtTypeAndAnnotations(analysisContext) ?: createErrorTypeAndAnnotations()
         }
 
     override val visibility: Visibility
         get() = withValidityAssertion { psi.ktVisibility ?: descriptor?.ktVisibility ?: Visibilities.Public }
 
     override val typeParameters: List<KtTypeParameterSymbol>
-        get() = withValidityAssertion { psi.typeParameters.map { KtFe10PsiTypeParameterSymbol(it, analysisSession) } }
+        get() = withValidityAssertion { psi.typeParameters.map { KtFe10PsiTypeParameterSymbol(it, analysisContext) } }
 
     override fun createPointer(): KtSymbolPointer<KtConstructorSymbol> = withValidityAssertion {
         return KtPsiBasedSymbolPointer.createForSymbolFromSource(this) ?: KtFe10NeverRestoringSymbolPointer()

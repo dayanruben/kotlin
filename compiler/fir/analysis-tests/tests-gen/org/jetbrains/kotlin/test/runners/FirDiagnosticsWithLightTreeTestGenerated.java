@@ -3990,6 +3990,12 @@ public class FirDiagnosticsWithLightTreeTestGenerated extends AbstractFirDiagnos
             }
 
             @Test
+            @TestMetadata("privateAliasInSamePackage.kt")
+            public void testPrivateAliasInSamePackage() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/visibility/privateAliasInSamePackage.kt");
+            }
+
+            @Test
             @TestMetadata("protectedInCompanion.kt")
             public void testProtectedInCompanion() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolve/visibility/protectedInCompanion.kt");
@@ -3999,6 +4005,12 @@ public class FirDiagnosticsWithLightTreeTestGenerated extends AbstractFirDiagnos
             @TestMetadata("singletonConstructors.kt")
             public void testSingletonConstructors() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolve/visibility/singletonConstructors.kt");
+            }
+
+            @Test
+            @TestMetadata("superAccessToJavaField.kt")
+            public void testSuperAccessToJavaField() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/visibility/superAccessToJavaField.kt");
             }
 
             @Test

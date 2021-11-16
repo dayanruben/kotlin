@@ -3574,6 +3574,11 @@ public class LazyBodyIsNotTouchedTilContractsPhaseTestGenerated extends Abstract
             runTest("compiler/fir/analysis-tests/testData/resolve/visibility/kotlinJavaKotlinHierarchy.kt");
         }
 
+        @TestMetadata("privateAliasInSamePackage.kt")
+        public void testPrivateAliasInSamePackage() throws Exception {
+            runTest("compiler/fir/analysis-tests/testData/resolve/visibility/privateAliasInSamePackage.kt");
+        }
+
         @TestMetadata("protectedInCompanion.kt")
         public void testProtectedInCompanion() throws Exception {
             runTest("compiler/fir/analysis-tests/testData/resolve/visibility/protectedInCompanion.kt");
@@ -3582,6 +3587,11 @@ public class LazyBodyIsNotTouchedTilContractsPhaseTestGenerated extends Abstract
         @TestMetadata("singletonConstructors.kt")
         public void testSingletonConstructors() throws Exception {
             runTest("compiler/fir/analysis-tests/testData/resolve/visibility/singletonConstructors.kt");
+        }
+
+        @TestMetadata("superAccessToJavaField.kt")
+        public void testSuperAccessToJavaField() throws Exception {
+            runTest("compiler/fir/analysis-tests/testData/resolve/visibility/superAccessToJavaField.kt");
         }
 
         @TestMetadata("visibilityWithOverrides.kt")

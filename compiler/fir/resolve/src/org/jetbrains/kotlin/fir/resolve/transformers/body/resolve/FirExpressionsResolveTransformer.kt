@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.fakeElement
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.declarations.utils.isLocal
 import org.jetbrains.kotlin.fir.diagnostics.*
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.builder.buildErrorExpression
@@ -219,7 +220,7 @@ open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransform
                 superReferenceContainer.resultType = superTypeRef.copyWithNewSourceKind(KtFakeSourceElementKind.SuperCallExplicitType)
             }
             superTypeRef !is FirImplicitTypeRef -> {
-                components.typeResolverTransformer.withAllowedBareTypes {
+                components.typeResolverTransformer.withBareTypes {
                     superReference.transformChildren(transformer, ResolutionMode.ContextIndependent)
                 }
 
@@ -384,7 +385,7 @@ open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransform
     }
 
     override fun transformBlock(block: FirBlock, data: ResolutionMode): FirStatement {
-        context.forBlock {
+        context.forBlock(session) {
             transformBlockInCurrentScope(block, data)
         }
         return block
@@ -535,6 +536,7 @@ open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransform
                         dispatchReceiver = it.dispatchReceiver
                         extensionReceiver = it.extensionReceiver
                     }
+                    annotations += assignmentOperatorStatement.annotations
                 }
             return assignment.transform(transformer, ResolutionMode.ContextIndependent)
         }
@@ -602,18 +604,22 @@ open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransform
         override fun <T> shouldRunCompletion(call: T): Boolean where T : FirStatement, T : FirResolvable = false
     }
 
-    private fun FirTypeRef.withTypeArgumentsForBareType(argument: FirExpression): FirTypeRef {
+    private fun FirTypeRef.withTypeArgumentsForBareType(argument: FirExpression, operation: FirOperation): FirTypeRef {
         val type = coneTypeSafe<ConeClassLikeType>() ?: return this
-        if (type.typeArguments.isNotEmpty()) return this
+        if (type.typeArguments.isNotEmpty()) return this // TODO: Incorrect for local classes.
+        // TODO: Check equality of size of arguments and parameters?
 
         val firClass = type.lookupTag.toSymbol(session)?.fir ?: return this
         if (firClass.typeParameters.isEmpty()) return this
 
         val originalType = argument.unwrapSmartcastExpression().typeRef.coneTypeSafe<ConeKotlinType>() ?: return this
-        val newType = components.computeRepresentativeTypeForBareType(type, originalType) ?: return buildErrorTypeRef {
-            source = this@withTypeArgumentsForBareType.source
-            diagnostic = ConeNoTypeArgumentsOnRhsError(firClass.typeParameters.size, firClass.symbol)
-        }
+        val newType = components.computeRepresentativeTypeForBareType(type, originalType)
+            ?: if (firClass.isLocal && (operation == FirOperation.AS || operation == FirOperation.SAFE_AS)) {
+                (firClass as FirClass).defaultType()
+            } else return buildErrorTypeRef {
+                source = this@withTypeArgumentsForBareType.source
+                diagnostic = ConeNoTypeArgumentsOnRhsError(firClass.typeParameters.size, firClass.symbol)
+            }
         return if (newType.typeArguments.isEmpty()) this else withReplacedConeType(newType)
     }
 
@@ -621,7 +627,7 @@ open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransform
         typeOperatorCall: FirTypeOperatorCall,
         data: ResolutionMode,
     ): FirStatement {
-        val resolved = components.typeResolverTransformer.withAllowedBareTypes {
+        val resolved = components.typeResolverTransformer.withBareTypes {
             if (typeOperatorCall.operation == FirOperation.IS || typeOperatorCall.operation == FirOperation.NOT_IS) {
                 components.typeResolverTransformer.withIsOperandOfIsOperator {
                     typeOperatorCall.transformConversionTypeRef(transformer, ResolutionMode.ContextIndependent)
@@ -631,7 +637,7 @@ open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransform
             }
         }.transformTypeOperatorCallChildren()
 
-        val conversionTypeRef = resolved.conversionTypeRef.withTypeArgumentsForBareType(resolved.argument)
+        val conversionTypeRef = resolved.conversionTypeRef.withTypeArgumentsForBareType(resolved.argument, typeOperatorCall.operation)
         resolved.transformChildren(object : FirDefaultTransformer<Any?>() {
             override fun <E : FirElement> transformElement(element: E, data: Any?): E {
                 return element
@@ -1038,6 +1044,7 @@ open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransform
         val operatorName = FirOperationNameConventions.ASSIGNMENTS.getValue(augmentedArraySetCall.operation)
 
         val firstCalls = with(augmentedArraySetCall.setGetBlock.statements.last() as FirFunctionCall) setCall@{
+            (annotations as MutableList<FirAnnotation>) += augmentedArraySetCall.annotations
             buildList {
                 add(this@setCall)
                 with(arguments.last() as FirFunctionCall) plusCall@{

@@ -1236,20 +1236,20 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
-    add(FirErrors.INLINE_CLASS_NOT_TOP_LEVEL) { firDiagnostic ->
-        InlineClassNotTopLevelImpl(
+    add(FirErrors.VALUE_CLASS_NOT_TOP_LEVEL) { firDiagnostic ->
+        ValueClassNotTopLevelImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
     }
-    add(FirErrors.INLINE_CLASS_NOT_FINAL) { firDiagnostic ->
-        InlineClassNotFinalImpl(
+    add(FirErrors.VALUE_CLASS_NOT_FINAL) { firDiagnostic ->
+        ValueClassNotFinalImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
     }
-    add(FirErrors.ABSENCE_OF_PRIMARY_CONSTRUCTOR_FOR_INLINE_CLASS) { firDiagnostic ->
-        AbsenceOfPrimaryConstructorForInlineClassImpl(
+    add(FirErrors.ABSENCE_OF_PRIMARY_CONSTRUCTOR_FOR_VALUE_CLASS) { firDiagnostic ->
+        AbsenceOfPrimaryConstructorForValueClassImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
@@ -1260,64 +1260,64 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
-    add(FirErrors.INLINE_CLASS_CONSTRUCTOR_NOT_FINAL_READ_ONLY_PARAMETER) { firDiagnostic ->
-        InlineClassConstructorNotFinalReadOnlyParameterImpl(
+    add(FirErrors.VALUE_CLASS_CONSTRUCTOR_NOT_FINAL_READ_ONLY_PARAMETER) { firDiagnostic ->
+        ValueClassConstructorNotFinalReadOnlyParameterImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
     }
-    add(FirErrors.PROPERTY_WITH_BACKING_FIELD_INSIDE_INLINE_CLASS) { firDiagnostic ->
-        PropertyWithBackingFieldInsideInlineClassImpl(
+    add(FirErrors.PROPERTY_WITH_BACKING_FIELD_INSIDE_VALUE_CLASS) { firDiagnostic ->
+        PropertyWithBackingFieldInsideValueClassImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
     }
-    add(FirErrors.DELEGATED_PROPERTY_INSIDE_INLINE_CLASS) { firDiagnostic ->
-        DelegatedPropertyInsideInlineClassImpl(
+    add(FirErrors.DELEGATED_PROPERTY_INSIDE_VALUE_CLASS) { firDiagnostic ->
+        DelegatedPropertyInsideValueClassImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
     }
-    add(FirErrors.INLINE_CLASS_HAS_INAPPLICABLE_PARAMETER_TYPE) { firDiagnostic ->
-        InlineClassHasInapplicableParameterTypeImpl(
+    add(FirErrors.VALUE_CLASS_HAS_INAPPLICABLE_PARAMETER_TYPE) { firDiagnostic ->
+        ValueClassHasInapplicableParameterTypeImpl(
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
     }
-    add(FirErrors.INLINE_CLASS_CANNOT_IMPLEMENT_INTERFACE_BY_DELEGATION) { firDiagnostic ->
-        InlineClassCannotImplementInterfaceByDelegationImpl(
+    add(FirErrors.VALUE_CLASS_CANNOT_IMPLEMENT_INTERFACE_BY_DELEGATION) { firDiagnostic ->
+        ValueClassCannotImplementInterfaceByDelegationImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
     }
-    add(FirErrors.INLINE_CLASS_CANNOT_EXTEND_CLASSES) { firDiagnostic ->
-        InlineClassCannotExtendClassesImpl(
+    add(FirErrors.VALUE_CLASS_CANNOT_EXTEND_CLASSES) { firDiagnostic ->
+        ValueClassCannotExtendClassesImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
     }
-    add(FirErrors.INLINE_CLASS_CANNOT_BE_RECURSIVE) { firDiagnostic ->
-        InlineClassCannotBeRecursiveImpl(
+    add(FirErrors.VALUE_CLASS_CANNOT_BE_RECURSIVE) { firDiagnostic ->
+        ValueClassCannotBeRecursiveImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
     }
-    add(FirErrors.RESERVED_MEMBER_INSIDE_INLINE_CLASS) { firDiagnostic ->
-        ReservedMemberInsideInlineClassImpl(
+    add(FirErrors.RESERVED_MEMBER_INSIDE_VALUE_CLASS) { firDiagnostic ->
+        ReservedMemberInsideValueClassImpl(
             firDiagnostic.a,
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
     }
-    add(FirErrors.SECONDARY_CONSTRUCTOR_WITH_BODY_INSIDE_INLINE_CLASS) { firDiagnostic ->
-        SecondaryConstructorWithBodyInsideInlineClassImpl(
+    add(FirErrors.SECONDARY_CONSTRUCTOR_WITH_BODY_INSIDE_VALUE_CLASS) { firDiagnostic ->
+        SecondaryConstructorWithBodyInsideValueClassImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
     }
-    add(FirErrors.INNER_CLASS_INSIDE_INLINE_CLASS) { firDiagnostic ->
-        InnerClassInsideInlineClassImpl(
+    add(FirErrors.INNER_CLASS_INSIDE_VALUE_CLASS) { firDiagnostic ->
+        InnerClassInsideValueClassImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
@@ -1599,7 +1599,7 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
     add(FirErrors.WRONG_NUMBER_OF_TYPE_ARGUMENTS) { firDiagnostic ->
         WrongNumberOfTypeArgumentsImpl(
             firDiagnostic.a,
-            firSymbolBuilder.classifierBuilder.buildClassLikeSymbol(firDiagnostic.b.fir),
+            firSymbolBuilder.classifierBuilder.buildClassLikeSymbol(firDiagnostic.b.fir as FirClass),
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
@@ -1614,7 +1614,7 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
     }
     add(FirErrors.OUTER_CLASS_ARGUMENTS_REQUIRED) { firDiagnostic ->
         OuterClassArgumentsRequiredImpl(
-            firSymbolBuilder.classifierBuilder.buildClassLikeSymbol(firDiagnostic.a.fir),
+            firSymbolBuilder.classifierBuilder.buildClassLikeSymbol(firDiagnostic.a.fir as FirClass),
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
@@ -3097,8 +3097,29 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirErrors.CANNOT_CHECK_FOR_ERASED) { firDiagnostic ->
+        CannotCheckForErasedImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.CAST_NEVER_SUCCEEDS) { firDiagnostic ->
+        CastNeverSucceedsImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
     add(FirErrors.USELESS_CAST) { firDiagnostic ->
         UselessCastImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.UNCHECKED_CAST) { firDiagnostic ->
+        UncheckedCastImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.b),
             firDiagnostic as KtPsiDiagnostic,
             token,
         )

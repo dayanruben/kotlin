@@ -145,7 +145,9 @@ internal class PropertiesProvider private constructor(private val project: Proje
 
     var mpp13XFlagsSetByPlugin: Boolean
         get() = booleanProperty("kotlin.internal.mpp.13X.flags.setByPlugin") ?: false
-        set(value) { project.extensions.extraProperties.set("kotlin.internal.mpp.13X.flags.setByPlugin", "$value") }
+        set(value) {
+            project.extensions.extraProperties.set("kotlin.internal.mpp.13X.flags.setByPlugin", "$value")
+        }
 
     val mppHierarchicalStructureByDefault: Boolean
         get() = booleanProperty(KOTLIN_MPP_HIERARCHICAL_STRUCTURE_BY_DEFAULT) ?: false
@@ -164,6 +166,9 @@ internal class PropertiesProvider private constructor(private val project: Proje
 
     val ignoreDisabledNativeTargets: Boolean?
         get() = booleanProperty(DisabledNativeTargetsReporter.DISABLE_WARNING_PROPERTY_NAME)
+
+    val ignoreAbsentAndroidMultiplatformTarget: Boolean
+        get() = booleanProperty("kotlin.mpp.absentAndroidTarget.nowarn") ?: false
 
     val ignoreIncorrectNativeDependencies: Boolean?
         get() = booleanProperty(KOTLIN_NATIVE_IGNORE_INCORRECT_DEPENDENCIES)
@@ -429,5 +434,7 @@ internal class PropertiesProvider private constructor(private val project: Proje
                 return get(CACHED_PROVIDER_EXT_NAME) as? PropertiesProvider
                     ?: PropertiesProvider(project) // Fallback if multiple class loaders are involved
             }
+
+        internal val Project.kotlinPropertiesProvider get() = PropertiesProvider(this)
     }
 }

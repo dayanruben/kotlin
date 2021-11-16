@@ -24,6 +24,9 @@ class JvmIrBackendFacade(
         module: TestModule,
         inputArtifact: IrBackendInput
     ): BinaryArtifacts.Jvm? {
+        require(inputArtifact is IrBackendInput.JvmIrBackendInput) {
+            "JvmIrBackendFacade expects IrBackendInput.JvmIrBackendInput as input"
+        }
         val state = inputArtifact.state
         val codegenFactory = state.codegenFactory as JvmIrCodegenFactory
         try {

@@ -1,7 +1,7 @@
 fun <E> foo(x: Any, y: Any) : Any {
     class C
     // without E?
-    if(x is C) {
+    if(x is <!NO_TYPE_ARGUMENTS_ON_RHS!>C<!>) {
         return x
     }
 
@@ -22,7 +22,12 @@ fun <E> foo(x: Any, y: Any) : Any {
         return y
     }
 
+    if (y is Outer<*>.Inner) {
+        return y
+    }
+
     y as Outer<*>.Inner
+    y as Outer.Inner
 
     return C()
 }

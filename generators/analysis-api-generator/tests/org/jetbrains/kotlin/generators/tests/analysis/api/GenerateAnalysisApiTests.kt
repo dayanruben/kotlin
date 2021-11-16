@@ -5,8 +5,11 @@
 
 package org.jetbrains.kotlin.generators.tests.analysis.api
 
+import org.jetbrains.kotlin.analysis.api.descriptors.test.AbstractKtFe10ResolveCallTest
 import org.jetbrains.kotlin.analysis.api.descriptors.test.components.*
+import org.jetbrains.kotlin.analysis.api.descriptors.test.symbols.AbstractKtFe10CompileTimeConstantEvaluatorTest
 import org.jetbrains.kotlin.analysis.api.descriptors.test.symbols.AbstractKtFe10SymbolByFqNameTest
+import org.jetbrains.kotlin.analysis.api.descriptors.test.symbols.AbstractKtFe10SymbolByPsiTest
 import org.jetbrains.kotlin.analysis.api.descriptors.test.symbols.AbstractKtFe10SymbolByReferenceTest
 import org.jetbrains.kotlin.analysis.api.fir.AbstractFirReferenceResolveTest
 import org.jetbrains.kotlin.analysis.api.fir.components.*
@@ -73,6 +76,10 @@ fun main(args: Array<String>) {
                 model("components/expectedExpressionType")
             }
 
+            testClass<AbstractFirFunctionClassKindTest> {
+                model("components/functionClassKind")
+            }
+
             testClass<AbstractFirOverriddenDeclarationProviderTest> {
                 model("components/overriddenDeclarations")
             }
@@ -105,6 +112,10 @@ fun main(args: Array<String>) {
                 model("components/psiTypeProvider")
             }
 
+            testClass<AbstractExpressionPsiTypeProviderTest> {
+                model("components/expressionPsiType")
+            }
+
             testClass<AbstractFirHLSmartCastInfoTest> {
                 model("components/smartCastInfo")
             }
@@ -115,9 +126,9 @@ fun main(args: Array<String>) {
         }
 
         testGroup("analysis/analysis-api-fe10/tests", "analysis/analysis-api/testData") {
-//            testClass<AbstractKtFe10ResolveCallTest> {
-//                model("analysisSession/resolveCall")
-//            }
+            testClass<AbstractKtFe10ResolveCallTest> {
+                model("analysisSession/resolveCall")
+            }
 
 //            testClass<AbstractKtFe10MemberScopeByFqNameTest> {
 //                model("scopes/memberScopeByFqName")
@@ -127,13 +138,13 @@ fun main(args: Array<String>) {
 //                model("scopes/fileScopeTest", extension = "kt")
 //            }
 
-//            testClass<AbstractKtFe10SymbolByPsiTest> {
-//                model("symbols/symbolByPsi")
-//            }
+            testClass<AbstractKtFe10SymbolByPsiTest> {
+                model("symbols/symbolByPsi")
+            }
 
-//            testClass<AbstractKtFe10CompileTimeConstantEvaluatorTest> {
-//                model("components/compileTimeConstantEvaluator")
-//            }
+            testClass<AbstractKtFe10CompileTimeConstantEvaluatorTest> {
+                model("components/compileTimeConstantEvaluator")
+            }
 
             testClass<AbstractKtFe10SymbolByFqNameTest> {
                 model("symbols/symbolByFqName")
@@ -146,6 +157,10 @@ fun main(args: Array<String>) {
             testClass<AbstractKtFe10ExpectedExpressionTypeTest> {
                 model("components/expectedExpressionType")
             }
+
+//            testClass<AbstractKtFe10FunctionClassKindTest> {
+//                model("components/functionClassKind")
+//            }
 
             testClass<AbstractKtFe10OverriddenDeclarationProviderTest> {
                 model("components/overriddenDeclarations")

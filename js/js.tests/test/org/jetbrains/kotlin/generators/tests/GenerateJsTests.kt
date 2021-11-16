@@ -7,19 +7,14 @@ package org.jetbrains.kotlin.generators.tests
 
 import org.jetbrains.kotlin.generators.generateTestGroupSuiteWithJUnit5
 import org.jetbrains.kotlin.generators.impl.generateTestGroupSuite
-import org.jetbrains.kotlin.js.test.AbstractDceTest
-import org.jetbrains.kotlin.js.test.AbstractJsLineNumberTest
-import org.jetbrains.kotlin.js.test.compatibility.binary.AbstractJsKlibBinaryCompatibilityTest
-import org.jetbrains.kotlin.js.test.es6.semantics.AbstractIrBoxJsES6Test
-import org.jetbrains.kotlin.js.test.es6.semantics.AbstractIrJsCodegenBoxES6Test
-import org.jetbrains.kotlin.js.test.es6.semantics.AbstractIrJsCodegenInlineES6Test
-import org.jetbrains.kotlin.js.test.es6.semantics.AbstractIrJsTypeScriptExportES6Test
-import org.jetbrains.kotlin.js.test.ir.semantics.*
-import org.jetbrains.kotlin.js.test.wasm.semantics.AbstractIrCodegenBoxWasmTest
-import org.jetbrains.kotlin.js.test.wasm.semantics.AbstractIrCodegenWasmJsInteropWasmTest
-import org.jetbrains.kotlin.js.test.wasm.semantics.AbstractJsTranslatorWasmTest
-import org.jetbrains.kotlin.js.testNew.*
-import org.jetbrains.kotlin.js.testNew.AbstractWebDemoExamplesTest
+import org.jetbrains.kotlin.js.testOld.AbstractDceTest
+import org.jetbrains.kotlin.js.testOld.AbstractJsLineNumberTest
+import org.jetbrains.kotlin.js.testOld.compatibility.binary.AbstractJsKlibBinaryCompatibilityTest
+import org.jetbrains.kotlin.js.testOld.wasm.semantics.AbstractIrCodegenBoxWasmTest
+import org.jetbrains.kotlin.js.testOld.wasm.semantics.AbstractIrCodegenWasmJsInteropWasmTest
+import org.jetbrains.kotlin.js.testOld.wasm.semantics.AbstractJsTranslatorWasmTest
+import org.jetbrains.kotlin.js.test.*
+import org.jetbrains.kotlin.js.test.ir.*
 import org.jetbrains.kotlin.test.TargetBackend
 
 fun main(args: Array<String>) {
@@ -36,25 +31,10 @@ fun main(args: Array<String>) {
 
     generateTestGroupSuite(args) {
         testGroup("js/js.tests/tests-gen", "js/js.translator/testData", testRunnerMethodName = "runTest0") {
-            testClass<AbstractIrBoxJsTest> {
-                model("box/", pattern = "^([^_](.+))\\.kt$", targetBackend = TargetBackend.JS_IR)
-            }
-
             testClass<AbstractJsTranslatorWasmTest> {
                 model("box/main", pattern = "^([^_](.+))\\.kt$", targetBackend = TargetBackend.WASM)
                 model("box/kotlin.test/", pattern = "^([^_](.+))\\.kt$", targetBackend = TargetBackend.WASM)
-            }
-
-            testClass<AbstractIrBoxJsES6Test> {
-                model("box/", pattern = "^([^_](.+))\\.kt$", targetBackend = TargetBackend.JS_IR_ES6)
-            }
-
-            testClass<AbstractIrJsTypeScriptExportTest> {
-                model("typescript-export/", pattern = "^([^_](.+))\\.kt$", targetBackend = TargetBackend.JS_IR)
-            }
-
-            testClass<AbstractIrJsTypeScriptExportES6Test> {
-                model("typescript-export/", pattern = "^([^_](.+))\\.kt$", targetBackend = TargetBackend.JS_IR_ES6)
+                model("box/native/", pattern = "^([^_](.+))\\.kt$", targetBackend = TargetBackend.WASM)
             }
 
             testClass<AbstractDceTest> {
@@ -67,21 +47,9 @@ fun main(args: Array<String>) {
         }
 
         testGroup("js/js.tests/tests-gen", "compiler/testData", testRunnerMethodName = "runTest0") {
-            testClass<AbstractIrJsCodegenBoxTest> {
-                model("codegen/box", targetBackend = TargetBackend.JS_IR, excludeDirs = jvmOnlyBoxTests + "compileKotlinAgainstKotlin")
-            }
-
-            testClass<AbstractIrJsCodegenBoxErrorTest> {
-                model("codegen/boxError", targetBackend = TargetBackend.JS_IR, excludeDirs = jvmOnlyBoxTests + "compileKotlinAgainstKotlin")
-            }
-
             testClass<AbstractIrCodegenBoxWasmTest> {
                 model(
                     "codegen/box", pattern = "^([^_](.+))\\.kt$", targetBackend = TargetBackend.WASM, excludeDirs = listOf(
-                        
-                        // TODO: Support reflection
-                        "toArray", "classLiteral", "reflection",
-
                         // TODO: Add stdlib
                         "contracts", "platformTypes",
 
@@ -96,24 +64,8 @@ fun main(args: Array<String>) {
                 )
             }
 
-            testClass<AbstractIrCodegenWasmJsInteropJsTest> {
-                model("codegen/boxWasmJsInterop", targetBackend = TargetBackend.JS_IR)
-            }
-
             testClass<AbstractIrCodegenWasmJsInteropWasmTest> {
                 model("codegen/boxWasmJsInterop", targetBackend = TargetBackend.WASM)
-            }
-
-            testClass<AbstractIrJsCodegenBoxES6Test> {
-                model("codegen/box", targetBackend = TargetBackend.JS_IR_ES6, excludeDirs = jvmOnlyBoxTests)
-            }
-
-            testClass<AbstractIrJsCodegenInlineTest> {
-                model("codegen/boxInline/", targetBackend = TargetBackend.JS_IR)
-            }
-
-            testClass<AbstractIrJsCodegenInlineES6Test> {
-                model("codegen/boxInline/", targetBackend = TargetBackend.JS_IR_ES6)
             }
         }
 
@@ -145,6 +97,14 @@ fun main(args: Array<String>) {
             testClass<AbstractWebDemoExamplesTest> {
                 model("webDemoExamples/")
             }
+
+            testClass<AbstractIrBoxJsTest> {
+                model("box/", pattern = "^([^_](.+))\\.kt$")
+            }
+
+            testClass<AbstractIrJsTypeScriptExportTest> {
+                model("typescript-export/", pattern = "^([^_](.+))\\.kt$")
+            }
         }
 
         testGroup("js/js.tests/tests-gen", "compiler/testData", testRunnerMethodName = "runTest0") {
@@ -158,6 +118,22 @@ fun main(args: Array<String>) {
 
             testClass<AbstractJsLegacyPrimitiveArraysBoxTest> {
                 model("codegen/box/arrays")
+            }
+
+            testClass<AbstractIrJsCodegenBoxTest> {
+                model("codegen/box", excludeDirs = jvmOnlyBoxTests + "compileKotlinAgainstKotlin")
+            }
+
+            testClass<AbstractIrJsCodegenBoxErrorTest> {
+                model("codegen/boxError", excludeDirs = jvmOnlyBoxTests + "compileKotlinAgainstKotlin")
+            }
+
+            testClass<AbstractIrJsCodegenInlineTest> {
+                model("codegen/boxInline")
+            }
+
+            testClass<AbstractIrCodegenWasmJsInteropJsTest> {
+                model("codegen/boxWasmJsInterop")
             }
         }
     }

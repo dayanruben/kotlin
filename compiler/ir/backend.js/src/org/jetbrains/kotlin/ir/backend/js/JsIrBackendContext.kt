@@ -68,6 +68,7 @@ class JsIrBackendContext(
     val extractedLocalClasses: MutableSet<IrClass> = hashSetOf()
 
     override val builtIns = module.builtIns
+
     override val typeSystem: IrTypeSystemContext = IrTypeSystemContextImpl(irBuiltIns)
 
     override val irFactory: IrFactory = symbolTable.irFactory
@@ -156,9 +157,9 @@ class JsIrBackendContext(
 
     private val internalPackage = module.getPackage(JS_PACKAGE_FQNAME)
 
-
     val dynamicType: IrDynamicType = IrDynamicTypeImpl(null, emptyList(), Variance.INVARIANT)
-    val intrinsics = JsIntrinsics(irBuiltIns, this)
+    val intrinsics: JsIntrinsics = JsIntrinsics(irBuiltIns, this)
+    override val reflectionSymbols: ReflectionSymbols get() = intrinsics.reflectionSymbols
 
     override val catchAllThrowableType: IrType
         get() = dynamicType
@@ -284,15 +285,11 @@ class JsIrBackendContext(
     val errorCodeSymbol: IrSimpleFunctionSymbol? =
         if (errorPolicy.allowErrors) symbolTable.referenceSimpleFunction(getJsInternalFunction("errorCode")) else null
 
-    val primitiveClassesObject = getIrClass(FqName("kotlin.reflect.js.internal.PrimitiveClasses"))
-
     val throwableClass = getIrClass(JsIrBackendContext.KOTLIN_PACKAGE_FQN.child(Name.identifier("Throwable")))
 
     val primitiveCompanionObjects = primitivesWithImplicitCompanionObject().associateWith {
         getIrClass(JS_INTERNAL_PACKAGE_FQNAME.child(Name.identifier("${it.identifier}CompanionObject")))
     }
-
-
 
     // Top-level functions forced to be loaded
 
@@ -322,16 +319,6 @@ class JsIrBackendContext(
 
     override val suiteFun = getFunctions(FqName("kotlin.test.suite")).singleOrNull()?.let { symbolTable.referenceSimpleFunction(it) }
     override val testFun = getFunctions(FqName("kotlin.test.test")).singleOrNull()?.let { symbolTable.referenceSimpleFunction(it) }
-
-    val primitiveClassProperties by lazy2 {
-        primitiveClassesObject.owner.declarations.filterIsInstance<IrProperty>()
-    }
-
-    val primitiveClassFunctionClass by lazy2 {
-        primitiveClassesObject.owner.declarations
-            .filterIsInstance<IrSimpleFunction>()
-            .find { it.name == Name.identifier("functionClass") }!!
-    }
 
     val throwableConstructors by lazy2 { throwableClass.owner.declarations.filterIsInstance<IrConstructor>().map { it.symbol } }
     val defaultThrowableCtor by lazy2 { throwableConstructors.single { !it.owner.isPrimary && it.owner.valueParameters.size == 0 } }
@@ -365,7 +352,7 @@ class JsIrBackendContext(
     internal fun getProperty(fqName: FqName): PropertyDescriptor =
         findProperty(module.getPackage(fqName.parent()).memberScope, fqName.shortName()).single()
 
-    private fun getIrClass(fqName: FqName): IrClassSymbol = symbolTable.referenceClass(getClass(fqName))
+    internal fun getIrClass(fqName: FqName): IrClassSymbol = symbolTable.referenceClass(getClass(fqName))
 
     internal fun getJsInternalFunction(name: String): SimpleFunctionDescriptor =
         findFunctions(internalPackage.memberScope, Name.identifier(name)).singleOrNull() ?: error("Internal function '$name' not found")

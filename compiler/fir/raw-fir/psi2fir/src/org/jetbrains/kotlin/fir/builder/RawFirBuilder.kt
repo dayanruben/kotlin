@@ -1044,7 +1044,7 @@ open class RawFirBuilder(
                     isExternal = classOrObject.hasModifier(EXTERNAL_KEYWORD)
                 }
 
-                withCapturedTypeParameters(status.isInner, listOf()) {
+                withCapturedTypeParameters(status.isInner || isLocal, listOf()) {
                     buildRegularClass {
                         source = classOrObject.toFirSourceElement()
                         moduleData = baseModuleData
@@ -1058,11 +1058,9 @@ open class RawFirBuilder(
                         classOrObject.extractAnnotationsTo(this)
                         classOrObject.extractTypeParametersTo(this, symbol)
 
-                        context.applyToActualCapturedTypeParameters(true) {
-                            typeParameters += buildOuterClassTypeParameterRef { symbol = it }
-                        }
+                        context.appendOuterTypeParameters(ignoreLastLevel = true, typeParameters)
                         context.pushFirTypeParameters(
-                            status.isInner,
+                            status.isInner || isLocal,
                             typeParameters.subList(0, classOrObject.typeParameters.size)
                         )
 
@@ -1158,9 +1156,7 @@ open class RawFirBuilder(
                         scopeProvider = baseScopeProvider
                         symbol = FirAnonymousObjectSymbol()
                         status = FirDeclarationStatusImpl(Visibilities.Local, Modality.FINAL)
-                        context.applyToActualCapturedTypeParameters(false) {
-                            typeParameters += buildOuterClassTypeParameterRef { symbol = it }
-                        }
+                        context.appendOuterTypeParameters(ignoreLastLevel = false, typeParameters)
                         val delegatedSelfType = objectDeclaration.toDelegatedSelfType(this)
                         registerSelfType(delegatedSelfType)
                         objectDeclaration.extractAnnotationsTo(this)
@@ -2166,7 +2162,13 @@ open class RawFirBuilder(
             } else {
                 val firOperation = operationToken.toFirOperation()
                 if (firOperation in FirOperation.ASSIGNMENTS) {
-                    return expression.left.generateAssignment(source, expression.right, rightArgument, firOperation) {
+                    return expression.left.generateAssignment(
+                        source,
+                        expression.right,
+                        rightArgument,
+                        firOperation,
+                        leftArgument.annotations
+                    ) {
                         (this as KtExpression).toFirExpression("Incorrect expression in assignment: ${expression.text}")
                     }
                 } else {

@@ -33,8 +33,8 @@ import org.jetbrains.kotlin.name.Name
 class WasmBackendContext(
     val module: ModuleDescriptor,
     override val irBuiltIns: IrBuiltIns,
-    symbolTable: SymbolTable,
-    irModuleFragment: IrModuleFragment,
+    val symbolTable: SymbolTable,
+    val irModuleFragment: IrModuleFragment,
     override val configuration: CompilerConfiguration,
 ) : JsCommonBackendContext {
     override val builtIns = module.builtIns
@@ -102,6 +102,8 @@ class WasmBackendContext(
         WasmSharedVariablesManager(this, irBuiltIns, internalPackageFragment)
 
     val wasmSymbols: WasmSymbols = WasmSymbols(this@WasmBackendContext, symbolTable)
+    override val reflectionSymbols: ReflectionSymbols get() = wasmSymbols.reflectionSymbols
+
     override val ir = object : Ir<WasmBackendContext>(this, irModuleFragment) {
         override val symbols: Symbols<WasmBackendContext> = wasmSymbols
         override fun shouldGenerateHandlerParameterForDefaultBodyFun() = true
