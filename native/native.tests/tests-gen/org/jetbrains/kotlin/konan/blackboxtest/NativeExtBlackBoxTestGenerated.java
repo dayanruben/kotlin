@@ -6631,6 +6631,30 @@ public class NativeExtBlackBoxTestGenerated extends AbstractNativeBlackBoxTest {
             }
 
             @Test
+            @TestMetadata("kt48945.kt")
+            public void testKt48945() throws Exception {
+                runTest("compiler/testData/codegen/box/collections/kt48945.kt");
+            }
+
+            @Test
+            @TestMetadata("kt48945a.kt")
+            public void testKt48945a() throws Exception {
+                runTest("compiler/testData/codegen/box/collections/kt48945a.kt");
+            }
+
+            @Test
+            @TestMetadata("kt48945b.kt")
+            public void testKt48945b() throws Exception {
+                runTest("compiler/testData/codegen/box/collections/kt48945b.kt");
+            }
+
+            @Test
+            @TestMetadata("kt48945c.kt")
+            public void testKt48945c() throws Exception {
+                runTest("compiler/testData/codegen/box/collections/kt48945c.kt");
+            }
+
+            @Test
             @TestMetadata("mutableList.kt")
             public void testMutableList() throws Exception {
                 runTest("compiler/testData/codegen/box/collections/mutableList.kt");
@@ -39452,6 +39476,12 @@ public class NativeExtBlackBoxTestGenerated extends AbstractNativeBlackBoxTest {
                 }
 
                 @Test
+                @TestMetadata("annotatedType.kt")
+                public void testAnnotatedType() throws Exception {
+                    runTest("compiler/testData/codegen/box/reflection/typeOf/annotatedType.kt");
+                }
+
+                @Test
                 @TestMetadata("classes.kt")
                 public void testClasses() throws Exception {
                     runTest("compiler/testData/codegen/box/reflection/typeOf/classes.kt");
@@ -39608,6 +39638,12 @@ public class NativeExtBlackBoxTestGenerated extends AbstractNativeBlackBoxTest {
                     @Test
                     public void testAllFilesPresentInNoReflect() throws Exception {
                         KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/reflection/typeOf/noReflect"), Pattern.compile("^(.+)\\.kt$"), null, true);
+                    }
+
+                    @Test
+                    @TestMetadata("annotatedType.kt")
+                    public void testAnnotatedType() throws Exception {
+                        runTest("compiler/testData/codegen/box/reflection/typeOf/noReflect/annotatedType.kt");
                     }
 
                     @Test

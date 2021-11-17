@@ -63,6 +63,13 @@ open class JvmIrCodegenFactory(
         val notifyCodegenStart: () -> Unit
     ) : CodegenFactory.BackendInput
 
+    private data class JvmIrCodegenInput(
+        override val state: GenerationState,
+        val context: JvmBackendContext,
+        val module: IrModuleFragment,
+        val notifyCodegenStart: () -> Unit,
+    ) : CodegenFactory.CodegenInput
+
     override fun convertToIr(input: CodegenFactory.IrConversionInput): JvmIrBackendInput {
         val (mangler, symbolTable) =
             if (externalSymbolTable != null) externalMangler!! to externalSymbolTable
@@ -213,7 +220,7 @@ open class JvmIrCodegenFactory(
         )
     }
 
-    override fun generateModule(state: GenerationState, input: CodegenFactory.BackendInput) {
+    override fun invokeLowerings(state: GenerationState, input: CodegenFactory.BackendInput): CodegenFactory.CodegenInput {
         val (irModuleFragment, symbolTable, customPhaseConfig, irProviders, extensions, backendExtension, notifyCodegenStart) =
             input as JvmIrBackendInput
         val irSerializer = if (
@@ -221,22 +228,25 @@ open class JvmIrCodegenFactory(
         )
             JvmIrSerializerImpl(state.configuration)
         else null
-        val phases = prefixPhases?.then(jvmPhases) ?: jvmPhases
+        val phases = prefixPhases?.then(jvmLoweringPhases) ?: jvmLoweringPhases
         val phaseConfig = customPhaseConfig ?: PhaseConfig(phases)
         val context = JvmBackendContext(
             state, irModuleFragment.irBuiltins, irModuleFragment, symbolTable, phaseConfig, extensions, backendExtension, irSerializer,
-            notifyCodegenStart,
         )
         /* JvmBackendContext creates new unbound symbols, have to resolve them. */
         ExternalDependenciesGenerator(symbolTable, irProviders).generateUnboundSymbolsAsDependencies()
 
         context.state.factory.registerSourceFiles(irModuleFragment.files.map(IrFile::getKtFile))
 
-        phases.invokeToplevel(
-            phaseConfig,
-            context,
-            irModuleFragment
-        )
+        phases.invokeToplevel(phaseConfig, context, irModuleFragment)
+
+        return JvmIrCodegenInput(state, context, irModuleFragment, notifyCodegenStart)
+    }
+
+    override fun invokeCodegen(input: CodegenFactory.CodegenInput) {
+        val (state, context, module, notifyCodegenStart) = input as JvmIrCodegenInput
+        notifyCodegenStart()
+        jvmCodegenPhases.invokeToplevel(PhaseConfig(jvmCodegenPhases), context, module)
 
         // TODO: split classes into groups connected by inline calls; call this after every group
         //       and clear `JvmBackendContext.classCodegens`
