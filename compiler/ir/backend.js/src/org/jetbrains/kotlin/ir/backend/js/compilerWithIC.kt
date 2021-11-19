@@ -5,7 +5,9 @@
 
 package org.jetbrains.kotlin.ir.backend.js
 
+import org.jetbrains.kotlin.backend.common.lower
 import org.jetbrains.kotlin.backend.common.phaser.PhaseConfig
+import org.jetbrains.kotlin.backend.common.phaser.PhaserState
 import org.jetbrains.kotlin.backend.common.phaser.invokeToplevel
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
@@ -14,9 +16,7 @@ import org.jetbrains.kotlin.ir.backend.js.ic.PersistentCacheConsumer
 import org.jetbrains.kotlin.ir.backend.js.lower.generateJsTests
 import org.jetbrains.kotlin.ir.backend.js.lower.moveBodilessDeclarationsToSeparatePlace
 import org.jetbrains.kotlin.ir.backend.js.lower.serialization.ir.JsIrLinker
-import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.IrModuleToJsTransformer
-import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.IrModuleToJsTransformerTmp
-import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.generateWrappedModuleBody
+import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.*
 import org.jetbrains.kotlin.ir.backend.js.utils.serialization.JsIrAstDeserializer
 import org.jetbrains.kotlin.ir.declarations.IrFactory
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
@@ -72,7 +72,8 @@ fun compileWithIC(
         propertyLazyInitialization = propertyLazyInitialization,
         baseClassIntoMetadata = baseClassIntoMetadata,
         safeExternalBoolean = safeExternalBoolean,
-        safeExternalBooleanDiagnostic = safeExternalBooleanDiagnostic
+        safeExternalBooleanDiagnostic = safeExternalBooleanDiagnostic,
+        icCompatibleIr2Js = true,
     )
 
     // Load declarations referenced during `context` initialization
@@ -88,7 +89,7 @@ fun compileWithIC(
 
     generateJsTests(context, mainModule)
 
-    jsPhases.invokeToplevel(PhaseConfig(jsPhases), context, allModules)
+    lowerPreservingTags(allModules, context, PhaseConfig(jsPhases), symbolTable.irFactory.stageController as WholeWorldStageController)
 
     val transformer = IrModuleToJsTransformerTmp(
         context,
@@ -108,13 +109,37 @@ fun compileWithIC(
     ast.entries.forEach { (path, bytes) -> cacheConsumer.commitBinaryAst(path, bytes) }
 }
 
+fun lowerPreservingTags(modules: Iterable<IrModuleFragment>, context: JsIrBackendContext, phaseConfig: PhaseConfig, controller: WholeWorldStageController) {
+    // Lower all the things
+    controller.currentStage = 0
+
+    val phaserState = PhaserState<Iterable<IrModuleFragment>>()
+
+    loweringList.forEachIndexed { i, lowering ->
+        controller.currentStage = i + 1
+        lowering.modulePhase.invoke(phaseConfig, phaserState, context, modules)
+    }
+
+    controller.currentStage = pirLowerings.size + 1
+}
+
 
 @Suppress("UNUSED_PARAMETER")
 fun generateJsFromAst(
-    mainModule: String,
-    caches: Map<String, ModuleCache>
+    mainModuleName: String,
+    moduleKind: ModuleKind,
+    caches: Map<String, ModuleCache>,
 ): CompilerResult {
     val deserializer = JsIrAstDeserializer()
-    val fragments = caches.values.map { it.asts.values.mapNotNull { it.ast?.let { deserializer.deserialize(ByteArrayInputStream(it))} } }
-    return CompilerResult(generateWrappedModuleBody("main", ModuleKind.PLAIN, fragments), null)
+    val fragments = JsIrProgram(caches.values.map { JsIrModule(it.name, it.name, it.asts.values.sortedBy { it.name }.mapNotNull { it.ast?.let { deserializer.deserialize(ByteArrayInputStream(it))} }) })
+    return CompilerResult(
+        generateSingleWrappedModuleBody(
+            mainModuleName,
+            moduleKind,
+            fragments.modules.flatMap { it.fragments },
+            sourceMapsInfo = null,
+            generateScriptModule = false,
+            generateCallToMain = true,
+        ), null
+    )
 }

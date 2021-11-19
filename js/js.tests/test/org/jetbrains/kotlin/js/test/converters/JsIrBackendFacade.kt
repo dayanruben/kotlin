@@ -17,7 +17,9 @@ import org.jetbrains.kotlin.ir.backend.js.codegen.JsGenerationOptions
 import org.jetbrains.kotlin.ir.backend.js.codegen.generateEsModules
 import org.jetbrains.kotlin.ir.backend.js.lower.serialization.ir.JsManglerDesc
 import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.IrModuleToJsTransformer
+import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.IrModuleToJsTransformerTmp
 import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
+import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImplForJsIC
 import org.jetbrains.kotlin.ir.util.IrMessageLogger
 import org.jetbrains.kotlin.ir.util.SymbolTable
 import org.jetbrains.kotlin.js.config.ErrorTolerancePolicy
@@ -71,6 +73,7 @@ class JsIrBackendFacade(
         val splitPerModule = JsEnvironmentConfigurationDirectives.SPLIT_PER_MODULE in module.directives
         val splitPerFile = JsEnvironmentConfigurationDirectives.SPLIT_PER_FILE in module.directives
         val perModule = JsEnvironmentConfigurationDirectives.PER_MODULE in module.directives
+        val runNewIr2Js = JsEnvironmentConfigurationDirectives.RUN_NEW_IR_2_JS in module.directives
 
         val granularity = when {
             !firstTimeCompilation -> JsGenerationGranularity.WHOLE_PROGRAM
@@ -92,7 +95,9 @@ class JsIrBackendFacade(
                 val outputFile = File(JsEnvironmentConfigurator.getJsModuleArtifactPath(testServices, module.name) + ".js")
                 File(outputFile.parentFile, outputFile.nameWithoutExtension + "-recompiled.js")
             }
-            val compiledModule = generateJsFromAst(inputArtifact.outputFile.absolutePath, testServices.jsIrIncrementalDataProvider.getCaches())
+            val moduleName = configuration.getNotNull(CommonConfigurationKeys.MODULE_NAME)
+            val moduleKind = configuration.get(JSConfigurationKeys.MODULE_KIND, ModuleKind.PLAIN)
+            val compiledModule = generateJsFromAst(moduleName, moduleKind, testServices.jsIrIncrementalDataProvider.getCaches())
             return BinaryArtifacts.Js.JsIrArtifact(
                 outputFile, compiledModule, testServices.jsIrIncrementalDataProvider.getCacheForModule(module)
             ).dump(module)
@@ -116,7 +121,8 @@ class JsIrBackendFacade(
             lowerPerModule = lowerPerModule,
             safeExternalBoolean = JsEnvironmentConfigurationDirectives.SAFE_EXTERNAL_BOOLEAN in module.directives,
             safeExternalBooleanDiagnostic = module.directives[JsEnvironmentConfigurationDirectives.SAFE_EXTERNAL_BOOLEAN_DIAGNOSTIC].singleOrNull(),
-            granularity = granularity
+            granularity = granularity,
+            icCompatibleIr2Js = runNewIr2Js,
         )
 
         return loweredIr2JsArtifact(module, loweredIr, granularity)
@@ -132,19 +138,34 @@ class JsIrBackendFacade(
             .run { if (shouldBeGenerated()) arguments() else null }
         val runIrDce = JsEnvironmentConfigurationDirectives.RUN_IR_DCE in module.directives
         val esModules = JsEnvironmentConfigurationDirectives.ES_MODULES in module.directives
+        val runNewIr2Js = JsEnvironmentConfigurationDirectives.RUN_NEW_IR_2_JS in module.directives
 
         val outputFile = File(JsEnvironmentConfigurator.getJsModuleArtifactPath(testServices, module.name) + ".js")
         val dceOutputFile = File(JsEnvironmentConfigurator.getDceJsArtifactPath(testServices, module.name) + ".js")
         if (!esModules) {
-            val transformer = IrModuleToJsTransformer(
-                loweredIr.context,
-                mainArguments,
-                fullJs = true,
-                dceJs = runIrDce,
-                multiModule = granularity == JsGenerationGranularity.PER_MODULE,
-                relativeRequirePath = false
-            )
-            return BinaryArtifacts.Js.JsIrArtifact(outputFile, transformer.generateModule(loweredIr.allModules)).dump(module)
+            if (runNewIr2Js) {
+                val transformer = IrModuleToJsTransformerTmp(
+                    loweredIr.context,
+                    mainArguments,
+                    fullJs = true,
+                    dceJs = runIrDce,
+                    multiModule = granularity == JsGenerationGranularity.PER_MODULE,
+                    relativeRequirePath = false
+                )
+
+                return BinaryArtifacts.Js.JsIrArtifact(outputFile, transformer.generateModule(loweredIr.allModules)).dump(module)
+            } else {
+                val transformer = IrModuleToJsTransformer(
+                    loweredIr.context,
+                    mainArguments,
+                    fullJs = true,
+                    dceJs = runIrDce,
+                    multiModule = granularity == JsGenerationGranularity.PER_MODULE,
+                    relativeRequirePath = false
+                )
+
+                return BinaryArtifacts.Js.JsIrArtifact(outputFile, transformer.generateModule(loweredIr.allModules)).dump(module)
+            }
         }
 
         val options = JsGenerationOptions(generatePackageJson = true, generateTypeScriptDefinitions = generateDts)
@@ -162,7 +183,7 @@ class JsIrBackendFacade(
         val filesToLoad = module.files.takeIf { !firstTimeCompilation }?.map { "/${it.relativePath}" }?.toSet()
 
         val messageLogger = configuration.get(IrMessageLogger.IR_MESSAGE_LOGGER) ?: IrMessageLogger.None
-        val symbolTable = SymbolTable(IdSignatureDescriptor(JsManglerDesc), IrFactoryImpl)
+        val symbolTable = SymbolTable(IdSignatureDescriptor(JsManglerDesc), IrFactoryImplForJsIC(WholeWorldStageController()),)
 
         val moduleDescriptor = testServices.moduleDescriptorProvider.getModuleDescriptor(module)
         val mainModuleLib = testServices.jsLibraryProvider.getCompiledLibraryByDescriptor(moduleDescriptor)
@@ -192,7 +213,7 @@ class JsIrBackendFacade(
     ): IrModuleInfo {
         val errorPolicy = configuration.get(JSConfigurationKeys.ERROR_TOLERANCE_POLICY) ?: ErrorTolerancePolicy.DEFAULT
         val messageLogger = configuration.get(IrMessageLogger.IR_MESSAGE_LOGGER) ?: IrMessageLogger.None
-        val symbolTable = SymbolTable(IdSignatureDescriptor(JsManglerDesc), IrFactoryImpl)
+        val symbolTable = SymbolTable(IdSignatureDescriptor(JsManglerDesc), IrFactoryImplForJsIC(WholeWorldStageController()),)
         val verifySignatures = JsEnvironmentConfigurationDirectives.SKIP_MANGLE_VERIFICATION !in module.directives
 
         val psi2Ir = Psi2IrTranslator(

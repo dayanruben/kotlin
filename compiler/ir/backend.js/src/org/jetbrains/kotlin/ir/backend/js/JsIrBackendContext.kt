@@ -60,6 +60,7 @@ class JsIrBackendContext(
     val safeExternalBooleanDiagnostic: RuntimeDiagnostic? = null,
     override val mapping: JsMapping = JsMapping(symbolTable.irFactory),
     val granularity: JsGenerationGranularity = JsGenerationGranularity.WHOLE_PROGRAM,
+    val icCompatibleIr2Js: Boolean = false,
 ) : JsCommonBackendContext {
     val fileToInitializationFuns: MutableMap<IrFile, IrSimpleFunction?> = mutableMapOf()
     val fileToInitializerPureness: MutableMap<IrFile, Boolean> = mutableMapOf()
@@ -95,31 +96,6 @@ class JsIrBackendContext(
 
     val packageLevelJsModules = mutableSetOf<IrFile>()
     val declarationLevelJsModules = mutableListOf<IrDeclarationWithName>()
-
-    private val internalPackageFragmentDescriptor = EmptyPackageFragmentDescriptor(builtIns.builtInsModule, FqName("kotlin.js.internal"))
-
-    private fun syntheticFile(name: String, module: IrModuleFragment): IrFile {
-        return IrFileImpl(object : IrFileEntry {
-            override val name = "<$name>"
-            override val maxOffset = UNDEFINED_OFFSET
-
-            override fun getSourceRangeInfo(beginOffset: Int, endOffset: Int) =
-                SourceRangeInfo(
-                    "",
-                    UNDEFINED_OFFSET,
-                    UNDEFINED_OFFSET,
-                    UNDEFINED_OFFSET,
-                    UNDEFINED_OFFSET,
-                    UNDEFINED_OFFSET,
-                    UNDEFINED_OFFSET
-                )
-
-            override fun getLineNumber(offset: Int) = UNDEFINED_OFFSET
-            override fun getColumnNumber(offset: Int) = UNDEFINED_OFFSET
-        }, internalPackageFragmentDescriptor, module).also {
-            module.files += it
-        }
-    }
 
     val testFunsPerFile = mutableMapOf<IrFile, IrSimpleFunction>()
 

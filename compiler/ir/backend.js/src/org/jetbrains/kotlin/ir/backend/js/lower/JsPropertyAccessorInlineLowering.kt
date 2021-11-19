@@ -19,6 +19,14 @@ class JsPropertyAccessorInlineLowering(
         if (!isSafeToInlineInClosedWorld())
             return false
 
+        // TODO: teach the deserializer to load constant property initializers
+        if (context.icCompatibleIr2Js) {
+            val accessFile = accessContainer.fileOrNull ?: return false
+            val file = fileOrNull ?: return false
+
+            return accessFile == file
+        }
+
         if (isConst)
             return true
 

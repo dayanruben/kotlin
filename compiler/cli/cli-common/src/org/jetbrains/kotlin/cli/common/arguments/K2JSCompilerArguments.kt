@@ -176,6 +176,9 @@ class K2JSCompilerArguments : CommonCompilerArguments() {
     @Argument(value = "-Xir-per-file", description = "Splits generated .js per-file")
     var irPerFile: Boolean by FreezableVar(false)
 
+    @Argument(value = "-Xir-new-ir2js", description = "New fragment-based ir2js")
+    var irNewIr2Js: Boolean by FreezableVar(false)
+
     @Argument(
         value = "-Xinclude",
         valueDescription = "<path>",
@@ -231,6 +234,9 @@ class K2JSCompilerArguments : CommonCompilerArguments() {
 
     @Argument(value = "-Xerror-tolerance-policy", description = "Set up error tolerance policy (NONE, SEMANTIC, SYNTAX, ALL)")
     var errorTolerancePolicy: String? by NullableStringFreezableVar(null)
+
+    @Argument(value = "-Xpartial-linkage", description = "Allow unlinked symbols")
+    var partialLinkage: Boolean by FreezableVar(false)
 
     @Argument(value = "-Xwasm", description = "Use experimental WebAssembly compiler backend")
     var wasm: Boolean by FreezableVar(false)

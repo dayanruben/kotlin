@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.ir.util.ExternalDependenciesGenerator
 import org.jetbrains.kotlin.ir.util.SymbolTable
 import org.jetbrains.kotlin.ir.util.noUnboundLeft
 import org.jetbrains.kotlin.js.backend.ast.JsProgram
+import org.jetbrains.kotlin.js.config.JSConfigurationKeys
 import org.jetbrains.kotlin.js.config.RuntimeDiagnostic
 import org.jetbrains.kotlin.name.FqName
 
@@ -63,6 +64,7 @@ fun compile(
     safeExternalBooleanDiagnostic: RuntimeDiagnostic? = null,
     filesToLower: Set<String>? = null,
     granularity: JsGenerationGranularity = JsGenerationGranularity.WHOLE_PROGRAM,
+    icCompatibleIr2Js: Boolean = false,
 ): LoweredIr {
 
     if (lowerPerModule) {
@@ -99,7 +101,8 @@ fun compile(
         lowerPerModule,
         safeExternalBoolean,
         safeExternalBooleanDiagnostic,
-        granularity
+        granularity,
+        icCompatibleIr2Js,
     )
 }
 
@@ -122,6 +125,7 @@ fun compileIr(
     safeExternalBoolean: Boolean,
     safeExternalBooleanDiagnostic: RuntimeDiagnostic?,
     granularity: JsGenerationGranularity,
+    icCompatibleIr2Js: Boolean,
 ): LoweredIr {
     val moduleDescriptor = moduleFragment.descriptor
     val irFactory = symbolTable.irFactory
@@ -130,6 +134,8 @@ fun compileIr(
         is MainModule.SourceFiles -> dependencyModules + listOf(moduleFragment)
         is MainModule.Klib -> dependencyModules
     }
+
+    val allowUnboundSymbols = configuration[JSConfigurationKeys.PARTIAL_LINKAGE] ?: false
 
     val context = JsIrBackendContext(
         moduleDescriptor,
@@ -144,7 +150,8 @@ fun compileIr(
         baseClassIntoMetadata = baseClassIntoMetadata,
         safeExternalBoolean = safeExternalBoolean,
         safeExternalBooleanDiagnostic = safeExternalBooleanDiagnostic,
-        granularity = granularity
+        granularity = granularity,
+        icCompatibleIr2Js = icCompatibleIr2Js,
     )
 
     // Load declarations referenced during `context` initialization
@@ -152,7 +159,9 @@ fun compileIr(
     ExternalDependenciesGenerator(symbolTable, irProviders).generateUnboundSymbolsAsDependencies()
 
     deserializer.postProcess()
-    symbolTable.noUnboundLeft("Unbound symbols at the end of linker")
+    if (!allowUnboundSymbols) {
+        symbolTable.noUnboundLeft("Unbound symbols at the end of linker")
+    }
 
     allModules.forEach { module ->
         moveBodilessDeclarationsToSeparatePlace(context, module)
@@ -183,7 +192,9 @@ fun compileIr(
             }
             irFactory.stageController = object : StageController(irFactory.stageController.currentStage) {}
         } else {
-            jsPhases.invokeToplevel(phaseConfig, context, allModules)
+            (irFactory.stageController as? WholeWorldStageController)?.let {
+                lowerPreservingTags(allModules, context, phaseConfig, it)
+            } ?: jsPhases.invokeToplevel(phaseConfig, context, allModules)
         }
     }
 
