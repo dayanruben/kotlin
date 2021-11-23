@@ -1,10 +1,6 @@
 KtKotlinPropertySymbol:
-  annotatedType: [] kotlin/Int
-  annotationClassIds: [
-    kotlin/Deprecated
-  ]
-  annotations: [
-    kotlin/Deprecated(message = don't use i)
+  annotationsList: [
+    kotlin/Deprecated(message = "don't use i")
       psi: KtAnnotationEntry
   ]
   callableIdIfNonLocal: /i
@@ -12,7 +8,7 @@ KtKotlinPropertySymbol:
   hasBackingField: true
   hasGetter: true
   hasSetter: false
-  initializer: 1
+  initializer: KtConstantInitializerValue(1)
   isConst: false
   isDelegatedProperty: false
   isExtension: false
@@ -25,6 +21,7 @@ KtKotlinPropertySymbol:
   name: i
   origin: SOURCE
   receiverType: null
+  returnType: kotlin/Int
   setter: null
   symbolKind: TOP_LEVEL
   typeParameters: []
@@ -36,15 +33,13 @@ KtKotlinPropertySymbol:
   setterDeprecationStatus: DeprecationInfo(deprecationLevel=WARNING, propagatesToOverrides=true, message=don't use i)
 
 KtKotlinPropertySymbol:
-  annotatedType: [] kotlin/Int
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: /i2
   getter: KtPropertyGetterSymbol(<getter>)
   hasBackingField: true
   hasGetter: true
   hasSetter: false
-  initializer: 1
+  initializer: KtConstantInitializerValue(1)
   isConst: false
   isDelegatedProperty: false
   isExtension: false
@@ -57,6 +52,7 @@ KtKotlinPropertySymbol:
   name: i2
   origin: SOURCE
   receiverType: null
+  returnType: kotlin/Int
   setter: null
   symbolKind: TOP_LEVEL
   typeParameters: []
@@ -68,15 +64,13 @@ KtKotlinPropertySymbol:
   setterDeprecationStatus: null
 
 KtKotlinPropertySymbol:
-  annotatedType: [] kotlin/Int
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: /i3
   getter: KtPropertyGetterSymbol(<getter>)
   hasBackingField: true
   hasGetter: true
   hasSetter: true
-  initializer: 1
+  initializer: KtConstantInitializerValue(1)
   isConst: false
   isDelegatedProperty: false
   isExtension: false
@@ -89,6 +83,7 @@ KtKotlinPropertySymbol:
   name: i3
   origin: SOURCE
   receiverType: null
+  returnType: kotlin/Int
   setter: KtPropertySetterSymbol(<setter>)
   symbolKind: TOP_LEVEL
   typeParameters: []
@@ -100,15 +95,13 @@ KtKotlinPropertySymbol:
   setterDeprecationStatus: DeprecationInfo(deprecationLevel=WARNING, propagatesToOverrides=true, message=don't use getter of i3)
 
 KtKotlinPropertySymbol:
-  annotatedType: [] kotlin/Int
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: /i4
   getter: KtPropertyGetterSymbol(<getter>)
   hasBackingField: true
   hasGetter: true
   hasSetter: true
-  initializer: 1
+  initializer: KtConstantInitializerValue(1)
   isConst: false
   isDelegatedProperty: false
   isExtension: false
@@ -121,6 +114,7 @@ KtKotlinPropertySymbol:
   name: i4
   origin: SOURCE
   receiverType: null
+  returnType: kotlin/Int
   setter: KtPropertySetterSymbol(<setter>)
   symbolKind: TOP_LEVEL
   typeParameters: []
@@ -132,12 +126,8 @@ KtKotlinPropertySymbol:
   setterDeprecationStatus: DeprecationInfo(deprecationLevel=WARNING, propagatesToOverrides=true, message=don't use getter of i4)
 
 KtFunctionSymbol:
-  annotatedType: [] kotlin/Int
-  annotationClassIds: [
-    kotlin/Deprecated
-  ]
-  annotations: [
-    kotlin/Deprecated(message = don't use f)
+  annotationsList: [
+    kotlin/Deprecated(message = "don't use f")
       psi: KtAnnotationEntry
   ]
   callableIdIfNonLocal: /f
@@ -154,6 +144,7 @@ KtFunctionSymbol:
   name: f
   origin: SOURCE
   receiverType: null
+  returnType: kotlin/Int
   symbolKind: TOP_LEVEL
   typeParameters: []
   valueParameters: []
@@ -161,11 +152,8 @@ KtFunctionSymbol:
   deprecationStatus: DeprecationInfo(deprecationLevel=WARNING, propagatesToOverrides=true, message=don't use f)
 
 KtNamedClassOrObjectSymbol:
-  annotationClassIds: [
-    kotlin/Deprecated
-  ]
-  annotations: [
-    kotlin/Deprecated(message = don't use MyClass)
+  annotationsList: [
+    kotlin/Deprecated(message = "don't use MyClass")
       psi: KtAnnotationEntry
   ]
   classIdIfNonLocal: MyClass
@@ -180,7 +168,7 @@ KtNamedClassOrObjectSymbol:
   name: MyClass
   origin: SOURCE
   superTypes: [
-    [] kotlin/Any
+    kotlin/Any
   ]
   symbolKind: TOP_LEVEL
   typeParameters: []
@@ -188,12 +176,8 @@ KtNamedClassOrObjectSymbol:
   deprecationStatus: DeprecationInfo(deprecationLevel=WARNING, propagatesToOverrides=true, message=don't use MyClass)
 
 KtKotlinPropertySymbol:
-  annotatedType: [] kotlin/Int
-  annotationClassIds: [
-    kotlin/Deprecated
-  ]
-  annotations: [
-    kotlin/Deprecated(message = don't use i2)
+  annotationsList: [
+    kotlin/Deprecated(message = "don't use i2")
       psi: KtAnnotationEntry
   ]
   callableIdIfNonLocal: /Foo.i2
@@ -201,7 +185,7 @@ KtKotlinPropertySymbol:
   hasBackingField: true
   hasGetter: true
   hasSetter: false
-  initializer: 1
+  initializer: KtConstantInitializerValue(1)
   isConst: false
   isDelegatedProperty: false
   isExtension: false
@@ -214,6 +198,7 @@ KtKotlinPropertySymbol:
   name: i2
   origin: SOURCE
   receiverType: null
+  returnType: kotlin/Int
   setter: null
   symbolKind: CLASS_MEMBER
   typeParameters: []
@@ -226,12 +211,8 @@ KtKotlinPropertySymbol:
   setterDeprecationStatus: DeprecationInfo(deprecationLevel=WARNING, propagatesToOverrides=true, message=don't use i2)
 
 KtFunctionSymbol:
-  annotatedType: [] kotlin/Int
-  annotationClassIds: [
-    kotlin/Deprecated
-  ]
-  annotations: [
-    kotlin/Deprecated(message = don't use f2)
+  annotationsList: [
+    kotlin/Deprecated(message = "don't use f2")
       psi: KtAnnotationEntry
   ]
   callableIdIfNonLocal: /Foo.f2
@@ -248,6 +229,7 @@ KtFunctionSymbol:
   name: f2
   origin: SOURCE
   receiverType: null
+  returnType: kotlin/Int
   symbolKind: CLASS_MEMBER
   typeParameters: []
   valueParameters: []
@@ -256,8 +238,7 @@ KtFunctionSymbol:
   deprecationStatus: DeprecationInfo(deprecationLevel=WARNING, propagatesToOverrides=true, message=don't use f2)
 
 KtNamedClassOrObjectSymbol:
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   classIdIfNonLocal: Foo
   classKind: CLASS
   companionObject: null
@@ -270,7 +251,7 @@ KtNamedClassOrObjectSymbol:
   name: Foo
   origin: SOURCE
   superTypes: [
-    [] kotlin/Any
+    kotlin/Any
   ]
   symbolKind: TOP_LEVEL
   typeParameters: []
@@ -278,12 +259,8 @@ KtNamedClassOrObjectSymbol:
   deprecationStatus: null
 
 KtKotlinPropertySymbol:
-  annotatedType: [] kotlin/Int
-  annotationClassIds: [
-    kotlin/Deprecated
-  ]
-  annotations: [
-    kotlin/Deprecated(level = KtEnumEntryConstantValue(kotlin/DeprecationLevel.ERROR), message = don't use j)
+  annotationsList: [
+    kotlin/Deprecated(level = kotlin.DeprecationLevel.ERROR, message = "don't use j")
       psi: KtAnnotationEntry
   ]
   callableIdIfNonLocal: /j
@@ -291,7 +268,7 @@ KtKotlinPropertySymbol:
   hasBackingField: true
   hasGetter: true
   hasSetter: false
-  initializer: 2
+  initializer: KtConstantInitializerValue(2)
   isConst: false
   isDelegatedProperty: false
   isExtension: false
@@ -304,6 +281,7 @@ KtKotlinPropertySymbol:
   name: j
   origin: SOURCE
   receiverType: null
+  returnType: kotlin/Int
   setter: null
   symbolKind: TOP_LEVEL
   typeParameters: []
@@ -315,12 +293,8 @@ KtKotlinPropertySymbol:
   setterDeprecationStatus: DeprecationInfo(deprecationLevel=ERROR, propagatesToOverrides=true, message=null)
 
 KtKotlinPropertySymbol:
-  annotatedType: [] kotlin/Int
-  annotationClassIds: [
-    kotlin/Deprecated
-  ]
-  annotations: [
-    kotlin/Deprecated(level = KtEnumEntryConstantValue(kotlin/DeprecationLevel.HIDDEN), message = don't use j2)
+  annotationsList: [
+    kotlin/Deprecated(level = kotlin.DeprecationLevel.HIDDEN, message = "don't use j2")
       psi: KtAnnotationEntry
   ]
   callableIdIfNonLocal: /j2
@@ -328,7 +302,7 @@ KtKotlinPropertySymbol:
   hasBackingField: true
   hasGetter: true
   hasSetter: false
-  initializer: 2
+  initializer: KtConstantInitializerValue(2)
   isConst: false
   isDelegatedProperty: false
   isExtension: false
@@ -341,6 +315,7 @@ KtKotlinPropertySymbol:
   name: j2
   origin: SOURCE
   receiverType: null
+  returnType: kotlin/Int
   setter: null
   symbolKind: TOP_LEVEL
   typeParameters: []
@@ -352,11 +327,7 @@ KtKotlinPropertySymbol:
   setterDeprecationStatus: DeprecationInfo(deprecationLevel=HIDDEN, propagatesToOverrides=true, message=null)
 
 KtKotlinPropertySymbol:
-  annotatedType: [] kotlin/Int
-  annotationClassIds: [
-    java/lang/Deprecated
-  ]
-  annotations: [
+  annotationsList: [
     java/lang/Deprecated()
       psi: KtAnnotationEntry
   ]
@@ -365,7 +336,7 @@ KtKotlinPropertySymbol:
   hasBackingField: true
   hasGetter: true
   hasSetter: false
-  initializer: 2
+  initializer: KtConstantInitializerValue(2)
   isConst: false
   isDelegatedProperty: false
   isExtension: false
@@ -378,6 +349,7 @@ KtKotlinPropertySymbol:
   name: j2
   origin: SOURCE
   receiverType: null
+  returnType: kotlin/Int
   setter: null
   symbolKind: TOP_LEVEL
   typeParameters: []

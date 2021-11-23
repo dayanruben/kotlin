@@ -1,7 +1,5 @@
 KtFunctionSymbol:
-  annotatedType: [] kotlin/Int
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: /foo
   hasStableParameterNames: true
   isExtension: false
@@ -16,6 +14,7 @@ KtFunctionSymbol:
   name: foo
   origin: SOURCE
   receiverType: null
+  returnType: kotlin/Int
   symbolKind: TOP_LEVEL
   typeParameters: []
   valueParameters: []

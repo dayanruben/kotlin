@@ -1,13 +1,11 @@
 KtKotlinPropertySymbol:
-  annotatedType: [] kotlin/Int
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: /x
   getter: KtPropertyGetterSymbol(<getter>)
   hasBackingField: true
   hasGetter: true
   hasSetter: false
-  initializer: 10
+  initializer: KtConstantInitializerValue(10)
   isConst: false
   isDelegatedProperty: false
   isExtension: false
@@ -20,6 +18,7 @@ KtKotlinPropertySymbol:
   name: x
   origin: SOURCE
   receiverType: null
+  returnType: kotlin/Int
   setter: null
   symbolKind: TOP_LEVEL
   typeParameters: []
@@ -31,9 +30,7 @@ KtKotlinPropertySymbol:
   setterDeprecationStatus: null
 
 KtPropertyGetterSymbol:
-  annotatedType: [] kotlin/Int
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: null
   hasBody: true
   hasStableParameterNames: true
@@ -43,16 +40,15 @@ KtPropertyGetterSymbol:
   isOverride: false
   modality: FINAL
   origin: SOURCE
-  receiverType: [] kotlin/Int
+  receiverType: kotlin/Int
+  returnType: kotlin/Int
   symbolKind: ACCESSOR
   valueParameters: []
   visibility: Public
   deprecationStatus: null
 
 KtKotlinPropertySymbol:
-  annotatedType: [] kotlin/Int
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: /y
   getter: KtPropertyGetterSymbol(<getter>)
   hasBackingField: false
@@ -70,7 +66,8 @@ KtKotlinPropertySymbol:
   modality: FINAL
   name: y
   origin: SOURCE
-  receiverType: [] kotlin/Int
+  receiverType: kotlin/Int
+  returnType: kotlin/Int
   setter: null
   symbolKind: TOP_LEVEL
   typeParameters: []

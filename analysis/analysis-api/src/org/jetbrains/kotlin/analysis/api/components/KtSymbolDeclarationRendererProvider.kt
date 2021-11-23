@@ -33,9 +33,9 @@ public data class KtTypeRendererOptions(
     public val renderUnresolvedTypeAsResolved: Boolean = true,
 
     /**
-     * Whether to render type arguments.
+     * Should annotations on types be rendered.
      */
-    public val renderTypeArguments: Boolean = true
+    public val renderTypeAnnotations: Boolean = true
 ) {
     public companion object {
         public val DEFAULT: KtTypeRendererOptions = KtTypeRendererOptions()

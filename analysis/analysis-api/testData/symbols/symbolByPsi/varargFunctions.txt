@@ -1,7 +1,5 @@
 KtValueParameterSymbol:
-  annotatedType: [] kotlin/Int
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: null
   hasDefaultValue: false
   isExtension: false
@@ -9,13 +7,12 @@ KtValueParameterSymbol:
   name: a
   origin: SOURCE
   receiverType: null
+  returnType: kotlin/Int
   symbolKind: LOCAL
   deprecationStatus: null
 
 KtFunctionSymbol:
-  annotatedType: [] kotlin/Unit
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: /primitive
   hasStableParameterNames: true
   isExtension: false
@@ -30,6 +27,7 @@ KtFunctionSymbol:
   name: primitive
   origin: SOURCE
   receiverType: null
+  returnType: kotlin/Unit
   symbolKind: TOP_LEVEL
   typeParameters: []
   valueParameters: [
@@ -39,9 +37,7 @@ KtFunctionSymbol:
   deprecationStatus: null
 
 KtValueParameterSymbol:
-  annotatedType: [] kotlin/Float?
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: null
   hasDefaultValue: false
   isExtension: false
@@ -49,13 +45,12 @@ KtValueParameterSymbol:
   name: b
   origin: SOURCE
   receiverType: null
+  returnType: kotlin/Float?
   symbolKind: LOCAL
   deprecationStatus: null
 
 KtFunctionSymbol:
-  annotatedType: [] kotlin/Unit
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: /nullablePrimitive
   hasStableParameterNames: true
   isExtension: false
@@ -70,6 +65,7 @@ KtFunctionSymbol:
   name: nullablePrimitive
   origin: SOURCE
   receiverType: null
+  returnType: kotlin/Unit
   symbolKind: TOP_LEVEL
   typeParameters: []
   valueParameters: [
@@ -79,9 +75,7 @@ KtFunctionSymbol:
   deprecationStatus: null
 
 KtValueParameterSymbol:
-  annotatedType: [] kotlin/Any
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: null
   hasDefaultValue: false
   isExtension: false
@@ -89,13 +83,12 @@ KtValueParameterSymbol:
   name: c
   origin: SOURCE
   receiverType: null
+  returnType: kotlin/Any
   symbolKind: LOCAL
   deprecationStatus: null
 
 KtFunctionSymbol:
-  annotatedType: [] kotlin/Unit
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: /nonPrimitive
   hasStableParameterNames: true
   isExtension: false
@@ -110,6 +103,7 @@ KtFunctionSymbol:
   name: nonPrimitive
   origin: SOURCE
   receiverType: null
+  returnType: kotlin/Unit
   symbolKind: TOP_LEVEL
   typeParameters: []
   valueParameters: [
@@ -119,9 +113,7 @@ KtFunctionSymbol:
   deprecationStatus: null
 
 KtValueParameterSymbol:
-  annotatedType: [] ERROR_TYPE
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: null
   hasDefaultValue: false
   isExtension: false
@@ -129,13 +121,12 @@ KtValueParameterSymbol:
   name: d
   origin: SOURCE
   receiverType: null
+  returnType: ERROR_TYPE
   symbolKind: LOCAL
   deprecationStatus: null
 
 KtFunctionSymbol:
-  annotatedType: [] kotlin/Unit
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: /error
   hasStableParameterNames: true
   isExtension: false
@@ -150,6 +141,7 @@ KtFunctionSymbol:
   name: error
   origin: SOURCE
   receiverType: null
+  returnType: kotlin/Unit
   symbolKind: TOP_LEVEL
   typeParameters: []
   valueParameters: [

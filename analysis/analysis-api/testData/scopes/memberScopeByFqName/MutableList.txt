@@ -1,7 +1,5 @@
 KtFunctionSymbol:
-  annotatedType: [] kotlin/Boolean
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: kotlin/collections/MutableList.add
   hasStableParameterNames: true
   isExtension: false
@@ -16,6 +14,7 @@ KtFunctionSymbol:
   name: add
   origin: LIBRARY
   receiverType: null
+  returnType: kotlin/Boolean
   symbolKind: CLASS_MEMBER
   typeParameters: []
   valueParameters: [
@@ -26,9 +25,7 @@ KtFunctionSymbol:
   deprecationStatus: null
 
 KtFunctionSymbol:
-  annotatedType: [] kotlin/Unit
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: kotlin/collections/MutableList.add
   hasStableParameterNames: true
   isExtension: false
@@ -43,6 +40,7 @@ KtFunctionSymbol:
   name: add
   origin: LIBRARY
   receiverType: null
+  returnType: kotlin/Unit
   symbolKind: CLASS_MEMBER
   typeParameters: []
   valueParameters: [
@@ -54,9 +52,7 @@ KtFunctionSymbol:
   deprecationStatus: null
 
 KtFunctionSymbol:
-  annotatedType: [] kotlin/Boolean
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: kotlin/collections/MutableList.addAll
   hasStableParameterNames: true
   isExtension: false
@@ -71,6 +67,7 @@ KtFunctionSymbol:
   name: addAll
   origin: LIBRARY
   receiverType: null
+  returnType: kotlin/Boolean
   symbolKind: CLASS_MEMBER
   typeParameters: []
   valueParameters: [
@@ -82,9 +79,7 @@ KtFunctionSymbol:
   deprecationStatus: null
 
 KtFunctionSymbol:
-  annotatedType: [] kotlin/Boolean
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: kotlin/collections/MutableList.addAll
   hasStableParameterNames: true
   isExtension: false
@@ -99,6 +94,7 @@ KtFunctionSymbol:
   name: addAll
   origin: LIBRARY
   receiverType: null
+  returnType: kotlin/Boolean
   symbolKind: CLASS_MEMBER
   typeParameters: []
   valueParameters: [
@@ -109,9 +105,7 @@ KtFunctionSymbol:
   deprecationStatus: null
 
 KtFunctionSymbol:
-  annotatedType: [] kotlin/Unit
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: kotlin/collections/MutableList.clear
   hasStableParameterNames: true
   isExtension: false
@@ -126,6 +120,7 @@ KtFunctionSymbol:
   name: clear
   origin: LIBRARY
   receiverType: null
+  returnType: kotlin/Unit
   symbolKind: CLASS_MEMBER
   typeParameters: []
   valueParameters: []
@@ -134,9 +129,7 @@ KtFunctionSymbol:
   deprecationStatus: null
 
 KtFunctionSymbol:
-  annotatedType: [] kotlin/collections/MutableListIterator<E>
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: kotlin/collections/MutableList.listIterator
   hasStableParameterNames: true
   isExtension: false
@@ -151,6 +144,7 @@ KtFunctionSymbol:
   name: listIterator
   origin: LIBRARY
   receiverType: null
+  returnType: kotlin/collections/MutableListIterator<E>
   symbolKind: CLASS_MEMBER
   typeParameters: []
   valueParameters: []
@@ -159,9 +153,7 @@ KtFunctionSymbol:
   deprecationStatus: null
 
 KtFunctionSymbol:
-  annotatedType: [] kotlin/collections/MutableListIterator<E>
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: kotlin/collections/MutableList.listIterator
   hasStableParameterNames: true
   isExtension: false
@@ -176,6 +168,7 @@ KtFunctionSymbol:
   name: listIterator
   origin: LIBRARY
   receiverType: null
+  returnType: kotlin/collections/MutableListIterator<E>
   symbolKind: CLASS_MEMBER
   typeParameters: []
   valueParameters: [
@@ -186,9 +179,7 @@ KtFunctionSymbol:
   deprecationStatus: null
 
 KtFunctionSymbol:
-  annotatedType: [] kotlin/Boolean
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: kotlin/collections/MutableList.remove
   hasStableParameterNames: true
   isExtension: false
@@ -203,6 +194,7 @@ KtFunctionSymbol:
   name: remove
   origin: LIBRARY
   receiverType: null
+  returnType: kotlin/Boolean
   symbolKind: CLASS_MEMBER
   typeParameters: []
   valueParameters: [
@@ -213,9 +205,7 @@ KtFunctionSymbol:
   deprecationStatus: null
 
 KtFunctionSymbol:
-  annotatedType: [] kotlin/Boolean
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: kotlin/collections/MutableList.removeAll
   hasStableParameterNames: true
   isExtension: false
@@ -230,6 +220,7 @@ KtFunctionSymbol:
   name: removeAll
   origin: LIBRARY
   receiverType: null
+  returnType: kotlin/Boolean
   symbolKind: CLASS_MEMBER
   typeParameters: []
   valueParameters: [
@@ -240,9 +231,7 @@ KtFunctionSymbol:
   deprecationStatus: null
 
 KtFunctionSymbol:
-  annotatedType: [] E
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: kotlin/collections/MutableList.removeAt
   hasStableParameterNames: true
   isExtension: false
@@ -257,6 +246,7 @@ KtFunctionSymbol:
   name: removeAt
   origin: LIBRARY
   receiverType: null
+  returnType: E
   symbolKind: CLASS_MEMBER
   typeParameters: []
   valueParameters: [
@@ -267,9 +257,7 @@ KtFunctionSymbol:
   deprecationStatus: null
 
 KtFunctionSymbol:
-  annotatedType: [] kotlin/Boolean
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: kotlin/collections/MutableList.retainAll
   hasStableParameterNames: true
   isExtension: false
@@ -284,6 +272,7 @@ KtFunctionSymbol:
   name: retainAll
   origin: LIBRARY
   receiverType: null
+  returnType: kotlin/Boolean
   symbolKind: CLASS_MEMBER
   typeParameters: []
   valueParameters: [
@@ -294,9 +283,7 @@ KtFunctionSymbol:
   deprecationStatus: null
 
 KtFunctionSymbol:
-  annotatedType: [] E
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: kotlin/collections/MutableList.set
   hasStableParameterNames: true
   isExtension: false
@@ -311,6 +298,7 @@ KtFunctionSymbol:
   name: set
   origin: LIBRARY
   receiverType: null
+  returnType: E
   symbolKind: CLASS_MEMBER
   typeParameters: []
   valueParameters: [
@@ -322,9 +310,7 @@ KtFunctionSymbol:
   deprecationStatus: null
 
 KtFunctionSymbol:
-  annotatedType: [] kotlin/collections/MutableList<E>
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: kotlin/collections/MutableList.subList
   hasStableParameterNames: true
   isExtension: false
@@ -339,6 +325,7 @@ KtFunctionSymbol:
   name: subList
   origin: LIBRARY
   receiverType: null
+  returnType: kotlin/collections/MutableList<E>
   symbolKind: CLASS_MEMBER
   typeParameters: []
   valueParameters: [
@@ -350,9 +337,7 @@ KtFunctionSymbol:
   deprecationStatus: null
 
 KtFunctionSymbol:
-  annotatedType: [] kotlin/Boolean
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: kotlin/collections/MutableList.contains
   hasStableParameterNames: true
   isExtension: false
@@ -367,6 +352,7 @@ KtFunctionSymbol:
   name: contains
   origin: LIBRARY
   receiverType: null
+  returnType: kotlin/Boolean
   symbolKind: CLASS_MEMBER
   typeParameters: []
   valueParameters: [
@@ -377,9 +363,7 @@ KtFunctionSymbol:
   deprecationStatus: null
 
 KtFunctionSymbol:
-  annotatedType: [] kotlin/Boolean
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: kotlin/collections/MutableList.containsAll
   hasStableParameterNames: true
   isExtension: false
@@ -394,6 +378,7 @@ KtFunctionSymbol:
   name: containsAll
   origin: LIBRARY
   receiverType: null
+  returnType: kotlin/Boolean
   symbolKind: CLASS_MEMBER
   typeParameters: []
   valueParameters: [
@@ -404,9 +389,7 @@ KtFunctionSymbol:
   deprecationStatus: null
 
 KtFunctionSymbol:
-  annotatedType: [] E
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: kotlin/collections/MutableList.get
   hasStableParameterNames: true
   isExtension: false
@@ -421,6 +404,7 @@ KtFunctionSymbol:
   name: get
   origin: LIBRARY
   receiverType: null
+  returnType: E
   symbolKind: CLASS_MEMBER
   typeParameters: []
   valueParameters: [
@@ -431,9 +415,7 @@ KtFunctionSymbol:
   deprecationStatus: null
 
 KtFunctionSymbol:
-  annotatedType: [] kotlin/Int
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: kotlin/collections/MutableList.indexOf
   hasStableParameterNames: true
   isExtension: false
@@ -448,6 +430,7 @@ KtFunctionSymbol:
   name: indexOf
   origin: LIBRARY
   receiverType: null
+  returnType: kotlin/Int
   symbolKind: CLASS_MEMBER
   typeParameters: []
   valueParameters: [
@@ -458,9 +441,7 @@ KtFunctionSymbol:
   deprecationStatus: null
 
 KtFunctionSymbol:
-  annotatedType: [] kotlin/Boolean
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: kotlin/collections/MutableList.isEmpty
   hasStableParameterNames: true
   isExtension: false
@@ -475,6 +456,7 @@ KtFunctionSymbol:
   name: isEmpty
   origin: LIBRARY
   receiverType: null
+  returnType: kotlin/Boolean
   symbolKind: CLASS_MEMBER
   typeParameters: []
   valueParameters: []
@@ -483,9 +465,7 @@ KtFunctionSymbol:
   deprecationStatus: null
 
 KtFunctionSymbol:
-  annotatedType: [] kotlin/collections/MutableIterator<E>
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: kotlin/collections/MutableList.iterator
   hasStableParameterNames: true
   isExtension: false
@@ -500,6 +480,7 @@ KtFunctionSymbol:
   name: iterator
   origin: INTERSECTION_OVERRIDE
   receiverType: null
+  returnType: kotlin/collections/MutableIterator<E>
   symbolKind: CLASS_MEMBER
   typeParameters: []
   valueParameters: []
@@ -508,9 +489,7 @@ KtFunctionSymbol:
   deprecationStatus: null
 
 KtFunctionSymbol:
-  annotatedType: [] kotlin/Int
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: kotlin/collections/MutableList.lastIndexOf
   hasStableParameterNames: true
   isExtension: false
@@ -525,6 +504,7 @@ KtFunctionSymbol:
   name: lastIndexOf
   origin: LIBRARY
   receiverType: null
+  returnType: kotlin/Int
   symbolKind: CLASS_MEMBER
   typeParameters: []
   valueParameters: [
@@ -535,9 +515,7 @@ KtFunctionSymbol:
   deprecationStatus: null
 
 KtKotlinPropertySymbol:
-  annotatedType: [] kotlin/Int
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: kotlin/collections/MutableList.size
   getter: null
   hasBackingField: false
@@ -556,6 +534,7 @@ KtKotlinPropertySymbol:
   name: size
   origin: LIBRARY
   receiverType: null
+  returnType: kotlin/Int
   setter: null
   symbolKind: CLASS_MEMBER
   typeParameters: []
@@ -568,9 +547,7 @@ KtKotlinPropertySymbol:
   setterDeprecationStatus: null
 
 KtFunctionSymbol:
-  annotatedType: [] kotlin/Boolean
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: kotlin/Any.equals
   hasStableParameterNames: true
   isExtension: false
@@ -585,6 +562,7 @@ KtFunctionSymbol:
   name: equals
   origin: LIBRARY
   receiverType: null
+  returnType: kotlin/Boolean
   symbolKind: CLASS_MEMBER
   typeParameters: []
   valueParameters: [
@@ -595,9 +573,7 @@ KtFunctionSymbol:
   deprecationStatus: null
 
 KtFunctionSymbol:
-  annotatedType: [] kotlin/Int
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: kotlin/Any.hashCode
   hasStableParameterNames: true
   isExtension: false
@@ -612,6 +588,7 @@ KtFunctionSymbol:
   name: hashCode
   origin: LIBRARY
   receiverType: null
+  returnType: kotlin/Int
   symbolKind: CLASS_MEMBER
   typeParameters: []
   valueParameters: []
@@ -620,9 +597,7 @@ KtFunctionSymbol:
   deprecationStatus: null
 
 KtFunctionSymbol:
-  annotatedType: [] kotlin/String
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: kotlin/Any.toString
   hasStableParameterNames: true
   isExtension: false
@@ -637,6 +612,7 @@ KtFunctionSymbol:
   name: toString
   origin: LIBRARY
   receiverType: null
+  returnType: kotlin/String
   symbolKind: CLASS_MEMBER
   typeParameters: []
   valueParameters: []

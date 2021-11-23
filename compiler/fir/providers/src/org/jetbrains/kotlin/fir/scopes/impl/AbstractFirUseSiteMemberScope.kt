@@ -12,12 +12,14 @@ import org.jetbrains.kotlin.fir.scopes.FirOverrideChecker
 import org.jetbrains.kotlin.fir.scopes.FirTypeScope
 import org.jetbrains.kotlin.fir.scopes.ProcessorAction
 import org.jetbrains.kotlin.fir.symbols.impl.*
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 
 abstract class AbstractFirUseSiteMemberScope(
+    val classId: ClassId,
     session: FirSession,
     overrideChecker: FirOverrideChecker,
-    protected val superTypesScope: FirTypeScope,
+    val superTypesScope: FirTypeScope,
     protected val declaredMemberScope: FirContainingNamesAwareScope
 ) : AbstractFirOverrideScope(session, overrideChecker) {
 

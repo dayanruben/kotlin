@@ -30,8 +30,6 @@ import kotlin.reflect.jvm.javaGetter
 
 abstract class AbstractResolveCallTest(configurator: FrontendApiTestConfiguratorService) : AbstractHLApiSingleModuleTest(configurator) {
     override fun doTestByFileStructure(ktFiles: List<KtFile>, module: TestModule, testServices: TestServices) {
-        super.doTestByFileStructure(ktFiles, module, testServices)
-
         val ktFile = ktFiles.first()
         val expression = testServices.expressionMarkerProvider.getSelectedElement(ktFile)
 
@@ -78,7 +76,7 @@ private fun KtAnalysisSession.stringRepresentation(call: KtCall): String {
             )
             append("(")
             (this@stringValue as? KtFunctionSymbol)?.receiverType?.let { receiver ->
-                append("<extension receiver>: ${receiver.type.render()}")
+                append("<extension receiver>: ${receiver.render()}")
                 if (valueParameters.isNotEmpty()) append(", ")
             }
 
@@ -89,11 +87,11 @@ private fun KtAnalysisSession.stringRepresentation(call: KtCall): String {
             }
             valueParameters.joinTo(this) { it.stringValue() }
             append(")")
-            append(": ${annotatedType.type.render()}")
+            append(": ${returnType.render()}")
         }
-        is KtValueParameterSymbol -> "${if (isVararg) "vararg " else ""}$name: ${annotatedType.type.render()}"
+        is KtValueParameterSymbol -> "${if (isVararg) "vararg " else ""}$name: ${returnType.render()}"
         is KtTypeParameterSymbol -> this.nameOrAnonymous.asString()
-        is KtVariableSymbol -> "${if (isVal) "val" else "var"} $name: ${annotatedType.type.render()}"
+        is KtVariableSymbol -> "${if (isVal) "val" else "var"} $name: ${returnType.render()}"
         is KtSuccessCallTarget -> symbol.stringValue()
         is KtErrorCallTarget -> "ERR<${this.diagnostic.defaultMessage}, [${candidates.joinToString { it.stringValue() }}]>"
         is Boolean -> toString()

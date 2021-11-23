@@ -19,10 +19,7 @@ import org.jetbrains.kotlin.fir.checkers.registerJvmCheckers
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
 import org.jetbrains.kotlin.fir.deserialization.ModuleDataProvider
 import org.jetbrains.kotlin.fir.deserialization.SingleModuleDataProvider
-import org.jetbrains.kotlin.fir.extensions.BunchOfRegisteredExtensions
-import org.jetbrains.kotlin.fir.extensions.FirExtensionDeclarationsSymbolProvider
-import org.jetbrains.kotlin.fir.extensions.extensionService
-import org.jetbrains.kotlin.fir.extensions.registerExtensions
+import org.jetbrains.kotlin.fir.extensions.*
 import org.jetbrains.kotlin.fir.java.FirCliSession
 import org.jetbrains.kotlin.fir.java.FirProjectSessionProvider
 import org.jetbrains.kotlin.fir.java.JavaSymbolProvider
@@ -167,6 +164,7 @@ object FirSessionFactory {
             }.configure()
 
             val dependenciesSymbolProvider = FirDependenciesSymbolProviderImpl(this)
+            val generatedSymbolsProvider = FirSwitchableExtensionDeclarationsSymbolProvider.create(this)
             register(
                 FirSymbolProvider::class,
                 FirCompositeSymbolProvider(
@@ -174,12 +172,14 @@ object FirSessionFactory {
                     listOfNotNull(
                         firProvider.symbolProvider,
                         symbolProviderForBinariesFromIncrementalCompilation,
-                        FirExtensionDeclarationsSymbolProvider.create(this),
+                        generatedSymbolsProvider,
                         JavaSymbolProvider(this, projectEnvironment.getFirJavaFacade(this, moduleData, scope)),
                         dependenciesSymbolProvider,
                     )
                 )
             )
+
+            generatedSymbolsProvider?.let { register(FirSwitchableExtensionDeclarationsSymbolProvider::class, it) }
 
             register(
                 FirDependenciesSymbolProvider::class,

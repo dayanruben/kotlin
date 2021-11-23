@@ -19,8 +19,6 @@ abstract class AbstractTypeParameterTypeTest(
     configurator: FrontendApiTestConfiguratorService
 ) : AbstractHLApiSingleFileTest(configurator) {
     override fun doTestByFileStructure(ktFile: KtFile, module: TestModule, testServices: TestServices) {
-        super.doTestByFileStructure(ktFile, module, testServices)
-
         val expressionAtCaret = testServices.expressionMarkerProvider.getElementOfTypAtCaret(ktFile) as KtTypeParameter
 
         val actual = analyseForTest(expressionAtCaret) {

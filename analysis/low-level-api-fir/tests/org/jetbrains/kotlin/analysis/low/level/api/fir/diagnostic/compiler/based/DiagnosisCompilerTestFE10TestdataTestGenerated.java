@@ -17340,6 +17340,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             }
 
             @Test
+            @TestMetadata("purelyImplementedSupertype.kt")
+            public void testPurelyImplementedSupertype() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/j+k/purelyImplementedSupertype.kt");
+            }
+
+            @Test
             @TestMetadata("rawOverride.kt")
             public void testRawOverride() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/j+k/rawOverride.kt");
@@ -24438,6 +24444,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             }
 
             @Test
+            @TestMetadata("kt49736.kt")
+            public void testKt49736() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/resolve/kt49736.kt");
+            }
+
+            @Test
             @TestMetadata("localObject.kt")
             public void testLocalObject() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/resolve/localObject.kt");
@@ -25371,6 +25383,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             @TestMetadata("javaMemberAgainstExtension.kt")
             public void testJavaMemberAgainstExtension() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/samConversions/javaMemberAgainstExtension.kt");
+            }
+
+            @Test
+            @TestMetadata("kt17765.kt")
+            public void testKt17765() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/samConversions/kt17765.kt");
             }
 
             @Test
@@ -31928,6 +31946,18 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             }
 
             @Test
+            @TestMetadata("kt10926.kt")
+            public void testKt10926() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/varargs/kt10926.kt");
+            }
+
+            @Test
+            @TestMetadata("kt10926EnabledFeature.kt")
+            public void testKt10926EnabledFeature() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/varargs/kt10926EnabledFeature.kt");
+            }
+
+            @Test
             @TestMetadata("kt1781.kt")
             public void testKt1781() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/varargs/kt1781.kt");
@@ -32547,6 +32577,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             @TestMetadata("kt48653_before.kt")
             public void testKt48653_before() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/when/kt48653_before.kt");
+            }
+
+            @Test
+            @TestMetadata("kt49702.kt")
+            public void testKt49702() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/when/kt49702.kt");
             }
 
             @Test

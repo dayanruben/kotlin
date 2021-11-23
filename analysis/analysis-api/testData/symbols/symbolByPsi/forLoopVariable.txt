@@ -1,18 +1,16 @@
 KtLocalVariableSymbol:
-  annotatedType: [] kotlin/Int
   callableIdIfNonLocal: null
   isExtension: false
   isVal: true
   name: loopVariable
   origin: SOURCE
   receiverType: null
+  returnType: kotlin/Int
   symbolKind: LOCAL
   deprecationStatus: null
 
 KtFunctionSymbol:
-  annotatedType: [] kotlin/Unit
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: /usage
   hasStableParameterNames: true
   isExtension: false
@@ -27,6 +25,7 @@ KtFunctionSymbol:
   name: usage
   origin: SOURCE
   receiverType: null
+  returnType: kotlin/Unit
   symbolKind: TOP_LEVEL
   typeParameters: []
   valueParameters: []

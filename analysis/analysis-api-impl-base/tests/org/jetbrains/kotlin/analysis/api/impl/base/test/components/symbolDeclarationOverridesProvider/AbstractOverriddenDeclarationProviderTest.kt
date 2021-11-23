@@ -24,8 +24,6 @@ abstract class AbstractOverriddenDeclarationProviderTest(
     configurator: FrontendApiTestConfiguratorService
 ) : AbstractHLApiSingleModuleTest(configurator) {
     override fun doTestByFileStructure(ktFiles: List<KtFile>, module: TestModule, testServices: TestServices) {
-        super.doTestByFileStructure(ktFiles, module, testServices)
-
         val declaration = testServices.expressionMarkerProvider.getElementOfTypAtCaret<KtDeclaration>(ktFiles.first())
 
         val actual = executeOnPooledThreadInReadAction {
@@ -51,7 +49,7 @@ abstract class AbstractOverriddenDeclarationProviderTest(
             symbol.valueParameters.forEachIndexed { index, parameter ->
                 append(parameter.name.identifier)
                 append(": ")
-                append(parameter.annotatedType.type.render(KtTypeRendererOptions.SHORT_NAMES))
+                append(parameter.returnType.render(KtTypeRendererOptions.SHORT_NAMES))
                 if (index != symbol.valueParameters.lastIndex) {
                     append(", ")
                 }
@@ -59,7 +57,7 @@ abstract class AbstractOverriddenDeclarationProviderTest(
             append(")")
         }
         append(": ")
-        append(symbol.annotatedType.type.render(KtTypeRendererOptions.SHORT_NAMES))
+        append(symbol.returnType.render(KtTypeRendererOptions.SHORT_NAMES))
     }
 
     private fun getPath(symbol: KtCallableSymbol): String = when (symbol) {

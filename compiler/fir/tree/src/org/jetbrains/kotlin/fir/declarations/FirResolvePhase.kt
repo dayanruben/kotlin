@@ -7,8 +7,9 @@ package org.jetbrains.kotlin.fir.declarations
 
 enum class FirResolvePhase(val pluginPhase: Boolean = false, val noProcessor: Boolean = false) {
     RAW_FIR(noProcessor = true),
-    ANNOTATIONS_FOR_PLUGINS(pluginPhase = true),
     IMPORTS,
+    ANNOTATIONS_FOR_PLUGINS(pluginPhase = true),
+    COMPANION_GENERATION(pluginPhase = true),
     SUPER_TYPES,
     SEALED_CLASS_INHERITORS,
     TYPES,

@@ -31,10 +31,7 @@ import org.jetbrains.kotlin.kapt3.test.AbstractIrKotlinKaptContextTest
 import org.jetbrains.kotlin.kapt3.test.AbstractKotlinKaptContextTest
 import org.jetbrains.kotlin.lombok.AbstractLombokCompileTest
 import org.jetbrains.kotlin.noarg.*
-import org.jetbrains.kotlin.parcelize.test.runners.AbstractParcelizeBoxTest
-import org.jetbrains.kotlin.parcelize.test.runners.AbstractParcelizeBytecodeListingTest
-import org.jetbrains.kotlin.parcelize.test.runners.AbstractParcelizeIrBoxTest
-import org.jetbrains.kotlin.parcelize.test.runners.AbstractParcelizeIrBytecodeListingTest
+import org.jetbrains.kotlin.parcelize.test.runners.*
 import org.jetbrains.kotlin.samWithReceiver.AbstractSamWithReceiverScriptTest
 import org.jetbrains.kotlin.samWithReceiver.AbstractSamWithReceiverTest
 import org.jetbrains.kotlin.test.TargetBackend
@@ -353,6 +350,8 @@ fun main(args: Array<String>) {
     }
 
     generateTestGroupSuiteWithJUnit5 {
+        val excludedFirTestdataPattern = "^(.+)\\.fir\\.kts?\$"
+
         testGroup("plugins/parcelize/parcelize-compiler/tests-gen", "plugins/parcelize/parcelize-compiler/testData") {
             testClass<AbstractParcelizeBoxTest> {
                 model("box")
@@ -362,12 +361,24 @@ fun main(args: Array<String>) {
                 model("box")
             }
 
+            testClass<AbstractParcelizeFirBoxTest> {
+                model("box")
+            }
+
             testClass<AbstractParcelizeBytecodeListingTest> {
                 model("codegen")
             }
 
             testClass<AbstractParcelizeIrBytecodeListingTest> {
                 model("codegen")
+            }
+
+            testClass<AbstractParcelizeDiagnosticTest> {
+                model("diagnostics", excludedPattern = excludedFirTestdataPattern)
+            }
+
+            testClass<AbstractFirParcelizeDiagnosticTest> {
+                model("diagnostics", excludedPattern = excludedFirTestdataPattern)
             }
         }
 

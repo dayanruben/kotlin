@@ -22,6 +22,7 @@ class FirTotalResolveProcessor(session: FirSession, enablePluginPhases: Boolean 
 
     fun process(files: List<FirFile>) {
         for (processor in processors) {
+            processor.beforePhase()
             when (processor) {
                 is FirTransformerBasedResolveProcessor -> {
                     for (file in files) {
@@ -32,6 +33,7 @@ class FirTotalResolveProcessor(session: FirSession, enablePluginPhases: Boolean 
                     processor.process(files)
                 }
             }
+            processor.afterPhase()
         }
     }
 }
@@ -66,6 +68,7 @@ fun FirResolvePhase.createCompilerProcessorByPhase(
     return when (this) {
         RAW_FIR -> throw IllegalArgumentException("Raw FIR building phase does not have a transformer")
         ANNOTATIONS_FOR_PLUGINS -> FirPluginAnnotationsResolveProcessor(session, scopeSession)
+        COMPANION_GENERATION -> FirCompanionGenerationProcessor(session, scopeSession)
         IMPORTS -> FirImportResolveProcessor(session, scopeSession)
         SUPER_TYPES -> FirSupertypeResolverProcessor(session, scopeSession)
         SEALED_CLASS_INHERITORS -> FirSealedClassInheritorsProcessor(session, scopeSession)

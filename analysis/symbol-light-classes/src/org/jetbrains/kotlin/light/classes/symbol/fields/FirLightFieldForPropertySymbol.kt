@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.light.classes.symbol
 
 import com.intellij.psi.*
+import org.jetbrains.kotlin.analysis.api.KtConstantInitializerValue
 import org.jetbrains.kotlin.asJava.builder.LightMemberOrigin
 import org.jetbrains.kotlin.asJava.classes.lazyPub
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
@@ -38,7 +39,7 @@ internal class FirLightFieldForPropertySymbol(
                         it.getKtType()?.asPsiType(this@FirLightFieldForPropertySymbol, KtTypeMappingMode.RETURN_TYPE)
                     }
                 else -> {
-                    propertySymbol.annotatedType.type.asPsiType(this@FirLightFieldForPropertySymbol, KtTypeMappingMode.RETURN_TYPE)
+                    propertySymbol.returnType.asPsiType(this@FirLightFieldForPropertySymbol, KtTypeMappingMode.RETURN_TYPE)
                 }
             }
         } ?: nonExistentType()
@@ -92,7 +93,7 @@ internal class FirLightFieldForPropertySymbol(
 
         val nullability = if (!(propertySymbol is KtKotlinPropertySymbol && propertySymbol.isLateInit)) {
             analyzeWithSymbolAsContext(propertySymbol) {
-                getTypeNullability(propertySymbol.annotatedType.type)
+                getTypeNullability(propertySymbol.returnType)
             }
         } else NullabilityType.Unknown
 
@@ -111,7 +112,8 @@ internal class FirLightFieldForPropertySymbol(
         if (propertySymbol !is KtKotlinPropertySymbol) return@lazyPub null
         if (!propertySymbol.isConst) return@lazyPub null
         if (!propertySymbol.isVal) return@lazyPub null
-        (propertySymbol.initializer as? KtLiteralConstantValue<*>)?.createPsiLiteral(this)
+        val constInitializer = propertySymbol.initializer as? KtConstantInitializerValue ?: return@lazyPub null
+        (constInitializer.constant as? KtLiteralConstantValue<*>)?.createPsiLiteral(this)
     }
 
     override fun getInitializer(): PsiExpression? = _initializer

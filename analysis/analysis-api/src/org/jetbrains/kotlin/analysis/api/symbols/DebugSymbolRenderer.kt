@@ -5,8 +5,16 @@
 
 package org.jetbrains.kotlin.analysis.api.symbols
 
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.resolve.deprecation.DeprecationInfo
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KtConstantInitializerValue
+import org.jetbrains.kotlin.analysis.api.KtInitializerValue
+import org.jetbrains.kotlin.analysis.api.KtNonConstantInitializerValue
+import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationApplication
+import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationsList
+import org.jetbrains.kotlin.analysis.api.annotations.KtNamedConstantValue
+import org.jetbrains.kotlin.analysis.api.annotations.annotations
 import org.jetbrains.kotlin.analysis.api.components.KtSymbolInfoProviderMixIn
 import org.jetbrains.kotlin.analysis.api.symbols.markers.*
 import org.jetbrains.kotlin.analysis.api.types.KtClassErrorType
@@ -22,6 +30,9 @@ import kotlin.reflect.full.extensionReceiverParameter
 
 public object DebugSymbolRenderer {
     public fun render(symbol: KtSymbol): String = Block().apply { renderSymbol(symbol) }.toString()
+
+    public fun renderAnnotationApplication(application: KtAnnotationApplication): String =
+        Block().apply { renderAnnotationApplication(application) }.toString()
 
     public fun renderType(type: KtType): String = Block().apply { renderType(type) }.toString()
 
@@ -106,16 +117,7 @@ public object DebugSymbolRenderer {
     }
 
     private fun Block.renderConstantValue(value: KtConstantValue) {
-        when (value) {
-            is KtLiteralConstantValue<*> -> renderValue(value.value)
-            is KtEnumEntryConstantValue -> {
-                append(KtEnumEntryConstantValue::class.java.simpleName)
-                append("(")
-                renderValue(value.callableId)
-                append(")")
-            }
-            else -> append(value::class.java.simpleName)
-        }
+        append(KtConstantValueRenderer.render(value))
     }
 
     private fun Block.renderNamedConstantValue(value: KtNamedConstantValue) {
@@ -124,19 +126,17 @@ public object DebugSymbolRenderer {
     }
 
     private fun Block.renderType(type: KtType) {
+        if (type.annotations.isNotEmpty()) {
+            renderList(type.annotations)
+            append(' ')
+        }
         when (type) {
             is KtClassErrorType -> append("ERROR_TYPE")
             else -> append(type.asStringForDebugging())
         }
     }
 
-    private fun Block.renderTypeAndAnnotations(type: KtTypeAndAnnotations) {
-        renderList(type.annotations)
-        append(' ')
-        renderType(type.type)
-    }
-
-    private fun Block.renderAnnotationCall(call: KtAnnotationCall) {
+    private fun Block.renderAnnotationApplication(call: KtAnnotationApplication) {
         renderValue(call.classId)
         append('(')
         call.arguments.sortedBy { it.name }.forEachIndexed { index, value ->
@@ -166,10 +166,11 @@ public object DebugSymbolRenderer {
             // Symbol-related values
             is KtSymbol -> renderSymbolTag(value)
             is KtType -> renderType(value)
-            is KtTypeAndAnnotations -> renderTypeAndAnnotations(value)
             is KtConstantValue -> renderConstantValue(value)
             is KtNamedConstantValue -> renderNamedConstantValue(value)
-            is KtAnnotationCall -> renderAnnotationCall(value)
+            is KtInitializerValue -> renderKtInitializerValue(value)
+            is KtAnnotationApplication -> renderAnnotationApplication(value)
+            is KtAnnotationsList -> renderAnnotationsList(value)
             // Other custom values
             is Name -> append(value.asString())
             is FqName -> append(value.asString())
@@ -188,6 +189,25 @@ public object DebugSymbolRenderer {
         }
     }
 
+    private fun Block.renderKtInitializerValue(value: KtInitializerValue) {
+        when (value) {
+            is KtConstantInitializerValue -> {
+                append("KtConstantInitializerValue(")
+                renderConstantValue(value.constant)
+                append(")")
+            }
+            is KtNonConstantInitializerValue -> {
+                append("KtNonConstantInitializerValue(")
+                append(value.initializerPsi?.firstLineOfPsi() ?: "NO_PSI")
+                append(")")
+            }
+        }
+    }
+
+    private fun Block.renderAnnotationsList(value: KtAnnotationsList) {
+        renderList(value.annotations)
+    }
+
     private fun getSymbolApiClass(symbol: KtSymbol): KClass<*> {
         var current: Class<in KtSymbol> = symbol.javaClass
 
@@ -198,6 +218,13 @@ public object DebugSymbolRenderer {
             }
             current = current.superclass
         }
+    }
+
+    private fun PsiElement.firstLineOfPsi(): String {
+        val text = text
+        val lines = text.lines()
+        return if (lines.count() <= 1) text
+        else lines.first() + " ..."
     }
 
     private val ignoredPropertyNames = setOf("psi", "token")

@@ -1,7 +1,5 @@
 KtPropertyGetterSymbol:
-  annotatedType: [] kotlin/Int
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: null
   hasBody: true
   hasStableParameterNames: true
@@ -12,15 +10,14 @@ KtPropertyGetterSymbol:
   modality: FINAL
   origin: SOURCE
   receiverType: null
+  returnType: kotlin/Int
   symbolKind: ACCESSOR
   valueParameters: []
   visibility: Public
   deprecationStatus: null
 
 KtValueParameterSymbol:
-  annotatedType: [] kotlin/Int
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: null
   hasDefaultValue: false
   isExtension: false
@@ -28,13 +25,12 @@ KtValueParameterSymbol:
   name: value
   origin: SOURCE
   receiverType: null
+  returnType: kotlin/Int
   symbolKind: LOCAL
   deprecationStatus: null
 
 KtPropertySetterSymbol:
-  annotatedType: [] kotlin/Unit
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: null
   hasBody: true
   hasStableParameterNames: true
@@ -46,6 +42,7 @@ KtPropertySetterSymbol:
   origin: SOURCE
   parameter: KtValueParameterSymbol(value)
   receiverType: null
+  returnType: kotlin/Unit
   symbolKind: ACCESSOR
   valueParameters: [
     KtValueParameterSymbol(value)
@@ -54,9 +51,7 @@ KtPropertySetterSymbol:
   deprecationStatus: null
 
 KtKotlinPropertySymbol:
-  annotatedType: [] kotlin/Int
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: /p
   getter: KtPropertyGetterSymbol(<getter>)
   hasBackingField: true
@@ -75,6 +70,7 @@ KtKotlinPropertySymbol:
   name: p
   origin: SOURCE
   receiverType: null
+  returnType: kotlin/Int
   setter: KtPropertySetterSymbol(<setter>)
   symbolKind: TOP_LEVEL
   typeParameters: []

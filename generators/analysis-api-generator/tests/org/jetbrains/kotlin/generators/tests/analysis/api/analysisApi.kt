@@ -5,7 +5,12 @@
 
 package org.jetbrains.kotlin.generators.tests.analysis.api
 
+import org.jetbrains.kotlin.analysis.api.descriptors.test.annotations.AbstractAnalysisApiFE10AnnotationsOnFilesTest
+import org.jetbrains.kotlin.analysis.api.descriptors.test.annotations.AbstractAnalysisApiFe10AnnotationsOnDeclarationsTest
+import org.jetbrains.kotlin.analysis.api.descriptors.test.annotations.AbstractAnalysisApiFe10AnnotationsOnTypesTest
 import org.jetbrains.kotlin.analysis.api.descriptors.test.components.callResolver.AbstractKtFe10ResolveCallTest
+import org.jetbrains.kotlin.analysis.api.descriptors.test.components.compileTimeConstantProvider.AbstractKtFe10CompileTimeConstantEvaluatorTest
+import org.jetbrains.kotlin.analysis.api.descriptors.test.components.expressionInfoProvider.AbstractKtFe10ReturnTargetSymbolTest
 import org.jetbrains.kotlin.analysis.api.descriptors.test.components.expressionInfoProvider.AbstractKtFe10WhenMissingCasesTest
 import org.jetbrains.kotlin.analysis.api.descriptors.test.components.expressionTypeProvider.AbstractKtFe10ExpectedExpressionTypeTest
 import org.jetbrains.kotlin.analysis.api.descriptors.test.components.expressionTypeProvider.AbstractKtFe10HLExpressionTypeTest
@@ -14,13 +19,16 @@ import org.jetbrains.kotlin.analysis.api.descriptors.test.components.symbolDecla
 import org.jetbrains.kotlin.analysis.api.descriptors.test.components.symbolDeclarationRenderer.AbstractKtFe10RendererTest
 import org.jetbrains.kotlin.analysis.api.descriptors.test.components.typeCreator.AbstractKtFe10TypeParameterTypeTest
 import org.jetbrains.kotlin.analysis.api.descriptors.test.components.typeProvider.AbstractKtFe10HasCommonSubtypeTest
-import org.jetbrains.kotlin.analysis.api.descriptors.test.components.compileTimeConstantProvider.AbstractKtFe10CompileTimeConstantEvaluatorTest
 import org.jetbrains.kotlin.analysis.api.descriptors.test.symbols.AbstractKtFe10SymbolByFqNameTest
 import org.jetbrains.kotlin.analysis.api.descriptors.test.symbols.AbstractKtFe10SymbolByPsiTest
 import org.jetbrains.kotlin.analysis.api.descriptors.test.symbols.AbstractKtFe10SymbolByReferenceTest
 import org.jetbrains.kotlin.analysis.api.fir.AbstractFirReferenceResolveTest
+import org.jetbrains.kotlin.analysis.api.fir.annotations.AbstractAnalysisApiFirAnnotationsOnDeclarationsTest
+import org.jetbrains.kotlin.analysis.api.fir.annotations.AbstractAnalysisApiFirAnnotationsOnFilesTest
+import org.jetbrains.kotlin.analysis.api.fir.annotations.AbstractAnalysisApiFirAnnotationsOnTypesTest
 import org.jetbrains.kotlin.analysis.api.fir.components.callResolver.AbstractFirResolveCallTest
 import org.jetbrains.kotlin.analysis.api.fir.components.compileTimeConstantProvider.AbstractFirCompileTimeConstantEvaluatorTest
+import org.jetbrains.kotlin.analysis.api.fir.components.expressionInfoProvider.AbstractFirReturnTargetSymbolTest
 import org.jetbrains.kotlin.analysis.api.fir.components.expressionInfoProvider.AbstractFirWhenMissingCasesTest
 import org.jetbrains.kotlin.analysis.api.fir.components.expressionTypeProvider.AbstractFirExpectedExpressionTypeTest
 import org.jetbrains.kotlin.analysis.api.fir.components.expressionTypeProvider.AbstractFirHLExpressionTypeTest
@@ -100,6 +108,30 @@ private fun TestGroupSuite.generateAnalysisApiNonComponentsTests() {
             model("symbolByReference")
         }
     }
+
+    group("annotations") {
+        test(
+            fir = AbstractAnalysisApiFirAnnotationsOnTypesTest::class,
+            fe10 = AbstractAnalysisApiFe10AnnotationsOnTypesTest::class
+        ) {
+            model("annotationsOnTypes")
+        }
+
+        test(
+            fir = AbstractAnalysisApiFirAnnotationsOnDeclarationsTest::class,
+            fe10 = AbstractAnalysisApiFe10AnnotationsOnDeclarationsTest::class,
+        ) {
+            model("annotationsOnDeclaration")
+        }
+
+        test(
+            fir = AbstractAnalysisApiFirAnnotationsOnFilesTest::class,
+            fe10 = null // TODO "fails with Rewrite at slice ANNOTATION key"
+            /*AbstractAnalysisApiFE10AnnotationsOnFilesTest*/
+        ) {
+            model("annotationsOnFiles")
+        }
+    }
 }
 
 
@@ -128,7 +160,7 @@ private fun TestGroupSuite.generateAnalysisApiComponentsTests() {
         }
 
         test(
-            fir = null /*TODO*/, fe10 = null
+            fir = AbstractFirReturnTargetSymbolTest::class, fe10 = AbstractKtFe10ReturnTargetSymbolTest::class
         ) {
             model("returnExpressionTargetSymbol")
         }

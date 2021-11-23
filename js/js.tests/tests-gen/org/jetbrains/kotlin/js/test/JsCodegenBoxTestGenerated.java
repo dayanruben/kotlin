@@ -3489,6 +3489,12 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
         public void testKt19246() throws Exception {
             runTest("compiler/testData/codegen/box/checkcastOptimization/kt19246.kt");
         }
+
+        @Test
+        @TestMetadata("kt47851.kt")
+        public void testKt47851() throws Exception {
+            runTest("compiler/testData/codegen/box/checkcastOptimization/kt47851.kt");
+        }
     }
 
     @Nested
@@ -9395,6 +9401,12 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             @TestMetadata("kt38925.kt")
             public void testKt38925() throws Exception {
                 runTest("compiler/testData/codegen/box/coroutines/varSpilling/kt38925.kt");
+            }
+
+            @Test
+            @TestMetadata("kt49834.kt")
+            public void testKt49834() throws Exception {
+                runTest("compiler/testData/codegen/box/coroutines/varSpilling/kt49834.kt");
             }
 
             @Test
@@ -29492,6 +29504,12 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/sam"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JS, true);
         }
 
+        @Test
+        @TestMetadata("kt17765.kt")
+        public void testKt17765() throws Exception {
+            runTest("compiler/testData/codegen/box/sam/kt17765.kt");
+        }
+
         @Nested
         @TestMetadata("compiler/testData/codegen/box/sam/adapters")
         @TestDataPath("$PROJECT_ROOT")
@@ -31994,6 +32012,12 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
         @TestMetadata("evaluationOrder.kt")
         public void testEvaluationOrder() throws Exception {
             runTest("compiler/testData/codegen/box/vararg/evaluationOrder.kt");
+        }
+
+        @Test
+        @TestMetadata("kt10926.kt")
+        public void testKt10926() throws Exception {
+            runTest("compiler/testData/codegen/box/vararg/kt10926.kt");
         }
 
         @Test

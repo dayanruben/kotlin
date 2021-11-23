@@ -1,7 +1,5 @@
 KtKotlinPropertySymbol:
-  annotatedType: [] kotlin/Int
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: /Foo.i
   getter: KtPropertyGetterSymbol(<getter>)
   hasBackingField: true
@@ -20,6 +18,7 @@ KtKotlinPropertySymbol:
   name: i
   origin: SOURCE
   receiverType: null
+  returnType: kotlin/Int
   setter: KtPropertySetterSymbol(<setter>)
   symbolKind: CLASS_MEMBER
   typeParameters: []
@@ -32,12 +31,8 @@ KtKotlinPropertySymbol:
   setterDeprecationStatus: null
 
 KtPropertyGetterSymbol:
-  annotatedType: [] kotlin/Int
-  annotationClassIds: [
-    kotlin/jvm/JvmName
-  ]
-  annotations: [
-    kotlin/jvm/JvmName(name = getMyJ)
+  annotationsList: [
+    kotlin/jvm/JvmName(name = "getMyJ")
       psi: KtAnnotationEntry
   ]
   callableIdIfNonLocal: null
@@ -50,15 +45,14 @@ KtPropertyGetterSymbol:
   modality: FINAL
   origin: SOURCE
   receiverType: null
+  returnType: kotlin/Int
   symbolKind: ACCESSOR
   valueParameters: []
   visibility: Public
   deprecationStatus: null
 
 KtValueParameterSymbol:
-  annotatedType: [] kotlin/Int
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: null
   hasDefaultValue: false
   isExtension: false
@@ -66,16 +60,13 @@ KtValueParameterSymbol:
   name: value
   origin: SOURCE
   receiverType: null
+  returnType: kotlin/Int
   symbolKind: LOCAL
   deprecationStatus: null
 
 KtPropertySetterSymbol:
-  annotatedType: [] kotlin/Unit
-  annotationClassIds: [
-    kotlin/jvm/JvmName
-  ]
-  annotations: [
-    kotlin/jvm/JvmName(name = setMyJ)
+  annotationsList: [
+    kotlin/jvm/JvmName(name = "setMyJ")
       psi: KtAnnotationEntry
   ]
   callableIdIfNonLocal: null
@@ -89,6 +80,7 @@ KtPropertySetterSymbol:
   origin: SOURCE
   parameter: KtValueParameterSymbol(value)
   receiverType: null
+  returnType: kotlin/Unit
   symbolKind: ACCESSOR
   valueParameters: [
     KtValueParameterSymbol(value)
@@ -97,9 +89,7 @@ KtPropertySetterSymbol:
   deprecationStatus: null
 
 KtKotlinPropertySymbol:
-  annotatedType: [] kotlin/Int
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   callableIdIfNonLocal: /Foo.j
   getter: KtPropertyGetterSymbol(<getter>)
   hasBackingField: false
@@ -118,6 +108,7 @@ KtKotlinPropertySymbol:
   name: j
   origin: SOURCE
   receiverType: null
+  returnType: kotlin/Int
   setter: KtPropertySetterSymbol(<setter>)
   symbolKind: CLASS_MEMBER
   typeParameters: []
@@ -130,8 +121,7 @@ KtKotlinPropertySymbol:
   setterDeprecationStatus: null
 
 KtNamedClassOrObjectSymbol:
-  annotationClassIds: []
-  annotations: []
+  annotationsList: []
   classIdIfNonLocal: Foo
   classKind: CLASS
   companionObject: null
@@ -144,7 +134,7 @@ KtNamedClassOrObjectSymbol:
   name: Foo
   origin: SOURCE
   superTypes: [
-    [] kotlin/Any
+    kotlin/Any
   ]
   symbolKind: TOP_LEVEL
   typeParameters: []

@@ -192,7 +192,6 @@ class JsIntrinsics(private val irBuiltIns: IrBuiltIns, val context: JsIrBackendC
     }!!
 
     val charClassSymbol = getInternalClassWithoutPackage("kotlin.Char")
-    val charConstructor = charClassSymbol.constructors.single().owner
 
     val stringClassSymbol = getInternalClassWithoutPackage("kotlin.String")
     val stringConstructorSymbol = stringClassSymbol.constructors.single()
@@ -289,7 +288,7 @@ class JsIntrinsics(private val irBuiltIns: IrBuiltIns, val context: JsIrBackendC
     val doNotIntrinsifyAnnotationSymbol = context.symbolTable.referenceClass(context.getJsInternalClass("DoNotIntrinsify"))
     val jsFunAnnotationSymbol = context.symbolTable.referenceClass(context.getJsInternalClass("JsFun"))
 
-    val jsEagerInitializationAnnotationSymbol = context.symbolTable.referenceClass(context.getJsInternalClass("JsEagerInitialization"))
+    val jsEagerInitializationAnnotationSymbol = context.symbolTable.referenceClass(context.getJsInternalClass("EagerInitialization"))
 
     // TODO move CharSequence-related stiff to IntrinsifyCallsLowering
     val charSequenceClassSymbol = context.symbolTable.referenceClass(context.getClass(FqName("kotlin.CharSequence")))
