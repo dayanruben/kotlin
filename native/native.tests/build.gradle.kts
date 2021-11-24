@@ -12,6 +12,7 @@ dependencies {
     testImplementation(project(":kotlin-reflect"))
     testImplementation(intellijCoreDep()) { includeJars("intellij-core") }
     testImplementation(intellijPluginDep("java"))
+    testImplementation(intellijDep()) { includeJars("commons-lang-2.4") }
     testImplementation(project(":kotlin-compiler-runner-unshaded"))
     testImplementation(projectTests(":compiler:tests-common"))
     testImplementation(projectTests(":compiler:tests-common-new"))
@@ -46,7 +47,8 @@ enum class TestProperty(shortName: String) {
     KOTLIN_NATIVE_HOME("nativeHome"),
     COMPILER_CLASSPATH("compilerClasspath"),
     TEST_MODE("mode"),
-    USE_CACHE("useCache");
+    USE_CACHE("useCache"),
+    EXECUTION_TIMEOUT("executionTimeout");
 
     private val propertyName = "kotlin.internal.native.test.$shortName"
 
@@ -81,6 +83,7 @@ if (kotlinBuildProperties.isKotlinNativeEnabled) {
         // Pass Gradle properties as JVM properties so test process can read them.
         TestProperty.TEST_MODE.setUpFromGradleProperty(this)
         TestProperty.USE_CACHE.setUpFromGradleProperty(this)
+        TestProperty.EXECUTION_TIMEOUT.setUpFromGradleProperty(this)
 
         useJUnitPlatform()
     }
