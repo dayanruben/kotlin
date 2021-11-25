@@ -281,6 +281,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val INAPPLICABLE_FILE_TARGET by error<KtAnnotationEntry>(PositioningStrategy.ANNOTATION_USE_SITE)
         val REPEATED_ANNOTATION by error<KtAnnotationEntry>()
         val REPEATED_ANNOTATION_WARNING by warning<KtAnnotationEntry>()
+        val NOT_A_CLASS by error<PsiElement>()
     }
 
     val OPT_IN by object : DiagnosticGroup("OptIn") {
@@ -653,6 +654,12 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<FirExpression>("subject")
             parameter<String>("description")
             parameter<Boolean>("isCastToNotNull")
+        }
+
+        val REDUNDANT_NULLABLE by warning<KtTypeReference>(PositioningStrategy.REDUNDANT_NULLABLE)
+
+        val PLATFORM_CLASS_MAPPED_TO_KOTLIN by warning<PsiElement>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED) {
+            parameter<FqName>("kotlinClass")
         }
     }
 

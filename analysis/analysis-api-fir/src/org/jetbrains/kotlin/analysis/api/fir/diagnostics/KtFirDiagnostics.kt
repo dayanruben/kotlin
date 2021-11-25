@@ -659,6 +659,10 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = RepeatedAnnotationWarning::class
     }
 
+    abstract class NotAClass : KtFirDiagnostic<PsiElement>() {
+        override val diagnosticClass get() = NotAClass::class
+    }
+
     abstract class OptInUsage : KtFirDiagnostic<PsiElement>() {
         override val diagnosticClass get() = OptInUsage::class
         abstract val optInMarkerFqName: FqName
@@ -1342,6 +1346,15 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         abstract val subject: KtExpression
         abstract val description: String
         abstract val isCastToNotNull: Boolean
+    }
+
+    abstract class RedundantNullable : KtFirDiagnostic<KtTypeReference>() {
+        override val diagnosticClass get() = RedundantNullable::class
+    }
+
+    abstract class PlatformClassMappedToKotlin : KtFirDiagnostic<PsiElement>() {
+        override val diagnosticClass get() = PlatformClassMappedToKotlin::class
+        abstract val kotlinClass: FqName
     }
 
     abstract class ExtensionInClassReferenceNotAllowed : KtFirDiagnostic<KtExpression>() {
