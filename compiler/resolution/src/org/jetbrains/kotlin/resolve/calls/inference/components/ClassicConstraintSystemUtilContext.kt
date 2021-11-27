@@ -72,7 +72,7 @@ class ClassicConstraintSystemUtilContext(
         }
     }
 
-    override fun PostponedAtomWithRevisableExpectedType.isAnonymousFunction(): Boolean {
+    override fun PostponedAtomWithRevisableExpectedType.isFunctionExpression(): Boolean {
         require(this is ResolvedAtom)
         return this.atom is FunctionExpression
     }
@@ -81,6 +81,12 @@ class ClassicConstraintSystemUtilContext(
         require(this is ResolvedAtom)
         val atom = this.atom
         return atom is FunctionExpression && atom.receiverType != null
+    }
+
+    override fun PostponedAtomWithRevisableExpectedType.isLambda(): Boolean {
+        require(this is ResolvedAtom)
+        val atom = this.atom
+        return atom is LambdaKotlinCallArgument && atom !is FunctionExpression
     }
 
     override fun createTypeVariableForLambdaReturnType(): TypeVariableMarker {

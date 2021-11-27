@@ -13460,9 +13460,33 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("selectOfLambdaWithExtension.kt")
+            public void testSelectOfLambdaWithExtension() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inference/selectOfLambdaWithExtension.kt");
+            }
+
+            @Test
+            @TestMetadata("selectOfLambdaWithExtensionDisabled.kt")
+            public void testSelectOfLambdaWithExtensionDisabled() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inference/selectOfLambdaWithExtensionDisabled.kt");
+            }
+
+            @Test
+            @TestMetadata("selectOfLambdaWithExtensionEnabled.kt")
+            public void testSelectOfLambdaWithExtensionEnabled() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inference/selectOfLambdaWithExtensionEnabled.kt");
+            }
+
+            @Test
             @TestMetadata("specialCallsWithCallableReferences.kt")
             public void testSpecialCallsWithCallableReferences() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/inference/specialCallsWithCallableReferences.kt");
+            }
+
+            @Test
+            @TestMetadata("specialCallsWithLambdas.kt")
+            public void testSpecialCallsWithLambdas() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inference/specialCallsWithLambdas.kt");
             }
 
             @Test
@@ -14067,6 +14091,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 }
 
                 @Test
+                @TestMetadata("lambdaWithNullableUnitInElvis.kt")
+                public void testLambdaWithNullableUnitInElvis() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/coercionToUnit/lambdaWithNullableUnitInElvis.kt");
+                }
+
+                @Test
                 @TestMetadata("noCoercion.kt")
                 public void testNoCoercion() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/coercionToUnit/noCoercion.kt");
@@ -14116,6 +14146,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("dontCaptureTypeVariable.kt")
                 public void testDontCaptureTypeVariable() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/commonSystem/dontCaptureTypeVariable.kt");
+                }
+
+                @Test
+                @TestMetadata("exactOnElvis.kt")
+                public void testExactOnElvis() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/commonSystem/exactOnElvis.kt");
                 }
 
                 @Test
@@ -17166,6 +17202,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("innerLightClass.kt")
+            public void testInnerLightClass() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/j+k/innerLightClass.kt");
+            }
+
+            @Test
             @TestMetadata("innerNestedClassFromJava.kt")
             public void testInnerNestedClassFromJava() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/j+k/innerNestedClassFromJava.kt");
@@ -18072,6 +18114,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("arrayList.kt")
                 public void testArrayList() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/j+k/types/arrayList.kt");
+                }
+
+                @Test
+                @TestMetadata("constantStaticStringField.kt")
+                public void testConstantStaticStringField() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/j+k/types/constantStaticStringField.kt");
                 }
 
                 @Test
@@ -21073,6 +21121,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("compareToNullable.kt")
             public void testCompareToNullable() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/operatorsOverloading/compareToNullable.kt");
+            }
+
+            @Test
+            @TestMetadata("incForAssignmentSmartCast.kt")
+            public void testIncForAssignmentSmartCast() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/operatorsOverloading/incForAssignmentSmartCast.kt");
             }
 
             @Test
@@ -32372,6 +32426,18 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("privateDeclarationInAnotherFile.kt")
+            public void testPrivateDeclarationInAnotherFile() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/visibility/privateDeclarationInAnotherFile.kt");
+            }
+
+            @Test
+            @TestMetadata("privateFromInAnonymousObject.kt")
+            public void testPrivateFromInAnonymousObject() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/visibility/privateFromInAnonymousObject.kt");
+            }
+
+            @Test
             @TestMetadata("protectedInternal.kt")
             public void testProtectedInternal() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/visibility/protectedInternal.kt");
@@ -33207,6 +33273,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("defaultValueMustBeConstant.kt")
             public void testDefaultValueMustBeConstant() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/annotations/defaultValueMustBeConstant.kt");
+            }
+
+            @Test
+            @TestMetadata("dontPropagateExact.kt")
+            public void testDontPropagateExact() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/annotations/dontPropagateExact.kt");
             }
 
             @Test

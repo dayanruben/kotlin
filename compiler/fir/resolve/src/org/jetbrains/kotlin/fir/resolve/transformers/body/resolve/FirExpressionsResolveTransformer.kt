@@ -408,8 +408,8 @@ open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransform
             TransformData.Data(value)
         }
         block.transformOtherChildren(transformer, data)
-        if (data is ResolutionMode.WithExpectedType && data.expectedTypeRef is FirResolvedTypeRef) {
-            // Top-down propagation: from the explicit type of the enclosing declaration to the block type
+        if (data is ResolutionMode.WithExpectedType && data.expectedTypeRef.coneTypeSafe<ConeKotlinType>()?.isUnitOrFlexibleUnit == true) {
+            // Unit-coercion
             block.resultType = data.expectedTypeRef
         } else {
             // Bottom-up propagation: from the return type of the last expression in the block to the block type
@@ -825,19 +825,19 @@ open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransform
 
     override fun transformGetClassCall(getClassCall: FirGetClassCall, data: ResolutionMode): FirStatement {
         val arg = getClassCall.argument
-        val dataWithExpectedType = if (arg is FirConstExpression<*>) {
+        val dataForLhs = if (arg is FirConstExpression<*>) {
             withExpectedType(arg.typeRef.resolvedTypeFromPrototype(arg.kind.expectedConeType(session)))
         } else {
-            data
+            ResolutionMode.ContextIndependent
         }
 
         val transformedGetClassCall = run {
             val argument = getClassCall.argument
             val replacedArgument: FirExpression =
                 if (argument is FirPropertyAccessExpression)
-                    transformQualifiedAccessExpression(argument, dataWithExpectedType, isUsedAsReceiver = true) as FirExpression
+                    transformQualifiedAccessExpression(argument, dataForLhs, isUsedAsReceiver = true) as FirExpression
                 else
-                    argument.transform(this, dataWithExpectedType)
+                    argument.transform(this, dataForLhs)
 
             getClassCall.argumentList.transformArguments(object : FirTransformer<Nothing?>() {
                 @Suppress("UNCHECKED_CAST")

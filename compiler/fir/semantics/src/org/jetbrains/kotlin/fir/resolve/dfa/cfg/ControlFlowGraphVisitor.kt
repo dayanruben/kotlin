@@ -52,6 +52,10 @@ abstract class ControlFlowGraphVisitor<out R, in D> {
 
     // ----------------------------------- Classes -----------------------------------
 
+    open fun visitAnonymousObjectEnterNode(node: AnonymousObjectEnterNode, data: D): R {
+        return visitNode(node, data)
+    }
+
     open fun visitAnonymousObjectExitNode(node: AnonymousObjectExitNode, data: D): R {
         return visitNode(node, data)
     }
@@ -344,6 +348,10 @@ abstract class ControlFlowGraphVisitor<out R, in D> {
     }
 
     open fun visitExitSafeCallNode(node: ExitSafeCallNode, data: D): R {
+        return visitNode(node, data)
+    }
+
+    open fun visitWhenSubjectExpressionExitNode(node: WhenSubjectExpressionExitNode, data: D): R {
         return visitNode(node, data)
     }
 

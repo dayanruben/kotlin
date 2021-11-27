@@ -193,6 +193,9 @@ object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() 
         noImpl(expressionWithSmartcast)
         noImpl(expressionWithSmartcastToNull)
 
+        noImpl(whenSubjectExpressionWithSmartcast)
+        noImpl(whenSubjectExpressionWithSmartcastToNull)
+
         impl(getClassCall) {
             default("argument") {
                 value = "argumentList.arguments.first()"
@@ -200,15 +203,7 @@ object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() 
             }
         }
 
-        val errorTypeRefImpl = impl(errorTypeRef) {
-            default("type", "ConeClassErrorType(diagnostic)")
-            default("annotations", "mutableListOf()")
-            useTypes(coneClassErrorTypeType)
-            default("delegatedTypeRef") {
-                needAcceptAndTransform = false
-            }
-        }
-
+        noImpl(errorTypeRef)
 
         impl(property) {
             default("isVal") {
@@ -231,7 +226,7 @@ object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() 
                 withGetter = true
             )
             default("returnTypeRef", "FirErrorTypeRefImpl(null, null, diagnostic)")
-            useTypes(errorTypeRefImpl)
+            useTypes(errorTypeRefImplType)
         }
 
         impl(field) {
@@ -428,13 +423,13 @@ object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() 
 
         impl(errorExpression) {
             default("typeRef", "FirErrorTypeRefImpl(source, null, ConeStubDiagnostic(diagnostic))")
-            useTypes(errorTypeRefImpl, coneStubDiagnosticType)
+            useTypes(errorTypeRefImplType, coneStubDiagnosticType)
         }
 
         impl(errorFunction) {
             defaultNull("receiverTypeRef", "body", withGetter = true)
             default("returnTypeRef", "FirErrorTypeRefImpl(null, null, diagnostic)")
-            useTypes(errorTypeRefImpl)
+            useTypes(errorTypeRefImplType)
         }
 
         impl(functionTypeRef)

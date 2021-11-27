@@ -157,6 +157,9 @@ fun ControlFlowGraphBuilder.createElvisRhsEnterNode(fir: FirElvisExpression): El
 fun ControlFlowGraphBuilder.createElvisLhsExitNode(fir: FirElvisExpression): ElvisLhsExitNode =
     ElvisLhsExitNode(currentGraph, fir, levelCounter, createId())
 
+fun ControlFlowGraphBuilder.createWhenSubjectExpressionExitNode(fir: FirWhenSubjectExpression): WhenSubjectExpressionExitNode =
+    WhenSubjectExpressionExitNode(currentGraph, fir, levelCounter, createId())
+
 fun ControlFlowGraphBuilder.createElvisExitNode(fir: FirElvisExpression): ElvisExitNode =
     ElvisExitNode(currentGraph, fir, levelCounter, createId())
 
@@ -228,6 +231,9 @@ fun ControlFlowGraphBuilder.createPostponedLambdaEnterNode(fir: FirAnonymousFunc
 
 fun ControlFlowGraphBuilder.createAnonymousFunctionExpressionExitNode(fir: FirAnonymousFunctionExpression): AnonymousFunctionExpressionExitNode =
     AnonymousFunctionExpressionExitNode(currentGraph, fir, levelCounter, createId())
+
+fun ControlFlowGraphBuilder.createAnonymousObjectEnterNode(fir: FirAnonymousObject): AnonymousObjectEnterNode =
+    AnonymousObjectEnterNode(currentGraph, fir, levelCounter, createId())
 
 fun ControlFlowGraphBuilder.createAnonymousObjectExitNode(fir: FirAnonymousObject): AnonymousObjectExitNode =
     AnonymousObjectExitNode(currentGraph, fir, levelCounter, createId())
