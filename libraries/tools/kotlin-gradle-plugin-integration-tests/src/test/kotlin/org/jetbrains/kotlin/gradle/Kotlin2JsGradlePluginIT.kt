@@ -59,7 +59,7 @@ class Kotlin2JsIrGradlePluginIT : AbstractKotlin2JsGradlePluginIT(true) {
     @GradleTest
     fun testCleanOutputWithEmptySources(gradleVersion: GradleVersion) {
         project("kotlin-js-nodejs-project", gradleVersion) {
-            build("build") {
+            build("assemble") {
                 assertTasksExecuted(":compileProductionExecutableKotlinJs")
 
                 assertFileInProjectExists("build/js/packages/kotlin-js-nodejs-project/kotlin/kotlin-js-nodejs-project.js")
@@ -380,7 +380,7 @@ abstract class AbstractKotlin2JsGradlePluginIT(protected val irBackend: Boolean)
         jsCompilerType = if (irBackend) KotlinJsCompilerType.IR else KotlinJsCompilerType.LEGACY,
     )
 
-    override val defaultBuildOptions =
+    final override val defaultBuildOptions =
         super.defaultBuildOptions.copy(
             jsOptions = defaultJsOptions,
             warningMode = WarningMode.Summary
@@ -783,7 +783,7 @@ abstract class AbstractKotlin2JsGradlePluginIT(protected val irBackend: Boolean)
                 gradleProperties.appendText(jsCompilerType(KotlinJsCompilerType.IR))
             }
 
-            build("build") {
+            build("assemble") {
                 assertTasksExecuted(":app:browserProductionWebpack")
 
                 assertDirectoryInProjectExists("build/js/packages/kotlin-js-browser-base-js-ir")

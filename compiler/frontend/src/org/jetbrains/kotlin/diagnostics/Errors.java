@@ -99,9 +99,9 @@ public interface Errors {
     DiagnosticFactory2<PsiElement, DeclarationDescriptor, String> DEPRECATION_ERROR = DiagnosticFactory2.create(ERROR);
     DiagnosticFactory3<PsiElement, TypeAliasDescriptor, DeclarationDescriptor, String> TYPEALIAS_EXPANSION_DEPRECATION = DiagnosticFactory3.create(WARNING);
     DiagnosticFactory3<PsiElement, TypeAliasDescriptor, DeclarationDescriptor, String> TYPEALIAS_EXPANSION_DEPRECATION_ERROR = DiagnosticFactory3.create(ERROR);
-    DiagnosticFactory3<PsiElement, DeclarationDescriptor, VersionRequirement.Version, Pair<LanguageVersion, String>>
+    DiagnosticFactory3<PsiElement, DeclarationDescriptor, VersionRequirement.Version, Pair<String, String>>
             VERSION_REQUIREMENT_DEPRECATION = DiagnosticFactory3.create(WARNING);
-    DiagnosticFactory3<PsiElement, DeclarationDescriptor, VersionRequirement.Version, Pair<LanguageVersion, String>>
+    DiagnosticFactory3<PsiElement, DeclarationDescriptor, VersionRequirement.Version, Pair<String, String>>
             VERSION_REQUIREMENT_DEPRECATION_ERROR = DiagnosticFactory3.create(ERROR);
     // descriptor and deprecation infos are needed only for IDE quickfix for this warning
     DiagnosticFactory3<KtNamedDeclaration, String, CallableMemberDescriptor, List<DescriptorBasedDeprecationInfo>> OVERRIDE_DEPRECATION = DiagnosticFactory3.create(WARNING, DECLARATION_NAME);
@@ -1163,7 +1163,7 @@ public interface Errors {
     DiagnosticFactory2<KtElement, KtExpression, DeclarationDescriptor> USAGE_IS_NOT_INLINABLE = DiagnosticFactory2.create(ERROR);
     DiagnosticFactory2<KtElement, KtElement, DeclarationDescriptor> NULLABLE_INLINE_PARAMETER = DiagnosticFactory2.create(ERROR);
     DiagnosticFactory2<KtElement, KtElement, DeclarationDescriptor> RECURSION_IN_INLINE = DiagnosticFactory2.create(ERROR);
-    DiagnosticFactory0<KtDeclaration> DECLARATION_CANT_BE_INLINED = DiagnosticFactory0.create(ERROR, DECLARATION_SIGNATURE);
+    DiagnosticFactory0<KtDeclaration> DECLARATION_CANT_BE_INLINED = DiagnosticFactory0.create(ERROR, INLINE_FUN_MODIFIER);
     DiagnosticFactory0<KtDeclaration> OVERRIDE_BY_INLINE = DiagnosticFactory0.create(WARNING, DECLARATION_SIGNATURE);
     DiagnosticFactory0<PsiElement> REIFIED_TYPE_PARAMETER_IN_OVERRIDE = DiagnosticFactory0.create(ERROR);
     DiagnosticFactory1<PsiElement, CallableDescriptor> INLINE_CALL_CYCLE = DiagnosticFactory1.create(ERROR, DEFAULT);

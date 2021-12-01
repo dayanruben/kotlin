@@ -686,6 +686,11 @@ public class CliTestGenerated extends AbstractCliTest {
             runTest("compiler/testData/cli/jvm/newInferenceWithOldFlagImpliesSamConversions.args");
         }
 
+        @TestMetadata("newLineInPackage.args")
+        public void testNewLineInPackage() throws Exception {
+            runTest("compiler/testData/cli/jvm/newLineInPackage.args");
+        }
+
         @TestMetadata("noReflect.args")
         public void testNoReflect() throws Exception {
             runTest("compiler/testData/cli/jvm/noReflect.args");
@@ -764,6 +769,11 @@ public class CliTestGenerated extends AbstractCliTest {
         @TestMetadata("recordAsSingleFileRoot.args")
         public void testRecordAsSingleFileRoot() throws Exception {
             runTest("compiler/testData/cli/jvm/recordAsSingleFileRoot.args");
+        }
+
+        @TestMetadata("requireKotlinCompilerVersion.args")
+        public void testRequireKotlinCompilerVersion() throws Exception {
+            runTest("compiler/testData/cli/jvm/requireKotlinCompilerVersion.args");
         }
 
         @TestMetadata("resultInReturnTypeSupportedByDefault15.args")

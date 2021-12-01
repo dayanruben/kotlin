@@ -7,8 +7,8 @@ package org.jetbrains.kotlin.analysis.api.descriptors.components
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.components.KtExpressionTypeProvider
-import org.jetbrains.kotlin.analysis.api.descriptors.KtFe10AnalysisSession
 import org.jetbrains.kotlin.analysis.api.descriptors.Fe10AnalysisFacade.AnalysisMode
+import org.jetbrains.kotlin.analysis.api.descriptors.KtFe10AnalysisSession
 import org.jetbrains.kotlin.analysis.api.descriptors.components.base.Fe10KtAnalysisSessionComponent
 import org.jetbrains.kotlin.analysis.api.descriptors.symbols.descriptorBased.base.toKtType
 import org.jetbrains.kotlin.analysis.api.tokens.ValidityToken
@@ -18,10 +18,7 @@ import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
-import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes
-import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
-import org.jetbrains.kotlin.psi.psiUtil.unwrapParenthesesLabelsAndAnnotations
+import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.inference.returnTypeOrNothing
 import org.jetbrains.kotlin.resolve.calls.smartcasts.MultipleSmartCasts
@@ -96,6 +93,29 @@ class KtFe10ExpressionTypeProvider(
             val kotlinType = bindingContext[BindingContext.PROPERTY_ACCESSOR, declaration]?.returnType
                 ?: ErrorUtils.createErrorType("Return type for property accessor \"${declaration.property.name}\" cannot be resolved")
 
+            return kotlinType.toKtType(analysisContext)
+        }
+
+        // Manually handle custom setter parameter
+        if (declaration is KtParameter) {
+            val parameterList = declaration.parent as? KtParameterList
+            if (parameterList?.parameters?.singleOrNull() == declaration) {
+                val propertyAccessor = parameterList.parent as? KtPropertyAccessor
+                val property = propertyAccessor?.parent as? KtProperty
+                if (property != null && property.setter == propertyAccessor) {
+                    val bindingContext = analysisContext.analyze(property)
+                    val kotlinType = bindingContext[BindingContext.VARIABLE, property]?.returnType
+                        ?: ErrorUtils.createErrorType("Return type for property \"${declaration.name}\" cannot be resolved")
+
+                    return kotlinType.toKtType(analysisContext)
+                }
+            }
+        }
+
+        if (declaration is KtConstructor<*>) {
+            val bindingContext = analysisContext.analyze(declaration)
+            val kotlinType = bindingContext[BindingContext.CONSTRUCTOR, declaration]?.returnType
+                ?: ErrorUtils.createErrorType("Return type for constructor \"${declaration.containingClass()?.name}\" cannot be resolved")
             return kotlinType.toKtType(analysisContext)
         }
 

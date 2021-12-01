@@ -19,9 +19,9 @@ package org.jetbrains.kotlin.incremental
 import org.jetbrains.kotlin.build.DEFAULT_KOTLIN_SOURCE_FILES_EXTENSIONS
 import org.jetbrains.kotlin.build.GeneratedFile
 import org.jetbrains.kotlin.build.report.BuildReporter
-import org.jetbrains.kotlin.build.report.metrics.BuildTime
 import org.jetbrains.kotlin.build.report.metrics.BuildAttribute
 import org.jetbrains.kotlin.build.report.metrics.BuildPerformanceMetric
+import org.jetbrains.kotlin.build.report.metrics.BuildTime
 import org.jetbrains.kotlin.build.report.metrics.measure
 import org.jetbrains.kotlin.cli.common.*
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
@@ -38,9 +38,6 @@ import org.jetbrains.kotlin.incremental.util.BufferingMessageCollector
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.progress.CompilationCanceledStatus
 import java.io.File
-import java.io.IOException
-import java.util.*
-import kotlin.collections.HashMap
 
 abstract class IncrementalCompilerRunner<
         Args : CommonCompilerArguments,
@@ -52,7 +49,7 @@ abstract class IncrementalCompilerRunner<
     private val buildHistoryFile: File,
     // there might be some additional output directories (e.g. for generated java in kapt)
     // to remove them correctly on rebuild, we pass them as additional argument
-    private val outputFiles: Collection<File> = emptyList()
+    private val additionalOutputFiles: Collection<File> = emptyList()
 ) {
 
     protected val cacheDirectory = File(workingDir, cacheDirName)
@@ -108,7 +105,7 @@ abstract class IncrementalCompilerRunner<
             caches.close(false)
             // todo: we can recompile all files incrementally (not cleaning caches), so rebuild won't propagate
             reporter.measure(BuildTime.CLEAR_OUTPUT_ON_REBUILD) {
-                clearLocalStateOnRebuild(args)
+                cleanOutputsAndLocalStateOnRebuild(args)
             }
             caches = createCacheManager(args, projectDir)
             if (providedChangedFiles == null) {
@@ -133,7 +130,6 @@ abstract class IncrementalCompilerRunner<
                 null -> caches.inputsCache.sourceSnapshotMap.compareAndUpdate(allSourceFiles)
                 else -> providedChangedFiles
             }
-
 
             val compilationMode = sourcesToCompile(caches, changedFiles, args, messageCollector, classpathAbiSnapshot)
 
@@ -162,12 +158,17 @@ abstract class IncrementalCompilerRunner<
                             allSourceFiles,
                             compilationMode,
                             messageCollector,
-                            withSnapshot)
+                            withSnapshot
+                        )
                     }
                 }
                 is CompilationMode.Rebuild -> {
                     rebuild(compilationMode.reason)
                 }
+            }
+
+            if (exitCode == ExitCode.OK) {
+                performWorkAfterSuccessfulCompilation(caches)
             }
 
             if (!caches.close(flush = true)) throw RuntimeException("Could not flush caches")
@@ -182,7 +183,7 @@ abstract class IncrementalCompilerRunner<
                 )
                 if (cacheDirectory.exists() && cacheDirectory.isDirectory()) {
                     cacheDirectory.walkTopDown().filter { it.isFile }.map { it.length() }.sum().let {
-                        reporter.addMetric(BuildPerformanceMetric.OUTPUT_SIZE, it)
+                        reporter.addMetric(BuildPerformanceMetric.CACHE_DIRECTORY_SIZE, it)
                     }
                 }
             }
@@ -193,37 +194,33 @@ abstract class IncrementalCompilerRunner<
             rebuild(BuildAttribute.CACHE_CORRUPTION)
         } finally {
             if (cachesMayBeCorrupted) {
-                clearLocalStateOnRebuild(args)
+                cleanOutputsAndLocalStateOnRebuild(args)
             }
         }
     }
 
-    private fun clearLocalStateOnRebuild(args: Args) {
-        val destinationDir = destinationDir(args)
+    /**
+     * Deletes output files and contents of output directories on rebuild, including `@LocalState` files/directories.
+     *
+     * If the directories do not yet exist, they will be created.
+     */
+    private fun cleanOutputsAndLocalStateOnRebuild(args: Args) {
+        // Use Set as additionalOutputFiles may already contain destinationDir and workingDir
+        val outputFiles = setOf(destinationDir(args), workingDir) + additionalOutputFiles
 
-        reporter.reportVerbose { "Clearing output on rebuild" }
-        for (file in sequenceOf(destinationDir, workingDir) + outputFiles.asSequence()) {
-            val deleted: Boolean? = when {
-                file.isDirectory -> {
-                    reporter.reportVerbose { "  Deleting directory $file" }
-                    file.deleteRecursively()
+        reporter.reportVerbose { "Cleaning outputs on rebuild" }
+        outputFiles.forEach {
+            when {
+                it.isDirectory -> {
+                    reporter.reportVerbose { "  Deleting contents of directory '${it.path}'" }
+                    it.cleanDirectoryContents()
                 }
-                file.isFile -> {
-                    reporter.reportVerbose { "  Deleting $file" }
-                    file.delete()
+                it.isFile -> {
+                    reporter.reportVerbose { "  Deleting file '${it.path}'" }
+                    it.forceDeleteRecursively()
                 }
-                else -> null
-            }
-
-            if (deleted == false) {
-                reporter.reportVerbose { "  Could not delete $file" }
             }
         }
-
-        if (destinationDir.exists()) throw IOException("Could not delete directory $destinationDir.")
-        if (workingDir.exists()) throw IOException("Could not delete internal caches in folder $workingDir")
-        destinationDir.mkdirs()
-        workingDir.mkdirs()
     }
 
     private fun sourcesToCompile(
@@ -393,9 +390,8 @@ abstract class IncrementalCompilerRunner<
                 caches.platformCache.updateComplementaryFiles(dirtySources, expectActualTracker)
                 caches.inputsCache.registerOutputForSourceFiles(generatedFiles)
                 caches.lookupCache.update(lookupTracker, sourcesToCompile, removedKotlinSources)
-            updateCaches(services, caches, generatedFiles, changesCollector)
-
-}
+                updateCaches(services, caches, generatedFiles, changesCollector)
+            }
             if (compilationMode is CompilationMode.Rebuild) {
                 if (withSnapshot) {
                     abiSnapshot.protos.putAll(changesCollector.protoDataChanges())
@@ -497,6 +493,13 @@ abstract class IncrementalCompilerRunner<
         //TODO(valtman) old history build should be restored in case of build fail
         BuildDiffsStorage.writeToFile(buildHistoryFile, BuildDiffsStorage(prevDiffs + newDiff), reporter)
     }
+
+    /**
+     * Performs some work after a compilation if the compilation completed successfully.
+     *
+     * This method MUST NOT be called when the compilation failed because the results produced by the work here would be incorrect.
+     */
+    protected open fun performWorkAfterSuccessfulCompilation(caches: CacheManager) {}
 
     companion object {
         const val DIRTY_SOURCES_FILE_NAME = "dirty-sources.txt"

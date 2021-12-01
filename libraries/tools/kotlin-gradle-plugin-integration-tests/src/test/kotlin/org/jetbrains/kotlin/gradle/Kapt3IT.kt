@@ -430,7 +430,7 @@ open class Kapt3IT : Kapt3BaseIT() {
             gradleVersion,
             buildOptions = defaultBuildOptions.copy(logLevel = LogLevel.DEBUG)
         ) {
-            val arg = "-Xskip-runtime-version-check"
+            val arg = "-Xsuppress-version-warnings"
             buildGradle.modify {
                 //language=Gradle
                 """
@@ -844,10 +844,7 @@ open class Kapt3IT : Kapt3BaseIT() {
         project(
             "incrementalRebuild".withPrefix,
             gradleVersion,
-            buildOptions = defaultBuildOptions.copy(
-                configurationCache = true,
-                configurationCacheProblems = BaseGradleIT.ConfigurationCacheProblems.FAIL
-            )
+            buildOptions = defaultBuildOptions.withConfigurationCache
         ) {
             build("assemble")
 

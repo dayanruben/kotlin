@@ -7280,6 +7280,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/coroutines/kt49168.kt");
         }
 
+        @TestMetadata("kt49294.kt")
+        public void ignoreKt49294() throws Exception {
+            runTest("compiler/testData/codegen/box/coroutines/kt49294.kt");
+        }
+
         @TestMetadata("suspendFunctionAsSupertype.kt")
         public void ignoreSuspendFunctionAsSupertype() throws Exception {
             runTest("compiler/testData/codegen/box/coroutines/suspendFunctionAsSupertype.kt");
@@ -17093,6 +17098,39 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                 runTest("compiler/testData/codegen/box/inlineClasses/defaultParameterValues/kt27416.kt");
             }
 
+            @TestMetadata("compiler/testData/codegen/box/inlineClasses/defaultParameterValues/defaultWithDefaultParameter")
+            @TestDataPath("$PROJECT_ROOT")
+            @RunWith(JUnit3RunnerWithInners.class)
+            public static class DefaultWithDefaultParameter extends AbstractLightAnalysisModeTest {
+                @TestMetadata("all.kt")
+                public void ignoreAll() throws Exception {
+                    runTest("compiler/testData/codegen/box/inlineClasses/defaultParameterValues/defaultWithDefaultParameter/all.kt");
+                }
+
+                @TestMetadata("all-compatibility.kt")
+                public void ignoreAll_compatibility() throws Exception {
+                    runTest("compiler/testData/codegen/box/inlineClasses/defaultParameterValues/defaultWithDefaultParameter/all-compatibility.kt");
+                }
+
+                @TestMetadata("compatibility.kt")
+                public void ignoreCompatibility() throws Exception {
+                    runTest("compiler/testData/codegen/box/inlineClasses/defaultParameterValues/defaultWithDefaultParameter/compatibility.kt");
+                }
+
+                @TestMetadata("default.kt")
+                public void ignoreDefault() throws Exception {
+                    runTest("compiler/testData/codegen/box/inlineClasses/defaultParameterValues/defaultWithDefaultParameter/default.kt");
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM, testDataFilePath);
+                }
+
+                public void testAllFilesPresentInDefaultWithDefaultParameter() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/inlineClasses/defaultParameterValues/defaultWithDefaultParameter"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
+                }
+            }
+
             @TestMetadata("compiler/testData/codegen/box/inlineClasses/defaultParameterValues/overrideFunctionWithDefaultParameter")
             @TestDataPath("$PROJECT_ROOT")
             @RunWith(JUnit3RunnerWithInners.class)
@@ -17543,6 +17581,16 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
 
             public void testAllFilesPresentInJvm8DefaultInterfaceMethods() throws Exception {
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/inlineClasses/jvm8DefaultInterfaceMethods"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
+            }
+
+            @TestMetadata("inlineClassInheritingDefaultMethod.kt")
+            public void testInlineClassInheritingDefaultMethod() throws Exception {
+                runTest("compiler/testData/codegen/box/inlineClasses/jvm8DefaultInterfaceMethods/inlineClassInheritingDefaultMethod.kt");
+            }
+
+            @TestMetadata("inlineClassInheritingDefaultMethodAll.kt")
+            public void testInlineClassInheritingDefaultMethodAll() throws Exception {
+                runTest("compiler/testData/codegen/box/inlineClasses/jvm8DefaultInterfaceMethods/inlineClassInheritingDefaultMethodAll.kt");
             }
 
             @TestMetadata("javaDefaultMethod.kt")

@@ -6988,6 +6988,12 @@ public class NativeExtBlackBoxTestGenerated extends AbstractNativeBlackBoxTest {
             }
 
             @Test
+            @TestMetadata("internalLeakBug.kt")
+            public void testInternalLeakBug() throws Exception {
+                runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/internalLeakBug.kt");
+            }
+
+            @Test
             @TestMetadata("internalSetterOverridden.kt")
             public void testInternalSetterOverridden() throws Exception {
                 runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/internalSetterOverridden.kt");
@@ -9923,6 +9929,12 @@ public class NativeExtBlackBoxTestGenerated extends AbstractNativeBlackBoxTest {
             @TestMetadata("kt49168.kt")
             public void testKt49168() throws Exception {
                 runTest("compiler/testData/codegen/box/coroutines/kt49168.kt");
+            }
+
+            @Test
+            @TestMetadata("kt49294.kt")
+            public void testKt49294() throws Exception {
+                runTest("compiler/testData/codegen/box/coroutines/kt49294.kt");
             }
 
             @Test
@@ -20928,6 +20940,41 @@ public class NativeExtBlackBoxTestGenerated extends AbstractNativeBlackBoxTest {
                 }
 
                 @Nested
+                @TestMetadata("compiler/testData/codegen/box/inlineClasses/defaultParameterValues/defaultWithDefaultParameter")
+                @TestDataPath("$PROJECT_ROOT")
+                @NativeBlackBoxTestCaseGroupProvider(ExtTestCaseGroupProvider.class)
+                public class DefaultWithDefaultParameter {
+                    @Test
+                    @TestMetadata("all.kt")
+                    public void testAll() throws Exception {
+                        runTest("compiler/testData/codegen/box/inlineClasses/defaultParameterValues/defaultWithDefaultParameter/all.kt");
+                    }
+
+                    @Test
+                    public void testAllFilesPresentInDefaultWithDefaultParameter() throws Exception {
+                        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/inlineClasses/defaultParameterValues/defaultWithDefaultParameter"), Pattern.compile("^(.+)\\.kt$"), null, true);
+                    }
+
+                    @Test
+                    @TestMetadata("all-compatibility.kt")
+                    public void testAll_compatibility() throws Exception {
+                        runTest("compiler/testData/codegen/box/inlineClasses/defaultParameterValues/defaultWithDefaultParameter/all-compatibility.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("compatibility.kt")
+                    public void testCompatibility() throws Exception {
+                        runTest("compiler/testData/codegen/box/inlineClasses/defaultParameterValues/defaultWithDefaultParameter/compatibility.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("default.kt")
+                    public void testDefault() throws Exception {
+                        runTest("compiler/testData/codegen/box/inlineClasses/defaultParameterValues/defaultWithDefaultParameter/default.kt");
+                    }
+                }
+
+                @Nested
                 @TestMetadata("compiler/testData/codegen/box/inlineClasses/defaultParameterValues/overrideFunctionWithDefaultParameter")
                 @TestDataPath("$PROJECT_ROOT")
                 @NativeBlackBoxTestCaseGroupProvider(ExtTestCaseGroupProvider.class)
@@ -21426,6 +21473,18 @@ public class NativeExtBlackBoxTestGenerated extends AbstractNativeBlackBoxTest {
                 @Test
                 public void testAllFilesPresentInJvm8DefaultInterfaceMethods() throws Exception {
                     KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/inlineClasses/jvm8DefaultInterfaceMethods"), Pattern.compile("^(.+)\\.kt$"), null, true);
+                }
+
+                @Test
+                @TestMetadata("inlineClassInheritingDefaultMethod.kt")
+                public void testInlineClassInheritingDefaultMethod() throws Exception {
+                    runTest("compiler/testData/codegen/box/inlineClasses/jvm8DefaultInterfaceMethods/inlineClassInheritingDefaultMethod.kt");
+                }
+
+                @Test
+                @TestMetadata("inlineClassInheritingDefaultMethodAll.kt")
+                public void testInlineClassInheritingDefaultMethodAll() throws Exception {
+                    runTest("compiler/testData/codegen/box/inlineClasses/jvm8DefaultInterfaceMethods/inlineClassInheritingDefaultMethodAll.kt");
                 }
 
                 @Test

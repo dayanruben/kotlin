@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.fir.extensions
 
 import org.jetbrains.kotlin.fir.FirSession
-import org.jetbrains.kotlin.fir.declarations.FirPluginKey
 import org.jetbrains.kotlin.fir.extensions.predicate.DeclarationPredicate
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -24,17 +23,13 @@ typealias AnnotationFqn = FqName
 abstract class FirExtension(val session: FirSession) {
     abstract val name: FirExtensionPointName
 
-    abstract val key: FirPluginKey
-
     abstract val extensionType: KClass<out FirExtension>
 
     fun interface Factory<out P : FirExtension> {
         fun create(session: FirSession): P
     }
-}
 
-abstract class FirPredicateBasedExtension(session: FirSession) : FirExtension(session) {
-    abstract fun FirDeclarationPredicateRegistrar.registerPredicates()
+    open fun FirDeclarationPredicateRegistrar.registerPredicates() {}
 }
 
 data class FirExtensionPointName(val name: Name) {
