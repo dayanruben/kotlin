@@ -298,7 +298,7 @@ class ClassicFrontendFacade(
                 )
                 if (isBuiltIns) builtInsModule = moduleDescriptor.builtIns
                 dependencies += moduleDescriptor
-                moduleDescriptor.setDependencies(dependencies)
+                moduleDescriptor.setDependencies(ArrayList(dependencies))
 
                 Pair(moduleDescriptor, resolvedLibrary.library)
             }
@@ -314,7 +314,7 @@ class ClassicFrontendFacade(
         dependentDescriptors: List<ModuleDescriptorImpl>,
         friendsDescriptors: List<ModuleDescriptorImpl>,
     ): AnalysisResult {
-        val runtimeKlibsNames = JsEnvironmentConfigurator.getStdlibPathsForModule(module)
+        val runtimeKlibsNames = JsEnvironmentConfigurator.getRuntimePathsForModule(module, testServices)
         val runtimeKlibs = loadKlib(runtimeKlibsNames, configuration)
         val transitiveLibraries = JsEnvironmentConfigurator.getDependencies(module, testServices, DependencyRelation.RegularDependency)
         val friendLibraries = JsEnvironmentConfigurator.getDependencies(module, testServices, DependencyRelation.FriendDependency)
