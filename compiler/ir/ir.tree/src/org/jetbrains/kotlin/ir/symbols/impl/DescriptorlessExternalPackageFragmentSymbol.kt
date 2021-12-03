@@ -31,6 +31,5 @@ class DescriptorlessExternalPackageFragmentSymbol : IrExternalPackageFragmentSym
         _owner = owner
     }
 
-    override val isPublicApi: Boolean
-        get() = TODO("Not yet implemented")
+    override var privateSignature: IdSignature? = null
 }

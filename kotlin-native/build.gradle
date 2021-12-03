@@ -536,11 +536,6 @@ task bundleRegular(type: (isWindows()) ? Zip : Tar) {
         exclude 'klib/cache/*/org.jetbrains.kotlin.native.platform.*/**'
         into archiveBaseName
     }
-    from(project.rootDir) {
-        include 'licenses/**'
-        exclude '**/xcode_license.pdf'
-        into archiveBaseName
-    }
 }
 
 task bundlePrebuilt(type: (isWindows()) ? Zip : Tar) {
@@ -553,11 +548,24 @@ task bundlePrebuilt(type: (isWindows()) ? Zip : Tar) {
         exclude 'klib/testLibrary'
         into archiveBaseName
     }
-    from(project.rootDir) {
+}
+
+void configurePackingLicensesToBundle(AbstractArchiveTask task, boolean containsPlatformLibraries) {
+    task.from(project.projectDir) {
         include 'licenses/**'
-        into archiveBaseName
+        if (!containsPlatformLibraries || !isMac()) {
+            exclude '**/xcode_license.pdf'
+        }
+        into task.archiveBaseName
+    }
+
+    task.from(project.rootProject.file("license")) {
+        into "${task.archiveBaseName.get()}/licenses"
     }
 }
+
+configurePackingLicensesToBundle(bundleRegular, /* containsPlatformLibraries = */ false)
+configurePackingLicensesToBundle(bundlePrebuilt, /* containsPlatformLibraries = */ true)
 
 configure([bundleRegular, bundlePrebuilt]) {
     dependsOn("crossDist")
@@ -565,7 +573,7 @@ configure([bundleRegular, bundlePrebuilt]) {
     dependsOn("crossDistEndorsedCache")
     dependsOn("distSources")
     dependsOn("distDef")
-    from(project.rootDir) {
+    from(project.projectDir) {
         include 'RELEASE_NOTES.md'
         into baseName
     }
@@ -621,7 +629,7 @@ configure([samplesZip, samplesTar]) {
         exclude '**/gradle.properties'
     }
 
-    from(project.rootDir) {
+    from(project.projectDir) {
         include 'licenses/**'
     }
 

@@ -34,8 +34,11 @@ abstract class IrDelegatingSymbol<S : IrBindableSymbol<D, B>, B : IrSymbolOwner,
         return false
     }
 
-    override val isPublicApi: Boolean
-        get() = delegate.isPublicApi
+    override var privateSignature: IdSignature?
+        get() = delegate.privateSignature
+        set(value) {
+            delegate.privateSignature = value
+        }
 }
 
 class IrDelegatingClassSymbolImpl(delegate: IrClassSymbol) :

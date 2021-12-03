@@ -37,8 +37,13 @@ interface IrSymbol {
 
     val signature: IdSignature?
 
-    val isPublicApi: Boolean
+    // TODO: remove once JS IR IC migrates to a different stable tag generation scheme
+    // Used to store signatures in private symbols for JS IC
+    var privateSignature: IdSignature?
 }
+
+val IrSymbol.isPublicApi: Boolean
+    get() = signature != null
 
 interface IrBindableSymbol<out D : DeclarationDescriptor, B : IrSymbolOwner> : IrSymbol {
     override val owner: B

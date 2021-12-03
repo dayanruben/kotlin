@@ -505,7 +505,6 @@ allprojects {
     }
 
     val jvmCompilerArgs = listOf(
-        "-Xjvm-default=compatibility",
         "-Xno-optimized-callable-references",
         "-Xno-kotlin-nothing-value-exception",
         "-Xsuppress-deprecated-jvm-target-warning" // Remove as soon as there are no modules for JDK 1.6 & 1.7
@@ -733,7 +732,8 @@ tasks {
         dependsOn(":compiler:fir:analysis-tests:test")
         dependsOn(":compiler:fir:analysis-tests:legacy-fir-tests:test")
         dependsOn(":compiler:fir:fir2ir:test")
-        dependsOn(":plugins:fir:fir-plugin-prototype:test")
+        dependsOn(":plugins:fir-plugin-prototype:test")
+        dependsOn(":plugins:fir-plugin-prototype:fir-plugin-ic-test:test")
     }
 
     register("firAllTest") {
@@ -744,7 +744,8 @@ tasks {
             ":compiler:fir:analysis-tests:test",
             ":compiler:fir:analysis-tests:legacy-fir-tests:test",
             ":compiler:fir:fir2ir:test",
-            ":plugins:fir:fir-plugin-prototype:test"
+            ":plugins:fir-plugin-prototype:test",
+            ":plugins:fir-plugin-prototype:fir-plugin-ic-test:test"
         )
     }
 
