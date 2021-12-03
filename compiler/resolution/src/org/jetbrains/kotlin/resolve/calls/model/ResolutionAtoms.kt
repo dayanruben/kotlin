@@ -75,7 +75,9 @@ abstract class ResolvedCallAtom : ResolvedAtom() {
     abstract val candidateDescriptor: CallableDescriptor
     abstract val explicitReceiverKind: ExplicitReceiverKind
     abstract val dispatchReceiverArgument: SimpleKotlinCallArgument?
-    abstract val extensionReceiverArgument: SimpleKotlinCallArgument?
+    abstract var extensionReceiverArgument: SimpleKotlinCallArgument?
+    abstract val extensionReceiverArgumentCandidates: List<SimpleKotlinCallArgument>?
+    abstract var contextReceiversArguments: List<SimpleKotlinCallArgument>
     abstract val typeArgumentMappingByOriginal: TypeArgumentsToParametersMapper.TypeArgumentsMapping
     abstract val argumentMappingByOriginal: Map<ValueParameterDescriptor, ResolvedCallArgument>
     abstract val freshVariablesSubstitutor: FreshVariableNewTypeSubstitutor
@@ -148,6 +150,7 @@ class ResolvedLambdaAtom(
     override val atom: LambdaKotlinCallArgument,
     val isSuspend: Boolean,
     val receiver: UnwrappedType?,
+    val contextReceivers: List<UnwrappedType>,
     val parameters: List<UnwrappedType>,
     val returnType: UnwrappedType,
     val typeVariableForLambdaReturnType: TypeVariableForLambdaReturnType?,

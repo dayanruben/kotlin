@@ -9,7 +9,8 @@ import org.jetbrains.kotlin.analysis.api.components.KtCompileTimeConstantProvide
 import org.jetbrains.kotlin.analysis.api.descriptors.KtFe10AnalysisSession
 import org.jetbrains.kotlin.analysis.api.descriptors.components.base.Fe10KtAnalysisSessionComponent
 import org.jetbrains.kotlin.analysis.api.descriptors.symbols.descriptorBased.base.toKtConstantValue
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtConstantValue
+import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationValue
+import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
 import org.jetbrains.kotlin.analysis.api.tokens.ValidityToken
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator

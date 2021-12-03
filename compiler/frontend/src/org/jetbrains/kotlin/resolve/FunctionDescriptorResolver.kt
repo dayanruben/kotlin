@@ -16,6 +16,7 @@
 
 package org.jetbrains.kotlin.resolve
 
+import com.google.common.collect.HashMultimap
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.PsiElement
 import com.intellij.util.AstLoadingFilter
@@ -197,6 +198,12 @@ class FunctionDescriptorResolver(
                 if (function is KtFunctionLiteral) expectedFunctionType.getReceiverType() else null
             }
 
+        val contextReceivers = function.contextReceivers
+        val contextReceiverTypes =
+            if (function is KtFunctionLiteral) expectedFunctionType.getContextReceiversTypes()
+            else contextReceivers
+                .mapNotNull { it.typeReference() }
+                .map { typeResolver.resolveType(headerScope, it, trace, true) }
 
         val valueParameterDescriptors =
             createValueParameterDescriptors(function, functionDescriptor, headerScope, trace, expectedFunctionType, inferenceSession)
@@ -223,15 +230,39 @@ class FunctionDescriptorResolver(
         }
 
         val extensionReceiver = receiverType?.let {
-            val splitter = AnnotationSplitter(storageManager, receiverType.annotations, EnumSet.of(AnnotationUseSiteTarget.RECEIVER))
+            val splitter = AnnotationSplitter(storageManager, it.annotations, EnumSet.of(AnnotationUseSiteTarget.RECEIVER))
             DescriptorFactory.createExtensionReceiverParameterForCallable(
                 functionDescriptor, it, splitter.getAnnotationsForTarget(AnnotationUseSiteTarget.RECEIVER)
             )
+        }
+        val contextReceiverDescriptors = contextReceiverTypes.mapNotNull {
+            val splitter = AnnotationSplitter(storageManager, it.annotations, EnumSet.of(AnnotationUseSiteTarget.RECEIVER))
+            DescriptorFactory.createContextReceiverParameterForCallable(
+                functionDescriptor, it, splitter.getAnnotationsForTarget(AnnotationUseSiteTarget.RECEIVER)
+            )
+        }
+
+        if (languageVersionSettings.supportsFeature(LanguageFeature.ContextReceivers)) {
+            val labelNameToReceiverMap = HashMultimap.create<String, ReceiverParameterDescriptor>()
+            if (receiverTypeRef != null && extensionReceiver != null) {
+                receiverTypeRef.nameForReceiverLabel()?.let {
+                    labelNameToReceiverMap.put(it, extensionReceiver)
+                }
+            }
+            contextReceiverDescriptors.zip(0 until contextReceivers.size).reversed()
+                .forEach { (contextReceiverDescriptor, i) ->
+                    contextReceivers[i].name()?.let {
+                        labelNameToReceiverMap.put(it, contextReceiverDescriptor)
+                    }
+                }
+
+            trace.record(BindingContext.DESCRIPTOR_TO_CONTEXT_RECEIVER_MAP, functionDescriptor, labelNameToReceiverMap)
         }
 
         functionDescriptor.initialize(
             extensionReceiver,
             getDispatchReceiverParameterIfNeeded(container),
+            contextReceiverDescriptors,
             typeParameterDescriptors,
             valueParameterDescriptors,
             returnType,
@@ -327,6 +358,9 @@ class FunctionDescriptorResolver(
     private fun KotlinType.functionTypeExpected() = !TypeUtils.noExpectedType(this) && isBuiltinFunctionalType
     private fun KotlinType.getReceiverType(): KotlinType? =
         if (functionTypeExpected()) this.getReceiverTypeFromFunctionType() else null
+
+    private fun KotlinType.getContextReceiversTypes(): List<KotlinType> =
+        if (functionTypeExpected()) this.getContextReceiverTypesFromFunctionType() else emptyList()
 
     private fun KotlinType.getValueParameters(owner: FunctionDescriptor): List<ValueParameterDescriptor>? =
         if (functionTypeExpected()) {

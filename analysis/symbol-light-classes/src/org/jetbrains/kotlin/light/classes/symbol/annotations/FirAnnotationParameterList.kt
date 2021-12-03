@@ -7,7 +7,7 @@ package org.jetbrains.kotlin.light.classes.symbol
 
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightIdentifier
-import org.jetbrains.kotlin.analysis.api.annotations.KtNamedConstantValue
+import org.jetbrains.kotlin.analysis.api.annotations.KtNamedAnnotationValue
 import org.jetbrains.kotlin.asJava.classes.cannotModify
 import org.jetbrains.kotlin.asJava.classes.lazyPub
 import org.jetbrains.kotlin.asJava.elements.KtLightElementBase
@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.psi.KtElement
 
 internal class FirAnnotationParameterList(
     parent: FirLightAbstractAnnotation,
-    private val arguments: List<KtNamedConstantValue>,
+    private val arguments: List<KtNamedAnnotationValue>,
 ) : KtLightElementBase(parent), PsiAnnotationParameterList {
 
     private val _attributes: Array<PsiNameValuePair> by lazyPub {
@@ -32,7 +32,7 @@ internal class FirAnnotationParameterList(
 }
 
 private class FirNameValuePairForAnnotationArgument(
-    private val constantValue: KtNamedConstantValue,
+    private val constantValue: KtNamedAnnotationValue,
     parent: PsiElement
 ) : KtLightElementBase(parent), PsiNameValuePair {
 
@@ -45,7 +45,7 @@ private class FirNameValuePairForAnnotationArgument(
     override fun setValue(p0: PsiAnnotationMemberValue) = cannotModify()
 
     private val _nameIdentifier: PsiIdentifier by lazyPub {
-        LightIdentifier(parent.manager, constantValue.name)
+        LightIdentifier(parent.manager, constantValue.name.asString())
     }
 
     override fun getNameIdentifier(): PsiIdentifier = _nameIdentifier
@@ -54,5 +54,5 @@ private class FirNameValuePairForAnnotationArgument(
 
     override fun getLiteralValue(): String? = (value as? PsiLiteralExpression)?.value?.toString()
 
-    override fun getName(): String = constantValue.name
+    override fun getName(): String = constantValue.name.asString()
 }

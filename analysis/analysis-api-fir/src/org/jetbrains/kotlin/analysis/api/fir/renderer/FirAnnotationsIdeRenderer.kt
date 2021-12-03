@@ -7,29 +7,32 @@ package org.jetbrains.kotlin.analysis.api.fir.renderer
 
 import org.jetbrains.kotlin.analysis.api.fir.annotations.mapAnnotationParameters
 import org.jetbrains.kotlin.analysis.api.fir.evaluate.FirCompileTimeConstantEvaluator
-import org.jetbrains.kotlin.analysis.api.fir.evaluate.KtFirConstantValueConverter
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtConstantValueRenderer
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtUnsupportedConstantValue
+import org.jetbrains.kotlin.analysis.api.fir.evaluate.FirAnnotationValueConverter
+import org.jetbrains.kotlin.analysis.api.annotations.KtUnsupportedAnnotationValue
+import org.jetbrains.kotlin.analysis.api.annotations.renderAsSourceCode
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.toAnnotationClassId
 import org.jetbrains.kotlin.fir.expressions.FirAnnotation
-import org.jetbrains.kotlin.fir.expressions.FirConstExpression
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.types.FirResolvedTypeRef
+import kotlin.text.Appendable
 
-internal fun StringBuilder.renderAnnotations(
+internal fun Appendable.renderAnnotations(
     coneTypeIdeRenderer: ConeTypeIdeRenderer,
     annotations: List<FirAnnotation>,
-    session: FirSession
+    session: FirSession,
+    isSingleLineAnnotations: Boolean,
 ) {
+    val separator = if (isSingleLineAnnotations) " " else "\n"
     for (annotation in annotations) {
         if (!annotation.isParameterName()) {
             append(renderAnnotation(annotation, coneTypeIdeRenderer, session))
-            append(" ")
+            append(separator)
         }
     }
 }
+
 
 private fun FirAnnotation.isParameterName(): Boolean {
     return toAnnotationClassId()?.asSingleFqName() == StandardNames.FqNames.parameterName
@@ -58,8 +61,8 @@ private fun renderAndSortAnnotationArguments(descriptor: FirAnnotation, session:
 
 private fun renderConstant(value: FirExpression, useSiteSession: FirSession): String {
     val evaluated = FirCompileTimeConstantEvaluator.evaluate(value)
-    val constantValue = KtFirConstantValueConverter.toConstantValue(evaluated ?: value, useSiteSession)
-        ?: KtUnsupportedConstantValue
+    val constantValue = FirAnnotationValueConverter.toConstantValue(evaluated ?: value, useSiteSession)
+        ?: KtUnsupportedAnnotationValue
 
-    return KtConstantValueRenderer.render(constantValue)
+    return constantValue.renderAsSourceCode()
 }

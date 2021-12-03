@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.resolve;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Multimap;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import kotlin.Pair;
@@ -262,6 +263,7 @@ public interface BindingContext {
                     .setFurtherLookupSlices(DECLARATIONS_TO_DESCRIPTORS)
                     .build();
 
+    WritableSlice<DeclarationDescriptor, Multimap<String, ReceiverParameterDescriptor>> DESCRIPTOR_TO_CONTEXT_RECEIVER_MAP = Slices.createSimpleSlice();
     WritableSlice<KtReferenceExpression, PsiElement> LABEL_TARGET = Slices.createSimpleSlice();
     WritableSlice<KtReferenceExpression, Collection<? extends PsiElement>> AMBIGUOUS_LABEL_TARGET = Slices.createSimpleSlice();
     WritableSlice<ValueParameterDescriptor, PropertyDescriptor> VALUE_PARAMETER_AS_PROPERTY = Slices.createSimpleSlice();

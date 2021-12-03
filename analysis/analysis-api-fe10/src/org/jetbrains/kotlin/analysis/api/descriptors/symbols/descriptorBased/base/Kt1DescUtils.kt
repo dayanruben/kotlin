@@ -6,19 +6,24 @@
 package org.jetbrains.kotlin.analysis.api.descriptors.symbols.descriptorBased.base
 
 import org.jetbrains.kotlin.analysis.api.*
-import org.jetbrains.kotlin.analysis.api.annotations.KtNamedConstantValue
+import org.jetbrains.kotlin.analysis.api.annotations.*
+import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
+import org.jetbrains.kotlin.analysis.api.base.KtConstantValueFactory
 import org.jetbrains.kotlin.analysis.api.components.KtDeclarationRendererOptions
 import org.jetbrains.kotlin.analysis.api.descriptors.Fe10AnalysisContext
 import org.jetbrains.kotlin.analysis.api.descriptors.symbols.descriptorBased.*
 import org.jetbrains.kotlin.analysis.api.descriptors.symbols.psiBased.base.KtFe10PsiSymbol
 import org.jetbrains.kotlin.analysis.api.descriptors.types.*
 import org.jetbrains.kotlin.analysis.api.descriptors.utils.KtFe10Renderer
+import org.jetbrains.kotlin.analysis.api.descriptors.utils.KtFe10TypeRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.*
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
+import org.jetbrains.kotlin.analysis.utils.printer.prettyPrint
 import org.jetbrains.kotlin.builtins.functions.FunctionClassDescriptor
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.descriptors.impl.*
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.load.java.descriptors.JavaCallableMemberDescriptor
@@ -30,7 +35,9 @@ import org.jetbrains.kotlin.load.kotlin.toSourceElement
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.calls.inference.CapturedType
@@ -38,7 +45,9 @@ import org.jetbrains.kotlin.resolve.constants.*
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
 import org.jetbrains.kotlin.resolve.descriptorUtil.annotationClass
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
+import org.jetbrains.kotlin.resolve.lazy.descriptors.LazyAnnotationDescriptor
 import org.jetbrains.kotlin.resolve.sam.SamConstructorDescriptor
+import org.jetbrains.kotlin.resolve.source.PsiSourceElement
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
 import org.jetbrains.kotlin.types.*
@@ -265,28 +274,50 @@ internal val MemberDescriptor.ktModality: Modality
 
 internal fun ConstantValue<*>.toKtConstantValue(): KtConstantValue {
     return when (this) {
-        is BooleanValue -> KtLiteralConstantValue(ConstantValueKind.Boolean, value, null)
-        is CharValue -> KtLiteralConstantValue(ConstantValueKind.Char, value, null)
-        is ByteValue -> KtLiteralConstantValue(ConstantValueKind.Byte, value, null)
-        is UByteValue -> KtLiteralConstantValue(ConstantValueKind.UnsignedByte, value, null)
-        is ShortValue -> KtLiteralConstantValue(ConstantValueKind.Short, value, null)
-        is UShortValue -> KtLiteralConstantValue(ConstantValueKind.UnsignedShort, value, null)
-        is IntValue -> KtLiteralConstantValue(ConstantValueKind.Int, value, null)
-        is UIntValue -> KtLiteralConstantValue(ConstantValueKind.UnsignedInt, value, null)
-        is LongValue -> KtLiteralConstantValue(ConstantValueKind.Long, value, null)
-        is ULongValue -> KtLiteralConstantValue(ConstantValueKind.UnsignedLong, value, null)
-        is FloatValue -> KtLiteralConstantValue(ConstantValueKind.Float, value, null)
-        is DoubleValue -> KtLiteralConstantValue(ConstantValueKind.Double, value, null)
-        is NullValue -> KtLiteralConstantValue(ConstantValueKind.Null, null, null)
-        is StringValue -> KtLiteralConstantValue(ConstantValueKind.String, value, null)
-        is ArrayValue -> KtArrayConstantValue(value.map { it.toKtConstantValue() }, null)
-        is EnumValue -> KtEnumEntryConstantValue(CallableId(enumClassId, enumEntryName), null)
-        is AnnotationValue -> {
-            val arguments = value.allValueArguments.map { (name, v) -> KtNamedConstantValue(name.asString(), v.toKtConstantValue()) }
-            KtAnnotationConstantValue(value.annotationClass?.classId, arguments, null)
+        is ErrorValue.ErrorValueWithMessage -> KtConstantValue.KtErrorConstantValue(message, sourcePsi = null)
+        is BooleanValue -> KtConstantValue.KtBooleanConstantValue(value, sourcePsi = null)
+        is DoubleValue -> KtConstantValue.KtDoubleConstantValue(value, sourcePsi = null)
+        is FloatValue -> KtConstantValue.KtFloatConstantValue(value, sourcePsi = null)
+        is NullValue -> KtConstantValue.KtNullConstantValue(sourcePsi = null)
+        is StringValue -> KtConstantValue.KtStringConstantValue(value, sourcePsi = null)
+        is ByteValue -> KtConstantValue.KtByteConstantValue(value, sourcePsi = null)
+        is CharValue -> KtConstantValue.KtCharConstantValue(value, sourcePsi = null)
+        is IntValue -> KtConstantValue.KtIntConstantValue(value, sourcePsi = null)
+        is LongValue -> KtConstantValue.KtLongConstantValue(value, sourcePsi = null)
+        is ShortValue -> KtConstantValue.KtShortConstantValue(value, sourcePsi = null)
+        is UByteValue -> KtConstantValue.KtUnsignedByteConstantValue(value.toUByte(), sourcePsi = null)
+        is UIntValue -> KtConstantValue.KtUnsignedIntConstantValue(value.toUInt(), sourcePsi = null)
+        is ULongValue -> KtConstantValue.KtUnsignedLongConstantValue(value.toULong(), sourcePsi = null)
+        is UShortValue -> KtConstantValue.KtUnsignedShortConstantValue(value.toUShort(), sourcePsi = null)
+        else -> error("Unexpected constant value $value")
+    }
+}
+
+internal fun ConstantValue<*>.toKtAnnotationValue(): KtAnnotationValue {
+    return when (this) {
+        is ArrayValue -> KtArrayAnnotationValue(value.map { it.toKtAnnotationValue() }, sourcePsi = null)
+        is EnumValue -> KtEnumEntryAnnotationValue(CallableId(enumClassId, enumEntryName), sourcePsi = null)
+        is KClassValue -> when (val value = value) {
+            is KClassValue.Value.LocalClass -> {
+                val descriptor = value.type.constructor.declarationDescriptor as ClassDescriptor
+                KtKClassAnnotationValue.KtLocalKClassAnnotationValue(descriptor.source.getPsi() as KtClassOrObject, sourcePsi = null)
+            }
+            is KClassValue.Value.NormalClass -> KtKClassAnnotationValue.KtNonLocalKClassAnnotationValue(value.classId, sourcePsi = null)
         }
-        is ErrorValue -> KtErrorValue(this.toString())
-        else -> KtUnsupportedConstantValue
+
+        is AnnotationValue -> {
+            KtAnnotationApplicationValue(
+                KtAnnotationApplication(
+                    value.annotationClass?.classId,
+                    psi = null,
+                    useSiteTarget = null,
+                    arguments = value.getKtNamedAnnotationArguments(),
+                )
+            )
+        }
+        else -> {
+            KtConstantAnnotationValue(toKtConstantValue())
+        }
     }
 }
 
@@ -359,6 +390,7 @@ internal fun getSymbolDescriptor(symbol: KtSymbol): DeclarationDescriptor? {
     return when (symbol) {
         is KtFe10DescSymbol<*> -> symbol.descriptor
         is KtFe10PsiSymbol<*, *> -> symbol.descriptor
+        is KtFe10DescSyntheticFieldSymbol -> symbol.descriptor
         else -> null
     }
 }
@@ -385,9 +417,7 @@ internal fun ClassDescriptor.getSupertypesWithAny(): Collection<KotlinType> {
 
 internal fun DeclarationDescriptor.render(analysisContext: Fe10AnalysisContext, options: KtDeclarationRendererOptions): String {
     val renderer = KtFe10Renderer(analysisContext, options)
-    val consumer = StringBuilder()
-    renderer.render(this, consumer)
-    return consumer.toString().trim()
+    return prettyPrint { renderer.render(this@render, this) }.trim()
 }
 
 internal fun CallableMemberDescriptor.getSymbolPointerSignature(analysisContext: Fe10AnalysisContext): String {
@@ -420,3 +450,17 @@ internal fun createKtInitializerValue(
 
     return KtNonConstantInitializerValue(initializer)
 }
+
+internal fun AnnotationDescriptor.toKtAnnotationApplication(): KtAnnotationApplication {
+    return KtAnnotationApplication(
+        annotationClass?.maybeLocalClassId,
+        (source as? PsiSourceElement)?.psi as? KtCallElement,
+        (this as? LazyAnnotationDescriptor)?.annotationEntry?.useSiteTarget?.getAnnotationUseSiteTarget(),
+        getKtNamedAnnotationArguments(),
+    )
+}
+
+internal fun AnnotationDescriptor.getKtNamedAnnotationArguments() =
+    allValueArguments.map { (name, value) ->
+        KtNamedAnnotationValue(name, value.toKtAnnotationValue())
+    }

@@ -437,8 +437,9 @@ fun getDeclarationLabels(lambdaOrFun: PsiElement?, descriptor: DeclarationDescri
     val result = HashSet<String>()
 
     if (lambdaOrFun != null) {
-        val label = LabelResolver.getLabelNameIfAny(lambdaOrFun)
-        if (label != null) {
+        val labels = LabelResolver.getLabelNamesIfAny(lambdaOrFun, addClassNameLabels = false)
+        if (labels.isNotEmpty()) {
+            val label = labels.singleOrNull() ?: error("Multiple labels for $lambdaOrFun")
             result.add(label.asString())
         }
     }

@@ -35,10 +35,7 @@ import org.jetbrains.kotlin.resolve.calls.CallTransformer
 import org.jetbrains.kotlin.resolve.calls.CandidateResolver
 import org.jetbrains.kotlin.resolve.calls.context.*
 import org.jetbrains.kotlin.resolve.calls.inference.BuilderInferenceSupport
-import org.jetbrains.kotlin.resolve.calls.model.KotlinCallDiagnostic
-import org.jetbrains.kotlin.resolve.calls.model.MutableResolvedCall
-import org.jetbrains.kotlin.resolve.calls.model.ResolvedCallImpl
-import org.jetbrains.kotlin.resolve.calls.model.VariableAsFunctionResolvedCallImpl
+import org.jetbrains.kotlin.resolve.calls.model.*
 import org.jetbrains.kotlin.resolve.calls.results.OverloadResolutionResultsImpl
 import org.jetbrains.kotlin.resolve.calls.results.ResolutionResultsHandler
 import org.jetbrains.kotlin.resolve.calls.results.ResolutionStatus
@@ -371,6 +368,9 @@ class NewResolutionOldInference(
                 cache.getOrPut(it) { resolutionContext.transformToReceiverWithSmartCastInfo(it) }
             }
 
+        override fun getContextReceivers(scope: LexicalScope): List<ReceiverValueWithSmartCastInfo> =
+            scope.contextReceiversGroup.map { cache.getOrPut(it.value) { resolutionContext.transformToReceiverWithSmartCastInfo(it.value) } }
+
         override fun getNameForGivenImportAlias(name: Name): Name? =
             (resolutionContext.call.callElement.containingFile as? KtFile)?.getNameForGivenImportAlias(name)
 
@@ -380,6 +380,9 @@ class NewResolutionOldInference(
 
         override val isNewInferenceEnabled: Boolean
             get() = resolutionContext.languageVersionSettings.supportsFeature(LanguageFeature.NewInference)
+
+        override val areContextReceiversEnabled: Boolean
+            get() = resolutionContext.languageVersionSettings.supportsFeature(LanguageFeature.ContextReceivers)
 
         override val languageVersionSettings: LanguageVersionSettings
             get() = resolutionContext.languageVersionSettings
@@ -488,6 +491,16 @@ class NewResolutionOldInference(
                 createDiagnosticsForCandidate(towerCandidate, candidateCall)
             }
         }
+
+        /**
+         * The function is called only inside [NoExplicitReceiverScopeTowerProcessor] with [TowerData.BothTowerLevelAndContextReceiversGroup].
+         * This case involves only [SimpleCandidateFactory].
+         */
+        override fun createCandidate(
+            towerCandidate: CandidateWithBoundDispatchReceiver,
+            explicitReceiverKind: ExplicitReceiverKind,
+            extensionReceiverCandidates: List<ReceiverValueWithSmartCastInfo>
+        ): MyCandidate = error("${this::class.simpleName} doesn't support candidates with multiple extension receiver candidates")
 
         override fun createErrorCandidate(): MyCandidate {
             throw IllegalStateException("Not supported creating error candidate for the old type inference candidate factory")

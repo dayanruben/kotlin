@@ -5,7 +5,7 @@
 
 package org.jetbrains.kotlin.analysis.api.components
 
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtConstantValue
+import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
 import org.jetbrains.kotlin.psi.KtExpression
 
 public abstract class KtCompileTimeConstantProvider : KtAnalysisSessionComponent() {

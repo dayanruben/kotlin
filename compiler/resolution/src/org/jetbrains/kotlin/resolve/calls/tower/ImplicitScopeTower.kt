@@ -39,6 +39,8 @@ interface ImplicitScopeTower {
 
     fun getImplicitReceiver(scope: LexicalScope): ReceiverValueWithSmartCastInfo?
 
+    fun getContextReceivers(scope: LexicalScope): List<ReceiverValueWithSmartCastInfo>
+
     fun getNameForGivenImportAlias(name: Name): Name?
 
     val dynamicScope: MemberScope
@@ -50,6 +52,8 @@ interface ImplicitScopeTower {
     val isDebuggerContext: Boolean
 
     val isNewInferenceEnabled: Boolean
+
+    val areContextReceiversEnabled: Boolean
 
     val languageVersionSettings: LanguageVersionSettings
 
@@ -107,6 +111,12 @@ abstract class ResolutionDiagnostic(candidateApplicability: CandidateApplicabili
     KotlinCallDiagnostic(candidateApplicability) {
     override fun report(reporter: DiagnosticReporter) {
         // do nothing
+    }
+}
+
+class ContextReceiverAmbiguity : ResolutionDiagnostic(RESOLVED_WITH_ERROR) {
+    override fun report(reporter: DiagnosticReporter) {
+        reporter.onCall(this)
     }
 }
 

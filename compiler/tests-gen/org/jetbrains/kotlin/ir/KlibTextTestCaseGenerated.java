@@ -87,21 +87,6 @@ public class KlibTextTestCaseGenerated extends AbstractKlibTextTestCase {
             runTest("compiler/testData/ir/irText/classes/companionObject.kt");
         }
 
-        @TestMetadata("dataClassWithArrayMembers.kt")
-        public void testDataClassWithArrayMembers() throws Exception {
-            runTest("compiler/testData/ir/irText/classes/dataClassWithArrayMembers.kt");
-        }
-
-        @TestMetadata("dataClasses.kt")
-        public void testDataClasses() throws Exception {
-            runTest("compiler/testData/ir/irText/classes/dataClasses.kt");
-        }
-
-        @TestMetadata("dataClassesGeneric.kt")
-        public void testDataClassesGeneric() throws Exception {
-            runTest("compiler/testData/ir/irText/classes/dataClassesGeneric.kt");
-        }
-
         @TestMetadata("delegatedGenericImplementation.kt")
         public void testDelegatedGenericImplementation() throws Exception {
             runTest("compiler/testData/ir/irText/classes/delegatedGenericImplementation.kt");
@@ -192,16 +177,6 @@ public class KlibTextTestCaseGenerated extends AbstractKlibTextTestCase {
             runTest("compiler/testData/ir/irText/classes/kt19306.kt");
         }
 
-        @TestMetadata("kt31649.kt")
-        public void testKt31649() throws Exception {
-            runTest("compiler/testData/ir/irText/classes/kt31649.kt");
-        }
-
-        @TestMetadata("lambdaInDataClassDefaultParameter.kt")
-        public void testLambdaInDataClassDefaultParameter() throws Exception {
-            runTest("compiler/testData/ir/irText/classes/lambdaInDataClassDefaultParameter.kt");
-        }
-
         @TestMetadata("localClasses.kt")
         public void testLocalClasses() throws Exception {
             runTest("compiler/testData/ir/irText/classes/localClasses.kt");
@@ -215,11 +190,6 @@ public class KlibTextTestCaseGenerated extends AbstractKlibTextTestCase {
         @TestMetadata("objectWithInitializers.kt")
         public void testObjectWithInitializers() throws Exception {
             runTest("compiler/testData/ir/irText/classes/objectWithInitializers.kt");
-        }
-
-        @TestMetadata("openDataClass.kt")
-        public void testOpenDataClass() throws Exception {
-            runTest("compiler/testData/ir/irText/classes/openDataClass.kt");
         }
 
         @TestMetadata("outerClassAccess.kt")
@@ -265,6 +235,54 @@ public class KlibTextTestCaseGenerated extends AbstractKlibTextTestCase {
         @TestMetadata("superCallsComposed.kt")
         public void testSuperCallsComposed() throws Exception {
             runTest("compiler/testData/ir/irText/classes/superCallsComposed.kt");
+        }
+
+        @TestMetadata("compiler/testData/ir/irText/classes/dataClasses")
+        @TestDataPath("$PROJECT_ROOT")
+        @RunWith(JUnit3RunnerWithInners.class)
+        public static class DataClasses extends AbstractKlibTextTestCase {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, TargetBackend.JS_IR, testDataFilePath);
+            }
+
+            public void testAllFilesPresentInDataClasses() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/ir/irText/classes/dataClasses"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JS_IR, true);
+            }
+
+            @TestMetadata("dataClassWithArrayMembers.kt")
+            public void testDataClassWithArrayMembers() throws Exception {
+                runTest("compiler/testData/ir/irText/classes/dataClasses/dataClassWithArrayMembers.kt");
+            }
+
+            @TestMetadata("dataClasses.kt")
+            public void testDataClasses() throws Exception {
+                runTest("compiler/testData/ir/irText/classes/dataClasses/dataClasses.kt");
+            }
+
+            @TestMetadata("dataClassesGeneric.kt")
+            public void testDataClassesGeneric() throws Exception {
+                runTest("compiler/testData/ir/irText/classes/dataClasses/dataClassesGeneric.kt");
+            }
+
+            @TestMetadata("kt31649.kt")
+            public void testKt31649() throws Exception {
+                runTest("compiler/testData/ir/irText/classes/dataClasses/kt31649.kt");
+            }
+
+            @TestMetadata("kt49936.kt")
+            public void testKt49936() throws Exception {
+                runTest("compiler/testData/ir/irText/classes/dataClasses/kt49936.kt");
+            }
+
+            @TestMetadata("lambdaInDataClassDefaultParameter.kt")
+            public void testLambdaInDataClassDefaultParameter() throws Exception {
+                runTest("compiler/testData/ir/irText/classes/dataClasses/lambdaInDataClassDefaultParameter.kt");
+            }
+
+            @TestMetadata("openDataClass.kt")
+            public void testOpenDataClass() throws Exception {
+                runTest("compiler/testData/ir/irText/classes/dataClasses/openDataClass.kt");
+            }
         }
     }
 
@@ -570,6 +588,97 @@ public class KlibTextTestCaseGenerated extends AbstractKlibTextTestCase {
             @TestMetadata("variablesWithAnnotations.kt")
             public void testVariablesWithAnnotations() throws Exception {
                 runTest("compiler/testData/ir/irText/declarations/annotations/variablesWithAnnotations.kt");
+            }
+        }
+
+        @TestMetadata("compiler/testData/ir/irText/declarations/contextReceivers")
+        @TestDataPath("$PROJECT_ROOT")
+        @RunWith(JUnit3RunnerWithInners.class)
+        public static class ContextReceivers extends AbstractKlibTextTestCase {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, TargetBackend.JS_IR, testDataFilePath);
+            }
+
+            public void testAllFilesPresentInContextReceivers() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/ir/irText/declarations/contextReceivers"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JS_IR, true);
+            }
+
+            @TestMetadata("class.kt")
+            public void testClass() throws Exception {
+                runTest("compiler/testData/ir/irText/declarations/contextReceivers/class.kt");
+            }
+
+            @TestMetadata("contextualPrimaryConstructorWithParams.kt")
+            public void testContextualPrimaryConstructorWithParams() throws Exception {
+                runTest("compiler/testData/ir/irText/declarations/contextReceivers/contextualPrimaryConstructorWithParams.kt");
+            }
+
+            @TestMetadata("function.kt")
+            public void testFunction() throws Exception {
+                runTest("compiler/testData/ir/irText/declarations/contextReceivers/function.kt");
+            }
+
+            @TestMetadata("functionalType.kt")
+            public void testFunctionalType() throws Exception {
+                runTest("compiler/testData/ir/irText/declarations/contextReceivers/functionalType.kt");
+            }
+
+            @TestMetadata("genericOuterClass.kt")
+            public void testGenericOuterClass() throws Exception {
+                runTest("compiler/testData/ir/irText/declarations/contextReceivers/genericOuterClass.kt");
+            }
+
+            @TestMetadata("lazy.kt")
+            public void testLazy() throws Exception {
+                runTest("compiler/testData/ir/irText/declarations/contextReceivers/lazy.kt");
+            }
+
+            @TestMetadata("localDeclaration.kt")
+            public void testLocalDeclaration() throws Exception {
+                runTest("compiler/testData/ir/irText/declarations/contextReceivers/localDeclaration.kt");
+            }
+
+            @TestMetadata("overloadPriority.kt")
+            public void testOverloadPriority() throws Exception {
+                runTest("compiler/testData/ir/irText/declarations/contextReceivers/overloadPriority.kt");
+            }
+
+            @TestMetadata("overloading.kt")
+            public void testOverloading() throws Exception {
+                runTest("compiler/testData/ir/irText/declarations/contextReceivers/overloading.kt");
+            }
+
+            @TestMetadata("plusMatrix.kt")
+            public void testPlusMatrix() throws Exception {
+                runTest("compiler/testData/ir/irText/declarations/contextReceivers/plusMatrix.kt");
+            }
+
+            @TestMetadata("property.kt")
+            public void testProperty() throws Exception {
+                runTest("compiler/testData/ir/irText/declarations/contextReceivers/property.kt");
+            }
+
+            @TestMetadata("thisWithCustomLabel.kt")
+            public void testThisWithCustomLabel() throws Exception {
+                runTest("compiler/testData/ir/irText/declarations/contextReceivers/thisWithCustomLabel.kt");
+            }
+
+            @TestMetadata("typeParameterAsContextReceiver.kt")
+            public void testTypeParameterAsContextReceiver() throws Exception {
+                runTest("compiler/testData/ir/irText/declarations/contextReceivers/typeParameterAsContextReceiver.kt");
+            }
+
+            @TestMetadata("compiler/testData/ir/irText/declarations/contextReceivers/fromKEEP")
+            @TestDataPath("$PROJECT_ROOT")
+            @RunWith(JUnit3RunnerWithInners.class)
+            public static class FromKEEP extends AbstractKlibTextTestCase {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, TargetBackend.JS_IR, testDataFilePath);
+                }
+
+                public void testAllFilesPresentInFromKEEP() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/ir/irText/declarations/contextReceivers/fromKEEP"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JS_IR, true);
+                }
             }
         }
 

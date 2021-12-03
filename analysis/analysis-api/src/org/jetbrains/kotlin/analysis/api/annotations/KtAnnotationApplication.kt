@@ -5,14 +5,41 @@
 
 package org.jetbrains.kotlin.analysis.api.annotations
 
-import org.jetbrains.kotlin.analysis.api.ValidityTokenOwner
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtCallElement
 
-public abstract class KtAnnotationApplication : ValidityTokenOwner {
-    public abstract val classId: ClassId?
-    public abstract val useSiteTarget: AnnotationUseSiteTarget?
-    public abstract val psi: KtCallElement?
-    public abstract val arguments: List<KtNamedConstantValue>
-}
+/**
+ * Application of annotation to some declaration, type, or as argument inside other annotation.
+ *
+ * Some examples:
+ * - For declarations: `@Deprecated("Should not be used") fun foo(){}`
+ * - For types: `fun foo(x: List<@A Int>){}`
+ * - Inside other annotation (`B` is annotation here): `@A(B()) fun foo(){}
+ */
+public data class KtAnnotationApplication(
+    /**
+     * The [ClassId] of applied annotation. [ClassId] is a fully qualified name on annotation class.
+     */
+    public val classId: ClassId?,
+
+    /**
+     * PsiElement which was used to apply annotation to declaration/type.
+     *
+     * Present only for declarations from sources. For declarations from other places (libraries, stdlib) it's `null`
+     */
+    public val psi: KtCallElement?,
+
+    /**
+     * [AnnotationUseSiteTarget] to which annotation was applied. May be not-null only for annotation applications for declarations.
+     *
+     * See in more details in [Kotlin Documentation](https://kotlinlang.org/docs/annotations.html#annotation-use-site-targets) for more information about annotation targets.
+     */
+    public val useSiteTarget: AnnotationUseSiteTarget?,
+
+    /**
+     * A list of annotation arguments which were applied when constructing annotation. Every argument is [KtAnnotationValue]
+     */
+    public val arguments: List<KtNamedAnnotationValue>,
+)

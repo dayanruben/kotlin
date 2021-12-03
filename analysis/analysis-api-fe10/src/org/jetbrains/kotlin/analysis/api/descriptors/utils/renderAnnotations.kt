@@ -5,9 +5,10 @@
 
 package org.jetbrains.kotlin.analysis.api.descriptors.utils
 
+import org.jetbrains.kotlin.analysis.api.annotations.renderAsSourceCode
 import org.jetbrains.kotlin.analysis.api.descriptors.symbols.descriptorBased.base.classId
-import org.jetbrains.kotlin.analysis.api.descriptors.symbols.descriptorBased.base.toKtConstantValue
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtConstantValueRenderer
+import org.jetbrains.kotlin.analysis.api.descriptors.symbols.descriptorBased.base.toKtAnnotationValue
+import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.name.ClassId
@@ -15,7 +16,13 @@ import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.descriptorUtil.annotationClass
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 
-internal fun KtFe10RendererConsumer.renderFe10Annotations(annotations: Annotations, predicate: (ClassId) -> Boolean = { true }) {
+internal fun PrettyPrinter.renderFe10Annotations(
+    annotations: Annotations,
+    isSingleLineAnnotations: Boolean,
+    renderAnnotationWithShortNames: Boolean,
+    predicate: (ClassId) -> Boolean = { true }
+) {
+    val separator = if (isSingleLineAnnotations) " " else "\n"
     for (annotation in annotations) {
         val annotationClass = annotation.annotationClass ?: continue
         val classId = annotationClass.classId
@@ -25,16 +32,17 @@ internal fun KtFe10RendererConsumer.renderFe10Annotations(annotations: Annotatio
 
         if (annotationClass.fqNameSafe != StandardNames.FqNames.parameterName) {
             append('@')
-            append(annotation.fqName?.shortName()?.asString() ?: "ERROR")
+            val rendered = if (renderAnnotationWithShortNames) annotation.fqName?.shortName()?.render() else annotation.fqName?.render()
+            append(rendered ?: "ERROR")
 
             val valueArguments = annotation.allValueArguments.entries.sortedBy { it.key.asString() }
-            renderList(valueArguments, separator = ", ", prefix = "(", postfix = ")", renderWhenEmpty = false) { (name, value) ->
+            printCollectionIfNotEmpty(valueArguments, separator = ", ", prefix = "(", postfix = ")") { (name, value) ->
                 append(name.render())
                 append(" = ")
-                append(KtConstantValueRenderer.render(value.toKtConstantValue()))
+                append(value.toKtAnnotationValue().renderAsSourceCode())
             }
 
-            append(' ')
+            append(separator)
         }
     }
 }

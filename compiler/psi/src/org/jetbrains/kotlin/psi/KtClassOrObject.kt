@@ -25,6 +25,7 @@ import com.intellij.psi.impl.CheckUtil
 import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -186,6 +187,11 @@ abstract class KtClassOrObject :
         parts.reverse()
         return parts.joinToString(separator = ".")
     }
+
+    fun getContextReceiverList(): KtContextReceiverList? = getStubOrPsiChild(KtStubElementTypes.CONTEXT_RECEIVER_LIST)
+
+    override fun getContextReceivers(): List<KtContextReceiver> =
+        getContextReceiverList()?.let { return it.contextReceivers() } ?: emptyList()
 }
 
 

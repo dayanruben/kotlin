@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.analysis.api.impl.base.test.components.compileTimeC
 import org.jetbrains.kotlin.analysis.api.impl.barebone.test.FrontendApiTestConfiguratorService
 import org.jetbrains.kotlin.analysis.api.impl.barebone.test.expressionMarkerProvider
 import org.jetbrains.kotlin.analysis.api.impl.base.test.test.framework.AbstractHLApiSingleFileTest
-import org.jetbrains.kotlin.analysis.api.symbols.markers.*
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtValueArgument
@@ -31,47 +30,10 @@ abstract class AbstractCompileTimeConstantEvaluatorTest(
         }
         val actual = buildString {
             appendLine("expression: ${expression.text}")
-            appendLine("constant_value: ${analyseForTest(expression) { constantValue?.stringRepresentation() }}")
-            appendLine("constant: ${(constantValue as? KtLiteralConstantValue<*>)?.toConst()}")
+            appendLine("constant: ${constantValue?.renderAsKotlinConstant() ?: "NOT_EVALUATED"}")
+            appendLine("constantValueKind: ${constantValue?.constantValueKind ?: "NOT_EVALUATED"}")
         }
         testServices.assertions.assertEqualsToTestDataFileSibling(actual)
     }
 
-    private fun KtConstantValue.stringRepresentation(): String {
-        return when (this) {
-            is KtArrayConstantValue -> buildString {
-                appendLine("KtArrayConstantValue [")
-                appendLine(INDENT, values.joinToString(separator = "\n") { it.stringRepresentation() })
-                append("]")
-            }
-            is KtAnnotationConstantValue -> buildString {
-                append("KtAnnotationConstantValue(")
-                append(classId?.relativeClassName)
-                append(", ")
-                arguments.joinTo(this, separator = ", ", prefix = "(", postfix = ")") {
-                    "${it.name} = ${it.expression.stringRepresentation()}"
-                }
-                append(")")
-            }
-            is KtEnumEntryConstantValue -> buildString {
-                append("KtEnumEntryConstantValue(")
-                append("$callableId")
-                append(")")
-            }
-            is KtLiteralConstantValue<*> -> buildString {
-                append("KtLiteralConstantValue(")
-                append("constantValueKind=${constantValueKind}")
-                append(", ")
-                append("value=${value})")
-            }
-            is KtErrorValue -> "KtErrorValue($message)"
-            is KtUnsupportedConstantValue -> "KtUnsupportedConstantValue"
-        }
-    }
-
-    private fun StringBuilder.appendLine(indent: Int, value: String) {
-        appendLine(value.prependIndent(" ".repeat(indent)))
-    }
 }
-
-private const val INDENT = 2

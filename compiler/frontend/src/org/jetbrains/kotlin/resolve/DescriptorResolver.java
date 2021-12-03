@@ -16,7 +16,9 @@
 
 package org.jetbrains.kotlin.resolve;
 
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Multimap;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import kotlin.Pair;
@@ -63,12 +65,12 @@ import org.jetbrains.kotlin.types.expressions.*;
 import org.jetbrains.kotlin.types.typeUtil.TypeUtilsKt;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.*;
 import static org.jetbrains.kotlin.diagnostics.Errors.*;
 import static org.jetbrains.kotlin.lexer.KtTokens.*;
-import static org.jetbrains.kotlin.resolve.BindingContext.CONSTRUCTOR;
-import static org.jetbrains.kotlin.resolve.BindingContext.TYPE_ALIAS;
+import static org.jetbrains.kotlin.resolve.BindingContext.*;
 import static org.jetbrains.kotlin.resolve.DescriptorUtils.*;
 import static org.jetbrains.kotlin.resolve.ModifiersChecker.resolveMemberModalityFromModifiers;
 import static org.jetbrains.kotlin.resolve.ModifiersChecker.resolveVisibilityFromModifiers;
@@ -955,22 +957,47 @@ public class DescriptorResolver {
                 scopeForDeclarationResolutionWithTypeParameters = writableScopeForDeclarationResolution;
                 scopeForInitializerResolutionWithTypeParameters = writableScopeForInitializerResolution;
             }
-
-            KtTypeReference receiverTypeRef = variableDeclaration.getReceiverTypeReference();
-            if (receiverTypeRef != null) {
-                receiverType = typeResolver.resolveType(scopeForDeclarationResolutionWithTypeParameters, receiverTypeRef, trace, true);
-            }
         }
 
-        ReceiverParameterDescriptor receiverDescriptor;
-        if (receiverType != null) {
+        KtTypeReference receiverTypeRef = variableDeclaration.getReceiverTypeReference();
+        ReceiverParameterDescriptor receiverDescriptor = null;
+        if (receiverTypeRef != null) {
+            receiverType = typeResolver.resolveType(scopeForDeclarationResolutionWithTypeParameters, receiverTypeRef, trace, true);
             AnnotationSplitter splitter = new AnnotationSplitter(storageManager, receiverType.getAnnotations(), EnumSet.of(RECEIVER));
             receiverDescriptor = DescriptorFactory.createExtensionReceiverParameterForCallable(
                     propertyDescriptor, receiverType, splitter.getAnnotationsForTarget(RECEIVER)
             );
         }
-        else {
-            receiverDescriptor = null;
+
+        List<KtContextReceiver> contextReceivers = variableDeclaration.getContextReceivers();
+        List<ReceiverParameterDescriptor> contextReceiverDescriptors = contextReceivers.stream()
+                .map(contextReceiver -> {
+                    KtTypeReference typeReference = contextReceiver.typeReference();
+                    if (typeReference == null) {
+                        return null;
+                    }
+                    KotlinType type = typeResolver.resolveType(scopeForDeclarationResolutionWithTypeParameters, typeReference, trace, true);
+                    AnnotationSplitter splitter = new AnnotationSplitter(storageManager, type.getAnnotations(), EnumSet.of(RECEIVER));
+                    return DescriptorFactory.createContextReceiverParameterForCallable(
+                            propertyDescriptor, type, splitter.getAnnotationsForTarget(RECEIVER)
+                    );
+                }).collect(Collectors.toList());
+
+        if (languageVersionSettings.supportsFeature(LanguageFeature.ContextReceivers)) {
+            Multimap<String, ReceiverParameterDescriptor> nameToReceiverMap = HashMultimap.create();
+            if (receiverTypeRef != null) {
+                String receiverName = receiverTypeRef.nameForReceiverLabel();
+                if (receiverName != null) {
+                    nameToReceiverMap.put(receiverName, receiverDescriptor);
+                }
+            }
+            for (int i = 0; i < contextReceivers.size(); i++) {
+                String contextReceiverName = contextReceivers.get(i).name();
+                if (contextReceiverName != null) {
+                    nameToReceiverMap.put(contextReceiverName, contextReceiverDescriptors.get(i));
+                }
+            }
+            trace.record(DESCRIPTOR_TO_CONTEXT_RECEIVER_MAP, propertyDescriptor, nameToReceiverMap);
         }
 
         LexicalScope scopeForInitializer = ScopeUtils.makeScopeForPropertyInitializer(scopeForInitializerResolutionWithTypeParameters, propertyDescriptor);
@@ -1001,7 +1028,8 @@ public class DescriptorResolver {
                 propertyDescriptor, scopeForInitializer, variableDeclaration, dataFlowInfo, type, inferenceSession, trace
         );
 
-        propertyDescriptor.setType(type, typeParameterDescriptors, getDispatchReceiverParameterIfNeeded(container), receiverDescriptor);
+        propertyDescriptor.setType(type, typeParameterDescriptors, getDispatchReceiverParameterIfNeeded(container), receiverDescriptor,
+                                   contextReceiverDescriptors);
 
         PropertySetterDescriptor setter = resolvePropertySetterDescriptor(
                 scopeForDeclarationResolutionWithTypeParameters,
@@ -1019,7 +1047,6 @@ public class DescriptorResolver {
                 new FieldDescriptorImpl(annotationSplitter.getAnnotationsForTarget(FIELD), propertyDescriptor),
                 new FieldDescriptorImpl(annotationSplitter.getAnnotationsForTarget(PROPERTY_DELEGATE_FIELD), propertyDescriptor)
         );
-
         trace.record(BindingContext.VARIABLE, variableDeclaration, propertyDescriptor);
         return propertyDescriptor;
     }
@@ -1251,7 +1278,6 @@ public class DescriptorResolver {
         });
     }
 
-    @NotNull
     public PropertyDescriptor resolvePrimaryConstructorParameterToAProperty(
             @NotNull ClassDescriptor classDescriptor,
             @NotNull ValueParameterDescriptor valueParameter,
@@ -1299,7 +1325,8 @@ public class DescriptorResolver {
                 false,
                 false
         );
-        propertyDescriptor.setType(type, Collections.emptyList(), getDispatchReceiverParameterIfNeeded(classDescriptor), null);
+        propertyDescriptor.setType(type, Collections.emptyList(), getDispatchReceiverParameterIfNeeded(classDescriptor), null,
+                                   CollectionsKt.emptyList());
 
         Annotations setterAnnotations = annotationSplitter.getAnnotationsForTarget(PROPERTY_SETTER);
         Annotations getterAnnotations = new CompositeAnnotations(CollectionsKt.listOf(

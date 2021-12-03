@@ -1,6 +1,10 @@
 public abstract interface annotation class kotlin/BuilderInference : java/lang/annotation/Annotation {
 }
 
+public abstract interface annotation class kotlin/ContextFunctionTypeParams : java/lang/annotation/Annotation {
+	public abstract fun count ()I
+}
+
 public final class kotlin/DeepRecursiveFunction {
 	public fun <init> (Lkotlin/jvm/functions/Function3;)V
 }
@@ -3577,6 +3581,15 @@ public final class kotlin/jvm/internal/FloatSpreadBuilder : kotlin/jvm/internal/
 	public final fun add (F)V
 	public synthetic fun getSize (Ljava/lang/Object;)I
 	public final fun toArray ()[F
+}
+
+public class kotlin/jvm/internal/FunInterfaceConstructorReference : kotlin/jvm/internal/FunctionReference, java/io/Serializable {
+	public fun <init> (Ljava/lang/Class;)V
+	public fun equals (Ljava/lang/Object;)Z
+	protected synthetic fun getReflected ()Lkotlin/reflect/KCallable;
+	protected fun getReflected ()Lkotlin/reflect/KFunction;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public abstract interface class kotlin/jvm/internal/FunctionAdapter {

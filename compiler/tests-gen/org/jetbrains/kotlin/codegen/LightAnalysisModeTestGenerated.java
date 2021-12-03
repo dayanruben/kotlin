@@ -7280,11 +7280,6 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/coroutines/kt49168.kt");
         }
 
-        @TestMetadata("kt49294.kt")
-        public void ignoreKt49294() throws Exception {
-            runTest("compiler/testData/codegen/box/coroutines/kt49294.kt");
-        }
-
         @TestMetadata("suspendFunctionAsSupertype.kt")
         public void ignoreSuspendFunctionAsSupertype() throws Exception {
             runTest("compiler/testData/codegen/box/coroutines/suspendFunctionAsSupertype.kt");
@@ -8363,6 +8358,34 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                             runTest("compiler/testData/codegen/box/coroutines/featureIntersection/callableReference/function/local/equalsHashCode.kt");
                         }
                     }
+                }
+            }
+
+            @TestMetadata("compiler/testData/codegen/box/coroutines/featureIntersection/funInterface")
+            @TestDataPath("$PROJECT_ROOT")
+            @RunWith(JUnit3RunnerWithInners.class)
+            public static class FunInterface extends AbstractLightAnalysisModeTest {
+                @TestMetadata("kt49294.kt")
+                public void ignoreKt49294() throws Exception {
+                    runTest("compiler/testData/codegen/box/coroutines/featureIntersection/funInterface/kt49294.kt");
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM, testDataFilePath);
+                }
+
+                public void testAllFilesPresentInFunInterface() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/coroutines/featureIntersection/funInterface"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
+                }
+
+                @TestMetadata("kt47549.kt")
+                public void testKt47549() throws Exception {
+                    runTest("compiler/testData/codegen/box/coroutines/featureIntersection/funInterface/kt47549.kt");
+                }
+
+                @TestMetadata("kt47549_1.kt")
+                public void testKt47549_1() throws Exception {
+                    runTest("compiler/testData/codegen/box/coroutines/featureIntersection/funInterface/kt47549_1.kt");
                 }
             }
 
@@ -10266,6 +10289,29 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("unitComponent.kt")
         public void testUnitComponent() throws Exception {
             runTest("compiler/testData/codegen/box/dataClasses/unitComponent.kt");
+        }
+
+        @TestMetadata("compiler/testData/codegen/box/dataClasses/components")
+        @TestDataPath("$PROJECT_ROOT")
+        @RunWith(JUnit3RunnerWithInners.class)
+        public static class Components extends AbstractLightAnalysisModeTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM, testDataFilePath);
+            }
+
+            public void testAllFilesPresentInComponents() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/dataClasses/components"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
+            }
+
+            @TestMetadata("kt49812.kt")
+            public void testKt49812() throws Exception {
+                runTest("compiler/testData/codegen/box/dataClasses/components/kt49812.kt");
+            }
+
+            @TestMetadata("kt49936.kt")
+            public void testKt49936() throws Exception {
+                runTest("compiler/testData/codegen/box/dataClasses/components/kt49936.kt");
+            }
         }
 
         @TestMetadata("compiler/testData/codegen/box/dataClasses/copy")
@@ -12995,6 +13041,19 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         }
     }
 
+    @TestMetadata("compiler/testData/codegen/box/extensionClasses")
+    @TestDataPath("$PROJECT_ROOT")
+    @RunWith(JUnit3RunnerWithInners.class)
+    public static class ExtensionClasses extends AbstractLightAnalysisModeTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM, testDataFilePath);
+        }
+
+        public void testAllFilesPresentInExtensionClasses() throws Exception {
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/extensionClasses"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
+        }
+    }
+
     @TestMetadata("compiler/testData/codegen/box/extensionFunctions")
     @TestDataPath("$PROJECT_ROOT")
     @RunWith(JUnit3RunnerWithInners.class)
@@ -13145,6 +13204,32 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("whenFail.kt")
         public void testWhenFail() throws Exception {
             runTest("compiler/testData/codegen/box/extensionFunctions/whenFail.kt");
+        }
+
+        @TestMetadata("compiler/testData/codegen/box/extensionFunctions/contextReceivers")
+        @TestDataPath("$PROJECT_ROOT")
+        @RunWith(JUnit3RunnerWithInners.class)
+        public static class ContextReceivers extends AbstractLightAnalysisModeTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM, testDataFilePath);
+            }
+
+            public void testAllFilesPresentInContextReceivers() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/extensionFunctions/contextReceivers"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
+            }
+
+            @TestMetadata("compiler/testData/codegen/box/extensionFunctions/contextReceivers/fromKEEP")
+            @TestDataPath("$PROJECT_ROOT")
+            @RunWith(JUnit3RunnerWithInners.class)
+            public static class FromKEEP extends AbstractLightAnalysisModeTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM, testDataFilePath);
+                }
+
+                public void testAllFilesPresentInFromKEEP() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/extensionFunctions/contextReceivers/fromKEEP"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
+                }
+            }
         }
     }
 

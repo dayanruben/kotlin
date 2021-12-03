@@ -89,24 +89,6 @@ public class Fir2IrTextTestGenerated extends AbstractFir2IrTextTest {
         }
 
         @Test
-        @TestMetadata("dataClassWithArrayMembers.kt")
-        public void testDataClassWithArrayMembers() throws Exception {
-            runTest("compiler/testData/ir/irText/classes/dataClassWithArrayMembers.kt");
-        }
-
-        @Test
-        @TestMetadata("dataClasses.kt")
-        public void testDataClasses() throws Exception {
-            runTest("compiler/testData/ir/irText/classes/dataClasses.kt");
-        }
-
-        @Test
-        @TestMetadata("dataClassesGeneric.kt")
-        public void testDataClassesGeneric() throws Exception {
-            runTest("compiler/testData/ir/irText/classes/dataClassesGeneric.kt");
-        }
-
-        @Test
         @TestMetadata("delegatedGenericImplementation.kt")
         public void testDelegatedGenericImplementation() throws Exception {
             runTest("compiler/testData/ir/irText/classes/delegatedGenericImplementation.kt");
@@ -233,12 +215,6 @@ public class Fir2IrTextTestGenerated extends AbstractFir2IrTextTest {
         }
 
         @Test
-        @TestMetadata("kt31649.kt")
-        public void testKt31649() throws Exception {
-            runTest("compiler/testData/ir/irText/classes/kt31649.kt");
-        }
-
-        @Test
         @TestMetadata("kt43217.kt")
         public void testKt43217() throws Exception {
             runTest("compiler/testData/ir/irText/classes/kt43217.kt");
@@ -263,12 +239,6 @@ public class Fir2IrTextTestGenerated extends AbstractFir2IrTextTest {
         }
 
         @Test
-        @TestMetadata("lambdaInDataClassDefaultParameter.kt")
-        public void testLambdaInDataClassDefaultParameter() throws Exception {
-            runTest("compiler/testData/ir/irText/classes/lambdaInDataClassDefaultParameter.kt");
-        }
-
-        @Test
         @TestMetadata("localClasses.kt")
         public void testLocalClasses() throws Exception {
             runTest("compiler/testData/ir/irText/classes/localClasses.kt");
@@ -284,12 +254,6 @@ public class Fir2IrTextTestGenerated extends AbstractFir2IrTextTest {
         @TestMetadata("objectWithInitializers.kt")
         public void testObjectWithInitializers() throws Exception {
             runTest("compiler/testData/ir/irText/classes/objectWithInitializers.kt");
-        }
-
-        @Test
-        @TestMetadata("openDataClass.kt")
-        public void testOpenDataClass() throws Exception {
-            runTest("compiler/testData/ir/irText/classes/openDataClass.kt");
         }
 
         @Test
@@ -344,6 +308,58 @@ public class Fir2IrTextTestGenerated extends AbstractFir2IrTextTest {
         @TestMetadata("superCallsComposed.kt")
         public void testSuperCallsComposed() throws Exception {
             runTest("compiler/testData/ir/irText/classes/superCallsComposed.kt");
+        }
+
+        @Nested
+        @TestMetadata("compiler/testData/ir/irText/classes/dataClasses")
+        @TestDataPath("$PROJECT_ROOT")
+        public class DataClasses {
+            @Test
+            public void testAllFilesPresentInDataClasses() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/ir/irText/classes/dataClasses"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            }
+
+            @Test
+            @TestMetadata("dataClassWithArrayMembers.kt")
+            public void testDataClassWithArrayMembers() throws Exception {
+                runTest("compiler/testData/ir/irText/classes/dataClasses/dataClassWithArrayMembers.kt");
+            }
+
+            @Test
+            @TestMetadata("dataClasses.kt")
+            public void testDataClasses() throws Exception {
+                runTest("compiler/testData/ir/irText/classes/dataClasses/dataClasses.kt");
+            }
+
+            @Test
+            @TestMetadata("dataClassesGeneric.kt")
+            public void testDataClassesGeneric() throws Exception {
+                runTest("compiler/testData/ir/irText/classes/dataClasses/dataClassesGeneric.kt");
+            }
+
+            @Test
+            @TestMetadata("kt31649.kt")
+            public void testKt31649() throws Exception {
+                runTest("compiler/testData/ir/irText/classes/dataClasses/kt31649.kt");
+            }
+
+            @Test
+            @TestMetadata("kt49936.kt")
+            public void testKt49936() throws Exception {
+                runTest("compiler/testData/ir/irText/classes/dataClasses/kt49936.kt");
+            }
+
+            @Test
+            @TestMetadata("lambdaInDataClassDefaultParameter.kt")
+            public void testLambdaInDataClassDefaultParameter() throws Exception {
+                runTest("compiler/testData/ir/irText/classes/dataClasses/lambdaInDataClassDefaultParameter.kt");
+            }
+
+            @Test
+            @TestMetadata("openDataClass.kt")
+            public void testOpenDataClass() throws Exception {
+                runTest("compiler/testData/ir/irText/classes/dataClasses/openDataClass.kt");
+            }
         }
     }
 
@@ -723,6 +739,182 @@ public class Fir2IrTextTestGenerated extends AbstractFir2IrTextTest {
             @TestMetadata("variablesWithAnnotations.kt")
             public void testVariablesWithAnnotations() throws Exception {
                 runTest("compiler/testData/ir/irText/declarations/annotations/variablesWithAnnotations.kt");
+            }
+        }
+
+        @Nested
+        @TestMetadata("compiler/testData/ir/irText/declarations/contextReceivers")
+        @TestDataPath("$PROJECT_ROOT")
+        public class ContextReceivers {
+            @Test
+            public void testAllFilesPresentInContextReceivers() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/ir/irText/declarations/contextReceivers"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            }
+
+            @Test
+            @TestMetadata("arrayAccessCompositeOperators.kt")
+            public void testArrayAccessCompositeOperators() throws Exception {
+                runTest("compiler/testData/ir/irText/declarations/contextReceivers/arrayAccessCompositeOperators.kt");
+            }
+
+            @Test
+            @TestMetadata("arrayAccessOperators.kt")
+            public void testArrayAccessOperators() throws Exception {
+                runTest("compiler/testData/ir/irText/declarations/contextReceivers/arrayAccessOperators.kt");
+            }
+
+            @Test
+            @TestMetadata("class.kt")
+            public void testClass() throws Exception {
+                runTest("compiler/testData/ir/irText/declarations/contextReceivers/class.kt");
+            }
+
+            @Test
+            @TestMetadata("compoundAssignmentOperators.kt")
+            public void testCompoundAssignmentOperators() throws Exception {
+                runTest("compiler/testData/ir/irText/declarations/contextReceivers/compoundAssignmentOperators.kt");
+            }
+
+            @Test
+            @TestMetadata("contextualFunctionConversion.kt")
+            public void testContextualFunctionConversion() throws Exception {
+                runTest("compiler/testData/ir/irText/declarations/contextReceivers/contextualFunctionConversion.kt");
+            }
+
+            @Test
+            @TestMetadata("contextualPrimaryConstructorWithParams.kt")
+            public void testContextualPrimaryConstructorWithParams() throws Exception {
+                runTest("compiler/testData/ir/irText/declarations/contextReceivers/contextualPrimaryConstructorWithParams.kt");
+            }
+
+            @Test
+            @TestMetadata("delegatedPropertiesOperators.kt")
+            public void testDelegatedPropertiesOperators() throws Exception {
+                runTest("compiler/testData/ir/irText/declarations/contextReceivers/delegatedPropertiesOperators.kt");
+            }
+
+            @Test
+            @TestMetadata("function.kt")
+            public void testFunction() throws Exception {
+                runTest("compiler/testData/ir/irText/declarations/contextReceivers/function.kt");
+            }
+
+            @Test
+            @TestMetadata("functionalType.kt")
+            public void testFunctionalType() throws Exception {
+                runTest("compiler/testData/ir/irText/declarations/contextReceivers/functionalType.kt");
+            }
+
+            @Test
+            @TestMetadata("genericOuterClass.kt")
+            public void testGenericOuterClass() throws Exception {
+                runTest("compiler/testData/ir/irText/declarations/contextReceivers/genericOuterClass.kt");
+            }
+
+            @Test
+            @TestMetadata("iteratorOperator.kt")
+            public void testIteratorOperator() throws Exception {
+                runTest("compiler/testData/ir/irText/declarations/contextReceivers/iteratorOperator.kt");
+            }
+
+            @Test
+            @TestMetadata("lazy.kt")
+            public void testLazy() throws Exception {
+                runTest("compiler/testData/ir/irText/declarations/contextReceivers/lazy.kt");
+            }
+
+            @Test
+            @TestMetadata("localDeclaration.kt")
+            public void testLocalDeclaration() throws Exception {
+                runTest("compiler/testData/ir/irText/declarations/contextReceivers/localDeclaration.kt");
+            }
+
+            @Test
+            @TestMetadata("overloadPriority.kt")
+            public void testOverloadPriority() throws Exception {
+                runTest("compiler/testData/ir/irText/declarations/contextReceivers/overloadPriority.kt");
+            }
+
+            @Test
+            @TestMetadata("overloading.kt")
+            public void testOverloading() throws Exception {
+                runTest("compiler/testData/ir/irText/declarations/contextReceivers/overloading.kt");
+            }
+
+            @Test
+            @TestMetadata("passingLambdaToContextualParam.kt")
+            public void testPassingLambdaToContextualParam() throws Exception {
+                runTest("compiler/testData/ir/irText/declarations/contextReceivers/passingLambdaToContextualParam.kt");
+            }
+
+            @Test
+            @TestMetadata("plusMatrix.kt")
+            public void testPlusMatrix() throws Exception {
+                runTest("compiler/testData/ir/irText/declarations/contextReceivers/plusMatrix.kt");
+            }
+
+            @Test
+            @TestMetadata("property.kt")
+            public void testProperty() throws Exception {
+                runTest("compiler/testData/ir/irText/declarations/contextReceivers/property.kt");
+            }
+
+            @Test
+            @TestMetadata("thisWithCustomLabel.kt")
+            public void testThisWithCustomLabel() throws Exception {
+                runTest("compiler/testData/ir/irText/declarations/contextReceivers/thisWithCustomLabel.kt");
+            }
+
+            @Test
+            @TestMetadata("typeParameterAsContextReceiver.kt")
+            public void testTypeParameterAsContextReceiver() throws Exception {
+                runTest("compiler/testData/ir/irText/declarations/contextReceivers/typeParameterAsContextReceiver.kt");
+            }
+
+            @Test
+            @TestMetadata("unaryOperators.kt")
+            public void testUnaryOperators() throws Exception {
+                runTest("compiler/testData/ir/irText/declarations/contextReceivers/unaryOperators.kt");
+            }
+
+            @Nested
+            @TestMetadata("compiler/testData/ir/irText/declarations/contextReceivers/fromKEEP")
+            @TestDataPath("$PROJECT_ROOT")
+            public class FromKEEP {
+                @Test
+                public void testAllFilesPresentInFromKEEP() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/ir/irText/declarations/contextReceivers/fromKEEP"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+                }
+
+                @Test
+                @TestMetadata("canvas.kt")
+                public void testCanvas() throws Exception {
+                    runTest("compiler/testData/ir/irText/declarations/contextReceivers/fromKEEP/canvas.kt");
+                }
+
+                @Test
+                @TestMetadata("compareTo.kt")
+                public void testCompareTo() throws Exception {
+                    runTest("compiler/testData/ir/irText/declarations/contextReceivers/fromKEEP/compareTo.kt");
+                }
+
+                @Test
+                @TestMetadata("dp.kt")
+                public void testDp() throws Exception {
+                    runTest("compiler/testData/ir/irText/declarations/contextReceivers/fromKEEP/dp.kt");
+                }
+
+                @Test
+                @TestMetadata("functionalType.kt")
+                public void testFunctionalType() throws Exception {
+                    runTest("compiler/testData/ir/irText/declarations/contextReceivers/fromKEEP/functionalType.kt");
+                }
+
+                @Test
+                @TestMetadata("monoidSum.kt")
+                public void testMonoidSum() throws Exception {
+                    runTest("compiler/testData/ir/irText/declarations/contextReceivers/fromKEEP/monoidSum.kt");
+                }
             }
         }
 

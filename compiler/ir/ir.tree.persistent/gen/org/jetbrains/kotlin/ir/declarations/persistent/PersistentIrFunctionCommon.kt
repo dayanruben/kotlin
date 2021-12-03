@@ -135,6 +135,8 @@ internal abstract class PersistentIrFunctionCommon(
             }
         }
 
+    override var contextReceiverParametersCount: Int = 0
+
     override var valueParametersField: List<IrValueParameter> = emptyList()
 
     override var valueParametersSymbolField: List<IrValueParameterSymbol>

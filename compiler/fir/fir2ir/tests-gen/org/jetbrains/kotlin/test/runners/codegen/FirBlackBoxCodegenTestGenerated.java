@@ -9829,12 +9829,6 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         }
 
         @Test
-        @TestMetadata("kt49294.kt")
-        public void testKt49294() throws Exception {
-            runTest("compiler/testData/codegen/box/coroutines/kt49294.kt");
-        }
-
-        @Test
         @TestMetadata("lastExpressionIsLoop.kt")
         public void testLastExpressionIsLoop() throws Exception {
             runTest("compiler/testData/codegen/box/coroutines/lastExpressionIsLoop.kt");
@@ -10660,6 +10654,34 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
                             runTest("compiler/testData/codegen/box/coroutines/featureIntersection/callableReference/function/local/equalsHashCode.kt");
                         }
                     }
+                }
+            }
+
+            @Nested
+            @TestMetadata("compiler/testData/codegen/box/coroutines/featureIntersection/funInterface")
+            @TestDataPath("$PROJECT_ROOT")
+            public class FunInterface {
+                @Test
+                public void testAllFilesPresentInFunInterface() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/coroutines/featureIntersection/funInterface"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+                }
+
+                @Test
+                @TestMetadata("kt47549.kt")
+                public void testKt47549() throws Exception {
+                    runTest("compiler/testData/codegen/box/coroutines/featureIntersection/funInterface/kt47549.kt");
+                }
+
+                @Test
+                @TestMetadata("kt47549_1.kt")
+                public void testKt47549_1() throws Exception {
+                    runTest("compiler/testData/codegen/box/coroutines/featureIntersection/funInterface/kt47549_1.kt");
+                }
+
+                @Test
+                @TestMetadata("kt49294.kt")
+                public void testKt49294() throws Exception {
+                    runTest("compiler/testData/codegen/box/coroutines/featureIntersection/funInterface/kt49294.kt");
                 }
             }
 
@@ -12792,6 +12814,28 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         @TestMetadata("unitComponent.kt")
         public void testUnitComponent() throws Exception {
             runTest("compiler/testData/codegen/box/dataClasses/unitComponent.kt");
+        }
+
+        @Nested
+        @TestMetadata("compiler/testData/codegen/box/dataClasses/components")
+        @TestDataPath("$PROJECT_ROOT")
+        public class Components {
+            @Test
+            public void testAllFilesPresentInComponents() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/dataClasses/components"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            }
+
+            @Test
+            @TestMetadata("kt49812.kt")
+            public void testKt49812() throws Exception {
+                runTest("compiler/testData/codegen/box/dataClasses/components/kt49812.kt");
+            }
+
+            @Test
+            @TestMetadata("kt49936.kt")
+            public void testKt49936() throws Exception {
+                runTest("compiler/testData/codegen/box/dataClasses/components/kt49936.kt");
+            }
         }
 
         @Nested
@@ -15888,6 +15932,64 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
     }
 
     @Nested
+    @TestMetadata("compiler/testData/codegen/box/extensionClasses")
+    @TestDataPath("$PROJECT_ROOT")
+    public class ExtensionClasses {
+        @Test
+        public void testAllFilesPresentInExtensionClasses() throws Exception {
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/extensionClasses"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+        }
+
+        @Test
+        @TestMetadata("constructors.kt")
+        public void testConstructors() throws Exception {
+            runTest("compiler/testData/codegen/box/extensionClasses/constructors.kt");
+        }
+
+        @Test
+        @TestMetadata("contextualPrimaryConstructorWithParams.kt")
+        public void testContextualPrimaryConstructorWithParams() throws Exception {
+            runTest("compiler/testData/codegen/box/extensionClasses/contextualPrimaryConstructorWithParams.kt");
+        }
+
+        @Test
+        @TestMetadata("edouble.kt")
+        public void testEdouble() throws Exception {
+            runTest("compiler/testData/codegen/box/extensionClasses/edouble.kt");
+        }
+
+        @Test
+        @TestMetadata("genericCollection.kt")
+        public void testGenericCollection() throws Exception {
+            runTest("compiler/testData/codegen/box/extensionClasses/genericCollection.kt");
+        }
+
+        @Test
+        @TestMetadata("generics.kt")
+        public void testGenerics() throws Exception {
+            runTest("compiler/testData/codegen/box/extensionClasses/generics.kt");
+        }
+
+        @Test
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("compiler/testData/codegen/box/extensionClasses/simple.kt");
+        }
+
+        @Test
+        @TestMetadata("typealiasForContextualClass.kt")
+        public void testTypealiasForContextualClass() throws Exception {
+            runTest("compiler/testData/codegen/box/extensionClasses/typealiasForContextualClass.kt");
+        }
+
+        @Test
+        @TestMetadata("useFromAnotherModule.kt")
+        public void testUseFromAnotherModule() throws Exception {
+            runTest("compiler/testData/codegen/box/extensionClasses/useFromAnotherModule.kt");
+        }
+    }
+
+    @Nested
     @TestMetadata("compiler/testData/codegen/box/extensionFunctions")
     @TestDataPath("$PROJECT_ROOT")
     public class ExtensionFunctions {
@@ -16062,6 +16164,194 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         @TestMetadata("whenFail.kt")
         public void testWhenFail() throws Exception {
             runTest("compiler/testData/codegen/box/extensionFunctions/whenFail.kt");
+        }
+
+        @Nested
+        @TestMetadata("compiler/testData/codegen/box/extensionFunctions/contextReceivers")
+        @TestDataPath("$PROJECT_ROOT")
+        public class ContextReceivers {
+            @Test
+            public void testAllFilesPresentInContextReceivers() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/extensionFunctions/contextReceivers"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            }
+
+            @Test
+            @TestMetadata("arrayAccessCompositeOperators.kt")
+            public void testArrayAccessCompositeOperators() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/arrayAccessCompositeOperators.kt");
+            }
+
+            @Test
+            @TestMetadata("arrayAccessOperators.kt")
+            public void testArrayAccessOperators() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/arrayAccessOperators.kt");
+            }
+
+            @Test
+            @TestMetadata("compoundAssignmentOperators.kt")
+            public void testCompoundAssignmentOperators() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/compoundAssignmentOperators.kt");
+            }
+
+            @Test
+            @TestMetadata("contextAndExtensionSameName.kt")
+            public void testContextAndExtensionSameName() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/contextAndExtensionSameName.kt");
+            }
+
+            @Test
+            @TestMetadata("contextualFunctionConversion.kt")
+            public void testContextualFunctionConversion() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/contextualFunctionConversion.kt");
+            }
+
+            @Test
+            @TestMetadata("delegatedPropertiesOperators.kt")
+            public void testDelegatedPropertiesOperators() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/delegatedPropertiesOperators.kt");
+            }
+
+            @Test
+            @TestMetadata("inferGenericPropertyType.kt")
+            public void testInferGenericPropertyType() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/inferGenericPropertyType.kt");
+            }
+
+            @Test
+            @TestMetadata("iteratorOperator.kt")
+            public void testIteratorOperator() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/iteratorOperator.kt");
+            }
+
+            @Test
+            @TestMetadata("localDeclaration.kt")
+            public void testLocalDeclaration() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/localDeclaration.kt");
+            }
+
+            @Test
+            @TestMetadata("overload.kt")
+            public void testOverload() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/overload.kt");
+            }
+
+            @Test
+            @TestMetadata("overloading.kt")
+            public void testOverloading() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/overloading.kt");
+            }
+
+            @Test
+            @TestMetadata("passingLambdaToContextualParam.kt")
+            public void testPassingLambdaToContextualParam() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/passingLambdaToContextualParam.kt");
+            }
+
+            @Test
+            @TestMetadata("plusAssign.kt")
+            public void testPlusAssign() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/plusAssign.kt");
+            }
+
+            @Test
+            @TestMetadata("plusMatrix.kt")
+            public void testPlusMatrix() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/plusMatrix.kt");
+            }
+
+            @Test
+            @TestMetadata("propertyCompoundAssignment.kt")
+            public void testPropertyCompoundAssignment() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/propertyCompoundAssignment.kt");
+            }
+
+            @Test
+            @TestMetadata("simpleCall.kt")
+            public void testSimpleCall() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/simpleCall.kt");
+            }
+
+            @Test
+            @TestMetadata("this.kt")
+            public void testThis() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/this.kt");
+            }
+
+            @Test
+            @TestMetadata("unaryOperators.kt")
+            public void testUnaryOperators() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/unaryOperators.kt");
+            }
+
+            @Test
+            @TestMetadata("useFromAnotherModule.kt")
+            public void testUseFromAnotherModule() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/useFromAnotherModule.kt");
+            }
+
+            @Test
+            @TestMetadata("useFromAnotherModuleSuspending.kt")
+            public void testUseFromAnotherModuleSuspending() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/useFromAnotherModuleSuspending.kt");
+            }
+
+            @Test
+            @TestMetadata("useFromAnotherModuleWithDefaultParameterValues.kt")
+            public void testUseFromAnotherModuleWithDefaultParameterValues() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/useFromAnotherModuleWithDefaultParameterValues.kt");
+            }
+
+            @Nested
+            @TestMetadata("compiler/testData/codegen/box/extensionFunctions/contextReceivers/fromKEEP")
+            @TestDataPath("$PROJECT_ROOT")
+            public class FromKEEP {
+                @Test
+                public void testAllFilesPresentInFromKEEP() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/extensionFunctions/contextReceivers/fromKEEP"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+                }
+
+                @Test
+                @TestMetadata("canvas.kt")
+                public void testCanvas() throws Exception {
+                    runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/fromKEEP/canvas.kt");
+                }
+
+                @Test
+                @TestMetadata("compareTo.kt")
+                public void testCompareTo() throws Exception {
+                    runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/fromKEEP/compareTo.kt");
+                }
+
+                @Test
+                @TestMetadata("decimateEveryEvenThird.kt")
+                public void testDecimateEveryEvenThird() throws Exception {
+                    runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/fromKEEP/decimateEveryEvenThird.kt");
+                }
+
+                @Test
+                @TestMetadata("dp.kt")
+                public void testDp() throws Exception {
+                    runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/fromKEEP/dp.kt");
+                }
+
+                @Test
+                @TestMetadata("functionalType.kt")
+                public void testFunctionalType() throws Exception {
+                    runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/fromKEEP/functionalType.kt");
+                }
+
+                @Test
+                @TestMetadata("monoidSum.kt")
+                public void testMonoidSum() throws Exception {
+                    runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/fromKEEP/monoidSum.kt");
+                }
+
+                @Test
+                @TestMetadata("structuredConcurrency.kt")
+                public void testStructuredConcurrency() throws Exception {
+                    runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/fromKEEP/structuredConcurrency.kt");
+                }
+            }
         }
     }
 

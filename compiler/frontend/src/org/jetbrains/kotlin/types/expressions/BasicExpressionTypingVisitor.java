@@ -66,7 +66,9 @@ import org.jetbrains.kotlin.resolve.checkers.UnderscoreChecker;
 import org.jetbrains.kotlin.resolve.constants.*;
 import org.jetbrains.kotlin.resolve.scopes.LexicalScopeKind;
 import org.jetbrains.kotlin.resolve.scopes.LexicalWritableScope;
+import org.jetbrains.kotlin.resolve.scopes.receivers.ContextReceiver;
 import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver;
+import org.jetbrains.kotlin.resolve.scopes.receivers.ExtensionReceiver;
 import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue;
 import org.jetbrains.kotlin.resolve.scopes.utils.ScopeUtilsKt;
 import org.jetbrains.kotlin.types.*;
@@ -596,7 +598,13 @@ public class BasicExpressionTypingVisitor extends ExpressionTypingVisitor {
                 }
             }
             else if (!receivers.isEmpty()) {
-                result = receivers.get(0);
+                // `this` cannot point to context receiver
+                for (ReceiverParameterDescriptor receiver : receivers) {
+                    if (!(receiver.getValue() instanceof ContextReceiver)) {
+                        result = receiver;
+                        break;
+                    }
+                }
             }
             if (result != null) {
                 context.trace.record(REFERENCE_TARGET, expression.getInstanceReference(), result.getContainingDeclaration());

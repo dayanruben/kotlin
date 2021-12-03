@@ -5,12 +5,12 @@
 
 package org.jetbrains.kotlin.analysis.api.descriptors.utils
 
-import org.jetbrains.kotlin.analysis.api.annotations.KtNamedConstantValue
+import org.jetbrains.kotlin.analysis.api.annotations.*
 import org.jetbrains.kotlin.analysis.api.components.KtTypeRendererOptions
 import org.jetbrains.kotlin.analysis.api.descriptors.symbols.descriptorBased.base.classId
+import org.jetbrains.kotlin.analysis.api.descriptors.symbols.descriptorBased.base.getKtNamedAnnotationArguments
 import org.jetbrains.kotlin.analysis.api.descriptors.symbols.descriptorBased.base.maybeLocalClassId
-import org.jetbrains.kotlin.analysis.api.descriptors.symbols.descriptorBased.base.toKtConstantValue
-import org.jetbrains.kotlin.analysis.api.symbols.markers.*
+import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.builtins.functions.FunctionClassDescriptor
 import org.jetbrains.kotlin.builtins.getReceiverTypeFromFunctionType
 import org.jetbrains.kotlin.builtins.getReturnTypeFromFunctionType
@@ -37,7 +37,7 @@ internal class KtFe10TypeRenderer(private val options: KtTypeRendererOptions, pr
         const val ERROR_TYPE_TEXT = "ERROR_TYPE"
     }
 
-    fun render(type: KotlinType, consumer: KtFe10RendererConsumer) {
+    fun render(type: KotlinType, consumer: PrettyPrinter) {
         consumer.renderType(type)
     }
 
@@ -45,7 +45,11 @@ internal class KtFe10TypeRenderer(private val options: KtTypeRendererOptions, pr
         if (isDebugText) {
             renderTypeAnnotationsDebug(type)
         } else {
-            renderFe10Annotations(type.annotations) { classId ->
+            renderFe10Annotations(
+                type.annotations,
+                isSingleLineAnnotations = true,
+                renderAnnotationWithShortNames = options.shortQualifiedNames
+            ) { classId ->
                 classId != StandardClassIds.Annotations.ExtensionFunctionType
             }
         }
@@ -85,15 +89,15 @@ internal class KtFe10TypeRenderer(private val options: KtTypeRendererOptions, pr
         val annotations = type.annotations
             .filter { it.annotationClass?.classId != StandardClassIds.Annotations.ExtensionFunctionType }
 
-        renderList(annotations, separator = " ", postfix = "  ", renderWhenEmpty = false) { renderTypeAnnotationDebug(it) }
+        printCollectionIfNotEmpty(annotations, separator = " ", postfix = "  ") { renderTypeAnnotationDebug(it) }
     }
 
     private fun KtFe10RendererConsumer.renderTypeAnnotationDebug(annotation: AnnotationDescriptor) {
-        val namedValues = annotation.allValueArguments.map { KtNamedConstantValue(it.key.asString(), it.value.toKtConstantValue()) }
+        val namedValues = annotation.getKtNamedAnnotationArguments()
         renderAnnotationDebug(annotation.annotationClass?.classId, namedValues)
     }
 
-    private fun KtFe10RendererConsumer.renderAnnotationDebug(classId: ClassId?, namedValues: List<KtNamedConstantValue>) {
+    private fun KtFe10RendererConsumer.renderAnnotationDebug(classId: ClassId?, namedValues: List<KtNamedAnnotationValue>) {
         append("@")
 
         if (classId != null) {
@@ -104,21 +108,22 @@ internal class KtFe10TypeRenderer(private val options: KtTypeRendererOptions, pr
             print("<ERROR TYPE REF>")
         }
 
-        renderList(namedValues, separator = ", ", prefix = "(", postfix = ")") { (name, value) ->
-            append(name).append(" = ")
+        printCollection(namedValues, separator = ", ", prefix = "(", postfix = ")") { (name, value) ->
+            append(name.render())
+            append(" = ")
             renderConstantValueDebug(value)
         }
     }
 
-    private fun KtFe10RendererConsumer.renderConstantValueDebug(value: KtConstantValue) {
+    private fun KtFe10RendererConsumer.renderConstantValueDebug(value: KtAnnotationValue) {
         when (value) {
-            is KtAnnotationConstantValue -> renderAnnotationDebug(value.classId, value.arguments)
-            is KtArrayConstantValue ->
-                renderList(value.values, separator = ", ", prefix = "[", postfix = "]") { renderConstantValueDebug(it) }
-            is KtEnumEntryConstantValue -> append(value.callableId)
-            is KtLiteralConstantValue<*> -> append(value.constantValueKind.asString).append("(").append(value.value).append(")")
-            KtUnsupportedConstantValue -> append(KtUnsupportedConstantValue::class.java.simpleName)
-            is KtErrorValue -> append("<ERROR>")
+            is KtAnnotationApplicationValue -> renderAnnotationDebug(value.annotationValue.classId, value.annotationValue.arguments)
+            is KtArrayAnnotationValue ->
+                printCollection(value.values, separator = ", ", prefix = "[", postfix = "]") { renderConstantValueDebug(it) }
+            is KtEnumEntryAnnotationValue -> append(value.callableId?.asSingleFqName()?.render())
+            is KtConstantAnnotationValue -> append(value.constantValue.constantValueKind.asString).append("(").append(value.constantValue.value.toString()).append(")")
+            KtUnsupportedAnnotationValue -> append(KtUnsupportedAnnotationValue::class.java.simpleName)
+            is KtKClassAnnotationValue -> append(value.renderAsSourceCode())
         }
     }
 
@@ -167,7 +172,7 @@ internal class KtFe10TypeRenderer(private val options: KtTypeRendererOptions, pr
         if (isDebugText) {
             append("it")
         }
-        renderList(typeConstructor.supertypes, separator = " & ", prefix = "(", postfix = ")") { renderType(it) }
+        printCollection(typeConstructor.supertypes, separator = " & ", prefix = "(", postfix = ")") { renderType(it) }
     }
 
     private fun KtFe10RendererConsumer.renderFunctionType(type: SimpleType) {
@@ -179,7 +184,7 @@ internal class KtFe10TypeRenderer(private val options: KtTypeRendererOptions, pr
             renderType(receiverType)
             append(".")
         }
-        renderList(valueParameters, separator = ", ", prefix = "(", postfix = ")") { renderTypeProjection(it) }
+        printCollection(valueParameters, separator = ", ", prefix = "(", postfix = ")") { renderTypeProjection(it) }
         append(" -> ")
         renderType(returnType)
     }
@@ -191,7 +196,7 @@ internal class KtFe10TypeRenderer(private val options: KtTypeRendererOptions, pr
     private fun KtFe10RendererConsumer.renderOrdinaryType(type: SimpleType) {
         val nestedType = KtFe10JvmTypeMapperContext.getNestedType(type)
         renderTypeSegment(nestedType.root, isRoot = true)
-        renderList(nestedType.nested, separator = ".", prefix = ".", postfix = "", renderWhenEmpty = false) { renderTypeSegment(it) }
+        printCollectionIfNotEmpty(nestedType.nested, separator = ".", prefix = ".", postfix = "") { renderTypeSegment(it) }
     }
 
     private fun KtFe10RendererConsumer.renderTypeSegment(typeSegment: PossiblyInnerType, isRoot: Boolean = false) {
@@ -211,11 +216,11 @@ internal class KtFe10TypeRenderer(private val options: KtTypeRendererOptions, pr
         }
 
         val arguments = typeSegment.arguments
-        renderList(arguments, separator = ", ", prefix = "<", postfix = ">", renderWhenEmpty = false) { renderTypeProjection(it) }
+        printCollectionIfNotEmpty(arguments, separator = ", ", prefix = "<", postfix = ">") { renderTypeProjection(it) }
     }
 
     private fun KtFe10RendererConsumer.renderFqName(fqName: FqName) {
-        renderList(fqName.pathSegments(), separator = ".") { append(it.render()) }
+        printCollection(fqName.pathSegments(), separator = ".") { append(it.render()) }
     }
 
     private fun KtFe10RendererConsumer.renderTypeProjection(projection: TypeProjection) {

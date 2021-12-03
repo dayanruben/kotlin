@@ -10572,6 +10572,296 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             public void testVariableInvoke() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/extensions/variableInvoke.kt");
             }
+
+            @Nested
+            @TestMetadata("compiler/testData/diagnostics/tests/extensions/contextReceivers")
+            @TestDataPath("$PROJECT_ROOT")
+            public class ContextReceivers {
+                @Test
+                public void testAllFilesPresentInContextReceivers() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/extensions/contextReceivers"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
+                }
+
+                @Test
+                @TestMetadata("ambiguityInGroup.kt")
+                public void testAmbiguityInGroup() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/ambiguityInGroup.kt");
+                }
+
+                @Test
+                @TestMetadata("contextReceiverTypeParamsUsage.kt")
+                public void testContextReceiverTypeParamsUsage() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/contextReceiverTypeParamsUsage.kt");
+                }
+
+                @Test
+                @TestMetadata("contextReceiverTypeParamsUsageError.kt")
+                public void testContextReceiverTypeParamsUsageError() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/contextReceiverTypeParamsUsageError.kt");
+                }
+
+                @Test
+                @TestMetadata("contextualFunctionalTypeConversion.kt")
+                public void testContextualFunctionalTypeConversion() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/contextualFunctionalTypeConversion.kt");
+                }
+
+                @Test
+                @TestMetadata("functionalType.kt")
+                public void testFunctionalType() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/functionalType.kt");
+                }
+
+                @Test
+                @TestMetadata("genericOuterClass.kt")
+                public void testGenericOuterClass() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/genericOuterClass.kt");
+                }
+
+                @Test
+                @TestMetadata("insideDeclaration.kt")
+                public void testInsideDeclaration() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/insideDeclaration.kt");
+                }
+
+                @Test
+                @TestMetadata("labelsFromClassNameForbidden.kt")
+                public void testLabelsFromClassNameForbidden() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/labelsFromClassNameForbidden.kt");
+                }
+
+                @Test
+                @TestMetadata("lazy.kt")
+                public void testLazy() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/lazy.kt");
+                }
+
+                @Test
+                @TestMetadata("localDeclaration.kt")
+                public void testLocalDeclaration() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/localDeclaration.kt");
+                }
+
+                @Test
+                @TestMetadata("manyReceivers.kt")
+                public void testManyReceivers() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/manyReceivers.kt");
+                }
+
+                @Test
+                @TestMetadata("noBackingField.kt")
+                public void testNoBackingField() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/noBackingField.kt");
+                }
+
+                @Test
+                @TestMetadata("noContextReceiversOnInlineClasses.kt")
+                public void testNoContextReceiversOnInlineClasses() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/noContextReceiversOnInlineClasses.kt");
+                }
+
+                @Test
+                @TestMetadata("noExplicitReceiver.kt")
+                public void testNoExplicitReceiver() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/noExplicitReceiver.kt");
+                }
+
+                @Test
+                @TestMetadata("noLabelsByClassName.kt")
+                public void testNoLabelsByClassName() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/noLabelsByClassName.kt");
+                }
+
+                @Test
+                @TestMetadata("outerClass.kt")
+                public void testOuterClass() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/outerClass.kt");
+                }
+
+                @Test
+                @TestMetadata("overloadPriority.kt")
+                public void testOverloadPriority() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/overloadPriority.kt");
+                }
+
+                @Test
+                @TestMetadata("overloading.kt")
+                public void testOverloading() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/overloading.kt");
+                }
+
+                @Test
+                @TestMetadata("plusMatrix.kt")
+                public void testPlusMatrix() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/plusMatrix.kt");
+                }
+
+                @Test
+                @TestMetadata("superWithContext.kt")
+                public void testSuperWithContext() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/superWithContext.kt");
+                }
+
+                @Test
+                @TestMetadata("syntaxError.kt")
+                public void testSyntaxError() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/syntaxError.kt");
+                }
+
+                @Test
+                @TestMetadata("thisIdentifierInfo.kt")
+                public void testThisIdentifierInfo() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/thisIdentifierInfo.kt");
+                }
+
+                @Test
+                @TestMetadata("thisWithCustomLabel.kt")
+                public void testThisWithCustomLabel() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/thisWithCustomLabel.kt");
+                }
+
+                @Test
+                @TestMetadata("thisWithReceiverLabelsClasses.kt")
+                public void testThisWithReceiverLabelsClasses() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/thisWithReceiverLabelsClasses.kt");
+                }
+
+                @Test
+                @TestMetadata("thisWithReceiverLabelsFunctions.kt")
+                public void testThisWithReceiverLabelsFunctions() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/thisWithReceiverLabelsFunctions.kt");
+                }
+
+                @Test
+                @TestMetadata("thisWithReceiverLabelsProperties.kt")
+                public void testThisWithReceiverLabelsProperties() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/thisWithReceiverLabelsProperties.kt");
+                }
+
+                @Test
+                @TestMetadata("typeParameterAsContextReceiver.kt")
+                public void testTypeParameterAsContextReceiver() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/typeParameterAsContextReceiver.kt");
+                }
+
+                @Test
+                @TestMetadata("typeParameterized.kt")
+                public void testTypeParameterized() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/typeParameterized.kt");
+                }
+
+                @Test
+                @TestMetadata("typeParameterizedList.kt")
+                public void testTypeParameterizedList() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/typeParameterizedList.kt");
+                }
+
+                @Test
+                @TestMetadata("unsupported.kt")
+                public void testUnsupported() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/unsupported.kt");
+                }
+
+                @Test
+                @TestMetadata("withExplicitReceiver.kt")
+                public void testWithExplicitReceiver() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/withExplicitReceiver.kt");
+                }
+
+                @Test
+                @TestMetadata("withExplicitReceiverError.kt")
+                public void testWithExplicitReceiverError() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/withExplicitReceiverError.kt");
+                }
+
+                @Nested
+                @TestMetadata("compiler/testData/diagnostics/tests/extensions/contextReceivers/fromKEEP")
+                @TestDataPath("$PROJECT_ROOT")
+                public class FromKEEP {
+                    @Test
+                    public void testAllFilesPresentInFromKEEP() throws Exception {
+                        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/extensions/contextReceivers/fromKEEP"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
+                    }
+
+                    @Test
+                    @TestMetadata("autoCloseScope.kt")
+                    public void testAutoCloseScope() throws Exception {
+                        runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/fromKEEP/autoCloseScope.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("canvas.kt")
+                    public void testCanvas() throws Exception {
+                        runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/fromKEEP/canvas.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("clickHandler.kt")
+                    public void testClickHandler() throws Exception {
+                        runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/fromKEEP/clickHandler.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("compareTo.kt")
+                    public void testCompareTo() throws Exception {
+                        runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/fromKEEP/compareTo.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("decimateEveryEvenThird.kt")
+                    public void testDecimateEveryEvenThird() throws Exception {
+                        runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/fromKEEP/decimateEveryEvenThird.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("dp.kt")
+                    public void testDp() throws Exception {
+                        runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/fromKEEP/dp.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("functionalType.kt")
+                    public void testFunctionalType() throws Exception {
+                        runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/fromKEEP/functionalType.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("iterableClass.kt")
+                    public void testIterableClass() throws Exception {
+                        runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/fromKEEP/iterableClass.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("json.kt")
+                    public void testJson() throws Exception {
+                        runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/fromKEEP/json.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("loggingContext.kt")
+                    public void testLoggingContext() throws Exception {
+                        runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/fromKEEP/loggingContext.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("monoidSum.kt")
+                    public void testMonoidSum() throws Exception {
+                        runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/fromKEEP/monoidSum.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("transaction.kt")
+                    public void testTransaction() throws Exception {
+                        runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/fromKEEP/transaction.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("userStorage.kt")
+                    public void testUserStorage() throws Exception {
+                        runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/fromKEEP/userStorage.kt");
+                    }
+                }
+            }
         }
 
         @Nested

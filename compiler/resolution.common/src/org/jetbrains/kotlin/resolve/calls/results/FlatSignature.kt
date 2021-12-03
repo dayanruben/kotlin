@@ -18,6 +18,7 @@ class FlatSignature<out T> constructor(
     val origin: T,
     val typeParameters: Collection<TypeParameterMarker>,
     val hasExtensionReceiver: Boolean,
+    val contextReceiverCount: Int,
     val hasVarargs: Boolean,
     val numDefaults: Int,
     val isExpect: Boolean,
@@ -31,12 +32,13 @@ class FlatSignature<out T> constructor(
         typeParameters: Collection<TypeParameterMarker>,
         valueParameterTypes: List<KotlinTypeMarker?>,
         hasExtensionReceiver: Boolean,
+        contextReceiverCount: Int,
         hasVarargs: Boolean,
         numDefaults: Int,
         isExpect: Boolean,
         isSyntheticMember: Boolean,
     ) : this(
-        origin, typeParameters, hasExtensionReceiver, hasVarargs, numDefaults, isExpect,
+        origin, typeParameters, hasExtensionReceiver, contextReceiverCount, hasVarargs, numDefaults, isExpect,
         isSyntheticMember, valueParameterTypes.map(::TypeWithConversion)
     )
 
@@ -64,9 +66,11 @@ private fun <T> SimpleConstraintSystem.isValueParameterTypeNotLessSpecific(
 ): Boolean {
     val typeParameters = general.typeParameters
     val typeSubstitutor = registerTypeVariables(typeParameters)
-    val valueParameterTypes = specific.valueParameterTypes.map(typeKindSelector).zip(general.valueParameterTypes.map(typeKindSelector))
+    val valueParamsWithoutContextReceivers =
+        specific.valueParameterTypes.drop(specific.contextReceiverCount).map(typeKindSelector)
+            .zip(general.valueParameterTypes.drop(general.contextReceiverCount).map(typeKindSelector))
 
-    for ((specificType, generalType) in valueParameterTypes) {
+    for ((specificType, generalType) in valueParamsWithoutContextReceivers) {
         if (specificType == null || generalType == null) continue
 
         if (specificityComparator.isDefinitelyLessSpecific(specificType, generalType)) {
@@ -106,7 +110,9 @@ fun <T> SimpleConstraintSystem.isSignatureNotLessSpecific(
     useOriginalSamTypes: Boolean = false
 ): Boolean {
     if (specific.hasExtensionReceiver != general.hasExtensionReceiver) return false
-    if (specific.valueParameterTypes.size != general.valueParameterTypes.size) return false
+    if (specific.contextReceiverCount > general.contextReceiverCount) return false
+    if (specific.valueParameterTypes.size - specific.contextReceiverCount != general.valueParameterTypes.size - general.contextReceiverCount)
+        return false
 
     if (!isValueParameterTypeNotLessSpecific(specific, general, callbacks, specificityComparator) { it?.resultType }) {
         return false
