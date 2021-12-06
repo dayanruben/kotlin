@@ -44,6 +44,7 @@ import org.jetbrains.kotlin.ir.backend.js.codegen.JsGenerationGranularity
 import org.jetbrains.kotlin.ir.backend.js.ic.*
 import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.IrModuleToJsTransformer
 import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.IrModuleToJsTransformerTmp
+import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImplForJsIC
 import org.jetbrains.kotlin.ir.declarations.persistent.PersistentIrFactory
 import org.jetbrains.kotlin.js.analyzer.JsAnalysisResult
 import org.jetbrains.kotlin.js.config.*
@@ -205,39 +206,24 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
 
             val includes = arguments.includes!!
 
-            // TODO: deduplicate
-            val mainModule = run {
-                if (sourcesFiles.isNotEmpty()) {
-                    messageCollector.report(ERROR, "Source files are not supported when -Xinclude is present")
-                }
-                MainModule.Klib(includes)
-            }
-
-            val perFileCache = usePerFileInvalidator(configurationJs)
-
             val start = System.currentTimeMillis()
 
-            val updated = if (perFileCache) {
-                actualizeCacheForModule(includes, outputFilePath, configurationJs, libraries, icCaches, IrFactoryImpl, ::buildCacheForModuleFiles)
-            } else {
-                buildCache(
-                    cachePath = outputFilePath,
-                    project = projectJs,
-                    mainModule = mainModule,
-                    configuration = config.configuration,
-                    dependencies = libraries,
-                    friendDependencies = friendLibraries,
-                    icCache = checkCaches(libraries, icCaches, skipLib = mainModule.libPath)
-                )
-            }
+            val updated = actualizeCacheForModule(
+                includes,
+                outputFilePath,
+                configurationJs,
+                libraries,
+                icCaches,
+                IrFactoryImplForJsIC(WholeWorldStageController()),
+                ::buildCacheForModuleFiles
+            )
 
-            val invalidationType = if (perFileCache) "per-file" else "per-module"
             if (updated) {
-                messageCollector.report(INFO, "IC $invalidationType cache building duration: ${System.currentTimeMillis() - start}ms")
+                messageCollector.report(INFO, "IC per-file cache building duration: ${System.currentTimeMillis() - start}ms")
             } else {
                 messageCollector.report(
                     INFO,
-                    "IC $invalidationType cache up-to-date check duration: ${System.currentTimeMillis() - start}ms"
+                    "IC per-file cache up-to-date check duration: ${System.currentTimeMillis() - start}ms"
                 )
             }
             return OK
@@ -337,7 +323,7 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
                     PhaseConfig(wasmPhases),
                     IrFactoryImpl,
                     exportedDeclarations = setOf(FqName("main")),
-                    emitNameSection = arguments.wasmDebug,
+                    emitNameSection  = arguments.wasmDebug,
                 )
                 val outputWasmFile = outputFile.withReplacedExtensionOrNull(outputFile.extension, "wasm")!!
                 outputWasmFile.writeBytes(res.wasm)
@@ -387,10 +373,16 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
                 else -> JsGenerationGranularity.WHOLE_PROGRAM
             }
             try {
+                val irFactory = when {
+                    arguments.irDceDriven -> PersistentIrFactory()
+                    arguments.irNewIr2Js -> IrFactoryImplForJsIC(WholeWorldStageController())
+                    else -> IrFactoryImpl
+                }
+
                 val ir = compile(
                     module,
                     phaseConfig,
-                    if (arguments.irDceDriven) PersistentIrFactory() else IrFactoryImpl,
+                    irFactory,
                     dceRuntimeDiagnostic = RuntimeDiagnostic.resolve(
                         arguments.irDceRuntimeDiagnostic,
                         messageCollector
