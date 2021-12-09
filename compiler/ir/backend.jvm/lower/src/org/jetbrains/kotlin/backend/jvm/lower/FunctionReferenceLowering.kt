@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.ir.declarations.impl.IrFunctionImpl
 import org.jetbrains.kotlin.ir.declarations.impl.IrVariableImpl
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.expressions.impl.*
+import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.impl.IrVariableSymbolImpl
 import org.jetbrains.kotlin.ir.types.*
@@ -571,7 +572,16 @@ internal class FunctionReferenceLowering(private val context: JvmBackendContext)
             }
 
         private val adaptedReferenceOriginalTarget: IrFunction? = adapteeCall?.symbol?.owner
-        private val isAdaptedReference = adaptedReferenceOriginalTarget != null
+        private val isAdaptedFunInterfaceConstructorReference =
+            callee.origin == IrDeclarationOrigin.ADAPTER_FOR_FUN_INTERFACE_CONSTRUCTOR
+        private val constructedFunInterfaceSymbol: IrClassSymbol? =
+            if (isAdaptedFunInterfaceConstructorReference)
+                callee.returnType.classOrNull
+                    ?: throw AssertionError("Fun interface type expected: ${callee.returnType.render()}")
+            else
+                null
+        private val isAdaptedReference =
+            isAdaptedFunInterfaceConstructorReference || adaptedReferenceOriginalTarget != null
 
         private val samInterface = samSuperType?.getClass()
         private val isKotlinFunInterface = samInterface != null && !samInterface.isFromJava()
@@ -580,14 +590,16 @@ internal class FunctionReferenceLowering(private val context: JvmBackendContext)
             isKotlinFunInterface && (isAdaptedReference || !isLambda)
 
         private val superType =
-            samSuperType ?: when {
-                isLambda -> context.ir.symbols.lambdaClass
-                useOptimizedSuperClass -> when {
-                    isAdaptedReference -> context.ir.symbols.adaptedFunctionReference
-                    else -> context.ir.symbols.functionReferenceImpl
-                }
-                else -> context.ir.symbols.functionReference
-            }.defaultType
+            samSuperType
+                ?: when {
+                    isLambda -> context.ir.symbols.lambdaClass
+                    isAdaptedFunInterfaceConstructorReference -> context.ir.symbols.funInterfaceConstructorReferenceClass
+                    useOptimizedSuperClass -> when {
+                        isAdaptedReference -> context.ir.symbols.adaptedFunctionReference
+                        else -> context.ir.symbols.functionReferenceImpl
+                    }
+                    else -> context.ir.symbols.functionReference
+                }.defaultType
 
         private val functionReferenceClass = context.irFactory.buildClass {
             setSourceRange(irFunctionReference)
@@ -732,22 +744,29 @@ internal class FunctionReferenceLowering(private val context: JvmBackendContext)
                 }
 
                 // Super constructor:
+                // - For fun interface constructor references, super class is kotlin.jvm.internal.FunInterfaceConstructorReference
+                //   with single constructor 'public FunInterfaceConstructorReference(Class funInterface)'
                 // - For SAM references, the super class is Any
                 // - For lambdas, accepts arity
                 // - For optimized function references (1.4+), accepts:
                 //       arity, [receiver], owner, name, signature, flags
                 // - For unoptimized function references, accepts:
                 //       arity, [receiver]
-                val constructor = if (samSuperType != null) {
-                    context.irBuiltIns.anyClass.owner.constructors.single()
-                } else {
-                    val expectedArity =
-                        if (isLambda && !isAdaptedReference) 1
-                        else 1 + (if (boundReceiver != null) 1 else 0) + (if (useOptimizedSuperClass) 4 else 0)
-                    superType.getClass()!!.constructors.single {
-                        it.valueParameters.size == expectedArity
+                val constructor =
+                    when {
+                        isAdaptedFunInterfaceConstructorReference ->
+                            context.ir.symbols.funInterfaceConstructorReferenceClass.owner.constructors.single()
+                        samSuperType != null ->
+                            context.irBuiltIns.anyClass.owner.constructors.single()
+                        else -> {
+                            val expectedArity =
+                                if (isLambda && !isAdaptedReference) 1
+                                else 1 + (if (boundReceiver != null) 1 else 0) + (if (useOptimizedSuperClass) 4 else 0)
+                            superType.getClass()!!.constructors.single {
+                                it.valueParameters.size == expectedArity
+                            }
+                        }
                     }
-                }
 
                 body = context.createJvmIrBuilder(symbol).run {
                     irBlockBody(startOffset, endOffset) {
@@ -765,18 +784,24 @@ internal class FunctionReferenceLowering(private val context: JvmBackendContext)
             call: IrFunctionAccessExpression,
             generateBoundReceiver: IrBuilder.() -> IrExpression
         ) {
-            var index = 0
-            call.putValueArgument(index++, irInt(argumentTypes.size + if (irFunctionReference.isSuspend) 1 else 0))
-            if (boundReceiver != null) {
-                call.putValueArgument(index++, generateBoundReceiver())
-            }
-            if (!isLambda && useOptimizedSuperClass) {
-                val callableReferenceTarget = adaptedReferenceOriginalTarget ?: callee
-                val owner = calculateOwnerKClass(callableReferenceTarget.parent)
-                call.putValueArgument(index++, kClassToJavaClass(owner))
-                call.putValueArgument(index++, irString(callableReferenceTarget.originalName.asString()))
-                call.putValueArgument(index++, generateSignature(callableReferenceTarget.symbol))
-                call.putValueArgument(index, irInt(getFunctionReferenceFlags(callableReferenceTarget)))
+            if (isAdaptedFunInterfaceConstructorReference) {
+                val funInterfaceKClassRef = kClassReference(constructedFunInterfaceSymbol!!.owner.defaultType)
+                val funInterfaceJavaClassRef = kClassToJavaClass(funInterfaceKClassRef)
+                call.putValueArgument(0, funInterfaceJavaClassRef)
+            } else {
+                var index = 0
+                call.putValueArgument(index++, irInt(argumentTypes.size + if (irFunctionReference.isSuspend) 1 else 0))
+                if (boundReceiver != null) {
+                    call.putValueArgument(index++, generateBoundReceiver())
+                }
+                if (!isLambda && useOptimizedSuperClass) {
+                    val callableReferenceTarget = adaptedReferenceOriginalTarget ?: callee
+                    val owner = calculateOwnerKClass(callableReferenceTarget.parent)
+                    call.putValueArgument(index++, kClassToJavaClass(owner))
+                    call.putValueArgument(index++, irString(callableReferenceTarget.originalName.asString()))
+                    call.putValueArgument(index++, generateSignature(callableReferenceTarget.symbol))
+                    call.putValueArgument(index, irInt(getFunctionReferenceFlags(callableReferenceTarget)))
+                }
             }
         }
 
@@ -824,7 +849,12 @@ internal class FunctionReferenceLowering(private val context: JvmBackendContext)
                     IrDeclarationOrigin.INSTANCE_RECEIVER,
                     functionReferenceClass.symbol.defaultType
                 )
-                if (isLambda) createLambdaInvokeMethod() else createFunctionReferenceInvokeMethod(receiverVar)
+                if (isLambda)
+                    createLambdaInvokeMethod()
+                else if (isAdaptedFunInterfaceConstructorReference)
+                    createFunInterfaceConstructorInvokeMethod()
+                else
+                    createFunctionReferenceInvokeMethod(receiverVar)
             }
 
         // Inline the body of an anonymous function into the generated lambda subclass.
@@ -835,6 +865,17 @@ internal class FunctionReferenceLowering(private val context: JvmBackendContext)
             }
             valueParameters += valueParameterMap.values
             body = callee.moveBodyTo(this, valueParameterMap)
+
+        }
+
+        private fun IrSimpleFunction.createFunInterfaceConstructorInvokeMethod() {
+            val adapterValueParameter = callee.valueParameters.singleOrNull()
+                ?: throw AssertionError("Single value parameter expected: ${callee.render()}")
+            val invokeValueParameter = adapterValueParameter.copyTo(this, index = 0)
+            val valueParameterMap = mapOf(adapterValueParameter to invokeValueParameter)
+            valueParameters = listOf(invokeValueParameter)
+            body = callee.moveBodyTo(this, valueParameterMap)
+            callee.body = null
         }
 
         private fun IrSimpleFunction.createFunctionReferenceInvokeMethod(receiver: IrValueDeclaration?) {

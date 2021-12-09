@@ -243,14 +243,21 @@ enum class LanguageFeature(
     EliminateAmbiguitiesOnInheritedSamInterfaces(KOTLIN_1_7),
     ConsiderExtensionReceiverFromConstrainsInLambda(KOTLIN_1_7, kind = BUG_FIX), // KT-49832
     ProperInternalVisibilityCheckInImportingScope(KOTLIN_1_7, kind = BUG_FIX),
+    InlineClassImplementationByDelegation(KOTLIN_1_7),
 
     // 1.8
 
     ProhibitConfusingSyntaxInWhenBranches(KOTLIN_1_8, kind = BUG_FIX), // KT-48385
     UseConsistentRulesForPrivateConstructorsOfSealedClasses(sinceVersion = KOTLIN_1_8, kind = BUG_FIX), // KT-44866
+    ProgressionsChangingResolve(KOTLIN_1_8), // KT-49276
+
+    // 1.9
+
+    DisableCheckingChangedProgressionsResolve(KOTLIN_1_9), // KT-49276
 
     // Temporarily disabled, see KT-27084/KT-22379
     SoundSmartcastFromLoopConditionForLoopAssignedVariables(sinceVersion = null, kind = BUG_FIX),
+
     // Disabled for indefinite time. See KT-48535 and related discussion
     OptInOnOverrideForbidden(sinceVersion = null, kind = BUG_FIX),
     ApproximateIntegerLiteralTypesInReceiverPosition(sinceVersion = null),
@@ -270,6 +277,7 @@ enum class LanguageFeature(
     JsAllowInvalidCharsIdentifiersEscaping(sinceVersion = null, defaultState = State.DISABLED, kind = UNSTABLE_FEATURE),
     JsAllowValueClassesInExternals(sinceVersion = null, defaultState = State.DISABLED, kind = UNSTABLE_FEATURE),
     ContextReceivers(sinceVersion = null, defaultState = State.DISABLED, kind = UNSTABLE_FEATURE),
+    KotlinFunInterfaceConstructorReference(sinceVersion = null, defaultState = State.DISABLED, kind = UNSTABLE_FEATURE),
 
     ;
 
@@ -358,6 +366,7 @@ enum class LanguageVersion(val major: Int, val minor: Int) : DescriptionAware, L
     KOTLIN_1_6(1, 6),
     KOTLIN_1_7(1, 7),
     KOTLIN_1_8(1, 8),
+    KOTLIN_1_9(1, 9),
     ;
 
     override val isStable: Boolean

@@ -99,6 +99,7 @@ open class ParcelizeDeclarationChecker : DeclarationChecker {
         if (containingClass.isParcelize
             && (declaration.hasDelegate() || bindingContext[BindingContext.BACKING_FIELD_REQUIRED, property] == true)
             && !hasIgnoredOnParcel()
+            && !containingClass.hasCustomParceler()
         ) {
             val reportElement = declaration.nameIdentifier ?: declaration
             diagnosticHolder.report(ErrorsParcelize.PROPERTY_WONT_BE_SERIALIZED.on(reportElement))
@@ -192,6 +193,11 @@ open class ParcelizeDeclarationChecker : DeclarationChecker {
             }
         }
 
+        // The constructor checks are irrelevant for custom parcelers
+        if (descriptor.hasCustomParceler()) {
+            return
+        }
+
         val primaryConstructor = declaration.primaryConstructor
         if (primaryConstructor == null && declaration.secondaryConstructors.isNotEmpty()) {
             val reportElement = declaration.nameIdentifier ?: declaration
@@ -226,9 +232,15 @@ open class ParcelizeDeclarationChecker : DeclarationChecker {
         }
 
         val descriptor = typeMapper.bindingContext[BindingContext.PRIMARY_CONSTRUCTOR_PARAMETER, parameter] ?: return
+
+        // Don't check parameters which won't be serialized
+        if (descriptor.annotations.any { it.fqName in IGNORED_ON_PARCEL_FQ_NAMES }) {
+            return
+        }
+
         val type = descriptor.type
 
-        if (!type.isError && !containerClass.hasCustomParceler()) {
+        if (!type.isError) {
             val asmType = typeMapper.mapType(type, mode = TypeMappingMode.CLASS_DECLARATION)
 
             try {

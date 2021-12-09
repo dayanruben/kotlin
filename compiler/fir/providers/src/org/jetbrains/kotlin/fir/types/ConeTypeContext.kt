@@ -104,12 +104,12 @@ interface ConeTypeContext : TypeSystemContext, TypeSystemOptimizationContext, Ty
 
     override fun FlexibleTypeMarker.upperBound(): SimpleTypeMarker {
         require(this is ConeFlexibleType)
-        return this.upperBound as SimpleTypeMarker
+        return this.upperBound
     }
 
     override fun FlexibleTypeMarker.lowerBound(): SimpleTypeMarker {
         require(this is ConeFlexibleType)
-        return this.lowerBound as SimpleTypeMarker
+        return this.lowerBound
     }
 
     override fun SimpleTypeMarker.asCapturedType(): CapturedTypeMarker? {
@@ -208,6 +208,18 @@ interface ConeTypeContext : TypeSystemContext, TypeSystemOptimizationContext, Ty
         require(this is ConeTypeProjection)
         require(this is ConeKotlinTypeProjection) { "No type for StarProjection" }
         return this.type
+    }
+
+    override fun TypeArgumentMarker.replaceType(newType: KotlinTypeMarker): TypeArgumentMarker {
+        require(this is ConeKotlinTypeProjection)
+        require(newType is ConeKotlinType)
+        return when (this) {
+            is ConeKotlinType -> newType
+            is ConeStarProjection -> ConeStarProjection
+            is ConeKotlinTypeProjectionOut -> ConeKotlinTypeProjectionOut(newType)
+            is ConeKotlinTypeProjectionIn -> ConeKotlinTypeProjectionIn(newType)
+            is ConeKotlinTypeConflictingProjection -> ConeKotlinTypeConflictingProjection(newType)
+        }
     }
 
     override fun TypeConstructorMarker.parametersCount(): Int {

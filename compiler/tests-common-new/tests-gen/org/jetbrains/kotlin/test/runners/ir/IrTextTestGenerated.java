@@ -1395,6 +1395,12 @@ public class IrTextTestGenerated extends AbstractIrTextTest {
         }
 
         @Test
+        @TestMetadata("funInterfaceConstructorReference.kt")
+        public void testFunInterfaceConstructorReference() throws Exception {
+            runTest("compiler/testData/ir/irText/expressions/funInterfaceConstructorReference.kt");
+        }
+
+        @Test
         @TestMetadata("genericConstructorCallWithTypeArguments.kt")
         public void testGenericConstructorCallWithTypeArguments() throws Exception {
             runTest("compiler/testData/ir/irText/expressions/genericConstructorCallWithTypeArguments.kt");
@@ -1656,6 +1662,12 @@ public class IrTextTestGenerated extends AbstractIrTextTest {
         @TestMetadata("kt49203.kt")
         public void testKt49203() throws Exception {
             runTest("compiler/testData/ir/irText/expressions/kt49203.kt");
+        }
+
+        @Test
+        @TestMetadata("kt50028.kt")
+        public void testKt50028() throws Exception {
+            runTest("compiler/testData/ir/irText/expressions/kt50028.kt");
         }
 
         @Test

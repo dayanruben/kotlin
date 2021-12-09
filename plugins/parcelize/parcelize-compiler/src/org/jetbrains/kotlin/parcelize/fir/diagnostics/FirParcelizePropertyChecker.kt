@@ -38,13 +38,13 @@ object FirParcelizePropertyChecker : FirPropertyChecker() {
             if (
                 !fromPrimaryConstructor &&
                 (declaration.hasBackingField || declaration.delegate != null) &&
-                !declaration.hasIgnoredOnParcel()
+                !declaration.hasIgnoredOnParcel() &&
+                !containingClassSymbol.hasCustomParceler(context.session)
             ) {
                 reporter.reportOn(declaration.source, KtErrorsParcelize.PROPERTY_WONT_BE_SERIALIZED, context)
             }
             if (fromPrimaryConstructor) {
                 checkParcelableClassProperty(declaration, containingClassSymbol, context, reporter)
-                checkIgnoredOnParcelUsage(declaration, context, reporter)
             }
         }
 
@@ -54,11 +54,6 @@ object FirParcelizePropertyChecker : FirPropertyChecker() {
                 reporter.reportOn(declaration.source, KtErrorsParcelize.CREATOR_DEFINITION_IS_NOT_ALLOWED, context)
             }
         }
-    }
-
-    private fun checkIgnoredOnParcelUsage(property: FirProperty, context: CheckerContext, reporter: DiagnosticReporter) {
-        val illegalAnnotation = property.annotations.firstOrNull { it.classId in IGNORED_ON_PARCEL_CLASS_IDS } ?: return
-        reporter.reportOn(illegalAnnotation.source, KtErrorsParcelize.INAPPLICABLE_IGNORED_ON_PARCEL_CONSTRUCTOR_PROPERTY, context)
     }
 
     @Suppress("UNUSED_PARAMETER")

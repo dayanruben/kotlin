@@ -672,6 +672,7 @@ tasks {
             ":kotlin-stdlib-js-ir",
             ":kotlin-test:kotlin-test-js-ir".takeIf { !kotlinBuildProperties.isInJpsBuildIdeaSync },
             ":kotlin-test:kotlin-test-js:kotlin-test-js-it".takeIf { !kotlinBuildProperties.isInJpsBuildIdeaSync },
+            ":kotlin-test:kotlin-test-js-ir:kotlin-test-js-ir-it".takeIf { !kotlinBuildProperties.isInJpsBuildIdeaSync },
             ":kotlinx-metadata-jvm",
             ":tools:binary-compatibility-validator"
         )).forEach {
@@ -1170,6 +1171,9 @@ if (disableVerificationTasks) {
 plugins.withType(org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin::class) {
     extensions.configure(org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension::class.java) {
         nodeVersion = "16.13.0"
+        npmInstallTaskProvider?.configure {
+            args += listOf("--network-concurrency", "1", "--mutex", "network")
+        } ?: error("kotlinNpmInstall task should exist inside NodeJsRootExtension")
     }
 }
 

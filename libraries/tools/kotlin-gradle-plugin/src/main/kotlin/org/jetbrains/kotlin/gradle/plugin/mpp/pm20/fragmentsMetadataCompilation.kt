@@ -14,7 +14,9 @@ import org.jetbrains.kotlin.gradle.dsl.pm20Extension
 import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.plugin.KotlinCommonSourceSetProcessor
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
+import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinFragmentModuleCapabilityConfigurator.setModuleCapability
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.util.ComputedCapability
+import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.util.disambiguateName
 import org.jetbrains.kotlin.gradle.targets.metadata.createGenerateProjectStructureMetadataTask
 import org.jetbrains.kotlin.gradle.targets.metadata.filesWithUnpackedArchives
 import org.jetbrains.kotlin.gradle.tasks.*
@@ -113,15 +115,10 @@ private fun configureMetadataCompilationsAndCreateRegistry(
     metadataCompilationRegistry: MetadataCompilationRegistry
 ) {
     val project = module.project
-    val metadataResolutionByFragment = mutableMapOf<KotlinGradleFragment, FragmentGranularMetadataResolver>()
+    val metadataResolverFactory = FragmentGranularMetadataResolverFactory()
     module.fragments.all { fragment ->
-        val transformation = FragmentGranularMetadataResolver(fragment, lazy {
-            fragment.refinesClosure.minus(fragment).map {
-                metadataResolutionByFragment.getValue(it)
-            }
-        })
-        metadataResolutionByFragment[fragment] = transformation
-        createExtractMetadataTask(project, fragment, transformation)
+        val metadataResolver = metadataResolverFactory.getOrCreate(fragment)
+        createExtractMetadataTask(project, fragment, metadataResolver)
     }
     val compileAllTask = project.registerTask<DefaultTask>(lowerCamelCaseName(module.moduleClassifier, "metadataClasses"))
     module.fragments.all { fragment ->

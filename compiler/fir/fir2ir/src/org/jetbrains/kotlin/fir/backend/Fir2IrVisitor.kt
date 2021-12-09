@@ -76,7 +76,11 @@ class Fir2IrVisitor(
     override fun visitField(field: FirField, data: Any?): IrField {
         if (field.isSynthetic) {
             return declarationStorage.getCachedIrField(field)!!.apply {
-                memberGenerator.convertFieldContent(this, field)
+                // If this is a property backing field, then it has no separate initializer,
+                // so we shouldn't convert it
+                if (correspondingPropertySymbol == null) {
+                    memberGenerator.convertFieldContent(this, field)
+                }
             }
         } else {
             throw AssertionError("Unexpected field: ${field.render()}")
@@ -275,7 +279,7 @@ class Fir2IrVisitor(
         }
         val initializer = variable.initializer
         val isNextVariable = initializer is FirFunctionCall &&
-                initializer.resolvedNamedFunctionSymbol()?.callableId?.isIteratorNext() == true &&
+                (initializer.calleeReference.resolvedSymbol as? FirNamedFunctionSymbol)?.callableId?.isIteratorNext() == true &&
                 variable.source.psi?.parent is KtForExpression
         val irVariable = declarationStorage.createIrVariable(
             variable, conversionScope.parentFromStack(),
@@ -393,11 +397,6 @@ class Fir2IrVisitor(
         return checkedSafeCallSubject.convertWithOffsets { startOffset, endOffset ->
             IrGetValueImpl(startOffset, endOffset, lastSubjectVariable.type, lastSubjectVariable.symbol)
         }
-    }
-
-    private fun FirFunctionCall.resolvedNamedFunctionSymbol(): FirNamedFunctionSymbol? {
-        val calleeReference = (calleeReference as? FirResolvedNamedReference) ?: return null
-        return calleeReference.resolvedSymbol as? FirNamedFunctionSymbol
     }
 
     override fun visitAnnotation(annotation: FirAnnotation, data: Any?): IrElement {

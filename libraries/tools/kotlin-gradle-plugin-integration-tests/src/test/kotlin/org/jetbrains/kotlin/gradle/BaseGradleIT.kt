@@ -14,11 +14,13 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.gradle.model.ModelContainer
 import org.jetbrains.kotlin.gradle.model.ModelFetcherBuildAction
 import org.jetbrains.kotlin.gradle.plugin.KotlinJsCompilerType
+import org.jetbrains.kotlin.gradle.testbase.applyAndroidTestFixes
 import org.jetbrains.kotlin.gradle.testbase.enableCacheRedirector
 import org.jetbrains.kotlin.gradle.testbase.extractJavaCompiledSources
 import org.jetbrains.kotlin.gradle.testbase.extractKotlinCompiledSources
 import org.jetbrains.kotlin.gradle.testbase.prettyPrintXml
 import org.jetbrains.kotlin.gradle.testbase.readAndCleanupTestResults
+import org.jetbrains.kotlin.gradle.testbase.addPluginManagementToSettings
 import org.jetbrains.kotlin.gradle.util.*
 import org.jetbrains.kotlin.gradle.util.modify
 import org.jetbrains.kotlin.test.RunnerWithMuteInDatabase
@@ -298,7 +300,11 @@ abstract class BaseGradleIT {
                     addHeapDumpOptionsToPropertiesFile()
                 }
 
-                if (enableCacheRedirector) projectDir.toPath().enableCacheRedirector()
+                projectDir.toPath().apply {
+                    addPluginManagementToSettings()
+                    if (enableCacheRedirector) enableCacheRedirector()
+                    applyAndroidTestFixes()
+                }
             }
         }
 
@@ -441,7 +447,7 @@ abstract class BaseGradleIT {
         }
 
         val options = defaultBuildOptions()
-        val arguments = mutableListOf("-Pkotlin_version=${options.kotlinVersion}")
+        val arguments = mutableListOf("-Pkotlin_version=${options.kotlinVersion}", "-Ptest_fixes_version=$KOTLIN_VERSION")
         options.androidGradlePluginVersion?.let { arguments.add("-Pandroid_tools_version=$it") }
         val env = createEnvironmentVariablesMap(options)
         val wrapperVersion = chooseWrapperVersionOrFinishTest()
@@ -870,6 +876,7 @@ Finished executing task ':$taskName'|
             }
 
             add("-Pkotlin_version=" + options.kotlinVersion)
+            add("-Ptest_fixes_version=$KOTLIN_VERSION")
             options.incremental?.let {
                 add("-Pkotlin.incremental=$it")
             }

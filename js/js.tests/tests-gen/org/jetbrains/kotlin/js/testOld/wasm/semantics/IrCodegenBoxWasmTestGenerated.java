@@ -2204,6 +2204,44 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
             }
         }
 
+        @TestMetadata("compiler/testData/codegen/box/callableReference/funInterfaceConstructor")
+        @TestDataPath("$PROJECT_ROOT")
+        @RunWith(JUnit3RunnerWithInners.class)
+        public static class FunInterfaceConstructor extends AbstractIrCodegenBoxWasmTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest0(this::doTest, TargetBackend.WASM, testDataFilePath);
+            }
+
+            public void testAllFilesPresentInFunInterfaceConstructor() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/callableReference/funInterfaceConstructor"), Pattern.compile("^([^_](.+))\\.kt$"), null, TargetBackend.WASM, true);
+            }
+
+            @TestMetadata("funInterfaceConstructedObjectsEquality.kt")
+            public void testFunInterfaceConstructedObjectsEquality() throws Exception {
+                runTest("compiler/testData/codegen/box/callableReference/funInterfaceConstructor/funInterfaceConstructedObjectsEquality.kt");
+            }
+
+            @TestMetadata("funInterfaceConstructor.kt")
+            public void testFunInterfaceConstructor() throws Exception {
+                runTest("compiler/testData/codegen/box/callableReference/funInterfaceConstructor/funInterfaceConstructor.kt");
+            }
+
+            @TestMetadata("funInterfaceConstructorEquality.kt")
+            public void testFunInterfaceConstructorEquality() throws Exception {
+                runTest("compiler/testData/codegen/box/callableReference/funInterfaceConstructor/funInterfaceConstructorEquality.kt");
+            }
+
+            @TestMetadata("funInterfaceConstructorIsKFunction.kt")
+            public void testFunInterfaceConstructorIsKFunction() throws Exception {
+                runTest("compiler/testData/codegen/box/callableReference/funInterfaceConstructor/funInterfaceConstructorIsKFunction.kt");
+            }
+
+            @TestMetadata("funInterfaceConstructorOfImplicitKFunctionType.kt")
+            public void testFunInterfaceConstructorOfImplicitKFunctionType() throws Exception {
+                runTest("compiler/testData/codegen/box/callableReference/funInterfaceConstructor/funInterfaceConstructorOfImplicitKFunctionType.kt");
+            }
+        }
+
         @TestMetadata("compiler/testData/codegen/box/callableReference/function")
         @TestDataPath("$PROJECT_ROOT")
         @RunWith(JUnit3RunnerWithInners.class)
@@ -12069,6 +12107,11 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
             runTest("compiler/testData/codegen/box/inference/kt45118.kt");
         }
 
+        @TestMetadata("kt49838.kt")
+        public void testKt49838() throws Exception {
+            runTest("compiler/testData/codegen/box/inference/kt49838.kt");
+        }
+
         @TestMetadata("lambdaWithStarReturn.kt")
         public void testLambdaWithStarReturn() throws Exception {
             runTest("compiler/testData/codegen/box/inference/lambdaWithStarReturn.kt");
@@ -13842,6 +13885,34 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
             }
         }
 
+        @TestMetadata("compiler/testData/codegen/box/inlineClasses/delegationByUnderlyingType")
+        @TestDataPath("$PROJECT_ROOT")
+        @RunWith(JUnit3RunnerWithInners.class)
+        public static class DelegationByUnderlyingType extends AbstractIrCodegenBoxWasmTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest0(this::doTest, TargetBackend.WASM, testDataFilePath);
+            }
+
+            public void testAllFilesPresentInDelegationByUnderlyingType() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/inlineClasses/delegationByUnderlyingType"), Pattern.compile("^([^_](.+))\\.kt$"), null, TargetBackend.WASM, true);
+            }
+
+            @TestMetadata("default.kt")
+            public void testDefault() throws Exception {
+                runTest("compiler/testData/codegen/box/inlineClasses/delegationByUnderlyingType/default.kt");
+            }
+
+            @TestMetadata("defaultArgument.kt")
+            public void testDefaultArgument() throws Exception {
+                runTest("compiler/testData/codegen/box/inlineClasses/delegationByUnderlyingType/defaultArgument.kt");
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("compiler/testData/codegen/box/inlineClasses/delegationByUnderlyingType/simple.kt");
+            }
+        }
+
         @TestMetadata("compiler/testData/codegen/box/inlineClasses/funInterface")
         @TestDataPath("$PROJECT_ROOT")
         @RunWith(JUnit3RunnerWithInners.class)
@@ -14805,6 +14876,11 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
             @TestMetadata("objectExtendsInnerOfLocalWithCapture.kt")
             public void testObjectExtendsInnerOfLocalWithCapture() throws Exception {
                 runTest("compiler/testData/codegen/box/innerNested/superConstructorCall/objectExtendsInnerOfLocalWithCapture.kt");
+            }
+
+            @TestMetadata("objectExtendsInnerWithDelegatingConstructor.kt")
+            public void testObjectExtendsInnerWithDelegatingConstructor() throws Exception {
+                runTest("compiler/testData/codegen/box/innerNested/superConstructorCall/objectExtendsInnerWithDelegatingConstructor.kt");
             }
 
             @TestMetadata("objectExtendsLocalCaptureInSuperCall.kt")
@@ -24835,6 +24911,11 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
         @TestMetadata("delegatingConstructor.kt")
         public void testDelegatingConstructor() throws Exception {
             runTest("compiler/testData/codegen/box/sealed/delegatingConstructor.kt");
+        }
+
+        @TestMetadata("kt49752.kt")
+        public void testKt49752() throws Exception {
+            runTest("compiler/testData/codegen/box/sealed/kt49752.kt");
         }
 
         @TestMetadata("multipleFiles_enabled.kt")

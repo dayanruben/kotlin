@@ -2437,6 +2437,46 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
         }
 
         @Nested
+        @TestMetadata("compiler/testData/codegen/box/callableReference/funInterfaceConstructor")
+        @TestDataPath("$PROJECT_ROOT")
+        public class FunInterfaceConstructor {
+            @Test
+            public void testAllFilesPresentInFunInterfaceConstructor() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/callableReference/funInterfaceConstructor"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JS, true);
+            }
+
+            @Test
+            @TestMetadata("funInterfaceConstructedObjectsEquality.kt")
+            public void testFunInterfaceConstructedObjectsEquality() throws Exception {
+                runTest("compiler/testData/codegen/box/callableReference/funInterfaceConstructor/funInterfaceConstructedObjectsEquality.kt");
+            }
+
+            @Test
+            @TestMetadata("funInterfaceConstructor.kt")
+            public void testFunInterfaceConstructor() throws Exception {
+                runTest("compiler/testData/codegen/box/callableReference/funInterfaceConstructor/funInterfaceConstructor.kt");
+            }
+
+            @Test
+            @TestMetadata("funInterfaceConstructorEquality.kt")
+            public void testFunInterfaceConstructorEquality() throws Exception {
+                runTest("compiler/testData/codegen/box/callableReference/funInterfaceConstructor/funInterfaceConstructorEquality.kt");
+            }
+
+            @Test
+            @TestMetadata("funInterfaceConstructorIsKFunction.kt")
+            public void testFunInterfaceConstructorIsKFunction() throws Exception {
+                runTest("compiler/testData/codegen/box/callableReference/funInterfaceConstructor/funInterfaceConstructorIsKFunction.kt");
+            }
+
+            @Test
+            @TestMetadata("funInterfaceConstructorOfImplicitKFunctionType.kt")
+            public void testFunInterfaceConstructorOfImplicitKFunctionType() throws Exception {
+                runTest("compiler/testData/codegen/box/callableReference/funInterfaceConstructor/funInterfaceConstructorOfImplicitKFunctionType.kt");
+            }
+        }
+
+        @Nested
         @TestMetadata("compiler/testData/codegen/box/callableReference/function")
         @TestDataPath("$PROJECT_ROOT")
         public class Function {
@@ -10732,6 +10772,12 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             }
 
             @Test
+            @TestMetadata("kt50019_noOptimizedCallableReferences.kt")
+            public void testKt50019_noOptimizedCallableReferences() throws Exception {
+                runTest("compiler/testData/codegen/box/delegatedProperty/delegateToAnother/kt50019_noOptimizedCallableReferences.kt");
+            }
+
+            @Test
             @TestMetadata("mutable.kt")
             public void testMutable() throws Exception {
                 runTest("compiler/testData/codegen/box/delegatedProperty/delegateToAnother/mutable.kt");
@@ -14367,6 +14413,12 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
         }
 
         @Test
+        @TestMetadata("kt49838.kt")
+        public void testKt49838() throws Exception {
+            runTest("compiler/testData/codegen/box/inference/kt49838.kt");
+        }
+
+        @Test
         @TestMetadata("lambdaWithStarReturn.kt")
         public void testLambdaWithStarReturn() throws Exception {
             runTest("compiler/testData/codegen/box/inference/lambdaWithStarReturn.kt");
@@ -16445,6 +16497,34 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
         }
 
         @Nested
+        @TestMetadata("compiler/testData/codegen/box/inlineClasses/delegationByUnderlyingType")
+        @TestDataPath("$PROJECT_ROOT")
+        public class DelegationByUnderlyingType {
+            @Test
+            public void testAllFilesPresentInDelegationByUnderlyingType() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/inlineClasses/delegationByUnderlyingType"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JS, true);
+            }
+
+            @Test
+            @TestMetadata("default.kt")
+            public void testDefault() throws Exception {
+                runTest("compiler/testData/codegen/box/inlineClasses/delegationByUnderlyingType/default.kt");
+            }
+
+            @Test
+            @TestMetadata("defaultArgument.kt")
+            public void testDefaultArgument() throws Exception {
+                runTest("compiler/testData/codegen/box/inlineClasses/delegationByUnderlyingType/defaultArgument.kt");
+            }
+
+            @Test
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("compiler/testData/codegen/box/inlineClasses/delegationByUnderlyingType/simple.kt");
+            }
+        }
+
+        @Nested
         @TestMetadata("compiler/testData/codegen/box/inlineClasses/funInterface")
         @TestDataPath("$PROJECT_ROOT")
         public class FunInterface {
@@ -17505,6 +17585,12 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             @TestMetadata("objectExtendsInnerOfLocalWithCapture.kt")
             public void testObjectExtendsInnerOfLocalWithCapture() throws Exception {
                 runTest("compiler/testData/codegen/box/innerNested/superConstructorCall/objectExtendsInnerOfLocalWithCapture.kt");
+            }
+
+            @Test
+            @TestMetadata("objectExtendsInnerWithDelegatingConstructor.kt")
+            public void testObjectExtendsInnerWithDelegatingConstructor() throws Exception {
+                runTest("compiler/testData/codegen/box/innerNested/superConstructorCall/objectExtendsInnerWithDelegatingConstructor.kt");
             }
 
             @Test
@@ -29812,6 +29898,12 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
         @TestMetadata("delegatingConstructor.kt")
         public void testDelegatingConstructor() throws Exception {
             runTest("compiler/testData/codegen/box/sealed/delegatingConstructor.kt");
+        }
+
+        @Test
+        @TestMetadata("kt49752.kt")
+        public void testKt49752() throws Exception {
+            runTest("compiler/testData/codegen/box/sealed/kt49752.kt");
         }
 
         @Test

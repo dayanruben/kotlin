@@ -13,7 +13,8 @@ import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.checkers.declaration.FirConstructorChecker
 import org.jetbrains.kotlin.fir.declarations.FirConstructor
 import org.jetbrains.kotlin.fir.declarations.FirRegularClass
-import org.jetbrains.kotlin.parcelize.fir.diagnostics.KtErrorsParcelize.PARCELABLE_CONSTRUCTOR_PARAMETER_SHOULD_BE_VAL_OR_VAR
+import org.jetbrains.kotlin.fir.expressions.classId
+import org.jetbrains.kotlin.parcelize.ParcelizeNames
 
 object FirParcelizeConstructorChecker : FirConstructorChecker() {
     override fun check(declaration: FirConstructor, context: CheckerContext, reporter: DiagnosticReporter) {
@@ -22,14 +23,30 @@ object FirParcelizeConstructorChecker : FirConstructorChecker() {
         if (source.kind == KtFakeSourceElementKind.ImplicitConstructor) return
         val containingClass = context.containingDeclarations.last() as? FirRegularClass ?: return
         val containingClassSymbol = containingClass.symbol
-        if (!containingClassSymbol.isParcelize(context.session)) return
+        if (!containingClassSymbol.isParcelize(context.session) || containingClass.hasCustomParceler(context.session)) return
 
         if (declaration.valueParameters.isEmpty()) {
             reporter.reportOn(containingClass.source, KtErrorsParcelize.PARCELABLE_PRIMARY_CONSTRUCTOR_IS_EMPTY, context)
         } else {
             for (valueParameter in declaration.valueParameters) {
                 if (valueParameter.source?.hasValOrVar() != true) {
-                    reporter.reportOn(valueParameter.source, PARCELABLE_CONSTRUCTOR_PARAMETER_SHOULD_BE_VAL_OR_VAR, context)
+                    reporter.reportOn(
+                        valueParameter.source,
+                        KtErrorsParcelize.PARCELABLE_CONSTRUCTOR_PARAMETER_SHOULD_BE_VAL_OR_VAR,
+                        context
+                    )
+                }
+                if (valueParameter.defaultValue == null) {
+                    val illegalAnnotation = valueParameter.annotations.firstOrNull {
+                        it.classId in ParcelizeNames.IGNORED_ON_PARCEL_CLASS_IDS
+                    }
+                    if (illegalAnnotation != null) {
+                        reporter.reportOn(
+                            illegalAnnotation.source,
+                            KtErrorsParcelize.INAPPLICABLE_IGNORED_ON_PARCEL_CONSTRUCTOR_PROPERTY,
+                            context
+                        )
+                    }
                 }
             }
         }

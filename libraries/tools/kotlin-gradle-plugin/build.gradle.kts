@@ -26,6 +26,10 @@ pill {
     variant = PillExtension.Variant.FULL
 }
 
+kotlin.sourceSets.all {
+    languageSettings.optIn("kotlin.RequiresOptIn")
+}
+
 dependencies {
     compileOnly(gradleKotlinDsl())
     api(project(":kotlin-gradle-plugin-api"))
