@@ -51,6 +51,12 @@ public class IrBoxJsTestGenerated extends AbstractIrBoxJsTest {
         }
 
         @Test
+        @TestMetadata("arrayToString.kt")
+        public void testArrayToString() throws Exception {
+            runTest("js/js.translator/testData/box/builtins/arrayToString.kt");
+        }
+
+        @Test
         @TestMetadata("hashCode.kt")
         public void testHashCode() throws Exception {
             runTest("js/js.translator/testData/box/builtins/hashCode.kt");
@@ -272,6 +278,12 @@ public class IrBoxJsTestGenerated extends AbstractIrBoxJsTest {
         @Test
         public void testAllFilesPresentInClassObject() throws Exception {
             KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("js/js.translator/testData/box/classObject"), Pattern.compile("^([^_](.+))\\.kt$"), null, TargetBackend.JS_IR, true);
+        }
+
+        @Test
+        @TestMetadata("contextDependentClassObjectName.kt")
+        public void testContextDependentClassObjectName() throws Exception {
+            runTest("js/js.translator/testData/box/classObject/contextDependentClassObjectName.kt");
         }
 
         @Test
@@ -516,6 +528,12 @@ public class IrBoxJsTestGenerated extends AbstractIrBoxJsTest {
         @TestMetadata("closureVarToScopeWithSameNameDeclaration.kt")
         public void testClosureVarToScopeWithSameNameDeclaration() throws Exception {
             runTest("js/js.translator/testData/box/closure/closureVarToScopeWithSameNameDeclaration.kt");
+        }
+
+        @Test
+        @TestMetadata("contextDependentClosureName.kt")
+        public void testContextDependentClosureName() throws Exception {
+            runTest("js/js.translator/testData/box/closure/contextDependentClosureName.kt");
         }
 
         @Test
@@ -6635,6 +6653,12 @@ public class IrBoxJsTestGenerated extends AbstractIrBoxJsTest {
         }
 
         @Test
+        @TestMetadata("privatePropertyAccessFromMethod.kt")
+        public void testPrivatePropertyAccessFromMethod() throws Exception {
+            runTest("js/js.translator/testData/box/jsExport/privatePropertyAccessFromMethod.kt");
+        }
+
+        @Test
         @TestMetadata("recursiveExport.kt")
         public void testRecursiveExport() throws Exception {
             runTest("js/js.translator/testData/box/jsExport/recursiveExport.kt");
@@ -7060,6 +7084,22 @@ public class IrBoxJsTestGenerated extends AbstractIrBoxJsTest {
         @TestMetadata("simpleLabelInlined.kt")
         public void testSimpleLabelInlined() throws Exception {
             runTest("js/js.translator/testData/box/labels/simpleLabelInlined.kt");
+        }
+    }
+
+    @Nested
+    @TestMetadata("js/js.translator/testData/box/local")
+    @TestDataPath("$PROJECT_ROOT")
+    public class Local {
+        @Test
+        public void testAllFilesPresentInLocal() throws Exception {
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("js/js.translator/testData/box/local"), Pattern.compile("^([^_](.+))\\.kt$"), null, TargetBackend.JS_IR, true);
+        }
+
+        @Test
+        @TestMetadata("contextDependentLocalClassName.kt")
+        public void testContextDependentLocalClassName() throws Exception {
+            runTest("js/js.translator/testData/box/local/contextDependentLocalClassName.kt");
         }
     }
 
@@ -8031,6 +8071,12 @@ public class IrBoxJsTestGenerated extends AbstractIrBoxJsTest {
         }
 
         @Test
+        @TestMetadata("intBitOperations.kt")
+        public void testIntBitOperations() throws Exception {
+            runTest("js/js.translator/testData/box/number/intBitOperations.kt");
+        }
+
+        @Test
         @TestMetadata("intConversions.kt")
         public void testIntConversions() throws Exception {
             runTest("js/js.translator/testData/box/number/intConversions.kt");
@@ -8158,6 +8204,12 @@ public class IrBoxJsTestGenerated extends AbstractIrBoxJsTest {
         @Test
         public void testAllFilesPresentInObjectDeclaration() throws Exception {
             KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("js/js.translator/testData/box/objectDeclaration"), Pattern.compile("^([^_](.+))\\.kt$"), null, TargetBackend.JS_IR, true);
+        }
+
+        @Test
+        @TestMetadata("contextDependentObjectName.kt")
+        public void testContextDependentObjectName() throws Exception {
+            runTest("js/js.translator/testData/box/objectDeclaration/contextDependentObjectName.kt");
         }
 
         @Test

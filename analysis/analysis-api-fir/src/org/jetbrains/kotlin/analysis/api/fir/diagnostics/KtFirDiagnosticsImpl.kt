@@ -2161,10 +2161,10 @@ internal class WrongSetterParameterTypeImpl(
     override val token: ValidityToken,
 ) : KtFirDiagnostic.WrongSetterParameterType(), KtAbstractFirDiagnostic<KtTypeReference>
 
-internal class DelegateUsesExtensionPropertyTypeParameterImpl(
+internal class DelegateUsesExtensionPropertyTypeParameterErrorImpl(
     override val firDiagnostic: KtPsiDiagnostic,
     override val token: ValidityToken,
-) : KtFirDiagnostic.DelegateUsesExtensionPropertyTypeParameter(), KtAbstractFirDiagnostic<KtProperty>
+) : KtFirDiagnostic.DelegateUsesExtensionPropertyTypeParameterError(), KtAbstractFirDiagnostic<KtProperty>
 
 internal class DelegateUsesExtensionPropertyTypeParameterWarningImpl(
     override val firDiagnostic: KtPsiDiagnostic,
@@ -3456,15 +3456,15 @@ internal class JvmDefaultInDeclarationImpl(
     override val token: ValidityToken,
 ) : KtFirDiagnostic.JvmDefaultInDeclaration(), KtAbstractFirDiagnostic<KtElement>
 
-internal class JvmDefaultThroughInheritanceImpl(
+internal class JvmDefaultWithCompatibilityInDeclarationImpl(
     override val firDiagnostic: KtPsiDiagnostic,
     override val token: ValidityToken,
-) : KtFirDiagnostic.JvmDefaultThroughInheritance(), KtAbstractFirDiagnostic<KtDeclaration>
+) : KtFirDiagnostic.JvmDefaultWithCompatibilityInDeclaration(), KtAbstractFirDiagnostic<KtElement>
 
-internal class UsageOfJvmDefaultThroughSuperCallImpl(
+internal class JvmDefaultWithCompatibilityNotOnInterfaceImpl(
     override val firDiagnostic: KtPsiDiagnostic,
     override val token: ValidityToken,
-) : KtFirDiagnostic.UsageOfJvmDefaultThroughSuperCall(), KtAbstractFirDiagnostic<PsiElement>
+) : KtFirDiagnostic.JvmDefaultWithCompatibilityNotOnInterface(), KtAbstractFirDiagnostic<KtElement>
 
 internal class NonJvmDefaultOverridesJavaDefaultImpl(
     override val firDiagnostic: KtPsiDiagnostic,

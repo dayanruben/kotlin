@@ -1,7 +1,8 @@
 // !LANGUAGE: +ContextReceivers
 // TARGET_BACKEND: JVM_IR
 // IGNORE_BACKEND_FIR: JVM_IR
-// WITH_RUNTIME
+// FIR status: context receivers aren't yet supported
+// WITH_STDLIB
 
 fun List<Int>.decimateEveryEvenThird() = sequence {
     var counter = 1

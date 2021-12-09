@@ -62,9 +62,7 @@ abstract class CompileToBitcodeJob : WorkAction<CompileToBitcodeParameters> {
     }
 }
 
-// TODO: Get rid of storing srcRoot in the task.
 abstract class CompileToBitcode @Inject constructor(
-        @Internal val srcRoot: File,
         @Input val folderName: String,
         @Input val target: String,
         @Input val outputGroup: String
@@ -94,15 +92,18 @@ abstract class CompileToBitcode @Inject constructor(
 
     // Source files and headers are registered as inputs by the `inputFiles` and `headers` properties.
     @Internal
-    var srcDirs: FileCollection = project.files(srcRoot.resolve("cpp"))
+    var srcDirs: FileCollection = project.files()
     @Internal
-    var headersDirs: FileCollection = srcDirs + project.files(srcRoot.resolve("headers"))
+    var headersDirs: FileCollection = project.files()
 
     @Input
     var language = Language.CPP
 
     @Input @Optional
     var sanitizer: SanitizerKind? = null
+
+    @Input @Optional
+    val extraSanitizerArgs = mutableMapOf<SanitizerKind, List<String>>()
 
     private val targetDir: File
         get() {
@@ -138,11 +139,18 @@ abstract class CompileToBitcode @Inject constructor(
                 null -> listOf()
                 SanitizerKind.ADDRESS -> listOf("-fsanitize=address")
                 SanitizerKind.THREAD -> listOf("-fsanitize=thread")
-            }
+            } + (extraSanitizerArgs[sanitizer] ?: emptyList())
             val languageFlags = when (language) {
-                Language.C ->
-                    // Used flags provided by original build of allocator C code.
-                    listOf("-std=gnu11", "-O3", "-Wall", "-Wextra", "-Werror")
+                Language.C -> {
+                    listOf("-std=gnu11", "-Wall", "-Wextra", "-Werror") +
+                    if (sanitizer != SanitizerKind.THREAD) {
+                        // Used flags provided by original build of allocator C code.
+                        listOf("-O3")
+                    } else {
+                        // Building with TSAN needs turning off extra optimizations.
+                        listOf("-O1")
+                    }
+                }
                 Language.CPP ->
                     listOfNotNull("-std=c++17", "-Werror", "-O2",
                             "-fno-aligned-allocation", // TODO: Remove when all targets support aligned allocation in C++ runtime.

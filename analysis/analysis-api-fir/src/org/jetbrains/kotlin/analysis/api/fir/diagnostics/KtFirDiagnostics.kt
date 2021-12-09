@@ -1798,8 +1798,8 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         abstract val actualType: KtType
     }
 
-    abstract class DelegateUsesExtensionPropertyTypeParameter : KtFirDiagnostic<KtProperty>() {
-        override val diagnosticClass get() = DelegateUsesExtensionPropertyTypeParameter::class
+    abstract class DelegateUsesExtensionPropertyTypeParameterError : KtFirDiagnostic<KtProperty>() {
+        override val diagnosticClass get() = DelegateUsesExtensionPropertyTypeParameterError::class
     }
 
     abstract class DelegateUsesExtensionPropertyTypeParameterWarning : KtFirDiagnostic<KtProperty>() {
@@ -2859,12 +2859,12 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         abstract val annotation: String
     }
 
-    abstract class JvmDefaultThroughInheritance : KtFirDiagnostic<KtDeclaration>() {
-        override val diagnosticClass get() = JvmDefaultThroughInheritance::class
+    abstract class JvmDefaultWithCompatibilityInDeclaration : KtFirDiagnostic<KtElement>() {
+        override val diagnosticClass get() = JvmDefaultWithCompatibilityInDeclaration::class
     }
 
-    abstract class UsageOfJvmDefaultThroughSuperCall : KtFirDiagnostic<PsiElement>() {
-        override val diagnosticClass get() = UsageOfJvmDefaultThroughSuperCall::class
+    abstract class JvmDefaultWithCompatibilityNotOnInterface : KtFirDiagnostic<KtElement>() {
+        override val diagnosticClass get() = JvmDefaultWithCompatibilityNotOnInterface::class
     }
 
     abstract class NonJvmDefaultOverridesJavaDefault : KtFirDiagnostic<KtDeclaration>() {

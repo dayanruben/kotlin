@@ -69,6 +69,7 @@ bitcode {
     }
 
     create("mimalloc") {
+        val srcRoot = file("src/mimalloc")
         language = CompileToBitcode.Language.C
         includeFiles = listOf("**/*.c")
         excludeFiles += listOf("**/alloc-override*.c", "**/page-queue.c", "**/static.c", "**/bitmap.inc.c")
@@ -76,12 +77,14 @@ bitcode {
         compilerArgs.addAll(listOf("-DKONAN_MI_MALLOC=1", "-Wno-unknown-pragmas", "-ftls-model=initial-exec",
                 "-Wno-unused-function", "-Wno-error=atomic-alignment",
                 "-Wno-unused-parameter" /* for windows 32*/))
+        extraSanitizerArgs[SanitizerKind.THREAD] = listOf("-DMI_TSAN=1")
         headersDirs = files("$srcRoot/c/include")
 
         onlyIf { targetSupportsMimallocAllocator(target) }
     }
 
     create("libbacktrace") {
+        val srcRoot = file("src/libbacktrace")
         val targetInfo = HostManager().targetByName(target)
         language = CompileToBitcode.Language.C
         val useMachO = targetInfo.family.isAppleFamily
