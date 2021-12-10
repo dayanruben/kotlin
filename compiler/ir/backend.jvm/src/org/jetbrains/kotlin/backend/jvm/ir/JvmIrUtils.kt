@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.backend.jvm.ir
 
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.backend.common.ir.ir2string
 import org.jetbrains.kotlin.backend.common.ir.isMethodOfAny
 import org.jetbrains.kotlin.backend.common.lower.at
@@ -12,18 +13,24 @@ import org.jetbrains.kotlin.backend.common.lower.irNot
 import org.jetbrains.kotlin.backend.jvm.CachedFieldsForObjectInstances
 import org.jetbrains.kotlin.backend.jvm.JvmBackendContext
 import org.jetbrains.kotlin.backend.jvm.JvmLoweredDeclarationOrigin
-import org.jetbrains.kotlin.backend.jvm.codegen.isInlineOnly
-import org.jetbrains.kotlin.backend.jvm.codegen.isJvmInterface
+import org.jetbrains.kotlin.backend.jvm.JvmSymbols
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.codegen.ASSERTIONS_DISABLED_FIELD_NAME
+import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.codegen.inline.coroutines.FOR_INLINE_SUFFIX
+import org.jetbrains.kotlin.codegen.mangleNameIfNeeded
+import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.config.JvmDefaultMode
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.ClassKind
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithSource
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
-import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.descriptors.annotations.KotlinRetention
 import org.jetbrains.kotlin.descriptors.deserialization.PLATFORM_DEPENDENT_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.IrElement
+import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.PsiIrFileEntry
 import org.jetbrains.kotlin.ir.builders.IrBuilderWithScope
 import org.jetbrains.kotlin.ir.builders.declarations.buildField
@@ -49,15 +56,21 @@ import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 import org.jetbrains.kotlin.load.java.JavaDescriptorVisibilities
 import org.jetbrains.kotlin.load.java.JvmAbi
+import org.jetbrains.kotlin.load.kotlin.JvmPackagePartSource
 import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.JvmNames.JVM_DEFAULT_FQ_NAME
 import org.jetbrains.kotlin.name.JvmNames.JVM_DEFAULT_NO_COMPATIBILITY_FQ_NAME
 import org.jetbrains.kotlin.name.JvmNames.JVM_DEFAULT_WITH_COMPATIBILITY_FQ_NAME
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.DescriptorUtils
+import org.jetbrains.kotlin.resolve.jvm.AsmTypes
+import org.jetbrains.kotlin.resolve.multiplatform.OptionalAnnotationUtil
+import org.jetbrains.kotlin.resolve.source.PsiSourceElement
 import org.jetbrains.kotlin.utils.DFS
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import org.jetbrains.org.objectweb.asm.Type
+import org.jetbrains.org.objectweb.asm.commons.Method
 
 fun IrDeclaration.getJvmNameFromAnnotation(): String? {
     // TODO lower @JvmName?
@@ -100,13 +113,6 @@ fun IrFunction.hasPlatformDependent(): Boolean = propertyIfAccessor.hasAnnotatio
 
 fun IrFunction.getJvmVisibilityOfDefaultArgumentStub() =
     if (DescriptorVisibilities.isPrivate(visibility) || isInlineOnly()) JavaDescriptorVisibilities.PACKAGE_VISIBILITY else DescriptorVisibilities.PUBLIC
-
-fun IrValueParameter.isInlineParameter() =
-    index >= 0 && !isNoinline && (type.isFunction() || type.isSuspendFunction()) &&
-            // Parameters with default values are always nullable, so check the expression too.
-            // Note that the frontend has a diagnostic for nullable inline parameters, so actually
-            // making this return `false` requires using `@Suppress`.
-            (!type.isNullable() || defaultValue?.expression?.type?.isNullable() == false)
 
 fun IrDeclaration.isInCurrentModule(): Boolean =
     getPackageFragment() is IrFile
@@ -262,6 +268,12 @@ private fun JvmBackendContext.makeRawTypeAnnotation() =
 fun IrClass.rawType(context: JvmBackendContext): IrType =
     defaultType.addAnnotations(listOf(context.makeRawTypeAnnotation()))
 
+fun IrSimpleType.isRawType(): Boolean =
+    hasAnnotation(JvmSymbols.RAW_TYPE_ANNOTATION_FQ_NAME)
+
+val IrClass.isJvmInterface: Boolean
+    get() = isAnnotationClass || isInterface
+
 fun IrClass.getSingleAbstractMethod(): IrSimpleFunction? =
     functions.singleOrNull { it.modality == Modality.ABSTRACT }
 
@@ -285,42 +297,6 @@ val IrClass.isSyntheticSingleton: Boolean
             || origin == JvmLoweredDeclarationOrigin.FUNCTION_REFERENCE_IMPL
             || origin == JvmLoweredDeclarationOrigin.GENERATED_PROPERTY_REFERENCE)
             && primaryConstructor!!.valueParameters.isEmpty()
-
-// Map declarations to original declarations before lowering.
-private val IrDeclaration.original: IrDeclaration
-    get() = (this as? IrAttributeContainer)?.attributeOwnerId as? IrDeclaration ?: this
-
-// Declarations in the scope of an externally visible inline function are implicitly part of the
-// public ABI of a Kotlin module. This function returns the visibility of a containing inline function
-// (determined *before* lowering), or null if the given declaration is not in the scope of an inline function.
-//
-// Currently, we mark all declarations in the scope of a public inline function as public, even if they are
-// contained in a nested private inline function. This is an over approximation, since private declarations
-// inside of a public inline function can still escape if they are used without being regenerated.
-// See `plugins/jvm-abi-gen/testData/compile/inlineNoRegeneration` for an example.
-val IrDeclaration.inlineScopeVisibility: DescriptorVisibility?
-    get() {
-        var owner: IrDeclaration? = original
-        var result: DescriptorVisibility? = null
-        while (owner != null) {
-            if (owner is IrFunction && owner.isInline) {
-                result = if (!DescriptorVisibilities.isPrivate(owner.visibility)) {
-                    if (owner.parentClassOrNull?.visibility?.let(DescriptorVisibilities::isPrivate) == true)
-                        DescriptorVisibilities.PRIVATE
-                    else
-                        return owner.visibility
-                } else {
-                    owner.visibility
-                }
-            }
-            owner = owner.parent.safeAs<IrDeclaration>()?.original
-        }
-        return result
-    }
-
-// True for declarations which are in the scope of an externally visible inline function.
-val IrDeclaration.isInPublicInlineScope: Boolean
-    get() = inlineScopeVisibility?.let(DescriptorVisibilities::isPrivate) == false
 
 fun IrSimpleFunction.suspendFunctionOriginal(): IrSimpleFunction =
     if (isSuspend &&
@@ -425,3 +401,117 @@ fun findSuperDeclaration(function: IrSimpleFunction, isSuperCall: Boolean, jvmDe
     }
     return current
 }
+
+fun IrMemberAccessExpression<*>.getIntConstArgument(i: Int): Int =
+    getValueArgument(i)?.let {
+        if (it is IrConst<*> && it.kind == IrConstKind.Int)
+            it.value as Int
+        else
+            null
+    } ?: throw AssertionError("Value argument #$i should be an Int const: ${dump()}")
+
+fun IrMemberAccessExpression<*>.getStringConstArgument(i: Int): String =
+    getValueArgument(i)?.let {
+        if (it is IrConst<*> && it.kind == IrConstKind.String)
+            it.value as String
+        else
+            null
+    } ?: throw AssertionError("Value argument #$i should be a String const: ${dump()}")
+
+fun IrMemberAccessExpression<*>.getBooleanConstArgument(i: Int): Boolean =
+    getValueArgument(i)?.let {
+        if (it is IrConst<*> && it.kind == IrConstKind.Boolean)
+            it.value as Boolean
+        else
+            null
+    } ?: throw AssertionError("Value argument #$i should be a Boolean const: ${dump()}")
+
+val IrDeclaration.fileParent: IrFile
+    get() {
+        return when (val myParent = parent) {
+            is IrFile -> myParent
+            else -> (myParent as IrDeclaration).fileParent
+        }
+    }
+
+private val RETENTION_PARAMETER_NAME = Name.identifier("value")
+
+fun IrClass.getAnnotationRetention(): KotlinRetention? {
+    val retentionArgument =
+        getAnnotation(StandardNames.FqNames.retention)?.getValueArgument(RETENTION_PARAMETER_NAME)
+                as? IrGetEnumValue ?: return null
+    val retentionArgumentValue = retentionArgument.symbol.owner
+    return KotlinRetention.valueOf(retentionArgumentValue.name.asString())
+}
+
+// To be generalized to IrMemberAccessExpression as soon as properties get symbols.
+fun IrConstructorCall.getValueArgument(name: Name): IrExpression? {
+    val index = symbol.owner.valueParameters.find { it.name == name }?.index ?: return null
+    return getValueArgument(index)
+}
+
+val IrMemberWithContainerSource.parentClassId: ClassId?
+    get() = ((this as? IrSimpleFunction)?.correspondingPropertySymbol?.owner ?: this).let { directMember ->
+        (directMember.containerSource as? JvmPackagePartSource)?.classId ?: (directMember.parent as? IrClass)?.classId
+    }
+
+// Translated into IR-based terms from classifierDescriptor?.classId
+private val IrClass.classId: ClassId?
+    get() = when (val parent = parent) {
+        is IrExternalPackageFragment -> ClassId(parent.fqName, name)
+        // TODO: there's `context.classNameOverride`; theoretically it's only relevant for top-level members,
+        //       where `containerSource` is a `JvmPackagePartSource` anyway, but I'm not 100% sure.
+        is IrClass -> parent.classId?.createNestedClassId(name)
+        else -> null
+    }
+
+val IrClass.isOptionalAnnotationClass: Boolean
+    get() = kind == ClassKind.ANNOTATION_CLASS &&
+            isExpect &&
+            hasAnnotation(OptionalAnnotationUtil.OPTIONAL_EXPECTATION_FQ_NAME)
+
+fun IrFunctionAccessExpression.receiverAndArgs(): List<IrExpression> {
+    return (arrayListOf(this.dispatchReceiver, this.extensionReceiver) +
+            symbol.owner.valueParameters.mapIndexed { i, _ -> getValueArgument(i) }).filterNotNull()
+}
+
+fun classFileContainsMethod(classId: ClassId, function: IrFunction, context: JvmBackendContext): Boolean? {
+    val originalSignature = context.methodSignatureMapper.mapAsmMethod(function)
+    val originalDescriptor = originalSignature.descriptor
+    val descriptor = if (function.isSuspend)
+        listOf(*Type.getArgumentTypes(originalDescriptor), Type.getObjectType("kotlin/coroutines/Continuation"))
+            .joinToString(prefix = "(", postfix = ")", separator = "") + AsmTypes.OBJECT_TYPE
+    else originalDescriptor
+    return org.jetbrains.kotlin.codegen.classFileContainsMethod(classId, context.state, Method(originalSignature.name, descriptor))
+}
+
+val DeclarationDescriptorWithSource.psiElement: PsiElement?
+    get() = (source as? PsiSourceElement)?.psi
+
+@OptIn(ObsoleteDescriptorBasedAPI::class)
+val IrDeclaration.psiElement: PsiElement?
+    get() = (descriptor as? DeclarationDescriptorWithSource)?.psiElement
+
+@OptIn(ObsoleteDescriptorBasedAPI::class)
+val IrMemberAccessExpression<*>.psiElement: PsiElement?
+    get() = (symbol.descriptor.original as? DeclarationDescriptorWithSource)?.psiElement
+
+fun IrFunction.extensionReceiverName(state: GenerationState): String {
+    if (!state.languageVersionSettings.supportsFeature(LanguageFeature.NewCapturedReceiverFieldNamingConvention)) {
+        return AsmUtil.RECEIVER_PARAMETER_NAME
+    }
+
+    extensionReceiverParameter?.let {
+        if (it.name.asString().startsWith(AsmUtil.LABELED_THIS_PARAMETER)) {
+            return it.name.asString()
+        }
+    }
+    val callableName = (this as? IrSimpleFunction)?.correspondingPropertySymbol?.owner?.name ?: name
+    return if (callableName.isSpecial || !Name.isValidIdentifier(callableName.asString()))
+        AsmUtil.RECEIVER_PARAMETER_NAME
+    else
+        AsmUtil.LABELED_THIS_PARAMETER + mangleNameIfNeeded(callableName.asString())
+}
+
+fun IrFunction.isBridge(): Boolean =
+    origin == IrDeclarationOrigin.BRIDGE || origin == IrDeclarationOrigin.BRIDGE_SPECIAL

@@ -9,11 +9,10 @@ import org.jetbrains.kotlin.backend.common.FileLoweringPass
 import org.jetbrains.kotlin.backend.common.IrElementTransformerVoidWithContext
 import org.jetbrains.kotlin.backend.common.phaser.makeIrModulePhase
 import org.jetbrains.kotlin.backend.jvm.JvmBackendContext
-import org.jetbrains.kotlin.backend.jvm.JvmReflectSymbols
-import org.jetbrains.kotlin.backend.jvm.codegen.isJvmInterface
 import org.jetbrains.kotlin.backend.jvm.ir.IrInlineScopeResolver
 import org.jetbrains.kotlin.backend.jvm.ir.createJvmIrBuilder
 import org.jetbrains.kotlin.backend.jvm.ir.findInlineCallSites
+import org.jetbrains.kotlin.backend.jvm.ir.isJvmInterface
 import org.jetbrains.kotlin.backend.jvm.lower.SyntheticAccessorLowering.Companion.isAccessible
 import org.jetbrains.kotlin.ir.builders.*
 import org.jetbrains.kotlin.ir.declarations.IrFile
@@ -504,7 +503,7 @@ internal class ReflectiveAccessLowering(
         val builder = context.createJvmIrBuilder(expression.symbol)
 
         // invokeSpecial(owner: String, name: String, descriptor: String, isInterface: Boolean): T
-        return builder.irCall(context.ir.symbols.jvmDebuggerInvokeSpecialIntrinsic).apply {
+        return builder.irCall(symbols.jvmDebuggerInvokeSpecialIntrinsic).apply {
             dispatchReceiver = expression.dispatchReceiver
             this.type = expression.symbol.owner.returnType
             putValueArgument(0, builder.irString("${owner.packageFqName}/${owner.name}"))

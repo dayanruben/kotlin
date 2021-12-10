@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.generators
 import org.jetbrains.kotlin.generators.impl.SimpleTestClassModelTestAllFilesPresentMethodGenerator
 import org.jetbrains.kotlin.generators.impl.SimpleTestMethodGenerator
 import org.jetbrains.kotlin.generators.impl.SingleClassTestModelAllFilesPresentedMethodGenerator
+import org.jetbrains.kotlin.generators.impl.TransformingTestMethodGenerator
 import org.jetbrains.kotlin.generators.model.*
 import org.jetbrains.kotlin.generators.util.GeneratorsFileUtil
 import org.jetbrains.kotlin.test.TestMetadata
@@ -18,14 +19,14 @@ import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import java.io.File
 import java.io.IOException
-import java.util.*
 
 private const val TEST_GENERATOR_NAME = "GenerateNewCompilerTests.kt"
 
 private val METHOD_GENERATORS = listOf(
     SimpleTestClassModelTestAllFilesPresentMethodGenerator,
     SimpleTestMethodGenerator,
-    SingleClassTestModelAllFilesPresentedMethodGenerator
+    SingleClassTestModelAllFilesPresentedMethodGenerator,
+    TransformingTestMethodGenerator,
 )
 
 object NewTestGeneratorImpl : TestGenerator(METHOD_GENERATORS) {
@@ -128,7 +129,12 @@ object NewTestGeneratorImpl : TestGenerator(METHOD_GENERATORS) {
             p.println("import ${KtTestUtil::class.java.canonicalName};")
 
             for (clazz in testClassModels.flatMapTo(mutableSetOf()) { classModel -> classModel.imports }) {
-                p.println("import ${clazz.name};")
+                val realName = when (clazz) {
+                    TransformingTestMethodModel.TransformerFunctionsClassPlaceHolder::class.java ->
+                        "org.jetbrains.kotlin.test.utils.TransformersFunctions"
+                    else -> clazz.name
+                }
+                p.println("import $realName;")
             }
 
             if (suiteClassPackage != baseTestClassPackage) {
@@ -207,9 +213,20 @@ object NewTestGeneratorImpl : TestGenerator(METHOD_GENERATORS) {
 
             var first = true
 
+            val transformers = testClassModel.predefinedNativeTransformers(false)
+
+            if (transformers.isNotEmpty()) {
+                p.println("public ${testClassModel.name}() {")
+                p.pushIndent()
+                transformers.forEach { (path, transformer) -> p.println("register(\"$path\", $transformer);") }
+                p.popIndent()
+                p.println("}")
+                first = false
+            }
+
             for (methodModel in testMethods) {
-                if (methodModel is RunTestMethodModel) continue
-                if (!methodModel.shouldBeGenerated()) continue
+                if (methodModel is RunTestMethodModel) continue // should also skip its imports
+                if (!methodModel.shouldBeGenerated()) continue // should also skip its imports
 
                 if (first) {
                     first = false
@@ -273,4 +290,9 @@ object NewTestGeneratorImpl : TestGenerator(METHOD_GENERATORS) {
         }
         return false
     }
+
+    private fun TestClassModel.predefinedNativeTransformers(recursive: Boolean): List<Pair<String, String>> =
+        methods.mapNotNull { method ->
+            (method as? TransformingTestMethodModel)?.takeIf { it.registerInConstructor }?.let { it.source.file.path to it.transformer }
+        } + if (recursive) innerTestClasses.flatMap { it.predefinedNativeTransformers(recursive) } else listOf()
 }

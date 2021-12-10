@@ -5,10 +5,10 @@
 package org.jetbrains.kotlin.generators.model
 
 import com.intellij.openapi.util.io.FileUtil
+import org.jetbrains.kotlin.generators.util.methodModelLocator
 import org.jetbrains.kotlin.test.TargetBackend
 import org.jetbrains.kotlin.test.util.KtTestUtil
 import java.io.File
-import java.util.*
 import java.util.regex.Pattern
 
 class SingleClassTestModel(
@@ -38,6 +38,11 @@ class SingleClassTestModel(
             }
             true
         }
+        if (result.any { it is WithoutJvmInlineTestMethodModel }) {
+            val additionalRunner =
+                RunTestMethodModel(targetBackend, doTestMethodName, testRunnerMethodName, additionalRunnerArguments, withTransformer = true)
+            result.add(additionalRunner)
+        }
         result.sortedWith { o1: MethodModel, o2: MethodModel -> o1.name.compareTo(o2.name, ignoreCase = true) }
     }
 
@@ -45,10 +50,8 @@ class SingleClassTestModel(
         get() = emptyList()
 
     private fun getTestMethodsFromFile(file: File): Collection<MethodModel> {
-        return listOf(
-            SimpleTestMethodModel(
-                rootFile, file, filenamePattern, checkFilenameStartsLowerCase, targetBackend, skipIgnored, tags = emptyList()
-            )
+        return methodModelLocator(
+            rootFile, file, filenamePattern, checkFilenameStartsLowerCase, targetBackend, skipIgnored, tags = emptyList()
         )
     }
 

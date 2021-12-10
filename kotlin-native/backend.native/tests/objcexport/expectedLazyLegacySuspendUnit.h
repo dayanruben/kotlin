@@ -343,6 +343,12 @@ __attribute__((swift_name("CoroutinesKt")))
  @note This method converts instances of CoroutineException, CancellationException to errors.
  Other uncaught Kotlin exceptions are fatal.
 */
++ (void)unitSuspendFunAsyncContinuationHolder:(KtContinuationHolder<KtKotlinUnit *> *)continuationHolder completionHandler:(void (^)(KtKotlinUnit * _Nullable, NSError * _Nullable))completionHandler __attribute__((swift_name("unitSuspendFunAsync(continuationHolder:completionHandler:)")));
+
+/**
+ @note This method converts instances of CoroutineException, CancellationException to errors.
+ Other uncaught Kotlin exceptions are fatal.
+*/
 + (BOOL)throwExceptionException:(KtKotlinThrowable *)exception error:(NSError * _Nullable * _Nullable)error __attribute__((swift_name("throwException(exception:)")));
 + (void)callSuspendFunSuspendFun:(id<KtSuspendFun>)suspendFun doYield:(BOOL)doYield doThrow:(BOOL)doThrow resultHolder:(KtResultHolder<KtInt *> *)resultHolder __attribute__((swift_name("callSuspendFun(suspendFun:doYield:doThrow:resultHolder:)")));
 
@@ -376,6 +382,7 @@ __attribute__((swift_name("CoroutinesKt")))
 + (void)invoke1Block:(id<KtKotlinSuspendFunction1>)block argument:(id _Nullable)argument completionHandler:(void (^)(id _Nullable_result, NSError * _Nullable))completionHandler __attribute__((swift_name("invoke1(block:argument:completionHandler:)")));
 + (id<KtKotlinKSuspendFunction0>)getKSuspendCallableReference0 __attribute__((swift_name("getKSuspendCallableReference0()")));
 + (id<KtKotlinKSuspendFunction1>)getKSuspendCallableReference1 __attribute__((swift_name("getKSuspendCallableReference1()")));
++ (void)gc __attribute__((swift_name("gc()")));
 @end;
 
 __attribute__((swift_name("DeallocRetainBase")))

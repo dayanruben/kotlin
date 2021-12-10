@@ -6,10 +6,9 @@
 package org.jetbrains.kotlin.backend.jvm.ir
 
 import org.jetbrains.kotlin.backend.jvm.JvmSymbols
-import org.jetbrains.kotlin.backend.jvm.codegen.isRawType
 import org.jetbrains.kotlin.builtins.StandardNames
-import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.IrBuiltIns
+import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classFqName
@@ -68,7 +67,7 @@ private class IrJvmFlexibleTypeImpl(
         }
 }
 
-internal fun IrType.isWithFlexibleNullability(): Boolean =
+fun IrType.isWithFlexibleNullability(): Boolean =
     hasAnnotation(JvmSymbols.FLEXIBLE_NULLABILITY_ANNOTATION_FQ_NAME)
 
 internal fun IrType.isWithFlexibleMutability(): Boolean =

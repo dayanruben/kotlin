@@ -69,10 +69,7 @@ class TestRunner(private val testConfiguration: TestConfiguration) {
         runTestPipeline(moduleStructure, services)
     }
 
-    fun runTestPipeline(
-        moduleStructure: TestModuleStructure,
-        services: TestServices
-    ) {
+    fun runTestPipeline(moduleStructure: TestModuleStructure, services: TestServices) {
         val globalMetadataInfoHandler = testConfiguration.testServices.globalMetadataInfoHandler
         globalMetadataInfoHandler.parseExistingMetadataInfosFromAllSources()
 

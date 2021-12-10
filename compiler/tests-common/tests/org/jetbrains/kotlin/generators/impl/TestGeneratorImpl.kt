@@ -20,13 +20,13 @@ import org.junit.runner.RunWith
 import org.junit.runners.BlockJUnit4ClassRunner
 import java.io.File
 import java.io.IOException
-import java.util.*
 
 private val METHOD_GENERATORS = listOf(
     RunTestMethodGenerator,
     SimpleTestClassModelTestAllFilesPresentMethodGenerator,
     SimpleTestMethodGenerator,
-    SingleClassTestModelAllFilesPresentedMethodGenerator
+    SingleClassTestModelAllFilesPresentedMethodGenerator,
+    TransformingTestMethodGenerator,
 )
 
 object TestGeneratorImpl : TestGenerator(METHOD_GENERATORS) {
@@ -124,7 +124,12 @@ private class TestGeneratorImplInstance(
         p.println("import " + KtTestUtil::class.java.canonicalName + ";")
 
         for (clazz in testClassModels.flatMapTo(mutableSetOf()) { classModel -> classModel.imports }) {
-            p.println("import ${clazz.name};")
+            val realName = when (clazz) {
+                TransformingTestMethodModel.TransformerFunctionsClassPlaceHolder::class.java ->
+                    "org.jetbrains.kotlin.test.utils.TransformersFunctions"
+                else -> clazz.name
+            }
+            p.println("import $realName;")
         }
 
         if (suiteClassPackage != baseTestClassPackage) {

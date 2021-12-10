@@ -12,12 +12,11 @@ import org.jetbrains.kotlin.test.builders.testRunner
 import org.jetbrains.kotlin.test.directives.ConfigurationDirectives
 import org.jetbrains.kotlin.test.directives.LanguageSettingsDirectives
 import org.jetbrains.kotlin.test.model.ResultingArtifact
+import org.jetbrains.kotlin.test.model.TestFile
 import org.jetbrains.kotlin.test.preprocessors.MetaInfosCleanupPreprocessor
-import org.jetbrains.kotlin.test.services.JUnit5Assertions
-import org.jetbrains.kotlin.test.services.KotlinTestInfo
-import org.jetbrains.kotlin.test.services.SourceFilePreprocessor
-import org.jetbrains.kotlin.test.services.TemporaryDirectoryManager
+import org.jetbrains.kotlin.test.services.*
 import org.jetbrains.kotlin.test.services.impl.TemporaryDirectoryManagerImpl
+import org.jetbrains.kotlin.test.utils.ReplacingSourceTransformer
 import org.jetbrains.kotlin.types.AbstractTypeChecker
 import org.jetbrains.kotlin.types.FlexibleTypeImpl
 import org.junit.jupiter.api.BeforeEach
@@ -81,5 +80,19 @@ abstract class AbstractKotlinCompilerTest {
 
     open fun runTest(@TestDataFile filePath: String) {
         testRunner(filePath, configuration).runTest(filePath)
+    }
+
+    open fun runTest(
+        @TestDataFile filePath: String,
+        contentModifier: ReplacingSourceTransformer,
+    ) {
+        class SourceTransformer(testServices: TestServices) : ReversibleSourceFilePreprocessor(testServices) {
+            override fun process(file: TestFile, content: String): String = contentModifier.invokeForTestFile(file, content)
+            override fun revert(file: TestFile, actualContent: String): String = contentModifier.revertForFile(file, actualContent)
+        }
+        testRunner(filePath) {
+            configuration.invoke(this)
+            useSourcePreprocessor(::SourceTransformer)
+        }.runTest(filePath)
     }
 }
