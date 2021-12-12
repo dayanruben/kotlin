@@ -321,7 +321,10 @@ class ExpressionCodegen(
                 irFunction.origin == IrDeclarationOrigin.LOCAL_FUNCTION_FOR_LAMBDA
 
     private fun generateNonNullAssertion(param: IrValueParameter) {
-        if (param.origin == JvmLoweredDeclarationOrigin.FIELD_FOR_OUTER_THIS) return
+        if (param.origin == JvmLoweredDeclarationOrigin.FIELD_FOR_OUTER_THIS ||
+            param.origin == IrDeclarationOrigin.MOVED_DISPATCH_RECEIVER
+        )
+            return
         val asmType = param.type.asmType
         if (!param.type.unboxInlineClass().isNullable() && !isPrimitive(asmType)) {
             mv.load(findLocalIndex(param.symbol), asmType)
@@ -1045,6 +1048,12 @@ class ExpressionCodegen(
                     TypeIntrinsics.checkcast(mv, kotlinType, boxedRightType, false)
                 }
                 MaterialValue(this, boxedRightType, expression.type)
+            }
+
+            IrTypeOperator.REINTERPRET_CAST -> {
+                val targetType = typeMapper.mapType(typeOperand)
+                expression.argument.accept(this, data).materialize()
+                MaterialValue(this, targetType, typeOperand)
             }
 
             IrTypeOperator.INSTANCEOF -> {

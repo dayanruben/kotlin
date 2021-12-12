@@ -1061,6 +1061,24 @@ public class BytecodeTextTestGenerated extends AbstractBytecodeTextTest {
         public void testKt22714() throws Exception {
             runTest("compiler/testData/codegen/bytecodeText/checkcast/kt22714.kt");
         }
+
+        @Test
+        @TestMetadata("noCheckcastOnDelegatingDefaultImplsCall.kt")
+        public void testNoCheckcastOnDelegatingDefaultImplsCall() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeText/checkcast/noCheckcastOnDelegatingDefaultImplsCall.kt");
+        }
+
+        @Test
+        @TestMetadata("noCheckcastOnDispatchReceiverOfMethodWithDefaultParameters.kt")
+        public void testNoCheckcastOnDispatchReceiverOfMethodWithDefaultParameters() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeText/checkcast/noCheckcastOnDispatchReceiverOfMethodWithDefaultParameters.kt");
+        }
+
+        @Test
+        @TestMetadata("noCheckcastOnSuper.kt")
+        public void testNoCheckcastOnSuper() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeText/checkcast/noCheckcastOnSuper.kt");
+        }
     }
 
     @Nested
@@ -3816,6 +3834,12 @@ public class BytecodeTextTestGenerated extends AbstractBytecodeTextTest {
         @TestMetadata("noAnyMethodsOnInterfaceInheritance.kt")
         public void testNoAnyMethodsOnInterfaceInheritance() throws Exception {
             runTest("compiler/testData/codegen/bytecodeText/interfaces/noAnyMethodsOnInterfaceInheritance.kt");
+        }
+
+        @Test
+        @TestMetadata("noNullCheckOnThisInDefaultMethod.kt")
+        public void testNoNullCheckOnThisInDefaultMethod() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeText/interfaces/noNullCheckOnThisInDefaultMethod.kt");
         }
 
         @Test
