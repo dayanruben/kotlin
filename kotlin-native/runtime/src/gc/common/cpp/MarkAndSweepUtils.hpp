@@ -69,34 +69,49 @@ void SweepExtraObjects(typename Traits::ExtraObjectsFactory& objectFactory) noex
     auto iter = objectFactory.LockForIter();
     for (auto it = iter.begin(); it != iter.end();) {
         auto &extraObject = *it;
-        if (!Traits::IsMarkedByExtraObject(extraObject)) {
+        if (!extraObject.getFlag(mm::ExtraObjectData::FLAGS_IN_FINALIZER_QUEUE) && !Traits::IsMarkedByExtraObject(extraObject)) {
             extraObject.ClearWeakReferenceCounter();
-            extraObject.DetachAssociatedObject();
+            if (extraObject.HasAssociatedObject()) {
+                extraObject.DetachAssociatedObject();
+                extraObject.setFlag(mm::ExtraObjectData::FLAGS_IN_FINALIZER_QUEUE);
+                ++it;
+            } else {
+                extraObject.Uninstall();
+                objectFactory.EraseAndAdvance(it);
+            }
+        } else {
+            ++it;
         }
-        ++it;
     }
 }
 
 template <typename Traits>
-typename Traits::ObjectFactory::FinalizerQueue Sweep(typename Traits::ObjectFactory& objectFactory) noexcept {
+typename Traits::ObjectFactory::FinalizerQueue Sweep(typename Traits::ObjectFactory::Iterable& objectFactoryIter) noexcept {
     typename Traits::ObjectFactory::FinalizerQueue finalizerQueue;
 
-    auto iter = objectFactory.LockForIter();
-    for (auto it = iter.begin(); it != iter.end();) {
+    for (auto it = objectFactoryIter.begin(); it != objectFactoryIter.end();) {
         if (Traits::TryResetMark(*it)) {
             ++it;
             continue;
         }
         auto* objHeader = it->IsArray() ? it->GetArrayHeader()->obj() : it->GetObjHeader();
         if (HasFinalizers(objHeader)) {
-            iter.MoveAndAdvance(finalizerQueue, it);
+            objectFactoryIter.MoveAndAdvance(finalizerQueue, it);
         } else {
-            iter.EraseAndAdvance(it);
+            objectFactoryIter.EraseAndAdvance(it);
         }
     }
 
     return finalizerQueue;
 }
+
+template <typename Traits>
+typename Traits::ObjectFactory::FinalizerQueue Sweep(typename Traits::ObjectFactory& objectFactory) noexcept {
+    auto iter = objectFactory.LockForIter();
+    return Sweep<Traits>(iter);
+}
+
+KStdVector<ObjHeader*> collectRootSet();
 
 } // namespace gc
 } // namespace kotlin

@@ -1387,6 +1387,11 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
             runTest("compiler/testData/codegen/box/bridges/overrideReturnType.kt");
         }
 
+        @TestMetadata("overrideWithValueClassReturn.kt")
+        public void testOverrideWithValueClassReturn() throws Exception {
+            runTest("compiler/testData/codegen/box/bridges/overrideWithValueClassReturn.kt");
+        }
+
         @TestMetadata("propertyAccessorsWithoutBody.kt")
         public void testPropertyAccessorsWithoutBody() throws Exception {
             runTest("compiler/testData/codegen/box/bridges/propertyAccessorsWithoutBody.kt");
@@ -3171,6 +3176,11 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
         @TestMetadata("kt47851.kt")
         public void testKt47851() throws Exception {
             runTest("compiler/testData/codegen/box/checkcastOptimization/kt47851.kt");
+        }
+
+        @TestMetadata("kt50215.kt")
+        public void testKt50215() throws Exception {
+            runTest("compiler/testData/codegen/box/checkcastOptimization/kt50215.kt");
         }
     }
 

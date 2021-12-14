@@ -82,7 +82,11 @@ MetaObjHeader* ObjHeader::createMetaObject(ObjHeader* object) {
 
 // static
 void ObjHeader::destroyMetaObject(ObjHeader* object) {
-    mm::ExtraObjectData::Uninstall(object);
+    RuntimeAssert(object->has_meta_object(), "Object must have a meta object set");
+    auto &extraObject = *mm::ExtraObjectData::Get(object);
+    extraObject.Uninstall();
+    auto *threadData = mm::ThreadRegistry::Instance().CurrentThreadData();
+    mm::ExtraObjectDataFactory::Instance().DestroyExtraObjectData(threadData, extraObject);
 }
 
 ALWAYS_INLINE bool isPermanentOrFrozen(const ObjHeader* obj) {
@@ -107,7 +111,7 @@ extern "C" void DeinitMemory(MemoryState* state, bool destroyRuntime) {
     auto* node = mm::FromMemoryState(state);
     if (destroyRuntime) {
         ThreadStateGuard guard(state, ThreadState::kRunnable);
-        node->Get()->gc().PerformFullGC();
+        node->Get()->gc().ScheduleAndWaitFullGC();
         // TODO: Also make sure that finalizers are run.
     }
     mm::ThreadRegistry::Instance().Unregister(node);
@@ -289,7 +293,7 @@ extern "C" RUNTIME_NOTHROW void GC_CollectorCallback(void* worker) {
 
 extern "C" void Kotlin_native_internal_GC_collect(ObjHeader*) {
     auto* threadData = mm::ThreadRegistry::Instance().CurrentThreadData();
-    threadData->gc().PerformFullGC();
+    threadData->gc().ScheduleAndWaitFullGC();
 }
 
 extern "C" void Kotlin_native_internal_GC_collectCyclic(ObjHeader*) {
@@ -398,7 +402,7 @@ extern "C" void Kotlin_Any_share(ObjHeader* thiz) {
 }
 
 extern "C" RUNTIME_NOTHROW void PerformFullGC(MemoryState* memory) {
-    memory->GetThreadData()->gc().PerformFullGC();
+    memory->GetThreadData()->gc().ScheduleAndWaitFullGC();
 }
 
 extern "C" bool TryAddHeapRef(const ObjHeader* object) {

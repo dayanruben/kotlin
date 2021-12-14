@@ -81,7 +81,19 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
         }
     }
     val destroyRuntimeMode: DestroyRuntimeMode get() = configuration.get(KonanConfigKeys.DESTROY_RUNTIME_MODE)!!
-    val gc: GC get() = configuration.get(KonanConfigKeys.GARBAGE_COLLECTOR)!!
+    val gc: GC by lazy {
+        val configGc = configuration.get(KonanConfigKeys.GARBAGE_COLLECTOR)
+        val (gcFallbackReason, realGc) = when {
+            configGc == GC.CONCURRENT_MARK_AND_SWEEP && !target.supportsThreads() ->
+                "Concurrent mark and sweep gc is not supported for this target. Fallback to Same thread mark and sweep is done" to GC.SAME_THREAD_MARK_AND_SWEEP
+            configGc == null -> null to GC.SAME_THREAD_MARK_AND_SWEEP
+            else -> null to configGc
+        }
+        if (gcFallbackReason != null) {
+            configuration.report(CompilerMessageSeverity.STRONG_WARNING, gcFallbackReason)
+        }
+        realGc
+    }
     val gcAggressive: Boolean get() = configuration.get(KonanConfigKeys.GARBAGE_COLLECTOR_AGRESSIVE)!!
     val runtimeAssertsMode: RuntimeAssertsMode get() = configuration.get(BinaryOptions.runtimeAssertionsMode) ?: RuntimeAssertsMode.IGNORE
     val workerExceptionHandling: WorkerExceptionHandling get() = configuration.get(KonanConfigKeys.WORKER_EXCEPTION_HANDLING)!!
@@ -104,6 +116,13 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
                 ?: SourceInfoType.CORESYMBOLICATION.takeIf { debug && target.supportsCoreSymbolication() }
                 ?: SourceInfoType.NOOP
 
+    val gcSchedulerType: GCSchedulerType by lazy {
+        configuration.get(BinaryOptions.gcSchedulerType) ?: when {
+            !target.supportsThreads() -> GCSchedulerType.ON_SAFE_POINTS
+            gcAggressive -> GCSchedulerType.ON_SAFE_POINTS
+            else -> GCSchedulerType.WITH_TIMER
+        }
+    }
 
     val needVerifyIr: Boolean
         get() = configuration.get(KonanConfigKeys.VERIFY_IR) == true
@@ -227,6 +246,11 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
                         add("common_gc_noop.bc")
                         add("experimental_memory_manager_noop.bc")
                         add("noop_gc.bc")
+                    }
+                    GC.CONCURRENT_MARK_AND_SWEEP -> {
+                        add("common_gc_cms.bc")
+                        add("experimental_memory_manager_cms.bc")
+                        add("concurrent_ms_gc.bc")
                     }
                 }
             }

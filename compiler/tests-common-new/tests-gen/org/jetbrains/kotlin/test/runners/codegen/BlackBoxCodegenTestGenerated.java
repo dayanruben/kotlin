@@ -2208,6 +2208,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         }
 
         @Test
+        @TestMetadata("overrideWithValueClassReturn.kt")
+        public void testOverrideWithValueClassReturn() throws Exception {
+            runTest("compiler/testData/codegen/box/bridges/overrideWithValueClassReturn.kt");
+        }
+
+        @Test
         @TestMetadata("propertyAccessorsWithoutBody.kt")
         public void testPropertyAccessorsWithoutBody() throws Exception {
             runTest("compiler/testData/codegen/box/bridges/propertyAccessorsWithoutBody.kt");
@@ -4765,6 +4771,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         @TestMetadata("kt47851a.kt")
         public void testKt47851a() throws Exception {
             runTest("compiler/testData/codegen/box/checkcastOptimization/kt47851a.kt");
+        }
+
+        @Test
+        @TestMetadata("kt50215.kt")
+        public void testKt50215() throws Exception {
+            runTest("compiler/testData/codegen/box/checkcastOptimization/kt50215.kt");
         }
     }
 
@@ -9963,6 +9975,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         @TestMetadata("stopAfter.kt")
         public void testStopAfter() throws Exception {
             runTest("compiler/testData/codegen/box/coroutines/stopAfter.kt");
+        }
+
+        @Test
+        @TestMetadata("suspendCallInSuperInterfaceCallArguments.kt")
+        public void testSuspendCallInSuperInterfaceCallArguments() throws Exception {
+            runTest("compiler/testData/codegen/box/coroutines/suspendCallInSuperInterfaceCallArguments.kt");
         }
 
         @Test

@@ -132,7 +132,7 @@ object NewTestGeneratorImpl : TestGenerator(METHOD_GENERATORS) {
                 val realName = when (clazz) {
                     TransformingTestMethodModel.TransformerFunctionsClassPlaceHolder::class.java ->
                         "org.jetbrains.kotlin.test.utils.TransformersFunctions"
-                    else -> clazz.name
+                    else -> clazz.canonicalName
                 }
                 p.println("import $realName;")
             }
@@ -293,6 +293,8 @@ object NewTestGeneratorImpl : TestGenerator(METHOD_GENERATORS) {
 
     private fun TestClassModel.predefinedNativeTransformers(recursive: Boolean): List<Pair<String, String>> =
         methods.mapNotNull { method ->
-            (method as? TransformingTestMethodModel)?.takeIf { it.registerInConstructor }?.let { it.source.file.path to it.transformer }
-        } + if (recursive) innerTestClasses.flatMap { it.predefinedNativeTransformers(recursive) } else listOf()
+            (method as? TransformingTestMethodModel)
+                ?.takeIf { it.registerInConstructor }
+                ?.let { it.source.file.invariantSeparatorsPath to it.transformer }
+        } + if (recursive) innerTestClasses.flatMap { it.predefinedNativeTransformers(true) } else listOf()
 }

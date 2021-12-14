@@ -1560,6 +1560,12 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
         }
 
         @Test
+        @TestMetadata("overrideWithValueClassReturn.kt")
+        public void testOverrideWithValueClassReturn() throws Exception {
+            runTest("compiler/testData/codegen/box/bridges/overrideWithValueClassReturn.kt");
+        }
+
+        @Test
         @TestMetadata("propertyAccessorsWithoutBody.kt")
         public void testPropertyAccessorsWithoutBody() throws Exception {
             runTest("compiler/testData/codegen/box/bridges/propertyAccessorsWithoutBody.kt");
@@ -3577,6 +3583,12 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
         @TestMetadata("kt47851.kt")
         public void testKt47851() throws Exception {
             runTest("compiler/testData/codegen/box/checkcastOptimization/kt47851.kt");
+        }
+
+        @Test
+        @TestMetadata("kt50215.kt")
+        public void testKt50215() throws Exception {
+            runTest("compiler/testData/codegen/box/checkcastOptimization/kt50215.kt");
         }
     }
 

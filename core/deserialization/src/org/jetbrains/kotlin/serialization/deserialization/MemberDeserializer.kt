@@ -132,21 +132,21 @@ class MemberDeserializer(private val c: DeserializationContext) {
         }
 
         if (Flags.HAS_CONSTANT.get(flags)) {
-            property.setCompileTimeInitializer(
+            property.setCompileTimeInitializerFactory {
                 c.storageManager.createNullableLazyValue {
                     val container = c.containingDeclaration.asProtoContainer()!!
                     c.components.annotationAndConstantLoader.loadPropertyConstant(container, proto, property.returnType)
                 }
-            )
+            }
         }
 
         if ((c.containingDeclaration as? ClassDescriptor)?.kind == ClassKind.ANNOTATION_CLASS) {
-            property.setCompileTimeInitializer(
+            property.setCompileTimeInitializerFactory {
                 c.storageManager.createNullableLazyValue {
                     val container = c.containingDeclaration.asProtoContainer()!!
                     c.components.annotationAndConstantLoader.loadAnnotationDefaultValue(container, proto, property.returnType)
                 }
-            )
+            }
         }
 
         property.initialize(

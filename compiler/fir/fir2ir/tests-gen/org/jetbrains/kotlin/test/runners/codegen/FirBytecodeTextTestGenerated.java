@@ -1081,12 +1081,6 @@ public class FirBytecodeTextTestGenerated extends AbstractFirBytecodeTextTest {
         }
 
         @Test
-        @TestMetadata("noCheckcastOnDispatchReceiverOfMethodWithDefaultParameters.kt")
-        public void testNoCheckcastOnDispatchReceiverOfMethodWithDefaultParameters() throws Exception {
-            runTest("compiler/testData/codegen/bytecodeText/checkcast/noCheckcastOnDispatchReceiverOfMethodWithDefaultParameters.kt");
-        }
-
-        @Test
         @TestMetadata("noCheckcastOnSuper.kt")
         public void testNoCheckcastOnSuper() throws Exception {
             runTest("compiler/testData/codegen/bytecodeText/checkcast/noCheckcastOnSuper.kt");
@@ -2278,6 +2272,12 @@ public class FirBytecodeTextTestGenerated extends AbstractFirBytecodeTextTest {
         @Test
         public void testAllFilesPresentInExclExcl() throws Exception {
             KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/exclExcl"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+        }
+
+        @Test
+        @TestMetadata("exclExclOnPlatformType.kt")
+        public void testExclExclOnPlatformType() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeText/exclExcl/exclExclOnPlatformType.kt");
         }
 
         @Test
@@ -4662,6 +4662,12 @@ public class FirBytecodeTextTestGenerated extends AbstractFirBytecodeTextTest {
         @TestMetadata("noAssertionsForKotlin.kt")
         public void testNoAssertionsForKotlin() throws Exception {
             runTest("compiler/testData/codegen/bytecodeText/notNullAssertions/noAssertionsForKotlin.kt");
+        }
+
+        @Test
+        @TestMetadata("noTemporaryVariableInNullCheckOnExpression.kt")
+        public void testNoTemporaryVariableInNullCheckOnExpression() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeText/notNullAssertions/noTemporaryVariableInNullCheckOnExpression.kt");
         }
     }
 

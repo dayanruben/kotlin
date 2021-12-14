@@ -1069,12 +1069,6 @@ public class BytecodeTextTestGenerated extends AbstractBytecodeTextTest {
         }
 
         @Test
-        @TestMetadata("noCheckcastOnDispatchReceiverOfMethodWithDefaultParameters.kt")
-        public void testNoCheckcastOnDispatchReceiverOfMethodWithDefaultParameters() throws Exception {
-            runTest("compiler/testData/codegen/bytecodeText/checkcast/noCheckcastOnDispatchReceiverOfMethodWithDefaultParameters.kt");
-        }
-
-        @Test
         @TestMetadata("noCheckcastOnSuper.kt")
         public void testNoCheckcastOnSuper() throws Exception {
             runTest("compiler/testData/codegen/bytecodeText/checkcast/noCheckcastOnSuper.kt");
@@ -2254,6 +2248,12 @@ public class BytecodeTextTestGenerated extends AbstractBytecodeTextTest {
         @Test
         public void testAllFilesPresentInExclExcl() throws Exception {
             KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeText/exclExcl"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
+        }
+
+        @Test
+        @TestMetadata("exclExclOnPlatformType.kt")
+        public void testExclExclOnPlatformType() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeText/exclExcl/exclExclOnPlatformType.kt");
         }
 
         @Test
@@ -4518,6 +4518,12 @@ public class BytecodeTextTestGenerated extends AbstractBytecodeTextTest {
         @TestMetadata("noAssertionsForKotlin.kt")
         public void testNoAssertionsForKotlin() throws Exception {
             runTest("compiler/testData/codegen/bytecodeText/notNullAssertions/noAssertionsForKotlin.kt");
+        }
+
+        @Test
+        @TestMetadata("noTemporaryVariableInNullCheckOnExpression.kt")
+        public void testNoTemporaryVariableInNullCheckOnExpression() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeText/notNullAssertions/noTemporaryVariableInNullCheckOnExpression.kt");
         }
     }
 
