@@ -5,6 +5,8 @@
 
 package org.jetbrains.kotlin.konan.blackboxtest.support
 
+import org.jetbrains.kotlin.konan.blackboxtest.support.util.startsWith
+import org.jetbrains.kotlin.test.services.JUnit5Assertions.assertFalse
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import java.io.File
 
@@ -14,38 +16,43 @@ internal class TestExecutable(
 )
 
 internal class TestRun(
+    val displayName: String,
     val executable: TestExecutable,
     val runParameters: List<TestRunParameter>,
-    val origin: TestOrigin.SingleTestDataFile
+    val testCaseId: TestCaseId
 )
 
 internal sealed interface TestRunParameter {
     fun applyTo(programArgs: MutableList<String>)
 
     sealed class WithFilter : TestRunParameter {
-        protected abstract val wildcard: String
-        abstract fun testMatches(testName: String): Boolean
+        abstract fun testMatches(testName: TestName): Boolean
+    }
 
-        final override fun applyTo(programArgs: MutableList<String>) {
-            programArgs += "--ktest_filter=$wildcard"
+    class WithPackageFilter(private val packageName: PackageName) : WithFilter() {
+        init {
+            assertFalse(packageName.isEmpty())
         }
-    }
 
-    class WithPackageFilter(private val packageFQN: PackageFQN) : WithFilter() {
-        override val wildcard get() = "$packageFQN.*"
-        override fun testMatches(testName: String) = testName.startsWith("$packageFQN.")
-    }
-
-/*
-    class WithFunctionFilter(private val functionFQN: String) : WithFilter() {
-        override val wildcard get() = functionFQN
-        override fun testMatches(testName: String) = testName == functionFQN
-    }
-*/
-
-    object WithGTestLogger : TestRunParameter {
         override fun applyTo(programArgs: MutableList<String>) {
-            programArgs += "--ktest_logger=GTEST"
+            programArgs += "--ktest_filter=$packageName.*"
+        }
+
+        override fun testMatches(testName: TestName) = testName.packageName.startsWith(packageName)
+    }
+
+    class WithTestFilter(val testName: TestName) : WithFilter() {
+        override fun applyTo(programArgs: MutableList<String>) {
+            programArgs += "--ktest_filter=$testName"
+        }
+
+        override fun testMatches(testName: TestName) = this.testName == testName
+    }
+
+    object WithTCTestLogger : TestRunParameter {
+        override fun applyTo(programArgs: MutableList<String>) {
+            programArgs += "--ktest_logger=TEAMCITY"
+            programArgs += "--ktest_no_exit_code"
         }
     }
 

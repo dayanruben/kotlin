@@ -18,25 +18,21 @@ dependencies {
     testApi(kotlinStdlib())
     testApi(project(":kotlin-reflect"))
     testApi(projectTests(":compiler:tests-common"))
-    testApi(commonDep("junit:junit"))
+    testApi(commonDependency("junit:junit"))
     testApi(projectTests(":compiler:test-infrastructure"))
     testApi(projectTests(":compiler:test-infrastructure-utils"))
     testApi(projectTests(":compiler:tests-compiler-utils"))
     testApi(projectTests(":compiler:tests-common-new"))
 
-    testApi(commonDep("junit:junit"))
+    testApi(commonDependency("junit:junit"))
 
-    testApi(intellijDep()) { includeJars("util", "idea", "idea_rt", rootProject = rootProject) }
-    testApi(intellijDep()) { includeJars("groovy", rootProject = rootProject) }
-
-    testApi(intellijPluginDep("java")) { includeJars("jps-builders") }
-    testApi(jpsStandalone()) { includeJars("jps-model") }
+    testApi(jpsModel())
     testApi(jpsBuildTest())
 
-    testRuntimeOnly(intellijCoreDep()) { includeJars("intellij-core") }
-    testRuntimeOnly(intellijDep()) { includeJars("jna", rootProject = rootProject) }
+    testRuntimeOnly(intellijCore())
+    testRuntimeOnly(commonDependency("net.java.dev.jna:jna"))
 
-    testApi("org.junit.platform:junit-platform-launcher:${commonVer("org.junit.platform", "")}")
+    testApi("org.junit.platform:junit-platform-launcher:${commonDependencyVersion("org.junit.platform", "")}")
 }
 
 sourceSets {

@@ -645,6 +645,18 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
         }
 
         @Test
+        @TestMetadata("ReserveYieldNoMore.kt")
+        public void testReserveYieldNoMore() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/ReserveYieldNoMore.kt");
+        }
+
+        @Test
+        @TestMetadata("ReserveYieldNoMore2.kt")
+        public void testReserveYieldNoMore2() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/ReserveYieldNoMore2.kt");
+        }
+
+        @Test
         @TestMetadata("ResolveOfJavaGenerics.kt")
         public void testResolveOfJavaGenerics() throws Exception {
             runTest("compiler/testData/diagnostics/tests/ResolveOfJavaGenerics.kt");
@@ -4940,6 +4952,18 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
                 @TestMetadata("divideByZero.kt")
                 public void testDivideByZero() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/constantEvaluator/constant/divideByZero.kt");
+                }
+
+                @Test
+                @TestMetadata("duplicateLabelWithNonTrivialCondition_disabled.kt")
+                public void testDuplicateLabelWithNonTrivialCondition_disabled() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/constantEvaluator/constant/duplicateLabelWithNonTrivialCondition_disabled.kt");
+                }
+
+                @Test
+                @TestMetadata("duplicateLabelWithNonTrivialCondition_enabled.kt")
+                public void testDuplicateLabelWithNonTrivialCondition_enabled() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/constantEvaluator/constant/duplicateLabelWithNonTrivialCondition_enabled.kt");
                 }
 
                 @Test
@@ -10652,6 +10676,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
                 @TestMetadata("insideDeclaration.kt")
                 public void testInsideDeclaration() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/insideDeclaration.kt");
+                }
+
+                @Test
+                @TestMetadata("labelFromFunctionName.kt")
+                public void testLabelFromFunctionName() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/labelFromFunctionName.kt");
                 }
 
                 @Test
@@ -27970,6 +28000,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             }
 
             @Test
+            @TestMetadata("noSmartcastForNonFinalMembersFromJava.kt")
+            public void testNoSmartcastForNonFinalMembersFromJava() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/smartCasts/noSmartcastForNonFinalMembersFromJava.kt");
+            }
+
+            @Test
             @TestMetadata("noUnnecessarySmartCastForReceiver.kt")
             public void testNoUnnecessarySmartCastForReceiver() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/smartCasts/noUnnecessarySmartCastForReceiver.kt");
@@ -32921,6 +32957,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             @TestMetadata("ExhaustiveVarOverConditionalInit.kt")
             public void testExhaustiveVarOverConditionalInit() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/when/ExhaustiveVarOverConditionalInit.kt");
+            }
+
+            @Test
+            @TestMetadata("exhaustiveWhenWithConstVal.kt")
+            public void testExhaustiveWhenWithConstVal() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/when/exhaustiveWhenWithConstVal.kt");
             }
 
             @Test

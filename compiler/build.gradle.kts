@@ -12,14 +12,14 @@ val otherCompilerModules = compilerModules.filter { it != path }
 val antLauncherJar by configurations.creating
 
 dependencies {
-    testImplementation(intellijDep()) { includeJars("platform-impl", rootProject = rootProject) } // Should come before compiler, because of "progarded" stuff needed for tests
+    testImplementation(intellijCore()) // Should come before compiler, because of "progarded" stuff needed for tests
 
     testApi(project(":kotlin-script-runtime"))
     testApi(project(":kotlin-test:kotlin-test-jvm"))
     
     testApi(kotlinStdlib())
 
-    testApi(commonDep("junit:junit"))
+    testApi(commonDependency("junit:junit"))
     testCompileOnly(project(":kotlin-test:kotlin-test-jvm"))
     testCompileOnly(project(":kotlin-test:kotlin-test-junit"))
     testApi(projectTests(":compiler:tests-common"))
@@ -33,26 +33,15 @@ dependencies {
     testApi(project(":kotlin-scripting-compiler"))
     testApi(project(":kotlin-script-util"))
     testCompileOnly(project(":kotlin-reflect-api"))
+
     otherCompilerModules.forEach {
         testCompileOnly(project(it))
     }
-    testCompileOnly(intellijCoreDep()) { includeJars("intellij-core") }
-
-    testRuntimeOnly(intellijDep()) {
-        includeJars(
-            "jps-model",
-            "streamex",
-            "idea_rt",
-            rootProject = rootProject
-        )
-    }
-
-    testRuntimeOnly(intellijPluginDep("java"))
 
     testImplementation(project(":kotlin-reflect"))
     testImplementation(toolsJar())
 
-    antLauncherJar(commonDep("org.apache.ant", "ant"))
+    antLauncherJar(commonDependency("org.apache.ant", "ant"))
     antLauncherJar(toolsJar())
 }
 

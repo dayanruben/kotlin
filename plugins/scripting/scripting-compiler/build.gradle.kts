@@ -11,18 +11,15 @@ dependencies {
     compileOnly(project(":compiler:psi"))
     compileOnly(project(":compiler:plugin-api"))
     compileOnly(project(":compiler:cli"))
-    compileOnly(project(":compiler:backend.js"))
     compileOnly(project(":core:descriptors.runtime"))
     compileOnly(project(":compiler:ir.tree.impl"))
     compileOnly(project(":compiler:backend.jvm.entrypoint"))
     compileOnly(project(":kotlin-reflect-api"))
     api(project(":kotlin-scripting-common"))
-    api(project(":kotlin-scripting-js"))
-    api(project(":kotlin-util-klib"))
     api(project(":kotlin-scripting-jvm"))
     api(project(":kotlin-scripting-compiler-impl"))
     api(kotlinStdlib())
-    compileOnly(intellijCoreDep()) { includeJars("intellij-core") }
+    compileOnly(intellijCore())
 
     testApi(project(":compiler:frontend"))
     testApi(project(":compiler:plugin-api"))
@@ -30,14 +27,11 @@ dependencies {
     testApi(project(":compiler:cli"))
     testApi(project(":compiler:cli-common"))
     testApi(project(":compiler:frontend.java"))
-    testApi(project(":compiler:backend.js"))
     testApi(projectTests(":compiler:tests-common"))
-    testApi(commonDep("junit:junit"))
+    testApi(commonDependency("junit:junit"))
 
-    testImplementation(intellijCoreDep()) { includeJars("intellij-core") }
-    testImplementation(commonDep("org.jetbrains.kotlinx", "kotlinx-coroutines-core"))
-    testRuntimeOnly(intellijDep()) { includeJars("jps-model", "jna") }
-
+    testImplementation(intellijCore())
+    testImplementation(commonDependency("org.jetbrains.kotlinx", "kotlinx-coroutines-core"))
     testImplementation(project(":kotlin-reflect"))
 }
 

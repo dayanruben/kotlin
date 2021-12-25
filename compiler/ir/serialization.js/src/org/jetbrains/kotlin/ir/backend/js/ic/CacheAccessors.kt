@@ -28,15 +28,13 @@ private fun ByteArray.toHex(): String = joinToString(separator = "") { eachByte 
 
 private fun createFileCacheId(fileName: String): String = md5.digest(fileName.encodeToByteArray()).toHex()
 
-class ICCache(val dataProvider: PersistentCacheProvider, val dataConsumer: PersistentCacheConsumer, val serializedIcData: SerializedIcData)
+class ICCache()
 
 class FileCache(val name: String, var ast: ByteArray?, var dts: ByteArray?, var sourceMap: ByteArray?)
 class ModuleCache(val name: String, val asts: Map<String, FileCache>)
 
 interface PersistentCacheProvider {
     fun fileFingerPrint(path: String): Hash
-
-    fun serializedParts(path: String): SerializedIcDataForFile
 
     fun inlineGraphForFile(path: String, sigResolver: (Int) -> IdSignature): Collection<Pair<IdSignature, TransHash>>
 
@@ -52,14 +50,12 @@ interface PersistentCacheProvider {
 
     fun filePaths(): Iterable<String>
 
+    fun moduleName(): String
+
     companion object {
         val EMPTY = object : PersistentCacheProvider {
             override fun fileFingerPrint(path: String): Hash {
                 return 0
-            }
-
-            override fun serializedParts(path: String): SerializedIcDataForFile {
-                TODO("..")
             }
 
             override fun inlineGraphForFile(path: String, sigResolver: (Int) -> IdSignature): Collection<Pair<IdSignature, TransHash>> {
@@ -87,6 +83,10 @@ interface PersistentCacheProvider {
             }
 
             override fun filePaths(): Iterable<String> = emptyList()
+
+            override fun moduleName(): String {
+                TODO("Not yet implemented")
+            }
         }
     }
 }
@@ -108,11 +108,6 @@ class PersistentCacheProviderImpl(private val cachePath: String) : PersistentCac
             val hashLine = dataFile.readLines()[1]
             hashLine.parseHash()
         } else 0
-    }
-
-    override fun serializedParts(path: String): SerializedIcDataForFile {
-        val fileDir = path.fileDir
-        return fileDir.readIcDataBinary()
     }
 
     private fun parseHashList(
@@ -184,12 +179,18 @@ class PersistentCacheProviderImpl(private val cachePath: String) : PersistentCac
     }
 
     override fun filePaths(): Iterable<String> {
-        return File(cachePath).listFiles()!!.filter { it.isDirectory }.mapNotNull { f ->
+        val files = File(cachePath).listFiles() ?: return emptyList()
+        return files.filter { it.isDirectory }.mapNotNull { f ->
             val fileInfo = File(f, fileInfoFile)
             if (fileInfo.exists()) {
                 fileInfo.readLines()[0]
             } else null
         }
+    }
+
+    override fun moduleName(): String {
+        val infoFile = File(File(cachePath), "info")
+        return infoFile.readLines()[3]
     }
 }
 
@@ -197,13 +198,12 @@ interface PersistentCacheConsumer {
     fun commitInlineFunctions(path: String, hashes: Collection<Pair<IdSignature, TransHash>>, sigResolver: (IdSignature) -> Int)
     fun commitFileFingerPrint(path: String, fingerprint: Hash)
     fun commitInlineGraph(path: String, hashes: Collection<Pair<IdSignature, TransHash>>, sigResolver: (IdSignature) -> Int)
-    fun commitICCacheData(path: String, icData: SerializedIcDataForFile)
     fun commitBinaryAst(path: String, astData: ByteArray)
     fun commitBinaryDts(path: String, dstData: ByteArray)
     fun commitSourceMap(path: String, mapData: ByteArray)
     fun invalidateForFile(path: String)
 
-    fun commitLibraryPath(libraryPath: String, flatHash: ULong, transHash: ULong)
+    fun commitLibraryInfo(libraryPath: String, flatHash: ULong, transHash: ULong, moduleName: String)
 
     companion object {
         val EMPTY = object : PersistentCacheConsumer {
@@ -224,9 +224,6 @@ interface PersistentCacheConsumer {
             ) {
             }
 
-            override fun commitICCacheData(path: String, icData: SerializedIcDataForFile) {
-            }
-
             override fun invalidateForFile(path: String) {
             }
 
@@ -234,7 +231,7 @@ interface PersistentCacheConsumer {
 
             }
 
-            override fun commitLibraryPath(libraryPath: String, flatHash: ULong, transHash: ULong) {
+            override fun commitLibraryInfo(libraryPath: String, flatHash: ULong, transHash: ULong, moduleName: String) {
 
             }
 
@@ -294,12 +291,6 @@ class PersistentCacheConsumerImpl(private val cachePath: String) : PersistentCac
         commitFileHashMapping(path, inlineGraphFile, hashes, sigResolver)
     }
 
-    override fun commitICCacheData(path: String, icData: SerializedIcDataForFile) {
-        val fileId = createFileCacheId(path)
-        val fileDir = File(File(cachePath), fileId)
-        icData.writeData(fileDir)
-    }
-
     override fun invalidateForFile(path: String) {
         val fileId = createFileCacheId(path)
         val cacheDir = File(cachePath)
@@ -333,7 +324,7 @@ class PersistentCacheConsumerImpl(private val cachePath: String) : PersistentCac
         commitByteArrayToCacheFile(path, fileSourceMap, mapData)
     }
 
-    override fun commitLibraryPath(libraryPath: String, flatHash: ULong, transHash: ULong) {
+    override fun commitLibraryInfo(libraryPath: String, flatHash: ULong, transHash: ULong, moduleName: String) {
         val infoFile = File(File(cachePath), "info")
         if (infoFile.exists()) {
             infoFile.delete()
@@ -344,6 +335,7 @@ class PersistentCacheConsumerImpl(private val cachePath: String) : PersistentCac
             it.println(libraryPath)
             it.println(flatHash.toString(16))
             it.println(transHash.toString(16))
+            it.println(moduleName)
         }
     }
 }

@@ -25,8 +25,35 @@ fun CompilerConfiguration.setupJvmSpecificArguments(arguments: K2JVMCompilerArgu
 
     putIfNotNull(JVMConfigurationKeys.FRIEND_PATHS, arguments.friendPaths?.asList())
 
-    if (arguments.jvmTarget != null) {
-        val jvmTarget = JvmTarget.fromString(arguments.jvmTarget!!)
+    val releaseTargetArg = arguments.jdkRelease
+    val jvmTargetArg = arguments.jvmTarget
+    if (releaseTargetArg != null) {
+        val value =
+            when (releaseTargetArg) {
+                "1.6" -> 6
+                "1.8" -> 8
+                else -> releaseTargetArg.toIntOrNull()
+            }
+        if (value == null || value < 6) {
+            messageCollector.report(ERROR, "Unknown JDK release version: $releaseTargetArg")
+        } else {
+            //don't use release flag if it equals to compilation JDK version
+            if (value != getJavaVersion() || arguments.jdkHome != null) {
+                put(JVMConfigurationKeys.JDK_RELEASE, value)
+            }
+            if (jvmTargetArg != null && jvmTargetArg != releaseTargetArg) {
+                messageCollector.report(
+                    ERROR,
+                    "'-Xjdk-release=$releaseTargetArg' option conflicts with '-jvm-target $jvmTargetArg'. " +
+                            "Please remove the '-jvm-target' option"
+                )
+            }
+        }
+    }
+
+    val jvmTargetValue = releaseTargetArg ?: jvmTargetArg
+    if (jvmTargetValue != null) {
+        val jvmTarget = JvmTarget.fromString(jvmTargetValue)
         if (jvmTarget != null) {
             put(JVMConfigurationKeys.JVM_TARGET, jvmTarget)
             if (jvmTarget == JvmTarget.JVM_1_6 && !arguments.suppressDeprecatedJvmTargetWarning) {
@@ -37,7 +64,7 @@ fun CompilerConfiguration.setupJvmSpecificArguments(arguments: K2JVMCompilerArgu
             }
         } else {
             messageCollector.report(
-                ERROR, "Unknown JVM target version: ${arguments.jvmTarget}\n" +
+                ERROR, "Unknown JVM target version: $jvmTargetValue\n" +
                         "Supported versions: ${JvmTarget.values().joinToString { it.description }}"
             )
         }
@@ -147,7 +174,8 @@ fun CompilerConfiguration.configureExplicitContentRoots(arguments: K2JVMCompiler
 }
 
 fun CompilerConfiguration.configureStandardLibs(paths: KotlinPaths?, arguments: K2JVMCompilerArguments) {
-    val isModularJava = isModularJava()
+    val jdkRelease = get(JVMConfigurationKeys.JDK_RELEASE)
+    val isModularJava = isModularJava() && (jdkRelease == null || jdkRelease >= 9)
 
     fun addRoot(moduleName: String, libraryName: String, getLibrary: (KotlinPaths) -> File, noLibraryArgument: String) {
         addModularRootIfNotNull(
@@ -306,3 +334,6 @@ fun CompilerConfiguration.configureKlibPaths(arguments: K2JVMCompilerArguments) 
 
 private val CompilerConfiguration.messageCollector: MessageCollector
     get() = getNotNull(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY)
+
+private fun getJavaVersion(): Int =
+    System.getProperty("java.specification.version")?.substringAfter('.')?.toIntOrNull() ?: 6

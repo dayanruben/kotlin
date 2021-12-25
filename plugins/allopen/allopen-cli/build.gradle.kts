@@ -9,16 +9,16 @@ plugins {
 dependencies {
     compileOnly(project(":compiler:plugin-api"))
     compileOnly(project(":compiler:frontend"))
-    compileOnly(intellijCoreDep()) { includeJars("intellij-core") }
+    compileOnly(intellijCore())
 
     runtimeOnly(kotlinStdlib())
 
     testApi(project(":compiler:backend"))
     testApi(project(":compiler:cli"))
     testApi(projectTests(":compiler:tests-common"))
-    testApi(commonDep("junit:junit"))
+    testApi(commonDependency("junit:junit"))
 
-    testApi(intellijCoreDep()) { includeJars("intellij-core") }
+    testApi(intellijCore())
 }
 
 sourceSets {

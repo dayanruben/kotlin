@@ -6,11 +6,11 @@ plugins {
 dependencies {
     api(project(":compiler:cli"))
 
-    compileOnly(intellijCoreDep()) { includeJars("intellij-core", rootProject = rootProject) }
+    compileOnly(intellijCore())
 
     testApi(projectTests(":compiler:tests-common"))
     testApi(projectTests(":compiler"))
-    testApi(commonDep("junit:junit"))
+    testApi(commonDependency("junit:junit"))
 }
 
 sourceSets {

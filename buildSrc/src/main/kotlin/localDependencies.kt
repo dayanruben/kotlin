@@ -80,35 +80,16 @@ fun Project.intellijDep(module: String? = null, forIde: Boolean = false) =
 
 fun Project.intellijCoreDep() = "kotlin.build:intellij-core:${rootProject.extra["versions.intellijSdk"]}"
 
-fun Project.jpsStandalone() = "kotlin.build:jps-standalone:${rootProject.extra["versions.intellijSdk"]}"
-
-fun Project.jpsBuildTest() = "com.jetbrains.intellij.idea:jps-build-test:${rootProject.extra["versions.intellijSdk"]}"
-
-fun Project.kotlinxCollectionsImmutable() = "org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:${rootProject.extra["versions.kotlinx-collections-immutable"]}"
-
-/**
- * Runtime version of annotations that are already in Kotlin stdlib (historically Kotlin has older version of this one).
- *
- * SHOULD NOT BE USED IN COMPILE CLASSPATH!
- *
- * `@NonNull`, `@Nullabe` from `idea/annotations.jar` has `TYPE` target which leads to different types treatment in Kotlin compiler.
- * On the other hand, `idea/annotations.jar` contains org/jetbrains/annotations/Async annations which is required for IDEA debugger.
- *
- * So, we are excluding `annotaions.jar` from all other `kotlin.build` and using this one for runtime only
- * to avoid accidentally including `annotations.jar` by calling `intellijDep()`.
- */
-fun Project.intellijRuntimeAnnotations() = "kotlin.build:intellij-runtime-annotations:${rootProject.extra["versions.intellijSdk"]}"
-
 fun Project.intellijPluginDep(plugin: String, forIde: Boolean = false) = intellijDep(plugin, forIde)
 
 fun ModuleDependency.includeJars(vararg names: String, rootProject: Project? = null) {
     names.forEach {
         var baseName = it.removeSuffix(".jar")
-        if (rootProject != null && rootProject.extra.has("ignore.jar.$baseName")) {
+        if (rootProject != null && rootProject.extra.has("ignore.$baseName")) {
             return@forEach
         }
-        if (rootProject != null && rootProject.extra.has("versions.jar.$baseName")) {
-            baseName += "-${rootProject.extra["versions.jar.$baseName"]}"
+        if (rootProject != null && rootProject.extra.has("versions.$baseName")) {
+            baseName += "-${rootProject.extra["versions.$baseName"]}"
         }
         artifact {
             name = baseName
@@ -132,11 +113,11 @@ object IntellijRootUtils {
     }
 }
 
-@Suppress("UNCHECKED_CAST")
-fun ModuleDependency.includeIntellijCoreJarDependencies(project: Project, jarsFilterPredicate: (String) -> Boolean = { true }): Unit =
-    includeJars(
-        *(project.rootProject.extra["IntellijCoreDependencies"] as List<String>).filter(jarsFilterPredicate).toTypedArray(),
-        rootProject = project.rootProject
-    )
+fun Project.ideaHomePathForTests() = rootProject.buildDir.resolve("ideaHomeForTests")
 
-fun Project.intellijRootDir() = IntellijRootUtils.getIntellijRootDir(project)
+fun Project.ideaBuildNumberFileForTests() = File(ideaHomePathForTests(), "build.txt")
+
+fun Project.writeIdeaBuildNumberForTests() {
+    ideaHomePathForTests().mkdirs()
+    ideaBuildNumberFileForTests().writeText("IC-${rootProject.extra["versions.intellijSdk"]}")
+}

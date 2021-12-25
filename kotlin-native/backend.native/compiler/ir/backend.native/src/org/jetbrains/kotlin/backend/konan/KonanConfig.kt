@@ -94,7 +94,6 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
         }
         realGc
     }
-    val gcAggressive: Boolean get() = configuration.get(KonanConfigKeys.GARBAGE_COLLECTOR_AGRESSIVE)!!
     val runtimeAssertsMode: RuntimeAssertsMode get() = configuration.get(BinaryOptions.runtimeAssertionsMode) ?: RuntimeAssertsMode.IGNORE
     val workerExceptionHandling: WorkerExceptionHandling get() = configuration.get(KonanConfigKeys.WORKER_EXCEPTION_HANDLING)!!
     val runtimeLogs: String? get() = configuration.get(KonanConfigKeys.RUNTIME_LOGS)
@@ -119,7 +118,6 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
     val gcSchedulerType: GCSchedulerType by lazy {
         configuration.get(BinaryOptions.gcSchedulerType) ?: when {
             !target.supportsThreads() -> GCSchedulerType.ON_SAFE_POINTS
-            gcAggressive -> GCSchedulerType.ON_SAFE_POINTS
             else -> GCSchedulerType.WITH_TIMER
         }
     }
@@ -236,20 +234,16 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
                 add("legacy_memory_manager.bc")
             }
             MemoryModel.EXPERIMENTAL -> {
+                add("common_gc.bc")
+                add("experimental_memory_manager.bc")
                 when (gc) {
                     GC.SAME_THREAD_MARK_AND_SWEEP -> {
-                        add("common_gc_stms.bc")
-                        add("experimental_memory_manager_stms.bc")
                         add("same_thread_ms_gc.bc")
                     }
                     GC.NOOP -> {
-                        add("common_gc_noop.bc")
-                        add("experimental_memory_manager_noop.bc")
                         add("noop_gc.bc")
                     }
                     GC.CONCURRENT_MARK_AND_SWEEP -> {
-                        add("common_gc_cms.bc")
-                        add("experimental_memory_manager_cms.bc")
                         add("concurrent_ms_gc.bc")
                     }
                 }

@@ -131,7 +131,7 @@ interface ConeInferenceContext : TypeSystemInferenceExtensionContext, ConeTypeCo
 
     override fun StubTypeMarker.getOriginalTypeVariable(): TypeVariableTypeConstructorMarker {
         require(this is ConeStubType)
-        return this.variable.typeConstructor
+        return this.constructor.variable.typeConstructor
     }
 
     override fun KotlinTypeMarker.typeDepth() = when (this) {
@@ -264,7 +264,7 @@ interface ConeInferenceContext : TypeSystemInferenceExtensionContext, ConeTypeCo
 
     override fun createStubTypeForBuilderInference(typeVariable: TypeVariableMarker): StubTypeMarker {
         require(typeVariable is ConeTypeVariable) { "$typeVariable should subtype of ${ConeTypeVariable::class.qualifiedName}" }
-        return ConeStubTypeForBuilderInference(typeVariable, ConeNullability.create(typeVariable.defaultType().isMarkedNullable()))
+        return ConeStubTypeForChainInference(typeVariable, ConeNullability.create(typeVariable.defaultType().isMarkedNullable()))
     }
 
     override fun createStubTypeForTypeVariablesInSubtyping(typeVariable: TypeVariableMarker): StubTypeMarker {

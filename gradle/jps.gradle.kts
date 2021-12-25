@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.ideaExt.*
 val ideaPluginDir: File by extra
 val ideaSandboxDir: File by extra
 val ideaSdkPath: String
-    get() = IntellijRootUtils.getIntellijRootDir(rootProject).absolutePath
+    get() = rootProject.ideaHomePathForTests().absolutePath
 
 fun JUnit.configureForKotlin(xmx: String = "1600m") {
     vmParameters = listOf(
@@ -25,6 +25,7 @@ fun JUnit.configureForKotlin(xmx: String = "1600m") {
         "-Didea.is.unit.test=true",
         "-Didea.ignore.disabled.plugins=true",
         "-Didea.home.path=$ideaSdkPath",
+        "-Didea.use.native.fs.for.win=false",
         "-Djps.kotlin.home=${ideaPluginDir.absolutePath}",
         "-Dkotlin.ni=" + if (rootProject.hasProperty("newInferenceTests")) "true" else "false",
         "-Duse.jps=true",
@@ -135,6 +136,8 @@ if (kotlinBuildProperties.isInJpsBuildIdeaSync) {
 
     rootProject.afterEvaluate {
 
+        writeIdeaBuildNumberForTests()
+
         setupFirRunConfiguration()
         setupGenerateAllTestsRunConfiguration()
 
@@ -183,42 +186,6 @@ if (kotlinBuildProperties.isInJpsBuildIdeaSync) {
                     }
 
                     runConfigurations {
-                        fun idea(
-                            title: String,
-                            sandboxDir: File,
-                            pluginDir: File,
-                            disableProcessCanceledException: Boolean = false
-                        ) {
-                            val useAndroidStudio = rootProject.extra.has("versions.androidStudioRelease")
-                            application(title) {
-                                moduleName = "kotlin.idea-runner.main"
-                                workingDirectory = File(intellijRootDir(), "bin").toString()
-                                mainClass = "com.intellij.idea.Main"
-                                jvmArgs = listOf(
-                                    "-Xmx1250m",
-                                    "-XX:ReservedCodeCacheSize=240m",
-                                    "-XX:+HeapDumpOnOutOfMemoryError",
-                                    "-ea",
-                                    "-Didea.platform.prefix=Idea",
-                                    "-Didea.is.internal=true",
-                                    "-Didea.debug.mode=true",
-                                    "-Didea.system.path=${sandboxDir.absolutePath}",
-                                    "-Didea.config.path=${sandboxDir.absolutePath}/config",
-                                    "-Didea.tooling.debug=true",
-                                    "-Dfus.internal.test.mode=true",
-                                    "-Dapple.laf.useScreenMenuBar=true",
-                                    "-Dapple.awt.graphics.UseQuartz=true",
-                                    "-Dsun.io.useCanonCaches=false",
-                                    "-Dplugin.path=${pluginDir.absolutePath}",
-                                    "-Didea.ProcessCanceledException=${if (disableProcessCanceledException) "disabled" else "enabled"}",
-                                    if (useAndroidStudio) "-Didea.platform.prefix=AndroidStudio" else ""
-                                ).joinToString(" ")
-                            }
-                        }
-
-                        idea("[JPS] IDEA", ideaSandboxDir, ideaPluginDir)
-
-                        idea("[JPS] IDEA (No ProcessCanceledException)", ideaSandboxDir, ideaPluginDir, disableProcessCanceledException = true)
 
                         defaults<JUnit> {
                             configureForKotlin()

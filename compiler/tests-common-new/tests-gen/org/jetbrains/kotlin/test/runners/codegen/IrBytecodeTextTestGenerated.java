@@ -50,6 +50,12 @@ public class IrBytecodeTextTestGenerated extends AbstractIrBytecodeTextTest {
     }
 
     @Test
+    @TestMetadata("annotationDefaultValueOfUnsigned.kt")
+    public void testAnnotationDefaultValueOfUnsigned() throws Exception {
+        runTest("compiler/testData/codegen/bytecodeText/annotationDefaultValueOfUnsigned.kt");
+    }
+
+    @Test
     @TestMetadata("annotationJavaRetentionPolicyRuntime.kt")
     public void testAnnotationJavaRetentionPolicyRuntime() throws Exception {
         runTest("compiler/testData/codegen/bytecodeText/annotationJavaRetentionPolicyRuntime.kt");
@@ -5884,6 +5890,12 @@ public class IrBytecodeTextTestGenerated extends AbstractIrBytecodeTextTest {
         @TestMetadata("manyWhensWithinClass.kt")
         public void testManyWhensWithinClass() throws Exception {
             runTest("compiler/testData/codegen/bytecodeText/whenEnumOptimization/manyWhensWithinClass.kt");
+        }
+
+        @Test
+        @TestMetadata("nestedWhenInCondition.kt")
+        public void testNestedWhenInCondition() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeText/whenEnumOptimization/nestedWhenInCondition.kt");
         }
 
         @Test

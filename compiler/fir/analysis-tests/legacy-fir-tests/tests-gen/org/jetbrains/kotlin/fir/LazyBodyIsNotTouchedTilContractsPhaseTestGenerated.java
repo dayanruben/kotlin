@@ -1055,6 +1055,11 @@ public class LazyBodyIsNotTouchedTilContractsPhaseTestGenerated extends Abstract
             runTest("compiler/fir/analysis-tests/testData/resolve/delegates/delegateInference.kt");
         }
 
+        @TestMetadata("delegateWithArgInference.kt")
+        public void testDelegateWithArgInference() throws Exception {
+            runTest("compiler/fir/analysis-tests/testData/resolve/delegates/delegateWithArgInference.kt");
+        }
+
         @TestMetadata("delegateWithLambda.kt")
         public void testDelegateWithLambda() throws Exception {
             runTest("compiler/fir/analysis-tests/testData/resolve/delegates/delegateWithLambda.kt");
@@ -1078,6 +1083,11 @@ public class LazyBodyIsNotTouchedTilContractsPhaseTestGenerated extends Abstract
         @TestMetadata("provideDelegate.kt")
         public void testProvideDelegate() throws Exception {
             runTest("compiler/fir/analysis-tests/testData/resolve/delegates/provideDelegate.kt");
+        }
+
+        @TestMetadata("receiverInference.kt")
+        public void testReceiverInference() throws Exception {
+            runTest("compiler/fir/analysis-tests/testData/resolve/delegates/receiverInference.kt");
         }
     }
 
@@ -3063,6 +3073,11 @@ public class LazyBodyIsNotTouchedTilContractsPhaseTestGenerated extends Abstract
     public static class Smartcasts extends AbstractLazyBodyIsNotTouchedTilContractsPhaseTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("accessToMemberAfterReceiverReassignment.kt")
+        public void testAccessToMemberAfterReceiverReassignment() throws Exception {
+            runTest("compiler/fir/analysis-tests/testData/resolve/smartcasts/accessToMemberAfterReceiverReassignment.kt");
         }
 
         public void testAllFilesPresentInSmartcasts() throws Exception {

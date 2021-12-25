@@ -3,10 +3,6 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-@file:Suppress("unused")
-
-// usages in build scripts are not tracked properly
-
 import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.artifacts.*
@@ -14,10 +10,7 @@ import org.gradle.api.artifacts.dsl.DependencyHandler
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.FileCollection
 import org.gradle.internal.jvm.Jvm
-import org.gradle.jvm.toolchain.JavaLanguageVersion
-import org.gradle.kotlin.dsl.accessors.runtime.addDependencyTo
 import org.gradle.kotlin.dsl.closureOf
-import org.gradle.kotlin.dsl.exclude
 import org.gradle.kotlin.dsl.extra
 import org.gradle.kotlin.dsl.project
 import java.io.File
@@ -25,42 +18,44 @@ import java.io.File
 private val Project.isEAPIntellij get() = rootProject.extra["versions.intellijSdk"].toString().contains("-EAP-")
 private val Project.isNightlyIntellij get() = rootProject.extra["versions.intellijSdk"].toString().endsWith("SNAPSHOT") && !isEAPIntellij
 
-val Project.intellijRepo get() =
-    when {
-        isEAPIntellij -> "https://www.jetbrains.com/intellij-repository/snapshots"
-        isNightlyIntellij -> "https://www.jetbrains.com/intellij-repository/nightly"
-        else -> "https://www.jetbrains.com/intellij-repository/releases"
-    }
+val Project.intellijRepo
+    get() =
+        when {
+            isEAPIntellij -> "https://www.jetbrains.com/intellij-repository/snapshots"
+            isNightlyIntellij -> "https://www.jetbrains.com/intellij-repository/nightly"
+            else -> "https://www.jetbrains.com/intellij-repository/releases"
+        }
 
-val Project.internalBootstrapRepo: String? get() =
-    when {
-        bootstrapKotlinRepo?.startsWith("https://buildserver.labs.intellij.net") == true
-                || bootstrapKotlinRepo?.startsWith("https://teamcity.jetbrains.com") == true ->
-            bootstrapKotlinRepo!!.replace("artifacts/content/maven", "artifacts/content/internal/repo")
+val Project.internalBootstrapRepo: String?
+    get() =
+        when {
+            bootstrapKotlinRepo?.startsWith("https://buildserver.labs.intellij.net") == true
+                    || bootstrapKotlinRepo?.startsWith("https://teamcity.jetbrains.com") == true ->
+                bootstrapKotlinRepo!!.replace("artifacts/content/maven", "artifacts/content/internal/repo")
 
-        project.kotlinBuildProperties.isJpsBuildEnabled ->
-            "https://teamcity.jetbrains.com/guestAuth/app/rest/builds/buildType:(id:Kotlin_KotlinPublic_Aggregate)," +
-                    "number:$bootstrapKotlinVersion,branch:default:any/artifacts/content/internal/repo/"
+            project.kotlinBuildProperties.isJpsBuildEnabled ->
+                "https://teamcity.jetbrains.com/guestAuth/app/rest/builds/buildType:(id:Kotlin_KotlinPublic_Aggregate)," +
+                        "number:$bootstrapKotlinVersion,branch:default:any/artifacts/content/internal/repo/"
 
-        else -> null
-    }
+            else -> null
+        }
 
-fun Project.commonDep(coord: String): String {
-    val parts = coord.split(':')
+fun Project.commonDependency(coordinates: String): String {
+    val parts = coordinates.split(':')
     return when (parts.size) {
-        1 -> "$coord:$coord:${commonVer(coord, coord)}"
-        2 -> "${parts[0]}:${parts[1]}:${commonVer(parts[0], parts[1])}"
-        3 -> coord
-        else -> throw IllegalArgumentException("Illegal maven coordinates: $coord")
+        1 -> "$coordinates:$coordinates:${commonDependencyVersion(coordinates, coordinates)}"
+        2 -> "${parts[0]}:${parts[1]}:${commonDependencyVersion(parts[0], parts[1])}"
+        3 -> coordinates
+        else -> throw IllegalArgumentException("Illegal maven coordinates: $coordinates")
     }
 }
 
-fun Project.commonDep(group: String, artifact: String, vararg suffixesAndClassifiers: String): String {
+fun Project.commonDependency(group: String, artifact: String, vararg suffixesAndClassifiers: String): String {
     val (classifiers, artifactSuffixes) = suffixesAndClassifiers.partition { it.startsWith(':') }
-    return "$group:$artifact${artifactSuffixes.joinToString("")}:${commonVer(group, artifact)}${classifiers.joinToString("")}"
+    return "$group:$artifact${artifactSuffixes.joinToString("")}:${commonDependencyVersion(group, artifact)}${classifiers.joinToString("")}"
 }
 
-fun Project.commonVer(group: String, artifact: String) =
+fun Project.commonDependencyVersion(group: String, artifact: String) =
     when {
         rootProject.extra.has("versions.$artifact") -> rootProject.extra["versions.$artifact"]
         rootProject.extra.has("versions.$group") -> rootProject.extra["versions.$group"]
@@ -70,10 +65,10 @@ fun Project.commonVer(group: String, artifact: String) =
 fun Project.preloadedDeps(
     vararg artifactBaseNames: String,
     baseDir: File = File(rootDir, "dependencies"),
-    subdir: String? = null,
+    subDir: String? = null,
     optional: Boolean = false
 ): ConfigurableFileCollection {
-    val dir = if (subdir != null) File(baseDir, subdir) else baseDir
+    val dir = if (subDir != null) File(baseDir, subDir) else baseDir
     if (!dir.exists() || !dir.isDirectory) {
         if (optional) return files()
         throw GradleException("Invalid base directory $dir")
@@ -82,20 +77,22 @@ fun Project.preloadedDeps(
     if (matchingFiles == null || matchingFiles.size < artifactBaseNames.size) {
         throw GradleException(
             "Not all matching artifacts '${artifactBaseNames.joinToString()}' found in the '$dir' " +
-                    "(missing: ${artifactBaseNames.filterNot { request ->
-                        matchingFiles.any {
-                            it.matchMaybeVersionedArtifact(
-                                request
-                            )
-                        }
-                    }.joinToString()};" +
+                    "(missing: ${
+                        artifactBaseNames.filterNot { request ->
+                            matchingFiles?.any {
+                                it.matchMaybeVersionedArtifact(
+                                    request
+                                )
+                            } ?: false
+                        }.joinToString()
+                    };" +
                     " found: ${matchingFiles?.joinToString { it.name }})"
         )
     }
     return files(*matchingFiles.map { it.canonicalPath }.toTypedArray())
 }
 
-fun Project.kotlinDep(artifactBaseName: String, version: String, classifier: String? = null): String =
+fun kotlinDep(artifactBaseName: String, version: String, classifier: String? = null): String =
     listOfNotNull("org.jetbrains.kotlin:kotlin-$artifactBaseName:$version", classifier).joinToString(":")
 
 fun Project.kotlinStdlib(suffix: String? = null, classifier: String? = null): Any {
@@ -126,6 +123,7 @@ fun DependencyHandler.add(configurationName: String, dependencyNotation: Any, co
     }
 }
 
+@Suppress("unused") // Used in cooperative mode with IDEA Kotlin plugin
 fun Project.disableDependencyVerification() {
     configurations.all {
         resolutionStrategy {
@@ -171,6 +169,7 @@ fun DependencyHandler.jpsLikeJarDependency(
     }
 }
 
+@Suppress("unused") // Used in cooperative mode with IDEA Kotlin plugin
 fun DependencyHandler.jpsLikeModuleDependency(moduleName: String, scope: JpsDepScope, exported: Boolean = false) {
     jpsLikeJarDependency(project(moduleName), scope, exported = exported)
     when (scope) {
@@ -209,7 +208,7 @@ fun Project.testApiJUnit5(
     jupiterParams: Boolean = false
 ) {
     with(dependencies) {
-        val platformVersion = commonVer("org.junit", "junit-bom")
+        val platformVersion = commonDependencyVersion("org.junit", "junit-bom")
         testApi(platform("org.junit:junit-bom:$platformVersion"))
         testApi("org.junit.jupiter:junit-jupiter")
         if (vintageEngine) {
@@ -220,7 +219,7 @@ fun Project.testApiJUnit5(
             testApi("org.junit.jupiter:junit-jupiter-params:$platformVersion")
         }
 
-        val componentsVersion = commonVer("org.junit.platform", "")
+        val componentsVersion = commonDependencyVersion("org.junit.platform", "")
 
         val components = mutableListOf(
             "org.junit.platform:junit-platform-commons",
@@ -237,14 +236,11 @@ fun Project.testApiJUnit5(
             testApi("$component:$componentsVersion")
         }
 
-        addDependencyTo<ExternalModuleDependency>(this, "testImplementation", intellijDep()) {
-            // This dependency is needed only for FileComparisonFailure
-            includeJars("idea_rt", rootProject = rootProject)
-            isTransitive = false
-        }
+        // This dependency is needed only for FileComparisonFailure
+        add("testImplementation", intellijJavaRt())
 
         // This is needed only for using FileComparisonFailure, which relies on JUnit 3 classes
-        add("testRuntimeOnly", commonDep("junit:junit"))
+        add("testRuntimeOnly", commonDependency("junit:junit"))
     }
 }
 
@@ -260,6 +256,8 @@ val Project.protobufRepo: String
 
 fun Project.protobufLite(): String = "org.jetbrains.kotlin:protobuf-lite:$protobufVersion"
 fun Project.protobufFull(): String = "org.jetbrains.kotlin:protobuf-relocated:$protobufVersion"
+fun Project.kotlinxCollectionsImmutable() =
+    "org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:${rootProject.extra["versions.kotlinx-collections-immutable"]}"
 
 val Project.kotlinNativeVersion: String get() = property("versions.kotlin-native") as String
 
@@ -306,5 +304,5 @@ val compilerManifestClassPath
     get() = "annotations-13.0.jar kotlin-stdlib.jar kotlin-reflect.jar kotlin-script-runtime.jar trove4j.jar"
 
 object EmbeddedComponents {
-    val CONFIGURATION_NAME = "embedded"
+    const val CONFIGURATION_NAME = "embedded"
 }

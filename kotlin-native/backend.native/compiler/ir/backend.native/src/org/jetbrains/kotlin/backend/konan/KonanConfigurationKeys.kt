@@ -134,7 +134,7 @@ class KonanConfigKeys {
                 = CompilerConfigurationKey.create("target we compile for")
         val TEMPORARY_FILES_DIR: CompilerConfigurationKey<String?>
                 = CompilerConfigurationKey.create("directory for temporary files")
-        val SAVE_LLVM_IR: CompilerConfigurationKey<Boolean>
+        val SAVE_LLVM_IR: CompilerConfigurationKey<List<String>>
                 = CompilerConfigurationKey.create("save LLVM IR")
         val VERIFY_BITCODE: CompilerConfigurationKey<Boolean>
                 = CompilerConfigurationKey.create("verify bitcode")
@@ -161,7 +161,6 @@ class KonanConfigKeys {
         val DESTROY_RUNTIME_MODE: CompilerConfigurationKey<DestroyRuntimeMode>
                 = CompilerConfigurationKey.create("when to destroy runtime")
         val GARBAGE_COLLECTOR: CompilerConfigurationKey<GC> = CompilerConfigurationKey.create("gc")
-        val GARBAGE_COLLECTOR_AGRESSIVE: CompilerConfigurationKey<Boolean> = CompilerConfigurationKey.create("turn on agressive GC mode")
         val CHECK_LLD_COMPATIBILITY: CompilerConfigurationKey<Boolean> = CompilerConfigurationKey.create("check compatibility with LLD")
         val PROPERTY_LAZY_INITIALIZATION: CompilerConfigurationKey<Boolean>
                 = CompilerConfigurationKey.create("lazy top level properties initialization")

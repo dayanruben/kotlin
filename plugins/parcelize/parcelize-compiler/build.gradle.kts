@@ -9,9 +9,11 @@ plugins {
 
 val robolectricClasspath by configurations.creating
 val parcelizeRuntimeForTests by configurations.creating
+val layoutLib by configurations.creating
+val layoutLibApi by configurations.creating
 
 dependencies {
-    testApi(intellijCoreDep()) { includeJars("intellij-core") }
+    testApi(intellijCore())
 
     compileOnly(project(":compiler:util"))
     compileOnly(project(":compiler:plugin-api"))
@@ -21,8 +23,8 @@ dependencies {
     compileOnly(project(":compiler:ir.backend.common"))
     compileOnly(project(":compiler:backend.jvm"))
     compileOnly(project(":compiler:ir.tree.impl"))
-    compileOnly(intellijCoreDep()) { includeJars("intellij-core") }
-    compileOnly(intellijDep()) { includeJars("asm-all", rootProject = rootProject) }
+    compileOnly(intellijCore())
+    compileOnly(commonDependency("org.jetbrains.intellij.deps:asm-all"))
 
     // FIR dependencies
     compileOnly(project(":compiler:fir:cones"))
@@ -60,17 +62,18 @@ dependencies {
     testRuntimeOnly(project(":kotlin-reflect"))
     testRuntimeOnly(project(":core:descriptors.runtime"))
 
-    testApi(commonDep("junit:junit"))
+    testApi(commonDependency("junit:junit"))
 
-    testRuntimeOnly(intellijPluginDep("junit"))
-
-    robolectricClasspath(commonDep("org.robolectric", "robolectric"))
+    robolectricClasspath(commonDependency("org.robolectric", "robolectric"))
     robolectricClasspath("org.robolectric:android-all:4.4_r1-robolectric-1")
     robolectricClasspath(project(":plugins:parcelize:parcelize-runtime")) { isTransitive = false }
     robolectricClasspath(project(":kotlin-android-extensions-runtime")) { isTransitive = false }
 
     parcelizeRuntimeForTests(project(":plugins:parcelize:parcelize-runtime")) { isTransitive = false }
     parcelizeRuntimeForTests(project(":kotlin-android-extensions-runtime")) { isTransitive = false }
+
+    layoutLib("org.jetbrains.intellij.deps.android.tools:layoutlib:26.5.0") { isTransitive = false }
+    layoutLibApi("com.android.tools.layoutlib:layoutlib-api:26.5.0") { isTransitive = false }
 }
 
 val generationRoot = projectDir.resolve("tests-gen")
@@ -103,14 +106,13 @@ projectTest(jUnitMode = JUnitMode.JUnit5) {
     workingDir = rootDir
     useAndroidJar()
 
-    val androidPluginPath = File(intellijRootDir(), "plugins/android/lib").canonicalPath
-    systemProperty("ideaSdk.androidPlugin.path", androidPluginPath)
-
     val parcelizeRuntimeForTestsProvider = project.provider { parcelizeRuntimeForTests.asPath }
     val robolectricClasspathProvider = project.provider { robolectricClasspath.asPath }
     doFirst {
         systemProperty("parcelizeRuntime.classpath", parcelizeRuntimeForTestsProvider.get())
         systemProperty("robolectric.classpath", robolectricClasspathProvider.get())
+        systemProperty("layoutLib.path", layoutLib.singleFile.canonicalPath)
+        systemProperty("layoutLibApi.path", layoutLibApi.singleFile.canonicalPath)
     }
     doLast {
         println(filter)

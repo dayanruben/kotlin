@@ -6,9 +6,11 @@
 package org.jetbrains.kotlin.gradle.plugin.statistics
 
 import com.gradle.scan.plugin.BuildScanExtension
+import org.gradle.api.logging.Logging
 import org.jetbrains.kotlin.gradle.plugin.stat.CompileStatData
 import org.jetbrains.kotlin.gradle.plugin.stat.ReportStatistics
 import org.jetbrains.kotlin.konan.file.File
+import kotlin.system.measureTimeMillis
 
 class ReportStatisticsToBuildScan(
     private val buildScan: BuildScanExtension
@@ -19,9 +21,21 @@ class ReportStatisticsToBuildScan(
         const val gbSize = kbSize * mbSize
     }
 
+    private val tags = LinkedHashSet<String>()
+    private val log = Logging.getLogger(this.javaClass)
+
     override fun report(data: CompileStatData) {
-        buildScan.value(data.taskName, readableString(data))
-        data.tags.forEach { buildScan.tag(it) }
+        val elapsedTime = measureTimeMillis {
+            buildScan.value(data.taskName, readableString(data))
+
+            data.tags
+                .filter { !tags.contains(it) }
+                .forEach {
+                    buildScan.tag(it)
+                    tags.add(it)
+                }
+        }
+        log.debug("Report statistic to build scan takes $elapsedTime ms")
     }
 
     private fun readableString(data: CompileStatData): String {
@@ -35,7 +49,7 @@ class ReportStatisticsToBuildScan(
         data.changes.joinTo(readableString, prefix = "Changes: [", postfix = "]; ") { it.substringAfterLast(File.separator) }
 
         val timeData = data.timeData.map { (key, value) -> "${key.readableString}: ${value}ms"} //sometimes it is better to have separate variable to be able debug
-        val perfData = data.perfData.map { (key, value) -> "$key: ${readableFileLength(value)}"}
+        val perfData = data.perfData.map { (key, value) -> "${key.readableString}: ${readableFileLength(value)}"}
         timeData.union(perfData).joinTo(readableString, ",", "Performance: [", "]")
         return readableString.toString()
     }

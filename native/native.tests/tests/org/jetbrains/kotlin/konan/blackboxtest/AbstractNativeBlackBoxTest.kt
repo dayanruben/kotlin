@@ -6,32 +6,93 @@
 package org.jetbrains.kotlin.konan.blackboxtest
 
 import com.intellij.testFramework.TestDataFile
-import org.jetbrains.kotlin.konan.blackboxtest.support.NativeBlackBoxTestSupport
-import org.jetbrains.kotlin.konan.blackboxtest.support.TestRunProvider
+import org.jetbrains.kotlin.konan.blackboxtest.support.*
+import org.jetbrains.kotlin.konan.blackboxtest.support.settings.TestRunSettings
+import org.jetbrains.kotlin.konan.blackboxtest.support.util.TreeNode
 import org.jetbrains.kotlin.konan.blackboxtest.support.util.getAbsoluteFile
+import org.jetbrains.kotlin.konan.blackboxtest.support.util.joinPackageNames
+import org.jetbrains.kotlin.konan.blackboxtest.support.util.prependPackageName
+import org.junit.jupiter.api.DynamicNode
+import org.junit.jupiter.api.DynamicTest.dynamicTest
 import org.junit.jupiter.api.extension.ExtendWith
-import java.io.File
 
 @ExtendWith(NativeBlackBoxTestSupport::class)
 abstract class AbstractNativeBlackBoxTest {
+    internal lateinit var testRunSettings: TestRunSettings
     internal lateinit var testRunProvider: TestRunProvider
-    private val toBeRegistered = mutableListOf<Pair<File, List<(String) -> String>>>()
-    internal fun onRunProviderSet() {
-        for ((file, transformer) in toBeRegistered) {
-            testRunProvider.setProcessors(file, transformer)
-        }
+
+    /**
+     * Run JUnit test.
+     *
+     * This function should be called from a method annotated with [org.junit.jupiter.api.Test].
+     */
+    fun runTest(@TestDataFile testDataFilePath: String) {
+        val testCaseId = TestCaseId.TestDataFile(getAbsoluteFile(testDataFilePath))
+        runTestCase(testCaseId)
     }
 
-    fun register(@TestDataFile testDataFilePath: String, sourceTransformers: List<(String) -> String>) =
-        toBeRegistered.add(File(testDataFilePath) to sourceTransformers)
+    /**
+     * Run JUnit test.
+     *
+     * This function should be called from a method annotated with [org.junit.jupiter.api.Test].
+     */
+    internal fun runTestCase(testCaseId: TestCaseId) {
+        val testRun = testRunProvider.getSingleTestRun(testCaseId, testRunSettings)
+        performTestRun(testRun)
+    }
 
-    fun register(@TestDataFile testDataFilePath: String, sourceTransformer: (String) -> String) =
-        register(testDataFilePath, listOf(sourceTransformer))
+    /**
+     * Run JUnit dynamic test.
+     *
+     * This function should be called from a method annotated with [org.junit.jupiter.api.TestFactory].
+     */
+    fun dynamicTest(@TestDataFile testDataFilePath: String): Collection<DynamicNode> {
+        val testCaseId = TestCaseId.TestDataFile(getAbsoluteFile(testDataFilePath))
+        return dynamicTestCase(testCaseId)
+    }
 
-    fun runTest(@TestDataFile testDataFilePath: String): Unit = with(testRunProvider) {
-        val testDataFile = getAbsoluteFile(testDataFilePath)
-        val testRun = getSingleTestRun(testDataFile)
-        val testRunner = createRunner(testRun)
+    /**
+     * Run JUnit dynamic test.
+     *
+     * This function should be called from a method annotated with [org.junit.jupiter.api.TestFactory].
+     */
+    internal fun dynamicTestCase(testCaseId: TestCaseId): Collection<DynamicNode> {
+        val testRunNodes = testRunProvider.getTestRuns(testCaseId, testRunSettings)
+        return buildJUnitDynamicNodes(testRunNodes)
+    }
+
+    // We have to use planar (one-level) tree of JUnit5 dynamic nodes, because Gradle does not support yet rendering
+    // tests with arbitrary nesting level in their test reports. As long as these reports are consumed by various CI (such as TeamCity)
+    // we have almost no chance to display test results in CI properly.
+    private fun buildJUnitDynamicNodes(testRunNodes: Collection<TreeNode<TestRun>>): Collection<DynamicNode> =
+    // This is the proper implementation that should be used instead:
+//        buildList {
+//            testRunNodes.forEach { testRunNode ->
+//                testRunNode.items.mapTo(this) { testRun ->
+//                    dynamicTest(testRun.displayName) { runTest(testRun) }
+//                }
+//
+//                testRunNode.children.mapTo(this) { childTestRunNode ->
+//                    dynamicContainer(childTestRunNode.packageSegment, buildJUnitDynamicNodes(childTestRunNode))
+//                }
+//            }
+//        }
+        buildList {
+            fun TreeNode<TestRun>.processItems(parentPackageSegment: PackageName) {
+                val ownPackageSegment = joinPackageNames(parentPackageSegment, packageSegment)
+                items.mapTo(this@buildList) { testRun ->
+                    val displayName = testRun.displayName.prependPackageName(ownPackageSegment)
+                    dynamicTest(displayName) { performTestRun(testRun) }
+                }
+
+                children.forEach { it.processItems(ownPackageSegment) }
+            }
+
+            testRunNodes.forEach { testRunNode -> testRunNode.processItems(PackageName.EMPTY) }
+        }
+
+    private fun performTestRun(testRun: TestRun) {
+        val testRunner = testRunProvider.createRunner(testRun, testRunSettings)
         testRunner.run()
     }
 }

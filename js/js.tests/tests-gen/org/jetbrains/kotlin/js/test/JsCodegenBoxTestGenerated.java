@@ -538,6 +538,12 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
         }
 
         @Test
+        @TestMetadata("kt47483.kt")
+        public void testKt47483() throws Exception {
+            runTest("compiler/testData/codegen/box/arrays/kt47483.kt");
+        }
+
+        @Test
         @TestMetadata("kt503.kt")
         public void testKt503() throws Exception {
             runTest("compiler/testData/codegen/box/arrays/kt503.kt");
@@ -1166,6 +1172,42 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
         }
 
         @Test
+        @TestMetadata("kt49092a.kt")
+        public void testKt49092a() throws Exception {
+            runTest("compiler/testData/codegen/box/boxingOptimization/kt49092a.kt");
+        }
+
+        @Test
+        @TestMetadata("kt49092b.kt")
+        public void testKt49092b() throws Exception {
+            runTest("compiler/testData/codegen/box/boxingOptimization/kt49092b.kt");
+        }
+
+        @Test
+        @TestMetadata("kt49092c.kt")
+        public void testKt49092c() throws Exception {
+            runTest("compiler/testData/codegen/box/boxingOptimization/kt49092c.kt");
+        }
+
+        @Test
+        @TestMetadata("kt49092d.kt")
+        public void testKt49092d() throws Exception {
+            runTest("compiler/testData/codegen/box/boxingOptimization/kt49092d.kt");
+        }
+
+        @Test
+        @TestMetadata("kt49092e.kt")
+        public void testKt49092e() throws Exception {
+            runTest("compiler/testData/codegen/box/boxingOptimization/kt49092e.kt");
+        }
+
+        @Test
+        @TestMetadata("kt49092f.kt")
+        public void testKt49092f() throws Exception {
+            runTest("compiler/testData/codegen/box/boxingOptimization/kt49092f.kt");
+        }
+
+        @Test
         @TestMetadata("kt49548.kt")
         public void testKt49548() throws Exception {
             runTest("compiler/testData/codegen/box/boxingOptimization/kt49548.kt");
@@ -1724,6 +1766,16 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
         }
 
         @Nested
+        @TestMetadata("compiler/testData/codegen/box/builtinStubMethods/bridgesForStubs")
+        @TestDataPath("$PROJECT_ROOT")
+        public class BridgesForStubs {
+            @Test
+            public void testAllFilesPresentInBridgesForStubs() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/builtinStubMethods/bridgesForStubs"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JS, true);
+            }
+        }
+
+        @Nested
         @TestMetadata("compiler/testData/codegen/box/builtinStubMethods/extendJavaCollections")
         @TestDataPath("$PROJECT_ROOT")
         public class ExtendJavaCollections {
@@ -1893,6 +1945,36 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
         @TestMetadata("kt47988.kt")
         public void testKt47988() throws Exception {
             runTest("compiler/testData/codegen/box/callableReference/kt47988.kt");
+        }
+
+        @Test
+        @TestMetadata("kt49526.kt")
+        public void testKt49526() throws Exception {
+            runTest("compiler/testData/codegen/box/callableReference/kt49526.kt");
+        }
+
+        @Test
+        @TestMetadata("kt49526_sam.kt")
+        public void testKt49526_sam() throws Exception {
+            runTest("compiler/testData/codegen/box/callableReference/kt49526_sam.kt");
+        }
+
+        @Test
+        @TestMetadata("kt49526a.kt")
+        public void testKt49526a() throws Exception {
+            runTest("compiler/testData/codegen/box/callableReference/kt49526a.kt");
+        }
+
+        @Test
+        @TestMetadata("kt49526b.kt")
+        public void testKt49526b() throws Exception {
+            runTest("compiler/testData/codegen/box/callableReference/kt49526b.kt");
+        }
+
+        @Test
+        @TestMetadata("kt50172.kt")
+        public void testKt50172() throws Exception {
+            runTest("compiler/testData/codegen/box/callableReference/kt50172.kt");
         }
 
         @Test
@@ -14609,6 +14691,12 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             }
 
             @Test
+            @TestMetadata("kt49887.kt")
+            public void testKt49887() throws Exception {
+                runTest("compiler/testData/codegen/box/inference/builderInference/kt49887.kt");
+            }
+
+            @Test
             @TestMetadata("labaledCall.kt")
             public void testLabaledCall() throws Exception {
                 runTest("compiler/testData/codegen/box/inference/builderInference/labaledCall.kt");
@@ -15323,6 +15411,12 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
         @TestMetadata("iterateOverListOfInlineClassValues.kt")
         public void testIterateOverListOfInlineClassValues() throws Exception {
             runTest("compiler/testData/codegen/box/inlineClasses/iterateOverListOfInlineClassValues.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
+        }
+
+        @Test
+        @TestMetadata("jvmInline.kt")
+        public void testJvmInline() throws Exception {
+            runTest("compiler/testData/codegen/box/inlineClasses/jvmInline.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
         }
 
         @Test
@@ -32241,22 +32335,6 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
     }
 
     @Nested
-    @TestMetadata("compiler/testData/codegen/box/valueClasses")
-    @TestDataPath("$PROJECT_ROOT")
-    public class ValueClasses {
-        @Test
-        public void testAllFilesPresentInValueClasses() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/valueClasses"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JS, true);
-        }
-
-        @Test
-        @TestMetadata("jvmInline.kt")
-        public void testJvmInline() throws Exception {
-            runTest("compiler/testData/codegen/box/valueClasses/jvmInline.kt");
-        }
-    }
-
-    @Nested
     @TestMetadata("compiler/testData/codegen/box/vararg")
     @TestDataPath("$PROJECT_ROOT")
     public class Vararg {
@@ -32705,9 +32783,27 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             }
 
             @Test
+            @TestMetadata("kt50258.kt")
+            public void testKt50258() throws Exception {
+                runTest("compiler/testData/codegen/box/when/enumOptimization/kt50258.kt");
+            }
+
+            @Test
             @TestMetadata("manyWhensWithinClass.kt")
             public void testManyWhensWithinClass() throws Exception {
                 runTest("compiler/testData/codegen/box/when/enumOptimization/manyWhensWithinClass.kt");
+            }
+
+            @Test
+            @TestMetadata("nestedWhenInCondition.kt")
+            public void testNestedWhenInCondition() throws Exception {
+                runTest("compiler/testData/codegen/box/when/enumOptimization/nestedWhenInCondition.kt");
+            }
+
+            @Test
+            @TestMetadata("nestedWhenInResult.kt")
+            public void testNestedWhenInResult() throws Exception {
+                runTest("compiler/testData/codegen/box/when/enumOptimization/nestedWhenInResult.kt");
             }
 
             @Test

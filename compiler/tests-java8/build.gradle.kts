@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 plugins {
     kotlin("jvm")
     id("jps-compatible")
@@ -8,12 +6,14 @@ plugins {
 dependencies {
     testApi(project(":kotlin-scripting-compiler"))
     testApi(projectTests(":compiler:tests-common"))
-    testImplementation(intellijCoreDep()) { includeJars("intellij-core") }
+    testImplementation(intellijCore())
     testApi(projectTests(":generators:test-generator"))
     testRuntimeOnly(project(":kotlin-reflect"))
     testRuntimeOnly(toolsJar())
-    testRuntimeOnly(intellijPluginDep("java"))
-    if (isIdeaActive) testRuntimeOnly(files("${rootProject.projectDir}/dist/kotlinc/lib/kotlin-reflect.jar"))
+
+    if (kotlinBuildProperties.isInJpsBuildIdeaSync) {
+        testRuntimeOnly(files("${rootProject.projectDir}/dist/kotlinc/lib/kotlin-reflect.jar"))
+    }
 }
 
 sourceSets {
@@ -25,7 +25,6 @@ projectTest(parallel = true) {
     dependsOn(":dist")
     workingDir = rootDir
     systemProperty("kotlin.test.script.classpath", testSourceSet.output.classesDirs.joinToString(File.pathSeparator))
-    systemProperty("idea.home.path", intellijRootDir().canonicalPath)
 }
 
 val generateTests by generator("org.jetbrains.kotlin.generators.tests.GenerateJava8TestsKt")

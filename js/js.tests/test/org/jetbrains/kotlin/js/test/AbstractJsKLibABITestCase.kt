@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.ir.backend.js.*
 import org.jetbrains.kotlin.ir.backend.js.codegen.JsGenerationGranularity
 import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.IrModuleToJsTransformerTmp
+import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.TranslationMode
 import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
 import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImplForJsIC
 import org.jetbrains.kotlin.js.config.JSConfigurationKeys
@@ -30,30 +31,27 @@ abstract class AbstractJsKLibABITestCase : AbstractKlibABITestCase() {
         configuration.put(JSConfigurationKeys.MODULE_KIND, ModuleKind.PLAIN)
         configuration.put(CommonConfigurationKeys.MODULE_NAME, MAIN_MODULE_NAME)
         val kLib = MainModule.Klib(mainModulePath)
-        val moduleStructure = ModulesStructure(project, kLib, configuration, libraries, emptyList(), false, false, emptyMap())
+        val moduleStructure = ModulesStructure(project, kLib, configuration, libraries, emptyList())
 
         val ir = compile(
             moduleStructure,
             PhaseConfig(jsPhases),
             IrFactoryImplForJsIC(WholeWorldStageController()),
+            exportedDeclarations = setOf(FqName("box")),
             propertyLazyInitialization = true,
             granularity = JsGenerationGranularity.PER_MODULE,
-            exportedDeclarations = setOf(FqName("box")),
             icCompatibleIr2Js = true
         )
 
         val transformer = IrModuleToJsTransformerTmp(
             ir.context,
             emptyList(),
-            fullJs = true,
-            dceJs = true,
-            multiModule = true,
             relativeRequirePath = false
         )
 
-        val compiledResult = transformer.generateModule(ir.allModules)
+        val compiledResult = transformer.generateModule(ir.allModules, setOf(TranslationMode.FULL_DCE))
 
-        val dceOutput = compiledResult.outputsAfterDce ?: error("No DCE output")
+        val dceOutput = compiledResult.outputs[TranslationMode.FULL_DCE] ?: error("No DCE output")
 
         val binariesDir = File(buildDir, BIN_DIR_NAME).also { it.mkdirs() }
 

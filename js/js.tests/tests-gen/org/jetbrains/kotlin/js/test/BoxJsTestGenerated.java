@@ -4139,6 +4139,12 @@ public class BoxJsTestGenerated extends AbstractBoxJsTest {
         }
 
         @Test
+        @TestMetadata("clashingPrivateDeclarations.kt")
+        public void testClashingPrivateDeclarations() throws Exception {
+            runTest("js/js.translator/testData/box/incremental/clashingPrivateDeclarations.kt");
+        }
+
+        @Test
         @TestMetadata("classReferencingClass.kt")
         public void testClassReferencingClass() throws Exception {
             runTest("js/js.translator/testData/box/incremental/classReferencingClass.kt");
@@ -6820,6 +6826,12 @@ public class BoxJsTestGenerated extends AbstractBoxJsTest {
         @TestMetadata("packageAndPrivateDeclarationDoNotClash.kt")
         public void testPackageAndPrivateDeclarationDoNotClash() throws Exception {
             runTest("js/js.translator/testData/box/multiFile/packageAndPrivateDeclarationDoNotClash.kt");
+        }
+
+        @Test
+        @TestMetadata("samePrivateVals.kt")
+        public void testSamePrivateVals() throws Exception {
+            runTest("js/js.translator/testData/box/multiFile/samePrivateVals.kt");
         }
     }
 

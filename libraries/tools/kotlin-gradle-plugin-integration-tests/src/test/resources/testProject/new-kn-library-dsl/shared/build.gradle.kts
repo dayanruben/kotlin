@@ -1,7 +1,3 @@
-import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
-import org.jetbrains.kotlin.gradle.targets.native.tasks.artifact.*
-import org.jetbrains.kotlin.konan.target.KonanTarget.*
-
 plugins {
     kotlin("multiplatform")
 }
@@ -13,20 +9,41 @@ kotlin {
     iosSimulatorArm64()
 }
 
-kotlinArtifact("mylib", Library) {
-    target = LINUX_X64
-}
-
-kotlinArtifact("myslib", Library) {
-    target = LINUX_X64
-    modes = setOf(NativeBuildType.DEBUG)
-    addModule(project(":lib"))
-}
-
-kotlinArtifact(XCFramework) {
-    targets = setOf(IOS_X64, IOS_ARM64, IOS_SIMULATOR_ARM64)
-    setModules(
-        project(":shared"),
-        project(":lib")
-    )
+kotlinArtifacts {
+    Native.Library("mylib") {
+        target = linuxX64
+    }
+    Native.Library("myslib") {
+        target = linuxX64
+        isStatic = false
+        modes(DEBUG)
+        addModule(project(":lib"))
+        kotlinOptions {
+            verbose = false
+            freeCompilerArgs = emptyList()
+        }
+    }
+    Native.Framework("myframe") {
+        modes(DEBUG, RELEASE)
+        target = iosArm64
+        isStatic = false
+        embedBitcode = EmbedBitcodeMode.MARKER
+        kotlinOptions {
+            verbose = false
+        }
+    }
+    Native.FatFramework("myfatframe") {
+        targets(iosX64, iosSimulatorArm64)
+        embedBitcode = EmbedBitcodeMode.DISABLE
+        kotlinOptions {
+            suppressWarnings = false
+        }
+    }
+    Native.XCFramework {
+        targets(iosX64, iosArm64, iosSimulatorArm64)
+        setModules(
+            project(":shared"),
+            project(":lib")
+        )
+    }
 }

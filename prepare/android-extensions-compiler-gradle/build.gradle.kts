@@ -12,8 +12,8 @@ dependencies {
     compileOnly(project(":compiler:backend"))
     compileOnly(project(":kotlin-android-extensions-runtime"))
     runtimeOnly(project(":kotlin-compiler-embeddable"))
-    compileOnly(commonDep("com.google.android", "android"))
-    compileOnly(intellijCoreDep()) { includeJars("intellij-core") }
+    compileOnly(commonDependency("com.google.android", "android"))
+    compileOnly(intellijCore())
 
     embedded(project(":plugins:android-extensions-compiler")) { isTransitive = false }
     embedded(project(":kotlin-android-extensions-runtime")) { isTransitive = false }

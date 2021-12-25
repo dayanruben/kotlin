@@ -17,11 +17,11 @@ dependencies {
     api(project(":kotlin-scripting-jvm"))
     api(kotlinStdlib())
     compileOnly(project(":kotlin-reflect-api"))
-    compileOnly(intellijCoreDep()) { includeJars("intellij-core") }
-    compileOnly(intellijDep()) { includeJars("asm-all", rootProject = rootProject) }
+    compileOnly(intellijCore())
+    compileOnly(commonDependency("org.jetbrains.intellij.deps:asm-all"))
 
     // FIXME: drop after removing references to LocalFileSystem they don't exist in intellij-core
-    compileOnly(intellijDep()) { includeJars("platform-api") }
+    compileOnly(intellijAnalysis())
 
     runtimeOnly(project(":kotlin-reflect"))
 
@@ -32,7 +32,7 @@ dependencies {
     testApi(project(":compiler:cli-common"))
     testApi(project(":compiler:frontend.java"))
     testApi(projectTests(":compiler:tests-common"))
-    testApi(commonDep("junit:junit"))
+    testApi(commonDependency("junit:junit"))
 }
 
 sourceSets {

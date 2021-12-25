@@ -210,11 +210,6 @@ object JsEnvironmentConfigurationDirectives : SimpleDirectivesContainer() {
         applicability = DirectiveApplicability.Global
     )
 
-    val LOWER_PER_MODULE by directive(
-        description = "",
-        applicability = DirectiveApplicability.Global
-    )
-
     val KLIB_MAIN_MODULE by directive(
         description = "Specify that main module is actually a klib",
         applicability = DirectiveApplicability.Global
@@ -238,5 +233,12 @@ object JsEnvironmentConfigurationDirectives : SimpleDirectivesContainer() {
     val RUN_NEW_IR_2_JS by directive(
         description = "",
         applicability = DirectiveApplicability.Global
+    )
+
+    val NO_COMMON_FILES by directive(
+        """
+            Don't added helper files to prevent linking issues.
+        """.trimIndent(),
+        applicability = DirectiveApplicability.Global,
     )
 }

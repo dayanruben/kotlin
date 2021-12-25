@@ -7,6 +7,9 @@ package org.jetbrains.kotlin.konan.blackboxtest.support
 
 import org.jetbrains.kotlin.cli.common.ExitCode
 import org.jetbrains.kotlin.konan.blackboxtest.support.runner.RunResult
+import org.jetbrains.kotlin.konan.blackboxtest.support.util.SafeEnvVars
+import org.jetbrains.kotlin.konan.blackboxtest.support.util.SafeProperties
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.io.File
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
@@ -22,27 +25,52 @@ internal abstract class LoggedData {
     protected abstract fun computeText(): String
     final override fun toString() = text
 
-    fun withErrorMessageHeader(errorMessageHeader: String): String = buildString {
-        appendLine(errorMessageHeader)
+    fun withErrorMessage(errorMessage: String): String = buildString {
+        appendLine(errorMessage)
         appendLine()
         appendLine(this@LoggedData)
     }
 
+    class JVMEnvironment : LoggedData() {
+        private val properties = SafeProperties()
+
+        override fun computeText() = buildString {
+            appendLine("ENVIRONMENT VARIABLES:")
+            SafeEnvVars.forEach { (name, safeValue) ->
+                append("- ").append(name).append(" = ").appendLine(safeValue)
+            }
+            appendLine()
+            appendLine("JVM PROPERTIES:")
+            properties.forEach { (name, safeValue) ->
+                append("- ").append(name).append(" = ").appendLine(safeValue)
+            }
+        }
+    }
+
     class CompilerParameters(
         private val compilerArgs: Array<String>,
-        private val sourceModules: Collection<TestModule>
+        private val sourceModules: Collection<TestModule>,
+        private val environment: JVMEnvironment = JVMEnvironment() // Capture environment.
     ) : LoggedData() {
         private val testDataFiles: List<File>
-            get() = sourceModules.asSequence()
-                .filterIsInstance<TestModule.Exclusive>()
-                .map { it.testCase.origin.testDataFile }
-                .toMutableList()
-                .apply { sort() }
+            get() = buildList {
+                sourceModules.forEach { module ->
+                    if (module !is TestModule.Exclusive) return@forEach
+                    this += module.testCase.id.safeAs<TestCaseId.TestDataFile>()?.file ?: return@forEach
+                }
+                sort()
+            }
 
         override fun computeText() = buildString {
             appendArguments("COMPILER ARGUMENTS:", listOf("\$\$kotlinc-native\$\$") + compilerArgs)
             appendLine()
-            appendList("TEST DATA FILES (COMPILED TOGETHER):", testDataFiles)
+            appendLine(environment)
+
+            val testDataFiles = testDataFiles
+            if (testDataFiles.isNotEmpty()) {
+                appendLine()
+                appendList("TEST DATA FILES (COMPILED TOGETHER):", testDataFiles)
+            }
         }
     }
 
@@ -70,9 +98,7 @@ internal abstract class LoggedData {
                 appendLine("- Exit code: ${exitCode.code} (${exitCode.name})")
                 appendDuration(duration)
                 appendLine()
-                appendLine("========== BEGIN: RAW COMPILER OUTPUT ==========")
-                if (compilerOutput.isNotEmpty()) appendLine(compilerOutput.trimEnd())
-                appendLine("========== END: RAW COMPILER OUTPUT ==========")
+                appendPotentiallyLargeOutput(compilerOutput, "RAW COMPILER OUTPUT", truncateLargeOutput = false)
                 appendLine()
                 appendLine(parameters)
             }
@@ -83,22 +109,31 @@ internal abstract class LoggedData {
 
     class TestRunParameters(
         private val compilerCall: CompilerCall,
-        private val origin: TestOrigin.SingleTestDataFile,
+        private val testCaseId: TestCaseId?,
         private val runArgs: Iterable<String>,
-        private val runParameters: List<TestRunParameter>
+        private val runParameters: List<TestRunParameter>?
     ) : LoggedData() {
         override fun computeText() = buildString {
-            appendLine("TEST DATA FILE:")
-            appendLine(origin.testDataFile)
-            appendLine()
+            when {
+                testCaseId is TestCaseId.TestDataFile -> {
+                    appendLine("TEST DATA FILE:")
+                    appendLine(testCaseId.file)
+                    appendLine()
+                }
+                testCaseId != null -> {
+                    appendLine("TEST CASE ID:")
+                    appendLine(testCaseId)
+                    appendLine()
+                }
+            }
             appendArguments("TEST RUN ARGUMENTS:", runArgs)
             appendLine()
-            runParameters.get<TestRunParameter.WithInputData> {
+            runParameters?.get<TestRunParameter.WithInputData> {
                 appendLine("INPUT DATA FILE:")
                 appendLine(inputDataFile)
                 appendLine()
             }
-            runParameters.get<TestRunParameter.WithExpectedOutputData> {
+            runParameters?.get<TestRunParameter.WithExpectedOutputData> {
                 appendLine("EXPECTED OUTPUT DATA FILE:")
                 appendLine(expectedOutputDataFile)
                 appendLine()
@@ -186,14 +221,24 @@ internal abstract class LoggedData {
             appendLine("- Exit code: ${runResult.exitCode ?: "<unknown>"}")
             appendDuration(runResult.duration)
             appendLine()
-            appendLine("========== BEGIN: TEST STDOUT ==========")
-            if (runResult.output.stdOut.isNotEmpty()) appendLine(runResult.output.stdOut.trimEnd())
-            appendLine("========== END: TEST STDOUT ==========")
+            appendPotentiallyLargeOutput(runResult.processOutput.stdOut.filteredOutput, "STDOUT", truncateLargeOutput = true)
             appendLine()
-            appendLine("========== BEGIN: TEST STDERR ==========")
-            if (runResult.output.stdErr.isNotEmpty()) appendLine(runResult.output.stdErr.trimEnd())
-            appendLine("========== END: TEST STDERR ==========")
+            appendPotentiallyLargeOutput(runResult.processOutput.stdErr, "STDERR", truncateLargeOutput = true)
             return this
         }
+
+        private fun StringBuilder.appendPotentiallyLargeOutput(output: String, subject: String, truncateLargeOutput: Boolean) {
+            appendLine("========== BEGIN: $subject ==========")
+            if (output.length > MAX_PRINTED_OUTPUT_LENGTH && truncateLargeOutput) {
+                append(output.substring(0, MAX_PRINTED_OUTPUT_LENGTH).trimEnd()).appendLine("...")
+                appendLine()
+                appendLine("********** The output is too large (${output.length} characters in total), it has been truncated to avoid excessive logs **********")
+            } else if (output.isNotEmpty()) {
+                appendLine(output.trimEnd())
+            }
+            appendLine("========== END: $subject ==========")
+        }
+
+        private const val MAX_PRINTED_OUTPUT_LENGTH = 8 * 1024
     }
 }

@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.fir.resolve.calls.Candidate
 import org.jetbrains.kotlin.fir.resolve.calls.FirNamedReferenceWithCandidate
 import org.jetbrains.kotlin.fir.resolve.calls.ResolutionContext
 import org.jetbrains.kotlin.fir.resolve.inference.model.ConeFixVariableConstraintPosition
+import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.BodyResolveContext
 import org.jetbrains.kotlin.fir.returnExpressions
 import org.jetbrains.kotlin.fir.types.ConeClassErrorType
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
@@ -33,7 +34,7 @@ import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-class ConstraintSystemCompleter(private val components: BodyResolveComponents) {
+class ConstraintSystemCompleter(private val components: BodyResolveComponents, private val context: BodyResolveContext) {
     private val inferenceComponents = components.session.inferenceComponents
     val variableFixationFinder = inferenceComponents.variableFixationFinder
     private val postponedArgumentsInputTypesResolver = inferenceComponents.postponedArgumentInputTypesResolver
@@ -50,7 +51,7 @@ class ConstraintSystemCompleter(private val components: BodyResolveComponents) {
         val topLevelTypeVariables = candidateReturnType.extractTypeVariables()
 
         completion@ while (true) {
-            val postponedArguments = getOrderedNotAnalyzedPostponedArguments(topLevelAtoms)
+            val postponedArguments = getOrderedNotAnalyzedPostponedArguments(topLevelAtoms) // TODO: This is very slow
 
             if (completionMode == ConstraintSystemCompletionMode.UNTIL_FIRST_LAMBDA && hasLambdaToAnalyze(postponedArguments)) return
 
@@ -225,11 +226,21 @@ class ConstraintSystemCompleter(private val components: BodyResolveComponents) {
 
             val variableWithConstraints = notFixedTypeVariables.getValue(variableForFixation.variable)
 
-            if (variableForFixation.hasProperConstraint) {
-                fixVariable(asConstraintSystemCompletionContext(), topLevelType, variableWithConstraints, postponedArguments)
-                return true
-            } else {
-                processVariableWhenNotEnoughInformation(this, variableWithConstraints, topLevelAtoms)
+            when {
+                variableForFixation.hasProperConstraint -> {
+                    fixVariable(asConstraintSystemCompletionContext(), topLevelType, variableWithConstraints, postponedArguments)
+                    return true
+                }
+                context.inferenceSession.isSyntheticTypeVariable(variableWithConstraints.typeVariable) -> {
+                    context.inferenceSession.fixSyntheticTypeVariableWithNotEnoughInformation(
+                        variableWithConstraints.typeVariable as ConeTypeVariable,
+                        asConstraintSystemCompletionContext()
+                    )
+                    return true
+                }
+                else -> {
+                    processVariableWhenNotEnoughInformation(this, variableWithConstraints, topLevelAtoms)
+                }
             }
         }
 
@@ -378,6 +389,10 @@ class ConstraintSystemCompleter(private val components: BodyResolveComponents) {
 
         for (topLevel in topLevelAtoms) {
             topLevel.collectAllTypeVariables()
+        }
+
+        if (context.inferenceSession.hasSyntheticTypeVariables()) {
+            result.addAll(c.notFixedTypeVariables.filter { context.inferenceSession.isSyntheticTypeVariable(it.value.typeVariable) }.keys.asIterable())
         }
 
         require(result.size == c.notFixedTypeVariables.size) {

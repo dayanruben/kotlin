@@ -6,10 +6,12 @@
 package org.jetbrains.kotlin.konan.blackboxtest.support.group
 
 import org.jetbrains.kotlin.konan.blackboxtest.support.*
-import org.jetbrains.kotlin.konan.blackboxtest.support.util.DEFAULT_FILE_NAME
-import org.jetbrains.kotlin.konan.blackboxtest.support.util.ThreadSafeFactory
-import org.jetbrains.kotlin.konan.blackboxtest.support.util.computeGeneratedSourcesDir
-import org.jetbrains.kotlin.konan.blackboxtest.support.util.computePackageName
+import org.jetbrains.kotlin.konan.blackboxtest.support.TestCase.NoTestRunnerExtras
+import org.jetbrains.kotlin.konan.blackboxtest.support.TestCase.WithTestRunnerExtras
+import org.jetbrains.kotlin.konan.blackboxtest.support.settings.GeneratedSources
+import org.jetbrains.kotlin.konan.blackboxtest.support.settings.Settings
+import org.jetbrains.kotlin.konan.blackboxtest.support.settings.TestRoots
+import org.jetbrains.kotlin.konan.blackboxtest.support.util.*
 import org.jetbrains.kotlin.test.directives.model.Directive
 import org.jetbrains.kotlin.test.services.JUnit5Assertions
 import org.jetbrains.kotlin.test.services.JUnit5Assertions.assertEquals
@@ -20,42 +22,37 @@ import org.jetbrains.kotlin.test.services.JUnit5Assertions.fail
 import org.jetbrains.kotlin.test.services.impl.RegisteredDirectivesParser
 import java.io.File
 
-internal class StandardTestCaseGroupProvider(private val environment: TestEnvironment) : TestCaseGroupProvider {
-    val sourceTransformers: MutableMap<String, List<(String) -> String>> = mutableMapOf()
+internal class StandardTestCaseGroupProvider : TestCaseGroupProvider {
+    // Create and cache test cases in groups on demand.
+    private val cachedTestCaseGroups = ThreadSafeCache<TestCaseGroupId.TestDataDir, TestCaseGroup?>()
 
-    // Load test cases in groups on demand.
-    private val lazyTestCaseGroups = ThreadSafeFactory<File, TestCaseGroup?> { testDataDir ->
-        val testDataFiles = testDataDir.listFiles()
-            ?: return@ThreadSafeFactory null // `null` means that there is no such testDataDir.
+    override fun getTestCaseGroup(testCaseGroupId: TestCaseGroupId, settings: Settings): TestCaseGroup? {
+        check(testCaseGroupId is TestCaseGroupId.TestDataDir)
 
-        val testCases = testDataFiles.mapNotNull { testDataFile ->
-            if (!testDataFile.isFile || testDataFile.extension != "kt")
-                return@mapNotNull null
+        return cachedTestCaseGroups.computeIfAbsent(testCaseGroupId) {
+            val testDataFiles = testCaseGroupId.dir.listFiles()
+                ?: return@computeIfAbsent null // `null` means that there is no such testDataDir.
 
-            createTestCase(testDataFile)
+            val testCases = testDataFiles.mapNotNull { testDataFile ->
+                if (!testDataFile.isFile || testDataFile.extension != "kt")
+                    return@mapNotNull null
+
+                createTestCase(testDataFile, settings)
+            }
+
+            TestCaseGroup.Default(disabledTestCaseIds = emptySet(), testCases = testCases)
         }
-
-        TestCaseGroup.Default(disabledTestDataFileNames = emptySet(), testCases = testCases)
     }
 
-    override fun setPreprocessors(testDataDir: File, preprocessors: List<(String) -> String>) {
-        if (preprocessors.isNotEmpty())
-            sourceTransformers[testDataDir.canonicalPath] = preprocessors
-        else
-            sourceTransformers.remove(testDataDir.canonicalPath)
-    }
-
-    override fun getTestCaseGroup(testDataDir: File) = lazyTestCaseGroups[testDataDir]
-
-    private fun createTestCase(testDataFile: File): TestCase {
+    private fun createTestCase(testDataFile: File, settings: Settings): TestCase {
         val generatedSourcesDir = computeGeneratedSourcesDir(
-            testDataBaseDir = environment.testRoots.baseDir,
+            testDataBaseDir = settings.get<TestRoots>().baseDir,
             testDataFile = testDataFile,
-            generatedSourcesBaseDir = environment.testSourcesDir
+            generatedSourcesBaseDir = settings.get<GeneratedSources>().testSourcesDir
         )
 
         val nominalPackageName = computePackageName(
-            testDataBaseDir = environment.testRoots.baseDir,
+            testDataBaseDir = settings.get<TestRoots>().baseDir,
             testDataFile = testDataFile
         )
 
@@ -91,7 +88,7 @@ internal class StandardTestCaseGroupProvider(private val environment: TestEnviro
         fun finishTestFile(forceFinish: Boolean, location: Location) {
             val needToFinish = forceFinish
                     || currentTestFileName != null
-                    || (currentTestFileName == null /*&& testFiles.isEmpty()*/ && currentTestFileText.hasAnythingButComments())
+                    || (/*currentTestFileName == null && testFiles.isEmpty() &&*/ currentTestFileText.hasAnythingButComments())
 
             if (needToFinish) {
                 val fileName = currentTestFileName ?: DEFAULT_FILE_NAME
@@ -109,8 +106,7 @@ internal class StandardTestCaseGroupProvider(private val environment: TestEnviro
             }
         }
 
-        val text = testDataFile.applySourceTransformers(sourceTransformers[testDataFile.canonicalPath] ?: listOf())
-        text.lines().forEachIndexed { lineNumber, line ->
+        testDataFile.readLines().forEachIndexed { lineNumber, line ->
             val location = Location(testDataFile, lineNumber)
             val expectFileDirectiveAfterModuleDirective =
                 lastParsedDirective == TestDirectives.MODULE // Only FILE directive may follow MODULE directive.
@@ -187,88 +183,52 @@ internal class StandardTestCaseGroupProvider(private val environment: TestEnviro
 
         if (testKind == TestKind.REGULAR) {
             // Fix package declarations to avoid unintended conflicts between symbols with the same name in different test cases.
-            testModules.values.forEach { testModule ->
-                testModule.files.forEach { testFile -> fixPackageDeclaration(testFile, nominalPackageName, testDataFile) }
-            }
+            fixPackageNames(testModules.values, nominalPackageName, testDataFile)
         }
 
         val testCase = TestCase(
+            id = TestCaseId.TestDataFile(testDataFile),
             kind = testKind,
             modules = testModules.values.toSet(),
             freeCompilerArgs = freeCompilerArgs,
-            origin = TestOrigin.SingleTestDataFile(testDataFile),
             nominalPackageName = nominalPackageName,
             expectedOutputDataFile = expectedOutputDataFile,
-            extras = if (testKind == TestKind.STANDALONE_NO_TR) {
-                TestCase.StandaloneNoTestRunnerExtras(
+            extras = if (testKind == TestKind.STANDALONE_NO_TR)
+                NoTestRunnerExtras(
                     entryPoint = parseEntryPoint(registeredDirectives, location),
                     inputDataFile = parseInputDataFile(baseDir = testDataFile.parentFile, registeredDirectives, location)
                 )
-            } else
-                null
+            else
+                WithTestRunnerExtras(runnerType = parseTestRunner(registeredDirectives, location))
         )
         testCase.initialize(findSharedModule = null)
 
         return testCase
     }
 
-    private fun CharSequence.hasAnythingButComments(): Boolean {
-        var result = false
-        runForFirstMeaningfulStatement { _, _ -> result = true }
-        return result
-    }
+    companion object {
+        private fun fixPackageNames(testModules: Collection<TestModule.Exclusive>, basePackageName: PackageName, testDataFile: File) {
+            testModules.forEach { testModule ->
+                testModule.files.forEach { testFile ->
+                    val firstMeaningfulLine = testFile.text.dropNonMeaningfulLines().firstOrNull()
 
-    private fun fixPackageDeclaration(
-        testFile: TestFile<TestModule.Exclusive>,
-        packageName: PackageFQN,
-        testDataFile: File
-    ) = testFile.update { text ->
-        var existingPackageDeclarationLine: String? = null
-        var existingPackageDeclarationLineNumber: Int? = null
-
-        text.runForFirstMeaningfulStatement { lineNumber, line ->
-            // First meaningful line.
-            val trimmedLine = line.trim()
-            if (trimmedLine.startsWith("package ")) {
-                existingPackageDeclarationLine = trimmedLine
-                existingPackageDeclarationLineNumber = lineNumber
-            }
-        }
-
-        if (existingPackageDeclarationLine != null) {
-            val existingPackageName = existingPackageDeclarationLine!!.substringAfter("package ").trimStart()
-            assertTrue(
-                existingPackageName == packageName
-                        || (existingPackageName.length > packageName.length
-                        && existingPackageName.startsWith(packageName)
-                        && existingPackageName[packageName.length] == '.')
-            ) {
-                val location = Location(testDataFile, existingPackageDeclarationLineNumber)
-                """
-                    $location: Invalid package name declaration found: $existingPackageDeclarationLine
-                    Expected: package $packageName
-                """.trimIndent()
-            }
-            text
-        } else
-            "package $packageName $text"
-    }
-
-    private inline fun CharSequence.runForFirstMeaningfulStatement(action: (lineNumber: Int, line: String) -> Unit) {
-        var inMultilineComment = false
-
-        for ((lineNumber, line) in lines().withIndex()) {
-            val trimmedLine = line.trim()
-            when {
-                inMultilineComment -> inMultilineComment = !trimmedLine.endsWith("*/")
-                trimmedLine.startsWith("/*") -> inMultilineComment = true
-                trimmedLine.isMeaningfulLine() -> {
-                    action(lineNumber, line)
-                    break
+                    // Retrieve the package name if it is declared inside the test file.
+                    val existingPackageName = firstMeaningfulLine?.getExistingPackageName()
+                    if (existingPackageName != null) {
+                        // Validate it.
+                        assertTrue(existingPackageName.startsWith(basePackageName)) {
+                            val location = Location(testDataFile, firstMeaningfulLine.number)
+                            """
+                               $location: Invalid package name declaration found: $firstMeaningfulLine
+                                Expected: package $basePackageName
+                            """.trimIndent()
+                        }
+                    } else {
+                        // Add package declaration.
+                        testFile.update { text -> "package $basePackageName $text" }
+                    }
                 }
             }
         }
     }
-
-    private fun String.isMeaningfulLine() = isNotEmpty() && !startsWith("//") && !startsWith("@file:")
 }

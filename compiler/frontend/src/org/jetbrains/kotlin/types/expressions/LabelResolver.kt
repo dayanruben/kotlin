@@ -116,7 +116,9 @@ object LabelResolver {
 
     fun resolveControlLabel(expression: KtExpressionWithLabel, context: ResolutionContext<*>): KtElement? {
         val labelElement = expression.getTargetLabel()
-        checkReservedYield(labelElement, context.trace)
+        if (!context.languageVersionSettings.supportsFeature(LanguageFeature.YieldIsNoMoreReserved)) {
+            checkReservedYield(labelElement, context.trace)
+        }
 
         val labelName = expression.getLabelNameAsName()
         if (labelElement == null || labelName == null) return null
@@ -190,7 +192,7 @@ object LabelResolver {
                     ]
                     val thisReceivers = labelNameToReceiverMap?.get(labelName.identifier)
                     val thisReceiver = when {
-                        thisReceivers == null -> declarationDescriptor.extensionReceiverParameter
+                        thisReceivers.isNullOrEmpty() -> declarationDescriptor.extensionReceiverParameter
                         thisReceivers.size == 1 -> thisReceivers.single()
                         else -> {
                             BindingContextUtils.reportAmbiguousLabel(context.trace, targetLabel, declarationsByLabel)

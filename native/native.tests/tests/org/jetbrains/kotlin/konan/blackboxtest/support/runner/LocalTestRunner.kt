@@ -7,7 +7,11 @@ package org.jetbrains.kotlin.konan.blackboxtest.support.runner
 
 import com.intellij.openapi.util.text.StringUtilRt.convertLineSeparators
 import org.jetbrains.kotlin.konan.blackboxtest.support.*
+import org.jetbrains.kotlin.konan.blackboxtest.support.util.TCTestOutputFilter
+import org.jetbrains.kotlin.konan.blackboxtest.support.util.TestOutputFilter
+import org.jetbrains.kotlin.konan.blackboxtest.support.util.TestReport
 import org.jetbrains.kotlin.test.services.JUnit5Assertions.fail
+import org.junit.jupiter.api.Assumptions.assumeFalse
 import kotlin.time.Duration
 
 internal class LocalTestRunner(
@@ -22,9 +26,12 @@ internal class LocalTestRunner(
         testRun.runParameters.forEach { it.applyTo(this) }
     }
 
+    override val outputFilter: TestOutputFilter
+        get() = if (testRun.runParameters.has<TestRunParameter.WithTCTestLogger>()) TCTestOutputFilter else TestOutputFilter.NO_FILTERING
+
     override fun getLoggedParameters() = LoggedData.TestRunParameters(
         compilerCall = executable.loggedCompilerCall,
-        origin = testRun.origin,
+        testCaseId = testRun.testCaseId,
         runArgs = programArgs,
         runParameters = testRun.runParameters
     )
@@ -40,80 +47,56 @@ internal class LocalTestRunner(
 
     override fun handleUnexpectedFailure(t: Throwable) = fail {
         LoggedData.TestRunUnexpectedFailure(getLoggedParameters(), t)
-            .withErrorMessageHeader("Test execution failed with unexpected exception.")
+            .withErrorMessage("Test execution failed with unexpected exception.")
     }
 
     inner class ResultHandler(runResult: RunResult.Completed) : AbstractLocalProcessRunner<Unit>.ResultHandler(runResult) {
         override fun getLoggedRun() = LoggedData.TestRun(getLoggedParameters(), runResult)
 
         override fun doHandle() {
-            if (testRun.runParameters.has<TestRunParameter.WithGTestLogger>()) {
-                verifyTestWithGTestRunner()
-            } else {
-                verifyPlainTest()
-            }
+            verifyTestReport(runResult.processOutput.stdOut.testReport)
+
+            val mergedOutput = runResult.processOutput.stdOut.filteredOutput + runResult.processOutput.stdErr
+            verifyNonTestOutput(mergedOutput)
         }
 
-        private fun verifyTestWithGTestRunner() {
-            val testStatuses = hashMapOf<TestStatus, MutableSet<TestName>>()
-            val cleanStdOut = StringBuilder()
+        private fun verifyTestReport(testReport: TestReport?) {
+            if (testReport == null) return
 
-            var expectStatusLine = false
-            runResult.output.stdOut.lines().forEach { line ->
-                when {
-                    expectStatusLine -> {
-                        val matcher = GTEST_STATUS_LINE_REGEX.matchEntire(line)
-                        if (matcher != null) {
-                            // Read the line with test status.
-                            val testStatus = matcher.groupValues[1]
-                            val testName = matcher.groupValues[2]
-                            testStatuses.getOrPut(testStatus) { hashSetOf() } += testName
-                            expectStatusLine = false
-                        } else {
-                            // If current line is not a status line then it could be only the line with the process' output.
-                            cleanStdOut.appendLine(line)
-                        }
-                    }
-                    line.startsWith(GTEST_RUN_LINE_PREFIX) -> {
-                        expectStatusLine = true // Next line contains either  test status.
-                    }
-                    else -> Unit
-                }
-            }
-
-            verifyExpectation(testStatuses.isNotEmpty()) { "No tests have been executed." }
-
-            val passedTests = testStatuses[GTEST_STATUS_OK]?.size ?: 0
-            verifyExpectation(passedTests > 0) { "No passed tests." }
+            verifyExpectation(!testReport.isEmpty()) { "No tests have been found." }
 
             testRun.runParameters.get<TestRunParameter.WithFilter> {
-                val excessiveTests = testStatuses.getValue(GTEST_STATUS_OK).filter { testName -> !testMatches(testName) }
-                verifyExpectation(excessiveTests.isEmpty()) { "Excessive tests have been executed: $excessiveTests." }
+                verifyNoSuchTests(
+                    testReport.passedTests.filter { testName -> !testMatches(testName) },
+                    "Excessive tests have been executed"
+                )
+
+                verifyNoSuchTests(
+                    testReport.ignoredTests.filter { testName -> !testMatches(testName) },
+                    "Excessive tests have been ignored"
+                )
             }
 
-            val failedTests = (testStatuses - GTEST_STATUS_OK).values.sumOf { it.size }
-            verifyExpectation(0, failedTests) { "There are failed tests." }
+            verifyNoSuchTests(testReport.failedTests, "There are failed tests")
 
-            verifyOutputData(mergedOutput = cleanStdOut.toString() + runResult.output.stdErr)
+            assumeFalse(testReport.ignoredTests.isNotEmpty() && testReport.passedTests.isEmpty(), "Test case is disabled")
         }
 
-        private fun verifyPlainTest() = verifyOutputData(mergedOutput = runResult.output.stdOut + runResult.output.stdErr)
+        private fun verifyNoSuchTests(tests: Collection<TestName>, subject: String) = verifyExpectation(tests.isEmpty()) {
+            buildString {
+                append(subject).append(':')
+                tests.forEach { appendLine().append(" - ").append(it) }
+            }
+        }
 
-        private fun verifyOutputData(mergedOutput: String) {
+        private fun verifyNonTestOutput(nonTestOutput: String) {
             testRun.runParameters.get<TestRunParameter.WithExpectedOutputData> {
-                verifyExpectation(convertLineSeparators(expectedOutputDataFile.readText()), convertLineSeparators(mergedOutput)) {
+                // Don't use verifyExpectation(expected, actual) to avoid exposing potentially large test output in exception message
+                // and blowing up test logs.
+                verifyExpectation(convertLineSeparators(expectedOutputDataFile.readText()) == convertLineSeparators(nonTestOutput)) {
                     "Tested process output mismatch. See \"TEST STDOUT\" and \"EXPECTED OUTPUT DATA FILE\" below."
                 }
             }
         }
     }
-
-    companion object {
-        private const val GTEST_RUN_LINE_PREFIX = "[ RUN      ]"
-        private val GTEST_STATUS_LINE_REGEX = Regex("^\\[\\s+([A-Z]+)\\s+]\\s+(\\S+)\\s+.*")
-        private const val GTEST_STATUS_OK = "OK"
-    }
 }
-
-private typealias TestStatus = String
-private typealias TestName = String

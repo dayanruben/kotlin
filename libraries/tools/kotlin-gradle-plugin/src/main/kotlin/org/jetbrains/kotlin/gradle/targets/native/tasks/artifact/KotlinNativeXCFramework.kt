@@ -18,8 +18,12 @@ import org.jetbrains.kotlin.gradle.tasks.registerTask
 import org.jetbrains.kotlin.gradle.utils.lowerCamelCaseName
 import org.jetbrains.kotlin.konan.target.KonanTarget
 
-class KotlinNativeXCFramework : KotlinNativeArtifact() {
+open class KotlinNativeXCFramework : KotlinNativeArtifact() {
     var targets: Set<KonanTarget> = emptySet()
+    fun targets(vararg targets: KonanTarget) {
+        this.targets = targets.toSet()
+    }
+
     var embedBitcode: BitcodeEmbeddingMode? = null
 
     private val kind = NativeOutputKind.FRAMEWORK
@@ -72,6 +76,7 @@ class KotlinNativeXCFramework : KotlinNativeArtifact() {
 
                 val group = AppleTarget.values().firstOrNull { it.targets.contains(target) }
                 holder.fatTasks[group]?.configure { fatTask ->
+                    fatTask.baseName = name
                     fatTask.fromFrameworkDescriptors(listOf(descriptor))
                     fatTask.dependsOn(targetTask)
                 }

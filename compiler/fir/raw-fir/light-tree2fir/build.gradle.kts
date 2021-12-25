@@ -21,9 +21,10 @@ dependencies {
     implementation(project(":compiler:psi"))
     implementation(kotlinxCollectionsImmutable())
 
-    compileOnly(intellijCoreDep()) { includeJars("intellij-core", "guava", rootProject = rootProject) }
+    compileOnly(intellijCore())
+    compileOnly(commonDependency("com.google.guava:guava"))
 
-    testImplementation(commonDep("junit:junit"))
+    testImplementation(commonDependency("junit:junit"))
     testImplementation(projectTests(":compiler:tests-common"))
     testImplementation(projectTests(":compiler:fir:raw-fir:psi2fir"))
 
@@ -38,8 +39,8 @@ dependencies {
     implementation("org.openjdk.jmh", "jmh-generator-bytecode", jmhVersion)
     implementation("org.openjdk.jmh", "jmh-generator-annprocess", jmhVersion)
 
-    testCompileOnly(intellijCoreDep()) { includeJars("intellij-core") }
-    testRuntimeOnly(intellijCoreDep()) { includeJars("intellij-core") }
+    testCompileOnly(intellijCore())
+    testRuntimeOnly(intellijCore())
 }
 
 val generationRoot = projectDir.resolve("tests-gen")
@@ -107,7 +108,9 @@ val jmhCompile by tasks.registering(JavaCompile::class) {
 }
 
 val jmhExec by tasks.registering(JavaExec::class) {
+    dependsOn(":createIdeaHomeForTests")
     dependsOn(tasks["compileTestJava"])
+
     doFirst {
         classpath = files(
             tasks["compactClasspath"].outputs.files.singleFile.absolutePath,
@@ -119,7 +122,8 @@ val jmhExec by tasks.registering(JavaExec::class) {
     main = "org.openjdk.jmh.Main"
 
     workingDir = rootDir
-    systemProperty("idea.home.path", project.intellijRootDir().absolutePath)
+    systemProperty("idea.home.path", project.ideaHomePathForTests().absolutePath)
+    systemProperty("idea.use.native.fs.for.win", false)
     systemProperty("idea.max.intellisense.filesize", 5000 * 1024)
     configurations.plusAssign(project.configurations["api"])
 }

@@ -19,8 +19,10 @@ configurations.getByName("compileOnly").extendsFrom(shadows)
 configurations.getByName("testApi").extendsFrom(shadows)
 
 dependencies {
-    // Should come before compiler dependencies, see comment in "compiler/build.gradle.kts"
-    testRuntimeOnly(intellijDep())
+    // Should come before dependency on proguarded compiler because StringUtil methods are deleted from it
+    testRuntimeOnly(intellijPlatformUtil()) { isTransitive = false }
+
+    testRuntimeOnly(project(":kotlin-compiler"))
 
     compileOnly(project(":compiler:util"))
     compileOnly(project(":compiler:cli"))
@@ -34,15 +36,12 @@ dependencies {
     // Note that kotlinx-metadata-jvm already includes kotlinx-metadata, core:metadata, core:metadata.jvm,
     // and protobuf-lite, so we only need to include kotlinx-metadata-jvm in the shadow jar.
     compileOnly(project(":kotlinx-metadata"))
-    shadows(commonDep("org.jetbrains.kotlinx:kotlinx-metadata-jvm"))
+    shadows(commonDependency("org.jetbrains.kotlinx:kotlinx-metadata-jvm"))
 
-    compileOnly(intellijCoreDep()) { includeJars("intellij-core", "asm-all", rootProject = rootProject) }
+    compileOnly(intellijCore())
+    compileOnly(commonDependency("org.jetbrains.intellij.deps:asm-all"))
 
-    testApi(intellijDep()) { includeJars("platform-impl", rootProject = rootProject) }
-    testRuntimeOnly(intellijCoreDep()) { includeJars("intellij-core") }
-    testRuntimeOnly(project(":kotlin-compiler"))
-
-    testImplementation(commonDep("junit:junit"))
+    testImplementation(commonDependency("junit:junit"))
     testImplementation(projectTests(":compiler:tests-common"))
     testImplementation(projectTests(":compiler:incremental-compilation-impl"))
 }

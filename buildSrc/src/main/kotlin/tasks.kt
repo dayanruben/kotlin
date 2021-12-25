@@ -110,10 +110,12 @@ fun Project.projectTest(
         evaluationDependsOn(":test-instrumenter")
     }
     return getOrCreateTask<Test>(taskName) {
+        dependsOn(":createIdeaHomeForTests")
+
         doFirst {
             if (jUnitMode == JUnitMode.JUnit5) return@doFirst
 
-            val commandLineIncludePatterns = (filter as? DefaultTestFilter)?.commandLineIncludePatterns?.toMutableList() ?: mutableSetOf()
+            val commandLineIncludePatterns = commandLineIncludePatterns.toMutableSet()
             val patterns = filter.includePatterns + commandLineIncludePatterns
             if (patterns.isEmpty() || patterns.any { '*' in it }) return@doFirst
             patterns.forEach { pattern ->
@@ -177,7 +179,8 @@ fun Project.projectTest(
 
         maxHeapSize = "1600m"
         systemProperty("idea.is.unit.test", "true")
-        systemProperty("idea.home.path", project.intellijRootDir().canonicalPath)
+        systemProperty("idea.home.path", project.ideaHomePathForTests().canonicalPath)
+        systemProperty("idea.use.native.fs.for.win", false)
         systemProperty("java.awt.headless", "true")
         environment("NO_FS_ROOTS_ACCESS_CHECK", "true")
         environment("PROJECT_CLASSES_DIRS", project.testSourceSet.output.classesDirs.asPath)
@@ -228,6 +231,9 @@ fun Project.projectTest(
         }
     }.apply { configure(body) }
 }
+
+val Test.commandLineIncludePatterns: Set<String>
+    get() = (filter as? DefaultTestFilter)?.commandLineIncludePatterns.orEmpty()
 
 private inline fun String.isFirstChar(f: (Char) -> Boolean) = isNotEmpty() && f(first())
 

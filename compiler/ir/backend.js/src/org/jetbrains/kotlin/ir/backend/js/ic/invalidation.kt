@@ -52,7 +52,7 @@ private fun invalidateCacheForModule(
     cacheConsumer: PersistentCacheConsumer,
     signatureResolver: (String, Int) -> IdSignature,
     fileFingerPrints: MutableMap<String, Hash>
-): Set<String> {
+): Pair<Set<String>, Collection<String>> {
 
     val dirtyFiles = mutableSetOf<String>()
 
@@ -110,7 +110,14 @@ private fun invalidateCacheForModule(
         cacheConsumer.invalidateForFile(dirty)
     }
 
-    return dirtyFiles
+    val cachedFiles = cacheProvider.filePaths()
+    val deletedFiles = cachedFiles - libraryFiles.toSet()
+
+    for (deleted in deletedFiles) {
+        cacheConsumer.invalidateForFile(deleted)
+    }
+
+    return dirtyFiles to deletedFiles
 }
 
 private fun KotlinLibrary.filesAndSigReaders(): List<Pair<String, IdSignatureDeserializer>> {
@@ -149,10 +156,12 @@ private fun buildCacheForModule(
     deserializer: JsIrLinker,
     dependencies: Collection<IrModuleFragment>,
     dirtyFiles: Collection<String>,
+    deletedFiles: Collection<String>,
     cleanInlineHashes: Map<IdSignature, Hash>,
     cacheConsumer: PersistentCacheConsumer,
     signatureDeserializers: Map<FilePath, Map<IdSignature, Int>>,
     fileFingerPrints: Map<String, Hash>,
+    mainArguments: List<String>?,
     cacheExecutor: CacheExecutor
 ) {
     val dirtyIrFiles = irModule.files.filter { it.fileEntry.name in dirtyFiles }
@@ -194,9 +203,9 @@ private fun buildCacheForModule(
 
     // TODO: actual way of building a cache could change in future
 
-    cacheExecutor.execute(irModule, dependencies, deserializer, configuration, dirtyFiles, cacheConsumer, emptySet(), null) // TODO: main arguments?
+    cacheExecutor.execute(irModule, dependencies, deserializer, configuration, dirtyFiles, deletedFiles, cacheConsumer, emptySet(), mainArguments)
 
-    cacheConsumer.commitLibraryPath(libraryInfo.libPath.toCanonicalPath(), libraryInfo.flatHash, libraryInfo.transHash)
+    cacheConsumer.commitLibraryInfo(libraryInfo.libPath.toCanonicalPath(), libraryInfo.flatHash, libraryInfo.transHash, irModule.name.asString())
 }
 
 private fun loadModules(
@@ -243,7 +252,7 @@ private fun createLinker(
     val moduleDescriptor = loadedModules.keys.last()
     val typeTranslator = TypeTranslatorImpl(symbolTable, configuration.languageVersionSettings, moduleDescriptor)
     val irBuiltIns = IrBuiltInsOverDescriptors(moduleDescriptor.builtIns, typeTranslator, symbolTable)
-    return JsIrLinker(null, logger, irBuiltIns, symbolTable, null, null)
+    return JsIrLinker(null, logger, irBuiltIns, symbolTable, null)
 }
 
 
@@ -299,18 +308,15 @@ fun interface CacheExecutor {
         deserializer: JsIrLinker,
         configuration: CompilerConfiguration,
         dirtyFiles: Collection<String>?, // if null consider the whole module dirty
+        deletedFiles: Collection<String>,
         cacheConsumer: PersistentCacheConsumer,
         exportedDeclarations: Set<FqName>,
         mainArguments: List<String>?,
     )
 }
 
-private fun File.md5(additional: Iterable<ULong> = emptyList()): ULong {
+private fun File.md5(): ULong {
     val md5 = MessageDigest.getInstance("MD5")
-
-    for (ul in additional) {
-        md5.update(ul.toLong().toByteArray())
-    }
 
     fun File.process(prefix: String = "") {
         if (isDirectory) {
@@ -382,6 +388,7 @@ fun actualizeCacheForModule(
     dependencies: Collection<ModulePath>,
     icCachePaths: Collection<String>,
     irFactory: IrFactory,
+    mainArguments: List<String>?,
     executor: CacheExecutor
 ): CacheUpdateStatus {
     val modulePath = moduleName.toCanonicalPath()
@@ -409,7 +416,17 @@ fun actualizeCacheForModule(
     val currentModule = libraries[moduleName.toCanonicalPath()] ?: error("No loaded library found for path $moduleName")
     val persistentCacheConsumer = createCacheConsumer(cachePath)
 
-    return actualizeCacheForModule(currentModule, cacheInfo, compilerConfiguration, dependencyGraph, persistentCacheProviders, persistentCacheConsumer, irFactory, executor)
+    return actualizeCacheForModule(
+        currentModule,
+        cacheInfo,
+        compilerConfiguration,
+        dependencyGraph,
+        persistentCacheProviders,
+        persistentCacheConsumer,
+        irFactory,
+        mainArguments,
+        executor
+    )
 }
 
 
@@ -421,6 +438,7 @@ private fun actualizeCacheForModule(
     persistentCacheProviders: Map<KotlinLibrary, PersistentCacheProvider>,
     persistentCacheConsumer: PersistentCacheConsumer,
     irFactory: IrFactory,
+    mainArguments: List<String>?,
     cacheExecutor: CacheExecutor
 ): CacheUpdateStatus {
     // 1. Invalidate
@@ -441,7 +459,9 @@ private fun actualizeCacheForModule(
         persistentCacheProviders[lib]?.let { provider ->
             val moduleReaders = depReaders[lib]!!
             val inlineHashes = provider.allInlineHashes { f, i ->
-                moduleReaders[f]!!.deserializeIdSignature(i)
+                val moduleReader = moduleReaders[f]
+                    ?: error("No module reader for file $f")
+                moduleReader.deserializeIdSignature(i)
             }
             sigHashes.putAll(inlineHashes)
         }
@@ -458,7 +478,7 @@ private fun actualizeCacheForModule(
             currentLibraryCacheProvider.inlineHashes(filePath) { s -> sigReader.deserializeIdSignature(s) }
     }
 
-    val dirtySet = invalidateCacheForModule(
+    val (dirtySet, deletedFiles) = invalidateCacheForModule(
         library,
         libraryFiles,
         sigHashes,
@@ -513,15 +533,18 @@ private fun actualizeCacheForModule(
         jsIrLinker,
         irModules.map { it.first },
         dirtySet,
+        deletedFiles,
         sigHashes,
         persistentCacheConsumer,
         deserializers,
         fileFingerPrints,
+        mainArguments,
         cacheExecutor
     )
     return CacheUpdateStatus.DIRTY // invalidated and re-built
 }
 
+// Used for tests only
 fun rebuildCacheForDirtyFiles(
     library: KotlinLibrary,
     configuration: CompilerConfiguration,
@@ -559,12 +582,15 @@ fun rebuildCacheForDirtyFiles(
 
     val currentIrModule = irModules.find { it.second == library }?.first!!
 
+    cacheConsumer.commitLibraryInfo(library.libraryFile.path.toCanonicalPath(), 0UL, 0UL, currentIrModule.name.asString())
+
     buildCacheForModuleFiles(
         currentIrModule,
         irModules.map { it.first },
         jsIrLinker,
         configuration,
         dirtyFiles,
+        emptyList(),
         cacheConsumer,
         exportedDeclarations,
         mainArguments
@@ -578,6 +604,7 @@ fun buildCacheForModuleFiles(
     deserializer: JsIrLinker,
     configuration: CompilerConfiguration,
     dirtyFiles: Collection<String>?, // if null consider the whole module dirty
+    deletedFiles: Collection<String>,
     cacheConsumer: PersistentCacheConsumer,
     exportedDeclarations: Set<FqName>,
     mainArguments: List<String>?,
@@ -606,7 +633,7 @@ fun loadModuleCaches(icCachePaths: Collection<String>): Map<String, ModuleCache>
     return icCacheMap.entries.associate { (lib, cache) ->
         val provider = createCacheProvider(cache.path)
         val files = provider.filePaths()
-        lib to ModuleCache(lib, files.associate { f ->
+        lib to ModuleCache(provider.moduleName(), files.associate { f ->
             f to FileCache(f, provider.binaryAst(f), provider.dts(f), provider.sourceMap(f))
         })
     }

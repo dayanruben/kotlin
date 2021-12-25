@@ -8,16 +8,18 @@ package org.jetbrains.kotlin.test.services.configuration
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
-import org.jetbrains.kotlin.config.CommonConfigurationKeys
-import org.jetbrains.kotlin.config.CompilerConfiguration
-import org.jetbrains.kotlin.descriptors.impl.ModuleDescriptorImpl
 import org.jetbrains.kotlin.config.AnalysisFlag
 import org.jetbrains.kotlin.config.AnalysisFlags.allowFullyQualifiedNameInKClass
+import org.jetbrains.kotlin.config.CommonConfigurationKeys
+import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.descriptors.impl.ModuleDescriptorImpl
+import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.TranslationMode
 import org.jetbrains.kotlin.js.config.*
 import org.jetbrains.kotlin.js.facade.MainCallParameters
 import org.jetbrains.kotlin.library.KotlinLibrary
 import org.jetbrains.kotlin.resolve.CompilerEnvironment
+import org.jetbrains.kotlin.resolve.TargetEnvironment
 import org.jetbrains.kotlin.serialization.js.JsModuleDescriptor
 import org.jetbrains.kotlin.serialization.js.KotlinJavascriptSerializationUtil
 import org.jetbrains.kotlin.serialization.js.ModuleKind
@@ -31,9 +33,9 @@ import org.jetbrains.kotlin.test.directives.JsEnvironmentConfigurationDirectives
 import org.jetbrains.kotlin.test.directives.JsEnvironmentConfigurationDirectives.SOURCE_MAP_EMBED_SOURCES
 import org.jetbrains.kotlin.test.directives.JsEnvironmentConfigurationDirectives.TYPED_ARRAYS
 import org.jetbrains.kotlin.test.directives.model.DirectivesContainer
+import org.jetbrains.kotlin.test.directives.model.RegisteredDirectives
 import org.jetbrains.kotlin.test.frontend.classic.moduleDescriptorProvider
 import org.jetbrains.kotlin.test.model.ArtifactKinds
-import org.jetbrains.kotlin.test.directives.model.RegisteredDirectives
 import org.jetbrains.kotlin.test.model.DependencyDescription
 import org.jetbrains.kotlin.test.model.DependencyRelation
 import org.jetbrains.kotlin.test.model.TestModule
@@ -51,9 +53,15 @@ class JsEnvironmentConfigurator(testServices: TestServices) : EnvironmentConfigu
         const val TEST_DATA_DIR_PATH = "js/js.translator/testData"
         const val OLD_MODULE_SUFFIX = "_old"
 
-        private const val OUTPUT_DIR_NAME = "outputDir"
+        // Keep names short to keep path lengths under 255 for Windows
+        private val outputDirByMode = mapOf(
+            TranslationMode.FULL to "out",
+            TranslationMode.FULL_DCE to "outMin",
+            TranslationMode.PER_MODULE to "outPm",
+            TranslationMode.PER_MODULE_DCE to "outPmMin"
+        )
+
         private const val OUTPUT_KLIB_DIR_NAME = "outputKlibDir"
-        private const val DCE_OUTPUT_DIR_NAME = "dceOutputDir"
         private const val MINIFICATION_OUTPUT_DIR_NAME = "minOutputDir"
 
         object ExceptionThrowingReporter : JsConfig.Reporter() {
@@ -75,28 +83,28 @@ class JsEnvironmentConfigurator(testServices: TestServices) : EnvironmentConfigu
             return testName + outputFileSuffix
         }
 
-        fun getJsModuleArtifactPath(testServices: TestServices, moduleName: String): String {
-            return getJsArtifactsOutputDir(testServices).absolutePath + File.separator + getJsArtifactSimpleName(testServices, moduleName) + "_v5"
+        fun getJsModuleArtifactPath(testServices: TestServices, moduleName: String, translationMode: TranslationMode = TranslationMode.FULL): String {
+            return getJsArtifactsOutputDir(testServices, translationMode).absolutePath + File.separator + getJsArtifactSimpleName(testServices, moduleName) + "_v5"
+        }
+
+        fun getRecompiledJsModuleArtifactPath(testServices: TestServices, moduleName: String, translationMode: TranslationMode = TranslationMode.FULL): String {
+            return getJsArtifactsRecompiledOutputDir(testServices, translationMode).absolutePath + File.separator + getJsArtifactSimpleName(testServices, moduleName) + "_v5"
         }
 
         fun getJsKlibArtifactPath(testServices: TestServices, moduleName: String): String {
             return getJsKlibOutputDir(testServices).absolutePath + File.separator + getJsArtifactSimpleName(testServices, moduleName)
         }
 
-        fun getDceJsArtifactPath(testServices: TestServices, moduleName: String): String {
-            return getDceJsArtifactsOutputDir(testServices).absolutePath + File.separator + getJsArtifactSimpleName(testServices, moduleName) + "_v5"
+        fun getJsArtifactsOutputDir(testServices: TestServices, translationMode: TranslationMode = TranslationMode.FULL): File {
+            return testServices.temporaryDirectoryManager.getOrCreateTempDirectory(outputDirByMode[translationMode]!!)
         }
 
-        fun getJsArtifactsOutputDir(testServices: TestServices): File {
-            return testServices.temporaryDirectoryManager.getOrCreateTempDirectory(OUTPUT_DIR_NAME)
+        fun getJsArtifactsRecompiledOutputDir(testServices: TestServices, translationMode: TranslationMode = TranslationMode.FULL): File {
+            return testServices.temporaryDirectoryManager.getOrCreateTempDirectory(outputDirByMode[translationMode]!! + "-recompiled")
         }
 
         fun getJsKlibOutputDir(testServices: TestServices): File {
             return testServices.temporaryDirectoryManager.getOrCreateTempDirectory(OUTPUT_KLIB_DIR_NAME)
-        }
-
-        fun getDceJsArtifactsOutputDir(testServices: TestServices): File {
-            return testServices.temporaryDirectoryManager.getOrCreateTempDirectory(DCE_OUTPUT_DIR_NAME)
         }
 
         fun getMinificationJsArtifactsOutputDir(testServices: TestServices): File {
@@ -114,9 +122,11 @@ class JsEnvironmentConfigurator(testServices: TestServices) : EnvironmentConfigu
 
         fun getPostfixFile(module: TestModule): File? = getPrefixPostfixFile(module, prefix = false)
 
-        fun createJsConfig(project: Project, configuration: CompilerConfiguration): JsConfig {
+        fun createJsConfig(
+            project: Project, configuration: CompilerConfiguration, compilerEnvironment: TargetEnvironment = CompilerEnvironment
+        ): JsConfig {
             return JsConfig(
-                project, configuration, CompilerEnvironment, METADATA_CACHE, (JsConfig.JS_STDLIB + JsConfig.JS_KOTLIN_TEST).toSet()
+                project, configuration, compilerEnvironment, METADATA_CACHE, (JsConfig.JS_STDLIB + JsConfig.JS_KOTLIN_TEST).toSet()
             )
         }
 

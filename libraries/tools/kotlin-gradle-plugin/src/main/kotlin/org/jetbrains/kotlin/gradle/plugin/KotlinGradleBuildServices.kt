@@ -15,13 +15,12 @@ import org.jetbrains.kotlin.gradle.logging.kotlinDebug
 import org.jetbrains.kotlin.gradle.plugin.internal.state.TaskExecutionResults
 import org.jetbrains.kotlin.gradle.plugin.internal.state.TaskLoggers
 import org.jetbrains.kotlin.gradle.plugin.stat.ReportStatistics
-import org.jetbrains.kotlin.gradle.plugin.statistics.KotlinBuildEsStatListener
+import org.jetbrains.kotlin.gradle.plugin.statistics.KotlinBuildStatListener
 import org.jetbrains.kotlin.gradle.plugin.statistics.ReportStatisticsToBuildScan
 import org.jetbrains.kotlin.gradle.plugin.statistics.ReportStatisticsToElasticSearch
-import org.jetbrains.kotlin.gradle.report.configureReporting
 import java.io.File
 
-abstract class KotlinGradleBuildServices : BuildService<KotlinGradleBuildServices.Parameters>, AutoCloseable {
+internal abstract class KotlinGradleBuildServices : BuildService<KotlinGradleBuildServices.Parameters>, AutoCloseable {
 
     interface Parameters : BuildServiceParameters {
         var buildDir: File
@@ -29,7 +28,7 @@ abstract class KotlinGradleBuildServices : BuildService<KotlinGradleBuildService
     }
 
     private val log = Logging.getLogger(this.javaClass)
-    private var buildHandler: KotlinGradleFinishBuildHandler = KotlinGradleFinishBuildHandler()
+    private val buildHandler: KotlinGradleFinishBuildHandler = KotlinGradleFinishBuildHandler()
     private val CLASS_NAME = KotlinGradleBuildServices::class.java.simpleName
     val INIT_MESSAGE = "Initialized $CLASS_NAME"
     val DISPOSE_MESSAGE = "Disposed $CLASS_NAME"
@@ -53,26 +52,22 @@ abstract class KotlinGradleBuildServices : BuildService<KotlinGradleBuildService
             "kotlin-build-service-${KotlinGradleBuildServices::class.java.canonicalName}_${KotlinGradleBuildServices::class.java.classLoader.hashCode()}",
             KotlinGradleBuildServices::class.java
         ) { service ->
-            configureReporting(project.gradle)
             service.parameters.rootDir = project.rootProject.rootDir
             service.parameters.buildDir = project.rootProject.buildDir
             addListeners(project)
         }
 
         fun addListeners(project: Project) {
-            val kotlinGradleEsListenerProvider = project.provider {
-                val listeners = project.rootProject.objects.listProperty(ReportStatistics::class.java)
-                    .value(listOf<ReportStatistics>(ReportStatisticsToElasticSearch))
-                if (project.gradle.startParameter.isBuildScan) {
-                    project.rootProject.extensions.findByName("buildScan")
-                        ?.also { listeners.add(ReportStatisticsToBuildScan(it as BuildScanExtension)) }
+            project.rootProject.extensions.findByName("buildScan")
+                ?.also {
+                    val listeners = project.rootProject.objects.listProperty(ReportStatistics::class.java)
+                        .value(listOf<ReportStatistics>(ReportStatisticsToElasticSearch))
+                    listeners.add(ReportStatisticsToBuildScan(it as BuildScanExtension))
+                    val statListener = KotlinBuildStatListener(project.rootProject.name, listeners.get())
+                    val listenerRegistryHolder = BuildEventsListenerRegistryHolder.getInstance(project)
+
+                    listenerRegistryHolder.listenerRegistry.onTaskCompletion(project.provider { statListener })
                 }
-                KotlinBuildEsStatListener(project.rootProject.name, listeners.get())
-            }
-
-            val listenerRegistryHolder = BuildEventsListenerRegistryHolder.getInstance(project)
-
-            listenerRegistryHolder.listenerRegistry.onTaskCompletion(kotlinGradleEsListenerProvider)
         }
 
         private val multipleProjectsHolder = KotlinPluginInMultipleProjectsHolder(

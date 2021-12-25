@@ -9,12 +9,9 @@ val ktorExcludesForDaemon: List<Pair<String, String>> by rootProject.extra
 dependencies {
     compileOnly(project(":daemon-common"))
     api(kotlinStdlib())
-    compileOnly(intellijCoreDep()) { includeJars("intellij-core") }
-    compileOnly(intellijDep()) { includeIntellijCoreJarDependencies(project) }
-    api(commonDep("org.jetbrains.kotlinx", "kotlinx-coroutines-core")) {
-        isTransitive = false
-    }
-    api(commonDep("io.ktor", "ktor-network")) {
+    compileOnly(intellijCore())
+    api(commonDependency("org.jetbrains.kotlinx", "kotlinx-coroutines-core")) { isTransitive = false }
+    api(commonDependency("io.ktor", "ktor-network")) {
         ktorExcludesForDaemon.forEach { (group, module) ->
             exclude(group = group, module = module)
         }

@@ -1208,6 +1208,12 @@ public class FirDiagnosticTestGenerated extends AbstractFirDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("delegateWithArgInference.kt")
+            public void testDelegateWithArgInference() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/delegates/delegateWithArgInference.kt");
+            }
+
+            @Test
             @TestMetadata("delegateWithLambda.kt")
             public void testDelegateWithLambda() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolve/delegates/delegateWithLambda.kt");
@@ -1235,6 +1241,12 @@ public class FirDiagnosticTestGenerated extends AbstractFirDiagnosticTest {
             @TestMetadata("provideDelegate.kt")
             public void testProvideDelegate() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolve/delegates/provideDelegate.kt");
+            }
+
+            @Test
+            @TestMetadata("receiverInference.kt")
+            public void testReceiverInference() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/delegates/receiverInference.kt");
             }
         }
 
@@ -3463,6 +3475,12 @@ public class FirDiagnosticTestGenerated extends AbstractFirDiagnosticTest {
         @TestDataPath("$PROJECT_ROOT")
         public class Smartcasts {
             @Test
+            @TestMetadata("accessToMemberAfterReceiverReassignment.kt")
+            public void testAccessToMemberAfterReceiverReassignment() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/smartcasts/accessToMemberAfterReceiverReassignment.kt");
+            }
+
+            @Test
             public void testAllFilesPresentInSmartcasts() throws Exception {
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolve/smartcasts"), Pattern.compile("^([^.]+)\\.kt$"), null, true);
             }
@@ -4938,6 +4956,12 @@ public class FirDiagnosticTestGenerated extends AbstractFirDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("annotationArgumentMapping.kt")
+            public void testAnnotationArgumentMapping() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/delegates/annotationArgumentMapping.kt");
+            }
+
+            @Test
             @TestMetadata("anonymousInDelegate.kt")
             public void testAnonymousInDelegate() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/delegates/anonymousInDelegate.kt");
@@ -4956,15 +4980,39 @@ public class FirDiagnosticTestGenerated extends AbstractFirDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("getClassLet.kt")
+            public void testGetClassLet() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/delegates/getClassLet.kt");
+            }
+
+            @Test
             @TestMetadata("kt41917.kt")
             public void testKt41917() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/delegates/kt41917.kt");
             }
 
             @Test
+            @TestMetadata("mapValuesLazy.kt")
+            public void testMapValuesLazy() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/delegates/mapValuesLazy.kt");
+            }
+
+            @Test
+            @TestMetadata("nullableTypeDelegate.kt")
+            public void testNullableTypeDelegate() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/delegates/nullableTypeDelegate.kt");
+            }
+
+            @Test
             @TestMetadata("propertyWithFunctionalType.kt")
             public void testPropertyWithFunctionalType() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/delegates/propertyWithFunctionalType.kt");
+            }
+
+            @Test
+            @TestMetadata("sequentialLazy.kt")
+            public void testSequentialLazy() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/delegates/sequentialLazy.kt");
             }
 
             @Test
@@ -5078,6 +5126,34 @@ public class FirDiagnosticTestGenerated extends AbstractFirDiagnosticTest {
             public void testPlusAssignWithLambdaInRhs() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/inference/plusAssignWithLambdaInRhs.kt");
             }
+
+            @Nested
+            @TestMetadata("compiler/fir/analysis-tests/testData/resolveWithStdlib/inference/problems")
+            @TestDataPath("$PROJECT_ROOT")
+            public class Problems {
+                @Test
+                public void testAllFilesPresentInProblems() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolveWithStdlib/inference/problems"), Pattern.compile("^([^.]+)\\.kt$"), null, true);
+                }
+
+                @Test
+                @TestMetadata("buildList.kt")
+                public void testBuildList() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/inference/problems/buildList.kt");
+                }
+
+                @Test
+                @TestMetadata("buildSetWithVisitor.kt")
+                public void testBuildSetWithVisitor() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/inference/problems/buildSetWithVisitor.kt");
+                }
+
+                @Test
+                @TestMetadata("expectedType.kt")
+                public void testExpectedType() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/inference/problems/expectedType.kt");
+                }
+            }
         }
 
         @Nested
@@ -5145,6 +5221,12 @@ public class FirDiagnosticTestGenerated extends AbstractFirDiagnosticTest {
             @TestMetadata("FieldVsSyntheticAccessor.kt")
             public void testFieldVsSyntheticAccessor() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/intellij/FieldVsSyntheticAccessor.kt");
+            }
+
+            @Test
+            @TestMetadata("hideBySeverity.kt")
+            public void testHideBySeverity() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/intellij/hideBySeverity.kt");
             }
 
             @Test
@@ -5598,6 +5680,12 @@ public class FirDiagnosticTestGenerated extends AbstractFirDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("localScopesInAnonymousObject.kt")
+            public void testLocalScopesInAnonymousObject() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/problems/localScopesInAnonymousObject.kt");
+            }
+
+            @Test
             @TestMetadata("qualifierPriority.kt")
             public void testQualifierPriority() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/problems/qualifierPriority.kt");
@@ -5607,6 +5695,12 @@ public class FirDiagnosticTestGenerated extends AbstractFirDiagnosticTest {
             @TestMetadata("receiverResolutionInLambda.kt")
             public void testReceiverResolutionInLambda() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/problems/receiverResolutionInLambda.kt");
+            }
+
+            @Test
+            @TestMetadata("resolveToLocalFromCallSite.kt")
+            public void testResolveToLocalFromCallSite() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/problems/resolveToLocalFromCallSite.kt");
             }
 
             @Test

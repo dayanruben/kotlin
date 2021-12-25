@@ -20,8 +20,8 @@ dependencies {
     api(project(":compiler:javac-wrapper"))
     api(project(":js:js.translator"))
     api(project(":native:frontend.native"))
-    api(commonDep("org.fusesource.jansi", "jansi"))
-    api(commonDep("org.jline", "jline"))
+    api(commonDependency("org.fusesource.jansi", "jansi"))
+    api(commonDependency("org.jline", "jline"))
     api(project(":compiler:fir:raw-fir:psi2fir"))
     api(project(":compiler:fir:resolve"))
     api(project(":compiler:fir:providers"))
@@ -39,13 +39,13 @@ dependencies {
     compileOnly(project(":compiler:ir.tree.impl"))
 
     compileOnly(toolsJarApi())
-    compileOnly(intellijCoreDep()) { includeJars("intellij-core") }
-    compileOnly(intellijDep()) { includeIntellijCoreJarDependencies(project) }
+    compileOnly(intellijCore())
+    compileOnly(commonDependency("org.jetbrains.intellij.deps:trove4j"))
 
     testApi(project(":compiler:backend"))
     testApi(project(":compiler:cli"))
     testApi(projectTests(":compiler:tests-common"))
-    testApi(commonDep("junit:junit"))
+    testApi(commonDependency("junit:junit"))
 }
 
 sourceSets {

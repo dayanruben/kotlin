@@ -43,7 +43,7 @@ class ConstraintInjector(
 
     fun addInitialSubtypeConstraint(c: Context, lowerType: KotlinTypeMarker, upperType: KotlinTypeMarker, position: ConstraintPosition) {
         val initialConstraint = InitialConstraint(lowerType, upperType, UPPER, position).also { c.addInitialConstraint(it) }
-        val typeCheckerState = TypeCheckerStateForConstraintInjector(c, IncorporationConstraintPosition(position, initialConstraint))
+        val typeCheckerState = TypeCheckerStateForConstraintInjector(c, IncorporationConstraintPosition(initialConstraint))
 
         updateAllowedTypeDepth(c, lowerType)
         updateAllowedTypeDepth(c, upperType)
@@ -69,7 +69,7 @@ class ConstraintInjector(
             else -> return
         }
         val initialConstraint = InitialConstraint(typeVariable, equalType, EQUALITY, position).also { c.addInitialConstraint(it) }
-        val typeCheckerState = TypeCheckerStateForConstraintInjector(c, IncorporationConstraintPosition(position, initialConstraint))
+        val typeCheckerState = TypeCheckerStateForConstraintInjector(c, IncorporationConstraintPosition(initialConstraint))
 
         // We add constraints like `T? == Foo!` in the old way
         if (!typeVariable.isSimpleType() || typeVariable.isMarkedNullable()) {
@@ -293,7 +293,7 @@ class ConstraintInjector(
 
         // from AbstractTypeCheckerContextForConstraintSystem
         override fun isMyTypeVariable(type: SimpleTypeMarker): Boolean =
-            c.allTypeVariables.containsKey(type.typeConstructor())
+            c.allTypeVariables.containsKey(type.typeConstructor().unwrapStubTypeVariableConstructor())
 
         override fun addUpperConstraint(typeVariable: TypeConstructorMarker, superType: KotlinTypeMarker) =
             addConstraint(typeVariable, superType, UPPER)
@@ -326,7 +326,7 @@ class ConstraintInjector(
             kind: ConstraintKind,
             isFromNullabilityConstraint: Boolean = false
         ) {
-            val typeVariable = c.allTypeVariables[typeVariableConstructor]
+            val typeVariable = c.allTypeVariables[typeVariableConstructor.unwrapStubTypeVariableConstructor()]
                 ?: error("Should by type variableConstructor: $typeVariableConstructor. ${c.allTypeVariables.values}")
 
             addNewIncorporatedConstraint(

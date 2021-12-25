@@ -529,6 +529,11 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
             runTest("compiler/testData/codegen/box/arrays/kt4357.kt");
         }
 
+        @TestMetadata("kt47483.kt")
+        public void testKt47483() throws Exception {
+            runTest("compiler/testData/codegen/box/arrays/kt47483.kt");
+        }
+
         @TestMetadata("kt503.kt")
         public void testKt503() throws Exception {
             runTest("compiler/testData/codegen/box/arrays/kt503.kt");
@@ -1099,6 +1104,36 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
             runTest("compiler/testData/codegen/box/boxingOptimization/kt48394.kt");
         }
 
+        @TestMetadata("kt49092a.kt")
+        public void testKt49092a() throws Exception {
+            runTest("compiler/testData/codegen/box/boxingOptimization/kt49092a.kt");
+        }
+
+        @TestMetadata("kt49092b.kt")
+        public void testKt49092b() throws Exception {
+            runTest("compiler/testData/codegen/box/boxingOptimization/kt49092b.kt");
+        }
+
+        @TestMetadata("kt49092c.kt")
+        public void testKt49092c() throws Exception {
+            runTest("compiler/testData/codegen/box/boxingOptimization/kt49092c.kt");
+        }
+
+        @TestMetadata("kt49092d.kt")
+        public void testKt49092d() throws Exception {
+            runTest("compiler/testData/codegen/box/boxingOptimization/kt49092d.kt");
+        }
+
+        @TestMetadata("kt49092e.kt")
+        public void testKt49092e() throws Exception {
+            runTest("compiler/testData/codegen/box/boxingOptimization/kt49092e.kt");
+        }
+
+        @TestMetadata("kt49092f.kt")
+        public void testKt49092f() throws Exception {
+            runTest("compiler/testData/codegen/box/boxingOptimization/kt49092f.kt");
+        }
+
         @TestMetadata("kt49548.kt")
         public void testKt49548() throws Exception {
             runTest("compiler/testData/codegen/box/boxingOptimization/kt49548.kt");
@@ -1568,6 +1603,19 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
             runTest("compiler/testData/codegen/box/builtinStubMethods/customReadOnlyIterator.kt");
         }
 
+        @TestMetadata("compiler/testData/codegen/box/builtinStubMethods/bridgesForStubs")
+        @TestDataPath("$PROJECT_ROOT")
+        @RunWith(JUnit3RunnerWithInners.class)
+        public static class BridgesForStubs extends AbstractIrCodegenBoxWasmTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest0(this::doTest, TargetBackend.WASM, testDataFilePath);
+            }
+
+            public void testAllFilesPresentInBridgesForStubs() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/builtinStubMethods/bridgesForStubs"), Pattern.compile("^([^_](.+))\\.kt$"), null, TargetBackend.WASM, true);
+            }
+        }
+
         @TestMetadata("compiler/testData/codegen/box/builtinStubMethods/extendJavaCollections")
         @TestDataPath("$PROJECT_ROOT")
         @RunWith(JUnit3RunnerWithInners.class)
@@ -1728,6 +1776,31 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
         @TestMetadata("kt47988.kt")
         public void testKt47988() throws Exception {
             runTest("compiler/testData/codegen/box/callableReference/kt47988.kt");
+        }
+
+        @TestMetadata("kt49526.kt")
+        public void testKt49526() throws Exception {
+            runTest("compiler/testData/codegen/box/callableReference/kt49526.kt");
+        }
+
+        @TestMetadata("kt49526_sam.kt")
+        public void testKt49526_sam() throws Exception {
+            runTest("compiler/testData/codegen/box/callableReference/kt49526_sam.kt");
+        }
+
+        @TestMetadata("kt49526a.kt")
+        public void testKt49526a() throws Exception {
+            runTest("compiler/testData/codegen/box/callableReference/kt49526a.kt");
+        }
+
+        @TestMetadata("kt49526b.kt")
+        public void testKt49526b() throws Exception {
+            runTest("compiler/testData/codegen/box/callableReference/kt49526b.kt");
+        }
+
+        @TestMetadata("kt50172.kt")
+        public void testKt50172() throws Exception {
+            runTest("compiler/testData/codegen/box/callableReference/kt50172.kt");
         }
 
         @TestMetadata("nested.kt")
@@ -12265,6 +12338,11 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
                 runTest("compiler/testData/codegen/box/inference/builderInference/kt48445.kt");
             }
 
+            @TestMetadata("kt49887.kt")
+            public void testKt49887() throws Exception {
+                runTest("compiler/testData/codegen/box/inference/builderInference/kt49887.kt");
+            }
+
             @TestMetadata("labaledCall.kt")
             public void testLabaledCall() throws Exception {
                 runTest("compiler/testData/codegen/box/inference/builderInference/labaledCall.kt");
@@ -12874,6 +12952,11 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
         @TestMetadata("iterateOverListOfInlineClassValues.kt")
         public void testIterateOverListOfInlineClassValues() throws Exception {
             runTest("compiler/testData/codegen/box/inlineClasses/iterateOverListOfInlineClassValues.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
+        }
+
+        @TestMetadata("jvmInline.kt")
+        public void testJvmInline() throws Exception {
+            runTest("compiler/testData/codegen/box/inlineClasses/jvmInline.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
         }
 
         @TestMetadata("kt25246.kt")
@@ -27069,24 +27152,6 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
         }
     }
 
-    @TestMetadata("compiler/testData/codegen/box/valueClasses")
-    @TestDataPath("$PROJECT_ROOT")
-    @RunWith(JUnit3RunnerWithInners.class)
-    public static class ValueClasses extends AbstractIrCodegenBoxWasmTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest0(this::doTest, TargetBackend.WASM, testDataFilePath);
-        }
-
-        public void testAllFilesPresentInValueClasses() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/valueClasses"), Pattern.compile("^([^_](.+))\\.kt$"), null, TargetBackend.WASM, true);
-        }
-
-        @TestMetadata("jvmInline.kt")
-        public void testJvmInline() throws Exception {
-            runTest("compiler/testData/codegen/box/valueClasses/jvmInline.kt");
-        }
-    }
-
     @TestMetadata("compiler/testData/codegen/box/vararg")
     @TestDataPath("$PROJECT_ROOT")
     @RunWith(JUnit3RunnerWithInners.class)
@@ -27474,9 +27539,24 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
                 runTest("compiler/testData/codegen/box/when/enumOptimization/kt15806.kt");
             }
 
+            @TestMetadata("kt50258.kt")
+            public void testKt50258() throws Exception {
+                runTest("compiler/testData/codegen/box/when/enumOptimization/kt50258.kt");
+            }
+
             @TestMetadata("manyWhensWithinClass.kt")
             public void testManyWhensWithinClass() throws Exception {
                 runTest("compiler/testData/codegen/box/when/enumOptimization/manyWhensWithinClass.kt");
+            }
+
+            @TestMetadata("nestedWhenInCondition.kt")
+            public void testNestedWhenInCondition() throws Exception {
+                runTest("compiler/testData/codegen/box/when/enumOptimization/nestedWhenInCondition.kt");
+            }
+
+            @TestMetadata("nestedWhenInResult.kt")
+            public void testNestedWhenInResult() throws Exception {
+                runTest("compiler/testData/codegen/box/when/enumOptimization/nestedWhenInResult.kt");
             }
 
             @TestMetadata("nonConstantEnum.kt")

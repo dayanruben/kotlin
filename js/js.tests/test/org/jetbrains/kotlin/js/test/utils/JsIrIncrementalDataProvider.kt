@@ -25,18 +25,16 @@ import org.jetbrains.kotlin.test.services.configuration.JsEnvironmentConfigurato
 import org.jetbrains.kotlin.test.services.jsLibraryProvider
 import java.io.File
 
-class TestModuleCache(val moduleName: String, val files: MutableMap<String, FileCache>) {
+class TestModuleCache(val files: MutableMap<String, FileCache>) {
 
-    constructor(moduleName: String) : this(moduleName, mutableMapOf())
+    constructor() : this(mutableMapOf())
+
+    private lateinit var storedModuleName: String
 
     fun cacheProvider(): PersistentCacheProvider {
         return object : PersistentCacheProvider {
             override fun fileFingerPrint(path: String): Hash {
                 return 0L
-            }
-
-            override fun serializedParts(path: String): SerializedIcDataForFile {
-                error("Is not supported")
             }
 
             override fun inlineGraphForFile(path: String, sigResolver: (Int) -> IdSignature): Collection<Pair<IdSignature, TransHash>> {
@@ -66,6 +64,10 @@ class TestModuleCache(val moduleName: String, val files: MutableMap<String, File
             override fun filePaths(): Iterable<String> {
                 return files.keys
             }
+
+            override fun moduleName(): String {
+                return storedModuleName
+            }
         }
     }
 
@@ -91,10 +93,6 @@ class TestModuleCache(val moduleName: String, val files: MutableMap<String, File
 
             }
 
-            override fun commitICCacheData(path: String, icData: SerializedIcDataForFile) {
-
-            }
-
             override fun commitBinaryAst(path: String, astData: ByteArray) {
                 val storage = files.getOrPut(path) { FileCache(path, null, null, null) }
                 storage.ast = astData
@@ -114,13 +112,13 @@ class TestModuleCache(val moduleName: String, val files: MutableMap<String, File
                 files.remove(path)
             }
 
-            override fun commitLibraryPath(libraryPath: String, flatHash: ULong, transHash: ULong) {
-
+            override fun commitLibraryInfo(libraryPath: String, flatHash: ULong, transHash: ULong, moduleName: String) {
+                storedModuleName = moduleName
             }
         }
     }
 
-    fun createModuleCache(): ModuleCache = ModuleCache(moduleName, files)
+    fun createModuleCache(): ModuleCache = ModuleCache(storedModuleName, files)
 }
 
 class JsIrIncrementalDataProvider(private val testServices: TestServices) : TestService {
@@ -201,7 +199,7 @@ class JsIrIncrementalDataProvider(private val testServices: TestServices) : Test
         var moduleCache = predefinedKlibHasIcCache[canonicalPath]
 
         if (moduleCache == null) {
-            moduleCache = icCache[canonicalPath] ?: TestModuleCache(canonicalPath)
+            moduleCache = icCache[canonicalPath] ?: TestModuleCache()
 
             val libs = allDependencies.associateBy { File(it.libraryFile.path).canonicalPath }
 

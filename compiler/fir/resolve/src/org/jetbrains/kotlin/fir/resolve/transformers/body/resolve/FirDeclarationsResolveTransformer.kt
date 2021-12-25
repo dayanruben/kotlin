@@ -24,19 +24,19 @@ import org.jetbrains.kotlin.fir.expressions.builder.buildReturnExpression
 import org.jetbrains.kotlin.fir.expressions.builder.buildUnitExpression
 import org.jetbrains.kotlin.fir.expressions.impl.FirLazyBlock
 import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
-import org.jetbrains.kotlin.fir.resolve.ResolutionMode
+import org.jetbrains.kotlin.fir.resolve.*
 import org.jetbrains.kotlin.fir.resolve.calls.FirNamedReferenceWithCandidate
-import org.jetbrains.kotlin.fir.resolve.constructFunctionalTypeRef
+import org.jetbrains.kotlin.fir.resolve.calls.candidate
 import org.jetbrains.kotlin.fir.resolve.dfa.FirControlFlowGraphReferenceImpl
 import org.jetbrains.kotlin.fir.resolve.dfa.unwrapSmartcastExpression
 import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeLocalVariableNoTypeOrInitializer
+import org.jetbrains.kotlin.fir.resolve.inference.FirStubTypeTransformer
 import org.jetbrains.kotlin.fir.resolve.inference.ResolvedLambdaAtom
 import org.jetbrains.kotlin.fir.resolve.inference.extractLambdaInfoFromFunctionalType
 import org.jetbrains.kotlin.fir.types.isSuspendFunctionType
-import org.jetbrains.kotlin.fir.resolve.mode
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
+import org.jetbrains.kotlin.fir.resolve.substitution.createTypeSubstitutorByTypeConstructor
 import org.jetbrains.kotlin.fir.resolve.transformers.*
-import org.jetbrains.kotlin.fir.resolve.withExpectedType
 import org.jetbrains.kotlin.fir.scopes.impl.FirMemberTypeParameterScope
 import org.jetbrains.kotlin.fir.symbols.constructStarProjectedType
 import org.jetbrains.kotlin.fir.symbols.impl.FirValueParameterSymbol
@@ -140,7 +140,6 @@ open class FirDeclarationsResolveTransformer(transformer: FirBodyResolveTransfor
             var backingFieldIsAlreadyResolved = false
             context.withProperty(property) {
                 context.forPropertyInitializer {
-                    property.transformDelegate(transformer, ResolutionMode.ContextDependentDelegate)
                     if (!initializerIsAlreadyResolved) {
                         property.transformChildrenWithoutComponents(returnTypeRef)
                         property.replaceBodyResolveState(FirPropertyBodyResolveState.INITIALIZER_RESOLVED)
@@ -156,7 +155,7 @@ open class FirDeclarationsResolveTransformer(transformer: FirBodyResolveTransfor
                 }
                 val delegate = property.delegate
                 if (delegate != null) {
-                    transformPropertyAccessorsWithDelegate(property, delegate)
+                    transformPropertyAccessorsWithDelegate(property)
                     if (property.delegateFieldSymbol != null) {
                         replacePropertyReferenceTypeInDelegateAccessors(property)
                     }
@@ -263,11 +262,26 @@ open class FirDeclarationsResolveTransformer(transformer: FirBodyResolveTransfor
         (property.delegate as? FirFunctionCall)?.replacePropertyReferenceTypeInDelegateAccessors(property)
     }
 
-    private fun transformPropertyAccessorsWithDelegate(property: FirProperty, delegateExpression: FirExpression) {
-        context.forPropertyDelegateAccessors(property, delegateExpression, resolutionContext, callCompleter) {
+    private fun transformPropertyAccessorsWithDelegate(property: FirProperty) {
+
+        context.forPropertyDelegateAccessors(property, resolutionContext, callCompleter) {
+            // Resolve delegate expression, after that, delegate will contain either expr.provideDelegate or expr
+            if (property.isLocal) {
+                property.transformDelegate(transformer, ResolutionMode.ContextDependentDelegate)
+            } else {
+                context.forPropertyInitializer {
+                    property.transformDelegate(transformer, ResolutionMode.ContextDependentDelegate)
+                }
+            }
+
             property.transformAccessors()
             val completedCalls = completeCandidates()
             val finalSubstitutor = createFinalSubstitutor()
+
+            // Replace stub types with corresponding type variable types
+            val stubTypeCompletionResultsWriter = FirStubTypeTransformer(finalSubstitutor)
+            property.transformSingle(stubTypeCompletionResultsWriter, null)
+
             val callCompletionResultsWriter = callCompleter.createCompletionResultsWriter(
                 finalSubstitutor,
                 mode = FirCallCompletionResultsWriterTransformer.Mode.DelegatedPropertyCompletion
@@ -275,6 +289,7 @@ open class FirDeclarationsResolveTransformer(transformer: FirBodyResolveTransfor
             completedCalls.forEach {
                 it.transformSingle(callCompletionResultsWriter, null)
             }
+
             val declarationCompletionResultsWriter =
                 FirDeclarationCompletionResultsWriter(finalSubstitutor, session.typeApproximator, session.typeContext)
             property.transformSingle(declarationCompletionResultsWriter, FirDeclarationCompletionResultsWriter.ApproximationData.Default)
@@ -287,20 +302,57 @@ open class FirDeclarationsResolveTransformer(transformer: FirBodyResolveTransfor
     ): FirStatement {
         dataFlowAnalyzer.enterDelegateExpression()
         try {
-            val delegateProvider = wrappedDelegateExpression.delegateProvider.transformSingle(transformer, data)
-            when (val calleeReference = (delegateProvider as FirResolvable).calleeReference) {
-                is FirResolvedNamedReference -> return delegateProvider
-                is FirNamedReferenceWithCandidate -> {
-                    val candidate = calleeReference.candidate
-                    if (!candidate.system.hasContradiction) {
-                        return delegateProvider
+            // First, resolve delegate expression in dependent context
+            val delegateExpression =
+                wrappedDelegateExpression.expression.transformSingle(transformer, ResolutionMode.ContextDependent)
+
+            // Second, replace result type of delegate expression with stub type if delegate not yet resolved
+            if (delegateExpression is FirQualifiedAccess) {
+                val calleeReference = delegateExpression.calleeReference
+                if (calleeReference is FirNamedReferenceWithCandidate) {
+                    val system = calleeReference.candidate.system
+                    system.notFixedTypeVariables.forEach {
+                        system.markPostponedVariable(it.value.typeVariable)
                     }
+                    val typeVariableTypeToStubType = context.inferenceSession.createSyntheticStubTypes(system)
+
+                    val substitutor = createTypeSubstitutorByTypeConstructor(typeVariableTypeToStubType, session.typeContext)
+                    val delegateExpressionTypeRef = delegateExpression.typeRef
+                    val stubTypeSubstituted = substitutor.substituteOrNull(delegateExpressionTypeRef.coneType)
+                    delegateExpression.replaceTypeRef(delegateExpressionTypeRef.withReplacedConeType(stubTypeSubstituted))
                 }
             }
 
-            (delegateProvider as? FirFunctionCall)?.let { dataFlowAnalyzer.dropSubgraphFromCall(it) }
-            return wrappedDelegateExpression.expression
-                .transformSingle(transformer, data)
+            val provideDelegateCall = wrappedDelegateExpression.delegateProvider as FirFunctionCall
+
+            // Resolve call for provideDelegate, without completion
+            provideDelegateCall.transformSingle(this, ResolutionMode.ContextIndependent)
+
+            // If we got successful candidate for provideDelegate, let's select it
+            val provideDelegateCandidate = provideDelegateCall.candidate()
+            if (provideDelegateCandidate != null && provideDelegateCandidate.isSuccessful) {
+                val system = provideDelegateCandidate.system
+                system.notFixedTypeVariables.forEach {
+                    system.markPostponedVariable(it.value.typeVariable)
+                }
+                val typeVariableTypeToStubType = context.inferenceSession.createSyntheticStubTypes(system)
+                val substitutor = createTypeSubstitutorByTypeConstructor(typeVariableTypeToStubType, session.typeContext)
+
+                val stubTypeSubstituted = substitutor.substituteOrSelf(provideDelegateCandidate.substitutor.substituteOrSelf(components.typeFromCallee(provideDelegateCall).type))
+
+                provideDelegateCall.replaceTypeRef(provideDelegateCall.typeRef.resolvedTypeFromPrototype(stubTypeSubstituted))
+                return provideDelegateCall
+            }
+
+            if (provideDelegateCall.calleeReference is FirResolvedNamedReference) {
+                return provideDelegateCall
+            }
+
+            // Otherwise, rollback
+            (provideDelegateCall as? FirFunctionCall)?.let { dataFlowAnalyzer.dropSubgraphFromCall(it) }
+
+            // Select delegate expression otherwise
+            return delegateExpression
                 .approximateIfIsIntegerConst()
         } finally {
             dataFlowAnalyzer.exitDelegateExpression()
@@ -309,13 +361,12 @@ open class FirDeclarationsResolveTransformer(transformer: FirBodyResolveTransfor
 
     private fun transformLocalVariable(variable: FirProperty): FirProperty {
         assert(variable.isLocal)
-        variable.transformDelegate(transformer, ResolutionMode.ContextDependentDelegate)
         val delegate = variable.delegate
 
         val hadExplicitType = variable.returnTypeRef !is FirImplicitTypeRef
 
         if (delegate != null) {
-            transformPropertyAccessorsWithDelegate(variable, delegate)
+            transformPropertyAccessorsWithDelegate(variable)
             if (variable.delegateFieldSymbol != null) {
                 replacePropertyReferenceTypeInDelegateAccessors(variable)
             }
@@ -341,7 +392,6 @@ open class FirDeclarationsResolveTransformer(transformer: FirBodyResolveTransfor
         val data = withExpectedType(returnTypeRef)
         return transformReturnTypeRef(transformer, data)
             .transformInitializer(transformer, data)
-            .transformDelegate(transformer, data)
             .transformTypeParameters(transformer, data)
             .transformOtherChildren(transformer, data)
     }

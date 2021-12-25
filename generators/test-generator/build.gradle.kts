@@ -5,11 +5,10 @@ plugins {
 }
 
 dependencies {
-    testApi(intellijDep()) { includeJars("util") }
     testApi(project(":core:util.runtime"))
     testApi(projectTests(":compiler:test-infrastructure-utils"))
     testApi(kotlinStdlib())
-    testApi(commonDep("junit:junit"))
+    testApi(commonDependency("junit:junit"))
     testApiJUnit5()
     testApi(project(":generators"))
 

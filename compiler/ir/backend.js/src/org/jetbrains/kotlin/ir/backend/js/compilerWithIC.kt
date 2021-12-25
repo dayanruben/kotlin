@@ -5,10 +5,8 @@
 
 package org.jetbrains.kotlin.ir.backend.js
 
-import org.jetbrains.kotlin.backend.common.lower
 import org.jetbrains.kotlin.backend.common.phaser.PhaseConfig
 import org.jetbrains.kotlin.backend.common.phaser.PhaserState
-import org.jetbrains.kotlin.backend.common.phaser.invokeToplevel
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.backend.js.ic.ModuleCache
@@ -17,8 +15,8 @@ import org.jetbrains.kotlin.ir.backend.js.lower.generateJsTests
 import org.jetbrains.kotlin.ir.backend.js.lower.moveBodilessDeclarationsToSeparatePlace
 import org.jetbrains.kotlin.ir.backend.js.lower.serialization.ir.JsIrLinker
 import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.*
+import org.jetbrains.kotlin.ir.backend.js.utils.sanitizeName
 import org.jetbrains.kotlin.ir.backend.js.utils.serialization.JsIrAstDeserializer
-import org.jetbrains.kotlin.ir.declarations.IrFactory
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.descriptors.IrBuiltInsOverDescriptors
 import org.jetbrains.kotlin.ir.util.ExternalDependenciesGenerator
@@ -94,9 +92,6 @@ fun compileWithIC(
     val transformer = IrModuleToJsTransformerTmp(
         context,
         mainArguments,
-        fullJs = generateFullJs,
-        dceJs = generateDceJs,
-        multiModule = multiModule,
         relativeRequirePath = relativeRequirePath,
     )
 
@@ -128,18 +123,30 @@ fun lowerPreservingTags(modules: Iterable<IrModuleFragment>, context: JsIrBacken
 fun generateJsFromAst(
     mainModuleName: String,
     moduleKind: ModuleKind,
+    sourceMapsInfo: SourceMapsInfo?,
+    translationModes: Set<TranslationMode>,
     caches: Map<String, ModuleCache>,
+    relativeRequirePath: Boolean = false,
 ): CompilerResult {
-    val deserializer = JsIrAstDeserializer()
-    val fragments = JsIrProgram(caches.values.map { JsIrModule(it.name, it.name, it.asts.values.sortedBy { it.name }.mapNotNull { it.ast?.let { deserializer.deserialize(ByteArrayInputStream(it))} }) })
-    return CompilerResult(
-        generateSingleWrappedModuleBody(
-            mainModuleName,
-            moduleKind,
-            fragments.modules.flatMap { it.fragments },
-            sourceMapsInfo = null,
+    fun compilationOutput(multiModule: Boolean): CompilationOutputs {
+        val deserializer = JsIrAstDeserializer()
+        val jsIrProgram = JsIrProgram(caches.values.map {
+            JsIrModule(
+                it.name.safeModuleName,
+                sanitizeName(it.name.safeModuleName),
+                it.asts.values.sortedBy { it.name }.mapNotNull { it.ast?.let { deserializer.deserialize(ByteArrayInputStream(it)) } })
+        })
+
+        return generateWrappedModuleBody(
+            multiModule = multiModule,
+            mainModuleName = mainModuleName,
+            moduleKind = moduleKind,
+            jsIrProgram,
+            sourceMapsInfo = sourceMapsInfo,
+            relativeRequirePath = relativeRequirePath,
             generateScriptModule = false,
-            generateCallToMain = true,
-        ), null
-    )
+        )
+    }
+
+    return CompilerResult(translationModes.associate { it to compilationOutput(it.perModule) }, null)
 }
