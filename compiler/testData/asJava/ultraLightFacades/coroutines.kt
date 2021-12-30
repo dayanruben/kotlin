@@ -1,6 +1,6 @@
 //RELEASE_COROUTINE_NEEDED
-suspend fun doSomething(foo: String): Int {}
+suspend fun doSomething(foo: String): Int { TODO() }
 
-fun <T> async(block: suspend () -> T)
+fun <T> async(block: suspend () -> T) { TODO() }
 
-// FIR_COMPARISON
+// WITH_STDLIB

@@ -256,56 +256,57 @@ internal val allLoweringsPhase = NamedCompilerPhase(
         name = "IrLowering",
         description = "IR Lowering",
         // TODO: The lowerings before inlinePhase should be aligned with [NativeInlineFunctionResolver.kt]
-        lower = removeExpectDeclarationsPhase then
-                stripTypeAliasDeclarationsPhase then
-                lowerBeforeInlinePhase then
-                arrayConstructorPhase then
-                lateinitPhase then
-                sharedVariablesPhase then
-                inventNamesForLocalClasses then
-                extractLocalClassesFromInlineBodies then
-                inlinePhase then
-                provisionalFunctionExpressionPhase then
-                lowerAfterInlinePhase then
-                performByIrFile(
-                        name = "IrLowerByFile",
-                        description = "IR Lowering by file",
-                        lower = listOf(
-                            annotationImplementationPhase,
-                            rangeContainsLoweringPhase,
-                            forLoopsPhase,
-                            flattenStringConcatenationPhase,
-                            foldConstantLoweringPhase,
-                            computeStringTrimPhase,
-                            stringConcatenationPhase,
-                            enumConstructorsPhase,
-                            initializersPhase,
-                            localFunctionsPhase,
-                            tailrecPhase,
-                            defaultParameterExtentPhase,
-                            innerClassPhase,
-                            dataClassesPhase,
-                            ifNullExpressionsFusionPhase,
-                            testProcessorPhase,
-                            delegationPhase,
-                            functionReferencePhase,
-                            singleAbstractMethodPhase,
-                            enumWhenPhase,
-                            builtinOperatorPhase,
-                            finallyBlocksPhase,
-                            enumClassPhase,
-                            enumUsagePhase,
-                            interopPhase,
-                            varargPhase,
-                            kotlinNothingValueExceptionPhase,
-                            coroutinesPhase,
-                            typeOperatorPhase,
-                            expressionBodyTransformPhase,
-                            fileInitializersPhase,
-                            bridgesPhase,
-                            autoboxPhase,
-                        )
-                ),
+        lower = performByIrFile(
+                name = "IrLowerByFile",
+                description = "IR Lowering by file",
+                lower = listOf(
+                        removeExpectDeclarationsPhase,
+                        stripTypeAliasDeclarationsPhase,
+                        lowerBeforeInlinePhase,
+                        arrayConstructorPhase,
+                        lateinitPhase,
+                        sharedVariablesPhase,
+                        inventNamesForLocalClasses,
+                        extractLocalClassesFromInlineBodies,
+                        inlinePhase,
+                        provisionalFunctionExpressionPhase,
+                        postInlinePhase,
+                        contractsDslRemovePhase,
+                        annotationImplementationPhase,
+                        rangeContainsLoweringPhase,
+                        forLoopsPhase,
+                        flattenStringConcatenationPhase,
+                        foldConstantLoweringPhase,
+                        computeStringTrimPhase,
+                        stringConcatenationPhase,
+                        enumConstructorsPhase,
+                        initializersPhase,
+                        localFunctionsPhase,
+                        tailrecPhase,
+                        defaultParameterExtentPhase,
+                        innerClassPhase,
+                        dataClassesPhase,
+                        ifNullExpressionsFusionPhase,
+                        testProcessorPhase,
+                        delegationPhase,
+                        functionReferencePhase,
+                        singleAbstractMethodPhase,
+                        enumWhenPhase,
+                        builtinOperatorPhase,
+                        finallyBlocksPhase,
+                        enumClassPhase,
+                        enumUsagePhase,
+                        interopPhase,
+                        varargPhase,
+                        kotlinNothingValueExceptionPhase,
+                        coroutinesPhase,
+                        typeOperatorPhase,
+                        expressionBodyTransformPhase,
+                        fileInitializersPhase,
+                        bridgesPhase,
+                        autoboxPhase,
+                )
+        ),
         actions = setOf(defaultDumper, ::moduleValidationCallback)
 )
 
@@ -580,6 +581,12 @@ internal fun PhaseConfig.disableUnless(phase: AnyNamedPhase, condition: Boolean)
 
 internal fun PhaseConfig.konanPhasesConfig(config: KonanConfig) {
     with(config.configuration) {
+        // The original comment around [checkSamSuperTypesPhase] still holds, but in order to be on par with JVM_IR
+        // (which doesn't report error for these corner cases), we turn off the checker for now (the problem with variances
+        // is workarounded in [FunctionReferenceLowering] by taking erasure of SAM conversion type).
+        // Also see https://youtrack.jetbrains.com/issue/KT-50399 for more details.
+        disable(checkSamSuperTypesPhase)
+
         disable(localEscapeAnalysisPhase)
 
         // Don't serialize anything to a final executable.

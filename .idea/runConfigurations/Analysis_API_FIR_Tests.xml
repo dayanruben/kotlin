@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Analysis API FIR Tests" type="GradleRunConfiguration" factoryName="Gradle" folderName="Analysis API">
+  <configuration default="false" name="Analysis API FIR Tests" type="GradleRunConfiguration" factoryName="Gradle" folderName="Analysis">
     <ExternalSystemSettings>
       <option name="executionName" />
       <option name="externalProjectPath" value="$PROJECT_DIR$" />

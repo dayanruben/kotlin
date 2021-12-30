@@ -1427,21 +1427,15 @@ public class BytecodeTextTestGenerated extends AbstractBytecodeTextTest {
         }
 
         @Test
-        @TestMetadata("noInline.kt")
-        public void testNoInline() throws Exception {
-            runTest("compiler/testData/codegen/bytecodeText/constProperty/noInline.kt");
+        @TestMetadata("nonConstValHasNoDefaultValue_after.kt")
+        public void testNonConstValHasNoDefaultValue_after() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeText/constProperty/nonConstValHasNoDefaultValue_after.kt");
         }
 
         @Test
-        @TestMetadata("noInlineInCmp.kt")
-        public void testNoInlineInCmp() throws Exception {
-            runTest("compiler/testData/codegen/bytecodeText/constProperty/noInlineInCmp.kt");
-        }
-
-        @Test
-        @TestMetadata("nonConstValHasNoDefaultValue.kt")
-        public void testNonConstValHasNoDefaultValue() throws Exception {
-            runTest("compiler/testData/codegen/bytecodeText/constProperty/nonConstValHasNoDefaultValue.kt");
+        @TestMetadata("nonConstValHasNoDefaultValue_before.kt")
+        public void testNonConstValHasNoDefaultValue_before() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeText/constProperty/nonConstValHasNoDefaultValue_before.kt");
         }
     }
 
@@ -1528,12 +1522,6 @@ public class BytecodeTextTestGenerated extends AbstractBytecodeTextTest {
         @TestMetadata("noInlineNonStaticJavaField.kt")
         public void testNoInlineNonStaticJavaField() throws Exception {
             runTest("compiler/testData/codegen/bytecodeText/constants/noInlineNonStaticJavaField.kt");
-        }
-
-        @Test
-        @TestMetadata("noInlineNonStaticJavaField_lv10.kt")
-        public void testNoInlineNonStaticJavaField_lv10() throws Exception {
-            runTest("compiler/testData/codegen/bytecodeText/constants/noInlineNonStaticJavaField_lv10.kt");
         }
 
         @Test
@@ -4159,12 +4147,6 @@ public class BytecodeTextTestGenerated extends AbstractBytecodeTextTest {
         }
 
         @Test
-        @TestMetadata("negateConstantCompare.kt")
-        public void testNegateConstantCompare() throws Exception {
-            runTest("compiler/testData/codegen/bytecodeText/lazyCodegen/negateConstantCompare.kt");
-        }
-
-        @Test
         @TestMetadata("negateObjectComp.kt")
         public void testNegateObjectComp() throws Exception {
             runTest("compiler/testData/codegen/bytecodeText/lazyCodegen/negateObjectComp.kt");
@@ -4555,6 +4537,12 @@ public class BytecodeTextTestGenerated extends AbstractBytecodeTextTest {
         }
 
         @Test
+        @TestMetadata("exclExclAsNotNullType.kt")
+        public void testExclExclAsNotNullType() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeText/nullCheckOptimization/exclExclAsNotNullType.kt");
+        }
+
+        @Test
         @TestMetadata("expressionValueIsNotNull.kt")
         public void testExpressionValueIsNotNull() throws Exception {
             runTest("compiler/testData/codegen/bytecodeText/nullCheckOptimization/expressionValueIsNotNull.kt");
@@ -4808,6 +4796,12 @@ public class BytecodeTextTestGenerated extends AbstractBytecodeTextTest {
         @TestMetadata("dontGenerateOnNullableArray.kt")
         public void testDontGenerateOnNullableArray() throws Exception {
             runTest("compiler/testData/codegen/bytecodeText/parameterlessMain/dontGenerateOnNullableArray.kt");
+        }
+
+        @Test
+        @TestMetadata("dontGenerateOnNullableString.kt")
+        public void testDontGenerateOnNullableString() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeText/parameterlessMain/dontGenerateOnNullableString.kt");
         }
 
         @Test
@@ -5363,6 +5357,12 @@ public class BytecodeTextTestGenerated extends AbstractBytecodeTextTest {
         }
 
         @Test
+        @TestMetadata("noTemporaryInCheckedCast.kt")
+        public void testNoTemporaryInCheckedCast() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeText/temporaryVals/noTemporaryInCheckedCast.kt");
+        }
+
+        @Test
         @TestMetadata("notNullReceiversInChain.kt")
         public void testNotNullReceiversInChain() throws Exception {
             runTest("compiler/testData/codegen/bytecodeText/temporaryVals/notNullReceiversInChain.kt");
@@ -5822,12 +5822,6 @@ public class BytecodeTextTestGenerated extends AbstractBytecodeTextTest {
         @TestMetadata("inlineStringConstInsideWhen.kt")
         public void testInlineStringConstInsideWhen() throws Exception {
             runTest("compiler/testData/codegen/bytecodeText/whenStringOptimization/inlineStringConstInsideWhen.kt");
-        }
-
-        @Test
-        @TestMetadata("nonInlinedConst.kt")
-        public void testNonInlinedConst() throws Exception {
-            runTest("compiler/testData/codegen/bytecodeText/whenStringOptimization/nonInlinedConst.kt");
         }
 
         @Test

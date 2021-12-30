@@ -182,6 +182,7 @@ include ":benchmarks",
         ":core:metadata.jvm",
         ":core:deserialization.common",
         ":core:deserialization.common.jvm",
+        ":compiler:frontend.common.jvm",
         ":core:util.runtime",
         ":compiler:compiler.version",
         ":dependencies:android-sdk",
@@ -291,6 +292,7 @@ include ":benchmarks",
         ":kotlin-serialization",
         ":kotlin-serialization-unshaded",
         ":wasm:wasm.ir"
+
 
 include ":kotlinx-atomicfu-compiler-plugin",
         ":kotlinx-atomicfu-runtime",
@@ -483,6 +485,7 @@ if (attachedIntellijVersion == "212") { // Latest available platform in scope of
 }
 
 include ":generators:analysis-api-generator",
+        ":analysis",
         ":analysis:low-level-api-fir",
         ":analysis:analysis-api-fir:analysis-api-fir-generator",
         ":analysis:analysis-api-fir",
@@ -493,7 +496,12 @@ include ":generators:analysis-api-generator",
         ":analysis:analysis-internal-utils",
         ":analysis:symbol-light-classes",
         ":analysis:project-structure",
-        ":analysis:analysis-api-fe10"
+        ":analysis:analysis-api-fe10",
+        ":analysis:decompiled:decompiler-to-psi",
+        ":analysis:decompiled:decompiler-to-stubs",
+        ":analysis:decompiled:decompiler-to-file-stubs",
+        ":analysis:decompiled:light-classes-for-decompiled",
+        ":analysis:decompiled:light-classes-for-decompiled-fe10"
 
 
 if (buildProperties.inJpsBuildIdeaSync) {

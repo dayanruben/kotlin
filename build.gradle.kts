@@ -153,7 +153,12 @@ val commonCompilerModules = arrayOf(
     ":core:compiler.common",
     ":core:compiler.common.jvm",
     ":core:util.runtime",
-    ":compiler:frontend.java" // TODO this is fe10 module but some utils used in fir ide now
+    ":compiler:frontend.common.jvm",
+    ":compiler:frontend.java", // TODO this is fe10 module but some utils used in fir ide now
+    ":analysis:decompiled:decompiler-to-stubs",
+    ":analysis:decompiled:decompiler-to-file-stubs",
+    ":analysis:decompiled:decompiler-to-psi",
+    ":analysis:decompiled:light-classes-for-decompiled",
 ).also { extra["commonCompilerModules"] = it }
 
 val firCompilerCoreModules = arrayOf(
@@ -223,7 +228,8 @@ val fe10CompilerModules = arrayOf(
     ":native:frontend.native",
     ":native:kotlin-native-utils",
     ":kotlin-build-common",
-    ":compiler:backend.common.jvm"
+    ":compiler:backend.common.jvm",
+    ":analysis:decompiled:light-classes-for-decompiled-fe10",
 ).also { extra["fe10CompilerModules"] = it }
 
 extra["compilerModules"] =
@@ -454,6 +460,7 @@ allprojects {
 
     val commonCompilerArgs = listOfNotNull(
         "-opt-in=kotlin.RequiresOptIn",
+        "-Xklib-relative-path-base=$rootDir".takeIf { !kotlinBuildProperties.getBoolean("kotlin.build.use.absolute.paths.in.klib") },
         "-progressive".takeIf { hasProperty("test.progressive.mode") }
     )
 
@@ -805,13 +812,7 @@ tasks {
     }
 
     register("frontendApiTests") {
-        dependsOn("dist")
-        dependsOn(
-            ":analysis:analysis-api:test",
-            ":analysis:analysis-api-fir:test",
-            ":analysis:analysis-api-fe10:test",
-            ":analysis:low-level-api-fir:test"
-        )
+        dependsOn(":analysis:analysisAllTests")
     }
 
     register("kaptTests") {
@@ -820,7 +821,7 @@ tasks {
         dependsOn(":kotlin-annotation-processing-cli:test")
     }
 
-    // Need the task for transition period. Shouold be removed in a week after commit is master.
+    // Need the task for transi˚tion period. Shouold be removed in a week after commit is master.
     register("kaptIdeTest") {
         dependsOn("kaptTests")
     }

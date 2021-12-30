@@ -17,6 +17,8 @@ dependencies {
     testApi(projectTests("::analysis:low-level-api-fir"))
     testApi(projectTests(":analysis:analysis-api-fir"))
     testApi(projectTests(":analysis:analysis-api-fe10"))
+    testApi(projectTests(":analysis:decompiled:decompiler-to-file-stubs"))
+    testApi(projectTests(":analysis:symbol-light-classes"))
     testApi(intellijCore())
     testApiJUnit5()
 }

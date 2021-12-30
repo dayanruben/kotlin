@@ -44,6 +44,12 @@ public class AtomicfuJsIrTestGenerated extends AbstractAtomicfuJsIrTest {
     }
 
     @Test
+    @TestMetadata("DelegatedPropertiesTest.kt")
+    public void testDelegatedPropertiesTest() throws Exception {
+        runTest("plugins/atomicfu/atomicfu-compiler/testData/box/DelegatedPropertiesTest.kt");
+    }
+
+    @Test
     @TestMetadata("ExtensionsTest.kt")
     public void testExtensionsTest() throws Exception {
         runTest("plugins/atomicfu/atomicfu-compiler/testData/box/ExtensionsTest.kt");
@@ -143,6 +149,12 @@ public class AtomicfuJsIrTestGenerated extends AbstractAtomicfuJsIrTest {
     @TestMetadata("TopLevelTest.kt")
     public void testTopLevelTest() throws Exception {
         runTest("plugins/atomicfu/atomicfu-compiler/testData/box/TopLevelTest.kt");
+    }
+
+    @Test
+    @TestMetadata("TraceTest.kt")
+    public void testTraceTest() throws Exception {
+        runTest("plugins/atomicfu/atomicfu-compiler/testData/box/TraceTest.kt");
     }
 
     @Test
