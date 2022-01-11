@@ -13654,6 +13654,18 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("kt49658.kt")
+            public void testKt49658() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inference/kt49658.kt");
+            }
+
+            @Test
+            @TestMetadata("kt49658Strict.kt")
+            public void testKt49658Strict() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inference/kt49658Strict.kt");
+            }
+
+            @Test
             @TestMetadata("kt6175.kt")
             public void testKt6175() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/inference/kt6175.kt");
@@ -13888,6 +13900,18 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("unsoundness1.kt")
+            public void testUnsoundness1() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inference/unsoundness1.kt");
+            }
+
+            @Test
+            @TestMetadata("unsoundness2.kt")
+            public void testUnsoundness2() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inference/unsoundness2.kt");
+            }
+
+            @Test
             @TestMetadata("useFunctionLiteralsToInferType.kt")
             public void testUseFunctionLiteralsToInferType() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/inference/useFunctionLiteralsToInferType.kt");
@@ -13924,6 +13948,18 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("kt47744.kt")
                 public void testKt47744() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/builderInference/kt47744.kt");
+                }
+
+                @Test
+                @TestMetadata("kt49828.kt")
+                public void testKt49828() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/kt49828.kt");
+                }
+
+                @Test
+                @TestMetadata("kt49829.kt")
+                public void testKt49829() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/kt49829.kt");
                 }
 
                 @Test
@@ -31171,6 +31207,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("repeatedBound.kt")
             public void testRepeatedBound() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/typeParameters/repeatedBound.kt");
+            }
+
+            @Test
+            @TestMetadata("starProjectionInsteadOutCaptured.kt")
+            public void testStarProjectionInsteadOutCaptured() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/typeParameters/starProjectionInsteadOutCaptured.kt");
             }
 
             @Test

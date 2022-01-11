@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.resolve.calls.inference.components.KotlinConstraintS
 import org.jetbrains.kotlin.resolve.calls.inference.model.ConstraintStorage
 import org.jetbrains.kotlin.resolve.calls.inference.model.DelegatedPropertyConstraintPositionImpl
 import org.jetbrains.kotlin.resolve.calls.model.*
-import org.jetbrains.kotlin.resolve.calls.tower.ManyCandidatesResolver
+import org.jetbrains.kotlin.resolve.calls.tower.StubTypesBasedInferenceSession
 import org.jetbrains.kotlin.resolve.calls.tower.PSICallResolver
 import org.jetbrains.kotlin.resolve.calls.tower.PSIPartialCallInfo
 import org.jetbrains.kotlin.types.ErrorUtils
@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.types.TypeConstructor
 import org.jetbrains.kotlin.types.UnwrappedType
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
-class DelegatedPropertyInferenceSession(
+class DelegateInferenceSession(
     val variableDescriptor: VariableDescriptorWithAccessors,
     val expectedType: UnwrappedType?,
     psiCallResolver: PSICallResolver,
@@ -36,18 +36,18 @@ class DelegatedPropertyInferenceSession(
     callComponents: KotlinCallComponents,
     builtIns: KotlinBuiltIns,
     override val parentSession: InferenceSession?
-) : ManyCandidatesResolver<FunctionDescriptor>(
+) : StubTypesBasedInferenceSession<FunctionDescriptor>(
     psiCallResolver, postponedArgumentsAnalyzer, kotlinConstraintSystemCompleter, callComponents, builtIns
 ) {
     init {
-        if (parentSession is ManyCandidatesResolver<*>) {
+        if (parentSession is StubTypesBasedInferenceSession<*>) {
             parentSession.addNestedInferenceSession(this)
         }
     }
 
     fun getNestedBuilderInferenceSessions(): List<BuilderInferenceSession> {
         val builderInferenceSessions = nestedInferenceSessions.filterIsInstance<BuilderInferenceSession>()
-        val delegatedPropertyInferenceSessions = nestedInferenceSessions.filterIsInstance<DelegatedPropertyInferenceSession>()
+        val delegatedPropertyInferenceSessions = nestedInferenceSessions.filterIsInstance<DelegateInferenceSession>()
 
         return builderInferenceSessions + delegatedPropertyInferenceSessions.map { it.getNestedBuilderInferenceSessions() }.flatten()
     }

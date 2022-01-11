@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.resolve.calls.results.OverloadResolutionResults
 import org.jetbrains.kotlin.resolve.calls.tasks.TracingStrategy
 import org.jetbrains.kotlin.types.TypeConstructor
 
-abstract class ManyCandidatesResolver<D : CallableDescriptor>(
+abstract class StubTypesBasedInferenceSession<D : CallableDescriptor>(
     private val psiCallResolver: PSICallResolver,
     private val postponedArgumentsAnalyzer: PostponedArgumentsAnalyzer,
     protected val kotlinConstraintSystemCompleter: KotlinConstraintSystemCompleter,
@@ -29,11 +29,11 @@ abstract class ManyCandidatesResolver<D : CallableDescriptor>(
     val builtIns: KotlinBuiltIns
 ) : InferenceSession {
     protected val partiallyResolvedCallsInfo = arrayListOf<PSIPartialCallInfo>()
-    private val errorCallsInfo = arrayListOf<PSIErrorCallInfo<D>>()
+    val errorCallsInfo = arrayListOf<PSIErrorCallInfo<D>>()
     private val completedCalls = hashSetOf<ResolvedAtom>()
-    protected val nestedInferenceSessions = hashSetOf<ManyCandidatesResolver<*>>()
+    protected val nestedInferenceSessions = hashSetOf<StubTypesBasedInferenceSession<*>>()
 
-    fun addNestedInferenceSession(inferenceSession: ManyCandidatesResolver<*>) {
+    fun addNestedInferenceSession(inferenceSession: StubTypesBasedInferenceSession<*>) {
         nestedInferenceSessions.add(inferenceSession)
     }
 
@@ -65,7 +65,8 @@ abstract class ManyCandidatesResolver<D : CallableDescriptor>(
     }
 
     override fun currentConstraintSystem(): ConstraintStorage {
-        return partiallyResolvedCallsInfo.lastOrNull()?.callResolutionResult?.constraintSystem ?: ConstraintStorage.Empty
+        return partiallyResolvedCallsInfo.lastOrNull()?.callResolutionResult?.constraintSystem?.getBuilder()?.currentStorage()
+            ?: ConstraintStorage.Empty
     }
 
     override fun callCompleted(resolvedAtom: ResolvedAtom): Boolean =
@@ -110,13 +111,17 @@ abstract class ManyCandidatesResolver<D : CallableDescriptor>(
         val allCandidates = arrayListOf<ResolutionResultCallInfo<D>>()
 
         if (hasOneSuccessfulAndOneErrorCandidate) {
-            val goodCandidate = resolvedCallsInfo.first { it.callResolutionResult.constraintSystem.errors.isEmpty() && it.callResolutionResult.diagnostics.isEmpty() }
-            val badCandidate = resolvedCallsInfo.first { it.callResolutionResult.constraintSystem.errors.isNotEmpty() || it.callResolutionResult.diagnostics.isNotEmpty()}
+            val goodCandidate = resolvedCallsInfo.first {
+                it.callResolutionResult.constraintSystem.errors.isEmpty() && it.callResolutionResult.diagnostics.isEmpty()
+            }
+            val badCandidate = resolvedCallsInfo.first {
+                it.callResolutionResult.constraintSystem.errors.isNotEmpty() || it.callResolutionResult.diagnostics.isNotEmpty()
+            }
 
             for (callInfo in listOf(goodCandidate, badCandidate)) {
                 val atomsToAnalyze = mutableListOf<ResolvedAtom>(callInfo.callResolutionResult)
                 val system = NewConstraintSystemImpl(callComponents.constraintInjector, builtIns, callComponents.kotlinTypeRefiner).apply {
-                    addOtherSystem(callInfo.callResolutionResult.constraintSystem)
+                    addOtherSystem(callInfo.callResolutionResult.constraintSystem.getBuilder().currentStorage())
                     /*
                      * This is needed for very stupid case, when we have some delegate with good `getValue` and bad `setValue` that
                      *   was provided by some function call with generic (e.g. var x by lazy { "" })
@@ -129,7 +134,8 @@ abstract class ManyCandidatesResolver<D : CallableDescriptor>(
                      *   stub atoms in order to call completer doesn't fail
                      */
                     if (callInfo === badCandidate) {
-                        for ((typeVariable, fixedType) in allCandidates[0].resolutionResult.constraintSystem.fixedTypeVariables) {
+                        val storage = allCandidates[0].resolutionResult.constraintSystem.getBuilder().currentStorage()
+                        for ((typeVariable, fixedType) in storage.fixedTypeVariables) {
                             if (typeVariable in this.notFixedTypeVariables) {
                                 val type = (typeVariable as TypeConstructor).typeForTypeVariable()
                                 addEqualityConstraint(
@@ -150,7 +156,11 @@ abstract class ManyCandidatesResolver<D : CallableDescriptor>(
                 )
             }
         } else {
-            val commonSystem = NewConstraintSystemImpl(callComponents.constraintInjector, builtIns, callComponents.kotlinTypeRefiner).apply {
+            val commonSystem = NewConstraintSystemImpl(
+                callComponents.constraintInjector,
+                builtIns,
+                callComponents.kotlinTypeRefiner
+            ).apply {
                 addOtherSystem(currentConstraintSystem())
             }
 
@@ -165,11 +175,13 @@ abstract class ManyCandidatesResolver<D : CallableDescriptor>(
         }
 
         val results = allCandidates.map { it.resolutionResult }
-        errorCallsInfo.filter { it.callResolutionResult !in results }.mapTo(allCandidates) { ResolutionResultCallInfo(it.callResolutionResult, it.result) }
+        errorCallsInfo.filter { it.callResolutionResult !in results }.mapTo(allCandidates) {
+            ResolutionResultCallInfo(it.callResolutionResult, it.result)
+        }
         return allCandidates
     }
 
-    override fun computeCompletionMode(candidate: ResolutionCandidate) = null
+    override fun computeCompletionMode(candidate: ResolutionCandidate): ConstraintSystemCompletionMode? = null
 
     override fun resolveReceiverIndependently(): Boolean = false
 
@@ -178,7 +190,7 @@ abstract class ManyCandidatesResolver<D : CallableDescriptor>(
         commonSystem: NewConstraintSystem
     ): CallResolutionResult {
         val diagnostics = diagnosticsHolder.getDiagnostics() + callResolutionResult.diagnostics + commonSystem.errors.asDiagnostics()
-        return CompletedCallResolutionResult(callResolutionResult.resultCallAtom, diagnostics, commonSystem.asReadOnlyStorage())
+        return CompletedCallResolutionResult(callResolutionResult.resultCallAtom, diagnostics, commonSystem)
     }
 }
 
