@@ -1,9 +1,9 @@
 /*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-package org.jetbrains.kotlin.fir.utils
+package org.jetbrains.kotlin.util
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
@@ -78,8 +78,13 @@ abstract class TypeRegistry<K : Any, V : Any> {
     }
 
     fun <T : K> getId(kClass: KClass<T>): Int {
-        return idPerType.computeIfAbsent(kClass) { idCounter.getAndIncrement() }
+        return idPerType.customComputeIfAbsent(kClass) { idCounter.getAndIncrement() }
     }
+
+    abstract fun <T : K> ConcurrentHashMap<KClass<out K>, Int>.customComputeIfAbsent(
+        kClass: KClass<T>,
+        compute: (KClass<out K>) -> Int
+    ): Int
 
     fun allValuesThreadUnsafeForRendering(): Map<KClass<out K>, Int> {
         return idPerType
