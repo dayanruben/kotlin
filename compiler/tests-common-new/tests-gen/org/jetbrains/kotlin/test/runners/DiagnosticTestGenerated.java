@@ -8880,6 +8880,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("usageOnEnum.kt")
+            public void testUsageOnEnum() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/deprecated/usageOnEnum.kt");
+            }
+
+            @Test
             @TestMetadata("warningOnConstructorErrorOnClass.kt")
             public void testWarningOnConstructorErrorOnClass() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/deprecated/warningOnConstructorErrorOnClass.kt");
@@ -13807,6 +13813,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("selectOfLambdaWithExtensionEnabled.kt")
             public void testSelectOfLambdaWithExtensionEnabled() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/inference/selectOfLambdaWithExtensionEnabled.kt");
+            }
+
+            @Test
+            @TestMetadata("smartCastFork.kt")
+            public void testSmartCastFork() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inference/smartCastFork.kt");
             }
 
             @Test
@@ -36671,6 +36683,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("kt4975.kt")
             public void testKt4975() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/inference/kt4975.kt");
+            }
+
+            @Test
+            @TestMetadata("plusAssignOnArrayList.kt")
+            public void testPlusAssignOnArrayList() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/inference/plusAssignOnArrayList.kt");
             }
 
             @Test
