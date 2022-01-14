@@ -641,6 +641,16 @@ internal class NonConstValUsedInConstantExpressionImpl(
     override val token: ValidityToken,
 ) : KtFirDiagnostic.NonConstValUsedInConstantExpression(), KtAbstractFirDiagnostic<KtExpression>
 
+internal class CycleInAnnotationParameterErrorImpl(
+    override val firDiagnostic: KtPsiDiagnostic,
+    override val token: ValidityToken,
+) : KtFirDiagnostic.CycleInAnnotationParameterError(), KtAbstractFirDiagnostic<KtParameter>
+
+internal class CycleInAnnotationParameterWarningImpl(
+    override val firDiagnostic: KtPsiDiagnostic,
+    override val token: ValidityToken,
+) : KtFirDiagnostic.CycleInAnnotationParameterWarning(), KtAbstractFirDiagnostic<KtParameter>
+
 internal class AnnotationClassConstructorCallImpl(
     override val firDiagnostic: KtPsiDiagnostic,
     override val token: ValidityToken,
@@ -1099,6 +1109,11 @@ internal class InlineClassConstructorWrongParametersSizeImpl(
     override val firDiagnostic: KtPsiDiagnostic,
     override val token: ValidityToken,
 ) : KtFirDiagnostic.InlineClassConstructorWrongParametersSize(), KtAbstractFirDiagnostic<KtElement>
+
+internal class ValueClassEmptyConstructorImpl(
+    override val firDiagnostic: KtPsiDiagnostic,
+    override val token: ValidityToken,
+) : KtFirDiagnostic.ValueClassEmptyConstructor(), KtAbstractFirDiagnostic<KtElement>
 
 internal class ValueClassConstructorNotFinalReadOnlyParameterImpl(
     override val firDiagnostic: KtPsiDiagnostic,

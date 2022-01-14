@@ -60,6 +60,7 @@ public interface Errors {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     DiagnosticFactory1<PsiElement, String> UNSUPPORTED = DiagnosticFactory1.create(ERROR);
+    DiagnosticFactory1<PsiElement, String> UNSUPPORTED_WARNING = DiagnosticFactory1.create(WARNING);
 
     DiagnosticFactory1<PsiElement, String> NEW_INFERENCE_ERROR = DiagnosticFactory1.create(ERROR);
     DiagnosticFactory1<PsiElement, String> NEW_INFERENCE_DIAGNOSTIC = DiagnosticFactory1.create(WARNING);
@@ -299,6 +300,7 @@ public interface Errors {
     DiagnosticFactory0<KtAnnotatedExpression> ANNOTATIONS_ON_BLOCK_LEVEL_EXPRESSION_ON_THE_SAME_LINE = DiagnosticFactory0.create(WARNING);
     DiagnosticFactory0<KtAnnotationEntry> ANNOTATION_USED_AS_ANNOTATION_ARGUMENT = DiagnosticFactory0.create(ERROR);
     DiagnosticFactory0<KtExpression> ANNOTATION_ARGUMENT_IS_NON_CONST = DiagnosticFactory0.create(WARNING);
+    DiagnosticFactoryForDeprecation0<KtParameter> CYCLE_IN_ANNOTATION_PARAMETER = DiagnosticFactoryForDeprecation0.create(LanguageFeature.ProhibitCyclesInAnnotations);
 
     DiagnosticFactoryForDeprecation0<PsiElement> RESTRICTED_RETENTION_FOR_EXPRESSION_ANNOTATION =
             DiagnosticFactoryForDeprecation0.create(LanguageFeature.RestrictRetentionForExpressionAnnotations);
@@ -398,12 +400,13 @@ public interface Errors {
     DiagnosticFactory0<PsiElement> NON_PRIVATE_CONSTRUCTOR_IN_SEALED = DiagnosticFactory0.create(ERROR);
     DiagnosticFactory0<PsiElement> NON_PRIVATE_OR_PROTECTED_CONSTRUCTOR_IN_SEALED = DiagnosticFactory0.create(ERROR);
 
-    // Inline classes
+    // Inline classes, Value classes
 
     DiagnosticFactory0<PsiElement> VALUE_CLASS_NOT_TOP_LEVEL = DiagnosticFactory0.create(ERROR);
     DiagnosticFactory0<PsiElement> VALUE_CLASS_NOT_FINAL = DiagnosticFactory0.create(ERROR);
     DiagnosticFactory0<PsiElement> ABSENCE_OF_PRIMARY_CONSTRUCTOR_FOR_VALUE_CLASS = DiagnosticFactory0.create(ERROR);
     DiagnosticFactory0<KtElement> INLINE_CLASS_CONSTRUCTOR_WRONG_PARAMETERS_SIZE = DiagnosticFactory0.create(ERROR);
+    DiagnosticFactory0<KtElement> VALUE_CLASS_EMPTY_CONSTRUCTOR = DiagnosticFactory0.create(ERROR);
     DiagnosticFactory0<KtParameter> VALUE_CLASS_CONSTRUCTOR_NOT_FINAL_READ_ONLY_PARAMETER = DiagnosticFactory0.create(ERROR);
     DiagnosticFactory0<KtProperty> PROPERTY_WITH_BACKING_FIELD_INSIDE_VALUE_CLASS = DiagnosticFactory0.create(ERROR, DECLARATION_SIGNATURE);
     DiagnosticFactory0<PsiElement> DELEGATED_PROPERTY_INSIDE_VALUE_CLASS = DiagnosticFactory0.create(ERROR);
@@ -837,6 +840,7 @@ public interface Errors {
     DiagnosticFactory0<PsiElement> TAIL_RECURSION_IN_TRY_IS_NOT_SUPPORTED = DiagnosticFactory0.create(WARNING, CALL_EXPRESSION);
 
     DiagnosticFactory0<PsiElement> NO_CONSTRUCTOR = DiagnosticFactory0.create(ERROR);
+    DiagnosticFactory0<PsiElement> NO_CONSTRUCTOR_WARNING = DiagnosticFactory0.create(WARNING);
     DiagnosticFactory0<PsiElement> CREATING_AN_INSTANCE_OF_ABSTRACT_CLASS = DiagnosticFactory0.create(ERROR);
     DiagnosticFactory0<KtExpression> NOT_A_CLASS = DiagnosticFactory0.create(ERROR);
 
@@ -1032,6 +1036,7 @@ public interface Errors {
 
     DiagnosticFactory1<KtSimpleNameExpression, VariableDescriptor> UNINITIALIZED_VARIABLE = DiagnosticFactory1.create(ERROR);
     DiagnosticFactory1<KtSimpleNameExpression, ValueParameterDescriptor> UNINITIALIZED_PARAMETER = DiagnosticFactory1.create(ERROR);
+    DiagnosticFactory1<KtSimpleNameExpression, ValueParameterDescriptor> UNINITIALIZED_PARAMETER_WARNING = DiagnosticFactory1.create(WARNING);
     DiagnosticFactory1<KtSimpleNameExpression, ClassDescriptor> UNINITIALIZED_ENUM_ENTRY = DiagnosticFactory1.create(ERROR);
     DiagnosticFactory1<KtExpression, ClassDescriptor> UNINITIALIZED_ENUM_COMPANION = DiagnosticFactory1.create(ERROR);
     DiagnosticFactory1<KtExpression, ClassDescriptor> UNINITIALIZED_ENUM_COMPANION_WARNING = DiagnosticFactory1.create(WARNING);

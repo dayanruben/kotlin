@@ -94,10 +94,10 @@ public class DefaultErrorMessages {
         MAP.put(EXTENSION_FUNCTION_SHADOWED_BY_MEMBER_PROPERTY_WITH_INVOKE,
                 "Extension function is shadowed by a member property ''{0}'' with {1}", NAME, COMPACT_WITH_MODIFIERS);
 
-        MAP.put(INACCESSIBLE_TYPE, "Type {0} is inaccessible in this context due to: {1}", RENDER_TYPE, commaSeparated(
+        MAP.put(INACCESSIBLE_TYPE, "Type {0} is inaccessible in this context due to: {1}", RENDER_TYPE, CommonRenderers.commaSeparated(
                 FQ_NAMES_IN_TYPES_WITH_ANNOTATIONS));
 
-        MAP.put(REDECLARATION, "Conflicting declarations: {0}", commaSeparated(COMPACT_WITH_MODIFIERS));
+        MAP.put(REDECLARATION, "Conflicting declarations: {0}", CommonRenderers.commaSeparated(COMPACT_WITH_MODIFIERS));
         MAP.put(PACKAGE_OR_CLASSIFIER_REDECLARATION, "Redeclaration: {0}", STRING);
         MAP.put(DUPLICATE_PARAMETER_NAME_IN_FUNCTION_TYPE, "Duplicate parameter name in function type");
 
@@ -315,9 +315,9 @@ public class DefaultErrorMessages {
                 MODULE_WITH_PLATFORM, adaptGenerics1(PlatformIncompatibilityDiagnosticRenderer.TEXT));
         MAP.put(ACTUAL_WITHOUT_EXPECT, "{0} has no corresponding expected declaration{1}", CAPITALIZED_DECLARATION_NAME_WITH_KIND_AND_PLATFORM,
                 adaptGenerics1(PlatformIncompatibilityDiagnosticRenderer.TEXT));
-        MAP.put(AMBIGUOUS_ACTUALS, "{0} has several compatible actual declarations in modules {1}", CAPITALIZED_DECLARATION_NAME_WITH_KIND_AND_PLATFORM, commaSeparated(
+        MAP.put(AMBIGUOUS_ACTUALS, "{0} has several compatible actual declarations in modules {1}", CAPITALIZED_DECLARATION_NAME_WITH_KIND_AND_PLATFORM, CommonRenderers.commaSeparated(
                 MODULE));
-        MAP.put(AMBIGUOUS_EXPECTS, "{0} has several compatible expect declarations in modules {1}", CAPITALIZED_DECLARATION_NAME_WITH_KIND_AND_PLATFORM, commaSeparated(
+        MAP.put(AMBIGUOUS_EXPECTS, "{0} has several compatible expect declarations in modules {1}", CAPITALIZED_DECLARATION_NAME_WITH_KIND_AND_PLATFORM, CommonRenderers.commaSeparated(
                 MODULE));
 
         MAP.put(NO_ACTUAL_CLASS_MEMBER_FOR_EXPECTED_CLASS, "Actual class ''{0}'' has no corresponding members for expected class members:{1}",
@@ -345,6 +345,7 @@ public class DefaultErrorMessages {
 
         MAP.put(UNINITIALIZED_VARIABLE, "Variable ''{0}'' must be initialized", NAME);
         MAP.put(UNINITIALIZED_PARAMETER, "Parameter ''{0}'' is uninitialized here", NAME);
+        MAP.put(UNINITIALIZED_PARAMETER_WARNING, "Parameter ''{0}'' is uninitialized here. This warning will be an error in future releases", NAME);
         MAP.put(UNINITIALIZED_ENUM_ENTRY, "Enum entry ''{0}'' is uninitialized here", NAME);
         MAP.put(UNINITIALIZED_ENUM_COMPANION, "Companion object of enum class ''{0}'' is uninitialized here", NAME);
         MAP.put(UNINITIALIZED_ENUM_COMPANION_WARNING, "Companion object of enum class ''{0}'' is uninitialized here. This warning will become an error in future releases", NAME);
@@ -437,8 +438,9 @@ public class DefaultErrorMessages {
 
         MAP.put(DELEGATION_IN_INTERFACE, "Interfaces cannot use delegation");
         MAP.put(DELEGATION_NOT_TO_INTERFACE, "Only interfaces can be delegated to");
-        MAP.put(DELEGATED_MEMBER_HIDES_SUPERTYPE_OVERRIDE, "Delegated member ''{0}'' hides supertype override: {1}. Please specify proper override explicitly", COMPACT, commaSeparated(SHORT_NAMES_IN_TYPES));
+        MAP.put(DELEGATED_MEMBER_HIDES_SUPERTYPE_OVERRIDE, "Delegated member ''{0}'' hides supertype override: {1}. Please specify proper override explicitly", COMPACT, CommonRenderers.commaSeparated(SHORT_NAMES_IN_TYPES));
         MAP.put(NO_CONSTRUCTOR, "This class does not have a constructor");
+        MAP.put(NO_CONSTRUCTOR_WARNING, "This class does not have a constructor. This warning will be an error in future releases");
         MAP.put(RESOLUTION_TO_CLASSIFIER, "{2}", NAME, TO_STRING, STRING);
         MAP.put(NOT_A_CLASS, "Not a class");
         MAP.put(ILLEGAL_ESCAPE_SEQUENCE, "Illegal escape sequence");
@@ -714,6 +716,7 @@ public class DefaultErrorMessages {
         MAP.put(UNSAFE_IMPLICIT_INVOKE_CALL, "Reference has a nullable type ''{0}'', use explicit ''?.invoke()'' to make a function-like call instead", RENDER_TYPE);
         MAP.put(AMBIGUOUS_LABEL, "Ambiguous label");
         MAP.put(UNSUPPORTED, "Unsupported [{0}]", STRING);
+        MAP.put(UNSUPPORTED_WARNING, "Unsupported [{0}]. This warning will be an error in future releases", STRING);
         MAP.put(NEW_INFERENCE_ERROR, "New inference error [{0}]", STRING);
         MAP.put(NEW_INFERENCE_DIAGNOSTIC, "New inference [{0}]", STRING);
         MAP.put(NON_APPLICABLE_CALL_FOR_BUILDER_INFERENCE, "Non-applicable call for builder inference");
@@ -752,8 +755,9 @@ public class DefaultErrorMessages {
         MAP.put(VALUE_CLASS_NOT_TOP_LEVEL, "Value classes cannot be local or inner");
         MAP.put(VALUE_CLASS_NOT_FINAL, "Value classes can be only final");
         MAP.put(ABSENCE_OF_PRIMARY_CONSTRUCTOR_FOR_VALUE_CLASS, "Primary constructor is required for value class");
-        MAP.put(INLINE_CLASS_CONSTRUCTOR_WRONG_PARAMETERS_SIZE, "Inline class must have exactly one primary constructor parameter"); // +
-        MAP.put(VALUE_CLASS_CONSTRUCTOR_NOT_FINAL_READ_ONLY_PARAMETER, "Value class primary constructor must only have final read-only (val) property parameter");
+        MAP.put(INLINE_CLASS_CONSTRUCTOR_WRONG_PARAMETERS_SIZE, "Inline class must have exactly one primary constructor parameter");
+        MAP.put(VALUE_CLASS_EMPTY_CONSTRUCTOR, "Value class must have at least one primary constructor parameter");
+        MAP.put(VALUE_CLASS_CONSTRUCTOR_NOT_FINAL_READ_ONLY_PARAMETER, "Value class primary constructor must only have final read-only (val) property parameters");
         MAP.put(PROPERTY_WITH_BACKING_FIELD_INSIDE_VALUE_CLASS, "Value class cannot have properties with backing fields");
         MAP.put(DELEGATED_PROPERTY_INSIDE_VALUE_CLASS, "Value class cannot have delegated properties");
         MAP.put(VALUE_CLASS_HAS_INAPPLICABLE_PARAMETER_TYPE, "Value class cannot have value parameter of type ''{0}''", RENDER_TYPE);
@@ -878,7 +882,7 @@ public class DefaultErrorMessages {
         MAP.put(VAR_OVERRIDDEN_BY_VAL, "Var-property {0} cannot be overridden by val-property {1}", FQ_NAMES_IN_TYPES,
                 FQ_NAMES_IN_TYPES);
 
-        MAP.put(CONFLICTING_INHERITED_MEMBERS, "{0} inherits conflicting members: {1}", NAME, commaSeparated(FQ_NAMES_IN_TYPES));
+        MAP.put(CONFLICTING_INHERITED_MEMBERS, "{0} inherits conflicting members: {1}", NAME, CommonRenderers.commaSeparated(FQ_NAMES_IN_TYPES));
         MAP.put(ABSTRACT_MEMBER_NOT_IMPLEMENTED, "{0} is not abstract and does not implement abstract member {1}", RENDER_CLASS_OR_OBJECT,
                 FQ_NAMES_IN_TYPES);
         MAP.put(ABSTRACT_CLASS_MEMBER_NOT_IMPLEMENTED, "{0} is not abstract and does not implement abstract base class member {1}",
@@ -892,9 +896,9 @@ public class DefaultErrorMessages {
                 RENDER_CLASS_OR_OBJECT, FQ_NAMES_IN_TYPES);
         MAP.put(MANY_INTERFACES_MEMBER_NOT_IMPLEMENTED_WARNING, "Deprecated: {0} must override {1} because it inherits multiple interface methods of it",
                 RENDER_CLASS_OR_OBJECT, FQ_NAMES_IN_TYPES);
-        MAP.put(INVISIBLE_ABSTRACT_MEMBER_FROM_SUPER, "{0} inherits invisible abstract members: {1}", NAME, commaSeparated(FQ_NAMES_IN_TYPES));
+        MAP.put(INVISIBLE_ABSTRACT_MEMBER_FROM_SUPER, "{0} inherits invisible abstract members: {1}", NAME, CommonRenderers.commaSeparated(FQ_NAMES_IN_TYPES));
 
-        MAP.put(CONFLICTING_OVERLOADS, "Conflicting overloads: {0}", commaSeparated(FQ_NAMES_IN_TYPES));
+        MAP.put(CONFLICTING_OVERLOADS, "Conflicting overloads: {0}", CommonRenderers.commaSeparated(FQ_NAMES_IN_TYPES));
 
         MAP.put(FUNCTION_EXPECTED, "Expression ''{0}''{1} cannot be invoked as a function. " +
                                    "The function ''" + OperatorNameConventions.INVOKE.asString() + "()'' is not found",
@@ -998,6 +1002,7 @@ public class DefaultErrorMessages {
 
         MAP.put(ANNOTATION_USED_AS_ANNOTATION_ARGUMENT, "An annotation can't be used as the annotations argument");
         MAP.put(ANNOTATION_ARGUMENT_IS_NON_CONST, "An annotation argument must be a compile-time constant");
+        MAP.put(CYCLE_IN_ANNOTATION_PARAMETER, "Type of this parameter is cyclic");
 
         MAP.put(RESTRICTED_RETENTION_FOR_EXPRESSION_ANNOTATION,
                 "Expression annotations with retention other than SOURCE are prohibited");
@@ -1027,7 +1032,7 @@ public class DefaultErrorMessages {
 
         MAP.put(DIFFERENT_NAMES_FOR_THE_SAME_PARAMETER_IN_SUPERTYPES,
                     "Names of the parameter #{1} conflict in the following members of supertypes: ''{0}''. " +
-                    "This may cause problems when calling this function with named arguments.", commaSeparated(
+                    "This may cause problems when calling this function with named arguments.", CommonRenderers.commaSeparated(
                         FQ_NAMES_IN_TYPES), TO_STRING);
 
         MAP.put(NAME_FOR_AMBIGUOUS_PARAMETER, "Named argument is not allowed for a parameter with an ambiguous name");

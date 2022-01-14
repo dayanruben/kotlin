@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.config.LanguageFeature.ForbidExposingTypesInPrimaryC
 import org.jetbrains.kotlin.config.LanguageFeature.ForbidUsingExtensionPropertyTypeParameterInDelegate
 import org.jetbrains.kotlin.config.LanguageFeature.ProhibitAssigningSingleElementsToVarargsInNamedForm
 import org.jetbrains.kotlin.config.LanguageFeature.ProhibitConfusingSyntaxInWhenBranches
+import org.jetbrains.kotlin.config.LanguageFeature.ProhibitCyclesInAnnotations
 import org.jetbrains.kotlin.config.LanguageFeature.ProhibitInvisibleAbstractMethodsInSuperclasses
 import org.jetbrains.kotlin.config.LanguageFeature.ProhibitNonReifiedArraysAsReifiedTypeArguments
 import org.jetbrains.kotlin.config.LanguageFeature.ProhibitUseSiteTargetAnnotationsOnSuperTypes
@@ -222,6 +223,7 @@ object FirErrors {
     val LOCAL_ANNOTATION_CLASS_ERROR by error0<KtClassOrObject>()
     val MISSING_VAL_ON_ANNOTATION_PARAMETER by error0<KtParameter>()
     val NON_CONST_VAL_USED_IN_CONSTANT_EXPRESSION by error0<KtExpression>()
+    val CYCLE_IN_ANNOTATION_PARAMETER by deprecationError0<KtParameter>(ProhibitCyclesInAnnotations)
     val ANNOTATION_CLASS_CONSTRUCTOR_CALL by error0<KtCallExpression>()
     val NOT_AN_ANNOTATION_CLASS by error1<PsiElement, String>()
     val NULLABLE_TYPE_OF_ANNOTATION_MEMBER by error0<KtTypeReference>()
@@ -304,6 +306,7 @@ object FirErrors {
     val VALUE_CLASS_NOT_FINAL by error0<KtDeclaration>(SourceElementPositioningStrategies.MODALITY_MODIFIER)
     val ABSENCE_OF_PRIMARY_CONSTRUCTOR_FOR_VALUE_CLASS by error0<KtDeclaration>(SourceElementPositioningStrategies.INLINE_OR_VALUE_MODIFIER)
     val INLINE_CLASS_CONSTRUCTOR_WRONG_PARAMETERS_SIZE by error0<KtElement>()
+    val VALUE_CLASS_EMPTY_CONSTRUCTOR by error0<KtElement>()
     val VALUE_CLASS_CONSTRUCTOR_NOT_FINAL_READ_ONLY_PARAMETER by error0<KtParameter>()
     val PROPERTY_WITH_BACKING_FIELD_INSIDE_VALUE_CLASS by error0<KtProperty>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE)
     val DELEGATED_PROPERTY_INSIDE_VALUE_CLASS by error0<PsiElement>()
