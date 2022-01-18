@@ -432,7 +432,7 @@ internal abstract class FunctionGenerationContext(
         val function: LLVMValueRef,
         val codegen: CodeGenerator,
         private val startLocation: LocationInfo?,
-        private val endLocation: LocationInfo?,
+        protected val endLocation: LocationInfo?,
         switchToRunnable: Boolean,
         internal val irFunction: IrFunction? = null
 ) : ContextUtils {
@@ -498,11 +498,6 @@ internal abstract class FunctionGenerationContext(
     )
 
     private val invokeInstructions = mutableListOf<FunctionInvokeInformation>()
-
-    /**
-     * TODO: consider merging this with [ExceptionHandler].
-     */
-    var forwardingForeignExceptionsTerminatedWith: LlvmCallable? = null
 
     // Whether the generating function needs to initialize Kotlin runtime before execution. Useful for interop bridges,
     // for example.
@@ -659,6 +654,12 @@ internal abstract class FunctionGenerationContext(
             Native -> call(context.llvm.Kotlin_mm_switchThreadStateNative, emptyList())
             Runnable -> call(context.llvm.Kotlin_mm_switchThreadStateRunnable, emptyList())
         }.let {} // Force exhaustive.
+    }
+
+    fun switchThreadStateIfExperimentalMM(state: ThreadState) {
+        if (context.memoryModel == MemoryModel.EXPERIMENTAL) {
+            switchThreadState(state)
+        }
     }
 
     fun memset(pointer: LLVMValueRef, value: Byte, size: Int, isVolatile: Boolean = false) =
@@ -974,9 +975,7 @@ internal abstract class FunctionGenerationContext(
             }
 
             appendingTo(fatalForeignExceptionBlock) {
-                val exceptionRecord = extractValue(landingpad, 0)
-                call(context.llvm.cxaBeginCatchFunction, listOf(exceptionRecord))
-                terminate()
+                terminateWithCurrentException(landingpad)
             }
 
         }
@@ -985,6 +984,13 @@ internal abstract class FunctionGenerationContext(
             override val unwind: LLVMBasicBlockRef
                 get() = lpBlock
         }
+    }
+
+    fun terminateWithCurrentException(landingpad: LLVMValueRef) {
+        val exceptionRecord = extractValue(landingpad, 0)
+        // So `std::terminate` is called from C++ catch block:
+        call(context.llvm.cxaBeginCatchFunction, listOf(exceptionRecord))
+        terminate()
     }
 
     fun terminate() {
@@ -1470,34 +1476,6 @@ internal abstract class FunctionGenerationContext(
                 val landingpad = gxxLandingpad(numClauses = 0)
                 LLVMSetCleanup(landingpad, 1)
 
-                forwardingForeignExceptionsTerminatedWith?.let { terminator ->
-                    // Catch all but Kotlin exceptions.
-                    val clause = ConstArray(int8TypePtr, listOf(kotlinExceptionRtti))
-                    LLVMAddClause(landingpad, clause.llvm)
-
-                    val bbCleanup = basicBlock("forwardException", position()?.end)
-                    val bbUnexpected = basicBlock("unexpectedException", position()?.end)
-
-                    val selector = extractValue(landingpad, 1)
-                    condBr(
-                            icmpLt(selector, Int32(0).llvm),
-                            bbUnexpected,
-                            bbCleanup
-                    )
-
-                    appendingTo(bbUnexpected) {
-                        val exceptionRecord = extractValue(landingpad, 0)
-
-                        val beginCatch = context.llvm.cxaBeginCatchFunction
-                        // So `terminator` is called from C++ catch block:
-                        call(beginCatch, listOf(exceptionRecord))
-                        call(terminator, emptyList())
-                        unreachable()
-                    }
-
-                    positionAtEnd(bbCleanup)
-                }
-
                 releaseVars()
                 handleEpilogueExperimentalMM()
                 LLVMBuildResume(builder, landingpad)
@@ -1532,7 +1510,10 @@ internal abstract class FunctionGenerationContext(
 
         processReturns()
 
-        if (!needCleanupLandingpadAndLeaveFrame) {
+        // If cleanup landingpad is trivial or unused, remove it.
+        // It would be great not to generate it in the first place in this case,
+        // but this would be complicated without a major refactoring.
+        if (!needCleanupLandingpadAndLeaveFrame || invokeInstructions.isEmpty()) {
             // Replace invokes with calls and branches.
             invokeInstructions.forEach { functionInvokeInfo ->
                 positionBefore(functionInvokeInfo.invokeInstruction)

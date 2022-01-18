@@ -7793,6 +7793,12 @@ public class IrBoxJsTestGenerated extends AbstractIrBoxJsTest {
         }
 
         @Test
+        @TestMetadata("long.kt")
+        public void testLong() throws Exception {
+            runTest("js/js.translator/testData/box/native/long.kt");
+        }
+
+        @Test
         @TestMetadata("nativeClassAsReifiedTypeArgument.kt")
         public void testNativeClassAsReifiedTypeArgument() throws Exception {
             runTest("js/js.translator/testData/box/native/nativeClassAsReifiedTypeArgument.kt");
@@ -8128,6 +8134,12 @@ public class IrBoxJsTestGenerated extends AbstractIrBoxJsTest {
         @TestMetadata("intIncDecOverflow.kt")
         public void testIntIncDecOverflow() throws Exception {
             runTest("js/js.translator/testData/box/number/intIncDecOverflow.kt");
+        }
+
+        @Test
+        @TestMetadata("intMod.kt")
+        public void testIntMod() throws Exception {
+            runTest("js/js.translator/testData/box/number/intMod.kt");
         }
 
         @Test

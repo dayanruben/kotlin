@@ -37,7 +37,6 @@ import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.isNothing
 import org.jetbrains.kotlin.ir.types.isUnit
 import org.jetbrains.kotlin.ir.util.*
-import org.jetbrains.kotlin.konan.ForeignExceptionMode
 import org.jetbrains.kotlin.konan.target.AppleConfigurables
 import org.jetbrains.kotlin.konan.target.LinkerOutputKind
 import org.jetbrains.kotlin.name.Name
@@ -86,8 +85,27 @@ internal class ObjCExportFunctionGenerationContext(
         rawRet(result)
     }
 
+    fun objcReleaseFromRunnableThreadState(objCReference: LLVMValueRef) {
+        switchThreadStateIfExperimentalMM(ThreadState.Native)
+        // It is nounwind, so no exception handler is required.
+        call(objCExportCodegen.objcRelease, listOf(objCReference), exceptionHandler = ExceptionHandler.None)
+        switchThreadStateIfExperimentalMM(ThreadState.Runnable)
+    }
+
     override fun processReturns() {
         // Do nothing.
+    }
+
+    val terminatingExceptionHandler = object : ExceptionHandler.Local() {
+        override val unwind: LLVMBasicBlockRef by lazy {
+            val result = basicBlockInFunction("fatal_landingpad", endLocation)
+            appendingTo(result) {
+                val landingpad = gxxLandingpad(0)
+                LLVMSetCleanup(landingpad, 1)
+                terminateWithCurrentException(landingpad)
+            }
+            result
+        }
     }
 }
 
@@ -138,61 +156,37 @@ internal open class ObjCExportCodeGeneratorBase(codegen: CodeGenerator) : ObjCCo
         rttiGenerator.dispose()
     }
 
-    fun FunctionGenerationContext.callFromBridge(
+    fun ObjCExportFunctionGenerationContext.callFromBridge(
             llvmFunction: LLVMValueRef,
             args: List<LLVMValueRef>,
-            resultLifetime: Lifetime = Lifetime.IRRELEVANT,
-            toNative: Boolean = false,
+            resultLifetime: Lifetime = Lifetime.IRRELEVANT
     ): LLVMValueRef {
         val llvmDeclarations = LlvmCallable(
                 llvmFunction,
                 // llvmFunction could be a function pointer here, and we can't infer attributes from it.
                 LlvmFunctionAttributeProvider.makeEmpty()
         )
-        return callFromBridge(llvmDeclarations, args, resultLifetime, toNative)
+        return callFromBridge(llvmDeclarations, args, resultLifetime)
     }
 
-    // TODO: currently bridges don't have any custom `landingpad`s,
-    // so it is correct to use [callAtFunctionScope] here.
-    // However, exception handling probably should be refactored
-    // (e.g. moved from `IrToBitcode.kt` to [FunctionGenerationContext]).
-    fun FunctionGenerationContext.callFromBridge(
+    fun ObjCExportFunctionGenerationContext.callFromBridge(
             function: LlvmCallable,
             args: List<LLVMValueRef>,
             resultLifetime: Lifetime = Lifetime.IRRELEVANT,
-            toNative: Boolean = false,
     ): LLVMValueRef {
+        // All calls that actually do need to forward exceptions to callers should express this explicitly.
+        val exceptionHandler = terminatingExceptionHandler
 
-        // TODO: it is required only for Kotlin-to-Objective-C bridges.
-        this.forwardingForeignExceptionsTerminatedWith = objcTerminate
-
-        val switchStateToNative = toNative && context.config.memoryModel == MemoryModel.EXPERIMENTAL
-        val exceptionHandler: ExceptionHandler
-
-        if (switchStateToNative) {
-            switchThreadState(ThreadState.Native)
-            // Note: this is suboptimal. We should forbid Kotlin exceptions thrown from native code, and use simple fatal handler here.
-            exceptionHandler = filteringExceptionHandler(ExceptionHandler.Caller, ForeignExceptionMode.default, switchThreadState = true)
-        } else {
-            exceptionHandler = ExceptionHandler.Caller
-        }
-
-        val result = call(function, args, resultLifetime, exceptionHandler)
-
-        if (switchStateToNative) {
-            switchThreadState(ThreadState.Runnable)
-        }
-
-        return result
+        return call(function, args, resultLifetime, exceptionHandler)
     }
 
-    fun FunctionGenerationContext.kotlinReferenceToLocalObjC(value: LLVMValueRef) =
+    fun ObjCExportFunctionGenerationContext.kotlinReferenceToLocalObjC(value: LLVMValueRef) =
             callFromBridge(context.llvm.Kotlin_ObjCExport_refToLocalObjC, listOf(value))
 
-    fun FunctionGenerationContext.kotlinReferenceToRetainedObjC(value: LLVMValueRef) =
+    fun ObjCExportFunctionGenerationContext.kotlinReferenceToRetainedObjC(value: LLVMValueRef) =
             callFromBridge(context.llvm.Kotlin_ObjCExport_refToRetainedObjC, listOf(value))
 
-    fun FunctionGenerationContext.objCReferenceToKotlin(value: LLVMValueRef, resultLifetime: Lifetime) =
+    fun ObjCExportFunctionGenerationContext.objCReferenceToKotlin(value: LLVMValueRef, resultLifetime: Lifetime) =
             callFromBridge(context.llvm.Kotlin_ObjCExport_refFromObjC, listOf(value), resultLifetime)
 
     private val blockToKotlinFunctionConverterCache = mutableMapOf<BlockPointerBridge, LLVMValueRef>()
@@ -254,12 +248,12 @@ internal class ObjCExportCodeGenerator(
         return irFunction?.name?.asString()
     }
 
-    fun FunctionGenerationContext.genSendMessage(
+    // Caution! Arbitrary methods shouldn't be called from Runnable thread state.
+    fun ObjCExportFunctionGenerationContext.genSendMessage(
             returnType: LlvmParamType,
             parameterTypes: List<LlvmParamType>,
             receiver: LLVMValueRef,
             selector: String,
-            switchToNative: Boolean,
             vararg args: LLVMValueRef,
     ): LLVMValueRef {
 
@@ -267,7 +261,7 @@ internal class ObjCExportCodeGenerator(
                 returnType,
                 listOf(LlvmParamType(int8TypePtr), LlvmParamType(int8TypePtr)) + parameterTypes
         )
-        return callFromBridge(msgSender(objcMsgSendType), listOf(receiver, genSelector(selector)) + args, toNative = switchToNative)
+        return callFromBridge(msgSender(objcMsgSendType), listOf(receiver, genSelector(selector)) + args)
     }
 
     fun FunctionGenerationContext.kotlinToObjC(
@@ -296,7 +290,7 @@ internal class ObjCExportCodeGenerator(
         ObjCValueType.FLOAT, ObjCValueType.DOUBLE, ObjCValueType.POINTER -> value
     }
 
-    private fun FunctionGenerationContext.objCBlockPointerToKotlin(
+    private fun ObjCExportFunctionGenerationContext.objCBlockPointerToKotlin(
             value: LLVMValueRef,
             typeBridge: BlockPointerBridge,
             resultLifetime: Lifetime
@@ -306,17 +300,17 @@ internal class ObjCExportCodeGenerator(
             resultLifetime
     )
 
-    private fun FunctionGenerationContext.kotlinFunctionToObjCBlockPointer(
+    private fun ObjCExportFunctionGenerationContext.kotlinFunctionToObjCBlockPointer(
             typeBridge: BlockPointerBridge,
             value: LLVMValueRef
     ) = callFromBridge(objcAutorelease, listOf(kotlinFunctionToRetainedObjCBlockPointer(typeBridge, value)))
 
-    internal fun FunctionGenerationContext.kotlinFunctionToRetainedObjCBlockPointer(
+    internal fun ObjCExportFunctionGenerationContext.kotlinFunctionToRetainedObjCBlockPointer(
             typeBridge: BlockPointerBridge,
             value: LLVMValueRef
     ) = callFromBridge(kotlinFunctionToRetainedBlockConverter(typeBridge), listOf(value))
 
-    fun FunctionGenerationContext.kotlinToLocalObjC(
+    fun ObjCExportFunctionGenerationContext.kotlinToLocalObjC(
             value: LLVMValueRef,
             typeBridge: TypeBridge
     ): LLVMValueRef = if (LLVMTypeOf(value) == voidType) {
@@ -329,7 +323,7 @@ internal class ObjCExportCodeGenerator(
         }
     }
 
-    fun FunctionGenerationContext.objCToKotlin(
+    fun ObjCExportFunctionGenerationContext.objCToKotlin(
             value: LLVMValueRef,
             typeBridge: TypeBridge,
             resultLifetime: Lifetime
@@ -343,7 +337,7 @@ internal class ObjCExportCodeGenerator(
         this.needsRuntimeInit = true
     }
 
-    inline fun FunctionGenerationContext.convertKotlin(
+    inline fun ObjCExportFunctionGenerationContext.convertKotlin(
             genValue: (Lifetime) -> LLVMValueRef,
             actualType: IrType,
             expectedType: IrType,
@@ -756,10 +750,11 @@ private fun ObjCExportCodeGenerator.emitBoxConverter(
                 LlvmParamType(value.type, objCValueType.defaultParameterAttributes)
         )
         val nsNumberSubclass = genGetLinkedClass(namer.numberBoxName(boxClass.classId!!).binaryName)
-        val switchToNative = false // We consider these methods fast enough.
-        val instance = callFromBridge(objcAlloc, listOf(nsNumberSubclass), toNative = switchToNative)
+        // We consider this function fast enough, so don't switch thread state to Native.
+        val instance = callFromBridge(objcAlloc, listOf(nsNumberSubclass))
         val returnType = LlvmRetType(int8TypePtr)
-        ret(genSendMessage(returnType, valueParameterTypes, instance, nsNumberInitSelector, switchToNative, value))
+        // We consider these methods fast enough, so don't switch thread state to Native.
+        ret(genSendMessage(returnType, valueParameterTypes, instance, nsNumberInitSelector, value))
     }
 
     LLVMSetLinkage(converter, LLVMLinkage.LLVMPrivateLinkage)
@@ -963,7 +958,7 @@ private fun ObjCExportCodeGenerator.generateObjCImp(
         methodBridge: MethodBridge,
         isDirect: Boolean,
         baseMethod: IrFunction? = null,
-        callKotlin: FunctionGenerationContext.(
+        callKotlin: ObjCExportFunctionGenerationContext.(
                 args: List<LLVMValueRef>,
                 resultLifetime: Lifetime,
                 exceptionHandler: ExceptionHandler
@@ -1041,7 +1036,7 @@ private fun ObjCExportCodeGenerator.generateObjCImp(
                 is MethodBridge.ReturnValue.WithError.ZeroForError -> {
                     if (returnType.successBridge == MethodBridge.ReturnValue.Instance.InitResult) {
                         // Release init receiver, as required by convention.
-                        callFromBridge(objcRelease, listOf(param(0)), toNative = true)
+                        objcReleaseFromRunnableThreadState(param(0))
                     }
                     Zero(returnType.toLlvmRetType(context).llvmType).llvm
                 }
@@ -1240,14 +1235,22 @@ private fun ObjCExportCodeGenerator.generateKotlinToObjCBridge(
             }
         }
 
-        val targetResult = callFromBridge(objcMsgSend, objCArgs, toNative = true)
+        switchThreadStateIfExperimentalMM(ThreadState.Native)
+        // Using terminatingExceptionHandler, so any exception thrown by the method will lead to the termination,
+        // and switching the thread state back to `Runnable` on exceptional path is not required.
+        val targetResult = call(objcMsgSend, objCArgs, exceptionHandler = terminatingExceptionHandler)
+        switchThreadStateIfExperimentalMM(ThreadState.Runnable)
 
         assert(baseMethod.symbol !is IrConstructorSymbol)
 
         fun rethrow() {
             val error = load(errorOutPtr!!)
-            callFromBridge(context.llvm.Kotlin_ObjCExport_RethrowNSErrorAsException, listOf(error))
-            unreachable()
+            val exception = callFromBridge(
+                    context.llvm.Kotlin_ObjCExport_NSErrorAsException,
+                    listOf(error),
+                    resultLifetime = Lifetime.THROW
+            )
+            ExceptionHandler.Caller.genThrow(this, exception)
         }
 
         fun genKotlinBaseMethodResult(

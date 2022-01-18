@@ -45,6 +45,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ABSTRACT_PROPERTY
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ABSTRACT_PROPERTY_WITH_INITIALIZER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ABSTRACT_PROPERTY_WITH_SETTER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ABSTRACT_SUPER_CALL
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ABSTRACT_SUPER_CALL_WARNING
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ACCESSOR_FOR_DELEGATED_PROPERTY
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ACTUAL_ANNOTATION_CONFLICTING_DEFAULT_ARGUMENT_VALUE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS
@@ -560,6 +561,8 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.VAR_TYPE_MISMATCH
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.VIRTUAL_MEMBER_HIDDEN
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WRONG_ANNOTATION_TARGET
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WRONG_ANNOTATION_TARGET_WITH_USE_SITE_TARGET
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WRONG_EXTENSION_FUNCTION_TYPE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WRONG_EXTENSION_FUNCTION_TYPE_WARNING
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WRONG_GETTER_RETURN_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WRONG_INVOCATION_KIND
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.WRONG_LONG_SUFFIX
@@ -642,6 +645,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(SUPER_IS_NOT_AN_EXPRESSION, "Super cannot be a callee")
         map.put(SUPER_NOT_AVAILABLE, "No supertypes are accessible in this context")
         map.put(ABSTRACT_SUPER_CALL, "Abstract member cannot be accessed directly")
+        map.put(ABSTRACT_SUPER_CALL_WARNING, "Abstract fake override member access is deprecated")
         map.put(
             INSTANCE_ACCESS_BEFORE_SUPER_CALL,
             "Cannot access ''{0}'' before superclass constructor has been called",
@@ -851,6 +855,14 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             "Opt-in requirement marker annotation on override makes no sense without the same marker on base declaration"
         )
         map.put(NOT_A_CLASS, "Not a class")
+        map.put(
+            WRONG_EXTENSION_FUNCTION_TYPE,
+            "ExtensionFunctionType is forbidden on a function type without parameters or on a non-function type"
+        )
+        map.put(
+            WRONG_EXTENSION_FUNCTION_TYPE_WARNING,
+            "ExtensionFunctionType makes no sense on a non-function type. It will be an error in a future release."
+        )
 
         // Exposed visibility group // #
         map.put(
@@ -888,10 +900,10 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(DEPRECATED_MODIFIER_PAIR, "Modifier ''{0}'' is deprecated in presence of ''{1}''", TO_STRING, TO_STRING)
         map.put(DEPRECATED_MODIFIER_FOR_TARGET, "Modifier ''{0}'' is deprecated for ''{1}''", TO_STRING, STRING)
         map.put(REDUNDANT_MODIFIER_FOR_TARGET, "Modifier ''{0}'' is redundant for ''{1}''", TO_STRING, STRING)
-        map.put(NO_EXPLICIT_VISIBILITY_IN_API_MODE, "Visibility must be specified in explicit API mode");
-        map.put(NO_EXPLICIT_RETURN_TYPE_IN_API_MODE, "Return type must be specified in explicit API mode");
-        map.put(NO_EXPLICIT_VISIBILITY_IN_API_MODE_WARNING, "Visibility must be specified in explicit API mode");
-        map.put(NO_EXPLICIT_RETURN_TYPE_IN_API_MODE_WARNING, "Return type must be specified in explicit API mode");
+        map.put(NO_EXPLICIT_VISIBILITY_IN_API_MODE, "Visibility must be specified in explicit API mode")
+        map.put(NO_EXPLICIT_RETURN_TYPE_IN_API_MODE, "Return type must be specified in explicit API mode")
+        map.put(NO_EXPLICIT_VISIBILITY_IN_API_MODE_WARNING, "Visibility must be specified in explicit API mode")
+        map.put(NO_EXPLICIT_RETURN_TYPE_IN_API_MODE_WARNING, "Return type must be specified in explicit API mode")
 
         map.put(INCOMPATIBLE_MODIFIERS, "Modifier ''{0}'' is incompatible with ''{1}''", TO_STRING, TO_STRING)
         map.put(REDUNDANT_OPEN_IN_INTERFACE, "Modifier 'open' is redundant for abstract interface members")
@@ -1448,7 +1460,8 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         )
         map.put(
             DELEGATE_USES_EXTENSION_PROPERTY_TYPE_PARAMETER,
-            "It's forbidden using extension property type parameter in delegate"
+            "It''s forbidden using extension property type parameter ''{0}'' in delegate",
+            SYMBOL
         )
         map.put(INITIALIZER_TYPE_MISMATCH, "Initializer type mismatch: expected {0}, actual {1}", RENDER_TYPE, RENDER_TYPE, NOT_RENDERED)
         map.put(GETTER_VISIBILITY_DIFFERS_FROM_PROPERTY_VISIBILITY, "Getter visibility must be the same as property visibility")
@@ -1516,7 +1529,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(LOCAL_VARIABLE_WITH_TYPE_PARAMETERS_WARNING, "Type parameters for local variables are deprecated")
         map.put(LOCAL_VARIABLE_WITH_TYPE_PARAMETERS, "Local variables are not allowed to have type parameters")
 
-        map.put(CONST_VAL_NOT_TOP_LEVEL_OR_OBJECT, "Const 'val' are only allowed on top level or in objects")
+        map.put(CONST_VAL_NOT_TOP_LEVEL_OR_OBJECT, "Const 'val' are only allowed on top level, in named objects, or in companion objects")
         map.put(CONST_VAL_WITH_GETTER, "Const 'val' should not have a getter")
         map.put(CONST_VAL_WITH_DELEGATE, "Const 'val' should not have a delegate")
         map.put(TYPE_CANT_BE_USED_FOR_CONST_VAL, "Const ''val'' has type ''{0}''. Only primitives and String are allowed", RENDER_TYPE)
@@ -1711,7 +1724,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(DUPLICATE_LABEL_IN_WHEN, "Duplicate label in when")
         map.put(
             ILLEGAL_DECLARATION_IN_WHEN_SUBJECT,
-            "Illegal variable declaration in 'when' subject: {0}. Should be a simple val with an initializer",
+            "Illegal variable declaration in ''when'' subject: {0}. Should be a simple val with an initializer",
             STRING
         )
         map.put(
@@ -1955,7 +1968,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         // Label
         map.put(
             REDUNDANT_LABEL_WARNING,
-            "Label is redundant, because it can not be referenced in either ''break'', ''continue'', or ''return'' expression"
+            "Label is redundant, because it can not be referenced in either 'break', 'continue', or 'return' expression"
         )
 
         // Extended checkers group

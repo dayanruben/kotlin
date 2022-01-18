@@ -149,6 +149,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val SUPER_IS_NOT_AN_EXPRESSION by error<PsiElement>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED)
         val SUPER_NOT_AVAILABLE by error<PsiElement>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED)
         val ABSTRACT_SUPER_CALL by error<PsiElement>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED)
+        val ABSTRACT_SUPER_CALL_WARNING by warning<PsiElement>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED)
         val INSTANCE_ACCESS_BEFORE_SUPER_CALL by error<PsiElement> {
             parameter<String>("target")
         }
@@ -286,6 +287,8 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val REPEATED_ANNOTATION by error<KtAnnotationEntry>()
         val REPEATED_ANNOTATION_WARNING by warning<KtAnnotationEntry>()
         val NOT_A_CLASS by error<PsiElement>()
+        val WRONG_EXTENSION_FUNCTION_TYPE by error<KtAnnotationEntry>()
+        val WRONG_EXTENSION_FUNCTION_TYPE_WARNING by warning<KtAnnotationEntry>()
     }
 
     val OPT_IN by object : DiagnosticGroup("OptIn") {
@@ -926,7 +929,9 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val DELEGATE_USES_EXTENSION_PROPERTY_TYPE_PARAMETER by deprecationError<KtProperty>(
             LanguageFeature.ForbidUsingExtensionPropertyTypeParameterInDelegate,
             PositioningStrategy.PROPERTY_DELEGATE
-        )
+        ) {
+            parameter<FirTypeParameterSymbol>("usedTypeParameter")
+        }
         val INITIALIZER_TYPE_MISMATCH by error<KtProperty>(PositioningStrategy.PROPERTY_INITIALIZER) {
             parameter<ConeKotlinType>("expectedType")
             parameter<ConeKotlinType>("actualType")

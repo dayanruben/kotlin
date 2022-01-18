@@ -165,6 +165,7 @@ object FirErrors {
     val SUPER_IS_NOT_AN_EXPRESSION by error0<PsiElement>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
     val SUPER_NOT_AVAILABLE by error0<PsiElement>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
     val ABSTRACT_SUPER_CALL by error0<PsiElement>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
+    val ABSTRACT_SUPER_CALL_WARNING by warning0<PsiElement>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
     val INSTANCE_ACCESS_BEFORE_SUPER_CALL by error1<PsiElement, String>()
 
     // Supertypes
@@ -252,6 +253,8 @@ object FirErrors {
     val REPEATED_ANNOTATION by error0<KtAnnotationEntry>()
     val REPEATED_ANNOTATION_WARNING by warning0<KtAnnotationEntry>()
     val NOT_A_CLASS by error0<PsiElement>()
+    val WRONG_EXTENSION_FUNCTION_TYPE by error0<KtAnnotationEntry>()
+    val WRONG_EXTENSION_FUNCTION_TYPE_WARNING by warning0<KtAnnotationEntry>()
 
     // OptIn
     val OPT_IN_USAGE by warning2<PsiElement, FqName, String>(SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED)
@@ -507,7 +510,7 @@ object FirErrors {
     val CONST_VAL_WITHOUT_INITIALIZER by error0<KtProperty>(SourceElementPositioningStrategies.CONST_MODIFIER)
     val CONST_VAL_WITH_NON_CONST_INITIALIZER by error0<KtExpression>()
     val WRONG_SETTER_PARAMETER_TYPE by error2<KtTypeReference, ConeKotlinType, ConeKotlinType>()
-    val DELEGATE_USES_EXTENSION_PROPERTY_TYPE_PARAMETER by deprecationError0<KtProperty>(ForbidUsingExtensionPropertyTypeParameterInDelegate, SourceElementPositioningStrategies.PROPERTY_DELEGATE)
+    val DELEGATE_USES_EXTENSION_PROPERTY_TYPE_PARAMETER by deprecationError1<KtProperty, FirTypeParameterSymbol>(ForbidUsingExtensionPropertyTypeParameterInDelegate, SourceElementPositioningStrategies.PROPERTY_DELEGATE)
     val INITIALIZER_TYPE_MISMATCH by error3<KtProperty, ConeKotlinType, ConeKotlinType, Boolean>(SourceElementPositioningStrategies.PROPERTY_INITIALIZER)
     val GETTER_VISIBILITY_DIFFERS_FROM_PROPERTY_VISIBILITY by error0<KtModifierListOwner>(SourceElementPositioningStrategies.VISIBILITY_MODIFIER)
     val SETTER_VISIBILITY_INCONSISTENT_WITH_PROPERTY_VISIBILITY by error0<KtModifierListOwner>(SourceElementPositioningStrategies.VISIBILITY_MODIFIER)

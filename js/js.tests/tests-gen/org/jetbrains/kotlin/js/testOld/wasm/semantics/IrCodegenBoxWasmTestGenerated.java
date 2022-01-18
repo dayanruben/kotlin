@@ -14586,6 +14586,16 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
             public void testLambdaTakesResultThroughBridge() throws Exception {
                 runTest("compiler/testData/codegen/box/inlineClasses/result/lambdaTakesResultThroughBridge.kt");
             }
+
+            @TestMetadata("returnGenericMultiModule.kt")
+            public void testReturnGenericMultiModule() throws Exception {
+                runTest("compiler/testData/codegen/box/inlineClasses/result/returnGenericMultiModule.kt");
+            }
+
+            @TestMetadata("returnGenericSingleModule.kt")
+            public void testReturnGenericSingleModule() throws Exception {
+                runTest("compiler/testData/codegen/box/inlineClasses/result/returnGenericSingleModule.kt");
+            }
         }
 
         @TestMetadata("compiler/testData/codegen/box/inlineClasses/returnResult")
@@ -25679,6 +25689,11 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
         @TestMetadata("concatDynamicWithConstants.kt")
         public void testConcatDynamicWithConstants() throws Exception {
             runTest("compiler/testData/codegen/box/strings/concatDynamicWithConstants.kt");
+        }
+
+        @TestMetadata("concatDynamicWithSpecialSymbols.kt")
+        public void testConcatDynamicWithSpecialSymbols() throws Exception {
+            runTest("compiler/testData/codegen/box/strings/concatDynamicWithSpecialSymbols.kt");
         }
 
         @TestMetadata("concatGenericWithNullablePrimitiveUpperBound.kt")

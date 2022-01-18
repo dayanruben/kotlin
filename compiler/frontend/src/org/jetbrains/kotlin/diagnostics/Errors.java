@@ -278,6 +278,8 @@ public interface Errors {
     DiagnosticFactory0<KtAnnotationEntry> REPEATED_ANNOTATION = DiagnosticFactory0.create(ERROR);
     DiagnosticFactory0<KtAnnotationEntry> REPEATED_ANNOTATION_WARNING = DiagnosticFactory0.create(WARNING);
     DiagnosticFactory0<KtAnnotationEntry> NON_SOURCE_ANNOTATION_ON_INLINED_LAMBDA_EXPRESSION = DiagnosticFactory0.create(ERROR);
+    DiagnosticFactory0<KtAnnotationEntry> WRONG_EXTENSION_FUNCTION_TYPE = DiagnosticFactory0.create(ERROR);
+    DiagnosticFactory0<KtAnnotationEntry> WRONG_EXTENSION_FUNCTION_TYPE_WARNING = DiagnosticFactory0.create(WARNING);
 
     // Annotations
 
@@ -789,7 +791,7 @@ public interface Errors {
     DiagnosticFactory1<PsiElement, String> NAME_SHADOWING = DiagnosticFactory1.create(WARNING, PositioningStrategies.FOR_REDECLARATION);
     DiagnosticFactory0<PsiElement> ACCESSOR_PARAMETER_NAME_SHADOWING = DiagnosticFactory0.create(WARNING);
 
-    DiagnosticFactory0<KtExpression> TYPECHECKER_HAS_RUN_INTO_RECURSIVE_PROBLEM = DiagnosticFactory0.create(ERROR);
+    DiagnosticFactoryForDeprecation0<KtExpression> TYPECHECKER_HAS_RUN_INTO_RECURSIVE_PROBLEM = DiagnosticFactoryForDeprecation0.create(LanguageFeature.ForbidRecursiveDelegateExpressions);
 
     // Checking call arguments
 
@@ -933,6 +935,7 @@ public interface Errors {
     DiagnosticFactory0<KtSuperExpression> SUPERCLASS_NOT_ACCESSIBLE_FROM_INTERFACE = DiagnosticFactory0.create(ERROR);
     DiagnosticFactory0<KtSuperExpression> AMBIGUOUS_SUPER = DiagnosticFactory0.create(ERROR);
     DiagnosticFactory0<KtExpression> ABSTRACT_SUPER_CALL = DiagnosticFactory0.create(ERROR);
+    DiagnosticFactory0<KtExpression> ABSTRACT_SUPER_CALL_WARNING = DiagnosticFactory0.create(WARNING);
     DiagnosticFactory0<KtTypeReference> NOT_A_SUPERTYPE = DiagnosticFactory0.create(ERROR);
     DiagnosticFactory0<PsiElement> TYPE_ARGUMENTS_REDUNDANT_IN_SUPER_QUALIFIER = DiagnosticFactory0.create(WARNING);
     DiagnosticFactory1<KtTypeReference, KotlinType> QUALIFIED_SUPERTYPE_EXTENDED_BY_OTHER_SUPERTYPE = DiagnosticFactory1.create(ERROR);
@@ -961,6 +964,8 @@ public interface Errors {
     DiagnosticFactory0<KtSimpleNameExpression> EQUALS_MISSING = DiagnosticFactory0.create(ERROR);
     DiagnosticFactory3<KtBinaryExpression, KtSimpleNameExpression, KotlinType, KotlinType> EQUALITY_NOT_APPLICABLE =
             DiagnosticFactory3.create(ERROR);
+    DiagnosticFactory3<KtBinaryExpression, KtSimpleNameExpression, KotlinType, KotlinType> EQUALITY_NOT_APPLICABLE_WARNING =
+            DiagnosticFactory3.create(WARNING);
 
     DiagnosticFactory2<KtElement, KotlinType, KotlinType> INCOMPATIBLE_ENUM_COMPARISON =
             DiagnosticFactory2.create(WARNING);

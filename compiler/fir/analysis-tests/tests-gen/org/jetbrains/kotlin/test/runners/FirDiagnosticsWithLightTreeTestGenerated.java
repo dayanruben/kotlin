@@ -2800,6 +2800,12 @@ public class FirDiagnosticsWithLightTreeTestGenerated extends AbstractFirDiagnos
             }
 
             @Test
+            @TestMetadata("dnnThrowJavaCall.kt")
+            public void testDnnThrowJavaCall() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/inference/dnnThrowJavaCall.kt");
+            }
+
+            @Test
             @TestMetadata("elvisAndUnit.kt")
             public void testElvisAndUnit() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolve/inference/elvisAndUnit.kt");
@@ -3531,6 +3537,18 @@ public class FirDiagnosticsWithLightTreeTestGenerated extends AbstractFirDiagnos
             @TestMetadata("kt39000.kt")
             public void testKt39000() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolve/smartcasts/kt39000.kt");
+            }
+
+            @Test
+            @TestMetadata("kt50788.kt")
+            public void testKt50788() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/smartcasts/kt50788.kt");
+            }
+
+            @Test
+            @TestMetadata("literalInWhenSubject.kt")
+            public void testLiteralInWhenSubject() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/smartcasts/literalInWhenSubject.kt");
             }
 
             @Test

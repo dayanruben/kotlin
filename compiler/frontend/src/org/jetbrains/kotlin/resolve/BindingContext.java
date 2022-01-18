@@ -120,6 +120,7 @@ public interface BindingContext {
     WritableSlice<KtExpression, DoubleColonLHS> DOUBLE_COLON_LHS = new BasicWritableSlice<>(DO_NOTHING);
 
     WritableSlice<KtSuperExpression, KotlinType> THIS_TYPE_FOR_SUPER_EXPRESSION = new BasicWritableSlice<>(DO_NOTHING);
+    WritableSlice<KtSuperExpression, Boolean> SUPER_EXPRESSION_FROM_ANY_MIGRATION = Slices.createSimpleSlice();
 
     WritableSlice<KtReferenceExpression, DeclarationDescriptor> REFERENCE_TARGET = new BasicWritableSlice<>(DO_NOTHING);
     // if 'A' really means 'A.Companion' then this slice stores class descriptor for A, REFERENCE_TARGET stores descriptor Companion in this case
@@ -174,6 +175,8 @@ public interface BindingContext {
     WritableSlice<ValueParameterDescriptor, Boolean> AUTO_CREATED_IT = Slices.createSimpleSetSlice();
 
     WritableSlice<Pair<AnonymousFunctionDescriptor, Integer>, Boolean> SUSPEND_LAMBDA_PARAMETER_USED = Slices.createSimpleSlice();
+
+    WritableSlice<KtBinaryExpression, Boolean> MARKED_EQUALIY_CALL_PROPER_IN_BUILDER_INFERENCE = Slices.createSimpleSlice();
 
     /**
      * Has type of current expression has been already resolved

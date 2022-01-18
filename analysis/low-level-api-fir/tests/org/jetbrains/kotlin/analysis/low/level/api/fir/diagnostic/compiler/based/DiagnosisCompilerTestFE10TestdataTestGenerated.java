@@ -8489,6 +8489,18 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             }
 
             @Test
+            @TestMetadata("kt49477.kt")
+            public void testKt49477() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/delegation/kt49477.kt");
+            }
+
+            @Test
+            @TestMetadata("kt49477Error.kt")
+            public void testKt49477Error() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/delegation/kt49477Error.kt");
+            }
+
+            @Test
             @TestMetadata("kt8154.kt")
             public void testKt8154() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/delegation/kt8154.kt");
@@ -14012,6 +14024,18 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
                 }
 
                 @Test
+                @TestMetadata("equalityChecksOnIntegerTypes.kt")
+                public void testEqualityChecksOnIntegerTypes() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/equalityChecksOnIntegerTypes.kt");
+                }
+
+                @Test
+                @TestMetadata("equalityChecksOnIntegerTypesProgressive.kt")
+                public void testEqualityChecksOnIntegerTypesProgressive() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/equalityChecksOnIntegerTypesProgressive.kt");
+                }
+
+                @Test
                 @TestMetadata("kt47744.kt")
                 public void testKt47744() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/builderInference/kt47744.kt");
@@ -18585,6 +18609,18 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             @TestMetadata("abstractBaseClassMemberNotImplemented_15.kt")
             public void testAbstractBaseClassMemberNotImplemented_15() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/java8Overrides/abstractBaseClassMemberNotImplemented_15.kt");
+            }
+
+            @Test
+            @TestMetadata("abstractFakeOverrideSuperCall.kt")
+            public void testAbstractFakeOverrideSuperCall() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/java8Overrides/abstractFakeOverrideSuperCall.kt");
+            }
+
+            @Test
+            @TestMetadata("abstractFakeOverrideSuperCallForbidden.kt")
+            public void testAbstractFakeOverrideSuperCallForbidden() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/java8Overrides/abstractFakeOverrideSuperCallForbidden.kt");
             }
 
             @Test

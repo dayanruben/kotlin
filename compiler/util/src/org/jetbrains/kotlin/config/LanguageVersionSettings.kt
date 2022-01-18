@@ -225,16 +225,13 @@ enum class LanguageFeature(
     ReportNonVarargSpreadOnGenericCalls(KOTLIN_1_7, kind = BUG_FIX),
     ProhibitSimplificationOfNonTrivialConstBooleanExpressions(KOTLIN_1_7),
     SafeCallsAreAlwaysNullable(KOTLIN_1_7),
-    StopPropagatingDeprecationThroughOverrides(KOTLIN_1_7),
     AbstractClassMemberNotImplementedWithIntermediateAbstractClass(KOTLIN_1_7, kind = BUG_FIX),
     RefineTypeCheckingOnAssignmentsToJavaFields(KOTLIN_1_7),
     JvmPermittedSubclassesAttributeForSealed(KOTLIN_1_7),
     ForbidUsingExtensionPropertyTypeParameterInDelegate(KOTLIN_1_7, kind = BUG_FIX),
     IgnoreNullabilityForErasedValueParameters(KOTLIN_1_7, kind = BUG_FIX),
     ProperTypeInferenceConstraintsProcessing(KOTLIN_1_7, kind = BUG_FIX),
-    ProhibitNonExhaustiveIfInRhsOfElvis(KOTLIN_1_7, kind = BUG_FIX), // KT-44705
     ForbidExposingTypesInPrimaryConstructorProperties(KOTLIN_1_7, kind = BUG_FIX),
-    ProhibitAccessToEnumCompanionMembersInEnumConstructorCall(KOTLIN_1_7, kind = BUG_FIX),
     PartiallySpecifiedTypeArguments(KOTLIN_1_7),
     EliminateAmbiguitiesWithExternalTypeParameters(KOTLIN_1_7),
     EliminateAmbiguitiesOnInheritedSamInterfaces(KOTLIN_1_7),
@@ -245,6 +242,7 @@ enum class LanguageFeature(
     YieldIsNoMoreReserved(KOTLIN_1_7),
     NoDeprecationOnDeprecatedEnumEntries(KOTLIN_1_7), // KT-37975
     ProhibitQualifiedAccessToUninitializedEnumEntry(KOTLIN_1_7, kind = BUG_FIX), // KT-41124
+    ForbidRecursiveDelegateExpressions(KOTLIN_1_7, kind = BUG_FIX),
 
     // 1.8
 
@@ -253,6 +251,12 @@ enum class LanguageFeature(
     ProhibitConfusingSyntaxInWhenBranches(KOTLIN_1_8, kind = BUG_FIX), // KT-48385
     UseConsistentRulesForPrivateConstructorsOfSealedClasses(sinceVersion = KOTLIN_1_8, kind = BUG_FIX), // KT-44866
     ProgressionsChangingResolve(KOTLIN_1_8), // KT-49276
+    ForbidSuperDelegationToAbstractFakeOverride(KOTLIN_1_8), // KT-49017
+    ForbidSuperDelegationToAbstractAnyMethod(KOTLIN_1_8), // KT-38078
+    ProperEqualityChecksInBuilderInferenceCalls(KOTLIN_1_8, kind = BUG_FIX),
+    StopPropagatingDeprecationThroughOverrides(KOTLIN_1_8), // KT-47902
+    ProhibitNonExhaustiveIfInRhsOfElvis(KOTLIN_1_8, kind = BUG_FIX), // KT-44705
+    ProhibitAccessToEnumCompanionMembersInEnumConstructorCall(KOTLIN_1_8, kind = BUG_FIX), // KT-49110
 
     // 1.9
 
@@ -260,7 +264,8 @@ enum class LanguageFeature(
     ProhibitIllegalValueParameterUsageInDefaultArguments(KOTLIN_1_9, kind = BUG_FIX), // KT-25694
     ProhibitConstructorCallOnFunctionalSupertype(KOTLIN_1_9, kind = BUG_FIX), // KT-46344
     ProhibitArrayLiteralsInCompanionOfAnnotation(KOTLIN_1_9, kind = BUG_FIX), // KT-39041
-    ProhibitCyclesInAnnotations(KOTLIN_1_9, kind = BUG_FIX), // KT-49110
+    ProhibitCyclesInAnnotations(KOTLIN_1_9, kind = BUG_FIX), // KT-47932
+    ForbidExtensionFunctionTypeOnNonFunctionTypes(KOTLIN_1_9), // related to KT-43527
 
     // Temporarily disabled, see KT-27084/KT-22379
     SoundSmartcastFromLoopConditionForLoopAssignedVariables(sinceVersion = null, kind = BUG_FIX),

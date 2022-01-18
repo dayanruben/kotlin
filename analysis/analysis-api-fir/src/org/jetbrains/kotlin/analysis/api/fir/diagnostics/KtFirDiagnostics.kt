@@ -307,6 +307,10 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = AbstractSuperCall::class
     }
 
+    abstract class AbstractSuperCallWarning : KtFirDiagnostic<PsiElement>() {
+        override val diagnosticClass get() = AbstractSuperCallWarning::class
+    }
+
     abstract class InstanceAccessBeforeSuperCall : KtFirDiagnostic<PsiElement>() {
         override val diagnosticClass get() = InstanceAccessBeforeSuperCall::class
         abstract val target: String
@@ -674,6 +678,14 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
 
     abstract class NotAClass : KtFirDiagnostic<PsiElement>() {
         override val diagnosticClass get() = NotAClass::class
+    }
+
+    abstract class WrongExtensionFunctionType : KtFirDiagnostic<KtAnnotationEntry>() {
+        override val diagnosticClass get() = WrongExtensionFunctionType::class
+    }
+
+    abstract class WrongExtensionFunctionTypeWarning : KtFirDiagnostic<KtAnnotationEntry>() {
+        override val diagnosticClass get() = WrongExtensionFunctionTypeWarning::class
     }
 
     abstract class OptInUsage : KtFirDiagnostic<PsiElement>() {
@@ -1817,10 +1829,12 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
 
     abstract class DelegateUsesExtensionPropertyTypeParameterError : KtFirDiagnostic<KtProperty>() {
         override val diagnosticClass get() = DelegateUsesExtensionPropertyTypeParameterError::class
+        abstract val usedTypeParameter: KtTypeParameterSymbol
     }
 
     abstract class DelegateUsesExtensionPropertyTypeParameterWarning : KtFirDiagnostic<KtProperty>() {
         override val diagnosticClass get() = DelegateUsesExtensionPropertyTypeParameterWarning::class
+        abstract val usedTypeParameter: KtTypeParameterSymbol
     }
 
     abstract class InitializerTypeMismatch : KtFirDiagnostic<KtProperty>() {
