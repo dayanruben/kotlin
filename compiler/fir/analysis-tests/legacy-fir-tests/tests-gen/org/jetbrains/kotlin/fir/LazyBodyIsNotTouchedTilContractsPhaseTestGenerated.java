@@ -2511,6 +2511,11 @@ public class LazyBodyIsNotTouchedTilContractsPhaseTestGenerated extends Abstract
             runTest("compiler/fir/analysis-tests/testData/resolve/inference/lambdaInElvis.kt");
         }
 
+        @TestMetadata("lambdaWithoutExpectedType.kt")
+        public void testLambdaWithoutExpectedType() throws Exception {
+            runTest("compiler/fir/analysis-tests/testData/resolve/inference/lambdaWithoutExpectedType.kt");
+        }
+
         @TestMetadata("lambdasReturns.kt")
         public void testLambdasReturns() throws Exception {
             runTest("compiler/fir/analysis-tests/testData/resolve/inference/lambdasReturns.kt");
@@ -3265,6 +3270,11 @@ public class LazyBodyIsNotTouchedTilContractsPhaseTestGenerated extends Abstract
         @TestMetadata("smartcastsFromEquals_sameModule.kt")
         public void testSmartcastsFromEquals_sameModule() throws Exception {
             runTest("compiler/fir/analysis-tests/testData/resolve/smartcasts/smartcastsFromEquals_sameModule.kt");
+        }
+
+        @TestMetadata("unstableSmartcastAndAmbiguity.kt")
+        public void testUnstableSmartcastAndAmbiguity() throws Exception {
+            runTest("compiler/fir/analysis-tests/testData/resolve/smartcasts/unstableSmartcastAndAmbiguity.kt");
         }
 
         @TestMetadata("compiler/fir/analysis-tests/testData/resolve/smartcasts/booleans")

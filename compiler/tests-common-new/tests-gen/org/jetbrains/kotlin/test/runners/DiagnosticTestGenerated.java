@@ -1267,6 +1267,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("javaAnnotationWithClassArray.kt")
+            public void testJavaAnnotationWithClassArray() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/annotations/javaAnnotationWithClassArray.kt");
+            }
+
+            @Test
             @TestMetadata("kt1860-negative.kt")
             public void testKt1860_negative() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/annotations/kt1860-negative.kt");
@@ -17769,6 +17775,18 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("orderOfSupertypesAndFakeOverrides_1.kt")
+            public void testOrderOfSupertypesAndFakeOverrides_1() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/j+k/orderOfSupertypesAndFakeOverrides_1.kt");
+            }
+
+            @Test
+            @TestMetadata("orderOfSupertypesAndFakeOverrides_2.kt")
+            public void testOrderOfSupertypesAndFakeOverrides_2() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/j+k/orderOfSupertypesAndFakeOverrides_2.kt");
+            }
+
+            @Test
             @TestMetadata("overrideRawType.kt")
             public void testOverrideRawType() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/j+k/overrideRawType.kt");
@@ -25713,6 +25731,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("memberVsLocalExt.kt")
                 public void testMemberVsLocalExt() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/resolve/priority/memberVsLocalExt.kt");
+                }
+
+                @Test
+                @TestMetadata("memberWithHidesMemberAnnotationVsMemberWithout.kt")
+                public void testMemberWithHidesMemberAnnotationVsMemberWithout() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/resolve/priority/memberWithHidesMemberAnnotationVsMemberWithout.kt");
                 }
 
                 @Test

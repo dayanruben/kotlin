@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.fir.builder
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.*
 import org.jetbrains.kotlin.KtNodeTypes.*
-import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.fir.*
@@ -103,13 +102,26 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
         context.dispatchReceiverTypesStack.add(selfType.type as ConeClassLikeType)
     }
 
-    inline fun <T> withCapturedTypeParameters(status: Boolean, currentFirTypeParameters: List<FirTypeParameterRef>, block: () -> T): T {
-        context.pushFirTypeParameters(status, currentFirTypeParameters)
+    protected inline fun <T> withCapturedTypeParameters(
+        status: Boolean,
+        declarationSource: KtSourceElement? = null,
+        currentFirTypeParameters: List<FirTypeParameterRef>,
+        block: () -> T
+    ): T {
+        addCapturedTypeParameters(status, declarationSource, currentFirTypeParameters)
         return try {
             block()
         } finally {
             context.popFirTypeParameters()
         }
+    }
+
+    protected open fun addCapturedTypeParameters(
+        status: Boolean,
+        declarationSource: KtSourceElement?,
+        currentFirTypeParameters: List<FirTypeParameterRef>
+    ) {
+        context.pushFirTypeParameters(status, currentFirTypeParameters)
     }
 
     fun callableIdForName(name: Name) =
@@ -919,14 +931,13 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
             return buildAssignmentOperatorStatement {
                 source = baseSource
                 this.operation = operation
-                leftArgument = withDefaultSourceElementKind(KtFakeSourceElementKind.DesugaredCompoundAssignment) {
-                    this@generateAssignment?.convert()
-                } ?: buildErrorExpression {
-                    source = null
-                    diagnostic = ConeSimpleDiagnostic(
-                        "Unsupported left value of assignment: ${baseSource?.psi?.text}", DiagnosticKind.ExpressionExpected
-                    )
-                }
+                leftArgument = this@generateAssignment?.convert()
+                    ?: buildErrorExpression {
+                        source = null
+                        diagnostic = ConeSimpleDiagnostic(
+                            "Unsupported left value of assignment: ${baseSource?.psi?.text}", DiagnosticKind.ExpressionExpected
+                        )
+                    }
                 rightArgument = value
                 this.annotations += annotations
             }

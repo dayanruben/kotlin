@@ -2860,6 +2860,12 @@ public class FirDiagnosticsWithLightTreeTestGenerated extends AbstractFirDiagnos
             }
 
             @Test
+            @TestMetadata("lambdaWithoutExpectedType.kt")
+            public void testLambdaWithoutExpectedType() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/inference/lambdaWithoutExpectedType.kt");
+            }
+
+            @Test
             @TestMetadata("lambdasReturns.kt")
             public void testLambdasReturns() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolve/inference/lambdasReturns.kt");
@@ -3697,6 +3703,12 @@ public class FirDiagnosticsWithLightTreeTestGenerated extends AbstractFirDiagnos
             @TestMetadata("smartcastsFromEquals_sameModule.kt")
             public void testSmartcastsFromEquals_sameModule() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolve/smartcasts/smartcastsFromEquals_sameModule.kt");
+            }
+
+            @Test
+            @TestMetadata("unstableSmartcastAndAmbiguity.kt")
+            public void testUnstableSmartcastAndAmbiguity() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/smartcasts/unstableSmartcastAndAmbiguity.kt");
             }
 
             @Nested
@@ -5277,6 +5289,12 @@ public class FirDiagnosticsWithLightTreeTestGenerated extends AbstractFirDiagnos
                 }
 
                 @Test
+                @TestMetadata("buildListLazy.kt")
+                public void testBuildListLazy() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/inference/problems/buildListLazy.kt");
+                }
+
+                @Test
                 @TestMetadata("buildSetWithVisitor.kt")
                 public void testBuildSetWithVisitor() throws Exception {
                     runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/inference/problems/buildSetWithVisitor.kt");
@@ -5865,6 +5883,12 @@ public class FirDiagnosticsWithLightTreeTestGenerated extends AbstractFirDiagnos
             @TestMetadata("weakHashMap.kt")
             public void testWeakHashMap() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/problems/weakHashMap.kt");
+            }
+
+            @Test
+            @TestMetadata("WithValidityAssertion.kt")
+            public void testWithValidityAssertion() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/problems/WithValidityAssertion.kt");
             }
         }
 

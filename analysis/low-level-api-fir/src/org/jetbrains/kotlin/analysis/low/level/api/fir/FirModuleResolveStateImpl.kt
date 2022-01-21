@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.analysis.low.level.api.fir
 
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.api.impl.barebone.annotations.InternalForInline
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.DiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.FirModuleResolveState
 import org.jetbrains.kotlin.analysis.low.level.api.fir.diagnostics.DiagnosticsCollector
@@ -16,8 +15,6 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.file.builder.FirFileBuild
 import org.jetbrains.kotlin.analysis.low.level.api.fir.file.builder.ModuleFileCache
 import org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.FileStructureCache
 import org.jetbrains.kotlin.analysis.low.level.api.fir.lazy.resolve.FirLazyDeclarationResolver
-import org.jetbrains.kotlin.analysis.low.level.api.fir.lazy.resolve.ResolveType
-import org.jetbrains.kotlin.analysis.low.level.api.fir.lazy.resolve.lazyResolveDeclaration
 import org.jetbrains.kotlin.analysis.low.level.api.fir.providers.firIdeProvider
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.FirIdeSessionProvider
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.FirIdeSourcesSession
@@ -28,9 +25,9 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.util.originalDeclaration
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.analysis.project.structure.getKtModule
+import org.jetbrains.kotlin.diagnostics.KtPsiDiagnostic
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.FirSession
-import org.jetbrains.kotlin.diagnostics.KtPsiDiagnostic
 import org.jetbrains.kotlin.fir.declarations.FirDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
@@ -38,6 +35,7 @@ import org.jetbrains.kotlin.fir.expressions.FirAnonymousFunctionExpression
 import org.jetbrains.kotlin.fir.expressions.FirAnonymousObjectExpression
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
+import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.psi.*
 
 internal class FirModuleResolveStateImpl(
@@ -73,7 +71,7 @@ internal class FirModuleResolveStateImpl(
         )
 
     override fun getOrBuildFirFile(ktFile: KtFile): FirFile =
-        firFileBuilder.buildRawFirFileWithCaching(ktFile, rootModuleSession.cache, preferLazyBodies = false)
+        firFileBuilder.buildRawFirFileWithCaching(ktFile, rootModuleSession.cache)
 
     override fun tryGetCachedFirFile(declaration: FirDeclaration, cache: ModuleFileCache): FirFile? =
         cache.getContainerFirFile(declaration)
@@ -84,14 +82,32 @@ internal class FirModuleResolveStateImpl(
     override fun collectDiagnosticsForFile(ktFile: KtFile, filter: DiagnosticCheckerFilter): Collection<KtPsiDiagnostic> =
         diagnosticsCollector.collectDiagnosticsForFile(ktFile, filter)
 
-    @OptIn(InternalForInline::class)
-    override fun findSourceFirDeclaration(ktDeclaration: KtDeclaration): FirDeclaration {
-        return findSourceFirDeclarationByExpression(ktDeclaration.originalDeclaration ?: ktDeclaration)
+    override fun findSourceFirSymbol(ktDeclaration: KtDeclaration): FirBasedSymbol<*> {
+        return findSourceFirDeclarationByExpression(ktDeclaration.originalDeclaration ?: ktDeclaration).symbol
     }
 
-    @OptIn(InternalForInline::class)
-    override fun findSourceFirDeclaration(ktDeclaration: KtLambdaExpression): FirDeclaration =
-        findSourceFirDeclarationByExpression(ktDeclaration)
+    override fun findSourceFirSymbol(ktDeclaration: KtLambdaExpression): FirBasedSymbol<*> {
+        return findSourceFirDeclarationByExpression(ktDeclaration).symbol
+    }
+
+    override fun findSourceFirCompiledSymbol(ktDeclaration: KtDeclaration): FirBasedSymbol<*> {
+        require(ktDeclaration.containingKtFile.isCompiled) {
+            "This method will only work on compiled declarations, but this declaration is not compiled: ${ktDeclaration.getElementTextInContext()}"
+        }
+
+        val searcher = FirDeclarationForCompiledElementSearcher(rootModuleSession.symbolProvider)
+
+        val firDeclaration = when (ktDeclaration) {
+            is KtEnumEntry -> searcher.findNonLocalEnumEntry(ktDeclaration)
+            is KtClassOrObject -> searcher.findNonLocalClass(ktDeclaration)
+            is KtConstructor<*> -> searcher.findConstructorOfNonLocalClass(ktDeclaration)
+            is KtNamedFunction -> searcher.findNonLocalFunction(ktDeclaration)
+            is KtProperty -> searcher.findNonLocalProperty(ktDeclaration)
+
+            else -> error("Unsupported compiled declaration of type ${ktDeclaration::class}: ${ktDeclaration.getElementTextInContext()}")
+        }
+        return firDeclaration.symbol
+    }
 
     /**
      * [ktDeclaration] should be either [KtDeclaration] or [KtLambdaExpression]
@@ -120,51 +136,17 @@ internal class FirModuleResolveStateImpl(
         }
     }
 
-    @OptIn(InternalForInline::class)
-    override fun findSourceFirCompiledDeclaration(ktDeclaration: KtDeclaration): FirDeclaration {
-        require(ktDeclaration.containingKtFile.isCompiled) {
-            "This method will only work on compiled declarations, but this declaration is not compiled: ${ktDeclaration.getElementTextInContext()}"
-        }
-
-        val searcher = FirDeclarationForCompiledElementSearcher(rootModuleSession.symbolProvider)
-
-        return when (ktDeclaration) {
-            is KtEnumEntry -> searcher.findNonLocalEnumEntry(ktDeclaration)
-            is KtClassOrObject -> searcher.findNonLocalClass(ktDeclaration)
-            is KtConstructor<*> -> searcher.findConstructorOfNonLocalClass(ktDeclaration)
-            is KtNamedFunction -> searcher.findNonLocalFunction(ktDeclaration)
-            is KtProperty -> searcher.findNonLocalProperty(ktDeclaration)
-
-            else -> error("Unsupported compiled declaration of type ${ktDeclaration::class}: ${ktDeclaration.getElementTextInContext()}")
-        }
-    }
-
-    override fun <D : FirDeclaration> resolveFirToPhase(declaration: D, toPhase: FirResolvePhase): D {
-        if (toPhase == FirResolvePhase.RAW_FIR) return declaration
+    override fun resolveFirToPhase(declaration: FirDeclaration, toPhase: FirResolvePhase) {
+        if (toPhase == FirResolvePhase.RAW_FIR) return
         val fileCache = when (val session = declaration.moduleData.session) {
             is FirIdeSourcesSession -> session.cache
-            else -> return declaration
+            else -> return
         }
-        return firLazyDeclarationResolver.lazyResolveDeclaration(
+        firLazyDeclarationResolver.lazyResolveDeclaration(
             firDeclarationToResolve = declaration,
             moduleFileCache = fileCache,
             scopeSession = ScopeSession(),
             toPhase = toPhase,
-            checkPCE = true,
-        )
-    }
-
-    override fun <D : FirDeclaration> resolveFirToResolveType(declaration: D, type: ResolveType): D {
-        if (type == ResolveType.NoResolve) return declaration
-        val fileCache = when (val session = declaration.moduleData.session) {
-            is FirIdeSourcesSession -> session.cache
-            else -> return declaration
-        }
-        return firLazyDeclarationResolver.lazyResolveDeclaration(
-            firDeclaration = declaration,
-            moduleFileCache = fileCache,
-            scopeSession = ScopeSession(),
-            toResolveType = type,
             checkPCE = true,
         )
     }
