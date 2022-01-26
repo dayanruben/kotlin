@@ -12651,6 +12651,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
             }
 
             @Test
+            @TestMetadata("checkcast.kt")
+            public void testCheckcast() throws Exception {
+                runTest("compiler/testData/codegen/box/coroutines/tailCallOptimizations/checkcast.kt");
+            }
+
+            @Test
             @TestMetadata("crossinline.kt")
             public void testCrossinline() throws Exception {
                 runTest("compiler/testData/codegen/box/coroutines/tailCallOptimizations/crossinline.kt");
@@ -45463,6 +45469,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         @TestMetadata("kt5448.kt")
         public void testKt5448() throws Exception {
             runTest("compiler/testData/codegen/box/when/kt5448.kt");
+        }
+
+        @Test
+        @TestMetadata("longCondition.kt")
+        public void testLongCondition() throws Exception {
+            runTest("compiler/testData/codegen/box/when/longCondition.kt");
         }
 
         @Test
