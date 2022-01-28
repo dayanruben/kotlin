@@ -20,6 +20,7 @@ class DeclarationStubGeneratorImpl(
     moduleDescriptor: ModuleDescriptor,
     symbolTable: SymbolTable,
     irBuiltins: IrBuiltIns,
+    override val descriptorFinder: DescriptorByIdSignatureFinder,
     extensions: StubGeneratorExtensions = StubGeneratorExtensions.EMPTY,
 ) : DeclarationStubGenerator(moduleDescriptor, symbolTable, irBuiltins, extensions) {
     override val typeTranslator: TypeTranslator =
@@ -38,11 +39,12 @@ fun generateTypicalIrProviderList(
     moduleDescriptor: ModuleDescriptor,
     irBuiltins: IrBuiltIns,
     symbolTable: SymbolTable,
+    descriptorFinder: DescriptorByIdSignatureFinder,
     deserializer: IrDeserializer? = null,
     extensions: StubGeneratorExtensions = StubGeneratorExtensions.EMPTY
 ): List<IrProvider> {
     val stubGenerator = DeclarationStubGeneratorImpl(
-        moduleDescriptor, symbolTable, irBuiltins, extensions
+        moduleDescriptor, symbolTable, irBuiltins, descriptorFinder, extensions
     )
     return listOfNotNull(deserializer, stubGenerator)
 }

@@ -77,7 +77,7 @@ fun ExportedDeclaration.toTypeScript(indent: String, prefix: String = ""): Strin
 
         val renderedTypeParameters =
             if (typeParameters.isNotEmpty())
-                "<" + typeParameters.joinToString(", ") + ">"
+                "<" + typeParameters.joinToString(", ") { it.toTypeScript(indent) } + ">"
             else
                 ""
 
@@ -268,8 +268,12 @@ fun ExportedClass.toReadonlyProperty(): ExportedProperty {
     )
 }
 
-fun ExportedParameter.toTypeScript(indent: String): String =
-    "${sanitizeName(name, withHash = false)}: ${type.toTypeScript(indent)}"
+fun ExportedParameter.toTypeScript(indent: String): String {
+    val name = sanitizeName(name, withHash = false)
+    val type = type.toTypeScript(indent)
+    val questionMark = if (hasDefaultValue) "?" else ""
+    return "$name$questionMark: $type"
+}
 
 fun ExportedType.toTypeScript(indent: String): String = when (this) {
     is ExportedType.Primitive -> typescript
@@ -285,7 +289,6 @@ fun ExportedType.toTypeScript(indent: String): String = when (this) {
     is ExportedType.TypeOf ->
         "typeof $name"
 
-    is ExportedType.TypeParameter -> name
     is ExportedType.ErrorType -> "any /*$comment*/"
     is ExportedType.Nullable -> "Nullable<" + baseType.toTypeScript(indent) + ">"
     is ExportedType.InlineInterfaceType -> {
@@ -301,5 +304,10 @@ fun ExportedType.toTypeScript(indent: String): String = when (this) {
     is ExportedType.LiteralType.NumberLiteralType -> value.toString()
     is ExportedType.ImplicitlyExportedType -> {
         ExportedType.Primitive.Any.toTypeScript(indent) + "/* ${type.toTypeScript("")} */"
+    }
+    is ExportedType.TypeParameter -> if (constraint == null) {
+        name
+    } else {
+        "$name extends ${constraint.toTypeScript(indent)}"
     }
 }

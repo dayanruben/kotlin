@@ -52,12 +52,6 @@ private val validateIrAfterLowering = makeCustomPhase(
     description = "Validate IR after lowering"
 )
 
-private val stripTypeAliasDeclarationsPhase = makeIrFilePhase<CommonBackendContext>(
-    { StripTypeAliasDeclarationsLowering() },
-    name = "StripTypeAliasDeclarations",
-    description = "Strip typealias declarations"
-)
-
 // TODO make all lambda-related stuff work with IrFunctionExpression and drop this phase
 private val provisionalFunctionExpressionPhase = makeIrFilePhase<CommonBackendContext>(
     { ProvisionalFunctionExpressionLowering() },
@@ -71,8 +65,8 @@ private val arrayConstructorPhase = makeIrFilePhase(
     description = "Transform `Array(size) { index -> value }` into a loop"
 )
 
-internal val expectDeclarationsRemovingPhase = makeIrModulePhase(
-    ::ExpectDeclarationsRemoveLowering,
+internal val expectDeclarationsRemovingPhase = makeIrModulePhase<CommonBackendContext>(
+    ::ExpectDeclarationRemover,
     name = "ExpectDeclarationsRemoving",
     description = "Remove expect declaration from module fragment"
 )
@@ -260,7 +254,6 @@ private val kotlinNothingValueExceptionPhase = makeIrFilePhase<CommonBackendCont
 
 private val jvmFilePhases = listOf(
     typeAliasAnnotationMethodsPhase,
-    stripTypeAliasDeclarationsPhase,
     provisionalFunctionExpressionPhase,
 
     jvmOverloadsAnnotationPhase,

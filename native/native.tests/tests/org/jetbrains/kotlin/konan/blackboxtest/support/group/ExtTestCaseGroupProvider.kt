@@ -150,7 +150,7 @@ private class ExtTestDataFile(
     private fun assembleFreeCompilerArgs(): TestCompilerArgs {
         val args = mutableListOf<String>()
         testDataFileSettings.languageSettings.sorted().mapTo(args) { "-XXLanguage:$it" }
-        testDataFileSettings.optInsForCompiler.sorted().mapTo(args) { "-Xopt-in=$it" }
+        testDataFileSettings.optInsForCompiler.sorted().mapTo(args) { "-opt-in=$it" }
         if (testDataFileSettings.expectActualLinker) args += "-Xexpect-actual-linker"
         return TestCompilerArgs(args)
     }
@@ -528,19 +528,10 @@ private class ExtTestDataFile(
                 appendLine()
             }
 
-            append(
-                """
-                    @kotlin.test.Test
-                    fun runTest() {
-                        val result = $entryPointFunctionFQN()
-                        kotlin.test.assertEquals("OK", result, "Test failed with: ${'$'}result")
-                    }
-             
-                """.trimIndent()
-            )
+            append(generateBoxFunctionLauncher(entryPointFunctionFQN))
         }
 
-        structure.addFileToMainModule(fileName = "__launcher__.kt", text = fileText)
+        structure.addFileToMainModule(fileName = LAUNCHER_FILE_NAME, text = fileText)
     }
 
     private fun doCreateTestCase(

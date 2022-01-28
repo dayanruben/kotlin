@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.konan.blackboxtest.support.util.ThreadSafeCache
 import org.jetbrains.kotlin.konan.blackboxtest.support.util.expandGlobTo
 import org.jetbrains.kotlin.konan.blackboxtest.support.util.getAbsoluteFile
 import org.jetbrains.kotlin.test.services.JUnit5Assertions.assertTrue
-import org.junit.jupiter.api.fail
+import org.jetbrains.kotlin.test.services.JUnit5Assertions.fail
 import java.io.File
 
 internal class PredefinedTestCaseGroupProvider(annotation: PredefinedTestCases) : TestCaseGroupProvider {
@@ -104,7 +104,7 @@ internal class PredefinedTestCaseGroupProvider(annotation: PredefinedTestCases) 
     private fun substituteRealPaths(value: String, settings: Settings): String =
         if ('$' in value) {
             // N.B. Here, more substitutions can be supported in the future if it would be necessary.
-            value.replace(PredefinedPaths.KOTLIN_NATIVE_DISTRIBUTION, settings.get<KotlinNativeHome>().path)
+            value.replace(PredefinedPaths.KOTLIN_NATIVE_DISTRIBUTION, settings.get<KotlinNativeHome>().dir.path)
         } else
             value
 }

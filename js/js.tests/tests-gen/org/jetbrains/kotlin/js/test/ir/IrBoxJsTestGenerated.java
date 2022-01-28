@@ -2672,6 +2672,12 @@ public class IrBoxJsTestGenerated extends AbstractIrBoxJsTest {
             }
 
             @Test
+            @TestMetadata("redundantCast.kt")
+            public void testRedundantCast() throws Exception {
+                runTest("js/js.translator/testData/box/expression/cast/redundantCast.kt");
+            }
+
+            @Test
             @TestMetadata("reifiedToNotNull.kt")
             public void testReifiedToNotNull() throws Exception {
                 runTest("js/js.translator/testData/box/expression/cast/reifiedToNotNull.kt");
@@ -9820,6 +9826,12 @@ public class IrBoxJsTestGenerated extends AbstractIrBoxJsTest {
         @Test
         public void testAllFilesPresentInVararg() throws Exception {
             KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("js/js.translator/testData/box/vararg"), Pattern.compile("^([^_](.+))\\.kt$"), null, TargetBackend.JS_IR, true);
+        }
+
+        @Test
+        @TestMetadata("jsExternalInterfaceVararg.kt")
+        public void testJsExternalInterfaceVararg() throws Exception {
+            runTest("js/js.translator/testData/box/vararg/jsExternalInterfaceVararg.kt");
         }
 
         @Test

@@ -9689,6 +9689,12 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
             }
 
             @Test
+            @TestMetadata("declaringClass.kt")
+            public void testDeclaringClass() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/enum/declaringClass.kt");
+            }
+
+            @Test
             @TestMetadata("dontCreatePackageTypeForEnumEntry_after.kt")
             public void testDontCreatePackageTypeForEnumEntry_after() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/enum/dontCreatePackageTypeForEnumEntry_after.kt");
@@ -14057,6 +14063,12 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
                 @TestMetadata("kt49829.kt")
                 public void testKt49829() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/builderInference/kt49829.kt");
+                }
+
+                @Test
+                @TestMetadata("kt50989.kt")
+                public void testKt50989() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/kt50989.kt");
                 }
 
                 @Test

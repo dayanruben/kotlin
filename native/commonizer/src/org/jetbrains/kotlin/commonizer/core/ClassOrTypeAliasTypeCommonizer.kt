@@ -5,6 +5,8 @@
 
 package org.jetbrains.kotlin.commonizer.core
 
+import org.jetbrains.kotlin.commonizer.CommonizerSettings
+import org.jetbrains.kotlin.commonizer.OptimisticNumberCommonizationEnabledKey
 import org.jetbrains.kotlin.commonizer.cir.*
 import org.jetbrains.kotlin.commonizer.mergedtree.*
 import org.jetbrains.kotlin.commonizer.utils.isUnderKotlinNativeSyntheticPackages
@@ -15,11 +17,16 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal class ClassOrTypeAliasTypeCommonizer(
     private val typeCommonizer: TypeCommonizer,
-    private val classifiers: CirKnownClassifiers
+    private val classifiers: CirKnownClassifiers,
+    private val isOptimisticNumberTypeCommonizationEnabled: Boolean
 ) : NullableSingleInvocationCommonizer<CirClassOrTypeAliasType> {
 
-    private val isMarkedNullableCommonizer = TypeNullabilityCommonizer(typeCommonizer.options)
-    private val typeDistanceMeasurement = TypeDistanceMeasurement(typeCommonizer.options)
+    constructor(typeCommonizer: TypeCommonizer, classifiers: CirKnownClassifiers, settings: CommonizerSettings) : this(
+        typeCommonizer, classifiers, settings.getSetting(OptimisticNumberCommonizationEnabledKey)
+    )
+
+    private val isMarkedNullableCommonizer = TypeNullabilityCommonizer(typeCommonizer.context)
+    private val typeDistanceMeasurement = TypeDistanceMeasurement(typeCommonizer.context)
 
     override fun invoke(values: List<CirClassOrTypeAliasType>): CirClassOrTypeAliasType? {
         if (values.isEmpty()) return null
@@ -27,7 +34,7 @@ internal class ClassOrTypeAliasTypeCommonizer(
         val isMarkedNullable = isMarkedNullableCommonizer.commonize(expansions.map { it.isMarkedNullable }) ?: return null
 
         val substitutedTypes = substituteTypesIfNecessary(values)
-            ?: typeCommonizer.options.enableOptimisticNumberTypeCommonization.ifTrue {
+            ?: isOptimisticNumberTypeCommonizationEnabled.ifTrue {
                 return OptimisticNumbersTypeCommonizer.commonize(expansions)?.makeNullableIfNecessary(isMarkedNullable)
             } ?: return null
 
@@ -196,8 +203,8 @@ internal class ClassOrTypeAliasTypeCommonizer(
      * - The input [types] do not have a single distinct set of associated ids
      */
     private fun selectSubstitutionClassifierId(types: List<CirClassOrTypeAliasType>): CirEntityId? {
-        val forwardSubstitutionAllowed = typeCommonizer.options.enableForwardTypeAliasSubstitution
-        val backwardsSubstitutionAllowed = typeCommonizer.options.enableBackwardsTypeAliasSubstitution
+        val forwardSubstitutionAllowed = typeCommonizer.context.enableForwardTypeAliasSubstitution
+        val backwardsSubstitutionAllowed = typeCommonizer.context.enableBackwardsTypeAliasSubstitution
 
         /* No substitution allowed in any direction */
         if (!forwardSubstitutionAllowed && !backwardsSubstitutionAllowed) {
@@ -261,7 +268,7 @@ private interface TypeDistanceMeasurement {
     }
 
     companion object {
-        operator fun invoke(options: TypeCommonizer.Options): TypeDistanceMeasurement = when {
+        operator fun invoke(options: TypeCommonizer.Context): TypeDistanceMeasurement = when {
             options.enableBackwardsTypeAliasSubstitution && options.enableForwardTypeAliasSubstitution -> Full
             options.enableForwardTypeAliasSubstitution -> ForwardOnly
             else -> None

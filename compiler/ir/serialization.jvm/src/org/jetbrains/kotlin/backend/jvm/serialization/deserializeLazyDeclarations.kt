@@ -14,14 +14,15 @@ import org.jetbrains.kotlin.backend.common.serialization.encodings.BinarySymbolD
 import org.jetbrains.kotlin.backend.common.serialization.signature.IdSignatureSerializer
 import org.jetbrains.kotlin.backend.jvm.serialization.proto.JvmIr
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.IrElement
-import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmDescriptorMangler
 import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmIrMangler
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclaration
 import org.jetbrains.kotlin.ir.declarations.impl.IrFileImpl
 import org.jetbrains.kotlin.ir.declarations.lazy.IrLazyDeclarationBase
 import org.jetbrains.kotlin.ir.declarations.lazy.LazyIrFactory
+import org.jetbrains.kotlin.ir.linkage.IrProvider
 import org.jetbrains.kotlin.ir.symbols.IrPropertySymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
@@ -38,13 +39,13 @@ import org.jetbrains.kotlin.backend.common.serialization.proto.IrType as ProtoTy
 
 fun deserializeFromByteArray(
     byteArray: ByteArray,
-    stubGenerator: DeclarationStubGenerator,
+    irBuiltIns: IrBuiltIns,
+    symbolTable: SymbolTable,
+    irProviders: List<IrProvider>,
     toplevelParent: IrClass,
     typeSystemContext: IrTypeSystemContext,
     allowErrorNodes: Boolean,
 ) {
-    val irBuiltIns = stubGenerator.irBuiltIns
-    val symbolTable = stubGenerator.symbolTable
     val irProto = JvmIr.ClassOrFile.parseFrom(byteArray.codedInputStream)
     val irLibraryFile = IrLibraryFileFromAnnotation(
         irProto.typeList,
@@ -53,25 +54,22 @@ fun deserializeFromByteArray(
         irProto.bodyList,
         irProto.debugInfoList
     )
-    val descriptorFinder =
-        DescriptorByIdSignatureFinder(
-            stubGenerator.moduleDescriptor,
-            JvmDescriptorMangler(null),
-            DescriptorByIdSignatureFinder.LookupMode.MODULE_WITH_DEPENDENCIES
-        )
 
     // Only needed for local signature computation.
     val dummyIrFile = IrFileImpl(NaiveSourceBasedFileEntryImpl("<unknown>"), IrFileSymbolImpl(), toplevelParent.packageFqName!!)
+    // On JVM, file-scope private declarations are uniquely identified by file facade's fq name.
+    val dummyFileSignature = IdSignature.FileSignature(irProto.fileFacadeFqName, toplevelParent.packageFqName!!, "<unknown>")
 
     val symbolDeserializer = IrSymbolDeserializer(
         symbolTable,
         irLibraryFile,
         fileSymbol = dummyIrFile.symbol,
+        fileSignature = dummyFileSignature,
         /* TODO */ actuals = emptyList(),
         enqueueLocalTopLevelDeclaration = {}, // just link to it in symbolTable
-        handleExpectActualMapping = { _, _ -> TODO() }
+        handleExpectActualMapping = { _, symbol -> symbol } // no expect declarations
     ) { idSignature, symbolKind ->
-        referencePublicSymbol(symbolTable, descriptorFinder, idSignature, symbolKind)
+        referencePublicSymbol(symbolTable, idSignature, symbolKind)
     }
 
     val lazyIrFactory = LazyIrFactory(irBuiltIns.irFactory)
@@ -100,8 +98,10 @@ fun deserializeFromByteArray(
         }
     }
 
-    ExternalDependenciesGenerator(stubGenerator.symbolTable, listOf(stubGenerator)).generateUnboundSymbolsAsDependencies()
-    buildFakeOverridesForLocalClasses(stubGenerator.symbolTable, typeSystemContext, symbolDeserializer, toplevelParent)
+    symbolTable.signaturer.withFileSignature(dummyFileSignature) {
+        ExternalDependenciesGenerator(symbolTable, irProviders).generateUnboundSymbolsAsDependencies()
+    }
+    buildFakeOverridesForLocalClasses(symbolTable, typeSystemContext, symbolDeserializer, toplevelParent)
 }
 
 private class IrLibraryFileFromAnnotation(
@@ -129,37 +129,20 @@ private class IrLibraryFileFromAnnotation(
 
 private fun referencePublicSymbol(
     symbolTable: SymbolTable,
-    descriptorFinder: DescriptorByIdSignatureFinder,
     idSig: IdSignature,
     symbolKind: BinarySymbolData.SymbolKind
 ): IrSymbol {
     with(symbolTable) {
-        val descriptor = descriptorFinder.findDescriptorBySignature(idSig)
-        return if (descriptor != null) {
-            when (symbolKind) {
-                BinarySymbolData.SymbolKind.CLASS_SYMBOL -> referenceClass(descriptor as ClassDescriptor)
-                BinarySymbolData.SymbolKind.CONSTRUCTOR_SYMBOL -> referenceConstructor(descriptor as ClassConstructorDescriptor)
-                BinarySymbolData.SymbolKind.ENUM_ENTRY_SYMBOL -> referenceEnumEntry(descriptor as ClassDescriptor)
-                BinarySymbolData.SymbolKind.STANDALONE_FIELD_SYMBOL, BinarySymbolData.SymbolKind.FIELD_SYMBOL
-                    -> referenceField(descriptor as PropertyDescriptor)
-                BinarySymbolData.SymbolKind.FUNCTION_SYMBOL -> referenceSimpleFunction(descriptor as FunctionDescriptor)
-                BinarySymbolData.SymbolKind.TYPEALIAS_SYMBOL -> referenceTypeAlias(descriptor as TypeAliasDescriptor)
-                BinarySymbolData.SymbolKind.PROPERTY_SYMBOL -> referenceProperty(descriptor as PropertyDescriptor)
-                BinarySymbolData.SymbolKind.TYPE_PARAMETER_SYMBOL -> referenceTypeParameter(descriptor as TypeParameterDescriptor)
-                else -> error("Unexpected classifier symbol kind: $symbolKind for signature $idSig")
-            }
-        } else {
-            when (symbolKind) {
-                BinarySymbolData.SymbolKind.CLASS_SYMBOL -> referenceClassFromLinker(idSig)
-                BinarySymbolData.SymbolKind.CONSTRUCTOR_SYMBOL -> referenceConstructorFromLinker(idSig)
-                BinarySymbolData.SymbolKind.ENUM_ENTRY_SYMBOL -> referenceEnumEntryFromLinker(idSig)
-                BinarySymbolData.SymbolKind.STANDALONE_FIELD_SYMBOL, BinarySymbolData.SymbolKind.FIELD_SYMBOL
-                    -> referenceFieldFromLinker(idSig)
-                BinarySymbolData.SymbolKind.FUNCTION_SYMBOL -> referenceSimpleFunctionFromLinker(idSig)
-                BinarySymbolData.SymbolKind.TYPEALIAS_SYMBOL -> referenceTypeAliasFromLinker(idSig)
-                BinarySymbolData.SymbolKind.PROPERTY_SYMBOL -> referencePropertyFromLinker(idSig)
-                else -> error("Unexpected classifier symbol kind: $symbolKind for signature $idSig")
-            }
+        return when (symbolKind) {
+            BinarySymbolData.SymbolKind.CLASS_SYMBOL -> referenceClass(idSig)
+            BinarySymbolData.SymbolKind.CONSTRUCTOR_SYMBOL -> referenceConstructor(idSig)
+            BinarySymbolData.SymbolKind.ENUM_ENTRY_SYMBOL -> referenceEnumEntry(idSig)
+            BinarySymbolData.SymbolKind.STANDALONE_FIELD_SYMBOL, BinarySymbolData.SymbolKind.FIELD_SYMBOL -> referenceField(idSig)
+            BinarySymbolData.SymbolKind.FUNCTION_SYMBOL -> referenceSimpleFunction(idSig)
+            BinarySymbolData.SymbolKind.TYPEALIAS_SYMBOL -> referenceTypeAlias(idSig)
+            BinarySymbolData.SymbolKind.PROPERTY_SYMBOL -> referenceProperty(idSig)
+            BinarySymbolData.SymbolKind.TYPE_PARAMETER_SYMBOL -> referenceTypeParameter(idSig)
+            else -> error("Unexpected classifier symbol kind: $symbolKind for signature $idSig")
         }
     }
 }
@@ -197,17 +180,17 @@ private fun buildFakeOverridesForLocalClasses(
     val builder = makeSimpleFakeOverrideBuilder(symbolTable, typeSystemContext, symbolDeserializer)
     toplevel.acceptChildrenVoid(
         object : IrElementVisitorVoid {
-        override fun visitElement(element: IrElement) {
-            element.acceptChildrenVoid(this)
-        }
-
-        override fun visitClass(declaration: IrClass) {
-            if (declaration.visibility == DescriptorVisibilities.LOCAL) {
-                builder.provideFakeOverrides(declaration, CompatibilityMode.CURRENT)
+            override fun visitElement(element: IrElement) {
+                element.acceptChildrenVoid(this)
             }
-            super.visitClass(declaration)
-        }
-    })
+
+            override fun visitClass(declaration: IrClass) {
+                if (declaration.visibility == DescriptorVisibilities.LOCAL) {
+                    builder.provideFakeOverrides(declaration, CompatibilityMode.CURRENT)
+                }
+                super.visitClass(declaration)
+            }
+        })
 }
 
 class PrePopulatedDeclarationTable(

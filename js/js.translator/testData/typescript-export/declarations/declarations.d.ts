@@ -13,9 +13,11 @@ declare namespace JS_TESTS {
         function varargWithOtherParameters(x: string, y: Array<string>, z: string): number;
         function varargWithComplexType(x: Array<(p0: Array<Int32Array>) => Array<Int32Array>>): number;
         function sumNullable(x: Nullable<number>, y: Nullable<number>): number;
-        function defaultParameters(x: number, y: string): string;
+        function defaultParameters(x?: number, y?: string): string;
         function generic1<T>(x: T): T;
         function generic2<T>(x: Nullable<T>): boolean;
+        function genericWithConstraint<T extends string>(x: T): T;
+        function genericWithMultipleConstraints<T extends foo.TestInterface & Error>(x: T): T;
         function generic3<A, B, C, D, E>(a: A, b: B, c: C, d: D): Nullable<E>;
         function inlineFun(x: number, callback: (p0: number) => void): void;
         const _const_val: number;
@@ -92,7 +94,7 @@ declare namespace JS_TESTS {
             constructor(name: string);
             get name(): string;
             component1(): string;
-            copy(name: string): foo.TestDataClass;
+            copy(name?: string): foo.TestDataClass;
             toString(): string;
             hashCode(): number;
             equals(other: Nullable<any>): boolean;

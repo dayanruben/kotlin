@@ -6,8 +6,8 @@
 package org.jetbrains.kotlin.konan.blackboxtest.support.settings
 
 import org.jetbrains.kotlin.konan.target.KonanTarget
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.io.File
+import java.util.*
 import kotlin.time.Duration
 
 /**
@@ -19,7 +19,12 @@ internal class KotlinNativeTargets(val testTarget: KonanTarget, val hostTarget: 
  * The Kotlin/Native home.
  */
 internal class KotlinNativeHome(val dir: File) {
-    val path: String get() = dir.path
+    val librariesDir: File = dir.resolve("klib")
+    val stdlibFile: File = librariesDir.resolve("common/stdlib")
+
+    val properties: Properties by lazy {
+        dir.resolve("konan/konan.properties").inputStream().use { Properties().apply { load(it) } }
+    }
 }
 
 /**
@@ -82,7 +87,8 @@ internal enum class ThreadStateChecker(val compilerFlag: String?) {
 internal enum class GCType(val compilerFlag: String?) {
     UNSPECIFIED(null),
     NOOP("-Xgc=noop"),
-    STMS("-Xgc=stms");
+    STMS("-Xgc=stms"),
+    CMS("-Xgc=cms");
 
     override fun toString() = compilerFlag?.let { "($it)" }.orEmpty()
 }
@@ -90,7 +96,7 @@ internal enum class GCType(val compilerFlag: String?) {
 /**
  * Current project's directories.
  */
-internal class BaseDirs(val buildDir: File)
+internal class BaseDirs(val testBuildDir: File)
 
 /**
  * Timeouts.
@@ -101,14 +107,21 @@ internal class Timeouts(val executionTimeout: Duration)
  * Used cache kind.
  */
 internal sealed interface CacheKind {
-    object WithoutCache : CacheKind
+    val staticCacheRootDir: File?
+    val staticCacheRequiredForEveryLibrary: Boolean
+
+    object WithoutCache : CacheKind {
+        override val staticCacheRootDir: File? get() = null
+        override val staticCacheRequiredForEveryLibrary get() = false
+    }
 
     class WithStaticCache(
         kotlinNativeHome: KotlinNativeHome,
         kotlinNativeTargets: KotlinNativeTargets,
-        optimizationMode: OptimizationMode
+        optimizationMode: OptimizationMode,
+        override val staticCacheRequiredForEveryLibrary: Boolean
     ) : CacheKind {
-        val rootCacheDir: File? = kotlinNativeHome.dir
+        override val staticCacheRootDir: File? = kotlinNativeHome.dir
             .resolve("klib/cache")
             .resolve(
                 computeCacheDirName(
@@ -123,9 +136,9 @@ internal sealed interface CacheKind {
         }
     }
 
-    companion object {
-        val CacheKind.rootCacheDir: File? get() = safeAs<WithStaticCache>()?.rootCacheDir
+    enum class Alias { NO, ONLY_DIST, EVERYWHERE }
 
+    companion object {
         private fun computeCacheDirName(testTarget: KonanTarget, cacheKind: String, debuggable: Boolean) =
             "$testTarget${if (debuggable) "-g" else ""}$cacheKind"
     }

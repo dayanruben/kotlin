@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.gradle.plugin.mpp.pm20
 
 import org.gradle.api.NamedDomainObjectFactory
+import org.gradle.api.artifacts.Configuration
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinGradleFragmentFactory.FragmentConfigurator
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinGradleFragmentFactory.FragmentInstantiator
 
@@ -47,4 +48,12 @@ class KotlinGradleFragmentFactory<T : KotlinGradleFragment>(
     override fun create(name: String): T {
         return fragmentInstantiator.create(name).apply(fragmentConfigurator::configure)
     }
+}
+
+internal fun <T : KotlinGradleFragment> Configuration.configure(
+    definition: KotlinGradleFragmentConfigurationDefinition<T>, fragment: T
+) {
+    definition.attributes.setAttributes(attributes, fragment)
+    definition.artifacts.addArtifacts(outgoing, fragment)
+    definition.capabilities.setCapabilities(outgoing, fragment)
 }

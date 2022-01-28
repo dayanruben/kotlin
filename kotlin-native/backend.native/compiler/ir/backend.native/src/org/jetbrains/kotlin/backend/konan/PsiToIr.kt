@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.backend.konan
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContextImpl
 import org.jetbrains.kotlin.backend.common.overrides.FakeOverrideChecker
+import org.jetbrains.kotlin.backend.common.serialization.DescriptorByIdSignatureFinderImpl
 import org.jetbrains.kotlin.backend.common.serialization.mangle.ManglerChecker
 import org.jetbrains.kotlin.backend.common.serialization.mangle.descriptor.Ir2DescriptorManglerAdapter
 import org.jetbrains.kotlin.backend.konan.descriptors.isForwardDeclarationModule
@@ -39,10 +40,12 @@ internal fun Context.psiToIr(
         useLinkerWhenProducingLibrary: Boolean
 ) {
     // Translate AST to high level IR.
-    val expectActualLinker = config.configuration.get(CommonConfigurationKeys.EXPECT_ACTUAL_LINKER)?:false
-    val messageLogger = config.configuration.get(IrMessageLogger.IR_MESSAGE_LOGGER) ?: IrMessageLogger.None
+    val expectActualLinker = config.configuration[CommonConfigurationKeys.EXPECT_ACTUAL_LINKER] ?: false
+    val messageLogger = config.configuration[IrMessageLogger.IR_MESSAGE_LOGGER] ?: IrMessageLogger.None
 
-    val translator = Psi2IrTranslator(config.configuration.languageVersionSettings, Psi2IrConfiguration(false))
+    val allowUnboundSymbols = config.configuration[KonanConfigKeys.PARTIAL_LINKAGE] ?: false
+
+    val translator = Psi2IrTranslator(config.configuration.languageVersionSettings, Psi2IrConfiguration(ignoreErrors = false, allowUnboundSymbols = allowUnboundSymbols))
     val generatorContext = translator.createGeneratorContext(moduleDescriptor, bindingContext, symbolTable)
 
     val pluginExtensions = IrGenerationExtension.getInstances(config.project)
@@ -56,7 +59,8 @@ internal fun Context.psiToIr(
 
     val stubGenerator = DeclarationStubGeneratorImpl(
             moduleDescriptor, symbolTable,
-            generatorContext.irBuiltIns
+            generatorContext.irBuiltIns,
+            DescriptorByIdSignatureFinderImpl(moduleDescriptor, KonanManglerDesc),
     )
     val irBuiltInsOverDescriptors = generatorContext.irBuiltIns as IrBuiltInsOverDescriptors
     val functionIrClassFactory: KonanIrAbstractDescriptorBasedFunctionFactory =
@@ -104,20 +108,23 @@ internal fun Context.psiToIr(
                         config.resolve.includedLibraries.map { it.uniqueName }
                 ).associateWith { friendModules }
 
+        val unlinkedDeclarationsSupport = KonanUnlinkedDeclarationsSupport(generatorContext.irBuiltIns, allowUnboundSymbols)
+
         KonanIrLinker(
-                moduleDescriptor,
-                translationContext,
-                messageLogger,
-                generatorContext.irBuiltIns,
-                symbolTable,
-                friendModulesMap,
-                forwardDeclarationsModuleDescriptor,
-                stubGenerator,
-                irProviderForCEnumsAndCStructs,
-                exportedDependencies,
-                config.cachedLibraries,
-                config.lazyIrForCaches,
-                config.userVisibleIrModulesSupport
+                currentModule = moduleDescriptor,
+                translationPluginContext = translationContext,
+                messageLogger = messageLogger,
+                builtIns = generatorContext.irBuiltIns,
+                symbolTable = symbolTable,
+                friendModules = friendModulesMap,
+                forwardModuleDescriptor = forwardDeclarationsModuleDescriptor,
+                stubGenerator = stubGenerator,
+                cenumsProvider = irProviderForCEnumsAndCStructs,
+                exportedDependencies = exportedDependencies,
+                cachedLibraries = config.cachedLibraries,
+                lazyIrForCaches = config.lazyIrForCaches,
+                unlinkedDeclarationsSupport = unlinkedDeclarationsSupport,
+                userVisibleIrModulesSupport = config.userVisibleIrModulesSupport
         ).also { linker ->
 
             // context.config.librariesWithDependencies could change at each iteration.
