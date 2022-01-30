@@ -6,18 +6,18 @@ Analysis API is an API which allows analysing Kotlin code and retrieve compiler-
 expression types, symbols, smartcast, and many others. Analysis API is an API which is used to implement Kotlin Plugin 2.0 which is under
 active development now.
 
-Analysis API is Kotlin compioler implemetnation independent . That means that it do not expose any Kotlin compiler internals.
+Analysis API is Kotlin compiler implementation independent . That means that it do not expose any Kotlin compiler internals.
 
-Analysis API itself is a just set of interfaces/abstraact classes without specific implementation inside. But there are two implementations
+Analysis API itself is a just set of interfaces/abstract classes without specific implementation inside. But there are two implementations
 currently available.
 
 * FIR-based implementation. FIR is a new compiler frontend which is a part of K2 Kotlin compiler. Read more:
     * [Analysis API FIR Implementation documentation](analysis-api-fir.md)
-    * [Analysis API FIR Implementation source code](../../analysis/analysis-api-fir)
-    * [FIR Compiler documentation](../fir/fir-basics.md)
+    * [Analysis API FIR Implementation source code](../../../analysis/analysis-api-fir)
+    * [FIR Compiler documentation](../../fir/fir-basics.md)
 * FE1.0-based implementation. FE1.0 is an original Kotlin compiler frontend. Read more:
     * [Analysis API FE1.0 Implementation documentation](analysis-api-fe10.md)
-    * [Analysis API FE1.0 Implementation source code](../../analysis/analysis-api-fe10)
+    * [Analysis API FE1.0 Implementation source code](../../../analysis/analysis-api-fe10)
 
 Analysis API can work outside IntelliJ IDEA (e.g, it can be used for implementing Kotlin LSP server) but it still uses some basic classes
 form IntelliJ Core. This is needed mostly for working with [PsiElements](https://plugins.jetbrains.com/docs/intellij/psi-elements.html),

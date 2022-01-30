@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.konan.blackboxtest.support.group.TestCaseGroupProvid
 import org.jetbrains.kotlin.konan.blackboxtest.support.runner.SimpleTestRunProvider
 import org.jetbrains.kotlin.konan.blackboxtest.support.runner.TestRunProvider
 import org.jetbrains.kotlin.konan.blackboxtest.support.settings.*
-import org.jetbrains.kotlin.konan.blackboxtest.support.settings.CacheKind
+import org.jetbrains.kotlin.konan.blackboxtest.support.settings.CacheMode
 import org.jetbrains.kotlin.konan.blackboxtest.support.util.*
 import org.jetbrains.kotlin.konan.target.Distribution
 import org.jetbrains.kotlin.konan.target.HostManager
@@ -71,63 +71,24 @@ class NativeSimpleTestSupport : BeforeEachCallback {
 }
 
 private object NativeTestSupport {
+    private val NAMESPACE = ExtensionContext.Namespace.create(NativeBlackBoxTestSupport::class.java.simpleName)
+
     /*************** Test process settings ***************/
 
     fun ExtensionContext.getOrCreateTestProcessSettings(): TestProcessSettings =
         root.getStore(NAMESPACE).getOrComputeIfAbsent(TestProcessSettings::class.java.name) {
-            val optimizationMode = computeOptimizationMode()
-            val memoryModel = computeMemoryModel()
-
-            val threadStateChecker = computeThreadStateChecker()
-            if (threadStateChecker == ThreadStateChecker.ENABLED) {
-                assertEquals(MemoryModel.EXPERIMENTAL, memoryModel) {
-                    "Thread state checker can be enabled only with experimental memory model"
-                }
-                assertEquals(OptimizationMode.DEBUG, optimizationMode) {
-                    "Thread state checker can be enabled only with debug optimization mode"
-                }
-            }
-
-            val gcType = computeGCType()
-            if (gcType != GCType.UNSPECIFIED) {
-                assertEquals(MemoryModel.EXPERIMENTAL, memoryModel) {
-                    "GC type can be specified only with experimental memory model"
-                }
-            }
-
-            val nativeHome = computeNativeHome()
-            val hostManager = HostManager(distribution = Distribution(nativeHome.dir.path), experimental = false)
-
-            val nativeTargets = computeNativeTargets(hostManager)
-
             TestProcessSettings(
-                nativeTargets,
-                nativeHome,
+                computeNativeHome(),
                 computeNativeClassLoader(),
-                computeTestMode(),
-                optimizationMode,
-                memoryModel,
-                threadStateChecker,
-                gcType,
-                CacheKind::class to computeCacheKind(nativeHome, nativeTargets, optimizationMode),
-                computeBaseDirs(),
-                computeTimeouts()
+                computeBaseDirs()
             )
         }.cast()
 
-    private fun computeNativeTargets(hostManager: HostManager): KotlinNativeTargets {
-        val hostTarget = HostManager.host
-        return KotlinNativeTargets(
-            testTarget = systemProperty(TEST_TARGET, hostManager::targetByName, default = hostTarget),
-            hostTarget = hostTarget
-        )
-    }
-
-    private fun computeNativeHome(): KotlinNativeHome = KotlinNativeHome(File(requiredSystemProperty(KOTLIN_NATIVE_HOME)))
+    private fun computeNativeHome(): KotlinNativeHome = KotlinNativeHome(File(ProcessLevelProperty.KOTLIN_NATIVE_HOME.readValue()))
 
     private fun computeNativeClassLoader(): KotlinNativeClassLoader = KotlinNativeClassLoader(
         lazy {
-            val nativeClassPath = requiredSystemProperty(COMPILER_CLASSPATH)
+            val nativeClassPath = ProcessLevelProperty.COMPILER_CLASSPATH.readValue()
                 .split(':', ';')
                 .map { File(it).toURI().toURL() }
                 .toTypedArray()
@@ -136,98 +97,129 @@ private object NativeTestSupport {
         }
     )
 
-    private fun computeTestMode(): TestMode = enumSystemProperty(TEST_MODE, TestMode.values(), default = TestMode.WITH_MODULES)
-
-    private fun computeOptimizationMode(): OptimizationMode =
-        enumSystemProperty(OPTIMIZATION_MODE, OptimizationMode.values(), default = OptimizationMode.DEBUG)
-
-    private fun computeMemoryModel(): MemoryModel =
-        enumSystemProperty(MEMORY_MODEL, MemoryModel.values(), default = MemoryModel.DEFAULT)
-
-    private fun computeThreadStateChecker(): ThreadStateChecker {
-        val useThreadStateChecker = systemProperty(USE_THREAD_STATE_CHECKER, String::toBooleanStrictOrNull, default = false)
-        return if (useThreadStateChecker) ThreadStateChecker.ENABLED else ThreadStateChecker.DISABLED
-    }
-
-    private fun computeGCType(): GCType = enumSystemProperty(GC_TYPE, GCType.values(), default = GCType.UNSPECIFIED)
-
-    private fun computeCacheKind(
-        kotlinNativeHome: KotlinNativeHome,
-        kotlinNativeTargets: KotlinNativeTargets,
-        optimizationMode: OptimizationMode
-    ): CacheKind {
-        // Compatibility stuff (initially, the property was boolean):
-        val legacyUseCache = System.getProperty(USE_CACHE)?.let(String::toBooleanStrictOrNull)
-        if (legacyUseCache != null) {
-            return if (legacyUseCache)
-                CacheKind.WithStaticCache(kotlinNativeHome, kotlinNativeTargets, optimizationMode, false)
-            else
-                CacheKind.WithoutCache
-        }
-
-        val staticCacheRequiredForEveryLibrary =
-            when (enumSystemProperty(USE_CACHE, CacheKind.Alias.values(), default = CacheKind.Alias.ONLY_DIST)) {
-                CacheKind.Alias.NO -> return CacheKind.WithoutCache
-                CacheKind.Alias.ONLY_DIST -> false
-                CacheKind.Alias.EVERYWHERE -> true
-            }
-
-        return CacheKind.WithStaticCache(kotlinNativeHome, kotlinNativeTargets, optimizationMode, staticCacheRequiredForEveryLibrary)
-    }
-
     private fun computeBaseDirs(): BaseDirs {
-        val testBuildDir = File(requiredEnvironmentVariable(PROJECT_BUILD_DIR)).resolve("t")
+        val testBuildDir = File(EnvironmentVariable.PROJECT_BUILD_DIR.readValue()).resolve("t")
         testBuildDir.mkdirs() // Make sure it exists. Don't clean up.
 
         return BaseDirs(testBuildDir)
     }
 
-    private fun computeTimeouts(): Timeouts {
-        val executionTimeout = systemProperty(EXECUTION_TIMEOUT, { it.toLongOrNull()?.milliseconds }, default = 10.seconds)
+    /*************** Test class settings (common part) ***************/
+
+    private fun ExtensionContext.addCommonTestClassSettingsTo(
+        enclosingTestClass: Class<*>,
+        output: MutableCollection<Any>
+    ): KotlinNativeTargets {
+        val enforcedProperties = EnforcedProperties(enclosingTestClass)
+
+        val optimizationMode = computeOptimizationMode(enforcedProperties)
+        val memoryModel = computeMemoryModel(enforcedProperties)
+
+        val threadStateChecker = computeThreadStateChecker(enforcedProperties)
+        if (threadStateChecker == ThreadStateChecker.ENABLED) {
+            assertEquals(MemoryModel.EXPERIMENTAL, memoryModel) {
+                "Thread state checker can be enabled only with experimental memory model"
+            }
+            assertEquals(OptimizationMode.DEBUG, optimizationMode) {
+                "Thread state checker can be enabled only with debug optimization mode"
+            }
+        }
+
+        val gcType = computeGCType(enforcedProperties)
+        if (gcType != GCType.UNSPECIFIED) {
+            assertEquals(MemoryModel.EXPERIMENTAL, memoryModel) {
+                "GC type can be specified only with experimental memory model"
+            }
+        }
+
+        val nativeHome = getOrCreateTestProcessSettings().get<KotlinNativeHome>()
+
+        val hostManager = HostManager(distribution = Distribution(nativeHome.dir.path), experimental = false)
+        val nativeTargets = computeNativeTargets(enforcedProperties, hostManager)
+
+        output += optimizationMode
+        output += memoryModel
+        output += threadStateChecker
+        output += gcType
+        output += nativeTargets
+        output += CacheMode::class to computeCacheMode(enforcedProperties, nativeHome, nativeTargets, optimizationMode)
+        output += computeTestMode(enforcedProperties)
+        output += computeTimeouts(enforcedProperties)
+
+        return nativeTargets
+    }
+
+    private fun computeOptimizationMode(enforcedProperties: EnforcedProperties): OptimizationMode =
+        ClassLevelProperty.OPTIMIZATION_MODE.readValue(
+            enforcedProperties,
+            OptimizationMode.values(),
+            default = OptimizationMode.DEBUG
+        )
+
+    private fun computeMemoryModel(enforcedProperties: EnforcedProperties): MemoryModel =
+        ClassLevelProperty.MEMORY_MODEL.readValue(enforcedProperties, MemoryModel.values(), default = MemoryModel.DEFAULT)
+
+    private fun computeThreadStateChecker(enforcedProperties: EnforcedProperties): ThreadStateChecker {
+        val useThreadStateChecker =
+            ClassLevelProperty.USE_THREAD_STATE_CHECKER.readValue(enforcedProperties, String::toBooleanStrictOrNull, default = false)
+        return if (useThreadStateChecker) ThreadStateChecker.ENABLED else ThreadStateChecker.DISABLED
+    }
+
+    private fun computeGCType(enforcedProperties: EnforcedProperties): GCType =
+        ClassLevelProperty.GC_TYPE.readValue(enforcedProperties, GCType.values(), default = GCType.UNSPECIFIED)
+
+    private fun computeNativeTargets(enforcedProperties: EnforcedProperties, hostManager: HostManager): KotlinNativeTargets {
+        val hostTarget = HostManager.host
+        return KotlinNativeTargets(
+            testTarget = ClassLevelProperty.TEST_TARGET.readValue(
+                enforcedProperties,
+                hostManager::targetByName,
+                default = hostTarget
+            ),
+            hostTarget = hostTarget
+        )
+    }
+
+    private fun computeCacheMode(
+        enforcedProperties: EnforcedProperties,
+        kotlinNativeHome: KotlinNativeHome,
+        kotlinNativeTargets: KotlinNativeTargets,
+        optimizationMode: OptimizationMode
+    ): CacheMode {
+        // TODO: legacy, need to remove it
+        val legacyUseCache = System.getProperty("kotlin.internal.native.test.useCache")?.let(String::toBooleanStrictOrNull)
+        if (legacyUseCache != null) {
+            return if (legacyUseCache)
+                CacheMode.WithStaticCache(kotlinNativeHome, kotlinNativeTargets, optimizationMode, false)
+            else
+                CacheMode.WithoutCache
+        }
+
+        val cacheMode = ClassLevelProperty.CACHE_MODE.readValue(
+            enforcedProperties,
+            CacheMode.Alias.values(),
+            default = CacheMode.Alias.STATIC_ONLY_DIST
+        )
+        val staticCacheRequiredForEveryLibrary = when (cacheMode) {
+            CacheMode.Alias.NO -> return CacheMode.WithoutCache
+            CacheMode.Alias.STATIC_ONLY_DIST -> false
+            CacheMode.Alias.STATIC_EVERYWHERE -> true
+        }
+
+        return CacheMode.WithStaticCache(kotlinNativeHome, kotlinNativeTargets, optimizationMode, staticCacheRequiredForEveryLibrary)
+    }
+
+    private fun computeTestMode(enforcedProperties: EnforcedProperties): TestMode =
+        ClassLevelProperty.TEST_MODE.readValue(enforcedProperties, TestMode.values(), default = TestMode.WITH_MODULES)
+
+    private fun computeTimeouts(enforcedProperties: EnforcedProperties): Timeouts {
+        val executionTimeout = ClassLevelProperty.EXECUTION_TIMEOUT.readValue(
+            enforcedProperties,
+            { it.toLongOrNull()?.milliseconds },
+            default = 10.seconds
+        )
         return Timeouts(executionTimeout)
     }
-
-    private fun requiredSystemProperty(name: String): String =
-        System.getProperty(name) ?: fail { "Unspecified $name system property" }
-
-    private fun <T> systemProperty(propertyName: String, transform: (String) -> T?, default: T): T {
-        val propertyValue = System.getProperty(propertyName)
-        return if (propertyValue != null) {
-            transform(propertyValue) ?: fail { "Invalid value for $propertyName system property: $propertyValue" }
-        } else
-            default
-    }
-
-    private inline fun <reified E : Enum<E>> enumSystemProperty(propertyName: String, values: Array<out E>, default: E): E {
-        val optionName = System.getProperty(propertyName)
-        return if (optionName != null) {
-            values.firstOrNull { it.name == optionName } ?: fail {
-                buildString {
-                    appendLine("Unknown ${E::class.java.simpleName} name $optionName.")
-                    appendLine("One of the following ${E::class.java.simpleName} should be passed through $propertyName system property:")
-                    values.forEach { value -> appendLine("- ${value.name}: $value") }
-                }
-            }
-        } else
-            default
-    }
-
-    private fun requiredEnvironmentVariable(name: String): String =
-        System.getenv(name) ?: fail { "Unspecified $name environment variable" }
-
-    private val NAMESPACE = ExtensionContext.Namespace.create(NativeBlackBoxTestSupport::class.java.simpleName)
-
-    private const val KOTLIN_NATIVE_HOME = "kotlin.internal.native.test.nativeHome"
-    private const val COMPILER_CLASSPATH = "kotlin.internal.native.test.compilerClasspath"
-    private const val TEST_TARGET = "kotlin.internal.native.test.target"
-    private const val TEST_MODE = "kotlin.internal.native.test.mode"
-    private const val OPTIMIZATION_MODE = "kotlin.internal.native.test.optimizationMode"
-    private const val MEMORY_MODEL = "kotlin.internal.native.test.memoryModel"
-    private const val USE_THREAD_STATE_CHECKER = "kotlin.internal.native.test.useThreadStateChecker"
-    private const val GC_TYPE = "kotlin.internal.native.test.gcType"
-    private const val USE_CACHE = "kotlin.internal.native.test.useCache"
-    private const val EXECUTION_TIMEOUT = "kotlin.internal.native.test.executionTimeout"
-    private const val PROJECT_BUILD_DIR = "PROJECT_BUILD_DIR"
 
     /*************** Test class settings (for black box tests only) ***************/
 
@@ -238,22 +230,21 @@ private object NativeTestSupport {
             val testProcessSettings = getOrCreateTestProcessSettings()
             val computedTestConfiguration = computeTestConfiguration(enclosingTestClass)
 
-            // Put settings that are always required:
-            val settings = mutableListOf(
-                computedTestConfiguration,
-                computeBinariesDirs(testProcessSettings.get(), testProcessSettings.get(), enclosingTestClass)
-            )
+            val settings = buildList {
+                // Put common settings:
+                val nativeTargets = addCommonTestClassSettingsTo(enclosingTestClass, this)
 
-            // Add custom settings:
-            computedTestConfiguration.configuration.requiredSettings.mapTo(settings) { clazz ->
-                when (clazz) {
-                    TestRoots::class -> computeTestRoots(enclosingTestClass)
-                    GeneratedSources::class -> computeGeneratedSourceDirs(
-                        testProcessSettings.get(),
-                        testProcessSettings.get(),
-                        enclosingTestClass
-                    )
-                    else -> fail { "Unknown test class setting type: $clazz" }
+                // Put settings that are always required:
+                this += computedTestConfiguration
+                this += computeBinariesDirs(testProcessSettings.get(), nativeTargets, enclosingTestClass)
+
+                // Add custom settings:
+                computedTestConfiguration.configuration.requiredSettings.forEach { clazz ->
+                    this += when (clazz) {
+                        TestRoots::class -> computeTestRoots(enclosingTestClass)
+                        GeneratedSources::class -> computeGeneratedSourceDirs(testProcessSettings.get(), nativeTargets, enclosingTestClass)
+                        else -> fail { "Unknown test class setting type: $clazz" }
+                    }
                 }
             }
 
@@ -331,6 +322,16 @@ private object NativeTestSupport {
         return Binaries(testBinariesDir, sharedBinariesDir)
     }
 
+    /*************** Test class settings (simplified) ***************/
+
+    private fun ExtensionContext.getOrCreateSimpleTestClassSettings(): SimpleTestClassSettings =
+        root.getStore(NAMESPACE).getOrComputeIfAbsent(testClassKeyFor<SimpleTestClassSettings>()) {
+            SimpleTestClassSettings(
+                parent = getOrCreateTestProcessSettings(),
+                buildList { addCommonTestClassSettingsTo(enclosingTestClass, this) }
+            )
+        }.cast()
+
     /*************** Test run settings (for black box tests only) ***************/
 
     // Note: TestRunSettings is not cached!
@@ -353,13 +354,13 @@ private object NativeTestSupport {
 
     // Note: SimpleTestRunSettings is not cached!
     fun ExtensionContext.createSimpleTestRunSettings(): SimpleTestRunSettings {
-        val testProcessSettings = getOrCreateTestProcessSettings()
+        val testClassSettings = getOrCreateSimpleTestClassSettings()
 
         return SimpleTestRunSettings(
-            parent = testProcessSettings,
+            parent = testClassSettings,
             listOf(
                 computeSimpleTestInstances(),
-                computeSimpleTestDirectories(testProcessSettings.get(), testProcessSettings.get())
+                computeSimpleTestDirectories(testClassSettings.get(), testClassSettings.get())
             )
         )
     }
