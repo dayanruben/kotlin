@@ -6,8 +6,10 @@
 package org.jetbrains.kotlin.analysis.low.level.api.fir.sessions
 
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.low.level.api.fir.FirPhaseRunner
-import org.jetbrains.kotlin.analysis.low.level.api.fir.IdeFirPhaseManager
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.ProjectScope
+import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirPhaseRunner
+import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirPhaseManager
 import org.jetbrains.kotlin.analysis.low.level.api.fir.IdeSessionComponents
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.services.createPackagePartProviderForLibrary
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.services.createSealedInheritorsProvider
@@ -52,26 +54,26 @@ import org.jetbrains.kotlin.resolve.jvm.platform.JvmPlatformAnalyzerServices
 import java.nio.file.Path
 
 @OptIn(PrivateSessionConstructor::class, SessionConfiguration::class)
-internal object FirIdeSessionFactory {
+internal object LLFirSessionFactory {
     fun createSourcesSession(
         project: Project,
         module: KtSourceModule,
-        builtinsAndCloneableSession: FirIdeBuiltinsAndCloneableSession,
-        firPhaseRunner: FirPhaseRunner,
-        sessionInvalidator: FirSessionInvalidator,
+        builtinsAndCloneableSession: LLFirBuiltinsAndCloneableSession,
+        firPhaseRunner: LLFirPhaseRunner,
+        sessionInvalidator: LLFirSessionInvalidator,
         builtinTypes: BuiltinTypes,
-        sessionsCache: MutableMap<KtSourceModule, FirIdeSourcesSession>,
+        sessionsCache: MutableMap<KtModule, LLFirResolvableModuleSession>,
         isRootModule: Boolean,
         librariesCache: LibrariesCache,
-        configureSession: (FirIdeSession.() -> Unit)? = null
-    ): FirIdeSourcesSession {
-        sessionsCache[module]?.let { return it }
+        configureSession: (LLFirSession.() -> Unit)? = null
+    ): LLFirSourcesSession {
+        sessionsCache[module]?.let { return it as LLFirSourcesSession }
         val languageVersionSettings = module.languageVersionSettings
         val scopeProvider = FirKotlinScopeProvider(::wrapScopeWithJvmMapped)
         val firBuilder = FirFileBuilder(scopeProvider, firPhaseRunner)
         val contentScope = module.contentScope
         val dependentModules = module.directRegularDependenciesOfType<KtSourceModule>()
-        val session = FirIdeSourcesSession(module, project, firBuilder, builtinTypes)
+        val session = LLFirSourcesSession(module, project, firBuilder, builtinTypes)
         sessionsCache[module] = session
 
         return session.apply session@{
@@ -80,14 +82,14 @@ internal object FirIdeSessionFactory {
             register(FirKotlinScopeProvider::class, scopeProvider)
 
             val cache = ModuleFileCacheImpl(this)
-            val firPhaseManager = IdeFirPhaseManager(FirLazyDeclarationResolver(firFileBuilder), cache, sessionInvalidator)
+            val firPhaseManager = LLFirPhaseManager(FirLazyDeclarationResolver(firFileBuilder), cache, sessionInvalidator)
 
             registerIdeComponents(project)
             registerCommonComponents(languageVersionSettings)
             registerCommonJavaComponents(JavaModuleResolver.getInstance(project))
             registerResolveComponents()
 
-            val provider = FirIdeProvider(
+            val provider = LLFirProvider(
                 project,
                 this,
                 module,
@@ -99,7 +101,7 @@ internal object FirIdeSessionFactory {
             )
 
             register(FirProvider::class, provider)
-            register(FirIdeProvider::class, provider)
+            register(LLFirProvider::class, provider)
 
             register(FirPhaseManager::class, firPhaseManager)
 
@@ -137,7 +139,7 @@ internal object FirIdeSessionFactory {
 
             register(
                 FirSymbolProvider::class,
-                FirModuleWithDependenciesSymbolProvider(
+                LLFirModuleWithDependenciesSymbolProvider(
                     this,
                     providers = listOf(
                         provider.symbolProvider,
@@ -171,15 +173,15 @@ internal object FirIdeSessionFactory {
     private fun createModuleLibrariesSession(
         sourceModule: KtSourceModule,
         project: Project,
-        builtinsAndCloneableSession: FirIdeBuiltinsAndCloneableSession,
+        builtinsAndCloneableSession: LLFirBuiltinsAndCloneableSession,
         builtinTypes: BuiltinTypes,
         librariesCache: LibrariesCache,
         languageVersionSettings: LanguageVersionSettings = LanguageVersionSettingsImpl.DEFAULT,
-        configureSession: (FirIdeSession.() -> Unit)?,
-    ): FirIdeLibrariesSession = librariesCache.cached(sourceModule) {
+        configureSession: (LLFirSession.() -> Unit)?,
+    ): LLFirLibrariesSession = librariesCache.cached(sourceModule) {
         checkCanceled()
         val searchScope = project.moduleScopeProvider.getModuleLibrariesScope(sourceModule)
-        FirIdeLibrariesSession(project, builtinTypes).apply session@{
+        LLFirLibrariesSession(project, builtinTypes).apply session@{
             registerModuleData(KtModuleBasedModuleData(sourceModule).apply { bindSession(this@session) })
             registerIdeComponents(project)
             register(FirPhaseManager::class, FirPhaseCheckingPhaseManager)
@@ -204,14 +206,14 @@ internal object FirIdeSessionFactory {
             )
             val symbolProvider =
                 FirCompositeSymbolProvider(this, listOf(classFileBasedSymbolProvider, builtinsAndCloneableSession.symbolProvider))
-            register(FirProvider::class, FirIdeLibrariesSessionProvider(symbolProvider))
+            register(FirProvider::class, LLFirLibrariesSessionProvider(symbolProvider))
             register(FirSymbolProvider::class, symbolProvider)
             register(FirJvmTypeMapper::class, FirJvmTypeMapper(this))
             configureSession?.invoke(this)
         }
     }
 
-    private fun createModuleDataProvider(sourceModule: KtSourceModule, session: FirIdeSession): ModuleDataProvider {
+    private fun createModuleDataProvider(sourceModule: KtModule, session: LLFirSession): ModuleDataProvider {
         val dependencyList = DependencyListForCliModule.build(
             Name.special("<${sourceModule.moduleDescription}>"),
             sourceModule.platform,
@@ -230,9 +232,9 @@ internal object FirIdeSessionFactory {
         project: Project,
         builtinTypes: BuiltinTypes,
         languageVersionSettings: LanguageVersionSettings = LanguageVersionSettingsImpl.DEFAULT,
-        configureSession: (FirIdeSession.() -> Unit)? = null,
-    ): FirIdeBuiltinsAndCloneableSession {
-        return FirIdeBuiltinsAndCloneableSession(project, builtinTypes).apply session@{
+        configureSession: (LLFirSession.() -> Unit)? = null,
+    ): LLFirBuiltinsAndCloneableSession {
+        return LLFirBuiltinsAndCloneableSession(project, builtinTypes).apply session@{
             val moduleData = FirModuleDataImpl(
                 Name.special("<builtins module>"),
                 emptyList(),
@@ -253,18 +255,125 @@ internal object FirIdeSessionFactory {
             val symbolProvider = FirCompositeSymbolProvider(
                 this,
                 listOf(
-                    FirIdeBuiltinSymbolProvider(this, moduleData, kotlinScopeProvider),
+                    LLFirBuiltinSymbolProvider(this, moduleData, kotlinScopeProvider),
                     FirCloneableSymbolProvider(this, moduleData, kotlinScopeProvider),
                 )
             )
             register(FirSymbolProvider::class, symbolProvider)
-            register(FirProvider::class, FirIdeBuiltinsAndCloneableSessionProvider(symbolProvider))
+            register(FirProvider::class, LLFirBuiltinsAndCloneableSessionProvider(symbolProvider))
             register(FirJvmTypeMapper::class, FirJvmTypeMapper(this))
             configureSession?.invoke(this)
         }
     }
 
-    private fun FirIdeSession.registerIdeComponents(project: Project) {
+    fun creatLibraryOrLibrarySourceResolvableSession(
+        project: Project,
+        module: KtModule,
+        builtinsAndCloneableSession: LLFirBuiltinsAndCloneableSession,
+        firPhaseRunner: LLFirPhaseRunner,
+        sessionInvalidator: LLFirSessionInvalidator,
+        builtinTypes: BuiltinTypes,
+        sessionsCache: MutableMap<KtModule, LLFirResolvableModuleSession>,
+        languageVersionSettings: LanguageVersionSettings = LanguageVersionSettingsImpl.DEFAULT,
+        configureSession: (LLFirSession.() -> Unit)? = null
+    ): LLFirLibraryOrLibrarySourceResolvableModuleSession {
+        LLFirLibraryOrLibrarySourceResolvableModuleSession.checkIsValidKtModule(module)
+        sessionsCache[module]?.let { return it as LLFirLibraryOrLibrarySourceResolvableModuleSession }
+        checkCanceled()
+
+        val libraryModule = when (module) {
+            is KtLibraryModule -> module
+            is KtLibrarySourceModule -> module.binaryLibrary
+            else -> error("Unexpected module ${module::class.simpleName}")
+        }
+
+
+        val scopeProvider = FirKotlinScopeProvider()
+        val firFileBuilder = FirFileBuilder(scopeProvider, firPhaseRunner)
+        val contentScope = module.contentScope
+        val session = LLFirLibraryOrLibrarySourceResolvableModuleSession(module, project, firFileBuilder, builtinTypes)
+        sessionsCache[module] = session
+
+        return session.apply session@{
+            val moduleData = KtModuleBasedModuleData(module).apply { bindSession(this@session) }
+            registerModuleData(moduleData)
+            register(FirKotlinScopeProvider::class, scopeProvider)
+
+            val cache = ModuleFileCacheImpl(this)
+            val firPhaseManager = LLFirPhaseManager(FirLazyDeclarationResolver(firFileBuilder), cache, sessionInvalidator)
+
+            registerIdeComponents(project)
+            registerCommonComponents(languageVersionSettings)
+            registerCommonJavaComponents(JavaModuleResolver.getInstance(project))
+            registerResolveComponents()
+
+            val provider = LLFirProvider(
+                project,
+                this,
+                module,
+                scopeProvider,
+                firFileBuilder,
+                cache,
+                project.createDeclarationProvider(contentScope),
+                project.createPackageProvider(contentScope),
+            )
+
+            register(FirProvider::class, provider)
+            register(LLFirProvider::class, provider)
+
+            register(FirPhaseManager::class, firPhaseManager)
+            val dependentProviders = buildList {
+                val librariesSearchScope = ProjectScope.getLibrariesScope(project)
+                    .intersectWith(GlobalSearchScope.notScope(libraryModule.contentScope)) // <all libraries scope> - <current library scope>
+                add(builtinsAndCloneableSession.symbolProvider)
+                add(
+                    JvmClassFileBasedSymbolProvider(
+                        this@session,
+                        moduleDataProvider = createModuleDataProvider(module, this@session),
+                        kotlinScopeProvider = scopeProvider,
+                        packagePartProvider = project.createPackagePartProviderForLibrary(librariesSearchScope),
+                        kotlinClassFinder = VirtualFileFinderFactory.getInstance(project).create(librariesSearchScope),
+                        javaFacade = FirJavaFacade(
+                            this@session, moduleData, project.createJavaClassFinder(librariesSearchScope)
+                        )
+                    )
+                )
+            }
+
+            val dependencyProvider = DependentModuleProviders(this, dependentProviders)
+
+            register(
+                FirSymbolProvider::class,
+                LLFirModuleWithDependenciesSymbolProvider(
+                    this,
+                    providers = listOf(
+                        provider.symbolProvider,
+                        JavaSymbolProvider(
+                            this,
+                            FirJavaFacade(
+                                this, moduleData, project.createJavaClassFinder(contentScope)
+                            )
+                        ),
+                    ),
+                    dependencyProvider
+                )
+            )
+
+            register(FirDependenciesSymbolProvider::class, dependencyProvider)
+            register(FirJvmTypeMapper::class, FirJvmTypeMapper(this))
+
+            registerJavaSpecificResolveComponents()
+            FirSessionFactory.FirSessionConfigurator(this).apply {
+                for (extensionRegistrar in FirExtensionRegistrar.getInstances(project)) {
+                    registerExtensions(extensionRegistrar.configure())
+                }
+            }.configure()
+            configureSession?.invoke(this)
+        }
+
+    }
+
+    private fun LLFirSession.registerIdeComponents(project: Project) {
         register(IdeSessionComponents::class, IdeSessionComponents.create(this))
         register(FirCachesFactory::class, FirThreadSafeCachesFactory)
         register(SealedClassInheritorsProvider::class, project.createSealedInheritorsProvider())
