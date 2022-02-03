@@ -274,17 +274,17 @@ interface ConeInferenceContext : TypeSystemInferenceExtensionContext, ConeTypeCo
 
     override fun KotlinTypeMarker.removeAnnotations(): KotlinTypeMarker {
         require(this is ConeKotlinType)
-        return withAttributes(ConeAttributes.Empty, this@ConeInferenceContext)
+        return withAttributes(ConeAttributes.Empty)
     }
 
     override fun SimpleTypeMarker.replaceArguments(newArguments: List<TypeArgumentMarker>): SimpleTypeMarker {
         require(this is ConeKotlinType)
-        return this.withArguments(newArguments.cast<List<ConeTypeProjection>>().toTypedArray(), this@ConeInferenceContext)
+        return this.withArguments(newArguments.cast<List<ConeTypeProjection>>().toTypedArray())
     }
 
     override fun SimpleTypeMarker.replaceArguments(replacement: (TypeArgumentMarker) -> TypeArgumentMarker): SimpleTypeMarker {
         require(this is ConeKotlinType)
-        return this.withArguments({ replacement(it).cast() }, this@ConeInferenceContext)
+        return this.withArguments { replacement(it) as ConeTypeProjection }
     }
 
     override fun KotlinTypeMarker.hasExactAnnotation(): Boolean {
@@ -324,7 +324,7 @@ interface ConeInferenceContext : TypeSystemInferenceExtensionContext, ConeTypeCo
 
     override fun DefinitelyNotNullTypeMarker.original(): SimpleTypeMarker {
         require(this is ConeDefinitelyNotNullType)
-        return this.original as SimpleTypeMarker
+        return this.original
     }
 
     override fun typeSubstitutorByTypeConstructor(map: Map<TypeConstructorMarker, KotlinTypeMarker>): ConeSubstitutor {
@@ -387,7 +387,7 @@ interface ConeInferenceContext : TypeSystemInferenceExtensionContext, ConeTypeCo
 
     override fun KotlinTypeMarker.removeExactAnnotation(): KotlinTypeMarker {
         require(this is ConeKotlinType)
-        return withAttributes(attributes.remove(CompilerConeAttributes.Exact), this@ConeInferenceContext)
+        return withAttributes(attributes.remove(CompilerConeAttributes.Exact))
     }
 
     override fun TypeConstructorMarker.toErrorType(): SimpleTypeMarker {
@@ -415,10 +415,7 @@ interface ConeInferenceContext : TypeSystemInferenceExtensionContext, ConeTypeCo
         @Suppress("UNCHECKED_CAST")
         val newCustomAttributes = (newAttributes as List<ConeAttribute<*>>).filter { it.isCustomAttribute() }
         val attributesToKeep = this.attributes.filterNot { it.isCustomAttribute() }
-        return withAttributes(
-            ConeAttributes.create(newCustomAttributes + attributesToKeep),
-            this@ConeInferenceContext
-        )
+        return withAttributes(ConeAttributes.create(newCustomAttributes + attributesToKeep))
     }
 
     override fun TypeConstructorMarker.getApproximatedIntegerLiteralType(): KotlinTypeMarker {

@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.IrTypeArgument
 import org.jetbrains.kotlin.ir.types.IrTypeProjection
+import org.jetbrains.kotlin.ir.types.impl.IrDefinitelyNotNullTypeImpl
 import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
 import org.jetbrains.kotlin.ir.types.impl.IrStarProjectionImpl
 import org.jetbrains.kotlin.ir.types.impl.makeTypeProjection
@@ -188,7 +189,7 @@ class Fir2IrTypeConverter(
                 }
             }
             is ConeDefinitelyNotNullType -> {
-                original.toIrType(typeContext.definitelyNotNull())
+                IrDefinitelyNotNullTypeImpl(null, original.toIrType(typeContext))
             }
             is ConeIntersectionType -> {
                 // TODO: add intersectionTypeApproximation
@@ -263,7 +264,7 @@ class Fir2IrTypeConverter(
         return classIdToSymbolMap[classId] ?: getArrayClassSymbol(classId)
     }
 
-    private fun approximateType(type: ConeKotlinType): ConeKotlinType {
+    private fun approximateType(type: ConeSimpleKotlinType): ConeKotlinType {
         if (type is ConeClassLikeType && type.typeArguments.isEmpty()) return type
         val substitutor = object : AbstractConeSubstitutor(session.typeContext) {
             override fun substituteType(type: ConeKotlinType): ConeKotlinType? {
