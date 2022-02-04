@@ -24,6 +24,8 @@ import org.jetbrains.kotlin.gradle.testbase.readAndCleanupTestResults
 import org.jetbrains.kotlin.gradle.testbase.addPluginManagementToSettings
 import org.jetbrains.kotlin.gradle.util.*
 import org.jetbrains.kotlin.gradle.util.modify
+import org.jetbrains.kotlin.konan.target.HostManager
+import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.test.RunnerWithMuteInDatabase
 import org.jetbrains.kotlin.test.util.trimTrailingWhitespaces
 import org.junit.After
@@ -418,10 +420,17 @@ abstract class BaseGradleIT {
     ) {
         val wrapperVersion = chooseWrapperVersionOrFinishTest()
 
-        val env = createEnvironmentVariablesMap(options)
+        // TODO: remove this when the minimal Gradle version is >= 6.9
+        val buildOptions = if (HostManager.host == KonanTarget.MACOS_ARM64) {
+            val minSupportedMacAArch64Version = GradleVersion.version("6.9")
+            val withDaemon = (GradleVersion.version(wrapperVersion) >= minSupportedMacAArch64Version)
+            options.copy(withDaemon = withDaemon && options.withDaemon)
+        } else options
+
+        val env = createEnvironmentVariablesMap(buildOptions)
         val wrapperDir = prepareWrapper(wrapperVersion, env)
 
-        val cmd = createBuildCommand(wrapperDir, params, options)
+        val cmd = createBuildCommand(wrapperDir, params, buildOptions)
 
         if (!projectDir.exists()) {
             setupWorkingDir()
@@ -431,7 +440,7 @@ abstract class BaseGradleIT {
 
         var result: ProcessRunResult? = null
         try {
-            result = runProcess(cmd, projectDir, env, options)
+            result = runProcess(cmd, projectDir, env, buildOptions)
             CompiledProject(this, result.output, result.exitCode).check()
         } catch (t: Throwable) {
             println("<=== Test build: ${this.projectName} $cmd ===>")
@@ -860,7 +869,10 @@ Finished executing task ':$taskName'|
             }
         }
 
-        val actualTestResults = readAndCleanupTestResults(testReportDirs, projectDir.toPath())
+        val actualTestResults = readAndCleanupTestResults(testReportDirs, projectDir.toPath()) { s ->
+            val excl = "Invalid connection: com.apple.coresymbolicationd"
+            s.lines().filter { it != excl }.joinToString("\n")
+        }
         val expectedTestResults = prettyPrintXml(resourcesRootFile.resolve(assertionFileName).readText())
 
         assertEquals(expectedTestResults, actualTestResults)
