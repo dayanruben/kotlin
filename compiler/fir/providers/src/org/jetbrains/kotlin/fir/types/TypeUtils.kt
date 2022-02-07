@@ -96,7 +96,7 @@ fun <T : ConeKotlinType> T.withArguments(arguments: Array<out ConeTypeProjection
 
     @Suppress("UNCHECKED_CAST")
     return when (this) {
-        is ConeClassErrorType -> this
+        is ConeErrorType -> this
         is ConeClassLikeTypeImpl -> ConeClassLikeTypeImpl(lookupTag, arguments, nullability.isNullable) as T
         is ConeDefinitelyNotNullType -> ConeDefinitelyNotNullType(original.withArguments(arguments)) as T
         else -> error("Not supported: $this: ${this.render()}")
@@ -113,7 +113,7 @@ fun <T : ConeKotlinType> T.withAttributes(attributes: ConeAttributes): T {
 
     @Suppress("UNCHECKED_CAST")
     return when (this) {
-        is ConeClassErrorType -> this
+        is ConeErrorType -> this
         is ConeClassLikeTypeImpl -> ConeClassLikeTypeImpl(lookupTag, typeArguments, nullability.isNullable, attributes)
         is ConeDefinitelyNotNullType -> ConeDefinitelyNotNullType(original.withAttributes(attributes))
         is ConeTypeParameterTypeImpl -> ConeTypeParameterTypeImpl(lookupTag, nullability.isNullable, attributes)
@@ -143,7 +143,7 @@ fun <T : ConeKotlinType> T.withNullability(
 
     @Suppress("UNCHECKED_CAST")
     return when (this) {
-        is ConeClassErrorType -> this
+        is ConeErrorType -> this
         is ConeClassLikeTypeImpl -> ConeClassLikeTypeImpl(lookupTag, typeArguments, nullability.isNullable, attributes)
         is ConeTypeParameterTypeImpl -> ConeTypeParameterTypeImpl(lookupTag, nullability.isNullable, attributes)
         is ConeFlexibleType -> {
@@ -175,7 +175,8 @@ fun <T : ConeKotlinType> T.withNullability(
             ConeNullability.NULLABLE -> original.withNullability(nullability, typeContext)
             ConeNullability.UNKNOWN -> original.withNullability(nullability, typeContext)
         }
-        is ConeIntegerLiteralType -> ConeIntegerLiteralTypeImpl(value, isUnsigned, nullability)
+        is ConeIntegerLiteralConstantType -> ConeIntegerLiteralConstantTypeImpl(value, possibleTypes, isUnsigned, nullability)
+        is ConeIntegerConstantOperatorType -> ConeIntegerConstantOperatorTypeImpl(isUnsigned, nullability)
         else -> error("sealed: ${this::class}")
     } as T
 }
@@ -223,7 +224,7 @@ fun ConeKotlinType.toFirResolvedTypeRef(
     source: KtSourceElement? = null,
     delegatedTypeRef: FirTypeRef? = null
 ): FirResolvedTypeRef {
-    return if (this is ConeKotlinErrorType) {
+    return if (this is ConeErrorType) {
         buildErrorTypeRef {
             this.source = source
             diagnostic = this@toFirResolvedTypeRef.diagnostic
@@ -282,7 +283,7 @@ fun FirTypeRef.withReplacedConeType(
         else
             this.source
 
-    return if (newType is ConeKotlinErrorType) {
+    return if (newType is ConeErrorType) {
         buildErrorTypeRef {
             source = newSource
             type = newType

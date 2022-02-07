@@ -2647,6 +2647,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             }
 
             @Test
+            @TestMetadata("callableReferenceWithMostSpecificGenericTypeParameter.kt")
+            public void testCallableReferenceWithMostSpecificGenericTypeParameter() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/callableReference/callableReferenceWithMostSpecificGenericTypeParameter.kt");
+            }
+
+            @Test
             @TestMetadata("classVsPackage.kt")
             public void testClassVsPackage() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/callableReference/classVsPackage.kt");
@@ -5037,6 +5043,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
                 @TestMetadata("integers.kt")
                 public void testIntegers() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/constantEvaluator/constant/integers.kt");
+                }
+
+                @Test
+                @TestMetadata("invAsCompileTimeCall.kt")
+                public void testInvAsCompileTimeCall() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/constantEvaluator/constant/invAsCompileTimeCall.kt");
                 }
 
                 @Test
@@ -14804,6 +14816,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
                 }
 
                 @Test
+                @TestMetadata("inferLabeledElementTypeForLambdaInReturnInCatch.kt")
+                public void testInferLabeledElementTypeForLambdaInReturnInCatch() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/completion/inferLabeledElementTypeForLambdaInReturnInCatch.kt");
+                }
+
+                @Test
                 @TestMetadata("intersectionType.kt")
                 public void testIntersectionType() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/completion/intersectionType.kt");
@@ -17478,6 +17496,34 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
         }
 
         @Nested
+        @TestMetadata("compiler/testData/diagnostics/tests/integerLiterals")
+        @TestDataPath("$PROJECT_ROOT")
+        public class IntegerLiterals {
+            @Test
+            public void testAllFilesPresentInIntegerLiterals() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/integerLiterals"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
+            }
+
+            @Test
+            @TestMetadata("constantUnaryOperators.kt")
+            public void testConstantUnaryOperators() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/integerLiterals/constantUnaryOperators.kt");
+            }
+
+            @Test
+            @TestMetadata("intToLongConversion.kt")
+            public void testIntToLongConversion() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/integerLiterals/intToLongConversion.kt");
+            }
+
+            @Test
+            @TestMetadata("literalsInInference.kt")
+            public void testLiteralsInInference() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/integerLiterals/literalsInInference.kt");
+            }
+        }
+
+        @Nested
         @TestMetadata("compiler/testData/diagnostics/tests/j+k")
         @TestDataPath("$PROJECT_ROOT")
         public class J_k {
@@ -19590,6 +19636,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             @TestMetadata("redundantElseInWhen.kt")
             public void testRedundantElseInWhen() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/multimodule/redundantElseInWhen.kt");
+            }
+
+            @Test
+            @TestMetadata("samWithSuspendFunctionFromAnotherModule.kt")
+            public void testSamWithSuspendFunctionFromAnotherModule() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multimodule/samWithSuspendFunctionFromAnotherModule.kt");
             }
 
             @Test

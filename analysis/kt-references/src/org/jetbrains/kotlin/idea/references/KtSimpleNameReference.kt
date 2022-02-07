@@ -1,11 +1,10 @@
 /*
- * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.idea.references
 
-import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -17,7 +16,14 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 
 abstract class KtSimpleNameReference(expression: KtSimpleNameExpression) : KtSimpleReference<KtSimpleNameExpression>(expression) {
-    protected abstract fun doCanBeReferenceTo(candidateTarget: PsiElement): Boolean
+    // Extension point used by deprecated android extensions.
+    abstract fun isReferenceToViaExtension(element: PsiElement): Boolean
+
+    override fun isReferenceTo(candidateTarget: PsiElement): Boolean {
+        if (!canBeReferenceTo(candidateTarget)) return false
+        if (isReferenceToViaExtension(candidateTarget)) return true
+        return super.isReferenceTo(candidateTarget)
+    }
 
     override fun getRangeInElement(): TextRange {
         val element = element.getReferencedNameElement()

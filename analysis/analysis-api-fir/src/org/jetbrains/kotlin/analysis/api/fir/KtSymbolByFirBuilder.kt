@@ -106,10 +106,13 @@ internal class KtSymbolByFirBuilder private constructor(
         buildSymbol(fir.symbol)
 
     fun buildSymbol(firSymbol: FirBasedSymbol<*>): KtSymbol {
+        assertIsValidAndAccessible()
+
         return when (firSymbol) {
             is FirClassLikeSymbol<*> -> classifierBuilder.buildClassLikeSymbol(firSymbol)
             is FirTypeParameterSymbol -> classifierBuilder.buildTypeParameterSymbol(firSymbol)
             is FirCallableSymbol<*> -> callableBuilder.buildCallableSymbol(firSymbol)
+            is FirFileSymbol -> buildFileSymbol(firSymbol)
             else -> throwUnexpectedElementError(firSymbol)
         }
     }
@@ -428,12 +431,13 @@ internal class KtSymbolByFirBuilder private constructor(
                         else KtFirUsualClassType(coneType, token, this@KtSymbolByFirBuilder)
                     }
                     is ConeTypeParameterType -> KtFirTypeParameterType(coneType, token, this@KtSymbolByFirBuilder)
-                    is ConeClassErrorType -> KtFirClassErrorType(coneType, token, this@KtSymbolByFirBuilder)
+                    is ConeErrorType -> KtFirClassErrorType(coneType, token, this@KtSymbolByFirBuilder)
                     is ConeFlexibleType -> KtFirFlexibleType(coneType, token, this@KtSymbolByFirBuilder)
                     is ConeIntersectionType -> KtFirIntersectionType(coneType, token, this@KtSymbolByFirBuilder)
                     is ConeDefinitelyNotNullType -> KtFirDefinitelyNotNullType(coneType, token, this@KtSymbolByFirBuilder)
                     is ConeCapturedType -> KtFirCapturedType(coneType, token, this@KtSymbolByFirBuilder)
-                    is ConeIntegerLiteralType -> KtFirIntegerLiteralType(coneType, token, this@KtSymbolByFirBuilder)
+                    is ConeIntegerLiteralConstantType -> KtFirIntegerLiteralType(coneType, token, this@KtSymbolByFirBuilder)
+                    is ConeIntegerConstantOperatorType -> buildKtType(coneType.getApproximatedType())
                     is ConeStubTypeForChainInference -> {
                         // TODO this is a temporary hack to prevent FIR IDE from crashing on builder inference, see KT-50916
                         val typeVariable = coneType.constructor.variable as? ConeTypeParameterBasedTypeVariable

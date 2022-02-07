@@ -23,12 +23,15 @@ import org.jetbrains.kotlin.fir.references.builder.buildSimpleNamedReference
 import org.jetbrains.kotlin.fir.references.impl.FirSimpleNamedReference
 import org.jetbrains.kotlin.fir.resolve.*
 import org.jetbrains.kotlin.fir.resolve.calls.*
+import org.jetbrains.kotlin.fir.resolve.dfa.coneType
 import org.jetbrains.kotlin.fir.resolve.dfa.unwrapSmartcastExpression
 import org.jetbrains.kotlin.fir.resolve.diagnostics.*
 import org.jetbrains.kotlin.fir.resolve.inference.FirStubInferenceSession
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.resolve.transformers.InvocationKindTransformer
 import org.jetbrains.kotlin.fir.resolve.transformers.StoreReceiver
+import org.jetbrains.kotlin.fir.scopes.impl.isWrappedIntegerOperator
+import org.jetbrains.kotlin.fir.scopes.impl.isWrappedIntegerOperatorForUnsignedType
 import org.jetbrains.kotlin.fir.symbols.impl.FirVariableSymbol
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.builder.buildErrorTypeRef
@@ -373,14 +376,63 @@ open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransform
             } catch (e: Throwable) {
                 throw RuntimeException("While resolving call ${functionCall.render()}", e)
             }
-
-        dataFlowAnalyzer.exitFunctionCall(completeInference, callCompleted)
+        val result = completeInference.transformToIntegerOperatorCallOrApproximateItIfNeeded(data)
+        dataFlowAnalyzer.exitFunctionCall(result, callCompleted)
         if (callCompleted) {
             if (enableArrayOfCallTransformation) {
-                return arrayOfCallTransformer.transformFunctionCall(completeInference, null)
+                return arrayOfCallTransformer.transformFunctionCall(result, null)
             }
         }
-        return completeInference
+        return result
+    }
+
+    private fun FirFunctionCall.transformToIntegerOperatorCallOrApproximateItIfNeeded(resolutionMode: ResolutionMode): FirFunctionCall {
+        if (!explicitReceiver.isIntegerLiteralOrOperatorCall()) return this
+        val resolvedSymbol = when (val reference = calleeReference) {
+            is FirResolvedNamedReference -> reference.resolvedSymbol
+            is FirErrorNamedReference -> reference.candidateSymbol
+            else -> null
+        } ?: return this
+        if (!resolvedSymbol.isWrappedIntegerOperator()) return this
+
+        val arguments = this.argumentList.arguments
+        val argument = when (arguments.size) {
+            0 -> null
+            1 -> arguments.first()
+            else -> return this
+        }
+        assert(argument?.isIntegerLiteralOrOperatorCall() != false)
+
+        val originalCall = this
+
+        val integerOperatorType = ConeIntegerConstantOperatorTypeImpl(
+            isUnsigned = resolvedSymbol.isWrappedIntegerOperatorForUnsignedType(),
+            ConeNullability.NOT_NULL
+        )
+
+        val approximationIsNeeded = resolutionMode !is ResolutionMode.ReceiverResolution && resolutionMode !is ResolutionMode.ContextDependent
+
+        val integerOperatorCall = buildIntegerLiteralOperatorCall {
+            source = originalCall.source
+            typeRef = originalCall.typeRef.resolvedTypeFromPrototype(integerOperatorType)
+            annotations.addAll(originalCall.annotations)
+            typeArguments.addAll(originalCall.typeArguments)
+            calleeReference = originalCall.calleeReference
+            origin = originalCall.origin
+            argumentList = originalCall.argumentList
+            explicitReceiver = originalCall.explicitReceiver
+            dispatchReceiver = originalCall.dispatchReceiver
+            extensionReceiver = originalCall.extensionReceiver
+        }
+
+        return if (approximationIsNeeded) {
+            integerOperatorCall.transformSingle<FirFunctionCall, ConeKotlinType?>(
+                components.integerLiteralAndOperatorApproximationTransformer,
+                resolutionMode.expectedType?.coneTypeSafe()
+            )
+        } else {
+            integerOperatorCall
+        }
     }
 
     override fun transformBlock(block: FirBlock, data: ResolutionMode): FirStatement {
@@ -906,17 +958,31 @@ open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransform
 
         val type = when (val kind = constExpression.kind) {
             ConstantValueKind.IntegerLiteral, ConstantValueKind.UnsignedIntegerLiteral -> {
-                val integerLiteralType =
-                    ConeIntegerLiteralTypeImpl(constExpression.value as Long, isUnsigned = kind == ConstantValueKind.UnsignedIntegerLiteral)
-                if (data.expectedType != null) {
-                    val coneType = data.expectedType?.coneTypeSafe<ConeKotlinType>()?.fullyExpandedType(session)
-                    val approximatedType = integerLiteralType.getApproximatedType(coneType)
-                    val newConstKind = approximatedType.toConstKind()
-                    @Suppress("UNCHECKED_CAST")
-                    constExpression.replaceKind(newConstKind as ConstantValueKind<T>)
-                    approximatedType
-                } else {
-                    integerLiteralType
+                val expressionType = ConeIntegerLiteralConstantTypeImpl.create(
+                    constExpression.value as Long,
+                    isUnsigned = kind == ConstantValueKind.UnsignedIntegerLiteral
+                )
+                val expectedTypeRef = data.expectedType
+                @Suppress("UNCHECKED_CAST")
+                when {
+                    expressionType is ConeClassLikeType -> {
+                        constExpression.replaceKind(expressionType.toConstKind() as ConstantValueKind<T>)
+                        expressionType
+                    }
+                    data is ResolutionMode.ReceiverResolution -> {
+                        require(expressionType is ConeIntegerLiteralConstantTypeImpl)
+                        ConeIntegerConstantOperatorTypeImpl(expressionType.isUnsigned, ConeNullability.NOT_NULL)
+                    }
+                    expectedTypeRef != null -> {
+                        require(expressionType is ConeIntegerLiteralConstantTypeImpl)
+                        val coneType = expectedTypeRef.coneTypeSafe<ConeKotlinType>()?.fullyExpandedType(session)
+                        val approximatedType= expressionType.getApproximatedType(coneType)
+                        constExpression.replaceKind(approximatedType.toConstKind() as ConstantValueKind<T>)
+                        approximatedType
+                    }
+                    else -> {
+                        expressionType
+                    }
                 }
             }
             else -> kind.expectedConeType(session)
@@ -991,17 +1057,13 @@ open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransform
             }
 
             val reference = delegatedConstructorCall.calleeReference
-            val constructorType: ConeClassLikeType = when (reference) {
-                is FirThisReference -> {
-                    lastDispatchReceiver?.type as? ConeClassLikeType ?: return delegatedConstructorCall
-                }
-                is FirSuperReference -> {
-                    // TODO: unresolved supertype
-                    val supertype = reference.superTypeRef.coneTypeSafe<ConeClassLikeType>()
-                        ?.takeIf { it !is ConeClassErrorType } ?: return delegatedConstructorCall
-                    supertype.fullyExpandedType(session)
-                }
-                else -> return delegatedConstructorCall
+            val constructorType: ConeClassLikeType? = when (reference) {
+                is FirThisReference -> lastDispatchReceiver?.type as? ConeClassLikeType
+                is FirSuperReference -> reference.superTypeRef
+                    .coneTypeSafe<ConeClassLikeType>()
+                    ?.takeIf { it !is ConeErrorType }
+                    ?.fullyExpandedType(session)
+                else -> null
             }
 
             val resolvedCall = callResolver.resolveDelegatingConstructorCall(delegatedConstructorCall, constructorType)

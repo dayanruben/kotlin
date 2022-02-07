@@ -3,65 +3,49 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-package org.jetbrains.kotlin.fir.scopes.impl
+package org.jetbrains.kotlin.fir.expressions.builder
 
+import kotlin.contracts.*
 import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.fir.FirImplementationDetail
 import org.jetbrains.kotlin.fir.builder.FirAnnotationContainerBuilder
 import org.jetbrains.kotlin.fir.builder.FirBuilderDsl
 import org.jetbrains.kotlin.fir.expressions.FirAnnotation
 import org.jetbrains.kotlin.fir.expressions.FirArgumentList
+import org.jetbrains.kotlin.fir.expressions.FirEmptyArgumentList
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.FirFunctionCallOrigin
-import org.jetbrains.kotlin.fir.expressions.builder.FirCallBuilder
+import org.jetbrains.kotlin.fir.expressions.FirIntegerLiteralOperatorCall
+import org.jetbrains.kotlin.fir.expressions.builder.FirAbstractFunctionCallBuilder
 import org.jetbrains.kotlin.fir.expressions.builder.FirExpressionBuilder
-import org.jetbrains.kotlin.fir.expressions.builder.FirQualifiedAccessBuilder
-import org.jetbrains.kotlin.fir.expressions.impl.FirFunctionCallImpl
+import org.jetbrains.kotlin.fir.expressions.impl.FirIntegerLiteralOperatorCallImpl
 import org.jetbrains.kotlin.fir.expressions.impl.FirNoReceiverExpression
 import org.jetbrains.kotlin.fir.references.FirNamedReference
+import org.jetbrains.kotlin.fir.references.FirReference
 import org.jetbrains.kotlin.fir.types.FirTypeProjection
 import org.jetbrains.kotlin.fir.types.FirTypeRef
-import org.jetbrains.kotlin.fir.types.builder.buildImplicitTypeRef
+import org.jetbrains.kotlin.fir.visitors.*
 
-@OptIn(FirImplementationDetail::class)
-class FirIntegerOperatorCall @FirImplementationDetail constructor(
-    source: KtSourceElement?,
-    typeRef: FirTypeRef,
-    annotations: MutableList<FirAnnotation>,
-    typeArguments: MutableList<FirTypeProjection>,
-    explicitReceiver: FirExpression?,
-    dispatchReceiver: FirExpression,
-    extensionReceiver: FirExpression,
-    argumentList: FirArgumentList,
-    calleeReference: FirNamedReference,
-) : FirFunctionCallImpl(
-    source,
-    typeRef,
-    annotations,
-    typeArguments,
-    explicitReceiver,
-    dispatchReceiver,
-    extensionReceiver,
-    argumentList,
-    calleeReference,
-    FirFunctionCallOrigin.Operator
-)
+/*
+ * This file was generated automatically
+ * DO NOT MODIFY IT MANUALLY
+ */
 
 @FirBuilderDsl
-class FirIntegerOperatorCallBuilder : FirQualifiedAccessBuilder, FirCallBuilder, FirAnnotationContainerBuilder, FirExpressionBuilder {
+open class FirIntegerLiteralOperatorCallBuilder : FirAbstractFunctionCallBuilder, FirAnnotationContainerBuilder, FirExpressionBuilder {
     override var source: KtSourceElement? = null
-    override var typeRef: FirTypeRef = buildImplicitTypeRef()
+    override lateinit var typeRef: FirTypeRef
     override val annotations: MutableList<FirAnnotation> = mutableListOf()
     override val typeArguments: MutableList<FirTypeProjection> = mutableListOf()
     override var explicitReceiver: FirExpression? = null
     override var dispatchReceiver: FirExpression = FirNoReceiverExpression
     override var extensionReceiver: FirExpression = FirNoReceiverExpression
-    lateinit var calleeReference: FirNamedReference
-    override lateinit var argumentList: FirArgumentList
+    override var argumentList: FirArgumentList = FirEmptyArgumentList
+    override lateinit var calleeReference: FirNamedReference
+    override lateinit var origin: FirFunctionCallOrigin
 
-    @OptIn(FirImplementationDetail::class)
-    override fun build(): FirIntegerOperatorCall {
-        return FirIntegerOperatorCall(
+    override fun build(): FirIntegerLiteralOperatorCall {
+        return FirIntegerLiteralOperatorCallImpl(
             source,
             typeRef,
             annotations,
@@ -71,11 +55,16 @@ class FirIntegerOperatorCallBuilder : FirQualifiedAccessBuilder, FirCallBuilder,
             extensionReceiver,
             argumentList,
             calleeReference,
+            origin,
         )
     }
 
 }
 
-inline fun buildIntegerOperatorFunctionCall(init: FirIntegerOperatorCallBuilder.() -> Unit): FirIntegerOperatorCall {
-    return FirIntegerOperatorCallBuilder().apply(init).build()
+@OptIn(ExperimentalContracts::class)
+inline fun buildIntegerLiteralOperatorCall(init: FirIntegerLiteralOperatorCallBuilder.() -> Unit): FirIntegerLiteralOperatorCall {
+    contract {
+        callsInPlace(init, kotlin.contracts.InvocationKind.EXACTLY_ONCE)
+    }
+    return FirIntegerLiteralOperatorCallBuilder().apply(init).build()
 }
