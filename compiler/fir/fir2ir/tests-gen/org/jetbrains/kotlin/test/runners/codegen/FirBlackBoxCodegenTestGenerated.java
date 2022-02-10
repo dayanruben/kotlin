@@ -15341,6 +15341,34 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
     }
 
     @Nested
+    @TestMetadata("compiler/testData/codegen/box/differentDependencyVersion")
+    @TestDataPath("$PROJECT_ROOT")
+    public class DifferentDependencyVersion {
+        @Test
+        public void testAllFilesPresentInDifferentDependencyVersion() throws Exception {
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/differentDependencyVersion"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+        }
+
+        @Test
+        @TestMetadata("kt51194_java.kt")
+        public void testKt51194_java() throws Exception {
+            runTest("compiler/testData/codegen/box/differentDependencyVersion/kt51194_java.kt");
+        }
+
+        @Test
+        @TestMetadata("kt51194_javaAndKotlin.kt")
+        public void testKt51194_javaAndKotlin() throws Exception {
+            runTest("compiler/testData/codegen/box/differentDependencyVersion/kt51194_javaAndKotlin.kt");
+        }
+
+        @Test
+        @TestMetadata("kt51194_kotlin.kt")
+        public void testKt51194_kotlin() throws Exception {
+            runTest("compiler/testData/codegen/box/differentDependencyVersion/kt51194_kotlin.kt");
+        }
+    }
+
+    @Nested
     @TestMetadata("compiler/testData/codegen/box/directInvokeOptimization")
     @TestDataPath("$PROJECT_ROOT")
     public class DirectInvokeOptimization {
@@ -28552,6 +28580,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
             @TestMetadata("kt23739.kt")
             public void testKt23739() throws Exception {
                 runTest("compiler/testData/codegen/box/multiplatform/defaultArguments/kt23739.kt");
+            }
+
+            @Test
+            @TestMetadata("nestedEnumEntryValue.kt")
+            public void testNestedEnumEntryValue() throws Exception {
+                runTest("compiler/testData/codegen/box/multiplatform/defaultArguments/nestedEnumEntryValue.kt");
             }
 
             @Test

@@ -3,18 +3,26 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-package org.jetbrains.kotlin.analysis.api.impl.base.test.utils.libraries
+package org.jetbrains.kotlin.analysis.api.impl.base.util
 
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.jar.CoreJarFileSystem
+import com.intellij.util.io.URLUtil.JAR_SEPARATOR
 import java.nio.file.Path
-import kotlin.io.path.absolutePathString
 
-object TestLibraryUtils {
-    fun getAllVirtualFilesFromJar(jar: Path): Collection<VirtualFile> {
-        val jarFileSystem = CoreJarFileSystem()
-        val root = jarFileSystem.refreshAndFindFileByPath(jar.absolutePathString() + "!/")!!
+object LibraryUtils {
+    /**
+     * Get all [VirtualFile]s inside the given [jar] (of [Path])
+     *
+     * Note that, if [CoreJarFileSystem] is not given, a fresh instance will be used, which will create fresh instances of [VirtualFile],
+     *   resulting in potential hash mismatch (e.g., if used in scope membership check).
+     */
+    fun getAllVirtualFilesFromJar(
+        jar: Path,
+        jarFileSystem: CoreJarFileSystem = CoreJarFileSystem(),
+    ): Collection<VirtualFile> {
+        val root = jarFileSystem.refreshAndFindFileByPath(jar.toAbsolutePath().toString() + JAR_SEPARATOR)!!
 
         val files = mutableSetOf<VirtualFile>()
         VfsUtilCore.iterateChildrenRecursively(

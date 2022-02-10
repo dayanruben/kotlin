@@ -12741,6 +12741,18 @@ public class ExternalTestGenerated extends AbstractExternalNativeBlackBoxTest {
         }
 
         @Nested
+        @TestMetadata("compiler/testData/codegen/box/differentDependencyVersion")
+        @TestDataPath("$PROJECT_ROOT")
+        @Tag("external")
+        @UseExtTestCaseGroupProvider()
+        public class DifferentDependencyVersion {
+            @Test
+            public void testAllFilesPresentInDifferentDependencyVersion() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/differentDependencyVersion"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+            }
+        }
+
+        @Nested
         @TestMetadata("compiler/testData/codegen/box/directInvokeOptimization")
         @TestDataPath("$PROJECT_ROOT")
         @Tag("external")
@@ -21907,6 +21919,12 @@ public class ExternalTestGenerated extends AbstractExternalNativeBlackBoxTest {
                 @TestMetadata("kt23739.kt")
                 public void testKt23739() throws Exception {
                     runTest("compiler/testData/codegen/box/multiplatform/defaultArguments/kt23739.kt");
+                }
+
+                @Test
+                @TestMetadata("nestedEnumEntryValue.kt")
+                public void testNestedEnumEntryValue() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/defaultArguments/nestedEnumEntryValue.kt");
                 }
 
                 @Test
