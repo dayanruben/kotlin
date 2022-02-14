@@ -19040,6 +19040,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         }
 
         @Test
+        @TestMetadata("kt51040.kt")
+        public void testKt51040() throws Exception {
+            runTest("compiler/testData/codegen/box/inference/kt51040.kt");
+        }
+
+        @Test
         @TestMetadata("lambdaWithStarReturn.kt")
         public void testLambdaWithStarReturn() throws Exception {
             runTest("compiler/testData/codegen/box/inference/lambdaWithStarReturn.kt");
@@ -20489,6 +20495,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         @TestMetadata("nullableWrapperEquality.kt")
         public void testNullableWrapperEquality() throws Exception {
             runTest("compiler/testData/codegen/box/inlineClasses/nullableWrapperEquality.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
+        }
+
+        @Test
+        @TestMetadata("overrideReturnNothing.kt")
+        public void testOverrideReturnNothing() throws Exception {
+            runTest("compiler/testData/codegen/box/inlineClasses/overrideReturnNothing.kt");
         }
 
         @Test
@@ -40825,6 +40837,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         @TestMetadata("kt51171.kt")
         public void testKt51171() throws Exception {
             runTest("compiler/testData/codegen/box/regressions/kt51171.kt");
+        }
+
+        @Test
+        @TestMetadata("kt51265.kt")
+        public void testKt51265() throws Exception {
+            runTest("compiler/testData/codegen/box/regressions/kt51265.kt");
         }
 
         @Test

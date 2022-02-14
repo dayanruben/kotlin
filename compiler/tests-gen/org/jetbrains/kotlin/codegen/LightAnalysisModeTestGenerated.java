@@ -15487,6 +15487,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/inference/kt47316.kt");
         }
 
+        @TestMetadata("kt51040.kt")
+        public void testKt51040() throws Exception {
+            runTest("compiler/testData/codegen/box/inference/kt51040.kt");
+        }
+
         @TestMetadata("lambdaWithStarReturn.kt")
         public void testLambdaWithStarReturn() throws Exception {
             runTest("compiler/testData/codegen/box/inference/lambdaWithStarReturn.kt");
@@ -16713,6 +16718,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("nullableWrapperEquality.kt")
         public void testNullableWrapperEquality() throws Exception {
             runTest("compiler/testData/codegen/box/inlineClasses/nullableWrapperEquality.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
+        }
+
+        @TestMetadata("overrideReturnNothing.kt")
+        public void testOverrideReturnNothing() throws Exception {
+            runTest("compiler/testData/codegen/box/inlineClasses/overrideReturnNothing.kt");
         }
 
         @TestMetadata("overridingFunCallingPrivateFun.kt")
@@ -32463,6 +32473,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("kt51171.kt")
         public void testKt51171() throws Exception {
             runTest("compiler/testData/codegen/box/regressions/kt51171.kt");
+        }
+
+        @TestMetadata("kt51265.kt")
+        public void testKt51265() throws Exception {
+            runTest("compiler/testData/codegen/box/regressions/kt51265.kt");
         }
 
         @TestMetadata("kt528.kt")
