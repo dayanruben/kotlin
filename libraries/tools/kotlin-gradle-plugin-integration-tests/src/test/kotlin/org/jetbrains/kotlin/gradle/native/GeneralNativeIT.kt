@@ -875,7 +875,7 @@ class GeneralNativeIT : BaseGradleIT() {
         }
 
         // Check that changing K/N version lead to tasks rerun
-        build(*compileTasksArray, "-Porg.jetbrains.kotlin.native.version=1.5.30") {
+        build(*compileTasksArray, "-Porg.jetbrains.kotlin.native.version=1.6.10") {
             assertSuccessful()
             assertTasksExecuted(compileTasks)
         }
@@ -1216,6 +1216,23 @@ class GeneralNativeIT : BaseGradleIT() {
             }
 
             assertTrue(customKonanDataDir.listFiles().isNullOrEmpty())
+        }
+    }
+
+    @Test
+    fun allowToOverrideDownloadUrl() {
+        with(transformNativeTestProjectWithPluginDsl("native-parallel")) {
+            gradleProperties().appendText(
+                """
+                
+                kotlin.native.reinstall=true
+                kotlin.native.distribution.baseDownloadUrl=https://non-existent.net
+                """.trimIndent()
+            )
+            build("build") {
+                assertFailed()
+                assertContains("Could not HEAD 'https://non-existent.net")
+            }
         }
     }
 
