@@ -120,7 +120,7 @@ rootProject.apply {
 IdeVersionConfigurator.setCurrentIde(project)
 
 if (!project.hasProperty("versions.kotlin-native")) {
-    extra["versions.kotlin-native"] = "1.7.0-dev-1132"
+    extra["versions.kotlin-native"] = "1.7.0-dev-1827"
 }
 
 
@@ -362,6 +362,7 @@ val projectsWithDisabledFirBootstrap = coreLibProjects + listOf(
 val gradlePluginProjects = listOf(
     ":kotlin-gradle-plugin",
     ":kotlin-gradle-plugin-api",
+    ":kotlin-gradle-plugin-idea",
     ":kotlin-gradle-plugin-kpm-android",
     ":kotlin-allopen",
     ":kotlin-annotation-processing-gradle",
