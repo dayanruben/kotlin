@@ -29,7 +29,7 @@ buildscript {
     dependencies {
         bootstrapCompilerClasspath(kotlin("compiler-embeddable", bootstrapKotlinVersion))
 
-        classpath("org.jetbrains.kotlin:kotlin-build-gradle-plugin:0.0.32")
+        classpath("org.jetbrains.kotlin:kotlin-build-gradle-plugin:0.0.35")
         classpath(kotlin("gradle-plugin", bootstrapKotlinVersion))
         classpath(kotlin("serialization", bootstrapKotlinVersion))
         classpath("org.jetbrains.dokka:dokka-gradle-plugin:0.9.17")
@@ -123,8 +123,8 @@ if (!project.hasProperty("versions.kotlin-native")) {
     extra["versions.kotlin-native"] = "1.7.0-dev-1827"
 }
 
-
 val useJvmFir by extra(project.kotlinBuildProperties.useFir)
+val renderDiagnosticNames by extra(project.kotlinBuildProperties.renderDiagnosticNames)
 
 val irCompilerModules = arrayOf(
     ":compiler:ir.tree",
@@ -259,6 +259,7 @@ extra["compilerModulesForJps"] = listOf(
     ":core:deserialization",
     ":core:deserialization.common",
     ":core:deserialization.common.jvm",
+    ":compiler:frontend.common.jvm",
     ":compiler:frontend.java",
     ":core:metadata",
     ":core:metadata.jvm",
@@ -500,6 +501,9 @@ allprojects {
             if (useJvmFir && this@allprojects.path !in projectsWithDisabledFirBootstrap) {
                 freeCompilerArgs += "-Xuse-fir"
                 freeCompilerArgs += "-Xabi-stability=stable"
+            }
+            if (renderDiagnosticNames) {
+                freeCompilerArgs += "-Xrender-internal-diagnostic-names"
             }
         }
     }

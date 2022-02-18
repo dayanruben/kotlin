@@ -16525,6 +16525,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
             }
 
             @Test
+            @TestMetadata("contextualInlineCall.kt")
+            public void testContextualInlineCall() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/contextualInlineCall.kt");
+            }
+
+            @Test
             @TestMetadata("delegatedPropertiesOperators.kt")
             public void testDelegatedPropertiesOperators() throws Exception {
                 runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/delegatedPropertiesOperators.kt");
@@ -16582,6 +16588,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
             @TestMetadata("simpleCall.kt")
             public void testSimpleCall() throws Exception {
                 runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/simpleCall.kt");
+            }
+
+            @Test
+            @TestMetadata("suspendContextualWithExtension.kt")
+            public void testSuspendContextualWithExtension() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/suspendContextualWithExtension.kt");
             }
 
             @Test
@@ -21149,6 +21161,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         @TestMetadata("kt51254.kt")
         public void testKt51254() throws Exception {
             runTest("compiler/testData/codegen/box/inlineClasses/kt51254.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
+        }
+
+        @Test
+        @TestMetadata("kt51353.kt")
+        public void testKt51353() throws Exception {
+            runTest("compiler/testData/codegen/box/inlineClasses/kt51353.kt");
         }
 
         @Test
@@ -30741,6 +30759,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         @TestMetadata("annotationsViaActualTypeAliasFromBinary.kt")
         public void testAnnotationsViaActualTypeAliasFromBinary() throws Exception {
             runTest("compiler/testData/codegen/box/multiplatform/annotationsViaActualTypeAliasFromBinary.kt");
+        }
+
+        @Test
+        @TestMetadata("commonInternal.kt")
+        public void testCommonInternal() throws Exception {
+            runTest("compiler/testData/codegen/box/multiplatform/commonInternal.kt");
         }
 
         @Test
