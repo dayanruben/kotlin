@@ -2647,6 +2647,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             }
 
             @Test
+            @TestMetadata("callableReferenceInWhenExpression.kt")
+            public void testCallableReferenceInWhenExpression() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/callableReference/callableReferenceInWhenExpression.kt");
+            }
+
+            @Test
             @TestMetadata("callableReferenceWithMostSpecificGenericTypeParameter.kt")
             public void testCallableReferenceWithMostSpecificGenericTypeParameter() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/callableReference/callableReferenceWithMostSpecificGenericTypeParameter.kt");
@@ -10290,6 +10296,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             @Test
             public void testAllFilesPresentInExceptions() throws Exception {
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/exceptions"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
+            }
+
+            @Test
+            @TestMetadata("expectedSomeTypesOnBranchForWhenExpressionOfErroneousType.kt")
+            public void testExpectedSomeTypesOnBranchForWhenExpressionOfErroneousType() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/exceptions/expectedSomeTypesOnBranchForWhenExpressionOfErroneousType.kt");
             }
 
             @Test
