@@ -17,6 +17,8 @@ import org.jetbrains.kotlin.asJava.classes.METHOD_INDEX_FOR_NON_ORIGIN_METHOD
 import org.jetbrains.kotlin.asJava.classes.lazyPub
 import org.jetbrains.kotlin.asJava.elements.KtLightField
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
+import org.jetbrains.kotlin.builtins.StandardNames.ENUM_VALUES
+import org.jetbrains.kotlin.builtins.StandardNames.ENUM_VALUE_OF
 import org.jetbrains.kotlin.builtins.StandardNames.HASHCODE_NAME
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibility
@@ -94,8 +96,11 @@ internal open class FirLightClassForSymbol(
             val declaredMemberScope = classOrObjectSymbol.getDeclaredMemberScope()
 
             val visibleDeclarations = declaredMemberScope.getCallableSymbols().applyIf(isEnum) {
+                // Technically, synthetic members of `enum` class, such as `values` or `valueOf`, are visible.
+                // They're just needed to be added later (to be in a backward-compatible order of members).
                 filterNot { function ->
-                    function is KtFunctionSymbol && function.name.asString().let { it == "values" || it == "valueOf" }
+                    function is KtFunctionSymbol && function.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED &&
+                            (function.name == ENUM_VALUES || function.name == ENUM_VALUE_OF)
                 }
             }.applyIf(classOrObjectSymbol.isObject) {
                 filterNot {
@@ -117,6 +122,7 @@ internal open class FirLightClassForSymbol(
 
         addMethodsFromCompanionIfNeeded(result)
 
+        addMethodsFromEnumClass(result)
         addMethodsFromDataClass(result)
         addDelegatesToInterfaceMethods(result)
 
@@ -131,6 +137,19 @@ internal open class FirLightClassForSymbol(
                     .filter { it.hasJvmStaticAnnotation() }
                 createMethods(methods, result)
             }
+        }
+    }
+
+    private fun addMethodsFromEnumClass(result: MutableList<KtLightMethod>) {
+        if (!isEnum) return
+
+        analyzeWithSymbolAsContext(classOrObjectSymbol) {
+            val valuesAndValueOfFunctions = classOrObjectSymbol.getDeclaredMemberScope()
+                .getCallableSymbols { name -> name == ENUM_VALUES || name == ENUM_VALUE_OF }
+                .filter { it.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED }
+                .filterIsInstance<KtFunctionSymbol>()
+
+            createMethods(valuesAndValueOfFunctions, result)
         }
     }
 

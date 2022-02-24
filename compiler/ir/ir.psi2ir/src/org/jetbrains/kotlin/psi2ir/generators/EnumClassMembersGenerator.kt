@@ -16,6 +16,8 @@
 
 package org.jetbrains.kotlin.psi2ir.generators
 
+import org.jetbrains.kotlin.builtins.StandardNames.ENUM_VALUES
+import org.jetbrains.kotlin.builtins.StandardNames.ENUM_VALUE_OF
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.addMember
@@ -23,7 +25,7 @@ import org.jetbrains.kotlin.ir.expressions.IrSyntheticBodyKind
 import org.jetbrains.kotlin.ir.expressions.impl.IrSyntheticBodyImpl
 import org.jetbrains.kotlin.ir.util.SYNTHETIC_OFFSET
 import org.jetbrains.kotlin.ir.util.declareSimpleFunctionWithOverrides
-import org.jetbrains.kotlin.ir.util.findFirstFunction
+import org.jetbrains.kotlin.resolve.scopes.findFirstFunction
 
 class EnumClassMembersGenerator(declarationGenerator: DeclarationGenerator) : DeclarationGeneratorExtension(declarationGenerator) {
     fun generateSpecialMembers(irClass: IrClass) {
@@ -32,7 +34,7 @@ class EnumClassMembersGenerator(declarationGenerator: DeclarationGenerator) : De
     }
 
     private fun generateValues(irClass: IrClass) {
-        val valuesFunction = irClass.descriptor.staticScope.findFirstFunction("values") {
+        val valuesFunction = irClass.descriptor.staticScope.findFirstFunction(ENUM_VALUES.identifier) {
             it.dispatchReceiverParameter == null &&
                     it.extensionReceiverParameter == null &&
                     it.valueParameters.size == 0
@@ -51,7 +53,7 @@ class EnumClassMembersGenerator(declarationGenerator: DeclarationGenerator) : De
     }
 
     private fun generateValueOf(irClass: IrClass) {
-        val valueOfFunction = irClass.descriptor.staticScope.findFirstFunction("valueOf") {
+        val valueOfFunction = irClass.descriptor.staticScope.findFirstFunction(ENUM_VALUE_OF.identifier) {
             it.dispatchReceiverParameter == null &&
                     it.extensionReceiverParameter == null &&
                     it.valueParameters.size == 1

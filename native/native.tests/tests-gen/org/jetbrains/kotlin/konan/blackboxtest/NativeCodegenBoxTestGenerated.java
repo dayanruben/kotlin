@@ -5701,6 +5701,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
                 }
 
                 @Test
+                @TestMetadata("privateConstructorWithPrivateFieldUsingTypeTable.kt")
+                public void testPrivateConstructorWithPrivateFieldUsingTypeTable() throws Exception {
+                    runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/inlineClasses/privateConstructorWithPrivateFieldUsingTypeTable.kt");
+                }
+
+                @Test
                 @TestMetadata("privateTopLevelValInDifferentModule.kt")
                 public void testPrivateTopLevelValInDifferentModule() throws Exception {
                     runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/inlineClasses/privateTopLevelValInDifferentModule.kt");
@@ -7366,6 +7372,18 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
                 @TestMetadata("when.kt")
                 public void testWhen() throws Exception {
                     runTest("compiler/testData/codegen/box/controlStructures/returnsNothing/when.kt");
+                }
+            }
+
+            @Nested
+            @TestMetadata("compiler/testData/codegen/box/controlStructures/slowDsl")
+            @TestDataPath("$PROJECT_ROOT")
+            @Tag("codegen")
+            @UseExtTestCaseGroupProvider()
+            public class SlowDsl {
+                @Test
+                public void testAllFilesPresentInSlowDsl() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/controlStructures/slowDsl"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
                 }
             }
 
