@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.lazy.resolve.FirLazyDecla
 import org.jetbrains.kotlin.analysis.low.level.api.fir.providers.*
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.checkCanceled
 import org.jetbrains.kotlin.analysis.project.structure.*
+import org.jetbrains.kotlin.analysis.providers.createAnnotationResolver
 import org.jetbrains.kotlin.analysis.providers.createDeclarationProvider
 import org.jetbrains.kotlin.analysis.providers.createPackageProvider
 import org.jetbrains.kotlin.config.LanguageVersionSettings
@@ -31,6 +32,9 @@ import org.jetbrains.kotlin.fir.checkers.registerExtendedCommonCheckers
 import org.jetbrains.kotlin.fir.declarations.SealedClassInheritorsProvider
 import org.jetbrains.kotlin.fir.deserialization.ModuleDataProvider
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
+import org.jetbrains.kotlin.fir.extensions.FirPredicateBasedProvider
+import org.jetbrains.kotlin.fir.extensions.FirRegisteredPluginAnnotations
+import org.jetbrains.kotlin.fir.extensions.FirSwitchableExtensionDeclarationsSymbolProvider
 import org.jetbrains.kotlin.fir.java.FirJavaFacade
 import org.jetbrains.kotlin.fir.java.JavaSymbolProvider
 import org.jetbrains.kotlin.fir.java.deserialization.JvmClassFileBasedSymbolProvider
@@ -88,6 +92,7 @@ internal object LLFirSessionFactory {
             registerCommonComponents(languageVersionSettings)
             registerCommonJavaComponents(JavaModuleResolver.getInstance(project))
             registerResolveComponents()
+            registerJavaSpecificResolveComponents()
 
             val provider = LLFirProvider(
                 project,
@@ -135,14 +140,45 @@ internal object LLFirSessionFactory {
                     }
             }
 
+            val projectWithDependenciesScope = contentScope.uniteWith(project.moduleScopeProvider.getModuleLibrariesScope(module))
+            val annotationsResolver = project.createAnnotationResolver(projectWithDependenciesScope)
+
+            // We need FirRegisteredPluginAnnotations and FirPredicateBasedProvider during extensions' registration process
+            register(FirRegisteredPluginAnnotations::class, LLFirIdeRegisteredPluginAnnotations(this@session, annotationsResolver))
+            register(
+                FirPredicateBasedProvider::class,
+                LLFirIdePredicateBasedProvider(
+                    this@session,
+                    annotationsResolver,
+                    project.createDeclarationProvider(projectWithDependenciesScope)
+                )
+            )
+
+            FirSessionFactory.FirSessionConfigurator(this).apply {
+                if (isRootModule) {
+                    registerExtendedCommonCheckers()
+                }
+                for (extensionRegistrar in FirExtensionRegistrar.getInstances(project)) {
+                    registerExtensions(extensionRegistrar.configure())
+                }
+            }.configure()
+
+            val switchableExtensionDeclarationsSymbolProvider =
+                FirSwitchableExtensionDeclarationsSymbolProvider.create(session)
+
+            switchableExtensionDeclarationsSymbolProvider?.let {
+                register(FirSwitchableExtensionDeclarationsSymbolProvider::class, it)
+            }
+
             val dependencyProvider = DependentModuleProviders(this, dependentProviders)
 
             register(
                 FirSymbolProvider::class,
                 LLFirModuleWithDependenciesSymbolProvider(
                     this,
-                    providers = listOf(
+                    providers = listOfNotNull(
                         provider.symbolProvider,
+                        switchableExtensionDeclarationsSymbolProvider,
                         JavaSymbolProvider(
                             this,
                             FirJavaFacade(
@@ -157,15 +193,6 @@ internal object LLFirSessionFactory {
             register(FirDependenciesSymbolProvider::class, dependencyProvider)
             register(FirJvmTypeMapper::class, FirJvmTypeMapper(this))
 
-            registerJavaSpecificResolveComponents()
-            FirSessionFactory.FirSessionConfigurator(this).apply {
-                if (isRootModule) {
-                    registerExtendedCommonCheckers()
-                }
-                for (extensionRegistrar in FirExtensionRegistrar.getInstances(project)) {
-                    registerExtensions(extensionRegistrar.configure())
-                }
-            }.configure()
             configureSession?.invoke(this)
         }
     }
@@ -305,6 +332,7 @@ internal object LLFirSessionFactory {
             registerCommonComponents(languageVersionSettings)
             registerCommonJavaComponents(JavaModuleResolver.getInstance(project))
             registerResolveComponents()
+            registerJavaSpecificResolveComponents()
 
             val provider = LLFirProvider(
                 project,
@@ -339,6 +367,16 @@ internal object LLFirSessionFactory {
                 )
             }
 
+            // We need FirRegisteredPluginAnnotations during extensions' registration process
+            val annotationsResolver = project.createAnnotationResolver(contentScope)
+            register(FirRegisteredPluginAnnotations::class, LLFirIdeRegisteredPluginAnnotations(this@session, annotationsResolver))
+
+            FirSessionFactory.FirSessionConfigurator(this).apply {
+                for (extensionRegistrar in FirExtensionRegistrar.getInstances(project)) {
+                    registerExtensions(extensionRegistrar.configure())
+                }
+            }.configure()
+
             val dependencyProvider = DependentModuleProviders(this, dependentProviders)
 
             register(
@@ -361,12 +399,6 @@ internal object LLFirSessionFactory {
             register(FirDependenciesSymbolProvider::class, dependencyProvider)
             register(FirJvmTypeMapper::class, FirJvmTypeMapper(this))
 
-            registerJavaSpecificResolveComponents()
-            FirSessionFactory.FirSessionConfigurator(this).apply {
-                for (extensionRegistrar in FirExtensionRegistrar.getInstances(project)) {
-                    registerExtensions(extensionRegistrar.configure())
-                }
-            }.configure()
             configureSession?.invoke(this)
         }
 
