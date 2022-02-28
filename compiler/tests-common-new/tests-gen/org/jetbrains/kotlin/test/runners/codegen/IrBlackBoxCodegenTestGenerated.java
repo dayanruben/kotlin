@@ -90,6 +90,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         }
 
         @Test
+        @TestMetadata("annotationWithVarargAsDefaultValue.kt")
+        public void testAnnotationWithVarargAsDefaultValue() throws Exception {
+            runTest("compiler/testData/codegen/box/annotations/annotationWithVarargAsDefaultValue.kt");
+        }
+
+        @Test
         @TestMetadata("annotationsOnDefault.kt")
         public void testAnnotationsOnDefault() throws Exception {
             runTest("compiler/testData/codegen/box/annotations/annotationsOnDefault.kt");
@@ -9332,6 +9338,40 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
             @TestMetadata("forInListWithIndexWithExplicitlyTypedIndexVariable.kt")
             public void testForInListWithIndexWithExplicitlyTypedIndexVariable() throws Exception {
                 runTest("compiler/testData/codegen/box/controlStructures/forInIterableWithIndex/forInListWithIndexWithExplicitlyTypedIndexVariable.kt");
+            }
+        }
+
+        @Nested
+        @TestMetadata("compiler/testData/codegen/box/controlStructures/forInIterator")
+        @TestDataPath("$PROJECT_ROOT")
+        public class ForInIterator {
+            @Test
+            @TestMetadata("abstractNext.kt")
+            public void testAbstractNext() throws Exception {
+                runTest("compiler/testData/codegen/box/controlStructures/forInIterator/abstractNext.kt");
+            }
+
+            @Test
+            public void testAllFilesPresentInForInIterator() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/controlStructures/forInIterator"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            }
+
+            @Test
+            @TestMetadata("primitiveIterator.kt")
+            public void testPrimitiveIterator() throws Exception {
+                runTest("compiler/testData/codegen/box/controlStructures/forInIterator/primitiveIterator.kt");
+            }
+
+            @Test
+            @TestMetadata("uintIterator.kt")
+            public void testUintIterator() throws Exception {
+                runTest("compiler/testData/codegen/box/controlStructures/forInIterator/uintIterator.kt");
+            }
+
+            @Test
+            @TestMetadata("unrelatedExtensionFunctionNext.kt")
+            public void testUnrelatedExtensionFunctionNext() throws Exception {
+                runTest("compiler/testData/codegen/box/controlStructures/forInIterator/unrelatedExtensionFunctionNext.kt");
             }
         }
 
