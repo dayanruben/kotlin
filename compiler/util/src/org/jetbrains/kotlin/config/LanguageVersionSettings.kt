@@ -269,6 +269,7 @@ enum class LanguageFeature(
     ForbidExtensionFunctionTypeOnNonFunctionTypes(KOTLIN_1_9), // related to KT-43527
     ProhibitEnumDeclaringClass(KOTLIN_1_9, kind = BUG_FIX), // KT-49653
     StopPropagatingDeprecationThroughOverrides(KOTLIN_1_9, kind = BUG_FIX), // KT-47902
+    ReportTypeVarianceConflictOnQualifierArguments(KOTLIN_1_9, kind = BUG_FIX), // KT-50947
 
     // Disabled for indefinite time. See KT-48535 and related discussion
     ApproximateIntegerLiteralTypesInReceiverPosition(sinceVersion = null),
@@ -290,6 +291,7 @@ enum class LanguageFeature(
     ContextReceivers(sinceVersion = null, defaultState = State.DISABLED, kind = UNSTABLE_FEATURE),
     GenericInlineClassParameter(sinceVersion = null, defaultState = State.ENABLED_WITH_WARNING, kind = UNSTABLE_FEATURE),
     ValueClasses(sinceVersion = null, defaultState = State.DISABLED, kind = UNSTABLE_FEATURE),
+    JavaSamConversionEqualsHashCode(sinceVersion = null, defaultState = State.DISABLED, kind = UNSTABLE_FEATURE),
     ;
 
     val presentableName: String
