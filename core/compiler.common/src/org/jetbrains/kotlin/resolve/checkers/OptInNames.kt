@@ -38,4 +38,19 @@ object OptInNames {
     )
     @Suppress("unused")
     val USE_EXPERIMENTAL_FQ_NAMES = OPT_IN_FQ_NAMES
+
+    fun buildDefaultDiagnosticMessage(prefix: String, fqName: FqName): String {
+        return "$prefix with '@${fqName.asString()}' or '@OptIn(${fqName.asString()}::class)'"
+    }
+
+    fun buildMessagePrefix(verb: String): String =
+        "This declaration needs OptIn. Its usage $verb be marked"
+
+    fun buildOverrideMessage(supertypeName: String, markerMessage: String?, verb: String, markerName: String): String {
+        val basePrefix = "Base declaration of supertype '$supertypeName' needs OptIn. "
+        val markerMessageOrStub = markerMessage
+            ?.takeIf { it.isNotBlank() }?.let { if (it.endsWith(".")) "$it " else "$it. " } ?: ""
+        val baseSuffix = "The declaration override $verb be annotated with '@$markerName'"
+        return basePrefix + markerMessageOrStub + baseSuffix
+    }
 }

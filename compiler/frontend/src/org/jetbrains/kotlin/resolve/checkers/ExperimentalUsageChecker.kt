@@ -71,7 +71,7 @@ class ExperimentalUsageChecker(project: Project) : CallChecker {
         val defaultMessage: (FqName) -> String
     ) : ExperimentalityDiagnostic {
         override fun report(trace: BindingTrace, element: PsiElement, fqName: FqName, message: String?) {
-            trace.reportDiagnosticOnce(factory.on(element, fqName, message ?: defaultMessage(fqName)))
+            trace.reportDiagnosticOnce(factory.on(element, fqName, message?.takeIf { it.isNotBlank() } ?: defaultMessage(fqName)))
         }
     }
 
@@ -118,18 +118,18 @@ class ExperimentalUsageChecker(project: Project) : CallChecker {
         private val WARNING_LEVEL = Name.identifier("WARNING")
         private val ERROR_LEVEL = Name.identifier("ERROR")
 
-        internal fun getDefaultDiagnosticMessage(prefix: String) = fun(fqName: FqName): String {
-            return "$prefix with '@${fqName.asString()}' or '@OptIn(${fqName.asString()}::class)'"
+        internal fun getDefaultDiagnosticMessage(prefix: String): (FqName) -> String = { fqName: FqName ->
+            OptInNames.buildDefaultDiagnosticMessage(prefix, fqName)
         }
 
         private val USAGE_DIAGNOSTICS = ExperimentalityDiagnostics(
             warning = ExperimentalityDiagnostic2(
                 Errors.OPT_IN_USAGE,
-                getDefaultDiagnosticMessage("This declaration is experimental and its usage should be marked")
+                getDefaultDiagnosticMessage(OptInNames.buildMessagePrefix("should"))
             ),
             error = ExperimentalityDiagnostic2(
                 Errors.OPT_IN_USAGE_ERROR,
-                getDefaultDiagnosticMessage("This declaration is experimental and its usage must be marked")
+                getDefaultDiagnosticMessage(OptInNames.buildMessagePrefix("must"))
             ),
             futureError = ExperimentalityDiagnostic2(
                 Errors.OPT_IN_USAGE_FUTURE_ERROR,
@@ -480,10 +480,12 @@ class ExperimentalUsageChecker(project: Project) : CallChecker {
                         Experimentality.Severity.ERROR -> Errors.OPT_IN_OVERRIDE_ERROR to "must"
                         Experimentality.Severity.FUTURE_ERROR -> Errors.OPT_IN_OVERRIDE_ERROR to "must"
                     }
-                    val message = experimentality.message
-                        ?: "This declaration overrides experimental member of supertype " +
-                        "'${member.containingDeclaration.name.asString()}' and $defaultMessageVerb be annotated " +
-                        "with '@${experimentality.annotationFqName.asString()}'"
+                    val message = OptInNames.buildOverrideMessage(
+                        supertypeName = member.containingDeclaration.name.asString(),
+                        markerMessage = experimentality.message,
+                        verb = defaultMessageVerb,
+                        markerName = experimentality.annotationFqName.asString()
+                    )
                     context.trace.report(diagnostic.on(reportOn, experimentality.annotationFqName, message))
                 }
             }
