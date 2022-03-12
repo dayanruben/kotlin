@@ -18,6 +18,10 @@ import org.jetbrains.kotlin.fir.diagnostics.ConeUnexpectedTypeArgumentsError
 import org.jetbrains.kotlin.fir.diagnostics.DiagnosticKind
 import org.jetbrains.kotlin.fir.render
 import org.jetbrains.kotlin.fir.resolve.*
+import org.jetbrains.kotlin.fir.resolve.calls.AbstractCallInfo
+import org.jetbrains.kotlin.fir.resolve.calls.AbstractCandidate
+import org.jetbrains.kotlin.fir.resolve.calls.ReceiverValue
+import org.jetbrains.kotlin.fir.resolve.calls.ResolutionDiagnostic
 import org.jetbrains.kotlin.fir.resolve.diagnostics.*
 import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
@@ -29,11 +33,13 @@ import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.impl.ConeClassLikeTypeImpl
 import org.jetbrains.kotlin.fir.types.impl.ConeTypeParameterTypeImpl
-import org.jetbrains.kotlin.fir.types.impl.FirImplicitBuiltinTypeRef
 import org.jetbrains.kotlin.fir.visibilityChecker
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.utils.addToStdlib.runIf
+import org.jetbrains.kotlin.resolve.calls.inference.model.ConstraintSystemError
+import org.jetbrains.kotlin.resolve.calls.tasks.ExplicitReceiverKind
+import org.jetbrains.kotlin.resolve.calls.tower.CandidateApplicability
+import org.jetbrains.kotlin.resolve.deprecation.DeprecationLevelValue
 
 @ThreadSafeMutableState
 class FirTypeResolverImpl(private val session: FirSession) : FirTypeResolver() {
@@ -98,74 +104,81 @@ class FirTypeResolverImpl(private val session: FirSession) : FirTypeResolver() {
         }
     }
 
-    private fun resolveToSymbol(
-        typeRef: FirTypeRef,
+    fun resolveUserTypeToSymbol(
+        typeRef: FirUserTypeRef,
         scopeClassDeclaration: ScopeClassDeclaration,
         useSiteFile: FirFile?,
         supertypeSupplier: SupertypeSupplier
-    ): Triple<FirBasedSymbol<*>?, ConeSubstitutor?, ConeDiagnostic?> {
-        return when (typeRef) {
-            is FirResolvedTypeRef -> {
-                val resultSymbol = typeRef.coneTypeSafe<ConeLookupTagBasedType>()?.lookupTag?.let(symbolProvider::getSymbolByLookupTag)
-                Triple(resultSymbol, null, null)
+    ): TypeResolutionResult {
+        val qualifierResolver = session.qualifierResolver
+        var applicability: CandidateApplicability? = null
+
+        val candidates = mutableSetOf<TypeCandidate>()
+        val qualifier = typeRef.qualifier
+        val scopes = scopeClassDeclaration.scopes
+        val containingDeclarations = scopeClassDeclaration.containingDeclarations
+
+        fun processCandidate(symbol: FirBasedSymbol<*>, substitutor: ConeSubstitutor?) {
+            var symbolApplicability = CandidateApplicability.RESOLVED
+            var diagnostic: ConeDiagnostic? = null
+
+            if (!symbol.isVisible(useSiteFile, containingDeclarations, supertypeSupplier)) {
+                symbolApplicability = minOf(CandidateApplicability.VISIBILITY_ERROR, symbolApplicability)
+                diagnostic = ConeVisibilityError(symbol)
             }
 
-            is FirUserTypeRef -> {
-                val qualifierResolver = session.qualifierResolver
-                var acceptedSymbol: FirBasedSymbol<*>? = null
-                var substitutor: ConeSubstitutor? = null
-                val notApplicableSymbols = mutableListOf<Pair<FirBasedSymbol<*>, ConeSubstitutor>>()
-                val qualifier = typeRef.qualifier
-                val scopes = scopeClassDeclaration.scopes
-                val containingDeclarations = scopeClassDeclaration.containingDeclarations
-
-                for (scope in scopes) {
-                    if (acceptedSymbol != null) {
-                        break
-                    }
-                    val collectNonApplicable = notApplicableSymbols.isEmpty()
-                    scope.processClassifiersByNameWithSubstitution(qualifier.first().name) { symbol, substitutorFromScope ->
-                        if (acceptedSymbol != null) return@processClassifiersByNameWithSubstitution
-                        val resolvedSymbol = resolveSymbol(symbol, qualifier, qualifierResolver)
-                            ?: return@processClassifiersByNameWithSubstitution
-
-                        if (resolvedSymbol.isVisible(useSiteFile, containingDeclarations, supertypeSupplier)) {
-                            acceptedSymbol = resolvedSymbol
-                            substitutor = substitutorFromScope
-                        } else if (collectNonApplicable) {
-                            resolvedSymbol.isVisible(useSiteFile, containingDeclarations, supertypeSupplier)
-                            notApplicableSymbols += resolvedSymbol to substitutorFromScope
-                        }
-                    }
-                }
-
-                when {
-                    acceptedSymbol != null -> Triple(acceptedSymbol, substitutor, null)
-
-                    notApplicableSymbols.size == 1 -> {
-                        val (notApplicableSymbol, resultingSubstitutor) = notApplicableSymbols.single()
-                        Triple(notApplicableSymbol, resultingSubstitutor, ConeVisibilityError(notApplicableSymbol))
-                    }
-
-                    else -> {
-                        val symbolFromQualifier = qualifierResolver.resolveSymbol(qualifier)
-                        val diagnostic = runIf(
-                            symbolFromQualifier != null &&
-                                    !symbolFromQualifier.isVisible(useSiteFile, containingDeclarations, supertypeSupplier)
-                        ) {
-                            ConeVisibilityError(symbolFromQualifier!!)
-                        }
-                        Triple(symbolFromQualifier, null, diagnostic)
-                    }
-                }
+            val deprecation = symbol.getDeprecation(useSiteFile)
+            if (deprecation != null && deprecation.deprecationLevel == DeprecationLevelValue.HIDDEN) {
+                symbolApplicability = minOf(CandidateApplicability.HIDDEN, symbolApplicability)
+                diagnostic = null
             }
 
-            is FirImplicitBuiltinTypeRef -> {
-                Triple(resolveBuiltInQualified(typeRef.id, session), null, null)
+            if (applicability == null || symbolApplicability > applicability!!) {
+                applicability = symbolApplicability
+                candidates.clear()
             }
-
-            else -> Triple(null, null, null)
+            if (symbolApplicability == applicability) {
+                candidates.add(TypeCandidate(symbol, substitutor, diagnostic, symbolApplicability))
+            }
         }
+
+        for (scope in scopes) {
+            if (applicability == CandidateApplicability.RESOLVED) break
+            scope.processClassifiersByNameWithSubstitution(qualifier.first().name) { symbol, substitutorFromScope ->
+                val resolvedSymbol = resolveSymbol(symbol, qualifier, qualifierResolver)
+                    ?: return@processClassifiersByNameWithSubstitution
+
+                processCandidate(resolvedSymbol, substitutorFromScope)
+            }
+        }
+
+        if (applicability != CandidateApplicability.RESOLVED) {
+            val symbol = qualifierResolver.resolveSymbol(qualifier)
+            if (symbol != null) {
+                processCandidate(symbol, null)
+            }
+        }
+
+        val candidateCount = candidates.size
+        return when {
+            candidateCount == 1 -> {
+                val candidate = candidates.single()
+                TypeResolutionResult.Resolved(candidate)
+            }
+            candidateCount > 1 -> {
+                TypeResolutionResult.Ambiguity(candidates.toList())
+            }
+            candidateCount == 0 -> {
+                TypeResolutionResult.Unresolved
+            }
+            else -> error("Unexpected")
+        }
+    }
+
+    sealed class TypeResolutionResult {
+        class Ambiguity(val typeCandidates: List<TypeCandidate>) : TypeResolutionResult()
+        object Unresolved : TypeResolutionResult()
+        class Resolved(val typeCandidate: TypeCandidate) : TypeResolutionResult()
     }
 
     private fun resolveLocalClassChain(symbol: FirClassLikeSymbol<*>, qualifier: List<FirQualifierPart>): FirRegularClassSymbol? {
@@ -210,21 +223,35 @@ class FirTypeResolverImpl(private val session: FirSession) : FirTypeResolver() {
     @OptIn(SymbolInternals::class)
     private fun resolveUserType(
         typeRef: FirUserTypeRef,
-        symbol: FirBasedSymbol<*>?,
-        substitutor: ConeSubstitutor?,
+        result: TypeResolutionResult,
         areBareTypesAllowed: Boolean,
         topContainer: FirDeclaration?,
         isOperandOfIsOperator: Boolean
     ): ConeKotlinType {
+
+        val (symbol, substitutor) = when (result) {
+            is TypeResolutionResult.Resolved -> {
+                result.typeCandidate.symbol to result.typeCandidate.substitutor
+            }
+            is TypeResolutionResult.Ambiguity -> null to null
+            TypeResolutionResult.Unresolved -> null to null
+        }
+
         if (symbol == null || symbol !is FirClassifierSymbol<*>) {
-            val diagnostic = if (symbol?.fir is FirEnumEntry) {
-                if (isOperandOfIsOperator) {
-                    ConeSimpleDiagnostic("'is' operator can not be applied to an enum entry.", DiagnosticKind.IsEnumEntry)
-                } else {
-                    ConeSimpleDiagnostic("An enum entry should not be used as a type.", DiagnosticKind.EnumEntryAsType)
+            val diagnostic = when {
+                symbol?.fir is FirEnumEntry -> {
+                    if (isOperandOfIsOperator) {
+                        ConeSimpleDiagnostic("'is' operator can not be applied to an enum entry.", DiagnosticKind.IsEnumEntry)
+                    } else {
+                        ConeSimpleDiagnostic("An enum entry should not be used as a type.", DiagnosticKind.EnumEntryAsType)
+                    }
                 }
-            } else {
-                ConeUnresolvedQualifierError(typeRef.render())
+                result is TypeResolutionResult.Ambiguity -> {
+                    ConeAmbiguityError(typeRef.qualifier.last().name, result.typeCandidates.first().applicability, result.typeCandidates)
+                }
+                else -> {
+                    ConeUnresolvedQualifierError(typeRef.render())
+                }
             }
             return ConeErrorType(diagnostic)
         }
@@ -473,15 +500,14 @@ class FirTypeResolverImpl(private val session: FirSession) : FirTypeResolver() {
         return when (typeRef) {
             is FirResolvedTypeRef -> error("Do not resolve, resolved type-refs")
             is FirUserTypeRef -> {
-                val (symbol, substitutor, diagnostic) = resolveToSymbol(typeRef, scopeClassDeclaration, useSiteFile, supertypeSupplier)
+                val result = resolveUserTypeToSymbol(typeRef, scopeClassDeclaration, useSiteFile, supertypeSupplier)
                 resolveUserType(
                     typeRef,
-                    symbol,
-                    substitutor,
+                    result,
                     areBareTypesAllowed,
                     scopeClassDeclaration.topContainer ?: scopeClassDeclaration.containingDeclarations.lastOrNull(),
                     isOperandOfIsOperator
-                ) to diagnostic
+                ) to (result as? TypeResolutionResult.Resolved)?.typeCandidate?.diagnostic
             }
             is FirFunctionTypeRef -> createFunctionalType(typeRef) to null
             is FirDynamicTypeRef -> ConeErrorType(ConeUnsupportedDynamicType()) to null
@@ -497,6 +523,46 @@ class FirTypeResolverImpl(private val session: FirSession) : FirTypeResolver() {
 
             }
             else -> error(typeRef.render())
+        }
+    }
+
+
+    class TypeCandidate(
+        override val symbol: FirBasedSymbol<*>,
+        val substitutor: ConeSubstitutor?,
+        val diagnostic: ConeDiagnostic?,
+        override val applicability: CandidateApplicability
+    ) : AbstractCandidate() {
+
+        override val dispatchReceiverValue: ReceiverValue?
+            get() = null
+
+        override val extensionReceiverValue: ReceiverValue?
+            get() = null
+
+        override val explicitReceiverKind: ExplicitReceiverKind
+            get() = ExplicitReceiverKind.NO_EXPLICIT_RECEIVER
+
+        override val diagnostics: List<ResolutionDiagnostic>
+            get() = emptyList()
+
+        override val errors: List<ConstraintSystemError>
+            get() = emptyList()
+
+        override val callInfo: AbstractCallInfo
+            get() = throw UnsupportedOperationException("Should not be called")
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is TypeCandidate) return false
+
+            if (symbol != other.symbol) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            return symbol.hashCode()
         }
     }
 }

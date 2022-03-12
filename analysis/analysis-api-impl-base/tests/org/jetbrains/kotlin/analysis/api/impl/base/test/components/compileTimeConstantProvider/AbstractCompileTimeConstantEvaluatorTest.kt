@@ -1,11 +1,11 @@
 /*
- * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.analysis.api.impl.base.test.components.compileTimeConstantProvider
 
-import org.jetbrains.kotlin.analysis.api.impl.barebone.test.FrontendApiTestConfiguratorService
+import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
 import org.jetbrains.kotlin.analysis.api.impl.barebone.test.expressionMarkerProvider
 import org.jetbrains.kotlin.analysis.api.impl.base.test.test.framework.AbstractHLApiSingleFileTest
 import org.jetbrains.kotlin.psi.KtExpression
@@ -24,14 +24,26 @@ abstract class AbstractCompileTimeConstantEvaluatorTest : AbstractHLApiSingleFil
             else -> null
         } ?: testServices.assertions.fail { "Unsupported expression: $element" }
         val constantValue = executeOnPooledThreadInReadAction {
-            analyseForTest(expression) { expression.evaluate() }
+            analyseForTest(expression) {
+                expression.evaluate(KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION)
+            }
+        }
+        val constantLikeValue = executeOnPooledThreadInReadAction {
+            analyseForTest(expression) {
+                expression.evaluate(KtConstantEvaluationMode.CONSTANT_LIKE_EXPRESSION_EVALUATION)
+            }
         }
         val actual = buildString {
             appendLine("expression: ${expression.text}")
+            appendLine()
+            appendLine("CONSTANT_EXPRESSION_EVALUATION")
             appendLine("constant: ${constantValue?.renderAsKotlinConstant() ?: "NOT_EVALUATED"}")
             appendLine("constantValueKind: ${constantValue?.constantValueKind ?: "NOT_EVALUATED"}")
+            appendLine()
+            appendLine("CONSTANT_LIKE_EXPRESSION_EVALUATION")
+            appendLine("constantLike: ${constantLikeValue?.renderAsKotlinConstant() ?: "NOT_EVALUATED"}")
+            appendLine("constantLikeValueKind: ${constantLikeValue?.constantValueKind ?: "NOT_EVALUATED"}")
         }
         testServices.assertions.assertEqualsToTestDataFileSibling(actual)
     }
-
 }

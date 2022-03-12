@@ -8,16 +8,22 @@ package org.jetbrains.kotlin.analysis.api.fir.evaluate
 import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
 import org.jetbrains.kotlin.analysis.api.base.KtConstantValueFactory
+import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
+import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.declarations.FirCallableDeclaration
+import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
-import org.jetbrains.kotlin.fir.expressions.FirConstExpression
-import org.jetbrains.kotlin.fir.expressions.FirExpression
-import org.jetbrains.kotlin.fir.expressions.FirFunctionCall
-import org.jetbrains.kotlin.fir.expressions.argument
+import org.jetbrains.kotlin.fir.declarations.utils.isConst
+import org.jetbrains.kotlin.fir.declarations.utils.referredPropertySymbol
+import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.builder.buildConstExpression
 import org.jetbrains.kotlin.fir.psi
+import org.jetbrains.kotlin.fir.references.FirNamedReference
 import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
+import org.jetbrains.kotlin.fir.resolvedSymbol
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
+import org.jetbrains.kotlin.fir.symbols.ensureResolved
+import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.impl.*
 import org.jetbrains.kotlin.psi.KtElement
@@ -31,16 +37,49 @@ import org.jetbrains.kotlin.types.ConstantValueKind
  * and the argument, are compile-time constant as well.
  */
 internal object FirCompileTimeConstantEvaluator {
-    // TODO: Handle boolean operators, const property loading, class reference, array, annotation values, etc.
-    fun evaluate(expression: FirExpression): FirConstExpression<*>? =
-        when (expression) {
-            is FirConstExpression<*> -> expression.adaptToConstKind()
-            is FirFunctionCall -> evaluate(expression)
+    // TODO: Handle boolean operators, class reference, array, annotation values, etc.
+    fun evaluate(
+        fir: FirElement?,
+        mode: KtConstantEvaluationMode,
+    ): FirConstExpression<*>? =
+        when (fir) {
+            is FirPropertyAccessExpression -> {
+                fir.referredPropertySymbol?.toConstExpression(mode)
+            }
+            is FirConstExpression<*> -> {
+                fir.adaptToConstKind()
+            }
+            is FirFunctionCall -> {
+                evaluateFunctionCall(fir, mode)
+            }
+            is FirNamedReference -> {
+                when (val resolvedSymbol = fir.resolvedSymbol) {
+                    is FirPropertySymbol -> resolvedSymbol.toConstExpression(mode)
+                    else -> null
+                }
+            }
             else -> null
         }
 
-    fun evaluateAsKtConstantExpression(expression: FirExpression): KtConstantValue? {
-        val evaluated = evaluate(expression) ?: return null
+    private fun FirPropertySymbol.toConstExpression(
+        mode: KtConstantEvaluationMode,
+    ): FirConstExpression<*>? {
+        return when {
+            mode == KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION && !isConst -> null
+            isVal && hasInitializer -> {
+                // NB: the initializer could be [FirLazyExpression] in [BodyBuildingMode.LAZY_BODIES].
+                this.ensureResolved(FirResolvePhase.BODY_RESOLVE) // to unwrap lazy body
+                evaluate(fir.initializer, mode)
+            }
+            else -> null
+        }
+    }
+
+    fun evaluateAsKtConstantValue(
+        fir: FirElement,
+        mode: KtConstantEvaluationMode,
+    ): KtConstantValue? {
+        val evaluated = evaluate(fir, mode) ?: return null
 
         val ktConstantValue = KtConstantValueFactory.createConstantValue(evaluated.value, evaluated.psi as? KtElement) ?: return null
         check(ktConstantValue.constantValueKind == evaluated.kind) {
@@ -56,18 +95,18 @@ internal object FirCompileTimeConstantEvaluator {
         )
     }
 
-    // TODO: Rework to handle nested expressions
-    //  This is no longer used during FIR2IR where an inner expression is recursively rewritten to ConstExpression if possible.
-    //  Maybe rewrite this to a recursive version with caching either here or in provider.
-    private fun evaluate(functionCall: FirFunctionCall): FirConstExpression<*>? {
+    private fun evaluateFunctionCall(
+        functionCall: FirFunctionCall,
+        mode: KtConstantEvaluationMode,
+    ): FirConstExpression<*>? {
         val function = functionCall.getOriginalFunction() as? FirSimpleFunction ?: return null
 
-        val opr1 = functionCall.explicitReceiver as? FirConstExpression<*> ?: return null
+        val opr1 = evaluate(functionCall.explicitReceiver, mode) ?: return null
         opr1.evaluate(function)?.let {
             return it.adjustType(functionCall.typeRef)
         }
 
-        val opr2 = functionCall.argument as? FirConstExpression<*> ?: return null
+        val opr2 = evaluate(functionCall.argument, mode) ?: return null
         opr1.evaluate(function, opr2)?.let {
             return it.adjustType(functionCall.typeRef)
         }
@@ -115,12 +154,15 @@ internal object FirCompileTimeConstantEvaluator {
     // Unary operators
     private fun FirConstExpression<*>.evaluate(function: FirSimpleFunction): FirConstExpression<*>? {
         if (value == null) return null
-        return evalUnaryOp(
-            function.name.asString(),
-            kind.toCompileTimeType(),
-            kind.convertToNumber(value as? Number)!!
-        )?.let {
-            it.toConstantValueKind().toConstExpression(source, it)
+        // TODO: there are a couple operations on String, such as .length and .toString
+        return kind.convertToNumber(value as? Number)?.let { opr ->
+            evalUnaryOp(
+                function.name.asString(),
+                kind.toCompileTimeType(),
+                opr
+            )?.let {
+                it.toConstantValueKind().toConstExpression(source, it)
+            }
         }
     }
 
@@ -130,14 +172,19 @@ internal object FirCompileTimeConstantEvaluator {
         other: FirConstExpression<*>
     ): FirConstExpression<*>? {
         if (value == null || other.value == null) return null
-        return evalBinaryOp(
-            function.name.asString(),
-            kind.toCompileTimeType(),
-            kind.convertToNumber(value as? Number)!!,
-            other.kind.toCompileTimeType(),
-            other.kind.convertToNumber(other.value as? Number)!!
-        )?.let {
-            it.toConstantValueKind().toConstExpression(source, it)
+        // TODO: there are a couple operations on Strings, such as .compareTo, .equals, or .plus
+        return kind.convertToNumber(value as? Number)?.let { opr1 ->
+            other.kind.convertToNumber(other.value as? Number)?.let { opr2 ->
+                evalBinaryOp(
+                    function.name.asString(),
+                    kind.toCompileTimeType(),
+                    opr1,
+                    other.kind.toCompileTimeType(),
+                    opr2
+                )?.let {
+                    it.toConstantValueKind().toConstExpression(source, it)
+                }
+            }
         }
     }
 

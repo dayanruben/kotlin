@@ -1,4 +1,3 @@
-// FIR_IDENTICAL
 // !DIAGNOSTICS: -UNUSED_PARAMETER
 // FILE: main1.kt
 package abc1
