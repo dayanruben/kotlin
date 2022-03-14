@@ -2,10 +2,10 @@ public enum EnumNameOverride /* EnumNameOverride*/ implements Bar {
   ;
 
   @org.jetbrains.annotations.NotNull()
-  public final EnumNameOverride valueOf(@org.jetbrains.annotations.NotNull() java.lang.String);//  valueOf(java.lang.String)
+  public static EnumNameOverride valueOf(@org.jetbrains.annotations.NotNull() java.lang.String) throws java.lang.IllegalArgumentException;//  valueOf(java.lang.String)
 
   @org.jetbrains.annotations.NotNull()
-  public final EnumNameOverride[] values();//  values()
+  public static EnumNameOverride[] values();//  values()
 
   private  EnumNameOverride();//  .ctor()
 

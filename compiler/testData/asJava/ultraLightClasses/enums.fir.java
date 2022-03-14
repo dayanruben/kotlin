@@ -5,10 +5,10 @@ public enum Direction /* Direction*/ {
   EAST;
 
   @org.jetbrains.annotations.NotNull()
-  public final Direction valueOf(@org.jetbrains.annotations.NotNull() java.lang.String);//  valueOf(java.lang.String)
+  public static Direction valueOf(@org.jetbrains.annotations.NotNull() java.lang.String) throws java.lang.IllegalArgumentException;//  valueOf(java.lang.String)
 
   @org.jetbrains.annotations.NotNull()
-  public final Direction[] values();//  values()
+  public static Direction[] values();//  values()
 
   private  Direction();//  .ctor()
 
@@ -22,10 +22,10 @@ public enum Color /* Color*/ {
   private final int rgb;
 
   @org.jetbrains.annotations.NotNull()
-  public final Color valueOf(@org.jetbrains.annotations.NotNull() java.lang.String);//  valueOf(java.lang.String)
+  public static Color valueOf(@org.jetbrains.annotations.NotNull() java.lang.String) throws java.lang.IllegalArgumentException;//  valueOf(java.lang.String)
 
   @org.jetbrains.annotations.NotNull()
-  public final Color[] values();//  values()
+  public static Color[] values();//  values()
 
   private  Color(int);//  .ctor(int)
 
@@ -55,10 +55,10 @@ public enum ProtocolState /* ProtocolState*/ {
   public abstract ProtocolState signal();//  signal()
 
   @org.jetbrains.annotations.NotNull()
-  public final ProtocolState valueOf(@org.jetbrains.annotations.NotNull() java.lang.String);//  valueOf(java.lang.String)
+  public static ProtocolState valueOf(@org.jetbrains.annotations.NotNull() java.lang.String) throws java.lang.IllegalArgumentException;//  valueOf(java.lang.String)
 
   @org.jetbrains.annotations.NotNull()
-  public final ProtocolState[] values();//  values()
+  public static ProtocolState[] values();//  values()
 
   private  ProtocolState();//  .ctor()
 
@@ -98,10 +98,10 @@ public enum IntArithmetics /* IntArithmetics*/ {
   public IntArithmetics applyAsInt(int, int);//  applyAsInt(int, int)
 
   @org.jetbrains.annotations.NotNull()
-  public final IntArithmetics valueOf(@org.jetbrains.annotations.NotNull() java.lang.String);//  valueOf(java.lang.String)
+  public static IntArithmetics valueOf(@org.jetbrains.annotations.NotNull() java.lang.String) throws java.lang.IllegalArgumentException;//  valueOf(java.lang.String)
 
   @org.jetbrains.annotations.NotNull()
-  public final IntArithmetics[] values();//  values()
+  public static IntArithmetics[] values();//  values()
 
   private  IntArithmetics();//  .ctor()
 

@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.analyzer.KotlinModificationTrackerService
 import org.jetbrains.kotlin.asJava.classes.KotlinClassInnerStuffCache
 import org.jetbrains.kotlin.asJava.classes.LightClassesLazyCreator
 import org.jetbrains.kotlin.asJava.classes.lazyPub
+import org.jetbrains.kotlin.asJava.isSyntheticValuesOrValueOfMethod
 import org.jetbrains.kotlin.load.java.structure.LightClassOriginKind
 import org.jetbrains.kotlin.psi.KtClassOrObject
 
@@ -30,7 +31,7 @@ open class KtLightClassForDecompiledDeclaration(
 
     private val myInnersCache = KotlinClassInnerStuffCache(
         myClass = this,
-        externalDependencies = listOf(KotlinModificationTrackerService.getInstance(manager.project).outOfBlockModificationTracker),
+        dependencies = listOf(KotlinModificationTrackerService.getInstance(manager.project).outOfBlockModificationTracker),
         lazyCreator = LightClassesLazyCreator(project)
     )
 
@@ -95,9 +96,6 @@ open class KtLightClassForDecompiledDeclaration(
         lastParent: PsiElement?,
         place: PsiElement
     ): Boolean {
-        if (isEnum) {
-            if (!KotlinClassInnerStuffCache.processDeclarationsInEnum(processor, state, myInnersCache)) return false
-        }
         return PsiClassImplUtil.processDeclarationsInClass(
             this, processor, state, null,
             lastParent, place, PsiUtil.getLanguageLevel(place), false
@@ -158,7 +156,8 @@ open class KtLightClassForDecompiledDeclaration(
 
     private val _methods: MutableList<PsiMethod> by lazyPub {
         mutableListOf<PsiMethod>().also {
-            clsDelegate.methods.mapTo(it) { psiMethod ->
+            clsDelegate.methods.mapNotNullTo(it) { psiMethod ->
+                if (isSyntheticValuesOrValueOfMethod(psiMethod)) return@mapNotNullTo null
                 KtLightMethodForDecompiledDeclaration(
                     funDelegate = psiMethod,
                     funParent = this,
