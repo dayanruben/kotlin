@@ -19,10 +19,12 @@ import org.jetbrains.kotlin.fir.symbols.ensureResolved
 import org.jetbrains.kotlin.fir.scopes.FakeOverrideTypeCalculator
 import org.jetbrains.kotlin.fir.scopes.FirScope
 import org.jetbrains.kotlin.fir.scopes.impl.FirFakeOverrideGenerator
+import org.jetbrains.kotlin.fir.scopes.processClassifiersByName
 import org.jetbrains.kotlin.fir.scopes.scopeForClass
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.visibilityChecker
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.deprecation.DeprecationLevelValue
 
 private operator fun <T> Pair<T, *>?.component1() = this?.first
@@ -73,45 +75,79 @@ internal fun FirScope.processFunctionsAndConstructorsByName(
     processFunctionsByName(callInfo.name, processor)
 }
 
+private data class SymbolWithSubstitutor(val symbol: FirClassifierSymbol<*>, val substitutor: ConeSubstitutor)
+
+fun FirScope.getSingleVisibleClassifier(
+    session: FirSession,
+    bodyResolveComponents: BodyResolveComponents,
+    name: Name
+): FirClassifierSymbol<*>? = mutableSetOf<FirClassifierSymbol<*>>().apply {
+    processClassifiersByName(name) { classifierSymbol ->
+        if (!classifierSymbol.fir.isInvisibleOrHidden(session, bodyResolveComponents)) {
+            this.add(classifierSymbol)
+        }
+    }
+}.singleOrNull()
+
+private fun FirDeclaration.isInvisibleOrHidden(session: FirSession, bodyResolveComponents: BodyResolveComponents): Boolean {
+    if (this is FirMemberDeclaration) {
+        if (!session.visibilityChecker.isVisible(
+                this,
+                session,
+                bodyResolveComponents.file,
+                bodyResolveComponents.containingDeclarations,
+                dispatchReceiver = null,
+                isCallToPropertySetter = false
+            )
+        ) {
+            return true
+        }
+    }
+
+    val deprecation = symbol.getDeprecationForCallSite()
+    return deprecation != null && deprecation.deprecationLevel == DeprecationLevelValue.HIDDEN
+}
+
 private fun FirScope.getFirstClassifierOrNull(
     callInfo: CallInfo,
     session: FirSession,
     bodyResolveComponents: BodyResolveComponents
-): Pair<FirClassifierSymbol<*>, ConeSubstitutor>? {
-    var successful = false
-    var ambiguity = false
-    var result: Pair<FirClassifierSymbol<*>, ConeSubstitutor>? = null
-    processClassifiersByNameWithSubstitution(callInfo.name) { symbol, substitution ->
+): SymbolWithSubstitutor? {
+    var isSuccessResult = false
+    var isAmbiguousResult = false
+    var result: SymbolWithSubstitutor? = null
+    processClassifiersByNameWithSubstitution(callInfo.name) { symbol, substitutor ->
         val classifierDeclaration = symbol.fir
-        var isSuccessCandidate = true
-        if (classifierDeclaration is FirMemberDeclaration) {
-            if (!session.visibilityChecker.isVisible(
-                    classifierDeclaration,
-                    session,
-                    bodyResolveComponents.file,
-                    bodyResolveComponents.containingDeclarations,
-                    dispatchReceiver = null,
-                    isCallToPropertySetter = false
-                )
-            ) {
-                isSuccessCandidate = false
+        val isSuccessCandidate = !classifierDeclaration.isInvisibleOrHidden(session, bodyResolveComponents)
+
+        when {
+            isSuccessCandidate && !isSuccessResult -> {
+                // successful result is better than unsuccessful
+                isSuccessResult = true
+                isAmbiguousResult = false
+                result = SymbolWithSubstitutor(symbol, substitutor)
             }
-        }
-
-        val deprecation = symbol.getDeprecationForCallSite()
-        if (deprecation != null && deprecation.deprecationLevel == DeprecationLevelValue.HIDDEN) {
-            isSuccessCandidate = false
-        }
-
-        if (result == null || (!successful && isSuccessCandidate)) {
-            successful = isSuccessCandidate
-            result = symbol to substitution
-        } else {
-            ambiguity = true
+            result?.symbol === symbol -> {
+                // miss identical results
+                return@processClassifiersByNameWithSubstitution
+            }
+            result != null -> {
+                if (isSuccessResult == isSuccessCandidate) {
+                    // results are similar => ambiguity
+                    isAmbiguousResult = true
+                } else {
+                    // ignore unsuccessful result if we have successful one
+                }
+            }
+            else -> {
+                // result == null: any result is better than no result
+                isSuccessResult = isSuccessCandidate
+                result = SymbolWithSubstitutor(symbol, substitutor)
+            }
         }
     }
 
-    return result.takeUnless { ambiguity }
+    return result.takeUnless { isAmbiguousResult }
 }
 
 private fun processSyntheticConstructors(

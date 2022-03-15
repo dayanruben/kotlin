@@ -384,6 +384,11 @@ public class LazyBodyIsNotTouchedTilContractsPhaseTestGenerated extends Abstract
         runTest("compiler/fir/analysis-tests/testData/resolve/recursiveCallOnWhenWithSealedClass.kt");
     }
 
+    @TestMetadata("recursiveTypeAlias.kt")
+    public void testRecursiveTypeAlias() throws Exception {
+        runTest("compiler/fir/analysis-tests/testData/resolve/recursiveTypeAlias.kt");
+    }
+
     @TestMetadata("sealedClass.kt")
     public void testSealedClass() throws Exception {
         runTest("compiler/fir/analysis-tests/testData/resolve/sealedClass.kt");
@@ -427,6 +432,11 @@ public class LazyBodyIsNotTouchedTilContractsPhaseTestGenerated extends Abstract
     @TestMetadata("throwableSubclass.kt")
     public void testThrowableSubclass() throws Exception {
         runTest("compiler/fir/analysis-tests/testData/resolve/throwableSubclass.kt");
+    }
+
+    @TestMetadata("topLevelDestruction.kt")
+    public void testTopLevelDestruction() throws Exception {
+        runTest("compiler/fir/analysis-tests/testData/resolve/topLevelDestruction.kt");
     }
 
     @TestMetadata("treeSet.kt")
@@ -477,6 +487,11 @@ public class LazyBodyIsNotTouchedTilContractsPhaseTestGenerated extends Abstract
     @TestMetadata("varargInPrimaryConstructor.kt")
     public void testVarargInPrimaryConstructor() throws Exception {
         runTest("compiler/fir/analysis-tests/testData/resolve/varargInPrimaryConstructor.kt");
+    }
+
+    @TestMetadata("visibleVsInvisibleQualifier.kt")
+    public void testVisibleVsInvisibleQualifier() throws Exception {
+        runTest("compiler/fir/analysis-tests/testData/resolve/visibleVsInvisibleQualifier.kt");
     }
 
     @TestMetadata("whenAsReceiver.kt")

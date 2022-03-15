@@ -453,6 +453,12 @@ public class FirDiagnosticTestGenerated extends AbstractFirDiagnosticTest {
         }
 
         @Test
+        @TestMetadata("recursiveTypeAlias.kt")
+        public void testRecursiveTypeAlias() throws Exception {
+            runTest("compiler/fir/analysis-tests/testData/resolve/recursiveTypeAlias.kt");
+        }
+
+        @Test
         @TestMetadata("sealedClass.kt")
         public void testSealedClass() throws Exception {
             runTest("compiler/fir/analysis-tests/testData/resolve/sealedClass.kt");
@@ -504,6 +510,12 @@ public class FirDiagnosticTestGenerated extends AbstractFirDiagnosticTest {
         @TestMetadata("throwableSubclass.kt")
         public void testThrowableSubclass() throws Exception {
             runTest("compiler/fir/analysis-tests/testData/resolve/throwableSubclass.kt");
+        }
+
+        @Test
+        @TestMetadata("topLevelDestruction.kt")
+        public void testTopLevelDestruction() throws Exception {
+            runTest("compiler/fir/analysis-tests/testData/resolve/topLevelDestruction.kt");
         }
 
         @Test
@@ -564,6 +576,12 @@ public class FirDiagnosticTestGenerated extends AbstractFirDiagnosticTest {
         @TestMetadata("varargInPrimaryConstructor.kt")
         public void testVarargInPrimaryConstructor() throws Exception {
             runTest("compiler/fir/analysis-tests/testData/resolve/varargInPrimaryConstructor.kt");
+        }
+
+        @Test
+        @TestMetadata("visibleVsInvisibleQualifier.kt")
+        public void testVisibleVsInvisibleQualifier() throws Exception {
+            runTest("compiler/fir/analysis-tests/testData/resolve/visibleVsInvisibleQualifier.kt");
         }
 
         @Test
