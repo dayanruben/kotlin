@@ -6,42 +6,30 @@
 package org.jetbrains.kotlin.gradle.kpm.idea
 
 import org.jetbrains.kotlin.gradle.kpm.KotlinExternalModelContainer
-import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinGradleFragment
-import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinGradleFragmentInternal
-import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinGradleVariant
+import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.*
 
-private typealias IdeaKotlinFragmentBuilderCache = MutableMap<KotlinGradleFragment, IdeaKotlinFragment>
-
-internal fun KotlinGradleFragment.toIdeaKotlinFragment(
-    cache: IdeaKotlinFragmentBuilderCache = mutableMapOf()
-): IdeaKotlinFragment {
-    return cache.getOrPut(this) {
-        if (this is KotlinGradleVariant) buildIdeaKotlinVariant(cache)
-        else buildIdeaKotlinFragment(cache)
-    }
+internal fun IdeaKotlinProjectModelBuildingContext.IdeaKotlinFragment(fragment: KotlinGradleFragment): IdeaKotlinFragment {
+    return if (fragment is KotlinGradleVariant) buildIdeaKotlinVariant(fragment)
+    else buildIdeaKotlinFragment(fragment)
 }
 
-private fun KotlinGradleFragment.buildIdeaKotlinFragment(cache: IdeaKotlinFragmentBuilderCache): IdeaKotlinFragment {
+private fun IdeaKotlinProjectModelBuildingContext.buildIdeaKotlinFragment(fragment: KotlinGradleFragment): IdeaKotlinFragment {
     return IdeaKotlinFragmentImpl(
-        name = name,
-        moduleIdentifier = containingModule.moduleIdentifier.toIdeaKotlinModuleIdentifier(),
-        languageSettings = languageSettings.toIdeaKotlinLanguageSettings(),
-        dependencies = emptyList(),
-        directRefinesDependencies = directRefinesDependencies.map { refinesFragment ->
-            refinesFragment.toIdeaKotlinFragment(cache)
-        },
-        sourceDirectories = kotlinSourceRoots.sourceDirectories.files.toList().map { file ->
-            IdeaKotlinSourceDirectoryImpl(file)
-        },
+        coordinates = IdeaKotlinFragmentCoordinates(fragment),
+        platforms = fragment.containingVariants.map { variant -> IdeaKotlinPlatform(variant) }.toSet(),
+        languageSettings = IdeaKotlinLanguageSettings(fragment.languageSettings),
+        dependencies = dependencyResolver.resolve(fragment).toList(),
+        sourceDirectories = fragment.kotlinSourceRoots.sourceDirectories.files.toList().map { file -> IdeaKotlinSourceDirectoryImpl(file) },
         resourceDirectories = emptyList(),
-        external = (this as? KotlinGradleFragmentInternal)?.external ?: KotlinExternalModelContainer.Empty
+        external = (fragment as? KotlinGradleFragmentInternal)?.external ?: KotlinExternalModelContainer.Empty
     )
 }
 
-private fun KotlinGradleVariant.buildIdeaKotlinVariant(cache: IdeaKotlinFragmentBuilderCache): IdeaKotlinVariant {
+private fun IdeaKotlinProjectModelBuildingContext.buildIdeaKotlinVariant(variant: KotlinGradleVariant): IdeaKotlinVariant {
     return IdeaKotlinVariantImpl(
-        fragment = buildIdeaKotlinFragment(cache),
-        variantAttributes = variantAttributes.mapKeys { (key, _) -> key.uniqueName },
-        compilationOutputs = compilationOutputs.toIdeaKotlinCompilationOutputs()
+        fragment = buildIdeaKotlinFragment(variant),
+        platform = IdeaKotlinPlatform(variant),
+        variantAttributes = variant.variantAttributes.mapKeys { (key, _) -> key.uniqueName },
+        compilationOutputs = IdeaKotlinCompilationOutput(variant.compilationOutputs)
     )
 }

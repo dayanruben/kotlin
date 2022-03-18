@@ -59,16 +59,16 @@ internal abstract class AbstractKotlinFragmentMetadataCompilationData<T : Kotlin
 
     override var compileDependencyFiles: FileCollection by project.newProperty {
         createMetadataDependencyTransformationClasspath(
-            project,
-            resolvableMetadataConfiguration(fragment.containingModule),
-            lazy {
-                fragment.refinesClosure.minus(fragment).map {
+            project = project,
+            fromFiles = resolvableMetadataConfiguration(fragment.containingModule),
+            parentCompiledMetadataFiles = lazy {
+                fragment.refinesClosure.map {
                     val compilation = metadataCompilationRegistry.getForFragmentOrNull(it)
                         ?: return@map project.files()
                     compilation.output.classesDirs
                 }
             },
-            resolvedMetadataFiles
+            metadataResolutionProviders = resolvedMetadataFiles
         )
     }
 
@@ -95,7 +95,7 @@ internal abstract class AbstractKotlinFragmentMetadataCompilationData<T : Kotlin
 
     override val friendPaths: Iterable<FileCollection>
         get() = metadataCompilationRegistry.run {
-            fragment.refinesClosure.minus(fragment)
+            fragment.refinesClosure
                 .map {
                     val compilation = metadataCompilationRegistry.getForFragmentOrNull(it)
                         ?: return@map project.files()
@@ -121,7 +121,7 @@ internal open class KotlinCommonFragmentMetadataCompilationDataImpl(
 
     override val isActive: Boolean
         get() = !fragment.isNativeShared() &&
-                fragment.containingModule.variantsContainingFragment(fragment).run {
+                fragment.containingVariants.run {
                     !all { it.platformType in setOf(KotlinPlatformType.androidJvm, KotlinPlatformType.jvm) } &&
                             mapTo(hashSetOf()) { it.platformType }.size > 1
                 }
@@ -134,7 +134,7 @@ interface KotlinNativeFragmentMetadataCompilationData :
     KotlinNativeCompilationData<KotlinCommonOptions>
 
 internal fun KotlinGradleFragment.isNativeShared(): Boolean =
-    containingModule.variantsContainingFragment(this).run {
+    containingVariants.run {
         any() && all { it.platformType == KotlinPlatformType.native }
     }
 
@@ -161,14 +161,14 @@ internal open class KotlinNativeFragmentMetadataCompilationDataImpl(
         get() = lowerCamelCaseName("compile", fragment.disambiguateName(""), "KotlinNativeMetadata")
 
     override val isActive: Boolean
-        get() = fragment.isNativeShared() && fragment.containingModule.variantsContainingFragment(fragment).count() > 1
+        get() = fragment.isNativeShared() && fragment.containingVariants.count() > 1
 
     override val kotlinOptions: NativeCompileOptions = NativeCompileOptions { languageSettings }
 
     override val konanTarget: KonanTarget
         get() {
             val nativeVariants =
-                fragment.containingModule.variantsContainingFragment(fragment).filterIsInstance<KotlinNativeVariantInternal>()
+                fragment.containingVariants.filterIsInstance<KotlinNativeVariantInternal>()
             return nativeVariants.firstOrNull { it.konanTarget.enabledOnCurrentHost }?.konanTarget
                 ?: nativeVariants.firstOrNull()?.konanTarget
                 ?: HostManager.host
@@ -182,8 +182,8 @@ internal open class KotlinNativeFragmentMetadataCompilationDataImpl(
 // TODO think about more generic case: a fragment that can be compiled by an arbitrary compiler
 //      what tasks should we create? should there be a generic task for that?
 internal class MetadataCompilationRegistry {
-    private val commonCompilationDataPerFragment = mutableMapOf<KotlinGradleFragment, KotlinCommonFragmentMetadataCompilationDataImpl>()
-    private val nativeCompilationDataPerFragment = mutableMapOf<KotlinGradleFragment, KotlinNativeFragmentMetadataCompilationDataImpl>()
+    private val commonCompilationDataPerFragment = LinkedHashMap<KotlinGradleFragment, KotlinCommonFragmentMetadataCompilationDataImpl>()
+    private val nativeCompilationDataPerFragment = LinkedHashMap<KotlinGradleFragment, KotlinNativeFragmentMetadataCompilationDataImpl>()
 
     fun registerCommon(fragment: KotlinGradleFragment, compilationData: KotlinCommonFragmentMetadataCompilationDataImpl) {
         commonCompilationDataPerFragment.compute(fragment) { _, existing ->

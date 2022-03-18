@@ -7,14 +7,18 @@ package org.jetbrains.kotlin.gradle.kpm.idea
 
 import java.io.Serializable
 
-interface IdeaKotlinModule : Serializable {
-    val moduleIdentifier: IdeaKotlinModuleIdentifier
+sealed interface IdeaKotlinModule : Serializable {
+    val coordinates: IdeaKotlinModuleCoordinates
     val fragments: List<IdeaKotlinFragment>
 }
 
+val IdeaKotlinModule.name get() = coordinates.moduleName
+
+val IdeaKotlinModule.moduleClassifier get() = coordinates.moduleClassifier
+
 @InternalKotlinGradlePluginApi
 data class IdeaKotlinModuleImpl(
-    override val moduleIdentifier: IdeaKotlinModuleIdentifier,
+    override val coordinates: IdeaKotlinModuleCoordinates,
     override val fragments: List<IdeaKotlinFragment>
 ) : IdeaKotlinModule {
 

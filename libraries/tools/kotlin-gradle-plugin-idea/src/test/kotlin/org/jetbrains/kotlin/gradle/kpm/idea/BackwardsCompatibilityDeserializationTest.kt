@@ -10,23 +10,20 @@ package org.jetbrains.kotlin.gradle.kpm.idea
 import buildIdeaKotlinProjectModel
 import createKpmProject
 import createProxyInstance
-import deserialize
-import org.gradle.api.Project
 import org.gradle.api.internal.project.ProjectInternal
-import org.gradle.configurationcache.extensions.serviceOf
 import org.gradle.kotlin.dsl.create
 import org.gradle.testfixtures.ProjectBuilder
-import org.gradle.tooling.provider.model.ToolingModelBuilderRegistry
 import org.jetbrains.kotlin.gradle.kpm.KotlinExternalModelKey
 import org.jetbrains.kotlin.gradle.kpm.KotlinExternalModelSerializer.Companion.serializable
 import org.jetbrains.kotlin.gradle.kpm.external.ExternalVariantApi
 import org.jetbrains.kotlin.gradle.kpm.external.external
+import org.jetbrains.kotlin.gradle.kpm.idea.testFixtures.deserialize
+import org.jetbrains.kotlin.gradle.kpm.idea.testFixtures.serialize
 import org.jetbrains.kotlin.gradle.plugin.KotlinPm20PluginWrapper
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinIosX64Variant
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinLinuxX64Variant
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinPm20ProjectExtension
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.jvm
-import serialize
 import unwrapProxyInstance
 import java.io.File
 import java.io.Serializable
@@ -66,10 +63,10 @@ class BackwardsCompatibilityDeserializationTest {
         run {
             val deserializedModelProxy = createProxyInstance<IdeaKotlinProjectModel>(deserializedModel)
 
-            val deserializedMainModuleProxy = deserializedModelProxy.modules.firstOrNull { it.moduleIdentifier.moduleClassifier == null }
+            val deserializedMainModuleProxy = deserializedModelProxy.modules.firstOrNull { it.coordinates.moduleClassifier == null }
                 ?: fail("Missing main module")
 
-            val deserializedTestModuleProxy = deserializedModelProxy.modules.firstOrNull { it.moduleIdentifier.moduleClassifier == "test" }
+            val deserializedTestModuleProxy = deserializedModelProxy.modules.firstOrNull { it.coordinates.moduleClassifier == "test" }
                 ?: fail("Missing test module")
 
             listOf(deserializedMainModuleProxy, deserializedTestModuleProxy).forEach { module ->
@@ -103,7 +100,7 @@ class BackwardsCompatibilityDeserializationTest {
         val deserializedModel = deserializeModelWithBackwardsCompatibleClasses(model)
         val deserializedModelProxy = createProxyInstance<IdeaKotlinProjectModel>(deserializedModel)
 
-        val deserializedMainModuleProxy = deserializedModelProxy.modules.find { it.moduleIdentifier.moduleClassifier == null }
+        val deserializedMainModuleProxy = deserializedModelProxy.modules.find { it.coordinates.moduleClassifier == null }
             ?: fail("Missing main module")
 
         val deserializedCommonFragmentProxy = deserializedMainModuleProxy.fragments.find { it.name == "common" }

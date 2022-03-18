@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.gradle.plugin.mpp.pm20
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
+import org.gradle.api.attributes.Category
 import org.gradle.api.attributes.Usage
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.jvm.tasks.Jar
@@ -109,7 +110,9 @@ private fun createResolvableMetadataConfigurationForModule(module: KotlinGradleM
     project.configurations.create(module.resolvableMetadataConfigurationName).apply {
         isCanBeConsumed = false
         isCanBeResolved = true
+        attributes.attribute(KotlinPlatformType.attribute, KotlinPlatformType.common)
         attributes.attribute(Usage.USAGE_ATTRIBUTE, project.usageByName(KotlinUsages.KOTLIN_METADATA))
+        attributes.attribute(Category.CATEGORY_ATTRIBUTE, project.categoryByName(Category.LIBRARY))
         module.fragments.all { fragment ->
             project.addExtendsFromRelation(name, fragment.apiConfigurationName)
             project.addExtendsFromRelation(name, fragment.implementationConfigurationName)
@@ -248,7 +251,7 @@ private class MetadataCompilationTasksConfigurator(project: Project) : KotlinCom
 }
 
 private fun resolvedMetadataProviders(fragment: KotlinGradleFragment) =
-    fragment.refinesClosure.map {
+    fragment.withRefinesClosure.map {
         FragmentResolvedMetadataProvider(
             fragment.project.tasks.withType<TransformKotlinGranularMetadataForFragment>().named(transformFragmentMetadataTaskName(it))
         )
@@ -266,7 +269,7 @@ private fun createExtractMetadataTask(
         transformation
     ).configure { task ->
         task.dependsOn(Callable {
-            fragment.refinesClosure.mapNotNull { refined ->
+            fragment.withRefinesClosure.mapNotNull { refined ->
                 if (refined !== fragment)
                     project.tasks.named(transformFragmentMetadataTaskName(refined))
                 else null
@@ -280,7 +283,7 @@ private fun disableMetadataCompilationIfNotYetSupported(
     metadataCompilationData: AbstractKotlinFragmentMetadataCompilationData<*>
 ) {
     val fragment = metadataCompilationData.fragment
-    val platforms = fragment.containingModule.variantsContainingFragment(fragment).map { it.platformType }.toSet()
+    val platforms = fragment.containingVariants.map { it.platformType }.toSet()
     if (platforms != setOf(KotlinPlatformType.native) && platforms.size == 1
         || platforms == setOf(KotlinPlatformType.jvm, KotlinPlatformType.androidJvm)
     ) {

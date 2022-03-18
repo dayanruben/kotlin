@@ -8,24 +8,24 @@ package org.jetbrains.kotlin.gradle.kpm.idea
 import org.jetbrains.kotlin.gradle.kpm.KotlinExternalModelContainer
 import java.io.Serializable
 
-interface IdeaKotlinFragment : Serializable {
-    val name: String
-    val moduleIdentifier: IdeaKotlinModuleIdentifier
+sealed interface IdeaKotlinFragment : Serializable {
+    val coordinates: IdeaKotlinFragmentCoordinates
+    val platforms: Set<IdeaKotlinPlatform>
     val languageSettings: IdeaKotlinLanguageSettings?
-    val dependencies: List<IdeaKotlinFragmentDependency>
-    val directRefinesDependencies: List<IdeaKotlinFragment>
+    val dependencies: List<IdeaKotlinDependency>
     val sourceDirectories: List<IdeaKotlinSourceDirectory>
     val resourceDirectories: List<IdeaKotlinResourceDirectory>
     val external: KotlinExternalModelContainer
 }
 
+val IdeaKotlinFragment.name get() = coordinates.fragmentName
+
 @InternalKotlinGradlePluginApi
 data class IdeaKotlinFragmentImpl(
-    override val name: String,
-    override val moduleIdentifier: IdeaKotlinModuleIdentifier,
+    override val coordinates: IdeaKotlinFragmentCoordinates,
+    override val platforms: Set<IdeaKotlinPlatform>,
     override val languageSettings: IdeaKotlinLanguageSettings?,
-    override val dependencies: List<IdeaKotlinFragmentDependency>,
-    override val directRefinesDependencies: List<IdeaKotlinFragment>,
+    override val dependencies: List<IdeaKotlinDependency>,
     override val sourceDirectories: List<IdeaKotlinSourceDirectory>,
     override val resourceDirectories: List<IdeaKotlinResourceDirectory>,
     override val external: KotlinExternalModelContainer
@@ -36,3 +36,4 @@ data class IdeaKotlinFragmentImpl(
         private const val serialVersionUID = 0L
     }
 }
+

@@ -9,6 +9,9 @@ package org.jetbrains.kotlin.gradle.kpm.idea
 
 import org.gradle.kotlin.dsl.create
 import org.jetbrains.kotlin.gradle.kpm.AbstractKpmExtensionTest
+import org.jetbrains.kotlin.gradle.kpm.buildIdeaKotlinProjectModel
+import org.jetbrains.kotlin.gradle.kpm.idea.testFixtures.deserialize
+import org.jetbrains.kotlin.gradle.kpm.idea.testFixtures.serialize
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinIosX64Variant
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinLinuxX64Variant
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinMacosX64Variant
@@ -26,11 +29,14 @@ class IdeaKotlinProjectModelSerializableTest : AbstractKpmExtensionTest() {
     @Test
     fun `test - serialize and deserialize - empty project`() {
         project.evaluate()
-        assertSerializeAndDeserializeEquals(kotlin.toIdeaKotlinProjectModel())
+        project.repositories.mavenLocal()
+        assertSerializeAndDeserializeEquals(kotlin.buildIdeaKotlinProjectModel())
     }
 
     @Test
     fun `test - serialize and deserialize - project with variants and fragments`() {
+        project.evaluate()
+        project.repositories.mavenLocal()
         kotlin.mainAndTest {
             val native = fragments.create("native")
             val apple = fragments.create("apple")
@@ -47,18 +53,11 @@ class IdeaKotlinProjectModelSerializableTest : AbstractKpmExtensionTest() {
         }
 
         project.evaluate()
-        assertSerializeAndDeserializeEquals(kotlin.toIdeaKotlinProjectModel())
+        assertSerializeAndDeserializeEquals(kotlin.buildIdeaKotlinProjectModel())
     }
 
     private fun assertSerializeAndDeserializeEquals(model: IdeaKotlinProjectModel) {
-        val byteStream = ByteArrayOutputStream()
-        ObjectOutputStream(byteStream).use { stream -> stream.writeObject(model) }
-        val serializedModel = byteStream.toByteArray()
-
-        val deserializedModel = ObjectInputStream(ByteArrayInputStream(serializedModel)).use { stream -> stream.readObject() }
-        if (deserializedModel !is IdeaKotlinProjectModelImpl) {
-            fail("Expected 'deserializedModel' to implement ${IdeaKotlinProjectModelImpl::class.java}. Found $deserializedModel")
-        }
+        val deserializedModel = model.serialize().deserialize<IdeaKotlinProjectModel>()
 
         assertEquals(
             model.toString(), deserializedModel.toString(),
