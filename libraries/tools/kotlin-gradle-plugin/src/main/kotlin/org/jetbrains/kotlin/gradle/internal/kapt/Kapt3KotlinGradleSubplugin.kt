@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.gradle.model.builder.KaptModelBuilder
 import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.AbstractKotlinCompilation
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinJvmAndroidCompilation
+import org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompileTool
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.gradle.tasks.locateTask
 import org.jetbrains.kotlin.gradle.tasks.registerTask
@@ -515,7 +516,7 @@ class Kapt3GradleSubplugin @Inject internal constructor(private val registry: To
             // the configuration is not extended (via extendsFrom, which normally happens when one configuration is _added_ into another)
             // but is instead included as the (lazily) resolved files. This is needed because the class structure configuration doesn't have
             // the attributes that are potentially needed to resolve dependencies on MPP modules, and the classpath configuration does.
-            project.dependencies.add(classStructureIfIncremental.name, project.files(project.provider { kotlinCompile.get().classpath }))
+            project.dependencies.add(classStructureIfIncremental.name, project.files(project.provider { kotlinCompile.get().libraries }))
         }
 
         val kaptClasspathConfiguration = project.configurations.create("kaptClasspath_$taskName")
@@ -576,8 +577,7 @@ class Kapt3GradleSubplugin @Inject internal constructor(private val registry: To
         kotlinCompilation.output.classesDirs.from(kaptTaskProvider.map { it.classesDir })
 
         kotlinCompilation.compileKotlinTaskProvider.configure {
-            it as SourceTask
-            it.source(sourcesOutputDir, kotlinSourcesOutputDir)
+            (it as AbstractKotlinCompileTool<*>).setSource(sourcesOutputDir, kotlinSourcesOutputDir)
         }
 
         if (javaCompile != null) {

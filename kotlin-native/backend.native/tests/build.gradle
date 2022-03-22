@@ -4705,6 +4705,10 @@ task interop_sourceCodeStruct(type: KonanLocalTest) {
     source = "codegen/intrinsics/interop_sourceCodeStruct.kt"
 }
 
+task interop_alloc_value(type: KonanLocalTest) {
+    source = "runtime/interop/interop_alloc_value.kt"
+}
+
 standaloneTest("isExperimentalMM") {
     source = "codegen/intrinsics/isExperimentalMM.kt"
     flags = [ "-tr" ]
@@ -5353,7 +5357,7 @@ if (isAppleTarget(project)) {
         framework(frameworkName) {
             sources = ['objcexport']
             library = libraryName
-            opts = ["-Xemit-lazy-objc-header=$lazyHeader", "-Xexport-kdoc", "-Xbundle-id=foo.bar", "-Xbinary=unitSuspendFunctionObjCExport=proper"]
+            opts = ["-Xemit-lazy-objc-header=$lazyHeader", "-Xexport-kdoc", "-Xbundle-id=foo.bar"]
         }
         swiftSources = ['objcexport']
         if (isNoopGC) {
@@ -5407,7 +5411,7 @@ if (isAppleTarget(project)) {
             sources = ['objcexport']
             artifact = frameworkArtifactName
             library = libraryName
-            opts = ["-Xemit-lazy-objc-header=$lazyHeader", "-Xno-objc-generics", "-Xbinary=unitSuspendFunctionObjCExport=proper"]
+            opts = ["-Xemit-lazy-objc-header=$lazyHeader", "-Xno-objc-generics"]
         }
         swiftSources = ['objcexport']
         swiftExtraOpts = [ '-D', 'NO_GENERICS' ]
@@ -5462,7 +5466,7 @@ if (isAppleTarget(project)) {
             sources = ['objcexport']
             artifact = frameworkArtifactName
             library = libraryName
-            opts = ["-Xemit-lazy-objc-header=$lazyHeader"]
+            opts = ["-Xemit-lazy-objc-header=$lazyHeader", "-Xbinary=unitSuspendFunctionObjCExport=legacy"]
         }
         swiftSources = ['objcexport']
         swiftExtraOpts = [ '-D', 'LEGACY_SUSPEND_UNIT_FUNCTION_EXPORT' ]
@@ -5497,7 +5501,6 @@ if (isAppleTarget(project)) {
             artifact = frameworkArtifactName
             library = libraryName
             isStatic = true
-            opts = ["-Xbinary=unitSuspendFunctionObjCExport=proper"]
         }
         swiftSources = ['objcexport']
         if (isNoopGC) {

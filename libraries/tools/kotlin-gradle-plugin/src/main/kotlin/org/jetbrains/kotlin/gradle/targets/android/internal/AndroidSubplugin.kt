@@ -130,7 +130,7 @@ class AndroidSubplugin : KotlinCompilerPluginSupportPlugin {
                 )
             )
             kotlinCompilation.compileKotlinTaskProvider.configure {
-                it.source(getLayoutDirectories(project, sourceSet.res.srcDirs))
+                it.androidLayoutResourceFiles.from(getLayoutDirectories(project, sourceSet.res.srcDirs))
             }
         }
 

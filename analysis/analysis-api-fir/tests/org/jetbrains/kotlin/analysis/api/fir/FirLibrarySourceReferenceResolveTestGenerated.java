@@ -287,6 +287,12 @@ public class FirLibrarySourceReferenceResolveTestGenerated extends AbstractRefer
     }
 
     @Test
+    @TestMetadata("JavaStaticMethod.kt")
+    public void testJavaStaticMethod() throws Exception {
+        runTest("analysis/analysis-api/testData/referenceResolve/JavaStaticMethod.kt");
+    }
+
+    @Test
     @TestMetadata("KotlinPropertyAssignment.kt")
     public void testKotlinPropertyAssignment() throws Exception {
         runTest("analysis/analysis-api/testData/referenceResolve/KotlinPropertyAssignment.kt");
@@ -332,6 +338,24 @@ public class FirLibrarySourceReferenceResolveTestGenerated extends AbstractRefer
     @TestMetadata("parameterByName.kt")
     public void testParameterByName() throws Exception {
         runTest("analysis/analysis-api/testData/referenceResolve/parameterByName.kt");
+    }
+
+    @Test
+    @TestMetadata("PlusAssignByHand.kt")
+    public void testPlusAssignByHand() throws Exception {
+        runTest("analysis/analysis-api/testData/referenceResolve/PlusAssignByHand.kt");
+    }
+
+    @Test
+    @TestMetadata("PlusAssignOperator.kt")
+    public void testPlusAssignOperator() throws Exception {
+        runTest("analysis/analysis-api/testData/referenceResolve/PlusAssignOperator.kt");
+    }
+
+    @Test
+    @TestMetadata("PlusAssignViaPlusOperator.kt")
+    public void testPlusAssignViaPlusOperator() throws Exception {
+        runTest("analysis/analysis-api/testData/referenceResolve/PlusAssignViaPlusOperator.kt");
     }
 
     @Test

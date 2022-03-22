@@ -16,12 +16,10 @@
 
 package org.jetbrains.kotlin.gradle.tasks
 
+import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.FileCollection
-import org.gradle.api.file.FileTree
-import org.gradle.api.tasks.CacheableTask
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.TaskAction
+import org.gradle.api.model.ObjectFactory
+import org.gradle.api.tasks.*
 import org.gradle.work.ChangeType
 import org.gradle.work.Incremental
 import org.gradle.work.InputChanges
@@ -34,17 +32,21 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinJsDceOptions
 import org.jetbrains.kotlin.gradle.dsl.KotlinJsDceOptionsImpl
 import org.jetbrains.kotlin.gradle.logging.GradleKotlinLogger
 import org.jetbrains.kotlin.gradle.utils.canonicalPathWithoutExtension
+import org.jetbrains.kotlin.gradle.utils.fileExtensionCasePermutations
 import java.io.File
+import javax.inject.Inject
 
 @CacheableTask
-abstract class KotlinJsDce : AbstractKotlinCompileTool<K2JSDceArguments>(), KotlinJsDce {
+abstract class KotlinJsDce @Inject constructor(
+    objectFactory: ObjectFactory
+) : AbstractKotlinCompileTool<K2JSDceArguments>(objectFactory),
+    KotlinJsDce {
 
     init {
         cacheOnlyIfEnabledForKotlin()
-    }
 
-    @get:Internal
-    internal val objects = project.objects
+        include("js".fileExtensionCasePermutations().map { "**/*.$it" })
+    }
 
     override fun createCompilerArgs(): K2JSDceArguments = K2JSDceArguments()
 
@@ -73,14 +75,18 @@ abstract class KotlinJsDce : AbstractKotlinCompileTool<K2JSDceArguments>(), Kotl
     @Input
     var jvmArgs = mutableListOf<String>()
 
-    @Incremental
-    override fun getClasspath(): FileCollection {
-        return super.getClasspath()
-    }
+    // Source could be empty, while classpath not
+    @get:Incremental
+    @get:InputFiles
+    @get:IgnoreEmptyDirectories
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    override val sources: FileCollection = super.sources
 
-    private val buildDir by lazy {
-        project.buildDir
-    }
+    @get:Incremental
+    @get:InputFiles
+    abstract override val libraries: ConfigurableFileCollection
+
+    private val buildDir = project.layout.buildDirectory
 
     private val isDevMode
         get() = dceOptions.devMode || "-dev-mode" in dceOptions.freeCompilerArgs
@@ -97,17 +103,16 @@ abstract class KotlinJsDce : AbstractKotlinCompileTool<K2JSDceArguments>(), Kotl
         val shouldPerformIncrementalCopy = isDevMode && !isExplicitDevModeAllStrategy
 
         val classpathFiles = if (shouldPerformIncrementalCopy) {
-            inputChanges.getFileChanges(classpath)
+            inputChanges.getFileChanges(libraries)
                 .filter { it.changeType == ChangeType.MODIFIED || it.changeType == ChangeType.ADDED }
                 .map { it.file }
         } else {
-            classpath
+            libraries.asFileTree.files
         }
-        val inputFiles = (listOf(source) + classpathFiles
+
+        val inputFiles = sources.asFileTree.files.plus(classpathFiles)
             .filter { !kotlinFilesOnly || isDceCandidate(it) }
-            .map { objects.fileCollection().from(it).asFileTree })
-            .reduce(FileTree::plus)
-            .files.map { it.path }
+            .map { it.path }
 
         val outputDirArgs = arrayOf("-output-dir", destinationDirectory.get().asFile.path)
 
@@ -129,7 +134,7 @@ abstract class KotlinJsDce : AbstractKotlinCompileTool<K2JSDceArguments>(), Kotl
             K2JSDce::class.java.name,
             defaultCompilerClasspath,
             log,
-            buildDir,
+            buildDir.get().asFile,
             jvmArgs
         )
         throwGradleExceptionIfError(exitCode, KotlinCompilerExecutionStrategy.OUT_OF_PROCESS)
