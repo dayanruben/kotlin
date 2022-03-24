@@ -74,6 +74,8 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue;
 import org.jetbrains.kotlin.resolve.scopes.utils.ScopeUtilsKt;
 import org.jetbrains.kotlin.types.*;
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker;
+import org.jetbrains.kotlin.types.error.ErrorTypeKind;
+import org.jetbrains.kotlin.types.error.ErrorUtils;
 import org.jetbrains.kotlin.types.expressions.ControlStructureTypingUtils.ResolveConstruct;
 import org.jetbrains.kotlin.types.expressions.typeInfoFactory.TypeInfoFactoryKt;
 import org.jetbrains.kotlin.types.expressions.unqualifiedSuper.UnqualifiedSuperKt;
@@ -760,15 +762,22 @@ public class BasicExpressionTypingVisitor extends ExpressionTypingVisitor {
             return typeInfo.clearType();
         }
 
+        KtExpression deparenthesizedBaseExpression = KtPsiUtil.deparenthesize(baseExpression);
+
         // a[i]++/-- takes special treatment because it is actually let j = i, arr = a in arr.set(j, a.get(j).inc())
         if ((operationType == KtTokens.PLUSPLUS || operationType == KtTokens.MINUSMINUS) &&
-            baseExpression instanceof KtArrayAccessExpression) {
+            deparenthesizedBaseExpression instanceof KtArrayAccessExpression) {
             KtExpression stubExpression = ExpressionTypingUtils.createFakeExpressionOfType(
                     baseExpression.getProject(), context.trace, "e", type);
             TemporaryBindingTrace temporaryBindingTrace = TemporaryBindingTrace.create(
                     context.trace, "trace to resolve array access set method for unary expression", expression);
             ExpressionTypingContext newContext = context.replaceBindingTrace(temporaryBindingTrace);
-            resolveImplicitArrayAccessSetMethod((KtArrayAccessExpression) baseExpression, stubExpression, newContext, context.trace);
+            resolveImplicitArrayAccessSetMethod(
+                    (KtArrayAccessExpression) deparenthesizedBaseExpression,
+                    stubExpression,
+                    newContext,
+                    context.trace
+            );
         }
 
         // Resolve the operation reference
@@ -785,7 +794,7 @@ public class BasicExpressionTypingVisitor extends ExpressionTypingVisitor {
         if (operationType == KtTokens.PLUSPLUS || operationType == KtTokens.MINUSMINUS) {
             assert returnType != null : "returnType is null for " + resolutionResults.getResultingDescriptor();
             if (KotlinBuiltIns.isUnit(returnType)) {
-                result = ErrorUtils.createErrorType(components.builtIns.getUnit().getName().asString());
+                result = ErrorUtils.createErrorType(ErrorTypeKind.UNIT_RETURN_TYPE_FOR_INC_DEC);
                 context.trace.report(INC_DEC_SHOULD_NOT_RETURN_UNIT.on(operationSign));
             }
             else {
@@ -852,7 +861,9 @@ public class BasicExpressionTypingVisitor extends ExpressionTypingVisitor {
             context.trace.report(diagnosticFactory.on(operationSign));
             return baseTypeInfo != null ? baseTypeInfo : components.expressionTypingServices.getTypeInfo(baseExpression, context);
         }
-        assert baseTypeInfo != null : "Base expression was not processed: " + expression;
+        if (baseTypeInfo == null) {
+            return TypeInfoFactoryKt.noTypeInfo(context);
+        }
         KotlinType baseType = baseTypeInfo.getType();
         if (baseType == null) {
             return baseTypeInfo;
@@ -913,7 +924,7 @@ public class BasicExpressionTypingVisitor extends ExpressionTypingVisitor {
     ) {
         if (ktType == null) return false;
 
-        if (KotlinTypeKt.isError(ktType) && !ErrorUtils.isUninferredParameter(ktType)) return false;
+        if (KotlinTypeKt.isError(ktType) && !ErrorUtils.isUninferredTypeVariable(ktType)) return false;
 
         if (!TypeUtils.isNullableType(ktType)) return true;
 

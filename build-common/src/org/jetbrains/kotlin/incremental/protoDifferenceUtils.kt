@@ -29,7 +29,6 @@ import org.jetbrains.kotlin.protobuf.MessageLite
 import org.jetbrains.kotlin.serialization.deserialization.ProtoEnumFlags
 import org.jetbrains.kotlin.serialization.deserialization.descriptorVisibility
 import org.jetbrains.kotlin.serialization.deserialization.getClassId
-import java.util.*
 
 data class Difference(
     val isClassAffected: Boolean = false,
@@ -292,7 +291,10 @@ class DifferenceCalculatorForClass(
                 }
                 ProtoBufClassKind.INLINE_CLASS_UNDERLYING_PROPERTY_NAME,
                 ProtoBufClassKind.INLINE_CLASS_UNDERLYING_TYPE,
-                ProtoBufClassKind.INLINE_CLASS_UNDERLYING_TYPE_ID -> {
+                ProtoBufClassKind.INLINE_CLASS_UNDERLYING_TYPE_ID,
+                ProtoBufClassKind.MULTI_FIELD_VALUE_CLASS_UNDERLYING_NAME_LIST,
+                ProtoBufClassKind.MULTI_FIELD_VALUE_CLASS_UNDERLYING_TYPE_LIST,
+                ProtoBufClassKind.MULTI_FIELD_VALUE_CLASS_UNDERLYING_TYPE_ID_LIST -> {
                     isClassAffected = true
                 }
                 ProtoBufClassKind.CONTEXT_RECEIVER_TYPE_LIST,

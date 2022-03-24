@@ -422,7 +422,7 @@ interface IrTypeSystemContext : TypeSystemContext, TypeSystemCommonSuperTypesCon
         TODO("IrTypeSystemContext doesn't support constraint system resolution")
     }
 
-    override fun createErrorTypeWithCustomConstructor(debugName: String, constructor: TypeConstructorMarker): KotlinTypeMarker =
+    override fun createUninferredType(constructor: TypeConstructorMarker): KotlinTypeMarker =
         TODO("IrTypeSystemContext doesn't support constraint system resolution")
 
     override fun nullableAnyType() = irBuiltIns.anyNType as IrSimpleType
@@ -461,6 +461,12 @@ interface IrTypeSystemContext : TypeSystemContext, TypeSystemCommonSuperTypesCon
 
     override fun TypeConstructorMarker.isInlineClass(): Boolean =
         (this as? IrClassSymbol)?.owner?.isSingleFieldValueClass == true
+
+    override fun TypeConstructorMarker.isMultiFieldValueClass(): Boolean =
+        (this as? IrClassSymbol)?.owner?.isMultiFieldValueClass == true
+
+    override fun TypeConstructorMarker.getValueClassProperties(): List<Pair<Name, SimpleTypeMarker>>? =
+        (this as? IrClassSymbol)?.owner?.valueClassRepresentation?.underlyingPropertyNamesToTypes
 
     override fun TypeConstructorMarker.isInnerClass(): Boolean =
         (this as? IrClassSymbol)?.owner?.isInner == true

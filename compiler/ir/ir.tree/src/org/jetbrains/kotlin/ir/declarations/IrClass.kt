@@ -38,7 +38,7 @@ abstract class IrClass :
 
     abstract var thisReceiver: IrValueParameter?
 
-    abstract var inlineClassRepresentation: InlineClassRepresentation<IrSimpleType>?
+    abstract var valueClassRepresentation: ValueClassRepresentation<IrSimpleType>?
 
     abstract var sealedSubclasses: List<IrClassSymbol>
 

@@ -5,10 +5,12 @@
 
 package org.jetbrains.kotlin.ir.declarations
 
+import org.jetbrains.kotlin.descriptors.InlineClassRepresentation
+import org.jetbrains.kotlin.descriptors.MultiFieldValueClassRepresentation
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.expressions.IrExpressionBody
-import org.jetbrains.kotlin.ir.util.primaryConstructor
+import org.jetbrains.kotlin.ir.types.IrSimpleType
 import java.io.File
 
 fun <D : IrAttributeContainer> D.copyAttributes(other: IrAttributeContainer?): D = apply {
@@ -18,10 +20,10 @@ fun <D : IrAttributeContainer> D.copyAttributes(other: IrAttributeContainer?): D
 }
 
 val IrClass.isSingleFieldValueClass: Boolean
-    get() = this.isValue && (this.inlineClassRepresentation != null || this.primaryConstructor?.valueParameters?.size == 1)
+    get() = valueClassRepresentation is InlineClassRepresentation
 
 val IrClass.isMultiFieldValueClass: Boolean
-    get() = this.isValue && !isSingleFieldValueClass
+    get() = valueClassRepresentation is MultiFieldValueClassRepresentation
 
 fun IrClass.addMember(member: IrDeclaration) {
     declarations.add(member)
@@ -54,3 +56,10 @@ val IrFunction.isStaticMethodOfClass: Boolean
 
 val IrFunction.isPropertyAccessor: Boolean
     get() = this is IrSimpleFunction && correspondingPropertySymbol != null
+
+
+val IrClass.multiFieldValueClassRepresentation: MultiFieldValueClassRepresentation<IrSimpleType>?
+    get() = valueClassRepresentation as? MultiFieldValueClassRepresentation<IrSimpleType>
+
+val IrClass.inlineClassRepresentation: InlineClassRepresentation<IrSimpleType>?
+    get() = valueClassRepresentation as? InlineClassRepresentation<IrSimpleType>

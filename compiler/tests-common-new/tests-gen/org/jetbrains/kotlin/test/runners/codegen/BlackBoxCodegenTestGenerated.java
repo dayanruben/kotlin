@@ -20908,6 +20908,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         }
 
         @Test
+        @TestMetadata("kt51672.kt")
+        public void testKt51672() throws Exception {
+            runTest("compiler/testData/codegen/box/inlineClasses/kt51672.kt");
+        }
+
+        @Test
         @TestMetadata("mangledDefaultParameterFunction.kt")
         public void testMangledDefaultParameterFunction() throws Exception {
             runTest("compiler/testData/codegen/box/inlineClasses/mangledDefaultParameterFunction.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
@@ -31371,6 +31377,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         @TestMetadata("kt45170.kt")
         public void testKt45170() throws Exception {
             runTest("compiler/testData/codegen/box/objects/kt45170.kt");
+        }
+
+        @Test
+        @TestMetadata("kt46136.kt")
+        public void testKt46136() throws Exception {
+            runTest("compiler/testData/codegen/box/objects/kt46136.kt");
         }
 
         @Test

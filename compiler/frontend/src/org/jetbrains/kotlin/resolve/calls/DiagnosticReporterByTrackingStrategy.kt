@@ -35,7 +35,7 @@ import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluat
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
 import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedCallableMemberDescriptor
-import org.jetbrains.kotlin.types.ErrorUtils
+import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.checker.intersectWrappedTypes
@@ -75,6 +75,11 @@ class DiagnosticReporterByTrackingStrategy(
                 trace,
                 (diagnostic as NoValueForParameter).parameterDescriptor
             )
+            TypeCheckerHasRanIntoRecursion::class.java -> {
+                val shouldReportErrorsOnRecursiveTypeInsidePlusAssignment =
+                    context.languageVersionSettings.supportsFeature(LanguageFeature.ReportErrorsOnRecursiveTypeInsidePlusAssignment)
+                tracingStrategy.recursiveType(trace, shouldReportErrorsOnRecursiveTypeInsidePlusAssignment)
+            }
             InstantiationOfAbstractClass::class.java -> tracingStrategy.instantiationOfAbstractClass(trace)
             AbstractSuperCall::class.java -> {
                 val superExpression = (diagnostic as AbstractSuperCall).receiver.psiExpression as? KtSuperExpression
@@ -656,7 +661,7 @@ class DiagnosticReporterByTrackingStrategy(
     }
 
     private fun KotlinType.containsUninferredTypeParameter(uninferredTypeVariable: TypeVariableMarker) = contains {
-        ErrorUtils.isUninferredParameter(it) || it == TypeUtils.DONT_CARE
+        ErrorUtils.isUninferredTypeVariable(it) || it == TypeUtils.DONT_CARE
                 || it.constructor == uninferredTypeVariable.freshTypeConstructor(typeSystemContext)
     }
 

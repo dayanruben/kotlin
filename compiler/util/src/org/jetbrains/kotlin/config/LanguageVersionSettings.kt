@@ -242,6 +242,7 @@ enum class LanguageFeature(
     ProhibitQualifiedAccessToUninitializedEnumEntry(KOTLIN_1_7, kind = BUG_FIX), // KT-41124
     ForbidRecursiveDelegateExpressions(KOTLIN_1_7, kind = BUG_FIX),
     KotlinFunInterfaceConstructorReference(KOTLIN_1_7),
+    SuspendOnlySamConversions(KOTLIN_1_7),
 
     // 1.8
 
@@ -270,6 +271,7 @@ enum class LanguageFeature(
     ProhibitEnumDeclaringClass(KOTLIN_1_9, kind = BUG_FIX), // KT-49653
     StopPropagatingDeprecationThroughOverrides(KOTLIN_1_9, kind = BUG_FIX), // KT-47902
     ReportTypeVarianceConflictOnQualifierArguments(KOTLIN_1_9, kind = BUG_FIX), // KT-50947
+    ReportErrorsOnRecursiveTypeInsidePlusAssignment(KOTLIN_1_9, kind = BUG_FIX), // KT-48546
 
     // Disabled for indefinite time. See KT-48535 and related discussion
     ApproximateIntegerLiteralTypesInReceiverPosition(sinceVersion = null),

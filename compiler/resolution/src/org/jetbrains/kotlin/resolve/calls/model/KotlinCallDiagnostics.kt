@@ -116,6 +116,10 @@ class WrongCountOfTypeArguments(
     override fun report(reporter: DiagnosticReporter) = reporter.onTypeArguments(this)
 }
 
+object TypeCheckerHasRanIntoRecursion : KotlinCallDiagnostic(INAPPLICABLE) {
+    override fun report(reporter: DiagnosticReporter) = reporter.onCall(this)
+}
+
 // Callable reference resolution
 class CallableReferenceNotCompatible(
     argument: CallableReferenceResolutionAtom,

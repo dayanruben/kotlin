@@ -102,7 +102,7 @@ public interface ClassDescriptor extends ClassifierDescriptorWithTypeParameters,
     Collection<ClassDescriptor> getSealedSubclasses();
 
     @Nullable
-    InlineClassRepresentation<SimpleType> getInlineClassRepresentation();
+    ValueClassRepresentation<SimpleType> getValueClassRepresentation();
 
     @NotNull
     @Override

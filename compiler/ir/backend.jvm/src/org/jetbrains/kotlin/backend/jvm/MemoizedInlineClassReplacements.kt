@@ -34,19 +34,19 @@ import java.util.concurrent.ConcurrentHashMap
  */
 class MemoizedInlineClassReplacements(
     private val mangleReturnTypes: Boolean,
-    private val irFactory: IrFactory,
-    private val context: JvmBackendContext
-) {
+    irFactory: IrFactory,
+    context: JvmBackendContext
+) : MemoizedValueClassAbstractReplacements(irFactory, context) {
     private val storageManager = LockBasedStorageManager("inline-class-replacements")
     private val propertyMap = ConcurrentHashMap<IrPropertySymbol, IrProperty>()
 
-    val originalFunctionForStaticReplacement: MutableMap<IrFunction, IrFunction> = ConcurrentHashMap()
+    override val originalFunctionForStaticReplacement: MutableMap<IrFunction, IrFunction> = ConcurrentHashMap()
     internal val originalFunctionForMethodReplacement: MutableMap<IrFunction, IrFunction> = ConcurrentHashMap()
 
     /**
      * Get a replacement for a function or a constructor.
      */
-    val getReplacementFunction: (IrFunction) -> IrSimpleFunction? =
+    override val getReplacementFunction: (IrFunction) -> IrSimpleFunction? =
         storageManager.createMemoizedFunctionWithNullableValues {
             when {
                 // Don't mangle anonymous or synthetic functions, except for generated SAM wrapper methods
@@ -234,12 +234,11 @@ class MemoizedInlineClassReplacements(
         val replacement = buildReplacementInner(function, replacementOrigin, noFakeOverride, useOldManglingScheme, body)
         // When using the new mangling scheme we might run into dependencies using the old scheme
         // for which we will fall back to the old mangling scheme as well.
-        if (
-            !useOldManglingScheme &&
-            replacement.name.asString().contains("-") &&
-            function.parentClassId?.let { classFileContainsMethod(it, replacement, context) } == false
-        ) {
-            return buildReplacementInner(function, replacementOrigin, noFakeOverride, true, body)
+        if (!useOldManglingScheme && replacement.name.asString().contains('-') && function.parentClassId != null) {
+            val resolved = (function as? IrSimpleFunction)?.resolveFakeOverride(true)
+            if (resolved?.parentClassId?.let { classFileContainsMethod(it, replacement, context) } == false) {
+                return buildReplacementInner(function, replacementOrigin, noFakeOverride, true, body)
+            }
         }
         return replacement
     }

@@ -21358,6 +21358,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         }
 
         @Test
+        @TestMetadata("kt51672.kt")
+        public void testKt51672() throws Exception {
+            runTest("compiler/testData/codegen/box/inlineClasses/kt51672.kt");
+        }
+
+        @Test
         @TestMetadata("mangledDefaultParameterFunction.kt")
         public void testMangledDefaultParameterFunction() throws Exception {
             runTest("compiler/testData/codegen/box/inlineClasses/mangledDefaultParameterFunction.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
@@ -31827,6 +31833,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         @TestMetadata("kt45170.kt")
         public void testKt45170() throws Exception {
             runTest("compiler/testData/codegen/box/objects/kt45170.kt");
+        }
+
+        @Test
+        @TestMetadata("kt46136.kt")
+        public void testKt46136() throws Exception {
+            runTest("compiler/testData/codegen/box/objects/kt46136.kt");
         }
 
         @Test
@@ -44486,6 +44498,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         }
 
         @Test
+        @TestMetadata("kt50477Enabled.kt")
+        public void testKt50477Enabled() throws Exception {
+            runTest("compiler/testData/codegen/box/sam/kt50477Enabled.kt");
+        }
+
+        @Test
         @TestMetadata("nonInlinedSamWrapper.kt")
         public void testNonInlinedSamWrapper() throws Exception {
             runTest("compiler/testData/codegen/box/sam/nonInlinedSamWrapper.kt");
@@ -48187,6 +48205,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         @Test
         public void testAllFilesPresentInValueClasses() throws Exception {
             KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/valueClasses"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+        }
+
+        @Test
+        @TestMetadata("classFlattening.kt")
+        public void testClassFlattening() throws Exception {
+            runTest("compiler/testData/codegen/box/valueClasses/classFlattening.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
         }
 
         @Test

@@ -100,9 +100,9 @@ class IrLazyClass(
         }
     }
 
-    override var inlineClassRepresentation: InlineClassRepresentation<IrSimpleType>? by lazyVar(stubGenerator.lock) {
-        descriptor.inlineClassRepresentation?.mapUnderlyingType {
-            it.toIrType() as? IrSimpleType ?: error("Inline class underlying type is not a simple type: ${render()}")
+    override var valueClassRepresentation: ValueClassRepresentation<IrSimpleType>? by lazyVar(stubGenerator.lock) {
+        descriptor.valueClassRepresentation?.mapUnderlyingType {
+            it.toIrType() as? IrSimpleType ?: error("Value class underlying type is not a simple type: ${render()}")
         }
     }
 

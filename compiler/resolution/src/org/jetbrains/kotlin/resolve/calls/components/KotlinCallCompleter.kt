@@ -23,9 +23,11 @@ import org.jetbrains.kotlin.resolve.calls.inference.model.ExpectedTypeConstraint
 import org.jetbrains.kotlin.resolve.calls.model.*
 import org.jetbrains.kotlin.resolve.calls.tower.CandidateFactory
 import org.jetbrains.kotlin.resolve.calls.tower.forceResolution
-import org.jetbrains.kotlin.types.ErrorUtils
+import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.UnwrappedType
+import org.jetbrains.kotlin.types.error.ErrorType
+import org.jetbrains.kotlin.types.error.ErrorTypeKind
 import org.jetbrains.kotlin.types.model.safeSubstitute
 import org.jetbrains.kotlin.utils.addToStdlib.same
 
@@ -269,6 +271,10 @@ class KotlinCallCompleter(
         }
 
         constraintSystem.errors.forEach(diagnosticsHolder::addError)
+
+        if (returnType is ErrorType && returnType.kind == ErrorTypeKind.RECURSIVE_TYPE) {
+            diagnosticsHolder.addDiagnostic(TypeCheckerHasRanIntoRecursion)
+        }
     }
 
     private fun prepareCandidateForCompletion(

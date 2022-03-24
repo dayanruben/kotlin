@@ -134,8 +134,8 @@ class Fir2IrLazyClass(
         receiver
     }
 
-    override var inlineClassRepresentation: InlineClassRepresentation<IrSimpleType>?
-        get() = computeInlineClassRepresentation(fir)
+    override var valueClassRepresentation: ValueClassRepresentation<IrSimpleType>?
+        get() = computeValueClassRepresentation(fir)
         set(_) {
             error("Mutating Fir2Ir lazy elements is not possible")
         }

@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.descriptors.impl;
 
+import kotlin.Pair;
 import kotlin.collections.CollectionsKt;
 import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
@@ -323,13 +324,17 @@ public class LazySubstitutingClassDescriptor extends ModuleAwareClassDescriptor 
 
     @Nullable
     @Override
-    public InlineClassRepresentation<SimpleType> getInlineClassRepresentation() {
-        InlineClassRepresentation<SimpleType> representation = original.getInlineClassRepresentation();
-        //noinspection ConstantConditions
-        return representation == null ? null : new InlineClassRepresentation<SimpleType>(
-                representation.getUnderlyingPropertyName(),
-                substituteSimpleType(getInlineClassRepresentation().getUnderlyingType())
-        );
+    public ValueClassRepresentation<SimpleType> getValueClassRepresentation() {
+        ValueClassRepresentation<SimpleType> representation = original.getValueClassRepresentation();
+        if (representation == null) {
+            return null;
+        }
+        return representation.mapUnderlyingType(new Function1<SimpleType, SimpleType>() {
+            @Override
+            public SimpleType invoke(SimpleType type) {
+                return substituteSimpleType(type);
+            }
+        });
     }
 
     @Nullable
