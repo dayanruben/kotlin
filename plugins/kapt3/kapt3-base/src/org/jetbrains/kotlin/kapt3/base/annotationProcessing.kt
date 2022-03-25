@@ -116,13 +116,13 @@ fun KaptContext.doAnnotationProcessing(
             logger.info("Annotation processing complete, errors: $errorCount, warnings: $warningCount")
         }
 
-        val showProcessorTimings = options[KaptFlag.SHOW_PROCESSOR_TIMINGS]
-        if (logger.isVerbose || showProcessorTimings) {
-            val loggerFun = if (showProcessorTimings) logger::warn else logger::info
-            showProcessorTimings(wrappedProcessors, loggerFun)
+        val showProcessorStats = options[KaptFlag.SHOW_PROCESSOR_STATS]
+        if (logger.isVerbose || showProcessorStats) {
+            val loggerFun = if (showProcessorStats) logger::warn else logger::info
+            showProcessorStats(wrappedProcessors, loggerFun)
         }
 
-        options.processorsPerfReportFile?.let { dumpProcessorTiming(wrappedProcessors, options.processorsPerfReportFile, logger::info) }
+        options.processorsStatsReportFile?.let { dumpProcessorStats(wrappedProcessors, it, logger::info) }
 
         if (logger.isVerbose) {
             filer.displayState()
@@ -137,20 +137,28 @@ fun KaptContext.doAnnotationProcessing(
     }
 }
 
-private fun showProcessorTimings(wrappedProcessors: List<ProcessorWrapper>, logger: (String) -> Unit) {
+private fun showProcessorStats(wrappedProcessors: List<ProcessorWrapper>, logger: (String) -> Unit) {
     logger("Annotation processor stats:")
     wrappedProcessors.forEach { processor ->
         logger(processor.renderSpentTime())
     }
+    logger("Generated files report:")
+    wrappedProcessors.forEach { processor ->
+        logger(processor.renderGenerations())
+    }
 }
 
-private fun dumpProcessorTiming(wrappedProcessors: List<ProcessorWrapper>, apReportFile: File, logger: (String) -> Unit) {
+private fun dumpProcessorStats(wrappedProcessors: List<ProcessorWrapper>, apReportFile: File, logger: (String) -> Unit) {
     logger("Dumping Kapt Annotation Processing performance report to ${apReportFile.absolutePath}")
 
     apReportFile.writeText(buildString {
         appendLine("Kapt Annotation Processing performance report:")
         wrappedProcessors.forEach { processor ->
             appendLine(processor.renderSpentTime())
+        }
+        appendLine("Generated files report:")
+        wrappedProcessors.forEach { processor ->
+            appendLine(processor.renderGenerations())
         }
     })
 }
@@ -182,12 +190,14 @@ private fun reportIfRunningNonIncrementally(
 private class ProcessorWrapper(private val delegate: IncrementalProcessor) : Processor by delegate {
     private var initTime: Long = 0
     private val roundTime = mutableListOf<Long>()
+    private val sourcesGenerated = mutableListOf<Int>()
 
     override fun process(annotations: MutableSet<out TypeElement>, roundEnv: RoundEnvironment): Boolean {
         val (time, result) = measureTimeMillisWithResult {
             delegate.process(annotations, roundEnv)
         }
 
+        updateGenerationStats(roundEnv)
         roundTime += time
         return result
     }
@@ -224,6 +234,39 @@ private class ProcessorWrapper(private val delegate: IncrementalProcessor) : Pro
                 "total: $totalTime ms, " +
                 "init: $initTime ms, " +
                 "${roundTime.size} round(s): ${roundTime.joinToString { "$it ms" }}"
+    }
+
+    fun renderGenerations(): String {
+        val processorName = delegate.processorName
+
+        return "$processorName: " +
+                "total sources: ${sourcesGenerated.sum()}, " +
+                "sources per round: ${sourcesGenerated.joinToString()}"
+    }
+
+    private fun updateGenerationStats(roundEnv: RoundEnvironment) {
+        var numSourcesGenerated = -1
+        try {
+            val procEnv = roundEnv::class.java.getDeclaredField("processingEnv")
+            procEnv.isAccessible = true
+            val proEnvObj = procEnv.get(roundEnv) as ProcessingEnvironment
+
+            val filerField = JavacProcessingEnvironment::class.java.getDeclaredField("filer")
+            filerField.isAccessible = true
+            val filerObj = filerField.get(proEnvObj)
+
+            val genSourceNameField = JavacFiler::class.java.getDeclaredField("generatedSourceNames")
+            genSourceNameField.isAccessible = true
+            val genSourceNameObj = genSourceNameField.get(filerObj)
+
+            @Suppress("UNCHECKED_CAST")
+            val sources: Set<String>? = genSourceNameObj as? Set<String>
+            numSourcesGenerated = sources?.size ?: -1
+        } catch (e: Exception) {
+            // Not much we can do
+        } finally {
+            sourcesGenerated.add(numSourcesGenerated)
+        }
     }
 }
 
