@@ -6393,6 +6393,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("kt51711.kt")
+            public void testKt51711() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/controlStructures/kt51711.kt");
+            }
+
+            @Test
             @TestMetadata("kt657.kt")
             public void testKt657() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/controlStructures/kt657.kt");
@@ -21174,6 +21180,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("safeAccessOnUnit.kt")
             public void testSafeAccessOnUnit() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/nullableTypes/safeAccessOnUnit.kt");
+            }
+
+            @Test
+            @TestMetadata("safeCallOnNotNullableType.kt")
+            public void testSafeCallOnNotNullableType() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/nullableTypes/safeCallOnNotNullableType.kt");
             }
 
             @Test
