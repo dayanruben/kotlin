@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.backend.konan.llvm
 
 import llvm.*
+import org.jetbrains.kotlin.backend.common.LoggingContext
 import org.jetbrains.kotlin.backend.common.phaser.CompilerPhase
 import org.jetbrains.kotlin.backend.common.phaser.PhaseConfig
 import org.jetbrains.kotlin.backend.common.phaser.PhaserState
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.ir.util.isFunction
 import org.jetbrains.kotlin.ir.util.isReal
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.ir.visitors.*
+import org.jetbrains.kotlin.konan.target.Architecture
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 
@@ -356,7 +358,12 @@ internal val rewriteExternalCallsCheckerGlobals = makeKonanModuleOpPhase(
 internal val bitcodeOptimizationPhase = makeKonanModuleOpPhase(
         name = "BitcodeOptimization",
         description = "Optimize bitcode",
-        op = { context, _ -> runLlvmOptimizationPipeline(context) }
+        op = { context, _ ->
+            val config = createLTOFinalPipelineConfig(context)
+            LlvmOptimizationPipeline(config, context.llvmModule!!, context).use {
+                it.run()
+            }
+        }
 )
 
 internal val coveragePhase = makeKonanModuleOpPhase(
@@ -377,6 +384,16 @@ internal val produceOutputPhase = namedUnitPhase(
         lower = object : CompilerPhase<Context, Unit, Unit> {
             override fun invoke(phaseConfig: PhaseConfig, phaserState: PhaserState<Unit>, context: Context, input: Unit) {
                 produceOutput(context)
+            }
+        }
+)
+
+internal val removeRedundantSafepointsPhase = makeKonanModuleOpPhase(
+        name = "RemoveRedundantSafepoints",
+        description = "Leave only one safepoint in a basic block",
+        op = { context, _ ->
+            if (context.config.target.architecture == Architecture.ARM32 && context.config.target.family.isAppleFamily) {
+                RemoveRedundantSafepointsPass(context as LoggingContext).runOnModule(context.llvmModule!!)
             }
         }
 )

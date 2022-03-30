@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.incremental.AbstractInvalidationTest
 import org.jetbrains.kotlin.js.test.*
 import org.jetbrains.kotlin.js.test.ir.*
 import org.jetbrains.kotlin.js.testOld.AbstractDceTest
-import org.jetbrains.kotlin.js.testOld.AbstractJsLineNumberTest
 import org.jetbrains.kotlin.js.testOld.compatibility.binary.AbstractJsKlibBinaryCompatibilityTest
 import org.jetbrains.kotlin.js.testOld.wasm.semantics.AbstractIrCodegenBoxWasmTest
 import org.jetbrains.kotlin.js.testOld.wasm.semantics.AbstractIrCodegenWasmJsInteropWasmTest
@@ -40,10 +39,6 @@ fun main(args: Array<String>) {
 
             testClass<AbstractDceTest> {
                 model("dce/", pattern = "(.+)\\.js", targetBackend = TargetBackend.JS)
-            }
-
-            testClass<AbstractJsLineNumberTest> {
-                model("lineNumbers/", pattern = "^([^_](.+))\\.kt$", targetBackend = TargetBackend.JS)
             }
         }
 
@@ -111,12 +106,20 @@ fun main(args: Array<String>) {
                 model("webDemoExamples/")
             }
 
+            testClass<AbstractJsLineNumberTest> {
+                model("lineNumbers/")
+            }
+
             testClass<AbstractIrBoxJsTest> {
                 model("box/", pattern = "^([^_](.+))\\.kt$")
             }
 
             testClass<AbstractIrJsTypeScriptExportTest> {
                 model("typescript-export/", pattern = "^([^_](.+))\\.kt$")
+            }
+
+            testClass<AbstractJsIrLineNumberTest> {
+                model("lineNumbers/")
             }
         }
 
