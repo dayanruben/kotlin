@@ -19,6 +19,9 @@ import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.*
+import org.jetbrains.kotlin.diagnostics.DiagnosticContext
+import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
+import org.jetbrains.kotlin.diagnostics.reportOn
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.builder.*
 import org.jetbrains.kotlin.fir.contracts.FirContractDescription
@@ -59,7 +62,9 @@ class DeclarationsConverter(
     private val baseScopeProvider: FirScopeProvider,
     tree: FlyweightCapableTreeStructure<LighterASTNode>,
     @set:PrivateForInline override var offset: Int = 0,
-    context: Context<LighterASTNode> = Context()
+    context: Context<LighterASTNode> = Context(),
+    private val diagnosticsReporter: DiagnosticReporter? = null,
+    private val diagnosticContext: DiagnosticContext? = null
 ) : BaseConverter(session, tree, context) {
 
     @OptIn(PrivateForInline::class)
@@ -75,11 +80,15 @@ class DeclarationsConverter(
 
     private val expressionConverter = ExpressionsConverter(session, tree, this, context)
 
+    override fun reportSyntaxError(node: LighterASTNode) {
+        diagnosticsReporter?.reportOn(node.toFirSourceElement(), FirSyntaxErrors.SYNTAX, diagnosticContext!!)
+    }
+
     /**
      * [org.jetbrains.kotlin.parsing.KotlinParsing.parseFile]
      * [org.jetbrains.kotlin.parsing.KotlinParsing.parsePreamble]
      */
-    fun convertFile(file: LighterASTNode, fileName: String = "", filePath: String?): FirFile {
+    fun convertFile(file: LighterASTNode, sourceFile: KtSourceFile, linesMapping: KtSourceFileLinesMapping): FirFile {
         if (file.tokenType != KT_FILE) {
             //TODO throw error
             throw Exception()
@@ -114,8 +123,9 @@ class DeclarationsConverter(
             source = file.toFirSourceElement()
             origin = FirDeclarationOrigin.Source
             moduleData = baseModuleData
-            name = fileName
-            path = filePath
+            name = sourceFile.name
+            this.sourceFile = sourceFile
+            this.sourceFileLinesMapping = linesMapping
             this.packageDirective = packageDirective ?: buildPackageDirective { packageFqName = context.packageFqName }
             annotations += fileAnnotationList
             imports += importList
@@ -222,7 +232,7 @@ class DeclarationsConverter(
 
     private fun MutableList<String>.collectSegments(expression: LighterASTNode) {
         when (expression.tokenType) {
-            REFERENCE_EXPRESSION -> add(expression.asText)
+            REFERENCE_EXPRESSION -> add(expression.getAsStringWithoutBacktick())
             DOT_QUALIFIED_EXPRESSION -> {
                 expression.forEachChildren {
                     collectSegments(it)
@@ -1156,7 +1166,7 @@ class DeclarationsConverter(
 
                     fun defaultAccessorStatus() =
                         // Downward propagation of `inline` and `external` modifiers (from property to its accessors)
-                        FirDeclarationStatusImpl(propertyVisibility, modifiers.getModality(isClassOrObject = false)).apply {
+                        FirDeclarationStatusImpl(propertyVisibility, null).apply {
                             isInline = modifiers.hasInline()
                             isExternal = modifiers.hasExternal()
                         }
@@ -1694,7 +1704,8 @@ class DeclarationsConverter(
 
         val blockTree = LightTree2Fir.buildLightTreeBlockExpression(block.asText)
         return DeclarationsConverter(
-            baseSession, baseScopeProvider, blockTree, offset = offset + tree.getStartOffset(block), context
+            baseSession, baseScopeProvider, blockTree, offset = offset + tree.getStartOffset(block), context,
+            diagnosticsReporter, diagnosticContext
         ).convertBlockExpression(blockTree.root)
     }
 

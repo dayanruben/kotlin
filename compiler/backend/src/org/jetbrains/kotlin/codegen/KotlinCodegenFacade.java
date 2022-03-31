@@ -25,22 +25,33 @@ import org.jetbrains.kotlin.psi.KtFile;
 import java.util.Collection;
 
 public class KotlinCodegenFacade {
-    public static void compileCorrectFiles(@NotNull GenerationState state) {
+    public static void compileCorrectFiles(
+            Collection<KtFile> files,
+            @NotNull GenerationState state,
+            CodegenFactory codegenFactory
+    ) {
         ProgressIndicatorAndCompilationCanceledStatus.checkCanceled();
 
         state.beforeCompile();
+        state.oldBEInitTrace(files);
 
         ProgressIndicatorAndCompilationCanceledStatus.checkCanceled();
 
-        CodegenFactory.IrConversionInput psi2irInput = CodegenFactory.IrConversionInput.Companion.fromGenerationState(state);
-        CodegenFactory.BackendInput backendInput = state.getCodegenFactory().convertToIr(psi2irInput);
+        CodegenFactory.IrConversionInput psi2irInput = CodegenFactory.IrConversionInput.Companion.fromGenerationStateAndFiles(state, files);
+        CodegenFactory.BackendInput backendInput = codegenFactory.convertToIr(psi2irInput);
 
         ProgressIndicatorAndCompilationCanceledStatus.checkCanceled();
 
-        state.getCodegenFactory().generateModule(state, backendInput);
+        codegenFactory.generateModule(state, backendInput);
 
         CodegenFactory.Companion.doCheckCancelled(state);
         state.getFactory().done();
+    }
+
+    // TODO: remove after cleanin up IDE counterpart
+    public static void compileCorrectFiles(@NotNull GenerationState state) {
+        CodegenFactory codegenFactory = state.getCodegenFactory();
+        compileCorrectFiles(state.getFiles(), state, codegenFactory != null ? codegenFactory : DefaultCodegenFactory.INSTANCE);
     }
 
     public static void generatePackage(@NotNull GenerationState state, @NotNull FqName packageFqName, @NotNull Collection<KtFile> files) {

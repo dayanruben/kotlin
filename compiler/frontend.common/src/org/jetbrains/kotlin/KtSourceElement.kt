@@ -440,3 +440,4 @@ inline fun LighterASTNode.toKtLightSourceElement(
     startOffset: Int = this.startOffset,
     endOffset: Int = this.endOffset
 ): KtLightSourceElement = KtLightSourceElement(this, startOffset, endOffset, tree, kind)
+

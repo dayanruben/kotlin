@@ -12,13 +12,13 @@ import com.intellij.psi.search.ProjectScope
 import org.jetbrains.kotlin.analyzer.common.CommonPlatformAnalyzerServices
 import org.jetbrains.kotlin.asJava.finder.JavaElementFinder
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
-import org.jetbrains.kotlin.cli.jvm.compiler.PsiBasedProjectEnvironment
 import org.jetbrains.kotlin.cli.jvm.compiler.PsiBasedProjectFileSearchScope
 import org.jetbrains.kotlin.cli.jvm.compiler.TopDownAnalyzerFacadeForJVM
+import org.jetbrains.kotlin.cli.jvm.compiler.VfsBasedProjectEnvironment
 import org.jetbrains.kotlin.cli.jvm.config.jvmClasspathRoots
 import org.jetbrains.kotlin.cli.jvm.config.jvmModularRoots
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
-import org.jetbrains.kotlin.fir.analysis.FirAnalyzerFacade
+import org.jetbrains.kotlin.fir.FirAnalyzerFacade
 import org.jetbrains.kotlin.fir.checkers.registerExtendedCommonCheckers
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
 import org.jetbrains.kotlin.fir.moduleData
@@ -36,7 +36,9 @@ import org.jetbrains.kotlin.resolve.jvm.platform.JvmPlatformAnalyzerServices
 import org.jetbrains.kotlin.resolve.konan.platform.NativePlatformAnalyzerServices
 import org.jetbrains.kotlin.test.directives.FirDiagnosticsDirectives
 import org.jetbrains.kotlin.test.directives.model.DirectivesContainer
-import org.jetbrains.kotlin.test.model.*
+import org.jetbrains.kotlin.test.model.FrontendFacade
+import org.jetbrains.kotlin.test.model.FrontendKinds
+import org.jetbrains.kotlin.test.model.TestModule
 import org.jetbrains.kotlin.test.services.*
 
 class FirFrontendFacade(
@@ -64,8 +66,8 @@ class FirFrontendFacade(
         PsiElementFinder.EP.getPoint(project).unregisterExtension(JavaElementFinder::class.java)
 
         val lightTreeEnabled = FirDiagnosticsDirectives.USE_LIGHT_TREE in module.directives
-        val (ktFiles, originalFiles) = if (lightTreeEnabled) {
-            emptyList<KtFile>() to module.files.filter { it.isKtFile }.map { testServices.sourceFileProvider.getRealFileForSourceFile(it) }
+        val (ktFiles, lightTreeFiles) = if (lightTreeEnabled) {
+            emptyList<KtFile>() to testServices.sourceFileProvider.getLightTreeFilesForSourceFiles(module.files).values
         } else {
             testServices.sourceFileProvider.getKtFilesForSourceFiles(module.files, project).values to emptyList()
         }
@@ -83,7 +85,7 @@ class FirFrontendFacade(
             module.targetPlatform,
             module.targetPlatform.getAnalyzerServices(),
             moduleInfoProvider.firSessionProvider,
-            PsiBasedProjectEnvironment(
+            VfsBasedProjectEnvironment(
                 project, VirtualFileManager.getInstance().getFileSystem(StandardFileSystems.FILE_PROTOCOL),
                 { packagePartProviderFactory.invoke(it) }
             ),
@@ -91,7 +93,7 @@ class FirFrontendFacade(
             PsiBasedProjectFileSearchScope(sourcesScope),
             PsiBasedProjectFileSearchScope(librariesScope),
             lookupTracker = null,
-            providerAndScopeForIncrementalCompilation = null,
+            incrementalCompilationContext = null,
             extensionRegistrars = FirExtensionRegistrar.getInstances(project),
             needRegisterJavaElementFinder = true,
             dependenciesConfigurator = {
@@ -118,7 +120,7 @@ class FirFrontendFacade(
             session,
             languageVersionSettings,
             ktFiles,
-            originalFiles,
+            lightTreeFiles,
             IrGenerationExtension.getInstances(project),
             lightTreeEnabled,
             enablePluginPhases

@@ -7,12 +7,17 @@ package org.jetbrains.kotlin.cli.jvm.compiler
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.StandardFileSystems
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.psi.PsiElementFinder
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
+import org.jetbrains.kotlin.KtIoFileSourceFile
+import org.jetbrains.kotlin.KtPsiSourceFile
+import org.jetbrains.kotlin.KtSourceFile
+import org.jetbrains.kotlin.KtVirtualFileSourceFile
 import org.jetbrains.kotlin.asJava.finder.JavaElementFinder
 import org.jetbrains.kotlin.fir.FirModuleData
 import org.jetbrains.kotlin.fir.FirSession
@@ -42,11 +47,12 @@ class PsiBasedProjectFileSearchScope(val psiSearchScope: GlobalSearchScope) : Ab
         PsiBasedProjectFileSearchScope(GlobalSearchScope.notScope(psiSearchScope))
 }
 
-class PsiBasedProjectEnvironment(
+open class VfsBasedProjectEnvironment(
     val project: Project,
     val localFileSystem: VirtualFileSystem,
-    val getPackagePartProviderFn: (GlobalSearchScope) -> PackagePartProvider
+    private val getPackagePartProviderFn: (GlobalSearchScope) -> PackagePartProvider
 ) : AbstractProjectEnvironment {
+
     override fun getKotlinClassFinder(fileSearchScope: AbstractProjectFileSearchScope): KotlinClassFinder =
         VirtualFileFinderFactory.getInstance(project).create(fileSearchScope.asPsiSearchScope())
 
@@ -64,15 +70,43 @@ class PsiBasedProjectEnvironment(
         psiFinderExtensionPoint.registerExtension(FirJavaElementFinder(firSession, project), project)
     }
 
+    private fun List<VirtualFile>.toSearchScope(allowOutOfProjectRoots: Boolean) =
+        takeIf { it.isNotEmpty() }
+            ?.let {
+                if (allowOutOfProjectRoots) GlobalSearchScope.filesWithLibrariesScope(project, it)
+                else GlobalSearchScope.filesWithoutLibrariesScope(project, it)
+            }
+            ?: GlobalSearchScope.EMPTY_SCOPE
+
     override fun getSearchScopeByIoFiles(files: Iterable<File>, allowOutOfProjectRoots: Boolean): AbstractProjectFileSearchScope =
         PsiBasedProjectFileSearchScope(
             files
                 .mapNotNull { localFileSystem.findFileByPath(it.absolutePath) }
-                .toList()
+                .toSearchScope(allowOutOfProjectRoots)
+        )
+
+    override fun getSearchScopeBySourceFiles(files: Iterable<KtSourceFile>, allowOutOfProjectRoots: Boolean): AbstractProjectFileSearchScope =
+        PsiBasedProjectFileSearchScope(
+            files
+                .mapNotNull {
+                    when (it) {
+                        is KtPsiSourceFile -> it.psiFile.virtualFile
+                        is KtVirtualFileSourceFile -> it.virtualFile
+                        is KtIoFileSourceFile -> localFileSystem.findFileByPath(it.file.absolutePath)
+                        else -> null // TODO: find out whether other use cases should be supported
+                    }
+                }
+                .toSearchScope(allowOutOfProjectRoots)
+        )
+
+    override fun getSearchScopeByDirectories(directories: Iterable<File>): AbstractProjectFileSearchScope =
+        PsiBasedProjectFileSearchScope(
+            directories
+                .mapNotNull { localFileSystem.findFileByPath(it.absolutePath) }
+                .toSet()
                 .takeIf { it.isNotEmpty() }
                 ?.let {
-                    if (allowOutOfProjectRoots) GlobalSearchScope.filesWithLibrariesScope(project, it)
-                    else GlobalSearchScope.filesWithoutLibrariesScope(project, it)
+                    KotlinToJVMBytecodeCompiler.DirectoriesScope(project, it)
                 } ?: GlobalSearchScope.EMPTY_SCOPE
         )
 
@@ -95,6 +129,7 @@ class PsiBasedProjectEnvironment(
         baseModuleData: FirModuleData,
         fileSearchScope: AbstractProjectFileSearchScope
     ) = FirJavaFacade(firSession, baseModuleData, project.createJavaClassFinder(fileSearchScope.asPsiSearchScope()))
+
 }
 
 private fun AbstractProjectFileSearchScope.asPsiSearchScope() =
@@ -105,7 +140,7 @@ private fun AbstractProjectFileSearchScope.asPsiSearchScope() =
     }
 
 fun KotlinCoreEnvironment.toAbstractProjectEnvironment(): AbstractProjectEnvironment =
-    PsiBasedProjectEnvironment(
+    VfsBasedProjectEnvironment(
         project, VirtualFileManager.getInstance().getFileSystem(StandardFileSystems.FILE_PROTOCOL),
         { createPackagePartProvider(it) }
     )

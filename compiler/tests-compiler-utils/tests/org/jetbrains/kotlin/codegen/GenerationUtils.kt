@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.languageVersionSettings
-import org.jetbrains.kotlin.fir.analysis.FirAnalyzerFacade
+import org.jetbrains.kotlin.fir.FirAnalyzerFacade
 import org.jetbrains.kotlin.fir.backend.jvm.FirJvmBackendClassResolver
 import org.jetbrains.kotlin.fir.backend.jvm.FirJvmBackendExtension
 import org.jetbrains.kotlin.fir.createSessionForTests
@@ -124,9 +124,7 @@ object GenerationUtils {
         )
 
         val generationState = GenerationState.Builder(
-            project, classBuilderFactory, moduleFragment.descriptor, dummyBindingContext, files, configuration
-        ).codegenFactory(
-            codegenFactory
+            project, classBuilderFactory, moduleFragment.descriptor, dummyBindingContext, configuration
         ).isIrBackend(
             true
         ).jvmBackendClassResolver(
@@ -134,6 +132,7 @@ object GenerationUtils {
         ).build()
 
         generationState.beforeCompile()
+        generationState.oldBEInitTrace(files)
         codegenFactory.generateModuleInFrontendIRMode(
             generationState, moduleFragment, symbolTable, extensions, FirJvmBackendExtension(session, components),
         ) {}
@@ -190,14 +189,16 @@ object GenerationUtils {
                     configuration.getBoolean(JVMConfigurationKeys.USE_KAPT_WITH_JVM_IR)
         val generationState = GenerationState.Builder(
             project, classBuilderFactory, analysisResult.moduleDescriptor, analysisResult.bindingContext,
-            files, configuration
-        ).codegenFactory(
-            if (isIrBackend)
-                JvmIrCodegenFactory(configuration, configuration.get(CLIConfigurationKeys.PHASE_CONFIG))
-            else DefaultCodegenFactory
+            configuration
         ).isIrBackend(isIrBackend).apply(configureGenerationState).build()
         if (analysisResult.shouldGenerateCode) {
-            KotlinCodegenFacade.compileCorrectFiles(generationState)
+            KotlinCodegenFacade.compileCorrectFiles(
+                files,
+                generationState,
+                if (isIrBackend)
+                    JvmIrCodegenFactory(configuration, configuration.get(CLIConfigurationKeys.PHASE_CONFIG))
+                else DefaultCodegenFactory
+            )
         }
         return generationState
     }

@@ -5,12 +5,12 @@
 
 package org.jetbrains.kotlin.fir.backend
 
-import org.jetbrains.kotlin.KtFakeSourceElementKind
-import org.jetbrains.kotlin.KtNodeTypes
-import org.jetbrains.kotlin.KtSourceElement
+import com.intellij.psi.tree.IElementType
+import org.jetbrains.kotlin.*
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
+import org.jetbrains.kotlin.diagnostics.findChildByType
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.backend.generators.ClassMemberGenerator
 import org.jetbrains.kotlin.fir.backend.generators.OperatorExpressionGenerator
@@ -49,7 +49,6 @@ import org.jetbrains.kotlin.ir.util.parentClassOrNull
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
-import org.jetbrains.kotlin.psi
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtForExpression
 import org.jetbrains.kotlin.util.OperatorNameConventions
@@ -284,7 +283,7 @@ class Fir2IrVisitor(
         val initializer = variable.initializer
         val isNextVariable = initializer is FirFunctionCall &&
                 (initializer.calleeReference.resolvedSymbol as? FirNamedFunctionSymbol)?.callableId?.isIteratorNext() == true &&
-                variable.source.psi?.parent is KtForExpression
+                variable.source?.isChildOfForLoop == true
         val irVariable = declarationStorage.createIrVariable(
             variable, conversionScope.parentFromStack(),
             if (isNextVariable) {
@@ -789,11 +788,10 @@ class Fir2IrVisitor(
 
     override fun visitWhenExpression(whenExpression: FirWhenExpression, data: Any?): IrElement {
         val subjectVariable = generateWhenSubjectVariable(whenExpression)
-        val psi = whenExpression.psi
         val origin = when (whenExpression.source?.elementType) {
             KtNodeTypes.WHEN -> IrStatementOrigin.WHEN
             KtNodeTypes.IF -> IrStatementOrigin.IF
-            KtNodeTypes.BINARY_EXPRESSION -> when ((psi as? KtBinaryExpression)?.operationToken) {
+            KtNodeTypes.BINARY_EXPRESSION -> when (whenExpression.source?.operationToken) {
                 KtTokens.OROR -> IrStatementOrigin.OROR
                 KtTokens.ANDAND -> IrStatementOrigin.ANDAND
                 else -> null
@@ -1198,3 +1196,16 @@ class Fir2IrVisitor(
         }
     }
 }
+
+val KtSourceElement.isChildOfForLoop: Boolean
+    get() =
+        if (this is KtPsiSourceElement) psi.parent is KtForExpression
+        else treeStructure.getParent(lighterASTNode)?.tokenType == KtNodeTypes.FOR
+
+val KtSourceElement.operationToken: IElementType?
+    get() {
+        assert(elementType == KtNodeTypes.BINARY_EXPRESSION)
+        return if (this is KtPsiSourceElement) (psi as? KtBinaryExpression)?.operationToken
+        else treeStructure.findChildByType(lighterASTNode, KtNodeTypes.OPERATION_REFERENCE)?.tokenType
+            ?: error("No operation reference for binary expression: $lighterASTNode")
+    }

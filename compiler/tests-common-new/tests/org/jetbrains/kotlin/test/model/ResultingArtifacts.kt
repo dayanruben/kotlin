@@ -5,18 +5,20 @@
 
 package org.jetbrains.kotlin.test.model
 
+import org.jetbrains.kotlin.KtSourceFile
 import org.jetbrains.kotlin.codegen.ClassFileFactory
-import org.jetbrains.kotlin.descriptors.ModuleDescriptor
-import org.jetbrains.kotlin.incremental.js.TranslationResultValue
+import org.jetbrains.kotlin.fileClasses.JvmFileClassInfo
 import org.jetbrains.kotlin.ir.backend.js.CompilerResult
-import org.jetbrains.kotlin.js.backend.ast.JsProgram
-import org.jetbrains.kotlin.library.KotlinLibrary
-import org.jetbrains.kotlin.ir.backend.js.LoweredIr
 import org.jetbrains.kotlin.js.facade.TranslationResult
 import java.io.File
 
+class SourceFileInfo(
+    val sourceFile: KtSourceFile,
+    val info: JvmFileClassInfo
+)
+
 object BinaryArtifacts {
-    class Jvm(val classFileFactory: ClassFileFactory) : ResultingArtifact.Binary<Jvm>() {
+    class Jvm(val classFileFactory: ClassFileFactory, val fileInfos: Collection<SourceFileInfo>) : ResultingArtifact.Binary<Jvm>() {
         override val kind: BinaryKind<Jvm>
             get() = ArtifactKinds.Jvm
     }

@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementFinder
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.KtInMemoryTextSourceFile
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.asJava.finder.JavaElementFinder
 import org.jetbrains.kotlin.checkers.BaseDiagnosticsTest
@@ -21,13 +22,13 @@ import org.jetbrains.kotlin.checkers.diagnostics.SyntaxErrorDiagnostic
 import org.jetbrains.kotlin.checkers.diagnostics.TextDiagnostic
 import org.jetbrains.kotlin.checkers.utils.CheckerTestUtil
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
-import org.jetbrains.kotlin.cli.jvm.compiler.PsiBasedProjectEnvironment
 import org.jetbrains.kotlin.cli.jvm.compiler.PsiBasedProjectFileSearchScope
 import org.jetbrains.kotlin.cli.jvm.compiler.TopDownAnalyzerFacadeForJVM
+import org.jetbrains.kotlin.cli.jvm.compiler.VfsBasedProjectEnvironment
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.diagnostics.PsiDiagnosticUtils
 import org.jetbrains.kotlin.diagnostics.KtDiagnostic
+import org.jetbrains.kotlin.diagnostics.PsiDiagnosticUtils
 import org.jetbrains.kotlin.fir.builder.BodyBuildingMode
 import org.jetbrains.kotlin.fir.builder.PsiHandlingMode
 import org.jetbrains.kotlin.fir.builder.RawFirBuilder
@@ -46,6 +47,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.AnalyzingUtils
 import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 import org.jetbrains.kotlin.resolve.jvm.platform.JvmPlatformAnalyzerServices
+import org.jetbrains.kotlin.toSourceLinesMapping
 import java.io.File
 
 abstract class AbstractFirBaseDiagnosticsTest : BaseDiagnosticsTest() {
@@ -89,15 +91,15 @@ abstract class AbstractFirBaseDiagnosticsTest : BaseDiagnosticsTest() {
                 info.platform,
                 info.analyzerServices,
                 externalSessionProvider = sessionProvider,
-                PsiBasedProjectEnvironment(
+                VfsBasedProjectEnvironment(
                     project, VirtualFileManager.getInstance().getFileSystem(StandardFileSystems.FILE_PROTOCOL),
                     { environment.createPackagePartProvider(it) }
                 ),
                 config?.languageVersionSettings ?: LanguageVersionSettingsImpl.DEFAULT,
-                sourceScope = PsiBasedProjectFileSearchScope(scope),
+                javaSourcesScope = PsiBasedProjectFileSearchScope(scope),
                 librariesScope = PsiBasedProjectFileSearchScope(allProjectScope),
                 lookupTracker = null,
-                providerAndScopeForIncrementalCompilation = null,
+                incrementalCompilationContext = null,
                 extensionRegistrars = emptyList(),
                 needRegisterJavaElementFinder = true
             ) {
@@ -133,7 +135,12 @@ abstract class AbstractFirBaseDiagnosticsTest : BaseDiagnosticsTest() {
         if (useLightTree) {
             val lightTreeBuilder = LightTree2Fir(session, firProvider.kotlinScopeProvider)
             ktFiles.mapTo(firFiles) {
-                val firFile = lightTreeBuilder.buildFirFile(it.text, it.name, it.virtualFilePath)
+                val firFile =
+                    lightTreeBuilder.buildFirFile(
+                        it.text,
+                        KtInMemoryTextSourceFile(it.name, it.virtualFilePath, it.text),
+                        it.text.toSourceLinesMapping()
+                    )
                 (session.firProvider as FirProviderImpl).recordFile(firFile)
                 firFile
             }

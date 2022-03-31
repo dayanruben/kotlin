@@ -5,14 +5,17 @@
 
 package org.jetbrains.kotlin.test.backend.classic
 
+import org.jetbrains.kotlin.KtPsiSourceFile
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories
 import org.jetbrains.kotlin.codegen.DefaultCodegenFactory
 import org.jetbrains.kotlin.codegen.KotlinCodegenFacade
 import org.jetbrains.kotlin.codegen.state.GenerationState
+import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.test.directives.CodegenTestDirectives
 import org.jetbrains.kotlin.test.directives.model.DirectivesContainer
 import org.jetbrains.kotlin.test.model.ArtifactKinds
 import org.jetbrains.kotlin.test.model.BinaryArtifacts
+import org.jetbrains.kotlin.test.model.SourceFileInfo
 import org.jetbrains.kotlin.test.model.TestModule
 import org.jetbrains.kotlin.test.services.TestServices
 import org.jetbrains.kotlin.test.services.compilerConfigurationProvider
@@ -37,12 +40,14 @@ class ClassicJvmBackendFacade(
             ClassBuilderFactories.TEST,
             analysisResult.moduleDescriptor,
             analysisResult.bindingContext,
-            psiFiles.toList(),
             configuration
-        ).codegenFactory(DefaultCodegenFactory).build()
+        ).build()
 
-        KotlinCodegenFacade.compileCorrectFiles(generationState)
+        KotlinCodegenFacade.compileCorrectFiles(psiFiles, generationState, DefaultCodegenFactory)
         javaCompilerFacade.compileJavaFiles(module, configuration, generationState.factory)
-        return BinaryArtifacts.Jvm(generationState.factory)
+        return BinaryArtifacts.Jvm(
+            generationState.factory,
+            psiFiles.map { SourceFileInfo(KtPsiSourceFile(it), JvmFileClassUtil.getFileClassInfoNoResolve(it)) }
+        )
     }
 }

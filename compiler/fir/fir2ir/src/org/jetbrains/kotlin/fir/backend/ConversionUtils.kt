@@ -6,9 +6,7 @@
 package org.jetbrains.kotlin.fir.backend
 
 import com.intellij.psi.PsiCompiledElement
-import org.jetbrains.kotlin.KtFakeSourceElementKind
-import org.jetbrains.kotlin.KtNodeTypes
-import org.jetbrains.kotlin.KtSourceElement
+import org.jetbrains.kotlin.*
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.backend.generators.FakeOverrideGenerator
@@ -21,11 +19,11 @@ import org.jetbrains.kotlin.fir.declarations.utils.isInline
 import org.jetbrains.kotlin.fir.declarations.utils.isJava
 import org.jetbrains.kotlin.fir.declarations.utils.visibility
 import org.jetbrains.kotlin.fir.expressions.*
+import org.jetbrains.kotlin.fir.expressions.impl.FirNoReceiverExpression
 import org.jetbrains.kotlin.fir.extensions.FirExtensionApiInternals
 import org.jetbrains.kotlin.fir.extensions.declarationGenerators
 import org.jetbrains.kotlin.fir.extensions.extensionService
 import org.jetbrains.kotlin.fir.extensions.generatedDeclarationsSymbolProvider
-import org.jetbrains.kotlin.fir.expressions.impl.FirNoReceiverExpression
 import org.jetbrains.kotlin.fir.references.FirErrorNamedReference
 import org.jetbrains.kotlin.fir.references.FirReference
 import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
@@ -59,12 +57,8 @@ import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.psi
-import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
-import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffsetSkippingComments
-import org.jetbrains.kotlin.resolve.calls.util.isSingleUnderscore
 import org.jetbrains.kotlin.types.ConstantValueKind
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.util.OperatorNameConventions
@@ -80,23 +74,19 @@ internal fun <T : IrElement> KtSourceElement?.convertWithOffsets(
     f: (startOffset: Int, endOffset: Int) -> T
 ): T {
     val psi = psi
-    if (psi is PsiCompiledElement || psi == null) return f(UNDEFINED_OFFSET, UNDEFINED_OFFSET)
-    val startOffset = psi.startOffsetSkippingComments
-    val endOffset = psi.endOffset
+    if (psi is PsiCompiledElement) return f(UNDEFINED_OFFSET, UNDEFINED_OFFSET)
+    val startOffset = psi?.startOffsetSkippingComments ?: this?.startOffset ?: UNDEFINED_OFFSET
+    val endOffset = this?.endOffset ?: UNDEFINED_OFFSET
     return f(startOffset, endOffset)
 }
 
 internal fun <T : IrElement> FirQualifiedAccess.convertWithOffsets(
     f: (startOffset: Int, endOffset: Int) -> T
 ): T {
-    val psi = psi
-    if (psi is PsiCompiledElement || psi == null) return f(UNDEFINED_OFFSET, UNDEFINED_OFFSET)
-    val startOffset = if (psi is KtQualifiedExpression) {
-        (psi.selectorExpression ?: psi).startOffsetSkippingComments
-    } else {
-        psi.startOffsetSkippingComments
-    }
-    val endOffset = psi.endOffset
+    val psi = calleeReference.psi
+    if (psi is PsiCompiledElement) return f(UNDEFINED_OFFSET, UNDEFINED_OFFSET)
+    val startOffset = psi?.startOffsetSkippingComments ?: calleeReference.source ?.startOffset ?: UNDEFINED_OFFSET
+    val endOffset = source?.endOffset ?: UNDEFINED_OFFSET
     return f(startOffset, endOffset)
 }
 
@@ -689,13 +679,11 @@ fun FirSession.createFilesWithGeneratedDeclarations(): List<FirFile> {
 fun FirDeclaration?.computeIrOrigin(predefinedOrigin: IrDeclarationOrigin? = null): IrDeclarationOrigin {
     return predefinedOrigin
         ?: (this?.origin as? FirDeclarationOrigin.Plugin)?.let { IrPluginDeclarationOrigin(it.key) }
-        ?: ((this as? FirValueParameter)?.source.psi as? KtParameter)?.let {
-            if (it.isSingleUnderscore) {
-                IrDeclarationOrigin.UNDERSCORE_PARAMETER
-            } else if (it.destructuringDeclaration != null) {
-                IrDeclarationOrigin.DESTRUCTURED_OBJECT_PARAMETER
-            } else {
-                null
+        ?: (this as? FirValueParameter)?.name?.let {
+            when (it) {
+                SpecialNames.UNDERSCORE_FOR_UNUSED_VAR -> IrDeclarationOrigin.UNDERSCORE_PARAMETER
+                SpecialNames.DESTRUCT -> IrDeclarationOrigin.DESTRUCTURED_OBJECT_PARAMETER
+                else -> null
             }
         }
         ?: IrDeclarationOrigin.DEFINED

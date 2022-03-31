@@ -50,6 +50,7 @@ class Fir2IrResultsConverter(
 
         // TODO: handle fir from light tree
         val ktFiles = inputArtifact.firFiles.values.mapNotNull { it.psi as KtFile? }
+        val sourceFiles = inputArtifact.firFiles.values.mapNotNull { it.sourceFile }
 
         // Create and initialize the module and its dependencies
         val project = compilerConfigurationProvider.getProject(module)
@@ -62,10 +63,7 @@ class Fir2IrResultsConverter(
 
         val generationState = GenerationState.Builder(
             project, ClassBuilderFactories.TEST,
-            container.get(), dummyBindingContext, ktFiles,
-            configuration
-        ).codegenFactory(
-            codegenFactory
+            container.get(), dummyBindingContext, configuration
         ).isIrBackend(
             true
         ).jvmBackendClassResolver(
@@ -76,6 +74,7 @@ class Fir2IrResultsConverter(
 
         return IrBackendInput.JvmIrBackendInput(
             generationState,
+            codegenFactory,
             JvmIrCodegenFactory.JvmIrBackendInput(
                 irModuleFragment,
                 symbolTable,
@@ -84,7 +83,8 @@ class Fir2IrResultsConverter(
                 extensions,
                 FirJvmBackendExtension(inputArtifact.session, components),
                 notifyCodegenStart = {},
-            )
+            ),
+            sourceFiles
         )
     }
 }
