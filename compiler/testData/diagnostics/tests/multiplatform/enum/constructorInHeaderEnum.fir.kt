@@ -2,11 +2,11 @@
 // FILE: common.kt
 
 expect enum class En(x: Int) {
-    <!NONE_APPLICABLE!>E1,<!>
+    E1,
     E2(42),
     ;
 
-    <!PRIMARY_CONSTRUCTOR_DELEGATION_CALL_EXPECTED!>constructor(s: String)<!>
+    constructor(s: String)
 }
 
 expect enum class En2 {
