@@ -10682,6 +10682,18 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
             }
 
             @Test
+            @TestMetadata("kt49715.kt")
+            public void testKt49715() throws Exception {
+                runTest("compiler/testData/codegen/box/dataClasses/kt49715.kt");
+            }
+
+            @Test
+            @TestMetadata("kt49715_behaviorChange.kt")
+            public void testKt49715_behaviorChange() throws Exception {
+                runTest("compiler/testData/codegen/box/dataClasses/kt49715_behaviorChange.kt");
+            }
+
+            @Test
             @TestMetadata("mixedParams.kt")
             public void testMixedParams() throws Exception {
                 runTest("compiler/testData/codegen/box/dataClasses/mixedParams.kt");

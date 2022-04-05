@@ -31561,6 +31561,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             }
 
             @Test
+            @TestMetadata("functionalTypeWithParameterNameVisibility.kt")
+            public void testFunctionalTypeWithParameterNameVisibility() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/typealias/functionalTypeWithParameterNameVisibility.kt");
+            }
+
+            @Test
             @TestMetadata("genericTypeAliasConstructor.kt")
             public void testGenericTypeAliasConstructor() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/typealias/genericTypeAliasConstructor.kt");
@@ -36546,6 +36552,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             @TestMetadata("experimentalSetter.kt")
             public void testExperimentalSetter() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/experimentalSetter.kt");
+            }
+
+            @Test
+            @TestMetadata("fileOptInSuppressesOverride.kt")
+            public void testFileOptInSuppressesOverride() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/fileOptInSuppressesOverride.kt");
             }
 
             @Test

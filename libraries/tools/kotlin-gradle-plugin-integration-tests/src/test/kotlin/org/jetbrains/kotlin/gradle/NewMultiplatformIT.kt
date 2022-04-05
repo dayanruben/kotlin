@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.UnusedSourceSetsChecker
 import org.jetbrains.kotlin.gradle.plugin.sources.METADATA_CONFIGURATION_NAME_SUFFIX
 import org.jetbrains.kotlin.gradle.plugin.sources.UnsatisfiedSourceSetVisibilityException
 import org.jetbrains.kotlin.gradle.targets.jvm.KotlinJvmTarget
+import org.jetbrains.kotlin.gradle.testbase.TestVersions
 import org.jetbrains.kotlin.gradle.util.*
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.library.KLIB_PROPERTY_SHORT_NAME
@@ -1483,12 +1484,12 @@ class NewMultiplatformIT : BaseGradleIT() {
     fun testJsDceInMpp() = with(Project("new-mpp-js-dce", gradleVersion)) {
         build("runRhino", options = defaultBuildOptions().copy(warningMode = WarningMode.Summary)) {
             assertSuccessful()
-            assertTasksExecuted(":mainProject:runDceNodeJsKotlin")
+            assertTasksExecuted(":mainProject:processDceBrowserKotlinJs")
 
-            val pathPrefix = "mainProject/build/kotlin-js-min/nodeJs/main"
+            val pathPrefix = "mainProject/build/kotlin-js-min/"
             assertFileExists("$pathPrefix/exampleapp.js.map")
             assertFileExists("$pathPrefix/examplelib.js.map")
-            assertFileContains("$pathPrefix/exampleapp.js.map", "\"../../../../src/nodeJsMain/kotlin/exampleapp/main.kt\"")
+            assertFileContains("$pathPrefix/exampleapp.js.map", "\"../../src/browserMain/kotlin/exampleapp/main.kt\"")
 
             assertFileExists("$pathPrefix/kotlin.js")
             assertTrue(fileInWorkingDir("$pathPrefix/kotlin.js").length() < 500 * 1000, "Looks like kotlin.js file was not minified by DCE")
@@ -1926,7 +1927,7 @@ class NewMultiplatformIT : BaseGradleIT() {
         "new-mpp-wasm-js",
         // TODO: this test fails with deprecation error on Gradle <7.0
         // Should be fixed via planned fixes in Kotlin/JS plugin: https://youtrack.jetbrains.com/issue/KFC-252
-        gradleVersionRequirement = GradleVersionRequired.AtLeast("7.0")
+        gradleVersionRequirement = GradleVersionRequired.AtLeast(TestVersions.Gradle.G_7_0)
     )) {
         setupWorkingDir()
         gradleBuildScript().modify(::transformBuildScriptWithPluginsDsl)

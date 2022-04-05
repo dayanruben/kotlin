@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.fir.scopes
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationAttributes
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationDataKey
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationDataRegistry
-import org.jetbrains.kotlin.fir.declarations.FirTypedDeclaration
+import org.jetbrains.kotlin.fir.declarations.FirCallableDeclaration
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.resolvedTypeFromPrototype
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
@@ -16,26 +16,26 @@ import org.jetbrains.kotlin.fir.types.FirResolvedTypeRef
 import org.jetbrains.kotlin.fir.types.FirTypeRef
 
 abstract class FakeOverrideTypeCalculator {
-    abstract fun computeReturnType(declaration: FirTypedDeclaration): FirTypeRef
+    abstract fun computeReturnType(declaration: FirCallableDeclaration): FirTypeRef?
 
     object DoNothing : FakeOverrideTypeCalculator() {
-        override fun computeReturnType(declaration: FirTypedDeclaration): FirTypeRef {
+        override fun computeReturnType(declaration: FirCallableDeclaration): FirTypeRef {
             return declaration.returnTypeRef
         }
     }
 
     object Forced : FakeOverrideTypeCalculator() {
-        override fun computeReturnType(declaration: FirTypedDeclaration): FirResolvedTypeRef {
+        override fun computeReturnType(declaration: FirCallableDeclaration): FirResolvedTypeRef? {
             val fakeOverrideSubstitution = declaration.attributes.fakeOverrideSubstitution
-                ?: return declaration.returnTypeRef as FirResolvedTypeRef
+                ?: return declaration.returnTypeRef as? FirResolvedTypeRef
             synchronized(fakeOverrideSubstitution) {
                 if (declaration.attributes.fakeOverrideSubstitution == null) {
                     return declaration.returnTypeRef as FirResolvedTypeRef
                 }
-                declaration.attributes.fakeOverrideSubstitution = null
                 val (substitutor, baseSymbol) = fakeOverrideSubstitution
-                val baseDeclaration = baseSymbol.fir as FirTypedDeclaration
-                val baseReturnType = computeReturnType(baseDeclaration).type
+                val baseDeclaration = baseSymbol.fir as FirCallableDeclaration
+                val baseReturnType = computeReturnType(baseDeclaration)?.type ?: return null
+                declaration.attributes.fakeOverrideSubstitution = null
                 val coneType = substitutor.substituteOrSelf(baseReturnType)
                 val returnType = declaration.returnTypeRef.resolvedTypeFromPrototype(coneType)
                 declaration.replaceReturnTypeRef(returnType)
