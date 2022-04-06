@@ -35,6 +35,7 @@ abstract class FirEnumEntry : FirVariable() {
     abstract override val deprecation: DeprecationsPerUseSite?
     abstract override val containerSource: DeserializedContainerSource?
     abstract override val dispatchReceiverType: ConeSimpleKotlinType?
+    abstract override val contextReceivers: List<FirContextReceiver>
     abstract override val name: Name
     abstract override val initializer: FirExpression?
     abstract override val delegate: FirExpression?
@@ -59,6 +60,8 @@ abstract class FirEnumEntry : FirVariable() {
     abstract override fun replaceReceiverTypeRef(newReceiverTypeRef: FirTypeRef?)
 
     abstract override fun replaceDeprecation(newDeprecation: DeprecationsPerUseSite?)
+
+    abstract override fun replaceContextReceivers(newContextReceivers: List<FirContextReceiver>)
 
     abstract override fun replaceInitializer(newInitializer: FirExpression?)
 

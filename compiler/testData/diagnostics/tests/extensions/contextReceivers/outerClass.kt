@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 // !LANGUAGE: +ContextReceivers
 // !DIAGNOSTICS: -UNUSED_PARAMETER
 
@@ -11,7 +12,7 @@ class Inner(arg: Any) {
 }
 
 fun f(outer: Outer) {
-    <!NO_CONTEXT_RECEIVER!>Inner(1)<!>
+    <!NO_CONTEXT_RECEIVER!>Inner<!>(1)
     with(outer) {
         Inner(3)
     }

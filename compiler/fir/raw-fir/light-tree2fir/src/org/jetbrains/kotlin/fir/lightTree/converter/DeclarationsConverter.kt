@@ -34,7 +34,6 @@ import org.jetbrains.kotlin.fir.diagnostics.ConeSimpleDiagnostic
 import org.jetbrains.kotlin.fir.diagnostics.DiagnosticKind
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.builder.*
-import org.jetbrains.kotlin.fir.expressions.impl.FirEmptyAnnotationArgumentMapping
 import org.jetbrains.kotlin.fir.expressions.impl.FirSingleExpressionBlock
 import org.jetbrains.kotlin.fir.lightTree.LightTree2Fir
 import org.jetbrains.kotlin.fir.lightTree.fir.*
@@ -529,6 +528,7 @@ class DeclarationsConverter(
                     )
                     //parse primary constructor
                     val primaryConstructorWrapper = convertPrimaryConstructor(
+                        classNode,
                         primaryConstructor,
                         selfType.source,
                         classWrapper,
@@ -591,6 +591,8 @@ class DeclarationsConverter(
                         )
                     }
                     initCompanionObjectSymbolAttr()
+
+                    contextReceivers.addAll(convertContextReceivers(classNode))
                 }.also {
                     it.delegateFieldsMap = delegatedFieldsMap
                 }
@@ -669,6 +671,7 @@ class DeclarationsConverter(
                     )
                     //parse primary constructor
                     convertPrimaryConstructor(
+                        objectDeclaration,
                         primaryConstructor,
                         delegatedSelfType.source,
                         classWrapper,
@@ -759,6 +762,7 @@ class DeclarationsConverter(
                         )
                         superTypeRefs += enumClassWrapper.delegatedSuperTypeRef
                         convertPrimaryConstructor(
+                            enumEntry,
                             null,
                             enumEntry.toFirSourceElement(),
                             enumClassWrapper,
@@ -821,6 +825,7 @@ class DeclarationsConverter(
      * primaryConstructor branch
      */
     private fun convertPrimaryConstructor(
+        classNode: LighterASTNode,
         primaryConstructor: LighterASTNode?,
         selfTypeSource: KtSourceElement?,
         classWrapper: ClassWrapper,
@@ -895,6 +900,7 @@ class DeclarationsConverter(
                 this.valueParameters += valueParameters.map { it.firValueParameter }
                 delegatedConstructor = firDelegatedCall
                 this.body = null
+                this.contextReceivers.addAll(convertContextReceivers(classNode))
             }.apply {
                 containingClassForStaticMemberAttr = currentDispatchReceiverType()!!.lookupTag
             }, valueParameters
@@ -1234,6 +1240,8 @@ class DeclarationsConverter(
                 it.useSiteTarget != PROPERTY_GETTER &&
                         (!isVar || it.useSiteTarget != SETTER_PARAMETER && it.useSiteTarget != PROPERTY_SETTER)
             }
+
+            contextReceivers.addAll(convertContextReceivers(property))
         }.also {
             fillDanglingConstraintsTo(firTypeParameters, typeConstraints, it)
         }
@@ -1615,6 +1623,7 @@ class DeclarationsConverter(
 
                 symbol = functionSymbol
                 dispatchReceiverType = currentDispatchReceiverType()
+                contextReceivers.addAll(convertContextReceivers(functionDeclaration))
             }
         }
 
@@ -2156,10 +2165,12 @@ class DeclarationsConverter(
             receiverTypeRef = receiverTypeReference
             returnTypeRef = returnTypeReference
             valueParameters += valueParametersList.map { it.firValueParameter }
-            if (receiverTypeReference != null) {
-                annotations += extensionFunctionAnnotation
-            }
             this.isSuspend = isSuspend
+            this.contextReceiverTypeRefs.addAll(
+                functionType.getChildNodeByType(CONTEXT_RECEIVER_LIST)?.getChildNodesByType(CONTEXT_RECEIVER)?.mapNotNull {
+                    it.getChildNodeByType(TYPE_REFERENCE)?.let(::convertType)
+                }.orEmpty()
+            )
         }
     }
 
@@ -2229,17 +2240,6 @@ class DeclarationsConverter(
         return ValueParameter(isVal, isVar, modifiers, firValueParameter, destructuringDeclaration)
     }
 
-    private val extensionFunctionAnnotation = buildAnnotation {
-        annotationTypeRef = buildResolvedTypeRef {
-            type = ConeClassLikeTypeImpl(
-                ConeClassLikeLookupTagImpl(EXTENSION_FUNCTION_ANNOTATION),
-                emptyArray(),
-                false
-            )
-        }
-        argumentMapping = FirEmptyAnnotationArgumentMapping
-    }
-
     private fun <T> fillDanglingConstraintsTo(
         typeParameters: List<FirTypeParameter>,
         typeConstraints: List<TypeConstraint>,
@@ -2257,6 +2257,31 @@ class DeclarationsConverter(
         }
         if (result.isNotEmpty()) {
             to.danglingTypeConstraints = result
+        }
+    }
+
+    private fun convertContextReceivers(container: LighterASTNode): List<FirContextReceiver> {
+        val receivers = container.getChildNodeByType(CONTEXT_RECEIVER_LIST)?.getChildNodesByType(CONTEXT_RECEIVER) ?: emptyList()
+        return receivers.map { contextReceiverElement ->
+            buildContextReceiver {
+                this.source = contextReceiverElement.toFirSourceElement()
+                this.customLabelName =
+                    contextReceiverElement
+                        .getChildNodeByType(LABEL_QUALIFIER)
+                        ?.getChildNodeByType(LABEL)
+                        ?.getChildNodeByType(IDENTIFIER)
+                        ?.getReferencedNameAsName()
+
+                val typeReference = contextReceiverElement.getChildNodeByType(TYPE_REFERENCE)
+
+                this.labelNameFromTypeRef = typeReference?.getChildNodeByType(USER_TYPE)
+                    ?.getChildNodeByType(REFERENCE_EXPRESSION)
+                    ?.getReferencedNameAsName()
+
+                typeReference?.let {
+                    this.typeRef = convertType(it)
+                }
+            }
         }
     }
 }

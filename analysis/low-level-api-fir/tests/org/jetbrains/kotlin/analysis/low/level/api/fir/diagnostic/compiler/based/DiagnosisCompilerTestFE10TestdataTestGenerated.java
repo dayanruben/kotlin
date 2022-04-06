@@ -5435,6 +5435,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             }
 
             @Test
+            @TestMetadata("breakContinueInTryFinallyInLoop.kt")
+            public void testBreakContinueInTryFinallyInLoop() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/breakContinueInTryFinallyInLoop.kt");
+            }
+
+            @Test
             @TestMetadata("breakInsideLocal.kt")
             public void testBreakInsideLocal() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/breakInsideLocal.kt");
@@ -19407,6 +19413,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             }
 
             @Test
+            @TestMetadata("NoInapplicableLateinitModifierForPropertyWithUnnresolvedType.kt")
+            public void testNoInapplicableLateinitModifierForPropertyWithUnnresolvedType() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/lateinit/NoInapplicableLateinitModifierForPropertyWithUnnresolvedType.kt");
+            }
+
+            @Test
             @TestMetadata("setter.kt")
             public void testSetter() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/lateinit/setter.kt");
@@ -27927,6 +27939,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             }
 
             @Test
+            @TestMetadata("implicitThisOnRefInLambdaInSmartcast.kt")
+            public void testImplicitThisOnRefInLambdaInSmartcast() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/smartCasts/implicitThisOnRefInLambdaInSmartcast.kt");
+            }
+
+            @Test
             @TestMetadata("implicitToGrandSon.kt")
             public void testImplicitToGrandSon() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/smartCasts/implicitToGrandSon.kt");
@@ -30980,6 +30998,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             @TestMetadata("mustBeEffectivelyPublic.kt")
             public void testMustBeEffectivelyPublic() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/testsWithExplicitApi/mustBeEffectivelyPublic.kt");
+            }
+
+            @Test
+            @TestMetadata("noErrorsForMemebersInsideInternalDeclaration.kt")
+            public void testNoErrorsForMemebersInsideInternalDeclaration() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/testsWithExplicitApi/noErrorsForMemebersInsideInternalDeclaration.kt");
             }
 
             @Test

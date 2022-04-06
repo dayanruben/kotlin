@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.fir.resolve.calls.tower
 
 import org.jetbrains.kotlin.fir.*
+import org.jetbrains.kotlin.fir.declarations.ContextReceiverGroup
 import org.jetbrains.kotlin.fir.declarations.FirConstructor
 import org.jetbrains.kotlin.fir.declarations.getAnnotationByClassId
 import org.jetbrains.kotlin.fir.declarations.utils.isInner
@@ -27,7 +28,6 @@ import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.name.StandardClassIds.Annotations.HidesMembers
 import org.jetbrains.kotlin.types.AbstractTypeChecker
-import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.SmartList
 
 enum class ProcessResult {
@@ -57,21 +57,13 @@ abstract class TowerScopeLevel {
         fun consumeCandidate(
             symbol: T,
             dispatchReceiverValue: ReceiverValue?,
-            extensionReceiverValue: ReceiverValue?,
+            givenExtensionReceiverOptions: List<ReceiverValue>,
             scope: FirScope,
-            builtInExtensionFunctionReceiverValue: ReceiverValue? = null,
             objectsByName: Boolean = false
         )
     }
 }
 
-abstract class SessionBasedTowerLevel(val session: FirSession) : TowerScopeLevel() {
-    protected fun FirCallableSymbol<*>.hasConsistentExtensionReceiver(extensionReceiver: Receiver?): Boolean {
-        return (extensionReceiver != null) == hasExtensionReceiver()
-    }
-
-    open fun replaceReceiverValue(receiverValue: ReceiverValue) = this
-}
 
 // This is more like "dispatch receiver-based tower level"
 // Here we always have an explicit or implicit dispatch receiver, and can access members of its scope
@@ -80,13 +72,13 @@ abstract class SessionBasedTowerLevel(val session: FirSession) : TowerScopeLevel
 // So: extension receiver = either none, if dispatch receiver = explicit receiver,
 //     or given implicit or explicit receiver, otherwise
 class MemberScopeTowerLevel(
-    session: FirSession,
     private val bodyResolveComponents: BodyResolveComponents,
     val dispatchReceiverValue: ReceiverValue,
-    private val extensionReceiver: ReceiverValue? = null,
-    private val implicitExtensionInvokeMode: Boolean = false,
-    private val scopeSession: ScopeSession
-) : SessionBasedTowerLevel(session) {
+    private val givenExtensionReceiverOptions: List<ReceiverValue>,
+) : TowerScopeLevel() {
+    private val scopeSession: ScopeSession get() = bodyResolveComponents.scopeSession
+    private val session: FirSession get() = bodyResolveComponents.session
+
     private fun <T : FirBasedSymbol<*>> processMembers(
         output: TowerScopeLevelProcessor<T>,
         processScopeMembers: FirScope.(processor: (T) -> Unit) -> Unit
@@ -95,11 +87,11 @@ class MemberScopeTowerLevel(
         var (empty, candidates) = scope.collectCandidates(processScopeMembers)
         consumeCandidates(output, candidates.map { scope to it })
 
-        if (extensionReceiver == null) {
+        if (givenExtensionReceiverOptions.isEmpty()) {
             val withSynthetic = FirSyntheticPropertiesScope(session, scope)
             withSynthetic.processScopeMembers { symbol ->
                 empty = false
-                output.consumeCandidate(symbol, dispatchReceiverValue, null, scope)
+                output.consumeCandidate(symbol, dispatchReceiverValue, givenExtensionReceiverOptions = emptyList(), scope)
             }
         }
         return if (empty) ProcessResult.SCOPE_EMPTY else ProcessResult.FOUND
@@ -112,9 +104,7 @@ class MemberScopeTowerLevel(
         val result = mutableListOf<T>()
         processScopeMembers { candidate ->
             empty = false
-            if (candidate is FirCallableSymbol<*> &&
-                (implicitExtensionInvokeMode || candidate.hasConsistentExtensionReceiver(extensionReceiver))
-            ) {
+            if (candidate is FirCallableSymbol<*> && candidate.hasConsistentExtensionReceiver(givenExtensionReceiverOptions)) {
                 val fir = candidate.fir
                 if ((fir as? FirConstructor)?.isInner == false) {
                     return@processScopeMembers
@@ -132,25 +122,14 @@ class MemberScopeTowerLevel(
         candidatesWithScope: List<Pair<FirScope, T>>
     ) {
         for ((scope, candidate) in candidatesWithScope) {
-            if (candidate is FirCallableSymbol<*> &&
-                (implicitExtensionInvokeMode || candidate.hasConsistentExtensionReceiver(extensionReceiver))
-            ) {
+            if (candidate is FirCallableSymbol<*> && candidate.hasConsistentExtensionReceiver(givenExtensionReceiverOptions)) {
                 output.consumeCandidate(
                     candidate, dispatchReceiverValue,
-                    extensionReceiverValue = extensionReceiver,
+                    givenExtensionReceiverOptions,
                     scope
                 )
-
-                if (implicitExtensionInvokeMode) {
-                    output.consumeCandidate(
-                        candidate, dispatchReceiverValue,
-                        extensionReceiverValue = null,
-                        scope,
-                        builtInExtensionFunctionReceiverValue = this.extensionReceiver
-                    )
-                }
             } else if (candidate is FirClassLikeSymbol<*>) {
-                output.consumeCandidate(candidate, null, extensionReceiver, scope)
+                output.consumeCandidate(candidate, null, givenExtensionReceiverOptions, scope)
             }
         }
     }
@@ -159,10 +138,6 @@ class MemberScopeTowerLevel(
         info: CallInfo,
         processor: TowerScopeLevelProcessor<FirFunctionSymbol<*>>
     ): ProcessResult {
-        val isInvoke = info.name == OperatorNameConventions.INVOKE
-        if (implicitExtensionInvokeMode && !isInvoke) {
-            return ProcessResult.FOUND
-        }
         val lookupTracker = session.lookupTracker
         return processMembers(processor) { consumer ->
             withMemberCallLookup(lookupTracker, info) { lookupCtx ->
@@ -205,12 +180,6 @@ class MemberScopeTowerLevel(
         return ProcessResult.FOUND
     }
 
-    override fun replaceReceiverValue(receiverValue: ReceiverValue): SessionBasedTowerLevel {
-        return MemberScopeTowerLevel(
-            session, bodyResolveComponents, receiverValue, extensionReceiver, implicitExtensionInvokeMode, scopeSession
-        )
-    }
-
     private inline fun withMemberCallLookup(
         lookupTracker: FirLookupTrackerComponent?,
         info: CallInfo,
@@ -232,6 +201,32 @@ class MemberScopeTowerLevel(
             }
         }
     }
+
+    private fun FirCallableSymbol<*>.hasConsistentExtensionReceiver(givenExtensionReceivers: List<ReceiverValue>): Boolean {
+        return givenExtensionReceivers.isNotEmpty() == hasExtensionReceiver()
+    }
+}
+
+class ContextReceiverGroupMemberScopeTowerLevel(
+    bodyResolveComponents: BodyResolveComponents,
+    contextReceiverGroup: ContextReceiverGroup,
+    givenExtensionReceiverOptions: List<ReceiverValue> = emptyList(),
+) : TowerScopeLevel() {
+    private val memberScopeLevels = contextReceiverGroup.map {
+        MemberScopeTowerLevel(bodyResolveComponents, it, givenExtensionReceiverOptions)
+    }
+
+    override fun processFunctionsByName(info: CallInfo, processor: TowerScopeLevelProcessor<FirFunctionSymbol<*>>): ProcessResult {
+        return memberScopeLevels.minOf { it.processFunctionsByName(info, processor) }
+    }
+
+    override fun processPropertiesByName(info: CallInfo, processor: TowerScopeLevelProcessor<FirVariableSymbol<*>>): ProcessResult {
+        return memberScopeLevels.minOf { it.processPropertiesByName(info, processor) }
+    }
+
+    override fun processObjectsByName(info: CallInfo, processor: TowerScopeLevelProcessor<FirBasedSymbol<*>>): ProcessResult {
+        return memberScopeLevels.minOf { it.processObjectsByName(info, processor) }
+    }
 }
 
 // This is more like "scope-based tower level"
@@ -242,13 +237,15 @@ class MemberScopeTowerLevel(
 // So: extension receiver = either none or explicit
 // (if explicit receiver exists, it always *should* be an extension receiver)
 class ScopeTowerLevel(
-    session: FirSession,
     private val bodyResolveComponents: BodyResolveComponents,
     val scope: FirScope,
-    val extensionReceiver: ReceiverValue?,
+    private val givenExtensionReceiverOptions: List<ReceiverValue>,
     private val withHideMembersOnly: Boolean,
     private val includeInnerConstructors: Boolean
-) : SessionBasedTowerLevel(session) {
+) : TowerScopeLevel() {
+    private val session: FirSession get() = bodyResolveComponents.session
+
+    fun areThereExtensionReceiverOptions(): Boolean = givenExtensionReceiverOptions.isNotEmpty()
 
     private fun dispatchReceiverValue(candidate: FirCallableSymbol<*>): ReceiverValue? {
         candidate.fir.importedFromObjectData?.let { data ->
@@ -285,26 +282,25 @@ class ScopeTowerLevel(
 
     private fun shouldSkipCandidateWithInconsistentExtensionReceiver(candidate: FirCallableSymbol<*>): Boolean {
         // Pre-check explicit extension receiver for default package top-level members
-        if (scope is FirDefaultStarImportingScope && extensionReceiver != null) {
+        if (scope !is FirDefaultStarImportingScope || !areThereExtensionReceiverOptions()) return false
+
+        val declarationReceiverType = candidate.resolvedReceiverTypeRef?.coneType as? ConeClassLikeType ?: return false
+        val startProjectedDeclarationReceiverType = declarationReceiverType.lookupTag.constructClassType(
+            declarationReceiverType.typeArguments.map { ConeStarProjection }.toTypedArray(),
+            isNullable = true
+        )
+
+        return givenExtensionReceiverOptions.none { extensionReceiver ->
             val extensionReceiverType = extensionReceiver.type
-            if (extensionReceiverType is ConeClassLikeType) {
-                val declarationReceiverType = candidate.resolvedReceiverTypeRef?.coneType
-                if (declarationReceiverType is ConeClassLikeType) {
-                    if (!AbstractTypeChecker.isSubtypeOf(
-                            session.typeContext,
-                            extensionReceiverType,
-                            declarationReceiverType.lookupTag.constructClassType(
-                                declarationReceiverType.typeArguments.map { ConeStarProjection }.toTypedArray(),
-                                isNullable = true
-                            )
-                        )
-                    ) {
-                        return true
-                    }
-                }
-            }
+            // If some receiver is non class like, we should not skip it
+            if (extensionReceiverType !is ConeClassLikeType) return@none true
+
+            AbstractTypeChecker.isSubtypeOf(
+                session.typeContext,
+                extensionReceiverType,
+                startProjectedDeclarationReceiverType
+            )
         }
-        return false
     }
 
     private fun <T : FirBasedSymbol<*>> consumeCallableCandidate(
@@ -315,7 +311,7 @@ class ScopeTowerLevel(
         if (withHideMembersOnly && candidate.getAnnotationByClassId(HidesMembers) == null) {
             return
         }
-        val receiverExpected = withHideMembersOnly || extensionReceiver != null
+        val receiverExpected = withHideMembersOnly || areThereExtensionReceiverOptions()
         if (candidateReceiverTypeRef == null == receiverExpected) return
         val dispatchReceiverValue = dispatchReceiverValue(candidate)
         if (dispatchReceiverValue == null && shouldSkipCandidateWithInconsistentExtensionReceiver(candidate)) {
@@ -325,7 +321,7 @@ class ScopeTowerLevel(
         @Suppress("UNCHECKED_CAST")
         processor.consumeCandidate(
             unwrappedCandidate as T, dispatchReceiverValue,
-            extensionReceiverValue = extensionReceiver,
+            givenExtensionReceiverOptions,
             scope
         )
     }
@@ -371,7 +367,7 @@ class ScopeTowerLevel(
             empty = false
             processor.consumeCandidate(
                 it, dispatchReceiverValue = null,
-                extensionReceiverValue = null,
+                givenExtensionReceiverOptions = emptyList(),
                 scope = scope,
                 objectsByName = true
             )

@@ -75,6 +75,9 @@ class FirSyntheticPropertyAccessor(
         bind(this@FirSyntheticPropertyAccessor)
     }
 
+    override val contextReceivers: List<FirContextReceiver>
+        get() = emptyList()
+
     // NB: unused
     override val propertySymbol: FirPropertySymbol? = null
 
@@ -155,6 +158,10 @@ class FirSyntheticPropertyAccessor(
     }
 
     override fun replaceControlFlowGraphReference(newControlFlowGraphReference: FirControlFlowGraphReference?) {
+        throw AssertionError("Mutation of synthetic property accessor isn't supported")
+    }
+
+    override fun replaceContextReceivers(newContextReceivers: List<FirContextReceiver>) {
         throw AssertionError("Mutation of synthetic property accessor isn't supported")
     }
 }

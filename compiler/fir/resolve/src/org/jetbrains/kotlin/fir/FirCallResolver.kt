@@ -119,8 +119,9 @@ class FirCallResolver(
             functionCall.copyAsImplicitInvokeCall {
                 explicitReceiver = candidate.callInfo.explicitReceiver
                 dispatchReceiver = candidate.dispatchReceiverExpression()
-                extensionReceiver = candidate.extensionReceiverExpression()
+                extensionReceiver = candidate.chosenExtensionReceiverExpression()
                 argumentList = candidate.callInfo.argumentList
+                contextReceiverArguments.addAll(candidate.contextReceiverArguments())
             }
         } else {
             resultExpression
@@ -381,7 +382,8 @@ class FirCallResolver(
         if (reducedCandidates.size == 1) {
             val candidate = reducedCandidates.single()
             resultExpression = resultExpression.transformDispatchReceiver(StoreReceiver, candidate.dispatchReceiverExpression())
-            resultExpression = resultExpression.transformExtensionReceiver(StoreReceiver, candidate.extensionReceiverExpression())
+            resultExpression = resultExpression.transformExtensionReceiver(StoreReceiver, candidate.chosenExtensionReceiverExpression())
+            resultExpression.replaceContextReceiverArguments(candidate.contextReceiverArguments())
         }
         if (resultExpression is FirExpression) transformer.storeTypeFromCallee(resultExpression)
         return resultExpression

@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.fir.serialization
 
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.Modality
@@ -17,11 +18,10 @@ import org.jetbrains.kotlin.fir.declarations.comparators.FirCallableDeclarationC
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyAccessor
 import org.jetbrains.kotlin.fir.declarations.utils.*
 import org.jetbrains.kotlin.fir.deserialization.projection
-import org.jetbrains.kotlin.fir.expressions.FirAnnotation
-import org.jetbrains.kotlin.fir.expressions.FirArgumentList
-import org.jetbrains.kotlin.fir.expressions.FirExpression
-import org.jetbrains.kotlin.fir.expressions.FirNamedArgumentExpression
+import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.builder.buildAnnotation
+import org.jetbrains.kotlin.fir.expressions.builder.buildAnnotationArgumentMapping
+import org.jetbrains.kotlin.fir.expressions.builder.buildConstExpression
 import org.jetbrains.kotlin.fir.expressions.impl.FirEmptyAnnotationArgumentMapping
 import org.jetbrains.kotlin.fir.extensions.extensionService
 import org.jetbrains.kotlin.fir.extensions.typeAttributeExtensions
@@ -51,6 +51,7 @@ import org.jetbrains.kotlin.name.*
 import org.jetbrains.kotlin.resolve.RequireKotlinConstants
 import org.jetbrains.kotlin.serialization.deserialization.ProtoEnumFlags
 import org.jetbrains.kotlin.types.AbstractTypeApproximator
+import org.jetbrains.kotlin.types.ConstantValueKind
 import org.jetbrains.kotlin.types.TypeApproximatorConfiguration
 
 class FirElementSerializer private constructor(
@@ -188,6 +189,17 @@ class FirElementSerializer private constructor(
             }
         }
 
+        if (klass is FirRegularClass) {
+            for (contextReceiver in klass.contextReceivers) {
+                val typeRef = contextReceiver.typeRef
+                if (useTypeTable()) {
+                    builder.addContextReceiverTypeId(typeId(typeRef))
+                } else {
+                    builder.addContextReceiverType(typeProto(contextReceiver.typeRef))
+                }
+            }
+        }
+
         if (versionRequirementTable == null) error("Version requirements must be serialized for classes: ${klass.render()}")
 
         builder.addAllVersionRequirement(versionRequirementTable.serializeVersionRequirements(klass))
@@ -311,6 +323,15 @@ class FirElementSerializer private constructor(
             builder.addTypeParameter(local.typeParameterProto(typeParameter))
         }
 
+        for (contextReceiver in property.contextReceivers) {
+            val typeRef = contextReceiver.typeRef
+            if (useTypeTable()) {
+                builder.addContextReceiverTypeId(typeId(typeRef))
+            } else {
+                builder.addContextReceiverType(typeProto(contextReceiver.typeRef))
+            }
+        }
+
         val receiverTypeRef = property.receiverTypeRef
         if (receiverTypeRef != null) {
             if (useTypeTable()) {
@@ -383,6 +404,15 @@ class FirElementSerializer private constructor(
         for (typeParameter in function.typeParameters) {
             if (typeParameter !is FirTypeParameter) continue
             builder.addTypeParameter(local.typeParameterProto(typeParameter))
+        }
+
+        for (contextReceiver in function.contextReceivers) {
+            val typeRef = contextReceiver.typeRef
+            if (useTypeTable()) {
+                builder.addContextReceiverTypeId(typeId(typeRef))
+            } else {
+                builder.addContextReceiverType(typeProto(contextReceiver.typeRef))
+            }
         }
 
         val receiverTypeRef = function.receiverTypeRef
@@ -592,39 +622,7 @@ class FirElementSerializer private constructor(
     fun typeId(type: ConeKotlinType): Int = typeTable[typeProto(type)]
 
     private fun typeProto(typeRef: FirTypeRef, toSuper: Boolean = false): ProtoBuf.Type.Builder {
-        val coneType = typeRef.coneType
-        return typeProto(coneType, toSuper, correspondingTypeRef = typeRef).also { typeProto ->
-            val compilerAttributes = mutableListOf<ConeAttribute<*>>()
-            val extensionAttributes = mutableListOf<ConeAttribute<*>>()
-            for (attribute in coneType.attributes) {
-                when (attribute) {
-                    is CustomAnnotationTypeAttribute -> continue
-                    in CompilerConeAttributes.classIdByCompilerAttribute -> compilerAttributes += attribute
-                    else -> extensionAttributes += attribute
-                }
-            }
-
-            for (attribute in compilerAttributes) {
-                val annotation = buildAnnotation {
-                    annotationTypeRef = buildResolvedTypeRef {
-                        type = ConeClassLikeTypeImpl(
-                            ConeClassLikeLookupTagImpl(CompilerConeAttributes.classIdByCompilerAttribute.getValue(attribute)),
-                            emptyArray(),
-                            isNullable = false
-                        )
-                    }
-                    argumentMapping = FirEmptyAnnotationArgumentMapping
-                }
-                extension.serializeTypeAnnotation(annotation, typeProto)
-            }
-
-            for (attributeExtension in session.extensionService.typeAttributeExtensions) {
-                for (attribute in extensionAttributes) {
-                    val annotation = attributeExtension.convertAttributeToAnnotation(attribute) ?: continue
-                    extension.serializeTypeAnnotation(annotation, typeProto)
-                }
-            }
-        }
+        return typeProto(typeRef.coneType, toSuper, correspondingTypeRef = typeRef)
     }
 
     private fun typeProto(
@@ -661,9 +659,13 @@ class FirElementSerializer private constructor(
                     return functionType
                 }
                 fillFromPossiblyInnerType(builder, type)
-                if (type.isExtensionFunctionType) {
+                if (type.hasContextReceivers) {
                     serializeAnnotationFromAttribute(
-                        correspondingTypeRef?.annotations, CompilerConeAttributes.ExtensionFunctionType.ANNOTATION_CLASS_ID, builder
+                        correspondingTypeRef?.annotations, CompilerConeAttributes.ContextFunctionTypeParams.ANNOTATION_CLASS_ID, builder,
+                        argumentMapping = buildAnnotationArgumentMapping {
+                            this.mapping[StandardNames.CONTEXT_FUNCTION_TYPE_PARAMETER_COUNT_NAME] =
+                                buildConstExpression(source = null, ConstantValueKind.Int, type.contextReceiversNumberForFunctionType)
+                        }
                     )
                 }
             }
@@ -705,8 +707,24 @@ class FirElementSerializer private constructor(
             builder.nullable = type.isMarkedNullable
         }
 
-        for (annotation in type.attributes.customAnnotations) {
-            extension.serializeTypeAnnotation(annotation, builder)
+        val extensionAttributes = mutableListOf<ConeAttribute<*>>()
+        for (attribute in type.attributes) {
+            when {
+                attribute is CustomAnnotationTypeAttribute ->
+                    for (annotation in attribute.annotations) {
+                        extension.serializeTypeAnnotation(annotation, builder)
+                    }
+                attribute.key in CompilerConeAttributes.classIdByCompilerAttributeKey ->
+                    serializeCompilerDefinedTypeAttribute(builder, attribute)
+                else -> extensionAttributes += attribute
+            }
+        }
+
+        for (attributeExtension in session.extensionService.typeAttributeExtensions) {
+            for (attribute in extensionAttributes) {
+                val annotation = attributeExtension.convertAttributeToAnnotation(attribute) ?: continue
+                extension.serializeTypeAnnotation(annotation, builder)
+            }
         }
 
         // TODO: abbreviated type
@@ -722,20 +740,38 @@ class FirElementSerializer private constructor(
         return builder
     }
 
+    private fun serializeCompilerDefinedTypeAttribute(
+        builder: ProtoBuf.Type.Builder,
+        attribute: ConeAttribute<*>
+    ) {
+        val annotation = buildAnnotation {
+            annotationTypeRef = buildResolvedTypeRef {
+                this.type = ConeClassLikeTypeImpl(
+                    ConeClassLikeLookupTagImpl(CompilerConeAttributes.classIdByCompilerAttributeKey.getValue(attribute.key)),
+                    emptyArray(),
+                    isNullable = false
+                )
+            }
+            argumentMapping = FirEmptyAnnotationArgumentMapping
+        }
+        extension.serializeTypeAnnotation(annotation, builder)
+    }
+
     private fun serializeAnnotationFromAttribute(
         existingAnnotations: List<FirAnnotation>?,
         classId: ClassId,
-        builder: ProtoBuf.Type.Builder
+        builder: ProtoBuf.Type.Builder,
+        argumentMapping: FirAnnotationArgumentMapping = FirEmptyAnnotationArgumentMapping,
     ) {
         if (existingAnnotations?.any { it.annotationTypeRef.coneTypeSafe<ConeClassLikeType>()?.classId == classId } != true) {
             extension.serializeTypeAnnotation(
                 buildAnnotation {
                     annotationTypeRef = buildResolvedTypeRef {
-                        this.type = CompilerConeAttributes.ExtensionFunctionType.ANNOTATION_CLASS_ID.constructClassLikeType(
+                        this.type = classId.constructClassLikeType(
                             emptyArray(), isNullable = false
                         )
                     }
-                    argumentMapping = FirEmptyAnnotationArgumentMapping
+                    this.argumentMapping = argumentMapping
                 }, builder
             )
         }

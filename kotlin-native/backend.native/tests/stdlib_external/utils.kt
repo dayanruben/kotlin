@@ -30,6 +30,21 @@ public actual val isFloat32RangeEnforced: Boolean get() = true
 
 public actual val supportsSuppressedExceptions: Boolean get() = true
 
-public actual val supportsNamedCapturingGroup: Boolean get() = false
+public actual val supportsNamedCapturingGroup: Boolean get() = true
+
+public actual val supportsOctalLiteralInRegex: Boolean get() = true
+
+public actual val supportsEscapeAnyCharInRegex: Boolean get() = true
 
 public actual val regexSplitUnicodeCodePointHandling: Boolean get() = true
+
+public actual object BackReferenceHandling {
+    actual val captureLargestValidIndex: Boolean get() = true
+
+    actual val notYetDefinedGroup: HandlingOption = HandlingOption.THROW
+    actual val notYetDefinedNamedGroup: HandlingOption = HandlingOption.THROW
+    actual val enclosingGroup: HandlingOption = HandlingOption.MATCH_NOTHING
+    actual val nonExistentGroup: HandlingOption = HandlingOption.THROW
+    actual val nonExistentNamedGroup: HandlingOption = HandlingOption.THROW
+    actual val groupZero: HandlingOption = HandlingOption.THROW
+}

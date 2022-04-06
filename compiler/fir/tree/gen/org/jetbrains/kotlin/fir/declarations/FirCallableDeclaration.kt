@@ -35,6 +35,7 @@ sealed class FirCallableDeclaration : FirMemberDeclaration() {
     abstract override val symbol: FirCallableSymbol<out FirCallableDeclaration>
     abstract val containerSource: DeserializedContainerSource?
     abstract val dispatchReceiverType: ConeSimpleKotlinType?
+    abstract val contextReceivers: List<FirContextReceiver>
 
     override fun <R, D> accept(visitor: FirVisitor<R, D>, data: D): R = visitor.visitCallableDeclaration(this, data)
 
@@ -49,6 +50,8 @@ sealed class FirCallableDeclaration : FirMemberDeclaration() {
     abstract fun replaceReceiverTypeRef(newReceiverTypeRef: FirTypeRef?)
 
     abstract fun replaceDeprecation(newDeprecation: DeprecationsPerUseSite?)
+
+    abstract fun replaceContextReceivers(newContextReceivers: List<FirContextReceiver>)
 
     abstract override fun <D> transformAnnotations(transformer: FirTransformer<D>, data: D): FirCallableDeclaration
 

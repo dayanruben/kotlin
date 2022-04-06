@@ -131,7 +131,7 @@ class FirCallCompletionResultsWriterTransformer(
         }
 
         var dispatchReceiver = subCandidate.dispatchReceiverExpression()
-        var extensionReceiver = subCandidate.extensionReceiverExpression()
+        var extensionReceiver = subCandidate.chosenExtensionReceiverExpression()
         if (!declaration.isWrappedIntegerOperator()) {
             val expectedDispatchReceiverType = (declaration as? FirCallableDeclaration)?.dispatchReceiverType
             val expectedExtensionReceiverType = (declaration as? FirCallableDeclaration)?.receiverTypeRef?.coneType
@@ -147,6 +147,9 @@ class FirCallCompletionResultsWriterTransformer(
             )
             .transformDispatchReceiver(StoreReceiver, dispatchReceiver)
             .transformExtensionReceiver(StoreReceiver, extensionReceiver) as T
+
+        result.replaceContextReceiverArguments(subCandidate.contextReceiverArguments())
+
         if (result is FirPropertyAccessExpressionImpl && calleeReference.candidate.currentApplicability == CandidateApplicability.PROPERTY_AS_OPERATOR) {
             result.nonFatalDiagnostics.add(ConePropertyAsOperator(calleeReference.candidate.symbol as FirPropertySymbol))
         }
@@ -403,7 +406,7 @@ class FirCallCompletionResultsWriterTransformer(
             StoreCalleeReference,
             resolvedReference,
         ).transformDispatchReceiver(StoreReceiver, subCandidate.dispatchReceiverExpression())
-            .transformExtensionReceiver(StoreReceiver, subCandidate.extensionReceiverExpression())
+            .transformExtensionReceiver(StoreReceiver, subCandidate.chosenExtensionReceiverExpression())
     }
 
     override fun transformVariableAssignment(

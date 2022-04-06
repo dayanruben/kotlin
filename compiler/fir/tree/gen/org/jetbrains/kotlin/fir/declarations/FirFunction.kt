@@ -38,6 +38,7 @@ sealed class FirFunction : FirCallableDeclaration(), FirTargetElement, FirContro
     abstract override val deprecation: DeprecationsPerUseSite?
     abstract override val containerSource: DeserializedContainerSource?
     abstract override val dispatchReceiverType: ConeSimpleKotlinType?
+    abstract override val contextReceivers: List<FirContextReceiver>
     abstract override val controlFlowGraphReference: FirControlFlowGraphReference?
     abstract override val symbol: FirFunctionSymbol<out FirFunction>
     abstract val valueParameters: List<FirValueParameter>
@@ -56,6 +57,8 @@ sealed class FirFunction : FirCallableDeclaration(), FirTargetElement, FirContro
     abstract override fun replaceReceiverTypeRef(newReceiverTypeRef: FirTypeRef?)
 
     abstract override fun replaceDeprecation(newDeprecation: DeprecationsPerUseSite?)
+
+    abstract override fun replaceContextReceivers(newContextReceivers: List<FirContextReceiver>)
 
     abstract override fun replaceControlFlowGraphReference(newControlFlowGraphReference: FirControlFlowGraphReference?)
 

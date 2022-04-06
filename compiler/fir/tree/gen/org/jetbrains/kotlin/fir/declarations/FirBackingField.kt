@@ -35,6 +35,7 @@ abstract class FirBackingField : FirVariable(), FirTypeParametersOwner, FirState
     abstract override val deprecation: DeprecationsPerUseSite?
     abstract override val containerSource: DeserializedContainerSource?
     abstract override val dispatchReceiverType: ConeSimpleKotlinType?
+    abstract override val contextReceivers: List<FirContextReceiver>
     abstract override val name: Name
     abstract override val delegate: FirExpression?
     abstract override val isVar: Boolean
@@ -62,6 +63,8 @@ abstract class FirBackingField : FirVariable(), FirTypeParametersOwner, FirState
     abstract override fun replaceReceiverTypeRef(newReceiverTypeRef: FirTypeRef?)
 
     abstract override fun replaceDeprecation(newDeprecation: DeprecationsPerUseSite?)
+
+    abstract override fun replaceContextReceivers(newContextReceivers: List<FirContextReceiver>)
 
     abstract override fun replaceGetter(newGetter: FirPropertyAccessor?)
 

@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.fir.types
 
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -67,6 +68,22 @@ object CompilerConeAttributes {
         override fun toString(): String = "@ExtensionFunctionType"
     }
 
+    class ContextFunctionTypeParams(val contextReceiverNumber: Int) : ConeAttribute<ContextFunctionTypeParams>() {
+        override fun union(other: ContextFunctionTypeParams?): ContextFunctionTypeParams? = other
+        override fun intersect(other: ContextFunctionTypeParams?): ContextFunctionTypeParams = this
+        override fun add(other: ContextFunctionTypeParams?): ContextFunctionTypeParams = this
+
+        override fun isSubtypeOf(other: ContextFunctionTypeParams?): Boolean = true
+
+        override val key: KClass<out ContextFunctionTypeParams> = ContextFunctionTypeParams::class
+
+        override fun toString(): String = "@${StandardNames.FqNames.contextFunctionTypeParams.shortName().asString()}"
+
+        companion object {
+            val ANNOTATION_CLASS_ID = ClassId.topLevel(StandardNames.FqNames.contextFunctionTypeParams)
+        }
+    }
+
     object UnsafeVariance : ConeAttribute<UnsafeVariance>() {
         val ANNOTATION_CLASS_ID = ClassId(FqName("kotlin"), Name.identifier("UnsafeVariance"))
 
@@ -81,26 +98,29 @@ object CompilerConeAttributes {
         override fun toString(): String = "@UnsafeVariance"
     }
 
-    val compilerAttributeByClassId: Map<ClassId, ConeAttribute<*>> = mapOf(
-        Exact.ANNOTATION_CLASS_ID to Exact,
-        NoInfer.ANNOTATION_CLASS_ID to NoInfer,
-        EnhancedNullability.ANNOTATION_CLASS_ID to EnhancedNullability,
-        ExtensionFunctionType.ANNOTATION_CLASS_ID to ExtensionFunctionType,
-        UnsafeVariance.ANNOTATION_CLASS_ID to UnsafeVariance
+    private val compilerAttributeByClassId: Map<ClassId, ConeAttributeKey> = mapOf(
+        Exact.ANNOTATION_CLASS_ID to Exact.key,
+        NoInfer.ANNOTATION_CLASS_ID to NoInfer.key,
+        EnhancedNullability.ANNOTATION_CLASS_ID to EnhancedNullability.key,
+        ExtensionFunctionType.ANNOTATION_CLASS_ID to ExtensionFunctionType.key,
+        UnsafeVariance.ANNOTATION_CLASS_ID to UnsafeVariance.key
     )
 
-    val classIdByCompilerAttribute: Map<ConeAttribute<*>, ClassId> = compilerAttributeByClassId.entries.associateBy(
+    val classIdByCompilerAttributeKey: Map<ConeAttributeKey, ClassId> = compilerAttributeByClassId.entries.associateBy(
         keySelector = { it.value },
         valueTransform = { it.key }
     )
 
-    val compilerAttributeByFqName: Map<FqName, ConeAttribute<*>> = compilerAttributeByClassId.mapKeys { it.key.asSingleFqName() }
+    val compilerAttributeKeyByFqName: Map<FqName, ConeAttributeKey> =
+        compilerAttributeByClassId.mapKeys { it.key.asSingleFqName() }
 }
 
 val ConeAttributes.exact: CompilerConeAttributes.Exact? by ConeAttributes.attributeAccessor<CompilerConeAttributes.Exact>()
 val ConeAttributes.noInfer: CompilerConeAttributes.NoInfer? by ConeAttributes.attributeAccessor<CompilerConeAttributes.NoInfer>()
 val ConeAttributes.enhancedNullability: CompilerConeAttributes.EnhancedNullability? by ConeAttributes.attributeAccessor<CompilerConeAttributes.EnhancedNullability>()
 val ConeAttributes.extensionFunctionType: CompilerConeAttributes.ExtensionFunctionType? by ConeAttributes.attributeAccessor<CompilerConeAttributes.ExtensionFunctionType>()
+private val ConeAttributes.contextFunctionTypeParams: CompilerConeAttributes.ContextFunctionTypeParams? by ConeAttributes.attributeAccessor<CompilerConeAttributes.ContextFunctionTypeParams>()
+
 val ConeAttributes.unsafeVarianceType: CompilerConeAttributes.UnsafeVariance? by ConeAttributes.attributeAccessor<CompilerConeAttributes.UnsafeVariance>()
 
 // ------------------------------------------------------------------
@@ -115,3 +135,11 @@ val ConeKotlinType.hasEnhancedNullability: Boolean
 
 val ConeKotlinType.isExtensionFunctionType: Boolean
     get() = attributes.extensionFunctionType != null
+
+val ConeKotlinType.hasContextReceivers: Boolean
+    get() = attributes.contextReceiversNumberForFunctionType > 0
+
+val ConeKotlinType.contextReceiversNumberForFunctionType: Int
+    get() = attributes.contextReceiversNumberForFunctionType
+
+val ConeAttributes.contextReceiversNumberForFunctionType: Int get() = contextFunctionTypeParams?.contextReceiverNumber ?: 0

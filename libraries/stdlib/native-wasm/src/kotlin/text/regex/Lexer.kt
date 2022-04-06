@@ -33,12 +33,14 @@ internal abstract class SpecialToken {
      * Returns the type of the token, may return following values:
      * TOK_CHARCLASS  - token representing character class;
      * TOK_QUANTIFIER - token representing quantifier;
+     * TOK_NAMED_GROUP - token representing named capturing group;
      */
     abstract val type: Type
 
     enum class Type {
         CHARCLASS,
-        QUANTIFIER
+        QUANTIFIER,
+        NAMED_GROUP
     }
 }
 
@@ -111,6 +113,10 @@ internal class Lexer(val patternString: String, flags: Int) {
         this.pattern[this.pattern.size - 1] = 0.toChar()
         this.pattern[this.pattern.size - 2] = 0.toChar()
 
+        // Skips leading comments and whitespaces if comments flag is on.
+        if (flags and Pattern.COMMENTS != 0) {
+            skipComments()
+        }
         // Read first two tokens.
         movePointer()
         movePointer()
@@ -198,10 +204,9 @@ internal class Lexer(val patternString: String, flags: Int) {
      */
     private fun nextIndex(): Int {
         prevNonWhitespaceIndex = index
-        if (flags and Pattern.COMMENTS != 0) {
+        index++
+        if (mode != Mode.ESCAPE && flags and Pattern.COMMENTS != 0) {
             skipComments()
-        } else {
-            index++
         }
         return prevNonWhitespaceIndex
     }
@@ -209,7 +214,6 @@ internal class Lexer(val patternString: String, flags: Int) {
     /** Skips comments and whitespaces */
     private fun skipComments(): Int {
         val length = pattern.size - 2
-        index++
         do {
             while (index < length && pattern[index].isWhitespace()) {
                 index++
@@ -287,6 +291,8 @@ internal class Lexer(val patternString: String, flags: Int) {
             if (lookAheadChar == 'E') {
                 // If \E found - change the mode to the previous one and shift to the next char.
                 mode = savedMode
+                index = prevNonWhitespaceIndex // index of 'E'
+                nextIndex() // skip 'E' and process the following chars with the saved mode
                 lookAhead = if (index <= pattern.size - 2) nextCodePoint() else 0
             } else {
                 // If \ have no E - make a step back and return.
@@ -333,52 +339,58 @@ internal class Lexer(val patternString: String, flags: Int) {
                     // Group
                     lookAhead = CHAR_LEFT_PARENTHESIS
                 } else {
-                    // Special constructs (non-capturing groups, look ahead/look behind etc).
+                    // Special constructs (non-capturing groups, named capturing groups, look ahead/look behind etc).
                     nextIndex()
-                    var char = pattern[index]
-                    var isLookBehind = false
-                    do {
-                        if (!isLookBehind) {
-                            when (char) {
-                                // Look ahead or an atomic group.
-                                '!' -> { lookAhead = CHAR_NEG_LOOKAHEAD; nextIndex() }
-                                '=' -> { lookAhead = CHAR_POS_LOOKAHEAD; nextIndex() }
-                                '>' -> { lookAhead = CHAR_ATOMIC_GROUP;  nextIndex() }
-                                // Positive / negaitve look behind - need to check the next char.
-                                '<' -> {
-                                    nextIndex()
-                                    char = pattern[index]
-                                    isLookBehind = true
-                                }
-                                // Flags.
-                                else -> {
-                                    lookAhead = readFlags()
-
-                                    // We return `res = res or 1 shl 8` from readFlags() if we read (?idmsux-idmsux)
-                                    if (lookAhead >= 256) {
-                                        // Just flags (no non-capturing group with them). Erase auxiliary bit.
-                                        lookAhead = lookAhead and 0xff
-                                        flags = lookAhead
-                                        lookAhead = lookAhead shl 16
-                                        lookAhead = CHAR_FLAGS or lookAhead
-                                    } else {
-                                        // A non-capturing group with flags: (?<flags>:Foo)
-                                        flags = lookAhead
-                                        lookAhead = lookAhead shl 16
-                                        lookAhead = CHAR_NONCAP_GROUP or lookAhead
-                                    }
-                                }
-                            }
-                        } else {
+                    var char = pattern[prevNonWhitespaceIndex + 1]
+                    when (char) {
+                        // Look ahead or an atomic group.
+                        '!' -> {
+                            lookAhead = CHAR_NEG_LOOKAHEAD; nextIndex()
+                        }
+                        '=' -> {
+                            lookAhead = CHAR_POS_LOOKAHEAD; nextIndex()
+                        }
+                        '>' -> {
+                            lookAhead = CHAR_ATOMIC_GROUP; nextIndex()
+                        }
+                        // named capturing group or positive / negative look behind - need to check the next char.
+                        '<' -> {
+                            nextIndex()
+                            char = pattern[index]
                             // Process the second char for look behind construction.
-                            isLookBehind = false
                             when (char) {
-                                '!' -> {  lookAhead = CHAR_NEG_LOOKBEHIND; nextIndex() }
-                                '=' -> {  lookAhead = CHAR_POS_LOOKBEHIND; nextIndex() }
-                                else -> throw PatternSyntaxException("Unknown look behind", patternString, curTokenIndex)
+                                '!' -> {
+                                    lookAhead = CHAR_NEG_LOOKBEHIND; nextIndex()
+                                }
+                                '=' -> {
+                                    lookAhead = CHAR_POS_LOOKBEHIND; nextIndex()
+                                }
+                                else -> {
+                                    val name = readGroupName()
+                                    lookAhead = CHAR_NAMED_GROUP
+                                    lookAheadSpecialToken = NamedGroup(name)
+                                }
                             }
                         }
-                    } while (isLookBehind)
+                        // Flags.
+                        else -> {
+                            lookAhead = readFlags()
+
+                            // We return `res = res or 1 shl 8` from readFlags() if we read (?idmsux-idmsux)
+                            if (lookAhead >= 256) {
+                                // Just flags (no non-capturing group with them). Erase auxiliary bit.
+                                lookAhead = lookAhead and 0xff
+                                flags = lookAhead
+                                lookAhead = lookAhead shl 16
+                                lookAhead = CHAR_FLAGS or lookAhead
+                            } else {
+                                // A non-capturing group with flags: (?<flags>:Foo)
+                                flags = lookAhead
+                                lookAhead = lookAhead shl 16
+                                lookAhead = CHAR_NONCAP_GROUP or lookAhead
+                            }
+                        }
+                    }
                 }
             }
 
@@ -411,18 +423,13 @@ internal class Lexer(val patternString: String, flags: Int) {
 
     /** Processes an escaped (\x) character in any mode. Returns whether we need to reread the character or not */
     private fun processEscapedChar() : Boolean {
-        lookAhead = if (index < pattern.size - 2) {
-            nextCodePoint()
-        } else {
+        val escapedCharIndex = prevNonWhitespaceIndex + 1
+        if (escapedCharIndex >= pattern.size - 2) {
             throw PatternSyntaxException("Trailing \\", patternString, curTokenIndex)
         }
-
-        // The current code point cannot be a surrogate pair because it is an escaped special one.
-        // Cast it to char or just skip it as if we pass through the else branch of the when below.
-        if (lookAhead.isSurrogatePair()) {
-            return false
-        }
-        val lookAheadChar = lookAhead.toChar()
+        index = escapedCharIndex
+        val lookAheadChar = pattern[nextIndex()]
+        lookAhead = lookAheadChar.toInt()
 
         when (lookAheadChar) {
             // Character class.
@@ -447,6 +454,8 @@ internal class Lexer(val patternString: String, flags: Int) {
             'Q' -> {
                 savedMode = mode
                 mode = Mode.ESCAPE
+                index = escapedCharIndex // index of 'Q'
+                nextIndex() // skip 'Q' and process the following chars with ESCAPE mode
                 return true
             }
 
@@ -459,10 +468,20 @@ internal class Lexer(val patternString: String, flags: Int) {
             'e' -> lookAhead = '\u001B'.toInt()
 
             // Back references to capturing groups.
+            // \n
             '1', '2', '3', '4', '5', '6', '7', '8', '9' -> {
                 if (mode == Mode.PATTERN) {
                     lookAhead = 0x80000000.toInt() or lookAhead  // Captured group reference is 0x80...<group number>
                 }
+            }
+            // \k<name>
+            'k' -> {
+                if (pattern[nextIndex()] != '<') {
+                    throw PatternSyntaxException("Invalid syntax for named group back reference", patternString, curTokenIndex)
+                }
+                val name = readGroupName()
+                lookAhead = CHAR_NAMED_GROUP_REF
+                lookAheadSpecialToken = NamedGroup(name)
             }
 
             // A literal: octal, hex, or hex unicode.
@@ -489,7 +508,7 @@ internal class Lexer(val patternString: String, flags: Int) {
                 }
             }
 
-            'C', 'E', 'F', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'T', 'U', 'X', 'Y', 'g', 'i', 'j', 'k', 'l', 'm', 'o', 'q', 'y' ->
+            'C', 'E', 'F', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'T', 'U', 'X', 'Y', 'g', 'i', 'j', 'l', 'm', 'o', 'q', 'y' ->
                 throw PatternSyntaxException("Illegal escape sequence", patternString, curTokenIndex)
         }
         return false
@@ -570,6 +589,11 @@ internal class Lexer(val patternString: String, flags: Int) {
                     positive = false
                 }
 
+                'c' -> result = if (positive)
+                                    result or Pattern.CANON_EQ
+                                else
+                                    result xor Pattern.CANON_EQ and result
+
                 'i' -> result = if (positive)
                                     result or Pattern.CASE_INSENSITIVE
                                 else
@@ -591,10 +615,16 @@ internal class Lexer(val patternString: String, flags: Int) {
                                     result xor Pattern.DOTALL and result
 
                 // We don't support UNICODE_CASE.
-                /*'u' -> result = if (positive)
+                'u' -> {}/*result = if (positive)
                                     result or Pattern.UNICODE_CASE
                                 else
                                     result xor Pattern.UNICODE_CASE and result*/
+
+                // We don't support UNICODE_CHARACTER_CLASS.
+                'U' -> {}/*result = if (positive)
+                                    result or Pattern.UNICODE_CHARACTER_CLASS
+                                else
+                                    result xor Pattern.UNICODE_CHARACTER_CLASS and result*/
 
                 'x' -> result = if (positive)
                                     result or Pattern.COMMENTS
@@ -609,6 +639,10 @@ internal class Lexer(val patternString: String, flags: Int) {
                 ')' -> {
                     nextIndex()
                     return result or (1 shl 8)
+                }
+
+                else -> {
+                    throw PatternSyntaxException("Unknown inline modifier", patternString, curTokenIndex)
                 }
             }
             nextIndex()
@@ -680,6 +714,24 @@ internal class Lexer(val patternString: String, flags: Int) {
         return result
     }
 
+    private fun readGroupName(): String {
+        var char = pattern[nextIndex()]
+        if (char !in 'a'..'z' && char !in 'A'..'Z') {
+            throw PatternSyntaxException("Capturing group name should start with a letter", patternString, curTokenIndex)
+        }
+
+        val sb = StringBuilder()
+        do {
+            sb.append(char)
+            char = pattern[nextIndex()]
+        } while (char in 'a'..'z' || char in 'A'..'Z' || char in '0'..'9')
+
+        if (char != '>') {
+            throw PatternSyntaxException("Invalid group name syntax", patternString, curTokenIndex)
+        }
+        return sb.toString()
+    }
+
     companion object {
         // Special characters.
         val CHAR_DOLLAR               = 0xe0000000.toInt() or '$'.toInt()
@@ -692,6 +744,7 @@ internal class Lexer(val patternString: String, flags: Int) {
         val CHAR_HYPHEN               = 0xe0000000.toInt() or '-'.toInt()
         val CHAR_DOT                  = 0xe0000000.toInt() or '.'.toInt()
         val CHAR_LEFT_PARENTHESIS     = 0x80000000.toInt() or '('.toInt()
+        val CHAR_NAMED_GROUP          = 0x90000000.toInt() or '('.toInt()
         val CHAR_NONCAP_GROUP         = 0xc0000000.toInt() or '('.toInt()
         val CHAR_POS_LOOKAHEAD        = 0xe0000000.toInt() or '('.toInt()
         val CHAR_NEG_LOOKAHEAD        = 0xf0000000.toInt() or '('.toInt()
@@ -703,6 +756,7 @@ internal class Lexer(val patternString: String, flags: Int) {
         val CHAR_WORD_BOUND           = 0x80000000.toInt() or 'b'.toInt()
         val CHAR_NONWORD_BOUND        = 0x80000000.toInt() or 'B'.toInt()
         val CHAR_PREVIOUS_MATCH       = 0x80000000.toInt() or 'G'.toInt()
+        val CHAR_NAMED_GROUP_REF      = 0x80000000.toInt() or 'k'.toInt()
         val CHAR_END_OF_INPUT         = 0x80000000.toInt() or 'z'.toInt()
         val CHAR_END_OF_LINE          = 0x80000000.toInt() or 'Z'.toInt()
         val CHAR_LINEBREAK            = 0x80000000.toInt() or 'R'.toInt()

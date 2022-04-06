@@ -67,6 +67,9 @@ class FirJavaField @FirImplementationDetail constructor(
         annotations.getDeprecationInfosFromAnnotations(moduleData.session.languageVersionSettings.apiVersion, fromJava = true)
     }
 
+    override val contextReceivers: List<FirContextReceiver>
+        get() = emptyList()
+
     override fun <D> transformReturnTypeRef(transformer: FirTransformer<D>, data: D): FirField {
         returnTypeRef = returnTypeRef.transformSingle(transformer, data)
         return this
@@ -156,6 +159,10 @@ class FirJavaField @FirImplementationDetail constructor(
     override fun replaceSetter(newSetter: FirPropertyAccessor?) {}
 
     override fun replaceControlFlowGraphReference(newControlFlowGraphReference: FirControlFlowGraphReference?) {}
+
+    override fun replaceContextReceivers(newContextReceivers: List<FirContextReceiver>) {
+        error("Body cannot be replaced for FirJavaField")
+    }
 }
 
 @FirBuilderDsl

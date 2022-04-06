@@ -97,6 +97,9 @@ class FirJavaValueParameter @FirImplementationDetail constructor(
     override val dispatchReceiverType: ConeSimpleKotlinType?
         get() = null
 
+    override val contextReceivers: List<FirContextReceiver>
+        get() = emptyList()
+
     override fun <R, D> acceptChildren(visitor: FirVisitor<R, D>, data: D) {
         returnTypeRef.accept(visitor, data)
         annotations.forEach { it.accept(visitor, data) }
@@ -180,6 +183,10 @@ class FirJavaValueParameter @FirImplementationDetail constructor(
     }
 
     override fun replaceSetter(newSetter: FirPropertyAccessor?) {
+    }
+
+    override fun replaceContextReceivers(newContextReceivers: List<FirContextReceiver>) {
+        error("Body cannot be replaced for FirJavaValueParameter")
     }
 }
 

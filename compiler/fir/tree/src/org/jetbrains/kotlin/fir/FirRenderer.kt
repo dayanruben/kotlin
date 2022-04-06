@@ -235,6 +235,8 @@ open class FirRenderer(builder: StringBuilder, protected val mode: RenderMode = 
     }
 
     override fun visitCallableDeclaration(callableDeclaration: FirCallableDeclaration) {
+        renderContexts(callableDeclaration.contextReceivers)
+        callableDeclaration.contextReceivers
         callableDeclaration.annotations.renderAnnotations()
         visitMemberDeclaration(callableDeclaration)
         val receiverType = callableDeclaration.receiverTypeRef
@@ -267,6 +269,22 @@ open class FirRenderer(builder: StringBuilder, protected val mode: RenderMode = 
         print(": ")
         callableDeclaration.returnTypeRef.accept(this)
         callableDeclaration.renderContractDescription()
+    }
+
+    private fun renderContexts(contextReceivers: List<FirContextReceiver>) {
+        if (contextReceivers.isEmpty()) return
+        print("context(")
+        contextReceivers.renderSeparated()
+        print(")")
+        newLine()
+    }
+
+    override fun visitContextReceiver(contextReceiver: FirContextReceiver) {
+        contextReceiver.customLabelName?.let {
+            print(it.asString() + "@")
+        }
+
+        contextReceiver.typeRef.accept(this)
     }
 
     private fun FirDeclaration.renderContractDescription() {
@@ -487,6 +505,7 @@ open class FirRenderer(builder: StringBuilder, protected val mode: RenderMode = 
     }
 
     override fun visitRegularClass(regularClass: FirRegularClass) {
+        renderContexts(regularClass.contextReceivers)
         regularClass.annotations.renderAnnotations()
         visitMemberDeclaration(regularClass)
         renderSupertypes(regularClass)
@@ -1082,6 +1101,12 @@ open class FirRenderer(builder: StringBuilder, protected val mode: RenderMode = 
     }
 
     override fun visitFunctionTypeRef(functionTypeRef: FirFunctionTypeRef) {
+        if (functionTypeRef.contextReceiverTypeRefs.isNotEmpty()) {
+            print("context(")
+            functionTypeRef.contextReceiverTypeRefs.renderSeparated()
+            print(")")
+        }
+
         functionTypeRef.annotations.dropExtensionFunctionAnnotation().renderAnnotations()
         print("( ")
         if (functionTypeRef.isSuspend) {
@@ -1102,9 +1127,7 @@ open class FirRenderer(builder: StringBuilder, protected val mode: RenderMode = 
         val kind = resolvedTypeRef.functionTypeKind
         print("R|")
         val coneType = resolvedTypeRef.type
-        print(coneType.renderFunctionType(kind, resolvedTypeRef.annotations.any {
-            it.isExtensionFunctionAnnotationCall
-        }))
+        print(coneType.renderFunctionType(kind))
         print("|")
     }
 

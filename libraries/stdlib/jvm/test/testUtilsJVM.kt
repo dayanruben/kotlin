@@ -41,6 +41,22 @@ public actual val isFloat32RangeEnforced: Boolean = true
 
 public actual val supportsSuppressedExceptions: Boolean get() = !isJava6
 
-public actual val supportsNamedCapturingGroup: Boolean get() = !isJava6
+// Named capturing groups are supported starting from java 7. However, retrieving them by name is not supported in java 7.
+public actual val supportsNamedCapturingGroup: Boolean get() = isJava8AndAbove
+
+public actual val supportsOctalLiteralInRegex: Boolean get() = true
+
+public actual val supportsEscapeAnyCharInRegex: Boolean get() = true
 
 public actual val regexSplitUnicodeCodePointHandling: Boolean get() = false
+
+public actual object BackReferenceHandling {
+    actual val captureLargestValidIndex: Boolean get() = true
+
+    actual val notYetDefinedGroup: HandlingOption = HandlingOption.MATCH_NOTHING
+    actual val notYetDefinedNamedGroup: HandlingOption = HandlingOption.THROW
+    actual val enclosingGroup: HandlingOption = HandlingOption.MATCH_NOTHING
+    actual val nonExistentGroup: HandlingOption = HandlingOption.MATCH_NOTHING
+    actual val nonExistentNamedGroup: HandlingOption = HandlingOption.THROW
+    actual val groupZero: HandlingOption = HandlingOption.THROW
+}

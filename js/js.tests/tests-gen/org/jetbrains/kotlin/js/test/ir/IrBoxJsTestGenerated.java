@@ -2497,6 +2497,12 @@ public class IrBoxJsTestGenerated extends AbstractIrBoxJsTest {
         }
 
         @Test
+        @TestMetadata("exportClassWithInternalOneFile.kt")
+        public void testExportClassWithInternalOneFile() throws Exception {
+            runTest("js/js.translator/testData/box/export/exportClassWithInternalOneFile.kt");
+        }
+
+        @Test
         @TestMetadata("exportEnumClass.kt")
         public void testExportEnumClass() throws Exception {
             runTest("js/js.translator/testData/box/export/exportEnumClass.kt");
@@ -2684,12 +2690,6 @@ public class IrBoxJsTestGenerated extends AbstractIrBoxJsTest {
             }
 
             @Test
-            @TestMetadata("redundantCast.kt")
-            public void testRedundantCast() throws Exception {
-                runTest("js/js.translator/testData/box/expression/cast/redundantCast.kt");
-            }
-
-            @Test
             @TestMetadata("reifiedToNotNull.kt")
             public void testReifiedToNotNull() throws Exception {
                 runTest("js/js.translator/testData/box/expression/cast/reifiedToNotNull.kt");
@@ -2747,6 +2747,12 @@ public class IrBoxJsTestGenerated extends AbstractIrBoxJsTest {
             @TestMetadata("smartCastInFunction.kt")
             public void testSmartCastInFunction() throws Exception {
                 runTest("js/js.translator/testData/box/expression/cast/smartCastInFunction.kt");
+            }
+
+            @Test
+            @TestMetadata("unsafeVarianceCast.kt")
+            public void testUnsafeVarianceCast() throws Exception {
+                runTest("js/js.translator/testData/box/expression/cast/unsafeVarianceCast.kt");
             }
         }
 
@@ -3395,6 +3401,12 @@ public class IrBoxJsTestGenerated extends AbstractIrBoxJsTest {
             @TestMetadata("overloadClassConstructorByFactoryMethod.kt")
             public void testOverloadClassConstructorByFactoryMethod() throws Exception {
                 runTest("js/js.translator/testData/box/expression/function/overloadClassConstructorByFactoryMethod.kt");
+            }
+
+            @Test
+            @TestMetadata("overloadGeneric.kt")
+            public void testOverloadGeneric() throws Exception {
+                runTest("js/js.translator/testData/box/expression/function/overloadGeneric.kt");
             }
 
             @Test

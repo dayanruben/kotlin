@@ -467,7 +467,8 @@ class FirTypeResolverImpl(private val session: FirSession) : FirTypeResolver() {
 
     private fun createFunctionalType(typeRef: FirFunctionTypeRef): ConeClassLikeType {
         val parameters =
-            listOfNotNull(typeRef.receiverTypeRef?.coneType) +
+            typeRef.contextReceiverTypeRefs.map { it.coneType } +
+                    listOfNotNull(typeRef.receiverTypeRef?.coneType) +
                     typeRef.valueParameters.map { it.returnTypeRef.coneType.withParameterNameAnnotation(it) } +
                     listOf(typeRef.returnTypeRef.coneType)
         val classId = if (typeRef.isSuspend) {
@@ -475,7 +476,19 @@ class FirTypeResolverImpl(private val session: FirSession) : FirTypeResolver() {
         } else {
             StandardClassIds.FunctionN(typeRef.parametersCount)
         }
-        val attributes = typeRef.annotations.computeTypeAttributes(session)
+
+        val attributes = typeRef.annotations.computeTypeAttributes(
+            session,
+            predefined = buildList {
+                if (typeRef.receiverTypeRef != null) {
+                    add(CompilerConeAttributes.ExtensionFunctionType)
+                }
+
+                if (typeRef.contextReceiverTypeRefs.isNotEmpty()) {
+                    add(CompilerConeAttributes.ContextFunctionTypeParams(typeRef.contextReceiverTypeRefs.size))
+                }
+            }
+        )
         val symbol = resolveBuiltInQualified(classId, session)
         return ConeClassLikeTypeImpl(
             symbol.toLookupTag().also {
@@ -537,7 +550,7 @@ class FirTypeResolverImpl(private val session: FirSession) : FirTypeResolver() {
         override val dispatchReceiverValue: ReceiverValue?
             get() = null
 
-        override val extensionReceiverValue: ReceiverValue?
+        override val chosenExtensionReceiverValue: ReceiverValue?
             get() = null
 
         override val explicitReceiverKind: ExplicitReceiverKind
