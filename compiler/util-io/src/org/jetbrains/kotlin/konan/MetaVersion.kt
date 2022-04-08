@@ -1,25 +1,34 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
-
 package org.jetbrains.kotlin.konan
 
-enum class MetaVersion(val metaString: String) {
-    DEV("dev"),
-    DEV_GOOGLE("dev-google-pr"),
-    EAP("eap"),
-    BETA("beta"),
-    M1("M1"),
-    M2("M2"),
-    RC("RC"),
-    PUB("PUB"),
-    RELEASE("release");
+inline class MetaVersion(val metaString: String) {
+    operator fun compareTo(other: MetaVersion): Int {
+        if (metaOrder.contains(this)) {
+            if (metaOrder.contains(other)) {
+                return metaOrder.indexOf(this).compareTo(metaOrder.indexOf(other))
+            }
+        }
+        return metaString.compareTo(other.metaString)
+    }
 
     companion object {
-        fun findAppropriate(metaString: String): MetaVersion {
-            return values().find { it.metaString.equals(metaString, ignoreCase = true) }
-                ?: if (metaString.isBlank()) RELEASE else error("Unknown meta version: $metaString")
-        }
+        // Following meta versions are left for source-level compatibility
+        val DEV = MetaVersion("dev")
+        val DEV_GOOGLE = MetaVersion("dev-google-pr")
+        val EAP = MetaVersion("eap")
+        val BETA = MetaVersion("Beta")
+        val RC = MetaVersion("RC")
+        val PUB = MetaVersion("PUB")
+        val RELEASE = MetaVersion("release")
+
+        // Defines order of meta versions
+        private val metaOrder = listOf(DEV, DEV_GOOGLE, EAP, BETA, RC, PUB, RELEASE)
+
+        fun findAppropriate(metaString: String): MetaVersion = metaOrder
+            .find { it.metaString.equals(metaString, ignoreCase = true) }
+            ?: if (metaString.isBlank()) RELEASE else MetaVersion(metaString)  // should it be lowercased?
     }
 }

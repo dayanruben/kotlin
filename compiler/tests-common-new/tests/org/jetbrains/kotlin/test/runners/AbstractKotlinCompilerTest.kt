@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.test.runners
 
 import com.intellij.testFramework.TestDataFile
 import org.jetbrains.kotlin.test.Constructor
+import org.jetbrains.kotlin.test.ExecutionListenerBasedDisposableProvider
 import org.jetbrains.kotlin.test.builders.TestConfigurationBuilder
 import org.jetbrains.kotlin.test.builders.testRunner
 import org.jetbrains.kotlin.test.directives.ConfigurationDirectives
@@ -39,6 +40,7 @@ abstract class AbstractKotlinCompilerTest {
         }
 
         val defaultConfiguration: TestConfigurationBuilder.() -> Unit = {
+            assertions = JUnit5Assertions
             useAdditionalService<TemporaryDirectoryManager>(::TemporaryDirectoryManagerImpl)
             useSourcePreprocessor(*defaultPreprocessors.toTypedArray())
             useDirectives(*defaultDirectiveContainers.toTypedArray())
@@ -48,13 +50,22 @@ abstract class AbstractKotlinCompilerTest {
     }
 
     protected val configuration: TestConfigurationBuilder.() -> Unit = {
-        assertions = JUnit5Assertions
         defaultConfiguration()
+        useAdditionalService { createApplicationDisposableProvider() }
+        useAdditionalService { createKotlinStandardLibrariesPathProvider() }
         configure(this)
     }
 
     abstract fun TestConfigurationBuilder.configuration()
     private lateinit var testInfo: KotlinTestInfo
+
+    open fun createApplicationDisposableProvider(): ApplicationDisposableProvider {
+        return ExecutionListenerBasedDisposableProvider()
+    }
+
+    open fun createKotlinStandardLibrariesPathProvider(): KotlinStandardLibrariesPathProvider {
+        return StandardLibrariesPathProviderForKotlinProject
+    }
 
     @BeforeEach
     fun initTestInfo(testInfo: TestInfo) {

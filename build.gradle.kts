@@ -29,7 +29,7 @@ buildscript {
     dependencies {
         bootstrapCompilerClasspath(kotlin("compiler-embeddable", bootstrapKotlinVersion))
 
-        classpath("org.jetbrains.kotlin:kotlin-build-gradle-plugin:0.0.36")
+        classpath("org.jetbrains.kotlin:kotlin-build-gradle-plugin:${kotlinBuildProperties.buildGradlePluginVersion}")
         classpath(kotlin("gradle-plugin", bootstrapKotlinVersion))
         classpath(kotlin("serialization", bootstrapKotlinVersion))
     }
@@ -493,6 +493,17 @@ allprojects {
             languageVersion = kotlinLanguageVersion
             apiVersion = kotlinLanguageVersion
             freeCompilerArgs = commonCompilerArgs
+        }
+
+        val relativePathBaseArg: String? =
+            "-Xklib-relative-path-base=$buildDir,$projectDir,$rootDir".takeIf {
+                !kotlinBuildProperties.getBoolean("kotlin.build.use.absolute.paths.in.klib")
+            }
+
+        doFirst {
+            if (relativePathBaseArg != null) {
+                kotlinOptions.freeCompilerArgs += relativePathBaseArg
+            }
         }
     }
 

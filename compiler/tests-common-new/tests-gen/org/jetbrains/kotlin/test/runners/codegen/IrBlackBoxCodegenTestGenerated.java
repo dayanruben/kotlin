@@ -10192,6 +10192,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         }
 
         @Test
+        @TestMetadata("kt51530.kt")
+        public void testKt51530() throws Exception {
+            runTest("compiler/testData/codegen/box/coroutines/kt51530.kt");
+        }
+
+        @Test
         @TestMetadata("kt51718.kt")
         public void testKt51718() throws Exception {
             runTest("compiler/testData/codegen/box/coroutines/kt51718.kt");
@@ -16953,6 +16959,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         @TestMetadata("diamondFunction.kt")
         public void testDiamondFunction() throws Exception {
             runTest("compiler/testData/codegen/box/fakeOverride/diamondFunction.kt");
+        }
+
+        @Test
+        @TestMetadata("fakeOverrideInAnonymousObject.kt")
+        public void testFakeOverrideInAnonymousObject() throws Exception {
+            runTest("compiler/testData/codegen/box/fakeOverride/fakeOverrideInAnonymousObject.kt");
         }
 
         @Test
@@ -45630,9 +45642,27 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         }
 
         @Test
+        @TestMetadata("resolveToMemberOfSuperclass_overrideWithDifferentType.kt")
+        public void testResolveToMemberOfSuperclass_overrideWithDifferentType() throws Exception {
+            runTest("compiler/testData/codegen/box/smartCasts/resolveToMemberOfSuperclass_overrideWithDifferentType.kt");
+        }
+
+        @Test
+        @TestMetadata("resolveToMemberOfSuperclass_overrideWithSameType.kt")
+        public void testResolveToMemberOfSuperclass_overrideWithSameType() throws Exception {
+            runTest("compiler/testData/codegen/box/smartCasts/resolveToMemberOfSuperclass_overrideWithSameType.kt");
+        }
+
+        @Test
         @TestMetadata("smartCastInsideIf.kt")
         public void testSmartCastInsideIf() throws Exception {
             runTest("compiler/testData/codegen/box/smartCasts/smartCastInsideIf.kt");
+        }
+
+        @Test
+        @TestMetadata("toStringOnReceiverWIthSmartcast.kt")
+        public void testToStringOnReceiverWIthSmartcast() throws Exception {
+            runTest("compiler/testData/codegen/box/smartCasts/toStringOnReceiverWIthSmartcast.kt");
         }
 
         @Test
