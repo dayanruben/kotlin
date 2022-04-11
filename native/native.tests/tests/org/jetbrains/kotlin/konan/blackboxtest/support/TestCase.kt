@@ -9,6 +9,7 @@ package org.jetbrains.kotlin.konan.blackboxtest.support
 
 import org.jetbrains.kotlin.konan.blackboxtest.support.TestCase.WithTestRunnerExtras
 import org.jetbrains.kotlin.konan.blackboxtest.support.TestModule.Companion.allDependencies
+import org.jetbrains.kotlin.konan.blackboxtest.support.runner.TestRunChecks
 import org.jetbrains.kotlin.konan.blackboxtest.support.util.*
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
 import org.jetbrains.kotlin.test.services.JUnit5Assertions.assertTrue
@@ -105,7 +106,7 @@ internal sealed class TestModule {
             other.directDependencySymbols == directDependencySymbols && other.directFriendSymbols == directFriendSymbols
     }
 
-    class Shared(override val name: String) : TestModule() {
+    data class Shared(override val name: String) : TestModule() {
         override val files: FailOnDuplicatesSet<TestFile<Shared>> = FailOnDuplicatesSet()
     }
 
@@ -169,7 +170,7 @@ internal class TestCase(
     val modules: Set<TestModule.Exclusive>,
     val freeCompilerArgs: TestCompilerArgs,
     val nominalPackageName: PackageName,
-    val expectedOutputDataFile: File?,
+    val checks: TestRunChecks,
     val extras: Extras
 ) {
     sealed interface Extras
@@ -208,6 +209,17 @@ internal class TestCase(
 
         @Suppress("UNCHECKED_CAST")
         rootModules as Set<TestModule.Exclusive>
+    }
+
+    // All shared modules used in the current test case.
+    val sharedModules: Set<TestModule.Shared> by lazy {
+        buildSet {
+            modules.forEach { module ->
+                module.allDependencies.forEach { dependency ->
+                    if (dependency is TestModule.Shared) this += dependency
+                }
+            }
+        }
     }
 
     fun initialize(findSharedModule: ((moduleName: String) -> TestModule.Shared?)?) {
@@ -253,7 +265,12 @@ internal interface TestCaseGroupId {
 internal interface TestCaseGroup {
     fun isEnabled(testCaseId: TestCaseId): Boolean
     fun getByName(testCaseId: TestCaseId): TestCase?
-    fun getRegularOnly(freeCompilerArgs: TestCompilerArgs, runnerType: TestRunnerType): Collection<TestCase>
+
+    fun getRegularOnly(
+        freeCompilerArgs: TestCompilerArgs,
+        sharedModules: Set<TestModule.Shared>,
+        runnerType: TestRunnerType
+    ): Collection<TestCase>
 
     class Default(
         private val disabledTestCaseIds: Set<TestCaseId>,
@@ -264,19 +281,29 @@ internal interface TestCaseGroup {
         override fun isEnabled(testCaseId: TestCaseId) = testCaseId !in disabledTestCaseIds
         override fun getByName(testCaseId: TestCaseId) = testCasesById[testCaseId]
 
-        override fun getRegularOnly(freeCompilerArgs: TestCompilerArgs, runnerType: TestRunnerType) =
-            testCasesById.values.filter { testCase ->
-                testCase.kind == TestKind.REGULAR
-                        && testCase.extras<WithTestRunnerExtras>().runnerType == runnerType
-                        && testCase.freeCompilerArgs == freeCompilerArgs
-            }
+        override fun getRegularOnly(
+            freeCompilerArgs: TestCompilerArgs,
+            sharedModules: Set<TestModule.Shared>,
+            runnerType: TestRunnerType
+        ) = testCasesById.values.filter { testCase ->
+            testCase.kind == TestKind.REGULAR
+                    && testCase.freeCompilerArgs == freeCompilerArgs
+                    && testCase.sharedModules == sharedModules
+                    && testCase.extras<WithTestRunnerExtras>().runnerType == runnerType
+        }
     }
 
     companion object {
         val ALL_DISABLED = object : TestCaseGroup {
             override fun isEnabled(testCaseId: TestCaseId) = false
             override fun getByName(testCaseId: TestCaseId) = unsupported()
-            override fun getRegularOnly(freeCompilerArgs: TestCompilerArgs, runnerType: TestRunnerType) = unsupported()
+
+            override fun getRegularOnly(
+                freeCompilerArgs: TestCompilerArgs,
+                sharedModules: Set<TestModule.Shared>,
+                runnerType: TestRunnerType
+            ) = unsupported()
+
             private fun unsupported(): Nothing = fail { "This function should not be called" }
         }
     }

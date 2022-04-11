@@ -54,7 +54,8 @@ internal class TestRun(
     val displayName: String,
     val executable: TestExecutable,
     val runParameters: List<TestRunParameter>,
-    val testCaseId: TestCaseId
+    val testCaseId: TestCaseId,
+    val checks: TestRunChecks
 )
 
 internal sealed interface TestRunParameter {
@@ -95,6 +96,7 @@ internal sealed interface TestRunParameter {
         override fun applyTo(programArgs: MutableList<String>) = Unit
     }
 
+    // Currently, used only for logging the data.
     class WithExpectedOutputData(val expectedOutputDataFile: File) : TestRunParameter {
         override fun applyTo(programArgs: MutableList<String>) = Unit
     }

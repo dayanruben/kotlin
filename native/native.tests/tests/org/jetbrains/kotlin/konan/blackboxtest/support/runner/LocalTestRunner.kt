@@ -5,19 +5,14 @@
 
 package org.jetbrains.kotlin.konan.blackboxtest.support.runner
 
-import com.intellij.openapi.util.text.StringUtilRt.convertLineSeparators
 import org.jetbrains.kotlin.konan.blackboxtest.support.*
 import org.jetbrains.kotlin.konan.blackboxtest.support.util.TCTestOutputFilter
 import org.jetbrains.kotlin.konan.blackboxtest.support.util.TestOutputFilter
 import org.jetbrains.kotlin.konan.blackboxtest.support.util.TestReport
 import org.jetbrains.kotlin.test.services.JUnit5Assertions.fail
 import org.junit.jupiter.api.Assumptions.assumeFalse
-import kotlin.time.Duration
 
-internal class LocalTestRunner(
-    private val testRun: TestRun,
-    executionTimeout: Duration
-) : AbstractLocalProcessRunner<Unit>(executionTimeout) {
+internal class LocalTestRunner(private val testRun: TestRun) : AbstractLocalProcessRunner<Unit>(testRun.checks) {
     override val visibleProcessName get() = "Tested process"
     override val executable get() = testRun.executable
 
@@ -43,21 +38,18 @@ internal class LocalTestRunner(
         }
     }
 
-    override fun buildResultHandler(runResult: RunResult.Completed) = ResultHandler(runResult)
+    override fun buildResultHandler(runResult: RunResult) = ResultHandler(runResult)
 
     override fun handleUnexpectedFailure(t: Throwable) = fail {
         LoggedData.TestRunUnexpectedFailure(getLoggedParameters(), t)
             .withErrorMessage("Test execution failed with unexpected exception.")
     }
 
-    inner class ResultHandler(runResult: RunResult.Completed) : AbstractLocalProcessRunner<Unit>.ResultHandler(runResult) {
+    inner class ResultHandler(runResult: RunResult) : AbstractLocalProcessRunner<Unit>.ResultHandler(runResult) {
         override fun getLoggedRun() = LoggedData.TestRun(getLoggedParameters(), runResult)
 
         override fun doHandle() {
             verifyTestReport(runResult.processOutput.stdOut.testReport)
-
-            val mergedOutput = runResult.processOutput.stdOut.filteredOutput + runResult.processOutput.stdErr
-            verifyNonTestOutput(mergedOutput)
         }
 
         private fun verifyTestReport(testReport: TestReport?) {
@@ -86,16 +78,6 @@ internal class LocalTestRunner(
             buildString {
                 append(subject).append(':')
                 tests.forEach { appendLine().append(" - ").append(it) }
-            }
-        }
-
-        private fun verifyNonTestOutput(nonTestOutput: String) {
-            testRun.runParameters.get<TestRunParameter.WithExpectedOutputData> {
-                // Don't use verifyExpectation(expected, actual) to avoid exposing potentially large test output in exception message
-                // and blowing up test logs.
-                verifyExpectation(convertLineSeparators(expectedOutputDataFile.readText()) == convertLineSeparators(nonTestOutput)) {
-                    "Tested process output mismatch. See \"TEST STDOUT\" and \"EXPECTED OUTPUT DATA FILE\" below."
-                }
             }
         }
     }

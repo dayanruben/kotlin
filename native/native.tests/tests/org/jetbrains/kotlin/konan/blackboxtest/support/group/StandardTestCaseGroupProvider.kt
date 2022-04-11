@@ -8,11 +8,15 @@ package org.jetbrains.kotlin.konan.blackboxtest.support.group
 import org.jetbrains.kotlin.konan.blackboxtest.support.*
 import org.jetbrains.kotlin.konan.blackboxtest.support.TestCase.NoTestRunnerExtras
 import org.jetbrains.kotlin.konan.blackboxtest.support.TestCase.WithTestRunnerExtras
+import org.jetbrains.kotlin.konan.blackboxtest.support.runner.TestRunCheck.*
+import org.jetbrains.kotlin.konan.blackboxtest.support.runner.TestRunChecks
 import org.jetbrains.kotlin.konan.blackboxtest.support.settings.GeneratedSources
 import org.jetbrains.kotlin.konan.blackboxtest.support.settings.Settings
 import org.jetbrains.kotlin.konan.blackboxtest.support.settings.TestRoots
+import org.jetbrains.kotlin.konan.blackboxtest.support.settings.Timeouts
 import org.jetbrains.kotlin.konan.blackboxtest.support.util.*
 import org.jetbrains.kotlin.test.directives.model.Directive
+import org.jetbrains.kotlin.test.directives.model.RegisteredDirectives
 import org.jetbrains.kotlin.test.services.JUnit5Assertions
 import org.jetbrains.kotlin.test.services.JUnit5Assertions.assertEquals
 import org.jetbrains.kotlin.test.services.JUnit5Assertions.assertFalse
@@ -178,8 +182,8 @@ internal class StandardTestCaseGroupProvider : TestCaseGroupProvider {
         val registeredDirectives = directivesParser.build()
 
         val freeCompilerArgs = parseFreeCompilerArgs(registeredDirectives, location)
-        val expectedOutputDataFile = parseOutputDataFile(baseDir = testDataFile.parentFile, registeredDirectives, location)
         val testKind = parseTestKind(registeredDirectives, location)
+        val expectedTimeoutFailure = parseExpectedTimeoutFailure(registeredDirectives)
 
         if (testKind == TestKind.REGULAR) {
             // Fix package declarations to avoid unintended conflicts between symbols with the same name in different test cases.
@@ -192,7 +196,11 @@ internal class StandardTestCaseGroupProvider : TestCaseGroupProvider {
             modules = testModules.values.toSet(),
             freeCompilerArgs = freeCompilerArgs,
             nominalPackageName = nominalPackageName,
-            expectedOutputDataFile = expectedOutputDataFile,
+            checks = TestRunChecks(
+                computeExecutionTimeoutCheck(settings, expectedTimeoutFailure),
+                computeExitCodeCheck(testKind, registeredDirectives, location),
+                computeOutputDataFileCheck(testDataFile, registeredDirectives, location)
+            ),
             extras = if (testKind == TestKind.STANDALONE_NO_TR)
                 NoTestRunnerExtras(
                     entryPoint = parseEntryPoint(registeredDirectives, location),
@@ -230,5 +238,25 @@ internal class StandardTestCaseGroupProvider : TestCaseGroupProvider {
                 }
             }
         }
+
+        private fun computeExecutionTimeoutCheck(settings: Settings, expectedTimeoutFailure: Boolean): ExecutionTimeout {
+            val executionTimeout = settings.get<Timeouts>().executionTimeout
+            return if (expectedTimeoutFailure)
+                ExecutionTimeout.ShouldExceed(executionTimeout)
+            else
+                ExecutionTimeout.ShouldNotExceed(executionTimeout)
+        }
+
+        private fun computeExitCodeCheck(testKind: TestKind, registeredDirectives: RegisteredDirectives, location: Location): ExitCode =
+            if (testKind == TestKind.STANDALONE_NO_TR)
+                parseExpectedExitCode(registeredDirectives, location)
+            else
+                ExitCode.Expected(0)
+
+        private fun computeOutputDataFileCheck(
+            testDataFile: File,
+            registeredDirectives: RegisteredDirectives,
+            location: Location
+        ): OutputDataFile? = parseOutputDataFile(baseDir = testDataFile.parentFile, registeredDirectives, location)
     }
 }

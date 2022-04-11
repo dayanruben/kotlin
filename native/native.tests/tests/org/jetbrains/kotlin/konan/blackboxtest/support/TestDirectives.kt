@@ -6,11 +6,15 @@
 package org.jetbrains.kotlin.konan.blackboxtest.support
 
 import org.jetbrains.kotlin.konan.blackboxtest.support.TestDirectives.ENTRY_POINT
+import org.jetbrains.kotlin.konan.blackboxtest.support.TestDirectives.EXIT_CODE
 import org.jetbrains.kotlin.konan.blackboxtest.support.TestDirectives.FREE_COMPILER_ARGS
 import org.jetbrains.kotlin.konan.blackboxtest.support.TestDirectives.INPUT_DATA_FILE
 import org.jetbrains.kotlin.konan.blackboxtest.support.TestDirectives.KIND
 import org.jetbrains.kotlin.konan.blackboxtest.support.TestDirectives.OUTPUT_DATA_FILE
+import org.jetbrains.kotlin.konan.blackboxtest.support.TestDirectives.EXPECTED_TIMEOUT_FAILURE
 import org.jetbrains.kotlin.konan.blackboxtest.support.TestDirectives.TEST_RUNNER
+import org.jetbrains.kotlin.konan.blackboxtest.support.runner.TestRunCheck
+import org.jetbrains.kotlin.konan.blackboxtest.support.runner.TestRunCheck.OutputDataFile
 import org.jetbrains.kotlin.test.directives.model.RegisteredDirectives
 import org.jetbrains.kotlin.test.directives.model.SimpleDirectivesContainer
 import org.jetbrains.kotlin.test.directives.model.StringDirective
@@ -67,16 +71,52 @@ internal object TestDirectives : SimpleDirectivesContainer() {
 
     val OUTPUT_DATA_FILE by stringDirective(
         description = """
-            Specify the file which contains the expected program output. When program finishes its execution the actual output (stdout)
+            Specify the file which contains the expected program output. When program finishes its execution, the actual output (stdout)
             will be compared to the contents of this file.
         """.trimIndent()
     )
+
+    // TODO: to be supported later
+//    val OUTPUT_REGEX by stringDirective(
+//        description = """
+//            The regex that the expected program output should match to. When program finishes its execution, the actual output (stdout)
+//            will be checked against this regex.
+//        """.trimIndent()
+//    )
+
+    // TODO: to be supported later
+//    val OUTPUT_INCLUDES by stringDirective(
+//        description = """
+//            The text that the expected program output should contain. When program finishes its execution, it will be checked if
+//            the actual output (stdout) contains this text.
+//        """.trimIndent()
+//    )
+
+    // TODO: to be supported later
+//    val OUTPUT_NOT_INCLUDES by stringDirective(
+//        description = """
+//            The text that the expected program output should NOT contain. When program finishes its execution, it will be checked if
+//            the actual output (stdout) does nto contain this text.
+//        """.trimIndent()
+//    )
 
     val INPUT_DATA_FILE by stringDirective(
         description = """
             Specify the file which contains the text to be passed to process' input (stdin).
             Note that this directive makes sense only in combination with // KIND: STANDALONE_NO_TR
         """.trimIndent()
+    )
+
+    val EXIT_CODE by stringDirective(
+        description = """
+            Specify the exit code that the test should finish with. Example: // EXIT_CODE: 42
+            To indicate any non-zero exit code use // EXIT_CODE: !0
+            Note that this directive makes sense only in combination with // KIND: STANDALONE_NO_TR
+        """.trimIndent()
+    )
+
+    val EXPECTED_TIMEOUT_FAILURE by directive(
+        description = "Whether the test is expected to fail on timeout"
     )
 
     val FREE_COMPILER_ARGS by stringDirective(
@@ -203,6 +243,24 @@ internal fun parseFileName(parsedDirective: RegisteredDirectivesParser.ParsedDir
     return fileName
 }
 
+internal fun parseExpectedTimeoutFailure(registeredDirectives: RegisteredDirectives): Boolean =
+    EXPECTED_TIMEOUT_FAILURE in registeredDirectives
+
+internal fun parseExpectedExitCode(registeredDirectives: RegisteredDirectives, location: Location): TestRunCheck.ExitCode {
+    if (EXIT_CODE !in registeredDirectives)
+        return TestRunCheck.ExitCode.Expected(0)
+
+    val values = registeredDirectives[EXIT_CODE]
+    val exitCode = values.singleOrNull()
+        ?: fail { "$location: Exactly one exit code expected in $EXIT_CODE directive: $values" }
+
+    return when (exitCode) {
+        "!0" -> TestRunCheck.ExitCode.AnyNonZero
+        else -> exitCode.toIntOrNull()?.let(TestRunCheck.ExitCode::Expected)
+            ?: fail { "$location: Invalid exit code specified in $EXIT_CODE directive: $exitCode" }
+    }
+}
+
 internal fun parseFreeCompilerArgs(registeredDirectives: RegisteredDirectives, location: Location): TestCompilerArgs {
     if (FREE_COMPILER_ARGS !in registeredDirectives)
         return TestCompilerArgs.EMPTY
@@ -219,8 +277,8 @@ internal fun parseFreeCompilerArgs(registeredDirectives: RegisteredDirectives, l
     return TestCompilerArgs(freeCompilerArgs)
 }
 
-internal fun parseOutputDataFile(baseDir: File, registeredDirectives: RegisteredDirectives, location: Location): File? =
-    parseFileBasedDirective(baseDir, OUTPUT_DATA_FILE, registeredDirectives, location)
+internal fun parseOutputDataFile(baseDir: File, registeredDirectives: RegisteredDirectives, location: Location): OutputDataFile? =
+    parseFileBasedDirective(baseDir, OUTPUT_DATA_FILE, registeredDirectives, location)?.let(TestRunCheck::OutputDataFile)
 
 internal fun parseInputDataFile(baseDir: File, registeredDirectives: RegisteredDirectives, location: Location): File? =
     parseFileBasedDirective(baseDir, INPUT_DATA_FILE, registeredDirectives, location)
