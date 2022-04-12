@@ -1,4 +1,3 @@
-// FIR_IDENTICAL
 enum class E {
     A,
     B,

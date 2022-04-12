@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.internal.KOTLIN_COMPILER_EMBEDDABLE
 import org.jetbrains.kotlin.gradle.internal.KOTLIN_MODULE_GROUP
 import org.jetbrains.kotlin.gradle.logging.kotlinDebug
+import org.jetbrains.kotlin.gradle.plugin.internal.MavenPluginConfigurator
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinMultiplatformPlugin
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinUsages
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinPm20GradlePlugin
@@ -50,12 +51,13 @@ import org.jetbrains.kotlin.gradle.utils.loadPropertyFromResources
 import org.jetbrains.kotlin.gradle.utils.runProjectConfigurationHealthCheck
 import org.jetbrains.kotlin.statistics.metrics.StringMetrics
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
-import javax.inject.Inject
 import kotlin.reflect.KClass
 
 abstract class KotlinBasePluginWrapper : Plugin<Project> {
 
     open val projectExtensionClass: KClass<out KotlinTopLevelExtension> get() = KotlinProjectExtension::class
+
+    abstract val pluginVariant: String
 
     internal open fun kotlinSourceSetFactory(project: Project): NamedDomainObjectFactory<KotlinSourceSet> =
         if (PropertiesProvider(project).experimentalKpmModelMapping)
@@ -64,6 +66,8 @@ abstract class KotlinBasePluginWrapper : Plugin<Project> {
 
     override fun apply(project: Project) {
         val kotlinPluginVersion = project.getKotlinPluginVersion()
+
+        project.logger.info("Using Kotlin Gradle Plugin $pluginVariant variant")
 
         val statisticsReporter = KotlinBuildStatsService.getOrCreateInstance(project)
         statisticsReporter?.report(StringMetrics.KOTLIN_COMPILER_VERSION, kotlinPluginVersion)
@@ -89,6 +93,8 @@ abstract class KotlinBasePluginWrapper : Plugin<Project> {
             addGradlePluginMetadataAttributes(project)
         }
         project.registerCommonizerClasspathConfigurationIfNecessary()
+
+        project.registerDefaultVariantImplementations()
 
         KotlinGradleBuildServices.registerIfAbsent(project, kotlinPluginVersion).get()
 
@@ -132,6 +138,14 @@ abstract class KotlinBasePluginWrapper : Plugin<Project> {
         project.registerBuildKotlinToolingMetadataTask()
     }
 
+    private fun Project.registerDefaultVariantImplementations() {
+        val factories = VariantImplementationFactories.get(project.gradle)
+        factories.putIfAbsent(
+            MavenPluginConfigurator.MavenPluginConfiguratorVariantFactory::class,
+            MavenPluginConfigurator.DefaultMavenPluginConfiguratorVariantFactory()
+        )
+    }
+
     private fun addKotlinCompilerConfiguration(project: Project) {
         project
             .configurations
@@ -169,7 +183,7 @@ abstract class KotlinBasePluginWrapper : Plugin<Project> {
     ): Plugin<Project>
 }
 
-open class KotlinPluginWrapper @Inject constructor(
+abstract class AbstractKotlinPluginWrapper(
     protected val registry: ToolingModelBuilderRegistry
 ) : KotlinBasePluginWrapper() {
     override fun getPlugin(project: Project): Plugin<Project> =
@@ -179,7 +193,7 @@ open class KotlinPluginWrapper @Inject constructor(
         get() = KotlinJvmProjectExtension::class
 }
 
-open class KotlinCommonPluginWrapper @Inject constructor(
+abstract class AbstractKotlinCommonPluginWrapper(
     protected val registry: ToolingModelBuilderRegistry
 ) : KotlinBasePluginWrapper() {
     override fun getPlugin(project: Project): Plugin<Project> =
@@ -189,7 +203,7 @@ open class KotlinCommonPluginWrapper @Inject constructor(
         get() = KotlinCommonProjectExtension::class
 }
 
-open class KotlinAndroidPluginWrapper @Inject constructor(
+abstract class AbstractKotlinAndroidPluginWrapper(
     protected val registry: ToolingModelBuilderRegistry
 ) : KotlinBasePluginWrapper() {
     override fun getPlugin(project: Project): Plugin<Project> =
@@ -203,7 +217,7 @@ open class KotlinAndroidPluginWrapper @Inject constructor(
     message = "Should be removed with JS platform plugin",
     level = DeprecationLevel.ERROR
 )
-open class Kotlin2JsPluginWrapper @Inject constructor(
+abstract class AbstractKotlin2JsPluginWrapper(
     protected val registry: ToolingModelBuilderRegistry
 ) : KotlinBasePluginWrapper() {
 
@@ -215,7 +229,7 @@ open class Kotlin2JsPluginWrapper @Inject constructor(
         get() = Kotlin2JsProjectExtension::class
 }
 
-open class KotlinJsPluginWrapper : KotlinBasePluginWrapper() {
+abstract class AbstractKotlinJsPluginWrapper : KotlinBasePluginWrapper() {
     override fun getPlugin(project: Project): Plugin<Project> =
         KotlinJsPlugin(project.getKotlinPluginVersion())
 
@@ -246,7 +260,7 @@ open class KotlinJsPluginWrapper : KotlinBasePluginWrapper() {
     override fun createTestRegistry(project: Project) = KotlinTestsRegistry(project, "test")
 }
 
-open class KotlinMultiplatformPluginWrapper : KotlinBasePluginWrapper() {
+abstract class AbstractKotlinMultiplatformPluginWrapper : KotlinBasePluginWrapper() {
     override fun getPlugin(project: Project): Plugin<Project> =
         KotlinMultiplatformPlugin()
 
@@ -260,7 +274,7 @@ open class KotlinMultiplatformPluginWrapper : KotlinBasePluginWrapper() {
     }
 }
 
-open class KotlinPm20PluginWrapper @Inject constructor(
+abstract class AbstractKotlinPm20PluginWrapper(
     private val objectFactory: ObjectFactory
 ) : KotlinBasePluginWrapper() {
     override fun getPlugin(project: Project): Plugin<Project> =

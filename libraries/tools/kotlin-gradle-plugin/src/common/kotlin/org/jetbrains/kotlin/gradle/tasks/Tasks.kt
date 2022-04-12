@@ -275,7 +275,11 @@ abstract class AbstractKotlinCompile<T : CommonCompilerArguments> @Inject constr
             task.sourceSetName.set(project.provider { compilation.compilationPurpose })
             task.multiPlatformEnabled.value(
                 project.provider {
-                    project.plugins.any { it is KotlinPlatformPluginBase || it is KotlinMultiplatformPluginWrapper || it is KotlinPm20PluginWrapper }
+                    project.plugins.any {
+                        it is KotlinPlatformPluginBase ||
+                                it is AbstractKotlinMultiplatformPluginWrapper ||
+                                it is AbstractKotlinPm20PluginWrapper
+                    }
                 }
             ).disallowChanges()
             task.taskBuildCacheableOutputDirectory.value(getKotlinBuildDir(task).map { it.dir("cacheable") }).disallowChanges()
@@ -852,10 +856,7 @@ abstract class KotlinCompile @Inject constructor(
             )
         )
 
-        // This method could be called on configuration phase to calculate `filteredArgumentsMap` property
-        if (state.executing) {
-            defaultKotlinJavaToolchain.get().updateJvmTarget(this, args)
-        }
+        defaultKotlinJavaToolchain.get().updateJvmTarget(this, args)
 
         if (reportingSettings().buildReportMode == BuildReportMode.VERBOSE) {
             args.reportPerf = true
