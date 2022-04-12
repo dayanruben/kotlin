@@ -253,7 +253,9 @@ public class TokenStream {
 
         LAST_TOKEN  = 147,
         NUMBER_INT  = 148,
-    
+        SINGLE_LINE_COMMENT  = 149,
+        MULTI_LINE_COMMENT  = 150,
+
         // This value is only used as a return value for getTokenHelper,
         // which is only called from getToken and exists to avoid an excessive
         // recursion problem if a number of lines in a row are comments.
@@ -413,6 +415,8 @@ public class TokenStream {
                 case NEWLOCAL:        return "newlocal";
                 case USELOCAL:        return "uselocal";
                 case SCRIPT:          return "script";
+                case SINGLE_LINE_COMMENT:          return "singlelinecomment";
+                case MULTI_LINE_COMMENT:           return "multilinecomment";
             }
             return "<unknown="+token+">";
         }
@@ -532,13 +536,19 @@ public class TokenStream {
     }
 
     public int peekToken() throws IOException {
-        int result = getToken();
+        return peekTokenHelper(getToken());
+    }
 
-        this.pushbackToken = result;
+    public int peekTokenWithComment() throws IOException {
+        return peekTokenHelper(getTokenWithComment());
+    }
+
+    private int peekTokenHelper(int token) throws IOException {
+        this.pushbackToken = token;
         lastPosition = secondToLastPosition;
         lastTokenPosition = tokenPosition;
         tokenno--;
-        return result;
+        return token;
     }
 
     public int peekTokenSameLine() throws IOException {
@@ -586,12 +596,23 @@ public class TokenStream {
         in.unread();
     }
 
-    public int getToken() throws IOException {
+    public int getTokenWithComment() throws IOException {
         lastTokenPosition = tokenPosition;
         int c;
         do {
             c = getTokenHelper();
         } while (c == RETRY_TOKEN);
+
+        updatePosition();
+        return c;
+    }
+
+    public int getToken() throws IOException {
+        lastTokenPosition = tokenPosition;
+        int c;
+        do {
+            c = getTokenHelper();
+        } while (c == RETRY_TOKEN || c == SINGLE_LINE_COMMENT || c == MULTI_LINE_COMMENT);
 
         updatePosition();
         return c;
@@ -1059,19 +1080,25 @@ public class TokenStream {
         case '/':
             // is it a // comment?
             if (in.match('/')) {
-                skipLine();
-                return RETRY_TOKEN;
+                stringBufferTop = 0;
+                while ((c = in.read()) != -1 && c != '\n') {
+                    addToString(c);
+                }
+                this.string = getStringFromBuffer();
+                return SINGLE_LINE_COMMENT;
             }
             if (in.match('*')) {
+                stringBufferTop = 0;
                 while ((c = in.read()) != -1 &&
                        !(c == '*' && in.match('/'))) {
-                    ; // empty loop body
+                    addToString(c);
                 }
                 if (c == EOF_CHAR) {
                     reportTokenError("msg.unterminated.comment", null);
                     return ERROR;
                 }
-                return RETRY_TOKEN;  // `goto retry'
+                this.string = getStringFromBuffer();
+                return MULTI_LINE_COMMENT;  // `goto retry'
             }
 
             // is it a regexp?

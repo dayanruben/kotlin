@@ -11,14 +11,17 @@ import org.jetbrains.kotlin.ir.backend.js.JsLoweredDeclarationOrigin
 import org.jetbrains.kotlin.ir.backend.js.utils.JsGenerationContext
 import org.jetbrains.kotlin.ir.backend.js.utils.emptyScope
 import org.jetbrains.kotlin.ir.declarations.IrFunction
+import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.declarations.IrVariable
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrReturnableBlockSymbol
 import org.jetbrains.kotlin.ir.types.classifierOrNull
+import org.jetbrains.kotlin.ir.types.classOrNull
 import org.jetbrains.kotlin.ir.types.isAny
 import org.jetbrains.kotlin.ir.util.constructedClassType
 import org.jetbrains.kotlin.ir.util.file
+import org.jetbrains.kotlin.ir.util.fqNameWhenAvailable
 import org.jetbrains.kotlin.ir.util.render
 import org.jetbrains.kotlin.js.backend.ast.*
 
@@ -40,18 +43,31 @@ class IrElementToJsStatementTransformer : BaseIrElementToJsNodeTransformer<JsSta
             context.newFile(it.owner.file, context.currentFunction, context.localNames)
         } ?: context
 
-        val block = JsBlock(expression.statements.map { it.accept(this, newContext) })
+        val statements = expression.statements.map { it.accept(this, newContext) }
 
-        if (expression is IrReturnableBlock) {
+        return if (expression is IrReturnableBlock) {
             val label = context.getNameForReturnableBlock(expression)
-            if (label != null) return JsLabel(label, block)
-        }
+            val wrappedStatements = statements.wrapInCommentsInlineFunctionCall(expression)
 
-        return block
+            if (label != null) {
+                JsLabel(label, JsBlock(wrappedStatements))
+            } else {
+                JsCompositeBlock(wrappedStatements)
+            }
+        } else {
+            JsBlock(statements)
+        }
+    }
+
+    private fun List<JsStatement>.wrapInCommentsInlineFunctionCall(expression: IrReturnableBlock): List<JsStatement> {
+        val inlineFunctionSymbol = expression.inlineFunctionSymbol ?: return this
+        val correspondingProperty = (inlineFunctionSymbol.owner as? IrSimpleFunction)?.correspondingPropertySymbol
+        val owner = correspondingProperty?.owner ?: inlineFunctionSymbol.owner
+        val funName = owner.fqNameWhenAvailable ?: owner.name
+        return listOf(JsSingleLineComment(" Inline function '$funName' call")) + this
     }
 
     override fun visitComposite(expression: IrComposite, context: JsGenerationContext): JsStatement {
-        // TODO introduce JsCompositeBlock?
         return JsBlock(expression.statements.map { it.accept(this, context) })
     }
 

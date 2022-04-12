@@ -73,8 +73,8 @@ abstract class JsAstDeserializerBase {
             block
         }
 
-        JsAstProtoBuf.Statement.StatementCase.GLOBAL_BLOCK -> {
-            deserializeGlobalBlock(proto.globalBlock)
+        JsAstProtoBuf.Statement.StatementCase.COMPOSITE_BLOCK -> {
+            deserializeCompositeBlock(proto.compositeBlock)
         }
 
         JsAstProtoBuf.Statement.StatementCase.LABEL -> {
@@ -163,6 +163,8 @@ abstract class JsAstDeserializerBase {
         JsAstProtoBuf.Statement.StatementCase.EMPTY -> JsEmpty
 
         JsAstProtoBuf.Statement.StatementCase.SINGLE_LINE_COMMENT -> JsSingleLineComment(proto.singleLineComment.message)
+
+        JsAstProtoBuf.Statement.StatementCase.MULTI_LINE_COMMENT -> JsMultiLineComment(proto.multiLineComment.message)
 
         JsAstProtoBuf.Statement.StatementCase.STATEMENT_NOT_SET,
         null -> error("Statement not set")
@@ -336,8 +338,9 @@ abstract class JsAstDeserializerBase {
         return vars
     }
 
-    protected fun deserializeGlobalBlock(proto: JsAstProtoBuf.GlobalBlock): JsGlobalBlock {
-        return JsGlobalBlock().apply { statements += proto.statementList.map { deserialize(it) } }
+    protected fun deserializeCompositeBlock(proto: JsAstProtoBuf.CompositeBlock): JsCompositeBlock {
+        return JsCompositeBlock()
+            .apply { statements += proto.statementList.map { deserialize(it) } }
     }
 
     protected fun deserializeParameter(proto: JsAstProtoBuf.Parameter): JsParameter {

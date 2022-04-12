@@ -3872,6 +3872,18 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirErrors.MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND_FUN.errorFactory) { firDiagnostic ->
+        ModifierFormForNonBuiltInSuspendFunErrorImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND_FUN.warningFactory) { firDiagnostic ->
+        ModifierFormForNonBuiltInSuspendFunWarningImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
     add(FirErrors.RETURN_FOR_BUILT_IN_SUSPEND) { firDiagnostic ->
         ReturnForBuiltInSuspendImpl(
             firDiagnostic as KtPsiDiagnostic,
@@ -4002,6 +4014,18 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
     }
     add(FirJvmErrors.SYNCHRONIZED_ON_INLINE) { firDiagnostic ->
         SynchronizedOnInlineImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.SYNCHRONIZED_ON_SUSPEND.errorFactory) { firDiagnostic ->
+        SynchronizedOnSuspendErrorImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.SYNCHRONIZED_ON_SUSPEND.warningFactory) { firDiagnostic ->
+        SynchronizedOnSuspendWarningImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
         )

@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.serialization.js.ast
 
 import org.jetbrains.kotlin.js.backend.ast.*
 import org.jetbrains.kotlin.js.backend.ast.metadata.*
-import java.io.File
 import java.util.*
 
 abstract class JsAstSerializerBase {
@@ -67,14 +66,15 @@ abstract class JsAstSerializerBase {
             }
 
             override fun visitBlock(x: JsBlock) {
-                if (x is JsGlobalBlock) {
-                    builder.globalBlock = serializeBlock(x)
-                } else {
-                    val blockBuilder = JsAstProtoBuf.Block.newBuilder()
-                    for (part in x.statements) {
-                        blockBuilder.addStatement(serialize(part))
+                when (x) {
+                    is JsCompositeBlock -> { builder.compositeBlock = serializeBlock(x) }
+                    else -> {
+                        val blockBuilder = JsAstProtoBuf.Block.newBuilder()
+                        for (part in x.statements) {
+                            blockBuilder.addStatement(serialize(part))
+                        }
+                        builder.block = blockBuilder.build()
                     }
-                    builder.block = blockBuilder.build()
                 }
             }
 
@@ -167,6 +167,10 @@ abstract class JsAstSerializerBase {
 
             override fun visitSingleLineComment(comment: JsSingleLineComment) {
                 builder.singleLineComment = JsAstProtoBuf.SingleLineComment.newBuilder().setMessage(comment.text).build()
+            }
+
+            override fun visitMultiLineComment(comment: JsMultiLineComment) {
+                builder.multiLineComment = JsAstProtoBuf.MultiLineComment.newBuilder().setMessage(comment.text).build()
             }
         }
 
@@ -376,8 +380,8 @@ abstract class JsAstSerializerBase {
         return parameterBuilder.build()
     }
 
-    protected fun serializeBlock(block: JsGlobalBlock): JsAstProtoBuf.GlobalBlock {
-        val blockBuilder = JsAstProtoBuf.GlobalBlock.newBuilder()
+    protected fun serializeBlock(block: JsCompositeBlock): JsAstProtoBuf.CompositeBlock {
+        val blockBuilder = JsAstProtoBuf.CompositeBlock.newBuilder()
         for (part in block.statements) {
             blockBuilder.addStatement(serialize(part))
         }

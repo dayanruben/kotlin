@@ -43,7 +43,7 @@ public class JsBlock extends SourceInfoAwareJsNode implements JsStatement {
         return statements.isEmpty();
     }
 
-    public boolean isGlobalBlock() {
+    public boolean isTransparent() {
         return false;
     }
 

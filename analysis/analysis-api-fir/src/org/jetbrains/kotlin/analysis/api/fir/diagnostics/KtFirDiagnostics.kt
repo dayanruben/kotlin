@@ -2699,6 +2699,14 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = ModifierFormForNonBuiltInSuspend::class
     }
 
+    abstract class ModifierFormForNonBuiltInSuspendFunError : KtFirDiagnostic<PsiElement>() {
+        override val diagnosticClass get() = ModifierFormForNonBuiltInSuspendFunError::class
+    }
+
+    abstract class ModifierFormForNonBuiltInSuspendFunWarning : KtFirDiagnostic<PsiElement>() {
+        override val diagnosticClass get() = ModifierFormForNonBuiltInSuspendFunWarning::class
+    }
+
     abstract class ReturnForBuiltInSuspend : KtFirDiagnostic<KtReturnExpression>() {
         override val diagnosticClass get() = ReturnForBuiltInSuspend::class
     }
@@ -2787,6 +2795,14 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
 
     abstract class SynchronizedOnInline : KtFirDiagnostic<KtAnnotationEntry>() {
         override val diagnosticClass get() = SynchronizedOnInline::class
+    }
+
+    abstract class SynchronizedOnSuspendError : KtFirDiagnostic<KtAnnotationEntry>() {
+        override val diagnosticClass get() = SynchronizedOnSuspendError::class
+    }
+
+    abstract class SynchronizedOnSuspendWarning : KtFirDiagnostic<KtAnnotationEntry>() {
+        override val diagnosticClass get() = SynchronizedOnSuspendWarning::class
     }
 
     abstract class OverloadsWithoutDefaultArguments : KtFirDiagnostic<KtAnnotationEntry>() {

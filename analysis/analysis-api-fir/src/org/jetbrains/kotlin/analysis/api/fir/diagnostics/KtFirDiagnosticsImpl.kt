@@ -3256,6 +3256,16 @@ internal class ModifierFormForNonBuiltInSuspendImpl(
     override val token: ValidityToken,
 ) : KtFirDiagnostic.ModifierFormForNonBuiltInSuspend(), KtAbstractFirDiagnostic<PsiElement>
 
+internal class ModifierFormForNonBuiltInSuspendFunErrorImpl(
+    override val firDiagnostic: KtPsiDiagnostic,
+    override val token: ValidityToken,
+) : KtFirDiagnostic.ModifierFormForNonBuiltInSuspendFunError(), KtAbstractFirDiagnostic<PsiElement>
+
+internal class ModifierFormForNonBuiltInSuspendFunWarningImpl(
+    override val firDiagnostic: KtPsiDiagnostic,
+    override val token: ValidityToken,
+) : KtFirDiagnostic.ModifierFormForNonBuiltInSuspendFunWarning(), KtAbstractFirDiagnostic<PsiElement>
+
 internal class ReturnForBuiltInSuspendImpl(
     override val firDiagnostic: KtPsiDiagnostic,
     override val token: ValidityToken,
@@ -3367,6 +3377,16 @@ internal class SynchronizedOnInlineImpl(
     override val firDiagnostic: KtPsiDiagnostic,
     override val token: ValidityToken,
 ) : KtFirDiagnostic.SynchronizedOnInline(), KtAbstractFirDiagnostic<KtAnnotationEntry>
+
+internal class SynchronizedOnSuspendErrorImpl(
+    override val firDiagnostic: KtPsiDiagnostic,
+    override val token: ValidityToken,
+) : KtFirDiagnostic.SynchronizedOnSuspendError(), KtAbstractFirDiagnostic<KtAnnotationEntry>
+
+internal class SynchronizedOnSuspendWarningImpl(
+    override val firDiagnostic: KtPsiDiagnostic,
+    override val token: ValidityToken,
+) : KtFirDiagnostic.SynchronizedOnSuspendWarning(), KtAbstractFirDiagnostic<KtAnnotationEntry>
 
 internal class OverloadsWithoutDefaultArgumentsImpl(
     override val firDiagnostic: KtPsiDiagnostic,

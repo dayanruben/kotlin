@@ -4,6 +4,7 @@
 
 package org.jetbrains.kotlin.js.backend;
 
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.js.backend.ast.*;
 import org.jetbrains.kotlin.js.backend.ast.JsDoubleLiteral;
 import org.jetbrains.kotlin.js.backend.ast.JsIntLiteral;
@@ -458,11 +459,13 @@ public class JsToStringGenerationVisitor extends JsVisitor {
 
         popSourceInfo();
 
-        nestedPush(x.getBody());
+        JsStatement body = materialize(x.getBody());
+
+        nestedPush(body);
         sourceLocationConsumer.pushSourceInfo(null);
-        accept(x.getBody());
+        accept(body);
         sourceLocationConsumer.popSourceInfo();
-        nestedPop(x.getBody());
+        nestedPop(body);
     }
 
     @Override
@@ -470,10 +473,13 @@ public class JsToStringGenerationVisitor extends JsVisitor {
         sourceLocationConsumer.pushSourceInfo(null);
 
         p.print(CHARS_DO);
-        nestedPush(x.getBody());
-        accept(x.getBody());
+
+        JsStatement body = materialize(x.getBody());
+
+        nestedPush(body);
+        accept(body);
         sourceLocationConsumer.popSourceInfo();
-        nestedPop(x.getBody());
+        nestedPop(body);
 
         pushSourceInfo(x.getCondition().getSource());
         if (needSemi) {
@@ -557,13 +563,15 @@ public class JsToStringGenerationVisitor extends JsVisitor {
 
         popSourceInfo();
 
-        nestedPush(x.getBody());
-        if (x.getBody() != null) {
+        JsStatement body = materialize(x.getBody());
+
+        nestedPush(body);
+        if (body != null) {
             sourceLocationConsumer.pushSourceInfo(null);
-            accept(x.getBody());
+            accept(body);
             sourceLocationConsumer.popSourceInfo();
         }
-        nestedPop(x.getBody());
+        nestedPop(body);
     }
 
     @Override
@@ -601,11 +609,12 @@ public class JsToStringGenerationVisitor extends JsVisitor {
 
         popSourceInfo();
 
-        nestedPush(x.getBody());
+        JsStatement body = materialize(x.getBody());
+        nestedPush(body);
         sourceLocationConsumer.pushSourceInfo(null);
-        accept(x.getBody());
+        accept(body);
         sourceLocationConsumer.popSourceInfo();
-        nestedPop(x.getBody());
+        nestedPop(body);
     }
 
     @Override
@@ -715,7 +724,7 @@ public class JsToStringGenerationVisitor extends JsVisitor {
         }
 
         sourceLocationConsumer.pushSourceInfo(null);
-        accept(thenStmt);
+        accept(materialize(thenStmt));
         sourceLocationConsumer.popSourceInfo();
 
         nestedPop(thenStmt);
@@ -755,6 +764,12 @@ public class JsToStringGenerationVisitor extends JsVisitor {
         }
 
         return false;
+    }
+
+    private static JsStatement materialize(JsStatement statement) {
+       return statement instanceof JsCompositeBlock && ((JsCompositeBlock) statement).getStatements().size() > 1
+              ? new JsBlock(statement)
+              : statement;
     }
 
     @Override
@@ -1124,6 +1139,15 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     }
 
     @Override
+    public void visitMultiLineComment(@NotNull JsMultiLineComment comment) {
+        p.print("/*");
+        p.print(comment.getText());
+        p.print("*/");
+        needSemi = false;
+        newline();
+    }
+
+    @Override
     public void visitDocComment(@NotNull JsDocComment comment) {
         boolean asSingleLine = comment.getTags().size() == 1;
         if (!asSingleLine) {
@@ -1275,14 +1299,15 @@ public class JsToStringGenerationVisitor extends JsVisitor {
 
         sourceLocationConsumer.pushSourceInfo(null);
 
-        boolean needBraces = !x.isGlobalBlock();
+        boolean needBraces = !x.isTransparent();
+
         if (needBraces) {
             blockOpen();
         }
 
         Iterator<JsStatement> iterator = x.getStatements().iterator();
         while (iterator.hasNext()) {
-            boolean isGlobal = x.isGlobalBlock() || globalBlocks.contains(x);
+            boolean isGlobal = x.isTransparent() || globalBlocks.contains(x);
 
             JsStatement statement = iterator.next();
             if (statement instanceof JsEmpty) {
