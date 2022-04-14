@@ -5,97 +5,107 @@
 
 package org.jetbrains.kotlin.generators.tests.analysis.api
 
-import org.jetbrains.kotlin.analysis.api.fir.components.importOptimizer.AbstractHLImportOptimizerTest
-import org.jetbrains.kotlin.analysis.api.fir.components.psiTypeProvider.AbstractExpressionPsiTypeProviderTest
-import org.jetbrains.kotlin.analysis.api.fir.components.psiTypeProvider.AbstractPsiTypeProviderTest
-import org.jetbrains.kotlin.analysis.api.fir.components.typeProvider.AbstractFirGetSuperTypesTest
-import org.jetbrains.kotlin.analysis.api.impl.base.test.AbstractReferenceResolveTest
-import org.jetbrains.kotlin.analysis.api.impl.base.test.annotations.AbstractAnalysisApiAnnotationsOnDeclarationsTest
-import org.jetbrains.kotlin.analysis.api.impl.base.test.annotations.AbstractAnalysisApiAnnotationsOnFilesTest
-import org.jetbrains.kotlin.analysis.api.impl.base.test.annotations.AbstractAnalysisApiAnnotationsOnTypesTest
-import org.jetbrains.kotlin.analysis.api.impl.base.test.components.AbstractResolveCallTest
-import org.jetbrains.kotlin.analysis.api.impl.base.test.components.AbstractResolveCandidatesTest
-import org.jetbrains.kotlin.analysis.api.impl.base.test.components.compileTimeConstantProvider.AbstractCompileTimeConstantEvaluatorTest
-import org.jetbrains.kotlin.analysis.api.impl.base.test.components.diagnosticProvider.AbstractCollectDiagnosticsTest
-import org.jetbrains.kotlin.analysis.api.impl.base.test.components.expressionInfoProvider.AbstractReturnTargetSymbolTest
-import org.jetbrains.kotlin.analysis.api.impl.base.test.components.expressionInfoProvider.AbstractWhenMissingCasesTest
-import org.jetbrains.kotlin.analysis.api.impl.base.test.components.expressionTypeProvider.AbstractDeclarationReturnTypeTest
-import org.jetbrains.kotlin.analysis.api.impl.base.test.components.expressionTypeProvider.AbstractExpectedExpressionTypeTest
-import org.jetbrains.kotlin.analysis.api.impl.base.test.components.expressionTypeProvider.AbstractHLExpressionTypeTest
-import org.jetbrains.kotlin.analysis.api.impl.base.test.components.smartCastProvider.AbstractHLSmartCastInfoTest
-import org.jetbrains.kotlin.analysis.api.impl.base.test.components.symbolDeclarationOverridesProvider.AbstractIsSubclassOfTest
-import org.jetbrains.kotlin.analysis.api.impl.base.test.components.symbolDeclarationOverridesProvider.AbstractOverriddenDeclarationProviderTest
-import org.jetbrains.kotlin.analysis.api.impl.base.test.components.symbolDeclarationRenderer.AbstractRendererTest
-import org.jetbrains.kotlin.analysis.api.impl.base.test.components.typeCreator.AbstractTypeParameterTypeTest
-import org.jetbrains.kotlin.analysis.api.impl.base.test.components.typeInfoProvider.AbstractFunctionClassKindTest
-import org.jetbrains.kotlin.analysis.api.impl.base.test.components.typeInfoProvider.AbstractIsDenotableTest
-import org.jetbrains.kotlin.analysis.api.impl.base.test.components.typeProvider.AbstractHasCommonSubtypeTest
-import org.jetbrains.kotlin.analysis.api.impl.base.test.scopes.AbstractDelegateMemberScopeTest
-import org.jetbrains.kotlin.analysis.api.impl.base.test.scopes.AbstractFileScopeTest
-import org.jetbrains.kotlin.analysis.api.impl.base.test.scopes.AbstractMemberScopeByFqNameTest
-import org.jetbrains.kotlin.analysis.api.impl.base.test.scopes.AbstractSubstitutionOverridesUnwrappingTest
-import org.jetbrains.kotlin.analysis.api.impl.base.test.symbols.AbstractSymbolByFqNameTest
-import org.jetbrains.kotlin.analysis.api.impl.base.test.symbols.AbstractSymbolByPsiTest
-import org.jetbrains.kotlin.analysis.api.impl.base.test.symbols.AbstractSymbolByReferenceTest
-import org.jetbrains.kotlin.generators.TestGroupSuite
-import org.jetbrains.kotlin.generators.tests.analysis.api.dsl.TestModuleKind
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.importOptimizer.AbstractAnalysisApiImportOptimizerTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.psiTypeProvider.AbstractAnalysisApiExpressionPsiTypeProviderTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.psiTypeProvider.AbstractAnalysisApiPsiTypeProviderTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.typeProvider.AbstractAnalysisApiGetSuperTypesTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.references.AbstractReferenceResolveTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.annotations.AbstractAnalysisApiAnnotationsOnDeclarationsTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.annotations.AbstractAnalysisApiAnnotationsOnFilesTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.annotations.AbstractAnalysisApiAnnotationsOnTypesTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.callResolver.AbstractResolveCallTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.callResolver.AbstractResolveCandidatesTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.compileTimeConstantProvider.AbstractCompileTimeConstantEvaluatorTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.diagnosticProvider.AbstractCollectDiagnosticsTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.expressionInfoProvider.AbstractReturnTargetSymbolTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.expressionInfoProvider.AbstractWhenMissingCasesTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.expressionTypeProvider.AbstractDeclarationReturnTypeTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.expressionTypeProvider.AbstractExpectedExpressionTypeTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.expressionTypeProvider.AbstractHLExpressionTypeTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.smartCastProvider.AbstractHLSmartCastInfoTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.symbolDeclarationOverridesProvider.AbstractIsSubclassOfTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.symbolDeclarationOverridesProvider.AbstractOverriddenDeclarationProviderTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.symbolDeclarationRenderer.AbstractRendererTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.typeCreator.AbstractTypeParameterTypeTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.typeInfoProvider.AbstractFunctionClassKindTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.typeInfoProvider.AbstractIsDenotableTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.typeProvider.AbstractHasCommonSubtypeTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.scopes.AbstractDelegateMemberScopeTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.scopes.AbstractFileScopeTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.scopes.AbstractMemberScopeByFqNameTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.scopes.AbstractSubstitutionOverridesUnwrappingTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.symbols.AbstractSymbolByFqNameTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.symbols.AbstractSymbolByPsiTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.symbols.AbstractSymbolByReferenceTest
+import org.jetbrains.kotlin.analysis.test.framework.test.configurators.AnalysisApiMode
+import org.jetbrains.kotlin.analysis.test.framework.test.configurators.AnalysisSessionMode
+import org.jetbrains.kotlin.analysis.test.framework.test.configurators.FrontendKind
+import org.jetbrains.kotlin.analysis.test.framework.test.configurators.TestModuleKind
+import org.jetbrains.kotlin.generators.tests.analysis.api.dsl.*
+import org.jetbrains.kotlin.generators.tests.analysis.api.dsl.AnalysisApiTestGroup
 import org.jetbrains.kotlin.generators.tests.analysis.api.dsl.component
-import org.jetbrains.kotlin.generators.tests.analysis.api.dsl.group
-import org.jetbrains.kotlin.generators.tests.analysis.api.dsl.test
 import org.jetbrains.kotlin.generators.util.TestGeneratorUtil
 
-fun TestGroupSuite.generateAnalysisApiTests() {
-    generateAnalysisApiComponentsTests()
-    generateAnalysisApiNonComponentsTests()
-}
-
-private fun TestGroupSuite.generateAnalysisApiNonComponentsTests() {
+internal fun AnalysisApiTestGroup.generateAnalysisApiTests() {
     test(
         AbstractReferenceResolveTest::class,
-        testModuleKinds = TestModuleKind.SOURCE_AND_LIBRARY_SOURCE,
-        addFe10 = false,
-    ) { moduleKind ->
-        when (moduleKind) {
-            TestModuleKind.LIBRARY_SOURCE -> {
-                model("referenceResolve", pattern = TestGeneratorUtil.KT_WITHOUT_DOTS_IN_NAME, excludeDirsRecursively = listOf("withErrors"))
+        filter = frontendIs(FrontendKind.Fir) and
+                testModuleKindIs(TestModuleKind.Source, TestModuleKind.LibrarySource) and
+                analysisApiModeIs(AnalysisApiMode.Ide, AnalysisApiMode.Standalone),
+    ) { data ->
+        when (data.moduleKind) {
+            TestModuleKind.LibrarySource -> {
+                model(
+                    "referenceResolve",
+                    pattern = TestGeneratorUtil.KT_WITHOUT_DOTS_IN_NAME,
+                    excludeDirsRecursively = listOf("withErrors")
+                )
             }
+
             else -> {
                 model("referenceResolve", pattern = TestGeneratorUtil.KT_WITHOUT_DOTS_IN_NAME)
             }
         }
     }
 
-    group("scopes") {
+    group(filter = testModuleKindIs(TestModuleKind.Source)) {
+        generateAnalysisApiComponentsTests()
+        generateAnalysisApiNonComponentsTests()
+    }
+}
+
+private fun AnalysisApiTestGroup.generateAnalysisApiNonComponentsTests() {
+    group("scopes", filter = analysisSessionModeIs(AnalysisSessionMode.Normal)) {
         test(
             AbstractSubstitutionOverridesUnwrappingTest::class,
-            generateFe10 = false,
+            filter = frontendIs(FrontendKind.Fir),
         ) {
             model("substitutionOverridesUnwrapping")
         }
 
         test(
             AbstractMemberScopeByFqNameTest::class,
-            generateFe10 = false,
+            filter = frontendIs(FrontendKind.Fir),
         ) {
             model("memberScopeByFqName")
         }
 
         test(
             AbstractFileScopeTest::class,
-            generateFe10 = false,
+            filter = frontendIs(FrontendKind.Fir),
         ) {
             model("fileScopeTest", extension = "kt")
         }
 
         test(
             AbstractDelegateMemberScopeTest::class,
-            generateFe10 = false,
+            filter = frontendIs(FrontendKind.Fir),
         ) {
             model("delegatedMemberScope")
         }
     }
 
-    group("symbols") {
+    group("symbols", filter = analysisSessionModeIs(AnalysisSessionMode.Normal)) {
         test(AbstractSymbolByPsiTest::class) {
             model("symbolByPsi")
         }
@@ -122,7 +132,7 @@ private fun TestGroupSuite.generateAnalysisApiNonComponentsTests() {
 
         test(
             AbstractAnalysisApiAnnotationsOnFilesTest::class,
-            generateFe10 = false // TODO "fails with Rewrite at slice ANNOTATION key"
+            filter = frontendIs(FrontendKind.Fir) and analysisSessionModeIs(AnalysisSessionMode.Normal), // TODO "fe10 fails with Rewrite at slice ANNOTATION key"
         ) {
             model("annotationsOnFiles")
         }
@@ -130,8 +140,8 @@ private fun TestGroupSuite.generateAnalysisApiNonComponentsTests() {
 }
 
 
-private fun TestGroupSuite.generateAnalysisApiComponentsTests() {
-    component("callResolver") {
+private fun AnalysisApiTestGroup.generateAnalysisApiComponentsTests() {
+    component("callResolver", filter = analysisSessionModeIs(AnalysisSessionMode.Normal)) {
         test(AbstractResolveCallTest::class) {
             model("resolveCall")
         }
@@ -176,7 +186,7 @@ private fun TestGroupSuite.generateAnalysisApiComponentsTests() {
         }
     }
 
-    component("diagnosticsProvider") {
+    component("diagnosticsProvider", filter = analysisSessionModeIs(AnalysisSessionMode.Normal)) {
         test(AbstractCollectDiagnosticsTest::class) {
             model("diagnostics")
         }
@@ -184,19 +194,19 @@ private fun TestGroupSuite.generateAnalysisApiComponentsTests() {
 
     component("importOptimizer") {
         test(
-            AbstractHLImportOptimizerTest::class,
-            generateFe10 = false,
+            AbstractAnalysisApiImportOptimizerTest::class,
+            filter = frontendIs(FrontendKind.Fir) and analysisSessionModeIs(AnalysisSessionMode.Normal),
         ) {
             model("analyseImports", pattern = TestGeneratorUtil.KT_WITHOUT_DOTS_IN_NAME)
         }
     }
 
     component("psiTypeProvider") {
-        test(AbstractPsiTypeProviderTest::class, generateFe10 = false) {
+        test(AbstractAnalysisApiPsiTypeProviderTest::class, filter = frontendIs(FrontendKind.Fir)) {
             model("psiType/forDeclaration")
         }
 
-        test(AbstractExpressionPsiTypeProviderTest::class, generateFe10 = false) {
+        test(AbstractAnalysisApiExpressionPsiTypeProviderTest::class, filter = frontendIs(FrontendKind.Fir)) {
             model("psiType/forExpression")
         }
     }
@@ -230,10 +240,10 @@ private fun TestGroupSuite.generateAnalysisApiComponentsTests() {
     }
 
     component("typeInfoProvider") {
-        test(AbstractFunctionClassKindTest::class, generateFe10 = false) {
+        test(AbstractFunctionClassKindTest::class, filter = frontendIs(FrontendKind.Fir)) {
             model("functionClassKind")
         }
-        test(AbstractFirGetSuperTypesTest::class, generateFe10 = false) {
+        test(AbstractAnalysisApiGetSuperTypesTest::class, filter = frontendIs(FrontendKind.Fir)) {
             model("superTypes")
         }
         test(AbstractIsDenotableTest::class) {
@@ -242,8 +252,10 @@ private fun TestGroupSuite.generateAnalysisApiComponentsTests() {
     }
 
     component("typeProvider") {
-        test(AbstractHasCommonSubtypeTest::class) {
-            model("haveCommonSubtype")
+        group(filter = analysisSessionModeIs(AnalysisSessionMode.Normal)) {
+            test(AbstractHasCommonSubtypeTest::class) {
+                model("haveCommonSubtype")
+            }
         }
     }
 }

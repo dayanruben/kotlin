@@ -33,19 +33,20 @@ dependencies {
     testApi(project(":analysis:decompiled:decompiler-to-file-stubs"))
     testApi(project(":analysis:decompiled:decompiler-to-psi"))
     testApi(project(":kotlin-test:kotlin-test-junit"))
+    testImplementation(projectTests(":analysis:analysis-test-framework"))
 
     testApi(toolsJar())
     testApiJUnit5()
     testApi(project(":analysis:symbol-light-classes"))
 
-    // We use 'api' instead of 'implementation' because other modules might be using these jars indirectly
-    testApi(project(":plugins:fir-plugin-prototype"))
-    testApi(projectTests(":plugins:fir-plugin-prototype"))
 }
 
 sourceSets {
     "main" { projectDefault() }
-    "test" { projectDefault() }
+    "test" {
+        projectDefault()
+        generatedTestDir()
+    }
 }
 
 projectTest(jUnitMode = JUnitMode.JUnit5) {

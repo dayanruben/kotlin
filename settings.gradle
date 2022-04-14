@@ -34,9 +34,9 @@ buildscript {
 }
 
 plugins {
-    id "com.gradle.enterprise" version "3.8.1"
-    id "com.gradle.enterprise.test-distribution" version "2.2.2"
-    id "com.gradle.common-custom-user-data-gradle-plugin" version "1.6.2" apply false
+    id "com.gradle.enterprise" version "3.9"
+    id "com.gradle.enterprise.test-distribution" version "2.2.3"
+    id "com.gradle.common-custom-user-data-gradle-plugin" version "1.6.5" apply false
 }
 
 def buildProperties = BuildPropertiesKt.getKotlinBuildPropertiesForSettings(settings)
@@ -352,6 +352,7 @@ if (!buildProperties.inJpsBuildIdeaSync) {
             ":prepare:ide-plugin-dependencies:kotlin-gradle-statistics-for-ide",
             ":prepare:ide-plugin-dependencies:kotlin-jps-common-for-ide",
             ":prepare:ide-plugin-dependencies:kotlin-jps-plugin-classpath",
+            ":prepare:ide-plugin-dependencies:kotlin-jps-plugin-tests-for-ide",
             ":prepare:ide-plugin-dependencies:kotlinx-serialization-compiler-plugin-for-ide",
             ":prepare:ide-plugin-dependencies:noarg-compiler-plugin-for-ide",
             ":prepare:ide-plugin-dependencies:sam-with-receiver-compiler-plugin-for-ide",
@@ -541,10 +542,12 @@ include ":generators:analysis-api-generator",
         ":analysis:analysis-api-impl-base",
         ":analysis:analysis-api-providers",
         ":analysis:analysis-internal-utils",
+        ":analysis:analysis-test-framework",
         ":analysis:kt-references",
         ":analysis:symbol-light-classes",
         ":analysis:project-structure",
         ":analysis:analysis-api-standalone",
+        ":analysis:analysis-api-standalone:analysis-api-standalone-base",
         ":analysis:analysis-api-fe10",
         ":analysis:decompiled:decompiler-to-psi",
         ":analysis:decompiled:decompiler-to-stubs",

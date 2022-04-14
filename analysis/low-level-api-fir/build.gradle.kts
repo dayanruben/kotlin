@@ -35,12 +35,19 @@ dependencies {
     testApi(projectTests(":compiler:tests-common"))
     testApi(projectTests(":compiler:fir:analysis-tests:legacy-fir-tests"))
     testApi(projectTests(":analysis:analysis-api-impl-barebone"))
+    testApi(projectTests(":analysis:analysis-test-framework"))
+    testApi(projectTests(":analysis:analysis-api-impl-base"))
     testApi(project(":kotlin-test:kotlin-test-junit"))
     testApiJUnit5()
     testApi(project(":kotlin-reflect"))
     testImplementation(project(":analysis:symbol-light-classes"))
 
     testRuntimeOnly(project(":core:descriptors.runtime"))
+
+
+    // We use 'api' instead of 'implementation' because other modules might be using these jars indirectly
+    testApi(project(":plugins:fir-plugin-prototype"))
+    testApi(projectTests(":plugins:fir-plugin-prototype"))
 }
 
 sourceSets {

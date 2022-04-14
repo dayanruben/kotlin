@@ -5,12 +5,16 @@
 
 package org.jetbrains.kotlin.light.classes.symbol.base
 
+import com.intellij.mock.MockApplication
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.search.GlobalSearchScope
-import org.jetbrains.kotlin.analysis.api.impl.barebone.test.FrontendApiTestConfiguratorService
-import org.jetbrains.kotlin.analysis.api.impl.base.test.test.framework.AbstractHLApiSingleModuleTest
-import org.jetbrains.kotlin.analysis.api.impl.base.test.utils.libraries.CompilerExecutor
+import com.intellij.util.pico.DefaultPicoContainer
+import org.jetbrains.kotlin.analysis.test.framework.base.AbstractAnalysisApiBasedSingleModuleTest
+import org.jetbrains.kotlin.analysis.test.framework.services.libraries.CompiledLibraryProvider
+import org.jetbrains.kotlin.analysis.test.framework.services.libraries.CompilerExecutor
+import org.jetbrains.kotlin.analysis.test.framework.test.configurators.AnalysisApiTestConfigurator
 import org.jetbrains.kotlin.asJava.finder.JavaElementFinder
 import org.jetbrains.kotlin.light.classes.symbol.base.service.NullabilityAnnotationSourceProvider
 import org.jetbrains.kotlin.psi.KtFile
@@ -21,6 +25,7 @@ import org.jetbrains.kotlin.test.model.TestModule
 import org.jetbrains.kotlin.test.services.TestModuleStructure
 import org.jetbrains.kotlin.test.services.TestServices
 import org.jetbrains.kotlin.test.services.assertions
+import org.jetbrains.kotlin.test.services.service
 import org.jetbrains.kotlin.test.utils.FirIdenticalCheckerHelper
 import java.io.File
 import java.nio.file.Path
@@ -28,22 +33,16 @@ import kotlin.io.path.exists
 import kotlin.io.path.nameWithoutExtension
 
 abstract class AbstractSymbolLightClassesTestBase(
-    override val configurator: FrontendApiTestConfiguratorService
-) : AbstractHLApiSingleModuleTest() {
-
-    override val enableTestInDependedMode: Boolean get() = false
+    override val configurator: AnalysisApiTestConfigurator
+) : AbstractAnalysisApiBasedSingleModuleTest() {
 
     override fun configureTest(builder: TestConfigurationBuilder) {
         super.configureTest(builder)
         with(builder) {
+            useAdditionalServices(service(::CompiledLibraryProvider))
             useDirectives(Directives, CompilerExecutor.Directives)
             useAdditionalSourceProviders(::NullabilityAnnotationSourceProvider)
         }
-    }
-
-    override fun handleInitializationError(exception: Throwable, moduleStructure: TestModuleStructure): InitializationErrorAction {
-        return if (Directives.IGNORE_FIR in moduleStructure.allDirectives) InitializationErrorAction.IGNORE
-        else InitializationErrorAction.THROW
     }
 
     override fun doTestByFileStructure(ktFiles: List<KtFile>, module: TestModule, testServices: TestServices) {
@@ -51,10 +50,12 @@ abstract class AbstractSymbolLightClassesTestBase(
             return
         }
         val testDataFile = module.files.first { it.name.endsWith(".kt") }.originalFile.toPath()
-        val project = ktFiles.first().project
+
+        val ktFile = ktFiles.first()
+        val project = ktFile.project
 
         ignoreExceptionIfIgnoreFirPresent(module) {
-            val actual = getRenderResult(ktFiles.first(), testDataFile, module, project)
+            val actual = getRenderResult(ktFile, testDataFile, module, project)
             compareResults(testServices, actual)
             removeIgnoreFir(module)
             removeDuplicatedFirJava(testServices)

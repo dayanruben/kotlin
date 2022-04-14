@@ -5,12 +5,12 @@
 
 package org.jetbrains.kotlin.light.classes.symbol.source
 
-import org.jetbrains.kotlin.analysis.api.fir.FirFrontendApiTestConfiguratorService
+import org.jetbrains.kotlin.analysis.low.level.api.fir.test.configurators.AnalysisApiFirSourceTestConfigurator
 import org.jetbrains.kotlin.light.classes.symbol.base.AbstractSymbolLightClassesFacadeTest
 
 abstract class AbstractSymbolLightClassesFacadeForSourceTest :
     AbstractSymbolLightClassesFacadeTest(
-        FirFrontendApiTestConfiguratorService,
+        AnalysisApiFirSourceTestConfigurator(analyseInDependentSession = false),
         EXTENSIONS.FIR_JAVA,
         stopIfCompilationErrorDirectivePresent = false
     )

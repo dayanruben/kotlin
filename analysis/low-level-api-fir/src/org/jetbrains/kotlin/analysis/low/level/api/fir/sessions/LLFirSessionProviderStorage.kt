@@ -11,18 +11,15 @@ import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.toPersistentMap
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirPhaseRunner
+import org.jetbrains.kotlin.analysis.low.level.api.fir.project.structure.firKtModuleBasedModuleData
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.addValueFor
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.executeWithoutPCE
-import org.jetbrains.kotlin.analysis.project.structure.KtLibraryModule
-import org.jetbrains.kotlin.analysis.project.structure.KtLibrarySourceModule
-import org.jetbrains.kotlin.analysis.project.structure.KtModule
-import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
+import org.jetbrains.kotlin.analysis.project.structure.*
 import org.jetbrains.kotlin.analysis.providers.createLibrariesModificationTracker
 import org.jetbrains.kotlin.analysis.providers.createModuleWithoutDependenciesOutOfBlockModificationTracker
 import org.jetbrains.kotlin.analysis.utils.caches.getValue
 import org.jetbrains.kotlin.analysis.utils.caches.softCachedValue
 import org.jetbrains.kotlin.fir.BuiltinTypes
-import org.jetbrains.kotlin.fir.FirModuleData
 import org.jetbrains.kotlin.fir.moduleData
 import java.util.concurrent.ConcurrentHashMap
 
@@ -38,7 +35,8 @@ class LLFirSessionProviderStorage(val project: Project) {
         val firPhaseRunner = LLFirPhaseRunner()
 
         val builtinTypes = BuiltinTypes()
-        val builtinsAndCloneableSession = LLFirSessionFactory.createBuiltinsAndCloneableSession(project, builtinTypes)
+
+        val builtinsAndCloneableSession = LLFirSessionFactory.createBuiltinsAndCloneableSession(project, builtinTypes, rootModule)
         val cache = sessionsCache.getOrPut(rootModule) { FromModuleViewSessionCache() }
         val (sessions, session) = cache.withMappings(project) { mappings ->
             val sessions = mutableMapOf<KtModule, LLFirResolvableModuleSession>().apply { putAll(mappings) }
@@ -86,7 +84,7 @@ private class FromModuleViewSessionCache {
     private var mappings: PersistentMap<KtModule, FirSessionWithModificationTracker> = persistentMapOf()
 
     val sessionInvalidator: LLFirSessionInvalidator = LLFirSessionInvalidator { session ->
-        mappings[session.moduleData.module]?.invalidate()
+        mappings[session.firKtModuleBasedModuleData.ktModule]?.invalidate()
     }
 
 
@@ -126,7 +124,7 @@ private class FromModuleViewSessionCache {
         }
         return wasSessionInvalidated.entries
             .mapNotNull { (session, wasInvalidated) -> session.takeUnless { wasInvalidated } }
-            .associate { session -> session.firSession.moduleData.module to session.firSession }
+            .associate { session -> session.firSession.firKtModuleBasedModuleData.ktModule to session.firSession }
     }
 
     private fun <T> Collection<T>.reversedDependencies(getDependencies: (T) -> List<T>): Map<T, List<T>> {
@@ -145,10 +143,11 @@ private class FirSessionWithModificationTracker(
     val firSession: LLFirResolvableModuleSession,
 ) {
     private val modificationTracker =
-        when (val moduleInfo = firSession.moduleData.module) {
-            is KtSourceModule -> moduleInfo.createModuleWithoutDependenciesOutOfBlockModificationTracker(project)
+        when (val ktModule = firSession.firKtModuleBasedModuleData.ktModule) {
+            is KtSourceModule -> ktModule.createModuleWithoutDependenciesOutOfBlockModificationTracker(project)
             else -> ModificationTracker.NEVER_CHANGED
         }
+
 
     private val timeStamp = modificationTracker.modificationCount
 
@@ -161,8 +160,3 @@ private class FirSessionWithModificationTracker(
 
     val isValid: Boolean get() = !isInvalidated && modificationTracker.modificationCount == timeStamp
 }
-
-internal val FirModuleData.module: KtModule get() = moduleUnsafe()
-
-internal inline fun <reified T : KtModule> FirModuleData.moduleUnsafe(): T = (this as KtModuleBasedModuleData).module as T
-internal inline fun <reified T : KtModule> FirModuleData.moduleInfoSafe(): T? = (this as KtModuleBasedModuleData).module as? T

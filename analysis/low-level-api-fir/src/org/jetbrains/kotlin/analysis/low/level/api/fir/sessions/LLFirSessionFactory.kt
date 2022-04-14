@@ -17,12 +17,15 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.file.builder.FirFileBuild
 import org.jetbrains.kotlin.analysis.low.level.api.fir.file.builder.ModuleFileCacheImpl
 import org.jetbrains.kotlin.analysis.low.level.api.fir.fir.caches.FirThreadSafeCachesFactory
 import org.jetbrains.kotlin.analysis.low.level.api.fir.lazy.resolve.FirLazyDeclarationResolver
+import org.jetbrains.kotlin.analysis.low.level.api.fir.project.structure.LLFirKtModuleBasedModuleData
+import org.jetbrains.kotlin.analysis.low.level.api.fir.project.structure.LLFirBuiltinsModuleData
 import org.jetbrains.kotlin.analysis.low.level.api.fir.providers.*
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.checkCanceled
 import org.jetbrains.kotlin.analysis.project.structure.*
 import org.jetbrains.kotlin.analysis.providers.createAnnotationResolver
 import org.jetbrains.kotlin.analysis.providers.createDeclarationProvider
 import org.jetbrains.kotlin.analysis.providers.createPackageProvider
+import org.jetbrains.kotlin.analysis.utils.errors.checkIsInstance
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.fir.*
@@ -32,13 +35,16 @@ import org.jetbrains.kotlin.fir.checkers.registerExtendedCommonCheckers
 import org.jetbrains.kotlin.fir.declarations.FirDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.fir.declarations.SealedClassInheritorsProvider
+import org.jetbrains.kotlin.fir.deserialization.EmptyModuleDataProvider
+import org.jetbrains.kotlin.fir.deserialization.LibraryPathFilter
 import org.jetbrains.kotlin.fir.deserialization.ModuleDataProvider
+import org.jetbrains.kotlin.fir.deserialization.MultipleModuleDataProvider
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
 import org.jetbrains.kotlin.fir.extensions.FirPredicateBasedProvider
 import org.jetbrains.kotlin.fir.extensions.FirRegisteredPluginAnnotations
 import org.jetbrains.kotlin.fir.extensions.FirSwitchableExtensionDeclarationsSymbolProvider
 import org.jetbrains.kotlin.fir.extensions.predicate.DeclarationPredicate
-import org.jetbrains.kotlin.fir.java.FirJavaFacade
+import org.jetbrains.kotlin.fir.java.FirJavaFacadeForSource
 import org.jetbrains.kotlin.fir.java.JavaSymbolProvider
 import org.jetbrains.kotlin.fir.java.deserialization.JvmClassFileBasedSymbolProvider
 import org.jetbrains.kotlin.fir.resolve.providers.FirDependenciesSymbolProvider
@@ -85,7 +91,7 @@ internal object LLFirSessionFactory {
         sessionsCache[module] = session
 
         return session.apply session@{
-            val moduleData = KtModuleBasedModuleData(module).apply { bindSession(this@session) }
+            val moduleData = LLFirKtModuleBasedModuleData(module).apply { bindSession(this@session) }
             registerModuleData(moduleData)
             register(FirKotlinScopeProvider::class, scopeProvider)
 
@@ -185,7 +191,7 @@ internal object LLFirSessionFactory {
                         switchableExtensionDeclarationsSymbolProvider,
                         JavaSymbolProvider(
                             this,
-                            FirJavaFacade(
+                            FirJavaFacadeForSource(
                                 this, moduleData, project.createJavaClassFinder(contentScope)
                             )
                         ),
@@ -213,7 +219,7 @@ internal object LLFirSessionFactory {
         checkCanceled()
         val searchScope = project.moduleScopeProvider.getModuleLibrariesScope(sourceModule)
         LLFirLibrariesSession(project, builtinTypes).apply session@{
-            registerModuleData(KtModuleBasedModuleData(sourceModule).apply { bindSession(this@session) })
+            registerModuleData(LLFirKtModuleBasedModuleData(sourceModule).apply { bindSession(this@session) })
             registerIdeComponents(project)
             register(FirPhaseManager::class, FirPhaseCheckingPhaseManager)
             registerCommonComponents(languageVersionSettings)
@@ -223,16 +229,18 @@ internal object LLFirSessionFactory {
             val kotlinScopeProvider = FirKotlinScopeProvider(::wrapScopeWithJvmMapped)
             register(FirKotlinScopeProvider::class, kotlinScopeProvider)
 
-            val mainModuleData = KtModuleBasedModuleData(sourceModule).apply { bindSession(this@session) }
-
+            val moduleDataProvider = createModuleDataProviderWithLibraryDependencies(sourceModule, this)
             val classFileBasedSymbolProvider = JvmClassFileBasedSymbolProvider(
                 this@session,
-                moduleDataProvider = createModuleDataProvider(sourceModule, this),
+                moduleDataProvider = moduleDataProvider,
                 kotlinScopeProvider = kotlinScopeProvider,
                 packagePartProvider = project.createPackagePartProviderForLibrary(searchScope),
                 kotlinClassFinder = VirtualFileFinderFactory.getInstance(project).create(searchScope),
-                javaFacade = FirJavaFacade(
-                    this@session, mainModuleData, project.createJavaClassFinder(searchScope)
+                javaFacade = LLFirJavaFacadeForBinaries(
+                    this@session,
+                    builtinTypes,
+                    project.createJavaClassFinder(searchScope),
+                    moduleDataProvider
                 )
             )
             val symbolProvider =
@@ -244,36 +252,46 @@ internal object LLFirSessionFactory {
         }
     }
 
-    private fun createModuleDataProvider(sourceModule: KtModule, session: LLFirSession): ModuleDataProvider {
-        val dependencyList = DependencyListForCliModule.build(
-            Name.special("<${sourceModule.moduleDescription}>"),
-            sourceModule.platform,
-            sourceModule.analyzerServices
-        ) {
-            dependencies(sourceModule.directRegularDependencies.extractLibraryPaths())
-            friendDependencies(sourceModule.directFriendDependencies.extractLibraryPaths())
-            dependsOnDependencies(sourceModule.directRefinementDependencies.extractLibraryPaths())
+    private fun createModuleDataProviderWithLibraryDependencies(sourceModule: KtModule, session: LLFirSession): ModuleDataProvider {
+        val regularDependenciesOnLibs =
+            sourceModule.directRegularDependenciesOfType<KtBinaryModule>().map { LLFirKtModuleBasedModuleData(it) }
+        val friendDependenciesOnLibs =
+            sourceModule.directFriendDependenciesOfType<KtBinaryModule>().map { LLFirKtModuleBasedModuleData(it) }
+        val dependsOnDependenciesOnLibs =
+            sourceModule.directRefinementDependenciesOfType<KtBinaryModule>().map { LLFirKtModuleBasedModuleData(it) }
+
+        val allDependencies = buildList {
+            addAll(regularDependenciesOnLibs)
+            addAll(friendDependenciesOnLibs)
+            addAll(dependsOnDependenciesOnLibs)
         }
-        return dependencyList.moduleDataProvider.apply {
-            allModuleData.forEach { it.bindSession(session) }
+
+        if (allDependencies.isEmpty()) {
+            return EmptyModuleDataProvider(sourceModule.platform, sourceModule.analyzerServices)
         }
+
+        allDependencies.forEach { it.bindSession(session) }
+
+        val moduleDataWithFilters: Map<FirModuleData, LibraryPathFilter.LibraryList> =
+            allDependencies.associateWith { moduleData ->
+                checkIsInstance<LLFirKtModuleBasedModuleData>(moduleData)
+                val ktBinaryModule = moduleData.ktModule as KtBinaryModule
+                val moduleBinaryRoots = ktBinaryModule.getBinaryRoots().mapTo(mutableSetOf()) { it.toAbsolutePath() }
+                LibraryPathFilter.LibraryList(moduleBinaryRoots)
+            }
+
+        return MultipleModuleDataProvider(moduleDataWithFilters)
     }
 
     fun createBuiltinsAndCloneableSession(
         project: Project,
         builtinTypes: BuiltinTypes,
+        useSiteModule: KtModule,
         languageVersionSettings: LanguageVersionSettings = LanguageVersionSettingsImpl.DEFAULT,
         configureSession: (LLFirSession.() -> Unit)? = null,
     ): LLFirBuiltinsAndCloneableSession {
         return LLFirBuiltinsAndCloneableSession(project, builtinTypes).apply session@{
-            val moduleData = FirModuleDataImpl(
-                Name.special("<builtins module>"),
-                emptyList(),
-                emptyList(),
-                emptyList(),
-                JvmPlatforms.unspecifiedJvmPlatform,
-                JvmPlatformAnalyzerServices
-            ).apply {
+            val moduleData = LLFirBuiltinsModuleData(useSiteModule).apply {
                 bindSession(this@session)
             }
             registerIdeComponents(project)
@@ -325,7 +343,7 @@ internal object LLFirSessionFactory {
         sessionsCache[module] = session
 
         return session.apply session@{
-            val moduleData = KtModuleBasedModuleData(module).apply { bindSession(this@session) }
+            val moduleData = LLFirKtModuleBasedModuleData(module).apply { bindSession(this@session) }
             registerModuleData(moduleData)
             register(FirKotlinScopeProvider::class, scopeProvider)
 
@@ -357,15 +375,19 @@ internal object LLFirSessionFactory {
                 val librariesSearchScope = ProjectScope.getLibrariesScope(project)
                     .intersectWith(GlobalSearchScope.notScope(libraryModule.contentScope)) // <all libraries scope> - <current library scope>
                 add(builtinsAndCloneableSession.symbolProvider)
+                val libraryDependenciesModuleDataProvider = createModuleDataProviderWithLibraryDependencies(module, this@session)
                 add(
                     JvmClassFileBasedSymbolProvider(
                         this@session,
-                        moduleDataProvider = createModuleDataProvider(module, this@session),
+                        moduleDataProvider = libraryDependenciesModuleDataProvider,
                         kotlinScopeProvider = scopeProvider,
                         packagePartProvider = project.createPackagePartProviderForLibrary(librariesSearchScope),
                         kotlinClassFinder = VirtualFileFinderFactory.getInstance(project).create(librariesSearchScope),
-                        javaFacade = FirJavaFacade(
-                            this@session, moduleData, project.createJavaClassFinder(librariesSearchScope)
+                        javaFacade = LLFirJavaFacadeForBinaries(
+                            this@session,
+                            builtinTypes,
+                            project.createJavaClassFinder(librariesSearchScope),
+                            libraryDependenciesModuleDataProvider
                         )
                     )
                 )
@@ -403,7 +425,7 @@ internal object LLFirSessionFactory {
                         provider.symbolProvider,
                         JavaSymbolProvider(
                             this,
-                            FirJavaFacade(
+                            FirJavaFacadeForSource(
                                 this, moduleData, project.createJavaClassFinder(contentScope)
                             )
                         ),
@@ -431,6 +453,7 @@ private fun List<KtModule>.extractLibraryPaths(): List<Path> =
     asSequence()
         .filterIsInstance<KtBinaryModule>()
         .flatMap { it.getBinaryRoots() }
+        .map { it.toAbsolutePath() }
         .toList()
 
 @Deprecated(

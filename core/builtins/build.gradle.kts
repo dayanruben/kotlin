@@ -61,7 +61,7 @@ fun serializeTask(name: String, sourcesTask: TaskProvider<*>, inDirs: List<File>
         outputs.cacheIf { true }
 
         classpath(rootProject.buildscript.configurations["bootstrapCompilerClasspath"])
-        main = "org.jetbrains.kotlin.serialization.builtins.RunKt"
+        mainClass.set("org.jetbrains.kotlin.serialization.builtins.RunKt")
         jvmArgs(listOfNotNull(
             "-Didea.io.use.nio2=true",
             "-Dkotlin.builtins.serializer.log=true".takeIf { logger.isInfoEnabled }
@@ -79,14 +79,14 @@ val serializeJvm = serializeTask("serializeJvm", prepareSourcesJvm, listOf(built
 val builtinsJar by task<Jar> {
     dependsOn(serialize)
     from(serialize) { include("kotlin/**") }
-    destinationDir = File(buildDir, "libs")
+    destinationDirectory.set(File(buildDir, "libs"))
 }
 
 val builtinsJvmJar by task<Jar> {
     dependsOn(serializeJvm)
     from(serializeJvm) { include("kotlin/**") }
     archiveClassifier.set("jvm")
-    destinationDir = File(buildDir, "libs")
+    destinationDirectory.set(File(buildDir, "libs"))
 }
 
 val assemble by tasks.getting {
