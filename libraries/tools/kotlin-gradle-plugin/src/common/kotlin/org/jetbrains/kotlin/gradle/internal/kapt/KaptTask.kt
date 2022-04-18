@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.gradle.internal
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
 import org.gradle.api.file.ConfigurableFileCollection
-import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileCollection
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.ListProperty
@@ -19,13 +18,12 @@ import org.jetbrains.kotlin.gradle.internal.kapt.incremental.ClasspathSnapshot
 import org.jetbrains.kotlin.gradle.internal.kapt.incremental.KaptClasspathChanges
 import org.jetbrains.kotlin.gradle.internal.kapt.incremental.KaptIncrementalChanges
 import org.jetbrains.kotlin.gradle.internal.kapt.incremental.UnknownSnapshot
-import org.jetbrains.kotlin.gradle.internal.tasks.TaskConfigurator
 import org.jetbrains.kotlin.gradle.internal.tasks.TaskWithLocalState
+import org.jetbrains.kotlin.gradle.plugin.CompilerPluginConfig
 import org.jetbrains.kotlin.gradle.tasks.*
 import org.jetbrains.kotlin.gradle.utils.*
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import java.io.File
-import java.util.concurrent.Callable
 import java.util.jar.JarFile
 import javax.inject.Inject
 
@@ -34,31 +32,8 @@ abstract class KaptTask @Inject constructor(
     objectFactory: ObjectFactory
 ) : DefaultTask(),
     TaskWithLocalState,
-    UsesKotlinJavaToolchain {
-
-    open class Configurator<T: KaptTask>(protected val kotlinCompileTask: KotlinCompile) : TaskConfigurator<T> {
-        override fun configure(task: T) {
-            val objectFactory = task.project.objects
-
-            task.compilerClasspath.from({ kotlinCompileTask.defaultCompilerClasspath })
-            task.classpath.from(kotlinCompileTask.libraries)
-            task.compiledSources.from(
-                kotlinCompileTask.destinationDirectory,
-                Callable { kotlinCompileTask.javaOutputDir.takeIf { it.isPresent } }
-            ).disallowChanges()
-            task.sourceSetName.value(kotlinCompileTask.sourceSetName).disallowChanges()
-            task.localStateDirectories.from(Callable { task.incAptCache.orNull }).disallowChanges()
-            task.source.from(
-                objectFactory.fileCollection().from(
-                    kotlinCompileTask.javaSources,
-                    task.stubsDir
-                ).asFileTree
-                    .matching { it.include("**/*.java") }
-                    .filter { f -> task.isRootAllowed(f) }
-            ).disallowChanges()
-            task.verbose.set(queryKaptVerboseProperty(task.project))
-        }
-    }
+    UsesKotlinJavaToolchain,
+    BaseKapt {
 
     init {
         cacheOnlyIfEnabledForKotlin()
@@ -67,25 +42,9 @@ abstract class KaptTask @Inject constructor(
         outputs.cacheIf(reason) { useBuildCache }
     }
 
-    @get:Internal
-    internal abstract val stubsDir: DirectoryProperty
-
-    @get:NormalizeLineEndings
-    @get:Classpath
-    abstract val kaptClasspath: ConfigurableFileCollection
-
-    //part of kaptClasspath consisting from external artifacts only
-    //basically kaptClasspath = kaptExternalClasspath + artifacts built locally
-    @get:NormalizeLineEndings
-    @get:Classpath
-    abstract val kaptExternalClasspath: ConfigurableFileCollection
-
     @get:NormalizeLineEndings
     @get:Classpath
     abstract val compilerClasspath: ConfigurableFileCollection
-
-    @get:Internal
-    internal abstract val kaptClasspathConfigurationNames: ListProperty<String>
 
     @get:PathSensitive(PathSensitivity.NONE)
     @get:Incremental
@@ -95,35 +54,19 @@ abstract class KaptTask @Inject constructor(
     @get:InputFiles
     abstract val classpathStructure: ConfigurableFileCollection
 
-    /**
-     * Output directory that contains caches necessary to support incremental annotation processing.
-     */
-    @get:LocalState
-    abstract val incAptCache: DirectoryProperty
-
-    @get:OutputDirectory
-    internal lateinit var classesDir: File
-
-    @get:OutputDirectory
-    lateinit var destinationDir: File
-
-    @get:OutputDirectory
-    lateinit var kotlinSourcesDestinationDir: File
+    @get:Internal
+    abstract val kaptPluginOptions: ListProperty<CompilerPluginConfig>
 
     @get:Nested
-    internal val annotationProcessorOptionProviders: MutableList<Any> = mutableListOf()
+    override val annotationProcessorOptionProviders: MutableList<Any> = mutableListOf()
 
     @get:Input
-    internal val includeCompileClasspath: Property<Boolean> = objectFactory
+    override val includeCompileClasspath: Property<Boolean> = objectFactory
         .propertyWithConvention(true)
         .chainedFinalizeValueOnRead()
 
     @get:Input
     internal var isIncremental = true
-
-    // @Internal because _abiClasspath and _nonAbiClasspath are used for actual checks
-    @get:Internal
-    abstract val classpath: ConfigurableFileCollection
 
     @get:Internal
     internal val defaultKotlinJavaToolchain: Provider<DefaultKotlinJavaToolchain> = objectFactory
@@ -158,55 +101,12 @@ abstract class KaptTask @Inject constructor(
     @get:Internal
     var useBuildCache: Boolean = false
 
-    /** Needed for the model builder. */
-    @get:Internal
-    abstract val sourceSetName: Property<String>
-
-    @get:InputFiles
-    @get:IgnoreEmptyDirectories
-    @get:NormalizeLineEndings
-    @get:Incremental
-    @get:PathSensitive(PathSensitivity.RELATIVE)
-    abstract val source: ConfigurableFileCollection
-
     @get:Internal
     override val metrics: Property<BuildMetricsReporter> = objectFactory
         .property(BuildMetricsReporterImpl())
 
     @get:Input
     abstract val verbose: Property<Boolean>
-
-    private fun isRootAllowed(file: File): Boolean =
-        file.exists() &&
-            !isAncestor(destinationDir, file) &&
-            !isAncestor(classesDir, file)
-
-    //Have to avoid using FileUtil because it is required system property reading that is not allowed for configuration cache
-    private fun isAncestor(dir: File, file: File): Boolean {
-        val path = file.canonicalPath
-        val prefix = dir.canonicalPath
-        val pathLength = path.length
-        val prefixLength = prefix.length
-        //TODO
-        val caseSensitive = true
-        return if (prefixLength == 0) {
-            true
-        } else if (prefixLength > pathLength) {
-            false
-        } else if (!path.regionMatches(0, prefix, 0, prefixLength, ignoreCase = !caseSensitive)) {
-            return false
-        } else if (pathLength == prefixLength) {
-            return true
-        } else {
-            val lastPrefixChar: Char = prefix.get(prefixLength - 1)
-            var slashOrSeparatorIdx = prefixLength
-            if (lastPrefixChar == '/' || lastPrefixChar == File.separatorChar) {
-                slashOrSeparatorIdx = prefixLength - 1
-            }
-            val next1 = path[slashOrSeparatorIdx]
-            return !(next1 != '/' && next1 != File.separatorChar)
-        }
-    }
 
     protected fun checkAnnotationProcessorClasspath() {
         if (!includeCompileClasspath.get()) return
@@ -236,10 +136,6 @@ abstract class KaptTask @Inject constructor(
 
         }
     }
-
-    // TODO(gavra): Here we assume that kotlinc and javac output is available for incremental runs. We should insert some checks.
-    @get:Internal
-    internal abstract val compiledSources: ConfigurableFileCollection
 
     protected fun getIncrementalChanges(inputChanges: InputChanges): KaptIncrementalChanges {
         return if (isIncremental) {

@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.cli.common.ExitCode
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.jvm.K2JVMCompiler
-import org.jetbrains.kotlin.codegen.forTestCompile.ForTestCompileRuntime
 import org.jetbrains.kotlin.compilerRunner.*
 import org.jetbrains.kotlin.config.Services
 import org.jetbrains.kotlin.incremental.components.LookupInfo
@@ -37,7 +36,6 @@ import org.jetbrains.kotlin.test.kotlinPathsForDistDirectoryForTests
 import org.jetbrains.kotlin.utils.JsMetadataVersion
 import org.jetbrains.kotlin.utils.PathUtil
 import java.io.*
-import java.util.*
 
 abstract class AbstractJvmLookupTrackerTest : AbstractLookupTrackerTest() {
 
@@ -76,7 +74,7 @@ abstract class AbstractJvmLookupTrackerTest : AbstractLookupTrackerTest() {
             sourcesToCompile = filesToCompile.toList(),
             commonSources = emptyList(),
             javaSourceRoots = listOf(JvmSourceRoot(srcDir, null)),
-            classpath = listOf(outDir, ForTestCompileRuntime.runtimeJarForTests()).filter { it.exists() },
+            classpath = listOf(outDir, PathUtil.kotlinPathsForDistDirectoryForTests.stdlibPath).filter { it.exists() },
             friendDirs = emptyList()
         )
 
@@ -95,8 +93,7 @@ abstract class AbstractJvmLookupTrackerTest : AbstractLookupTrackerTest() {
             CompilerOutputParser.parseCompilerMessagesFromReader(env.messageCollector, reader, env.outputItemsCollector)
 
             return exitCode
-        }
-        finally {
+        } finally {
             moduleFile.delete()
         }
     }
@@ -150,7 +147,7 @@ abstract class AbstractJsLookupTrackerTest : AbstractLookupTrackerTest() {
     }
 
     override fun processCompilationResults(outputItemsCollector: OutputItemsCollectorImpl, services: Services) {
-        val incrementalResults = services.get(IncrementalResultsConsumer::class.java) as IncrementalResultsConsumerImpl
+        val incrementalResults = services[IncrementalResultsConsumer::class.java] as IncrementalResultsConsumerImpl
         header = incrementalResults.headerMetadata
         packageParts.putAll(incrementalResults.packageParts)
         serializedIrFiles.putAll(incrementalResults.irFileData)
@@ -178,6 +175,7 @@ abstract class AbstractJsLookupTrackerTest : AbstractLookupTrackerTest() {
 abstract class AbstractLookupTrackerTest : TestWithWorkingDir() {
     private val DECLARATION_KEYWORDS = listOf("interface", "class", "enum class", "object", "fun", "operator fun", "val", "var")
     private val DECLARATION_STARTS_WITH = DECLARATION_KEYWORDS.map { it + " " }
+
     // ignore KDoc like comments which starts with `/**`, example: /** text */
     private val COMMENT_WITH_LOOKUP_INFO = "/\\*[^*]+\\*/".toRegex()
 
@@ -208,6 +206,7 @@ abstract class AbstractLookupTrackerTest : TestWithWorkingDir() {
         fun StringBuilder.indentln(string: String) {
             appendLine("  $string")
         }
+
         fun CompilerOutput.logOutput(stepName: String) {
             sb.appendLine("==== $stepName ====")
 
@@ -232,12 +231,17 @@ abstract class AbstractLookupTrackerTest : TestWithWorkingDir() {
         val testDir = File(path)
         val workToOriginalFileMap = HashMap(copyTestSources(testDir, srcDir, filePrefix = ""))
         var dirtyFiles = srcDir.walk().filterTo(HashSet()) { it.isKotlinFile(listOf("kt", "kts")) }
-        val steps = getModificationsToPerform(testDir, moduleNames = null, allowNoFilesWithSuffixInTestData = true, touchPolicy = TouchPolicy.CHECKSUM)
-                .filter { it.isNotEmpty() }
+        val steps = getModificationsToPerform(
+            testDir,
+            moduleNames = null,
+            allowNoFilesWithSuffixInTestData = true,
+            touchPolicy = TouchPolicy.CHECKSUM
+        )
+            .filter { it.isNotEmpty() }
 
         val filesToLookups = arrayListOf<Map<File, List<LookupInfo>>>()
         fun CompilerOutput.originalFilesToLookups() =
-                compiledFiles.associateBy({ workToOriginalFileMap[it]!! }, { lookups[it] ?: emptyList() })
+            compiledFiles.associateBy({ workToOriginalFileMap[it]!! }, { lookups[it] ?: emptyList() })
 
         make(dirtyFiles).apply {
             logOutput("INITIAL BUILD")
@@ -292,7 +296,7 @@ abstract class AbstractLookupTrackerTest : TestWithWorkingDir() {
         }
 
         val lookups = lookupTracker.lookups.groupBy { File(it.filePath) }
-        val lookupsFromCompiledFiles = filesToCompile.associate { it to (lookups[it] ?: emptyList()) }
+        val lookupsFromCompiledFiles = filesToCompile.associateWith { (lookups[it] ?: emptyList()) }
         return CompilerOutput(exitCode.toString(), messageCollector.errors, filesToCompile, lookupsFromCompiledFiles)
     }
 
@@ -314,20 +318,20 @@ abstract class AbstractLookupTrackerTest : TestWithWorkingDir() {
                 val end = column - 1
                 parts.add(lineContent.subSequence(start, end))
 
-                val lookups = lookupsFromColumn.mapTo(sortedSetOf()) {
+                val lookups = lookupsFromColumn.mapTo(sortedSetOf()) { lookupInfo ->
                     val rest = lineContent.substring(end)
 
                     val name =
                         when {
-                            rest.startsWith(it.name) || // same name
-                                    rest.startsWith("$" + it.name) || // backing field
+                            rest.startsWith(lookupInfo.name) || // same name
+                                    rest.startsWith("$" + lookupInfo.name) || // backing field
                                     DECLARATION_STARTS_WITH.any { rest.startsWith(it) } // it's declaration
                             -> ""
-                            else -> "(" + it.name + ")"
+                            else -> "(" + lookupInfo.name + ")"
                         }
 
-                    it.scopeKind.toString()[0].lowercaseChar()
-                        .toString() + ":" + it.scopeFqName.let { if (it.isNotEmpty()) it else "<root>" } + name
+                    lookupInfo.scopeKind.toString()[0].lowercaseChar()
+                        .toString() + ":" + lookupInfo.scopeFqName.let { it.ifEmpty { "<root>" } } + name
                 }.joinToString(separator = " ", prefix = "/*", postfix = "*/")
 
                 parts.add(lookups)

@@ -19,6 +19,8 @@ package org.jetbrains.kotlin.gradle.plugin
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.provider.Provider
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
 import java.io.File
 
 open class SubpluginOption(val key: String, private val lazyValue: Lazy<String>) {
@@ -64,12 +66,51 @@ open class InternalSubpluginOption(key: String, value: String) : SubpluginOption
 
 /** Keeps one or more compiler options for one of more compiler plugins. */
 open class CompilerPluginConfig {
+    @get:Internal
     protected val optionsByPluginId = mutableMapOf<String, MutableList<SubpluginOption>>()
 
     fun allOptions(): Map<String, List<SubpluginOption>> = optionsByPluginId
 
     fun addPluginArgument(pluginId: String, option: SubpluginOption) {
         optionsByPluginId.getOrPut(pluginId) { mutableListOf() }.add(option)
+    }
+
+    @Input
+    fun getAsTaskInputArgs(): Map<String, String> {
+        val result = mutableMapOf<String, String>()
+        optionsByPluginId.forEach { (id, subpluginOptions) ->
+            result += computeForSubpluginId(id, subpluginOptions)
+        }
+        return result
+    }
+
+    private fun computeForSubpluginId(subpluginId: String, subpluginOptions: List<SubpluginOption>): Map<String, String> {
+        // There might be several options with the same key. We group them together
+        // and add an index to the Gradle input property name to resolve possible duplication:
+        val result = mutableMapOf<String, String>()
+        val pluginOptionsGrouped = subpluginOptions.groupBy { it.key }
+        for ((optionKey, optionsGroup) in pluginOptionsGrouped) {
+            optionsGroup.forEachIndexed { index, option ->
+                val indexSuffix = if (optionsGroup.size > 1) ".$index" else ""
+                when (option) {
+                    is InternalSubpluginOption -> return@forEachIndexed
+
+                    is CompositeSubpluginOption -> {
+                        val subpluginIdWithWrapperKey = "$subpluginId.$optionKey$indexSuffix"
+                        result += computeForSubpluginId(subpluginIdWithWrapperKey, option.originalOptions)
+                    }
+
+                    is FilesSubpluginOption -> when (option.kind) {
+                        FilesOptionKind.INTERNAL -> Unit
+                    }.run { /* exhaustive when */ }
+
+                    else -> {
+                        result["$subpluginId." + option.key + indexSuffix] = option.value
+                    }
+                }
+            }
+        }
+        return result
     }
 }
 

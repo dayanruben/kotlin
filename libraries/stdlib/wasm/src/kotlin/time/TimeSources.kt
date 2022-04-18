@@ -6,6 +6,7 @@
 package kotlin.time
 
 import kotlin.wasm.internal.ExternalInterfaceType
+import kotlin.time.TimeSource.Monotonic.ValueTimeMark
 
 @JsFun("() => typeof globalThis !== 'undefined' && typeof globalThis.performance !== 'undefined' ? globalThis.performance : null")
 private external fun tryGetPerformance(): ExternalInterfaceType?
@@ -18,12 +19,22 @@ private external fun dateNow(): Double
 
 @SinceKotlin("1.3")
 @ExperimentalTime
-internal actual object MonotonicTimeSource : TimeSource, AbstractDoubleTimeSource(unit = DurationUnit.MILLISECONDS) {
+internal actual object MonotonicTimeSource : TimeSource {
     private val performance: ExternalInterfaceType? = tryGetPerformance()
 
-    override fun read(): Double =
+    private fun read(): Double =
         if (performance != null) getPerformanceNow(performance) else dateNow()
+
+    actual override fun markNow(): ValueTimeMark = ValueTimeMark(read())
+    actual fun elapsedFrom(timeMark: ValueTimeMark): Duration = (read() - timeMark.reading as Double).milliseconds
+    actual fun adjustReading(timeMark: ValueTimeMark, duration: Duration): ValueTimeMark =
+        ValueTimeMark(sumCheckNaN(timeMark.reading as Double + duration.toDouble(DurationUnit.MILLISECONDS)))
 
     override fun toString(): String =
         if (performance != null) "TimeSource(globalThis.performance.now())" else "TimeSource(Date.now())"
 }
+
+@Suppress("ACTUAL_WITHOUT_EXPECT") // visibility
+internal actual typealias ValueTimeMarkReading = Double
+
+private fun sumCheckNaN(value: Double): Double = value.also { if (it.isNaN()) throw IllegalArgumentException("Summing infinities of different signs") }

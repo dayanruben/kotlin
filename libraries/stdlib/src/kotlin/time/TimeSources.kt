@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -7,7 +7,11 @@ package kotlin.time
 
 @SinceKotlin("1.3")
 @ExperimentalTime
-internal expect object MonotonicTimeSource : TimeSource
+internal expect object MonotonicTimeSource : TimeSource {
+    override fun markNow(): TimeSource.Monotonic.ValueTimeMark
+    fun elapsedFrom(timeMark: TimeSource.Monotonic.ValueTimeMark): Duration
+    fun adjustReading(timeMark: TimeSource.Monotonic.ValueTimeMark, duration: Duration): TimeSource.Monotonic.ValueTimeMark
+}
 
 /**
  * An abstract class used to implement time sources that return their readings as [Long] values in the specified [unit].
@@ -23,7 +27,7 @@ public abstract class AbstractLongTimeSource(protected val unit: DurationUnit) :
      */
     protected abstract fun read(): Long
 
-    private class LongTimeMark(private val startedAt: Long, private val timeSource: AbstractLongTimeSource, private val offset: Duration) : TimeMark() {
+    private class LongTimeMark(private val startedAt: Long, private val timeSource: AbstractLongTimeSource, private val offset: Duration) : TimeMark {
         override fun elapsedNow(): Duration = (timeSource.read() - startedAt).toDuration(timeSource.unit) - offset
         override fun plus(duration: Duration): TimeMark = LongTimeMark(startedAt, timeSource, offset + duration)
     }
@@ -45,7 +49,7 @@ public abstract class AbstractDoubleTimeSource(protected val unit: DurationUnit)
      */
     protected abstract fun read(): Double
 
-    private class DoubleTimeMark(private val startedAt: Double, private val timeSource: AbstractDoubleTimeSource, private val offset: Duration) : TimeMark() {
+    private class DoubleTimeMark(private val startedAt: Double, private val timeSource: AbstractDoubleTimeSource, private val offset: Duration) : TimeMark {
         override fun elapsedNow(): Duration = (timeSource.read() - startedAt).toDuration(timeSource.unit) - offset
         override fun plus(duration: Duration): TimeMark = DoubleTimeMark(startedAt, timeSource, offset + duration)
     }

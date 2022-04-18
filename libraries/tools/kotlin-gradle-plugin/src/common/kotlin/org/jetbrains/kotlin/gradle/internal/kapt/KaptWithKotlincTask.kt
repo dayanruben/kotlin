@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.gradle.internal.kapt.incremental.KaptIncrementalChan
 import org.jetbrains.kotlin.gradle.internal.tasks.allOutputFiles
 import org.jetbrains.kotlin.gradle.logging.GradleKotlinLogger
 import org.jetbrains.kotlin.gradle.logging.GradlePrintingMessageCollector
+import org.jetbrains.kotlin.gradle.plugin.CompilerPluginConfig
 import org.jetbrains.kotlin.gradle.report.ReportingSettings
 import org.jetbrains.kotlin.gradle.tasks.*
 import org.jetbrains.kotlin.gradle.utils.newInstance
@@ -35,21 +36,6 @@ abstract class KaptWithKotlincTask @Inject constructor(
     CompilerArgumentAwareWithInput<K2JVMCompilerArguments>,
     CompileUsingKotlinDaemonWithNormalization {
 
-    class Configurator(kotlinCompileTask: KotlinCompile): KaptTask.Configurator<KaptWithKotlincTask>(kotlinCompileTask) {
-        override fun configure(task: KaptWithKotlincTask) {
-            super.configure(task)
-            task.pluginClasspath.from(kotlinCompileTask.pluginClasspath)
-            task.compileKotlinArgumentsContributor.set(
-                task.project.provider { kotlinCompileTask.compilerArgumentsContributor }
-            )
-            task.javaPackagePrefix.set(task.project.provider { kotlinCompileTask.javaPackagePrefix })
-            task.reportingSettings.set(task.project.provider { kotlinCompileTask.reportingSettings() })
-        }
-    }
-
-    @get:Internal
-    internal val pluginOptions = CompilerPluginOptions()
-
     @get:NormalizeLineEndings
     @get:Classpath
     abstract val pluginClasspath: ConfigurableFileCollection
@@ -58,6 +44,10 @@ abstract class KaptWithKotlincTask @Inject constructor(
     val taskProvider: Provider<GradleCompileTaskProvider> = objectFactory.property(
         objectFactory.newInstance<GradleCompileTaskProvider>(project.gradle, this, project)
     )
+
+    /** Used only as task input, actual values come from [compileKotlinArgumentsContributor]. */
+    @get:Nested
+    internal abstract val additionalPluginOptionsAsInputs: ListProperty<CompilerPluginConfig>
 
     override fun createCompilerArgs(): K2JVMCompilerArguments = K2JVMCompilerArguments()
 
@@ -74,8 +64,7 @@ abstract class KaptWithKotlincTask @Inject constructor(
         ))
 
         args.pluginClasspaths = pluginClasspath.toPathsArray()
-
-        val pluginOptionsWithKapt: CompilerPluginOptions = pluginOptions.withWrappedKaptOptions(
+        val pluginOptionsWithKapt: CompilerPluginOptions = kaptPluginOptions.toSingleCompilerPluginOptions().withWrappedKaptOptions(
             withApClasspath = kaptClasspath,
             changedFiles = changedFiles,
             classpathChanges = classpathChanges,
@@ -95,8 +84,11 @@ abstract class KaptWithKotlincTask @Inject constructor(
     private var classpathChanges: List<String> = emptyList()
     private var processIncrementally = false
 
-    private val javaPackagePrefix = objectFactory.property(String::class.java)
-    private val reportingSettings = objectFactory.property(ReportingSettings::class.java)
+    @get:Internal
+    internal abstract val javaPackagePrefix: Property<String>
+
+    @get:Internal
+    internal abstract val reportingSettings: Property<ReportingSettings>
 
     @TaskAction
     fun compile(inputChanges: InputChanges) {

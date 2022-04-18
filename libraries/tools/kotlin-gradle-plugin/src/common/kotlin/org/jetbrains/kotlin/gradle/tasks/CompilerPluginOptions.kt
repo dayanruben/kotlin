@@ -16,7 +16,12 @@
 
 package org.jetbrains.kotlin.gradle.tasks
 
+import org.gradle.api.provider.ListProperty
+import org.gradle.api.provider.Provider
+import org.gradle.api.tasks.Internal
+import org.jetbrains.kotlin.gradle.internal.Kapt3GradleSubplugin
 import org.jetbrains.kotlin.gradle.plugin.CompilerPluginConfig
+import org.jetbrains.kotlin.gradle.plugin.SubpluginOption
 
 class CompilerPluginOptions() : CompilerPluginConfig() {
 
@@ -24,14 +29,20 @@ class CompilerPluginOptions() : CompilerPluginConfig() {
         copyOptionsFrom(options)
     }
 
-    val subpluginOptionsByPluginId = optionsByPluginId
+    @get:Internal
+    internal val subpluginOptionsByPluginId = optionsByPluginId
 
+    @get:Internal
     val arguments: List<String>
         get() = optionsByPluginId.flatMap { (pluginId, subplubinOptions) ->
             subplubinOptions.map { option ->
                 "plugin:$pluginId:${option.key}=${option.value}"
             }
         }
+
+    fun addPluginArgument(options: CompilerPluginOptions) {
+        copyOptionsFrom(options)
+    }
 
     operator fun plus(options: CompilerPluginConfig?): CompilerPluginOptions {
         if (options == null) return this
@@ -46,5 +57,19 @@ class CompilerPluginOptions() : CompilerPluginConfig() {
         options.allOptions().forEach { entry ->
             optionsByPluginId[entry.key] = entry.value.toMutableList()
         }
+    }
+}
+
+internal fun ListProperty<out CompilerPluginConfig>.toSingleCompilerPluginOptions(): CompilerPluginOptions {
+    var res = CompilerPluginOptions()
+    this.get().forEach { res += it }
+    return res
+}
+
+internal fun Provider<List<SubpluginOption>>.toCompilerPluginOptions(): Provider<CompilerPluginOptions> {
+    return map {
+        val res = CompilerPluginOptions()
+        it.forEach { res.addPluginArgument(Kapt3GradleSubplugin.KAPT_SUBPLUGIN_ID, it) }
+        return@map res
     }
 }

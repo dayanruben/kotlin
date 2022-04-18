@@ -8893,6 +8893,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             }
 
             @Test
+            @TestMetadata("duplicatedOverrideDeprecationOnProperty.kt")
+            public void testDuplicatedOverrideDeprecationOnProperty() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/deprecated/duplicatedOverrideDeprecationOnProperty.kt");
+            }
+
+            @Test
             @TestMetadata("functionUsage.kt")
             public void testFunctionUsage() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/deprecated/functionUsage.kt");
@@ -18709,6 +18715,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
                 @TestMetadata("constantStaticStringField.kt")
                 public void testConstantStaticStringField() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/j+k/types/constantStaticStringField.kt");
+                }
+
+                @Test
+                @TestMetadata("noOverrideKeyword.kt")
+                public void testNoOverrideKeyword() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/j+k/types/noOverrideKeyword.kt");
                 }
 
                 @Test
