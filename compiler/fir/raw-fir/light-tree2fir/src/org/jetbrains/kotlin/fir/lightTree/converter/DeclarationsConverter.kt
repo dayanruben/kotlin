@@ -377,7 +377,8 @@ class DeclarationsConverter(
                 CONSTRUCTOR_CALLEE -> constructorCalleePair = convertConstructorInvocation(unescapedAnnotation)
             }
         }
-        val name = (constructorCalleePair.first as? FirUserTypeRef)?.qualifier?.last()?.name ?: Name.special("<no-annotation-name>")
+        val qualifier = (constructorCalleePair.first as? FirUserTypeRef)?.qualifier?.last()
+        val name = qualifier?.name ?: Name.special("<no-annotation-name>")
         return buildAnnotationCall {
             source = unescapedAnnotation.toFirSourceElement()
             useSiteTarget = annotationUseSiteTarget ?: defaultAnnotationUseSiteTarget
@@ -392,6 +393,7 @@ class DeclarationsConverter(
                 this.name = name
             }
             extractArgumentsFrom(constructorCalleePair.second)
+            typeArguments += qualifier?.typeArgumentList?.typeArguments ?: listOf()
         }
     }
 
@@ -999,7 +1001,7 @@ class DeclarationsConverter(
             }
         }
 
-        val isImplicit = constructorDelegationCall.asText.isEmpty()
+        val isImplicit = constructorDelegationCall.textLength == 0
         val isThis = thisKeywordPresent //|| (isImplicit && classWrapper.hasPrimaryConstructor)
         val delegatedType =
             when {
@@ -1783,7 +1785,7 @@ class DeclarationsConverter(
         val firValueArguments = mutableListOf<FirExpression>()
         constructorInvocation.forEachChildren {
             when (it.tokenType) {
-                CONSTRUCTOR_CALLEE -> if (it.asText.isNotEmpty()) firTypeRef = convertType(it)   //is empty in enum entry constructor
+                CONSTRUCTOR_CALLEE -> firTypeRef = convertType(it)
                 VALUE_ARGUMENT_LIST -> firValueArguments += expressionConverter.convertValueArguments(it)
             }
         }
@@ -1928,12 +1930,6 @@ class DeclarationsConverter(
      */
     fun convertType(type: LighterASTNode): FirTypeRef {
         val typeRefSource = type.toFirSourceElement()
-        if (type.asText.isEmpty()) {
-            return buildErrorTypeRef {
-                source = typeRefSource
-                diagnostic = ConeSimpleDiagnostic("Unwrapped type is null", DiagnosticKind.Syntax)
-            }
-        }
 
         // There can be MODIFIER_LIST children on the TYPE_REFERENCE node AND the descendant NULLABLE_TYPE nodes.
         // We aggregate them to get modifiers and annotations. Not only that, there could be multiple modifier lists on each. Examples:
@@ -2228,12 +2224,13 @@ class DeclarationsConverter(
             isNoinline = modifiers.hasNoinline()
             isVararg = modifiers.hasVararg()
             val isFromPrimaryConstructor = valueParameterDeclaration == ValueParameterDeclaration.PRIMARY_CONSTRUCTOR
-            annotations += modifiers.annotations.filter {
-                !isFromPrimaryConstructor || it.useSiteTarget == null ||
-                        it.useSiteTarget == CONSTRUCTOR_PARAMETER ||
-                        it.useSiteTarget == RECEIVER ||
-                        it.useSiteTarget == FILE
-            }
+            annotations += if (!isFromPrimaryConstructor)
+                modifiers.annotations
+            else
+                modifiers.annotations.filter {
+                    val useSiteTarget = it.useSiteTarget
+                    useSiteTarget == null || useSiteTarget == CONSTRUCTOR_PARAMETER || useSiteTarget == RECEIVER || useSiteTarget == FILE
+                }
             annotations += additionalAnnotations
         }
         return ValueParameter(isVal, isVar, modifiers, firValueParameter, destructuringDeclaration)

@@ -1453,6 +1453,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("typeArgumentsInAnnotation.kt")
+            public void testTypeArgumentsInAnnotation() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/annotations/typeArgumentsInAnnotation.kt");
+            }
+
+            @Test
             @TestMetadata("typeParameterAsAnnotation.kt")
             public void testTypeParameterAsAnnotation() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/annotations/typeParameterAsAnnotation.kt");
@@ -13085,6 +13091,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("OptionalAnnotationClasses.kt")
+            public void testOptionalAnnotationClasses() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/imports/OptionalAnnotationClasses.kt");
+            }
+
+            @Test
             @TestMetadata("PackageLocalClassNotImported.kt")
             public void testPackageLocalClassNotImported() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/imports/PackageLocalClassNotImported.kt");
@@ -16291,6 +16303,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("delegationAndInference.kt")
                 public void testDelegationAndInference() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/substitutions/delegationAndInference.kt");
+                }
+
+                @Test
+                @TestMetadata("hideLocalTypeForReturnTypeOfSingleExpressionFunction.kt")
+                public void testHideLocalTypeForReturnTypeOfSingleExpressionFunction() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/substitutions/hideLocalTypeForReturnTypeOfSingleExpressionFunction.kt");
                 }
 
                 @Test
@@ -31587,6 +31605,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("typeMismatchErrorHasExpectedGenericTypeArgumentInsteadOfTypeParameter.kt")
+            public void testTypeMismatchErrorHasExpectedGenericTypeArgumentInsteadOfTypeParameter() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/typeParameters/typeMismatchErrorHasExpectedGenericTypeArgumentInsteadOfTypeParameter.kt");
+            }
+
+            @Test
             @TestMetadata("upperBoundCannotBeArray.kt")
             public void testUpperBoundCannotBeArray() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/typeParameters/upperBoundCannotBeArray.kt");
@@ -37457,6 +37481,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("kt32249.kt")
                 public void testKt32249() throws Exception {
                     runTest("compiler/testData/diagnostics/testsWithStdLib/inference/delegates/kt32249.kt");
+                }
+
+                @Test
+                @TestMetadata("kt50994.kt")
+                public void testKt50994() throws Exception {
+                    runTest("compiler/testData/diagnostics/testsWithStdLib/inference/delegates/kt50994.kt");
                 }
             }
 
