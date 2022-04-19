@@ -7,7 +7,7 @@ fun box(): String {
     assertEquals(false, 'A' == 'B')
     assertEquals(false, ('A' as Any) == (65 as Any))
 
-    // FIXME(KT-50157): assertEquals(true, 'A' === 'A')
+    assertEquals(true, 'A' === 'A')
     assertEquals(false, 'A' === 'B')
     assertEquals(false, ('A' as Any) === (65 as Any))
 

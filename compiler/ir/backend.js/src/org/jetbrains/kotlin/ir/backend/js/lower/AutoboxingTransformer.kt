@@ -191,6 +191,24 @@ class AutoboxingTransformer(context: JsCommonBackendContext) : AbstractValueUsag
             )
         }
     }
+
+    override fun visitCall(expression: IrCall): IrExpression {
+        if (expression.symbol == irBuiltIns.eqeqeqSymbol && expression.allArgumentsHaveType(irBuiltIns.charType)) {
+            return expression.apply { transformChildrenVoid() }
+        } else {
+            return super.visitCall(expression)
+        }
+    }
+
+    private fun IrCall.allArgumentsHaveType(type: IrType): Boolean {
+        for (i in 0 until valueArgumentsCount) {
+            if (getValueArgument(i)?.type != type) {
+                return false
+            }
+        }
+        return true
+    }
+
 }
 
 private tailrec fun IrExpression.isGetUnit(irBuiltIns: IrBuiltIns): Boolean =

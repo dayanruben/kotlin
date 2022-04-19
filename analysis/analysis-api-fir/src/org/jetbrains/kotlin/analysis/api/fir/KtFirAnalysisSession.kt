@@ -13,11 +13,14 @@ import org.jetbrains.kotlin.analysis.api.fir.components.*
 import org.jetbrains.kotlin.analysis.api.fir.symbols.KtFirOverrideInfoProvider
 import org.jetbrains.kotlin.analysis.api.fir.symbols.KtFirSymbolProvider
 import org.jetbrains.kotlin.analysis.api.fir.utils.threadLocal
+import org.jetbrains.kotlin.analysis.api.impl.base.components.KtAnalysisScopeProviderImpl
 import org.jetbrains.kotlin.analysis.api.tokens.ValidityToken
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.LLFirModuleResolveState
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.LowLevelFirApiFacadeForResolveOnAir
+import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.moduleData
+import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.resolve.providers.FirSymbolProvider
 import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -32,6 +35,8 @@ private constructor(
     token: ValidityToken,
     private val mode: AnalysisSessionMode,
 ) : KtAnalysisSession(token) {
+
+    override val useSiteModule: KtModule get() = firResolveState.module
 
     private enum class AnalysisSessionMode {
         REGULAR,
@@ -91,6 +96,8 @@ private constructor(
 
     override val typesCreatorImpl: KtTypeCreator = KtFirTypeCreator(this, token)
 
+    override val analysisScopeProviderImpl: KtAnalysisScopeProvider = KtAnalysisScopeProviderImpl(this, token)
+
     override fun createContextDependentCopy(originalKtFile: KtFile, elementToReanalyze: KtElement): KtAnalysisSession {
         check(mode == AnalysisSessionMode.REGULAR) {
             "Cannot create context-dependent copy of KtAnalysis session from a context dependent one"
@@ -115,6 +122,8 @@ private constructor(
     val rootModuleSession: FirSession get() = firResolveState.rootModuleSession
     val firSymbolProvider: FirSymbolProvider get() = rootModuleSession.symbolProvider
     val targetPlatform: TargetPlatform get() = rootModuleSession.moduleData.platform
+
+    fun getScopeSessionFor(session: FirSession): ScopeSession = firResolveState.getScopeSessionFor(session)
 
     companion object {
         @InvalidWayOfUsingAnalysisSession
