@@ -7,8 +7,13 @@ package org.jetbrains.kotlin.gradle.targets.native.tasks.artifact
 
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.plugins.ExtensionAware
 import org.gradle.language.base.plugins.LifecycleBasePlugin
+import org.jetbrains.kotlin.gradle.dsl.KotlinCommonToolOptions
+import org.jetbrains.kotlin.gradle.dsl.KotlinNativeFatFramework
+import org.jetbrains.kotlin.gradle.dsl.KotlinNativeFatFrameworkConfig
 import org.jetbrains.kotlin.gradle.plugin.mpp.BitcodeEmbeddingMode
+import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
 import org.jetbrains.kotlin.gradle.plugin.mpp.NativeOutputKind
 import org.jetbrains.kotlin.gradle.tasks.FatFrameworkTask
 import org.jetbrains.kotlin.gradle.tasks.FrameworkDescriptor
@@ -17,62 +22,91 @@ import org.jetbrains.kotlin.gradle.tasks.registerTask
 import org.jetbrains.kotlin.gradle.utils.lowerCamelCaseName
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.konan.util.visibleName
+import javax.inject.Inject
 
-open class KotlinNativeFatFramework : KotlinNativeArtifact() {
-    var targets: Set<KonanTarget> = emptySet()
-    fun targets(vararg targets: KonanTarget) {
+abstract class KotlinNativeFatFrameworkConfigImpl @Inject constructor(artifactName: String) :
+    KotlinNativeArtifactConfigImpl(artifactName), KotlinNativeFatFrameworkConfig {
+    override var targets: Set<KonanTarget> = emptySet()
+    override fun targets(vararg targets: KonanTarget) {
         this.targets = targets.toSet()
     }
 
-    var embedBitcode: BitcodeEmbeddingMode? = null
+    override var embedBitcode: BitcodeEmbeddingMode? = null
 
-    private val kind = NativeOutputKind.FRAMEWORK
-
-    override fun validate(project: Project, name: String): Boolean {
-        val logger = project.logger
-        if (!super.validate(project, name)) return false
-        if (targets.isEmpty()) {
-            logger.error("Native library '${name}' wasn't configured because it requires at least one target")
-            return false
+    override fun validate() {
+        super.validate()
+        val kind = NativeOutputKind.FRAMEWORK
+        check(targets.isNotEmpty()) {
+            "Native artifact '$artifactName' wasn't configured because it requires at least one target"
         }
-        targets.firstOrNull { !kind.availableFor(it) }?.let { target ->
-            logger.error("Native library '${name}' wasn't configured because ${kind.description} is not available for ${target.visibleName}")
-            return false
+        val wrongTarget = targets.firstOrNull { !kind.availableFor(it) }
+        check(wrongTarget == null) {
+            "Native artifact '$artifactName' wasn't configured because ${kind.description} is not available for ${wrongTarget!!.visibleName}"
         }
-
-        return true
     }
 
-    override fun registerAssembleTask(project: Project, name: String) {
-        val parentTask = project.registerTask<Task>(lowerCamelCaseName("assemble", name, "FatFramework")) {
+    override fun createArtifact(extensions: ExtensionAware): KotlinNativeFatFrameworkImpl {
+        validate()
+        return KotlinNativeFatFrameworkImpl(
+            artifactName = artifactName,
+            modules = modules,
+            modes = modes,
+            isStatic = isStatic,
+            linkerOptions = linkerOptions,
+            kotlinOptionsFn = kotlinOptionsFn,
+            binaryOptions = binaryOptions,
+            targets = targets,
+            embedBitcode = embedBitcode,
+            extensions = extensions
+        )
+    }
+}
+
+class KotlinNativeFatFrameworkImpl(
+    override val artifactName: String,
+    override val modules: Set<Any>,
+    override val modes: Set<NativeBuildType>,
+    override val isStatic: Boolean,
+    override val linkerOptions: List<String>,
+    override val kotlinOptionsFn: KotlinCommonToolOptions.() -> Unit,
+    override val binaryOptions: Map<String, String>,
+    override val targets: Set<KonanTarget>,
+    override val embedBitcode: BitcodeEmbeddingMode?,
+    extensions: ExtensionAware
+) : KotlinNativeFatFramework, ExtensionAware by extensions {
+    override fun getName() = lowerCamelCaseName(artifactName, "FatFramework")
+    override val taskName = lowerCamelCaseName("assemble", name)
+
+    override fun registerAssembleTask(project: Project) {
+        val parentTask = project.registerTask<Task>(taskName) {
             it.group = "build"
-            it.description = "Assemble all types of registered '$name' FatFramework"
+            it.description = "Assemble all types of registered '$artifactName' FatFramework"
         }
         project.tasks.named(LifecycleBasePlugin.ASSEMBLE_TASK_NAME).dependsOn(parentTask)
 
         modes.forEach { buildType ->
             val fatTask = project.registerTask<FatFrameworkTask>(
-                lowerCamelCaseName("assemble", name, buildType.visibleName, "FatFramework")
+                lowerCamelCaseName("assemble", artifactName, buildType.visibleName, "FatFramework")
             ) {
-                it.baseName = name
+                it.baseName = artifactName
                 it.destinationDir = project.buildDir.resolve("out/fatframework/${buildType.getName()}")
             }
             parentTask.dependsOn(fatTask)
 
             val nameSuffix = "ForFat"
             val frameworkDescriptors: List<FrameworkDescriptor> = targets.map { target ->
-                val librariesConfigurationName = project.registerLibsDependencies(target, name + nameSuffix, modules)
-                val exportConfigurationName = project.registerExportDependencies(target, name + nameSuffix, modules)
+                val librariesConfigurationName = project.registerLibsDependencies(target, artifactName + nameSuffix, modules)
+                val exportConfigurationName = project.registerExportDependencies(target, artifactName + nameSuffix, modules)
                 val targetTask = registerLinkFrameworkTask(
-                    project,
-                    name,
-                    target,
-                    buildType,
-                    librariesConfigurationName,
-                    exportConfigurationName,
-                    embedBitcode,
-                    "${name}FatFrameworkTemp",
-                    nameSuffix
+                    project = project,
+                    name = artifactName,
+                    target = target,
+                    buildType = buildType,
+                    librariesConfigurationName = librariesConfigurationName,
+                    exportConfigurationName = exportConfigurationName,
+                    embedBitcode = embedBitcode,
+                    outDirName = "${artifactName}FatFrameworkTemp",
+                    taskNameSuffix = nameSuffix
                 )
                 fatTask.dependsOn(targetTask)
                 val frameworkFileProvider = targetTask.map { it.outputFile }

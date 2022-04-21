@@ -791,6 +791,12 @@ public class BoxJsTestGenerated extends AbstractBoxJsTest {
         }
 
         @Test
+        @TestMetadata("lambdaWithValueClass.kt")
+        public void testLambdaWithValueClass() throws Exception {
+            runTest("js/js.translator/testData/box/coroutines/lambdaWithValueClass.kt");
+        }
+
+        @Test
         @TestMetadata("localVarOptimization.kt")
         public void testLocalVarOptimization() throws Exception {
             runTest("js/js.translator/testData/box/coroutines/localVarOptimization.kt");
@@ -4572,6 +4578,12 @@ public class BoxJsTestGenerated extends AbstractBoxJsTest {
         @TestMetadata("astCopy.kt")
         public void testAstCopy() throws Exception {
             runTest("js/js.translator/testData/box/inline/astCopy.kt");
+        }
+
+        @Test
+        @TestMetadata("blocksMaterialization.kt")
+        public void testBlocksMaterialization() throws Exception {
+            runTest("js/js.translator/testData/box/inline/blocksMaterialization.kt");
         }
 
         @Test
