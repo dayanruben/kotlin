@@ -35,7 +35,7 @@ internal class KtFirCompileTimeConstantProvider(
 
     private fun evaluateFir(
         fir: FirElement?,
-        context: KtExpression,
+        sourcePsi: KtExpression,
         mode: KtConstantEvaluationMode,
     ): KtConstantValue? = withValidityAssertion {
         when (fir) {
@@ -45,7 +45,7 @@ internal class KtFirCompileTimeConstantProvider(
                 try {
                     FirCompileTimeConstantEvaluator.evaluateAsKtConstantValue(fir, mode)
                 } catch (e: ArithmeticException) {
-                    KtConstantValue.KtErrorConstantValue(e.localizedMessage, context)
+                    KtConstantValue.KtErrorConstantValue(e.localizedMessage, sourcePsi)
                 }
             }
             // For invalid code like the following,
@@ -57,7 +57,8 @@ internal class KtFirCompileTimeConstantProvider(
             // `false` does not have a corresponding elements on the FIR side and hence the containing `FirWhenBranch` is returned. In this
             // case, we simply report null since FIR does not know about it.
             is FirWhenBranch -> null
-            else -> throwUnexpectedFirElementError(fir, context)
+            else -> throwUnexpectedFirElementError(fir, sourcePsi)
         }
     }
+
 }
