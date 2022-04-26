@@ -13,6 +13,7 @@ import org.eclipse.jgit.api.ResetCommand
 import org.eclipse.jgit.lib.TextProgressMonitor
 import org.jetbrains.kotlinx.dataframe.*
 import org.jetbrains.kotlinx.dataframe.api.*
+import org.jetbrains.kotlinx.dataframe.io.DisplayConfiguration
 import org.jetbrains.kotlinx.dataframe.io.readCSV
 import org.jetbrains.kotlinx.dataframe.io.toHTML
 import org.jetbrains.kotlinx.dataframe.io.writeCSV
@@ -20,7 +21,6 @@ import org.jetbrains.kotlinx.dataframe.math.median
 import java.io.File
 import java.io.InputStream
 import java.util.zip.ZipInputStream
-import kotlin.reflect.typeOf
 import kotlin.script.experimental.annotations.KotlinScript
 import kotlin.script.experimental.api.*
 import kotlin.script.experimental.util.PropertiesCollection
@@ -195,7 +195,8 @@ abstract class BenchmarkTemplate(
 
     fun aggregateBenchmarkResults(vararg benchmarkResults: BenchmarkResult) {
         println("Aggregating benchmark results...")
-        val results = benchmarkResults
+        val sortedResults = benchmarkResults.sortedBy { it.name }
+        val results = sortedResults
             .map { result ->
                 DataFrame
                     .readCSV(result.result)
@@ -203,12 +204,12 @@ abstract class BenchmarkTemplate(
                     .remove("version", "tasks") // removing unused columns
                     .remove { nameContains("warm-up build") } // removing warm-up times
                     .add("median build time") { // squashing build times into median build time
-                        valuesOf<Int>().median(typeOf<Int>())
+                        valuesOf<Int>().median()
                     }
                     .remove { nameContains("measured build") } // removing iterations results
                     .groupBy("scenario").aggregate { // merging configuration and build times into one row
                         first { it.values().contains("task start") }["median build time"] into "tasks start median time"
-                        first { it.values().contains("execution") }["median build time"] into "execution median time"
+                        first { it.values().contains("total execution time") }["median build time"] into "execution median time"
                     }
                     .add("benchmark") { result.name }
             }
@@ -219,12 +220,27 @@ abstract class BenchmarkTemplate(
                     row["execution median time"] into "Execution: ${row["benchmark"]}"
                 }
             }
+            .also { println(it.print(borders = true)) }
             .sortBy("scenario")
             .rename("scenario" to "Scenario")
             .reorderColumnsBy {
                 // "Scenario" column should always be in the first place
                 if (it.name() == "Scenario") "0000Scenario" else it.name()
             }
+            .insert("Configuration diff from stable release") {
+                val stableReleaseConfiguration = column<Int>("Configuration: ${sortedResults.first().name}").getValue(this)
+                val currentReleaseConfiguration = column<Int>("Configuration: ${sortedResults.last().name}").getValue(this)
+                val percent = currentReleaseConfiguration * 100 / stableReleaseConfiguration
+                "${percent}%"
+            }
+            .after("Configuration: ${sortedResults.last().name}")
+            .insert("Execution diff from stable release") {
+                val stableReleaseConfiguration = column<Int>("Execution: ${sortedResults.first().name}").getValue(this)
+                val currentReleaseConfiguration = column<Int>("Execution: ${sortedResults.last().name}").getValue(this)
+                val percent = currentReleaseConfiguration * 100 / stableReleaseConfiguration
+                "${percent}%"
+            }
+            .after("Execution: ${sortedResults.last().name}")
 
         println("Benchmark results:")
         println(results.print(borders = true))
@@ -235,7 +251,28 @@ abstract class BenchmarkTemplate(
         val benchmarkHtml = benchmarkOutputDir.resolve("$projectName.html")
         benchmarkHtml.writeText(
             results.toHTML(
-                includeInit = true
+                configuration = DisplayConfiguration(
+                    cellContentLimit = 120,
+                    cellFormatter = { dataRow, dataColumn ->
+                        if (dataColumn.name.contains("diff from stable release")) {
+                            val percent = dataRow.getValue<String>(dataColumn.name).removeSuffix("%").toInt()
+                            when {
+                                percent <= 100 -> background(184, 255, 184) // Green
+                                percent in 101..105 -> this.background(255, 255, 184) // Yellow
+                                else -> background(255, 184, 184) // Red
+                            }
+                        } else if (dataColumn.name == "Scenario") {
+                            background(225, 225, 225) // Gray
+                            bold
+                        } else {
+                            null
+                        }
+                    }
+                ),
+                includeInit = true,
+                getFooter = {
+                    "Results for: $projectName"
+                }
             ).toString()
         )
         println("Result in csv format: ${benchmarkCsv.absolutePath}")
@@ -347,7 +384,7 @@ abstract class BenchmarkTemplate(
         }
     }
 
-    private fun <T : Any> DataFrame<*>.rowToColumn(
+    private fun <T : Any?> DataFrame<*>.rowToColumn(
         rowName: String,
         typeConversion: (Any?) -> T
     ): List<T> =
@@ -366,9 +403,9 @@ abstract class BenchmarkTemplate(
 
     companion object {
         private const val STEP_SEPARATOR = "###############"
-        private const val GRADLE_PROFILER_VERSION = "0.16.0"
+        private const val GRADLE_PROFILER_VERSION = "0.18.0"
         private const val GRADLE_PROFILER_URL: String =
-            "https://repo.gradle.org/gradle/ext-releases-local/org/gradle/profiler/gradle-profiler/$GRADLE_PROFILER_VERSION/gradle-profiler-$GRADLE_PROFILER_VERSION.zip"
+            "https://repo1.maven.org/maven2/org/gradle/profiler/gradle-profiler/$GRADLE_PROFILER_VERSION/gradle-profiler-$GRADLE_PROFILER_VERSION.zip"
 
     }
 }
