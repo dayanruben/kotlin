@@ -888,11 +888,6 @@ tasks {
         dependsOn(":kotlin-annotation-processing-cli:test")
     }
 
-    // Need the task for transi˚tion period. Shouold be removed in a week after commit is master.
-    register("kaptIdeTest") {
-        dependsOn("kaptTests")
-    }
-
     register("test") {
         doLast {
             throw GradleException("Don't use directly, use aggregate tasks *-check instead")
@@ -974,26 +969,6 @@ val zipTestData by task<Zip> {
     }
 }
 
-val zipPlugin by task<Zip> {
-    val src = when (project.findProperty("pluginArtifactDir") as String?) {
-        "Kotlin" -> ideaPluginDir
-        null -> ideaPluginDir
-        else -> error("Unsupported plugin artifact dir")
-    }
-    val destPath = project.findProperty("pluginZipPath") as String?
-    val dest = File(destPath ?: "$buildDir/kotlin-plugin.zip")
-    destinationDirectory.set(dest.parentFile)
-    archiveFileName.set(dest.name)
-
-    from(src)
-    into("Kotlin")
-    setExecutablePermissions()
-
-    doLast {
-        logger.lifecycle("Plugin artifacts packed to ${archiveFile.get()}")
-    }
-}
-
 fun Project.secureZipTask(zipTask: TaskProvider<Zip>): RegisteringDomainObjectDelegateProviderWithAction<out TaskContainer, Task> {
     val checkSumTask = tasks.register("${zipTask.name}Checksum", Checksum::class) {
         dependsOn(zipTask)
@@ -1019,7 +994,6 @@ signing {
 }
 
 val zipCompilerWithSignature by secureZipTask(zipCompiler)
-val zipPluginWithSignature by secureZipTask(zipPlugin)
 
 configure<IdeaModel> {
     module {
@@ -1033,61 +1007,6 @@ configure<IdeaModel> {
         ).toSet()
     }
 }
-
-tasks.register("findShadowJarsInClasspath") {
-    doLast {
-        fun Collection<File>.printSorted(indent: String = "    ") {
-            sortedBy { it.path }.forEach { println(indent + it.relativeTo(rootProject.projectDir)) }
-        }
-
-        val mainJars = hashSetOf<File>()
-        val shadowJars = hashSetOf<File>()
-        for (project in rootProject.allprojects) {
-            project.withJavaPlugin {
-                project.sourceSets.forEach { sourceSet ->
-                    val jarTask = project.tasks.findByPath(sourceSet.jarTaskName) as? Jar
-                    jarTask?.outputFile?.let { mainJars.add(it) }
-                }
-            }
-            for (task in project.tasks) {
-                when (task) {
-                    is ShadowJar -> {
-                        shadowJars.add(fileFrom(task.outputFile))
-                    }
-                    is ProGuardTask -> {
-                        shadowJars.addAll(task.outputs.files.toList())
-                    }
-                }
-            }
-        }
-
-        shadowJars.removeAll(mainJars)
-        println("Shadow jars that might break incremental compilation:")
-        shadowJars.printSorted()
-
-        fun Project.checkConfig(configName: String) {
-            val config = configurations.findByName(configName) ?: return
-            val shadowJarsInConfig = config.resolvedConfiguration.files.filter { it in shadowJars }
-            if (shadowJarsInConfig.isNotEmpty()) {
-                println()
-                println("Project $project contains shadow jars in configuration '$configName':")
-                shadowJarsInConfig.printSorted()
-            }
-        }
-
-        for (project in rootProject.allprojects) {
-            project.sourceSetsOrNull?.forEach { sourceSet ->
-                project.checkConfig(sourceSet.compileClasspathConfigurationName)
-            }
-        }
-    }
-}
-
-val Jar.outputFile: File
-    get() = archiveFile.get().asFile
-
-val Project.sourceSetsOrNull: SourceSetContainer?
-    get() = convention.findPlugin(JavaPluginConvention::class.java)?.sourceSets
 
 val disableVerificationTasks = providers.systemProperty("disable.verification.tasks")
     .forUseAtConfigurationTime().orNull?.toBoolean() ?: false

@@ -274,6 +274,9 @@ abstract class AbstractKotlinCompile<T : CommonCompilerArguments> @Inject constr
     @get:Internal
     val startParameters = BuildMetricsReporterService.getStartParameters(project)
 
+    @get:Input
+    abstract val ownModuleName: Property<String>
+
     @get:Internal
     internal abstract val buildMetricsReporterService: Property<BuildMetricsReporterService?>
 
@@ -528,16 +531,10 @@ abstract class KotlinCompile @Inject constructor(
         "Replaced with 'libraries' input",
         replaceWith = ReplaceWith("libraries")
     )
-    fun setClasspath(classpath: FileCollection) {
-        libraries.setFrom(classpath)
-    }
-
-    @Deprecated(
-        "Replaced with 'libraries' input",
-        replaceWith = ReplaceWith("libraries")
-    )
-    @Internal
-    fun getClasspath(): FileCollection = libraries
+    @get:Internal
+    var classpath: FileCollection
+        set(value) = libraries.setFrom(value)
+        get() = libraries
 
     @get:Input
     abstract val useKotlinAbiSnapshot: Property<Boolean>
