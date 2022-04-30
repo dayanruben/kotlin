@@ -174,26 +174,27 @@ class KotlinJsr223ScriptEngineIT {
     @Test
     fun testInvocable() {
         val engine = ScriptEngineManager().getEngineByExtension("kts")!!
-        val res1 = engine.eval("""
+        val res0 = engine.eval("""
 fun fn(x: Int) = x + 2
 val obj = object {
     fun fn1(x: Int) = x + 3
 }
 obj
 """)
-        Assert.assertNotNull(res1)
+        Assert.assertNotNull(res0)
         val invocator = engine as? Invocable
         Assert.assertNotNull(invocator)
+        val res1 = invocator!!.invokeFunction("fn", 6)
+        Assert.assertEquals(8, res1)
         assertThrows(NoSuchMethodException::class.java) {
-            invocator!!.invokeFunction("fn1", 3)
+            invocator.invokeFunction("fn1", 3)
         }
-        val res2 = invocator!!.invokeFunction("fn", 3)
+        val res2 = invocator.invokeFunction("fn", 3)
         Assert.assertEquals(5, res2)
-        // TODO: fix and restore
-//        assertThrows(NoSuchMethodException::class.java) {
-//            invocator!!.invokeMethod(res1, "fn", 3)
-//        }
-        val res3 = invocator.invokeMethod(res1, "fn1", 3)
+        assertThrows(NoSuchMethodException::class.java) {
+            invocator.invokeMethod(res0, "fn", 3)
+        }
+        val res3 = invocator.invokeMethod(res0, "fn1", 3)
         Assert.assertEquals(6, res3)
     }
 
@@ -261,6 +262,10 @@ obj
             put("boundValue", 100)
         })
         Assert.assertEquals(111, result2)
+
+        engine.put("nullable", null)
+        val result3 = engine.eval("bindings[\"nullable\"]?.let { it as Int } ?: -1")
+        Assert.assertEquals(-1, result3)
     }
 
     @Test
@@ -280,6 +285,10 @@ obj
             put("boundValue", 100)
         })
         Assert.assertEquals(111, result2)
+
+        engine.put("nullable", null)
+        val result3 = engine.eval("nullable?.let { it as Int } ?: -1")
+        Assert.assertEquals(-1, result3)
     }
 
     @Test

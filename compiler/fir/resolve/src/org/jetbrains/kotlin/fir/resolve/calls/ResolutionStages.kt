@@ -41,6 +41,7 @@ import org.jetbrains.kotlin.resolve.calls.tower.CandidateApplicability
 import org.jetbrains.kotlin.resolve.deprecation.DeprecationLevelValue
 import org.jetbrains.kotlin.types.AbstractNullabilityChecker
 import org.jetbrains.kotlin.types.TypeApproximatorConfiguration
+import org.jetbrains.kotlin.types.isDefinitelyEmpty
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 abstract class ResolutionStage {
@@ -256,7 +257,6 @@ private fun Candidate.findClosestMatchingReceivers(
 object CheckDslScopeViolation : ResolutionStage() {
     private val dslMarkerClassId = ClassId.fromString("kotlin/DslMarker")
 
-    @OptIn(ExperimentalStdlibApi::class)
     override suspend fun check(candidate: Candidate, callInfo: CallInfo, sink: CheckerSink, context: ResolutionContext) {
         fun checkReceiverValue(receiverValue: ReceiverValue?) {
             if (receiverValue is ImplicitReceiverValue<*>) {
@@ -333,7 +333,6 @@ object CheckDslScopeViolation : ResolutionStage() {
         }
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     private fun ImplicitReceiverValue<*>.getDslMarkersOfImplicitReceiver(context: ResolutionContext): Set<ClassId> {
         return buildSet {
             (boundSymbol as? FirAnonymousFunctionSymbol)?.fir?.matchingParameterFunctionType?.let {
@@ -358,7 +357,6 @@ object CheckDslScopeViolation : ResolutionStage() {
         }
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     private fun FirThisReceiverExpression.getDslMarkersOfThisReceiverExpression(context: ResolutionContext): Set<ClassId> {
         return buildSet {
             collectDslMarkerAnnotations(context, typeRef.coneType)
@@ -577,6 +575,29 @@ internal object CheckLowPriorityInOverloadResolution : CheckerStage() {
             sink.reportDiagnostic(ResolvedWithLowPriority)
         }
     }
+}
+
+internal object CheckIncompatibleTypeVariableUpperBounds : ResolutionStage() {
+    override suspend fun check(candidate: Candidate, callInfo: CallInfo, sink: CheckerSink, context: ResolutionContext) =
+        with(candidate.system.asConstraintSystemCompleterContext()) {
+            for (variableWithConstraints in candidate.system.notFixedTypeVariables.values) {
+                val upperTypes = variableWithConstraints.constraints.extractUpperTypesToCheckIntersectionEmptiness()
+
+                // TODO: consider reporting errors on bounded type variables by incompatible types but with other lower constraints
+                if (
+                    variableWithConstraints.constraints.none { it.kind.isLower() }
+                    && upperTypes.computeEmptyIntersectionTypeKind().isDefinitelyEmpty()
+                ) {
+                    sink.yieldDiagnostic(
+                        @Suppress("UNCHECKED_CAST")
+                        InferredEmptyIntersectionDiagnostic(
+                            upperTypes as Collection<ConeKotlinType>,
+                            variableWithConstraints.typeVariable as ConeTypeVariable
+                        )
+                    )
+                }
+            }
+        }
 }
 
 internal object PostponedVariablesInitializerResolutionStage : ResolutionStage() {

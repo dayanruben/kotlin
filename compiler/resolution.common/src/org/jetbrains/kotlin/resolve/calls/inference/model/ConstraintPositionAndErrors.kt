@@ -135,6 +135,21 @@ class ConstrainingTypeIsError(
 
 class NoSuccessfulFork(val position: IncorporationConstraintPosition) : ConstraintSystemError(INAPPLICABLE)
 
+sealed interface InferredEmptyIntersection {
+    val incompatibleTypes: Collection<KotlinTypeMarker>
+    val typeVariable: TypeVariableMarker
+}
+
+class InferredEmptyIntersectionWarning(
+    override val incompatibleTypes: Collection<KotlinTypeMarker>,
+    override val typeVariable: TypeVariableMarker
+) : ConstraintSystemError(RESOLVED), InferredEmptyIntersection
+
+class InferredEmptyIntersectionError(
+    override val incompatibleTypes: Collection<KotlinTypeMarker>,
+    override val typeVariable: TypeVariableMarker
+) : ConstraintSystemError(INAPPLICABLE), InferredEmptyIntersection
+
 class OnlyInputTypesDiagnostic(val typeVariable: TypeVariableMarker) : ConstraintSystemError(INAPPLICABLE)
 
 object LowerPriorityToPreserveCompatibility : ConstraintSystemError(RESOLVED_NEED_PRESERVE_COMPATIBILITY)

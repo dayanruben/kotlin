@@ -5,12 +5,15 @@
 
 package org.jetbrains.kotlin.resolve.calls.inference.model
 
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.resolve.calls.components.PostponedArgumentsAnalyzerContext
 import org.jetbrains.kotlin.resolve.calls.inference.*
 import org.jetbrains.kotlin.resolve.calls.inference.components.*
 import org.jetbrains.kotlin.types.AbstractTypeApproximator
 import org.jetbrains.kotlin.types.AbstractTypeChecker
 import org.jetbrains.kotlin.types.TypeApproximatorConfiguration
+import org.jetbrains.kotlin.types.isDefinitelyEmpty
 import org.jetbrains.kotlin.types.model.*
 import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.kotlin.utils.SmartSet
@@ -19,7 +22,8 @@ import kotlin.math.max
 
 class NewConstraintSystemImpl(
     private val constraintInjector: ConstraintInjector,
-    val typeSystemContext: TypeSystemInferenceExtensionContext
+    val typeSystemContext: TypeSystemInferenceExtensionContext,
+    private val languageVersionSettings: LanguageVersionSettings,
 ) : ConstraintSystemCompletionContext(),
     TypeSystemInferenceExtensionContext by typeSystemContext,
     NewConstraintSystem,
@@ -408,6 +412,8 @@ class NewConstraintSystemImpl(
     ) = with(utilContext) {
         checkState(State.BUILDING, State.COMPLETION)
 
+        checkInferredEmptyIntersection(variable, resultType)
+
         constraintInjector.addInitialEqualityConstraint(this@NewConstraintSystemImpl, variable.defaultType(), resultType, position)
 
         /*
@@ -434,7 +440,21 @@ class NewConstraintSystemImpl(
         doPostponedComputationsIfAllVariablesAreFixed()
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
+    private fun checkInferredEmptyIntersection(variable: TypeVariableMarker, resultType: KotlinTypeMarker) {
+        val intersectionTypeConstructor = resultType.typeConstructor().takeIf { it is IntersectionTypeConstructorMarker } ?: return
+        val isInferredEmptyIntersectionForbidden =
+            languageVersionSettings.supportsFeature(LanguageFeature.ForbidInferringTypeVariablesIntoEmptyIntersection)
+        val upperTypes = intersectionTypeConstructor.supertypes()
+
+        if (upperTypes.computeEmptyIntersectionTypeKind().isDefinitelyEmpty()) {
+            // Remove existing errors from resolution stage because a completion error is more precise
+            storage.errors.removeIf { it is InferredEmptyIntersectionError || it is InferredEmptyIntersectionWarning }
+            val errorFactory =
+                if (isInferredEmptyIntersectionForbidden) ::InferredEmptyIntersectionError else ::InferredEmptyIntersectionWarning
+            addError(errorFactory(upperTypes, variable))
+        }
+    }
+
     private fun checkMissedConstraints() {
         val constraintSystem = this@NewConstraintSystemImpl
         val errorsByMissedConstraints = buildList {

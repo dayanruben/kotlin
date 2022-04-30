@@ -26,9 +26,7 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValueWithSmartCastI
 import org.jetbrains.kotlin.resolve.scopes.utils.parentsWithSelf
 import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.types.error.ErrorUtils
-import org.jetbrains.kotlin.types.model.KotlinTypeMarker
-import org.jetbrains.kotlin.types.model.TypeConstructorMarker
-import org.jetbrains.kotlin.types.model.typeConstructor
+import org.jetbrains.kotlin.types.model.*
 import org.jetbrains.kotlin.types.typeUtil.*
 import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.kotlin.utils.addToStdlib.cast
@@ -303,25 +301,6 @@ internal object PostponedVariablesInitializerResolutionPart : ResolutionPart() {
                 }
             }
         }
-    }
-}
-
-internal object CompatibilityOfTypeVariableAsIntersectionTypePart : ResolutionPart() {
-    override fun ResolutionCandidate.process(workIndex: Int) {
-        val csBuilder = getSystem().getBuilder()
-        for ((_, variableWithConstraints) in csBuilder.currentStorage().notFixedTypeVariables) {
-            val constraints = variableWithConstraints.constraints.filter { csBuilder.isProperType(it.type) }
-
-            if (constraints.size <= 1) continue
-            if (constraints.any { it.kind.isLower() || it.kind.isEqual() }) continue
-
-            // See TypeBoundsImpl.computeValues(). It returns several values for such situation which means an error in OI
-            if (callComponents.statelessCallbacks.isOldIntersectionIsEmpty(constraints.map { it.type }.cast())) {
-                markCandidateForCompatibilityResolve()
-                return
-            }
-        }
-
     }
 }
 
@@ -898,5 +877,34 @@ internal object CheckContextReceiversResolutionPart : ResolutionPart() {
         }
         addDiagnostic(NoContextReceiver(candidateContextReceiverParameter))
         return null
+    }
+}
+
+internal object CheckIncompatibleTypeVariableUpperBounds : ResolutionPart() {
+    /*
+     * Check if the candidate was already discriminated by `CompatibilityOfTypeVariableAsIntersectionTypePart` resolution part
+     * If it's true we shouldn't mark the candidate with warning, but should mark with error, to repeat the existing proper behaviour
+     */
+    private fun ResolutionCandidate.wasPreviouslyDiscriminated(upperTypes: List<KotlinTypeMarker>) =
+        callComponents.statelessCallbacks.isOldIntersectionIsEmpty(upperTypes.cast())
+
+    override fun ResolutionCandidate.process(workIndex: Int) = with(getSystem().asConstraintSystemCompleterContext()) {
+        for (variableWithConstraints in getSystem().getBuilder().currentStorage().notFixedTypeVariables.values) {
+            val upperTypes = variableWithConstraints.constraints.extractUpperTypesToCheckIntersectionEmptiness()
+
+            // TODO: consider reporting errors on bounded type variables by incompatible types but with other lower constraints
+            if (
+                variableWithConstraints.constraints.none { it.kind.isLower() }
+                && upperTypes.computeEmptyIntersectionTypeKind().isDefinitelyEmpty()
+            ) {
+                val isInferredEmptyIntersectionForbidden =
+                    callComponents.languageVersionSettings.supportsFeature(LanguageFeature.ForbidInferringTypeVariablesIntoEmptyIntersection)
+
+                val errorFactory = if (isInferredEmptyIntersectionForbidden || wasPreviouslyDiscriminated(upperTypes))
+                    ::InferredEmptyIntersectionError
+                else ::InferredEmptyIntersectionWarning
+                addError(errorFactory(upperTypes, variableWithConstraints.typeVariable))
+            }
+        }
     }
 }

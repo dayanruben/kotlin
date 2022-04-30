@@ -8,14 +8,10 @@ package org.jetbrains.kotlin.resolve.calls.inference.components
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.resolve.calls.inference.ConstraintSystemBuilder
-import org.jetbrains.kotlin.resolve.calls.inference.model.ConstraintSystemError
-import org.jetbrains.kotlin.resolve.calls.inference.model.FixVariableConstraintPosition
-import org.jetbrains.kotlin.resolve.calls.inference.model.VariableWithConstraints
+import org.jetbrains.kotlin.resolve.calls.inference.model.*
 import org.jetbrains.kotlin.resolve.calls.model.PostponedAtomWithRevisableExpectedType
 import org.jetbrains.kotlin.resolve.calls.model.PostponedResolvedAtomMarker
-import org.jetbrains.kotlin.types.model.KotlinTypeMarker
-import org.jetbrains.kotlin.types.model.TypeConstructorMarker
-import org.jetbrains.kotlin.types.model.TypeVariableMarker
+import org.jetbrains.kotlin.types.model.*
 
 abstract class ConstraintSystemCompletionContext : VariableFixationFinder.Context, ResultTypeResolver.Context {
     abstract val allTypeVariables: Map<TypeConstructorMarker, TypeVariableMarker>
@@ -110,4 +106,11 @@ abstract class ConstraintSystemCompletionContext : VariableFixationFinder.Contex
     private fun <T : PostponedResolvedAtomMarker> findPostponedArgumentWithFixedInputTypes(
         postponedArguments: List<T>
     ) = postponedArguments.firstOrNull { argument -> argument.inputTypes.all { containsOnlyFixedVariables(it) } }
+
+    fun List<Constraint>.extractUpperTypesToCheckIntersectionEmptiness(): List<KotlinTypeMarker> =
+        filter { constraint ->
+            constraint.kind == ConstraintKind.UPPER && !constraint.type.contains {
+                !it.typeConstructor().isClassTypeConstructor() && !it.typeConstructor().isTypeParameterTypeConstructor()
+            }
+        }.map { it.type }
 }

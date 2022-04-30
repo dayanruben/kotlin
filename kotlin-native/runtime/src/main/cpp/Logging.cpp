@@ -22,6 +22,9 @@ inline constexpr auto nullopt = std::experimental::nullopt;
 
 #include "Format.h"
 #include "KAssert.h"
+#include "Porting.h"
+#include "std_support/Map.hpp"
+#include "std_support/String.hpp"
 
 using namespace kotlin;
 
@@ -60,9 +63,9 @@ std::optional<logging::Level> ParseLevel(std::string_view levelString) noexcept 
     return std::nullopt;
 }
 
-KStdOrderedMap<KStdString, logging::Level> ParseTagsFilter(std::string_view tagsFilter) noexcept {
+std_support::map<std_support::string, logging::Level> ParseTagsFilter(std::string_view tagsFilter) noexcept {
     if (tagsFilter.empty()) return {};
-    KStdOrderedMap<KStdString, logging::Level> result;
+    std_support::map<std_support::string, logging::Level> result;
     std::string_view rest = tagsFilter;
     while (!rest.empty()) {
         auto tag = ParseTag(rest);
@@ -82,7 +85,7 @@ KStdOrderedMap<KStdString, logging::Level> ParseTagsFilter(std::string_view tags
             konan::consoleErrorf("'. No logging will be performed\n");
             return {};
         }
-        result.emplace(KStdString(tag.value->data(), tag.value->size()), *level);
+        result.emplace(std_support::string(tag.value->data(), tag.value->size()), *level);
     }
     return result;
 }
@@ -107,7 +110,7 @@ public:
 
 private:
     // TODO: Make it more efficient.
-    KStdOrderedMap<KStdString, logging::Level> tagLevelMap_;
+    std_support::map<std_support::string, logging::Level> tagLevelMap_;
 };
 
 class StderrLogger : public logging::internal::Logger {
@@ -142,12 +145,12 @@ std_support::span<char> FormatTags(std_support::span<char> buffer, std_support::
 
 } // namespace
 
-KStdUniquePtr<logging::internal::LogFilter> logging::internal::CreateLogFilter(std::string_view tagsFilter) noexcept {
-    return ::make_unique<::LogFilter>(tagsFilter);
+std_support::unique_ptr<logging::internal::LogFilter> logging::internal::CreateLogFilter(std::string_view tagsFilter) noexcept {
+    return std_support::make_unique<::LogFilter>(tagsFilter);
 }
 
-KStdUniquePtr<logging::internal::Logger> logging::internal::CreateStderrLogger() noexcept {
-    return ::make_unique<StderrLogger>();
+std_support::unique_ptr<logging::internal::Logger> logging::internal::CreateStderrLogger() noexcept {
+    return std_support::make_unique<StderrLogger>();
 }
 
 std_support::span<char> logging::internal::FormatLogEntry(
