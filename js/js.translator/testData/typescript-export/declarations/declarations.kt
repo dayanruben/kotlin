@@ -123,6 +123,10 @@ class A4 {
         set(value) { field = value * 10 }
 }
 
+@JsExport
+class A5<T>(val value: T) {
+    fun test(): T = value
+}
 
 @JsExport
 object O0
@@ -216,7 +220,7 @@ class OuterClass {
 }
 
 @JsExport
-class KT38262 {
+open class KT38262 {
     fun then(): Int = 42
     fun catch(): Int = 24
 }
