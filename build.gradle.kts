@@ -133,7 +133,7 @@ rootProject.apply {
 IdeVersionConfigurator.setCurrentIde(project)
 
 if (!project.hasProperty("versions.kotlin-native")) {
-    extra["versions.kotlin-native"] = "1.7.20-dev-260"
+    extra["versions.kotlin-native"] = "1.7.20-dev-853"
 }
 
 val useJvmFir by extra(project.kotlinBuildProperties.useFir)
@@ -1024,7 +1024,6 @@ if (disableVerificationTasks) {
 
 plugins.withType(org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin::class) {
     extensions.configure(org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension::class.java) {
-        nodeVersion = "16.13.0"
         npmInstallTaskProvider?.configure {
             args += listOf("--network-concurrency", "1", "--mutex", "network")
         } ?: error("kotlinNpmInstall task should exist inside NodeJsRootExtension")

@@ -158,6 +158,8 @@ private object NativeTestSupport {
         output += nativeTargets
         output += CacheMode::class to cacheMode
         output += computeTestMode(enforcedProperties)
+        output += computeForcedStandaloneTestKind(enforcedProperties)
+        output += computeForcedNoopTestRunner(enforcedProperties)
         output += computeTimeouts(enforcedProperties)
 
         return nativeTargets
@@ -219,6 +221,24 @@ private object NativeTestSupport {
 
     private fun computeTestMode(enforcedProperties: EnforcedProperties): TestMode =
         ClassLevelProperty.TEST_MODE.readValue(enforcedProperties, TestMode.values(), default = TestMode.TWO_STAGE_MULTI_MODULE)
+
+    private fun computeForcedStandaloneTestKind(enforcedProperties: EnforcedProperties): ForcedStandaloneTestKind =
+        ForcedStandaloneTestKind(
+            ClassLevelProperty.FORCE_STANDALONE.readValue(
+                enforcedProperties,
+                String::toBooleanStrictOrNull,
+                default = false
+            )
+        )
+
+    private fun computeForcedNoopTestRunner(enforcedProperties: EnforcedProperties): ForcedNoopTestRunner =
+        ForcedNoopTestRunner(
+            ClassLevelProperty.COMPILE_ONLY.readValue(
+                enforcedProperties,
+                String::toBooleanStrictOrNull,
+                default = false
+            )
+        )
 
     private fun computeTimeouts(enforcedProperties: EnforcedProperties): Timeouts {
         val executionTimeout = ClassLevelProperty.EXECUTION_TIMEOUT.readValue(

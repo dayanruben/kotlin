@@ -8,8 +8,6 @@ package org.jetbrains.kotlin.analysis.low.level.api.fir.state
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirGlobalResolveComponents
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.DiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.low.level.api.fir.file.builder.FirFileBuilder
-import org.jetbrains.kotlin.analysis.low.level.api.fir.lazy.resolve.FirLazyDeclarationResolver
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSessionProvider
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirLibraryOrLibrarySourceResolvableModuleSession
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
@@ -18,12 +16,12 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 
 
-internal class LLFirLibraryOrLibrarySourceResolvableModuleResolveState(
+internal class LLFirLibraryOrLibrarySourceResolvableResolveSession(
     override val globalComponents: LLFirGlobalResolveComponents,
     override val project: Project,
-    override val module: KtModule,
+    override val useSiteKtModule: KtModule,
     sessionProvider: LLFirSessionProvider,
-) : LLFirResolvableModuleResolveState(sessionProvider) {
+) : LLFirResolvableResolveSession(sessionProvider) {
     override fun getDiagnostics(element: KtElement, filter: DiagnosticCheckerFilter): List<KtPsiDiagnostic> =
         emptyList()
 
@@ -33,7 +31,7 @@ internal class LLFirLibraryOrLibrarySourceResolvableModuleResolveState(
     override fun getModuleKind(module: KtModule): ModuleKind {
         LLFirLibraryOrLibrarySourceResolvableModuleSession.checkIsValidKtModule(module)
         return when {
-            module == this.module -> ModuleKind.RESOLVABLE_MODULE
+            module == this.useSiteKtModule -> ModuleKind.RESOLVABLE_MODULE
             else -> ModuleKind.BINARY_MODULE
         }
     }

@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirGlobalResolveComponents
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.DiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.low.level.api.fir.diagnostics.DiagnosticsCollector
-import org.jetbrains.kotlin.analysis.low.level.api.fir.file.builder.FirFileBuilder
+import org.jetbrains.kotlin.analysis.low.level.api.fir.file.builder.LLFirFileBuilder
 import org.jetbrains.kotlin.analysis.low.level.api.fir.lazy.resolve.FirLazyDeclarationResolver
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSessionProvider
 import org.jetbrains.kotlin.analysis.project.structure.KtLibraryModule
@@ -20,12 +20,12 @@ import org.jetbrains.kotlin.diagnostics.KtPsiDiagnostic
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 
-internal class LLFirSourceModuleResolveState(
+internal class LLFirSourceResolveSession(
     override val globalComponents: LLFirGlobalResolveComponents,
     override val project: Project,
-    override val module: KtModule,
+    override val useSiteKtModule: KtModule,
     sessionProvider: LLFirSessionProvider,
-) : LLFirResolvableModuleResolveState(sessionProvider) {
+) : LLFirResolvableResolveSession(sessionProvider) {
     override fun getDiagnostics(element: KtElement, filter: DiagnosticCheckerFilter): List<KtPsiDiagnostic> {
         val moduleComponents = getModuleComponentsForElement(element)
         return moduleComponents.diagnosticsCollector.getDiagnosticsFor(element, filter)

@@ -3130,6 +3130,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         }
 
         @Test
+        @TestMetadata("kt51844.kt")
+        public void testKt51844() throws Exception {
+            runTest("compiler/testData/codegen/box/callableReference/kt51844.kt");
+        }
+
+        @Test
         @TestMetadata("nested.kt")
         public void testNested() throws Exception {
             runTest("compiler/testData/codegen/box/callableReference/nested.kt");
@@ -19469,15 +19475,15 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
             }
 
             @Test
-            @TestMetadata("kt49285.kt")
-            public void testKt49285() throws Exception {
-                runTest("compiler/testData/codegen/box/inference/builderInference/kt49285.kt");
-            }
-
-            @Test
             @TestMetadata("kt49887.kt")
             public void testKt49887() throws Exception {
                 runTest("compiler/testData/codegen/box/inference/builderInference/kt49887.kt");
+            }
+
+            @Test
+            @TestMetadata("kt51988.kt")
+            public void testKt51988() throws Exception {
+                runTest("compiler/testData/codegen/box/inference/builderInference/kt51988.kt");
             }
 
             @Test
@@ -25613,6 +25619,18 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         @TestMetadata("kt12125_inc_2.kt")
         public void testKt12125_inc_2() throws Exception {
             runTest("compiler/testData/codegen/box/intrinsics/kt12125_inc_2.kt");
+        }
+
+        @Test
+        @TestMetadata("kt52163_boolean.kt")
+        public void testKt52163_boolean() throws Exception {
+            runTest("compiler/testData/codegen/box/intrinsics/kt52163_boolean.kt");
+        }
+
+        @Test
+        @TestMetadata("kt52163_doubleCompareToInt.kt")
+        public void testKt52163_doubleCompareToInt() throws Exception {
+            runTest("compiler/testData/codegen/box/intrinsics/kt52163_doubleCompareToInt.kt");
         }
 
         @Test

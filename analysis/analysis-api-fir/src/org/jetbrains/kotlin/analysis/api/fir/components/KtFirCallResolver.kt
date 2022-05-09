@@ -69,7 +69,7 @@ internal class KtFirCallResolver(
     private val diagnosticCache = mutableListOf<KtDiagnostic>()
 
     private val equalsSymbolInAny: FirNamedFunctionSymbol by lazy(LazyThreadSafetyMode.PUBLICATION) {
-        val session = analysisSession.rootModuleSession
+        val session = analysisSession.useSiteSession
         val scope = session.declaredMemberScope(session.builtinTypes.anyType.toRegularClassSymbol(session)!!)
         lateinit var result: FirNamedFunctionSymbol
         scope.processFunctionsByName(EQUALS) {
@@ -110,7 +110,7 @@ internal class KtFirCallResolver(
             ?: containingBinaryExpressionForLhs
             ?: containingUnaryExpressionForIncOrDec
             ?: psi
-        val fir = psiToResolve.getOrBuildFir(analysisSession.firResolveState) ?: return emptyList()
+        val fir = psiToResolve.getOrBuildFir(analysisSession.firResolveSession) ?: return emptyList()
         return fir.getCallInfo(
             psiToResolve,
             psiToResolve == containingCallExpressionForCalleeExpression,
@@ -225,7 +225,7 @@ internal class KtFirCallResolver(
         val lhs = deparenthesize(this)
         val binaryExpression = parentOfType<KtBinaryExpression>() ?: return null
         if (deparenthesize(binaryExpression.left) != lhs || binaryExpression.operationToken !in KtTokens.ALL_ASSIGNMENTS) return null
-        val firBinaryExpression = binaryExpression.getOrBuildFir(analysisSession.firResolveState)
+        val firBinaryExpression = binaryExpression.getOrBuildFir(analysisSession.firResolveSession)
         if (firBinaryExpression is FirFunctionCall) {
             if (firBinaryExpression.origin == FirFunctionCallOrigin.Operator &&
                 firBinaryExpression.calleeReference.name in OperatorNameConventions.ASSIGNMENT_OPERATIONS
@@ -771,8 +771,8 @@ internal class KtFirCallResolver(
             }
 
         val calleeName = originalFunctionCall.calleeOrCandidateName ?: return emptyList()
-        val candidates = AllCandidatesResolver(analysisSession.rootModuleSession).getAllCandidates(
-            analysisSession.firResolveState,
+        val candidates = AllCandidatesResolver(analysisSession.useSiteSession).getAllCandidates(
+            analysisSession.firResolveSession,
             originalFunctionCall,
             calleeName,
             psi
@@ -902,7 +902,7 @@ internal class KtFirCallResolver(
             FirOperation.EQ, FirOperation.NOT_EQ -> {
                 val equalsSymbolInAny = equalsSymbolInAny
                 val leftOperand = arguments.firstOrNull() ?: return null
-                val session = analysisSession.rootModuleSession
+                val session = analysisSession.useSiteSession
                 val classSymbol = leftOperand.typeRef.coneType.fullyExpandedType(session).toSymbol(session) as? FirClassSymbol<*>
                 val equalsSymbol = classSymbol?.getEqualsSymbol(equalsSymbolInAny) ?: equalsSymbolInAny
                 val ktSignature = equalsSymbol.toKtSignature()
@@ -926,8 +926,8 @@ internal class KtFirCallResolver(
 
     private fun FirClassSymbol<*>.getEqualsSymbol(equalsSymbolInAny: FirNamedFunctionSymbol): FirNamedFunctionSymbol {
         val scope = unsubstitutedScope(
-            analysisSession.rootModuleSession,
-            analysisSession.getScopeSessionFor(analysisSession.rootModuleSession),
+            analysisSession.useSiteSession,
+            analysisSession.getScopeSessionFor(analysisSession.useSiteSession),
             false
         )
         var equalsSymbol: FirNamedFunctionSymbol? = null

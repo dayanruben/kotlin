@@ -53,7 +53,7 @@ open class CompileToBitcodeExtension @Inject constructor(val project: Project) {
             val sanitizers: List<SanitizerKind?> = target.supportedSanitizers() + listOf(null)
             sanitizers.forEach { sanitizer ->
                 project.tasks.register(
-                        "${targetName}${name.snakeCaseToCamelCase().capitalize()}${suffixForSanitizer(sanitizer)}",
+                        "${targetName}${name.snakeCaseToCamelCase().replaceFirstChar { it.uppercase() }}${suffixForSanitizer(sanitizer)}",
                         CompileToBitcode::class.java,
                         name, targetName, outputGroup
                 ).configure {
@@ -78,7 +78,7 @@ open class CompileToBitcodeExtension @Inject constructor(val project: Project) {
     companion object {
 
         private fun String.snakeCaseToCamelCase() =
-                split('_').joinToString(separator = "") { it.capitalize() }
+                split('_').joinToString(separator = "") { word -> word.replaceFirstChar { it.uppercase() } }
 
         fun suffixForSanitizer(sanitizer: SanitizerKind?) =
             when (sanitizer) {

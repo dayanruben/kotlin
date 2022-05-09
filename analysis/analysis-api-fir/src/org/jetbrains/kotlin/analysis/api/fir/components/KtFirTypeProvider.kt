@@ -80,13 +80,13 @@ internal class KtFirTypeProvider(
     }
 
     override fun commonSuperType(types: Collection<KtType>): KtType? {
-        return analysisSession.rootModuleSession.typeContext
+        return analysisSession.useSiteSession.typeContext
             .commonSuperTypeOrNull(types.map { it.coneType })
             ?.asKtType()
     }
 
     override fun getKtType(ktTypeReference: KtTypeReference): KtType = withValidityAssertion {
-        when (val fir = ktTypeReference.getOrBuildFir(firResolveState)) {
+        when (val fir = ktTypeReference.getOrBuildFir(firResolveSession)) {
             is FirResolvedTypeRef -> fir.coneType.asKtType()
             is FirDelegatedConstructorCall -> fir.constructedTypeRef.coneType.asKtType()
             else -> throwUnexpectedFirElementError(fir, ktTypeReference)
@@ -94,7 +94,7 @@ internal class KtFirTypeProvider(
     }
 
     override fun getReceiverTypeForDoubleColonExpression(expression: KtDoubleColonExpression): KtType? = withValidityAssertion {
-        when (val fir = expression.getOrBuildFir(firResolveState)) {
+        when (val fir = expression.getOrBuildFir(firResolveSession)) {
             is FirGetClassCall ->
                 fir.typeRef.coneType.getReceiverOfReflectionType()?.asKtType()
             is FirCallableReferenceAccess ->
@@ -115,14 +115,14 @@ internal class KtFirTypeProvider(
     }
 
     override fun haveCommonSubtype(a: KtType, b: KtType): Boolean {
-        return analysisSession.rootModuleSession.typeContext.isCompatible(
+        return analysisSession.useSiteSession.typeContext.isCompatible(
             a.coneType,
             b.coneType
         ) == ConeTypeCompatibilityChecker.Compatibility.COMPATIBLE
     }
 
     override fun getImplicitReceiverTypesAtPosition(position: KtElement): List<KtType> {
-        return analysisSession.firResolveState.getTowerContextProvider(position.containingKtFile)
+        return analysisSession.firResolveSession.getTowerContextProvider(position.containingKtFile)
             .getClosestAvailableParentContext(position)?.implicitReceiverStack?.map { it.type.asKtType() } ?: emptyList()
     }
 
@@ -136,7 +136,7 @@ internal class KtFirTypeProvider(
             // We also need to collect those on `upperBound` due to nullability.
             is ConeFlexibleType -> lowerBound.getDirectSuperTypes(shouldApproximate) + upperBound.getDirectSuperTypes(shouldApproximate)
             is ConeDefinitelyNotNullType -> original.getDirectSuperTypes(shouldApproximate).map {
-                ConeDefinitelyNotNullType.create(it, analysisSession.rootModuleSession.typeContext) ?: it
+                ConeDefinitelyNotNullType.create(it, analysisSession.useSiteSession.typeContext) ?: it
             }
             is ConeIntersectionType -> intersectedTypes.asSequence().flatMap { it.getDirectSuperTypes(shouldApproximate) }
             is ConeErrorType -> emptySequence()
@@ -146,7 +146,7 @@ internal class KtFirTypeProvider(
     }
 
     private fun ConeLookupTagBasedType.getSubstitutedSuperTypes(shouldApproximate: Boolean): Sequence<ConeKotlinType> {
-        val session = analysisSession.firResolveState.rootModuleSession
+        val session = analysisSession.firResolveSession.useSiteFirSession
         val symbol = lookupTag.toSymbol(session)
         val superTypes = when (symbol) {
             is FirAnonymousObjectSymbol -> symbol.superConeTypes

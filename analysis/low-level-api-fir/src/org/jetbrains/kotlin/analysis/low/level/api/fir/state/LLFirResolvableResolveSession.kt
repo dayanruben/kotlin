@@ -7,7 +7,7 @@ package org.jetbrains.kotlin.analysis.low.level.api.fir.state
 
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirGlobalResolveComponents
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirModuleResolveComponents
-import org.jetbrains.kotlin.analysis.low.level.api.fir.api.LLFirModuleResolveState
+import org.jetbrains.kotlin.analysis.low.level.api.fir.api.LLFirResolveSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.element.builder.FirTowerContextProvider
 import org.jetbrains.kotlin.analysis.low.level.api.fir.element.builder.getNonLocalContainingOrThisDeclaration
 import org.jetbrains.kotlin.analysis.low.level.api.fir.project.structure.firModuleData
@@ -34,12 +34,12 @@ import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.psi.*
 
-internal abstract class LLFirResolvableModuleResolveState(
+internal abstract class LLFirResolvableResolveSession(
     private val sessionProvider: LLFirSessionProvider,
-) : LLFirModuleResolveState() {
+) : LLFirResolveSession() {
     abstract val globalComponents: LLFirGlobalResolveComponents
 
-    final override val rootModuleSession = sessionProvider.rootModuleSession
+    final override val useSiteFirSession = sessionProvider.rootModuleSession
 
     override fun getSessionFor(module: KtModule): FirSession =
         sessionProvider.getSession(module)
@@ -80,7 +80,7 @@ internal abstract class LLFirResolvableModuleResolveState(
             "This method will only work on compiled declarations, but this declaration is not compiled: ${ktDeclaration.getElementTextInContext()}"
         }
 
-        val searcher = FirDeclarationForCompiledElementSearcher(rootModuleSession.symbolProvider)
+        val searcher = FirDeclarationForCompiledElementSearcher(useSiteFirSession.symbolProvider)
         val firDeclaration = searcher.findNonLocalDeclaration(ktDeclaration)
         return firDeclaration.symbol
     }
