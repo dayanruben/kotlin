@@ -8318,6 +8318,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
             }
 
             @Test
+            @TestMetadata("suspendInlineReference.kt")
+            public void testSuspendInlineReference() throws Exception {
+                runTest("compiler/testData/codegen/box/coroutines/suspendInlineReference.kt");
+            }
+
+            @Test
             @TestMetadata("suspendLambdaInInterface.kt")
             public void testSuspendLambdaInInterface() throws Exception {
                 runTest("compiler/testData/codegen/box/coroutines/suspendLambdaInInterface.kt");
@@ -8428,6 +8434,18 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
                 @TestMetadata("lambdaWithMultipleParameters.kt")
                 public void testLambdaWithMultipleParameters() throws Exception {
                     runTest("compiler/testData/codegen/box/coroutines/bridges/lambdaWithMultipleParameters.kt");
+                }
+
+                @Test
+                @TestMetadata("mapSuspendAbstractClear.kt")
+                public void testMapSuspendAbstractClear() throws Exception {
+                    runTest("compiler/testData/codegen/box/coroutines/bridges/mapSuspendAbstractClear.kt");
+                }
+
+                @Test
+                @TestMetadata("mapSuspendClear.kt")
+                public void testMapSuspendClear() throws Exception {
+                    runTest("compiler/testData/codegen/box/coroutines/bridges/mapSuspendClear.kt");
                 }
             }
 

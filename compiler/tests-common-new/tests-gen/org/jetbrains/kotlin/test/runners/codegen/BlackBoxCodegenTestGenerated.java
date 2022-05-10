@@ -10366,6 +10366,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         }
 
         @Test
+        @TestMetadata("suspendInlineReference.kt")
+        public void testSuspendInlineReference() throws Exception {
+            runTest("compiler/testData/codegen/box/coroutines/suspendInlineReference.kt");
+        }
+
+        @Test
         @TestMetadata("suspendJavaOverrides.kt")
         public void testSuspendJavaOverrides() throws Exception {
             runTest("compiler/testData/codegen/box/coroutines/suspendJavaOverrides.kt");
@@ -10486,6 +10492,18 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
             @TestMetadata("lambdaWithMultipleParameters.kt")
             public void testLambdaWithMultipleParameters() throws Exception {
                 runTest("compiler/testData/codegen/box/coroutines/bridges/lambdaWithMultipleParameters.kt");
+            }
+
+            @Test
+            @TestMetadata("mapSuspendAbstractClear.kt")
+            public void testMapSuspendAbstractClear() throws Exception {
+                runTest("compiler/testData/codegen/box/coroutines/bridges/mapSuspendAbstractClear.kt");
+            }
+
+            @Test
+            @TestMetadata("mapSuspendClear.kt")
+            public void testMapSuspendClear() throws Exception {
+                runTest("compiler/testData/codegen/box/coroutines/bridges/mapSuspendClear.kt");
             }
         }
 
