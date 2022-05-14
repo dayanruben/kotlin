@@ -116,16 +116,12 @@ internal class ClassMemberGenerator(
             if (firFunction is FirConstructor && irFunction is IrConstructor && !firFunction.isExpect) {
                 val body = factory.createBlockBody(startOffset, endOffset)
                 val delegatedConstructor = firFunction.delegatedConstructor
-                if (delegatedConstructor != null) {
-                    val irDelegatingConstructorCall = delegatedConstructor.toIrDelegatingConstructorCall()
-                    body.statements += irDelegatingConstructorCall
-                }
                 val irClass = parent as IrClass
-                if (delegatedConstructor?.isThis == false) {
-                    val instanceInitializerCall = IrInstanceInitializerCallImpl(
-                        startOffset, endOffset, irClass.symbol, irFunction.constructedClassType
-                    )
-                    body.statements += instanceInitializerCall
+                if (delegatedConstructor != null) {
+                    val irDelegatingConstructorCall = conversionScope.forDelegatingConstructorCall(irFunction, irClass) {
+                        delegatedConstructor.toIrDelegatingConstructorCall()
+                    }
+                    body.statements += irDelegatingConstructorCall
                 }
 
                 if (containingClass is FirRegularClass && containingClass.contextReceivers.isNotEmpty()) {
@@ -154,6 +150,13 @@ internal class ClassMemberGenerator(
                             )
                         )
                     }
+                }
+
+                if (delegatedConstructor?.isThis == false) {
+                    val instanceInitializerCall = IrInstanceInitializerCallImpl(
+                        startOffset, endOffset, irClass.symbol, irFunction.constructedClassType
+                    )
+                    body.statements += instanceInitializerCall
                 }
 
                 val regularBody = firFunction.body?.let { visitor.convertToIrBlockBody(it) }

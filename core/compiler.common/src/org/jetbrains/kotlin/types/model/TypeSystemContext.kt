@@ -347,7 +347,11 @@ interface TypeSystemInferenceExtensionContext : TypeSystemContext, TypeSystemBui
 
     private fun areIncompatibleSuperTypes(firstType: KotlinTypeMarker, secondType: KotlinTypeMarker): Boolean =
         firstType.typeConstructor() == secondType.typeConstructor()
-                && !AbstractTypeChecker.equalTypes(context = this, firstType, secondType)
+                && !AbstractTypeChecker.equalTypes(
+            newTypeCheckerState(errorTypesEqualToAnything = true, stubTypesEqualToAnything = true),
+            firstType,
+            secondType
+        )
 
     // interface A<T>
     // interface B : A<Int>
@@ -388,10 +392,10 @@ interface TypeSystemInferenceExtensionContext : TypeSystemContext, TypeSystemBui
             "One of the passed type should be an interface"
         }
         @Suppress("NAME_SHADOWING")
-        val firstType = firstType.withNullability(false).eraseContainingTypeParameters()
+        val firstType = firstType.eraseContainingTypeParameters()
 
         @Suppress("NAME_SHADOWING")
-        val secondType = secondType.withNullability(false).eraseContainingTypeParameters()
+        val secondType = secondType.eraseContainingTypeParameters()
 
         // interface A<K>
         // interface B: A<String>
@@ -410,14 +414,14 @@ interface TypeSystemInferenceExtensionContext : TypeSystemContext, TypeSystemBui
         val typeCheckerState = newTypeCheckerState(errorTypesEqualToAnything = true, stubTypesEqualToAnything = true)
 
         for (i in expandedTypes.indices) {
-            val firstType = expandedTypes[i]
+            val firstType = expandedTypes[i].withNullability(false)
             val firstTypeConstructor = firstType.typeConstructor()
 
             if (!firstType.mayCauseEmptyIntersection())
                 continue
 
             for (j in i + 1 until expandedTypes.size) {
-                val secondType = expandedTypes[j]
+                val secondType = expandedTypes[j].withNullability(false)
                 val secondTypeConstructor = secondType.typeConstructor()
 
                 if (!secondType.mayCauseEmptyIntersection())

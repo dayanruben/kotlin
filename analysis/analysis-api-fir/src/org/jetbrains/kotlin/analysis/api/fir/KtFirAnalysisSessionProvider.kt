@@ -6,17 +6,18 @@
 package org.jetbrains.kotlin.analysis.api.fir
 
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.api.InvalidWayOfUsingAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KtAnalysisApiInternals
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.symbols.KtFirSymbol
 import org.jetbrains.kotlin.analysis.api.impl.base.CachingKtAnalysisSessionProvider
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
-import org.jetbrains.kotlin.analysis.api.tokens.ValidityToken
+import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.LLFirResolveSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getFirResolveSession
+import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.psi.KtElement
 
-@OptIn(InvalidWayOfUsingAnalysisSession::class)
+@OptIn(KtAnalysisApiInternals::class)
 class KtFirAnalysisSessionProvider(project: Project) : CachingKtAnalysisSessionProvider<LLFirResolveSession>(project) {
     override fun getFirResolveSession(contextElement: KtElement): LLFirResolveSession {
         return contextElement.getFirResolveSession()
@@ -29,12 +30,17 @@ class KtFirAnalysisSessionProvider(project: Project) : CachingKtAnalysisSessionP
         }
     }
 
+    override fun getFirResolveSession(contextModule: KtModule): LLFirResolveSession {
+        checkNotNull(contextModule.project)
+        return contextModule.getFirResolveSession(contextModule.project!!)
+    }
+
     override fun createAnalysisSession(
         firResolveSession: LLFirResolveSession,
-        validityToken: ValidityToken,
+        token: KtLifetimeToken,
     ): KtAnalysisSession {
         @Suppress("DEPRECATION")
-        return KtFirAnalysisSession.createAnalysisSessionByFirResolveSession(firResolveSession, validityToken)
+        return KtFirAnalysisSession.createAnalysisSessionByFirResolveSession(firResolveSession, token)
     }
 }
 

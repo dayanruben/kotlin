@@ -16753,6 +16753,24 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
             }
 
             @Test
+            @TestMetadata("substitutedContextReceivers.kt")
+            public void testSubstitutedContextReceivers() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/substitutedContextReceivers.kt");
+            }
+
+            @Test
+            @TestMetadata("superClassAndSubClassWithContextReceiver.kt")
+            public void testSuperClassAndSubClassWithContextReceiver() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/superClassAndSubClassWithContextReceiver.kt");
+            }
+
+            @Test
+            @TestMetadata("superClassAndSubClassWithContextReceiverSubstituted.kt")
+            public void testSuperClassAndSubClassWithContextReceiverSubstituted() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/superClassAndSubClassWithContextReceiverSubstituted.kt");
+            }
+
+            @Test
             @TestMetadata("suspendContextualWithExtension.kt")
             public void testSuspendContextualWithExtension() throws Exception {
                 runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/suspendContextualWithExtension.kt");
@@ -16768,6 +16786,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
             @TestMetadata("unaryOperators.kt")
             public void testUnaryOperators() throws Exception {
                 runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/unaryOperators.kt");
+            }
+
+            @Test
+            @TestMetadata("useContextReceiverInPropertyInitializer.kt")
+            public void testUseContextReceiverInPropertyInitializer() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/useContextReceiverInPropertyInitializer.kt");
             }
 
             @Test
@@ -44583,6 +44607,18 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         @TestMetadata("kt49226.kt")
         public void testKt49226() throws Exception {
             runTest("compiler/testData/codegen/box/sam/kt49226.kt");
+        }
+
+        @Test
+        @TestMetadata("kt50108.kt")
+        public void testKt50108() throws Exception {
+            runTest("compiler/testData/codegen/box/sam/kt50108.kt");
+        }
+
+        @Test
+        @TestMetadata("kt50108_java.kt")
+        public void testKt50108_java() throws Exception {
+            runTest("compiler/testData/codegen/box/sam/kt50108_java.kt");
         }
 
         @Test

@@ -93,7 +93,9 @@ tasks.withType(KonanCompileNativeBinary.class).configureEach {
     enableTwoStageCompilation = twoStageEnabled
 }
 
-ext.isExperimentalMM = project.globalTestArgs.contains("-memory-model") && project.globalTestArgs.contains("experimental")
+ext.isExperimentalMM = !(project.globalTestArgs.contains("-memory-model") &&
+                         project.globalTestArgs.contains("strict")) &&
+                         project.testTarget != 'wasm32'
 ext.isNoopGC = project.globalTestArgs.contains("-Xgc=noop")
 
 // TODO: It also makes sense to test -g without asserts, and also to test -opt with asserts.
@@ -5047,6 +5049,21 @@ if (PlatformInfo.isAppleTarget(project)) {
     }
 }
 
+tasks.register("KT-50983", KonanDriverTest) {
+    // The test is not working on Windows Server 2019-based TeamCity agents for the unknown reason.
+    // TODO: Re-enable it after LLVM update where llvm-windres will be added.
+    enabled = false
+    doBeforeBuild {
+        mkdir(buildDir)
+        exec {
+            commandLine UtilsKt.binaryFromToolchain(project, "windres")
+            args "$projectDir/windows/KT-50983/File.rc", "-O", "coff", "-o", "$buildDir/File.res"
+        }
+    }
+    source = "windows/KT-50983/main.kt"
+    flags = ['-linker-option', "$buildDir/File.res"]
+}
+
 standaloneTest("jsinterop_math") {
     doBeforeBuild {
         def jsinteropScript = isWindows() ? "jsinterop.bat" : "jsinterop"
@@ -5568,7 +5585,8 @@ if (isAppleTarget(project)) {
     }
 
     frameworkTest("testMultipleFrameworksStatic") {
-         if (cacheTesting != null && !isExperimentalMM) {
+         // this test doesn't work with caches. For now caches are enabled only if isExperimentalMM is true, even if cacheTesting is passed
+         if (cacheTesting != null && isExperimentalMM) {
             // See https://youtrack.jetbrains.com/issue/KT-34261.
             expectedExitStatus = 134
          }
