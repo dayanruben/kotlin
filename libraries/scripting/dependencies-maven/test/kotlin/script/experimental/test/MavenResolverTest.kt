@@ -21,6 +21,7 @@ import kotlin.script.experimental.dependencies.impl.SimpleExternalDependenciesRe
 import kotlin.script.experimental.dependencies.impl.makeExternalDependenciesResolverOptions
 import kotlin.script.experimental.dependencies.impl.set
 import kotlin.script.experimental.dependencies.maven.MavenDependenciesResolver
+import kotlin.script.experimental.dependencies.maven.impl.createMavenSettings
 
 @ExperimentalContracts
 class MavenResolverTest : ResolversTestBase() {
@@ -51,7 +52,14 @@ class MavenResolverTest : ResolversTestBase() {
         })
     }
 
+    private fun parseOptions(options: String) = SimpleExternalDependenciesResolverOptionsParser(options).valueOrThrow()
+
     private val resolvedKotlinVersion = "1.5.31"
+
+    fun testDefaultSettings() {
+        val settings = createMavenSettings()
+        assertNotNull(settings.localRepository)
+    }
 
     fun testResolveSimple() {
         resolveAndCheck("org.jetbrains.kotlin:kotlin-annotations-jvm:$resolvedKotlinVersion") { files ->
@@ -77,7 +85,6 @@ class MavenResolverTest : ResolversTestBase() {
         val dependency = "junit:junit:4.11"
 
         var transitiveFiles: Iterable<File>
-        fun parseOptions(options: String) = SimpleExternalDependenciesResolverOptionsParser(options).valueOrThrow()
 
         resolveAndCheck(dependency, options = parseOptions("transitive=true")) { files ->
             transitiveFiles = files
@@ -96,6 +103,16 @@ class MavenResolverTest : ResolversTestBase() {
 
         assertTrue(ntCount < tCount)
         assertEquals("jar", artifact.extension)
+    }
+
+    fun testSourcesResolution() {
+        resolveAndCheck("junit:junit:4.11", options = parseOptions("classifier=sources extension=jar")) { files ->
+            assertEquals(2, files.count())
+            files.forEach {
+                assertTrue(it.name.endsWith("-sources.jar"))
+            }
+            true
+        }
     }
 
     fun testResolveVersionsRange() {
