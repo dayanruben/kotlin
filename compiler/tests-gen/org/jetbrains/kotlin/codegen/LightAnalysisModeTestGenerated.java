@@ -7944,6 +7944,16 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/coroutines/kt51718.kt");
         }
 
+        @TestMetadata("kt52311_nullOnLeft.kt")
+        public void testKt52311_nullOnLeft() throws Exception {
+            runTest("compiler/testData/codegen/box/coroutines/kt52311_nullOnLeft.kt");
+        }
+
+        @TestMetadata("kt52311_nullOnRight.kt")
+        public void testKt52311_nullOnRight() throws Exception {
+            runTest("compiler/testData/codegen/box/coroutines/kt52311_nullOnRight.kt");
+        }
+
         @TestMetadata("lastExpressionIsLoop.kt")
         public void testLastExpressionIsLoop() throws Exception {
             runTest("compiler/testData/codegen/box/coroutines/lastExpressionIsLoop.kt");
@@ -17522,6 +17532,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("kt51672.kt")
         public void testKt51672() throws Exception {
             runTest("compiler/testData/codegen/box/inlineClasses/kt51672.kt");
+        }
+
+        @TestMetadata("kt52394.kt")
+        public void testKt52394() throws Exception {
+            runTest("compiler/testData/codegen/box/inlineClasses/kt52394.kt");
         }
 
         @TestMetadata("mangledDefaultParameterFunction.kt")

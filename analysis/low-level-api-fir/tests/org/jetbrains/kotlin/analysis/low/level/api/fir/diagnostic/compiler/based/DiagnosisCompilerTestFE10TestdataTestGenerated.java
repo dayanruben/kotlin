@@ -10656,6 +10656,28 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
         }
 
         @Nested
+        @TestMetadata("compiler/testData/diagnostics/tests/expressionAfterTypeReference")
+        @TestDataPath("$PROJECT_ROOT")
+        public class ExpressionAfterTypeReference {
+            @Test
+            public void testAllFilesPresentInExpressionAfterTypeReference() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/expressionAfterTypeReference"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
+            }
+
+            @Test
+            @TestMetadata("allowExpressionAfterTypeReference.kt")
+            public void testAllowExpressionAfterTypeReference() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/expressionAfterTypeReference/allowExpressionAfterTypeReference.kt");
+            }
+
+            @Test
+            @TestMetadata("forbidExpressionAfterTypeReference.kt")
+            public void testForbidExpressionAfterTypeReference() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/expressionAfterTypeReference/forbidExpressionAfterTypeReference.kt");
+            }
+        }
+
+        @Nested
         @TestMetadata("compiler/testData/diagnostics/tests/extensions")
         @TestDataPath("$PROJECT_ROOT")
         public class Extensions {
@@ -10908,9 +10930,21 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
                 }
 
                 @Test
+                @TestMetadata("parameterizedContextualLambda.kt")
+                public void testParameterizedContextualLambda() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/parameterizedContextualLambda.kt");
+                }
+
+                @Test
                 @TestMetadata("plusMatrix.kt")
                 public void testPlusMatrix() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/plusMatrix.kt");
+                }
+
+                @Test
+                @TestMetadata("subtypingBetweenContextReceivers.kt")
+                public void testSubtypingBetweenContextReceivers() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/subtypingBetweenContextReceivers.kt");
                 }
 
                 @Test
@@ -13856,6 +13890,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             @TestMetadata("kt49658Strict.kt")
             public void testKt49658Strict() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/inference/kt49658Strict.kt");
+            }
+
+            @Test
+            @TestMetadata("kt49961.kt")
+            public void testKt49961() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inference/kt49961.kt");
             }
 
             @Test

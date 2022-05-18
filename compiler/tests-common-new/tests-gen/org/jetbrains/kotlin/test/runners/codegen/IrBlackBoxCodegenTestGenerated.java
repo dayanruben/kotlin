@@ -10210,6 +10210,18 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         }
 
         @Test
+        @TestMetadata("kt52311_nullOnLeft.kt")
+        public void testKt52311_nullOnLeft() throws Exception {
+            runTest("compiler/testData/codegen/box/coroutines/kt52311_nullOnLeft.kt");
+        }
+
+        @Test
+        @TestMetadata("kt52311_nullOnRight.kt")
+        public void testKt52311_nullOnRight() throws Exception {
+            runTest("compiler/testData/codegen/box/coroutines/kt52311_nullOnRight.kt");
+        }
+
+        @Test
         @TestMetadata("lastExpressionIsLoop.kt")
         public void testLastExpressionIsLoop() throws Exception {
             runTest("compiler/testData/codegen/box/coroutines/lastExpressionIsLoop.kt");
@@ -16723,6 +16735,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
             }
 
             @Test
+            @TestMetadata("parameterizedContextualLambda.kt")
+            public void testParameterizedContextualLambda() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/parameterizedContextualLambda.kt");
+            }
+
+            @Test
             @TestMetadata("passingLambdaToContextualParam.kt")
             public void testPassingLambdaToContextualParam() throws Exception {
                 runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/passingLambdaToContextualParam.kt");
@@ -21461,6 +21479,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         @TestMetadata("kt51672.kt")
         public void testKt51672() throws Exception {
             runTest("compiler/testData/codegen/box/inlineClasses/kt51672.kt");
+        }
+
+        @Test
+        @TestMetadata("kt52394.kt")
+        public void testKt52394() throws Exception {
+            runTest("compiler/testData/codegen/box/inlineClasses/kt52394.kt");
         }
 
         @Test

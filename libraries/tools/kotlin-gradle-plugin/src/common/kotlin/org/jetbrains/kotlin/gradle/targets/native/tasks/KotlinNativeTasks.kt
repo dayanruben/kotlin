@@ -158,6 +158,10 @@ abstract class AbstractKotlinNativeCompile<
         compilation.konanTarget
     }
 
+    init {
+        notCompatibleWithConfigurationCache("Task $name does not support Gradle Configuration Cache. Check KT-43293 for more info")
+    }
+
     @get:Classpath
     override val libraries: ConfigurableFileCollection by project.provider {
         // Avoid resolving these dependencies during task graph construction when we can't build the target:
@@ -1088,6 +1092,10 @@ open class CInteropProcess @Inject constructor(@get:Internal val settings: Defau
     @get:Internal
     val outputFile: File
         get() = outputFileProvider.get()
+
+    init {
+        notCompatibleWithConfigurationCache("Task $name does not support Gradle Configuration Cache. Check KT-43293 for more info")
+    }
 
     // Inputs and outputs.
 
