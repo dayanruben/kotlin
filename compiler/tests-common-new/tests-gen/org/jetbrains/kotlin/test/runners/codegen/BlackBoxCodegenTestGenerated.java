@@ -7068,6 +7068,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         }
 
         @Test
+        @TestMetadata("genericSetter.kt")
+        public void testGenericSetter() throws Exception {
+            runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/genericSetter.kt");
+        }
+
+        @Test
         @TestMetadata("importCompanion.kt")
         public void testImportCompanion() throws Exception {
             runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/importCompanion.kt");
@@ -7242,6 +7248,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         }
 
         @Test
+        @TestMetadata("nestedClassAsBound.kt")
+        public void testNestedClassAsBound() throws Exception {
+            runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/nestedClassAsBound.kt");
+        }
+
+        @Test
         @TestMetadata("nestedClassInAnnotationArgument.kt")
         public void testNestedClassInAnnotationArgument() throws Exception {
             runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/nestedClassInAnnotationArgument.kt");
@@ -7287,6 +7299,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         @TestMetadata("platformTypes.kt")
         public void testPlatformTypes() throws Exception {
             runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/platformTypes.kt");
+        }
+
+        @Test
+        @TestMetadata("privateSuperType.kt")
+        public void testPrivateSuperType() throws Exception {
+            runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/privateSuperType.kt");
         }
 
         @Test

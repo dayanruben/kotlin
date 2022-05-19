@@ -5516,6 +5516,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
             }
 
             @Test
+            @TestMetadata("genericSetter.kt")
+            public void testGenericSetter() throws Exception {
+                runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/genericSetter.kt");
+            }
+
+            @Test
             @TestMetadata("innerClassConstructor.kt")
             public void testInnerClassConstructor() throws Exception {
                 runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/innerClassConstructor.kt");
@@ -5564,6 +5570,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
             }
 
             @Test
+            @TestMetadata("nestedClassAsBound.kt")
+            public void testNestedClassAsBound() throws Exception {
+                runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/nestedClassAsBound.kt");
+            }
+
+            @Test
             @TestMetadata("nestedClassInAnnotationArgument.kt")
             public void testNestedClassInAnnotationArgument() throws Exception {
                 runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/nestedClassInAnnotationArgument.kt");
@@ -5591,6 +5603,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
             @TestMetadata("nestedTypeAliasExpansion.kt")
             public void testNestedTypeAliasExpansion() throws Exception {
                 runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/nestedTypeAliasExpansion.kt");
+            }
+
+            @Test
+            @TestMetadata("privateSuperType.kt")
+            public void testPrivateSuperType() throws Exception {
+                runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/privateSuperType.kt");
             }
 
             @Test
@@ -42098,6 +42116,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
             @TestMetadata("nestedInPrivateClass.kt")
             public void testNestedInPrivateClass() throws Exception {
                 runTest("compiler/testData/codegen/boxInline/private/nestedInPrivateClass.kt");
+            }
+
+            @Test
+            @TestMetadata("nestedInPrivateClass2.kt")
+            public void testNestedInPrivateClass2() throws Exception {
+                runTest("compiler/testData/codegen/boxInline/private/nestedInPrivateClass2.kt");
             }
 
             @Test
