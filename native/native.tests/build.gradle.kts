@@ -1,4 +1,3 @@
-import org.gradle.internal.util.NumberUtil.formatBytes
 import org.jetbrains.kotlin.ideaExt.idea
 
 plugins {
@@ -70,7 +69,11 @@ enum class TestProperty(shortName: String) {
     fun readGradleProperty(task: Test): String? = task.project.findProperty(propertyName)?.toString()
 }
 
-fun nativeTest(taskName: String, vararg tags: String) = projectTest(taskName, jUnitMode = JUnitMode.JUnit5) {
+fun nativeTest(taskName: String, vararg tags: String) = projectTest(
+    taskName,
+    jUnitMode = JUnitMode.JUnit5,
+    maxHeapSizeMb = 6 * 1024 // Extra heap space for Kotlin/Native compiler.
+) {
     group = "verification"
 
     if (kotlinBuildProperties.isKotlinNativeEnabled) {
@@ -81,8 +84,8 @@ fun nativeTest(taskName: String, vararg tags: String) = projectTest(taskName, jU
             false
         }
 
-        maxHeapSize = "6G" // Extra heap space for Kotlin/Native compiler.
-        jvmArgs("-XX:MaxJavaStackTraceDepth=1000000") // Effectively remove the limit for the amount of stack trace elements in Throwable.
+        // Effectively remove the limit for the amount of stack trace elements in Throwable.
+        jvmArgs("-XX:MaxJavaStackTraceDepth=1000000")
 
         // Double the stack size. This is needed to compile some marginal tests with extra-deep IR tree, which requires a lot of stack frames
         // for visiting it. Example: codegen/box/strings/concatDynamicWithConstants.kt
@@ -128,35 +131,23 @@ fun nativeTest(taskName: String, vararg tags: String) = projectTest(taskName, jU
         TestProperty.CACHE_MODE.setUpFromGradleProperty(this)
         TestProperty.EXECUTION_TIMEOUT.setUpFromGradleProperty(this)
 
+        // Pass the current Gradle task name so test can use it in logging.
+        environment("GRADLE_TASK_NAME", path)
+
         useJUnitPlatform {
             includeTags(*tags)
         }
 
-        fun formatExecutionParameters() = buildString {
-            appendLine("$path parallel test execution parameters:")
-            append("  Available CPU cores = $availableCpuCores")
-            systemProperties.filterKeys { it.startsWith("junit.jupiter") }.toSortedMap().forEach { (key, value) ->
-                append("\n  $key = $value")
-            }
-        }
-
-        fun formatMemoryUsage(before: Boolean) = buildString {
-            with(Runtime.getRuntime()) {
-                appendLine("$path (${if (before) "before" else "after"}) memory info:")
-                appendLine("  Max memory (-Xmx) = ${formatBytes(maxMemory())}")
-                appendLine("  Allocated memory = ${formatBytes(totalMemory())}")
-                appendLine("    Used memory = ${formatBytes(totalMemory() - freeMemory())}")
-                append("    Free memory = ${formatBytes(freeMemory())}")
-            }
-        }
-
         doFirst {
-            logger.info(formatExecutionParameters())
-            logger.info(formatMemoryUsage(before = true))
-        }
-
-        doLast {
-            logger.info(formatMemoryUsage(before = false))
+            logger.info(
+                buildString {
+                    appendLine("$path parallel test execution parameters:")
+                    append("  Available CPU cores = $availableCpuCores")
+                    systemProperties.filterKeys { it.startsWith("junit.jupiter") }.toSortedMap().forEach { (key, value) ->
+                        append("\n  $key = $value")
+                    }
+                }
+            )
         }
     } else
         doFirst {

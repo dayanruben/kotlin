@@ -11479,6 +11479,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("kt51317.kt")
+            public void testKt51317() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/functionLiterals/kt51317.kt");
+            }
+
+            @Test
             @TestMetadata("kt6541_extensionForExtensionFunction.kt")
             public void testKt6541_extensionForExtensionFunction() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/functionLiterals/kt6541_extensionForExtensionFunction.kt");
@@ -32775,6 +32781,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("kt49394.kt")
+            public void testKt49394() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/unitConversion/kt49394.kt");
+            }
+
+            @Test
             @TestMetadata("noUnitConversionForGenericTypeFromArrow.kt")
             public void testNoUnitConversionForGenericTypeFromArrow() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/unitConversion/noUnitConversionForGenericTypeFromArrow.kt");
@@ -37268,6 +37280,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("incorrectUseExperimental.kt")
             public void testIncorrectUseExperimental() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/incorrectUseExperimental.kt");
+            }
+
+            @Test
+            @TestMetadata("insideSAM.kt")
+            public void testInsideSAM() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/insideSAM.kt");
             }
 
             @Test
