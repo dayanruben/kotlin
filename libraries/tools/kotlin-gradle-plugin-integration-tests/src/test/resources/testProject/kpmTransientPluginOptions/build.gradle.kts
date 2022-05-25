@@ -11,7 +11,7 @@ repositories {
     mavenCentral()
 }
 
-plugins.apply(GradleKpmPluginWithTransientPluginOptions::class.java)
+plugins.apply(KpmGradlePluginWithTransientPluginOptions::class.java)
 
 configure<KotlinPm20ProjectExtension> {
     main {
@@ -33,12 +33,12 @@ class KpmPluginWithTransientPluginOptions(
         )
     )
 
-    override fun forMetadataCompilation(fragment: KotlinModuleFragment) = pluginData()
-    override fun forNativeMetadataCompilation(fragment: KotlinModuleFragment) = pluginData()
-    override fun forPlatformCompilation(variant: KotlinModuleVariant) = pluginData()
+    override fun forMetadataCompilation(fragment: KpmFragment) = pluginData()
+    override fun forNativeMetadataCompilation(fragment: KpmFragment) = pluginData()
+    override fun forPlatformCompilation(variant: KpmVariant) = pluginData()
 }
 
-class GradleKpmPluginWithTransientPluginOptions : GradleKpmCompilerPlugin {
+class KpmGradlePluginWithTransientPluginOptions : GradleKpmCompilerPlugin {
     private lateinit var project: Project
 
     override fun apply(target: Project) {

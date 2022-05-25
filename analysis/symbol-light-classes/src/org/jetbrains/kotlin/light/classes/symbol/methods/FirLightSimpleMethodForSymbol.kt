@@ -95,8 +95,7 @@ internal class FirLightSimpleMethodForSymbol(
         )
 
         val visibility: String = functionSymbol.isOverride.ifTrue {
-            (containingClass as? FirLightClassForSymbol)
-                ?.tryGetEffectiveVisibility(functionSymbol)
+            tryGetEffectiveVisibility(functionSymbol)
                 ?.toPsiVisibilityForMember(isTopLevel)
         } ?: functionSymbol.toPsiVisibilityForMember(isTopLevel = isTopLevel)
 

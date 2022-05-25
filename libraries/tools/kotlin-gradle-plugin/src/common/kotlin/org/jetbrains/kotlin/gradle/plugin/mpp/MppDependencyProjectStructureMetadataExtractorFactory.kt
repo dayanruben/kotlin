@@ -10,8 +10,8 @@ import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.artifacts.result.ResolvedComponentResult
 import org.gradle.api.artifacts.result.ResolvedDependencyResult
-import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.toSingleModuleIdentifier
-import org.jetbrains.kotlin.project.model.KotlinModuleIdentifier
+import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.toSingleKpmModuleIdentifier
+import org.jetbrains.kotlin.project.model.KpmModuleIdentifier
 
 internal fun MppDependencyProjectStructureMetadataExtractor.Factory.create(
     project: Project,
@@ -25,7 +25,7 @@ internal fun MppDependencyProjectStructureMetadataExtractor.Factory.create(
         FIXME this loses information about auxiliary module deps
         TODO check how this code works with multi-capability resolutions,
          */
-        moduleIdentifier = resolvedComponentResult.toSingleModuleIdentifier(),
+        moduleIdentifier = resolvedComponentResult.toSingleKpmModuleIdentifier(),
         configuration = configuration,
         resolveViaAvailableAt = resolveViaAvailableAt,
         resolvedComponentResult = resolvedComponentResult,
@@ -36,7 +36,7 @@ internal fun MppDependencyProjectStructureMetadataExtractor.Factory.create(
 internal fun MppDependencyProjectStructureMetadataExtractor.Factory.create(
     project: Project,
     resolvedComponentResult: ResolvedComponentResult,
-    moduleIdentifier: KotlinModuleIdentifier,
+    moduleIdentifier: KpmModuleIdentifier,
     configuration: Configuration
 ): MppDependencyProjectStructureMetadataExtractor? {
     return create(
@@ -51,7 +51,7 @@ internal fun MppDependencyProjectStructureMetadataExtractor.Factory.create(
 
 private fun MppDependencyProjectStructureMetadataExtractor.Factory.create(
     resolvedMppVariantsProvider: ResolvedMppVariantsProvider,
-    moduleIdentifier: KotlinModuleIdentifier,
+    moduleIdentifier: KpmModuleIdentifier,
     configuration: Configuration,
     resolveViaAvailableAt: Boolean,
     resolvedComponentResult: ResolvedComponentResult,

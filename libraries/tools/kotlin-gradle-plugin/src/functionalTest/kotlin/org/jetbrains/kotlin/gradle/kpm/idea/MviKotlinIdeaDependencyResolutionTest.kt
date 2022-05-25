@@ -13,8 +13,8 @@ import org.jetbrains.kotlin.commonizer.stdlib
 import org.jetbrains.kotlin.gradle.android.androidPrototype
 import org.jetbrains.kotlin.gradle.assumeAndroidSdkAvailable
 import org.jetbrains.kotlin.gradle.kpm.applyKpmPlugin
-import org.jetbrains.kotlin.gradle.kpm.buildIdeaKotlinProjectModel
-import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKotlinDependency.Companion.CLASSPATH_BINARY_TYPE
+import org.jetbrains.kotlin.gradle.kpm.buildIdeaKpmProjectModel
+import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKpmDependency.Companion.CLASSPATH_BINARY_TYPE
 import org.jetbrains.kotlin.gradle.kpm.idea.testFixtures.assertContainsFragment
 import org.jetbrains.kotlin.gradle.kpm.idea.testFixtures.assertContainsModule
 import org.jetbrains.kotlin.gradle.kpm.idea.testFixtures.assertIsNotEmpty
@@ -31,10 +31,10 @@ class MviKotlinIdeaDependencyResolutionTest : AbstractLightweightIdeaDependencyR
 
         val kotlin = project.applyKpmPlugin {
             mainAndTest {
-                fragments.create("jvm", KotlinJvmVariant::class.java)
-                val linuxX64Variant = fragments.create("linuxX64", KotlinLinuxX64Variant::class.java)
-                val iosX64Variant = fragments.create("iosX64", KotlinIosX64Variant::class.java)
-                val iosArm64Variant = fragments.create("iosArm64", KotlinIosArm64Variant::class.java)
+                fragments.create("jvm", GradleKpmJvmVariant::class.java)
+                val linuxX64Variant = fragments.create("linuxX64", GradleKpmLinuxX64Variant::class.java)
+                val iosX64Variant = fragments.create("iosX64", GradleKpmIosX64Variant::class.java)
+                val iosArm64Variant = fragments.create("iosArm64", GradleKpmIosArm64Variant::class.java)
                 val iosCommon = fragments.create("iosCommon")
                 val nativeCommon = fragments.create("nativeCommon")
 
@@ -51,7 +51,7 @@ class MviKotlinIdeaDependencyResolutionTest : AbstractLightweightIdeaDependencyR
             }
         }
 
-        kotlin.buildIdeaKotlinProjectModel().assertIsNotEmpty().modules.forEach { module ->
+        kotlin.buildIdeaKpmProjectModel().assertIsNotEmpty().modules.forEach { module ->
             module.assertContainsFragment("common").assertResolvedBinaryDependencies(
                 CLASSPATH_BINARY_TYPE,
                 "com.arkivanov.mvikotlin:mvikotlin:3.0.0-beta01:main:commonMain",
@@ -197,7 +197,7 @@ class MviKotlinIdeaDependencyResolutionTest : AbstractLightweightIdeaDependencyR
         /* Android requires project to evaluate */
         project.evaluate()
 
-        kotlin.buildIdeaKotlinProjectModel().assertIsNotEmpty().assertContainsModule("main").let { module ->
+        kotlin.buildIdeaKpmProjectModel().assertIsNotEmpty().assertContainsModule("main").let { module ->
             listOf("common", "jvm").forEach { fragmentName ->
                 module.assertContainsFragment(fragmentName).assertResolvedBinaryDependencies(
                     CLASSPATH_BINARY_TYPE,

@@ -22,8 +22,8 @@ import org.jetbrains.kotlin.gradle.execution.KotlinAggregateExecutionSource
 import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
-import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinGradleFragment
-import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinGradleModule
+import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.GradleKpmFragment
+import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.GradleKpmModule
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.hasKpmModel
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.kpmModules
 import org.jetbrains.kotlin.gradle.plugin.sources.KotlinDependencyScope
@@ -134,8 +134,8 @@ internal fun configureStdlibDefaultDependency(project: Project) = with(project) 
 private fun addStdlibToKpmProject(
     project: Project
 ) {
-    project.kpmModules.matching { it.name == KotlinGradleModule.MAIN_MODULE_NAME }.configureEach { main ->
-        main.fragments.matching { it.name == KotlinGradleFragment.COMMON_FRAGMENT_NAME }.configureEach { common ->
+    project.kpmModules.matching { it.name == GradleKpmModule.MAIN_MODULE_NAME }.configureEach { main ->
+        main.fragments.matching { it.name == GradleKpmFragment.COMMON_FRAGMENT_NAME }.configureEach { common ->
             common.dependencies {
                 api(project.kotlinDependency("kotlin-stdlib-common", project.topLevelExtension.coreLibrariesVersion))
             }

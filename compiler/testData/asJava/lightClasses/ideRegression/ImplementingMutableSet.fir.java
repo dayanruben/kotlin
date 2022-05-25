@@ -1,4 +1,4 @@
-public final class SmartSet /* SmartSet*/<T>  implements kotlin.collections.MutableSet<T> {
+public final class SmartSet /* SmartSet*/<T>  extends kotlin.collections.AbstractSet<T> implements kotlin.collections.MutableSet<T> {
   @org.jetbrains.annotations.NotNull()
   public static final SmartSet.Companion Companion;
 
@@ -6,6 +6,16 @@ public final class SmartSet /* SmartSet*/<T>  implements kotlin.collections.Muta
   private java.lang.Object data;
 
   private int size;
+
+  private static final int ARRAY_THRESHOLD;
+
+  @kotlin.jvm.JvmStatic()
+  @org.jetbrains.annotations.NotNull()
+  public static final <T> SmartSet<T> create();// <T>  create()
+
+  @kotlin.jvm.JvmStatic()
+  @org.jetbrains.annotations.NotNull()
+  public static final <T> SmartSet<T> create(@org.jetbrains.annotations.NotNull() java.util.Collection<? extends T>);// <T>  create(java.util.Collection<? extends T>)
 
   @org.jetbrains.annotations.NotNull()
   public java.util.Iterator<T> iterator();//  iterator()
@@ -22,13 +32,11 @@ public final class SmartSet /* SmartSet*/<T>  implements kotlin.collections.Muta
 
 
 public static final class Companion /* SmartSet.Companion*/ {
-  private final int ARRAY_THRESHOLD;
-
-  @<error>()
+  @kotlin.jvm.JvmStatic()
   @org.jetbrains.annotations.NotNull()
   public final <T> SmartSet<T> create();// <T>  create()
 
-  @<error>()
+  @kotlin.jvm.JvmStatic()
   @org.jetbrains.annotations.NotNull()
   public final <T> SmartSet<T> create(@org.jetbrains.annotations.NotNull() java.util.Collection<? extends T>);// <T>  create(java.util.Collection<? extends T>)
 

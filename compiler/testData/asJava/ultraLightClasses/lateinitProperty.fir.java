@@ -39,24 +39,24 @@ public class B /* B*/ {
   public java.lang.String d;
 
   @org.jetbrains.annotations.NotNull()
-  public final java.lang.String getA();//  getA()
+  public final java.lang.String getA$light_idea_test_case();//  getA$light_idea_test_case()
 
   @org.jetbrains.annotations.NotNull()
-  public final java.lang.String getB();//  getB()
+  public final java.lang.String getB$light_idea_test_case();//  getB$light_idea_test_case()
 
   @org.jetbrains.annotations.NotNull()
-  public final java.lang.String getC();//  getC()
+  public final java.lang.String getC$light_idea_test_case();//  getC$light_idea_test_case()
 
   @org.jetbrains.annotations.NotNull()
-  public final java.lang.String getD();//  getD()
+  public final java.lang.String getD$light_idea_test_case();//  getD$light_idea_test_case()
 
-  protected final void setC(@org.jetbrains.annotations.NotNull() java.lang.String);//  setC(java.lang.String)
+  protected final void setC$light_idea_test_case(@org.jetbrains.annotations.NotNull() java.lang.String);//  setC$light_idea_test_case(java.lang.String)
 
   public  B();//  .ctor()
 
-  public final void setA(@org.jetbrains.annotations.NotNull() java.lang.String);//  setA(java.lang.String)
+  public final void setA$light_idea_test_case(@org.jetbrains.annotations.NotNull() java.lang.String);//  setA$light_idea_test_case(java.lang.String)
 
-  public final void setD(@org.jetbrains.annotations.NotNull() java.lang.String);//  setD(java.lang.String)
+  public final void setD$light_idea_test_case(@org.jetbrains.annotations.NotNull() java.lang.String);//  setD$light_idea_test_case(java.lang.String)
 
 }
 

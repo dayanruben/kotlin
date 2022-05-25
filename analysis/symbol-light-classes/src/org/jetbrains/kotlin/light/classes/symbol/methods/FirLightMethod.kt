@@ -20,6 +20,10 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
+import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
+import org.jetbrains.kotlin.analysis.project.structure.getKtModule
+import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
+import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.utils.addToStdlib.ifTrue
 
 internal abstract class FirLightMethod(
@@ -68,7 +72,7 @@ internal abstract class FirLightMethod(
         }
     }
 
-    override val isMangled: Boolean = false
+    override val isMangled: Boolean = false // TODO: checkIsMangled ?
 
     abstract override fun getTypeParameters(): Array<PsiTypeParameter>
     abstract override fun hasTypeParameters(): Boolean
@@ -87,18 +91,14 @@ internal abstract class FirLightMethod(
         getJvmNameFromAnnotation(annotationUseSiteTarget)?.let { return it }
 
         val effectiveVisibilityIfNotInternal = (visibility != Visibilities.Internal).ifTrue {
-            (containingClass as? FirLightClassForSymbol)?.tryGetEffectiveVisibility(this)
+            tryGetEffectiveVisibility(this)
         } ?: this.visibility
 
         if (effectiveVisibilityIfNotInternal != Visibilities.Internal) return defaultName
+        if (containingClass is KtLightClassForFacade) return defaultName
+        if (hasPublishedApiAnnotation(annotationUseSiteTarget)) return defaultName
 
-        //TODO
-//        val moduleName = module?.name ?: return defaultName
-
-        return defaultName
-
-//        if (hasPublishedApiAnnotation(annotationUseSiteTarget)) return defaultName
-//
-//        return KotlinTypeMapper.InternalNameMapper.mangleInternalName(defaultName, moduleName)
+        val moduleName = (getKtModule(project) as? KtSourceModule)?.moduleName ?: return defaultName
+        return KotlinTypeMapper.InternalNameMapper.mangleInternalName(defaultName, moduleName)
     }
 }
