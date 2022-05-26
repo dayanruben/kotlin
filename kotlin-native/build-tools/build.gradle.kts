@@ -8,24 +8,36 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.util.Properties
 
 plugins {
-    // We explicitly configure versions of plugins in settings.gradle.kts.
-    // due to https://github.com/gradle/gradle/issues/1697.
-    id("kotlin")
+    kotlin
     groovy
-    `java-gradle-plugin`
+    `kotlin-dsl`
+    id("gradle-plugin-dependency-configuration")
 }
 
 buildscript {
-    dependencies {
-        classpath("com.google.code.gson:gson:2.8.6")
+    val rootBuildDirectory by extra(project.file("../.."))
+
+    repositories {
+        project.bootstrapKotlinRepo?.let {
+            maven(url = it)
+        }
     }
+
+    apply(from = rootBuildDirectory.resolve("kotlin-native/gradle/loadRootProperties.gradle"))
+    dependencies {
+        classpath(commonDependency("com.google.code.gson:gson"))
+        classpath("org.jetbrains.kotlin:kotlin-sam-with-receiver:${project.bootstrapKotlinVersion}")
+    }
+}
+apply {
+    plugin("kotlin-sam-with-receiver")
 }
 
 val rootProperties = Properties().apply {
-    rootDir.resolve("../gradle.properties").reader().use(::load)
+    project(":kotlin-native").projectDir.resolve("gradle.properties").reader().use(::load)
 }
 
-val kotlinVersion: String by rootProperties
+val kotlinVersion = project.bootstrapKotlinVersion
 val konanVersion: String by rootProperties
 val slackApiVersion: String by rootProperties
 val ktorVersion: String by rootProperties
@@ -38,68 +50,66 @@ version = konanVersion
 repositories {
     maven("https://cache-redirector.jetbrains.com/maven-central")
     mavenCentral()
+    gradlePluginPortal()
 }
 
 dependencies {
-    compileOnly(gradleApi())
+    api(gradleApi())
 
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
-    implementation("com.ullink.slack:simpleslackapi:$slackApiVersion")
+    api(kotlinStdlib())
+    commonApi(project(":kotlin-gradle-plugin"))
+    commonApi(project(":kotlin-gradle-plugin-api"))
+    commonApi(project(":kotlin-gradle-plugin-model"))
+    implementation(project(":kotlin-reflect"))
+    implementation("org.jetbrains.kotlin:kotlin-build-gradle-plugin:${kotlinBuildProperties.buildGradlePluginVersion}")
+
+    implementation("com.ullink.slack:simpleslackapi:$slackApiVersion") {
+        exclude(group = "com.google.code.gson", module = "gson") // Workaround for Gradle dependency resolution error
+    }
+    val versionProperties = Properties()
+    project.rootProject.projectDir.resolve("gradle/versions.properties").inputStream().use { propInput ->
+        versionProperties.load(propInput)
+    }
+    implementation(commonDependency("com.google.code.gson:gson"))
+    configurations.all {
+        resolutionStrategy.eachDependency {
+            if (requested.group == "com.google.code.gson" && requested.name == "gson") {
+                useVersion(versionProperties["versions.gson"] as String)
+                because("Force using same gson version because of https://github.com/google/gson/pull/1991")
+            }
+        }
+    }
 
     implementation("io.ktor:ktor-client-auth:$ktorVersion")
     implementation("io.ktor:ktor-client-core:$ktorVersion")
     implementation("io.ktor:ktor-client-cio:$ktorVersion")
 
-    api("org.jetbrains.kotlin:kotlin-native-utils:$kotlinVersion")
-
-    // Located in <repo root>/shared and always provided by the composite build.
-    api("org.jetbrains.kotlin:kotlin-native-shared:$konanVersion")
-    implementation("gradle.plugin.com.github.johnrengelman:shadow:$shadowVersion")
-
-    implementation("org.jetbrains.kotlinx:kotlinx-metadata-klib:$metadataVersion")
+    api(project(":native:kotlin-native-utils"))
+    api(project(":kotlin-native-shared"))
+    api(project(":kotlinx-metadata-klib"))
+    api(project(":kotlin-util-klib"))
+    implementation("gradle.plugin.com.github.johnrengelman:shadow:${rootProject.extra["versions.shadow"]}")
 }
 
 sourceSets["main"].withConvention(KotlinSourceSet::class) {
     kotlin.srcDir("$projectDir/../tools/benchmarks/shared/src/main/kotlin/report")
 }
 
-gradlePlugin {
-    plugins {
-        create("benchmarkPlugin") {
-            id = "benchmarking"
-            implementationClass = "org.jetbrains.kotlin.benchmark.KotlinNativeBenchmarkingPlugin"
-        }
-        create("compileBenchmarking") {
-            id = "compile-benchmarking"
-            implementationClass = "org.jetbrains.kotlin.benchmark.CompileBenchmarkingPlugin"
-        }
-        create("swiftBenchmarking") {
-            id = "swift-benchmarking"
-            implementationClass = "org.jetbrains.kotlin.benchmark.SwiftBenchmarkingPlugin"
-        }
-        create("compileToBitcode") {
-            id = "compile-to-bitcode"
-            implementationClass = "org.jetbrains.kotlin.bitcode.CompileToBitcodePlugin"
-        }
-        create("runtimeTesting") {
-            id = "runtime-testing"
-            implementationClass = "org.jetbrains.kotlin.testing.native.RuntimeTestingPlugin"
-        }
-    }
-}
-
 val compileKotlin: KotlinCompile by tasks
 val compileGroovy: GroovyCompile by tasks
 
 compileKotlin.apply {
-    kotlinOptions.jvmTarget = "1.8"
-    kotlinOptions.freeCompilerArgs += "-Xskip-prerelease-check"
+    kotlinOptions {
+        jvmTarget = "1.8"
+        freeCompilerArgs += listOf(
+                "-Xskip-prerelease-check",
+                "-Xsuppress-version-warnings",
+                "-opt-in=kotlin.ExperimentalStdlibApi")
+    }
 }
 
 // Add Kotlin classes to a classpath for the Groovy compiler
 compileGroovy.apply {
-    classpath += project.files(compileKotlin.destinationDir)
+    classpath += project.files(compileKotlin.destinationDirectory)
     dependsOn(compileKotlin)
 }
