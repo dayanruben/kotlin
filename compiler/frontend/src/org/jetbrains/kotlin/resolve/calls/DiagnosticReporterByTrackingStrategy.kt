@@ -40,6 +40,7 @@ import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.checker.intersectWrappedTypes
 import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.types.expressions.ControlStructureTypingUtils
+import org.jetbrains.kotlin.types.isPossiblyEmpty
 import org.jetbrains.kotlin.types.model.TypeSystemInferenceExtensionContextDelegate
 import org.jetbrains.kotlin.types.model.TypeVariableMarker
 import org.jetbrains.kotlin.types.model.freshTypeConstructor
@@ -195,14 +196,6 @@ class DiagnosticReporterByTrackingStrategy(
             SmartCastDiagnostic::class.java -> reportSmartCast(diagnostic as SmartCastDiagnostic)
             UnstableSmartCastDiagnosticError::class.java,
             UnstableSmartCastResolutionError::class.java -> reportUnstableSmartCast(diagnostic as UnstableSmartCast)
-            TypeCheckerHasRanIntoRecursion::class.java -> {
-                diagnostic as TypeCheckerHasRanIntoRecursion
-                val argumentExpression =
-                    diagnostic.onArgument?.psiCallArgument?.valueArgument?.getArgumentExpression()
-                if (argumentExpression != null) {
-                    trace.report(TYPECHECKER_HAS_RUN_INTO_RECURSIVE_PROBLEM.errorFactory.on(argumentExpression))
-                }
-            }
             VisibilityErrorOnArgument::class.java -> {
                 diagnostic as VisibilityErrorOnArgument
                 val invisibleMember = diagnostic.invisibleMember
@@ -612,16 +605,28 @@ class DiagnosticReporterByTrackingStrategy(
 
             InferredEmptyIntersectionError::class.java, InferredEmptyIntersectionWarning::class.java -> {
                 val typeVariable = (error as InferredEmptyIntersection).typeVariable
-                psiKotlinCall.psiCall.calleeExpression?.let {
+                psiKotlinCall.psiCall.calleeExpression?.let { expression ->
                     val typeVariableText = (typeVariable as? TypeVariableFromCallableDescriptor)?.originalTypeParameter?.name?.asString()
                         ?: typeVariable.toString()
-                    trace.reportDiagnosticOnce(
-                        @Suppress("UNCHECKED_CAST")
-                        INFERRED_TYPE_VARIABLE_INTO_EMPTY_INTERSECTION.on(
-                            context.languageVersionSettings, it, typeVariableText,
-                            error.incompatibleTypes as Collection<KotlinType>
+
+                    @Suppress("UNCHECKED_CAST")
+                    val incompatibleTypes = error.incompatibleTypes as List<KotlinType>
+
+                    @Suppress("UNCHECKED_CAST")
+                    val causingTypes = error.causingTypes as List<KotlinType>
+                    val causingTypesText = if (incompatibleTypes == causingTypes) "" else ": ${causingTypes.joinToString()}"
+                    val diagnostic = if (error.kind.isPossiblyEmpty()) {
+                        INFERRED_TYPE_VARIABLE_INTO_POSSIBLE_EMPTY_INTERSECTION.on(
+                            expression, typeVariableText, incompatibleTypes, error.kind.description, causingTypesText
                         )
-                    )
+                    } else {
+                        INFERRED_TYPE_VARIABLE_INTO_EMPTY_INTERSECTION.on(
+                            context.languageVersionSettings, expression, typeVariableText,
+                            incompatibleTypes, error.kind.description, causingTypesText
+                        )
+                    }
+
+                    trace.reportDiagnosticOnce(diagnostic)
                 }
             }
         }

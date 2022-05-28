@@ -218,7 +218,13 @@ internal class InlineChecker(private val descriptor: FunctionDescriptor) : CallC
     ) {
         val inlinableCall = isInvokeOrInlineExtension(callDescriptor)
         if (!inlinableCall) {
-            context.trace.report(USAGE_IS_NOT_INLINABLE.on(receiverExpression, receiverExpression, descriptor))
+            if (InlineUtil.isInline(callDescriptor) &&
+                !context.languageVersionSettings.supportsFeature(LanguageFeature.ForbidExtensionCallsOnInlineFunctionalParameters)
+            ) {
+                context.trace.report(USAGE_IS_NOT_INLINABLE_WARNING.on(receiverExpression, receiverExpression, descriptor))
+            } else {
+                context.trace.report(USAGE_IS_NOT_INLINABLE.on(receiverExpression, receiverExpression, descriptor))
+            }
         } else {
             checkNonLocalReturn(context, lambdaDescriptor, receiverExpression)
         }
@@ -238,12 +244,12 @@ internal class InlineChecker(private val descriptor: FunctionDescriptor) : CallC
         if (descriptor !is SimpleFunctionDescriptor) {
             return false
         }
+        // TODO: receivers are currently not inline (KT-5837)
+        // if (InlineUtil.isInline(descriptor)) return true
 
         val containingDeclaration = descriptor.getContainingDeclaration()
-        val isInvoke = descriptor.getName() == OperatorNameConventions.INVOKE &&
+        return descriptor.getName() == OperatorNameConventions.INVOKE &&
                 containingDeclaration is ClassDescriptor && containingDeclaration.defaultType.isBuiltinFunctionalType
-
-        return isInvoke || InlineUtil.isInline(descriptor)
     }
 
     private fun checkVisibilityAndAccess(

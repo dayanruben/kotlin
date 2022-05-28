@@ -264,6 +264,11 @@ public class CliTestGenerated extends AbstractCliTest {
             runTest("compiler/testData/cli/jvm/duplicateSourcesInModule.args");
         }
 
+        @TestMetadata("duplicateSourcesNormalized.args")
+        public void testDuplicateSourcesNormalized() throws Exception {
+            runTest("compiler/testData/cli/jvm/duplicateSourcesNormalized.args");
+        }
+
         @TestMetadata("emptySources.args")
         public void testEmptySources() throws Exception {
             runTest("compiler/testData/cli/jvm/emptySources.args");
@@ -782,6 +787,11 @@ public class CliTestGenerated extends AbstractCliTest {
         @TestMetadata("nonExistingPhaseName.args")
         public void testNonExistingPhaseName() throws Exception {
             runTest("compiler/testData/cli/jvm/nonExistingPhaseName.args");
+        }
+
+        @TestMetadata("nonExistingPluginClassPath.args")
+        public void testNonExistingPluginClassPath() throws Exception {
+            runTest("compiler/testData/cli/jvm/nonExistingPluginClassPath.args");
         }
 
         @TestMetadata("nonExistingSourcePath.args")

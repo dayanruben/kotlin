@@ -1,7 +1,9 @@
 KtTypeParameterSymbol:
+  annotationsList: []
   isReified: false
   name: T
   origin: SOURCE
+  typeParameters: []
   upperBounds: [
     kotlin/Any?
   ]
@@ -34,9 +36,11 @@ KtNamedClassOrObjectSymbol:
   deprecationStatus: null
 
 KtTypeParameterSymbol:
+  annotationsList: []
   isReified: false
   name: Z
   origin: SOURCE
+  typeParameters: []
   upperBounds: [
     kotlin/Any?
   ]

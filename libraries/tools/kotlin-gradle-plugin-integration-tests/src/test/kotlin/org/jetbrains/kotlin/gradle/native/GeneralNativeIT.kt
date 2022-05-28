@@ -376,7 +376,7 @@ class GeneralNativeIT : BaseGradleIT() {
             headerPaths.forEach { assertFileExists(it) }
             frameworkPaths.forEach { assertFileExists(it) }
 
-            fileInWorkingDir(headerPaths[0]).readText().contains("+ (int32_t)exported")
+            assertTrue(fileInWorkingDir(headerPaths[0]).readText().contains("+ (int32_t)exported"))
 
             // Check that by default release frameworks have bitcode embedded.
             withNativeCommandLineArguments(":linkMainReleaseFrameworkIos") { arguments ->
@@ -456,6 +456,34 @@ class GeneralNativeIT : BaseGradleIT() {
                 assertFailed()
                 assertContains(failureMsgFor(it.binaryName))
             }
+        }
+    }
+
+    @Test
+    fun testTransitiveExportIsNotRequiredForExportingVariant() = with(
+        transformNativeTestProjectWithPluginDsl(
+            wrapperVersion = GradleVersionRequired.AtLeast("6.8"), // See https://youtrack.jetbrains.com/issue/KT-52447
+            projectName = "export-published-lib",
+            directoryPrefix = "native-binaries"
+        )
+    ) {
+        val binaryName = "shared"
+        val headerPath = "shared/build/bin/linuxX64/debugStatic/lib${binaryName}_api.h"
+        val binaryBuildTask = "linkDebugStaticLinuxX64"
+
+        build(":lib:publish") {
+            assertSuccessful()
+        }
+
+        build(":shared:$binaryBuildTask") {
+            assertSuccessful()
+            assertFileExists(headerPath)
+            val headerContents = fileInWorkingDir(headerPath).readText()
+
+            assertTrue(headerContents.contains("funInShared"))
+
+            // Check that the function from exported published library (:lib) is included to the header:
+            assertTrue(headerContents.contains("funToExport"))
         }
     }
 

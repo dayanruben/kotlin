@@ -18,8 +18,10 @@ package org.jetbrains.kotlin.resolve.calls.tower
 
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.progress.ProgressIndicatorAndCompilationCanceledStatus
+import org.jetbrains.kotlin.resolve.calls.components.candidate.ResolutionCandidate
+import org.jetbrains.kotlin.resolve.calls.inference.model.LowerPriorityToPreserveCompatibility
+import org.jetbrains.kotlin.resolve.calls.model.constraintSystemError
 import org.jetbrains.kotlin.resolve.calls.tasks.ExplicitReceiverKind
-import org.jetbrains.kotlin.resolve.calls.util.ErrorCandidateReason
 import org.jetbrains.kotlin.resolve.descriptorUtil.HIDES_MEMBERS_NAME_LIST
 import org.jetbrains.kotlin.resolve.scopes.HierarchicalScope
 import org.jetbrains.kotlin.resolve.scopes.ImportingScope
@@ -48,7 +50,7 @@ interface CandidateFactory<out C : Candidate> {
         extensionReceiver: ReceiverValueWithSmartCastInfo?
     ): C
 
-    fun createErrorCandidate(reason: ErrorCandidateReason = ErrorCandidateReason.OTHER): C
+    fun createErrorCandidate(): C
 
     fun createCandidate(
         towerCandidate: CandidateWithBoundDispatchReceiver,
@@ -438,12 +440,20 @@ class TowerResolver {
             }
 
             if (firstGroupWithResolved == null) return null
-            if (compatibilityCandidate != null && compatibilityGroup !== firstGroupWithResolved) {
+            if (compatibilityCandidate != null
+                && compatibilityGroup !== firstGroupWithResolved
+                && needToReportCompatibilityWarning(compatibilityCandidate)
+            ) {
                 firstGroupWithResolved.forEach { it.addCompatibilityWarning(compatibilityCandidate) }
             }
 
             return firstGroupWithResolved.filter(::isSuccessfulCandidate)
         }
+
+        private fun needToReportCompatibilityWarning(candidate: C) = candidate is ResolutionCandidate &&
+                candidate.diagnostics.any {
+                    (it.constraintSystemError as? LowerPriorityToPreserveCompatibility)?.needToReportWarning == true
+                }
 
         private fun isSuccessfulCandidate(candidate: C): Boolean {
             return candidate.resultingApplicability == CandidateApplicability.RESOLVED

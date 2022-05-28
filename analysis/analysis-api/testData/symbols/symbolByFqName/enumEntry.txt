@@ -1,4 +1,5 @@
 KtEnumEntrySymbol:
+  annotationsList: []
   callableIdIfNonLocal: kotlin/LazyThreadSafetyMode.SYNCHRONIZED
   containingEnumClassIdIfNonLocal: kotlin/LazyThreadSafetyMode
   isExtension: false
@@ -7,5 +8,6 @@ KtEnumEntrySymbol:
   receiverType: null
   returnType: kotlin/LazyThreadSafetyMode
   symbolKind: CLASS_MEMBER
+  typeParameters: []
   getContainingModule: KtLibraryModule "Library kotlin-stdlib"
   deprecationStatus: null

@@ -10,10 +10,12 @@ KtValueParameterSymbol:
   receiverType: null
   returnType: kotlin/Int
   symbolKind: LOCAL
+  typeParameters: []
   getContainingModule: KtSourceModule "Sources of main"
   deprecationStatus: null
 
 KtLocalVariableSymbol:
+  annotationsList: []
   callableIdIfNonLocal: null
   isExtension: false
   isVal: true
@@ -22,10 +24,12 @@ KtLocalVariableSymbol:
   receiverType: null
   returnType: kotlin/Int
   symbolKind: LOCAL
+  typeParameters: []
   getContainingModule: KtSourceModule "Sources of main"
   deprecationStatus: null
 
 KtAnonymousFunctionSymbol:
+  annotationsList: []
   callableIdIfNonLocal: null
   hasStableParameterNames: true
   isExtension: false
@@ -33,6 +37,7 @@ KtAnonymousFunctionSymbol:
   receiverType: null
   returnType: kotlin/Int
   symbolKind: LOCAL
+  typeParameters: []
   valueParameters: [
     KtValueParameterSymbol(a)
   ]
@@ -40,6 +45,7 @@ KtAnonymousFunctionSymbol:
   deprecationStatus: null
 
 KtLocalVariableSymbol:
+  annotationsList: []
   callableIdIfNonLocal: null
   isExtension: false
   isVal: true
@@ -48,6 +54,7 @@ KtLocalVariableSymbol:
   receiverType: null
   returnType: kotlin/Function1<kotlin/Int, kotlin/Int>
   symbolKind: LOCAL
+  typeParameters: []
   getContainingModule: KtSourceModule "Sources of main"
   deprecationStatus: null
 
@@ -63,10 +70,12 @@ KtValueParameterSymbol:
   receiverType: null
   returnType: kotlin/Int
   symbolKind: LOCAL
+  typeParameters: []
   getContainingModule: KtSourceModule "Sources of main"
   deprecationStatus: null
 
 KtLocalVariableSymbol:
+  annotationsList: []
   callableIdIfNonLocal: null
   isExtension: false
   isVal: true
@@ -75,10 +84,12 @@ KtLocalVariableSymbol:
   receiverType: null
   returnType: kotlin/Int
   symbolKind: LOCAL
+  typeParameters: []
   getContainingModule: KtSourceModule "Sources of main"
   deprecationStatus: null
 
 KtAnonymousFunctionSymbol:
+  annotationsList: []
   callableIdIfNonLocal: null
   hasStableParameterNames: true
   isExtension: false
@@ -86,6 +97,7 @@ KtAnonymousFunctionSymbol:
   receiverType: null
   returnType: kotlin/Int
   symbolKind: LOCAL
+  typeParameters: []
   valueParameters: [
     KtValueParameterSymbol(a)
   ]
@@ -93,6 +105,7 @@ KtAnonymousFunctionSymbol:
   deprecationStatus: null
 
 KtLocalVariableSymbol:
+  annotationsList: []
   callableIdIfNonLocal: null
   isExtension: false
   isVal: true
@@ -101,10 +114,12 @@ KtLocalVariableSymbol:
   receiverType: null
   returnType: kotlin/Function1<kotlin/Int, kotlin/Int>
   symbolKind: LOCAL
+  typeParameters: []
   getContainingModule: KtSourceModule "Sources of main"
   deprecationStatus: null
 
 KtLocalVariableSymbol:
+  annotationsList: []
   callableIdIfNonLocal: null
   isExtension: false
   isVal: true
@@ -113,10 +128,12 @@ KtLocalVariableSymbol:
   receiverType: null
   returnType: kotlin/Int
   symbolKind: LOCAL
+  typeParameters: []
   getContainingModule: KtSourceModule "Sources of main"
   deprecationStatus: null
 
 KtAnonymousFunctionSymbol:
+  annotationsList: []
   callableIdIfNonLocal: null
   hasStableParameterNames: true
   isExtension: false
@@ -124,6 +141,7 @@ KtAnonymousFunctionSymbol:
   receiverType: null
   returnType: kotlin/Int
   symbolKind: LOCAL
+  typeParameters: []
   valueParameters: [
     KtValueParameterSymbol(it)
   ]
@@ -167,6 +185,7 @@ KtValueParameterSymbol:
   receiverType: null
   returnType: kotlin/Function1<kotlin/Int, kotlin/Int>
   symbolKind: LOCAL
+  typeParameters: []
   getContainingModule: KtSourceModule "Sources of main"
   deprecationStatus: null
 

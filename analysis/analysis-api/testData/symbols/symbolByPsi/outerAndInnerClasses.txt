@@ -1,7 +1,9 @@
 KtTypeParameterSymbol:
+  annotationsList: []
   isReified: false
   name: T
   origin: SOURCE
+  typeParameters: []
   upperBounds: [
     kotlin/Any?
   ]
@@ -10,9 +12,11 @@ KtTypeParameterSymbol:
   deprecationStatus: null
 
 KtTypeParameterSymbol:
+  annotationsList: []
   isReified: false
   name: T1
   origin: SOURCE
+  typeParameters: []
   upperBounds: [
     kotlin/Any?
   ]
@@ -45,9 +49,11 @@ KtNamedClassOrObjectSymbol:
   deprecationStatus: null
 
 KtTypeParameterSymbol:
+  annotationsList: []
   isReified: false
   name: T2
   origin: SOURCE
+  typeParameters: []
   upperBounds: [
     kotlin/Any?
   ]
@@ -80,9 +86,11 @@ KtNamedClassOrObjectSymbol:
   deprecationStatus: null
 
 KtTypeParameterSymbol:
+  annotationsList: []
   isReified: false
   name: T3
   origin: SOURCE
+  typeParameters: []
   upperBounds: [
     kotlin/Any?
   ]
@@ -91,9 +99,11 @@ KtTypeParameterSymbol:
   deprecationStatus: null
 
 KtTypeParameterSymbol:
+  annotationsList: []
   isReified: false
   name: T4
   origin: SOURCE
+  typeParameters: []
   upperBounds: [
     kotlin/Any?
   ]
@@ -102,9 +112,11 @@ KtTypeParameterSymbol:
   deprecationStatus: null
 
 KtTypeParameterSymbol:
+  annotationsList: []
   isReified: false
   name: T5
   origin: SOURCE
+  typeParameters: []
   upperBounds: [
     kotlin/Any?
   ]
@@ -137,9 +149,11 @@ KtNamedClassOrObjectSymbol:
   deprecationStatus: null
 
 KtTypeParameterSymbol:
+  annotationsList: []
   isReified: false
   name: T6
   origin: SOURCE
+  typeParameters: []
   upperBounds: [
     kotlin/Any?
   ]

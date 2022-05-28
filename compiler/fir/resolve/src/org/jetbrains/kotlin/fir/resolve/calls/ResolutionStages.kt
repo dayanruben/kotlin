@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.languageVersionSettings
 import org.jetbrains.kotlin.fir.matchingParameterFunctionType
 import org.jetbrains.kotlin.fir.references.FirSuperReference
-import org.jetbrains.kotlin.fir.resolve.dfa.symbol
 import org.jetbrains.kotlin.fir.resolve.directExpansionType
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.resolve.inference.ConeTypeParameterBasedTypeVariable
@@ -39,9 +38,7 @@ import org.jetbrains.kotlin.resolve.calls.inference.model.SimpleConstraintSystem
 import org.jetbrains.kotlin.resolve.calls.tasks.ExplicitReceiverKind.*
 import org.jetbrains.kotlin.resolve.calls.tower.CandidateApplicability
 import org.jetbrains.kotlin.resolve.deprecation.DeprecationLevelValue
-import org.jetbrains.kotlin.types.AbstractNullabilityChecker
-import org.jetbrains.kotlin.types.TypeApproximatorConfiguration
-import org.jetbrains.kotlin.types.isDefinitelyEmpty
+import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 abstract class ResolutionStage {
@@ -581,18 +578,20 @@ internal object CheckIncompatibleTypeVariableUpperBounds : ResolutionStage() {
                 val upperTypes = variableWithConstraints.constraints.extractUpperTypesToCheckIntersectionEmptiness()
 
                 // TODO: consider reporting errors on bounded type variables by incompatible types but with other lower constraints
-                if (
-                    variableWithConstraints.constraints.none { it.kind.isLower() }
-                    && upperTypes.computeEmptyIntersectionTypeKind().isDefinitelyEmpty()
-                ) {
-                    sink.yieldDiagnostic(
-                        @Suppress("UNCHECKED_CAST")
-                        InferredEmptyIntersectionDiagnostic(
-                            upperTypes as Collection<ConeKotlinType>,
-                            variableWithConstraints.typeVariable as ConeTypeVariable
-                        )
+                if (upperTypes.size <= 1 || variableWithConstraints.constraints.any { it.kind.isLower() })
+                    continue
+
+                val emptyIntersectionTypeInfo = candidate.system.getEmptyIntersectionTypeKind(upperTypes) ?: continue
+
+                sink.yieldDiagnostic(
+                    @Suppress("UNCHECKED_CAST")
+                    InferredEmptyIntersectionDiagnostic(
+                        upperTypes as List<ConeKotlinType>,
+                        emptyIntersectionTypeInfo.casingTypes.toList() as List<ConeKotlinType>,
+                        variableWithConstraints.typeVariable as ConeTypeVariable,
+                        emptyIntersectionTypeInfo.kind
                     )
-                }
+                )
             }
         }
 }

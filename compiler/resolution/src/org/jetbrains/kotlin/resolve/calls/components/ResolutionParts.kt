@@ -889,21 +889,35 @@ internal object CheckIncompatibleTypeVariableUpperBounds : ResolutionPart() {
         callComponents.statelessCallbacks.isOldIntersectionIsEmpty(upperTypes.cast())
 
     override fun ResolutionCandidate.process(workIndex: Int) = with(getSystem().asConstraintSystemCompleterContext()) {
-        for (variableWithConstraints in getSystem().getBuilder().currentStorage().notFixedTypeVariables.values) {
+        val constraintSystem = getSystem()
+        for (variableWithConstraints in constraintSystem.getBuilder().currentStorage().notFixedTypeVariables.values) {
             val upperTypes = variableWithConstraints.constraints.extractUpperTypesToCheckIntersectionEmptiness()
 
-            // TODO: consider reporting errors on bounded type variables by incompatible types but with other lower constraints
-            if (
-                variableWithConstraints.constraints.none { it.kind.isLower() }
-                && upperTypes.computeEmptyIntersectionTypeKind().isDefinitelyEmpty()
-            ) {
-                val isInferredEmptyIntersectionForbidden =
-                    callComponents.languageVersionSettings.supportsFeature(LanguageFeature.ForbidInferringTypeVariablesIntoEmptyIntersection)
+            when {
+                // TODO: consider reporting errors on bounded type variables by incompatible types but with other lower constraints
+                upperTypes.size <= 1 || variableWithConstraints.constraints.any { it.kind.isLower() } ->
+                    continue
+                wasPreviouslyDiscriminated(upperTypes) -> {
+                    markCandidateForCompatibilityResolve(needToReportWarning = false)
+                    continue
+                }
+                else -> {
+                    val emptyIntersectionTypeInfo = constraintSystem.getEmptyIntersectionTypeKind(upperTypes) ?: continue
+                    val isInferredEmptyIntersectionForbidden = callComponents.languageVersionSettings.supportsFeature(
+                        LanguageFeature.ForbidInferringTypeVariablesIntoEmptyIntersection
+                    )
+                    val errorFactory =
+                        if (isInferredEmptyIntersectionForbidden) ::InferredEmptyIntersectionError else ::InferredEmptyIntersectionWarning
 
-                val errorFactory = if (isInferredEmptyIntersectionForbidden || wasPreviouslyDiscriminated(upperTypes))
-                    ::InferredEmptyIntersectionError
-                else ::InferredEmptyIntersectionWarning
-                addError(errorFactory(upperTypes, variableWithConstraints.typeVariable))
+                    addError(
+                        errorFactory(
+                            upperTypes,
+                            emptyIntersectionTypeInfo.casingTypes.toList(),
+                            variableWithConstraints.typeVariable,
+                            emptyIntersectionTypeInfo.kind
+                        )
+                    )
+                }
             }
         }
     }

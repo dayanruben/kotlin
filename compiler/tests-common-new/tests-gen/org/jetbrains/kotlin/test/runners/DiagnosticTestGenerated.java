@@ -2833,6 +2833,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("kt52503.kt")
+            public void testKt52503() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/callableReference/kt52503.kt");
+            }
+
+            @Test
             @TestMetadata("kt7430_wrongClassOnLHS.kt")
             public void testKt7430_wrongClassOnLHS() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/callableReference/kt7430_wrongClassOnLHS.kt");
@@ -13917,12 +13923,6 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
-            @TestMetadata("kt51844.kt")
-            public void testKt51844() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/inference/kt51844.kt");
-            }
-
-            @Test
             @TestMetadata("kt6175.kt")
             public void testKt6175() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/inference/kt6175.kt");
@@ -14244,9 +14244,21 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 }
 
                 @Test
+                @TestMetadata("kt50498.kt")
+                public void testKt50498() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/kt50498.kt");
+                }
+
+                @Test
                 @TestMetadata("kt50989.kt")
                 public void testKt50989() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/builderInference/kt50989.kt");
+                }
+
+                @Test
+                @TestMetadata("kt51148.kt")
+                public void testKt51148() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/kt51148.kt");
                 }
 
                 @Test
@@ -15588,6 +15600,18 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 }
 
                 @Test
+                @TestMetadata("kt52393.kt")
+                public void testKt52393() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/emptyIntersectionTypes/kt52393.kt");
+                }
+
+                @Test
+                @TestMetadata("kt52431.kt")
+                public void testKt52431() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/emptyIntersectionTypes/kt52431.kt");
+                }
+
+                @Test
                 @TestMetadata("nullableEmptyIntersection.kt")
                 public void testNullableEmptyIntersection() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/emptyIntersectionTypes/nullableEmptyIntersection.kt");
@@ -16918,6 +16942,18 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("extensionOnFunction.kt")
             public void testExtensionOnFunction() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/inline/extensionOnFunction.kt");
+            }
+
+            @Test
+            @TestMetadata("forbidExtensionCallsOnInlineFunctionalParameters_after.kt")
+            public void testForbidExtensionCallsOnInlineFunctionalParameters_after() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inline/forbidExtensionCallsOnInlineFunctionalParameters_after.kt");
+            }
+
+            @Test
+            @TestMetadata("forbidExtensionCallsOnInlineFunctionalParameters_before.kt")
+            public void testForbidExtensionCallsOnInlineFunctionalParameters_before() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inline/forbidExtensionCallsOnInlineFunctionalParameters_before.kt");
             }
 
             @Test

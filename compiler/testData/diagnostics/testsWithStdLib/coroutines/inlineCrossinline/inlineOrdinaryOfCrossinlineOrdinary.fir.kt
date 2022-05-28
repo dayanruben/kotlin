@@ -1,3 +1,4 @@
+// !LANGUAGE: +ForbidExtensionCallsOnInlineFunctionalParameters
 // !DIAGNOSTICS: -UNUSED_VARIABLE
 // WITH_COROUTINES
 // SKIP_TXT
@@ -21,7 +22,7 @@ inline fun test(crossinline c: () -> Unit) {
         }
     }
     val l = { c() }
-    c.<!USAGE_IS_NOT_INLINABLE!>startCoroutine<!>(EmptyContinuation)
+    <!USAGE_IS_NOT_INLINABLE!>c<!>.startCoroutine(EmptyContinuation)
 }
 
 suspend fun calculate() = "OK"
