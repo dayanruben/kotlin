@@ -126,7 +126,7 @@ rootProject.apply {
 IdeVersionConfigurator.setCurrentIde(project)
 
 if (!project.hasProperty("versions.kotlin-native")) {
-    extra["versions.kotlin-native"] = "1.7.20-dev-1094"
+    extra["versions.kotlin-native"] = "1.7.20-dev-1583"
 }
 
 val irCompilerModules = arrayOf(
@@ -501,8 +501,7 @@ tasks {
         )).forEach {
             dependsOn("$it:check")
         }
-        // Temporary disabled while bootstrapping is in progress
-        // dependsOn(":kotlin-stdlib-wasm:runWasmStdLibTestsWithD8") //Instead of :kotlin-stdlib-wasm:check
+        dependsOn(":kotlin-stdlib-wasm:runWasmStdLibTestsWithD8") //Instead of :kotlin-stdlib-wasm:check
     }
 
     register("gradlePluginTest") {
