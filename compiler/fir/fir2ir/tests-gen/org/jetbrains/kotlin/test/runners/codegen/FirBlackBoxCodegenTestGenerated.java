@@ -132,6 +132,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         }
 
         @Test
+        @TestMetadata("correctTypeForClassReferenceExpressionInAnnotation.kt")
+        public void testCorrectTypeForClassReferenceExpressionInAnnotation() throws Exception {
+            runTest("compiler/testData/codegen/box/annotations/correctTypeForClassReferenceExpressionInAnnotation.kt");
+        }
+
+        @Test
         @TestMetadata("defaultParameterValues.kt")
         public void testDefaultParameterValues() throws Exception {
             runTest("compiler/testData/codegen/box/annotations/defaultParameterValues.kt");
@@ -309,6 +315,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         @TestMetadata("resolveWithLowPriorityAnnotation.kt")
         public void testResolveWithLowPriorityAnnotation() throws Exception {
             runTest("compiler/testData/codegen/box/annotations/resolveWithLowPriorityAnnotation.kt");
+        }
+
+        @Test
+        @TestMetadata("resolvedReturnTypeForJavaEnumEntryAfterDeserialization.kt")
+        public void testResolvedReturnTypeForJavaEnumEntryAfterDeserialization() throws Exception {
+            runTest("compiler/testData/codegen/box/annotations/resolvedReturnTypeForJavaEnumEntryAfterDeserialization.kt");
         }
 
         @Test
@@ -14571,6 +14583,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
             public void testWithSideEffects() throws Exception {
                 runTest("compiler/testData/codegen/box/delegatedProperty/delegateToAnother/withSideEffects.kt");
             }
+
+            @Test
+            @TestMetadata("withSideEffectsFromFileClass.kt")
+            public void testWithSideEffectsFromFileClass() throws Exception {
+                runTest("compiler/testData/codegen/box/delegatedProperty/delegateToAnother/withSideEffectsFromFileClass.kt");
+            }
         }
 
         @Nested
@@ -25249,6 +25267,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         @Test
         public void testAllFilesPresentInInnerNested() throws Exception {
             KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/innerNested"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+        }
+
+        @Test
+        @TestMetadata("considerPropertyInitValueFromNestedClass.kt")
+        public void testConsiderPropertyInitValueFromNestedClass() throws Exception {
+            runTest("compiler/testData/codegen/box/innerNested/considerPropertyInitValueFromNestedClass.kt");
         }
 
         @Test

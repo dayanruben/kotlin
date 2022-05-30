@@ -1,8 +1,11 @@
+// This artifact is deprecated and will be remove in the near future. Use `kotlin-jps-plugin` instead
 idePluginDependency {
     @Suppress("UNCHECKED_CAST")
-    val compilerComponents = rootProject.extra["compilerModulesForJps"] as List<String>
+    val embeddedDependencies = rootProject.extra["kotlinJpsPluginEmbeddedDependencies"] as List<String>
+    @Suppress("UNCHECKED_CAST")
+    val mavenDependencies = rootProject.extra["kotlinJpsPluginMavenDependencies"] as List<String>
 
-    val otherProjects = listOf(":kotlin-daemon-client", ":jps:jps-plugin", ":jps:jps-common", ":kotlin-reflect")
+    val otherProjects = listOf(":jps:jps-plugin", ":jps:jps-common")
 
-    publishProjectJars(compilerComponents + otherProjects, libraryDependencies = listOf(protobufFull()))
+    publishProjectJars(embeddedDependencies + mavenDependencies + otherProjects, libraryDependencies = listOf(protobufFull()))
 }

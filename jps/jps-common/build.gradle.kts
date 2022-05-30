@@ -5,22 +5,25 @@ plugins {
 }
 
 dependencies {
-    api(kotlinStdlib())
-    compileOnly(project(":kotlin-reflect-api"))
-    testImplementation(project(":kotlin-reflect"))
-    api(project(":compiler:util"))
-    api(project(":compiler:cli-common"))
-    api(project(":compiler:frontend.java"))
-    api(project(":js:js.frontend"))
-    api(project(":native:frontend.native"))
+    implementation(kotlinStdlib())
+    rootProject.extra["kotlinJpsPluginEmbeddedDependencies"]
+        .let { it as List<String> }
+        .forEach { implementation(project(it)) }
+
+    rootProject.extra["kotlinJpsPluginMavenDependencies"]
+        .let { it as List<String> }
+        .forEach { implementation(project(it)) }
+
     compileOnly(intellijUtilRt())
     compileOnly(intellijPlatformUtil())
     compileOnly(jpsModel())
     compileOnly(jpsModelImpl())
     compileOnly(jpsModelSerialization())
 
-    testApi(jpsModelSerialization())
-    testApi(commonDependency("junit:junit"))
+    testImplementation(project(":compiler:cli-common"))
+    testImplementation(jpsModelSerialization())
+    testImplementation(project(":kotlin-reflect"))
+    testImplementation(commonDependency("junit:junit"))
 }
 
 sourceSets {

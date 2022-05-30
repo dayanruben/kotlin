@@ -242,12 +242,8 @@ extra["compilerModules"] =
             commonCompilerModules +
             firAllCompilerModules
 
-
-extra["compilerModulesForJps"] = listOf(
-    ":kotlin-build-common",
-    ":kotlin-util-io",
-    ":kotlin-util-klib",
-    ":kotlin-util-klib-metadata",
+// They are embedded just because we don't publish those dependencies as separate Maven artifacts (yet)
+extra["kotlinJpsPluginEmbeddedDependencies"] = listOf(
     ":compiler:cli-common",
     ":kotlin-compiler-runner-unshaded",
     ":daemon-common",
@@ -257,7 +253,6 @@ extra["compilerModulesForJps"] = listOf(
     ":core:descriptors",
     ":core:descriptors.jvm",
     ":compiler:backend.common.jvm",
-    ":native:kotlin-native-utils",
     ":js:js.serializer",
     ":core:deserialization",
     ":core:deserialization.common",
@@ -266,7 +261,6 @@ extra["compilerModulesForJps"] = listOf(
     ":compiler:frontend.java",
     ":core:metadata",
     ":core:metadata.jvm",
-    ":jps:jps-common",
     ":kotlin-preloader",
     ":compiler:util",
     ":compiler:config",
@@ -274,6 +268,16 @@ extra["compilerModulesForJps"] = listOf(
     ":js:js.config",
     ":core:util.runtime",
     ":compiler:compiler.version"
+)
+
+extra["kotlinJpsPluginMavenDependencies"] = listOf(
+    ":kotlin-daemon-client",
+    ":kotlin-build-common",
+    ":kotlin-reflect",
+    ":kotlin-util-io",
+    ":kotlin-util-klib",
+    ":kotlin-util-klib-metadata",
+    ":native:kotlin-native-utils"
 )
 
 extra["compilerArtifactsForIde"] = listOfNotNull(
@@ -292,7 +296,6 @@ extra["compilerArtifactsForIde"] = listOfNotNull(
     ":prepare:ide-plugin-dependencies:kotlinx-serialization-compiler-plugin-for-ide",
     ":prepare:ide-plugin-dependencies:noarg-compiler-plugin-for-ide",
     ":prepare:ide-plugin-dependencies:sam-with-receiver-compiler-plugin-for-ide",
-    ":prepare:ide-plugin-dependencies:compiler-components-for-jps",
     ":prepare:ide-plugin-dependencies:parcelize-compiler-plugin-for-ide",
     ":prepare:ide-plugin-dependencies:lombok-compiler-plugin-for-ide",
     ":prepare:ide-plugin-dependencies:kotlin-backend-native-for-ide".takeIf { kotlinBuildProperties.isKotlinNativeEnabled },
@@ -316,6 +319,7 @@ extra["compilerArtifactsForIde"] = listOfNotNull(
     ":prepare:ide-plugin-dependencies:kotlin-compiler-common-for-ide",
     ":prepare:ide-plugin-dependencies:kotlin-compiler-fe10-for-ide",
     ":prepare:ide-plugin-dependencies:kotlin-compiler-fir-for-ide",
+    ":prepare:kotlin-jps-plugin",
     ":kotlin-script-runtime",
     ":kotlin-script-util",
     ":kotlin-scripting-common",

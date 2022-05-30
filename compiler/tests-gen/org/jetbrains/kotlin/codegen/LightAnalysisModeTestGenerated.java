@@ -113,6 +113,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/annotations/constValInAnnotation.kt");
         }
 
+        @TestMetadata("correctTypeForClassReferenceExpressionInAnnotation.kt")
+        public void testCorrectTypeForClassReferenceExpressionInAnnotation() throws Exception {
+            runTest("compiler/testData/codegen/box/annotations/correctTypeForClassReferenceExpressionInAnnotation.kt");
+        }
+
         @TestMetadata("defaultParameterValues.kt")
         public void testDefaultParameterValues() throws Exception {
             runTest("compiler/testData/codegen/box/annotations/defaultParameterValues.kt");
@@ -256,6 +261,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("resolveWithLowPriorityAnnotation.kt")
         public void testResolveWithLowPriorityAnnotation() throws Exception {
             runTest("compiler/testData/codegen/box/annotations/resolveWithLowPriorityAnnotation.kt");
+        }
+
+        @TestMetadata("resolvedReturnTypeForJavaEnumEntryAfterDeserialization.kt")
+        public void testResolvedReturnTypeForJavaEnumEntryAfterDeserialization() throws Exception {
+            runTest("compiler/testData/codegen/box/annotations/resolvedReturnTypeForJavaEnumEntryAfterDeserialization.kt");
         }
 
         @TestMetadata("retentionInJava.kt")
@@ -11787,6 +11797,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             public void testWithSideEffects() throws Exception {
                 runTest("compiler/testData/codegen/box/delegatedProperty/delegateToAnother/withSideEffects.kt");
             }
+
+            @TestMetadata("withSideEffectsFromFileClass.kt")
+            public void testWithSideEffectsFromFileClass() throws Exception {
+                runTest("compiler/testData/codegen/box/delegatedProperty/delegateToAnother/withSideEffectsFromFileClass.kt");
+            }
         }
 
         @TestMetadata("compiler/testData/codegen/box/delegatedProperty/local")
@@ -20806,6 +20821,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
 
         public void testAllFilesPresentInInnerNested() throws Exception {
             KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/innerNested"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
+        }
+
+        @TestMetadata("considerPropertyInitValueFromNestedClass.kt")
+        public void testConsiderPropertyInitValueFromNestedClass() throws Exception {
+            runTest("compiler/testData/codegen/box/innerNested/considerPropertyInitValueFromNestedClass.kt");
         }
 
         @TestMetadata("createNestedClass.kt")

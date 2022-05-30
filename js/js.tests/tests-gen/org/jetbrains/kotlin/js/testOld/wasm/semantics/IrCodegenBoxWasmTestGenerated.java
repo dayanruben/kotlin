@@ -9792,6 +9792,11 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
             public void testWithSideEffects() throws Exception {
                 runTest("compiler/testData/codegen/box/delegatedProperty/delegateToAnother/withSideEffects.kt");
             }
+
+            @TestMetadata("withSideEffectsFromFileClass.kt")
+            public void testWithSideEffectsFromFileClass() throws Exception {
+                runTest("compiler/testData/codegen/box/delegatedProperty/delegateToAnother/withSideEffectsFromFileClass.kt");
+            }
         }
 
         @TestMetadata("compiler/testData/codegen/box/delegatedProperty/local")
@@ -17589,6 +17594,11 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
 
         public void testAllFilesPresentInInnerNested() throws Exception {
             KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/innerNested"), Pattern.compile("^([^_](.+))\\.kt$"), null, TargetBackend.WASM, true);
+        }
+
+        @TestMetadata("considerPropertyInitValueFromNestedClass.kt")
+        public void testConsiderPropertyInitValueFromNestedClass() throws Exception {
+            runTest("compiler/testData/codegen/box/innerNested/considerPropertyInitValueFromNestedClass.kt");
         }
 
         @TestMetadata("createNestedClass.kt")

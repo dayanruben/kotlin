@@ -25797,6 +25797,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("varInsideLambdaThatPassedToExtensionFunctionWithTypeParametersThatDefinedInsideThisLambda.kt")
+            public void testVarInsideLambdaThatPassedToExtensionFunctionWithTypeParametersThatDefinedInsideThisLambda() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/resolve/varInsideLambdaThatPassedToExtensionFunctionWithTypeParametersThatDefinedInsideThisLambda.kt");
+            }
+
+            @Test
             @TestMetadata("wrongNumberOfTypeArguments.kt")
             public void testWrongNumberOfTypeArguments() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/resolve/wrongNumberOfTypeArguments.kt");
@@ -34496,6 +34502,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("throws.kt")
             public void testThrows() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/annotations/throws.kt");
+            }
+
+            @Test
+            @TestMetadata("throwsByStarWinsBuiltin.kt")
+            public void testThrowsByStarWinsBuiltin() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/annotations/throwsByStarWinsBuiltin.kt");
             }
 
             @Test

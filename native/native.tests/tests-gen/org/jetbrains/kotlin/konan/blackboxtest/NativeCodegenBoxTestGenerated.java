@@ -12029,6 +12029,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
                 public void testWithSideEffects() throws Exception {
                     runTest("compiler/testData/codegen/box/delegatedProperty/delegateToAnother/withSideEffects.kt");
                 }
+
+                @Test
+                @TestMetadata("withSideEffectsFromFileClass.kt")
+                public void testWithSideEffectsFromFileClass() throws Exception {
+                    runTest("compiler/testData/codegen/box/delegatedProperty/delegateToAnother/withSideEffectsFromFileClass.kt");
+                }
             }
 
             @Nested
@@ -22520,6 +22526,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
             @Test
             public void testAllFilesPresentInInnerNested() throws Exception {
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/innerNested"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+            }
+
+            @Test
+            @TestMetadata("considerPropertyInitValueFromNestedClass.kt")
+            public void testConsiderPropertyInitValueFromNestedClass() throws Exception {
+                runTest("compiler/testData/codegen/box/innerNested/considerPropertyInitValueFromNestedClass.kt");
             }
 
             @Test
