@@ -152,7 +152,10 @@ internal class KtFe10Renderer(
         renderName(descriptor)
 
         val upperBounds = descriptor.upperBounds.filterNot { it.isNullableAny() }
-        printCollectionIfNotEmpty(upperBounds, separator = " & ", prefix = " : ") { renderType(it) }
+        if (upperBounds.isNotEmpty()) {
+            append(" : ")
+            renderType(upperBounds.first())
+        }
     }
 
     private fun KtFe10RendererConsumer.renderClass(descriptor: ClassDescriptor) {
@@ -186,6 +189,8 @@ internal class KtFe10Renderer(
 
         renderTypeParameters(descriptor.declaredTypeParameters)
         renderSupertypes(descriptor)
+
+        renderWhereSuffix(descriptor.declaredTypeParameters)
 
         if (options.renderClassMembers) {
             val (enumEntries, otherDeclarations) = descriptor.unsubstitutedMemberScope.getContributedDescriptors()
@@ -349,6 +354,7 @@ internal class KtFe10Renderer(
         renderName(descriptor)
         append(": ")
         renderType(descriptor.type, shouldApproximate = options.approximateTypes)
+        renderWhereSuffix(descriptor.typeParameters)
 
         if (options.renderClassMembers) {
             fun shouldRenderAccessor(accessor: PropertyAccessorDescriptor): Boolean {
@@ -377,7 +383,7 @@ internal class KtFe10Renderer(
 
     private fun KtFe10RendererConsumer.renderReceiver(descriptor: CallableDescriptor) {
         val extensionReceiver = descriptor.extensionReceiverParameter ?: return
-        val needsParentheses = !descriptor.annotations.isEmpty() || needsParenthesis(extensionReceiver.type)
+        val needsParentheses = !extensionReceiver.annotations.isEmpty() || needsParenthesis(extensionReceiver.type)
         if (needsParentheses) {
             append('(')
         }
@@ -415,6 +421,24 @@ internal class KtFe10Renderer(
         if (returnType != null && !returnType.isUnit()) {
             append(": ")
             renderType(returnType, shouldApproximate = options.approximateTypes)
+        }
+
+        renderWhereSuffix(descriptor.typeParameters)
+    }
+
+    private fun KtFe10RendererConsumer.renderWhereSuffix(descriptors: List<TypeParameterDescriptor>) {
+        val upperBoundStrings = ArrayList<String>(0)
+
+        for (typeParameter in descriptors) {
+            typeParameter.upperBounds
+                .drop(1) // first parameter is rendered by renderTypeParameter
+                .mapTo(upperBoundStrings) { typeParameter.name.render() + " : " + prettyPrint { renderType(it) } }
+        }
+
+        if (upperBoundStrings.isNotEmpty()) {
+            append(" where ")
+            upperBoundStrings.joinTo(this, ", ")
+            append(' ')
         }
     }
 
@@ -477,7 +501,7 @@ internal class KtFe10Renderer(
         }
 
         if (descriptor is CallableMemberDescriptor) {
-            renderModifier("override", descriptor.isExplicitOverride, RendererModifier.OVERRIDE)
+            renderModifier("override", descriptor !is DeserializedDescriptor && descriptor.isExplicitOverride, RendererModifier.OVERRIDE)
         }
 
         if (descriptor is ValueParameterDescriptor) {

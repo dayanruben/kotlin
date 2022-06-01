@@ -8,9 +8,9 @@ package org.jetbrains.kotlin.analysis.api.descriptors.symbols.descriptorBased.ba
 import org.jetbrains.kotlin.analysis.api.*
 import org.jetbrains.kotlin.analysis.api.annotations.*
 import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
-import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.components.KtDeclarationRendererOptions
 import org.jetbrains.kotlin.analysis.api.descriptors.Fe10AnalysisContext
+import org.jetbrains.kotlin.analysis.api.descriptors.symbols.KtFe10PackageSymbol
 import org.jetbrains.kotlin.analysis.api.descriptors.symbols.descriptorBased.*
 import org.jetbrains.kotlin.analysis.api.descriptors.symbols.psiBased.base.KtFe10PsiSymbol
 import org.jetbrains.kotlin.analysis.api.descriptors.types.*
@@ -26,10 +26,7 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.descriptors.impl.*
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.load.java.descriptors.JavaCallableMemberDescriptor
-import org.jetbrains.kotlin.load.java.descriptors.JavaClassDescriptor
-import org.jetbrains.kotlin.load.java.descriptors.JavaForKotlinOverridePropertyDescriptor
-import org.jetbrains.kotlin.load.java.descriptors.JavaPropertyDescriptor
+import org.jetbrains.kotlin.load.java.descriptors.*
 import org.jetbrains.kotlin.load.java.sources.JavaSourceElement
 import org.jetbrains.kotlin.load.kotlin.toSourceElement
 import org.jetbrains.kotlin.name.CallableId
@@ -89,7 +86,9 @@ internal fun DeclarationDescriptor.toKtSymbol(analysisContext: Fe10AnalysisConte
 
     return when (this) {
         is ClassifierDescriptor -> toKtClassifierSymbol(analysisContext)
+        is ReceiverParameterDescriptor -> toKtReceiverParameterSymbol(analysisContext)
         is CallableDescriptor -> toKtCallableSymbol(analysisContext)
+        is PackageViewDescriptor -> toKtPackageSymbol(analysisContext)
         else -> null
     }
 }
@@ -109,6 +108,14 @@ internal fun ClassDescriptor.toKtClassSymbol(analysisContext: Fe10AnalysisContex
     } else {
         KtFe10DescNamedClassOrObjectSymbol(this, analysisContext)
     }
+}
+
+internal fun PackageViewDescriptor.toKtPackageSymbol(analysisContext: Fe10AnalysisContext): KtPackageSymbol {
+    return KtFe10PackageSymbol(fqName, analysisContext)
+}
+
+internal fun ReceiverParameterDescriptor.toKtReceiverParameterSymbol(analysisContext: Fe10AnalysisContext): KtReceiverParameterSymbol {
+    return KtFe10ReceiverParameterSymbol(this, analysisContext)
 }
 
 internal fun KtSymbol.getDescriptor(): DeclarationDescriptor? {
@@ -342,7 +349,10 @@ internal val MemberDescriptor.ktModality: Modality
         if (selfModality == Modality.OPEN) {
             val containingDeclaration = this.containingDeclaration
             if (containingDeclaration is ClassDescriptor && containingDeclaration.modality == Modality.FINAL) {
-                return Modality.FINAL
+                if (this !is CallableMemberDescriptor || dispatchReceiverParameter != null) {
+                    // Non-static open callables in final class are counted as final (to match FIR)
+                    return Modality.FINAL
+                }
             }
         }
 

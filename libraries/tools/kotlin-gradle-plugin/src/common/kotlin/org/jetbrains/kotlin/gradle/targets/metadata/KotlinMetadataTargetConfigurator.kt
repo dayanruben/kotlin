@@ -403,13 +403,13 @@ class KotlinMetadataTargetConfigurator :
     }
 
     /** Ensure that the [configuration] excludes the dependencies that are classified by this [GranularMetadataTransformation] as
-     * [MetadataDependencyResolution.ExcludeAsUnrequested], and uses exactly the same versions as were resolved for the requested
+     * [MetadataDependencyResolution.Exclude], and uses exactly the same versions as were resolved for the requested
      * dependencies during the transformation. */
     private fun GranularMetadataTransformation.applyToConfiguration(configuration: Configuration) {
         // Run this action immediately before the configuration first takes part in dependency resolution:
         configuration.withDependencies {
             val (unrequested, requested) = metadataDependencyResolutions
-                .partition { it is MetadataDependencyResolution.ExcludeAsUnrequested }
+                .partition { it is MetadataDependencyResolution.Exclude }
 
             unrequested.forEach {
                 val (group, name) = it.projectDependency?.run {
@@ -528,7 +528,7 @@ internal fun createMetadataDependencyTransformationClasspath(
             val artifactView = fromFiles.incoming.artifactView { view ->
                 view.componentFilter { id ->
                     allResolutionsByComponentId[id].let { resolutions ->
-                        resolutions == null || resolutions.any { it !is MetadataDependencyResolution.ExcludeAsUnrequested }
+                        resolutions == null || resolutions.any { it !is MetadataDependencyResolution.Exclude }
                     }
                 }
             }

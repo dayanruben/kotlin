@@ -61,6 +61,7 @@ object OperatorNameConventions {
     @JvmField val MOD = Name.identifier("mod")
     @JvmField val REM = Name.identifier("rem")
     @JvmField val RANGE_TO = Name.identifier("rangeTo")
+    @JvmField val RANGE_UNTIL = Name.identifier("rangeUntil")
 
     @JvmField val TIMES_ASSIGN = Name.identifier("timesAssign")
     @JvmField val DIV_ASSIGN = Name.identifier("divAssign")
@@ -78,7 +79,7 @@ object OperatorNameConventions {
     val SIMPLE_UNARY_OPERATION_NAMES = setOf(UNARY_PLUS, UNARY_MINUS, NOT, INV)
 
     @JvmField
-    val BINARY_OPERATION_NAMES = setOf(TIMES, PLUS, MINUS, DIV, MOD, REM, RANGE_TO)
+    val BINARY_OPERATION_NAMES = setOf(TIMES, PLUS, MINUS, DIV, MOD, REM, RANGE_TO, RANGE_UNTIL)
 
     @JvmField
     val ASSIGNMENT_OPERATIONS = setOf(TIMES_ASSIGN, DIV_ASSIGN, MOD_ASSIGN, REM_ASSIGN, PLUS_ASSIGN, MINUS_ASSIGN)

@@ -14220,6 +14220,42 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
                 }
 
                 @Test
+                @TestMetadata("kt47986Default.kt")
+                public void testKt47986Default() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/kt47986Default.kt");
+                }
+
+                @Test
+                @TestMetadata("kt47986Disabled.kt")
+                public void testKt47986Disabled() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/kt47986Disabled.kt");
+                }
+
+                @Test
+                @TestMetadata("kt47986Enabled.kt")
+                public void testKt47986Enabled() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/kt47986Enabled.kt");
+                }
+
+                @Test
+                @TestMetadata("kt47986_2.kt")
+                public void testKt47986_2() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/kt47986_2.kt");
+                }
+
+                @Test
+                @TestMetadata("kt47986_3.kt")
+                public void testKt47986_3() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/kt47986_3.kt");
+                }
+
+                @Test
+                @TestMetadata("kt47986_4.kt")
+                public void testKt47986_4() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/kt47986_4.kt");
+                }
+
+                @Test
                 @TestMetadata("kt49285.kt")
                 public void testKt49285() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/builderInference/kt49285.kt");
@@ -14253,6 +14289,12 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
                 @TestMetadata("kt51148.kt")
                 public void testKt51148() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/builderInference/kt51148.kt");
+                }
+
+                @Test
+                @TestMetadata("kt51464.kt")
+                public void testKt51464() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/kt51464.kt");
                 }
 
                 @Test
@@ -22342,6 +22384,40 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
             @TestMetadata("plusAssignOnVarAndCollections.kt")
             public void testPlusAssignOnVarAndCollections() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/operatorsOverloading/plusAssignOnVarAndCollections.kt");
+            }
+
+            @Nested
+            @TestMetadata("compiler/testData/diagnostics/tests/operatorsOverloading/until")
+            @TestDataPath("$PROJECT_ROOT")
+            public class Until {
+                @Test
+                public void testAllFilesPresentInUntil() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/operatorsOverloading/until"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
+                }
+
+                @Test
+                @TestMetadata("custom.kt")
+                public void testCustom() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/operatorsOverloading/until/custom.kt");
+                }
+
+                @Test
+                @TestMetadata("customDefault.kt")
+                public void testCustomDefault() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/operatorsOverloading/until/customDefault.kt");
+                }
+
+                @Test
+                @TestMetadata("customDisabled.kt")
+                public void testCustomDisabled() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/operatorsOverloading/until/customDisabled.kt");
+                }
+
+                @Test
+                @TestMetadata("simple.kt")
+                public void testSimple() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/operatorsOverloading/until/simple.kt");
+                }
             }
         }
 
