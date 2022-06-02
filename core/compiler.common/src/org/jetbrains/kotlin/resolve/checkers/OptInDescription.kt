@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.resolve.checkers
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.name.FqName
 
-data class Experimentality(val annotationFqName: FqName, val severity: Severity, val message: String?) {
+data class OptInDescription(val annotationFqName: FqName, val severity: Severity, val message: String?) {
     enum class Severity { WARNING, ERROR, FUTURE_ERROR }
 
     companion object {
@@ -22,3 +22,7 @@ data class Experimentality(val annotationFqName: FqName, val severity: Severity,
         )
     }
 }
+
+@Deprecated("Please use OptInDescription instead", ReplaceWith("OptInDescription"))
+@Suppress("unused")
+typealias Experimentality = OptInDescription

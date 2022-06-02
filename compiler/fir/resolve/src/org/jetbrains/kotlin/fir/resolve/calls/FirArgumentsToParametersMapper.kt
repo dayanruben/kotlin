@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.fir.resolve.calls
 
 import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
 import org.jetbrains.kotlin.fir.declarations.FirFunction
 import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
 import org.jetbrains.kotlin.fir.declarations.FirValueParameter
@@ -79,7 +80,11 @@ fun BodyResolveComponents.mapArguments(
 
     // If this is an indexed access set operator, it could have default values or a vararg parameter in the middle.
     // For proper argument mapping, wrap the last one, which is supposed to be the updated value, as a named argument.
-    val isIndexedSetOperator = function is FirSimpleFunction && function.isOperator && function.name == OperatorNameConventions.SET
+    val isIndexedSetOperator = function is FirSimpleFunction
+            && function.isOperator
+            && function.name == OperatorNameConventions.SET
+            && function.origin !is FirDeclarationOrigin.DynamicScope
+
     if (isIndexedSetOperator &&
         function.valueParameters.any { it.defaultValue != null || it.isVararg }
     ) {
@@ -154,19 +159,25 @@ private class FirCallArgumentsProcessor(
     }
 
     private fun processNonLambdaArgument(argument: FirExpression, isLastArgument: Boolean) {
-        // process position argument
-        if (argument !is FirNamedArgumentExpression) {
-            if (processPositionArgument(argument, isLastArgument)) {
-                state = State.VARARG_POSITION
+        when {
+            // process position argument
+            argument !is FirNamedArgumentExpression -> {
+                if (processPositionArgument(argument, isLastArgument)) {
+                    state = State.VARARG_POSITION
+                }
             }
-        }
-        // process named argument
-        else {
-            if (state == State.VARARG_POSITION) {
-                completeVarargPositionArguments()
+            // process named argument
+            function.origin == FirDeclarationOrigin.DynamicScope -> {
+                if (processPositionArgument(argument.expression, isLastArgument)) {
+                    state = State.VARARG_POSITION
+                }
             }
-
-            processNamedArgument(argument)
+            else -> {
+                if (state == State.VARARG_POSITION) {
+                    completeVarargPositionArguments()
+                }
+                processNamedArgument(argument)
+            }
         }
     }
 

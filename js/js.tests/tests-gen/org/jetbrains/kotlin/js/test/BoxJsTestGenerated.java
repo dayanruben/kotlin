@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
 public class BoxJsTestGenerated extends AbstractBoxJsTest {
     @Test
     public void testAllFilesPresentInBox() throws Exception {
-        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("js/js.translator/testData/box"), Pattern.compile("^([^_](.+))\\.kt$"), null, TargetBackend.JS, true);
+        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("js/js.translator/testData/box"), Pattern.compile("^([^_](.+))\\.kt$"), null, TargetBackend.JS, true, "closure/inlineAnonymousFunctions");
     }
 
     @Nested
@@ -347,7 +347,7 @@ public class BoxJsTestGenerated extends AbstractBoxJsTest {
     public class Closure {
         @Test
         public void testAllFilesPresentInClosure() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("js/js.translator/testData/box/closure"), Pattern.compile("^([^_](.+))\\.kt$"), null, TargetBackend.JS, true);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("js/js.translator/testData/box/closure"), Pattern.compile("^([^_](.+))\\.kt$"), null, TargetBackend.JS, true, "inlineAnonymousFunctions");
         }
 
         @Test

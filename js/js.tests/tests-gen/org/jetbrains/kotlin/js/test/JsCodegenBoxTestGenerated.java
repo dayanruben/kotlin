@@ -7194,6 +7194,12 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
         }
 
         @Test
+        @TestMetadata("kt52561.kt")
+        public void testKt52561() throws Exception {
+            runTest("compiler/testData/codegen/box/coroutines/kt52561.kt");
+        }
+
+        @Test
         @TestMetadata("lastExpressionIsLoop.kt")
         public void testLastExpressionIsLoop() throws Exception {
             runTest("compiler/testData/codegen/box/coroutines/lastExpressionIsLoop.kt");
@@ -32792,6 +32798,12 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
         }
 
         @Test
+        @TestMetadata("avoidSmartCastToDerivedForPrivate.kt")
+        public void testAvoidSmartCastToDerivedForPrivate() throws Exception {
+            runTest("compiler/testData/codegen/box/smartCasts/avoidSmartCastToDerivedForPrivate.kt");
+        }
+
+        @Test
         @TestMetadata("complexExplicitReceiver.kt")
         public void testComplexExplicitReceiver() throws Exception {
             runTest("compiler/testData/codegen/box/smartCasts/complexExplicitReceiver.kt");
@@ -32891,6 +32903,12 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
         @TestMetadata("kt44942.kt")
         public void testKt44942() throws Exception {
             runTest("compiler/testData/codegen/box/smartCasts/kt44942.kt");
+        }
+
+        @Test
+        @TestMetadata("kt52432.kt")
+        public void testKt52432() throws Exception {
+            runTest("compiler/testData/codegen/box/smartCasts/kt52432.kt");
         }
 
         @Test

@@ -616,7 +616,12 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
         val resultInitializer = buildFunctionCall {
             source = desugaredSource
             calleeReference = buildSimpleNamedReference {
-                source = operationReference?.toFirSourceElement()
+                val kind = if (prefix) {
+                    KtFakeSourceElementKind.DesugaredPrefixNameReference
+                } else {
+                    KtFakeSourceElementKind.DesugaredPostfixNameReference
+                }
+                source = operationReference?.toFirSourceElement(kind)
                 name = callName
             }
             explicitReceiver = if (prefix) {
@@ -631,7 +636,7 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
         val resultVar = generateTemporaryVariable(
             baseModuleData,
             desugaredSource,
-            Name.special("<unary-result>"),
+            SpecialNames.UNARY_RESULT,
             resultInitializer
         )
 
@@ -811,7 +816,7 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
             val firArgument = buildFunctionCall {
                 source = desugaredSource
                 calleeReference = buildSimpleNamedReference {
-                    source = receiver?.toFirSourceElement()
+                    source = receiver?.toFirSourceElement(KtFakeSourceElementKind.ArrayAccessNameReference)
                     name = OperatorNameConventions.GET
                 }
                 explicitReceiver = generateResolvedAccessExpression(arrayVariable.source, arrayVariable)

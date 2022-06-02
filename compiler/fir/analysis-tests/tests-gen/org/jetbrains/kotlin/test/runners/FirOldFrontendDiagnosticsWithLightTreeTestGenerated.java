@@ -33497,9 +33497,39 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             }
 
             @Test
+            @TestMetadata("innerClassDelegatingConstructorCallToPrivate.kt")
+            public void testInnerClassDelegatingConstructorCallToPrivate() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/visibility/innerClassDelegatingConstructorCallToPrivate.kt");
+            }
+
+            @Test
+            @TestMetadata("innerConstructorThroughSubclass.kt")
+            public void testInnerConstructorThroughSubclass() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/visibility/innerConstructorThroughSubclass.kt");
+            }
+
+            @Test
             @TestMetadata("innerNestedAndAnonymousClasses.kt")
             public void testInnerNestedAndAnonymousClasses() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/visibility/innerNestedAndAnonymousClasses.kt");
+            }
+
+            @Test
+            @TestMetadata("invisiblePrivateThroughSubClass.kt")
+            public void testInvisiblePrivateThroughSubClass() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/visibility/invisiblePrivateThroughSubClass.kt");
+            }
+
+            @Test
+            @TestMetadata("invisiblePrivateThroughSubClassDoubleSmartCast.kt")
+            public void testInvisiblePrivateThroughSubClassDoubleSmartCast() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/visibility/invisiblePrivateThroughSubClassDoubleSmartCast.kt");
+            }
+
+            @Test
+            @TestMetadata("invisiblePrivateThroughSubClassSmartCast.kt")
+            public void testInvisiblePrivateThroughSubClassSmartCast() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/visibility/invisiblePrivateThroughSubClassSmartCast.kt");
             }
 
             @Test

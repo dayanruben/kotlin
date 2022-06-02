@@ -10252,6 +10252,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         }
 
         @Test
+        @TestMetadata("kt52561.kt")
+        public void testKt52561() throws Exception {
+            runTest("compiler/testData/codegen/box/coroutines/kt52561.kt");
+        }
+
+        @Test
         @TestMetadata("lastExpressionIsLoop.kt")
         public void testLastExpressionIsLoop() throws Exception {
             runTest("compiler/testData/codegen/box/coroutines/lastExpressionIsLoop.kt");
@@ -42724,6 +42730,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
                 }
 
                 @Test
+                @TestMetadata("getExtensionDelegateForDelegatedToAnother.kt")
+                public void testGetExtensionDelegateForDelegatedToAnother() throws Exception {
+                    runTest("compiler/testData/codegen/box/reflection/properties/getDelegate/getExtensionDelegateForDelegatedToAnother.kt");
+                }
+
+                @Test
                 @TestMetadata("kPropertyForDelegatedProperty.kt")
                 public void testKPropertyForDelegatedProperty() throws Exception {
                     runTest("compiler/testData/codegen/box/reflection/properties/getDelegate/kPropertyForDelegatedProperty.kt");
@@ -45666,6 +45678,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         }
 
         @Test
+        @TestMetadata("avoidSmartCastToDerivedForPrivate.kt")
+        public void testAvoidSmartCastToDerivedForPrivate() throws Exception {
+            runTest("compiler/testData/codegen/box/smartCasts/avoidSmartCastToDerivedForPrivate.kt");
+        }
+
+        @Test
         @TestMetadata("complexExplicitReceiver.kt")
         public void testComplexExplicitReceiver() throws Exception {
             runTest("compiler/testData/codegen/box/smartCasts/complexExplicitReceiver.kt");
@@ -45783,6 +45801,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         @TestMetadata("kt48163_smartCastToThrowable.kt")
         public void testKt48163_smartCastToThrowable() throws Exception {
             runTest("compiler/testData/codegen/box/smartCasts/kt48163_smartCastToThrowable.kt");
+        }
+
+        @Test
+        @TestMetadata("kt52432.kt")
+        public void testKt52432() throws Exception {
+            runTest("compiler/testData/codegen/box/smartCasts/kt52432.kt");
         }
 
         @Test

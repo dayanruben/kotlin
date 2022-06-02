@@ -9,15 +9,12 @@ import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.FirClass
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.expressions.FirExpressionWithSmartcast
-import org.jetbrains.kotlin.fir.expressions.FirExpressionWithSmartcastToNull
+import org.jetbrains.kotlin.fir.expressions.FirExpressionWithSmartcastToNothing
 import org.jetbrains.kotlin.fir.resolve.substitution.substitutorByMap
 import org.jetbrains.kotlin.fir.scopes.FakeOverrideTypeCalculator
 import org.jetbrains.kotlin.fir.scopes.FirTypeScope
 import org.jetbrains.kotlin.fir.scopes.FirUnstableSmartcastTypeScope
-import org.jetbrains.kotlin.fir.scopes.impl.FirScopeWithFakeOverrideTypeCalculator
-import org.jetbrains.kotlin.fir.scopes.impl.FirStandardOverrideChecker
-import org.jetbrains.kotlin.fir.scopes.impl.FirTypeIntersectionScope
-import org.jetbrains.kotlin.fir.scopes.impl.getOrBuildScopeForIntegerConstantOperatorType
+import org.jetbrains.kotlin.fir.scopes.impl.*
 import org.jetbrains.kotlin.fir.scopes.scopeForClass
 import org.jetbrains.kotlin.fir.symbols.ensureResolved
 import org.jetbrains.kotlin.fir.symbols.impl.ConeClassLikeLookupTagImpl
@@ -33,7 +30,7 @@ fun FirExpressionWithSmartcast.smartcastScope(
     scopeSession: ScopeSession
 ): FirTypeScope? {
     val smartcastType =
-        if (this is FirExpressionWithSmartcastToNull) smartcastTypeWithoutNullableNothing.coneType else smartcastType.coneType
+        if (this is FirExpressionWithSmartcastToNothing) smartcastTypeWithoutNullableNothing.coneType else smartcastType.coneType
     val smartcastScope = smartcastType.scope(useSiteSession, scopeSession, FakeOverrideTypeCalculator.DoNothing)
     if (isStable) {
         return smartcastScope
@@ -81,6 +78,7 @@ private fun ConeKotlinType.scope(useSiteSession: FirSession, scopeSession: Scope
             }
         }
         is ConeRawType -> lowerBound.scope(useSiteSession, scopeSession, requiredPhase)
+        is ConeDynamicType -> useSiteSession.dynamicMembersStorage.getDynamicScopeFor(scopeSession)
         is ConeFlexibleType -> lowerBound.scope(useSiteSession, scopeSession, requiredPhase)
         is ConeIntersectionType -> FirTypeIntersectionScope.prepareIntersectionScope(
             useSiteSession,

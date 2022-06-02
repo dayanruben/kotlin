@@ -14,13 +14,18 @@ import org.jetbrains.kotlin.fir.analysis.checkers.declaration.ComposedDeclaratio
 import org.jetbrains.kotlin.fir.analysis.checkers.declaration.DeclarationCheckers
 import org.jetbrains.kotlin.fir.analysis.checkers.expression.ComposedExpressionCheckers
 import org.jetbrains.kotlin.fir.analysis.checkers.expression.ExpressionCheckers
+import org.jetbrains.kotlin.fir.analysis.checkers.type.ComposedTypeCheckers
 import org.jetbrains.kotlin.fir.analysis.checkers.type.TypeCheckers
 import org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollector
 import org.jetbrains.kotlin.fir.analysis.collectors.components.*
+import org.jetbrains.kotlin.fir.analysis.js.checkers.JsDeclarationCheckers
+import org.jetbrains.kotlin.fir.analysis.js.checkers.JsExpressionCheckers
 import org.jetbrains.kotlin.fir.analysis.jvm.checkers.JvmDeclarationCheckers
 import org.jetbrains.kotlin.fir.analysis.jvm.checkers.JvmExpressionCheckers
+import org.jetbrains.kotlin.fir.analysis.jvm.checkers.JvmTypeCheckers
 import org.jetbrains.kotlin.platform.SimplePlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatform
+import org.jetbrains.kotlin.platform.js.JsPlatform
 
 internal abstract class AbstractLLFirDiagnosticsCollector(
     session: FirSession,
@@ -43,7 +48,7 @@ private object CheckersFactory {
         val platform = module.platform.componentPlatforms.first()
         val declarationCheckers = createDeclarationCheckers(useExtendedCheckers, platform)
         val expressionCheckers = createExpressionCheckers(useExtendedCheckers, platform)
-        val typeCheckers = createTypeCheckers(useExtendedCheckers)
+        val typeCheckers = createTypeCheckers(useExtendedCheckers, platform)
 
         @OptIn(ExperimentalStdlibApi::class)
         return buildList {
@@ -52,7 +57,7 @@ private object CheckersFactory {
             }
             add(DeclarationCheckersDiagnosticComponent(session, reporter, declarationCheckers))
             add(ExpressionCheckersDiagnosticComponent(session, reporter, expressionCheckers))
-            typeCheckers?.let { add(TypeCheckersDiagnosticComponent(session, reporter, it)) }
+            add(TypeCheckersDiagnosticComponent(session, reporter, typeCheckers))
             add(ControlFlowAnalysisDiagnosticComponent(session, reporter, declarationCheckers))
         }
     }
@@ -66,6 +71,7 @@ private object CheckersFactory {
                 add(CommonDeclarationCheckers)
                 when (platform) {
                     is JvmPlatform -> add(JvmDeclarationCheckers)
+                    is JsPlatform -> add(JsDeclarationCheckers)
                     else -> {
                     }
                 }
@@ -81,6 +87,7 @@ private object CheckersFactory {
                 add(CommonExpressionCheckers)
                 when (platform) {
                     is JvmPlatform -> add(JvmExpressionCheckers)
+                    is JsPlatform -> add(JsExpressionCheckers)
                     else -> {
                     }
                 }
@@ -88,8 +95,18 @@ private object CheckersFactory {
         }
     }
 
-    private fun createTypeCheckers(useExtendedCheckers: Boolean): TypeCheckers? =
-        if (useExtendedCheckers) ExtendedTypeCheckers else CommonTypeCheckers
+    private fun createTypeCheckers(useExtendedCheckers: Boolean, platform: SimplePlatform): TypeCheckers =
+        if (useExtendedCheckers) {
+            ExtendedTypeCheckers
+        } else {
+            createTypeCheckers {
+                add(CommonTypeCheckers)
+                when (platform) {
+                    is JvmPlatform -> add(JvmTypeCheckers)
+                    else -> {}
+                }
+            }
+        }
 
 
     @OptIn(ExperimentalStdlibApi::class)
@@ -120,6 +137,21 @@ private object CheckersFactory {
             1 -> expressionCheckers.single()
             else -> ComposedExpressionCheckers().apply {
                 expressionCheckers.forEach(::register)
+            }
+        }
+    }
+
+    @OptIn(ExperimentalStdlibApi::class)
+    private inline fun createTypeCheckers(
+        createTypeCheckers: MutableList<TypeCheckers>.() -> Unit
+    ): TypeCheckers = createTypeCheckers(buildList(createTypeCheckers))
+
+    @OptIn(CheckersComponentInternal::class)
+    private fun createTypeCheckers(typeCheckers: List<TypeCheckers>): TypeCheckers {
+        return when (typeCheckers.size) {
+            1 -> typeCheckers.single()
+            else -> ComposedTypeCheckers().apply {
+                typeCheckers.forEach(::register)
             }
         }
     }

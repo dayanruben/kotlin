@@ -7964,6 +7964,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/coroutines/kt52311_nullOnRight.kt");
         }
 
+        @TestMetadata("kt52561.kt")
+        public void testKt52561() throws Exception {
+            runTest("compiler/testData/codegen/box/coroutines/kt52561.kt");
+        }
+
         @TestMetadata("lastExpressionIsLoop.kt")
         public void testLastExpressionIsLoop() throws Exception {
             runTest("compiler/testData/codegen/box/coroutines/lastExpressionIsLoop.kt");
@@ -33942,6 +33947,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                     runTest("compiler/testData/codegen/box/reflection/properties/getDelegate/getExtensionDelegate.kt");
                 }
 
+                @TestMetadata("getExtensionDelegateForDelegatedToAnother.kt")
+                public void testGetExtensionDelegateForDelegatedToAnother() throws Exception {
+                    runTest("compiler/testData/codegen/box/reflection/properties/getDelegate/getExtensionDelegateForDelegatedToAnother.kt");
+                }
+
                 @TestMetadata("kPropertyForDelegatedProperty.kt")
                 public void testKPropertyForDelegatedProperty() throws Exception {
                     runTest("compiler/testData/codegen/box/reflection/properties/getDelegate/kPropertyForDelegatedProperty.kt");
@@ -36489,6 +36499,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/smartCasts"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
         }
 
+        @TestMetadata("avoidSmartCastToDerivedForPrivate.kt")
+        public void testAvoidSmartCastToDerivedForPrivate() throws Exception {
+            runTest("compiler/testData/codegen/box/smartCasts/avoidSmartCastToDerivedForPrivate.kt");
+        }
+
         @TestMetadata("complexExplicitReceiver.kt")
         public void testComplexExplicitReceiver() throws Exception {
             runTest("compiler/testData/codegen/box/smartCasts/complexExplicitReceiver.kt");
@@ -36587,6 +36602,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("kt48163_smartCastToThrowable.kt")
         public void testKt48163_smartCastToThrowable() throws Exception {
             runTest("compiler/testData/codegen/box/smartCasts/kt48163_smartCastToThrowable.kt");
+        }
+
+        @TestMetadata("kt52432.kt")
+        public void testKt52432() throws Exception {
+            runTest("compiler/testData/codegen/box/smartCasts/kt52432.kt");
         }
 
         @TestMetadata("lambdaArgumentWithoutType.kt")

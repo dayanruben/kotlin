@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.js.testOld.wasm.semantics.AbstractIrCodegenBoxWasmTe
 import org.jetbrains.kotlin.js.testOld.wasm.semantics.AbstractIrCodegenWasmJsInteropWasmTest
 import org.jetbrains.kotlin.js.testOld.wasm.semantics.AbstractJsTranslatorWasmTest
 import org.jetbrains.kotlin.test.TargetBackend
+import org.jetbrains.kotlin.test.runners.ir.AbstractFir2IrJsTextTest
 
 fun main(args: Array<String>) {
     System.setProperty("java.awt.headless", "true")
@@ -79,7 +80,7 @@ fun main(args: Array<String>) {
     generateTestGroupSuiteWithJUnit5(args) {
         testGroup("js/js.tests/tests-gen", "js/js.translator/testData", testRunnerMethodName = "runTest0") {
             testClass<AbstractBoxJsTest> {
-                model("box/", pattern = "^([^_](.+))\\.kt$")
+                model("box/", pattern = "^([^_](.+))\\.kt$", excludeDirs = listOf("closure/inlineAnonymousFunctions"))
             }
 
             testClass<AbstractSourceMapGenerationSmokeTest> {
@@ -113,6 +114,10 @@ fun main(args: Array<String>) {
             testClass<AbstractJsIrLineNumberTest> {
                 model("lineNumbers/")
             }
+
+            testClass<AbstractFirJsTest> {
+                model("box/", pattern = "^([^_](.+))\\.kt$")
+            }
         }
 
         testGroup("js/js.tests/tests-gen", "compiler/testData", testRunnerMethodName = "runTest0") {
@@ -142,6 +147,12 @@ fun main(args: Array<String>) {
 
             testClass<AbstractIrCodegenWasmJsInteropJsTest> {
                 model("codegen/boxWasmJsInterop")
+            }
+
+            testClass<AbstractFir2IrJsTextTest>(
+                suiteTestClassName = "Fir2IrJsTextTestGenerated"
+            ) {
+                model("ir/irJsText")
             }
         }
     }

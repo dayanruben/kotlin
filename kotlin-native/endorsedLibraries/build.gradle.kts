@@ -8,6 +8,10 @@ if (HostManager.host == KonanTarget.MACOS_ARM64) {
     project.configureJvmToolchain(JdkMajorVersion.JDK_17)
 }
 
+plugins {
+    base
+}
+
 val endorsedLibraries = listOf(EndorsedLibraryInfo(project("kotlinx.cli"), "org.jetbrains.kotlinx.kotlinx-cli"))
 
 extra["endorsedLibraries"] = endorsedLibraries.associateBy { it.project }
