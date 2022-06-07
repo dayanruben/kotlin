@@ -9,15 +9,17 @@ import org.jetbrains.kotlin.descriptors.EffectiveVisibility
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.fir.FirSession
-import org.jetbrains.kotlin.fir.declarations.FirPluginKey
+import org.jetbrains.kotlin.GeneratedDeclarationKey
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.declarations.builder.buildSimpleFunction
 import org.jetbrains.kotlin.fir.declarations.builder.buildValueParameter
 import org.jetbrains.kotlin.fir.declarations.impl.FirResolvedDeclarationStatusImpl
+import org.jetbrains.kotlin.fir.declarations.origin
 import org.jetbrains.kotlin.fir.extensions.FirDeclarationGenerationExtension
 import org.jetbrains.kotlin.fir.extensions.FirDeclarationPredicateRegistrar
+import org.jetbrains.kotlin.fir.extensions.MemberGenerationContext
 import org.jetbrains.kotlin.fir.extensions.predicate.DeclarationPredicate
-import org.jetbrains.kotlin.fir.extensions.predicate.has
+import org.jetbrains.kotlin.fir.extensions.predicate.annotated
 import org.jetbrains.kotlin.fir.extensions.predicateBasedProvider
 import org.jetbrains.kotlin.fir.moduleData
 import org.jetbrains.kotlin.fir.plugin.fqn
@@ -33,7 +35,7 @@ import org.jetbrains.kotlin.name.Name
  */
 class TopLevelDeclarationsGenerator(session: FirSession) : FirDeclarationGenerationExtension(session) {
     companion object {
-        private val PREDICATE: DeclarationPredicate = has("DummyFunction".fqn())
+        private val PREDICATE: DeclarationPredicate = annotated("DummyFunction".fqn())
     }
 
     private val predicateBasedProvider = session.predicateBasedProvider
@@ -41,8 +43,8 @@ class TopLevelDeclarationsGenerator(session: FirSession) : FirDeclarationGenerat
         predicateBasedProvider.getSymbolsByPredicate(PREDICATE).filterIsInstance<FirRegularClassSymbol>()
     }
 
-    override fun generateFunctions(callableId: CallableId, owner: FirClassSymbol<*>?): List<FirNamedFunctionSymbol> {
-        if (owner != null) return emptyList()
+    override fun generateFunctions(callableId: CallableId, context: MemberGenerationContext?): List<FirNamedFunctionSymbol> {
+        if (context != null) return emptyList()
         val matchedClassSymbol = findMatchedClassForFunction(callableId) ?: return emptyList()
         val function = buildSimpleFunction {
             resolvePhase = FirResolvePhase.BODY_RESOLVE
@@ -92,7 +94,7 @@ class TopLevelDeclarationsGenerator(session: FirSession) : FirDeclarationGenerat
         }
     }
 
-    object Key : FirPluginKey()
+    object Key : GeneratedDeclarationKey()
 
     override fun FirDeclarationPredicateRegistrar.registerPredicates() {
         register(PREDICATE)

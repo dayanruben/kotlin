@@ -5,12 +5,23 @@
 
 package org.jetbrains.kotlin.fir.declarations
 
-sealed class FirDeclarationOrigin(private val displayName: String? = null, val fromSupertypes: Boolean = false, val generated: Boolean = false) {
-    object Source : FirDeclarationOrigin()
+import org.jetbrains.kotlin.GeneratedDeclarationKey
+
+sealed class FirDeclarationOrigin(
+    private val displayName: String? = null,
+    val fromSupertypes: Boolean = false,
+    val generated: Boolean = false,
+    val fromSource: Boolean = false
+) {
+    object Source : FirDeclarationOrigin(fromSource = true)
     object Library : FirDeclarationOrigin()
     object Precompiled : FirDeclarationOrigin() // currently used for incremental compilation
     object BuiltIns : FirDeclarationOrigin()
-    object Java : FirDeclarationOrigin()
+    sealed class Java(displayName: String, fromSource: Boolean = false) : FirDeclarationOrigin(displayName, fromSource = fromSource) {
+        object Source : Java("Java(Source)", fromSource = true)
+        object Library : Java("Java(Library)")
+    }
+
     object Synthetic : FirDeclarationOrigin()
     object DynamicScope : FirDeclarationOrigin()
     object SamConstructor : FirDeclarationOrigin()
@@ -22,13 +33,12 @@ sealed class FirDeclarationOrigin(private val displayName: String? = null, val f
     object RenamedForOverride : FirDeclarationOrigin()
     object WrappedIntegerOperator : FirDeclarationOrigin()
 
-    class Plugin(val key: FirPluginKey) : FirDeclarationOrigin(displayName = "Plugin[$key]", generated = true)
+    class Plugin(val key: GeneratedDeclarationKey) : FirDeclarationOrigin(displayName = "Plugin[$key]", generated = true)
 
     override fun toString(): String {
         return displayName ?: this::class.simpleName!!
     }
 }
 
-abstract class FirPluginKey {
-    val origin: FirDeclarationOrigin = FirDeclarationOrigin.Plugin(this)
-}
+val GeneratedDeclarationKey.origin: FirDeclarationOrigin
+    get() = FirDeclarationOrigin.Plugin(this)

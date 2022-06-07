@@ -9,15 +9,17 @@ import org.jetbrains.kotlin.descriptors.EffectiveVisibility
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.fir.FirSession
-import org.jetbrains.kotlin.fir.declarations.FirPluginKey
+import org.jetbrains.kotlin.GeneratedDeclarationKey
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.declarations.builder.buildSimpleFunction
 import org.jetbrains.kotlin.fir.declarations.builder.buildValueParameter
 import org.jetbrains.kotlin.fir.declarations.impl.FirResolvedDeclarationStatusImpl
+import org.jetbrains.kotlin.fir.declarations.origin
 import org.jetbrains.kotlin.fir.expressions.builder.buildBlock
 import org.jetbrains.kotlin.fir.extensions.FirDeclarationGenerationExtension
 import org.jetbrains.kotlin.fir.extensions.FirDeclarationPredicateRegistrar
-import org.jetbrains.kotlin.fir.extensions.predicate.has
+import org.jetbrains.kotlin.fir.extensions.MemberGenerationContext
+import org.jetbrains.kotlin.fir.extensions.predicate.annotated
 import org.jetbrains.kotlin.fir.extensions.predicateBasedProvider
 import org.jetbrains.kotlin.fir.moduleData
 import org.jetbrains.kotlin.fir.plugin.fqn
@@ -35,8 +37,8 @@ import org.jetbrains.kotlin.name.Name
  */
 class MembersOfSerializerGenerator(session: FirSession) : FirDeclarationGenerationExtension(session) {
     companion object {
-        private val SERIALIZABLE_PREDICATE = has("MySerializable".fqn())
-        private val CORE_SERIALIZER_PREDICATE = has("CoreSerializer".fqn())
+        private val SERIALIZABLE_PREDICATE = annotated("MySerializable".fqn())
+        private val CORE_SERIALIZER_PREDICATE = annotated("CoreSerializer".fqn())
 
         private val X_NAME = Name.identifier("x")
     }
@@ -57,7 +59,7 @@ class MembersOfSerializerGenerator(session: FirSession) : FirDeclarationGenerati
         serializableClassIds.associateBy { Name.identifier("serialize${it.shortClassName.identifier}") }
     }
 
-    override fun generateFunctions(callableId: CallableId, owner: FirClassSymbol<*>?): List<FirNamedFunctionSymbol> {
+    override fun generateFunctions(callableId: CallableId, context: MemberGenerationContext?): List<FirNamedFunctionSymbol> {
         val argumentClassId = serializeMethodNames[callableId.callableName] ?: return emptyList()
         val dispatchReceiverClassId = callableId.classId ?: return emptyList()
         val function = buildSimpleFunction {
@@ -99,5 +101,5 @@ class MembersOfSerializerGenerator(session: FirSession) : FirDeclarationGenerati
         register(SERIALIZABLE_PREDICATE, CORE_SERIALIZER_PREDICATE)
     }
 
-    object Key : FirPluginKey()
+    object Key : GeneratedDeclarationKey()
 }

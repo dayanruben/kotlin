@@ -10,16 +10,16 @@ import org.jetbrains.kotlin.descriptors.EffectiveVisibility
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.fir.FirSession
-import org.jetbrains.kotlin.fir.declarations.FirPluginKey
+import org.jetbrains.kotlin.GeneratedDeclarationKey
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.declarations.builder.buildRegularClass
 import org.jetbrains.kotlin.fir.declarations.impl.FirResolvedDeclarationStatusImpl
+import org.jetbrains.kotlin.fir.declarations.origin
 import org.jetbrains.kotlin.fir.extensions.FirDeclarationGenerationExtension
 import org.jetbrains.kotlin.fir.extensions.FirDeclarationPredicateRegistrar
+import org.jetbrains.kotlin.fir.extensions.MemberGenerationContext
 import org.jetbrains.kotlin.fir.extensions.predicate.DeclarationPredicate
-import org.jetbrains.kotlin.fir.extensions.predicate.has
-import org.jetbrains.kotlin.fir.extensions.predicate.metaHas
-import org.jetbrains.kotlin.fir.extensions.predicate.or
+import org.jetbrains.kotlin.fir.extensions.predicate.annotated
 import org.jetbrains.kotlin.fir.extensions.predicateBasedProvider
 import org.jetbrains.kotlin.fir.moduleData
 import org.jetbrains.kotlin.fir.plugin.fqn
@@ -40,7 +40,7 @@ class AdditionalMembersGenerator(session: FirSession) : FirDeclarationGeneration
         private val MATERIALIZE_NAME = Name.identifier("materialize")
         private val NESTED_NAME = Name.identifier("Nested")
 
-        private val PREDICATE: DeclarationPredicate = has("NestedClassAndMaterializeMember".fqn())
+        private val PREDICATE: DeclarationPredicate = annotated("NestedClassAndMaterializeMember".fqn())
     }
 
     private val predicateBasedProvider = session.predicateBasedProvider
@@ -52,7 +52,7 @@ class AdditionalMembersGenerator(session: FirSession) : FirDeclarationGeneration
         matchedClasses.map { it.classId.createNestedClassId(NESTED_NAME) }
     }
 
-    override fun generateFunctions(callableId: CallableId, owner: FirClassSymbol<*>?): List<FirNamedFunctionSymbol> {
+    override fun generateFunctions(callableId: CallableId, context: MemberGenerationContext?): List<FirNamedFunctionSymbol> {
         if (callableId.callableName != MATERIALIZE_NAME) return emptyList()
         val classId = callableId.classId ?: return emptyList()
         val matchedClassSymbol = matchedClasses.firstOrNull { it.classId == classId } ?: return emptyList()
@@ -76,9 +76,10 @@ class AdditionalMembersGenerator(session: FirSession) : FirDeclarationGeneration
         }.symbol
     }
 
-    override fun generateConstructors(owner: FirClassSymbol<*>): List<FirConstructorSymbol> {
-        assert(owner.classId in nestedClassIds)
-        return listOf(buildConstructor(owner.classId, isInner = false, Key).symbol)
+    override fun generateConstructors(context: MemberGenerationContext): List<FirConstructorSymbol> {
+        val ownerClassId = context.owner.classId
+        assert(ownerClassId in nestedClassIds)
+        return listOf(buildConstructor(ownerClassId, isInner = false, Key).symbol)
     }
 
     override fun getCallableNamesForClass(classSymbol: FirClassSymbol<*>): Set<Name> {
@@ -93,7 +94,7 @@ class AdditionalMembersGenerator(session: FirSession) : FirDeclarationGeneration
         return if (classSymbol in matchedClasses) setOf(NESTED_NAME) else emptySet()
     }
 
-    object Key : FirPluginKey() {
+    object Key : GeneratedDeclarationKey() {
         override fun toString(): String {
             return "AllOpenMembersGeneratorKey"
         }

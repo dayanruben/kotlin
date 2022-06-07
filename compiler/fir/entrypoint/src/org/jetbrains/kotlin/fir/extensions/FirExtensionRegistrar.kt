@@ -30,43 +30,85 @@ abstract class FirExtensionRegistrar : FirExtensionRegistrarAdapter() {
             FirSupertypeGenerationExtension::class,
             FirTypeAttributeExtension::class,
             FirExpressionResolutionExtension::class,
+            FirExtensionSessionComponent::class,
         )
     }
 
     protected abstract fun ExtensionRegistrarContext.configurePlugin()
 
     protected inner class ExtensionRegistrarContext {
+        // ------------------ factory methods ------------------
+
+        @JvmName("plusStatusTransformerExtension")
+        operator fun (FirStatusTransformerExtension.Factory).unaryPlus() {
+            registerExtension(FirStatusTransformerExtension::class, this)
+        }
+
+        @JvmName("plusClassGenerationExtension")
+        operator fun (FirDeclarationGenerationExtension.Factory).unaryPlus() {
+            registerExtension(FirDeclarationGenerationExtension::class, this)
+        }
+
+        @JvmName("plusAdditionalCheckersExtension")
+        operator fun (FirAdditionalCheckersExtension.Factory).unaryPlus() {
+            registerExtension(FirAdditionalCheckersExtension::class, this)
+        }
+
+        @JvmName("plusSupertypeGenerationExtension")
+        operator fun (FirSupertypeGenerationExtension.Factory).unaryPlus() {
+            registerExtension(FirSupertypeGenerationExtension::class, this)
+        }
+
+        @JvmName("plusTypeAttributeExtension")
+        operator fun (FirTypeAttributeExtension.Factory).unaryPlus() {
+            registerExtension(FirTypeAttributeExtension::class, this)
+        }
+
+        @JvmName("plusExpressionResolutionExtension")
+        operator fun (FirExpressionResolutionExtension.Factory).unaryPlus() {
+            registerExtension(FirExpressionResolutionExtension::class, this)
+        }
+
+        @JvmName("plusExtensionSessionComponent")
+        operator fun (FirExtensionSessionComponent.Factory).unaryPlus() {
+            registerExtension(FirExtensionSessionComponent::class, this)
+        }
+
+        // ------------------ reference methods ------------------
+
         @JvmName("plusStatusTransformerExtension")
         operator fun ((FirSession) -> FirStatusTransformerExtension).unaryPlus() {
-            registerExtension(FirStatusTransformerExtension::class, FirStatusTransformerExtension.Factory { this.invoke(it) })
+            FirStatusTransformerExtension.Factory { this.invoke(it) }.unaryPlus()
         }
 
         @JvmName("plusClassGenerationExtension")
         operator fun ((FirSession) -> FirDeclarationGenerationExtension).unaryPlus() {
-            registerExtension(FirDeclarationGenerationExtension::class, FirDeclarationGenerationExtension.Factory { this.invoke(it) })
+            FirDeclarationGenerationExtension.Factory { this.invoke(it) }.unaryPlus()
         }
 
         @JvmName("plusAdditionalCheckersExtension")
         operator fun ((FirSession) -> FirAdditionalCheckersExtension).unaryPlus() {
-            registerExtension(
-                FirAdditionalCheckersExtension::class,
-                FirAdditionalCheckersExtension.Factory { this.invoke(it) }
-            )
+            FirAdditionalCheckersExtension.Factory { this.invoke(it) }.unaryPlus()
         }
 
         @JvmName("plusSupertypeGenerationExtension")
         operator fun ((FirSession) -> FirSupertypeGenerationExtension).unaryPlus() {
-            registerExtension(FirSupertypeGenerationExtension::class, FirSupertypeGenerationExtension.Factory { this.invoke(it) })
+            FirSupertypeGenerationExtension.Factory { this.invoke(it) }.unaryPlus()
         }
 
         @JvmName("plusTypeAttributeExtension")
         operator fun ((FirSession) -> FirTypeAttributeExtension).unaryPlus() {
-            registerExtension(FirTypeAttributeExtension::class, FirTypeAttributeExtension.Factory { this.invoke(it) })
+            FirTypeAttributeExtension.Factory { this.invoke(it) }.unaryPlus()
         }
 
         @JvmName("plusExpressionResolutionExtension")
         operator fun ((FirSession) -> FirExpressionResolutionExtension).unaryPlus() {
-            registerExtension(FirExpressionResolutionExtension::class, FirExpressionResolutionExtension.Factory { this.invoke(it) })
+            FirExpressionResolutionExtension.Factory { this.invoke(it) }.unaryPlus()
+        }
+
+        @JvmName("plusExtensionSessionComponent")
+        operator fun ((FirSession) -> FirExtensionSessionComponent).unaryPlus() {
+            FirExtensionSessionComponent.Factory { this.invoke(it) }.unaryPlus()
         }
     }
 
@@ -87,14 +129,13 @@ abstract class FirExtensionRegistrar : FirExtensionRegistrarAdapter() {
         val extensionFactories: MutableList<FirExtension.Factory<FirExtension>> = mutableListOf()
     }
 
-    private val map: Map<KClass<out FirExtension>, RegisteredExtensionsFactories> = AVAILABLE_EXTENSIONS.map {
-        it to RegisteredExtensionsFactories(it)
-    }.toMap()
+    private val map: Map<KClass<out FirExtension>, RegisteredExtensionsFactories> = AVAILABLE_EXTENSIONS.associateWith {
+        RegisteredExtensionsFactories(it)
+    }
 
     private var isInitialized: AtomicBoolean = AtomicBoolean(false)
 
     private fun <P : FirExtension> registerExtension(kClass: KClass<out P>, factory: FirExtension.Factory<P>) {
-        @Suppress("UNCHECKED_CAST")
         val registeredExtensions = map.getValue(kClass)
         registeredExtensions.extensionFactories += factory
     }
@@ -121,5 +162,8 @@ class BunchOfRegisteredExtensions @PluginServicesInitialization constructor(
 @OptIn(PluginServicesInitialization::class)
 fun FirExtensionService.registerExtensions(registeredExtensions: BunchOfRegisteredExtensions) {
     registeredExtensions.extensions.forEach { registerExtensions(it.kClass, it.extensionFactories) }
+    extensionSessionComponents.forEach {
+        session.register(it.componentClass, it)
+    }
     session.registeredPluginAnnotations.initialize()
 }

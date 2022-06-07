@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.generators.tests
 
 import org.jetbrains.kotlin.allopen.AbstractBytecodeListingTestForAllOpen
+import org.jetbrains.kotlin.allopen.AbstractFirBytecodeListingTestForAllOpen
 import org.jetbrains.kotlin.allopen.AbstractIrBytecodeListingTestForAllOpen
 import org.jetbrains.kotlin.android.parcel.AbstractParcelBoxTest
 import org.jetbrains.kotlin.android.parcel.AbstractParcelBytecodeListingTest
@@ -28,7 +29,7 @@ import org.jetbrains.kotlin.kapt3.test.AbstractClassFileToSourceStubConverterTes
 import org.jetbrains.kotlin.kapt3.test.AbstractIrClassFileToSourceStubConverterTest
 import org.jetbrains.kotlin.kapt3.test.AbstractIrKotlinKaptContextTest
 import org.jetbrains.kotlin.kapt3.test.AbstractKotlinKaptContextTest
-import org.jetbrains.kotlin.lombok.AbstractLombokCompileTest
+import org.jetbrains.kotlin.lombok.*
 import org.jetbrains.kotlin.noarg.*
 import org.jetbrains.kotlin.parcelize.test.runners.*
 import org.jetbrains.kotlin.samWithReceiver.AbstractSamWithReceiverScriptTest
@@ -221,29 +222,6 @@ fun main(args: Array<String>) {
             }
         }
 
-        testGroup("plugins/allopen/allopen-cli/test", "plugins/allopen/allopen-cli/testData") {
-            testClass<AbstractBytecodeListingTestForAllOpen> {
-                model("bytecodeListing", extension = "kt")
-            }
-            testClass<AbstractIrBytecodeListingTestForAllOpen> {
-                model("bytecodeListing", extension = "kt")
-            }
-        }
-
-        testGroup("plugins/noarg/noarg-cli/test", "plugins/noarg/noarg-cli/testData") {
-            testClass<AbstractDiagnosticsTestForNoArg> { model("diagnostics", extension = "kt") }
-
-            testClass<AbstractBytecodeListingTestForNoArg> {
-                model("bytecodeListing", extension = "kt", targetBackend = TargetBackend.JVM)
-            }
-            testClass<AbstractIrBytecodeListingTestForNoArg> {
-                model("bytecodeListing", extension = "kt", targetBackend = TargetBackend.JVM_IR)
-            }
-
-            testClass<AbstractBlackBoxCodegenTestForNoArg> { model("box", targetBackend = TargetBackend.JVM) }
-            testClass<AbstractIrBlackBoxCodegenTestForNoArg> { model("box", targetBackend = TargetBackend.JVM_IR) }
-        }
-
         testGroup("plugins/sam-with-receiver/sam-with-receiver-cli/test", "plugins/sam-with-receiver/sam-with-receiver-cli/testData") {
             testClass<AbstractSamWithReceiverTest> {
                 model("diagnostics")
@@ -267,12 +245,6 @@ fun main(args: Array<String>) {
 
             testClass<AbstractSerializationIrBytecodeListingTest> {
                 model("codegen")
-            }
-        }
-
-        testGroup("plugins/lombok/lombok-compiler-plugin/tests", "plugins/lombok/lombok-compiler-plugin/testData") {
-            testClass<AbstractLombokCompileTest> {
-                model("compile")
             }
         }
 /*
@@ -407,6 +379,63 @@ fun main(args: Array<String>) {
         ) {
             testClass<AbstractAtomicfuJsIrTest> {
                 model("box/")
+            }
+        }
+
+        testGroup("plugins/allopen/tests-gen", "plugins/allopen/testData") {
+            testClass<AbstractBytecodeListingTestForAllOpen> {
+                model("bytecodeListing", excludedPattern = excludedFirTestdataPattern)
+            }
+            testClass<AbstractIrBytecodeListingTestForAllOpen> {
+                model("bytecodeListing", excludedPattern = excludedFirTestdataPattern)
+            }
+            testClass<AbstractFirBytecodeListingTestForAllOpen> {
+                model("bytecodeListing", excludedPattern = excludedFirTestdataPattern)
+            }
+        }
+
+        testGroup("plugins/noarg/tests-gen", "plugins/noarg/testData") {
+            testClass<AbstractDiagnosticsTestForNoArg> {
+                model("diagnostics", excludedPattern = excludedFirTestdataPattern)
+            }
+            testClass<AbstractFirDiagnosticsTestForNoArg> {
+                model("diagnostics", excludedPattern = excludedFirTestdataPattern)
+            }
+            testClass<AbstractBytecodeListingTestForNoArg> {
+                model("bytecodeListing", excludedPattern = excludedFirTestdataPattern)
+            }
+            testClass<AbstractIrBytecodeListingTestForNoArg> {
+                model("bytecodeListing", excludedPattern = excludedFirTestdataPattern)
+            }
+            testClass<AbstractFirBytecodeListingTestForNoArg> {
+                model("bytecodeListing", excludedPattern = excludedFirTestdataPattern)
+            }
+            testClass<AbstractBlackBoxCodegenTestForNoArg> {
+                model("box")
+            }
+            testClass<AbstractIrBlackBoxCodegenTestForNoArg> {
+                model("box")
+            }
+            testClass<AbstractFirBlackBoxCodegenTestForNoArg> {
+                model("box")
+            }
+        }
+
+        testGroup("plugins/lombok/tests-gen", "plugins/lombok/testData") {
+            testClass<AbstractBlackBoxCodegenTestForLombok> {
+                model("box")
+            }
+            testClass<AbstractIrBlackBoxCodegenTestForLombok> {
+                model("box")
+            }
+            testClass<AbstractFirBlackBoxCodegenTestForLombok> {
+                model("box")
+            }
+            testClass<AbstractDiagnosticTestForLombok> {
+                model("diagnostics", excludedPattern = excludedFirTestdataPattern)
+            }
+            testClass<AbstractFirDiagnosticTestForLombok> {
+                model("diagnostics", excludedPattern = excludedFirTestdataPattern)
             }
         }
     }

@@ -11,14 +11,16 @@ import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
-import org.jetbrains.kotlin.fir.declarations.FirPluginKey
+import org.jetbrains.kotlin.GeneratedDeclarationKey
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.declarations.builder.buildRegularClass
 import org.jetbrains.kotlin.fir.declarations.builder.buildSimpleFunction
 import org.jetbrains.kotlin.fir.declarations.impl.FirResolvedDeclarationStatusImpl
+import org.jetbrains.kotlin.fir.declarations.origin
 import org.jetbrains.kotlin.fir.extensions.FirDeclarationGenerationExtension
 import org.jetbrains.kotlin.fir.extensions.FirDeclarationPredicateRegistrar
-import org.jetbrains.kotlin.fir.extensions.predicate.has
+import org.jetbrains.kotlin.fir.extensions.MemberGenerationContext
+import org.jetbrains.kotlin.fir.extensions.predicate.annotated
 import org.jetbrains.kotlin.fir.extensions.predicateBasedProvider
 import org.jetbrains.kotlin.fir.moduleData
 import org.jetbrains.kotlin.fir.plugin.fqn
@@ -36,7 +38,7 @@ import org.jetbrains.kotlin.name.SpecialNames
  */
 class CompanionGenerator(session: FirSession) : FirDeclarationGenerationExtension(session) {
     companion object {
-        private val PREDICATE = has("CompanionWithFoo".fqn())
+        private val PREDICATE = annotated("CompanionWithFoo".fqn())
         private val FOO_NAME = Name.identifier("foo")
     }
 
@@ -69,8 +71,10 @@ class CompanionGenerator(session: FirSession) : FirDeclarationGenerationExtensio
         return regularClass.symbol
     }
 
-    override fun generateFunctions(callableId: CallableId, owner: FirClassSymbol<*>?): List<FirNamedFunctionSymbol> {
-        if (owner == null || owner.origin != Key.origin) return emptyList()
+    override fun generateFunctions(callableId: CallableId, context: MemberGenerationContext?): List<FirNamedFunctionSymbol> {
+        val owner = context?.owner ?: return emptyList()
+        val ownerKey = (owner.origin as? FirDeclarationOrigin.Plugin)?.key ?: return emptyList()
+        if (ownerKey != Key) return emptyList()
         if (callableId.callableName != FOO_NAME) return emptyList()
         val function = buildSimpleFunction {
             resolvePhase = FirResolvePhase.BODY_RESOLVE
@@ -89,8 +93,8 @@ class CompanionGenerator(session: FirSession) : FirDeclarationGenerationExtensio
         return listOf(function.symbol)
     }
 
-    override fun generateConstructors(owner: FirClassSymbol<*>): List<FirConstructorSymbol> {
-        val constructor = buildConstructor(owner.classId, isInner = false, Key)
+    override fun generateConstructors(context: MemberGenerationContext): List<FirConstructorSymbol> {
+        val constructor = buildConstructor(context.owner.classId, isInner = false, Key)
         return listOf(constructor.symbol)
     }
 
@@ -116,7 +120,7 @@ class CompanionGenerator(session: FirSession) : FirDeclarationGenerationExtensio
         }
     }
 
-    object Key : FirPluginKey() {
+    object Key : GeneratedDeclarationKey() {
         override fun toString(): String {
             return "CompanionGeneratorKey"
         }

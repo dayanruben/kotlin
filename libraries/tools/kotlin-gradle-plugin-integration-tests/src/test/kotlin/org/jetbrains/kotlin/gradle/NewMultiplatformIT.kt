@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.library.KLIB_PROPERTY_SHORT_NAME
 import org.jetbrains.kotlin.library.KLIB_PROPERTY_UNIQUE_NAME
 import org.junit.Assert
+import org.junit.Ignore
 import org.junit.Test
 import java.util.*
 import java.util.jar.JarFile
@@ -1950,10 +1951,34 @@ class NewMultiplatformIT : BaseGradleIT() {
             assertFileExists(jsOutput + "redefined-js-module-name.js")
 
             val wasmOutput = outputPrefix + "redefined-wasm-module-name/kotlin/"
-            assertFileExists(wasmOutput + "redefined-wasm-module-name.js")
+            assertFileExists(wasmOutput + "redefined-wasm-module-name.mjs")
             assertFileExists(wasmOutput + "redefined-wasm-module-name.wasm")
         }
     }
+
+    private fun testWasmTest(engine: String, name: String) = with(
+        Project("new-mpp-wasm-test", gradleVersionRequirement = GradleVersionRequired.AtLeast(TestVersions.Gradle.G_7_0))
+    ) {
+        setupWorkingDir()
+        gradleBuildScript().modify {
+            transformBuildScriptWithPluginsDsl(it)
+                .replace("<JsEngine>", engine)
+        }
+        build(":wasm${name}Test") {
+            assertTasksExecuted(":compileKotlinWasm")
+            assertTasksFailed(":wasm${name}Test")
+            assertTestResults(
+                "testProject/new-mpp-wasm-test/TEST-${engine}.xml",
+                "wasm${name}Test"
+            )
+        }
+    }
+
+    @Test
+    fun testWasmNodeTest() = testWasmTest("nodejs", "Node")
+
+    @Test
+    fun testWasmD8Test() = testWasmTest("d8", "D8")
 
     @Test
     fun testResolveMetadataCompileClasspathKt50925() {

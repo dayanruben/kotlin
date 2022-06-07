@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.fir.plugin.generators
 
+import org.jetbrains.kotlin.GeneratedDeclarationKey
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.EffectiveVisibility
 import org.jetbrains.kotlin.descriptors.Modality
@@ -15,8 +16,9 @@ import org.jetbrains.kotlin.fir.declarations.builder.buildRegularClass
 import org.jetbrains.kotlin.fir.declarations.impl.FirResolvedDeclarationStatusImpl
 import org.jetbrains.kotlin.fir.extensions.FirDeclarationGenerationExtension
 import org.jetbrains.kotlin.fir.extensions.FirDeclarationPredicateRegistrar
+import org.jetbrains.kotlin.fir.extensions.MemberGenerationContext
 import org.jetbrains.kotlin.fir.extensions.predicate.DeclarationPredicate
-import org.jetbrains.kotlin.fir.extensions.predicate.has
+import org.jetbrains.kotlin.fir.extensions.predicate.annotated
 import org.jetbrains.kotlin.fir.extensions.predicateBasedProvider
 import org.jetbrains.kotlin.fir.moduleData
 import org.jetbrains.kotlin.fir.plugin.fqn
@@ -41,10 +43,10 @@ class ExternalClassGenerator(session: FirSession) : FirDeclarationGenerationExte
         private val GENERATED_CLASS_ID = ClassId(FOO_PACKAGE, Name.identifier("AllOpenGenerated"))
         private val MATERIALIZE_NAME = Name.identifier("materialize")
 
-        private val PREDICATE: DeclarationPredicate = has("ExternalClassWithNested".fqn())
+        private val PREDICATE: DeclarationPredicate = annotated("ExternalClassWithNested".fqn())
     }
 
-    object Key : FirPluginKey() {
+    object Key : GeneratedDeclarationKey() {
         override fun toString(): String {
             return "AllOpenClassGeneratorKey"
         }
@@ -80,8 +82,8 @@ class ExternalClassGenerator(session: FirSession) : FirDeclarationGenerationExte
         return buildClass(classId).symbol
     }
 
-    override fun generateConstructors(owner: FirClassSymbol<*>): List<FirConstructorSymbol> {
-        val classId = owner.classId
+    override fun generateConstructors(context: MemberGenerationContext): List<FirConstructorSymbol> {
+        val classId = context.owner.classId
         if (classId != GENERATED_CLASS_ID && classId !in classIdsForMatchedClasses) return emptyList()
         return listOf(buildConstructor(classId, isInner = false, Key).symbol)
     }
@@ -96,8 +98,9 @@ class ExternalClassGenerator(session: FirSession) : FirDeclarationGenerationExte
     }
 
     @OptIn(SymbolInternals::class)
-    override fun generateFunctions(callableId: CallableId, owner: FirClassSymbol<*>?): List<FirNamedFunctionSymbol> {
+    override fun generateFunctions(callableId: CallableId, context: MemberGenerationContext?): List<FirNamedFunctionSymbol> {
         if (callableId.classId !in classIdsForMatchedClasses || callableId.callableName != MATERIALIZE_NAME) return emptyList()
+        val owner = context?.owner
         require(owner is FirRegularClassSymbol)
         val matchedClassId = owner.fir.matchedClass ?: return emptyList()
         val matchedClassSymbol = session.symbolProvider.getClassLikeSymbolByClassId(matchedClassId) ?: return emptyList()

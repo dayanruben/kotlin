@@ -13,6 +13,8 @@ import org.jetbrains.kotlin.fir.declarations.utils.*
 import org.jetbrains.kotlin.fir.dispatchReceiverClassOrNull
 import org.jetbrains.kotlin.fir.isNewPlaceForBodyGeneration
 import org.jetbrains.kotlin.fir.isSubstitutionOrIntersectionOverride
+import org.jetbrains.kotlin.fir.scopes.getDeclaredConstructors
+import org.jetbrains.kotlin.fir.scopes.impl.declaredMemberScope
 import org.jetbrains.kotlin.fir.scopes.unsubstitutedScope
 import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
@@ -171,7 +173,7 @@ class Fir2IrLazyClass(
                 // TODO we also come here for all deserialized / enhanced static enum members (with declaration.source == null).
                 //  For such members we currently can't tell whether they are compiler-generated methods or not.
                 // Note: we must drop declarations from Java here to avoid FirJavaTypeRefs inside
-                if (declaration.source == null && declaration.origin != FirDeclarationOrigin.Java ||
+                if (declaration.source == null && declaration.origin !is FirDeclarationOrigin.Java ||
                     declaration.source?.kind == KtFakeSourceElementKind.EnumGeneratedDeclaration
                 ) {
                     result += declarationStorage.getIrFunctionSymbol(declaration.symbol, forceTopLevelPrivate = isTopLevelPrivate).owner

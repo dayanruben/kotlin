@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.fir.caches.FirCache
 import org.jetbrains.kotlin.fir.caches.firCachesFactory
 import org.jetbrains.kotlin.fir.caches.getValue
 import org.jetbrains.kotlin.fir.declarations.FirClass
+import org.jetbrains.kotlin.fir.extensions.MemberGenerationContext
 import org.jetbrains.kotlin.fir.resolve.providers.FirSymbolProvider
 import org.jetbrains.kotlin.fir.scopes.FirContainingNamesAwareScope
 import org.jetbrains.kotlin.fir.scopes.FirNameAwareCompositeScope
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.fir.scopes.FirTypeScope
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.utils.addToStdlib.runIf
 
 @ThreadSafeMutableState
 class FirDeclaredMemberScopeProvider(val useSiteSession: FirSession) : FirSessionComponent {
@@ -51,9 +53,14 @@ class FirDeclaredMemberScopeProvider(val useSiteSession: FirSession) : FirSessio
         existingNames: List<Name>?,
         symbolProvider: FirSymbolProvider?
     ): FirContainingNamesAwareScope {
+        val origin = klass.origin
         return when {
-            klass.origin.generated -> {
-                FirGeneratedClassDeclaredMemberScope.create(useSiteSession, klass, needNestedClassifierScope = true) ?: FirTypeScope.Empty
+            origin.generated -> {
+                FirGeneratedClassDeclaredMemberScope.create(
+                    useSiteSession,
+                    MemberGenerationContext(klass.symbol, declaredMemberScope = null),
+                    needNestedClassifierScope = true
+                ) ?: FirTypeScope.Empty
             }
             else -> {
                 val baseScope = FirClassDeclaredMemberScopeImpl(
@@ -63,7 +70,13 @@ class FirDeclaredMemberScopeProvider(val useSiteSession: FirSession) : FirSessio
                     existingNames,
                     symbolProvider
                 )
-                val generatedScope = FirGeneratedClassDeclaredMemberScope.create(useSiteSession, klass, needNestedClassifierScope = false)
+                val generatedScope = runIf(origin.fromSource || origin.generated) {
+                    FirGeneratedClassDeclaredMemberScope.create(
+                        useSiteSession,
+                        MemberGenerationContext(klass.symbol, baseScope),
+                        needNestedClassifierScope = false
+                    )
+                }
                 if (generatedScope != null) {
                     FirNameAwareCompositeScope(listOf(baseScope, generatedScope))
                 } else {
