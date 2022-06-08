@@ -9982,6 +9982,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         }
 
         @Test
+        @TestMetadata("genericSignatureForSuspendImpl.kt")
+        public void testGenericSignatureForSuspendImpl() throws Exception {
+            runTest("compiler/testData/codegen/box/coroutines/genericSignatureForSuspendImpl.kt");
+        }
+
+        @Test
         @TestMetadata("handleException.kt")
         public void testHandleException() throws Exception {
             runTest("compiler/testData/codegen/box/coroutines/handleException.kt");
@@ -13207,6 +13213,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         @TestMetadata("doubleParam.kt")
         public void testDoubleParam() throws Exception {
             runTest("compiler/testData/codegen/box/dataClasses/doubleParam.kt");
+        }
+
+        @Test
+        @TestMetadata("equalityChecksPrimitiveUnboxed.kt")
+        public void testEqualityChecksPrimitiveUnboxed() throws Exception {
+            runTest("compiler/testData/codegen/box/dataClasses/equalityChecksPrimitiveUnboxed.kt");
         }
 
         @Test
@@ -20691,6 +20703,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         @TestMetadata("equalityChecksPrimitiveGeneric.kt")
         public void testEqualityChecksPrimitiveGeneric() throws Exception {
             runTest("compiler/testData/codegen/box/inlineClasses/equalityChecksPrimitiveGeneric.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
+        }
+
+        @Test
+        @TestMetadata("equalityChecksPrimitiveUnboxed.kt")
+        public void testEqualityChecksPrimitiveUnboxed() throws Exception {
+            runTest("compiler/testData/codegen/box/inlineClasses/equalityChecksPrimitiveUnboxed.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
         }
 
         @Test
@@ -44935,6 +44953,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         @TestMetadata("kt50477Enabled.kt")
         public void testKt50477Enabled() throws Exception {
             runTest("compiler/testData/codegen/box/sam/kt50477Enabled.kt");
+        }
+
+        @Test
+        @TestMetadata("kt52417.kt")
+        public void testKt52417() throws Exception {
+            runTest("compiler/testData/codegen/box/sam/kt52417.kt");
         }
 
         @Test

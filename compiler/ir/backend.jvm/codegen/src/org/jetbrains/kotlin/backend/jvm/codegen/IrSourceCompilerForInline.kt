@@ -42,12 +42,15 @@ class IrSourceCompilerForInline(
 
     override val inlineCallSiteInfo: InlineCallSiteInfo
         get() {
-            val root = generateSequence(codegen) { it.inlinedInto }.last()
+            val rootFunction = codegen.enclosingFunctionForLocalObjects
             return InlineCallSiteInfo(
-                root.classCodegen.type.internalName,
-                root.signature.asmMethod,
-                root.irFunction.inlineScopeVisibility,
-                root.irFunction.fileParent.getIoFile(),
+                codegen.classCodegen.type.internalName,
+                if (rootFunction === codegen.irFunction)
+                    codegen.signature.asmMethod
+                else
+                    codegen.methodSignatureMapper.mapAsmMethod(rootFunction),
+                rootFunction.inlineScopeVisibility,
+                rootFunction.fileParent.getIoFile(),
                 callElement.psiElement?.let { CodegenUtil.getLineNumberForElement(it, false) } ?: 0
             )
         }
@@ -62,7 +65,7 @@ class IrSourceCompilerForInline(
                 reifiedTypeParameters.addUsedReifiedParameter(typeParameter.name.asString())
             }
         }
-        return FunctionCodegen(lambdaInfo.function, codegen.classCodegen).generate(codegen, reifiedTypeParameters)
+        return FunctionCodegen(lambdaInfo.function, codegen.classCodegen).generate(reifiedTypeParameters)
     }
 
     override fun compileInlineFunction(jvmSignature: JvmMethodSignature): SMAPAndMethodNode {
@@ -96,7 +99,7 @@ class IrSourceCompilerForInline(
     override fun generateFinallyBlocks(finallyNode: MethodNode, curFinallyDepth: Int, returnType: Type, afterReturnLabel: Label, target: Label?) {
         ExpressionCodegen(
             codegen.irFunction, codegen.signature, codegen.frameMap, InstructionAdapter(finallyNode), codegen.classCodegen,
-            codegen.inlinedInto, codegen.smap, codegen.reifiedTypeParametersUsages
+            codegen.smap, codegen.reifiedTypeParametersUsages
         ).also {
             it.finallyDepth = curFinallyDepth
         }.generateFinallyBlocksIfNeeded(returnType, afterReturnLabel, data, target)
