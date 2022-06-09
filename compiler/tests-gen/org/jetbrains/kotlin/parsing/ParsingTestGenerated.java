@@ -131,6 +131,16 @@ public class ParsingTestGenerated extends AbstractParsingTest {
             runTest("compiler/testData/psi/CommentsBindingInStatementBlock.kt");
         }
 
+        @TestMetadata("complicateLTGT.kt")
+        public void testComplicateLTGT() throws Exception {
+            runTest("compiler/testData/psi/complicateLTGT.kt");
+        }
+
+        @TestMetadata("complicateLTGTE.kt")
+        public void testComplicateLTGTE() throws Exception {
+            runTest("compiler/testData/psi/complicateLTGTE.kt");
+        }
+
         @TestMetadata("Constructors.kt")
         public void testConstructors() throws Exception {
             runTest("compiler/testData/psi/Constructors.kt");
@@ -2432,11 +2442,6 @@ public class ParsingTestGenerated extends AbstractParsingTest {
             @TestMetadata("SameLineStatementRecovery.kt")
             public void testSameLineStatementRecovery() throws Exception {
                 runTest("compiler/testData/psi/recovery/SameLineStatementRecovery.kt");
-            }
-
-            @TestMetadata("TypeParameterBeforeEqualSign.kt")
-            public void testTypeParameterBeforeEqualSign() throws Exception {
-                runTest("compiler/testData/psi/recovery/TypeParameterBeforeEqualSign.kt");
             }
 
             @TestMetadata("UnfinishedExtension.kt")

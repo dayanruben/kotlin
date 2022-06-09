@@ -7,12 +7,18 @@ package org.jetbrains.kotlin.analysis.api.standalone.base.project.structure
 
 import com.intellij.codeInsight.ExternalAnnotationsManager
 import com.intellij.codeInsight.InferredAnnotationsManager
+import com.intellij.core.CoreJavaFileManager
 import com.intellij.mock.MockProject
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.ServiceManager
 import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.impl.file.impl.JavaFileManager
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
+import com.intellij.util.io.URLUtil.JAR_PROTOCOL
+import com.intellij.util.io.URLUtil.JAR_SEPARATOR
 import org.jetbrains.kotlin.analysis.project.structure.*
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.jvm.compiler.*
@@ -22,8 +28,7 @@ import org.jetbrains.kotlin.cli.jvm.index.SingleJavaFileRootsIndex
 import org.jetbrains.kotlin.cli.jvm.modules.CliJavaModuleFinder
 import org.jetbrains.kotlin.cli.jvm.modules.CliJavaModuleResolver
 import org.jetbrains.kotlin.cli.jvm.modules.JavaModuleGraph
-import org.jetbrains.kotlin.config.CompilerConfiguration
-import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.load.kotlin.MetadataFinderFactory
 import org.jetbrains.kotlin.load.kotlin.VirtualFileFinderFactory
 import org.jetbrains.kotlin.resolve.ModuleAnnotationsResolver
@@ -35,52 +40,59 @@ import java.nio.file.Path
 object StandaloneProjectFactory {
     fun createProjectEnvironment(
         projectDisposable: Disposable,
-        applicationDisposable: Disposable
+        applicationDisposable: Disposable,
+        compilerConfiguration: CompilerConfiguration = CompilerConfiguration(),
     ): KotlinCoreProjectEnvironment {
         val applicationEnvironment =
-            KotlinCoreEnvironment.getOrCreateApplicationEnvironmentForTests(applicationDisposable, CompilerConfiguration())
+            KotlinCoreEnvironment.getOrCreateApplicationEnvironmentForTests(applicationDisposable, compilerConfiguration)
 
-        return KotlinCoreProjectEnvironment(projectDisposable, applicationEnvironment)
+        return KotlinCoreProjectEnvironment(projectDisposable, applicationEnvironment).apply {
+            registerJavaPsiFacade(project)
+        }
+    }
+
+    private fun registerJavaPsiFacade(project: MockProject) {
+        with(project) {
+            registerService(
+                CoreJavaFileManager::class.java,
+                ServiceManager.getService(this, JavaFileManager::class.java) as CoreJavaFileManager
+            )
+
+            registerService(ExternalAnnotationsManager::class.java, MockExternalAnnotationsManager())
+            registerService(InferredAnnotationsManager::class.java, MockInferredAnnotationsManager())
+        }
     }
 
     fun registerServicesForProjectEnvironment(
         environment: KotlinCoreProjectEnvironment,
-        modules: KtModuleProjectStructure,
-        languageVersionSettings: LanguageVersionSettings,
-        jdkHome: Path?,
+        projectStructureProvider: ProjectStructureProvider,
+        modules: List<KtModule>,
+        sourceFiles: List<PsiFileSystemItem>,
+        languageVersionSettings: LanguageVersionSettings = latestLanguageVersionSettings,
+        jdkHome: Path? = null,
     ) {
         val project = environment.project
 
         KotlinCoreEnvironment.registerProjectExtensionPoints(project.extensionArea)
         KotlinCoreEnvironment.registerProjectServices(project)
 
-        project.registerService(ProjectStructureProvider::class.java, KtStaticModuleProvider(modules))
-        initialiseVirtualFileFinderServices(modules, environment, jdkHome, languageVersionSettings)
-        initialiseAnnotationServices(project)
+        project.registerService(ProjectStructureProvider::class.java, projectStructureProvider)
+        initialiseVirtualFileFinderServices(environment, modules, sourceFiles, languageVersionSettings, jdkHome)
 
         project.setupHighestLanguageLevel()
     }
 
-    private fun initialiseAnnotationServices(project: MockProject) {
-        project.registerService(ExternalAnnotationsManager::class.java, MockExternalAnnotationsManager())
-        project.registerService(InferredAnnotationsManager::class.java, MockInferredAnnotationsManager())
-    }
-
     private fun initialiseVirtualFileFinderServices(
-        modules: KtModuleProjectStructure,
         environment: KotlinCoreProjectEnvironment,
+        modules: List<KtModule>,
+        sourceFiles: List<PsiFileSystemItem>,
+        languageVersionSettings: LanguageVersionSettings,
         jdkHome: Path?,
-        languageVersionSettings: LanguageVersionSettings
     ) {
         val project = environment.project
 
-        val allSourceFiles = buildList {
-            val files = modules.mainModules.flatMap { it.files }
-            addAll(files)
-            addAll(findJvmRootsForJavaFiles(files.filterIsInstance<PsiJavaFile>()))
-        }
-        val allSourceFileRoots = allSourceFiles.map { JavaRoot(it.virtualFile, JavaRoot.RootType.SOURCE) }
-        val libraryRoots = getAllBinaryRoots(modules.allKtModules(), environment)
+        val allSourceFileRoots = sourceFiles.map { JavaRoot(it.virtualFile, JavaRoot.RootType.SOURCE) }
+        val libraryRoots = getAllBinaryRoots(modules, environment)
         libraryRoots.forEach { environment.addSourcesToClasspath(it.file) }
 
         val sourceAndLibraryRoots = buildList {
@@ -93,7 +105,10 @@ object StandaloneProjectFactory {
 
         javaFileManager.initialize(
             JvmDependenciesIndexImpl(sourceAndLibraryRoots),
-            listOf(createPackagePartsProvider(languageVersionSettings, project, libraryRoots)),
+            listOf(
+                createPackagePartsProvider(project, libraryRoots, languageVersionSettings)
+                    .invoke(ProjectScope.getLibrariesScope(project))
+            ),
             SingleJavaFileRootsIndex(emptyList()),
             true
         )
@@ -109,21 +124,24 @@ object StandaloneProjectFactory {
         project.registerService(VirtualFileFinderFactory::class.java, finderFactory)
     }
 
-    private fun findJvmRootsForJavaFiles(files: List<PsiJavaFile>): List<PsiDirectory> {
+    fun findJvmRootsForJavaFiles(files: List<PsiJavaFile>): List<PsiDirectory> {
         if (files.isEmpty()) return emptyList()
         val result = mutableSetOf<PsiDirectory>()
         for (file in files) {
             val packageParts = file.packageName.takeIf { it.isNotEmpty() }?.split('.') ?: emptyList()
-            val javaDir = packageParts
-                .reversed()
-                .fold(file.parent) { dir, part ->
-                    if (dir?.name == part) {
-                        dir.parent
-                    } else {
-                        error("File package ${file.packageName} does not match file path ${file.virtualFile.path}")
-                    }
+            var javaDir: PsiDirectory? = file.parent
+            for (part in packageParts.reversed()) {
+                if (javaDir?.name == part) {
+                    javaDir = javaDir.parent
+                } else {
+                    // Error(ish): file package does not match file path.
+                    // This could happen if, e.g., src/my/pkg/MyTest.java has package `test.pkg`.
+                    // It is just best practice, not enforced by language spec.
+                    // So, here, we just stop iterating upward the folder structure.
+                    break
                 }
-            result += javaDir as PsiDirectory
+            }
+            javaDir?.let { result += it }
         }
         return result.toList()
     }
@@ -134,8 +152,13 @@ object StandaloneProjectFactory {
     ): List<JavaRoot> = withAllTransitiveDependencies(modules)
         .filterIsInstance<KtBinaryModule>()
         .flatMap { it.getBinaryRoots() }
-        .map {
-            val jar = environment.environment.jarFileSystem.findFileByPath(it.toAbsolutePath().toString() + "!/")!!
+        .mapNotNull { path ->
+            val pathString = path.toAbsolutePath().toString()
+            val jar =
+                if (pathString.endsWith(JAR_PROTOCOL))
+                    environment.environment.jarFileSystem.findFileByPath(pathString + JAR_SEPARATOR)
+                else null
+            if (jar == null) return@mapNotNull null
             JavaRoot(jar, JavaRoot.RootType.BINARY)
         }
 
@@ -168,15 +191,18 @@ object StandaloneProjectFactory {
     }
 
     fun createPackagePartsProvider(
-        languageVersionSettings: LanguageVersionSettings,
         project: MockProject,
-        libraryRoots: List<JavaRoot>
-    ): JvmPackagePartProvider {
-        return JvmPackagePartProvider(languageVersionSettings, ProjectScope.getLibrariesScope(project)).apply {
+        libraryRoots: List<JavaRoot>,
+        languageVersionSettings: LanguageVersionSettings = latestLanguageVersionSettings,
+    ): (GlobalSearchScope) -> JvmPackagePartProvider = { scope ->
+        JvmPackagePartProvider(languageVersionSettings, scope).apply {
             addRoots(libraryRoots, MessageCollector.NONE)
             (ModuleAnnotationsResolver
                 .getInstance(project) as CliModuleAnnotationsResolver)
                 .addPackagePartProvider(this)
         }
     }
+
+    private val latestLanguageVersionSettings: LanguageVersionSettings =
+        LanguageVersionSettingsImpl(LanguageVersion.LATEST_STABLE, ApiVersion.LATEST)
 }
