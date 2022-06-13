@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.KtVirtualFileSourceFile
 import org.jetbrains.kotlin.analyzer.common.CommonPlatformAnalyzerServices
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.jvm.JvmIrCodegenFactory
+import org.jetbrains.kotlin.backend.jvm.JvmIrDeserializerImpl
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.CommonCompilerPerformanceManager
 import org.jetbrains.kotlin.cli.common.config.kotlinSourceRoots
@@ -60,6 +61,7 @@ import org.jetbrains.kotlin.fir.resolve.providers.FirSymbolProvider
 import org.jetbrains.kotlin.fir.session.FirSessionFactory
 import org.jetbrains.kotlin.fir.session.environment.AbstractProjectEnvironment
 import org.jetbrains.kotlin.fir.session.environment.AbstractProjectFileSearchScope
+import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmIrMangler
 import org.jetbrains.kotlin.javac.JavacWrapper
 import org.jetbrains.kotlin.load.kotlin.MetadataFinderFactory
 import org.jetbrains.kotlin.load.kotlin.PackagePartProvider
@@ -185,7 +187,7 @@ fun convertAnalyzedFirToIr(
     analysisResults: ModuleCompilerAnalyzedOutput,
     environment: ModuleCompilerEnvironment
 ): ModuleCompilerIrBackendInput {
-    val extensions = JvmFir2IrExtensions(input.configuration)
+    val extensions = JvmFir2IrExtensions(input.configuration, JvmIrDeserializerImpl(), JvmIrMangler)
 
     // fir2ir
     val irGenerationExtensions =
@@ -363,7 +365,6 @@ fun writeOutputs(
     return true
 }
 
-
 fun createSession(
     name: String,
     platform: TargetPlatform,
@@ -460,11 +461,9 @@ private class ProjectEnvironmentWithCoreEnvironmentEmulation(
     override fun getPackagePartProvider(fileSearchScope: AbstractProjectFileSearchScope): PackagePartProvider {
         return super.getPackagePartProvider(fileSearchScope).also {
             (it as? JvmPackagePartProvider)?.run {
-                (it as? JvmPackagePartProvider)?.run {
-                    addRoots(initialRoots, configuration.getNotNull(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY))
-                    packagePartProviders += this
-                    (ModuleAnnotationsResolver.getInstance(project) as CliModuleAnnotationsResolver).addPackagePartProvider(this)
-                }
+                addRoots(initialRoots, configuration.getNotNull(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY))
+                packagePartProviders += this
+                (ModuleAnnotationsResolver.getInstance(project) as CliModuleAnnotationsResolver).addPackagePartProvider(this)
             }
         }
     }
@@ -549,18 +548,21 @@ fun createProjectEnvironment(
 }
 
 private fun contentRootToVirtualFile(
-    root: JvmContentRootBase, locaFileSystem: VirtualFileSystem, jarFileSystem: VirtualFileSystem, messageCollector: MessageCollector
+    root: JvmContentRootBase,
+    localFileSystem: VirtualFileSystem,
+    jarFileSystem: VirtualFileSystem,
+    messageCollector: MessageCollector,
 ): VirtualFile? =
     when (root) {
         // TODO: find out why non-existent location is not reported for JARs, add comment or fix
         is JvmClasspathRoot ->
             if (root.file.isFile) jarFileSystem.findJarRoot(root.file)
-            else locaFileSystem.findExistingRoot(root, "Classpath entry", messageCollector)
+            else localFileSystem.findExistingRoot(root, "Classpath entry", messageCollector)
         is JvmModulePathRoot ->
             if (root.file.isFile) jarFileSystem.findJarRoot(root.file)
-            else locaFileSystem.findExistingRoot(root, "Java module root", messageCollector)
+            else localFileSystem.findExistingRoot(root, "Java module root", messageCollector)
         is JavaSourceRoot ->
-            locaFileSystem.findExistingRoot(root, "Java source root", messageCollector)
+            localFileSystem.findExistingRoot(root, "Java source root", messageCollector)
         else ->
             throw IllegalStateException("Unexpected root: $root")
     }

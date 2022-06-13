@@ -22,10 +22,8 @@ import org.jetbrains.kotlin.metadata.jvm.JvmProtoBuf
 import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
 import org.jetbrains.kotlin.metadata.jvm.serialization.JvmStringTable
 import org.jetbrains.kotlin.protobuf.MessageLite
-import org.jetbrains.kotlin.resolve.jvm.diagnostics.JvmDeclarationOrigin
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.JvmDeclarationOrigin.Companion.NO_ORIGIN
 import org.jetbrains.org.objectweb.asm.*
-import org.jetbrains.org.objectweb.asm.commons.InstructionAdapter
 import org.jetbrains.org.objectweb.asm.commons.Method
 import org.jetbrains.org.objectweb.asm.tree.*
 import java.util.*
@@ -44,7 +42,6 @@ class AnonymousObjectTransformer(
     private var constructor: MethodNode? = null
     private lateinit var sourceMap: SMAP
     private lateinit var sourceMapper: SourceMapper
-    private val languageVersionSettings = inliningContext.state.languageVersionSettings
 
     // TODO: use IrTypeMapper in the IR backend
     private val typeMapper: KotlinTypeMapperBase = state.typeMapper
@@ -107,7 +104,7 @@ class AnonymousObjectTransformer(
                 return if (isCapturedFieldName(name)) {
                     null
                 } else {
-                    classBuilder.newField(JvmDeclarationOrigin.NO_ORIGIN, access, name, desc, signature, value)
+                    classBuilder.newField(NO_ORIGIN, access, name, desc, signature, value)
                 }
             }
 
@@ -132,13 +129,13 @@ class AnonymousObjectTransformer(
 
         val allCapturedParamBuilder = ParametersBuilder.newBuilder()
         val constructorParamBuilder = ParametersBuilder.newBuilder()
-        val additionalFakeParams = extractParametersMappingAndPatchConstructor(
+        extractParametersMappingAndPatchConstructor(
             constructor!!, allCapturedParamBuilder, constructorParamBuilder, transformationInfo, parentRemapper
         )
 
         val deferringMethods = ArrayList<DeferredMethodVisitor>()
 
-        generateConstructorAndFields(classBuilder, allCapturedParamBuilder, constructorParamBuilder, parentRemapper, additionalFakeParams)
+        generateConstructorAndFields(classBuilder, constructorParamBuilder, parentRemapper)
 
         val coroutineTransformer = CoroutineTransformer(
             inliningContext,
@@ -344,34 +341,12 @@ class AnonymousObjectTransformer(
 
     private fun generateConstructorAndFields(
         classBuilder: ClassBuilder,
-        allCapturedBuilder: ParametersBuilder,
         constructorInlineBuilder: ParametersBuilder,
-        parentRemapper: FieldRemapper,
-        constructorAdditionalFakeParams: List<CapturedParamInfo>
+        parentRemapper: FieldRemapper
     ) {
-        val descTypes = ArrayList<Type>()
-
         val constructorParams = constructorInlineBuilder.buildParameters()
-        val capturedIndexes = IntArray(constructorParams.parameters.size)
-        var index = 0
-        var size = 0
-
-        //complex processing cause it could have super constructor call params
-        for (info in constructorParams) {
-            if (!info.isSkipped) { //not inlined
-                if (info.isCaptured || info is CapturedParamInfo) {
-                    capturedIndexes[index] = size
-                    index++
-                }
-
-                if (size != 0) { //skip this
-                    descTypes.add(info.type)
-                }
-                size += info.type.size
-            }
-        }
-
-        val constructorDescriptor = Type.getMethodDescriptor(Type.VOID_TYPE, *descTypes.toTypedArray())
+        val constructorParamTypes = constructorParams.filter { !it.isSkipped }.map { it.type }.drop(1)
+        val constructorDescriptor = Type.getMethodDescriptor(Type.VOID_TYPE, *constructorParamTypes.toTypedArray())
         //TODO for inline method make public class
         transformationInfo.newConstructorDescriptor = constructorDescriptor
         val constructorVisitor = classBuilder.newMethod(
@@ -380,34 +355,23 @@ class AnonymousObjectTransformer(
 
         val newBodyStartLabel = Label()
         constructorVisitor.visitLabel(newBodyStartLabel)
+
         //initialize captured fields
-        val newFieldsWithSkipped = getNewFieldsToGenerate(allCapturedBuilder.listCaptured())
-        val fieldInfoWithSkipped = transformToFieldInfo(Type.getObjectType(transformationInfo.newClassName), newFieldsWithSkipped)
-
-        val capturedFieldInitializer = InstructionAdapter(constructorVisitor)
-        fieldInfoWithSkipped.forEachIndexed { paramIndex, fieldInfo ->
-            if (!newFieldsWithSkipped[paramIndex].skip) {
-                DescriptorAsmUtil.genAssignInstanceFieldFromParam(fieldInfo, capturedIndexes[paramIndex], capturedFieldInitializer)
-            }
-        }
-
-        //then transform constructor
-        //HACK: in inlining into constructor we access original captured fields with field access not local var
-        //but this fields added to general params (this assumes local var access) not captured one,
-        //so we need to add them to captured params
-        for (info in constructorAdditionalFakeParams) {
-            val fake = constructorInlineBuilder.addCapturedParamCopy(info)
-
-            if (fake.functionalArgument is LambdaInfo) {
-                //set remap value to skip this fake (captured with lambda already skipped)
-                val composed = StackValue.field(
-                    fake.type,
-                    oldObjectType,
-                    fake.newFieldName,
-                    false,
-                    StackValue.LOCAL_0
-                )
-                fake.remapValue = composed
+        var nextParamOffset = 0
+        for (param in constructorParams) {
+            val offset = if (param.isSkipped) -1 else nextParamOffset.also { nextParamOffset += param.type.size }
+            val info = param.fieldEquivalent?.also {
+                // Permit to access this capture through a field within the constructor itself, but remap to local loads.
+                constructorInlineBuilder.addCapturedParam(it, it.newFieldName).remapValue =
+                    if (offset == -1) null else StackValue.local(offset, param.type)
+            } ?: param
+            if (!param.isSkipped && info is CapturedParamInfo && !info.isSkipInConstructor) {
+                val desc = info.type.descriptor
+                val access = AsmUtil.NO_FLAG_PACKAGE_PRIVATE or Opcodes.ACC_SYNTHETIC or Opcodes.ACC_FINAL
+                classBuilder.newField(NO_ORIGIN, access, info.newFieldName, desc, null, null)
+                constructorVisitor.visitVarInsn(Opcodes.ALOAD, 0)
+                constructorVisitor.visitVarInsn(info.type.getOpcode(Opcodes.ILOAD), offset)
+                constructorVisitor.visitFieldInsn(Opcodes.PUTFIELD, transformationInfo.newClassName, info.newFieldName, desc)
             }
         }
 
@@ -417,7 +381,7 @@ class AnonymousObjectTransformer(
 
         val first = intermediateMethodNode.instructions.first
         val oldStartLabel = (first as? LabelNode)?.label
-        intermediateMethodNode.accept(object : MethodBodyVisitor(capturedFieldInitializer) {
+        intermediateMethodNode.accept(object : MethodBodyVisitor(constructorVisitor) {
             override fun visitLocalVariable(
                 name: String, desc: String, signature: String?, start: Label, end: Label, index: Int
             ) {
@@ -430,9 +394,6 @@ class AnonymousObjectTransformer(
             }
         })
         constructorVisitor.visitEnd()
-        DescriptorAsmUtil.genClosureFields(
-            toNameTypePair(filterSkipped(newFieldsWithSkipped)), classBuilder
-        )
     }
 
     private fun getMethodParametersWithCaptured(capturedBuilder: ParametersBuilder, sourceNode: MethodNode): Parameters {
@@ -469,11 +430,10 @@ class AnonymousObjectTransformer(
         constructorParamBuilder: ParametersBuilder,
         transformationInfo: AnonymousObjectTransformationInfo,
         parentFieldRemapper: FieldRemapper
-    ): List<CapturedParamInfo> {
+    ) {
+        val capturedParams = HashMap<Int, CapturedParamInfo>()
         val capturedLambdas = LinkedHashSet<LambdaInfo>() //captured var of inlined parameter
-        val constructorAdditionalFakeParams = ArrayList<CapturedParamInfo>()
         val indexToFunctionalArgument = transformationInfo.functionalArguments
-        val capturedParams = HashSet<Int>()
 
         // Possible cases where we need to add each lambda's captures separately:
         //
@@ -520,9 +480,7 @@ class AnonymousObjectTransformer(
             if (functionalArgument is LambdaInfo) {
                 capturedLambdas.add(functionalArgument)
             }
-            constructorAdditionalFakeParams.add(info)
-            capturedParams.add(varIndex)
-
+            capturedParams[varIndex] = info
             toDelete.add(parameterAload.previous)
             toDelete.add(parameterAload)
             toDelete.add(fieldNode)
@@ -533,11 +491,17 @@ class AnonymousObjectTransformer(
 
         val paramTypes = transformationInfo.constructorDesc?.let { Type.getArgumentTypes(it) } ?: emptyArray()
         for (type in paramTypes) {
-            val info = indexToFunctionalArgument[constructorParamBuilder.nextParameterOffset]
-            val isCaptured = capturedParams.contains(constructorParamBuilder.nextParameterOffset)
-            val parameterInfo = constructorParamBuilder.addNextParameter(type, info is LambdaInfo)
-            parameterInfo.functionalArgument = info
-            parameterInfo.isCaptured = isCaptured
+            val functionalArgument = indexToFunctionalArgument[constructorParamBuilder.nextParameterOffset]
+            val fieldEquivalent = capturedParams[constructorParamBuilder.nextParameterOffset]
+            val parameterInfo = constructorParamBuilder.addNextParameter(type, functionalArgument is LambdaInfo)
+            parameterInfo.functionalArgument = functionalArgument
+            parameterInfo.fieldEquivalent = fieldEquivalent
+            if (functionalArgument is LambdaInfo && parameterInfo.fieldEquivalent == null) {
+                // TODO: check if this is enough to support lambdas that have no field equivalent because they are only used
+                //  in the constructor - see `LocalClassContext` in `LocalDeclarationsLowering`.
+                // TODO: these lambdas' captures should have no fields either.
+                capturedLambdas.add(functionalArgument)
+            }
         }
 
         //For all inlined lambdas add their captured parameters
@@ -547,27 +511,20 @@ class AnonymousObjectTransformer(
             val capturedOuterThisTypes = mutableSetOf<String>()
             for (info in capturedLambdas) {
                 for (desc in info.capturedVars) {
-                    // Merge all outer `this` of the same type captured by inlined lambdas, since they have to be the same
-                    // object. Outer `this` captured by the original object itself should have been renamed above,
-                    // and can have a different value even if the same type is captured by a lambda.
-                    val recapturedParamInfo = if (isThis0(desc.fieldName))
-                        capturedParamBuilder.addCapturedParam(desc, desc.fieldName, !capturedOuterThisTypes.add(desc.type.className))
-                    else
-                        capturedParamBuilder.addCapturedParam(desc, addUniqueField(desc.fieldName + INLINE_TRANSFORMATION_SUFFIX), false)
+                    val recapturedParamInfo = constructorParamBuilder.addCapturedParam(
+                        desc,
+                        // Merge all outer `this` of the same type captured by inlined lambdas, since they have to be the same
+                        // object. Outer `this` captured by the original object itself should have been renamed above,
+                        // and can have a different value even if the same type is captured by a lambda.
+                        if (isThis0(desc.fieldName)) desc.fieldName else addUniqueField(desc.fieldName + INLINE_TRANSFORMATION_SUFFIX),
+                        (isThis0(desc.fieldName) && !capturedOuterThisTypes.add(desc.type.className))
+                    )
                     if (desc.isSuspend) {
                         recapturedParamInfo.functionalArgument = NonInlineArgumentForInlineSuspendParameter.INLINE_LAMBDA_AS_VARIABLE
                     }
-                    val composed = StackValue.field(
-                        desc.type,
-                        oldObjectType, /*TODO owner type*/
-                        recapturedParamInfo.newFieldName,
-                        false,
-                        StackValue.LOCAL_0
-                    )
-                    recapturedParamInfo.remapValue = composed
+                    capturedParamBuilder.addCapturedParam(recapturedParamInfo, recapturedParamInfo.newFieldName).remapValue =
+                        StackValue.field(desc.type, oldObjectType, recapturedParamInfo.newFieldName, false, StackValue.LOCAL_0)
                     allRecapturedParameters.add(desc)
-
-                    constructorParamBuilder.addCapturedParam(recapturedParamInfo, recapturedParamInfo.newFieldName).remapValue = composed
                 }
             }
         } else if (capturedLambdas.isNotEmpty()) {
@@ -578,18 +535,14 @@ class AnonymousObjectTransformer(
                 ?: throw AssertionError("Expecting RegeneratedLambdaFieldRemapper, but ${parentFieldRemapper.parent}")
             val ownerType = Type.getObjectType(parent.originalLambdaInternalName)
             val desc = CapturedParamDesc(ownerType, AsmUtil.THIS, ownerType)
-            val recapturedParamInfo = capturedParamBuilder.addCapturedParam(desc, AsmUtil.CAPTURED_THIS_FIELD/*outer lambda/object*/, false)
-            val composed = StackValue.LOCAL_0
-            recapturedParamInfo.remapValue = composed
+            val recapturedParamInfo =
+                constructorParamBuilder.addCapturedParam(desc, AsmUtil.CAPTURED_THIS_FIELD/*outer lambda/object*/, false)
+            capturedParamBuilder.addCapturedParam(recapturedParamInfo, recapturedParamInfo.newFieldName).remapValue = StackValue.LOCAL_0
             allRecapturedParameters.add(desc)
-
-            constructorParamBuilder.addCapturedParam(recapturedParamInfo, recapturedParamInfo.newFieldName).remapValue = composed
         }
 
         transformationInfo.allRecapturedParameters = allRecapturedParameters
         transformationInfo.capturedLambdasToInline = capturedLambdas.associateBy { it.lambdaClassType.internalName }
-
-        return constructorAdditionalFakeParams
     }
 
     private fun addUniqueField(name: String): String {
