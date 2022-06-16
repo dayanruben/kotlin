@@ -1078,6 +1078,18 @@ public class FirDiagnosticTestGenerated extends AbstractFirDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("flowFromInplaceLambda2.kt")
+            public void testFlowFromInplaceLambda2() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/cfg/flowFromInplaceLambda2.kt");
+            }
+
+            @Test
+            @TestMetadata("flowFromTwoInplaceLambdas.kt")
+            public void testFlowFromTwoInplaceLambdas() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/cfg/flowFromTwoInplaceLambdas.kt");
+            }
+
+            @Test
             @TestMetadata("initBlock.kt")
             public void testInitBlock() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolve/cfg/initBlock.kt");

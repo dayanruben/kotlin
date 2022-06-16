@@ -1189,6 +1189,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             }
 
             @Test
+            @TestMetadata("cycleInParameters_array.kt")
+            public void testCycleInParameters_array() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/annotations/cycleInParameters_array.kt");
+            }
+
+            @Test
             @TestMetadata("cycleInParameters_before.kt")
             public void testCycleInParameters_before() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/annotations/cycleInParameters_before.kt");
@@ -12926,6 +12932,30 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             @TestMetadata("DoubleImports.kt")
             public void testDoubleImports() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/imports/DoubleImports.kt");
+            }
+
+            @Test
+            @TestMetadata("EnumEntryVsStaticAmbiguity.kt")
+            public void testEnumEntryVsStaticAmbiguity() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/imports/EnumEntryVsStaticAmbiguity.kt");
+            }
+
+            @Test
+            @TestMetadata("EnumEntryVsStaticAmbiguity2.kt")
+            public void testEnumEntryVsStaticAmbiguity2() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/imports/EnumEntryVsStaticAmbiguity2.kt");
+            }
+
+            @Test
+            @TestMetadata("EnumEntryVsStaticAmbiguity3.kt")
+            public void testEnumEntryVsStaticAmbiguity3() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/imports/EnumEntryVsStaticAmbiguity3.kt");
+            }
+
+            @Test
+            @TestMetadata("EnumEntryVsStaticAmbiguity4.kt")
+            public void testEnumEntryVsStaticAmbiguity4() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/imports/EnumEntryVsStaticAmbiguity4.kt");
             }
 
             @Test
@@ -30109,6 +30139,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
                 @TestMetadata("capturedByMultipleLambdas.kt")
                 public void testCapturedByMultipleLambdas() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/smartCasts/variables/capturedByMultipleLambdas.kt");
+                }
+
+                @Test
+                @TestMetadata("capturedByNested.kt")
+                public void testCapturedByNested() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/smartCasts/variables/capturedByNested.kt");
                 }
 
                 @Test

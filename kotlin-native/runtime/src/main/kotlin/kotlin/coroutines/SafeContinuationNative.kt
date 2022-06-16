@@ -9,9 +9,11 @@ import kotlin.*
 import kotlin.native.concurrent.*
 import kotlin.coroutines.intrinsics.CoroutineSingletons.*
 import kotlin.coroutines.intrinsics.*
+import kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED
 
 @PublishedApi
 @SinceKotlin("1.3")
+@OptIn(FreezingIsDeprecated::class)
 internal actual class SafeContinuation<in T>
 internal actual constructor(
         private val delegate: Continuation<T>,
