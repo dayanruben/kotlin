@@ -1,3 +1,5 @@
+import plugins.KotlinBuildPublishingPlugin.Companion.ADHOC_COMPONENT_NAME
+
 plugins {
     kotlin("jvm")
     `java-test-fixtures`
@@ -16,7 +18,7 @@ dependencies {
     testImplementation(gradleApi())
     testImplementation(gradleKotlinDsl())
     testImplementation(project(":kotlin-gradle-plugin"))
-    testImplementation(project(":kotlin-gradle-statistics"))
+    testImplementation(project(":kotlin-gradle-plugin-idea-proto"))
     testImplementation(project(":kotlin-test:kotlin-test-junit"))
 
     testImplementation("org.reflections:reflections:0.10.2") {
@@ -26,10 +28,33 @@ dependencies {
     testFixturesImplementation(gradleApi())
     testFixturesImplementation(gradleKotlinDsl())
     testFixturesImplementation(project(":kotlin-tooling-core"))
+    testFixturesImplementation(project(":kotlin-gradle-plugin-idea-proto"))
     testFixturesImplementation(project(":kotlin-test:kotlin-test-junit"))
 }
 
-publish()
+
+publish(moduleMetadata = true) {
+    fun ConfigurationVariantDetails.skipUnpublishable() {
+        if (configurationVariant.artifacts.any { JavaBasePlugin.UNPUBLISHABLE_VARIANT_ARTIFACTS.contains(it.type) }) {
+            skip()
+        }
+    }
+
+    suppressAllPomMetadataWarnings()
+
+    val kotlinLibraryComponent = components[ADHOC_COMPONENT_NAME] as AdhocComponentWithVariants
+
+    kotlinLibraryComponent.addVariantsFromConfiguration(configurations.testFixturesApiElements.get()) {
+        mapToMavenScope("compile")
+        skipUnpublishable()
+    }
+
+    kotlinLibraryComponent.addVariantsFromConfiguration(configurations.testFixturesRuntimeElements.get()) {
+        mapToMavenScope("runtime")
+        skipUnpublishable()
+    }
+}
+
 javadocJar()
 sourcesJar()
 

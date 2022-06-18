@@ -997,6 +997,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("AnnotatedBlock.kt")
+            public void testAnnotatedBlock() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/annotations/AnnotatedBlock.kt");
+            }
+
+            @Test
             @TestMetadata("AnnotatedConstructor.kt")
             public void testAnnotatedConstructor() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/annotations/AnnotatedConstructor.kt");
@@ -14657,6 +14663,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("kt49101.kt")
                 public void testKt49101() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/kt49101.kt");
+                }
+
+                @Test
+                @TestMetadata("kt52782.kt")
+                public void testKt52782() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/kt52782.kt");
                 }
 
                 @Test

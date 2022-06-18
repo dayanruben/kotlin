@@ -3,6 +3,8 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
+@file:Suppress("DuplicatedCode")
+
 package org.jetbrains.kotlin.fir.types.impl
 
 import org.jetbrains.kotlin.KtSourceElement
@@ -23,6 +25,7 @@ class FirResolvedTypeRefImpl @FirImplementationDetail constructor(
     override val annotations: MutableList<FirAnnotation>,
     override val type: ConeKotlinType,
     override var delegatedTypeRef: FirTypeRef?,
+    override val isFromStubType: Boolean,
 ) : FirResolvedTypeRef() {
     override fun <R, D> acceptChildren(visitor: FirVisitor<R, D>, data: D) {
         annotations.forEach { it.accept(visitor, data) }

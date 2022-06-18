@@ -73,9 +73,14 @@ internal fun writeWasmUnitTestRunner(compiledFile: File): File {
     val testRunnerFile = compiledFile.parentFile.resolve("runUnitTests.mjs")
     testRunnerFile.writeText(
         """
-        import exports from '${compiledFile.absolutePath}';
+        import exports from './${compiledFile.name}';
         exports.startUnitTests?.();
         """.trimIndent()
     )
     return testRunnerFile
+}
+
+internal fun MutableList<String>.addWasmExperimentalArguments() {
+    add("--experimental-wasm-gc")
+    add("--experimental-wasm-eh")
 }

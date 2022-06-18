@@ -13,16 +13,23 @@ import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskProvider
 import org.jetbrains.kotlin.gradle.dsl.pm20Extension
 import org.jetbrains.kotlin.gradle.tasks.locateOrRegisterTask
+import org.jetbrains.kotlin.kpm.idea.proto.writeTo
 import java.io.ByteArrayOutputStream
 import java.io.ObjectOutputStream
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 
 internal fun Project.locateOrRegisterIdeaKpmBuildProjectModelTask(): TaskProvider<IdeaKpmBuildProjectModelTask> {
     return locateOrRegisterTask(IdeaKpmBuildProjectModelTask.defaultTaskName)
 }
 
+/**
+ * Internal Task used for troubleshooting/debugging/diagnosing IdeaKpm model building.
+ */
 internal open class IdeaKpmBuildProjectModelTask : DefaultTask() {
+
     @OutputDirectory
-    val outputDirectory = project.buildDir.resolve("ideaKpmProjectModel")
+    val outputDirectory = project.buildDir.resolve("IdeaKpmProject")
 
     private val builder = project.pm20Extension.ideaKpmProjectModelBuilder
 
@@ -34,15 +41,22 @@ internal open class IdeaKpmBuildProjectModelTask : DefaultTask() {
     protected fun buildIdeaKpmProjectModel() {
         outputDirectory.mkdirs()
 
-        val model = builder.buildIdeaKpmProjectModel()
+        val model = builder.buildIdeaKpmProject()
+        val serializationContext = builder.buildSerializationContext()
         val textFile = outputDirectory.resolve("model.txt")
         textFile.writeText(model.toString())
 
-        val binaryFile = outputDirectory.resolve("model.bin")
-        binaryFile.writeBytes(ByteArrayOutputStream().use { byteArrayOutputStream ->
+        val javaIoSerializableBinaryFile = outputDirectory.resolve("model.java.bin")
+        javaIoSerializableBinaryFile.writeBytes(ByteArrayOutputStream().use { byteArrayOutputStream ->
             ObjectOutputStream(byteArrayOutputStream).use { objectOutputStream -> objectOutputStream.writeObject(model) }
             byteArrayOutputStream.toByteArray()
         })
+
+        val protoBinaryFile = outputDirectory.resolve("model.proto.bin")
+        if (protoBinaryFile.exists()) protoBinaryFile.delete()
+        protoBinaryFile.outputStream().use { stream ->
+            model.writeTo(stream, serializationContext)
+        }
 
         val jsonFile = outputDirectory.resolve("model.json")
         jsonFile.writeText(GsonBuilder().setLenient().setPrettyPrinting().create().toJson(model))

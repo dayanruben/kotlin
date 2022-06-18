@@ -119,13 +119,6 @@ class ConeConstraintSystemHasContradiction(
     override val candidateSymbol: FirBasedSymbol<*> get() = candidate.symbol
 }
 
-class ConeArgumentTypeMismatchCandidateError(
-    val expectedType: ConeKotlinType, val actualType: ConeKotlinType
-) : ConeDiagnostic {
-    override val reason: String
-        get() = "Type mismatch. Expected: $expectedType, Actual: $actualType"
-}
-
 class ConeAmbiguityError(
     val name: Name,
     val applicability: CandidateApplicability,
@@ -204,12 +197,13 @@ class ConeImportFromSingleton(val name: Name) : ConeDiagnostic {
 
 open class ConeUnsupported(override val reason: String, val source: KtSourceElement? = null) : ConeDiagnostic
 
+open class ConeUnsupportedDefaultValueInFunctionType(source: KtSourceElement? = null) :
+    ConeUnsupported("Default value of parameter in function type", source)
+
 class ConeUnresolvedParentInImport(val parentClassId: ClassId) : ConeDiagnostic {
     override val reason: String
         get() = "unresolved import"
 }
-
-class ConeUnsupportedDynamicType : ConeUnsupported("Dynamic types are not supported in this context")
 
 class ConeDeprecated(
     val source: KtSourceElement?,

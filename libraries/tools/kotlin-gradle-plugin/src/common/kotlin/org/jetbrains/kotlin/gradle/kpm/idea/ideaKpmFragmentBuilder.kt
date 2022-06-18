@@ -6,26 +6,26 @@
 package org.jetbrains.kotlin.gradle.kpm.idea
 
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.*
-import org.jetbrains.kotlin.tooling.core.emptyExtras
 
-internal fun IdeaKpmProjectModelBuildingContext.IdeaKpmFragment(fragment: GradleKpmFragment): IdeaKpmFragment {
+internal fun IdeaKpmProjectBuildingContext.IdeaKpmFragment(fragment: GradleKpmFragment): IdeaKpmFragment {
     return if (fragment is GradleKpmVariant) buildIdeaKpmVariant(fragment)
     else buildIdeaKpmFragment(fragment)
 }
 
-private fun IdeaKpmProjectModelBuildingContext.buildIdeaKpmFragment(fragment: GradleKpmFragment): IdeaKpmFragment {
+private fun IdeaKpmProjectBuildingContext.buildIdeaKpmFragment(fragment: GradleKpmFragment): IdeaKpmFragment {
     return IdeaKpmFragmentImpl(
         coordinates = IdeaKpmFragmentCoordinates(fragment),
         platforms = fragment.containingVariants.map { variant -> IdeaKpmPlatform(variant) }.toSet(),
         languageSettings = IdeaKpmLanguageSettings(fragment.languageSettings),
         dependencies = dependencyResolver.resolve(fragment).toList(),
-        sourceDirectories = fragment.kotlinSourceRoots.sourceDirectories.files.toList().map { file -> IdeaKpmSourceDirectoryImpl(file) },
-        resourceDirectories = emptyList(), // TODO
-        extras = emptyExtras() // TODO: Requires more sophisticated serialization
+        contentRoots = fragment.kotlinSourceRoots.sourceDirectories.files.map { file ->
+            IdeaKpmContentRootImpl(file, type = IdeaKpmContentRoot.SOURCES_TYPE)
+        },
+        extras = fragment.extras
     )
 }
 
-private fun IdeaKpmProjectModelBuildingContext.buildIdeaKpmVariant(variant: GradleKpmVariant): IdeaKpmVariant {
+private fun IdeaKpmProjectBuildingContext.buildIdeaKpmVariant(variant: GradleKpmVariant): IdeaKpmVariant {
     return IdeaKpmVariantImpl(
         fragment = buildIdeaKpmFragment(variant),
         platform = IdeaKpmPlatform(variant),

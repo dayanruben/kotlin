@@ -4,7 +4,7 @@
  * Version of kotlin-gradle-plugin-idea module that should be resolved for compatibility tests
  * This version can be treated as 'minimal guaranteed backwards compatible version' of the module.
  */
-val testedVersion = "1.7.20-dev-1435"
+val testedVersion = "1.7.20-dev-2127"
 
 val isSnapshotTest = properties.contains("kgp-idea.snapshot_test")
 val resolvedTestedVersion = if (isSnapshotTest) properties["defaultSnapshotVersion"].toString() else testedVersion
@@ -15,6 +15,7 @@ if (isSnapshotTest) {
     repositories {
         clear()
         mavenLocal()
+        mavenCentral()
     }
 }
 
@@ -29,6 +30,8 @@ val incomingClasspath by configurations.creating {
 
 dependencies {
     incomingClasspath(kotlin("gradle-plugin-idea", resolvedTestedVersion))
+    incomingClasspath(testFixtures(kotlin("gradle-plugin-idea", resolvedTestedVersion)))
+    incomingClasspath(kotlin("gradle-plugin-idea-proto", resolvedTestedVersion))
 }
 
 val syncClasspath by tasks.register<Sync>("syncClasspath") {
