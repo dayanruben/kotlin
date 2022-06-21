@@ -12,6 +12,7 @@ import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.mock.MockProject
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.PsiJavaFile
@@ -28,6 +29,7 @@ import org.jetbrains.kotlin.cli.jvm.index.JvmDependenciesIndexImpl
 import org.jetbrains.kotlin.cli.jvm.index.SingleJavaFileRootsIndex
 import org.jetbrains.kotlin.cli.jvm.modules.CliJavaModuleFinder
 import org.jetbrains.kotlin.cli.jvm.modules.CliJavaModuleResolver
+import org.jetbrains.kotlin.cli.jvm.modules.CoreJrtFileSystem
 import org.jetbrains.kotlin.cli.jvm.modules.JavaModuleGraph
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.load.kotlin.MetadataFinderFactory
@@ -155,16 +157,7 @@ object StandaloneProjectFactory {
         environment: KotlinCoreProjectEnvironment
     ): List<JavaRoot> = withAllTransitiveDependencies(modules)
         .filterIsInstance<KtBinaryModule>()
-        .flatMap { it.getBinaryRoots() }
-        .mapNotNull { path ->
-            val pathString = path.toAbsolutePath().toString()
-            val jar =
-                if (pathString.endsWith(JAR_PROTOCOL))
-                    environment.environment.jarFileSystem.findFileByPath(pathString + JAR_SEPARATOR)
-                else null
-            if (jar == null) return@mapNotNull null
-            JavaRoot(jar, JavaRoot.RootType.BINARY)
-        }
+        .flatMap { it.getJavaRoots(environment) }
 
     private fun withAllTransitiveDependencies(ktModules: List<KtModule>): List<KtModule> {
         val visited = hashSetOf<KtModule>()
@@ -192,6 +185,45 @@ object StandaloneProjectFactory {
                 addIfNotNull(librarySources)
             }
         }
+    }
+
+    private fun KtBinaryModule.getJavaRoots(
+        environment: KotlinCoreProjectEnvironment,
+    ): List<JavaRoot> {
+        return buildList {
+            getBinaryRoots().forEach { path ->
+                val pathString = path.toAbsolutePath().toString()
+                when {
+                    pathString.endsWith(JAR_PROTOCOL) -> {
+                        environment.environment.jarFileSystem.findFileByPath(pathString + JAR_SEPARATOR)
+                    }
+                    pathString.contains(JAR_SEPARATOR) -> {
+                        environment.environment.jrtFileSystem?.findFileByPath(adjustModulePath(pathString))
+                    }
+                    else -> {
+                        VirtualFileManager.getInstance().findFileByNioPath(path)
+                    }
+                }?.let { root ->
+                    add(JavaRoot(root, JavaRoot.RootType.BINARY))
+                }
+            }
+        }
+    }
+
+    private fun adjustModulePath(pathString: String): String {
+        return if (pathString.contains(JAR_SEPARATOR)) {
+            // URLs loaded from JDK point to module names in a JRT protocol format,
+            // e.g., "jrt:///path/to/jdk/home!/java.base" (JRT protocol prefix + JDK home path + JAR separator + module name)
+            // After protocol erasure, we will see "/path/to/jdk/home!/java.base" as a binary root.
+            // CoreJrtFileSystem.CoreJrtHandler#findFile, which uses Path#resolve, finds a virtual file path to the file itself,
+            // e.g., "/path/to/jdk/home!/modules/java.base". (JDK home path + JAR separator + actual file path)
+            // To work with that JRT handler, a hacky workaround here is to add "modules" before the module name so that it can
+            // find the actual file path.
+            // See [LLFirJavaFacadeForBinaries#getBinaryPath] for a similar hack.
+            val (libHomePath, pathInImage) = CoreJrtFileSystem.splitPath(pathString)
+            libHomePath + JAR_SEPARATOR + "modules/$pathInImage"
+        } else
+            pathString
     }
 
     fun createPackagePartsProvider(

@@ -15230,6 +15230,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         }
 
         @Test
+        @TestMetadata("sealedClass.kt")
+        public void testSealedClass() throws Exception {
+            runTest("compiler/testData/codegen/box/delegation/sealedClass.kt");
+        }
+
+        @Test
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             runTest("compiler/testData/codegen/box/delegation/simple.kt");
@@ -19389,6 +19395,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         @TestMetadata("builderInferenceLeakingVariable.kt")
         public void testBuilderInferenceLeakingVariable() throws Exception {
             runTest("compiler/testData/codegen/box/inference/builderInferenceLeakingVariable.kt");
+        }
+
+        @Test
+        @TestMetadata("builderInferenceWithAnnotation.kt")
+        public void testBuilderInferenceWithAnnotation() throws Exception {
+            runTest("compiler/testData/codegen/box/inference/builderInferenceWithAnnotation.kt");
         }
 
         @Test
@@ -44727,6 +44739,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         @TestMetadata("kt4733.kt")
         public void testKt4733() throws Exception {
             runTest("compiler/testData/codegen/box/safeCall/kt4733.kt");
+        }
+
+        @Test
+        @TestMetadata("kt52580.kt")
+        public void testKt52580() throws Exception {
+            runTest("compiler/testData/codegen/box/safeCall/kt52580.kt");
         }
 
         @Test

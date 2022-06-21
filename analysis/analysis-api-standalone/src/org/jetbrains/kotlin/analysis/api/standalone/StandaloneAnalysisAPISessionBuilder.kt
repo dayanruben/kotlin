@@ -126,7 +126,6 @@ public class StandaloneAnalysisAPISessionBuilder(
             registerService(KtDefaultLifetimeTokenProvider::class.java, KtReadActionConfinementDefaultLifetimeTokenProvider::class.java)
 
             registerService(KtModuleScopeProvider::class.java, KtModuleScopeProviderImpl())
-            registerService(KotlinModificationTrackerFactory::class.java, KotlinStaticModificationTrackerFactory::class.java)
             registerService(KotlinAnnotationsResolverFactory::class.java, KotlinStaticAnnotationsResolverFactory(ktFiles))
             registerService(KotlinDeclarationProviderFactory::class.java, KotlinStaticDeclarationProviderFactory(ktFiles))
             registerService(KotlinPackageProviderFactory::class.java, KotlinStaticPackageProviderFactory(ktFiles))
@@ -150,8 +149,8 @@ public class StandaloneAnalysisAPISessionBuilder(
                 }
             )
 
-            registerService(SymbolLightClassFacadeCache::class.java)
-            registerService(ClsJavaStubByVirtualFileCache::class.java)
+            registerService(SymbolLightClassFacadeCache::class.java, SymbolLightClassFacadeCache(this))
+            registerService(ClsJavaStubByVirtualFileCache::class.java, ClsJavaStubByVirtualFileCache())
             registerService(KotlinAsJavaSupport::class.java, KotlinAsJavaFirSupport(this))
         }
 
