@@ -20,8 +20,6 @@ sourceSets {
     compiler {
         kotlin {
             srcDir 'compiler/ir/backend.native/src/'
-            srcDir '../shared/src/main/kotlin'
-            srcDir '../shared/src/library/kotlin'
             srcDir(VersionGeneratorKt.kotlinNativeVersionSrc(project))
         }
         resources.srcDir 'compiler/ir/backend.native/resources/'
@@ -118,7 +116,6 @@ dependencies {
     compilerApi project(":native:kotlin-native-utils")
     compilerApi project(":core:descriptors")
     compilerApi project(":compiler:ir.tree")
-    compilerApi project(":compiler:ir.tree.impl")
     compilerApi project(":compiler:ir.backend.common")
     compilerApi project(":compiler:util")
     compilerApi project(":native:frontend.native")
@@ -128,6 +125,7 @@ dependencies {
     compilerApi project(":kotlin-util-klib-metadata")
     compilerApi project(":compiler:ir.serialization.common")
     compilerApi project(":compiler:ir.psi2ir")
+    compilerApi project(":kotlin-native-shared")
     use(IntellijDependenciesKt) {
         compilerApi(intellijCore())
         compileOnly(jpsModel())

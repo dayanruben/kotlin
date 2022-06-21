@@ -25,7 +25,8 @@ class IrErrorTypeImpl(
     kotlinType: KotlinType?,
     override val annotations: List<IrConstructorCall>,
     override val variance: Variance,
-) : IrErrorType(kotlinType) {
+    isMarkedNullable: Boolean = false
+) : IrErrorType(kotlinType, IrErrorClassImpl.symbol, isMarkedNullable) {
     override fun equals(other: Any?): Boolean = other is IrErrorTypeImpl
 
     override fun hashCode(): Int = IrErrorTypeImpl::class.java.hashCode()
@@ -40,7 +41,6 @@ class IrDynamicTypeImpl(
 
     override fun hashCode(): Int = IrDynamicTypeImpl::class.java.hashCode()
 }
-
 
 val IrType.originalKotlinType: KotlinType?
     get() = safeAs<IrTypeBase>()?.kotlinType
