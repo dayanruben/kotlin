@@ -9,8 +9,9 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.*
 import org.jetbrains.kotlin.analysis.api.descriptors.components.*
 import org.jetbrains.kotlin.analysis.api.impl.base.components.KtAnalysisScopeProviderImpl
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolProvider
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
+import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
+import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolProvider
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.getKtModule
 import org.jetbrains.kotlin.psi.KtElement
@@ -55,8 +56,12 @@ class KtFe10AnalysisSession(
     override val symbolInfoProviderImpl: KtSymbolInfoProvider = KtFe10SymbolInfoProvider(this)
     override val analysisScopeProviderImpl: KtAnalysisScopeProvider = KtAnalysisScopeProviderImpl(this, token)
     override val referenceResolveProviderImpl: KtReferenceResolveProvider = KtFe10ReferenceResolveProvider(this)
+    override val signatureSubstitutorImpl: KtSignatureSubstitutor = KtFe10SignatureSubstitutor(this)
+    override val scopeSubstitutionImpl: KtScopeSubstitution = KtFe10ScopeSubstitution(this)
+    override val substitutorFactoryImpl: KtSubstitutorFactory = KtFe10SubstitutorFactory(this)
 
-    override fun createContextDependentCopy(originalKtFile: KtFile, elementToReanalyze: KtElement): KtAnalysisSession {
-        return KtFe10AnalysisSession(elementToReanalyze, token)
-    }
+    override fun createContextDependentCopy(originalKtFile: KtFile, elementToReanalyze: KtElement): KtAnalysisSession =
+        withValidityAssertion {
+            KtFe10AnalysisSession(elementToReanalyze, token)
+        }
 }

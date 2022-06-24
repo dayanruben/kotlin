@@ -13,11 +13,15 @@ KtSuccessCallInfo:
             receiverType = null
             returnType = kotlin.String
             symbol = vararg names: kotlin.String
+            callableIdIfNonLocal = null
         ]
+        callableIdIfNonLocal = null
+    typeArgumentsMapping = {}
     argumentMapping = {
       "DEPRECATION" -> (KtVariableLikeSignature:
         name = names
         receiverType = null
         returnType = kotlin.String
-        symbol = vararg names: kotlin.String)
+        symbol = vararg names: kotlin.String
+        callableIdIfNonLocal = null)
     }

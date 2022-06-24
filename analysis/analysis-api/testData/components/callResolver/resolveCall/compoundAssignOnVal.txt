@@ -5,6 +5,7 @@ KtSuccessCallInfo:
       dispatchReceiver = KtExplicitReceiverValue:
         expression = l
         isSafeNavigation = false
+        type = A
       extensionReceiver = null
       signature = KtFunctionLikeSignature:
         receiverType = null
@@ -16,11 +17,15 @@ KtSuccessCallInfo:
             receiverType = null
             returnType = kotlin.Int
             symbol = i: kotlin.Int
+            callableIdIfNonLocal = null
         ]
+        callableIdIfNonLocal = /A.plusAssign
+    typeArgumentsMapping = {}
     argumentMapping = {
       1 -> (KtVariableLikeSignature:
         name = i
         receiverType = null
         returnType = kotlin.Int
-        symbol = i: kotlin.Int)
+        symbol = i: kotlin.Int
+        callableIdIfNonLocal = null)
     }

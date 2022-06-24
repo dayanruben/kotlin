@@ -105,7 +105,7 @@ class K2NativeCompilerArguments : CommonCompilerArguments() {
     @Argument(
             value = "-Xbundle-id",
             valueDescription = "<id>",
-            description = "Bundle ID to be set in Info.plist of a produced framework"
+            description = "Bundle ID to be set in Info.plist of a produced framework. Deprecated. Please use -Xbinary=bundleId=<id>."
     )
     var bundleId: String? = null
 

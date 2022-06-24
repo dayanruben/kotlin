@@ -5,11 +5,14 @@ KtSuccessCallInfo:
         symbol = KtReceiverParameterSymbol:
           origin: SOURCE
           type: JavaClass
+        type = JavaClass
       extensionReceiver = null
       signature = KtVariableLikeSignature:
         name = foo
         receiverType = null
         returnType = kotlin.Int
         symbol = var foo: kotlin.Int
+        callableIdIfNonLocal = /JavaClass.foo
     simpleAccess = Write:
       value = 42
+    typeArgumentsMapping = {}

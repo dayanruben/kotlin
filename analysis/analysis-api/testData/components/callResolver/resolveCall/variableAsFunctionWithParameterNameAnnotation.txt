@@ -5,6 +5,7 @@ KtSuccessCallInfo:
       dispatchReceiver = KtExplicitReceiverValue:
         expression = x
         isSafeNavigation = false
+        type = kotlin.Function2<@R|kotlin.ParameterName|(name = String(a))  kotlin.Int, @R|kotlin.ParameterName|(name = String(b))  kotlin.String, kotlin.Unit>
       extensionReceiver = null
       signature = KtFunctionLikeSignature:
         receiverType = null
@@ -15,22 +16,28 @@ KtSuccessCallInfo:
             name = a
             receiverType = null
             returnType = @R|kotlin.ParameterName|(name = String(a))  kotlin.Int
-            symbol = p1: P1,
+            symbol = p1: P1
+            callableIdIfNonLocal = null,
           KtVariableLikeSignature:
             name = b
             receiverType = null
             returnType = @R|kotlin.ParameterName|(name = String(b))  kotlin.String
             symbol = p2: P2
+            callableIdIfNonLocal = null
         ]
+        callableIdIfNonLocal = kotlin/Function2.invoke
+    typeArgumentsMapping = {}
     argumentMapping = {
       1 -> (KtVariableLikeSignature:
         name = a
         receiverType = null
         returnType = @R|kotlin.ParameterName|(name = String(a))  kotlin.Int
-        symbol = p1: P1),
+        symbol = p1: P1
+        callableIdIfNonLocal = null),
       "" -> (KtVariableLikeSignature:
         name = b
         receiverType = null
         returnType = @R|kotlin.ParameterName|(name = String(b))  kotlin.String
-        symbol = p2: P2)
+        symbol = p2: P2
+        callableIdIfNonLocal = null)
     }

@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.fir.annotations.KtFirAnnotationListForD
 import org.jetbrains.kotlin.analysis.api.fir.findPsi
 import org.jetbrains.kotlin.analysis.api.fir.symbols.pointers.KtFirClassOrObjectInLibrarySymbolPointer
 import org.jetbrains.kotlin.analysis.api.fir.utils.cached
+import org.jetbrains.kotlin.analysis.api.impl.base.symbols.toKtClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
@@ -50,9 +51,6 @@ internal class KtFirNamedClassOrObjectSymbol(
             firSymbol.fir.modality
                 ?: when (classKind) { // default modality
                     KtClassKind.INTERFACE -> Modality.ABSTRACT
-                    // Enum class should not be `final`, since its entries extend it.
-                    // It could be either `abstract` w/o ctor, or empty modality w/ private ctor.
-                    KtClassKind.ENUM_CLASS -> Modality.OPEN
                     else -> Modality.FINAL
                 }
         }
@@ -60,9 +58,11 @@ internal class KtFirNamedClassOrObjectSymbol(
 
     /* FirRegularClass visibility is not modified by STATUS only for Unknown, so it can be taken from RAW */
     override val visibility: Visibility
-        get() = when (val possiblyRawVisibility = firSymbol.fir.visibility) {
-            Visibilities.Unknown -> if (firSymbol.fir.isLocal) Visibilities.Local else Visibilities.Public
-            else -> possiblyRawVisibility
+        get() = withValidityAssertion {
+            when (val possiblyRawVisibility = firSymbol.fir.visibility) {
+                Visibilities.Unknown -> if (firSymbol.fir.isLocal) Visibilities.Local else Visibilities.Public
+                else -> possiblyRawVisibility
+            }
         }
 
     override val annotationsList by cached { KtFirAnnotationListForDeclaration.create(firSymbol, firResolveSession.useSiteFirSession, token) }
@@ -92,14 +92,7 @@ internal class KtFirNamedClassOrObjectSymbol(
 
     override val classKind: KtClassKind
         get() = withValidityAssertion {
-            when (firSymbol.classKind) {
-                ClassKind.INTERFACE -> KtClassKind.INTERFACE
-                ClassKind.ENUM_CLASS -> KtClassKind.ENUM_CLASS
-                ClassKind.ENUM_ENTRY -> KtClassKind.ENUM_ENTRY
-                ClassKind.ANNOTATION_CLASS -> KtClassKind.ANNOTATION_CLASS
-                ClassKind.CLASS -> KtClassKind.CLASS
-                ClassKind.OBJECT -> if (firSymbol.isCompanion) KtClassKind.COMPANION_OBJECT else KtClassKind.OBJECT
-            }
+            firSymbol.classKind.toKtClassKind(isCompanionObject = firSymbol.isCompanion)
         }
 
     override val symbolKind: KtSymbolKind
@@ -112,7 +105,7 @@ internal class KtFirNamedClassOrObjectSymbol(
         }
 
 
-    override fun createPointer(): KtSymbolPointer<KtNamedClassOrObjectSymbol> {
+    override fun createPointer(): KtSymbolPointer<KtNamedClassOrObjectSymbol> = withValidityAssertion {
         KtPsiBasedSymbolPointer.createForSymbolFromSource(this)?.let { return it }
         if (symbolKind == KtSymbolKind.LOCAL) {
             throw CanNotCreateSymbolPointerForLocalLibraryDeclarationException(classIdIfNonLocal?.asString().orEmpty())

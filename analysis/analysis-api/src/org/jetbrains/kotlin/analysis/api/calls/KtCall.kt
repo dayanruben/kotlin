@@ -12,6 +12,9 @@ import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
 import org.jetbrains.kotlin.psi.KtExpression
 
 /**
@@ -147,7 +150,7 @@ public class KtGenericTypeQualifier(
  * properties, the missing information is the type of access (read, write, or compound access) to this property. For functions, the missing
  * information is the value arguments for the call.
  */
-public class KtPartiallyAppliedSymbol<out S : KtCallableSymbol, out C : KtSignature<S>>(
+public class KtPartiallyAppliedSymbol<out S : KtCallableSymbol, out C : KtCallableSignature<S>>(
     private val _signature: C,
     private val _dispatchReceiver: KtReceiverValue?,
     private val _extensionReceiver: KtReceiverValue?,
@@ -171,7 +174,7 @@ public class KtPartiallyAppliedSymbol<out S : KtCallableSymbol, out C : KtSignat
     public val extensionReceiver: KtReceiverValue? get() = withValidityAssertion { _extensionReceiver }
 }
 
-public val <S : KtCallableSymbol, C : KtSignature<S>> KtPartiallyAppliedSymbol<S, C>.symbol: S get() = signature.symbol
+public val <S : KtCallableSymbol, C : KtCallableSignature<S>> KtPartiallyAppliedSymbol<S, C>.symbol: S get() = signature.symbol
 
 /**
  * A synthetic call to assert an expression is not null. For example
@@ -191,11 +194,18 @@ public class KtCheckNotNullCall(
 /**
  * A call to a function, or a simple/compound access to a property.
  */
-public sealed class KtCallableMemberCall<S : KtCallableSymbol, C : KtSignature<S>> : KtCall() {
+public sealed class KtCallableMemberCall<S : KtCallableSymbol, C : KtCallableSignature<S>> : KtCall() {
     public abstract val partiallyAppliedSymbol: KtPartiallyAppliedSymbol<S, C>
+
+    /**
+     * This map returns inferred type arguments. If the type placeholders was used, actual inferred type will be used as a value.
+     * Keys for this map is from the set [partiallyAppliedSymbol].signature.typeParameters.
+     * In case of resolution or inference error could return empty map.
+     */
+    public abstract val typeArgumentsMapping: Map<KtTypeParameterSymbol, KtType>
 }
 
-public val <S : KtCallableSymbol, C : KtSignature<S>> KtCallableMemberCall<S, C>.symbol: S get() = partiallyAppliedSymbol.symbol
+public val <S : KtCallableSymbol, C : KtCallableSignature<S>> KtCallableMemberCall<S, C>.symbol: S get() = partiallyAppliedSymbol.symbol
 
 public sealed class KtFunctionCall<S : KtFunctionLikeSymbol>(
     private val _argumentMapping: LinkedHashMap<KtExpression, KtVariableLikeSignature<KtValueParameterSymbol>>,
@@ -216,6 +226,7 @@ public typealias KtPartiallyAppliedFunctionSymbol<S> = KtPartiallyAppliedSymbol<
 public class KtSimpleFunctionCall(
     private val _partiallyAppliedSymbol: KtPartiallyAppliedFunctionSymbol<KtFunctionLikeSymbol>,
     argumentMapping: LinkedHashMap<KtExpression, KtVariableLikeSignature<KtValueParameterSymbol>>,
+    private val _typeArgumentsMapping: Map<KtTypeParameterSymbol, KtType>,
     private val _isImplicitInvoke: Boolean,
 ) : KtFunctionCall<KtFunctionLikeSymbol>(argumentMapping) {
     override val token: KtLifetimeToken get() = _partiallyAppliedSymbol.token
@@ -224,6 +235,8 @@ public class KtSimpleFunctionCall(
      * The function and receivers for this call.
      */
     override val partiallyAppliedSymbol: KtPartiallyAppliedFunctionSymbol<KtFunctionLikeSymbol> get() = withValidityAssertion { _partiallyAppliedSymbol }
+
+    override val typeArgumentsMapping: Map<KtTypeParameterSymbol, KtType> get() = withValidityAssertion { _typeArgumentsMapping }
 
     /**
      * Whether this function call is an implicit invoke call on a value that has an `invoke` member function. See
@@ -249,6 +262,8 @@ public class KtAnnotationCall(
      * The function and receivers for this call.
      */
     override val partiallyAppliedSymbol: KtPartiallyAppliedFunctionSymbol<KtConstructorSymbol> get() = withValidityAssertion { _partiallyAppliedSymbol }
+
+    override val typeArgumentsMapping: Map<KtTypeParameterSymbol, KtType> get() = withValidityAssertion { emptyMap() }
 }
 
 /**
@@ -274,6 +289,15 @@ public class KtDelegatedConstructorCall(
      */
     override val partiallyAppliedSymbol: KtPartiallyAppliedFunctionSymbol<KtConstructorSymbol> get() = withValidityAssertion { _partiallyAppliedSymbol }
 
+    override val typeArgumentsMapping: Map<KtTypeParameterSymbol, KtType>
+        get() = withValidityAssertion {
+            check(partiallyAppliedSymbol.symbol.typeParameters.isEmpty()) {
+                "Type arguments for delegation constructor to java constructor with type parameters not supported. " +
+                        "Symbol: ${partiallyAppliedSymbol.symbol}"
+            }
+            emptyMap()
+        }
+
     public val kind: Kind get() = withValidityAssertion { _kind }
 
     public enum class Kind { SUPER_CALL, THIS_CALL }
@@ -291,12 +315,15 @@ public typealias KtPartiallyAppliedVariableSymbol<S> = KtPartiallyAppliedSymbol<
  */
 public class KtSimpleVariableAccessCall(
     private val _partiallyAppliedSymbol: KtPartiallyAppliedVariableSymbol<KtVariableLikeSymbol>,
+    private val _typeArgumentsMapping: Map<KtTypeParameterSymbol, KtType>,
     private val _simpleAccess: KtSimpleVariableAccess
 ) : KtVariableAccessCall() {
 
     override val token: KtLifetimeToken get() = _partiallyAppliedSymbol.token
 
     override val partiallyAppliedSymbol: KtPartiallyAppliedVariableSymbol<KtVariableLikeSymbol> get() = withValidityAssertion { _partiallyAppliedSymbol }
+
+    override val typeArgumentsMapping: Map<KtTypeParameterSymbol, KtType> get() = withValidityAssertion { _typeArgumentsMapping }
 
     /**
      * The type of access to this property.
@@ -363,11 +390,13 @@ public interface KtCompoundAccessCall {
  */
 public class KtCompoundVariableAccessCall(
     private val _partiallyAppliedSymbol: KtPartiallyAppliedVariableSymbol<KtVariableLikeSymbol>,
+    private val _typeArgumentsMapping: Map<KtTypeParameterSymbol, KtType>,
     private val _compoundAccess: KtCompoundAccess
 ) : KtVariableAccessCall(), KtCompoundAccessCall {
     override val token: KtLifetimeToken
         get() = _partiallyAppliedSymbol.token
     override val partiallyAppliedSymbol: KtPartiallyAppliedVariableSymbol<KtVariableLikeSymbol> get() = withValidityAssertion { _partiallyAppliedSymbol }
+    override val typeArgumentsMapping: Map<KtTypeParameterSymbol, KtType> get() = withValidityAssertion { _typeArgumentsMapping }
     override val compoundAccess: KtCompoundAccess get() = withValidityAssertion { _compoundAccess }
 }
 
@@ -489,7 +518,16 @@ public sealed class KtCompoundAccess(private val _operationPartiallyAppliedSymbo
 /**
  * A receiver value of a call.
  */
-public sealed class KtReceiverValue : KtLifetimeOwner
+public sealed class KtReceiverValue : KtLifetimeOwner {
+    /**
+     * Returns inferred [KtType] of the receiver.
+     *
+     * In case of smart cast on the receiver returns smart cast type.
+     *
+     * For builder inference in FIR implementation it currently works incorrectly, see KT-50916.
+     */
+    public abstract val type: KtType
+}
 
 /**
  * An explicit expression receiver. For example
@@ -499,8 +537,9 @@ public sealed class KtReceiverValue : KtLifetimeOwner
  */
 public class KtExplicitReceiverValue(
     private val _expression: KtExpression,
+    private val _type: KtType,
     private val _isSafeNavigation: Boolean,
-    override val token: KtLifetimeToken
+    override val token: KtLifetimeToken,
 ) : KtReceiverValue() {
     public val expression: KtExpression get() = withValidityAssertion { _expression }
 
@@ -514,6 +553,8 @@ public class KtExplicitReceiverValue(
      * ```
      */
     public val isSafeNavigation: Boolean get() = withValidityAssertion { _isSafeNavigation }
+
+    override val type: KtType get() = withValidityAssertion { _type }
 }
 
 /**
@@ -531,9 +572,14 @@ public class KtExplicitReceiverValue(
  * }
  * ```
  */
-public class KtImplicitReceiverValue(private val _symbol: KtSymbol) : KtReceiverValue() {
+public class KtImplicitReceiverValue(
+    private val _symbol: KtSymbol,
+    private val _type: KtType
+) : KtReceiverValue() {
     override val token: KtLifetimeToken get() = _symbol.token
     public val symbol: KtSymbol get() = withValidityAssertion { _symbol }
+
+    override val type: KtType get() = withValidityAssertion { _type }
 }
 
 /**
@@ -550,5 +596,5 @@ public class KtSmartCastedReceiverValue(private val _original: KtReceiverValue, 
     override val token: KtLifetimeToken
         get() = _original.token
     public val original: KtReceiverValue get() = withValidityAssertion { _original }
-    public val smartCastType: KtType get() = withValidityAssertion { _smartCastType }
+    public override val type: KtType get() = withValidityAssertion { _smartCastType }
 }

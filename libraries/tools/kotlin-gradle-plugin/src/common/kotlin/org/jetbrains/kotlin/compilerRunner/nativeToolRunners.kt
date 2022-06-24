@@ -146,13 +146,6 @@ internal class KotlinNativeCInteropRunner private constructor(project: Project) 
         fun runWithContext(action: () -> Unit)
     }
 
-    override val defaultArguments: List<String>
-        get() = mutableListOf<String>().apply {
-            if (project.gradle.startParameter.isOffline) {
-                addAll(listOf("-Xoverride-konan-properties", "airplaneMode=true"))
-            }
-        }
-
     companion object {
         fun ExecutionContext.run(args: List<String>) {
             val runner = KotlinNativeCInteropRunner(project)
@@ -182,13 +175,6 @@ internal class KotlinNativeCompilerRunner(project: Project) : KotlinNativeToolRu
 
         return listOf(toolName, "@${argFile.absolutePath}")
     }
-
-    override val defaultArguments: List<String>
-        get() = mutableListOf<String>().apply {
-            if (project.gradle.startParameter.isOffline) {
-                add("-Xoverride-konan-properties=airplaneMode=true")
-            }
-        }
 }
 
 /** Platform libraries generation tool. Runs the cinterop tool under the hood. */
@@ -196,11 +182,4 @@ internal class KotlinNativeLibraryGenerationRunner(project: Project) :
     AbstractKotlinNativeCInteropRunner("generatePlatformLibraries", project) {
     // The library generator works for a long time so enabling C2 can improve performance.
     override val disableC2: Boolean = false
-
-    override val defaultArguments: List<String>
-        get() = mutableListOf<String>().apply {
-            if (project.gradle.startParameter.isOffline) {
-                addAll(listOf("-Xoverride-konan-properties", "airplaneMode=true"))
-            }
-        }
 }

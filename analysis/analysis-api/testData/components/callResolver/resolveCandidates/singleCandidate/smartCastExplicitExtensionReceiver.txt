@@ -7,11 +7,14 @@ KtApplicableCallCandidateInfo:
         original = KtExplicitReceiverValue:
           expression = a
           isSafeNavigation = false
-        smartCastType = kotlin.String
+          type = kotlin.Any
+        type = kotlin.String
       signature = KtFunctionLikeSignature:
         receiverType = kotlin.String
         returnType = kotlin.Unit
         symbol = /foo(<extension receiver>: kotlin.String): kotlin.Unit
         valueParameters = []
+        callableIdIfNonLocal = /foo
+    typeArgumentsMapping = {}
     argumentMapping = {}
   isInBestCandidates = true

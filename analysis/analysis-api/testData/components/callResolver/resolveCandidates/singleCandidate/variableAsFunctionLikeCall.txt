@@ -6,10 +6,13 @@ KtApplicableCallCandidateInfo:
       extensionReceiver = KtExplicitReceiverValue:
         expression = x
         isSafeNavigation = false
+        type = kotlin.Int
       signature = KtFunctionLikeSignature:
         receiverType = kotlin.Int
         returnType = kotlin.String
         symbol = /invoke(<extension receiver>: kotlin.Int): kotlin.String
         valueParameters = []
+        callableIdIfNonLocal = /invoke
+    typeArgumentsMapping = {}
     argumentMapping = {}
   isInBestCandidates = true

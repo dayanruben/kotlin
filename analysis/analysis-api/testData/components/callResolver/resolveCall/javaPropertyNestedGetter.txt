@@ -4,10 +4,14 @@ KtSuccessCallInfo:
       dispatchReceiver = KtExplicitReceiverValue:
         expression = javaClass
         isSafeNavigation = false
+        type = JavaClass
       extensionReceiver = null
       signature = KtVariableLikeSignature:
         name = sub
         receiverType = null
         returnType = ft<JavaSubClass, JavaSubClass?>
         symbol = val sub: ft<JavaSubClass, JavaSubClass?>
+        callableIdIfNonLocal = /JavaClass.sub
     simpleAccess = Read:
+
+    typeArgumentsMapping = {}

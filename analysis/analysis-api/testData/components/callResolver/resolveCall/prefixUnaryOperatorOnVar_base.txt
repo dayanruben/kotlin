@@ -8,4 +8,7 @@ KtSuccessCallInfo:
         receiverType = null
         returnType = kotlin.Int
         symbol = var i: kotlin.Int
+        callableIdIfNonLocal = null
     simpleAccess = Read:
+
+    typeArgumentsMapping = {}

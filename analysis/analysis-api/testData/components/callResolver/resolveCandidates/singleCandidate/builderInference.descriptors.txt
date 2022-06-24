@@ -6,6 +6,7 @@ KtApplicableCallCandidateInfo:
         symbol = KtReceiverParameterSymbol:
           origin: SOURCE
           type: test/Target<kotlin/String>
+        type = test.Target<kotlin.String>
       extensionReceiver = null
       signature = KtFunctionLikeSignature:
         receiverType = null
@@ -17,12 +18,16 @@ KtApplicableCallCandidateInfo:
             receiverType = null
             returnType = kotlin.String
             symbol = t: T
+            callableIdIfNonLocal = null
         ]
+        callableIdIfNonLocal = test/Target.add
+    typeArgumentsMapping = {}
     argumentMapping = {
       s -> (KtVariableLikeSignature:
         name = t
         receiverType = null
         returnType = kotlin.String
-        symbol = t: T)
+        symbol = t: T
+        callableIdIfNonLocal = null)
     }
   isInBestCandidates = true

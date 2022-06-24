@@ -13,11 +13,15 @@ KtSuccessCallInfo:
             receiverType = null
             returnType = Annotation
             symbol = value: Annotation
+            callableIdIfNonLocal = null
         ]
+        callableIdIfNonLocal = null
+    typeArgumentsMapping = {}
     argumentMapping = {
       Annotation("v1", "v2") -> (KtVariableLikeSignature:
         name = value
         receiverType = null
         returnType = Annotation
-        symbol = value: Annotation)
+        symbol = value: Annotation
+        callableIdIfNonLocal = null)
     }

@@ -5,6 +5,7 @@ KtSuccessCallInfo:
       dispatchReceiver = KtExplicitReceiverValue:
         expression = serializer
         isSafeNavigation = false
+        type = test.Serializer
       extensionReceiver = null
       signature = KtFunctionLikeSignature:
         receiverType = null
@@ -16,11 +17,15 @@ KtSuccessCallInfo:
             receiverType = null
             returnType = test.FirstTarget
             symbol = x: test.FirstTarget
+            callableIdIfNonLocal = null
         ]
+        callableIdIfNonLocal = test/Serializer.serializeFirstTarget
+    typeArgumentsMapping = {}
     argumentMapping = {
       target -> (KtVariableLikeSignature:
         name = x
         receiverType = null
         returnType = test.FirstTarget
-        symbol = x: test.FirstTarget)
+        symbol = x: test.FirstTarget
+        callableIdIfNonLocal = null)
     }

@@ -5,6 +5,7 @@ KtApplicableCallCandidateInfo:
       dispatchReceiver = KtExplicitReceiverValue:
         expression = i
         isSafeNavigation = false
+        type = kotlin.Int
       extensionReceiver = null
       signature = KtFunctionLikeSignature:
         receiverType = null
@@ -16,12 +17,16 @@ KtApplicableCallCandidateInfo:
             receiverType = null
             returnType = kotlin.Int
             symbol = other: kotlin.Int
+            callableIdIfNonLocal = null
         ]
+        callableIdIfNonLocal = kotlin/Int.compareTo
+    typeArgumentsMapping = {}
     argumentMapping = {
       j -> (KtVariableLikeSignature:
         name = other
         receiverType = null
         returnType = kotlin.Int
-        symbol = other: kotlin.Int)
+        symbol = other: kotlin.Int
+        callableIdIfNonLocal = null)
     }
   isInBestCandidates = true

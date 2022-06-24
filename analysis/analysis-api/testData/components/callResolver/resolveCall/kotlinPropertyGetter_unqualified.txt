@@ -5,10 +5,14 @@ KtSuccessCallInfo:
         symbol = KtReceiverParameterSymbol:
           origin: SOURCE
           type: A
+        type = A
       extensionReceiver = null
       signature = KtVariableLikeSignature:
         name = i
         receiverType = null
         returnType = kotlin.Int
         symbol = val i: kotlin.Int
+        callableIdIfNonLocal = /A.i
     simpleAccess = Read:
+
+    typeArgumentsMapping = {}

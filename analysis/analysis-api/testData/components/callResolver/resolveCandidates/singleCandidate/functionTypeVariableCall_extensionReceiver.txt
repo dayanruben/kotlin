@@ -5,9 +5,11 @@ KtApplicableCallCandidateInfo:
       dispatchReceiver = KtExplicitReceiverValue:
         expression = f
         isSafeNavigation = false
+        type = @ExtensionFunctionType kotlin.Function1<kotlin.String, kotlin.Unit>
       extensionReceiver = KtExplicitReceiverValue:
         expression = ""
         isSafeNavigation = false
+        type = kotlin.String
       signature = KtFunctionLikeSignature:
         receiverType = null
         returnType = kotlin.Unit
@@ -18,6 +20,9 @@ KtApplicableCallCandidateInfo:
             receiverType = null
             returnType = kotlin.String
             symbol = p1: P1
+            callableIdIfNonLocal = null
         ]
+        callableIdIfNonLocal = kotlin/Function1.invoke
+    typeArgumentsMapping = {}
     argumentMapping = {}
   isInBestCandidates = true

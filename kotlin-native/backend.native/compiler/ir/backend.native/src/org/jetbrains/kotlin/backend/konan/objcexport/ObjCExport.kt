@@ -164,6 +164,8 @@ internal class ObjCExport(val context: Context, symbolTable: SymbolTable) {
 
         val file = directory.child("Info.plist")
         val bundleId = guessBundleID(name)
+        val bundleShortVersionString = context.configuration[BinaryOptions.bundleShortVersionString] ?: "1.0"
+        val bundleVersion = context.configuration[BinaryOptions.bundleVersion] ?: "1"
         val platform = properties.platformName()
         val minimumOsVersion = properties.osVersionMin
 
@@ -184,13 +186,13 @@ internal class ObjCExport(val context: Context, symbolTable: SymbolTable) {
                 <key>CFBundlePackageType</key>
                 <string>FMWK</string>
                 <key>CFBundleShortVersionString</key>
-                <string>1.0</string>
+                <string>$bundleShortVersionString</string>
                 <key>CFBundleSupportedPlatforms</key>
                 <array>
                     <string>$platform</string>
                 </array>
                 <key>CFBundleVersion</key>
-                <string>1</string>
+                <string>$bundleVersion</string>
 
         """.trimIndent())
 
@@ -316,9 +318,17 @@ internal class ObjCExport(val context: Context, symbolTable: SymbolTable) {
 
     private fun guessBundleID(bundleName: String): String {
         val configuration = context.configuration
-        configuration[BUNDLE_ID]?.let {
-            return it
+        val deprecatedBundleIdOption = configuration[BUNDLE_ID]
+        val bundleIdOption = configuration[BinaryOptions.bundleId]
+        if (deprecatedBundleIdOption != null && bundleIdOption != null && deprecatedBundleIdOption != bundleIdOption) {
+            configuration.report(
+                    CompilerMessageSeverity.ERROR,
+                    "Both the deprecated -Xbundle-id=<id> and the new -Xbinary=bundleId=<id> options supplied with different values: " +
+                            "'$deprecatedBundleIdOption' and '$bundleIdOption'. " +
+                            "Please use only one of the options or make sure they have the same value."
+            )
         }
+        deprecatedBundleIdOption?.let { return it } ?: bundleIdOption?.let { return it }
 
         // Consider exported libraries only if we cannot infer the package from sources or included libs.
         val mainPackage = guessMainPackage(context.getIncludedLibraryDescriptors() + context.moduleDescriptor)
@@ -332,7 +342,7 @@ internal class ObjCExport(val context: Context, symbolTable: SymbolTable) {
                     CompilerMessageSeverity.STRONG_WARNING,
                     "Cannot infer a bundle ID from packages of source files and exported dependencies, " +
                             "use the bundle name instead: $bundleName. " +
-                            "Please specify the bundle ID explicitly using the -Xbundle-id compiler flag."
+                            "Please specify the bundle ID explicitly using the -Xbinary=bundleId=<id> compiler flag."
             )
         }
         return bundleID

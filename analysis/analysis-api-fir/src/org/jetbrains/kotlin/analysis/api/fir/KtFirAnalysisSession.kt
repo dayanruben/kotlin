@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.analysis.api.fir.symbols.KtFirSymbolProvider
 import org.jetbrains.kotlin.analysis.api.fir.utils.threadLocal
 import org.jetbrains.kotlin.analysis.api.impl.base.components.KtAnalysisScopeProviderImpl
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
+import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.LLFirResolveSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.LowLevelFirApiFacadeForResolveOnAir
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
@@ -26,15 +27,18 @@ import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 
+@Suppress("AnalysisApiMissingLifetimeCheck")
 internal class KtFirAnalysisSession
 private constructor(
     private val project: Project,
     val firResolveSession: LLFirResolveSession,
-    internal val firSymbolBuilder: KtSymbolByFirBuilder,
     token: KtLifetimeToken,
     private val mode: AnalysisSessionMode,
 ) : KtAnalysisSession(token) {
 
+    internal val firSymbolBuilder: KtSymbolByFirBuilder = KtSymbolByFirBuilder(project, this, token)
+
+    @Suppress("AnalysisApiMissingLifetimeCheck")
     override val useSiteModule: KtModule get() = firResolveSession.useSiteKtModule
 
     private enum class AnalysisSessionMode {
@@ -54,10 +58,10 @@ private constructor(
 
     override val samResolverImpl = KtFirSamResolver(this, token)
 
-    override val scopeProviderImpl by threadLocal { KtFirScopeProvider(this, firSymbolBuilder, project, firResolveSession, token) }
+    override val scopeProviderImpl by threadLocal { KtFirScopeProvider(this, firSymbolBuilder, project, firResolveSession) }
 
     override val symbolProviderImpl =
-        KtFirSymbolProvider(this, firResolveSession.useSiteFirSession.symbolProvider, firResolveSession, firSymbolBuilder, token)
+        KtFirSymbolProvider(this, firResolveSession.useSiteFirSession.symbolProvider, firResolveSession, firSymbolBuilder)
 
     override val completionCandidateCheckerImpl = KtFirCompletionCandidateChecker(this, token)
 
@@ -99,6 +103,13 @@ private constructor(
 
     override val referenceResolveProviderImpl: KtReferenceResolveProvider = KtFirReferenceResolveProvider(this)
 
+    override val signatureSubstitutorImpl: KtSignatureSubstitutor = KtFirSignatureSubstitutor(this)
+
+    override val scopeSubstitutionImpl: KtScopeSubstitution = KtFirScopeSubstitution(this)
+
+    override val substitutorFactoryImpl: KtSubstitutorFactory = KtFirSubstitutorFactory(this)
+
+    @Suppress("AnalysisApiMissingLifetimeCheck")
     override fun createContextDependentCopy(originalKtFile: KtFile, elementToReanalyze: KtElement): KtAnalysisSession {
         check(mode == AnalysisSessionMode.REGULAR) {
             "Cannot create context-dependent copy of KtAnalysis session from a context dependent one"
@@ -114,17 +125,16 @@ private constructor(
         return KtFirAnalysisSession(
             project,
             contextFirResolveSession,
-            firSymbolBuilder.createReadOnlyCopy(contextFirResolveSession),
             token,
             AnalysisSessionMode.DEPENDENT_COPY
         )
     }
 
-    val useSiteSession: FirSession get() = firResolveSession.useSiteFirSession
-    val firSymbolProvider: FirSymbolProvider get() = useSiteSession.symbolProvider
-    val targetPlatform: TargetPlatform get() = useSiteSession.moduleData.platform
+    internal val useSiteSession: FirSession get() = firResolveSession.useSiteFirSession
+    internal val firSymbolProvider: FirSymbolProvider get() = useSiteSession.symbolProvider
+    internal val targetPlatform: TargetPlatform get() = useSiteSession.moduleData.platform
 
-    fun getScopeSessionFor(session: FirSession): ScopeSession = firResolveSession.getScopeSessionFor(session)
+    fun getScopeSessionFor(session: FirSession): ScopeSession = withValidityAssertion { firResolveSession.getScopeSessionFor(session) }
 
     companion object {
         internal fun createAnalysisSessionByFirResolveSession(
@@ -132,15 +142,10 @@ private constructor(
             token: KtLifetimeToken,
         ): KtFirAnalysisSession {
             val project = firResolveSession.project
-            val firSymbolBuilder = KtSymbolByFirBuilder(
-                firResolveSession,
-                project,
-                token
-            )
+
             return KtFirAnalysisSession(
                 project,
                 firResolveSession,
-                firSymbolBuilder,
                 token,
                 AnalysisSessionMode.REGULAR,
             )
