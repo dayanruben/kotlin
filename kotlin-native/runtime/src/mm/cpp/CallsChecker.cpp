@@ -146,6 +146,8 @@ extern "C" const char* Kotlin_callsCheckerGoodFunctionNames[] = {
         "vsnprintf",
         "bcmp",
 
+        "gettid",
+
         "getenv",
         "setenv",
         "unsetenv",
@@ -277,6 +279,7 @@ extern "C" const char* Kotlin_callsCheckerGoodFunctionNames[] = {
         "VirtualAlloc",
         "FlsSetValue",
         "GetCurrentProcess",
+        "GetCurrentThreadId",
         "FlsFree",
         "K32GetProcessMemoryInfo",
         "VirtualFree",

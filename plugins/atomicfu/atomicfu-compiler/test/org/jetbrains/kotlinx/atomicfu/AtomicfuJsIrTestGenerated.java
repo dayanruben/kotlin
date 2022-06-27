@@ -32,9 +32,15 @@ public class AtomicfuJsIrTestGenerated extends AbstractAtomicfuJsIrTest {
     }
 
     @Test
-    @TestMetadata("ArrayInlineFunctionTest.kt")
-    public void testArrayInlineFunctionTest() throws Exception {
-        runTest("plugins/atomicfu/atomicfu-compiler/testData/box/ArrayInlineFunctionTest.kt");
+    @TestMetadata("ArrayInlineExtensionTest.kt")
+    public void testArrayInlineExtensionTest() throws Exception {
+        runTest("plugins/atomicfu/atomicfu-compiler/testData/box/ArrayInlineExtensionTest.kt");
+    }
+
+    @Test
+    @TestMetadata("ArrayLoopTest.kt")
+    public void testArrayLoopTest() throws Exception {
+        runTest("plugins/atomicfu/atomicfu-compiler/testData/box/ArrayLoopTest.kt");
     }
 
     @Test
@@ -44,9 +50,21 @@ public class AtomicfuJsIrTestGenerated extends AbstractAtomicfuJsIrTest {
     }
 
     @Test
+    @TestMetadata("ComplexLoopTest.kt")
+    public void testComplexLoopTest() throws Exception {
+        runTest("plugins/atomicfu/atomicfu-compiler/testData/box/ComplexLoopTest.kt");
+    }
+
+    @Test
     @TestMetadata("DelegatedPropertiesTest.kt")
     public void testDelegatedPropertiesTest() throws Exception {
         runTest("plugins/atomicfu/atomicfu-compiler/testData/box/DelegatedPropertiesTest.kt");
+    }
+
+    @Test
+    @TestMetadata("ExtensionLoopTest.kt")
+    public void testExtensionLoopTest() throws Exception {
+        runTest("plugins/atomicfu/atomicfu-compiler/testData/box/ExtensionLoopTest.kt");
     }
 
     @Test
@@ -65,6 +83,18 @@ public class AtomicfuJsIrTestGenerated extends AbstractAtomicfuJsIrTest {
     @TestMetadata("InlineExtensionWithTypeParameterTest.kt")
     public void testInlineExtensionWithTypeParameterTest() throws Exception {
         runTest("plugins/atomicfu/atomicfu-compiler/testData/box/InlineExtensionWithTypeParameterTest.kt");
+    }
+
+    @Test
+    @TestMetadata("LambdaTest.kt")
+    public void testLambdaTest() throws Exception {
+        runTest("plugins/atomicfu/atomicfu-compiler/testData/box/LambdaTest.kt");
+    }
+
+    @Test
+    @TestMetadata("LateinitPropertiesTest.kt")
+    public void testLateinitPropertiesTest() throws Exception {
+        runTest("plugins/atomicfu/atomicfu-compiler/testData/box/LateinitPropertiesTest.kt");
     }
 
     @Test
@@ -113,12 +143,6 @@ public class AtomicfuJsIrTestGenerated extends AbstractAtomicfuJsIrTest {
     @TestMetadata("ParameterizedInlineFunExtensionTest.kt")
     public void testParameterizedInlineFunExtensionTest() throws Exception {
         runTest("plugins/atomicfu/atomicfu-compiler/testData/box/ParameterizedInlineFunExtensionTest.kt");
-    }
-
-    @Test
-    @TestMetadata("PropertyDeclarationTest.kt")
-    public void testPropertyDeclarationTest() throws Exception {
-        runTest("plugins/atomicfu/atomicfu-compiler/testData/box/PropertyDeclarationTest.kt");
     }
 
     @Test

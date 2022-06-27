@@ -7,13 +7,12 @@ package org.jetbrains.kotlin.analysis.api.impl.base.test.cases.symbols
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KtDeclarationRendererOptions
-import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
-import org.jetbrains.kotlin.analysis.test.framework.base.AbstractAnalysisApiSingleFileTest
 import org.jetbrains.kotlin.analysis.api.symbols.DebugSymbolRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFileSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtSymbolPointer
+import org.jetbrains.kotlin.analysis.test.framework.base.AbstractAnalysisApiSingleFileTest
 import org.jetbrains.kotlin.analysis.test.framework.utils.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.analysis.utils.printer.prettyPrint
 import org.jetbrains.kotlin.psi.KtFile
@@ -90,12 +89,19 @@ abstract class AbstractSymbolTest : AbstractAnalysisApiSingleFileTest() {
         data: SymbolPointersData,
         testServices: TestServices,
     ) {
-        val actual = data.pointers.joinToString(separator = "\n\n") { it.rendered }
+        val actual = data.pointers.renderDeclarations()
         testServices.assertions.assertEqualsToTestDataFileSibling(actual)
 
-        val actualPretty = data.pointersForPrettyRendering.joinToString(separator = "\n\n") { it.rendered }
+        val actualPretty = data.pointersForPrettyRendering.renderDeclarations()
         testServices.assertions.assertEqualsToTestDataFileSibling(actualPretty, extension = ".pretty.txt")
     }
+
+    private fun List<PointerWithRenderedSymbol>.renderDeclarations(): String =
+        map { it.rendered }.renderAsDeclarations()
+
+    private fun List<String>.renderAsDeclarations(): String =
+        if (isEmpty()) "NO_SYMBOLS"
+        else joinToString(separator = "\n\n")
 
     private fun restoreSymbolsInOtherReadActionAndCompareResults(
         ktFile: KtFile,
@@ -110,7 +116,7 @@ abstract class AbstractSymbolTest : AbstractAnalysisApiSingleFileTest() {
                 renderSymbolForComparison(restored)
             }
         }
-        val actual = restored.joinToString(separator = "\n\n")
+        val actual = restored.renderAsDeclarations()
         testServices.assertions.assertEqualsToTestDataFileSibling(actual)
     }
 

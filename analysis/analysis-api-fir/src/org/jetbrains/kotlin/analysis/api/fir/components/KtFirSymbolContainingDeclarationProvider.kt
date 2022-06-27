@@ -14,13 +14,12 @@ import org.jetbrains.kotlin.analysis.api.fir.symbols.KtFirReceiverParameterSymbo
 import org.jetbrains.kotlin.analysis.api.fir.symbols.KtFirSymbol
 import org.jetbrains.kotlin.analysis.api.fir.symbols.KtFirTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.fir.utils.getContainingKtModule
-import org.jetbrains.kotlin.analysis.api.impl.barebone.parentOfType
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithKind
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
-import org.jetbrains.kotlin.analysis.api.lifetime.assertIsValidAndAccessible
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
+import org.jetbrains.kotlin.analysis.utils.printer.parentOfType
 import org.jetbrains.kotlin.psi
 import org.jetbrains.kotlin.psi.*
 
@@ -52,7 +51,7 @@ internal class KtFirSymbolContainingDeclarationProvider(
                 KtSymbolOrigin.LIBRARY, KtSymbolOrigin.JAVA, KtSymbolOrigin.JAVA_SYNTHETIC_PROPERTY ->
                     getContainingDeclarationForLibrarySymbol(symbol)
                 KtSymbolOrigin.PROPERTY_BACKING_FIELD -> getContainingDeclarationForBackingFieldSymbol(symbol)
-                KtSymbolOrigin.INTERSECTION_OVERRIDE -> TODO()
+                KtSymbolOrigin.INTERSECTION_OVERRIDE, KtSymbolOrigin.SUBSTITUTION_OVERRIDE -> TODO()
                 KtSymbolOrigin.SAM_CONSTRUCTOR -> null
                 KtSymbolOrigin.PLUGIN -> TODO("Containing declaration is requested for ${ DebugSymbolRenderer.render(symbol) }")
                 KtSymbolOrigin.DELEGATED -> TODO()
