@@ -130,7 +130,6 @@ internal fun assertIsOfType(value: Any?, type: KType, result: Boolean, message: 
  */
 @SinceKotlin("1.5")
 @InlineOnly
-@OptIn(ExperimentalStdlibApi::class)
 inline fun <reified T> assertIsNot(value: Any?, message: String? = null) {
     assertIsNotOfType(value, typeOf<T>(), value !is T, message)
 }
@@ -281,6 +280,13 @@ fun <T : Comparable<T>> assertContains(range: ClosedRange<T>, value: T, message:
 }
 
 /** Asserts that the [range] contains the specified [value], with an optional [message]. */
+@SinceKotlin("1.7")
+@ExperimentalStdlibApi
+fun <T : Comparable<T>> assertContains(range: OpenEndRange<T>, value: T, message: String? = null) {
+    assertRangeContains(range, value, message, OpenEndRange<T>::contains)
+}
+
+/** Asserts that the [range] contains the specified [value], with an optional [message]. */
 @SinceKotlin("1.5")
 fun assertContains(range: CharRange, value: Char, message: String? = null) {
     assertRangeContains(range, value, message, CharRange::contains)
@@ -288,14 +294,12 @@ fun assertContains(range: CharRange, value: Char, message: String? = null) {
 
 /** Asserts that the [range] contains the specified [value], with an optional [message]. */
 @SinceKotlin("1.5")
-@OptIn(ExperimentalUnsignedTypes::class)
 fun assertContains(range: UIntRange, value: UInt, message: String? = null) {
     assertRangeContains(range, value, message, UIntRange::contains)
 }
 
 /** Asserts that the [range] contains the specified [value], with an optional [message]. */
 @SinceKotlin("1.5")
-@OptIn(ExperimentalUnsignedTypes::class)
 fun assertContains(range: ULongRange, value: ULong, message: String? = null) {
     assertRangeContains(range, value, message, ULongRange::contains)
 }

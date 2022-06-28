@@ -8624,6 +8624,19 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
             public void testSafeCallElvis() throws Exception {
                 runTest("compiler/testData/codegen/box/coroutines/varSpilling/safeCallElvis.kt");
             }
+
+            @TestMetadata("compiler/testData/codegen/box/coroutines/varSpilling/cleanup")
+            @TestDataPath("$PROJECT_ROOT")
+            @RunWith(JUnit3RunnerWithInners.class)
+            public static class Cleanup extends AbstractIrCodegenBoxWasmTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest0(this::doTest, TargetBackend.WASM, testDataFilePath);
+                }
+
+                public void testAllFilesPresentInCleanup() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/coroutines/varSpilling/cleanup"), Pattern.compile("^([^_](.+))\\.kt$"), null, TargetBackend.WASM, true);
+                }
+            }
         }
     }
 
@@ -20593,6 +20606,11 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
         @TestMetadata("kt46136.kt")
         public void testKt46136() throws Exception {
             runTest("compiler/testData/codegen/box/objects/kt46136.kt");
+        }
+
+        @TestMetadata("kt52540.kt")
+        public void testKt52540() throws Exception {
+            runTest("compiler/testData/codegen/box/objects/kt52540.kt");
         }
 
         @TestMetadata("kt535.kt")

@@ -126,7 +126,7 @@ rootProject.apply {
 IdeVersionConfigurator.setCurrentIde(project)
 
 if (!project.hasProperty("versions.kotlin-native")) {
-    extra["versions.kotlin-native"] = "1.7.20-dev-1583"
+    extra["versions.kotlin-native"] = "1.7.20-dev-2651"
 }
 
 val irCompilerModules = arrayOf(
@@ -503,7 +503,7 @@ tasks {
             ":kotlin-test:kotlin-test-js-ir:kotlin-test-js-ir-it".takeIf { !kotlinBuildProperties.isInJpsBuildIdeaSync },
             ":kotlinx-metadata-jvm",
             ":tools:binary-compatibility-validator",
-            //":kotlin-stdlib-wasm",
+            ":kotlin-stdlib-wasm",
         )).forEach {
             dependsOn("$it:check")
         }

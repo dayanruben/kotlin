@@ -5,19 +5,15 @@
 
 package org.jetbrains.kotlin.gradle.plugin.mpp
 
-import groovy.lang.Closure
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.attributes.AttributeContainer
 import org.gradle.api.file.DuplicatesStrategy
-import org.gradle.api.internal.plugins.DslObject
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.jvm.tasks.Jar
-import org.gradle.util.ConfigureUtil
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
-import org.jetbrains.kotlin.gradle.dsl.configureOrCreate
 import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
 import org.jetbrains.kotlin.gradle.dsl.multiplatformExtension
 import org.jetbrains.kotlin.gradle.internal.customizeKotlinDependencies
@@ -30,7 +26,6 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.registerDefaultVariantFactori
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.setupFragmentsMetadataForKpmModules
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.setupKpmModulesPublication
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.util.copyAttributes
-import org.jetbrains.kotlin.gradle.plugin.sources.CleanupStaleSourceSetMetadataEntriesService
 import org.jetbrains.kotlin.gradle.plugin.sources.DefaultLanguageSettingsBuilder
 import org.jetbrains.kotlin.gradle.plugin.sources.SourceSetMetadataStorageForIde
 import org.jetbrains.kotlin.gradle.plugin.sources.checkSourceSetVisibilityRequirements
@@ -50,15 +45,6 @@ import org.jetbrains.kotlin.statistics.metrics.StringMetrics
 import java.io.File
 
 class KotlinMultiplatformPlugin : Plugin<Project> {
-
-    private class TargetFromPresetExtension(val targetsContainer: KotlinTargetsContainerWithPresets) {
-        fun <T : KotlinTarget> fromPreset(preset: KotlinTargetPreset<T>, name: String, configureClosure: Closure<*>): T =
-            fromPreset(preset, name) { ConfigureUtil.configure(configureClosure, this) }
-
-        @JvmOverloads
-        fun <T : KotlinTarget> fromPreset(preset: KotlinTargetPreset<T>, name: String, configureAction: T.() -> Unit = { }): T =
-            targetsContainer.configureOrCreate(name, preset, configureAction)
-    }
 
     override fun apply(project: Project) {
         checkGradleCompatibility("the Kotlin Multiplatform plugin", GradleVersion.version("6.0"))
@@ -88,28 +74,14 @@ class KotlinMultiplatformPlugin : Plugin<Project> {
             }
         }
 
-        val targetsContainer = project.container(KotlinTarget::class.java)
         val kotlinMultiplatformExtension = project.extensions.getByType(KotlinMultiplatformExtension::class.java)
-        val targetsFromPreset = TargetFromPresetExtension(kotlinMultiplatformExtension)
-
-        kotlinMultiplatformExtension.apply {
-            DslObject(targetsContainer).addConvention("fromPreset", targetsFromPreset)
-
-            targets = targetsContainer
-            addExtension("targets", targets)
-
-            presets = project.container(KotlinTargetPreset::class.java)
-            addExtension("presets", presets)
-
-            defaultJsCompilerType = PropertiesProvider(project).jsCompiler
-        }
 
         setupDefaultPresets(project)
         customizeKotlinDependencies(project)
         configureSourceSets(project)
 
         // set up metadata publishing
-        targetsFromPreset.fromPreset(
+        kotlinMultiplatformExtension.targetFromPreset(
             KotlinMetadataTargetPreset(project),
             METADATA_TARGET_NAME
         )
@@ -118,7 +90,7 @@ class KotlinMultiplatformPlugin : Plugin<Project> {
         if (!project.hasKpmModel) {
             configurePublishingWithMavenPublish(project)
         }
-        targetsContainer.withType(AbstractKotlinTarget::class.java).all { applyUserDefinedAttributes(it) }
+        kotlinMultiplatformExtension.targets.withType(AbstractKotlinTarget::class.java).all { applyUserDefinedAttributes(it) }
 
         // propagate compiler plugin options to the source set language settings
         setupAdditionalCompilerArguments(project)
@@ -127,24 +99,6 @@ class KotlinMultiplatformPlugin : Plugin<Project> {
         project.pluginManager.apply(ScriptingGradleSubplugin::class.java)
 
         exportProjectStructureMetadataForOtherBuilds(kotlinMultiplatformExtension)
-
-        SingleActionPerBuild.run(project.rootProject, "cleanup-processed-metadata") {
-            if (isConfigurationCacheAvailable(project.gradle)) {
-                BuildEventsListenerRegistryHolder.getInstance(project).listenerRegistry.onTaskCompletion(
-                    project.gradle.sharedServices
-                        .registerIfAbsent(
-                            "cleanup-stale-sourceset-metadata",
-                            CleanupStaleSourceSetMetadataEntriesService::class.java
-                        ) {
-                            CleanupStaleSourceSetMetadataEntriesService.configure(it, project)
-                        }
-                )
-            } else {
-                project.gradle.buildFinished {
-                    SourceSetMetadataStorageForIde.cleanupStaleEntries(project)
-                }
-            }
-        }
     }
 
     private fun exportProjectStructureMetadataForOtherBuilds(
@@ -370,6 +324,8 @@ internal fun sourcesJarTaskNamed(
     val result = project.registerTask<Jar>(taskName) { sourcesJar ->
         sourcesJar.archiveAppendix.set(artifactNameAppendix)
         sourcesJar.archiveClassifier.set("sources")
+        sourcesJar.isPreserveFileTimestamps = false
+        sourcesJar.isReproducibleFileOrder = true
     }
 
     project.whenEvaluated {

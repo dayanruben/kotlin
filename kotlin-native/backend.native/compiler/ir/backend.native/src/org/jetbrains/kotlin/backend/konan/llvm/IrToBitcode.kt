@@ -832,10 +832,10 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
                 || body == null)
             return
         val isNotInlinedLambda = declaration.origin == IrDeclarationOrigin.LOCAL_FUNCTION_FOR_LAMBDA
-        val file = ((declaration as? IrSimpleFunction)?.attributeOwnerId as? IrSimpleFunction)?.file.takeIf {
-            it ?: return@takeIf false
-            (currentCodeContext.fileScope() as FileScope).file != it && isNotInlinedLambda
-        }
+        val file = ((declaration as? IrSimpleFunction)?.attributeOwnerId as? IrSimpleFunction)
+                .takeIf { isNotInlinedLambda }
+                ?.file
+                .takeIf { (currentCodeContext.fileScope() as FileScope).file != it }
         val scope = file?.let {
             FileScope(it)
         }
@@ -2770,6 +2770,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
             val programType = configuration.get(BinaryOptions.androidProgramType) ?: AndroidProgramType.Default
             overrideRuntimeGlobal("Kotlin_printToAndroidLogcat", Int32(if (programType.consolePrintsToLogcat) 1 else 0))
         }
+        overrideRuntimeGlobal("Kotlin_appStateTracking", Int32(context.config.appStateTracking.value))
     }
 
     //-------------------------------------------------------------------------//

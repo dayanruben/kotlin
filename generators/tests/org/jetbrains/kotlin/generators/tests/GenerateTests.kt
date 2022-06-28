@@ -32,8 +32,7 @@ import org.jetbrains.kotlin.kapt3.test.AbstractKotlinKaptContextTest
 import org.jetbrains.kotlin.lombok.*
 import org.jetbrains.kotlin.noarg.*
 import org.jetbrains.kotlin.parcelize.test.runners.*
-import org.jetbrains.kotlin.samWithReceiver.AbstractSamWithReceiverScriptTest
-import org.jetbrains.kotlin.samWithReceiver.AbstractSamWithReceiverTest
+import org.jetbrains.kotlin.samWithReceiver.*
 import org.jetbrains.kotlin.test.TargetBackend
 import org.jetbrains.kotlinx.serialization.AbstractSerializationIrBytecodeListingTest
 import org.jetbrains.kotlinx.serialization.AbstractSerializationPluginBytecodeListingTest
@@ -223,11 +222,12 @@ fun main(args: Array<String>) {
             }
         }
 
-        testGroup("plugins/sam-with-receiver/sam-with-receiver-cli/test", "plugins/sam-with-receiver/sam-with-receiver-cli/testData") {
-            testClass<AbstractSamWithReceiverTest> {
-                model("diagnostics")
-            }
+        testGroup("plugins/sam-with-receiver/tests-gen", "plugins/sam-with-receiver/testData") {
             testClass<AbstractSamWithReceiverScriptTest> {
+                model("script", extension = "kts")
+            }
+
+            testClass<AbstractSamWithReceiverScriptNewDefTest> {
                 model("script", extension = "kts")
             }
         }
@@ -447,6 +447,21 @@ fun main(args: Array<String>) {
             }
             testClass<AbstractFirDiagnosticTestForLombok> {
                 model("diagnostics", excludedPattern = excludedFirTestdataPattern)
+            }
+        }
+
+        testGroup("plugins/sam-with-receiver/tests-gen", "plugins/sam-with-receiver/testData") {
+            testClass<AbstractSamWithReceiverTest> {
+                model("diagnostics", excludedPattern = excludedFirTestdataPattern)
+            }
+            testClass<AbstractFirSamWithReceiverTest> {
+                model("diagnostics", excludedPattern = excludedFirTestdataPattern)
+            }
+            testClass<AbstractIrBlackBoxCodegenTestForSamWithReceiver> {
+                model("codegen", excludedPattern = excludedFirTestdataPattern)
+            }
+            testClass<AbstractFirBlackBoxCodegenTestForSamWithReceiver> {
+                model("codegen", excludedPattern = excludedFirTestdataPattern)
             }
         }
     }

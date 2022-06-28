@@ -10685,6 +10685,18 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
                 public void testSafeCallElvis() throws Exception {
                     runTest("compiler/testData/codegen/box/coroutines/varSpilling/safeCallElvis.kt");
                 }
+
+                @Nested
+                @TestMetadata("compiler/testData/codegen/box/coroutines/varSpilling/cleanup")
+                @TestDataPath("$PROJECT_ROOT")
+                @Tag("codegen")
+                @UseExtTestCaseGroupProvider()
+                public class Cleanup {
+                    @Test
+                    public void testAllFilesPresentInCleanup() throws Exception {
+                        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/coroutines/varSpilling/cleanup"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+                    }
+                }
             }
         }
 
@@ -25810,6 +25822,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
             @TestMetadata("kt46136.kt")
             public void testKt46136() throws Exception {
                 runTest("compiler/testData/codegen/box/objects/kt46136.kt");
+            }
+
+            @Test
+            @TestMetadata("kt52540.kt")
+            public void testKt52540() throws Exception {
+                runTest("compiler/testData/codegen/box/objects/kt52540.kt");
             }
 
             @Test
