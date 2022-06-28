@@ -1,16 +1,15 @@
 /*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.test.frontend.classic.handlers
 
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.asJava.getJvmSignatureDiagnostics
 import org.jetbrains.kotlin.checkers.diagnostics.SyntaxErrorDiagnostic
 import org.jetbrains.kotlin.checkers.utils.CheckerTestUtil
 import org.jetbrains.kotlin.checkers.utils.DiagnosticsRenderingConfiguration
+import org.jetbrains.kotlin.cli.jvm.compiler.getJvmSignatureDiagnostics
 import org.jetbrains.kotlin.descriptors.impl.ModuleDescriptorImpl
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
@@ -77,7 +76,6 @@ class ClassicDiagnosticsHandler(testServices: TestServices) : ClassicFrontendAna
         if (testServices.moduleStructure.modules.any { !it.targetPlatform.isJvm() }) return emptySet()
         if (REPORT_JVM_DIAGNOSTICS_ON_FRONTEND !in testServices.moduleStructure.allDirectives) return emptySet()
         val bindingContext = info.analysisResult.bindingContext
-        val project = info.project
         val jvmSignatureDiagnostics = HashSet<Diagnostic>()
         for (ktFile in info.ktFiles.values) {
             val declarations = PsiTreeUtil.findChildrenOfType(ktFile, KtDeclaration::class.java)
@@ -85,8 +83,8 @@ class ClassicDiagnosticsHandler(testServices: TestServices) : ClassicFrontendAna
                 val diagnostics = getJvmSignatureDiagnostics(
                     declaration,
                     bindingContext.diagnostics,
-                    GlobalSearchScope.allScope(project)
                 ) ?: continue
+
                 jvmSignatureDiagnostics.addAll(diagnostics.forElement(declaration))
             }
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.asJava.classes
 
 import com.intellij.psi.*
 import com.intellij.psi.impl.PsiImplUtil
+import com.intellij.psi.impl.compiled.ClsJavaCodeReferenceElementImpl
 import com.intellij.psi.impl.light.LightIdentifier
 import org.jetbrains.kotlin.asJava.elements.KtLightAbstractAnnotation
 import org.jetbrains.kotlin.asJava.elements.KtLightElementBase
@@ -46,8 +47,12 @@ class KtUltraLightSimpleAnnotation(
     private val ultraLightSupport: KtUltraLightSupport,
     parent: PsiElement,
     private val nameReferenceElementProvider: (() -> PsiJavaCodeReferenceElement?)? = null,
-) : KtLightAbstractAnnotation(parent, computeDelegate = null) {
-    override fun getNameReferenceElement(): PsiJavaCodeReferenceElement? = nameReferenceElementProvider?.invoke()
+) : KtLightAbstractAnnotation(parent) {
+    private val _nameReferenceElement: PsiJavaCodeReferenceElement? by lazyPub {
+        nameReferenceElementProvider?.invoke() ?: annotationFqName?.let { ClsJavaCodeReferenceElementImpl(parent, it) }
+    }
+
+    override fun getNameReferenceElement(): PsiJavaCodeReferenceElement? = _nameReferenceElement
 
     private val parameterList = ParameterListImpl()
 

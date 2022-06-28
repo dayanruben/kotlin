@@ -1,17 +1,6 @@
 /*
- * Copyright 2010-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.asJava.elements
@@ -30,7 +19,6 @@ import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.impl.source.SourceTreeToPsiMap
 import com.intellij.psi.impl.source.tree.TreeElement
-import com.intellij.psi.stubs.PsiClassHolderFileStub
 import com.intellij.psi.util.PsiUtil
 import com.intellij.reference.SoftReference
 import com.intellij.util.AstLoadingFilter
@@ -44,8 +32,7 @@ import java.lang.ref.Reference
 open class FakeFileForLightClass(
     val ktFile: KtFile,
     private val lightClass: () -> KtLightClass,
-    private val stub: () -> PsiClassHolderFileStub<*>?,
-    private val packageFqName: FqName = ktFile.packageFqName
+    private val packageFqName: FqName = ktFile.packageFqName,
 ) : ClsFileImpl(ktFile.viewProvider) {
 
     override fun getVirtualFile(): VirtualFile =
@@ -54,13 +41,13 @@ open class FakeFileForLightClass(
     override fun getPackageName() = packageFqName.asString()
 
     private fun createFakeJavaFileStub(): PsiJavaFileStub {
-        val javaFileStub = PsiJavaFileStubImpl(packageFqName.asString(), /*compiled = */true)
+        val javaFileStub = PsiJavaFileStubImpl(packageFqName.asString(), /* compiled = */true)
         javaFileStub.psiFactory = ClsStubPsiFactory.INSTANCE
         javaFileStub.psi = this
         return javaFileStub
     }
 
-    override fun getStub() = stub() ?: createFakeJavaFileStub()
+    override fun getStub() = createFakeJavaFileStub()
 
     override fun getClasses() = arrayOf(lightClass())
 
@@ -103,7 +90,7 @@ open class FakeFileForLightClass(
     }
 
     // this should be equal to current compiler target language level
-    override fun getLanguageLevel() = LanguageLevel.JDK_1_6
+    override fun getLanguageLevel() = LanguageLevel.JDK_1_8
 
     override fun hashCode(): Int {
         val thisClass = lightClass()

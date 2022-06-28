@@ -8,37 +8,27 @@ package org.jetbrains.kotlin.asJava.classes
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.impl.InheritanceImplUtil
-import com.intellij.psi.impl.java.stubs.PsiJavaFileStub
 import com.intellij.psi.impl.source.PsiImmediateClassType
 import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.stubs.StubElement
-import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.IncorrectOperationException
-import com.intellij.util.containers.ConcurrentFactoryMap
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.analyzer.KotlinModificationTrackerService
 import org.jetbrains.kotlin.asJava.ImpreciseResolveResult
 import org.jetbrains.kotlin.asJava.ImpreciseResolveResult.UNSURE
 import org.jetbrains.kotlin.asJava.LightClassGenerationSupport
-import org.jetbrains.kotlin.asJava.LightClassUtil
-import org.jetbrains.kotlin.asJava.builder.InvalidLightClassDataHolder
-import org.jetbrains.kotlin.asJava.builder.LightClassData
-import org.jetbrains.kotlin.asJava.builder.LightClassDataHolder
-import org.jetbrains.kotlin.asJava.builder.LightClassDataProviderForClassOrObject
 import org.jetbrains.kotlin.asJava.elements.FakeFileForLightClass
 import org.jetbrains.kotlin.asJava.elements.KtLightIdentifier
 import org.jetbrains.kotlin.asJava.elements.KtLightModifierList
-import org.jetbrains.kotlin.asJava.elements.KtLightPsiReferenceList
 import org.jetbrains.kotlin.asJava.hasInterfaceDefaultImpls
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.config.JvmDefaultMode
@@ -48,7 +38,6 @@ import org.jetbrains.kotlin.load.java.structure.LightClassOriginKind
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.debugText.getDebugText
-import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.psi.stubs.KotlinClassOrObjectStub
@@ -94,8 +83,8 @@ abstract class KtLightClassForSourceDeclaration(
     private val _implementsList by lazyPub { createImplementsList() }
     private val _deprecated by lazyPub { classOrObject.isDeprecated() }
 
-    protected open fun createExtendsList(): PsiReferenceList? = super.getExtendsList()?.let { KtLightPsiReferenceList(it, this) }
-    protected open fun createImplementsList(): PsiReferenceList? = super.getImplementsList()?.let { KtLightPsiReferenceList(it, this) }
+    protected abstract fun createExtendsList(): PsiReferenceList?
+    protected abstract fun createImplementsList(): PsiReferenceList?
 
     override val kotlinOrigin: KtClassOrObject = classOrObject
 
@@ -103,29 +92,13 @@ abstract class KtLightClassForSourceDeclaration(
     abstract override fun getParent(): PsiElement?
     abstract override fun getQualifiedName(): String?
 
-    override val lightClassData: LightClassData
-        get() = findLightClassData()
-
-    protected open fun findLightClassData() = getLightClassDataHolder().findDataForClassOrObject(classOrObject)
-
-    private fun getJavaFileStub(): PsiJavaFileStub = getLightClassDataHolder().javaFileStub
-
     fun getDescriptor() =
         LightClassGenerationSupport.getInstance(project).resolveToDescriptor(classOrObject) as? ClassDescriptor
-
-    protected fun getLightClassDataHolder(): LightClassDataHolder.ForClass {
-        val lightClassData = getLightClassDataHolder(classOrObject)
-        if (lightClassData is InvalidLightClassDataHolder) {
-            LOG.error("Invalid light class data for existing light class:\n$lightClassData\n${classOrObject.getElementTextWithContext()}")
-        }
-        return lightClassData
-    }
 
     private val _containingFile: PsiFile by lazyPub {
         object : FakeFileForLightClass(
             classOrObject.containingKtFile,
-            { if (classOrObject.isTopLevel()) this else create(getOutermostClassOrObject(classOrObject), jvmDefaultMode)!! },
-            { getJavaFileStub() }
+            { if (classOrObject.isTopLevel()) this else create(getOutermostClassOrObject(classOrObject))!! },
         ) {
             override fun findReferenceAt(offset: Int) = ktFile.findReferenceAt(offset)
 
@@ -181,7 +154,7 @@ abstract class KtLightClassForSourceDeclaration(
 
         val containingClassOrObject = (classOrObject.parent as? KtClassBody)?.parent as? KtClassOrObject
         if (containingClassOrObject != null) {
-            return create(containingClassOrObject, jvmDefaultMode)
+            return create(containingClassOrObject)
         }
 
         // TODO: should return null
@@ -190,7 +163,7 @@ abstract class KtLightClassForSourceDeclaration(
 
     private val _typeParameterList: PsiTypeParameterList by lazyPub { buildTypeParameterList() }
 
-    protected open fun buildTypeParameterList() = LightClassUtil.buildLightTypeParameterList(this, classOrObject)
+    protected abstract fun buildTypeParameterList(): PsiTypeParameterList
 
     override fun getTypeParameterList(): PsiTypeParameterList? = _typeParameterList
 
@@ -309,10 +282,7 @@ abstract class KtLightClassForSourceDeclaration(
             // we can't prohibit creating light classes with null names either since they can contain members
             .filter { it.name != null }
             .mapNotNullTo(result) {
-                if (!forceUsingOldLightClasses)
-                    create(it, jvmDefaultMode)
-                else
-                    createNoCache(it, jvmDefaultMode, forceUsingOldLightClasses = true)
+                create(it)
             }
 
         if (classOrObject.hasInterfaceDefaultImpls && jvmDefaultMode != JvmDefaultMode.ALL_INCOMPATIBLE) {
@@ -322,7 +292,7 @@ abstract class KtLightClassForSourceDeclaration(
         return result
     }
 
-    protected open fun createClassForInterfaceDefaultImpls(): PsiClass = KtLightClassForInterfaceDefaultImpls(classOrObject)
+    protected abstract fun createClassForInterfaceDefaultImpls(): PsiClass
 
     override fun getUseScope(): SearchScope = kotlinOrigin.useScope
 
@@ -335,12 +305,6 @@ abstract class KtLightClassForSourceDeclaration(
     override fun getImplementsList(): PsiReferenceList? = _implementsList
 
     companion object {
-        private val JAVA_API_STUB = Key.create<CachedValue<LightClassDataHolder.ForClass>>("JAVA_API_STUB")
-        private val JAVA_API_STUB_LOCK = Key.create<Any>("JAVA_API_STUB_LOCK")
-
-        @JvmStatic
-        private val javaApiStubInitIsRunning: ThreadLocal<Boolean> = ThreadLocal.withInitial { false }
-
         private val jetTokenToPsiModifier = listOf(
             PUBLIC_KEYWORD to PsiModifier.PUBLIC,
             INTERNAL_KEYWORD to PsiModifier.PUBLIC,
@@ -348,21 +312,15 @@ abstract class KtLightClassForSourceDeclaration(
             FINAL_KEYWORD to PsiModifier.FINAL
         )
 
-        fun create(classOrObject: KtClassOrObject, jvmDefaultMode: JvmDefaultMode): KtLightClassForSourceDeclaration? =
+        fun create(classOrObject: KtClassOrObject): KtLightClassForSourceDeclaration? =
             CachedValuesManager.getCachedValue(classOrObject) {
                 CachedValueProvider.Result.create(
-                    ConcurrentFactoryMap.createMap { defaultMode: JvmDefaultMode ->
-                        createNoCache(classOrObject, defaultMode, KtUltraLightSupport.forceUsingOldLightClasses)
-                    },
+                    createNoCache(classOrObject),
                     KotlinModificationTrackerService.getInstance(classOrObject.project).outOfBlockModificationTracker,
                 )
-            }[jvmDefaultMode]
+            }
 
-        fun createNoCache(
-            classOrObject: KtClassOrObject,
-            jvmDefaultMode: JvmDefaultMode,
-            forceUsingOldLightClasses: Boolean
-        ): KtLightClassForSourceDeclaration? {
+        fun createNoCache(classOrObject: KtClassOrObject): KtLightClassForSourceDeclaration? {
             val containingFile = classOrObject.containingFile
             if (containingFile is KtCodeFragment) {
                 // Avoid building light classes for code fragments
@@ -373,86 +331,9 @@ abstract class KtLightClassForSourceDeclaration(
                 return null
             }
 
-            if (!forceUsingOldLightClasses) {
-                LightClassGenerationSupport.getInstance(classOrObject.project).run {
-                    if (useUltraLightClasses) {
-                        return createUltraLightClass(classOrObject)
-                            ?: error { "Unable to create UL class for ${classOrObject.javaClass.name}" }
-                    }
-                }
+            return LightClassGenerationSupport.getInstance(classOrObject.project).run {
+                createUltraLightClass(classOrObject)
             }
-
-            return when {
-                classOrObject is KtObjectDeclaration && classOrObject.isObjectLiteral() ->
-                    KtLightClassForAnonymousDeclaration(classOrObject)
-
-                classOrObject.safeIsLocal() ->
-                    KtLightClassForLocalDeclaration(classOrObject)
-
-                else ->
-                    KtLightClassImpl(classOrObject, jvmDefaultMode, forceUsingOldLightClasses)
-            }
-        }
-
-        fun getLightClassDataHolder(classOrObject: KtClassOrObject): LightClassDataHolder.ForClass {
-            if (classOrObject.shouldNotBeVisibleAsLightClass()) {
-                return InvalidLightClassDataHolder
-            }
-
-            val containingScript = classOrObject.containingKtFile.safeScript()
-            return when {
-                !classOrObject.safeIsLocal() && containingScript != null ->
-                    KtLightClassForScript.getLightClassCachedValue(containingScript).value
-
-                else ->
-                    getLightClassCachedValue(classOrObject).value
-            }
-        }
-
-        private fun getLightClassCachedValue(classOrObject: KtClassOrObject): CachedValue<LightClassDataHolder.ForClass> {
-            val outerClassValue = getOutermostClassOrObject(classOrObject).getUserData(JAVA_API_STUB)
-            outerClassValue?.let {
-                // stub computed for outer class can be used for inner/nested
-                return it
-            }
-            // the idea behind this locking approach:
-            // Thread T1 starts to calculate value for A it acquires lock for A
-            //
-            // Assumption 1: Lets say A calculation requires another value e.g. B to be calculated
-            // Assumption 2: Thread T2 wants to calculate value for B
-
-            // to avoid dead-lock case we mark thread as doing calculation and acquire lock only once per thread
-            // as a trade-off to prevent dependent value could be calculated several time
-            // due to CAS (within putUserDataIfAbsent etc) the same instance of calculated value will be used
-            val value: CachedValue<LightClassDataHolder.ForClass> = if (!javaApiStubInitIsRunning.get()) {
-                classOrObject.getUserData(JAVA_API_STUB) ?: run {
-                    val lock = classOrObject.putUserDataIfAbsent(JAVA_API_STUB_LOCK, Object())
-                    synchronized(lock) {
-                        try {
-                            javaApiStubInitIsRunning.set(true)
-                            computeLightClassCachedValue(classOrObject)
-                        } finally {
-                            javaApiStubInitIsRunning.set(false)
-                        }
-                    }
-                }
-            } else {
-                computeLightClassCachedValue(classOrObject)
-            }
-            return value
-        }
-
-        private fun computeLightClassCachedValue(
-            classOrObject: KtClassOrObject
-        ): CachedValue<LightClassDataHolder.ForClass> {
-            val value = classOrObject.getUserData(JAVA_API_STUB) ?: run {
-                val manager = CachedValuesManager.getManager(classOrObject.project)
-                val cachedValue = manager.createCachedValue(
-                    LightClassDataProviderForClassOrObject(classOrObject), false
-                )
-                classOrObject.putUserDataIfAbsent(JAVA_API_STUB, cachedValue)
-            }
-            return value
         }
 
         private fun checkSuperTypeByFQName(classDescriptor: ClassDescriptor, qualifiedName: String, deep: Boolean): Boolean {
@@ -488,19 +369,9 @@ abstract class KtLightClassForSourceDeclaration(
         private val LOG = Logger.getInstance(KtLightClassForSourceDeclaration::class.java)
     }
 
-    override fun getSupers(): Array<PsiClass> {
-        if (classOrObject.superTypeListEntries.isEmpty()) {
-            return getSupertypeByPsi()?.let { arrayOf(it.resolve()!!) } ?: emptyArray()
-        }
-        return clsDelegate.supers
-    }
+    abstract override fun getSupers(): Array<PsiClass>
 
-    override fun getSuperTypes(): Array<PsiClassType> {
-        if (classOrObject.superTypeListEntries.isEmpty()) {
-            return getSupertypeByPsi()?.let { arrayOf<PsiClassType>(it) } ?: emptyArray()
-        }
-        return clsDelegate.superTypes
-    }
+    abstract override fun getSuperTypes(): Array<PsiClassType>
 
     private fun getSupertypeByPsi(): PsiImmediateClassType? {
         return classOrObject.defaultJavaAncestorQualifiedName()?.let { ancestorFqName ->
@@ -525,12 +396,7 @@ abstract class KtLightClassForSourceDeclaration(
     override val originKind: LightClassOriginKind
         get() = LightClassOriginKind.SOURCE
 
-    open fun isFinal(isFinalByPsi: Boolean): Boolean {
-        // annotations can make class open via 'allopen' plugin
-        if (!isPossiblyAffectedByAllOpen() || !isFinalByPsi) return isFinalByPsi
-
-        return clsDelegate.hasModifierProperty(PsiModifier.FINAL)
-    }
+    abstract fun isFinal(isFinalByPsi: Boolean): Boolean
 }
 
 fun KtLightClassForSourceDeclaration.isPossiblyAffectedByAllOpen() =

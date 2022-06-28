@@ -5,24 +5,17 @@
 
 package org.jetbrains.kotlin.asJava.classes
 
-import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import com.intellij.psi.impl.PsiSuperMethodImplUtil
-import com.intellij.psi.impl.java.stubs.PsiJavaFileStub
 import com.intellij.psi.impl.light.LightEmptyImplementsList
 import com.intellij.psi.impl.light.LightModifierList
-import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.IncorrectOperationException
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.analyzer.KotlinModificationTrackerService
 import org.jetbrains.kotlin.asJava.LightClassGenerationSupport
-import org.jetbrains.kotlin.asJava.builder.LightClassData
-import org.jetbrains.kotlin.asJava.builder.LightClassDataHolder
-import org.jetbrains.kotlin.asJava.builder.LightClassDataProviderForScript
 import org.jetbrains.kotlin.asJava.elements.FakeFileForLightClass
-import org.jetbrains.kotlin.config.JvmDefaultMode
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.load.java.structure.LightClassOriginKind
 import org.jetbrains.kotlin.name.FqName
@@ -31,17 +24,7 @@ import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtScript
 import javax.swing.Icon
 
-open class KtLightClassForScript(val script: KtScript) : KtLazyLightClass(script.manager) {
-
-    protected open fun getLightClassDataHolder(): LightClassDataHolder.ForScript =
-        getLightClassCachedValue(script).value
-
-    override val lightClassData: LightClassData
-        get() = getLightClassDataHolder().findDataForScript(script.fqName)
-
-    protected open val javaFileStub: PsiJavaFileStub?
-        get() = getLightClassDataHolder().javaFileStub
-
+abstract class KtLightClassForScript(val script: KtScript) : KtLazyLightClass(script.manager) {
     private val modifierList: PsiModifierList = LightModifierList(manager, KotlinLanguage.INSTANCE, PsiModifier.PUBLIC)
 
     private val scriptImplementsList: LightEmptyImplementsList = LightEmptyImplementsList(manager)
@@ -56,7 +39,6 @@ open class KtLightClassForScript(val script: KtScript) : KtLazyLightClass(script
         FakeFileForLightClass(
             script.containingKtFile,
             lightClass = { this },
-            stub = { javaFileStub },
             packageFqName = fqName.parent(),
         )
     }
@@ -103,7 +85,7 @@ open class KtLightClassForScript(val script: KtScript) : KtLazyLightClass(script
             // inner classes with null names can't be searched for and can't be used from java anyway
             // we can't prohibit creating light classes with null names either since they can contain members
             .filter { it.name != null }
-            .mapNotNull { KtLightClassForSourceDeclaration.create(it, JvmDefaultMode.DEFAULT) }
+            .mapNotNull { KtLightClassForSourceDeclaration.create(it) }
     }
 
     override fun getInitializers(): Array<PsiClassInitializer> = PsiClassInitializer.EMPTY_ARRAY
@@ -114,7 +96,7 @@ open class KtLightClassForScript(val script: KtScript) : KtLazyLightClass(script
 
     override fun isValid() = script.isValid
 
-    override fun copy() = KtLightClassForScript(script)
+    abstract override fun copy(): PsiElement
 
     override fun getNavigationElement() = script
 
@@ -177,46 +159,25 @@ open class KtLightClassForScript(val script: KtScript) : KtLazyLightClass(script
     override fun toString() = "${KtLightClassForScript::class.java.simpleName}:${script.fqName}"
 
     companion object {
-
-        private val JAVA_API_STUB_FOR_SCRIPT = Key.create<CachedValue<LightClassDataHolder.ForScript>>("JAVA_API_STUB_FOR_SCRIPT")
-
         fun create(script: KtScript): KtLightClassForScript? =
             CachedValuesManager.getCachedValue(script) {
                 CachedValueProvider.Result
                     .create(
-                        createNoCache(script, KtUltraLightSupport.forceUsingOldLightClasses),
+                        createNoCache(script),
                         KotlinModificationTrackerService.getInstance(script.project).outOfBlockModificationTracker,
                     )
             }
 
-        fun createNoCache(script: KtScript, forceUsingOldLightClasses: Boolean): KtLightClassForScript? {
+        fun createNoCache(script: KtScript): KtLightClassForScript? {
             val containingFile = script.containingFile
             if (containingFile is KtCodeFragment) {
                 // Avoid building light classes for code fragments
                 return null
             }
 
-            if (!forceUsingOldLightClasses) {
-                LightClassGenerationSupport.getInstance(script.project).run {
-                    if (useUltraLightClasses) {
-                        return createUltraLightClassForScript(script) ?: error("UL class cannot be created for script")
-                    }
-                }
-            }
-
-            return KtLightClassForScript(script)
-        }
-
-        fun getLightClassCachedValue(script: KtScript): CachedValue<LightClassDataHolder.ForScript> {
-            return script.getUserData(JAVA_API_STUB_FOR_SCRIPT) ?: createCachedValueForScript(script).also {
-                script.putUserData(
-                    JAVA_API_STUB_FOR_SCRIPT,
-                    it,
-                )
+            return LightClassGenerationSupport.getInstance(script.project).run {
+                createUltraLightClassForScript(script)
             }
         }
-
-        private fun createCachedValueForScript(script: KtScript): CachedValue<LightClassDataHolder.ForScript> =
-            CachedValuesManager.getManager(script.project).createCachedValue(LightClassDataProviderForScript(script), false)
     }
 }
