@@ -3,6 +3,8 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
+@file:Suppress("DEPRECATION")
+
 package org.jetbrains.kotlin.cli.jvm.compiler
 
 import com.intellij.codeInsight.ExternalAnnotationsManager
@@ -62,6 +64,8 @@ import org.jetbrains.kotlin.codegen.extensions.ClassBuilderInterceptorExtension
 import org.jetbrains.kotlin.codegen.extensions.ClassFileFactoryFinalizerExtension
 import org.jetbrains.kotlin.codegen.extensions.ExpressionCodegenExtension
 import org.jetbrains.kotlin.compiler.plugin.ComponentRegistrar
+import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
+import org.jetbrains.kotlin.compiler.plugin.registerInProject
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.extensions.*
 import org.jetbrains.kotlin.extensions.internal.CandidateInterceptor
@@ -637,12 +641,17 @@ class KotlinCoreEnvironment private constructor(
         }
 
         internal fun registerExtensionsFromPlugins(project: MockProject, configuration: CompilerConfiguration) {
+            fun createErrorMessage(extension: Any): String {
+                return "The provided plugin ${extension.javaClass.name} is not compatible with this version of compiler"
+            }
+
             val messageCollector = configuration.get(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY)
+
             for (registrar in configuration.getList(ComponentRegistrar.PLUGIN_COMPONENT_REGISTRARS)) {
                 try {
                     registrar.registerProjectComponents(project, configuration)
                 } catch (e: AbstractMethodError) {
-                    val message = "The provided plugin ${registrar.javaClass.name} is not compatible with this version of compiler"
+                    val message = createErrorMessage(registrar)
                     // Since the scripting plugin is often discovered in the compiler environment, it is often taken from the incompatible
                     // location, and in many cases this is not a fatal error, therefore strong warning is generated instead of exception
                     if (registrar.javaClass.simpleName == "ScriptingCompilerConfigurationComponentRegistrar") {
@@ -652,8 +661,13 @@ class KotlinCoreEnvironment private constructor(
                     }
                 }
             }
-        }
 
+            val extensionStorage = CompilerPluginRegistrar.ExtensionStorage()
+            for (registrar in configuration.getList(CompilerPluginRegistrar.COMPILER_PLUGIN_REGISTRARS)) {
+                with(registrar) { extensionStorage.registerExtensions(configuration) }
+            }
+            extensionStorage.registerInProject(project) { createErrorMessage(it) }
+        }
 
         private fun registerApplicationServicesForCLI(applicationEnvironment: KotlinCoreApplicationEnvironment) {
             // ability to get text from annotations xml files

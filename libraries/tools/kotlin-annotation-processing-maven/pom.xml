@@ -16,7 +16,7 @@
   <parent>
     <groupId>org.jetbrains.kotlin</groupId>
     <artifactId>kotlin-project</artifactId>
-    <version>1.7.255-SNAPSHOT</version>
+    <version>1.8.255-SNAPSHOT</version>
     <relativePath>../../pom.xml</relativePath>
   </parent>
 
@@ -79,6 +79,9 @@
           <annotationPaths>
             <annotationPath>${basedir}/kotlinAnnotation</annotationPath>
           </annotationPaths>
+          <args>
+            <arg>-opt-in=org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi</arg>
+          </args>
         </configuration>
 
         <executions>

@@ -9,6 +9,7 @@ dependencies {
     api(project(":compiler:config.jvm"))
     api(project(":js:js.config"))
     api(project(":native:kotlin-native-utils"))
+    api(project(":compiler:plugin-api"))
     compileOnly(project(":kotlin-reflect-api"))
     compileOnly(intellijCore())
     compileOnly(commonDependency("com.google.guava:guava"))
@@ -19,6 +20,8 @@ sourceSets {
     "main" { projectDefault() }
     "test" {}
 }
+
+optInToExperimentalCompilerApi()
 
 tasks.getByName<Jar>("jar") {
     //excludes unused bunch files
