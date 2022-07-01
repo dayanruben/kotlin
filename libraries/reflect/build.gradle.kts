@@ -12,7 +12,7 @@ description = "Kotlin Full Reflection Library"
 
 buildscript {
     dependencies {
-        classpath("org.jetbrains.kotlinx:kotlinx-metadata-jvm:0.4.1")
+        classpath("org.jetbrains.kotlinx:kotlinx-metadata-jvm:0.5.0")
     }
 }
 
@@ -192,6 +192,7 @@ val relocateCoreSources by task<Copy> {
     filter { line ->
         line.replace("org.jetbrains.kotlin", "kotlin.reflect.jvm.internal.impl")
     }
+    filter(org.apache.tools.ant.filters.FixCrLfFilter::class, "eol" to org.apache.tools.ant.filters.FixCrLfFilter.CrLf.newInstance("lf"))
 
     outputs.cacheIf { true }
 }
