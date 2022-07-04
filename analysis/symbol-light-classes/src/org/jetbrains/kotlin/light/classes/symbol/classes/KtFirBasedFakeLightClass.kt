@@ -14,6 +14,8 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
 //TODO Make fake class symbol based
+import org.jetbrains.kotlin.light.classes.symbol.classes.analyzeForLightClasses
+
 class KtFirBasedFakeLightClass(kotlinOrigin: KtClassOrObject) :
     KtFakeLightClass(kotlinOrigin) {
 
@@ -30,6 +32,8 @@ class KtFirBasedFakeLightClass(kotlinOrigin: KtClassOrObject) :
         LightClassInheritanceHelper.getService(project).isInheritor(this, baseClass, checkDeep).ifSure { return it }
 
         val baseClassOrigin = (baseClass as? KtLightClass)?.kotlinOrigin ?: return false
-        return kotlinOrigin.checkIsInheritor(baseClassOrigin, checkDeep)
+        return analyzeForLightClasses(baseClassOrigin) {
+            kotlinOrigin.checkIsInheritor(baseClassOrigin, checkDeep)
+        }
     }
 }

@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.analysis.utils.collections.ConcurrentMapBasedCache
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.light.classes.symbol.FirLightClassForFacade
+import org.jetbrains.kotlin.light.classes.symbol.classes.analyzeForLightClasses
 import org.jetbrains.kotlin.light.classes.symbol.decompiled.KtLightClassForDecompiledFacade
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -47,7 +48,9 @@ class SymbolLightClassFacadeCache(private val project: Project) {
         val firstFile = ktFiles.first()
         return when {
             ktFiles.none { it.isCompiled } ->
-                return FirLightClassForFacade(firstFile.manager, facadeClassFqName, ktFiles)
+                analyzeForLightClasses(firstFile) {
+                    FirLightClassForFacade(firstFile.manager, facadeClassFqName, ktFiles)
+                }
             ktFiles.all { it.isCompiled } -> {
                 val file = ktFiles.firstOrNull { it.javaFileFacadeFqName == facadeClassFqName } as? KtClsFile
                     ?: error("Can't find the representative decompiled file for $facadeClassFqName")

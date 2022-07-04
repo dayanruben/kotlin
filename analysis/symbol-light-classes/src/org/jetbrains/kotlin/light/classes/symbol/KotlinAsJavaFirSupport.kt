@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.asJava.classes.KtFakeLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.light.classes.symbol.caches.SymbolLightClassFacadeCache
+import org.jetbrains.kotlin.light.classes.symbol.classes.analyzeForLightClasses
 import org.jetbrains.kotlin.light.classes.symbol.classes.getOrCreateFirLightClass
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -129,12 +130,15 @@ class KotlinAsJavaFirSupport(private val project: Project) : KotlinAsJavaSupport
         TODO("Not implemented")
 
     private fun getFacadeClassesForFiles(facadeFqName: FqName, allFiles: Collection<KtFile>): Collection<PsiClass> {
+        if (allFiles.isEmpty()) return emptyList()
         val filesByModule = allFiles.groupBy { it.getKtModule(project) }
 
         val lightClassFacadeCache = project.getService(SymbolLightClassFacadeCache::class.java)
 
-        return filesByModule.values.mapNotNull { files ->
-            lightClassFacadeCache.getOrCreateSymbolLightFacade(files, facadeFqName)
+        return filesByModule.mapNotNull { (module, files) ->
+            analyzeForLightClasses(module) {
+                lightClassFacadeCache.getOrCreateSymbolLightFacade(files, facadeFqName)
+            }
         }
     }
 }
