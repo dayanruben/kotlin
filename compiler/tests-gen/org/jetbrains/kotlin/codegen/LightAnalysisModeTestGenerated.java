@@ -10597,19 +10597,6 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                     runTest("compiler/testData/codegen/box/coroutines/varSpilling/cleanup/when.kt");
                 }
             }
-
-            @TestMetadata("compiler/testData/codegen/box/coroutines/varSpilling/debugMode")
-            @TestDataPath("$PROJECT_ROOT")
-            @RunWith(JUnit3RunnerWithInners.class)
-            public static class DebugMode extends AbstractLightAnalysisModeTest {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM, testDataFilePath);
-                }
-
-                public void testAllFilesPresentInDebugMode() throws Exception {
-                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/coroutines/varSpilling/debugMode"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
-                }
-            }
         }
     }
 
@@ -14255,6 +14242,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("objectInFinally.kt")
         public void testObjectInFinally() throws Exception {
             runTest("compiler/testData/codegen/box/finally/objectInFinally.kt");
+        }
+
+        @TestMetadata("returnNullFromInlined.kt")
+        public void testReturnNullFromInlined() throws Exception {
+            runTest("compiler/testData/codegen/box/finally/returnNullFromInlined.kt");
         }
 
         @TestMetadata("someStuff.kt")

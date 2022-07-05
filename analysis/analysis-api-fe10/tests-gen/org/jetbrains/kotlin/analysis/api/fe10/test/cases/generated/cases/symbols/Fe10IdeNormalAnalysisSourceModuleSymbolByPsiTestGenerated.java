@@ -243,4 +243,48 @@ public class Fe10IdeNormalAnalysisSourceModuleSymbolByPsiTestGenerated extends A
     public void testVarargFunctions() throws Exception {
         runTest("analysis/analysis-api/testData/symbols/symbolByPsi/varargFunctions.kt");
     }
+
+    @Nested
+    @TestMetadata("analysis/analysis-api/testData/symbols/symbolByPsi/contextReceivers")
+    @TestDataPath("$PROJECT_ROOT")
+    public class ContextReceivers {
+        @Test
+        public void testAllFilesPresentInContextReceivers() throws Exception {
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/analysis-api/testData/symbols/symbolByPsi/contextReceivers"), Pattern.compile("^(.+)\\.kt$"), null, true);
+        }
+
+        @Test
+        @TestMetadata("contextReceiversOnClass.kt")
+        public void testContextReceiversOnClass() throws Exception {
+            runTest("analysis/analysis-api/testData/symbols/symbolByPsi/contextReceivers/contextReceiversOnClass.kt");
+        }
+
+        @Test
+        @TestMetadata("contextReceiversOnFunction.kt")
+        public void testContextReceiversOnFunction() throws Exception {
+            runTest("analysis/analysis-api/testData/symbols/symbolByPsi/contextReceivers/contextReceiversOnFunction.kt");
+        }
+
+        @Test
+        @TestMetadata("contextReceiversOnProperty.kt")
+        public void testContextReceiversOnProperty() throws Exception {
+            runTest("analysis/analysis-api/testData/symbols/symbolByPsi/contextReceivers/contextReceiversOnProperty.kt");
+        }
+    }
+
+    @Nested
+    @TestMetadata("analysis/analysis-api/testData/symbols/symbolByPsi/valueParameters")
+    @TestDataPath("$PROJECT_ROOT")
+    public class ValueParameters {
+        @Test
+        public void testAllFilesPresentInValueParameters() throws Exception {
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/analysis-api/testData/symbols/symbolByPsi/valueParameters"), Pattern.compile("^(.+)\\.kt$"), null, true);
+        }
+
+        @Test
+        @TestMetadata("parameterInlining.kt")
+        public void testParameterInlining() throws Exception {
+            runTest("analysis/analysis-api/testData/symbols/symbolByPsi/valueParameters/parameterInlining.kt");
+        }
+    }
 }

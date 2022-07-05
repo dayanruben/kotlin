@@ -35,7 +35,7 @@ abstract class GradleKpmNativeVariantInternal(
         get() = listOf(apiElementsConfiguration.name).flatMap { listOf(it, publishedConfigurationName(it)) }.toSet()
 
     val cinterops = project.container(DefaultCInteropSettings::class.java) { cinteropName ->
-        DefaultCInteropSettings(project, cinteropName, compilationData)
+        project.objects.newInstance(DefaultCInteropSettings::class.java, project, cinteropName, compilationData)
     }
 
     override val compilationData by lazy { GradleKpmNativeVariantCompilationData(this) }
@@ -54,9 +54,10 @@ internal class KotlinMappedNativeCompilationFactory(
         val module = target.project.kpmModules.maybeCreate(name)
         val variant = module.fragments.create(target.name, variantClass)
 
-        return KotlinNativeCompilation(
+        return target.project.objects.newInstance(
+            KotlinNativeCompilation::class.java,
             target.konanTarget,
-            VariantMappedCompilationDetails(variant, target)
+            VariantMappedCompilationDetails<KotlinCommonOptions>(variant, target)
         )
     }
 }

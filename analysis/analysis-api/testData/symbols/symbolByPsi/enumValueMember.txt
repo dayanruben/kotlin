@@ -1,10 +1,13 @@
 KtValueParameterSymbol:
   annotationsList: []
   callableIdIfNonLocal: null
+  contextReceivers: []
   generatedPrimaryConstructorProperty: KtKotlinPropertySymbol(/Style.value)
   hasDefaultValue: false
+  isCrossinline: false
   isExtension: false
   isImplicitLambdaParameter: false
+  isNoinline: false
   isVararg: false
   name: value
   origin: SOURCE
@@ -19,6 +22,7 @@ KtConstructorSymbol:
   annotationsList: []
   callableIdIfNonLocal: null
   containingClassIdIfNonLocal: Style
+  contextReceivers: []
   hasStableParameterNames: true
   isExtension: false
   isPrimary: true
@@ -37,6 +41,7 @@ KtConstructorSymbol:
 KtPropertyGetterSymbol:
   annotationsList: []
   callableIdIfNonLocal: null
+  contextReceivers: []
   hasBody: true
   hasStableParameterNames: true
   isDefault: false
@@ -57,6 +62,7 @@ KtPropertyGetterSymbol:
 KtKotlinPropertySymbol:
   annotationsList: []
   callableIdIfNonLocal: null
+  contextReceivers: []
   getter: KtPropertyGetterSymbol(<getter>)
   hasBackingField: false
   hasGetter: true
@@ -91,6 +97,7 @@ KtEnumEntrySymbol:
   annotationsList: []
   callableIdIfNonLocal: /Style.SHEET
   containingEnumClassIdIfNonLocal: Style
+  contextReceivers: []
   isExtension: false
   name: SHEET
   origin: SOURCE
@@ -104,6 +111,7 @@ KtEnumEntrySymbol:
 KtKotlinPropertySymbol:
   annotationsList: []
   callableIdIfNonLocal: /Style.exitAnimation
+  contextReceivers: []
   getter: KtPropertyGetterSymbol(<getter>)
   hasBackingField: false
   hasGetter: true
@@ -139,6 +147,7 @@ KtNamedClassOrObjectSymbol:
   classIdIfNonLocal: Style
   classKind: ENUM_CLASS
   companionObject: null
+  contextReceivers: []
   isData: false
   isExternal: false
   isFun: false

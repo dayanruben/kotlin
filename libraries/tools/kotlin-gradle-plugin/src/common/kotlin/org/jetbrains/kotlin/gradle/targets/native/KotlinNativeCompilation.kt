@@ -6,12 +6,10 @@
 @file:Suppress("PackageDirectoryMismatch") // Old package for compatibility
 package org.jetbrains.kotlin.gradle.plugin.mpp
 
-import groovy.lang.Closure
 import org.gradle.api.Action
 import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Project
 import org.gradle.api.tasks.TaskProvider
-import org.gradle.util.ConfigureUtil
 import org.jetbrains.kotlin.gradle.dsl.KotlinCommonOptions
 import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinNativeCompilationData
@@ -21,6 +19,7 @@ import org.jetbrains.kotlin.gradle.utils.lowerCamelCaseName
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import java.io.File
 import java.util.concurrent.Callable
+import javax.inject.Inject
 
 internal class NativeCompileOptions(languageSettingsProvider: () -> LanguageSettingsBuilder) : KotlinCommonOptions {
     private val languageSettings: LanguageSettingsBuilder by lazy(languageSettingsProvider)
@@ -86,7 +85,7 @@ internal fun addSourcesToKotlinNativeCompileTask(
 
 }
 
-class KotlinNativeCompilation(
+abstract class KotlinNativeCompilation @Inject constructor(
     konanTarget: KonanTarget,
     details: CompilationDetails<KotlinCommonOptions>
 ) : AbstractKotlinNativeCompilation(konanTarget, details),
@@ -97,10 +96,9 @@ class KotlinNativeCompilation(
 
     // Interop DSL.
     val cinterops = project.container(DefaultCInteropSettings::class.java) { cinteropName ->
-        DefaultCInteropSettings(project, cinteropName, this)
+        project.objects.newInstance(DefaultCInteropSettings::class.java, project, cinteropName, this)
     }
 
-    fun cinterops(action: Closure<Unit>) = cinterops(ConfigureUtil.configureUsing(action))
     fun cinterops(action: Action<NamedDomainObjectContainer<DefaultCInteropSettings>>) = action.execute(cinterops)
 
     // Naming
@@ -111,7 +109,7 @@ class KotlinNativeCompilation(
         get() = lowerCamelCaseName(target.disambiguationClassifier, compilationPurpose, "binaries")
 }
 
-class KotlinSharedNativeCompilation(
+abstract class KotlinSharedNativeCompilation @Inject constructor(
     val konanTargets: List<KonanTarget>,
     compilationDetails: CompilationDetails<KotlinCommonOptions>
 ) : KotlinNativeFragmentMetadataCompilationData,

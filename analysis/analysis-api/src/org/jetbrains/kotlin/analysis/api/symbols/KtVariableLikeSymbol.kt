@@ -6,12 +6,15 @@
 package org.jetbrains.kotlin.analysis.api.symbols
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.*
+import org.jetbrains.kotlin.analysis.api.KtConstantInitializerValue
+import org.jetbrains.kotlin.analysis.api.KtInitializerValue
+import org.jetbrains.kotlin.analysis.api.KtNonConstantInitializerValue
+import org.jetbrains.kotlin.analysis.api.base.KtContextReceiver
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
-import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.analysis.api.symbols.markers.*
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtSymbolPointer
 import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
@@ -42,6 +45,7 @@ public abstract class KtBackingFieldSymbol : KtVariableLikeSymbol() {
     final override val callableIdIfNonLocal: CallableId? get() = withValidityAssertion { null }
     final override val isExtension: Boolean get() = withValidityAssertion { false }
     final override val receiverType: KtType? get() = withValidityAssertion { null }
+    final override val contextReceivers: List<KtContextReceiver> get() = withValidityAssertion { emptyList() }
 
     final override val typeParameters: List<KtTypeParameterSymbol>
         get() = withValidityAssertion { emptyList() }
@@ -58,6 +62,7 @@ public abstract class KtEnumEntrySymbol : KtVariableLikeSymbol(), KtSymbolWithMe
     final override val symbolKind: KtSymbolKind get() = withValidityAssertion { KtSymbolKind.CLASS_MEMBER }
     final override val isExtension: Boolean get() = withValidityAssertion { false }
     final override val receiverType: KtType? get() = withValidityAssertion { null }
+    final override val contextReceivers: List<KtContextReceiver> get() = withValidityAssertion { emptyList() }
 
     final override val typeParameters: List<KtTypeParameterSymbol>
         get() = withValidityAssertion { emptyList() }
@@ -82,6 +87,7 @@ public abstract class KtJavaFieldSymbol :
     final override val symbolKind: KtSymbolKind get() = withValidityAssertion { KtSymbolKind.CLASS_MEMBER }
     final override val isExtension: Boolean get() = withValidityAssertion { false }
     final override val receiverType: KtType? get() = withValidityAssertion { null }
+    final override val contextReceivers: List<KtContextReceiver> get() = withValidityAssertion { emptyList() }
 
     final override val typeParameters: List<KtTypeParameterSymbol>
         get() = withValidityAssertion { emptyList() }
@@ -137,6 +143,8 @@ public abstract class KtSyntheticJavaPropertySymbol : KtPropertySymbol() {
     final override val isDelegatedProperty: Boolean get() = withValidityAssertion { false }
     final override val hasGetter: Boolean get() = withValidityAssertion { true }
     final override val symbolKind: KtSymbolKind get() = withValidityAssertion { KtSymbolKind.CLASS_MEMBER }
+    final override val contextReceivers: List<KtContextReceiver> get() = withValidityAssertion { emptyList() }
+
 
     abstract override val getter: KtPropertyGetterSymbol
 
@@ -150,6 +158,7 @@ public abstract class KtLocalVariableSymbol : KtVariableSymbol(), KtSymbolWithKi
     final override val callableIdIfNonLocal: CallableId? get() = withValidityAssertion { null }
     final override val isExtension: Boolean get() = withValidityAssertion { false }
     final override val receiverType: KtType? get() = withValidityAssertion { null }
+    final override val contextReceivers: List<KtContextReceiver> get() = withValidityAssertion { emptyList() }
 
     final override val typeParameters: List<KtTypeParameterSymbol>
         get() = withValidityAssertion { emptyList() }
@@ -162,6 +171,17 @@ public abstract class KtValueParameterSymbol : KtVariableLikeSymbol(), KtSymbolW
     final override val callableIdIfNonLocal: CallableId? get() = withValidityAssertion { null }
     final override val isExtension: Boolean get() = withValidityAssertion { false }
     final override val receiverType: KtType? get() = withValidityAssertion { null }
+    final override val contextReceivers: List<KtContextReceiver> get() = withValidityAssertion { emptyList() }
+
+    /**
+     * Returns true if the function parameter is marked with `noinline` modifier
+     */
+    public abstract val isNoinline: Boolean
+
+    /**
+     * Returns true if the function parameter is marked with `crossinline` modifier
+     */
+    public abstract val isCrossinline: Boolean
 
     final override val typeParameters: List<KtTypeParameterSymbol>
         get() = withValidityAssertion { emptyList() }

@@ -1,10 +1,13 @@
 KtValueParameterSymbol:
   annotationsList: []
   callableIdIfNonLocal: null
+  contextReceivers: []
   generatedPrimaryConstructorProperty: null
   hasDefaultValue: false
+  isCrossinline: false
   isExtension: false
   isImplicitLambdaParameter: true
+  isNoinline: false
   isVararg: false
   name: it
   origin: SOURCE_MEMBER_GENERATED

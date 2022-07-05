@@ -13107,16 +13107,6 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
                     runTest("compiler/testData/codegen/box/coroutines/varSpilling/cleanup/when.kt");
                 }
             }
-
-            @Nested
-            @TestMetadata("compiler/testData/codegen/box/coroutines/varSpilling/debugMode")
-            @TestDataPath("$PROJECT_ROOT")
-            public class DebugMode {
-                @Test
-                public void testAllFilesPresentInDebugMode() throws Exception {
-                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/coroutines/varSpilling/debugMode"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
-                }
-            }
         }
     }
 
@@ -17211,6 +17201,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         @TestMetadata("objectInFinally.kt")
         public void testObjectInFinally() throws Exception {
             runTest("compiler/testData/codegen/box/finally/objectInFinally.kt");
+        }
+
+        @Test
+        @TestMetadata("returnNullFromInlined.kt")
+        public void testReturnNullFromInlined() throws Exception {
+            runTest("compiler/testData/codegen/box/finally/returnNullFromInlined.kt");
         }
 
         @Test

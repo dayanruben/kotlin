@@ -10,8 +10,6 @@ package org.jetbrains.kotlin.gradle.plugin.mpp
 
 import groovy.lang.Closure
 import org.gradle.api.tasks.TaskProvider
-import org.gradle.util.ConfigureUtil
-import org.gradle.util.WrapUtil
 import org.jetbrains.kotlin.gradle.dsl.KotlinJsOptions
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilationWithResources
 import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
@@ -22,15 +20,14 @@ import org.jetbrains.kotlin.gradle.targets.js.ir.JsBinary
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsBinaryContainer
 import org.jetbrains.kotlin.gradle.targets.js.npm.PackageJson
 import org.jetbrains.kotlin.gradle.tasks.Kotlin2JsCompile
+import javax.inject.Inject
 
-open class KotlinJsCompilation internal constructor(
+abstract class KotlinJsCompilation @Inject internal constructor(
     compilationDetails: JsCompilationDetails
 ) : AbstractKotlinCompilationToRunnableFiles<KotlinJsOptions>(compilationDetails),
     KotlinCompilationWithResources<KotlinJsOptions> {
 
     final override val target: KotlinTarget get() = super.target
-
-    constructor(target: KotlinTarget, name: String) : this(JsCompilationDetails(target, name))
 
     private val kotlinProperties = PropertiesProvider(target.project)
 
@@ -43,7 +40,7 @@ open class KotlinJsCompilation internal constructor(
         target.project.objects.newInstance(
             KotlinJsBinaryContainer::class.java,
             target,
-            WrapUtil.toDomainObjectSet(JsBinary::class.java)
+            target.project.objects.domainObjectSet(JsBinary::class.java)
         )
 
     var outputModuleName: String? = null

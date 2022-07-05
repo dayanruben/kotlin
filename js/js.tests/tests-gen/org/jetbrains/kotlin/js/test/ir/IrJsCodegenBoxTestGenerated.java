@@ -9773,16 +9773,6 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
                     KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/coroutines/varSpilling/cleanup"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JS_IR, true);
                 }
             }
-
-            @Nested
-            @TestMetadata("compiler/testData/codegen/box/coroutines/varSpilling/debugMode")
-            @TestDataPath("$PROJECT_ROOT")
-            public class DebugMode {
-                @Test
-                public void testAllFilesPresentInDebugMode() throws Exception {
-                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/coroutines/varSpilling/debugMode"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JS_IR, true);
-                }
-            }
         }
     }
 
@@ -13379,6 +13369,12 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
         @TestMetadata("objectInFinally.kt")
         public void testObjectInFinally() throws Exception {
             runTest("compiler/testData/codegen/box/finally/objectInFinally.kt");
+        }
+
+        @Test
+        @TestMetadata("returnNullFromInlined.kt")
+        public void testReturnNullFromInlined() throws Exception {
+            runTest("compiler/testData/codegen/box/finally/returnNullFromInlined.kt");
         }
 
         @Test
