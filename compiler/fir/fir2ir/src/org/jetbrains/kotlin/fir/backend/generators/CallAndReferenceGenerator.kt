@@ -59,10 +59,11 @@ class CallAndReferenceGenerator(
     private val approximator = ConeTypeApproximator(session.typeContext, session.languageVersionSettings)
     private val adapterGenerator = AdapterGenerator(components, conversionScope)
 
-    private fun FirTypeRef.toIrType(): IrType = with(typeConverter) { toIrType() }
+    private fun FirTypeRef.toIrType(): IrType =
+        with(typeConverter) { toIrType(conversionScope.defaultConversionTypeContext()) }
 
-    private fun ConeKotlinType.toIrType(conversionTypeContext: ConversionTypeContext = ConversionTypeContext.DEFAULT): IrType =
-        with(typeConverter) { toIrType(conversionTypeContext) }
+    private fun ConeKotlinType.toIrType(): IrType =
+        with(typeConverter) { toIrType(conversionScope.defaultConversionTypeContext()) }
 
     fun convertToIrCallableReference(
         callableReferenceAccess: FirCallableReferenceAccess,
@@ -784,22 +785,7 @@ class CallAndReferenceGenerator(
                 val argumentsCount = call.arguments.size
                 if (argumentsCount <= valueArgumentsCount) {
                     apply {
-                        val calleeReference = when (call) {
-                            is FirFunctionCall -> call.calleeReference
-                            is FirDelegatedConstructorCall -> call.calleeReference
-                            is FirAnnotationCall -> call.calleeReference
-                            else -> null
-                        }
-                        val function = if (calleeReference == FirReferencePlaceholderForResolvedAnnotations) {
-                            val coneClassLikeType = (call as FirAnnotation).annotationTypeRef.coneTypeSafe<ConeClassLikeType>()
-                            val firClass = (coneClassLikeType?.lookupTag?.toSymbol(session) as? FirRegularClassSymbol)?.fir
-                            firClass?.declarations?.filterIsInstance<FirConstructor>()?.firstOrNull()
-                        } else {
-                            ((calleeReference as? FirResolvedNamedReference)?.resolvedSymbol as? FirFunctionSymbol<*>)?.fir
-                        }
-                        val valueParameters = function?.valueParameters
-                        val argumentMapping = call.resolvedArgumentMapping
-                        val substitutor = (call as? FirFunctionCall)?.buildSubstitutorByCalledFunction(function) ?: ConeSubstitutor.Empty
+                        val (valueParameters, argumentMapping, substitutor) = extractArgumentsMapping(call)
                         if (argumentMapping != null && (annotationMode || argumentMapping.isNotEmpty())) {
                             if (valueParameters != null) {
                                 return applyArgumentsWithReorderingIfNeeded(

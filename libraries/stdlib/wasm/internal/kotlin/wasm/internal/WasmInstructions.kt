@@ -21,6 +21,12 @@ internal fun wasm_unreachable(): Nothing =
 internal fun <To> wasm_ref_cast(a: Any?): To =
     implementedAsIntrinsic
 
+internal fun <To> wasm_ref_test(a: Any?): Boolean =
+    implementedAsIntrinsic
+
+internal fun <T> wasm_array_copy(destination: T, destinationIndex: Int, source: T, sourceIndex: Int, length: Int): Unit =
+    implementedAsIntrinsic
+
 @WasmOp(WasmOp.I32_EQ)
 public external fun wasm_i32_eq(a: Int, b: Int): Boolean
 
@@ -284,9 +290,6 @@ public external fun wasm_ref_is_null(a: Any?): Boolean
 
 @WasmOp(WasmOp.REF_EQ)
 public external fun wasm_ref_eq(a: Any?, b: Any?): Boolean
-
-@WasmOp(WasmOp.REF_TEST)
-public external fun <T> wasm_ref_test(a: Any?): Boolean
 
 // ---
 

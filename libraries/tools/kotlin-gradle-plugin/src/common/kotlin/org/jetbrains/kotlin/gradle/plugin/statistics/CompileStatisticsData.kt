@@ -30,7 +30,8 @@ data class CompileStatisticsData(
     val nonIncrementalAttributes: Set<BuildAttribute>,
     //TODO think about it,time in milliseconds
     val buildTimesMetrics: Map<BuildTime, Long>,
-    val performanceMetrics: Map<BuildPerformanceMetric, Long>
+    val performanceMetrics: Map<BuildPerformanceMetric, Long>,
+    val type: String = BuildDataType.TASK_DATA.name
 ) {
     companion object {
         private val formatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").also { it.timeZone = TimeZone.getTimeZone("UTC")}
@@ -43,7 +44,14 @@ enum class StatTag {
     INCREMENTAL,
     NON_INCREMENTAL,
     GRADLE_DEBUG,
-    KOTLIN_DEBUG
+    KOTLIN_DEBUG,
+    CONFIGURATION_CACHE,
+    BUILD_CACHE,
+}
+
+enum class BuildDataType {
+    TASK_DATA,
+    BUILD_DATA
 }
 
 //Sensitive data. This object is used directly for statistic via http
@@ -56,11 +64,13 @@ data class GradleBuildStartParameters(
 ) : java.io.Serializable
 
 //Sensitive data. This object is used directly for statistic via http
-data class BuildFinishData(
+data class BuildFinishStatisticsData(
+    val projectName: String,
     val startParameters: GradleBuildStartParameters,
     val buildUuid: String = "Unset",
     val label: String?,
     val totalTime: Long,
+    val type: String = BuildDataType.BUILD_DATA.name
 )
 
 

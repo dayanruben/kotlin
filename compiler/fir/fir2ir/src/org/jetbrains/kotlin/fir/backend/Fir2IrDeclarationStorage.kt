@@ -55,6 +55,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedContainerSource
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
+import org.jetbrains.kotlin.utils.addToStdlib.runUnless
 import org.jetbrains.kotlin.utils.threadLocal
 import java.util.concurrent.ConcurrentHashMap
 
@@ -510,7 +511,22 @@ class Fir2IrDeclarationStorage(
                     function.origin == FirDeclarationOrigin.Enhancement -> IrDeclarationOrigin.IR_EXTERNAL_JAVA_DECLARATION_STUB
             else -> function.computeIrOrigin(predefinedOrigin)
         }
-        val signature = if (isLocal) null else signatureComposer.composeSignature(function, containingClass, forceTopLevelPrivate)
+        // We don't generate signatures for local classes
+        // We attempt to avoid signature generation for non-local classes, with the following exceptions:
+        // - special mode (generateSignatures) oriented on special backend modes
+        // - lazy classes (they still use signatures)
+        // - primitive types (they can be from built-ins and don't have FIR counterpart)
+        // - overrides and fake overrides (sometimes we perform "receiver replacement" in FIR2IR breaking FIR->IR relation,
+        // or FIR counterpart can be just created on the fly)
+        val signature =
+            runUnless(
+                isLocal ||
+                        !generateSignatures && irParent !is Fir2IrLazyClass &&
+                        function.dispatchReceiverType?.isPrimitive != true && function.containerSource == null &&
+                        updatedOrigin != IrDeclarationOrigin.FAKE_OVERRIDE && !function.isOverride
+            ) {
+                signatureComposer.composeSignature(function, containingClass, forceTopLevelPrivate)
+            }
         if (irParent is Fir2IrLazyClass && signature != null) {
             // For private functions signature is null, fallback to non-lazy function
             return createIrLazyFunction(function as FirSimpleFunction, signature, irParent, updatedOrigin)
@@ -609,7 +625,10 @@ class Fir2IrDeclarationStorage(
     ): IrConstructor = convertCatching(constructor) {
         val origin = constructor.computeIrOrigin(predefinedOrigin)
         val isPrimary = constructor.isPrimary
-        val signature = if (isLocal) null else signatureComposer.composeSignature(constructor, forceTopLevelPrivate = forceTopLevelPrivate)
+        val signature =
+            runUnless(isLocal || !generateSignatures) {
+                signatureComposer.composeSignature(constructor, forceTopLevelPrivate = forceTopLevelPrivate)
+            }
         val created = constructor.convertWithOffsets { startOffset, endOffset ->
             declareIrConstructor(signature) { symbol ->
                 classifierStorage.preCacheTypeParameters(constructor, symbol)
@@ -662,13 +681,16 @@ class Fir2IrDeclarationStorage(
         origin: IrDeclarationOrigin,
         startOffset: Int,
         endOffset: Int,
-        isLocal: Boolean = false,
+        dontUseSignature: Boolean = false,
         containingClass: ConeClassLikeLookupTag? = null,
         propertyAccessorForAnnotations: FirPropertyAccessor? = propertyAccessor,
         forceTopLevelPrivate: Boolean = false,
     ): IrSimpleFunction = convertCatching(propertyAccessor ?: property) {
         val prefix = if (isSetter) "set" else "get"
-        val signature = if (isLocal) null else signatureComposer.composeAccessorSignature(property, isSetter, containingClass, forceTopLevelPrivate)
+        val signature =
+            runUnless(dontUseSignature) {
+                signatureComposer.composeAccessorSignature(property, isSetter, containingClass, forceTopLevelPrivate)
+            }
         val containerSource = (correspondingProperty as? IrProperty)?.containerSource
         return declareIrAccessor(
             signature,
@@ -743,7 +765,7 @@ class Fir2IrDeclarationStorage(
         type: IrType? = null
     ): IrField = convertCatching(property) {
         val inferredType = type ?: firInitializerExpression!!.typeRef.toIrType()
-        return declareIrField(null) { symbol ->
+        return declareIrField { symbol ->
             irFactory.createField(
                 startOffset, endOffset, origin, symbol,
                 name, inferredType,
@@ -778,11 +800,8 @@ class Fir2IrDeclarationStorage(
         else
             symbolTable.declareProperty(signature, { Fir2IrPropertySymbol(signature, containerSource) }, factory)
 
-    private fun declareIrField(signature: IdSignature?, factory: (IrFieldSymbol) -> IrField): IrField =
-        if (signature == null)
-            factory(IrFieldSymbolImpl())
-        else
-            symbolTable.declareField(signature, { IrFieldPublicSymbolImpl(signature) }, factory)
+    private fun declareIrField(factory: (IrFieldSymbol) -> IrField): IrField =
+        factory(IrFieldSymbolImpl())
 
     fun getOrCreateIrProperty(
         property: FirProperty,
@@ -835,7 +854,16 @@ class Fir2IrDeclarationStorage(
         forceTopLevelPrivate: Boolean = false,
     ): IrProperty = convertCatching(property) {
         val origin = property.computeIrOrigin(predefinedOrigin)
-        val signature = if (isLocal) null else signatureComposer.composeSignature(property, containingClass, forceTopLevelPrivate)
+        // See similar comments in createIrFunction above
+        val signature =
+            runUnless(
+                isLocal ||
+                        !generateSignatures && irParent !is Fir2IrLazyClass &&
+                        property.dispatchReceiverType?.isPrimitive != true && property.containerSource == null &&
+                        origin != IrDeclarationOrigin.FAKE_OVERRIDE && !property.isOverride
+            ) {
+                signatureComposer.composeSignature(property, containingClass, forceTopLevelPrivate)
+            }
         if (irParent is Fir2IrLazyClass && signature != null) {
             // For private functions signature is null, fallback to non-lazy property
             return createIrLazyProperty(property, signature, irParent, origin)
@@ -907,7 +935,8 @@ class Fir2IrDeclarationStorage(
                             getter is FirDefaultPropertyGetter -> IrDeclarationOrigin.DEFAULT_PROPERTY_ACCESSOR
                             else -> origin
                         },
-                        startOffset, endOffset, isLocal, containingClass,
+                        startOffset, endOffset,
+                        dontUseSignature = signature == null, containingClass,
                         property.unwrapFakeOverrides().getter,
                         forceTopLevelPrivate = forceTopLevelPrivate,
                     )
@@ -919,7 +948,8 @@ class Fir2IrDeclarationStorage(
                                 setter is FirDefaultPropertySetter -> IrDeclarationOrigin.DEFAULT_PROPERTY_ACCESSOR
                                 else -> origin
                             },
-                            startOffset, endOffset, isLocal, containingClass,
+                            startOffset, endOffset,
+                            dontUseSignature = signature == null, containingClass,
                             property.unwrapFakeOverrides().setter,
                             forceTopLevelPrivate = forceTopLevelPrivate,
                         )
@@ -1188,12 +1218,12 @@ class Fir2IrDeclarationStorage(
             delegate.parent = irParent
             getter = createIrPropertyAccessor(
                 property.getter, property, this, type, irParent, null, false,
-                IrDeclarationOrigin.DELEGATED_PROPERTY_ACCESSOR, startOffset, endOffset, isLocal
+                IrDeclarationOrigin.DELEGATED_PROPERTY_ACCESSOR, startOffset, endOffset, dontUseSignature = true
             )
             if (property.isVar) {
                 setter = createIrPropertyAccessor(
                     property.setter, property, this, type, irParent, null, true,
-                    IrDeclarationOrigin.DELEGATED_PROPERTY_ACCESSOR, startOffset, endOffset, isLocal
+                    IrDeclarationOrigin.DELEGATED_PROPERTY_ACCESSOR, startOffset, endOffset, dontUseSignature = true
                 )
             }
             leaveScope(this)
