@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.serialization.deserialization.getClassId
 import java.io.File
 import java.util.*
+import kotlin.collections.HashSet
 
 /**
  * Incremental cache common for JVM and JS, ClassName type aware
@@ -203,12 +204,34 @@ abstract class AbstractIncrementalCache<ClassName>(
     override fun getComplementaryFilesRecursive(dirtyFiles: Collection<File>): Collection<File> {
         val complementaryFiles = HashSet<File>()
         val filesQueue = ArrayDeque(dirtyFiles)
+
+        val processedClasses = HashSet<FqName>()
+        val processedFiles = HashSet<File>()
+
         while (filesQueue.isNotEmpty()) {
             val file = filesQueue.pollFirst()
-            complementaryFilesMap[file].forEach {
-                if (complementaryFiles.add(it)) filesQueue.add(it)
+            if (processedFiles.contains(file)) {
+                continue
             }
+            processedFiles.add(file)
+            complementaryFilesMap[file].forEach {
+                if (complementaryFiles.add(it) && !processedFiles.contains(it)) filesQueue.add(it)
+            }
+            val classes2recompile = sourceToClassesMap.getFqNames(file)
+            classes2recompile.filter { !processedClasses.contains(it) }.forEach {class2recompile ->
+                processedClasses.add(class2recompile)
+                val sealedClasses = findSealedSupertypes(class2recompile, listOf(this))
+                val allSubtypes = sealedClasses.flatMap { withSubtypes(it, listOf(this)) }.also {
+                    // there could be only one sealed class in hierarchy
+                    processedClasses.addAll(it)
+                }
+                val files2add = allSubtypes.mapNotNull { classFqNameToSourceMap[it] }.filter { !processedFiles.contains(it) }
+                filesQueue.addAll(files2add)
+            }
+
+
         }
+        complementaryFiles.addAll(processedFiles)
         complementaryFiles.removeAll(dirtyFiles)
         return complementaryFiles
     }
@@ -223,11 +246,11 @@ abstract class AbstractIncrementalCache<ClassName>(
             for (actual in actuals) {
                 actualToExpect.getOrPut(actual) { hashSetOf() }.add(expect)
             }
-            complementaryFilesMap[expect] = actuals
+            complementaryFilesMap[expect] = actuals.union(complementaryFilesMap[expect])
         }
 
         for ((actual, expects) in actualToExpect) {
-            complementaryFilesMap[actual] = expects
+            complementaryFilesMap[actual] = expects.union(complementaryFilesMap[actual])
         }
     }
 }

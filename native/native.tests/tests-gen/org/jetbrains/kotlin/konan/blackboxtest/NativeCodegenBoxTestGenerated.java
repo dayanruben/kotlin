@@ -2084,6 +2084,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
             }
 
             @Test
+            @TestMetadata("kt52270.kt")
+            public void testKt52270() throws Exception {
+                runTest("compiler/testData/codegen/box/callableReference/kt52270.kt");
+            }
+
+            @Test
             @TestMetadata("nested.kt")
             public void testNested() throws Exception {
                 runTest("compiler/testData/codegen/box/callableReference/nested.kt");
@@ -23763,6 +23769,30 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
             }
 
             @Nested
+            @TestMetadata("compiler/testData/codegen/box/javaInterop/foreignAnnotationsTests")
+            @TestDataPath("$PROJECT_ROOT")
+            @Tag("codegen")
+            @UseExtTestCaseGroupProvider()
+            public class ForeignAnnotationsTests {
+                @Test
+                public void testAllFilesPresentInForeignAnnotationsTests() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/javaInterop/foreignAnnotationsTests"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+                }
+
+                @Nested
+                @TestMetadata("compiler/testData/codegen/box/javaInterop/foreignAnnotationsTests/tests")
+                @TestDataPath("$PROJECT_ROOT")
+                @Tag("codegen")
+                @UseExtTestCaseGroupProvider()
+                public class Tests {
+                    @Test
+                    public void testAllFilesPresentInTests() throws Exception {
+                        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/javaInterop/foreignAnnotationsTests/tests"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+                    }
+                }
+            }
+
+            @Nested
             @TestMetadata("compiler/testData/codegen/box/javaInterop/generics")
             @TestDataPath("$PROJECT_ROOT")
             @Tag("codegen")
@@ -34086,6 +34116,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
                 public void testAllFilesPresentInGenericSignature() throws Exception {
                     KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/reflection/genericSignature"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
                 }
+
+                @Test
+                @TestMetadata("genericFunctionReferenceSignature.kt")
+                public void testGenericFunctionReferenceSignature() throws Exception {
+                    runTest("compiler/testData/codegen/box/reflection/genericSignature/genericFunctionReferenceSignature.kt");
+                }
             }
 
             @Nested
@@ -39228,6 +39264,18 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
             @TestMetadata("defineClass.kt")
             public void testDefineClass() throws Exception {
                 runTest("compiler/testData/codegen/boxInline/anonymousObject/defineClass.kt");
+            }
+
+            @Test
+            @TestMetadata("fakeOverrideInDefaultMultiModule.kt")
+            public void testFakeOverrideInDefaultMultiModule() throws Exception {
+                runTest("compiler/testData/codegen/boxInline/anonymousObject/fakeOverrideInDefaultMultiModule.kt");
+            }
+
+            @Test
+            @TestMetadata("fakeOverrideMultiModule.kt")
+            public void testFakeOverrideMultiModule() throws Exception {
+                runTest("compiler/testData/codegen/boxInline/anonymousObject/fakeOverrideMultiModule.kt");
             }
 
             @Test

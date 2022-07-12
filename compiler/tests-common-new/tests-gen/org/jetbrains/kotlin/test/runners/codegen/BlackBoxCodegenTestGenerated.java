@@ -3052,6 +3052,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         }
 
         @Test
+        @TestMetadata("kt52270.kt")
+        public void testKt52270() throws Exception {
+            runTest("compiler/testData/codegen/box/callableReference/kt52270.kt");
+        }
+
+        @Test
         @TestMetadata("nested.kt")
         public void testNested() throws Exception {
             runTest("compiler/testData/codegen/box/callableReference/nested.kt");
@@ -27278,6 +27284,32 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         }
 
         @Nested
+        @TestMetadata("compiler/testData/codegen/box/javaInterop/foreignAnnotationsTests")
+        @TestDataPath("$PROJECT_ROOT")
+        public class ForeignAnnotationsTests {
+            @Test
+            public void testAllFilesPresentInForeignAnnotationsTests() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/javaInterop/foreignAnnotationsTests"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
+            }
+
+            @Nested
+            @TestMetadata("compiler/testData/codegen/box/javaInterop/foreignAnnotationsTests/tests")
+            @TestDataPath("$PROJECT_ROOT")
+            public class Tests {
+                @Test
+                public void testAllFilesPresentInTests() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/javaInterop/foreignAnnotationsTests/tests"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
+                }
+
+                @Test
+                @TestMetadata("kt53041.kt")
+                public void testKt53041() throws Exception {
+                    runTest("compiler/testData/codegen/box/javaInterop/foreignAnnotationsTests/tests/kt53041.kt");
+                }
+            }
+        }
+
+        @Nested
         @TestMetadata("compiler/testData/codegen/box/javaInterop/generics")
         @TestDataPath("$PROJECT_ROOT")
         public class Generics {
@@ -41272,6 +41304,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
             @TestMetadata("genericBackingFieldSignature.kt")
             public void testGenericBackingFieldSignature() throws Exception {
                 runTest("compiler/testData/codegen/box/reflection/genericSignature/genericBackingFieldSignature.kt");
+            }
+
+            @Test
+            @TestMetadata("genericFunctionReferenceSignature.kt")
+            public void testGenericFunctionReferenceSignature() throws Exception {
+                runTest("compiler/testData/codegen/box/reflection/genericSignature/genericFunctionReferenceSignature.kt");
             }
 
             @Test

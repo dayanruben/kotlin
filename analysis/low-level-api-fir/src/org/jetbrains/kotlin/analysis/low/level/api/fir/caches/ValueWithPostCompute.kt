@@ -78,7 +78,9 @@ internal class ValueWithPostCompute<KEY, VALUE, DATA>(
                     _postCompute!!(key, calculated, data)
                     calculated
                 } catch (e: Throwable) {
-                    if (e !is ProcessCanceledException) {
+                    if (e is ProcessCanceledException) {
+                        value = ValueIsNotComputed
+                    } else {
                         value = ExceptionWasThrownDuringValueComputation(e)
                     }
                     throw e
@@ -92,7 +94,7 @@ internal class ValueWithPostCompute<KEY, VALUE, DATA>(
                 throw stateSnapshot.error
             }
             else -> {
-                return value as VALUE
+                return stateSnapshot as VALUE
             }
         }
     }

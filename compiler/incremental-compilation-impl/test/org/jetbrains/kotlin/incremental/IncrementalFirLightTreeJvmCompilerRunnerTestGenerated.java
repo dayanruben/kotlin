@@ -64,7 +64,7 @@ public class IncrementalFirLightTreeJvmCompilerRunnerTestGenerated extends Abstr
         }
 
         public void testAllFilesPresentInPureKotlin() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("jps/jps-plugin/testData/incremental/pureKotlin"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JVM_IR, false);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("jps/jps-plugin/testData/incremental/pureKotlin"), Pattern.compile("^([^\\.]+)$"), Pattern.compile("^.*Expect.*"), TargetBackend.JVM_IR, false);
         }
 
         @TestMetadata("annotations")
@@ -597,6 +597,11 @@ public class IncrementalFirLightTreeJvmCompilerRunnerTestGenerated extends Abstr
             runTest("jps/jps-plugin/testData/incremental/pureKotlin/sealedClassesAddImplements/");
         }
 
+        @TestMetadata("sealedClassesAddIndirectInheritor")
+        public void testSealedClassesAddIndirectInheritor() throws Exception {
+            runTest("jps/jps-plugin/testData/incremental/pureKotlin/sealedClassesAddIndirectInheritor/");
+        }
+
         @TestMetadata("sealedClassesAddInheritor")
         public void testSealedClassesAddInheritor() throws Exception {
             runTest("jps/jps-plugin/testData/incremental/pureKotlin/sealedClassesAddInheritor/");
@@ -612,9 +617,9 @@ public class IncrementalFirLightTreeJvmCompilerRunnerTestGenerated extends Abstr
             runTest("jps/jps-plugin/testData/incremental/pureKotlin/sealedClassesRemoveInheritor/");
         }
 
-        @TestMetadata("sealedClassesUseSwitch")
-        public void testSealedClassesUseSwitch() throws Exception {
-            runTest("jps/jps-plugin/testData/incremental/pureKotlin/sealedClassesUseSwitch/");
+        @TestMetadata("sealedClassesWhenExpression")
+        public void testSealedClassesWhenExpression() throws Exception {
+            runTest("jps/jps-plugin/testData/incremental/pureKotlin/sealedClassesWhenExpression/");
         }
 
         @TestMetadata("secondaryConstructorInlined")
