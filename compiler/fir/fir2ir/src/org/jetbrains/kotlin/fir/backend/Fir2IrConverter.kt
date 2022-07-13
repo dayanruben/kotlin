@@ -10,6 +10,9 @@ import org.jetbrains.kotlin.KtSourceFileLinesMappingFromLineStartOffsets
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.backend.generators.*
 import org.jetbrains.kotlin.fir.backend.generators.DataClassMembersGenerator
@@ -26,7 +29,6 @@ import org.jetbrains.kotlin.fir.psi
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.signaturer.FirBasedSignatureComposer
 import org.jetbrains.kotlin.fir.signaturer.FirMangler
-import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.PsiIrFileEntry
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.declarations.impl.IrFileImpl
@@ -34,7 +36,6 @@ import org.jetbrains.kotlin.ir.declarations.impl.IrModuleFragmentImpl
 import org.jetbrains.kotlin.ir.interpreter.IrInterpreter
 import org.jetbrains.kotlin.ir.interpreter.checker.EvaluationMode
 import org.jetbrains.kotlin.ir.interpreter.checker.IrConstTransformer
-import org.jetbrains.kotlin.ir.symbols.*
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
 import org.jetbrains.kotlin.psi.KtFile
@@ -396,7 +397,7 @@ class Fir2IrConverter(
             }
         }
 
-        fun createModuleFragment(
+        fun createModuleFragmentWithSignaturesIfNeeded(
             session: FirSession,
             scopeSession: ScopeSession,
             firFiles: List<FirFile>,
@@ -411,10 +412,64 @@ class Fir2IrConverter(
             irGenerationExtensions: Collection<IrGenerationExtension>,
             generateSignatures: Boolean
         ): Fir2IrResult {
-            val moduleDescriptor = FirModuleDescriptor(session)
+            if (!generateSignatures) {
+                return createModuleFragmentWithoutSignatures(
+                    session, scopeSession, firFiles, languageVersionSettings,
+                    fir2IrExtensions, mangler, irMangler, irFactory,
+                    visibilityConverter, specialSymbolProvider, irGenerationExtensions
+                )
+            }
             val signatureComposer = FirBasedSignatureComposer(mangler)
             val wrappedSignaturer = WrappedDescriptorSignatureComposer(signaturer, signatureComposer)
             val symbolTable = SymbolTable(wrappedSignaturer, irFactory)
+            return createModuleFragmentWithSymbolTable(
+                session, scopeSession, firFiles, languageVersionSettings,
+                fir2IrExtensions, irMangler, irFactory, visibilityConverter,
+                specialSymbolProvider, irGenerationExtensions, signatureComposer,
+                symbolTable, generateSignatures = true
+            )
+        }
+
+        fun createModuleFragmentWithoutSignatures(
+            session: FirSession,
+            scopeSession: ScopeSession,
+            firFiles: List<FirFile>,
+            languageVersionSettings: LanguageVersionSettings,
+            fir2IrExtensions: Fir2IrExtensions,
+            mangler: FirMangler,
+            irMangler: KotlinMangler.IrMangler,
+            irFactory: IrFactory,
+            visibilityConverter: Fir2IrVisibilityConverter,
+            specialSymbolProvider: Fir2IrSpecialSymbolProvider,
+            irGenerationExtensions: Collection<IrGenerationExtension>
+        ): Fir2IrResult {
+            val signatureComposer = FirBasedSignatureComposer(mangler)
+            val signaturer = DescriptorSignatureComposerStub()
+            val symbolTable = SymbolTable(signaturer, irFactory)
+            return createModuleFragmentWithSymbolTable(
+                session, scopeSession, firFiles, languageVersionSettings,
+                fir2IrExtensions, irMangler, irFactory, visibilityConverter,
+                specialSymbolProvider, irGenerationExtensions, signatureComposer,
+                symbolTable, generateSignatures = false
+            )
+        }
+
+        private fun createModuleFragmentWithSymbolTable(
+            session: FirSession,
+            scopeSession: ScopeSession,
+            firFiles: List<FirFile>,
+            languageVersionSettings: LanguageVersionSettings,
+            fir2IrExtensions: Fir2IrExtensions,
+            irMangler: KotlinMangler.IrMangler,
+            irFactory: IrFactory,
+            visibilityConverter: Fir2IrVisibilityConverter,
+            specialSymbolProvider: Fir2IrSpecialSymbolProvider,
+            irGenerationExtensions: Collection<IrGenerationExtension>,
+            signatureComposer: FirBasedSignatureComposer,
+            symbolTable: SymbolTable,
+            generateSignatures: Boolean
+        ): Fir2IrResult {
+            val moduleDescriptor = FirModuleDescriptor(session)
             val components = Fir2IrComponentsStorage(
                 session, scopeSession, symbolTable, irFactory, signatureComposer, fir2IrExtensions, generateSignatures
             )
@@ -475,5 +530,27 @@ private class WrappedDescriptorSignatureComposer(
         firComposer.withFileSignature(fileSignature) {
             delegate.withFileSignature(fileSignature, body)
         }
+    }
+}
+
+private class DescriptorSignatureComposerStub : IdSignatureComposer {
+    override fun composeSignature(descriptor: DeclarationDescriptor): IdSignature? {
+        return null
+    }
+
+    override fun composeEnumEntrySignature(descriptor: ClassDescriptor): IdSignature? {
+        return null
+    }
+
+    override fun composeFieldSignature(descriptor: PropertyDescriptor): IdSignature? {
+        return null
+    }
+
+    override fun composeAnonInitSignature(descriptor: ClassDescriptor): IdSignature? {
+        return null
+    }
+
+    override fun withFileSignature(fileSignature: IdSignature.FileSignature, body: () -> Unit) {
+        body()
     }
 }

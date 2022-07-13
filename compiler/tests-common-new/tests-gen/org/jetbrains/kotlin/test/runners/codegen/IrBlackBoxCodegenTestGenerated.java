@@ -17788,6 +17788,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         }
 
         @Test
+        @TestMetadata("externalInDependency.kt")
+        public void testExternalInDependency() throws Exception {
+            runTest("compiler/testData/codegen/box/fir/externalInDependency.kt");
+        }
+
+        @Test
         @TestMetadata("FakeOverrideBuilder.kt")
         public void testFakeOverrideBuilder() throws Exception {
             runTest("compiler/testData/codegen/box/fir/FakeOverrideBuilder.kt");
@@ -34962,6 +34968,18 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
             @TestMetadata("interfaceCompanion.kt")
             public void testInterfaceCompanion() throws Exception {
                 runTest("compiler/testData/codegen/box/properties/const/interfaceCompanion.kt");
+            }
+
+            @Test
+            @TestMetadata("intermoduleInlineConst.kt")
+            public void testIntermoduleInlineConst() throws Exception {
+                runTest("compiler/testData/codegen/box/properties/const/intermoduleInlineConst.kt");
+            }
+
+            @Test
+            @TestMetadata("kt52970.kt")
+            public void testKt52970() throws Exception {
+                runTest("compiler/testData/codegen/box/properties/const/kt52970.kt");
             }
 
             @Test
