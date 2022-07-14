@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.fir.java
 
-import org.jetbrains.kotlin.fir.FirRenderer
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.FirCallableDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirDeclaration
@@ -14,6 +13,7 @@ import org.jetbrains.kotlin.fir.java.declarations.FirJavaClass
 import org.jetbrains.kotlin.fir.java.declarations.FirJavaConstructor
 import org.jetbrains.kotlin.fir.java.declarations.FirJavaField
 import org.jetbrains.kotlin.fir.java.declarations.FirJavaMethod
+import org.jetbrains.kotlin.fir.renderer.FirRenderer
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.scopes.unsubstitutedScope
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals
@@ -26,16 +26,16 @@ fun renderJavaClass(renderer: FirRenderer, javaClass: FirJavaClass, session: Fir
     val staticScope = javaClass.scopeProvider.getStaticScope(javaClass, session, ScopeSession())
 
     renderer.renderAnnotations(javaClass)
-    renderer.visitMemberDeclaration(javaClass)
+    renderer.renderMemberDeclarationClass(javaClass)
     renderer.renderSupertypes(javaClass)
-    renderer.renderInBraces {
+    renderer.printer.renderInBraces {
         val renderedDeclarations = mutableListOf<FirDeclaration>()
 
         fun renderAndCache(symbol: FirCallableSymbol<*>) {
             val enhanced = symbol.fir
             if (enhanced !in renderedDeclarations) {
-                enhanced.accept(renderer, null)
-                renderer.newLine()
+                renderer.renderElementAsString(enhanced)
+                renderer.printer.newLine()
                 renderedDeclarations += enhanced
             }
         }
@@ -55,8 +55,8 @@ fun renderJavaClass(renderer: FirRenderer, javaClass: FirJavaClass, session: Fir
                 is FirJavaField -> scopeToUse!!.processPropertiesByName(declaration.name, ::renderAndCache)
                 is FirEnumEntry -> scopeToUse!!.processPropertiesByName(declaration.name, ::renderAndCache)
                 else -> {
-                    declaration.accept(renderer, null)
-                    renderer.newLine()
+                    renderer.renderElementAsString(declaration)
+                    renderer.printer.newLine()
                     renderedDeclarations += declaration
                 }
             }

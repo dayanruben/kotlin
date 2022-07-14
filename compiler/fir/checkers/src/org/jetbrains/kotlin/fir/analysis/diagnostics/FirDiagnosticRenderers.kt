@@ -12,14 +12,14 @@ import org.jetbrains.kotlin.diagnostics.rendering.ContextIndependentParameterRen
 import org.jetbrains.kotlin.diagnostics.rendering.Renderer
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.FirModuleData
-import org.jetbrains.kotlin.fir.FirRenderer
 import org.jetbrains.kotlin.fir.declarations.utils.*
 import org.jetbrains.kotlin.fir.render
+import org.jetbrains.kotlin.fir.renderer.*
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
-import org.jetbrains.kotlin.fir.types.render
+import org.jetbrains.kotlin.fir.types.renderReadableWithFqNames
 import org.jetbrains.kotlin.name.CallableId
 
 object FirDiagnosticRenderers {
@@ -27,7 +27,16 @@ object FirDiagnosticRenderers {
     val SYMBOL = Renderer { symbol: FirBasedSymbol<*> ->
         when (symbol) {
             is FirClassLikeSymbol<*>,
-            is FirCallableSymbol<*> -> symbol.fir.render(FirRenderer.RenderMode.DeclarationHeader)
+            is FirCallableSymbol<*> -> FirRenderer(
+                typeRenderer = ConeTypeRenderer(),
+                idRenderer = ConeIdShortRenderer(),
+                classMemberRenderer = FirNoClassMemberRenderer(),
+                bodyRenderer = null,
+                propertyAccessorRenderer = null,
+                callArgumentsRenderer = FirCallNoArgumentsRenderer(),
+                modifierRenderer = FirPartialModifierRenderer(),
+                valueParameterRenderer = FirValueParameterRendererNoDefaultValue(),
+            ).renderElementAsString(symbol.fir)
             is FirTypeParameterSymbol -> symbol.name.asString()
             else -> "???"
         }
@@ -89,12 +98,14 @@ object FirDiagnosticRenderers {
 
     val RENDER_TYPE = Renderer { t: ConeKotlinType ->
         // TODO: need a way to tune granuality, e.g., without parameter names in functional types.
-        t.render()
+        t.renderReadableWithFqNames()
     }
 
     val FQ_NAMES_IN_TYPES = Renderer { symbol: FirBasedSymbol<*> ->
         @OptIn(SymbolInternals::class)
-        symbol.fir.render(mode = FirRenderer.RenderMode.WithFqNamesExceptAnnotationAndBody)
+        FirRenderer(
+            annotationRenderer = null, bodyRenderer = null, idRenderer = ConeIdFullRenderer()
+        ).renderElementAsString(symbol.fir)
     }
 
     val AMBIGUOUS_CALLS = Renderer { candidates: Collection<FirBasedSymbol<*>> ->

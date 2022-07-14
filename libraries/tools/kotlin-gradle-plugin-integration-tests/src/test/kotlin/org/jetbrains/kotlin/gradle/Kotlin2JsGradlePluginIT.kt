@@ -176,8 +176,6 @@ class Kotlin2JsIrGradlePluginIT : AbstractKotlin2JsGradlePluginIT(true) {
     @GradleTest
     fun testJsIrIncrementalMultipleArtifacts(gradleVersion: GradleVersion) {
         project("kotlin-js-ir-ic-multiple-artifacts", gradleVersion) {
-            buildGradleKts.modify(::transformBuildScriptWithPluginsDsl)
-
             build("compileDevelopmentExecutableKotlinJs") {
                 val cacheDir = projectPath.resolve("app/build/klib/cache/lib/")
                     .toFile()
@@ -257,75 +255,6 @@ class Kotlin2JsIrGradlePluginIT : AbstractKotlin2JsGradlePluginIT(true) {
 
 @JsGradlePluginTests
 class Kotlin2JsGradlePluginIT : AbstractKotlin2JsGradlePluginIT(false) {
-
-    @DisplayName("incremental compilation for js works")
-    @GradleTest
-    fun testIncrementalCompilation(gradleVersion: GradleVersion) {
-        val buildOptions = defaultBuildOptions.copy(logLevel = LogLevel.DEBUG)
-        project("kotlin2JsICProject", gradleVersion, buildOptions = buildOptions) {
-            val modules = listOf("app", "lib")
-            val mainFiles = modules.flatMapTo(LinkedHashSet()) {
-                projectPath.resolve("$it/src/main").allKotlinFiles
-            }
-
-            build("build") {
-                checkIrCompilationMessage()
-                assertOutputContains(USING_JS_INCREMENTAL_COMPILATION_MESSAGE)
-                if (irBackend) {
-                    assertCompiledKotlinSources(mainFiles.relativizeTo(projectPath), output)
-                } else {
-                    assertCompiledKotlinSources(projectPath.allKotlinFiles.relativizeTo(projectPath), output)
-                }
-            }
-
-            build("build") {
-                assertCompiledKotlinSources(emptyList(), output)
-            }
-
-            val modifiedFile = subProject("lib").kotlinSourcesDir().resolve("A.kt") ?: error("No A.kt file in test project")
-            modifiedFile.modify {
-                it.replace("val x = 0", "val x = \"a\"")
-            }
-            build("build") {
-                checkIrCompilationMessage()
-                assertOutputContains(USING_JS_INCREMENTAL_COMPILATION_MESSAGE)
-                val affectedFiles = listOf("A.kt", "useAInLibMain.kt", "useAInAppMain.kt", "useAInAppTest.kt").mapNotNull {
-                    projectPath.findInPath(it)
-                }
-                if (irBackend) {
-                    // only klib ic is supported for now, so tests are generated non-incrementally with ir backend
-                    assertCompiledKotlinSources(affectedFiles.filter { it in mainFiles }.relativizeTo(projectPath), output)
-                } else {
-                    assertCompiledKotlinSources(affectedFiles.relativizeTo(projectPath), output)
-                }
-            }
-        }
-    }
-
-    @DisplayName("incremental compilation with multiple js modules after compilation error works")
-    @GradleTest
-    fun testIncrementalCompilationWithMultipleModulesAfterCompilationError(gradleVersion: GradleVersion) {
-        project("kotlin-js-ir-ic-multiple-artifacts", gradleVersion) {
-            buildGradleKts.modify(::transformBuildScriptWithPluginsDsl)
-
-            build("compileKotlinJs")
-
-            val libKt = subProject("lib").kotlinSourcesDir().resolve("Lib.kt") ?: error("No Lib.kt file in test project")
-            val appKt = subProject("app").kotlinSourcesDir().resolve("App.kt") ?: error("No App.kt file in test project")
-
-            libKt.modify { it.replace("fun answer", "func answe") } // introduce compilation error
-            buildAndFail("compileKotlinJs")
-            libKt.modify { it.replace("func answe", "fun answer") } // revert compilation error
-            appKt.modify { it.replace("Sheldon:", "Sheldon :") } // some change for incremental compilation
-            build("compileKotlinJs", buildOptions = defaultBuildOptions.copy(logLevel = LogLevel.DEBUG)) {
-                assertOutputContains(USING_JS_INCREMENTAL_COMPILATION_MESSAGE)
-                assertTasksUpToDate(":lib:compileKotlinJs")
-                assertTasksExecuted(":app:compileKotlinJs")
-                assertCompiledKotlinSources(listOf(appKt).relativizeTo(projectPath), output)
-            }
-        }
-    }
-
     @DisplayName("builtins are loaded")
     @GradleTest
     fun testKotlinJsBuiltins(gradleVersion: GradleVersion) {
@@ -734,6 +663,36 @@ abstract class AbstractKotlin2JsGradlePluginIT(protected val irBackend: Boolean)
         }
     }
 
+    @DisplayName("incremental compilation for js works")
+    @GradleTest
+    fun testIncrementalCompilation(gradleVersion: GradleVersion) {
+        val buildOptions = defaultBuildOptions.copy(logLevel = LogLevel.DEBUG)
+        project("kotlin2JsICProject", gradleVersion, buildOptions = buildOptions) {
+            build("compileKotlinJs", "compileTestKotlinJs") {
+                checkIrCompilationMessage()
+                assertOutputContains(USING_JS_INCREMENTAL_COMPILATION_MESSAGE)
+                assertCompiledKotlinSources(projectPath.allKotlinFiles.relativizeTo(projectPath), output)
+            }
+
+            build("compileKotlinJs", "compileTestKotlinJs") {
+                assertCompiledKotlinSources(emptyList(), output)
+            }
+
+            val modifiedFile = subProject("lib").kotlinSourcesDir().resolve("A.kt") ?: error("No A.kt file in test project")
+            modifiedFile.modify {
+                it.replace("val x = 0", "val x = \"a\"")
+            }
+            build("compileKotlinJs", "compileTestKotlinJs") {
+                checkIrCompilationMessage()
+                assertOutputContains(USING_JS_INCREMENTAL_COMPILATION_MESSAGE)
+                val affectedFiles = listOf("A.kt", "useAInLibMain.kt", "useAInAppMain.kt", "useAInAppTest.kt").mapNotNull {
+                    projectPath.findInPath(it)
+                }
+                assertCompiledKotlinSources(affectedFiles.relativizeTo(projectPath), output)
+            }
+        }
+    }
+
     @DisplayName("non-incremental compilation works")
     @GradleTest
     fun testIncrementalCompilationDisabled(gradleVersion: GradleVersion) {
@@ -742,7 +701,7 @@ abstract class AbstractKotlin2JsGradlePluginIT(protected val irBackend: Boolean)
         }
         val options = defaultBuildOptions.copy(jsOptions = jsOptions)
         project("kotlin2JsICProject", gradleVersion, buildOptions = options) {
-            build("build") {
+            build("compileKotlinJs", "compileTestKotlinJs") {
                 checkIrCompilationMessage()
                 assertOutputDoesNotContain(USING_JS_INCREMENTAL_COMPILATION_MESSAGE)
             }
@@ -1241,6 +1200,28 @@ abstract class AbstractKotlin2JsGradlePluginIT(protected val irBackend: Boolean)
             .let {
                 Gson().fromJson(it.readText(), PackageJson::class.java)
             }
+
+    @DisplayName("incremental compilation with multiple js modules after compilation error works")
+    @GradleTest
+    fun testIncrementalCompilationWithMultipleModulesAfterCompilationError(gradleVersion: GradleVersion) {
+        project("kotlin-js-ir-ic-multiple-artifacts", gradleVersion) {
+            build("compileKotlinJs")
+
+            val libKt = subProject("lib").kotlinSourcesDir().resolve("Lib.kt") ?: error("No Lib.kt file in test project")
+            val appKt = subProject("app").kotlinSourcesDir().resolve("App.kt") ?: error("No App.kt file in test project")
+
+            libKt.modify { it.replace("fun answer", "func answe") } // introduce compilation error
+            buildAndFail("compileKotlinJs")
+            libKt.modify { it.replace("func answe", "fun answer") } // revert compilation error
+            appKt.modify { it.replace("Sheldon:", "Sheldon :") } // some change for incremental compilation
+            build("compileKotlinJs", buildOptions = defaultBuildOptions.copy(logLevel = LogLevel.DEBUG)) {
+                assertOutputContains(USING_JS_INCREMENTAL_COMPILATION_MESSAGE)
+                assertTasksUpToDate(":lib:compileKotlinJs")
+                assertTasksExecuted(":app:compileKotlinJs")
+                assertCompiledKotlinSources(listOf(appKt).relativizeTo(projectPath), output)
+            }
+        }
+    }
 }
 
 @JsGradlePluginTests

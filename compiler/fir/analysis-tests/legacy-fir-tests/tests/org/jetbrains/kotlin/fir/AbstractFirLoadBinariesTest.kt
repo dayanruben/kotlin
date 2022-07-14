@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.fir
 
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
+import org.jetbrains.kotlin.fir.renderer.FirRenderer
 import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.name.ClassId
@@ -36,14 +37,14 @@ abstract class AbstractFirLoadBinariesTest : AbstractFirResolveWithSessionTestCa
 
         for (name in declarationNames) {
             for (symbol in provider.getTopLevelCallableSymbols(packageFqName, name)) {
-                symbol.fir.accept(firRenderer)
+                firRenderer.renderElementAsString(symbol.fir)
                 builder.appendLine()
             }
         }
 
         for (name in declarationNames) {
             val classLikeSymbol = provider.getClassLikeSymbolByClassId(ClassId.topLevel(packageFqName.child(name))) ?: continue
-            classLikeSymbol.fir.accept(firRenderer)
+            firRenderer.renderElementAsString(classLikeSymbol.fir)
             builder.appendLine()
         }
 

@@ -5,13 +5,14 @@
 
 package org.jetbrains.kotlin.fir.resolve.dfa.cfg
 
-import org.jetbrains.kotlin.fir.FirRenderer
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.expressions.FirDoWhileLoop
 import org.jetbrains.kotlin.fir.expressions.FirLoop
 import org.jetbrains.kotlin.fir.expressions.FirWhileLoop
 import org.jetbrains.kotlin.fir.expressions.impl.FirElseIfTrueCondition
 import org.jetbrains.kotlin.fir.render
+import org.jetbrains.kotlin.fir.renderer.FirCallNoArgumentsRenderer
+import org.jetbrains.kotlin.fir.renderer.FirRenderer
 
 fun CFGNode<*>.render(): String =
     buildString {
@@ -39,29 +40,26 @@ fun CFGNode<*>.render(): String =
                 is LoopConditionExitNode -> "Exit loop condition"
                 is LoopExitNode -> "Exit ${fir.type()}loop"
 
-                is QualifiedAccessNode -> "Access variable ${fir.calleeReference.render(CfgRenderMode)}"
+                is QualifiedAccessNode -> "Access variable ${CfgRenderer.renderElementAsString(fir.calleeReference)}"
                 is ResolvedQualifierNode -> "Access qualifier ${fir.classId}"
                 is ComparisonExpressionNode -> "Comparison ${fir.operation.operator}"
-                is TypeOperatorCallNode -> "Type operator: \"${fir.render(CfgRenderMode)}\""
+                is TypeOperatorCallNode -> "Type operator: \"${CfgRenderer.renderElementAsString(fir)}\""
                 is EqualityOperatorCallNode -> "Equality operator ${fir.operation.operator}"
                 is JumpNode -> "Jump: ${fir.render()}"
                 is StubNode -> "Stub"
-                is CheckNotNullCallNode -> "Check not null: ${fir.render(CfgRenderMode)}"
+                is CheckNotNullCallNode -> "Check not null: ${CfgRenderer.renderElementAsString(fir)}"
 
                 is ConstExpressionNode -> "Const: ${fir.render()}"
                 is VariableDeclarationNode ->
-                    "Variable declaration: ${buildString {
-                        FirRenderer(
-                            this,
-                            CfgRenderMode
-                        ).visitCallableDeclaration(fir)
-                    }}"
+                    "Variable declaration: ${
+                        CfgRenderer.renderAsCallableDeclarationString(fir)
+                    }"
 
-                is VariableAssignmentNode -> "Assignment: ${fir.lValue.render(CfgRenderMode)}"
-                is FunctionCallNode -> "Function call: ${fir.render(CfgRenderMode)}"
-                is DelegatedConstructorCallNode -> "Delegated constructor call: ${fir.render(CfgRenderMode)}"
-                is StringConcatenationCallNode -> "String concatenation call: ${fir.render(CfgRenderMode)}"
-                is ThrowExceptionNode -> "Throw: ${fir.render(CfgRenderMode)}"
+                is VariableAssignmentNode -> "Assignment: ${CfgRenderer.renderElementAsString(fir.lValue)}"
+                is FunctionCallNode -> "Function call: ${CfgRenderer.renderElementAsString(fir)}"
+                is DelegatedConstructorCallNode -> "Delegated constructor call: ${CfgRenderer.renderElementAsString(fir)}"
+                is StringConcatenationCallNode -> "String concatenation call: ${CfgRenderer.renderElementAsString(fir)}"
+                is ThrowExceptionNode -> "Throw: ${CfgRenderer.renderElementAsString(fir)}"
 
                 is TryExpressionEnterNode -> "Try expression enter"
                 is TryMainBlockEnterNode -> "Try main block enter"
@@ -126,7 +124,7 @@ fun CFGNode<*>.render(): String =
                 is ElvisRhsEnterNode -> "Enter rhs of ?:"
                 is ElvisExitNode -> "Exit ?:"
 
-                is CallableReferenceNode -> "Callable reference: ${fir.render(CfgRenderMode)}"
+                is CallableReferenceNode -> "Callable reference: ${CfgRenderer.renderElementAsString(fir)}"
                 is GetClassCallNode -> "::class call"
 
                 is AbstractBinaryExitNode -> throw IllegalStateException()
@@ -134,13 +132,9 @@ fun CFGNode<*>.render(): String =
         )
     }
 
-private val CfgRenderMode = FirRenderer.RenderMode(
-    renderLambdaBodies = false,
-    renderCallArguments = false,
-    renderCallableFqNames = false,
-    renderDeclarationResolvePhase = false,
-    renderAnnotation = false,
-)
+// NB: renderer has a state, so we have to create it each time
+private val CfgRenderer
+    get() = FirRenderer(annotationRenderer = null, callArgumentsRenderer = FirCallNoArgumentsRenderer())
 
 private fun FirFunction.name(): String = when (this) {
     is FirSimpleFunction -> name.asString()

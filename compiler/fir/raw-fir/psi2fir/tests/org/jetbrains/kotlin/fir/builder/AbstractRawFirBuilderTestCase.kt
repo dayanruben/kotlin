@@ -24,6 +24,8 @@ import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.impl.FirNoReceiverExpression
 import org.jetbrains.kotlin.fir.expressions.impl.FirStubStatement
 import org.jetbrains.kotlin.fir.references.impl.FirStubReference
+import org.jetbrains.kotlin.fir.renderer.FirDeclarationRendererWithAttributes
+import org.jetbrains.kotlin.fir.renderer.FirRenderer
 import org.jetbrains.kotlin.fir.session.FirSessionFactory
 import org.jetbrains.kotlin.fir.types.FirTypeProjection
 import org.jetbrains.kotlin.fir.types.FirTypeRef
@@ -64,7 +66,7 @@ abstract class AbstractRawFirBuilderTestCase : KtParsingTestCase(
     protected open fun doRawFirTest(filePath: String) {
         val file = createKtFile(filePath)
         val firFile = file.toFirFile(BodyBuildingMode.NORMAL)
-        val firFileDump = StringBuilder().also { FirRenderer(it, mode = FirRenderer.RenderMode.WithDeclarationAttributes).visitFile(firFile) }.toString()
+        val firFileDump = FirRenderer.withDeclarationAttributes().renderElementAsString(firFile)
         val expectedPath = filePath.replace(".kt", ".txt")
         KotlinTestUtils.assertEqualsToFile(File(expectedPath), firFileDump)
     }
@@ -190,7 +192,7 @@ private fun throwTwiceVisitingError(element: FirElement) {
         if (psiParent is KtPropertyDelegate || psiParent?.parent is KtPropertyDelegate) return
     }
 
-    val elementDump = StringBuilder().also { element.accept(FirRenderer(it)) }.toString()
+    val elementDump = FirRenderer().renderElementAsString(element)
     throw AssertionError("FirElement ${element.javaClass} is visited twice: $elementDump")
 }
 

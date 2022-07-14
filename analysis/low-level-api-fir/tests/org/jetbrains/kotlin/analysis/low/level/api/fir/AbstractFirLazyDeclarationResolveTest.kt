@@ -8,12 +8,13 @@ package org.jetbrains.kotlin.analysis.low.level.api.fir
 import org.jetbrains.kotlin.analysis.low.level.api.fir.state.LLFirSourceResolveSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.test.base.AbstractLowLevelApiSingleFileTest
 import org.jetbrains.kotlin.fir.FirElement
-import org.jetbrains.kotlin.fir.FirRenderer
 import org.jetbrains.kotlin.fir.declarations.FirDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.realPsi
-import org.jetbrains.kotlin.fir.render
+import org.jetbrains.kotlin.fir.renderer.FirDeclarationRendererWithAttributes
+import org.jetbrains.kotlin.fir.renderer.FirRenderer
+import org.jetbrains.kotlin.fir.renderer.FirResolvePhaseRenderer
 import org.jetbrains.kotlin.fir.symbols.ensureResolved
 import org.jetbrains.kotlin.fir.visitors.FirVisitorVoid
 import org.jetbrains.kotlin.psi.KtDeclaration
@@ -51,8 +52,12 @@ abstract class AbstractFirLazyDeclarationResolveTest : AbstractLowLevelApiSingle
     }
 
     override fun doTestByFileStructure(ktFile: KtFile, moduleStructure: TestModuleStructure, testServices: TestServices) {
-        val rendererOption = FirRenderer.RenderMode.WithDeclarationAttributes.copy(renderDeclarationResolvePhase = true)
         val resultBuilder = StringBuilder()
+        val renderer = FirRenderer(
+            builder = resultBuilder,
+            declarationRenderer = FirDeclarationRendererWithAttributes(),
+            resolvePhaseRenderer = FirResolvePhaseRenderer()
+        )
         resolveWithClearCaches(ktFile) { firResolveSession ->
             check(firResolveSession is LLFirSourceResolveSession)
             val declarationToResolve = firResolveSession
@@ -63,7 +68,7 @@ abstract class AbstractFirLazyDeclarationResolveTest : AbstractLowLevelApiSingle
                 declarationToResolve.ensureResolved(currentPhase)
                 val firFile = firResolveSession.getOrBuildFirFile(ktFile)
                 resultBuilder.append("\n${currentPhase.name}:\n")
-                resultBuilder.append(firFile.render(rendererOption))
+                renderer.renderElementAsString(firFile)
             }
         }
 
@@ -72,7 +77,7 @@ abstract class AbstractFirLazyDeclarationResolveTest : AbstractLowLevelApiSingle
             val firFile = firResolveSession.getOrBuildFirFile(ktFile)
             firFile.ensureResolved(FirResolvePhase.BODY_RESOLVE)
             resultBuilder.append("\nFILE RAW TO BODY:\n")
-            resultBuilder.append(firFile.render(rendererOption))
+            renderer.renderElementAsString(firFile)
         }
 
         testServices.assertions.assertEqualsToTestDataFileSibling(resultBuilder.toString())

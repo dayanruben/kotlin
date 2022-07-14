@@ -611,7 +611,7 @@ public class DefaultErrorMessages {
                 RENDER_TYPE, RENDER_TYPE, NAME);
         MAP.put(UPPER_BOUND_VIOLATED_IN_TYPEALIAS_EXPANSION_WARNING,
                 "Type argument resulting from type alias expansion is not within required bounds for ''{2}'': " +
-                "should be subtype of ''{0}'', substituted type is ''{1}''. This warning will become an error since 1.8",
+                "should be subtype of ''{0}'', substituted type is ''{1}''. This warning will become an error since 1.8. See https://youtrack.jetbrains.com/issue/KT-29168",
                 RENDER_TYPE, RENDER_TYPE, NAME);
         MAP.put(CONFLICTING_PROJECTION_IN_TYPEALIAS_EXPANSION, "Conflicting projection in type alias expansion in intermediate type ''{0}''", RENDER_TYPE);
         MAP.put(TYPEALIAS_SHOULD_EXPAND_TO_CLASS, "Type alias expands to {0}, which is not a class, an interface, or an object", RENDER_TYPE);
@@ -1085,6 +1085,7 @@ public class DefaultErrorMessages {
         MAP.put(PRIVATE_CLASS_MEMBER_FROM_INLINE, "Non-private inline function cannot access members of private classes: ''{0}''", SHORT_NAMES_IN_TYPES, SHORT_NAMES_IN_TYPES);
         MAP.put(NOT_YET_SUPPORTED_IN_INLINE, "{0} are not yet supported in inline functions", STRING);
         MAP.put(DECLARATION_CANT_BE_INLINED, "'inline' modifier is not allowed on virtual members. Only private or final members can be inlined");
+        MAP.put(DECLARATION_CANT_BE_INLINED_WARNING, "'inline' modifier is not allowed on virtual enum members. Only private or final members can be inlined. This warning will become an error in K2");
         MAP.put(OVERRIDE_BY_INLINE, "Override by an inline function");
         MAP.put(REIFIED_TYPE_PARAMETER_IN_OVERRIDE, "Override by a function with reified type parameter");
         MAP.put(NOTHING_TO_INLINE, "Expected performance impact from inlining is insignificant. Inlining works best for functions with parameters of functional types");

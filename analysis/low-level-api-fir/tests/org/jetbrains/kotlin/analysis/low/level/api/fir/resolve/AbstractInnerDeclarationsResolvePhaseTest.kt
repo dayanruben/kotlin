@@ -5,14 +5,12 @@
 
 package org.jetbrains.kotlin.analysis.low.level.api.fir.resolve
 
-import org.jetbrains.kotlin.fir.FirRenderer
-import org.jetbrains.kotlin.fir.declarations.FirFile
-import org.jetbrains.kotlin.fir.render
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getOrBuildFirOfType
 import org.jetbrains.kotlin.analysis.low.level.api.fir.resolveWithClearCaches
 import org.jetbrains.kotlin.analysis.low.level.api.fir.test.base.AbstractLowLevelApiSingleFileTest
+import org.jetbrains.kotlin.fir.declarations.FirFile
+import org.jetbrains.kotlin.fir.renderer.FirRenderer
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.kotlin.test.services.TestModuleStructure
 import org.jetbrains.kotlin.test.services.TestServices
 import org.jetbrains.kotlin.test.services.assertions
@@ -21,7 +19,7 @@ abstract class AbstractInnerDeclarationsResolvePhaseTest : AbstractLowLevelApiSi
     override fun doTestByFileStructure(ktFile: KtFile, moduleStructure: TestModuleStructure, testServices: TestServices) {
         resolveWithClearCaches(ktFile) { firResolveSession ->
             val firFile = ktFile.getOrBuildFirOfType<FirFile>(firResolveSession)
-            val actual = firFile.render(FirRenderer.RenderMode.WithResolvePhases)
+            val actual = FirRenderer.withResolvePhase().renderElementAsString(firFile)
             testServices.assertions.assertEqualsToTestDataFileSibling(actual, extension = ".fir.txt")
         }
     }

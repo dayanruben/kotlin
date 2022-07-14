@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.analysis.api.fir.symbols.pointers
 
 import org.jetbrains.kotlin.analysis.api.fir.KtFirAnalysisSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.ideSessionComponents
-import org.jetbrains.kotlin.fir.FirRenderer
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.FirDeclaration
 import org.jetbrains.kotlin.fir.renderWithType
@@ -54,7 +53,7 @@ internal fun FirBasedSymbol<*>.createSignature(): IdSignature =
 internal fun FirDeclaration.createSignature(): IdSignature {
     val signatureComposer = moduleData.session.ideSessionComponents.signatureComposer
     return signatureComposer.composeSignature(this)
-        ?: error("Could not compose signature for ${this.renderWithType(FirRenderer.RenderMode.WithResolvePhases)}, looks like it is private or local")
+        ?: error("Could not compose signature for ${this.renderWithType()}, looks like it is private or local")
 }
 
 internal fun KtFirAnalysisSession.getClassLikeSymbol(classId: ClassId) =

@@ -11,9 +11,10 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getOrBuildFir
 import org.jetbrains.kotlin.analysis.low.level.api.fir.test.base.AbstractLowLevelApiSingleFileTest
 import org.jetbrains.kotlin.analysis.test.framework.services.expressionMarkerProvider
 import org.jetbrains.kotlin.fir.FirElement
-import org.jetbrains.kotlin.fir.FirRenderer
 import org.jetbrains.kotlin.fir.declarations.FirImport
 import org.jetbrains.kotlin.fir.render
+import org.jetbrains.kotlin.fir.renderer.FirPackageDirectiveRenderer
+import org.jetbrains.kotlin.fir.renderer.FirRenderer
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.builders.TestConfigurationBuilder
@@ -59,12 +60,8 @@ abstract class AbstractGetOrBuildFirTest : AbstractLowLevelApiSingleFileTest() {
     private fun render(firElement: FirElement?): String = when (firElement) {
         null -> "null"
         is FirImport -> "import ${firElement.importedFqName}"
-        else -> firElement.render(renderingMode)
+        else -> FirRenderer(packageDirectiveRenderer = FirPackageDirectiveRenderer()).renderElementAsString(firElement)
     }
-
-    private val renderingMode = FirRenderer.RenderMode.Normal.copy(
-        renderPackageDirective = true,
-    )
 
     private object Directives : SimpleDirectivesContainer() {
         val LOOK_UP_FOR_ELEMENT_OF_TYPE by stringDirective("LOOK_UP_FOR_ELEMENT_OF_TYPE")

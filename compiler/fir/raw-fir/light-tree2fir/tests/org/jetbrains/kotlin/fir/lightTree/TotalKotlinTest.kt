@@ -13,9 +13,9 @@ import com.intellij.util.PathUtil
 import org.jetbrains.kotlin.KtIoFileSourceFile
 import org.jetbrains.kotlin.KtSourceFile
 import org.jetbrains.kotlin.KtSourceFileLinesMapping
-import org.jetbrains.kotlin.fir.FirRenderer
 import org.jetbrains.kotlin.fir.builder.AbstractRawFirBuilderTestCase
 import org.jetbrains.kotlin.fir.builder.StubFirScopeProvider
+import org.jetbrains.kotlin.fir.renderer.FirRenderer
 import org.jetbrains.kotlin.fir.session.FirSessionFactory
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.readSourceFileWithMapping
@@ -33,7 +33,7 @@ class TotalKotlinTest : AbstractRawFirBuilderTestCase() {
             DebugUtil.psiTreeToString(ktFile, false)
         } else {
             val firFile = ktFile.toFirFile()
-            StringBuilder().also { FirRenderer(it).visitFile(firFile) }.toString()
+            FirRenderer().renderElementAsString(firFile)
         }
     }
 
@@ -46,7 +46,7 @@ class TotalKotlinTest : AbstractRawFirBuilderTestCase() {
             DebugUtil.lightTreeToString(lightTree, false)
         } else {
             val firFile = converter.buildFirFile(text, sourceFile, linesMapping)
-            StringBuilder().also { FirRenderer(it).visitFile(firFile) }.toString()
+            FirRenderer().renderElementAsString(firFile)
         }
     }
 

@@ -5,10 +5,11 @@
 
 package org.jetbrains.kotlin.fir.lightTree
 
-import org.jetbrains.kotlin.fir.FirRenderer
 import org.jetbrains.kotlin.fir.builder.AbstractRawFirBuilderTestCase
 import org.jetbrains.kotlin.fir.builder.StubFirScopeProvider
 import org.jetbrains.kotlin.fir.render
+import org.jetbrains.kotlin.fir.renderer.FirDeclarationRendererWithAttributes
+import org.jetbrains.kotlin.fir.renderer.FirRenderer
 import org.jetbrains.kotlin.fir.session.FirSessionFactory
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import java.io.File
@@ -23,7 +24,7 @@ abstract class AbstractLightTree2FirConverterTestCase : AbstractRawFirBuilderTes
             scopeProvider = StubFirScopeProvider,
             diagnosticsReporter = null
         ).buildFirFile(Paths.get(filePath))
-        val firDump = firFile.render(mode = FirRenderer.RenderMode.WithDeclarationAttributes)
+        val firDump = FirRenderer.withDeclarationAttributes().renderElementAsString(firFile)
 
         val expectedFile = File(filePath.replace(".kt", ".txt"))
         KotlinTestUtils.assertEqualsToFile(expectedFile, firDump)
