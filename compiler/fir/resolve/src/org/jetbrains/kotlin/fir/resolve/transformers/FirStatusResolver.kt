@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.impl.FirDeclarationStatusImpl
+import org.jetbrains.kotlin.fir.declarations.impl.FirOuterClassTypeParameterRef
 import org.jetbrains.kotlin.fir.declarations.impl.FirResolvedDeclarationStatusImpl
 import org.jetbrains.kotlin.fir.declarations.utils.effectiveVisibility
 import org.jetbrains.kotlin.fir.declarations.utils.isExpect
@@ -17,14 +18,14 @@ import org.jetbrains.kotlin.fir.declarations.utils.visibility
 import org.jetbrains.kotlin.fir.extensions.*
 import org.jetbrains.kotlin.fir.render
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
+import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.scopes.ProcessorAction
 import org.jetbrains.kotlin.fir.scopes.unsubstitutedScope
 import org.jetbrains.kotlin.fir.symbols.ensureResolved
 import org.jetbrains.kotlin.fir.toEffectiveVisibility
-import org.jetbrains.kotlin.fir.types.ConeClassLikeType
-import org.jetbrains.kotlin.fir.types.coneTypeSafe
-import org.jetbrains.kotlin.fir.types.typeContext
+import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
 
 class FirStatusResolver(
@@ -80,7 +81,6 @@ class FirStatusResolver(
         }
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     fun getOverriddenProperties(
         property: FirProperty,
         containingClass: FirClass?,
@@ -100,7 +100,6 @@ class FirStatusResolver(
         }
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     fun resolveStatus(
         property: FirProperty,
         containingClass: FirClass?,
@@ -138,7 +137,6 @@ class FirStatusResolver(
         }
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     fun resolveStatus(function: FirSimpleFunction, containingClass: FirClass?, isLocal: Boolean): FirResolvedDeclarationStatus {
         val status = function.applyExtensionTransformers { transformStatus(it, function, containingClass, isLocal) }
         val overriddenStatuses = getOverriddenStatuses(function, containingClass)
@@ -185,7 +183,7 @@ class FirStatusResolver(
         return resolveStatus(field, field.status, containingClass, null, isLocal, emptyList())
     }
 
-    fun resolveStatus(
+    private fun resolveStatus(
         backingField: FirBackingField,
         containingClass: FirClass?,
         isLocal: Boolean
@@ -216,6 +214,15 @@ class FirStatusResolver(
             Visibilities.Unknown -> when {
                 isLocal -> Visibilities.Local
                 else -> resolveVisibility(declaration, containingClass, containingProperty, overriddenStatuses)
+            }
+            Visibilities.Private -> when {
+                declaration is FirPropertyAccessor -> if (containingProperty?.visibility == Visibilities.PrivateToThis) {
+                    Visibilities.PrivateToThis
+                } else {
+                    Visibilities.Private
+                }
+                isPrivateToThis(declaration, containingClass) -> Visibilities.PrivateToThis
+                else -> Visibilities.Private
             }
             else -> status.visibility
         }
@@ -275,6 +282,62 @@ class FirStatusResolver(
         }
 
         return status.resolved(visibility, modality, effectiveVisibility)
+    }
+
+    private fun isPrivateToThis(
+        declaration: FirDeclaration,
+        containingClass: FirClass?,
+    ): Boolean {
+        if (containingClass == null) return false
+        if (declaration !is FirCallableDeclaration) return false
+        if (declaration is FirConstructor) return false
+        if (containingClass.typeParameters.all { it.symbol.variance == Variance.INVARIANT }) return false
+
+        if (declaration.receiverTypeRef?.contradictsWith(Variance.IN_VARIANCE) == true) {
+            return true
+        }
+        if (declaration.returnTypeRef.contradictsWith(
+                if (declaration is FirProperty && declaration.isVar) Variance.INVARIANT
+                else Variance.OUT_VARIANCE
+            )
+        ) {
+            return true
+        }
+        if (declaration is FirFunction) {
+            for (parameter in declaration.valueParameters) {
+                if (parameter.returnTypeRef.contradictsWith(Variance.IN_VARIANCE)) {
+                    return true
+                }
+            }
+        }
+        return false
+    }
+
+    private fun FirTypeRef.contradictsWith(requiredVariance: Variance): Boolean {
+        val type = coneTypeSafe<ConeKotlinType>() ?: return false
+        return contradictsWith(type, requiredVariance)
+    }
+
+    private fun contradictsWith(type: ConeKotlinType, requiredVariance: Variance): Boolean {
+        if (type is ConeTypeParameterType) {
+            return !type.lookupTag.typeParameterSymbol.fir.variance.allowsPosition(requiredVariance)
+        }
+        if (type is ConeClassLikeType) {
+            val classLike = type.lookupTag.toSymbol(session)?.fir
+            for ((index, argument) in type.typeArguments.withIndex()) {
+                if (classLike?.typeParameters?.getOrNull(index) is FirOuterClassTypeParameterRef) continue
+                val (argType, requiredVarianceForArgument) = when (argument) {
+                    is ConeKotlinTypeProjectionOut -> argument.type to requiredVariance
+                    is ConeKotlinTypeProjectionIn -> argument.type to requiredVariance.opposite()
+                    is ConeKotlinTypeProjection -> argument.type to Variance.INVARIANT
+                    is ConeStarProjection -> continue
+                }
+                if (contradictsWith(argType, requiredVarianceForArgument)) {
+                    return true
+                }
+            }
+        }
+        return false
     }
 
     private fun resolveVisibility(

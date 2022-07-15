@@ -20,9 +20,13 @@ import org.jetbrains.jps.incremental.java.JavaBuilder
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.kotlin.build.GeneratedFile
 import org.jetbrains.kotlin.build.GeneratedJvmClass
+import org.jetbrains.kotlin.build.report.ICReporter.ReportSeverity
+import org.jetbrains.kotlin.build.report.ICReporterBase
+import org.jetbrains.kotlin.build.report.debug
 import org.jetbrains.kotlin.cli.common.ExitCode
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
-import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity.*
+import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity.ERROR
+import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity.INFO
 import org.jetbrains.kotlin.cli.common.messages.MessageCollectorUtil
 import org.jetbrains.kotlin.compilerRunner.*
 import org.jetbrains.kotlin.config.IncrementalCompilation
@@ -30,12 +34,11 @@ import org.jetbrains.kotlin.config.KotlinModuleKind
 import org.jetbrains.kotlin.config.Services
 import org.jetbrains.kotlin.daemon.common.isDaemonEnabled
 import org.jetbrains.kotlin.incremental.*
-import org.jetbrains.kotlin.incremental.components.ExpectActualTracker
-import org.jetbrains.kotlin.incremental.components.LookupTracker
-import org.jetbrains.kotlin.build.report.ICReporterBase
 import org.jetbrains.kotlin.incremental.components.EnumWhenTracker
-import org.jetbrains.kotlin.jps.KotlinJpsBundle
+import org.jetbrains.kotlin.incremental.components.ExpectActualTracker
 import org.jetbrains.kotlin.incremental.components.InlineConstTracker
+import org.jetbrains.kotlin.incremental.components.LookupTracker
+import org.jetbrains.kotlin.jps.KotlinJpsBundle
 import org.jetbrains.kotlin.jps.incremental.JpsIncrementalCache
 import org.jetbrains.kotlin.jps.incremental.JpsLookupStorageManager
 import org.jetbrains.kotlin.jps.model.kotlinKind
@@ -731,14 +734,11 @@ private class JpsICReporter : ICReporterBase() {
     override fun reportCompileIteration(incremental: Boolean, sourceFiles: Collection<File>, exitCode: ExitCode) {
     }
 
-    override fun report(message: () -> String) {
+    override fun report(message: () -> String, severity: ReportSeverity) {
+        // Currently, all severity levels are mapped to debug
         if (KotlinBuilder.LOG.isDebugEnabled) {
             KotlinBuilder.LOG.debug(message())
         }
-    }
-
-    override fun reportVerbose(message: () -> String) {
-        report(message)
     }
 }
 
@@ -751,7 +751,7 @@ private fun ChangesCollector.processChangesUsingLookups(
     val allCaches = caches.flatMap { it.thisWithDependentCaches }
     val reporter = JpsICReporter()
 
-    reporter.reportVerbose { "Start processing changes" }
+    reporter.debug { "Start processing changes" }
 
     val dirtyFiles = getDirtyFiles(allCaches, lookupStorageManager)
     // if list of inheritors of sealed class has changed it should be recompiled with all the inheritors
@@ -765,7 +765,7 @@ private fun ChangesCollector.processChangesUsingLookups(
         excludeFiles = excludeFiles
     )
 
-    reporter.reportVerbose { "End of processing changes" }
+    reporter.debug { "End of processing changes" }
 }
 
 data class FilesToRecompile(val dirtyFiles: Set<File>, val forceRecompileTogether: Set<File>)
