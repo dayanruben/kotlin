@@ -30,7 +30,10 @@ class JsIrLinker(
     override val translationPluginContext: TranslationPluginContext?,
     private val icData: ICData? = null,
     friendModules: Map<String, Collection<String>> = emptyMap(),
-    override val unlinkedDeclarationsSupport: UnlinkedDeclarationsSupport = JsUnlinkedDeclarationsSupport(allowUnboundSymbols = false),
+    override val unlinkedDeclarationsSupport: UnlinkedDeclarationsSupport = JsUnlinkedDeclarationsSupport(
+        builtIns,
+        allowUnboundSymbols = false
+    ),
     private val stubGenerator: DeclarationStubGenerator? = null
 ) : KotlinIrLinker(
     currentModule = currentModule,
@@ -68,15 +71,6 @@ class JsIrLinker(
 
     private inner class JsModuleDeserializer(moduleDescriptor: ModuleDescriptor, klib: IrLibrary, strategyResolver: (String) -> DeserializationStrategy, libraryAbiVersion: KotlinAbiVersion, allowErrorCode: Boolean) :
         BasicIrModuleDeserializer(this, moduleDescriptor, klib, strategyResolver, libraryAbiVersion, allowErrorCode)
-
-    override fun maybeWrapWithBuiltInAndInit(
-        moduleDescriptor: ModuleDescriptor,
-        moduleDeserializer: IrModuleDeserializer
-    ): IrModuleDeserializer {
-        return if (isBuiltInModule(moduleDescriptor)) {
-            IrModuleDeserializerWithBuiltIns(builtIns, moduleDeserializer)
-        } else moduleDeserializer
-    }
 
     override fun createCurrentModuleDeserializer(moduleFragment: IrModuleFragment, dependencies: Collection<IrModuleDeserializer>): IrModuleDeserializer {
         val currentModuleDeserializer = super.createCurrentModuleDeserializer(moduleFragment, dependencies)

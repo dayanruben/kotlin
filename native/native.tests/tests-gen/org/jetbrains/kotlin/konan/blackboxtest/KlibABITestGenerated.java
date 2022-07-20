@@ -49,6 +49,12 @@ public class KlibABITestGenerated extends AbstractNativeKlibABITest {
     }
 
     @Test
+    @TestMetadata("removeClassAsConstructorCall")
+    public void testRemoveClassAsConstructorCall() throws Exception {
+        runTest("compiler/testData/klibABI/removeClassAsConstructorCall/");
+    }
+
+    @Test
     @TestMetadata("removeClassAsParameterType")
     public void testRemoveClassAsParameterType() throws Exception {
         runTest("compiler/testData/klibABI/removeClassAsParameterType/");
@@ -73,14 +79,56 @@ public class KlibABITestGenerated extends AbstractNativeKlibABITest {
     }
 
     @Test
+    @TestMetadata("removeClassAsVariableType")
+    public void testRemoveClassAsVariableType() throws Exception {
+        runTest("compiler/testData/klibABI/removeClassAsVariableType/");
+    }
+
+    @Test
     @TestMetadata("removeFunction")
     public void testRemoveFunction() throws Exception {
         runTest("compiler/testData/klibABI/removeFunction/");
     }
 
     @Test
+    @TestMetadata("removeInlinedClass")
+    public void testRemoveInlinedClass() throws Exception {
+        runTest("compiler/testData/klibABI/removeInlinedClass/");
+    }
+
+    @Test
+    @TestMetadata("removeInlinedFunction")
+    public void testRemoveInlinedFunction() throws Exception {
+        runTest("compiler/testData/klibABI/removeInlinedFunction/");
+    }
+
+    @Test
+    @TestMetadata("removeInlinedProperty")
+    public void testRemoveInlinedProperty() throws Exception {
+        runTest("compiler/testData/klibABI/removeInlinedProperty/");
+    }
+
+    @Test
+    @TestMetadata("removeOpenFunction")
+    public void testRemoveOpenFunction() throws Exception {
+        runTest("compiler/testData/klibABI/removeOpenFunction/");
+    }
+
+    @Test
+    @TestMetadata("removeOpenProperty")
+    public void testRemoveOpenProperty() throws Exception {
+        runTest("compiler/testData/klibABI/removeOpenProperty/");
+    }
+
+    @Test
     @TestMetadata("removeProperty")
     public void testRemoveProperty() throws Exception {
         runTest("compiler/testData/klibABI/removeProperty/");
+    }
+
+    @Test
+    @TestMetadata("typeAliasRHSTypeChange")
+    public void testTypeAliasRHSTypeChange() throws Exception {
+        runTest("compiler/testData/klibABI/typeAliasRHSTypeChange/");
     }
 }

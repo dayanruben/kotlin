@@ -1,10 +1,10 @@
-
 plugins {
     kotlin("jvm")
     id("jps-compatible")
 }
 
 dependencies {
+    api(project(":compiler:light-classes-base"))
     api(project(":compiler:util"))
     api(project(":compiler:backend"))
     api(project(":compiler:frontend"))
@@ -17,6 +17,4 @@ dependencies {
 
 sourceSets {
     "main" { projectDefault() }
-    "test" {}
 }
-

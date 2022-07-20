@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.cli.jvm.compiler
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiSearchScopeUtil
 import com.intellij.util.SmartList
@@ -27,16 +26,14 @@ import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.MemberScope
 
 class CliKotlinAsJavaSupport(
-    project: Project,
+    private val project: Project,
     private val traceHolder: CliTraceHolder
 ) : KotlinAsJavaSupport() {
-    private val psiManager = PsiManager.getInstance(project)
-
     override fun getFacadeClassesInPackage(packageFqName: FqName, scope: GlobalSearchScope): Collection<PsiClass> {
         return findFacadeFilesInPackage(packageFqName, scope)
             .groupBy { it.javaFileFacadeFqName }
             .mapNotNull { (facadeClassFqName, _) ->
-                KtLightClassForFacadeImpl.createForFacade(psiManager, facadeClassFqName, scope)
+                KotlinLightClassFactory.createFacade(project, facadeClassFqName, scope)
             }
     }
 
@@ -53,7 +50,7 @@ class CliKotlinAsJavaSupport(
         .orEmpty()
 
     override fun getFacadeClasses(facadeFqName: FqName, scope: GlobalSearchScope): Collection<PsiClass> {
-        return listOfNotNull(KtLightClassForFacadeImpl.createForFacade(psiManager, facadeFqName, scope))
+        return listOfNotNull(KotlinLightClassFactory.createFacade(project, facadeFqName, scope))
     }
 
     override fun getScriptClasses(scriptFqName: FqName, scope: GlobalSearchScope): Collection<PsiClass> {
@@ -108,9 +105,9 @@ class CliKotlinAsJavaSupport(
         ).mapNotNull { member -> (member as? PackageViewDescriptor)?.fqName }
     }
 
-    override fun getLightClass(classOrObject: KtClassOrObject): KtLightClass? = KtLightClassForSourceDeclaration.create(classOrObject)
+    override fun getLightClass(classOrObject: KtClassOrObject): KtLightClass? = KotlinLightClassFactory.createClass(classOrObject)
 
-    override fun getLightClassForScript(script: KtScript): KtLightClassForScript? = KtLightClassForScript.create(script)
+    override fun getLightClassForScript(script: KtScript): KtLightClassForScript? = KotlinLightClassFactory.createScript(script)
 
     override fun findClassOrObjectDeclarations(fqName: FqName, searchScope: GlobalSearchScope): Collection<KtClassOrObject> {
         return ResolveSessionUtils.getClassDescriptorsByFqName(traceHolder.module, fqName).mapNotNull {

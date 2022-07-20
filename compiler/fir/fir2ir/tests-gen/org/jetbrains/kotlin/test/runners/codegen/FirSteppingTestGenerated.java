@@ -320,6 +320,12 @@ public class FirSteppingTestGenerated extends AbstractFirSteppingTest {
     }
 
     @Test
+    @TestMetadata("multiModule.kt")
+    public void testMultiModule() throws Exception {
+        runTest("compiler/testData/debug/stepping/multiModule.kt");
+    }
+
+    @Test
     @TestMetadata("multilineExpression.kt")
     public void testMultilineExpression() throws Exception {
         runTest("compiler/testData/debug/stepping/multilineExpression.kt");

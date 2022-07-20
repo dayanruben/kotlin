@@ -142,7 +142,7 @@ val irCompilerModules = arrayOf(
 val commonCompilerModules = arrayOf(
     ":compiler:psi",
     ":compiler:frontend.common-psi",
-    ":compiler:light-classes", // TODO split this module to base and FE1.0 implementation modules
+    ":compiler:light-classes-base",
     ":compiler:frontend.common",
     ":compiler:util",
     ":compiler:config.jvm",
@@ -196,6 +196,7 @@ val fe10CompilerModules = arrayOf(
     ":core:descriptors.runtime",
     ":core:descriptors",
     ":core:descriptors.jvm",
+    ":compiler:light-classes",
     ":compiler:resolution",
     ":compiler:serialization",
     ":compiler:frontend",
@@ -331,6 +332,11 @@ extra["compilerArtifactsForIde"] = listOfNotNull(
     ":plugins:parcelize:parcelize-runtime",
     ":kotlin-stdlib-common",
     ":kotlin-stdlib",
+    ":kotlin-stdlib-js",
+    ":kotlin-test",
+    ":kotlin-daemon",
+    ":kotlin-compiler",
+    ":kotlin-annotations-jvm",
     ":kotlin-stdlib-jdk7",
     ":kotlin-stdlib-jdk8",
     ":kotlin-reflect",

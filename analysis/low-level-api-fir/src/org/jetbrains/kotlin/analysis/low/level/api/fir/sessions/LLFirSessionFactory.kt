@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirGlobalResolveCompone
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirModuleResolveComponents
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirPhaseManager
 import org.jetbrains.kotlin.analysis.low.level.api.fir.project.structure.*
-import org.jetbrains.kotlin.analysis.low.level.api.fir.project.structure.LLFirLibraryProviderFactory
 import org.jetbrains.kotlin.analysis.low.level.api.fir.project.structure.LLFirLibrarySessionFactory
 import org.jetbrains.kotlin.analysis.low.level.api.fir.project.structure.registerIdeComponents
 import org.jetbrains.kotlin.analysis.low.level.api.fir.providers.*
@@ -55,6 +54,9 @@ internal object LLFirSessionFactory {
         configureSession: (LLFirSession.() -> Unit)? = null
     ): LLFirSourcesSession {
         sessionsCache[module]?.let { return it as LLFirSourcesSession }
+        val platform = module.platform
+        val builtinsSession = LLFirBuiltinsSessionFactory.getInstance(project).getBuiltinsSession(platform)
+
         val languageVersionSettings = object : LanguageVersionSettings by module.languageVersionSettings {
             override fun getFeatureSupport(feature: LanguageFeature): LanguageFeature.State =
                 if (feature == LanguageFeature.EnableDfaWarningsInK2) LanguageFeature.State.ENABLED
@@ -71,8 +73,12 @@ internal object LLFirSessionFactory {
         val components = LLFirModuleResolveComponents(module, globalResolveComponents, scopeProvider)
 
         val contentScope = module.contentScope
-        val dependentModules = module.directRegularDependenciesOfType<KtSourceModule>()
-        val session = LLFirSourcesSession(module, project, components, librariesSessionFactory.builtInTypes)
+        val session = LLFirSourcesSession(
+            module,
+            project,
+            components,
+            builtinsSession.builtinTypes
+        )
         sessionsCache[module] = session
         components.session = session
 
@@ -104,21 +110,27 @@ internal object LLFirSessionFactory {
                 register(FirSwitchableExtensionDeclarationsSymbolProvider::class, it)
             }
 
-            val dependencyProvider = LLFirDependentModuleProviders(this) {
-                add(librariesSessionFactory.getLibrarySessionForSourceModule(module).symbolProvider)
-                dependentModules
-                    .mapTo(this) { dependentSourceModule ->
-                        val dependentSourceSession = createSourcesSession(
-                            project,
-                            dependentSourceModule,
-                            globalResolveComponents,
-                            sessionInvalidator,
-                            sessionsCache,
-                            librariesSessionFactory = librariesSessionFactory,
-                            configureSession = configureSession,
-                        )
-                        dependentSourceSession.symbolProvider
+            val dependencyProvider = LLFirDependentModuleProvidersBySessions(this) {
+                module.directRegularDependencies.mapNotNullTo(this) { dependency ->
+                    when (dependency) {
+                        is KtBuiltinsModule -> null //  build in is already added
+                        is KtBinaryModule -> LLFirLibrarySessionFactory.getInstance(project).getLibrarySession(dependency)
+                        is KtSourceModule -> {
+                            createSourcesSession(
+                                project,
+                                dependency,
+                                globalResolveComponents,
+                                sessionInvalidator,
+                                sessionsCache,
+                                librariesSessionFactory = librariesSessionFactory,
+                                configureSession = configureSession,
+                            )
+                        }
+                        is KtNotUnderContentRootModule -> error("Module $module cannot depend on ${dependency::class}: $dependency")
+                        is KtLibrarySourceModule -> error("Module $module cannot depend on ${dependency::class}: $dependency")
                     }
+                }
+                add(builtinsSession)
             }
 
             val javaSymbolProvider = createJavaSymbolProvider(this, moduleData, project, contentScope)
@@ -148,10 +160,9 @@ internal object LLFirSessionFactory {
     fun createLibraryOrLibrarySourceResolvableSession(
         project: Project,
         module: KtModule,
-        builtinsAndCloneableSession: LLFirBuiltinsAndCloneableSession,
         globalComponents: LLFirGlobalResolveComponents,
         sessionInvalidator: LLFirSessionInvalidator,
-        builtinTypes: BuiltinTypes,
+        builtinSession: LLFirBuiltinsAndCloneableSession,
         sessionsCache: MutableMap<KtModule, LLFirResolvableModuleSession>,
         languageVersionSettings: LanguageVersionSettings = LanguageVersionSettingsImpl.DEFAULT,
         configureSession: (LLFirSession.() -> Unit)? = null
@@ -170,7 +181,7 @@ internal object LLFirSessionFactory {
         val components = LLFirModuleResolveComponents(module, globalComponents, scopeProvider)
 
         val contentScope = module.contentScope
-        val session = LLFirLibraryOrLibrarySourceResolvableModuleSession(module, project, components, builtinTypes)
+        val session = LLFirLibraryOrLibrarySourceResolvableModuleSession(module, project, components, builtinSession.builtinTypes)
         sessionsCache[module] = session
         components.session = session
 
@@ -201,15 +212,15 @@ internal object LLFirSessionFactory {
             register(FirRegisteredPluginAnnotations::class, LLFirIdeRegisteredPluginAnnotations(this@session, annotationsResolver))
             register(FirPredicateBasedProvider::class, FirEmptyPredicateBasedProvider())
 
-            val dependencyProvider = LLFirDependentModuleProviders(this) {
+            val dependencyProvider = LLFirDependentModuleProvidersByProviders(this) {
                 // <all libraries scope> - <current library scope>
                 val librariesSearchScope =
                     ProjectScope.getLibrariesScope(project).intersectWith(GlobalSearchScope.notScope(libraryModule.contentScope))
-                add(builtinsAndCloneableSession.symbolProvider)
+                add(builtinSession.symbolProvider)
                 addAll(
-                    LLFirLibraryProviderFactory.createProvidersByModuleLibraryDependencies(
-                        session, module, scopeProvider, project, builtinTypes
-                    ) { librariesSearchScope }
+                    LLFirLibraryProviderFactory.createLibraryProvidersForAllProjectLibraries(
+                        session, moduleData, scopeProvider, project, builtinTypes, librariesSearchScope
+                    )
                 )
             }
 
