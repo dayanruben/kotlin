@@ -25,10 +25,13 @@ dependencies {
     testImplementation(intellijCore())
     testRuntimeOnly(intellijResources()) { isTransitive = false }
 
-    testApi(projectTests(":compiler:tests-common"))
+    testApiJUnit5()
+    testApi(projectTests(":compiler:tests-common-new"))
+    testApi(projectTests(":compiler:test-infrastructure"))
+    testApi(projectTests(":compiler:test-infrastructure-utils"))
+
     testApi(project(":kotlin-annotation-processing-base"))
     testApi(projectTests(":kotlin-annotation-processing-base"))
-    testApi(commonDependency("junit:junit"))
     testApi(project(":kotlin-annotation-processing-runtime"))
 
     testCompileOnly(toolsJarApi())
@@ -43,19 +46,32 @@ optInToExperimentalCompilerApi()
 
 sourceSets {
     "main" { projectDefault() }
-    "test" { projectDefault() }
+    "test" {
+        projectDefault()
+        generatedTestDir()
+    }
 }
 
 testsJar {}
 
-projectTest(parallel = true) {
-    workingDir = rootDir
-    dependsOn(":dist")
+kaptTestTask("test", JavaLanguageVersion.of(8))
+kaptTestTask("testJdk11", JavaLanguageVersion.of(11))
+
+fun Project.kaptTestTask(name: String, javaLanguageVersion: JavaLanguageVersion) {
+    val service = extensions.getByType<JavaToolchainService>()
+
+    projectTest(taskName = name, parallel = true) {
+        useJUnitPlatform {
+            excludeTags = setOf("IgnoreJDK11")
+        }
+        workingDir = rootDir
+        dependsOn(":dist")
+        javaLauncher.set(service.launcherFor { languageVersion.set(javaLanguageVersion) })
+    }
 }
 
 publish()
 
 runtimeJar()
-
 sourcesJar()
 javadocJar()

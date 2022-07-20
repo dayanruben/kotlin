@@ -57,6 +57,74 @@ public class CliTestGenerated extends AbstractCliTest {
         }
     }
 
+    @TestMetadata("compiler/testData/cli/jvm/plugins")
+    @TestDataPath("$PROJECT_ROOT")
+    @RunWith(JUnit3RunnerWithInners.class)
+    public static class Plugins extends AbstractCliTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doJvmTest, this, testDataFilePath);
+        }
+
+        public void testAllFilesPresentInPlugins() throws Exception {
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/cli/jvm/plugins"), Pattern.compile("^(.+)\\.args$"), null, false);
+        }
+
+        @TestMetadata("firAllOpenPlugin_legacy.args")
+        public void testFirAllOpenPlugin_legacy() throws Exception {
+            runTest("compiler/testData/cli/jvm/plugins/firAllOpenPlugin_legacy.args");
+        }
+
+        @TestMetadata("firAllOpenPlugin_modern.args")
+        public void testFirAllOpenPlugin_modern() throws Exception {
+            runTest("compiler/testData/cli/jvm/plugins/firAllOpenPlugin_modern.args");
+        }
+
+        @TestMetadata("mixingModernAndLegacyArgs.args")
+        public void testMixingModernAndLegacyArgs() throws Exception {
+            runTest("compiler/testData/cli/jvm/plugins/mixingModernAndLegacyArgs.args");
+        }
+
+        @TestMetadata("multipleOptionsForOnePlugin.args")
+        public void testMultipleOptionsForOnePlugin() throws Exception {
+            runTest("compiler/testData/cli/jvm/plugins/multipleOptionsForOnePlugin.args");
+        }
+
+        @TestMetadata("multiplePlugins.args")
+        public void testMultiplePlugins() throws Exception {
+            runTest("compiler/testData/cli/jvm/plugins/multiplePlugins.args");
+        }
+
+        @TestMetadata("multiplePluginsInSameArg.args")
+        public void testMultiplePluginsInSameArg() throws Exception {
+            runTest("compiler/testData/cli/jvm/plugins/multiplePluginsInSameArg.args");
+        }
+
+        @TestMetadata("noPluginInClasspath.args")
+        public void testNoPluginInClasspath() throws Exception {
+            runTest("compiler/testData/cli/jvm/plugins/noPluginInClasspath.args");
+        }
+
+        @TestMetadata("pluginSimple_legacy.args")
+        public void testPluginSimple_legacy() throws Exception {
+            runTest("compiler/testData/cli/jvm/plugins/pluginSimple_legacy.args");
+        }
+
+        @TestMetadata("pluginSimple_modern_noK2.args")
+        public void testPluginSimple_modern_noK2() throws Exception {
+            runTest("compiler/testData/cli/jvm/plugins/pluginSimple_modern_noK2.args");
+        }
+
+        @TestMetadata("pluginWithK2Error_legacy.args")
+        public void testPluginWithK2Error_legacy() throws Exception {
+            runTest("compiler/testData/cli/jvm/plugins/pluginWithK2Error_legacy.args");
+        }
+
+        @TestMetadata("pluginWithK2Error_modern.args")
+        public void testPluginWithK2Error_modern() throws Exception {
+            runTest("compiler/testData/cli/jvm/plugins/pluginWithK2Error_modern.args");
+        }
+    }
+
     @TestMetadata("compiler/testData/cli/jvm")
     @TestDataPath("$PROJECT_ROOT")
     @RunWith(JUnit3RunnerWithInners.class)
@@ -367,11 +435,6 @@ public class CliTestGenerated extends AbstractCliTest {
         @TestMetadata("fileClassClashMultipleFiles.args")
         public void testFileClassClashMultipleFiles() throws Exception {
             runTest("compiler/testData/cli/jvm/fileClassClashMultipleFiles.args");
-        }
-
-        @TestMetadata("firAllOpenPlugin.args")
-        public void testFirAllOpenPlugin() throws Exception {
-            runTest("compiler/testData/cli/jvm/firAllOpenPlugin.args");
         }
 
         @TestMetadata("firDeprecationJava.args")
@@ -872,16 +935,6 @@ public class CliTestGenerated extends AbstractCliTest {
         @TestMetadata("optInOverrideMessageFir.args")
         public void testOptInOverrideMessageFir() throws Exception {
             runTest("compiler/testData/cli/jvm/optInOverrideMessageFir.args");
-        }
-
-        @TestMetadata("pluginSimple.args")
-        public void testPluginSimple() throws Exception {
-            runTest("compiler/testData/cli/jvm/pluginSimple.args");
-        }
-
-        @TestMetadata("pluginWithK2Error.args")
-        public void testPluginWithK2Error() throws Exception {
-            runTest("compiler/testData/cli/jvm/pluginWithK2Error.args");
         }
 
         @TestMetadata("progressiveModeOff.args")
