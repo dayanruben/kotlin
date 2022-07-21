@@ -17,6 +17,9 @@ import org.jetbrains.kotlin.gradle.targets.js.npm.NpmProject
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmProjectModules
 import org.jetbrains.kotlin.gradle.targets.js.npm.PackageJson
 import org.jetbrains.kotlin.gradle.targets.js.npm.fromSrcPackageJson
+import org.jetbrains.kotlin.gradle.targets.js.yarn.YARN_LOCK_MISMATCH_MESSAGE
+import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnLockCopyTask.Companion.STORE_YARN_LOCK_NAME
+import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnLockCopyTask.Companion.UPGRADE_YARN_LOCK
 import org.jetbrains.kotlin.gradle.tasks.USING_JS_INCREMENTAL_COMPILATION_MESSAGE
 import org.jetbrains.kotlin.gradle.tasks.USING_JS_IR_BACKEND_MESSAGE
 import org.jetbrains.kotlin.gradle.testbase.*
@@ -25,7 +28,6 @@ import org.jetbrains.kotlin.gradle.util.normalizePath
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.condition.DisabledIf
-import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.zip.ZipFile
@@ -33,7 +35,6 @@ import kotlin.io.path.*
 import kotlin.streams.toList
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
-import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 @JsGradlePluginTests
@@ -614,48 +615,156 @@ abstract class AbstractKotlin2JsGradlePluginIT(protected val irBackend: Boolean)
         }
     }
 
-
     @DisplayName("source map is generated")
     @GradleTest
+    fun testKotlinJsSourceMap(gradleVersion: GradleVersion) {
+        project("kotlin2JsProjectWithSourceMap", gradleVersion) {
+            build(if (irBackend) "compileDevelopmentExecutableKotlinJs" else "compileKotlinJs") {
+                if (irBackend) {
+                    assertFileContains(
+                        subProject("app").projectPath
+                            .resolve("build/compileSync/main/developmentExecutable/kotlin/$projectName-app.js.map"),
+                        "\"../../../../../src/main/kotlin/main.kt\"",
+                        "\"../../../../../../lib/src/main/kotlin/foo.kt\"",
+                        "\"sourcesContent\":[null",
+                    )
+                    assertFileContains(
+                        subProject("app").projectPath
+                            .resolve("build/compileSync/main/developmentExecutable/kotlin/$projectName-lib.js.map"),
+                        "\"../../../../../../lib/src/main/kotlin/foo.kt\"",
+                        "\"sourcesContent\":[null",
+                    )
+                    assertFileContains(
+                        projectPath
+                            .resolve("build/js/packages/$projectName-app/kotlin/$projectName-lib.js.map"),
+                        "\"../../../../../lib/src/main/kotlin/foo.kt\"",
+                        "\"sourcesContent\":[null",
+                    )
+                }
+                assertFileContains(
+                    projectPath
+                        .resolve("build/js/packages/$projectName-app/kotlin/$projectName-app.js.map"),
+                    "\"../../../../../app/src/main/kotlin/main.kt\"",
+                    "\"../../../../../lib/src/main/kotlin/foo.kt\"",
+                    "\"sourcesContent\":[null",
+                )
+            }
+        }
+    }
+
+    @DisplayName("prefix is added to paths in source map")
     @DisabledIf(
         "org.jetbrains.kotlin.gradle.AbstractKotlin2JsGradlePluginIT#getIrBackend",
         disabledReason = "Source maps are not supported in IR backend"
     )
-    fun testKotlinJsSourceMap(gradleVersion: GradleVersion) {
-        project("kotlin2JsNoOutputFileProject", gradleVersion) {
-            buildGradle.appendText(
+    @GradleTest
+    fun testKotlinJsSourceMapCustomPrefix(gradleVersion: GradleVersion) {
+        project("kotlin2JsProjectWithSourceMap", gradleVersion) {
+            buildGradleKts.appendText(
                 """
+                |project("app") {
+                |   tasks.withType<KotlinJsCompile> {
+                |        kotlinOptions.sourceMapPrefix = "appPrefix/"
+                |   }
+                |}
                 |
-                |compileKotlin2Js.kotlinOptions.sourceMap = true
-                |compileKotlin2Js.kotlinOptions.sourceMapPrefix = "prefixprefix/"
-                |compileKotlin2Js.kotlinOptions.outputFile = "${'$'}{buildDir}/kotlin2js/main/app.js"
+                |project("lib") {
+                |   tasks.withType<KotlinJsCompile> {
+                |        kotlinOptions.sourceMapPrefix = "libPrefix/"
+                |   }
+                |}
+                |
                 """.trimMargin()
             )
+            build(if (irBackend) "compileDevelopmentExecutableKotlinJs" else "compileKotlinJs") {
+                val mapFilePath = projectPath
+                    .resolve("build/js/packages/$projectName-app/kotlin/$projectName-app.js.map")
+                assertFileContains(
+                    mapFilePath,
+                    "\"appPrefix/src/main/kotlin/main.kt\"",
+                    "\"appPrefix/libPrefix/src/main/kotlin/foo.kt\"",
+                )
+            }
+        }
+    }
 
-            build("build") {
-                val mapFilePath = projectPath.resolve("build/kotlin2js/main/app.js.map")
-                assertFileExists(mapFilePath)
-                val sourceFilePath = "prefixprefix/src/main/kotlin/example/Dummy.kt"
-                assertFileContains(mapFilePath, "\"$sourceFilePath\"")
+    @DisplayName("path in source maps are remapped for custom outputFile")
+    @GradleTest
+    fun testKotlinJsSourceMapCustomOutputFile(gradleVersion: GradleVersion) {
+        project("kotlin2JsProjectWithSourceMap", gradleVersion) {
+            val taskSelector = if (irBackend)
+                "named<KotlinJsIrLink>(\"compileDevelopmentExecutableKotlinJs\")"
+            else
+                "withType<KotlinJsCompile>"
+            buildGradleKts.appendText(
+                """
+                |project("app") {
+                |   tasks.$taskSelector {
+                |        kotlinOptions.outputFile = "${'$'}{buildDir}/kotlin2js/app.js"
+                |   }
+                |}
+                |
+                """.trimMargin()
+            )
+            build(if (irBackend) "compileDevelopmentExecutableKotlinJs" else "compileKotlinJs") {
+                val mapFilePath = subProject("app").projectPath
+                    .resolve("build/kotlin2js/app.js.map")
+                assertFileContains(mapFilePath,"\"../../src/main/kotlin/main.kt\"")
+                if (irBackend) {
+                    // The IR BE generates correct paths for dependencies
+                    assertFileContains(mapFilePath, "\"../../../lib/src/main/kotlin/foo.kt\"")
+                } else {
+                    // The legacy BE doesn't.
+                    assertFileContains(mapFilePath, "\"../../../../../lib/src/main/kotlin/foo.kt\"")
+                }
+            }
+        }
+    }
+
+    @DisplayName("source map is not generated when disabled")
+    @GradleTest
+    fun testKotlinJsSourceMapDisabled(gradleVersion: GradleVersion) {
+        project("kotlin2JsProjectWithSourceMap", gradleVersion) {
+            buildGradleKts.appendText(
+                """
+                |allprojects {
+                |   tasks.withType<KotlinJsCompile> {
+                |        kotlinOptions.sourceMap = false
+                |   }
+                |}
+                |
+                """.trimMargin()
+            )
+            build(if (irBackend) "compileDevelopmentExecutableKotlinJs" else "compileKotlinJs") {
+                val jsFilePath = projectPath.resolve("build/js/packages/$projectName-app/kotlin/$projectName-app.js")
+                assertFileExists(jsFilePath)
+                assertFileNotExists(Path("$jsFilePath.map"))
             }
         }
     }
 
     @DisplayName("sources can be embedded into source map")
-    @GradleTest
     @DisabledIf(
         "org.jetbrains.kotlin.gradle.AbstractKotlin2JsGradlePluginIT#getIrBackend",
         disabledReason = "Source maps are not supported in IR backend"
     )
-    fun testKotlinJsSourceMapInline(gradleVersion: GradleVersion) {
-        project("kotlin2JsProjectWithSourceMapInline", gradleVersion) {
-            build("build") {
-                val mapFilePath = subProject("app").kotlinClassesDir().resolve("app.js.map")
-                assertFileExists(mapFilePath)
+    @GradleTest
+    fun testKotlinJsSourceMapEmbedSources(gradleVersion: GradleVersion) {
+        project("kotlin2JsProjectWithSourceMap", gradleVersion) {
+            buildGradleKts.appendText(
+                """
+                |allprojects {
+                |    tasks.withType<KotlinJsCompile> {
+                |        kotlinOptions.sourceMapEmbedSources = "always"
+                |    }
+                |}
+                |
+                """.trimMargin()
+            )
+            build(if (irBackend) "compileDevelopmentExecutableKotlinJs" else "compileKotlinJs") {
+                val mapFilePath = projectPath.resolve("build/js/packages/$projectName-app/kotlin/$projectName-app.js.map")
                 assertFileContains(
                     mapFilePath,
-                    "\"./src/main/kotlin/main.kt\"",
-                    "\"./src/main/kotlin/foo.kt\"",
                     "\"fun main(args: Array<String>) {",
                     "\"inline fun foo(): String {",
                 )
@@ -865,6 +974,10 @@ abstract class AbstractKotlin2JsGradlePluginIT(protected val irBackend: Boolean)
                     .joinToString(separator = "\n") {
                         if (it.contains("npm", ignoreCase = true)) "" else it
                     }
+            }
+
+            build(UPGRADE_YARN_LOCK) {
+                assertTasksExecuted(":$UPGRADE_YARN_LOCK")
             }
 
             build("jsJar") {
@@ -1174,6 +1287,202 @@ abstract class AbstractKotlin2JsGradlePluginIT(protected val irBackend: Boolean)
             )
             buildAndFail("nodeTest") {
                 assertTasksFailed(":nodeTest")
+            }
+        }
+    }
+
+    @DisplayName("Failing with yarn.lock update")
+    @GradleTest
+    fun testFailingWithYarnLockUpdate(gradleVersion: GradleVersion) {
+        project("kotlin-js-yarn-lock-project", gradleVersion) {
+            build("compileKotlinJs") {
+                assertTasksExecuted(":$STORE_YARN_LOCK_NAME")
+            }
+
+            projectPath.resolve("kotlin-js-store").deleteRecursively()
+
+            buildGradleKts.modify {
+                it + "\n" +
+                        """
+                        rootProject.plugins.withType(org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin::class.java) {
+                            rootProject.the<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension>().reportNewYarnLock = true
+                        }
+                        """.trimIndent()
+            }
+
+            buildAndFail("compileKotlinJs") {
+                assertTasksFailed(":$STORE_YARN_LOCK_NAME")
+            }
+
+            buildGradleKts.modify {
+                it + "\n" +
+                        """
+                        dependencies {
+                            implementation(npm("decamelize", "6.0.0"))
+                        }
+                            
+                        rootProject.plugins.withType(org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin::class.java) {
+                            rootProject.the<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension>().yarnLockMismatchReport = 
+                                org.jetbrains.kotlin.gradle.targets.js.yarn.YarnLockMismatchReport.FAIL
+                        }
+                        """.trimIndent()
+            }
+
+            buildAndFail("compileKotlinJs") {
+                assertTasksFailed(":$STORE_YARN_LOCK_NAME")
+            }
+
+            // yarn.lock was not updated
+            buildAndFail("compileKotlinJs") {
+                assertTasksFailed(":$STORE_YARN_LOCK_NAME")
+            }
+
+            build(UPGRADE_YARN_LOCK) {
+                assertTasksExecuted(":$UPGRADE_YARN_LOCK")
+            }
+
+            buildGradleKts.modify {
+                val replaced = it.replace("implementation(npm(\"decamelize\", \"6.0.0\"))", "")
+                replaced + "\n" +
+                        """
+                        rootProject.plugins.withType(org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin::class.java) {
+                            rootProject.the<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension>().yarnLockMismatchReport =
+                                org.jetbrains.kotlin.gradle.targets.js.yarn.YarnLockMismatchReport.WARNING
+                        }
+                        """.trimIndent()
+            }
+
+            build("compileKotlinJs") {
+                assertTasksExecuted(":$STORE_YARN_LOCK_NAME")
+
+                assertOutputContains(YARN_LOCK_MISMATCH_MESSAGE)
+            }
+
+            build(UPGRADE_YARN_LOCK) {
+                assertTasksExecuted(":$UPGRADE_YARN_LOCK")
+            }
+
+            buildGradleKts.modify {
+                it + "\n" +
+                        """
+                        dependencies {
+                            implementation(npm("decamelize", "6.0.0"))
+                        }
+                            
+                        rootProject.plugins.withType(org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin::class.java) {
+                            rootProject.the<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension>().yarnLockMismatchReport =
+                                org.jetbrains.kotlin.gradle.targets.js.yarn.YarnLockMismatchReport.NONE
+                        }
+                        """.trimIndent()
+            }
+
+            build("compileKotlinJs") {
+                assertTasksExecuted(":$STORE_YARN_LOCK_NAME")
+
+                assertOutputDoesNotContain(YARN_LOCK_MISMATCH_MESSAGE)
+            }
+
+            build(UPGRADE_YARN_LOCK) {
+                assertTasksExecuted(":$UPGRADE_YARN_LOCK")
+            }
+
+            buildGradleKts.modify {
+                val replaced = it.replace("implementation(npm(\"decamelize\", \"6.0.0\"))", "")
+                replaced + "\n" +
+                        """
+                        rootProject.plugins.withType(org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin::class.java) {
+                            rootProject.the<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension>().yarnLockMismatchReport =
+                                org.jetbrains.kotlin.gradle.targets.js.yarn.YarnLockMismatchReport.FAIL_AFTER_BUILD
+                        }
+                        """.trimIndent()
+            }
+
+            buildAndFail("compileKotlinJs") {
+                assertTasksExecuted(":$STORE_YARN_LOCK_NAME")
+
+                assertOutputContains(YARN_LOCK_MISMATCH_MESSAGE)
+            }
+
+            buildAndFail("compileKotlinJs") {
+                assertTasksUpToDate(":$STORE_YARN_LOCK_NAME")
+
+                assertOutputContains(YARN_LOCK_MISMATCH_MESSAGE)
+            }
+
+            projectPath.resolve("kotlin-js-store").deleteRecursively()
+
+            buildGradleKts.modify {
+                it + "\n" +
+                        """
+                        rootProject.plugins.withType(org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin::class.java) {
+                            rootProject.the<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension>().yarnLockMismatchReport =
+                                org.jetbrains.kotlin.gradle.targets.js.yarn.YarnLockMismatchReport.NONE
+                            rootProject.the<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension>().reportNewYarnLock =
+                                true
+                        }
+                        """.trimIndent()
+            }
+
+            build("compileKotlinJs") {
+                assertTasksExecuted(":$STORE_YARN_LOCK_NAME")
+
+                assertOutputDoesNotContain(YARN_LOCK_MISMATCH_MESSAGE)
+            }
+
+            buildGradleKts.modify {
+                it + "\n" +
+                        """
+                        dependencies {
+                            implementation(npm("decamelize", "6.0.0"))
+                        }
+                            
+                        rootProject.plugins.withType(org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin::class.java) {
+                            rootProject.the<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension>().yarnLockMismatchReport =
+                                org.jetbrains.kotlin.gradle.targets.js.yarn.YarnLockMismatchReport.FAIL
+                            rootProject.the<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension>().yarnLockAutoReplace = 
+                                true
+                        }
+                        """.trimIndent()
+            }
+
+            buildAndFail("compileKotlinJs") {
+                assertTasksFailed(":$STORE_YARN_LOCK_NAME")
+            }
+
+            //yarn.lock was updated
+            build("compileKotlinJs") {
+                assertTasksExecuted(":$STORE_YARN_LOCK_NAME")
+            }
+
+            buildGradleKts.modify {
+                val replaced = it.replace("implementation(npm(\"decamelize\", \"6.0.0\"))", "")
+                replaced + "\n" +
+                        """
+                        rootProject.plugins.withType(org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin::class.java) {
+                            rootProject.the<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension>().yarnLockMismatchReport =
+                                org.jetbrains.kotlin.gradle.targets.js.yarn.YarnLockMismatchReport.FAIL_AFTER_BUILD
+                        }
+                        """.trimIndent()
+            }
+
+            buildAndFail("compileKotlinJs") {
+                assertTasksExecuted(":$STORE_YARN_LOCK_NAME")
+
+                assertOutputContains(YARN_LOCK_MISMATCH_MESSAGE)
+            }
+
+            //yarn.lock was updated
+            build("compileKotlinJs") {
+                assertTasksUpToDate(":$STORE_YARN_LOCK_NAME")
+            }
+
+            // check if everything ok without build/js/yarn.lock
+            build("clean") {
+                assertTasksExecuted(":clean")
+            }
+
+            build("clean") {
+                assertTasksUpToDate(":clean")
             }
         }
     }
