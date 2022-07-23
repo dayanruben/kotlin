@@ -132,5 +132,5 @@ fun use(
     ned.p = 1
 
     diff.<!DEPRECATION!>p<!>
-    diff.<!DEPRECATION, DEPRECATION_ERROR!>p<!> = 1
+    diff.<!DEPRECATION, UNRESOLVED_REFERENCE!>p<!> = 1
 }

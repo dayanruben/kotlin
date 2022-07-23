@@ -11,9 +11,10 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.diagnostics.fir.Persisten
 import org.jetbrains.kotlin.analysis.low.level.api.fir.diagnostics.fir.PersistentCheckerContextFactory
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
-import org.jetbrains.kotlin.fir.analysis.collectors.components.AbstractDiagnosticCollectorComponent
+import org.jetbrains.kotlin.fir.analysis.collectors.DiagnosticCollectorComponents
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.resolve.SessionHolderImpl
+import org.jetbrains.kotlin.name.StandardClassIds
 
 internal abstract class FileStructureElementDiagnosticRetriever {
     abstract fun retrieve(
@@ -43,7 +44,7 @@ internal class SingleNonLocalDeclarationDiagnosticRetriever(
     private class Visitor(
         private val structureElementDeclaration: FirDeclaration,
         context: CheckerContext,
-        components: List<AbstractDiagnosticCollectorComponent>
+        components: DiagnosticCollectorComponents
     ) : LLFirDiagnosticVisitor(context, components) {
         private var insideAlwaysVisitableDeclarations = 0
 
@@ -60,6 +61,10 @@ internal class SingleNonLocalDeclarationDiagnosticRetriever(
             return when {
                 structureElementDeclaration !is FirRegularClass -> true
                 structureElementDeclaration == declaration -> true
+                declaration.hasAnnotation(StandardClassIds.Annotations.Suppress) -> {
+                    useRegularComponents = false
+                    true
+                }
                 else -> false
             }
         }
@@ -102,7 +107,7 @@ internal object FileDiagnosticRetriever : FileStructureElementDiagnosticRetrieve
         }
 
     private class Visitor(
-        components: List<AbstractDiagnosticCollectorComponent>,
+        components: DiagnosticCollectorComponents,
         moduleComponents: LLFirModuleResolveComponents,
     ) : LLFirDiagnosticVisitor(
         PersistentCheckerContextFactory.createEmptyPersistenceCheckerContext(

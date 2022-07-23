@@ -2633,6 +2633,18 @@ public class IrTextTestGenerated extends AbstractIrTextTest {
         }
 
         @Test
+        @TestMetadata("reflectFindAnnotationOnDefaultMethodParameter.kt")
+        public void testReflectFindAnnotationOnDefaultMethodParameter() throws Exception {
+            runTest("compiler/testData/ir/irText/firProblems/reflectFindAnnotationOnDefaultMethodParameter.kt");
+        }
+
+        @Test
+        @TestMetadata("reflectGetOnNullableTypeAlias.kt")
+        public void testReflectGetOnNullableTypeAlias() throws Exception {
+            runTest("compiler/testData/ir/irText/firProblems/reflectGetOnNullableTypeAlias.kt");
+        }
+
+        @Test
         @TestMetadata("SafeLetWithReturn.kt")
         public void testSafeLetWithReturn() throws Exception {
             runTest("compiler/testData/ir/irText/firProblems/SafeLetWithReturn.kt");
@@ -3010,6 +3022,12 @@ public class IrTextTestGenerated extends AbstractIrTextTest {
         @TestMetadata("definitelyNotNullWithIntersection1.kt")
         public void testDefinitelyNotNullWithIntersection1() throws Exception {
             runTest("compiler/testData/ir/irText/types/definitelyNotNullWithIntersection1.kt");
+        }
+
+        @Test
+        @TestMetadata("dontLeaveStubTypesInSetter.kt")
+        public void testDontLeaveStubTypesInSetter() throws Exception {
+            runTest("compiler/testData/ir/irText/types/dontLeaveStubTypesInSetter.kt");
         }
 
         @Test

@@ -201,7 +201,7 @@ abstract class AbstractKtDiagnosticsTest : AbstractFirBaseDiagnosticsTest() {
         val sourceElement = element.source ?: return null
         val sourceKind = sourceElement.kind
         if (sourceKind !in allowedKindsForDebugInfo) {
-            if (sourceKind != KtFakeSourceElementKind.ImplicitReturn || sourceElement.elementType != KtNodeTypes.RETURN) {
+            if (sourceKind !is KtFakeSourceElementKind.ImplicitReturn || sourceElement.elementType != KtNodeTypes.RETURN) {
                 return null
             }
         }
@@ -270,7 +270,7 @@ abstract class AbstractKtDiagnosticsTest : AbstractFirBaseDiagnosticsTest() {
         for (firFile in firFiles) {
             val session = firFile.moduleData.session
             val collector = collectors.computeIfAbsent(session) { createCollector(session) }
-            val reporter = DiagnosticReporterFactory.createReporter()
+            val reporter = DiagnosticReporterFactory.createPendingReporter()
             collector.collectDiagnostics(firFile, reporter)
             result[firFile] = reporter.diagnostics
         }

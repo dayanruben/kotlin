@@ -14394,6 +14394,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
                 }
 
                 @Test
+                @TestMetadata("propertySubstitution.kt")
+                public void testPropertySubstitution() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/builderInference/propertySubstitution.kt");
+                }
+
+                @Test
                 @TestMetadata("simpleLambdaInCallWithAnotherLambdaWithBuilderInference.kt")
                 public void testSimpleLambdaInCallWithAnotherLambdaWithBuilderInference() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/builderInference/simpleLambdaInCallWithAnotherLambdaWithBuilderInference.kt");
@@ -16875,12 +16881,6 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
                 @TestMetadata("kt32189returnTypeWithTypealiasSubtitution.kt")
                 public void testKt32189returnTypeWithTypealiasSubtitution() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/substitutions/kt32189returnTypeWithTypealiasSubtitution.kt");
-                }
-
-                @Test
-                @TestMetadata("kt32189returnTypeWithTypealiasSubtitutionOldInference.kt")
-                public void testKt32189returnTypeWithTypealiasSubtitutionOldInference() throws Exception {
-                    runTest("compiler/testData/diagnostics/tests/inference/substitutions/kt32189returnTypeWithTypealiasSubtitutionOldInference.kt");
                 }
 
                 @Test
@@ -34027,6 +34027,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             }
 
             @Test
+            @TestMetadata("extractingEntireCall.kt")
+            public void testExtractingEntireCall() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/when/extractingEntireCall.kt");
+            }
+
+            @Test
             @TestMetadata("intersectionExhaustivenessComplex.kt")
             public void testIntersectionExhaustivenessComplex() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/when/intersectionExhaustivenessComplex.kt");
@@ -37726,6 +37732,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             @Test
             public void testAllFilesPresentInFunctionLiterals() throws Exception {
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/testsWithStdLib/functionLiterals"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
+            }
+
+            @Test
+            @TestMetadata("nullableUnitLiteral.kt")
+            public void testNullableUnitLiteral() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/functionLiterals/nullableUnitLiteral.kt");
             }
 
             @Test

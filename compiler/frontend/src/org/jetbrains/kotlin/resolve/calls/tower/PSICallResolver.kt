@@ -143,8 +143,39 @@ class PSICallResolver(
         }
     }
 
+    fun <D : CallableDescriptor> runResolutionAndInferenceForGivenDescriptors(
+        context: BasicCallResolutionContext,
+        descriptors: Collection<CallableDescriptor>,
+        tracingStrategy: TracingStrategy,
+        kind: KotlinCallKind,
+        substitutor: TypeSubstitutor? = null,
+        dispatchReceiver: ReceiverValueWithSmartCastInfo? = null
+    ): OverloadResolutionResults<D> {
+        val isSpecialFunction = descriptors.any { it.name in SPECIAL_FUNCTION_NAMES }
+        val kotlinCall = toKotlinCall(
+            context, kind, context.call, givenCandidatesName, tracingStrategy, isSpecialFunction, dispatchReceiver?.receiverValue
+        )
+        val scopeTower = ASTScopeTower(context)
+        val resolutionCallbacks = createResolutionCallbacks(context)
+        val givenCandidates = descriptors.map {
+            GivenCandidate(
+                it,
+                dispatchReceiver = dispatchReceiver,
+                knownTypeParametersResultingSubstitutor = substitutor
+            )
+        }
+
+        val result = kotlinCallResolver.resolveAndCompleteGivenCandidates(
+            scopeTower, resolutionCallbacks, kotlinCall, calculateExpectedType(context), givenCandidates, context.collectAllCandidates
+        )
+
+        return convertToOverloadResolutionResults<D>(context, result, tracingStrategy).also {
+            clearCacheForApproximationResults()
+        }
+    }
+
     // actually, `D` is at least FunctionDescriptor, but right now because of CallResolver it isn't possible change upper bound for `D`
-    fun <D : CallableDescriptor> runResolutionAndInferenceForGivenCandidates(
+    fun <D : CallableDescriptor> runResolutionAndInferenceForGivenOldCandidates(
         context: BasicCallResolutionContext,
         resolutionCandidates: Collection<OldResolutionCandidate<D>>,
         tracingStrategy: TracingStrategy
@@ -262,6 +293,10 @@ class PSICallResolver(
         return SingleOverloadResolutionResult(resolvedCall)
     }
 
+    private fun needToReportUnresolvedReferenceForNoneCandidates(call: Call): Boolean =
+        // Don't report unresolved reference on constructor calls since they are processed separately, and aother error is reported
+        call.callElement !is KtConstructorDelegationCall
+
     private fun <D : CallableDescriptor> handleErrorResolutionResult(
         context: BasicCallResolutionContext,
         trace: BindingTrace,
@@ -273,7 +308,9 @@ class PSICallResolver(
         diagnostics.firstIsInstanceOrNull<NoneCandidatesCallDiagnostic>()?.let {
             kotlinToResolvedCallTransformer.transformAndReport<D>(result, context, tracingStrategy)
 
-            tracingStrategy.unresolvedReference(trace)
+            if (needToReportUnresolvedReferenceForNoneCandidates(context.call)) {
+                tracingStrategy.unresolvedReference(trace)
+            }
             return OverloadResolutionResultsImpl.nameNotFound()
         }
 

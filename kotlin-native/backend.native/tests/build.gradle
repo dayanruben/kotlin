@@ -101,7 +101,7 @@ ext.isAggressiveGC = project.globalTestArgs.contains("-Xbinary=gcSchedulerType=a
 ext.isCmsGC = project.globalTestArgs.contains("-Xgc=cms") || !project.globalTestArgs.any { it.startsWith("-Xgc=") }
 
 // TODO: It also makes sense to test -g without asserts, and also to test -opt with asserts.
-if (project.globalTestArgs.contains("-g")) {
+if (project.globalTestArgs.contains("-g") && (cacheTesting == null)) {
     tasks.withType(KonanCompileNativeBinary.class).configureEach {
         extraOpts "-Xbinary=runtimeAssertionsMode=panic"
     }
@@ -2579,6 +2579,11 @@ task boxing14(type: KonanLocalTest) {
 task boxing15(type: KonanLocalTest) {
     useGoldenData = true
     source = "codegen/boxing/boxing15.kt"
+}
+
+task kt53100_casts(type: KonanLocalTest) {
+    useGoldenData = true
+    source = "codegen/boxing/kt53100_casts.kt"
 }
 
 task boxCache0(type: KonanLocalTest) {

@@ -1932,6 +1932,16 @@ public class KlibTextTestCaseGenerated extends AbstractKlibTextTestCase {
             runTest("compiler/testData/ir/irText/firProblems/recursiveCapturedTypeInPropertyReference.kt");
         }
 
+        @TestMetadata("reflectFindAnnotationOnDefaultMethodParameter.kt")
+        public void testReflectFindAnnotationOnDefaultMethodParameter() throws Exception {
+            runTest("compiler/testData/ir/irText/firProblems/reflectFindAnnotationOnDefaultMethodParameter.kt");
+        }
+
+        @TestMetadata("reflectGetOnNullableTypeAlias.kt")
+        public void testReflectGetOnNullableTypeAlias() throws Exception {
+            runTest("compiler/testData/ir/irText/firProblems/reflectGetOnNullableTypeAlias.kt");
+        }
+
         @TestMetadata("SafeLetWithReturn.kt")
         public void testSafeLetWithReturn() throws Exception {
             runTest("compiler/testData/ir/irText/firProblems/SafeLetWithReturn.kt");
@@ -2180,6 +2190,11 @@ public class KlibTextTestCaseGenerated extends AbstractKlibTextTestCase {
         @TestMetadata("definitelyNotNullWithIntersection1.kt")
         public void testDefinitelyNotNullWithIntersection1() throws Exception {
             runTest("compiler/testData/ir/irText/types/definitelyNotNullWithIntersection1.kt");
+        }
+
+        @TestMetadata("dontLeaveStubTypesInSetter.kt")
+        public void testDontLeaveStubTypesInSetter() throws Exception {
+            runTest("compiler/testData/ir/irText/types/dontLeaveStubTypesInSetter.kt");
         }
 
         @TestMetadata("genericDelegatedDeepProperty.kt")

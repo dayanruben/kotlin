@@ -17818,6 +17818,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         }
 
         @Test
+        @TestMetadata("findAnnotationOnDefaultMethodParameter.kt")
+        public void testFindAnnotationOnDefaultMethodParameter() throws Exception {
+            runTest("compiler/testData/codegen/box/fir/findAnnotationOnDefaultMethodParameter.kt");
+        }
+
+        @Test
         @TestMetadata("Fir2IrClassifierStorage.kt")
         public void testFir2IrClassifierStorage() throws Exception {
             runTest("compiler/testData/codegen/box/fir/Fir2IrClassifierStorage.kt");
@@ -17827,6 +17833,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         @TestMetadata("flexibleIntegerLiterals.kt")
         public void testFlexibleIntegerLiterals() throws Exception {
             runTest("compiler/testData/codegen/box/fir/flexibleIntegerLiterals.kt");
+        }
+
+        @Test
+        @TestMetadata("getOnNullableTypeAlias.kt")
+        public void testGetOnNullableTypeAlias() throws Exception {
+            runTest("compiler/testData/codegen/box/fir/getOnNullableTypeAlias.kt");
         }
 
         @Test
@@ -26592,6 +26604,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
             @TestMetadata("kt47510.kt")
             public void testKt47510() throws Exception {
                 runTest("compiler/testData/codegen/box/invokedynamic/sam/kt47510.kt");
+            }
+
+            @Test
+            @TestMetadata("kt51868_contravariantGenericSam.kt")
+            public void testKt51868_contravariantGenericSam() throws Exception {
+                runTest("compiler/testData/codegen/box/invokedynamic/sam/kt51868_contravariantGenericSam.kt");
             }
 
             @Test
