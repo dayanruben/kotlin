@@ -49,7 +49,7 @@ internal object LLFirSessionFactory {
         module: KtSourceModule,
         globalResolveComponents: LLFirGlobalResolveComponents,
         sessionInvalidator: LLFirSessionInvalidator,
-        sessionsCache: MutableMap<KtModule, LLFirResolvableModuleSession>,
+        sessionsCache: MutableMap<KtModule, LLFirSession>,
         librariesSessionFactory: LLFirLibrarySessionFactory,
         configureSession: (LLFirSession.() -> Unit)? = null
     ): LLFirSourcesSession {
@@ -83,7 +83,7 @@ internal object LLFirSessionFactory {
         components.session = session
 
         return session.apply session@{
-            val moduleData = LLFirKtModuleBasedModuleData(module).apply { bindSession(this@session) }
+            val moduleData = LLFirModuleData(module).apply { bindSession(this@session) }
             registerModuleData(moduleData)
             register(FirKotlinScopeProvider::class, scopeProvider)
 
@@ -114,7 +114,7 @@ internal object LLFirSessionFactory {
                 module.directRegularDependencies.mapNotNullTo(this) { dependency ->
                     when (dependency) {
                         is KtBuiltinsModule -> null //  build in is already added
-                        is KtBinaryModule -> LLFirLibrarySessionFactory.getInstance(project).getLibrarySession(dependency)
+                        is KtBinaryModule -> LLFirLibrarySessionFactory.getInstance(project).getLibrarySession(dependency, sessionsCache)
                         is KtSourceModule -> {
                             createSourcesSession(
                                 project,
@@ -164,7 +164,7 @@ internal object LLFirSessionFactory {
         globalComponents: LLFirGlobalResolveComponents,
         sessionInvalidator: LLFirSessionInvalidator,
         builtinSession: LLFirBuiltinsAndCloneableSession,
-        sessionsCache: MutableMap<KtModule, LLFirResolvableModuleSession>,
+        sessionsCache: MutableMap<KtModule, LLFirSession>,
         languageVersionSettings: LanguageVersionSettings = LanguageVersionSettingsImpl.DEFAULT,
         configureSession: (LLFirSession.() -> Unit)? = null
     ): LLFirLibraryOrLibrarySourceResolvableModuleSession {
@@ -187,7 +187,7 @@ internal object LLFirSessionFactory {
         components.session = session
 
         return session.apply session@{
-            val moduleData = LLFirKtModuleBasedModuleData(module).apply { bindSession(this@session) }
+            val moduleData = LLFirModuleData(module).apply { bindSession(this@session) }
             registerModuleData(moduleData)
             register(FirKotlinScopeProvider::class, scopeProvider)
 

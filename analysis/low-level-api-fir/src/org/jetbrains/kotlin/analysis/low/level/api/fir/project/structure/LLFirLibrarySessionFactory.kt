@@ -8,13 +8,10 @@ package org.jetbrains.kotlin.analysis.low.level.api.fir.project.structure
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.low.level.api.fir.providers.LLFirFirClassByPsiClassProvider
 import org.jetbrains.kotlin.analysis.low.level.api.fir.providers.LLFirLibrarySessionProvider
-import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirLibraryLikeSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirLibrarySession
+import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSession
 import org.jetbrains.kotlin.analysis.project.structure.KtBinaryModule
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
-import org.jetbrains.kotlin.analysis.project.structure.allDirectDependenciesOfType
-import org.jetbrains.kotlin.analysis.providers.createLibrariesModificationTracker
-import org.jetbrains.kotlin.analysis.utils.caches.softCachedValue
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.fir.PrivateSessionConstructor
 import org.jetbrains.kotlin.fir.SessionConfiguration
@@ -31,21 +28,15 @@ import org.jetbrains.kotlin.fir.session.registerJavaSpecificResolveComponents
 import org.jetbrains.kotlin.fir.session.registerModuleData
 import org.jetbrains.kotlin.fir.symbols.FirPhaseManager
 import org.jetbrains.kotlin.resolve.jvm.modules.JavaModuleResolver
-import java.util.concurrent.ConcurrentHashMap
-import org.jetbrains.kotlin.analysis.utils.caches.getValue
 
 @OptIn(PrivateSessionConstructor::class, SessionConfiguration::class)
 internal class LLFirLibrarySessionFactory(
     private val project: Project,
 ) {
-    private val librarySessionByModule by softCachedValue(project, project.createLibrariesModificationTracker()) {
-        ConcurrentHashMap<KtBinaryModule, LLFirLibrarySession>()
-    }
 
-    fun getLibrarySession(ktBinaryModule: KtBinaryModule): LLFirLibrarySession {
-        return librarySessionByModule.getOrPut(ktBinaryModule) { createModuleLibrariesSession(ktBinaryModule) }
+    fun getLibrarySession(ktBinaryModule: KtBinaryModule, sessionsCache: MutableMap<KtModule, LLFirSession>): LLFirLibrarySession {
+        return sessionsCache.getOrPut(ktBinaryModule) { createModuleLibrariesSession(ktBinaryModule) } as LLFirLibrarySession
     }
-
 
     private fun createModuleLibrariesSession(
         ktLibraryModule: KtBinaryModule,
@@ -53,7 +44,7 @@ internal class LLFirLibrarySessionFactory(
         val platform = ktLibraryModule.platform
         val builtinsSession = LLFirBuiltinsSessionFactory.getInstance(project).getBuiltinsSession(platform)
         return LLFirLibrarySession(ktLibraryModule, project, builtinsSession.builtinTypes).apply session@{
-            val moduleData = LLFirKtModuleBasedModuleData(ktLibraryModule).apply { bindSession(this@session) }
+            val moduleData = LLFirModuleData(ktLibraryModule).apply { bindSession(this@session) }
             registerModuleData(moduleData)
             registerIdeComponents(project)
             register(FirPhaseManager::class, FirPhaseCheckingPhaseManager)

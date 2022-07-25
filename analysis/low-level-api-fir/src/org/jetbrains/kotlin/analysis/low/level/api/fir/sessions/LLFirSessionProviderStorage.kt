@@ -14,15 +14,17 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirGlobalResolveCompone
 import org.jetbrains.kotlin.analysis.low.level.api.fir.project.structure.LLFirBuiltinsSessionFactory
 import org.jetbrains.kotlin.analysis.low.level.api.fir.project.structure.LLFirLibrarySessionFactory
 import org.jetbrains.kotlin.analysis.low.level.api.fir.project.structure.LLFirNonUnderContentRootSessionFactory
-import org.jetbrains.kotlin.analysis.low.level.api.fir.project.structure.firKtModuleBasedModuleData
+import org.jetbrains.kotlin.analysis.low.level.api.fir.project.structure.llFirModuleData
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.addValueFor
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.executeWithoutPCE
 import org.jetbrains.kotlin.analysis.project.structure.*
-import org.jetbrains.kotlin.analysis.providers.createModuleWithoutDependenciesOutOfBlockModificationTracker
-import java.util.concurrent.ConcurrentHashMap
+import org.jetbrains.kotlin.analysis.providers.KotlinModificationTrackerFactory
+import org.jetbrains.kotlin.analysis.providers.KtModuleStateTracker
+import org.jetbrains.kotlin.analysis.utils.trackers.CompositeModificationTracker
 
 class LLFirSessionProviderStorage(val project: Project) {
-    private val sessionsCache = LLFirSessionsCache()
+    private val sourceAsUseSiteSessionCache = LLFirSessionsCache()
+    private val libraryAsUseSiteSessionCache = LLFirSessionsCache()
 
     private val librariesSessionFactory = LLFirLibrarySessionFactory.getInstance(project)
     private val builtInsSessionFactory = LLFirBuiltinsSessionFactory.getInstance(project)
@@ -32,46 +34,64 @@ class LLFirSessionProviderStorage(val project: Project) {
     fun getSessionProvider(
         useSiteKtModule: KtModule,
         configureSession: (LLFirSession.() -> Unit)? = null
-    ): LLFirSessionProvider {
-        val (sessions, session) = sessionsCache.withMappings(project) { mappings ->
-            val sessions = mutableMapOf<KtModule, LLFirResolvableModuleSession>().apply { putAll(mappings) }
-            val session = executeWithoutPCE {
-                when (useSiteKtModule) {
-                    is KtSourceModule -> {
-                        LLFirSessionFactory.createSourcesSession(
-                            project,
-                            useSiteKtModule,
-                            globalComponents,
-                            sessionsCache.sessionInvalidator,
-                            sessions,
-                            librariesSessionFactory,
-                            configureSession = configureSession,
-                        )
-                    }
-
-                    is KtLibraryModule, is KtLibrarySourceModule -> {
-                        LLFirSessionFactory.createLibraryOrLibrarySourceResolvableSession(
-                            project,
-                            useSiteKtModule,
-                            globalComponents,
-                            sessionsCache.sessionInvalidator,
-                            builtInsSessionFactory.getBuiltinsSession(useSiteKtModule.platform),
-                            sessions,
-                            configureSession = configureSession,
-                        )
-                    }
-
-                    is KtNotUnderContentRootModule ->
-                        LLFirNonUnderContentRootSessionFactory.getInstance(project)
-                            .getNonUnderContentRootSession(useSiteKtModule, sessions)
-
-                    else -> error("Unexpected ${useSiteKtModule::class.simpleName}")
-                }
-
+    ): LLFirSessionProvider = executeWithoutPCE {
+        when (useSiteKtModule) {
+            is KtSourceModule -> {
+                createSessionProviderForSourceSession(useSiteKtModule, configureSession)
             }
+
+            is KtLibraryModule, is KtLibrarySourceModule -> {
+                createSessionProviderForLibraryOrLibrarySource(useSiteKtModule, configureSession)
+            }
+
+            is KtNotUnderContentRootModule -> {
+                val session = LLFirNonUnderContentRootSessionFactory.getInstance(project)
+                    .getNonUnderContentRootSession(useSiteKtModule)
+                LLFirSessionProvider(project, session, mapOf(useSiteKtModule to session))
+            }
+
+            else -> error("Unexpected ${useSiteKtModule::class.simpleName}")
+        }
+    }
+
+    private fun createSessionProviderForSourceSession(
+        useSiteKtModule: KtSourceModule,
+        configureSession: (LLFirSession.() -> Unit)?
+    ): LLFirSessionProvider {
+        val (sessions, session) = sourceAsUseSiteSessionCache.withMappings(project) { mappings ->
+            val sessions = mutableMapOf<KtModule, LLFirSession>().apply { putAll(mappings) }
+            val session = LLFirSessionFactory.createSourcesSession(
+                project,
+                useSiteKtModule,
+                globalComponents,
+                libraryAsUseSiteSessionCache.sessionInvalidator,
+                sessions,
+                librariesSessionFactory,
+                configureSession = configureSession,
+            )
             sessions to session
         }
+        return LLFirSessionProvider(project, session, sessions)
+    }
 
+
+    private fun createSessionProviderForLibraryOrLibrarySource(
+        useSiteKtModule: KtModule,
+        configureSession: (LLFirSession.() -> Unit)?
+    ): LLFirSessionProvider {
+        val (sessions, session) = libraryAsUseSiteSessionCache.withMappings(project) { mappings ->
+            val sessions = mutableMapOf<KtModule, LLFirSession>().apply { putAll(mappings) }
+            val session = LLFirSessionFactory.createLibraryOrLibrarySourceResolvableSession(
+                project,
+                useSiteKtModule,
+                globalComponents,
+                libraryAsUseSiteSessionCache.sessionInvalidator,
+                builtInsSessionFactory.getBuiltinsSession(useSiteKtModule.platform),
+                sessions,
+                configureSession = configureSession,
+            )
+            sessions to session
+        }
         return LLFirSessionProvider(project, session, sessions)
     }
 }
@@ -81,26 +101,28 @@ private class LLFirSessionsCache {
     private var mappings: PersistentMap<KtModule, FirSessionWithModificationTracker> = persistentMapOf()
 
     val sessionInvalidator: LLFirSessionInvalidator = LLFirSessionInvalidator { session ->
-        mappings[session.firKtModuleBasedModuleData.ktModule]?.invalidate()
+        mappings[session.llFirModuleData.ktModule]?.invalidate()
     }
 
 
     inline fun <R> withMappings(
         project: Project,
-        action: (Map<KtModule, LLFirResolvableModuleSession>) -> Pair<Map<KtModule, LLFirResolvableModuleSession>, R>
-    ): Pair<Map<KtModule, LLFirResolvableModuleSession>, R> {
+        action: (Map<KtModule, LLFirSession>) -> Pair<Map<KtModule, LLFirSession>, R>
+    ): Pair<Map<KtModule, LLFirSession>, R> {
         val (newMappings, result) = action(getSessions().mapValues { it.value })
         mappings = newMappings.mapValues { FirSessionWithModificationTracker(project, it.value) }.toPersistentMap()
         return newMappings to result
     }
 
     @OptIn(ExperimentalStdlibApi::class)
-    private fun getSessions(): Map<KtModule, LLFirResolvableModuleSession> = buildMap {
+    private fun getSessions(): Map<KtModule, LLFirSession> = buildMap {
         val sessions = mappings.values
         val wasSessionInvalidated = sessions.associateWithTo(hashMapOf()) { false }
 
         val reversedDependencies = sessions.reversedDependencies { session ->
-            session.firSession.ktModule.directRegularDependencies.mapNotNull { mappings[it] }
+            if (session.validityTracker.isValid) {
+                session.firSession.ktModule.directRegularDependencies.mapNotNull { mappings[it] }
+            } else emptyList()
         }
 
         fun markAsInvalidWithDfs(session: FirSessionWithModificationTracker) {
@@ -121,7 +143,7 @@ private class LLFirSessionsCache {
         }
         return wasSessionInvalidated.entries
             .mapNotNull { (session, wasInvalidated) -> session.takeUnless { wasInvalidated } }
-            .associate { session -> session.firSession.firKtModuleBasedModuleData.ktModule to session.firSession }
+            .associate { session -> session.firSession.llFirModuleData.ktModule to session.firSession }
     }
 
     private fun <T> Collection<T>.reversedDependencies(getDependencies: (T) -> List<T>): Map<T, List<T>> {
@@ -137,13 +159,31 @@ private class LLFirSessionsCache {
 
 private class FirSessionWithModificationTracker(
     project: Project,
-    val firSession: LLFirResolvableModuleSession,
+    val firSession: LLFirSession,
 ) {
-    private val modificationTracker =
-        when (val ktModule = firSession.firKtModuleBasedModuleData.ktModule) {
-            is KtSourceModule -> ktModule.createModuleWithoutDependenciesOutOfBlockModificationTracker(project)
-            else -> ModificationTracker.NEVER_CHANGED
+
+    val validityTracker: KtModuleStateTracker
+    private val modificationTracker: ModificationTracker
+
+    init {
+        val trackerFactory = KotlinModificationTrackerFactory.getService(project)
+        val ktModule = firSession.llFirModuleData.ktModule
+
+        validityTracker = trackerFactory.createModuleStateTracker(ktModule)
+
+        val outOfBlockTracker = when (ktModule) {
+            is KtSourceModule -> trackerFactory.createModuleWithoutDependenciesOutOfBlockModificationTracker(ktModule)
+            else -> null
         }
+        modificationTracker = CompositeModificationTracker.create(
+            listOfNotNull(
+                outOfBlockTracker,
+                object : ModificationTracker {
+                    override fun getModificationCount() = validityTracker.rootModificationCount
+                }
+            )
+        )
+    }
 
 
     private val timeStamp = modificationTracker.modificationCount
@@ -155,5 +195,8 @@ private class FirSessionWithModificationTracker(
         isInvalidated = true
     }
 
-    val isValid: Boolean get() = !isInvalidated && modificationTracker.modificationCount == timeStamp
+    val isValid: Boolean
+        get() = validityTracker.isValid
+                && !isInvalidated
+                && modificationTracker.modificationCount == timeStamp
 }
