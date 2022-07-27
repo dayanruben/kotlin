@@ -20,7 +20,7 @@ dependencies {
 sourceSets {
     "main" {
         projectDefault()
-        this.java.srcDir("gen")
+        generatedDir()
     }
     "test" { none() }
 }
@@ -37,6 +37,7 @@ val generationRoot = projectDir.resolve("gen")
 val platformGenerationRoots = listOf(
     "checkers.jvm",
     "checkers.js",
+    "checkers.native",
 ).map { projectDir.resolve(it).resolve("gen") }
 
 val generateCheckersComponents by tasks.registering(NoDebugJavaExec::class) {

@@ -46,6 +46,7 @@ import org.jetbrains.kotlin.fir.scopes.impl.*
 import org.jetbrains.kotlin.fir.scopes.unsubstitutedScope
 import org.jetbrains.kotlin.fir.symbols.ensureResolved
 import org.jetbrains.kotlin.fir.symbols.impl.*
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
@@ -159,14 +160,7 @@ internal class KtFirScopeProvider(
 
     override fun getPackageScope(packageSymbol: KtPackageSymbol): KtScope {
         return packageMemberScopeCache.getOrPut(packageSymbol) {
-            KtFirPackageScope(
-                packageSymbol.fqName,
-                project,
-                builder,
-                token,
-                GlobalSearchScope.allScope(project), // TODO
-                analysisSession.targetPlatform,
-            )
+            createPackageScope(packageSymbol.fqName)
         }
     }
 
@@ -185,9 +179,9 @@ internal class KtFirScopeProvider(
             FakeOverrideTypeCalculator.Forced
         ) ?: return null
         return KtCompositeTypeScope(
-            listOf(
+            listOfNotNull(
                 convertToKtTypeScope(firTypeScope),
-                convertToKtTypeScope(FirSyntheticPropertiesScope(firSession, firTypeScope))
+                FirSyntheticPropertiesScope.createIfSyntheticNamesProviderIsDefined(firSession, firTypeScope)?.let { convertToKtTypeScope(it) }
             ),
             token
         )
@@ -231,18 +225,23 @@ internal class KtFirScopeProvider(
     private fun convertToKtScope(firScope: FirScope): KtScope {
         return when (firScope) {
             is FirAbstractSimpleImportingScope -> KtFirNonStarImportingScope(firScope, builder, token)
-            is FirAbstractStarImportingScope -> KtFirStarImportingScope(firScope, builder, project, token)
-            is FirPackageMemberScope -> KtFirPackageScope(
-                firScope.fqName,
-                project,
-                builder,
-                token,
-                GlobalSearchScope.allScope(project), // todo
-                analysisSession.targetPlatform
-            )
+            is FirAbstractStarImportingScope -> KtFirStarImportingScope(firScope, builder, analysisSession.useSiteScopeDeclarationProvider, token)
+            is FirPackageMemberScope -> createPackageScope(firScope.fqName)
             is FirContainingNamesAwareScope -> KtFirDelegatingScope(firScope, builder, token)
             else -> TODO(firScope::class.toString())
         }
+    }
+
+    private fun createPackageScope(fqName: FqName): KtFirPackageScope {
+        return KtFirPackageScope(
+            fqName,
+            project,
+            builder,
+            token,
+            analysisSession.useSiteAnalisisScope,
+            analysisSession.useSiteScopeDeclarationProvider,
+            analysisSession.targetPlatform
+        )
     }
 
     private fun convertToKtTypeScope(firScope: FirScope): KtTypeScope {

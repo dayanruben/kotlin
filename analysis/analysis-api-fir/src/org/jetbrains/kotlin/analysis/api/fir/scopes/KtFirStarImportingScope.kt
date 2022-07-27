@@ -5,30 +5,26 @@
 
 package org.jetbrains.kotlin.analysis.api.fir.scopes
 
-import com.intellij.openapi.project.Project
-import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analysis.api.fir.KtSymbolByFirBuilder
 import org.jetbrains.kotlin.analysis.api.fir.utils.cached
+import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
+import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.scopes.KtScope
 import org.jetbrains.kotlin.analysis.api.scopes.KtScopeNameFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPackageSymbol
-import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
-import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
-import org.jetbrains.kotlin.analysis.providers.createDeclarationProvider
+import org.jetbrains.kotlin.analysis.providers.KotlinDeclarationProvider
 import org.jetbrains.kotlin.fir.scopes.impl.FirAbstractStarImportingScope
 import org.jetbrains.kotlin.name.Name
 
 internal class KtFirStarImportingScope(
     private val firScope: FirAbstractStarImportingScope,
     private val builder: KtSymbolByFirBuilder,
-    project: Project,
+    private val declarationProvider: KotlinDeclarationProvider,
     override val token: KtLifetimeToken,
 ) : KtScope {
-    //todo use more concrete scope
-    private val declarationProvider = project.createDeclarationProvider(GlobalSearchScope.allScope(project))
 
     private val imports: List<StarImport> by cached {
         firScope.starImports.map { import ->
@@ -55,8 +51,7 @@ internal class KtFirStarImportingScope(
     override fun getPossibleCallableNames(): Set<Name> = withValidityAssertion {
         imports.flatMapTo(hashSetOf()) { import: Import ->
             if (import.relativeClassName == null) { // top level callable
-                declarationProvider.getFunctionsNamesInPackage(import.packageFqName) +
-                        declarationProvider.getPropertyNamesInPackage(import.packageFqName)
+                declarationProvider.getTopLevelCallableNamesInPackage(import.packageFqName)
             } else { //member
                 val classId = import.resolvedClassId ?: error("Class id should not be null as relativeClassName is not null")
                 firScope.getStaticsScope(classId)?.getCallableNames().orEmpty()
@@ -73,8 +68,7 @@ internal class KtFirStarImportingScope(
     override fun getPossibleClassifierNames(): Set<Name> = withValidityAssertion {
         imports.flatMapTo(hashSetOf()) { import ->
             if (import.relativeClassName == null) {
-                declarationProvider.getClassNamesInPackage(import.packageFqName) +
-                        declarationProvider.getTypeAliasNamesInPackage(import.packageFqName)
+                declarationProvider.getTopLevelKotlinClassLikeDeclarationNamesInPackage(import.packageFqName)
             } else {
                 val classId = import.resolvedClassId ?: error("Class id should not be null as relativeClassName is not null")
                 firScope.getStaticsScope(classId)?.getClassifierNames().orEmpty()

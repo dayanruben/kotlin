@@ -5,11 +5,9 @@
 
 package org.jetbrains.kotlin.test.frontend.fir
 
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiElementFinder
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
 import org.jetbrains.kotlin.analyzer.common.CommonPlatformAnalyzerServices
 import org.jetbrains.kotlin.asJava.finder.JavaElementFinder
@@ -21,13 +19,11 @@ import org.jetbrains.kotlin.cli.jvm.config.jvmClasspathRoots
 import org.jetbrains.kotlin.cli.jvm.config.jvmModularRoots
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
-import org.jetbrains.kotlin.config.LanguageVersionSettings
-import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.FirAnalyzerFacade
 import org.jetbrains.kotlin.fir.checkers.registerExtendedCommonCheckers
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
-import org.jetbrains.kotlin.fir.java.FirProjectSessionProvider
+import org.jetbrains.kotlin.fir.session.FirSessionConfigurator
 import org.jetbrains.kotlin.fir.session.FirSessionFactory
 import org.jetbrains.kotlin.ir.backend.js.jsResolveLibraries
 import org.jetbrains.kotlin.ir.backend.js.toResolverLogger
@@ -64,7 +60,7 @@ class FirFrontendFacade(
     // Separate constructor is needed for creating callable references to it
     constructor(testServices: TestServices) : this(testServices, additionalSessionConfiguration = null)
 
-    fun interface SessionConfiguration : (FirSessionFactory.FirSessionConfigurator) -> Unit
+    fun interface SessionConfiguration : (FirSessionConfigurator) -> Unit
 
     override val additionalServices: List<ServiceRegistrationData>
         get() = listOf(service(::FirModuleInfoProvider))
@@ -94,40 +90,110 @@ class FirFrontendFacade(
         val configuration = compilerConfigurationProvider.getCompilerConfiguration(module)
         val extensionRegistrars = FirExtensionRegistrar.getInstances(project)
 
-        val sessionConfigurator: FirSessionFactory.FirSessionConfigurator.() -> Unit = {
+        val sessionConfigurator: FirSessionConfigurator.() -> Unit = {
             if (FirDiagnosticsDirectives.WITH_EXTENDED_CHECKERS in module.directives) {
                 registerExtendedCommonCheckers()
             }
             additionalSessionConfiguration?.invoke(this)
         }
 
-        val session = when {
-            module.targetPlatform.isJvm() || module.targetPlatform.isCommon() -> {
-                configureSessionsForJvmOrCommon(
-                    module,
+        val isCommonOrJvm = module.targetPlatform.isJvm() || module.targetPlatform.isCommon()
+
+        val dependencyList = buildDependencyList(module, moduleName, moduleInfoProvider, analyzerServices) {
+            if (isCommonOrJvm || module.targetPlatform.isNative()) {
+                configureJvmDependencies(configuration)
+            } else {
+                configureJsDependencies(module, testServices)
+            }
+        }
+
+        val projectEnvironment: VfsBasedProjectEnvironment?
+
+        when {
+            isCommonOrJvm -> {
+                val packagePartProviderFactory = compilerConfigurationProvider.getPackagePartProviderFactory(module)
+                projectEnvironment = VfsBasedProjectEnvironment(
+                    project, VirtualFileManager.getInstance().getFileSystem(StandardFileSystems.FILE_PROTOCOL),
+                ) { packagePartProviderFactory.invoke(it) }
+                val projectFileSearchScope = PsiBasedProjectFileSearchScope(ProjectScope.getLibrariesScope(project))
+                val packagePartProvider = projectEnvironment.getPackagePartProvider(projectFileSearchScope)
+
+                FirSessionFactory.createLibrarySession(
                     moduleName,
-                    project,
-                    ktFiles,
-                    compilerConfigurationProvider,
-                    moduleInfoProvider,
-                    analyzerServices,
-                    configuration,
-                    sessionConfigurator,
-                    extensionRegistrars,
+                    moduleInfoProvider.firSessionProvider,
+                    dependencyList,
+                    projectEnvironment,
+                    projectFileSearchScope,
+                    packagePartProvider,
                     languageVersionSettings,
                 )
             }
             module.targetPlatform.isJs() -> {
-                configureSessionsForJs(
-                    module,
+                projectEnvironment = null
+                FirJsSessionFactory.createLibrarySession(
                     moduleName,
-                    moduleInfoProvider,
-                    analyzerServices,
-                    configuration,
+                    moduleInfoProvider.firSessionProvider,
+                    dependencyList,
+                    module,
                     testServices,
-                    sessionConfigurator,
+                    configuration,
+                    languageVersionSettings,
+                )
+            }
+            module.targetPlatform.isNative() -> {
+                projectEnvironment = null
+                FirNativeSessionFactory.createLibrarySession(
+                    moduleName,
+                    moduleInfoProvider.firSessionProvider,
+                    dependencyList,
+                    languageVersionSettings,
+                )
+            }
+            else -> error("Unsupported")
+        }
+
+        val mainModuleData = FirModuleDataImpl(
+            moduleName,
+            dependencyList.regularDependencies,
+            dependencyList.dependsOnDependencies,
+            dependencyList.friendsDependencies,
+            dependencyList.platform,
+            dependencyList.analyzerServices
+        )
+
+        val session = when {
+            isCommonOrJvm -> {
+                FirSessionFactory.createModuleBasedSession(
+                    mainModuleData,
+                    moduleInfoProvider.firSessionProvider,
+                    PsiBasedProjectFileSearchScope(TopDownAnalyzerFacadeForJVM.newModuleSearchScope(project, ktFiles)),
+                    projectEnvironment!!,
+                    incrementalCompilationContext = null,
                     extensionRegistrars,
                     languageVersionSettings,
+                    lookupTracker = null,
+                    enumWhenTracker = null,
+                    needRegisterJavaElementFinder = true,
+                    sessionConfigurator,
+                )
+            }
+            module.targetPlatform.isJs() -> {
+                FirJsSessionFactory.createModuleBasedSession(
+                    mainModuleData,
+                    moduleInfoProvider.firSessionProvider,
+                    extensionRegistrars,
+                    languageVersionSettings,
+                    null,
+                    sessionConfigurator,
+                )
+            }
+            module.targetPlatform.isNative() -> {
+                FirNativeSessionFactory.createModuleBasedSession(
+                    mainModuleData,
+                    moduleInfoProvider.firSessionProvider,
+                    extensionRegistrars,
+                    languageVersionSettings,
+                    init = sessionConfigurator
                 )
             }
             else -> error("Unsupported")
@@ -211,166 +277,6 @@ private fun buildDependencyList(
     sourceDependencies(moduleInfoProvider.getRegularDependentSourceModules(module))
     sourceFriendsDependencies(moduleInfoProvider.getDependentFriendSourceModules(module))
     sourceDependsOnDependencies(moduleInfoProvider.getDependentDependsOnSourceModules(module))
-}
-
-private fun configureSessionsForJvmOrCommon(
-    module: TestModule,
-    moduleName: Name,
-    project: Project,
-    ktFiles: Collection<KtFile>,
-    compilerConfigurationProvider: CompilerConfigurationProvider,
-    moduleInfoProvider: FirModuleInfoProvider,
-    analyzerServices: PlatformDependentAnalyzerServices,
-    configuration: CompilerConfiguration,
-    sessionConfigurator: FirSessionFactory.FirSessionConfigurator.() -> Unit,
-    extensionRegistrars: List<FirExtensionRegistrar>,
-    languageVersionSettings: LanguageVersionSettings = LanguageVersionSettingsImpl.DEFAULT,
-): FirSession {
-    val librariesScope = ProjectScope.getLibrariesScope(project)
-    val sourcesScope = TopDownAnalyzerFacadeForJVM.newModuleSearchScope(project, ktFiles)
-
-    val dependencyList = buildDependencyList(module, moduleName, moduleInfoProvider, analyzerServices) {
-        configureJvmDependencies(configuration)
-    }
-
-    configureLibrarySessionForJvmOrCommon(
-        module,
-        moduleName,
-        moduleInfoProvider.firSessionProvider,
-        dependencyList,
-        librariesScope,
-        project,
-        compilerConfigurationProvider,
-        languageVersionSettings,
-    )
-
-    val mainModuleData = FirModuleDataImpl(
-        moduleName,
-        dependencyList.regularDependencies,
-        dependencyList.dependsOnDependencies,
-        dependencyList.friendsDependencies,
-        dependencyList.platform,
-        dependencyList.analyzerServices
-    )
-
-    return configureMainSessionForJvmOrCommon(
-        module,
-        project,
-        compilerConfigurationProvider,
-        sessionConfigurator,
-        extensionRegistrars,
-        sourcesScope,
-        mainModuleData,
-        moduleInfoProvider.firSessionProvider,
-        languageVersionSettings,
-    )
-}
-
-private fun configureLibrarySessionForJvmOrCommon(
-    module: TestModule,
-    moduleName: Name,
-    sessionProvider: FirProjectSessionProvider,
-    dependencyList: DependencyListForCliModule,
-    librariesScope: GlobalSearchScope,
-    project: Project,
-    compilerConfigurationProvider: CompilerConfigurationProvider,
-    languageVersionSettings: LanguageVersionSettings = LanguageVersionSettingsImpl.DEFAULT,
-): FirSession {
-    val packagePartProviderFactory = compilerConfigurationProvider.getPackagePartProviderFactory(module)
-
-    val projectEnvironment = VfsBasedProjectEnvironment(
-        project, VirtualFileManager.getInstance().getFileSystem(StandardFileSystems.FILE_PROTOCOL),
-    ) { packagePartProviderFactory.invoke(it) }
-
-    val projectFileSearchScope = PsiBasedProjectFileSearchScope(librariesScope)
-
-    return FirSessionFactory.createLibrarySession(
-        moduleName,
-        sessionProvider,
-        dependencyList.moduleDataProvider,
-        projectFileSearchScope,
-        projectEnvironment,
-        projectEnvironment.getPackagePartProvider(projectFileSearchScope),
-        languageVersionSettings,
-    )
-}
-
-private fun configureMainSessionForJvmOrCommon(
-    module: TestModule,
-    project: Project,
-    compilerConfigurationProvider: CompilerConfigurationProvider,
-    sessionConfigurator: FirSessionFactory.FirSessionConfigurator.() -> Unit,
-    extensionRegistrars: List<FirExtensionRegistrar>,
-    sourcesScope: GlobalSearchScope,
-    mainModuleData: FirModuleData,
-    sessionProvider: FirProjectSessionProvider,
-    languageVersionSettings: LanguageVersionSettings = LanguageVersionSettingsImpl.DEFAULT,
-): FirSession {
-    val packagePartProviderFactory = compilerConfigurationProvider.getPackagePartProviderFactory(module)
-
-    val projectEnvironment = VfsBasedProjectEnvironment(
-        project, VirtualFileManager.getInstance().getFileSystem(StandardFileSystems.FILE_PROTOCOL),
-    ) { packagePartProviderFactory.invoke(it) }
-
-    val projectFileSearchScope = PsiBasedProjectFileSearchScope(sourcesScope)
-
-    return FirSessionFactory.createJavaModuleBasedSession(
-        mainModuleData,
-        sessionProvider,
-        projectFileSearchScope,
-        projectEnvironment,
-        incrementalCompilationContext = null,
-        extensionRegistrars,
-        languageVersionSettings,
-        lookupTracker = null,
-        enumWhenTracker = null,
-        needRegisterJavaElementFinder = true,
-        sessionConfigurator,
-    )
-}
-
-private fun configureSessionsForJs(
-    module: TestModule,
-    moduleName: Name,
-    moduleInfoProvider: FirModuleInfoProvider,
-    analyzerServices: PlatformDependentAnalyzerServices,
-    configuration: CompilerConfiguration,
-    testServices: TestServices,
-    sessionConfigurator: FirSessionFactory.FirSessionConfigurator.() -> Unit,
-    extensionRegistrars: List<FirExtensionRegistrar>,
-    languageVersionSettings: LanguageVersionSettings = LanguageVersionSettingsImpl.DEFAULT,
-): FirSession {
-    val dependencyList = buildDependencyList(module, moduleName, moduleInfoProvider, analyzerServices) {
-        configureJsDependencies(module, testServices)
-    }
-
-    FirJsSessionFactory.createJsLibrarySession(
-        moduleName,
-        module,
-        testServices,
-        configuration,
-        moduleInfoProvider.firSessionProvider,
-        dependencyList.moduleDataProvider,
-        languageVersionSettings,
-    )
-
-    val mainModuleData = FirModuleDataImpl(
-        moduleName,
-        dependencyList.regularDependencies,
-        dependencyList.dependsOnDependencies,
-        dependencyList.friendsDependencies,
-        dependencyList.platform,
-        dependencyList.analyzerServices
-    )
-
-    return FirJsSessionFactory.createJsModuleBasedSession(
-        mainModuleData,
-        moduleInfoProvider.firSessionProvider,
-        extensionRegistrars,
-        languageVersionSettings,
-        null,
-        sessionConfigurator,
-    )
 }
 
 fun TargetPlatform.getAnalyzerServices(): PlatformDependentAnalyzerServices {
