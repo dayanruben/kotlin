@@ -48,10 +48,12 @@ open class CandidateCollector(
 
     fun bestCandidates(): List<Candidate> = candidates
 
-    open fun shouldStopAtTheLevel(group: TowerGroup): Boolean =
-        currentApplicability.shouldStopResolve && bestGroup < group
+    open fun shouldStopAtTheGroup(group: TowerGroup): Boolean =
+        shouldStopResolve && bestGroup < group
 
-    fun isSuccess(): Boolean {
-        return currentApplicability.isSuccess
-    }
+    private val shouldStopResolve: Boolean
+        get() = currentApplicability.shouldStopResolve
+
+    val isSuccess: Boolean
+        get() = currentApplicability.isSuccess
 }

@@ -6571,6 +6571,36 @@ public class BoxJsTestGenerated extends AbstractBoxJsTest {
         }
 
         @Test
+        @TestMetadata("methodOfAbstractClass.kt")
+        public void testMethodOfAbstractClass() throws Exception {
+            runTest("js/js.translator/testData/box/jsName/methodOfAbstractClass.kt");
+        }
+
+        @Test
+        @TestMetadata("methodOfInterface.kt")
+        public void testMethodOfInterface() throws Exception {
+            runTest("js/js.translator/testData/box/jsName/methodOfInterface.kt");
+        }
+
+        @Test
+        @TestMetadata("methodOfInterfaceWithDefinition.kt")
+        public void testMethodOfInterfaceWithDefinition() throws Exception {
+            runTest("js/js.translator/testData/box/jsName/methodOfInterfaceWithDefinition.kt");
+        }
+
+        @Test
+        @TestMetadata("methodOfMultipleInterface.kt")
+        public void testMethodOfMultipleInterface() throws Exception {
+            runTest("js/js.translator/testData/box/jsName/methodOfMultipleInterface.kt");
+        }
+
+        @Test
+        @TestMetadata("methodOfOpenClass.kt")
+        public void testMethodOfOpenClass() throws Exception {
+            runTest("js/js.translator/testData/box/jsName/methodOfOpenClass.kt");
+        }
+
+        @Test
         @TestMetadata("overriddenMethod.kt")
         public void testOverriddenMethod() throws Exception {
             runTest("js/js.translator/testData/box/jsName/overriddenMethod.kt");
@@ -7466,6 +7496,12 @@ public class BoxJsTestGenerated extends AbstractBoxJsTest {
         @TestMetadata("externalNestedEnum.kt")
         public void testExternalNestedEnum() throws Exception {
             runTest("js/js.translator/testData/box/native/externalNestedEnum.kt");
+        }
+
+        @Test
+        @TestMetadata("externalValWithOverridenVar.kt")
+        public void testExternalValWithOverridenVar() throws Exception {
+            runTest("js/js.translator/testData/box/native/externalValWithOverridenVar.kt");
         }
 
         @Test

@@ -127,7 +127,7 @@ class UnsupportedContextualDeclarationCall : ResolutionDiagnostic(RESOLVED_WITH_
 }
 
 // todo error for this access from nested class
-class VisibilityError(val invisibleMember: DeclarationDescriptorWithVisibility) : ResolutionDiagnostic(RUNTIME_ERROR) {
+class VisibilityError(val invisibleMember: DeclarationDescriptorWithVisibility) : ResolutionDiagnostic(K1_RUNTIME_ERROR) {
     override fun report(reporter: DiagnosticReporter) {
         reporter.onCall(this)
     }
@@ -136,21 +136,20 @@ class VisibilityError(val invisibleMember: DeclarationDescriptorWithVisibility) 
 class VisibilityErrorOnArgument(
     val argument: KotlinCallArgument,
     val invisibleMember: DeclarationDescriptorWithVisibility
-) : ResolutionDiagnostic(RUNTIME_ERROR) {
+) : ResolutionDiagnostic(K1_RUNTIME_ERROR) {
     override fun report(reporter: DiagnosticReporter) {
         reporter.onCallArgument(argument, this)
     }
 }
 
-class NestedClassViaInstanceReference(val classDescriptor: ClassDescriptor) : ResolutionDiagnostic(IMPOSSIBLE_TO_GENERATE)
-class InnerClassViaStaticReference(val classDescriptor: ClassDescriptor) : ResolutionDiagnostic(IMPOSSIBLE_TO_GENERATE)
-class UnsupportedInnerClassCall(val message: String) : ResolutionDiagnostic(IMPOSSIBLE_TO_GENERATE)
+class NestedClassViaInstanceReference(val classDescriptor: ClassDescriptor) : ResolutionDiagnostic(K1_IMPOSSIBLE_TO_GENERATE)
+class InnerClassViaStaticReference(val classDescriptor: ClassDescriptor) : ResolutionDiagnostic(K1_IMPOSSIBLE_TO_GENERATE)
+class UnsupportedInnerClassCall(val message: String) : ResolutionDiagnostic(K1_IMPOSSIBLE_TO_GENERATE)
 class UsedSmartCastForDispatchReceiver(val smartCastType: KotlinType) : ResolutionDiagnostic(RESOLVED)
 
 object ErrorDescriptorDiagnostic : ResolutionDiagnostic(RESOLVED) // todo discuss and change to INAPPLICABLE
 object LowPriorityDescriptorDiagnostic : ResolutionDiagnostic(RESOLVED_LOW_PRIORITY)
 object DynamicDescriptorDiagnostic : ResolutionDiagnostic(RESOLVED_LOW_PRIORITY)
-object ResolvedUsingNewFeatures : ResolutionDiagnostic(RESOLVED_NEED_PRESERVE_COMPATIBILITY)
 object UnstableSmartCastDiagnostic : ResolutionDiagnostic(UNSTABLE_SMARTCAST)
 object HiddenExtensionRelatedToDynamicTypes : ResolutionDiagnostic(HIDDEN)
 object HiddenDescriptor : ResolutionDiagnostic(HIDDEN)

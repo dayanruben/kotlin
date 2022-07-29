@@ -13244,6 +13244,18 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
             }
 
             @Test
+            @TestMetadata("kt53202.kt")
+            public void testKt53202() throws Exception {
+                runTest("compiler/testData/codegen/box/directInvokeOptimization/kt53202.kt");
+            }
+
+            @Test
+            @TestMetadata("kt53202_funLiteral.kt")
+            public void testKt53202_funLiteral() throws Exception {
+                runTest("compiler/testData/codegen/box/directInvokeOptimization/kt53202_funLiteral.kt");
+            }
+
+            @Test
             @TestMetadata("nestedLambdas.kt")
             public void testNestedLambdas() throws Exception {
                 runTest("compiler/testData/codegen/box/directInvokeOptimization/nestedLambdas.kt");
@@ -40182,6 +40194,18 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
             @TestMetadata("kt51950.kt")
             public void testKt51950() throws Exception {
                 runTest("compiler/testData/codegen/boxInline/anonymousObject/kt51950.kt");
+            }
+
+            @Test
+            @TestMetadata("kt52795.kt")
+            public void testKt52795() throws Exception {
+                runTest("compiler/testData/codegen/boxInline/anonymousObject/kt52795.kt");
+            }
+
+            @Test
+            @TestMetadata("kt52795_2.kt")
+            public void testKt52795_2() throws Exception {
+                runTest("compiler/testData/codegen/boxInline/anonymousObject/kt52795_2.kt");
             }
 
             @Test

@@ -204,23 +204,23 @@ class UnsafeCallError(
 }
 
 // Other
-object InstantiationOfAbstractClass : KotlinCallDiagnostic(RUNTIME_ERROR) {
+object InstantiationOfAbstractClass : KotlinCallDiagnostic(K1_RUNTIME_ERROR) {
     override fun report(reporter: DiagnosticReporter) = reporter.onCall(this)
 }
 
-class AbstractSuperCall(val receiver: SimpleKotlinCallArgument) : KotlinCallDiagnostic(RUNTIME_ERROR) {
+class AbstractSuperCall(val receiver: SimpleKotlinCallArgument) : KotlinCallDiagnostic(K1_RUNTIME_ERROR) {
     override fun report(reporter: DiagnosticReporter) {
         reporter.onCall(this)
     }
 }
 
-object AbstractFakeOverrideSuperCall : KotlinCallDiagnostic(RUNTIME_ERROR) {
+object AbstractFakeOverrideSuperCall : KotlinCallDiagnostic(K1_RUNTIME_ERROR) {
     override fun report(reporter: DiagnosticReporter) {
         reporter.onCall(this)
     }
 }
 
-class SuperAsExtensionReceiver(val receiver: SimpleKotlinCallArgument) : KotlinCallDiagnostic(RUNTIME_ERROR) {
+class SuperAsExtensionReceiver(val receiver: SimpleKotlinCallArgument) : KotlinCallDiagnostic(K1_RUNTIME_ERROR) {
     override fun report(reporter: DiagnosticReporter) {
         reporter.onCallReceiver(receiver, this)
     }
@@ -273,7 +273,7 @@ class ArgumentNullabilityWarningDiagnostic(
     }
 }
 
-class ResolvedToSamWithVarargDiagnostic(val argument: KotlinCallArgument) : KotlinCallDiagnostic(RESOLVED_TO_SAM_WITH_VARARG) {
+class ResolvedToSamWithVarargDiagnostic(val argument: KotlinCallArgument) : KotlinCallDiagnostic(K1_RESOLVED_TO_SAM_WITH_VARARG) {
     override fun report(reporter: DiagnosticReporter) {
         reporter.onCallArgument(argument, this)
     }

@@ -408,7 +408,7 @@ class FirCallResolver(
             noSuccessfulCandidates -> {
                 val errorReference = buildErrorReference(
                     info,
-                    if (applicability == CandidateApplicability.UNSUPPORTED) {
+                    if (applicability == CandidateApplicability.K2_UNSUPPORTED) {
                         val unsupportedResolutionDiagnostic = reducedCandidates.firstOrNull()?.diagnostics?.firstOrNull() as? Unsupported
                         ConeUnsupported(unsupportedResolutionDiagnostic?.message ?: "", unsupportedResolutionDiagnostic?.source)
                     } else {
@@ -835,7 +835,7 @@ class AllCandidatesCollector(
     }
 
     // We want to get candidates at all tower levels.
-    override fun shouldStopAtTheLevel(group: TowerGroup): Boolean = false
+    override fun shouldStopAtTheGroup(group: TowerGroup): Boolean = false
 
     val allCandidates: List<Candidate>
         get() = allCandidatesSet.toList()

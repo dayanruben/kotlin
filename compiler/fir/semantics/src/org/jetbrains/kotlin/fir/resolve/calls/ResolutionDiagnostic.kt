@@ -80,22 +80,26 @@ object InapplicableCandidate : ResolutionDiagnostic(INAPPLICABLE)
 
 object HiddenCandidate : ResolutionDiagnostic(HIDDEN)
 
-object VisibilityError : ResolutionDiagnostic(VISIBILITY_ERROR)
+object VisibilityError : ResolutionDiagnostic(K2_VISIBILITY_ERROR)
 
 object ResolvedWithLowPriority : ResolutionDiagnostic(RESOLVED_LOW_PRIORITY)
+
+object ResolvedWithSynthetic : ResolutionDiagnostic(K2_SYNTHETIC_RESOLVED)
 
 class InapplicableWrongReceiver(
     val expectedType: ConeKotlinType? = null,
     val actualType: ConeKotlinType? = null,
 ) : ResolutionDiagnostic(INAPPLICABLE_WRONG_RECEIVER)
 
-object NoCompanionObject : ResolutionDiagnostic(NO_COMPANION_OBJECT)
+object NoCompanionObject : ResolutionDiagnostic(K2_NO_COMPANION_OBJECT)
 
 class UnsafeCall(val actualType: ConeKotlinType) : ResolutionDiagnostic(UNSAFE_CALL)
 
 object LowerPriorityToPreserveCompatibilityDiagnostic : ResolutionDiagnostic(RESOLVED_NEED_PRESERVE_COMPATIBILITY)
 
-object LowerPriorityForDynamic : ResolutionDiagnostic(RESOLVED_LOW_PRIORITY)
+// TODO: change this to RESOLVED_LOW_PRIORITY after we are able to process dynamic extensions properly
+// At the moment we stop resolve on synthetic dynamic members, which is not correct
+object LowerPriorityForDynamic : ResolutionDiagnostic(K2_SYNTHETIC_RESOLVED)
 
 object CandidateChosenUsingOverloadResolutionByLambdaAnnotation : ResolutionDiagnostic(RESOLVED)
 
@@ -117,15 +121,15 @@ class ManyLambdaExpressionArguments(
     val argument: FirExpression
 ) : ResolutionDiagnostic(INAPPLICABLE_ARGUMENTS_MAPPING_ERROR)
 
-class InfixCallOfNonInfixFunction(val function: FirNamedFunctionSymbol) : ResolutionDiagnostic(INAPPLICABLE_MODIFIER)
-class OperatorCallOfNonOperatorFunction(val function: FirNamedFunctionSymbol) : ResolutionDiagnostic(INAPPLICABLE_MODIFIER)
+class InfixCallOfNonInfixFunction(val function: FirNamedFunctionSymbol) : ResolutionDiagnostic(CONVENTION_ERROR)
+class OperatorCallOfNonOperatorFunction(val function: FirNamedFunctionSymbol) : ResolutionDiagnostic(CONVENTION_ERROR)
 
 class InferenceError(val constraintError: ConstraintSystemError) : ResolutionDiagnostic(constraintError.applicability)
-class Unsupported(val message: String, val source: KtSourceElement? = null) : ResolutionDiagnostic(UNSUPPORTED)
+class Unsupported(val message: String, val source: KtSourceElement? = null) : ResolutionDiagnostic(K2_UNSUPPORTED)
 
-object PropertyAsOperator : ResolutionDiagnostic(PROPERTY_AS_OPERATOR)
+object PropertyAsOperator : ResolutionDiagnostic(K2_PROPERTY_AS_OPERATOR)
 
-class DslScopeViolation(val calleeSymbol: FirBasedSymbol<*>) : ResolutionDiagnostic(DSL_SCOPE_VIOLATION)
+class DslScopeViolation(val calleeSymbol: FirBasedSymbol<*>) : ResolutionDiagnostic(RESOLVED_WITH_ERROR)
 
 class MultipleContextReceiversApplicableForExtensionReceivers : ResolutionDiagnostic(INAPPLICABLE)
 
