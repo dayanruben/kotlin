@@ -18,8 +18,6 @@ import org.jetbrains.kotlin.gradle.dsl.multiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
 import org.jetbrains.kotlin.gradle.plugin.addExtension
 import org.jetbrains.kotlin.gradle.plugin.cocoapods.CocoapodsExtension.CocoapodsDependency
-import org.jetbrains.kotlin.gradle.plugin.cocoapods.CocoapodsExtension.CocoapodsDependency.PodLocation.Git
-import org.jetbrains.kotlin.gradle.plugin.cocoapods.CocoapodsExtension.CocoapodsDependency.PodLocation.Url
 import org.jetbrains.kotlin.gradle.plugin.ide.Idea222Api
 import org.jetbrains.kotlin.gradle.plugin.ide.ideaImportDependsOn
 import org.jetbrains.kotlin.gradle.plugin.mpp.Framework
@@ -32,6 +30,7 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFrameworkTask
 import org.jetbrains.kotlin.gradle.plugin.whenEvaluated
 import org.jetbrains.kotlin.gradle.targets.native.tasks.*
 import org.jetbrains.kotlin.gradle.tasks.*
+import org.jetbrains.kotlin.gradle.utils.SingleWarningPerBuild
 import org.jetbrains.kotlin.gradle.utils.asValidTaskName
 import org.jetbrains.kotlin.gradle.utils.lowerCamelCaseName
 import org.jetbrains.kotlin.konan.target.Family
@@ -61,12 +60,7 @@ internal class CocoapodsBuildDirs(val project: Project) {
 
     fun synthetic(family: Family) = synthetic.resolve(family.name)
 
-    val externalSources: File
-        get() = root.resolve("externalSources")
-
     val publish: File = root.resolve("publish")
-
-    fun externalSources(fileName: String) = externalSources.resolve(fileName)
 
     fun fatFramework(buildType: NativeBuildType) =
         root.resolve("fat-frameworks/${buildType.getName()}")
@@ -91,12 +85,6 @@ private fun String.toBuildDependenciesTaskName(pod: CocoapodsDependency): String
     pod.name.asValidTaskName(),
     this
 )
-
-private val CocoapodsDependency.toPodDownloadTaskName: String
-    get() = lowerCamelCaseName(
-        KotlinCocoapodsPlugin.POD_DOWNLOAD_TASK_NAME,
-        name.asValidTaskName()
-    )
 
 private val KotlinNativeTarget.toValidSDK: String
     get() = when (konanTarget) {
@@ -168,7 +156,7 @@ open class KotlinCocoapodsPlugin : Plugin<Project> {
         kotlinExtension.supportedTargets().all { target ->
             target.binaries.framework(POD_FRAMEWORK_PREFIX) {
                 baseName = cocoapodsExtension.frameworkNameInternal
-                isStatic = true
+                setIsStaticSilently(true)
             }
         }
     }
@@ -195,7 +183,7 @@ open class KotlinCocoapodsPlugin : Plugin<Project> {
             "The project must have a target for at least one of the following platforms: " +
                     "${requestedPlatforms.joinToString { it.visibleName }}."
         }
-        fatTargets.forEach { platform, targets ->
+        fatTargets.forEach { (platform, targets) ->
             check(targets.size <= 1) {
                 "The project has more than one target for the requested platform: `${platform.visibleName}`"
             }
@@ -230,7 +218,33 @@ open class KotlinCocoapodsPlugin : Plugin<Project> {
         check(targets.size == 1) { "The project has more than one target for the requested platform: `${requestedPlatform.visibleName}`" }
 
         val frameworkLinkTask = targets.single().binaries.getFramework(POD_FRAMEWORK_PREFIX, requestedBuildType).linkTaskProvider
-        project.createSyncFrameworkTask(frameworkLinkTask.flatMap { it.destinationDirectory.map { it.asFile }}, frameworkLinkTask)
+        project.createSyncFrameworkTask(frameworkLinkTask.flatMap { it.destinationDirectory.map { it.asFile } }, frameworkLinkTask)
+    }
+
+    private fun checkFrameworkLinkingType(
+        project: Project,
+        kotlinExtension: KotlinMultiplatformExtension
+    ) = project.whenEvaluated {
+        val anyPodTarget = kotlinExtension.supportedTargets().firstOrNull() ?: return@whenEvaluated
+        val anyPodFramework = anyPodTarget.binaries.firstOrNull { binary ->
+            binary is Framework && binary.name.startsWith(POD_FRAMEWORK_PREFIX)
+        } as? Framework ?: return@whenEvaluated
+
+        val hasDefaultLinkingType = !anyPodFramework.isStaticWasReassigned
+        if (hasDefaultLinkingType) SingleWarningPerBuild.show(
+            project,
+            """
+                |Cocoapods Gradle plugin uses default STATIC linking type for frameworks.
+                |Set it up explicitly because the default behavior will be changed to DYNAMIC linking in the 1.8 version.
+                |kotlin {
+                |  cocoapods {
+                |    framework {
+                |      isStatic = true //or false
+                |    }
+                |  }
+                |}
+                |""".trimMargin()
+        )
     }
 
     private fun createSyncTask(
@@ -416,41 +430,13 @@ open class KotlinCocoapodsPlugin : Plugin<Project> {
         }
     }
 
-    private fun registerPodDownloadTask(
-        project: Project,
-        cocoapodsExtension: CocoapodsExtension
-    ) {
-        val downloadAllTask = project.tasks.register(POD_DOWNLOAD_TASK_NAME) {
-            it.group = TASK_GROUP
-            it.description = "Downloads CocoaPods dependencies from external sources"
-        }
-
-        cocoapodsExtension.pods.all { pod ->
-            val downloadPodTask = when (val podSource = pod.source) {
-                is Git -> project.tasks.register(pod.toPodDownloadTaskName, PodDownloadGitTask::class.java) {
-                    it.podName = project.provider { pod.name.asValidTaskName() }
-                    it.podSource = project.provider<Git> { podSource }
-                }
-                is Url -> project.tasks.register(pod.toPodDownloadTaskName, PodDownloadUrlTask::class.java) {
-                    it.podName = project.provider { pod.name.asValidTaskName() }
-                    it.podSource = project.provider<Url> { podSource }
-                }
-                else -> return@all
-            }
-
-            downloadAllTask.dependsOn(downloadPodTask)
-        }
-    }
-
     private fun registerPodGenTask(
         project: Project, kotlinExtension: KotlinMultiplatformExtension, cocoapodsExtension: CocoapodsExtension
     ) {
         val families = mutableSetOf<Family>()
 
         val podspecTaskProvider = project.tasks.named(POD_SPEC_TASK_NAME, PodspecTask::class.java)
-        val downloadPods = project.tasks.named(POD_DOWNLOAD_TASK_NAME)
         kotlinExtension.supportedTargets().all { target ->
-
             val family = target.konanTarget.family
             if (family in families) {
                 return@all
@@ -474,7 +460,6 @@ open class KotlinCocoapodsPlugin : Plugin<Project> {
                 it.family = family
                 it.platformSettings = platformSettings
                 it.pods.set(cocoapodsExtension.pods)
-                it.dependsOn(downloadPods)
             }
         }
     }
@@ -702,9 +687,9 @@ open class KotlinCocoapodsPlugin : Plugin<Project> {
             createDefaultFrameworks(kotlinExtension, cocoapodsExtension)
             registerDummyFrameworkTask(project, cocoapodsExtension)
             createSyncTask(project, kotlinExtension, cocoapodsExtension)
+            checkFrameworkLinkingType(project, kotlinExtension)
             registerPodspecTask(project, cocoapodsExtension)
 
-            registerPodDownloadTask(project, cocoapodsExtension)
             registerPodGenTask(project, kotlinExtension, cocoapodsExtension)
             registerPodInstallTask(project, cocoapodsExtension)
             registerPodSetupBuildTasks(project, kotlinExtension, cocoapodsExtension)
@@ -732,7 +717,6 @@ open class KotlinCocoapodsPlugin : Plugin<Project> {
         const val POD_SPEC_TASK_NAME = "podspec"
         const val DUMMY_FRAMEWORK_TASK_NAME = "generateDummyFramework"
         const val POD_INSTALL_TASK_NAME = "podInstall"
-        const val POD_DOWNLOAD_TASK_NAME = "podDownload"
         const val POD_GEN_TASK_NAME = "podGen"
         const val POD_SETUP_BUILD_TASK_NAME = "podSetupBuild"
         const val POD_BUILD_TASK_NAME = "podBuild"
