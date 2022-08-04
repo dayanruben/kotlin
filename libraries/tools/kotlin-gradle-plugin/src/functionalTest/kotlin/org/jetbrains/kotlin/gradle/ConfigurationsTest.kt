@@ -10,12 +10,15 @@ package org.jetbrains.kotlin.gradle
 import org.gradle.api.attributes.Category
 import org.gradle.api.attributes.Usage
 import org.gradle.kotlin.dsl.withType
+import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
+import org.jetbrains.kotlin.gradle.mpp.androidLibrary
 import org.jetbrains.kotlin.gradle.mpp.buildProjectWithMPP
 import org.jetbrains.kotlin.gradle.mpp.kotlin
 import org.jetbrains.kotlin.gradle.plugin.KotlinJsCompilerType
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinUsages
+import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.util.targets
 import org.jetbrains.kotlin.gradle.targets.js.KotlinJsCompilerAttribute
 import org.jetbrains.kotlin.gradle.targets.js.KotlinJsTarget
 import org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl
@@ -145,10 +148,77 @@ class ConfigurationsTest : MultiplatformExtensionTest() {
                 }
             }
         }
-        with(project.evaluate()) {
-            assertContainsDependencies("jsApi", "test:compilation-dependency", "test:source-set-dependency")
+
+        project.evaluate()
+
+        with(project) {
+            assertContainsDependencies("jsCompilationApi", "test:compilation-dependency", "test:source-set-dependency")
             assertContainsDependencies("jsMainApi", "test:source-set-dependency")
             assertNotContainsDependencies("jsMainApi", "test:compilation-dependency")
+        }
+    }
+
+    @Test
+    fun `test compilation and source set configurations don't clash`() {
+        val project = buildProjectWithMPP {
+            androidLibrary {
+                compileSdkVersion(30)
+            }
+
+            kotlin {
+                jvm()
+                js(BOTH)
+                linuxX64("linux")
+                android()
+            }
+        }
+
+        project.evaluate()
+
+        project.kotlinExtension.targets.flatMap { it.compilations }.forEach { compilation ->
+            val compilationSourceSets = compilation.allKotlinSourceSets
+            val compilationConfigurationNames = compilation.relatedConfigurationNames
+            val sourceSetConfigurationNames = compilationSourceSets.flatMapTo(mutableSetOf()) { it.relatedConfigurationNames }
+
+            assert(compilationConfigurationNames.none { it in sourceSetConfigurationNames }) {
+                """A name clash between source set and compilation configurations detected for the following configurations:
+                    |${compilationConfigurationNames.filter { it in sourceSetConfigurationNames }.joinToString()}
+                """.trimMargin()
+            }
+        }
+    }
+
+    @Test
+    fun `test scoped sourceSet's configurations don't extend other configurations`() {
+        val project = buildProjectWithMPP {
+            kotlin {
+                jvm()
+                js(BOTH)
+                linuxX64("linux")
+            }
+        }
+
+        project.evaluate()
+
+        for (sourceSet in project.kotlinExtension.sourceSets) {
+            val configurationNames = listOf(
+                sourceSet.implementationConfigurationName,
+                sourceSet.apiConfigurationName,
+                sourceSet.compileOnlyConfigurationName,
+                sourceSet.runtimeOnlyConfigurationName,
+            )
+
+            for (name in configurationNames) {
+                val extendsFrom = project.configurations.getByName(name).extendsFrom
+                assert(extendsFrom.isEmpty()) {
+                    "Configuration $name is not expected to be extending anything, but it extends: ${
+                        extendsFrom.joinToString(
+                            prefix = "[",
+                            postfix = "]"
+                        ) { it.name }
+                    }"
+                }
+            }
         }
     }
 }
