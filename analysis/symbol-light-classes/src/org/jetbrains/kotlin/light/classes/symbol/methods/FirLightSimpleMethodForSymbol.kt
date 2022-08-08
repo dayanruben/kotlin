@@ -1,9 +1,9 @@
 /*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-package org.jetbrains.kotlin.light.classes.symbol
+package org.jetbrains.kotlin.light.classes.symbol.methods
 
 import com.intellij.psi.*
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -13,6 +13,10 @@ import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
 import org.jetbrains.kotlin.asJava.builder.LightMemberOrigin
 import org.jetbrains.kotlin.asJava.classes.lazyPub
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.light.classes.symbol.*
+import org.jetbrains.kotlin.light.classes.symbol.annotations.*
+import org.jetbrains.kotlin.light.classes.symbol.classes.FirLightClassBase
+import org.jetbrains.kotlin.light.classes.symbol.modifierLists.FirLightMemberModifierList
 import org.jetbrains.kotlin.name.JvmNames.STRICTFP_ANNOTATION_CLASS_ID
 import org.jetbrains.kotlin.name.JvmNames.SYNCHRONIZED_ANNOTATION_CLASS_ID
 import org.jetbrains.kotlin.utils.addToStdlib.ifTrue
@@ -66,8 +70,10 @@ internal class FirLightSimpleMethodForSymbol(
                     when {
                         functionSymbol.isSuspend -> // Any?
                             return@l NullabilityType.Nullable
+
                         isVoidReturnType ->
                             return@l NullabilityType.Unknown
+
                         else ->
                             functionSymbol.returnType
                     }
@@ -141,8 +147,10 @@ internal class FirLightSimpleMethodForSymbol(
         val ktType = when {
             functionSymbol.isSuspend -> // Any?
                 analysisSession.builtinTypes.NULLABLE_ANY
+
             isVoidReturnType ->
                 return@lazyPub PsiType.VOID
+
             else ->
                 functionSymbol.returnType
         }

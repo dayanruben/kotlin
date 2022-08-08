@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -8,11 +8,6 @@ package org.jetbrains.kotlin.light.classes.symbol
 import com.intellij.psi.*
 import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.util.IncorrectOperationException
-import org.jetbrains.kotlin.asJava.elements.KtLightElement
-import org.jetbrains.kotlin.asJava.elements.KtLightMember
-import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.descriptors.Visibilities
-import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.annotations.*
 import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
@@ -21,12 +16,21 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.*
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.types.*
+import org.jetbrains.kotlin.asJava.elements.KtLightElement
+import org.jetbrains.kotlin.asJava.elements.KtLightMember
 import org.jetbrains.kotlin.asJava.elements.psiType
+import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.descriptors.Visibilities
+import org.jetbrains.kotlin.descriptors.Visibility
+import org.jetbrains.kotlin.light.classes.symbol.annotations.FirLightSimpleAnnotation
+import org.jetbrains.kotlin.light.classes.symbol.annotations.FirPsiArrayInitializerMemberValue
+import org.jetbrains.kotlin.light.classes.symbol.annotations.FirPsiExpression
+import org.jetbrains.kotlin.light.classes.symbol.annotations.FirPsiLiteral
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.SpecialNames
-import org.jetbrains.kotlin.resolve.constants.KClassValue
 import java.util.*
 
 internal fun <L : Any> L.invalidAccess(): Nothing =
@@ -88,6 +92,7 @@ internal fun KtSymbolWithModality.computeModalityForMethod(
         result.add(PsiModifier.STATIC)
     }
 }
+
 context(KtAnalysisSession)
 internal fun PsiElement.tryGetEffectiveVisibility(symbol: KtCallableSymbol): Visibility? {
     if (symbol !is KtPropertySymbol && symbol !is KtFunctionSymbol) return null
@@ -118,6 +123,7 @@ private fun Visibility.toPsiVisibility(isTopLevel: Boolean, forClass: Boolean): 
     // Nested private class has PRIVATE visibility
     Visibilities.Private, Visibilities.PrivateToThis ->
         if (forClass && isTopLevel) PsiModifier.PACKAGE_LOCAL else PsiModifier.PRIVATE
+
     Visibilities.Protected -> PsiModifier.PROTECTED
     else -> PsiModifier.PUBLIC
 }
@@ -197,6 +203,7 @@ internal fun KtAnnotationValue.toAnnotationMemberValue(parent: PsiElement): PsiA
             FirPsiArrayInitializerMemberValue(sourcePsi, parent) { arrayLiteralParent ->
                 values.mapNotNull { element -> element.toAnnotationMemberValue(arrayLiteralParent) }
             }
+
         is KtAnnotationApplicationValue ->
             FirLightSimpleAnnotation(
                 annotationValue.classId?.relativeClassName?.asString(),
@@ -204,6 +211,7 @@ internal fun KtAnnotationValue.toAnnotationMemberValue(parent: PsiElement): PsiA
                 annotationValue.arguments,
                 annotationValue.psi
             )
+
         is KtConstantAnnotationValue -> {
             this.constantValue.createPsiLiteral(parent)?.let {
                 when (it) {
@@ -212,11 +220,13 @@ internal fun KtAnnotationValue.toAnnotationMemberValue(parent: PsiElement): PsiA
                 }
             }
         }
+
         is KtEnumEntryAnnotationValue -> {
             val fqName = this.callableId?.asSingleFqName()?.asString() ?: return null
             val psiExpression = PsiElementFactory.getInstance(parent.project).createExpressionFromText(fqName, parent)
             FirPsiExpression(sourcePsi, parent, psiExpression)
         }
+
         KtUnsupportedAnnotationValue -> null
         is KtKClassAnnotationValue.KtErrorClassAnnotationValue -> null
         is KtKClassAnnotationValue.KtLocalKClassAnnotationValue -> null
@@ -227,7 +237,7 @@ internal fun KtAnnotationValue.toAnnotationMemberValue(parent: PsiElement): PsiA
 private fun KtKClassAnnotationValue.KtNonLocalKClassAnnotationValue.toAnnotationMemberValue(parent: PsiElement): PsiExpression? {
     val fqName = classId.asSingleFqName()
     val canonicalText = psiType(
-        fqName.asString(), parent, boxPrimitiveType = false /* TODO value.arrayNestedness > 0*/,
+        fqName.asString(), parent, boxPrimitiveType = false, /* TODO value.arrayNestedness > 0*/
     ).let(TypeConversionUtil::erasure).getCanonicalText(false)
     return try {
         PsiElementFactory.getInstance(parent.project).createExpressionFromText("$canonicalText.class", parent)

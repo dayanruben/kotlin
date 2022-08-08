@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -10734,28 +10734,6 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             @TestMetadata("typeArgs.kt")
             public void testTypeArgs() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/exposed/typeArgs.kt");
-            }
-        }
-
-        @Nested
-        @TestMetadata("compiler/testData/diagnostics/tests/expressionAfterTypeReference")
-        @TestDataPath("$PROJECT_ROOT")
-        public class ExpressionAfterTypeReference {
-            @Test
-            public void testAllFilesPresentInExpressionAfterTypeReference() throws Exception {
-                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/expressionAfterTypeReference"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
-            }
-
-            @Test
-            @TestMetadata("allowExpressionAfterTypeReference.kt")
-            public void testAllowExpressionAfterTypeReference() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/expressionAfterTypeReference/allowExpressionAfterTypeReference.kt");
-            }
-
-            @Test
-            @TestMetadata("forbidExpressionAfterTypeReference.kt")
-            public void testForbidExpressionAfterTypeReference() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/expressionAfterTypeReference/forbidExpressionAfterTypeReference.kt");
             }
         }
 
@@ -22889,12 +22867,6 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             }
 
             @Test
-            @TestMetadata("InternalPotentialOverride.kt")
-            public void testInternalPotentialOverride() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/override/InternalPotentialOverride.kt");
-            }
-
-            @Test
             @TestMetadata("InvisiblePotentialOverride.kt")
             public void testInvisiblePotentialOverride() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/override/InvisiblePotentialOverride.kt");
@@ -32140,28 +32112,6 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             @TestMetadata("traitSupertypeList.kt")
             public void testTraitSupertypeList() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/traitWithRequired/traitSupertypeList.kt");
-            }
-        }
-
-        @Nested
-        @TestMetadata("compiler/testData/diagnostics/tests/typeArguments")
-        @TestDataPath("$PROJECT_ROOT")
-        public class TypeArguments {
-            @Test
-            public void testAllFilesPresentInTypeArguments() throws Exception {
-                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/typeArguments"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
-            }
-
-            @Test
-            @TestMetadata("allowTypeArgumentListLikeExpressions.kt")
-            public void testAllowTypeArgumentListLikeExpressions() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/typeArguments/allowTypeArgumentListLikeExpressions.kt");
-            }
-
-            @Test
-            @TestMetadata("forbidTypeArgumentListLikeExpressions.kt")
-            public void testForbidTypeArgumentListLikeExpressions() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/typeArguments/forbidTypeArgumentListLikeExpressions.kt");
             }
         }
 

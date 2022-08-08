@@ -170,6 +170,7 @@ fun findStandardKotlinTypeSerializer(module: ModuleDescriptor, kType: KotlinType
         "D" -> if (kType.isDouble()) "DoubleSerializer" else return null
         "C" -> if (kType.isChar()) "CharSerializer" else return null
         "kotlin.Unit" -> "UnitSerializer"
+        "kotlin.Nothing" -> "NothingSerializer"
         "kotlin.Boolean" -> "BooleanSerializer"
         "kotlin.Byte" -> "ByteSerializer"
         "kotlin.Short" -> "ShortSerializer"
@@ -196,6 +197,10 @@ fun findStandardKotlinTypeSerializer(module: ModuleDescriptor, kType: KotlinType
         "kotlin.ShortArray" -> "ShortArraySerializer"
         "kotlin.IntArray" -> "IntArraySerializer"
         "kotlin.LongArray" -> "LongArraySerializer"
+        "kotlin.UByteArray" -> "UByteArraySerializer"
+        "kotlin.UShortArray" -> "UShortArraySerializer"
+        "kotlin.UIntArray" -> "UIntArraySerializer"
+        "kotlin.ULongArray" -> "ULongArraySerializer"
         "kotlin.CharArray" -> "CharArraySerializer"
         "kotlin.FloatArray" -> "FloatArraySerializer"
         "kotlin.DoubleArray" -> "DoubleArraySerializer"

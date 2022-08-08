@@ -61,6 +61,7 @@ private class KotlinStaticPsiDeclarationFromBinaryModuleProvider(
         return clsClassImplsByFqName(classId.asSingleFqName(), isPackageName = false)
     }
 
+    // TODO(dimonchik0036): support 'is' accessor
     override fun getProperties(callableId: CallableId): Collection<PsiMember> {
         val classes = callableId.classId?.let { classId ->
             getClassesByClassId(classId)
@@ -96,7 +97,7 @@ private class KotlinStaticPsiDeclarationFromBinaryModuleProvider(
 
 // TODO: we can't register this in IDE yet due to non-trivial parameters: lib modules and jar file system.
 //  We need a session or facade that maintains such information
-public class KotlinStaticPsiDeclarationProviderFactory(
+class KotlinStaticPsiDeclarationProviderFactory(
     private val project: Project,
     private val binaryModules: Collection<KtBinaryModule>,
     private val jarFileSystem: CoreJarFileSystem,

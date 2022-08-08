@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -33,6 +33,14 @@ import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.lexer.KtTokens.*
 import org.jetbrains.kotlin.light.classes.symbol.*
+import org.jetbrains.kotlin.light.classes.symbol.annotations.*
+import org.jetbrains.kotlin.light.classes.symbol.fields.FirLightField
+import org.jetbrains.kotlin.light.classes.symbol.fields.FirLightFieldForEnumEntry
+import org.jetbrains.kotlin.light.classes.symbol.fields.FirLightFieldForPropertySymbol
+import org.jetbrains.kotlin.light.classes.symbol.methods.FirLightAccessorMethodForSymbol
+import org.jetbrains.kotlin.light.classes.symbol.methods.FirLightConstructorForSymbol
+import org.jetbrains.kotlin.light.classes.symbol.methods.FirLightNoArgConstructor
+import org.jetbrains.kotlin.light.classes.symbol.methods.FirLightSimpleMethodForSymbol
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
@@ -75,11 +83,13 @@ internal fun createFirLightClassNoCache(classOrObject: KtClassOrObject): KtLight
         classOrObject is KtEnumEntry -> analyzeForLightClasses(classOrObject) {
             lightClassForEnumEntry(classOrObject)
         }
+
         classOrObject.hasModifier(INLINE_KEYWORD) -> {
             analyzeForLightClasses(classOrObject) {
                 classOrObject.getNamedClassOrObjectSymbol()?.let { FirLightInlineClass(it, classOrObject.manager) }
             }
         }
+
         else -> {
             analyzeForLightClasses(classOrObject) {
                 classOrObject.getClassOrObjectSymbol().createLightClassNoCache(classOrObject.manager)
@@ -90,7 +100,7 @@ internal fun createFirLightClassNoCache(classOrObject: KtClassOrObject): KtLight
 
 
 context(KtAnalysisSession)
-        internal fun KtClassOrObjectSymbol.createLightClassNoCache(manager: PsiManager): FirLightClassBase = when (this) {
+internal fun KtClassOrObjectSymbol.createLightClassNoCache(manager: PsiManager): FirLightClassBase = when (this) {
     is KtAnonymousObjectSymbol -> FirLightAnonymousClassForSymbol(this, manager)
     is KtNamedClassOrObjectSymbol -> when (classKind) {
         KtClassKind.INTERFACE -> FirLightInterfaceClassSymbol(this, manager)
@@ -100,7 +110,7 @@ context(KtAnalysisSession)
 }
 
 context(KtAnalysisSession)
-        private fun lightClassForEnumEntry(ktEnumEntry: KtEnumEntry): KtLightClass? {
+private fun lightClassForEnumEntry(ktEnumEntry: KtEnumEntry): KtLightClass? {
     if (ktEnumEntry.body == null) return null
 
     val firClass = ktEnumEntry
@@ -116,7 +126,7 @@ context(KtAnalysisSession)
 }
 
 context(KtAnalysisSession)
-        internal fun FirLightClassBase.createConstructors(
+internal fun FirLightClassBase.createConstructors(
     declarations: Sequence<KtConstructorSymbol>,
     result: MutableList<KtLightMethod>
 ) {
@@ -145,7 +155,7 @@ context(KtAnalysisSession)
 }
 
 context(KtAnalysisSession)
-        private fun FirLightClassBase.shouldGenerateNoArgOverload(
+private fun FirLightClassBase.shouldGenerateNoArgOverload(
     primaryConstructor: KtConstructorSymbol,
     constructors: Iterable<KtConstructorSymbol>,
 ): Boolean {
@@ -160,7 +170,7 @@ context(KtAnalysisSession)
 }
 
 context(KtAnalysisSession)
-        private fun FirLightClassBase.defaultConstructor(): KtLightMethod {
+private fun FirLightClassBase.defaultConstructor(): KtLightMethod {
     val classOrObject = kotlinOrigin
     val visibility = when {
         classOrObject is KtObjectDeclaration || classOrObject?.hasModifier(SEALED_KEYWORD) == true || isEnum -> PsiModifier.PRIVATE
@@ -171,7 +181,7 @@ context(KtAnalysisSession)
 }
 
 context(KtAnalysisSession)
-        private fun FirLightClassBase.noArgConstructor(
+private fun FirLightClassBase.noArgConstructor(
     visibility: String,
     methodIndex: Int,
 ): KtLightMethod {
@@ -188,7 +198,7 @@ context(KtAnalysisSession)
 }
 
 context(KtAnalysisSession)
-        internal fun FirLightClassBase.createMethods(
+internal fun FirLightClassBase.createMethods(
     declarations: Sequence<KtCallableSymbol>,
     result: MutableList<KtLightMethod>,
     isTopLevel: Boolean = false,
@@ -233,12 +243,14 @@ context(KtAnalysisSession)
                     }
                 }
             }
+
             is KtPropertySymbol -> createPropertyAccessors(
                 result,
                 declaration,
                 isTopLevel = isTopLevel,
                 suppressStatic = suppressStatic
             )
+
             is KtConstructorSymbol -> error("Constructors should be handled separately and not passed to this function")
             else -> {}
         }
@@ -255,7 +267,7 @@ context(KtAnalysisSession)
 }
 
 context(KtAnalysisSession)
-        internal fun FirLightClassBase.createPropertyAccessors(
+internal fun FirLightClassBase.createPropertyAccessors(
     result: MutableList<KtLightMethod>,
     declaration: KtPropertySymbol,
     isTopLevel: Boolean,
@@ -334,7 +346,7 @@ context(KtAnalysisSession)
 }
 
 context(KtAnalysisSession)
-        internal fun FirLightClassBase.createField(
+internal fun FirLightClassBase.createField(
     declaration: KtPropertySymbol,
     nameGenerator: FirLightField.FieldNameGenerator,
     isTopLevel: Boolean,
@@ -378,7 +390,7 @@ context(KtAnalysisSession)
 }
 
 context(KtAnalysisSession)
-        internal fun FirLightClassBase.createInheritanceList(forExtendsList: Boolean, superTypes: List<KtType>): PsiReferenceList {
+internal fun FirLightClassBase.createInheritanceList(forExtendsList: Boolean, superTypes: List<KtType>): PsiReferenceList {
 
     val role = if (forExtendsList) PsiReferenceList.Role.EXTENDS_LIST else PsiReferenceList.Role.IMPLEMENTS_LIST
 
@@ -420,7 +432,7 @@ context(KtAnalysisSession)
 }
 
 context(KtAnalysisSession)
-        internal fun KtSymbolWithMembers.createInnerClasses(
+internal fun KtSymbolWithMembers.createInnerClasses(
     manager: PsiManager,
     containingClass: FirLightClassBase,
     classOrObject: KtClassOrObject?

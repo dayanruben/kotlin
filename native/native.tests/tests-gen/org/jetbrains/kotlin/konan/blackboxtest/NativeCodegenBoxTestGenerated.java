@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -15441,18 +15441,6 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
         }
 
         @Nested
-        @TestMetadata("compiler/testData/codegen/box/hashPMap")
-        @TestDataPath("$PROJECT_ROOT")
-        @Tag("codegen")
-        @UseExtTestCaseGroupProvider()
-        public class HashPMap {
-            @Test
-            public void testAllFilesPresentInHashPMap() throws Exception {
-                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/hashPMap"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
-            }
-        }
-
-        @Nested
         @TestMetadata("compiler/testData/codegen/box/ieee754")
         @TestDataPath("$PROJECT_ROOT")
         @Tag("codegen")
@@ -28252,6 +28240,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
                     @TestMetadata("topLevelProperty.kt")
                     public void testTopLevelProperty() throws Exception {
                         runTest("compiler/testData/codegen/box/properties/lateinit/isInitializedAndDeinitialize/topLevelProperty.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("topLevelPropertyMultiModule.kt")
+                    public void testTopLevelPropertyMultiModule() throws Exception {
+                        runTest("compiler/testData/codegen/box/properties/lateinit/isInitializedAndDeinitialize/topLevelPropertyMultiModule.kt");
                     }
                 }
 
