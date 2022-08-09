@@ -421,7 +421,7 @@ internal val exportInternalAbiPhase = makeKonanModuleOpPhase(
                             function.body = irBlockBody {
                                 +irReturn(irGetField(
                                         irGet(function.valueParameters[0]),
-                                        context.specialDeclarationsFactory.getOuterThisField(declaration))
+                                        context.innerClassesSupport.getOuterThisField(declaration))
                                 )
                             }
                         }
@@ -507,7 +507,7 @@ internal val useInternalAbiPhase = makeKonanModuleOpPhase(
                     return when {
                         context.llvmModuleSpecification.containsDeclaration(field) -> expression
 
-                        irClass?.isInner == true && context.specialDeclarationsFactory.getOuterThisField(irClass) == field -> {
+                        irClass?.isInner == true && context.innerClassesSupport.getOuterThisField(irClass) == field -> {
                             val accessor = outerThisAccessors.getOrPut(irClass) {
                                 context.irFactory.buildFun {
                                     name = InternalAbi.getInnerClassOuterThisAccessorName(irClass)
@@ -583,6 +583,7 @@ internal val bitcodePhase = NamedCompilerPhase(
                                                  // from dependencies can be changed during lowerings.
                 inlineClassPropertyAccessorsPhase then
                 redundantCoercionsCleaningPhase then
+                unboxInlinePhase then
                 createLLVMDeclarationsPhase then
                 ghaPhase then
                 RTTIPhase then
@@ -699,6 +700,7 @@ internal fun PhaseConfig.konanPhasesConfig(config: KonanConfig) {
             // Inline accessors only in optimized builds due to separate compilation and possibility to get broken
             // debug information.
             disable(propertyAccessorInlinePhase)
+            disable(unboxInlinePhase)
             disable(inlineClassPropertyAccessorsPhase)
             disable(dcePhase)
             disable(removeRedundantCallsToFileInitializersPhase)

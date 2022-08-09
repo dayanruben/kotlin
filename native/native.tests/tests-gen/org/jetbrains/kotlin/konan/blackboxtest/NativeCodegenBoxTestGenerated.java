@@ -121,6 +121,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
                 }
 
                 @Test
+                @TestMetadata("annotationInstancesEmptyDefaultLowered.kt")
+                public void testAnnotationInstancesEmptyDefaultLowered() throws Exception {
+                    runTest("compiler/testData/codegen/box/annotations/instances/annotationInstancesEmptyDefaultLowered.kt");
+                }
+
+                @Test
                 @TestMetadata("annotationToString.kt")
                 public void testAnnotationToString() throws Exception {
                     runTest("compiler/testData/codegen/box/annotations/instances/annotationToString.kt");
@@ -40023,6 +40029,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
             }
 
             @Test
+            @TestMetadata("anonymousObjectInCallChildren.kt")
+            public void testAnonymousObjectInCallChildren() throws Exception {
+                runTest("compiler/testData/codegen/boxInline/anonymousObject/anonymousObjectInCallChildren.kt");
+            }
+
+            @Test
             @TestMetadata("anonymousObjectInDefault.kt")
             public void testAnonymousObjectInDefault() throws Exception {
                 runTest("compiler/testData/codegen/boxInline/anonymousObject/anonymousObjectInDefault.kt");
@@ -40290,6 +40302,24 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
             @TestMetadata("kt52795_2.kt")
             public void testKt52795_2() throws Exception {
                 runTest("compiler/testData/codegen/boxInline/anonymousObject/kt52795_2.kt");
+            }
+
+            @Test
+            @TestMetadata("kt52795_3.kt")
+            public void testKt52795_3() throws Exception {
+                runTest("compiler/testData/codegen/boxInline/anonymousObject/kt52795_3.kt");
+            }
+
+            @Test
+            @TestMetadata("kt52795_4.kt")
+            public void testKt52795_4() throws Exception {
+                runTest("compiler/testData/codegen/boxInline/anonymousObject/kt52795_4.kt");
+            }
+
+            @Test
+            @TestMetadata("kt52795_5.kt")
+            public void testKt52795_5() throws Exception {
+                runTest("compiler/testData/codegen/boxInline/anonymousObject/kt52795_5.kt");
             }
 
             @Test
@@ -40830,6 +40860,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
             @TestMetadata("constructor.kt")
             public void testConstructor() throws Exception {
                 runTest("compiler/testData/codegen/boxInline/callableReference/constructor.kt");
+            }
+
+            @Test
+            @TestMetadata("inlineCallableReference.kt")
+            public void testInlineCallableReference() throws Exception {
+                runTest("compiler/testData/codegen/boxInline/callableReference/inlineCallableReference.kt");
             }
 
             @Test

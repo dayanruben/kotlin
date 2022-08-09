@@ -15,25 +15,21 @@ import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.bundling.AbstractArchiveTask
 import org.jetbrains.kotlin.gradle.dsl.*
-import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptionsImpl
 import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.internal.KotlinCompilationsModuleGroups
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.util.*
-import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.util.newDependencyFilesHolder
-import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.util.ofVariantCompileDependencies
-import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.util.unambiguousNameInProject
+import org.jetbrains.kotlin.gradle.plugin.sources.android.kotlinAndroidSourceSetLayout
 import org.jetbrains.kotlin.gradle.plugin.sources.defaultSourceSetLanguageSettingsChecker
+import org.jetbrains.kotlin.gradle.plugin.sources.dependsOnClosure
 import org.jetbrains.kotlin.gradle.plugin.sources.getVisibleSourceSetsFromAssociateCompilations
 import org.jetbrains.kotlin.gradle.plugin.sources.kpm.FragmentMappedKotlinSourceSet
-import org.jetbrains.kotlin.gradle.plugin.sources.dependsOnClosure
 import org.jetbrains.kotlin.gradle.plugin.sources.withDependsOnClosure
 import org.jetbrains.kotlin.gradle.targets.js.KotlinJsTarget
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrCompilation
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrTarget
 import org.jetbrains.kotlin.gradle.targets.metadata.getMetadataCompilationForSourceSet
 import org.jetbrains.kotlin.gradle.utils.*
-import org.jetbrains.kotlin.gradle.utils.lowerCamelCaseName
 import org.jetbrains.kotlin.project.model.LanguageSettings
 import org.jetbrains.kotlin.tooling.core.closure
 import java.util.*
@@ -527,6 +523,10 @@ class AndroidCompilationDetails(
 
     override val friendArtifacts: FileCollection
         get() = target.project.files(super.friendArtifacts, compilation.testedVariantArtifacts)
+
+    override val defaultSourceSetName: String by lazy {
+        project.kotlinAndroidSourceSetLayout.naming.defaultKotlinSourceSetName(this) ?: super.defaultSourceSetName
+    }
 
     /*
     * Example of how multiplatform dependencies from common would get to Android test classpath:

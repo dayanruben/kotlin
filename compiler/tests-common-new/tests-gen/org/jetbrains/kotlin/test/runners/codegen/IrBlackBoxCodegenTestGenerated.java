@@ -451,6 +451,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
             }
 
             @Test
+            @TestMetadata("annotationInstancesEmptyDefaultLowered.kt")
+            public void testAnnotationInstancesEmptyDefaultLowered() throws Exception {
+                runTest("compiler/testData/codegen/box/annotations/instances/annotationInstancesEmptyDefaultLowered.kt");
+            }
+
+            @Test
             @TestMetadata("annotationJvmHashCode.kt")
             public void testAnnotationJvmHashCode() throws Exception {
                 runTest("compiler/testData/codegen/box/annotations/instances/annotationJvmHashCode.kt");
@@ -41265,6 +41271,18 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         @Test
         public void testAllFilesPresentInReflection() throws Exception {
             KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/reflection"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+        }
+
+        @Test
+        @TestMetadata("jvmKPackageCaching.kt")
+        public void testJvmKPackageCaching() throws Exception {
+            runTest("compiler/testData/codegen/box/reflection/jvmKPackageCaching.kt");
+        }
+
+        @Test
+        @TestMetadata("jvmKTypeCaching.kt")
+        public void testJvmKTypeCaching() throws Exception {
+            runTest("compiler/testData/codegen/box/reflection/jvmKTypeCaching.kt");
         }
 
         @Nested

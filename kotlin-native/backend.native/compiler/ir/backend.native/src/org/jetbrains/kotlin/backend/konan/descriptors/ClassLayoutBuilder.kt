@@ -57,7 +57,7 @@ internal class OverriddenFunctionInfo(
             } else {
                 function
             }
-            context.specialDeclarationsFactory.getBridge(OverriddenFunctionInfo(bridgeOwner, overriddenFunction))
+            context.bridgesSupport.getBridge(OverriddenFunctionInfo(bridgeOwner, overriddenFunction))
         }
         return if (implementation.modality == Modality.ABSTRACT) null else implementation
     }
@@ -466,7 +466,7 @@ internal class ClassLayoutBuilder(val irClass: IrClass, val context: Context) {
      */
     fun getDeclaredFields(): List<FieldInfo> {
         val outerThisField = if (irClass.isInner)
-            context.specialDeclarationsFactory.getOuterThisField(irClass)
+            context.innerClassesSupport.getOuterThisField(irClass)
         else null
         val packageFragment = irClass.getPackageFragment()
         if (packageFragment is IrExternalPackageFragment) {

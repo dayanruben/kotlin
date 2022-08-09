@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.backend.common.lower.at
 import org.jetbrains.kotlin.backend.common.lower.createIrBuilder
 import org.jetbrains.kotlin.backend.common.lower.irBlockBody
 import org.jetbrains.kotlin.backend.konan.Context
-import org.jetbrains.kotlin.backend.konan.DECLARATION_ORIGIN_ENUM
 import org.jetbrains.kotlin.backend.konan.MemoryModel
 import org.jetbrains.kotlin.backend.konan.llvm.IntrinsicType
 import org.jetbrains.kotlin.backend.konan.llvm.tryGetIntrinsicType
@@ -34,14 +33,14 @@ import org.jetbrains.kotlin.name.Name
 
 private class EnumSyntheticFunctionsBuilder(val context: Context) {
     fun IrBuilderWithScope.enumValues(enumClass: IrClass): IrExpression {
-        val loweredEnum = this@EnumSyntheticFunctionsBuilder.context.specialDeclarationsFactory.getLoweredEnum(enumClass)
+        val loweredEnum = this@EnumSyntheticFunctionsBuilder.context.enumsSupport.getLoweredEnum(enumClass)
         return irCall(genericValuesSymbol, listOf(enumClass.defaultType)).apply {
             putValueArgument(0, loweredEnum.getValuesField(startOffset, endOffset))
         }
     }
 
     fun IrBuilderWithScope.enumValueOf(enumClass: IrClass, value: IrExpression): IrExpression {
-        val loweredEnum = this@EnumSyntheticFunctionsBuilder.context.specialDeclarationsFactory.getLoweredEnum(enumClass)
+        val loweredEnum = this@EnumSyntheticFunctionsBuilder.context.enumsSupport.getLoweredEnum(enumClass)
         return irCall(genericValueOfSymbol, listOf(enumClass.defaultType)).apply {
             putValueArgument(0, value)
             putValueArgument(1, loweredEnum.getValuesField(startOffset, endOffset))
@@ -56,7 +55,7 @@ private class EnumSyntheticFunctionsBuilder(val context: Context) {
 internal class NativeEnumWhenLowering constructor(context: Context) : EnumWhenLowering(context) {
     override fun mapConstEnumEntry(entry: IrEnumEntry): Int {
         val parent = entry.parentAsClass
-        val loweredEnum = (context as Context).specialDeclarationsFactory.getLoweredEnumOrNull(parent)
+        val loweredEnum = (context as Context).enumsSupport.getLoweredEnumOrNull(parent)
                 ?: return super.mapConstEnumEntry(entry)
         return loweredEnum.entriesMap[entry.name]!!.ordinal
     }
@@ -109,7 +108,7 @@ internal class EnumUsageLowering(val context: Context)
     }
 
     private fun IrBuilderWithScope.loadEnumEntry(enumClass: IrClass, name: Name): IrExpression {
-        val loweredEnum = this@EnumUsageLowering.context.specialDeclarationsFactory.getLoweredEnum(enumClass)
+        val loweredEnum = this@EnumUsageLowering.context.enumsSupport.getLoweredEnum(enumClass)
         val getterId = loweredEnum.entriesMap.getValue(name).getterId
         return irCall(loweredEnum.itemGetterSymbol, enumClass.defaultType).apply {
             dispatchReceiver = irCall(loweredEnum.valuesGetter)
@@ -132,7 +131,7 @@ internal class EnumClassLowering(val context: Context) : FileLoweringPass {
     }
 
     private inner class EnumClassTransformer(val irClass: IrClass) {
-        private val loweredEnum = context.specialDeclarationsFactory.getInternalLoweredEnum(irClass)
+        private val loweredEnum = context.enumsSupport.getInternalLoweredEnum(irClass)
         private val enumSyntheticFunctionsBuilder = EnumSyntheticFunctionsBuilder(context)
 
         fun run() {
