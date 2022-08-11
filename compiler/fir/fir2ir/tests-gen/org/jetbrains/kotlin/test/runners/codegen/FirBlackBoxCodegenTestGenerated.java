@@ -8134,6 +8134,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         }
 
         @Test
+        @TestMetadata("kt53480.kt")
+        public void testKt53480() throws Exception {
+            runTest("compiler/testData/codegen/box/constants/kt53480.kt");
+        }
+
+        @Test
         @TestMetadata("kt9532.kt")
         public void testKt9532() throws Exception {
             runTest("compiler/testData/codegen/box/constants/kt9532.kt");
@@ -9032,6 +9038,52 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
             @TestMetadata("whileTrueBreak.kt")
             public void testWhileTrueBreak() throws Exception {
                 runTest("compiler/testData/codegen/box/controlStructures/breakContinueInExpressions/whileTrueBreak.kt");
+            }
+
+            @Nested
+            @TestMetadata("compiler/testData/codegen/box/controlStructures/breakContinueInExpressions/inlinedBreakContinue")
+            @TestDataPath("$PROJECT_ROOT")
+            public class InlinedBreakContinue {
+                @Test
+                public void testAllFilesPresentInInlinedBreakContinue() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/controlStructures/breakContinueInExpressions/inlinedBreakContinue"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+                }
+
+                @Test
+                @TestMetadata("inlineFunctionWithMultipleParameters.kt")
+                public void testInlineFunctionWithMultipleParameters() throws Exception {
+                    runTest("compiler/testData/codegen/box/controlStructures/breakContinueInExpressions/inlinedBreakContinue/inlineFunctionWithMultipleParameters.kt");
+                }
+
+                @Test
+                @TestMetadata("lambdaPassedToInlineFunction.kt")
+                public void testLambdaPassedToInlineFunction() throws Exception {
+                    runTest("compiler/testData/codegen/box/controlStructures/breakContinueInExpressions/inlinedBreakContinue/lambdaPassedToInlineFunction.kt");
+                }
+
+                @Test
+                @TestMetadata("loopWithinInlineFunction.kt")
+                public void testLoopWithinInlineFunction() throws Exception {
+                    runTest("compiler/testData/codegen/box/controlStructures/breakContinueInExpressions/inlinedBreakContinue/loopWithinInlineFunction.kt");
+                }
+
+                @Test
+                @TestMetadata("simple.kt")
+                public void testSimple() throws Exception {
+                    runTest("compiler/testData/codegen/box/controlStructures/breakContinueInExpressions/inlinedBreakContinue/simple.kt");
+                }
+
+                @Test
+                @TestMetadata("stdlibFunctions.kt")
+                public void testStdlibFunctions() throws Exception {
+                    runTest("compiler/testData/codegen/box/controlStructures/breakContinueInExpressions/inlinedBreakContinue/stdlibFunctions.kt");
+                }
+
+                @Test
+                @TestMetadata("withReturnValue.kt")
+                public void testWithReturnValue() throws Exception {
+                    runTest("compiler/testData/codegen/box/controlStructures/breakContinueInExpressions/inlinedBreakContinue/withReturnValue.kt");
+                }
             }
         }
 
@@ -48733,6 +48785,16 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         @TestMetadata("toTypedArray.kt")
         public void testToTypedArray() throws Exception {
             runTest("compiler/testData/codegen/box/toArray/toTypedArray.kt");
+        }
+    }
+
+    @Nested
+    @TestMetadata("compiler/testData/codegen/box/topLevelInitializtion")
+    @TestDataPath("$PROJECT_ROOT")
+    public class TopLevelInitializtion {
+        @Test
+        public void testAllFilesPresentInTopLevelInitializtion() throws Exception {
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/topLevelInitializtion"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
         }
     }
 

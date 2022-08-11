@@ -37,6 +37,24 @@ public class DiagnosticTestForLombokGenerated extends AbstractDiagnosticTestForL
     }
 
     @Test
+    @TestMetadata("builderAnnotationArguments.kt")
+    public void testBuilderAnnotationArguments() throws Exception {
+        runTest("plugins/lombok/testData/diagnostics/builderAnnotationArguments.kt");
+    }
+
+    @Test
+    @TestMetadata("builderConfig.kt")
+    public void testBuilderConfig() throws Exception {
+        runTest("plugins/lombok/testData/diagnostics/builderConfig.kt");
+    }
+
+    @Test
+    @TestMetadata("builderSingularNullability.kt")
+    public void testBuilderSingularNullability() throws Exception {
+        runTest("plugins/lombok/testData/diagnostics/builderSingularNullability.kt");
+    }
+
+    @Test
     @TestMetadata("clashAccessors.kt")
     public void testClashAccessors() throws Exception {
         runTest("plugins/lombok/testData/diagnostics/clashAccessors.kt");

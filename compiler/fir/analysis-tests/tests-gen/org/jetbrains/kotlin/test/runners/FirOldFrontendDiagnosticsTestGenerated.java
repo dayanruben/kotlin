@@ -5477,6 +5477,18 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
             }
 
             @Test
+            @TestMetadata("breakContinueNoinline.kt")
+            public void testBreakContinueNoinline() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/breakContinueNoinline.kt");
+            }
+
+            @Test
+            @TestMetadata("breakInLambdaPassedToDirectInvoke.kt")
+            public void testBreakInLambdaPassedToDirectInvoke() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/breakInLambdaPassedToDirectInvoke.kt");
+            }
+
+            @Test
             @TestMetadata("breakInsideLocal.kt")
             public void testBreakInsideLocal() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/breakInsideLocal.kt");
@@ -37534,6 +37546,24 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
             @TestMetadata("overrideInAnonymousObject.kt")
             public void testOverrideInAnonymousObject() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/overrideInAnonymousObject.kt");
+            }
+
+            @Test
+            @TestMetadata("subClassOptInModality.kt")
+            public void testSubClassOptInModality() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/subClassOptInModality.kt");
+            }
+
+            @Test
+            @TestMetadata("subClassOptInRequired.kt")
+            public void testSubClassOptInRequired() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/subClassOptInRequired.kt");
+            }
+
+            @Test
+            @TestMetadata("subclassOptInInheritance.kt")
+            public void testSubclassOptInInheritance() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/subclassOptInInheritance.kt");
             }
 
             @Test

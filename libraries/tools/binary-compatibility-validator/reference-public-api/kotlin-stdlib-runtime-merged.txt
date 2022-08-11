@@ -66,6 +66,9 @@ public abstract interface annotation class kotlin/ExperimentalMultiplatform : ja
 public abstract interface annotation class kotlin/ExperimentalStdlibApi : java/lang/annotation/Annotation {
 }
 
+public abstract interface annotation class kotlin/ExperimentalSubclassOptIn : java/lang/annotation/Annotation {
+}
+
 public abstract interface annotation class kotlin/ExperimentalUnsignedTypes : java/lang/annotation/Annotation {
 }
 
@@ -233,6 +236,10 @@ public final class kotlin/ResultKt {
 
 public abstract interface annotation class kotlin/SinceKotlin : java/lang/annotation/Annotation {
 	public abstract fun version ()Ljava/lang/String;
+}
+
+public abstract interface annotation class kotlin/SubclassOptInRequired : java/lang/annotation/Annotation {
+	public abstract fun markerClass ()Ljava/lang/Class;
 }
 
 public abstract interface annotation class kotlin/Suppress : java/lang/annotation/Annotation {

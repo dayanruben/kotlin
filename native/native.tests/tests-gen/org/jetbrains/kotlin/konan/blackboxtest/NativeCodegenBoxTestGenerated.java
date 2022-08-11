@@ -6965,6 +6965,54 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
                 public void testWhileTrueBreak() throws Exception {
                     runTest("compiler/testData/codegen/box/controlStructures/breakContinueInExpressions/whileTrueBreak.kt");
                 }
+
+                @Nested
+                @TestMetadata("compiler/testData/codegen/box/controlStructures/breakContinueInExpressions/inlinedBreakContinue")
+                @TestDataPath("$PROJECT_ROOT")
+                @Tag("codegen")
+                @UseExtTestCaseGroupProvider()
+                public class InlinedBreakContinue {
+                    @Test
+                    public void testAllFilesPresentInInlinedBreakContinue() throws Exception {
+                        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/controlStructures/breakContinueInExpressions/inlinedBreakContinue"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+                    }
+
+                    @Test
+                    @TestMetadata("inlineFunctionWithMultipleParameters.kt")
+                    public void testInlineFunctionWithMultipleParameters() throws Exception {
+                        runTest("compiler/testData/codegen/box/controlStructures/breakContinueInExpressions/inlinedBreakContinue/inlineFunctionWithMultipleParameters.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("lambdaPassedToInlineFunction.kt")
+                    public void testLambdaPassedToInlineFunction() throws Exception {
+                        runTest("compiler/testData/codegen/box/controlStructures/breakContinueInExpressions/inlinedBreakContinue/lambdaPassedToInlineFunction.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("loopWithinInlineFunction.kt")
+                    public void testLoopWithinInlineFunction() throws Exception {
+                        runTest("compiler/testData/codegen/box/controlStructures/breakContinueInExpressions/inlinedBreakContinue/loopWithinInlineFunction.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("simple.kt")
+                    public void testSimple() throws Exception {
+                        runTest("compiler/testData/codegen/box/controlStructures/breakContinueInExpressions/inlinedBreakContinue/simple.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("stdlibFunctions.kt")
+                    public void testStdlibFunctions() throws Exception {
+                        runTest("compiler/testData/codegen/box/controlStructures/breakContinueInExpressions/inlinedBreakContinue/stdlibFunctions.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("withReturnValue.kt")
+                    public void testWithReturnValue() throws Exception {
+                        runTest("compiler/testData/codegen/box/controlStructures/breakContinueInExpressions/inlinedBreakContinue/withReturnValue.kt");
+                    }
+                }
             }
 
             @Nested
@@ -38304,6 +38352,24 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
             @TestMetadata("toTypedArray.kt")
             public void testToTypedArray() throws Exception {
                 runTest("compiler/testData/codegen/box/toArray/toTypedArray.kt");
+            }
+        }
+
+        @Nested
+        @TestMetadata("compiler/testData/codegen/box/topLevelInitializtion")
+        @TestDataPath("$PROJECT_ROOT")
+        @Tag("codegen")
+        @UseExtTestCaseGroupProvider()
+        public class TopLevelInitializtion {
+            @Test
+            public void testAllFilesPresentInTopLevelInitializtion() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/topLevelInitializtion"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+            }
+
+            @Test
+            @TestMetadata("concurrent.kt")
+            public void testConcurrent() throws Exception {
+                runTest("compiler/testData/codegen/box/topLevelInitializtion/concurrent.kt");
             }
         }
 

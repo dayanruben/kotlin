@@ -8913,6 +8913,16 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
             public void testWhileTrueBreak() throws Exception {
                 runTest("compiler/testData/codegen/box/controlStructures/breakContinueInExpressions/whileTrueBreak.kt");
             }
+
+            @Nested
+            @TestMetadata("compiler/testData/codegen/box/controlStructures/breakContinueInExpressions/inlinedBreakContinue")
+            @TestDataPath("$PROJECT_ROOT")
+            public class InlinedBreakContinue {
+                @Test
+                public void testAllFilesPresentInInlinedBreakContinue() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/controlStructures/breakContinueInExpressions/inlinedBreakContinue"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
+                }
+            }
         }
 
         @Nested
@@ -47305,6 +47315,16 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         @TestMetadata("toTypedArray.kt")
         public void testToTypedArray() throws Exception {
             runTest("compiler/testData/codegen/box/toArray/toTypedArray.kt");
+        }
+    }
+
+    @Nested
+    @TestMetadata("compiler/testData/codegen/box/topLevelInitializtion")
+    @TestDataPath("$PROJECT_ROOT")
+    public class TopLevelInitializtion {
+        @Test
+        public void testAllFilesPresentInTopLevelInitializtion() throws Exception {
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/topLevelInitializtion"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
         }
     }
 

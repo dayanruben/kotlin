@@ -6892,6 +6892,19 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             public void testWhileTrueBreak() throws Exception {
                 runTest("compiler/testData/codegen/box/controlStructures/breakContinueInExpressions/whileTrueBreak.kt");
             }
+
+            @TestMetadata("compiler/testData/codegen/box/controlStructures/breakContinueInExpressions/inlinedBreakContinue")
+            @TestDataPath("$PROJECT_ROOT")
+            @RunWith(JUnit3RunnerWithInners.class)
+            public static class InlinedBreakContinue extends AbstractLightAnalysisModeTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM, testDataFilePath);
+                }
+
+                public void testAllFilesPresentInInlinedBreakContinue() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/controlStructures/breakContinueInExpressions/inlinedBreakContinue"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
+                }
+            }
         }
 
         @TestMetadata("compiler/testData/codegen/box/controlStructures/forInArray")
@@ -38338,6 +38351,19 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("toTypedArray.kt")
         public void testToTypedArray() throws Exception {
             runTest("compiler/testData/codegen/box/toArray/toTypedArray.kt");
+        }
+    }
+
+    @TestMetadata("compiler/testData/codegen/box/topLevelInitializtion")
+    @TestDataPath("$PROJECT_ROOT")
+    @RunWith(JUnit3RunnerWithInners.class)
+    public static class TopLevelInitializtion extends AbstractLightAnalysisModeTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM, testDataFilePath);
+        }
+
+        public void testAllFilesPresentInTopLevelInitializtion() throws Exception {
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/topLevelInitializtion"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
         }
     }
 
