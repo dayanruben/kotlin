@@ -16282,6 +16282,36 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         }
 
         @Test
+        @TestMetadata("enumEntries.kt")
+        public void testEnumEntries() throws Exception {
+            runTest("compiler/testData/codegen/box/enum/enumEntries.kt");
+        }
+
+        @Test
+        @TestMetadata("enumEntriesFromJava.kt")
+        public void testEnumEntriesFromJava() throws Exception {
+            runTest("compiler/testData/codegen/box/enum/enumEntriesFromJava.kt");
+        }
+
+        @Test
+        @TestMetadata("enumEntriesMultimodule.kt")
+        public void testEnumEntriesMultimodule() throws Exception {
+            runTest("compiler/testData/codegen/box/enum/enumEntriesMultimodule.kt");
+        }
+
+        @Test
+        @TestMetadata("enumEntriesMultimoduleMultipleMappings.kt")
+        public void testEnumEntriesMultimoduleMultipleMappings() throws Exception {
+            runTest("compiler/testData/codegen/box/enum/enumEntriesMultimoduleMultipleMappings.kt");
+        }
+
+        @Test
+        @TestMetadata("enumEntriesMultimoduleMultipleMappingsForMultipleClassfiles.kt")
+        public void testEnumEntriesMultimoduleMultipleMappingsForMultipleClassfiles() throws Exception {
+            runTest("compiler/testData/codegen/box/enum/enumEntriesMultimoduleMultipleMappingsForMultipleClassfiles.kt");
+        }
+
+        @Test
         @TestMetadata("enumEntryMembers.kt")
         public void testEnumEntryMembers() throws Exception {
             runTest("compiler/testData/codegen/box/enum/enumEntryMembers.kt");

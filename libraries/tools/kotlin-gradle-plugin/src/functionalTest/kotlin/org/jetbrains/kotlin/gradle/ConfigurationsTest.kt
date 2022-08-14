@@ -7,6 +7,7 @@
 
 package org.jetbrains.kotlin.gradle
 
+import org.gradle.api.attributes.AttributeContainer
 import org.gradle.api.attributes.Category
 import org.gradle.api.attributes.Usage
 import org.gradle.kotlin.dsl.withType
@@ -215,6 +216,113 @@ class ConfigurationsTest : MultiplatformExtensionTest() {
                         ) { it.name }
                     }"
                 }
+            }
+        }
+    }
+
+    class TestDisambiguationAttributePropagation {
+        private val disambiguationAttribute = org.gradle.api.attributes.Attribute.of("disambiguationAttribute", String::class.java)
+
+        private val mppProject get() = buildProjectWithMPP {
+            kotlin {
+                jvm("plainJvm") {
+                    attributes { attribute(disambiguationAttribute, "plainJvm") }
+                }
+
+                jvm("jvmWithJava") {
+                    withJava()
+                    attributes { attribute(disambiguationAttribute, "jvmWithJava") }
+                }
+            }
+        }
+
+        private val javaProject get() = buildProject {
+            project.plugins.apply("java-library")
+        }
+
+        //NB: There is no "api" configuration registered by Java Plugin
+        private val javaConfigurations = listOf(
+            "compileClasspath",
+            "runtimeClasspath",
+            "implementation",
+            "compileOnly",
+            "runtimeOnly"
+        )
+
+        @Test
+        fun `test that jvm target attributes are propagated to java configurations`() {
+            val kotlinJvmConfigurations = listOf(
+                "jvmWithJavaCompileClasspath",
+                "jvmWithJavaRuntimeClasspath",
+                "jvmWithJavaCompilationApi",
+                "jvmWithJavaCompilationImplementation",
+                "jvmWithJavaCompilationCompileOnly",
+                "jvmWithJavaCompilationRuntimeOnly",
+            )
+
+            val outgoingConfigurations = listOf(
+                "jvmWithJavaApiElements",
+                "jvmWithJavaRuntimeElements",
+            )
+
+            val testJavaConfigurations = listOf(
+                "testCompileClasspath",
+                "testCompileOnly",
+                "testImplementation",
+                "testRuntimeClasspath",
+                "testRuntimeOnly"
+            )
+
+            val jvmWithJavaTestConfigurations = listOf(
+                "jvmWithJavaTestCompileClasspath",
+                "jvmWithJavaTestRuntimeClasspath",
+                "jvmWithJavaTestCompilationApi",
+                "jvmWithJavaTestCompilationCompileOnly",
+                "jvmWithJavaTestCompilationImplementation",
+                "jvmWithJavaTestCompilationRuntimeOnly"
+            )
+
+            val expectedConfigurationsWithDisambiguationAttribute = javaConfigurations +
+                    kotlinJvmConfigurations +
+                    outgoingConfigurations +
+                    testJavaConfigurations +
+                    jvmWithJavaTestConfigurations
+
+            with(mppProject.evaluate()) {
+                val actualConfigurationsWithDisambiguationAttribute = configurations
+                    .filter { it.attributes.getAttribute(disambiguationAttribute) == "jvmWithJava" }
+                    .map { it.name }
+
+                assertEquals(
+                    expectedConfigurationsWithDisambiguationAttribute.sorted(),
+                    actualConfigurationsWithDisambiguationAttribute.sorted()
+                )
+            }
+        }
+
+        @Test
+        fun `test that no new attributes are added to java configurations`() {
+            val evaluatedJavaProject = javaProject.evaluate()
+            val evaluatedMppProject = mppProject.evaluate()
+
+            fun AttributeContainer.toStringMap(): Map<String, String> =
+                keySet().associate { it.name to getAttribute(it).toString() }
+
+            for (configurationName in javaConfigurations) {
+                val expectedAttributes = evaluatedJavaProject
+                    .configurations
+                    .getByName(configurationName)
+                    .attributes.toStringMap()
+
+                val actualAttributes = evaluatedMppProject
+                    .configurations
+                    .getByName(configurationName)
+                    .attributes.toStringMap()
+
+                assertEquals(
+                    expectedAttributes,
+                    actualAttributes - disambiguationAttribute.name
+                )
             }
         }
     }
