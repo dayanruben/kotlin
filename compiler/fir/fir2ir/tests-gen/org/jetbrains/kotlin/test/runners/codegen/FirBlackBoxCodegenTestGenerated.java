@@ -16890,6 +16890,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         }
 
         @Test
+        @TestMetadata("referenceNameFromStaticInDifferentModule.kt")
+        public void testReferenceNameFromStaticInDifferentModule() throws Exception {
+            runTest("compiler/testData/codegen/box/evaluate/referenceNameFromStaticInDifferentModule.kt");
+        }
+
+        @Test
         @TestMetadata("rem.kt")
         public void testRem() throws Exception {
             runTest("compiler/testData/codegen/box/evaluate/rem.kt");
@@ -45615,6 +45621,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         @TestMetadata("callableReferenceInlinedFun.kt")
         public void testCallableReferenceInlinedFun() throws Exception {
             runTest("compiler/testData/codegen/box/reified/callableReferenceInlinedFun.kt");
+        }
+
+        @Test
+        @TestMetadata("callableReferenceInlinedFunFromOtherModule.kt")
+        public void testCallableReferenceInlinedFunFromOtherModule() throws Exception {
+            runTest("compiler/testData/codegen/box/reified/callableReferenceInlinedFunFromOtherModule.kt");
         }
 
         @Test

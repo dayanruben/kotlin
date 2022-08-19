@@ -20,6 +20,18 @@ fun main(args: Array<String>) {
             testClass<AbstractSerializationIrBoxTest> {
                 model("boxIr")
             }
+
+            testClass<AbstractSerializationWithoutRuntimeIrBoxTest> {
+                model("boxWithoutRuntime")
+            }
+
+            testClass<AbstractSerializationFirMembersTest> {
+                model("firMembers")
+            }
+
+            testClass<AbstractSerializationFirBlackBoxTest> {
+                model("firMembers")
+            }
         }
     }
 }

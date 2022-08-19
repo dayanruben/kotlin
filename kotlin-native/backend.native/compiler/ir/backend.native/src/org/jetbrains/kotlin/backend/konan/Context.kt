@@ -1,6 +1,6 @@
 /*
- * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
- * that can be found in the LICENSE file.
+ * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.backend.konan
@@ -41,6 +41,7 @@ import org.jetbrains.kotlin.konan.library.KonanLibraryLayout
 import org.jetbrains.kotlin.konan.target.Architecture
 import org.jetbrains.kotlin.konan.target.CompilerOutputKind
 import org.jetbrains.kotlin.konan.target.KonanTarget
+import org.jetbrains.kotlin.konan.target.needSmallBinary
 import org.jetbrains.kotlin.library.SerializedIrModule
 import org.jetbrains.kotlin.library.SerializedMetadata
 import org.jetbrains.kotlin.name.ClassId
@@ -65,6 +66,10 @@ internal class NativeMapping : DefaultMapping() {
     val bridges = mutableMapOf<BridgeKey, IrSimpleFunction>()
     val notLoweredInlineFunctions = mutableMapOf<IrFunctionSymbol, IrFunction>()
     val loweredInlineFunctions = mutableMapOf<IrFunction, InlineFunctionOriginInfo>()
+    val companionObjectCacheAccessors = DefaultDelegateFactory.newDeclarationToDeclarationMapping<IrClass, IrSimpleFunction>()
+    val outerThisCacheAccessors = DefaultDelegateFactory.newDeclarationToDeclarationMapping<IrClass, IrSimpleFunction>()
+    val lateinitPropertyCacheAccessors = DefaultDelegateFactory.newDeclarationToDeclarationMapping<IrProperty, IrSimpleFunction>()
+    val enumValuesCacheAccessors = DefaultDelegateFactory.newDeclarationToDeclarationMapping<IrClass, IrSimpleFunction>()
 }
 
 internal class Context(config: KonanConfig) : KonanBackendContext(config) {
@@ -105,6 +110,7 @@ internal class Context(config: KonanConfig) : KonanBackendContext(config) {
     val bridgesSupport by lazy { BridgesSupport(mapping, irBuiltIns, irFactory) }
     val inlineFunctionsSupport by lazy { InlineFunctionsSupport(mapping) }
     val enumsSupport by lazy { EnumsSupport(mapping, ir.symbols, irBuiltIns, irFactory) }
+    val cachesAbiSupport by lazy { CachesAbiSupport(mapping, ir.symbols, irFactory) }
 
     open class LazyMember<T>(val initializer: Context.() -> T) {
         operator fun getValue(thisRef: Context, property: KProperty<*>): T = thisRef.getValue(this)
@@ -318,10 +324,7 @@ internal class Context(config: KonanConfig) : KonanBackendContext(config) {
     fun shouldUseDebugInfoFromNativeLibs() = shouldContainAnyDebugInfo() && config.useDebugInfoInNativeLibs
 
     fun shouldOptimize() = config.optimizationsEnabled
-    fun shouldInlineSafepoints() = when {
-        config.target.family.isAppleFamily -> config.target.architecture != Architecture.ARM32 // disable for watchos_arm32 and similar
-        else -> true
-    }
+    fun shouldInlineSafepoints() = !config.target.needSmallBinary()
     fun ghaEnabled() = ::globalHierarchyAnalysisResult.isInitialized
     fun useLazyFileInitializers() = config.propertyLazyInitialization
 
@@ -362,11 +365,6 @@ internal class Context(config: KonanConfig) : KonanBackendContext(config) {
     }
 
     val declaredLocalArrays: MutableMap<String, LLVMTypeRef> = HashMap()
-
-    /**
-     * Manages internal ABI references and declarations.
-     */
-    val internalAbi = InternalAbi(this)
 
     lateinit var irLinker: KonanIrLinker
 

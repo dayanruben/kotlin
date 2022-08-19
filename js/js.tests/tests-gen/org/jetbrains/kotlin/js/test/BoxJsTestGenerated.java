@@ -39,6 +39,12 @@ public class BoxJsTestGenerated extends AbstractBoxJsTest {
         public void testAnnotationClass() throws Exception {
             runTest("js/js.translator/testData/box/annotation/annotationClass.kt");
         }
+
+        @Test
+        @TestMetadata("multipleEqualMethodsBug.kt")
+        public void testMultipleEqualMethodsBug() throws Exception {
+            runTest("js/js.translator/testData/box/annotation/multipleEqualMethodsBug.kt");
+        }
     }
 
     @Nested
@@ -7734,6 +7740,18 @@ public class BoxJsTestGenerated extends AbstractBoxJsTest {
         @TestMetadata("innerReferenceFromChild.kt")
         public void testInnerReferenceFromChild() throws Exception {
             runTest("js/js.translator/testData/box/nestedTypes/innerReferenceFromChild.kt");
+        }
+
+        @Test
+        @TestMetadata("innerWithMultipleArgs.kt")
+        public void testInnerWithMultipleArgs() throws Exception {
+            runTest("js/js.translator/testData/box/nestedTypes/innerWithMultipleArgs.kt");
+        }
+
+        @Test
+        @TestMetadata("innerWithSecondaryConstructor.kt")
+        public void testInnerWithSecondaryConstructor() throws Exception {
+            runTest("js/js.translator/testData/box/nestedTypes/innerWithSecondaryConstructor.kt");
         }
 
         @Test

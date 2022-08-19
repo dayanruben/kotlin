@@ -26,9 +26,33 @@ public class SerializationIrBoxTestGenerated extends AbstractSerializationIrBoxT
     }
 
     @Test
+    @TestMetadata("annotationsOnFile.kt")
+    public void testAnnotationsOnFile() throws Exception {
+        runTest("plugins/kotlin-serialization/kotlin-serialization-compiler/testData/boxIr/annotationsOnFile.kt");
+    }
+
+    @Test
     @TestMetadata("classSerializerAsObject.kt")
     public void testClassSerializerAsObject() throws Exception {
         runTest("plugins/kotlin-serialization/kotlin-serialization-compiler/testData/boxIr/classSerializerAsObject.kt");
+    }
+
+    @Test
+    @TestMetadata("enumsAreCached.kt")
+    public void testEnumsAreCached() throws Exception {
+        runTest("plugins/kotlin-serialization/kotlin-serialization-compiler/testData/boxIr/enumsAreCached.kt");
+    }
+
+    @Test
+    @TestMetadata("generics.kt")
+    public void testGenerics() throws Exception {
+        runTest("plugins/kotlin-serialization/kotlin-serialization-compiler/testData/boxIr/generics.kt");
+    }
+
+    @Test
+    @TestMetadata("inlineClasses.kt")
+    public void testInlineClasses() throws Exception {
+        runTest("plugins/kotlin-serialization/kotlin-serialization-compiler/testData/boxIr/inlineClasses.kt");
     }
 
     @Test

@@ -236,18 +236,6 @@ class Fir2IrDeclarationStorage(
         }
     }
 
-    private fun findIrClass(lookupTag: ConeClassLikeLookupTag): IrClass? =
-        if (lookupTag.classId.isLocal) {
-            classifierStorage.getCachedLocalClass(lookupTag)
-        } else {
-            val firSymbol = lookupTag.toSymbol(session)
-            if (firSymbol is FirClassSymbol) {
-                classifierStorage.getIrClassSymbol(firSymbol).owner
-            } else {
-                null
-            }
-        }
-
     internal fun findIrParent(
         packageFqName: FqName,
         parentLookupTag: ConeClassLikeLookupTag?,
@@ -255,7 +243,7 @@ class Fir2IrDeclarationStorage(
         firOrigin: FirDeclarationOrigin
     ): IrDeclarationParent? {
         return if (parentLookupTag != null) {
-            findIrClass(parentLookupTag)
+            classifierStorage.findIrClass(parentLookupTag)
         } else {
             val containerFile = when (firBasedSymbol) {
                 is FirCallableSymbol -> firProvider.getFirCallableContainerFile(firBasedSymbol)
@@ -854,8 +842,8 @@ class Fir2IrDeclarationStorage(
         containingClass: ConeClassLikeLookupTag? = (irParent as? IrClass)?.classId?.let { ConeClassLikeLookupTagImpl(it) },
         forceTopLevelPrivate: Boolean = false,
     ): IrProperty = convertCatching(property) {
-        val origin = if (property.isStatic && property.name in ENUM_SYNTHETIC_NAMES)
-            IrDeclarationOrigin.ENUM_CLASS_SPECIAL_MEMBER
+        val origin =
+            if (property.isStatic && property.name in ENUM_SYNTHETIC_NAMES) IrDeclarationOrigin.ENUM_CLASS_SPECIAL_MEMBER
             else property.computeIrOrigin(predefinedOrigin)
         // See similar comments in createIrFunction above
         val signature =
@@ -934,6 +922,7 @@ class Fir2IrDeclarationStorage(
                         getter, property, this, type, irParent, thisReceiverOwner, false,
                         when {
                             origin == IrDeclarationOrigin.IR_EXTERNAL_DECLARATION_STUB -> origin
+                            origin == IrDeclarationOrigin.ENUM_CLASS_SPECIAL_MEMBER -> origin
                             delegate != null -> IrDeclarationOrigin.DELEGATED_PROPERTY_ACCESSOR
                             getter is FirDefaultPropertyGetter -> IrDeclarationOrigin.DEFAULT_PROPERTY_ACCESSOR
                             else -> origin
@@ -1572,7 +1561,7 @@ class Fir2IrDeclarationStorage(
             is FirEnumEntry -> {
                 classifierStorage.getCachedIrEnumEntry(firDeclaration)?.let { return it.symbol }
                 val containingFile = firProvider.getFirCallableContainerFile(firVariableSymbol)
-                val irParentClass = firDeclaration.containingClass()?.let { findIrClass(it) }
+                val irParentClass = firDeclaration.containingClass()?.let { classifierStorage.findIrClass(it) }
                 classifierStorage.createIrEnumEntry(
                     firDeclaration,
                     irParent = irParentClass,

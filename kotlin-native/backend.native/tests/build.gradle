@@ -5225,6 +5225,13 @@ dynamicTest("kt39496") {
     useGoldenData = true
 }
 
+dynamicTest("kt41904") {
+    disabled = (project.testTarget == 'wasm32') // wasm doesn't support -produce dynamic
+    source = "produce_dynamic/kt-41904/hello.kt"
+    cSource = "$projectDir/produce_dynamic/kt-41904/main.c"
+    useGoldenData = true
+}
+
 for (i in 0..2) {
     dynamicTest("kt42796_$i") {
         clangTool = "clang++"
@@ -5234,6 +5241,13 @@ for (i in 0..2) {
         useGoldenData = true
         clangFlags = ["-DTEST=$i", "-Werror"]
     }
+}
+
+dynamicTest("kt42830") {
+    disabled = (project.testTarget == 'wasm32') // wasm doesn't support -produce dynamic
+    source = "produce_dynamic/kt-42830/box_unbox.kt"
+    cSource = "$projectDir/produce_dynamic/kt-42830/main.c"
+    useGoldenData = true
 }
 
 dynamicTest("produce_dynamic_unhandledException") {

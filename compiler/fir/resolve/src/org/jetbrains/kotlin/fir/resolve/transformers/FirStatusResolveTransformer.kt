@@ -8,12 +8,12 @@ package org.jetbrains.kotlin.fir.resolve.transformers
 import org.jetbrains.kotlin.descriptors.EffectiveVisibility
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.caches.firCachesFactory
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.impl.FirResolvedDeclarationStatusImpl
 import org.jetbrains.kotlin.fir.declarations.utils.isLocal
 import org.jetbrains.kotlin.fir.expressions.FirBlock
 import org.jetbrains.kotlin.fir.expressions.FirStatement
-import org.jetbrains.kotlin.fir.languageVersionSettings
 import org.jetbrains.kotlin.fir.render
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.resolve.providers.firProvider
@@ -554,8 +554,8 @@ abstract class AbstractFirStatusResolveTransformer(
     }
 
     protected fun calculateDeprecations(simpleFunction: FirCallableDeclaration) {
-        if (simpleFunction.deprecation == null) {
-            simpleFunction.replaceDeprecation(simpleFunction.getDeprecationInfos(session.languageVersionSettings.apiVersion))
+        if (simpleFunction.deprecationsProvider is UnresolvedDeprecationProvider) {
+            simpleFunction.replaceDeprecationsProvider(simpleFunction.getDeprecationsProvider(session.firCachesFactory))
         }
     }
 }

@@ -119,11 +119,4 @@ fun ClassId.defaultType(parameters: List<FirTypeParameterSymbol>): ConeClassLike
         isNullable = false,
     )
 
-fun FirClass.typeWithStarProjections(): ConeClassLikeType =
-    ConeClassLikeTypeImpl(
-        symbol.toLookupTag(),
-        typeParameters.map { ConeStarProjection }.toTypedArray(),
-        isNullable = false
-    )
-
 val TYPE_PARAMETER_SCOPE_KEY = scopeSessionKey<FirTypeParameterSymbol, FirTypeScope>()

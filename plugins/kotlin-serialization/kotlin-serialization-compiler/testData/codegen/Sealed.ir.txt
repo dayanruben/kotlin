@@ -1,7 +1,7 @@
 public final class Container$$serializer : java/lang/Object, kotlinx/serialization/internal/GeneratedSerializer {
     public final static Container$$serializer INSTANCE
 
-    public final static kotlinx.serialization.descriptors.SerialDescriptor descriptor
+    private final static kotlinx.serialization.internal.PluginGeneratedSerialDescriptor descriptor
 
     static void <clinit>() {
           NEW (Container$$serializer)
@@ -23,8 +23,7 @@ public final class Container$$serializer : java/lang/Object, kotlinx/serializati
           ICONST_0
           INVOKEVIRTUAL (kotlinx/serialization/internal/PluginGeneratedSerialDescriptor, addElement, (Ljava/lang/String;Z)V)
           ALOAD (0)
-          CHECKCAST (kotlinx/serialization/descriptors/SerialDescriptor)
-          PUTSTATIC (Container$$serializer, descriptor, Lkotlinx/serialization/descriptors/SerialDescriptor;)
+          PUTSTATIC (Container$$serializer, descriptor, Lkotlinx/serialization/internal/PluginGeneratedSerialDescriptor;)
         LABEL (L1)
         LINENUMBER (19)
           RETURN
@@ -326,7 +325,9 @@ final class Result$Companion$$cachedSerializer$delegate$1 : kotlin/jvm/internal/
           DUP
           LDC (Result.Err)
           GETSTATIC (Result$Err, INSTANCE, LResult$Err;)
-          INVOKESPECIAL (kotlinx/serialization/internal/ObjectSerializer, <init>, (Ljava/lang/String;Ljava/lang/Object;)V)
+          ICONST_0
+          ANEWARRAY (java/lang/annotation/Annotation)
+          INVOKESPECIAL (kotlinx/serialization/internal/ObjectSerializer, <init>, (Ljava/lang/String;Ljava/lang/Object;[Ljava/lang/annotation/Annotation;)V)
           CHECKCAST (kotlinx/serialization/KSerializer)
           AASTORE
           ALOAD (1)
@@ -335,7 +336,9 @@ final class Result$Companion$$cachedSerializer$delegate$1 : kotlin/jvm/internal/
           CHECKCAST (kotlinx/serialization/KSerializer)
           AASTORE
           ALOAD (1)
-          INVOKESPECIAL (kotlinx/serialization/SealedClassSerializer, <init>, (Ljava/lang/String;Lkotlin/reflect/KClass;[Lkotlin/reflect/KClass;[Lkotlinx/serialization/KSerializer;)V)
+          ICONST_0
+          ANEWARRAY (java/lang/annotation/Annotation)
+          INVOKESPECIAL (kotlinx/serialization/SealedClassSerializer, <init>, (Ljava/lang/String;Lkotlin/reflect/KClass;[Lkotlin/reflect/KClass;[Lkotlinx/serialization/KSerializer;[Ljava/lang/annotation/Annotation;)V)
           CHECKCAST (kotlinx/serialization/KSerializer)
           ARETURN
         LABEL (L1)
@@ -410,7 +413,9 @@ final class Result$Err$$cachedSerializer$delegate$1 : kotlin/jvm/internal/Lambda
           DUP
           LDC (Result.Err)
           GETSTATIC (Result$Err, INSTANCE, LResult$Err;)
-          INVOKESPECIAL (kotlinx/serialization/internal/ObjectSerializer, <init>, (Ljava/lang/String;Ljava/lang/Object;)V)
+          ICONST_0
+          ANEWARRAY (java/lang/annotation/Annotation)
+          INVOKESPECIAL (kotlinx/serialization/internal/ObjectSerializer, <init>, (Ljava/lang/String;Ljava/lang/Object;[Ljava/lang/annotation/Annotation;)V)
           CHECKCAST (kotlinx/serialization/KSerializer)
           ARETURN
         LABEL (L1)
@@ -473,7 +478,7 @@ public final class Result$Err : Result {
 public final class Result$OK$$serializer : java/lang/Object, kotlinx/serialization/internal/GeneratedSerializer {
     public final static Result$OK$$serializer INSTANCE
 
-    public final static kotlinx.serialization.descriptors.SerialDescriptor descriptor
+    private final static kotlinx.serialization.internal.PluginGeneratedSerialDescriptor descriptor
 
     static void <clinit>() {
           NEW (Result$OK$$serializer)
@@ -495,8 +500,7 @@ public final class Result$OK$$serializer : java/lang/Object, kotlinx/serializati
           ICONST_0
           INVOKEVIRTUAL (kotlinx/serialization/internal/PluginGeneratedSerialDescriptor, addElement, (Ljava/lang/String;Z)V)
           ALOAD (0)
-          CHECKCAST (kotlinx/serialization/descriptors/SerialDescriptor)
-          PUTSTATIC (Result$OK$$serializer, descriptor, Lkotlinx/serialization/descriptors/SerialDescriptor;)
+          PUTSTATIC (Result$OK$$serializer, descriptor, Lkotlinx/serialization/internal/PluginGeneratedSerialDescriptor;)
           RETURN
     }
 
@@ -859,7 +863,9 @@ public final class X$Companion : java/lang/Object {
           DUP
           LDC (Result.Err)
           GETSTATIC (Result$Err, INSTANCE, LResult$Err;)
-          INVOKESPECIAL (kotlinx/serialization/internal/ObjectSerializer, <init>, (Ljava/lang/String;Ljava/lang/Object;)V)
+          ICONST_0
+          ANEWARRAY (java/lang/annotation/Annotation)
+          INVOKESPECIAL (kotlinx/serialization/internal/ObjectSerializer, <init>, (Ljava/lang/String;Ljava/lang/Object;[Ljava/lang/annotation/Annotation;)V)
           CHECKCAST (kotlinx/serialization/KSerializer)
           AASTORE
           ALOAD (1)
@@ -868,7 +874,9 @@ public final class X$Companion : java/lang/Object {
           CHECKCAST (kotlinx/serialization/KSerializer)
           AASTORE
           ALOAD (1)
-          INVOKESPECIAL (kotlinx/serialization/SealedClassSerializer, <init>, (Ljava/lang/String;Lkotlin/reflect/KClass;[Lkotlin/reflect/KClass;[Lkotlinx/serialization/KSerializer;)V)
+          ICONST_0
+          ANEWARRAY (java/lang/annotation/Annotation)
+          INVOKESPECIAL (kotlinx/serialization/SealedClassSerializer, <init>, (Ljava/lang/String;Lkotlin/reflect/KClass;[Lkotlin/reflect/KClass;[Lkotlinx/serialization/KSerializer;[Ljava/lang/annotation/Annotation;)V)
           CHECKCAST (kotlinx/serialization/KSerializer)
           ARETURN
         LABEL (L1)

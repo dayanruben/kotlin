@@ -9909,6 +9909,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             }
 
             @Test
+            @TestMetadata("enumEntriesAmbiguity.kt")
+            public void testEnumEntriesAmbiguity() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/enum/enumEntriesAmbiguity.kt");
+            }
+
+            @Test
             @TestMetadata("enumEntryCannotHaveClassObject.kt")
             public void testEnumEntryCannotHaveClassObject() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/enum/enumEntryCannotHaveClassObject.kt");
@@ -14032,6 +14038,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             @TestMetadata("kt49961.kt")
             public void testKt49961() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/inference/kt49961.kt");
+            }
+
+            @Test
+            @TestMetadata("kt50232a.kt")
+            public void testKt50232a() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inference/kt50232a.kt");
             }
 
             @Test
