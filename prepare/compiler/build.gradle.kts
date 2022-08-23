@@ -89,6 +89,9 @@ val distLibraryProjects = listOfNotNull(
     ":kotlin-imports-dumper-compiler-plugin",
     ":kotlin-main-kts",
     ":kotlin-preloader",
+    // Although, Kotlin compiler is compiled against reflect of an older version (which is bundled into minimal supported IDEA). We put
+    // SNAPSHOT reflect into the dist because we use reflect dist in user code compile classpath (see JvmArgumentsKt.configureStandardLibs).
+    // We can use reflect of a bigger version in Kotlin compiler runtime, because kotlin-reflect follows backwards binary compatibility
     ":kotlin-reflect",
     ":kotlin-runner",
     ":kotlin-script-runtime",
@@ -137,7 +140,7 @@ configurations.all {
 dependencies {
     api(kotlinStdlib())
     api(project(":kotlin-script-runtime"))
-    api(project(":kotlin-reflect"))
+    api(commonDependency("org.jetbrains.kotlin:kotlin-reflect")) { isTransitive = false }
     api(commonDependency("org.jetbrains.intellij.deps", "trove4j"))
 
     proguardLibraries(project(":kotlin-annotations-jvm"))
