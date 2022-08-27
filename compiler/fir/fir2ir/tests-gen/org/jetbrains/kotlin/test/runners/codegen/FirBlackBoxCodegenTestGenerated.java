@@ -16324,6 +16324,18 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         }
 
         @Test
+        @TestMetadata("enumEntriesMultimoduleNoMappings.kt")
+        public void testEnumEntriesMultimoduleNoMappings() throws Exception {
+            runTest("compiler/testData/codegen/box/enum/enumEntriesMultimoduleNoMappings.kt");
+        }
+
+        @Test
+        @TestMetadata("enumEntriesNameClashes.kt")
+        public void testEnumEntriesNameClashes() throws Exception {
+            runTest("compiler/testData/codegen/box/enum/enumEntriesNameClashes.kt");
+        }
+
+        @Test
         @TestMetadata("enumEntryMembers.kt")
         public void testEnumEntryMembers() throws Exception {
             runTest("compiler/testData/codegen/box/enum/enumEntryMembers.kt");
@@ -17003,6 +17015,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         @TestMetadata("generics.kt")
         public void testGenerics() throws Exception {
             runTest("compiler/testData/codegen/box/extensionClasses/generics.kt");
+        }
+
+        @Test
+        @TestMetadata("propertyWithContext.kt")
+        public void testPropertyWithContext() throws Exception {
+            runTest("compiler/testData/codegen/box/extensionClasses/propertyWithContext.kt");
         }
 
         @Test
@@ -50255,6 +50273,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         @TestMetadata("kt47365.kt")
         public void testKt47365() throws Exception {
             runTest("compiler/testData/codegen/box/when/kt47365.kt");
+        }
+
+        @Test
+        @TestMetadata("kt47475.kt")
+        public void testKt47475() throws Exception {
+            runTest("compiler/testData/codegen/box/when/kt47475.kt");
         }
 
         @Test

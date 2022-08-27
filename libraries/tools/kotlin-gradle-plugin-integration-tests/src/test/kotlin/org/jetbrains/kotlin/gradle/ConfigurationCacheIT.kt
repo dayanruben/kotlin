@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.gradle
 
+import org.gradle.api.logging.LogLevel
 import org.gradle.api.logging.configuration.WarningMode
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.report.BuildReportType
@@ -94,7 +95,7 @@ class ConfigurationCacheIT : AbstractConfigurationCacheIT() {
             build("build", buildOptions = buildOptions) {
                 // Reduce the problem numbers when a Task become compatible with GCC.
                 // When all tasks support GCC, replace these assertions with `testConfigurationCacheOf`
-                assertOutputContains("15 problems were found storing the configuration cache, 5 of which seem unique.")
+                assertOutputContains("16 problems were found storing the configuration cache, 6 of which seem unique.")
                 configCacheIncompatibleTaskTypes.forEach { taskType ->
                     assertOutputContains(
                         """Task `\S+` of type `[\w.]+$taskType`: .+(at execution time is unsupported)|(not supported with the configuration cache)"""
@@ -249,6 +250,22 @@ class ConfigurationCacheIT : AbstractConfigurationCacheIT() {
 
             build("assemble", buildOptions = buildOptions) {
                 assertBuildReportPathIsPrinted()
+            }
+        }
+    }
+
+    @JvmGradlePluginTests
+    @DisplayName("with build build scan report")
+    @GradleTest
+    fun testBuildScanReportSmokeTestForConfigurationCache(gradleVersion: GradleVersion) {
+        project("simpleProject", gradleVersion) {
+            val buildOptions = defaultBuildOptions.copy(buildReport = listOf(BuildReportType.BUILD_SCAN), logLevel = LogLevel.DEBUG)
+            build("clean", "assemble", "-Pkotlin.build.report.build_scan.custom_values_limit=0", "--scan", buildOptions = buildOptions) {
+                assertOutputContains("Can't add any more custom values into build scan")
+            }
+
+            build("clean", "assemble", "-Pkotlin.build.report.build_scan.custom_values_limit=0", "--scan", buildOptions = buildOptions) {
+                assertOutputContains("Can't add any more custom values into build scan")
             }
         }
     }
