@@ -35,6 +35,16 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
     @TestDataPath("$PROJECT_ROOT")
     @RunWith(JUnit3RunnerWithInners.class)
     public static class Annotations extends AbstractLightAnalysisModeTest {
+        @TestMetadata("noTypeUseIfDependOnJvm6.kt")
+        public void ignoreNoTypeUseIfDependOnJvm6() throws Exception {
+            runTest("compiler/testData/codegen/box/annotations/noTypeUseIfDependOnJvm6.kt");
+        }
+
+        @TestMetadata("noTypeUseIfFlagIsSpecified.kt")
+        public void ignoreNoTypeUseIfFlagIsSpecified() throws Exception {
+            runTest("compiler/testData/codegen/box/annotations/noTypeUseIfFlagIsSpecified.kt");
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM, testDataFilePath);
         }
@@ -13159,6 +13169,21 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("bigEnum.kt")
         public void ignoreBigEnum() throws Exception {
             runTest("compiler/testData/codegen/box/enum/bigEnum.kt");
+        }
+
+        @TestMetadata("enumEntries.kt")
+        public void ignoreEnumEntries() throws Exception {
+            runTest("compiler/testData/codegen/box/enum/enumEntries.kt");
+        }
+
+        @TestMetadata("enumEntriesMultimoduleNoMappings.kt")
+        public void ignoreEnumEntriesMultimoduleNoMappings() throws Exception {
+            runTest("compiler/testData/codegen/box/enum/enumEntriesMultimoduleNoMappings.kt");
+        }
+
+        @TestMetadata("enumEntriesNameClashes.kt")
+        public void ignoreEnumEntriesNameClashes() throws Exception {
+            runTest("compiler/testData/codegen/box/enum/enumEntriesNameClashes.kt");
         }
 
         private void runTest(String testDataFilePath) throws Exception {
