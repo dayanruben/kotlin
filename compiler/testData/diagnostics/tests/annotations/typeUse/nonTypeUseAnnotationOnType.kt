@@ -1,4 +1,3 @@
-// FIR_IDENTICAL
 // !LANGUAGE: +ProperCheckAnnotationsTargetInTypeUsePositions
 // ISSUE: KT-28449
 

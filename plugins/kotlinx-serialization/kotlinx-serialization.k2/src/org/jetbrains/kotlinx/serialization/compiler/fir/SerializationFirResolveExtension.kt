@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
 import org.jetbrains.kotlin.fir.declarations.builder.*
 import org.jetbrains.kotlin.fir.declarations.impl.FirResolvedDeclarationStatusImpl
 import org.jetbrains.kotlin.fir.declarations.origin
-import org.jetbrains.kotlin.fir.declarations.utils.superConeTypes
 import org.jetbrains.kotlin.fir.extensions.FirDeclarationGenerationExtension
 import org.jetbrains.kotlin.fir.extensions.FirDeclarationPredicateRegistrar
 import org.jetbrains.kotlin.fir.extensions.MemberGenerationContext
@@ -100,7 +99,7 @@ class SerializationFirResolveExtension(session: FirSession) : FirDeclarationGene
                     SerialEntityNames.LOAD_NAME,
                     SerialEntityNames.SERIAL_DESC_FIELD_NAME
                 )
-                if (classSymbol.superConeTypes.any {
+                if (classSymbol.resolvedSuperTypes.any {
                         it.classId == ClassId(
                             SerializationPackages.internalPackageFqName,
                             SerialEntityNames.GENERATED_SERIALIZER_CLASS
@@ -136,7 +135,7 @@ class SerializationFirResolveExtension(session: FirSession) : FirDeclarationGene
     override fun generateFunctions(callableId: CallableId, context: MemberGenerationContext?): List<FirNamedFunctionSymbol> {
         val owner = context?.owner ?: return emptyList()
         if (callableId.callableName == SerialEntityNames.SERIALIZER_PROVIDER_NAME) {
-            val serializableClass = session.getSerializableClassDescriptorByCompanion(owner) ?: return emptyList()
+            val serializableClass = owner.getSerializableClassSymbolIfCompanion(session) ?: return emptyList()
             return listOf(generateSerializerGetterInCompanion(owner, serializableClass, callableId))
         }
         if (owner.name != SerialEntityNames.SERIALIZER_CLASS_NAME) return emptyList()

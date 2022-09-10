@@ -8,8 +8,6 @@ package org.jetbrains.kotlin.light.classes.symbol.classes
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiReferenceList
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
@@ -21,12 +19,12 @@ import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.analysis.project.structure.getKtModuleOfTypeSafe
-import org.jetbrains.kotlin.analysis.providers.createProjectWideOutOfBlockModificationTracker
 import org.jetbrains.kotlin.asJava.builder.LightMemberOriginForDeclaration
 import org.jetbrains.kotlin.asJava.classes.*
 import org.jetbrains.kotlin.asJava.elements.KtLightField
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.hasInterfaceDefaultImpls
+import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.config.JvmAnalysisFlags
 import org.jetbrains.kotlin.config.JvmDefaultMode
 import org.jetbrains.kotlin.descriptors.Modality
@@ -48,30 +46,8 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.JvmDeclarationOriginKind
 import java.util.*
 
-internal fun getOrCreateSymbolLightClass(classOrObject: KtClassOrObject): KtLightClass? =
-    CachedValuesManager.getCachedValue(classOrObject) {
-        CachedValueProvider.Result
-            .create(
-                createSymbolLightClassNoCache(classOrObject),
-                classOrObject.project.createProjectWideOutOfBlockModificationTracker()
-            )
-    }
-
 @OptIn(KtAllowAnalysisOnEdt::class)
 internal fun createSymbolLightClassNoCache(classOrObject: KtClassOrObject): KtLightClass? = allowAnalysisOnEdt {
-
-    val containingFile = classOrObject.containingFile
-    if (containingFile is KtCodeFragment) {
-        // Avoid building light classes for code fragments
-        return null
-    }
-
-    if (containingFile is KtFile && containingFile.isCompiled) return null
-
-    if (classOrObject.shouldNotBeVisibleAsLightClass()) {
-        return null
-    }
-
     val anonymousObject = classOrObject.parent as? KtObjectLiteralExpression
     if (anonymousObject != null) {
         return analyzeForLightClasses(anonymousObject) {
@@ -113,14 +89,10 @@ context(KtAnalysisSession)
 private fun lightClassForEnumEntry(ktEnumEntry: KtEnumEntry): KtLightClass? {
     if (ktEnumEntry.body == null) return null
 
-    val symbolLightClass = ktEnumEntry
-        .containingClass()
-        ?.let { getOrCreateSymbolLightClass(it) } as? SymbolLightClass
-        ?: return null
-
-    val targetField = symbolLightClass.ownFields
-        .firstOrNull { it is SymbolLightFieldForEnumEntry && it.kotlinOrigin == ktEnumEntry }
-        ?: return null
+    val symbolLightClass = ktEnumEntry.containingClass()?.toLightClass() as? SymbolLightClass ?: return null
+    val targetField = symbolLightClass.ownFields.firstOrNull {
+        it is SymbolLightFieldForEnumEntry && it.kotlinOrigin == ktEnumEntry
+    } ?: return null
 
     return (targetField as? SymbolLightFieldForEnumEntry)?.initializingClass as? KtLightClass
 }
@@ -145,6 +117,15 @@ internal fun SymbolLightClassBase.createConstructors(
                 methodIndex = METHOD_INDEX_BASE
             )
         )
+        createJvmOverloadsIfNeeded(constructor, result) { methodIndex, argumentSkipMask ->
+            SymbolLightConstructor(
+                constructorSymbol = constructor,
+                lightMemberOrigin = null,
+                containingClass = this@createConstructors,
+                methodIndex = methodIndex,
+                argumentsSkipMask = argumentSkipMask
+            )
+        }
     }
     val primaryConstructor = constructors.singleOrNull { it.isPrimary }
     if (primaryConstructor != null && shouldGenerateNoArgOverload(primaryConstructor, constructors)) {
@@ -173,7 +154,8 @@ context(KtAnalysisSession)
 private fun SymbolLightClassBase.defaultConstructor(): KtLightMethod {
     val classOrObject = kotlinOrigin
     val visibility = when {
-        classOrObject is KtObjectDeclaration || classOrObject?.hasModifier(SEALED_KEYWORD) == true || isEnum -> PsiModifier.PRIVATE
+        classOrObject is KtObjectDeclaration || isEnum -> PsiModifier.PRIVATE
+        classOrObject?.hasModifier(SEALED_KEYWORD) == true -> PsiModifier.PROTECTED
         classOrObject is KtEnumEntry -> PsiModifier.PACKAGE_LOCAL
         else -> PsiModifier.PUBLIC
     }
@@ -204,7 +186,7 @@ internal fun SymbolLightClassBase.createMethods(
     isTopLevel: Boolean = false,
     suppressStatic: Boolean = false
 ) {
-    val declarationGroups = declarations.groupBy { it is KtPropertySymbol && it.isFromPrimaryConstructor }
+    val (ctorProperties, regularMembers) = declarations.partition { it is KtPropertySymbol && it.isFromPrimaryConstructor }
 
     fun handleDeclaration(declaration: KtCallableSymbol) {
         when (declaration) {
@@ -214,33 +196,27 @@ internal fun SymbolLightClassBase.createMethods(
                     declaration.isHiddenOrSynthetic()
                 ) return
 
-                var methodIndex = METHOD_INDEX_BASE
                 result.add(
                     SymbolLightSimpleMethod(
                         functionSymbol = declaration,
                         lightMemberOrigin = null,
                         containingClass = this@createMethods,
+                        methodIndex = METHOD_INDEX_BASE,
                         isTopLevel = isTopLevel,
-                        methodIndex = methodIndex,
                         suppressStatic = suppressStatic
                     )
                 )
 
-                if (declaration.hasJvmOverloadsAnnotation()) {
-                    val skipMask = BitSet(declaration.valueParameters.size)
-
-                    for (i in declaration.valueParameters.size - 1 downTo 0) {
-
-                        if (!declaration.valueParameters[i].hasDefaultValue) continue
-
-                        skipMask.set(i)
-
-                        result.add(
-                            SymbolLightSimpleMethod(
-                                declaration, null, this@createMethods, methodIndex++, isTopLevel, skipMask.copy()
-                            )
-                        )
-                    }
+                createJvmOverloadsIfNeeded(declaration, result) { methodIndex, argumentSkipMask ->
+                    SymbolLightSimpleMethod(
+                        functionSymbol = declaration,
+                        lightMemberOrigin = null,
+                        containingClass = this@createMethods,
+                        methodIndex = methodIndex,
+                        isTopLevel = isTopLevel,
+                        argumentsSkipMask = argumentSkipMask,
+                        suppressStatic = suppressStatic
+                    )
                 }
             }
 
@@ -257,12 +233,30 @@ internal fun SymbolLightClassBase.createMethods(
     }
 
     // Regular members
-    declarationGroups[false]?.forEach {
+    regularMembers.forEach {
         handleDeclaration(it)
     }
     // Then, properties from the primary constructor parameters
-    declarationGroups[true]?.forEach {
+    ctorProperties.forEach {
         handleDeclaration(it)
+    }
+}
+
+context(KtAnalysisSession)
+private inline fun <T : KtFunctionLikeSymbol> SymbolLightClassBase.createJvmOverloadsIfNeeded(
+    declaration: T,
+    result: MutableList<KtLightMethod>,
+    lightMethodCreator: (Int, BitSet) -> KtLightMethod
+) {
+    if (!declaration.hasJvmOverloadsAnnotation()) return
+    var methodIndex = METHOD_INDEX_BASE
+    val skipMask = BitSet(declaration.valueParameters.size)
+    for (i in declaration.valueParameters.size - 1 downTo 0) {
+        if (!declaration.valueParameters[i].hasDefaultValue) continue
+        skipMask.set(i)
+        result.add(
+            lightMethodCreator.invoke(methodIndex++, skipMask.copy())
+        )
     }
 }
 
