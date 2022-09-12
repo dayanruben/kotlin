@@ -56,6 +56,18 @@ public class IrBlackBoxCodegenTestForLombokGenerated extends AbstractIrBlackBoxC
     }
 
     @Test
+    @TestMetadata("builderGuava.kt")
+    public void testBuilderGuava() throws Exception {
+        runTest("plugins/lombok/testData/box/builderGuava.kt");
+    }
+
+    @Test
+    @TestMetadata("builderRawSingular.kt")
+    public void testBuilderRawSingular() throws Exception {
+        runTest("plugins/lombok/testData/box/builderRawSingular.kt");
+    }
+
+    @Test
     @TestMetadata("builderSingular.kt")
     public void testBuilderSingular() throws Exception {
         runTest("plugins/lombok/testData/box/builderSingular.kt");

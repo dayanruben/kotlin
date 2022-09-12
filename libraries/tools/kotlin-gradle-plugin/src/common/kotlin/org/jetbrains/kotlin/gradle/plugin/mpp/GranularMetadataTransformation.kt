@@ -368,12 +368,12 @@ internal fun requestedDependencies(
             project.configurations.sourceSetDependencyConfigurationByScope(sourceSet, scope).incoming.dependencies
         }
 
-    val otherContributingSourceSets = dependsOnClosureWithInterCompilationDependencies(project, sourceSet)
+    val otherContributingSourceSets = dependsOnClosureWithInterCompilationDependencies(sourceSet)
     return listOf(sourceSet, *otherContributingSourceSets.toTypedArray()).flatMap(::collectScopedDependenciesFromSourceSet)
 }
 
 private val KotlinMultiplatformExtension.platformCompilationSourceSets: Set<KotlinSourceSet>
     get() = targets.filterNot { it is KotlinMetadataTarget }
         .flatMap { target -> target.compilations }
-        .flatMap { it.kotlinSourceSetsIncludingDefault }
+        .flatMap { it.kotlinSourceSets }
         .toSet()
