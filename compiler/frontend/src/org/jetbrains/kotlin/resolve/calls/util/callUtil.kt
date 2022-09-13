@@ -28,7 +28,6 @@ import org.jetbrains.kotlin.resolve.calls.tower.NewResolvedCallImpl
 import org.jetbrains.kotlin.resolve.calls.tower.psiKotlinCall
 import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
 import org.jetbrains.kotlin.types.*
-import org.jetbrains.kotlin.types.expressions.ControlStructureTypingUtils
 import org.jetbrains.kotlin.types.typeUtil.asTypeProjection
 import org.jetbrains.kotlin.types.typeUtil.contains
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -150,7 +149,7 @@ fun KtElement.getCall(context: BindingContext): Call? {
         else -> element.getCalleeExpressionIfAny()
     }
     if (reference != null) {
-        return context[CALL, reference] ?: context[CALL, element]
+        return context[CALL, reference]
     }
     return context[CALL, element]
 }
@@ -331,5 +330,3 @@ fun KotlinCall.extractCallableReferenceExpression(): KtCallableReferenceExpressi
     psiKotlinCall.psiCall.extractCallableReferenceExpression()
 
 fun Call.extractCallableReferenceExpression(): KtCallableReferenceExpression? = callElement.asCallableReferenceExpression()
-
-val SPECIAL_FUNCTION_NAMES = ControlStructureTypingUtils.ResolveConstruct.values().map { it.specialFunctionName }.toSet()

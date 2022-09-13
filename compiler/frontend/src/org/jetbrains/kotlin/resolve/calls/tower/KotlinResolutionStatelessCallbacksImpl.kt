@@ -17,6 +17,7 @@
 package org.jetbrains.kotlin.resolve.calls.tower
 
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
@@ -37,9 +38,9 @@ import org.jetbrains.kotlin.resolve.calls.model.KotlinCall
 import org.jetbrains.kotlin.resolve.calls.model.KotlinCallArgument
 import org.jetbrains.kotlin.resolve.calls.model.SimpleKotlinCallArgument
 import org.jetbrains.kotlin.resolve.calls.results.SimpleConstraintSystem
-import org.jetbrains.kotlin.resolve.calls.util.isCallWithSuperReceiver
 import org.jetbrains.kotlin.resolve.deprecation.DeprecationResolver
 import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.KotlinTypeRefinerImpl
 import org.jetbrains.kotlin.types.TypeIntersector
 import org.jetbrains.kotlin.types.checker.KotlinTypeRefiner
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -95,7 +96,7 @@ class KotlinResolutionStatelessCallbacksImpl(
         functionCall.safeAs<PSIKotlinCallForInvoke>()?.variableCall
 
     override fun isBuilderInferenceCall(argument: KotlinCallArgument, parameter: ValueParameterDescriptor): Boolean =
-        isBuilderInferenceCall(parameter, argument.psiCallArgument.valueArgument)
+        isBuilderInferenceCall(parameter, argument.psiCallArgument.valueArgument, languageVersionSettings)
 
     override fun isApplicableCallForBuilderInference(
         descriptor: CallableDescriptor,
