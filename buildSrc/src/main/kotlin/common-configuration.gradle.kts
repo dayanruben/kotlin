@@ -158,10 +158,6 @@ fun Project.configureKotlinCompilationOptions() {
         // TODO: fix remaining warnings and remove this property.
         val tasksWithWarnings = listOf(
             ":kotlin-gradle-plugin:compileCommonKotlin",
-            // Temporarily disable -Werror for the following modules because of deprecation warning for `-Xjvm-default=compatibility`.
-            // These modules should be removed after they are migrated to `-Xjvm-default=all/all-compatibility`.
-            ":compiler:frontend:compileKotlin",
-            ":kotlin-scripting-intellij:compileKotlin",
         )
 
         val projectsWithEnabledContextReceivers: List<String> by rootProject.extra
@@ -189,6 +185,9 @@ fun Project.configureKotlinCompilationOptions() {
                 }
                 if (project.path in projectsWithEnabledContextReceivers) {
                     freeCompilerArgs += "-Xcontext-receivers"
+                }
+                if (!skipJvmDefaultAllForModule(project.path)) {
+                    freeCompilerArgs += "-Xjvm-default=all"
                 }
             }
         }
@@ -249,3 +248,18 @@ fun Project.configureTests() {
         apply(from = "$rootDir/gradle/testRetry.gradle.kts")
     }
 }
+
+// TODO: migrate remaining modules to the new JVM default scheme.
+fun skipJvmDefaultAllForModule(path: String): Boolean =
+// Gradle plugin modules are disabled because different Gradle versions bundle different Kotlin compilers,
+    // and not all of them support the new JVM default scheme.
+    "-gradle" in path || "-runtime" in path || path == ":kotlin-project-model" ||
+            // Visitor/transformer interfaces in ir.tree are very sensitive to the way interface methods are implemented.
+            // Enabling default method generation results in a performance loss of several % on full pipeline test on Kotlin.
+            // TODO: investigate the performance difference and enable new mode for ir.tree.
+            path == ":compiler:ir.tree" ||
+            // Workaround a Proguard issue:
+            //     java.lang.IllegalAccessError: tried to access method kotlin.reflect.jvm.internal.impl.types.checker.ClassicTypeSystemContext$substitutionSupertypePolicy$2.<init>(
+            //       Lkotlin/reflect/jvm/internal/impl/types/checker/ClassicTypeSystemContext;Lkotlin/reflect/jvm/internal/impl/types/TypeSubstitutor;
+            //     )V from class kotlin.reflect.jvm.internal.impl.resolve.OverridingUtilTypeSystemContext
+            path == ":core:descriptors"
