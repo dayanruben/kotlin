@@ -25,6 +25,7 @@ import org.gradle.api.logging.Logging
 import org.gradle.api.model.ObjectFactory
 import org.gradle.tooling.provider.model.ToolingModelBuilderRegistry
 import org.jetbrains.kotlin.compilerRunner.maybeCreateCommonizerClasspathConfiguration
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.internal.KOTLIN_COMPILER_EMBEDDABLE
 import org.jetbrains.kotlin.gradle.internal.KOTLIN_MODULE_GROUP
@@ -88,12 +89,14 @@ abstract class DefaultKotlinBasePlugin : KotlinBasePlugin {
             addGradlePluginMetadataAttributes(project)
         }
 
-        KotlinGradleBuildServices.registerIfAbsent(project).get()
-        KotlinGradleBuildServices.detectKotlinPluginLoadedInMultipleProjects(project, kotlinPluginVersion)
+        KotlinGradleBuildServices.registerIfAbsent(project.gradle).get().detectKotlinPluginLoadedInMultipleProjects(project, kotlinPluginVersion)
 
-        BuildMetricsService.registerIfAbsent(project)?.also {
-            BuildEventsListenerRegistryHolder.getInstance(project).listenerRegistry.onTaskCompletion(it)
-            BuildReportsService.registerIfAbsent(project, it)
+        BuildMetricsService.registerIfAbsent(project)?.also { buildMetricsService ->
+            val buildEventsListenerRegistryHolder = BuildEventsListenerRegistryHolder.getInstance(project)
+            buildEventsListenerRegistryHolder.listenerRegistry.onTaskCompletion(buildMetricsService)
+            BuildReportsService.registerIfAbsent(project, buildMetricsService).also {
+                buildEventsListenerRegistryHolder.listenerRegistry.onTaskCompletion(it)
+            }
         }
     }
 

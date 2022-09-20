@@ -24,6 +24,7 @@ fun updateCompilerXml() {
         "libraries/tools/kotlin-allopen",
         "libraries/tools/kotlin-annotation-processing",
         "libraries/tools/kotlin-annotation-processing-maven",
+        "libraries/tools/kotlin-assignment",
         "libraries/tools/kotlin-bom",
         "libraries/tools/kotlin-gradle-build-metrics",
         "libraries/tools/kotlin-gradle-plugin",
@@ -223,7 +224,7 @@ if (kotlinBuildProperties.isInJpsBuildIdeaSync) {
                     inheritOutputDirs = true
                 }
             }
-            
+
             if (this != rootProject) {
                 evaluationDependsOn(path)
             }
@@ -418,7 +419,7 @@ fun NamedDomainObjectContainer<TopLevelArtifact>.kotlinc() {
         directory("license") {
             directoryContent("$rootDir/license")
         }
-        
+
         file("$rootDir/bootstrap/build.txt")
     }
 }
@@ -520,7 +521,7 @@ fun RecursiveArtifact.sourceJarsFromConfiguration(configuration: Configuration, 
         .resolvedArtifacts
 
     jarsFromExternalModules(resolvedArtifacts, renamer)
-    
+
     resolvedArtifacts
         .map { it.id.componentIdentifier }
         .filterIsInstance<ProjectComponentIdentifier>()

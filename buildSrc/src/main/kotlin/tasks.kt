@@ -26,6 +26,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 val kotlinGradlePluginAndItsRequired = arrayOf(
+    ":kotlin-assignment",
     ":kotlin-allopen",
     ":kotlin-noarg",
     ":kotlin-sam-with-receiver",
@@ -43,6 +44,7 @@ val kotlinGradlePluginAndItsRequired = arrayOf(
     ":kotlin-daemon-client",
     ":kotlin-project-model",
     ":kotlin-gradle-plugin-api",
+    ":kotlin-gradle-plugin-annotations",
     ":kotlin-gradle-plugin-idea",
     ":kotlin-gradle-plugin-idea-proto",
     ":kotlin-gradle-plugin",
@@ -332,6 +334,7 @@ fun Project.confugureFirPluginAnnotationsDependency(testTask: TaskProvider<Test>
 }
 
 fun Project.optInToExperimentalCompilerApi() {
+    @Suppress("DEPRECATION")
     tasks.withType<org.jetbrains.kotlin.gradle.dsl.KotlinCompile<*>>().configureEach {
         kotlinOptions {
             freeCompilerArgs += "-opt-in=org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi"

@@ -11080,6 +11080,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
                 }
 
                 @Test
+                @TestMetadata("twoReceiverCandidatesError.kt")
+                public void testTwoReceiverCandidatesError() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/twoReceiverCandidatesError.kt");
+                }
+
+                @Test
                 @TestMetadata("typeParameterAsContextReceiver.kt")
                 public void testTypeParameterAsContextReceiver() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/typeParameterAsContextReceiver.kt");
@@ -19566,6 +19572,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             }
 
             @Test
+            @TestMetadata("abstractFakeOverrideSuperCallOneMoreLevel.kt")
+            public void testAbstractFakeOverrideSuperCallOneMoreLevel() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/java8Overrides/abstractFakeOverrideSuperCallOneMoreLevel.kt");
+            }
+
+            @Test
             @TestMetadata("abstractVsAbstract.kt")
             public void testAbstractVsAbstract() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/java8Overrides/abstractVsAbstract.kt");
@@ -19580,6 +19592,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             @TestMetadata("defaultVsAbstract.kt")
             public void testDefaultVsAbstract() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/java8Overrides/defaultVsAbstract.kt");
+            }
+
+            @Test
+            @TestMetadata("falseManyImplementations.kt")
+            public void testFalseManyImplementations() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/java8Overrides/falseManyImplementations.kt");
             }
 
             @Test
@@ -34582,6 +34600,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
         }
 
         @Test
+        @TestMetadata("genericContainer.kt")
+        public void testGenericContainer() throws Exception {
+            runTest("compiler/testData/diagnostics/testsWithStdLib/genericContainer.kt");
+        }
+
+        @Test
         @TestMetadata("greater.kt")
         public void testGreater() throws Exception {
             runTest("compiler/testData/diagnostics/testsWithStdLib/greater.kt");
@@ -39244,6 +39268,18 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             @TestMetadata("typeAliasSamAdapterConstructors2.kt")
             public void testTypeAliasSamAdapterConstructors2() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/typealias/typeAliasSamAdapterConstructors2.kt");
+            }
+
+            @Test
+            @TestMetadata("upperBoundViolated.kt")
+            public void testUpperBoundViolated() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/typealias/upperBoundViolated.kt");
+            }
+
+            @Test
+            @TestMetadata("upperBoundViolated2.kt")
+            public void testUpperBoundViolated2() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/typealias/upperBoundViolated2.kt");
             }
         }
 

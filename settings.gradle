@@ -210,6 +210,12 @@ include ":kotlin-sam-with-receiver-compiler-plugin",
         ":kotlin-sam-with-receiver-compiler-plugin.k2",
         ":kotlin-sam-with-receiver-compiler-plugin.cli"
 
+include ":kotlin-assignment-compiler-plugin",
+        ":kotlin-assignment-compiler-plugin.common",
+        ":kotlin-assignment-compiler-plugin.k1",
+        ":kotlin-assignment-compiler-plugin.k2",
+        ":kotlin-assignment-compiler-plugin.cli"
+
 include ":kotlin-imports-dumper-compiler-plugin",
         ":kotlin-script-runtime",
         ":plugins:fir-plugin-prototype",
@@ -243,7 +249,9 @@ include ":kotlin-imports-dumper-compiler-plugin",
         ":tools:kotlinp",
         ":kotlin-project-model",
         ":kotlin-project-model-tests-generator",
+        ":kotlin-gradle-compiler-types",
         ":kotlin-gradle-plugin-api",
+        ":kotlin-gradle-plugin-annotations",
         ":kotlin-gradle-plugin-idea",
         ":kotlin-gradle-plugin-idea-proto",
         ":kotlin-gradle-plugin-idea-for-compatibility-tests",
@@ -264,6 +272,7 @@ include ":kotlin-imports-dumper-compiler-plugin",
         ":kotlin-allopen",
         ":kotlin-noarg",
         ":kotlin-sam-with-receiver",
+        ":kotlin-assignment",
         ":kotlin-gradle-subplugin-example",
         ":examples:annotation-processor-example",
         ":kotlin-script-util",
@@ -395,6 +404,7 @@ if (!buildProperties.inJpsBuildIdeaSync) {
             ":prepare:ide-plugin-dependencies:kotlinx-serialization-compiler-plugin-for-ide",
             ":prepare:ide-plugin-dependencies:noarg-compiler-plugin-for-ide",
             ":prepare:ide-plugin-dependencies:sam-with-receiver-compiler-plugin-for-ide",
+            ":prepare:ide-plugin-dependencies:assignment-compiler-plugin-for-ide",
             ":prepare:ide-plugin-dependencies:parcelize-compiler-plugin-for-ide",
             ":prepare:ide-plugin-dependencies:lombok-compiler-plugin-for-ide",
             ":prepare:ide-plugin-dependencies:kotlin-backend-native-for-ide",
@@ -736,10 +746,18 @@ project(':kotlin-sam-with-receiver-compiler-plugin.k1').projectDir = "$rootDir/p
 project(':kotlin-sam-with-receiver-compiler-plugin.k2').projectDir = "$rootDir/plugins/sam-with-receiver/sam-with-receiver.k2" as File
 project(':kotlin-sam-with-receiver-compiler-plugin.cli').projectDir = "$rootDir/plugins/sam-with-receiver/sam-with-receiver.cli" as File
 
+project(':kotlin-assignment-compiler-plugin').projectDir = "$rootDir/plugins/assign-plugin" as File
+project(':kotlin-assignment-compiler-plugin.common').projectDir = "$rootDir/plugins/assign-plugin/assign-plugin.common" as File
+project(':kotlin-assignment-compiler-plugin.k1').projectDir = "$rootDir/plugins/assign-plugin/assign-plugin.k1" as File
+project(':kotlin-assignment-compiler-plugin.k2').projectDir = "$rootDir/plugins/assign-plugin/assign-plugin.k2" as File
+project(':kotlin-assignment-compiler-plugin.cli').projectDir = "$rootDir/plugins/assign-plugin/assign-plugin.cli" as File
+
 project(':tools:kotlinp').projectDir = "$rootDir/libraries/tools/kotlinp" as File
 project(':kotlin-project-model').projectDir = "$rootDir/libraries/tools/kotlin-project-model" as File
 project(':kotlin-project-model-tests-generator').projectDir = "$rootDir/libraries/tools/kotlin-project-model-tests-generator" as File
+project(':kotlin-gradle-compiler-types').projectDir = "$rootDir/libraries/tools/kotlin-gradle-compiler-types" as File
 project(':kotlin-gradle-plugin-api').projectDir = "$rootDir/libraries/tools/kotlin-gradle-plugin-api" as File
+project(':kotlin-gradle-plugin-annotations').projectDir = "$rootDir/libraries/tools/kotlin-gradle-plugin-annotations" as File
 project(':kotlin-gradle-plugin-idea').projectDir = "$rootDir/libraries/tools/kotlin-gradle-plugin-idea" as File
 project(':kotlin-gradle-plugin-idea-proto').projectDir = "$rootDir/libraries/tools/kotlin-gradle-plugin-idea-proto" as File
 project(':kotlin-gradle-plugin-idea-for-compatibility-tests').projectDir = "$rootDir/libraries/tools/kotlin-gradle-plugin-idea-for-compatibility-tests" as File
@@ -760,6 +778,7 @@ project(':kotlin-tooling-core').projectDir = "$rootDir/libraries/tools/kotlin-to
 project(':kotlin-allopen').projectDir = "$rootDir/libraries/tools/kotlin-allopen" as File
 project(':kotlin-noarg').projectDir = "$rootDir/libraries/tools/kotlin-noarg" as File
 project(':kotlin-sam-with-receiver').projectDir = "$rootDir/libraries/tools/kotlin-sam-with-receiver" as File
+project(':kotlin-assignment').projectDir = "$rootDir/libraries/tools/kotlin-assignment" as File
 project(':kotlin-lombok').projectDir = "$rootDir/libraries/tools/kotlin-lombok" as File
 project(':kotlin-gradle-subplugin-example').projectDir = "$rootDir/libraries/examples/kotlin-gradle-subplugin-example" as File
 project(':examples:annotation-processor-example').projectDir = "$rootDir/libraries/examples/annotation-processor-example" as File

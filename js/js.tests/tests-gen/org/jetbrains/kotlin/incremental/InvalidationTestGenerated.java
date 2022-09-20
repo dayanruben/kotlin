@@ -75,6 +75,11 @@ public class InvalidationTestGenerated extends AbstractInvalidationTest {
         runTest("js/js.translator/testData/incremental/invalidation/eagerInitialization/");
     }
 
+    @TestMetadata("enum")
+    public void testEnum() throws Exception {
+        runTest("js/js.translator/testData/incremental/invalidation/enum/");
+    }
+
     @TestMetadata("exportsThroughInlineFunction")
     public void testExportsThroughInlineFunction() throws Exception {
         runTest("js/js.translator/testData/incremental/invalidation/exportsThroughInlineFunction/");
@@ -160,6 +165,11 @@ public class InvalidationTestGenerated extends AbstractInvalidationTest {
         runTest("js/js.translator/testData/incremental/invalidation/inlineFunctionDefaultParams/");
     }
 
+    @TestMetadata("inlineFunctionWithObject")
+    public void testInlineFunctionWithObject() throws Exception {
+        runTest("js/js.translator/testData/incremental/invalidation/inlineFunctionWithObject/");
+    }
+
     @TestMetadata("jsCode")
     public void testJsCode() throws Exception {
         runTest("js/js.translator/testData/incremental/invalidation/jsCode/");
@@ -168,6 +178,16 @@ public class InvalidationTestGenerated extends AbstractInvalidationTest {
     @TestMetadata("jsExport")
     public void testJsExport() throws Exception {
         runTest("js/js.translator/testData/incremental/invalidation/jsExport/");
+    }
+
+    @TestMetadata("jsModuleAnnotation")
+    public void testJsModuleAnnotation() throws Exception {
+        runTest("js/js.translator/testData/incremental/invalidation/jsModuleAnnotation/");
+    }
+
+    @TestMetadata("localInlineFunction")
+    public void testLocalInlineFunction() throws Exception {
+        runTest("js/js.translator/testData/incremental/invalidation/localInlineFunction/");
     }
 
     @TestMetadata("mainModuleInvalidation")

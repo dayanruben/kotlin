@@ -40,7 +40,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.ifTrue
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 context(KtAnalysisSession)
-internal abstract class SymbolLightClassForClassOrObject(
+abstract class SymbolLightClassForClassOrObject(
     private val classOrObjectSymbol: KtNamedClassOrObjectSymbol,
     manager: PsiManager
 ) : SymbolLightClassBase(manager),
@@ -135,7 +135,7 @@ internal abstract class SymbolLightClassForClassOrObject(
             getDeclaredMemberScope().getCallableSymbols()
                 .filterIsInstance<KtPropertySymbol>()
                 .applyIf(isInterface) {
-                    filter { it.hasJvmFieldAnnotation() || it.isConst }
+                    filter { it.isConstOrJvmField }
                 }
                 .mapTo(result) {
                     SymbolLightFieldForProperty(
@@ -145,11 +145,14 @@ internal abstract class SymbolLightClassForClassOrObject(
                         lightMemberOrigin = null,
                         isTopLevel = false,
                         forceStatic = true,
-                        takePropertyVisibility = true
+                        takePropertyVisibility = it.isConstOrJvmField
                     )
                 }
         }
     }
+
+    private val KtPropertySymbol.isConstOrJvmField: Boolean
+        get() = isConst || hasJvmFieldAnnotation()
 
     private val KtPropertySymbol.isConst: Boolean
         get() = (this as? KtKotlinPropertySymbol)?.isConst == true

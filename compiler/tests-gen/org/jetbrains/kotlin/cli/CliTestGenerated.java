@@ -103,26 +103,6 @@ public class CliTestGenerated extends AbstractCliTest {
         public void testNoPluginInClasspath() throws Exception {
             runTest("compiler/testData/cli/jvm/plugins/noPluginInClasspath.args");
         }
-
-        @TestMetadata("pluginSimple_legacy.args")
-        public void testPluginSimple_legacy() throws Exception {
-            runTest("compiler/testData/cli/jvm/plugins/pluginSimple_legacy.args");
-        }
-
-        @TestMetadata("pluginSimple_modern_noK2.args")
-        public void testPluginSimple_modern_noK2() throws Exception {
-            runTest("compiler/testData/cli/jvm/plugins/pluginSimple_modern_noK2.args");
-        }
-
-        @TestMetadata("pluginWithK2Error_legacy.args")
-        public void testPluginWithK2Error_legacy() throws Exception {
-            runTest("compiler/testData/cli/jvm/plugins/pluginWithK2Error_legacy.args");
-        }
-
-        @TestMetadata("pluginWithK2Error_modern.args")
-        public void testPluginWithK2Error_modern() throws Exception {
-            runTest("compiler/testData/cli/jvm/plugins/pluginWithK2Error_modern.args");
-        }
     }
 
     @TestMetadata("compiler/testData/cli/jvm")
@@ -136,11 +116,6 @@ public class CliTestGenerated extends AbstractCliTest {
         @TestMetadata("abiStabilityIncorrectValue.args")
         public void testAbiStabilityIncorrectValue() throws Exception {
             runTest("compiler/testData/cli/jvm/abiStabilityIncorrectValue.args");
-        }
-
-        @TestMetadata("abiStabilityUnstableWithOldBackend.args")
-        public void testAbiStabilityUnstableWithOldBackend() throws Exception {
-            runTest("compiler/testData/cli/jvm/abiStabilityUnstableWithOldBackend.args");
         }
 
         public void testAllFilesPresentInJvm() throws Exception {
@@ -205,11 +180,6 @@ public class CliTestGenerated extends AbstractCliTest {
         @TestMetadata("argumentPassedMultipleTimes.args")
         public void testArgumentPassedMultipleTimes() throws Exception {
             runTest("compiler/testData/cli/jvm/argumentPassedMultipleTimes.args");
-        }
-
-        @TestMetadata("bothJvmIrAndOldBackend.args")
-        public void testBothJvmIrAndOldBackend() throws Exception {
-            runTest("compiler/testData/cli/jvm/bothJvmIrAndOldBackend.args");
         }
 
         @TestMetadata("builderInferenceByDefault.args")
@@ -927,9 +897,14 @@ public class CliTestGenerated extends AbstractCliTest {
             runTest("compiler/testData/cli/jvm/nullabilityAnnotations.args");
         }
 
-        @TestMetadata("oldBackendLv16.args")
-        public void testOldBackendLv16() throws Exception {
-            runTest("compiler/testData/cli/jvm/oldBackendLv16.args");
+        @TestMetadata("oldBackend.args")
+        public void testOldBackend() throws Exception {
+            runTest("compiler/testData/cli/jvm/oldBackend.args");
+        }
+
+        @TestMetadata("oldBackendWithScript.args")
+        public void testOldBackendWithScript() throws Exception {
+            runTest("compiler/testData/cli/jvm/oldBackendWithScript.args");
         }
 
         @TestMetadata("optInEmptyMessage.args")
@@ -1040,21 +1015,6 @@ public class CliTestGenerated extends AbstractCliTest {
         @TestMetadata("suppressAllWarningsJvm.args")
         public void testSuppressAllWarningsJvm() throws Exception {
             runTest("compiler/testData/cli/jvm/suppressAllWarningsJvm.args");
-        }
-
-        @TestMetadata("suspendInFunInterfaceDefault.args")
-        public void testSuspendInFunInterfaceDefault() throws Exception {
-            runTest("compiler/testData/cli/jvm/suspendInFunInterfaceDefault.args");
-        }
-
-        @TestMetadata("suspendInFunInterfaceIrDisabled.args")
-        public void testSuspendInFunInterfaceIrDisabled() throws Exception {
-            runTest("compiler/testData/cli/jvm/suspendInFunInterfaceIrDisabled.args");
-        }
-
-        @TestMetadata("suspendInFunInterfaceIrEnabled.args")
-        public void testSuspendInFunInterfaceIrEnabled() throws Exception {
-            runTest("compiler/testData/cli/jvm/suspendInFunInterfaceIrEnabled.args");
         }
 
         @TestMetadata("suspensionPointInMonitor.args")

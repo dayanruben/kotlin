@@ -93,11 +93,11 @@ internal val serializationExceptionName = "kotlinx/serialization/$SERIAL_EXC"
 internal val serializationExceptionMissingFieldName = "kotlinx/serialization/$MISSING_FIELD_EXC"
 internal val serializationExceptionUnknownIndexName = "kotlinx/serialization/$UNKNOWN_FIELD_EXC"
 
-private val annotationType = Type.getObjectType("java/lang/annotation/Annotation")
-private val annotationArrayType = Type.getObjectType("[${annotationType.descriptor}")
-private val doubleAnnotationArrayType = Type.getObjectType("[${annotationArrayType.descriptor}")
-private val stringType = AsmTypes.JAVA_STRING_TYPE
-private val stringArrayType = Type.getObjectType("[${stringType.descriptor}")
+internal val annotationType = Type.getObjectType("java/lang/annotation/Annotation")
+internal val annotationArrayType = Type.getObjectType("[${annotationType.descriptor}")
+internal val doubleAnnotationArrayType = Type.getObjectType("[${annotationArrayType.descriptor}")
+internal val stringType = AsmTypes.JAVA_STRING_TYPE
+internal val stringArrayType = Type.getObjectType("[${stringType.descriptor}")
 
 internal val descriptorGetterName = JvmAbi.getterName(SERIAL_DESC_FIELD)
 internal val getLazyValueName = JvmAbi.getterName("value")

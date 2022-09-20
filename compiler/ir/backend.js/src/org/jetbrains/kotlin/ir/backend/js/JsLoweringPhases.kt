@@ -526,7 +526,7 @@ private val privateMemberUsagesLoweringPhase = makeBodyLoweringPhase(
 private val propertyReferenceLoweringPhase = makeBodyLoweringPhase(
     ::PropertyReferenceLowering,
     name = "PropertyReferenceLowering",
-    description = "Transform property references"
+    description = "Transform property references",
 )
 
 private val interopCallableReferenceLoweringPhase = makeBodyLoweringPhase(
@@ -555,7 +555,7 @@ private val defaultArgumentPatchOverridesPhase = makeDeclarationTransformerPhase
 )
 
 private val defaultParameterInjectorPhase = makeBodyLoweringPhase(
-    { context -> DefaultParameterInjector(context, skipExternalMethods = true, forceSetOverrideSymbols = false) },
+    ::JsDefaultParameterInjector,
     name = "DefaultParameterInjector",
     description = "Replace callsite with default parameters with corresponding stub function",
     prerequisite = setOf(interopCallableReferenceLoweringPhase, innerClassesLoweringPhase)
@@ -565,19 +565,6 @@ private val defaultParameterCleanerPhase = makeDeclarationTransformerPhase(
     ::DefaultParameterCleaner,
     name = "DefaultParameterCleaner",
     description = "Clean default parameters up"
-)
-
-
-private val exportedDefaultParameterStubPhase = makeDeclarationTransformerPhase(
-    ::ExportedDefaultParameterStub,
-    name = "ExportedDefaultParameterStub",
-    description = "Generates default stub for exported entity and renames the non-default counterpart"
-)
-
-private val jsDefaultCallbackGeneratorPhase = makeBodyLoweringPhase(
-    ::JsDefaultCallbackGenerator,
-    name = "JsDefaultCallbackGenerator",
-    description = "Build binding for super calls with default parameters"
 )
 
 private val varargLoweringPhase = makeBodyLoweringPhase(
@@ -669,7 +656,7 @@ private val typeOperatorLoweringPhase = makeBodyLoweringPhase(
         bridgesConstructionPhase,
         removeInlineDeclarationsWithReifiedTypeParametersLoweringPhase,
         singleAbstractMethodPhase, errorExpressionLoweringPhase,
-        interopCallableReferenceLoweringPhase
+        interopCallableReferenceLoweringPhase,
     )
 )
 
@@ -705,7 +692,6 @@ private val constLoweringPhase = makeBodyLoweringPhase(
     name = "ConstLowering",
     description = "Wrap Long and Char constants into constructor invocation"
 )
-
 private val inlineClassDeclarationLoweringPhase = makeDeclarationTransformerPhase(
     { InlineClassLowering(it).inlineClassDeclarationLowering },
     name = "InlineClassDeclarationLowering",
@@ -806,11 +792,13 @@ private val implicitlyExportedDeclarationsMarkingLowering = makeDeclarationTrans
     description = "Add @JsImplicitExport annotation to declarations which are not exported but are used inside other exported declarations as a type"
 )
 
+
 private val cleanupLoweringPhase = makeBodyLoweringPhase(
     { CleanupLowering() },
     name = "CleanupLowering",
     description = "Clean up IR before codegen"
 )
+
 private val moveOpenClassesToSeparatePlaceLowering = makeCustomJsModulePhase(
     { context, module ->
         if (context.granularity == JsGenerationGranularity.PER_FILE)
@@ -899,12 +887,10 @@ val loweringList = listOf<Lowering>(
     computeStringTrimPhase,
     privateMembersLoweringPhase,
     privateMemberUsagesLoweringPhase,
-    exportedDefaultParameterStubPhase,
     defaultArgumentStubGeneratorPhase,
     defaultArgumentPatchOverridesPhase,
     defaultParameterInjectorPhase,
     defaultParameterCleanerPhase,
-    jsDefaultCallbackGeneratorPhase,
     throwableSuccessorsLoweringPhase,
     es6AddInternalParametersToConstructorPhase,
     es6ConstructorLowering,

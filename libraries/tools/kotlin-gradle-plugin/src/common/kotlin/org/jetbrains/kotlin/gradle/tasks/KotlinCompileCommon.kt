@@ -27,23 +27,47 @@ import org.jetbrains.kotlin.compilerRunner.GradleCompilerEnvironment
 import org.jetbrains.kotlin.compilerRunner.OutputItemsCollectorImpl
 import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.internal.tasks.allOutputFiles
+import org.jetbrains.kotlin.gradle.logging.GradleErrorMessageCollector
 import org.jetbrains.kotlin.gradle.logging.GradlePrintingMessageCollector
+import org.jetbrains.kotlin.gradle.tasks.internal.KotlinMultiplatformCommonOptionsCompat
 import java.io.File
 import javax.inject.Inject
 
 @CacheableTask
 abstract class KotlinCompileCommon @Inject constructor(
-    override val kotlinOptions: KotlinMultiplatformCommonOptions,
+    override val compilerOptions: CompilerMultiplatformCommonOptions,
     workerExecutor: WorkerExecutor,
     objectFactory: ObjectFactory
 ) : AbstractKotlinCompile<K2MetadataCompilerArguments>(objectFactory, workerExecutor),
+    KotlinCompilationTask<CompilerMultiplatformCommonOptions>,
     KotlinCommonCompile {
+
+    init {
+        compilerOptions.verbose.convention(logger.isDebugEnabled)
+    }
+
+    @Suppress("DEPRECATION")
+    @Deprecated("Replaced by compilerOptions input", replaceWith = ReplaceWith("compilerOptions"))
+    override val kotlinOptions: KotlinMultiplatformCommonOptions = KotlinMultiplatformCommonOptionsCompat(
+        { this },
+        compilerOptions
+    )
+
+    /**
+     * Workaround for those "nasty" plugins that are adding 'freeCompilerArgs' on task execution phase.
+     * With properties api it is not possible to update property value after task configuration is finished.
+     *
+     * Marking it as `@Internal` as anyway on the configuration phase, when Gradle does task inputs snapshot,
+     * this input will always be empty.
+     */
+    @get:Internal
+    internal var additionalFreeCompilerArgs: List<String> = listOf()
 
     override fun createCompilerArgs(): K2MetadataCompilerArguments =
         K2MetadataCompilerArguments()
 
     override fun setupCompilerArgs(args: K2MetadataCompilerArguments, defaultsOnly: Boolean, ignoreClasspathResolutionErrors: Boolean) {
-        args.apply { fillDefaultValues() }
+        (compilerOptions as CompilerMultiplatformCommonOptionsDefault).fillDefaultValues(args)
         super.setupCompilerArgs(args, defaultsOnly = defaultsOnly, ignoreClasspathResolutionErrors = ignoreClasspathResolutionErrors)
 
         args.moduleName = this@KotlinCompileCommon.moduleName.get()
@@ -64,7 +88,11 @@ abstract class KotlinCompileCommon @Inject constructor(
             refinesPaths = refinesMetadataPaths.map { it.absolutePath }.toTypedArray()
         }
 
-        (kotlinOptions as KotlinMultiplatformCommonOptionsImpl).updateArguments(args)
+        (compilerOptions as CompilerMultiplatformCommonOptionsDefault).fillCompilerArguments(args)
+
+        if (additionalFreeCompilerArgs.isNotEmpty()) {
+            args.freeArgs = compilerOptions.freeCompilerArgs.get().union(additionalFreeCompilerArgs).toList()
+        }
     }
 
     @get:PathSensitive(PathSensitivity.RELATIVE)
@@ -82,11 +110,12 @@ abstract class KotlinCompileCommon @Inject constructor(
         inputChanges: InputChanges,
         taskOutputsBackup: TaskOutputsBackup?
     ) {
-        val messageCollector = GradlePrintingMessageCollector(logger, args.allWarningsAsErrors)
+        val gradlePrintingMessageCollector = GradlePrintingMessageCollector(logger, args.allWarningsAsErrors)
+        val gradleMessageCollector = GradleErrorMessageCollector(gradlePrintingMessageCollector)
         val outputItemCollector = OutputItemsCollectorImpl()
         val compilerRunner = compilerRunner.get()
         val environment = GradleCompilerEnvironment(
-            defaultCompilerClasspath, messageCollector, outputItemCollector,
+            defaultCompilerClasspath, gradleMessageCollector, outputItemCollector,
             reportingSettings = reportingSettings(),
             outputFiles = allOutputFiles()
         )
@@ -96,5 +125,6 @@ abstract class KotlinCompileCommon @Inject constructor(
             args,
             environment
         )
+        compilerRunner.errorsFile?.also { gradleMessageCollector.flush(it) }
     }
 }

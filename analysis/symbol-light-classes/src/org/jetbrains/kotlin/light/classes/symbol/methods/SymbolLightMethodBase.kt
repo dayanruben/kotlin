@@ -88,7 +88,7 @@ internal abstract class SymbolLightMethodBase(
     override fun getThrowsList(): PsiReferenceList =
         KotlinLightReferenceListBuilder(manager, language, PsiReferenceList.Role.THROWS_LIST) //TODO()
 
-    override fun getDefaultValue(): PsiAnnotationMemberValue? = null //TODO()
+    override fun getDefaultValue(): PsiAnnotationMemberValue? = null
 
     protected fun <T> T.computeJvmMethodName(
         defaultName: String,
@@ -108,4 +108,6 @@ internal abstract class SymbolLightMethodBase(
         val moduleName = (getKtModule(project) as? KtSourceModule)?.moduleName ?: return defaultName
         return mangleInternalName(defaultName, moduleName)
     }
+
+    abstract fun isOverride(): Boolean
 }

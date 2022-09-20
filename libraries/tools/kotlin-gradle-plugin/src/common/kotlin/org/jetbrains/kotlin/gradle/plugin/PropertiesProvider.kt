@@ -123,7 +123,7 @@ internal class PropertiesProvider private constructor(private val project: Proje
         get() = booleanProperty("kotlin.incremental.js.klib")
 
     val incrementalJsIr: Boolean
-        get() = booleanProperty("kotlin.incremental.js.ir") ?: false
+        get() = booleanProperty("kotlin.incremental.js.ir") ?: true
 
     val jsIrOutputGranularity: KotlinJsIrOutputGranularity
         get() = this.property("kotlin.js.ir.output.granularity")?.let { KotlinJsIrOutputGranularity.byArgument(it) }
@@ -212,6 +212,9 @@ internal class PropertiesProvider private constructor(private val project: Proje
 
     val wasmStabilityNoWarn: Boolean
         get() = booleanProperty("kotlin.wasm.stability.nowarn") ?: false
+
+    val jsCompilerNoWarn: Boolean
+        get() = booleanProperty("$jsCompilerProperty.nowarn") ?: false
 
     val experimentalKpmModelMapping: Boolean
         get() = booleanProperty(PropertyNames.KOTLIN_KPM_EXPERIMENTAL_MODEL_MAPPING) ?: false
@@ -392,8 +395,8 @@ internal class PropertiesProvider private constructor(private val project: Proje
     /**
      * Use Kotlin/JS backend compiler type
      */
-    val jsCompiler: KotlinJsCompilerType
-        get() = this.property(jsCompilerProperty)?.let { KotlinJsCompilerType.byArgumentOrNull(it) } ?: KotlinJsCompilerType.LEGACY
+    val jsCompiler: KotlinJsCompilerType?
+        get() = this.property(jsCompilerProperty)?.let { KotlinJsCompilerType.byArgumentOrNull(it) }
 
     /**
      * Use Webpack 4 for compatibility

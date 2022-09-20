@@ -1221,6 +1221,12 @@ public class BoxJsTestGenerated extends AbstractBoxJsTest {
         }
 
         @Test
+        @TestMetadata("interfaceSuperCall.kt")
+        public void testInterfaceSuperCall() throws Exception {
+            runTest("js/js.translator/testData/box/defaultArguments/interfaceSuperCall.kt");
+        }
+
+        @Test
         @TestMetadata("overloadFunWithDefArg.kt")
         public void testOverloadFunWithDefArg() throws Exception {
             runTest("js/js.translator/testData/box/defaultArguments/overloadFunWithDefArg.kt");
@@ -2128,6 +2134,12 @@ public class BoxJsTestGenerated extends AbstractBoxJsTest {
         @TestMetadata("exportClassWithInternalOneFile.kt")
         public void testExportClassWithInternalOneFile() throws Exception {
             runTest("js/js.translator/testData/box/export/exportClassWithInternalOneFile.kt");
+        }
+
+        @Test
+        @TestMetadata("exportDefaultParameterAndOverrideIt.kt")
+        public void testExportDefaultParameterAndOverrideIt() throws Exception {
+            runTest("js/js.translator/testData/box/export/exportDefaultParameterAndOverrideIt.kt");
         }
 
         @Test
@@ -3809,6 +3821,12 @@ public class BoxJsTestGenerated extends AbstractBoxJsTest {
             @Test
             public void testAllFilesPresentInTypeCheck() throws Exception {
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("js/js.translator/testData/box/expression/typeCheck"), Pattern.compile("^([^_](.+))\\.kt$"), null, TargetBackend.JS, true);
+            }
+
+            @Test
+            @TestMetadata("complexIsInterface.kt")
+            public void testComplexIsInterface() throws Exception {
+                runTest("js/js.translator/testData/box/expression/typeCheck/complexIsInterface.kt");
             }
 
             @Test
@@ -6776,6 +6794,16 @@ public class BoxJsTestGenerated extends AbstractBoxJsTest {
         @TestMetadata("withModule.kt")
         public void testWithModule() throws Exception {
             runTest("js/js.translator/testData/box/jsQualifier/withModule.kt");
+        }
+    }
+
+    @Nested
+    @TestMetadata("js/js.translator/testData/box/keep")
+    @TestDataPath("$PROJECT_ROOT")
+    public class Keep {
+        @Test
+        public void testAllFilesPresentInKeep() throws Exception {
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("js/js.translator/testData/box/keep"), Pattern.compile("^([^_](.+))\\.kt$"), null, TargetBackend.JS, true);
         }
     }
 

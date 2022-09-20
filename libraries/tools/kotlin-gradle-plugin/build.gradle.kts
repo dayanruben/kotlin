@@ -25,8 +25,8 @@ pill {
 kotlin.sourceSets.all {
     languageSettings.optIn("kotlin.RequiresOptIn")
     languageSettings.optIn("org.jetbrains.kotlin.gradle.plugin.mpp.pm20.AdvancedKotlinGradlePluginApi")
-    languageSettings.optIn("org.jetbrains.kotlin.gradle.kpm.idea.InternalKotlinGradlePluginApi")
-    languageSettings.optIn("org.jetbrains.kotlin.gradle.plugin.ExperimentalKotlinGradlePluginApi")
+    languageSettings.optIn("org.jetbrains.kotlin.gradle.InternalKotlinGradlePluginApi")
+    languageSettings.optIn("org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi")
     languageSettings.optIn("org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi")
 }
 
@@ -38,6 +38,7 @@ dependencies {
     commonCompileOnly(project(":compiler"))
     commonCompileOnly(project(":compiler:incremental-compilation-impl"))
     commonCompileOnly(project(":daemon-common"))
+    commonCompileOnly(project(":kotlin-gradle-compiler-types"))
     commonCompileOnly(project(":native:kotlin-native-utils"))
     commonCompileOnly(project(":kotlin-android-extensions"))
     commonCompileOnly(project(":kotlin-build-common"))

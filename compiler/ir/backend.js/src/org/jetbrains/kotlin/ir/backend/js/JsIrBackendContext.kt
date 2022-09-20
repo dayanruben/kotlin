@@ -66,6 +66,7 @@ class JsIrBackendContext(
     val symbolTable: SymbolTable,
     irModuleFragment: IrModuleFragment,
     val additionalExportedDeclarationNames: Set<FqName>,
+    keep: Set<String>,
     override val configuration: CompilerConfiguration, // TODO: remove configuration from backend context
     override val scriptMode: Boolean = false,
     override val es6mode: Boolean = false,
@@ -85,6 +86,9 @@ class JsIrBackendContext(
 
     val minimizedNameGenerator: MinimizedNameGenerator =
         MinimizedNameGenerator()
+
+    val keeper: Keeper =
+        Keeper(keep)
 
     val fieldDataCache = mutableMapOf<IrClass, Map<IrField, String>>()
 
@@ -155,6 +159,7 @@ class JsIrBackendContext(
 
     val dynamicType: IrDynamicType = IrDynamicTypeImpl(null, emptyList(), Variance.INVARIANT)
     val intrinsics: JsIntrinsics = JsIntrinsics(irBuiltIns, this)
+
     override val reflectionSymbols: ReflectionSymbols get() = intrinsics.reflectionSymbols
 
     override val propertyLazyInitialization: PropertyLazyInitialization = PropertyLazyInitialization(

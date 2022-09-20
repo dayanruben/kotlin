@@ -10,18 +10,14 @@ import org.gradle.api.Project
 import org.gradle.api.file.FileCollection
 import org.gradle.api.file.SourceDirectorySet
 import org.gradle.api.tasks.TaskProvider
-import org.jetbrains.kotlin.gradle.dsl.KotlinCommonOptions
-import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformCommonOptions
-import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformCommonOptionsImpl
-import org.jetbrains.kotlin.gradle.dsl.topLevelExtension
-import org.jetbrains.kotlin.gradle.plugin.KotlinCompilationOutput
-import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
-import org.jetbrains.kotlin.gradle.plugin.LanguageSettingsBuilder
+import org.jetbrains.kotlin.gradle.dsl.*
+import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.util.archivesName
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.util.disambiguateName
 import org.jetbrains.kotlin.gradle.targets.metadata.ResolvedMetadataFilesProvider
 import org.jetbrains.kotlin.gradle.targets.metadata.createMetadataDependencyTransformationClasspath
+import org.jetbrains.kotlin.gradle.targets.native.NativeCompilerOptions
 import org.jetbrains.kotlin.gradle.utils.getValue
 import org.jetbrains.kotlin.gradle.utils.lowerCamelCaseName
 import org.jetbrains.kotlin.gradle.utils.newProperty
@@ -132,7 +128,19 @@ internal open class KotlinCommonFragmentMetadataCompilationDataImpl(
                             mapTo(hashSetOf()) { it.platformType }.size > 1
                 }
 
-    override val kotlinOptions: KotlinMultiplatformCommonOptions = KotlinMultiplatformCommonOptionsImpl()
+    override val compilerOptions: HasCompilerOptions<CompilerMultiplatformCommonOptions> =
+        object : HasCompilerOptions<CompilerMultiplatformCommonOptions> {
+            override val options: CompilerMultiplatformCommonOptions =
+                project.objects.newInstance(CompilerMultiplatformCommonOptionsDefault::class.java)
+        }
+
+
+    @Suppress("DEPRECATION")
+    @Deprecated("Replaced with compilerOptions.options", replaceWith = ReplaceWith("compilerOptions.options"))
+    override val kotlinOptions: KotlinMultiplatformCommonOptions = object : KotlinMultiplatformCommonOptions {
+        override val options: CompilerMultiplatformCommonOptions
+            get() = compilerOptions.options
+    }
 }
 
 interface KotlinNativeFragmentMetadataCompilationData :
@@ -169,7 +177,17 @@ internal open class KotlinNativeFragmentMetadataCompilationDataImpl(
     override val isActive: Boolean
         get() = fragment.isNativeShared() && fragment.containingVariants.count() > 1
 
-    override val kotlinOptions: NativeCompileOptions = NativeCompileOptions(languageSettings)
+    override val compilerOptions: HasCompilerOptions<CompilerCommonOptions> = NativeCompilerOptions(
+        project,
+        languageSettings
+    )
+
+    @Suppress("DEPRECATION")
+    @Deprecated("Replaced with compilerOptions.options", replaceWith = ReplaceWith("compilerOptions.options"))
+    override val kotlinOptions: KotlinCommonOptions = object : KotlinCommonOptions {
+        override val options: CompilerCommonOptions
+            get() = compilerOptions.options
+    }
 
     override val konanTarget: KonanTarget
         get() {

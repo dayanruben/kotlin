@@ -7,6 +7,9 @@ package org.jetbrains.kotlin.light.classes.symbol.methods
 
 import com.intellij.psi.*
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KtConstantInitializerValue
+import org.jetbrains.kotlin.analysis.api.KtConstantValueForAnnotation
+import org.jetbrains.kotlin.analysis.api.KtNonConstantInitializerValue
 import org.jetbrains.kotlin.analysis.api.lifetime.isValid
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
@@ -24,6 +27,7 @@ import org.jetbrains.kotlin.light.classes.symbol.classes.SymbolLightClassBase
 import org.jetbrains.kotlin.light.classes.symbol.modifierLists.SymbolLightMemberModifierList
 import org.jetbrains.kotlin.light.classes.symbol.parameters.SymbolLightParameterList
 import org.jetbrains.kotlin.light.classes.symbol.parameters.SymbolLightSetterParameter
+import org.jetbrains.kotlin.light.classes.symbol.parameters.SymbolLightTypeParameterList
 import org.jetbrains.kotlin.load.java.JvmAbi.getterName
 import org.jetbrains.kotlin.load.java.JvmAbi.setterName
 import org.jetbrains.kotlin.psi.KtDeclaration
@@ -59,9 +63,18 @@ internal class SymbolLightAccessorMethod(
 
     override fun getName(): String = _name
 
-    override fun hasTypeParameters(): Boolean = false
-    override fun getTypeParameterList(): PsiTypeParameterList? = null
-    override fun getTypeParameters(): Array<PsiTypeParameter> = PsiTypeParameter.EMPTY_ARRAY
+    private val _typeParameterList: PsiTypeParameterList? by lazyPub {
+        hasTypeParameters().ifTrue {
+            SymbolLightTypeParameterList(
+                owner = this,
+                symbolWithTypeParameterList = containingPropertySymbol,
+            )
+        }
+    }
+
+    override fun hasTypeParameters(): Boolean = containingPropertySymbol.typeParameters.isNotEmpty()
+    override fun getTypeParameterList(): PsiTypeParameterList? = _typeParameterList
+    override fun getTypeParameters(): Array<PsiTypeParameter> = _typeParameterList?.typeParameters ?: PsiTypeParameter.EMPTY_ARRAY
 
     override fun isVarArgs(): Boolean = false
 
@@ -79,7 +92,7 @@ internal class SymbolLightAccessorMethod(
     private fun computeAnnotations(isPrivate: Boolean): List<PsiAnnotation> {
         val nullabilityApplicable = isGetter &&
                 !isPrivate &&
-                !(isParameter && (containingClass.isAnnotationType || containingClass.isEnum))
+                !(isParameter && containingClass.isAnnotationType)
 
         val nullabilityType = if (nullabilityApplicable) {
             getTypeNullability(containingPropertySymbol.returnType)
@@ -115,8 +128,8 @@ internal class SymbolLightAccessorMethod(
 
         val visibility = isOverrideMethod.ifTrue {
             tryGetEffectiveVisibility(containingPropertySymbol)
-                ?.toPsiVisibilityForMember(isTopLevel)
-        } ?: propertyAccessorSymbol.toPsiVisibilityForMember(isTopLevel)
+                ?.toPsiVisibilityForMember()
+        } ?: propertyAccessorSymbol.toPsiVisibilityForMember()
         modifiers.add(visibility)
 
         if (!suppressStatic &&
@@ -191,4 +204,20 @@ internal class SymbolLightAccessorMethod(
     override fun getParameterList(): PsiParameterList = _parametersList
 
     override fun isValid(): Boolean = super.isValid() && propertyAccessorSymbol.isValid()
+
+    override fun isOverride(): Boolean = propertyAccessorSymbol.isOverride
+
+    private val _defaultValue: PsiAnnotationMemberValue? by lazyPub {
+        if (!containingClass.isAnnotationType) return@lazyPub null
+        when (val initializer = containingPropertySymbol.initializer) {
+            is KtConstantInitializerValue -> initializer.constant.createPsiLiteral(this)
+            is KtConstantValueForAnnotation -> initializer.annotationValue.toAnnotationMemberValue(this)
+            is KtNonConstantInitializerValue -> null
+            null -> null
+        }
+    }
+
+    override fun getDefaultValue(): PsiAnnotationMemberValue? {
+        return _defaultValue
+    }
 }

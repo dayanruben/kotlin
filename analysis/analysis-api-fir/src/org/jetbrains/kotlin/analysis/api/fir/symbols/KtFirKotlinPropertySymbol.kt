@@ -31,7 +31,6 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.api.LLFirResolveSession
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.fir.containingClass
-import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.declarations.synthetic.FirSyntheticProperty
 import org.jetbrains.kotlin.fir.declarations.utils.*
@@ -68,7 +67,7 @@ internal class KtFirKotlinPropertySymbol(
     override val contextReceivers: List<KtContextReceiver> by cached { firSymbol.createContextReceivers(builder) }
 
     override val isExtension: Boolean get() = withValidityAssertion { firSymbol.isExtension }
-    override val initializer: KtInitializerValue? by cached { firSymbol.getKtConstantInitializer() }
+    override val initializer: KtInitializerValue? by cached { firSymbol.getKtConstantInitializer(firResolveSession) }
 
     override val symbolKind: KtSymbolKind
         get() = withValidityAssertion {
@@ -119,9 +118,7 @@ internal class KtFirKotlinPropertySymbol(
     override val hasSetter: Boolean get() = withValidityAssertion { firSymbol.setterSymbol != null }
 
     override fun createPointer(): KtSymbolPointer<KtKotlinPropertySymbol> = withValidityAssertion {
-        if (firSymbol.fir.origin != FirDeclarationOrigin.SubstitutionOverride) {
-            KtPsiBasedSymbolPointer.createForSymbolFromSource(this)?.let { return it }
-        }
+        KtPsiBasedSymbolPointer.createForSymbolFromSource(this)?.let { return it }
 
         return when (symbolKind) {
             KtSymbolKind.TOP_LEVEL -> TODO("Creating symbol for top level properties is not supported yet")

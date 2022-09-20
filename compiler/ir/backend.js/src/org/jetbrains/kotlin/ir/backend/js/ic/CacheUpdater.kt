@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.ir.backend.js.*
 import org.jetbrains.kotlin.ir.backend.js.lower.serialization.ir.JsIrLinker
 import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.JsIrFragmentAndBinaryAst
+import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.safeModuleName
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.util.*
@@ -36,6 +37,7 @@ fun interface CacheExecutor {
 
 enum class DirtyFileState(val str: String) {
     ADDED_FILE("added file"),
+    MODIFIED_CONFIG("modified config"),
     MODIFIED_IR("modified ir"),
     UPDATED_EXPORTS("updated exports"),
     UPDATED_IMPORTS("updated imports"),
@@ -188,13 +190,14 @@ class CacheUpdater(
         val removedFilesMetadata = mutableMapOf<KotlinLibraryFile, Map<KotlinSourceFile, KotlinSourceFileMetadata>>()
 
         val modifiedFiles = KotlinSourceFileMap(incrementalCaches.entries.associate { (lib, cache) ->
-            val (dirtyFiles, removedFiles, newFiles) = cache.collectModifiedFiles(configHash)
+            val (dirtyFiles, removedFiles, newFiles, modifiedConfigFiles) = cache.collectModifiedFiles(configHash)
 
             val fileStats by lazy(LazyThreadSafetyMode.NONE) { dirtyFileStats.getOrPutFiles(lib) }
             newFiles.forEach { fileStats.addDirtFileStat(it, DirtyFileState.ADDED_FILE) }
+            modifiedConfigFiles.forEach { fileStats.addDirtFileStat(it, DirtyFileState.MODIFIED_CONFIG) }
             removedFiles.forEach { fileStats.addDirtFileStat(it.key, DirtyFileState.REMOVED_FILE) }
             dirtyFiles.forEach {
-                if (it.key !in newFiles) {
+                if (it.key !in newFiles && it.key !in modifiedConfigFiles) {
                     fileStats.addDirtFileStat(it.key, DirtyFileState.MODIFIED_IR)
                 }
             }
@@ -514,6 +517,7 @@ class CacheUpdater(
                 }
                 artifacts += incrementalCache.buildModuleArtifactAndCommitCache(
                     moduleName = libFragment.name.asString(),
+                    externalModuleName = lib.jsOutputName,
                     rebuiltFileFragments = libRebuiltFiles,
                     signatureToIndexMapping = signatureToIndexMapping
                 )

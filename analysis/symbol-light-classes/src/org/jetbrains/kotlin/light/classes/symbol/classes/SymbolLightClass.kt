@@ -50,7 +50,7 @@ internal open class SymbolLightClass(
 
     private val _modifierList: PsiModifierList? by lazyPub {
 
-        val modifiers = mutableSetOf(classOrObjectSymbol.toPsiVisibilityForClass(isTopLevel))
+        val modifiers = mutableSetOf(classOrObjectSymbol.toPsiVisibilityForClass(isNested = !isTopLevel))
         classOrObjectSymbol.computeSimpleModality()?.run {
             modifiers.add(this)
         }
@@ -209,7 +209,7 @@ internal open class SymbolLightClass(
         result
     }
 
-    private fun addPropertyBackingFields(result: MutableList<KtLightField>) {
+    protected fun addPropertyBackingFields(result: MutableList<KtLightField>) {
         val propertySymbols = classOrObjectSymbol.getDeclaredMemberScope().getCallableSymbols()
             .filterIsInstance<KtPropertySymbol>()
             .applyIf(isCompanionObject) {
@@ -225,9 +225,10 @@ internal open class SymbolLightClass(
         fun addPropertyBackingField(propertySymbol: KtPropertySymbol) {
             val isJvmField = propertySymbol.hasJvmFieldAnnotation()
             val isLateInit = (propertySymbol as? KtKotlinPropertySymbol)?.isLateInit == true
+            val isConst = (propertySymbol as? KtKotlinPropertySymbol)?.isConst == true
 
             val forceStatic = classOrObjectSymbol.isObject
-            val takePropertyVisibility = !isCompanionObject && (isLateInit || isJvmField)
+            val takePropertyVisibility = !isCompanionObject && (isLateInit || isJvmField || isConst)
 
             createField(
                 declaration = propertySymbol,

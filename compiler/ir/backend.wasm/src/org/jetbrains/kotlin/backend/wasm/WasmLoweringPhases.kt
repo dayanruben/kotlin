@@ -142,6 +142,12 @@ private val tailrecLoweringPhase = makeWasmModulePhase(
     description = "Replace `tailrec` call sites with equivalent loop"
 )
 
+private val wasmStringSwitchOptimizerLowering = makeWasmModulePhase(
+    ::WasmStringSwitchOptimizerLowering,
+    name = "WasmStringSwitchOptimizerLowering",
+    description = "Replace when with constant string cases to binary search by string hashcodes"
+)
+
 private val complexExternalDeclarationsToTopLevelFunctionsLowering = makeWasmModulePhase(
     ::ComplexExternalDeclarationsToTopLevelFunctionsLowering,
     name = "ComplexExternalDeclarationsToTopLevelFunctionsLowering",
@@ -397,13 +403,6 @@ private val tryCatchCanonicalization = makeWasmModulePhase(
     prerequisite = setOf(functionInliningPhase)
 )
 
-private val returnableBlockLoweringPhase = makeWasmModulePhase(
-    ::ReturnableBlockLowering,
-    name = "ReturnableBlockLowering",
-    description = "Replace returnable block with do-while loop",
-    prerequisite = setOf(functionInliningPhase)
-)
-
 private val bridgesConstructionPhase = makeWasmModulePhase(
     ::WasmBridgesConstruction,
     name = "BridgesConstruction",
@@ -426,12 +425,6 @@ private val autoboxingTransformerPhase = makeWasmModulePhase(
     { context -> AutoboxingTransformer(context) },
     name = "AutoboxingTransformer",
     description = "Insert box/unbox intrinsics"
-)
-
-private val wasmNullSpecializationLowering = makeWasmModulePhase(
-    { context -> WasmNullCoercingLowering(context) },
-    name = "WasmNullCoercingLowering",
-    description = "Specialize assigning Nothing? values to other types."
 )
 
 private val staticMembersLoweringPhase = makeWasmModulePhase(
@@ -599,6 +592,8 @@ val wasmPhases = NamedCompilerPhase(
             delegateToPrimaryConstructorLoweringPhase then
             // Common prefix ends
 
+            wasmStringSwitchOptimizerLowering then
+
             complexExternalDeclarationsToTopLevelFunctionsLowering then
             complexExternalDeclarationsUsagesLowering then
 
@@ -619,7 +614,6 @@ val wasmPhases = NamedCompilerPhase(
             unhandledExceptionLowering then
 
             tryCatchCanonicalization then
-            returnableBlockLoweringPhase then
 
             forLoopsLoweringPhase then
             propertyLazyInitLoweringPhase then
@@ -661,6 +655,5 @@ val wasmPhases = NamedCompilerPhase(
 
             virtualDispatchReceiverExtractionPhase then
             staticMembersLoweringPhase then
-            wasmNullSpecializationLowering then
             validateIrAfterLowering
 )

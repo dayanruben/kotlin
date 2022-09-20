@@ -11,7 +11,8 @@ import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Project
 import org.gradle.api.tasks.TaskProvider
 import org.jetbrains.kotlin.gradle.dsl.KotlinCommonOptions
-import org.jetbrains.kotlin.gradle.plugin.*
+import org.jetbrains.kotlin.gradle.plugin.KotlinCompilationWithResources
+import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinNativeCompilationData
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinNativeFragmentMetadataCompilationData
 import org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile
@@ -21,31 +22,6 @@ import java.io.File
 import java.util.concurrent.Callable
 import javax.inject.Inject
 
-internal class NativeCompileOptions(private val languageSettings: LanguageSettingsBuilder) : KotlinCommonOptions {
-
-    override var apiVersion: String?
-        get() = languageSettings.apiVersion
-        set(value) {
-            languageSettings.apiVersion = value
-        }
-
-    override var languageVersion: String?
-        get() = languageSettings.languageVersion
-        set(value) {
-            languageSettings.languageVersion = value
-        }
-    
-    override var useK2: Boolean
-        get() = false
-        set(@Suppress("UNUSED_PARAMETER") value) {}
-
-    override var allWarningsAsErrors: Boolean = false
-    override var suppressWarnings: Boolean = false
-    override var verbose: Boolean = false
-
-    override var freeCompilerArgs: List<String> = listOf()
-}
-
 abstract class AbstractKotlinNativeCompilation(
     override val konanTarget: KonanTarget,
     compilationDetails: CompilationDetails<KotlinCommonOptions>
@@ -54,12 +30,19 @@ abstract class AbstractKotlinNativeCompilation(
 ),
     KotlinNativeCompilationData<KotlinCommonOptions> {
 
+    @Suppress("DEPRECATION")
+    @Deprecated("Accessing task instance directly is deprecated", replaceWith = ReplaceWith("compileTaskProvider"))
     override val compileKotlinTask: KotlinNativeCompile
         get() = super.compileKotlinTask as KotlinNativeCompile
 
-    @Suppress("UNCHECKED_CAST")
+    @Suppress("UNCHECKED_CAST", "DEPRECATION")
+    @Deprecated("Replaced with compileTaskProvider", replaceWith = ReplaceWith("compileTaskProvider"))
     override val compileKotlinTaskProvider: TaskProvider<out KotlinNativeCompile>
         get() = super.compileKotlinTaskProvider as TaskProvider<out KotlinNativeCompile>
+
+    @Suppress("UNCHECKED_CAST")
+    override val compileTaskProvider: TaskProvider<KotlinNativeCompile>
+        get() = super.compileTaskProvider as TaskProvider<KotlinNativeCompile>
 
     internal val useGenericPluginArtifact: Boolean
         get() = project.nativeUseEmbeddableCompilerJar

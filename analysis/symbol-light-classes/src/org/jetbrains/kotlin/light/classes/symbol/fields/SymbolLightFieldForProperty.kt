@@ -87,7 +87,7 @@ internal class SymbolLightFieldForProperty(
         }
 
         val visibility =
-            if (takePropertyVisibility) propertySymbol.toPsiVisibilityForMember(isTopLevel = false) else PsiModifier.PRIVATE
+            if (takePropertyVisibility) propertySymbol.toPsiVisibilityForMember() else PsiModifier.PRIVATE
         modifiers.add(visibility)
 
         if (!suppressFinal) {
@@ -117,8 +117,6 @@ internal class SymbolLightFieldForProperty(
 
     private val _initializer by lazyPub {
         if (propertySymbol !is KtKotlinPropertySymbol) return@lazyPub null
-        if (!propertySymbol.isConst) return@lazyPub null
-        if (!propertySymbol.isVal) return@lazyPub null
         val constInitializer = propertySymbol.initializer as? KtConstantInitializerValue ?: return@lazyPub null
         (constInitializer.constant as? KtConstantValue)?.createPsiLiteral(this)
     }

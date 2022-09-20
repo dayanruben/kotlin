@@ -8,12 +8,10 @@ package org.jetbrains.kotlin.ir.backend.js
 import org.jetbrains.kotlin.builtins.PrimitiveType
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
-import org.jetbrains.kotlin.ir.backend.js.utils.getJsName
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
-import org.jetbrains.kotlin.ir.symbols.IrConstructorSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.types.isLong
 import org.jetbrains.kotlin.ir.util.constructors
@@ -31,6 +29,7 @@ class JsIntrinsics(private val irBuiltIns: IrBuiltIns, val context: JsIrBackendC
     // TODO: Should we drop operator intrinsics in favor of IrDynamicOperatorExpression?
 
     // Global variables
+    val void = getInternalProperty("VOID")
     val globalThis = getInternalProperty("globalThis")
 
     // Equality operations:
@@ -109,6 +108,9 @@ class JsIntrinsics(private val irBuiltIns: IrBuiltIns, val context: JsIrBackendC
 
 
     // RTTI:
+    val implementSymbol = getInternalFunction("implement")
+    val setMetadataForSymbol = getInternalFunction("setMetadataFor")
+
     val isInterfaceSymbol = getInternalFunction("isInterface")
     val isArraySymbol = getInternalFunction("isArray")
     //    val isCharSymbol = getInternalFunction("isChar")
@@ -139,7 +141,6 @@ class JsIntrinsics(private val irBuiltIns: IrBuiltIns, val context: JsIrBackendC
 
     // Other:
 
-    val jsObjectCreate = getInternalFunction("objectCreate") // Object.create
     val jsCode = getInternalFunction("js") // js("<code>")
     val jsHashCode = getInternalFunction("hashCode")
     val jsGetNumberHashCode = getInternalFunction("getNumberHashCode")
@@ -312,11 +313,13 @@ class JsIntrinsics(private val irBuiltIns: IrBuiltIns, val context: JsIrBackendC
 
     val jsArraySlice = getInternalFunction("slice")
 
+    val jsCall = getInternalFunction("jsCall")
     val jsBind = getInternalFunction("jsBind")
 
     // TODO move to IntrinsifyCallsLowering
     val doNotIntrinsifyAnnotationSymbol = context.symbolTable.referenceClass(context.getJsInternalClass("DoNotIntrinsify"))
     val jsFunAnnotationSymbol = context.symbolTable.referenceClass(context.getJsInternalClass("JsFun"))
+    val jsNameAnnotationSymbol = context.symbolTable.referenceClass(context.getJsInternalClass("JsName"))
 
     val jsImplicitExportAnnotationSymbol = context.symbolTable.referenceClass(context.getJsInternalClass("JsImplicitExport"))
 
@@ -340,6 +343,7 @@ class JsIntrinsics(private val irBuiltIns: IrBuiltIns, val context: JsIrBackendC
     val jsCharSequenceLength = getInternalFunction("charSequenceLength")
     val jsCharSequenceSubSequence = getInternalFunction("charSequenceSubSequence")
 
+    val jsContexfulRef = getInternalFunction("jsContextfulRef")
     val jsBoxIntrinsic = getInternalFunction("boxIntrinsic")
     val jsUnboxIntrinsic = getInternalFunction("unboxIntrinsic")
 
@@ -349,9 +353,11 @@ class JsIntrinsics(private val irBuiltIns: IrBuiltIns, val context: JsIrBackendC
     val readSharedBox = getInternalFunction("sharedBoxRead")
     val writeSharedBox = getInternalFunction("sharedBoxWrite")
 
-    val jsUndefined = getInternalFunction("jsUndefined")
-
     val linkageErrorSymbol = getInternalFunction("throwLinkageError")
+
+    val jsPrototypeOfSymbol = getInternalFunction("protoOf")
+    val jsDefinePropertySymbol = getInternalFunction("defineProp")
+    val jsObjectCreateSymbol = getInternalFunction("objectCreate") // Object.create
 
     // Helpers:
 
