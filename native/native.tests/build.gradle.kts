@@ -5,7 +5,7 @@ plugins {
     id("jps-compatible")
 }
 
-project.configureJvmToolchain(JdkMajorVersion.JDK_11)
+project.configureJvmToolchain(JdkMajorVersion.JDK_11_0)
 
 dependencies {
     testImplementation(kotlinStdlib())
@@ -169,6 +169,7 @@ val codegenBoxTest = nativeTest("codegenBoxTest", "codegen")
 val stdlibTest = nativeTest("stdlibTest", "stdlib")
 val kotlinTestLibraryTest = nativeTest("kotlinTestLibraryTest", "kotlin-test")
 val klibAbiTest = nativeTest("klibAbiTest", "klib-abi")
+val klibBinaryCompatibilityTest = nativeTest("klibBinaryCompatibilityTest", "klib-binary-compatibility")
 
 // "test" task is created by convention. We can't just remove it. Let's enable it in developer's environment, so it can be used
 // to run any test from IDE or from console, but disable it at TeamCity where it is not supposed to be ever used.
@@ -179,6 +180,6 @@ val test by nativeTest("test" /* no tags */).apply {
 }
 
 val generateTests by generator("org.jetbrains.kotlin.generators.tests.GenerateNativeTestsKt") {
-    javaLauncher.set(project.getToolchainLauncherFor(JdkMajorVersion.JDK_11))
+    javaLauncher.set(project.getToolchainLauncherFor(JdkMajorVersion.JDK_11_0))
     dependsOn(":compiler:generateTestData")
 }

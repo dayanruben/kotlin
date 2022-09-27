@@ -16,12 +16,14 @@ import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.compilerRunner.ArgumentUtils
 import org.jetbrains.kotlin.gradle.dsl.CompilerJsOptionsDefault
+import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinCompilationData
 import org.jetbrains.kotlin.gradle.plugin.statistics.KotlinBuildStatsService
 import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsBinaryMode
 import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsBinaryMode.DEVELOPMENT
 import org.jetbrains.kotlin.gradle.tasks.Kotlin2JsCompile
+import org.jetbrains.kotlin.gradle.utils.getValue
 import org.jetbrains.kotlin.gradle.utils.toHexString
 import org.jetbrains.kotlin.statistics.metrics.BooleanMetrics
 import org.jetbrains.kotlin.statistics.metrics.StringMetrics
@@ -33,7 +35,7 @@ import javax.inject.Inject
 @CacheableTask
 abstract class KotlinJsIrLink @Inject constructor(
     objectFactory: ObjectFactory,
-    workerExecutor: WorkerExecutor,
+    workerExecutor: WorkerExecutor
 ) : Kotlin2JsCompile(
     objectFactory.newInstance(CompilerJsOptionsDefault::class.java),
     objectFactory,
@@ -52,6 +54,11 @@ abstract class KotlinJsIrLink @Inject constructor(
         return !entryModule.get().asFile.exists()
     }
 
+    @get:Internal
+    val platformType by lazy {
+        compilation.platformType
+    }
+
     @Transient
     @get:Internal
     internal lateinit var compilation: KotlinCompilationData<*>
@@ -65,6 +72,11 @@ abstract class KotlinJsIrLink @Inject constructor(
 
     @get:Input
     val outputGranularity: KotlinJsIrOutputGranularity = propertiesProvider.jsIrOutputGranularity
+
+    // Incremental stuff of link task is inside compiler
+    @get:Internal
+    override val taskBuildCacheableOutputDirectory: DirectoryProperty
+        get() = super.taskBuildCacheableOutputDirectory
 
     @get:Internal
     @get:Deprecated("Please use modeProperty instead.")
@@ -85,13 +97,6 @@ abstract class KotlinJsIrLink @Inject constructor(
     @get:InputDirectory
     @get:PathSensitive(PathSensitivity.RELATIVE)
     internal abstract val entryModule: DirectoryProperty
-
-    @Deprecated(
-        message = "Replace with destinationDirectory",
-        replaceWith = ReplaceWith("destinationDirectory")
-    )
-    @get:Internal
-    val normalizedDestinationDirectory: DirectoryProperty get() = destinationDirectory
 
     @get:Internal
     val rootCacheDirectory by lazy {
@@ -145,3 +150,16 @@ abstract class KotlinJsIrLink @Inject constructor(
             .filterNot { it.isEmpty() }
     }
 }
+
+val KotlinPlatformType.fileExtension
+    get() = when (this) {
+        KotlinPlatformType.wasm -> {
+            ".mjs"
+        }
+
+        KotlinPlatformType.js -> {
+            ".js"
+        }
+
+        else -> error("Only JS and WASM supported for KotlinJsTest")
+    }

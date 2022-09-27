@@ -52,6 +52,14 @@ interface KotlinJsOptions : org.jetbrains.kotlin.gradle.dsl.KotlinCommonOptions 
         set(value) = options.moduleKind.set(value.moduleKindCompilerOption)
 
     /**
+     * Base name of generated files
+     * Default value: null
+     */
+    var moduleName: kotlin.String?
+        get() = options.moduleName.orNull
+        set(value) = options.moduleName.set(value)
+
+    /**
      * Don't automatically include the default Kotlin/JS stdlib into compilation dependencies
      * Default value: true
      */
@@ -63,7 +71,7 @@ interface KotlinJsOptions : org.jetbrains.kotlin.gradle.dsl.KotlinCommonOptions 
      * Destination *.js file for the compilation result
      * Default value: null
      */
-    @Deprecated(message = "Use task 'outputFileProperty' to specify location", level = DeprecationLevel.WARNING)
+    @Deprecated(message = "Only for legacy backend. For IR backend please use task.destinationDirectory and moduleName", level = DeprecationLevel.WARNING)
     var outputFile: kotlin.String?
         get() = options.outputFile.orNull
         set(value) = options.outputFile.set(value)

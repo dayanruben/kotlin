@@ -985,6 +985,7 @@ class GeneralNativeIT : BaseGradleIT() {
 
     @Test
     fun testIgnoreDisabledNativeTargets() = with(Project("sample-lib", directoryPrefix = "new-mpp-lib-and-app")) {
+        hostHaveUnsupportedTarget()
         build {
             assertSuccessful()
             assertEquals(1, output.lines().count { DISABLED_NATIVE_TARGETS_REPORTER_WARNING_PREFIX in it })
@@ -1133,6 +1134,10 @@ class GeneralNativeIT : BaseGradleIT() {
                 kotlin.native.distribution.baseDownloadUrl=https://non-existent.net
                 """.trimIndent()
             )
+
+            gradleProperties().modify {
+                it.replace("cacheRedirectorEnabled=true", "cacheRedirectorEnabled=false")
+            }
 
             build(
                 "build",

@@ -8804,6 +8804,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                     runTest("compiler/testData/codegen/box/coroutines/featureIntersection/funInterface/kt49294.kt");
                 }
 
+                @TestMetadata("kt50950.kt")
+                public void ignoreKt50950() throws Exception {
+                    runTest("compiler/testData/codegen/box/coroutines/featureIntersection/funInterface/kt50950.kt");
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM, testDataFilePath);
                 }
@@ -10369,6 +10374,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             @TestMetadata("interfaceDelegation.kt")
             public void testInterfaceDelegation() throws Exception {
                 runTest("compiler/testData/codegen/box/coroutines/tailCallOptimizations/interfaceDelegation.kt");
+            }
+
+            @TestMetadata("lambdaParameterInlining.kt")
+            public void testLambdaParameterInlining() throws Exception {
+                runTest("compiler/testData/codegen/box/coroutines/tailCallOptimizations/lambdaParameterInlining.kt");
             }
 
             @TestMetadata("returnInlineClass.kt")
@@ -34254,11 +34264,6 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                 runTest("compiler/testData/codegen/box/reflection/properties/noConflictOnKotlinGetterAndJavaField.kt");
             }
 
-            @TestMetadata("overrideKotlinPropertyByJavaMethod.kt")
-            public void testOverrideKotlinPropertyByJavaMethod() throws Exception {
-                runTest("compiler/testData/codegen/box/reflection/properties/overrideKotlinPropertyByJavaMethod.kt");
-            }
-
             @TestMetadata("privateClassVal.kt")
             public void testPrivateClassVal() throws Exception {
                 runTest("compiler/testData/codegen/box/reflection/properties/privateClassVal.kt");
@@ -38305,6 +38310,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("implicitReceiver.kt")
         public void testImplicitReceiver() throws Exception {
             runTest("compiler/testData/codegen/box/syntheticExtensions/implicitReceiver.kt");
+        }
+
+        @TestMetadata("overrideKotlinPropertyByJavaMethod.kt")
+        public void testOverrideKotlinPropertyByJavaMethod() throws Exception {
+            runTest("compiler/testData/codegen/box/syntheticExtensions/overrideKotlinPropertyByJavaMethod.kt");
         }
 
         @TestMetadata("overrideOnlyGetter.kt")

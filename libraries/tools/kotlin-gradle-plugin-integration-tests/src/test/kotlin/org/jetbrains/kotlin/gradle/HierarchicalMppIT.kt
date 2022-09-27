@@ -115,7 +115,7 @@ class HierarchicalMppIT : KGPBaseTest() {
     fun testDependenciesInTests(gradleVersion: GradleVersion, @TempDir tempDir: Path) {
         publishThirdPartyLib(withGranularMetadata = true, gradleVersion = gradleVersion, localRepoDir = tempDir) {
             kotlinSourcesDir("jvmMain").copyRecursively(kotlinSourcesDir("linuxX64Main"))
-            buildGradleKts.appendText("kotlin.linuxX64()")
+            buildGradleKts.appendText("\nkotlin.linuxX64()")
         }
 
         nativeProject(
@@ -570,6 +570,7 @@ class HierarchicalMppIT : KGPBaseTest() {
             sourceSetCInteropMetadataDirectory = mapOf(),
             hostSpecificSourceSets = emptySet(),
             sourceSetBinaryLayout = sourceSetModuleDependencies.mapValues { SourceSetMetadataLayout.KLIB },
+            sourceSetNames = setOf("commonMain", "jvmAndJsMain", "linuxAndJsMain"),
             isPublishedAsRoot = true
         )
     }

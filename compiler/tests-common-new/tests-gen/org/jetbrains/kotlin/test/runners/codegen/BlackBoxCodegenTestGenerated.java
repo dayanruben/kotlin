@@ -11116,6 +11116,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
                 public void testKt49294() throws Exception {
                     runTest("compiler/testData/codegen/box/coroutines/featureIntersection/funInterface/kt49294.kt");
                 }
+
+                @Test
+                @TestMetadata("kt50950.kt")
+                public void testKt50950() throws Exception {
+                    runTest("compiler/testData/codegen/box/coroutines/featureIntersection/funInterface/kt50950.kt");
+                }
             }
 
             @Nested
@@ -12856,6 +12862,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
             @TestMetadata("interfaceDelegation.kt")
             public void testInterfaceDelegation() throws Exception {
                 runTest("compiler/testData/codegen/box/coroutines/tailCallOptimizations/interfaceDelegation.kt");
+            }
+
+            @Test
+            @TestMetadata("lambdaParameterInlining.kt")
+            public void testLambdaParameterInlining() throws Exception {
+                runTest("compiler/testData/codegen/box/coroutines/tailCallOptimizations/lambdaParameterInlining.kt");
             }
 
             @Test
@@ -42657,12 +42669,6 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
             }
 
             @Test
-            @TestMetadata("overrideKotlinPropertyByJavaMethod.kt")
-            public void testOverrideKotlinPropertyByJavaMethod() throws Exception {
-                runTest("compiler/testData/codegen/box/reflection/properties/overrideKotlinPropertyByJavaMethod.kt");
-            }
-
-            @Test
             @TestMetadata("privateClassVal.kt")
             public void testPrivateClassVal() throws Exception {
                 runTest("compiler/testData/codegen/box/reflection/properties/privateClassVal.kt");
@@ -47271,6 +47277,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         @TestMetadata("implicitReceiver.kt")
         public void testImplicitReceiver() throws Exception {
             runTest("compiler/testData/codegen/box/syntheticExtensions/implicitReceiver.kt");
+        }
+
+        @Test
+        @TestMetadata("overrideKotlinPropertyByJavaMethod.kt")
+        public void testOverrideKotlinPropertyByJavaMethod() throws Exception {
+            runTest("compiler/testData/codegen/box/syntheticExtensions/overrideKotlinPropertyByJavaMethod.kt");
         }
 
         @Test

@@ -406,11 +406,12 @@ class Kotlin2JsGradlePluginIT : AbstractKotlin2JsGradlePluginIT(false) {
             }
             libBuildscript.appendText(
                 """
-                kotlin.js().browser {
-                    dceTask {
-                        dceOptions.devMode = true
-                    }
-                }
+                |
+                |kotlin.js().browser {
+                |    dceTask {
+                |        dceOptions.devMode = true
+                |    }
+                |}
                 """.trimMargin()
             )
 
@@ -530,7 +531,7 @@ abstract class AbstractKotlin2JsGradlePluginIT(protected val irBackend: Boolean)
                     ":compileTestKotlin2Js"
                 )
                 if (irBackend) {
-                    assertFileInProjectExists("build/kotlin2js/main/module.js/default/manifest")
+                    assertFileInProjectExists("build/kotlin2js/main/default/manifest")
                 } else {
                     assertFileInProjectExists("build/kotlin2js/main/module.js")
                 }

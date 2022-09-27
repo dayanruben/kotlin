@@ -21,12 +21,22 @@ class K2JSCompilerArguments : CommonCompilerArguments() {
         gradleInputType = GradleInputTypes.INTERNAL // handled by task 'outputFileProperty'
     )
     @GradleDeprecatedOption(
-        message = "Use task 'outputFileProperty' to specify location",
+        message = "Only for legacy backend. For IR backend please use task.destinationDirectory and moduleName",
         level = DeprecationLevel.WARNING,
         removeAfter = "1.9.0"
     )
     @Argument(value = "-output", valueDescription = "<filepath>", description = "Destination *.js file for the compilation result")
     var outputFile: String? by NullableStringFreezableVar(null)
+
+    @Argument(value = "-Xir-output-dir", valueDescription = "<directory>", description = "Destination for generated files")
+    var outputDir: String? by NullableStringFreezableVar(null)
+
+    @GradleOption(
+        value = DefaultValues.StringNullDefault::class,
+        gradleInputType = GradleInputTypes.INPUT
+    )
+    @Argument(value = "-Xir-module-name", description = "Base name of generated files")
+    var moduleName: String? by NullableStringFreezableVar(null)
 
     @GradleOption(
         value = DefaultValues.BooleanTrueDefault::class,
@@ -183,7 +193,7 @@ class K2JSCompilerArguments : CommonCompilerArguments() {
     var irOnly: Boolean by FreezableVar(false)
 
     @Argument(
-        value = "-Xir-module-name",
+        value = "-Xir-klib-module-name",
         valueDescription = "<name>",
         description = "Specify a compilation module name for IR backend"
     )

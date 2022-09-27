@@ -120,6 +120,7 @@ class KotlinMetadataTargetConfigurator :
             val tasksProvider = KotlinTasksProvider()
             KotlinCommonSourceSetProcessor(compilation, tasksProvider)
         }
+
         is KotlinSharedNativeCompilation -> NativeSharedCompilationProcessor(compilation)
         else -> error("unsupported compilation type ${compilation::class.qualifiedName}")
     }
@@ -299,13 +300,14 @@ class KotlinMetadataTargetConfigurator :
         val platformCompilations = sourceSet.internal.compilations
             .filter { it.target.name != KotlinMultiplatformPlugin.METADATA_TARGET_NAME }
 
-        val isNativeSourceSet = isSharedNativeSourceSet(sourceSet)
+        val isNativeSourceSet = isNativeSourceSet(sourceSet)
 
         val compilationFactory: KotlinCompilationFactory<out AbstractKotlinCompilation<*>> = when {
             isNativeSourceSet -> KotlinSharedNativeCompilationFactory(
                 target,
                 platformCompilations.map { (it as AbstractKotlinNativeCompilation).konanTarget }
             )
+
             else -> KotlinCommonCompilationFactory(target)
         }
 
@@ -338,7 +340,7 @@ class KotlinMetadataTargetConfigurator :
         val project = compilation.target.project
         val sourceSet = compilation.defaultSourceSet
 
-        project.registerTask<TransformKotlinGranularMetadata>(
+        project.registerTask<MetadataDependencyTransformationTask>(
             transformGranularMetadataTaskName(compilation.name),
             listOf(sourceSet)
         ) {
@@ -453,7 +455,7 @@ class KotlinMetadataTargetConfigurator :
 
         val resolvedMetadataFilesProviders = lazy {
             val transformationTaskHolders = sourceSet.internal.withDependsOnClosure.mapNotNull { hierarchySourceSet ->
-                project.locateTask<TransformKotlinGranularMetadata>(transformGranularMetadataTaskName(hierarchySourceSet.name))
+                project.locateTask<MetadataDependencyTransformationTask>(transformGranularMetadataTaskName(hierarchySourceSet.name))
             }
             transformationTaskHolders.map { SourceSetResolvedMetadataProvider(it) }
         }
@@ -566,11 +568,9 @@ internal fun createMetadataDependencyTransformationClasspath(
     )
 }
 
-internal fun isSharedNativeSourceSet(sourceSet: KotlinSourceSet): Boolean {
-    val compilations = sourceSet.internal.compilations
-    return compilations.isNotEmpty() && compilations.all {
-        it.platformType == KotlinPlatformType.common || it.platformType == KotlinPlatformType.native
-    }
+internal fun isNativeSourceSet(sourceSet: KotlinSourceSet): Boolean {
+    val compilations = sourceSet.internal.compilations.filterNot { it.platformType == KotlinPlatformType.common }
+    return compilations.isNotEmpty() && compilations.all { it.platformType == KotlinPlatformType.native }
 }
 
 internal fun dependsOnClosureWithInterCompilationDependencies(sourceSet: KotlinSourceSet): Set<KotlinSourceSet> =

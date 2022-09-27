@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.test.RunnerWithMuteInDatabase
 import org.junit.After
 import org.junit.AfterClass
+import org.junit.Assume
 import org.junit.Before
 import org.junit.runner.RunWith
 import java.io.File
@@ -243,6 +244,8 @@ abstract class BaseGradleIT {
                 "Could not stop some daemons ${(DaemonRegistry.activeDaemons).joinToString()}"
             }
         }
+
+        fun hostHaveUnsupportedTarget() = Assume.assumeFalse(HostManager.hostIsMac)
     }
 
     // the second parameter is for using with ToolingAPI, that do not like --daemon/--no-daemon  options at all
@@ -424,12 +427,16 @@ abstract class BaseGradleIT {
             result = runProcess(cmd, projectDir, env, buildOptions)
             CompiledProject(this, result.output, result.exitCode).check()
         } catch (t: Throwable) {
-            println("<=== Test build: ${this.projectName} $cmd ===>")
+            println("<=== Test build: $projectName $cmd ===>")
 
             // to prevent duplication of output
             if (!options.forceOutputToStdout && result != null) {
-                println(result.output)
+                result.output
+                    .split("\n")
+                    .map { "    |test output $projectName|$it" }
+                    .forEach(::println)
             }
+
             throw t
         }
     }
