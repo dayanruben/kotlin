@@ -23023,6 +23023,12 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
             }
 
             @Test
+            @TestMetadata("InternalPotentialOverride.kt")
+            public void testInternalPotentialOverride() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/override/InternalPotentialOverride.kt");
+            }
+
+            @Test
             @TestMetadata("InvisiblePotentialOverride.kt")
             public void testInvisiblePotentialOverride() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/override/InvisiblePotentialOverride.kt");
@@ -33864,6 +33870,18 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
             @TestMetadata("lackOfInvisibleSetterOfJavaClassInSamePackage.kt")
             public void testLackOfInvisibleSetterOfJavaClassInSamePackage() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/visibility/lackOfInvisibleSetterOfJavaClassInSamePackage.kt");
+            }
+
+            @Test
+            @TestMetadata("notOverridingInternal.kt")
+            public void testNotOverridingInternal() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/visibility/notOverridingInternal.kt");
+            }
+
+            @Test
+            @TestMetadata("notOverridingPackagePrivate.kt")
+            public void testNotOverridingPackagePrivate() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/visibility/notOverridingPackagePrivate.kt");
             }
 
             @Test

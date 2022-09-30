@@ -208,7 +208,7 @@ abstract class AbstractKotlinNativeCompile<
         get() = languageSettings.progressiveMode
     // endregion.
 
-    @Deprecated("Declare dependencies explicitly please. This option is scheduled to be removed in 1.9.0")
+    @Deprecated("Please declare explicit dependency on kotlinx-cli. This option is scheduled to be removed in 1.9.0")
     @get:Input
     val enableEndorsedLibs: Boolean by project.provider { compilation.enableEndorsedLibs }
 
@@ -1007,10 +1007,14 @@ open class CInteropProcess
     @get:PathSensitive(PathSensitivity.RELATIVE)
     val headers: FileCollection get() = settings.headers
 
-    @get:Input
+    @get:IgnoreEmptyDirectories
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.RELATIVE)
     val allHeadersDirs: Set<File> get() = settings.includeDirs.allHeadersDirs.files
 
-    @get:Input
+    @get:IgnoreEmptyDirectories
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.RELATIVE)
     val headerFilterDirs: Set<File> get() = settings.includeDirs.headerFilterDirs.files
 
     private val libDirectories = project.buildLibDirectories()
