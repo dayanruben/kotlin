@@ -333,7 +333,6 @@ public class DefaultErrorMessages {
         MAP.put(ACTUAL_MISSING, "Declaration must be marked with 'actual'");
 
         MAP.put(OPTIONAL_EXPECTATION_NOT_ON_EXPECTED, "'@OptionalExpectation' can only be used on an expected annotation class");
-        MAP.put(NESTED_OPTIONAL_EXPECTATION, "'@OptionalExpectation' cannot be used on a nested class");
         MAP.put(OPTIONAL_DECLARATION_OUTSIDE_OF_ANNOTATION_ENTRY, "Declaration annotated with '@OptionalExpectation' can only be used inside an annotation entry");
         MAP.put(OPTIONAL_DECLARATION_USAGE_IN_NON_COMMON_SOURCE, "Declaration annotated with '@OptionalExpectation' can only be used in common module sources");
 
@@ -1123,7 +1122,7 @@ public class DefaultErrorMessages {
         MAP.put(IMPLICIT_NOTHING_TYPE_ARGUMENT_IN_RETURN_POSITION, "Returning type parameter has been inferred to Nothing implicitly. Please specify type arguments explicitly to hide this warning. Nothing can produce an exception at runtime.");
         MAP.put(IMPLICIT_NOTHING_TYPE_ARGUMENT_AGAINST_NOT_NOTHING_EXPECTED_TYPE, "Returning type parameter has been inferred to Nothing implicitly because Nothing is more specific than specified expected type. Please specify type arguments explicitly in accordance with expected type to hide this warning. Nothing can produce an exception at runtime. See KT-36776 for more details.");
         MAP.put(RETURN_FOR_BUILT_IN_SUSPEND, "Using implicit label for this lambda is prohibited");
-        MAP.put(MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND, "Calls having a form of ''suspend {}'' are deprecated because ''suspend'' in the context will have a meaning of a modifier. Add empty argument list to the call: ''suspend() { ... }''");
+        MAP.put(MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND, "Calls having a form of ''suspend {}'' are deprecated because ''suspend'' in the context will have a meaning of a modifier. Surround the lambda with parentheses: ''suspend({ ... })''");
         MAP.put(MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND_FUN,
                 "Calls having a form of ''suspend fun'' are deprecated because ''suspend'' in the context will have a meaning of a modifier. Surround the argument of the call with parens: ''suspend(fun() { ... })''." +
                 " See https://youtrack.jetbrains.com/issue/KT-49264"

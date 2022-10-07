@@ -9269,6 +9269,12 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             }
 
             @Test
+            @TestMetadata("inheritFromAnotherModule.kt")
+            public void testInheritFromAnotherModule() throws Exception {
+                runTest("compiler/testData/codegen/box/coroutines/multiModule/inheritFromAnotherModule.kt");
+            }
+
+            @Test
             @TestMetadata("inlineCrossModule.kt")
             public void testInlineCrossModule() throws Exception {
                 runTest("compiler/testData/codegen/box/coroutines/multiModule/inlineCrossModule.kt");
@@ -32481,6 +32487,12 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             }
 
             @Test
+            @TestMetadata("arrayOfNullableReified.kt")
+            public void testArrayOfNullableReified() throws Exception {
+                runTest("compiler/testData/codegen/box/reflection/typeOf/arrayOfNullableReified.kt");
+            }
+
+            @Test
             @TestMetadata("classes.kt")
             public void testClasses() throws Exception {
                 runTest("compiler/testData/codegen/box/reflection/typeOf/classes.kt");
@@ -32508,6 +32520,12 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             @TestMetadata("multipleLayers.kt")
             public void testMultipleLayers() throws Exception {
                 runTest("compiler/testData/codegen/box/reflection/typeOf/multipleLayers.kt");
+            }
+
+            @Test
+            @TestMetadata("reifiedAsNestedArgument.kt")
+            public void testReifiedAsNestedArgument() throws Exception {
+                runTest("compiler/testData/codegen/box/reflection/typeOf/reifiedAsNestedArgument.kt");
             }
 
             @Test

@@ -28941,6 +28941,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("implicitThisOrLocalVar.kt")
+            public void testImplicitThisOrLocalVar() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/smartCasts/implicitThisOrLocalVar.kt");
+            }
+
+            @Test
             @TestMetadata("implicitToGrandSon.kt")
             public void testImplicitToGrandSon() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/smartCasts/implicitToGrandSon.kt");
@@ -30485,6 +30491,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("capturedByNested.kt")
                 public void testCapturedByNested() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/smartCasts/variables/capturedByNested.kt");
+                }
+
+                @Test
+                @TestMetadata("capturedWithControlJumps.kt")
+                public void testCapturedWithControlJumps() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/smartCasts/variables/capturedWithControlJumps.kt");
                 }
 
                 @Test
@@ -32101,6 +32113,18 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("irrelevantFields.kt")
                 public void testIrrelevantFields() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/testsWithJava17/jvmRecord/irrelevantFields.kt");
+                }
+
+                @Test
+                @TestMetadata("javaRecordWithExplicitComponent.kt")
+                public void testJavaRecordWithExplicitComponent() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/testsWithJava17/jvmRecord/javaRecordWithExplicitComponent.kt");
+                }
+
+                @Test
+                @TestMetadata("javaRecordWithGeneric.kt")
+                public void testJavaRecordWithGeneric() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/testsWithJava17/jvmRecord/javaRecordWithGeneric.kt");
                 }
 
                 @Test
@@ -34780,6 +34804,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         }
 
         @Test
+        @TestMetadata("jvmFieldAndJavaGetter.kt")
+        public void testJvmFieldAndJavaGetter() throws Exception {
+            runTest("compiler/testData/diagnostics/testsWithStdLib/jvmFieldAndJavaGetter.kt");
+        }
+
+        @Test
         @TestMetadata("kt8050.kt")
         public void testKt8050() throws Exception {
             runTest("compiler/testData/diagnostics/testsWithStdLib/kt8050.kt");
@@ -34924,6 +34954,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("JvmSyntheticOnDelegate.kt")
             public void testJvmSyntheticOnDelegate() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/annotations/JvmSyntheticOnDelegate.kt");
+            }
+
+            @Test
+            @TestMetadata("multipleRepeatables.kt")
+            public void testMultipleRepeatables() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/annotations/multipleRepeatables.kt");
             }
 
             @Test

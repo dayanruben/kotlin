@@ -121,6 +121,12 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
             }
 
             @Test
+            @TestMetadata("annotationsUnsignedTypes.kt")
+            public void testAnnotationsUnsignedTypes() throws Exception {
+                runTest("compiler/testData/codegen/box/annotations/instances/annotationsUnsignedTypes.kt");
+            }
+
+            @Test
             @TestMetadata("inInlineFunction.kt")
             public void testInInlineFunction() throws Exception {
                 runTest("compiler/testData/codegen/box/annotations/instances/inInlineFunction.kt");
@@ -9356,6 +9362,12 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
             @Test
             public void testAllFilesPresentInMultiModule() throws Exception {
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/coroutines/multiModule"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JS_IR, true);
+            }
+
+            @Test
+            @TestMetadata("inheritFromAnotherModule.kt")
+            public void testInheritFromAnotherModule() throws Exception {
+                runTest("compiler/testData/codegen/box/coroutines/multiModule/inheritFromAnotherModule.kt");
             }
 
             @Test
@@ -32655,6 +32667,12 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
             }
 
             @Test
+            @TestMetadata("arrayOfNullableReified.kt")
+            public void testArrayOfNullableReified() throws Exception {
+                runTest("compiler/testData/codegen/box/reflection/typeOf/arrayOfNullableReified.kt");
+            }
+
+            @Test
             @TestMetadata("classes.kt")
             public void testClasses() throws Exception {
                 runTest("compiler/testData/codegen/box/reflection/typeOf/classes.kt");
@@ -32682,6 +32700,12 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
             @TestMetadata("multipleLayers.kt")
             public void testMultipleLayers() throws Exception {
                 runTest("compiler/testData/codegen/box/reflection/typeOf/multipleLayers.kt");
+            }
+
+            @Test
+            @TestMetadata("reifiedAsNestedArgument.kt")
+            public void testReifiedAsNestedArgument() throws Exception {
+                runTest("compiler/testData/codegen/box/reflection/typeOf/reifiedAsNestedArgument.kt");
             }
 
             @Test

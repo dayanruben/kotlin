@@ -133,6 +133,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
                 }
 
                 @Test
+                @TestMetadata("annotationsUnsignedTypes.kt")
+                public void testAnnotationsUnsignedTypes() throws Exception {
+                    runTest("compiler/testData/codegen/box/annotations/instances/annotationsUnsignedTypes.kt");
+                }
+
+                @Test
                 @TestMetadata("inInlineFunction.kt")
                 public void testInInlineFunction() throws Exception {
                     runTest("compiler/testData/codegen/box/annotations/instances/inInlineFunction.kt");
@@ -10264,6 +10270,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
                 @Test
                 public void testAllFilesPresentInMultiModule() throws Exception {
                     KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/coroutines/multiModule"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+                }
+
+                @Test
+                @TestMetadata("inheritFromAnotherModule.kt")
+                public void testInheritFromAnotherModule() throws Exception {
+                    runTest("compiler/testData/codegen/box/coroutines/multiModule/inheritFromAnotherModule.kt");
                 }
 
                 @Test
@@ -35732,6 +35744,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
                 }
 
                 @Test
+                @TestMetadata("arrayOfNullableReified.kt")
+                public void testArrayOfNullableReified() throws Exception {
+                    runTest("compiler/testData/codegen/box/reflection/typeOf/arrayOfNullableReified.kt");
+                }
+
+                @Test
                 @TestMetadata("classes.kt")
                 public void testClasses() throws Exception {
                     runTest("compiler/testData/codegen/box/reflection/typeOf/classes.kt");
@@ -35759,6 +35777,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
                 @TestMetadata("multipleLayers.kt")
                 public void testMultipleLayers() throws Exception {
                     runTest("compiler/testData/codegen/box/reflection/typeOf/multipleLayers.kt");
+                }
+
+                @Test
+                @TestMetadata("reifiedAsNestedArgument.kt")
+                public void testReifiedAsNestedArgument() throws Exception {
+                    runTest("compiler/testData/codegen/box/reflection/typeOf/reifiedAsNestedArgument.kt");
                 }
 
                 @Test

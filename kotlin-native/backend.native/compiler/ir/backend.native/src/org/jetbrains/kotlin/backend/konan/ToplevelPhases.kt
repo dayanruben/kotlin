@@ -17,6 +17,8 @@ import org.jetbrains.kotlin.backend.konan.lower.CacheInfoBuilder
 import org.jetbrains.kotlin.backend.konan.lower.ExpectToActualDefaultValueCopier
 import org.jetbrains.kotlin.backend.konan.lower.SamSuperTypesChecker
 import org.jetbrains.kotlin.backend.konan.objcexport.ObjCExport
+import org.jetbrains.kotlin.backend.konan.objcexport.createCodeSpec
+import org.jetbrains.kotlin.backend.konan.objcexport.produceObjCExportInterface
 import org.jetbrains.kotlin.backend.konan.serialization.*
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.languageVersionSettings
@@ -86,7 +88,13 @@ internal val createSymbolTablePhase = konanUnitPhase(
 
 internal val objCExportPhase = konanUnitPhase(
         op = {
-            objCExport = ObjCExport(this, symbolTable!!)
+            val objcInterface = when {
+                !config.target.family.isAppleFamily -> null
+                config.produce != CompilerOutputKind.FRAMEWORK -> null
+                else -> produceObjCExportInterface(this)
+            }
+            val codeSpec = objcInterface?.createCodeSpec(symbolTable!!)
+            objCExport = ObjCExport(this, objcInterface, codeSpec)
         },
         name = "ObjCExport",
         description = "Objective-C header generation",
@@ -398,11 +406,8 @@ internal val bitcodePhase = NamedCompilerPhase(
                 createLLVMDeclarationsPhase then
                 ghaPhase then
                 RTTIPhase then
-                generateDebugInfoHeaderPhase then
                 escapeAnalysisPhase then
-                localEscapeAnalysisPhase then
                 codegenPhase then
-                finalizeDebugInfoPhase then
                 cStubsPhase
 )
 
@@ -520,8 +525,6 @@ internal fun PhaseConfig.konanPhasesConfig(config: KonanConfig) {
         // Also see https://youtrack.jetbrains.com/issue/KT-50399 for more details.
         disable(checkSamSuperTypesPhase)
 
-        disable(localEscapeAnalysisPhase)
-
         disableIf(singleCompilation, config.producePerFileCache)
         disableUnless(umbrellaCompilation, config.producePerFileCache)
 
@@ -539,10 +542,6 @@ internal fun PhaseConfig.konanPhasesConfig(config: KonanConfig) {
         disableUnless(rewriteExternalCallsCheckerGlobals, getBoolean(KonanConfigKeys.CHECK_EXTERNAL_CALLS))
         disableUnless(stringConcatenationTypeNarrowingPhase, config.optimizationsEnabled)
         disableUnless(optimizeTLSDataLoadsPhase, config.optimizationsEnabled)
-        if (!config.debug && !config.lightDebug) {
-            disable(generateDebugInfoHeaderPhase)
-            disable(finalizeDebugInfoPhase)
-        }
         if (!config.involvesLinkStage) {
             disable(bitcodePostprocessingPhase)
             disable(linkBitcodeDependenciesPhase)

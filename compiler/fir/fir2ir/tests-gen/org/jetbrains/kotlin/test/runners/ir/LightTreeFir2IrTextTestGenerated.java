@@ -943,6 +943,28 @@ public class LightTreeFir2IrTextTestGenerated extends AbstractLightTreeFir2IrTex
         }
 
         @Nested
+        @TestMetadata("compiler/testData/ir/irText/declarations/jvmRecord")
+        @TestDataPath("$PROJECT_ROOT")
+        public class JvmRecord {
+            @Test
+            public void testAllFilesPresentInJvmRecord() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/ir/irText/declarations/jvmRecord"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            }
+
+            @Test
+            @TestMetadata("dataClassWithJvmRecord.kt")
+            public void testDataClassWithJvmRecord() throws Exception {
+                runTest("compiler/testData/ir/irText/declarations/jvmRecord/dataClassWithJvmRecord.kt");
+            }
+
+            @Test
+            @TestMetadata("javaRecordComponentAccess.kt")
+            public void testJavaRecordComponentAccess() throws Exception {
+                runTest("compiler/testData/ir/irText/declarations/jvmRecord/javaRecordComponentAccess.kt");
+            }
+        }
+
+        @Nested
         @TestMetadata("compiler/testData/ir/irText/declarations/multiplatform")
         @TestDataPath("$PROJECT_ROOT")
         public class Multiplatform {
@@ -1260,6 +1282,12 @@ public class LightTreeFir2IrTextTestGenerated extends AbstractLightTreeFir2IrTex
         @TestMetadata("breakContinueInWhen.kt")
         public void testBreakContinueInWhen() throws Exception {
             runTest("compiler/testData/ir/irText/expressions/breakContinueInWhen.kt");
+        }
+
+        @Test
+        @TestMetadata("builtinOperators.kt")
+        public void testBuiltinOperators() throws Exception {
+            runTest("compiler/testData/ir/irText/expressions/builtinOperators.kt");
         }
 
         @Test

@@ -20,11 +20,9 @@ import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.konan.target.KonanTarget.*
 import org.jetbrains.kotlin.konan.util.visibleName
-import org.jetbrains.kotlin.utils.PathUtil
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.nio.file.Files
-import java.nio.file.Path
 
 class FrameworkDsymLayout(val rootDir: File) {
     init {
@@ -117,7 +115,7 @@ open class FatFrameworkTask : DefaultTask() {
         onlyIf { HostManager.hostIsMac }
     }
 
-    private val archToFramework: MutableMap<Architecture, FrameworkDescriptor> = mutableMapOf()
+    private val archToFramework: MutableMap<AppleArchitecture, FrameworkDescriptor> = mutableMapOf()
 
     //region DSL properties.
     /**
@@ -166,6 +164,29 @@ open class FatFrameworkTask : DefaultTask() {
             }
         }
 
+    private enum class AppleArchitecture(val clangMacro: String) {
+        X64("__x86_64__"),
+        X86("__i386__"),
+        ARM32("__arm__"),
+        // We need to distinguish between variants of aarch64, because there are two WatchOS ARM64 targets that we support
+        // watchOsArm64 that compiles to arm64_32 architecture
+        // watchOsDeviceArm64 that compiles to arm64 architecture
+        // https://github.com/apple/llvm-project/blob/6698c7d5889280d336f4aa8bf665d6e3c0c13ea0/clang/lib/Basic/Targets/AArch64.cpp#L1041
+        ARM64_32("__ARM64_ARCH_8_32__"),
+        ARM64("__ARM64_ARCH_8__"),
+    }
+
+    private val KonanTarget.appleArchitecture: AppleArchitecture get() =
+        when (architecture) {
+            Architecture.X64 -> AppleArchitecture.X64
+            Architecture.X86 -> AppleArchitecture.X86
+            Architecture.ARM64 -> if (this == WATCHOS_ARM64) AppleArchitecture.ARM64_32 else AppleArchitecture.ARM64
+            Architecture.ARM32 -> AppleArchitecture.ARM32
+            Architecture.MIPS32,
+            Architecture.MIPSEL32,
+            Architecture.WASM32 -> error("Fat frameworks are not supported for target `$name`")
+        }
+
     // region DSL methods.
     /**
      * Adds the specified frameworks in this fat framework.
@@ -185,7 +206,7 @@ open class FatFrameworkTask : DefaultTask() {
      */
     fun fromFrameworkDescriptors(frameworks: Iterable<FrameworkDescriptor>) {
         frameworks.forEach { framework ->
-            val arch = framework.target.architecture
+            val arch = framework.target.appleArchitecture
             val family = framework.target.family
             val fatFrameworkFamily = getFatFrameworkFamily()
             require(fatFrameworkFamily == null || family == fatFrameworkFamily) {
@@ -221,21 +242,12 @@ open class FatFrameworkTask : DefaultTask() {
         return archToFramework.values.firstOrNull()?.target?.family
     }
 
-    private val Architecture.clangMacro: String
-        get() = when (this) {
-            Architecture.X86 -> "__i386__"
-            Architecture.X64 -> "__x86_64__"
-            Architecture.ARM32 -> "__arm__"
-            Architecture.ARM64 -> "__aarch64__"
-            else -> error("Fat frameworks are not supported for architecture `$name`")
-        }
-
     private val FrameworkDescriptor.plistPlatform: String
         get() = when (target) {
             MACOS_X64, MACOS_ARM64 -> "MacOSX"
             IOS_ARM32, IOS_ARM64, IOS_X64, IOS_SIMULATOR_ARM64 -> "iPhoneOS"
             TVOS_ARM64, TVOS_X64, TVOS_SIMULATOR_ARM64 -> "AppleTVOS"
-            WATCHOS_ARM32, WATCHOS_ARM64, WATCHOS_X86, WATCHOS_X64, WATCHOS_SIMULATOR_ARM64 -> "WatchOS"
+            WATCHOS_ARM32, WATCHOS_ARM64, WATCHOS_X86, WATCHOS_X64, WATCHOS_SIMULATOR_ARM64, WATCHOS_DEVICE_ARM64 -> "WatchOS"
             else -> error("Fat frameworks are not supported for platform `${target.visibleName}`")
         }
 
@@ -420,7 +432,7 @@ open class FatFrameworkTask : DefaultTask() {
     companion object {
         private val supportedTargets = listOf(
             IOS_ARM32, IOS_ARM64, IOS_X64,
-            WATCHOS_ARM32, WATCHOS_ARM64, WATCHOS_X86, WATCHOS_X64,
+            WATCHOS_ARM32, WATCHOS_ARM64, WATCHOS_X86, WATCHOS_X64, WATCHOS_DEVICE_ARM64,
             TVOS_ARM64, TVOS_X64,
             MACOS_X64, MACOS_ARM64
         )

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -7,6 +7,8 @@ package org.jetbrains.kotlin.ir.backend.js
 
 import org.jetbrains.kotlin.backend.common.*
 import org.jetbrains.kotlin.backend.common.lower.*
+import org.jetbrains.kotlin.backend.common.lower.coroutines.AddContinuationToLocalSuspendFunctionsLowering
+import org.jetbrains.kotlin.backend.common.lower.coroutines.AddContinuationToNonLocalSuspendFunctionsLowering
 import org.jetbrains.kotlin.backend.common.lower.inline.FunctionInlining
 import org.jetbrains.kotlin.backend.common.lower.inline.LocalClassesExtractionFromInlineFunctionsLowering
 import org.jetbrains.kotlin.backend.common.lower.inline.LocalClassesInInlineFunctionsLowering
@@ -234,7 +236,7 @@ private val localClassesInInlineFunctionsPhase = makeBodyLoweringPhase(
 )
 
 private val localClassesExtractionFromInlineFunctionsPhase = makeBodyLoweringPhase(
-    { context -> LocalClassesExtractionFromInlineFunctionsLowering(context, BackendContext::jsRecordExtractedLocalClasses) },
+    { context -> LocalClassesExtractionFromInlineFunctionsLowering(context) },
     name = "localClassesExtractionFromInlineFunctionsPhase",
     description = "Move local classes from inline functions into nearest declaration container",
     prerequisite = setOf(localClassesInInlineFunctionsPhase)
@@ -457,7 +459,7 @@ private val localDeclarationsLoweringPhase = makeBodyLoweringPhase(
 )
 
 private val localClassExtractionPhase = makeBodyLoweringPhase(
-    { context -> LocalClassPopupLowering(context, BackendContext::jsRecordExtractedLocalClasses) },
+    { context -> LocalClassPopupLowering(context) },
     name = "LocalClassExtractionPhase",
     description = "Move local declarations into nearest declaration container",
     prerequisite = setOf(localDeclarationsLoweringPhase)

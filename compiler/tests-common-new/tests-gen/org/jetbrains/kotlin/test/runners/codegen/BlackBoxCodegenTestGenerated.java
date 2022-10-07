@@ -457,6 +457,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
             }
 
             @Test
+            @TestMetadata("annotationsUnsignedTypes.kt")
+            public void testAnnotationsUnsignedTypes() throws Exception {
+                runTest("compiler/testData/codegen/box/annotations/instances/annotationsUnsignedTypes.kt");
+            }
+
+            @Test
             @TestMetadata("inInlineFunction.kt")
             public void testInInlineFunction() throws Exception {
                 runTest("compiler/testData/codegen/box/annotations/instances/inInlineFunction.kt");
@@ -12462,6 +12468,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
             @Test
             public void testAllFilesPresentInMultiModule() throws Exception {
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/coroutines/multiModule"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
+            }
+
+            @Test
+            @TestMetadata("inheritFromAnotherModule.kt")
+            public void testInheritFromAnotherModule() throws Exception {
+                runTest("compiler/testData/codegen/box/coroutines/multiModule/inheritFromAnotherModule.kt");
             }
 
             @Test
@@ -40234,6 +40246,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
                 }
 
                 @Test
+                @TestMetadata("arrayTypeInDefaultPackage.kt")
+                public void testArrayTypeInDefaultPackage() throws Exception {
+                    runTest("compiler/testData/codegen/box/reflection/annotations/onTypes/arrayTypeInDefaultPackage.kt");
+                }
+
+                @Test
                 @TestMetadata("classLiteralWithExpectedType.kt")
                 public void testClassLiteralWithExpectedType() throws Exception {
                     runTest("compiler/testData/codegen/box/reflection/annotations/onTypes/classLiteralWithExpectedType.kt");
@@ -43093,6 +43111,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
             }
 
             @Test
+            @TestMetadata("arrayOfNullableReified.kt")
+            public void testArrayOfNullableReified() throws Exception {
+                runTest("compiler/testData/codegen/box/reflection/typeOf/arrayOfNullableReified.kt");
+            }
+
+            @Test
             @TestMetadata("classes.kt")
             public void testClasses() throws Exception {
                 runTest("compiler/testData/codegen/box/reflection/typeOf/classes.kt");
@@ -43174,6 +43198,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
             @TestMetadata("rawTypes_before.kt")
             public void testRawTypes_before() throws Exception {
                 runTest("compiler/testData/codegen/box/reflection/typeOf/rawTypes_before.kt");
+            }
+
+            @Test
+            @TestMetadata("reifiedAsNestedArgument.kt")
+            public void testReifiedAsNestedArgument() throws Exception {
+                runTest("compiler/testData/codegen/box/reflection/typeOf/reifiedAsNestedArgument.kt");
             }
 
             @Test
@@ -44487,6 +44517,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         @TestMetadata("spreads.kt")
         public void testSpreads() throws Exception {
             runTest("compiler/testData/codegen/box/reified/spreads.kt");
+        }
+
+        @Test
+        @TestMetadata("typeTokenWrapper.kt")
+        public void testTypeTokenWrapper() throws Exception {
+            runTest("compiler/testData/codegen/box/reified/typeTokenWrapper.kt");
         }
 
         @Test
