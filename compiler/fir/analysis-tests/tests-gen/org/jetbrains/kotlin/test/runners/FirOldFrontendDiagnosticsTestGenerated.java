@@ -17855,6 +17855,12 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
             }
 
             @Test
+            @TestMetadata("illegalEqualsOverridingInInlineClass.kt")
+            public void testIllegalEqualsOverridingInInlineClass() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inlineClasses/illegalEqualsOverridingInInlineClass.kt");
+            }
+
+            @Test
             @TestMetadata("inlineClassCanImplementInterfaceByDelegation.kt")
             public void testInlineClassCanImplementInterfaceByDelegation() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/inlineClasses/inlineClassCanImplementInterfaceByDelegation.kt");
@@ -17960,6 +17966,12 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
             @TestMetadata("synchronizedForbidden.kt")
             public void testSynchronizedForbidden() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/inlineClasses/synchronizedForbidden.kt");
+            }
+
+            @Test
+            @TestMetadata("typedEqualsOperatorModifierInInlineClass.kt")
+            public void testTypedEqualsOperatorModifierInInlineClass() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inlineClasses/typedEqualsOperatorModifierInInlineClass.kt");
             }
 
             @Test
@@ -31530,6 +31542,12 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
                 }
 
                 @Test
+                @TestMetadata("FullySupportedSyntheticJavaPropertyReference.kt")
+                public void testFullySupportedSyntheticJavaPropertyReference() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/syntheticExtensions/javaProperties/FullySupportedSyntheticJavaPropertyReference.kt");
+                }
+
+                @Test
                 @TestMetadata("GenericClass.kt")
                 public void testGenericClass() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/syntheticExtensions/javaProperties/GenericClass.kt");
@@ -31629,12 +31647,6 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
                 @TestMetadata("OverrideGetterOnly.kt")
                 public void testOverrideGetterOnly() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/syntheticExtensions/javaProperties/OverrideGetterOnly.kt");
-                }
-
-                @Test
-                @TestMetadata("PartiallySupportedSyntheticJavaPropertyReference.kt")
-                public void testPartiallySupportedSyntheticJavaPropertyReference() throws Exception {
-                    runTest("compiler/testData/diagnostics/tests/syntheticExtensions/javaProperties/PartiallySupportedSyntheticJavaPropertyReference.kt");
                 }
 
                 @Test
@@ -33970,6 +33982,44 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
         }
 
         @Nested
+        @TestMetadata("compiler/testData/diagnostics/tests/warningsForBreakingChanges")
+        @TestDataPath("$PROJECT_ROOT")
+        public class WarningsForBreakingChanges {
+            @Test
+            public void testAllFilesPresentInWarningsForBreakingChanges() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/warningsForBreakingChanges"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
+            }
+
+            @Nested
+            @TestMetadata("compiler/testData/diagnostics/tests/warningsForBreakingChanges/capturedTypes")
+            @TestDataPath("$PROJECT_ROOT")
+            public class CapturedTypes {
+                @Test
+                public void testAllFilesPresentInCapturedTypes() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/warningsForBreakingChanges/capturedTypes"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
+                }
+
+                @Test
+                @TestMetadata("incorrectCapturedApproximationForValueParameters.kt")
+                public void testIncorrectCapturedApproximationForValueParameters() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/warningsForBreakingChanges/capturedTypes/incorrectCapturedApproximationForValueParameters.kt");
+                }
+
+                @Test
+                @TestMetadata("noWarningAfterSmartcast.kt")
+                public void testNoWarningAfterSmartcast() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/warningsForBreakingChanges/capturedTypes/noWarningAfterSmartcast.kt");
+                }
+
+                @Test
+                @TestMetadata("noWarningOnSAMAdaption.kt")
+                public void testNoWarningOnSAMAdaption() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/warningsForBreakingChanges/capturedTypes/noWarningOnSAMAdaption.kt");
+                }
+            }
+        }
+
+        @Nested
         @TestMetadata("compiler/testData/diagnostics/tests/when")
         @TestDataPath("$PROJECT_ROOT")
         public class When {
@@ -35752,6 +35802,12 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
             @TestMetadata("typeVariableShouldNotBeFixed.kt")
             public void testTypeVariableShouldNotBeFixed() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/builderInference/typeVariableShouldNotBeFixed.kt");
+            }
+
+            @Test
+            @TestMetadata("unsafeAssignment.kt")
+            public void testUnsafeAssignment() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/builderInference/unsafeAssignment.kt");
             }
 
             @Test
