@@ -472,4 +472,34 @@ println(42)
             environment = jdk11,
         )
     }
+
+    fun testInterpreterClassLoader() {
+        runProcess(
+            "kotlinc", "$testDataDirectory/interpreterClassLoader.kt", "-d", tmpdir.path
+        )
+    }
+
+    fun testImplicitModularJdk() {
+        // see KT-54337
+        val moduleInfo = tmpdir.resolve("module-info.java").apply {
+            writeText(
+                """
+                    module test {
+                        requires kotlin.stdlib;
+                    }
+                """.trimIndent()
+            )
+        }
+        val testKt = tmpdir.resolve("test.kt").apply {
+            writeText("fun main() {}")
+        }
+        val jdk11 = mapOf("JAVA_HOME" to KtTestUtil.getJdk11Home().absolutePath)
+        runProcess(
+            "kotlinc", moduleInfo.absolutePath, testKt.absolutePath, "-d", tmpdir.path,
+            environment = jdk11,
+            expectedExitCode = 0,
+            expectedStdout = "",
+            expectedStderr = ""
+        )
+    }
 }

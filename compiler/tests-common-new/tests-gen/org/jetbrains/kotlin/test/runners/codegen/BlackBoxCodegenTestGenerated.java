@@ -14783,6 +14783,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
             }
 
             @Test
+            @TestMetadata("kt54463_platformType.kt")
+            public void testKt54463_platformType() throws Exception {
+                runTest("compiler/testData/codegen/box/delegatedProperty/delegateToFinalProperty/kt54463_platformType.kt");
+            }
+
+            @Test
             @TestMetadata("memberExtensionPropertyAndImportFromObject.kt")
             public void testMemberExtensionPropertyAndImportFromObject() throws Exception {
                 runTest("compiler/testData/codegen/box/delegatedProperty/delegateToFinalProperty/memberExtensionPropertyAndImportFromObject.kt");
@@ -21501,6 +21507,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         @TestMetadata("kt52913.kt")
         public void testKt52913() throws Exception {
             runTest("compiler/testData/codegen/box/inlineClasses/kt52913.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
+        }
+
+        @Test
+        @TestMetadata("kt54455.kt")
+        public void testKt54455() throws Exception {
+            runTest("compiler/testData/codegen/box/inlineClasses/kt54455.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
         }
 
         @Test

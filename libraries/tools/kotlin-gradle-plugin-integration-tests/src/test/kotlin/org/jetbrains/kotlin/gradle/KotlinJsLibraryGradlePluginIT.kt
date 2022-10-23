@@ -10,7 +10,6 @@ import com.google.gson.JsonObject
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.plugin.KotlinJsCompilerType
 import org.jetbrains.kotlin.gradle.testbase.*
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
 import java.util.zip.ZipFile
 import kotlin.io.path.reader
@@ -32,7 +31,6 @@ class KotlinJsIrLibraryGradlePluginIT : KGPBaseTest() {
 
     @DisplayName("simple binary library")
     @GradleTest
-    @Disabled
     fun testSimpleJsBinaryLibrary(gradleVersion: GradleVersion) {
         project("simple-js-library", gradleVersion) {
             build("build") {
@@ -73,20 +71,6 @@ class KotlinJsIrLibraryGradlePluginIT : KGPBaseTest() {
                 assertFileInProjectExists("build/productionLibrary/main.js")
 
                 assertFileInProjectExists("build/distributions/js-library.js")
-            }
-        }
-    }
-
-    @DisplayName("publish sources jar task should also include dukat outputs")
-    @GradleTest
-    fun testPublishSourcesJarTaskShouldAlsoIncludeDukatTaskOutputs(gradleVersion: GradleVersion) {
-        project("js-library-ir", gradleVersion) {
-            build("sourcesJar") {
-                val sourcesJarFilePath = "build/libs/js-library-ir-kotlin-sources.jar"
-                assertFileInProjectExists(sourcesJarFilePath)
-                ZipFile(projectPath.resolve(sourcesJarFilePath).toFile()).use {
-                    assertNotNull(it.getEntry("jsMain/index.module_decamelize.kt"))
-                }
             }
         }
     }

@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.backend.jvm.lower
 
+import org.jetbrains.kotlin.backend.common.lower.MethodsFromAnyGeneratorForLowerings.Companion.isEquals
 import org.jetbrains.kotlin.backend.common.lower.createIrBuilder
 import org.jetbrains.kotlin.backend.common.lower.irBlockBody
 import org.jetbrains.kotlin.backend.common.lower.loops.forLoopsPhase
@@ -28,8 +29,8 @@ import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.resolve.InlineClassDescriptorResolver
 import org.jetbrains.kotlin.resolve.JVM_INLINE_ANNOTATION_FQ_NAME
-import org.jetbrains.kotlin.util.OperatorNameConventions.EQUALS
 
 val jvmInlineClassPhase = makeIrFilePhase(
     ::JvmInlineClassLowering,
@@ -118,7 +119,7 @@ private class JvmInlineClassLowering(context: JvmBackendContext) : JvmValueClass
         buildPrimaryInlineClassConstructor(declaration, irConstructor)
         buildBoxFunction(declaration)
         buildUnboxFunction(declaration)
-        buildSpecializedEqualsMethod(declaration)
+        buildSpecializedEqualsMethodIfNeeded(declaration)
         addJvmInlineAnnotation(declaration)
     }
 
@@ -479,34 +480,41 @@ private class JvmInlineClassLowering(context: JvmBackendContext) : JvmValueClass
         irClass.declarations += function
     }
 
-    fun buildSpecializedEqualsMethod(valueClass: IrClass) {
+    fun buildSpecializedEqualsMethodIfNeeded(valueClass: IrClass) {
         val function = context.inlineClassReplacements.getSpecializedEqualsMethod(valueClass, context.irBuiltIns)
+        // Return if we have already built specialized equals as static replacement of typed equals
+        if (function.body != null) return
         val left = function.valueParameters[0]
         val right = function.valueParameters[1]
         val type = left.type.unboxInlineClass()
 
-        val typedEqualsStaticReplacement = findStaticReplacementForTypedEquals(valueClass)
-        val untypedEquals = valueClass.functions.single { overridesEqualsFromAny(it) }
+        val untypedEquals = valueClass.functions.single { it.isEquals(context) }
 
         function.body = context.createIrBuilder(valueClass.symbol).run {
+            val context = this@JvmInlineClassLowering.context
+            val underlyingType = getInlineClassUnderlyingType(valueClass)
             irExprBody(
-                if (typedEqualsStaticReplacement == null) {
-                    if (untypedEquals.origin == IrDeclarationOrigin.DEFINED) {
-                        val boxFunction = this@JvmInlineClassLowering.context.inlineClassReplacements.getBoxFunction(valueClass)
+                if (untypedEquals.origin == IrDeclarationOrigin.DEFINED) {
+                    val boxFunction = context.inlineClassReplacements.getBoxFunction(valueClass)
 
-                        fun irBox(expr: IrExpression) = irCall(boxFunction).apply { putValueArgument(0, expr) }
+                    fun irBox(expr: IrExpression) = irCall(boxFunction).apply { putValueArgument(0, expr) }
 
-                        irCall(untypedEquals).apply {
-                            dispatchReceiver = irBox(irGet(left))
-                            putValueArgument(0, irBox(irGet(right)))
+                    irCall(untypedEquals).apply {
+                        dispatchReceiver = irBox(coerceInlineClasses(irGet(left), left.type, underlyingType))
+                        putValueArgument(0, irBox(coerceInlineClasses(irGet(right), right.type, underlyingType)))
+                    }
+                } else {
+                    val underlyingClass = underlyingType.getClass()
+                    // We can't directly compare unboxed values of underlying inline class as this class can have custom equals
+                    if (underlyingClass?.isSingleFieldValueClass == true && !underlyingType.isNullable()) {
+                        val underlyingClassEq =
+                            context.inlineClassReplacements.getSpecializedEqualsMethod(underlyingClass, context.irBuiltIns)
+                        irCall(underlyingClassEq).apply {
+                            putValueArgument(0, coerceInlineClasses(irGet(left), left.type, underlyingType))
+                            putValueArgument(1, coerceInlineClasses(irGet(right), right.type, underlyingType))
                         }
                     } else {
                         irEquals(coerceInlineClasses(irGet(left), left.type, type), coerceInlineClasses(irGet(right), right.type, type))
-                    }
-                } else {
-                    irCall(typedEqualsStaticReplacement).apply {
-                        putValueArgument(0, irGet(left))
-                        putValueArgument(1, irGet(right))
                     }
                 }
             )
@@ -515,22 +523,4 @@ private class JvmInlineClassLowering(context: JvmBackendContext) : JvmValueClass
         valueClass.declarations += function
     }
 
-    private fun overridesEqualsFromAny(irFunction: IrFunction): Boolean {
-        return irFunction.run {
-            name == EQUALS && returnType.isBoolean() && valueParameters.size == 1
-                    && valueParameters[0].type.isNullableAny() && contextReceiverParametersCount == 0 && extensionReceiverParameter == null
-        }
-    }
-
-    private fun findStaticReplacementForTypedEquals(valueClass: IrClass): IrFunction? {
-        fun isTypedEquals(irFunction: IrFunction): Boolean {
-            return irFunction.run {
-                name == EQUALS && returnType.isBoolean() && valueParameters.size == 1
-                        && (valueParameters[0].type.classFqName?.run { valueClass.hasEqualFqName(this) } ?: false)
-                        && contextReceiverParametersCount == 0 && extensionReceiverParameter == null
-            }
-        }
-        return valueClass.functions
-            .singleOrNull { context.inlineClassReplacements.originalFunctionForStaticReplacement[it]?.run { isTypedEquals(this) } ?: false }
-    }
 }

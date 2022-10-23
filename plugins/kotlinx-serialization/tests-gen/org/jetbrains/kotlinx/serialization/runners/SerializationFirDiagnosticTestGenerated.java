@@ -27,6 +27,12 @@ public class SerializationFirDiagnosticTestGenerated extends AbstractSerializati
         }
 
         @Test
+        @TestMetadata("companionObjectSerializers.kt")
+        public void testCompanionObjectSerializers() throws Exception {
+            runTest("plugins/kotlinx-serialization/testData/diagnostics/companionObjectSerializers.kt");
+        }
+
+        @Test
         @TestMetadata("DuplicateSerialName.kt")
         public void testDuplicateSerialName() throws Exception {
             runTest("plugins/kotlinx-serialization/testData/diagnostics/DuplicateSerialName.kt");
@@ -175,6 +181,12 @@ public class SerializationFirDiagnosticTestGenerated extends AbstractSerializati
         }
 
         @Test
+        @TestMetadata("externalSerializers.kt")
+        public void testExternalSerializers() throws Exception {
+            runTest("plugins/kotlinx-serialization/testData/firMembers/externalSerializers.kt");
+        }
+
+        @Test
         @TestMetadata("inlineClasses.kt")
         public void testInlineClasses() throws Exception {
             runTest("plugins/kotlinx-serialization/testData/firMembers/inlineClasses.kt");
@@ -208,6 +220,12 @@ public class SerializationFirDiagnosticTestGenerated extends AbstractSerializati
         @TestMetadata("serializableWith.kt")
         public void testSerializableWith() throws Exception {
             runTest("plugins/kotlinx-serialization/testData/firMembers/serializableWith.kt");
+        }
+
+        @Test
+        @TestMetadata("serializerViaCompanion.kt")
+        public void testSerializerViaCompanion() throws Exception {
+            runTest("plugins/kotlinx-serialization/testData/firMembers/serializerViaCompanion.kt");
         }
     }
 }

@@ -106,6 +106,18 @@ public class SerializationFirBlackBoxTestGenerated extends AbstractSerialization
         }
 
         @Test
+        @TestMetadata("serialInfo.kt")
+        public void testSerialInfo() throws Exception {
+            runTest("plugins/kotlinx-serialization/testData/boxIr/serialInfo.kt");
+        }
+
+        @Test
+        @TestMetadata("serializableOnPropertyType.kt")
+        public void testSerializableOnPropertyType() throws Exception {
+            runTest("plugins/kotlinx-serialization/testData/boxIr/serializableOnPropertyType.kt");
+        }
+
+        @Test
         @TestMetadata("starProjections.kt")
         public void testStarProjections() throws Exception {
             runTest("plugins/kotlinx-serialization/testData/boxIr/starProjections.kt");
@@ -152,6 +164,12 @@ public class SerializationFirBlackBoxTestGenerated extends AbstractSerialization
         }
 
         @Test
+        @TestMetadata("externalSerializers.kt")
+        public void testExternalSerializers() throws Exception {
+            runTest("plugins/kotlinx-serialization/testData/firMembers/externalSerializers.kt");
+        }
+
+        @Test
         @TestMetadata("inlineClasses.kt")
         public void testInlineClasses() throws Exception {
             runTest("plugins/kotlinx-serialization/testData/firMembers/inlineClasses.kt");
@@ -185,6 +203,12 @@ public class SerializationFirBlackBoxTestGenerated extends AbstractSerialization
         @TestMetadata("serializableWith.kt")
         public void testSerializableWith() throws Exception {
             runTest("plugins/kotlinx-serialization/testData/firMembers/serializableWith.kt");
+        }
+
+        @Test
+        @TestMetadata("serializerViaCompanion.kt")
+        public void testSerializerViaCompanion() throws Exception {
+            runTest("plugins/kotlinx-serialization/testData/firMembers/serializerViaCompanion.kt");
         }
     }
 }

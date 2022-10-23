@@ -11,27 +11,21 @@ import org.gradle.api.Task
 import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.TaskProvider
 import org.jetbrains.kotlin.gradle.dsl.KotlinJsOptions
-import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
-import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
 import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.plugin.AbstractKotlinTargetConfigurator.Companion.runTaskNameSuffix
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation.Companion.MAIN_COMPILATION_NAME
 import org.jetbrains.kotlin.gradle.plugin.mpp.DefaultKotlinUsageContext
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinTargetWithBinaries
-import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinVariant
-import org.jetbrains.kotlin.gradle.plugin.mpp.PRIMARY_SINGLE_COMPONENT_NAME
 import org.jetbrains.kotlin.gradle.targets.js.JsAggregatingExecutionSource
 import org.jetbrains.kotlin.gradle.targets.js.KotlinJsReportAggregatingTestRun
 import org.jetbrains.kotlin.gradle.targets.js.KotlinJsTarget
 import org.jetbrains.kotlin.gradle.targets.js.binaryen.BinaryenExec
 import org.jetbrains.kotlin.gradle.targets.js.dsl.*
 import org.jetbrains.kotlin.gradle.targets.js.internal.RewriteSourceMapFilterReader
-import org.jetbrains.kotlin.gradle.targets.js.npm.NpmProject
 import org.jetbrains.kotlin.gradle.targets.js.npm.npmProject
 import org.jetbrains.kotlin.gradle.targets.js.typescript.TypeScriptValidationTask
 import org.jetbrains.kotlin.gradle.tasks.locateOrRegisterTask
 import org.jetbrains.kotlin.gradle.tasks.registerTask
-import org.jetbrains.kotlin.gradle.utils.dashSeparatedName
 import org.jetbrains.kotlin.gradle.utils.lowerCamelCaseName
 import org.jetbrains.kotlin.gradle.utils.setProperty
 import javax.inject.Inject
@@ -41,6 +35,7 @@ abstract class KotlinJsIrTarget
 constructor(
     project: Project,
     platformType: KotlinPlatformType,
+    internal val mixedMode: Boolean
 ) :
     KotlinTargetWithBinaries<KotlinJsIrCompilation, KotlinJsBinaryContainer>(project, platformType),
     KotlinTargetWithTests<JsAggregatingExecutionSource, KotlinJsReportAggregatingTestRun>,
@@ -66,33 +61,10 @@ constructor(
             field = value
         }
 
-    override val kotlinComponents: Set<KotlinTargetComponent> by lazy {
-        if (legacyTarget == null)
-            super.kotlinComponents
-        else {
-            val mainCompilation = compilations.getByName(MAIN_COMPILATION_NAME)
-            val usageContexts = createUsageContexts(mainCompilation) +
-                    legacyTarget!!.createUsageContexts(legacyTarget!!.compilations.getByName(MAIN_COMPILATION_NAME))
-
-            val componentName =
-                if (project.kotlinExtension is KotlinMultiplatformExtension)
-                    legacyTarget?.let { targetName.removeJsCompilerSuffix(KotlinJsCompilerType.IR) } ?: targetName
-                else PRIMARY_SINGLE_COMPONENT_NAME
-
-            val result = createKotlinVariant(componentName, mainCompilation, usageContexts)
-
-            result.sourcesArtifacts = setOf(
-                sourcesJarArtifact(mainCompilation, componentName, dashSeparatedName(targetName.toLowerCase()))
-            )
-
-            setOf(result)
-        }
-    }
-
     override fun createUsageContexts(producingCompilation: KotlinCompilation<*>): Set<DefaultKotlinUsageContext> {
         val usageContexts = super.createUsageContexts(producingCompilation)
 
-        if (isMpp!!) return usageContexts
+        if (isMpp!! || mixedMode) return usageContexts
 
         return usageContexts +
                 DefaultKotlinUsageContext(
@@ -103,28 +75,17 @@ constructor(
                 )
     }
 
-    override fun createKotlinVariant(
-        componentName: String,
-        compilation: KotlinCompilation<*>,
-        usageContexts: Set<DefaultKotlinUsageContext>
-    ): KotlinVariant {
-        return super.createKotlinVariant(componentName, compilation, usageContexts).apply {
-            legacyTarget?.let {
-                artifactTargetName = targetName.removeJsCompilerSuffix(KotlinJsCompilerType.IR)
-            }
-        }
-    }
-
     internal val commonFakeApiElementsConfigurationName: String
         get() = lowerCamelCaseName(
-            legacyTarget?.let {
-                this.disambiguationClassifierInPlatform
-            } ?: disambiguationClassifier,
+            if (mixedMode)
+                disambiguationClassifierInPlatform
+            else
+                disambiguationClassifier,
             "commonFakeApiElements"
         )
 
     val disambiguationClassifierInPlatform: String?
-        get() = if (legacyTarget != null) {
+        get() = if (mixedMode) {
             disambiguationClassifier?.removeJsCompilerSuffix(KotlinJsCompilerType.IR)
         } else {
             disambiguationClassifier
@@ -161,11 +122,10 @@ constructor(
 
                         it.finalizedBy(syncTask)
 
-                        if (tsValidationTask != null) {
+                        if (binary.generateTs) {
                             it.finalizedBy(tsValidationTask)
                         }
                     }
-
                 }
         }
     }
@@ -201,21 +161,17 @@ constructor(
         }
     }
 
-    private fun registerTypeScriptCheckTask(binary: JsIrBinary): TaskProvider<TypeScriptValidationTask>? {
+    private fun registerTypeScriptCheckTask(binary: JsIrBinary): TaskProvider<TypeScriptValidationTask> {
         val linkTask = binary.linkTask
         val compilation = binary.compilation
-        return if (compilation.name == KotlinCompilation.TEST_COMPILATION_NAME) {
-            null
-        } else {
-            project.registerTask(binary.validateGeneratedTsTaskName, listOf(compilation)) {
-                it.inputDir.set(linkTask.flatMap { it.destinationDirectory })
-                it.validationStrategy.set(
-                    when (binary.mode) {
-                        KotlinJsBinaryMode.DEVELOPMENT -> propertiesProvider.jsIrGeneratedTypeScriptValidationDevStrategy
-                        KotlinJsBinaryMode.PRODUCTION -> propertiesProvider.jsIrGeneratedTypeScriptValidationProdStrategy
-                    }
-                )
-            }
+        return project.registerTask(binary.validateGeneratedTsTaskName, listOf(compilation)) {
+            it.inputDir.set(linkTask.flatMap { it.destinationDirectory })
+            it.validationStrategy.set(
+                when (binary.mode) {
+                    KotlinJsBinaryMode.DEVELOPMENT -> propertiesProvider.jsIrGeneratedTypeScriptValidationDevStrategy
+                    KotlinJsBinaryMode.PRODUCTION -> propertiesProvider.jsIrGeneratedTypeScriptValidationProdStrategy
+                }
+            )
         }
     }
 
@@ -262,7 +218,6 @@ constructor(
 
     override fun browser(body: KotlinJsBrowserDsl.() -> Unit) {
         body(browser)
-        legacyTarget?.browser(body)
     }
 
     //node.js
@@ -287,7 +242,6 @@ constructor(
 
     override fun nodejs(body: KotlinJsNodeDsl.() -> Unit) {
         body(nodejs)
-        legacyTarget?.nodejs(body)
     }
 
     //d8
@@ -355,12 +309,46 @@ constructor(
                     }
                 }
         }
-        legacyTarget?.useCommonJs()
+    }
+
+    override fun useEsModules() {
+        compilations.all {
+            it.kotlinOptions.configureEsModulesOptions()
+
+            binaries
+                .withType(JsIrBinary::class.java)
+                .all {
+                    it.linkTask.configure { linkTask ->
+                        linkTask.kotlinOptions.configureEsModulesOptions()
+                    }
+                }
+        }
+
     }
 
     private fun KotlinJsOptions.configureCommonJsOptions() {
         moduleKind = "commonjs"
         sourceMap = true
         sourceMapEmbedSources = "never"
+    }
+
+    private fun KotlinJsOptions.configureEsModulesOptions() {
+        moduleKind = "es"
+        sourceMap = true
+        sourceMapEmbedSources = "never"
+    }
+
+    override fun generateTypeScriptDefinitions() {
+        compilations
+            .all {
+                it.binaries
+                    .withType(JsIrBinary::class.java)
+                    .all {
+                        it.generateTs = true
+                        it.linkTask.configure { linkTask ->
+                            linkTask.compilerOptions.freeCompilerArgs.add(GENERATE_D_TS)
+                        }
+                    }
+            }
     }
 }

@@ -57,6 +57,13 @@ import org.jetbrains.kotlin.utils.join
 import java.io.File
 import java.io.IOException
 
+private val K2JSCompilerArguments.granularity: JsGenerationGranularity
+    get() = when {
+        this.irPerModule -> JsGenerationGranularity.PER_MODULE
+        this.irPerFile -> JsGenerationGranularity.PER_FILE
+        else -> JsGenerationGranularity.WHOLE_PROGRAM
+    }
+
 class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
 
     override val defaultPerformanceManager: CommonCompilerPerformanceManager =
@@ -76,12 +83,6 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
         val mainCallArguments: List<String>?
     ) {
         private fun lowerIr(): LoweredIr {
-            val granularity = when {
-                arguments.irPerModule -> JsGenerationGranularity.PER_MODULE
-                arguments.irPerFile -> JsGenerationGranularity.PER_FILE
-                else -> JsGenerationGranularity.WHOLE_PROGRAM
-            }
-
             val irFactory = when {
                 arguments.irNewIr2Js -> IrFactoryImplForJsIC(WholeWorldStageController())
                 else -> IrFactoryImpl
@@ -105,7 +106,7 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
                     arguments.irSafeExternalBooleanDiagnostic,
                     messageCollector
                 ),
-                granularity = granularity,
+                granularity = arguments.granularity,
                 icCompatibleIr2Js = arguments.irNewIr2Js,
             )
         }
@@ -216,6 +217,7 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
         }
 
         configuration.put(CommonConfigurationKeys.KLIB_NORMALIZE_ABSOLUTE_PATH, arguments.normalizeAbsolutePath)
+        configuration.put(CommonConfigurationKeys.PRODUCE_KLIB_SIGNATURES_CLASH_CHECKS, arguments.enableSignatureClashChecks)
 
         val environmentForJS =
             KotlinCoreEnvironment.createForProduction(rootDisposable, configuration, EnvironmentConfigFiles.JS_CONFIG_FILES)
@@ -226,6 +228,7 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
         configurationJs.put(CLIConfigurationKeys.ALLOW_KOTLIN_PACKAGE, arguments.allowKotlinPackage)
         configurationJs.put(CLIConfigurationKeys.RENDER_DIAGNOSTIC_INTERNAL_NAME, arguments.renderInternalDiagnosticNames)
         configurationJs.put(JSConfigurationKeys.PROPERTY_LAZY_INITIALIZATION, arguments.irPropertyLazyInitialization)
+        configurationJs.put(JSConfigurationKeys.GENERATE_POLYFILLS, arguments.generatePolyfills)
         configurationJs.put(JSConfigurationKeys.GENERATE_INLINE_ANONYMOUS_FUNCTIONS, arguments.irGenerateInlineAnonymousFunctions)
 
         if (!checkKotlinPackageUsage(environmentForJS.configuration, sourcesFiles)) return COMPILATION_ERROR
@@ -233,12 +236,12 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
         val outputDirPath = arguments.outputDir
         val outputName = arguments.moduleName
         if (outputDirPath == null) {
-            messageCollector.report(ERROR, "IR: Specify output dir via -Xir-output-dir", null)
+            messageCollector.report(ERROR, "IR: Specify output dir via -ir-output-dir", null)
             return COMPILATION_ERROR
         }
 
         if (outputName == null) {
-            messageCollector.report(ERROR, "IR: Specify output name via -Xir-module-name", null)
+            messageCollector.report(ERROR, "IR: Specify output name via -ir-output-name", null)
             return COMPILATION_ERROR
         }
 
@@ -289,7 +292,7 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
                 compilerConfiguration = configurationJs,
                 irFactory = { IrFactoryImplForJsIC(WholeWorldStageController()) },
                 mainArguments = mainCallArguments,
-                compilerInterfaceFactory = { mainModule, cfg -> JsIrCompilerWithIC(mainModule, cfg) }
+                compilerInterfaceFactory = { mainModule, cfg -> JsIrCompilerWithIC(mainModule, cfg, arguments.granularity) }
             )
 
             var tp = System.currentTimeMillis()
@@ -551,7 +554,7 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
         var moduleKind: ModuleKind? = if (moduleKindName != null) moduleKindMap[moduleKindName] else ModuleKind.PLAIN
         if (moduleKind == null) {
             messageCollector.report(
-                ERROR, "Unknown module kind: $moduleKindName. Valid values are: plain, amd, commonjs, umd", null
+                ERROR, "Unknown module kind: $moduleKindName. Valid values are: plain, amd, commonjs, umd, es", null
             )
             moduleKind = ModuleKind.PLAIN
         }
@@ -576,9 +579,10 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
         else
             SourceMapSourceEmbedding.INLINING
         if (sourceMapContentEmbedding == null) {
-            val message = "Unknown source map source embedding mode: " + sourceMapEmbedContentString + ". Valid values are: " +
-                    StringUtil.join(sourceMapContentEmbeddingMap.keys, ", ")
-            messageCollector.report(ERROR, message, null)
+            messageCollector.report(
+                ERROR,
+                "Unknown source map source embedding mode: $sourceMapEmbedContentString. Valid values are: ${sourceMapContentEmbeddingMap.keys.joinToString()}"
+            )
             sourceMapContentEmbedding = SourceMapSourceEmbedding.INLINING
         }
         configuration.put(JSConfigurationKeys.SOURCE_MAP_EMBED_SOURCES, sourceMapContentEmbedding)
@@ -586,6 +590,20 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
         if (!arguments.sourceMap && sourceMapEmbedContentString != null) {
             messageCollector.report(WARNING, "source-map-embed-sources argument has no effect without source map", null)
         }
+
+        val sourceMapNamesPolicyString = arguments.sourceMapNamesPolicy
+        var sourceMapNamesPolicy: SourceMapNamesPolicy? = if (sourceMapNamesPolicyString != null)
+            sourceMapNamesPolicyMap[sourceMapNamesPolicyString]
+        else
+            SourceMapNamesPolicy.SIMPLE_NAMES
+        if (sourceMapNamesPolicy == null) {
+            messageCollector.report(
+                ERROR,
+                "Unknown source map names policy: $sourceMapNamesPolicyString. Valid values are: ${sourceMapNamesPolicyMap.keys.joinToString()}"
+            )
+            sourceMapNamesPolicy = SourceMapNamesPolicy.SIMPLE_NAMES
+        }
+        configuration.put(JSConfigurationKeys.SOURCEMAP_NAMES_POLICY, sourceMapNamesPolicy)
 
         configuration.put(JSConfigurationKeys.PRINT_REACHABILITY_INFO, arguments.irDcePrintReachabilityInfo)
         configuration.put(JSConfigurationKeys.FAKE_OVERRIDE_VALIDATOR, arguments.fakeOverrideValidator)
@@ -613,6 +631,12 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
             K2JsArgumentConstants.SOURCE_MAP_SOURCE_CONTENT_ALWAYS to SourceMapSourceEmbedding.ALWAYS,
             K2JsArgumentConstants.SOURCE_MAP_SOURCE_CONTENT_NEVER to SourceMapSourceEmbedding.NEVER,
             K2JsArgumentConstants.SOURCE_MAP_SOURCE_CONTENT_INLINING to SourceMapSourceEmbedding.INLINING
+        )
+
+        private val sourceMapNamesPolicyMap = mapOf(
+            K2JsArgumentConstants.SOURCE_MAP_NAMES_POLICY_NO to SourceMapNamesPolicy.NO,
+            K2JsArgumentConstants.SOURCE_MAP_NAMES_POLICY_SIMPLE_NAMES to SourceMapNamesPolicy.SIMPLE_NAMES,
+            K2JsArgumentConstants.SOURCE_MAP_NAMES_POLICY_FQ_NAMES to SourceMapNamesPolicy.FULLY_QUALIFIED_NAMES
         )
 
         @JvmStatic

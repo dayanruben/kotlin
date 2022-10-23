@@ -164,27 +164,27 @@ abstract class KotlinSingleTargetExtension<TARGET : KotlinTarget>(project: Proje
 abstract class KotlinSingleJavaTargetExtension(project: Project) : KotlinSingleTargetExtension<KotlinWithJavaTarget<*, *>>(project)
 
 abstract class KotlinJvmProjectExtension(project: Project) : KotlinSingleJavaTargetExtension(project) {
-    override lateinit var target: KotlinWithJavaTarget<KotlinJvmOptions, CompilerJvmOptions>
+    override lateinit var target: KotlinWithJavaTarget<KotlinJvmOptions, KotlinJvmCompilerOptions>
         internal set
 
-    open fun target(body: KotlinWithJavaTarget<KotlinJvmOptions, CompilerJvmOptions>.() -> Unit) = target.run(body)
+    open fun target(body: KotlinWithJavaTarget<KotlinJvmOptions, KotlinJvmCompilerOptions>.() -> Unit) = target.run(body)
 }
 
 abstract class Kotlin2JsProjectExtension(project: Project) : KotlinSingleJavaTargetExtension(project) {
-    private lateinit var _target: KotlinWithJavaTarget<KotlinJsOptions, CompilerJsOptions>
+    private lateinit var _target: KotlinWithJavaTarget<KotlinJsOptions, KotlinJsCompilerOptions>
 
-    override val target: KotlinWithJavaTarget<KotlinJsOptions, CompilerJsOptions>
+    override val target: KotlinWithJavaTarget<KotlinJsOptions, KotlinJsCompilerOptions>
         get() {
             if (!::_target.isInitialized) throw IllegalStateException("Extension target is not initialized!")
 
             return _target
         }
 
-    internal fun setTarget(target: KotlinWithJavaTarget<KotlinJsOptions, CompilerJsOptions>) {
+    internal fun setTarget(target: KotlinWithJavaTarget<KotlinJsOptions, KotlinJsCompilerOptions>) {
         _target = target
     }
 
-    open fun target(body: KotlinWithJavaTarget<KotlinJsOptions, CompilerJsOptions>.() -> Unit) = target.run(body)
+    open fun target(body: KotlinWithJavaTarget<KotlinJsOptions, KotlinJsCompilerOptions>.() -> Unit) = target.run(body)
 }
 
 abstract class KotlinJsProjectExtension(project: Project) :
@@ -206,7 +206,7 @@ abstract class KotlinJsProjectExtension(project: Project) :
             targetSetObservers.forEach { it(value) }
         }
 
-    internal fun registerTargetObserver(observer: (KotlinJsTargetDsl?) -> Unit) {
+    fun registerTargetObserver(observer: (KotlinJsTargetDsl?) -> Unit) {
         targetSetObservers.add(observer)
     }
 
@@ -299,25 +299,25 @@ abstract class KotlinJsProjectExtension(project: Project) :
             val target: KotlinJsTargetDsl = when (compilerOrDefault) {
                 KotlinJsCompilerType.LEGACY -> legacyPreset
                     .also {
-                        it.mixedMode = false
+                        it.irPreset = null
                     }
                     .createTarget("js")
 
                 KotlinJsCompilerType.IR -> irPreset
                     .also {
-                        it.legacyPreset = null
+                        it.mixedMode = false
                     }
                     .createTarget("js")
 
-                KotlinJsCompilerType.BOTH -> irPreset
+                KotlinJsCompilerType.BOTH -> legacyPreset
                     .also {
-                        legacyPreset.mixedMode = true
-                        it.legacyPreset = legacyPreset
+                        irPreset.mixedMode = true
+                        it.irPreset = irPreset
                     }
                     .createTarget(
                         lowerCamelCaseName(
                             "js",
-                            IR.lowerName
+                            LEGACY.lowerName
                         )
                     )
             }
@@ -381,11 +381,11 @@ abstract class KotlinJsProjectExtension(project: Project) :
 }
 
 abstract class KotlinCommonProjectExtension(project: Project) : KotlinSingleJavaTargetExtension(project) {
-    override lateinit var target: KotlinWithJavaTarget<KotlinMultiplatformCommonOptions, CompilerMultiplatformCommonOptions>
+    override lateinit var target: KotlinWithJavaTarget<KotlinMultiplatformCommonOptions, KotlinMultiplatformCommonCompilerOptions>
         internal set
 
     open fun target(
-        body: KotlinWithJavaTarget<KotlinMultiplatformCommonOptions, CompilerMultiplatformCommonOptions>.() -> Unit
+        body: KotlinWithJavaTarget<KotlinMultiplatformCommonOptions, KotlinMultiplatformCommonCompilerOptions>.() -> Unit
     ) = target.run(body)
 }
 

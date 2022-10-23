@@ -25,7 +25,6 @@ import org.jetbrains.kotlin.codegen.inline.ReifiedTypeInliner.OperationKind.SAFE
 import org.jetbrains.kotlin.codegen.intrinsics.TypeIntrinsics
 import org.jetbrains.kotlin.codegen.pseudoInsns.fakeAlwaysFalseIfeq
 import org.jetbrains.kotlin.codegen.pseudoInsns.fixStackAndJump
-import org.jetbrains.kotlin.codegen.signature.BothSignatureWriter
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities

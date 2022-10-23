@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.backend.common.phaser.PhaseConfig
 import org.jetbrains.kotlin.backend.common.phaser.PhaserState
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
+import org.jetbrains.kotlin.ir.backend.js.codegen.JsGenerationGranularity
 import org.jetbrains.kotlin.ir.backend.js.ic.JsIrCompilerICInterface
 import org.jetbrains.kotlin.ir.backend.js.lower.collectNativeImplementations
 import org.jetbrains.kotlin.ir.backend.js.lower.generateJsTests
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.ir.backend.js.lower.moveBodilessDeclarationsToSepara
 import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.*
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
+import org.jetbrains.kotlin.js.config.JSConfigurationKeys
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi2ir.descriptors.IrBuiltInsOverDescriptors
 
@@ -23,6 +25,7 @@ import org.jetbrains.kotlin.psi2ir.descriptors.IrBuiltInsOverDescriptors
 class JsIrCompilerWithIC(
     private val mainModule: IrModuleFragment,
     configuration: CompilerConfiguration,
+    granularity: JsGenerationGranularity,
     exportedDeclarations: Set<FqName> = emptySet(),
     es6mode: Boolean = false
 ) : JsIrCompilerICInterface {
@@ -41,6 +44,7 @@ class JsIrCompilerWithIC(
             keep = emptySet(),
             configuration = configuration,
             es6mode = es6mode,
+            granularity = granularity,
             icCompatibleIr2Js = IcCompatibleIr2Js.IC_MODE,
         )
     }
@@ -50,8 +54,12 @@ class JsIrCompilerWithIC(
         dirtyFiles: Collection<IrFile>,
         mainArguments: List<String>?
     ): List<JsIrFragmentAndBinaryAst> {
+        val shouldGeneratePolyfills = context.configuration.getBoolean(JSConfigurationKeys.GENERATE_POLYFILLS)
+
         allModules.forEach {
-            collectNativeImplementations(context, it)
+            if (shouldGeneratePolyfills) {
+                collectNativeImplementations(context, it)
+            }
             moveBodilessDeclarationsToSeparatePlace(context, it)
         }
 

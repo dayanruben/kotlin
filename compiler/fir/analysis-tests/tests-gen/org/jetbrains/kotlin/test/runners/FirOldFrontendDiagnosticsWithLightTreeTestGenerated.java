@@ -8969,6 +8969,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             }
 
             @Test
+            @TestMetadata("deprecatedCompanionAndClassReference.kt")
+            public void testDeprecatedCompanionAndClassReference() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/deprecated/deprecatedCompanionAndClassReference.kt");
+            }
+
+            @Test
             @TestMetadata("deprecatedConstructor.kt")
             public void testDeprecatedConstructor() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/deprecated/deprecatedConstructor.kt");
@@ -17855,9 +17861,9 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             }
 
             @Test
-            @TestMetadata("illegalEqualsOverridingInInlineClass.kt")
-            public void testIllegalEqualsOverridingInInlineClass() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/inlineClasses/illegalEqualsOverridingInInlineClass.kt");
+            @TestMetadata("inefficientEqualsOverridingInInlineClass.kt")
+            public void testInefficientEqualsOverridingInInlineClass() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inlineClasses/inefficientEqualsOverridingInInlineClass.kt");
             }
 
             @Test
@@ -23098,6 +23104,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             @TestMetadata("kt4785.kt")
             public void testKt4785() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/override/kt4785.kt");
+            }
+
+            @Test
+            @TestMetadata("kt53408.kt")
+            public void testKt53408() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/override/kt53408.kt");
             }
 
             @Test
@@ -29622,6 +29634,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
                 }
 
                 @Test
+                @TestMetadata("capturedSpecificity.kt")
+                public void testCapturedSpecificity() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/smartCasts/intersectionScope/capturedSpecificity.kt");
+                }
+
+                @Test
                 @TestMetadata("conflictTypeParameters.kt")
                 public void testConflictTypeParameters() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/smartCasts/intersectionScope/conflictTypeParameters.kt");
@@ -29637,6 +29655,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
                 @TestMetadata("flexibleTypes.kt")
                 public void testFlexibleTypes() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/smartCasts/intersectionScope/flexibleTypes.kt");
+                }
+
+                @Test
+                @TestMetadata("intersectReturnType.kt")
+                public void testIntersectReturnType() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/smartCasts/intersectionScope/intersectReturnType.kt");
                 }
 
                 @Test
@@ -33924,6 +33948,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             @TestMetadata("overrideOfMemberInPackagePrivateClass.kt")
             public void testOverrideOfMemberInPackagePrivateClass() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/visibility/overrideOfMemberInPackagePrivateClass.kt");
+            }
+
+            @Test
+            @TestMetadata("packagePrivateStatic.kt")
+            public void testPackagePrivateStatic() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/visibility/packagePrivateStatic.kt");
             }
 
             @Test

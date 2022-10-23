@@ -46,6 +46,54 @@ public class FirIdeNormalAnalysisSourceModuleSingleSymbolByPsiGenerated extends 
         KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/analysis-api/testData/symbols/singleSymbolByPsi"), Pattern.compile("^(.+)\\.kt$"), null, true);
     }
 
+    @Test
+    @TestMetadata("functionWithReceiverAnnotation.kt")
+    public void testFunctionWithReceiverAnnotation() throws Exception {
+        runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/functionWithReceiverAnnotation.kt");
+    }
+
+    @Test
+    @TestMetadata("getterWithAnnotations.kt")
+    public void testGetterWithAnnotations() throws Exception {
+        runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/getterWithAnnotations.kt");
+    }
+
+    @Test
+    @TestMetadata("getterWithReceiverAndAnnotations.kt")
+    public void testGetterWithReceiverAndAnnotations() throws Exception {
+        runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/getterWithReceiverAndAnnotations.kt");
+    }
+
+    @Test
+    @TestMetadata("propertyWithAnnotations.kt")
+    public void testPropertyWithAnnotations() throws Exception {
+        runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/propertyWithAnnotations.kt");
+    }
+
+    @Test
+    @TestMetadata("propertyWithAnnotationsAndAccessors.kt")
+    public void testPropertyWithAnnotationsAndAccessors() throws Exception {
+        runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/propertyWithAnnotationsAndAccessors.kt");
+    }
+
+    @Test
+    @TestMetadata("propertyWithDelegateAndAnnotations.kt")
+    public void testPropertyWithDelegateAndAnnotations() throws Exception {
+        runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/propertyWithDelegateAndAnnotations.kt");
+    }
+
+    @Test
+    @TestMetadata("propertyWithReceiverAnnotation.kt")
+    public void testPropertyWithReceiverAnnotation() throws Exception {
+        runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/propertyWithReceiverAnnotation.kt");
+    }
+
+    @Test
+    @TestMetadata("setterWithAnnotations.kt")
+    public void testSetterWithAnnotations() throws Exception {
+        runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/setterWithAnnotations.kt");
+    }
+
     @Nested
     @TestMetadata("analysis/analysis-api/testData/symbols/singleSymbolByPsi/errors")
     @TestDataPath("$PROJECT_ROOT")

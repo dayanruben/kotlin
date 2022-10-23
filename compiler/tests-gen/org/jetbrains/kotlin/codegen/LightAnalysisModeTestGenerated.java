@@ -12091,6 +12091,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                 runTest("compiler/testData/codegen/box/delegatedProperty/delegateToFinalProperty/initializeContainerOfTopLevelProperties.kt");
             }
 
+            @TestMetadata("kt54463_platformType.kt")
+            public void testKt54463_platformType() throws Exception {
+                runTest("compiler/testData/codegen/box/delegatedProperty/delegateToFinalProperty/kt54463_platformType.kt");
+            }
+
             @TestMetadata("memberExtensionPropertyAndImportFromObject.kt")
             public void testMemberExtensionPropertyAndImportFromObject() throws Exception {
                 runTest("compiler/testData/codegen/box/delegatedProperty/delegateToFinalProperty/memberExtensionPropertyAndImportFromObject.kt");
@@ -17968,6 +17973,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("kt52913.kt")
         public void testKt52913() throws Exception {
             runTest("compiler/testData/codegen/box/inlineClasses/kt52913.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
+        }
+
+        @TestMetadata("kt54455.kt")
+        public void testKt54455() throws Exception {
+            runTest("compiler/testData/codegen/box/inlineClasses/kt54455.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
         }
 
         @TestMetadata("mangledDefaultParameterFunction.kt")
