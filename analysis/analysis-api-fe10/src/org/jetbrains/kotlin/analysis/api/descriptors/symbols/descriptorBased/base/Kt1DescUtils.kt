@@ -13,8 +13,12 @@ import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
 import org.jetbrains.kotlin.analysis.api.base.KtContextReceiver
 import org.jetbrains.kotlin.analysis.api.components.KtDeclarationRendererOptions
 import org.jetbrains.kotlin.analysis.api.descriptors.Fe10AnalysisContext
+import org.jetbrains.kotlin.analysis.api.descriptors.symbols.KtFe10FileSymbol
 import org.jetbrains.kotlin.analysis.api.descriptors.symbols.KtFe10PackageSymbol
 import org.jetbrains.kotlin.analysis.api.descriptors.symbols.descriptorBased.*
+import org.jetbrains.kotlin.analysis.api.descriptors.symbols.psiBased.KtFe10PsiDefaultPropertyGetterSymbol
+import org.jetbrains.kotlin.analysis.api.descriptors.symbols.psiBased.KtFe10PsiDefaultPropertySetterSymbol
+import org.jetbrains.kotlin.analysis.api.descriptors.symbols.psiBased.KtFe10PsiDefaultSetterParameterSymbol
 import org.jetbrains.kotlin.analysis.api.descriptors.symbols.psiBased.base.KtFe10PsiSymbol
 import org.jetbrains.kotlin.analysis.api.descriptors.types.*
 import org.jetbrains.kotlin.analysis.api.descriptors.utils.KtFe10Renderer
@@ -127,6 +131,14 @@ internal fun KtSymbol.getDescriptor(): DeclarationDescriptor? {
     return when (this) {
         is KtFe10PsiSymbol<*, *> -> descriptor
         is KtFe10DescSymbol<*> -> descriptor
+        is KtFe10DescSyntheticFieldSymbol -> descriptor
+        is KtFe10PsiDefaultPropertyGetterSymbol -> descriptor
+        is KtFe10PsiDefaultSetterParameterSymbol -> descriptor
+        is KtFe10PsiDefaultPropertySetterSymbol -> null
+        is KtFe10DescDefaultPropertySetterSymbol -> null
+        is KtFe10FileSymbol -> null
+        is KtFe10DescDefaultPropertySetterSymbol.DefaultKtValueParameterSymbol -> descriptor
+        is KtFe10PsiDefaultPropertySetterSymbol.DefaultKtValueParameterSymbol -> descriptor
         else -> unexpectedElementError("KtSymbol", this)
     }
 }

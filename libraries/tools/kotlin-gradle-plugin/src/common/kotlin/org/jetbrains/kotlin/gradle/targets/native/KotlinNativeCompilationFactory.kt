@@ -6,78 +6,34 @@
 @file:Suppress("PackageDirectoryMismatch") // Old package for compatibility
 package org.jetbrains.kotlin.gradle.plugin.mpp
 
-import org.jetbrains.kotlin.gradle.dsl.*
-import org.jetbrains.kotlin.gradle.targets.native.NativeCompilerOptions
-import org.jetbrains.kotlin.konan.target.KonanTarget
+import org.jetbrains.kotlin.gradle.plugin.mpp.compilationImpl.DefaultKotlinCompilationSourceSetInclusion
+import org.jetbrains.kotlin.gradle.plugin.mpp.compilationImpl.KotlinNativeCompilationAssociator
+import org.jetbrains.kotlin.gradle.plugin.mpp.compilationImpl.factory.KotlinCompilationImplFactory
+import org.jetbrains.kotlin.gradle.plugin.mpp.compilationImpl.factory.KotlinNativeCompilerOptionsFactory
+import org.jetbrains.kotlin.gradle.plugin.mpp.compilationImpl.factory.NativeKotlinCompilationDependencyConfigurationsFactory
+import org.jetbrains.kotlin.gradle.plugin.mpp.compilationImpl.factory.NativeKotlinCompilationTaskNamesContainerFactory
 
-open class KotlinNativeCompilationFactory(
+open class KotlinNativeCompilationFactory internal constructor(
     override val target: KotlinNativeTarget
 ) : KotlinCompilationFactory<KotlinNativeCompilation> {
 
     override val itemClass: Class<KotlinNativeCompilation>
         get() = KotlinNativeCompilation::class.java
 
-    @Suppress("DEPRECATION")
-    override fun create(name: String): KotlinNativeCompilation {
-        // TODO: Validate compilation free args using the [CompilationFreeArgsValidator]
-        //       when the compilation and the link args are separated (see KT-33717).
-        // Note: such validation should be done in the whenEvaluate block because
-        // a user can change args during project configuration.
-
-        val defaultSourceSet = getOrCreateDefaultSourceSet(name)
-        return target.project.objects.newInstance(
-            KotlinNativeCompilation::class.java,
-            target.konanTarget,
-            NativeCompilationDetails(
-                target,
-                name,
-                defaultSourceSet,
-                {
-                    NativeCompilerOptions(
-                        target.project,
-                        defaultSourceSet.languageSettings
-                    )
-                },
-                {
-                    object : KotlinCommonOptions {
-                        override val options: KotlinCommonCompilerOptions
-                            get() = compilerOptions.options
-                    }
-                }
-            )
+    private val compilationImplFactory: KotlinCompilationImplFactory =
+        KotlinCompilationImplFactory(
+            compilationTaskNamesContainerFactory = NativeKotlinCompilationTaskNamesContainerFactory,
+            compilationDependencyConfigurationsFactory = NativeKotlinCompilationDependencyConfigurationsFactory,
+            compilerOptionsFactory = KotlinNativeCompilerOptionsFactory,
+            compilationAssociator = KotlinNativeCompilationAssociator,
+            compilationSourceSetInclusion = DefaultKotlinCompilationSourceSetInclusion(
+                DefaultKotlinCompilationSourceSetInclusion.NativeAddSourcesToCompileTask
+            ),
         )
-    }
-}
 
-class KotlinSharedNativeCompilationFactory(
-    override val target: KotlinMetadataTarget,
-    val konanTargets: List<KonanTarget>
-) : KotlinCompilationFactory<KotlinSharedNativeCompilation> {
-    override val itemClass: Class<KotlinSharedNativeCompilation>
-        get() = KotlinSharedNativeCompilation::class.java
-
-    override fun create(name: String): KotlinSharedNativeCompilation {
-        val defaultSourceSet = getOrCreateDefaultSourceSet(name)
+    override fun create(name: String): KotlinNativeCompilation {
         return target.project.objects.newInstance(
-            KotlinSharedNativeCompilation::class.java,
-            konanTargets,
-            SharedNativeCompilationDetails(
-                target,
-                name,
-                defaultSourceSet,
-                {
-                    NativeCompilerOptions(
-                        target.project,
-                        defaultSourceSet.languageSettings
-                    )
-                },
-                {
-                    object : KotlinCommonOptions {
-                        override val options: KotlinCommonCompilerOptions
-                            get() = compilerOptions.options
-                    }
-                }
-            )
+            KotlinNativeCompilation::class.java, target.konanTarget, compilationImplFactory.create(target, name)
         )
     }
 }

@@ -38,6 +38,9 @@ KtConstructorSymbol:
           typeParameters: []
           valueParameters: []
           visibility: Public
+          getDispatchReceiver(): A
+          getContainingModule: KtSourceModule "Sources of main"
+          deprecationStatus: null
         hasBackingField: true
         hasGetter: true
         hasSetter: false
@@ -59,6 +62,13 @@ KtConstructorSymbol:
         symbolKind: CLASS_MEMBER
         typeParameters: []
         visibility: Public
+        getDispatchReceiver(): A
+        getContainingModule: KtSourceModule "Sources of main"
+        deprecationStatus: null
+        getterDeprecationStatus: null
+        javaGetterName: getA
+        javaSetterName: null
+        setterDeprecationStatus: null
       hasDefaultValue: false
       isCrossinline: false
       isExtension: false
@@ -71,6 +81,8 @@ KtConstructorSymbol:
       returnType: kotlin/Int
       symbolKind: LOCAL
       typeParameters: []
+      getContainingModule: KtSourceModule "Sources of main"
+      deprecationStatus: null
     KtValueParameterSymbol:
       annotationsList: []
       callableIdIfNonLocal: null
@@ -88,6 +100,8 @@ KtConstructorSymbol:
       returnType: kotlin/String
       symbolKind: LOCAL
       typeParameters: []
+      getContainingModule: KtSourceModule "Sources of main"
+      deprecationStatus: null
   ]
   visibility: Public
   getContainingModule: KtSourceModule "Sources of main"

@@ -38,6 +38,9 @@ KtConstructorSymbol:
           typeParameters: []
           valueParameters: []
           visibility: Public
+          getDispatchReceiver(): Anno
+          getContainingModule: KtSourceModule "Sources of main"
+          deprecationStatus: null
         hasBackingField: true
         hasGetter: true
         hasSetter: false
@@ -59,6 +62,13 @@ KtConstructorSymbol:
         symbolKind: CLASS_MEMBER
         typeParameters: []
         visibility: Public
+        getDispatchReceiver(): Anno
+        getContainingModule: KtSourceModule "Sources of main"
+        deprecationStatus: null
+        getterDeprecationStatus: null
+        javaGetterName: getParam1
+        javaSetterName: null
+        setterDeprecationStatus: null
       hasDefaultValue: false
       isCrossinline: false
       isExtension: false
@@ -71,6 +81,8 @@ KtConstructorSymbol:
       returnType: kotlin/String
       symbolKind: LOCAL
       typeParameters: []
+      getContainingModule: KtSourceModule "Sources of main"
+      deprecationStatus: null
     KtValueParameterSymbol:
       annotationsList: []
       callableIdIfNonLocal: null
@@ -97,6 +109,9 @@ KtConstructorSymbol:
           typeParameters: []
           valueParameters: []
           visibility: Public
+          getDispatchReceiver(): Anno
+          getContainingModule: KtSourceModule "Sources of main"
+          deprecationStatus: null
         hasBackingField: true
         hasGetter: true
         hasSetter: false
@@ -118,6 +133,13 @@ KtConstructorSymbol:
         symbolKind: CLASS_MEMBER
         typeParameters: []
         visibility: Public
+        getDispatchReceiver(): Anno
+        getContainingModule: KtSourceModule "Sources of main"
+        deprecationStatus: null
+        getterDeprecationStatus: null
+        javaGetterName: getParam2
+        javaSetterName: null
+        setterDeprecationStatus: null
       hasDefaultValue: false
       isCrossinline: false
       isExtension: false
@@ -130,6 +152,8 @@ KtConstructorSymbol:
       returnType: kotlin/Int
       symbolKind: LOCAL
       typeParameters: []
+      getContainingModule: KtSourceModule "Sources of main"
+      deprecationStatus: null
   ]
   visibility: Public
   getContainingModule: KtSourceModule "Sources of main"

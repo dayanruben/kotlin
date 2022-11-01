@@ -28,7 +28,6 @@ import org.gradle.api.tasks.bundling.Zip
 import org.gradle.language.base.plugins.LifecycleBasePlugin
 import org.gradle.language.jvm.tasks.ProcessResources
 import org.jetbrains.kotlin.gradle.dsl.KotlinCommonOptions
-import org.jetbrains.kotlin.gradle.internal.reorderPluginClasspathDependencies
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
 import org.jetbrains.kotlin.gradle.targets.js.KotlinJsCompilerAttribute
 import org.jetbrains.kotlin.gradle.targets.js.KotlinJsTarget
@@ -106,10 +105,10 @@ abstract class AbstractKotlinTargetConfigurator<KotlinTargetType : KotlinTarget>
         val project = target.project
 
         target.compilations.all { compilation ->
-            defineConfigurationsForCompilation(compilation)
-
-            if (compilation is KotlinCompilationWithResources) {
-                configureResourceProcessing(compilation, project.files(Callable { compilation.allKotlinSourceSets.map { it.resources } }))
+            compilation.internal.processResourcesTaskName?.let { processResourcesTaskName ->
+                configureResourceProcessing(
+                    compilation, processResourcesTaskName, project.files(Callable { compilation.allKotlinSourceSets.map { it.resources } })
+                )
             }
 
             createLifecycleTask(compilation)
@@ -117,13 +116,14 @@ abstract class AbstractKotlinTargetConfigurator<KotlinTargetType : KotlinTarget>
     }
 
     protected fun configureResourceProcessing(
-        compilation: KotlinCompilationWithResources<*>,
+        compilation: KotlinCompilation<*>,
+        processResourcesTaskName: String,
         resourceSet: FileCollection
     ) {
         val project = compilation.target.project
 
         val resourcesDestinationDir = project.file(compilation.output.resourcesDir)
-        val resourcesTask = project.locateOrRegisterTask<ProcessResources>(compilation.processResourcesTaskName) { resourcesTask ->
+        val resourcesTask = project.locateOrRegisterTask<ProcessResources>(processResourcesTaskName) { resourcesTask ->
             resourcesTask.description = "Processes $resourceSet."
             resourcesTask.from(resourceSet)
             resourcesTask.into(resourcesDestinationDir)
@@ -159,7 +159,7 @@ abstract class AbstractKotlinTargetConfigurator<KotlinTargetType : KotlinTarget>
 
         val mainCompilation = target.compilations.maybeCreate(KotlinCompilation.MAIN_COMPILATION_NAME)
 
-        val compileConfiguration = configurations.findByName(mainCompilation.deprecatedCompileConfigurationName)
+        val compileConfiguration = mainCompilation.internal.configurations.deprecatedCompileConfiguration
         val implementationConfiguration = configurations.maybeCreate(mainCompilation.implementationConfigurationName)
 
         val runtimeOnlyConfiguration = when (mainCompilation) {
@@ -176,7 +176,7 @@ abstract class AbstractKotlinTargetConfigurator<KotlinTargetType : KotlinTarget>
             attributes.attribute(Category.CATEGORY_ATTRIBUTE, project.categoryByName(Category.LIBRARY))
             extendsFrom(configurations.maybeCreate(mainCompilation.apiConfigurationName))
             if (mainCompilation is KotlinCompilationToRunnableFiles) {
-                val runtimeConfiguration = configurations.findByName(mainCompilation.deprecatedRuntimeConfigurationName)
+                val runtimeConfiguration = mainCompilation.internal.configurations.deprecatedRuntimeConfiguration
                 runtimeConfiguration?.let { extendsFrom(it) }
             }
             usesPlatformOf(target)
@@ -190,7 +190,7 @@ abstract class AbstractKotlinTargetConfigurator<KotlinTargetType : KotlinTarget>
                 isCanBeResolved = false
                 attributes.attribute(USAGE_ATTRIBUTE, KotlinUsages.producerRuntimeUsage(target))
                 attributes.attribute(Category.CATEGORY_ATTRIBUTE, project.categoryByName(Category.LIBRARY))
-                val runtimeConfiguration = configurations.findByName(mainCompilation.deprecatedRuntimeConfigurationName)
+                val runtimeConfiguration = mainCompilation.internal.configurations.deprecatedRuntimeConfiguration
                 extendsFrom(implementationConfiguration)
                 if (runtimeOnlyConfiguration != null)
                     extendsFrom(runtimeOnlyConfiguration)
@@ -201,7 +201,7 @@ abstract class AbstractKotlinTargetConfigurator<KotlinTargetType : KotlinTarget>
 
         if (createTestCompilation) {
             val testCompilation = target.compilations.getByName(KotlinCompilation.TEST_COMPILATION_NAME)
-            val compileTestsConfiguration = configurations.findByName(testCompilation.deprecatedCompileConfigurationName)
+            val compileTestsConfiguration = testCompilation.internal.configurations.deprecatedCompileConfiguration
             val testImplementationConfiguration = configurations.maybeCreate(testCompilation.implementationConfigurationName)
             val testRuntimeOnlyConfiguration = when (testCompilation) {
                 is KotlinCompilationToRunnableFiles<*> -> configurations.maybeCreate(testCompilation.runtimeOnlyConfigurationName)
@@ -213,8 +213,8 @@ abstract class AbstractKotlinTargetConfigurator<KotlinTargetType : KotlinTarget>
             testRuntimeOnlyConfiguration?.extendsFrom(runtimeOnlyConfiguration)
 
             if (mainCompilation is KotlinCompilationToRunnableFiles && testCompilation is KotlinCompilationToRunnableFiles) {
-                val runtimeConfiguration = configurations.findByName(mainCompilation.deprecatedRuntimeConfigurationName)
-                val testRuntimeConfiguration = configurations.findByName(testCompilation.deprecatedRuntimeConfigurationName)
+                val runtimeConfiguration = mainCompilation.internal.configurations.deprecatedRuntimeConfiguration
+                val testRuntimeConfiguration = testCompilation.internal.configurations.deprecatedRuntimeConfiguration
                 runtimeConfiguration?.let { testRuntimeConfiguration?.extendsFrom(it) }
             }
         }
@@ -263,117 +263,8 @@ abstract class AbstractKotlinTargetConfigurator<KotlinTargetType : KotlinTarget>
     companion object {
         const val testTaskNameSuffix = "test"
         const val runTaskNameSuffix = "run"
-
-        fun defineConfigurationsForCompilation(
-            compilation: KotlinCompilation<*>
-        ) {
-            val project = compilation.target.project
-            val target = compilation.target
-            val configurations = target.project.configurations
-
-            configurations.maybeCreate(compilation.pluginConfigurationName).apply {
-                addGradlePluginMetadataAttributes(project)
-
-                if (target.platformType == KotlinPlatformType.native) {
-                    extendsFrom(configurations.getByName(NATIVE_COMPILER_PLUGIN_CLASSPATH_CONFIGURATION_NAME))
-
-                    isTransitive = false
-                } else {
-                    extendsFrom(target.project.commonKotlinPluginClasspath)
-                }
-                isVisible = false
-                isCanBeConsumed = false
-                description = "Kotlin compiler plugins for $compilation"
-                reorderPluginClasspathDependencies()
-            }
-
-            val compileConfiguration = configurations.findByName(compilation.deprecatedCompileConfigurationName)?.apply {
-                isCanBeConsumed = false
-                setupAsLocalTargetSpecificConfigurationIfSupported(target)
-                isVisible = false
-                isCanBeResolved = false
-                description = "Dependencies for $compilation (deprecated, use '${compilation.implementationConfigurationName} ' instead)."
-            }
-
-            val apiConfiguration = configurations.maybeCreate(compilation.apiConfigurationName).apply {
-                compileConfiguration?.let { extendsFrom(it) }
-                isVisible = false
-                isCanBeConsumed = false
-                isCanBeResolved = false
-                description = "API dependencies for $compilation."
-            }
-
-            val implementationConfiguration = configurations.maybeCreate(compilation.implementationConfigurationName).apply {
-                extendsFrom(apiConfiguration)
-                compileConfiguration?.let { extendsFrom(it) }
-                isVisible = false
-                isCanBeConsumed = false
-                isCanBeResolved = false
-                description = "Implementation only dependencies for $compilation."
-            }
-
-            val compileOnlyConfiguration = configurations.maybeCreate(compilation.compileOnlyConfigurationName).apply {
-                isCanBeConsumed = false
-                setupAsLocalTargetSpecificConfigurationIfSupported(target)
-                attributes.attribute(Category.CATEGORY_ATTRIBUTE, project.categoryByName(Category.LIBRARY))
-                isVisible = false
-                isCanBeResolved = false
-                description = "Compile only dependencies for $compilation."
-            }
-
-            configurations.maybeCreate(compilation.compileDependencyConfigurationName).apply {
-                extendsFrom(compileOnlyConfiguration, implementationConfiguration)
-                usesPlatformOf(target)
-                isVisible = false
-                isCanBeConsumed = false
-                attributes.attribute(USAGE_ATTRIBUTE, KotlinUsages.consumerApiUsage(compilation.target))
-                if (compilation.platformType != KotlinPlatformType.androidJvm) {
-                    attributes.attribute(Category.CATEGORY_ATTRIBUTE, project.categoryByName(Category.LIBRARY))
-                }
-                description = "Compile classpath for $compilation."
-            }
-
-            if (compilation is KotlinCompilationToRunnableFiles) {
-                val runtimeConfiguration = configurations.findByName(compilation.deprecatedRuntimeConfigurationName)?.apply {
-                    isCanBeConsumed = false
-                    setupAsLocalTargetSpecificConfigurationIfSupported(target)
-                    compileConfiguration?.let { extendsFrom(it) }
-                    isVisible = false
-                    isCanBeResolved = false
-                    description =
-                        "Runtime dependencies for $compilation (deprecated, use '${compilation.runtimeOnlyConfigurationName} ' instead)."
-                }
-
-                val runtimeOnlyConfiguration = configurations.maybeCreate(compilation.runtimeOnlyConfigurationName).apply {
-                    isVisible = false
-                    isCanBeConsumed = false
-                    isCanBeResolved = false
-                    description = "Runtime only dependencies for $compilation."
-                }
-
-                configurations.maybeCreate(compilation.runtimeDependencyConfigurationName).apply {
-                    extendsFrom(runtimeOnlyConfiguration, implementationConfiguration)
-                    runtimeConfiguration?.let { extendsFrom(it) }
-                    usesPlatformOf(target)
-                    isVisible = false
-                    isCanBeConsumed = false
-                    isCanBeResolved = true
-                    attributes.attribute(USAGE_ATTRIBUTE, KotlinUsages.consumerRuntimeUsage(compilation.target))
-                    if (compilation.platformType != KotlinPlatformType.androidJvm) {
-                        attributes.attribute(Category.CATEGORY_ATTRIBUTE, project.categoryByName(Category.LIBRARY))
-                    }
-                    description = "Runtime classpath of $compilation."
-                }
-            }
-        }
     }
 }
-
-internal val KotlinCompilation<*>.deprecatedCompileConfigurationName: String
-    get() = disambiguateName(COMPILE)
-
-internal val KotlinCompilationToRunnableFiles<*>.deprecatedRuntimeConfigurationName: String
-    get() = disambiguateName(RUNTIME)
 
 internal val KotlinTarget.testTaskName: String
     get() = lowerCamelCaseName(targetName, AbstractKotlinTargetConfigurator.testTaskNameSuffix)
@@ -433,7 +324,7 @@ abstract class KotlinOnlyTargetConfigurator<KotlinCompilationType : KotlinCompil
                 addJarIfNoArtifactsPresent(apiElementsConfiguration, jarArtifact)
 
                 if (mainCompilation is KotlinCompilationToRunnableFiles<*>) {
-                    val runtimeConfiguration = project.configurations.findByName(mainCompilation.deprecatedRuntimeConfigurationName)
+                    val runtimeConfiguration = mainCompilation.internal.configurations.deprecatedRuntimeConfiguration
                     val runtimeElementsConfiguration = project.configurations.getByName(target.runtimeElementsConfigurationName)
                     runtimeConfiguration?.let { addJarIfNoArtifactsPresent(runtimeConfiguration, jarArtifact) }
                     addJarIfNoArtifactsPresent(runtimeElementsConfiguration, jarArtifact)
@@ -547,5 +438,3 @@ private fun Configuration.setJavaTargetEnvironmentAttributeIfSupported(project: 
 }
 
 internal val Project.commonKotlinPluginClasspath get() = configurations.getByName(PLUGIN_CLASSPATH_CONFIGURATION_NAME)
-internal val KotlinCompilation<*>.pluginConfigurationName
-    get() = lowerCamelCaseName(PLUGIN_CLASSPATH_CONFIGURATION_NAME, target.disambiguationClassifier, compilationName)

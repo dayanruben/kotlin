@@ -1417,6 +1417,16 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
             runTest("compiler/testData/codegen/box/bridges/methodFromTrait.kt");
         }
 
+        @TestMetadata("methodWithDefaultParameter.kt")
+        public void testMethodWithDefaultParameter() throws Exception {
+            runTest("compiler/testData/codegen/box/bridges/methodWithDefaultParameter.kt");
+        }
+
+        @TestMetadata("nestedClassTypeParameters.kt")
+        public void testNestedClassTypeParameters() throws Exception {
+            runTest("compiler/testData/codegen/box/bridges/nestedClassTypeParameters.kt");
+        }
+
         @TestMetadata("noBridgeOnMutableCollectionInheritance.kt")
         public void testNoBridgeOnMutableCollectionInheritance() throws Exception {
             runTest("compiler/testData/codegen/box/bridges/noBridgeOnMutableCollectionInheritance.kt");
@@ -3054,6 +3064,11 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
         @TestMetadata("kt53677.kt")
         public void testKt53677() throws Exception {
             runTest("compiler/testData/codegen/box/casts/kt53677.kt");
+        }
+
+        @TestMetadata("kt54707.kt")
+        public void testKt54707() throws Exception {
+            runTest("compiler/testData/codegen/box/casts/kt54707.kt");
         }
 
         @TestMetadata("lambdaToUnitCast.kt")
@@ -22616,11 +22631,6 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
             runTest("compiler/testData/codegen/box/properties/privatePropertyWithoutBackingField.kt");
         }
 
-        @TestMetadata("sideEffectInTopLevelInitializerMultiModule.kt")
-        public void testSideEffectInTopLevelInitializerMultiModule() throws Exception {
-            runTest("compiler/testData/codegen/box/properties/sideEffectInTopLevelInitializerMultiModule.kt");
-        }
-
         @TestMetadata("twoAnnotatedExtensionPropertiesWithoutBackingFields.kt")
         public void testTwoAnnotatedExtensionPropertiesWithoutBackingFields() throws Exception {
             runTest("compiler/testData/codegen/box/properties/twoAnnotatedExtensionPropertiesWithoutBackingFields.kt");
@@ -27633,6 +27643,11 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
 
             public void testAllFilesPresentInUnsigned() throws Exception {
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/ranges/unsigned"), Pattern.compile("^([^_](.+))\\.kt$"), null, TargetBackend.WASM, true);
+            }
+
+            @TestMetadata("bitShifting.kt")
+            public void testBitShifting() throws Exception {
+                runTest("compiler/testData/codegen/box/ranges/unsigned/bitShifting.kt");
             }
 
             @TestMetadata("inMixedUnsignedRange.kt")

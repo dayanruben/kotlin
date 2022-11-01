@@ -8,14 +8,14 @@ package org.jetbrains.kotlin.gradle.tasks.configuration
 import org.gradle.api.Project
 import org.gradle.api.attributes.Attribute
 import org.gradle.api.provider.Provider
-import org.jetbrains.kotlin.gradle.dsl.KotlinJvmCompilerOptions
 import org.jetbrains.kotlin.gradle.dsl.KotlinTopLevelExtension
 import org.jetbrains.kotlin.gradle.internal.transforms.ClasspathEntrySnapshotTransform
+import org.jetbrains.kotlin.gradle.plugin.KotlinCompilationInfo
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinJvmAndroidCompilation
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinJvmCompilation
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinWithJavaCompilation
-import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinCompilationData
 import org.jetbrains.kotlin.gradle.plugin.sources.DefaultLanguageSettingsBuilder
+import org.jetbrains.kotlin.gradle.plugin.tcsOrNull
 import org.jetbrains.kotlin.gradle.report.BuildMetricsService
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.project.model.LanguageSettings
@@ -60,8 +60,8 @@ internal open class BaseKotlinCompileConfig<TASK : KotlinCompile> : AbstractKotl
         }
     }
 
-    constructor(compilation: KotlinCompilationData<*>) : super(compilation) {
-        val javaTaskProvider = when (compilation) {
+    constructor(compilationInfo: KotlinCompilationInfo) : super(compilationInfo) {
+        val javaTaskProvider = when (val compilation = compilationInfo.tcsOrNull?.compilation) {
             is KotlinJvmCompilation -> compilation.compileJavaTaskProvider
             is KotlinJvmAndroidCompilation -> compilation.compileJavaTaskProvider
             is KotlinWithJavaCompilation<*, *> -> compilation.compileJavaTaskProvider
@@ -75,12 +75,16 @@ internal open class BaseKotlinCompileConfig<TASK : KotlinCompile> : AbstractKotl
                     task.associatedJavaCompileTaskSources.from(javaTaskProvider.map { it.source })
                     task.associatedJavaCompileTaskName.value(javaTaskProvider.name)
                 }
+
+                @Suppress("DEPRECATION")
                 task.ownModuleName.value(
-                    (compilation.compilerOptions.options as KotlinJvmCompilerOptions).moduleName.convention(compilation.ownModuleName)
-                )
+                    providers.provider {
+                        task.parentKotlinOptions.orNull?.moduleName ?: compilationInfo.moduleName
+                    })
             }
         }
     }
+
 
     constructor(project: Project, ext: KotlinTopLevelExtension) : super(
         project, ext, languageSettings = getDefaultLangSetting(project, ext)

@@ -35,11 +35,11 @@ import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 import org.jetbrains.kotlin.resolve.BindingContext
 
-class KtFe10PsiDefaultPropertySetterSymbol(
+internal class KtFe10PsiDefaultPropertySetterSymbol(
     private val propertyPsi: KtProperty,
     override val analysisContext: Fe10AnalysisContext
 ) : KtPropertySetterSymbol(), KtFe10Symbol {
-    private val descriptor: PropertySetterDescriptor? by cached {
+    val descriptor: PropertySetterDescriptor? by cached {
         val bindingContext = analysisContext.analyze(propertyPsi, Fe10AnalysisFacade.AnalysisMode.PARTIAL)
         (bindingContext[BindingContext.VARIABLE, propertyPsi] as? PropertyDescriptor)?.setter
     }
@@ -104,9 +104,9 @@ class KtFe10PsiDefaultPropertySetterSymbol(
         return KtFe10NeverRestoringSymbolPointer()
     }
 
-    private class DefaultKtValueParameterSymbol(
+    class DefaultKtValueParameterSymbol(
         private val propertyPsi: KtProperty,
-        private val descriptor: ValueParameterDescriptor?,
+        val descriptor: ValueParameterDescriptor?,
         override val analysisContext: Fe10AnalysisContext
     ) : KtValueParameterSymbol(), KtFe10Symbol {
         override val hasDefaultValue: Boolean

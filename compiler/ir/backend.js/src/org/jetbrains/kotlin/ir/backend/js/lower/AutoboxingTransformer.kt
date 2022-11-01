@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.backend.common.lower.AbstractValueUsageTransformer
 import org.jetbrains.kotlin.backend.common.pop
 import org.jetbrains.kotlin.backend.common.push
 import org.jetbrains.kotlin.ir.IrBuiltIns
+import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.backend.js.JsCommonBackendContext
 import org.jetbrains.kotlin.ir.backend.js.ir.JsIrBuilder
 import org.jetbrains.kotlin.ir.backend.js.utils.realOverrideTarget
@@ -107,16 +108,14 @@ abstract class AbstractValueUsageLowering(val context: JsCommonBackendContext) :
         return this.useAsArgument(expression.target.valueParameters[parameter.index])
     }
 
-
-    override fun IrExpression.useAsVarargElement(expression: IrVararg): IrExpression {
-        return this.useAs(
+    override fun useAsVarargElement(element: IrExpression, expression: IrVararg): IrExpression =
+        element.useAs(
             // Do not box primitive inline classes
-            if (icUtils.isTypeInlined(type) && !icUtils.isTypeInlined(expression.type) && !expression.type.isPrimitiveArray())
+            if (icUtils.isTypeInlined(element.type) && !icUtils.isTypeInlined(expression.type) && !expression.type.isPrimitiveArray())
                 irBuiltIns.anyNType
             else
                 expression.varargElementType
         )
-    }
 }
 
 class AutoboxingTransformer(context: JsCommonBackendContext) : AbstractValueUsageLowering(context) {
@@ -164,6 +163,8 @@ class AutoboxingTransformer(context: JsCommonBackendContext) : AbstractValueUsag
                 return JsIrBuilder.buildComposite(actualType, listOf(this, unitValue))
             }
         }
+
+        if (expectedType.isUnit()) return this
 
         val actualInlinedClass = icUtils.getInlinedClass(actualType)
         val expectedInlinedClass = icUtils.getInlinedClass(expectedType)
@@ -246,7 +247,6 @@ class AutoboxingTransformer(context: JsCommonBackendContext) : AbstractValueUsag
         }
         return true
     }
-
 }
 
 private tailrec fun IrExpression.isGetUnit(irBuiltIns: IrBuiltIns): Boolean =

@@ -81,3 +81,43 @@ internal class Void private constructor()
 @WasmOp(WasmOp.DROP)
 internal fun consumeAnyIntoVoid(a: Any?): Void =
     implementedAsIntrinsic
+
+@WasmOp(WasmOp.DROP)
+internal fun consumeBooleanIntoVoid(a: Boolean): Void =
+    implementedAsIntrinsic
+
+@WasmOp(WasmOp.DROP)
+internal fun consumeByteIntoVoid(a: Byte): Void =
+    implementedAsIntrinsic
+
+@WasmOp(WasmOp.DROP)
+internal fun consumeShortIntoVoid(a: Short): Void =
+    implementedAsIntrinsic
+
+@WasmOp(WasmOp.DROP)
+internal fun consumeCharIntoVoid(a: Char): Void =
+    implementedAsIntrinsic
+
+@WasmOp(WasmOp.DROP)
+internal fun consumeIntIntoVoid(a: Int): Void =
+    implementedAsIntrinsic
+
+@WasmOp(WasmOp.DROP)
+internal fun consumeLongIntoVoid(a: Long): Void =
+    implementedAsIntrinsic
+
+@WasmOp(WasmOp.DROP)
+internal fun consumeFloatIntoVoid(a: Float): Void =
+    implementedAsIntrinsic
+
+@WasmOp(WasmOp.DROP)
+internal fun consumeDoubleIntoVoid(a: Double): Void =
+    implementedAsIntrinsic
+
+@ExcludedFromCodegen
+internal fun stringGetPoolSize(): Int =
+    implementedAsIntrinsic
+
+// This initializer is a special case in FieldInitializersLowering
+@EagerInitialization
+internal val stringPool: Array<String?> = arrayOfNulls(stringGetPoolSize())

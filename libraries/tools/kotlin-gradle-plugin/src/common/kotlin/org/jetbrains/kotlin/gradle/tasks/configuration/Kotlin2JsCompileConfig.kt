@@ -5,12 +5,8 @@
 
 package org.jetbrains.kotlin.gradle.tasks.configuration
 
-import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinCompilationData
-import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.isMainCompilationData
+import org.jetbrains.kotlin.gradle.plugin.KotlinCompilationInfo
 import org.jetbrains.kotlin.gradle.targets.js.ir.*
-import org.jetbrains.kotlin.gradle.targets.js.ir.PRODUCE_JS
-import org.jetbrains.kotlin.gradle.targets.js.ir.PRODUCE_UNZIPPED_KLIB
-import org.jetbrains.kotlin.gradle.targets.js.ir.PRODUCE_ZIPPED_KLIB
 import org.jetbrains.kotlin.gradle.tasks.Kotlin2JsCompile
 import org.jetbrains.kotlin.gradle.utils.klibModuleName
 import java.io.File
@@ -18,7 +14,7 @@ import java.io.File
 internal typealias Kotlin2JsCompileConfig = BaseKotlin2JsCompileConfig<Kotlin2JsCompile>
 
 internal open class BaseKotlin2JsCompileConfig<TASK : Kotlin2JsCompile>(
-    compilation: KotlinCompilationData<*>
+    compilation: KotlinCompilationInfo
 ) : AbstractKotlinCompileConfig<TASK>(compilation) {
 
     init {
@@ -33,9 +29,7 @@ internal open class BaseKotlin2JsCompileConfig<TASK : Kotlin2JsCompile>(
 
             configureAdditionalFreeCompilerArguments(task, compilation)
 
-            task.compilerOptions.moduleName.convention(
-                compilation.ownModuleName
-            )
+            task.compilerOptions.moduleName.convention(compilation.moduleName)
 
             @Suppress("DEPRECATION")
             task.outputFileProperty.value(
@@ -75,7 +69,7 @@ internal open class BaseKotlin2JsCompileConfig<TASK : Kotlin2JsCompile>(
 
     protected open fun configureAdditionalFreeCompilerArguments(
         task: TASK,
-        compilation: KotlinCompilationData<*>
+        compilation: KotlinCompilationInfo
     ) {
         task.enhancedFreeCompilerArgs.value(
             task.compilerOptions.freeCompilerArgs.map { freeArgs ->
@@ -87,7 +81,7 @@ internal open class BaseKotlin2JsCompileConfig<TASK : Kotlin2JsCompile>(
     }
 
     protected fun MutableList<String>.commonJsAdditionalCompilerFlags(
-        compilation: KotlinCompilationData<*>
+        compilation: KotlinCompilationInfo
     ) {
         if (contains(DISABLE_PRE_IR) &&
             !contains(PRODUCE_UNZIPPED_KLIB) &&
@@ -101,10 +95,10 @@ internal open class BaseKotlin2JsCompileConfig<TASK : Kotlin2JsCompile>(
             contains(PRODUCE_ZIPPED_KLIB)
         ) {
             // Configure FQ module name to avoid cyclic dependencies in klib manifests (see KT-36721).
-            val baseName = if (compilation.isMainCompilationData()) {
+            val baseName = if (compilation.isMain) {
                 project.name
             } else {
-                "${project.name}_${compilation.compilationPurpose}"
+                "${project.name}_${compilation.compilationName}"
             }
             if (none { it.startsWith(KLIB_MODULE_NAME) }) {
                 add("$KLIB_MODULE_NAME=${project.klibModuleName(baseName)}")

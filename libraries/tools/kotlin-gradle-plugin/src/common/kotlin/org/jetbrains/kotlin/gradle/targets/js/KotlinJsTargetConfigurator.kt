@@ -54,18 +54,20 @@ open class KotlinJsTargetConfigurator :
 
     override fun buildCompilationProcessor(compilation: KotlinJsCompilation): KotlinSourceSetProcessor<*> {
         val tasksProvider = KotlinTasksProvider()
-        return Kotlin2JsSourceSetProcessor(tasksProvider, compilation)
+        return Kotlin2JsSourceSetProcessor(tasksProvider, KotlinCompilationInfo(compilation))
     }
 
     override fun configureCompilationDefaults(target: KotlinJsTarget) {
         val project = target.project
 
         target.compilations.all { compilation ->
-            defineConfigurationsForCompilation(compilation)
-
             compilation.source(compilation.defaultSourceSet)
 
-            configureResourceProcessing(compilation, project.files(Callable { compilation.allKotlinSourceSets.map { it.resources } }))
+            configureResourceProcessing(
+                compilation,
+                compilation.processResourcesTaskName,
+                project.files(Callable { compilation.allKotlinSourceSets.map { it.resources } })
+            )
 
             createLifecycleTaskInternal(compilation)
         }

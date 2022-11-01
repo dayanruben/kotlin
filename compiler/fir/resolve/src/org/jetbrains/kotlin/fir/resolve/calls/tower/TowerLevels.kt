@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.resultType
 import org.jetbrains.kotlin.fir.scopes.*
 import org.jetbrains.kotlin.fir.scopes.impl.FirDefaultStarImportingScope
-import org.jetbrains.kotlin.fir.scopes.impl.FirStandardOverrideChecker
 import org.jetbrains.kotlin.fir.scopes.impl.importedFromObjectData
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.*
@@ -105,10 +104,31 @@ class MemberScopeTowerLevel(
         }
 
         if (givenExtensionReceiverOptions.isEmpty()) {
+            val dispatchReceiverType = dispatchReceiverValue.type
+
+            val useSiteForSyntheticScope: FirTypeScope
+            val typeForSyntheticScope: ConeKotlinType
+
+            // In K1, synthetic properties were working a bit differently
+            // - On first step they've been built on the per-class level
+            // - Then, they've been handled as regular extensions with specific receiver value
+            // In K2, we build those properties using specific use-site scope of given receiver
+            // And that gives us different results in case of raw types (since we've got special scopes for them)
+            // So, here we decide to preserve the K1 behavior just by converting the type to its non-raw version
+            if (dispatchReceiverType.isRaw()) {
+                typeForSyntheticScope = dispatchReceiverType.convertToNonRawVersion()
+                useSiteForSyntheticScope =
+                    typeForSyntheticScope.scope(session, scopeSession, FakeOverrideTypeCalculator.DoNothing)
+                        ?: error("No scope for flexible type scope, while it's not null for $dispatchReceiverType")
+            } else {
+                typeForSyntheticScope = dispatchReceiverType
+                useSiteForSyntheticScope = scope
+            }
+
             val withSynthetic = FirSyntheticPropertiesScope.createIfSyntheticNamesProviderIsDefined(
                 session,
-                dispatchReceiverValue.type,
-                scope
+                typeForSyntheticScope,
+                useSiteForSyntheticScope,
             )
             withSynthetic?.processScopeMembers { symbol ->
                 empty = false
@@ -132,7 +152,7 @@ class MemberScopeTowerLevel(
 
         val overridableGroups = session.overrideService.createOverridableGroups(
             candidatesFromOriginalType + candidatesFromSmartcast,
-            FirStandardOverrideChecker(session)
+            FirIntersectionScopeOverrideChecker(session)
         )
 
         val candidates = mutableListOf<MemberWithBaseScope<T>>()
@@ -320,6 +340,7 @@ class ScopeTowerLevel(
                     (implicitReceiverValue.type as? ConeClassLikeType)?.fullyExpandedType(session)?.lookupTag == lookupTag
                 }
             }
+
             else -> {
                 bodyResolveComponents.implicitReceiverStack.lastDispatchReceiver()
             }

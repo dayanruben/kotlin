@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.gradle.plugin.KotlinCompilationOutput
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.project.model.LanguageSettings
 
-interface GradleKpmVariantCompilationData<T : KotlinCommonOptionsDeprecated> : KotlinCompilationData<T> {
+interface GradleKpmVariantCompilationData<T : KotlinCommonOptionsDeprecated> : GradleKpmCompilationData<T> {
     override val owner: GradleKpmVariant
 
     override val project: Project get() = owner.containingModule.project
@@ -43,6 +43,4 @@ interface GradleKpmVariantCompilationData<T : KotlinCommonOptionsDeprecated> : K
 
     override val platformType: KotlinPlatformType
         get() = owner.platformType
-
-    override val ownModuleName: String
 }

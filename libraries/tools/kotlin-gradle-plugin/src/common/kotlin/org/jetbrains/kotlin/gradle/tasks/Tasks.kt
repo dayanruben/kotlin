@@ -285,6 +285,7 @@ abstract class AbstractKotlinCompile<T : CommonCompilerArguments> @Inject constr
     internal open fun isIncrementalCompilationEnabled(): Boolean =
         incremental
 
+    @Deprecated("Scheduled for removal with Kotlin 1.9", ReplaceWith("moduleName"))
     @get:Input
     abstract val ownModuleName: Property<String>
 
@@ -521,6 +522,7 @@ open class KotlinCompileArgumentsProvider<T : AbstractKotlinCompile<out CommonCo
 
 class KotlinJvmCompilerArgumentsProvider
     (taskProvider: KotlinCompile) : KotlinCompileArgumentsProvider<KotlinCompile>(taskProvider) {
+    val taskName: String = taskProvider.name
     val moduleName: String = taskProvider.moduleName.get()
     val friendPaths: FileCollection = taskProvider.friendPaths
     val compileClasspath: Iterable<File> = taskProvider.libraries
@@ -533,7 +535,7 @@ internal inline val <reified T : Task> T.thisTaskProvider: TaskProvider<out T>
 
 @CacheableTask
 abstract class KotlinCompile @Inject constructor(
-    override val compilerOptions: KotlinJvmCompilerOptions,
+    final override val compilerOptions: KotlinJvmCompilerOptions,
     workerExecutor: WorkerExecutor,
     objectFactory: ObjectFactory
 ) : AbstractKotlinCompile<K2JVMCompilerArguments>(objectFactory, workerExecutor),

@@ -1987,6 +1987,16 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/bridges/methodFromTrait.kt");
         }
 
+        @TestMetadata("methodWithDefaultParameter.kt")
+        public void testMethodWithDefaultParameter() throws Exception {
+            runTest("compiler/testData/codegen/box/bridges/methodWithDefaultParameter.kt");
+        }
+
+        @TestMetadata("nestedClassTypeParameters.kt")
+        public void testNestedClassTypeParameters() throws Exception {
+            runTest("compiler/testData/codegen/box/bridges/nestedClassTypeParameters.kt");
+        }
+
         @TestMetadata("noBridgeOnMutableCollectionInheritance.kt")
         public void testNoBridgeOnMutableCollectionInheritance() throws Exception {
             runTest("compiler/testData/codegen/box/bridges/noBridgeOnMutableCollectionInheritance.kt");
@@ -3948,6 +3958,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
     @TestDataPath("$PROJECT_ROOT")
     @RunWith(JUnit3RunnerWithInners.class)
     public static class Casts extends AbstractLightAnalysisModeTest {
+        @TestMetadata("kt54707.kt")
+        public void ignoreKt54707() throws Exception {
+            runTest("compiler/testData/codegen/box/casts/kt54707.kt");
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM, testDataFilePath);
         }
@@ -28965,11 +28980,6 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/properties/genericWithSameName.kt");
         }
 
-        @TestMetadata("sideEffectInTopLevelInitializerMultiModule.kt")
-        public void ignoreSideEffectInTopLevelInitializerMultiModule() throws Exception {
-            runTest("compiler/testData/codegen/box/properties/sideEffectInTopLevelInitializerMultiModule.kt");
-        }
-
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM, testDataFilePath);
         }
@@ -31588,6 +31598,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
 
             public void testAllFilesPresentInUnsigned() throws Exception {
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/ranges/unsigned"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
+            }
+
+            @TestMetadata("bitShifting.kt")
+            public void testBitShifting() throws Exception {
+                runTest("compiler/testData/codegen/box/ranges/unsigned/bitShifting.kt");
             }
 
             @TestMetadata("inMixedUnsignedRange.kt")
@@ -36223,6 +36238,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("kt52417.kt")
         public void testKt52417() throws Exception {
             runTest("compiler/testData/codegen/box/sam/kt52417.kt");
+        }
+
+        @TestMetadata("kt54600.kt")
+        public void testKt54600() throws Exception {
+            runTest("compiler/testData/codegen/box/sam/kt54600.kt");
         }
 
         @TestMetadata("nonInlinedSamWrapper.kt")

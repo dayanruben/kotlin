@@ -2364,6 +2364,18 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         }
 
         @Test
+        @TestMetadata("methodWithDefaultParameter.kt")
+        public void testMethodWithDefaultParameter() throws Exception {
+            runTest("compiler/testData/codegen/box/bridges/methodWithDefaultParameter.kt");
+        }
+
+        @Test
+        @TestMetadata("nestedClassTypeParameters.kt")
+        public void testNestedClassTypeParameters() throws Exception {
+            runTest("compiler/testData/codegen/box/bridges/nestedClassTypeParameters.kt");
+        }
+
+        @Test
         @TestMetadata("noBridgeOnMutableCollectionInheritance.kt")
         public void testNoBridgeOnMutableCollectionInheritance() throws Exception {
             runTest("compiler/testData/codegen/box/bridges/noBridgeOnMutableCollectionInheritance.kt");
@@ -4812,6 +4824,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         }
 
         @Test
+        @TestMetadata("kt54707.kt")
+        public void testKt54707() throws Exception {
+            runTest("compiler/testData/codegen/box/casts/kt54707.kt");
+        }
+
+        @Test
         @TestMetadata("lambdaToUnitCast.kt")
         public void testLambdaToUnitCast() throws Exception {
             runTest("compiler/testData/codegen/box/casts/lambdaToUnitCast.kt");
@@ -7135,6 +7153,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         @TestMetadata("inlineFunctionCompanionPropertyAccess.kt")
         public void testInlineFunctionCompanionPropertyAccess() throws Exception {
             runTest("compiler/testData/codegen/box/companion/inlineFunctionCompanionPropertyAccess.kt");
+        }
+
+        @Test
+        @TestMetadata("kt54645.kt")
+        public void testKt54645() throws Exception {
+            runTest("compiler/testData/codegen/box/companion/kt54645.kt");
         }
     }
 
@@ -15564,6 +15588,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         }
 
         @Test
+        @TestMetadata("kt54654.kt")
+        public void testKt54654() throws Exception {
+            runTest("compiler/testData/codegen/box/delegation/kt54654.kt");
+        }
+
+        @Test
         @TestMetadata("kt8154.kt")
         public void testKt8154() throws Exception {
             runTest("compiler/testData/codegen/box/delegation/kt8154.kt");
@@ -17799,6 +17829,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         @TestMetadata("javaFieldAndCompanionProperty.kt")
         public void testJavaFieldAndCompanionProperty() throws Exception {
             runTest("compiler/testData/codegen/box/fieldRename/javaFieldAndCompanionProperty.kt");
+        }
+
+        @Test
+        @TestMetadata("javaFieldAndKotlinPrivateProperty.kt")
+        public void testJavaFieldAndKotlinPrivateProperty() throws Exception {
+            runTest("compiler/testData/codegen/box/fieldRename/javaFieldAndKotlinPrivateProperty.kt");
         }
 
         @Test
@@ -35280,12 +35316,6 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         }
 
         @Test
-        @TestMetadata("sideEffectInTopLevelInitializerMultiModule.kt")
-        public void testSideEffectInTopLevelInitializerMultiModule() throws Exception {
-            runTest("compiler/testData/codegen/box/properties/sideEffectInTopLevelInitializerMultiModule.kt");
-        }
-
-        @Test
         @TestMetadata("substituteJavaSuperField.kt")
         public void testSubstituteJavaSuperField() throws Exception {
             runTest("compiler/testData/codegen/box/properties/substituteJavaSuperField.kt");
@@ -41143,6 +41173,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
             }
 
             @Test
+            @TestMetadata("bitShifting.kt")
+            public void testBitShifting() throws Exception {
+                runTest("compiler/testData/codegen/box/ranges/unsigned/bitShifting.kt");
+            }
+
+            @Test
             @TestMetadata("inMixedUnsignedRange.kt")
             public void testInMixedUnsignedRange() throws Exception {
                 runTest("compiler/testData/codegen/box/ranges/unsigned/inMixedUnsignedRange.kt");
@@ -46515,6 +46551,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         @TestMetadata("kt52417.kt")
         public void testKt52417() throws Exception {
             runTest("compiler/testData/codegen/box/sam/kt52417.kt");
+        }
+
+        @Test
+        @TestMetadata("kt54600.kt")
+        public void testKt54600() throws Exception {
+            runTest("compiler/testData/codegen/box/sam/kt54600.kt");
         }
 
         @Test

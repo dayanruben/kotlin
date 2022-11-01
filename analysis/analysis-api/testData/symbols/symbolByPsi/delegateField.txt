@@ -38,6 +38,9 @@ KtConstructorSymbol:
           typeParameters: []
           valueParameters: []
           visibility: Public
+          getDispatchReceiver(): MyColor
+          getContainingModule: KtSourceModule "Sources of main"
+          deprecationStatus: null
         hasBackingField: true
         hasGetter: true
         hasSetter: false
@@ -59,6 +62,13 @@ KtConstructorSymbol:
         symbolKind: CLASS_MEMBER
         typeParameters: []
         visibility: Public
+        getDispatchReceiver(): MyColor
+        getContainingModule: KtSourceModule "Sources of main"
+        deprecationStatus: null
+        getterDeprecationStatus: null
+        javaGetterName: getX
+        javaSetterName: null
+        setterDeprecationStatus: null
       hasDefaultValue: false
       isCrossinline: false
       isExtension: false
@@ -71,6 +81,8 @@ KtConstructorSymbol:
       returnType: kotlin/Int
       symbolKind: LOCAL
       typeParameters: []
+      getContainingModule: KtSourceModule "Sources of main"
+      deprecationStatus: null
     KtValueParameterSymbol:
       annotationsList: []
       callableIdIfNonLocal: null
@@ -97,6 +109,9 @@ KtConstructorSymbol:
           typeParameters: []
           valueParameters: []
           visibility: Public
+          getDispatchReceiver(): MyColor
+          getContainingModule: KtSourceModule "Sources of main"
+          deprecationStatus: null
         hasBackingField: true
         hasGetter: true
         hasSetter: false
@@ -118,6 +133,13 @@ KtConstructorSymbol:
         symbolKind: CLASS_MEMBER
         typeParameters: []
         visibility: Public
+        getDispatchReceiver(): MyColor
+        getContainingModule: KtSourceModule "Sources of main"
+        deprecationStatus: null
+        getterDeprecationStatus: null
+        javaGetterName: getY
+        javaSetterName: null
+        setterDeprecationStatus: null
       hasDefaultValue: false
       isCrossinline: false
       isExtension: false
@@ -130,6 +152,8 @@ KtConstructorSymbol:
       returnType: kotlin/Int
       symbolKind: LOCAL
       typeParameters: []
+      getContainingModule: KtSourceModule "Sources of main"
+      deprecationStatus: null
     KtValueParameterSymbol:
       annotationsList: []
       callableIdIfNonLocal: null
@@ -156,6 +180,9 @@ KtConstructorSymbol:
           typeParameters: []
           valueParameters: []
           visibility: Public
+          getDispatchReceiver(): MyColor
+          getContainingModule: KtSourceModule "Sources of main"
+          deprecationStatus: null
         hasBackingField: true
         hasGetter: true
         hasSetter: false
@@ -177,6 +204,13 @@ KtConstructorSymbol:
         symbolKind: CLASS_MEMBER
         typeParameters: []
         visibility: Public
+        getDispatchReceiver(): MyColor
+        getContainingModule: KtSourceModule "Sources of main"
+        deprecationStatus: null
+        getterDeprecationStatus: null
+        javaGetterName: getZ
+        javaSetterName: null
+        setterDeprecationStatus: null
       hasDefaultValue: false
       isCrossinline: false
       isExtension: false
@@ -189,6 +223,8 @@ KtConstructorSymbol:
       returnType: kotlin/Int
       symbolKind: LOCAL
       typeParameters: []
+      getContainingModule: KtSourceModule "Sources of main"
+      deprecationStatus: null
   ]
   visibility: Public
   getContainingModule: KtSourceModule "Sources of main"
@@ -254,6 +290,8 @@ KtKotlinPropertySymbol:
     typeParameters: []
     valueParameters: []
     visibility: Public
+    getContainingModule: KtSourceModule "Sources of main"
+    deprecationStatus: null
   hasBackingField: false
   hasGetter: true
   hasSetter: false
@@ -320,6 +358,9 @@ KtKotlinPropertySymbol:
     typeParameters: []
     valueParameters: []
     visibility: Public
+    getDispatchReceiver(): Some
+    getContainingModule: KtSourceModule "Sources of main"
+    deprecationStatus: null
   hasBackingField: true
   hasGetter: true
   hasSetter: false
@@ -371,6 +412,9 @@ KtKotlinPropertySymbol:
     typeParameters: []
     valueParameters: []
     visibility: Public
+    getDispatchReceiver(): Some
+    getContainingModule: KtSourceModule "Sources of main"
+    deprecationStatus: null
   hasBackingField: true
   hasGetter: true
   hasSetter: false

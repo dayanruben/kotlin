@@ -34,14 +34,3 @@ interface KotlinCompilationFactory<T : KotlinCompilation<*>> : NamedDomainObject
 internal fun KotlinCompilationFactory<*>.getOrCreateDefaultSourceSet(compilationName: String): KotlinSourceSet {
     return project.kotlinExtension.sourceSets.maybeCreate(defaultSourceSetName(compilationName))
 }
-
-class KotlinCommonCompilationFactory(
-    override val target: KotlinOnlyTarget<*>
-) : KotlinCompilationFactory<KotlinCommonCompilation> {
-    override val itemClass: Class<KotlinCommonCompilation>
-        get() = KotlinCommonCompilation::class.java
-
-    override fun create(name: String): KotlinCommonCompilation = target.project.objects.newInstance(
-        KotlinCommonCompilation::class.java, MetadataCompilationDetails(target, name, getOrCreateDefaultSourceSet(name))
-    )
-}

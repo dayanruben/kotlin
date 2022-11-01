@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.backend.wasm.utils.*
 import org.jetbrains.kotlin.backend.wasm.utils.isCanonical
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.IrElement
+import org.jetbrains.kotlin.ir.backend.js.lower.PrimaryConstructorLowering
 import org.jetbrains.kotlin.ir.backend.js.utils.erasedUpperBound
 import org.jetbrains.kotlin.ir.backend.js.utils.findUnitGetInstanceFunction
 import org.jetbrains.kotlin.ir.backend.js.utils.isDispatchReceiver
@@ -44,6 +45,10 @@ class BodyGenerator(
         buildInstr(WasmOp.GET_UNIT, WasmImmediate.FuncIdx(context.referenceFunction(unitGetInstance.symbol)))
     }
 
+    private val anyConstructor by lazy {
+        wasmSymbols.any.constructors.first { it.owner.valueParameters.isEmpty() }
+    }
+
     // Generates code for the given IR element. Leaves something on the stack unless expression was of the type Void.
     internal fun generateExpression(elem: IrElement) {
         assert(elem is IrExpression || elem is IrVariable) { "Unsupported statement kind" }
@@ -67,6 +72,59 @@ class BodyGenerator(
 
     override fun visitElement(element: IrElement) {
         error("Unexpected element of type ${element::class}")
+    }
+
+    private fun tryGenerateConstVarargArray(irVararg: IrVararg, wasmArrayType: WasmImmediate.GcType): Boolean {
+        if (irVararg.elements.isEmpty()) return false
+
+        val kind = (irVararg.elements[0] as? IrConst<*>)?.kind ?: return false
+        if (kind == IrConstKind.String || kind == IrConstKind.Null) return false
+        if (irVararg.elements.any { it !is IrConst<*> || it.kind != kind }) return false
+
+        val elementConstValues = irVararg.elements.map { (it as IrConst<*>).value!! }
+
+        val resource = when (irVararg.varargElementType) {
+            irBuiltIns.byteType -> elementConstValues.map { (it as Byte).toLong() } to WasmI8
+            irBuiltIns.booleanType -> elementConstValues.map { if (it as Boolean) 1L else 0L } to WasmI8
+            irBuiltIns.intType -> elementConstValues.map { (it as Int).toLong() } to WasmI32
+            irBuiltIns.shortType -> elementConstValues.map { (it as Short).toLong() } to WasmI16
+            irBuiltIns.longType -> elementConstValues.map { it as Long } to WasmI64
+            else -> return false
+        }
+
+        val constantArrayId = context.referenceConstantArray(resource)
+
+        body.buildConstI32(0)
+        body.buildConstI32(irVararg.elements.size)
+        body.buildInstr(WasmOp.ARRAY_NEW_DATA, wasmArrayType, WasmImmediate.DataIdx(constantArrayId))
+        return true
+    }
+
+    private fun tryGenerateVarargArray(irVararg: IrVararg, wasmArrayType: WasmImmediate.GcType) {
+        irVararg.elements.forEach {
+            check(it is IrExpression)
+            generateExpression(it)
+        }
+
+        val length = WasmImmediate.ConstI32(irVararg.elements.size)
+        body.buildInstr(WasmOp.ARRAY_NEW_FIXED, wasmArrayType, length)
+    }
+
+    override fun visitVararg(expression: IrVararg) {
+        val arrayClass = expression.type.getClass()!!
+
+        val wasmArrayType = arrayClass.constructors
+            .mapNotNull { it.valueParameters.singleOrNull()?.type }
+            .firstOrNull { it.getClass()?.getWasmArrayAnnotation() != null }
+            ?.getRuntimeClass(irBuiltIns)?.symbol
+            ?.let(context::referenceGcType)
+            ?.let(WasmImmediate::GcType)
+
+        check(wasmArrayType != null)
+
+        generateAnyParameters(arrayClass.symbol)
+        if (!tryGenerateConstVarargArray(expression, wasmArrayType)) tryGenerateVarargArray(expression, wasmArrayType)
+        body.buildStructNew(context.referenceGcType(expression.type.getRuntimeClass(irBuiltIns).symbol))
     }
 
     override fun visitThrow(expression: IrThrow) {
@@ -187,12 +245,13 @@ class BodyGenerator(
 
     override fun visitConstructorCall(expression: IrConstructorCall) {
         val klass: IrClass = expression.symbol.owner.parentAsClass
+        val klassSymbol: IrClassSymbol = klass.symbol
 
         require(!backendContext.inlineClassesUtils.isClassInlineLike(klass)) {
             "All inline class constructor calls must be lowered to static function calls"
         }
 
-        val wasmGcType: WasmSymbol<WasmTypeDeclaration> = context.referenceGcType(klass.symbol)
+        val wasmGcType: WasmSymbol<WasmTypeDeclaration> = context.referenceGcType(klassSymbol)
 
         if (klass.getWasmArrayAnnotation() != null) {
             require(expression.valueArgumentsCount == 1) { "@WasmArrayOf constructs must have exactly one argument" }
@@ -204,27 +263,50 @@ class BodyGenerator(
             return
         }
 
+        if (expression.symbol.owner.hasWasmPrimitiveConstructorAnnotation()) {
+            generateAnyParameters(klassSymbol)
+            for (i in 0 until expression.valueArgumentsCount) {
+                generateExpression(expression.getValueArgument(i)!!)
+            }
+            body.buildStructNew(wasmGcType)
+            return
+        }
+
+        body.buildRefNull(WasmHeapType.Simple.NullNone) // this = null
+        generateCall(expression)
+    }
+
+    private fun generateAnyParameters(klassSymbol: IrClassSymbol) {
         //ClassITable and VTable load
-        body.buildGetGlobal(context.referenceGlobalVTable(klass.symbol))
-        if (klass.hasInterfaceSuperClass()) {
-            body.buildGetGlobal(context.referenceGlobalClassITable(klass.symbol))
+        body.buildGetGlobal(context.referenceGlobalVTable(klassSymbol))
+        if (klassSymbol.owner.hasInterfaceSuperClass()) {
+            body.buildGetGlobal(context.referenceGlobalClassITable(klassSymbol))
         } else {
             body.buildRefNull(WasmHeapType.Simple.Data)
         }
 
-        val wasmClassId = context.referenceClassId(klass.symbol)
+        body.buildConstI32Symbol(context.referenceClassId(klassSymbol))
+        body.buildConstI32(0) // Any::_hashCode
+    }
 
-        val irFields: List<IrField> = klass.allFields(backendContext.irBuiltIns)
-
+    fun generateObjectCreationPrefixIfNeeded(constructor: IrConstructor) {
+        val parentClass = constructor.parentAsClass
+        if (constructor.origin == PrimaryConstructorLowering.SYNTHETIC_PRIMARY_CONSTRUCTOR) return
+        if (parentClass.isAbstractOrSealed) return
+        val thisParameter = context.referenceLocal(parentClass.thisReceiver!!.symbol)
+        body.buildGetLocal(thisParameter)
+        body.buildInstr(WasmOp.REF_IS_NULL)
+        body.buildIf("this_init")
+        generateAnyParameters(parentClass.symbol)
+        val irFields: List<IrField> = parentClass.allFields(backendContext.irBuiltIns)
         irFields.forEachIndexed { index, field ->
-            if (index == 0)
-                body.buildConstI32Symbol(wasmClassId)
-            else
+            if (index > 1) {
                 generateDefaultInitializerForType(context.transformType(field.type), body)
+            }
         }
-
-        body.buildStructNew(wasmGcType)
-        generateCall(expression)
+        body.buildStructNew(context.referenceGcType(parentClass.symbol))
+        body.buildSetLocal(thisParameter)
+        body.buildEnd()
     }
 
     override fun visitDelegatingConstructorCall(expression: IrDelegatingConstructorCall) {
@@ -240,25 +322,18 @@ class BodyGenerator(
         generateCall(expression)
     }
 
+    private fun generateBox(expression: IrExpression, type: IrType) {
+        val klassSymbol = type.getRuntimeClass(irBuiltIns).symbol
+        generateAnyParameters(klassSymbol)
+        generateExpression(expression)
+        body.buildStructNew(context.referenceGcType(klassSymbol))
+    }
+
     private fun generateCall(call: IrFunctionAccessExpression) {
         // Box intrinsic has an additional klass ID argument.
         // Processing it separately
         if (call.symbol == wasmSymbols.boxIntrinsic) {
-            val klass = call.getTypeArgument(0)!!.getRuntimeClass(irBuiltIns)
-            val klassSymbol = klass.symbol
-
-            //ClassITable and VTable load
-            body.buildGetGlobal(context.referenceGlobalVTable(klassSymbol))
-            if (klass.hasInterfaceSuperClass()) {
-                body.buildGetGlobal(context.referenceGlobalClassITable(klassSymbol))
-            } else {
-                body.buildRefNull(WasmHeapType.Simple.Data)
-            }
-
-            body.buildConstI32Symbol(context.referenceClassId(klassSymbol))
-            body.buildConstI32(0) // Any::_hashCode
-            generateExpression(call.getValueArgument(0)!!)
-            body.buildStructNew(context.referenceGcType(klassSymbol))
+            generateBox(call.getValueArgument(0)!!, call.getTypeArgument(0)!!)
             return
         }
 
@@ -300,6 +375,9 @@ class BodyGenerator(
                 body.buildGetUnit()
             return
         }
+
+        // We skip now calling any ctor because it is empty
+        if (function.symbol.owner.hasWasmPrimitiveConstructorAnnotation()) return
 
         val isSuperCall = call is IrCall && call.superQualifierSymbol != null
         if (function is IrSimpleFunction && function.isOverridable && !isSuperCall) {
@@ -481,6 +559,17 @@ class BodyGenerator(
                     context.referenceGcType(call.getTypeArgument(0)!!.getRuntimeClass(irBuiltIns).symbol)
                 )
                 body.buildInstr(WasmOp.ARRAY_COPY, immediate, immediate)
+            }
+
+            wasmSymbols.stringGetPoolSize -> {
+                body.buildConstI32Symbol(context.stringPoolSize)
+            }
+
+            wasmSymbols.wasmArrayNewData0 -> {
+                val arrayGcType = WasmImmediate.GcType(
+                    context.referenceGcType(call.getTypeArgument(0)!!.getRuntimeClass(irBuiltIns).symbol)
+                )
+                body.buildInstr(WasmOp.ARRAY_NEW_DATA, arrayGcType, WasmImmediate.DataIdx(0))
             }
 
             else -> {

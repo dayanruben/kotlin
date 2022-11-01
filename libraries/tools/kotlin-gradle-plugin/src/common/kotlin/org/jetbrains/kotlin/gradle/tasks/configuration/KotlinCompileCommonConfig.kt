@@ -7,25 +7,24 @@ package org.jetbrains.kotlin.gradle.tasks.configuration
 
 import org.gradle.api.Project
 import org.gradle.api.provider.Provider
-import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
+import org.jetbrains.kotlin.gradle.plugin.KotlinCompilationInfo
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
-import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinCommonCompilation
-import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.AbstractKotlinFragmentMetadataCompilationData
-import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinCompilationData
-import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinMetadataCompilationData
+import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.GradleKpmAbstractFragmentMetadataCompilationData
+import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.GradleKpmMetadataCompilationData
 import org.jetbrains.kotlin.gradle.plugin.sources.internal
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompileCommon
 import java.io.File
 
 internal class KotlinCompileCommonConfig(
-    private val compilation: KotlinCompilationData<*>,
-) : AbstractKotlinCompileConfig<KotlinCompileCommon>(compilation) {
+    private val compilationInfo: KotlinCompilationInfo,
+) : AbstractKotlinCompileConfig<KotlinCompileCommon>(compilationInfo) {
     init {
         configureTask { task ->
             task.expectActualLinker.value(
                 providers.provider {
-                    (compilation as? KotlinCommonCompilation)?.isKlibCompilation == true || compilation is KotlinMetadataCompilationData
+                    (compilationInfo.origin as? KotlinCommonCompilation)?.isKlibCompilation == true ||
+                            compilationInfo.origin is GradleKpmMetadataCompilationData<*>
                 }
             ).disallowChanges()
             task.refinesMetadataPaths.from(getRefinesMetadataPaths(project)).disallowChanges()
@@ -34,25 +33,26 @@ internal class KotlinCompileCommonConfig(
 
     private fun getRefinesMetadataPaths(project: Project): Provider<Iterable<File>> {
         return project.provider {
-            when (compilation) {
-                is KotlinCompilation<*> -> {
-                    val defaultKotlinSourceSet: KotlinSourceSet = compilation.defaultSourceSet
-                    val metadataTarget = compilation.owner as KotlinTarget
+            when (compilationInfo) {
+                is KotlinCompilationInfo.TCS -> {
+                    val defaultKotlinSourceSet: KotlinSourceSet = compilationInfo.compilation.defaultSourceSet
+                    val metadataTarget = compilationInfo.compilation.target
                     defaultKotlinSourceSet.internal.dependsOnClosure
                         .mapNotNull { sourceSet -> metadataTarget.compilations.findByName(sourceSet.name)?.output?.classesDirs }
                         .flatten()
                 }
-                is AbstractKotlinFragmentMetadataCompilationData -> {
-                    val fragment = compilation.fragment
+
+                is KotlinCompilationInfo.KPM -> {
+                    val compilationData = compilationInfo.compilationData as GradleKpmAbstractFragmentMetadataCompilationData<*>
+                    val fragment = compilationData.fragment
                     project.files(
                         fragment.refinesClosure.minus(fragment).map {
-                            val compilation = compilation.metadataCompilationRegistry.getForFragmentOrNull(it)
+                            val compilation = compilationData.metadataCompilationRegistry.getForFragmentOrNull(it)
                                 ?: return@map project.files()
                             compilation.output.classesDirs
                         }
                     )
                 }
-                else -> error("unexpected compilation type")
             }
         }
     }

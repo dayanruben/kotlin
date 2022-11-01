@@ -161,7 +161,7 @@ class JsIrBackendContext(
     override val reflectionSymbols: ReflectionSymbols get() = intrinsics.reflectionSymbols
 
     override val propertyLazyInitialization: PropertyLazyInitialization = PropertyLazyInitialization(
-        enabled = configuration.getBoolean(JSConfigurationKeys.PROPERTY_LAZY_INITIALIZATION),
+        enabled = configuration.get(JSConfigurationKeys.PROPERTY_LAZY_INITIALIZATION, true),
         eagerInitialization = symbolTable.referenceClass(getJsInternalClass("EagerInitialization"))
     )
 
@@ -414,11 +414,5 @@ class JsIrBackendContext(
             ?: compilationException("Provided JS code is not a js function", jsFunAnnotation)
         outlinedJsCodeFunctions[symbol] = parsedJsFunction
         return parsedJsFunction
-    }
-
-    private var irFunctionSignatureCache = hashMapOf<IrFunction, String>()
-
-    fun getFunctionSignatureFromCache(f: IrFunction): String {
-        return irFunctionSignatureCache.getOrPut(f) { calculateJsFunctionSignature(f, this) }
     }
 }

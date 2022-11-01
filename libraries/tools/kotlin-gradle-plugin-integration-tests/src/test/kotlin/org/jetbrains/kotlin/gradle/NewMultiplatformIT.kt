@@ -2007,7 +2007,7 @@ class NewMultiplatformIT : BaseGradleIT() {
 
     @Test
     fun testResolveMetadataCompileClasspathKt50925() {
-        Project("lib", directoryPrefix =  "kt-50925-resolve-metadata-compile-classpath").apply {
+        Project("lib", directoryPrefix = "kt-50925-resolve-metadata-compile-classpath").apply {
             setupWorkingDir()
             gradleBuildScript().modify(::transformBuildScriptWithPluginsDsl)
 

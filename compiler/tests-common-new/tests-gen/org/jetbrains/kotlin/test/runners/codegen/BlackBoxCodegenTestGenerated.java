@@ -2268,6 +2268,18 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         }
 
         @Test
+        @TestMetadata("methodWithDefaultParameter.kt")
+        public void testMethodWithDefaultParameter() throws Exception {
+            runTest("compiler/testData/codegen/box/bridges/methodWithDefaultParameter.kt");
+        }
+
+        @Test
+        @TestMetadata("nestedClassTypeParameters.kt")
+        public void testNestedClassTypeParameters() throws Exception {
+            runTest("compiler/testData/codegen/box/bridges/nestedClassTypeParameters.kt");
+        }
+
+        @Test
         @TestMetadata("noBridgeOnMutableCollectionInheritance.kt")
         public void testNoBridgeOnMutableCollectionInheritance() throws Exception {
             runTest("compiler/testData/codegen/box/bridges/noBridgeOnMutableCollectionInheritance.kt");
@@ -4677,6 +4689,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         @TestMetadata("kt54581.kt")
         public void testKt54581() throws Exception {
             runTest("compiler/testData/codegen/box/casts/kt54581.kt");
+        }
+
+        @Test
+        @TestMetadata("kt54707.kt")
+        public void testKt54707() throws Exception {
+            runTest("compiler/testData/codegen/box/casts/kt54707.kt");
         }
 
         @Test
@@ -34458,12 +34476,6 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         }
 
         @Test
-        @TestMetadata("sideEffectInTopLevelInitializerMultiModule.kt")
-        public void testSideEffectInTopLevelInitializerMultiModule() throws Exception {
-            runTest("compiler/testData/codegen/box/properties/sideEffectInTopLevelInitializerMultiModule.kt");
-        }
-
-        @Test
         @TestMetadata("substituteJavaSuperField.kt")
         public void testSubstituteJavaSuperField() throws Exception {
             runTest("compiler/testData/codegen/box/properties/substituteJavaSuperField.kt");
@@ -39670,6 +39682,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
             @Test
             public void testAllFilesPresentInUnsigned() throws Exception {
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/ranges/unsigned"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
+            }
+
+            @Test
+            @TestMetadata("bitShifting.kt")
+            public void testBitShifting() throws Exception {
+                runTest("compiler/testData/codegen/box/ranges/unsigned/bitShifting.kt");
             }
 
             @Test
@@ -44907,6 +44925,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         @TestMetadata("kt52417.kt")
         public void testKt52417() throws Exception {
             runTest("compiler/testData/codegen/box/sam/kt52417.kt");
+        }
+
+        @Test
+        @TestMetadata("kt54600.kt")
+        public void testKt54600() throws Exception {
+            runTest("compiler/testData/codegen/box/sam/kt54600.kt");
         }
 
         @Test

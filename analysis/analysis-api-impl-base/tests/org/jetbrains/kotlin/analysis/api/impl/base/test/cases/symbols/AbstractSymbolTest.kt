@@ -75,11 +75,11 @@ abstract class AbstractSymbolTest : AbstractAnalysisApiSingleFileTest() {
                             is KtDeclarationSymbol -> symbol.render(prettyRenderOptions)
                             is KtFileSymbol -> prettyPrint {
                                 printCollection(symbol.getFileScope().getAllSymbols().asIterable(), separator = "\n\n") {
-                                    append((it as KtDeclarationSymbol).render(prettyRenderOptions))
+                                    append(it.render(prettyRenderOptions))
                                 }
                             }
 
-                            is KtReceiverParameterSymbol -> DebugSymbolRenderer.render(symbol)
+                            is KtReceiverParameterSymbol -> DebugSymbolRenderer().render(symbol)
                             else -> error(symbol::class.toString())
                         }
                     )
@@ -147,7 +147,7 @@ abstract class AbstractSymbolTest : AbstractAnalysisApiSingleFileTest() {
     }
 
     protected open fun KtAnalysisSession.renderSymbolForComparison(symbol: KtSymbol): String {
-        return with(DebugSymbolRenderer) { renderExtra(symbol) }
+        return with(DebugSymbolRenderer(renderExtra = true)) { render(symbol) }
     }
 }
 

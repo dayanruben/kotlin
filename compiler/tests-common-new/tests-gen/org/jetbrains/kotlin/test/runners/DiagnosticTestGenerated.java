@@ -802,6 +802,18 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         }
 
         @Test
+        @TestMetadata("syntheticSet.kt")
+        public void testSyntheticSet() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/syntheticSet.kt");
+        }
+
+        @Test
+        @TestMetadata("syntheticSetFalsePositive.kt")
+        public void testSyntheticSetFalsePositive() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/syntheticSetFalsePositive.kt");
+        }
+
+        @Test
         @TestMetadata("tailRecBasic.kt")
         public void testTailRecBasic() throws Exception {
             runTest("compiler/testData/diagnostics/tests/tailRecBasic.kt");
@@ -5618,6 +5630,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("initializationInLocalViaExplicitThis_before.kt")
             public void testInitializationInLocalViaExplicitThis_before() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/initializationInLocalViaExplicitThis_before.kt");
+            }
+
+            @Test
+            @TestMetadata("inlinedBreakContinueFeatureDisabled.kt")
+            public void testInlinedBreakContinueFeatureDisabled() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/inlinedBreakContinueFeatureDisabled.kt");
             }
 
             @Test
@@ -22585,6 +22603,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("augmentedAssignForJavaSyntheticProperty.kt")
+            public void testAugmentedAssignForJavaSyntheticProperty() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/operatorsOverloading/augmentedAssignForJavaSyntheticProperty.kt");
+            }
+
+            @Test
             @TestMetadata("compareToNullable.kt")
             public void testCompareToNullable() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/operatorsOverloading/compareToNullable.kt");
@@ -24164,9 +24188,27 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 }
 
                 @Test
+                @TestMetadata("lostRawTypeAfterElvis.kt")
+                public void testLostRawTypeAfterElvis() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/platformTypes/rawTypes/lostRawTypeAfterElvis.kt");
+                }
+
+                @Test
+                @TestMetadata("noTypeArgumentsForRawScopedMembers.kt")
+                public void testNoTypeArgumentsForRawScopedMembers() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/platformTypes/rawTypes/noTypeArgumentsForRawScopedMembers.kt");
+                }
+
+                @Test
                 @TestMetadata("nonGenericRawMember.kt")
                 public void testNonGenericRawMember() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/platformTypes/rawTypes/nonGenericRawMember.kt");
+                }
+
+                @Test
+                @TestMetadata("nonRawArraysInRawType.kt")
+                public void testNonRawArraysInRawType() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/platformTypes/rawTypes/nonRawArraysInRawType.kt");
                 }
 
                 @Test
@@ -24200,6 +24242,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 }
 
                 @Test
+                @TestMetadata("rawTypeSyntheticExtensions.kt")
+                public void testRawTypeSyntheticExtensions() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/platformTypes/rawTypes/rawTypeSyntheticExtensions.kt");
+                }
+
+                @Test
                 @TestMetadata("rawWithInProjection.kt")
                 public void testRawWithInProjection() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/platformTypes/rawTypes/rawWithInProjection.kt");
@@ -24227,6 +24275,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("simple.kt")
                 public void testSimple() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/platformTypes/rawTypes/simple.kt");
+                }
+
+                @Test
+                @TestMetadata("smartCastToClassWithRawSupertype.kt")
+                public void testSmartCastToClassWithRawSupertype() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/platformTypes/rawTypes/smartCastToClassWithRawSupertype.kt");
                 }
 
                 @Test
@@ -32515,6 +32569,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("inProjectedDnnParameter.kt")
+            public void testInProjectedDnnParameter() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/typeParameters/inProjectedDnnParameter.kt");
+            }
+
+            @Test
             @TestMetadata("kt42042.kt")
             public void testKt42042() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/typeParameters/kt42042.kt");
@@ -35934,6 +35994,18 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("unsafeAssignment.kt")
             public void testUnsafeAssignment() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/builderInference/unsafeAssignment.kt");
+            }
+
+            @Test
+            @TestMetadata("unsafeAssignmentExtra.kt")
+            public void testUnsafeAssignmentExtra() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/builderInference/unsafeAssignmentExtra.kt");
+            }
+
+            @Test
+            @TestMetadata("unsafeAssignment_noReport.kt")
+            public void testUnsafeAssignment_noReport() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/builderInference/unsafeAssignment_noReport.kt");
             }
 
             @Test

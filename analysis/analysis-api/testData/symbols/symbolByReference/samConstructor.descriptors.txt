@@ -28,6 +28,9 @@ KtSamConstructorSymbol:
       returnType: kotlin/Function0<kotlin/Unit>
       symbolKind: LOCAL
       typeParameters: []
+      getContainingModule: Could not render due to kotlin.NotImplementedError: An operation is not implemented: org.jetbrains.kotlin.analysis.api.descriptors.symbols.descriptorBased.KtFe10DescValueParameterSymbol
+
+      deprecationStatus: null
   ]
   getContainingModule: Could not render due to java.util.NoSuchElementException: Collection contains no element matching the predicate.
 

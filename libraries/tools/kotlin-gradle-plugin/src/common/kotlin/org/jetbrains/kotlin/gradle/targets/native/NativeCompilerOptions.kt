@@ -12,17 +12,15 @@ import org.jetbrains.kotlin.gradle.plugin.HasCompilerOptions
 import org.jetbrains.kotlin.gradle.plugin.sources.applyLanguageSettingsToCompilerOptions
 import org.jetbrains.kotlin.project.model.LanguageSettings
 
-class NativeCompilerOptions(
-    project: Project,
-    private val nativeLanguageSettings: LanguageSettings
-) : HasCompilerOptions<KotlinCommonCompilerOptions> {
+class NativeCompilerOptions(project: Project) : HasCompilerOptions<KotlinCommonCompilerOptions> {
+
     override val options: KotlinCommonCompilerOptions = project.objects
         .newInstance(KotlinCommonCompilerOptionsDefault::class.java)
         .apply {
             useK2.finalizeValue()
         }
 
-    fun syncLanguageSettings() {
-        applyLanguageSettingsToCompilerOptions(nativeLanguageSettings, options)
+    internal fun syncLanguageSettings(languageSettings: LanguageSettings) {
+        applyLanguageSettingsToCompilerOptions(languageSettings, options)
     }
 }

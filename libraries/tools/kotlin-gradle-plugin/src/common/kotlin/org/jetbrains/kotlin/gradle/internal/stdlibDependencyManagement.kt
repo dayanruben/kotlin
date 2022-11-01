@@ -6,23 +6,18 @@
 package org.jetbrains.kotlin.gradle.internal
 
 import org.gradle.api.Project
+import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ConfigurationContainer
 import org.gradle.api.artifacts.ExternalDependency
 import org.gradle.api.artifacts.dsl.DependencyHandler
 import org.gradle.api.provider.Provider
-import org.jetbrains.kotlin.gradle.dsl.KotlinJsProjectExtension
-import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
-import org.jetbrains.kotlin.gradle.dsl.KotlinSingleTargetExtension
-import org.jetbrains.kotlin.gradle.dsl.KotlinTopLevelExtension
+import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinAndroidTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.isTest
-import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.GradleKpmFragment
-import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.GradleKpmModule
-import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.hasKpmModel
-import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.kpmModules
+import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.*
 import org.jetbrains.kotlin.gradle.plugin.sources.KotlinDependencyScope
 import org.jetbrains.kotlin.gradle.plugin.sources.android.AndroidBaseSourceSetName
 import org.jetbrains.kotlin.gradle.plugin.sources.android.AndroidVariantType
@@ -36,17 +31,18 @@ internal fun Project.configureStdlibDefaultDependency(
     topLevelExtension: KotlinTopLevelExtension,
     coreLibrariesVersion: Provider<String>
 ) {
+    when (topLevelExtension) {
+        is KotlinPm20ProjectExtension -> addStdlibToKpmProject(project, coreLibrariesVersion)
 
-    when {
-        project.hasKpmModel -> addStdlibToKpmProject(project, coreLibrariesVersion)
-        topLevelExtension is KotlinJsProjectExtension -> topLevelExtension.registerTargetObserver { target ->
+        is KotlinJsProjectExtension -> topLevelExtension.registerTargetObserver { target ->
             target?.addStdlibDependency(configurations, dependencies, coreLibrariesVersion)
         }
-        topLevelExtension is KotlinSingleTargetExtension<*> -> topLevelExtension
+
+        is KotlinSingleTargetExtension<*> -> topLevelExtension
             .target
             .addStdlibDependency(configurations, dependencies, coreLibrariesVersion)
 
-        topLevelExtension is KotlinMultiplatformExtension -> topLevelExtension
+        is KotlinMultiplatformExtension -> topLevelExtension
             .targets
             .configureEach { target ->
                 target.addStdlibDependency(configurations, dependencies, coreLibrariesVersion)
@@ -58,9 +54,7 @@ internal fun Project.configureStdlibDefaultDependency(
  * Replacing kotlin-stdlib-jdk8 and kotlin-stdlib-jdk7 artifacts with kotlin-stdlib
  * when project stdlib version is >= 1.8.0
  */
-internal fun ConfigurationContainer.configureStdlibSubstitution(
-    dependencies: DependencyHandler
-) = all { configuration ->
+internal fun ConfigurationContainer.configureStdlibSubstitution() = all { configuration ->
     configuration.withDependencies { dependencySet ->
         dependencySet
             .withType<ExternalDependency>()
@@ -70,22 +64,30 @@ internal fun ConfigurationContainer.configureStdlibSubstitution(
                     dependency.version != null &&
                     SemVer.from(dependency.version!!) >= kotlin180Version
                 ) {
-                    dependencies.modules { componentModuleMetadataHandler ->
-                        componentModuleMetadataHandler.module("org.jetbrains.kotlin:kotlin-stdlib-jdk7") {
-                            it.replacedBy(
-                                "org.jetbrains.kotlin:kotlin-stdlib",
-                                "kotlin-stdlib-jdk7 is now part of kotlin-stdlib"
-                            )
-                        }
-                        componentModuleMetadataHandler.module("org.jetbrains.kotlin:kotlin-stdlib-jdk8") {
-                            it.replacedBy(
-                                "org.jetbrains.kotlin:kotlin-stdlib",
-                                "kotlin-stdlib-jdk8 is now part of kotlin-stdlib"
-                            )
-                        }
+                    if (configuration.isCanBeResolved) configuration.substitudeStdlibJvmVariants(dependency)
+
+                    // dependency substitution only works for resolvable configuration,
+                    // so we need to find all configuration that extends current one
+                    filter {
+                        it.isCanBeResolved && it.hierarchy.contains(configuration)
+                    }.forEach {
+                        it.substitudeStdlibJvmVariants(dependency)
                     }
                 }
             }
+    }
+}
+
+private fun Configuration.substitudeStdlibJvmVariants(
+    kotlinStdlibDependency: ExternalDependency
+) {
+    resolutionStrategy.dependencySubstitution {
+        it.substitute(it.module("org.jetbrains.kotlin:kotlin-stdlib-jdk7"))
+            .using(it.module("org.jetbrains.kotlin:kotlin-stdlib:${kotlinStdlibDependency.version}"))
+            .because("kotlin-stdlib-jdk7 is now part of kotlin-stdlib")
+        it.substitute(it.module("org.jetbrains.kotlin:kotlin-stdlib-jdk8"))
+            .using(it.module("org.jetbrains.kotlin:kotlin-stdlib:${kotlinStdlibDependency.version}"))
+            .because("kotlin-stdlib-jdk8 is now part of kotlin-stdlib")
     }
 }
 
@@ -93,7 +95,7 @@ private fun addStdlibToKpmProject(
     project: Project,
     coreLibrariesVersion: Provider<String>
 ) {
-    project.kpmModules.named(GradleKpmModule.MAIN_MODULE_NAME) { main ->
+    project.pm20Extension.modules.named(GradleKpmModule.MAIN_MODULE_NAME) { main ->
         main.fragments.named(GradleKpmFragment.COMMON_FRAGMENT_NAME) { common ->
             common.dependencies {
                 api(project.dependencies.kotlinDependency("kotlin-stdlib-common", coreLibrariesVersion.get()))
@@ -143,7 +145,7 @@ private fun KotlinTarget.addStdlibDependency(
 
                 val stdlibModule = compilation
                     .platformType
-                    .stdlibPlatformType( this, kotlinSourceSet)
+                    .stdlibPlatformType(this, kotlinSourceSet)
                     ?: return@withDependencies
 
                 // Check if stdlib module is added to SourceSets hierarchy

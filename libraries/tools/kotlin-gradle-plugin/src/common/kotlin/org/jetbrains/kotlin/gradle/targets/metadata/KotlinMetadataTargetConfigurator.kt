@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.*
-import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.hasKpmModel
 import org.jetbrains.kotlin.gradle.plugin.sources.*
 import org.jetbrains.kotlin.gradle.plugin.statistics.KotlinBuildStatsService
 import org.jetbrains.kotlin.gradle.targets.native.internal.*
@@ -36,14 +35,14 @@ internal const val ALL_COMPILE_METADATA_CONFIGURATION_NAME = "allSourceSetsCompi
 internal const val ALL_RUNTIME_METADATA_CONFIGURATION_NAME = "allSourceSetsRuntimeDependenciesMetadata"
 
 internal val Project.isKotlinGranularMetadataEnabled: Boolean
-    get() = project.hasKpmModel || with(PropertiesProvider(rootProject)) {
+    get() = project.pm20ExtensionOrNull != null || with(PropertiesProvider(rootProject)) {
         mppHierarchicalStructureByDefault || // then we want to use KLIB granular compilation & artifacts even if it's just commonMain
                 hierarchicalStructureSupport ||
                 enableGranularSourceSetsMetadata == true
     }
 
 internal val Project.shouldCompileIntermediateSourceSetsToMetadata: Boolean
-    get() = project.hasKpmModel || with(PropertiesProvider(rootProject)) {
+    get() = project.pm20ExtensionOrNull != null || with(PropertiesProvider(rootProject)) {
         when {
             !hierarchicalStructureSupport && mppHierarchicalStructureByDefault -> false
             else -> true
@@ -54,7 +53,7 @@ internal val Project.isCompatibilityMetadataVariantEnabled: Boolean
     get() = PropertiesProvider(this).enableCompatibilityMetadataVariant == true
 
 class KotlinMetadataTargetConfigurator :
-    KotlinOnlyTargetConfigurator<AbstractKotlinCompilation<*>, KotlinMetadataTarget>(createTestCompilation = false) {
+    KotlinOnlyTargetConfigurator<KotlinCompilation<*>, KotlinMetadataTarget>(createTestCompilation = false) {
     companion object {
         internal const val ALL_METADATA_JAR_NAME = "allMetadataJar"
 
@@ -115,10 +114,10 @@ class KotlinMetadataTargetConfigurator :
             super.setupCompilationDependencyFiles(compilation)
     }
 
-    override fun buildCompilationProcessor(compilation: AbstractKotlinCompilation<*>): KotlinCompilationProcessor<*> = when (compilation) {
+    override fun buildCompilationProcessor(compilation: KotlinCompilation<*>): KotlinCompilationProcessor<*> = when (compilation) {
         is KotlinCommonCompilation -> {
             val tasksProvider = KotlinTasksProvider()
-            KotlinCommonSourceSetProcessor(compilation, tasksProvider)
+            KotlinCommonSourceSetProcessor(KotlinCompilationInfo(compilation), tasksProvider)
         }
 
         is KotlinSharedNativeCompilation -> NativeSharedCompilationProcessor(compilation)
@@ -181,7 +180,7 @@ class KotlinMetadataTargetConfigurator :
         val publishedCommonSourceSets: Set<KotlinSourceSet> = getCommonSourceSetsForMetadataCompilation(project)
         val hostSpecificSourceSets: Set<KotlinSourceSet> = getHostSpecificSourceSets(project).toSet()
 
-        val sourceSetsWithMetadataCompilations: Map<KotlinSourceSet, AbstractKotlinCompilation<*>> = publishedCommonSourceSets
+        val sourceSetsWithMetadataCompilations: Map<KotlinSourceSet, KotlinCompilation<*>> = publishedCommonSourceSets
             .associateWith { sourceSet ->
                 createMetadataCompilation(target, sourceSet, allMetadataJar, sourceSet in hostSpecificSourceSets)
             }
@@ -236,7 +235,7 @@ class KotlinMetadataTargetConfigurator :
     }
 
     private fun exportDependenciesForPublishing(
-        compilation: AbstractKotlinCompilation<*>
+        compilation: KotlinCompilation<*>
     ) {
         val sourceSet = compilation.defaultSourceSet
         val isSharedNativeCompilation = compilation is KotlinSharedNativeCompilation
@@ -290,10 +289,8 @@ class KotlinMetadataTargetConfigurator :
         sourceSet: KotlinSourceSet,
         allMetadataJar: TaskProvider<out Jar>,
         isHostSpecific: Boolean
-    ): AbstractKotlinCompilation<*> {
+    ): KotlinCompilation<*> {
         val project = target.project
-
-        check(!project.hasKpmModel) { "KotlinMetadataTargetConfigurator cannot work with KPM!" }
 
         val compilationName = sourceSet.name
 
@@ -302,19 +299,20 @@ class KotlinMetadataTargetConfigurator :
 
         val isNativeSourceSet = isNativeSourceSet(sourceSet)
 
-        val compilationFactory: KotlinCompilationFactory<out AbstractKotlinCompilation<*>> = when {
+        val compilationFactory: KotlinCompilationFactory<out KotlinCompilation<*>> = when {
             isNativeSourceSet -> KotlinSharedNativeCompilationFactory(
-                target,
-                platformCompilations.map { (it as AbstractKotlinNativeCompilation).konanTarget }
+                target = target,
+                konanTargets = platformCompilations.map { (it as AbstractKotlinNativeCompilation).konanTarget }.toSet(),
+                defaultSourceSet = sourceSet
             )
 
-            else -> KotlinCommonCompilationFactory(target)
+            else -> KotlinCommonCompilationFactory(
+                target = target, defaultSourceSet = sourceSet
+            )
         }
 
         return compilationFactory.create(compilationName).apply {
             target.compilations.add(this@apply)
-
-            (compilationDetails as DefaultCompilationDetails<*, *>).addExactSourceSetEagerly(sourceSet)
 
             configureMetadataDependenciesForCompilation(this@apply)
 
@@ -336,7 +334,7 @@ class KotlinMetadataTargetConfigurator :
         }
     }
 
-    private fun configureMetadataDependenciesForCompilation(compilation: AbstractKotlinCompilation<*>) {
+    private fun configureMetadataDependenciesForCompilation(compilation: KotlinCompilation<*>) {
         val project = compilation.target.project
         val sourceSet = compilation.defaultSourceSet
 
@@ -344,7 +342,8 @@ class KotlinMetadataTargetConfigurator :
             transformGranularMetadataTaskName(compilation.name),
             listOf(sourceSet)
         ) {
-            it.description = "Generates serialized dependencies metadata for compilation '${compilation.name}' of target '${compilation.target.name}' (for tooling)"
+            it.description =
+                "Generates serialized dependencies metadata for compilation '${compilation.name}' of target '${compilation.target.name}' (for tooling)"
         }
 
         compilation.compileDependencyFiles += createMetadataDependencyTransformationClasspath(
@@ -393,21 +392,19 @@ class KotlinMetadataTargetConfigurator :
                 }
             }
 
-            if (!PropertiesProvider(project).experimentalKpmModelMapping) {
-                val sourceSetMetadataConfigurationByScope = project.sourceSetMetadataConfigurationByScope(sourceSet, scope)
-                granularMetadataTransformation.applyToConfiguration(sourceSetMetadataConfigurationByScope)
-                if (scope != KotlinDependencyScope.COMPILE_ONLY_SCOPE) {
-                    project.addExtendsFromRelation(
-                        sourceSetMetadataConfigurationByScope.name,
-                        ALL_COMPILE_METADATA_CONFIGURATION_NAME
-                    )
-                }
-                if (scope != KotlinDependencyScope.RUNTIME_ONLY_SCOPE) {
-                    project.addExtendsFromRelation(
-                        sourceSetMetadataConfigurationByScope.name,
-                        ALL_COMPILE_METADATA_CONFIGURATION_NAME
-                    )
-                }
+            val sourceSetMetadataConfigurationByScope = project.sourceSetMetadataConfigurationByScope(sourceSet, scope)
+            granularMetadataTransformation.applyToConfiguration(sourceSetMetadataConfigurationByScope)
+            if (scope != KotlinDependencyScope.COMPILE_ONLY_SCOPE) {
+                project.addExtendsFromRelation(
+                    sourceSetMetadataConfigurationByScope.name,
+                    ALL_COMPILE_METADATA_CONFIGURATION_NAME
+                )
+            }
+            if (scope != KotlinDependencyScope.RUNTIME_ONLY_SCOPE) {
+                project.addExtendsFromRelation(
+                    sourceSetMetadataConfigurationByScope.name,
+                    ALL_COMPILE_METADATA_CONFIGURATION_NAME
+                )
             }
         }
     }
@@ -440,7 +437,7 @@ class KotlinMetadataTargetConfigurator :
 
     private fun createMetadataDependencyTransformationClasspath(
         fromFiles: Configuration,
-        compilation: AbstractKotlinCompilation<*>
+        compilation: KotlinCompilation<*>
     ): FileCollection {
         val project = compilation.target.project
 
@@ -490,11 +487,11 @@ class KotlinMetadataTargetConfigurator :
 }
 
 internal class NativeSharedCompilationProcessor(
-    override val kotlinCompilation: KotlinNativeFragmentMetadataCompilationData
-) : KotlinCompilationProcessor<KotlinNativeCompile>(kotlinCompilation) {
+    private val compilation: KotlinSharedNativeCompilation
+) : KotlinCompilationProcessor<KotlinNativeCompile>(KotlinCompilationInfo(compilation)) {
 
     override val kotlinTask: TaskProvider<out KotlinNativeCompile> =
-        KotlinNativeTargetConfigurator.createKlibCompilationTask(kotlinCompilation)
+        KotlinNativeTargetConfigurator.createKlibCompilationTask(compilationInfo, compilation.konanTarget)
 
     override fun run() = Unit
 }
@@ -637,6 +634,6 @@ internal fun Project.filesWithUnpackedArchives(from: FileCollection, extensions:
         }
     }).builtBy(from)
 
-internal fun Project.getMetadataCompilationForSourceSet(sourceSet: KotlinSourceSet): AbstractKotlinCompilation<*>? {
+internal fun Project.getMetadataCompilationForSourceSet(sourceSet: KotlinSourceSet): KotlinMetadataCompilation<*>? {
     return multiplatformExtension.metadata().compilations.findByName(sourceSet.name)
 }
