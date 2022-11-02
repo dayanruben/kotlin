@@ -42,6 +42,18 @@ public class FirStandaloneNormalAnalysisSourceModuleAnalysisApiPsiTypeProviderTe
     }
 
     @Test
+    @TestMetadata("actual_jvmInline_typealias.kt")
+    public void testActual_jvmInline_typealias() throws Exception {
+        runTest("analysis/analysis-api/testData/components/psiTypeProvider/psiType/forDeclaration/actual_jvmInline_typealias.kt");
+    }
+
+    @Test
+    @TestMetadata("actual_typealias.kt")
+    public void testActual_typealias() throws Exception {
+        runTest("analysis/analysis-api/testData/components/psiTypeProvider/psiType/forDeclaration/actual_typealias.kt");
+    }
+
+    @Test
     public void testAllFilesPresentInForDeclaration() throws Exception {
         KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/analysis-api/testData/components/psiTypeProvider/psiType/forDeclaration"), Pattern.compile("^(.+)\\.kt$"), null, true);
     }
@@ -86,6 +98,12 @@ public class FirStandaloneNormalAnalysisSourceModuleAnalysisApiPsiTypeProviderTe
     @TestMetadata("localClass_memberFunction.kt")
     public void testLocalClass_memberFunction() throws Exception {
         runTest("analysis/analysis-api/testData/components/psiTypeProvider/psiType/forDeclaration/localClass_memberFunction.kt");
+    }
+
+    @Test
+    @TestMetadata("parameter_jvmInline.kt")
+    public void testParameter_jvmInline() throws Exception {
+        runTest("analysis/analysis-api/testData/components/psiTypeProvider/psiType/forDeclaration/parameter_jvmInline.kt");
     }
 
     @Test
