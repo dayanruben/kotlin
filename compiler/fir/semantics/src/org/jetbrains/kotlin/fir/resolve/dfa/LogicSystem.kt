@@ -22,15 +22,14 @@ abstract class LogicSystem<FLOW : Flow>(protected val context: ConeInferenceCont
 
     abstract fun addImplication(flow: FLOW, implication: Implication)
 
-    fun removeAllAboutVariable(flow: FLOW, variable: RealVariable?) {
-        if (variable == null) return
+    fun removeAllAboutVariable(flow: FLOW, variable: RealVariable) {
+        removeAliasInformationAboutVariable(flow, variable)
         removeTypeStatementsAboutVariable(flow, variable)
         removeLogicStatementsAboutVariable(flow, variable)
-        removeAliasInformationAboutVariable(flow, variable)
     }
 
     abstract fun removeTypeStatementsAboutVariable(flow: FLOW, variable: RealVariable)
-    abstract fun removeLogicStatementsAboutVariable(flow: FLOW, variable: DataFlowVariable)
+    abstract fun removeLogicStatementsAboutVariable(flow: FLOW, variable: RealVariable)
     abstract fun removeAliasInformationAboutVariable(flow: FLOW, variable: RealVariable)
 
     abstract fun translateVariableFromConditionInStatements(
