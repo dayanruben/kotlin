@@ -27,6 +27,7 @@ kotlin.sourceSets.all {
     languageSettings.optIn("org.jetbrains.kotlin.gradle.plugin.mpp.pm20.AdvancedKotlinGradlePluginApi")
     languageSettings.optIn("org.jetbrains.kotlin.gradle.InternalKotlinGradlePluginApi")
     languageSettings.optIn("org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi")
+    languageSettings.optIn("org.jetbrains.kotlin.gradle.ExternalKotlinTargetApi")
     languageSettings.optIn("org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi")
 }
 
@@ -97,6 +98,7 @@ dependencies {
         functionalTestCompileOnly("com.android.tools:common:30.2.1")
         functionalTestImplementation(gradleKotlinDsl())
         functionalTestImplementation(project(":kotlin-gradle-plugin-kpm-android"))
+        functionalTestImplementation(project(":kotlin-gradle-plugin-tcs-android"))
         functionalTestImplementation(project(":kotlin-tooling-metadata"))
         functionalTestImplementation(testFixtures(project(":kotlin-gradle-plugin-idea")))
         functionalTestImplementation("com.github.gundy:semver4j:0.16.4:nodeps") {

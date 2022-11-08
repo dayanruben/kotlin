@@ -82,15 +82,10 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
         val mainCallArguments: List<String>?
     ) {
         private fun lowerIr(): LoweredIr {
-            val irFactory = when {
-                arguments.irNewIr2Js -> IrFactoryImplForJsIC(WholeWorldStageController())
-                else -> IrFactoryImpl
-            }
-
             return compile(
                 module,
                 phaseConfig,
-                irFactory,
+                IrFactoryImplForJsIC(WholeWorldStageController()),
                 keep = arguments.irKeep?.split(",")
                     ?.filterNot { it.isEmpty() }
                     ?.toSet()
@@ -99,20 +94,18 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
                     arguments.irDceRuntimeDiagnostic,
                     messageCollector
                 ),
-                baseClassIntoMetadata = arguments.irBaseClassInMetadata,
                 safeExternalBoolean = arguments.irSafeExternalBoolean,
                 safeExternalBooleanDiagnostic = RuntimeDiagnostic.resolve(
                     arguments.irSafeExternalBooleanDiagnostic,
                     messageCollector
                 ),
-                granularity = arguments.granularity,
-                icCompatibleIr2Js = arguments.irNewIr2Js,
+                granularity = arguments.granularity
             )
         }
 
         private fun makeJsCodeGeneratorAndDts(): Pair<JsCodeGenerator, String> {
             val ir = lowerIr()
-            val transformer = IrModuleToJsTransformerTmp(ir.context, mainCallArguments, ir.moduleFragmentToUniqueName)
+            val transformer = IrModuleToJsTransformer(ir.context, mainCallArguments, ir.moduleFragmentToUniqueName)
 
             val mode = TranslationMode.fromFlags(arguments.irDce, arguments.irPerModule, arguments.irMinimizedMemberNames)
             return transformer.makeJsCodeGeneratorAndDts(ir.allModules, mode)
@@ -122,22 +115,6 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
             val (generator, dts) = makeJsCodeGeneratorAndDts()
             val out = generator.generateJsCode(relativeRequirePath = true, outJsProgram = false)
             return TransformResult(out, dts)
-        }
-
-        fun compileAndTransformIrOld(): TransformResult {
-            val ir = lowerIr()
-            val transformer = IrModuleToJsTransformer(
-                ir.context,
-                mainCallArguments,
-                fullJs = !arguments.irDce,
-                dceJs = arguments.irDce,
-                multiModule = arguments.irPerModule,
-                relativeRequirePath = true,
-                moduleToName = ir.moduleFragmentToUniqueName
-            )
-
-            val result = transformer.generateModule(ir.allModules)
-            return TransformResult(result.outputs.values.single(), result.tsDefinitions ?: error("No ts definitions"))
         }
     }
 
@@ -427,12 +404,8 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
             val start = System.currentTimeMillis()
 
             try {
-
-                val (outputs, tsDefinitions) = if (arguments.irNewIr2Js) {
-                    Ir2JsTransformer(arguments, module, phaseConfig, messageCollector, mainCallArguments).compileAndTransformIrNew()
-                } else {
-                    Ir2JsTransformer(arguments, module, phaseConfig, messageCollector, mainCallArguments).compileAndTransformIrOld()
-                }
+                val ir2JsTransformer = Ir2JsTransformer(arguments, module, phaseConfig, messageCollector, mainCallArguments)
+                val (outputs, tsDefinitions) = ir2JsTransformer.compileAndTransformIrNew()
 
                 messageCollector.report(INFO, "Executable production duration: ${System.currentTimeMillis() - start}ms")
 

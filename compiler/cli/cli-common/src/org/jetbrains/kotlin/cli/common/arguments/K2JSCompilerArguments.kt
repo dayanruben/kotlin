@@ -348,15 +348,19 @@ class K2JSCompilerArguments : CommonCompilerArguments() {
     )
     var legacyDeprecatedNoWarn: Boolean by FreezableVar(false)
 
+    private fun MessageCollector.deprecationWarn(value: Boolean, defaultValue: Boolean, name: String) {
+        if (value != defaultValue) {
+            report(CompilerMessageSeverity.WARNING, "'$name' is deprecated and ignored, it will be removed in a future release")
+        }
+    }
+
     override fun configureAnalysisFlags(collector: MessageCollector, languageVersion: LanguageVersion): MutableMap<AnalysisFlag<*>, Any> {
         // TODO: 'enableJsScripting' is used in intellij tests
         //   Drop it after removing the usage from the intellij repository:
         //   https://github.com/JetBrains/intellij-community/blob/master/plugins/kotlin/gradle/gradle-java/tests/test/org/jetbrains/kotlin/gradle/CompilerArgumentsCachingTest.kt#L329
-        if (enableJsScripting) {
-            collector.report(
-                CompilerMessageSeverity.WARNING, "'-Xenable-js-scripting' is deprecated and will be removed in a future release"
-            )
-        }
+        collector.deprecationWarn(enableJsScripting, false, "-Xenable-js-scripting")
+        collector.deprecationWarn(irBaseClassInMetadata, false, "-Xir-base-class-in-metadata")
+        collector.deprecationWarn(irNewIr2Js, true, "-Xir-new-ir2js")
 
         return super.configureAnalysisFlags(collector, languageVersion).also {
             it[allowFullyQualifiedNameInKClass] = wasm && wasmKClassFqn //Only enabled WASM BE supports this flag

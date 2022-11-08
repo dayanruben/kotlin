@@ -38,6 +38,7 @@ import org.jetbrains.kotlin.ir.backend.js.lower.serialization.ir.JsIrLinker
 import org.jetbrains.kotlin.ir.backend.js.lower.serialization.ir.JsIrModuleSerializer
 import org.jetbrains.kotlin.ir.backend.js.lower.serialization.ir.JsManglerDesc
 import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.IrModuleToJsTransformer
+import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.TranslationMode
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
 import org.jetbrains.kotlin.ir.util.ExternalDependenciesGenerator
@@ -610,7 +611,7 @@ class GenerateIrRuntime {
 
         val transformer = IrModuleToJsTransformer(context, null)
 
-        return transformer.generateModule(listOf(module))
+        return transformer.generateModule(listOf(module), setOf(TranslationMode.PER_MODULE), false)
     }
 
     fun compile(files: List<KtFile>): String {

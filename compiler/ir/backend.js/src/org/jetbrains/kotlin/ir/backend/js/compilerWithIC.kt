@@ -45,7 +45,7 @@ class JsIrCompilerWithIC(
             configuration = configuration,
             es6mode = es6mode,
             granularity = granularity,
-            icCompatibleIr2Js = IcCompatibleIr2Js.IC_MODE,
+            incrementalCacheEnabled = true
         )
     }
 
@@ -67,7 +67,7 @@ class JsIrCompilerWithIC(
 
         lowerPreservingTags(allModules, context, PhaseConfig(jsPhases), context.irFactory.stageController as WholeWorldStageController)
 
-        val transformer = IrModuleToJsTransformerTmp(context, mainArguments)
+        val transformer = IrModuleToJsTransformer(context, mainArguments)
         return transformer.generateBinaryAst(dirtyFiles, allModules)
     }
 }
