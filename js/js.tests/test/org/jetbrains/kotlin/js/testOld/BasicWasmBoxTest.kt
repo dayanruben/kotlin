@@ -25,7 +25,6 @@ import org.jetbrains.kotlin.js.config.JSConfigurationKeys
 import org.jetbrains.kotlin.js.config.JsConfig
 import org.jetbrains.kotlin.js.facade.TranslationUnit
 import org.jetbrains.kotlin.js.testOld.engines.ExternalTool
-import org.jetbrains.kotlin.js.testOld.engines.SpiderMonkeyEngine
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -43,8 +42,6 @@ abstract class BasicWasmBoxTest(
     private val startUnitTests: Boolean = false
 ) : KotlinTestWithEnvironment() {
     private val testGroupOutputDirForCompilation = File(pathToRootOutputDir + "out/" + testGroupOutputDirPrefix)
-
-    private val spiderMonkey by lazy { SpiderMonkeyEngine() }
 
     private val COMMON_FILES_NAME = "_common"
 
@@ -148,14 +145,14 @@ abstract class BasicWasmBoxTest(
                 generateWat = generateWat,
             )
 
-            val startUnitTests = if (startUnitTests) "exports.startUnitTests?.();\n" else ""
-
             val testJsQuiet = """
-                import exports from './index.mjs';
-        
-                let actualResult
+                let actualResult;
                 try {
-                    ${startUnitTests}actualResult = exports.box();
+                    // Use "dynamic import" to catch exception happened during JS & Wasm modules initialization
+                    let jsModule = await import('./index.mjs');
+                    let wasmExports = jsModule.default;
+                    ${if (startUnitTests) "wasmExports.startUnitTests();" else ""}
+                    actualResult = wasmExports.box();
                 } catch(e) {
                     console.log('Failed with exception!')
                     console.log('Message: ' + e.message)
@@ -163,6 +160,7 @@ abstract class BasicWasmBoxTest(
                     console.log('Stack:')
                     console.log(e.stack)
                 }
+
                 if (actualResult !== "OK")
                     throw `Wrong box result '${'$'}{actualResult}'; Expected "OK"`;
             """.trimIndent()
@@ -173,14 +171,41 @@ abstract class BasicWasmBoxTest(
 
             val testJs = if (debugMode >= DebugMode.DEBUG) testJsVerbose else testJsQuiet
 
-            fun compileAndRunD8Test(name: String, res: WasmCompilerResult) {
+            fun writeToFilesAndRunD8Test(name: String, res: WasmCompilerResult) {
                 val dir = File(outputDirBase, name)
+                dir.mkdirs()
+
                 if (debugMode >= DebugMode.DEBUG) {
                     val path = dir.absolutePath
-                    println(" ------ $name WAT  file://$path/index.wat")
-                    println(" ------ $name WASM file://$path/index.wasm")
+                    println(" ------ $name Wat  file://$path/index.wat")
+                    println(" ------ $name Wasm file://$path/index.wasm")
                     println(" ------ $name JS   file://$path/index.mjs")
                     println(" ------ $name Test file://$path/test.mjs")
+                    val projectName = "kotlin"
+                    println(" ------ $name HTML http://0.0.0.0:63342/$projectName/${dir.path}/index.html")
+
+                    File(dir, "index.html").writeText(
+                        """
+                            <!DOCTYPE html>
+                            <html lang="en">
+                            <body>
+                                <span id="test">UNKNOWN</span>
+                                <script type="module">
+                                    let test = document.getElementById("test")
+                                    try {
+                                        await import("./test.mjs");
+                                        test.style.backgroundColor = "#0f0";
+                                        test.textContent = "OK"
+                                    } catch(e) {
+                                        test.style.backgroundColor = "#f00";
+                                        test.textContent = "NOT OK"
+                                        throw e;
+                                    }
+                                </script>
+                            </body>
+                            </html>
+                        """.trimIndent()
+                    )
                 }
 
                 writeCompilationResult(res, dir)
@@ -188,7 +213,6 @@ abstract class BasicWasmBoxTest(
                 ExternalTool(System.getProperty("javascript.engine.path.V8"))
                     .run(
                         "--experimental-wasm-gc",
-                        "--experimental-wasm-eh",
                         *jsFilesBefore.map { File(it).absolutePath }.toTypedArray(),
                         "--module",
                         "./test.mjs",
@@ -197,36 +221,8 @@ abstract class BasicWasmBoxTest(
                     )
             }
 
-            compileAndRunD8Test("d8", compilerResult)
-            compileAndRunD8Test("d8-dce", compilerResultWithDCE)
-
-            if (debugMode >= DebugMode.SUPER_DEBUG) {
-                fun writeBrowserTest(name: String, res: WasmCompilerResult) {
-                    val dir = File(outputDirBase, name)
-                    writeCompilationResult(res, dir)
-                    File(dir, "test.mjs").writeText(testJsVerbose)
-                    File(dir, "index.html").writeText(
-                        """
-                            <!DOCTYPE html>
-                            <html lang="en">
-                            <body>
-                            <script src="test.mjs" type="module"></script>
-                            </body>
-                            </html>
-                        """.trimIndent()
-                    )
-                    val path = dir.absolutePath
-                    println(" ------ $name WAT  file://$path/index.wat")
-                    println(" ------ $name WASM file://$path/index.wasm")
-                    println(" ------ $name JS   file://$path/index.mjs")
-                    println(" ------ $name TEST file://$path/test.mjs")
-                    println(" ------ $name HTML file://$path/index.html")
-                }
-
-                writeBrowserTest("browser", compilerResult)
-                writeBrowserTest("browser-dce", compilerResultWithDCE)
-            }
-
+            writeToFilesAndRunD8Test("d8", compilerResult)
+            writeToFilesAndRunD8Test("d8-dce", compilerResultWithDCE)
         }
     }
 

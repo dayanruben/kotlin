@@ -2,14 +2,17 @@
  * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
+@file:Suppress("DEPRECATION")
 
 package kotlinx.metadata.impl
 
 import kotlinx.metadata.*
 import kotlinx.metadata.Flags // Don't remove this import. See KT-45553
 import kotlinx.metadata.impl.extensions.MetadataExtensions
+import kotlinx.metadata.internal.IgnoreInApiDump
 import org.jetbrains.kotlin.metadata.ProtoBuf
 import org.jetbrains.kotlin.metadata.deserialization.*
+import kotlin.contracts.ExperimentalContracts
 import org.jetbrains.kotlin.metadata.deserialization.Flags as F
 
 /**
@@ -21,7 +24,7 @@ interface ReadContextExtension
 class ReadContext(
     val strings: NameResolver,
     val types: TypeTable,
-    internal val versionRequirements: VersionRequirementTable,
+    @get:IgnoreInApiDump internal val versionRequirements: VersionRequirementTable,
     private val parent: ReadContext? = null,
     val contextExtensions: List<ReadContextExtension> = emptyList()
 ) {
@@ -244,7 +247,7 @@ private fun ProtoBuf.Function.accept(v: KmFunctionVisitor, outer: ReadContext) {
     }
 
     if (hasContract()) {
-        v.visitContract()?.let { contract.accept(it, c) }
+        @OptIn(ExperimentalContracts::class) v.visitContract()?.let { contract.accept(it, c) }
     }
 
     for (versionRequirement in versionRequirementList) {
@@ -443,6 +446,7 @@ private fun acceptVersionRequirementVisitor(id: Int, v: KmVersionRequirementVisi
     v.visitEnd()
 }
 
+@ExperimentalContracts
 private fun ProtoBuf.Contract.accept(v: KmContractVisitor, c: ReadContext) {
     for (effect in effectList) {
         if (!effect.hasEffectType()) continue
@@ -465,6 +469,7 @@ private fun ProtoBuf.Contract.accept(v: KmContractVisitor, c: ReadContext) {
     v.visitEnd()
 }
 
+@ExperimentalContracts
 private fun ProtoBuf.Effect.accept(v: KmEffectVisitor, c: ReadContext) {
     for (constructorArgument in effectConstructorArgumentList) {
         v.visitConstructorArgument()?.let { constructorArgument.accept(it, c) }
@@ -477,6 +482,7 @@ private fun ProtoBuf.Effect.accept(v: KmEffectVisitor, c: ReadContext) {
     v.visitEnd()
 }
 
+@ExperimentalContracts
 private fun ProtoBuf.Expression.accept(v: KmEffectExpressionVisitor, c: ReadContext) {
     v.visit(
         flags,

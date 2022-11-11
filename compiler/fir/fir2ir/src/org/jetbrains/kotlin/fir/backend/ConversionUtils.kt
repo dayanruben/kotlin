@@ -34,7 +34,9 @@ import org.jetbrains.kotlin.fir.resolve.providers.FirProvider
 import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.scopes.FirTypeScope
 import org.jetbrains.kotlin.fir.scopes.ProcessorAction
+import org.jetbrains.kotlin.fir.scopes.impl.importedFromObjectOrStaticData
 import org.jetbrains.kotlin.fir.scopes.unsubstitutedScope
+import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.*
@@ -60,6 +62,7 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffsetSkippingComments
 import org.jetbrains.kotlin.types.ConstantValueKind
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.util.OperatorNameConventions
+import org.jetbrains.kotlin.utils.addToStdlib.runIf
 
 internal fun <T : IrElement> FirElement.convertWithOffsets(
     f: (startOffset: Int, endOffset: Int) -> T
@@ -179,7 +182,7 @@ fun FirReference.toSymbolForCall(
     dispatchReceiver: FirExpression,
     conversionScope: Fir2IrConversionScope,
     preferGetter: Boolean = true,
-    explicitReceiver: FirExpression? = null, // Actual only for callable references
+    explicitReceiver: FirExpression? = null,
     isDelegate: Boolean = false,
     isReference: Boolean = false
 ): IrSymbol? {
@@ -219,31 +222,38 @@ fun FirReference.toSymbolForCall(
     }
 }
 
+private fun FirResolvedQualifier.toLookupTag(): ConeClassLikeLookupTag? = (symbol as? FirClassSymbol)?.toLookupTag()
+
 context(Fir2IrComponents)
 private fun FirCallableSymbol<*>.toSymbolForCall(
     dispatchReceiver: FirExpression,
     preferGetter: Boolean,
+    // Note: in fact LHS for callable references and explicit receiver for normal qualified accesses
     explicitReceiver: FirExpression? = null,
     isDelegate: Boolean = false,
     isReference: Boolean = false
 ): IrSymbol? {
-    val dispatchReceiverLookupTag = when {
-        dispatchReceiver is FirNoReceiverExpression -> {
-            val containingClass = containingClassLookupTag()
-            if (containingClass != null && containingClass.classId != StandardClassIds.Any) {
-                // Make sure that symbol is not extension and is not from inline class
-                val coneType = ((explicitReceiver as? FirResolvedQualifier)?.symbol as? FirClassSymbol)?.defaultType()
-                coneType?.findClassRepresentation(coneType, declarationStorage.session)
-            } else {
-                null
+    val fakeOverrideOwnerLookupTag = when {
+        // Static fake overrides
+        isStatic -> {
+            fir.importedFromObjectOrStaticData?.let {
+                ConeClassLikeLookupTagImpl(it.objectClassId)
+            } ?: (explicitReceiver as? FirResolvedQualifier)?.toLookupTag()
+        }
+        // Member fake override or bound callable reference
+        dispatchReceiver !is FirNoReceiverExpression -> {
+            dispatchReceiver.typeRef.coneType.let { it.findClassRepresentation(it, declarationStorage.session) }
+        }
+        // Unbound callable reference to member (non-extension)
+        isReference && fir.receiverTypeRef == null -> {
+            // TODO: remove runIf with StandardClassIds.Any comparison after fixing ValueClass::equals case (KT-54887)
+            runIf(containingClassLookupTag()?.classId != StandardClassIds.Any) {
+                (explicitReceiver as? FirResolvedQualifier)?.toLookupTag()
             }
         }
-
-        else -> {
-            val coneType = dispatchReceiver.typeRef.coneType
-            dispatchReceiver.typeRef.coneType.findClassRepresentation(coneType, declarationStorage.session)
-        }
+        else -> null
     }
+
     return when (this) {
         is FirSimpleSyntheticPropertySymbol -> {
             if (isDelegate) {
@@ -251,7 +261,7 @@ private fun FirCallableSymbol<*>.toSymbolForCall(
             } else {
                 (fir as? FirSyntheticProperty)?.let { syntheticProperty ->
                     if (isReference) {
-                        declarationStorage.getIrPropertySymbol(this, dispatchReceiverLookupTag)
+                        declarationStorage.getIrPropertySymbol(this, fakeOverrideOwnerLookupTag)
                     } else {
                         val delegateSymbol = if (preferGetter) {
                             syntheticProperty.getter.delegate.symbol
@@ -266,8 +276,8 @@ private fun FirCallableSymbol<*>.toSymbolForCall(
             }
         }
 
-        is FirFunctionSymbol<*> -> declarationStorage.getIrFunctionSymbol(this, dispatchReceiverLookupTag)
-        is FirPropertySymbol -> declarationStorage.getIrPropertySymbol(this, dispatchReceiverLookupTag)
+        is FirFunctionSymbol<*> -> declarationStorage.getIrFunctionSymbol(this, fakeOverrideOwnerLookupTag)
+        is FirPropertySymbol -> declarationStorage.getIrPropertySymbol(this, fakeOverrideOwnerLookupTag)
         is FirFieldSymbol -> declarationStorage.getIrFieldSymbol(this)
         is FirBackingFieldSymbol -> declarationStorage.getIrBackingFieldSymbol(this)
         is FirDelegateFieldSymbol -> declarationStorage.getIrDelegateFieldSymbol(this)
@@ -414,7 +424,7 @@ fun FirTypeScope.processOverriddenFunctionsFromSuperClasses(
 ): ProcessorAction =
     processDirectOverriddenFunctionsWithBaseScope(functionSymbol) { overridden, _ ->
         val unwrapped = if (overridden.fir.isSubstitutionOverride &&
-            overridden.dispatchReceiverClassOrNull() == containingClass.symbol.toLookupTag()
+            overridden.dispatchReceiverClassLookupTagOrNull() == containingClass.symbol.toLookupTag()
         )
             overridden.originalForSubstitutionOverride!!
         else
@@ -430,7 +440,7 @@ fun FirTypeScope.processOverriddenPropertiesFromSuperClasses(
 ): ProcessorAction =
     processDirectOverriddenPropertiesWithBaseScope(propertySymbol) { overridden, _ ->
         val unwrapped = if (overridden.fir.isSubstitutionOverride &&
-            overridden.dispatchReceiverClassOrNull() == containingClass.symbol.toLookupTag()
+            overridden.dispatchReceiverClassLookupTagOrNull() == containingClass.symbol.toLookupTag()
         )
             overridden.originalForSubstitutionOverride!!
         else
@@ -645,7 +655,9 @@ fun Fir2IrComponents.createTemporaryVariableForSafeCallConstruction(
     createTemporaryVariable(receiverExpression, conversionScope, "safe_receiver")
 
 fun Fir2IrComponents.computeValueClassRepresentation(klass: FirRegularClass): ValueClassRepresentation<IrSimpleType>? {
-    require((klass.valueClassRepresentation != null) == klass.isInline)
+    require((klass.valueClassRepresentation != null) == klass.isInline) {
+        "Value class has no representation: ${klass.render()}"
+    }
     return klass.valueClassRepresentation?.mapUnderlyingType {
         with(typeConverter) {
             it.toIrType() as? IrSimpleType ?: error("Value class underlying type is not a simple type: ${klass.render()}")

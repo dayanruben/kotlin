@@ -6977,6 +6977,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             @TestDataPath("$PROJECT_ROOT")
             @RunWith(JUnit3RunnerWithInners.class)
             public static class InlinedBreakContinue extends AbstractLightAnalysisModeTest {
+                @TestMetadata("initializerBlock.kt")
+                public void ignoreInitializerBlock() throws Exception {
+                    runTest("compiler/testData/codegen/box/controlStructures/breakContinueInExpressions/inlinedBreakContinue/initializerBlock.kt");
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM, testDataFilePath);
                 }
@@ -17463,6 +17468,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("inlineClassImplementsCollectionGeneric.kt")
         public void testInlineClassImplementsCollectionGeneric() throws Exception {
             runTest("compiler/testData/codegen/box/inlineClasses/inlineClassImplementsCollectionGeneric.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
+        }
+
+        @TestMetadata("inlineClassImplementsJavaLangInterface.kt")
+        public void testInlineClassImplementsJavaLangInterface() throws Exception {
+            runTest("compiler/testData/codegen/box/inlineClasses/inlineClassImplementsJavaLangInterface.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
         }
 
         @TestMetadata("inlineClassInInitBlock.kt")

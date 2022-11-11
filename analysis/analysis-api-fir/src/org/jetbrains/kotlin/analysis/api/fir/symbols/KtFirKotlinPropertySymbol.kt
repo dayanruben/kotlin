@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -13,20 +13,19 @@ import org.jetbrains.kotlin.analysis.api.fir.KtSymbolByFirBuilder
 import org.jetbrains.kotlin.analysis.api.fir.annotations.KtFirAnnotationListForDeclaration
 import org.jetbrains.kotlin.analysis.api.fir.findPsi
 import org.jetbrains.kotlin.analysis.api.fir.symbols.pointers.KtFirMemberPropertySymbolPointer
+import org.jetbrains.kotlin.analysis.api.fir.symbols.pointers.KtFirTopLevelPropertySymbolPointer
 import org.jetbrains.kotlin.analysis.api.fir.symbols.pointers.createSignature
+import org.jetbrains.kotlin.analysis.api.fir.symbols.pointers.requireOwnerPointer
 import org.jetbrains.kotlin.analysis.api.fir.utils.cached
-import org.jetbrains.kotlin.analysis.api.symbols.KtKotlinPropertySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtPropertyGetterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySetterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtTypeParameterSymbol
+import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
+import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
-import org.jetbrains.kotlin.analysis.api.symbols.pointers.CanNotCreateSymbolPointerForLocalLibraryDeclarationException
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtPsiBasedSymbolPointer
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtSymbolPointer
-import org.jetbrains.kotlin.analysis.api.symbols.pointers.WrongSymbolForSamConstructor
-import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
+import org.jetbrains.kotlin.analysis.api.symbols.pointers.UnsupportedSymbolKind
+import org.jetbrains.kotlin.analysis.api.symbols.pointers.symbolPointerDelegator
 import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.LLFirResolveSession
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibility
@@ -34,10 +33,10 @@ import org.jetbrains.kotlin.fir.containingClassLookupTag
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.declarations.synthetic.FirSyntheticProperty
 import org.jetbrains.kotlin.fir.declarations.utils.*
-import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirSyntheticPropertySymbol
 import org.jetbrains.kotlin.fir.symbols.impl.isExtension
+import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
 
@@ -76,10 +75,17 @@ internal class KtFirKotlinPropertySymbol(
                 else -> KtSymbolKind.CLASS_MEMBER
             }
         }
+
     override val modality: Modality get() = withValidityAssertion { firSymbol.modalityOrFinal }
     override val visibility: Visibility get() = withValidityAssertion { firSymbol.visibility }
 
-    override val annotationsList by cached { KtFirAnnotationListForDeclaration.create(firSymbol, firResolveSession.useSiteFirSession, token) }
+    override val annotationsList by cached {
+        KtFirAnnotationListForDeclaration.create(
+            firSymbol,
+            firResolveSession.useSiteFirSession,
+            token
+        )
+    }
 
     override val callableIdIfNonLocal: CallableId? get() = withValidityAssertion { firSymbol.getCallableIdIfNonLocal() }
 
@@ -102,6 +108,7 @@ internal class KtFirKotlinPropertySymbol(
             firSymbol.lazyResolveToPhase(FirResolvePhase.BODY_RESOLVE)
             firSymbol.fir.hasBackingField
         }
+
     override val isLateInit: Boolean get() = withValidityAssertion { firSymbol.isLateInit }
 
 
@@ -118,20 +125,26 @@ internal class KtFirKotlinPropertySymbol(
     override val hasSetter: Boolean get() = withValidityAssertion { firSymbol.setterSymbol != null }
 
     override fun createPointer(): KtSymbolPointer<KtKotlinPropertySymbol> = withValidityAssertion {
-        KtPsiBasedSymbolPointer.createForSymbolFromSource(this)?.let { return it }
+        KtPsiBasedSymbolPointer.createForSymbolFromSource<KtVariableLikeSymbol>(this)?.let { psiPointer ->
+            return symbolPointerDelegator(psiPointer) {
+                when (it) {
+                    is KtKotlinPropertySymbol -> it
+                    is KtValueParameterSymbol -> it.generatedPrimaryConstructorProperty
+                    else -> null
+                }
+            }
+        }
 
-        return when (symbolKind) {
-            KtSymbolKind.TOP_LEVEL -> TODO("Creating symbol for top level properties is not supported yet")
+        return when (val kind = symbolKind) {
+            KtSymbolKind.TOP_LEVEL -> KtFirTopLevelPropertySymbolPointer(firSymbol.callableId, firSymbol.createSignature())
             KtSymbolKind.CLASS_MEMBER ->
                 KtFirMemberPropertySymbolPointer(
-                    firSymbol.containingClassLookupTag()?.classId ?: error("ClassId should not be null for member property"),
+                    requireOwnerPointer(),
                     firSymbol.name,
-                    firSymbol.createSignature()
+                    firSymbol.createSignature(),
                 )
 
-            KtSymbolKind.ACCESSOR -> TODO("Creating symbol for accessors is not supported yet")
-            KtSymbolKind.LOCAL -> throw CanNotCreateSymbolPointerForLocalLibraryDeclarationException(name.asString())
-            KtSymbolKind.SAM_CONSTRUCTOR -> throw WrongSymbolForSamConstructor(this::class.java.simpleName)
+            else -> throw UnsupportedSymbolKind(this::class, kind)
         }
     }
 

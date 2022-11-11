@@ -11,6 +11,7 @@ import kotlinx.metadata.impl.WriteContext
 import org.jetbrains.kotlin.metadata.ProtoBuf
 import java.util.*
 
+@Suppress("DEPRECATION")
 interface MetadataExtensions {
     fun readClassExtensions(v: KmClassVisitor, proto: ProtoBuf.Class, c: ReadContext)
 

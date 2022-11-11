@@ -1,7 +1,5 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-extra["versions.native-platform"] = "0.14"
-
 buildscript {
 
     val cacheRedirectorEnabled = findProperty("cacheRedirectorEnabled")?.toString()?.toBoolean() == true
@@ -166,9 +164,6 @@ dependencies {
     implementation("com.gradle.publish:plugin-publish-plugin:1.0.0")
     implementation("org.jetbrains.dokka:dokka-gradle-plugin:1.7.0")
 
-    implementation("net.rubygrapefruit:native-platform:${property("versions.native-platform")}")
-    implementation("net.rubygrapefruit:native-platform-windows-amd64:${property("versions.native-platform")}")
-    implementation("net.rubygrapefruit:native-platform-windows-i386:${property("versions.native-platform")}")
     implementation("com.jakewharton.dex:dex-member-list:4.1.1")
 
     implementation("gradle.plugin.com.github.johnrengelman:shadow:${rootProject.extra["versions.shadow"]}")
@@ -199,6 +194,7 @@ dependencies {
     implementation("io.ktor:ktor-client-core:$ktorVersion")
     implementation("io.ktor:ktor-client-cio:$ktorVersion")
 
+    implementation("org.jetbrains.kotlinx:kotlinx-metadata-jvm:0.5.0")
     implementation("org.jetbrains.kotlinx:kotlinx-metadata-klib:$metadataVersion")
     if (kotlinBuildProperties.isInJpsBuildIdeaSync) {
         implementation("org.jetbrains.kotlin:kotlin-native-utils:${project.bootstrapKotlinVersion}")

@@ -18,6 +18,8 @@ import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
 import org.jetbrains.kotlin.fir.symbols.impl.ConeClassLookupTagWithFixedSymbol
 import org.jetbrains.kotlin.analysis.utils.errors.buildErrorWithAttachment
 import org.jetbrains.kotlin.analysis.utils.errors.checkWithAttachmentBuilder
+import org.jetbrains.kotlin.fir.diagnostics.ConeDestructuringDeclarationsOnTopLevel
+import org.jetbrains.kotlin.fir.java.javaSymbolProvider
 
 class FirDeclarationDesignationWithFile(
     path: List<FirDeclaration>,
@@ -60,7 +62,7 @@ private fun FirRegularClass.collectForNonLocal(): List<FirDeclaration> {
 private fun collectDesignationPath(declaration: FirDeclaration): List<FirDeclaration>? {
     val containingClass = when (declaration) {
         is FirCallableDeclaration -> {
-            if (declaration.symbol.callableId.isLocal) return null
+            if (declaration !is FirConstructor && declaration.symbol.callableId.isLocal) return null
             if ((declaration as? FirCallableDeclaration)?.status?.visibility == Visibilities.Local) return null
             when (declaration) {
                 is FirSimpleFunction, is FirProperty, is FirField, is FirConstructor, is FirEnumEntry -> {
@@ -68,12 +70,21 @@ private fun collectDesignationPath(declaration: FirDeclaration): List<FirDeclara
                     if (klass.classId.isLocal) return null
                     klass.toFirRegularClassFromSameSession(declaration.moduleData.session)
                 }
+                is FirErrorProperty -> {
+                    return if (declaration.diagnostic == ConeDestructuringDeclarationsOnTopLevel) {
+                        emptyList()
+                    } else {
+                        null
+                    }
+                }
                 else -> return null
             }
         }
         is FirClassLikeDeclaration -> {
             if (declaration.isLocal) return null
-            declaration.symbol.classId.outerClassId?.let(declaration.moduleData.session.firProvider::getFirClassifierByFqName)
+            val outerClassId = declaration.symbol.classId.outerClassId
+            outerClassId?.let(declaration.moduleData.session.firProvider::getFirClassifierByFqName)
+                ?: outerClassId?.let(declaration.moduleData.session.javaSymbolProvider::getClassLikeSymbolByClassId)?.fir
         }
         else -> return null
     } ?: return emptyList()

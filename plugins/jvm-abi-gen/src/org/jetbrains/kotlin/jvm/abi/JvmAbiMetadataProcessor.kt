@@ -136,6 +136,7 @@ private fun AnnotationVisitor.visitKotlinMetadata(header: KotlinClassHeader) {
  * Class metadata adapter which removes private functions, properties, type aliases,
  * and local delegated properties.
  */
+@Suppress("DEPRECATION")
 private class AbiKmClassVisitor(delegate: KmClassVisitor) : KmClassVisitor(delegate) {
     override fun visitConstructor(flags: Flags): KmConstructorVisitor? {
         if (!isPrivateDeclaration(flags))
@@ -172,6 +173,7 @@ private class AbiKmClassVisitor(delegate: KmClassVisitor) : KmClassVisitor(deleg
  * Class metadata adapter which removes private functions, properties, type aliases,
  * and local delegated properties.
  */
+@Suppress("DEPRECATION")
 private class AbiKmPackageVisitor(delegate: KmPackageVisitor) : KmPackageVisitor(delegate) {
     override fun visitFunction(flags: Flags, name: String): KmFunctionVisitor? {
         if (!isPrivateDeclaration(flags))

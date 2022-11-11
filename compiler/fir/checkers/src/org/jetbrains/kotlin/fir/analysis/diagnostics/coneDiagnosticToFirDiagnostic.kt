@@ -46,12 +46,12 @@ private fun ConeDiagnostic.toKtDiagnostic(
 ): KtDiagnostic? = when (this) {
     is ConeUnresolvedReferenceError -> FirErrors.UNRESOLVED_REFERENCE.createOn(
         source,
-        (this.name ?: SpecialNames.NO_NAME_PROVIDED).asString()
+        this.name.asString()
     )
 
     is ConeUnresolvedSymbolError -> FirErrors.UNRESOLVED_REFERENCE.createOn(source, this.classId.asString())
     is ConeUnresolvedNameError -> FirErrors.UNRESOLVED_REFERENCE.createOn(source, this.name.asString())
-    is ConeUnresolvedQualifierError -> FirErrors.UNRESOLVED_REFERENCE.createOn(source, this.qualifier)
+    is ConeUnresolvedTypeQualifierError -> FirErrors.UNRESOLVED_REFERENCE.createOn(source, this.qualifier)
     is ConeFunctionCallExpectedError -> FirErrors.FUNCTION_CALL_EXPECTED.createOn(source, this.name.asString(), this.hasValueParameters)
     is ConeFunctionExpectedError -> FirErrors.FUNCTION_EXPECTED.createOn(source, this.expression, this.type)
     is ConeResolutionToClassifierError -> FirErrors.RESOLUTION_TO_CLASSIFIER.createOn(source, this.candidateSymbol)
@@ -113,6 +113,7 @@ private fun ConeDiagnostic.toKtDiagnostic(
         else -> this.getFactory(source).createOn(qualifiedAccessSource ?: source)
     }
 
+    is ConeDestructuringDeclarationsOnTopLevel -> FirSyntaxErrors.SYNTAX.createOn(source)
     is ConeCannotInferParameterType -> FirErrors.CANNOT_INFER_PARAMETER_TYPE.createOn(source)
     is ConeInstanceAccessBeforeSuperCall -> FirErrors.INSTANCE_ACCESS_BEFORE_SUPER_CALL.createOn(source, this.target)
     is ConeStubDiagnostic -> null

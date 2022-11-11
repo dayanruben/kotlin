@@ -47,6 +47,12 @@ public class FirIdeNormalAnalysisSourceModuleHLExpressionTypeTestGenerated exten
     }
 
     @Test
+    @TestMetadata("anonymousFunction.kt")
+    public void testAnonymousFunction() throws Exception {
+        runTest("analysis/analysis-api/testData/components/expressionTypeProvider/expressionType/anonymousFunction.kt");
+    }
+
+    @Test
     @TestMetadata("arrayElement_arrayOfNulls.kt")
     public void testArrayElement_arrayOfNulls() throws Exception {
         runTest("analysis/analysis-api/testData/components/expressionTypeProvider/expressionType/arrayElement_arrayOfNulls.kt");
@@ -134,6 +140,12 @@ public class FirIdeNormalAnalysisSourceModuleHLExpressionTypeTestGenerated exten
     @TestMetadata("list_mutableListOf.kt")
     public void testList_mutableListOf() throws Exception {
         runTest("analysis/analysis-api/testData/components/expressionTypeProvider/expressionType/list_mutableListOf.kt");
+    }
+
+    @Test
+    @TestMetadata("nameReference.kt")
+    public void testNameReference() throws Exception {
+        runTest("analysis/analysis-api/testData/components/expressionTypeProvider/expressionType/nameReference.kt");
     }
 
     @Test

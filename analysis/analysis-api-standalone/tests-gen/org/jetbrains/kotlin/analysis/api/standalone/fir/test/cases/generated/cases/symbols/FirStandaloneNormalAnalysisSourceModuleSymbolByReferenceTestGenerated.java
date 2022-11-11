@@ -53,6 +53,12 @@ public class FirStandaloneNormalAnalysisSourceModuleSymbolByReferenceTestGenerat
     }
 
     @Test
+    @TestMetadata("constructorValueParameter.kt")
+    public void testConstructorValueParameter() throws Exception {
+        runTest("analysis/analysis-api/testData/symbols/symbolByReference/constructorValueParameter.kt");
+    }
+
+    @Test
     @TestMetadata("constructorViaTypeAlias.kt")
     public void testConstructorViaTypeAlias() throws Exception {
         runTest("analysis/analysis-api/testData/symbols/symbolByReference/constructorViaTypeAlias.kt");
@@ -89,6 +95,24 @@ public class FirStandaloneNormalAnalysisSourceModuleSymbolByReferenceTestGenerat
     }
 
     @Test
+    @TestMetadata("javaField.kt")
+    public void testJavaField() throws Exception {
+        runTest("analysis/analysis-api/testData/symbols/symbolByReference/javaField.kt");
+    }
+
+    @Test
+    @TestMetadata("primaryConstructorValueParameter.kt")
+    public void testPrimaryConstructorValueParameter() throws Exception {
+        runTest("analysis/analysis-api/testData/symbols/symbolByReference/primaryConstructorValueParameter.kt");
+    }
+
+    @Test
+    @TestMetadata("primaryConstructorValueParameterAsProperty.kt")
+    public void testPrimaryConstructorValueParameterAsProperty() throws Exception {
+        runTest("analysis/analysis-api/testData/symbols/symbolByReference/primaryConstructorValueParameterAsProperty.kt");
+    }
+
+    @Test
     @TestMetadata("propertyReceiverParameter.kt")
     public void testPropertyReceiverParameter() throws Exception {
         runTest("analysis/analysis-api/testData/symbols/symbolByReference/propertyReceiverParameter.kt");
@@ -98,5 +122,17 @@ public class FirStandaloneNormalAnalysisSourceModuleSymbolByReferenceTestGenerat
     @TestMetadata("samConstructor.kt")
     public void testSamConstructor() throws Exception {
         runTest("analysis/analysis-api/testData/symbols/symbolByReference/samConstructor.kt");
+    }
+
+    @Test
+    @TestMetadata("setterValueParameter.kt")
+    public void testSetterValueParameter() throws Exception {
+        runTest("analysis/analysis-api/testData/symbols/symbolByReference/setterValueParameter.kt");
+    }
+
+    @Test
+    @TestMetadata("valueParameter.kt")
+    public void testValueParameter() throws Exception {
+        runTest("analysis/analysis-api/testData/symbols/symbolByReference/valueParameter.kt");
     }
 }

@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.fir.builder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.*
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.StandardNames.BACKING_FIELD
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.Modality
@@ -422,7 +423,7 @@ open class RawFirBuilder(
                                 moduleData = baseModuleData
                                 origin = FirDeclarationOrigin.Source
                                 returnTypeRef = propertyTypeRefToUse
-                                symbol = FirValueParameterSymbol(SpecialNames.IMPLICIT_SET_PARAMETER)
+                                symbol = FirValueParameterSymbol(StandardNames.DEFAULT_VALUE_PARAMETER)
                                 annotations += parameterAnnotationsFromProperty
                             }
                         }
@@ -1225,14 +1226,13 @@ open class RawFirBuilder(
         }
 
         override fun visitObjectLiteralExpression(expression: KtObjectLiteralExpression, data: Unit): FirElement {
-            val objectDeclaration = expression.objectDeclaration
             return withChildClassName(SpecialNames.ANONYMOUS, forceLocalContext = true, isExpect = false) {
                 var delegatedFieldsMap: Map<Int, FirFieldSymbol>?
                 buildAnonymousObjectExpression {
-                    val sourceElement = objectDeclaration.toFirSourceElement()
-                    source = sourceElement
+                    source = expression.toFirSourceElement()
                     anonymousObject = buildAnonymousObject {
-                        source = sourceElement
+                        val objectDeclaration = expression.objectDeclaration
+                        source = objectDeclaration.toFirSourceElement()
                         moduleData = baseModuleData
                         origin = FirDeclarationOrigin.Source
                         classKind = ClassKind.OBJECT

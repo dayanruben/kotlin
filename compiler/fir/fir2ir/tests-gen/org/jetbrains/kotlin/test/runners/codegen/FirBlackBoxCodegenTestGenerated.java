@@ -9170,6 +9170,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
                 }
 
                 @Test
+                @TestMetadata("initializerBlock.kt")
+                public void testInitializerBlock() throws Exception {
+                    runTest("compiler/testData/codegen/box/controlStructures/breakContinueInExpressions/inlinedBreakContinue/initializerBlock.kt");
+                }
+
+                @Test
                 @TestMetadata("inlineFunctionWithMultipleParameters.kt")
                 public void testInlineFunctionWithMultipleParameters() throws Exception {
                     runTest("compiler/testData/codegen/box/controlStructures/breakContinueInExpressions/inlinedBreakContinue/inlineFunctionWithMultipleParameters.kt");
@@ -18026,6 +18032,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         }
 
         @Test
+        @TestMetadata("assertEqualsFakeOverride.kt")
+        public void testAssertEqualsFakeOverride() throws Exception {
+            runTest("compiler/testData/codegen/box/fir/assertEqualsFakeOverride.kt");
+        }
+
+        @Test
         @TestMetadata("callableReferenceToJavaField.kt")
         public void testCallableReferenceToJavaField() throws Exception {
             runTest("compiler/testData/codegen/box/fir/callableReferenceToJavaField.kt");
@@ -21507,6 +21519,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         @TestMetadata("inlineClassImplementsCollectionGeneric.kt")
         public void testInlineClassImplementsCollectionGeneric() throws Exception {
             runTest("compiler/testData/codegen/box/inlineClasses/inlineClassImplementsCollectionGeneric.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
+        }
+
+        @Test
+        @TestMetadata("inlineClassImplementsJavaLangInterface.kt")
+        public void testInlineClassImplementsJavaLangInterface() throws Exception {
+            runTest("compiler/testData/codegen/box/inlineClasses/inlineClassImplementsJavaLangInterface.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
         }
 
         @Test
@@ -28729,6 +28747,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
             }
 
             @Test
+            @TestMetadata("inheritedPackageStaticFunction.kt")
+            public void testInheritedPackageStaticFunction() throws Exception {
+                runTest("compiler/testData/codegen/box/javaVisibility/package/inheritedPackageStaticFunction.kt");
+            }
+
+            @Test
             @TestMetadata("kt2781.kt")
             public void testKt2781() throws Exception {
                 runTest("compiler/testData/codegen/box/javaVisibility/package/kt2781.kt");
@@ -28750,6 +28774,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
             @TestMetadata("packageProperty.kt")
             public void testPackageProperty() throws Exception {
                 runTest("compiler/testData/codegen/box/javaVisibility/package/packageProperty.kt");
+            }
+
+            @Test
+            @TestMetadata("publicInterfaceImplementedByPackagePrivateClass.kt")
+            public void testPublicInterfaceImplementedByPackagePrivateClass() throws Exception {
+                runTest("compiler/testData/codegen/box/javaVisibility/package/publicInterfaceImplementedByPackagePrivateClass.kt");
             }
         }
 
@@ -33749,6 +33779,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         @TestMetadata("packageLocalClassNotImportedWithDefaultImport.kt")
         public void testPackageLocalClassNotImportedWithDefaultImport() throws Exception {
             runTest("compiler/testData/codegen/box/package/packageLocalClassNotImportedWithDefaultImport.kt");
+        }
+
+        @Test
+        @TestMetadata("packageOrNestedClass.kt")
+        public void testPackageOrNestedClass() throws Exception {
+            runTest("compiler/testData/codegen/box/package/packageOrNestedClass.kt");
         }
 
         @Test

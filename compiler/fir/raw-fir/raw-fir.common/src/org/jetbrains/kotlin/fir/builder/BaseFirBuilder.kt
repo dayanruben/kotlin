@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.fir.declarations.impl.FirDeclarationStatusImpl
 import org.jetbrains.kotlin.fir.declarations.utils.addDeclaration
 import org.jetbrains.kotlin.fir.declarations.utils.isCompanion
 import org.jetbrains.kotlin.fir.declarations.utils.isLocal
+import org.jetbrains.kotlin.fir.diagnostics.ConeDestructuringDeclarationsOnTopLevel
 import org.jetbrains.kotlin.fir.diagnostics.ConeSimpleDiagnostic
 import org.jetbrains.kotlin.fir.diagnostics.ConeUnderscoreIsReserved
 import org.jetbrains.kotlin.fir.diagnostics.DiagnosticKind
@@ -810,7 +811,7 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
             val indexVariables = indices.mapIndexed { i, index ->
                 generateTemporaryVariable(
                     baseModuleData,
-                    index.toFirSourceElement(),
+                    index.toFirSourceElement(KtFakeSourceElementKind.ArrayIndexExpressionReference),
                     name = SpecialNames.subscribeOperatorIndex(i),
                     index.convert()
                 ).also { statements += it }
@@ -1276,9 +1277,7 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
         moduleData = baseModuleData
         origin = FirDeclarationOrigin.Source
         name = Name.special("<destructuring>")
-        diagnostic = ConeSimpleDiagnostic(
-            "Destructuring declarations are only allowed for local variables/values", DiagnosticKind.Syntax
-        )
+        diagnostic = ConeDestructuringDeclarationsOnTopLevel
         symbol = FirErrorPropertySymbol(diagnostic)
     }
 

@@ -2,16 +2,16 @@
  * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
-
+@file:Suppress("DEPRECATION")
 package kotlinx.metadata.impl
 
 import kotlinx.metadata.*
-import kotlinx.metadata.impl.extensions.MetadataExtensions
 import kotlinx.metadata.impl.extensions.applySingleExtension
 import org.jetbrains.kotlin.metadata.ProtoBuf
 import org.jetbrains.kotlin.metadata.deserialization.VersionRequirement
 import org.jetbrains.kotlin.metadata.serialization.MutableVersionRequirementTable
 import org.jetbrains.kotlin.metadata.serialization.StringTable
+import kotlin.contracts.ExperimentalContracts
 
 /**
  * Allows to populate [WriteContext] with additional data
@@ -171,6 +171,7 @@ private fun writeFunction(c: WriteContext, flags: Flags, name: String, output: (
         override fun visitVersionRequirement(): KmVersionRequirementVisitor? =
             writeVersionRequirement(c) { t.addVersionRequirement(it) }
 
+        @OptIn(ExperimentalContracts::class)
         override fun visitContract(): KmContractVisitor? =
             writeContract(c) { t.contract = it.build() }
 
@@ -341,6 +342,7 @@ private fun writeVersionRequirement(
     }
 }
 
+@ExperimentalContracts
 private fun writeContract(c: WriteContext, output: (ProtoBuf.Contract.Builder) -> Unit): KmContractVisitor =
     object : KmContractVisitor() {
         val t = ProtoBuf.Contract.newBuilder()
@@ -353,6 +355,7 @@ private fun writeContract(c: WriteContext, output: (ProtoBuf.Contract.Builder) -
         }
     }
 
+@ExperimentalContracts
 private fun writeEffect(
     c: WriteContext, type: KmEffectType, invocationKind: KmEffectInvocationKind?,
     output: (ProtoBuf.Effect.Builder) -> Unit
@@ -382,6 +385,7 @@ private fun writeEffect(
     }
 }
 
+@ExperimentalContracts
 private fun writeEffectExpression(c: WriteContext, output: (ProtoBuf.Expression.Builder) -> Unit): KmEffectExpressionVisitor =
     object : KmEffectExpressionVisitor() {
         val t = ProtoBuf.Expression.newBuilder()

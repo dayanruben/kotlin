@@ -216,6 +216,24 @@ public class GetOrBuildFirTestGenerated extends AbstractGetOrBuildFirTest {
         }
 
         @Test
+        @TestMetadata("destructuring.kt")
+        public void testDestructuring() throws Exception {
+            runTest("analysis/low-level-api-fir/testdata/getOrBuildFir/declarations/destructuring.kt");
+        }
+
+        @Test
+        @TestMetadata("objectLiteral.kt")
+        public void testObjectLiteral() throws Exception {
+            runTest("analysis/low-level-api-fir/testdata/getOrBuildFir/declarations/objectLiteral.kt");
+        }
+
+        @Test
+        @TestMetadata("objectLiteralExpression.kt")
+        public void testObjectLiteralExpression() throws Exception {
+            runTest("analysis/low-level-api-fir/testdata/getOrBuildFir/declarations/objectLiteralExpression.kt");
+        }
+
+        @Test
         @TestMetadata("propertyDelegate.kt")
         public void testPropertyDelegate() throws Exception {
             runTest("analysis/low-level-api-fir/testdata/getOrBuildFir/declarations/propertyDelegate.kt");
@@ -241,6 +259,12 @@ public class GetOrBuildFirTestGenerated extends AbstractGetOrBuildFirTest {
         @TestMetadata("arrayAccessExpression.kt")
         public void testArrayAccessExpression() throws Exception {
             runTest("analysis/low-level-api-fir/testdata/getOrBuildFir/expressions/arrayAccessExpression.kt");
+        }
+
+        @Test
+        @TestMetadata("arrayIndexExpressionWithInc.kt")
+        public void testArrayIndexExpressionWithInc() throws Exception {
+            runTest("analysis/low-level-api-fir/testdata/getOrBuildFir/expressions/arrayIndexExpressionWithInc.kt");
         }
 
         @Test
@@ -301,6 +325,12 @@ public class GetOrBuildFirTestGenerated extends AbstractGetOrBuildFirTest {
         @TestMetadata("ifExpression.kt")
         public void testIfExpression() throws Exception {
             runTest("analysis/low-level-api-fir/testdata/getOrBuildFir/expressions/ifExpression.kt");
+        }
+
+        @Test
+        @TestMetadata("incExpression.kt")
+        public void testIncExpression() throws Exception {
+            runTest("analysis/low-level-api-fir/testdata/getOrBuildFir/expressions/incExpression.kt");
         }
 
         @Test
