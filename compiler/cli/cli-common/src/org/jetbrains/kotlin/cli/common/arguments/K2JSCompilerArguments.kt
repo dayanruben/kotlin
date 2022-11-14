@@ -391,12 +391,15 @@ class K2JSCompilerArguments : CommonCompilerArguments() {
             if (isIrBackendEnabled()) {
                 this[LanguageFeature.JsAllowValueClassesInExternals] = LanguageFeature.State.ENABLED
             }
+            if (wasm) {
+                this[LanguageFeature.JsAllowImplementingFunctionInterface] = LanguageFeature.State.ENABLED
+            }
         }
     }
 }
 
 fun K2JSCompilerArguments.isPreIrBackendDisabled(): Boolean =
-    irOnly || irProduceJs || irProduceKlibFile || irBuildCache
+    irOnly || irProduceJs || irProduceKlibFile || irBuildCache || useK2
 
 fun K2JSCompilerArguments.isIrBackendEnabled(): Boolean =
-    irProduceKlibDir || irProduceJs || irProduceKlibFile || wasm || irBuildCache
+    irProduceKlibDir || irProduceJs || irProduceKlibFile || wasm || irBuildCache || useK2

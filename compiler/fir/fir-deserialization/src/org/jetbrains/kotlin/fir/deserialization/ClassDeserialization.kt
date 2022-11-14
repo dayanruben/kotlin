@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.metadata.ProtoBuf
 import org.jetbrains.kotlin.metadata.deserialization.*
 import org.jetbrains.kotlin.metadata.jvm.JvmProtoBuf
 import org.jetbrains.kotlin.name.*
+import org.jetbrains.kotlin.serialization.SerializerExtensionProtocol
 import org.jetbrains.kotlin.serialization.deserialization.ProtoEnumFlags
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedContainerSource
 import org.jetbrains.kotlin.serialization.deserialization.getName
@@ -44,6 +45,7 @@ fun deserializeClassToSymbol(
     moduleData: FirModuleData,
     defaultAnnotationDeserializer: AbstractAnnotationDeserializer?,
     scopeProvider: FirScopeProvider,
+    serializerExtensionProtocol: SerializerExtensionProtocol,
     parentContext: FirDeserializationContext? = null,
     containerSource: DeserializedContainerSource? = null,
     origin: FirDeclarationOrigin = FirDeclarationOrigin.Library,
@@ -71,9 +73,9 @@ fun deserializeClassToSymbol(
     val annotationDeserializer = defaultAnnotationDeserializer ?: FirBuiltinAnnotationDeserializer(session)
     val jvmBinaryClass = (containerSource as? KotlinJvmBinarySourceElement)?.binaryClass
     val constDeserializer = if (jvmBinaryClass != null) {
-        FirJvmConstDeserializer(session, jvmBinaryClass)
+        FirJvmConstDeserializer(session, jvmBinaryClass, serializerExtensionProtocol)
     } else {
-        FirConstDeserializer(session)
+        FirConstDeserializer(session, serializerExtensionProtocol)
     }
     val context =
         parentContext?.childContext(
@@ -87,8 +89,9 @@ fun deserializeClassToSymbol(
             if (status.isCompanion) {
                 parentContext.constDeserializer
             } else {
-                ((containerSource as? KotlinJvmBinarySourceElement)?.binaryClass)?.let { FirJvmConstDeserializer(session, it) }
-                    ?: parentContext.constDeserializer
+                ((containerSource as? KotlinJvmBinarySourceElement)?.binaryClass)?.let {
+                    FirJvmConstDeserializer(session, it, serializerExtensionProtocol)
+                } ?: parentContext.constDeserializer
             },
             status.isInner
         ) ?: FirDeserializationContext.createForClass(
@@ -189,7 +192,9 @@ fun deserializeClassToSymbol(
         }
 
         addCloneForArrayIfNeeded(classId, context.dispatchReceiver)
-        addSerializableIfNeeded(classId)
+        session.deserializedClassConfigurator?.run {
+            configure(classId)
+        }
 
         declarations.sortWith(object : Comparator<FirDeclaration> {
             override fun compare(a: FirDeclaration, b: FirDeclaration): Int {
@@ -229,6 +234,9 @@ fun deserializeClassToSymbol(
 
         classProto.getExtensionOrNull(JvmProtoBuf.classModuleName)?.let { idx ->
             moduleName = nameResolver.getString(idx)
+        }
+        session.deserializedClassConfigurator?.run {
+            configure(classId)
         }
     }
 }
@@ -297,3 +305,17 @@ private fun FirRegularClassBuilder.addCloneForArrayIfNeeded(classId: ClassId, di
         dispatchReceiverType = dispatchReceiver!!
     }
 }
+
+abstract class DeserializedClassConfigurator(val session: FirSession) : FirSessionComponent {
+    open fun FirRegularClassBuilder.configure(classId: ClassId) {}
+
+    open fun FirRegularClass.configure(classId: ClassId) {}
+}
+
+class JvmDeserializedClassConfigurator(session: FirSession): DeserializedClassConfigurator(session) {
+    override fun FirRegularClassBuilder.configure(classId: ClassId) {
+        addSerializableIfNeeded(classId)
+    }
+}
+
+val FirSession.deserializedClassConfigurator: DeserializedClassConfigurator? by FirSession.nullableSessionComponentAccessor()
