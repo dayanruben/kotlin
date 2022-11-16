@@ -51,7 +51,7 @@ import org.jetbrains.kotlin.fir.visitors.FirTransformer
 import org.jetbrains.kotlin.fir.visitors.transformSingle
 import org.jetbrains.kotlin.name.Name
 
-open class FirDeclarationsResolveTransformer(transformer: FirBodyResolveTransformer) : FirPartialBodyResolveTransformer(transformer) {
+open class FirDeclarationsResolveTransformer(transformer: FirAbstractBodyResolveTransformerDispatcher) : FirPartialBodyResolveTransformer(transformer) {
     private val statusResolver: FirStatusResolver = FirStatusResolver(session, scopeSession)
 
     private fun FirDeclaration.visibilityForApproximation(): Visibility {
@@ -68,7 +68,7 @@ open class FirDeclarationsResolveTransformer(transformer: FirBodyResolveTransfor
         }
     }
 
-    private fun transformDeclarationContent(declaration: FirDeclaration, data: ResolutionMode): FirDeclaration {
+    protected fun transformDeclarationContent(declaration: FirDeclaration, data: ResolutionMode): FirDeclaration {
         transformer.firTowerDataContextCollector?.addDeclarationContext(declaration, context.towerDataContext)
         return transformer.transformDeclarationContent(declaration, data)
     }
@@ -97,7 +97,7 @@ open class FirDeclarationsResolveTransformer(transformer: FirBodyResolveTransfor
         return FirMemberTypeParameterScope(declaration)
     }
 
-    private fun doTransformTypeParameters(declaration: FirMemberDeclaration) {
+    protected fun doTransformTypeParameters(declaration: FirMemberDeclaration) {
         for (typeParameter in declaration.typeParameters) {
             typeParameter.transformChildren(transformer, ResolutionMode.ContextIndependent)
         }
@@ -227,7 +227,7 @@ open class FirDeclarationsResolveTransformer(transformer: FirBodyResolveTransfor
         // var someProperty: SomeType
         //     get() = delegate.getValue(thisRef, kProperty: KProperty0/1/2<..., SomeType>)
         //     set() = delegate.getValue(thisRef, kProperty: KProperty0/1/2<..., SomeType>, value)
-        val propertyReferenceAccess = argumentMapping?.keys?.toList()?.getOrNull(1) as? FirCallableReferenceAccess ?: return
+        val propertyReferenceAccess = resolvedArgumentMapping?.keys?.toList()?.getOrNull(1) as? FirCallableReferenceAccess ?: return
         val typeRef = propertyReferenceAccess.typeRef
         if (typeRef is FirResolvedTypeRef && property.returnTypeRef is FirResolvedTypeRef) {
             val typeArguments = (typeRef.type as ConeClassLikeType).typeArguments
@@ -295,6 +295,12 @@ open class FirDeclarationsResolveTransformer(transformer: FirBodyResolveTransfor
             val declarationCompletionResultsWriter =
                 FirDeclarationCompletionResultsWriter(finalSubstitutor, session.typeApproximator, session.typeContext)
             property.transformSingle(declarationCompletionResultsWriter, FirDeclarationCompletionResultsWriter.ApproximationData.Default)
+        }
+    }
+
+    override fun transformPropertyAccessor(propertyAccessor: FirPropertyAccessor, data: ResolutionMode): FirStatement {
+        return propertyAccessor.also {
+            transformProperty(it.propertySymbol.fir, data)
         }
     }
 
@@ -1097,7 +1103,7 @@ open class FirDeclarationsResolveTransformer(transformer: FirBodyResolveTransfor
     private val FirVariable.initializerResolved: Boolean
         get() = initializer?.typeRef is FirResolvedTypeRef
 
-    private val FirFunction.bodyResolved: Boolean
+    protected val FirFunction.bodyResolved: Boolean
         get() = body !is FirLazyBlock && body?.typeRef is FirResolvedTypeRef
 
 }

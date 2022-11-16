@@ -11,30 +11,27 @@ import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.references.FirErrorNamedReference
 import org.jetbrains.kotlin.fir.resolve.ResolutionMode
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
-import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.BodyResolveContext
-import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirBodyResolveTransformer
-import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirDeclarationsResolveTransformer
-import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirExpressionsResolveTransformer
+import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.*
 
 open class FirAnnotationArgumentsResolveTransformer(
     session: FirSession,
     scopeSession: ScopeSession,
     resolvePhase: FirResolvePhase,
     outerBodyResolveContext: BodyResolveContext? = null
-) : FirBodyResolveTransformer(
+) : FirAbstractBodyResolveTransformerDispatcher(
     session,
     resolvePhase,
     implicitTypeOnly = false,
     scopeSession,
     outerBodyResolveContext = outerBodyResolveContext
 ) {
-    override val expressionsTransformer: FirExpressionsResolveTransformer = FirExpressionsResolveTransformerForSpecificAnnotations(this)
+    final override val expressionsTransformer: FirExpressionsResolveTransformer = FirExpressionsResolveTransformerForSpecificAnnotations(this)
 
-    override val declarationsTransformer: FirDeclarationsResolveTransformer = FirDeclarationsResolveTransformerForArgumentAnnotations(this)
+    final override val declarationsTransformer: FirDeclarationsResolveTransformer = FirDeclarationsResolveTransformerForArgumentAnnotations(this)
 }
 
 private class FirDeclarationsResolveTransformerForArgumentAnnotations(
-    transformer: FirBodyResolveTransformer
+    transformer: FirAbstractBodyResolveTransformerDispatcher
 ) : FirDeclarationsResolveTransformer(transformer) {
     override fun transformRegularClass(regularClass: FirRegularClass, data: ResolutionMode): FirStatement {
         regularClass.transformAnnotations(this, data)
@@ -134,7 +131,7 @@ private class FirDeclarationsResolveTransformerForArgumentAnnotations(
 }
 
 private class FirExpressionsResolveTransformerForSpecificAnnotations(
-    transformer: FirBodyResolveTransformer
+    transformer: FirAbstractBodyResolveTransformerDispatcher
 ) : FirExpressionsResolveTransformer(transformer) {
 
     override fun transformAnnotation(annotation: FirAnnotation, data: ResolutionMode): FirStatement {
@@ -146,6 +143,10 @@ private class FirExpressionsResolveTransformerForSpecificAnnotations(
 
     override fun transformAnnotationCall(annotationCall: FirAnnotationCall, data: ResolutionMode): FirStatement {
         return transformAnnotation(annotationCall, data)
+    }
+
+    override fun transformErrorAnnotationCall(errorAnnotationCall: FirErrorAnnotationCall, data: ResolutionMode): FirStatement {
+        return transformAnnotation(errorAnnotationCall, data)
     }
 
     override fun transformExpression(expression: FirExpression, data: ResolutionMode): FirStatement {

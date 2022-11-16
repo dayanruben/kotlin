@@ -53,7 +53,7 @@ import org.jetbrains.kotlin.types.ConstantValueKind
 import org.jetbrains.kotlin.types.TypeApproximatorConfiguration
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
-open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransformer) : FirPartialBodyResolveTransformer(transformer) {
+open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveTransformerDispatcher) : FirPartialBodyResolveTransformer(transformer) {
     private inline val builtinTypes: BuiltinTypes get() = session.builtinTypes
     private val arrayOfCallTransformer = FirArrayOfCallTransformer()
     var enableArrayOfCallTransformation = false
@@ -1010,11 +1010,15 @@ open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransform
             ConstantValueKind.IntegerLiteral, ConstantValueKind.UnsignedIntegerLiteral -> {
                 val expressionType = ConeIntegerLiteralConstantTypeImpl.create(
                     constExpression.value as Long,
+                    isTypePresent = { it.lookupTag.toSymbol(session) != null },
                     isUnsigned = kind == ConstantValueKind.UnsignedIntegerLiteral
                 )
                 val expectedTypeRef = data.expectedType
                 @Suppress("UNCHECKED_CAST")
                 when {
+                    expressionType is ConeErrorType -> {
+                        expressionType
+                    }
                     expressionType is ConeClassLikeType -> {
                         constExpression.replaceKind(expressionType.toConstKind() as ConstantValueKind<T>)
                         expressionType
@@ -1040,7 +1044,16 @@ open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransform
 
         dataFlowAnalyzer.exitConstExpression(constExpression as FirConstExpression<*>)
         constExpression.resultType = constExpression.resultType.resolvedTypeFromPrototype(type)
-        return constExpression
+
+        return when (val resolvedType = constExpression.resultType.coneType) {
+            is ConeErrorType -> buildErrorExpression {
+                expression = constExpression
+                diagnostic = resolvedType.diagnostic
+                source = constExpression.source
+            }
+
+            else -> constExpression
+        }
     }
 
     override fun transformAnnotation(annotation: FirAnnotation, data: ResolutionMode): FirStatement {
@@ -1059,14 +1072,17 @@ open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransform
                 dataFlowAnalyzer.exitAnnotation(result ?: annotationCall)
                 if (result == null) return annotationCall
                 callCompleter.completeCall(result, noExpectedType)
-                // TODO: FirBlackBoxCodegenTestGenerated.Annotations.testDelegatedPropertySetter, it fails with hard cast
-                (result.argumentList as? FirResolvedArgumentList)?.let { annotationCall.replaceArgumentMapping((it).toAnnotationArgumentMapping()) }
+                (result.argumentList as FirResolvedArgumentList).let { annotationCall.replaceArgumentMapping((it).toAnnotationArgumentMapping()) }
                 annotationCall
             }
         }
     }
 
-    private inline fun <T> withFirArrayOfCallTransformer(block: () -> T): T {
+    override fun transformErrorAnnotationCall(errorAnnotationCall: FirErrorAnnotationCall, data: ResolutionMode): FirStatement {
+        return transformAnnotationCall(errorAnnotationCall, data)
+    }
+
+    protected inline fun <T> withFirArrayOfCallTransformer(block: () -> T): T {
         enableArrayOfCallTransformation = true
         return try {
             block()

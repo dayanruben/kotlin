@@ -53,6 +53,7 @@
 /compiler/container/ "Kotlin Compiler Core"
 /compiler/daemon/ "Kotlin Compiler Core"
 /compiler/fir/ "Kotlin Compiler Core"
+/compiler/fir/fir2ir/tests-gen/ "Kotlin Compiler Core" "Kotlin JVM" "Kotlin JS" "Kotlin Native" "Kotlin Wasm"
 /compiler/frontend/ "Kotlin Compiler Core"
 /compiler/frontend.common/ "Kotlin Compiler Core"
 /compiler/frontend.common.jvm/ "Kotlin Compiler Core"
@@ -105,7 +106,7 @@
 /compiler/testData/cli/jvm/ "Kotlin JVM" "Kotlin Compiler Core"
 /compiler/testData/cli/metadata/ "Kotlin Compiler Core"
 /compiler/testData/codegen/asmLike/ "Kotlin JVM"
-/compiler/testData/codegen/box/ "Kotlin JVM" "Kotlin JS" "Kotlin Native" "Kotlin Wasm"
+/compiler/testData/codegen/box/ "Kotlin Compiler Core" "Kotlin JVM" "Kotlin JS" "Kotlin Native" "Kotlin Wasm"
 /compiler/testData/codegen/boxError/ "Kotlin JS"
 /compiler/testData/codegen/boxInline/ "Kotlin JVM" "Kotlin JS" "Kotlin Native" "Kotlin Wasm"
 /compiler/testData/codegen/boxKlib/ "Kotlin JVM"
@@ -188,6 +189,8 @@
 /compiler/tests-against-klib/ "Kotlin JVM"
 /compiler/tests-common/ "Kotlin Compiler Core" "Kotlin JVM" "Kotlin JS" "Kotlin Native" "Kotlin Wasm"
 /compiler/tests-common-new/ "Kotlin Compiler Core"
+/compiler/tests-common-new/tests-gen/org/jetbrains/kotlin/test/runners/codegen/ "Kotlin Compiler Core" "Kotlin JVM" "Kotlin JS" "Kotlin Native" "Kotlin Wasm"
+/compiler/tests-common-new/tests-gen/org/jetbrains/kotlin/test/runners/ir/ "Kotlin Compiler Core" "Kotlin JVM" "Kotlin JS" "Kotlin Native" "Kotlin Wasm"
 /compiler/tests-compiler-utils/ "Kotlin Compiler Core"
 /compiler/tests-different-jdk/ "Kotlin JVM"
 /compiler/tests-for-compiler-generator/ "Kotlin Compiler Core" "Kotlin JVM" "Kotlin JS" "Kotlin Native" "Kotlin Wasm"
@@ -266,6 +269,8 @@
 /libraries/reflect/ A.Qurbonzoda Vsevolod.Tolstopyato Ilya.Gorbunov
 /libraries/scripting/ "Kotlin Compiler Core"
 /libraries/stdlib/ A.Qurbonzoda Vsevolod.Tolstopyato Ilya.Gorbunov
+libraries/stdlib/wasm/builtins/ "Kotlin Wasm"
+libraries/stdlib/wasm/internal/ "Kotlin Wasm"
 
 /libraries/tools/atomicfu/ "Kotlin Libraries"
 /libraries/tools/binary-compatibility-validator/ "Kotlin Libraries"
