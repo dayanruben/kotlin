@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.fir.renderer
 
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.contracts.FirContractDescription
 import org.jetbrains.kotlin.fir.contracts.FirEffectDeclaration
@@ -179,10 +180,11 @@ class FirRenderer(
             renderContexts(callableDeclaration.contextReceivers)
             annotationRenderer?.render(callableDeclaration)
             visitMemberDeclaration(callableDeclaration)
-            val receiverType = callableDeclaration.receiverTypeRef
+            val receiverParameter = callableDeclaration.receiverParameter
             print(" ")
-            if (receiverType != null) {
-                receiverType.accept(this)
+            if (receiverParameter != null) {
+                annotationRenderer?.render(receiverParameter, AnnotationUseSiteTarget.RECEIVER)
+                receiverParameter.typeRef.accept(this)
                 print(".")
             }
             when (callableDeclaration) {
@@ -299,6 +301,12 @@ class FirRenderer(
             }
         }
 
+        override fun visitReceiverParameter(receiverParameter: FirReceiverParameter) {
+            print("<explicit receiver parameter>: ")
+            annotationRenderer?.render(receiverParameter)
+            receiverParameter.typeRef.accept(this)
+        }
+
         override fun visitSimpleFunction(simpleFunction: FirSimpleFunction) {
             visitCallableDeclaration(simpleFunction)
             bodyRenderer?.render(simpleFunction)
@@ -343,9 +351,9 @@ class FirRenderer(
             annotationRenderer?.render(anonymousFunction)
             declarationRenderer.render(anonymousFunction)
             print(" ")
-            val receiverType = anonymousFunction.receiverTypeRef
-            if (receiverType != null) {
-                receiverType.accept(this)
+            val receiverParameter = anonymousFunction.receiverParameter
+            if (receiverParameter != null) {
+                receiverParameter.typeRef.accept(this)
                 print(".")
             }
             print("<anonymous>")

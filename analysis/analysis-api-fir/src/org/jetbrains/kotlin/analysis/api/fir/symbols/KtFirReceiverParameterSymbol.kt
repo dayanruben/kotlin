@@ -7,7 +7,9 @@ package org.jetbrains.kotlin.analysis.api.fir.symbols
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationsList
 import org.jetbrains.kotlin.analysis.api.fir.KtSymbolByFirBuilder
+import org.jetbrains.kotlin.analysis.api.fir.annotations.KtFirAnnotationListForReceiverParameter
 import org.jetbrains.kotlin.analysis.api.fir.findPsi
 import org.jetbrains.kotlin.analysis.api.fir.symbols.pointers.KtFirReceiverParameterSymbolPointer
 import org.jetbrains.kotlin.analysis.api.fir.symbols.pointers.requireOwnerPointer
@@ -29,15 +31,14 @@ internal class KtFirReceiverParameterSymbol(
     override val token: KtLifetimeToken,
     private val builder: KtSymbolByFirBuilder
 ) : KtReceiverParameterSymbol(), KtLifetimeOwner {
-    override val psi: PsiElement? by cached { firSymbol.fir.receiverTypeRef?.findPsi(firSymbol.fir.moduleData.session) }
+    override val psi: PsiElement? by cached { firSymbol.fir.receiverParameter?.typeRef?.findPsi(firSymbol.fir.moduleData.session) }
 
     init {
-        require(firSymbol.fir.receiverTypeRef != null) { "$firSymbol doesn't have an extension receiver." }
+        require(firSymbol.fir.receiverParameter != null) { "$firSymbol doesn't have an extension receiver." }
     }
 
     override val type: KtType by cached {
-        firSymbol.receiverType(builder)
-            ?: error("$firSymbol doesn't have an extension receiver.")
+        firSymbol.receiverType(builder) ?: error("$firSymbol doesn't have an extension receiver.")
     }
 
     override val owningCallableSymbol: KtCallableSymbol by cached { builder.callableBuilder.buildCallableSymbol(firSymbol) }
@@ -46,5 +47,9 @@ internal class KtFirReceiverParameterSymbol(
 
     override fun createPointer(): KtSymbolPointer<KtReceiverParameterSymbol> = withValidityAssertion {
         KtFirReceiverParameterSymbolPointer(owningCallableSymbol.createPointer())
+    }
+
+    override val annotationsList: KtAnnotationsList by cached {
+        KtFirAnnotationListForReceiverParameter.create(firSymbol, firResolveSession.useSiteFirSession, token)
     }
 }

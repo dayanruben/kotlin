@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -245,7 +245,7 @@ private fun FirCallableSymbol<*>.toSymbolForCall(
             dispatchReceiver.typeRef.coneType.let { it.findClassRepresentation(it, declarationStorage.session) }
         }
         // Unbound callable reference to member (non-extension)
-        isReference && fir.receiverTypeRef == null -> {
+        isReference && fir.receiverParameter == null -> {
             // TODO: remove runIf with StandardClassIds.Any comparison after fixing ValueClass::equals case (KT-54887)
             runIf(containingClassLookupTag()?.classId != StandardClassIds.Any) {
                 (explicitReceiver as? FirResolvedQualifier)?.toLookupTag()
@@ -573,7 +573,8 @@ internal fun IrDeclarationParent.declareThisReceiverParameter(
     thisOrigin: IrDeclarationOrigin,
     startOffset: Int = this.startOffset,
     endOffset: Int = this.endOffset,
-    name: Name = SpecialNames.THIS
+    name: Name = SpecialNames.THIS,
+    explicitReceiver: FirReceiverParameter? = null,
 ): IrValueParameter {
     return symbolTable.irFactory.createValueParameter(
         startOffset, endOffset, thisOrigin, IrValueParameterSymbolImpl(),
@@ -582,6 +583,7 @@ internal fun IrDeclarationParent.declareThisReceiverParameter(
         isHidden = false, isAssignable = false
     ).apply {
         this.parent = this@declareThisReceiverParameter
+        explicitReceiver?.let { annotationGenerator.generate(this, it) }
     }
 }
 

@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.gradle.plugin.sources
 
+import org.gradle.api.Project
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.utils.MutableObservableSet
@@ -16,8 +17,11 @@ internal val KotlinSourceSet.internal: InternalKotlinSourceSet
     )
 
 internal interface InternalKotlinSourceSet : KotlinSourceSet {
+    val project: Project
     override val dependsOn: ObservableSet<KotlinSourceSet>
     val dependsOnClosure: ObservableSet<KotlinSourceSet>
     val withDependsOnClosure: ObservableSet<KotlinSourceSet>
     val compilations: MutableObservableSet<KotlinCompilation<*>>
 }
+
+internal val KotlinSourceSet.project: Project get() = this.internal.project

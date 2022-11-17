@@ -18,7 +18,13 @@ KtKotlinPropertySymbol:
   modality: OPEN
   name: zoo
   origin: DELEGATED
-  receiverType: kotlin/Int
+  receiverParameter: KtReceiverParameterSymbol:
+    annotationsList: []
+    origin: DELEGATED
+    owningCallableSymbol: KtKotlinPropertySymbol(/I.zoo)
+    type: kotlin/Int
+    getContainingModule: KtSourceModule "Sources of main"
+    deprecationStatus: null
   returnType: kotlin/Unit
   setter: null
   symbolKind: CLASS_MEMBER
@@ -49,7 +55,7 @@ KtFunctionSymbol:
   modality: OPEN
   name: foo
   origin: DELEGATED
-  receiverType: null
+  receiverParameter: null
   returnType: kotlin/Unit
   symbolKind: CLASS_MEMBER
   typeParameters: []
@@ -79,7 +85,7 @@ KtKotlinPropertySymbol:
   modality: OPEN
   name: foo
   origin: DELEGATED
-  receiverType: null
+  receiverParameter: null
   returnType: kotlin/Int
   setter: null
   symbolKind: CLASS_MEMBER
@@ -110,7 +116,13 @@ KtFunctionSymbol:
   modality: OPEN
   name: smth
   origin: DELEGATED
-  receiverType: kotlin/Int
+  receiverParameter: KtReceiverParameterSymbol:
+    annotationsList: []
+    origin: DELEGATED
+    owningCallableSymbol: KtFunctionSymbol(/I.smth)
+    type: kotlin/Int
+    getContainingModule: KtSourceModule "Sources of main"
+    deprecationStatus: null
   returnType: kotlin/Short
   symbolKind: CLASS_MEMBER
   typeParameters: []
@@ -140,7 +152,7 @@ KtKotlinPropertySymbol:
   modality: OPEN
   name: bar
   origin: DELEGATED
-  receiverType: null
+  receiverParameter: null
   returnType: kotlin/Long
   setter: null
   symbolKind: CLASS_MEMBER
@@ -174,7 +186,13 @@ KtKotlinPropertySymbol:
   modality: OPEN
   name: doo
   origin: DELEGATED
-  receiverType: kotlin/Int
+  receiverParameter: KtReceiverParameterSymbol:
+    annotationsList: []
+    origin: DELEGATED
+    owningCallableSymbol: KtKotlinPropertySymbol(/I.doo)
+    type: kotlin/Int
+    getContainingModule: KtSourceModule "Sources of main"
+    deprecationStatus: null
   returnType: kotlin/String
   setter: null
   symbolKind: CLASS_MEMBER
