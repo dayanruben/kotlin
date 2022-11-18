@@ -18011,9 +18011,9 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             }
 
             @Test
-            @TestMetadata("typedEqualsOperatorModifierInInlineClass.kt")
-            public void testTypedEqualsOperatorModifierInInlineClass() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/inlineClasses/typedEqualsOperatorModifierInInlineClass.kt");
+            @TestMetadata("typedEqualsOperatorDeclarationCheck.kt")
+            public void testTypedEqualsOperatorDeclarationCheck() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inlineClasses/typedEqualsOperatorDeclarationCheck.kt");
             }
 
             @Test
@@ -21002,6 +21002,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             @TestMetadata("incompatibles.kt")
             public void testIncompatibles() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/multiplatform/incompatibles.kt");
+            }
+
+            @Test
+            @TestMetadata("kt54827.kt")
+            public void testKt54827() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multiplatform/kt54827.kt");
             }
 
             @Test
