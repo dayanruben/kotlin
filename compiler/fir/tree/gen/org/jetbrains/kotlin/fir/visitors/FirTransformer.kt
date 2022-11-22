@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.fir.declarations.FirReceiverParameter
 import org.jetbrains.kotlin.fir.declarations.FirProperty
 import org.jetbrains.kotlin.fir.declarations.FirField
 import org.jetbrains.kotlin.fir.declarations.FirEnumEntry
+import org.jetbrains.kotlin.fir.FirFunctionTypeParameter
 import org.jetbrains.kotlin.fir.declarations.FirClassLikeDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirClass
 import org.jetbrains.kotlin.fir.declarations.FirRegularClass
@@ -92,6 +93,7 @@ import org.jetbrains.kotlin.fir.expressions.FirErrorExpression
 import org.jetbrains.kotlin.fir.declarations.FirErrorFunction
 import org.jetbrains.kotlin.fir.declarations.FirErrorProperty
 import org.jetbrains.kotlin.fir.expressions.FirQualifiedAccessExpression
+import org.jetbrains.kotlin.fir.expressions.FirQualifiedErrorAccessExpression
 import org.jetbrains.kotlin.fir.expressions.FirPropertyAccessExpression
 import org.jetbrains.kotlin.fir.expressions.FirFunctionCall
 import org.jetbrains.kotlin.fir.expressions.FirIntegerLiteralOperatorCall
@@ -253,6 +255,10 @@ abstract class FirTransformer<in D> : FirVisitor<FirElement, D>() {
 
     open fun transformEnumEntry(enumEntry: FirEnumEntry, data: D): FirStatement {
         return transformElement(enumEntry, data)
+    }
+
+    open fun transformFunctionTypeParameter(functionTypeParameter: FirFunctionTypeParameter, data: D): FirFunctionTypeParameter {
+        return transformElement(functionTypeParameter, data)
     }
 
     open fun transformClassLikeDeclaration(classLikeDeclaration: FirClassLikeDeclaration, data: D): FirStatement {
@@ -493,6 +499,10 @@ abstract class FirTransformer<in D> : FirVisitor<FirElement, D>() {
 
     open fun transformQualifiedAccessExpression(qualifiedAccessExpression: FirQualifiedAccessExpression, data: D): FirStatement {
         return transformElement(qualifiedAccessExpression, data)
+    }
+
+    open fun transformQualifiedErrorAccessExpression(qualifiedErrorAccessExpression: FirQualifiedErrorAccessExpression, data: D): FirStatement {
+        return transformElement(qualifiedErrorAccessExpression, data)
     }
 
     open fun transformPropertyAccessExpression(propertyAccessExpression: FirPropertyAccessExpression, data: D): FirStatement {
@@ -799,6 +809,10 @@ abstract class FirTransformer<in D> : FirVisitor<FirElement, D>() {
         return transformEnumEntry(enumEntry, data)
     }
 
+    final override fun visitFunctionTypeParameter(functionTypeParameter: FirFunctionTypeParameter, data: D): FirFunctionTypeParameter {
+        return transformFunctionTypeParameter(functionTypeParameter, data)
+    }
+
     final override fun visitClassLikeDeclaration(classLikeDeclaration: FirClassLikeDeclaration, data: D): FirStatement {
         return transformClassLikeDeclaration(classLikeDeclaration, data)
     }
@@ -1037,6 +1051,10 @@ abstract class FirTransformer<in D> : FirVisitor<FirElement, D>() {
 
     final override fun visitQualifiedAccessExpression(qualifiedAccessExpression: FirQualifiedAccessExpression, data: D): FirStatement {
         return transformQualifiedAccessExpression(qualifiedAccessExpression, data)
+    }
+
+    final override fun visitQualifiedErrorAccessExpression(qualifiedErrorAccessExpression: FirQualifiedErrorAccessExpression, data: D): FirStatement {
+        return transformQualifiedErrorAccessExpression(qualifiedErrorAccessExpression, data)
     }
 
     final override fun visitPropertyAccessExpression(propertyAccessExpression: FirPropertyAccessExpression, data: D): FirStatement {

@@ -43,6 +43,12 @@ public class SerializationPluginDiagnosticTestGenerated extends AbstractSerializ
     }
 
     @Test
+    @TestMetadata("externalSerialierJava.kt")
+    public void testExternalSerialierJava() throws Exception {
+        runTest("plugins/kotlinx-serialization/testData/diagnostics/externalSerialierJava.kt");
+    }
+
+    @Test
     @TestMetadata("ExternalSerializers.kt")
     public void testExternalSerializers() throws Exception {
         runTest("plugins/kotlinx-serialization/testData/diagnostics/ExternalSerializers.kt");
@@ -82,6 +88,12 @@ public class SerializationPluginDiagnosticTestGenerated extends AbstractSerializ
     @TestMetadata("LocalAndAnonymous.kt")
     public void testLocalAndAnonymous() throws Exception {
         runTest("plugins/kotlinx-serialization/testData/diagnostics/LocalAndAnonymous.kt");
+    }
+
+    @Test
+    @TestMetadata("metaSerializableNested.kt")
+    public void testMetaSerializableNested() throws Exception {
+        runTest("plugins/kotlinx-serialization/testData/diagnostics/metaSerializableNested.kt");
     }
 
     @Test

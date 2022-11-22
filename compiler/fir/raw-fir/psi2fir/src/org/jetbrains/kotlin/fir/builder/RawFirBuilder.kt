@@ -227,7 +227,6 @@ open class RawFirBuilder(
             val callExpressionCallee = (this as? KtCallExpression)?.calleeExpression?.unwrapParenthesesLabelsAndAnnotations()
 
             if (this is KtNameReferenceExpression ||
-                this is KtConstantExpression ||
                 (this is KtCallExpression && callExpressionCallee !is KtLambdaExpression) ||
                 getQualifiedExpressionForSelector() == null
             ) {
@@ -1611,6 +1610,7 @@ open class RawFirBuilder(
                     isLocal = true
                     symbol = FirPropertySymbol(propertyName)
 
+                    extractTypeParametersTo(this, symbol)
                     backingField = this@toFirProperty.fieldDeclaration.toFirBackingField(
                         this@toFirProperty,
                         propertySymbol = symbol,
@@ -1815,7 +1815,14 @@ open class RawFirBuilder(
                         // TODO: probably implicit type should not be here
                         returnTypeRef = unwrappedElement.returnTypeReference.toFirOrErrorType()
                         for (valueParameter in unwrappedElement.parameters) {
-                            valueParameters += convertValueParameter(valueParameter, valueParameterDeclaration = ValueParameterDeclaration.FUNCTIONAL_TYPE)
+                            parameters += buildFunctionTypeParameter {
+                                this.source = valueParameter.toFirSourceElement()
+                                name = valueParameter.nameAsName
+                                returnTypeRef = when {
+                                    valueParameter.typeReference != null -> valueParameter.typeReference.toFirOrErrorType()
+                                    else -> createNoTypeForParameterTypeRef()
+                                }
+                            }
                         }
 
                         contextReceiverTypeRefs.addAll(
@@ -2454,6 +2461,14 @@ open class RawFirBuilder(
                 }
 
                 return convertFirSelector(firSelector, expression.toFirSourceElement(), receiver)
+            }
+            if (firSelector is FirErrorExpression) {
+                return buildQualifiedErrorAccessExpression {
+                    this.receiver = receiver
+                    this.selector = firSelector
+                    source = expression.toFirSourceElement()
+                    diagnostic = ConeSimpleDiagnostic("Qualified expression with unexpected selector", DiagnosticKind.Syntax)
+                }
             }
             return firSelector
         }

@@ -80,6 +80,12 @@ public class SerializationIrBoxTestGenerated extends AbstractSerializationIrBoxT
     }
 
     @Test
+    @TestMetadata("intrinsicsStarProjections.kt")
+    public void testIntrinsicsStarProjections() throws Exception {
+        runTest("plugins/kotlinx-serialization/testData/boxIr/intrinsicsStarProjections.kt");
+    }
+
+    @Test
     @TestMetadata("metaSerializable.kt")
     public void testMetaSerializable() throws Exception {
         runTest("plugins/kotlinx-serialization/testData/boxIr/metaSerializable.kt");
@@ -119,5 +125,11 @@ public class SerializationIrBoxTestGenerated extends AbstractSerializationIrBoxT
     @TestMetadata("starProjections.kt")
     public void testStarProjections() throws Exception {
         runTest("plugins/kotlinx-serialization/testData/boxIr/starProjections.kt");
+    }
+
+    @Test
+    @TestMetadata("typealiasesTest.kt")
+    public void testTypealiasesTest() throws Exception {
+        runTest("plugins/kotlinx-serialization/testData/boxIr/typealiasesTest.kt");
     }
 }

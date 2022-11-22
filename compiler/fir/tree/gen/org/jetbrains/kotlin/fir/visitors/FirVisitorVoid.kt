@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.fir.declarations.FirReceiverParameter
 import org.jetbrains.kotlin.fir.declarations.FirProperty
 import org.jetbrains.kotlin.fir.declarations.FirField
 import org.jetbrains.kotlin.fir.declarations.FirEnumEntry
+import org.jetbrains.kotlin.fir.FirFunctionTypeParameter
 import org.jetbrains.kotlin.fir.declarations.FirClassLikeDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirClass
 import org.jetbrains.kotlin.fir.declarations.FirRegularClass
@@ -92,6 +93,7 @@ import org.jetbrains.kotlin.fir.expressions.FirErrorExpression
 import org.jetbrains.kotlin.fir.declarations.FirErrorFunction
 import org.jetbrains.kotlin.fir.declarations.FirErrorProperty
 import org.jetbrains.kotlin.fir.expressions.FirQualifiedAccessExpression
+import org.jetbrains.kotlin.fir.expressions.FirQualifiedErrorAccessExpression
 import org.jetbrains.kotlin.fir.expressions.FirPropertyAccessExpression
 import org.jetbrains.kotlin.fir.expressions.FirFunctionCall
 import org.jetbrains.kotlin.fir.expressions.FirIntegerLiteralOperatorCall
@@ -252,6 +254,10 @@ abstract class FirVisitorVoid : FirVisitor<Unit, Nothing?>() {
 
     open fun visitEnumEntry(enumEntry: FirEnumEntry) {
         visitElement(enumEntry)
+    }
+
+    open fun visitFunctionTypeParameter(functionTypeParameter: FirFunctionTypeParameter) {
+        visitElement(functionTypeParameter)
     }
 
     open fun visitClassLikeDeclaration(classLikeDeclaration: FirClassLikeDeclaration) {
@@ -492,6 +498,10 @@ abstract class FirVisitorVoid : FirVisitor<Unit, Nothing?>() {
 
     open fun visitQualifiedAccessExpression(qualifiedAccessExpression: FirQualifiedAccessExpression) {
         visitElement(qualifiedAccessExpression)
+    }
+
+    open fun visitQualifiedErrorAccessExpression(qualifiedErrorAccessExpression: FirQualifiedErrorAccessExpression) {
+        visitElement(qualifiedErrorAccessExpression)
     }
 
     open fun visitPropertyAccessExpression(propertyAccessExpression: FirPropertyAccessExpression) {
@@ -798,6 +808,10 @@ abstract class FirVisitorVoid : FirVisitor<Unit, Nothing?>() {
         visitEnumEntry(enumEntry)
     }
 
+    final override fun visitFunctionTypeParameter(functionTypeParameter: FirFunctionTypeParameter, data: Nothing?) {
+        visitFunctionTypeParameter(functionTypeParameter)
+    }
+
     final override fun visitClassLikeDeclaration(classLikeDeclaration: FirClassLikeDeclaration, data: Nothing?) {
         visitClassLikeDeclaration(classLikeDeclaration)
     }
@@ -1036,6 +1050,10 @@ abstract class FirVisitorVoid : FirVisitor<Unit, Nothing?>() {
 
     final override fun visitQualifiedAccessExpression(qualifiedAccessExpression: FirQualifiedAccessExpression, data: Nothing?) {
         visitQualifiedAccessExpression(qualifiedAccessExpression)
+    }
+
+    final override fun visitQualifiedErrorAccessExpression(qualifiedErrorAccessExpression: FirQualifiedErrorAccessExpression, data: Nothing?) {
+        visitQualifiedErrorAccessExpression(qualifiedErrorAccessExpression)
     }
 
     final override fun visitPropertyAccessExpression(propertyAccessExpression: FirPropertyAccessExpression, data: Nothing?) {

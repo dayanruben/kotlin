@@ -207,6 +207,11 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
             +fieldList("nonFatalDiagnostics", coneDiagnosticType)
         }
 
+        qualifiedErrorAccessExpression.configure {
+            +field("selector", errorExpression)
+            +field("receiver", expression)
+        }
+
         constExpression.configure {
             withArg("T")
             +field("kind", constKindType.withArgs("T"), withReplace = true)
@@ -409,6 +414,12 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
             +field("backingField", backingField, nullable = true).withTransform()
             +annotations
             needTransformOtherChildren()
+        }
+
+
+        functionTypeParameter.configure {
+            +field("name", nameType, nullable = true)
+            +field("returnTypeRef", typeRef)
         }
 
         errorProperty.configure {
@@ -640,7 +651,7 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
 
         functionTypeRef.configure {
             +field("receiverTypeRef", typeRef, nullable = true)
-            +valueParameters
+            +fieldList("parameters", functionTypeParameter)
             +returnTypeRef
             +booleanField("isSuspend")
 
