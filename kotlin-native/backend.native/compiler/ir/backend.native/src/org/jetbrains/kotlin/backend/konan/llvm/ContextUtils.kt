@@ -235,30 +235,30 @@ internal interface ContextUtils : RuntimeAware {
  */
 internal fun stringAsBytes(str: String) = str.toByteArray(Charsets.UTF_8)
 
-internal class InitializersGenerationState {
-    val fileGlobalInitStates = mutableMapOf<IrFile, LLVMValueRef>()
-    val fileThreadLocalInitStates = mutableMapOf<IrFile, AddressAccess>()
-
+internal class ScopeInitializersGenerationState {
     val topLevelFields = mutableListOf<IrField>()
-    val moduleThreadLocalInitializers = mutableListOf<IrFunction>()
-    val moduleGlobalInitializers = mutableListOf<IrFunction>()
     var globalInitFunction: IrFunction? = null
     var globalInitState: LLVMValueRef? = null
     var threadLocalInitFunction: IrFunction? = null
     var threadLocalInitState: AddressAccess? = null
+    val globalSharedObjects = mutableSetOf<LLVMValueRef>()
+    fun isEmpty() = topLevelFields.isEmpty() &&
+            globalInitState == null &&
+            threadLocalInitState == null &&
+            globalSharedObjects.isEmpty()
+}
 
-    fun reset() {
-        moduleThreadLocalInitializers.clear()
-        moduleGlobalInitializers.clear()
-        topLevelFields.clear()
-        globalInitFunction = null
-        globalInitState = null
-        threadLocalInitFunction = null
-        threadLocalInitState = null
+internal class InitializersGenerationState {
+    val fileGlobalInitStates = mutableMapOf<IrDeclarationContainer, LLVMValueRef>()
+    val fileThreadLocalInitStates = mutableMapOf<IrDeclarationContainer, AddressAccess>()
+
+    var scopeState = ScopeInitializersGenerationState()
+
+    fun reset(newState: ScopeInitializersGenerationState) : ScopeInitializersGenerationState {
+        val t = scopeState
+        scopeState = newState
+        return t
     }
-
-    fun isEmpty() = topLevelFields.isEmpty() && globalInitState == null && threadLocalInitState == null
-            && moduleGlobalInitializers.isEmpty() && moduleThreadLocalInitializers.isEmpty()
 }
 
 internal class ConstInt1(llvm: Llvm, val value: Boolean) : ConstValue {
@@ -481,8 +481,6 @@ internal class Llvm(private val context: Context, val module: LLVMModuleRef) : R
 
     val allocInstanceFunction = importRtFunction("AllocInstance")
     val allocArrayFunction = importRtFunction("AllocArrayInstance")
-    val initThreadLocalSingleton = importRtFunction("InitThreadLocalSingleton")
-    val initSingletonFunction = importRtFunction("InitSingleton")
     val initAndRegisterGlobalFunction = importRtFunction("InitAndRegisterGlobal")
     val updateHeapRefFunction = importRtFunction("UpdateHeapRef")
     val updateStackRefFunction = importRtFunction("UpdateStackRef")
@@ -564,7 +562,6 @@ internal class Llvm(private val context: Context, val module: LLVMModuleRef) : R
     val compilerUsedGlobals = mutableListOf<LLVMValueRef>()
     val irStaticInitializers = mutableListOf<IrStaticInitializer>()
     val otherStaticInitializers = mutableListOf<LLVMValueRef>()
-    var fileUsesThreadLocalObjects = false
     val globalSharedObjects = mutableSetOf<LLVMValueRef>()
     val initializersGenerationState = InitializersGenerationState()
     val boxCacheGlobals = mutableMapOf<BoxCache, StaticData.Global>()

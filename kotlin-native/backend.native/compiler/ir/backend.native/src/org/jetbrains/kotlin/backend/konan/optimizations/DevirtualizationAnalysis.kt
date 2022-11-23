@@ -13,9 +13,9 @@ import org.jetbrains.kotlin.backend.common.lower.createIrBuilder
 import org.jetbrains.kotlin.backend.common.lower.irBlock
 import org.jetbrains.kotlin.backend.konan.*
 import org.jetbrains.kotlin.backend.konan.ir.isBoxOrUnboxCall
-import org.jetbrains.kotlin.backend.konan.optimizations.DevirtualizationAnalysis.irCoerce
 import org.jetbrains.kotlin.backend.konan.util.IntArrayList
 import org.jetbrains.kotlin.backend.konan.util.LongArrayList
+import org.jetbrains.kotlin.backend.konan.lower.getObjectClassInstanceFunction
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.builders.*
@@ -83,8 +83,8 @@ internal object DevirtualizationAnalysis {
         // TODO: Are globals initializers always called whether they are actually reachable from roots or not?
         // TODO: With the changed semantics of global initializers this is no longer the case - rework.
         val globalInitializers =
-                moduleDFG.symbolTable.functionMap.values.filter { it.isTopLevelFieldInitializer || it.isGlobalInitializer } +
-                        externalModulesDFG.functionDFGs.keys.filter { it.isTopLevelFieldInitializer || it.isGlobalInitializer }
+                moduleDFG.symbolTable.functionMap.values.filter { it.isStaticFieldInitializer } +
+                        externalModulesDFG.functionDFGs.keys.filter { it.isStaticFieldInitializer  }
 
         val explicitlyExported =
                 moduleDFG.symbolTable.functionMap.values.filter { it.explicitlyExported } +
@@ -107,7 +107,7 @@ internal object DevirtualizationAnalysis {
 
                 context.getLayoutBuilder(declaration).associatedObjects.values.forEach {
                     assert(it.kind == ClassKind.OBJECT) { "An object expected but was ${it.dump()}" }
-                    associatedObjectConstructors += moduleDFG.symbolTable.mapFunction(it.constructors.single())
+                    associatedObjectConstructors += moduleDFG.symbolTable.mapFunction(context.getObjectClassInstanceFunction(it))
                 }
             }
 

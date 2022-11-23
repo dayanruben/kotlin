@@ -250,6 +250,12 @@ internal val initializersPhase = makeKonanFileLoweringPhase(
         prerequisite = setOf(enumConstructorsPhase)
 )
 
+internal val objectClassesPhase = makeKonanFileLoweringPhase(
+        ::ObjectClassLowering,
+        name = "ObjectClasses",
+        description = "Enum constructors lowering"
+)
+
 internal val localFunctionsPhase = makeKonanFileOpPhase(
         op = { context, irFile ->
             LocalDelegatedPropertiesLowering().lower(irFile)
@@ -444,10 +450,10 @@ internal val constantInliningPhase = makeKonanFileLoweringPhase(
         description = "Inline const fields reads",
 )
 
-internal val fileInitializersPhase = makeKonanFileLoweringPhase(
-        ::FileInitializersLowering,
-        name = "FileInitializers",
-        description = "Add calls to file initializers",
+internal val staticInitializersPhase = makeKonanFileLoweringPhase(
+        ::StaticInitializersLowering,
+        name = "StaticInitializers",
+        description = "Add calls to static initializers",
         prerequisite = setOf(expressionBodyTransformPhase)
 )
 

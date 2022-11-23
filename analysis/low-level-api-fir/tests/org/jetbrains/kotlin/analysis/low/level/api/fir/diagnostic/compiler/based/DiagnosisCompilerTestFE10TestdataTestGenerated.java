@@ -30644,6 +30644,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
                 }
 
                 @Test
+                @TestMetadata("reassignedInRhs.kt")
+                public void testReassignedInRhs() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/smartCasts/variables/reassignedInRhs.kt");
+                }
+
+                @Test
                 @TestMetadata("varAsUse.kt")
                 public void testVarAsUse() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/smartCasts/variables/varAsUse.kt");
@@ -37845,6 +37851,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             }
 
             @Test
+            @TestMetadata("callOfBaseFunctionFromGeneric.kt")
+            public void testCallOfBaseFunctionFromGeneric() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/callOfBaseFunctionFromGeneric.kt");
+            }
+
+            @Test
             @TestMetadata("classMembers.kt")
             public void testClassMembers() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/classMembers.kt");
@@ -37863,9 +37875,21 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             }
 
             @Test
+            @TestMetadata("constructorCheck.kt")
+            public void testConstructorCheck() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/constructorCheck.kt");
+            }
+
+            @Test
             @TestMetadata("deeplyNestedClass.kt")
             public void testDeeplyNestedClass() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/deeplyNestedClass.kt");
+            }
+
+            @Test
+            @TestMetadata("duration.kt")
+            public void testDuration() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/duration.kt");
             }
 
             @Test
@@ -37950,6 +37974,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             @TestMetadata("noRetentionAfter.kt")
             public void testNoRetentionAfter() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/noRetentionAfter.kt");
+            }
+
+            @Test
+            @TestMetadata("overridableCheck.kt")
+            public void testOverridableCheck() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/overridableCheck.kt");
             }
 
             @Test
@@ -38392,6 +38422,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
                 }
 
                 @Test
+                @TestMetadata("moreOnlyInputTypes.kt")
+                public void testMoreOnlyInputTypes() throws Exception {
+                    runTest("compiler/testData/diagnostics/testsWithStdLib/inference/annotationsForResolve/moreOnlyInputTypes.kt");
+                }
+
+                @Test
                 @TestMetadata("noInferAndLowPriority.kt")
                 public void testNoInferAndLowPriority() throws Exception {
                     runTest("compiler/testData/diagnostics/testsWithStdLib/inference/annotationsForResolve/noInferAndLowPriority.kt");
@@ -38425,6 +38461,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
                 @TestMetadata("onlyInputTypes.kt")
                 public void testOnlyInputTypes() throws Exception {
                     runTest("compiler/testData/diagnostics/testsWithStdLib/inference/annotationsForResolve/onlyInputTypes.kt");
+                }
+
+                @Test
+                @TestMetadata("onlyInputTypesAndClassLiterals.kt")
+                public void testOnlyInputTypesAndClassLiterals() throws Exception {
+                    runTest("compiler/testData/diagnostics/testsWithStdLib/inference/annotationsForResolve/onlyInputTypesAndClassLiterals.kt");
                 }
 
                 @Test

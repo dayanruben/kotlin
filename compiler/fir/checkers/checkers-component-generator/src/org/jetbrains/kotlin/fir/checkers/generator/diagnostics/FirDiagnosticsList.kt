@@ -449,6 +449,10 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<Boolean>("isMismatchDueToNullability")
         }
 
+        val TYPE_INFERENCE_ONLY_INPUT_TYPES_ERROR by error<PsiElement>() {
+            parameter<FirTypeParameterSymbol>("typeParameter")
+        }
+
         val THROWABLE_TYPE_MISMATCH by error<PsiElement> {
             parameter<ConeKotlinType>("actualType")
             parameter<Boolean>("isMismatchDueToNullability")
@@ -648,6 +652,9 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<FirFunction>("targetFunction")
             parameter<Boolean>("isMismatchDueToNullability")
         }
+
+        val IMPLICIT_NOTHING_RETURN_TYPE by error<PsiElement>(PositioningStrategy.NAME_IDENTIFIER)
+        val IMPLICIT_NOTHING_PROPERTY_TYPE by error<PsiElement>(PositioningStrategy.NAME_IDENTIFIER)
 
         val CYCLIC_GENERIC_UPPER_BOUND by error<PsiElement>()
 

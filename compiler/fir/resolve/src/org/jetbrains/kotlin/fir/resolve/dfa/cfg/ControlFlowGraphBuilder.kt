@@ -43,6 +43,9 @@ class ControlFlowGraphBuilder {
     val lastNode: CFGNode<*>
         get() = lastNodes.top()
 
+    val lastNodeOrNull: CFGNode<*>?
+        get() = lastNodes.topOrNull()
+
     var levelCounter: Int = 0
 
     private val modes: Stack<Mode> = stackOf(Mode.TopLevel)
@@ -182,7 +185,7 @@ class ControlFlowGraphBuilder {
 
     // ----------------------------------- Regular function -----------------------------------
 
-    fun enterFunction(function: FirFunction): Triple<FunctionEnterNode, LocalFunctionDeclarationNode?, CFGNode<*>?> {
+    fun enterFunction(function: FirFunction): Pair<FunctionEnterNode, LocalFunctionDeclarationNode?> {
         require(function !is FirAnonymousFunction)
         val name = when (function) {
             is FirSimpleFunction -> function.name.asString()
@@ -226,7 +229,7 @@ class ControlFlowGraphBuilder {
             exitTargetsForTry.push(it)
         }
 
-        return Triple(enterNode, localFunctionNode, previousNode)
+        return Pair(enterNode, localFunctionNode)
     }
 
     fun exitFunction(function: FirFunction): Pair<FunctionExitNode, ControlFlowGraph> {
@@ -885,14 +888,6 @@ class ControlFlowGraphBuilder {
         return leftExitNode to rightExitNode
     }
 
-    fun enterContract(qualifiedAccess: FirQualifiedAccess): EnterContractNode {
-        return createEnterContractNode(qualifiedAccess).also { addNewSimpleNode(it) }
-    }
-
-    fun exitContract(qualifiedAccess: FirQualifiedAccess): ExitContractNode {
-        return createExitContractNode(qualifiedAccess).also { addNewSimpleNode(it) }
-    }
-
     fun exitBinaryOr(binaryLogicExpression: FirBinaryLogicExpression): BinaryOrExitNode {
         assert(binaryLogicExpression.kind == LogicOperationKind.OR)
         levelCounter--
@@ -1304,7 +1299,7 @@ class ControlFlowGraphBuilder {
 
     // ----------------------------------- Block -----------------------------------
 
-    fun enterInitBlock(initBlock: FirAnonymousInitializer): Pair<InitBlockEnterNode, CFGNode<*>?> {
+    fun enterInitBlock(initBlock: FirAnonymousInitializer): InitBlockEnterNode {
         // TODO: questionable moment that we should pass data flow from init to init
 
         val graph = ControlFlowGraph(initBlock, "init block", ControlFlowGraph.Kind.Function)
@@ -1320,7 +1315,7 @@ class ControlFlowGraphBuilder {
             exitTargetsForTry.push(it)
         }
 
-        return enterNode to lastNode
+        return enterNode
     }
 
     fun exitInitBlock(initBlock: FirAnonymousInitializer): Pair<InitBlockExitNode, ControlFlowGraph> {

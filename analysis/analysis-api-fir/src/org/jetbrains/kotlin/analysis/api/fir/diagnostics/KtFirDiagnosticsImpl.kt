@@ -1224,6 +1224,12 @@ internal class TypeMismatchImpl(
     override val token: KtLifetimeToken,
 ) : KtFirDiagnostic.TypeMismatch(), KtAbstractFirDiagnostic<PsiElement>
 
+internal class TypeInferenceOnlyInputTypesErrorImpl(
+    override val typeParameter: KtTypeParameterSymbol,
+    override val firDiagnostic: KtPsiDiagnostic,
+    override val token: KtLifetimeToken,
+) : KtFirDiagnostic.TypeInferenceOnlyInputTypesError(), KtAbstractFirDiagnostic<PsiElement>
+
 internal class ThrowableTypeMismatchImpl(
     override val actualType: KtType,
     override val isMismatchDueToNullability: Boolean,
@@ -1641,6 +1647,16 @@ internal class ReturnTypeMismatchImpl(
     override val firDiagnostic: KtPsiDiagnostic,
     override val token: KtLifetimeToken,
 ) : KtFirDiagnostic.ReturnTypeMismatch(), KtAbstractFirDiagnostic<KtExpression>
+
+internal class ImplicitNothingReturnTypeImpl(
+    override val firDiagnostic: KtPsiDiagnostic,
+    override val token: KtLifetimeToken,
+) : KtFirDiagnostic.ImplicitNothingReturnType(), KtAbstractFirDiagnostic<PsiElement>
+
+internal class ImplicitNothingPropertyTypeImpl(
+    override val firDiagnostic: KtPsiDiagnostic,
+    override val token: KtLifetimeToken,
+) : KtFirDiagnostic.ImplicitNothingPropertyType(), KtAbstractFirDiagnostic<PsiElement>
 
 internal class CyclicGenericUpperBoundImpl(
     override val firDiagnostic: KtPsiDiagnostic,

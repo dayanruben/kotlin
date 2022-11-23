@@ -7,13 +7,11 @@ package org.jetbrains.kotlin.fir.builder
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IElementType
+import com.intellij.util.AstLoadingFilter
 import org.jetbrains.kotlin.*
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.StandardNames.BACKING_FIELD
-import org.jetbrains.kotlin.descriptors.ClassKind
-import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.descriptors.Visibilities
-import org.jetbrains.kotlin.descriptors.Visibility
+import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.*
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.contracts.FirContractDescription
@@ -51,14 +49,8 @@ import org.jetbrains.kotlin.utils.addToStdlib.runIf
 open class RawFirBuilder(
     session: FirSession,
     val baseScopeProvider: FirScopeProvider,
-    private val psiMode: PsiHandlingMode,
     bodyBuildingMode: BodyBuildingMode = BodyBuildingMode.NORMAL
 ) : BaseFirBuilder<PsiElement>(session) {
-
-    @Deprecated("Please replace with primary constructor call")
-    constructor(session: FirSession, baseScopeProvider: FirScopeProvider, mode: BodyBuildingMode = BodyBuildingMode.NORMAL) :
-            this(session, baseScopeProvider, psiMode = PsiHandlingMode.IDE, bodyBuildingMode = mode)
-
     protected open fun bindFunctionTarget(target: FirFunctionTarget, function: FirFunction) = target.bind(function)
 
     var mode: BodyBuildingMode = bodyBuildingMode
@@ -71,6 +63,15 @@ open class RawFirBuilder(
             body()
         } finally {
             mode = BodyBuildingMode.LAZY_BODIES
+        }
+    }
+
+    private inline fun <T> runOnStubs(crossinline body: () -> T): T {
+        return when (mode) {
+            BodyBuildingMode.NORMAL -> body()
+            BodyBuildingMode.LAZY_BODIES -> {
+                AstLoadingFilter.disallowTreeLoading<T, Nothing> { body() }
+            }
         }
     }
 
@@ -165,6 +166,28 @@ open class RawFirBuilder(
         private inline fun <reified R : FirElement> KtElement.convert(): R =
             convertElement(this) as R
 
+        private inline fun <T> buildOrLazy(build: () -> T, noinline lazy: () -> T): T {
+            return when (mode) {
+                BodyBuildingMode.NORMAL -> build()
+                BodyBuildingMode.LAZY_BODIES -> runOnStubs(lazy)
+            }
+        }
+
+        private inline fun buildOrLazyExpression(
+            sourceElement: KtSourceElement?,
+            buildExpression: () -> FirExpression,
+        ): FirExpression {
+            return buildOrLazy(buildExpression, {
+                buildLazyExpression {
+                    source = sourceElement
+                }
+            })
+        }
+
+        private inline fun buildOrLazyBlock(buildBlock: () -> FirBlock): FirBlock {
+            return buildOrLazy(buildBlock, ::buildLazyBlock)
+        }
+
         open fun convertElement(element: KtElement): FirElement? =
             element.accept(this@Visitor, Unit)
 
@@ -179,10 +202,11 @@ open class RawFirBuilder(
 
         open fun convertValueParameter(
             valueParameter: KtParameter,
+            functionSymbol: FirFunctionSymbol<*>,
             defaultTypeRef: FirTypeRef? = null,
             valueParameterDeclaration: ValueParameterDeclaration,
             additionalAnnotations: List<FirAnnotation> = emptyList()
-        ): FirValueParameter = valueParameter.toFirValueParameter(defaultTypeRef, valueParameterDeclaration, additionalAnnotations)
+        ): FirValueParameter = valueParameter.toFirValueParameter(defaultTypeRef, functionSymbol, valueParameterDeclaration, additionalAnnotations)
 
         private fun KtTypeReference?.toFirOrImplicitType(): FirTypeRef =
             convertSafe() ?: buildImplicitTypeRef {
@@ -317,28 +341,22 @@ open class RawFirBuilder(
             }
 
         private fun KtDeclarationWithBody.buildFirBody(): Pair<FirBlock?, FirContractDescription?> =
-            when {
-                !hasBody() ->
-                    null to null
-                mode == BodyBuildingMode.LAZY_BODIES -> {
-                    val block = buildLazyBlock {
-                        source = bodyExpression?.toFirSourceElement()
-                            ?: error("hasBody() == true but body is null")
-                    }
-                    block to null
-                }
-                hasBlockBody() -> {
-                    val block = bodyBlockExpression?.accept(this@Visitor, Unit) as? FirBlock
-                    if (hasContractEffectList()) {
-                        block to null
+            if (hasBody()) {
+                buildOrLazyBlock {
+                    if (hasBlockBody()) {
+                        val block = bodyBlockExpression?.accept(this@Visitor, Unit) as? FirBlock
+                        return@buildFirBody if (hasContractEffectList()) {
+                            block to null
+                        } else {
+                            block.extractContractDescriptionIfPossible()
+                        }
                     } else {
-                        block.extractContractDescriptionIfPossible()
+                        val result = { bodyExpression }.toFirExpression("Function has no body (but should)")
+                        FirSingleExpressionBlock(result.toReturn(baseSource = result.source))
                     }
-                }
-                else -> {
-                    val result = { bodyExpression }.toFirExpression("Function has no body (but should)")
-                    FirSingleExpressionBlock(result.toReturn(baseSource = result.source)) to null
-                }
+                } to null
+            } else {
+                null to null
             }
 
         private fun ValueArgument?.toFirExpression(): FirExpression {
@@ -413,8 +431,9 @@ open class RawFirBuilder(
                         extractAnnotationsTo(this)
                         annotations += accessorAnnotationsFromProperty
                         this@RawFirBuilder.context.firFunctionTargets += accessorTarget
+                        symbol = FirPropertyAccessorSymbol()
                         extractValueParametersTo(
-                            this, ValueParameterDeclaration.SETTER, propertyTypeRefToUse, parameterAnnotationsFromProperty
+                            this, symbol, ValueParameterDeclaration.SETTER, propertyTypeRefToUse, parameterAnnotationsFromProperty
                         )
                         if (!isGetter && valueParameters.isEmpty()) {
                             valueParameters += buildDefaultSetterValueParameter {
@@ -426,7 +445,6 @@ open class RawFirBuilder(
                                 annotations += parameterAnnotationsFromProperty
                             }
                         }
-                        symbol = FirPropertyAccessorSymbol()
                         val outerContractDescription = this@toFirPropertyAccessor.obtainContractDescription()
                         val bodyWithContractDescription = this@toFirPropertyAccessor.buildFirBody()
                         this.body = bodyWithContractDescription.first
@@ -497,13 +515,7 @@ open class RawFirBuilder(
                 Visibilities.Private
             }
             val status = obtainPropertyComponentStatus(componentVisibility, this, property)
-            val backingFieldInitializer = when {
-                mode == BodyBuildingMode.LAZY_BODIES -> buildLazyExpression {
-                    source = this@toFirBackingField?.initializer?.toFirSourceElement()
-                }
-                this?.hasInitializer() != true -> null
-                else -> this@toFirBackingField.initializer?.toFirExpression("Should have initializer")
-            }
+            val backingFieldInitializer = this?.toInitializerExpression()
             val returnType = this?.returnTypeReference.toFirOrImplicitType()
             val source = this?.toFirSourceElement()
             return if (this != null) {
@@ -535,8 +547,9 @@ open class RawFirBuilder(
 
         private fun KtParameter.toFirValueParameter(
             defaultTypeRef: FirTypeRef?,
+            functionSymbol: FirFunctionSymbol<*>,
             valueParameterDeclaration: ValueParameterDeclaration,
-            additionalAnnotations: List<FirAnnotation>
+            additionalAnnotations: List<FirAnnotation>,
         ): FirValueParameter {
             val name = convertValueParameterName(nameAsSafeName, nameIdentifier?.node?.text, valueParameterDeclaration)
             return buildValueParameter {
@@ -560,6 +573,7 @@ open class RawFirBuilder(
                 isCrossinline = hasModifier(CROSSINLINE_KEYWORD)
                 isNoinline = hasModifier(NOINLINE_KEYWORD)
                 isVararg = isVarArg
+                containingFunctionSymbol = functionSymbol
                 val isFromPrimaryConstructor = valueParameterDeclaration == ValueParameterDeclaration.PRIMARY_CONSTRUCTOR
                 for (annotationEntry in annotationEntries) {
                     annotationEntry.convert<FirAnnotation>().takeIf {
@@ -760,13 +774,14 @@ open class RawFirBuilder(
 
         private fun KtDeclarationWithBody.extractValueParametersTo(
             container: FirFunctionBuilder,
+            functionSymbol: FirFunctionSymbol<*>,
             valueParameterDeclaration: ValueParameterDeclaration,
             defaultTypeRef: FirTypeRef? = null,
             additionalAnnotations: List<FirAnnotation> = emptyList(),
         ) {
             for (valueParameter in valueParameters) {
                 container.valueParameters += convertValueParameter(
-                    valueParameter, defaultTypeRef, valueParameterDeclaration, additionalAnnotations = additionalAnnotations
+                    valueParameter, functionSymbol, defaultTypeRef, valueParameterDeclaration, additionalAnnotations = additionalAnnotations
                 )
             }
         }
@@ -939,7 +954,7 @@ open class RawFirBuilder(
                 typeParameters += constructorTypeParametersFromConstructedClass(ownerTypeParameters)
                 this.contextReceivers.addAll(convertContextReceivers(owner.contextReceivers))
                 this@toFirConstructor?.extractAnnotationsTo(this)
-                this@toFirConstructor?.extractValueParametersTo(this, ValueParameterDeclaration.PRIMARY_CONSTRUCTOR)
+                this@toFirConstructor?.extractValueParametersTo(this, symbol, ValueParameterDeclaration.PRIMARY_CONSTRUCTOR)
                 this.body = null
             }.apply {
                 containingClassForStaticMemberAttr = currentDispatchReceiverType()!!.lookupTag
@@ -950,7 +965,10 @@ open class RawFirBuilder(
             if (hasModifier(INNER_KEYWORD)) dispatchReceiverForInnerClassConstructor() else null
 
         override fun visitKtFile(file: KtFile, data: Unit): FirElement {
-            context.packageFqName = if (psiMode == PsiHandlingMode.COMPILER) file.packageFqNameByTree else file.packageFqName
+            context.packageFqName = when (mode) {
+                BodyBuildingMode.NORMAL -> file.packageFqNameByTree
+                BodyBuildingMode.LAZY_BODIES -> file.packageFqName
+            }
             return buildFile {
                 source = file.toFirSourceElement()
                 moduleData = baseModuleData
@@ -1298,10 +1316,11 @@ open class RawFirBuilder(
 
             val labelName: String?
             val isAnonymousFunction = function.name == null && !function.parent.let { it is KtFile || it is KtClassBody }
+            val functionSymbol: FirFunctionSymbol<*>
             val functionBuilder = if (isAnonymousFunction) {
                 FirAnonymousFunctionBuilder().apply {
                     receiverParameter = receiverType?.convertToReceiverParameter()
-                    symbol = FirAnonymousFunctionSymbol()
+                    symbol = FirAnonymousFunctionSymbol().also { functionSymbol = it }
                     isLambda = false
                     hasExplicitParameterList = true
                     label = context.getLastLabel(function)
@@ -1312,7 +1331,7 @@ open class RawFirBuilder(
                     receiverParameter = receiverType?.convertToReceiverParameter()
                     name = function.nameAsSafeName
                     labelName = runIf(!name.isSpecial) { name.identifier }
-                    symbol = FirNamedFunctionSymbol(callableIdForName(function.nameAsSafeName))
+                    symbol = FirNamedFunctionSymbol(callableIdForName(function.nameAsSafeName)).also { functionSymbol = it }
                     dispatchReceiverType = currentDispatchReceiverType()
                     status = FirDeclarationStatusImpl(
                         if (function.isLocal) Visibilities.Local else function.visibility,
@@ -1349,6 +1368,7 @@ open class RawFirBuilder(
                 for (valueParameter in function.valueParameters) {
                     valueParameters += convertValueParameter(
                         valueParameter,
+                        functionSymbol,
                         null,
                         if (isAnonymousFunction) ValueParameterDeclaration.LAMBDA else ValueParameterDeclaration.FUNCTION
                     )
@@ -1430,6 +1450,7 @@ open class RawFirBuilder(
                         val name = SpecialNames.DESTRUCT
                         val multiParameter = buildValueParameter {
                             source = valueParameter.toFirSourceElement()
+                            containingFunctionSymbol = this@buildAnonymousFunction.symbol
                             moduleData = baseModuleData
                             origin = FirDeclarationOrigin.Source
                             returnTypeRef = valueParameter.typeReference?.convertSafe() ?: buildImplicitTypeRef {
@@ -1453,7 +1474,7 @@ open class RawFirBuilder(
                         val typeRef = valueParameter.typeReference?.convertSafe() ?: buildImplicitTypeRef {
                             source = implicitTypeRefSource
                         }
-                        convertValueParameter(valueParameter, typeRef, ValueParameterDeclaration.LAMBDA)
+                        convertValueParameter(valueParameter, symbol, typeRef, ValueParameterDeclaration.LAMBDA)
                     }
                 }
                 val expressionSource = expression.toFirSourceElement()
@@ -1525,7 +1546,7 @@ open class RawFirBuilder(
                 this@RawFirBuilder.context.firFunctionTargets += target
                 extractAnnotationsTo(this)
                 typeParameters += constructorTypeParametersFromConstructedClass(ownerTypeParameters)
-                extractValueParametersTo(this, ValueParameterDeclaration.FUNCTION)
+                extractValueParametersTo(this, symbol, ValueParameterDeclaration.FUNCTION)
 
 
                 val (body, _) = buildFirBody()
@@ -1573,6 +1594,13 @@ open class RawFirBuilder(
             }
         }
 
+        private fun KtDeclarationWithInitializer.toInitializerExpression() =
+            runIf (hasInitializer()) {
+                buildOrLazyExpression(initializer?.toFirSourceElement()) {
+                    initializer.toFirExpression("Should have initializer")
+                }
+            }
+
         private fun <T> KtProperty.toFirProperty(
             ownerRegularOrAnonymousObjectSymbol: FirClassSymbol<*>?,
             ownerRegularClassTypeParametersCount: Int?,
@@ -1581,14 +1609,7 @@ open class RawFirBuilder(
             val propertyType = typeReference.toFirOrImplicitType()
             val propertyName = nameAsSafeName
             val isVar = isVar
-            val propertyInitializer = when {
-                !hasInitializer() -> null
-                mode == BodyBuildingMode.LAZY_BODIES -> buildLazyExpression {
-                    source = initializer?.toFirSourceElement()
-                }
-                else -> initializer.toFirExpression("Should have initializer")
-
-            }
+            val propertyInitializer = toInitializerExpression()
 
             val propertySource = toFirSourceElement()
 
@@ -1680,14 +1701,11 @@ open class RawFirBuilder(
                         }
 
                         if (hasDelegate()) {
-                            fun extractDelegateExpression() = when (mode) {
-                                BodyBuildingMode.NORMAL -> this@toFirProperty.delegate?.expression.toFirExpression("Should have delegate")
-                                BodyBuildingMode.LAZY_BODIES -> this@toFirProperty.delegate?.expression?.let {
-                                    buildLazyExpression { source = it.toFirSourceElement() }
-                                } ?: buildErrorExpression {
-                                    ConeSimpleDiagnostic("Should have delegate", DiagnosticKind.ExpressionExpected)
+                            fun extractDelegateExpression() = this@toFirProperty.delegate?.expression?.let { expression ->
+                                buildOrLazyExpression(expression.toFirSourceElement()) {
+                                    expression.toFirExpression("Should have delegate")
                                 }
-                            }
+                            } ?: buildErrorExpression { ConeSimpleDiagnostic("Should have delegate", DiagnosticKind.ExpressionExpected) }
 
                             val delegateBuilder = FirWrappedDelegateExpressionBuilder().apply {
                                 val delegateExpression = extractDelegateExpression()
@@ -1905,7 +1923,8 @@ open class RawFirBuilder(
                 source = expression.toFirSourceElement()
                 for (statement in expression.statements) {
                     val firStatement = statement.toFirStatement { "Statement expected: ${statement.text}" }
-                    val isForLoopBlock = firStatement is FirBlock && firStatement.source?.kind == KtFakeSourceElementKind.DesugaredForLoop
+                    val isForLoopBlock =
+                        firStatement is FirBlock && firStatement.source?.kind == KtFakeSourceElementKind.DesugaredForLoop
                     if (firStatement !is FirBlock || isForLoopBlock || firStatement.annotations.isNotEmpty()) {
                         statements += firStatement
                     } else {
@@ -1970,11 +1989,32 @@ open class RawFirBuilder(
                 tryBlock = expression.tryBlock.toFirBlock()
                 finallyBlock = expression.finallyBlock?.finalExpression?.toFirBlock()
                 for (clause in expression.catchClauses) {
-                    val parameter = clause.catchParameter?.let {
-                        convertValueParameter(
-                            it,
-                            valueParameterDeclaration = ValueParameterDeclaration.CATCH
+                    val parameter = clause.catchParameter?.let { ktParameter ->
+                        val name = convertValueParameterName(
+                            ktParameter.nameAsSafeName,
+                            ktParameter.nameIdentifier?.node?.text,
+                            ValueParameterDeclaration.CATCH
                         )
+
+                        buildProperty {
+                            source = ktParameter.toFirSourceElement()
+                            moduleData = baseModuleData
+                            origin = FirDeclarationOrigin.Source
+                            returnTypeRef = when {
+                                ktParameter.typeReference != null -> ktParameter.typeReference.toFirOrErrorType()
+                                else -> createNoTypeForParameterTypeRef()
+                            }
+                            isVar = false
+                            status = FirResolvedDeclarationStatusImpl(Visibilities.Local, Modality.FINAL, EffectiveVisibility.Local)
+                            isLocal = true
+                            this.name = name
+                            symbol = FirPropertySymbol(CallableId(name))
+                            for (annotationEntry in ktParameter.annotationEntries) {
+                                this.annotations += annotationEntry.convert<FirAnnotation>()
+                            }
+                        }.also {
+                            it.isCatchParameter = true
+                        }
                     } ?: continue
                     catches += buildCatch {
                         source = clause.toFirSourceElement()
@@ -2500,7 +2540,10 @@ open class RawFirBuilder(
         override fun visitParenthesizedExpression(expression: KtParenthesizedExpression, data: Unit): FirElement {
             context.forwardLabelUsagePermission(expression, expression.expression)
             return expression.expression?.accept(this, data)
-                ?: buildErrorExpression(expression.toFirSourceElement(), ConeSimpleDiagnostic("Empty parentheses", DiagnosticKind.Syntax))
+                ?: buildErrorExpression(
+                    expression.toFirSourceElement(),
+                    ConeSimpleDiagnostic("Empty parentheses", DiagnosticKind.Syntax)
+                )
         }
 
         override fun visitLabeledExpression(expression: KtLabeledExpression, data: Unit): FirElement {
@@ -2546,7 +2589,10 @@ open class RawFirBuilder(
                 baseModuleData,
                 multiDeclaration.toFirSourceElement(),
                 "destruct",
-                multiDeclaration.initializer.toFirExpression("Initializer required for destructuring declaration", DiagnosticKind.Syntax),
+                multiDeclaration.initializer.toFirExpression(
+                    "Initializer required for destructuring declaration",
+                    DiagnosticKind.Syntax
+                ),
                 extractAnnotationsTo = { extractAnnotationsTo(it) }
             )
             return generateDestructuringBlock(
@@ -2620,16 +2666,4 @@ enum class BodyBuildingMode {
         fun lazyBodies(lazyBodies: Boolean): BodyBuildingMode =
             if (lazyBodies) LAZY_BODIES else NORMAL
     }
-}
-
-enum class PsiHandlingMode {
-    /**
-     * Do not build any stubs while handling PSI
-     */
-    COMPILER,
-
-    /**
-     * Build stubs if possible while handling PSI
-     */
-    IDE;
 }
