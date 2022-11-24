@@ -258,6 +258,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         }
 
         @Test
+        @TestMetadata("kt55108.kt")
+        public void testKt55108() throws Exception {
+            runTest("compiler/testData/codegen/box/annotations/kt55108.kt");
+        }
+
+        @Test
         @TestMetadata("mustBeDocumented.kt")
         public void testMustBeDocumented() throws Exception {
             runTest("compiler/testData/codegen/box/annotations/mustBeDocumented.kt");
@@ -7686,6 +7692,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
             @TestMetadata("IrConstAcceptMultiModule.kt")
             public void testIrConstAcceptMultiModule() throws Exception {
                 runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/fir/IrConstAcceptMultiModule.kt");
+            }
+
+            @Test
+            @TestMetadata("javaTypeParameterBy.kt")
+            public void testJavaTypeParameterBy() throws Exception {
+                runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/fir/javaTypeParameterBy.kt");
             }
 
             @Test

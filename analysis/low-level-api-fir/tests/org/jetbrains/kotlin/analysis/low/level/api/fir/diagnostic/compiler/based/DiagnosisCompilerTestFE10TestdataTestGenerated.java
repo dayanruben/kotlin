@@ -496,6 +496,24 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
         }
 
         @Test
+        @TestMetadata("noLibraryProvidersDuplication.kt")
+        public void testNoLibraryProvidersDuplication() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/noLibraryProvidersDuplication.kt");
+        }
+
+        @Test
+        @TestMetadata("noLibraryProvidersDuplicationWithMpp.kt")
+        public void testNoLibraryProvidersDuplicationWithMpp() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/noLibraryProvidersDuplicationWithMpp.kt");
+        }
+
+        @Test
+        @TestMetadata("noSymbolProvidersDuplicationInDiamond.kt")
+        public void testNoSymbolProvidersDuplicationInDiamond() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/noSymbolProvidersDuplicationInDiamond.kt");
+        }
+
+        @Test
         @TestMetadata("Nullability.kt")
         public void testNullability() throws Exception {
             runTest("compiler/testData/diagnostics/tests/Nullability.kt");
@@ -32242,6 +32260,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             @TestMetadata("ambigousLabelOnThis.kt")
             public void testAmbigousLabelOnThis() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/thisAndSuper/ambigousLabelOnThis.kt");
+            }
+
+            @Test
+            @TestMetadata("considerAnonymousObjectsForSuperclassNotAccessibleFromInterface.kt")
+            public void testConsiderAnonymousObjectsForSuperclassNotAccessibleFromInterface() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/thisAndSuper/considerAnonymousObjectsForSuperclassNotAccessibleFromInterface.kt");
             }
 
             @Test
