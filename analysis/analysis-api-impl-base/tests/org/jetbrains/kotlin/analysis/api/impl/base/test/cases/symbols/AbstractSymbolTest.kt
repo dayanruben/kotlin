@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.symbols.SymbolTest
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForDebug
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.KtClassifierBodyRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithTypeParameters
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtPsiBasedSymbolPointer
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtSymbolPointer
 import org.jetbrains.kotlin.analysis.test.framework.base.AbstractAnalysisApiSingleFileTest
@@ -59,17 +60,17 @@ abstract class AbstractSymbolTest : AbstractAnalysisApiSingleFileTest() {
             }
         }
 
-        fun KtSymbol.safePointer(): PointerWrapper? {
-            val regularPointer = runCatching {
-                KtPsiBasedSymbolPointer.withDisabledPsiBasedPointers(disable = false, action = ::createPointer)
+        fun KtAnalysisSession.safePointer(ktSymbol: KtSymbol): PointerWrapper? {
+            val regularPointer = ktSymbol.runCatching {
+                KtPsiBasedSymbolPointer.withDisabledPsiBasedPointers(disable = false) { ktSymbol.createPointer() }
             }.let {
                 if (directiveToIgnoreSymbolRestore == null) it.getOrThrow() else it.getOrNull()
             } ?: return null
 
             val nonPsiPointer = kotlin.runCatching {
-                if (this is KtFileSymbol) return@runCatching null
+                if (ktSymbol is KtFileSymbol) return@runCatching null
 
-                KtPsiBasedSymbolPointer.withDisabledPsiBasedPointers(disable = true, action = ::createPointer)
+                KtPsiBasedSymbolPointer.withDisabledPsiBasedPointers(disable = true) { ktSymbol.createPointer() }
             }
 
             return PointerWrapper(
@@ -85,16 +86,26 @@ abstract class AbstractSymbolTest : AbstractAnalysisApiSingleFileTest() {
             analyseForTest(ktFile) {
                 val (symbols, symbolForPrettyRendering) = collectSymbols(ktFile, testServices)
 
-                val pointerWithRenderedSymbol = symbols.map { symbol ->
-                    PointerWithRenderedSymbol(
-                        symbol.safePointer(),
-                        renderSymbolForComparison(symbol),
-                    )
-                }
+                val pointerWithRenderedSymbol = symbols
+                    .asSequence()
+                    .flatMap { symbol ->
+                        sequenceOf(symbol to true) + symbol.withImplicitSymbols().map { implicitSymbol ->
+                            implicitSymbol to false
+                        }
+                    }
+                    .distinctBy { it.first }
+                    .map { (symbol, shouldBeRendered) ->
+                        PointerWithRenderedSymbol(
+                            pointer = safePointer(symbol),
+                            rendered = renderSymbolForComparison(symbol),
+                            shouldBeRendered = shouldBeRendered,
+                        )
+                    }
+                    .toList()
 
                 val pointerWithPrettyRenderedSymbol = symbolForPrettyRendering.map { symbol ->
                     PointerWithRenderedSymbol(
-                        symbol.safePointer(),
+                        safePointer(symbol),
                         when (symbol) {
                             is KtDeclarationSymbol -> symbol.render(prettyRenderOptions)
                             is KtFileSymbol -> prettyPrint {
@@ -105,7 +116,7 @@ abstract class AbstractSymbolTest : AbstractAnalysisApiSingleFileTest() {
 
                             is KtReceiverParameterSymbol -> DebugSymbolRenderer().render(symbol)
                             else -> error(symbol::class.toString())
-                        }
+                        },
                     )
                 }
 
@@ -168,7 +179,7 @@ abstract class AbstractSymbolTest : AbstractAnalysisApiSingleFileTest() {
     }
 
     private fun List<PointerWithRenderedSymbol>.renderDeclarations(): String =
-        map { it.rendered }.renderAsDeclarations()
+        mapNotNull { it.rendered.takeIf { _ -> it.shouldBeRendered } }.renderAsDeclarations()
 
     private fun List<String>.renderAsDeclarations(): String =
         if (isEmpty()) "NO_SYMBOLS"
@@ -184,10 +195,16 @@ abstract class AbstractSymbolTest : AbstractAnalysisApiSingleFileTest() {
         var failed = false
         try {
             val restored = analyseForTest(ktFile) {
-                pointersWithRendered.map { (pointerWrapper, expectedRender) ->
+                pointersWithRendered.mapNotNull { (pointerWrapper, expectedRender, shouldBeRendered) ->
                     val pointer = pointerWrapper?.let(pointerAccessor) ?: error("Symbol pointer for $expectedRender was not created")
                     val restored = pointer.restoreSymbol() ?: error("Symbol $expectedRender was not restored")
-                    renderSymbolForComparison(restored)
+                    val actualRender = renderSymbolForComparison(restored)
+                    if (shouldBeRendered) {
+                        actualRender
+                    } else {
+                        testServices.assertions.assertEquals(expectedRender, actualRender) { "${restored::class}" }
+                        null
+                    }
                 }
             }
 
@@ -259,9 +276,38 @@ private data class SymbolPointersData(
 private data class PointerWithRenderedSymbol(
     val pointer: PointerWrapper?,
     val rendered: String,
+    val shouldBeRendered: Boolean = true,
 )
 
 private data class PointerWrapper(
     val regularPointer: KtSymbolPointer<*>,
     val pointerWithoutPsiAnchor: KtSymbolPointer<*>?,
 )
+
+private fun KtSymbol?.withImplicitSymbols(): Sequence<KtSymbol> {
+    val ktSymbol = this ?: return emptySequence()
+    return sequence {
+        yield(ktSymbol)
+
+        if (ktSymbol is KtSymbolWithTypeParameters) {
+            for (parameter in ktSymbol.typeParameters) {
+                yieldAll(parameter.withImplicitSymbols())
+            }
+        }
+
+        if (ktSymbol is KtPropertySymbol) {
+            yieldAll(ktSymbol.getter.withImplicitSymbols())
+            yieldAll(ktSymbol.setter.withImplicitSymbols())
+        }
+
+        if (ktSymbol is KtFunctionLikeSymbol) {
+            for (parameter in ktSymbol.valueParameters) {
+                yieldAll(parameter.withImplicitSymbols())
+            }
+        }
+
+        if (ktSymbol is KtValueParameterSymbol) {
+            yieldAll(ktSymbol.generatedPrimaryConstructorProperty.withImplicitSymbols())
+        }
+    }
+}

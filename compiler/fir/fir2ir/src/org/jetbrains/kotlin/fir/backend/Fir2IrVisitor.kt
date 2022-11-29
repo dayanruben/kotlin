@@ -79,7 +79,7 @@ class Fir2IrVisitor(
 
     override fun visitField(field: FirField, data: Any?): IrField {
         if (field.isSynthetic) {
-            return declarationStorage.getCachedIrField(field)!!.apply {
+            return declarationStorage.getCachedIrDelegateOrBackingField(field)!!.apply {
                 // If this is a property backing field, then it has no separate initializer,
                 // so we shouldn't convert it
                 if (correspondingPropertySymbol == null) {
@@ -189,6 +189,25 @@ class Fir2IrVisitor(
             conversionScope.withContainingFirClass(regularClass) {
                 memberGenerator.convertClassContent(irClass, regularClass)
             }
+        }
+    }
+
+    override fun visitScript(script: FirScript, data: Any?): IrElement {
+        return declarationStorage.getCachedIrScript(script)!!.also { irScript ->
+            irScript.parent = conversionScope.parentFromStack()
+            symbolTable.enterScope(irScript)
+            conversionScope.withParent(irScript) {
+                for (statement in script.statements) {
+                    if (statement is FirDeclaration) {
+                        val irDeclaration = statement.accept(this@Fir2IrVisitor, null) as IrDeclaration
+                        irScript.statements.add(irDeclaration)
+                    } else {
+                        val irStatement = statement.toIrStatement()!!
+                        irScript.statements.add(irStatement)
+                    }
+                }
+            }
+            symbolTable.leaveScope(irScript)
         }
     }
 

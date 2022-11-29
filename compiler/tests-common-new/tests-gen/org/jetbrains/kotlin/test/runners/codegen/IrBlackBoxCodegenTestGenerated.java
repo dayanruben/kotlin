@@ -22392,6 +22392,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         }
 
         @Test
+        @TestMetadata("lateinitInlineClasses.kt")
+        public void testLateinitInlineClasses() throws Exception {
+            runTest("compiler/testData/codegen/box/inlineClasses/lateinitInlineClasses.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
+        }
+
+        @Test
         @TestMetadata("mangledDefaultParameterFunction.kt")
         public void testMangledDefaultParameterFunction() throws Exception {
             runTest("compiler/testData/codegen/box/inlineClasses/mangledDefaultParameterFunction.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
@@ -25066,6 +25072,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
             @TestMetadata("inlineMapOfInlineClassGeneric.kt")
             public void testInlineMapOfInlineClassGeneric() throws Exception {
                 runTest("compiler/testData/codegen/box/inlineClasses/inlineClassCollection/inlineMapOfInlineClassGeneric.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
+            }
+
+            @Test
+            @TestMetadata("inlineMutableCollectionBulkAdd.kt")
+            public void testInlineMutableCollectionBulkAdd() throws Exception {
+                runTest("compiler/testData/codegen/box/inlineClasses/inlineClassCollection/inlineMutableCollectionBulkAdd.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
             }
         }
 
@@ -28026,6 +28038,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         }
 
         @Test
+        @TestMetadata("kt52677.kt")
+        public void testKt52677() throws Exception {
+            runTest("compiler/testData/codegen/box/ir/kt52677.kt");
+        }
+
+        @Test
         @TestMetadata("lambdaWithLoop.kt")
         public void testLambdaWithLoop() throws Exception {
             runTest("compiler/testData/codegen/box/ir/lambdaWithLoop.kt");
@@ -28762,6 +28780,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
             @Test
             public void testAllFilesPresentInPackage() throws Exception {
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/javaVisibility/package"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            }
+
+            @Test
+            @TestMetadata("inheritedPackageStaticField.kt")
+            public void testInheritedPackageStaticField() throws Exception {
+                runTest("compiler/testData/codegen/box/javaVisibility/package/inheritedPackageStaticField.kt");
             }
 
             @Test
@@ -32571,6 +32595,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         @TestMetadata("callAssertions.kt")
         public void testCallAssertions() throws Exception {
             runTest("compiler/testData/codegen/box/notNullAssertions/callAssertions.kt");
+        }
+
+        @Test
+        @TestMetadata("constructorWithMangledParams.kt")
+        public void testConstructorWithMangledParams() throws Exception {
+            runTest("compiler/testData/codegen/box/notNullAssertions/constructorWithMangledParams.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
         }
 
         @Test

@@ -7,7 +7,7 @@
 
 package kotlinx.metadata
 
-import kotlinx.metadata.impl.extensions.*
+import kotlinx.metadata.internal.extensions.*
 import kotlin.contracts.ExperimentalContracts
 
 /**
@@ -859,7 +859,7 @@ class KmType(var flags: Flags) : KmTypeVisitor() {
         KmType(flags).also { flexibleTypeUpperBound = KmFlexibleTypeUpperBound(it, typeFlexibilityId) }
 
     @Deprecated(VISITOR_API_MESSAGE)
-    override fun visitExtensions(type: KmExtensionType): KmTypeExtension =
+    override fun visitExtensions(type: KmExtensionType): KmTypeExtensionVisitor =
         extensions.singleOfType(type)
 
     /**

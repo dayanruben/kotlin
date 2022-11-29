@@ -454,6 +454,18 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         }
 
         @Test
+        @TestMetadata("kt54587_1.kt")
+        public void testKt54587_1() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/kt54587_1.kt");
+        }
+
+        @Test
+        @TestMetadata("kt54587_2.kt")
+        public void testKt54587_2() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/kt54587_2.kt");
+        }
+
+        @Test
         @TestMetadata("LValueAssignment.kt")
         public void testLValueAssignment() throws Exception {
             runTest("compiler/testData/diagnostics/tests/LValueAssignment.kt");
@@ -13953,6 +13965,18 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("inferenceForkRegression.kt")
+            public void testInferenceForkRegression() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inference/inferenceForkRegression.kt");
+            }
+
+            @Test
+            @TestMetadata("inferenceForkRegressionSimple.kt")
+            public void testInferenceForkRegressionSimple() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inference/inferenceForkRegressionSimple.kt");
+            }
+
+            @Test
             @TestMetadata("intersectionTypeMultipleBoundsAsReceiver.kt")
             public void testIntersectionTypeMultipleBoundsAsReceiver() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/inference/intersectionTypeMultipleBoundsAsReceiver.kt");
@@ -14280,6 +14304,18 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("smartCastFork.kt")
             public void testSmartCastFork() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/inference/smartCastFork.kt");
+            }
+
+            @Test
+            @TestMetadata("smartCastForkForExpectType.kt")
+            public void testSmartCastForkForExpectType() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inference/smartCastForkForExpectType.kt");
+            }
+
+            @Test
+            @TestMetadata("smartCastForkForExpectedTypeNested.kt")
+            public void testSmartCastForkForExpectedTypeNested() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inference/smartCastForkForExpectedTypeNested.kt");
             }
 
             @Test
@@ -15963,6 +15999,34 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("substitutingSuperTypes2.kt")
                 public void testSubstitutingSuperTypes2() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/emptyIntersectionTypes/substitutingSuperTypes2.kt");
+                }
+            }
+
+            @Nested
+            @TestMetadata("compiler/testData/diagnostics/tests/inference/forks")
+            @TestDataPath("$PROJECT_ROOT")
+            public class Forks {
+                @Test
+                public void testAllFilesPresentInForks() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/inference/forks"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
+                }
+
+                @Test
+                @TestMetadata("nestedCallVariableFixation.kt")
+                public void testNestedCallVariableFixation() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/forks/nestedCallVariableFixation.kt");
+                }
+
+                @Test
+                @TestMetadata("nestedCallVariableFixationSimple.kt")
+                public void testNestedCallVariableFixationSimple() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/forks/nestedCallVariableFixationSimple.kt");
+                }
+
+                @Test
+                @TestMetadata("overloadResolutionByLambdaReturnTypeAndExpectedType.kt")
+                public void testOverloadResolutionByLambdaReturnTypeAndExpectedType() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/forks/overloadResolutionByLambdaReturnTypeAndExpectedType.kt");
                 }
             }
 
@@ -17993,9 +18057,15 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
-            @TestMetadata("lateinitInlineClasses.kt")
-            public void testLateinitInlineClasses() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/inlineClasses/lateinitInlineClasses.kt");
+            @TestMetadata("lateinitInlineClassesOff.kt")
+            public void testLateinitInlineClassesOff() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inlineClasses/lateinitInlineClassesOff.kt");
+            }
+
+            @Test
+            @TestMetadata("lateinitInlineClassesOn.kt")
+            public void testLateinitInlineClassesOn() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inlineClasses/lateinitInlineClassesOn.kt");
             }
 
             @Test
@@ -27962,6 +28032,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("resolveInitializerOfDestructuringDeclarationOnce.kts")
             public void testResolveInitializerOfDestructuringDeclarationOnce() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/script/resolveInitializerOfDestructuringDeclarationOnce.kts");
+            }
+
+            @Test
+            @TestMetadata("scriptScopes.kts")
+            public void testScriptScopes() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/script/scriptScopes.kts");
             }
 
             @Test

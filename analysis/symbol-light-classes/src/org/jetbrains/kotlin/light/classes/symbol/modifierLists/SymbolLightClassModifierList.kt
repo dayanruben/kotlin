@@ -17,20 +17,19 @@ import org.jetbrains.kotlin.psi.KtModifierListOwner
 internal class SymbolLightClassModifierList<T : KtLightElement<KtModifierListOwner, PsiModifierListOwner>>(
     containingDeclaration: T,
     private val lazyModifiers: Lazy<Set<String>>,
-    lazyAnnotations: Lazy<List<PsiAnnotation>>
+    lazyAnnotations: Lazy<List<PsiAnnotation>>,
 ) : SymbolLightModifierList<T>(containingDeclaration) {
-    private val lazyAnnotations = lazy {
-        lazyAnnotations.value
-            .onEach { (it as? KtLightElementBase)?.parent = this }
+    private val lazyAnnotations: Lazy<List<PsiAnnotation>> = lazyPub {
+        lazyAnnotations.value.onEach { (it as? KtLightElementBase)?.parent = this }
     }
 
     override fun hasModifierProperty(name: String): Boolean = name in lazyModifiers.value
 
-    override val givenAnnotations: List<KtLightAbstractAnnotation>?
-        get() = invalidAccess()
+    override val givenAnnotations: List<KtLightAbstractAnnotation> get() = invalidAccess()
 
     override fun getAnnotations(): Array<out PsiAnnotation> = lazyAnnotations.value.toTypedArray()
-    override fun findAnnotation(qualifiedName: String) = annotations.firstOrNull { it.qualifiedName == qualifiedName }
+    override fun findAnnotation(qualifiedName: String): PsiAnnotation? =
+        lazyAnnotations.value.firstOrNull { it.qualifiedName == qualifiedName }
 
     override fun equals(other: Any?): Boolean = this === other
 

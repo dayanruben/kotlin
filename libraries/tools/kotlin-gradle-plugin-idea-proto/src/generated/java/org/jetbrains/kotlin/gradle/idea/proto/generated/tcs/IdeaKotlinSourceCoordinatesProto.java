@@ -16,9 +16,6 @@ private static final long serialVersionUID = 0L;
     super(builder);
   }
   private IdeaKotlinSourceCoordinatesProto() {
-    buildId_ = "";
-    projectPath_ = "";
-    projectName_ = "";
     sourceSetName_ = "";
   }
 
@@ -48,156 +45,44 @@ private static final long serialVersionUID = 0L;
   }
 
   private int bitField0_;
-  public static final int BUILD_ID_FIELD_NUMBER = 1;
-  private volatile java.lang.Object buildId_;
+  public static final int PROJECT_FIELD_NUMBER = 1;
+  private org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinProjectCoordinatesProto project_;
   /**
-   * <code>optional string build_id = 1;</code>
-   * @return Whether the buildId field is set.
+   * <code>optional .org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinProjectCoordinatesProto project = 1;</code>
+   * @return Whether the project field is set.
    */
   @java.lang.Override
-  public boolean hasBuildId() {
+  public boolean hasProject() {
     return ((bitField0_ & 0x00000001) != 0);
   }
   /**
-   * <code>optional string build_id = 1;</code>
-   * @return The buildId.
+   * <code>optional .org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinProjectCoordinatesProto project = 1;</code>
+   * @return The project.
    */
   @java.lang.Override
-  public java.lang.String getBuildId() {
-    java.lang.Object ref = buildId_;
-    if (ref instanceof java.lang.String) {
-      return (java.lang.String) ref;
-    } else {
-      com.google.protobuf.ByteString bs = 
-          (com.google.protobuf.ByteString) ref;
-      java.lang.String s = bs.toStringUtf8();
-      buildId_ = s;
-      return s;
-    }
+  public org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinProjectCoordinatesProto getProject() {
+    return project_ == null ? org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinProjectCoordinatesProto.getDefaultInstance() : project_;
   }
   /**
-   * <code>optional string build_id = 1;</code>
-   * @return The bytes for buildId.
+   * <code>optional .org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinProjectCoordinatesProto project = 1;</code>
    */
   @java.lang.Override
-  public com.google.protobuf.ByteString
-      getBuildIdBytes() {
-    java.lang.Object ref = buildId_;
-    if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
-          com.google.protobuf.ByteString.copyFromUtf8(
-              (java.lang.String) ref);
-      buildId_ = b;
-      return b;
-    } else {
-      return (com.google.protobuf.ByteString) ref;
-    }
+  public org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinProjectCoordinatesProtoOrBuilder getProjectOrBuilder() {
+    return project_ == null ? org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinProjectCoordinatesProto.getDefaultInstance() : project_;
   }
 
-  public static final int PROJECT_PATH_FIELD_NUMBER = 2;
-  private volatile java.lang.Object projectPath_;
-  /**
-   * <code>optional string project_path = 2;</code>
-   * @return Whether the projectPath field is set.
-   */
-  @java.lang.Override
-  public boolean hasProjectPath() {
-    return ((bitField0_ & 0x00000002) != 0);
-  }
-  /**
-   * <code>optional string project_path = 2;</code>
-   * @return The projectPath.
-   */
-  @java.lang.Override
-  public java.lang.String getProjectPath() {
-    java.lang.Object ref = projectPath_;
-    if (ref instanceof java.lang.String) {
-      return (java.lang.String) ref;
-    } else {
-      com.google.protobuf.ByteString bs = 
-          (com.google.protobuf.ByteString) ref;
-      java.lang.String s = bs.toStringUtf8();
-      projectPath_ = s;
-      return s;
-    }
-  }
-  /**
-   * <code>optional string project_path = 2;</code>
-   * @return The bytes for projectPath.
-   */
-  @java.lang.Override
-  public com.google.protobuf.ByteString
-      getProjectPathBytes() {
-    java.lang.Object ref = projectPath_;
-    if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
-          com.google.protobuf.ByteString.copyFromUtf8(
-              (java.lang.String) ref);
-      projectPath_ = b;
-      return b;
-    } else {
-      return (com.google.protobuf.ByteString) ref;
-    }
-  }
-
-  public static final int PROJECT_NAME_FIELD_NUMBER = 3;
-  private volatile java.lang.Object projectName_;
-  /**
-   * <code>optional string project_name = 3;</code>
-   * @return Whether the projectName field is set.
-   */
-  @java.lang.Override
-  public boolean hasProjectName() {
-    return ((bitField0_ & 0x00000004) != 0);
-  }
-  /**
-   * <code>optional string project_name = 3;</code>
-   * @return The projectName.
-   */
-  @java.lang.Override
-  public java.lang.String getProjectName() {
-    java.lang.Object ref = projectName_;
-    if (ref instanceof java.lang.String) {
-      return (java.lang.String) ref;
-    } else {
-      com.google.protobuf.ByteString bs = 
-          (com.google.protobuf.ByteString) ref;
-      java.lang.String s = bs.toStringUtf8();
-      projectName_ = s;
-      return s;
-    }
-  }
-  /**
-   * <code>optional string project_name = 3;</code>
-   * @return The bytes for projectName.
-   */
-  @java.lang.Override
-  public com.google.protobuf.ByteString
-      getProjectNameBytes() {
-    java.lang.Object ref = projectName_;
-    if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
-          com.google.protobuf.ByteString.copyFromUtf8(
-              (java.lang.String) ref);
-      projectName_ = b;
-      return b;
-    } else {
-      return (com.google.protobuf.ByteString) ref;
-    }
-  }
-
-  public static final int SOURCE_SET_NAME_FIELD_NUMBER = 4;
+  public static final int SOURCE_SET_NAME_FIELD_NUMBER = 2;
   private volatile java.lang.Object sourceSetName_;
   /**
-   * <code>optional string source_set_name = 4;</code>
+   * <code>optional string source_set_name = 2;</code>
    * @return Whether the sourceSetName field is set.
    */
   @java.lang.Override
   public boolean hasSourceSetName() {
-    return ((bitField0_ & 0x00000008) != 0);
+    return ((bitField0_ & 0x00000002) != 0);
   }
   /**
-   * <code>optional string source_set_name = 4;</code>
+   * <code>optional string source_set_name = 2;</code>
    * @return The sourceSetName.
    */
   @java.lang.Override
@@ -214,7 +99,7 @@ private static final long serialVersionUID = 0L;
     }
   }
   /**
-   * <code>optional string source_set_name = 4;</code>
+   * <code>optional string source_set_name = 2;</code>
    * @return The bytes for sourceSetName.
    */
   @java.lang.Override
@@ -247,16 +132,10 @@ private static final long serialVersionUID = 0L;
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
     if (((bitField0_ & 0x00000001) != 0)) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 1, buildId_);
+      output.writeMessage(1, getProject());
     }
     if (((bitField0_ & 0x00000002) != 0)) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 2, projectPath_);
-    }
-    if (((bitField0_ & 0x00000004) != 0)) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 3, projectName_);
-    }
-    if (((bitField0_ & 0x00000008) != 0)) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 4, sourceSetName_);
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 2, sourceSetName_);
     }
     getUnknownFields().writeTo(output);
   }
@@ -268,16 +147,11 @@ private static final long serialVersionUID = 0L;
 
     size = 0;
     if (((bitField0_ & 0x00000001) != 0)) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, buildId_);
+      size += com.google.protobuf.CodedOutputStream
+        .computeMessageSize(1, getProject());
     }
     if (((bitField0_ & 0x00000002) != 0)) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, projectPath_);
-    }
-    if (((bitField0_ & 0x00000004) != 0)) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, projectName_);
-    }
-    if (((bitField0_ & 0x00000008) != 0)) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, sourceSetName_);
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, sourceSetName_);
     }
     size += getUnknownFields().getSerializedSize();
     memoizedSize = size;
@@ -294,20 +168,10 @@ private static final long serialVersionUID = 0L;
     }
     org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinSourceCoordinatesProto other = (org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinSourceCoordinatesProto) obj;
 
-    if (hasBuildId() != other.hasBuildId()) return false;
-    if (hasBuildId()) {
-      if (!getBuildId()
-          .equals(other.getBuildId())) return false;
-    }
-    if (hasProjectPath() != other.hasProjectPath()) return false;
-    if (hasProjectPath()) {
-      if (!getProjectPath()
-          .equals(other.getProjectPath())) return false;
-    }
-    if (hasProjectName() != other.hasProjectName()) return false;
-    if (hasProjectName()) {
-      if (!getProjectName()
-          .equals(other.getProjectName())) return false;
+    if (hasProject() != other.hasProject()) return false;
+    if (hasProject()) {
+      if (!getProject()
+          .equals(other.getProject())) return false;
     }
     if (hasSourceSetName() != other.hasSourceSetName()) return false;
     if (hasSourceSetName()) {
@@ -325,17 +189,9 @@ private static final long serialVersionUID = 0L;
     }
     int hash = 41;
     hash = (19 * hash) + getDescriptor().hashCode();
-    if (hasBuildId()) {
-      hash = (37 * hash) + BUILD_ID_FIELD_NUMBER;
-      hash = (53 * hash) + getBuildId().hashCode();
-    }
-    if (hasProjectPath()) {
-      hash = (37 * hash) + PROJECT_PATH_FIELD_NUMBER;
-      hash = (53 * hash) + getProjectPath().hashCode();
-    }
-    if (hasProjectName()) {
-      hash = (37 * hash) + PROJECT_NAME_FIELD_NUMBER;
-      hash = (53 * hash) + getProjectName().hashCode();
+    if (hasProject()) {
+      hash = (37 * hash) + PROJECT_FIELD_NUMBER;
+      hash = (53 * hash) + getProject().hashCode();
     }
     if (hasSourceSetName()) {
       hash = (37 * hash) + SOURCE_SET_NAME_FIELD_NUMBER;
@@ -458,25 +314,31 @@ private static final long serialVersionUID = 0L;
 
     // Construct using org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinSourceCoordinatesProto.newBuilder()
     private Builder() {
-
+      maybeForceBuilderInitialization();
     }
 
     private Builder(
         com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
       super(parent);
-
+      maybeForceBuilderInitialization();
+    }
+    private void maybeForceBuilderInitialization() {
+      if (com.google.protobuf.GeneratedMessageV3
+              .alwaysUseFieldBuilders) {
+        getProjectFieldBuilder();
+      }
     }
     @java.lang.Override
     public Builder clear() {
       super.clear();
-      buildId_ = "";
+      if (projectBuilder_ == null) {
+        project_ = null;
+      } else {
+        projectBuilder_.clear();
+      }
       bitField0_ = (bitField0_ & ~0x00000001);
-      projectPath_ = "";
-      bitField0_ = (bitField0_ & ~0x00000002);
-      projectName_ = "";
-      bitField0_ = (bitField0_ & ~0x00000004);
       sourceSetName_ = "";
-      bitField0_ = (bitField0_ & ~0x00000008);
+      bitField0_ = (bitField0_ & ~0x00000002);
       return this;
     }
 
@@ -506,19 +368,15 @@ private static final long serialVersionUID = 0L;
       int from_bitField0_ = bitField0_;
       int to_bitField0_ = 0;
       if (((from_bitField0_ & 0x00000001) != 0)) {
+        if (projectBuilder_ == null) {
+          result.project_ = project_;
+        } else {
+          result.project_ = projectBuilder_.build();
+        }
         to_bitField0_ |= 0x00000001;
       }
-      result.buildId_ = buildId_;
       if (((from_bitField0_ & 0x00000002) != 0)) {
         to_bitField0_ |= 0x00000002;
-      }
-      result.projectPath_ = projectPath_;
-      if (((from_bitField0_ & 0x00000004) != 0)) {
-        to_bitField0_ |= 0x00000004;
-      }
-      result.projectName_ = projectName_;
-      if (((from_bitField0_ & 0x00000008) != 0)) {
-        to_bitField0_ |= 0x00000008;
       }
       result.sourceSetName_ = sourceSetName_;
       result.bitField0_ = to_bitField0_;
@@ -570,23 +428,11 @@ private static final long serialVersionUID = 0L;
 
     public Builder mergeFrom(org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinSourceCoordinatesProto other) {
       if (other == org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinSourceCoordinatesProto.getDefaultInstance()) return this;
-      if (other.hasBuildId()) {
-        bitField0_ |= 0x00000001;
-        buildId_ = other.buildId_;
-        onChanged();
-      }
-      if (other.hasProjectPath()) {
-        bitField0_ |= 0x00000002;
-        projectPath_ = other.projectPath_;
-        onChanged();
-      }
-      if (other.hasProjectName()) {
-        bitField0_ |= 0x00000004;
-        projectName_ = other.projectName_;
-        onChanged();
+      if (other.hasProject()) {
+        mergeProject(other.getProject());
       }
       if (other.hasSourceSetName()) {
-        bitField0_ |= 0x00000008;
+        bitField0_ |= 0x00000002;
         sourceSetName_ = other.sourceSetName_;
         onChanged();
       }
@@ -617,25 +463,17 @@ private static final long serialVersionUID = 0L;
               done = true;
               break;
             case 10: {
-              buildId_ = input.readStringRequireUtf8();
+              input.readMessage(
+                  getProjectFieldBuilder().getBuilder(),
+                  extensionRegistry);
               bitField0_ |= 0x00000001;
               break;
             } // case 10
             case 18: {
-              projectPath_ = input.readStringRequireUtf8();
+              sourceSetName_ = input.readStringRequireUtf8();
               bitField0_ |= 0x00000002;
               break;
             } // case 18
-            case 26: {
-              projectName_ = input.readStringRequireUtf8();
-              bitField0_ |= 0x00000004;
-              break;
-            } // case 26
-            case 34: {
-              sourceSetName_ = input.readStringRequireUtf8();
-              bitField0_ |= 0x00000008;
-              break;
-            } // case 34
             default: {
               if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                 done = true; // was an endgroup tag
@@ -653,265 +491,136 @@ private static final long serialVersionUID = 0L;
     }
     private int bitField0_;
 
-    private java.lang.Object buildId_ = "";
+    private org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinProjectCoordinatesProto project_;
+    private com.google.protobuf.SingleFieldBuilderV3<
+        org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinProjectCoordinatesProto, org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinProjectCoordinatesProto.Builder, org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinProjectCoordinatesProtoOrBuilder> projectBuilder_;
     /**
-     * <code>optional string build_id = 1;</code>
-     * @return Whether the buildId field is set.
+     * <code>optional .org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinProjectCoordinatesProto project = 1;</code>
+     * @return Whether the project field is set.
      */
-    public boolean hasBuildId() {
+    public boolean hasProject() {
       return ((bitField0_ & 0x00000001) != 0);
     }
     /**
-     * <code>optional string build_id = 1;</code>
-     * @return The buildId.
+     * <code>optional .org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinProjectCoordinatesProto project = 1;</code>
+     * @return The project.
      */
-    public java.lang.String getBuildId() {
-      java.lang.Object ref = buildId_;
-      if (!(ref instanceof java.lang.String)) {
-        com.google.protobuf.ByteString bs =
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        buildId_ = s;
-        return s;
+    public org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinProjectCoordinatesProto getProject() {
+      if (projectBuilder_ == null) {
+        return project_ == null ? org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinProjectCoordinatesProto.getDefaultInstance() : project_;
       } else {
-        return (java.lang.String) ref;
+        return projectBuilder_.getMessage();
       }
     }
     /**
-     * <code>optional string build_id = 1;</code>
-     * @return The bytes for buildId.
+     * <code>optional .org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinProjectCoordinatesProto project = 1;</code>
      */
-    public com.google.protobuf.ByteString
-        getBuildIdBytes() {
-      java.lang.Object ref = buildId_;
-      if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        buildId_ = b;
-        return b;
+    public Builder setProject(org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinProjectCoordinatesProto value) {
+      if (projectBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        project_ = value;
+        onChanged();
       } else {
-        return (com.google.protobuf.ByteString) ref;
+        projectBuilder_.setMessage(value);
       }
-    }
-    /**
-     * <code>optional string build_id = 1;</code>
-     * @param value The buildId to set.
-     * @return This builder for chaining.
-     */
-    public Builder setBuildId(
-        java.lang.String value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000001;
-      buildId_ = value;
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>optional string build_id = 1;</code>
-     * @return This builder for chaining.
-     */
-    public Builder clearBuildId() {
-      bitField0_ = (bitField0_ & ~0x00000001);
-      buildId_ = getDefaultInstance().getBuildId();
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>optional string build_id = 1;</code>
-     * @param value The bytes for buildId to set.
-     * @return This builder for chaining.
-     */
-    public Builder setBuildIdBytes(
-        com.google.protobuf.ByteString value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  checkByteStringIsUtf8(value);
       bitField0_ |= 0x00000001;
-      buildId_ = value;
-      onChanged();
       return this;
     }
-
-    private java.lang.Object projectPath_ = "";
     /**
-     * <code>optional string project_path = 2;</code>
-     * @return Whether the projectPath field is set.
+     * <code>optional .org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinProjectCoordinatesProto project = 1;</code>
      */
-    public boolean hasProjectPath() {
-      return ((bitField0_ & 0x00000002) != 0);
+    public Builder setProject(
+        org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinProjectCoordinatesProto.Builder builderForValue) {
+      if (projectBuilder_ == null) {
+        project_ = builderForValue.build();
+        onChanged();
+      } else {
+        projectBuilder_.setMessage(builderForValue.build());
+      }
+      bitField0_ |= 0x00000001;
+      return this;
     }
     /**
-     * <code>optional string project_path = 2;</code>
-     * @return The projectPath.
+     * <code>optional .org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinProjectCoordinatesProto project = 1;</code>
      */
-    public java.lang.String getProjectPath() {
-      java.lang.Object ref = projectPath_;
-      if (!(ref instanceof java.lang.String)) {
-        com.google.protobuf.ByteString bs =
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        projectPath_ = s;
-        return s;
+    public Builder mergeProject(org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinProjectCoordinatesProto value) {
+      if (projectBuilder_ == null) {
+        if (((bitField0_ & 0x00000001) != 0) &&
+            project_ != null &&
+            project_ != org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinProjectCoordinatesProto.getDefaultInstance()) {
+          project_ =
+            org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinProjectCoordinatesProto.newBuilder(project_).mergeFrom(value).buildPartial();
+        } else {
+          project_ = value;
+        }
+        onChanged();
       } else {
-        return (java.lang.String) ref;
+        projectBuilder_.mergeFrom(value);
+      }
+      bitField0_ |= 0x00000001;
+      return this;
+    }
+    /**
+     * <code>optional .org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinProjectCoordinatesProto project = 1;</code>
+     */
+    public Builder clearProject() {
+      if (projectBuilder_ == null) {
+        project_ = null;
+        onChanged();
+      } else {
+        projectBuilder_.clear();
+      }
+      bitField0_ = (bitField0_ & ~0x00000001);
+      return this;
+    }
+    /**
+     * <code>optional .org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinProjectCoordinatesProto project = 1;</code>
+     */
+    public org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinProjectCoordinatesProto.Builder getProjectBuilder() {
+      bitField0_ |= 0x00000001;
+      onChanged();
+      return getProjectFieldBuilder().getBuilder();
+    }
+    /**
+     * <code>optional .org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinProjectCoordinatesProto project = 1;</code>
+     */
+    public org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinProjectCoordinatesProtoOrBuilder getProjectOrBuilder() {
+      if (projectBuilder_ != null) {
+        return projectBuilder_.getMessageOrBuilder();
+      } else {
+        return project_ == null ?
+            org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinProjectCoordinatesProto.getDefaultInstance() : project_;
       }
     }
     /**
-     * <code>optional string project_path = 2;</code>
-     * @return The bytes for projectPath.
+     * <code>optional .org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinProjectCoordinatesProto project = 1;</code>
      */
-    public com.google.protobuf.ByteString
-        getProjectPathBytes() {
-      java.lang.Object ref = projectPath_;
-      if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        projectPath_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
+    private com.google.protobuf.SingleFieldBuilderV3<
+        org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinProjectCoordinatesProto, org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinProjectCoordinatesProto.Builder, org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinProjectCoordinatesProtoOrBuilder> 
+        getProjectFieldBuilder() {
+      if (projectBuilder_ == null) {
+        projectBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+            org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinProjectCoordinatesProto, org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinProjectCoordinatesProto.Builder, org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinProjectCoordinatesProtoOrBuilder>(
+                getProject(),
+                getParentForChildren(),
+                isClean());
+        project_ = null;
       }
-    }
-    /**
-     * <code>optional string project_path = 2;</code>
-     * @param value The projectPath to set.
-     * @return This builder for chaining.
-     */
-    public Builder setProjectPath(
-        java.lang.String value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000002;
-      projectPath_ = value;
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>optional string project_path = 2;</code>
-     * @return This builder for chaining.
-     */
-    public Builder clearProjectPath() {
-      bitField0_ = (bitField0_ & ~0x00000002);
-      projectPath_ = getDefaultInstance().getProjectPath();
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>optional string project_path = 2;</code>
-     * @param value The bytes for projectPath to set.
-     * @return This builder for chaining.
-     */
-    public Builder setProjectPathBytes(
-        com.google.protobuf.ByteString value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  checkByteStringIsUtf8(value);
-      bitField0_ |= 0x00000002;
-      projectPath_ = value;
-      onChanged();
-      return this;
-    }
-
-    private java.lang.Object projectName_ = "";
-    /**
-     * <code>optional string project_name = 3;</code>
-     * @return Whether the projectName field is set.
-     */
-    public boolean hasProjectName() {
-      return ((bitField0_ & 0x00000004) != 0);
-    }
-    /**
-     * <code>optional string project_name = 3;</code>
-     * @return The projectName.
-     */
-    public java.lang.String getProjectName() {
-      java.lang.Object ref = projectName_;
-      if (!(ref instanceof java.lang.String)) {
-        com.google.protobuf.ByteString bs =
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        projectName_ = s;
-        return s;
-      } else {
-        return (java.lang.String) ref;
-      }
-    }
-    /**
-     * <code>optional string project_name = 3;</code>
-     * @return The bytes for projectName.
-     */
-    public com.google.protobuf.ByteString
-        getProjectNameBytes() {
-      java.lang.Object ref = projectName_;
-      if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        projectName_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
-    }
-    /**
-     * <code>optional string project_name = 3;</code>
-     * @param value The projectName to set.
-     * @return This builder for chaining.
-     */
-    public Builder setProjectName(
-        java.lang.String value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000004;
-      projectName_ = value;
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>optional string project_name = 3;</code>
-     * @return This builder for chaining.
-     */
-    public Builder clearProjectName() {
-      bitField0_ = (bitField0_ & ~0x00000004);
-      projectName_ = getDefaultInstance().getProjectName();
-      onChanged();
-      return this;
-    }
-    /**
-     * <code>optional string project_name = 3;</code>
-     * @param value The bytes for projectName to set.
-     * @return This builder for chaining.
-     */
-    public Builder setProjectNameBytes(
-        com.google.protobuf.ByteString value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  checkByteStringIsUtf8(value);
-      bitField0_ |= 0x00000004;
-      projectName_ = value;
-      onChanged();
-      return this;
+      return projectBuilder_;
     }
 
     private java.lang.Object sourceSetName_ = "";
     /**
-     * <code>optional string source_set_name = 4;</code>
+     * <code>optional string source_set_name = 2;</code>
      * @return Whether the sourceSetName field is set.
      */
     public boolean hasSourceSetName() {
-      return ((bitField0_ & 0x00000008) != 0);
+      return ((bitField0_ & 0x00000002) != 0);
     }
     /**
-     * <code>optional string source_set_name = 4;</code>
+     * <code>optional string source_set_name = 2;</code>
      * @return The sourceSetName.
      */
     public java.lang.String getSourceSetName() {
@@ -927,7 +636,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>optional string source_set_name = 4;</code>
+     * <code>optional string source_set_name = 2;</code>
      * @return The bytes for sourceSetName.
      */
     public com.google.protobuf.ByteString
@@ -944,7 +653,7 @@ private static final long serialVersionUID = 0L;
       }
     }
     /**
-     * <code>optional string source_set_name = 4;</code>
+     * <code>optional string source_set_name = 2;</code>
      * @param value The sourceSetName to set.
      * @return This builder for chaining.
      */
@@ -953,23 +662,23 @@ private static final long serialVersionUID = 0L;
       if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000008;
+  bitField0_ |= 0x00000002;
       sourceSetName_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>optional string source_set_name = 4;</code>
+     * <code>optional string source_set_name = 2;</code>
      * @return This builder for chaining.
      */
     public Builder clearSourceSetName() {
-      bitField0_ = (bitField0_ & ~0x00000008);
+      bitField0_ = (bitField0_ & ~0x00000002);
       sourceSetName_ = getDefaultInstance().getSourceSetName();
       onChanged();
       return this;
     }
     /**
-     * <code>optional string source_set_name = 4;</code>
+     * <code>optional string source_set_name = 2;</code>
      * @param value The bytes for sourceSetName to set.
      * @return This builder for chaining.
      */
@@ -979,7 +688,7 @@ private static final long serialVersionUID = 0L;
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
-      bitField0_ |= 0x00000008;
+      bitField0_ |= 0x00000002;
       sourceSetName_ = value;
       onChanged();
       return this;

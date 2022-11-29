@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.analysis.api.symbols
 
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.base.KtContextReceiversOwner
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtPossibleMemberSymbol
@@ -20,6 +21,7 @@ public sealed class KtCallableSymbol : KtSymbolWithKind, KtPossibleMemberSymbol,
     public abstract val receiverParameter: KtReceiverParameterSymbol?
     public abstract val isExtension: Boolean
 
+    context(KtAnalysisSession)
     abstract override fun createPointer(): KtSymbolPointer<KtCallableSymbol>
 }
 
@@ -38,4 +40,7 @@ public abstract class KtReceiverParameterSymbol : KtAnnotatedSymbol {
      * In terms of the example above -- this is link to the function foo.
      */
     public abstract val owningCallableSymbol: KtCallableSymbol
+
+    context(KtAnalysisSession)
+    abstract override fun createPointer(): KtSymbolPointer<KtReceiverParameterSymbol>
 }

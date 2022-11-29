@@ -509,6 +509,9 @@ object FirFakeOverrideGenerator {
             dispatchReceiverType = baseField.dispatchReceiverType
         }.apply {
             originalForSubstitutionOverrideAttr = baseField
+            if (isStatic && derivedClassId != null) {
+                containingClassForStaticMemberAttr = ConeClassLikeLookupTagImpl(derivedClassId)
+            }
         }
         return symbol
     }

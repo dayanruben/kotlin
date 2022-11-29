@@ -8,12 +8,8 @@ package org.jetbrains.kotlin.analysis.api.symbols.pointers
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
-import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtObjectLiteralExpression
+import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import kotlin.reflect.KClass
 
@@ -97,3 +93,6 @@ public class KtPsiBasedSymbolPointer<S : KtSymbol> private constructor(
         private var disablePsiPointer: Boolean = false
     }
 }
+
+public fun KtElement.symbolPointer(): KtSymbolPointer<KtSymbol> = KtPsiBasedSymbolPointer(this, KtSymbol::class)
+public inline fun <reified S : KtSymbol> KtElement.symbolPointerOfType(): KtSymbolPointer<S> = KtPsiBasedSymbolPointer(this, S::class)

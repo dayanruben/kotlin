@@ -992,13 +992,39 @@ open class RawFirBuilder(
                 }
                 for (declaration in file.declarations) {
                     declarations += when (declaration) {
-                        // TODO: scripts aren't supported yet
-                        is KtScript -> continue
+                        is KtScript -> {
+                            require(file.declarations.size == 1) { "Expect the script to be the only declaration in the file $name" }
+                            convertScript(declaration, this)
+                        }
                         is KtDestructuringDeclaration -> buildErrorTopLevelDestructuringDeclaration(declaration.toFirSourceElement())
                         else -> declaration.convert()
                     }
                 }
             }
+        }
+
+        private fun convertScript(script: KtScript, containingFile: FirFileBuilder,): FirScript {
+            return buildScript {
+                source = script.toFirSourceElement()
+                moduleData = baseModuleData
+                origin = FirDeclarationOrigin.Source
+                name = Name.special("<script-${containingFile.name}>")
+                symbol = FirScriptSymbol(context.packageFqName.child(name))
+                for (declaration in script.declarations) {
+                    when (declaration) {
+                        is KtScriptInitializer -> {
+                            declaration.body?.let { statements.add(it.toFirStatement()) }
+                        }
+                        else -> {
+                            statements.add(declaration.toFirStatement())
+                        }
+                    }
+                }
+            }
+        }
+
+        override fun visitScript(script: KtScript, data: Unit?): FirElement {
+            error("should not be here")
         }
 
         protected fun KtEnumEntry.toFirEnumEntry(
@@ -1080,12 +1106,6 @@ open class RawFirBuilder(
                 }
             }.apply {
                 containingClassForStaticMemberAttr = currentDispatchReceiverType()!!.lookupTag
-            }
-        }
-
-        override fun visitClassInitializer(initializer: KtClassInitializer, data: Unit?): FirElement {
-            return disabledLazyMode {
-                super.visitClassInitializer(initializer, data)
             }
         }
 
@@ -1319,7 +1339,7 @@ open class RawFirBuilder(
             val receiverType = function.receiverTypeReference.convertSafe<FirTypeRef>()
 
             val labelName: String?
-            val isAnonymousFunction = function.name == null && !function.parent.let { it is KtFile || it is KtClassBody }
+            val isAnonymousFunction = function.isAnonymous
             val functionSymbol: FirFunctionSymbol<*>
             val functionBuilder = if (isAnonymousFunction) {
                 FirAnonymousFunctionBuilder().apply {
@@ -1746,7 +1766,7 @@ open class RawFirBuilder(
                 source = initializer.toFirSourceElement()
                 moduleData = baseModuleData
                 origin = FirDeclarationOrigin.Source
-                body = initializer.body.toFirBlock()
+                body = buildOrLazyBlock { initializer.body.toFirBlock() }
             }
         }
 
@@ -2151,6 +2171,7 @@ open class RawFirBuilder(
                         return (parent.parent as? KtExpression)?.usedAsExpression ?: true
                     }
                 }
+                if (parent is KtScriptInitializer) return false
                 // Here we check that when used is a single statement of a loop
                 if (parent !is KtContainerNodeForControlStructureBody) return true
                 val type = parent.parent.elementType

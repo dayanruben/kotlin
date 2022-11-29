@@ -8,68 +8,32 @@ public interface IdeaKotlinSourceCoordinatesProtoOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>optional string build_id = 1;</code>
-   * @return Whether the buildId field is set.
+   * <code>optional .org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinProjectCoordinatesProto project = 1;</code>
+   * @return Whether the project field is set.
    */
-  boolean hasBuildId();
+  boolean hasProject();
   /**
-   * <code>optional string build_id = 1;</code>
-   * @return The buildId.
+   * <code>optional .org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinProjectCoordinatesProto project = 1;</code>
+   * @return The project.
    */
-  java.lang.String getBuildId();
+  org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinProjectCoordinatesProto getProject();
   /**
-   * <code>optional string build_id = 1;</code>
-   * @return The bytes for buildId.
+   * <code>optional .org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinProjectCoordinatesProto project = 1;</code>
    */
-  com.google.protobuf.ByteString
-      getBuildIdBytes();
+  org.jetbrains.kotlin.gradle.idea.proto.generated.tcs.IdeaKotlinProjectCoordinatesProtoOrBuilder getProjectOrBuilder();
 
   /**
-   * <code>optional string project_path = 2;</code>
-   * @return Whether the projectPath field is set.
-   */
-  boolean hasProjectPath();
-  /**
-   * <code>optional string project_path = 2;</code>
-   * @return The projectPath.
-   */
-  java.lang.String getProjectPath();
-  /**
-   * <code>optional string project_path = 2;</code>
-   * @return The bytes for projectPath.
-   */
-  com.google.protobuf.ByteString
-      getProjectPathBytes();
-
-  /**
-   * <code>optional string project_name = 3;</code>
-   * @return Whether the projectName field is set.
-   */
-  boolean hasProjectName();
-  /**
-   * <code>optional string project_name = 3;</code>
-   * @return The projectName.
-   */
-  java.lang.String getProjectName();
-  /**
-   * <code>optional string project_name = 3;</code>
-   * @return The bytes for projectName.
-   */
-  com.google.protobuf.ByteString
-      getProjectNameBytes();
-
-  /**
-   * <code>optional string source_set_name = 4;</code>
+   * <code>optional string source_set_name = 2;</code>
    * @return Whether the sourceSetName field is set.
    */
   boolean hasSourceSetName();
   /**
-   * <code>optional string source_set_name = 4;</code>
+   * <code>optional string source_set_name = 2;</code>
    * @return The sourceSetName.
    */
   java.lang.String getSourceSetName();
   /**
-   * <code>optional string source_set_name = 4;</code>
+   * <code>optional string source_set_name = 2;</code>
    * @return The bytes for sourceSetName.
    */
   com.google.protobuf.ByteString

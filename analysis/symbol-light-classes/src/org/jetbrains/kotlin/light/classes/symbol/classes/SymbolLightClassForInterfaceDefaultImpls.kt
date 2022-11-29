@@ -7,25 +7,28 @@ package org.jetbrains.kotlin.light.classes.symbol.classes
 
 import com.intellij.psi.*
 import com.intellij.util.IncorrectOperationException
-import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.asJava.classes.lazyPub
 import org.jetbrains.kotlin.light.classes.symbol.modifierLists.SymbolLightClassModifierList
 import org.jetbrains.kotlin.load.java.JvmAbi
 
-context(KtAnalysisSession)
-internal class SymbolLightClassForInterfaceDefaultImpls(
-    private val classOrObjectSymbol: KtNamedClassOrObjectSymbol,
-    private val containingClass: SymbolLightClassBase,
-    manager: PsiManager
-) : SymbolLightInterfaceClass(classOrObjectSymbol, manager) {
+internal class SymbolLightClassForInterfaceDefaultImpls(private val containingClass: SymbolLightClassForInterface) :
+    SymbolLightClassForInterface(
+        containingClass.classOrObjectDeclaration,
+        containingClass.classOrObjectSymbolPointer,
+        containingClass.ktModule,
+        containingClass.manager,
+    ) {
     override fun getQualifiedName(): String? = containingClass.qualifiedName?.let { it + ".${JvmAbi.DEFAULT_IMPLS_CLASS_NAME}" }
 
     override fun getName() = JvmAbi.DEFAULT_IMPLS_CLASS_NAME
     override fun getParent() = containingClass
 
-    override fun copy() =
-        SymbolLightClassForInterfaceDefaultImpls(classOrObjectSymbol, containingClass, manager)
+    override fun copy() = SymbolLightClassForInterfaceDefaultImpls(containingClass)
+
+    override fun equals(other: Any?): Boolean = this === other ||
+            other is SymbolLightClassForInterfaceDefaultImpls && other.containingClass == containingClass
+
+    override fun hashCode(): Int = containingClass.hashCode()
 
     override fun getTypeParameterList(): PsiTypeParameterList? = null
     override fun getTypeParameters(): Array<PsiTypeParameter> = emptyArray()
@@ -33,7 +36,7 @@ internal class SymbolLightClassForInterfaceDefaultImpls(
     private val _modifierList: PsiModifierList? by lazyPub {
         val lazyModifiers = lazyOf(setOf(PsiModifier.PUBLIC, PsiModifier.STATIC, PsiModifier.FINAL))
         val lazyAnnotations = lazyOf(emptyList<PsiAnnotation>())
-        SymbolLightClassModifierList(this@SymbolLightClassForInterfaceDefaultImpls, lazyModifiers, lazyAnnotations)
+        SymbolLightClassModifierList(this, lazyModifiers, lazyAnnotations)
     }
 
     override fun getModifierList(): PsiModifierList? = _modifierList
@@ -44,6 +47,7 @@ internal class SymbolLightClassForInterfaceDefaultImpls(
     override fun isEnum(): Boolean = false
     override fun hasTypeParameters(): Boolean = false
     override fun isInheritor(baseClass: PsiClass, checkDeep: Boolean): Boolean = false
+    override fun getExtendsList(): PsiReferenceList? = null
 
     @Throws(IncorrectOperationException::class)
     override fun setName(name: String): PsiElement {

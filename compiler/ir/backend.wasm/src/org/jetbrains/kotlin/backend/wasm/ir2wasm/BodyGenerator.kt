@@ -392,7 +392,7 @@ class BodyGenerator(
                 generateExpression(receiver)
 
                 //TODO: check why it could be needed
-                generateRefCast(receiver.type, klass.defaultType)
+                generateRefNullCast(receiver.type, klass.defaultType)
 
                 body.buildStructGet(context.referenceGcType(klass.symbol), WasmSymbol(0))
                 body.buildStructGet(context.referenceVTableGcType(klass.symbol), WasmSymbol(vfSlot))
@@ -428,7 +428,7 @@ class BodyGenerator(
             body.buildGetUnit()
     }
 
-    private fun generateRefCast(fromType: IrType, toType: IrType) {
+    private fun generateRefNullCast(fromType: IrType, toType: IrType) {
         if (!isDownCastAlwaysSuccessInRuntime(fromType, toType)) {
             body.buildRefCastNullStatic(
                 toType = context.referenceGcType(toType.getRuntimeClass(irBuiltIns).symbol)
@@ -492,7 +492,7 @@ class BodyGenerator(
                         body.buildBlock("isInterface", WasmRefNullType(WasmHeapType.Simple.Data)) { innerLabel ->
                             body.buildGetLocal(parameterLocal)
                             body.buildStructGet(context.referenceGcType(irBuiltIns.anyClass), WasmSymbol(1))
-                            body.buildBrInstr(WasmOp.BR_ON_CAST_FAIL, innerLabel, classITable)
+                            body.buildBrInstr(WasmOp.BR_ON_CAST_FAIL_DEPRECATED, innerLabel, classITable)
                             body.buildStructGet(classITable, context.referenceClassITableInterfaceSlot(irInterface.symbol))
                             body.buildInstr(WasmOp.REF_IS_NULL)
                             body.buildInstr(WasmOp.I32_EQZ)
@@ -507,8 +507,8 @@ class BodyGenerator(
                 }
             }
 
-            wasmSymbols.refCast -> {
-                generateRefCast(
+            wasmSymbols.refCastNull -> {
+                generateRefNullCast(
                     fromType = call.getValueArgument(0)!!.type,
                     toType = call.getTypeArgument(0)!!
                 )
@@ -540,7 +540,7 @@ class BodyGenerator(
                 val klass: IrClass = backendContext.inlineClassesUtils.getInlinedClass(toType)!!
                 val field = getInlineClassBackingField(klass)
 
-                generateRefCast(fromType, toType)
+                generateRefNullCast(fromType, toType)
                 generateInstanceFieldAccess(field)
             }
 
@@ -722,7 +722,7 @@ class BodyGenerator(
 
         // REF -> REF -> REF_CAST
         if (!expectedIsPrimitive) {
-            generateRefCast(actualTypeErased, expectedTypeErased)
+            generateRefNullCast(actualTypeErased, expectedTypeErased)
         }
     }
 
@@ -864,6 +864,8 @@ class BodyGenerator(
                                 WasmImmediate.MemArg(0u, 0u)
                             WasmImmediateKind.STRUCT_TYPE_IDX ->
                                 WasmImmediate.GcType(getReferenceGcType())
+                            WasmImmediateKind.HEAP_TYPE ->
+                                WasmImmediate.HeapType(WasmHeapType.Type(getReferenceGcType()))
                             WasmImmediateKind.TYPE_IDX ->
                                 WasmImmediate.TypeIdx(getReferenceGcType())
 

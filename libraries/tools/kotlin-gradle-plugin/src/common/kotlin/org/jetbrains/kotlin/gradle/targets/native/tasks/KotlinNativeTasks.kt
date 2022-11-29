@@ -179,7 +179,10 @@ abstract class AbstractKotlinNativeCompile<
     )
 
     @get:Classpath
-    protected val friendModule: FileCollection = project.files({ compilation.friendPaths })
+    internal val friendModule: FileCollection = project.files({ compilation.friendPaths })
+
+    @get:Classpath
+    internal val refinesModule: FileCollection = project.files({ compilation.refinesPaths })
 
     @get:Input
     val target: String by project.provider { konanTarget.name }
@@ -468,7 +471,7 @@ internal constructor(
         properties[KLIB_PROPERTY_NATIVE_TARGETS] = konanTargetsForManifest
         properties.saveToFile(org.jetbrains.kotlin.konan.file.File(manifestFile.toPath()))
 
-        return SharedCompilationData(manifestFile, isAllowCommonizer)
+        return SharedCompilationData(manifestFile, isAllowCommonizer, refinesModule)
     }
 
     @TaskAction

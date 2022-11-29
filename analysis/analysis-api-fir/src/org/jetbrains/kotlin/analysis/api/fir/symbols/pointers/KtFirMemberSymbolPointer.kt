@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.fir.KtFirAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.symbols.KtFirSymbol
 import org.jetbrains.kotlin.analysis.api.fir.utils.firSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtSymbolPointer
@@ -52,10 +51,4 @@ internal inline fun <reified T : KtSymbol> KtSymbol.requireOwnerPointer(): KtSym
 
     @Suppress("UNCHECKED_CAST")
     return symbolWithMembers.createPointer() as KtSymbolPointer<T>
-}
-
-internal inline fun <reified T : KtSymbol> KtFirSymbol<*>.requireOwnerPointer(): KtSymbolPointer<T> {
-    return analyze(firResolveSession.useSiteKtModule) {
-        requireOwnerPointer<T>()
-    }
 }

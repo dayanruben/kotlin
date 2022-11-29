@@ -437,7 +437,7 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
         }
 
         anonymousInitializer.configure {
-            +body(nullable = true)
+            +body(nullable = true, withReplace = true)
             +symbol("FirAnonymousInitializerSymbol")
         }
 
@@ -449,6 +449,13 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
             +field("sourceFile", sourceFileType, nullable = true)
             +field("sourceFileLinesMapping", sourceFileLinesMappingType, nullable = true)
             +symbol("FirFileSymbol")
+        }
+
+        script.configure {
+            +name
+            +fieldList(statement).withTransform()
+            +symbol("FirScriptSymbol")
+            +fieldList(contextReceiver)
         }
 
         packageDirective.configure {

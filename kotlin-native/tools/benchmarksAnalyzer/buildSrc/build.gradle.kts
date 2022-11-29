@@ -11,44 +11,30 @@ buildscript {
         extra[key] = value
     }
 
-    val cacheRedirectorEnabled = findProperty("cacheRedirectorEnabled")?.toString()?.toBoolean() ?: false
-
     extra["defaultSnapshotVersion"] = kotlinBuildProperties.defaultSnapshotVersion
-    kotlinBootstrapFrom(BootstrapOption.SpaceBootstrap(kotlinBuildProperties.kotlinBootstrapVersion!!, cacheRedirectorEnabled))
     extra["bootstrapKotlinRepo"] = project.bootstrapKotlinRepo
     extra["bootstrapKotlinVersion"] = project.bootstrapKotlinVersion
 
-    repositories {
-        maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-dependencies")
-        mavenCentral()
-        project.bootstrapKotlinRepo?.let {
-            maven(url = it)
-        }
-    }
-
     dependencies {
         classpath("org.jetbrains.kotlin:kotlin-build-gradle-plugin:${kotlinBuildProperties.buildGradlePluginVersion}")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${project.bootstrapKotlinVersion}")
     }
 }
 
-apply{
-    plugin("kotlin")
-    plugin("kotlin-sam-with-receiver")
-}
 plugins {
     `kotlin-dsl`
-    //kotlin("multiplatform") version "${project.bootstrapKotlinVersion}"
+    id("org.jetbrains.kotlin.jvm")
+    id("org.jetbrains.kotlin.plugin.sam.with.receiver")
+    //kotlin("multiplatform")
 }
 
-val cacheRedirectorEnabled = findProperty("cacheRedirectorEnabled")?.toString()?.toBoolean() == true
+kotlin {
+    jvmToolchain(8)
+}
+
 repositories {
     maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-dependencies")
     mavenCentral()
     gradlePluginPortal()
-    extra["bootstrapKotlinRepo"]?.let {
-        maven(url = it)
-    }
 }
 
 tasks.validatePlugins.configure {
@@ -102,6 +88,11 @@ dependencies {
     //api("org.jetbrains.kotlin:kotlin-native-shared:$konanVersion")
     implementation("gradle.plugin.com.github.johnrengelman:shadow:$shadowVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-metadata-klib:$metadataVersion")
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 }
 
 afterEvaluate {

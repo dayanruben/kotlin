@@ -48,10 +48,6 @@ internal fun notFoundIcError(what: String, libFile: KotlinLibraryFile? = null, s
     icError("can not find $what", libFile, srcFile)
 }
 
-internal inline fun <E> buildListUntil(to: Int, builderAction: MutableList<E>.(Int) -> Unit): List<E> {
-    return buildList(to) { repeat(to) { builderAction(it) } }
-}
-
 internal inline fun <E> buildSetUntil(to: Int, builderAction: MutableSet<E>.(Int) -> Unit): Set<E> {
     return HashSet<E>(to).apply { repeat(to) { builderAction(it) } }
 }
@@ -69,6 +65,12 @@ internal class StopwatchIC {
     val laps: List<Pair<String, Long>>
         get() = lapsImpl
 
+    fun clear() {
+        lapStart = 0
+        lapDescription = null
+        lapsImpl.clear()
+    }
+
     fun startNext(description: String) {
         val now = System.nanoTime()
         stop(now)
@@ -81,5 +83,12 @@ internal class StopwatchIC {
             lapsImpl += description to ((stopTime ?: System.nanoTime()) - lapStart)
         }
         lapDescription = null
+    }
+
+    inline fun <T> measure(description: String, f: () -> T): T {
+        startNext(description)
+        val result = f()
+        stop()
+        return result
     }
 }

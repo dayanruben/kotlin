@@ -23,3 +23,4 @@ internal class IdeaKotlinSourceDependencyMatcher(
                 dependency.coordinates.sourceSetName == sourceSetName
     }
 }
+

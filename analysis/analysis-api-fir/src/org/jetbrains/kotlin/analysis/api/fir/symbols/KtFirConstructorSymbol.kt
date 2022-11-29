@@ -6,11 +6,12 @@
 package org.jetbrains.kotlin.analysis.api.fir.symbols
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.KtSymbolByFirBuilder
 import org.jetbrains.kotlin.analysis.api.fir.annotations.KtFirAnnotationListForDeclaration
 import org.jetbrains.kotlin.analysis.api.fir.findPsi
+import org.jetbrains.kotlin.analysis.api.fir.symbols.pointers.FirCallableSignature
 import org.jetbrains.kotlin.analysis.api.fir.symbols.pointers.KtFirConstructorSymbolPointer
-import org.jetbrains.kotlin.analysis.api.fir.symbols.pointers.createSignature
 import org.jetbrains.kotlin.analysis.api.fir.symbols.pointers.requireOwnerPointer
 import org.jetbrains.kotlin.analysis.api.fir.utils.cached
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
@@ -37,7 +38,7 @@ internal class KtFirConstructorSymbol(
     private val builder: KtSymbolByFirBuilder
 ) : KtConstructorSymbol(), KtFirSymbol<FirConstructorSymbol> {
     override val psi: PsiElement? by cached { firSymbol.findPsi() }
-    
+
     override val returnType: KtType get() = withValidityAssertion { firSymbol.returnType(builder) }
 
     override val valueParameters: List<KtValueParameterSymbol> by cached { firSymbol.createKtValueParameters(builder) }
@@ -49,7 +50,13 @@ internal class KtFirConstructorSymbol(
 
     override val visibility: Visibility get() = withValidityAssertion { firSymbol.visibility }
 
-    override val annotationsList by cached { KtFirAnnotationListForDeclaration.create(firSymbol, firResolveSession.useSiteFirSession, token) }
+    override val annotationsList by cached {
+        KtFirAnnotationListForDeclaration.create(
+            firSymbol,
+            firResolveSession.useSiteFirSession,
+            token,
+        )
+    }
 
     override val containingClassIdIfNonLocal: ClassId?
         get() = withValidityAssertion { firSymbol.containingClassLookupTag()?.classId?.takeUnless { it.isLocal } }
@@ -59,13 +66,18 @@ internal class KtFirConstructorSymbol(
     override val typeParameters by cached { firSymbol.createKtTypeParameters(builder) }
 
 
+    context(KtAnalysisSession)
     override fun createPointer(): KtSymbolPointer<KtConstructorSymbol> = withValidityAssertion {
         KtPsiBasedSymbolPointer.createForSymbolFromSource<KtConstructorSymbol>(this)?.let { return it }
         if (symbolKind == KtSymbolKind.LOCAL) {
             throw CanNotCreateSymbolPointerForLocalLibraryDeclarationException("constructor")
         }
 
-        KtFirConstructorSymbolPointer(requireOwnerPointer(), isPrimary, firSymbol.fir.createSignature())
+        KtFirConstructorSymbolPointer(
+            requireOwnerPointer(),
+            isPrimary,
+            FirCallableSignature.createSignature(firSymbol),
+        )
     }
 
     override fun equals(other: Any?): Boolean = symbolEquals(other)

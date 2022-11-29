@@ -16836,6 +16836,7 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
                 register("compiler/testData/codegen/box/inlineClasses/kt51254.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
                 register("compiler/testData/codegen/box/inlineClasses/kt52913.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
                 register("compiler/testData/codegen/box/inlineClasses/kt54455.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
+                register("compiler/testData/codegen/box/inlineClasses/lateinitInlineClasses.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
                 register("compiler/testData/codegen/box/inlineClasses/mangledDefaultParameterFunction.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
                 register("compiler/testData/codegen/box/inlineClasses/mangledDefaultParameterFunctionGeneric.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
                 register("compiler/testData/codegen/box/inlineClasses/mangledSuperCalls.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
@@ -18689,6 +18690,13 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
             public void testKt54455() throws Exception {
                 // There is a registered source transformer for the testcase: TransformersFunctions.getRemoveOptionalJvmInlineAnnotation()
                 runTest("compiler/testData/codegen/box/inlineClasses/kt54455.kt");
+            }
+
+            @Test
+            @TestMetadata("lateinitInlineClasses.kt")
+            public void testLateinitInlineClasses() throws Exception {
+                // There is a registered source transformer for the testcase: TransformersFunctions.getRemoveOptionalJvmInlineAnnotation()
+                runTest("compiler/testData/codegen/box/inlineClasses/lateinitInlineClasses.kt");
             }
 
             @Test
@@ -21840,6 +21848,7 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
                     register("compiler/testData/codegen/box/inlineClasses/inlineClassCollection/inlineListOfInlineClassGeneric.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
                     register("compiler/testData/codegen/box/inlineClasses/inlineClassCollection/inlineMapOfInlineClass.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
                     register("compiler/testData/codegen/box/inlineClasses/inlineClassCollection/inlineMapOfInlineClassGeneric.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
+                    register("compiler/testData/codegen/box/inlineClasses/inlineClassCollection/inlineMutableCollectionBulkAdd.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
                 }
 
                 @Test
@@ -21887,6 +21896,13 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
                 public void testInlineMapOfInlineClassGeneric() throws Exception {
                     // There is a registered source transformer for the testcase: TransformersFunctions.getRemoveOptionalJvmInlineAnnotation()
                     runTest("compiler/testData/codegen/box/inlineClasses/inlineClassCollection/inlineMapOfInlineClassGeneric.kt");
+                }
+
+                @Test
+                @TestMetadata("inlineMutableCollectionBulkAdd.kt")
+                public void testInlineMutableCollectionBulkAdd() throws Exception {
+                    // There is a registered source transformer for the testcase: TransformersFunctions.getRemoveOptionalJvmInlineAnnotation()
+                    runTest("compiler/testData/codegen/box/inlineClasses/inlineClassCollection/inlineMutableCollectionBulkAdd.kt");
                 }
             }
 
@@ -23728,6 +23744,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
             @TestMetadata("kt41765.kt")
             public void testKt41765() throws Exception {
                 runTest("compiler/testData/codegen/box/ir/kt41765.kt");
+            }
+
+            @Test
+            @TestMetadata("kt52677.kt")
+            public void testKt52677() throws Exception {
+                runTest("compiler/testData/codegen/box/ir/kt52677.kt");
             }
 
             @Test

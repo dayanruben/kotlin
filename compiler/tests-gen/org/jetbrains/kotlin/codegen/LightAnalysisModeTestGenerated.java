@@ -18020,6 +18020,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/inlineClasses/kt54455.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
         }
 
+        @TestMetadata("lateinitInlineClasses.kt")
+        public void testLateinitInlineClasses() throws Exception {
+            runTest("compiler/testData/codegen/box/inlineClasses/lateinitInlineClasses.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
+        }
+
         @TestMetadata("mangledDefaultParameterFunction.kt")
         public void testMangledDefaultParameterFunction() throws Exception {
             runTest("compiler/testData/codegen/box/inlineClasses/mangledDefaultParameterFunction.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
@@ -20272,6 +20277,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestDataPath("$PROJECT_ROOT")
         @RunWith(JUnit3RunnerWithInners.class)
         public static class InlineClassCollection extends AbstractLightAnalysisModeTest {
+            @TestMetadata("inlineMutableCollectionBulkAdd.kt")
+            public void ignoreInlineMutableCollectionBulkAdd() throws Exception {
+                runTest("compiler/testData/codegen/box/inlineClasses/inlineClassCollection/inlineMutableCollectionBulkAdd.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM, testDataFilePath);
             }
@@ -22905,6 +22915,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("kt41765.kt")
         public void testKt41765() throws Exception {
             runTest("compiler/testData/codegen/box/ir/kt41765.kt");
+        }
+
+        @TestMetadata("kt52677.kt")
+        public void testKt52677() throws Exception {
+            runTest("compiler/testData/codegen/box/ir/kt52677.kt");
         }
 
         @TestMetadata("lambdaWithLoop.kt")

@@ -295,7 +295,7 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
 
         if (arguments.irProduceJs) {
             messageCollector.report(INFO, "Produce executable: $outputDirPath")
-            messageCollector.report(INFO, arguments.cacheDirectories ?: "")
+            messageCollector.report(INFO, "Cache directory: ${arguments.cacheDirectory}")
 
             if (icCaches.isNotEmpty()) {
                 val beforeIc2Js = System.currentTimeMillis()
@@ -635,14 +635,14 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
         configurationJs: CompilerConfiguration,
         mainCallArguments: List<String>?
     ): List<ModuleArtifact> {
-        val cacheDirectories = configureLibraries(arguments.cacheDirectories)
+        val cacheDirectory = arguments.cacheDirectory
 
         // TODO: Use JS IR IC infrastructure for WASM?
-        val icCaches = if (!arguments.wasm && cacheDirectories.isNotEmpty()) {
+        val icCaches = if (!arguments.wasm && cacheDirectory != null) {
             messageCollector.report(INFO, "")
             messageCollector.report(INFO, "Building cache:")
-            messageCollector.report(INFO, "to: ${outputDir}")
-            messageCollector.report(INFO, arguments.cacheDirectories ?: "")
+            messageCollector.report(INFO, "to: $outputDir")
+            messageCollector.report(INFO, "cache directory: $cacheDirectory")
             messageCollector.report(INFO, libraries.toString())
 
             val start = System.currentTimeMillis()
@@ -650,7 +650,7 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
             val cacheUpdater = CacheUpdater(
                 mainModule = arguments.includes!!,
                 allModules = libraries,
-                icCachePaths = cacheDirectories,
+                cacheDir = cacheDirectory,
                 compilerConfiguration = configurationJs,
                 irFactory = { IrFactoryImplForJsIC(WholeWorldStageController()) },
                 mainArguments = mainCallArguments,
@@ -659,25 +659,30 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
 
             val artifacts = cacheUpdater.actualizeCaches()
             messageCollector.report(INFO, "IC rebuilt overall time: ${System.currentTimeMillis() - start}ms")
-            for ((event, duration) in cacheUpdater.getStopwatchLaps()) {
+            for ((event, duration) in cacheUpdater.getStopwatchLastLaps()) {
                 messageCollector.report(INFO, "  $event: ${(duration / 1e6).toInt()}ms")
             }
 
             var libIndex = 0
-            for ((libFile, srcFiles) in cacheUpdater.getDirtyFileStats()) {
+            for ((libFile, srcFiles) in cacheUpdater.getDirtyFileLastStats()) {
+                val singleState = srcFiles.values.firstOrNull()?.singleOrNull()?.let { singleState ->
+                    singleState.takeIf { srcFiles.values.all { it.singleOrNull() == singleState } }
+                }
+
                 val (msg, showFiles) = when {
-                    srcFiles.values.all { it.contains(DirtyFileState.ADDED_FILE) } -> "fully rebuilt due to clean build" to false
-                    srcFiles.values.all { it.contains(DirtyFileState.MODIFIED_CONFIG) } -> "fully rebuilt due to config modification" to false
-                    else -> "partially rebuilt" to true
+                    singleState == DirtyFileState.NON_MODIFIED_IR -> continue
+                    singleState == DirtyFileState.REMOVED_FILE -> "removed" to emptyMap()
+                    singleState == DirtyFileState.ADDED_FILE -> "built clean" to emptyMap()
+                    srcFiles.values.any { it.singleOrNull() == DirtyFileState.NON_MODIFIED_IR } -> "partially rebuilt" to srcFiles
+                    else -> "fully rebuilt" to srcFiles
                 }
                 messageCollector.report(INFO, "${++libIndex}) module [${File(libFile.path).name}] was $msg")
-                if (showFiles) {
-                    var fileIndex = 0
-                    for ((srcFile, stat) in srcFiles) {
-                        val statStr = stat.joinToString { it.str }
-                        // Use index, because MessageCollector ignores already reported messages
-                        messageCollector.report(INFO, "  $libIndex.${++fileIndex}) file [${File(srcFile.path).name}]: ($statStr)")
-                    }
+                var fileIndex = 0
+                for ((srcFile, stat) in showFiles) {
+                    val filteredStats = stat.filter { it != DirtyFileState.NON_MODIFIED_IR }
+                    val statStr = filteredStats.takeIf { it.isNotEmpty() }?.joinToString { it.str } ?: continue
+                    // Use index, because MessageCollector ignores already reported messages
+                    messageCollector.report(INFO, "  $libIndex.${++fileIndex}) file [${File(srcFile.path).name}]: ($statStr)")
                 }
             }
 

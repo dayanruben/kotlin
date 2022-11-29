@@ -15025,6 +15025,11 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
             runTest("compiler/testData/codegen/box/inlineClasses/kt54455.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
         }
 
+        @TestMetadata("lateinitInlineClasses.kt")
+        public void testLateinitInlineClasses() throws Exception {
+            runTest("compiler/testData/codegen/box/inlineClasses/lateinitInlineClasses.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
+        }
+
         @TestMetadata("mangledDefaultParameterFunction.kt")
         public void testMangledDefaultParameterFunction() throws Exception {
             runTest("compiler/testData/codegen/box/inlineClasses/mangledDefaultParameterFunction.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
@@ -17205,6 +17210,11 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
             public void testInlineMapOfInlineClassGeneric() throws Exception {
                 runTest("compiler/testData/codegen/box/inlineClasses/inlineClassCollection/inlineMapOfInlineClassGeneric.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
             }
+
+            @TestMetadata("inlineMutableCollectionBulkAdd.kt")
+            public void testInlineMutableCollectionBulkAdd() throws Exception {
+                runTest("compiler/testData/codegen/box/inlineClasses/inlineClassCollection/inlineMutableCollectionBulkAdd.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
+            }
         }
 
         @TestMetadata("compiler/testData/codegen/box/inlineClasses/interfaceDelegation")
@@ -18658,6 +18668,11 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
         @TestMetadata("kt41765.kt")
         public void testKt41765() throws Exception {
             runTest("compiler/testData/codegen/box/ir/kt41765.kt");
+        }
+
+        @TestMetadata("kt52677.kt")
+        public void testKt52677() throws Exception {
+            runTest("compiler/testData/codegen/box/ir/kt52677.kt");
         }
 
         @TestMetadata("lambdaWithLoop.kt")
