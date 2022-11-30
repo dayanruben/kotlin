@@ -112,7 +112,7 @@ rootProject.apply {
 IdeVersionConfigurator.setCurrentIde(project)
 
 if (!project.hasProperty("versions.kotlin-native")) {
-    extra["versions.kotlin-native"] = "1.8.20-dev-2933"
+    extra["versions.kotlin-native"] = "1.8.20-dev-3138"
 }
 
 val irCompilerModules = arrayOf(
@@ -607,7 +607,6 @@ tasks {
             ":compiler:tests-against-klib:test"
         )
         dependsOn(":plugins:jvm-abi-gen:test")
-        dependsOn(":repo:codebase-tests:test")
     }
 
     register("testsForBootstrapBuildTest") {
