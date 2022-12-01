@@ -2512,4 +2512,20 @@ public class IrBytecodeListingTestGenerated extends AbstractIrBytecodeListingTes
             }
         }
     }
+
+    @Nested
+    @TestMetadata("compiler/testData/codegen/bytecodeListing/valueClasses")
+    @TestDataPath("$PROJECT_ROOT")
+    public class ValueClasses {
+        @Test
+        public void testAllFilesPresentInValueClasses() throws Exception {
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/bytecodeListing/valueClasses"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+        }
+
+        @Test
+        @TestMetadata("annotations.kt")
+        public void testAnnotations() throws Exception {
+            runTest("compiler/testData/codegen/bytecodeListing/valueClasses/annotations.kt");
+        }
+    }
 }

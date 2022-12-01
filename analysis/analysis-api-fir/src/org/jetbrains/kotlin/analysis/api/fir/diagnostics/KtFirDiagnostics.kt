@@ -697,6 +697,12 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = AnnotationInWhereClauseError::class
     }
 
+    abstract class PluginAnnotationAmbiguity : KtFirDiagnostic<PsiElement>() {
+        override val diagnosticClass get() = PluginAnnotationAmbiguity::class
+        abstract val typeFromCompilerPhase: KtType
+        abstract val typeFromTypesPhase: KtType
+    }
+
     abstract class OptInUsage : KtFirDiagnostic<PsiElement>() {
         override val diagnosticClass get() = OptInUsage::class
         abstract val optInMarkerFqName: FqName
@@ -987,13 +993,21 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = ValueClassCannotBeRecursive::class
     }
 
+    abstract class MultiFieldValueClassPrimaryConstructorDefaultParameter : KtFirDiagnostic<KtExpression>() {
+        override val diagnosticClass get() = MultiFieldValueClassPrimaryConstructorDefaultParameter::class
+    }
+
+    abstract class SecondaryConstructorWithBodyInsideValueClass : KtFirDiagnostic<PsiElement>() {
+        override val diagnosticClass get() = SecondaryConstructorWithBodyInsideValueClass::class
+    }
+
     abstract class ReservedMemberInsideValueClass : KtFirDiagnostic<KtFunction>() {
         override val diagnosticClass get() = ReservedMemberInsideValueClass::class
         abstract val name: String
     }
 
-    abstract class SecondaryConstructorWithBodyInsideValueClass : KtFirDiagnostic<PsiElement>() {
-        override val diagnosticClass get() = SecondaryConstructorWithBodyInsideValueClass::class
+    abstract class TypeArgumentOnTypedValueClassEquals : KtFirDiagnostic<KtTypeReference>() {
+        override val diagnosticClass get() = TypeArgumentOnTypedValueClassEquals::class
     }
 
     abstract class InnerClassInsideValueClass : KtFirDiagnostic<KtDeclaration>() {
@@ -1002,6 +1016,11 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
 
     abstract class ValueClassCannotBeCloneable : KtFirDiagnostic<KtDeclaration>() {
         override val diagnosticClass get() = ValueClassCannotBeCloneable::class
+    }
+
+    abstract class AnnotationOnIllegalMultiFieldValueClassTypedTarget : KtFirDiagnostic<KtAnnotationEntry>() {
+        override val diagnosticClass get() = AnnotationOnIllegalMultiFieldValueClassTypedTarget::class
+        abstract val name: String
     }
 
     abstract class NoneApplicable : KtFirDiagnostic<PsiElement>() {
@@ -2725,8 +2744,8 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = RedundantInlineSuspendFunctionType::class
     }
 
-    abstract class InefficientEqualsOverridingInInlineClass : KtFirDiagnostic<KtNamedFunction>() {
-        override val diagnosticClass get() = InefficientEqualsOverridingInInlineClass::class
+    abstract class InefficientEqualsOverridingInValueClass : KtFirDiagnostic<KtNamedFunction>() {
+        override val diagnosticClass get() = InefficientEqualsOverridingInValueClass::class
         abstract val type: KtType
     }
 

@@ -5,12 +5,12 @@
 
 package org.jetbrains.kotlin.backend.jvm.lower
 
+import org.jetbrains.kotlin.backend.common.ScopeWithIr
 import org.jetbrains.kotlin.backend.common.lower.createIrBuilder
 import org.jetbrains.kotlin.backend.common.lower.irBlockBody
-import org.jetbrains.kotlin.backend.common.lower.loops.forLoopsPhase
-import org.jetbrains.kotlin.backend.common.phaser.makeIrFilePhase
 import org.jetbrains.kotlin.backend.jvm.*
 import org.jetbrains.kotlin.backend.jvm.ir.erasedUpperBound
+import org.jetbrains.kotlin.backend.jvm.ir.isInlineClassType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
@@ -31,28 +31,18 @@ import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.JVM_INLINE_ANNOTATION_FQ_NAME
 
-val jvmInlineClassPhase = makeIrFilePhase(
-    ::JvmInlineClassLowering,
-    name = "Inline Classes",
-    description = "Lower inline classes",
-    // forLoopsPhase may produce UInt and ULong which are inline classes.
-    // Standard library replacements are done on the unmangled names for UInt and ULong classes.
-    // Collection stubs may require mangling by inline class rules.
-    // SAM wrappers may require mangling for fun interfaces with inline class parameters
-    prerequisite = setOf(
-        forLoopsPhase, jvmBuiltInsPhase, collectionStubMethodLowering, singleAbstractMethodPhase, jvmMultiFieldValueClassPhase
-    ),
-)
-
 /**
  * Adds new constructors, box, and unbox functions to inline classes as well as replacement
- * functions and bridges to avoid clashes between overloaded function. Changes calls with
+ * functions and bridges to avoid clashes between overloaded function. Changes call with
  * known types to call the replacement functions.
  *
  * We do not unfold inline class types here. Instead, the type mapper will lower inline class
  * types to the types of their underlying field.
  */
-private class JvmInlineClassLowering(context: JvmBackendContext) : JvmValueClassAbstractLowering(context) {
+internal class JvmInlineClassLowering(
+    context: JvmBackendContext,
+    scopeStack: MutableList<ScopeWithIr>,
+) : JvmValueClassAbstractLowering(context, scopeStack) {
     override val replacements: MemoizedValueClassAbstractReplacements
         get() = context.inlineClassReplacements
 
@@ -83,8 +73,10 @@ private class JvmInlineClassLowering(context: JvmBackendContext) : JvmValueClass
 
     override val specificMangle: SpecificMangle
         get() = SpecificMangle.Inline
+    override val IrType.needsHandling get() = isInlineClassType()
+    override fun visitClassNewDeclarationsWhenParallel(declaration: IrDeclaration) = Unit
 
-    override fun visitClassNew(declaration: IrClass): IrStatement {
+    override fun visitClassNew(declaration: IrClass): IrClass {
         // The arguments to the primary constructor are in scope in the initializers of IrFields.
 
         declaration.primaryConstructor?.let {
@@ -122,7 +114,7 @@ private class JvmInlineClassLowering(context: JvmBackendContext) : JvmValueClass
         addJvmInlineAnnotation(declaration)
     }
 
-    fun addJvmInlineAnnotation(valueClass: IrClass) {
+    private fun addJvmInlineAnnotation(valueClass: IrClass) {
         if (valueClass.hasAnnotation(JVM_INLINE_ANNOTATION_FQ_NAME)) return
         val constructor = context.ir.symbols.jvmInlineAnnotation.constructors.first()
         valueClass.annotations = valueClass.annotations + IrConstructorCallImpl.fromSymbolOwner(
@@ -272,8 +264,6 @@ private class JvmInlineClassLowering(context: JvmBackendContext) : JvmValueClass
 
     private fun IrExpression.coerceToUnboxed() =
         coerceInlineClasses(this, this.type, this.type.unboxInlineClass())
-
-    override fun keepOldFunctionInsteadOfNew(function: IrFunction): Boolean = false
 
     // Precondition: left has an inline class type, but may not be unboxed
     private fun IrBuilderWithScope.specializeEqualsCall(left: IrExpression, right: IrExpression): IrExpression? {
@@ -426,7 +416,7 @@ private class JvmInlineClassLowering(context: JvmBackendContext) : JvmValueClass
         return super.visitSetValue(expression)
     }
 
-    fun buildPrimaryInlineClassConstructor(valueClass: IrClass, irConstructor: IrConstructor) {
+    private fun buildPrimaryInlineClassConstructor(valueClass: IrClass, irConstructor: IrConstructor) {
         // Add the default primary constructor
         valueClass.addConstructor {
             updateFrom(irConstructor)
@@ -471,7 +461,7 @@ private class JvmInlineClassLowering(context: JvmBackendContext) : JvmValueClass
         valueClass.declarations += function
     }
 
-    fun buildBoxFunction(valueClass: IrClass) {
+    private fun buildBoxFunction(valueClass: IrClass) {
         val function = context.inlineClassReplacements.getBoxFunction(valueClass)
         with(context.createIrBuilder(function.symbol)) {
             function.body = irExprBody(
@@ -496,7 +486,7 @@ private class JvmInlineClassLowering(context: JvmBackendContext) : JvmValueClass
         irClass.declarations += function
     }
 
-    fun buildSpecializedEqualsMethodIfNeeded(valueClass: IrClass) {
+    private fun buildSpecializedEqualsMethodIfNeeded(valueClass: IrClass) {
         val function = context.inlineClassReplacements.getSpecializedEqualsMethod(valueClass, context.irBuiltIns)
         // Return if we have already built specialized equals as static replacement of typed equals
         if (function.body != null) return

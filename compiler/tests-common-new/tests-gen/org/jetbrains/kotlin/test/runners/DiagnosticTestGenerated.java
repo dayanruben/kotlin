@@ -11068,9 +11068,9 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 }
 
                 @Test
-                @TestMetadata("noContextReceiversOnInlineClasses.kt")
-                public void testNoContextReceiversOnInlineClasses() throws Exception {
-                    runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/noContextReceiversOnInlineClasses.kt");
+                @TestMetadata("noContextReceiversOnValueClasses.kt")
+                public void testNoContextReceiversOnValueClasses() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/extensions/contextReceivers/noContextReceiversOnValueClasses.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithUniversal());
                 }
 
                 @Test
@@ -18114,6 +18114,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("typedEqualsOperatorDeclarationCheck.kt")
             public void testTypedEqualsOperatorDeclarationCheck() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/inlineClasses/typedEqualsOperatorDeclarationCheck.kt");
+            }
+
+            @Test
+            @TestMetadata("typedEqualsOperatorModifierInInlineClass.kt")
+            public void testTypedEqualsOperatorModifierInInlineClass() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inlineClasses/typedEqualsOperatorModifierInInlineClass.kt");
             }
 
             @Test
@@ -33703,6 +33709,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("annotations.kt")
+            public void testAnnotations() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/valueClasses/annotations.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithUniversal());
+            }
+
+            @Test
             @TestMetadata("basicValueClassDeclaration.kt")
             public void testBasicValueClassDeclaration() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/valueClasses/basicValueClassDeclaration.kt");
@@ -33718,6 +33730,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("constructorsJvmSignaturesClash.kt")
             public void testConstructorsJvmSignaturesClash() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/valueClasses/constructorsJvmSignaturesClash.kt");
+            }
+
+            @Test
+            @TestMetadata("defaultParameters.kt")
+            public void testDefaultParameters() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/valueClasses/defaultParameters.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithUniversal());
             }
 
             @Test
@@ -33742,6 +33760,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("identityComparisonWithValueClasses.kt")
             public void testIdentityComparisonWithValueClasses() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/valueClasses/identityComparisonWithValueClasses.kt");
+            }
+
+            @Test
+            @TestMetadata("inefficientEqualsOverridingInMfvc.kt")
+            public void testInefficientEqualsOverridingInMfvc() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/valueClasses/inefficientEqualsOverridingInMfvc.kt");
             }
 
             @Test
@@ -33777,7 +33801,7 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @Test
             @TestMetadata("recursiveMultiFieldValueClasses.kt")
             public void testRecursiveMultiFieldValueClasses() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/valueClasses/recursiveMultiFieldValueClasses.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithUniversal());
+                runTest("compiler/testData/diagnostics/tests/valueClasses/recursiveMultiFieldValueClasses.kt");
             }
 
             @Test
@@ -33787,9 +33811,15 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
-            @TestMetadata("reservedMembersAndConstructsInsideValueClass.kt")
-            public void testReservedMembersAndConstructsInsideValueClass() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/valueClasses/reservedMembersAndConstructsInsideValueClass.kt");
+            @TestMetadata("reservedMembersAndConstructsInsideMfvc.kt")
+            public void testReservedMembersAndConstructsInsideMfvc() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/valueClasses/reservedMembersAndConstructsInsideMfvc.kt");
+            }
+
+            @Test
+            @TestMetadata("typedEqualsOperatorModifierInMfvc.kt")
+            public void testTypedEqualsOperatorModifierInMfvc() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/valueClasses/typedEqualsOperatorModifierInMfvc.kt");
             }
 
             @Test
@@ -33837,7 +33867,7 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @Test
             @TestMetadata("valueClassWithForbiddenUnderlyingTypeMultiField.kt")
             public void testValueClassWithForbiddenUnderlyingTypeMultiField() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/valueClasses/valueClassWithForbiddenUnderlyingTypeMultiField.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithUniversal());
+                runTest("compiler/testData/diagnostics/tests/valueClasses/valueClassWithForbiddenUnderlyingTypeMultiField.kt");
             }
 
             @Test

@@ -12,19 +12,20 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.util.checkPhase
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
+import org.jetbrains.kotlin.fir.resolve.transformers.plugin.CompilerRequiredAnnotationsComputationSession
 import org.jetbrains.kotlin.fir.resolve.transformers.plugin.FirCompilerRequiredAnnotationsResolveTransformer
 
 internal class LLFirDesignatedAnnotationsResolveTransformed(
     private val designation: FirDeclarationDesignationWithFile,
     session: FirSession,
     scopeSession: ScopeSession,
-) : LLFirLazyTransformer, FirCompilerRequiredAnnotationsResolveTransformer(session, scopeSession) {
+) : LLFirLazyTransformer, FirCompilerRequiredAnnotationsResolveTransformer(session, scopeSession, CompilerRequiredAnnotationsComputationSession()) {
 
     private fun moveNextDeclaration(designationIterator: Iterator<FirDeclaration>) {
         if (!designationIterator.hasNext()) {
             val declaration = designation.declaration
             if (declaration is FirRegularClass || declaration is FirTypeAlias) {
-                declaration.transform<FirDeclaration, Mode>(this, Mode.RegularAnnotations)
+                declaration.transform<FirDeclaration, Nothing?>(this, null)
             }
             return
         }
@@ -63,5 +64,4 @@ internal class LLFirDesignatedAnnotationsResolveTransformed(
         // todo add proper check that COMPILER_REQUIRED_ANNOTATIONS are resolved
 //        checkNestedDeclarationsAreResolved(declaration)
     }
-
 }

@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.builders.declarations.addValueParameter
 import org.jetbrains.kotlin.ir.builders.declarations.buildFun
 import org.jetbrains.kotlin.ir.declarations.*
-import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
 import org.jetbrains.kotlin.ir.types.impl.IrStarProjectionImpl
 import org.jetbrains.kotlin.ir.util.*
@@ -21,7 +20,6 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.InlineClassDescriptorResolver
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import org.jetbrains.kotlin.utils.alwaysNull
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -31,8 +29,7 @@ class MemoizedInlineClassReplacements(
     private val mangleReturnTypes: Boolean,
     irFactory: IrFactory,
     context: JvmBackendContext
-) : MemoizedValueClassAbstractReplacements(irFactory, context) {
-    private val storageManager = LockBasedStorageManager("inline-class-replacements")
+) : MemoizedValueClassAbstractReplacements(irFactory, context, LockBasedStorageManager("inline-class-replacements")) {
 
     val originalFunctionForStaticReplacement: MutableMap<IrFunction, IrFunction> = ConcurrentHashMap()
     val originalFunctionForMethodReplacement: MutableMap<IrFunction, IrFunction> = ConcurrentHashMap()
@@ -40,7 +37,7 @@ class MemoizedInlineClassReplacements(
     /**
      * Get a replacement for a function or a constructor.
      */
-    override val getReplacementFunction: (IrFunction) -> IrSimpleFunction? =
+    override val getReplacementFunctionImpl: (IrFunction) -> IrSimpleFunction? =
         storageManager.createMemoizedFunctionWithNullableValues {
             when {
                 // Don't mangle anonymous or synthetic functions, except for generated SAM wrapper methods
@@ -61,16 +58,18 @@ class MemoizedInlineClassReplacements(
                 // Mangle all functions in the body of an inline class
                 it.parent.safeAs<IrClass>()?.isSingleFieldValueClass == true ->
                     when {
-                        it.isTypedEquals() -> createStaticReplacement(it).also {
+                        it.isValueClassTypedEquals -> createStaticReplacement(it).also {
                             it.name = InlineClassDescriptorResolver.SPECIALIZED_EQUALS_NAME
                             specializedEqualsCache.computeIfAbsent(it.parentAsClass) { it }
                         }
 
                         it.isRemoveAtSpecialBuiltinStub() ->
                             null
+
                         it.isValueClassMemberFakeOverriddenFromJvmDefaultInterfaceMethod() ||
                                 it.origin == IrDeclarationOrigin.IR_BUILTINS_STUB ->
                             createMethodReplacement(it)
+
                         else ->
                             createStaticReplacement(it)
                     }
@@ -84,6 +83,13 @@ class MemoizedInlineClassReplacements(
                     null
             }
         }
+
+    override fun quickCheckIfFunctionIsNotApplicable(function: IrFunction) = !(
+            function.parent.let { (it is IrClass && it.isSingleFieldValueClass) } ||
+                    function.dispatchReceiverParameter?.type?.isInlineClassType() == true ||
+                    function.extensionReceiverParameter?.type?.isInlineClassType() == true ||
+                    function.valueParameters.any { it.type.isInlineClassType() } || function.returnType.isInlineClassType()
+            )
 
     /**
      * Get the box function for an inline class. Concretely, this is a synthetic
@@ -166,11 +172,7 @@ class MemoizedInlineClassReplacements(
                     it.defaultValue = parameter.defaultValue?.patchDeclarationParents(this)
                 }
             }
-            context.multiFieldValueClassReplacements.run {
-                bindingNewFunctionToParameterTemplateStructure[function]?.also {
-                    bindingNewFunctionToParameterTemplateStructure[this@buildReplacement] = it
-                }
-            }
+            context.remapMultiFieldValueClassStructure(function, this, parametersMappingOrNull = null)
         }
 
     override fun createStaticReplacement(function: IrFunction): IrSimpleFunction =
@@ -206,11 +208,7 @@ class MemoizedInlineClassReplacements(
                 }
             }
             valueParameters = newValueParameters
-            context.multiFieldValueClassReplacements.run {
-                bindingNewFunctionToParameterTemplateStructure[function]?.also {
-                    bindingNewFunctionToParameterTemplateStructure[this@buildReplacement] = it
-                }
-            }
+            context.remapMultiFieldValueClassStructure(function, this, parametersMappingOrNull = null)
         }
 
     private fun buildReplacement(
@@ -246,20 +244,15 @@ class MemoizedInlineClassReplacements(
         origin = when {
             function.origin == IrDeclarationOrigin.GENERATED_SINGLE_FIELD_VALUE_CLASS_MEMBER ->
                 JvmLoweredDeclarationOrigin.INLINE_CLASS_GENERATED_IMPL_METHOD
+
             function is IrConstructor && function.constructedClass.isSingleFieldValueClass ->
                 JvmLoweredDeclarationOrigin.STATIC_INLINE_CLASS_CONSTRUCTOR
+
             else ->
                 replacementOrigin
         }
         name = InlineClassAbi.mangledNameFor(function, mangleReturnTypes, useOldManglingScheme)
     }
 
-    override val getReplacementForRegularClassConstructor: (IrConstructor) -> IrConstructor? = alwaysNull()
-
-    override val replaceOverriddenSymbols: (IrSimpleFunction) -> List<IrSimpleFunctionSymbol> =
-        storageManager.createMemoizedFunction { irSimpleFunction ->
-            irSimpleFunction.overriddenSymbols.map {
-                computeOverrideReplacement(it.owner).symbol
-            }
-        }
+    override fun getReplacementForRegularClassConstructor(constructor: IrConstructor): IrConstructor? = null
 }

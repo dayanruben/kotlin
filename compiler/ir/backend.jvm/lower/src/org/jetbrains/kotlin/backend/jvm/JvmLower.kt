@@ -310,8 +310,7 @@ private val jvmFilePhases = listOf(
     forLoopsPhase,
     collectionStubMethodLowering,
     singleAbstractMethodPhase,
-    jvmMultiFieldValueClassPhase,
-    jvmInlineClassPhase,
+    jvmValueClassPhase,
     tailrecPhase,
     // makePatchParentsPhase(),
 
@@ -357,7 +356,6 @@ private val jvmFilePhases = listOf(
     enumClassPhase,
     enumExternalEntriesPhase,
     objectClassPhase,
-    readResolveForDataObjectsPhase,
     staticInitializersPhase,
     uniqueLoopLabelsPhase,
     initializersPhase,
