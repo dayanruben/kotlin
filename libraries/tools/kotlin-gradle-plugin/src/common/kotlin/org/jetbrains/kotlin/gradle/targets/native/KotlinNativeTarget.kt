@@ -93,7 +93,7 @@ abstract class KotlinNativeTarget @Inject constructor(
                 mutableUsageContexts.add(
                     DefaultKotlinUsageContext(
                         mainCompilation,
-                        project.usageByName(javaApiUsageForMavenScoping()),
+                        KotlinUsageContext.MavenScope.COMPILE,
                         metadataConfiguration.name,
                         includeIntoProjectStructureMetadata = false
                     )
@@ -101,11 +101,15 @@ abstract class KotlinNativeTarget @Inject constructor(
             }
         }
 
-        val result = createKotlinVariant(targetName, mainCompilation, mutableUsageContexts)
-
-        result.sourcesArtifacts = setOf(
-            sourcesJarArtifact(mainCompilation, targetName, dashSeparatedName(targetName.toLowerCase()))
+        configureSourcesJarArtifact(mainCompilation, targetName, dashSeparatedName(targetName.toLowerCase()))
+        val sourcesUsage = DefaultKotlinUsageContext(
+            compilation = mainCompilation,
+            dependencyConfigurationName = sourcesElementsConfigurationName,
+            includeIntoProjectStructureMetadata = false,
         )
+        mutableUsageContexts += sourcesUsage
+
+        val result = createKotlinVariant(targetName, mainCompilation, mutableUsageContexts)
 
         setOf(result)
     }

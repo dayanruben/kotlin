@@ -9,9 +9,7 @@ import org.gradle.api.DomainObjectSet
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ConfigurablePublishArtifact
 import org.gradle.api.artifacts.PublishArtifact
-import org.gradle.api.attributes.Attribute
-import org.gradle.api.attributes.AttributeContainer
-import org.gradle.api.attributes.Usage.JAVA_RUNTIME_JARS
+import org.gradle.api.attributes.*
 import org.gradle.api.component.ComponentWithCoordinates
 import org.gradle.api.component.ComponentWithVariants
 import org.gradle.api.component.SoftwareComponent
@@ -24,8 +22,10 @@ import org.jetbrains.kotlin.gradle.InternalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
 import org.jetbrains.kotlin.gradle.plugin.*
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinUsageContext.MavenScope.*
 import org.jetbrains.kotlin.gradle.utils.dashSeparatedName
 import org.jetbrains.kotlin.gradle.utils.lowerCamelCaseName
+import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 
 internal const val PRIMARY_SINGLE_COMPONENT_NAME = "kotlin"
 
@@ -51,6 +51,9 @@ abstract class AbstractKotlinTarget(
     override val runtimeElementsConfigurationName: String
         get() = disambiguateName("runtimeElements")
 
+    override val sourcesElementsConfigurationName: String
+        get() = disambiguateName("sourcesElements")
+
     override val artifactsTaskName: String
         get() = disambiguateName("jar")
 
@@ -62,18 +65,23 @@ abstract class AbstractKotlinTarget(
     @InternalKotlinGradlePluginApi
     override val kotlinComponents: Set<KotlinTargetComponent> by lazy {
         val mainCompilation = compilations.getByName(KotlinCompilation.MAIN_COMPILATION_NAME)
-        val usageContexts = createUsageContexts(mainCompilation)
+        val usageContexts = createUsageContexts(mainCompilation).toMutableSet()
 
         val componentName =
             if (project.kotlinExtension is KotlinMultiplatformExtension)
                 targetName
             else PRIMARY_SINGLE_COMPONENT_NAME
 
-        val result = createKotlinVariant(componentName, mainCompilation, usageContexts)
+        val sourcesArtifact = configureSourcesJarArtifact(mainCompilation, componentName, dashSeparatedName(targetName.toLowerCase()))
+        if (sourcesArtifact != null) {
+            usageContexts += DefaultKotlinUsageContext(
+                compilation = mainCompilation,
+                dependencyConfigurationName = sourcesElementsConfigurationName,
+                includeIntoProjectStructureMetadata = false,
+            )
+        }
 
-        result.sourcesArtifacts = setOf(
-            sourcesJarArtifact(mainCompilation, componentName, dashSeparatedName(targetName.toLowerCase()))
-        )
+        val result = createKotlinVariant(componentName, mainCompilation, usageContexts)
 
         setOf(result)
     }
@@ -106,43 +114,35 @@ abstract class AbstractKotlinTarget(
     internal open fun createUsageContexts(
         producingCompilation: KotlinCompilation<*>
     ): Set<DefaultKotlinUsageContext> {
-        // Here, the Java Usage values are used intentionally as Gradle needs this for
-        // ordering of the usage contexts (prioritizing the dependencies) when merging them into the POM;
-        // These Java usages should not be replaced with the custom Kotlin usages.
         return listOfNotNull(
-            javaApiUsageForMavenScoping() to apiElementsConfigurationName,
-            (JAVA_RUNTIME_JARS to runtimeElementsConfigurationName).takeIf { producingCompilation is KotlinCompilationToRunnableFiles }
-        ).mapTo(mutableSetOf()) { (usageName, dependenciesConfigurationName) ->
+            COMPILE to apiElementsConfigurationName,
+            (RUNTIME to runtimeElementsConfigurationName).takeIf { producingCompilation is KotlinCompilationToRunnableFiles }
+        ).mapTo(mutableSetOf()) { (mavenScope, dependenciesConfigurationName) ->
             DefaultKotlinUsageContext(
                 producingCompilation,
-                project.usageByName(usageName),
+                mavenScope,
                 dependenciesConfigurationName
             )
         }
     }
 
-    protected fun sourcesJarArtifact(
+    protected fun configureSourcesJarArtifact(
         producingCompilation: KotlinCompilation<*>,
         componentName: String,
         artifactNameAppendix: String,
-        classifierPrefix: String? = null
-    ): PublishArtifact {
+        classifierPrefix: String? = null,
+        sourcesElementsConfigurationName: String = this.sourcesElementsConfigurationName,
+    ): PublishArtifact? {
         val sourcesJarTask = sourcesJarTask(producingCompilation, componentName, artifactNameAppendix)
-        val sourceArtifactConfigurationName = producingCompilation.disambiguateName("sourceArtifacts")
 
-        return with(producingCompilation.target.project) {
-            (configurations.findByName(sourceArtifactConfigurationName) ?: run {
-                val configuration = configurations.create(sourceArtifactConfigurationName) {
-                    it.isCanBeResolved = false
-                    it.isCanBeConsumed = false
-                }
-                artifacts.add(sourceArtifactConfigurationName, sourcesJarTask)
-                configuration
-            }).artifacts.single().apply {
-                this as ConfigurablePublishArtifact
-                classifier = dashSeparatedName(classifierPrefix, "sources")
-            }
-        }
+        // If sourcesElements configuration not found, don't create artifact.
+        // This can happen in pure JVM plugin where source publication is delegated to Java Gradle Plugin.
+        // But we still want to have sourcesJarTask be registered
+        project.configurations.findByName(sourcesElementsConfigurationName) ?: return null
+
+        val artifact = project.artifacts.add(sourcesElementsConfigurationName, sourcesJarTask) as ConfigurablePublishArtifact
+        artifact.classifier = dashSeparatedName(classifierPrefix, "sources")
+        return artifact
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -202,12 +202,14 @@ internal fun Project.buildAdhocComponentsFromKotlinVariants(kotlinVariants: Set<
                     }
 
                 adhocVariant.addVariantsFromConfiguration(configuration) { configurationVariantDetails ->
-                    val mavenScope = when (kotlinUsageContext.usage.name) {
-                        "java-api-jars" -> "compile"
-                        "java-runtime-jars" -> "runtime"
-                        else -> error("unexpected usage value '${kotlinUsageContext.usage.name}'")
+                    val mavenScope = kotlinUsageContext.mavenScope
+                    if (mavenScope != null) {
+                        val mavenScopeString = when(mavenScope) {
+                            COMPILE -> "compile"
+                            RUNTIME -> "runtime"
+                        }
+                        configurationVariantDetails.mapToMavenScope(mavenScopeString)
                     }
-                    configurationVariantDetails.mapToMavenScope(mavenScope)
                 }
             }
         }
