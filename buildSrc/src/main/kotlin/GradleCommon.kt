@@ -49,6 +49,7 @@ enum class GradlePluginVariant(
     GRADLE_70("gradle70", "7.0", "7.0"),
     GRADLE_71("gradle71", "7.1", "7.1"),
     GRADLE_75("gradle75", "7.5", "7.5"),
+    GRADLE_76("gradle76", "7.6", "7.6"),
 }
 
 /**
@@ -113,7 +114,7 @@ fun Project.createGradleCommonSourceSet(): SourceSet {
 
         dependencies {
             compileOnlyConfigurationName(kotlinStdlib())
-            "commonGradleApiCompileOnly"("dev.gradleplugins:gradle-api:7.5")
+            "commonGradleApiCompileOnly"("dev.gradleplugins:gradle-api:7.6")
             if (this@createGradleCommonSourceSet.name != "kotlin-gradle-plugin-api" &&
                 this@createGradleCommonSourceSet.name != "android-test-fixes"
             ) {

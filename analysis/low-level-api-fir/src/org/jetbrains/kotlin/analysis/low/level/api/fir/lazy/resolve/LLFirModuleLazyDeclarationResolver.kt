@@ -16,10 +16,11 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.project.structure.llFirMo
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.llFirSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.transformers.LLFirFileAnnotationsResolveTransformer
 import org.jetbrains.kotlin.analysis.low.level.api.fir.transformers.LLFirFirProviderInterceptor
-import org.jetbrains.kotlin.analysis.low.level.api.fir.transformers.LazyTransformerFactory
+import org.jetbrains.kotlin.analysis.low.level.api.fir.transformers.LLFirLazyTransformerExecutor
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.checkCanceled
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.findSourceNonLocalFirDeclaration
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.withFirEntry
+import org.jetbrains.kotlin.analysis.utils.errors.buildErrorWithAttachment
 import org.jetbrains.kotlin.analysis.utils.errors.shouldIjPlatformExceptionBeRethrown
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.declarations.*
@@ -132,15 +133,13 @@ internal class LLFirModuleLazyDeclarationResolver(val moduleComponents: LLFirMod
             if (toPhase == FirResolvePhase.IMPORTS) return
             if (firFile.resolvePhase >= toPhase) return
             moduleComponents.globalResolveComponents.lockProvider.runCustomResolveUnderLock(firFile, checkPCE) {
-                ResolveTreeBuilder.resolveEnsure(firFile, toPhase) {
-                    lazyResolveFileDeclarationWithoutLock(
-                        firFile = firFile,
-                        toPhase = toPhase,
-                        collector = collector,
-                        scopeSession = scopeSession,
-                        checkPCE = checkPCE,
-                    )
-                }
+                lazyResolveFileDeclarationWithoutLock(
+                    firFile = firFile,
+                    toPhase = toPhase,
+                    collector = collector,
+                    scopeSession = scopeSession,
+                    checkPCE = checkPCE,
+                )
             }
         } catch (e: Throwable) {
             rethrowWithDetails(e, firFile, fromPhase, toPhase)
@@ -159,6 +158,7 @@ internal class LLFirModuleLazyDeclarationResolver(val moduleComponents: LLFirMod
         if (checkPCE) checkCanceled()
         firFile.transform<FirElement, Any?>(FirImportResolveTransformer(firFile.moduleData.session), null)
         firFile.replaceResolvePhase(FirResolvePhase.IMPORTS)
+
     }
 
     private fun lazyResolveFileDeclarationWithoutLock(
@@ -188,25 +188,24 @@ internal class LLFirModuleLazyDeclarationResolver(val moduleComponents: LLFirMod
             currentPhase = currentPhase.next
             if (checkPCE) checkCanceled()
 
-            val transformersToApply = designations.mapNotNull {
-                val needToResolve = it.declaration.resolvePhase < currentPhase
-                if (needToResolve) {
-                    LazyTransformerFactory.createLazyTransformer(
+            val transformersToApply = designations.filter { designation ->
+                designation.declaration.resolvePhase < currentPhase
+            }
+
+            if (transformersToApply.isEmpty()) continue
+
+            moduleComponents.globalResolveComponents.phaseRunner.runPhaseWithCustomResolve(currentPhase) {
+                for (curDesignation in transformersToApply) {
+                    LLFirLazyTransformerExecutor.execute(
                         phase = currentPhase,
-                        designation = it,
+                        designation = curDesignation,
                         scopeSession = scopeSession,
-                        lazyDeclarationResolver = this,
+                        phaseRunner = moduleComponents.globalResolveComponents.phaseRunner,
+                        lockProvider = moduleComponents.globalResolveComponents.lockProvider,
                         towerDataContextCollector = collector,
                         firProviderInterceptor = null,
                         checkPCE = checkPCE,
                     )
-                } else null
-            }
-            if (transformersToApply.isEmpty()) continue
-
-            moduleComponents.globalResolveComponents.phaseRunner.runPhaseWithCustomResolve(currentPhase) {
-                for (currentTransformer in transformersToApply) {
-                    currentTransformer.transformDeclaration(moduleComponents.globalResolveComponents.phaseRunner)
                 }
             }
             firFile.replaceResolvePhase(currentPhase)
@@ -262,31 +261,17 @@ internal class LLFirModuleLazyDeclarationResolver(val moduleComponents: LLFirMod
         }
         when (firDeclarationToResolve) {
             is FirSyntheticPropertyAccessor -> {
-                lazyResolveDeclaration(
-                    firDeclarationToResolve.delegate,
-                    scopeSession,
-                    toPhase,
-                    checkPCE,
-                )
+                lazyResolveDeclaration(firDeclarationToResolve.delegate, scopeSession, toPhase, checkPCE,)
                 return
             }
 
             is FirBackingField -> {
-                lazyResolveDeclaration(
-                    firDeclarationToResolve.propertySymbol.fir,
-                    scopeSession,
-                    toPhase,
-                    checkPCE,
-                )
+                lazyResolveDeclaration(firDeclarationToResolve.propertySymbol.fir, scopeSession, toPhase, checkPCE,)
+                return
             }
 
             is FirFile -> {
-                lazyResolveFileDeclaration(
-                    firFile = firDeclarationToResolve,
-                    toPhase = toPhase,
-                    scopeSession = scopeSession,
-                    checkPCE = checkPCE,
-                )
+                lazyResolveFileDeclaration(firDeclarationToResolve, toPhase, scopeSession, checkPCE = checkPCE)
                 return
             }
             else -> {}
@@ -345,15 +330,13 @@ internal class LLFirModuleLazyDeclarationResolver(val moduleComponents: LLFirMod
         }
 
         moduleComponents.globalResolveComponents.lockProvider.runCustomResolveUnderLock(designation.firFile, checkPCE) {
-            ResolveTreeBuilder.resolveEnsure(designation.declaration, neededPhase) {
-                runLazyDesignatedResolveWithoutLock(
-                    designation = designation,
-                    scopeSession = scopeSession,
-                    toPhase = neededPhase,
-                    checkPCE = checkPCE,
-                )
-                designation.declaration
-            }
+            runLazyDesignatedResolveWithoutLock(
+                designation = designation,
+                scopeSession = scopeSession,
+                toPhase = neededPhase,
+                checkPCE = checkPCE,
+            )
+            designation.declaration
         }
     }
 
@@ -377,15 +360,16 @@ internal class LLFirModuleLazyDeclarationResolver(val moduleComponents: LLFirMod
             currentPhase = currentPhase.next
             if (checkPCE) checkCanceled()
 
-            LazyTransformerFactory.createLazyTransformer(
+            LLFirLazyTransformerExecutor.execute(
                 phase = currentPhase,
                 designation = designation,
                 scopeSession = scopeSession,
-                lazyDeclarationResolver = this,
+                phaseRunner = moduleComponents.globalResolveComponents.phaseRunner,
+                lockProvider = moduleComponents.globalResolveComponents.lockProvider,
                 towerDataContextCollector = null,
                 firProviderInterceptor = null,
                 checkPCE = checkPCE,
-            ).transformDeclaration(moduleComponents.globalResolveComponents.phaseRunner)
+            )
         }
     }
 
@@ -412,15 +396,16 @@ internal class LLFirModuleLazyDeclarationResolver(val moduleComponents: LLFirMod
             currentPhase = currentPhase.next
             if (checkPCE) checkCanceled()
 
-            LazyTransformerFactory.createLazyTransformer(
+            LLFirLazyTransformerExecutor.execute(
                 phase = currentPhase,
                 designation = designation,
                 scopeSession = scopeSession,
-                lazyDeclarationResolver = this,
+                phaseRunner = moduleComponents.globalResolveComponents.phaseRunner,
+                lockProvider = moduleComponents.globalResolveComponents.lockProvider,
                 towerDataContextCollector = towerDataContextCollector,
                 firProviderInterceptor = firProviderInterceptor,
                 checkPCE = checkPCE,
-            ).transformDeclaration(moduleComponents.globalResolveComponents.phaseRunner)
+            )
         }
     }
 }
