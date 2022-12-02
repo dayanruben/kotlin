@@ -6,7 +6,12 @@
 package org.jetbrains.kotlin.gradle.plugin.ide
 
 import org.jetbrains.kotlin.gradle.dsl.KotlinProjectExtension
+import org.jetbrains.kotlin.gradle.idea.serialize.IdeaKotlinBooleanExtrasSerializer
 import org.jetbrains.kotlin.gradle.idea.serialize.IdeaKotlinExtrasSerializer
+import org.jetbrains.kotlin.gradle.idea.tcs.extras.KlibExtra
+import org.jetbrains.kotlin.gradle.idea.tcs.extras.isIdeaProjectLevelKey
+import org.jetbrains.kotlin.gradle.idea.tcs.extras.isNativeDistributionKey
+import org.jetbrains.kotlin.gradle.idea.tcs.extras.isNativeStdlibKey
 import org.jetbrains.kotlin.gradle.kpm.idea.kotlinDebugKey
 import org.jetbrains.kotlin.gradle.plugin.ide.IdeMultiplatformImport.SourceSetConstraint
 import org.jetbrains.kotlin.gradle.plugin.ide.dependencyResolvers.*
@@ -43,6 +48,20 @@ internal fun IdeMultiplatformImport(extension: KotlinProjectExtension): IdeMulti
         )
 
         registerDependencyResolver(
+            resolver = IdeNativeStdlibDependencyResolver,
+            constraint = SourceSetConstraint.isNative,
+            phase = IdeMultiplatformImport.DependencyResolutionPhase.BinaryDependencyResolution,
+            level = IdeMultiplatformImport.DependencyResolutionLevel.Default,
+        )
+
+        registerDependencyResolver(
+            resolver = IdeNativePlatformDependencyResolver,
+            constraint = SourceSetConstraint.isNative,
+            phase = IdeMultiplatformImport.DependencyResolutionPhase.BinaryDependencyResolution,
+            level = IdeMultiplatformImport.DependencyResolutionLevel.Default
+        )
+
+        registerDependencyResolver(
             resolver = IdeTransformedMetadataDependencyResolver,
             constraint = !SourceSetConstraint.isLeaf,
             phase = IdeMultiplatformImport.DependencyResolutionPhase.BinaryDependencyResolution,
@@ -74,20 +93,6 @@ internal fun IdeMultiplatformImport(extension: KotlinProjectExtension): IdeMulti
             level = IdeMultiplatformImport.DependencyResolutionLevel.Default
         )
 
-        registerDependencyResolver(
-            resolver = IdeNativePlatformDependencyResolver,
-            constraint = SourceSetConstraint.isNative,
-            phase = IdeMultiplatformImport.DependencyResolutionPhase.BinaryDependencyResolution,
-            level = IdeMultiplatformImport.DependencyResolutionLevel.Default
-        )
-
-        registerDependencyResolver(
-            resolver = IdeNativeStdlibDependencyResolver,
-            constraint = SourceSetConstraint.isNative,
-            phase = IdeMultiplatformImport.DependencyResolutionPhase.BinaryDependencyResolution,
-            level = IdeMultiplatformImport.DependencyResolutionLevel.Default,
-        )
-
         /* Overwrite android dependencies by empty resolver */
         registerDependencyResolver(
             resolver = IdeDependencyResolver.Empty,
@@ -96,8 +101,17 @@ internal fun IdeMultiplatformImport(extension: KotlinProjectExtension): IdeMulti
             level = IdeMultiplatformImport.DependencyResolutionLevel.Overwrite
         )
 
+        registerDependencyEffect(
+            effect = IdeDependencyLogger,
+            constraint = SourceSetConstraint.unconstrained
+        )
+
         registerExtrasSerializationExtension {
             register(kotlinDebugKey, IdeaKotlinExtrasSerializer.javaIoSerializable())
+            register(KlibExtra.key, IdeaKotlinExtrasSerializer.javaIoSerializable())
+            register(isIdeaProjectLevelKey, IdeaKotlinBooleanExtrasSerializer)
+            register(isNativeDistributionKey, IdeaKotlinBooleanExtrasSerializer)
+            register(isNativeStdlibKey, IdeaKotlinBooleanExtrasSerializer)
         }
     }
 }
