@@ -36,6 +36,7 @@ import org.jetbrains.kotlin.fir.types.impl.FirTypeArgumentListImpl
 import org.jetbrains.kotlin.lexer.KtTokens.*
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.NameUtils
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
@@ -382,7 +383,7 @@ open class RawFirBuilder(
         private fun ValueArgument?.toFirExpression(): FirExpression {
             if (this == null) {
                 return buildErrorExpression(
-                    (this as? KtElement)?.toFirSourceElement(),
+                    source = null,
                     ConeSimpleDiagnostic("No argument given", DiagnosticKind.Syntax),
                 )
             }
@@ -848,18 +849,17 @@ open class RawFirBuilder(
                         val type = superTypeListEntry.typeReference.toFirOrErrorType()
                         val delegateExpression = { superTypeListEntry.delegateExpression }.toFirExpression("Should have delegate")
                         container.superTypeRefs += type
-                        val delegateName = Name.special("<\$\$delegate_${delegateFieldsMap.size}>")
                         val delegateSource =
                             superTypeListEntry.delegateExpression?.toFirSourceElement(KtFakeSourceElementKind.ClassDelegationField)
                         val delegateField = buildField {
                             source = delegateSource
                             moduleData = baseModuleData
                             origin = FirDeclarationOrigin.Synthetic
-                            name = delegateName
+                            name = NameUtils.delegateFieldName(delegateFieldsMap.size)
                             returnTypeRef = type
                             symbol = FirFieldSymbol(CallableId(name))
                             isVar = false
-                            status = FirDeclarationStatusImpl(Visibilities.Local, Modality.FINAL)
+                            status = FirDeclarationStatusImpl(Visibilities.Private, Modality.FINAL)
                             initializer = delegateExpression
                         }
                         delegateFieldsMap[index] = delegateField.symbol

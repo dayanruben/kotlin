@@ -897,7 +897,7 @@ class Fir2IrDeclarationStorage(
                             createBackingField(
                                 property, IrDeclarationOrigin.PROPERTY_DELEGATE,
                                 components.visibilityConverter.convertToDescriptorVisibility(property.fieldVisibility),
-                                Name.identifier("${property.name}\$delegate"), true, delegate
+                                NameUtils.propertyDelegateName(property.name), true, delegate
                             )
                         } else {
                             val initializer = property.backingField?.initializer ?: property.initializer
@@ -1157,7 +1157,7 @@ class Fir2IrDeclarationStorage(
         return contextReceiver.convertWithOffsets { startOffset, endOffset ->
             irFactory.createValueParameter(
                 startOffset, endOffset, IrDeclarationOrigin.DEFINED, IrValueParameterSymbolImpl(),
-                Name.identifier("_context_receiver_$index"), index, type,
+                NameUtils.contextReceiverName(index), index, type,
                 null,
                 isCrossinline = false, isNoinline = false,
                 isHidden = false, isAssignable = false
@@ -1230,7 +1230,7 @@ class Fir2IrDeclarationStorage(
             enterScope(this)
             delegate = declareIrVariable(
                 startOffset, endOffset, IrDeclarationOrigin.PROPERTY_DELEGATE,
-                Name.identifier("${property.name}\$delegate"), property.delegate!!.typeRef.toIrType(),
+                NameUtils.propertyDelegateName(property.name), property.delegate!!.typeRef.toIrType(),
                 isVar = false, isConst = false, isLateinit = false
             )
             delegate.parent = irParent
