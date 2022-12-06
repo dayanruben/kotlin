@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.gradle.plugin.ide
 
+import org.gradle.api.Project
 import org.gradle.api.artifacts.result.ResolvedArtifactResult
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinDependency
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
@@ -12,6 +13,13 @@ import org.jetbrains.kotlin.tooling.core.extrasReadWriteProperty
 
 fun interface IdeDependencyResolver {
     fun resolve(sourceSet: KotlinSourceSet): Set<IdeaKotlinDependency>
+
+    interface WithBuildDependencies {
+        /**
+         * return anything accepted to be passed to [org.gradle.api.Task.dependsOn]
+         */
+        fun dependencies(project: Project): Iterable<Any>
+    }
 
     object Empty : IdeDependencyResolver {
         override fun resolve(sourceSet: KotlinSourceSet): Set<IdeaKotlinDependency> = emptySet()
@@ -52,8 +60,14 @@ operator fun IdeDependencyResolver.plus(other: IdeDependencyResolver): IdeDepend
 
 private class IdeCompositeDependencyResolver(
     val children: List<IdeDependencyResolver>
-) : IdeDependencyResolver {
+) : IdeDependencyResolver, IdeDependencyResolver.WithBuildDependencies {
     override fun resolve(sourceSet: KotlinSourceSet): Set<IdeaKotlinDependency> {
         return children.flatMap { child -> child.resolve(sourceSet) }.toSet()
+    }
+
+    override fun dependencies(project: Project): Iterable<Any> {
+        return children.flatMap { child ->
+            if (child is IdeDependencyResolver.WithBuildDependencies) child.dependencies(project) else emptyList()
+        }
     }
 }

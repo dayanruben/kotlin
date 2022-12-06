@@ -193,6 +193,60 @@ class KotlinTargetHierarchyDslTest {
     }
 
     @Test
+    fun `test - hierarchy - jvm and android`() {
+        val project = buildProjectWithMPP {
+            setMultiplatformAndroidSourceSetLayoutVersion(2)
+        }
+
+        val kotlin = project.multiplatformExtension
+
+        assumeAndroidSdkAvailable()
+        project.androidLibrary { compileSdk = 31 }
+
+        kotlin.targetHierarchy.default {
+            common {
+                group("jvmAndAndroid") {
+                    anyJvm()
+                    anyAndroid()
+                }
+            }
+        }
+
+        kotlin.android()
+        kotlin.jvm()
+
+        project.evaluate()
+
+        assertEquals(
+            stringSetOf("androidDebug", "androidMain", "androidRelease", "jvmAndAndroidMain", "jvmMain"),
+            kotlin.dependingSourceSetNames("commonMain")
+        )
+
+        assertEquals(
+            stringSetOf("jvmMain", "androidMain", "androidDebug", "androidRelease"),
+            kotlin.dependingSourceSetNames("jvmAndAndroidMain")
+        )
+
+        assertEquals(
+            stringSetOf("jvmAndAndroidTest", "jvmTest", "androidUnitTest", "androidUnitTestDebug", "androidUnitTestRelease"),
+            kotlin.dependingSourceSetNames("commonTest")
+        )
+
+        assertEquals(
+            stringSetOf("jvmTest", "androidUnitTest", "androidUnitTest", "androidUnitTestDebug", "androidUnitTestRelease"),
+            kotlin.dependingSourceSetNames("jvmAndAndroidTest")
+        )
+
+        /* Check all source sets: All from jvm and android target + expected common source sets */
+        assertEquals(
+            setOf("commonMain", "commonTest", "jvmAndAndroidMain", "jvmAndAndroidTest") +
+                    kotlin.android().compilations.flatMap { it.kotlinSourceSets }.map { it.name } +
+                    kotlin.jvm().compilations.flatMap { it.kotlinSourceSets }.map { it.name },
+            kotlin.sourceSets.map { it.name }.toStringSet()
+        )
+    }
+
+    @Test
     fun `test - hierarchy apply - extend`() {
         val descriptor = KotlinTargetHierarchyDescriptor {
             group("common") {
@@ -204,7 +258,7 @@ class KotlinTargetHierarchyDslTest {
             targetHierarchy.apply(descriptor) {
                 group("base") {
                     group("extension") {
-                        linuxX64()
+                        anyLinuxX64()
                     }
                 }
             }
@@ -276,7 +330,7 @@ class KotlinTargetHierarchyDslTest {
                 group("newRoot") {
                     group("base") {
                         group("extension") {
-                            linuxX64()
+                            anyLinuxX64()
                         }
                     }
                 }
