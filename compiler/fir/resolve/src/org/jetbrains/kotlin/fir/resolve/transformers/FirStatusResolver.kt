@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.scopes.ProcessorAction
 import org.jetbrains.kotlin.fir.scopes.unsubstitutedScope
-import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.types.Variance
@@ -109,11 +108,8 @@ class FirStatusResolver(
         isLocal: Boolean,
         overriddenStatuses: List<FirResolvedDeclarationStatus>? = null,
     ): FirResolvedDeclarationStatus {
-        val statuses = overriddenStatuses ?: getOverriddenProperties(property, containingClass)
-            .map {
-                it.lazyResolveToPhase(FirResolvePhase.STATUS)
-                it.status as FirResolvedDeclarationStatus
-            }
+        val statuses = overriddenStatuses
+            ?: getOverriddenProperties(property, containingClass).map { it.status as FirResolvedDeclarationStatus }
 
         val status = property.applyExtensionTransformers { transformStatus(it, property, containingClass, isLocal) }
         return resolveStatus(property, status, containingClass, null, isLocal, statuses)
@@ -140,8 +136,8 @@ class FirStatusResolver(
                 }
                 ProcessorAction.NEXT
             }
-        }.mapNotNull {
-            it.status as? FirResolvedDeclarationStatus
+        }.map {
+            it.status as FirResolvedDeclarationStatus
         }
     }
 
@@ -152,12 +148,15 @@ class FirStatusResolver(
     }
 
     fun resolveStatus(
-        regularClass: FirRegularClass,
+        firClass: FirClass,
         containingClass: FirClass?,
         isLocal: Boolean
     ): FirResolvedDeclarationStatus {
-        val status = regularClass.applyExtensionTransformers { transformStatus(it, regularClass, containingClass, isLocal) }
-        return resolveStatus(regularClass, status, containingClass, null, isLocal, emptyList())
+        val status = when (firClass) {
+            is FirRegularClass -> firClass.applyExtensionTransformers { transformStatus(it, firClass, containingClass, isLocal) }
+            else -> firClass.status
+        }
+        return resolveStatus(firClass, status, containingClass, null, isLocal, emptyList())
     }
 
     fun resolveStatus(

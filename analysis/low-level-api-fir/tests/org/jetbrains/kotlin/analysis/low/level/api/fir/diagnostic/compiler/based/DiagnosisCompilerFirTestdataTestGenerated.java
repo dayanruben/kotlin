@@ -3146,6 +3146,12 @@ public class DiagnosisCompilerFirTestdataTestGenerated extends AbstractDiagnosis
             }
 
             @Test
+            @TestMetadata("anonObject.kt")
+            public void testAnonObject() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/localClasses/anonObject.kt");
+            }
+
+            @Test
             @TestMetadata("anonymousInAnonymous.kt")
             public void testAnonymousInAnonymous() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolve/localClasses/anonymousInAnonymous.kt");
@@ -3161,6 +3167,12 @@ public class DiagnosisCompilerFirTestdataTestGenerated extends AbstractDiagnosis
             @TestMetadata("implicitInLocalClasses.kt")
             public void testImplicitInLocalClasses() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolve/localClasses/implicitInLocalClasses.kt");
+            }
+
+            @Test
+            @TestMetadata("overrideInLocal.kt")
+            public void testOverrideInLocal() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/localClasses/overrideInLocal.kt");
             }
 
             @Test

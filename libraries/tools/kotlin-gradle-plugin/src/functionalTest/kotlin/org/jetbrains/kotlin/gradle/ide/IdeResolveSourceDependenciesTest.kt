@@ -197,7 +197,9 @@ class IdeResolveSourceDependenciesTest {
         producer.evaluate()
         consumer.evaluate()
 
-        consumer.resolveDependencies("commonMain").assertMatches(emptyList<Any>())
+        consumer.resolveDependencies("commonMain").assertMatches(
+            projectArtifactDependency(Regular, ":producer", FilePathRegex(".*/build/libs/producer.jar"))
+        )
 
         consumer.resolveDependencies("jvmMain").assertMatches(
             dependsOnDependency(":consumer/commonMain"),
