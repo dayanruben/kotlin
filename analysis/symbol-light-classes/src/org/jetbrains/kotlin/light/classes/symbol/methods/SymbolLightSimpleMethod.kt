@@ -6,6 +6,8 @@
 package org.jetbrains.kotlin.light.classes.symbol.methods
 
 import com.intellij.psi.*
+import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.mutate
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -19,7 +21,9 @@ import org.jetbrains.kotlin.light.classes.symbol.annotations.hasAnnotation
 import org.jetbrains.kotlin.light.classes.symbol.annotations.hasInlineOnlyAnnotation
 import org.jetbrains.kotlin.light.classes.symbol.annotations.hasJvmStaticAnnotation
 import org.jetbrains.kotlin.light.classes.symbol.classes.SymbolLightClassBase
+import org.jetbrains.kotlin.light.classes.symbol.modifierLists.LazyModifiersBox
 import org.jetbrains.kotlin.light.classes.symbol.modifierLists.SymbolLightMemberModifierList
+import org.jetbrains.kotlin.light.classes.symbol.modifierLists.with
 import org.jetbrains.kotlin.light.classes.symbol.parameters.SymbolLightTypeParameterList
 import org.jetbrains.kotlin.name.JvmNames.STRICTFP_ANNOTATION_CLASS_ID
 import org.jetbrains.kotlin.name.JvmNames.SYNCHRONIZED_ANNOTATION_CLASS_ID
@@ -67,10 +71,11 @@ internal class SymbolLightSimpleMethod(
     override fun getTypeParameterList(): PsiTypeParameterList? = _typeParameterList
     override fun getTypeParameters(): Array<PsiTypeParameter> = _typeParameterList?.typeParameters ?: PsiTypeParameter.EMPTY_ARRAY
 
-    context(KtAnalysisSession)
-    private fun computeAnnotations(functionSymbol: KtFunctionSymbol, isPrivate: Boolean): List<PsiAnnotation> {
+    private fun computeAnnotations(
+        modifierList: PsiModifierList,
+    ): List<PsiAnnotation> = withFunctionSymbol { functionSymbol ->
         val nullability = when {
-            isPrivate -> NullabilityType.Unknown
+            modifierList.hasModifierProperty(PsiModifier.PRIVATE) -> NullabilityType.Unknown
             functionSymbol.isSuspend -> /* Any? */ NullabilityType.Nullable
             else -> {
                 val returnType = functionSymbol.returnType
@@ -78,61 +83,77 @@ internal class SymbolLightSimpleMethod(
             }
         }
 
-        return functionSymbol.computeAnnotations(
-            parent = this@SymbolLightSimpleMethod,
+        functionSymbol.computeAnnotations(
+            modifierList = modifierList,
             nullability = nullability,
             annotationUseSiteTarget = null,
         )
     }
 
-    context(KtAnalysisSession)
-    private fun computeModifiers(functionSymbol: KtFunctionSymbol): Set<String> {
-        if (functionSymbol.hasInlineOnlyAnnotation()) return setOf(PsiModifier.FINAL, PsiModifier.PRIVATE)
-
-        val finalModifier = kotlinOrigin?.hasModifier(KtTokens.FINAL_KEYWORD) == true
-
-        val modifiers = mutableSetOf<String>()
-
-        functionSymbol.computeModalityForMethod(
-            isTopLevel = isTopLevel,
-            suppressFinal = containingClass.isInterface || (!finalModifier && functionSymbol.isOverride),
-            result = modifiers
-        )
-
-        val visibility: String = functionSymbol.isOverride.ifTrue {
-            tryGetEffectiveVisibility(functionSymbol)
-                ?.toPsiVisibilityForMember()
-        } ?: functionSymbol.toPsiVisibilityForMember()
-
-        modifiers.add(visibility)
-
-        if (!suppressStatic && functionSymbol.hasJvmStaticAnnotation()) {
-            modifiers.add(PsiModifier.STATIC)
-        }
-        if (functionSymbol.hasAnnotation(STRICTFP_ANNOTATION_CLASS_ID, null)) {
-            modifiers.add(PsiModifier.STRICTFP)
-        }
-        if (functionSymbol.hasAnnotation(SYNCHRONIZED_ANNOTATION_CLASS_ID, null)) {
-            modifiers.add(PsiModifier.SYNCHRONIZED)
+    private fun computeModifiers(modifier: String): Map<String, Boolean>? = when (modifier) {
+        in LazyModifiersBox.MODALITY_MODIFIERS -> {
+            ifInlineOnly { return modifiersForInlineOnlyCase() }
+            val modality = if (isTopLevel) PsiModifier.FINAL else withFunctionSymbol { it.computeSimpleModality() }
+            LazyModifiersBox.MODALITY_MODIFIERS_MAP.with(modality)
         }
 
-        return modifiers
+        in LazyModifiersBox.VISIBILITY_MODIFIERS -> {
+            ifInlineOnly { return modifiersForInlineOnlyCase() }
+            LazyModifiersBox.computeVisibilityForMember(ktModule, functionSymbolPointer)
+        }
+
+        PsiModifier.STATIC -> {
+            ifInlineOnly { return null }
+            val isStatic = if (suppressStatic) {
+                false
+            } else {
+                isTopLevel || withFunctionSymbol { it.hasJvmStaticAnnotation() }
+            }
+
+            mapOf(modifier to isStatic)
+        }
+
+        PsiModifier.NATIVE -> {
+            ifInlineOnly { return null }
+            val isExternal = functionDeclaration?.hasModifier(KtTokens.EXTERNAL_KEYWORD) ?: withFunctionSymbol { it.isExternal }
+            mapOf(modifier to isExternal)
+        }
+
+        PsiModifier.STRICTFP -> {
+            ifInlineOnly { return null }
+            val hasAnnotation = withFunctionSymbol { it.hasAnnotation(STRICTFP_ANNOTATION_CLASS_ID, null) }
+            mapOf(modifier to hasAnnotation)
+        }
+
+        PsiModifier.SYNCHRONIZED -> {
+            ifInlineOnly { return null }
+            val hasAnnotation = withFunctionSymbol { it.hasAnnotation(SYNCHRONIZED_ANNOTATION_CLASS_ID, null) }
+            mapOf(modifier to hasAnnotation)
+        }
+
+        else -> null
     }
 
+    private inline fun ifInlineOnly(action: () -> Unit) {
+        if (hasInlineOnlyAnnotation) {
+            action()
+        }
+    }
+
+    private fun modifiersForInlineOnlyCase(): PersistentMap<String, Boolean> = LazyModifiersBox.MODALITY_MODIFIERS_MAP.mutate {
+        it.putAll(LazyModifiersBox.VISIBILITY_MODIFIERS_MAP)
+        it[PsiModifier.FINAL] = true
+        it[PsiModifier.PRIVATE] = true
+    }
+
+    private val hasInlineOnlyAnnotation: Boolean by lazyPub { withFunctionSymbol { it.hasInlineOnlyAnnotation() } }
+
     private val _modifierList: PsiModifierList by lazyPub {
-        val lazyModifiers = lazyPub {
-            withFunctionSymbol { functionSymbol ->
-                computeModifiers(functionSymbol)
-            }
-        }
-
-        val lazyAnnotations = lazyPub {
-            withFunctionSymbol { functionSymbol ->
-                computeAnnotations(functionSymbol, PsiModifier.PRIVATE in lazyModifiers.value)
-            }
-        }
-
-        SymbolLightMemberModifierList(this, lazyModifiers, lazyAnnotations)
+        SymbolLightMemberModifierList(
+            containingDeclaration = this,
+            lazyModifiersComputer = ::computeModifiers,
+            annotationsComputer = ::computeAnnotations,
+        )
     }
 
     override fun getModifierList(): PsiModifierList = _modifierList

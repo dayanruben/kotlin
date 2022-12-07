@@ -12,7 +12,9 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.annotations.*
 import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
-import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.KtKotlinPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithTypeParameters
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
@@ -25,10 +27,7 @@ import org.jetbrains.kotlin.asJava.elements.psiType
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.Visibility
-import org.jetbrains.kotlin.light.classes.symbol.annotations.SymbolLightSimpleAnnotation
-import org.jetbrains.kotlin.light.classes.symbol.annotations.SymbolPsiArrayInitializerMemberValue
-import org.jetbrains.kotlin.light.classes.symbol.annotations.SymbolPsiExpression
-import org.jetbrains.kotlin.light.classes.symbol.annotations.SymbolPsiLiteral
+import org.jetbrains.kotlin.light.classes.symbol.annotations.*
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.KtTypeParameterListOwner
@@ -73,80 +72,31 @@ internal fun KtSymbolWithModality.computeSimpleModality(): String? = when (modal
     Modality.OPEN -> null
 }
 
-internal fun KtSymbolWithModality.computeModalityForMethod(
-    isTopLevel: Boolean,
-    suppressFinal: Boolean,
-    result: MutableSet<String>
-) {
-    require(this !is KtClassLikeSymbol)
+internal fun KtSymbolWithVisibility.toPsiVisibilityForMember(): String = visibility.toPsiVisibilityForMember()
 
-    computeSimpleModality()?.run {
-        if (this != PsiModifier.FINAL || !suppressFinal) {
-            result.add(this)
-        }
-    }
+internal fun KtSymbolWithVisibility.toPsiVisibilityForClass(isNested: Boolean): String = visibility.toPsiVisibilityForClass(isNested)
 
-    if (this is KtFunctionSymbol && isExternal) {
-        result.add(PsiModifier.NATIVE)
-    }
-    if (isTopLevel) {
-        result.add(PsiModifier.STATIC)
-        val needFinalModifier = when (this) {
-            is KtPropertySymbol -> isDelegatedProperty || isVal
-            else -> true
-        }
-        if (needFinalModifier) {
-            result.add(PsiModifier.FINAL)
-        }
-    }
+private fun Visibility.toPsiVisibilityForMember(): String = when (this) {
+    Visibilities.Private, Visibilities.PrivateToThis -> PsiModifier.PRIVATE
+    Visibilities.Protected -> PsiModifier.PROTECTED
+    else -> PsiModifier.PUBLIC
 }
 
-context(KtAnalysisSession)
-internal fun PsiElement.tryGetEffectiveVisibility(symbol: KtCallableSymbol): Visibility? {
-    if (symbol !is KtPropertySymbol && symbol !is KtFunctionSymbol) return null
+private fun Visibility.toPsiVisibilityForClass(isNested: Boolean): String = when (isNested) {
+    false -> when (this) {
+        Visibilities.Public,
+        Visibilities.Protected,
+        Visibilities.Local,
+        Visibilities.Internal -> PsiModifier.PUBLIC
 
-    var visibility = (symbol as? KtSymbolWithVisibility)?.visibility
-
-    for (overriddenSymbol in symbol.getAllOverriddenSymbols()) {
-        val newVisibility = (overriddenSymbol as? KtSymbolWithVisibility)?.visibility
-        if (newVisibility != null) {
-            visibility = newVisibility
-        }
+        else -> PsiModifier.PACKAGE_LOCAL
     }
 
-    return visibility
-}
-
-internal fun KtSymbolWithVisibility.toPsiVisibilityForMember(): String =
-    visibility.toPsiVisibilityForMember()
-
-internal fun KtSymbolWithVisibility.toPsiVisibilityForClass(isNested: Boolean): String =
-    visibility.toPsiVisibilityForClass(isNested)
-
-internal fun Visibility.toPsiVisibilityForMember(): String =
-    when (this) {
-        Visibilities.Private, Visibilities.PrivateToThis -> PsiModifier.PRIVATE
+    true -> when (this) {
+        Visibilities.Public, Visibilities.Internal, Visibilities.Local -> PsiModifier.PUBLIC
         Visibilities.Protected -> PsiModifier.PROTECTED
-        else -> PsiModifier.PUBLIC
-    }
-
-private fun Visibility.toPsiVisibilityForClass(isNested: Boolean): String {
-    return when (isNested) {
-        false -> when (this) {
-            Visibilities.Public,
-            Visibilities.Protected,
-            Visibilities.Local,
-            Visibilities.Internal -> PsiModifier.PUBLIC
-
-            else -> PsiModifier.PACKAGE_LOCAL
-        }
-
-        true -> when (this) {
-            Visibilities.Public, Visibilities.Internal, Visibilities.Local -> PsiModifier.PUBLIC
-            Visibilities.Protected -> PsiModifier.PROTECTED
-            Visibilities.Private -> PsiModifier.PRIVATE
-            else -> PsiModifier.PACKAGE_LOCAL
-        }
+        Visibilities.Private -> PsiModifier.PRIVATE
+        else -> PsiModifier.PACKAGE_LOCAL
     }
 }
 
@@ -287,9 +237,8 @@ internal fun KtConstantValue.createPsiLiteral(parent: PsiElement): PsiExpression
 internal fun BitSet.copy(): BitSet = clone() as BitSet
 
 context(KtAnalysisSession)
-internal fun <T : KtSymbol> KtSymbolPointer<T>.restoreSymbolOrThrowIfDisposed(): T = requireNotNull(restoreSymbol()) {
-    "${this::class} pointer already disposed"
-}
+internal fun <T : KtSymbol> KtSymbolPointer<T>.restoreSymbolOrThrowIfDisposed(): T =
+    restoreSymbol() ?: error("${this::class} pointer already disposed")
 
 internal fun hasTypeParameters(
     ktModule: KtModule,
@@ -314,3 +263,7 @@ internal inline fun <T : KtSymbol, R> KtSymbolPointer<T>.withSymbol(
     ktModule: KtModule,
     crossinline action: KtAnalysisSession.(T) -> R,
 ): R = analyzeForLightClasses(ktModule) { action(this, restoreSymbolOrThrowIfDisposed()) }
+
+internal val KtPropertySymbol.isConstOrJvmField: Boolean get() = isConst || hasJvmFieldAnnotation()
+internal val KtPropertySymbol.isConst: Boolean get() = (this as? KtKotlinPropertySymbol)?.isConst == true
+internal val KtPropertySymbol.isLateInit: Boolean get() = (this as? KtKotlinPropertySymbol)?.isLateInit == true

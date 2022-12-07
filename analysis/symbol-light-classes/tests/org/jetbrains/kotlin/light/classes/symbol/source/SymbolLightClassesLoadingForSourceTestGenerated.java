@@ -169,6 +169,12 @@ public class SymbolLightClassesLoadingForSourceTestGenerated extends AbstractSym
     }
 
     @Test
+    @TestMetadata("jvmStaticOnPropertySetter.kt")
+    public void testJvmStaticOnPropertySetter() throws Exception {
+        runTest("compiler/testData/asJava/ultraLightClasses/jvmStaticOnPropertySetter.kt");
+    }
+
+    @Test
     @TestMetadata("jvmSynthetic.kt")
     public void testJvmSynthetic() throws Exception {
         runTest("compiler/testData/asJava/ultraLightClasses/jvmSynthetic.kt");
@@ -184,6 +190,12 @@ public class SymbolLightClassesLoadingForSourceTestGenerated extends AbstractSym
     @TestMetadata("jvmWildcardAnnotations.kt")
     public void testJvmWildcardAnnotations() throws Exception {
         runTest("compiler/testData/asJava/ultraLightClasses/jvmWildcardAnnotations.kt");
+    }
+
+    @Test
+    @TestMetadata("LateinitProperties.kt")
+    public void testLateinitProperties() throws Exception {
+        runTest("compiler/testData/asJava/ultraLightClasses/LateinitProperties.kt");
     }
 
     @Test

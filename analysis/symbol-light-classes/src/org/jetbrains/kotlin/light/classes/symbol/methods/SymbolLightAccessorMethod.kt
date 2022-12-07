@@ -27,7 +27,9 @@ import org.jetbrains.kotlin.light.classes.symbol.annotations.getJvmNameFromAnnot
 import org.jetbrains.kotlin.light.classes.symbol.annotations.hasDeprecatedAnnotation
 import org.jetbrains.kotlin.light.classes.symbol.annotations.hasJvmStaticAnnotation
 import org.jetbrains.kotlin.light.classes.symbol.classes.SymbolLightClassBase
+import org.jetbrains.kotlin.light.classes.symbol.modifierLists.LazyModifiersBox
 import org.jetbrains.kotlin.light.classes.symbol.modifierLists.SymbolLightMemberModifierList
+import org.jetbrains.kotlin.light.classes.symbol.modifierLists.with
 import org.jetbrains.kotlin.light.classes.symbol.parameters.SymbolLightParameterList
 import org.jetbrains.kotlin.light.classes.symbol.parameters.SymbolLightSetterParameter
 import org.jetbrains.kotlin.light.classes.symbol.parameters.SymbolLightTypeParameterList
@@ -129,13 +131,15 @@ internal class SymbolLightAccessorMethod private constructor(
     //TODO Fix it when SymbolConstructorValueParameter be ready
     private val isParameter: Boolean get() = containingPropertyDeclaration == null || containingPropertyDeclaration is KtParameter
 
-    private fun computeAnnotations(isPrivate: Boolean): List<PsiAnnotation> = analyzeForLightClasses(ktModule) {
-        val nullabilityApplicable = isGetter && !isPrivate && !(isParameter && containingClass.isAnnotationType)
+    private fun computeAnnotations(modifierList: PsiModifierList): List<PsiAnnotation> = analyzeForLightClasses(ktModule) {
+        val nullabilityApplicable = isGetter &&
+                !modifierList.hasModifierProperty(PsiModifier.PRIVATE) &&
+                !(isParameter && containingClass.isAnnotationType)
 
         val propertySymbol = propertySymbol()
         val nullabilityType = if (nullabilityApplicable) getTypeNullability(propertySymbol.returnType) else NullabilityType.Unknown
         val annotationsFromProperty = propertySymbol.computeAnnotations(
-            parent = this@SymbolLightAccessorMethod,
+            modifierList = modifierList,
             nullability = nullabilityType,
             annotationUseSiteTarget = accessorSite,
             includeAnnotationsWithoutSite = false,
@@ -143,7 +147,7 @@ internal class SymbolLightAccessorMethod private constructor(
 
         val propertyAccessorSymbol = propertyAccessorSymbol()
         val annotationsFromAccessor = propertyAccessorSymbol.computeAnnotations(
-            parent = this@SymbolLightAccessorMethod,
+            modifierList = modifierList,
             nullability = NullabilityType.Unknown,
             annotationUseSiteTarget = accessorSite,
         )
@@ -151,42 +155,43 @@ internal class SymbolLightAccessorMethod private constructor(
         annotationsFromProperty + annotationsFromAccessor
     }
 
-    private fun computeModifiers(): Set<String> = analyzeForLightClasses(ktModule) {
-        val propertySymbol = propertySymbol()
-        val propertyAccessorSymbol = propertyAccessorSymbol()
-        val isOverrideMethod = propertyAccessorSymbol.isOverride || propertySymbol.isOverride
-        val isInterfaceMethod = containingClass.isInterface
+    private fun computeModifiers(modifier: String): Map<String, Boolean>? {
+        return when (modifier) {
+            in LazyModifiersBox.VISIBILITY_MODIFIERS -> LazyModifiersBox.computeVisibilityForMember(ktModule, propertyAccessorSymbolPointer)
 
-        val modifiers = mutableSetOf<String>()
+            in LazyModifiersBox.MODALITY_MODIFIERS -> {
+                if (containingClass.isInterface) {
+                    return LazyModifiersBox.MODALITY_MODIFIERS_MAP.with(PsiModifier.ABSTRACT)
+                }
 
-        propertySymbol.computeModalityForMethod(
-            isTopLevel = isTopLevel,
-            suppressFinal = isOverrideMethod || isInterfaceMethod,
-            result = modifiers,
-        )
+                LazyModifiersBox.computeSimpleModality(ktModule, containingPropertySymbolPointer)
+            }
 
-        val visibility = isOverrideMethod.ifTrue {
-            tryGetEffectiveVisibility(propertySymbol)?.toPsiVisibilityForMember()
-        } ?: propertyAccessorSymbol.toPsiVisibilityForMember()
-        modifiers.add(visibility)
+            PsiModifier.STATIC -> {
+                val isStatic = if (suppressStatic) {
+                    false
+                } else {
+                    isTopLevel || hasJvmStaticAnnotation()
+                }
 
-        if (!suppressStatic &&
-            (propertySymbol.hasJvmStaticAnnotation() || propertyAccessorSymbol.hasJvmStaticAnnotation(accessorSite))
-        ) {
-            modifiers.add(PsiModifier.STATIC)
+                mapOf(modifier to isStatic)
+            }
+
+            else -> null
         }
+    }
 
-        if (isInterfaceMethod) {
-            modifiers.add(PsiModifier.ABSTRACT)
-        }
-
-        modifiers
+    private fun hasJvmStaticAnnotation(): Boolean = analyzeForLightClasses(ktModule) {
+        propertySymbol().hasJvmStaticAnnotation(accessorSite, strictUseSite = false) ||
+                propertyAccessorSymbol().hasJvmStaticAnnotation(accessorSite, strictUseSite = false)
     }
 
     private val _modifierList: PsiModifierList by lazyPub {
-        val lazyModifiers = lazyPub { computeModifiers() }
-        val lazyAnnotations = lazyPub { computeAnnotations(PsiModifier.PRIVATE in lazyModifiers.value) }
-        SymbolLightMemberModifierList(this, lazyModifiers, lazyAnnotations)
+        SymbolLightMemberModifierList(
+            containingDeclaration = this,
+            lazyModifiersComputer = ::computeModifiers,
+            annotationsComputer = ::computeAnnotations,
+        )
     }
 
     override fun getModifierList(): PsiModifierList = _modifierList
@@ -195,7 +200,8 @@ internal class SymbolLightAccessorMethod private constructor(
 
     private val _isDeprecated: Boolean by lazyPub {
         analyzeForLightClasses(ktModule) {
-            propertySymbol().hasDeprecatedAnnotation(accessorSite)
+            propertySymbol().hasDeprecatedAnnotation(accessorSite, strictUseSite = false) ||
+                    propertyAccessorSymbol().hasDeprecatedAnnotation(accessorSite, strictUseSite = false)
         }
     }
 

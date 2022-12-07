@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.light.classes.symbol.annotations
 import com.intellij.psi.CommonClassNames.JAVA_LANG_ANNOTATION_RETENTION
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiModifierList
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
@@ -33,8 +33,10 @@ import org.jetbrains.kotlin.resolve.annotations.JVM_STATIC_ANNOTATION_CLASS_ID
 import org.jetbrains.kotlin.resolve.deprecation.DeprecationLevelValue
 import org.jetbrains.kotlin.resolve.inline.INLINE_ONLY_ANNOTATION_FQ_NAME
 
-internal fun KtAnnotatedSymbol.hasJvmSyntheticAnnotation(annotationUseSiteTarget: AnnotationUseSiteTarget? = null): Boolean =
-    hasAnnotation(JVM_SYNTHETIC_ANNOTATION_CLASS_ID, annotationUseSiteTarget)
+internal fun KtAnnotatedSymbol.hasJvmSyntheticAnnotation(
+    annotationUseSiteTarget: AnnotationUseSiteTarget? = null,
+    strictUseSite: Boolean = true,
+): Boolean = hasAnnotation(JVM_SYNTHETIC_ANNOTATION_CLASS_ID, annotationUseSiteTarget, strictUseSite)
 
 internal fun KtFileSymbol.hasJvmMultifileClassAnnotation(): Boolean =
     hasAnnotation(JVM_MULTIFILE_CLASS_ID, AnnotationUseSiteTarget.FILE)
@@ -54,14 +56,16 @@ internal fun KtAnnotatedSymbol.getJvmNameFromAnnotation(annotationUseSiteTarget:
 context(KtAnalysisSession)
 internal fun isHiddenByDeprecation(
     symbol: KtAnnotatedSymbol,
-    annotationUseSiteTarget: AnnotationUseSiteTarget? = null
+    annotationUseSiteTarget: AnnotationUseSiteTarget? = null,
 ): Boolean {
     return symbol.getDeprecationStatus(annotationUseSiteTarget)?.deprecationLevel == DeprecationLevelValue.HIDDEN
 }
 
 context(KtAnalysisSession)
-internal fun KtAnnotatedSymbol.isHiddenOrSynthetic(annotationUseSiteTarget: AnnotationUseSiteTarget? = null) =
-    isHiddenByDeprecation(this, annotationUseSiteTarget) || hasJvmSyntheticAnnotation(annotationUseSiteTarget)
+internal fun KtAnnotatedSymbol.isHiddenOrSynthetic(
+    annotationUseSiteTarget: AnnotationUseSiteTarget? = null,
+    strictUseSite: Boolean = true,
+) = isHiddenByDeprecation(this, annotationUseSiteTarget) || hasJvmSyntheticAnnotation(annotationUseSiteTarget, strictUseSite)
 
 internal fun KtAnnotatedSymbol.hasJvmFieldAnnotation(): Boolean =
     hasAnnotation(JVM_FIELD_ANNOTATION_CLASS_ID, null)
@@ -69,29 +73,40 @@ internal fun KtAnnotatedSymbol.hasJvmFieldAnnotation(): Boolean =
 internal fun KtAnnotatedSymbol.hasPublishedApiAnnotation(annotationUseSiteTarget: AnnotationUseSiteTarget? = null): Boolean =
     hasAnnotation(StandardClassIds.Annotations.PublishedApi, annotationUseSiteTarget)
 
-internal fun KtAnnotatedSymbol.hasDeprecatedAnnotation(annotationUseSiteTarget: AnnotationUseSiteTarget? = null): Boolean =
-    hasAnnotation(StandardClassIds.Annotations.Deprecated, annotationUseSiteTarget)
+internal fun KtAnnotatedSymbol.hasDeprecatedAnnotation(
+    annotationUseSiteTarget: AnnotationUseSiteTarget? = null,
+    strictUseSite: Boolean = true,
+): Boolean = hasAnnotation(StandardClassIds.Annotations.Deprecated, annotationUseSiteTarget, strictUseSite)
 
-internal fun KtAnnotatedSymbol.hasJvmOverloadsAnnotation(): Boolean =
-    hasAnnotation(JVM_OVERLOADS_CLASS_ID, null)
+internal fun KtAnnotatedSymbol.hasJvmOverloadsAnnotation(): Boolean = hasAnnotation(JVM_OVERLOADS_CLASS_ID, null)
 
-internal fun KtAnnotatedSymbol.hasJvmStaticAnnotation(annotationUseSiteTarget: AnnotationUseSiteTarget? = null): Boolean =
-    hasAnnotation(JVM_STATIC_ANNOTATION_CLASS_ID, annotationUseSiteTarget)
+internal fun KtAnnotatedSymbol.hasJvmStaticAnnotation(
+    annotationUseSiteTarget: AnnotationUseSiteTarget? = null,
+    strictUseSite: Boolean = true,
+): Boolean = hasAnnotation(JVM_STATIC_ANNOTATION_CLASS_ID, annotationUseSiteTarget, strictUseSite)
 
 internal fun KtAnnotatedSymbol.hasInlineOnlyAnnotation(): Boolean =
     hasAnnotation(INLINE_ONLY_ANNOTATION_FQ_NAME, null)
 
-internal fun KtAnnotatedSymbol.hasAnnotation(classId: ClassId, annotationUseSiteTarget: AnnotationUseSiteTarget?): Boolean =
-    annotations.any {
-        it.useSiteTarget == annotationUseSiteTarget && it.classId == classId
-    }
+internal fun KtAnnotatedSymbol.hasAnnotation(
+    classId: ClassId,
+    annotationUseSiteTarget: AnnotationUseSiteTarget?,
+    strictUseSite: Boolean = true,
+): Boolean = annotations.any {
+    val useSiteTarget = it.useSiteTarget
+    (useSiteTarget == annotationUseSiteTarget || !strictUseSite && useSiteTarget == null) && it.classId == classId
+}
 
-internal fun KtAnnotatedSymbol.hasAnnotation(fqName: FqName, annotationUseSiteTarget: AnnotationUseSiteTarget?): Boolean =
-    annotations.any {
-        it.useSiteTarget == annotationUseSiteTarget && it.classId?.asSingleFqName() == fqName
-    }
+internal fun KtAnnotatedSymbol.hasAnnotation(
+    fqName: FqName,
+    annotationUseSiteTarget: AnnotationUseSiteTarget?,
+    strictUseSite: Boolean = true,
+): Boolean = annotations.any {
+    val useSiteTarget = it.useSiteTarget
+    (useSiteTarget == annotationUseSiteTarget || !strictUseSite && useSiteTarget == null) && it.classId?.asSingleFqName() == fqName
+}
 
-internal fun NullabilityType.computeNullabilityAnnotation(parent: PsiElement): SymbolLightSimpleAnnotation? {
+internal fun NullabilityType.computeNullabilityAnnotation(parent: PsiModifierList): SymbolLightSimpleAnnotation? {
     return when (this) {
         NullabilityType.NotNull -> NotNull::class.java
         NullabilityType.Nullable -> Nullable::class.java
@@ -102,27 +117,26 @@ internal fun NullabilityType.computeNullabilityAnnotation(parent: PsiElement): S
 }
 
 internal fun KtAnnotatedSymbol.computeAnnotations(
-    parent: PsiElement,
+    modifierList: PsiModifierList,
     nullability: NullabilityType,
     annotationUseSiteTarget: AnnotationUseSiteTarget?,
     includeAnnotationsWithoutSite: Boolean = true
 ): List<PsiAnnotation> {
-
-    val nullabilityAnnotation = nullability.computeNullabilityAnnotation(parent)
-
+    val parent = modifierList.parent
+    val nullabilityAnnotation = nullability.computeNullabilityAnnotation(modifierList)
     val parentIsAnnotation = (parent as? PsiClass)?.isAnnotationType == true
 
     val result = mutableListOf<PsiAnnotation>()
 
     if (parent is SymbolLightMethod<*>) {
         if (parent.isDelegated || parent.isOverride()) {
-            result.add(SymbolLightSimpleAnnotation(java.lang.Override::class.java.name, parent))
+            result.add(SymbolLightSimpleAnnotation(java.lang.Override::class.java.name, modifierList))
         }
     }
 
     if (annotations.isEmpty()) {
         if (parentIsAnnotation) {
-            result.add(createRetentionRuntimeAnnotation(parent))
+            result.add(createRetentionRuntimeAnnotation(modifierList))
         }
 
         if (nullabilityAnnotation != null) {
@@ -139,7 +153,7 @@ internal fun KtAnnotatedSymbol.computeAnnotations(
         if ((includeAnnotationsWithoutSite && siteTarget == null) ||
             siteTarget == annotationUseSiteTarget
         ) {
-            result.add(SymbolLightAnnotationForAnnotationCall(annotation, parent))
+            result.add(SymbolLightAnnotationForAnnotationCall(annotation, modifierList))
         }
     }
 
@@ -151,7 +165,7 @@ internal fun KtAnnotatedSymbol.computeAnnotations(
             ?.firstOrNull { it.name.asString() == "value" }
             ?.expression
         val kotlinRetentionName = (argumentWithKotlinRetention as? KtEnumEntryAnnotationValue)?.callableId?.callableName?.asString()
-        result.add(createRetentionRuntimeAnnotation(parent, kotlinRetentionName))
+        result.add(createRetentionRuntimeAnnotation(modifierList, kotlinRetentionName))
     }
 
     if (nullabilityAnnotation != null) {
@@ -161,19 +175,19 @@ internal fun KtAnnotatedSymbol.computeAnnotations(
     return result
 }
 
-private fun createRetentionRuntimeAnnotation(parent: PsiElement, retentionName: String? = null): PsiAnnotation =
+private fun createRetentionRuntimeAnnotation(modifierList: PsiModifierList, retentionName: String? = null): PsiAnnotation =
     SymbolLightSimpleAnnotation(
         JAVA_LANG_ANNOTATION_RETENTION,
-        parent,
+        modifierList,
         listOf(
             KtNamedAnnotationValue(
                 name = DEFAULT_VALUE_PARAMETER,
                 expression = KtEnumEntryAnnotationValue(
                     callableId = CallableId(
                         ClassId.fromString(RETENTION_POLICY_ENUM.asString()),
-                        Name.identifier(retentionName ?: AnnotationRetention.RUNTIME.name)
+                        Name.identifier(retentionName ?: AnnotationRetention.RUNTIME.name),
                     ),
-                    sourcePsi = null
+                    sourcePsi = null,
                 )
             )
         )

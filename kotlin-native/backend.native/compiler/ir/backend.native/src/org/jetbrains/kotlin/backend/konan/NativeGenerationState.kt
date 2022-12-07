@@ -6,12 +6,9 @@
 package org.jetbrains.kotlin.backend.konan
 
 import llvm.*
+import org.jetbrains.kotlin.backend.konan.driver.BasicPhaseContext
 import org.jetbrains.kotlin.backend.konan.llvm.*
-import org.jetbrains.kotlin.backend.konan.llvm.DebugInfo
-import org.jetbrains.kotlin.backend.konan.llvm.Llvm
-import org.jetbrains.kotlin.backend.konan.llvm.LlvmDeclarations
 import org.jetbrains.kotlin.backend.konan.llvm.coverage.CoverageManager
-import org.jetbrains.kotlin.backend.konan.llvm.verifyModule
 import org.jetbrains.kotlin.backend.konan.objcexport.ObjCExport
 import org.jetbrains.kotlin.backend.konan.serialization.SerializedClassFields
 import org.jetbrains.kotlin.backend.konan.serialization.SerializedInlineFunctionReference
@@ -42,9 +39,13 @@ internal class FileLowerState {
             "$prefix${cStubCount++}"
 }
 
-internal class NativeGenerationState(val context: Context, val cacheDeserializationStrategy: CacheDeserializationStrategy?) {
-    private val config = context.config
-
+internal class NativeGenerationState(
+        config: KonanConfig,
+        // TODO: Get rid of this property completely once transition to the dynamic driver is complete.
+        //  It will reduce code coupling and make it easier to create NativeGenerationState instances.
+        val context: Context,
+        val cacheDeserializationStrategy: CacheDeserializationStrategy?
+) : BasicPhaseContext(config) {
     private val outputPath = config.cacheSupport.tryGetImplicitOutput(cacheDeserializationStrategy) ?: config.outputPath
     val outputFiles = OutputFiles(outputPath, config.target, config.produce)
     val tempFiles = run {
@@ -111,14 +112,29 @@ internal class NativeGenerationState(val context: Context, val cacheDeserializat
         verifyModule(llvm.module)
     }
 
+    // TODO: Do we need this function?
     fun printBitCode() {
         if (!llvmDelegate.isInitialized()) return
-        context.separator("BitCode:")
+        separator("BitCode:")
         LLVMDumpModule(llvm.module)
     }
 
+    private fun separator(title: String) {
+        println("\n\n--- ${title} ----------------------\n")
+    }
+
     private var isDisposed = false
-    fun dispose() {
+
+    // A little hack to make logging work when executing this phase in its parent context.
+    // TODO: A better solution would be a separate logger object or something like that.
+    //  PhaseContext should not be responsible for logging.
+    override var inVerbosePhase: Boolean
+        get() = context.inVerbosePhase
+        set(value) {
+            context.inVerbosePhase = value
+        }
+
+    override fun dispose() {
         if (isDisposed) return
 
         if (hasDebugInfo()) {

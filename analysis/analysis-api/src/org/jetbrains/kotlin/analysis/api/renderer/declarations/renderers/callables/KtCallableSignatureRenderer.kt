@@ -7,23 +7,23 @@ package org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callab
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtDeclarationRenderer
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderAnnotationsAndModifiers
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderAnnotationsModifiersAndContextReceivers
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.lexer.KtKeywordToken
 
-public interface KtCallableSignatureRender {
+public interface KtCallableSignatureRenderer {
     context(KtAnalysisSession, KtDeclarationRenderer)
     public fun renderCallableSignature(symbol: KtCallableSymbol, keyword: KtKeywordToken?, printer: PrettyPrinter)
 
-    public object FOR_SOURCE : KtCallableSignatureRender {
+    public object FOR_SOURCE : KtCallableSignatureRenderer {
         context(KtAnalysisSession, KtDeclarationRenderer)
         override fun renderCallableSignature(symbol: KtCallableSymbol, keyword: KtKeywordToken?, printer: PrettyPrinter): Unit = printer {
             " ".separated(
                 {
-                    if (keyword != null) renderAnnotationsAndModifiers(symbol, printer, keyword)
-                    else renderAnnotationsAndModifiers(symbol, printer)
+                    if (keyword != null) renderAnnotationsModifiersAndContextReceivers(symbol, printer, keyword)
+                    else renderAnnotationsModifiersAndContextReceivers(symbol, printer)
                 },
                 { typeParametersRenderer.renderTypeParameters(symbol, printer) },
                 {

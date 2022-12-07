@@ -68,22 +68,21 @@ class SymbolLightClassForFacade(
         if (multiFileClass)
             return@lazyPub LightModifierList(manager, KotlinLanguage.INSTANCE, PsiModifier.PUBLIC, PsiModifier.FINAL)
 
-        val lazyModifiers = lazyOf(setOf(PsiModifier.PUBLIC, PsiModifier.FINAL))
-
-        val lazyAnnotations = lazyPub {
+        SymbolLightClassModifierList(
+            containingDeclaration = this,
+            staticModifiers = setOf(PsiModifier.PUBLIC, PsiModifier.FINAL),
+        ) { modifierList ->
             withFileSymbols { fileSymbols ->
                 fileSymbols.flatMap {
                     it.computeAnnotations(
-                        this@SymbolLightClassForFacade,
-                        NullabilityType.Unknown,
-                        AnnotationUseSiteTarget.FILE,
+                        modifierList = modifierList,
+                        nullability = NullabilityType.Unknown,
+                        annotationUseSiteTarget = AnnotationUseSiteTarget.FILE,
                         includeAnnotationsWithoutSite = false,
                     )
                 }
             }
         }
-
-        SymbolLightClassModifierList(this, lazyModifiers, lazyAnnotations)
     }
 
     override fun getModifierList(): PsiModifierList = _modifierList

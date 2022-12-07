@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.fir.scopes.kotlinScopeProvider
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirFunctionSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
+import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
 import org.jetbrains.kotlin.psi.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -116,29 +117,27 @@ internal class ReanalyzableFunctionStructureElement(
 
         return moduleComponents.globalResolveComponents.lockProvider.withWriteLock(firFile) {
             val upgradedPhase = minOf(originalFunction.resolvePhase, FirResolvePhase.DECLARATIONS)
-            with(originalFunction) {
-                replaceBody(temporaryFunction.body)
-                replaceContractDescription(temporaryFunction.contractDescription)
-                replaceResolvePhase(upgradedPhase)
-            }
-            designation.toSequence(includeTarget = true).forEach {
-                it.replaceResolvePhase(minOf(it.resolvePhase, upgradedPhase))
-            }
 
-            moduleComponents.firModuleLazyDeclarationResolver.lazyResolveDeclaration(
-                firDeclarationToResolve = originalFunction,
-                scopeSession = moduleComponents.scopeSessionProvider.getScopeSession(),
-                toPhase = FirResolvePhase.BODY_RESOLVE,
-                checkPCE = true,
-            )
+            moduleComponents.sessionInvalidator.withInvalidationOnException(moduleComponents.session) {
+                with(originalFunction) {
+                    replaceBody(temporaryFunction.body)
+                    replaceContractDescription(temporaryFunction.contractDescription)
+                    replaceResolvePhase(upgradedPhase)
+                }
+                designation.toSequence(includeTarget = true).forEach {
+                    it.replaceResolvePhase(minOf(it.resolvePhase, upgradedPhase))
+                }
 
-            ReanalyzableFunctionStructureElement(
-                firFile,
-                newKtDeclaration,
-                originalFunction.symbol,
-                newKtDeclaration.modificationStamp,
-                moduleComponents,
-            )
+                originalFunction.lazyResolveToPhase(FirResolvePhase.BODY_RESOLVE)
+
+                ReanalyzableFunctionStructureElement(
+                    firFile,
+                    newKtDeclaration,
+                    originalFunction.symbol,
+                    newKtDeclaration.modificationStamp,
+                    moduleComponents,
+                )
+            }
         }
     }
 }
@@ -164,36 +163,31 @@ internal class ReanalyzablePropertyStructureElement(
         ) as FirProperty
 
         return moduleComponents.globalResolveComponents.lockProvider.withWriteLock(firFile) {
-
             val getterPhase = originalProperty.getter?.resolvePhase ?: originalProperty.resolvePhase
             val setterPhase = originalProperty.setter?.resolvePhase ?: originalProperty.resolvePhase
             val upgradedPhase = minOf(originalProperty.resolvePhase, getterPhase, setterPhase, FirResolvePhase.DECLARATIONS)
 
-            with(originalProperty) {
-                getter?.replaceBody(temporaryProperty.getter?.body)
-                setter?.replaceBody(temporaryProperty.setter?.body)
-                replaceInitializer(temporaryProperty.initializer)
-                getter?.replaceResolvePhase(upgradedPhase)
-                setter?.replaceResolvePhase(upgradedPhase)
-                replaceResolvePhase(upgradedPhase)
-                replaceBodyResolveState(FirPropertyBodyResolveState.NOTHING_RESOLVED)
+            moduleComponents.sessionInvalidator.withInvalidationOnException(moduleComponents.session) {
+                with(originalProperty) {
+                    getter?.replaceBody(temporaryProperty.getter?.body)
+                    setter?.replaceBody(temporaryProperty.setter?.body)
+                    replaceInitializer(temporaryProperty.initializer)
+                    getter?.replaceResolvePhase(upgradedPhase)
+                    setter?.replaceResolvePhase(upgradedPhase)
+                    replaceResolvePhase(upgradedPhase)
+                    replaceBodyResolveState(FirPropertyBodyResolveState.NOTHING_RESOLVED)
+                }
+
+                originalProperty.lazyResolveToPhase(FirResolvePhase.BODY_RESOLVE)
+
+                ReanalyzablePropertyStructureElement(
+                    firFile,
+                    newKtDeclaration,
+                    originalProperty.symbol,
+                    newKtDeclaration.modificationStamp,
+                    moduleComponents,
+                )
             }
-
-            moduleComponents.firModuleLazyDeclarationResolver.lazyResolveDeclaration(
-                firDeclarationToResolve = originalProperty,
-                scopeSession = moduleComponents.scopeSessionProvider.getScopeSession(),
-                toPhase = FirResolvePhase.BODY_RESOLVE,
-                checkPCE = true,
-            )
-
-
-            ReanalyzablePropertyStructureElement(
-                firFile,
-                newKtDeclaration,
-                originalProperty.symbol,
-                newKtDeclaration.modificationStamp,
-                moduleComponents,
-            )
         }
     }
 }

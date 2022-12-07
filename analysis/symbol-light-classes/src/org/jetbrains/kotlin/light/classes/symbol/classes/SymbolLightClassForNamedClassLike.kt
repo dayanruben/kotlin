@@ -6,19 +6,24 @@
 package org.jetbrains.kotlin.light.classes.symbol.classes
 
 import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiModifier
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtKotlinPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtSymbolPointer
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.asJava.elements.KtLightField
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
-import org.jetbrains.kotlin.light.classes.symbol.annotations.hasJvmFieldAnnotation
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.light.classes.symbol.annotations.hasJvmStaticAnnotation
 import org.jetbrains.kotlin.light.classes.symbol.fields.SymbolLightFieldForObject
 import org.jetbrains.kotlin.light.classes.symbol.fields.SymbolLightFieldForProperty
+import org.jetbrains.kotlin.light.classes.symbol.isConstOrJvmField
+import org.jetbrains.kotlin.light.classes.symbol.isLateInit
+import org.jetbrains.kotlin.light.classes.symbol.modifierLists.LazyModifiersBox
+import org.jetbrains.kotlin.light.classes.symbol.modifierLists.with
+import org.jetbrains.kotlin.light.classes.symbol.toPsiVisibilityForClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.utils.addToStdlib.applyIf
 
@@ -73,9 +78,8 @@ abstract class SymbolLightClassForNamedClassLike : SymbolLightClassForClassLike<
             }
     }
 
-    private val KtPropertySymbol.isConstOrJvmField: Boolean get() = isConst || hasJvmFieldAnnotation()
-
-    private val KtPropertySymbol.isConst: Boolean get() = (this as? KtKotlinPropertySymbol)?.isConst == true
+    private val isInner: Boolean
+        get() = classOrObjectDeclaration?.hasModifier(KtTokens.INNER_KEYWORD) ?: withClassOrObjectSymbol { it.isInner }
 
     context(KtAnalysisSession)
     protected fun addFieldsFromCompanionIfNeeded(
@@ -98,7 +102,7 @@ abstract class SymbolLightClassForNamedClassLike : SymbolLightClassForClassLike<
                     lightMemberOrigin = null,
                     isTopLevel = false,
                     forceStatic = true,
-                    takePropertyVisibility = it.isConstOrJvmField,
+                    takePropertyVisibility = it.isConstOrJvmField || it.isLateInit,
                 )
             }
     }
@@ -120,5 +124,20 @@ abstract class SymbolLightClassForNamedClassLike : SymbolLightClassForClassLike<
                 )
             )
         }
+    }
+
+    internal fun computeModifiers(modifier: String): Map<String, Boolean>? = when (modifier) {
+        in LazyModifiersBox.VISIBILITY_MODIFIERS -> {
+            val visibility = withClassOrObjectSymbol { it.toPsiVisibilityForClass(isNested = !isTopLevel) }
+            LazyModifiersBox.VISIBILITY_MODIFIERS_MAP.with(visibility)
+        }
+
+        in LazyModifiersBox.MODALITY_MODIFIERS -> LazyModifiersBox.computeSimpleModality(ktModule, classOrObjectSymbolPointer)
+        PsiModifier.STATIC -> {
+            val isStatic = !isTopLevel && !isInner
+            mapOf(modifier to isStatic)
+        }
+
+        else -> null
     }
 }

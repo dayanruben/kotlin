@@ -71,6 +71,12 @@ public class FirIdeDependentAnalysisSourceModuleRendererTestGenerated extends Ab
     }
 
     @Test
+    @TestMetadata("contextReceiver.kt")
+    public void testContextReceiver() throws Exception {
+        runTest("analysis/analysis-api/testData/components/symbolDeclarationRenderer/renderDeclaration/contextReceiver.kt");
+    }
+
+    @Test
     @TestMetadata("delegates.kt")
     public void testDelegates() throws Exception {
         runTest("analysis/analysis-api/testData/components/symbolDeclarationRenderer/renderDeclaration/delegates.kt");
@@ -218,15 +224,21 @@ public class FirIdeDependentAnalysisSourceModuleRendererTestGenerated extends Ab
         }
 
         @Test
-        @TestMetadata("annotaionOnTypes.kt")
-        public void testAnnotaionOnTypes() throws Exception {
-            runTest("analysis/analysis-api/testData/components/symbolDeclarationRenderer/renderDeclaration/types/annotaionOnTypes.kt");
+        @TestMetadata("annotationOnTypes.kt")
+        public void testAnnotationOnTypes() throws Exception {
+            runTest("analysis/analysis-api/testData/components/symbolDeclarationRenderer/renderDeclaration/types/annotationOnTypes.kt");
         }
 
         @Test
-        @TestMetadata("annotaionOnTypesWithComplexExpression.kt")
-        public void testAnnotaionOnTypesWithComplexExpression() throws Exception {
-            runTest("analysis/analysis-api/testData/components/symbolDeclarationRenderer/renderDeclaration/types/annotaionOnTypesWithComplexExpression.kt");
+        @TestMetadata("annotationOnTypesWithComplexExpression.kt")
+        public void testAnnotationOnTypesWithComplexExpression() throws Exception {
+            runTest("analysis/analysis-api/testData/components/symbolDeclarationRenderer/renderDeclaration/types/annotationOnTypesWithComplexExpression.kt");
+        }
+
+        @Test
+        @TestMetadata("contextFunctionTypes.kt")
+        public void testContextFunctionTypes() throws Exception {
+            runTest("analysis/analysis-api/testData/components/symbolDeclarationRenderer/renderDeclaration/types/contextFunctionTypes.kt");
         }
     }
 }

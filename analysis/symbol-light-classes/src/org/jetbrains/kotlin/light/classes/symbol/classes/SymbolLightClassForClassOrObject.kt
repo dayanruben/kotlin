@@ -5,10 +5,12 @@
 
 package org.jetbrains.kotlin.light.classes.symbol.classes
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifierList
+import com.intellij.psi.PsiReferenceList
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtSymbolPointer
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.symbolPointerOfType
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
@@ -24,14 +26,10 @@ import org.jetbrains.kotlin.builtins.StandardNames.HASHCODE_NAME
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.light.classes.symbol.NullabilityType
 import org.jetbrains.kotlin.light.classes.symbol.annotations.computeAnnotations
-import org.jetbrains.kotlin.light.classes.symbol.annotations.hasJvmFieldAnnotation
-import org.jetbrains.kotlin.light.classes.symbol.computeSimpleModality
-import org.jetbrains.kotlin.light.classes.symbol.fields.SymbolLightField
 import org.jetbrains.kotlin.light.classes.symbol.fields.SymbolLightFieldForEnumEntry
 import org.jetbrains.kotlin.light.classes.symbol.fields.SymbolLightFieldForObject
 import org.jetbrains.kotlin.light.classes.symbol.methods.SymbolLightSimpleMethod
 import org.jetbrains.kotlin.light.classes.symbol.modifierLists.SymbolLightClassModifierList
-import org.jetbrains.kotlin.light.classes.symbol.toPsiVisibilityForClass
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -43,7 +41,6 @@ import org.jetbrains.kotlin.resolve.DataClassResolver
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.JvmDeclarationOriginKind
 import org.jetbrains.kotlin.util.OperatorNameConventions.EQUALS
 import org.jetbrains.kotlin.util.OperatorNameConventions.TO_STRING
-import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.applyIf
 
 internal open class SymbolLightClassForClassOrObject : SymbolLightClassForNamedClassLike {
@@ -86,29 +83,19 @@ internal open class SymbolLightClassForClassOrObject : SymbolLightClassForNamedC
     )
 
     private val _modifierList: PsiModifierList? by lazyPub {
-        val lazyModifiers = lazyPub {
-            withClassOrObjectSymbol { classOrObjectSymbol ->
-                buildSet {
-                    add(classOrObjectSymbol.toPsiVisibilityForClass(isNested = !isTopLevel))
-                    addIfNotNull(classOrObjectSymbol.computeSimpleModality())
-                    if (!isTopLevel && !classOrObjectSymbol.isInner) {
-                        add(PsiModifier.STATIC)
-                    }
+        SymbolLightClassModifierList(
+            containingDeclaration = this,
+            lazyModifiersComputer = ::computeModifiers,
+            annotationsComputer = { modifierList ->
+                withClassOrObjectSymbol { classOrObjectSymbol ->
+                    classOrObjectSymbol.computeAnnotations(
+                        modifierList = modifierList,
+                        nullability = NullabilityType.Unknown,
+                        annotationUseSiteTarget = null,
+                    )
                 }
-            }
-        }
-
-        val lazyAnnotations = lazyPub {
-            withClassOrObjectSymbol { classOrObjectSymbol ->
-                classOrObjectSymbol.computeAnnotations(
-                    parent = this@SymbolLightClassForClassOrObject,
-                    nullability = NullabilityType.Unknown,
-                    annotationUseSiteTarget = null,
-                )
-            }
-        }
-
-        SymbolLightClassModifierList(this, lazyModifiers, lazyAnnotations)
+            },
+        )
     }
 
     override fun getModifierList(): PsiModifierList? = _modifierList
@@ -269,45 +256,6 @@ internal open class SymbolLightClassForClassOrObject : SymbolLightClassForNamedC
 
             result
         }
-    }
-
-    context(KtAnalysisSession)
-    protected fun addPropertyBackingFields(result: MutableList<KtLightField>, symbolWithMembers: KtSymbolWithMembers) {
-        val propertySymbols = symbolWithMembers.getDeclaredMemberScope().getCallableSymbols()
-            .filterIsInstance<KtPropertySymbol>()
-            .applyIf(isCompanionObject) {
-                // All fields for companion object of classes are generated to the containing class
-                // For interfaces, only @JvmField-annotated properties are generated to the containing class
-                // Probably, the same should work for const vals but it doesn't at the moment (see KT-28294)
-                filter { containingClass?.isInterface == true && !it.hasJvmFieldAnnotation() }
-            }
-
-        val propertyGroups = propertySymbols.groupBy { it.isFromPrimaryConstructor }
-
-        val nameGenerator = SymbolLightField.FieldNameGenerator()
-
-        fun addPropertyBackingField(propertySymbol: KtPropertySymbol) {
-            val isJvmField = propertySymbol.hasJvmFieldAnnotation()
-            val isLateInit = (propertySymbol as? KtKotlinPropertySymbol)?.isLateInit == true
-            val isConst = (propertySymbol as? KtKotlinPropertySymbol)?.isConst == true
-
-            val forceStatic = isObject
-            val takePropertyVisibility = isLateInit || isJvmField || isConst
-
-            createField(
-                declaration = propertySymbol,
-                nameGenerator = nameGenerator,
-                isTopLevel = false,
-                forceStatic = forceStatic,
-                takePropertyVisibility = takePropertyVisibility,
-                result = result
-            )
-        }
-
-        // First, properties from parameters
-        propertyGroups[true]?.forEach(::addPropertyBackingField)
-        // Then, regular member properties
-        propertyGroups[false]?.forEach(::addPropertyBackingField)
     }
 
     context(KtAnalysisSession)

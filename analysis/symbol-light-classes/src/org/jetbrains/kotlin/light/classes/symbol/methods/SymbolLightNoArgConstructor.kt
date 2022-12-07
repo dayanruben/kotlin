@@ -9,13 +9,13 @@ import com.intellij.psi.*
 import org.jetbrains.kotlin.asJava.builder.LightMemberOrigin
 import org.jetbrains.kotlin.asJava.classes.lazyPub
 import org.jetbrains.kotlin.asJava.elements.KtLightIdentifier
-import org.jetbrains.kotlin.light.classes.symbol.classes.SymbolLightClassForClassLike
+import org.jetbrains.kotlin.light.classes.symbol.classes.SymbolLightClassBase
 import org.jetbrains.kotlin.light.classes.symbol.modifierLists.SymbolLightMemberModifierList
 import org.jetbrains.kotlin.light.classes.symbol.parameters.SymbolLightParameterList
 
 internal class SymbolLightNoArgConstructor(
     lightMemberOrigin: LightMemberOrigin?,
-    containingClass: SymbolLightClassForClassLike<*>,
+    containingClass: SymbolLightClassBase,
     private val visibility: String,
     methodIndex: Int,
 ) : SymbolLightMethodBase(lightMemberOrigin, containingClass, methodIndex) {
@@ -36,7 +36,7 @@ internal class SymbolLightNoArgConstructor(
     override fun isDeprecated(): Boolean = false
 
     private val _modifierList: PsiModifierList by lazyPub {
-        SymbolLightMemberModifierList(this, lazyOf(setOf(visibility)), lazyOf(emptyList()))
+        SymbolLightMemberModifierList(containingDeclaration = this, staticModifiers = setOf(visibility), annotationsComputer = null)
     }
 
     override fun getModifierList(): PsiModifierList = _modifierList
