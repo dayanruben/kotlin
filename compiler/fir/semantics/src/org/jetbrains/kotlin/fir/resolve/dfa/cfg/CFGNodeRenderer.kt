@@ -85,6 +85,7 @@ fun CFGNode<*>.render(): String =
                 is PartOfClassInitializationNode -> "Part of class initialization"
                 is PropertyInitializerEnterNode -> "Enter property"
                 is PropertyInitializerExitNode -> "Exit property"
+                is DelegateExpressionExitNode -> "Exit property delegate"
                 is FieldInitializerEnterNode -> "Enter field"
                 is FieldInitializerExitNode -> "Exit field"
                 is InitBlockEnterNode -> "Enter init block"
@@ -97,13 +98,10 @@ fun CFGNode<*>.render(): String =
 
                 is WhenSubjectExpressionExitNode -> "Exit ${'$'}subj"
 
-                is PostponedLambdaEnterNode -> "Postponed enter to lambda"
+                is SplitPostponedLambdasNode -> "Postponed enter to lambda"
                 is PostponedLambdaExitNode -> "Postponed exit from lambda"
-
-                is AnonymousFunctionExpressionExitNode -> "Exit anonymous function expression"
-
-                is UnionFunctionCallArgumentsNode -> "Call arguments union"
                 is MergePostponedLambdaExitsNode -> "Merge postponed lambda exits"
+                is AnonymousFunctionExpressionNode -> "Exit anonymous function expression"
 
                 is ClassEnterNode -> "Enter class ${owner.name}"
                 is ClassExitNode -> "Exit class ${owner.name}"

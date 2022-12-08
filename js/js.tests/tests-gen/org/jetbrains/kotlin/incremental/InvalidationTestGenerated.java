@@ -190,6 +190,11 @@ public class InvalidationTestGenerated extends AbstractInvalidationTest {
         runTest("js/js.translator/testData/incremental/invalidation/inlineBecomeNonInline/");
     }
 
+    @TestMetadata("inlineFunctionAnnotations")
+    public void testInlineFunctionAnnotations() throws Exception {
+        runTest("js/js.translator/testData/incremental/invalidation/inlineFunctionAnnotations/");
+    }
+
     @TestMetadata("inlineFunctionAsFunctionReference")
     public void testInlineFunctionAsFunctionReference() throws Exception {
         runTest("js/js.translator/testData/incremental/invalidation/inlineFunctionAsFunctionReference/");
@@ -323,6 +328,11 @@ public class InvalidationTestGenerated extends AbstractInvalidationTest {
     @TestMetadata("transitiveInlineFunction")
     public void testTransitiveInlineFunction() throws Exception {
         runTest("js/js.translator/testData/incremental/invalidation/transitiveInlineFunction/");
+    }
+
+    @TestMetadata("typeScriptExports")
+    public void testTypeScriptExports() throws Exception {
+        runTest("js/js.translator/testData/incremental/invalidation/typeScriptExports/");
     }
 
     @TestMetadata("unicodeSerializationAndDeserialization")

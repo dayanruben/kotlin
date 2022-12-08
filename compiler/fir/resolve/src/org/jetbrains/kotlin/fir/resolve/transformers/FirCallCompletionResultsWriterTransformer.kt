@@ -65,7 +65,7 @@ class FirCallCompletionResultsWriterTransformer(
     private val finalSubstitutor: ConeSubstitutor,
     private val typeCalculator: ReturnTypeCalculator,
     private val typeApproximator: ConeTypeApproximator,
-    private val dataFlowAnalyzer: FirDataFlowAnalyzer<*>,
+    private val dataFlowAnalyzer: FirDataFlowAnalyzer,
     private val integerOperatorApproximator: IntegerLiteralAndOperatorApproximationTransformer,
     private val context: BodyResolveContext,
     private val mode: Mode = Mode.Normal
@@ -74,7 +74,7 @@ class FirCallCompletionResultsWriterTransformer(
     private val arrayOfCallTransformer = FirArrayOfCallTransformer()
     private var enableArrayOfCallTransformation = false
 
-    private val samResolver: FirSamResolver = FirSamResolverImpl(session, ScopeSession())
+    private val samResolver: FirSamResolver = FirSamResolver(session, ScopeSession())
 
     enum class Mode {
         Normal, DelegatedPropertyCompletion
@@ -572,10 +572,8 @@ class FirCallCompletionResultsWriterTransformer(
         // Control flow info is necessary prerequisite because we collect return expressions in that function
         //
         // Example: second lambda in the call like list.filter({}, {})
-        if (!dataFlowAnalyzer.isThereControlFlowInfoForAnonymousFunction(anonymousFunction)) {
-            // But, don't leave implicit type refs behind
-            return transformImplicitTypeRefInAnonymousFunction(anonymousFunction)
-        }
+        val returnExpressionsOfAnonymousFunction = dataFlowAnalyzer.returnExpressionsOfAnonymousFunctionOrNull(anonymousFunction)
+            ?: return transformImplicitTypeRefInAnonymousFunction(anonymousFunction)
 
         val expectedType = data?.getExpectedType(anonymousFunction)?.let { expectedArgumentType ->
             // From the argument mapping, the expected type of this anonymous function would be:
@@ -588,7 +586,7 @@ class FirCallCompletionResultsWriterTransformer(
                         session.symbolProvider.getClassLikeSymbolByClassId(expectedArgumentType.lookupTag.classId)?.fir as? FirRegularClass
 
                     firRegularClass?.let answer@{
-                        val (_, functionType) = samResolver.getSamInfoForPossibleSamType(firRegularClass.defaultType())
+                        val functionType = samResolver.getFunctionTypeForPossibleSamType(firRegularClass.defaultType())
                             ?: return@answer null
                         createFunctionalType(
                             functionType.typeArguments.dropLast(1).map { it as ConeKotlinType },
@@ -645,8 +643,6 @@ class FirCallCompletionResultsWriterTransformer(
 
         val result = transformElement(anonymousFunction, null)
 
-        val returnExpressionsOfAnonymousFunction: Collection<FirStatement> =
-            dataFlowAnalyzer.returnExpressionsOfAnonymousFunction(anonymousFunction)
         for (expression in returnExpressionsOfAnonymousFunction) {
             expression.transform<FirElement, ExpectedArgumentType?>(this, finalType?.toExpectedType())
         }

@@ -160,7 +160,7 @@ open class FirDeclarationsResolveTransformer(transformer: FirAbstractBodyResolve
                 }
                 val delegate = property.delegate
                 if (delegate != null) {
-                    transformPropertyAccessorsWithDelegate(property)
+                    transformPropertyAccessorsWithDelegate(property, delegate)
                     if (property.delegateFieldSymbol != null) {
                         replacePropertyReferenceTypeInDelegateAccessors(property)
                     }
@@ -268,8 +268,9 @@ open class FirDeclarationsResolveTransformer(transformer: FirAbstractBodyResolve
         (property.delegate as? FirFunctionCall)?.replacePropertyReferenceTypeInDelegateAccessors(property)
     }
 
-    private fun transformPropertyAccessorsWithDelegate(property: FirProperty) {
+    private fun transformPropertyAccessorsWithDelegate(property: FirProperty, delegate: FirExpression) {
         context.forPropertyDelegateAccessors(property, resolutionContext, callCompleter) {
+            dataFlowAnalyzer.enterDelegateExpression()
             // Resolve delegate expression, after that, delegate will contain either expr.provideDelegate or expr
             if (property.isLocal) {
                 property.transformDelegate(transformer, ResolutionMode.ContextDependentDelegate)
@@ -281,7 +282,6 @@ open class FirDeclarationsResolveTransformer(transformer: FirAbstractBodyResolve
 
             property.transformAccessors()
             val completedCalls = completeCandidates()
-            dataFlowAnalyzer.exitDelegateExpression()
 
             val finalSubstitutor = createFinalSubstitutor()
 
@@ -297,6 +297,7 @@ open class FirDeclarationsResolveTransformer(transformer: FirAbstractBodyResolve
                 it.transformSingle(callCompletionResultsWriter, null)
             }
 
+            dataFlowAnalyzer.exitDelegateExpression(delegate)
             property
         }
     }
@@ -311,7 +312,6 @@ open class FirDeclarationsResolveTransformer(transformer: FirAbstractBodyResolve
         wrappedDelegateExpression: FirWrappedDelegateExpression,
         data: ResolutionMode,
     ): FirStatement {
-        dataFlowAnalyzer.enterDelegateExpression()
         // First, resolve delegate expression in dependent context
         val delegateExpression = wrappedDelegateExpression.expression.transformSingle(transformer, ResolutionMode.ContextDependent)
             .transformSingle(components.integerLiteralAndOperatorApproximationTransformer, null)
@@ -380,7 +380,7 @@ open class FirDeclarationsResolveTransformer(transformer: FirAbstractBodyResolve
         val hadExplicitType = variable.returnTypeRef !is FirImplicitTypeRef
 
         if (delegate != null) {
-            transformPropertyAccessorsWithDelegate(variable)
+            transformPropertyAccessorsWithDelegate(variable, delegate)
             if (variable.delegateFieldSymbol != null) {
                 replacePropertyReferenceTypeInDelegateAccessors(variable)
             }

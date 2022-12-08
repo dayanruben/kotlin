@@ -33,19 +33,21 @@ class LocalPropertyAndCapturedWriteCollector private constructor() : ControlFlow
 
     override fun visitNode(node: CFGNode<*>) {}
 
+    override fun <T> visitUnionNode(node: T) where T : CFGNode<*>, T : UnionNodeMarker {}
+
     override fun visitVariableDeclarationNode(node: VariableDeclarationNode) {
         symbols[node.fir.symbol] = lambdaOrLocalFunctionStack.lastOrNull() == null
     }
 
-    override fun visitPostponedLambdaEnterNode(node: PostponedLambdaEnterNode) {
-        lambdaOrLocalFunctionStack.add(node.fir)
+    override fun visitSplitPostponedLambdasNode(node: SplitPostponedLambdasNode) {
+        lambdaOrLocalFunctionStack.addAll(node.lambdas)
     }
 
-    override fun visitPostponedLambdaExitNode(node: PostponedLambdaExitNode) {
-        lambdaOrLocalFunctionStack.remove(node.fir.anonymousFunction)
+    override fun visitAnonymousFunctionExpressionNode(node: AnonymousFunctionExpressionNode) {
+        lambdaOrLocalFunctionStack.add(node.fir.anonymousFunction)
     }
 
-    override fun visitLocalFunctionDeclarationNode(node: LocalFunctionDeclarationNode, data: Nothing?) {
+    override fun visitLocalFunctionDeclarationNode(node: LocalFunctionDeclarationNode) {
         lambdaOrLocalFunctionStack.add(node.fir)
     }
 

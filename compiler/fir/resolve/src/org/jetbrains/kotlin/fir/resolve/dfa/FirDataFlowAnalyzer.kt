@@ -5,7 +5,7 @@
 
 package org.jetbrains.kotlin.fir.resolve.dfa
 
-import org.jetbrains.kotlin.contracts.description.EventOccurrencesRange
+import org.jetbrains.kotlin.contracts.description.canBeRevisited
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.contracts.FirResolvedContractDescription
@@ -23,31 +23,27 @@ import org.jetbrains.kotlin.fir.resolve.dfa.cfg.*
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutorByMap
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirAbstractBodyResolveTransformer
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.resultType
+import org.jetbrains.kotlin.fir.resolve.transformers.unwrapAnonymousFunctionExpression
 import org.jetbrains.kotlin.fir.scopes.getFunctions
 import org.jetbrains.kotlin.fir.scopes.impl.declaredMemberScope
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirTypeParameterSymbol
-import org.jetbrains.kotlin.fir.symbols.impl.FirVariableSymbol
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.types.ConstantValueKind
 import org.jetbrains.kotlin.util.OperatorNameConventions
-import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
-class DataFlowAnalyzerContext<FLOW : Flow>(
-    val graphBuilder: ControlFlowGraphBuilder,
-    variableStorage: VariableStorageImpl,
-    flowOnNodes: MutableMap<CFGNode<*>, FLOW>,
-    val preliminaryLoopVisitor: PreliminaryLoopVisitor
-) {
-    var flowOnNodes = flowOnNodes
-        private set
-    var variableStorage = variableStorage
-        private set
+class DataFlowAnalyzerContext(session: FirSession) {
+    val graphBuilder = ControlFlowGraphBuilder()
+    val preliminaryLoopVisitor = PreliminaryLoopVisitor()
+    val variablesClearedBeforeLoop = stackOf<List<RealVariable>>()
+    internal val variableAssignmentAnalyzer = FirLocalVariableAssignmentAnalyzer()
 
-    internal var firLocalVariableAssignmentAnalyzer: FirLocalVariableAssignmentAnalyzer? = null
+    var variableStorage = VariableStorageImpl(session)
+        private set
 
     private var assignmentCounter = 0
 
@@ -57,34 +53,24 @@ class DataFlowAnalyzerContext<FLOW : Flow>(
 
     fun reset() {
         graphBuilder.reset()
-
-        variableStorage = variableStorage.clear()
-        flowOnNodes = mutableMapOf()
-
         preliminaryLoopVisitor.resetState()
-        firLocalVariableAssignmentAnalyzer = null
-    }
-
-    companion object {
-        fun <FLOW : Flow> empty(session: FirSession): DataFlowAnalyzerContext<FLOW> =
-            DataFlowAnalyzerContext(
-                ControlFlowGraphBuilder(), VariableStorageImpl(session),
-                mutableMapOf(), PreliminaryLoopVisitor()
-            )
+        variablesClearedBeforeLoop.reset()
+        variableAssignmentAnalyzer.reset()
+        variableStorage = variableStorage.clear()
     }
 }
 
 @OptIn(DfaInternals::class)
-abstract class FirDataFlowAnalyzer<FLOW : Flow>(
+abstract class FirDataFlowAnalyzer(
     protected val components: FirAbstractBodyResolveTransformer.BodyResolveTransformerComponents,
-    private val context: DataFlowAnalyzerContext<FLOW>
+    private val context: DataFlowAnalyzerContext
 ) {
     companion object {
         fun createFirDataFlowAnalyzer(
             components: FirAbstractBodyResolveTransformer.BodyResolveTransformerComponents,
-            dataFlowAnalyzerContext: DataFlowAnalyzerContext<PersistentFlow>
-        ): FirDataFlowAnalyzer<*> =
-            object : FirDataFlowAnalyzer<PersistentFlow>(components, dataFlowAnalyzerContext) {
+            dataFlowAnalyzerContext: DataFlowAnalyzerContext
+        ): FirDataFlowAnalyzer =
+            object : FirDataFlowAnalyzer(components, dataFlowAnalyzerContext) {
                 override val receiverStack: PersistentImplicitReceiverStack
                     get() = components.implicitReceiverStack as PersistentImplicitReceiverStack
 
@@ -97,8 +83,8 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
                     receiverStack.replaceReceiverType(index, info.smartCastedType(typeContext, originalType))
                 }
 
-                override val logicSystem: PersistentLogicSystem =
-                    object : PersistentLogicSystem(components.session.typeContext) {
+                override val logicSystem: LogicSystem =
+                    object : LogicSystem(components.session.typeContext) {
                         override val variableStorage: VariableStorageImpl
                             get() = dataFlowAnalyzerContext.variableStorage
 
@@ -127,7 +113,7 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
             }
     }
 
-    protected abstract val logicSystem: LogicSystem<FLOW>
+    protected abstract val logicSystem: LogicSystem
     protected abstract val receiverStack: Iterable<ImplicitReceiverValue<*>>
     protected abstract fun receiverUpdated(symbol: FirBasedSymbol<*>, info: TypeStatement?)
 
@@ -137,16 +123,10 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
     private val any = components.session.builtinTypes.anyType.type
     private val nullableNothing = components.session.builtinTypes.nullableNothingType.type
 
-    @PrivateForInline
-    var ignoreFunctionCalls: Boolean = false
-
     // ----------------------------------- Requests -----------------------------------
 
-    fun isAccessToUnstableLocalVariable(expression: FirExpression): Boolean {
-        val analyzer = context.firLocalVariableAssignmentAnalyzer ?: return false
-        val realFir = expression.unwrapElement() as? FirQualifiedAccessExpression ?: return false
-        return analyzer.isAccessToUnstableLocalVariable(realFir)
-    }
+    fun isAccessToUnstableLocalVariable(expression: FirExpression): Boolean =
+        context.variableAssignmentAnalyzer.isAccessToUnstableLocalVariable(expression)
 
     open fun getTypeUsingSmartcastInfo(expression: FirExpression): Pair<PropertyStability, MutableList<ConeKotlinType>>? {
         val flow = graphBuilder.lastNode.flow
@@ -155,51 +135,53 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
         return variable.stability to types.toMutableList()
     }
 
-    fun returnExpressionsOfAnonymousFunction(function: FirAnonymousFunction): Collection<FirStatement> {
-        return graphBuilder.returnExpressionsOfAnonymousFunction(function)
-    }
+    fun returnExpressionsOfAnonymousFunctionOrNull(function: FirAnonymousFunction): Collection<FirStatement>? =
+        graphBuilder.returnExpressionsOfAnonymousFunction(function)
 
-    fun isThereControlFlowInfoForAnonymousFunction(function: FirAnonymousFunction): Boolean =
-        graphBuilder.isThereControlFlowInfoForAnonymousFunction(function)
+    fun returnExpressionsOfAnonymousFunction(function: FirAnonymousFunction): Collection<FirStatement> =
+        returnExpressionsOfAnonymousFunctionOrNull(function)
+            ?: error("anonymous function ${function.render()} not analyzed")
 
     fun dropSubgraphFromCall(call: FirFunctionCall) {
         graphBuilder.dropSubgraphFromCall(call)
-    }
-
-    @OptIn(PrivateForInline::class)
-    inline fun <T> withIgnoreFunctionCalls(block: () -> T): T {
-        val oldValue = ignoreFunctionCalls
-        ignoreFunctionCalls = true
-        return try {
-            block()
-        } finally {
-            ignoreFunctionCalls = oldValue
-        }
     }
 
     // ----------------------------------- Named function -----------------------------------
 
     fun enterFunction(function: FirFunction) {
         if (function is FirDefaultPropertyAccessor) return
-        if (function is FirAnonymousFunction) {
-            enterAnonymousFunction(function)
-            return
-        }
-        // All non-lambda function are treated as concurrent since we do not make any assumption about when and how it's invoked.
-        getOrCreateLocalVariableAssignmentAnalyzer(function)?.enterLocalFunction(function)
 
-        val (functionEnterNode, localFunctionNode) = graphBuilder.enterFunction(function)
+        val (localFunctionNode, functionEnterNode) = if (function is FirAnonymousFunction) {
+            null to graphBuilder.enterAnonymousFunction(function)
+        } else {
+            graphBuilder.enterFunction(function)
+        }
         localFunctionNode?.mergeIncomingFlow()
-        functionEnterNode.mergeIncomingFlow()
+        functionEnterNode.mergeIncomingFlow {
+            // TODO: ||?
+            if (function is FirAnonymousFunction && function.invocationKind?.canBeRevisited() != false) {
+                enterCapturingStatement(it, function)
+            }
+        }
+        context.variableAssignmentAnalyzer.enterFunction(function)
     }
 
     fun exitFunction(function: FirFunction): FirControlFlowGraphReference? {
         if (function is FirDefaultPropertyAccessor) return null
-        if (function is FirAnonymousFunction) {
-            return exitAnonymousFunction(function)
+
+        context.variableAssignmentAnalyzer.exitFunction()
+        // TODO: ||?
+        if (function is FirAnonymousFunction && function.invocationKind?.canBeRevisited() != false) {
+            exitCapturingStatement(function)
         }
-        // All non-lambda function are treated as concurrent since we do not make any assumption about when and how it's invoked.
-        getOrCreateLocalVariableAssignmentAnalyzer(function)?.exitLocalFunction(function)
+
+        if (function is FirAnonymousFunction) {
+            val (functionExitNode, postponedLambdaExitNode, graph) = graphBuilder.exitAnonymousFunction(function)
+            functionExitNode.mergeIncomingFlow()
+            postponedLambdaExitNode?.mergeIncomingFlow()
+            resetReceivers() // roll back to state before function
+            return FirControlFlowGraphReferenceImpl(graph)
+        }
 
         val (node, graph) = graphBuilder.exitFunction(function)
         node.mergeIncomingFlow()
@@ -208,67 +190,19 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
                 variableStorage.removeRealVariable(valueParameter.symbol)
             }
         }
-        val variableStorage = variableStorage
-        val flowOnNodes = context.flowOnNodes
-
+        val info = DataFlowInfo(variableStorage)
         if (graphBuilder.isTopLevel()) {
             context.reset()
         } else {
             resetReceivers()
         }
-        return FirControlFlowGraphReferenceImpl(graph, DataFlowInfo(variableStorage, flowOnNodes))
+        return FirControlFlowGraphReferenceImpl(graph, info)
     }
 
     // ----------------------------------- Anonymous function -----------------------------------
 
-    private fun enterAnonymousFunction(anonymousFunction: FirAnonymousFunction) {
-        getOrCreateLocalVariableAssignmentAnalyzer(anonymousFunction)?.apply {
-            finishPostponedAnonymousFunction()
-            enterLocalFunction(anonymousFunction)
-        }
-        val (postponedLambdaEnterNode, functionEnterNode) = graphBuilder.enterAnonymousFunction(anonymousFunction)
-        postponedLambdaEnterNode?.mergeIncomingFlow()
-        val flowOnEntry = functionEnterNode.mergeIncomingFlow()
-        when (anonymousFunction.invocationKind) {
-            EventOccurrencesRange.AT_LEAST_ONCE,
-            EventOccurrencesRange.MORE_THAN_ONCE,
-            EventOccurrencesRange.UNKNOWN, null ->
-                enterCapturingStatement(flowOnEntry, anonymousFunction)
-            else -> {}
-        }
-    }
-
-    private fun exitAnonymousFunction(anonymousFunction: FirAnonymousFunction): FirControlFlowGraphReference {
-        getOrCreateLocalVariableAssignmentAnalyzer(anonymousFunction)?.exitLocalFunction(
-            anonymousFunction
-        )
-        val (functionExitNode, postponedLambdaExitNode, graph) = graphBuilder.exitAnonymousFunction(anonymousFunction)
-        when (anonymousFunction.invocationKind) {
-            EventOccurrencesRange.AT_LEAST_ONCE,
-            EventOccurrencesRange.MORE_THAN_ONCE,
-            EventOccurrencesRange.UNKNOWN, null ->
-                exitCapturingStatement(anonymousFunction)
-            else -> {}
-        }
-        functionExitNode.mergeIncomingFlow()
-        if (postponedLambdaExitNode != null) {
-            postponedLambdaExitNode.mergeIncomingFlow()
-        } else {
-            resetReceivers()
-        }
-        return FirControlFlowGraphReferenceImpl(graph)
-    }
-
-    fun visitPostponedAnonymousFunction(anonymousFunctionExpression: FirAnonymousFunctionExpression) {
-        val anonymousFunction = anonymousFunctionExpression.anonymousFunction
-        getOrCreateLocalVariableAssignmentAnalyzer(anonymousFunction)?.visitPostponedAnonymousFunction(anonymousFunction)
-        val (enterNode, exitNode) = graphBuilder.visitPostponedAnonymousFunction(anonymousFunctionExpression)
-        enterNode.mergeIncomingFlow()
-        exitNode.mergeIncomingFlow()
-    }
-
-    fun exitAnonymousFunctionExpression(anonymousFunctionExpression: FirAnonymousFunctionExpression) {
-        graphBuilder.exitAnonymousFunctionExpression(anonymousFunctionExpression).mergeIncomingFlow()
+    fun enterAnonymousFunctionExpression(anonymousFunctionExpression: FirAnonymousFunctionExpression) {
+        graphBuilder.enterAnonymousFunctionExpression(anonymousFunctionExpression)?.mergeIncomingFlow()
     }
 
     // ----------------------------------- Classes -----------------------------------
@@ -360,8 +294,8 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
         graphBuilder.enterDelegateExpression()
     }
 
-    fun exitDelegateExpression() {
-        graphBuilder.exitDelegateExpression()
+    fun exitDelegateExpression(fir: FirExpression) {
+        graphBuilder.exitDelegateExpression(fir).mergeIncomingFlow()
     }
 
     // ----------------------------------- Block -----------------------------------
@@ -377,10 +311,13 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
     // ----------------------------------- Operator call -----------------------------------
 
     fun exitTypeOperatorCall(typeOperatorCall: FirTypeOperatorCall) {
-        val node = graphBuilder.exitTypeOperatorCall(typeOperatorCall)
-        val flow = node.mergeIncomingFlow()
+        graphBuilder.exitTypeOperatorCall(typeOperatorCall).mergeIncomingFlow {
+            if (typeOperatorCall.operation !in FirOperation.TYPES) return@mergeIncomingFlow
+            addTypeOperatorStatements(it, typeOperatorCall)
+        }
+    }
 
-        if (typeOperatorCall.operation !in FirOperation.TYPES) return
+    private fun addTypeOperatorStatements(flow: MutableFlow, typeOperatorCall: FirTypeOperatorCall) {
         val type = typeOperatorCall.conversionTypeRef.coneType
         val operandVariable = variableStorage.getOrCreateIfReal(flow, typeOperatorCall.argument) ?: return
         when (val operation = typeOperatorCall.operation) {
@@ -388,9 +325,9 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
                 val isType = operation == FirOperation.IS
                 when (type) {
                     // x is Nothing? <=> x == null
-                    nullableNothing -> processEqNull(node, typeOperatorCall.argument, isType)
+                    nullableNothing -> processEqNull(flow, typeOperatorCall, typeOperatorCall.argument, isType)
                     // x is Any <=> x != null
-                    any -> processEqNull(node, typeOperatorCall.argument, !isType)
+                    any -> processEqNull(flow, typeOperatorCall, typeOperatorCall.argument, !isType)
                     else -> {
                         val expressionVariable = variableStorage.createSynthetic(typeOperatorCall)
                         if (operandVariable.isReal()) {
@@ -399,10 +336,10 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
                         if (!type.canBeNull) {
                             // x is (T & Any) => x != null
                             flow.addImplication((expressionVariable eq isType) implies (operandVariable notEq null))
-                        } else {
-                            // TODO? (KT-22996) x !is T? => x != null; don't forget to change `approveContractStatement`
-                            // flow.addImplication((expressionVariable eq !isType) implies (operandVariable notEq null))
-                        }
+                        } else if (type.isMarkedNullable) {
+                            // x !is T? => x != null
+                            flow.addImplication((expressionVariable eq !isType) implies (operandVariable notEq null))
+                        } // else probably a type parameter, so which implication is correct depends on instantiation
                     }
                 }
             }
@@ -416,8 +353,7 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
                 } else {
                     val expressionVariable = variableStorage.createSynthetic(typeOperatorCall)
                     flow.addImplication((expressionVariable notEq null) implies (operandVariable notEq null))
-                    // TODO? (x as T?) == null => x == null
-                    // flow.addImplication((expressionVariable eq null) implies (operandVariable eq null))
+                    flow.addImplication((expressionVariable eq null) implies (operandVariable eq null))
                 }
             }
 
@@ -439,7 +375,6 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
 
     fun exitEqualityOperatorCall(equalityOperatorCall: FirEqualityOperatorCall) {
         val node = graphBuilder.exitEqualityOperatorCall(equalityOperatorCall)
-        node.mergeIncomingFlow()
         val operation = equalityOperatorCall.operation
         val leftOperand = equalityOperatorCall.arguments[0]
         val rightOperand = equalityOperatorCall.arguments[1]
@@ -464,27 +399,31 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
         val leftIsNull = leftIsNullConst || leftOperand.coneType.isNullableNothing && !rightIsNullConst
         val rightIsNull = rightIsNullConst || rightOperand.coneType.isNullableNothing && !leftIsNullConst
 
-        when {
-            leftConst != null && rightConst != null -> return
-            leftIsNull -> processEqNull(node, rightOperand, operation.isEq())
-            rightIsNull -> processEqNull(node, leftOperand, operation.isEq())
-            leftConst != null -> processEqWithConst(node, rightOperand, leftConst, operation)
-            rightConst != null -> processEqWithConst(node, leftOperand, rightConst, operation)
-            else -> processEq(node, leftOperand, rightOperand, operation)
+        node.mergeIncomingFlow { flow ->
+            when {
+                leftConst != null && rightConst != null -> return@mergeIncomingFlow
+                leftIsNull -> processEqNull(flow, equalityOperatorCall, rightOperand, operation.isEq())
+                rightIsNull -> processEqNull(flow, equalityOperatorCall, leftOperand, operation.isEq())
+                leftConst != null -> processEqConst(flow, equalityOperatorCall, rightOperand, leftConst, operation.isEq())
+                rightConst != null -> processEqConst(flow, equalityOperatorCall, leftOperand, rightConst, operation.isEq())
+                else -> processEq(flow, equalityOperatorCall, leftOperand, rightOperand, operation)
+            }
         }
     }
 
-    private fun processEqWithConst(
-        node: EqualityOperatorCallNode, operand: FirExpression, const: FirConstExpression<*>, operation: FirOperation
+    private fun processEqConst(
+        flow: MutableFlow,
+        expression: FirExpression,
+        operand: FirExpression,
+        const: FirConstExpression<*>,
+        isEq: Boolean
     ) {
-        val isEq = operation.isEq()
         if (const.kind == ConstantValueKind.Null) {
-            return processEqNull(node, operand, isEq)
+            return processEqNull(flow, expression, operand, isEq)
         }
 
-        val flow = node.flow
         val operandVariable = variableStorage.getOrCreateIfReal(flow, operand) ?: return
-        val expressionVariable = variableStorage.createSynthetic(node.fir)
+        val expressionVariable = variableStorage.createSynthetic(expression)
         if (const.kind == ConstantValueKind.Boolean && operand.coneType.isBooleanOrNullableBoolean) {
             val expected = (const.value as Boolean)
             flow.addImplication((expressionVariable eq isEq) implies (operandVariable eq expected))
@@ -497,16 +436,16 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
         }
     }
 
-    private fun processEqNull(node: CFGNode<*>, operand: FirExpression, isEq: Boolean) {
-        val flow = node.flow
+    private fun processEqNull(flow: MutableFlow, expression: FirExpression, operand: FirExpression, isEq: Boolean) {
         val operandVariable = variableStorage.getOrCreateIfReal(flow, operand) ?: return
-        val expressionVariable = variableStorage.createSynthetic(node.fir)
+        val expressionVariable = variableStorage.createSynthetic(expression)
         flow.addImplication((expressionVariable eq isEq) implies (operandVariable eq null))
         flow.addImplication((expressionVariable eq !isEq) implies (operandVariable notEq null))
     }
 
     private fun processEq(
-        node: EqualityOperatorCallNode,
+        flow: MutableFlow,
+        expression: FirExpression,
         leftOperand: FirExpression,
         rightOperand: FirExpression,
         operation: FirOperation,
@@ -524,13 +463,12 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
             return
         }
 
-        val flow = node.flow
         // TODO: should be `getOrCreateIfRealAndUnchanged(flow from LHS, flow, leftOperand)`, otherwise the statement will
         //  be added even if the value has changed in the RHS. Currently the only previous node is the RHS.
         val leftOperandVariable = variableStorage.getOrCreateIfReal(flow, leftOperand)
         val rightOperandVariable = variableStorage.getOrCreateIfReal(flow, rightOperand)
         if (leftOperandVariable == null && rightOperandVariable == null) return
-        val expressionVariable = variableStorage.createSynthetic(node.fir)
+        val expressionVariable = variableStorage.createSynthetic(expression)
 
         if (leftIsNullable || rightIsNullable) {
             // `a == b:Any` => `a != null`; the inverse is not true - we don't know when `a` *is* `null`
@@ -597,21 +535,25 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
 
     // ----------------------------------- Jump -----------------------------------
 
+    fun enterJump(jump: FirJump<*>) {
+        graphBuilder.enterJump(jump)
+    }
+
     fun exitJump(jump: FirJump<*>) {
         graphBuilder.exitJump(jump).mergeIncomingFlow()
     }
 
     // ----------------------------------- Check not null call -----------------------------------
 
+    fun enterCheckNotNullCall() {
+        graphBuilder.enterCall()
+    }
+
     fun exitCheckNotNullCall(checkNotNullCall: FirCheckNotNullCall, callCompleted: Boolean) {
-        // Add `Any` to the set of possible types; the intersection type `T? & Any` will be reduced to `T` after smartcast.
-        val (node, unionNode) = graphBuilder.exitCheckNotNullCall(checkNotNullCall, callCompleted)
-        val flow = node.mergeIncomingFlow()
-        val argumentVariable = variableStorage.getOrCreateIfReal(flow, checkNotNullCall.argument)
-        if (argumentVariable != null) {
+        graphBuilder.exitCheckNotNullCall(checkNotNullCall, callCompleted).mergeIncomingFlow { flow ->
+            val argumentVariable = variableStorage.getOrCreateIfReal(flow, checkNotNullCall.argument) ?: return@mergeIncomingFlow
             flow.commitOperationStatement(argumentVariable notEq null)
         }
-        unionNode?.unionFlowFromArguments()
     }
 
     // ----------------------------------- When -----------------------------------
@@ -624,28 +566,23 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
         graphBuilder.enterWhenBranchCondition(whenBranch).mergeWhenBranchEntryFlow()
     }
 
-    private fun CFGNode<*>.mergeWhenBranchEntryFlow() {
-        val previousConditionExitNode = previousNodes.singleOrNull()
-        if (previousConditionExitNode is WhenBranchConditionExitNode) {
-            val flow = mergeIncomingFlow()
-            val previousCondition = previousConditionExitNode.fir.condition
-            if (previousCondition.coneType.isBoolean) {
-                val previousConditionVariable = variableStorage.get(flow, previousCondition) ?: return
-                flow.commitOperationStatement(previousConditionVariable eq false)
-            }
-        } else { // first branch
-            mergeIncomingFlow()
-        }
+    private fun CFGNode<*>.mergeWhenBranchEntryFlow() = mergeIncomingFlow { flow ->
+        val previousConditionExitNode = previousNodes.singleOrNull() as? WhenBranchConditionExitNode ?: return@mergeIncomingFlow
+        val previousCondition = previousConditionExitNode.fir.condition
+        if (!previousCondition.coneType.isBoolean) return@mergeIncomingFlow
+        val previousConditionVariable = variableStorage.get(flow, previousCondition) ?: return@mergeIncomingFlow
+        flow.commitOperationStatement(previousConditionVariable eq false)
     }
 
     fun exitWhenBranchCondition(whenBranch: FirWhenBranch) {
         val (conditionExitNode, resultEnterNode) = graphBuilder.exitWhenBranchCondition(whenBranch)
-        val conditionExitFlow = conditionExitNode.mergeIncomingFlow()
-        val resultEnterFlow = resultEnterNode.mergeIncomingFlow()
-        // If the condition is invalid, don't generate smart casts to Any or Boolean.
-        if (whenBranch.condition.coneType.isBoolean) {
-            val conditionVariable = variableStorage.get(conditionExitFlow, whenBranch.condition) ?: return
-            resultEnterFlow.commitOperationStatement(conditionVariable eq true)
+        conditionExitNode.mergeIncomingFlow()
+        resultEnterNode.mergeIncomingFlow { flow ->
+            // If the condition is invalid, don't generate smart casts to Any or Boolean.
+            if (whenBranch.condition.coneType.isBoolean) {
+                val conditionVariable = variableStorage.get(flow, whenBranch.condition) ?: return@mergeIncomingFlow
+                flow.commitOperationStatement(conditionVariable eq true)
+            }
         }
     }
 
@@ -653,11 +590,10 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
         graphBuilder.exitWhenBranchResult(whenBranch).mergeIncomingFlow()
     }
 
-    fun exitWhenExpression(whenExpression: FirWhenExpression) {
-        val (whenExitNode, syntheticElseNode, mergePostponedLambdaExitsNode) = graphBuilder.exitWhenExpression(whenExpression)
+    fun exitWhenExpression(whenExpression: FirWhenExpression, callCompleted: Boolean) {
+        val (whenExitNode, syntheticElseNode) = graphBuilder.exitWhenExpression(whenExpression, callCompleted)
         syntheticElseNode?.mergeWhenBranchEntryFlow()
         whenExitNode.mergeIncomingFlow()
-        mergePostponedLambdaExitsNode?.mergeIncomingFlow()
     }
 
     fun exitWhenSubjectExpression(expression: FirWhenSubjectExpression) {
@@ -668,61 +604,91 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
 
     fun enterWhileLoop(loop: FirLoop) {
         val (loopEnterNode, loopConditionEnterNode) = graphBuilder.enterWhileLoop(loop)
-        val loopEnterFlow = loopEnterNode.mergeIncomingFlow()
-        enterCapturingStatement(loopEnterFlow, loop)
-        loopConditionEnterNode.mergeIncomingFlow()
+        loopEnterNode.mergeIncomingFlow()
+        loopConditionEnterNode.mergeIncomingFlow { flow -> enterCapturingStatement(flow, loop) }
     }
 
     fun exitWhileLoopCondition(loop: FirLoop) {
         val (loopConditionExitNode, loopBlockEnterNode) = graphBuilder.exitWhileLoopCondition(loop)
-        val conditionExitFlow = loopConditionExitNode.mergeIncomingFlow()
-        val blockEnterFlow = loopBlockEnterNode.mergeIncomingFlow()
-        if (loop.condition.coneType.isBoolean) {
-            val conditionVariable = variableStorage.get(conditionExitFlow, loop.condition) ?: return
-            blockEnterFlow.commitOperationStatement(conditionVariable eq true)
+        loopConditionExitNode.mergeIncomingFlow()
+        loopBlockEnterNode.mergeIncomingFlow { flow ->
+            if (loop.condition.coneType.isBoolean) {
+                val conditionVariable = variableStorage.get(flow, loop.condition) ?: return@mergeIncomingFlow
+                flow.commitOperationStatement(conditionVariable eq true)
+            }
         }
     }
 
     fun exitWhileLoop(loop: FirLoop) {
-        val (blockExitNode, exitNode) = graphBuilder.exitWhileLoop(loop)
+        val (conditionEnterNode, blockExitNode, exitNode) = graphBuilder.exitWhileLoop(loop)
         blockExitNode.mergeIncomingFlow()
-        exitNode.mergeLoopExitFlow()
-        exitCapturingStatement(loop)
+        exitNode.mergeIncomingFlow {
+            processWhileLoopExit(it, exitNode, conditionEnterNode)
+            processLoopExit(it, exitNode, exitNode.firstPreviousNode as LoopConditionExitNode)
+        }
     }
 
-    private fun LoopExitNode.mergeLoopExitFlow() {
-        val flow = mergeIncomingFlow()
-        // Might be > 1 node or other type if there are `break`s:
-        val singlePreviousNode = previousNodes.singleOrNull { !it.isDead } as? LoopConditionExitNode ?: return
-        if (singlePreviousNode.fir.coneType.isBoolean) {
-            val variable = variableStorage.get(flow, singlePreviousNode.fir) ?: return
+    private fun processWhileLoopExit(flow: MutableFlow, node: LoopExitNode, conditionEnterNode: LoopConditionEnterNode) {
+        val possiblyChangedVariables = exitCapturingStatement(node.fir)
+        if (possiblyChangedVariables.isNullOrEmpty()) return
+        // While analyzing the loop we might have added some backwards jumps to `conditionEnterNode` which weren't
+        // there at the time its flow was computed - which is why we erased all information about `possiblyChangedVariables`
+        // from it. Now that we have those edges, we can restore type information for the code after the loop.
+        val conditionEnterFlow = conditionEnterNode.flow
+        val loopEnterAndContinueFlows = conditionEnterNode.livePreviousFlows
+        val conditionExitAndBreakFlows = node.livePreviousFlows
+        possiblyChangedVariables.forEach { variable ->
+            // The statement about `variable` in `conditionEnterFlow` should be empty, so to obtain the new statement
+            // we can simply add the now-known input to whatever was inferred from nothing so long as the value is the same.
+            val toAdd = logicSystem.or(loopEnterAndContinueFlows.map { it.getTypeStatement(variable) ?: return@forEach })
+                ?.takeIf { it.isNotEmpty } ?: return@forEach
+            val newStatement = logicSystem.or(conditionExitAndBreakFlows.map {
+                val atExit = it.getTypeStatement(variable)
+                if (logicSystem.isSameValueIn(conditionEnterFlow, it, variable)) {
+                    logicSystem.and(atExit, toAdd)
+                } else {
+                    atExit ?: return@forEach
+                }
+            }) ?: return@forEach
+            flow.addTypeStatement(newStatement)
+        }
+    }
+
+    private fun processLoopExit(flow: MutableFlow, node: LoopExitNode, conditionExitNode: LoopConditionExitNode) {
+        if (conditionExitNode.isDead || node.previousNodes.count { !it.isDead } > 1) return
+        if (conditionExitNode.fir.coneType.isBoolean) {
+            val variable = variableStorage.get(flow, conditionExitNode.fir) ?: return
             flow.commitOperationStatement(variable eq false)
         }
     }
 
-    private fun enterCapturingStatement(flow: FLOW, statement: FirStatement) {
+    private fun enterCapturingStatement(flow: MutableFlow, statement: FirStatement) {
         val reassignedNames = context.preliminaryLoopVisitor.enterCapturingStatement(statement)
         if (reassignedNames.isEmpty()) return
-        val possiblyChangedVariables = variableStorage.realVariables.filterKeys {
-            val fir = (it.symbol as? FirVariableSymbol<*>)?.fir ?: return@filterKeys false
-            fir.isVar && fir.name in reassignedNames
-        }.values
-        if (possiblyChangedVariables.isEmpty()) return
-        for (variable in possiblyChangedVariables) {
-            logicSystem.removeAllAboutVariable(flow, variable)
+        // TODO: only choose the innermost variable for each name
+        val possiblyChangedVariables = variableStorage.realVariables.values.filter {
+            val identifier = it.identifier
+            val symbol = identifier.symbol
+            // Non-local vars can never produce stable smart casts anyway.
+            identifier.dispatchReceiver == null && identifier.extensionReceiver == null &&
+                    symbol is FirPropertySymbol && symbol.isVar && symbol.name in reassignedNames
         }
+        for (variable in possiblyChangedVariables) {
+            logicSystem.recordNewAssignment(flow, variable, context.newAssignmentIndex())
+        }
+        context.variablesClearedBeforeLoop.push(possiblyChangedVariables)
     }
 
-    private fun exitCapturingStatement(statement: FirStatement) {
-        context.preliminaryLoopVisitor.exitCapturingStatement(statement)
+    private fun exitCapturingStatement(statement: FirStatement): List<RealVariable>? {
+        if (context.preliminaryLoopVisitor.exitCapturingStatement(statement).isEmpty()) return null
+        return context.variablesClearedBeforeLoop.pop()
     }
 
     // ----------------------------------- Do while Loop -----------------------------------
 
     fun enterDoWhileLoop(loop: FirLoop) {
         val (loopEnterNode, loopBlockEnterNode) = graphBuilder.enterDoWhileLoop(loop)
-        val loopEnterFlow = loopEnterNode.mergeIncomingFlow()
-        enterCapturingStatement(loopEnterFlow, loop)
+        loopEnterNode.mergeIncomingFlow { flow -> enterCapturingStatement(flow, loop) }
         loopBlockEnterNode.mergeIncomingFlow()
     }
 
@@ -735,7 +701,7 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
     fun exitDoWhileLoop(loop: FirLoop) {
         val (loopConditionExitNode, loopExitNode) = graphBuilder.exitDoWhileLoop(loop)
         loopConditionExitNode.mergeIncomingFlow()
-        loopExitNode.mergeLoopExitFlow()
+        loopExitNode.mergeIncomingFlow { processLoopExit(it, loopExitNode, loopConditionExitNode) }
         exitCapturingStatement(loop)
     }
 
@@ -768,19 +734,15 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
     }
 
     fun exitTryExpression(callCompleted: Boolean) {
-        val (tryExpressionExitNode, unionNode) = graphBuilder.exitTryExpression(callCompleted)
-        tryExpressionExitNode.mergeIncomingFlow()
-        unionNode?.unionFlowFromArguments()
+        graphBuilder.exitTryExpression(callCompleted).mergeIncomingFlow()
     }
 
     // ----------------------------------- Resolvable call -----------------------------------
 
-    // Intentionally left empty for potential future needs (call sites are preserved)
-    fun enterQualifiedAccessExpression() {}
-
     fun exitQualifiedAccessExpression(qualifiedAccessExpression: FirQualifiedAccessExpression) {
-        val flow = graphBuilder.exitQualifiedAccessExpression(qualifiedAccessExpression).mergeIncomingFlow()
-        processConditionalContract(flow, qualifiedAccessExpression)
+        graphBuilder.exitQualifiedAccessExpression(qualifiedAccessExpression).mergeIncomingFlow { flow ->
+            processConditionalContract(flow, qualifiedAccessExpression)
+        }
     }
 
     fun exitSmartCastExpression(smartCastExpression: FirSmartCastExpression) {
@@ -788,87 +750,62 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
     }
 
     fun enterSafeCallAfterNullCheck(safeCall: FirSafeCallExpression) {
-        val node = graphBuilder.enterSafeCall(safeCall)
-        val flow = node.mergeIncomingFlow()
-        // When calling `c` in `a?.b?.c`, all type information obtained after calling `b` is valid as we know `a`
-        // is non-null. In theory, this should be unnecessary if the TODOs below are implemented.
-        val flowFromPreviousSafeCall = (node.firstPreviousNode as? ExitSafeCallNode)?.lastNodeInNotNullCase?.flow
-        if (flowFromPreviousSafeCall != null) {
-            flow.copyAllInformationFrom(flowFromPreviousSafeCall)
+        graphBuilder.enterSafeCall(safeCall).mergeIncomingFlow { flow ->
+            val receiverVariable = variableStorage.getOrCreateIfReal(flow, safeCall.receiver) ?: return@mergeIncomingFlow
+            flow.commitOperationStatement(receiverVariable notEq null)
         }
-        val receiverVariable = variableStorage.getOrCreateIfReal(flow, safeCall.receiver) ?: return
-        flow.commitOperationStatement(receiverVariable notEq null)
     }
 
     fun exitSafeCall(safeCall: FirSafeCallExpression) {
-        val (node, mergePostponedLambdaExitsNode) = graphBuilder.exitSafeCall()
-        val flow = node.mergeIncomingFlow()
-        mergePostponedLambdaExitsNode?.mergeIncomingFlow()
-
-        val receiverLastNode = node.firstPreviousNode
-        val receiverVariable = variableStorage.getOrCreateIfRealAndUnchanged(receiverLastNode.flow, flow, safeCall.receiver) ?: return
-        val expressionVariable = variableStorage.getOrCreate(flow, safeCall)
-        // TODO? if the callee has non-null return type, then safe-call == null => receiver == null
-        //   if (x?.toString() == null) { /* x == null */ }
-        // TODO? all new statements in previous node's flow are valid here if receiver != null
-        //   if (x?.whatever(y as String) != null) { /* y is String */ }
-        // TODO? all new implications in previous node's flow are valid here if receiver != null
-        //  (that requires a second level of implications: receiver != null => condition => effect).
-        flow.addImplication((expressionVariable notEq null) implies (receiverVariable notEq null))
+        val node = graphBuilder.exitSafeCall()
+        node.mergeIncomingFlow { flow ->
+            // If there is only 1 previous node, then this is LHS of `a?.b ?: c`; then the null-case
+            // edge from `a` goes directly to `c` and this node's flow already assumes `b` executed.
+            if (node.previousNodes.size < 2) return@mergeIncomingFlow
+            // Otherwise if the result is non-null, then `b` executed, which implies `a` is not null
+            // and every statement from `b` holds.
+            val expressionVariable = variableStorage.getOrCreate(flow, safeCall)
+            // TODO? if the callee has non-null return type, then safe-call == null => receiver == null
+            //   if (x?.toString() == null) { /* x == null */ }
+            // TODO? all new implications in previous node's flow are valid here if receiver != null
+            //  (that requires a second level of implications: receiver != null => condition => effect).
+            flow.addAllConditionally(expressionVariable notEq null, node.lastPreviousNode.flow)
+        }
     }
 
     fun exitResolvedQualifierNode(resolvedQualifier: FirResolvedQualifier) {
         graphBuilder.exitResolvedQualifierNode(resolvedQualifier).mergeIncomingFlow()
     }
 
-    fun enterCall() {
+    fun enterCallArguments(call: FirStatement, arguments: List<FirExpression>) {
+        val lambdas = arguments.mapNotNull { it.unwrapAnonymousFunctionExpression() }
+        context.variableAssignmentAnalyzer.enterFunctionCall(lambdas)
         graphBuilder.enterCall()
+        graphBuilder.enterCallArguments(call, lambdas)
     }
 
-    private tailrec fun FirExpression.getAnonymousFunction(): FirAnonymousFunction? = when (this) {
-        is FirAnonymousFunctionExpression -> anonymousFunction
-        is FirLambdaArgumentExpression -> expression.getAnonymousFunction()
-        else -> null
+    fun exitCallArguments() {
+        graphBuilder.exitCallArguments()?.mergeIncomingFlow()
     }
 
-    private var functionCallLevel = 0
-
-    fun enterFunctionCall(functionCall: FirFunctionCall) {
-        val lambdaArgs = functionCall.arguments.mapNotNullTo(mutableSetOf()) { it.getAnonymousFunction() }
-        val localVariableAssignmentAnalyzer = context.firLocalVariableAssignmentAnalyzer
-            ?: if (lambdaArgs.isNotEmpty()) getOrCreateLocalVariableAssignmentAnalyzer(lambdaArgs.first()) else null
-        localVariableAssignmentAnalyzer?.enterFunctionCall(lambdaArgs, functionCallLevel)
-        functionCallLevel++
-    }
-
-    @OptIn(PrivateForInline::class)
     fun exitFunctionCall(functionCall: FirFunctionCall, callCompleted: Boolean) {
-        functionCallLevel--
-        context.firLocalVariableAssignmentAnalyzer?.exitFunctionCall(callCompleted)
-        if (ignoreFunctionCalls) {
-            graphBuilder.exitIgnoredCall(functionCall)
-            return
+        context.variableAssignmentAnalyzer.exitFunctionCall(callCompleted)
+        graphBuilder.exitFunctionCall(functionCall, callCompleted).mergeIncomingFlow {
+            processConditionalContract(it, functionCall)
         }
-        val (functionCallNode, unionNode) = graphBuilder.exitFunctionCall(functionCall, callCompleted)
-        unionNode?.unionFlowFromArguments()
-        val flow = functionCallNode.mergeIncomingFlow()
-        processConditionalContract(flow, functionCall)
     }
 
     fun exitDelegatedConstructorCall(call: FirDelegatedConstructorCall, callCompleted: Boolean) {
-        val (callNode, unionNode) = graphBuilder.exitDelegatedConstructorCall(call, callCompleted)
-        unionNode?.unionFlowFromArguments()
-        callNode.mergeIncomingFlow()
+        context.variableAssignmentAnalyzer.exitFunctionCall(callCompleted)
+        graphBuilder.exitDelegatedConstructorCall(call, callCompleted).mergeIncomingFlow()
+    }
+
+    fun enterStringConcatenationCall() {
+        graphBuilder.enterCall()
     }
 
     fun exitStringConcatenationCall(call: FirStringConcatenationCall) {
-        val (callNode, unionNode) = graphBuilder.exitStringConcatenationCall(call)
-        unionNode?.unionFlowFromArguments()
-        callNode.mergeIncomingFlow()
-    }
-
-    private fun UnionFunctionCallArgumentsNode.unionFlowFromArguments() {
-        flow = logicSystem.unionFlow(previousNodes.map { it.flow })
+        graphBuilder.exitStringConcatenationCall(call).mergeIncomingFlow()
     }
 
     private fun FirQualifiedAccess.orderedArguments(callee: FirFunction): Array<out FirExpression?>? {
@@ -888,7 +825,7 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
         }
     }
 
-    private fun processConditionalContract(flow: FLOW, qualifiedAccess: FirQualifiedAccess) {
+    private fun processConditionalContract(flow: MutableFlow, qualifiedAccess: FirQualifiedAccess) {
         val callee = when (qualifiedAccess) {
             is FirFunctionCall -> qualifiedAccess.toResolvedCallableSymbol()?.fir as? FirSimpleFunction
             is FirQualifiedAccessExpression -> (qualifiedAccess.calleeReference.resolvedSymbol?.fir as? FirProperty)?.getter
@@ -927,9 +864,9 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
         for (conditionalEffect in conditionalEffects) {
             val effect = conditionalEffect.effect as? ConeReturnsEffectDeclaration ?: continue
             val operation = effect.value.toOperation()
-            val statements = logicSystem.approveContractStatement(
-                flow, conditionalEffect.condition, argumentVariables, substitutor, removeApprovedOrImpossible = operation == null
-            ) ?: continue // TODO: do what if the result is known to be false?
+            val statements = logicSystem.approveContractStatement(conditionalEffect.condition, argumentVariables, substitutor) {
+                logicSystem.approveOperationStatement(flow, it, removeApprovedOrImpossible = operation == null)
+            } ?: continue // TODO: do what if the result is known to be false?
             if (operation == null) {
                 flow.addAllStatements(statements)
             } else {
@@ -945,28 +882,30 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
     }
 
     fun exitLocalVariableDeclaration(variable: FirProperty, hadExplicitType: Boolean) {
-        val flow = graphBuilder.exitVariableDeclaration(variable).mergeIncomingFlow()
-        val initializer = variable.initializer ?: return
-        exitVariableInitialization(flow, initializer, variable, assignment = null, hadExplicitType)
+        graphBuilder.exitVariableDeclaration(variable).mergeIncomingFlow { flow ->
+            val initializer = variable.initializer ?: return@mergeIncomingFlow
+            exitVariableInitialization(flow, initializer, variable, assignment = null, hadExplicitType)
+        }
     }
 
     fun exitVariableAssignment(assignment: FirVariableAssignment) {
-        val flow = graphBuilder.exitVariableAssignment(assignment).mergeIncomingFlow()
-        val property = assignment.lValue.resolvedSymbol?.fir as? FirProperty ?: return
-        if (property.isLocal || property.isVal) {
-            exitVariableInitialization(flow, assignment.rValue, property, assignment, hasExplicitType = false)
-        } else {
-            // TODO: add unstable smartcast for non-local var
-            val variable = variableStorage.getRealVariableWithoutUnwrappingAlias(flow, assignment)
-            if (variable != null) {
-                logicSystem.recordNewAssignment(flow, variable, context.newAssignmentIndex())
+        graphBuilder.exitVariableAssignment(assignment).mergeIncomingFlow { flow ->
+            val property = assignment.lValue.resolvedSymbol?.fir as? FirProperty ?: return@mergeIncomingFlow
+            if (property.isLocal || property.isVal) {
+                exitVariableInitialization(flow, assignment.rValue, property, assignment, hasExplicitType = false)
+            } else {
+                // TODO: add unstable smartcast for non-local var
+                val variable = variableStorage.getRealVariableWithoutUnwrappingAlias(flow, assignment)
+                if (variable != null) {
+                    logicSystem.recordNewAssignment(flow, variable, context.newAssignmentIndex())
+                }
             }
+            processConditionalContract(flow, assignment)
         }
-        processConditionalContract(flow, assignment)
     }
 
     private fun exitVariableInitialization(
-        flow: FLOW,
+        flow: MutableFlow,
         initializer: FirExpression,
         property: FirProperty,
         assignment: FirVariableAssignment?,
@@ -1021,53 +960,32 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
 
     // ----------------------------------- Boolean operators -----------------------------------
 
-    fun enterBinaryAnd(binaryLogicExpression: FirBinaryLogicExpression) {
-        graphBuilder.enterBinaryAnd(binaryLogicExpression).mergeIncomingFlow()
+    fun enterBinaryLogicExpression(binaryLogicExpression: FirBinaryLogicExpression) {
+        graphBuilder.enterBinaryLogicExpression(binaryLogicExpression).mergeIncomingFlow()
     }
 
-    fun exitLeftBinaryAndArgument(binaryLogicExpression: FirBinaryLogicExpression) {
-        val (leftExitNode, rightEnterNode) = graphBuilder.exitLeftBinaryAndArgument(binaryLogicExpression)
-        exitLeftArgumentOfBinaryBooleanOperator(leftExitNode, rightEnterNode, isAnd = true)
+    fun exitLeftBinaryLogicExpressionArgument(binaryLogicExpression: FirBinaryLogicExpression) {
+        val (leftExitNode, rightEnterNode) = graphBuilder.exitLeftBinaryLogicExpressionArgument(binaryLogicExpression)
+        leftExitNode.mergeIncomingFlow()
+        rightEnterNode.mergeIncomingFlow { flow ->
+            val leftOperandVariable = variableStorage.get(flow, binaryLogicExpression.leftOperand) ?: return@mergeIncomingFlow
+            val isAnd = binaryLogicExpression.kind == LogicOperationKind.AND
+            flow.commitOperationStatement(leftOperandVariable eq isAnd)
+        }
     }
 
-    fun exitBinaryAnd(binaryLogicExpression: FirBinaryLogicExpression) {
-        val node = graphBuilder.exitBinaryAnd(binaryLogicExpression)
-        exitBinaryBooleanOperator(binaryLogicExpression, node, isAnd = true)
+    fun exitBinaryLogicExpression() {
+        graphBuilder.exitBinaryLogicExpression().mergeBinaryLogicOperatorFlow()
     }
 
-    fun enterBinaryOr(binaryLogicExpression: FirBinaryLogicExpression) {
-        graphBuilder.enterBinaryOr(binaryLogicExpression).mergeIncomingFlow()
-    }
+    private fun AbstractBinaryExitNode<FirBinaryLogicExpression>.mergeBinaryLogicOperatorFlow() = mergeIncomingFlow { flow ->
+        val isAnd = fir.kind == LogicOperationKind.AND
+        val flowFromLeft = leftOperandNode.flow
+        val flowFromRight = rightOperandNode.flow
 
-    fun exitLeftBinaryOrArgument(binaryLogicExpression: FirBinaryLogicExpression) {
-        val (leftExitNode, rightEnterNode) = graphBuilder.exitLeftBinaryOrArgument(binaryLogicExpression)
-        exitLeftArgumentOfBinaryBooleanOperator(leftExitNode, rightEnterNode, isAnd = false)
-    }
-
-    fun exitBinaryOr(binaryLogicExpression: FirBinaryLogicExpression) {
-        val node = graphBuilder.exitBinaryOr(binaryLogicExpression)
-        exitBinaryBooleanOperator(binaryLogicExpression, node, isAnd = false)
-    }
-
-    private fun exitLeftArgumentOfBinaryBooleanOperator(leftExitNode: CFGNode<*>, rightEnterNode: CFGNode<*>, isAnd: Boolean) {
-        val leftExitFlow = leftExitNode.mergeIncomingFlow()
-        val rightEnterFlow = rightEnterNode.mergeIncomingFlow()
-        val leftOperandVariable = variableStorage.get(leftExitFlow, leftExitNode.firstPreviousNode.fir) ?: return
-        rightEnterFlow.commitOperationStatement(leftOperandVariable eq isAnd)
-    }
-
-    private fun exitBinaryBooleanOperator(
-        binaryLogicExpression: FirBinaryLogicExpression,
-        node: AbstractBinaryExitNode<*>,
-        isAnd: Boolean
-    ) {
-        val flowFromLeft = node.leftOperandNode.flow
-        val flowFromRight = node.rightOperandNode.flow
-        val flow = node.mergeIncomingFlow()
-
-        val leftVariable = variableStorage.get(flowFromLeft, binaryLogicExpression.leftOperand)
-        val leftIsBoolean = leftVariable != null && binaryLogicExpression.leftOperand.coneType.isBoolean
-        if (!node.leftOperandNode.isDead && node.rightOperandNode.isDead) {
+        val leftVariable = variableStorage.get(flowFromLeft, fir.leftOperand)
+        val leftIsBoolean = leftVariable != null && fir.leftOperand.coneType.isBoolean
+        if (!leftOperandNode.isDead && rightOperandNode.isDead) {
             // If the right operand does not terminate, then we know that the value of the entire expression
             // has to be saturating (true for or, false for and), and it has to be produced by the left operand.
             if (leftIsBoolean) {
@@ -1075,9 +993,9 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
                 flow.commitOperationStatement(leftVariable!! eq !isAnd)
             }
         } else {
-            val rightVariable = variableStorage.get(flowFromRight, binaryLogicExpression.rightOperand)
-            val rightIsBoolean = rightVariable != null && binaryLogicExpression.rightOperand.coneType.isBoolean
-            val operatorVariable = variableStorage.createSynthetic(binaryLogicExpression)
+            val rightVariable = variableStorage.get(flowFromRight, fir.rightOperand)
+            val rightIsBoolean = rightVariable != null && fir.rightOperand.coneType.isBoolean
+            val operatorVariable = variableStorage.createSynthetic(fir)
             // If `left && right` is true, then both are evaluated to true. If `left || right` is false, then both are false.
             // Approved type statements for RHS already contain everything implied by the corresponding value of LHS.
             val bothEvaluated = operatorVariable eq isAnd
@@ -1105,7 +1023,7 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
         }
     }
 
-    private fun exitBooleanNot(flow: FLOW, expression: FirFunctionCall) {
+    private fun exitBooleanNot(flow: MutableFlow, expression: FirFunctionCall) {
         val argumentVariable = variableStorage.get(flow, expression.dispatchReceiver) ?: return
         val expressionVariable = variableStorage.createSynthetic(expression)
         // Alternatively: (expression == true => argument == false) && (expression == false => argument == true)
@@ -1160,30 +1078,26 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
 
     fun exitElvisLhs(elvisExpression: FirElvisExpression) {
         val (lhsExitNode, lhsIsNotNullNode, rhsEnterNode) = graphBuilder.exitElvisLhs(elvisExpression)
-        val flow = lhsExitNode.mergeIncomingFlow()
-        val lhsIsNotNullFlow = lhsIsNotNullNode.mergeIncomingFlow()
-        val rhsEnterFlow = rhsEnterNode.mergeIncomingFlow()
-        val lhsVariable = variableStorage.getOrCreateIfReal(flow, elvisExpression.lhs) ?: return
-        lhsIsNotNullFlow.commitOperationStatement(lhsVariable notEq null)
-        rhsEnterFlow.commitOperationStatement(lhsVariable eq null)
+        val lhsVariable = variableStorage.getOrCreateIfReal(lhsExitNode.mergeIncomingFlow(), elvisExpression.lhs)
+        lhsIsNotNullNode.mergeIncomingFlow { flow ->
+            lhsVariable?.let { flow.commitOperationStatement(it notEq null) }
+        }
+        rhsEnterNode.mergeIncomingFlow { flow ->
+            lhsVariable?.let { flow.commitOperationStatement(it eq null) }
+        }
     }
 
-    fun exitElvis(elvisExpression: FirElvisExpression, isLhsNotNull: Boolean) {
-        val (node, mergePostponedLambdaExitsNode) = graphBuilder.exitElvis()
-        val flow = node.mergeIncomingFlow()
-        mergePostponedLambdaExitsNode?.mergeIncomingFlow()
-
-        val rhs = elvisExpression.rhs
-        // No need to check for reassignments - if we can make any statements about LHS, then RHS has not executed.
-        val lhsVariable = variableStorage.getOrCreateIfReal(flow, elvisExpression.lhs) ?: return
-        if (isLhsNotNull) {
-            flow.commitOperationStatement(lhsVariable notEq null)
-        } else if (rhs is FirConstExpression<*> && rhs.kind == ConstantValueKind.Boolean) {
-            // (a ?: x) != x -> a != null. The logic system can only handle cases where x is Boolean.
-            // Or null...but nobody would write that, right?
+    fun exitElvis(elvisExpression: FirElvisExpression, isLhsNotNull: Boolean, callCompleted: Boolean) {
+        val node = graphBuilder.exitElvis(isLhsNotNull, callCompleted)
+        node.mergeIncomingFlow { flow ->
+            // If LHS is never null, then the edge from RHS is dead and this node's flow already contains
+            // all statements from LHS unconditionally.
+            if (isLhsNotNull) return@mergeIncomingFlow
+            // For any predicate P(x), if P(v) != P(u ?: v) then u != null. In general this requires two levels of
+            // implications, but for constant v the logic system can handle some basic cases of P(x).
+            val rhs = (elvisExpression.rhs as? FirConstExpression<*>)?.value as? Boolean ?: return@mergeIncomingFlow
             val elvisVariable = variableStorage.createSynthetic(elvisExpression)
-            val value = rhs.value as Boolean
-            flow.addImplication((elvisVariable eq !value) implies (lhsVariable notEq null))
+            flow.addAllConditionally(elvisVariable eq !rhs, node.firstPreviousNode.flow)
         }
     }
 
@@ -1199,39 +1113,27 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
 
     // ------------------------------------------------------ Utils ------------------------------------------------------
 
-    private fun getOrCreateLocalVariableAssignmentAnalyzer(firFunction: FirFunction): FirLocalVariableAssignmentAnalyzer? {
-        // Only return analyzer for nested functions so that we won't waste time on functions that don't contain any lambda or local
-        // function.
-        val rootFunction = components.containingDeclarations.firstIsInstanceOrNull<FirFunction>() ?: return null
-        if (rootFunction == firFunction) return null
-        return context.firLocalVariableAssignmentAnalyzer ?: FirLocalVariableAssignmentAnalyzer.analyzeFunction(rootFunction).also {
-            context.firLocalVariableAssignmentAnalyzer = it
-        }
-    }
-
-    private var CFGNode<*>.flow: FLOW
-        get() = context.flowOnNodes.getValue(this.origin)
-        set(value) {
-            context.flowOnNodes[this.origin] = value
-        }
-
-    private val CFGNode<*>.origin: CFGNode<*> get() = if (this is StubNode) firstPreviousNode else this
+    private val CFGNode<*>.livePreviousFlows: List<PersistentFlow>
+        get() = previousNodes.mapNotNull { it.takeIf { this.isDead || !it.isDead }?.flow }
 
     // Smart cast information is taken from `graphBuilder.lastNode`, but the problem with receivers specifically
     // is that they also affect tower resolver's scope stack. To allow accessing members on smart casted receivers,
     // we explicitly patch up the stack by calling `receiverUpdated` in a way that maintains consistency with
     // `getTypeUsingSmartcastInfo`; i.e. at any point between calls to this class' methods the types in the implicit
     // receiver stack also correspond to the data flow information attached to `graphBuilder.lastNode`.
-    private var currentReceiverState: FLOW? = null
+    private var currentReceiverState: Flow? = null
 
     // Generally when calling some method on `graphBuilder`, one of the nodes it returns is the new `lastNode`.
     // In that case `mergeIncomingFlow` will automatically ensure consistency once called on that node.
-    private fun CFGNode<*>.mergeIncomingFlow(): FLOW {
+    private fun CFGNode<*>.buildIncomingFlow(): MutableFlow {
         val previousFlows = previousNodes.mapNotNull {
             val incomingEdgeKind = incomingEdges.getValue(it).kind
-            it.takeIf { incomingEdgeKind.usedInDfa || (isDead && incomingEdgeKind.usedInDeadDfa) }?.flow
+            if (if (isDead) !incomingEdgeKind.usedInDeadDfa else !incomingEdgeKind.usedInDfa) return@mapNotNull null
+            // `MergePostponedLambdaExitsNode` nodes form a parallel data flow graph. We never compute
+            // data flow for any of them until reaching a completed call.
+            if (it is MergePostponedLambdaExitsNode) it.mergeIncomingFlow() else it.flow
         }
-        val result = logicSystem.joinFlow(previousFlows).also { flow = it }
+        val result = logicSystem.joinFlow(previousFlows, union = this is UnionNodeMarker)
         if (graphBuilder.lastNodeOrNull == this) {
             // Here it is, the new `lastNode`. If the previous state is the only predecessor, then there is actually
             // nothing to update; `addTypeStatement` has already ensured we have the correct information.
@@ -1243,6 +1145,21 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
         return result
     }
 
+    @OptIn(CfgInternals::class)
+    private fun CFGNode<*>.setFlow(builder: MutableFlow): PersistentFlow {
+        val flow = builder.freeze().also { this.flow = it }
+        if (currentReceiverState === builder) {
+            currentReceiverState = flow
+        }
+        return flow
+    }
+
+    private inline fun CFGNode<*>.mergeIncomingFlow(crossinline builder: (MutableFlow) -> Unit): PersistentFlow =
+        setFlow(buildIncomingFlow().also(builder))
+
+    private fun CFGNode<*>.mergeIncomingFlow() =
+        setFlow(buildIncomingFlow())
+
     // In rare cases (like after exiting functions) after adding more nodes `graphBuilder` will revert the current
     // state to a previously created node, so none of the nodes it returned are `lastNode` and `mergeIncomingFlow`
     // will not ensure consistency. In that case an explicit call to `resetReceivers` is needed to roll back the stack
@@ -1253,7 +1170,7 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
         currentReceiverState = currentFlow
     }
 
-    private fun updateAllReceivers(from: FLOW?, to: FLOW?) {
+    private fun updateAllReceivers(from: Flow?, to: Flow?) {
         receiverStack.forEach {
             variableStorage.getLocalVariable(it.boundSymbol)?.let { variable ->
                 val newStatement = to?.getTypeStatement(variable)
@@ -1264,47 +1181,32 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
         }
     }
 
-    private fun FLOW.copyAllInformationFrom(other: FLOW) {
-        if (this === currentReceiverState) {
-            updateAllReceivers(this, other)
-        }
-        logicSystem.copyAllInformation(other, this)
-    }
-
-    private fun FLOW.addImplication(statement: Implication) {
+    private fun MutableFlow.addImplication(statement: Implication) {
         logicSystem.addImplication(this, statement)
     }
 
-    private fun FLOW.addTypeStatement(info: TypeStatement) {
+    private fun MutableFlow.addTypeStatement(info: TypeStatement) {
         val newStatement = logicSystem.addTypeStatement(this, info) ?: return
         if (newStatement.variable.isThisReference && this === currentReceiverState) {
             receiverUpdated(newStatement.variable.identifier.symbol, newStatement)
         }
     }
 
-    private fun FLOW.addAllStatements(statements: TypeStatements) {
-        val newStatements = logicSystem.addTypeStatements(this, statements)
-        if (this === currentReceiverState) {
-            for (newStatement in newStatements) {
-                if (newStatement.variable.isThisReference) {
-                    receiverUpdated(newStatement.variable.identifier.symbol, newStatement)
-                }
-            }
-        }
-    }
+    private fun MutableFlow.addAllStatements(statements: TypeStatements) =
+        statements.values.forEach { addTypeStatement(it) }
 
-    private fun FLOW.addAllConditionally(condition: OperationStatement, statements: TypeStatements) =
+    private fun MutableFlow.addAllConditionally(condition: OperationStatement, statements: TypeStatements) =
         statements.values.forEach { addImplication(condition implies it) }
 
-    private fun FLOW.addAllConditionally(condition: OperationStatement, from: FLOW) =
+    private fun MutableFlow.addAllConditionally(condition: OperationStatement, from: Flow) =
         from.knownVariables.forEach {
             // Only add the statement if this variable is not aliasing another in `this` (but it could be aliasing in `from`).
             if (unwrapVariable(it) == it) addImplication(condition implies (from.getTypeStatement(it) ?: return@forEach))
         }
 
-    private fun FLOW.commitOperationStatement(statement: OperationStatement) =
+    private fun MutableFlow.commitOperationStatement(statement: OperationStatement) =
         addAllStatements(logicSystem.approveOperationStatement(this, statement, removeApprovedOrImpossible = true))
 
-    private fun VariableStorageImpl.getOrCreateIfRealAndUnchanged(originalFlow: FLOW, currentFlow: FLOW, fir: FirElement) =
+    private fun VariableStorageImpl.getOrCreateIfRealAndUnchanged(originalFlow: PersistentFlow, currentFlow: MutableFlow, fir: FirElement) =
         getOrCreateIfReal(originalFlow, fir)?.takeIf { !it.isReal() || logicSystem.isSameValueIn(originalFlow, currentFlow, it) }
 }

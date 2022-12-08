@@ -55,7 +55,7 @@ digraph nullability_kt {
     subgraph cluster_7 {
         color=red
         14 [label="Enter function <init>" style="filled" fillcolor=red];
-        15 [label="Delegated constructor call: super<R|kotlin/Any|>()"];
+        15 [label="Delegated constructor call: super<R|kotlin/Any|>()" style="filled" fillcolor=yellow];
         16 [label="Exit function <init>" style="filled" fillcolor=red];
     }
     14 -> {15};
@@ -106,7 +106,7 @@ digraph nullability_kt {
     subgraph cluster_12 {
         color=red
         30 [label="Enter function <init>" style="filled" fillcolor=red];
-        31 [label="Delegated constructor call: super<R|kotlin/Any|>()"];
+        31 [label="Delegated constructor call: super<R|kotlin/Any|>()" style="filled" fillcolor=yellow];
         32 [label="Exit function <init>" style="filled" fillcolor=red];
     }
     30 -> {31};
@@ -157,7 +157,7 @@ digraph nullability_kt {
     subgraph cluster_17 {
         color=red
         46 [label="Enter function <init>" style="filled" fillcolor=red];
-        47 [label="Delegated constructor call: super<R|kotlin/Any|>()"];
+        47 [label="Delegated constructor call: super<R|kotlin/Any|>()" style="filled" fillcolor=yellow];
         48 [label="Exit function <init>" style="filled" fillcolor=red];
     }
     46 -> {47};
@@ -240,7 +240,7 @@ digraph nullability_kt {
                     76 [label="Enter block"];
                     77 [label="Access variable R|<local>/x|"];
                     78 [label="Smart cast: R|<local>/x|"];
-                    79 [label="Function call: R|<local>/x|.<Inapplicable(UNSAFE_CALL): /A.foo>#()"];
+                    79 [label="Function call: R|<local>/x|.<Inapplicable(UNSAFE_CALL): /A.foo>#()" style="filled" fillcolor=yellow];
                     80 [label="Exit block"];
                 }
                 81 [label="Exit when branch result"];
@@ -250,14 +250,14 @@ digraph nullability_kt {
                     83 [label="Enter block"];
                     84 [label="Access variable R|<local>/x|"];
                     85 [label="Smart cast: R|<local>/x|"];
-                    86 [label="Function call: R|<local>/x|.R|/A.foo|()"];
+                    86 [label="Function call: R|<local>/x|.R|/A.foo|()" style="filled" fillcolor=yellow];
                     87 [label="Exit block"];
                 }
                 88 [label="Exit when branch result"];
                 89 [label="Exit when"];
             }
             90 [label="Access variable R|<local>/x|"];
-            91 [label="Function call: R|<local>/x|.<Inapplicable(UNSAFE_CALL): /A.foo>#()"];
+            91 [label="Function call: R|<local>/x|.<Inapplicable(UNSAFE_CALL): /A.foo>#()" style="filled" fillcolor=yellow];
             92 [label="Exit block"];
         }
         93 [label="Exit function test_1" style="filled" fillcolor=red];
@@ -319,7 +319,7 @@ digraph nullability_kt {
                     105 [label="Enter block"];
                     106 [label="Access variable R|<local>/x|"];
                     107 [label="Smart cast: R|<local>/x|"];
-                    108 [label="Function call: R|<local>/x|.R|/A.foo|()"];
+                    108 [label="Function call: R|<local>/x|.R|/A.foo|()" style="filled" fillcolor=yellow];
                     109 [label="Exit block"];
                 }
                 110 [label="Exit when branch result"];
@@ -329,14 +329,14 @@ digraph nullability_kt {
                     112 [label="Enter block"];
                     113 [label="Access variable R|<local>/x|"];
                     114 [label="Smart cast: R|<local>/x|"];
-                    115 [label="Function call: R|<local>/x|.<Inapplicable(UNSAFE_CALL): /A.foo>#()"];
+                    115 [label="Function call: R|<local>/x|.<Inapplicable(UNSAFE_CALL): /A.foo>#()" style="filled" fillcolor=yellow];
                     116 [label="Exit block"];
                 }
                 117 [label="Exit when branch result"];
                 118 [label="Exit when"];
             }
             119 [label="Access variable R|<local>/x|"];
-            120 [label="Function call: R|<local>/x|.<Inapplicable(UNSAFE_CALL): /A.foo>#()"];
+            120 [label="Function call: R|<local>/x|.<Inapplicable(UNSAFE_CALL): /A.foo>#()" style="filled" fillcolor=yellow];
             121 [label="Exit block"];
         }
         122 [label="Exit function test_2" style="filled" fillcolor=red];
@@ -385,7 +385,7 @@ digraph nullability_kt {
             131 [label="Exit ?:"];
             132 [label="Access variable R|<local>/x|"];
             133 [label="Smart cast: R|<local>/x|"];
-            134 [label="Function call: R|<local>/x|.R|/A.foo|()"];
+            134 [label="Function call: R|<local>/x|.R|/A.foo|()" style="filled" fillcolor=yellow];
             135 [label="Exit block"];
         }
         136 [label="Exit function test_3" style="filled" fillcolor=red];
@@ -419,7 +419,7 @@ digraph nullability_kt {
                     140 [label="Enter when branch condition "];
                     141 [label="Access variable R|<local>/x|"];
                     142 [label="Enter safe call"];
-                    143 [label="Function call: $subj$.R|/A.getA|()"];
+                    143 [label="Function call: $subj$.R|/A.getA|()" style="filled" fillcolor=yellow];
                     144 [label="Exit safe call"];
                     145 [label="Const: Null(null)"];
                     146 [label="Equality operator =="];
@@ -439,7 +439,7 @@ digraph nullability_kt {
             }
             156 [label="Access variable R|<local>/x|"];
             157 [label="Smart cast: R|<local>/x|"];
-            158 [label="Function call: R|<local>/x|.R|/A.foo|()"];
+            158 [label="Function call: R|<local>/x|.R|/A.foo|()" style="filled" fillcolor=yellow];
             159 [label="Exit block"];
         }
         160 [label="Exit function test_4" style="filled" fillcolor=red];
@@ -484,12 +484,12 @@ digraph nullability_kt {
                     165 [label="Access variable R|<local>/q|"];
                     166 [label="Enter safe call"];
                     167 [label="Access variable R|/Q.data|"];
-                    168 [label="Exit safe call"];
-                    169 [label="Enter safe call"];
-                    170 [label="Access variable R|/MyData.s|"];
-                    171 [label="Exit safe call"];
-                    172 [label="Enter safe call"];
-                    173 [label="Function call: $subj$.R|kotlin/Int.inc|()"];
+                    168 [label="Enter safe call"];
+                    169 [label="Access variable R|/MyData.s|"];
+                    170 [label="Enter safe call"];
+                    171 [label="Function call: $subj$.R|kotlin/Int.inc|()" style="filled" fillcolor=yellow];
+                    172 [label="Exit safe call"];
+                    173 [label="Exit safe call"];
                     174 [label="Exit safe call"];
                     175 [label="Const: Null(null)"];
                     176 [label="Equality operator !="];
@@ -514,7 +514,7 @@ digraph nullability_kt {
                     192 [label="Access variable R|/Q.data|"];
                     193 [label="Smart cast: R|<local>/q|.R|/Q.data|"];
                     194 [label="Access variable <Inapplicable(UNSTABLE_SMARTCAST): /MyData.s>#"];
-                    195 [label="Function call: R|<local>/q|.R|/Q.data|.<Inapplicable(UNSTABLE_SMARTCAST): /MyData.s>#.R|kotlin/Int.inc|()"];
+                    195 [label="Function call: R|<local>/q|.R|/Q.data|.<Inapplicable(UNSTABLE_SMARTCAST): /MyData.s>#.R|kotlin/Int.inc|()" style="filled" fillcolor=yellow];
                     196 [label="Exit block"];
                 }
                 197 [label="Exit when branch result"];
@@ -528,13 +528,13 @@ digraph nullability_kt {
     162 -> {163};
     163 -> {164};
     164 -> {165};
-    165 -> {166 168};
+    165 -> {166 172};
     166 -> {167};
-    167 -> {168};
-    168 -> {169 171};
-    169 -> {170};
+    167 -> {172 168};
+    168 -> {169};
+    169 -> {173 170};
     170 -> {171};
-    171 -> {172 174};
+    171 -> {174};
     172 -> {173};
     173 -> {174};
     174 -> {175};
@@ -573,18 +573,18 @@ digraph nullability_kt {
             203 [label="Access variable R|<local>/q|"];
             204 [label="Enter safe call"];
             205 [label="Access variable R|/Q.data|"];
-            206 [label="Exit safe call"];
-            207 [label="Enter safe call"];
-            208 [label="Access variable R|/MyData.s|"];
-            209 [label="Exit safe call"];
-            210 [label="Enter safe call"];
-            211 [label="Function call: $subj$.R|kotlin/Int.inc|()"];
-            212 [label="Exit safe call"];
-            213 [label="Exit lhs of ?:"];
-            214 [label="Enter rhs of ?:"];
-            215 [label="Jump: ^test_6 Unit"];
-            216 [label="Stub" style="filled" fillcolor=gray];
-            217 [label="Lhs of ?: is not null"];
+            206 [label="Enter safe call"];
+            207 [label="Access variable R|/MyData.s|"];
+            208 [label="Enter safe call"];
+            209 [label="Function call: $subj$.R|kotlin/Int.inc|()" style="filled" fillcolor=yellow];
+            210 [label="Exit safe call"];
+            211 [label="Exit lhs of ?:"];
+            212 [label="Lhs of ?: is not null"];
+            213 [label="Exit safe call"];
+            214 [label="Exit safe call"];
+            215 [label="Enter rhs of ?:"];
+            216 [label="Jump: ^test_6 Unit"];
+            217 [label="Stub" style="filled" fillcolor=gray];
             218 [label="Exit ?:"];
             219 [label="Access variable R|<local>/q|"];
             220 [label="Smart cast: R|<local>/q|"];
@@ -600,31 +600,29 @@ digraph nullability_kt {
             230 [label="Access variable R|/Q.data|"];
             231 [label="Smart cast: R|<local>/q|.R|/Q.data|"];
             232 [label="Access variable <Inapplicable(UNSTABLE_SMARTCAST): /MyData.s>#"];
-            233 [label="Function call: R|<local>/q|.R|/Q.data|.<Inapplicable(UNSTABLE_SMARTCAST): /MyData.s>#.R|kotlin/Int.inc|()"];
+            233 [label="Function call: R|<local>/q|.R|/Q.data|.<Inapplicable(UNSTABLE_SMARTCAST): /MyData.s>#.R|kotlin/Int.inc|()" style="filled" fillcolor=yellow];
             234 [label="Exit block"];
         }
         235 [label="Exit function test_6" style="filled" fillcolor=red];
     }
     201 -> {202};
     202 -> {203};
-    203 -> {204 206};
+    203 -> {204 213};
     204 -> {205};
-    205 -> {206};
-    206 -> {207 209};
-    207 -> {208};
+    205 -> {213 206};
+    206 -> {207};
+    207 -> {214 208};
     208 -> {209};
     209 -> {210};
-    209 -> {212} [color=red];
-    209 -> {214} [color=green];
     210 -> {211};
-    211 -> {212};
-    212 -> {213};
-    213 -> {217 214};
+    211 -> {212 215};
+    212 -> {218};
+    213 -> {214};
     214 -> {215};
-    215 -> {235};
-    215 -> {216} [style=dotted];
-    216 -> {218} [style=dotted];
-    217 -> {218};
+    215 -> {216};
+    216 -> {235};
+    216 -> {217} [style=dotted];
+    217 -> {218} [style=dotted];
     218 -> {219};
     219 -> {220};
     220 -> {221};
@@ -657,13 +655,13 @@ digraph nullability_kt {
                     239 [label="Enter when branch condition "];
                     240 [label="Access variable R|<local>/q|"];
                     241 [label="Enter safe call"];
-                    242 [label="Function call: $subj$.R|/Q.fdata|()"];
-                    243 [label="Exit safe call"];
-                    244 [label="Enter safe call"];
-                    245 [label="Function call: $subj$.R|/MyData.fs|()"];
-                    246 [label="Exit safe call"];
-                    247 [label="Enter safe call"];
-                    248 [label="Function call: $subj$.R|kotlin/Int.inc|()"];
+                    242 [label="Function call: $subj$.R|/Q.fdata|()" style="filled" fillcolor=yellow];
+                    243 [label="Enter safe call"];
+                    244 [label="Function call: $subj$.R|/MyData.fs|()" style="filled" fillcolor=yellow];
+                    245 [label="Enter safe call"];
+                    246 [label="Function call: $subj$.R|kotlin/Int.inc|()" style="filled" fillcolor=yellow];
+                    247 [label="Exit safe call"];
+                    248 [label="Exit safe call"];
                     249 [label="Exit safe call"];
                     250 [label="Const: Null(null)"];
                     251 [label="Equality operator !="];
@@ -676,16 +674,16 @@ digraph nullability_kt {
                     255 [label="Enter block"];
                     256 [label="Access variable R|<local>/q|"];
                     257 [label="Smart cast: R|<local>/q|"];
-                    258 [label="Function call: R|<local>/q|.R|/Q.fdata|()"];
+                    258 [label="Function call: R|<local>/q|.R|/Q.fdata|()" style="filled" fillcolor=yellow];
                     259 [label="Access variable R|<local>/q|"];
                     260 [label="Smart cast: R|<local>/q|"];
-                    261 [label="Function call: R|<local>/q|.R|/Q.fdata|()"];
-                    262 [label="Function call: R|<local>/q|.R|/Q.fdata|().<Inapplicable(UNSAFE_CALL): /MyData.fs>#()"];
+                    261 [label="Function call: R|<local>/q|.R|/Q.fdata|()" style="filled" fillcolor=yellow];
+                    262 [label="Function call: R|<local>/q|.R|/Q.fdata|().<Inapplicable(UNSAFE_CALL): /MyData.fs>#()" style="filled" fillcolor=yellow];
                     263 [label="Access variable R|<local>/q|"];
                     264 [label="Smart cast: R|<local>/q|"];
-                    265 [label="Function call: R|<local>/q|.R|/Q.fdata|()"];
-                    266 [label="Function call: R|<local>/q|.R|/Q.fdata|().<Inapplicable(UNSAFE_CALL): /MyData.fs>#()"];
-                    267 [label="Function call: R|<local>/q|.R|/Q.fdata|().<Inapplicable(UNSAFE_CALL): /MyData.fs>#().R|kotlin/Int.inc|()"];
+                    265 [label="Function call: R|<local>/q|.R|/Q.fdata|()" style="filled" fillcolor=yellow];
+                    266 [label="Function call: R|<local>/q|.R|/Q.fdata|().<Inapplicable(UNSAFE_CALL): /MyData.fs>#()" style="filled" fillcolor=yellow];
+                    267 [label="Function call: R|<local>/q|.R|/Q.fdata|().<Inapplicable(UNSAFE_CALL): /MyData.fs>#().R|kotlin/Int.inc|()" style="filled" fillcolor=yellow];
                     268 [label="Exit block"];
                 }
                 269 [label="Exit when branch result"];
@@ -699,13 +697,13 @@ digraph nullability_kt {
     237 -> {238};
     238 -> {239};
     239 -> {240};
-    240 -> {241 243};
+    240 -> {241 247};
     241 -> {242};
-    242 -> {243};
-    243 -> {244 246};
-    244 -> {245};
+    242 -> {247 243};
+    243 -> {244};
+    244 -> {248 245};
     245 -> {246};
-    246 -> {247 249};
+    246 -> {249};
     247 -> {248};
     248 -> {249};
     249 -> {250};
@@ -756,7 +754,7 @@ digraph nullability_kt {
                     283 [label="Enter block"];
                     284 [label="Access variable R|<local>/b|"];
                     285 [label="Smart cast: R|<local>/b|"];
-                    286 [label="Function call: R|<local>/b|.R|kotlin/Boolean.not|()"];
+                    286 [label="Function call: R|<local>/b|.R|kotlin/Boolean.not|()" style="filled" fillcolor=yellow];
                     287 [label="Exit block"];
                 }
                 288 [label="Exit when branch result"];
@@ -809,14 +807,14 @@ digraph nullability_kt {
                     302 [label="Enter block"];
                     303 [label="Access variable R|<local>/b|"];
                     304 [label="Smart cast: R|<local>/b|"];
-                    305 [label="Function call: R|<local>/b|.R|kotlin/Int.inc|()"];
+                    305 [label="Function call: R|<local>/b|.R|kotlin/Int.inc|()" style="filled" fillcolor=yellow];
                     306 [label="Exit block"];
                 }
                 307 [label="Exit when branch result"];
                 308 [label="Exit when"];
             }
             309 [label="Access variable R|<local>/b|"];
-            310 [label="Function call: R|<local>/b|.<Inapplicable(UNSAFE_CALL): kotlin/Int.inc>#()"];
+            310 [label="Function call: R|<local>/b|.<Inapplicable(UNSAFE_CALL): kotlin/Int.inc>#()" style="filled" fillcolor=yellow];
             subgraph cluster_66 {
                 color=blue
                 311 [label="Enter when"];
@@ -835,14 +833,14 @@ digraph nullability_kt {
                     319 [label="Enter block"];
                     320 [label="Access variable R|<local>/b|"];
                     321 [label="Smart cast: R|<local>/b|"];
-                    322 [label="Function call: R|<local>/b|.R|kotlin/Int.inc|()"];
+                    322 [label="Function call: R|<local>/b|.R|kotlin/Int.inc|()" style="filled" fillcolor=yellow];
                     323 [label="Exit block"];
                 }
                 324 [label="Exit when branch result"];
                 325 [label="Exit when"];
             }
             326 [label="Access variable R|<local>/b|"];
-            327 [label="Function call: R|<local>/b|.<Inapplicable(UNSAFE_CALL): kotlin/Int.inc>#()"];
+            327 [label="Function call: R|<local>/b|.<Inapplicable(UNSAFE_CALL): kotlin/Int.inc>#()" style="filled" fillcolor=yellow];
             subgraph cluster_69 {
                 color=blue
                 328 [label="Enter when"];
@@ -861,14 +859,14 @@ digraph nullability_kt {
                     336 [label="Enter block"];
                     337 [label="Access variable R|<local>/b|"];
                     338 [label="Smart cast: R|<local>/b|"];
-                    339 [label="Function call: R|<local>/b|.R|kotlin/Int.inc|()"];
+                    339 [label="Function call: R|<local>/b|.R|kotlin/Int.inc|()" style="filled" fillcolor=yellow];
                     340 [label="Exit block"];
                 }
                 341 [label="Exit when branch result"];
                 342 [label="Exit when"];
             }
             343 [label="Access variable R|<local>/b|"];
-            344 [label="Function call: R|<local>/b|.<Inapplicable(UNSAFE_CALL): kotlin/Int.inc>#()"];
+            344 [label="Function call: R|<local>/b|.<Inapplicable(UNSAFE_CALL): kotlin/Int.inc>#()" style="filled" fillcolor=yellow];
             subgraph cluster_72 {
                 color=blue
                 345 [label="Enter when"];
@@ -887,14 +885,14 @@ digraph nullability_kt {
                     353 [label="Enter block"];
                     354 [label="Access variable R|<local>/b|"];
                     355 [label="Smart cast: R|<local>/b|"];
-                    356 [label="Function call: R|<local>/b|.R|kotlin/Int.inc|()"];
+                    356 [label="Function call: R|<local>/b|.R|kotlin/Int.inc|()" style="filled" fillcolor=yellow];
                     357 [label="Exit block"];
                 }
                 358 [label="Exit when branch result"];
                 359 [label="Exit when"];
             }
             360 [label="Access variable R|<local>/b|"];
-            361 [label="Function call: R|<local>/b|.<Inapplicable(UNSAFE_CALL): kotlin/Int.inc>#()"];
+            361 [label="Function call: R|<local>/b|.<Inapplicable(UNSAFE_CALL): kotlin/Int.inc>#()" style="filled" fillcolor=yellow];
             362 [label="Exit block"];
         }
         363 [label="Exit function test_9" style="filled" fillcolor=red];
@@ -994,14 +992,14 @@ digraph nullability_kt {
                     color=blue
                     374 [label="Enter block"];
                     375 [label="Access variable R|<local>/b|"];
-                    376 [label="Function call: R|<local>/b|.<Inapplicable(UNSAFE_CALL): kotlin/Int.inc>#()"];
+                    376 [label="Function call: R|<local>/b|.<Inapplicable(UNSAFE_CALL): kotlin/Int.inc>#()" style="filled" fillcolor=yellow];
                     377 [label="Exit block"];
                 }
                 378 [label="Exit when branch result"];
                 379 [label="Exit when"];
             }
             380 [label="Access variable R|<local>/b|"];
-            381 [label="Function call: R|<local>/b|.<Inapplicable(UNSAFE_CALL): kotlin/Int.inc>#()"];
+            381 [label="Function call: R|<local>/b|.<Inapplicable(UNSAFE_CALL): kotlin/Int.inc>#()" style="filled" fillcolor=yellow];
             subgraph cluster_80 {
                 color=blue
                 382 [label="Enter when"];
@@ -1019,14 +1017,14 @@ digraph nullability_kt {
                     color=blue
                     390 [label="Enter block"];
                     391 [label="Access variable R|<local>/b|"];
-                    392 [label="Function call: R|<local>/b|.<Inapplicable(UNSAFE_CALL): kotlin/Int.inc>#()"];
+                    392 [label="Function call: R|<local>/b|.<Inapplicable(UNSAFE_CALL): kotlin/Int.inc>#()" style="filled" fillcolor=yellow];
                     393 [label="Exit block"];
                 }
                 394 [label="Exit when branch result"];
                 395 [label="Exit when"];
             }
             396 [label="Access variable R|<local>/b|"];
-            397 [label="Function call: R|<local>/b|.<Inapplicable(UNSAFE_CALL): kotlin/Int.inc>#()"];
+            397 [label="Function call: R|<local>/b|.<Inapplicable(UNSAFE_CALL): kotlin/Int.inc>#()" style="filled" fillcolor=yellow];
             subgraph cluster_83 {
                 color=blue
                 398 [label="Enter when"];
@@ -1044,14 +1042,14 @@ digraph nullability_kt {
                     color=blue
                     406 [label="Enter block"];
                     407 [label="Access variable R|<local>/b|"];
-                    408 [label="Function call: R|<local>/b|.<Inapplicable(UNSAFE_CALL): kotlin/Int.inc>#()"];
+                    408 [label="Function call: R|<local>/b|.<Inapplicable(UNSAFE_CALL): kotlin/Int.inc>#()" style="filled" fillcolor=yellow];
                     409 [label="Exit block"];
                 }
                 410 [label="Exit when branch result"];
                 411 [label="Exit when"];
             }
             412 [label="Access variable R|<local>/b|"];
-            413 [label="Function call: R|<local>/b|.<Inapplicable(UNSAFE_CALL): kotlin/Int.inc>#()"];
+            413 [label="Function call: R|<local>/b|.<Inapplicable(UNSAFE_CALL): kotlin/Int.inc>#()" style="filled" fillcolor=yellow];
             subgraph cluster_86 {
                 color=blue
                 414 [label="Enter when"];
@@ -1069,14 +1067,14 @@ digraph nullability_kt {
                     color=blue
                     422 [label="Enter block"];
                     423 [label="Access variable R|<local>/b|"];
-                    424 [label="Function call: R|<local>/b|.<Inapplicable(UNSAFE_CALL): kotlin/Int.inc>#()"];
+                    424 [label="Function call: R|<local>/b|.<Inapplicable(UNSAFE_CALL): kotlin/Int.inc>#()" style="filled" fillcolor=yellow];
                     425 [label="Exit block"];
                 }
                 426 [label="Exit when branch result"];
                 427 [label="Exit when"];
             }
             428 [label="Access variable R|<local>/b|"];
-            429 [label="Function call: R|<local>/b|.<Inapplicable(UNSAFE_CALL): kotlin/Int.inc>#()"];
+            429 [label="Function call: R|<local>/b|.<Inapplicable(UNSAFE_CALL): kotlin/Int.inc>#()" style="filled" fillcolor=yellow];
             430 [label="Exit block"];
         }
         431 [label="Exit function test_10" style="filled" fillcolor=red];
@@ -1164,12 +1162,12 @@ digraph nullability_kt {
                     436 [label="Access variable R|<local>/q|"];
                     437 [label="Enter safe call"];
                     438 [label="Access variable R|/QImpl.data|"];
-                    439 [label="Exit safe call"];
-                    440 [label="Enter safe call"];
-                    441 [label="Access variable R|/MyData.s|"];
-                    442 [label="Exit safe call"];
-                    443 [label="Enter safe call"];
-                    444 [label="Function call: $subj$.R|kotlin/Int.inc|()"];
+                    439 [label="Enter safe call"];
+                    440 [label="Access variable R|/MyData.s|"];
+                    441 [label="Enter safe call"];
+                    442 [label="Function call: $subj$.R|kotlin/Int.inc|()" style="filled" fillcolor=yellow];
+                    443 [label="Exit safe call"];
+                    444 [label="Exit safe call"];
                     445 [label="Exit safe call"];
                     446 [label="Const: Null(null)"];
                     447 [label="Equality operator !="];
@@ -1194,7 +1192,7 @@ digraph nullability_kt {
                     463 [label="Access variable R|/QImpl.data|"];
                     464 [label="Smart cast: R|<local>/q|.R|/QImpl.data|"];
                     465 [label="Access variable R|/MyData.s|"];
-                    466 [label="Function call: R|<local>/q|.R|/QImpl.data|.R|/MyData.s|.R|kotlin/Int.inc|()"];
+                    466 [label="Function call: R|<local>/q|.R|/QImpl.data|.R|/MyData.s|.R|kotlin/Int.inc|()" style="filled" fillcolor=yellow];
                     467 [label="Access variable R|<local>/q2|"];
                     468 [label="Access variable R|/QImpl.data|"];
                     469 [label="Access variable R|<local>/q2|"];
@@ -1203,7 +1201,7 @@ digraph nullability_kt {
                     472 [label="Access variable R|<local>/q2|"];
                     473 [label="Access variable R|/QImpl.data|"];
                     474 [label="Access variable <Inapplicable(UNSAFE_CALL): /MyData.s>#"];
-                    475 [label="Function call: R|<local>/q2|.R|/QImpl.data|.<Inapplicable(UNSAFE_CALL): /MyData.s>#.R|kotlin/Int.inc|()"];
+                    475 [label="Function call: R|<local>/q2|.R|/QImpl.data|.<Inapplicable(UNSAFE_CALL): /MyData.s>#.R|kotlin/Int.inc|()" style="filled" fillcolor=yellow];
                     subgraph cluster_94 {
                         color=blue
                         476 [label="Enter when"];
@@ -1229,7 +1227,7 @@ digraph nullability_kt {
                             491 [label="Access variable R|/QImpl.data|"];
                             492 [label="Smart cast: R|<local>/q2|.R|/QImpl.data|"];
                             493 [label="Access variable R|/MyData.s|"];
-                            494 [label="Function call: R|<local>/q2|.R|/QImpl.data|.R|/MyData.s|.R|kotlin/Int.inc|()"];
+                            494 [label="Function call: R|<local>/q2|.R|/QImpl.data|.R|/MyData.s|.R|kotlin/Int.inc|()" style="filled" fillcolor=yellow];
                             495 [label="Exit block"];
                         }
                         496 [label="Exit when branch result"];
@@ -1248,13 +1246,13 @@ digraph nullability_kt {
     433 -> {434};
     434 -> {435};
     435 -> {436};
-    436 -> {437 439};
+    436 -> {437 443};
     437 -> {438};
-    438 -> {439};
-    439 -> {440 442};
-    440 -> {441};
+    438 -> {443 439};
+    439 -> {440};
+    440 -> {444 441};
     441 -> {442};
-    442 -> {443 445};
+    442 -> {445};
     443 -> {444};
     444 -> {445};
     445 -> {446};
@@ -1330,12 +1328,12 @@ digraph nullability_kt {
                     507 [label="Access variable R|<local>/q|"];
                     508 [label="Enter safe call"];
                     509 [label="Access variable R|/QImplWithCustomGetter.data|"];
-                    510 [label="Exit safe call"];
-                    511 [label="Enter safe call"];
-                    512 [label="Access variable R|/MyData.s|"];
-                    513 [label="Exit safe call"];
-                    514 [label="Enter safe call"];
-                    515 [label="Function call: $subj$.R|kotlin/Int.inc|()"];
+                    510 [label="Enter safe call"];
+                    511 [label="Access variable R|/MyData.s|"];
+                    512 [label="Enter safe call"];
+                    513 [label="Function call: $subj$.R|kotlin/Int.inc|()" style="filled" fillcolor=yellow];
+                    514 [label="Exit safe call"];
+                    515 [label="Exit safe call"];
                     516 [label="Exit safe call"];
                     517 [label="Const: Null(null)"];
                     518 [label="Equality operator !="];
@@ -1360,7 +1358,7 @@ digraph nullability_kt {
                     534 [label="Access variable R|/QImplWithCustomGetter.data|"];
                     535 [label="Smart cast: R|<local>/q|.R|/QImplWithCustomGetter.data|"];
                     536 [label="Access variable <Inapplicable(UNSTABLE_SMARTCAST): /MyData.s>#"];
-                    537 [label="Function call: R|<local>/q|.R|/QImplWithCustomGetter.data|.<Inapplicable(UNSTABLE_SMARTCAST): /MyData.s>#.R|kotlin/Int.inc|()"];
+                    537 [label="Function call: R|<local>/q|.R|/QImplWithCustomGetter.data|.<Inapplicable(UNSTABLE_SMARTCAST): /MyData.s>#.R|kotlin/Int.inc|()" style="filled" fillcolor=yellow];
                     538 [label="Exit block"];
                 }
                 539 [label="Exit when branch result"];
@@ -1374,13 +1372,13 @@ digraph nullability_kt {
     504 -> {505};
     505 -> {506};
     506 -> {507};
-    507 -> {508 510};
+    507 -> {508 514};
     508 -> {509};
-    509 -> {510};
-    510 -> {511 513};
-    511 -> {512};
+    509 -> {514 510};
+    510 -> {511};
+    511 -> {515 512};
     512 -> {513};
-    513 -> {514 516};
+    513 -> {516};
     514 -> {515};
     515 -> {516};
     516 -> {517};
@@ -1425,12 +1423,12 @@ digraph nullability_kt {
                     547 [label="Access variable R|<local>/q|"];
                     548 [label="Enter safe call"];
                     549 [label="Access variable R|/QImplMutable.data|"];
-                    550 [label="Exit safe call"];
-                    551 [label="Enter safe call"];
-                    552 [label="Access variable R|/MyData.s|"];
-                    553 [label="Exit safe call"];
-                    554 [label="Enter safe call"];
-                    555 [label="Function call: $subj$.R|kotlin/Int.inc|()"];
+                    550 [label="Enter safe call"];
+                    551 [label="Access variable R|/MyData.s|"];
+                    552 [label="Enter safe call"];
+                    553 [label="Function call: $subj$.R|kotlin/Int.inc|()" style="filled" fillcolor=yellow];
+                    554 [label="Exit safe call"];
+                    555 [label="Exit safe call"];
                     556 [label="Exit safe call"];
                     557 [label="Const: Null(null)"];
                     558 [label="Equality operator !="];
@@ -1455,7 +1453,7 @@ digraph nullability_kt {
                     574 [label="Access variable R|/QImplMutable.data|"];
                     575 [label="Smart cast: R|<local>/q|.R|/QImplMutable.data|"];
                     576 [label="Access variable <Inapplicable(UNSTABLE_SMARTCAST): /MyData.s>#"];
-                    577 [label="Function call: R|<local>/q|.R|/QImplMutable.data|.<Inapplicable(UNSTABLE_SMARTCAST): /MyData.s>#.R|kotlin/Int.inc|()"];
+                    577 [label="Function call: R|<local>/q|.R|/QImplMutable.data|.<Inapplicable(UNSTABLE_SMARTCAST): /MyData.s>#.R|kotlin/Int.inc|()" style="filled" fillcolor=yellow];
                     578 [label="Exit block"];
                 }
                 579 [label="Exit when branch result"];
@@ -1469,13 +1467,13 @@ digraph nullability_kt {
     544 -> {545};
     545 -> {546};
     546 -> {547};
-    547 -> {548 550};
+    547 -> {548 554};
     548 -> {549};
-    549 -> {550};
-    550 -> {551 553};
-    551 -> {552};
+    549 -> {554 550};
+    550 -> {551};
+    551 -> {555 552};
     552 -> {553};
-    553 -> {554 556};
+    553 -> {556};
     554 -> {555};
     555 -> {556};
     556 -> {557};

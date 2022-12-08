@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.fir.resolve.dfa
 
+import kotlinx.collections.immutable.PersistentSet
 import org.jetbrains.kotlin.fir.types.ConeErrorType
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
 import kotlin.contracts.ExperimentalContracts
@@ -12,12 +13,15 @@ import kotlin.contracts.contract
 
 // --------------------------------------- Facts ---------------------------------------
 
+data class PersistentTypeStatement(
+    override val variable: RealVariable,
+    override val exactType: PersistentSet<ConeKotlinType>,
+) : TypeStatement()
+
 class MutableTypeStatement(
     override val variable: RealVariable,
     override val exactType: MutableSet<ConeKotlinType> = linkedSetOf(),
-) : TypeStatement() {
-    fun copy(): MutableTypeStatement = MutableTypeStatement(variable, LinkedHashSet(exactType))
-}
+) : TypeStatement()
 
 // --------------------------------------- Aliases ---------------------------------------
 

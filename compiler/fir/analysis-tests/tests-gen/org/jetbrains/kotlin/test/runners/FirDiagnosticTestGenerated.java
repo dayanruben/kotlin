@@ -1160,6 +1160,12 @@ public class FirDiagnosticTestGenerated extends AbstractFirDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("inlineLambdasAreInplace.kt")
+            public void testInlineLambdasAreInplace() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/cfg/inlineLambdasAreInplace.kt");
+            }
+
+            @Test
             @TestMetadata("innerClassInAnonymousObject.kt")
             public void testInnerClassInAnonymousObject() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolve/cfg/innerClassInAnonymousObject.kt");
@@ -1211,6 +1217,12 @@ public class FirDiagnosticTestGenerated extends AbstractFirDiagnosticTest {
             @TestMetadata("postponedLambdaInConstructor.kt")
             public void testPostponedLambdaInConstructor() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolve/cfg/postponedLambdaInConstructor.kt");
+            }
+
+            @Test
+            @TestMetadata("postponedLambdaInReturn.kt")
+            public void testPostponedLambdaInReturn() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/cfg/postponedLambdaInReturn.kt");
             }
 
             @Test
