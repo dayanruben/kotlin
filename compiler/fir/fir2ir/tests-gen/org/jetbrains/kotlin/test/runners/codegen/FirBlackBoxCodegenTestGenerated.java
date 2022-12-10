@@ -168,6 +168,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         }
 
         @Test
+        @TestMetadata("invisibleFunctionWithReceiverWithSuppress.kt")
+        public void testInvisibleFunctionWithReceiverWithSuppress() throws Exception {
+            runTest("compiler/testData/codegen/box/annotations/invisibleFunctionWithReceiverWithSuppress.kt");
+        }
+
+        @Test
         @TestMetadata("javaAnnotationArrayValueDefault.kt")
         public void testJavaAnnotationArrayValueDefault() throws Exception {
             runTest("compiler/testData/codegen/box/annotations/javaAnnotationArrayValueDefault.kt");
@@ -351,6 +357,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         @TestMetadata("singleAssignmentToVarargInAnnotation.kt")
         public void testSingleAssignmentToVarargInAnnotation() throws Exception {
             runTest("compiler/testData/codegen/box/annotations/singleAssignmentToVarargInAnnotation.kt");
+        }
+
+        @Test
+        @TestMetadata("suppressInvisibleMember.kt")
+        public void testSuppressInvisibleMember() throws Exception {
+            runTest("compiler/testData/codegen/box/annotations/suppressInvisibleMember.kt");
         }
 
         @Test
@@ -17457,9 +17469,27 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
             }
 
             @Test
+            @TestMetadata("kt51247.kt")
+            public void testKt51247() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/kt51247.kt");
+            }
+
+            @Test
             @TestMetadata("kt51284.kt")
             public void testKt51284() throws Exception {
                 runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/kt51284.kt");
+            }
+
+            @Test
+            @TestMetadata("kt51290.kt")
+            public void testKt51290() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/kt51290.kt");
+            }
+
+            @Test
+            @TestMetadata("kt51475.kt")
+            public void testKt51475() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/kt51475.kt");
             }
 
             @Test
@@ -17469,9 +17499,27 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
             }
 
             @Test
+            @TestMetadata("kt51951.kt")
+            public void testKt51951() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/kt51951.kt");
+            }
+
+            @Test
             @TestMetadata("kt52207.kt")
             public void testKt52207() throws Exception {
                 runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/kt52207.kt");
+            }
+
+            @Test
+            @TestMetadata("kt52373.kt")
+            public void testKt52373() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/kt52373.kt");
+            }
+
+            @Test
+            @TestMetadata("kt53846.kt")
+            public void testKt53846() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/kt53846.kt");
             }
 
             @Test

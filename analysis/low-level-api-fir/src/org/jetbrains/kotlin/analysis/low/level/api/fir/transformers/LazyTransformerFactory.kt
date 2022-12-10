@@ -5,7 +5,7 @@
 
 package org.jetbrains.kotlin.analysis.low.level.api.fir.transformers
 
-import org.jetbrains.kotlin.analysis.low.level.api.fir.api.FirDeclarationDesignationWithFile
+import org.jetbrains.kotlin.analysis.low.level.api.fir.api.FirDesignationWithFile
 import org.jetbrains.kotlin.analysis.low.level.api.fir.file.builder.LLFirLockProvider
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
@@ -15,12 +15,11 @@ import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirTowerDataCo
 internal object LazyTransformerFactory {
     fun createLazyTransformer(
         phase: FirResolvePhase,
-        designation: FirDeclarationDesignationWithFile,
+        designation: FirDesignationWithFile,
         scopeSession: ScopeSession,
         lockProvider: LLFirLockProvider,
         towerDataContextCollector: FirTowerDataContextCollector?,
         firProviderInterceptor: FirProviderInterceptor?,
-        checkPCE: Boolean,
     ): LLFirLazyTransformer = when (phase) {
         FirResolvePhase.COMPANION_GENERATION -> LLFirDesignatedGeneratedCompanionObjectResolveTransformer(
             designation = designation,
@@ -33,7 +32,6 @@ internal object LazyTransformerFactory {
             scopeSession = scopeSession,
             lockProvider = lockProvider,
             firProviderInterceptor = firProviderInterceptor,
-            checkPCE = checkPCE,
         )
         FirResolvePhase.TYPES -> LLFirDesignatedTypeResolverTransformer(
             designation,

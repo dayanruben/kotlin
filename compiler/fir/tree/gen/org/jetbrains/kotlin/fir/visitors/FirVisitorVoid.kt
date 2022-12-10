@@ -18,6 +18,8 @@ import org.jetbrains.kotlin.fir.declarations.FirControlFlowGraphOwner
 import org.jetbrains.kotlin.fir.expressions.FirStatement
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.declarations.FirContextReceiver
+import org.jetbrains.kotlin.fir.FirElementWithResolvePhase
+import org.jetbrains.kotlin.fir.FirFileAnnotationsContainer
 import org.jetbrains.kotlin.fir.declarations.FirDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirTypeParameterRefsOwner
 import org.jetbrains.kotlin.fir.declarations.FirTypeParametersOwner
@@ -199,6 +201,14 @@ abstract class FirVisitorVoid : FirVisitor<Unit, Nothing?>() {
 
     open fun visitContextReceiver(contextReceiver: FirContextReceiver) {
         visitElement(contextReceiver)
+    }
+
+    open fun visitElementWithResolvePhase(elementWithResolvePhase: FirElementWithResolvePhase) {
+        visitElement(elementWithResolvePhase)
+    }
+
+    open fun visitFileAnnotationsContainer(fileAnnotationsContainer: FirFileAnnotationsContainer) {
+        visitElement(fileAnnotationsContainer)
     }
 
     open fun visitDeclaration(declaration: FirDeclaration) {
@@ -755,6 +765,14 @@ abstract class FirVisitorVoid : FirVisitor<Unit, Nothing?>() {
 
     final override fun visitContextReceiver(contextReceiver: FirContextReceiver, data: Nothing?) {
         visitContextReceiver(contextReceiver)
+    }
+
+    final override fun visitElementWithResolvePhase(elementWithResolvePhase: FirElementWithResolvePhase, data: Nothing?) {
+        visitElementWithResolvePhase(elementWithResolvePhase)
+    }
+
+    final override fun visitFileAnnotationsContainer(fileAnnotationsContainer: FirFileAnnotationsContainer, data: Nothing?) {
+        visitFileAnnotationsContainer(fileAnnotationsContainer)
     }
 
     final override fun visitDeclaration(declaration: FirDeclaration, data: Nothing?) {

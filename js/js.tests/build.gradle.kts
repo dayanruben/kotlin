@@ -107,6 +107,7 @@ if (kotlinBuildProperties.isInJpsBuildIdeaSync) {
 enum class OsName { WINDOWS, MAC, LINUX, UNKNOWN }
 enum class OsArch { X86_32, X86_64, ARM64, UNKNOWN }
 data class OsType(val name: OsName, val arch: OsArch)
+
 val currentOsType = run {
     val gradleOs = OperatingSystem.current()
     val osName = when {
@@ -275,8 +276,10 @@ fun Test.setupV8() {
 
 fun Test.setUpJsBoxTests(jsEnabled: Boolean, jsIrEnabled: Boolean, firEnabled: Boolean) {
     setupV8()
-    if (jsIrEnabled)
+    if (jsIrEnabled) {
         setupNodeJs()
+        dependsOn(npmInstall)
+    }
 
     inputs.files(rootDir.resolve("js/js.engines/src/org/jetbrains/kotlin/js/engine/repl.js"))
 
@@ -295,6 +298,9 @@ fun Test.setUpJsBoxTests(jsEnabled: Boolean, jsIrEnabled: Boolean, firEnabled: B
         dependsOn(":kotlin-stdlib-js-ir:compileKotlinJs")
         systemProperty("kotlin.js.full.stdlib.path", "libraries/stdlib/js-ir/build/classes/kotlin/js/main")
         inputs.dir(rootDir.resolve("libraries/stdlib/js-ir/build/classes/kotlin/js/main"))
+
+        systemProperty("kotlin.js.stdlib.klib.path", "libraries/stdlib/js-ir/build/libs/kotlin-stdlib-js-ir-js-$version.klib")
+        inputs.file(rootDir.resolve("libraries/stdlib/js-ir/build/libs/kotlin-stdlib-js-ir-js-$version.klib"))
 
         dependsOn(":kotlin-stdlib-js-ir-minimal-for-test:compileKotlinJs")
         systemProperty("kotlin.js.reduced.stdlib.path", "libraries/stdlib/js-ir-minimal-for-test/build/classes/kotlin/js/main")
@@ -317,8 +323,15 @@ fun Test.setUpJsBoxTests(jsEnabled: Boolean, jsIrEnabled: Boolean, firEnabled: B
     if (!jsEnabled) {
         if (firEnabled) {
             include("org/jetbrains/kotlin/js/test/fir/*")
+            include("org/jetbrains/kotlin/test/runners/ir/Fir2IrJsTextTestGenerated.class")
         } else {
             include("org/jetbrains/kotlin/js/test/ir/*")
+
+            include("org/jetbrains/kotlin/incremental/*")
+            include("org/jetbrains/kotlin/js/testOld/api/*")
+            include("org/jetbrains/kotlin/js/testOld/compatibility/binary/JsKlibBinaryCompatibilityTestGenerated.class")
+            include("org/jetbrains/kotlin/benchmarks/GenerateIrRuntime.class")
+            include("org/jetbrains/kotlin/integration/JsIrAnalysisHandlerExtensionTest.class")
         }
     }
 
@@ -337,8 +350,10 @@ fun Test.setUpBoxTests() {
     }
 
     systemProperty("kotlin.js.test.root.out.dir", "$buildDir/")
-    systemProperty("overwrite.output", project.providers.gradleProperty("overwrite.output")
-        .forUseAtConfigurationTime().orNull ?: "false")
+    systemProperty(
+        "overwrite.output", project.providers.gradleProperty("overwrite.output")
+            .forUseAtConfigurationTime().orNull ?: "false"
+    )
 
     val rootLocalProperties = Properties().apply {
         rootProject.file("local.properties").takeIf { it.isFile }?.inputStream()?.use {
@@ -356,7 +371,7 @@ fun Test.setUpBoxTests() {
     }
 }
 
-projectTest(parallel = true, jUnitMode = JUnitMode.JUnit5, maxHeapSizeMb = 4096) {
+val test = projectTest(parallel = true, jUnitMode = JUnitMode.JUnit5, maxHeapSizeMb = 4096) {
     setUpJsBoxTests(jsEnabled = true, jsIrEnabled = true, firEnabled = true)
 
     inputs.dir(rootDir.resolve("compiler/cli/cli-common/resources")) // compiler.xml
@@ -369,8 +384,6 @@ projectTest(parallel = true, jUnitMode = JUnitMode.JUnit5, maxHeapSizeMb = 4096)
 
     outputs.dir("$buildDir/out")
     outputs.dir("$buildDir/out-min")
-
-    systemProperty("kotlin.js.stdlib.klib.path", "libraries/stdlib/js-ir/build/libs/kotlin-stdlib-js-ir-js-$version.klib")
 
     configureTestDistribution()
 }
@@ -405,7 +418,7 @@ val generateTests by generator("org.jetbrains.kotlin.generators.tests.GenerateJs
     }
 }
 
-val prepareMochaTestData by tasks.registering(Copy::class) {
+val prepareNpmTestData by tasks.registering(Copy::class) {
     from(testDataDir) {
         include("package.json")
         include("test.js")
@@ -414,11 +427,11 @@ val prepareMochaTestData by tasks.registering(Copy::class) {
 }
 
 val npmInstall by tasks.getting(NpmTask::class) {
-    dependsOn(prepareMochaTestData)
     workingDir.set(buildDir)
+    dependsOn(prepareNpmTestData)
 }
 
-val runMocha by task<NpmTask> {
+val mochaTest by task<NpmTask> {
     workingDir.set(buildDir)
 
     val target = if (project.hasProperty("teamcity")) "runOnTeamcity" else "test"
@@ -426,16 +439,20 @@ val runMocha by task<NpmTask> {
 
     ignoreExitValue.set(kotlinBuildProperties.ignoreTestFailures)
 
-    dependsOn(npmInstall, "test")
+    dependsOn(npmInstall)
 
-    val check by tasks
-    check.dependsOn(this)
+    environment.set(
+        mapOf(
+            "KOTLIN_JS_LOCATION" to rootDir.resolve("dist/js/kotlin.js").toString(),
+            "KOTLIN_JS_TEST_LOCATION" to rootDir.resolve("dist/js/kotlin-test.js").toString(),
+            "BOX_FLAG_LOCATION" to rootDir.resolve("compiler/testData/jsBoxFlag.js").toString()
+        )
+    )
+}
 
-    environment.set(mapOf(
-        "KOTLIN_JS_LOCATION" to rootDir.resolve("dist/js/kotlin.js").toString(),
-        "KOTLIN_JS_TEST_LOCATION" to rootDir.resolve("dist/js/kotlin-test.js").toString(),
-        "BOX_FLAG_LOCATION" to rootDir.resolve("compiler/testData/jsBoxFlag.js").toString()
-    ))
+val runMocha by tasks.registering {
+    dependsOn(test)
+    finalizedBy(mochaTest)
 }
 
 projectTest("wasmTest", true) {
@@ -464,4 +481,8 @@ projectTest("invalidationTest", jUnitMode = JUnitMode.JUnit4) {
 
     systemProperty("kotlin.js.stdlib.klib.path", "libraries/stdlib/js-ir/build/libs/kotlin-stdlib-js-ir-js-$version.klib")
     systemProperty("kotlin.js.test.root.out.dir", "$buildDir/")
+}
+
+tasks.named("check") {
+    dependsOn(runMocha)
 }

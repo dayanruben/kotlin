@@ -7,6 +7,8 @@ package org.jetbrains.kotlin.analysis.low.level.api.fir.util
 
 import org.jetbrains.kotlin.analysis.utils.errors.ExceptionAttachmentBuilder
 import org.jetbrains.kotlin.analysis.utils.errors.checkWithAttachmentBuilder
+import org.jetbrains.kotlin.fir.FirAnnotationContainer
+import org.jetbrains.kotlin.fir.FirElementWithResolvePhase
 import org.jetbrains.kotlin.fir.contracts.FirResolvedContractDescription
 import org.jetbrains.kotlin.fir.contracts.impl.FirEmptyContractDescription
 import org.jetbrains.kotlin.fir.declarations.*
@@ -19,7 +21,7 @@ import org.jetbrains.kotlin.fir.types.FirTypeRef
 internal inline fun checkTypeRefIsResolved(
     typeRef: FirTypeRef,
     typeRefName: String,
-    owner: FirDeclaration,
+    owner: FirElementWithResolvePhase,
     acceptImplicitTypeRef: Boolean = false,
     extraAttachment: ExceptionAttachmentBuilder.() -> Unit = {}
 ) {
@@ -31,7 +33,7 @@ internal inline fun checkTypeRefIsResolved(
                 if (acceptImplicitTypeRef) {
                     append(" or ${FirImplicitTypeRef::class.simpleName}")
                 }
-                append(" for $typeRefName of ${owner::class.simpleName}(${owner.origin}) but ${typeRef::class.simpleName} found")
+                append(" for $typeRefName of ${owner::class.simpleName}(${(owner as? FirDeclaration)?.origin}) but ${typeRef::class.simpleName} found")
             }
         }
     ) {
@@ -73,7 +75,7 @@ internal fun checkDeclarationStatusIsResolved(declaration: FirMemberDeclaration)
 
 internal inline fun checkAnnotationArgumentsMappingIsResolved(
     annotation: FirAnnotationCall,
-    owner: FirDeclaration,
+    owner: FirAnnotationContainer,
     extraAttachment: ExceptionAttachmentBuilder.() -> Unit = {}
 ) {
     checkWithAttachmentBuilder(
@@ -81,7 +83,7 @@ internal inline fun checkAnnotationArgumentsMappingIsResolved(
         message = {
             buildString {
                 append("Expected ${FirResolvedArgumentList::class.simpleName}")
-                append(" for ${annotation::class.simpleName} of ${owner::class.simpleName}(${owner.origin})")
+                append(" for ${annotation::class.simpleName} of ${owner::class.simpleName}(${(owner as? FirDeclaration)?.origin})")
                 append(" but ${annotation.argumentList::class.simpleName} found")
             }
         }

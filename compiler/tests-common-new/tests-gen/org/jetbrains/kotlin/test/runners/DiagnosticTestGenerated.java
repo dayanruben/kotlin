@@ -2995,6 +2995,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("referenceInCycleInProperties.kt")
+            public void testReferenceInCycleInProperties() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/callableReference/referenceInCycleInProperties.kt");
+            }
+
+            @Test
             @TestMetadata("referenceToCompanionObjectMemberViaClassName.kt")
             public void testReferenceToCompanionObjectMemberViaClassName() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/callableReference/referenceToCompanionObjectMemberViaClassName.kt");
@@ -15972,6 +15978,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 }
 
                 @Test
+                @TestMetadata("kt54411.kt")
+                public void testKt54411() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/emptyIntersectionTypes/kt54411.kt");
+                }
+
+                @Test
                 @TestMetadata("nullableEmptyIntersection.kt")
                 public void testNullableEmptyIntersection() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/emptyIntersectionTypes/nullableEmptyIntersection.kt");
@@ -22261,9 +22273,21 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("integerLiteralWillChangeResolveInFunctionReturnPosition.kt")
+            public void testIntegerLiteralWillChangeResolveInFunctionReturnPosition() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/numbers/integerLiteralWillChangeResolveInFunctionReturnPosition.kt");
+            }
+
+            @Test
             @TestMetadata("kt41679.kt")
             public void testKt41679() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/numbers/kt41679.kt");
+            }
+
+            @Test
+            @TestMetadata("kt45970.kt")
+            public void testKt45970() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/numbers/kt45970.kt");
             }
 
             @Test
@@ -22285,27 +22309,15 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
-            @TestMetadata("kt48361_disabled.kt")
-            public void testKt48361_disabled() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/numbers/kt48361_disabled.kt");
-            }
-
-            @Test
-            @TestMetadata("kt48361_enabled.kt")
-            public void testKt48361_enabled() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/numbers/kt48361_enabled.kt");
+            @TestMetadata("kt48361.kt")
+            public void testKt48361() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/numbers/kt48361.kt");
             }
 
             @Test
             @TestMetadata("literalReceiverWithIntegerValueType.kt")
             public void testLiteralReceiverWithIntegerValueType() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/numbers/literalReceiverWithIntegerValueType.kt");
-            }
-
-            @Test
-            @TestMetadata("newLiteralOperatorsResolution_newResolve.kt")
-            public void testNewLiteralOperatorsResolution_newResolve() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/numbers/newLiteralOperatorsResolution_newResolve.kt");
             }
 
             @Test
@@ -32403,6 +32415,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("disabledFeature.kt")
                 public void testDisabledFeature() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/testsWithJava17/jvmRecord/disabledFeature.kt");
+                }
+
+                @Test
+                @TestMetadata("explicitSuperConstructorCall.kt")
+                public void testExplicitSuperConstructorCall() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/testsWithJava17/jvmRecord/explicitSuperConstructorCall.kt");
                 }
 
                 @Test
