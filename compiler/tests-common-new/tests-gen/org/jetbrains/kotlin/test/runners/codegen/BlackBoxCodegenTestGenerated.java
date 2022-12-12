@@ -21906,6 +21906,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         }
 
         @Test
+        @TestMetadata("secondaryConstructorsWithBody.kt")
+        public void testSecondaryConstructorsWithBody() throws Exception {
+            runTest("compiler/testData/codegen/box/inlineClasses/secondaryConstructorsWithBody.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
+        }
+
+        @Test
         @TestMetadata("simpleSecondaryConstructor.kt")
         public void testSimpleSecondaryConstructor() throws Exception {
             runTest("compiler/testData/codegen/box/inlineClasses/simpleSecondaryConstructor.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
@@ -27431,6 +27437,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         @TestMetadata("conflictingOverloadsForThrowableInheritors2.kt")
         public void testConflictingOverloadsForThrowableInheritors2() throws Exception {
             runTest("compiler/testData/codegen/box/javaInterop/conflictingOverloadsForThrowableInheritors2.kt");
+        }
+
+        @Test
+        @TestMetadata("delegationToJavaDnn.kt")
+        public void testDelegationToJavaDnn() throws Exception {
+            runTest("compiler/testData/codegen/box/javaInterop/delegationToJavaDnn.kt");
         }
 
         @Test

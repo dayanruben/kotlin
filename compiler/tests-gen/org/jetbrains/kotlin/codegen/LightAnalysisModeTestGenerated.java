@@ -16703,6 +16703,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/inlineClasses/safeAsOfTypeParameterWithInlineClassBoundGeneric.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
         }
 
+        @TestMetadata("secondaryConstructorsWithBody.kt")
+        public void ignoreSecondaryConstructorsWithBody() throws Exception {
+            runTest("compiler/testData/codegen/box/inlineClasses/secondaryConstructorsWithBody.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
+        }
+
         @TestMetadata("simpleSecondaryConstructor.kt")
         public void ignoreSimpleSecondaryConstructor() throws Exception {
             runTest("compiler/testData/codegen/box/inlineClasses/simpleSecondaryConstructor.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
@@ -23150,6 +23155,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("conflictingOverloadsForThrowableInheritors2.kt")
         public void testConflictingOverloadsForThrowableInheritors2() throws Exception {
             runTest("compiler/testData/codegen/box/javaInterop/conflictingOverloadsForThrowableInheritors2.kt");
+        }
+
+        @TestMetadata("delegationToJavaDnn.kt")
+        public void testDelegationToJavaDnn() throws Exception {
+            runTest("compiler/testData/codegen/box/javaInterop/delegationToJavaDnn.kt");
         }
 
         @TestMetadata("genericSamProjectedOut.kt")
