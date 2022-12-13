@@ -164,6 +164,12 @@ public class FirLazyDeclarationResolveTestGenerated extends AbstractFirLazyDecla
         public void testFunctionInValueClass() throws Exception {
             runTest("analysis/low-level-api-fir/testdata/lazyResolve/classes/functionInValueClass.kt");
         }
+
+        @Test
+        @TestMetadata("nestedClassWithPropertiesOverrides.kt")
+        public void testNestedClassWithPropertiesOverrides() throws Exception {
+            runTest("analysis/low-level-api-fir/testdata/lazyResolve/classes/nestedClassWithPropertiesOverrides.kt");
+        }
     }
 
     @Nested
@@ -189,6 +195,18 @@ public class FirLazyDeclarationResolveTestGenerated extends AbstractFirLazyDecla
         @Test
         public void testAllFilesPresentInFunctions() throws Exception {
             KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/low-level-api-fir/testdata/lazyResolve/functions"), Pattern.compile("^(.+)\\.kt$"), null, true);
+        }
+
+        @Test
+        @TestMetadata("functionCallWithGenericResult.kt")
+        public void testFunctionCallWithGenericResult() throws Exception {
+            runTest("analysis/low-level-api-fir/testdata/lazyResolve/functions/functionCallWithGenericResult.kt");
+        }
+
+        @Test
+        @TestMetadata("functionWithGenericExpectedTypeInside.kt")
+        public void testFunctionWithGenericExpectedTypeInside() throws Exception {
+            runTest("analysis/low-level-api-fir/testdata/lazyResolve/functions/functionWithGenericExpectedTypeInside.kt");
         }
 
         @Test

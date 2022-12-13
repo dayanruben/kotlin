@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.gradle.plugin.ide.dependencyResolvers
 
+import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinDependency
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinSourceCoordinates
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinSourceDependency
@@ -14,7 +15,7 @@ import org.jetbrains.kotlin.gradle.plugin.ide.IdeaKotlinProjectCoordinates
 import org.jetbrains.kotlin.gradle.plugin.mpp.MetadataDependencyResolution
 import org.jetbrains.kotlin.gradle.plugin.sources.DefaultKotlinSourceSet
 
-object IdeVisibleMultiplatformSourceDependencyResolver : IdeDependencyResolver {
+internal object IdeVisibleMultiplatformSourceDependencyResolver : IdeDependencyResolver {
     override fun resolve(sourceSet: KotlinSourceSet): Set<IdeaKotlinDependency> {
         if (sourceSet !is DefaultKotlinSourceSet) return emptySet()
         return sourceSet.resolveMetadata<MetadataDependencyResolution.ChooseVisibleSourceSets>()
@@ -25,12 +26,12 @@ object IdeVisibleMultiplatformSourceDependencyResolver : IdeDependencyResolver {
     private fun resolveSourceDependencies(
         resolution: MetadataDependencyResolution.ChooseVisibleSourceSets
     ): Iterable<IdeaKotlinDependency> {
-        val project = resolution.projectDependency ?: return emptyList()
+        val projectComponentIdentifier = resolution.dependency.id as? ProjectComponentIdentifier ?: return emptyList()
         return resolution.allVisibleSourceSetNames.map { visibleSourceSetName ->
             IdeaKotlinSourceDependency(
                 type = IdeaKotlinSourceDependency.Type.Regular,
                 coordinates = IdeaKotlinSourceCoordinates(
-                    project = IdeaKotlinProjectCoordinates(project),
+                    project = IdeaKotlinProjectCoordinates(projectComponentIdentifier),
                     sourceSetName = visibleSourceSetName
                 )
             )
