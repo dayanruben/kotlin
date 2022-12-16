@@ -5,25 +5,15 @@
 
 package org.jetbrains.kotlin.fir.declarations.utils
 
-import org.jetbrains.kotlin.fir.PrivateForInline
 import org.jetbrains.kotlin.fir.declarations.*
-import org.jetbrains.kotlin.fir.expressions.FirQualifiedAccess
-import org.jetbrains.kotlin.fir.resolvedSymbol
-import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
-import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.ConeClassLikeType
 import org.jetbrains.kotlin.fir.types.coneTypeSafe
 import org.jetbrains.kotlin.name.ClassId
 
 val FirTypeAlias.expandedConeType: ConeClassLikeType? get() = expandedTypeRef.coneTypeSafe()
 
-val FirClassLikeDeclaration.classId
-    get() = when (this) {
-        is FirClass -> symbol.classId
-        is FirTypeAlias -> symbol.classId
-    }
-
-val FirClass.classId: ClassId get() = symbol.classId
+val FirClassLikeDeclaration.classId: ClassId
+    get() = symbol.classId
 
 val FirClass.superConeTypes: List<ConeClassLikeType> get() = superTypeRefs.mapNotNull { it.coneTypeSafe() }
 
@@ -32,12 +22,6 @@ val FirClass.anonymousInitializers: List<FirAnonymousInitializer>
 
 val FirClass.delegateFields: List<FirField>
     get() = declarations.filterIsInstance<FirField>().filter { it.isSynthetic }
-
-val FirQualifiedAccess.referredVariableSymbol: FirVariableSymbol<*>?
-    get() = calleeReference.resolvedSymbol as? FirVariableSymbol<*>
-
-val FirQualifiedAccess.referredPropertySymbol: FirPropertySymbol?
-    get() = referredVariableSymbol as? FirPropertySymbol
 
 inline val FirDeclaration.isJava: Boolean
     get() = origin is FirDeclarationOrigin.Java

@@ -28,9 +28,7 @@ import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.impl.FirElseIfTrueCondition
 import org.jetbrains.kotlin.fir.expressions.impl.FirStubStatement
 import org.jetbrains.kotlin.fir.expressions.impl.FirUnitExpression
-import org.jetbrains.kotlin.fir.references.FirReference
-import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
-import org.jetbrains.kotlin.fir.references.FirSuperReference
+import org.jetbrains.kotlin.fir.references.*
 import org.jetbrains.kotlin.fir.resolve.isIteratorNext
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.*
@@ -328,7 +326,7 @@ class Fir2IrVisitor(
         }
         val initializer = variable.initializer
         val isNextVariable = initializer is FirFunctionCall &&
-                (initializer.calleeReference.resolvedSymbol as? FirNamedFunctionSymbol)?.callableId?.isIteratorNext() == true &&
+                initializer.calleeReference.toResolvedFunctionSymbol()?.callableId?.isIteratorNext() == true &&
                 variable.source?.isChildOfForLoop == true
         val irVariable = declarationStorage.createIrVariable(
             variable, conversionScope.parentFromStack(),
@@ -852,7 +850,7 @@ class Fir2IrVisitor(
                 noArguments = true
             ) as IrDynamicOperatorExpression).apply {
                 originalVararg?.arguments?.forEach {
-                    val that = (it as? FirPropertyAccessExpression)?.calleeReference?.resolvedSymbol?.fir as? FirProperty
+                    val that = (it as? FirPropertyAccessExpression)?.calleeReference?.toResolvedPropertySymbol()?.fir
                     val initializer = that?.initializer ?: return@forEach
                     arguments.add(convertToIrExpression(initializer))
                 }

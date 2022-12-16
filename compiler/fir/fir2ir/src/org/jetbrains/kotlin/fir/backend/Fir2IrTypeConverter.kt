@@ -33,12 +33,15 @@ class Fir2IrTypeConverter(
 ) : Fir2IrComponents by components {
 
     internal val classIdToSymbolMap by lazy {
+        // Note: this map must include all base classes, and they should be before derived classes!
         mapOf(
             StandardClassIds.Nothing to irBuiltIns.nothingClass,
+            StandardClassIds.Any to irBuiltIns.anyClass,
             StandardClassIds.Unit to irBuiltIns.unitClass,
             StandardClassIds.Boolean to irBuiltIns.booleanClass,
+            StandardClassIds.CharSequence to irBuiltIns.charSequenceClass,
             StandardClassIds.String to irBuiltIns.stringClass,
-            StandardClassIds.Any to irBuiltIns.anyClass,
+            StandardClassIds.Number to irBuiltIns.numberClass,
             StandardClassIds.Long to irBuiltIns.longClass,
             StandardClassIds.Int to irBuiltIns.intClass,
             StandardClassIds.Short to irBuiltIns.shortClass,
@@ -46,7 +49,8 @@ class Fir2IrTypeConverter(
             StandardClassIds.Float to irBuiltIns.floatClass,
             StandardClassIds.Double to irBuiltIns.doubleClass,
             StandardClassIds.Char to irBuiltIns.charClass,
-            StandardClassIds.Array to irBuiltIns.arrayClass
+            StandardClassIds.Array to irBuiltIns.arrayClass,
+            INTRINSIC_CONST_EVALUATION_ANNOTATION to irBuiltIns.intrinsicConst
         )
     }
 

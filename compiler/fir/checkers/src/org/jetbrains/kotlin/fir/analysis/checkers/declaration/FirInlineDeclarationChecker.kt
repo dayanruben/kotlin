@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.fir.declarations.utils.*
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.languageVersionSettings
 import org.jetbrains.kotlin.fir.references.FirSuperReference
+import org.jetbrains.kotlin.fir.references.toResolvedCallableSymbol
 import org.jetbrains.kotlin.fir.types.isBuiltinFunctionalType
 import org.jetbrains.kotlin.fir.types.isFunctionalType
 import org.jetbrains.kotlin.fir.types.isSuspendFunctionType
@@ -458,7 +459,7 @@ abstract class FirInlineDeclarationChecker : FirFunctionChecker() {
         if (declaration.containingClassLookupTag() == null) return true
         if (effectiveVisibility == EffectiveVisibility.PrivateInClass) return true
 
-        if (!declaration.isFinal) {
+        if (!declaration.isEffectivelyFinal(context)) {
             reporter.reportOn(declaration.source, FirErrors.DECLARATION_CANT_BE_INLINED, context)
             return false
         }

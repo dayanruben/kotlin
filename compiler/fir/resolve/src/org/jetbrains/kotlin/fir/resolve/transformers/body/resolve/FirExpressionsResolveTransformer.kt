@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.fir.extensions.extensionService
 import org.jetbrains.kotlin.fir.references.*
 import org.jetbrains.kotlin.fir.references.builder.buildErrorNamedReference
 import org.jetbrains.kotlin.fir.references.builder.buildExplicitSuperReference
+import org.jetbrains.kotlin.fir.references.builder.buildResolvedErrorReference
 import org.jetbrains.kotlin.fir.references.builder.buildSimpleNamedReference
 import org.jetbrains.kotlin.fir.references.impl.FirSimpleNamedReference
 import org.jetbrains.kotlin.fir.resolve.*
@@ -36,7 +37,6 @@ import org.jetbrains.kotlin.fir.resolve.transformers.replaceLambdaArgumentInvoca
 import org.jetbrains.kotlin.fir.scopes.impl.isWrappedIntegerOperator
 import org.jetbrains.kotlin.fir.scopes.impl.isWrappedIntegerOperatorForUnsignedType
 import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
-import org.jetbrains.kotlin.fir.symbols.impl.FirVariableSymbol
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.builder.buildErrorTypeRef
 import org.jetbrains.kotlin.fir.types.builder.buildResolvedTypeRef
@@ -600,7 +600,7 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
         val operatorReturnTypeMatches = operatorIsSuccessful && operatorReturnTypeMatches(operatorCallReference!!.candidate)
 
         val lhsReference = leftArgument.toReference()
-        val lhsSymbol = lhsReference?.resolvedSymbol as? FirVariableSymbol<*>
+        val lhsSymbol = lhsReference?.toResolvedVariableSymbol()
         val lhsVariable = lhsSymbol?.fir
         val lhsIsVar = lhsVariable?.isVar == true
 
@@ -891,9 +891,10 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
 
                     else -> {
                         val altererNames = alteredAssignments.map { it.second::class.qualifiedName }
-                        val errorReference = buildErrorNamedReference {
+                        val errorReference = buildResolvedErrorReference {
                             source = resolvedReference.source
-                            candidateSymbol = resolvedReference.resolvedSymbol
+                            name = resolvedReference.name
+                            resolvedSymbol = resolvedReference.resolvedSymbol
                             diagnostic = ConeAmbiguousAlteredAssign(altererNames)
                         }
                         completeAssignment.replaceCalleeReference(errorReference)
@@ -1281,7 +1282,7 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
         }
 
         // prefer a "simpler" variant for dynamics
-        if (transformedLhsCall.calleeReference.resolvedSymbol?.origin == FirDeclarationOrigin.DynamicScope) {
+        if (transformedLhsCall.calleeReference.toResolvedBaseSymbol()?.origin == FirDeclarationOrigin.DynamicScope) {
             return chooseAssign()
         }
 

@@ -96,6 +96,13 @@ internal sealed interface TestRunParameter {
         override fun applyTo(programArgs: MutableList<String>) = Unit
     }
 
+    class WithLLDB(val commands: List<String>) : TestRunParameter {
+        override fun applyTo(programArgs: MutableList<String>) {
+            programArgs.add(0, "lldb")
+            programArgs.addAll(commands)
+        }
+    }
+
     // Currently, used only for logging the data.
     class WithExpectedOutputData(val expectedOutputDataFile: File) : TestRunParameter {
         override fun applyTo(programArgs: MutableList<String>) = Unit

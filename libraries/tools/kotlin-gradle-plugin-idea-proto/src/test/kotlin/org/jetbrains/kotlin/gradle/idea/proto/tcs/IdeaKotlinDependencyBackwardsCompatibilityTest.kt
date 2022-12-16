@@ -42,7 +42,7 @@ class IdeaKotlinDependencyBackwardsCompatibilityTest {
 
         assertEquals(dependency.coordinates, deserializedCopied.coordinates)
         assertEquals(dependency.binaryType, deserializedCopied.binaryType)
-        assertEquals(dependency.binaryFile, deserializedCopied.binaryFile)
+        assertEquals(dependency.classpath, deserializedCopied.classpath)
         assertEquals(dependency.extras, deserializedCopied.extras)
     }
 

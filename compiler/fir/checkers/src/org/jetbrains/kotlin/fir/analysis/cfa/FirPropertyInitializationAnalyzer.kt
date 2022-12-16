@@ -15,10 +15,10 @@ import org.jetbrains.kotlin.fir.analysis.cfa.util.traverse
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.fir.declarations.utils.isLateInit
-import org.jetbrains.kotlin.fir.declarations.utils.referredPropertySymbol
 import org.jetbrains.kotlin.fir.expressions.FirQualifiedAccess
 import org.jetbrains.kotlin.fir.expressions.FirVariableAssignment
 import org.jetbrains.kotlin.fir.isCatchParameter
+import org.jetbrains.kotlin.fir.references.toResolvedPropertySymbol
 import org.jetbrains.kotlin.fir.resolve.dfa.cfg.*
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
@@ -30,7 +30,7 @@ object FirPropertyInitializationAnalyzer : AbstractFirPropertyInitializationChec
     override fun analyze(
         graph: ControlFlowGraph,
         reporter: DiagnosticReporter,
-        data: Map<CFGNode<*>, PathAwarePropertyInitializationInfo>,
+        data: PropertyInitializationInfoData,
         properties: Set<FirPropertySymbol>,
         capturedWrites: Set<FirVariableAssignment>,
         context: CheckerContext
@@ -47,7 +47,7 @@ object FirPropertyInitializationAnalyzer : AbstractFirPropertyInitializationChec
     }
 
     private class PropertyReporter(
-        val data: Map<CFGNode<*>, PathAwarePropertyInitializationInfo>,
+        val data: PropertyInitializationInfoData,
         val localProperties: Set<FirPropertySymbol>,
         val capturedWrites: Set<FirVariableAssignment>,
         val reporter: DiagnosticReporter,
@@ -61,7 +61,7 @@ object FirPropertyInitializationAnalyzer : AbstractFirPropertyInitializationChec
         }
 
         private val CFGNode<*>.propertySymbol: FirPropertySymbol?
-            get() = (fir as? FirQualifiedAccess)?.referredPropertySymbol
+            get() = (fir as? FirQualifiedAccess)?.calleeReference?.toResolvedPropertySymbol()
 
         override fun visitVariableAssignmentNode(node: VariableAssignmentNode) {
             val symbol = node.propertySymbol ?: return

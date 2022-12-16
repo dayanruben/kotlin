@@ -112,7 +112,7 @@ rootProject.apply {
 IdeVersionConfigurator.setCurrentIde(project)
 
 if (!project.hasProperty("versions.kotlin-native")) {
-    extra["versions.kotlin-native"] = "1.8.20-dev-3138"
+    extra["versions.kotlin-native"] = "1.8.20-dev-4077"
 }
 
 val irCompilerModules = arrayOf(
@@ -607,6 +607,14 @@ tasks {
         dependsOn(":js:js.tests:runMocha")
     }
 
+    register("jsFirCompilerTest") {
+        dependsOn(":js:js.tests:jsFirTest")
+    }
+
+    register("jsIrCompilerTest") {
+        dependsOn(":js:js.tests:jsIrTest")
+    }
+
     register("wasmCompilerTest") {
         dependsOn(":js:js.tests:wasmTest")
         // Windows WABT release requires Visual C++ Redistributable
@@ -759,6 +767,10 @@ tasks {
         dependsOn(":kotlin-annotation-processing:testJdk11")
         dependsOn(":kotlin-annotation-processing-base:test")
         dependsOn(":kotlin-annotation-processing-cli:test")
+    }
+
+    register("parcelizeTests") {
+        dependsOn(":plugins:parcelize:parcelize-compiler:test")
     }
 
     register("codebaseTests") {

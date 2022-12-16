@@ -26,11 +26,14 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NEXT_NONE_APPLICA
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.OPERATOR_MODIFIER_REQUIRED
 import org.jetbrains.kotlin.fir.declarations.FirProperty
 import org.jetbrains.kotlin.fir.declarations.utils.isOperator
+import org.jetbrains.kotlin.fir.diagnostics.FirDiagnosticHolder
 import org.jetbrains.kotlin.fir.expressions.FirBlock
 import org.jetbrains.kotlin.fir.expressions.FirFunctionCall
 import org.jetbrains.kotlin.fir.expressions.FirWhileLoop
 import org.jetbrains.kotlin.fir.references.FirErrorNamedReference
+import org.jetbrains.kotlin.fir.references.FirResolvedErrorReference
 import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
+import org.jetbrains.kotlin.fir.references.isError
 import org.jetbrains.kotlin.fir.resolve.calls.UnsafeCall
 import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeAmbiguityError
 import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeInapplicableCandidateError
@@ -103,8 +106,9 @@ object FirForLoopChecker : FirBlockChecker() {
         noneApplicableFactory: KtDiagnosticFactory1<Collection<FirBasedSymbol<*>>>? = null,
         unsafeCallFactory: KtDiagnosticFactory0? = null,
     ): Boolean {
-        when (val calleeReference = call.calleeReference) {
-            is FirErrorNamedReference -> {
+        val calleeReference = call.calleeReference
+        when {
+            calleeReference.isError() -> {
                 when (val diagnostic = calleeReference.diagnostic) {
                     is ConeAmbiguityError -> if (diagnostic.applicability.isSuccess) {
                         reporter.reportOn(reportSource, ambiguityFactory, diagnostic.candidates.map { it.symbol }, context)
@@ -138,7 +142,7 @@ object FirForLoopChecker : FirBlockChecker() {
                 }
                 return true
             }
-            is FirResolvedNamedReference -> {
+            calleeReference is FirResolvedNamedReference -> {
                 val symbol = calleeReference.resolvedSymbol
                 if (symbol is FirNamedFunctionSymbol) {
                     if (!symbol.isOperator) {
