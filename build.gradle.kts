@@ -603,8 +603,8 @@ tasks {
     }
 
     register("jsCompilerTest") {
-        dependsOn(":js:js.tests:test")
-        dependsOn(":js:js.tests:runMocha")
+        dependsOn(":js:js.tests:jsTest")
+        dependsOn(":js:js.tests:mochaTest")
     }
 
     register("jsFirCompilerTest") {
@@ -717,7 +717,6 @@ tasks {
         dependsOn(":kotlinx-serialization-compiler-plugin:test")
         dependsOn(":kotlin-lombok-compiler-plugin:test")
         dependsOn(":kotlin-noarg-compiler-plugin:test")
-        dependsOn(":plugins:parcelize:parcelize-compiler:test")
         dependsOn(":kotlin-sam-with-receiver-compiler-plugin:test")
     }
 
