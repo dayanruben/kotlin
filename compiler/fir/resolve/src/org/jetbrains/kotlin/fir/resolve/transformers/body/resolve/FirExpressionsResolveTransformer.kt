@@ -32,7 +32,6 @@ import org.jetbrains.kotlin.fir.resolve.dfa.unwrapSmartcastExpression
 import org.jetbrains.kotlin.fir.resolve.diagnostics.*
 import org.jetbrains.kotlin.fir.resolve.inference.FirStubInferenceSession
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
-import org.jetbrains.kotlin.fir.resolve.transformers.StoreReceiver
 import org.jetbrains.kotlin.fir.resolve.transformers.replaceLambdaArgumentInvocationKinds
 import org.jetbrains.kotlin.fir.scopes.impl.isWrappedIntegerOperator
 import org.jetbrains.kotlin.fir.scopes.impl.isWrappedIntegerOperatorForUnsignedType
@@ -235,7 +234,7 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
                 lastDispatchReceiver
             }
         implicitReceiver?.receiverExpression?.let {
-            superReferenceContainer.transformDispatchReceiver(StoreReceiver, it)
+            superReferenceContainer.replaceDispatchReceiver(it)
         }
         val superTypeRefs = implicitReceiver?.boundSymbol?.fir?.superTypeRefs
         val superTypeRef = superReference.superTypeRef
@@ -386,6 +385,7 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
         ) {
             storeTypeFromCallee(functionCall)
         }
+        if (calleeReference is FirNamedReferenceWithCandidate) return functionCall
         if (calleeReference !is FirSimpleNamedReference) {
             // The callee reference can be resolved as an error very early, e.g., `super` as a callee during raw FIR creation.
             // We still need to visit/transform other parts, e.g., call arguments, to check if any other errors are there.
@@ -394,7 +394,6 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
             }
             return functionCall
         }
-        if (calleeReference is FirNamedReferenceWithCandidate) return functionCall
         functionCall.transformAnnotations(transformer, data)
         functionCall.replaceLambdaArgumentInvocationKinds(session)
         functionCall.transformTypeArguments(transformer, ResolutionMode.ContextIndependent)
@@ -455,11 +454,7 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
 
     private fun FirFunctionCall.transformToIntegerOperatorCallOrApproximateItIfNeeded(resolutionMode: ResolutionMode): FirFunctionCall {
         if (!explicitReceiver.isIntegerLiteralOrOperatorCall()) return this
-        val resolvedSymbol = when (val reference = calleeReference) {
-            is FirResolvedNamedReference -> reference.resolvedSymbol
-            is FirErrorNamedReference -> reference.candidateSymbol
-            else -> null
-        } ?: return this
+        val resolvedSymbol = calleeReference.toResolvedFunctionSymbol() ?: return this
         if (!resolvedSymbol.isWrappedIntegerOperator()) return this
 
         val arguments = this.argumentList.arguments
@@ -1223,7 +1218,6 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
                     // TODO: Use source of operator for callee reference source
                     this.source = source
                     this.name = name
-                    candidateSymbol = null
                 }
                 origin = FirFunctionCallOrigin.Operator
             }

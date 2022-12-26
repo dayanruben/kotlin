@@ -25,8 +25,10 @@ abstract class FirResolvedTypeRef : FirTypeRef() {
     override fun <R, D> accept(visitor: FirVisitor<R, D>, data: D): R = visitor.visitResolvedTypeRef(this, data)
 
     @Suppress("UNCHECKED_CAST")
-    override fun <E: FirElement, D> transform(transformer: FirTransformer<D>, data: D): E = 
+    override fun <E : FirElement, D> transform(transformer: FirTransformer<D>, data: D): E =
         transformer.transformResolvedTypeRef(this, data) as E
+
+    abstract override fun replaceAnnotations(newAnnotations: List<FirAnnotation>)
 
     abstract override fun <D> transformAnnotations(transformer: FirTransformer<D>, data: D): FirResolvedTypeRef
 }

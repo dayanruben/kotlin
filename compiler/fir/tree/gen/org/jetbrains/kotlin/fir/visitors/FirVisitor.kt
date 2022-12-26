@@ -95,6 +95,7 @@ import org.jetbrains.kotlin.fir.expressions.FirClassReferenceExpression
 import org.jetbrains.kotlin.fir.expressions.FirErrorExpression
 import org.jetbrains.kotlin.fir.declarations.FirErrorFunction
 import org.jetbrains.kotlin.fir.declarations.FirErrorProperty
+import org.jetbrains.kotlin.fir.declarations.FirDanglingModifierList
 import org.jetbrains.kotlin.fir.expressions.FirQualifiedAccessExpression
 import org.jetbrains.kotlin.fir.expressions.FirQualifiedErrorAccessExpression
 import org.jetbrains.kotlin.fir.expressions.FirPropertyAccessExpression
@@ -125,6 +126,7 @@ import org.jetbrains.kotlin.fir.expressions.FirVariableAssignment
 import org.jetbrains.kotlin.fir.expressions.FirWhenSubjectExpression
 import org.jetbrains.kotlin.fir.expressions.FirWrappedDelegateExpression
 import org.jetbrains.kotlin.fir.references.FirNamedReference
+import org.jetbrains.kotlin.fir.references.FirNamedReferenceWithCandidateBase
 import org.jetbrains.kotlin.fir.references.FirErrorNamedReference
 import org.jetbrains.kotlin.fir.references.FirSuperReference
 import org.jetbrains.kotlin.fir.references.FirThisReference
@@ -334,6 +336,8 @@ abstract class FirVisitor<out R, in D> {
 
     open fun visitErrorProperty(errorProperty: FirErrorProperty, data: D): R  = visitElement(errorProperty, data)
 
+    open fun visitDanglingModifierList(danglingModifierList: FirDanglingModifierList, data: D): R  = visitElement(danglingModifierList, data)
+
     open fun visitQualifiedAccessExpression(qualifiedAccessExpression: FirQualifiedAccessExpression, data: D): R  = visitElement(qualifiedAccessExpression, data)
 
     open fun visitQualifiedErrorAccessExpression(qualifiedErrorAccessExpression: FirQualifiedErrorAccessExpression, data: D): R  = visitElement(qualifiedErrorAccessExpression, data)
@@ -393,6 +397,8 @@ abstract class FirVisitor<out R, in D> {
     open fun visitWrappedDelegateExpression(wrappedDelegateExpression: FirWrappedDelegateExpression, data: D): R  = visitElement(wrappedDelegateExpression, data)
 
     open fun visitNamedReference(namedReference: FirNamedReference, data: D): R  = visitElement(namedReference, data)
+
+    open fun visitNamedReferenceWithCandidateBase(namedReferenceWithCandidateBase: FirNamedReferenceWithCandidateBase, data: D): R  = visitElement(namedReferenceWithCandidateBase, data)
 
     open fun visitErrorNamedReference(errorNamedReference: FirErrorNamedReference, data: D): R  = visitElement(errorNamedReference, data)
 

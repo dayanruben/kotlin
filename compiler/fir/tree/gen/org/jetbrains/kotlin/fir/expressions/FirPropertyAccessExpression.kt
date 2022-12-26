@@ -34,13 +34,15 @@ abstract class FirPropertyAccessExpression : FirQualifiedAccessExpression() {
     override fun <R, D> accept(visitor: FirVisitor<R, D>, data: D): R = visitor.visitPropertyAccessExpression(this, data)
 
     @Suppress("UNCHECKED_CAST")
-    override fun <E: FirElement, D> transform(transformer: FirTransformer<D>, data: D): E = 
+    override fun <E : FirElement, D> transform(transformer: FirTransformer<D>, data: D): E =
         transformer.transformPropertyAccessExpression(this, data) as E
 
     @FirImplementationDetail
     abstract override fun replaceSource(newSource: KtSourceElement?)
 
     abstract override fun replaceTypeRef(newTypeRef: FirTypeRef)
+
+    abstract override fun replaceAnnotations(newAnnotations: List<FirAnnotation>)
 
     abstract override fun replaceCalleeReference(newCalleeReference: FirReference)
 
@@ -50,6 +52,12 @@ abstract class FirPropertyAccessExpression : FirQualifiedAccessExpression() {
 
     abstract override fun replaceExplicitReceiver(newExplicitReceiver: FirExpression?)
 
+    abstract override fun replaceDispatchReceiver(newDispatchReceiver: FirExpression)
+
+    abstract override fun replaceExtensionReceiver(newExtensionReceiver: FirExpression)
+
+    abstract fun replaceNonFatalDiagnostics(newNonFatalDiagnostics: List<ConeDiagnostic>)
+
     abstract override fun <D> transformAnnotations(transformer: FirTransformer<D>, data: D): FirPropertyAccessExpression
 
     abstract override fun <D> transformCalleeReference(transformer: FirTransformer<D>, data: D): FirPropertyAccessExpression
@@ -57,8 +65,4 @@ abstract class FirPropertyAccessExpression : FirQualifiedAccessExpression() {
     abstract override fun <D> transformTypeArguments(transformer: FirTransformer<D>, data: D): FirPropertyAccessExpression
 
     abstract override fun <D> transformExplicitReceiver(transformer: FirTransformer<D>, data: D): FirPropertyAccessExpression
-
-    abstract override fun <D> transformDispatchReceiver(transformer: FirTransformer<D>, data: D): FirPropertyAccessExpression
-
-    abstract override fun <D> transformExtensionReceiver(transformer: FirTransformer<D>, data: D): FirPropertyAccessExpression
 }

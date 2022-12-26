@@ -26,18 +26,25 @@ object FieldSets {
     val receivers by lazy {
         fieldSet(
             field("explicitReceiver", expression, nullable = true, withReplace = true).withTransform(),
-            field("dispatchReceiver", expression).withTransform(),
-            field("extensionReceiver", expression).withTransform()
+            field("dispatchReceiver", expression, withReplace = true),
+            field("extensionReceiver", expression, withReplace = true)
         )
     }
 
-    val typeArguments by lazy { fieldList("typeArguments", typeProjection, withReplace = true) }
+    val typeArguments by lazy { fieldList("typeArguments", typeProjection, useMutableOrEmpty = true, withReplace = true) }
 
     val arguments by lazy { fieldList("arguments", expression) }
 
     val declarations by lazy { fieldList(declaration.withArgs("E" to "*")) }
 
-    val annotations by lazy { fieldList("annotations", annotation).withTransform(needTransformInOtherChildren = true) }
+    val annotations by lazy {
+        fieldList(
+            "annotations",
+            annotation,
+            withReplace = true,
+            useMutableOrEmpty = true
+        ).withTransform(needTransformInOtherChildren = true)
+    }
 
     fun symbolWithPackage(packageName: String?, symbolClassName: String, argument: String? = null): Field {
         return field("symbol", type(packageName, symbolClassName), argument)

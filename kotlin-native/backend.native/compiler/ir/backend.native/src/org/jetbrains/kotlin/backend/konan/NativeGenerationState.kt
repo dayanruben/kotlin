@@ -11,11 +11,9 @@ import org.jetbrains.kotlin.backend.konan.llvm.*
 import org.jetbrains.kotlin.backend.konan.llvm.coverage.CoverageManager
 import org.jetbrains.kotlin.backend.konan.objcexport.ObjCExport
 import org.jetbrains.kotlin.backend.konan.serialization.SerializedClassFields
+import org.jetbrains.kotlin.backend.konan.serialization.SerializedEagerInitializedFile
 import org.jetbrains.kotlin.backend.konan.serialization.SerializedInlineFunctionReference
-import org.jetbrains.kotlin.ir.declarations.IrAttributeContainer
-import org.jetbrains.kotlin.ir.declarations.IrClass
-import org.jetbrains.kotlin.ir.declarations.IrFile
-import org.jetbrains.kotlin.ir.declarations.IrFunction
+import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.konan.TempFiles
 import org.jetbrains.kotlin.konan.file.File
 
@@ -61,6 +59,7 @@ internal class NativeGenerationState(
 
     val inlineFunctionBodies = mutableListOf<SerializedInlineFunctionReference>()
     val classFields = mutableListOf<SerializedClassFields>()
+    val eagerInitializedFiles = mutableListOf<SerializedEagerInitializedFile>()
     val calledFromExportedInlineFunctions = mutableSetOf<IrFunction>()
     val constructedFromExportedInlineFunctions = mutableSetOf<IrClass>()
     val loweredInlineFunctions = mutableMapOf<IrFunction, InlineFunctionOriginInfo>()
@@ -85,12 +84,13 @@ internal class NativeGenerationState(
 
     val producedLlvmModuleContainsStdlib get() = llvmModuleSpecification.containsModule(context.stdlibModule)
 
+    val dependenciesTracker: DependenciesTracker = DependenciesTrackerImpl(this)
+
     private val runtimeDelegate = lazy { Runtime(llvmContext, config.distribution.compilerInterface(config.target)) }
     private val llvmDelegate = lazy { Llvm(this, LLVMModuleCreateWithNameInContext("out", llvmContext)!!) }
     private val debugInfoDelegate = lazy { DebugInfo(this) }
 
     val llvmContext = LLVMContextCreate()!!
-    val llvmImports = Llvm.ImportsImpl(context)
     val runtime by runtimeDelegate
     val llvm by llvmDelegate
     val debugInfo by debugInfoDelegate

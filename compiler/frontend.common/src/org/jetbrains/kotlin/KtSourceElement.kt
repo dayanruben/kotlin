@@ -57,6 +57,9 @@ sealed class KtFakeSourceElementKind : KtSourceElementKind() {
     // with a fake sources which refers to the target expression
     object GeneratedLambdaLabel : KtFakeSourceElementKind()
 
+    // for error element which is created for dangling modifier lists
+    object DanglingModifierList : KtFakeSourceElementKind()
+
     // for lambdas & functions with expression bodies the return statement is added
     // with a fake sources which refers to the return target
     sealed class ImplicitReturn : KtFakeSourceElementKind() {
@@ -109,6 +112,9 @@ sealed class KtFakeSourceElementKind : KtSourceElementKind() {
     // if (true) 1 --> if(true) { 1 }
     // with a fake sources for the block which refers to the wrapped expression
     object SingleExpressionBlock : KtFakeSourceElementKind()
+
+    // Contract statements are wrapped in a special block to be reused between a contract FIR and a function body.
+    object ContractBlock : KtFakeSourceElementKind()
 
     // x++ -> x = x.inc()
     // x = x++ -> x = { val <unary> = x; x = <unary>.inc(); <unary> }

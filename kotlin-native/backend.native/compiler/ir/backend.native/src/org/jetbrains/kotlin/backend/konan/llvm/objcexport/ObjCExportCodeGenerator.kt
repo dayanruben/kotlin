@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.backend.konan.descriptors.allOverriddenFunctions
 import org.jetbrains.kotlin.backend.konan.descriptors.isAbstract
 import org.jetbrains.kotlin.backend.konan.ir.KonanSymbols
 import org.jetbrains.kotlin.backend.konan.ir.isUnit
-import org.jetbrains.kotlin.backend.konan.ir.llvmSymbolOrigin
 import org.jetbrains.kotlin.backend.konan.ir.superClasses
 import org.jetbrains.kotlin.backend.konan.llvm.*
 import org.jetbrains.kotlin.backend.konan.llvm.objc.ObjCCodeGenerator
@@ -40,8 +39,6 @@ import org.jetbrains.kotlin.ir.types.isUnit
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.konan.target.AppleConfigurables
 import org.jetbrains.kotlin.konan.target.LinkerOutputKind
-import org.jetbrains.kotlin.library.metadata.CompiledKlibModuleOrigin
-import org.jetbrains.kotlin.library.metadata.CurrentKlibModuleOrigin
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi2ir.descriptors.IrBuiltInsOverDescriptors
 import org.jetbrains.kotlin.utils.DFS
@@ -222,15 +219,6 @@ internal open class ObjCExportCodeGeneratorBase(codegen: CodeGenerator) : ObjCCo
     val staticData get() = codegen.staticData
 
     val rttiGenerator = RTTIGenerator(generationState)
-
-    private val objcTerminate: LlvmCallable by lazy {
-        llvm.externalFunction(LlvmFunctionProto(
-                "objc_terminate",
-                LlvmRetType(llvm.voidType),
-                functionAttributes = listOf(LlvmFunctionAttribute.NoUnwind),
-                origin = CurrentKlibModuleOrigin
-        ))
-    }
 
     fun dispose() {
         rttiGenerator.dispose()
@@ -475,15 +463,12 @@ internal class ObjCExportCodeGenerator(
         emitSpecialClassesConvertions()
 
         // Replace runtime global with weak linkage:
-        replaceExternalWeakOrCommonGlobal(
+        codegen.replaceExternalWeakOrCommonGlobalFromNativeRuntime(
                 "Kotlin_ObjCInterop_uniquePrefix",
-                codegen.staticData.cStringLiteral(namer.topLevelNamePrefix),
-                context.standardLlvmSymbolsOrigin
+                codegen.staticData.cStringLiteral(namer.topLevelNamePrefix)
         )
 
         emitSelectorsHolder()
-
-        emitStaticInitializers()
 
         emitKt42254Hint()
     }
@@ -524,9 +509,8 @@ internal class ObjCExportCodeGenerator(
                 val sortedAdaptersPointer = staticData.placeGlobalConstArray("", type, sortedAdapters)
 
                 // Note: this globals replace runtime globals with weak linkage:
-                val origin = context.standardLlvmSymbolsOrigin
-                replaceExternalWeakOrCommonGlobal(prefix, sortedAdaptersPointer, origin)
-                replaceExternalWeakOrCommonGlobal("${prefix}Num", llvm.constInt32(sortedAdapters.size), origin)
+                codegen.replaceExternalWeakOrCommonGlobalFromNativeRuntime(prefix, sortedAdaptersPointer)
+                codegen.replaceExternalWeakOrCommonGlobalFromNativeRuntime("${prefix}Num", llvm.constInt32(sortedAdapters.size))
             }
         }
 
@@ -534,27 +518,11 @@ internal class ObjCExportCodeGenerator(
         emitSortedAdapters(placedInterfaceAdapters, "Kotlin_ObjCExport_sortedProtocolAdapters")
 
         if (generationState.llvmModuleSpecification.importsKotlinDeclarationsFromOtherSharedLibraries()) {
-            replaceExternalWeakOrCommonGlobal(
-                "Kotlin_ObjCExport_initTypeAdapters",
-                llvm.constInt1(true),
-                context.standardLlvmSymbolsOrigin
+            codegen.replaceExternalWeakOrCommonGlobalFromNativeRuntime(
+                    "Kotlin_ObjCExport_initTypeAdapters",
+                    llvm.constInt1(true)
             )
         }
-    }
-
-    private fun emitStaticInitializers() {
-        if (externalGlobalInitializers.isEmpty()) return
-
-        val initializer = generateFunctionNoRuntime(codegen, functionType(llvm.voidType, false), "initObjCExportGlobals") {
-            externalGlobalInitializers.forEach { (global, value) ->
-                store(value.llvm, global)
-            }
-            ret(null)
-        }
-
-        LLVMSetLinkage(initializer, LLVMLinkage.LLVMInternalLinkage)
-
-        llvm.otherStaticInitializers += initializer
     }
 
     private fun emitKt42254Hint() {
@@ -701,30 +669,6 @@ internal class ObjCExportCodeGenerator(
 
 }
 
-private fun ObjCExportCodeGenerator.replaceExternalWeakOrCommonGlobal(
-        name: String,
-        value: ConstValue,
-        origin: CompiledKlibModuleOrigin
-) {
-    // TODO: A similar mechanism is used in `IrToBitcode.overrideRuntimeGlobal`. Consider merging them.
-    if (generationState.llvmModuleSpecification.importsKotlinDeclarationsFromOtherSharedLibraries()) {
-        val global = codegen.importGlobal(name, value.llvmType, origin)
-        externalGlobalInitializers[global] = value
-    } else {
-        generationState.llvmImports.add(origin)
-        val global = staticData.placeGlobal(name, value, isExported = true)
-
-        if (generationState.llvmModuleSpecification.importsKotlinDeclarationsFromOtherObjectFiles()) {
-            // Note: actually this is required only if global's weak/common definition is in another object file,
-            // but it is simpler to do this for all globals, considering that all usages can't be removed by DCE anyway.
-            llvm.usedGlobals += global.llvmGlobal
-            LLVMSetVisibility(global.llvmGlobal, LLVMVisibility.LLVMHiddenVisibility)
-
-            // See also [emitKt42254Hint].
-        }
-    }
-}
-
 private fun ObjCExportCodeGenerator.setObjCExportTypeInfo(
         irClass: IrClass,
         convertToRetained: ConstPointer? = null,
@@ -739,10 +683,10 @@ private fun ObjCExportCodeGenerator.setObjCExportTypeInfo(
 
     if (codegen.isExternal(irClass)) {
         // Note: this global replaces the external one with common linkage.
-        replaceExternalWeakOrCommonGlobal(
+        codegen.replaceExternalWeakOrCommonGlobal(
                 irClass.writableTypeInfoSymbolName,
                 writableTypeInfoValue,
-                irClass.llvmSymbolOrigin
+                irClass
         )
     } else {
         setOwnWritableTypeInfo(irClass, writableTypeInfoValue)
@@ -924,11 +868,8 @@ private fun ObjCExportCodeGenerator.emitSpecialClassesConvertions() {
 
 private fun ObjCExportCodeGenerator.emitCollectionConverters() {
 
-    fun importConverter(name: String): ConstPointer = constPointer(llvm.externalFunction(LlvmFunctionProto(
-            name,
-            kotlinToObjCFunctionType,
-            origin = CurrentKlibModuleOrigin
-    )).llvmValue)
+    fun importConverter(name: String): ConstPointer =
+            constPointer(llvm.externalNativeRuntimeFunction(name, kotlinToObjCFunctionType).llvmValue)
 
     setObjCExportTypeInfo(
             symbols.list.owner,

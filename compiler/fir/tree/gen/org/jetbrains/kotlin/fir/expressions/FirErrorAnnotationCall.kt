@@ -36,10 +36,12 @@ abstract class FirErrorAnnotationCall : FirAnnotationCall(), FirDiagnosticHolder
     override fun <R, D> accept(visitor: FirVisitor<R, D>, data: D): R = visitor.visitErrorAnnotationCall(this, data)
 
     @Suppress("UNCHECKED_CAST")
-    override fun <E: FirElement, D> transform(transformer: FirTransformer<D>, data: D): E = 
+    override fun <E : FirElement, D> transform(transformer: FirTransformer<D>, data: D): E =
         transformer.transformErrorAnnotationCall(this, data) as E
 
     abstract override fun replaceTypeRef(newTypeRef: FirTypeRef)
+
+    abstract override fun replaceAnnotations(newAnnotations: List<FirAnnotation>)
 
     abstract override fun replaceAnnotationTypeRef(newAnnotationTypeRef: FirTypeRef)
 

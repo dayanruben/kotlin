@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.fir.FirModuleData
 import org.jetbrains.kotlin.fir.builder.FirAnnotationContainerBuilder
 import org.jetbrains.kotlin.fir.builder.FirBuilderDsl
+import org.jetbrains.kotlin.fir.builder.toMutableOrEmpty
 import org.jetbrains.kotlin.fir.declarations.DeprecationsProvider
 import org.jetbrains.kotlin.fir.declarations.FirBackingField
 import org.jetbrains.kotlin.fir.declarations.FirContextReceiver
@@ -72,11 +73,11 @@ class FirEnumEntryBuilder : FirAnnotationContainerBuilder {
             deprecationsProvider,
             containerSource,
             dispatchReceiverType,
-            contextReceivers,
+            contextReceivers.toMutableOrEmpty(),
             name,
             initializer,
             backingField,
-            annotations,
+            annotations.toMutableOrEmpty(),
             symbol,
         )
     }

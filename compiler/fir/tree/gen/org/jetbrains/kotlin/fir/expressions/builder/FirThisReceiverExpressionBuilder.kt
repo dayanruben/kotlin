@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.fir.FirImplementationDetail
 import org.jetbrains.kotlin.fir.builder.FirAnnotationContainerBuilder
 import org.jetbrains.kotlin.fir.builder.FirBuilderDsl
+import org.jetbrains.kotlin.fir.builder.toMutableOrEmpty
 import org.jetbrains.kotlin.fir.expressions.FirAnnotation
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.FirThisReceiverExpression
@@ -45,9 +46,9 @@ class FirThisReceiverExpressionBuilder : FirQualifiedAccessBuilder, FirAnnotatio
         return FirThisReceiverExpressionImpl(
             source,
             typeRef,
-            annotations,
-            contextReceiverArguments,
-            typeArguments,
+            annotations.toMutableOrEmpty(),
+            contextReceiverArguments.toMutableOrEmpty(),
+            typeArguments.toMutableOrEmpty(),
             calleeReference,
             isImplicit,
         )

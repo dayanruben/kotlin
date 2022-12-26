@@ -387,6 +387,11 @@ class FirRenderer(
             bodyRenderer?.renderBody(anonymousInitializer.body)
         }
 
+        override fun visitDanglingModifierList(danglingModifierList: FirDanglingModifierList) {
+            annotationRenderer?.render(danglingModifierList)
+            print("<DANGLING MODIFIER: ${danglingModifierList.diagnostic.reason}>")
+        }
+
         override fun visitBlock(block: FirBlock) {
             bodyRenderer?.renderBody(block)
         }
@@ -782,12 +787,15 @@ class FirRenderer(
         }
 
         override fun visitNamedReference(namedReference: FirNamedReference) {
-            val symbol = namedReference.candidateSymbol
-            when {
-                namedReference is FirErrorNamedReference -> print("<${namedReference.diagnostic.reason}>#")
-                symbol != null -> print("R?C|${symbol.render()}|")
-                else -> print("${namedReference.name}#")
-            }
+            print("${namedReference.name}#")
+        }
+
+        override fun visitNamedReferenceWithCandidateBase(namedReferenceWithCandidateBase: FirNamedReferenceWithCandidateBase) {
+            print("R?C|${namedReferenceWithCandidateBase.candidateSymbol.render()}|")
+        }
+
+        override fun visitErrorNamedReference(errorNamedReference: FirErrorNamedReference) {
+            print("<${errorNamedReference.diagnostic.reason}>#")
         }
 
         override fun visitBackingFieldReference(backingFieldReference: FirBackingFieldReference) {
@@ -1061,10 +1069,6 @@ class FirRenderer(
             binaryLogicExpression.leftOperand.accept(this)
             print(" ${binaryLogicExpression.kind.token} ")
             binaryLogicExpression.rightOperand.accept(this)
-        }
-
-        override fun visitErrorNamedReference(errorNamedReference: FirErrorNamedReference) {
-            visitNamedReference(errorNamedReference)
         }
 
         override fun visitEffectDeclaration(effectDeclaration: FirEffectDeclaration) {

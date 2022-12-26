@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.fir.expressions.FirAnnotation
 import org.jetbrains.kotlin.fir.expressions.FirBlock
 import org.jetbrains.kotlin.fir.references.FirControlFlowGraphReference
 import org.jetbrains.kotlin.fir.symbols.impl.FirAnonymousInitializerSymbol
+import org.jetbrains.kotlin.fir.types.ConeSimpleKotlinType
 import org.jetbrains.kotlin.fir.visitors.*
 
 /*
@@ -29,14 +30,17 @@ abstract class FirAnonymousInitializer : FirDeclaration(), FirControlFlowGraphOw
     abstract override val controlFlowGraphReference: FirControlFlowGraphReference?
     abstract val body: FirBlock?
     abstract override val symbol: FirAnonymousInitializerSymbol
+    abstract val dispatchReceiverType: ConeSimpleKotlinType?
 
     override fun <R, D> accept(visitor: FirVisitor<R, D>, data: D): R = visitor.visitAnonymousInitializer(this, data)
 
     @Suppress("UNCHECKED_CAST")
-    override fun <E: FirElement, D> transform(transformer: FirTransformer<D>, data: D): E = 
+    override fun <E : FirElement, D> transform(transformer: FirTransformer<D>, data: D): E =
         transformer.transformAnonymousInitializer(this, data) as E
 
     abstract override fun replaceResolvePhase(newResolvePhase: FirResolvePhase)
+
+    abstract override fun replaceAnnotations(newAnnotations: List<FirAnnotation>)
 
     abstract override fun replaceControlFlowGraphReference(newControlFlowGraphReference: FirControlFlowGraphReference?)
 

@@ -93,7 +93,14 @@ internal class SymbolLightSimpleMethod(
     private fun computeModifiers(modifier: String): Map<String, Boolean>? = when (modifier) {
         in LazyModifiersBox.MODALITY_MODIFIERS -> {
             ifInlineOnly { return modifiersForInlineOnlyCase() }
-            val modality = if (isTopLevel) PsiModifier.FINAL else withFunctionSymbol { it.computeSimpleModality() }
+            val modality = if (isTopLevel) {
+                PsiModifier.FINAL
+            } else {
+                withFunctionSymbol { functionSymbol ->
+                    functionSymbol.computeSimpleModality()?.takeUnless { it.isSuppressedFinalModifier(containingClass, functionSymbol) }
+                }
+            }
+
             LazyModifiersBox.MODALITY_MODIFIERS_MAP.with(modality)
         }
 
@@ -107,7 +114,7 @@ internal class SymbolLightSimpleMethod(
             val isStatic = if (suppressStatic) {
                 false
             } else {
-                isTopLevel || withFunctionSymbol { it.hasJvmStaticAnnotation() }
+                isTopLevel || withFunctionSymbol { it.isStatic || it.hasJvmStaticAnnotation() }
             }
 
             mapOf(modifier to isStatic)

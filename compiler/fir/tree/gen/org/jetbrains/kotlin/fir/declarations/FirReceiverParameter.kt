@@ -26,10 +26,12 @@ abstract class FirReceiverParameter : FirPureAbstractElement(), FirAnnotationCon
     override fun <R, D> accept(visitor: FirVisitor<R, D>, data: D): R = visitor.visitReceiverParameter(this, data)
 
     @Suppress("UNCHECKED_CAST")
-    override fun <E: FirElement, D> transform(transformer: FirTransformer<D>, data: D): E = 
+    override fun <E : FirElement, D> transform(transformer: FirTransformer<D>, data: D): E =
         transformer.transformReceiverParameter(this, data) as E
 
     abstract fun replaceTypeRef(newTypeRef: FirTypeRef)
+
+    abstract override fun replaceAnnotations(newAnnotations: List<FirAnnotation>)
 
     abstract fun <D> transformTypeRef(transformer: FirTransformer<D>, data: D): FirReceiverParameter
 

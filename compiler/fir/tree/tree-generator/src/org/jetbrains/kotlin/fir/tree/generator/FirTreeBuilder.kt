@@ -118,6 +118,7 @@ object FirTreeBuilder : AbstractFirTreeBuilder() {
     val errorExpression by element(Expression, expression, diagnosticHolder)
     val errorFunction by element(Declaration, function, diagnosticHolder)
     val errorProperty by element(Declaration, variable, diagnosticHolder)
+    val danglingModifierList by element(Declaration, declaration, diagnosticHolder)
     val qualifiedAccessExpression by element(Expression, expression, qualifiedAccess)
     val qualifiedErrorAccessExpression by element(Expression, expression, diagnosticHolder)
     val propertyAccessExpression by element(Expression, qualifiedAccessExpression)
@@ -152,6 +153,7 @@ object FirTreeBuilder : AbstractFirTreeBuilder() {
     val wrappedDelegateExpression by element(Expression, wrappedExpression)
 
     val namedReference by element(Reference, reference)
+    val namedReferenceWithCandidateBase by element(Reference, namedReference)
     val errorNamedReference by element(Reference, namedReference, diagnosticHolder)
     val superReference by element(Reference, reference)
     val thisReference by element(Reference, reference)

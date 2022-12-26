@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.fir.declarations.utils.isSealed
 import org.jetbrains.kotlin.fir.declarations.utils.isSynthetic
 import org.jetbrains.kotlin.fir.declarations.utils.visibility
 import org.jetbrains.kotlin.fir.expressions.*
+import org.jetbrains.kotlin.fir.expressions.impl.FirContractCallBlock
 import org.jetbrains.kotlin.fir.expressions.impl.FirElseIfTrueCondition
 import org.jetbrains.kotlin.fir.expressions.impl.FirStubStatement
 import org.jetbrains.kotlin.fir.expressions.impl.FirUnitExpression
@@ -193,7 +194,10 @@ class Fir2IrVisitor(
     override fun visitScript(script: FirScript, data: Any?): IrElement {
         return declarationStorage.getCachedIrScript(script)!!.also { irScript ->
             irScript.parent = conversionScope.parentFromStack()
-            symbolTable.enterScope(irScript)
+            declarationStorage.enterScope(irScript)
+            irScript.explicitCallParameters = script.parameters.map { parameter ->
+                declarationStorage.createIrVariable(parameter, irScript)
+            }
             conversionScope.withParent(irScript) {
                 for (statement in script.statements) {
                     if (statement is FirDeclaration) {
@@ -205,7 +209,7 @@ class Fir2IrVisitor(
                     }
                 }
             }
-            symbolTable.leaveScope(irScript)
+            declarationStorage.leaveScope(irScript)
         }
     }
 
@@ -657,6 +661,7 @@ class Fir2IrVisitor(
         if (this is FirTypeAlias) return null
         if (this == FirStubStatement) return null
         if (this is FirUnitExpression) return convertToIrExpression(this)
+        if (this is FirContractCallBlock) return null
         if (this is FirBlock) return convertToIrExpression(this)
         return accept(this@Fir2IrVisitor, null) as IrStatement
     }

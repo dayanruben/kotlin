@@ -30,8 +30,6 @@ import org.jetbrains.kotlin.fir.resolve.diagnostics.*
 import org.jetbrains.kotlin.fir.resolve.inference.ResolvedCallableReferenceAtom
 import org.jetbrains.kotlin.fir.resolve.inference.inferenceComponents
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
-import org.jetbrains.kotlin.fir.resolve.transformers.StoreNameReference
-import org.jetbrains.kotlin.fir.resolve.transformers.StoreReceiver
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirAbstractBodyResolveTransformer
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirExpressionsResolveTransformer
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.resultType
@@ -91,7 +89,7 @@ class FirCallResolver(
             expectedCandidates = forceCandidates
         )
 
-        val resultExpression = functionCall.transformCalleeReference(StoreNameReference, nameReference)
+        functionCall.replaceCalleeReference(nameReference)
         val candidate = (nameReference as? FirNamedReferenceWithCandidate)?.candidate
         val resolvedReceiver = functionCall.explicitReceiver
         if (candidate != null && resolvedReceiver is FirResolvedQualifier) {
@@ -108,7 +106,7 @@ class FirCallResolver(
                 contextReceiverArguments.addAll(candidate.contextReceiverArguments())
             }
         } else {
-            resultExpression
+            functionCall
         }
         val typeRef = components.typeFromCallee(resultFunctionCall)
         if (typeRef.type is ConeErrorType) {
@@ -320,15 +318,17 @@ class FirCallResolver(
             }
         }
 
-        var resultExpression = qualifiedAccess.transformCalleeReference(StoreNameReference, nameReference)
+        qualifiedAccess.replaceCalleeReference(nameReference)
         if (reducedCandidates.size == 1) {
             val candidate = reducedCandidates.single()
-            resultExpression = resultExpression.transformDispatchReceiver(StoreReceiver, candidate.dispatchReceiverExpression())
-            resultExpression = resultExpression.transformExtensionReceiver(StoreReceiver, candidate.chosenExtensionReceiverExpression())
-            resultExpression.replaceContextReceiverArguments(candidate.contextReceiverArguments())
+            qualifiedAccess.apply {
+                replaceDispatchReceiver(candidate.dispatchReceiverExpression())
+                replaceExtensionReceiver(candidate.chosenExtensionReceiverExpression())
+                replaceContextReceiverArguments(candidate.contextReceiverArguments())
+            }
         }
-        if (resultExpression is FirExpression) transformer.storeTypeFromCallee(resultExpression)
-        return resultExpression
+        if (qualifiedAccess is FirExpression) transformer.storeTypeFromCallee(qualifiedAccess)
+        return qualifiedAccess
     }
 
     fun resolveCallableReference(
@@ -467,7 +467,9 @@ class FirCallResolver(
                 transformer.resolutionContext,
                 components.resolutionStageRunner
             )
-            return delegatedConstructorCall.transformCalleeReference(StoreNameReference, errorReference)
+            return delegatedConstructorCall.apply {
+                replaceCalleeReference(errorReference)
+            }
         }
 
         val result = towerResolver.runResolverForDelegatingConstructor(
@@ -540,7 +542,9 @@ class FirCallResolver(
             )
         }
 
-        return annotation.transformCalleeReference(StoreNameReference, resolvedReference)
+        return annotation.apply {
+            replaceCalleeReference(resolvedReference)
+        }
     }
 
     private fun createCandidateForAnnotationCall(
@@ -587,12 +591,13 @@ class FirCallResolver(
             result.currentApplicability,
         )
 
-        return call.transformCalleeReference(StoreNameReference, nameReference).apply {
+        return call.apply {
+            call.replaceCalleeReference(nameReference)
             val singleCandidate = reducedCandidates.singleOrNull()
             if (singleCandidate != null) {
                 val symbol = singleCandidate.symbol
                 if (symbol is FirConstructorSymbol && symbol.fir.isInner) {
-                    transformDispatchReceiver(StoreReceiver, singleCandidate.dispatchReceiverExpression())
+                    replaceDispatchReceiver(singleCandidate.dispatchReceiverExpression())
                 }
                 replaceContextReceiverArguments(singleCandidate.contextReceiverArguments())
             }

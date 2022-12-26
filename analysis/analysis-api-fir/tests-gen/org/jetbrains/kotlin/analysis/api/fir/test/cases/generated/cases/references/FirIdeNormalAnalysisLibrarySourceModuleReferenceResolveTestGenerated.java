@@ -660,6 +660,12 @@ public class FirIdeNormalAnalysisLibrarySourceModuleReferenceResolveTestGenerate
         public void testSetOperator() throws Exception {
             runTest("analysis/analysis-api/testData/referenceResolve/arrayAccess/setOperator.kt");
         }
+
+        @Test
+        @TestMetadata("SetOperatorInc.kt")
+        public void testSetOperatorInc() throws Exception {
+            runTest("analysis/analysis-api/testData/referenceResolve/arrayAccess/SetOperatorInc.kt");
+        }
     }
 
     @Nested
@@ -681,6 +687,40 @@ public class FirIdeNormalAnalysisLibrarySourceModuleReferenceResolveTestGenerate
         @TestMetadata("toSecondary.kt")
         public void testToSecondary() throws Exception {
             runTest("analysis/analysis-api/testData/referenceResolve/constructorDelegatingReference/toSecondary.kt");
+        }
+    }
+
+    @Nested
+    @TestMetadata("analysis/analysis-api/testData/referenceResolve/danglingAnnotations")
+    @TestDataPath("$PROJECT_ROOT")
+    public class DanglingAnnotations {
+        @Test
+        public void testAllFilesPresentInDanglingAnnotations() throws Exception {
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/analysis-api/testData/referenceResolve/danglingAnnotations"), Pattern.compile("^([^.]+)\\.kt$"), null, true, "withErrors");
+        }
+
+        @Test
+        @TestMetadata("DanglingAnnotationsResolvedAnonymous.kt")
+        public void testDanglingAnnotationsResolvedAnonymous() throws Exception {
+            runTest("analysis/analysis-api/testData/referenceResolve/danglingAnnotations/DanglingAnnotationsResolvedAnonymous.kt");
+        }
+
+        @Test
+        @TestMetadata("DanglingAnnotationsResolvedClass.kt")
+        public void testDanglingAnnotationsResolvedClass() throws Exception {
+            runTest("analysis/analysis-api/testData/referenceResolve/danglingAnnotations/DanglingAnnotationsResolvedClass.kt");
+        }
+
+        @Test
+        @TestMetadata("DanglingAnnotationsResolvedLocal.kt")
+        public void testDanglingAnnotationsResolvedLocal() throws Exception {
+            runTest("analysis/analysis-api/testData/referenceResolve/danglingAnnotations/DanglingAnnotationsResolvedLocal.kt");
+        }
+
+        @Test
+        @TestMetadata("DanglingAnnotationsResolvedTopLevel.kt")
+        public void testDanglingAnnotationsResolvedTopLevel() throws Exception {
+            runTest("analysis/analysis-api/testData/referenceResolve/danglingAnnotations/DanglingAnnotationsResolvedTopLevel.kt");
         }
     }
 

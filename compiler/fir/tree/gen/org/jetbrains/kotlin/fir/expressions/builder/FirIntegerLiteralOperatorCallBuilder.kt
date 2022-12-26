@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.fir.FirImplementationDetail
 import org.jetbrains.kotlin.fir.builder.FirAnnotationContainerBuilder
 import org.jetbrains.kotlin.fir.builder.FirBuilderDsl
+import org.jetbrains.kotlin.fir.builder.toMutableOrEmpty
 import org.jetbrains.kotlin.fir.expressions.FirAnnotation
 import org.jetbrains.kotlin.fir.expressions.FirArgumentList
 import org.jetbrains.kotlin.fir.expressions.FirEmptyArgumentList
@@ -41,25 +42,25 @@ open class FirIntegerLiteralOperatorCallBuilder : FirAbstractFunctionCallBuilder
     override val contextReceiverArguments: MutableList<FirExpression> = mutableListOf()
     override val typeArguments: MutableList<FirTypeProjection> = mutableListOf()
     override var explicitReceiver: FirExpression? = null
-    override var dispatchReceiver: FirExpression = FirNoReceiverExpression
-    override var extensionReceiver: FirExpression = FirNoReceiverExpression
     override var argumentList: FirArgumentList = FirEmptyArgumentList
     override lateinit var calleeReference: FirNamedReference
     override lateinit var origin: FirFunctionCallOrigin
+    override var dispatchReceiver: FirExpression = FirNoReceiverExpression
+    override var extensionReceiver: FirExpression = FirNoReceiverExpression
 
     override fun build(): FirIntegerLiteralOperatorCall {
         return FirIntegerLiteralOperatorCallImpl(
             source,
             typeRef,
-            annotations,
-            contextReceiverArguments,
-            typeArguments,
+            annotations.toMutableOrEmpty(),
+            contextReceiverArguments.toMutableOrEmpty(),
+            typeArguments.toMutableOrEmpty(),
             explicitReceiver,
-            dispatchReceiver,
-            extensionReceiver,
             argumentList,
             calleeReference,
             origin,
+            dispatchReceiver,
+            extensionReceiver,
         )
     }
 

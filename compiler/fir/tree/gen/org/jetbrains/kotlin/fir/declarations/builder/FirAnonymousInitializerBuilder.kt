@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.fir.FirModuleData
 import org.jetbrains.kotlin.fir.builder.FirAnnotationContainerBuilder
 import org.jetbrains.kotlin.fir.builder.FirBuilderDsl
+import org.jetbrains.kotlin.fir.builder.toMutableOrEmpty
 import org.jetbrains.kotlin.fir.declarations.FirAnonymousInitializer
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationAttributes
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
@@ -22,6 +23,7 @@ import org.jetbrains.kotlin.fir.expressions.FirAnnotation
 import org.jetbrains.kotlin.fir.expressions.FirBlock
 import org.jetbrains.kotlin.fir.references.FirControlFlowGraphReference
 import org.jetbrains.kotlin.fir.symbols.impl.FirAnonymousInitializerSymbol
+import org.jetbrains.kotlin.fir.types.ConeSimpleKotlinType
 import org.jetbrains.kotlin.fir.visitors.*
 
 /*
@@ -38,6 +40,7 @@ class FirAnonymousInitializerBuilder : FirDeclarationBuilder, FirAnnotationConta
     override var attributes: FirDeclarationAttributes = FirDeclarationAttributes()
     var body: FirBlock? = null
     var symbol: FirAnonymousInitializerSymbol = FirAnonymousInitializerSymbol()
+    var dispatchReceiverType: ConeSimpleKotlinType? = null
 
     override fun build(): FirAnonymousInitializer {
         return FirAnonymousInitializerImpl(
@@ -48,6 +51,7 @@ class FirAnonymousInitializerBuilder : FirDeclarationBuilder, FirAnnotationConta
             attributes,
             body,
             symbol,
+            dispatchReceiverType,
         )
     }
 

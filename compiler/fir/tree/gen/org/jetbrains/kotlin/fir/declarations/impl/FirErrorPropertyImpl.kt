@@ -31,6 +31,8 @@ import org.jetbrains.kotlin.fir.types.impl.FirErrorTypeRefImpl
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedContainerSource
 import org.jetbrains.kotlin.fir.visitors.*
+import org.jetbrains.kotlin.fir.MutableOrEmptyList
+import org.jetbrains.kotlin.fir.builder.toMutableOrEmpty
 
 /*
  * This file was generated automatically
@@ -47,10 +49,10 @@ internal class FirErrorPropertyImpl(
     override var deprecationsProvider: DeprecationsProvider,
     override val containerSource: DeserializedContainerSource?,
     override val dispatchReceiverType: ConeSimpleKotlinType?,
-    override val contextReceivers: MutableList<FirContextReceiver>,
+    override var contextReceivers: MutableOrEmptyList<FirContextReceiver>,
     override val name: Name,
     override var backingField: FirBackingField?,
-    override val annotations: MutableList<FirAnnotation>,
+    override var annotations: MutableOrEmptyList<FirAnnotation>,
     override val diagnostic: ConeDiagnostic,
     override val symbol: FirErrorPropertySymbol,
 ) : FirErrorProperty() {
@@ -150,8 +152,7 @@ internal class FirErrorPropertyImpl(
     }
 
     override fun replaceContextReceivers(newContextReceivers: List<FirContextReceiver>) {
-        contextReceivers.clear()
-        contextReceivers.addAll(newContextReceivers)
+        contextReceivers = newContextReceivers.toMutableOrEmpty()
     }
 
     override fun replaceInitializer(newInitializer: FirExpression?) {}
@@ -159,4 +160,8 @@ internal class FirErrorPropertyImpl(
     override fun replaceGetter(newGetter: FirPropertyAccessor?) {}
 
     override fun replaceSetter(newSetter: FirPropertyAccessor?) {}
+
+    override fun replaceAnnotations(newAnnotations: List<FirAnnotation>) {
+        annotations = newAnnotations.toMutableOrEmpty()
+    }
 }

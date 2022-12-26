@@ -30,16 +30,22 @@ interface FirQualifiedAccess : FirResolvable, FirStatement, FirContextReceiverAr
     override fun <R, D> accept(visitor: FirVisitor<R, D>, data: D): R = visitor.visitQualifiedAccess(this, data)
 
     @Suppress("UNCHECKED_CAST")
-    override fun <E: FirElement, D> transform(transformer: FirTransformer<D>, data: D): E = 
+    override fun <E : FirElement, D> transform(transformer: FirTransformer<D>, data: D): E =
         transformer.transformQualifiedAccess(this, data) as E
 
     override fun replaceCalleeReference(newCalleeReference: FirReference)
+
+    override fun replaceAnnotations(newAnnotations: List<FirAnnotation>)
 
     override fun replaceContextReceiverArguments(newContextReceiverArguments: List<FirExpression>)
 
     fun replaceTypeArguments(newTypeArguments: List<FirTypeProjection>)
 
     fun replaceExplicitReceiver(newExplicitReceiver: FirExpression?)
+
+    fun replaceDispatchReceiver(newDispatchReceiver: FirExpression)
+
+    fun replaceExtensionReceiver(newExtensionReceiver: FirExpression)
 
     @FirImplementationDetail
     fun replaceSource(newSource: KtSourceElement?)
@@ -51,8 +57,4 @@ interface FirQualifiedAccess : FirResolvable, FirStatement, FirContextReceiverAr
     fun <D> transformTypeArguments(transformer: FirTransformer<D>, data: D): FirQualifiedAccess
 
     fun <D> transformExplicitReceiver(transformer: FirTransformer<D>, data: D): FirQualifiedAccess
-
-    fun <D> transformDispatchReceiver(transformer: FirTransformer<D>, data: D): FirQualifiedAccess
-
-    fun <D> transformExtensionReceiver(transformer: FirTransformer<D>, data: D): FirQualifiedAccess
 }

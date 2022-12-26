@@ -31,6 +31,8 @@ import org.jetbrains.kotlin.fir.types.ConeSimpleKotlinType
 import org.jetbrains.kotlin.fir.types.FirTypeRef
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedContainerSource
 import org.jetbrains.kotlin.fir.visitors.*
+import org.jetbrains.kotlin.fir.MutableOrEmptyList
+import org.jetbrains.kotlin.fir.builder.toMutableOrEmpty
 
 /*
  * This file was generated automatically
@@ -49,14 +51,14 @@ open class FirPropertyAccessorImpl @FirImplementationDetail constructor(
     override var deprecationsProvider: DeprecationsProvider,
     override val containerSource: DeserializedContainerSource?,
     override val dispatchReceiverType: ConeSimpleKotlinType?,
-    override val contextReceivers: MutableList<FirContextReceiver>,
+    override var contextReceivers: MutableOrEmptyList<FirContextReceiver>,
     override val valueParameters: MutableList<FirValueParameter>,
     override var body: FirBlock?,
     override var contractDescription: FirContractDescription,
     override val symbol: FirPropertyAccessorSymbol,
     override val propertySymbol: FirPropertySymbol,
     override val isGetter: Boolean,
-    override val annotations: MutableList<FirAnnotation>,
+    override var annotations: MutableOrEmptyList<FirAnnotation>,
     override val typeParameters: MutableList<FirTypeParameter>,
 ) : FirPropertyAccessor() {
     override val receiverParameter: FirReceiverParameter? get() = null
@@ -146,8 +148,7 @@ open class FirPropertyAccessorImpl @FirImplementationDetail constructor(
     }
 
     override fun replaceContextReceivers(newContextReceivers: List<FirContextReceiver>) {
-        contextReceivers.clear()
-        contextReceivers.addAll(newContextReceivers)
+        contextReceivers = newContextReceivers.toMutableOrEmpty()
     }
 
     override fun replaceControlFlowGraphReference(newControlFlowGraphReference: FirControlFlowGraphReference?) {
@@ -165,5 +166,9 @@ open class FirPropertyAccessorImpl @FirImplementationDetail constructor(
 
     override fun replaceContractDescription(newContractDescription: FirContractDescription) {
         contractDescription = newContractDescription
+    }
+
+    override fun replaceAnnotations(newAnnotations: List<FirAnnotation>) {
+        annotations = newAnnotations.toMutableOrEmpty()
     }
 }

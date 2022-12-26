@@ -24,10 +24,6 @@ import org.jetbrains.kotlin.asJava.elements.KtLightIdentifier
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.light.classes.symbol.*
 import org.jetbrains.kotlin.light.classes.symbol.annotations.*
-import org.jetbrains.kotlin.light.classes.symbol.annotations.computeAnnotations
-import org.jetbrains.kotlin.light.classes.symbol.annotations.getJvmNameFromAnnotation
-import org.jetbrains.kotlin.light.classes.symbol.annotations.hasDeprecatedAnnotation
-import org.jetbrains.kotlin.light.classes.symbol.annotations.hasJvmStaticAnnotation
 import org.jetbrains.kotlin.light.classes.symbol.classes.SymbolLightClassBase
 import org.jetbrains.kotlin.light.classes.symbol.modifierLists.LazyModifiersBox
 import org.jetbrains.kotlin.light.classes.symbol.modifierLists.SymbolLightMemberModifierList
@@ -169,34 +165,39 @@ internal class SymbolLightAccessorMethod private constructor(
         annotationsFromProperty + annotationsFromAccessor
     }
 
-    private fun computeModifiers(modifier: String): Map<String, Boolean>? {
-        return when (modifier) {
-            in LazyModifiersBox.VISIBILITY_MODIFIERS -> LazyModifiersBox.computeVisibilityForMember(ktModule, propertyAccessorSymbolPointer)
+    private fun computeModifiers(modifier: String): Map<String, Boolean>? = when (modifier) {
+        in LazyModifiersBox.VISIBILITY_MODIFIERS -> LazyModifiersBox.computeVisibilityForMember(ktModule, propertyAccessorSymbolPointer)
 
-            in LazyModifiersBox.MODALITY_MODIFIERS -> {
-                if (containingClass.isInterface) {
-                    return LazyModifiersBox.MODALITY_MODIFIERS_MAP.with(PsiModifier.ABSTRACT)
+        in LazyModifiersBox.MODALITY_MODIFIERS -> {
+            val modality = if (containingClass.isInterface) {
+                PsiModifier.ABSTRACT
+            } else {
+                analyzeForLightClasses(ktModule) {
+                    val propertySymbol = propertySymbol()
+                    propertySymbol.computeSimpleModality()?.takeUnless { it.isSuppressedFinalModifier(containingClass, propertySymbol) }
                 }
-
-                LazyModifiersBox.computeSimpleModality(ktModule, containingPropertySymbolPointer)
             }
 
-            PsiModifier.STATIC -> {
-                val isStatic = if (suppressStatic) {
-                    false
-                } else {
-                    isTopLevel || hasJvmStaticAnnotation()
-                }
-
-                mapOf(modifier to isStatic)
-            }
-
-            else -> null
+            LazyModifiersBox.MODALITY_MODIFIERS_MAP.with(modality)
         }
+
+        PsiModifier.STATIC -> {
+            val isStatic = if (suppressStatic) {
+                false
+            } else {
+                isTopLevel || isStatic()
+            }
+
+            mapOf(modifier to isStatic)
+        }
+
+        else -> null
     }
 
-    private fun hasJvmStaticAnnotation(): Boolean = analyzeForLightClasses(ktModule) {
-        propertySymbol().hasJvmStaticAnnotation(accessorSite, strictUseSite = false) ||
+    private fun isStatic(): Boolean = analyzeForLightClasses(ktModule) {
+        val propertySymbol = propertySymbol()
+        propertySymbol.isStatic ||
+                propertySymbol.hasJvmStaticAnnotation(accessorSite, strictUseSite = false) ||
                 propertyAccessorSymbol().hasJvmStaticAnnotation(accessorSite, strictUseSite = false)
     }
 

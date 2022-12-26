@@ -26,8 +26,8 @@ import org.jetbrains.kotlin.fir.diagnostics.ConeDiagnostic
 import org.jetbrains.kotlin.fir.diagnostics.DiagnosticKind
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.builder.*
+import org.jetbrains.kotlin.fir.expressions.impl.FirContractCallBlock
 import org.jetbrains.kotlin.fir.expressions.impl.FirSingleExpressionBlock
-import org.jetbrains.kotlin.fir.expressions.impl.FirStubStatement
 import org.jetbrains.kotlin.fir.references.FirNamedReference
 import org.jetbrains.kotlin.fir.references.builder.buildDelegateFieldReference
 import org.jetbrains.kotlin.fir.references.builder.buildImplicitThisReference
@@ -496,14 +496,16 @@ fun <T> FirPropertyBuilder.generateAccessorsByDelegate(
     }
 }
 
-fun FirBlock?.extractContractDescriptionIfPossible(): Pair<FirBlock?, FirContractDescription?> {
-    if (this == null) return null to null
-    if (!isContractPresentFirCheck()) return this to null
-    val contractCall = replaceFirstStatement(FirStubStatement) as FirFunctionCall
-    return this to buildLegacyRawContractDescription {
-        source = contractCall.source
-        this.contractCall = contractCall
+fun processLegacyContractDescription(block: FirBlock): FirContractDescription? {
+    if (block.isContractPresentFirCheck()) {
+        val contractCall = block.replaceFirstStatement<FirFunctionCall> { FirContractCallBlock(it) }
+        return buildLegacyRawContractDescription {
+            source = contractCall.source
+            this.contractCall = contractCall
+        }
     }
+
+    return null
 }
 
 fun FirBlock.isContractPresentFirCheck(): Boolean {
@@ -577,7 +579,10 @@ fun FirTypeRef.convertToReceiverParameter(): FirReceiverParameter {
         source = typeRef.source?.fakeElement(KtFakeSourceElementKind.ReceiverFromType)
         @Suppress("UNCHECKED_CAST")
         annotations += (typeRef.annotations as List<FirAnnotationCall>).filterUseSiteTarget(AnnotationUseSiteTarget.RECEIVER)
-        (typeRef.annotations as MutableList<FirAnnotation>).removeIf { it.useSiteTarget == AnnotationUseSiteTarget.RECEIVER }
+        val filteredTypeRefAnnotations = typeRef.annotations.filterNot { it.useSiteTarget == AnnotationUseSiteTarget.RECEIVER }
+        if (filteredTypeRefAnnotations.size != typeRef.annotations.size) {
+            typeRef.replaceAnnotations(filteredTypeRefAnnotations)
+        }
         this.typeRef = typeRef
     }
 }

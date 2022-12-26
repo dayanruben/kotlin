@@ -31,14 +31,18 @@ abstract class FirDelegatedConstructorCall : FirPureAbstractElement(), FirResolv
     override fun <R, D> accept(visitor: FirVisitor<R, D>, data: D): R = visitor.visitDelegatedConstructorCall(this, data)
 
     @Suppress("UNCHECKED_CAST")
-    override fun <E: FirElement, D> transform(transformer: FirTransformer<D>, data: D): E = 
+    override fun <E : FirElement, D> transform(transformer: FirTransformer<D>, data: D): E =
         transformer.transformDelegatedConstructorCall(this, data) as E
+
+    abstract override fun replaceAnnotations(newAnnotations: List<FirAnnotation>)
 
     abstract override fun replaceArgumentList(newArgumentList: FirArgumentList)
 
     abstract override fun replaceContextReceiverArguments(newContextReceiverArguments: List<FirExpression>)
 
     abstract fun replaceConstructedTypeRef(newConstructedTypeRef: FirTypeRef)
+
+    abstract fun replaceDispatchReceiver(newDispatchReceiver: FirExpression)
 
     abstract override fun replaceCalleeReference(newCalleeReference: FirReference)
 

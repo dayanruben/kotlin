@@ -29,15 +29,18 @@ abstract class FirScript : FirDeclaration() {
     abstract val name: Name
     abstract val statements: List<FirStatement>
     abstract override val symbol: FirScriptSymbol
+    abstract val parameters: List<FirVariable>
     abstract val contextReceivers: List<FirContextReceiver>
 
     override fun <R, D> accept(visitor: FirVisitor<R, D>, data: D): R = visitor.visitScript(this, data)
 
     @Suppress("UNCHECKED_CAST")
-    override fun <E: FirElement, D> transform(transformer: FirTransformer<D>, data: D): E = 
+    override fun <E : FirElement, D> transform(transformer: FirTransformer<D>, data: D): E =
         transformer.transformScript(this, data) as E
 
     abstract override fun replaceResolvePhase(newResolvePhase: FirResolvePhase)
+
+    abstract override fun replaceAnnotations(newAnnotations: List<FirAnnotation>)
 
     abstract override fun <D> transformAnnotations(transformer: FirTransformer<D>, data: D): FirScript
 

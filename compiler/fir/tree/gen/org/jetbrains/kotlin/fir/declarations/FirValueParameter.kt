@@ -58,7 +58,7 @@ abstract class FirValueParameter : FirVariable(), FirControlFlowGraphOwner {
     override fun <R, D> accept(visitor: FirVisitor<R, D>, data: D): R = visitor.visitValueParameter(this, data)
 
     @Suppress("UNCHECKED_CAST")
-    override fun <E: FirElement, D> transform(transformer: FirTransformer<D>, data: D): E = 
+    override fun <E : FirElement, D> transform(transformer: FirTransformer<D>, data: D): E =
         transformer.transformValueParameter(this, data) as E
 
     abstract override fun replaceResolvePhase(newResolvePhase: FirResolvePhase)
@@ -76,6 +76,8 @@ abstract class FirValueParameter : FirVariable(), FirControlFlowGraphOwner {
     abstract override fun replaceGetter(newGetter: FirPropertyAccessor?)
 
     abstract override fun replaceSetter(newSetter: FirPropertyAccessor?)
+
+    abstract override fun replaceAnnotations(newAnnotations: List<FirAnnotation>)
 
     abstract override fun replaceControlFlowGraphReference(newControlFlowGraphReference: FirControlFlowGraphReference?)
 

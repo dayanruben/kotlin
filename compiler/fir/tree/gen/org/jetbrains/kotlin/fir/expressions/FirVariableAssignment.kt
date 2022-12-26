@@ -35,16 +35,22 @@ abstract class FirVariableAssignment : FirPureAbstractElement(), FirQualifiedAcc
     override fun <R, D> accept(visitor: FirVisitor<R, D>, data: D): R = visitor.visitVariableAssignment(this, data)
 
     @Suppress("UNCHECKED_CAST")
-    override fun <E: FirElement, D> transform(transformer: FirTransformer<D>, data: D): E = 
+    override fun <E : FirElement, D> transform(transformer: FirTransformer<D>, data: D): E =
         transformer.transformVariableAssignment(this, data) as E
 
     abstract override fun replaceCalleeReference(newCalleeReference: FirReference)
+
+    abstract override fun replaceAnnotations(newAnnotations: List<FirAnnotation>)
 
     abstract override fun replaceContextReceiverArguments(newContextReceiverArguments: List<FirExpression>)
 
     abstract override fun replaceTypeArguments(newTypeArguments: List<FirTypeProjection>)
 
     abstract override fun replaceExplicitReceiver(newExplicitReceiver: FirExpression?)
+
+    abstract override fun replaceDispatchReceiver(newDispatchReceiver: FirExpression)
+
+    abstract override fun replaceExtensionReceiver(newExtensionReceiver: FirExpression)
 
     @FirImplementationDetail
     abstract override fun replaceSource(newSource: KtSourceElement?)
@@ -58,10 +64,6 @@ abstract class FirVariableAssignment : FirPureAbstractElement(), FirQualifiedAcc
     abstract override fun <D> transformTypeArguments(transformer: FirTransformer<D>, data: D): FirVariableAssignment
 
     abstract override fun <D> transformExplicitReceiver(transformer: FirTransformer<D>, data: D): FirVariableAssignment
-
-    abstract override fun <D> transformDispatchReceiver(transformer: FirTransformer<D>, data: D): FirVariableAssignment
-
-    abstract override fun <D> transformExtensionReceiver(transformer: FirTransformer<D>, data: D): FirVariableAssignment
 
     abstract fun <D> transformRValue(transformer: FirTransformer<D>, data: D): FirVariableAssignment
 }

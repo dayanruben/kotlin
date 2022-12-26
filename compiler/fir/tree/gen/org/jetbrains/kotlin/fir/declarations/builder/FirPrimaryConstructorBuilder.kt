@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.fir.FirImplementationDetail
 import org.jetbrains.kotlin.fir.FirModuleData
 import org.jetbrains.kotlin.fir.builder.FirAnnotationContainerBuilder
 import org.jetbrains.kotlin.fir.builder.FirBuilderDsl
+import org.jetbrains.kotlin.fir.builder.toMutableOrEmpty
 import org.jetbrains.kotlin.fir.declarations.DeprecationsProvider
 import org.jetbrains.kotlin.fir.declarations.FirConstructor
 import org.jetbrains.kotlin.fir.declarations.FirContextReceiver
@@ -77,9 +78,9 @@ class FirPrimaryConstructorBuilder : FirAbstractConstructorBuilder, FirAnnotatio
             deprecationsProvider,
             containerSource,
             dispatchReceiverType,
-            contextReceivers,
+            contextReceivers.toMutableOrEmpty(),
             valueParameters,
-            annotations,
+            annotations.toMutableOrEmpty(),
             symbol,
             delegatedConstructor,
             body,

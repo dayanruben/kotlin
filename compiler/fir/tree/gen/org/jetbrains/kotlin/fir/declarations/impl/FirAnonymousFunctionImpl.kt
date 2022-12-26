@@ -31,6 +31,8 @@ import org.jetbrains.kotlin.fir.types.ConeSimpleKotlinType
 import org.jetbrains.kotlin.fir.types.FirTypeRef
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedContainerSource
 import org.jetbrains.kotlin.fir.visitors.*
+import org.jetbrains.kotlin.fir.MutableOrEmptyList
+import org.jetbrains.kotlin.fir.builder.toMutableOrEmpty
 
 /*
  * This file was generated automatically
@@ -39,7 +41,7 @@ import org.jetbrains.kotlin.fir.visitors.*
 
 internal class FirAnonymousFunctionImpl(
     override val source: KtSourceElement?,
-    override val annotations: MutableList<FirAnnotation>,
+    override var annotations: MutableOrEmptyList<FirAnnotation>,
     override val moduleData: FirModuleData,
     override val origin: FirDeclarationOrigin,
     override val attributes: FirDeclarationAttributes,
@@ -48,7 +50,7 @@ internal class FirAnonymousFunctionImpl(
     override var deprecationsProvider: DeprecationsProvider,
     override val containerSource: DeserializedContainerSource?,
     override val dispatchReceiverType: ConeSimpleKotlinType?,
-    override val contextReceivers: MutableList<FirContextReceiver>,
+    override var contextReceivers: MutableOrEmptyList<FirContextReceiver>,
     override var controlFlowGraphReference: FirControlFlowGraphReference?,
     override val valueParameters: MutableList<FirValueParameter>,
     override var body: FirBlock?,
@@ -137,6 +139,10 @@ internal class FirAnonymousFunctionImpl(
         resolvePhase = newResolvePhase
     }
 
+    override fun replaceAnnotations(newAnnotations: List<FirAnnotation>) {
+        annotations = newAnnotations.toMutableOrEmpty()
+    }
+
     override fun replaceReturnTypeRef(newReturnTypeRef: FirTypeRef) {
         returnTypeRef = newReturnTypeRef
     }
@@ -150,8 +156,7 @@ internal class FirAnonymousFunctionImpl(
     }
 
     override fun replaceContextReceivers(newContextReceivers: List<FirContextReceiver>) {
-        contextReceivers.clear()
-        contextReceivers.addAll(newContextReceivers)
+        contextReceivers = newContextReceivers.toMutableOrEmpty()
     }
 
     override fun replaceControlFlowGraphReference(newControlFlowGraphReference: FirControlFlowGraphReference?) {

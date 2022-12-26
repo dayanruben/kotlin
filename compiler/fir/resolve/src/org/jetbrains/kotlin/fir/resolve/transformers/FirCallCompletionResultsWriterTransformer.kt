@@ -7,14 +7,10 @@ package org.jetbrains.kotlin.fir.resolve.transformers
 
 import org.jetbrains.kotlin.KtFakeSourceElementKind
 import org.jetbrains.kotlin.builtins.functions.FunctionClassKind
-import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.fakeElement
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.declarations.*
-import org.jetbrains.kotlin.fir.declarations.builder.buildReceiverParameterCopy
 import org.jetbrains.kotlin.fir.declarations.utils.isInline
-import org.jetbrains.kotlin.fir.declarations.utils.isLocal
-import org.jetbrains.kotlin.fir.declarations.utils.visibility
 import org.jetbrains.kotlin.fir.diagnostics.ConeDiagnostic
 import org.jetbrains.kotlin.fir.diagnostics.ConeSimpleDiagnostic
 import org.jetbrains.kotlin.fir.diagnostics.DiagnosticKind
@@ -134,32 +130,34 @@ class FirCallCompletionResultsWriterTransformer(
             extensionReceiver = extensionReceiver.transformSingle(integerOperatorApproximator, expectedExtensionReceiverType)
         }
 
-        @Suppress("UNCHECKED_CAST")
-        val result = qualifiedAccessExpression
-            .transformCalleeReference(
-                StoreCalleeReference,
-                calleeReference.toResolvedReference(),
-            )
-            .transformDispatchReceiver(StoreReceiver, dispatchReceiver)
-            .transformExtensionReceiver(StoreReceiver, extensionReceiver) as T
-
-        result.replaceContextReceiverArguments(subCandidate.contextReceiverArguments())
-
-        if (result is FirPropertyAccessExpressionImpl && calleeReference.candidate.currentApplicability == CandidateApplicability.K2_PROPERTY_AS_OPERATOR) {
-            result.nonFatalDiagnostics.add(ConePropertyAsOperator(calleeReference.candidate.symbol as FirPropertySymbol))
+        qualifiedAccessExpression.apply {
+            replaceCalleeReference(calleeReference.toResolvedReference())
+            replaceDispatchReceiver(dispatchReceiver)
+            replaceExtensionReceiver(extensionReceiver)
         }
 
-        if (result is FirQualifiedAccessExpression) {
-            result.replaceTypeRef(typeRef)
-        } else if (result is FirVariableAssignment) {
-            result.replaceLValueTypeRef(typeRef)
+        qualifiedAccessExpression.replaceContextReceiverArguments(subCandidate.contextReceiverArguments())
+
+        if (qualifiedAccessExpression is FirPropertyAccessExpressionImpl && calleeReference.candidate.currentApplicability == CandidateApplicability.K2_PROPERTY_AS_OPERATOR) {
+            val conePropertyAsOperator = ConePropertyAsOperator(calleeReference.candidate.symbol as FirPropertySymbol)
+            val nonFatalDiagnostics: List<ConeDiagnostic> = buildList {
+                addAll(qualifiedAccessExpression.nonFatalDiagnostics)
+                add(conePropertyAsOperator)
+            }
+            qualifiedAccessExpression.replaceNonFatalDiagnostics(nonFatalDiagnostics)
+        }
+
+        if (qualifiedAccessExpression is FirQualifiedAccessExpression) {
+            qualifiedAccessExpression.replaceTypeRef(typeRef)
+        } else if (qualifiedAccessExpression is FirVariableAssignment) {
+            qualifiedAccessExpression.replaceLValueTypeRef(typeRef)
         }
 
         if (declaration !is FirErrorFunction) {
-            result.replaceTypeArguments(typeArguments)
+            qualifiedAccessExpression.replaceTypeArguments(typeArguments)
         }
         session.lookupTracker?.recordTypeResolveAsLookup(typeRef, qualifiedAccessExpression.source, context.file.source)
-        return result
+        return qualifiedAccessExpression
     }
 
     override fun transformQualifiedAccessExpression(
@@ -259,12 +257,8 @@ class FirCallCompletionResultsWriterTransformer(
         annotationCall: FirAnnotationCall,
         data: ExpectedArgumentType?
     ): FirStatement {
-        val calleeReference = annotationCall.calleeReference as? FirNamedReferenceWithCandidate
-            ?: return annotationCall
-        annotationCall.transformCalleeReference(
-            StoreCalleeReference,
-            calleeReference.toResolvedReference(),
-        )
+        val calleeReference = annotationCall.calleeReference as? FirNamedReferenceWithCandidate ?: return annotationCall
+        annotationCall.replaceCalleeReference(calleeReference.toResolvedReference())
         val subCandidate = calleeReference.candidate
         val expectedArgumentsTypeMapping = runIf(!calleeReference.isError) { subCandidate.createArgumentsMapping() }
         withFirArrayOfCallTransformer {
@@ -389,11 +383,11 @@ class FirCallCompletionResultsWriterTransformer(
             }
         }
 
-        return callableReferenceAccess.transformCalleeReference(
-            StoreCalleeReference,
-            resolvedReference,
-        ).transformDispatchReceiver(StoreReceiver, subCandidate.dispatchReceiverExpression())
-            .transformExtensionReceiver(StoreReceiver, subCandidate.chosenExtensionReceiverExpression())
+        return callableReferenceAccess.apply {
+            replaceCalleeReference(resolvedReference)
+            replaceDispatchReceiver(subCandidate.dispatchReceiverExpression())
+            replaceExtensionReceiver(subCandidate.chosenExtensionReceiverExpression())
+        }
     }
 
     private fun FirNamedReferenceWithCandidate.toErrorReference(diagnostic: ConeDiagnostic): FirNamedReference {
@@ -401,7 +395,6 @@ class FirCallCompletionResultsWriterTransformer(
         return when (calleeReference.candidateSymbol) {
             is FirErrorPropertySymbol, is FirErrorFunctionSymbol -> buildErrorNamedReference {
                 source = calleeReference.source
-                candidateSymbol = calleeReference.candidateSymbol
                 this.diagnostic = diagnostic
             }
             else -> buildResolvedErrorReference {
@@ -417,8 +410,7 @@ class FirCallCompletionResultsWriterTransformer(
         variableAssignment: FirVariableAssignment,
         data: ExpectedArgumentType?,
     ): FirStatement {
-        val calleeReference = variableAssignment.calleeReference as? FirNamedReferenceWithCandidate
-            ?: return variableAssignment
+        val calleeReference = variableAssignment.calleeReference as? FirNamedReferenceWithCandidate ?: return variableAssignment
 
         // Initialize lValueTypeRef
         val qualifiedTransform = prepareQualifiedTransform(variableAssignment, calleeReference)
@@ -428,10 +420,9 @@ class FirCallCompletionResultsWriterTransformer(
         variableAssignment.replaceLValueTypeRef(resultLValueType)
         session.lookupTracker?.recordTypeResolveAsLookup(resultLValueType, variableAssignment.lValue.source, context.file.source)
 
-        return variableAssignment.transformCalleeReference(
-            StoreCalleeReference,
-            calleeReference.toResolvedReference(),
-        )
+        return variableAssignment.apply {
+            replaceCalleeReference(calleeReference.toResolvedReference())
+        }
     }
 
     override fun transformSmartCastExpression(smartCastExpression: FirSmartCastExpression, data: ExpectedArgumentType?): FirStatement {
@@ -513,10 +504,9 @@ class FirCallCompletionResultsWriterTransformer(
                 delegatedConstructorCall.replaceArgumentList(buildResolvedArgumentList(it, delegatedConstructorCall.argumentList.source))
             }
         }
-        return delegatedConstructorCall.transformCalleeReference(
-            StoreCalleeReference,
-            calleeReference.toResolvedReference(),
-        )
+        return delegatedConstructorCall.apply {
+            replaceCalleeReference(calleeReference.toResolvedReference())
+        }
     }
 
     private fun computeTypeArguments(
@@ -638,7 +628,7 @@ class FirCallCompletionResultsWriterTransformer(
         if (finalType != null) {
             if (anonymousFunction.returnTypeRef !is FirImplicitUnitTypeRef) {
                 val resultType = anonymousFunction.returnTypeRef.withReplacedConeType(finalType)
-                anonymousFunction.transformReturnTypeRef(StoreType, resultType)
+                anonymousFunction.replaceReturnTypeRef(resultType)
             }
             needUpdateLambdaType = true
         }
@@ -785,10 +775,9 @@ class FirCallCompletionResultsWriterTransformer(
         syntheticCall.replaceTypeRefWithSubstituted(calleeReference, typeRef)
         transformSyntheticCallChildren(syntheticCall, data)
 
-        return (syntheticCall.transformCalleeReference(
-            StoreCalleeReference,
-            calleeReference.toResolvedReference(),
-        ) as D)
+        return syntheticCall.apply {
+            replaceCalleeReference(calleeReference.toResolvedReference())
+        }
     }
 
     private inline fun <reified D> transformSyntheticCallChildren(

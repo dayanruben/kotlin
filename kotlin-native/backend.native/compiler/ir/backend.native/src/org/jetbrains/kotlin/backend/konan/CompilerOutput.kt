@@ -60,7 +60,7 @@ internal val NativeGenerationState.shouldDefineCachedBoxes: Boolean
 
 internal val NativeGenerationState.shouldLinkRuntimeNativeLibraries: Boolean
     get() = producedLlvmModuleContainsStdlib &&
-            cacheDeserializationStrategy?.contains(KonanFqNames.packageName, "Runtime.kt") != false
+            cacheDeserializationStrategy?.contains(KonanFqNames.internalPackageName, "Runtime.kt") != false
 
 val KonanConfig.involvesLinkStage: Boolean
     get() = when (this.produce) {
@@ -119,7 +119,7 @@ private data class LlvmModules(
 private fun collectLlvmModules(generationState: NativeGenerationState, generatedBitcodeFiles: List<String>): LlvmModules {
     val config = generationState.config
 
-    val (bitcodePartOfStdlib, bitcodeLibraries) = generationState.llvm.bitcodeToLink
+    val (bitcodePartOfStdlib, bitcodeLibraries) = generationState.dependenciesTracker.bitcodeToLink
             .partition { it.isStdlib && generationState.producedLlvmModuleContainsStdlib }
             .toList()
             .map { libraries ->
@@ -204,87 +204,6 @@ internal fun linkBitcodeDependencies(generationState: NativeGenerationState) {
 
 }
 
-// TODO: Remove this function after dynamic driver is complete.
-internal fun produceOutput(generationState: NativeGenerationState) {
-    val context = generationState.context
-    val config = context.config
-    val tempFiles = generationState.tempFiles
-    val produce = config.produce
-    if (produce == CompilerOutputKind.FRAMEWORK) {
-        generationState.objCExport.produceFrameworkInterface()
-        if (config.omitFrameworkBinary) {
-            // Compiler does not compile anything in this mode, so return early.
-            return
-        }
-    }
-    when (produce) {
-        CompilerOutputKind.STATIC,
-        CompilerOutputKind.DYNAMIC,
-        CompilerOutputKind.FRAMEWORK,
-        CompilerOutputKind.DYNAMIC_CACHE,
-        CompilerOutputKind.STATIC_CACHE,
-        CompilerOutputKind.PROGRAM -> {
-            val output = tempFiles.nativeBinaryFileName
-            generationState.bitcodeFileName = output
-            // Insert `_main` after pipeline so we won't worry about optimizations
-            // corrupting entry point.
-            insertAliasToEntryPoint(generationState)
-            LLVMWriteBitcodeToFile(generationState.llvm.module, output)
-        }
-        CompilerOutputKind.LIBRARY -> {
-            val nopack = config.configuration.getBoolean(KonanConfigKeys.NOPACK)
-            val output = generationState.outputFiles.klibOutputFileName(!nopack)
-            val libraryName = config.moduleId
-            val shortLibraryName = config.shortModuleName
-            val neededLibraries = context.librariesWithDependencies
-            val abiVersion = KotlinAbiVersion.CURRENT
-            val compilerVersion = CompilerVersion.CURRENT.toString()
-            val libraryVersion = config.configuration.get(KonanConfigKeys.LIBRARY_VERSION)
-            val metadataVersion = KlibMetadataVersion.INSTANCE.toString()
-            val irVersion = KlibIrVersion.INSTANCE.toString()
-            val versions = KotlinLibraryVersioning(
-                abiVersion = abiVersion,
-                libraryVersion = libraryVersion,
-                compilerVersion = compilerVersion,
-                metadataVersion = metadataVersion,
-                irVersion = irVersion
-            )
-            val target = config.target
-            val manifestProperties = config.manifestProperties
-
-            if (!nopack) {
-                val suffix = config.produce.suffix(target)
-                if (!output.endsWith(suffix)) {
-                    error("please specify correct output: packed: ${!nopack}, $output$suffix")
-                }
-            }
-
-            val library = buildLibrary(
-                    config.nativeLibraries,
-                    config.includeBinaries,
-                    neededLibraries,
-                    context.serializedMetadata!!,
-                    context.serializedIr,
-                    versions,
-                    target,
-                    output,
-                    libraryName,
-                    nopack,
-                    shortLibraryName,
-                    manifestProperties,
-                    context.dataFlowGraph)
-
-            generationState.bitcodeFileName = library.mainBitcodeFileName
-        }
-        CompilerOutputKind.BITCODE -> {
-            val output = generationState.outputFile
-            generationState.bitcodeFileName = output
-            LLVMWriteBitcodeToFile(generationState.llvm.module, output)
-        }
-        else -> error("not supported: $produce")
-    }
-}
-
 private fun parseAndLinkBitcodeFile(generationState: NativeGenerationState, llvmModule: LLVMModuleRef, path: String) {
     val parsedModule = parseBitcodeFile(generationState.llvmContext, path)
     if (!generationState.shouldUseDebugInfoFromNativeLibs()) {
@@ -312,7 +231,7 @@ private fun embedAppleLinkerOptionsToBitcode(llvm: Llvm, config: KonanConfig) {
     }
 
     val optionsToEmbed = findEmbeddableOptions(config.platform.configurables.linkerKonanFlags) +
-            llvm.allNativeDependencies.flatMap { findEmbeddableOptions(it.linkerOpts) }
+            llvm.dependenciesTracker.allNativeDependencies.flatMap { findEmbeddableOptions(it.linkerOpts) }
 
     embedLlvmLinkOptions(llvm.llvmContext, llvm.module, optionsToEmbed)
 }

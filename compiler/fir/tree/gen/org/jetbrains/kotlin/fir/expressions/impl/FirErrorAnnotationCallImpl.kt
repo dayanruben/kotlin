@@ -19,6 +19,8 @@ import org.jetbrains.kotlin.fir.references.FirReference
 import org.jetbrains.kotlin.fir.types.FirTypeProjection
 import org.jetbrains.kotlin.fir.types.FirTypeRef
 import org.jetbrains.kotlin.fir.visitors.*
+import org.jetbrains.kotlin.fir.MutableOrEmptyList
+import org.jetbrains.kotlin.fir.builder.toMutableOrEmpty
 
 /*
  * This file was generated automatically
@@ -29,7 +31,7 @@ internal class FirErrorAnnotationCallImpl(
     override val source: KtSourceElement?,
     override val useSiteTarget: AnnotationUseSiteTarget?,
     override var annotationTypeRef: FirTypeRef,
-    override val typeArguments: MutableList<FirTypeProjection>,
+    override var typeArguments: MutableOrEmptyList<FirTypeProjection>,
     override var argumentList: FirArgumentList,
     override var calleeReference: FirReference,
     override val diagnostic: ConeDiagnostic,
@@ -75,13 +77,14 @@ internal class FirErrorAnnotationCallImpl(
 
     override fun replaceTypeRef(newTypeRef: FirTypeRef) {}
 
+    override fun replaceAnnotations(newAnnotations: List<FirAnnotation>) {}
+
     override fun replaceAnnotationTypeRef(newAnnotationTypeRef: FirTypeRef) {
         annotationTypeRef = newAnnotationTypeRef
     }
 
     override fun replaceTypeArguments(newTypeArguments: List<FirTypeProjection>) {
-        typeArguments.clear()
-        typeArguments.addAll(newTypeArguments)
+        typeArguments = newTypeArguments.toMutableOrEmpty()
     }
 
     override fun replaceArgumentList(newArgumentList: FirArgumentList) {

@@ -51,7 +51,7 @@ abstract class FirPropertyAccessor : FirFunction(), FirContractDescriptionOwner,
     override fun <R, D> accept(visitor: FirVisitor<R, D>, data: D): R = visitor.visitPropertyAccessor(this, data)
 
     @Suppress("UNCHECKED_CAST")
-    override fun <E: FirElement, D> transform(transformer: FirTransformer<D>, data: D): E = 
+    override fun <E : FirElement, D> transform(transformer: FirTransformer<D>, data: D): E =
         transformer.transformPropertyAccessor(this, data) as E
 
     abstract override fun replaceResolvePhase(newResolvePhase: FirResolvePhase)
@@ -71,6 +71,8 @@ abstract class FirPropertyAccessor : FirFunction(), FirContractDescriptionOwner,
     abstract override fun replaceBody(newBody: FirBlock?)
 
     abstract override fun replaceContractDescription(newContractDescription: FirContractDescription)
+
+    abstract override fun replaceAnnotations(newAnnotations: List<FirAnnotation>)
 
     abstract override fun <D> transformStatus(transformer: FirTransformer<D>, data: D): FirPropertyAccessor
 

@@ -2,6 +2,7 @@ package org.jetbrains.kotlin.backend.konan
 
 import org.jetbrains.kotlin.backend.konan.driver.PhaseContext
 import org.jetbrains.kotlin.backend.konan.serialization.ClassFieldsSerializer
+import org.jetbrains.kotlin.backend.konan.serialization.EagerInitializedPropertySerializer
 import org.jetbrains.kotlin.backend.konan.serialization.InlineFunctionBodyReferenceSerializer
 import org.jetbrains.kotlin.konan.KonanExternalToolFailure
 import org.jetbrains.kotlin.konan.exec.Command
@@ -11,8 +12,6 @@ import org.jetbrains.kotlin.konan.target.CompilerOutputKind
 import org.jetbrains.kotlin.konan.target.Family
 import org.jetbrains.kotlin.konan.target.LinkerOutputKind
 import org.jetbrains.kotlin.konan.target.presetName
-import org.jetbrains.kotlin.library.metadata.resolver.TopologicalLibraryOrder
-import org.jetbrains.kotlin.library.uniqueName
 
 internal fun determineLinkerOutput(context: PhaseContext): LinkerOutputKind =
         when (context.config.produce) {
@@ -55,17 +54,12 @@ internal class CacheStorage(val generationState: NativeGenerationState) {
         saveCacheBitcodeDependencies()
         saveInlineFunctionBodies()
         saveClassFields()
+        saveEagerInitializedProperties()
     }
 
     private fun saveCacheBitcodeDependencies() {
-        val bitcodeDependencies = config.resolvedLibraries
-                .getFullList(TopologicalLibraryOrder)
-                .map { it as KonanLibrary }
-                .filter {
-                    generationState.llvmImports.bitcodeIsUsed(it)
-                            && it != config.cacheSupport.libraryToCache?.klib // Skip loops.
-                }
-        outputFiles.bitcodeDependenciesFile!!.writeLines(bitcodeDependencies.map { it.uniqueName })
+        outputFiles.bitcodeDependenciesFile!!.writeLines(
+                DependenciesSerializer.serialize(generationState.dependenciesTracker.immediateBitcodeDependencies))
     }
 
     private fun saveInlineFunctionBodies() {
@@ -76,6 +70,11 @@ internal class CacheStorage(val generationState: NativeGenerationState) {
     private fun saveClassFields() {
         outputFiles.classFieldsFile!!.writeBytes(
                 ClassFieldsSerializer.serialize(generationState.classFields))
+    }
+
+    private fun saveEagerInitializedProperties() {
+        outputFiles.eagerInitializedPropertiesFile!!.writeBytes(
+                EagerInitializedPropertySerializer.serialize(generationState.eagerInitializedFiles))
     }
 }
 
@@ -90,13 +89,13 @@ internal class Linker(val generationState: NativeGenerationState) {
     private val debug = config.debug || config.lightDebug
 
     fun link(objectFiles: List<ObjectFile>) {
-        val nativeDependencies = generationState.llvm.nativeDependenciesToLink
+        val nativeDependencies = generationState.dependenciesTracker.nativeDependenciesToLink
 
         val includedBinariesLibraries = config.libraryToCache?.let { listOf(it.klib) }
                 ?: nativeDependencies.filterNot { config.cachedLibraries.isLibraryCached(it) }
         val includedBinaries = includedBinariesLibraries.map { (it as? KonanLibrary)?.includedPaths.orEmpty() }.flatten()
 
-        val libraryProvidedLinkerFlags = generationState.llvm.allNativeDependencies.map { it.linkerOpts }.flatten()
+        val libraryProvidedLinkerFlags = generationState.dependenciesTracker.allNativeDependencies.map { it.linkerOpts }.flatten()
 
         runLinker(objectFiles, includedBinaries, libraryProvidedLinkerFlags)
     }
@@ -239,7 +238,8 @@ private fun determineCachesToLink(generationState: NativeGenerationState): Cache
     val staticCaches = mutableListOf<String>()
     val dynamicCaches = mutableListOf<String>()
 
-    generationState.llvm.allCachedBitcodeDependencies.forEach { library ->
+    generationState.dependenciesTracker.allCachedBitcodeDependencies.forEach { dependency ->
+        val library = dependency.library
         val currentBinaryContainsLibrary = generationState.llvmModuleSpecification.containsLibrary(library)
         val cache = generationState.config.cachedLibraries.getLibraryCache(library)
                 ?: error("Library $library is expected to be cached")
@@ -253,7 +253,9 @@ private fun determineCachesToLink(generationState: NativeGenerationState): Cache
             CachedLibraries.Kind.STATIC -> staticCaches
         }
 
-        list += cache.binariesPaths
+        list += if (dependency.kind is DependenciesTracker.DependencyKind.CertainFiles && cache is CachedLibraries.Cache.PerFile)
+            dependency.kind.files.map { cache.getFileBinaryPath(it) }
+        else cache.binariesPaths
     }
     return CachesToLink(static = staticCaches, dynamic = dynamicCaches)
 }

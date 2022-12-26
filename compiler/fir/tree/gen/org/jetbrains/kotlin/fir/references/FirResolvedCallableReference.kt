@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.fir.visitors.*
 abstract class FirResolvedCallableReference : FirResolvedNamedReference() {
     abstract override val source: KtSourceElement?
     abstract override val name: Name
-    abstract override val candidateSymbol: FirBasedSymbol<*>?
     abstract override val resolvedSymbol: FirBasedSymbol<*>
     abstract val inferredTypeArguments: List<ConeKotlinType>
     abstract val mappedArguments: CallableReferenceMappedArguments
@@ -29,6 +28,6 @@ abstract class FirResolvedCallableReference : FirResolvedNamedReference() {
     override fun <R, D> accept(visitor: FirVisitor<R, D>, data: D): R = visitor.visitResolvedCallableReference(this, data)
 
     @Suppress("UNCHECKED_CAST")
-    override fun <E: FirElement, D> transform(transformer: FirTransformer<D>, data: D): E = 
+    override fun <E : FirElement, D> transform(transformer: FirTransformer<D>, data: D): E =
         transformer.transformResolvedCallableReference(this, data) as E
 }

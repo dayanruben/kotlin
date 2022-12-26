@@ -107,6 +107,7 @@ if (kotlinBuildProperties.isInJpsBuildIdeaSync) {
 enum class OsName { WINDOWS, MAC, LINUX, UNKNOWN }
 enum class OsArch { X86_32, X86_64, ARM64, UNKNOWN }
 data class OsType(val name: OsName, val arch: OsArch)
+abstract class MochaTestTask : NpmTask(), VerificationTask
 
 val currentOsType = run {
     val gradleOs = OperatingSystem.current()
@@ -388,7 +389,7 @@ val test = projectTest(parallel = true, jUnitMode = JUnitMode.JUnit5, maxHeapSiz
     configureTestDistribution()
 }
 
-projectTest("jsTest", parallel = true, jUnitMode = JUnitMode.JUnit5, maxHeapSizeMb = 4096) {
+val jsTest = projectTest("jsTest", parallel = true, jUnitMode = JUnitMode.JUnit5, maxHeapSizeMb = 4096) {
     setUpJsBoxTests(jsEnabled = true, jsIrEnabled = false, firEnabled = false)
     useJUnitPlatform()
 }
@@ -431,7 +432,7 @@ val npmInstall by tasks.getting(NpmTask::class) {
     dependsOn(prepareNpmTestData)
 }
 
-val mochaTest by task<NpmTask> {
+val mochaTest by task<MochaTestTask> {
     workingDir.set(buildDir)
 
     val target = if (project.hasProperty("teamcity")) "runOnTeamcity" else "test"
@@ -451,7 +452,7 @@ val mochaTest by task<NpmTask> {
 }
 
 val runMocha by tasks.registering {
-    dependsOn(test)
+    dependsOn(jsTest)
     finalizedBy(mochaTest)
 }
 

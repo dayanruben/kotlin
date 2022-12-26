@@ -49,6 +49,12 @@ public class SymbolLightClassesParentingForLibraryTestGenerated extends Abstract
     }
 
     @Test
+    @TestMetadata("AnnotationJavaRepeatable.kt")
+    public void testAnnotationJavaRepeatable() throws Exception {
+        runTest("compiler/testData/asJava/lightClasses/AnnotationJavaRepeatable.kt");
+    }
+
+    @Test
     @TestMetadata("AnnotationJvmRepeatable.kt")
     public void testAnnotationJvmRepeatable() throws Exception {
         runTest("compiler/testData/asJava/lightClasses/AnnotationJvmRepeatable.kt");
@@ -118,6 +124,18 @@ public class SymbolLightClassesParentingForLibraryTestGenerated extends Abstract
     @TestMetadata("DollarsInNameNoPackage.kt")
     public void testDollarsInNameNoPackage() throws Exception {
         runTest("compiler/testData/asJava/lightClasses/DollarsInNameNoPackage.kt");
+    }
+
+    @Test
+    @TestMetadata("EnumClass.kt")
+    public void testEnumClass() throws Exception {
+        runTest("compiler/testData/asJava/lightClasses/EnumClass.kt");
+    }
+
+    @Test
+    @TestMetadata("EnumClassWithEnumEntries.kt")
+    public void testEnumClassWithEnumEntries() throws Exception {
+        runTest("compiler/testData/asJava/lightClasses/EnumClassWithEnumEntries.kt");
     }
 
     @Test

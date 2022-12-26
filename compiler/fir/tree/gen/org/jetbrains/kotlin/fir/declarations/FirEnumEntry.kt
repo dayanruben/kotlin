@@ -50,7 +50,7 @@ abstract class FirEnumEntry : FirVariable() {
     override fun <R, D> accept(visitor: FirVisitor<R, D>, data: D): R = visitor.visitEnumEntry(this, data)
 
     @Suppress("UNCHECKED_CAST")
-    override fun <E: FirElement, D> transform(transformer: FirTransformer<D>, data: D): E = 
+    override fun <E : FirElement, D> transform(transformer: FirTransformer<D>, data: D): E =
         transformer.transformEnumEntry(this, data) as E
 
     abstract override fun replaceResolvePhase(newResolvePhase: FirResolvePhase)
@@ -68,6 +68,8 @@ abstract class FirEnumEntry : FirVariable() {
     abstract override fun replaceGetter(newGetter: FirPropertyAccessor?)
 
     abstract override fun replaceSetter(newSetter: FirPropertyAccessor?)
+
+    abstract override fun replaceAnnotations(newAnnotations: List<FirAnnotation>)
 
     abstract override fun <D> transformTypeParameters(transformer: FirTransformer<D>, data: D): FirEnumEntry
 

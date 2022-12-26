@@ -27,10 +27,12 @@ abstract class FirSafeCallExpression : FirExpression() {
     override fun <R, D> accept(visitor: FirVisitor<R, D>, data: D): R = visitor.visitSafeCallExpression(this, data)
 
     @Suppress("UNCHECKED_CAST")
-    override fun <E: FirElement, D> transform(transformer: FirTransformer<D>, data: D): E = 
+    override fun <E : FirElement, D> transform(transformer: FirTransformer<D>, data: D): E =
         transformer.transformSafeCallExpression(this, data) as E
 
     abstract override fun replaceTypeRef(newTypeRef: FirTypeRef)
+
+    abstract override fun replaceAnnotations(newAnnotations: List<FirAnnotation>)
 
     abstract fun replaceSelector(newSelector: FirStatement)
 

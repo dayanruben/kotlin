@@ -95,6 +95,7 @@ import org.jetbrains.kotlin.fir.expressions.FirClassReferenceExpression
 import org.jetbrains.kotlin.fir.expressions.FirErrorExpression
 import org.jetbrains.kotlin.fir.declarations.FirErrorFunction
 import org.jetbrains.kotlin.fir.declarations.FirErrorProperty
+import org.jetbrains.kotlin.fir.declarations.FirDanglingModifierList
 import org.jetbrains.kotlin.fir.expressions.FirQualifiedAccessExpression
 import org.jetbrains.kotlin.fir.expressions.FirQualifiedErrorAccessExpression
 import org.jetbrains.kotlin.fir.expressions.FirPropertyAccessExpression
@@ -125,6 +126,7 @@ import org.jetbrains.kotlin.fir.expressions.FirVariableAssignment
 import org.jetbrains.kotlin.fir.expressions.FirWhenSubjectExpression
 import org.jetbrains.kotlin.fir.expressions.FirWrappedDelegateExpression
 import org.jetbrains.kotlin.fir.references.FirNamedReference
+import org.jetbrains.kotlin.fir.references.FirNamedReferenceWithCandidateBase
 import org.jetbrains.kotlin.fir.references.FirErrorNamedReference
 import org.jetbrains.kotlin.fir.references.FirSuperReference
 import org.jetbrains.kotlin.fir.references.FirThisReference
@@ -512,6 +514,10 @@ abstract class FirVisitorVoid : FirVisitor<Unit, Nothing?>() {
         visitElement(errorProperty)
     }
 
+    open fun visitDanglingModifierList(danglingModifierList: FirDanglingModifierList) {
+        visitElement(danglingModifierList)
+    }
+
     open fun visitQualifiedAccessExpression(qualifiedAccessExpression: FirQualifiedAccessExpression) {
         visitElement(qualifiedAccessExpression)
     }
@@ -630,6 +636,10 @@ abstract class FirVisitorVoid : FirVisitor<Unit, Nothing?>() {
 
     open fun visitNamedReference(namedReference: FirNamedReference) {
         visitElement(namedReference)
+    }
+
+    open fun visitNamedReferenceWithCandidateBase(namedReferenceWithCandidateBase: FirNamedReferenceWithCandidateBase) {
+        visitElement(namedReferenceWithCandidateBase)
     }
 
     open fun visitErrorNamedReference(errorNamedReference: FirErrorNamedReference) {
@@ -1080,6 +1090,10 @@ abstract class FirVisitorVoid : FirVisitor<Unit, Nothing?>() {
         visitErrorProperty(errorProperty)
     }
 
+    final override fun visitDanglingModifierList(danglingModifierList: FirDanglingModifierList, data: Nothing?) {
+        visitDanglingModifierList(danglingModifierList)
+    }
+
     final override fun visitQualifiedAccessExpression(qualifiedAccessExpression: FirQualifiedAccessExpression, data: Nothing?) {
         visitQualifiedAccessExpression(qualifiedAccessExpression)
     }
@@ -1198,6 +1212,10 @@ abstract class FirVisitorVoid : FirVisitor<Unit, Nothing?>() {
 
     final override fun visitNamedReference(namedReference: FirNamedReference, data: Nothing?) {
         visitNamedReference(namedReference)
+    }
+
+    final override fun visitNamedReferenceWithCandidateBase(namedReferenceWithCandidateBase: FirNamedReferenceWithCandidateBase, data: Nothing?) {
+        visitNamedReferenceWithCandidateBase(namedReferenceWithCandidateBase)
     }
 
     final override fun visitErrorNamedReference(errorNamedReference: FirErrorNamedReference, data: Nothing?) {

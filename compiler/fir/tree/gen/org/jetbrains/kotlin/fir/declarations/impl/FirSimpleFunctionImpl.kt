@@ -29,6 +29,8 @@ import org.jetbrains.kotlin.fir.types.FirTypeRef
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedContainerSource
 import org.jetbrains.kotlin.fir.visitors.*
+import org.jetbrains.kotlin.fir.MutableOrEmptyList
+import org.jetbrains.kotlin.fir.builder.toMutableOrEmpty
 
 /*
  * This file was generated automatically
@@ -48,13 +50,13 @@ internal class FirSimpleFunctionImpl(
     override var deprecationsProvider: DeprecationsProvider,
     override val containerSource: DeserializedContainerSource?,
     override val dispatchReceiverType: ConeSimpleKotlinType?,
-    override val contextReceivers: MutableList<FirContextReceiver>,
+    override var contextReceivers: MutableOrEmptyList<FirContextReceiver>,
     override val valueParameters: MutableList<FirValueParameter>,
     override var body: FirBlock?,
     override var contractDescription: FirContractDescription,
     override val name: Name,
     override val symbol: FirNamedFunctionSymbol,
-    override val annotations: MutableList<FirAnnotation>,
+    override var annotations: MutableOrEmptyList<FirAnnotation>,
     override val typeParameters: MutableList<FirTypeParameter>,
 ) : FirSimpleFunction() {
     override var controlFlowGraphReference: FirControlFlowGraphReference? = null
@@ -147,8 +149,7 @@ internal class FirSimpleFunctionImpl(
     }
 
     override fun replaceContextReceivers(newContextReceivers: List<FirContextReceiver>) {
-        contextReceivers.clear()
-        contextReceivers.addAll(newContextReceivers)
+        contextReceivers = newContextReceivers.toMutableOrEmpty()
     }
 
     override fun replaceControlFlowGraphReference(newControlFlowGraphReference: FirControlFlowGraphReference?) {
@@ -166,5 +167,9 @@ internal class FirSimpleFunctionImpl(
 
     override fun replaceContractDescription(newContractDescription: FirContractDescription) {
         contractDescription = newContractDescription
+    }
+
+    override fun replaceAnnotations(newAnnotations: List<FirAnnotation>) {
+        annotations = newAnnotations.toMutableOrEmpty()
     }
 }

@@ -1086,6 +1086,18 @@ public class FirDiagnosticsWithLightTreeTestGenerated extends AbstractFirDiagnos
             public void testInitializationInTry() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolve/cfa/initializationInTry.kt");
             }
+
+            @Test
+            @TestMetadata("reassignOfNonLocalProperty_initializedProperties.kt")
+            public void testReassignOfNonLocalProperty_initializedProperties() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/cfa/reassignOfNonLocalProperty_initializedProperties.kt");
+            }
+
+            @Test
+            @TestMetadata("reassignOfNonMemberProperty_lateInitialization.kt")
+            public void testReassignOfNonMemberProperty_lateInitialization() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/cfa/reassignOfNonMemberProperty_lateInitialization.kt");
+            }
         }
 
         @Nested
@@ -5181,6 +5193,12 @@ public class FirDiagnosticsWithLightTreeTestGenerated extends AbstractFirDiagnos
                         KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolveWithStdlib/contracts/fromSource/bad"), Pattern.compile("^([^.]+)\\.kt$"), null, true);
                     }
 
+                    @Test
+                    @TestMetadata("noOptIn.kt")
+                    public void testNoOptIn() throws Exception {
+                        runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/contracts/fromSource/bad/noOptIn.kt");
+                    }
+
                     @Nested
                     @TestMetadata("compiler/fir/analysis-tests/testData/resolveWithStdlib/contracts/fromSource/bad/callsInPlace")
                     @TestDataPath("$PROJECT_ROOT")
@@ -5234,6 +5252,12 @@ public class FirDiagnosticsWithLightTreeTestGenerated extends AbstractFirDiagnos
                         @TestMetadata("propertyGetter.kt")
                         public void testPropertyGetter() throws Exception {
                             runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/contracts/fromSource/bad/returnsImplies/propertyGetter.kt");
+                        }
+
+                        @Test
+                        @TestMetadata("redundantConditions.kt")
+                        public void testRedundantConditions() throws Exception {
+                            runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/contracts/fromSource/bad/returnsImplies/redundantConditions.kt");
                         }
                     }
                 }

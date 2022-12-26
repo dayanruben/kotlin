@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.fir.builder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.util.AstLoadingFilter
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.*
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.StandardNames.BACKING_FIELD
@@ -24,6 +25,7 @@ import org.jetbrains.kotlin.fir.diagnostics.*
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.builder.*
 import org.jetbrains.kotlin.fir.expressions.impl.FirSingleExpressionBlock
+import org.jetbrains.kotlin.fir.extensions.extensionService
 import org.jetbrains.kotlin.fir.references.builder.*
 import org.jetbrains.kotlin.fir.scopes.FirScopeProvider
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
@@ -354,23 +356,23 @@ open class RawFirBuilder(
                         val lastChild = children.lastOrNull()
                         if (lastChild is KtBlockExpression) {
                             firBlock = lastChild.toFirBlock()
-                            extractAnnotationsTo(firBlock.annotations as MutableList<FirAnnotation>)
+                            extractAnnotationsTo(firBlock)
                         }
                     }
                     firBlock ?: FirSingleExpressionBlock(convert())
                 }
             }
 
-        private fun KtDeclarationWithBody.buildFirBody(): Pair<FirBlock?, FirContractDescription?> =
+        private fun KtDeclarationWithBody.buildFirBody(allowLegacyContractDescription: Boolean): Pair<FirBlock?, FirContractDescription?> =
             if (hasBody()) {
                 buildOrLazyBlock {
                     if (hasBlockBody()) {
                         val block = bodyBlockExpression?.accept(this@Visitor, Unit) as? FirBlock
-                        return@buildFirBody if (hasContractEffectList()) {
-                            block to null
-                        } else {
-                            block.extractContractDescriptionIfPossible()
+                        val contractDescription = when {
+                            allowLegacyContractDescription && !hasContractEffectList() -> block?.let(::processLegacyContractDescription)
+                            else -> null
                         }
+                        return@buildFirBody block to contractDescription
                     } else {
                         val result = { bodyExpression }.toFirExpression("Function has no body (but should)")
                         FirSingleExpressionBlock(result.toReturn(baseSource = result.source))
@@ -467,7 +469,7 @@ open class RawFirBuilder(
                             }
                         }
                         val outerContractDescription = this@toFirPropertyAccessor.obtainContractDescription()
-                        val bodyWithContractDescription = this@toFirPropertyAccessor.buildFirBody()
+                        val bodyWithContractDescription = this@toFirPropertyAccessor.buildFirBody(allowLegacyContractDescription = true)
                         this.body = bodyWithContractDescription.first
                         val contractDescription = outerContractDescription ?: bodyWithContractDescription.second
                         contractDescription?.let {
@@ -499,7 +501,7 @@ open class RawFirBuilder(
                             if (this != null) {
                                 it.extractAnnotationsFrom(this)
                             }
-                            it.annotations += accessorAnnotationsFromProperty
+                            it.replaceAnnotations(it.annotations.smartPlus(accessorAnnotationsFromProperty))
                             it.status = status
                             it.initContainingClassAttr()
                         }
@@ -660,7 +662,7 @@ open class RawFirBuilder(
                     symbol,
                 ).also { getter ->
                     getter.initContainingClassAttr()
-                    getter.annotations += parameterAnnotations.filterUseSiteTarget(PROPERTY_GETTER)
+                    getter.replaceAnnotations(parameterAnnotations.filterUseSiteTarget(PROPERTY_GETTER))
                 }
                 setter = if (isMutable) FirDefaultPropertySetter(
                     defaultAccessorSource,
@@ -672,7 +674,7 @@ open class RawFirBuilder(
                     parameterAnnotations = parameterAnnotations.filterUseSiteTarget(SETTER_PARAMETER)
                 ).also { setter ->
                     setter.initContainingClassAttr()
-                    setter.annotations += parameterAnnotations.filterUseSiteTarget(PROPERTY_SETTER)
+                    setter.replaceAnnotations(parameterAnnotations.filterUseSiteTarget(PROPERTY_SETTER))
                 } else null
                 annotations += parameterAnnotations.filter {
                     it.useSiteTarget == null || it.useSiteTarget == PROPERTY ||
@@ -691,17 +693,24 @@ open class RawFirBuilder(
         }
 
         private fun FirDefaultPropertyAccessor.extractAnnotationsFrom(annotated: KtAnnotated) {
-            annotated.extractAnnotationsTo(this.annotations)
+            annotated.extractAnnotationsTo(this)
         }
 
-        private fun KtAnnotated.extractAnnotationsTo(container: MutableList<FirAnnotation>) {
-            for (annotationEntry in annotationEntries) {
-                container += annotationEntry.convert<FirAnnotation>()
+        private fun KtAnnotated.extractAnnotationsTo(container: FirAnnotationContainer) {
+            if (annotationEntries.isEmpty()) return
+            val annotations = buildList {
+                addAll(container.annotations)
+                for (annotationEntry in annotationEntries) {
+                    add(annotationEntry.convert())
+                }
             }
+            container.replaceAnnotations(annotations)
         }
 
         private fun KtAnnotated.extractAnnotationsTo(container: FirAnnotationContainerBuilder) {
-            extractAnnotationsTo(container.annotations)
+            for (annotationEntry in annotationEntries) {
+                container.annotations += annotationEntry.convert<FirAnnotation>()
+            }
         }
 
         private fun KtTypeParameterListOwner.extractTypeParametersTo(
@@ -1049,6 +1058,10 @@ open class RawFirBuilder(
                         else -> declaration.convert()
                     }
                 }
+
+                for (danglingModifierList in PsiTreeUtil.getChildrenOfTypeAsList(file, KtModifierList::class.java)) {
+                    declarations += buildErrorTopLevelDeclarationForDanglingModifierList(danglingModifierList)
+                }
             }
         }
 
@@ -1069,6 +1082,7 @@ open class RawFirBuilder(
                         }
                     }
                 }
+                baseSession.extensionService.scriptConfigurators.forEach { with(it) { configure(containingFile) } }
             }
         }
 
@@ -1260,7 +1274,14 @@ open class RawFirBuilder(
                                     classOrObject,
                                     this,
                                     typeParameters
-                                ),
+                                )
+                            )
+                        }
+                        for (danglingModifier in PsiTreeUtil.getChildrenOfTypeAsList(classOrObject.body, KtModifierList::class.java)) {
+                            addDeclaration(
+                                buildErrorTopLevelDeclarationForDanglingModifierList(danglingModifier).apply {
+                                    containingClassAttr = currentDispatchReceiverType()?.lookupTag
+                                }
                             )
                         }
 
@@ -1352,6 +1373,12 @@ open class RawFirBuilder(
                                 ownerTypeParameters = emptyList()
                             )
                         }
+
+                        for (danglingModifier in PsiTreeUtil.getChildrenOfTypeAsList(objectDeclaration.body, KtModifierList::class.java)) {
+                            declarations += buildErrorTopLevelDeclarationForDanglingModifierList(danglingModifier).apply {
+                                containingClassAttr = currentDispatchReceiverType()?.lookupTag
+                            }
+                        }
                     }.also {
                         it.delegateFieldsMap = delegatedFieldsMap
                     }
@@ -1390,6 +1417,7 @@ open class RawFirBuilder(
 
             val labelName: String?
             val isAnonymousFunction = function.isAnonymous
+            val isLocalFunction = function.isLocal
             val functionSymbol: FirFunctionSymbol<*>
             val functionBuilder = if (isAnonymousFunction) {
                 FirAnonymousFunctionBuilder().apply {
@@ -1408,7 +1436,7 @@ open class RawFirBuilder(
                     symbol = FirNamedFunctionSymbol(callableIdForName(function.nameAsSafeName)).also { functionSymbol = it }
                     dispatchReceiverType = currentDispatchReceiverType()
                     status = FirDeclarationStatusImpl(
-                        if (function.isLocal) Visibilities.Local else function.visibility,
+                        if (isLocalFunction) Visibilities.Local else function.visibility,
                         function.modality,
                     ).apply {
                         isExpect = function.hasExpectModifier() || context.containerIsExpect
@@ -1453,7 +1481,7 @@ open class RawFirBuilder(
                     listOf()
                 withCapturedTypeParameters(true, functionSource, actualTypeParameters) {
                     val outerContractDescription = function.obtainContractDescription()
-                    val bodyWithContractDescription = function.buildFirBody()
+                    val bodyWithContractDescription = function.buildFirBody(!isLocalFunction)
                     this.body = bodyWithContractDescription.first
                     val contractDescription = outerContractDescription ?: bodyWithContractDescription.second
                     contractDescription?.let {
@@ -1626,7 +1654,7 @@ open class RawFirBuilder(
                 extractValueParametersTo(this, symbol, ValueParameterDeclaration.FUNCTION)
 
 
-                val (body, _) = buildFirBody()
+                val (body, _) = buildFirBody(allowLegacyContractDescription = true)
                 this.body = body
                 this@RawFirBuilder.context.firFunctionTargets.removeLast()
             }.also {
@@ -1815,6 +1843,7 @@ open class RawFirBuilder(
                 moduleData = baseModuleData
                 origin = FirDeclarationOrigin.Source
                 body = buildOrLazyBlock { initializer.body.toFirBlock() }
+                dispatchReceiverType = context.dispatchReceiverTypesStack.lastOrNull()
             }
         }
 
@@ -2646,7 +2675,7 @@ open class RawFirBuilder(
                     expression.toFirSourceElement(),
                     ConeNotAnnotationContainer(rawResult?.render() ?: "???")
                 )
-            expression.extractAnnotationsTo(result.annotations as MutableList<FirAnnotation>)
+            expression.extractAnnotationsTo(result)
             return result
         }
 
@@ -2718,6 +2747,17 @@ open class RawFirBuilder(
         private fun MutableList<FirTypeProjection>.appendTypeArguments(args: List<KtTypeProjection>) {
             for (typeArgument in args) {
                 this += typeArgument.convert<FirTypeProjection>()
+            }
+        }
+
+        private fun buildErrorTopLevelDeclarationForDanglingModifierList(modifierList : KtModifierList) = buildDanglingModifierList {
+            this.source = modifierList.toFirSourceElement(KtFakeSourceElementKind.DanglingModifierList)
+            moduleData = baseModuleData
+            origin = FirDeclarationOrigin.Source
+            diagnostic = ConeDanglingModifierOnTopLevel
+            symbol = FirDanglingModifierSymbol()
+            for (annotationEntry in modifierList.getAnnotationEntries()) {
+                annotations += annotationEntry.convert<FirAnnotation>()
             }
         }
     }

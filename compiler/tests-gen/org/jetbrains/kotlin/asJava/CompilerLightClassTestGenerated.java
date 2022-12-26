@@ -49,6 +49,11 @@ public class CompilerLightClassTestGenerated extends AbstractCompilerLightClassT
         runTest("compiler/testData/asJava/lightClasses/AnnotationClass.kt");
     }
 
+    @TestMetadata("AnnotationJavaRepeatable.kt")
+    public void testAnnotationJavaRepeatable() throws Exception {
+        runTest("compiler/testData/asJava/lightClasses/AnnotationJavaRepeatable.kt");
+    }
+
     @TestMetadata("AnnotationJvmRepeatable.kt")
     public void testAnnotationJvmRepeatable() throws Exception {
         runTest("compiler/testData/asJava/lightClasses/AnnotationJvmRepeatable.kt");
@@ -107,6 +112,16 @@ public class CompilerLightClassTestGenerated extends AbstractCompilerLightClassT
     @TestMetadata("DollarsInNameNoPackage.kt")
     public void testDollarsInNameNoPackage() throws Exception {
         runTest("compiler/testData/asJava/lightClasses/DollarsInNameNoPackage.kt");
+    }
+
+    @TestMetadata("EnumClass.kt")
+    public void testEnumClass() throws Exception {
+        runTest("compiler/testData/asJava/lightClasses/EnumClass.kt");
+    }
+
+    @TestMetadata("EnumClassWithEnumEntries.kt")
+    public void testEnumClassWithEnumEntries() throws Exception {
+        runTest("compiler/testData/asJava/lightClasses/EnumClassWithEnumEntries.kt");
     }
 
     @TestMetadata("EnumEntry.kt")

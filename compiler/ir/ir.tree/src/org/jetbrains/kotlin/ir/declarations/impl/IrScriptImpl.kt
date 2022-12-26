@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.utils.SmartList
 
 private val SCRIPT_ORIGIN = object : IrDeclarationOriginImpl("SCRIPT") {}
+val SCRIPT_K2_ORIGIN = object : IrDeclarationOriginImpl("SCRIPT_K2") {}
 
 class IrScriptImpl(
     override val symbol: IrScriptSymbol,
@@ -46,7 +47,7 @@ class IrScriptImpl(
     override var thisReceiver: IrValueParameter? = null
     override var baseClass: IrType? = null
 
-    override lateinit var explicitCallParameters: List<IrValueParameter>
+    override lateinit var explicitCallParameters: List<IrVariable>
     override lateinit var implicitReceiversParameters: List<IrValueParameter>
     override lateinit var providedProperties: List<IrPropertySymbol>
     override lateinit var providedPropertiesParameters: List<IrValueParameter>

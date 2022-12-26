@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.konan.ForeignExceptionMode
 import org.jetbrains.kotlin.konan.target.CompilerOutputKind
-import org.jetbrains.kotlin.library.metadata.CompiledKlibModuleOrigin
 
 
 internal class CodeGenerator(override val generationState: NativeGenerationState) : ContextUtils {
@@ -1265,21 +1264,19 @@ internal abstract class FunctionGenerationContext(
         assert(!irClass.isInterface)
 
         return if (irClass.isExternalObjCClass()) {
-            val llvmSymbolOrigin = irClass.llvmSymbolOrigin
-
+            llvm.dependenciesTracker.add(irClass)
             if (irClass.isObjCMetaClass()) {
                 val name = irClass.descriptor.getExternalObjCMetaClassBinaryName()
-                val objCClass = getObjCClass(name, llvmSymbolOrigin)
+                val objCClass = getObjCClass(name)
 
-                val getClass = llvm.externalFunction(LlvmFunctionProto(
+                val getClass = llvm.externalNativeRuntimeFunction(
                         "object_getClass",
                         LlvmRetType(llvm.int8PtrType),
-                        listOf(LlvmParamType(llvm.int8PtrType)),
-                        origin = context.standardLlvmSymbolsOrigin
-                ))
+                        listOf(LlvmParamType(llvm.int8PtrType))
+                )
                 call(getClass, listOf(objCClass), exceptionHandler = exceptionHandler)
             } else {
-                getObjCClass(irClass.descriptor.getExternalObjCClassBinaryName(), llvmSymbolOrigin)
+                getObjCClass(irClass.descriptor.getExternalObjCClassBinaryName())
             }
         } else {
             if (irClass.isObjCMetaClass()) {
@@ -1303,9 +1300,11 @@ internal abstract class FunctionGenerationContext(
         }
     }
 
-    fun getObjCClass(binaryName: String, llvmSymbolOrigin: CompiledKlibModuleOrigin): LLVMValueRef {
-        llvm.imports.add(llvmSymbolOrigin)
-        return load(codegen.objCDataGenerator!!.genClassRef(binaryName).llvm)
+    private fun getObjCClass(binaryName: String) = load(codegen.objCDataGenerator!!.genClassRef(binaryName).llvm)
+
+    fun getObjCClassFromNativeRuntime(binaryName: String): LLVMValueRef {
+        llvm.dependenciesTracker.addNativeRuntime()
+        return getObjCClass(binaryName)
     }
 
     fun resetDebugLocation() {
@@ -1467,17 +1466,15 @@ internal abstract class FunctionGenerationContext(
     }
 
     private val kotlinExceptionRtti: ConstPointer
-        get() = constPointer(importGlobal(
+        get() = constPointer(importNativeRuntimeGlobal(
                 "_ZTI18ExceptionObjHolder", // typeinfo for ObjHolder
-                llvm.int8PtrType,
-                origin = context.stdlibModule.llvmSymbolOrigin
+                llvm.int8PtrType
         )).bitcast(llvm.int8PtrType)
 
     private val objcNSExceptionRtti: ConstPointer by lazy {
-        constPointer(importGlobal(
+        constPointer(importNativeRuntimeGlobal(
                 "OBJC_EHTYPE_\$_NSException", // typeinfo for NSException*
-                llvm.int8PtrType,
-                origin = context.stdlibModule.llvmSymbolOrigin
+                llvm.int8PtrType
         )).bitcast(llvm.int8PtrType)
     }
 

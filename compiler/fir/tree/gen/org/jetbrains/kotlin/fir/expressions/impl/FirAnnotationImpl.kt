@@ -14,6 +14,8 @@ import org.jetbrains.kotlin.fir.expressions.FirAnnotationArgumentMapping
 import org.jetbrains.kotlin.fir.types.FirTypeProjection
 import org.jetbrains.kotlin.fir.types.FirTypeRef
 import org.jetbrains.kotlin.fir.visitors.*
+import org.jetbrains.kotlin.fir.MutableOrEmptyList
+import org.jetbrains.kotlin.fir.builder.toMutableOrEmpty
 
 /*
  * This file was generated automatically
@@ -25,7 +27,7 @@ internal class FirAnnotationImpl(
     override val useSiteTarget: AnnotationUseSiteTarget?,
     override var annotationTypeRef: FirTypeRef,
     override var argumentMapping: FirAnnotationArgumentMapping,
-    override val typeArguments: MutableList<FirTypeProjection>,
+    override var typeArguments: MutableOrEmptyList<FirTypeProjection>,
 ) : FirAnnotation() {
     override val typeRef: FirTypeRef get() = annotationTypeRef
     override val annotations: List<FirAnnotation> get() = emptyList()
@@ -59,6 +61,8 @@ internal class FirAnnotationImpl(
 
     override fun replaceTypeRef(newTypeRef: FirTypeRef) {}
 
+    override fun replaceAnnotations(newAnnotations: List<FirAnnotation>) {}
+
     override fun replaceAnnotationTypeRef(newAnnotationTypeRef: FirTypeRef) {
         annotationTypeRef = newAnnotationTypeRef
     }
@@ -68,7 +72,6 @@ internal class FirAnnotationImpl(
     }
 
     override fun replaceTypeArguments(newTypeArguments: List<FirTypeProjection>) {
-        typeArguments.clear()
-        typeArguments.addAll(newTypeArguments)
+        typeArguments = newTypeArguments.toMutableOrEmpty()
     }
 }

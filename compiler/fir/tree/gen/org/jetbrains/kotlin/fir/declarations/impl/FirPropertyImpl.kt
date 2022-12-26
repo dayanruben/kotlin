@@ -32,6 +32,8 @@ import org.jetbrains.kotlin.fir.types.FirTypeRef
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedContainerSource
 import org.jetbrains.kotlin.fir.visitors.*
+import org.jetbrains.kotlin.fir.MutableOrEmptyList
+import org.jetbrains.kotlin.fir.builder.toMutableOrEmpty
 
 /*
  * This file was generated automatically
@@ -58,8 +60,8 @@ internal class FirPropertyImpl(
     override var getter: FirPropertyAccessor?,
     override var setter: FirPropertyAccessor?,
     override var backingField: FirBackingField?,
-    override val annotations: MutableList<FirAnnotation>,
-    override val contextReceivers: MutableList<FirContextReceiver>,
+    override var annotations: MutableOrEmptyList<FirAnnotation>,
+    override var contextReceivers: MutableOrEmptyList<FirContextReceiver>,
     override val symbol: FirPropertySymbol,
     override val delegateFieldSymbol: FirDelegateFieldSymbol?,
     override val isLocal: Boolean,
@@ -193,13 +195,16 @@ internal class FirPropertyImpl(
         setter = newSetter
     }
 
+    override fun replaceAnnotations(newAnnotations: List<FirAnnotation>) {
+        annotations = newAnnotations.toMutableOrEmpty()
+    }
+
     override fun replaceControlFlowGraphReference(newControlFlowGraphReference: FirControlFlowGraphReference?) {
         controlFlowGraphReference = newControlFlowGraphReference
     }
 
     override fun replaceContextReceivers(newContextReceivers: List<FirContextReceiver>) {
-        contextReceivers.clear()
-        contextReceivers.addAll(newContextReceivers)
+        contextReceivers = newContextReceivers.toMutableOrEmpty()
     }
 
     override fun replaceBodyResolveState(newBodyResolveState: FirPropertyBodyResolveState) {

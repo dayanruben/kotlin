@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.builder.*
 import org.jetbrains.kotlin.fir.declarations.impl.*
 import org.jetbrains.kotlin.fir.declarations.utils.*
+import org.jetbrains.kotlin.fir.diagnostics.ConeDanglingModifierOnTopLevel
 import org.jetbrains.kotlin.fir.diagnostics.ConeDiagnostic
 import org.jetbrains.kotlin.fir.diagnostics.ConeSimpleDiagnostic
 import org.jetbrains.kotlin.fir.diagnostics.DiagnosticKind
@@ -97,6 +98,7 @@ class DeclarationsConverter(
         var fileAnnotationContainer: FirFileAnnotationsContainer? = null
         val importList = mutableListOf<FirImport>()
         val firDeclarationList = mutableListOf<FirDeclaration>()
+        val modifierList = mutableListOf<LighterASTNode>()
         context.packageFqName = FqName.ROOT
         var packageDirective: FirPackageDirective? = null
         file.forEachChildren { child ->
@@ -116,7 +118,12 @@ class DeclarationsConverter(
                 SCRIPT -> {
                     // TODO: scripts aren't supported yet
                 }
+                MODIFIER_LIST -> modifierList += child
             }
+        }
+
+        modifierList.forEach {
+            firDeclarationList += buildErrorTopLevelDeclarationForDanglingModifierList(it)
         }
 
         return buildFile {
@@ -839,7 +846,8 @@ class DeclarationsConverter(
      * @see org.jetbrains.kotlin.parsing.KotlinParsing.parseEnumClassBody
      */
     private fun convertClassBody(classBody: LighterASTNode, classWrapper: ClassWrapper): List<FirDeclaration> {
-        return classBody.forEachChildrenReturnList { node, container ->
+        val modifierLists = mutableListOf<LighterASTNode>()
+        var firDeclarations = classBody.forEachChildrenReturnList { node, container ->
             @Suppress("RemoveRedundantQualifierName")
             when (node.tokenType) {
                 ENUM_ENTRY -> container += convertEnumEntry(node, classWrapper)
@@ -850,8 +858,22 @@ class DeclarationsConverter(
                 OBJECT_DECLARATION -> container += convertClass(node)
                 CLASS_INITIALIZER -> container += convertAnonymousInitializer(node) //anonymousInitializer
                 SECONDARY_CONSTRUCTOR -> container += convertSecondaryConstructor(node, classWrapper)
+                MODIFIER_LIST -> modifierLists += node
             }
         }
+        for (node in modifierLists) {
+            firDeclarations += buildErrorTopLevelDeclarationForDanglingModifierList(node)
+        }
+        return firDeclarations
+    }
+
+    private fun buildErrorTopLevelDeclarationForDanglingModifierList(node: LighterASTNode) = buildDanglingModifierList {
+        this.source = node.toFirSourceElement(KtFakeSourceElementKind.DanglingModifierList)
+        moduleData = baseModuleData
+        origin = FirDeclarationOrigin.Source
+        diagnostic = ConeDanglingModifierOnTopLevel
+        symbol = FirDanglingModifierSymbol()
+        annotations += convertModifierList(node).annotations
     }
 
     /**
@@ -959,6 +981,7 @@ class DeclarationsConverter(
             moduleData = baseModuleData
             origin = FirDeclarationOrigin.Source
             body = firBlock ?: buildEmptyExpressionBlock()
+            dispatchReceiverType = context.dispatchReceiverTypesStack.lastOrNull()
         }
     }
 
@@ -1007,7 +1030,7 @@ class DeclarationsConverter(
             annotations += modifiers.annotations
             typeParameters += constructorTypeParametersFromConstructedClass(classWrapper.classBuilder.typeParameters)
             valueParameters += firValueParameters.map { it.firValueParameter }
-            val (body, _) = convertFunctionBody(block, null)
+            val (body, _) = convertFunctionBody(block, null, allowLegacyContractDescription = true)
             this.body = body
             context.firFunctionTargets.removeLast()
         }.also {
@@ -1234,7 +1257,7 @@ class DeclarationsConverter(
                             symbol,
                         ).also {
                             it.status = defaultAccessorStatus()
-                            it.annotations += modifiers.annotations.filterUseSiteTarget(PROPERTY_GETTER)
+                            it.replaceAnnotations(modifiers.annotations.filterUseSiteTarget(PROPERTY_GETTER))
                             it.initContainingClassAttr()
                         }
                     // NOTE: We still need the setter even for a val property so we can report errors (e.g., VAL_WITH_SETTER).
@@ -1250,7 +1273,7 @@ class DeclarationsConverter(
                                 parameterAnnotations = modifiers.annotations.filterUseSiteTarget(SETTER_PARAMETER)
                             ).also {
                                 it.status = defaultAccessorStatus()
-                                it.annotations += modifiers.annotations.filterUseSiteTarget(PROPERTY_SETTER)
+                                it.replaceAnnotations(modifiers.annotations.filterUseSiteTarget(PROPERTY_SETTER))
                                 it.initContainingClassAttr()
                             }
                         } else null
@@ -1416,8 +1439,7 @@ class DeclarationsConverter(
                     isGetter
                 )
                 .also { accessor ->
-                    accessor.annotations += modifiers.annotations
-                    accessor.annotations += accessorAdditionalAnnotations
+                    accessor.replaceAnnotations(modifiers.annotations + accessorAdditionalAnnotations)
                     accessor.status = status
                     accessor.initContainingClassAttr()
                 }
@@ -1438,9 +1460,8 @@ class DeclarationsConverter(
             if (!isGetter) {
                 valueParameters += firValueParameters
             }
-
-            val hasContractEffectList = outerContractDescription != null
-            val bodyWithContractDescription = convertFunctionBody(block, expression, hasContractEffectList)
+            val allowLegacyContractDescription = outerContractDescription == null
+            val bodyWithContractDescription = convertFunctionBody(block, expression, allowLegacyContractDescription)
             this.body = bodyWithContractDescription.first
             val contractDescription = outerContractDescription ?: bodyWithContractDescription.second
             contractDescription?.let {
@@ -1698,8 +1719,8 @@ class DeclarationsConverter(
                     ).map { it.firValueParameter }
                 }
 
-                val hasContractEffectList = outerContractDescription != null
-                val bodyWithContractDescription = convertFunctionBody(block, expression, hasContractEffectList)
+                val allowLegacyContractDescription = outerContractDescription == null && !isLocal
+                val bodyWithContractDescription = convertFunctionBody(block, expression, allowLegacyContractDescription)
                 this.body = bodyWithContractDescription.first
                 val contractDescription = outerContractDescription ?: bodyWithContractDescription.second
                 contractDescription?.let {
@@ -1733,16 +1754,13 @@ class DeclarationsConverter(
     private fun convertFunctionBody(
         blockNode: LighterASTNode?,
         expression: LighterASTNode?,
-        hasContractEffectList: Boolean = false
+        allowLegacyContractDescription: Boolean
     ): Pair<FirBlock?, FirContractDescription?> {
         return when {
             blockNode != null -> {
                 val block = convertBlock(blockNode)
-                if (hasContractEffectList) {
-                    block to null
-                } else {
-                    block.extractContractDescriptionIfPossible()
-                }
+                val contractDescription = runIf(allowLegacyContractDescription) { processLegacyContractDescription(block) }
+                block to contractDescription
             }
             expression != null -> FirSingleExpressionBlock(
                 expressionConverter.getAsFirExpression<FirExpression>(expression, "Function has no body (but should)").toReturn()
@@ -2021,7 +2039,7 @@ class DeclarationsConverter(
         }
 
         for (modifierList in allTypeModifiers) {
-            (calculatedFirType.annotations as MutableList<FirAnnotation>) += modifierList.annotations
+            calculatedFirType.replaceAnnotations(calculatedFirType.annotations.smartPlus(modifierList.annotations))
         }
         return calculatedFirType
     }

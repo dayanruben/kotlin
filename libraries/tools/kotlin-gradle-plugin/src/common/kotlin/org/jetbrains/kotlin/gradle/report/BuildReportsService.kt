@@ -17,7 +17,7 @@ import org.gradle.api.services.BuildServiceParameters
 import org.gradle.tooling.events.FinishEvent
 import org.gradle.tooling.events.OperationCompletionListener
 import org.gradle.tooling.events.task.TaskFinishEvent
-import org.jetbrains.kotlin.build.report.metrics.SizeMetricType
+import org.jetbrains.kotlin.build.report.metrics.ValueType
 import org.jetbrains.kotlin.gradle.plugin.BuildEventsListenerRegistryHolder
 import org.jetbrains.kotlin.gradle.plugin.getKotlinPluginVersion
 import org.jetbrains.kotlin.gradle.plugin.stat.BuildFinishStatisticsData
@@ -56,6 +56,7 @@ abstract class BuildReportsService : BuildService<BuildReportsService.Parameters
         val startParameters: Property<GradleBuildStartParameters>
         val reportingSettings: Property<ReportingSettings>
         var buildMetricsService: Provider<BuildMetricsService>
+        val httpService: Property<HttpReportService>
 
         val projectDir: DirectoryProperty
         val label: Property<String?>
@@ -120,14 +121,14 @@ abstract class BuildReportsService : BuildService<BuildReportsService.Parameters
                 .includeVerboseEnvironment(parameters.reportingSettings.get().httpReportSettings?.verboseEnvironment ?: false),
             buildUuid = buildUuid,
             label = parameters.label.orNull,
-            totalTime = (System.nanoTime() - startTime) / 1_000_000,
+            totalTime = TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - startTime)),
             finishTime = System.currentTimeMillis(),
             hostName = hostName,
             tags = tags.toList(),
             gitBranch = branchName
         )
 
-        sendDataViaHttp(httpReportSettings, buildFinishData, log)
+        parameters.httpService.orNull?.sendData(buildFinishData, log)
     }
 
     private fun GradleBuildStartParameters.includeVerboseEnvironment(verboseEnvironment: Boolean): GradleBuildStartParameters {
@@ -145,7 +146,7 @@ abstract class BuildReportsService : BuildService<BuildReportsService.Parameters
     }
 
     private fun addHttpReport(event: FinishEvent?) {
-        if (parameters.reportingSettings.get().httpReportSettings != null) {
+        parameters.httpService.orNull?.also { httpService ->
             if (event is TaskFinishEvent) {
                 val data =
                     prepareData(
@@ -157,7 +158,11 @@ abstract class BuildReportsService : BuildService<BuildReportsService.Parameters
                         parameters.buildMetricsService.get().buildOperationRecords,
                         parameters.additionalTags.get()
                     )
-                data?.also {  parameters.reportingSettings.get().httpReportSettings?.also {  executorService.submit { sendDataViaHttp(it, data, log) } } }
+                data?.also {
+                    executorService.submit {
+                        httpService.sendData(data, log)
+                    }
+                }
             }
         }
 
@@ -244,13 +249,14 @@ abstract class BuildReportsService : BuildService<BuildReportsService.Parameters
             data.buildTimesMetrics.map { (key, value) -> "${key.readableString}: ${value}ms" } //sometimes it is better to have separate variable to be able debug
         val perfData = data.performanceMetrics.map { (key, value) ->
             when (key.type) {
-                SizeMetricType.BYTES -> "${key.readableString}: ${formatSize(value)}"
+                ValueType.BYTES -> "${key.readableString}: ${formatSize(value)}"
+                ValueType.MILLISECONDS -> DATE_FORMATTER.format(value)
                 else -> "${key.readableString}: $value}"
             }
         }
         timeData.union(perfData).joinTo(readableString, ",", "Performance: [", "]")
 
-        return splitStringIfNeed(readableString.toString(), lengthLimit)
+        return splitStringIfNeed(readableString.toString(), CUSTOM_VALUE_LENGTH_LIMIT)
     }
 
     private fun splitStringIfNeed(str: String, lengthLimit: Int): List<String> {
@@ -282,7 +288,8 @@ abstract class BuildReportsService : BuildService<BuildReportsService.Parameters
 
     companion object {
 
-        const val lengthLimit = 100_000
+        const val CUSTOM_VALUE_LENGTH_LIMIT = 100_000
+        private val DATE_FORMATTER = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
 
         fun getStartParameters(project: Project) = project.gradle.startParameter.let {
             GradleBuildStartParameters(
@@ -316,6 +323,7 @@ abstract class BuildReportsService : BuildService<BuildReportsService.Parameters
                 it.parameters.kotlinVersion.set(kotlinVersion)
                 it.parameters.startParameters.set(getStartParameters(project))
                 it.parameters.reportingSettings.set(reportingSettings)
+                reportingSettings.httpReportSettings?.let { httpSettings -> it.parameters.httpService.set(HttpReportServiceImpl(httpSettings)) }
                 it.parameters.buildMetricsService = buildMetricsService
                 it.parameters.projectDir.set(project.rootProject.layout.projectDirectory)
 

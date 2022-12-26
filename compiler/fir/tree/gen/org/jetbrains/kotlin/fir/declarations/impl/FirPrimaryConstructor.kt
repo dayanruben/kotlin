@@ -29,6 +29,8 @@ import org.jetbrains.kotlin.fir.types.ConeSimpleKotlinType
 import org.jetbrains.kotlin.fir.types.FirTypeRef
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedContainerSource
 import org.jetbrains.kotlin.fir.visitors.*
+import org.jetbrains.kotlin.fir.MutableOrEmptyList
+import org.jetbrains.kotlin.fir.builder.toMutableOrEmpty
 
 /*
  * This file was generated automatically
@@ -49,9 +51,9 @@ class FirPrimaryConstructor @FirImplementationDetail constructor(
     override var deprecationsProvider: DeprecationsProvider,
     override val containerSource: DeserializedContainerSource?,
     override val dispatchReceiverType: ConeSimpleKotlinType?,
-    override val contextReceivers: MutableList<FirContextReceiver>,
+    override var contextReceivers: MutableOrEmptyList<FirContextReceiver>,
     override val valueParameters: MutableList<FirValueParameter>,
-    override val annotations: MutableList<FirAnnotation>,
+    override var annotations: MutableOrEmptyList<FirAnnotation>,
     override val symbol: FirConstructorSymbol,
     override var delegatedConstructor: FirDelegatedConstructorCall?,
     override var body: FirBlock?,
@@ -147,8 +149,7 @@ class FirPrimaryConstructor @FirImplementationDetail constructor(
     }
 
     override fun replaceContextReceivers(newContextReceivers: List<FirContextReceiver>) {
-        contextReceivers.clear()
-        contextReceivers.addAll(newContextReceivers)
+        contextReceivers = newContextReceivers.toMutableOrEmpty()
     }
 
     override fun replaceControlFlowGraphReference(newControlFlowGraphReference: FirControlFlowGraphReference?) {
@@ -158,6 +159,10 @@ class FirPrimaryConstructor @FirImplementationDetail constructor(
     override fun replaceValueParameters(newValueParameters: List<FirValueParameter>) {
         valueParameters.clear()
         valueParameters.addAll(newValueParameters)
+    }
+
+    override fun replaceAnnotations(newAnnotations: List<FirAnnotation>) {
+        annotations = newAnnotations.toMutableOrEmpty()
     }
 
     override fun replaceDelegatedConstructor(newDelegatedConstructor: FirDelegatedConstructorCall?) {

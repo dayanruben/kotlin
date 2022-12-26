@@ -1627,21 +1627,18 @@ internal class CodeGeneratorVisitor(val generationState: NativeGenerationState, 
         } else {
             // e.g. ObjCObject, ObjCObjectBase etc.
             if (dstClass.isObjCMetaClass()) {
-                val isClassProto = LlvmFunctionProto(
+                val isClass = llvm.externalNativeRuntimeFunction(
                         "object_isClass",
                         LlvmRetType(llvm.int8Type),
-                        listOf(LlvmParamType(llvm.int8PtrType)),
-                        origin = context.standardLlvmSymbolsOrigin
+                        listOf(LlvmParamType(llvm.int8PtrType))
                 )
-                val isClass = llvm.externalFunction(isClassProto)
                 call(isClass, listOf(objCObject)).let {
                     functionGenerationContext.icmpNe(it, llvm.int8(0))
                 }
             } else if (dstClass.isObjCProtocolClass()) {
                 // Note: it is not clear whether this class should be looked up this way.
                 // clang does the same, however swiftc uses dynamic lookup.
-                val protocolClass =
-                        functionGenerationContext.getObjCClass("Protocol", context.standardLlvmSymbolsOrigin)
+                val protocolClass = functionGenerationContext.getObjCClassFromNativeRuntime("Protocol")
                 call(
                         llvm.Kotlin_Interop_IsObjectKindOfClass,
                         listOf(objCObject, protocolClass)
@@ -2496,7 +2493,7 @@ internal class CodeGeneratorVisitor(val generationState: NativeGenerationState, 
         val protocolGetterProto = LlvmFunctionProto(
                 protocolGetterName,
                 LlvmRetType(llvm.int8PtrType),
-                origin = irClass.llvmSymbolOrigin,
+                origin = FunctionOrigin.OwnedBy(irClass),
                 independent = true // Protocol is header-only declaration.
         )
         val protocolGetter = llvm.externalFunction(protocolGetterProto)
@@ -2674,31 +2671,8 @@ internal class CodeGeneratorVisitor(val generationState: NativeGenerationState, 
     }
 
     // Globals set this way cannot be const, but are overridable when producing final executable.
-    private fun overrideRuntimeGlobal(name: String, value: ConstValue) {
-        // TODO: A similar mechanism is used in `ObjCExportCodeGenerator`. Consider merging them.
-        if (generationState.llvmModuleSpecification.importsKotlinDeclarationsFromOtherSharedLibraries()) {
-            // When some dynamic caches are used, we consider that stdlib is in the dynamic cache as well.
-            // Runtime is linked into stdlib module only, so import runtime global from it.
-            val global = codegen.importGlobal(name, value.llvmType, context.standardLlvmSymbolsOrigin)
-            val initializer = generateFunctionNoRuntime(codegen, functionType(llvm.voidType, false), "") {
-                store(value.llvm, global)
-                ret(null)
-            }
-
-            LLVMSetLinkage(initializer, LLVMLinkage.LLVMPrivateLinkage)
-
-            llvm.otherStaticInitializers += initializer
-        } else {
-            generationState.llvmImports.add(context.standardLlvmSymbolsOrigin)
-            // Define a strong runtime global. It'll overrule a weak global defined in a statically linked runtime.
-            val global = llvm.staticData.placeGlobal(name, value, true)
-
-            if (generationState.llvmModuleSpecification.importsKotlinDeclarationsFromOtherObjectFiles()) {
-                llvm.usedGlobals += global.llvmGlobal
-                LLVMSetVisibility(global.llvmGlobal, LLVMVisibility.LLVMHiddenVisibility)
-            }
-        }
-    }
+    private fun overrideRuntimeGlobal(name: String, value: ConstValue) =
+            codegen.replaceExternalWeakOrCommonGlobalFromNativeRuntime(name, value)
 
     private fun overrideRuntimeGlobals() {
         if (!context.config.isFinalBinary)
@@ -2759,11 +2733,9 @@ internal class CodeGeneratorVisitor(val generationState: NativeGenerationState, 
     //-------------------------------------------------------------------------//
     fun appendStaticInitializers() {
         // Note: the list of libraries is topologically sorted (in order for initializers to be called correctly).
-        val libraries = (llvm.allBitcodeDependencies + listOf(null)/* Null for "current" non-library module */)
+        val dependencies = (generationState.dependenciesTracker.allBitcodeDependencies + listOf(null)/* Null for "current" non-library module */)
 
-        val libraryToInitializers = libraries.associateWith {
-            mutableListOf<LLVMValueRef>()
-        }
+        val libraryToInitializers = dependencies.associate { it?.library to mutableListOf<LLVMValueRef>() }
 
         llvm.irStaticInitializers.forEach {
             val library = it.konanLibrary
@@ -2783,7 +2755,8 @@ internal class CodeGeneratorVisitor(val generationState: NativeGenerationState, 
                         kVoidFuncType
                 ).also { LLVMSetLinkage(it, LLVMLinkage.LLVMExternalLinkage) }
 
-        val ctorFunctions = libraries.flatMap { library ->
+        val ctorFunctions = dependencies.flatMap { dependency ->
+            val library = dependency?.library
             val initializers = libraryToInitializers.getValue(library)
 
             val ctorName = when {
@@ -2811,12 +2784,16 @@ internal class CodeGeneratorVisitor(val generationState: NativeGenerationState, 
                 val cache = context.config.cachedLibraries.getLibraryCache(library)
                         ?: error("Library $library is expected to be cached")
 
-                when (cache.granularity) {
-                    CachedLibraries.Granularity.MODULE -> listOf(addCtorFunction(ctorName))
-                    CachedLibraries.Granularity.FILE -> {
-                        context.irLinker.klibToModuleDeserializerMap[library]!!.sortedFileIds.map {
-                            addCtorFunction(fileCtorName(library.uniqueName, it))
+                when (cache) {
+                    is CachedLibraries.Cache.Monolithic -> listOf(addCtorFunction(ctorName))
+                    is CachedLibraries.Cache.PerFile -> {
+                        val files = when (dependency.kind) {
+                            is DependenciesTracker.DependencyKind.WholeModule ->
+                                context.irLinker.klibToModuleDeserializerMap[library]!!.sortedFileIds
+                            is DependenciesTracker.DependencyKind.CertainFiles ->
+                                dependency.kind.files
                         }
+                        files.map { addCtorFunction(fileCtorName(library.uniqueName, it)) }
                     }
                 }
             }
