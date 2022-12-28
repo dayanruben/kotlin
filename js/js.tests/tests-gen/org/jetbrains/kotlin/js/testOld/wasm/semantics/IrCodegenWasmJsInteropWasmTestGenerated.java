@@ -55,6 +55,16 @@ public class IrCodegenWasmJsInteropWasmTestGenerated extends AbstractIrCodegenWa
         runTest("compiler/testData/codegen/boxWasmJsInterop/functionTypes.kt");
     }
 
+    @TestMetadata("imperativeWrapperInitialised.kt")
+    public void testImperativeWrapperInitialised() throws Exception {
+        runTest("compiler/testData/codegen/boxWasmJsInterop/imperativeWrapperInitialised.kt");
+    }
+
+    @TestMetadata("imperativeWrapperUninitialised.kt")
+    public void testImperativeWrapperUninitialised() throws Exception {
+        runTest("compiler/testData/codegen/boxWasmJsInterop/imperativeWrapperUninitialised.kt");
+    }
+
     @TestMetadata("jsExport.kt")
     public void testJsExport() throws Exception {
         runTest("compiler/testData/codegen/boxWasmJsInterop/jsExport.kt");
@@ -83,5 +93,10 @@ public class IrCodegenWasmJsInteropWasmTestGenerated extends AbstractIrCodegenWa
     @TestMetadata("types.kt")
     public void testTypes() throws Exception {
         runTest("compiler/testData/codegen/boxWasmJsInterop/types.kt");
+    }
+
+    @TestMetadata("wasmImport.kt")
+    public void testWasmImport() throws Exception {
+        runTest("compiler/testData/codegen/boxWasmJsInterop/wasmImport.kt");
     }
 }

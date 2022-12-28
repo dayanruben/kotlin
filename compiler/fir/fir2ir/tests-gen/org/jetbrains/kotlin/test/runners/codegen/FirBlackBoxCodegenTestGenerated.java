@@ -17216,6 +17216,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         }
 
         @Test
+        @TestMetadata("multiple.kt")
+        public void testMultiple() throws Exception {
+            runTest("compiler/testData/codegen/box/extensionClasses/multiple.kt");
+        }
+
+        @Test
         @TestMetadata("propertyWithContext.kt")
         public void testPropertyWithContext() throws Exception {
             runTest("compiler/testData/codegen/box/extensionClasses/propertyWithContext.kt");
@@ -17505,6 +17511,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
             }
 
             @Test
+            @TestMetadata("kt51397.kt")
+            public void testKt51397() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/kt51397.kt");
+            }
+
+            @Test
             @TestMetadata("kt51475.kt")
             public void testKt51475() throws Exception {
                 runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/kt51475.kt");
@@ -17535,9 +17547,21 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
             }
 
             @Test
+            @TestMetadata("kt52459.kt")
+            public void testKt52459() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/kt52459.kt");
+            }
+
+            @Test
             @TestMetadata("kt53846.kt")
             public void testKt53846() throws Exception {
                 runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/kt53846.kt");
+            }
+
+            @Test
+            @TestMetadata("kt54357.kt")
+            public void testKt54357() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/kt54357.kt");
             }
 
             @Test
