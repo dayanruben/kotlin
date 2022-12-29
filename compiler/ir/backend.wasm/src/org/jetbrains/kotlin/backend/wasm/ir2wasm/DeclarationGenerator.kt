@@ -54,7 +54,10 @@ class DeclarationGenerator(
     }
 
     private fun jsCodeName(declaration: IrFunction): String {
-        return declaration.fqNameWhenAvailable!!.asString() + "_" + (declaration as IrSimpleFunction).wasmSignature(irBuiltIns).hashCode()
+        require(declaration is IrSimpleFunction)
+        val fqName = declaration.fqNameWhenAvailable!!.asString()
+        val hashCode = declaration.wasmSignature(irBuiltIns).hashCode() + declaration.file.path.hashCode()
+        return "${fqName}_$hashCode"
     }
 
     override fun visitFunction(declaration: IrFunction) {
@@ -68,11 +71,7 @@ class DeclarationGenerator(
         }
 
         val wasmImportModule = declaration.getWasmImportDescriptor()
-
-        val jsCode = declaration.getJsFunAnnotation()
-            // TODO: Why are we importing declarations by with raw declaration.name.asString() jsCode?
-            ?: if (declaration.isExternal && wasmImportModule == null) declaration.name.asString() else null
-
+        val jsCode = if (declaration.isExternal) declaration.getJsFunAnnotation() else null
         val importedName = when {
             wasmImportModule != null -> {
                 check(declaration.isExternal) { "Non-external fun with @WasmImport ${declaration.fqNameWhenAvailable}"}

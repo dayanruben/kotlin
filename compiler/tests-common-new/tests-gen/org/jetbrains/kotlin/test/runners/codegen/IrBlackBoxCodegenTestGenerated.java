@@ -17499,6 +17499,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
             }
 
             @Test
+            @TestMetadata("kt51277.kt")
+            public void testKt51277() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/kt51277.kt");
+            }
+
+            @Test
             @TestMetadata("kt51284.kt")
             public void testKt51284() throws Exception {
                 runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/kt51284.kt");
@@ -50725,6 +50731,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         @TestMetadata("assigningArrayToVarargInAnnotation.kt")
         public void testAssigningArrayToVarargInAnnotation() throws Exception {
             runTest("compiler/testData/codegen/box/vararg/assigningArrayToVarargInAnnotation.kt");
+        }
+
+        @Test
+        @TestMetadata("boxingArgumentsForVararg.kt")
+        public void testBoxingArgumentsForVararg() throws Exception {
+            runTest("compiler/testData/codegen/box/vararg/boxingArgumentsForVararg.kt");
         }
 
         @Test

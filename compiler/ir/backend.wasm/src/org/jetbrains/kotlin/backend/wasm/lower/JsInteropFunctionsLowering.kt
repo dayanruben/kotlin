@@ -53,6 +53,7 @@ class JsInteropFunctionsLowering(val context: WasmBackendContext) : DeclarationT
         if (declaration.getWasmImportDescriptor() != null) return null
         check(!(isExported && isExternal)) { "Exported external declarations are not supported: ${declaration.fqNameWhenAvailable}" }
         check(declaration.parent !is IrClass) { "Interop members are not supported:  ${declaration.fqNameWhenAvailable}" }
+        if (context.mapping.wasmNestedExternalToNewTopLevelFunction.keys.contains(declaration)) return null
 
         additionalDeclarations.clear()
         currentParent = declaration.parent
@@ -62,6 +63,13 @@ class JsInteropFunctionsLowering(val context: WasmBackendContext) : DeclarationT
             transformExportFunction(declaration)
 
         return (newDeclarations ?: listOf(declaration)) + additionalDeclarations
+    }
+
+    private fun doubleIfNumber(possiblyNumber: IrType): IrType {
+        val isNullable = possiblyNumber.isNullable()
+        val notNullType = possiblyNumber.makeNotNull()
+        if (notNullType != builtIns.numberType) return possiblyNumber
+        return if (isNullable) builtIns.doubleType.makeNullable() else builtIns.doubleType
     }
 
     /**
@@ -77,6 +85,9 @@ class JsInteropFunctionsLowering(val context: WasmBackendContext) : DeclarationT
         // [ComplexExternalDeclarationsToTopLevelFunctionsLowering]
         if (function.valueParameters.any { it.defaultValue != null })
             return null
+
+        // Patch function types for Number parameters as double
+        function.returnType = doubleIfNumber(function.returnType)
 
         val valueParametersAdapters = function.valueParameters.map {
             it.type.kotlinToJsAdapterIfNeeded(isReturn = false)
@@ -192,6 +203,16 @@ class JsInteropFunctionsLowering(val context: WasmBackendContext) : DeclarationT
         }
 
         val notNullType = makeNotNull()
+
+        if (notNullType == builtIns.numberType) {
+            return NullOrAdapter(
+                CombineAdapter(
+                    FunctionBasedAdapter(adapters.kotlinDoubleToExternRefAdapter.owner),
+                    FunctionBasedAdapter(adapters.numberToDoubleAdapter.owner)
+                )
+            )
+        }
+
         val primitiveToExternRefAdapter = when (notNullType) {
             builtIns.byteType -> adapters.kotlinByteToExternRefAdapter.owner
             builtIns.shortType -> adapters.kotlinShortToExternRefAdapter.owner
@@ -221,6 +242,7 @@ class JsInteropFunctionsLowering(val context: WasmBackendContext) : DeclarationT
             builtIns.stringType -> return FunctionBasedAdapter(adapters.kotlinToJsStringAdapter.owner)
             builtIns.booleanType -> return FunctionBasedAdapter(adapters.kotlinBooleanToExternRefAdapter.owner)
             builtIns.anyType -> return FunctionBasedAdapter(adapters.kotlinToJsAnyAdapter.owner)
+            builtIns.numberType -> return FunctionBasedAdapter(adapters.numberToDoubleAdapter.owner)
 
             builtIns.byteType,
             builtIns.shortType,
@@ -435,6 +457,7 @@ class JsInteropFunctionsLowering(val context: WasmBackendContext) : DeclarationT
         val result = context.irFactory.buildFun {
             name = Name.identifier("__convertKotlinClosureToJsClosure_${info.hashString}")
             returnType = context.wasmSymbols.externalInterfaceType
+            isExternal = true
         }
         result.parent = currentParent
         result.addValueParameter {
@@ -551,6 +574,7 @@ class JsInteropFunctionsLowering(val context: WasmBackendContext) : DeclarationT
         val result = context.irFactory.buildFun {
             name = Name.identifier("__callJsClosure_${info.hashString}")
             returnType = info.adaptedResultType
+            isExternal = true
         }
         result.parent = currentParent
         result.addValueParameter {
