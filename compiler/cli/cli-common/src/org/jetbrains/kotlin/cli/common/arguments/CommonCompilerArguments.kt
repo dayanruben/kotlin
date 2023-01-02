@@ -249,12 +249,6 @@ abstract class CommonCompilerArguments : CommonToolArguments() {
     var phasesToDump: Array<String>? by FreezableVar(null)
 
     @Argument(
-        value = "-Xexclude-from-dumping",
-        description = "Names of elements that should not be dumped"
-    )
-    var namesExcludedFromDumping: Array<String>? by FreezableVar(null)
-
-    @Argument(
         value = "-Xdump-directory",
         description = "Dump backend state into directory"
     )
@@ -329,7 +323,7 @@ abstract class CommonCompilerArguments : CommonToolArguments() {
         value = "-Xuse-fir-lt",
         description = "Compile using LightTree parser with Front-end IR. Warning: this feature is far from being production-ready"
     )
-    var useFirLT: Boolean by FreezableVar(false)
+    var useFirLT: Boolean by FreezableVar(true)
 
     @Argument(
         value = "-Xdisable-ultra-light-classes",

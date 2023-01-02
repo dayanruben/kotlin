@@ -65,7 +65,7 @@ abstract class AbstractSymbolLightClassesTestBase(
         val project = ktFile.project
 
         ignoreExceptionIfIgnoreFirPresent(module) {
-            val actual = getRenderResult(ktFile, testDataPath, module, project).cleanup()
+            val actual = getRenderResult(ktFile, ktFiles, testDataPath, module, project).cleanup()
             compareResults(testServices, actual)
             removeIgnoreFir(module)
             removeDuplicatedFirJava(testServices)
@@ -82,6 +82,7 @@ abstract class AbstractSymbolLightClassesTestBase(
 
     protected abstract fun getRenderResult(
         ktFile: KtFile,
+        ktFiles: List<KtFile>,
         testDataFile: Path,
         module: TestModule,
         project: Project
@@ -102,11 +103,8 @@ abstract class AbstractSymbolLightClassesTestBase(
         testServices: TestServices,
         actual: String,
     ) {
-        if (currentResultPath().exists()) {
-            testServices.assertions.assertEqualsToFile(currentResultPath(), actual)
-        } else {
-            testServices.assertions.assertEqualsToFile(javaPath(), actual)
-        }
+        val path: Path = currentResultPath().takeIf { it.exists() } ?: javaPath()
+        testServices.assertions.assertEqualsToFile(path, actual)
     }
 
     private fun removeIgnoreFir(module: TestModule) {
