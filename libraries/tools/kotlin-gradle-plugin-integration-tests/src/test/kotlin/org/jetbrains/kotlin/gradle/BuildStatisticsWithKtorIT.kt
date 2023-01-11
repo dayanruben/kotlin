@@ -15,25 +15,22 @@ import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
+import io.ktor.util.*
 import io.ktor.util.collections.*
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.plugin.stat.*
 import org.jetbrains.kotlin.gradle.report.BuildReportType
 import org.jetbrains.kotlin.gradle.testbase.*
-import org.jetbrains.kotlin.test.testFramework.KtUsefulTestCase.assertNotEmpty
 import org.junit.jupiter.api.DisplayName
 import java.io.IOException
 import java.net.HttpURLConnection
+import java.net.InetSocketAddress
 import java.net.ServerSocket
 import java.net.URL
 import java.util.*
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.TimeUnit
-import kotlin.test.assertContains
-import kotlin.test.assertContentEquals
-import kotlin.test.assertEquals
-import kotlin.test.assertFails
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 @DisplayName("Build statistics")
 @JvmGradlePluginTests
@@ -41,32 +38,40 @@ class BuildStatisticsWithKtorIT : KGPBaseTest() {
 
     companion object {
         fun runWithKtorService(action: (Int) -> Unit) {
-            val port = getEmptyPort().localPort
-            val server = embeddedServer(Netty, host="localhost", port = port)
-            {
-                val requests = ArrayBlockingQueue<String>(10)
+            var server: ApplicationEngine? = null
+            try {
+                val port = getEmptyPort().localPort
+                server = embeddedServer(Netty, host = "localhost", port = port)
+                {
+                    val requests = ArrayBlockingQueue<String>(10)
 
-                routing {
-                    post("/badRequest") {
-                        call.respond(HttpStatusCode.BadRequest, "Some reason")
-                    }
-                    post("/put") {
-                        val body = call.receive<String>()
-                        requests.add(body)
-                        call.respond(HttpStatusCode.OK)
-                    }
-                    get("/validate") {
-                        try {
-                            call.respond(status = HttpStatusCode.OK, requests.poll(2, TimeUnit.SECONDS))
-                        } catch (e: Exception) {
-                            call.respond(status = HttpStatusCode.NotFound, e.message ?: e::class)
+                    routing {
+                        get("/isReady") {
+                            call.respond(HttpStatusCode.OK)
                         }
-                    }
+                        post("/badRequest") {
+                            call.respond(HttpStatusCode.BadRequest, "Some reason")
+                        }
+                        post("/put") {
+                            val body = call.receive<String>()
+                            requests.add(body)
+                            call.respond(HttpStatusCode.OK)
+                        }
+                        get("/validate") {
+                            try {
+                                call.respond(status = HttpStatusCode.OK, requests.poll(2, TimeUnit.SECONDS))
+                            } catch (e: Exception) {
+                                call.respond(status = HttpStatusCode.NotFound, e.message ?: e::class)
+                            }
+                        }
 
-                }
-            }.start()
-            action(port)
-            server.stop(1000, 1000)
+                    }
+                }.start()
+                awaitInitialization(port)
+                action(port)
+            } finally {
+                server?.stop(1000, 1000)
+            }
         }
 
         private fun getEmptyPort(): ServerSocket {
@@ -74,7 +79,9 @@ class BuildStatisticsWithKtorIT : KGPBaseTest() {
             val endPort = 8180
             for (port in startPort..endPort) {
                 try {
-                    return ServerSocket(port).also {
+                    return ServerSocket().apply {
+                        bind(InetSocketAddress("localhost", port))
+                    }.also {
                         println("Use $port port")
                         it.close()
                     }
@@ -83,6 +90,29 @@ class BuildStatisticsWithKtorIT : KGPBaseTest() {
                 }
             }
             throw IOException("Failed to find free IP port in range $startPort..$endPort")
+        }
+
+        private fun awaitInitialization(port: Int, maxAttempts: Int = 20) {
+            var attempts = 0
+            val waitingTime = 500L
+            while (initCall(port) != HttpStatusCode.OK.value) {
+                attempts += 1
+                if (attempts == maxAttempts) {
+                    fail("Failed to await server initialization for ${waitingTime * attempts}ms")
+                }
+                Thread.sleep(waitingTime)
+            }
+        }
+
+        private fun initCall(port: Int): Int {
+            return try {
+                val connection = URL("http://localhost:$port/isReady").openConnection() as HttpURLConnection
+                connection.requestMethod = "GET"
+                connection.connect()
+                connection.responseCode
+            } catch (e: IOException) {
+                fail("Unable to open connection: ${e.message}", e)
+            }
         }
 
         private fun validateCall(port: Int, validate: (JsonObject) -> Unit) {
@@ -95,7 +125,7 @@ class BuildStatisticsWithKtorIT : KGPBaseTest() {
                 val jsonObject = JsonParser.parseString(body).asJsonObject
                 validate(jsonObject)
             } catch (e: IOException) {
-                assertFails { "Unable to open connection : ${e.message}" }
+                fail("Unable to open connection: ${e.message}", e)
             }
         }
 
@@ -132,11 +162,14 @@ class BuildStatisticsWithKtorIT : KGPBaseTest() {
         }
     }
 
-    @DisplayName("Validate mandatory field for http request body")
-    @GradleTest
-    fun testHttpRequest(gradleVersion: GradleVersion) {
+    private fun simpleTestHttpReport(
+        gradleVersion: GradleVersion,
+        additionalProjectSetup: (TestProject) -> Unit = {},
+        compileTaskAssertions: (CompileStatisticsData) -> Unit,
+    ) {
         runWithKtorService { port ->
             project("incrementalMultiproject", gradleVersion) {
+                additionalProjectSetup(this)
                 setProjectForTest(port)
                 build("clean", "assemble") {
                     assertOutputDoesNotContain("Failed to send statistic to")
@@ -144,29 +177,54 @@ class BuildStatisticsWithKtorIT : KGPBaseTest() {
             }
             validateTaskData(port) { taskData ->
                 assertEquals(":lib:compileKotlin", taskData.taskName)
-                assertContains(taskData.tags, "NON_INCREMENTAL")
-                assertContains(taskData.nonIncrementalAttributes.map { it.name }, "UNKNOWN_CHANGES_IN_GRADLE_INPUTS")
-                assertTrue(taskData.performanceMetrics.keys.isNotEmpty())
-                assertTrue(taskData.buildTimesMetrics.keys.isNotEmpty())
-                assertEquals(
-                    defaultBuildOptions.kotlinVersion, taskData.kotlinVersion,
-                    "Unexpected kotlinVersion: ${taskData.kotlinVersion} instead of ${defaultBuildOptions.kotlinVersion}"
-                )
+                compileTaskAssertions(taskData)
             }
             validateTaskData(port) { taskData ->
                 assertEquals(":app:compileKotlin", taskData.taskName)
-                assertContains(taskData.tags, "NON_INCREMENTAL")
-                assertContains(taskData.nonIncrementalAttributes.map { it.name }, "UNKNOWN_CHANGES_IN_GRADLE_INPUTS")
-                assertTrue(taskData.performanceMetrics.keys.isNotEmpty())
-                assertTrue(taskData.buildTimesMetrics.keys.isNotEmpty())
-                assertEquals(
-                    defaultBuildOptions.kotlinVersion, taskData.kotlinVersion,
-                    "Unexpected kotlinVersion: ${taskData.kotlinVersion} instead of ${defaultBuildOptions.kotlinVersion}"
-                )
+                compileTaskAssertions(taskData)
             }
             validateBuildData(port) { buildData ->
                 assertContains(buildData.startParameters.tasks, "assemble")
             }
+        }
+    }
+
+    @DisplayName("Validate mandatory field for http request body")
+    @GradleTest
+    fun testHttpRequest(gradleVersion: GradleVersion) {
+        simpleTestHttpReport(gradleVersion) { taskData ->
+            assertContains(taskData.tags, "NON_INCREMENTAL")
+            assertContains(taskData.nonIncrementalAttributes.map { it.name }, "UNKNOWN_CHANGES_IN_GRADLE_INPUTS")
+            assertFalse(taskData.performanceMetrics.keys.isEmpty())
+            assertFalse(taskData.buildTimesMetrics.keys.isEmpty())
+            assertFalse(taskData.compilerArguments.isEmpty())
+            assertEquals(
+                defaultBuildOptions.kotlinVersion, taskData.kotlinVersion,
+                "Unexpected kotlinVersion: ${taskData.kotlinVersion} instead of ${defaultBuildOptions.kotlinVersion}"
+            )
+        }
+    }
+
+    @DisplayName("Compiler arguments reporting can be disabled")
+    @GradleTest
+    fun testDisablingCompilerArgumentsReporting(gradleVersion: GradleVersion) {
+        simpleTestHttpReport(gradleVersion, { project ->
+            project.gradleProperties.append(
+                """
+                |
+                |kotlin.build.report.include_compiler_arguments=false
+                """.trimMargin()
+            )
+        }) { taskData ->
+            assertContains(taskData.tags, "NON_INCREMENTAL")
+            assertContains(taskData.nonIncrementalAttributes.map { it.name }, "UNKNOWN_CHANGES_IN_GRADLE_INPUTS")
+            assertFalse(taskData.performanceMetrics.keys.isEmpty())
+            assertFalse(taskData.buildTimesMetrics.keys.isEmpty())
+            assertTrue(taskData.compilerArguments.isEmpty())
+            assertEquals(
+                defaultBuildOptions.kotlinVersion, taskData.kotlinVersion,
+                "Unexpected kotlinVersion: ${taskData.kotlinVersion} instead of ${defaultBuildOptions.kotlinVersion}"
+            )
         }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -116,6 +116,7 @@ object StandardClassIds {
     val Set = "Set".collectionsId()
     val Map = "Map".collectionsId()
     val MutableIterator = "MutableIterator".collectionsId()
+    val CharIterator = "CharIterator".collectionsId()
 
     val MutableIterable = "MutableIterable".collectionsId()
     val MutableCollection = "MutableCollection".collectionsId()
@@ -148,6 +149,7 @@ object StandardClassIds {
         val DeprecatedSinceKotlin = "DeprecatedSinceKotlin".baseId()
 
         val HidesMembers = "HidesMembers".internalId()
+        val DynamicExtension = "DynamicExtension".internalId()
 
         val Retention = "Retention".annotationId()
         val Target = "Target".annotationId()
@@ -160,10 +162,13 @@ object StandardClassIds {
         val JvmDefault = "JvmDefault".jvmId()
         val JvmRepeatable = "JvmRepeatable".jvmId()
         val JvmRecord = "JvmRecord".jvmId()
+        val Throws = "Throws".jvmId()
 
         val RawTypeAnnotation = "RawType".internalIrId()
         val FlexibleNullability = "FlexibleNullability".internalIrId()
         val EnhancedNullability = "EnhancedNullability".jvmInternalId()
+
+        val InlineOnly = "InlineOnly".internalId()
 
         val OnlyInputTypes = "OnlyInputTypes".internalId()
 

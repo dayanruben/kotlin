@@ -214,6 +214,24 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         }
 
         @Test
+        @TestMetadata("derivedClassPropertyShadowsBaseClassField.kt")
+        public void testDerivedClassPropertyShadowsBaseClassField() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/derivedClassPropertyShadowsBaseClassField.kt");
+        }
+
+        @Test
+        @TestMetadata("derivedClassPropertyShadowsBaseClassField13.kt")
+        public void testDerivedClassPropertyShadowsBaseClassField13() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/derivedClassPropertyShadowsBaseClassField13.kt");
+        }
+
+        @Test
+        @TestMetadata("derivedIntersectionPropertyShadowsBaseClassField.kt")
+        public void testDerivedIntersectionPropertyShadowsBaseClassField() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/derivedIntersectionPropertyShadowsBaseClassField.kt");
+        }
+
+        @Test
         @TestMetadata("DiamondFunction.kt")
         public void testDiamondFunction() throws Exception {
             runTest("compiler/testData/diagnostics/tests/DiamondFunction.kt");
@@ -391,6 +409,24 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         @TestMetadata("IsExpressions.kt")
         public void testIsExpressions() throws Exception {
             runTest("compiler/testData/diagnostics/tests/IsExpressions.kt");
+        }
+
+        @Test
+        @TestMetadata("javaFieldKotlinPropertyJavaFieldInPackagePrivate.kt")
+        public void testJavaFieldKotlinPropertyJavaFieldInPackagePrivate() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/javaFieldKotlinPropertyJavaFieldInPackagePrivate.kt");
+        }
+
+        @Test
+        @TestMetadata("javaFieldKotlinPropertyJavaPackagePrivateField.kt")
+        public void testJavaFieldKotlinPropertyJavaPackagePrivateField() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/javaFieldKotlinPropertyJavaPackagePrivateField.kt");
+        }
+
+        @Test
+        @TestMetadata("javaProtectedFieldAndKotlinInvisiblePropertyReference.kt")
+        public void testJavaProtectedFieldAndKotlinInvisiblePropertyReference() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/javaProtectedFieldAndKotlinInvisiblePropertyReference.kt");
         }
 
         @Test
@@ -15111,6 +15147,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestDataPath("$PROJECT_ROOT")
             public class CoercionToUnit {
                 @Test
+                @TestMetadata("afterBareReturn.kt")
+                public void testAfterBareReturn() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/coercionToUnit/afterBareReturn.kt");
+                }
+
+                @Test
                 public void testAllFilesPresentInCoercionToUnit() throws Exception {
                     KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/inference/coercionToUnit"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.fir\\.kts?$"), true);
                 }
@@ -15191,6 +15233,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("lambdaWithNullableUnitInElvis.kt")
                 public void testLambdaWithNullableUnitInElvis() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/coercionToUnit/lambdaWithNullableUnitInElvis.kt");
+                }
+
+                @Test
+                @TestMetadata("nestedLambda.kt")
+                public void testNestedLambda() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/coercionToUnit/nestedLambda.kt");
                 }
 
                 @Test
@@ -30947,6 +30995,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("lambdaBetweenArguments.kt")
                 public void testLambdaBetweenArguments() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/smartCasts/variables/lambdaBetweenArguments.kt");
+                }
+
+                @Test
+                @TestMetadata("objectMembers.kt")
+                public void testObjectMembers() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/smartCasts/variables/objectMembers.kt");
                 }
 
                 @Test

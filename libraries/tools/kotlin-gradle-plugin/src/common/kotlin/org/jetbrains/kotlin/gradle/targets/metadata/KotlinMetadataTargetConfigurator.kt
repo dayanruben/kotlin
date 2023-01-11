@@ -25,7 +25,6 @@ import org.jetbrains.kotlin.gradle.plugin.sources.*
 import org.jetbrains.kotlin.gradle.plugin.statistics.KotlinBuildStatsService
 import org.jetbrains.kotlin.gradle.targets.native.internal.*
 import org.jetbrains.kotlin.gradle.tasks.*
-import org.jetbrains.kotlin.gradle.utils.addExtendsFromRelation
 import org.jetbrains.kotlin.gradle.utils.lowerCamelCaseName
 import org.jetbrains.kotlin.statistics.metrics.BooleanMetrics
 import java.util.concurrent.Callable
@@ -34,14 +33,14 @@ internal const val COMMON_MAIN_ELEMENTS_CONFIGURATION_NAME = "commonMainMetadata
 internal const val ALL_COMPILE_METADATA_CONFIGURATION_NAME = "allSourceSetsCompileDependenciesMetadata"
 
 internal val Project.isKotlinGranularMetadataEnabled: Boolean
-    get() = project.pm20ExtensionOrNull != null || with(PropertiesProvider(rootProject)) {
+    get() = project.pm20ExtensionOrNull != null || with(PropertiesProvider(this)) {
         mppHierarchicalStructureByDefault || // then we want to use KLIB granular compilation & artifacts even if it's just commonMain
                 hierarchicalStructureSupport ||
                 enableGranularSourceSetsMetadata == true
     }
 
 internal val Project.shouldCompileIntermediateSourceSetsToMetadata: Boolean
-    get() = project.pm20ExtensionOrNull != null || with(PropertiesProvider(rootProject)) {
+    get() = project.pm20ExtensionOrNull != null || with(PropertiesProvider(this)) {
         when {
             !hierarchicalStructureSupport && mppHierarchicalStructureByDefault -> false
             else -> true
@@ -162,10 +161,8 @@ class KotlinMetadataTargetConfigurator :
 
     private fun setupDependencyTransformationForCommonSourceSets(target: KotlinMetadataTarget) {
         target.project.whenEvaluated {
-            val publishedCommonSourceSets: Set<KotlinSourceSet> = getCommonSourceSetsForMetadataCompilation(project)
-
             kotlinExtension.sourceSets.all {
-                setupDependencyTransformationForSourceSet(target.project, it, it in publishedCommonSourceSets)
+                setupDependencyTransformationForSourceSet(target.project, it)
             }
         }
     }
@@ -345,7 +342,7 @@ class KotlinMetadataTargetConfigurator :
         }
 
         compilation.compileDependencyFiles += createMetadataDependencyTransformationClasspath(
-            project.configurations.getByName(ALL_COMPILE_METADATA_CONFIGURATION_NAME),
+            sourceSet.internal.resolvableMetadataConfiguration,
             compilation
         )
 
@@ -356,15 +353,11 @@ class KotlinMetadataTargetConfigurator :
 
     private fun setupDependencyTransformationForSourceSet(
         project: Project,
-        sourceSet: KotlinSourceSet,
-        isSourceSetPublished: Boolean
+        sourceSet: KotlinSourceSet
     ) {
-        val dependencyScopesToTransform = KotlinDependencyScope.compileScopes
-
         val granularMetadataTransformation = GranularMetadataTransformation(
             project = project,
             kotlinSourceSet = sourceSet,
-            sourceSetRequestedScopes = dependencyScopesToTransform,
             parentTransformations = lazy {
                 dependsOnClosureWithInterCompilationDependencies(sourceSet).filterIsInstance<DefaultKotlinSourceSet>()
                     .map { it.compileDependenciesTransformationOrFail }
@@ -373,26 +366,6 @@ class KotlinMetadataTargetConfigurator :
 
         if (sourceSet is DefaultKotlinSourceSet)
             sourceSet.compileDependenciesTransformation = granularMetadataTransformation
-
-        dependencyScopesToTransform.forEach { scope ->
-            val sourceSetDependencyConfigurationByScope = project.configurations.sourceSetDependencyConfigurationByScope(sourceSet, scope)
-
-            if (isSourceSetPublished) {
-                project.addExtendsFromRelation(
-                    ALL_COMPILE_METADATA_CONFIGURATION_NAME,
-                    sourceSetDependencyConfigurationByScope.name
-                )
-            }
-
-            val sourceSetMetadataConfigurationByScope = project.sourceSetMetadataConfigurationByScope(sourceSet, scope)
-            if (sourceSetMetadataConfigurationByScope != null) {
-                granularMetadataTransformation.applyToConfiguration(sourceSetMetadataConfigurationByScope)
-                project.addExtendsFromRelation(
-                    sourceSetMetadataConfigurationByScope.name,
-                    ALL_COMPILE_METADATA_CONFIGURATION_NAME
-                )
-            }
-        }
     }
 
     /** Ensure that the [configuration] excludes the dependencies that are classified by this [GranularMetadataTransformation] as
@@ -405,7 +378,7 @@ class KotlinMetadataTargetConfigurator :
                 .partition { it is MetadataDependencyResolution.Exclude }
 
             unrequested.forEach {
-                val (group, name) = it.projectDependency?.run {
+                val (group, name) = it.projectDependency(project)?.run {
                     /** Note: the project dependency notation here should be exactly this, group:name,
                      * not from [ModuleIds.fromProjectPathDependency], as `exclude` checks it against the project's group:name  */
                     ModuleDependencyIdentifier(group.toString(), name)
@@ -413,7 +386,7 @@ class KotlinMetadataTargetConfigurator :
                 configuration.exclude(mapOf("group" to group, "module" to name))
             }
 
-            requested.filter { it.projectDependency == null }.forEach {
+            requested.filter { it.dependency.currentBuildProjectIdOrNull == null }.forEach {
                 val (group, name) = ModuleIds.fromComponent(project, it.dependency)
                 val notation = listOfNotNull(group.orEmpty(), name, it.dependency.moduleVersion?.version).joinToString(":")
                 configuration.resolutionStrategy.force(notation)

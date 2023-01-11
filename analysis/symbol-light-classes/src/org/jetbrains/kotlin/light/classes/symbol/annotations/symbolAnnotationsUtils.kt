@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.annotations.*
 import org.jetbrains.kotlin.analysis.api.annotations.KtKClassAnnotationValue.KtNonLocalKClassAnnotationValue
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
-import org.jetbrains.kotlin.analysis.api.symbols.KtFileSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtAnnotatedSymbol
@@ -25,34 +24,23 @@ import org.jetbrains.kotlin.light.classes.symbol.NullabilityType
 import org.jetbrains.kotlin.light.classes.symbol.classes.SymbolLightClassBase
 import org.jetbrains.kotlin.light.classes.symbol.methods.SymbolLightMethod
 import org.jetbrains.kotlin.load.java.JvmAbi
-import org.jetbrains.kotlin.load.java.JvmAbi.JVM_FIELD_ANNOTATION_CLASS_ID
 import org.jetbrains.kotlin.load.java.JvmAnnotationNames
-import org.jetbrains.kotlin.name.*
-import org.jetbrains.kotlin.name.JvmNames.JVM_MULTIFILE_CLASS_ID
-import org.jetbrains.kotlin.name.JvmNames.JVM_NAME_CLASS_ID
+import org.jetbrains.kotlin.name.CallableId
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.JvmNames.JVM_OVERLOADS_CLASS_ID
 import org.jetbrains.kotlin.name.JvmNames.JVM_SYNTHETIC_ANNOTATION_CLASS_ID
-import org.jetbrains.kotlin.resolve.annotations.JVM_STATIC_ANNOTATION_CLASS_ID
-import org.jetbrains.kotlin.resolve.annotations.JVM_THROWS_ANNOTATION_FQ_NAME
+import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.resolve.deprecation.DeprecationLevelValue
-import org.jetbrains.kotlin.resolve.inline.INLINE_ONLY_ANNOTATION_FQ_NAME
 import java.lang.annotation.ElementType
 
 internal fun KtAnnotatedSymbol.hasJvmSyntheticAnnotation(
     annotationUseSiteTarget: AnnotationUseSiteTarget? = null,
-    strictUseSite: Boolean = true,
-): Boolean = hasAnnotation(JVM_SYNTHETIC_ANNOTATION_CLASS_ID, annotationUseSiteTarget, strictUseSite)
-
-internal fun KtFileSymbol.hasJvmMultifileClassAnnotation(): Boolean =
-    hasAnnotation(JVM_MULTIFILE_CLASS_ID, AnnotationUseSiteTarget.FILE)
+    acceptAnnotationsWithoutUseSite: Boolean = false,
+): Boolean = hasAnnotation(JVM_SYNTHETIC_ANNOTATION_CLASS_ID, annotationUseSiteTarget, acceptAnnotationsWithoutUseSite)
 
 internal fun KtAnnotatedSymbol.getJvmNameFromAnnotation(annotationUseSiteTarget: AnnotationUseSiteTarget? = null): String? {
-    val annotation = annotations.firstOrNull {
-        val siteTarget = it.useSiteTarget
-        (siteTarget == null || siteTarget == annotationUseSiteTarget) &&
-                it.classId == JVM_NAME_CLASS_ID
-    }
-
+    val annotation = findAnnotation(StandardClassIds.Annotations.JvmName, annotationUseSiteTarget, acceptAnnotationsWithoutUseSite = true)
     return annotation?.let {
         (it.arguments.firstOrNull()?.expression as? KtConstantAnnotationValue)?.constantValue?.value as? String
     }
@@ -62,77 +50,53 @@ context(KtAnalysisSession)
 internal fun isHiddenByDeprecation(
     symbol: KtAnnotatedSymbol,
     annotationUseSiteTarget: AnnotationUseSiteTarget? = null,
-): Boolean {
-    return symbol.getDeprecationStatus(annotationUseSiteTarget)?.deprecationLevel == DeprecationLevelValue.HIDDEN
-}
+): Boolean = symbol.getDeprecationStatus(annotationUseSiteTarget)?.deprecationLevel == DeprecationLevelValue.HIDDEN
 
 context(KtAnalysisSession)
 internal fun KtAnnotatedSymbol.isHiddenOrSynthetic(
     annotationUseSiteTarget: AnnotationUseSiteTarget? = null,
-    strictUseSite: Boolean = true,
-) = isHiddenByDeprecation(this, annotationUseSiteTarget) || hasJvmSyntheticAnnotation(annotationUseSiteTarget, strictUseSite)
+    acceptAnnotationsWithoutUseSite: Boolean = false,
+) = isHiddenByDeprecation(this, annotationUseSiteTarget) ||
+        hasJvmSyntheticAnnotation(annotationUseSiteTarget, acceptAnnotationsWithoutUseSite)
 
-internal fun KtAnnotatedSymbol.hasJvmFieldAnnotation(): Boolean =
-    hasAnnotation(JVM_FIELD_ANNOTATION_CLASS_ID, null)
+internal fun KtAnnotatedSymbol.hasJvmFieldAnnotation(): Boolean = hasAnnotation(StandardClassIds.Annotations.JvmField)
 
 internal fun KtAnnotatedSymbol.hasPublishedApiAnnotation(annotationUseSiteTarget: AnnotationUseSiteTarget? = null): Boolean =
     hasAnnotation(StandardClassIds.Annotations.PublishedApi, annotationUseSiteTarget)
 
 internal fun KtAnnotatedSymbol.hasDeprecatedAnnotation(
     annotationUseSiteTarget: AnnotationUseSiteTarget? = null,
-    strictUseSite: Boolean = true,
-): Boolean = hasAnnotation(StandardClassIds.Annotations.Deprecated, annotationUseSiteTarget, strictUseSite)
+    acceptAnnotationsWithoutUseSite: Boolean = false,
+): Boolean = hasAnnotation(StandardClassIds.Annotations.Deprecated, annotationUseSiteTarget, acceptAnnotationsWithoutUseSite)
 
-internal fun KtAnnotatedSymbol.hasJvmOverloadsAnnotation(): Boolean = hasAnnotation(JVM_OVERLOADS_CLASS_ID, null)
+internal fun KtAnnotatedSymbol.hasJvmOverloadsAnnotation(): Boolean = hasAnnotation(JVM_OVERLOADS_CLASS_ID)
 
 internal fun KtAnnotatedSymbol.hasJvmStaticAnnotation(
     annotationUseSiteTarget: AnnotationUseSiteTarget? = null,
-    strictUseSite: Boolean = true,
-): Boolean = hasAnnotation(JVM_STATIC_ANNOTATION_CLASS_ID, annotationUseSiteTarget, strictUseSite)
+    acceptAnnotationsWithoutUseSite: Boolean = false,
+): Boolean = hasAnnotation(StandardClassIds.Annotations.JvmStatic, annotationUseSiteTarget, acceptAnnotationsWithoutUseSite)
 
-internal fun KtAnnotatedSymbol.hasInlineOnlyAnnotation(): Boolean =
-    hasAnnotation(INLINE_ONLY_ANNOTATION_FQ_NAME, null)
-
-internal fun KtAnnotatedSymbol.hasAnnotation(
-    classId: ClassId,
-    annotationUseSiteTarget: AnnotationUseSiteTarget?,
-    strictUseSite: Boolean = true,
-): Boolean = findAnnotation(classId, annotationUseSiteTarget, strictUseSite) != null
+internal fun KtAnnotatedSymbol.hasInlineOnlyAnnotation(): Boolean = hasAnnotation(StandardClassIds.Annotations.InlineOnly)
 
 internal fun KtAnnotatedSymbol.findAnnotation(
     classId: ClassId,
     annotationUseSiteTarget: AnnotationUseSiteTarget?,
-    strictUseSite: Boolean = true,
-): KtAnnotationApplication? =
-    annotations.find {
+    acceptAnnotationsWithoutUseSite: Boolean = false,
+): KtAnnotationApplication? {
+    if (!hasAnnotation(classId, annotationUseSiteTarget, acceptAnnotationsWithoutUseSite)) return null
+
+    return annotations.find {
         val useSiteTarget = it.useSiteTarget
-        (useSiteTarget == annotationUseSiteTarget || !strictUseSite && useSiteTarget == null) && it.classId == classId
+        (useSiteTarget == annotationUseSiteTarget || acceptAnnotationsWithoutUseSite && useSiteTarget == null) && it.classId == classId
     }
+}
 
-internal fun KtAnnotatedSymbol.hasAnnotation(
-    fqName: FqName,
-    annotationUseSiteTarget: AnnotationUseSiteTarget?,
-    strictUseSite: Boolean = true,
-): Boolean = findAnnotation(fqName, annotationUseSiteTarget, strictUseSite) != null
-
-internal fun KtAnnotatedSymbol.findAnnotation(
-    fqName: FqName,
-    annotationUseSiteTarget: AnnotationUseSiteTarget?,
-    strictUseSite: Boolean = true,
-): KtAnnotationApplication? =
-    annotations.find {
-        val useSiteTarget = it.useSiteTarget
-        (useSiteTarget == annotationUseSiteTarget || !strictUseSite && useSiteTarget == null) && it.classId?.asSingleFqName() == fqName
-    }
-
-internal fun NullabilityType.computeNullabilityAnnotation(parent: PsiModifierList): SymbolLightSimpleAnnotation? {
-    return when (this) {
-        NullabilityType.NotNull -> NotNull::class.java
-        NullabilityType.Nullable -> Nullable::class.java
-        else -> null
-    }?.let {
-        SymbolLightSimpleAnnotation(it.name, parent)
-    }
+internal fun NullabilityType.computeNullabilityAnnotation(parent: PsiModifierList): SymbolLightSimpleAnnotation? = when (this) {
+    NullabilityType.NotNull -> NotNull::class.java
+    NullabilityType.Nullable -> Nullable::class.java
+    else -> null
+}?.let {
+    SymbolLightSimpleAnnotation(it.name, parent)
 }
 
 context(KtAnalysisSession)
@@ -328,14 +292,14 @@ internal fun KtAnnotatedSymbol.computeThrowsList(
     annotationUseSiteTarget: AnnotationUseSiteTarget?,
     useSitePosition: PsiElement,
     containingClass: SymbolLightClassBase,
-    strictUseSite: Boolean = true,
+    acceptAnnotationsWithoutUseSite: Boolean = false,
 ) {
     if (containingClass.isEnum && this is KtFunctionSymbol && name == StandardNames.ENUM_VALUE_OF && isStatic) {
         builder.addReference(java.lang.IllegalArgumentException::class.qualifiedName)
         builder.addReference(java.lang.NullPointerException::class.qualifiedName)
     }
 
-    val annoApp = findAnnotation(JVM_THROWS_ANNOTATION_FQ_NAME, annotationUseSiteTarget, strictUseSite) ?: return
+    val annoApp = findAnnotation(StandardClassIds.Annotations.Throws, annotationUseSiteTarget, acceptAnnotationsWithoutUseSite) ?: return
 
     fun handleAnnotationValue(annotationValue: KtAnnotationValue) = when (annotationValue) {
         is KtArrayAnnotationValue -> {

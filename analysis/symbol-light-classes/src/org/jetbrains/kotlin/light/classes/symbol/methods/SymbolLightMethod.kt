@@ -1,10 +1,11 @@
 /*
- * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.light.classes.symbol.methods
 
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiIdentifier
 import com.intellij.psi.PsiParameterList
 import com.intellij.psi.impl.light.LightReferenceListBuilder
@@ -21,6 +22,7 @@ import org.jetbrains.kotlin.light.classes.symbol.annotations.computeThrowsList
 import org.jetbrains.kotlin.light.classes.symbol.annotations.hasDeprecatedAnnotation
 import org.jetbrains.kotlin.light.classes.symbol.classes.SymbolLightClassBase
 import org.jetbrains.kotlin.light.classes.symbol.compareSymbolPointers
+import org.jetbrains.kotlin.light.classes.symbol.isOriginEquivalentTo
 import org.jetbrains.kotlin.light.classes.symbol.isValid
 import org.jetbrains.kotlin.light.classes.symbol.parameters.SymbolLightParameter
 import org.jetbrains.kotlin.light.classes.symbol.parameters.SymbolLightParameterList
@@ -136,6 +138,10 @@ internal abstract class SymbolLightMethod<FType : KtFunctionLikeSymbol> private 
     override fun isValid(): Boolean = super.isValid() && functionDeclaration?.isValid ?: functionSymbolPointer.isValid(ktModule)
 
     override fun isOverride(): Boolean = withFunctionSymbol { it.getDirectlyOverriddenSymbols().isNotEmpty() }
+
+    override fun isEquivalentTo(another: PsiElement?): Boolean {
+        return super.isEquivalentTo(another) || isOriginEquivalentTo(another)
+    }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

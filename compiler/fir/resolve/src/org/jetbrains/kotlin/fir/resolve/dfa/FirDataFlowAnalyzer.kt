@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.fir.contracts.description.ConeConditionalEffectDecla
 import org.jetbrains.kotlin.fir.contracts.description.ConeReturnsEffectDeclaration
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyAccessor
-import org.jetbrains.kotlin.fir.declarations.utils.isLocal
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.impl.FirNoReceiverExpression
 import org.jetbrains.kotlin.fir.references.FirControlFlowGraphReference
@@ -136,16 +135,12 @@ abstract class FirDataFlowAnalyzer(
         return variable.stability to types.toMutableList()
     }
 
-    fun returnExpressionsOfAnonymousFunctionOrNull(function: FirAnonymousFunction): Collection<FirStatement>? =
+    fun returnExpressionsOfAnonymousFunctionOrNull(function: FirAnonymousFunction): Collection<FirExpression>? =
         graphBuilder.returnExpressionsOfAnonymousFunction(function)
 
-    fun returnExpressionsOfAnonymousFunction(function: FirAnonymousFunction): Collection<FirStatement> =
+    fun returnExpressionsOfAnonymousFunction(function: FirAnonymousFunction): Collection<FirExpression> =
         returnExpressionsOfAnonymousFunctionOrNull(function)
             ?: error("anonymous function ${function.render()} not analyzed")
-
-    fun dropSubgraphFromCall(call: FirFunctionCall) {
-        graphBuilder.dropSubgraphFromCall(call)
-    }
 
     // ----------------------------------- Named function -----------------------------------
 
@@ -159,9 +154,8 @@ abstract class FirDataFlowAnalyzer(
         }
         localFunctionNode?.mergeIncomingFlow()
         functionEnterNode.mergeIncomingFlow {
-            // TODO: ||?
-            if (function is FirAnonymousFunction && function.invocationKind?.canBeRevisited() != false) {
-                enterCapturingStatement(it, function)
+            if (function is FirAnonymousFunction && function.invocationKind?.canBeRevisited() == true) {
+                enterRepeatableStatement(it, function)
             }
         }
         context.variableAssignmentAnalyzer.enterFunction(function)
@@ -171,9 +165,8 @@ abstract class FirDataFlowAnalyzer(
         if (function is FirDefaultPropertyAccessor) return null
 
         context.variableAssignmentAnalyzer.exitFunction()
-        // TODO: ||?
-        if (function is FirAnonymousFunction && function.invocationKind?.canBeRevisited() != false) {
-            exitCapturingStatement(function)
+        if (function is FirAnonymousFunction && function.invocationKind?.canBeRevisited() == true) {
+            exitRepeatableStatement(function)
         }
 
         if (function is FirAnonymousFunction) {
@@ -186,13 +179,13 @@ abstract class FirDataFlowAnalyzer(
 
         val (node, graph) = graphBuilder.exitFunction(function)
         node.mergeIncomingFlow()
-        if (!graphBuilder.isTopLevel()) {
+        if (!graphBuilder.isTopLevel) {
             for (valueParameter in function.valueParameters) {
                 variableStorage.removeRealVariable(valueParameter.symbol)
             }
         }
         val info = DataFlowInfo(variableStorage)
-        if (graphBuilder.isTopLevel()) {
+        if (graphBuilder.isTopLevel) {
             context.reset()
         } else {
             resetReceivers()
@@ -208,60 +201,52 @@ abstract class FirDataFlowAnalyzer(
 
     // ----------------------------------- Classes -----------------------------------
 
-    fun enterClass() {
-        graphBuilder.enterClass()
+    fun enterClass(klass: FirClass, buildGraph: Boolean) {
+        val (outerNode, enterNode) = graphBuilder.enterClass(klass, buildGraph)
+        outerNode?.mergeIncomingFlow()
+        enterNode?.mergeIncomingFlow()
+        context.variableAssignmentAnalyzer.enterClass(klass)
     }
 
-    fun exitClass() {
-        graphBuilder.exitClass()
-    }
-
-    fun exitRegularClass(klass: FirRegularClass): ControlFlowGraph {
-        if (klass.isLocal && components.container !is FirClass) return exitLocalClass(klass)
-        return graphBuilder.exitClass(klass)
-    }
-
-    private fun exitLocalClass(klass: FirRegularClass): ControlFlowGraph {
-        // TODO: support capturing of mutable properties, KT-44877
-        val (node, controlFlowGraph) = graphBuilder.exitLocalClass(klass)
-        node.mergeIncomingFlow()
-        return controlFlowGraph
-    }
-
-    fun enterAnonymousObject(anonymousObject: FirAnonymousObject) {
-        graphBuilder.enterAnonymousObject(anonymousObject).mergeIncomingFlow()
-    }
-
-    fun exitAnonymousObject(anonymousObject: FirAnonymousObject): ControlFlowGraph {
-        val (node, controlFlowGraph) = graphBuilder.exitAnonymousObject(anonymousObject)
-        node.mergeIncomingFlow()
-        return controlFlowGraph
+    fun exitClass(): ControlFlowGraph? {
+        context.variableAssignmentAnalyzer.exitClass()
+        val (node, graph) = graphBuilder.exitClass()
+        if (node != null) {
+            node.mergeIncomingFlow()
+        } else {
+            resetReceivers() // to state before class initialization
+        }
+        return graph
     }
 
     fun exitAnonymousObjectExpression(anonymousObjectExpression: FirAnonymousObjectExpression) {
-        graphBuilder.exitAnonymousObjectExpression(anonymousObjectExpression).mergeIncomingFlow()
+        graphBuilder.exitAnonymousObjectExpression(anonymousObjectExpression)?.mergeIncomingFlow()
     }
 
     // ----------------------------------- Scripts ------------------------------------------
 
     fun enterScript(script: FirScript) {
-        val res = graphBuilder.enterScript(script)
-        res.mergeIncomingFlow()
+        graphBuilder.enterScript(script).mergeIncomingFlow()
     }
 
-    fun exitScript(script: FirScript) {
-        graphBuilder.exitScript(script)
+    fun exitScript(): ControlFlowGraph {
+        val (node, graph) = graphBuilder.exitScript()
+        node.mergeIncomingFlow()
+        return graph
     }
 
     // ----------------------------------- Value parameters (and it's defaults) -----------------------------------
 
     fun enterValueParameter(valueParameter: FirValueParameter) {
-        graphBuilder.enterValueParameter(valueParameter)?.mergeIncomingFlow()
+        val (outerNode, innerNode) = graphBuilder.enterValueParameter(valueParameter) ?: return
+        outerNode.mergeIncomingFlow()
+        innerNode.mergeIncomingFlow()
     }
 
     fun exitValueParameter(valueParameter: FirValueParameter): ControlFlowGraph? {
-        val (node, graph) = graphBuilder.exitValueParameter(valueParameter) ?: return null
-        node.mergeIncomingFlow()
+        val (innerNode, outerNode, graph) = graphBuilder.exitValueParameter(valueParameter) ?: return null
+        innerNode.mergeIncomingFlow()
+        outerNode.mergeIncomingFlow()
         return graph
     }
 
@@ -606,7 +591,7 @@ abstract class FirDataFlowAnalyzer(
     fun enterWhileLoop(loop: FirLoop) {
         val (loopEnterNode, loopConditionEnterNode) = graphBuilder.enterWhileLoop(loop)
         loopEnterNode.mergeIncomingFlow()
-        loopConditionEnterNode.mergeIncomingFlow { flow -> enterCapturingStatement(flow, loop) }
+        loopConditionEnterNode.mergeIncomingFlow { flow -> enterRepeatableStatement(flow, loop) }
     }
 
     fun exitWhileLoopCondition(loop: FirLoop) {
@@ -630,7 +615,7 @@ abstract class FirDataFlowAnalyzer(
     }
 
     private fun processWhileLoopExit(flow: MutableFlow, node: LoopExitNode, conditionEnterNode: LoopConditionEnterNode) {
-        val possiblyChangedVariables = exitCapturingStatement(node.fir)
+        val possiblyChangedVariables = exitRepeatableStatement(node.fir)
         if (possiblyChangedVariables.isNullOrEmpty()) return
         // While analyzing the loop we might have added some backwards jumps to `conditionEnterNode` which weren't
         // there at the time its flow was computed - which is why we erased all information about `possiblyChangedVariables`
@@ -663,7 +648,7 @@ abstract class FirDataFlowAnalyzer(
         }
     }
 
-    private fun enterCapturingStatement(flow: MutableFlow, statement: FirStatement) {
+    private fun enterRepeatableStatement(flow: MutableFlow, statement: FirStatement) {
         val reassignedNames = context.preliminaryLoopVisitor.enterCapturingStatement(statement)
         if (reassignedNames.isEmpty()) return
         // TODO: only choose the innermost variable for each name
@@ -680,7 +665,7 @@ abstract class FirDataFlowAnalyzer(
         context.variablesClearedBeforeLoop.push(possiblyChangedVariables)
     }
 
-    private fun exitCapturingStatement(statement: FirStatement): List<RealVariable>? {
+    private fun exitRepeatableStatement(statement: FirStatement): List<RealVariable>? {
         if (context.preliminaryLoopVisitor.exitCapturingStatement(statement).isEmpty()) return null
         return context.variablesClearedBeforeLoop.pop()
     }
@@ -689,7 +674,7 @@ abstract class FirDataFlowAnalyzer(
 
     fun enterDoWhileLoop(loop: FirLoop) {
         val (loopEnterNode, loopBlockEnterNode) = graphBuilder.enterDoWhileLoop(loop)
-        loopEnterNode.mergeIncomingFlow { flow -> enterCapturingStatement(flow, loop) }
+        loopEnterNode.mergeIncomingFlow { flow -> enterRepeatableStatement(flow, loop) }
         loopBlockEnterNode.mergeIncomingFlow()
     }
 
@@ -703,7 +688,7 @@ abstract class FirDataFlowAnalyzer(
         val (loopConditionExitNode, loopExitNode) = graphBuilder.exitDoWhileLoop(loop)
         loopConditionExitNode.mergeIncomingFlow()
         loopExitNode.mergeIncomingFlow { processLoopExit(it, loopExitNode, loopConditionExitNode) }
-        exitCapturingStatement(loop)
+        exitRepeatableStatement(loop)
     }
 
     // ----------------------------------- Try-catch-finally -----------------------------------
@@ -975,8 +960,8 @@ abstract class FirDataFlowAnalyzer(
         }
     }
 
-    fun exitBinaryLogicExpression() {
-        graphBuilder.exitBinaryLogicExpression().mergeBinaryLogicOperatorFlow()
+    fun exitBinaryLogicExpression(binaryLogicExpression: FirBinaryLogicExpression) {
+        graphBuilder.exitBinaryLogicExpression(binaryLogicExpression).mergeBinaryLogicOperatorFlow()
     }
 
     private fun AbstractBinaryExitNode<FirBinaryLogicExpression>.mergeBinaryLogicOperatorFlow() = mergeIncomingFlow { flow ->
@@ -1041,12 +1026,12 @@ abstract class FirDataFlowAnalyzer(
 
     // ----------------------------------- Annotations -----------------------------------
 
-    fun enterAnnotation(annotation: FirAnnotation) {
-        graphBuilder.enterAnnotation(annotation).mergeIncomingFlow()
+    fun enterAnnotation() {
+        graphBuilder.enterFakeExpression().mergeIncomingFlow()
     }
 
-    fun exitAnnotation(annotation: FirAnnotation) {
-        graphBuilder.exitAnnotation(annotation).mergeIncomingFlow()
+    fun exitAnnotation() {
+        graphBuilder.exitFakeExpression()
     }
 
     // ----------------------------------- Init block -----------------------------------
@@ -1055,8 +1040,8 @@ abstract class FirDataFlowAnalyzer(
         graphBuilder.enterInitBlock(initBlock).mergeIncomingFlow()
     }
 
-    fun exitInitBlock(initBlock: FirAnonymousInitializer): ControlFlowGraph {
-        val (node, controlFlowGraph) = graphBuilder.exitInitBlock(initBlock)
+    fun exitInitBlock(): ControlFlowGraph {
+        val (node, controlFlowGraph) = graphBuilder.exitInitBlock()
         node.mergeIncomingFlow()
         return controlFlowGraph
     }
@@ -1064,11 +1049,11 @@ abstract class FirDataFlowAnalyzer(
     // ----------------------------------- Contract description -----------------------------------
 
     fun enterContractDescription() {
-        graphBuilder.enterContractDescription().mergeIncomingFlow()
+        graphBuilder.enterFakeExpression().mergeIncomingFlow()
     }
 
     fun exitContractDescription() {
-        graphBuilder.exitContractDescription()
+        graphBuilder.exitFakeExpression()
     }
 
     // ----------------------------------- Elvis -----------------------------------
@@ -1128,7 +1113,7 @@ abstract class FirDataFlowAnalyzer(
     // In that case `mergeIncomingFlow` will automatically ensure consistency once called on that node.
     private fun CFGNode<*>.buildIncomingFlow(): MutableFlow {
         val previousFlows = previousNodes.mapNotNull {
-            val incomingEdgeKind = incomingEdges.getValue(it).kind
+            val incomingEdgeKind = edgeFrom(it).kind
             if (if (isDead) !incomingEdgeKind.usedInDeadDfa else !incomingEdgeKind.usedInDfa) return@mapNotNull null
             // `MergePostponedLambdaExitsNode` nodes form a parallel data flow graph. We never compute
             // data flow for any of them until reaching a completed call.

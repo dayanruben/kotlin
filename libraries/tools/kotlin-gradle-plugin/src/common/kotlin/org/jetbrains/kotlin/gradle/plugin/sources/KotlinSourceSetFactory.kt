@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.gradle.targets.js.KotlinJsCompilerAttribute
 import org.jetbrains.kotlin.gradle.targets.js.KotlinJsTarget
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrTarget
 import org.jetbrains.kotlin.gradle.targets.metadata.isKotlinGranularMetadataEnabled
+import org.jetbrains.kotlin.gradle.utils.maybeRegister
 import java.io.File
 
 internal abstract class KotlinSourceSetFactory<T : KotlinSourceSet> internal constructor(
@@ -75,6 +76,7 @@ internal class DefaultKotlinSourceSetFactory(
         sourceSet.resources.srcDir(defaultSourceFolder(project, sourceSet.name, "resources"))
 
         val dependencyConfigurationWithMetadata = with(sourceSet) {
+            @Suppress("DEPRECATION")
             listOf(
                 apiConfigurationName to apiMetadataConfigurationName,
                 implementationConfigurationName to implementationMetadataConfigurationName,
@@ -84,7 +86,7 @@ internal class DefaultKotlinSourceSetFactory(
         }
 
         dependencyConfigurationWithMetadata.forEach { (configurationName, metadataName) ->
-            project.configurations.maybeCreate(metadataName).apply {
+            project.configurations.maybeRegister(metadataName) {
                 attributes.attribute(KotlinPlatformType.attribute, KotlinPlatformType.common)
                 attributes.attribute(Usage.USAGE_ATTRIBUTE, project.usageByName(KotlinUsages.KOTLIN_API))
                 attributes.attribute(Category.CATEGORY_ATTRIBUTE, project.categoryByName(Category.LIBRARY))
@@ -100,7 +102,7 @@ internal class DefaultKotlinSourceSetFactory(
                 }
 
                 project.afterEvaluate {
-                    setJsCompilerIfNecessary(sourceSet, this@apply)
+                    setJsCompilerIfNecessary(sourceSet, this)
                 }
             }
         }

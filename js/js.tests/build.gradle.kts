@@ -16,10 +16,12 @@ plugins {
     id("de.undercouch.download")
 }
 
+val nodeDir = buildDir.resolve("node")
+
 node {
     download.set(true)
     version.set(nodejsVersion)
-    nodeProjectDir.set(buildDir)
+    nodeProjectDir.set(nodeDir)
 }
 
 val antLauncherJar by configurations.creating
@@ -271,8 +273,11 @@ d8Plugin.version = v8Version
 
 fun Test.setupV8() {
     dependsOn(d8Plugin.setupTaskProvider)
+    val v8ExecutablePath = project.provider {
+        d8Plugin.requireConfigured().executablePath.absolutePath
+    }
     doFirst {
-        systemProperty("javascript.engine.path.V8", d8Plugin.requireConfigured().executablePath.absolutePath)
+        systemProperty("javascript.engine.path.V8", v8ExecutablePath.get())
     }
 }
 
@@ -314,6 +319,7 @@ fun Test.setUpJsBoxTests(jsEnabled: Boolean, jsIrEnabled: Boolean, firEnabled: B
     }
 
     exclude("org/jetbrains/kotlin/js/testOld/wasm/semantics/*")
+    exclude("org/jetbrains/kotlin/js/testOld/api/*")
 
     if (jsEnabled && !jsIrEnabled) {
         include("org/jetbrains/kotlin/integration/AntTaskJsTest.class")
@@ -330,7 +336,6 @@ fun Test.setUpJsBoxTests(jsEnabled: Boolean, jsIrEnabled: Boolean, firEnabled: B
             include("org/jetbrains/kotlin/js/test/ir/*")
 
             include("org/jetbrains/kotlin/incremental/*")
-            include("org/jetbrains/kotlin/js/testOld/api/*")
             include("org/jetbrains/kotlin/js/testOld/compatibility/binary/JsKlibBinaryCompatibilityTestGenerated.class")
             include("org/jetbrains/kotlin/benchmarks/GenerateIrRuntime.class")
             include("org/jetbrains/kotlin/integration/JsIrAnalysisHandlerExtensionTest.class")
@@ -351,7 +356,7 @@ fun Test.setUpBoxTests() {
         systemProperty("kotlin.ant.launcher.class", "org.apache.tools.ant.Main")
     }
 
-    systemProperty("kotlin.js.test.root.out.dir", "$buildDir/")
+    systemProperty("kotlin.js.test.root.out.dir", "$nodeDir/")
     systemProperty(
         "overwrite.output", project.providers.gradleProperty("overwrite.output")
             .forUseAtConfigurationTime().orNull ?: "false"
@@ -381,8 +386,6 @@ val test = projectTest(parallel = true, jUnitMode = JUnitMode.JUnit5, maxHeapSiz
     inputs.dir(testDataDir)
     inputs.dir(rootDir.resolve("dist"))
     inputs.dir(rootDir.resolve("compiler/testData"))
-    inputs.dir(rootDir.resolve("libraries/stdlib/api/js"))
-    inputs.dir(rootDir.resolve("libraries/stdlib/api/js-v1"))
 
     outputs.dir("$buildDir/out")
     outputs.dir("$buildDir/out-min")
@@ -411,6 +414,27 @@ projectTest("quickTest", parallel = true, jUnitMode = JUnitMode.JUnit5, maxHeapS
     useJUnitPlatform()
 }
 
+projectTest("jsStdlibApiTest", parallel = true, maxHeapSizeMb = 4096) {
+    setupV8()
+    setupNodeJs()
+    dependsOn(npmInstall)
+
+    dependsOn(":dist")
+    inputs.dir(rootDir.resolve("dist"))
+
+    include("org/jetbrains/kotlin/js/testOld/api/*")
+    inputs.dir(rootDir.resolve("libraries/stdlib/api/js"))
+    inputs.dir(rootDir.resolve("libraries/stdlib/api/js-v1"))
+
+    dependsOn(":kotlin-stdlib-js-ir:compileKotlinJs")
+    systemProperty("kotlin.js.full.stdlib.path", "libraries/stdlib/js-ir/build/classes/kotlin/js/main")
+    inputs.dir(rootDir.resolve("libraries/stdlib/js-ir/build/classes/kotlin/js/main"))
+
+    setTestNameIncludePatterns(listOf("org.jetbrains.kotlin.js.testOld.api.ApiTest.*"))
+
+    setUpBoxTests()
+}
+
 testsJar {}
 
 val generateTests by generator("org.jetbrains.kotlin.generators.tests.GenerateJsTestsKt") {
@@ -425,16 +449,16 @@ val prepareNpmTestData by tasks.registering(Copy::class) {
         include("package.json")
         include("test.js")
     }
-    into(buildDir)
+    into(nodeDir)
 }
 
 val npmInstall by tasks.getting(NpmTask::class) {
-    workingDir.set(buildDir)
+    workingDir.set(nodeDir)
     dependsOn(prepareNpmTestData)
 }
 
 val mochaTest by task<MochaTestTask> {
-    workingDir.set(buildDir)
+    workingDir.set(nodeDir)
 
     val target = if (project.hasProperty("teamcity")) "runOnTeamcity" else "test"
     args.set(listOf("run", target))

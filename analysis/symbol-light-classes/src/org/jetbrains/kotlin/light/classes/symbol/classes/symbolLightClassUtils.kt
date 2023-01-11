@@ -1,14 +1,16 @@
 /*
- * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.light.classes.symbol.classes
 
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiReferenceList
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithTypeParameters
@@ -19,19 +21,22 @@ import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.analysis.project.structure.getKtModuleOfTypeSafe
+import org.jetbrains.kotlin.analysis.utils.errors.requireIsInstance
 import org.jetbrains.kotlin.asJava.builder.LightMemberOriginForDeclaration
 import org.jetbrains.kotlin.asJava.classes.*
 import org.jetbrains.kotlin.asJava.elements.KtLightField
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.hasInterfaceDefaultImpls
 import org.jetbrains.kotlin.asJava.toLightClass
-import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.JvmAnalysisFlags
 import org.jetbrains.kotlin.config.JvmDefaultMode
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.lexer.KtTokens.*
-import org.jetbrains.kotlin.light.classes.symbol.annotations.*
+import org.jetbrains.kotlin.light.classes.symbol.annotations.hasJvmFieldAnnotation
+import org.jetbrains.kotlin.light.classes.symbol.annotations.hasJvmOverloadsAnnotation
+import org.jetbrains.kotlin.light.classes.symbol.annotations.hasJvmStaticAnnotation
+import org.jetbrains.kotlin.light.classes.symbol.annotations.isHiddenOrSynthetic
 import org.jetbrains.kotlin.light.classes.symbol.copy
 import org.jetbrains.kotlin.light.classes.symbol.fields.SymbolLightField
 import org.jetbrains.kotlin.light.classes.symbol.fields.SymbolLightFieldForEnumEntry
@@ -44,7 +49,6 @@ import org.jetbrains.kotlin.light.classes.symbol.methods.SymbolLightConstructor
 import org.jetbrains.kotlin.light.classes.symbol.methods.SymbolLightNoArgConstructor
 import org.jetbrains.kotlin.light.classes.symbol.methods.SymbolLightSimpleMethod
 import org.jetbrains.kotlin.load.java.JvmAbi
-import org.jetbrains.kotlin.load.java.JvmAnnotationNames
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
@@ -282,23 +286,20 @@ internal fun SymbolLightClassBase.createPropertyAccessors(
     if (declaration is KtKotlinPropertySymbol && declaration.isConst) return
     if (declaration.name.isSpecial) return
 
-    if (declaration.visibility.isPrivateOrPrivateToThis() &&
-        declaration.getter?.hasBody == false &&
-        declaration.setter?.hasBody == false
-    ) return
+    if (declaration.getter?.hasBody != true && declaration.setter?.hasBody != true && declaration.visibility.isPrivateOrPrivateToThis()) return
 
     if (declaration.hasJvmFieldAnnotation()) return
 
     fun KtPropertyAccessorSymbol.needToCreateAccessor(siteTarget: AnnotationUseSiteTarget): Boolean {
         if (onlyJvmStatic &&
-            !hasJvmStaticAnnotation(siteTarget, strictUseSite = false) &&
-            !declaration.hasJvmStaticAnnotation(siteTarget, strictUseSite = false)
+            !hasJvmStaticAnnotation(siteTarget, acceptAnnotationsWithoutUseSite = true) &&
+            !declaration.hasJvmStaticAnnotation(siteTarget, acceptAnnotationsWithoutUseSite = true)
         ) return false
 
         if (declaration.hasReifiedParameters) return false
         if (!hasBody && visibility.isPrivateOrPrivateToThis()) return false
         if (declaration.isHiddenOrSynthetic(siteTarget)) return false
-        return !isHiddenOrSynthetic(siteTarget, strictUseSite = false)
+        return !isHiddenOrSynthetic(siteTarget, acceptAnnotationsWithoutUseSite = true)
     }
 
     val originalElement = declaration.sourcePsiSafe<KtDeclaration>()
@@ -349,22 +350,6 @@ internal fun SymbolLightClassBase.createField(
     takePropertyVisibility: Boolean,
     result: MutableList<KtLightField>
 ) {
-
-    fun hasBackingField(property: KtPropertySymbol): Boolean = when (property) {
-        is KtSyntheticJavaPropertySymbol -> true
-        is KtKotlinPropertySymbol -> when {
-            property.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED -> false
-            property.modality == Modality.ABSTRACT -> false
-            property.isHiddenOrSynthetic() -> false
-            property.isLateInit -> true
-            property.isDelegatedProperty -> true
-            property.isFromPrimaryConstructor -> true
-            property.psi.let { it == null || it is KtParameter } -> true
-            property.hasJvmSyntheticAnnotation(AnnotationUseSiteTarget.FIELD) -> false
-            else -> property.hasBackingField
-        }
-    }
-
     if (!hasBackingField(declaration)) return
 
     val isDelegated = (declaration as? KtKotlinPropertySymbol)?.isDelegatedProperty == true
@@ -384,6 +369,38 @@ internal fun SymbolLightClassBase.createField(
             takePropertyVisibility = takePropertyVisibility,
         )
     )
+}
+
+context(KtAnalysisSession)
+private fun hasBackingField(property: KtPropertySymbol): Boolean {
+    if (property is KtSyntheticJavaPropertySymbol) return true
+    requireIsInstance<KtKotlinPropertySymbol>(property)
+
+    if (property.origin.cannotHasBackingField() || property.isStatic) return false
+    if (property.isLateInit || property.isDelegatedProperty || property.isFromPrimaryConstructor) return true
+    val hasBackingFieldByPsi: Boolean? = property.psi?.hasBackingField()
+    if (hasBackingFieldByPsi == false) {
+        return hasBackingFieldByPsi
+    }
+
+    if (property.modality == Modality.ABSTRACT ||
+        property.isHiddenOrSynthetic(AnnotationUseSiteTarget.FIELD, acceptAnnotationsWithoutUseSite = true)
+    ) return false
+
+    return hasBackingFieldByPsi ?: property.hasBackingField
+}
+
+private fun KtSymbolOrigin.cannotHasBackingField(): Boolean =
+    this == KtSymbolOrigin.SOURCE_MEMBER_GENERATED ||
+            this == KtSymbolOrigin.DELEGATED ||
+            this == KtSymbolOrigin.INTERSECTION_OVERRIDE ||
+            this == KtSymbolOrigin.SUBSTITUTION_OVERRIDE
+
+private fun PsiElement.hasBackingField(): Boolean {
+    if (this is KtParameter) return true
+    if (this !is KtProperty) return false
+
+    return hasInitializer() || getter?.takeIf { it.hasBody() } == null || setter?.takeIf { it.hasBody() } == null && isVar
 }
 
 context(KtAnalysisSession)
@@ -478,8 +495,8 @@ internal fun KtSymbolWithMembers.createInnerClasses(
 
     if (containingClass is SymbolLightClassForAnnotationClass &&
         this is KtNamedClassOrObjectSymbol &&
-        hasAnnotation(StandardNames.FqNames.repeatable, annotationUseSiteTarget = null) &&
-        !hasAnnotation(JvmAnnotationNames.REPEATABLE_ANNOTATION, annotationUseSiteTarget = null)
+        hasAnnotation(StandardClassIds.Annotations.Repeatable) &&
+        !hasAnnotation(StandardClassIds.Annotations.Java.Repeatable)
     ) {
         result.add(SymbolLightClassForRepeatableAnnotationContainer(containingClass))
     }

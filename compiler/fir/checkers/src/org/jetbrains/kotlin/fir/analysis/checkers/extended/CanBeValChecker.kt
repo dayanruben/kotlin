@@ -12,12 +12,10 @@ import org.jetbrains.kotlin.contracts.description.EventOccurrencesRange
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.diagnostics.reportOn
 import org.jetbrains.kotlin.fir.analysis.cfa.AbstractFirPropertyInitializationChecker
-import org.jetbrains.kotlin.fir.analysis.cfa.util.TraverseDirection
-import org.jetbrains.kotlin.fir.analysis.cfa.util.traverse
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.checkers.getChildren
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
-import org.jetbrains.kotlin.fir.analysis.cfa.PropertyInitializationInfoData
+import org.jetbrains.kotlin.fir.analysis.cfa.util.PropertyInitializationInfoData
 import org.jetbrains.kotlin.fir.expressions.FirVariableAssignment
 import org.jetbrains.kotlin.fir.references.toResolvedPropertySymbol
 import org.jetbrains.kotlin.fir.resolve.dfa.cfg.*
@@ -36,7 +34,7 @@ object CanBeValChecker : AbstractFirPropertyInitializationChecker() {
         val propertiesCharacteristics = mutableMapOf<FirPropertySymbol, EventOccurrencesRange>()
 
         val reporterVisitor = UninitializedPropertyReporter(data, properties, unprocessedProperties, propertiesCharacteristics)
-        graph.traverse(TraverseDirection.Forward, reporterVisitor)
+        graph.traverse(reporterVisitor)
 
         for (property in unprocessedProperties) {
             val source = property.source
@@ -93,7 +91,7 @@ object CanBeValChecker : AbstractFirPropertyInitializationChecker() {
 
             val currentCharacteristic = propertiesCharacteristics.getOrDefault(symbol, EventOccurrencesRange.ZERO)
             val info = data.getValue(node)
-            propertiesCharacteristics[symbol] = currentCharacteristic.or(info.infoAtNormalPath[symbol] ?: EventOccurrencesRange.ZERO)
+            propertiesCharacteristics[symbol] = info.values.fold(currentCharacteristic) { a, b -> b[symbol]?.let(a::or) ?: a }
         }
 
         override fun visitVariableDeclarationNode(node: VariableDeclarationNode) {

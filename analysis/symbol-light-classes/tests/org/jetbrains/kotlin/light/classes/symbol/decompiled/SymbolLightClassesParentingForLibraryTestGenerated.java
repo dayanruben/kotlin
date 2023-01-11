@@ -79,6 +79,12 @@ public class SymbolLightClassesParentingForLibraryTestGenerated extends Abstract
     }
 
     @Test
+    @TestMetadata("BackingFields.kt")
+    public void testBackingFields() throws Exception {
+        runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/BackingFields.kt");
+    }
+
+    @Test
     @TestMetadata("CompanionObject.kt")
     public void testCompanionObject() throws Exception {
         runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/CompanionObject.kt");
@@ -250,6 +256,12 @@ public class SymbolLightClassesParentingForLibraryTestGenerated extends Abstract
     @TestMetadata("StubOrderForOverloads.kt")
     public void testStubOrderForOverloads() throws Exception {
         runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/StubOrderForOverloads.kt");
+    }
+
+    @Test
+    @TestMetadata("Throws.kt")
+    public void testThrows() throws Exception {
+        runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/Throws.kt");
     }
 
     @Test

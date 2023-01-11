@@ -931,10 +931,8 @@ class NewMultiplatformIT : BaseGradleIT() {
 
                     task('printMetadataFiles') {
                         doFirst {
-                            ['Api', 'Implementation', 'CompileOnly'].each { kind ->
-                                def configuration = configurations.getByName("commonMain${'$'}kind" + '$METADATA_CONFIGURATION_NAME_SUFFIX')
-                                configuration.files.each { println '$pathPrefix' + configuration.name + '->' + it.name }
-                            }
+                            def configuration = configurations.getByName("commonMainResolvable" + '$METADATA_CONFIGURATION_NAME_SUFFIX')
+                            configuration.files.each { println '$pathPrefix' + configuration.name + '->' + it.name }                            
                         }
                     }
                 """.trimIndent()
@@ -952,9 +950,7 @@ class NewMultiplatformIT : BaseGradleIT() {
                     .toSet()
 
                 Assert.assertEquals(
-                    listOf("Api", "Implementation", "CompileOnly").map {
-                        "commonMain$it$METADATA_CONFIGURATION_NAME_SUFFIX" to expectedFileName
-                    }.toSet(),
+                    setOf("commonMainResolvable$METADATA_CONFIGURATION_NAME_SUFFIX" to expectedFileName),
                     paths
                 )
             }
@@ -1011,34 +1007,29 @@ class NewMultiplatformIT : BaseGradleIT() {
 
                     task('printMetadataFiles') {
                         doFirst {
-                            ['Api', 'Implementation', 'CompileOnly'].each { kind ->
-                                def configuration = configurations.getByName("nodeJsMain${'$'}kind" + '$METADATA_CONFIGURATION_NAME_SUFFIX')
-                                configuration.files.each { println '$pathPrefix' + configuration.name + '->' + it.name }
-                            }
+                            def configuration = configurations.getByName("nodeJsMainResolvable" + '$METADATA_CONFIGURATION_NAME_SUFFIX')
+                            configuration.files.each { println '$pathPrefix' + configuration.name + '->' + it.name }
                         }
                     }
                 """.trimIndent()
             )
-            val metadataDependencyRegex = "$pathPrefix(.*?)->(.*)".toRegex()
 
             build(
                 "printMetadataFiles",
                 options = buildOptions.copy(jsCompilerType = KotlinJsCompilerType.IR)
             ) {
-                assertSuccessful()
+                // After introducing Resolvable Metadata Dependencies configuration
+                // resolving nodeJsMainResolvableDependenciesMetadata is expected to fail for dependencies that have published
+                // both Legacy and IR klibs.
+                // Previously these Metadata Dependencies Configurations got resolved into platform artifacts which is incorrect
+                // and is just result of gradle's attempt to resolve to anything.
+                // TODO: Remove this test after removing Resolvable Metadata Dependencies for platform source sets.
+                assertFailed()
 
-                val expectedFileName = "sample-lib-nodejsir-1.0.klib"
-
-                val paths = metadataDependencyRegex
-                    .findAll(output).map { it.groupValues[1] to it.groupValues[2] }
-                    .filter { (_, f) -> "sample-lib" in f }
-                    .toSet()
-
-                Assert.assertEquals(
-                    listOf("Api", "Implementation", "CompileOnly").map {
-                        "nodeJsMain$it$METADATA_CONFIGURATION_NAME_SUFFIX" to expectedFileName
-                    }.toSet(),
-                    paths
+                assertContains(
+                    "However we cannot choose between the following variants of com.example:sample-lib-nodejs:1.0:",
+                    "- nodeJsIrApiElements-published",
+                    "- nodeJsLegacyApiElements-published",
                 )
             }
         }
@@ -1062,7 +1053,7 @@ class NewMultiplatformIT : BaseGradleIT() {
                         "\n" + """
                         task('printMetadataFiles') {
                            doFirst {
-                               configurations.getByName('commonMainImplementation$METADATA_CONFIGURATION_NAME_SUFFIX')
+                               configurations.getByName('commonMainResolvable$METADATA_CONFIGURATION_NAME_SUFFIX')
                                    .files.each { println '$pathPrefix' + it.name }
                            }
                         }
@@ -1530,48 +1521,6 @@ class NewMultiplatformIT : BaseGradleIT() {
     }
 
     @Test
-    fun testDependenciesDsl() = with(transformProjectWithPluginsDsl("newMppDependenciesDsl")) {
-        val originalBuildscriptContent = gradleBuildScript("app").readText()
-
-        fun testDependencies() = testResolveAllConfigurations("app") {
-            assertContains(">> :app:testNonTransitiveStringNotationApiDependenciesMetadata --> junit-4.13.2.jar")
-            assertContains(">> :app:testNonTransitiveStringNotationApiDependenciesMetadata --> kotlin-stdlib-common-${KOTLIN_VERSION}.jar")
-            val dependenciesOnNonTransitive = (Regex.escape(">> :app:testNonTransitiveStringNotationApiDependenciesMetadata") + " .*")
-                .toRegex().findAll(output)
-
-            if (dependenciesOnNonTransitive.count() != 2) fail(
-                "Expected two resolved dependencies on testNonTransitiveStringNotationApiDependenciesMetadata. " +
-                        "Found: ${dependenciesOnNonTransitive.toList().map { it.value }}"
-            )
-
-            assertContains(">> :app:testNonTransitiveDependencyNotationApiDependenciesMetadata --> kotlin-reflect-${defaultBuildOptions().kotlinVersion}.jar")
-
-            // All scoped DependenciesMetadata should resolve consistently into the same version
-            assertContains(">> :app:testExplicitKotlinVersionApiDependenciesMetadata --> kotlin-reflect-1.3.0.jar")
-            assertContains(">> :app:testExplicitKotlinVersionImplementationDependenciesMetadata --> kotlin-reflect-1.3.0.jar")
-            assertContains(">> :app:testExplicitKotlinVersionCompileOnlyDependenciesMetadata --> kotlin-reflect-1.3.0.jar")
-
-            assertContains(">> :app:testProjectWithConfigurationApiDependenciesMetadata --> output.txt")
-        }
-
-        testDependencies()
-
-        // Then run with Gradle Kotlin DSL; the build script needs some correction to be a valid GK DSL script:
-        gradleBuildScript("app").run {
-            modify {
-                originalBuildscriptContent
-                    .replace(": ", " = ")
-                    .replace("def ", " val ")
-                    .replace("new File(cacheRedirectorFile)", "File(cacheRedirectorFile)")
-                    .replace("id \"org.jetbrains.kotlin.test.fixes.android\"", "id(\"org.jetbrains.kotlin.test.fixes.android\")")
-            }
-            renameTo(projectDir.resolve("app/build.gradle.kts"))
-        }
-
-        testDependencies()
-    }
-
-    @Test
     fun testMultipleTargetsSamePlatform() = with(Project("newMppMultipleTargetsSamePlatform", gradleVersion)) {
         testResolveAllConfigurations("app") {
             assertContains(">> :app:junitCompileClasspath --> lib-junit.jar")
@@ -1626,7 +1575,12 @@ class NewMultiplatformIT : BaseGradleIT() {
         build(
             "assembleDebug",
             // https://issuetracker.google.com/issues/152187160
-            options = defaultBuildOptions().copy(androidGradlePluginVersion = AGPVersion.v4_2_0)
+            options = defaultBuildOptions().copy(
+                androidGradlePluginVersion = AGPVersion.v4_2_0,
+                // Workaround for a deprecation warning from AGP
+                // Relying on FileTrees for ignoring empty directories when using @SkipWhenEmpty has been deprecated.
+                warningMode = WarningMode.None,
+            )
         ) {
             assertSuccessful()
             assertNotContains(

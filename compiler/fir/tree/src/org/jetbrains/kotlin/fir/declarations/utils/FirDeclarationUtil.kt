@@ -33,3 +33,15 @@ inline val FirDeclaration.isPrecompiled: Boolean
     get() = origin == FirDeclarationOrigin.Precompiled
 inline val FirDeclaration.isSynthetic: Boolean
     get() = origin == FirDeclarationOrigin.Synthetic
+
+// NB: This function checks transitive localness. That is,
+// if a declaration `isNonLocal`, then its parent also `isNonLocal`.
+val FirDeclaration.isNonLocal
+    get() = when (this) {
+        is FirFile -> true
+        is FirCallableDeclaration -> !symbol.callableId.isLocal
+        is FirClassLikeDeclaration -> !symbol.classId.isLocal
+        else -> false
+    }
+
+val FirCallableDeclaration.isExtension get() = receiverParameter != null

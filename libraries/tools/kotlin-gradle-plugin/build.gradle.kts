@@ -251,6 +251,24 @@ if (!kotlinBuildProperties.isInJpsBuildIdeaSync) {
                     extendsFrom(configurations.getByName(testSourceSet.runtimeOnlyConfigurationName))
                 }
 
+                targets.create("functionalRegressionTest") {
+                    testTask.configure {
+                        include("**/org/jetbrains/kotlin/gradle/regressionTests/**")
+                    }
+                }
+
+                targets.create("functionalDependencyResolutionTest") {
+                    testTask.configure {
+                        include("**/org/jetbrains/kotlin/gradle/dependencyResolutionTests/**")
+                    }
+                }
+
+                targets.create("functionalUnitTest") {
+                    testTask.configure {
+                        include("**/org/jetbrains/kotlin/gradle/unitTests/**")
+                    }
+                }
+
                 targets.all {
                     testTask.configure {
                         dependsOnKotlinGradlePluginInstall()

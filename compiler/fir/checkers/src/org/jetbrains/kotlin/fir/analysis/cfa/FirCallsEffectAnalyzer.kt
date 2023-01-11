@@ -17,8 +17,8 @@ import org.jetbrains.kotlin.fir.analysis.checkers.cfa.FirControlFlowChecker
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.fir.contracts.FirContractDescription
-import org.jetbrains.kotlin.fir.contracts.coneEffects
 import org.jetbrains.kotlin.fir.contracts.description.ConeCallsEffectDeclaration
+import org.jetbrains.kotlin.fir.contracts.effects
 import org.jetbrains.kotlin.fir.declarations.FirAnonymousFunction
 import org.jetbrains.kotlin.fir.declarations.FirContractDescriptionOwner
 import org.jetbrains.kotlin.fir.declarations.FirFunction
@@ -27,7 +27,6 @@ import org.jetbrains.kotlin.fir.expressions.FirFunctionCall
 import org.jetbrains.kotlin.fir.expressions.FirQualifiedAccess
 import org.jetbrains.kotlin.fir.expressions.impl.FirResolvedArgumentList
 import org.jetbrains.kotlin.fir.expressions.toResolvedCallableSymbol
-import org.jetbrains.kotlin.fir.references.toResolvedCallableSymbol
 import org.jetbrains.kotlin.fir.references.FirReference
 import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
 import org.jetbrains.kotlin.fir.references.FirThisReference
@@ -43,10 +42,15 @@ import kotlin.contracts.contract
 object FirCallsEffectAnalyzer : FirControlFlowChecker() {
 
     override fun analyze(graph: ControlFlowGraph, reporter: DiagnosticReporter, context: CheckerContext) {
+        // TODO: this is quadratic due to `graph.traverse`, surely there is a better way?
+        for (subGraph in graph.subGraphs) {
+            analyze(subGraph, reporter, context)
+        }
+
         val session = context.session
         val function = (graph.declaration as? FirFunction) ?: return
         if (function !is FirContractDescriptionOwner) return
-        if (function.contractDescription.coneEffects?.any { it is ConeCallsEffectDeclaration } != true) return
+        if (function.contractDescription.effects?.any { it.effect is ConeCallsEffectDeclaration } != true) return
 
         val functionalTypeEffects = mutableMapOf<FirBasedSymbol<*>, ConeCallsEffectDeclaration>()
 
@@ -66,7 +70,6 @@ object FirCallsEffectAnalyzer : FirControlFlowChecker() {
 
         val leakedSymbols = mutableMapOf<FirBasedSymbol<*>, MutableList<KtSourceElement>>()
         graph.traverse(
-            TraverseDirection.Forward,
             CapturedLambdaFinder(function),
             IllegalScopeContext(functionalTypeEffects.keys, leakedSymbols)
         )
@@ -80,7 +83,6 @@ object FirCallsEffectAnalyzer : FirControlFlowChecker() {
 
         val invocationData = graph.collectDataForNode(
             TraverseDirection.Forward,
-            PathAwareLambdaInvocationInfo.EMPTY,
             InvocationDataCollector(functionalTypeEffects.keys.filterTo(mutableSetOf()) { it !in leakedSymbols })
         )
 
@@ -159,6 +161,8 @@ object FirCallsEffectAnalyzer : FirControlFlowChecker() {
         override fun <T> visitUnionNode(node: T, data: IllegalScopeContext) where T : CFGNode<*>, T : UnionNodeMarker {}
 
         override fun visitFunctionEnterNode(node: FunctionEnterNode, data: IllegalScopeContext) {
+            // TODO: this is not how CFG works, this should be done by FIR tree traversal. Especially considering that
+            //  none of these methods use anything from the CFG other than `node.fir`, which should've been a hint.
             data.enterScope(node.fir === rootFunction || node.fir.isInPlaceLambda())
         }
 
@@ -217,34 +221,21 @@ object FirCallsEffectAnalyzer : FirControlFlowChecker() {
 
         override val constructor: (PersistentMap<FirBasedSymbol<*>, EventOccurrencesRange>) -> LambdaInvocationInfo =
             ::LambdaInvocationInfo
-
-        override val empty: () -> LambdaInvocationInfo =
-            ::EMPTY
-    }
-
-    class PathAwareLambdaInvocationInfo(
-        map: PersistentMap<EdgeLabel, LambdaInvocationInfo> = persistentMapOf()
-    ) : PathAwareControlFlowInfo<PathAwareLambdaInvocationInfo, LambdaInvocationInfo>(map) {
-        companion object {
-            val EMPTY = PathAwareLambdaInvocationInfo(persistentMapOf(NormalPath to LambdaInvocationInfo.EMPTY))
-        }
-
-        override val constructor: (PersistentMap<EdgeLabel, LambdaInvocationInfo>) -> PathAwareLambdaInvocationInfo =
-            ::PathAwareLambdaInvocationInfo
-
-        override val empty: () -> PathAwareLambdaInvocationInfo =
-            ::EMPTY
     }
 
     private class InvocationDataCollector(
         val functionalTypeSymbols: Set<FirBasedSymbol<*>>
-    ) : PathAwareControlFlowGraphVisitor<PathAwareLambdaInvocationInfo>() {
+    ) : PathAwareControlFlowGraphVisitor<LambdaInvocationInfo>() {
+        companion object {
+            private val EMPTY_INFO: PathAwareLambdaInvocationInfo = persistentMapOf(NormalPath to LambdaInvocationInfo.EMPTY)
+        }
+
         override val emptyInfo: PathAwareLambdaInvocationInfo
-            get() = PathAwareLambdaInvocationInfo.EMPTY
+            get() = EMPTY_INFO
 
         override fun visitFunctionCallNode(
             node: FunctionCallNode,
-            data: Collection<Pair<EdgeLabel, PathAwareLambdaInvocationInfo>>
+            data: PathAwareLambdaInvocationInfo
         ): PathAwareLambdaInvocationInfo {
             var dataForNode = visitUnionNode(node, data)
 
@@ -287,9 +278,7 @@ object FirCallsEffectAnalyzer : FirControlFlowChecker() {
             range: EventOccurrencesRange
         ): PathAwareLambdaInvocationInfo {
             val symbol = referenceToSymbol(reference)
-            return if (symbol != null) {
-                addRange(this, symbol, range, ::PathAwareLambdaInvocationInfo)
-            } else this
+            return if (symbol != null) addRange(this, symbol, range) else this
         }
     }
 
@@ -298,7 +287,7 @@ object FirCallsEffectAnalyzer : FirControlFlowChecker() {
     }
 
     private fun FirContractDescription?.getParameterCallsEffectDeclaration(index: Int): ConeCallsEffectDeclaration? {
-        val effects = this?.coneEffects
+        val effects = this?.effects?.map { it.effect }
         val callsEffect = effects?.find { it is ConeCallsEffectDeclaration && it.valueParameterReference.parameterIndex == index }
         return callsEffect as? ConeCallsEffectDeclaration?
     }
@@ -330,3 +319,5 @@ object FirCallsEffectAnalyzer : FirControlFlowChecker() {
         else -> null
     }
 }
+
+private typealias PathAwareLambdaInvocationInfo = PathAwareControlFlowInfo<FirCallsEffectAnalyzer.LambdaInvocationInfo>

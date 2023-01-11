@@ -112,7 +112,7 @@ rootProject.apply {
 IdeVersionConfigurator.setCurrentIde(project)
 
 if (!project.hasProperty("versions.kotlin-native")) {
-    extra["versions.kotlin-native"] = "1.8.20-dev-4812"
+    extra["versions.kotlin-native"] = "1.8.20-dev-5321"
 }
 
 val irCompilerModules = arrayOf(
@@ -142,6 +142,7 @@ val commonCompilerModules = arrayOf(
     ":core:deserialization.common.jvm",
     ":core:compiler.common",
     ":core:compiler.common.jvm",
+    ":core:compiler.common.js",
     ":core:util.runtime",
     ":compiler:frontend.common.jvm",
     ":compiler:frontend.java", // TODO this is fe10 module but some utils used in fir ide now
@@ -237,6 +238,7 @@ extra["kotlinJpsPluginEmbeddedDependencies"] = listOf(
     ":daemon-common",
     ":core:compiler.common",
     ":core:compiler.common.jvm",
+    ":core:compiler.common.js",
     ":core:descriptors",
     ":core:descriptors.jvm",
     ":compiler:backend.common.jvm",
@@ -613,6 +615,7 @@ tasks {
 
     register("jsIrCompilerTest") {
         dependsOn(":js:js.tests:jsIrTest")
+        dependsOn(":js:js.tests:jsStdlibApiTest")
     }
 
     register("wasmCompilerTest") {

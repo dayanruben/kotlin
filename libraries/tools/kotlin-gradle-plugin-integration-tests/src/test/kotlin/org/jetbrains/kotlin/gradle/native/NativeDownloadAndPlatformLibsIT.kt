@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.gradle.native.GeneralNativeIT.Companion.withNativeCo
 import org.jetbrains.kotlin.gradle.transformProjectWithPluginsDsl
 import org.jetbrains.kotlin.gradle.util.modify
 import org.jetbrains.kotlin.gradle.utils.NativeCompilerDownloader
+import org.jetbrains.kotlin.gradle.utils.Xcode
 import org.jetbrains.kotlin.konan.CompilerVersion
 import org.jetbrains.kotlin.konan.CompilerVersionImpl
 import org.jetbrains.kotlin.konan.MetaVersion
@@ -192,35 +193,6 @@ class NativeDownloadAndPlatformLibsIT : BaseGradleIT() {
     }
 
     @Test
-    fun testRerunGeneratorIfCacheKindChanged() {
-        // There are no cacheable targets on MinGW for now.
-        Assume.assumeFalse(HostManager.hostIsMingw)
-
-        fun buildPlatformLibrariesWithoutAndWithCaches(target: KonanTarget) {
-            val presetName = target.presetName
-            val targetName = target.name
-            with(platformLibrariesProject(presetName)) {
-                // Build libraries without caches.
-                buildWithLightDist("tasks") {
-                    assertSuccessful()
-                    assertContains("Generate platform libraries for $targetName")
-                }
-
-                // Change cache kind and check that platform libraries generator was executed.
-                buildWithLightDist("tasks", "-Pkotlin.native.cacheKind.$presetName=static") {
-                    assertSuccessful()
-                    assertContains("Precompile platform libraries for $targetName (precompilation: static)")
-                }
-            }
-        }
-        when {
-            HostManager.host == KonanTarget.MACOS_ARM64 -> buildPlatformLibrariesWithoutAndWithCaches(KonanTarget.IOS_ARM64)
-            HostManager.host == KonanTarget.MACOS_X64 -> buildPlatformLibrariesWithoutAndWithCaches(KonanTarget.IOS_X64)
-            HostManager.hostIsLinux -> buildPlatformLibrariesWithoutAndWithCaches(KonanTarget.LINUX_X64)
-        }
-    }
-
-    @Test
     fun testCanUsePrebuiltDistribution() = with(platformLibrariesProject("linuxX64")) {
         build("assemble", "-Pkotlin.native.distribution.type=prebuilt") {
             assertSuccessful()
@@ -329,6 +301,18 @@ class NativeDownloadAndPlatformLibsIT : BaseGradleIT() {
 
     @Test
     fun `download light Native bundle with maven`() {
+        if (HostManager.hostIsMac) {
+            val xcodeVersion = Xcode!!.currentVersion
+            val versionSplit = xcodeVersion.split("(\\s+|\\.|-)".toRegex())
+            check(versionSplit.size >= 2) {
+                "Unrecognised version of Xcode $xcodeVersion was split to $versionSplit"
+            }
+            val major = versionSplit[0].toInt()
+            val minor = versionSplit[1].toInt()
+            // Building platform libs require Xcode 14.1
+            Assume.assumeTrue(major >= 14 && minor >= 1)
+        }
+
         with(transformNativeTestProjectWithPluginDsl("native-download-maven")) {
             gradleProperties().appendText(
                 "kotlin.native.distribution.downloadFromMaven=true"

@@ -58,6 +58,24 @@ public class SerializationFirBlackBoxTestGenerated extends AbstractSerialization
         }
 
         @Test
+        @TestMetadata("expectActual.kt")
+        public void testExpectActual() throws Exception {
+            runTest("plugins/kotlinx-serialization/testData/boxIr/expectActual.kt");
+        }
+
+        @Test
+        @TestMetadata("externalSerialierJava.kt")
+        public void testExternalSerialierJava() throws Exception {
+            runTest("plugins/kotlinx-serialization/testData/boxIr/externalSerialierJava.kt");
+        }
+
+        @Test
+        @TestMetadata("generatedClassifiersViaLibraryDependency.kt")
+        public void testGeneratedClassifiersViaLibraryDependency() throws Exception {
+            runTest("plugins/kotlinx-serialization/testData/boxIr/generatedClassifiersViaLibraryDependency.kt");
+        }
+
+        @Test
         @TestMetadata("genericBaseClassMultiple.kt")
         public void testGenericBaseClassMultiple() throws Exception {
             runTest("plugins/kotlinx-serialization/testData/boxIr/genericBaseClassMultiple.kt");
@@ -151,6 +169,12 @@ public class SerializationFirBlackBoxTestGenerated extends AbstractSerialization
         @TestMetadata("useSerializersChain.kt")
         public void testUseSerializersChain() throws Exception {
             runTest("plugins/kotlinx-serialization/testData/boxIr/useSerializersChain.kt");
+        }
+
+        @Test
+        @TestMetadata("userDefinedSerializerInCompanion.kt")
+        public void testUserDefinedSerializerInCompanion() throws Exception {
+            runTest("plugins/kotlinx-serialization/testData/boxIr/userDefinedSerializerInCompanion.kt");
         }
     }
 

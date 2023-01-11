@@ -45,12 +45,15 @@ abstract class DefaultKotlinSourceSet @Inject constructor(
     override val runtimeOnlyConfigurationName: String
         get() = disambiguateName(RUNTIME_ONLY)
 
+    @Deprecated("KT-55312")
     override val apiMetadataConfigurationName: String
         get() = lowerCamelCaseName(apiConfigurationName, METADATA_CONFIGURATION_NAME_SUFFIX)
 
+    @Deprecated("KT-55312")
     override val implementationMetadataConfigurationName: String
         get() = lowerCamelCaseName(implementationConfigurationName, METADATA_CONFIGURATION_NAME_SUFFIX)
 
+    @Deprecated("KT-55312")
     override val compileOnlyMetadataConfigurationName: String
         get() = lowerCamelCaseName(compileOnlyConfigurationName, METADATA_CONFIGURATION_NAME_SUFFIX)
 
@@ -160,7 +163,7 @@ abstract class DefaultKotlinSourceSet @Inject constructor(
 
         return metadataDependencyResolutionByModule.mapNotNull { (groupAndName, resolution) ->
             val (group, name) = groupAndName
-            val projectPath = resolution.projectDependency?.path
+            val projectPath = resolution.dependency.currentBuildProjectIdOrNull?.projectPath
             when (resolution) {
                 // No metadata transformation leads to original dependency being used during import
                 is MetadataDependencyResolution.KeepOriginalDependency -> null

@@ -5,63 +5,69 @@ digraph implicitReceivers_kt {
 
     subgraph cluster_0 {
         color=red
-        0 [label="Enter function <init>" style="filled" fillcolor=red];
-        1 [label="Delegated constructor call: super<R|kotlin/Any|>()" style="filled" fillcolor=yellow];
-        2 [label="Exit function <init>" style="filled" fillcolor=red];
-    }
-    0 -> {1};
-    1 -> {2};
-
-    subgraph cluster_1 {
-        color=red
-        3 [label="Enter function foo" style="filled" fillcolor=red];
-        subgraph cluster_2 {
+        0 [label="Enter class A" style="filled" fillcolor=red];
+        subgraph cluster_1 {
             color=blue
-            4 [label="Enter block"];
-            5 [label="Exit block"];
+            1 [label="Enter function <init>" style="filled" fillcolor=red];
+            2 [label="Delegated constructor call: super<R|kotlin/Any|>()" style="filled" fillcolor=yellow];
+            3 [label="Exit function <init>" style="filled" fillcolor=red];
         }
-        6 [label="Exit function foo" style="filled" fillcolor=red];
+        4 [label="Exit class A" style="filled" fillcolor=red];
     }
-    3 -> {4};
-    4 -> {5};
+    subgraph cluster_2 {
+        color=blue
+        5 [label="Enter function foo" style="filled" fillcolor=red];
+        subgraph cluster_3 {
+            color=blue
+            6 [label="Enter block"];
+            7 [label="Exit block"];
+        }
+        8 [label="Exit function foo" style="filled" fillcolor=red];
+    }
+    0 -> {1} [color=green];
+    0 -> {4} [style=dotted];
+    0 -> {1} [style=dashed];
+    1 -> {2};
+    2 -> {3};
+    3 -> {4} [color=green];
+    4 -> {5} [color=green];
+    4 -> {5} [style=dashed];
     5 -> {6};
-
-    subgraph cluster_3 {
-        color=red
-        7 [label="Enter class A" style="filled" fillcolor=red];
-        8 [label="Exit class A" style="filled" fillcolor=red];
-    }
-    7 -> {8} [color=green];
+    6 -> {7};
+    7 -> {8};
 
     subgraph cluster_4 {
         color=red
-        9 [label="Enter function <init>" style="filled" fillcolor=red];
-        10 [label="Delegated constructor call: super<R|kotlin/Any|>()" style="filled" fillcolor=yellow];
-        11 [label="Exit function <init>" style="filled" fillcolor=red];
-    }
-    9 -> {10};
-    10 -> {11};
-
-    subgraph cluster_5 {
-        color=red
-        12 [label="Enter function bar" style="filled" fillcolor=red];
-        subgraph cluster_6 {
+        9 [label="Enter class B" style="filled" fillcolor=red];
+        subgraph cluster_5 {
             color=blue
-            13 [label="Enter block"];
-            14 [label="Exit block"];
+            10 [label="Enter function <init>" style="filled" fillcolor=red];
+            11 [label="Delegated constructor call: super<R|kotlin/Any|>()" style="filled" fillcolor=yellow];
+            12 [label="Exit function <init>" style="filled" fillcolor=red];
         }
-        15 [label="Exit function bar" style="filled" fillcolor=red];
+        13 [label="Exit class B" style="filled" fillcolor=red];
     }
-    12 -> {13};
-    13 -> {14};
+    subgraph cluster_6 {
+        color=blue
+        14 [label="Enter function bar" style="filled" fillcolor=red];
+        subgraph cluster_7 {
+            color=blue
+            15 [label="Enter block"];
+            16 [label="Exit block"];
+        }
+        17 [label="Exit function bar" style="filled" fillcolor=red];
+    }
+    9 -> {10} [color=green];
+    9 -> {13} [style=dotted];
+    9 -> {10} [style=dashed];
+    10 -> {11};
+    11 -> {12};
+    12 -> {13} [color=green];
+    13 -> {14} [color=green];
+    13 -> {14} [style=dashed];
     14 -> {15};
-
-    subgraph cluster_7 {
-        color=red
-        16 [label="Enter class B" style="filled" fillcolor=red];
-        17 [label="Exit class B" style="filled" fillcolor=red];
-    }
-    16 -> {17} [color=green];
+    15 -> {16};
+    16 -> {17};
 
     subgraph cluster_8 {
         color=red
@@ -134,7 +140,7 @@ digraph implicitReceivers_kt {
     25 -> {26};
     26 -> {27};
     27 -> {28};
-    28 -> {38 29};
+    28 -> {29 38};
     29 -> {30};
     30 -> {31};
     31 -> {32};
@@ -215,7 +221,7 @@ digraph implicitReceivers_kt {
     55 -> {56};
     56 -> {57};
     57 -> {58};
-    58 -> {69 59};
+    58 -> {59 69};
     59 -> {60};
     60 -> {61};
     61 -> {62};
@@ -249,84 +255,84 @@ digraph implicitReceivers_kt {
             85 [label="Postponed enter to lambda"];
             subgraph cluster_26 {
                 color=blue
-                90 [label="Enter function anonymousFunction" style="filled" fillcolor=red];
+                86 [label="Enter function <anonymous>" style="filled" fillcolor=red];
                 subgraph cluster_27 {
                     color=blue
-                    91 [label="Enter block"];
-                    92 [label="Access variable R|<local>/b|"];
-                    93 [label="Postponed enter to lambda"];
+                    87 [label="Enter block"];
+                    88 [label="Access variable R|<local>/b|"];
+                    89 [label="Postponed enter to lambda"];
                     subgraph cluster_28 {
                         color=blue
-                        98 [label="Enter function anonymousFunction" style="filled" fillcolor=red];
+                        90 [label="Enter function <anonymous>" style="filled" fillcolor=red];
                         subgraph cluster_29 {
                             color=blue
-                            99 [label="Enter block"];
-                            100 [label="Access variable R|<local>/c|"];
-                            101 [label="Postponed enter to lambda"];
+                            91 [label="Enter block"];
+                            92 [label="Access variable R|<local>/c|"];
+                            93 [label="Postponed enter to lambda"];
                             subgraph cluster_30 {
                                 color=blue
-                                110 [label="Enter function anonymousFunction" style="filled" fillcolor=red];
+                                94 [label="Enter function <anonymous>" style="filled" fillcolor=red];
                                 subgraph cluster_31 {
                                     color=blue
-                                    111 [label="Enter block"];
-                                    112 [label="Access variable this@R|special/anonymous|"];
-                                    113 [label="Type operator: (this@R|special/anonymous| as R|A|)"];
-                                    114 [label="Access variable this@R|special/anonymous|"];
-                                    115 [label="Smart cast: this@R|special/anonymous|"];
-                                    116 [label="Function call: this@R|special/anonymous|.R|/A.foo|()" style="filled" fillcolor=yellow];
-                                    117 [label="Function call: this@R|special/anonymous|.R|/A.foo|()" style="filled" fillcolor=yellow];
-                                    118 [label="Exit block"];
+                                    95 [label="Enter block"];
+                                    96 [label="Access variable this@R|special/anonymous|"];
+                                    97 [label="Type operator: (this@R|special/anonymous| as R|A|)"];
+                                    98 [label="Access variable this@R|special/anonymous|"];
+                                    99 [label="Smart cast: this@R|special/anonymous|"];
+                                    100 [label="Function call: this@R|special/anonymous|.R|/A.foo|()" style="filled" fillcolor=yellow];
+                                    101 [label="Function call: this@R|special/anonymous|.R|/A.foo|()" style="filled" fillcolor=yellow];
+                                    102 [label="Exit block"];
                                 }
-                                119 [label="Exit function anonymousFunction" style="filled" fillcolor=red];
+                                103 [label="Exit function <anonymous>" style="filled" fillcolor=red];
                             }
-                            102 [label="Postponed exit from lambda"];
-                            103 [label="Function call: R|kotlin/with|<R|kotlin/Any|, R|kotlin/Unit|>(...)" style="filled" fillcolor=yellow];
-                            104 [label="Access variable this@R|special/anonymous|"];
-                            105 [label="Smart cast: this@R|special/anonymous|"];
-                            106 [label="Function call: this@R|special/anonymous|.R|/A.foo|()" style="filled" fillcolor=yellow];
-                            107 [label="Function call: this@R|special/anonymous|.R|/A.foo|()" style="filled" fillcolor=yellow];
-                            108 [label="Exit block"];
+                            104 [label="Postponed exit from lambda"];
+                            105 [label="Function call: R|kotlin/with|<R|kotlin/Any|, R|kotlin/Unit|>(...)" style="filled" fillcolor=yellow];
+                            106 [label="Access variable this@R|special/anonymous|"];
+                            107 [label="Smart cast: this@R|special/anonymous|"];
+                            108 [label="Function call: this@R|special/anonymous|.R|/A.foo|()" style="filled" fillcolor=yellow];
+                            109 [label="Function call: this@R|special/anonymous|.R|/A.foo|()" style="filled" fillcolor=yellow];
+                            110 [label="Exit block"];
                         }
-                        109 [label="Exit function anonymousFunction" style="filled" fillcolor=red];
+                        111 [label="Exit function <anonymous>" style="filled" fillcolor=red];
                     }
-                    94 [label="Postponed exit from lambda"];
-                    95 [label="Function call: R|kotlin/with|<R|kotlin/Any|, R|kotlin/Unit|>(...)" style="filled" fillcolor=yellow];
-                    96 [label="Exit block"];
+                    112 [label="Postponed exit from lambda"];
+                    113 [label="Function call: R|kotlin/with|<R|kotlin/Any|, R|kotlin/Unit|>(...)" style="filled" fillcolor=yellow];
+                    114 [label="Exit block"];
                 }
-                97 [label="Exit function anonymousFunction" style="filled" fillcolor=red];
+                115 [label="Exit function <anonymous>" style="filled" fillcolor=red];
             }
-            86 [label="Postponed exit from lambda"];
-            87 [label="Function call: R|kotlin/with|<R|kotlin/Any|, R|kotlin/Unit|>(...)" style="filled" fillcolor=yellow];
-            88 [label="Exit block"];
+            116 [label="Postponed exit from lambda"];
+            117 [label="Function call: R|kotlin/with|<R|kotlin/Any|, R|kotlin/Unit|>(...)" style="filled" fillcolor=yellow];
+            118 [label="Exit block"];
         }
-        89 [label="Exit function test_3" style="filled" fillcolor=red];
+        119 [label="Exit function test_3" style="filled" fillcolor=red];
     }
     82 -> {83};
     83 -> {84};
     84 -> {85};
-    85 -> {90 87};
-    85 -> {86} [style=dotted];
-    85 -> {90} [style=dashed];
+    85 -> {86 117};
+    85 -> {116} [style=dotted];
+    85 -> {86} [style=dashed];
     86 -> {87};
     87 -> {88};
     88 -> {89};
+    89 -> {90 113};
+    89 -> {112} [style=dotted];
+    89 -> {90} [style=dashed];
     90 -> {91};
     91 -> {92};
     92 -> {93};
-    93 -> {98 95};
-    93 -> {94} [style=dotted];
-    93 -> {98} [style=dashed];
-    94 -> {87} [color=red];
-    94 -> {95} [color=green];
+    93 -> {94 105};
+    93 -> {104} [style=dotted];
+    93 -> {94} [style=dashed];
+    94 -> {95};
     95 -> {96};
     96 -> {97};
-    97 -> {86};
+    97 -> {98};
     98 -> {99};
     99 -> {100};
     100 -> {101};
-    101 -> {110 103};
-    101 -> {102} [style=dotted];
-    101 -> {110} [style=dashed];
+    101 -> {102};
     102 -> {103};
     103 -> {104};
     104 -> {105};
@@ -334,17 +340,17 @@ digraph implicitReceivers_kt {
     106 -> {107};
     107 -> {108};
     108 -> {109};
-    109 -> {94};
+    109 -> {110};
     110 -> {111};
     111 -> {112};
-    112 -> {113};
+    112 -> {113} [color=green];
+    112 -> {117} [color=red];
     113 -> {114};
     114 -> {115};
     115 -> {116};
     116 -> {117};
     117 -> {118};
     118 -> {119};
-    119 -> {102};
 
     subgraph cluster_32 {
         color=red
@@ -436,12 +442,12 @@ digraph implicitReceivers_kt {
     123 -> {124};
     124 -> {125};
     125 -> {126};
-    126 -> {158 127};
+    126 -> {127 158};
     127 -> {128};
     128 -> {129};
     129 -> {130};
     130 -> {131};
-    131 -> {146 132};
+    131 -> {132 146};
     132 -> {133};
     133 -> {134};
     134 -> {135};
@@ -564,11 +570,11 @@ digraph implicitReceivers_kt {
     180 -> {181};
     181 -> {182};
     182 -> {183};
-    183 -> {200 184};
+    183 -> {184 200};
     184 -> {185};
     185 -> {186};
     186 -> {187};
-    187 -> {195 188};
+    187 -> {188 195};
     188 -> {189};
     189 -> {190};
     190 -> {191};

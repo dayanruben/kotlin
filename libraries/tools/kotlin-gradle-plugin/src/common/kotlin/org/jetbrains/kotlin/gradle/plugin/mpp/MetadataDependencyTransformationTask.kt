@@ -49,13 +49,11 @@ open class MetadataDependencyTransformationTask
     }
 
     @Suppress("unused") // Gradle input
-    @get:IgnoreEmptyDirectories
-    @get:NormalizeLineEndings
     @get:InputFiles
     @get:PathSensitive(PathSensitivity.RELATIVE)
-    internal val allSourceSetsMetadataConfiguration: FileCollection by lazy {
-        project.files(project.configurations.getByName(ALL_COMPILE_METADATA_CONFIGURATION_NAME))
-    }
+    @get:IgnoreEmptyDirectories
+    @get:NormalizeLineEndings
+    internal val configurationToResolve: FileCollection get() = kotlinSourceSet.internal.resolvableMetadataConfiguration
 
     private val participatingSourceSets: Set<KotlinSourceSet>
         get() = transformation.kotlinSourceSet.internal.withDependsOnClosure.toMutableSet().apply {
@@ -83,13 +81,10 @@ open class MetadataDependencyTransformationTask
         }
     }
 
-    @get:Internal
-    @delegate:Transient
-    internal val transformation: GranularMetadataTransformation by lazy {
+    private val transformation: GranularMetadataTransformation by lazy {
         GranularMetadataTransformation(
             project,
             kotlinSourceSet,
-            KotlinDependencyScope.compileScopes,
             lazy {
                 dependsOnClosureWithInterCompilationDependencies(kotlinSourceSet).map {
                     project.tasks.withType(MetadataDependencyTransformationTask::class.java)

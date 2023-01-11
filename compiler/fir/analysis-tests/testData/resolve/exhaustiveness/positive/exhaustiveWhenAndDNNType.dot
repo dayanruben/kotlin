@@ -5,34 +5,38 @@ digraph exhaustiveWhenAndDNNType_kt {
 
     subgraph cluster_0 {
         color=red
-        0 [label="Enter function <init>" style="filled" fillcolor=red];
-        1 [label="Delegated constructor call: super<R|kotlin/Enum<SomeEnum>|>()" style="filled" fillcolor=yellow];
-        2 [label="Exit function <init>" style="filled" fillcolor=red];
-    }
-    0 -> {1};
-    1 -> {2};
-
-    subgraph cluster_1 {
-        color=red
-        3 [label="Enter class SomeEnum" style="filled" fillcolor=red];
+        0 [label="Enter class SomeEnum" style="filled" fillcolor=red];
+        subgraph cluster_1 {
+            color=blue
+            1 [label="Enter function <init>" style="filled" fillcolor=red];
+            2 [label="Delegated constructor call: super<R|kotlin/Enum<SomeEnum>|>()" style="filled" fillcolor=yellow];
+            3 [label="Exit function <init>" style="filled" fillcolor=red];
+        }
         4 [label="Exit class SomeEnum" style="filled" fillcolor=red];
     }
+    0 -> {1} [color=green];
+    0 -> {4} [style=dotted];
+    0 -> {1} [style=dashed];
+    1 -> {2};
+    2 -> {3};
     3 -> {4} [color=green];
 
     subgraph cluster_2 {
         color=red
-        5 [label="Enter function <init>" style="filled" fillcolor=red];
-        6 [label="Delegated constructor call: super<R|kotlin/Any|>()" style="filled" fillcolor=yellow];
-        7 [label="Exit function <init>" style="filled" fillcolor=red];
-    }
-    5 -> {6};
-    6 -> {7};
-
-    subgraph cluster_3 {
-        color=red
-        8 [label="Enter class B" style="filled" fillcolor=red];
+        5 [label="Enter class B" style="filled" fillcolor=red];
+        subgraph cluster_3 {
+            color=blue
+            6 [label="Enter function <init>" style="filled" fillcolor=red];
+            7 [label="Delegated constructor call: super<R|kotlin/Any|>()" style="filled" fillcolor=yellow];
+            8 [label="Exit function <init>" style="filled" fillcolor=red];
+        }
         9 [label="Exit class B" style="filled" fillcolor=red];
     }
+    5 -> {6} [color=green];
+    5 -> {9} [style=dotted];
+    5 -> {6} [style=dashed];
+    6 -> {7};
+    7 -> {8};
     8 -> {9} [color=green];
 
     subgraph cluster_4 {
@@ -119,7 +123,7 @@ digraph exhaustiveWhenAndDNNType_kt {
     24 -> {25};
     25 -> {26};
     26 -> {27};
-    27 -> {39 28};
+    27 -> {28 39};
     28 -> {29};
     29 -> {30};
     30 -> {31};
@@ -212,7 +216,7 @@ digraph exhaustiveWhenAndDNNType_kt {
     60 -> {61};
     61 -> {62};
     62 -> {63};
-    63 -> {75 64};
+    63 -> {64 75};
     64 -> {65};
     65 -> {66};
     66 -> {67};
@@ -303,7 +307,7 @@ digraph exhaustiveWhenAndDNNType_kt {
     95 -> {96};
     96 -> {97};
     97 -> {98};
-    98 -> {110 99};
+    98 -> {99 110};
     99 -> {100};
     100 -> {101};
     101 -> {102};

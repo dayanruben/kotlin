@@ -26,11 +26,19 @@ abstract class ControlFlowGraphVisitor<out R, in D> {
 
     // ----------------------------------- Default arguments -----------------------------------
 
-    open fun visitExitDefaultArgumentsNode(node: ExitDefaultArgumentsNode, data: D): R {
+    open fun visitEnterValueParameterNode(node: EnterValueParameterNode, data: D): R {
         return visitNode(node, data)
     }
 
     open fun visitEnterDefaultArgumentsNode(node: EnterDefaultArgumentsNode, data: D): R {
+        return visitNode(node, data)
+    }
+
+    open fun visitExitDefaultArgumentsNode(node: ExitDefaultArgumentsNode, data: D): R {
+        return visitNode(node, data)
+    }
+
+    open fun visitExitValueParameterNode(node: ExitValueParameterNode, data: D): R {
         return visitNode(node, data)
     }
 
@@ -58,10 +66,6 @@ abstract class ControlFlowGraphVisitor<out R, in D> {
         return visitNode(node, data)
     }
 
-    open fun visitAnonymousObjectExitNode(node: AnonymousObjectExitNode, data: D): R {
-        return visitNode(node, data)
-    }
-
     open fun visitAnonymousObjectExpressionExitNode(node: AnonymousObjectExpressionExitNode, data: D): R {
         return visitNode(node, data)
     }
@@ -85,12 +89,6 @@ abstract class ControlFlowGraphVisitor<out R, in D> {
     }
 
     open fun visitScriptExitNode(node: ScriptExitNode, data: D): R {
-        return visitNode(node, data)
-    }
-
-    // ----------------------------------- Initialization -----------------------------------
-
-    open fun visitPartOfClassInitializationNode(node: PartOfClassInitializationNode, data: D): R {
         return visitNode(node, data)
     }
 
@@ -339,10 +337,6 @@ abstract class ControlFlowGraphVisitor<out R, in D> {
         return visitNode(node, data)
     }
 
-    open fun visitContractDescriptionEnterNode(node: ContractDescriptionEnterNode, data: D): R {
-        return visitNode(node, data)
-    }
-
     open fun visitVariableDeclarationNode(node: VariableDeclarationNode, data: D): R {
         return visitNode(node, data)
     }
@@ -382,14 +376,6 @@ abstract class ControlFlowGraphVisitor<out R, in D> {
     }
 
     // ----------------------------------- Other -----------------------------------
-
-    open fun visitAnnotationEnterNode(node: AnnotationEnterNode, data: D): R {
-        return visitNode(node, data)
-    }
-
-    open fun visitAnnotationExitNode(node: AnnotationExitNode, data: D): R {
-        return visitNode(node, data)
-    }
 
     open fun visitSmartCastExpressionExitNode(node: SmartCastExpressionExitNode, data: D): R {
         return visitNode(node, data)

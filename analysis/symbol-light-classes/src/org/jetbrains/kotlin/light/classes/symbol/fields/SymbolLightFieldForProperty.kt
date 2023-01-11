@@ -1,16 +1,14 @@
 /*
- * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.light.classes.symbol.fields
 
-import com.intellij.psi.PsiExpression
-import com.intellij.psi.PsiModifier
-import com.intellij.psi.PsiModifierList
-import com.intellij.psi.PsiType
+import com.intellij.psi.*
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.KtConstantInitializerValue
+import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
 import org.jetbrains.kotlin.analysis.api.symbols.KtKotlinPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
@@ -22,7 +20,6 @@ import org.jetbrains.kotlin.asJava.classes.lazyPub
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.light.classes.symbol.*
 import org.jetbrains.kotlin.light.classes.symbol.annotations.computeAnnotations
-import org.jetbrains.kotlin.light.classes.symbol.annotations.hasAnnotation
 import org.jetbrains.kotlin.light.classes.symbol.annotations.hasDeprecatedAnnotation
 import org.jetbrains.kotlin.light.classes.symbol.classes.SymbolLightClassBase
 import org.jetbrains.kotlin.light.classes.symbol.modifierLists.LazyModifiersBox
@@ -83,8 +80,12 @@ internal class SymbolLightFieldForProperty private constructor(
 
     private val _isDeprecated: Boolean by lazyPub {
         withPropertySymbol { propertySymbol ->
-            propertySymbol.hasDeprecatedAnnotation(AnnotationUseSiteTarget.FIELD, strictUseSite = false)
+            propertySymbol.hasDeprecatedAnnotation(AnnotationUseSiteTarget.FIELD, acceptAnnotationsWithoutUseSite = true)
         }
+    }
+
+    override fun isEquivalentTo(another: PsiElement?): Boolean {
+        return super.isEquivalentTo(another) || isOriginEquivalentTo(another)
     }
 
     override fun isDeprecated(): Boolean = _isDeprecated
