@@ -721,16 +721,12 @@ abstract class BaseGradleIT {
     fun CompiledProject.getOutputForTask(taskName: String): String {
         @Language("RegExp")
         val taskOutputRegex = """
-(?:
-\[LIFECYCLE] \[class org\.gradle(?:\.internal\.buildevents)?\.TaskExecutionLogger] :$taskName|
-\[org\.gradle\.execution\.(?:plan|taskgraph)\.Default(?:Task)?PlanExecutor] :$taskName.*?started
-)
-([\s\S]+?)
-(?:
-Finished executing task ':$taskName'|
-\[org\.gradle\.execution\.(?:plan|taskgraph)\.Default(?:Task)?PlanExecutor] :$taskName.*?completed
-)
-""".trimIndent().replace("\n", "").toRegex()
+            \[org\.gradle\.internal\.operations\.DefaultBuildOperationRunner] Build operation 'Task :$taskName' started
+            ([\s\S]+?)
+            \[org\.gradle\.internal\.operations\.DefaultBuildOperationRunner] Build operation 'Task :$taskName' completed
+            """.trimIndent()
+            .replace("\n", "")
+            .toRegex()
 
         return taskOutputRegex.find(output)?.run { groupValues[1] } ?: error("Cannot find output for task $taskName")
     }
@@ -1002,6 +998,16 @@ Finished executing task ':$taskName'|
 fun BaseGradleIT.BuildOptions.withFreeCommandLineArgument(argument: String) = copy(
     freeCommandLineArgs = freeCommandLineArgs + argument
 )
+
+fun BaseGradleIT.BuildOptions.suppressDeprecationWarningsOnAgpLessThan(
+    agpVersion: AGPVersion,
+    @Suppress("UNUSED_PARAMETER") reason: String // just to require specifying a reason for suppressing
+) =
+    if ((androidGradlePluginVersion ?: error("AGP version expected to be configured")) >= agpVersion) {
+        this
+    } else {
+        copy(warningMode = WarningMode.All)
+    }
 
 private const val MAVEN_LOCAL_URL_PLACEHOLDER = "<mavenLocalUrl>"
 internal const val PLUGIN_MARKER_VERSION_PLACEHOLDER = "<pluginMarkerVersion>"

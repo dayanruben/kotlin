@@ -504,11 +504,13 @@ internal fun prepareTool(target: String?, flavor: KotlinPlatform, runFromDaemon:
             if (!runFromDaemon) it.prepare() // Daemon prepares the tool himself. (See KonanToolRunner.kt)
         }
 
+internal val predefinedObjCClassesIncludingCategories: Set<String> by lazy { setOf("NSView", "UIView") }
+
 internal fun buildNativeLibrary(
         tool: ToolConfig,
         def: DefFile,
         arguments: CInteropArguments,
-        imports: ImportsImpl
+        imports: Imports
 ): NativeLibrary {
     val additionalHeaders = (arguments.header).toTypedArray()
     val additionalCompilerOpts = (arguments.compilerOpts +
@@ -532,14 +534,14 @@ internal fun buildNativeLibrary(
     }
 
     val compilation = CompilationImpl(
-            includes = headerFiles,
+            includes = headerFiles.map { IncludeInfo(it, null) },
             additionalPreambleLines = def.defHeaderLines + predefinedMacrosRedefinitions,
             compilerArgs = defaultCompilerArgs(language) + compilerOpts + tool.platformCompilerOpts,
             language = language
     )
 
     val headerFilter: NativeLibraryHeaderFilter
-    val includes: List<String>
+    val includes: List<IncludeInfo>
 
     val modules = def.config.modules
 
@@ -552,7 +554,7 @@ internal fun buildNativeLibrary(
         val headerInclusionPolicy = HeaderInclusionPolicyImpl(headerFilterGlobs, excludeFilterGlobs)
 
         headerFilter = NativeLibraryHeaderFilter.NameBased(headerInclusionPolicy, excludeDependentModules)
-        includes = headerFiles
+        includes = headerFiles.map { IncludeInfo(it, null) }
     } else {
         require(language == Language.OBJECTIVE_C) { "cinterop supports 'modules' only when 'language = Objective-C'" }
         require(headerFiles.isEmpty()) { "cinterop doesn't support having headers and modules specified at the same time" }
@@ -568,6 +570,7 @@ internal fun buildNativeLibrary(
 
     val headerExclusionPolicy = HeaderExclusionPolicyImpl(imports)
 
+    val objCClassesIncludingCategories = def.config.objcClassesIncludingCategories.toSet() + predefinedObjCClassesIncludingCategories
     return NativeLibrary(
             includes = includes,
             additionalPreambleLines = compilation.additionalPreambleLines,
@@ -576,7 +579,8 @@ internal fun buildNativeLibrary(
             language = compilation.language,
             excludeSystemLibs = excludeSystemLibs,
             headerExclusionPolicy = headerExclusionPolicy,
-            headerFilter = headerFilter
+            headerFilter = headerFilter,
+            objCClassesIncludingCategories = objCClassesIncludingCategories
     )
 }
 

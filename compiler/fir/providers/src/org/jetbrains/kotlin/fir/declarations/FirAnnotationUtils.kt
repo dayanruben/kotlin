@@ -16,15 +16,19 @@ import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.references.toResolvedCallableSymbol
 import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirClassLikeSymbol
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 
-private fun FirAnnotation.toAnnotationLookupTag(session: FirSession): ConeClassLikeLookupTag? =
+fun FirAnnotation.toAnnotationClassLikeType(session: FirSession): ConeClassLikeType? =
     // this cast fails when we have generic-typed annotations @T
-    (annotationTypeRef.coneType as? ConeClassLikeType)?.fullyExpandedType(session)?.lookupTag
+    (annotationTypeRef.coneType as? ConeClassLikeType)?.fullyExpandedType(session)
+
+private fun FirAnnotation.toAnnotationLookupTag(session: FirSession): ConeClassLikeLookupTag? =
+    toAnnotationClassLikeType(session)?.lookupTag
 
 private fun FirAnnotation.toAnnotationLookupTagSafe(session: FirSession): ConeClassLikeLookupTag? =
     annotationTypeRef.coneTypeSafe<ConeClassLikeType>()?.fullyExpandedType(session)?.lookupTag
@@ -35,8 +39,11 @@ fun FirAnnotation.toAnnotationClassId(session: FirSession): ClassId? =
 private fun FirAnnotation.toAnnotationClassIdSafe(session: FirSession): ClassId? =
     toAnnotationLookupTagSafe(session)?.classId
 
+fun FirAnnotation.toAnnotationClassLikeSymbol(session: FirSession): FirClassLikeSymbol<*>? =
+    toAnnotationLookupTag(session)?.toSymbol(session)
+
 private fun FirAnnotation.toAnnotationClass(session: FirSession): FirRegularClass? =
-    toAnnotationLookupTag(session)?.toSymbol(session)?.fir as? FirRegularClass
+    toAnnotationClassLikeSymbol(session)?.fir as? FirRegularClass
 
 // TODO: this is temporary solution, we need something better
 private val FirExpression.callableNameOfMetaAnnotationArgument: Name?
@@ -101,6 +108,10 @@ private val USE_SITE_TARGET_NAME_MAP = mapOf(
 private val DEFAULT_USE_SITE_TARGETS: Set<AnnotationUseSiteTarget> =
     USE_SITE_TARGET_NAME_MAP.values.fold(setOf<AnnotationUseSiteTarget>()) { a, b -> a + b } - setOf(AnnotationUseSiteTarget.FILE)
 
+fun FirDeclaration.hasAnnotation(type: ConeClassLikeType, session: FirSession): Boolean {
+    return annotations.hasAnnotation(type, session)
+}
+
 fun FirDeclaration.hasAnnotation(classId: ClassId, session: FirSession): Boolean {
     return annotations.hasAnnotation(classId, session)
 }
@@ -115,6 +126,10 @@ fun FirBasedSymbol<*>.hasAnnotation(classId: ClassId, session: FirSession): Bool
 
 fun FirAnnotationContainer.hasAnnotation(classId: ClassId, session: FirSession): Boolean {
     return annotations.hasAnnotation(classId, session)
+}
+
+fun List<FirAnnotation>.hasAnnotation(type: ConeClassLikeType, session: FirSession): Boolean {
+    return this.any { it.toAnnotationClassLikeType(session) == type }
 }
 
 fun List<FirAnnotation>.hasAnnotation(classId: ClassId, session: FirSession): Boolean {
@@ -229,6 +244,3 @@ fun hasLowPriorityAnnotation(annotations: List<FirAnnotation>) = annotations.any
     val lookupTag = it.annotationTypeRef.coneTypeSafe<ConeClassLikeType>()?.lookupTag ?: return@any false
     lookupTag.classId == LOW_PRIORITY_IN_OVERLOAD_RESOLUTION_CLASS_ID
 }
-
-fun FirAnnotation.fullyExpandedClassId(useSiteSession: FirSession): ClassId? =
-    coneClassLikeType?.fullyExpandedType(useSiteSession)?.classId

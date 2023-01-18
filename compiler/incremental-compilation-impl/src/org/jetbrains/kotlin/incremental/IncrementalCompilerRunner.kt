@@ -32,8 +32,8 @@ import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.compilerRunner.MessageCollectorToOutputItemsCollectorAdapter
 import org.jetbrains.kotlin.compilerRunner.OutputItemsCollectorImpl
-import org.jetbrains.kotlin.compilerRunner.SimpleOutputItem
 import org.jetbrains.kotlin.compilerRunner.toGeneratedFile
+import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.config.Services
 import org.jetbrains.kotlin.incremental.components.ExpectActualTracker
 import org.jetbrains.kotlin.incremental.components.LookupTracker
@@ -41,10 +41,13 @@ import org.jetbrains.kotlin.incremental.parsing.classesFqNames
 import org.jetbrains.kotlin.incremental.util.BufferingMessageCollector
 import org.jetbrains.kotlin.incremental.util.ExceptionLocation
 import org.jetbrains.kotlin.incremental.util.reportException
+import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmMetadataVersion
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.progress.CompilationCanceledStatus
 import org.jetbrains.kotlin.util.removeSuffixIfPresent
+import org.jetbrains.kotlin.utils.toMetadataVersion
 import java.io.File
+import java.nio.file.Files
 
 abstract class IncrementalCompilerRunner<
         Args : CommonCompilerArguments,
@@ -67,7 +70,8 @@ abstract class IncrementalCompilerRunner<
      */
     private val outputDirs: Collection<File>?,
 
-    protected val withAbiSnapshot: Boolean = false
+    protected val withAbiSnapshot: Boolean = false,
+    private val preciseCompilationResultsBackup: Boolean = false,
 ) {
 
     protected val cacheDirectory = File(workingDir, cacheDirName)
@@ -76,7 +80,15 @@ abstract class IncrementalCompilerRunner<
     private val abiSnapshotFile = File(workingDir, ABI_SNAPSHOT_FILE_NAME)
     protected open val kotlinSourceFilesExtensions: List<String> = DEFAULT_KOTLIN_SOURCE_FILES_EXTENSIONS
 
-    protected abstract fun createCacheManager(args: Args, projectDir: File?): CacheManager
+    /**
+     * Creates an instance of [IncrementalCompilationContext] that holds common incremental compilation context mostly required for [CacheManager]
+     */
+    protected abstract fun createIncrementalCompilationContext(
+        projectDir: File?,
+        transaction: CompilationTransaction
+    ): IncrementalCompilationContext
+
+    protected abstract fun createCacheManager(icContext: IncrementalCompilationContext, args: Args): CacheManager
     protected abstract fun destinationDir(args: Args): File
 
     fun compile(
@@ -154,67 +166,99 @@ abstract class IncrementalCompilerRunner<
         }
         changedFiles as ChangedFiles.Known?
 
-        val caches = createCacheManager(args, projectDir)
-        val exitCode: ExitCode
-        try {
-            // Step 1: Get changed files
-            val knownChangedFiles: ChangedFiles.Known = try {
-                getChangedFiles(changedFiles, allSourceFiles, caches)
-            } catch (e: Throwable) {
-                // Don't need to close caches in cases where we return `ICResult.Failed` because we will compile non-incrementally anyway
-                return ICResult.Failed(IC_FAILED_TO_GET_CHANGED_FILES, e)
-            }
+        createTransaction().use { transaction ->
+            val icContext = createIncrementalCompilationContext(projectDir, transaction)
+            val caches = createCacheManager(icContext, args)
 
-            val classpathAbiSnapshot = if (withAbiSnapshot) getClasspathAbiSnapshot(args) else null
-
-            // Step 2: Compute files to recompile
-            val compilationMode = try {
-                reporter.measure(BuildTime.IC_CALCULATE_INITIAL_DIRTY_SET) {
-                    calculateSourcesToCompile(caches, knownChangedFiles, args, messageCollector, classpathAbiSnapshot ?: emptyMap())
+            fun compile(): ICResult {
+                // Step 1: Get changed files
+                val knownChangedFiles: ChangedFiles.Known = try {
+                    getChangedFiles(changedFiles, allSourceFiles, caches)
+                } catch (e: Throwable) {
+                    return ICResult.Failed(IC_FAILED_TO_GET_CHANGED_FILES, e)
                 }
-            } catch (e: Throwable) {
-                return ICResult.Failed(IC_FAILED_TO_COMPUTE_FILES_TO_RECOMPILE, e)
-            }
 
-            if (compilationMode is CompilationMode.Rebuild) {
-                return ICResult.RequiresRebuild(compilationMode.reason)
-            }
+                val classpathAbiSnapshot = if (withAbiSnapshot) getClasspathAbiSnapshot(args) else null
 
-            val abiSnapshotData = if (withAbiSnapshot) {
-                if (!abiSnapshotFile.exists()) {
-                    reporter.debug { "Jar snapshot file does not exist: ${abiSnapshotFile.path}" }
-                    return ICResult.RequiresRebuild(NO_ABI_SNAPSHOT)
+                // Step 2: Compute files to recompile
+                val compilationMode = try {
+                    reporter.measure(BuildTime.IC_CALCULATE_INITIAL_DIRTY_SET) {
+                        calculateSourcesToCompile(caches, knownChangedFiles, args, messageCollector, classpathAbiSnapshot ?: emptyMap())
+                    }
+                } catch (e: Throwable) {
+                    return ICResult.Failed(IC_FAILED_TO_COMPUTE_FILES_TO_RECOMPILE, e)
                 }
-                reporter.info { "Incremental compilation with ABI snapshot enabled" }
-                AbiSnapshotData(
-                    snapshot = AbiSnapshotImpl.read(abiSnapshotFile),
-                    classpathAbiSnapshot = classpathAbiSnapshot!!
-                )
-            } else null
 
-            // Step 3: Compile incrementally
-            exitCode = try {
-                compileImpl(compilationMode as CompilationMode.Incremental, allSourceFiles, args, caches, abiSnapshotData, messageCollector)
-            } catch (e: Throwable) {
-                return ICResult.Failed(IC_FAILED_TO_COMPILE_INCREMENTALLY, e)
+                if (compilationMode is CompilationMode.Rebuild) {
+                    return ICResult.RequiresRebuild(compilationMode.reason)
+                }
+
+                val abiSnapshotData = if (withAbiSnapshot) {
+                    if (!abiSnapshotFile.exists()) {
+                        reporter.debug { "Jar snapshot file does not exist: ${abiSnapshotFile.path}" }
+                        return ICResult.RequiresRebuild(NO_ABI_SNAPSHOT)
+                    }
+                    reporter.info { "Incremental compilation with ABI snapshot enabled" }
+                    AbiSnapshotData(
+                        snapshot = AbiSnapshotImpl.read(abiSnapshotFile),
+                        classpathAbiSnapshot = classpathAbiSnapshot!!
+                    )
+                } else null
+
+                // Step 3: Compile incrementally
+                val exitCode = try {
+                    compileImpl(
+                        icContext,
+                        compilationMode as CompilationMode.Incremental,
+                        allSourceFiles,
+                        args,
+                        caches,
+                        abiSnapshotData,
+                        messageCollector,
+                    )
+                } catch (e: Throwable) {
+                    return ICResult.Failed(IC_FAILED_TO_COMPILE_INCREMENTALLY, e)
+                }
+
+                return ICResult.Completed(exitCode)
             }
-        } catch (e: Throwable) {
-            // Because `caches` is a Closeable resource, it is good practice to close them in the event of an exception (in addition to
-            // closing them after a normal use).
+
+            fun closeCaches(caches: CacheManager, activeException: Throwable) {
+                try {
+                    caches.close()
+                } catch (e: Throwable) {
+                    activeException.addSuppressed(e)
+                }
+            }
+
+            // Because `caches` is a Closeable resource, it is important to close them in both cases:
+            //    1. in the event of an exception
+            //    2. after a normal execution
+            // Note: Historically, closing caches used to throw exceptions sometimes, so currently we want to collect those exceptions. In the
+            // future, if closing caches is safe, we can simplify the code by using Kotlin's `Closable.use` function (similar to the code in
+            // `compileNonIncrementally`).
+            val icResult = try {
+                compile()
+            } catch (e: Throwable) {
+                // Case 1 - Close the caches upon an exception
+                closeCaches(caches, e)
+                throw e
+            }
+
+            // Case 2 - Close the caches after a normal execution
             try {
                 caches.close()
-            } catch (e2: Throwable) {
-                e.addSuppressed(e2)
+            } catch (e: Throwable) {
+                return ICResult.Failed(
+                    IC_FAILED_TO_CLOSE_CACHES,
+                    RuntimeException("Failed to close caches, previous ICResult `$icResult` was discarded", e)
+                )
             }
-            throw e
+            if (icResult is ICResult.Completed && icResult.exitCode == ExitCode.OK) {
+                transaction.markAsSuccessful()
+            }
+            return icResult
         }
-        try {
-            caches.close()
-        } catch (e: Throwable) {
-            return ICResult.Failed(IC_FAILED_TO_CLOSE_CACHES, e)
-        }
-
-        return ICResult.Completed(exitCode)
     }
 
     private fun compileNonIncrementally(
@@ -234,7 +278,8 @@ abstract class IncrementalCompilerRunner<
             reporter.debug { "Cleaning ${outputDirsToClean.size} output directories" }
             cleanOrCreateDirectories(outputDirsToClean)
         }
-        return createCacheManager(args, projectDir).use { caches ->
+        val icContext = createIncrementalCompilationContext(projectDir, DummyCompilationTransaction())
+        return createCacheManager(icContext, args).use { caches ->
             if (trackChangedFiles) {
                 caches.inputsCache.sourceSnapshotMap.compareAndUpdate(allSourceFiles)
             }
@@ -242,7 +287,7 @@ abstract class IncrementalCompilerRunner<
                 AbiSnapshotData(snapshot = AbiSnapshotImpl(mutableMapOf()), classpathAbiSnapshot = getClasspathAbiSnapshot(args))
             } else null
 
-            compileImpl(CompilationMode.Rebuild(rebuildReason), allSourceFiles, args, caches, abiSnapshotData, messageCollector)
+            compileImpl(icContext, CompilationMode.Rebuild(rebuildReason), allSourceFiles, args, caches, abiSnapshotData, messageCollector)
         }
     }
 
@@ -350,20 +395,27 @@ abstract class IncrementalCompilerRunner<
     ): Pair<ExitCode, Collection<File>>
 
     private fun compileImpl(
+        icContext: IncrementalCompilationContext,
         compilationMode: CompilationMode,
         allSourceFiles: List<File>,
         args: Args,
         caches: CacheManager,
         abiSnapshotData: AbiSnapshotData?, // Not null iff withAbiSnapshot = true
-        messageCollector: MessageCollector
+        messageCollector: MessageCollector,
     ): ExitCode {
         performWorkBeforeCompilation(compilationMode, args)
 
         val allKotlinFiles = allSourceFiles.filter { it.isKotlinFile(kotlinSourceFilesExtensions) }
-        val exitCode = doCompile(compilationMode, allKotlinFiles, args, caches, abiSnapshotData, messageCollector)
+        val exitCode = doCompile(icContext, caches, compilationMode, allKotlinFiles, args, abiSnapshotData, messageCollector)
 
         performWorkAfterCompilation(compilationMode, exitCode, caches)
         return exitCode
+    }
+
+    private fun createTransaction() = if (preciseCompilationResultsBackup) {
+        RecoverableCompilationTransaction(reporter, Files.createTempDirectory("kotlin-backups"))
+    } else {
+        DummyCompilationTransaction()
     }
 
     protected open fun performWorkBeforeCompilation(compilationMode: CompilationMode, args: Args) {}
@@ -383,12 +435,13 @@ abstract class IncrementalCompilerRunner<
     }
 
     private fun doCompile(
+        icContext: IncrementalCompilationContext,
+        caches: CacheManager,
         compilationMode: CompilationMode,
         allKotlinSources: List<File>,
         args: Args,
-        caches: CacheManager,
         abiSnapshotData: AbiSnapshotData?, // Not null iff withAbiSnapshot = true
-        originalMessageCollector: MessageCollector
+        originalMessageCollector: MessageCollector,
     ): ExitCode {
         val dirtySources = when (compilationMode) {
             is CompilationMode.Incremental -> compilationMode.dirtyFiles.toMutableLinkedSet()
@@ -399,8 +452,13 @@ abstract class IncrementalCompilerRunner<
         val buildDirtyLookupSymbols = HashSet<LookupSymbol>()
         val buildDirtyFqNames = HashSet<FqName>()
         val allDirtySources = HashSet<File>()
+        val transaction = icContext.transaction
 
         var exitCode = ExitCode.OK
+
+        // TODO: ideally we should read arguments not here but at earlier stages
+        val jvmMetadataVersionFromLanguageVersion =
+            LanguageVersion.fromVersionString(args.languageVersion)?.toMetadataVersion() ?: JvmMetadataVersion.INSTANCE
 
         while (dirtySources.any() || runWithNoDirtyKotlinSources(caches)) {
             val complementaryFiles = caches.platformCache.getComplementaryFilesRecursive(dirtySources)
@@ -420,8 +478,9 @@ abstract class IncrementalCompilerRunner<
 
             args.reportOutputFiles = true
             val outputItemsCollector = OutputItemsCollectorImpl()
+            val transactionOutputsRegistrar = TransactionOutputsRegistrar(transaction, outputItemsCollector)
             val bufferingMessageCollector = BufferingMessageCollector()
-            val messageCollectorAdapter = MessageCollectorToOutputItemsCollectorAdapter(bufferingMessageCollector, outputItemsCollector)
+            val messageCollectorAdapter = MessageCollectorToOutputItemsCollectorAdapter(bufferingMessageCollector, transactionOutputsRegistrar)
 
             val compiledSources = reporter.measure(BuildTime.COMPILATION_ROUND) {
                 runCompiler(
@@ -436,17 +495,18 @@ abstract class IncrementalCompilerRunner<
             dirtySources.addAll(compiledSources)
             allDirtySources.addAll(dirtySources)
             val text = allDirtySources.joinToString(separator = System.getProperty("line.separator")) { it.normalize().absolutePath }
-            dirtySourcesSinceLastTimeFile.writeText(text)
+            transaction.writeText(dirtySourcesSinceLastTimeFile.toPath(), text)
 
-
-            val generatedFiles = outputItemsCollector.outputs.map(SimpleOutputItem::toGeneratedFile)
+            val generatedFiles = outputItemsCollector.outputs.map {
+                it.toGeneratedFile(jvmMetadataVersionFromLanguageVersion)
+            }
             if (compilationMode is CompilationMode.Incremental) {
                 // todo: feels dirty, can this be refactored?
                 val dirtySourcesSet = dirtySources.toHashSet()
                 val additionalDirtyFiles = additionalDirtyFiles(caches, generatedFiles, services).filter { it !in dirtySourcesSet }
                 if (additionalDirtyFiles.isNotEmpty()) {
                     dirtySources.addAll(additionalDirtyFiles)
-                    generatedFiles.forEach { it.outputFile.delete() }
+                    generatedFiles.forEach { transaction.deleteFile(it.outputFile.toPath()) }
                     continue
                 }
             }
@@ -456,7 +516,7 @@ abstract class IncrementalCompilerRunner<
 
             if (exitCode != ExitCode.OK) break
 
-            dirtySourcesSinceLastTimeFile.delete()
+            transaction.deleteFile(dirtySourcesSinceLastTimeFile.toPath())
 
             val changesCollector = ChangesCollector()
             reporter.measure(BuildTime.IC_UPDATE_CACHES) {
@@ -513,7 +573,7 @@ abstract class IncrementalCompilerRunner<
                 //write abi snapshot
                 if (withAbiSnapshot) {
                     //TODO(valtman) check method/class remove
-                    AbiSnapshotImpl.write(abiSnapshotData!!.snapshot, abiSnapshotFile)
+                    AbiSnapshotImpl.write(icContext, abiSnapshotData!!.snapshot, abiSnapshotFile)
                 }
             }
         }
@@ -522,7 +582,7 @@ abstract class IncrementalCompilerRunner<
         }
 
         val dirtyData = DirtyData(buildDirtyLookupSymbols, buildDirtyFqNames)
-        processChangesAfterBuild(compilationMode, currentBuildInfo, dirtyData)
+        processChangesAfterBuild(icContext, compilationMode, currentBuildInfo, dirtyData)
 
         return exitCode
     }
@@ -554,9 +614,10 @@ abstract class IncrementalCompilerRunner<
     open fun runWithNoDirtyKotlinSources(caches: CacheManager): Boolean = false
 
     private fun processChangesAfterBuild(
+        icContext: IncrementalCompilationContext,
         compilationMode: CompilationMode,
         currentBuildInfo: BuildInfo,
-        dirtyData: DirtyData
+        dirtyData: DirtyData,
     ) = reporter.measure(BuildTime.IC_WRITE_HISTORY_FILE) {
         val prevDiffs = BuildDiffsStorage.readFromFile(buildHistoryFile, reporter)?.buildDiffs ?: emptyList()
         val newDiff = if (compilationMode is CompilationMode.Incremental) {
@@ -566,8 +627,7 @@ abstract class IncrementalCompilerRunner<
             BuildDifference(currentBuildInfo.startTS, false, emptyDirtyData)
         }
 
-        //TODO(valtman) old history build should be restored in case of build fail
-        BuildDiffsStorage.writeToFile(buildHistoryFile, BuildDiffsStorage(prevDiffs + newDiff), reporter)
+        BuildDiffsStorage.writeToFile(icContext, buildHistoryFile, BuildDiffsStorage(prevDiffs + newDiff))
     }
 
     companion object {

@@ -26,16 +26,16 @@ const val SANITIZE_PARENTHESES = "SANITIZE_PARENTHESES"
 const val ENABLE_JVM_PREVIEW = "ENABLE_JVM_PREVIEW"
 
 data class CompilerTestLanguageVersionSettings(
-        private val initialLanguageFeatures: Map<LanguageFeature, LanguageFeature.State>,
-        override val apiVersion: ApiVersion,
-        override val languageVersion: LanguageVersion,
-        val analysisFlags: Map<AnalysisFlag<*>, Any?> = emptyMap()
+    private val initialLanguageFeatures: Map<LanguageFeature, LanguageFeature.State>,
+    override val apiVersion: ApiVersion,
+    override val languageVersion: LanguageVersion,
+    val analysisFlags: Map<AnalysisFlag<*>, Any?> = emptyMap()
 ) : LanguageVersionSettings {
     val extraLanguageFeatures = specificFeaturesForTests() + initialLanguageFeatures
     private val delegate = LanguageVersionSettingsImpl(languageVersion, apiVersion, emptyMap(), extraLanguageFeatures)
 
     override fun getFeatureSupport(feature: LanguageFeature): LanguageFeature.State =
-            extraLanguageFeatures[feature] ?: delegate.getFeatureSupport(feature)
+        extraLanguageFeatures[feature] ?: delegate.getFeatureSupport(feature)
 
     override fun isPreRelease(): Boolean = false
 

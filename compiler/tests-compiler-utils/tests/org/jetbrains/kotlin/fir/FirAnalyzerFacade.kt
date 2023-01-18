@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporterFactory
 import org.jetbrains.kotlin.diagnostics.KtDiagnostic
 import org.jetbrains.kotlin.fir.analysis.collectors.FirDiagnosticsCollector
+import org.jetbrains.kotlin.fir.backend.Fir2IrComponents
 import org.jetbrains.kotlin.fir.backend.Fir2IrConverter
 import org.jetbrains.kotlin.fir.backend.Fir2IrExtensions
 import org.jetbrains.kotlin.fir.backend.Fir2IrResult
@@ -28,6 +29,7 @@ import org.jetbrains.kotlin.fir.resolve.transformers.FirTotalResolveProcessor
 import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmDescriptorMangler
 import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmIrMangler
 import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
+import org.jetbrains.kotlin.ir.util.SymbolTable
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.sourceFiles.LightTreeFile
 
@@ -37,7 +39,11 @@ abstract class AbstractFirAnalyzerFacade {
 
     abstract fun runResolution(): List<FirFile>
 
-    abstract fun convertToIr(fir2IrExtensions: Fir2IrExtensions): Fir2IrResult
+    abstract fun convertToIr(
+        fir2IrExtensions: Fir2IrExtensions,
+        dependentComponents: List<Fir2IrComponents>,
+        symbolTable: SymbolTable?
+    ): Fir2IrResult
 }
 
 class FirAnalyzerFacade(
@@ -48,7 +54,7 @@ class FirAnalyzerFacade(
     val irGeneratorExtensions: Collection<IrGenerationExtension>,
     val useLightTree: Boolean = false,
     val enablePluginPhases: Boolean = false,
-    val generateSignatures: Boolean = false,
+    val generateSignatures: Boolean = false
 ) : AbstractFirAnalyzerFacade() {
     private var firFiles: List<FirFile>? = null
     private var _scopeSession: ScopeSession? = null
@@ -86,7 +92,6 @@ class FirAnalyzerFacade(
         return firFiles!!
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     override fun runCheckers(): Map<FirFile, List<KtDiagnostic>> {
         if (_scopeSession == null) runResolution()
         if (collectedDiagnostics != null) return collectedDiagnostics!!
@@ -103,26 +108,27 @@ class FirAnalyzerFacade(
         return collectedDiagnostics!!
     }
 
-    override fun convertToIr(fir2IrExtensions: Fir2IrExtensions): Fir2IrResult {
+    override fun convertToIr(
+        fir2IrExtensions: Fir2IrExtensions,
+        dependentComponents: List<Fir2IrComponents>,
+        symbolTable: SymbolTable?
+    ): Fir2IrResult {
         if (_scopeSession == null) runResolution()
         val mangler = JvmDescriptorMangler(null)
         val signaturer = JvmIdSignatureDescriptor(mangler)
 
-        val commonFirFiles = session.moduleData.dependsOnDependencies
-            .map { it.session }
-            .filter { it.kind == FirSession.Kind.Source }
-            .flatMap { (it.firProvider as FirProviderImpl).getAllFirFiles() }
-
         return Fir2IrConverter.createModuleFragmentWithSignaturesIfNeeded(
-            session, _scopeSession!!, firFiles!! + commonFirFiles,
+            session, _scopeSession!!, firFiles!!,
             languageVersionSettings, signaturer,
             fir2IrExtensions,
-            FirJvmKotlinMangler(session), JvmIrMangler, IrFactoryImpl,
+            FirJvmKotlinMangler(), JvmIrMangler, IrFactoryImpl,
             FirJvmVisibilityConverter,
             Fir2IrJvmSpecialAnnotationSymbolProvider(),
             irGeneratorExtensions,
             generateSignatures,
-            kotlinBuiltIns = DefaultBuiltIns.Instance // TODO: consider passing externally
+            kotlinBuiltIns = DefaultBuiltIns.Instance, // TODO: consider passing externally,
+            dependentComponents = dependentComponents,
+            currentSymbolTable = symbolTable
         )
     }
 }

@@ -29,12 +29,13 @@ import org.jetbrains.kotlin.backend.konan.*
 import org.jetbrains.kotlin.backend.konan.descriptors.*
 import org.jetbrains.kotlin.backend.konan.descriptors.ClassLayoutBuilder
 import org.jetbrains.kotlin.backend.konan.descriptors.findPackage
-import org.jetbrains.kotlin.backend.konan.descriptors.toFieldInfo
+import org.jetbrains.kotlin.backend.konan.descriptors.isInteropLibrary
 import org.jetbrains.kotlin.backend.konan.ir.interop.IrProviderForCEnumAndCStructStubs
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.library.metadata.DeserializedKlibModuleOrigin
 import org.jetbrains.kotlin.library.metadata.klibModuleOrigin
 import org.jetbrains.kotlin.descriptors.konan.isNativeStdlib
+import org.jetbrains.kotlin.fir.lazy.Fir2IrLazyClass
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.builders.TranslationPluginContext
 import org.jetbrains.kotlin.ir.declarations.*
@@ -43,6 +44,7 @@ import org.jetbrains.kotlin.ir.declarations.lazy.IrLazyClass
 import org.jetbrains.kotlin.ir.expressions.IrBody
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
+import org.jetbrains.kotlin.ir.symbols.impl.IrFieldSymbolImpl
 import org.jetbrains.kotlin.ir.symbols.impl.IrPublicSymbolBase
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.*
@@ -146,7 +148,7 @@ internal object InlineFunctionBodyReferenceSerializer {
 
 // [binaryType] is needed in case a field is of a private inline class type (which can't be deserialized).
 // But it is safe to just set the field's type to the primitive type the inline class will be erased to.
-class SerializedClassFieldInfo(val name: Int, val binaryType: Int, val type: Int, val flags: Int) {
+class SerializedClassFieldInfo(val name: Int, val binaryType: Int, val type: Int, val flags: Int, val alignment: Int) {
     companion object {
         const val FLAG_IS_CONST = 1
     }
@@ -157,7 +159,7 @@ class SerializedClassFields(val file: Int, val classSignature: Int, val typePara
 
 internal object ClassFieldsSerializer {
     fun serialize(classFields: List<SerializedClassFields>): ByteArray {
-        val size = classFields.sumOf { Int.SIZE_BYTES * (5 + it.typeParameterSigs.size + it.fields.size * 4) }
+        val size = classFields.sumOf { Int.SIZE_BYTES * (5 + it.typeParameterSigs.size + it.fields.size * 5) }
         val stream = ByteArrayStream(ByteArray(size))
         classFields.forEach {
             stream.writeInt(it.file)
@@ -171,6 +173,7 @@ internal object ClassFieldsSerializer {
                 stream.writeInt(field.binaryType)
                 stream.writeInt(field.type)
                 stream.writeInt(field.flags)
+                stream.writeInt(field.alignment)
             }
         }
         return stream.buf
@@ -190,7 +193,8 @@ internal object ClassFieldsSerializer {
                 val binaryType = stream.readInt()
                 val type = stream.readInt()
                 val flags = stream.readInt()
-                SerializedClassFieldInfo(name, binaryType, type, flags)
+                val alignment = stream.readInt()
+                SerializedClassFieldInfo(name, binaryType, type, flags, alignment)
             }
             result.add(SerializedClassFields(file, classSignature, typeParameterSigs, outerThisIndex, fields))
         }
@@ -314,12 +318,18 @@ object KonanFakeOverrideClassFilter : FakeOverrideClassFilter {
         IdSignature.Flags.IS_NATIVE_INTEROP_LIBRARY.test()
     }
 
+    private fun IrClassSymbol.isInterop(): Boolean {
+        if (this is IrPublicSymbolBase<*> && this.signature.isInteropSignature()) return true
+
+        // K2 doesn't properly put signatures into such symbols yet, workaround:
+        return this.isBound && this.owner is Fir2IrLazyClass && this.descriptor.isFromInteropLibrary()
+    }
+
     // This is an alternative to .isObjCClass that doesn't need to walk up all the class heirarchy,
     // rather it only looks at immediate super class symbols.
     private fun IrClass.hasInteropSuperClass() = this.superTypes
         .mapNotNull { it.classOrNull }
-        .filter { it is IrPublicSymbolBase<*> }
-        .any { it.signature?.isInteropSignature() ?: false }
+        .any { it.isInterop() }
 
     override fun needToConstructFakeOverrides(clazz: IrClass): Boolean {
         return !clazz.hasInteropSuperClass() && clazz !is IrLazyClass
@@ -623,7 +633,7 @@ internal class KonanIrLinker(
                             val outerProtoClass = protoClasses[protoClasses.size - 2]
                             val nameAndType = BinaryNameAndType.decode(outerProtoClass.thisReceiver.nameType)
 
-                            SerializedClassFieldInfo(name = InvalidIndex, binaryType = InvalidIndex, nameAndType.typeIndex, flags = 0)
+                            SerializedClassFieldInfo(name = InvalidIndex, binaryType = InvalidIndex, nameAndType.typeIndex, flags = 0, field.alignment)
                         } else {
                             val protoField = protoFieldsMap[field.name] ?: error("No proto for ${irField.render()}")
                             val nameAndType = BinaryNameAndType.decode(protoField.nameType)
@@ -640,7 +650,9 @@ internal class KonanIrLinker(
                                     if (with(KonanManglerIr) { (classifier as? IrClassSymbol)?.owner?.isExported(compatibleMode) } == false)
                                         InvalidIndex
                                     else nameAndType.typeIndex,
-                                    flags)
+                                    flags,
+                                    field.alignment
+                            )
                         }
                     })
         }
@@ -799,7 +811,7 @@ internal class KonanIrLinker(
             }
         }
 
-        fun deserializeClassFields(irClass: IrClass, outerThisField: IrField?): List<ClassLayoutBuilder.FieldInfo> {
+        fun deserializeClassFields(irClass: IrClass, outerThisFieldInfo: ClassLayoutBuilder.FieldInfo?): List<ClassLayoutBuilder.FieldInfo> {
             irClass.getPackageFragment() as? IrExternalPackageFragment
                     ?: error("Expected an external package fragment for ${irClass.render()}")
             val signature = irClass.symbol.signature
@@ -834,8 +846,10 @@ internal class KonanIrLinker(
             return serializedClassFields.fields.mapIndexed { index, field ->
                 if (index == serializedClassFields.outerThisIndex) {
                     require(irClass.isInner) { "Expected an inner class: ${irClass.render()}" }
-                    require(outerThisField != null) { "For an inner class ${irClass.render()} there should be <outer this> field" }
-                    outerThisField.toFieldInfo()
+                    require(outerThisFieldInfo != null) { "For an inner class ${irClass.render()} there should be <outer this> field" }
+                    outerThisFieldInfo.also {
+                        require(it.alignment == field.alignment) { "Mismatched align information for outer this"}
+                    }
                 } else {
                     val name = fileDeserializationState.fileReader.string(field.name)
                     val type = when {
@@ -855,7 +869,11 @@ internal class KonanIrLinker(
                         }
                     }
                     ClassLayoutBuilder.FieldInfo(
-                            name, type, isConst = (field.flags and SerializedClassFieldInfo.FLAG_IS_CONST) != 0, irField = null)
+                            name, type,
+                            isConst = (field.flags and SerializedClassFieldInfo.FLAG_IS_CONST) != 0,
+                            irFieldSymbol = IrFieldSymbolImpl(),
+                            alignment = field.alignment,
+                    )
                 }
             }
         }

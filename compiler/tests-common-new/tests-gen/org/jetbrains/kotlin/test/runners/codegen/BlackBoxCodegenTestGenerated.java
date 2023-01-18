@@ -1066,6 +1066,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         }
 
         @Test
+        @TestMetadata("kt55984.kt")
+        public void testKt55984() throws Exception {
+            runTest("compiler/testData/codegen/box/arrays/kt55984.kt");
+        }
+
+        @Test
         @TestMetadata("kt594.kt")
         public void testKt594() throws Exception {
             runTest("compiler/testData/codegen/box/arrays/kt594.kt");
@@ -6039,6 +6045,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         @TestMetadata("capturedLocalGenericFun.kt")
         public void testCapturedLocalGenericFun() throws Exception {
             runTest("compiler/testData/codegen/box/closures/capturedLocalGenericFun.kt");
+        }
+
+        @Test
+        @TestMetadata("closureCapturingGenericParam.kt")
+        public void testClosureCapturingGenericParam() throws Exception {
+            runTest("compiler/testData/codegen/box/closures/closureCapturingGenericParam.kt");
         }
 
         @Test
@@ -17555,6 +17567,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         @TestMetadata("SuspendExtension.kt")
         public void testSuspendExtension() throws Exception {
             runTest("compiler/testData/codegen/box/fir/SuspendExtension.kt");
+        }
+
+        @Test
+        @TestMetadata("SuspendFunctionReference.kt")
+        public void testSuspendFunctionReference() throws Exception {
+            runTest("compiler/testData/codegen/box/fir/SuspendFunctionReference.kt");
         }
     }
 
@@ -31684,8 +31702,56 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         @TestDataPath("$PROJECT_ROOT")
         public class MultiModule {
             @Test
+            @TestMetadata("accessToLocalClassFromBackend.kt")
+            public void testAccessToLocalClassFromBackend() throws Exception {
+                runTest("compiler/testData/codegen/box/multiplatform/multiModule/accessToLocalClassFromBackend.kt");
+            }
+
+            @Test
             public void testAllFilesPresentInMultiModule() throws Exception {
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/multiplatform/multiModule"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
+            }
+
+            @Test
+            @TestMetadata("correctParentForTypeParameter.kt")
+            public void testCorrectParentForTypeParameter() throws Exception {
+                runTest("compiler/testData/codegen/box/multiplatform/multiModule/correctParentForTypeParameter.kt");
+            }
+
+            @Test
+            @TestMetadata("enumEntryNameCall.kt")
+            public void testEnumEntryNameCall() throws Exception {
+                runTest("compiler/testData/codegen/box/multiplatform/multiModule/enumEntryNameCall.kt");
+            }
+
+            @Test
+            @TestMetadata("expectActualMultiCommon.kt")
+            public void testExpectActualMultiCommon() throws Exception {
+                runTest("compiler/testData/codegen/box/multiplatform/multiModule/expectActualMultiCommon.kt");
+            }
+
+            @Test
+            @TestMetadata("expectActualSimple.kt")
+            public void testExpectActualSimple() throws Exception {
+                runTest("compiler/testData/codegen/box/multiplatform/multiModule/expectActualSimple.kt");
+            }
+
+            @Test
+            @TestMetadata("expectInterfaceInSupertypes.kt")
+            public void testExpectInterfaceInSupertypes() throws Exception {
+                runTest("compiler/testData/codegen/box/multiplatform/multiModule/expectInterfaceInSupertypes.kt");
+            }
+
+            @Test
+            @TestMetadata("fakeOverridesInPlatformModule.kt")
+            public void testFakeOverridesInPlatformModule() throws Exception {
+                runTest("compiler/testData/codegen/box/multiplatform/multiModule/fakeOverridesInPlatformModule.kt");
+            }
+
+            @Test
+            @TestMetadata("getRidOfDoubleBindingInFir2IrLazyProperty.kt")
+            public void testGetRidOfDoubleBindingInFir2IrLazyProperty() throws Exception {
+                runTest("compiler/testData/codegen/box/multiplatform/multiModule/getRidOfDoubleBindingInFir2IrLazyProperty.kt");
             }
         }
     }
@@ -48895,6 +48961,70 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         @TestMetadata("varargsOverride3.kt")
         public void testVarargsOverride3() throws Exception {
             runTest("compiler/testData/codegen/box/vararg/varargsOverride3.kt");
+        }
+    }
+
+    @Nested
+    @TestMetadata("compiler/testData/codegen/box/volatile")
+    @TestDataPath("$PROJECT_ROOT")
+    public class Volatile {
+        @Test
+        public void testAllFilesPresentInVolatile() throws Exception {
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/volatile"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
+        }
+
+        @Test
+        @TestMetadata("volatileBool.kt")
+        public void testVolatileBool() throws Exception {
+            runTest("compiler/testData/codegen/box/volatile/volatileBool.kt");
+        }
+
+        @Test
+        @TestMetadata("volatileByte.kt")
+        public void testVolatileByte() throws Exception {
+            runTest("compiler/testData/codegen/box/volatile/volatileByte.kt");
+        }
+
+        @Test
+        @TestMetadata("volatileDouble.kt")
+        public void testVolatileDouble() throws Exception {
+            runTest("compiler/testData/codegen/box/volatile/volatileDouble.kt");
+        }
+
+        @Test
+        @TestMetadata("volatileFloat.kt")
+        public void testVolatileFloat() throws Exception {
+            runTest("compiler/testData/codegen/box/volatile/volatileFloat.kt");
+        }
+
+        @Test
+        @TestMetadata("volatileGeneric.kt")
+        public void testVolatileGeneric() throws Exception {
+            runTest("compiler/testData/codegen/box/volatile/volatileGeneric.kt");
+        }
+
+        @Test
+        @TestMetadata("volatileInt.kt")
+        public void testVolatileInt() throws Exception {
+            runTest("compiler/testData/codegen/box/volatile/volatileInt.kt");
+        }
+
+        @Test
+        @TestMetadata("volatileLong.kt")
+        public void testVolatileLong() throws Exception {
+            runTest("compiler/testData/codegen/box/volatile/volatileLong.kt");
+        }
+
+        @Test
+        @TestMetadata("volatileShort.kt")
+        public void testVolatileShort() throws Exception {
+            runTest("compiler/testData/codegen/box/volatile/volatileShort.kt");
+        }
+
+        @Test
+        @TestMetadata("volatileString.kt")
+        public void testVolatileString() throws Exception {
+            runTest("compiler/testData/codegen/box/volatile/volatileString.kt");
         }
     }
 

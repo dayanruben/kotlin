@@ -14,10 +14,12 @@ import org.gradle.api.plugins.ExtraPropertiesExtension
 import org.gradle.testfixtures.ProjectBuilder
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
-import org.jetbrains.kotlin.gradle.unitTests.kpm.applyKpmPlugin
+import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformAndroidPlugin
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformJvmPlugin
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider
+import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.PropertyNames.KOTLIN_MPP_ENABLE_INTRANSITIVE_METADATA_CONFIGURATION
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinPm20ProjectExtension
+import org.jetbrains.kotlin.gradle.unitTests.kpm.applyKpmPlugin
 
 fun buildProject(
     projectBuilder: ProjectBuilder.() -> Unit = { },
@@ -49,6 +51,10 @@ fun buildProjectWithJvm(projectBuilder: ProjectBuilder.() -> Unit = {}, code: Pr
 
 fun Project.applyKotlinJvmPlugin() {
     project.plugins.apply(KotlinPlatformJvmPlugin::class.java)
+}
+
+fun Project.applyKotlinAndroidPlugin() {
+    project.plugins.apply(KotlinPlatformAndroidPlugin::class.java)
 }
 
 fun Project.kotlin(code: KotlinMultiplatformExtension.() -> Unit) {
@@ -93,6 +99,10 @@ fun Project.enableCInteropCommonization(enabled: Boolean = true) {
 
 fun Project.enableHierarchicalStructureByDefault(enabled: Boolean = true) {
     propertiesExtension.set(PropertiesProvider.PropertyNames.KOTLIN_MPP_HIERARCHICAL_STRUCTURE_BY_DEFAULT, enabled.toString())
+}
+
+fun Project.enableIntransitiveMetadataConfiguration(enabled: Boolean = true) {
+    propertiesExtension.set(KOTLIN_MPP_ENABLE_INTRANSITIVE_METADATA_CONFIGURATION, enabled.toString())
 }
 
 fun Project.enableDefaultStdlibDependency(enabled: Boolean = true) {

@@ -447,9 +447,39 @@ public class CliTestGenerated extends AbstractCliTest {
             runTest("compiler/testData/cli/jvm/firHello.args");
         }
 
+        @TestMetadata("firHello20.args")
+        public void testFirHello20() throws Exception {
+            runTest("compiler/testData/cli/jvm/firHello20.args");
+        }
+
+        @TestMetadata("firHello20WithFlag.args")
+        public void testFirHello20WithFlag() throws Exception {
+            runTest("compiler/testData/cli/jvm/firHello20WithFlag.args");
+        }
+
+        @TestMetadata("firHello20WithOldLV.args")
+        public void testFirHello20WithOldLV() throws Exception {
+            runTest("compiler/testData/cli/jvm/firHello20WithOldLV.args");
+        }
+
+        @TestMetadata("firLightTreeOff.args")
+        public void testFirLightTreeOff() throws Exception {
+            runTest("compiler/testData/cli/jvm/firLightTreeOff.args");
+        }
+
+        @TestMetadata("firLightTreeOn.args")
+        public void testFirLightTreeOn() throws Exception {
+            runTest("compiler/testData/cli/jvm/firLightTreeOn.args");
+        }
+
         @TestMetadata("firMultiplatformCompilationWithError.args")
         public void testFirMultiplatformCompilationWithError() throws Exception {
             runTest("compiler/testData/cli/jvm/firMultiplatformCompilationWithError.args");
+        }
+
+        @TestMetadata("firMultiplatformCompilationWithLightTreeWithoutErrors.args")
+        public void testFirMultiplatformCompilationWithLightTreeWithoutErrors() throws Exception {
+            runTest("compiler/testData/cli/jvm/firMultiplatformCompilationWithLightTreeWithoutErrors.args");
         }
 
         @TestMetadata("firMultiplatformCompilationWithoutErrors.args")

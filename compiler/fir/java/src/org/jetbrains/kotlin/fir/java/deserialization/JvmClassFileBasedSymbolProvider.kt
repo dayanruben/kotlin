@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.fir.deserialization.*
 import org.jetbrains.kotlin.fir.expressions.FirAnnotation
 import org.jetbrains.kotlin.fir.java.FirJavaFacade
 import org.jetbrains.kotlin.fir.java.declarations.FirJavaClass
+import org.jetbrains.kotlin.fir.languageVersionSettings
 import org.jetbrains.kotlin.fir.scopes.FirKotlinScopeProvider
 import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.load.kotlin.*
@@ -29,6 +30,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.kotlin.serialization.deserialization.*
 import org.jetbrains.kotlin.serialization.deserialization.builtins.BuiltInSerializerProtocol
+import org.jetbrains.kotlin.utils.toMetadataVersion
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -60,12 +62,16 @@ class JvmClassFileBasedSymbolProvider(
             if (partName in kotlinBuiltins) return@mapNotNull null
             val classId = ClassId.topLevel(JvmClassName.byInternalName(partName).fqNameForTopLevelClassMaybeWithDollars)
             if (!javaFacade.hasTopLevelClassOf(classId)) return@mapNotNull null
-            val (kotlinJvmBinaryClass, byteContent) =
-                kotlinClassFinder.findKotlinClassOrContent(classId) as? KotlinClassFinder.Result.KotlinClass ?: return@mapNotNull null
+            val jvmMetadataVersion = session.languageVersionSettings.languageVersion.toMetadataVersion()
+            val (kotlinJvmBinaryClass, byteContent) = kotlinClassFinder.findKotlinClassOrContent(
+                classId, jvmMetadataVersion
+            ) as? KotlinClassFinder.Result.KotlinClass ?: return@mapNotNull null
 
             val facadeName = kotlinJvmBinaryClass.classHeader.multifileClassName?.takeIf { it.isNotEmpty() }
             val facadeFqName = facadeName?.let { JvmClassName.byInternalName(it).fqNameForTopLevelClassMaybeWithDollars }
-            val facadeBinaryClass = facadeFqName?.let { kotlinClassFinder.findKotlinClass(ClassId.topLevel(it)) }
+            val facadeBinaryClass = facadeFqName?.let {
+                kotlinClassFinder.findKotlinClass(ClassId.topLevel(it), jvmMetadataVersion)
+            }
 
             val moduleData = moduleDataProvider.getModuleData(kotlinJvmBinaryClass.containingLibrary.toPath()) ?: return@mapNotNull null
 
@@ -94,8 +100,16 @@ class JvmClassFileBasedSymbolProvider(
     private val KotlinJvmBinaryClass.incompatibility: IncompatibleVersionErrorData<JvmMetadataVersion>?
         get() {
             // TODO: skipMetadataVersionCheck
-            if (classHeader.metadataVersion.isCompatible()) return null
-            return IncompatibleVersionErrorData(classHeader.metadataVersion, JvmMetadataVersion.INSTANCE, location, classId)
+            val metadataVersionFromLanguageVersion = session.languageVersionSettings.languageVersion.toMetadataVersion()
+            if (classHeader.metadataVersion.isCompatible(metadataVersionFromLanguageVersion)) return null
+            return IncompatibleVersionErrorData(
+                actualVersion = classHeader.metadataVersion,
+                compilerVersion = JvmMetadataVersion.INSTANCE,
+                languageVersion = metadataVersionFromLanguageVersion,
+                expectedVersion = metadataVersionFromLanguageVersion.lastSupportedVersionWithThisLanguageVersion(classHeader.metadataVersion.isStrictSemantics),
+                filePath = location,
+                classId = classId
+            )
         }
 
     private val KotlinJvmBinaryClass.isPreReleaseInvisible: Boolean
@@ -105,7 +119,9 @@ class JvmClassFileBasedSymbolProvider(
         // Kotlin classes are annotated Java classes, so this check also looks for them.
         if (!javaFacade.hasTopLevelClassOf(classId)) return null
 
-        val result = kotlinClassFinder.findKotlinClassOrContent(classId)
+        val result = kotlinClassFinder.findKotlinClassOrContent(
+            classId, session.languageVersionSettings.languageVersion.toMetadataVersion()
+        )
         if (result !is KotlinClassFinder.Result.KotlinClass) {
             if (parentContext != null || (classId.isNestedClass && getClass(classId.outermostClassId)?.fir !is FirJavaClass)) {
                 // Nested class of Kotlin class should have been a Kotlin class.

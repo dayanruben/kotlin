@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.gradle.tasks.configuration
 
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilationInfo
+import org.jetbrains.kotlin.gradle.targets.js.internal.LibraryFilterCachingService
 import org.jetbrains.kotlin.gradle.targets.js.ir.*
 import org.jetbrains.kotlin.gradle.tasks.Kotlin2JsCompile
 import org.jetbrains.kotlin.gradle.utils.klibModuleName
@@ -18,10 +19,7 @@ internal open class BaseKotlin2JsCompileConfig<TASK : Kotlin2JsCompile>(
 ) : AbstractKotlinCompileConfig<TASK>(compilation) {
 
     init {
-        val libraryCacheService = project.rootProject.gradle.sharedServices.registerIfAbsent(
-            "${Kotlin2JsCompile.LibraryFilterCachingService::class.java.canonicalName}_${Kotlin2JsCompile.LibraryFilterCachingService::class.java.classLoader.hashCode()}",
-            Kotlin2JsCompile.LibraryFilterCachingService::class.java
-        ) {}
+        val libraryFilterCachingService = LibraryFilterCachingService.registerIfAbsent(project)
 
         configureTask { task ->
             task.incremental = propertiesProvider.incrementalJs ?: true
@@ -67,7 +65,7 @@ internal open class BaseKotlin2JsCompileConfig<TASK : Kotlin2JsCompile>(
                     )
                 )
 
-            task.libraryCache.set(libraryCacheService).also { task.libraryCache.disallowChanges() }
+            task.libraryFilterCacheService.value(libraryFilterCachingService).disallowChanges()
         }
     }
 

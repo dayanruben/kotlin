@@ -28,10 +28,13 @@ import org.jetbrains.kotlin.serialization.deserialization.DeserializationCompone
 import org.jetbrains.kotlin.serialization.deserialization.IncompatibleVersionErrorData
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedContainerAbiStability
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedPackageMemberScope
+import org.jetbrains.kotlin.utils.jvmMetadataVersionOrDefault
 import javax.inject.Inject
 
 class DeserializedDescriptorResolver {
     lateinit var components: DeserializationComponents
+
+    private val ownMetadataVersion: JvmMetadataVersion get() = components.configuration.jvmMetadataVersionOrDefault()
 
     // component dependency cycle
     @Inject
@@ -80,8 +83,15 @@ class DeserializedDescriptorResolver {
 
     private val KotlinJvmBinaryClass.incompatibility: IncompatibleVersionErrorData<JvmMetadataVersion>?
         get() {
-            if (skipMetadataVersionCheck || classHeader.metadataVersion.isCompatible()) return null
-            return IncompatibleVersionErrorData(classHeader.metadataVersion, JvmMetadataVersion.INSTANCE, location, classId)
+            if (skipMetadataVersionCheck || classHeader.metadataVersion.isCompatible(ownMetadataVersion)) return null
+            return IncompatibleVersionErrorData(
+                actualVersion = classHeader.metadataVersion,
+                compilerVersion = JvmMetadataVersion.INSTANCE,
+                languageVersion = ownMetadataVersion,
+                expectedVersion = ownMetadataVersion.lastSupportedVersionWithThisLanguageVersion(classHeader.metadataVersion.isStrictSemantics),
+                filePath = location,
+                classId = classId
+            )
         }
 
     /**
@@ -120,7 +130,7 @@ class DeserializedDescriptorResolver {
                 throw IllegalStateException("Could not read data from ${klass.location}", e)
             }
         } catch (e: Throwable) {
-            if (skipMetadataVersionCheck || klass.classHeader.metadataVersion.isCompatible()) {
+            if (skipMetadataVersionCheck || klass.classHeader.metadataVersion.isCompatible(ownMetadataVersion)) {
                 throw e
             }
 

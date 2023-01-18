@@ -40,44 +40,44 @@ import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import java.io.File
 import java.security.MessageDigest
 
-val KOTLIN_CACHE_DIRECTORY_NAME = "kotlin"
+const val KOTLIN_CACHE_DIRECTORY_NAME = "kotlin"
 
 open class IncrementalJvmCache(
     targetDataRoot: File,
+    icContext: IncrementalCompilationContext,
     targetOutputDir: File?,
-    pathConverter: FileToPathConverter
 ) : AbstractIncrementalCache<JvmClassName>(
     workingDir = File(targetDataRoot, KOTLIN_CACHE_DIRECTORY_NAME),
-    pathConverter = pathConverter
+    icContext,
 ), IncrementalCache {
     companion object {
-        private val PROTO_MAP = "proto"
-        private val FE_PROTO_MAP = "fe-proto"
-        private val CONSTANTS_MAP = "constants"
-        private val PACKAGE_PARTS = "package-parts"
-        private val MULTIFILE_CLASS_FACADES = "multifile-class-facades"
-        private val MULTIFILE_CLASS_PARTS = "multifile-class-parts"
-        private val INLINE_FUNCTIONS = "inline-functions"
-        private val INTERNAL_NAME_TO_SOURCE = "internal-name-to-source"
-        private val JAVA_SOURCES_PROTO_MAP = "java-sources-proto-map"
+        private const val PROTO_MAP = "proto"
+        private const val FE_PROTO_MAP = "fe-proto"
+        private const val CONSTANTS_MAP = "constants"
+        private const val PACKAGE_PARTS = "package-parts"
+        private const val MULTIFILE_CLASS_FACADES = "multifile-class-facades"
+        private const val MULTIFILE_CLASS_PARTS = "multifile-class-parts"
+        private const val INLINE_FUNCTIONS = "inline-functions"
+        private const val INTERNAL_NAME_TO_SOURCE = "internal-name-to-source"
+        private const val JAVA_SOURCES_PROTO_MAP = "java-sources-proto-map"
 
-        private val MODULE_MAPPING_FILE_NAME = "." + ModuleMapping.MAPPING_FILE_EXT
+        private const val MODULE_MAPPING_FILE_NAME = "." + ModuleMapping.MAPPING_FILE_EXT
     }
 
-    override val sourceToClassesMap = registerMap(SourceToJvmNameMap(SOURCE_TO_CLASSES.storageFile, pathConverter))
-    override val dirtyOutputClassesMap = registerMap(DirtyClassesJvmNameMap(DIRTY_OUTPUT_CLASSES.storageFile))
+    override val sourceToClassesMap = registerMap(SourceToJvmNameMap(SOURCE_TO_CLASSES.storageFile, icContext))
+    override val dirtyOutputClassesMap = registerMap(DirtyClassesJvmNameMap(DIRTY_OUTPUT_CLASSES.storageFile, icContext))
 
-    private val protoMap = registerMap(ProtoMap(PROTO_MAP.storageFile))
-    private val feProtoMap = registerMap(ProtoMap(FE_PROTO_MAP.storageFile))
-    private val constantsMap = registerMap(ConstantsMap(CONSTANTS_MAP.storageFile))
-    private val packagePartMap = registerMap(PackagePartMap(PACKAGE_PARTS.storageFile))
-    private val multifileFacadeToParts = registerMap(MultifileClassFacadeMap(MULTIFILE_CLASS_FACADES.storageFile))
-    private val partToMultifileFacade = registerMap(MultifileClassPartMap(MULTIFILE_CLASS_PARTS.storageFile))
-    private val inlineFunctionsMap = registerMap(InlineFunctionsMap(INLINE_FUNCTIONS.storageFile))
+    private val protoMap = registerMap(ProtoMap(PROTO_MAP.storageFile, icContext))
+    private val feProtoMap = registerMap(ProtoMap(FE_PROTO_MAP.storageFile, icContext))
+    private val constantsMap = registerMap(ConstantsMap(CONSTANTS_MAP.storageFile, icContext))
+    private val packagePartMap = registerMap(PackagePartMap(PACKAGE_PARTS.storageFile, icContext))
+    private val multifileFacadeToParts = registerMap(MultifileClassFacadeMap(MULTIFILE_CLASS_FACADES.storageFile, icContext))
+    private val partToMultifileFacade = registerMap(MultifileClassPartMap(MULTIFILE_CLASS_PARTS.storageFile, icContext))
+    private val inlineFunctionsMap = registerMap(InlineFunctionsMap(INLINE_FUNCTIONS.storageFile, icContext))
     // todo: try to use internal names only?
-    private val internalNameToSource = registerMap(InternalNameToSourcesMap(INTERNAL_NAME_TO_SOURCE.storageFile, pathConverter))
+    private val internalNameToSource = registerMap(InternalNameToSourcesMap(INTERNAL_NAME_TO_SOURCE.storageFile, icContext))
     // gradle only
-    private val javaSourcesProtoMap = registerMap(JavaSourcesProtoMap(JAVA_SOURCES_PROTO_MAP.storageFile))
+    private val javaSourcesProtoMap = registerMap(JavaSourcesProtoMap(JAVA_SOURCES_PROTO_MAP.storageFile, icContext))
 
     private val outputDir by lazy(LazyThreadSafetyMode.NONE) { requireNotNull(targetOutputDir) { "Target is expected to have output directory" } }
 
@@ -328,7 +328,10 @@ open class IncrementalJvmCache(
         return protoMap[JvmClassName.byInternalName(MODULE_MAPPING_FILE_NAME)]?.bytes
     }
 
-    private inner class ProtoMap(storageFile: File) : BasicStringMap<ProtoMapValue>(storageFile, ProtoMapValueExternalizer) {
+    private inner class ProtoMap(
+        storageFile: File,
+        icContext: IncrementalCompilationContext,
+    ) : BasicStringMap<ProtoMapValue>(storageFile, ProtoMapValueExternalizer, icContext) {
 
         @Synchronized
         fun process(kotlinClassInfo: KotlinClassInfo, changesCollector: ChangesCollector) {
@@ -366,7 +369,7 @@ open class IncrementalJvmCache(
             changesCollector.collectProtoChanges(oldMapValue?.toProtoData(className.packageFqName), newProtoData, packageProtoKey = key)
         }
 
-        internal fun check(
+        fun check(
             className: JvmClassName, classProto: ProtoBuf.Class, stringTable: JvmStringTable, changesCollector: ChangesCollector
         ) {
             val key = className.internalName
@@ -396,8 +399,11 @@ open class IncrementalJvmCache(
         }
     }
 
-    private inner class JavaSourcesProtoMap(storageFile: File) :
-        BasicStringMap<SerializedJavaClass>(storageFile, JavaClassProtoMapValueExternalizer) {
+    private inner class JavaSourcesProtoMap(
+        storageFile: File,
+        icContext: IncrementalCompilationContext,
+    ) :
+        BasicStringMap<SerializedJavaClass>(storageFile, JavaClassProtoMapValueExternalizer, icContext) {
 
         @Synchronized
         fun process(jvmClassName: JvmClassName, newData: SerializedJavaClass, changesCollector: ChangesCollector) {
@@ -431,8 +437,11 @@ open class IncrementalJvmCache(
     }
 
     // todo: reuse code with InlineFunctionsMap?
-    private inner class ConstantsMap(storageFile: File) :
-        BasicStringMap<Map<String, Any>>(storageFile, MapExternalizer(StringExternalizer, ConstantValueExternalizer)) {
+    private inner class ConstantsMap(
+        storageFile: File,
+        icContext: IncrementalCompilationContext,
+    ) :
+        BasicStringMap<Map<String, Any>>(storageFile, MapExternalizer(StringExternalizer, ConstantValueExternalizer), icContext) {
 
         operator fun contains(className: JvmClassName): Boolean =
             className.internalName in storage
@@ -484,7 +493,10 @@ open class IncrementalJvmCache(
             value.dumpMap(Any::toString)
     }
 
-    private inner class PackagePartMap(storageFile: File) : BasicStringMap<Boolean>(storageFile, BooleanDataDescriptor.INSTANCE) {
+    private inner class PackagePartMap(
+        storageFile: File,
+        icContext: IncrementalCompilationContext,
+    ) : BasicStringMap<Boolean>(storageFile, BooleanDataDescriptor.INSTANCE, icContext) {
         fun addPackagePart(className: JvmClassName) {
             storage[className.internalName] = true
         }
@@ -499,8 +511,11 @@ open class IncrementalJvmCache(
         override fun dumpValue(value: Boolean) = ""
     }
 
-    private inner class MultifileClassFacadeMap(storageFile: File) :
-        BasicStringMap<Collection<String>>(storageFile, StringCollectionExternalizer) {
+    private inner class MultifileClassFacadeMap(
+        storageFile: File,
+        icContext: IncrementalCompilationContext,
+    ) :
+        BasicStringMap<Collection<String>>(storageFile, StringCollectionExternalizer, icContext) {
 
         @Synchronized
         operator fun set(className: JvmClassName, partNames: Collection<String>) {
@@ -521,8 +536,11 @@ open class IncrementalJvmCache(
         override fun dumpValue(value: Collection<String>): String = value.dumpCollection()
     }
 
-    private inner class MultifileClassPartMap(storageFile: File) :
-        BasicStringMap<String>(storageFile, EnumeratorStringDescriptor.INSTANCE) {
+    private inner class MultifileClassPartMap(
+        storageFile: File,
+        icContext: IncrementalCompilationContext,
+    ) :
+        BasicStringMap<String>(storageFile, EnumeratorStringDescriptor.INSTANCE, icContext) {
 
         @Synchronized
         fun set(partName: String, facadeName: String) {
@@ -542,8 +560,8 @@ open class IncrementalJvmCache(
 
     inner class InternalNameToSourcesMap(
         storageFile: File,
-        private val pathConverter: FileToPathConverter
-    ) : BasicStringMap<Collection<String>>(storageFile, EnumeratorStringDescriptor(), PathCollectionExternalizer) {
+        icContext: IncrementalCompilationContext,
+    ) : BasicStringMap<Collection<String>>(storageFile, EnumeratorStringDescriptor(), PathCollectionExternalizer, icContext) {
         operator fun set(internalName: String, sourceFiles: Collection<File>) {
             storage[internalName] = pathConverter.toPaths(sourceFiles)
         }
@@ -559,10 +577,14 @@ open class IncrementalJvmCache(
             value.dumpCollection()
     }
 
-    private inner class InlineFunctionsMap(storageFile: File) :
+    private inner class InlineFunctionsMap(
+        storageFile: File,
+        icContext: IncrementalCompilationContext,
+    ) :
         BasicStringMap<Map<InlineFunctionOrAccessor, Long>>(
             storageFile,
-            MapExternalizer(InlineFunctionOrAccessorExternalizer, LongExternalizer)
+            MapExternalizer(InlineFunctionOrAccessorExternalizer, LongExternalizer),
+            icContext
         ) {
 
         @Synchronized

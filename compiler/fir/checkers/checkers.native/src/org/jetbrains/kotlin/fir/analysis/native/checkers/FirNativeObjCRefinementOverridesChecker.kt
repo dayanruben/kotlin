@@ -18,8 +18,9 @@ import org.jetbrains.kotlin.fir.containingClassLookupTag
 import org.jetbrains.kotlin.fir.declarations.FirClass
 import org.jetbrains.kotlin.fir.declarations.FirDeclaration
 import org.jetbrains.kotlin.fir.declarations.toAnnotationClassId
+import org.jetbrains.kotlin.fir.declarations.toAnnotationClassLikeSymbol
 import org.jetbrains.kotlin.fir.expressions.FirAnnotation
-import org.jetbrains.kotlin.fir.expressions.coneClassLikeType
+import org.jetbrains.kotlin.fir.expressions.unexpandedConeClassLikeType
 import org.jetbrains.kotlin.fir.isIntersectionOverride
 import org.jetbrains.kotlin.fir.resolve.toFirRegularClassSymbol
 import org.jetbrains.kotlin.fir.resolve.toSymbol
@@ -83,7 +84,7 @@ object FirNativeObjCRefinementOverridesChecker : FirClassChecker() {
         var hasObjC = false
         var hasSwift = false
         for (annotation in resolvedAnnotationsWithClassIds) {
-            val metaAnnotations = annotation.coneClassLikeType?.lookupTag?.toSymbol(session)?.resolvedAnnotationsWithClassIds.orEmpty()
+            val metaAnnotations = annotation.toAnnotationClassLikeSymbol(session)?.resolvedAnnotationsWithClassIds.orEmpty()
             for (metaAnnotation in metaAnnotations) {
                 when (metaAnnotation.toAnnotationClassId(session)) {
                     hidesFromObjCClassId -> {

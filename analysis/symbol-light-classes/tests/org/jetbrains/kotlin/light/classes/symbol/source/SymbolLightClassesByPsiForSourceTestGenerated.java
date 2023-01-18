@@ -73,6 +73,12 @@ public class SymbolLightClassesByPsiForSourceTestGenerated extends AbstractSymbo
     }
 
     @Test
+    @TestMetadata("DelegatedProperty.kt")
+    public void testDelegatedProperty() throws Exception {
+        runTest("compiler/testData/asJava/lightClasses/lightClassByPsi/DelegatedProperty.kt");
+    }
+
+    @Test
     @TestMetadata("delegatesWithAnnotations.kt")
     public void testDelegatesWithAnnotations() throws Exception {
         runTest("compiler/testData/asJava/lightClasses/lightClassByPsi/delegatesWithAnnotations.kt");
@@ -94,6 +100,12 @@ public class SymbolLightClassesByPsiForSourceTestGenerated extends AbstractSymbo
     @TestMetadata("enums.kt")
     public void testEnums() throws Exception {
         runTest("compiler/testData/asJava/lightClasses/lightClassByPsi/enums.kt");
+    }
+
+    @Test
+    @TestMetadata("exposedAnonymousType.kt")
+    public void testExposedAnonymousType() throws Exception {
+        runTest("compiler/testData/asJava/lightClasses/lightClassByPsi/exposedAnonymousType.kt");
     }
 
     @Test
@@ -229,6 +241,12 @@ public class SymbolLightClassesByPsiForSourceTestGenerated extends AbstractSymbo
     }
 
     @Test
+    @TestMetadata("strangeIdentifiers.kt")
+    public void testStrangeIdentifiers() throws Exception {
+        runTest("compiler/testData/asJava/lightClasses/lightClassByPsi/strangeIdentifiers.kt");
+    }
+
+    @Test
     @TestMetadata("throwsAnnotation.kt")
     public void testThrowsAnnotation() throws Exception {
         runTest("compiler/testData/asJava/lightClasses/lightClassByPsi/throwsAnnotation.kt");
@@ -244,6 +262,30 @@ public class SymbolLightClassesByPsiForSourceTestGenerated extends AbstractSymbo
     @TestMetadata("typeAnnotations.kt")
     public void testTypeAnnotations() throws Exception {
         runTest("compiler/testData/asJava/lightClasses/lightClassByPsi/typeAnnotations.kt");
+    }
+
+    @Test
+    @TestMetadata("typealiasInAnnotation.kt")
+    public void testTypealiasInAnnotation() throws Exception {
+        runTest("compiler/testData/asJava/lightClasses/lightClassByPsi/typealiasInAnnotation.kt");
+    }
+
+    @Test
+    @TestMetadata("typealiasInTypeArguments.kt")
+    public void testTypealiasInTypeArguments() throws Exception {
+        runTest("compiler/testData/asJava/lightClasses/lightClassByPsi/typealiasInTypeArguments.kt");
+    }
+
+    @Test
+    @TestMetadata("unresolvedWithAliasedImport.kt")
+    public void testUnresolvedWithAliasedImport() throws Exception {
+        runTest("compiler/testData/asJava/lightClasses/lightClassByPsi/unresolvedWithAliasedImport.kt");
+    }
+
+    @Test
+    @TestMetadata("valueClassInSignature.kt")
+    public void testValueClassInSignature() throws Exception {
+        runTest("compiler/testData/asJava/lightClasses/lightClassByPsi/valueClassInSignature.kt");
     }
 
     @Test
@@ -331,6 +373,12 @@ public class SymbolLightClassesByPsiForSourceTestGenerated extends AbstractSymbo
         @TestMetadata("throwsAnnotation.kt")
         public void testThrowsAnnotation() throws Exception {
             runTest("compiler/testData/asJava/lightClasses/lightClassByPsi/facades/throwsAnnotation.kt");
+        }
+
+        @Test
+        @TestMetadata("valueClassInSignature.kt")
+        public void testValueClassInSignature() throws Exception {
+            runTest("compiler/testData/asJava/lightClasses/lightClassByPsi/facades/valueClassInSignature.kt");
         }
 
         @Test

@@ -32,21 +32,22 @@ import java.util.*
 
 open class LookupStorage(
     targetDataDir: File,
-    pathConverter: FileToPathConverter,
-    storeFullFqNames: Boolean = false,
-    private val trackChanges: Boolean = false
+    private val icContext: IncrementalCompilationContext,
 ) : BasicMapsOwner(targetDataDir) {
     val LOG = Logger.getInstance("#org.jetbrains.kotlin.jps.build.KotlinBuilder")
 
     companion object {
-        private val DELETED_TO_SIZE_TRESHOLD = 0.5
-        private val MINIMUM_GARBAGE_COLLECTIBLE_SIZE = 10000
+        private const val DELETED_TO_SIZE_THRESHOLD = 0.5
+        private const val MINIMUM_GARBAGE_COLLECTIBLE_SIZE = 10000
     }
 
+    private val trackChanges
+        get() = icContext.trackChangesInLookupCache
+
     private val countersFile = "counters".storageFile
-    private val idToFile = registerMap(IdToFileMap("id-to-file".storageFile, pathConverter))
-    private val fileToId = registerMap(FileToIdMap("file-to-id".storageFile, pathConverter))
-    private val lookupMap = TrackedLookupMap(registerMap(LookupMap("lookups".storageFile, storeFullFqNames)), trackChanges)
+    private val idToFile = registerMap(IdToFileMap("id-to-file".storageFile, icContext))
+    private val fileToId = registerMap(FileToIdMap("file-to-id".storageFile, icContext))
+    private val lookupMap = TrackedLookupMap(registerMap(LookupMap("lookups".storageFile, icContext)), trackChanges)
 
     @Volatile
     private var size: Int = 0
@@ -56,8 +57,9 @@ open class LookupStorage(
         try {
             if (countersFile.exists()) {
                 val lines = countersFile.readLines()
-                size = lines.firstOrNull()?.toIntOrNull() ?: throw IOException("$countersFile exists, but it is empty. " +
-                                                                                       "Counters file is corrupted"
+                size = lines.firstOrNull()?.toIntOrNull() ?: throw IOException(
+                    "$countersFile exists, but it is empty. " +
+                            "Counters file is corrupted"
                 )
                 oldSize = size
             }
@@ -103,7 +105,7 @@ open class LookupStorage(
 
         }
 
-        if (size > MINIMUM_GARBAGE_COLLECTIBLE_SIZE && filtered.size.toDouble() / fileIds.size.toDouble() < DELETED_TO_SIZE_TRESHOLD) {
+        if (size > MINIMUM_GARBAGE_COLLECTIBLE_SIZE && filtered.size.toDouble() / fileIds.size.toDouble() < DELETED_TO_SIZE_THRESHOLD) {
             lookupMap[key] = filtered
         }
 
@@ -134,9 +136,7 @@ open class LookupStorage(
 
     @Synchronized
     override fun clean() {
-        if (countersFile.exists()) {
-            countersFile.delete()
-        }
+        icContext.transaction.deleteFile(countersFile.toPath())
 
         size = 0
 
@@ -148,12 +148,7 @@ open class LookupStorage(
         try {
             if (size != oldSize) {
                 if (size > 0) {
-                    if (!countersFile.exists()) {
-                        countersFile.parentFile.mkdirs()
-                        countersFile.createNewFile()
-                    }
-
-                    countersFile.writeText("$size\n0")
+                    icContext.transaction.writeText(countersFile.toPath(), "$size\n0")
                 }
             }
         } finally {

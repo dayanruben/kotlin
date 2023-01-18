@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
 import org.jetbrains.kotlin.name.parentOrNull
 import org.jetbrains.kotlin.wasm.ir.*
+import org.jetbrains.kotlin.wasm.ir.source.location.SourceLocation
 
 class DeclarationGenerator(
     val context: WasmModuleCodegenContext,
@@ -161,14 +162,14 @@ class DeclarationGenerator(
         // variables on constructor call sites.
         // TODO: Redesign construction scheme.
         if (declaration is IrConstructor) {
-            exprGen.buildGetLocal(/*implicit this*/ function.locals[0])
-            exprGen.buildInstr(WasmOp.RETURN)
+            exprGen.buildGetLocal(/*implicit this*/ function.locals[0], SourceLocation.NoLocation("Get implicit dispatch receiver"))
+            exprGen.buildInstr(WasmOp.RETURN, SourceLocation.NoLocation("Implicit return from constructor"))
         }
 
         // Add unreachable if function returns something but not as a last instruction.
         // We can do a separate lowering which adds explicit returns everywhere instead.
         if (wasmFunctionType.resultTypes.isNotEmpty()) {
-            exprGen.buildUnreachable()
+            exprGen.buildUnreachableForVerifier()
         }
 
         context.defineFunction(declaration.symbol, function)
@@ -254,18 +255,19 @@ class DeclarationGenerator(
         val vTableRefGcType = WasmRefType(WasmHeapType.Type(vTableTypeReference))
 
         val initVTableGlobal = buildWasmExpression {
+            val location = SourceLocation.NoLocation("Create instance of vtable struct")
             metadata.virtualMethods.forEachIndexed { i, method ->
                 if (method.function.modality != Modality.ABSTRACT) {
-                    buildInstr(WasmOp.REF_FUNC, WasmImmediate.FuncIdx(context.referenceFunction(method.function.symbol)))
+                    buildInstr(WasmOp.REF_FUNC, location, WasmImmediate.FuncIdx(context.referenceFunction(method.function.symbol)))
                 } else {
                     check(allowIncompleteImplementations) {
                         "Cannot find class implementation of method ${method.signature} in class ${klass.fqNameWhenAvailable}"
                     }
                     //This erased by DCE so abstract version appeared in non-abstract class
-                    buildRefNull(vtableStruct.fields[i].type.getHeapType())
+                    buildRefNull(vtableStruct.fields[i].type.getHeapType(), location)
                 }
             }
-            buildStructNew(vTableTypeReference)
+            buildStructNew(vTableTypeReference, location)
         }
         context.defineGlobalVTable(
             irClass = symbol,
@@ -274,6 +276,7 @@ class DeclarationGenerator(
     }
 
     private fun createClassITable(metadata: ClassMetadata) {
+        val location = SourceLocation.NoLocation("Create instance of itable struct")
         val klass = metadata.klass
         if (klass.isAbstractOrSealed) return
         val supportedInterface = metadata.interfaces.firstOrNull()?.symbol ?: return
@@ -289,7 +292,7 @@ class DeclarationGenerator(
                 val iFaceVTableGcNullHeapType = WasmHeapType.Type(iFaceVTableGcType)
 
                 if (!metadata.interfaces.contains(iFace.owner)) {
-                    buildRefNull(iFaceVTableGcNullHeapType)
+                    buildRefNull(iFaceVTableGcNullHeapType, location)
                     continue
                 }
 
@@ -303,15 +306,15 @@ class DeclarationGenerator(
 
                     if (classMethod != null) {
                         val functionTypeReference = context.referenceFunction(classMethod.function.symbol)
-                        buildInstr(WasmOp.REF_FUNC, WasmImmediate.FuncIdx(functionTypeReference))
+                        buildInstr(WasmOp.REF_FUNC, location, WasmImmediate.FuncIdx(functionTypeReference))
                     } else {
                         //This erased by DCE so abstract version appeared in non-abstract class
-                        buildRefNull(WasmHeapType.Type(context.referenceFunctionType(method.function.symbol)))
+                        buildRefNull(WasmHeapType.Type(context.referenceFunctionType(method.function.symbol)), location)
                     }
                 }
-                buildStructNew(iFaceVTableGcType)
+                buildStructNew(iFaceVTableGcType, location)
             }
-            buildStructNew(classInterfaceType)
+            buildStructNew(classInterfaceType, location)
         }
 
         val wasmClassIFaceGlobal = WasmGlobal(
@@ -454,7 +457,12 @@ class DeclarationGenerator(
             check(initValue is IrConst<*> && initValue.kind !is IrConstKind.String) {
                 "Static field initializer should be string or const"
             }
-            generateConstExpression(initValue, wasmExpressionGenerator, context)
+            generateConstExpression(
+                initValue,
+                wasmExpressionGenerator,
+                context,
+                declaration.getSourceLocation(declaration.fileOrNull?.fileEntry)
+            )
         } else {
             generateDefaultInitializerForType(wasmType, wasmExpressionGenerator)
         }
@@ -470,19 +478,22 @@ class DeclarationGenerator(
     }
 }
 
-fun generateDefaultInitializerForType(type: WasmType, g: WasmExpressionBuilder) = when (type) {
-    WasmI32 -> g.buildConstI32(0)
-    WasmI64 -> g.buildConstI64(0)
-    WasmF32 -> g.buildConstF32(0f)
-    WasmF64 -> g.buildConstF64(0.0)
-    is WasmRefNullType -> g.buildRefNull(type.heapType)
-    is WasmRefNullNoneType -> g.buildRefNull(WasmHeapType.Simple.NullNone)
-    is WasmRefNullExternrefType -> g.buildRefNull(WasmHeapType.Simple.NullNoExtern)
-    is WasmAnyRef -> g.buildRefNull(WasmHeapType.Simple.Any)
-    is WasmExternRef -> g.buildRefNull(WasmHeapType.Simple.Extern)
-    WasmUnreachableType -> error("Unreachable type can't be initialized")
-    else -> error("Unknown value type ${type.name}")
-}
+fun generateDefaultInitializerForType(type: WasmType, g: WasmExpressionBuilder) =
+    SourceLocation.NoLocation("Default initializer, usually don't require location").let { location ->
+        when (type) {
+            WasmI32 -> g.buildConstI32(0, location)
+            WasmI64 -> g.buildConstI64(0, location)
+            WasmF32 -> g.buildConstF32(0f, location)
+            WasmF64 -> g.buildConstF64(0.0, location)
+            is WasmRefNullType -> g.buildRefNull(type.heapType, location)
+            is WasmRefNullNoneType -> g.buildRefNull(WasmHeapType.Simple.NullNone, location)
+            is WasmRefNullExternrefType -> g.buildRefNull(WasmHeapType.Simple.NullNoExtern, location)
+            is WasmAnyRef -> g.buildRefNull(WasmHeapType.Simple.Any, location)
+            is WasmExternRef -> g.buildRefNull(WasmHeapType.Simple.Extern, location)
+            WasmUnreachableType -> error("Unreachable type can't be initialized")
+            else -> error("Unknown value type ${type.name}")
+        }
+    }
 
 fun IrFunction.getEffectiveValueParameters(): List<IrValueParameter> {
     val implicitThis = if (this is IrConstructor) parentAsClass.thisReceiver!! else null
@@ -493,30 +504,34 @@ fun IrFunction.isExported(): Boolean =
     isJsExport()
 
 
-fun generateConstExpression(expression: IrConst<*>, body: WasmExpressionBuilder, context: WasmModuleCodegenContext) {
+fun generateConstExpression(
+    expression: IrConst<*>,
+    body: WasmExpressionBuilder,
+    context: WasmModuleCodegenContext,
+    location: SourceLocation
+) =
     when (val kind = expression.kind) {
         is IrConstKind.Null -> {
             val bottomType = if (expression.type.getClass()?.isExternal == true) WasmRefNullExternrefType else WasmRefNullNoneType
-            body.buildInstr(WasmOp.REF_NULL, WasmImmediate.HeapType(bottomType))
+            body.buildInstr(WasmOp.REF_NULL, location, WasmImmediate.HeapType(bottomType))
         }
-        is IrConstKind.Boolean -> body.buildConstI32(if (kind.valueOf(expression)) 1 else 0)
-        is IrConstKind.Byte -> body.buildConstI32(kind.valueOf(expression).toInt())
-        is IrConstKind.Short -> body.buildConstI32(kind.valueOf(expression).toInt())
-        is IrConstKind.Int -> body.buildConstI32(kind.valueOf(expression))
-        is IrConstKind.Long -> body.buildConstI64(kind.valueOf(expression))
-        is IrConstKind.Char -> body.buildConstI32(kind.valueOf(expression).code)
-        is IrConstKind.Float -> body.buildConstF32(kind.valueOf(expression))
-        is IrConstKind.Double -> body.buildConstF64(kind.valueOf(expression))
+        is IrConstKind.Boolean -> body.buildConstI32(if (kind.valueOf(expression)) 1 else 0, location)
+        is IrConstKind.Byte -> body.buildConstI32(kind.valueOf(expression).toInt(), location)
+        is IrConstKind.Short -> body.buildConstI32(kind.valueOf(expression).toInt(), location)
+        is IrConstKind.Int -> body.buildConstI32(kind.valueOf(expression), location)
+        is IrConstKind.Long -> body.buildConstI64(kind.valueOf(expression), location)
+        is IrConstKind.Char -> body.buildConstI32(kind.valueOf(expression).code, location)
+        is IrConstKind.Float -> body.buildConstF32(kind.valueOf(expression), location)
+        is IrConstKind.Double -> body.buildConstF64(kind.valueOf(expression), location)
         is IrConstKind.String -> {
             val stringValue = kind.valueOf(expression)
             val (literalAddress, literalPoolId) = context.referenceStringLiteralAddressAndId(stringValue)
             body.commentGroupStart { "const string: \"$stringValue\"" }
-            body.buildConstI32Symbol(literalPoolId)
-            body.buildConstI32Symbol(literalAddress)
-            body.buildConstI32(stringValue.length)
-            body.buildCall(context.referenceFunction(context.backendContext.wasmSymbols.stringGetLiteral))
+            body.buildConstI32Symbol(literalPoolId, location)
+            body.buildConstI32Symbol(literalAddress, location)
+            body.buildConstI32(stringValue.length, location)
+            body.buildCall(context.referenceFunction(context.backendContext.wasmSymbols.stringGetLiteral), location)
             body.commentGroupEnd()
         }
         else -> error("Unknown constant kind")
     }
-}

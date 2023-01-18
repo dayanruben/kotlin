@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.resolve.CompilerEnvironment
+import org.jetbrains.kotlin.serialization.js.ModuleKind
 import org.jetbrains.kotlin.test.*
 import org.jetbrains.kotlin.test.util.KtTestUtil
 import java.io.Closeable
@@ -46,6 +47,7 @@ abstract class BasicWasmBoxTest(
     private val testGroupOutputDirForCompilation = File(pathToRootOutputDir + "out/" + testGroupOutputDirPrefix)
 
     private val COMMON_FILES_NAME = "_common"
+    private val COMMON_FILES_DIR = "_commonFiles"
 
     private val extraLanguageFeatures = mapOf(
         LanguageFeature.JsAllowImplementingFunctionInterface to LanguageFeature.State.ENABLED,
@@ -97,11 +99,18 @@ abstract class BasicWasmBoxTest(
             if (File(additionalJsFile).exists()) {
                 jsFilesBefore += additionalJsFile
             }
+            val additionalMjsFile = filePath.removeSuffix(".kt") + ".mjs"
+            if (File(additionalMjsFile).exists()) {
+                mjsFiles += additionalMjsFile
+            }
 
             val localCommonFile = file.parent + "/" + COMMON_FILES_NAME + "." + KotlinFileType.EXTENSION
             val localCommonFiles = if (File(localCommonFile).exists()) listOf(localCommonFile) else emptyList()
 
-            val allSourceFiles = kotlinFiles + localCommonFiles
+            val globalCommonFilesDir = File(File(pathToTestDir).parent, COMMON_FILES_DIR)
+            val globalCommonFiles = globalCommonFilesDir.listFiles().orEmpty().map { it.absolutePath }
+
+            val allSourceFiles = kotlinFiles + localCommonFiles + globalCommonFiles
 
             val psiFiles = createPsiFiles(allSourceFiles.map { File(it).canonicalPath }.sorted())
             val config = createConfig(languageVersionSettings)
@@ -270,6 +279,7 @@ abstract class BasicWasmBoxTest(
         configuration.put(CommonConfigurationKeys.MODULE_NAME, TEST_MODULE)
         configuration.put(JSConfigurationKeys.WASM_ENABLE_ARRAY_RANGE_CHECKS, true)
         configuration.put(JSConfigurationKeys.WASM_ENABLE_ASSERTS, true)
+        configuration.put(JSConfigurationKeys.MODULE_KIND, ModuleKind.ES)
         configuration.languageVersionSettings = languageVersionSettings
             ?: LanguageVersionSettingsImpl(LanguageVersion.LATEST_STABLE, ApiVersion.LATEST_STABLE, specificFeatures = extraLanguageFeatures)
         return JsConfig(project, configuration, CompilerEnvironment, null, null)

@@ -6,8 +6,8 @@
 package org.jetbrains.kotlin.fir.backend
 
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.fir.containingClassLookupTag
 import org.jetbrains.kotlin.fir.containingClassForLocalAttr
+import org.jetbrains.kotlin.fir.containingClassLookupTag
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.*
 import org.jetbrains.kotlin.fir.expressions.FirAnonymousObjectExpression
@@ -39,32 +39,49 @@ import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import org.jetbrains.kotlin.utils.addToStdlib.runUnless
 
 class Fir2IrClassifierStorage(
-    private val components: Fir2IrComponents
+    private val components: Fir2IrComponents,
+    private val dependentStorages: List<Fir2IrClassifierStorage>
 ) : Fir2IrComponents by components {
     private val firProvider = session.firProvider
 
-    private val classCache = mutableMapOf<FirRegularClass, IrClass>()
+    private val classCache: MutableMap<FirRegularClass, IrClass> = merge { it.classCache }
 
-    private val localClassesCreatedOnTheFly = mutableMapOf<FirClass, IrClass>()
+    private val localClassesCreatedOnTheFly: MutableMap<FirClass, IrClass> = mutableMapOf()
 
     private var processMembersOfClassesOnTheFlyImmediately = false
 
-    private val typeAliasCache = mutableMapOf<FirTypeAlias, IrTypeAlias>()
+    private val typeAliasCache: MutableMap<FirTypeAlias, IrTypeAlias> = mutableMapOf()
 
-    private val typeParameterCache = mutableMapOf<FirTypeParameter, IrTypeParameter>()
+    private val typeParameterCache: MutableMap<FirTypeParameter, IrTypeParameter> = merge { it.typeParameterCache }
 
-    private val typeParameterCacheForSetter = mutableMapOf<FirTypeParameter, IrTypeParameter>()
+    private val typeParameterCacheForSetter: MutableMap<FirTypeParameter, IrTypeParameter> = mutableMapOf()
 
-    private val enumEntryCache = mutableMapOf<FirEnumEntry, IrEnumEntry>()
+    private val enumEntryCache: MutableMap<FirEnumEntry, IrEnumEntry> = merge { it.enumEntryCache }
 
-    private val fieldsForContextReceivers = mutableMapOf<IrClass, List<IrField>>()
+    private val fieldsForContextReceivers: MutableMap<IrClass, List<IrField>> = mutableMapOf()
 
-    private val localStorage = Fir2IrLocalStorage()
+    private val localStorage: Fir2IrLocalClassStorage = Fir2IrLocalClassStorage(
+        // Merge is necessary here to be able to serialize local classes from common code in expression codegen
+        dependentStorages.map { it.localStorage }.fold(mutableMapOf()) { result, storage ->
+            result.putAll(storage.localClassCache)
+            result
+        }
+    )
+
+    private fun <K, V> merge(mapFunc: (Fir2IrClassifierStorage) -> MutableMap<K, V>): MutableMap<K, V> {
+        return dependentStorages.map { mapFunc(it) }.fold(mutableMapOf()) { result, map ->
+            result.putAll(map)
+            result
+        }
+    }
 
     private fun FirTypeRef.toIrType(typeContext: ConversionTypeContext = ConversionTypeContext.DEFAULT): IrType =
         with(typeConverter) { toIrType(typeContext) }
 
     fun preCacheBuiltinClasses() {
+        // dependentStorages are only actual for MPP scenario
+        // There is no need to precache them twice: the same library session is used and FIR and IR elements are the same
+        if (dependentStorages.isNotEmpty()) return
         for ((classId, irBuiltinSymbol) in typeConverter.classIdToSymbolMap) {
             val firClass = ConeClassLikeLookupTagImpl(classId).toSymbol(session)!!.fir as FirRegularClass
             val irClass = irBuiltinSymbol.owner
@@ -177,14 +194,14 @@ class Fir2IrClassifierStorage(
 
     fun getCachedIrClass(klass: FirClass): IrClass? {
         return if (klass is FirAnonymousObject || klass is FirRegularClass && klass.visibility == Visibilities.Local) {
-            localStorage.getLocalClass(klass)
+            localStorage[klass]
         } else {
             classCache[klass]
         }
     }
 
-    internal fun getCachedLocalClass(lookupTag: ConeClassLikeLookupTag): IrClass? {
-        return localStorage.getLocalClass(lookupTag.toSymbol(session)!!.fir as FirClass)
+    private fun getCachedLocalClass(lookupTag: ConeClassLikeLookupTag): IrClass? {
+        return localStorage[lookupTag.toSymbol(session)!!.fir as FirClass]
     }
 
     private fun FirRegularClass.enumClassModality(): Modality {
@@ -206,8 +223,8 @@ class Fir2IrClassifierStorage(
     private fun createLocalIrClassOnTheFly(klass: FirClass): IrClass {
         // finding the parent class that actually contains the [klass] in the tree - it is the root one that should be created on the fly
         val classOrLocalParent = generateSequence(klass) { c ->
-            (c as? FirRegularClass)?.containingClassForLocalAttr?.let {
-                (firProvider.symbolProvider.getSymbolByLookupTag(it)?.fir as? FirClass)?.takeIf {
+            (c as? FirRegularClass)?.containingClassForLocalAttr?.let { lookupTag ->
+                (firProvider.symbolProvider.getSymbolByLookupTag(lookupTag)?.fir as? FirClass)?.takeIf {
                     it.declarations.contains(c)
                 }
             }
@@ -341,7 +358,7 @@ class Fir2IrClassifierStorage(
             irClass.parent = parent
         }
         if (regularClass.visibility == Visibilities.Local) {
-            localStorage.putLocalClass(regularClass, irClass)
+            localStorage[regularClass] = irClass
         } else {
             classCache[regularClass] = irClass
         }
@@ -370,12 +387,12 @@ class Fir2IrClassifierStorage(
                 }
             }
         }.declareSupertypesAndTypeParameters(anonymousObject)
-        localStorage.putLocalClass(anonymousObject, result)
+        localStorage[anonymousObject] = result
         return result
     }
 
     private fun getIrAnonymousObjectForEnumEntry(anonymousObject: FirAnonymousObject, name: Name, irParent: IrClass?): IrClass {
-        localStorage.getLocalClass(anonymousObject)?.let { return it }
+        localStorage[anonymousObject]?.let { return it }
         return createIrAnonymousObject(anonymousObject, Visibilities.Private, name, irParent)
     }
 
@@ -462,7 +479,7 @@ class Fir2IrClassifierStorage(
     }
 
     fun putEnumEntryClassInScope(enumEntry: FirEnumEntry, correspondingClass: IrClass) {
-        localStorage.putLocalClass((enumEntry.initializer as FirAnonymousObjectExpression).anonymousObject, correspondingClass)
+        localStorage[(enumEntry.initializer as FirAnonymousObjectExpression).anonymousObject] = correspondingClass
     }
 
     internal fun getCachedIrEnumEntry(enumEntry: FirEnumEntry): IrEnumEntry? = enumEntryCache[enumEntry]
@@ -518,6 +535,11 @@ class Fir2IrClassifierStorage(
     ): IrEnumEntry {
         return enumEntry.convertWithOffsets { startOffset, endOffset ->
             val signature = signatureComposer.composeSignature(enumEntry, forceTopLevelPrivate = forceTopLevelPrivate)
+            if (signature != null) {
+                // Compilation of kotlinx-serialization-protobuf fails with "already bound" exception if this check is removed
+                // TODO: get rid of this check
+                symbolTable.referenceEnumEntryIfAny(signature)?.let { if (it.isBound) return@convertWithOffsets it.owner }
+            }
             val result = declareIrEnumEntry(signature) { symbol ->
                 val origin = enumEntry.computeIrOrigin(predefinedOrigin)
                 irFactory.createEnumEntry(

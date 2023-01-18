@@ -169,6 +169,11 @@ public class CompilerLightClassTestGenerated extends AbstractCompilerLightClassT
         runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/JavaBetween.kt");
     }
 
+    @TestMetadata("JavaClassWithAnnotation.kt")
+    public void testJavaClassWithAnnotation() throws Exception {
+        runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/JavaClassWithAnnotation.kt");
+    }
+
     @TestMetadata("JvmNameOnMember.kt")
     public void testJvmNameOnMember() throws Exception {
         runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/JvmNameOnMember.kt");
@@ -349,6 +354,11 @@ public class CompilerLightClassTestGenerated extends AbstractCompilerLightClassT
         @TestMetadata("TwoOverrides.kt")
         public void testTwoOverrides() throws Exception {
             runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/TwoOverrides.kt");
+        }
+
+        @TestMetadata("unresolvedQuialifierInAnnotation.kt")
+        public void testUnresolvedQuialifierInAnnotation() throws Exception {
+            runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/unresolvedQuialifierInAnnotation.kt");
         }
 
         @TestMetadata("WrongAnnotations.kt")

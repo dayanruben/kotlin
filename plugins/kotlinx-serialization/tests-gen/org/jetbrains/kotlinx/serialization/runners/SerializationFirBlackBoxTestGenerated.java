@@ -52,6 +52,12 @@ public class SerializationFirBlackBoxTestGenerated extends AbstractSerialization
         }
 
         @Test
+        @TestMetadata("contextualFallback.kt")
+        public void testContextualFallback() throws Exception {
+            runTest("plugins/kotlinx-serialization/testData/boxIr/contextualFallback.kt");
+        }
+
+        @Test
         @TestMetadata("enumsAreCached.kt")
         public void testEnumsAreCached() throws Exception {
             runTest("plugins/kotlinx-serialization/testData/boxIr/enumsAreCached.kt");
@@ -115,6 +121,12 @@ public class SerializationFirBlackBoxTestGenerated extends AbstractSerialization
         @TestMetadata("metaSerializable.kt")
         public void testMetaSerializable() throws Exception {
             runTest("plugins/kotlinx-serialization/testData/boxIr/metaSerializable.kt");
+        }
+
+        @Test
+        @TestMetadata("mpp.kt")
+        public void testMpp() throws Exception {
+            runTest("plugins/kotlinx-serialization/testData/boxIr/mpp.kt");
         }
 
         @Test
@@ -263,6 +275,12 @@ public class SerializationFirBlackBoxTestGenerated extends AbstractSerialization
         @TestMetadata("serializableWithCompanion.kt")
         public void testSerializableWithCompanion() throws Exception {
             runTest("plugins/kotlinx-serialization/testData/firMembers/serializableWithCompanion.kt");
+        }
+
+        @Test
+        @TestMetadata("serializerInLocalClass.kt")
+        public void testSerializerInLocalClass() throws Exception {
+            runTest("plugins/kotlinx-serialization/testData/firMembers/serializerInLocalClass.kt");
         }
 
         @Test

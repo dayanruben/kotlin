@@ -10,8 +10,10 @@ import org.jetbrains.kotlin.backend.wasm.WasmSymbols
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.isUnit
+import org.jetbrains.kotlin.ir.util.dumpKotlinLike
 import org.jetbrains.kotlin.ir.util.isElseBranch
 import org.jetbrains.kotlin.wasm.ir.*
+import org.jetbrains.kotlin.wasm.ir.source.location.SourceLocation
 
 private class ExtractedWhenCondition<T>(val condition: IrCall, val const: IrConst<T>)
 private class ExtractedWhenBranch<T>(val conditions: List<ExtractedWhenCondition<T>>, val expression: IrExpression)
@@ -59,7 +61,10 @@ internal fun BodyGenerator.tryGenerateOptimisedWhen(expression: IrWhen, symbols:
 
     val selectorLocal = functionContext.referenceLocal(SyntheticLocalType.TABLE_SWITCH_SELECTOR)
     generateExpression(subject)
-    body.buildSetLocal(selectorLocal)
+
+    // TODO test
+    val noLocation = SourceLocation.NoLocation("When's binary search infra")
+    body.buildSetLocal(selectorLocal, noLocation)
 
     val resultType = context.transformBlockResultType(expression.type)
     //int overflow or load is too small then make table switch
@@ -75,7 +80,7 @@ internal fun BodyGenerator.tryGenerateOptimisedWhen(expression: IrWhen, symbols:
             )
         } else {
             createBinaryTable(selectorLocal, intBranches)
-            body.buildSetLocal(selectorLocal)
+            body.buildSetLocal(selectorLocal, noLocation)
             genTableIntSwitch(
                 selectorLocal = selectorLocal,
                 resultType = resultType,
@@ -134,11 +139,13 @@ private fun BodyGenerator.createBinaryTable(selectorLocal: WasmLocal, intBranche
     intBranches.flatMapIndexedTo(sortedCaseToBranchIndex) { index, branch -> branch.conditions.map { it.const.value to index } }
     sortedCaseToBranchIndex.sortBy { it.first }
 
+    val location = SourceLocation.NoLocation("When's binary search infra")
+
     val thenBody = { result: Int ->
-        body.buildConstI32(result)
+        body.buildConstI32(result, location)
     }
     val elseBody: () -> Unit = {
-        body.buildConstI32(intBranches.size)
+        body.buildConstI32(intBranches.size, location)
     }
     createBinaryTable(selectorLocal, WasmI32, sortedCaseToBranchIndex, 0, sortedCaseToBranchIndex.size, thenBody, elseBody)
 }
@@ -204,7 +211,7 @@ private fun BodyGenerator.createBinaryTable(
     body.buildBlock("when_block", resultType) { currentBlock ->
         val thenBody = { result: IrExpression ->
             generateWithExpectedType(result, expectedType)
-            body.buildBr(currentBlock)
+            body.buildBr(currentBlock, SourceLocation.NoLocation("Break from a when"))
         }
         createBinaryTable(
             selectorLocal = selectorLocal,
@@ -222,9 +229,10 @@ private fun BodyGenerator.createBinaryTable(
             // default else block
             if (resultType != null) {
                 if (expectedType.isUnit()) {
+                    // UnitToVoidLowering may optimize "a code" that execution didn't come here.
                     body.buildGetUnit()
                 } else {
-                    body.buildUnreachable()
+                    error("'When' without else branch and non Unit type: ${expectedType.dumpKotlinLike()}")
                 }
             }
         }
@@ -240,12 +248,15 @@ private fun <T> BodyGenerator.createBinaryTable(
     thenBody: (T) -> Unit,
     elseBody: () -> Unit
 ) {
+    // TODO test
+    val location = SourceLocation.NoLocation("When's binary search infra")
+
     val size = toExcl - fromIncl
     if (size == 1) {
         val (case, result) = sortedCases[fromIncl]
-        body.buildGetLocal(selectorLocal)
-        body.buildConstI32(case)
-        body.buildInstr(WasmOp.I32_EQ)
+        body.buildGetLocal(selectorLocal, location)
+        body.buildConstI32(case, location)
+        body.buildInstr(WasmOp.I32_EQ, location)
         body.buildIf("binary_tree_branch", resultType)
         thenBody(result)
         body.buildElse()
@@ -256,9 +267,9 @@ private fun <T> BodyGenerator.createBinaryTable(
 
     val border = fromIncl + size / 2
 
-    body.buildGetLocal(selectorLocal)
-    body.buildConstI32(sortedCases[border].first)
-    body.buildInstr(WasmOp.I32_LT_S)
+    body.buildGetLocal(selectorLocal, location)
+    body.buildConstI32(sortedCases[border].first, location)
+    body.buildInstr(WasmOp.I32_LT_S, location)
     body.buildIf("binary_tree_node", resultType)
     createBinaryTable(selectorLocal, resultType, sortedCases, fromIncl, border, thenBody, elseBody)
     body.buildElse()
@@ -299,6 +310,8 @@ private fun BodyGenerator.genTableIntSwitch(
     brTable: List<Int>,
     expectedType: IrType,
 ) {
+    val location = SourceLocation.NoLocation("When's binary search infra")
+
     val baseBlockIndex = body.numberOfNestedBlocks
     //expressions + else branch + br_table
     repeat(branches.size + 2) {
@@ -306,13 +319,14 @@ private fun BodyGenerator.genTableIntSwitch(
     }
 
     resultType?.let { generateDefaultInitializerForType(it, body) } //stub value
-    body.buildGetLocal(selectorLocal)
+    body.buildGetLocal(selectorLocal, location)
     if (shift != 0) {
-        body.buildConstI32(shift)
-        body.buildInstr(WasmOp.I32_SUB)
+        body.buildConstI32(shift, location)
+        body.buildInstr(WasmOp.I32_SUB, location)
     }
     body.buildInstr(
         WasmOp.BR_TABLE,
+        location,
         WasmImmediate.LabelIdxVector(brTable),
         WasmImmediate.LabelIdx(branches.size)
     )
@@ -320,17 +334,17 @@ private fun BodyGenerator.genTableIntSwitch(
 
     for (expression in branches) {
         if (resultType != null) {
-            body.buildDrop()
+            body.buildDrop(location)
         }
         generateWithExpectedType(expression.expression, expectedType)
 
-        body.buildBr(baseBlockIndex + 1)
+        body.buildBr(baseBlockIndex + 1, location)
         body.buildEnd()
     }
 
     if (elseExpression != null) {
         if (resultType != null) {
-            body.buildDrop()
+            body.buildDrop(location)
         }
         generateWithExpectedType(elseExpression, expectedType)
     }

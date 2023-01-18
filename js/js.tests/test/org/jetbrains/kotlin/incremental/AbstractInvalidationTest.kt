@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.ir.backend.js.*
 import org.jetbrains.kotlin.ir.backend.js.ic.*
 import org.jetbrains.kotlin.ir.backend.js.SourceMapsInfo
 import org.jetbrains.kotlin.ir.backend.js.codegen.JsGenerationGranularity
+import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.CompilationOutputs
 import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.safeModuleName
 import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
 import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImplForJsIC
@@ -37,13 +38,20 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.serialization.js.ModuleKind
 import org.jetbrains.kotlin.test.builders.LanguageVersionSettingsBuilder
 import org.jetbrains.kotlin.test.KotlinTestWithEnvironment
+import org.jetbrains.kotlin.test.TargetBackend
 import org.jetbrains.kotlin.test.util.JUnit4Assertions
 import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 import org.junit.ComparisonFailure
 import java.io.File
 import java.util.EnumSet
 
-abstract class AbstractInvalidationTest : KotlinTestWithEnvironment() {
+abstract class AbstractJsIrInvalidationTest : AbstractInvalidationTest(TargetBackend.JS_IR, "incrementalOut/invalidation")
+abstract class AbstractJsIrES6InvalidationTest : AbstractInvalidationTest(TargetBackend.JS_IR_ES6, "incrementalOut/invalidationES6")
+
+abstract class AbstractInvalidationTest(
+    private val targetBackend: TargetBackend,
+    private val workingDirPath: String
+) : KotlinTestWithEnvironment() {
     companion object {
         private val OUT_DIR_PATH = System.getProperty("kotlin.js.test.root.out.dir") ?: error("'kotlin.js.test.root.out.dir' is not set")
         private val STDLIB_KLIB = File(System.getProperty("kotlin.js.stdlib.klib.path") ?: error("Please set stdlib path")).canonicalPath
@@ -225,18 +233,7 @@ abstract class AbstractInvalidationTest : KotlinTestWithEnvironment() {
             writeText(ClassicJsBackendFacade.wrapWithModuleEmulationMarkers(jsCode, JS_MODULE_KIND, moduleName))
         }
 
-        private fun writeJsFile(name: String, text: String): String {
-            val moduleFileName = "./$name.js"
-            val file = File(jsDir, moduleFileName)
-            if (file.exists()) {
-                file.delete()
-            }
-            file.writeAsJsModule(text, moduleFileName)
-            return file.canonicalPath
-        }
-
         private fun prepareExternalJsFiles(): MutableList<String> {
-            jsDir.invalidateDir()
             return testDir.filesInDir.mapNotNullTo(mutableListOf(MODULE_EMULATION_FILE)) { file ->
                 file.takeIf { it.name.isAllowedJsFile() }?.readText()?.let { jsCode ->
                     val externalModule = jsDir.resolve(file.name)
@@ -248,13 +245,16 @@ abstract class AbstractInvalidationTest : KotlinTestWithEnvironment() {
 
 
         private fun verifyJsCode(stepId: Int, mainModuleName: String, jsOutput: CompilationOutputs) {
-            val files = prepareExternalJsFiles()
-            jsOutput.dependencies.mapTo(files) { writeJsFile(it.first, it.second.jsCode) }
-            files += writeJsFile(mainModuleName, jsOutput.jsCode)
+            val compiledJsFiles = jsOutput.writeAll(jsDir, mainModuleName, true, mainModuleName, JS_MODULE_KIND).filter {
+                it.extension == "js"
+            }
+            for (jsCodeFile in compiledJsFiles) {
+                jsCodeFile.writeAsJsModule(jsCodeFile.readText(), "./${jsCodeFile.name}")
+            }
 
             try {
                 V8IrJsTestChecker.checkWithTestFunctionArgs(
-                    files = files,
+                    files = compiledJsFiles.mapTo(prepareExternalJsFiles()) { it.absolutePath },
                     testModuleName = "./$mainModuleName.js",
                     testPackageName = null,
                     testFunctionName = BOX_FUNCTION_NAME,
@@ -269,11 +269,16 @@ abstract class AbstractInvalidationTest : KotlinTestWithEnvironment() {
             }
         }
 
-        private fun verifyDTS(stepId: Int, testInfo: List<TestStepInfo>, jsOutput: CompilationOutputs) {
+        private fun verifyDTS(stepId: Int, testInfo: List<TestStepInfo>) {
             for (info in testInfo) {
                 val expectedDTS = info.expectedDTS ?: continue
-                val output = jsOutput.dependencies.find { it.first == info.moduleName }?.second ?: jsOutput
-                val gotDTS = output.getFullTsDefinition(info.moduleName, JS_MODULE_KIND)
+
+                val dtsFile = jsDir.resolve("${File(info.modulePath).nameWithoutExtension}.d.ts")
+                JUnit4Assertions.assertTrue(dtsFile.exists()) {
+                    "Cannot find d.ts (${dtsFile.absolutePath}) file for module ${info.moduleName} at step $stepId"
+                }
+
+                val gotDTS = dtsFile.readText()
                 JUnit4Assertions.assertEquals(expectedDTS, gotDTS) {
                     "Mismatched d.ts for module ${info.moduleName} at step $stepId"
                 }
@@ -299,7 +304,13 @@ abstract class AbstractInvalidationTest : KotlinTestWithEnvironment() {
                     irFactory = { IrFactoryImplForJsIC(WholeWorldStageController()) },
                     mainArguments = null,
                     compilerInterfaceFactory = { mainModule, cfg ->
-                        JsIrCompilerWithIC(mainModule, cfg, JsGenerationGranularity.PER_MODULE, setOf(FqName(BOX_FUNCTION_NAME)))
+                        JsIrCompilerWithIC(
+                            mainModule,
+                            cfg,
+                            JsGenerationGranularity.PER_MODULE,
+                            setOf(FqName(BOX_FUNCTION_NAME)),
+                            targetBackend == TargetBackend.JS_IR_ES6
+                        )
                     }
                 )
 
@@ -320,7 +331,7 @@ abstract class AbstractInvalidationTest : KotlinTestWithEnvironment() {
                 val (jsOutput, rebuiltModules) = jsExecutableProducer.buildExecutable(multiModule = true, outJsProgram = true)
                 verifyJsExecutableProducerBuildModules(projStep.id, rebuiltModules, projStep.dirtyJS)
                 verifyJsCode(projStep.id, mainModuleName, jsOutput)
-                verifyDTS(projStep.id, testInfo, jsOutput)
+                verifyDTS(projStep.id, testInfo)
             }
         }
     }
@@ -420,7 +431,7 @@ abstract class AbstractInvalidationTest : KotlinTestWithEnvironment() {
     }
 
     private fun testWorkingDir(testName: String): File {
-        val dir = File(File(File(OUT_DIR_PATH), "incrementalOut/invalidation"), testName)
+        val dir = File(File(File(OUT_DIR_PATH), workingDirPath), testName)
 
         dir.invalidateDir()
 

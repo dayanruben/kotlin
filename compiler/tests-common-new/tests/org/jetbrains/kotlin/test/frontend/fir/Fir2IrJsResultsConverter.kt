@@ -8,8 +8,6 @@ package org.jetbrains.kotlin.test.frontend.fir
 import org.jetbrains.kotlin.backend.common.serialization.signature.IdSignatureDescriptor
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
-import org.jetbrains.kotlin.codegen.state.GenerationState
-import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.languageVersionSettings
@@ -51,6 +49,7 @@ import org.jetbrains.kotlin.test.model.TestModule
 import org.jetbrains.kotlin.test.services.TestServices
 import org.jetbrains.kotlin.test.services.compilerConfigurationProvider
 import org.jetbrains.kotlin.test.services.jsLibraryProvider
+import org.jetbrains.kotlin.utils.metadataVersion
 
 class Fir2IrJsResultsConverter(
     testServices: TestServices
@@ -69,19 +68,17 @@ class Fir2IrJsResultsConverter(
         val fir2IrExtensions = Fir2IrExtensions.Default
         val firFiles = inputArtifact.allFirFiles.values
         val (irModuleFragment, components, pluginContext) =
-            inputArtifact.firAnalyzerFacade.convertToJsIr(firFiles, fir2IrExtensions, module, configuration, testServices)
+            inputArtifact.partsForDependsOnModules.last().firAnalyzerFacade.convertToJsIr(firFiles, fir2IrExtensions, module, configuration, testServices)
 
         val sourceFiles = firFiles.mapNotNull { it.sourceFile }
         val firFilesBySourceFile = firFiles.associateBy { it.sourceFile }
 
         val icData = configuration.incrementalDataProvider?.getSerializedData(sourceFiles) ?: emptyList()
         val expectDescriptorToSymbol = mutableMapOf<DeclarationDescriptor, IrSymbol>()
-        val metadataVersion =
-            configuration.get(CommonConfigurationKeys.METADATA_VERSION)
-                ?: GenerationState.LANGUAGE_TO_METADATA_VERSION.getValue(module.languageVersionSettings.languageVersion)
+        val metadataVersion = configuration.metadataVersion(module.languageVersionSettings.languageVersion)
 
         // At this point, checkers will already have been run by a previous test step. `runCheckers` returns the cached diagnostics map.
-        val diagnosticsMap = inputArtifact.firAnalyzerFacade.runCheckers()
+        val diagnosticsMap = inputArtifact.partsForDependsOnModules.last().firAnalyzerFacade.runCheckers()
         val hasErrors = diagnosticsMap.any { entry -> entry.value.any { it.severity == Severity.ERROR } }
 
         return IrBackendInput.JsIrBackendInput(
@@ -120,13 +117,15 @@ fun AbstractFirAnalyzerFacade.convertToJsIr(
         session, scopeSession, firFiles + commonFirFiles,
         languageVersionSettings, signaturer,
         fir2IrExtensions,
-        FirJvmKotlinMangler(session), // TODO: replace with potentially simpler JS version
+        FirJvmKotlinMangler(), // TODO: replace with potentially simpler JS version
         JsManglerIr, IrFactoryImpl,
         Fir2IrVisibilityConverter.Default,
         Fir2IrJvmSpecialAnnotationSymbolProvider(), // TODO: replace with appropriate (probably empty) implementation
         irGeneratorExtensions,
         generateSignatures = false,
-        kotlinBuiltIns = builtIns ?: DefaultBuiltIns.Instance // TODO: consider passing externally
+        kotlinBuiltIns = builtIns ?: DefaultBuiltIns.Instance, // TODO: consider passing externally,
+        dependentComponents = emptyList(),
+        currentSymbolTable = null
     ).also {
         (it.irModuleFragment.descriptor as? FirModuleDescriptor)?.let { it.allDependencyModules = dependencies }
     }

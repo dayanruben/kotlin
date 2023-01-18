@@ -18,6 +18,7 @@ package org.jetbrains.kotlin.cli.common.messages;
 
 import kotlin.text.StringsKt;
 import org.fusesource.jansi.Ansi;
+import org.fusesource.jansi.AnsiConsole;
 import org.fusesource.jansi.internal.CLibrary;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,26 +32,36 @@ import java.util.Set;
 import static org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity.*;
 
 public abstract class PlainTextMessageRenderer implements MessageRenderer {
-    public static final boolean COLOR_ENABLED;
+    private static final boolean IS_STDERR_A_TTY;
 
     static {
-        boolean colorEnabled = false;
+        boolean isStderrATty = false;
         // TODO: investigate why ANSI escape codes on Windows only work in REPL for some reason
         if (!PropertiesKt.isWindows() && "true".equals(CompilerSystemProperties.KOTLIN_COLORS_ENABLED_PROPERTY.getValue())) {
             try {
-                // AnsiConsole doesn't check isatty() for stderr (see https://github.com/fusesource/jansi/pull/35).
-                colorEnabled = CLibrary.isatty(CLibrary.STDERR_FILENO) != 0;
+                isStderrATty = CLibrary.isatty(CLibrary.STDERR_FILENO) != 0;
             }
-            catch (UnsatisfiedLinkError e) {
-                colorEnabled = false;
+            catch (UnsatisfiedLinkError ignored) {
             }
         }
-        COLOR_ENABLED = colorEnabled;
+        IS_STDERR_A_TTY = isStderrATty;
     }
 
     private static final String LINE_SEPARATOR = System.lineSeparator();
 
     private static final Set<CompilerMessageSeverity> IMPORTANT_MESSAGE_SEVERITIES = EnumSet.of(EXCEPTION, ERROR, STRONG_WARNING, WARNING);
+
+    private final boolean colorEnabled;
+
+    public PlainTextMessageRenderer() {
+        this(IS_STDERR_A_TTY);
+    }
+
+    // This constructor can be used in a compilation server to still be able to generate colored output, even if stderr is not a TTY.
+    @SuppressWarnings("WeakerAccess")
+    public PlainTextMessageRenderer(boolean colorEnabled) {
+        this.colorEnabled = colorEnabled;
+    }
 
     @Override
     public String renderPreamble() {
@@ -78,7 +89,7 @@ public abstract class PlainTextMessageRenderer implements MessageRenderer {
             result.append(" ");
         }
 
-        if (COLOR_ENABLED) {
+        if (this.colorEnabled) {
             Ansi ansi = Ansi.ansi()
                     .bold()
                     .fg(severityColor(severity))
@@ -166,5 +177,17 @@ public abstract class PlainTextMessageRenderer implements MessageRenderer {
     @Override
     public String renderConclusion() {
         return "";
+    }
+
+    public void enableColorsIfNeeded() {
+        if (colorEnabled) {
+            AnsiConsole.systemInstall();
+        }
+    }
+
+    public void disableColorsIfNeeded() {
+        if (colorEnabled) {
+            AnsiConsole.systemUninstall();
+        }
     }
 }

@@ -40,6 +40,7 @@ import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import org.jetbrains.kotlin.cli.jvm.config.configureJdkClasspathRoots
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.IncrementalCompilation
+import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.config.Services
 import org.jetbrains.kotlin.incremental.ClasspathChanges.ClasspathSnapshotDisabled
 import org.jetbrains.kotlin.incremental.ClasspathChanges.ClasspathSnapshotEnabled.IncrementalRun.NoChanges
@@ -85,8 +86,9 @@ fun makeIncrementally(
     val buildReporter = BuildReporter(icReporter = reporter, buildMetricsReporter = DoNothingBuildMetricsReporter)
 
     withIC(args) {
+        val useK2 = args.useK2 || LanguageVersion.fromVersionString(args.languageVersion)?.usesK2 == true
         val compiler =
-            if (args.useK2 && args.useFirIC && args.useFirLT /* TODO: move LT check into runner */ )
+            if (useK2 && args.useFirIC && args.useFirLT /* TODO: move LT check into runner */)
                 IncrementalFirJvmCompilerRunner(
                     cachesDir,
                     buildReporter,
@@ -101,7 +103,7 @@ fun makeIncrementally(
                     cachesDir,
                     buildReporter,
                     // Use precise setting in case of non-Gradle build
-                    usePreciseJavaTracking = !args.useK2, // TODO: add fir-based java classes tracker when available and set this to true
+                    usePreciseJavaTracking = !useK2, // TODO: add fir-based java classes tracker when available and set this to true
                     buildHistoryFile = buildHistoryFile,
                     outputDirs = null,
                     modulesApiHistory = EmptyModulesApiHistory,
@@ -137,24 +139,28 @@ open class IncrementalJvmCompilerRunner(
     private val modulesApiHistory: ModulesApiHistory,
     override val kotlinSourceFilesExtensions: List<String> = DEFAULT_KOTLIN_SOURCE_FILES_EXTENSIONS,
     private val classpathChanges: ClasspathChanges,
-    withAbiSnapshot: Boolean = false
+    withAbiSnapshot: Boolean = false,
+    preciseCompilationResultsBackup: Boolean = false,
 ) : IncrementalCompilerRunner<K2JVMCompilerArguments, IncrementalJvmCachesManager>(
     workingDir,
     "caches-jvm",
     reporter,
     buildHistoryFile = buildHistoryFile,
     outputDirs = outputDirs,
-    withAbiSnapshot = withAbiSnapshot
+    withAbiSnapshot = withAbiSnapshot,
+    preciseCompilationResultsBackup = preciseCompilationResultsBackup,
 ) {
-    override fun createCacheManager(args: K2JVMCompilerArguments, projectDir: File?): IncrementalJvmCachesManager =
-        IncrementalJvmCachesManager(
-            cacheDirectory,
-            projectDir,
-            File(args.destination),
-            reporter,
+    override fun createIncrementalCompilationContext(projectDir: File?, transaction: CompilationTransaction) =
+        IncrementalCompilationContext(
+            transaction = transaction,
+            rootProjectDir = projectDir,
+            reporter = reporter,
+            trackChangesInLookupCache = classpathChanges is ClasspathChanges.ClasspathSnapshotEnabled.IncrementalRun,
             storeFullFqNamesInLookupCache = withAbiSnapshot || classpathChanges is ClasspathChanges.ClasspathSnapshotEnabled,
-            trackChangesInLookupCache = classpathChanges is ClasspathChanges.ClasspathSnapshotEnabled.IncrementalRun
         )
+
+    override fun createCacheManager(icContext: IncrementalCompilationContext, args: K2JVMCompilerArguments) =
+        IncrementalJvmCachesManager(icContext, args.destination?.let { File(it) }, cacheDirectory)
 
     override fun destinationDir(args: K2JVMCompilerArguments): File =
         args.destinationAsFile

@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.test.frontend.classic.ClassicFrontendOutputArtifact
 import org.jetbrains.kotlin.test.frontend.classic.handlers.ClassicDiagnosticsHandler
 import org.jetbrains.kotlin.test.frontend.classic.handlers.DeclarationsDumpHandler
 import org.jetbrains.kotlin.test.frontend.classic.handlers.OldNewInferenceMetaInfoProcessor
-import org.jetbrains.kotlin.test.frontend.fir.DisableLazyResolveChecksAfterAnalysisChecker
+import org.jetbrains.kotlin.test.frontend.fir.FirFrontendFacade
 import org.jetbrains.kotlin.test.frontend.fir.FirOutputArtifact
 import org.jetbrains.kotlin.test.frontend.fir.handlers.*
 import org.jetbrains.kotlin.test.model.*
@@ -93,7 +93,7 @@ abstract class AbstractFirNativeDiagnosticsTest : AbstractDiagnosticsNativeTestB
         get() = FrontendKinds.FIR
 
     override val frontend: Constructor<FrontendFacade<FirOutputArtifact>>
-        get() = ::FirFrontendFacadeForDiagnosticTests
+        get() = ::FirFrontendFacade
 
     override fun handlersSetup(builder: TestConfigurationBuilder) {
         builder.firHandlersStep {
@@ -110,17 +110,7 @@ abstract class AbstractFirNativeDiagnosticsTest : AbstractDiagnosticsNativeTestB
 
     override fun configure(builder: TestConfigurationBuilder) {
         super.configure(builder)
-
-        builder.useAfterAnalysisCheckers(
-            ::DisableLazyResolveChecksAfterAnalysisChecker,
-        )
-
-        builder.firHandlersStep {
-            useHandlers(
-                ::FirResolveContractViolationErrorHandler,
-            )
-        }
-
+        builder.enableLazyResolvePhaseChecking()
 
         builder.forTestsMatching("compiler/testData/diagnostics/*") {
             configurationForClassicAndFirTestsAlongside()

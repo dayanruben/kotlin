@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.backend.konan.llvm.objc.genObjCSelector
 import org.jetbrains.kotlin.backend.konan.reportCompilationError
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.declarations.IrClass
+import org.jetbrains.kotlin.ir.declarations.IrField
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.symbols.IrConstructorSymbol
@@ -90,7 +91,16 @@ internal enum class IntrinsicType {
     INTEROP_FUNPTR_INVOKE,
     INTEROP_MEMORY_COPY,
     // Worker
-    WORKER_EXECUTE
+    WORKER_EXECUTE,
+    // Atomics
+    COMPARE_AND_SET_FIELD,
+    COMPARE_AND_SWAP_FIELD,
+    GET_AND_SET_FIELD,
+    GET_AND_ADD_FIELD,
+    COMPARE_AND_SET,
+    COMPARE_AND_SWAP,
+    GET_AND_SET,
+    GET_AND_ADD,
 }
 
 internal enum class ConstantConstructorIntrinsicType {
@@ -107,8 +117,6 @@ internal interface IntrinsicGeneratorEnvironment {
 
     val exceptionHandler: ExceptionHandler
 
-    val stackLocalsManager: StackLocalsManager
-
     fun calculateLifetime(element: IrElement): Lifetime
 
     fun evaluateCall(function: IrFunction, args: List<LLVMValueRef>, resultLifetime: Lifetime,
@@ -117,6 +125,10 @@ internal interface IntrinsicGeneratorEnvironment {
     fun evaluateExplicitArgs(expression: IrFunctionAccessExpression): List<LLVMValueRef>
 
     fun evaluateExpression(value: IrExpression, resultSlot: LLVMValueRef?): LLVMValueRef
+
+    fun getObjectFieldPointer(thisRef: LLVMValueRef, field: IrField): LLVMValueRef
+
+    fun getStaticFieldPointer(field: IrField): LLVMValueRef
 }
 
 internal fun tryGetIntrinsicType(callSite: IrFunctionAccessExpression): IntrinsicType? =
@@ -242,6 +254,10 @@ internal class IntrinsicGenerator(private val environment: IntrinsicGeneratorEnv
                 IntrinsicType.INTEROP_MEMORY_COPY -> emitMemoryCopy(callSite, args)
                 IntrinsicType.IS_EXPERIMENTAL_MM -> emitIsExperimentalMM()
                 IntrinsicType.THE_UNIT_INSTANCE -> theUnitInstanceRef.llvm
+                IntrinsicType.COMPARE_AND_SET -> emitCompareAndSet(callSite, args)
+                IntrinsicType.COMPARE_AND_SWAP -> emitCompareAndSwap(callSite, args, resultSlot)
+                IntrinsicType.GET_AND_SET -> emitGetAndSet(callSite, args, resultSlot)
+                IntrinsicType.GET_AND_ADD -> emitGetAndAdd(callSite, args)
                 IntrinsicType.GET_CONTINUATION,
                 IntrinsicType.RETURN_IF_SUSPENDED,
                 IntrinsicType.INTEROP_BITS_TO_FLOAT,
@@ -253,7 +269,11 @@ internal class IntrinsicGenerator(private val environment: IntrinsicGeneratorEnv
                 IntrinsicType.INTEROP_CONVERT,
                 IntrinsicType.ENUM_VALUES,
                 IntrinsicType.ENUM_VALUE_OF,
-                IntrinsicType.WORKER_EXECUTE ->
+                IntrinsicType.WORKER_EXECUTE,
+                IntrinsicType.COMPARE_AND_SET_FIELD,
+                IntrinsicType.COMPARE_AND_SWAP_FIELD,
+                IntrinsicType.GET_AND_SET_FIELD,
+                IntrinsicType.GET_AND_ADD_FIELD ->
                     reportNonLoweredIntrinsic(intrinsicType)
                 IntrinsicType.INIT_INSTANCE,
                 IntrinsicType.OBJC_INIT_BY,
@@ -292,6 +312,90 @@ internal class IntrinsicGenerator(private val environment: IntrinsicGeneratorEnv
     private fun FunctionGenerationContext.emitIsExperimentalMM(): LLVMValueRef =
             llvm.int1(context.memoryModel == MemoryModel.EXPERIMENTAL)
 
+    // cmpxcgh llvm instruction return pair. idnex is index of required element of this pair
+    enum class CmpExchangeMode(val index:Int) {
+        SWAP(0),
+        SET(1)
+    }
+
+    private fun FunctionGenerationContext.emitCmpExchange(callSite: IrCall, args: List<LLVMValueRef>, mode: CmpExchangeMode, resultSlot: LLVMValueRef?): LLVMValueRef {
+        val field = context.mapping.functionToVolatileField[callSite.symbol.owner]!!
+        val address: LLVMValueRef
+        val expected: LLVMValueRef
+        val new: LLVMValueRef
+        if (callSite.dispatchReceiver != null) {
+            require(!field.isStatic)
+            require(args.size == 3)
+            address = environment.getObjectFieldPointer(args[0], field)
+            expected = args[1]
+            new = args[2]
+        } else {
+            require(field.isStatic)
+            require(args.size == 2)
+            address = environment.getStaticFieldPointer(field)
+            expected = args[0]
+            new = args[1]
+        }
+        return if (isObjectRef(args[1])) {
+            require(context.memoryModel == MemoryModel.EXPERIMENTAL)
+            when (mode) {
+                CmpExchangeMode.SET -> call(llvm.CompareAndSetVolatileHeapRef, listOf(address, expected, new))
+                CmpExchangeMode.SWAP -> call(llvm.CompareAndSwapVolatileHeapRef, listOf(address, expected, new),
+                        environment.calculateLifetime(callSite), resultSlot = resultSlot)
+            }
+        } else {
+            val cmp = LLVMBuildAtomicCmpXchg(builder, address, expected, new,
+                    LLVMAtomicOrdering.LLVMAtomicOrderingSequentiallyConsistent,
+                    LLVMAtomicOrdering.LLVMAtomicOrderingSequentiallyConsistent,
+                    SingleThread = 0
+            )!!
+
+            LLVMBuildExtractValue(builder, cmp, mode.index, "")!!
+        }
+    }
+
+    private fun FunctionGenerationContext.emitAtomicRMW(callSite: IrCall, args: List<LLVMValueRef>, op: LLVMAtomicRMWBinOp, resultSlot: LLVMValueRef?): LLVMValueRef {
+        val field = context.mapping.functionToVolatileField[callSite.symbol.owner]!!
+        val address: LLVMValueRef
+        val value: LLVMValueRef
+        if (callSite.dispatchReceiver != null) {
+            require(!field.isStatic)
+            require(args.size == 2)
+            address = environment.getObjectFieldPointer(args[0], field)
+            value = args[1]
+        } else {
+            require(field.isStatic)
+            require(args.size == 1)
+            address = environment.getStaticFieldPointer(field)
+            value = args[0]
+        }
+        return if (isObjectRef(value)) {
+            require(op == LLVMAtomicRMWBinOp.LLVMAtomicRMWBinOpXchg)
+            require(context.memoryModel == MemoryModel.EXPERIMENTAL)
+            call(llvm.GetAndSetVolatileHeapRef, listOf(address, value),
+                    environment.calculateLifetime(callSite), resultSlot = resultSlot)
+        } else {
+            LLVMBuildAtomicRMW(builder, op, address, value,
+                    LLVMAtomicOrdering.LLVMAtomicOrderingSequentiallyConsistent,
+                    singleThread = 0
+            )!!
+        }
+    }
+
+    private fun FunctionGenerationContext.emitCompareAndSet(callSite: IrCall, args: List<LLVMValueRef>): LLVMValueRef {
+        return emitCmpExchange(callSite, args, CmpExchangeMode.SET, null)
+    }
+    private fun FunctionGenerationContext.emitCompareAndSwap(callSite: IrCall, args: List<LLVMValueRef>, resultSlot: LLVMValueRef?): LLVMValueRef {
+        return emitCmpExchange(callSite, args, CmpExchangeMode.SWAP, resultSlot)
+    }
+    private fun FunctionGenerationContext.emitGetAndSet(callSite: IrCall, args: List<LLVMValueRef>, resultSlot: LLVMValueRef?): LLVMValueRef {
+        return emitAtomicRMW(callSite, args, LLVMAtomicRMWBinOp.LLVMAtomicRMWBinOpXchg, resultSlot)
+    }
+    private fun FunctionGenerationContext.emitGetAndAdd(callSite: IrCall, args: List<LLVMValueRef>): LLVMValueRef {
+        return emitAtomicRMW(callSite, args, LLVMAtomicRMWBinOp.LLVMAtomicRMWBinOpAdd, null)
+    }
+
+
     private fun FunctionGenerationContext.emitGetNativeNullPtr(): LLVMValueRef =
             llvm.kNullInt8Ptr
 
@@ -312,7 +416,7 @@ internal class IntrinsicGenerator(private val environment: IntrinsicGeneratorEnv
         val typeParameterT = context.ir.symbols.createUninitializedInstance.descriptor.typeParameters[0]
         val enumClass = callSite.getTypeArgument(typeParameterT)!!
         val enumIrClass = enumClass.getClass()!!
-        return allocInstance(enumIrClass, environment.calculateLifetime(callSite), environment.stackLocalsManager, resultSlot)
+        return allocInstance(enumIrClass, environment.calculateLifetime(callSite), resultSlot)
     }
 
     private fun FunctionGenerationContext.emitGetPointerSize(): LLVMValueRef =

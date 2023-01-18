@@ -36,6 +36,7 @@ import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.protobuf.MessageLite
 import org.jetbrains.kotlin.types.AbstractTypeApproximator
 import org.jetbrains.kotlin.types.TypeApproximatorConfiguration
+import org.jetbrains.kotlin.utils.metadataVersion
 import org.jetbrains.org.objectweb.asm.Type
 import org.jetbrains.org.objectweb.asm.commons.Method
 
@@ -92,8 +93,7 @@ fun makeLocalFirMetadataSerializerForMetadataSource(
         configuration.getBoolean(JVMConfigurationKeys.DISABLE_PARAM_ASSERTIONS),
         session.languageVersionSettings.apiVersion >= ApiVersion.KOTLIN_1_4 &&
                 !configuration.getBoolean(JVMConfigurationKeys.NO_UNIFIED_NULL_CHECKS),
-        configuration.get(CommonConfigurationKeys.METADATA_VERSION)
-            ?: GenerationState.LANGUAGE_TO_METADATA_VERSION.getValue(session.languageVersionSettings.languageVersion),
+        configuration.metadataVersion(session.languageVersionSettings.languageVersion),
         session.languageVersionSettings.getFlag(JvmAnalysisFlags.jvmDefaultMode),
         stringTable
     )
@@ -118,7 +118,7 @@ class FirMetadataSerializer(
         val message = when (metadata) {
             is FirMetadataSource.Class -> serializer!!.classProto(metadata.fir).build()
             is FirMetadataSource.File ->
-                serializer!!.packagePartProto(metadata.fir.packageFqName, metadata.fir).apply {
+                serializer!!.packagePartProto(metadata.files.first().packageFqName, metadata.files).apply {
                     serializerExtension.serializeJvmPackage(this)
                 }.build()
             is FirMetadataSource.Function -> {

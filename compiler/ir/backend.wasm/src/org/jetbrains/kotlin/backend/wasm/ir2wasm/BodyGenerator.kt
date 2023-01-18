@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.backend.wasm.utils.*
 import org.jetbrains.kotlin.backend.wasm.utils.isCanonical
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.IrElement
+import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.backend.js.lower.PrimaryConstructorLowering
 import org.jetbrains.kotlin.ir.backend.js.utils.erasedUpperBound
 import org.jetbrains.kotlin.ir.backend.js.utils.findUnitGetInstanceFunction
@@ -28,7 +29,6 @@ import org.jetbrains.kotlin.ir.visitors.acceptVoid
 import org.jetbrains.kotlin.js.config.JSConfigurationKeys
 import org.jetbrains.kotlin.wasm.ir.*
 import org.jetbrains.kotlin.wasm.ir.source.location.SourceLocation
-import org.jetbrains.kotlin.wasm.ir.source.location.withLocation
 
 class BodyGenerator(
     val context: WasmModuleCodegenContext,
@@ -45,7 +45,11 @@ class BodyGenerator(
 
     private val unitGetInstance by lazy { backendContext.findUnitGetInstanceFunction() }
     fun WasmExpressionBuilder.buildGetUnit() {
-        buildInstr(WasmOp.GET_UNIT, WasmImmediate.FuncIdx(context.referenceFunction(unitGetInstance.symbol)))
+        buildInstr(
+            WasmOp.GET_UNIT,
+            SourceLocation.NoLocation("GET_UNIT"),
+            WasmImmediate.FuncIdx(context.referenceFunction(unitGetInstance.symbol))
+        )
     }
 
     private val anyConstructor by lazy {
@@ -53,23 +57,28 @@ class BodyGenerator(
     }
 
     // Generates code for the given IR element. Leaves something on the stack unless expression was of the type Void.
-    internal fun generateExpression(elem: IrElement) {
-        assert(elem is IrExpression || elem is IrVariable) { "Unsupported statement kind" }
+    internal fun generateExpression(expression: IrExpression) {
+        expression.acceptVoid(this)
 
-        elem.acceptVoid(this)
-
-        if (elem is IrExpression && elem.type.isNothing()) {
-            body.buildUnreachable()
+        if (expression.type.isNothing()) {
+            // TODO Ideally, we should generate unreachable only for specific cases and preferable on declaration site. 
+            body.buildUnreachableAfterNothingType()
         }
     }
 
     // Generates code for the given IR element but *never* leaves anything on the stack.
-    private fun generateStatement(statement: IrElement) {
-        assert(statement is IrExpression || statement is IrVariable) { "Unsupported statement kind" }
-
+    private fun generateAsStatement(statement: IrExpression) {
         generateExpression(statement)
-        if (statement is IrExpression && statement.type != wasmSymbols.voidType) {
-            body.buildDrop()
+        if (statement.type != wasmSymbols.voidType) {
+            body.buildDrop(statement.getSourceLocation())
+        }
+    }
+
+    private fun generateStatement(statement: IrStatement) {
+        when(statement) {
+            is IrExpression -> generateAsStatement(statement)
+            is IrVariable -> statement.acceptVoid(this)
+            else -> error("Unsupported node type: ${statement::class.simpleName}")
         }
     }
 
@@ -97,9 +106,11 @@ class BodyGenerator(
 
         val constantArrayId = context.referenceConstantArray(resource)
 
-        body.buildConstI32(0)
-        body.buildConstI32(irVararg.elements.size)
-        body.buildInstr(WasmOp.ARRAY_NEW_DATA, wasmArrayType, WasmImmediate.DataIdx(constantArrayId))
+        irVararg.getSourceLocation().let { location ->
+            body.buildConstI32(0, location)
+            body.buildConstI32(irVararg.elements.size, location)
+            body.buildInstr(WasmOp.ARRAY_NEW_DATA, location, wasmArrayType, WasmImmediate.DataIdx(constantArrayId))
+        }
         return true
     }
 
@@ -110,7 +121,7 @@ class BodyGenerator(
         }
 
         val length = WasmImmediate.ConstI32(irVararg.elements.size)
-        body.buildInstr(WasmOp.ARRAY_NEW_FIXED, wasmArrayType, length)
+        body.buildInstr(WasmOp.ARRAY_NEW_FIXED, irVararg.getSourceLocation(), wasmArrayType, length)
     }
 
     override fun visitVararg(expression: IrVararg) {
@@ -125,14 +136,15 @@ class BodyGenerator(
 
         check(wasmArrayType != null)
 
-        generateAnyParameters(arrayClass.symbol)
+        val location = expression.getSourceLocation()
+        generateAnyParameters(arrayClass.symbol, location)
         if (!tryGenerateConstVarargArray(expression, wasmArrayType)) tryGenerateVarargArray(expression, wasmArrayType)
-        body.buildStructNew(context.referenceGcType(expression.type.getRuntimeClass(irBuiltIns).symbol))
+        body.buildStructNew(context.referenceGcType(expression.type.getRuntimeClass(irBuiltIns).symbol), location)
     }
 
     override fun visitThrow(expression: IrThrow) {
         generateExpression(expression.value)
-        body.buildThrow(functionContext.tagIdx)
+        body.buildThrow(functionContext.tagIdx, expression.getSourceLocation())
     }
 
     override fun visitTry(aTry: IrTry) {
@@ -147,7 +159,7 @@ class BodyGenerator(
         // Exception object is on top of the stack, store it into the local
         aTry.catches.single().catchParameter.symbol.let {
             functionContext.defineLocal(it)
-            body.buildSetLocal(functionContext.referenceLocal(it))
+            body.buildSetLocal(functionContext.referenceLocal(it), it.owner.getSourceLocation())
         }
         generateExpression(aTry.catches.single().result)
 
@@ -158,7 +170,7 @@ class BodyGenerator(
         when (expression.operator) {
             IrTypeOperator.REINTERPRET_CAST -> generateExpression(expression.argument)
             IrTypeOperator.IMPLICIT_COERCION_TO_UNIT -> {
-                generateStatement(expression.argument)
+                generateAsStatement(expression.argument)
                 body.buildGetUnit()
             }
             else -> assert(false) { "Other types of casts must be lowered" }
@@ -166,26 +178,27 @@ class BodyGenerator(
     }
 
     override fun visitConst(expression: IrConst<*>): Unit =
-        generateConstExpression(expression, body, context)
+        generateConstExpression(expression, body, context, expression.getSourceLocation())
 
     override fun visitGetField(expression: IrGetField) {
         val field: IrField = expression.symbol.owner
         val receiver: IrExpression? = expression.receiver
+        val location = expression.getSourceLocation()
         if (receiver != null) {
             generateExpression(receiver)
             if (backendContext.inlineClassesUtils.isClassInlineLike(field.parentAsClass)) {
                 // Unboxed inline class instance is already represented as backing field.
                 // Doing nothing.
             } else {
-                generateInstanceFieldAccess(field)
+                generateInstanceFieldAccess(field, location)
             }
         } else {
-            body.buildGetGlobal(context.referenceGlobalField(field.symbol))
+            body.buildGetGlobal(context.referenceGlobalField(field.symbol), location)
             body.commentPreviousInstr { "type: ${field.type.render()}" }
         }
     }
 
-    private fun generateInstanceFieldAccess(field: IrField) {
+    private fun generateInstanceFieldAccess(field: IrField, location: SourceLocation) {
         val opcode = when (field.type) {
             irBuiltIns.charType ->
                 WasmOp.STRUCT_GET_U
@@ -200,6 +213,7 @@ class BodyGenerator(
 
         body.buildInstr(
             opcode,
+            location,
             WasmImmediate.GcType(context.referenceGcType(field.parentAsClass.symbol)),
             WasmImmediate.StructFieldIdx(context.getStructFieldRef(field))
         )
@@ -210,17 +224,20 @@ class BodyGenerator(
         val field = expression.symbol.owner
         val receiver = expression.receiver
 
+        val location = expression.getSourceLocation()
+
         if (receiver != null) {
             generateExpression(receiver)
             generateExpression(expression.value)
             body.buildStructSet(
                 struct = context.referenceGcType(field.parentAsClass.symbol),
                 fieldId = context.getStructFieldRef(field),
+                location
             )
             body.commentPreviousInstr { "name: ${field.name}, type: ${field.type.render()}" }
         } else {
             generateExpression(expression.value)
-            body.buildSetGlobal(context.referenceGlobalField(expression.symbol))
+            body.buildSetGlobal(context.referenceGlobalField(expression.symbol), location)
             body.commentPreviousInstr { "type: ${field.type.render()}" }
         }
 
@@ -236,14 +253,15 @@ class BodyGenerator(
             if (valueDeclaration.isDispatchReceiver)
                 functionContext.referenceLocal(0)
             else
-                functionContext.referenceLocal(valueSymbol)
+                functionContext.referenceLocal(valueSymbol),
+            expression.getSourceLocation()
         )
         body.commentPreviousInstr { "type: ${valueDeclaration.type.render()}" }
     }
 
     override fun visitSetValue(expression: IrSetValue) {
         generateExpression(expression.value)
-        body.buildSetLocal(functionContext.referenceLocal(expression.symbol))
+        body.buildSetLocal(functionContext.referenceLocal(expression.symbol), expression.getSourceLocation())
         body.commentPreviousInstr { "type: ${expression.symbol.owner.type.render()}" }
         body.buildGetUnit()
     }
@@ -261,12 +279,14 @@ class BodyGenerator(
         }
 
         val wasmGcType: WasmSymbol<WasmTypeDeclaration> = context.referenceGcType(klassSymbol)
+        val location = expression.getSourceLocation()
 
         if (klass.getWasmArrayAnnotation() != null) {
             require(expression.valueArgumentsCount == 1) { "@WasmArrayOf constructs must have exactly one argument" }
             generateExpression(expression.getValueArgument(0)!!)
             body.buildInstr(
                 WasmOp.ARRAY_NEW_DEFAULT,
+                location,
                 WasmImmediate.GcType(wasmGcType)
             )
             body.commentPreviousInstr { "@WasmArrayOf ctor call: ${klass.fqNameWhenAvailable}" }
@@ -274,31 +294,31 @@ class BodyGenerator(
         }
 
         if (expression.symbol.owner.hasWasmPrimitiveConstructorAnnotation()) {
-            generateAnyParameters(klassSymbol)
+            generateAnyParameters(klassSymbol, location)
             for (i in 0 until expression.valueArgumentsCount) {
                 generateExpression(expression.getValueArgument(i)!!)
             }
-            body.buildStructNew(wasmGcType)
+            body.buildStructNew(wasmGcType, location)
             body.commentPreviousInstr { "@WasmPrimitiveConstructor ctor call: ${klass.fqNameWhenAvailable}" }
             return
         }
 
-        body.buildRefNull(WasmHeapType.Simple.NullNone) // this = null
+        body.buildRefNull(WasmHeapType.Simple.NullNone, location) // this = null
         generateCall(expression)
     }
 
-    private fun generateAnyParameters(klassSymbol: IrClassSymbol) {
+    private fun generateAnyParameters(klassSymbol: IrClassSymbol, location: SourceLocation) {
         //ClassITable and VTable load
         body.commentGroupStart { "Any parameters" }
-        body.buildGetGlobal(context.referenceGlobalVTable(klassSymbol))
+        body.buildGetGlobal(context.referenceGlobalVTable(klassSymbol), location)
         if (klassSymbol.owner.hasInterfaceSuperClass()) {
-            body.buildGetGlobal(context.referenceGlobalClassITable(klassSymbol))
+            body.buildGetGlobal(context.referenceGlobalClassITable(klassSymbol), location)
         } else {
-            body.buildRefNull(WasmHeapType.Simple.Data)
+            body.buildRefNull(WasmHeapType.Simple.Data, location)
         }
 
-        body.buildConstI32Symbol(context.referenceClassId(klassSymbol))
-        body.buildConstI32(0) // Any::_hashCode
+        body.buildConstI32Symbol(context.referenceClassId(klassSymbol), location)
+        body.buildConstI32(0, location) // Any::_hashCode
         body.commentGroupEnd()
     }
 
@@ -308,19 +328,21 @@ class BodyGenerator(
         if (parentClass.isAbstractOrSealed) return
         val thisParameter = functionContext.referenceLocal(parentClass.thisReceiver!!.symbol)
         body.commentGroupStart { "Object creation prefix" }
-        body.buildGetLocal(thisParameter)
-        body.buildInstr(WasmOp.REF_IS_NULL)
-        body.buildIf("this_init")
-        generateAnyParameters(parentClass.symbol)
-        val irFields: List<IrField> = parentClass.allFields(backendContext.irBuiltIns)
-        irFields.forEachIndexed { index, field ->
-            if (index > 1) {
-                generateDefaultInitializerForType(context.transformType(field.type), body)
+        SourceLocation.NoLocation("Constructor preamble").let { location ->
+            body.buildGetLocal(thisParameter, location)
+            body.buildInstr(WasmOp.REF_IS_NULL, location)
+            body.buildIf("this_init")
+            generateAnyParameters(parentClass.symbol, location)
+            val irFields: List<IrField> = parentClass.allFields(backendContext.irBuiltIns)
+            irFields.forEachIndexed { index, field ->
+                if (index > 1) {
+                    generateDefaultInitializerForType(context.transformType(field.type), body)
+                }
             }
+            body.buildStructNew(context.referenceGcType(parentClass.symbol), location)
+            body.buildSetLocal(thisParameter, location)
+            body.buildEnd()
         }
-        body.buildStructNew(context.referenceGcType(parentClass.symbol))
-        body.buildSetLocal(thisParameter)
-        body.buildEnd()
         body.commentGroupEnd()
     }
 
@@ -333,19 +355,22 @@ class BodyGenerator(
             return
         }
 
-        body.buildGetLocal(functionContext.referenceLocal(0))  // this parameter
+        body.buildGetLocal(functionContext.referenceLocal(0), SourceLocation.NoLocation("Get implicit dispatch receiver")) // this parameter
         generateCall(expression)
     }
 
     private fun generateBox(expression: IrExpression, type: IrType) {
         val klassSymbol = type.getRuntimeClass(irBuiltIns).symbol
-        generateAnyParameters(klassSymbol)
+        val location = expression.getSourceLocation()
+        generateAnyParameters(klassSymbol, location)
         generateExpression(expression)
-        body.buildStructNew(context.referenceGcType(klassSymbol))
+        body.buildStructNew(context.referenceGcType(klassSymbol), location)
         body.commentPreviousInstr { "box" }
     }
 
     private fun generateCall(call: IrFunctionAccessExpression) {
+        val location = call.getSourceLocation()
+
         // Box intrinsic has an additional klass ID argument.
         // Processing it separately
         if (call.symbol == wasmSymbols.boxIntrinsic) {
@@ -410,11 +435,11 @@ class BodyGenerator(
                 body.commentGroupStart { "virtual call: ${function.fqNameWhenAvailable}" }
 
                 //TODO: check why it could be needed
-                generateRefNullCast(receiver.type, klass.defaultType)
+                generateRefNullCast(receiver.type, klass.defaultType, location)
 
-                body.buildStructGet(context.referenceGcType(klass.symbol), WasmSymbol(0))
-                body.buildStructGet(context.referenceVTableGcType(klass.symbol), WasmSymbol(vfSlot))
-                body.buildInstr(WasmOp.CALL_REF, WasmImmediate.TypeIdx(context.referenceFunctionType(function.symbol)))
+                body.buildStructGet(context.referenceGcType(klass.symbol), WasmSymbol(0), location)
+                body.buildStructGet(context.referenceVTableGcType(klass.symbol), WasmSymbol(vfSlot), location)
+                body.buildInstr(WasmOp.CALL_REF, location, WasmImmediate.TypeIdx(context.referenceFunctionType(function.symbol)))
                 body.commentGroupEnd()
             } else {
                 val symbol = klass.symbol
@@ -422,28 +447,29 @@ class BodyGenerator(
                     generateExpression(call.dispatchReceiver!!)
 
                     body.commentGroupStart { "interface call: ${function.fqNameWhenAvailable}" }
-                    body.buildStructGet(context.referenceGcType(irBuiltIns.anyClass), WasmSymbol(1))
+                    body.buildStructGet(context.referenceGcType(irBuiltIns.anyClass), WasmSymbol(1), location)
 
                     val classITableReference = context.referenceClassITableGcType(symbol)
-                    body.buildRefCastNullStatic(classITableReference)
-                    body.buildStructGet(classITableReference, context.referenceClassITableInterfaceSlot(symbol))
+                    body.buildRefCastNullStatic(classITableReference, location)
+                    body.buildStructGet(classITableReference, context.referenceClassITableInterfaceSlot(symbol), location)
 
                     val vfSlot = context.getInterfaceMetadata(symbol).methods
                         .indexOfFirst { it.function == function }
 
-                    body.buildStructGet(context.referenceVTableGcType(symbol), WasmSymbol(vfSlot))
-                    body.buildInstr(WasmOp.CALL_REF, WasmImmediate.TypeIdx(context.referenceFunctionType(function.symbol)))
+                    body.buildStructGet(context.referenceVTableGcType(symbol), WasmSymbol(vfSlot), location)
+                    body.buildInstr(WasmOp.CALL_REF, location, WasmImmediate.TypeIdx(context.referenceFunctionType(function.symbol)))
                     body.commentGroupEnd()
                 } else {
-                    body.buildUnreachable()
+                    // We came here for a call to an interface method which interface is not implemented anywhere, 
+                    // so we don't have a slot in the itable and can't generate a correct call, 
+                    // and, anyway, the call effectively is unreachable.
+                    body.buildUnreachableForVerifier()
                 }
             }
 
         } else {
             // Static function call
-            withLocation(call.getSourceLocation()) {
-                body.buildCall(context.referenceFunction(function.symbol), location)
-            }
+            body.buildCall(context.referenceFunction(function.symbol), location)
         }
 
         // Unit types don't cross function boundaries
@@ -451,22 +477,24 @@ class BodyGenerator(
             body.buildGetUnit()
     }
 
-    private fun generateRefNullCast(fromType: IrType, toType: IrType) {
+    private fun generateRefNullCast(fromType: IrType, toType: IrType, location: SourceLocation) {
         if (!isDownCastAlwaysSuccessInRuntime(fromType, toType)) {
             body.buildRefCastNullStatic(
-                toType = context.referenceGcType(toType.getRuntimeClass(irBuiltIns).symbol)
+                toType = context.referenceGcType(toType.getRuntimeClass(irBuiltIns).symbol),
+                location
             )
         }
     }
 
-    private fun generateRefTest(fromType: IrType, toType: IrType) {
+    private fun generateRefTest(fromType: IrType, toType: IrType, location: SourceLocation) {
         if (!isDownCastAlwaysSuccessInRuntime(fromType, toType)) {
             body.buildRefTestStatic(
-                toType = context.referenceGcType(toType.getRuntimeClass(irBuiltIns).symbol)
+                toType = context.referenceGcType(toType.getRuntimeClass(irBuiltIns).symbol),
+                location
             )
         } else {
-            body.buildDrop()
-            body.buildConstI32(1)
+            body.buildDrop(location)
+            body.buildConstI32(1, location)
         }
     }
 
@@ -488,19 +516,21 @@ class BodyGenerator(
             return true
         }
 
+        val location = call.getSourceLocation()
+
         when (function.symbol) {
             wasmSymbols.wasmClassId -> {
                 val klass = call.getTypeArgument(0)!!.getClass()
                     ?: error("No class given for wasmClassId intrinsic")
                 assert(!klass.isInterface)
-                body.buildConstI32Symbol(context.referenceClassId(klass.symbol))
+                body.buildConstI32Symbol(context.referenceClassId(klass.symbol), location)
             }
 
             wasmSymbols.wasmInterfaceId -> {
                 val irInterface = call.getTypeArgument(0)!!.getClass()
                     ?: error("No interface given for wasmInterfaceId intrinsic")
                 assert(irInterface.isInterface)
-                body.buildConstI32Symbol(context.referenceInterfaceId(irInterface.symbol))
+                body.buildConstI32Symbol(context.referenceInterfaceId(irInterface.symbol), location)
             }
 
             wasmSymbols.wasmIsInterface -> {
@@ -510,37 +540,39 @@ class BodyGenerator(
                 if (irInterface.symbol in hierarchyDisjointUnions) {
                     val classITable = context.referenceClassITableGcType(irInterface.symbol)
                     val parameterLocal = functionContext.referenceLocal(SyntheticLocalType.IS_INTERFACE_PARAMETER)
-                    body.buildSetLocal(parameterLocal)
+                    body.buildSetLocal(parameterLocal, location)
                     body.buildBlock("isInterface", WasmI32) { outerLabel ->
                         body.buildBlock("isInterface", WasmRefNullType(WasmHeapType.Simple.Data)) { innerLabel ->
-                            body.buildGetLocal(parameterLocal)
-                            body.buildStructGet(context.referenceGcType(irBuiltIns.anyClass), WasmSymbol(1))
-                            body.buildBrInstr(WasmOp.BR_ON_CAST_FAIL_DEPRECATED, innerLabel, classITable)
-                            body.buildStructGet(classITable, context.referenceClassITableInterfaceSlot(irInterface.symbol))
-                            body.buildInstr(WasmOp.REF_IS_NULL)
-                            body.buildInstr(WasmOp.I32_EQZ)
-                            body.buildBr(outerLabel)
+                            body.buildGetLocal(parameterLocal, location)
+                            body.buildStructGet(context.referenceGcType(irBuiltIns.anyClass), WasmSymbol(1), location)
+                            body.buildBrInstr(WasmOp.BR_ON_CAST_FAIL_DEPRECATED, innerLabel, classITable, location)
+                            body.buildStructGet(classITable, context.referenceClassITableInterfaceSlot(irInterface.symbol), location)
+                            body.buildInstr(WasmOp.REF_IS_NULL, location)
+                            body.buildInstr(WasmOp.I32_EQZ, location)
+                            body.buildBr(outerLabel, location)
                         }
-                        body.buildDrop()
-                        body.buildConstI32(0)
+                        body.buildDrop(location)
+                        body.buildConstI32(0, location)
                     }
                 } else {
-                    body.buildDrop()
-                    body.buildConstI32(0)
+                    body.buildDrop(location)
+                    body.buildConstI32(0, location)
                 }
             }
 
             wasmSymbols.refCastNull -> {
                 generateRefNullCast(
                     fromType = call.getValueArgument(0)!!.type,
-                    toType = call.getTypeArgument(0)!!
+                    toType = call.getTypeArgument(0)!!,
+                    location = location
                 )
             }
 
             wasmSymbols.refTest -> {
                 generateRefTest(
                     fromType = call.getValueArgument(0)!!.type,
-                    toType = call.getTypeArgument(0)!!
+                    toType = call.getTypeArgument(0)!!,
+                    location
                 )
             }
 
@@ -548,14 +580,8 @@ class BodyGenerator(
                 val fromType = call.getTypeArgument(0)!!
 
                 if (fromType.isNothing()) {
-                    body.buildUnreachable()
+                    body.buildUnreachableAfterNothingType()
                     // TODO: Investigate why?
-                    return true
-                }
-
-                // Workaround test codegen/box/elvis/nullNullOk.kt
-                if (fromType.makeNotNull().isNothing()) {
-                    body.buildUnreachable()
                     return true
                 }
 
@@ -563,36 +589,40 @@ class BodyGenerator(
                 val klass: IrClass = backendContext.inlineClassesUtils.getInlinedClass(toType)!!
                 val field = getInlineClassBackingField(klass)
 
-                generateRefNullCast(fromType, toType)
-                generateInstanceFieldAccess(field)
+                generateRefNullCast(fromType, toType, location)
+                generateInstanceFieldAccess(field, location)
             }
 
             wasmSymbols.unsafeGetScratchRawMemory -> {
-                body.buildConstI32Symbol(context.scratchMemAddr)
+                
+                body.buildConstI32Symbol(context.scratchMemAddr, location)
             }
+
+            
 
             wasmSymbols.wasmArrayCopy -> {
                 val immediate = WasmImmediate.GcType(
                     context.referenceGcType(call.getTypeArgument(0)!!.getRuntimeClass(irBuiltIns).symbol)
                 )
-                body.buildInstr(WasmOp.ARRAY_COPY, immediate, immediate)
+                body.buildInstr(WasmOp.ARRAY_COPY, location, immediate, immediate)
             }
 
             wasmSymbols.stringGetPoolSize -> {
-                body.buildConstI32Symbol(context.stringPoolSize)
+                body.buildConstI32Symbol(context.stringPoolSize, location)
             }
 
             wasmSymbols.wasmArrayNewData0 -> {
                 val arrayGcType = WasmImmediate.GcType(
                     context.referenceGcType(call.getTypeArgument(0)!!.getRuntimeClass(irBuiltIns).symbol)
                 )
-                body.buildInstr(WasmOp.ARRAY_NEW_DATA, arrayGcType, WasmImmediate.DataIdx(0))
+                body.buildInstr(WasmOp.ARRAY_NEW_DATA, location, arrayGcType, WasmImmediate.DataIdx(0))
             }
 
             else -> {
                 return false
             }
         }
+
         return true
     }
 
@@ -639,18 +669,18 @@ class BodyGenerator(
 
     override fun visitBreak(jump: IrBreak) {
         assert(jump.type == irBuiltIns.nothingType)
-        body.buildBr(functionContext.referenceLoopLevel(jump.loop, LoopLabelType.BREAK))
+        body.buildBr(functionContext.referenceLoopLevel(jump.loop, LoopLabelType.BREAK), jump.getSourceLocation())
     }
 
     override fun visitContinue(jump: IrContinue) {
         assert(jump.type == irBuiltIns.nothingType)
-        body.buildBr(functionContext.referenceLoopLevel(jump.loop, LoopLabelType.CONTINUE))
+        body.buildBr(functionContext.referenceLoopLevel(jump.loop, LoopLabelType.CONTINUE), jump.getSourceLocation())
     }
 
     private fun visitFunctionReturn(expression: IrReturn) {
         val returnType = expression.returnTargetSymbol.owner.returnType(backendContext)
         if (returnType == irBuiltIns.unitType && expression.returnTargetSymbol.owner != unitGetInstance) {
-            generateStatement(expression.value)
+            generateAsStatement(expression.value)
         } else {
             if (isGetUnitFunction) {
                 generateExpression(expression.value)
@@ -660,7 +690,7 @@ class BodyGenerator(
         }
 
         if (functionContext.irFunction is IrConstructor) {
-            body.buildGetLocal(functionContext.referenceLocal(0))
+            body.buildGetLocal(functionContext.referenceLocal(0), SourceLocation.NoLocation("Get implicit dispatch receiver"))
         }
 
         body.buildInstr(WasmOp.RETURN, expression.getSourceLocation())
@@ -670,25 +700,25 @@ class BodyGenerator(
         val actualType = expression.type
 
         if (expectedType == wasmSymbols.voidType) {
-            generateStatement(expression)
+            generateAsStatement(expression)
             return
         }
 
         if (expectedType.isUnit() && !actualType.isUnit()) {
-            generateStatement(expression)
+            generateAsStatement(expression)
             body.buildGetUnit()
             return
         }
 
         generateExpression(expression)
-        recoverToExpectedType(actualType = actualType, expectedType = expectedType)
+        recoverToExpectedType(actualType = actualType, expectedType = expectedType, location = expression.getSourceLocation())
     }
 
     //TODO: This method needed because of IR has type inconsistency. We need to discover why is it and fix
-    private fun recoverToExpectedType(actualType: IrType, expectedType: IrType) {
+    private fun recoverToExpectedType(actualType: IrType, expectedType: IrType, location: SourceLocation) {
         // TYPE -> NOTHING -> FALSE
         if (expectedType.isNothing()) {
-            body.buildUnreachable()
+            body.buildUnreachableAfterNothingType()
             return
         }
 
@@ -698,8 +728,8 @@ class BodyGenerator(
         // NOTHING? -> TYPE? -> (NOTHING?)NULL
         if (actualType.isNullableNothing() && expectedType.isNullable()) {
             if (expectedType.getClass()?.isExternal == true) {
-                body.buildDrop()
-                body.buildRefNull(WasmHeapType.Simple.NullNoExtern)
+                body.buildDrop(location)
+                body.buildRefNull(WasmHeapType.Simple.NullNoExtern, location)
             }
             return
         }
@@ -718,11 +748,12 @@ class BodyGenerator(
 
         // NOT_NOTHING_TYPE -> NOTHING -> FALSE
         if (expectedTypeErased.isNothing() && !actualTypeErased.isNothing()) {
-            body.buildUnreachable()
+            body.buildUnreachableAfterNothingType()
             return
         }
 
         // TYPE -> BASE -> TRUE
+        // TODO Shouldn't we keep nullability for subtype check?
         if (actualClassErased.isSubclassOf(expectedClassErased)) {
             return
         }
@@ -733,16 +764,17 @@ class BodyGenerator(
         // PRIMITIVE -> REF -> FALSE
         // REF -> PRIMITIVE -> FALSE
         if (expectedIsPrimitive != actualIsPrimitive) {
-            body.buildUnreachable()
+            // TODO Shouldn't we throw ICE instead? 
+            body.buildUnreachableForVerifier()
             return
         }
 
         // REF -> REF -> REF_CAST
         if (!expectedIsPrimitive) {
             if (expectedClassErased.isSubclassOf(actualClassErased)) {
-                generateRefNullCast(actualTypeErased, expectedTypeErased)
+                generateRefNullCast(actualTypeErased, expectedTypeErased, location)
             } else {
-                body.buildUnreachable()
+                body.buildUnreachableForVerifier()
             }
         }
     }
@@ -751,8 +783,7 @@ class BodyGenerator(
         val nonLocalReturnSymbol = expression.returnTargetSymbol as? IrReturnableBlockSymbol
         if (nonLocalReturnSymbol != null) {
             generateWithExpectedType(expression.value, nonLocalReturnSymbol.owner.type)
-            body.buildBr(functionContext.referenceNonLocalReturnLevel(nonLocalReturnSymbol))
-            body.buildUnreachable()
+            body.buildBr(functionContext.referenceNonLocalReturnLevel(nonLocalReturnSymbol), expression.getSourceLocation())
         } else {
             visitFunctionReturn(expression)
         }
@@ -792,7 +823,7 @@ class BodyGenerator(
                     body.buildGetUnit()
                 }
             } else {
-                body.buildUnreachable()
+                error("'When' without else branch and non Unit type: ${expression.type.dumpKotlinLike()}")
             }
         }
 
@@ -812,10 +843,10 @@ class BodyGenerator(
                 body.buildBlock("CONTINUE_$label") { wasmContinueBlock ->
                     functionContext.defineLoopLevel(loop, LoopLabelType.BREAK, wasmBreakBlock)
                     functionContext.defineLoopLevel(loop, LoopLabelType.CONTINUE, wasmContinueBlock)
-                    loop.body?.let { generateStatement(it) }
+                    loop.body?.let { generateAsStatement(it) }
                 }
                 generateExpression(loop.condition)
-                body.buildBrIf(wasmLoop)
+                body.buildBrIf(wasmLoop, loop.condition.getSourceLocation())
             }
         }
 
@@ -837,12 +868,13 @@ class BodyGenerator(
                 functionContext.defineLoopLevel(loop, LoopLabelType.CONTINUE, wasmLoop)
 
                 generateExpression(loop.condition)
-                body.buildInstr(WasmOp.I32_EQZ)
-                body.buildBrIf(wasmBreakBlock)
+                val location = loop.condition.getSourceLocation()
+                body.buildInstr(WasmOp.I32_EQZ, location)
+                body.buildBrIf(wasmBreakBlock, location)
                 loop.body?.let {
-                    generateStatement(it)
+                    generateAsStatement(it)
                 }
-                body.buildBr(wasmLoop)
+                body.buildBr(wasmLoop, SourceLocation.NoLocation("Continue in the loop"))
             }
         }
 
@@ -857,7 +889,7 @@ class BodyGenerator(
         val init = declaration.initializer!!
         generateExpression(init)
         val varName = functionContext.referenceLocal(declaration.symbol)
-        body.buildSetLocal(varName)
+        body.buildSetLocal(varName, declaration.getSourceLocation())
     }
 
     // Return true if function is recognized as intrinsic.
@@ -868,10 +900,11 @@ class BodyGenerator(
 
         val opString = function.getWasmOpAnnotation()
         if (opString != null) {
+            val location = call.getSourceLocation()
             val op = WasmOp.valueOf(opString)
             when (op.immediates.size) {
                 0 -> {
-                    body.buildInstr(op)
+                    body.buildInstr(op, location)
                 }
                 1 -> {
                     fun getReferenceGcType(): WasmSymbol<WasmTypeDeclaration> {
@@ -896,7 +929,7 @@ class BodyGenerator(
                                 error("Immediate $imm is unsupported")
                         }
                     )
-                    body.buildInstr(op, *immediates)
+                    body.buildInstr(op, location, *immediates)
                 }
                 else ->
                     error("Op $opString is unsupported")
@@ -907,15 +940,5 @@ class BodyGenerator(
         return false
     }
 
-    private fun IrExpression.getSourceLocation(): SourceLocation {
-        val fileEntry = functionContext.irFunction.fileEntry
-        val path = fileEntry.name
-        val startLine = fileEntry.getLineNumber(startOffset)
-        val startColumn = fileEntry.getColumnNumber(startOffset)
-
-        if (startLine < 0 || startColumn < 0) return SourceLocation.NoLocation
-
-        return SourceLocation.Location(path, startLine, startColumn)
-    }
-
+    private fun IrElement.getSourceLocation() = getSourceLocation(functionContext.irFunction.fileOrNull?.fileEntry)
 }

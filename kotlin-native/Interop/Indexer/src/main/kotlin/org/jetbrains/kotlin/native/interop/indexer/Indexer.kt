@@ -64,10 +64,12 @@ private class ObjCClassImpl(
     override val methods = mutableListOf<ObjCMethod>()
     override val properties = mutableListOf<ObjCProperty>()
     override var baseClass: ObjCClass? = null
+    override val includedCategories = mutableListOf<ObjCCategory>()
 }
 
 private class ObjCCategoryImpl(
-        name: String, clazz: ObjCClass
+        name: String, clazz: ObjCClass,
+        override val location: Location
 ) : ObjCCategory(name, clazz), ObjCContainerImpl {
     override val protocols = mutableListOf<ObjCProtocol>()
     override val methods = mutableListOf<ObjCMethod>()
@@ -84,7 +86,7 @@ public open class NativeIndexImpl(val library: NativeLibrary, val verbose: Boole
         object Protocol : DeclarationID()
     }
 
-    private inner class TypeDeclarationRegistry<D : TypeDeclaration> {
+    private inner class LocatableDeclarationRegistry<D : LocatableDeclaration> {
         private val all = mutableMapOf<DeclarationID, D>()
 
         val included = mutableListOf<D>()
@@ -119,22 +121,23 @@ public open class NativeIndexImpl(val library: NativeLibrary, val verbose: Boole
     }
 
     override val structs: List<StructDecl> get() = structRegistry.included
-    private val structRegistry = TypeDeclarationRegistry<StructDeclImpl>()
+    private val structRegistry = LocatableDeclarationRegistry<StructDeclImpl>()
 
     override val enums: List<EnumDef> get() = enumRegistry.included
-    private val enumRegistry = TypeDeclarationRegistry<EnumDefImpl>()
+    private val enumRegistry = LocatableDeclarationRegistry<EnumDefImpl>()
 
     override val objCClasses: List<ObjCClass> get() = objCClassRegistry.included
-    private val objCClassRegistry = TypeDeclarationRegistry<ObjCClassImpl>()
+    private val objCClassRegistry = LocatableDeclarationRegistry<ObjCClassImpl>()
 
     override val objCProtocols: List<ObjCProtocol> get() = objCProtocolRegistry.included
-    private val objCProtocolRegistry = TypeDeclarationRegistry<ObjCProtocolImpl>()
+    private val objCProtocolRegistry = LocatableDeclarationRegistry<ObjCProtocolImpl>()
 
-    override val objCCategories: Collection<ObjCCategory> get() = objCCategoryById.values
-    private val objCCategoryById = mutableMapOf<DeclarationID, ObjCCategoryImpl>()
+    override val objCCategories: Collection<ObjCCategory> get() = objCCategoryById.included
+    private val objCCategoryById = LocatableDeclarationRegistry<ObjCCategoryImpl>()
 
     override val typedefs get() = typedefRegistry.included
-    private val typedefRegistry = TypeDeclarationRegistry<TypedefDef>()
+    private val typedefRegistry = LocatableDeclarationRegistry<TypedefDef>()
+
 
     private val functionById = mutableMapOf<DeclarationID, FunctionDecl?>()
 
@@ -318,18 +321,13 @@ public open class NativeIndexImpl(val library: NativeLibrary, val verbose: Boole
             if (clang_isCursorDefinition(definitionCursor) != 0) {
                 return getEnumDefAt(definitionCursor)
             } else {
-                TODO("support enum forward declarations: " +
-                        clang_getTypeSpelling(clang_getCursorType(cursor)).convertAndDispose())
+                // FIXME("enum declaration without constants might be not a typedef, but a forward declaration instead")
+                return enumRegistry.getOrPut(cursor) { createEnumDefImpl(cursor) }
             }
         }
 
         return enumRegistry.getOrPut(cursor) {
-            val cursorType = clang_getCursorType(cursor)
-            val typeSpelling = clang_getTypeSpelling(cursorType).convertAndDispose()
-
-            val baseType = convertType(clang_getEnumDeclIntegerType(cursor))
-
-            val enumDef = EnumDefImpl(typeSpelling, baseType, getLocation(cursor))
+            val enumDef = createEnumDefImpl(cursor)
 
             visitChildren(cursor) { childCursor, _ ->
                 if (clang_getCursorKind(childCursor) == CXCursorKind.CXCursor_EnumConstantDecl) {
@@ -345,6 +343,13 @@ public open class NativeIndexImpl(val library: NativeLibrary, val verbose: Boole
 
             enumDef
         }
+    }
+
+    private fun createEnumDefImpl(cursor: CValue<CXCursor>): EnumDefImpl {
+        val cursorType = clang_getCursorType(cursor)
+        val typeSpelling = clang_getTypeSpelling(cursorType).convertAndDispose()
+        val baseType = convertType(clang_getEnumDeclIntegerType(cursor))
+        return EnumDefImpl(typeSpelling, baseType, getLocation(cursor))
     }
 
     private fun getObjCCategoryClassCursor(cursor: CValue<CXCursor>): CValue<CXCursor> {
@@ -390,10 +395,48 @@ public open class NativeIndexImpl(val library: NativeLibrary, val verbose: Boole
         return objCClassRegistry.getOrPut(cursor, {
             ObjCClassImpl(name, getLocation(cursor), isForwardDeclaration = false,
                     binaryName = getObjCBinaryName(cursor).takeIf { it != name })
-        }) {
-            addChildrenToObjCContainer(cursor, it)
+        }) { objcClass ->
+            addChildrenToObjCContainer(cursor, objcClass)
+            if (name in this.library.objCClassesIncludingCategories) {
+                // We don't include methods from categories to class during indexing
+                // because indexing does not care about how class is represented in Kotlin.
+                // Instead, it should be done during StubIR construction.
+                objcClass.includedCategories += collectClassCategories(cursor, name).mapNotNull { getObjCCategoryAt(it) }
+            }
         }
+    }
 
+    /**
+     * Find all categories for a class that is pointed by [classCursor] in the same file.
+     * NB: Current implementation is rather slow as it walks the whole translation unit.
+     */
+    private fun collectClassCategories(classCursor: CValue<CXCursor>, className: String): List<CValue<CXCursor>> {
+        assert(classCursor.kind == CXCursorKind.CXCursor_ObjCInterfaceDecl) { classCursor.kind }
+        val classFile = getContainingFile(classCursor)
+        val result = mutableListOf<CValue<CXCursor>>()
+        // Accessing the whole translation unit (TU) is overkill, but it is the simplest solution which is doable
+        // since we use this function for a narrow set of cases.
+        // Possible improvements:
+        // 1. Find/create a function that returns a file scope. `clang_findReferencesInFile` does not seem to work because for categories
+        // it returns `CXCursor_ObjCClassRef` (@interface >CLASS_REFERENCE<(CategoryName)) and there is no easy way to access category from
+        // there.
+        // 2. Extract categories collection into a separate TU pass and create Class -> [Category] mapping. This way we can avoid visiting
+        // TU for every class.
+        val translationUnit = clang_getCursorLexicalParent(classCursor)
+        visitChildren(translationUnit) { childCursor, _ ->
+            if (childCursor.kind == CXCursorKind.CXCursor_ObjCCategoryDecl) {
+                val categoryClassCursor = getObjCCategoryClassCursor(childCursor)
+                val categoryClassName = clang_getCursorDisplayName(categoryClassCursor).convertAndDispose()
+                if (className == categoryClassName) {
+                    val categoryFile = getContainingFile(childCursor)
+                    if (clang_File_isEqual(categoryFile, classFile) != 0) {
+                        result += childCursor
+                    }
+                }
+            }
+            CXChildVisitResult.CXChildVisit_Continue
+        }
+        return result
     }
 
     private fun getObjCProtocolAt(cursor: CValue<CXCursor>): ObjCProtocolImpl {
@@ -433,11 +476,10 @@ public open class NativeIndexImpl(val library: NativeLibrary, val verbose: Boole
         if (!isAvailable(classCursor)) return null
 
         val name = clang_getCursorDisplayName(cursor).convertAndDispose()
-        val declarationId = getDeclarationId(cursor)
 
-        return objCCategoryById.getOrPut(declarationId) {
+        return objCCategoryById.getOrPut(cursor) {
             val clazz = getObjCClassAt(classCursor)
-            val category = ObjCCategoryImpl(name, clazz)
+            val category = ObjCCategoryImpl(name, clazz, getLocation(cursor))
             addChildrenToObjCContainer(cursor, category)
             category
         }

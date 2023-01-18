@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.generators.tests.analysis.api
 
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.annotations.AbstractAnalysisApiAnnotationsOnDeclarationsTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.annotations.AbstractAnalysisApiAnnotationsOnDeclarationsWithMetaTest
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.annotations.AbstractAnalysisApiAnnotationsOnFilesTest
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.annotations.AbstractAnalysisApiAnnotationsOnTypesTest
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.callResolver.AbstractResolveCallTest
@@ -22,6 +23,7 @@ import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.express
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.expressionTypeProvider.AbstractExpectedExpressionTypeTest
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.expressionTypeProvider.AbstractHLExpressionTypeTest
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.importOptimizer.AbstractAnalysisApiImportOptimizerTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.multiplatformInfoProvider.AbstractExpectForActualTest
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.psiTypeProvider.AbstractAnalysisApiExpressionPsiTypeProviderTest
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.psiTypeProvider.AbstractAnalysisApiPsiTypeProviderTest
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.signatureSubstitution.AbstractAnalysisApiSignatureContractsTest
@@ -163,6 +165,11 @@ private fun AnalysisApiTestGroup.generateAnalysisApiNonComponentsTests() {
         ) {
             model("annotationsOnFiles")
         }
+
+        test(AbstractAnalysisApiAnnotationsOnDeclarationsWithMetaTest::class) {
+            model("metaAnnotations")
+        }
+
     }
 
     group("substitutors", filter = frontendIs(FrontendKind.Fir)) {
@@ -262,6 +269,12 @@ private fun AnalysisApiTestGroup.generateAnalysisApiComponentsTests() {
             filter = frontendIs(FrontendKind.Fir) and analysisSessionModeIs(AnalysisSessionMode.Normal),
         ) {
             model("analyseImports", pattern = TestGeneratorUtil.KT_WITHOUT_DOTS_IN_NAME)
+        }
+    }
+
+    component("multiplatformInfoProvider") {
+        test(AbstractExpectForActualTest::class) {
+            model("expectForActual")
         }
     }
 

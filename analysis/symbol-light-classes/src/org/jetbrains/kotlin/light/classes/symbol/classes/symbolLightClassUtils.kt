@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithTypeParameters
 import org.jetbrains.kotlin.analysis.api.symbols.markers.isPrivateOrPrivateToThis
+import org.jetbrains.kotlin.analysis.api.types.KtClassErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
@@ -289,6 +290,25 @@ internal fun SymbolLightClassBase.createPropertyAccessors(
     if (declaration.getter?.hasBody != true && declaration.setter?.hasBody != true && declaration.visibility.isPrivateOrPrivateToThis()) return
 
     if (declaration.hasJvmFieldAnnotation()) return
+    val propertyTypeIsValueClass = declaration.returnType.typeForValueClass
+    /*
+     * For top-level properties with value class in return type compiler mangles only setter
+     *
+     *   @JvmInline
+     *   value class Some(val value: String)
+     *
+     *   var topLevelProp: Some = Some("1")
+     *
+     * Compiles to
+     *   public final class FooKt {
+     *     public final static getTopLevelProp()Ljava/lang/String;
+     *
+     *     public final static setTopLevelProp-5lyY9Q4(Ljava/lang/String;)V
+     *
+     *     private static Ljava/lang/String; topLevelProp
+     *  }
+     */
+    if (this !is SymbolLightClassForFacade && propertyTypeIsValueClass) return
 
     fun KtPropertyAccessorSymbol.needToCreateAccessor(siteTarget: AnnotationUseSiteTarget): Boolean {
         if (onlyJvmStatic &&
@@ -333,7 +353,7 @@ internal fun SymbolLightClassBase.createPropertyAccessors(
     }
 
     val setter = declaration.setter?.takeIf {
-        !isAnnotationType && it.needToCreateAccessor(AnnotationUseSiteTarget.PROPERTY_SETTER)
+        !isAnnotationType && it.needToCreateAccessor(AnnotationUseSiteTarget.PROPERTY_SETTER) && !propertyTypeIsValueClass
     }
 
     if (isMutable && setter != null) {
@@ -418,30 +438,42 @@ internal fun SymbolLightClassForClassLike<*>.createInheritanceList(
     )
 
     fun KtType.needToAddTypeIntoList(): Boolean {
-        if (this !is KtNonErrorClassType) return false
-
         // Do not add redundant "extends java.lang.Object" anywhere
-        if (this.classId == StandardClassIds.Any) return false
-
-        // We don't have Enum among enums supertype in sources neither we do for decompiled class-files and light-classes
-        if (isEnum && this.classId == StandardClassIds.Enum) return false
-
+        if (this.isAny) return false
         // Interfaces have only extends lists
         if (isInterface) return forExtendsList
 
-        val classKind = (classSymbol as? KtClassOrObjectSymbol)?.classKind
-        val isJvmInterface = classKind == KtClassKind.INTERFACE || classKind == KtClassKind.ANNOTATION_CLASS
+        return when (this) {
+            is KtNonErrorClassType -> {
+                // We don't have Enum among enums supertype in sources neither we do for decompiled class-files and light-classes
+                if (isEnum && this.classId == StandardClassIds.Enum) return false
 
-        return forExtendsList == !isJvmInterface
+                val classKind = (classSymbol as? KtClassOrObjectSymbol)?.classKind
+                val isJvmInterface = classKind == KtClassKind.INTERFACE || classKind == KtClassKind.ANNOTATION_CLASS
+
+                forExtendsList == !isJvmInterface
+            }
+
+            is KtClassErrorType -> {
+                val superList = this@createInheritanceList.kotlinOrigin?.getSuperTypeList() ?: return false
+                val qualifierName = this.qualifiers.joinToString(".") { it.name.asString() }.takeIf { it.isNotEmpty() } ?: return false
+                val isConstructorCall = superList.findEntry(qualifierName) is KtSuperTypeCallEntry
+
+                forExtendsList == isConstructorCall
+            }
+
+            else -> false
+        }
     }
 
     superTypes.asSequence()
         .filter { it.needToAddTypeIntoList() }
         .forEach { superType ->
-            if (superType !is KtNonErrorClassType) return@forEach
-            val mappedType =
-                mapType(superType, this@createInheritanceList, KtTypeMappingMode.SUPER_TYPE_KOTLIN_COLLECTIONS_AS_IS)
-                    ?: return@forEach
+            val mappedType = mapType(
+                superType,
+                this@createInheritanceList,
+                KtTypeMappingMode.SUPER_TYPE_KOTLIN_COLLECTIONS_AS_IS
+            ) ?: return@forEach
             listBuilder.addReference(mappedType)
             if (mappedType.canonicalText.startsWith("kotlin.collections.")) {
                 val mappedToNoCollectionAsIs = mapType(superType, this@createInheritanceList, KtTypeMappingMode.SUPER_TYPE)
@@ -451,7 +483,9 @@ internal fun SymbolLightClassForClassLike<*>.createInheritanceList(
                     // Add java supertype
                     listBuilder.addReference(mappedToNoCollectionAsIs)
                     // Add marker interface
-                    listBuilder.addMarkerInterfaceIfNeeded(superType.classId)
+                    if (superType is KtNonErrorClassType) {
+                        listBuilder.addMarkerInterfaceIfNeeded(superType.classId)
+                    }
                 }
             }
         }
@@ -587,3 +621,10 @@ internal fun SymbolLightClassBase.addPropertyBackingFields(
     // Then, regular member properties
     propertyGroups[false]?.forEach(::addPropertyBackingField)
 }
+
+context(KtAnalysisSession)
+internal val KtType.typeForValueClass: Boolean
+    get() {
+        val symbol = expandedClassSymbol as? KtNamedClassOrObjectSymbol ?: return false
+        return symbol.isInline
+    }

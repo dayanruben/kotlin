@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.ir.backend.js.*
 import org.jetbrains.kotlin.ir.backend.js.codegen.JsGenerationGranularity
 import org.jetbrains.kotlin.ir.backend.js.ic.CacheUpdater
 import org.jetbrains.kotlin.ir.backend.js.ic.JsExecutableProducer
+import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.CompilationOutputs
 import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.IrModuleToJsTransformer
 import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.TranslationMode
 import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
@@ -168,18 +169,9 @@ abstract class AbstractJsKLibABITestCase : KtUsefulTestCase() {
             buildBinaryNoIC(configuration, mainModuleKlibFile, allDependencies)
 
         val binariesDir = File(buildDir, BIN_DIR_NAME).also { it.mkdirs() }
-        val binaries = ArrayList<File>(allDependencies.regularDependencies.size)
-
-        for ((name, code) in compilationOutputs.dependencies) {
-            val depBinary = binariesDir.binJsFile(name)
-            depBinary.parentFile?.let { if (!it.exists()) it.mkdirs() }
-            depBinary.writeText(code.jsCode)
-            binaries.add(depBinary)
+        val binaries = compilationOutputs.writeAll(binariesDir, MAIN_MODULE_NAME, false, MAIN_MODULE_NAME, ModuleKind.PLAIN).filter {
+            it.extension == "js"
         }
-
-        val mainBinary = binariesDir.binJsFile(MAIN_MODULE_NAME)
-        mainBinary.writeText(compilationOutputs.jsCode)
-        binaries.add(mainBinary)
 
         executeAndCheckBinaries(MAIN_MODULE_NAME, binaries)
     }
@@ -245,11 +237,11 @@ abstract class AbstractJsKLibABITestCase : KtUsefulTestCase() {
 
         val compiledResult = transformer.generateModule(
             modules = ir.allModules,
-            modes = setOf(TranslationMode.PER_MODULE),
+            modes = setOf(TranslationMode.PER_MODULE_DEV),
             relativeRequirePath = false
         )
 
-        return compiledResult.outputs[TranslationMode.PER_MODULE] ?: error("No compiler output")
+        return compiledResult.outputs[TranslationMode.PER_MODULE_DEV] ?: error("No compiler output")
     }
 
     private fun KotlinCoreEnvironment.createPsiFiles(sourceDir: File): List<KtFile> {

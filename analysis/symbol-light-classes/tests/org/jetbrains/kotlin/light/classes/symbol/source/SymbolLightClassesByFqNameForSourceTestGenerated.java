@@ -193,6 +193,12 @@ public class SymbolLightClassesByFqNameForSourceTestGenerated extends AbstractSy
     }
 
     @Test
+    @TestMetadata("JavaClassWithAnnotation.kt")
+    public void testJavaClassWithAnnotation() throws Exception {
+        runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/JavaClassWithAnnotation.kt");
+    }
+
+    @Test
     @TestMetadata("JvmNameOnMember.kt")
     public void testJvmNameOnMember() throws Exception {
         runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/JvmNameOnMember.kt");
@@ -403,6 +409,12 @@ public class SymbolLightClassesByFqNameForSourceTestGenerated extends AbstractSy
         @TestMetadata("TwoOverrides.kt")
         public void testTwoOverrides() throws Exception {
             runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/TwoOverrides.kt");
+        }
+
+        @Test
+        @TestMetadata("unresolvedQuialifierInAnnotation.kt")
+        public void testUnresolvedQuialifierInAnnotation() throws Exception {
+            runTest("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/unresolvedQuialifierInAnnotation.kt");
         }
 
         @Test

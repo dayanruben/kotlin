@@ -364,8 +364,27 @@ class KotlinMetadataTargetConfigurator :
             }
         )
 
-        if (sourceSet is DefaultKotlinSourceSet)
+        @Suppress("DEPRECATION")
+        if (sourceSet is DefaultKotlinSourceSet) {
             sourceSet.compileDependenciesTransformation = granularMetadataTransformation
+
+            /*
+            Older IDEs still rely on resolving the metadata configurations explicitly.
+            Dependencies will be coming from extending the newer 'resolvableMetadataConfiguration'.
+
+            the intransitiveMetadataConfigurationName will not extend this mechanism, since it only
+            relies on dependencies being added explicitly by the Kotlin Gradle Plugin
+            */
+            listOf(
+                sourceSet.apiMetadataConfigurationName,
+                sourceSet.implementationMetadataConfigurationName,
+                sourceSet.compileOnlyMetadataConfigurationName
+            ).forEach { configurationName ->
+                val configuration = project.configurations.getByName(configurationName)
+                configuration.extendsFrom(sourceSet.resolvableMetadataConfiguration)
+                granularMetadataTransformation.applyToConfiguration(configuration)
+            }
+        }
     }
 
     /** Ensure that the [configuration] excludes the dependencies that are classified by this [GranularMetadataTransformation] as
@@ -532,6 +551,11 @@ internal fun isNativeSourceSet(sourceSet: KotlinSourceSet): Boolean {
 internal fun isSinglePlatformTypeSourceSet(sourceSet: KotlinSourceSet): Boolean {
     val platformCompilations = sourceSet.internal.compilations.filterNot { it.platformType == KotlinPlatformType.common }
     return platformCompilations.map { it.platformType }.toSet().size == 1
+}
+
+internal fun isSingleKotlinTargetSourceSet(sourceSet: KotlinSourceSet): Boolean {
+    val platformCompilations = sourceSet.internal.compilations.filterNot { it.platformType == KotlinPlatformType.common }
+    return platformCompilations.map { it.target }.toSet().size == 1
 }
 
 internal fun dependsOnClosureWithInterCompilationDependencies(sourceSet: KotlinSourceSet): Set<KotlinSourceSet> =

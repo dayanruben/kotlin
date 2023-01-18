@@ -24,9 +24,11 @@ import org.jetbrains.kotlin.gradle.plugin.ide.IdeMultiplatformImport.SourceSetCo
 import org.jetbrains.kotlin.gradle.plugin.sources.internal
 import org.jetbrains.kotlin.gradle.plugin.sources.project
 import org.jetbrains.kotlin.gradle.targets.metadata.isNativeSourceSet
+import org.jetbrains.kotlin.gradle.targets.metadata.isSingleKotlinTargetSourceSet
 import org.jetbrains.kotlin.gradle.targets.metadata.isSinglePlatformTypeSourceSet
 import org.jetbrains.kotlin.gradle.utils.getOrPut
 import org.jetbrains.kotlin.tooling.core.Extras
+import org.jetbrains.kotlin.tooling.core.HasMutableExtras
 
 interface IdeMultiplatformImport {
 
@@ -35,6 +37,12 @@ interface IdeMultiplatformImport {
     fun resolveDependencies(sourceSet: KotlinSourceSet): Set<IdeaKotlinDependency>
 
     fun resolveDependenciesSerialized(sourceSetName: String): List<ByteArray>
+
+    /**
+     * @param owner: Should implement [HasMutableExtras]. Passing [Any] is fine to make it easier to cross
+     *  ClassLoader boundaries. Passing some non [HasMutableExtras] will just return null
+     */
+    fun resolveExtrasSerialized(owner: Any): ByteArray?
 
     fun serialize(dependencies: Iterable<IdeaKotlinDependency>): List<ByteArray>
 
@@ -169,6 +177,8 @@ interface IdeMultiplatformImport {
             val isNative = SourceSetConstraint { isNativeSourceSet(it) }
 
             val isSinglePlatformType = SourceSetConstraint { isSinglePlatformTypeSourceSet(it) }
+
+            val isSingleKotlinTarget = SourceSetConstraint { isSingleKotlinTargetSourceSet(it) }
 
             val isLeaf = SourceSetConstraint { sourceSet ->
                 (sourceSet.project.multiplatformExtensionOrNull ?: return@SourceSetConstraint true).sourceSets

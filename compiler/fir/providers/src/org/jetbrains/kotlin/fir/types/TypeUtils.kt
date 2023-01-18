@@ -23,9 +23,13 @@ import org.jetbrains.kotlin.fir.resolve.substitution.substitutorByMap
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.resolvedTypeFromPrototype
 import org.jetbrains.kotlin.fir.symbols.ConeTypeParameterLookupTag
-import org.jetbrains.kotlin.fir.symbols.impl.*
+import org.jetbrains.kotlin.fir.symbols.impl.FirClassLikeSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirClassifierSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirTypeParameterSymbol
 import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
-import org.jetbrains.kotlin.fir.types.builder.*
+import org.jetbrains.kotlin.fir.types.builder.buildErrorTypeRef
+import org.jetbrains.kotlin.fir.types.builder.buildResolvedTypeRef
 import org.jetbrains.kotlin.fir.types.impl.ConeClassLikeTypeImpl
 import org.jetbrains.kotlin.fir.types.impl.ConeTypeParameterTypeImpl
 import org.jetbrains.kotlin.fir.types.lowerBoundIfFlexible
@@ -118,8 +122,8 @@ fun <T : ConeKotlinType> T.withArguments(arguments: Array<out ConeTypeProjection
 
     @Suppress("UNCHECKED_CAST")
     return when (this) {
-        is ConeErrorType -> this
-        is ConeClassLikeTypeImpl -> ConeClassLikeTypeImpl(lookupTag, arguments, nullability.isNullable) as T
+        is ConeErrorType -> ConeErrorType(diagnostic, isUninferredParameter, arguments, attributes) as T
+        is ConeClassLikeTypeImpl -> ConeClassLikeTypeImpl(lookupTag, arguments, nullability.isNullable, attributes) as T
         is ConeDefinitelyNotNullType -> ConeDefinitelyNotNullType(original.withArguments(arguments)) as T
         else -> error("Not supported: $this: ${this.renderForDebugging()}")
     }
@@ -652,7 +656,7 @@ private fun FirTypeParameter.eraseToUpperBound(
         if (intersectUpperBounds) {
             ConeTypeIntersector.intersectTypes(session.typeContext, symbol.resolvedBounds.map(::eraseAsUpperBound))
         } else {
-            eraseAsUpperBound(symbol.resolvedBounds.first())
+            eraseAsUpperBound(symbol.fir.bounds.first() as FirResolvedTypeRef)
         }
     }
 }

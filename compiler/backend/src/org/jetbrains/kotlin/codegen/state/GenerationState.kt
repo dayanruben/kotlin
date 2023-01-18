@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.codegen.optimization.OptimizationClassBuilderFactory
 import org.jetbrains.kotlin.codegen.serialization.JvmSerializationBindings
 import org.jetbrains.kotlin.codegen.`when`.MappingsClassesForWhenByEnum
 import org.jetbrains.kotlin.config.*
-import org.jetbrains.kotlin.config.LanguageVersion.*
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
@@ -33,7 +32,6 @@ import org.jetbrains.kotlin.diagnostics.DiagnosticSink
 import org.jetbrains.kotlin.idea.MainFunctionDetector
 import org.jetbrains.kotlin.load.java.components.JavaDeprecationSettings
 import org.jetbrains.kotlin.load.kotlin.incremental.components.IncrementalCache
-import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmMetadataVersion
 import org.jetbrains.kotlin.modules.TargetId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -45,15 +43,16 @@ import org.jetbrains.kotlin.resolve.deprecation.DeprecationResolver
 import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
 import org.jetbrains.kotlin.resolve.diagnostics.OnDemandSuppressCache
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
+import org.jetbrains.kotlin.resolve.jvm.JvmCompilerDeserializationConfiguration
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.JvmDeclarationOrigin
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.JvmDeclarationOriginKind.*
 import org.jetbrains.kotlin.serialization.deserialization.DeserializationConfiguration
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeApproximator
+import org.jetbrains.kotlin.utils.metadataVersion
 import org.jetbrains.org.objectweb.asm.Type
 import java.io.File
-import java.util.*
 
 class GenerationState private constructor(
     val project: Project,
@@ -186,7 +185,7 @@ class GenerationState private constructor(
     val packagesWithObsoleteParts: Set<FqName>
     val obsoleteMultifileClasses: List<FqName>
     val deserializationConfiguration: DeserializationConfiguration =
-        CompilerDeserializationConfiguration(languageVersionSettings)
+        JvmCompilerDeserializationConfiguration(languageVersionSettings)
 
     val deprecationProvider = DeprecationResolver(
         LockBasedStorageManager.NO_LOCKS, languageVersionSettings, JavaDeprecationSettings
@@ -346,9 +345,7 @@ class GenerationState private constructor(
 
     val disableOptimization = configuration.get(JVMConfigurationKeys.DISABLE_OPTIMIZATION, false)
 
-    val metadataVersion =
-        configuration.get(CommonConfigurationKeys.METADATA_VERSION)
-            ?: LANGUAGE_TO_METADATA_VERSION.getValue(languageVersionSettings.languageVersion)
+    val metadataVersion = configuration.metadataVersion()
 
     val abiStability = configuration.get(JVMConfigurationKeys.ABI_STABILITY)
 
@@ -438,27 +435,6 @@ class GenerationState private constructor(
     val newFragmentCaptureParameters: MutableList<Triple<String, KotlinType, DeclarationDescriptor>> = mutableListOf()
     fun recordNewFragmentCaptureParameter(string: String, type: KotlinType, descriptor: DeclarationDescriptor) {
         newFragmentCaptureParameters.add(Triple(string, type, descriptor))
-    }
-
-    companion object {
-        val LANGUAGE_TO_METADATA_VERSION = EnumMap<LanguageVersion, JvmMetadataVersion>(LanguageVersion::class.java).apply {
-            val oldMetadataVersion = JvmMetadataVersion(1, 1, 18)
-            this[KOTLIN_1_0] = oldMetadataVersion
-            this[KOTLIN_1_1] = oldMetadataVersion
-            this[KOTLIN_1_2] = oldMetadataVersion
-            this[KOTLIN_1_3] = oldMetadataVersion
-            this[KOTLIN_1_4] = JvmMetadataVersion(1, 4, 3)
-            this[KOTLIN_1_5] = JvmMetadataVersion(1, 5, 1)
-            this[KOTLIN_1_6] = JvmMetadataVersion(1, 6, 0)
-            this[KOTLIN_1_7] = JvmMetadataVersion(1, 7, 0)
-            this[KOTLIN_1_8] = JvmMetadataVersion.INSTANCE
-            this[KOTLIN_1_9] = JvmMetadataVersion(1, 9, 0)
-
-            check(size == LanguageVersion.values().size) {
-                "Please add mappings from the missing LanguageVersion instances to the corresponding JvmMetadataVersion " +
-                        "in `GenerationState.LANGUAGE_TO_METADATA_VERSION`"
-            }
-        }
     }
 }
 

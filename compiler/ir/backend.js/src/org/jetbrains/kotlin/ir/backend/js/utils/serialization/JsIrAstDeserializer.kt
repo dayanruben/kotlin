@@ -240,6 +240,7 @@ private class JsIrAstDeserializer(private val source: ByteArray) {
     private val sideEffectKindValues = SideEffectKind.values()
     private val jsBinaryOperatorValues = JsBinaryOperator.values()
     private val jsUnaryOperatorValues = JsUnaryOperator.values()
+    private val jsFunctionModifiersValues = JsFunction.Modifier.values()
 
     private fun readExpression(): JsExpression {
         return withComments {
@@ -248,6 +249,9 @@ private class JsIrAstDeserializer(private val source: ByteArray) {
                     when (val id = readByte().toInt()) {
                         THIS_REF -> {
                             JsThisRef()
+                        }
+                        SUPER_REF -> {
+                            JsSuperRef()
                         }
                         NULL -> {
                             JsNullLiteral()
@@ -283,10 +287,15 @@ private class JsIrAstDeserializer(private val source: ByteArray) {
                             )
                         }
                         FUNCTION -> {
-                            JsFunction(scope, readBlock(), "").apply {
-                                readRepeated { parameters += readParameter() }
-                                ifTrue { name = nameTable[readInt()] }
-                                isLocal = readBoolean()
+                            readFunction()
+                        }
+                        CLASS -> {
+                            JsClass(
+                                ifTrue { nameTable[readInt()] },
+                                ifTrue { nameTable[readInt()].makeRef() },
+                                ifTrue { readFunction() },
+                            ).apply {
+                                readRepeated { members += readFunction() }
                             }
                         }
                         DOC_COMMENT -> {
@@ -298,16 +307,16 @@ private class JsIrAstDeserializer(private val source: ByteArray) {
                         }
                         BINARY_OPERATION -> {
                             JsBinaryOperation(
-                                jsBinaryOperatorValues[readInt()],
+                                jsBinaryOperatorValues[readByte().toInt()],
                                 readExpression(),
                                 readExpression()
                             )
                         }
                         PREFIX_OPERATION -> {
-                            JsPrefixOperation(jsUnaryOperatorValues[readInt()], readExpression())
+                            JsPrefixOperation(jsUnaryOperatorValues[readByte().toInt()], readExpression())
                         }
                         POSTFIX_OPERATION -> {
-                            JsPostfixOperation(jsUnaryOperatorValues[readInt()], readExpression())
+                            JsPostfixOperation(jsUnaryOperatorValues[readByte().toInt()], readExpression())
                         }
                         CONDITIONAL -> {
                             JsConditional(
@@ -348,8 +357,17 @@ private class JsIrAstDeserializer(private val source: ByteArray) {
             }
         }.apply {
             synthetic = readBoolean()
-            sideEffects = sideEffectKindValues[readInt()]
+            sideEffects = sideEffectKindValues[readByte().toInt()]
             ifTrue { localAlias = readJsImportedModule() }
+        }
+    }
+
+    private fun readFunction(): JsFunction {
+        return JsFunction(scope, readBlock(), "").apply {
+            readRepeated { parameters += readParameter() }
+            readRepeated { modifiers += jsFunctionModifiersValues[readInt()] }
+            ifTrue { name = nameTable[readInt()] }
+            isLocal = readBoolean()
         }
     }
 

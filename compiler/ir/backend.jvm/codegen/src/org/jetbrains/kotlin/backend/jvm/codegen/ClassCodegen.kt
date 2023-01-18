@@ -53,6 +53,7 @@ import org.jetbrains.kotlin.name.JvmNames.VOLATILE_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtPropertyDelegate
 import org.jetbrains.kotlin.resolve.jvm.checkers.JvmSimpleNameBacktickChecker
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.*
 import org.jetbrains.kotlin.resolve.jvm.jvmSignature.JvmClassSignature
@@ -80,10 +81,7 @@ class ClassCodegen private constructor(
 
     private val state get() = context.state
 
-    // TODO: the order of entries in this set depends on the order in which methods are generated; this means it is unstable
-    //       under incremental compilation, as calls to `inline fun`s declared in this class cause them to be generated out of order.
-    private val innerClasses = linkedSetOf<IrClass>()
-
+    private val innerClasses = mutableSetOf<IrClass>()
     val typeMapper =
         if (context.state.oldInnerClassesLogic)
             context.defaultTypeMapper
@@ -476,7 +474,7 @@ class ClassCodegen private constructor(
             }
         }
 
-        for (klass in innerClasses) {
+        for (klass in innerClasses.sortedBy { it.fqNameWhenAvailable?.asString() }) {
             val innerJavaClassId = klass.mapToJava()
             val innerClass = innerJavaClassId?.internalName ?: typeMapper.classInternalName(klass)
             val outerClass =
@@ -524,7 +522,15 @@ class ClassCodegen private constructor(
 
     private val IrDeclaration.descriptorOrigin: JvmDeclarationOrigin
         get() {
-            val psiElement = PsiSourceManager.findPsiElement(this)
+            val psiElement = PsiSourceManager.findPsiElement(this).let { element ->
+                // Offsets for accessors and field of delegated property in IR point to the 'by' keyword, so the closest PSI element is the
+                // KtPropertyDelegate (`by ...` expression). However, old JVM backend passed the PSI element of the property instead.
+                // This is important for example in case of KAPT stub generation in the "correct error types" mode, which tries to find the
+                // PSI element for each declaration with unresolved types and tries to heuristically "resolve" those unresolved types to
+                // generate them into the Java stub. In case of delegated property accessors, it should look for the property declaration,
+                // since the type can only be provided there, and not in the `by ...` expression.
+                if (element is KtPropertyDelegate) element.parent else element
+            }
             return when {
                 origin == IrDeclarationOrigin.FILE_CLASS ->
                     JvmDeclarationOrigin(JvmDeclarationOriginKind.PACKAGE_PART, psiElement, toIrBasedDescriptor())

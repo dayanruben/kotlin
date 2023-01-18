@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -57,6 +57,7 @@ internal open class SymbolLightClassForInterface : SymbolLightClassForInterfaceO
 
             val visibleDeclarations = classOrObjectSymbol.getDeclaredMemberScope().getCallableSymbols()
                 .filterNot { it is KtFunctionSymbol && it.visibility.isPrivateOrPrivateToThis() }
+                .filterNot { it.hasTypeForValueClassInSignature() }
 
             createMethods(visibleDeclarations, result)
             addMethodsFromCompanionIfNeeded(result, classOrObjectSymbol)

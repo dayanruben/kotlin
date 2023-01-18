@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.ir.backend.js.ic.JsExecutableProducer
 import org.jetbrains.kotlin.ir.backend.js.lower.serialization.ir.JsManglerDesc
 import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.IrModuleToJsTransformer
 import org.jetbrains.kotlin.ir.backend.js.SourceMapsInfo
+import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.CompilationOutputs
 import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.TranslationMode
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImplForJsIC
@@ -36,6 +37,7 @@ import org.jetbrains.kotlin.test.frontend.classic.moduleDescriptorProvider
 import org.jetbrains.kotlin.test.model.*
 import org.jetbrains.kotlin.test.services.*
 import org.jetbrains.kotlin.test.services.configuration.JsEnvironmentConfigurator
+import org.jetbrains.kotlin.utils.addToStdlib.ifTrue
 import org.jetbrains.kotlin.utils.fileUtils.withReplacedExtensionOrNull
 import java.io.File
 
@@ -75,6 +77,7 @@ class JsIrBackendFacade(
         val splitPerFile = JsEnvironmentConfigurationDirectives.SPLIT_PER_FILE in module.directives
         val perModule = JsEnvironmentConfigurationDirectives.PER_MODULE in module.directives
         val keep = module.directives[JsEnvironmentConfigurationDirectives.KEEP].toSet()
+        val es6Mode = JsEnvironmentConfigurationDirectives.ES6_MODE in module.directives
 
         val granularity = when {
             !firstTimeCompilation -> JsGenerationGranularity.WHOLE_PROGRAM
@@ -96,7 +99,7 @@ class JsIrBackendFacade(
             }
 
             val compiledModule = CompilerResult(
-                outputs = listOf(TranslationMode.FULL, TranslationMode.PER_MODULE).associateWith {
+                outputs = listOf(TranslationMode.FULL_DEV, TranslationMode.PER_MODULE_DEV).associateWith {
                     val jsExecutableProducer = JsExecutableProducer(
                         mainModuleName = configuration.getNotNull(CommonConfigurationKeys.MODULE_NAME),
                         moduleKind = configuration.get(JSConfigurationKeys.MODULE_KIND, ModuleKind.PLAIN),
@@ -141,7 +144,7 @@ class JsIrBackendFacade(
             exportedDeclarations = setOf(FqName.fromSegments(listOfNotNull(testPackage, TEST_FUNCTION))),
             keep = keep,
             dceRuntimeDiagnostic = null,
-            es6mode = false,
+            es6mode = es6Mode,
             safeExternalBoolean = JsEnvironmentConfigurationDirectives.SAFE_EXTERNAL_BOOLEAN in module.directives,
             safeExternalBooleanDiagnostic = module.directives[JsEnvironmentConfigurationDirectives.SAFE_EXTERNAL_BOOLEAN_DIAGNOSTIC].singleOrNull(),
             granularity = granularity,
@@ -164,7 +167,7 @@ class JsIrBackendFacade(
                 module.directives[JsEnvironmentConfigurationDirectives.MODULE_KIND].contains(ModuleKind.ES)
 
         val outputFile =
-            File(JsEnvironmentConfigurator.getJsModuleArtifactPath(testServices, module.name, TranslationMode.FULL) + module.kind.extension)
+            File(JsEnvironmentConfigurator.getJsModuleArtifactPath(testServices, module.name, TranslationMode.FULL_DEV) + module.kind.extension)
 
         val transformer = IrModuleToJsTransformer(
             loweredIr.context,
@@ -178,8 +181,8 @@ class JsIrBackendFacade(
         // If perModuleOnly then skip whole program
         // (it.dce => runIrDce) && (perModuleOnly => it.perModule)
         val translationModes = TranslationMode.values()
-            .filter { (it.dce || !onlyIrDce) && (!it.dce || runIrDce) && (!perModuleOnly || it.perModule) }
-            .filter { it.dce == it.minimizedMemberNames }
+            .filter { (it.production || !onlyIrDce) && (!it.production || runIrDce) && (!perModuleOnly || it.perModule) }
+            .filter { it.production == it.minimizedMemberNames }
             .toSet()
         val compilationOut = transformer.generateModule(loweredIr.allModules, translationModes, false)
         return BinaryArtifacts.Js.JsIrArtifact(outputFile, compilationOut).dump(module)
@@ -256,17 +259,30 @@ class JsIrBackendFacade(
         return this
     }
 
-    private fun CompilationOutputs.writeTo(outputFile: File, moduleId: String, moduleKind: ModuleKind) {
-        val wrappedCode = ClassicJsBackendFacade.wrapWithModuleEmulationMarkers(jsCode, moduleId = moduleId, moduleKind = moduleKind)
-        outputFile.write(wrappedCode)
+    fun File.fixJsFile(newJsTarget: File, moduleId: String, moduleKind: ModuleKind) {
+        val newJsCode = ClassicJsBackendFacade.wrapWithModuleEmulationMarkers(readText(), moduleKind, moduleId)
 
-        if (moduleKind == ModuleKind.PLAIN) {
-            writeSourceMapIfPresent(outputFile)
+        val oldJsMap = File("$absolutePath.map")
+        val jsCodeMap = (moduleKind == ModuleKind.PLAIN && oldJsMap.exists()).ifTrue { oldJsMap.readText() }
+
+        this.delete()
+        oldJsMap.delete()
+
+        newJsTarget.write(newJsCode)
+        jsCodeMap?.let { File("${newJsTarget.absolutePath}.map").write(it) }
+    }
+
+    private fun CompilationOutputs.writeTo(outputFile: File, moduleId: String, moduleKind: ModuleKind) {
+        val allJsFiles = writeAll(outputFile.parentFile, outputFile.nameWithoutExtension, false, moduleId, moduleKind).filter {
+            it.extension == "js"
         }
 
-        dependencies.forEach { (moduleId, outputs) ->
-            val moduleWrappedCode = ClassicJsBackendFacade.wrapWithModuleEmulationMarkers(outputs.jsCode, moduleKind, moduleId)
-            outputFile.augmentWithModuleName(moduleId).write(moduleWrappedCode)
+        val mainModuleFile = allJsFiles.last()
+        mainModuleFile.fixJsFile(outputFile, moduleId, moduleKind)
+
+        dependencies.map { it.first }.zip(allJsFiles.dropLast(1)).forEach { (depModuleId, builtJsFilePath) ->
+            val newFile = outputFile.augmentWithModuleName(depModuleId)
+            builtJsFilePath.fixJsFile(newFile, depModuleId, moduleKind)
         }
     }
 

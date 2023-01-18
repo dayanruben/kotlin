@@ -112,7 +112,7 @@ rootProject.apply {
 IdeVersionConfigurator.setCurrentIde(project)
 
 if (!project.hasProperty("versions.kotlin-native")) {
-    extra["versions.kotlin-native"] = "1.8.20-dev-5321"
+    extra["versions.kotlin-native"] = "1.8.20-dev-5812"
 }
 
 val irCompilerModules = arrayOf(
@@ -160,6 +160,7 @@ val firCompilerCoreModules = arrayOf(
     ":compiler:fir:resolve",
     ":compiler:fir:fir-serialization",
     ":compiler:fir:fir-deserialization",
+    ":compiler:fir:plugin-utils",
     ":compiler:fir:tree",
     ":compiler:fir:java",
     ":compiler:fir:raw-fir:raw-fir.common",
@@ -358,9 +359,11 @@ val projectsWithEnabledContextReceivers by extra {
         ":core:descriptors.jvm",
         ":compiler:frontend.common",
         ":compiler:fir:resolve",
+        ":compiler:fir:plugin-utils",
         ":compiler:fir:fir2ir",
         ":kotlin-lombok-compiler-plugin.k1",
         ":kotlinx-serialization-compiler-plugin.k2",
+        ":plugins:parcelize:parcelize-compiler:parcelize.k2",
         ":plugins:fir-plugin-prototype"
     )
 }
@@ -702,6 +705,7 @@ tasks {
 
         dependsOn(":kotlin-daemon-tests:test")
         dependsOn(":kotlin-build-common:test")
+        dependsOn(":kotlin-build-common:testJUnit5")
         dependsOn(":core:descriptors.runtime:test")
         dependsOn(":kotlin-util-io:test")
         dependsOn(":kotlin-util-klib:test")
@@ -822,11 +826,6 @@ tasks {
     }
 }
 
-fun CopySpec.setExecutablePermissions() {
-    filesMatching("**/bin/*") { mode = 0b111101101 }
-    filesMatching("**/bin/*.bat") { mode = 0b110100100 }
-}
-
 val zipCompiler by task<Zip> {
     dependsOn(dist)
     destinationDirectory.set(file(distDir))
@@ -834,7 +833,6 @@ val zipCompiler by task<Zip> {
 
     from(distKotlinHomeDir)
     into("kotlinc")
-    setExecutablePermissions()
 
     doLast {
         logger.lifecycle("Compiler artifacts packed to ${archiveFile.get().asFile.absolutePath}")

@@ -233,6 +233,7 @@ internal class SymbolLightAccessorMethod private constructor(
         analyzeForLightClasses(ktModule) {
             propertySymbol().returnType.asPsiType(
                 this@SymbolLightAccessorMethod,
+                allowErrorTypes = true,
                 KtTypeMappingMode.RETURN_TYPE,
                 containingClass.isAnnotationType,
             )
@@ -296,7 +297,11 @@ internal class SymbolLightAccessorMethod private constructor(
     override fun isValid(): Boolean =
         super.isValid() && propertyAccessorDeclaration?.isValid ?: propertyAccessorSymbolPointer.isValid(ktModule)
 
-    override fun isOverride(): Boolean = analyzeForLightClasses(ktModule) { propertyAccessorSymbol().isOverride }
+    private val _isOverride: Boolean by lazyPub {
+        if (isTopLevel) false else analyzeForLightClasses(ktModule) { propertyAccessorSymbol().isOverride }
+    }
+
+    override fun isOverride(): Boolean = _isOverride
 
     private val _defaultValue: PsiAnnotationMemberValue? by lazyPub {
         if (!containingClass.isAnnotationType) return@lazyPub null

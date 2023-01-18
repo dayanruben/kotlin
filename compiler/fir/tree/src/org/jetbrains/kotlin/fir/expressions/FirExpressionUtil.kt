@@ -29,11 +29,11 @@ import org.jetbrains.kotlin.fir.visitors.transformInplace
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.types.ConstantValueKind
 
-inline val FirAnnotation.coneClassLikeType: ConeClassLikeType?
+inline val FirAnnotation.unexpandedConeClassLikeType: ConeClassLikeType?
     get() = ((annotationTypeRef as? FirResolvedTypeRef)?.type as? ConeClassLikeType)
 
-inline val FirAnnotation.classId: ClassId?
-    get() = coneClassLikeType?.lookupTag?.classId
+inline val FirAnnotation.unexpandedClassId: ClassId?
+    get() = unexpandedConeClassLikeType?.lookupTag?.classId
 
 fun <T> buildConstOrErrorExpression(source: KtSourceElement?, kind: ConstantValueKind<T>, value: T?, diagnostic: ConeDiagnostic): FirExpression =
     value?.let {

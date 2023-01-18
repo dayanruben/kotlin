@@ -58,9 +58,6 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
         if (pluginLoadResult != ExitCode.OK) return pluginLoadResult
 
         val messageCollector = configuration.get(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY) ?: MessageCollector.NONE
-        if (configuration.getBoolean(CommonConfigurationKeys.USE_FIR)) {
-            messageCollector.report(WARNING, "New compiler pipeline K2 is experimental in Kotlin/Native. No compatibility guarantees are yet provided")
-        }
 
         val enoughArguments = arguments.freeArgs.isNotEmpty() || arguments.isUsefulWithoutFreeArgs
         if (!enoughArguments) {
@@ -159,6 +156,7 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
                 doMain(K2Native(), args)
             }
         }
+
         @JvmStatic fun mainNoExit(args: Array<String>) {
             profile("Total compiler main()") {
                 if (doMainNoExit(K2Native(), args) != ExitCode.OK) {
@@ -167,9 +165,9 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
             }
         }
 
-        @JvmStatic fun mainNoExitWithGradleRenderer(args: Array<String>) {
+        @JvmStatic fun mainNoExitWithRenderer(args: Array<String>, messageRenderer: MessageRenderer) {
             profile("Total compiler main()") {
-                if (doMainNoExit(K2Native(), args, MessageRenderer.GRADLE_STYLE) != ExitCode.OK) {
+                if (doMainNoExit(K2Native(), args, messageRenderer) != ExitCode.OK) {
                     throw KonanCompilationException("Compilation finished with errors")
                 }
             }
@@ -186,4 +184,5 @@ fun parseBinaryOptions(
 ): List<BinaryOptionWithValue<*>> = org.jetbrains.kotlin.backend.konan.parseBinaryOptions(arguments, configuration)
 
 fun main(args: Array<String>) = K2Native.main(args)
-fun mainNoExitWithGradleRenderer(args: Array<String>) = K2Native.mainNoExitWithGradleRenderer(args)
+fun mainNoExitWithGradleRenderer(args: Array<String>) = K2Native.mainNoExitWithRenderer(args, MessageRenderer.GRADLE_STYLE)
+fun mainNoExitWithXcodeRenderer(args: Array<String>) = K2Native.mainNoExitWithRenderer(args, MessageRenderer.XCODE_STYLE)

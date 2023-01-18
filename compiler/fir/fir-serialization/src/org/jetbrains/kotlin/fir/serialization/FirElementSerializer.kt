@@ -67,15 +67,17 @@ class FirElementSerializer private constructor(
 ) {
     private val contractSerializer = FirContractSerializer()
 
-    fun packagePartProto(packageFqName: FqName, file: FirFile): ProtoBuf.Package.Builder {
+    fun packagePartProto(packageFqName: FqName, files: List<FirFile>): ProtoBuf.Package.Builder {
         val builder = ProtoBuf.Package.newBuilder()
 
-        for (declaration in file.declarations) {
-            when (declaration) {
-                is FirProperty -> propertyProto(declaration)?.let { builder.addProperty(it) }
-                is FirSimpleFunction -> functionProto(declaration)?.let { builder.addFunction(it) }
-                is FirTypeAlias -> typeAliasProto(declaration)?.let { builder.addTypeAlias(it) }
-                else -> {}
+        for (file in files) {
+            for (declaration in file.declarations) {
+                when (declaration) {
+                    is FirProperty -> propertyProto(declaration)?.let { builder.addProperty(it) }
+                    is FirSimpleFunction -> functionProto(declaration)?.let { builder.addFunction(it) }
+                    is FirTypeAlias -> typeAliasProto(declaration)?.let { builder.addTypeAlias(it) }
+                    else -> {}
+                }
             }
         }
 
@@ -149,7 +151,7 @@ class FirElementSerializer private constructor(
         }
 
         fun FirClass.nestedClassifiers(): List<FirClassifierSymbol<*>> {
-            val scope = defaultType().scope(session, scopeSession, FakeOverrideTypeCalculator.DoNothing) ?: return emptyList()
+            val scope = defaultType().scope(session, scopeSession, FakeOverrideTypeCalculator.DoNothing, requiredPhase = null) ?: return emptyList()
             return buildList {
                 scope.getClassifierNames().mapNotNullTo(this) { scope.getSingleClassifier(it) }
             }
@@ -224,7 +226,7 @@ class FirElementSerializer private constructor(
 
     private fun FirClass.declarations(): List<FirCallableDeclaration> = buildList {
         val memberScope =
-            defaultType().scope(session, scopeSession, FakeOverrideTypeCalculator.DoNothing)
+            defaultType().scope(session, scopeSession, FakeOverrideTypeCalculator.DoNothing, requiredPhase = null)
                 ?: error("Null scope for $this")
 
         fun addDeclarationIfNeeded(symbol: FirCallableSymbol<*>) {

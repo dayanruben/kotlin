@@ -182,6 +182,12 @@ public class IrClassFileToSourceStubConverterTestGenerated extends AbstractIrCla
     }
 
     @Test
+    @TestMetadata("errorExtensionReceiver.kt")
+    public void testErrorExtensionReceiver() throws Exception {
+        runTest("plugins/kapt3/kapt3-compiler/testData/converter/errorExtensionReceiver.kt");
+    }
+
+    @Test
     @TestMetadata("errorLocationMapping.kt")
     public void testErrorLocationMapping() throws Exception {
         runTest("plugins/kapt3/kapt3-compiler/testData/converter/errorLocationMapping.kt");
@@ -338,6 +344,12 @@ public class IrClassFileToSourceStubConverterTestGenerated extends AbstractIrCla
     }
 
     @Test
+    @TestMetadata("jvmRepeatableAnnotation.kt")
+    public void testJvmRepeatableAnnotation() throws Exception {
+        runTest("plugins/kapt3/kapt3-compiler/testData/converter/jvmRepeatableAnnotation.kt");
+    }
+
+    @Test
     @TestMetadata("jvmStatic.kt")
     public void testJvmStatic() throws Exception {
         runTest("plugins/kapt3/kapt3-compiler/testData/converter/jvmStatic.kt");
@@ -437,6 +449,12 @@ public class IrClassFileToSourceStubConverterTestGenerated extends AbstractIrCla
     @TestMetadata("kt34569.kt")
     public void testKt34569() throws Exception {
         runTest("plugins/kapt3/kapt3-compiler/testData/converter/kt34569.kt");
+    }
+
+    @Test
+    @TestMetadata("kt43786.kt")
+    public void testKt43786() throws Exception {
+        runTest("plugins/kapt3/kapt3-compiler/testData/converter/kt43786.kt");
     }
 
     @Test

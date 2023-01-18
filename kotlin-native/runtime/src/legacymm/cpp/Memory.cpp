@@ -99,6 +99,7 @@ using container_size_t = size_t;
 // Granularity of arena container chunks.
 constexpr container_size_t kContainerAlignment = 1024;
 // Single object alignment.
+// Must match objectAlignment in Runtime.kt
 constexpr container_size_t kObjectAlignment = 8;
 
 // Required e.g. for object size computations to be correct.
@@ -3342,6 +3343,20 @@ RUNTIME_NOTHROW void UpdateHeapRefStrict(ObjHeader** location, const ObjHeader* 
 RUNTIME_NOTHROW void UpdateHeapRefRelaxed(ObjHeader** location, const ObjHeader* object) {
   updateHeapRef<false>(location, object);
 }
+
+ALWAYS_INLINE RUNTIME_NOTHROW void UpdateVolatileHeapRef(ObjHeader** location, const ObjHeader* object) {
+    RuntimeFail("Shouldn't be used");
+}
+extern "C" ALWAYS_INLINE RUNTIME_NOTHROW OBJ_GETTER(CompareAndSwapVolatileHeapRef, ObjHeader** location, ObjHeader* expectedValue, ObjHeader* newValue) {
+    RuntimeFail("Shouldn't be used");
+}
+extern "C" ALWAYS_INLINE RUNTIME_NOTHROW bool CompareAndSetVolatileHeapRef(ObjHeader** location, ObjHeader* expectedValue, ObjHeader* newValue) {
+    RuntimeFail("Shouldn't be used");
+}
+extern "C" ALWAYS_INLINE RUNTIME_NOTHROW OBJ_GETTER(GetAndSetVolatileHeapRef, ObjHeader** location, ObjHeader* newValue) {
+    RuntimeFail("Shouldn't be used");
+}
+
 
 RUNTIME_NOTHROW void UpdateHeapRefsInsideOneArrayStrict(const ArrayHeader* array, int fromIndex, int toIndex,
                                                         int count) {

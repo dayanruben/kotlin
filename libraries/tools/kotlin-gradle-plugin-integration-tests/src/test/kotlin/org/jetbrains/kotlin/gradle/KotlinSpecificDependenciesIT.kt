@@ -13,7 +13,7 @@ import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.*
 import java.nio.file.Path
-import java.util.UUID
+import java.util.*
 import java.util.stream.Stream
 import kotlin.io.path.appendText
 import kotlin.streams.asStream
@@ -58,7 +58,6 @@ class KotlinSpecificDependenciesIT : KGPBaseTest() {
         project(
             "kotlin-js-plugin-project",
             gradleVersion,
-            buildOptions = defaultBuildOptions.copy(warningMode = WarningMode.Summary)
         ) {
             buildGradleKts.modify { it.lines().filter { "html" !in it }.joinToString("\n") }
             kotlinSourcesDir().resolve("Main.kt").modify { "fun f() = listOf(1, 2, 3).joinToString()" }
@@ -79,7 +78,6 @@ class KotlinSpecificDependenciesIT : KGPBaseTest() {
         project(
             "kotlin-js-plugin-project",
             gradleVersion,
-            buildOptions = defaultBuildOptions.copy(warningMode = WarningMode.Summary)
         ) {
             buildGradleKts.modify { it.lines().filter { "html" !in it }.joinToString("\n") }
             kotlinSourcesDir().resolve("Main.kt").modify { "fun f() = listOf(1, 2, 3).joinToString()" }
@@ -352,7 +350,6 @@ class KotlinSpecificDependenciesIT : KGPBaseTest() {
         project(
             "kotlin-js-plugin-project",
             gradleVersion,
-            buildOptions = defaultBuildOptions.copy(warningMode = WarningMode.Summary)
         ) {
             assertKotlinTestDependency(
                 listOf("testImplementation"),
@@ -375,7 +372,13 @@ class KotlinSpecificDependenciesIT : KGPBaseTest() {
                 ),
                 mapOf(
                     "commonTestImplementationDependenciesMetadata" to listOf("kotlin-test-common", "kotlin-test-annotations-common"),
-                    "commonTestApiDependenciesMetadata" to listOf("!kotlin-test-common", "!kotlin-test-annotations-common"),
+
+                    /*
+                    implementation, api and compileOnly scoped metadata configurations are deprecated and report the same dependencies.
+                    The IDE does not rely on which exact configuration returned the dependencies.
+                    */
+                    "commonTestApiDependenciesMetadata" to listOf("kotlin-test-common", "kotlin-test-annotations-common"),
+                    "commonTestCompileOnlyDependenciesMetadata" to listOf("kotlin-test-common", "kotlin-test-annotations-common"),
                 ),
                 isBuildGradleKts = true
             )
@@ -398,7 +401,6 @@ class KotlinSpecificDependenciesIT : KGPBaseTest() {
                     "commonTestCompileOnlyDependenciesMetadata" to listOf("!kotlin-test-common"),
                     "jvmAndJsTestApiDependenciesMetadata" to listOf("kotlin-test-common"),
                     "jvmAndJsTestCompileOnlyDependenciesMetadata" to listOf("kotlin-test-common"),
-                    "jvmAndJsTestImplementationDependenciesMetadata" to listOf("!kotlin-test-common"),
                 ),
                 isBuildGradleKts = true
             )
@@ -503,9 +505,9 @@ class KotlinSpecificDependenciesIT : KGPBaseTest() {
 
             buildGradle.appendText(
                 """
-                
-                dependencies { testImplementation("$kotlinTestMultiplatformDependency") }
-                configurations.getByName("testImplementation").dependencies.removeAll { it.name == "kotlin-test" }
+                def dependency
+                dependencies { dependency = testImplementation("$kotlinTestMultiplatformDependency") }
+                configurations.getByName("testImplementation").dependencies.remove(dependency)
                 """.trimIndent()
             )
             checkTaskCompileClasspath("compileTestKotlin", checkModulesNotInClasspath = listOf("kotlin-test"))
@@ -617,6 +619,7 @@ class KotlinSpecificDependenciesIT : KGPBaseTest() {
         val expression = """configurations["$configurationName"].toList()"""
         checkPrintedItems(
             null,
+            configurationName,
             expression,
             checkModulesInResolutionResult,
             checkModulesNotInResolutionResult,
@@ -638,11 +641,12 @@ class KotlinSpecificDependenciesIT : KGPBaseTest() {
             "org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompileTool<?>"
         }
         val expression = """(tasks.getByName("$taskName") as $taskClass).libraries.toList()"""
-        checkPrintedItems(subproject, expression, checkModulesInClasspath, checkModulesNotInClasspath, isBuildGradleKts)
+        checkPrintedItems(subproject, taskPath, expression, checkModulesInClasspath, checkModulesNotInClasspath, isBuildGradleKts)
     }
 
     private fun TestProject.checkPrintedItems(
         subproject: String?,
+        dependencyOwner: String,
         itemsExpression: String,
         checkAnyItemsContains: List<String>,
         checkNoItemContains: List<String>,
@@ -669,10 +673,10 @@ class KotlinSpecificDependenciesIT : KGPBaseTest() {
             val itemsLine = output.lines().single { "###$printingTaskName" in it }.substringAfter(printingTaskName)
             val items = itemsLine.removeSurrounding("[", "]").split(", ").toSet()
             checkAnyItemsContains.forEach { pattern ->
-                assertTrue("Dependencies does not contain $pattern") { items.any { pattern in it } }
+                assertTrue("Dependencies($dependencyOwner) does not contain $pattern") { items.any { pattern in it } }
             }
             checkNoItemContains.forEach { pattern ->
-                assertFalse("Dependencies contain $pattern") { items.any { pattern in it } }
+                assertFalse("Dependencies($dependencyOwner) unexpectedly contains $pattern") { items.any { pattern in it } }
             }
         }
     }

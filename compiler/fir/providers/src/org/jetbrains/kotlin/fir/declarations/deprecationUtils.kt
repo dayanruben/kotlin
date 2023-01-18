@@ -181,6 +181,10 @@ private fun FirAnnotation.getDeprecationLevel(): DeprecationLevelValue? {
 private fun List<FirAnnotation>.extractDeprecationAnnotationInfoPerUseSite(
     session: FirSession, fromJava: Boolean
 ): DeprecationAnnotationInfoPerUseSiteStorage {
+    // NB: We can't expand typealiases (`toAnnotationClassId`), because it
+    // requires `lookupTag.tySymbol()`, but we can have cycles in annotations.
+    // See the commit message for an example.
+
     @Suppress("RemoveExplicitTypeArguments")
     val annotations = buildList<Pair<FirAnnotation, Boolean>> {
         mapAnnotationsWithClassIdTo(StandardClassIds.Annotations.Deprecated, this) { it to false }
@@ -190,12 +194,12 @@ private fun List<FirAnnotation>.extractDeprecationAnnotationInfoPerUseSite(
 
     return buildDeprecationAnnotationInfoPerUseSiteStorage {
         for ((deprecated, fromJavaAnnotation) in annotations) {
-            if (deprecated.classId == StandardClassIds.Annotations.SinceKotlin) {
+            if (deprecated.unexpandedClassId == StandardClassIds.Annotations.SinceKotlin) {
                 val sinceKotlinSingleArgument = deprecated.findArgumentByName(ParameterNames.sinceKotlinVersion)
                 val apiVersion = ((sinceKotlinSingleArgument as? FirConstExpression<*>)?.value as? String)
                     ?.let(ApiVersion.Companion::parse) ?: continue
                 val wasExperimental = this@extractDeprecationAnnotationInfoPerUseSite.any {
-                    it.classId == StandardClassIds.Annotations.WasExperimental
+                    it.unexpandedClassId == StandardClassIds.Annotations.WasExperimental
                 }
                 if (!wasExperimental) {
                     add(deprecated.useSiteTarget, SinceKotlinInfo(apiVersion))

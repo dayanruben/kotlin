@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.ir.symbols.*
 import org.jetbrains.kotlin.ir.util.fqNameWhenAvailable
 import org.jetbrains.kotlin.ir.util.getPackageFragment
 import org.jetbrains.kotlin.wasm.ir.*
+import org.jetbrains.kotlin.wasm.ir.source.location.SourceLocation
 
 class WasmCompiledModuleFragment(val irBuiltIns: IrBuiltIns) {
     val functions =
@@ -165,7 +166,7 @@ class WasmCompiledModuleFragment(val irBuiltIns: IrBuiltIns) {
         val masterInitFunction = WasmFunction.Defined("__init", WasmSymbol(masterInitFunctionType))
         with(WasmIrExpressionBuilder(masterInitFunction.instructions)) {
             initFunctions.sortedBy { it.priority }.forEach {
-                buildCall(WasmSymbol(it.function))
+                buildCall(WasmSymbol(it.function), SourceLocation.NoLocation("Generated service code"))
             }
         }
         exports += WasmExport.Function("__init", masterInitFunction)
@@ -256,7 +257,7 @@ inline fun WasmCompiledModuleFragment.ReferencableAndDefinable<IrClassSymbol, Co
     elements.mapTo(into) {
         val id = address(wasmToIr.getValue(it))
         val offset = mutableListOf<WasmInstr>()
-        WasmIrExpressionBuilder(offset).buildConstI32(id)
+        WasmIrExpressionBuilder(offset).buildConstI32(id, SourceLocation.NoLocation("Compile time data per class"))
         WasmData(WasmDataMode.Active(0, offset), it.toBytes())
     }
 }

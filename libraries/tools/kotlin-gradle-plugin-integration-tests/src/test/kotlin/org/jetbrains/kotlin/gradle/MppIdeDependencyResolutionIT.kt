@@ -11,10 +11,7 @@ import org.jetbrains.kotlin.commonizer.identityString
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinBinaryDependency
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinDependency
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinResolvedBinaryDependency
-import org.jetbrains.kotlin.gradle.idea.tcs.extras.isCommonized
-import org.jetbrains.kotlin.gradle.idea.tcs.extras.isNativeDistribution
-import org.jetbrains.kotlin.gradle.idea.tcs.extras.isNativeStdlib
-import org.jetbrains.kotlin.gradle.idea.tcs.extras.klibExtra
+import org.jetbrains.kotlin.gradle.idea.tcs.extras.*
 import org.jetbrains.kotlin.gradle.idea.testFixtures.tcs.assertMatches
 import org.jetbrains.kotlin.gradle.idea.testFixtures.tcs.binaryCoordinates
 import org.jetbrains.kotlin.gradle.testbase.*
@@ -82,6 +79,108 @@ class MppIdeDependencyResolutionIT : KGPBaseTest() {
                         binaryCoordinates(Regex("org\\.jetbrains\\.kotlin\\.native:platform.*"))
                     )
                 }
+            }
+        }
+    }
+
+    @GradleTest
+    fun testCinterops(gradleVersion: GradleVersion) {
+        fun Iterable<IdeaKotlinDependency>.cinteropDependencies() =
+            this.filterIsInstance<IdeaKotlinBinaryDependency>().filter {
+                it.klibExtra?.isInterop == true && !it.isNativeStdlib && !it.isNativeDistribution
+            }
+
+        project(projectName = "cinteropImport", gradleVersion = gradleVersion) {
+            build(":dep-with-cinterop:publishAllPublicationsToBuildRepository")
+
+            resolveIdeDependencies("dep-with-cinterop") { dependencies ->
+                dependencies["commonMain"].cinteropDependencies()
+                    .assertMatches(binaryCoordinates(Regex("a:dep.*\\(linux_arm64, linux_x64\\)")))
+                dependencies["commonTest"].cinteropDependencies()
+                    .assertMatches(binaryCoordinates(Regex("a:dep.*\\(linux_arm64, linux_x64\\)")))
+                dependencies["linuxX64Main"].cinteropDependencies().assertMatches(binaryCoordinates(Regex("a:dep.*linux_x64")))
+                dependencies["linuxArm64Main"].cinteropDependencies().assertMatches(binaryCoordinates(Regex("a:dep.*linux_arm64")))
+                dependencies["linuxX64Test"].cinteropDependencies().assertMatches(binaryCoordinates(Regex("a:dep.*linux_x64")))
+                dependencies["linuxArm64Test"].cinteropDependencies().assertMatches(binaryCoordinates(Regex("a:dep.*linux_arm64")))
+            }
+
+            resolveIdeDependencies("client-for-binary-dep") { dependencies ->
+                dependencies["commonMain"].cinteropDependencies()
+                    .assertMatches(binaryCoordinates(Regex("a:dep.*\\(linux_arm64, linux_x64\\)")))
+                dependencies["commonTest"].cinteropDependencies()
+                    .assertMatches(binaryCoordinates(Regex("a:dep.*\\(linux_arm64, linux_x64\\)")))
+
+                // CInterops are currently imported as extra roots of a platform publication, not as separate libraries
+                // This is a bit inconsistent with other CInterop dependencies, but correctly represents the published artifacts
+                fun assertDependencyOnPublishedProjectCInterop(sourceSetName: String) {
+                    val publishedProjectDependencies = dependencies[sourceSetName].filterIsInstance<IdeaKotlinResolvedBinaryDependency>()
+                        .filter { it.coordinates?.module?.contains("dep-with-cinterop") == true }
+
+                    val fileNames = publishedProjectDependencies
+                        .flatMap { dependency -> dependency.classpath }
+                        .map { file -> file.name }
+                        .toSet()
+
+                    assert(fileNames == setOf("dep-with-cinterop.klib", "dep-with-cinterop-cinterop-dep.klib")) {
+                        """Unexpected cinterop dependencies for the source set :client-for-binary-dep:$sourceSetName.
+                            |Expected a project dependency and a cinterop dependency, but instead found:
+                            |$fileNames""".trimMargin()
+                    }
+                }
+
+                assertDependencyOnPublishedProjectCInterop("linuxX64Main")
+                assertDependencyOnPublishedProjectCInterop("linuxX64Test")
+                assertDependencyOnPublishedProjectCInterop("linuxArm64Main")
+                assertDependencyOnPublishedProjectCInterop("linuxArm64Test")
+            }
+
+            resolveIdeDependencies("client-for-project-to-project-dep") { dependencies ->
+                dependencies["commonMain"].cinteropDependencies()
+                    .assertMatches(binaryCoordinates(Regex("a:dep.*\\(linux_arm64, linux_x64\\)")))
+                dependencies["commonTest"].cinteropDependencies()
+                    .assertMatches(binaryCoordinates(Regex("a:dep.*\\(linux_arm64, linux_x64\\)")))
+
+                dependencies["linuxX64Main"].cinteropDependencies()
+                    .assertMatches(binaryCoordinates(Regex("a:dep-with-cinterop-cinterop-dep.*linux_x64")))
+                dependencies["linuxX64Test"].cinteropDependencies()
+                    .assertMatches(binaryCoordinates(Regex("a:dep-with-cinterop-cinterop-dep.*linux_x64")))
+                dependencies["linuxArm64Main"].cinteropDependencies()
+                    .assertMatches(binaryCoordinates(Regex("a:dep-with-cinterop-cinterop-dep.*linux_arm64")))
+                dependencies["linuxArm64Test"].cinteropDependencies()
+                    .assertMatches(binaryCoordinates(Regex("a:dep-with-cinterop-cinterop-dep.*linux_arm64")))
+            }
+
+            resolveIdeDependencies("client-with-complex-hierarchy") { dependencies ->
+                dependencies["commonMain"].cinteropDependencies().assertMatches()
+                dependencies["commonTest"].cinteropDependencies().assertMatches()
+                dependencies["nativeMain"].cinteropDependencies().assertMatches(
+                    binaryCoordinates(Regex("a:client-with-complex-hierarchy-cinterop-w.*\\(linux_arm64, linux_x64\\)"))
+                )
+                dependencies["nativeTest"].cinteropDependencies().assertMatches(
+                    binaryCoordinates(Regex("a:client-with-complex-hierarchy-cinterop-w.*\\(linux_arm64, linux_x64\\)"))
+                )
+
+                dependencies["linuxArmMain"].cinteropDependencies()
+                    .assertMatches(binaryCoordinates(Regex("a:client-with-complex-hierarchy-cinterop-w.*:linux_arm64$")))
+                dependencies["linuxArmTest"].cinteropDependencies()
+                    .assertMatches(binaryCoordinates(Regex("a:client-with-complex-hierarchy-cinterop-w.*:linux_arm64$")))
+
+                dependencies["linuxIntermediateMain"].cinteropDependencies().assertMatches(
+                    binaryCoordinates(Regex("a:dep-with-cinterop-cinterop-dep.*:linux_x64$")),
+                    binaryCoordinates(Regex("a:client-with-complex-hierarchy-cinterop-w.*:linux_x64$")),
+                )
+                dependencies["linuxIntermediateTest"].cinteropDependencies().assertMatches(
+                    binaryCoordinates(Regex("a:dep-with-cinterop-cinterop-dep.*:linux_x64$")),
+                    binaryCoordinates(Regex("a:client-with-complex-hierarchy-cinterop-w.*:linux_x64$")),
+                )
+                dependencies["linuxMain"].cinteropDependencies().assertMatches(
+                    binaryCoordinates(Regex("a:dep-with-cinterop-cinterop-dep.*:linux_x64$")),
+                    binaryCoordinates(Regex("a:client-with-complex-hierarchy-cinterop-w.*:linux_x64$")),
+                )
+                dependencies["linuxTest"].cinteropDependencies().assertMatches(
+                    binaryCoordinates(Regex("a:dep-with-cinterop-cinterop-dep.*:linux_x64$")),
+                    binaryCoordinates(Regex("a:client-with-complex-hierarchy-cinterop-w.*:linux_x64$"))
+                )
             }
         }
     }

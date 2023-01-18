@@ -5,8 +5,10 @@
 
 package org.jetbrains.kotlin.gradle.native
 
+import org.gradle.api.logging.configuration.WarningMode
 import org.jetbrains.kotlin.gradle.BaseGradleIT
 import org.jetbrains.kotlin.gradle.GradleVersionRequired
+import org.jetbrains.kotlin.gradle.suppressDeprecationWarningsOnAgpLessThan
 import org.jetbrains.kotlin.gradle.util.AGPVersion
 import org.jetbrains.kotlin.gradle.util.modify
 import org.jetbrains.kotlin.konan.target.HostManager
@@ -40,7 +42,9 @@ class AppleFrameworkIT : BaseGradleIT() {
                     "ARCHS" to "arm64",
                     "TARGET_BUILD_DIR" to "no use",
                     "FRAMEWORKS_FOLDER_PATH" to "no use"
-                )
+                ),
+                // Workaround for KT-55751
+                warningMode = WarningMode.None,
             )
             build("assembleDebugAppleFrameworkForXcodeIosArm64", options = options) {
                 assertSuccessful()
@@ -68,7 +72,9 @@ class AppleFrameworkIT : BaseGradleIT() {
                     "ARCHS" to "arm64 x86_64",
                     "TARGET_BUILD_DIR" to "no use",
                     "FRAMEWORKS_FOLDER_PATH" to "no use"
-                )
+                ),
+                // Workaround for KT-55751
+                warningMode = WarningMode.None,
             )
             build("assembleReleaseAppleFrameworkForXcode", options = options) {
                 assertSuccessful()
@@ -92,7 +98,9 @@ class AppleFrameworkIT : BaseGradleIT() {
                     "EXPANDED_CODE_SIGN_IDENTITY" to "-",
                     "TARGET_BUILD_DIR" to workingDir.absolutePath,
                     "FRAMEWORKS_FOLDER_PATH" to "${projectName}/build/xcode-derived"
-                )
+                ),
+                // Workaround for KT-55751
+                warningMode = WarningMode.None,
             )
             build(":shared:embedAndSignAppleFrameworkForXcode", options = options) {
                 assertSuccessful()
@@ -129,6 +137,9 @@ class AppleFrameworkIT : BaseGradleIT() {
                     "TARGET_BUILD_DIR" to "testBuildDir",
                     "FRAMEWORKS_FOLDER_PATH" to "testFrameworksDir"
                 )
+            ).suppressDeprecationWarningsOnAgpLessThan(
+                AGPVersion.v7_3_0,
+                "uses deprecated IncrementalTaskInputs"
             )
             build("tasks", options = options) {
                 assertSuccessful()
@@ -157,6 +168,9 @@ class AppleFrameworkIT : BaseGradleIT() {
                     "SDK_NAME" to "iphoneos",
                     "ARCHS" to "arm64"
                 )
+            ).suppressDeprecationWarningsOnAgpLessThan(
+                AGPVersion.v7_3_0,
+                "uses deprecated IncrementalTaskInputs"
             )
             build("tasks", options = options) {
                 assertSuccessful()
@@ -192,7 +206,9 @@ class AppleFrameworkIT : BaseGradleIT() {
                     "ARCHS" to "arm64",
                     "TARGET_BUILD_DIR" to "no use",
                     "FRAMEWORKS_FOLDER_PATH" to "no use"
-                )
+                ),
+                // Workaround for KT-55751
+                warningMode = WarningMode.None,
             )
             setupWorkingDir()
             projectDir.resolve("shared/build.gradle.kts").modify {
@@ -211,4 +227,143 @@ class AppleFrameworkIT : BaseGradleIT() {
             }
         }
     }
+
+
+    @Test
+    fun `configuration errors reported to Xcode when embedAndSign task requested`() {
+        with(Project("sharedAppleFramework")) {
+            setupWorkingDir()
+            projectDir.resolve("shared/build.gradle.kts").appendText(
+                """
+                kotlin {
+                    sourceSets["commonMain"].dependencies {
+                        implementation("com.example.unknown:dependency:0.0.1")
+                    }       
+                }
+                """.trimIndent()
+            )
+
+            build(
+                ":shared:embedAndSignAppleFrameworkForXcode",
+                options = defaultBuildOptions().copy(
+                    customEnvironmentVariables = mapOf(
+                        "CONFIGURATION" to "debug",
+                        "SDK_NAME" to "iphoneos123",
+                        "ARCHS" to "arm64",
+                        "TARGET_BUILD_DIR" to "no use",
+                        "FRAMEWORKS_FOLDER_PATH" to "no use"
+                    )
+                )
+            ) {
+                assertFailed()
+                assertContains("error: Could not find com.example.unknown:dependency:0.0.1.")
+            }
+        }
+    }
+
+    @Test
+    fun `compilation errors reported to Xcode when embedAndSign task requested`() {
+        with(Project("sharedAppleFramework")) {
+            setupWorkingDir()
+            projectDir.resolve("shared/src/commonMain/kotlin/com/github/jetbrains/myapplication/Greeting.kt")
+                .appendText("this can't be compiled")
+
+            build(
+                ":shared:embedAndSignAppleFrameworkForXcode",
+                options = defaultBuildOptions().copy(
+                    customEnvironmentVariables = mapOf(
+                        "CONFIGURATION" to "debug",
+                        "SDK_NAME" to "iphoneos123",
+                        "ARCHS" to "arm64",
+                        "TARGET_BUILD_DIR" to "no use",
+                        "FRAMEWORKS_FOLDER_PATH" to "no use"
+                    )
+                )
+            ) {
+                assertFailed()
+                assertContains("/sharedAppleFramework/shared/src/commonMain/kotlin/com/github/jetbrains/myapplication/Greeting.kt:7:2: error: Expecting a top level declaration")
+                assertContains("error: Compilation finished with errors")
+            }
+        }
+    }
+
+
+    @Test
+    fun `compilation errors printed with Gradle-style when any other task requested`() {
+        with(Project("sharedAppleFramework")) {
+            setupWorkingDir()
+            projectDir.resolve("shared/src/commonMain/kotlin/com/github/jetbrains/myapplication/Greeting.kt")
+                .appendText("this can't be compiled")
+
+            build(
+                ":shared:assembleDebugAppleFrameworkForXcodeIosArm64",
+                options = defaultBuildOptions().copy(
+                    customEnvironmentVariables = mapOf(
+                        "CONFIGURATION" to "debug",
+                        "SDK_NAME" to "iphoneos123",
+                        "ARCHS" to "arm64",
+                        "TARGET_BUILD_DIR" to "no use",
+                        "FRAMEWORKS_FOLDER_PATH" to "no use"
+                    )
+                )
+            ) {
+                assertFailed()
+                assertContains("e: file:///")
+                assertNotContains("error: Compilation finished with errors")
+            }
+        }
+    }
+
+
+    @Test
+    fun `compilation errors printed with Xcode-style with explicit option`() {
+        with(Project("sharedAppleFramework")) {
+            setupWorkingDir()
+            projectDir.resolve("shared/src/commonMain/kotlin/com/github/jetbrains/myapplication/Greeting.kt")
+                .appendText("this can't be compiled")
+
+            build(
+                ":shared:assembleDebugAppleFrameworkForXcodeIosArm64", "-Pkotlin.native.useXcodeMessageStyle=true",
+                options = defaultBuildOptions().copy(
+                    customEnvironmentVariables = mapOf(
+                        "CONFIGURATION" to "debug",
+                        "SDK_NAME" to "iphoneos123",
+                        "ARCHS" to "arm64",
+                        "TARGET_BUILD_DIR" to "no use",
+                        "FRAMEWORKS_FOLDER_PATH" to "no use"
+                    )
+                )
+            ) {
+                assertFailed()
+                assertContains("/sharedAppleFramework/shared/src/commonMain/kotlin/com/github/jetbrains/myapplication/Greeting.kt:7:2: error: Expecting a top level declaration")
+                assertContains("error: Compilation finished with errors")
+            }
+        }
+    }
+
+    @Test
+    fun `compilation errors reported to Xcode when embedAndSign task requested and compiler runs in a separate process`() {
+        with(Project("sharedAppleFramework")) {
+            setupWorkingDir()
+            projectDir.resolve("shared/src/commonMain/kotlin/com/github/jetbrains/myapplication/Greeting.kt")
+                .appendText("this can't be compiled")
+
+            build(
+                ":shared:embedAndSignAppleFrameworkForXcode", "-Pkotlin.native.disableCompilerDaemon=true",
+                options = defaultBuildOptions().copy(
+                    customEnvironmentVariables = mapOf(
+                        "CONFIGURATION" to "debug",
+                        "SDK_NAME" to "iphoneos123",
+                        "ARCHS" to "arm64",
+                        "TARGET_BUILD_DIR" to "no use",
+                        "FRAMEWORKS_FOLDER_PATH" to "no use"
+                    )
+                )
+            ) {
+                assertFailed()
+                assertContains("/sharedAppleFramework/shared/src/commonMain/kotlin/com/github/jetbrains/myapplication/Greeting.kt:7:2: error: Expecting a top level declaration")
+            }
+        }
+    }
+
 }

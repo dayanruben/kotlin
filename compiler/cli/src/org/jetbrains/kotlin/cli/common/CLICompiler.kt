@@ -31,8 +31,7 @@ import org.jetbrains.kotlin.cli.jvm.plugins.PluginCliParser
 import org.jetbrains.kotlin.cli.plugins.processCompilerPluginsOptions
 import org.jetbrains.kotlin.compiler.plugin.CommandLineProcessor
 import org.jetbrains.kotlin.compiler.plugin.ComponentRegistrar
-import org.jetbrains.kotlin.config.CompilerConfiguration
-import org.jetbrains.kotlin.config.Services
+import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.ir.util.IrMessageLogger
 import org.jetbrains.kotlin.metadata.deserialization.BinaryVersion
 import org.jetbrains.kotlin.progress.CompilationCanceledException
@@ -77,7 +76,7 @@ abstract class CLICompiler<A : CommonCompilerArguments> : CLITool<A>() {
         configuration.put(CLIConfigurationKeys.ORIGINAL_MESSAGE_COLLECTOR_KEY, messageCollector)
 
         val collector = GroupingMessageCollector(messageCollector, arguments.allWarningsAsErrors).also {
-            configuration.put(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, it)
+            configuration.put(MESSAGE_COLLECTOR_KEY, it)
         }
 
         configuration.put(IrMessageLogger.IR_MESSAGE_LOGGER, IrMessageCollector(collector))
@@ -88,7 +87,7 @@ abstract class CLICompiler<A : CommonCompilerArguments> : CLITool<A>() {
             setupPlatformSpecificArgumentsAndServices(configuration, arguments, services)
             val paths = computeKotlinPaths(collector, arguments)
             if (collector.hasErrors()) {
-                return ExitCode.COMPILATION_ERROR
+                return COMPILATION_ERROR
             }
 
             val canceledStatus = services[CompilationCanceledStatus::class.java]
@@ -115,12 +114,12 @@ abstract class CLICompiler<A : CommonCompilerArguments> : CLITool<A>() {
                 return if (collector.hasErrors()) COMPILATION_ERROR else code
             } catch (e: CompilationCanceledException) {
                 collector.reportCompilationCancelled(e)
-                return ExitCode.OK
+                return OK
             } catch (e: RuntimeException) {
                 val cause = e.cause
                 if (cause is CompilationCanceledException) {
                     collector.reportCompilationCancelled(cause)
-                    return ExitCode.OK
+                    return OK
                 } else {
                     throw e
                 }
@@ -173,43 +172,9 @@ abstract class CLICompiler<A : CommonCompilerArguments> : CLITool<A>() {
         val pluginConfigurations = arguments.pluginConfigurations.orEmpty().toMutableList()
         val messageCollector = configuration.getNotNull(MESSAGE_COLLECTOR_KEY)
 
-        for (classpath in pluginClasspaths) {
-            if (!File(classpath).exists()) {
-                messageCollector.report(ERROR, "Plugin classpath entry points to a non-existent location: $classpath")
-            }
-        }
-
-        if (pluginConfigurations.isNotEmpty()) {
-            var hasErrors = false
-            messageCollector.report(WARNING, "Argument -Xcompiler-plugin is experimental")
-            if (!arguments.useK2) {
-                hasErrors = true
-                messageCollector.report(
-                    ERROR,
-                    "-Xcompiler-plugin argument is allowed only for for K2 compiler. Please use -Xplugin argument or enable -Xuse-k2"
-                )
-            }
-            if (pluginClasspaths.isNotEmpty() || pluginOptions.isNotEmpty()) {
-                hasErrors = true
-                val message = buildString {
-                    appendLine("Mixing legacy and modern plugin arguments is prohibited. Please use only one syntax")
-                    appendLine("Legacy arguments:")
-                    if (pluginClasspaths.isNotEmpty()) {
-                        appendLine("  -Xplugin=${pluginClasspaths.joinToString(",")}")
-                    }
-                    pluginOptions.forEach {
-                        appendLine("  -P $it")
-                    }
-                    appendLine("Modern arguments:")
-                    pluginConfigurations.forEach {
-                        appendLine("  -Xcompiler-plugin=$it")
-                    }
-                }
-                messageCollector.report(ERROR, message)
-            }
-            if (hasErrors) {
-                return INTERNAL_ERROR
-            }
+        val useK2 = configuration.get(CommonConfigurationKeys.USE_FIR) == true
+        if (!checkPluginsArguments(messageCollector, useK2, pluginClasspaths, pluginOptions, pluginConfigurations)) {
+            return INTERNAL_ERROR
         }
 
         if (!arguments.disableDefaultScriptingPlugin) {
@@ -257,5 +222,51 @@ abstract class CLICompiler<A : CommonCompilerArguments> : CLITool<A>() {
             messageCollector.report(LOGGING, "Exception on loading scripting plugin: $e")
             false
         }
+}
+
+fun checkPluginsArguments(
+    messageCollector: MessageCollector,
+    useK2: Boolean,
+    pluginClasspaths: List<String>,
+    pluginOptions: List<String>,
+    pluginConfigurations: MutableList<String>
+): Boolean {
+    var hasErrors = false
+
+    for (classpath in pluginClasspaths) {
+        if (!File(classpath).exists()) {
+            messageCollector.report(ERROR, "Plugin classpath entry points to a non-existent location: $classpath")
+        }
+    }
+
+    if (pluginConfigurations.isNotEmpty()) {
+        messageCollector.report(WARNING, "Argument -Xcompiler-plugin is experimental")
+        if (!useK2) {
+            hasErrors = true
+            messageCollector.report(
+                ERROR,
+                "-Xcompiler-plugin argument is allowed only for language version 2.0. Please use -Xplugin argument for language version 1.9 and below"
+            )
+        }
+        if (pluginClasspaths.isNotEmpty() || pluginOptions.isNotEmpty()) {
+            hasErrors = true
+            val message = buildString {
+                appendLine("Mixing legacy and modern plugin arguments is prohibited. Please use only one syntax")
+                appendLine("Legacy arguments:")
+                if (pluginClasspaths.isNotEmpty()) {
+                    appendLine("  -Xplugin=${pluginClasspaths.joinToString(",")}")
+                }
+                pluginOptions.forEach {
+                    appendLine("  -P $it")
+                }
+                appendLine("Modern arguments:")
+                pluginConfigurations.forEach {
+                    appendLine("  -Xcompiler-plugin=$it")
+                }
+            }
+            messageCollector.report(ERROR, message)
+        }
+    }
+    return !hasErrors
 }
 

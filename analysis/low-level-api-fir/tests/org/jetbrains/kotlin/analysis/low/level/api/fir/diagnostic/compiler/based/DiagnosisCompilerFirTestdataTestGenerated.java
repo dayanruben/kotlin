@@ -3590,6 +3590,12 @@ public class DiagnosisCompilerFirTestdataTestGenerated extends AbstractDiagnosis
             }
 
             @Test
+            @TestMetadata("javaFieldAndKotlinPropertyReferenceFromInner.kt")
+            public void testJavaFieldAndKotlinPropertyReferenceFromInner() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/propertyVsField/javaFieldAndKotlinPropertyReferenceFromInner.kt");
+            }
+
+            @Test
             @TestMetadata("propertyAndTwoFields.kt")
             public void testPropertyAndTwoFields() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolve/propertyVsField/propertyAndTwoFields.kt");
@@ -4868,6 +4874,12 @@ public class DiagnosisCompilerFirTestdataTestGenerated extends AbstractDiagnosis
         @TestMetadata("removeOnAbstractMap.kt")
         public void testRemoveOnAbstractMap() throws Exception {
             runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/removeOnAbstractMap.kt");
+        }
+
+        @Test
+        @TestMetadata("repeatedAnnotations.kt")
+        public void testRepeatedAnnotations() throws Exception {
+            runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/repeatedAnnotations.kt");
         }
 
         @Test

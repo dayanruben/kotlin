@@ -50,6 +50,12 @@ public class SerializationIrBoxTestGenerated extends AbstractSerializationIrBoxT
     }
 
     @Test
+    @TestMetadata("contextualFallback.kt")
+    public void testContextualFallback() throws Exception {
+        runTest("plugins/kotlinx-serialization/testData/boxIr/contextualFallback.kt");
+    }
+
+    @Test
     @TestMetadata("enumsAreCached.kt")
     public void testEnumsAreCached() throws Exception {
         runTest("plugins/kotlinx-serialization/testData/boxIr/enumsAreCached.kt");
@@ -113,6 +119,12 @@ public class SerializationIrBoxTestGenerated extends AbstractSerializationIrBoxT
     @TestMetadata("metaSerializable.kt")
     public void testMetaSerializable() throws Exception {
         runTest("plugins/kotlinx-serialization/testData/boxIr/metaSerializable.kt");
+    }
+
+    @Test
+    @TestMetadata("mpp.kt")
+    public void testMpp() throws Exception {
+        runTest("plugins/kotlinx-serialization/testData/boxIr/mpp.kt");
     }
 
     @Test

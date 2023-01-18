@@ -172,14 +172,18 @@ fun Project.configureKotlinCompilationOptions() {
             kotlinOptions {
                 freeCompilerArgs += jvmCompilerArgs
 
-                if (useJvmFir && project.path !in projectsWithDisabledFirBootstrap) {
-                    freeCompilerArgs += "-Xuse-k2"
-                    freeCompilerArgs += "-Xabi-stability=stable"
-                    if (useFirLT) {
-                        freeCompilerArgs += "-Xuse-fir-lt"
-                    }
-                    if (useFirIC) {
-                        freeCompilerArgs += "-Xuse-fir-ic"
+                if (useJvmFir) {
+                    if (project.path !in projectsWithDisabledFirBootstrap) {
+                        freeCompilerArgs += "-Xuse-k2"
+                        freeCompilerArgs += "-Xabi-stability=stable"
+                        if (useFirLT) {
+                            freeCompilerArgs += "-Xuse-fir-lt"
+                        }
+                        if (useFirIC) {
+                            freeCompilerArgs += "-Xuse-fir-ic"
+                        }
+                    } else {
+                        freeCompilerArgs += "-Xskip-prerelease-check"
                     }
                 }
                 if (renderDiagnosticNames) {
@@ -232,6 +236,12 @@ fun Project.configureArtifacts() {
     tasks.withType<AbstractArchiveTask>().configureEach {
         isPreserveFileTimestamps = false
         isReproducibleFileOrder = true
+        val `rw-r--r--` = 0b110100100
+        val `rwxr-xr-x` = 0b111101101
+        fileMode = `rw-r--r--`
+        dirMode = `rwxr-xr-x`
+        filesMatching("**/bin/*") { mode = `rwxr-xr-x` }
+        filesMatching("**/bin/*.bat") { mode = `rw-r--r--` }
     }
 
     normalization {

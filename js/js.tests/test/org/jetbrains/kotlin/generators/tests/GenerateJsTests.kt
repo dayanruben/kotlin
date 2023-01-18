@@ -8,6 +8,8 @@ package org.jetbrains.kotlin.generators.tests
 import org.jetbrains.kotlin.generators.generateTestGroupSuiteWithJUnit5
 import org.jetbrains.kotlin.generators.impl.generateTestGroupSuite
 import org.jetbrains.kotlin.incremental.AbstractInvalidationTest
+import org.jetbrains.kotlin.incremental.AbstractJsIrES6InvalidationTest
+import org.jetbrains.kotlin.incremental.AbstractJsIrInvalidationTest
 import org.jetbrains.kotlin.js.test.*
 import org.jetbrains.kotlin.js.test.fir.*
 import org.jetbrains.kotlin.js.test.ir.*
@@ -34,6 +36,15 @@ fun main(args: Array<String>) {
             testClass<AbstractJsTranslatorWasmTest> {
                 model("box/main", pattern = "^([^_](.+))\\.kt$", targetBackend = TargetBackend.WASM)
                 model("box/native/", pattern = "^([^_](.+))\\.kt$", targetBackend = TargetBackend.WASM)
+                model("box/esModules/", pattern = "^([^_](.+))\\.kt$", targetBackend = TargetBackend.WASM,
+                    excludeDirs = listOf(
+                        // JsExport is not supported for classes
+                        "jsExport", "native", "export",
+                        // Multimodal infra is not supported. Also, we don't use ES modules for cross-module refs in Wasm
+                        "crossModuleRef", "crossModuleRefPerFile", "crossModuleRefPerModule"
+                    )
+                )
+                model("box/jsQualifier/", pattern = "^([^_](.+))\\.kt$", targetBackend = TargetBackend.WASM)
             }
 
             testClass<AbstractJsTranslatorUnitWasmTest> {
@@ -57,8 +68,12 @@ fun main(args: Array<String>) {
         }
 
         testGroup("js/js.tests/tests-gen", "js/js.translator/testData") {
-            testClass<AbstractInvalidationTest> {
+            testClass<AbstractJsIrInvalidationTest> {
                 model("incremental/invalidation/", pattern = "^([^_](.+))$", targetBackend = TargetBackend.JS_IR, recursive = false)
+            }
+
+            testClass<AbstractJsIrES6InvalidationTest> {
+                model("incremental/invalidation/", pattern = "^([^_](.+))$", targetBackend = TargetBackend.JS_IR_ES6, recursive = false)
             }
         }
 
@@ -88,7 +103,7 @@ fun main(args: Array<String>) {
     generateTestGroupSuiteWithJUnit5(args) {
         testGroup("js/js.tests/tests-gen", "js/js.translator/testData", testRunnerMethodName = "runTest0") {
             testClass<AbstractBoxJsTest> {
-                model("box/", pattern = "^([^_](.+))\\.kt$", excludeDirs = listOf("closure/inlineAnonymousFunctions"))
+                model("box/", pattern = "^([^_](.+))\\.kt$", excludeDirs = listOf("closure/inlineAnonymousFunctions", "es6classes"))
             }
 
             testClass<AbstractSourceMapGenerationSmokeTest> {
@@ -112,6 +127,10 @@ fun main(args: Array<String>) {
             }
 
             testClass<AbstractIrBoxJsTest> {
+                model("box/", pattern = "^([^_](.+))\\.kt$", excludeDirs = listOf("es6classes"))
+            }
+
+            testClass<AbstractIrBoxJsES6Test> {
                 model("box/", pattern = "^([^_](.+))\\.kt$")
             }
 
@@ -124,7 +143,7 @@ fun main(args: Array<String>) {
             }
 
             testClass<AbstractFirJsBoxTest> {
-                model("box/", pattern = "^([^_](.+))\\.kt$")
+                model("box/", pattern = "^([^_](.+))\\.kt$", excludeDirs = listOf("es6classes"))
             }
 
             // see todo on defining class
@@ -160,6 +179,18 @@ fun main(args: Array<String>) {
             }
 
             testClass<AbstractIrJsCodegenInlineTest> {
+                model("codegen/boxInline")
+            }
+
+            testClass<AbstractIrJsES6CodegenBoxTest> {
+                model("codegen/box", excludeDirs = jvmOnlyBoxTests)
+            }
+
+            testClass<AbstractIrJsES6CodegenBoxErrorTest> {
+                model("codegen/boxError", excludeDirs = jvmOnlyBoxTests)
+            }
+
+            testClass<AbstractIrJsES6CodegenInlineTest> {
                 model("codegen/boxInline")
             }
 

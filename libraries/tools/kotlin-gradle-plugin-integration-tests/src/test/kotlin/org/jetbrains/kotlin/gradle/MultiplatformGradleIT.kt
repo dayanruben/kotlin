@@ -18,7 +18,6 @@ package org.jetbrains.kotlin.gradle
 
 import com.intellij.testFramework.TestDataPath
 import org.gradle.api.logging.LogLevel
-import org.gradle.api.logging.configuration.WarningMode
 import org.jetbrains.kotlin.gradle.internals.KOTLIN_12X_MPP_DEPRECATION_WARNING
 import org.jetbrains.kotlin.gradle.plugin.EXPECTED_BY_CONFIG_NAME
 import org.jetbrains.kotlin.gradle.plugin.IMPLEMENT_CONFIG_NAME
@@ -171,7 +170,7 @@ class MultiplatformGradleIT : BaseGradleIT() {
 
     @Test
     fun testMultipleCommonModules(): Unit = with(Project("multiplatformMultipleCommonModules")) {
-        build("build", options = defaultBuildOptions().copy(warningMode = WarningMode.Summary)) {
+        build("build") {
             assertSuccessful()
 
             val sourceSets = listOf("", "Test")
@@ -295,7 +294,7 @@ class MultiplatformGradleIT : BaseGradleIT() {
         val customSourceSetCompileTasks = listOf(":lib" to "Common", ":libJvm" to "")
             .map { (module, platform) -> "$module:compile${sourceSetName.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }}Kotlin$platform" }
 
-        build(*customSourceSetCompileTasks.toTypedArray(), options = defaultBuildOptions().copy(warningMode = WarningMode.Summary)) {
+        build(*customSourceSetCompileTasks.toTypedArray()) {
             assertSuccessful()
             assertTasksExecuted(customSourceSetCompileTasks)
         }
@@ -356,10 +355,10 @@ class MultiplatformGradleIT : BaseGradleIT() {
             options = defaultBuildOptions().copy(
                 androidGradlePluginVersion = AGPVersion.v4_2_0,
                 androidHome = KtTestUtil.findAndroidSdk().also { acceptAndroidSdkLicenses(it) },
-                // Workaround for a deprecation warning from AGP
-                // Relying on FileTrees for ignoring empty directories when using @SkipWhenEmpty has been deprecated.
-                warningMode = WarningMode.None,
-            ),
+            ).suppressDeprecationWarningsOnAgpLessThan(
+                AGPVersion.v7_3_0,
+                "uses deprecated IncrementalTaskInputs; relies on FileTrees for ignoring empty directories when using @SkipWhenEmpty"
+            )
         ) {
             assertSuccessful()
             assertTasksExecuted(":lib1:compileDebugKotlin")

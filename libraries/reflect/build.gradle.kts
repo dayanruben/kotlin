@@ -60,35 +60,56 @@ dependencies {
 }
 
 @CacheableTransformer
-class KotlinModuleShadowTransformer(private val logger: Logger) : Transformer {
+class KotlinModuleShadowTransformer(private val logger: Logger, private val useK2: Boolean) : Transformer {
     @Suppress("ArrayInDataClass")
     private data class Entry(val path: String, val bytes: ByteArray)
+
     private val data = mutableListOf<Entry>()
 
     override fun getName() = "KotlinModuleShadowTransformer"
 
     override fun canTransformResource(element: FileTreeElement): Boolean =
-            element.path.substringAfterLast(".") == KOTLIN_MODULE
+        element.path.substringAfterLast(".") == KOTLIN_MODULE
 
     override fun transform(context: TransformerContext) {
         fun relocate(content: String): String =
-                context.relocators.fold(content) { acc, relocator -> relocator.applyToSourceContent(acc) }
+            context.relocators.fold(content) { acc, relocator -> relocator.applyToSourceContent(acc) }
 
-        val metadata = KotlinModuleMetadata.read(context.`is`.readBytes())
-                ?: error("Not a .kotlin_module file: ${context.path}")
         val writer = KotlinModuleMetadata.Writer()
         logger.info("Transforming ${context.path}")
-        metadata.accept(object : KmModuleVisitor(writer) {
-            override fun visitPackageParts(fqName: String, fileFacades: List<String>, multiFileClassParts: Map<String, String>) {
-                assert(multiFileClassParts.isEmpty()) { multiFileClassParts } // There are no multi-file class parts in core
-                super.visitPackageParts(relocate(fqName), fileFacades.map(::relocate), multiFileClassParts)
+        if (useK2) {
+            // TODO: remove this branch after migration to version 1.9
+            val internalData = org.jetbrains.kotlin.metadata.jvm.deserialization.ModuleMapping.loadModuleMapping(
+                context.`is`.readBytes(), javaClass.name, skipMetadataVersionCheck = true, isJvmPackageNameSupported = true
+            ) {
             }
-        })
+            val visitor = object : KmModuleVisitor(writer) {
+                override fun visitPackageParts(fqName: String, fileFacades: List<String>, multiFileClassParts: Map<String, String>) {
+                    assert(multiFileClassParts.isEmpty()) { multiFileClassParts } // There are no multi-file class parts in core
+                    super.visitPackageParts(relocate(fqName), fileFacades.map(::relocate), multiFileClassParts)
+                }
+            }
+            for ((fqName, parts) in internalData.packageFqName2Parts) {
+                val (fileFacades, multiFileClassParts) = parts.parts.partition { parts.getMultifileFacadeName(it) == null }
+                visitor.visitPackageParts(fqName, fileFacades, multiFileClassParts.associateWith { parts.getMultifileFacadeName(it)!! })
+            }
+            visitor.visitEnd()
+        } else {
+            val metadata = KotlinModuleMetadata.read(context.`is`.readBytes())
+                ?: error("Not a .kotlin_module file: ${context.path}")
+            // TODO: writer declaration and logger.info call from above should be move here after migration to version 1.9
+            metadata.accept(object : KmModuleVisitor(writer) {
+                override fun visitPackageParts(fqName: String, fileFacades: List<String>, multiFileClassParts: Map<String, String>) {
+                    assert(multiFileClassParts.isEmpty()) { multiFileClassParts } // There are no multi-file class parts in core
+                    super.visitPackageParts(relocate(fqName), fileFacades.map(::relocate), multiFileClassParts)
+                }
+            })
+        }
+
         data += Entry(context.path, writer.write().bytes)
     }
 
-    override fun hasTransformedResource(): Boolean =
-            data.isNotEmpty()
+    override fun hasTransformedResource(): Boolean = data.isNotEmpty()
 
     override fun modifyOutputStream(os: ZipOutputStream, preserveFileTimestamps: Boolean) {
         for ((path, bytes) in data) {
@@ -112,7 +133,7 @@ val reflectShadowJar by task<ShadowJar> {
 
     if (kotlinBuildProperties.relocation) {
         mergeServiceFiles()
-        transform(KotlinModuleShadowTransformer(logger))
+        transform(KotlinModuleShadowTransformer(logger, project.kotlinBuildProperties.useFir))
         relocate("org.jetbrains.kotlin", "kotlin.reflect.jvm.internal.impl")
         relocate("javax.inject", "kotlin.reflect.jvm.internal.impl.javax.inject")
     }

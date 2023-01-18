@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.gradle.native
 
 import org.jetbrains.kotlin.gradle.BaseGradleIT
 import org.jetbrains.kotlin.gradle.GradleVersionRequired
+import org.jetbrains.kotlin.gradle.suppressDeprecationWarningsOnAgpLessThan
 import org.jetbrains.kotlin.gradle.transformProjectWithPluginsDsl
 import org.jetbrains.kotlin.gradle.util.AGPVersion
 import org.jetbrains.kotlin.konan.target.HostManager
@@ -93,7 +94,11 @@ class XCFrameworkIT : BaseGradleIT() {
     @Test
     fun `check there aren't XCFramework tasks without declaration in build script`() {
         with(Project("sharedAppleFramework")) {
-            build("tasks") {
+            val options = defaultBuildOptions().suppressDeprecationWarningsOnAgpLessThan(
+                AGPVersion.v7_3_0,
+                "uses deprecated IncrementalTaskInputs"
+            )
+            build("tasks", options = options) {
                 assertSuccessful()
                 assertTasksNotRegistered(
                     ":shared:assembleSharedDebugXCFramework",

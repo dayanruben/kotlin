@@ -13,7 +13,9 @@ import org.jetbrains.kotlin.test.Constructor
 import org.jetbrains.kotlin.test.TestJdkKind
 import org.jetbrains.kotlin.test.bind
 import org.jetbrains.kotlin.test.builders.TestConfigurationBuilder
+import org.jetbrains.kotlin.test.builders.configureFirHandlersStep
 import org.jetbrains.kotlin.test.builders.firHandlersStep
+import org.jetbrains.kotlin.test.coerce
 import org.jetbrains.kotlin.test.directives.ConfigurationDirectives.WITH_STDLIB
 import org.jetbrains.kotlin.test.directives.FirDiagnosticsDirectives.FIR_DUMP
 import org.jetbrains.kotlin.test.directives.FirDiagnosticsDirectives.USE_LIGHT_TREE
@@ -28,25 +30,17 @@ import org.jetbrains.kotlin.test.frontend.fir.handlers.*
 import org.jetbrains.kotlin.test.model.DependencyKind
 import org.jetbrains.kotlin.test.model.FrontendFacade
 import org.jetbrains.kotlin.test.model.FrontendKinds
-import org.jetbrains.kotlin.test.services.TestServices
 import org.jetbrains.kotlin.test.services.configuration.CommonEnvironmentConfigurator
 import org.jetbrains.kotlin.test.services.configuration.JvmEnvironmentConfigurator
 import org.jetbrains.kotlin.test.services.fir.FirOldFrontendMetaConfigurator
+import org.jetbrains.kotlin.test.services.service
 import org.jetbrains.kotlin.test.services.sourceProviders.AdditionalDiagnosticsSourceFilesProvider
 import org.jetbrains.kotlin.test.services.sourceProviders.CoroutineHelpersSourceFilesProvider
 
 abstract class AbstractFirDiagnosticTest : AbstractKotlinCompilerTest() {
     override fun TestConfigurationBuilder.configuration() {
         baseFirDiagnosticTestConfiguration()
-        useAfterAnalysisCheckers(
-            ::DisableLazyResolveChecksAfterAnalysisChecker,
-        )
-
-        firHandlersStep {
-            useHandlers(
-                ::FirResolveContractViolationErrorHandler,
-            )
-        }
+        enableLazyResolvePhaseChecking()
     }
 }
 
@@ -72,7 +66,7 @@ fun TestConfigurationBuilder.configurationForClassicAndFirTestsAlongside() {
 // `baseDir` is used in Kotlin plugin from IJ infra
 fun TestConfigurationBuilder.baseFirDiagnosticTestConfiguration(
     baseDir: String = ".",
-    frontendFacade: Constructor<FrontendFacade<FirOutputArtifact>> = ::FirFrontendFacadeForDiagnosticTests
+    frontendFacade: Constructor<FrontendFacade<FirOutputArtifact>> = ::FirFrontendFacade
 ) {
     globalDefaults {
         frontend = FrontendKinds.FIR
@@ -172,11 +166,28 @@ fun TestConfigurationBuilder.baseFirDiagnosticTestConfiguration(
     }
 }
 
-class FirFrontendFacadeForDiagnosticTests(testServices: TestServices) : FirFrontendFacade(testServices) {
+class FirLazyDeclarationResolverWithPhaseCheckingSessionComponentRegistrar : FirSessionComponentRegistrar() {
     private val lazyResolver = FirCompilerLazyDeclarationResolverWithPhaseChecking()
 
     @OptIn(org.jetbrains.kotlin.fir.SessionConfiguration::class)
-    override fun registerExtraComponents(session: FirSession) {
+    override fun registerAdditionalComponent(session: FirSession) {
         session.register(FirLazyDeclarationResolver::class, lazyResolver)
     }
 }
+
+fun TestConfigurationBuilder.enableLazyResolvePhaseChecking() {
+    useAdditionalServices(
+        service<FirSessionComponentRegistrar>(::FirLazyDeclarationResolverWithPhaseCheckingSessionComponentRegistrar.coerce())
+    )
+
+    useAfterAnalysisCheckers(
+        ::DisableLazyResolveChecksAfterAnalysisChecker,
+    )
+
+    configureFirHandlersStep {
+        useHandlers(
+            ::FirResolveContractViolationErrorHandler,
+        )
+    }
+}
+

@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.ir.backend.js.transformers.irToJs
 import org.jetbrains.kotlin.backend.common.serialization.checkIsFunctionInterface
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.ir.backend.js.*
-import org.jetbrains.kotlin.ir.backend.js.dce.eliminateDeadDeclarations
 import org.jetbrains.kotlin.ir.backend.js.export.*
 import org.jetbrains.kotlin.ir.backend.js.lower.StaticMembersLowering
 import org.jetbrains.kotlin.ir.backend.js.lower.isBuiltInClass
@@ -46,29 +45,33 @@ val IrModuleFragment.safeName: String
     get() = name.asString().safeModuleName
 
 enum class TranslationMode(
-    val dce: Boolean,
+    val production: Boolean,
     val perModule: Boolean,
     val minimizedMemberNames: Boolean,
 ) {
-    FULL(dce = false, perModule = false, minimizedMemberNames = false),
-    FULL_DCE(dce = true, perModule = false, minimizedMemberNames = false),
-    FULL_DCE_MINIMIZED_NAMES(dce = true, perModule = false, minimizedMemberNames = true),
-    PER_MODULE(dce = false, perModule = true, minimizedMemberNames = false),
-    PER_MODULE_DCE(dce = true, perModule = true, minimizedMemberNames = false),
-    PER_MODULE_DCE_MINIMIZED_NAMES(dce = true, perModule = true, minimizedMemberNames = true);
+    FULL_DEV(production = false, perModule = false, minimizedMemberNames = false),
+    FULL_PROD(production = true, perModule = false, minimizedMemberNames = false),
+    FULL_PROD_MINIMIZED_NAMES(production = true, perModule = false, minimizedMemberNames = true),
+    PER_MODULE_DEV(production = false, perModule = true, minimizedMemberNames = false),
+    PER_MODULE_PROD(production = true, perModule = true, minimizedMemberNames = false),
+    PER_MODULE_PROD_MINIMIZED_NAMES(production = true, perModule = true, minimizedMemberNames = true);
 
     companion object {
-        fun fromFlags(dce: Boolean, perModule: Boolean, minimizedMemberNames: Boolean): TranslationMode {
+        fun fromFlags(
+            production: Boolean,
+            perModule: Boolean,
+            minimizedMemberNames: Boolean
+        ): TranslationMode {
             return if (perModule) {
-                if (dce) {
-                    if (minimizedMemberNames) PER_MODULE_DCE_MINIMIZED_NAMES
-                    else PER_MODULE_DCE
-                } else PER_MODULE
+                if (production) {
+                    if (minimizedMemberNames) PER_MODULE_PROD_MINIMIZED_NAMES
+                    else PER_MODULE_PROD
+                } else PER_MODULE_DEV
             } else {
-                if (dce) {
-                    if (minimizedMemberNames) FULL_DCE_MINIMIZED_NAMES
-                    else FULL_DCE
-                } else FULL
+                if (production) {
+                    if (minimizedMemberNames) FULL_PROD_MINIMIZED_NAMES
+                    else FULL_PROD
+                } else FULL_DEV
             }
         }
     }
@@ -81,7 +84,7 @@ class JsCodeGenerator(
     private val moduleKind: ModuleKind,
     private val sourceMapsInfo: SourceMapsInfo?
 ) {
-    fun generateJsCode(relativeRequirePath: Boolean, outJsProgram: Boolean): CompilationOutputs {
+    fun generateJsCode(relativeRequirePath: Boolean, outJsProgram: Boolean): CompilationOutputsBuilt {
         return generateWrappedModuleBody(
             multiModule,
             mainModuleName,
@@ -146,15 +149,15 @@ class IrModuleToJsTransformer(
 
         val result = EnumMap<TranslationMode, CompilationOutputs>(TranslationMode::class.java)
 
-        modes.filter { !it.dce }.forEach {
+        modes.filter { !it.production }.forEach {
             result[it] = makeJsCodeGeneratorFromIr(exportData, it).generateJsCode(relativeRequirePath, true)
         }
 
-        if (modes.any { it.dce }) {
-            eliminateDeadDeclarations(modules, backendContext, removeUnusedAssociatedObjects)
+        if (modes.any { it.production }) {
+            optimizeProgramByIr(modules, backendContext, removeUnusedAssociatedObjects)
         }
 
-        modes.filter { it.dce }.forEach {
+        modes.filter { it.production }.forEach {
             result[it] = makeJsCodeGeneratorFromIr(exportData, it).generateJsCode(relativeRequirePath, true)
         }
 
@@ -165,8 +168,8 @@ class IrModuleToJsTransformer(
         val exportData = associateIrAndExport(modules)
         doStaticMembersLowering(modules)
 
-        if (mode.dce) {
-            eliminateDeadDeclarations(modules, backendContext, removeUnusedAssociatedObjects)
+        if (mode.production) {
+            optimizeProgramByIr(modules, backendContext, removeUnusedAssociatedObjects)
         }
 
         return makeJsCodeGeneratorFromIr(exportData, mode)
@@ -242,8 +245,12 @@ class IrModuleToJsTransformer(
 
         val internalModuleName = ReservedJsNames.makeInternalModuleName().takeIf { !isEsModules }
         val globalNames = NameTable<String>(globalNameScope)
+
+        val statements = result.declarations.statements
+        val fileStatements = fileExports.file.accept(IrFileToJsTransformer(useBareParameterNames = true), staticContext).statements
+
         val exportStatements =
-            ExportModelToJsStatements(staticContext, { globalNames.declareFreshName(it, it) }).generateModuleExport(
+            ExportModelToJsStatements(staticContext, backendContext.es6mode, { globalNames.declareFreshName(it, it) }).generateModuleExport(
                 ExportedModule(mainModuleName, moduleKind, fileExports.exports),
                 internalModuleName,
                 isEsModules
@@ -252,9 +259,6 @@ class IrModuleToJsTransformer(
         result.exports.statements += exportStatements
         result.dts = fileExports.tsDeclarations
 
-        val statements = result.declarations.statements
-
-        val fileStatements = fileExports.file.accept(IrFileToJsTransformer(useBareParameterNames = true), staticContext).statements
         if (fileStatements.isNotEmpty()) {
             var startComment = ""
 
@@ -380,7 +384,7 @@ private fun generateWrappedModuleBody(
     sourceMapsInfo: SourceMapsInfo?,
     relativeRequirePath: Boolean,
     outJsProgram: Boolean
-): CompilationOutputs {
+): CompilationOutputsBuilt {
     if (multiModule) {
         // mutable container allows explicitly remove elements from itself,
         // so we are able to help GC to free heavy JsIrModule objects
@@ -398,7 +402,7 @@ private fun generateWrappedModuleBody(
             )
         }
 
-        val dependencies = buildList(moduleToRef.size) {
+        mainModule.dependencies = buildList(moduleToRef.size) {
             while (moduleToRef.isNotEmpty()) {
                 moduleToRef.removeFirst().let { (module, moduleRef) ->
                     val moduleName = module.externalModuleName
@@ -416,7 +420,7 @@ private fun generateWrappedModuleBody(
             }
         }
 
-        return mainModule.addDependencies(dependencies)
+        return mainModule
     } else {
         return generateSingleWrappedModuleBody(
             mainModuleName,
@@ -437,7 +441,7 @@ fun generateSingleWrappedModuleBody(
     generateCallToMain: Boolean,
     crossModuleReferences: CrossModuleReferences = CrossModuleReferences.Empty(moduleKind),
     outJsProgram: Boolean = true
-): CompilationOutputs {
+): CompilationOutputsBuilt {
     val program = Merger(
         moduleName,
         moduleKind,
@@ -476,10 +480,10 @@ fun generateSingleWrappedModuleBody(
 
     program.accept(JsToStringGenerationVisitor(jsCode, sourceMapBuilderConsumer))
 
-    return CompilationOutputs(
+    return CompilationOutputsBuilt(
         jsCode.toString(),
+        sourceMapBuilder?.build(),
         fragments.mapNotNull { it.dts }.ifNotEmpty { joinTypeScriptFragments() },
-        program.takeIf { outJsProgram },
-        sourceMapBuilder?.build()
+        program.takeIf { outJsProgram }
     )
 }

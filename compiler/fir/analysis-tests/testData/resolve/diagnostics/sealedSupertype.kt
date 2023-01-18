@@ -1,5 +1,3 @@
-// FIR_IDE_IGNORE
-
 sealed class A
 
 class <!PACKAGE_OR_CLASSIFIER_REDECLARATION!>B<!> : A()

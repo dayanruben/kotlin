@@ -58,8 +58,8 @@ abstract class CLITool<A : CommonToolArguments> {
         val collector = PrintingMessageCollector(errStream, messageRenderer, arguments.verbose)
 
         try {
-            if (PlainTextMessageRenderer.COLOR_ENABLED) {
-                AnsiConsole.systemInstall()
+            if (messageRenderer is PlainTextMessageRenderer) {
+                messageRenderer.enableColorsIfNeeded()
             }
 
             errStream.print(messageRenderer.renderPreamble())
@@ -80,8 +80,8 @@ abstract class CLITool<A : CommonToolArguments> {
         } finally {
             errStream.print(messageRenderer.renderConclusion())
 
-            if (PlainTextMessageRenderer.COLOR_ENABLED) {
-                AnsiConsole.systemUninstall()
+            if (messageRenderer is PlainTextMessageRenderer) {
+                messageRenderer.disableColorsIfNeeded()
             }
         }
     }
@@ -142,6 +142,7 @@ abstract class CLITool<A : CommonToolArguments> {
             when (System.getProperty(MessageRenderer.PROPERTY_KEY)) {
                 MessageRenderer.XML.name -> MessageRenderer.XML
                 MessageRenderer.GRADLE_STYLE.name -> MessageRenderer.GRADLE_STYLE
+                MessageRenderer.XCODE_STYLE.name -> MessageRenderer.XCODE_STYLE
                 MessageRenderer.WITHOUT_PATHS.name -> MessageRenderer.WITHOUT_PATHS
                 MessageRenderer.PLAIN_FULL_PATHS.name -> MessageRenderer.PLAIN_FULL_PATHS
                 else -> MessageRenderer.PLAIN_RELATIVE_PATHS

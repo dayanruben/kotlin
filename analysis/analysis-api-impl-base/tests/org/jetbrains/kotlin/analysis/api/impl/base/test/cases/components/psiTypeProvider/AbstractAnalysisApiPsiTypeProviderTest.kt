@@ -14,11 +14,11 @@ import org.jetbrains.kotlin.analysis.test.framework.services.expressionMarkerPro
 import org.jetbrains.kotlin.analysis.test.framework.utils.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtPsiUtil
 import org.jetbrains.kotlin.test.services.TestModuleStructure
 import org.jetbrains.kotlin.test.services.TestServices
 import org.jetbrains.kotlin.test.services.assertions
 import org.jetbrains.kotlin.types.Variance
-import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 abstract class AbstractAnalysisApiPsiTypeProviderTest : AbstractAnalysisApiBasedTest() {
     override fun doTestByModuleStructure(moduleStructure: TestModuleStructure, testServices: TestServices) {
@@ -26,18 +26,24 @@ abstract class AbstractAnalysisApiPsiTypeProviderTest : AbstractAnalysisApiBased
             val ktFiles = testServices.ktModuleProvider.getModuleFiles(module).filterIsInstance<KtFile>()
             testServices.expressionMarkerProvider.getElementsOfTypeAtCarets<KtDeclaration>(ktFiles)
         }.single()
-        val containingClass = getContainingKtLightClass(declaration, ktFile)
-        val psiContext = containingClass.findLightDeclarationContext(declaration)
-            ?: error("Can't find psi context for $declaration")
+
+        val psiContext = if (KtPsiUtil.isLocal(declaration)) {
+            declaration
+        } else {
+            val containingClass = getContainingKtLightClass(declaration, ktFile)
+            containingClass.findLightDeclarationContext(declaration) ?: error("Can't find psi context for $declaration")
+        }
+
         val actual = buildString {
             executeOnPooledThreadInReadAction {
                 analyze(declaration) {
                     val ktType = declaration.getReturnKtType()
                     appendLine("KtType: ${ktType.render(position = Variance.INVARIANT)}")
-                    appendLine("PsiType: ${ktType.asPsiType(psiContext)}")
+                    appendLine("PsiType: ${ktType.asPsiType(psiContext, allowErrorTypes = false)}")
                 }
             }
         }
+
         testServices.assertions.assertEqualsToTestDataFileSibling(actual)
     }
 }

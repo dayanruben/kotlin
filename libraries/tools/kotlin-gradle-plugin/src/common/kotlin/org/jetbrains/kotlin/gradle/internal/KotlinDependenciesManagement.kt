@@ -82,10 +82,14 @@ private fun excludeStdlibAndKotlinTestCommonFromPlatformCompilations(project: Pr
 
 // there several JVM-like targets, like KotlinWithJava, or KotlinAndroid, and they don't have common supertype
 // aside from KotlinTarget
+@Suppress("DEPRECATION")
 private fun KotlinTarget.excludeStdlibAndKotlinTestCommonFromPlatformCompilations() {
     compilations.all {
         listOfNotNull(
             it.compileDependencyConfigurationName,
+            it.defaultSourceSet.apiMetadataConfigurationName,
+            it.defaultSourceSet.implementationMetadataConfigurationName,
+            it.defaultSourceSet.compileOnlyMetadataConfigurationName,
             (it as? KotlinCompilationToRunnableFiles<*>)?.runtimeDependencyConfigurationName,
 
             // Additional configurations for (old) jvmWithJava-preset. Remove it when we drop it completely

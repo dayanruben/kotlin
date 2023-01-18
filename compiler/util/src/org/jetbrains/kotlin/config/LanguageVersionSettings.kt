@@ -272,7 +272,6 @@ enum class LanguageFeature(
     SkipStandaloneScriptsInSourceRoots(KOTLIN_1_9, kind = OTHER), // KT-52525
     ModifierNonBuiltinSuspendFunError(KOTLIN_1_9, kind = BUG_FIX), // KT-49264
     EnumEntries(KOTLIN_1_9, sinceApiVersion = ApiVersion.KOTLIN_1_8, kind = UNSTABLE_FEATURE), // KT-48872
-    EnableDfaWarningsInK2(KOTLIN_1_9, kind = OTHER), // KT-50965
     ForbidSuperDelegationToAbstractFakeOverride(KOTLIN_1_9, kind = BUG_FIX), // KT-49017
     DataObjects(KOTLIN_1_9), // KT-4107
     ProhibitAccessToEnumCompanionMembersInEnumConstructorCall(KOTLIN_1_9, kind = BUG_FIX), // KT-49110
@@ -282,6 +281,11 @@ enum class LanguageFeature(
     ValueClassesSecondaryConstructorWithBody(sinceVersion = KOTLIN_1_9, kind = UNSTABLE_FEATURE), // KT-55333
     NativeJsProhibitLateinitIsInitalizedIntrinsicWithoutPrivateAccess(KOTLIN_1_9, kind = BUG_FIX), // KT-27002
 
+    // End of 1.* language features --------------------------------------------------
+
+    // 2.0
+
+    // End of 2.* language features --------------------------------------------------
 
     // This feature effectively might be removed because we decided to disable it until K2 and there it will be unconditionally enabled.
     // But we leave it here just to minimize the changes in K1 and also to allow use the feature once somebody needs it.
@@ -320,7 +324,7 @@ enum class LanguageFeature(
     JsAllowImplementingFunctionInterface(sinceVersion = null, kind = UNSTABLE_FEATURE),
     CustomEqualsInValueClasses(sinceVersion = null, kind = OTHER), // KT-24874
     InlineLateinit(sinceVersion = null, kind = OTHER), // KT-23814
-
+    EnableDfaWarningsInK2(sinceVersion = null, kind = OTHER), // KT-50965
     ;
 
     init {
@@ -414,10 +418,15 @@ enum class LanguageVersion(val major: Int, val minor: Int) : DescriptionAware, L
     KOTLIN_1_7(1, 7),
     KOTLIN_1_8(1, 8),
     KOTLIN_1_9(1, 9),
+
+    KOTLIN_2_0(2, 0),
     ;
 
     override val isStable: Boolean
         get() = this <= LATEST_STABLE
+
+    val usesK2: Boolean
+        get() = this >= KOTLIN_2_0
 
     override val isDeprecated: Boolean
         get() = FIRST_SUPPORTED <= this && this < FIRST_NON_DEPRECATED

@@ -1,4 +1,3 @@
-// FIR_IDE_IGNORE
 // FILE: I.kt
 
 open class I : <!CYCLIC_INHERITANCE_HIERARCHY!>K<!>() {

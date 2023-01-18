@@ -1,5 +1,3 @@
-// FIR_IDE_IGNORE
-
 <!CONFLICTING_OVERLOADS!>fun test(x: Int)<!> {}
 
 <!CONFLICTING_OVERLOADS!>fun test(y: Int)<!> {}

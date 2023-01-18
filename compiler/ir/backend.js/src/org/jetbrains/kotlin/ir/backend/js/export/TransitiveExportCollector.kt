@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.symbols.*
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.*
-import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
 import org.jetbrains.kotlin.ir.backend.js.utils.isJsImplicitExport
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.superTypes
@@ -66,6 +65,7 @@ class TransitiveExportCollector(val context: JsIrBackendContext) {
         return when (this) {
             is IrType -> substitute(typeSubstitutionMap)
             is IrTypeProjection -> type.substitute(typeSubstitutionMap)
+            is IrStarProjection -> context.irBuiltIns.anyNType
             else -> error("Unexpected ir type argument")
         }
     }

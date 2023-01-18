@@ -238,20 +238,35 @@ private inline fun <T : FunctionGenerationContext> generateFunctionBody(
 internal data class LocationInfoRange(var start: LocationInfo, var end: LocationInfo?)
 
 internal interface StackLocalsManager {
-    fun alloc(irClass: IrClass, cleanFieldsExplicitly: Boolean): LLVMValueRef
+    fun alloc(irClass: IrClass): LLVMValueRef
 
     fun allocArray(irClass: IrClass, count: LLVMValueRef): LLVMValueRef
 
     fun clean(refsOnly: Boolean)
+
+    fun enterScope()
+    fun exitScope()
 }
 
 internal class StackLocalsManagerImpl(
         val functionGenerationContext: FunctionGenerationContext,
         val bbInitStackLocals: LLVMBasicBlockRef
 ) : StackLocalsManager {
-    private class StackLocal(val isArray: Boolean, val irClass: IrClass,
-                             val bodyPtr: LLVMValueRef, val objHeaderPtr: LLVMValueRef,
-                             val gcRootSetSlot: LLVMValueRef?)
+    private var scopeDepth = 0
+    override fun enterScope() { scopeDepth++ }
+    override fun exitScope() { scopeDepth-- }
+    private fun isRootScope() = scopeDepth == 0
+
+    private class StackLocal(
+            val arraySize: Int?,
+            val irClass: IrClass,
+            val stackAllocationPtr: LLVMValueRef,
+            val objHeaderPtr: LLVMValueRef,
+            val gcRootSetSlot: LLVMValueRef?
+    ) {
+        val isArray
+            get() = arraySize != null
+    }
 
     private val stackLocals = mutableListOf<StackLocal>()
 
@@ -260,10 +275,12 @@ internal class StackLocalsManagerImpl(
     private fun FunctionGenerationContext.createRootSetSlot() =
             if (context.memoryModel == MemoryModel.EXPERIMENTAL) alloca(kObjHeaderPtr) else null
 
-    override fun alloc(irClass: IrClass, cleanFieldsExplicitly: Boolean): LLVMValueRef = with(functionGenerationContext) {
-        val type = llvmDeclarations.forClass(irClass).bodyType
+    override fun alloc(irClass: IrClass): LLVMValueRef = with(functionGenerationContext) {
+        val classInfo = llvmDeclarations.forClass(irClass)
+        val type = classInfo.bodyType
         val stackLocal = appendingTo(bbInitStackLocals) {
             val stackSlot = LLVMBuildAlloca(builder, type, "")!!
+            LLVMSetAlignment(stackSlot, classInfo.alignment)
 
             memset(bitcast(llvm.int8PtrType, stackSlot), 0, LLVMSizeOfTypeInBits(codegen.llvmTargetData, type).toInt() / 8)
 
@@ -271,12 +288,13 @@ internal class StackLocalsManagerImpl(
             val typeInfo = codegen.typeInfoForAllocation(irClass)
             setTypeInfoForLocalObject(objectHeader, typeInfo)
             val gcRootSetSlot = createRootSetSlot()
-            StackLocal(false, irClass, stackSlot, objectHeader, gcRootSetSlot)
+            StackLocal(null, irClass, stackSlot, objectHeader, gcRootSetSlot)
         }
 
         stackLocals += stackLocal
-        if (cleanFieldsExplicitly)
+        if (!isRootScope()) {
             clean(stackLocal, false)
+        }
         if (stackLocal.gcRootSetSlot != null) {
             storeStackRef(stackLocal.objHeaderPtr, stackLocal.gcRootSetSlot)
         }
@@ -330,11 +348,14 @@ internal class StackLocalsManagerImpl(
                     constCount * LLVMSizeOfTypeInBits(codegen.llvmTargetData, arrayToElementType[irClass.symbol]).toInt() / 8
             )
             val gcRootSetSlot = createRootSetSlot()
-            StackLocal(true, irClass, arraySlot, arrayHeaderSlot, gcRootSetSlot)
+            StackLocal(constCount, irClass, arraySlot, arrayHeaderSlot, gcRootSetSlot)
         }
 
         stackLocals += stackLocal
         val result = bitcast(kObjHeaderPtr, stackLocal.objHeaderPtr)
+        if (!isRootScope()) {
+            clean(stackLocal, false)
+        }
         if (stackLocal.gcRootSetSlot != null) {
             storeStackRef(result, stackLocal.gcRootSetSlot)
         }
@@ -345,16 +366,22 @@ internal class StackLocalsManagerImpl(
 
     private fun clean(stackLocal: StackLocal, refsOnly: Boolean) = with(functionGenerationContext) {
         if (stackLocal.isArray) {
-            if (stackLocal.irClass.symbol == context.ir.symbols.array)
+            if (stackLocal.irClass.symbol == context.ir.symbols.array) {
                 call(llvm.zeroArrayRefsFunction, listOf(stackLocal.objHeaderPtr))
+            } else if (!refsOnly) {
+                memset(bitcast(llvm.int8PtrType, structGep(stackLocal.stackAllocationPtr, 1, "arrayBody")),
+                        0,
+                        stackLocal.arraySize!! * LLVMSizeOfTypeInBits(codegen.llvmTargetData, arrayToElementType[stackLocal.irClass.symbol]).toInt() / 8
+                )
+            }
         } else {
-            val type = llvmDeclarations.forClass(stackLocal.irClass).bodyType
-            for (field in context.getLayoutBuilder(stackLocal.irClass).getFields(llvm)) {
-                val fieldIndex = field.index
+            val info = llvmDeclarations.forClass(stackLocal.irClass)
+            val type = info.bodyType
+            for (fieldIndex in info.fieldIndices.values.sorted()) {
                 val fieldType = LLVMStructGetTypeAtIndex(type, fieldIndex)!!
 
                 if (isObjectType(fieldType)) {
-                    val fieldPtr = LLVMBuildStructGEP(builder, stackLocal.bodyPtr, fieldIndex, "")!!
+                    val fieldPtr = LLVMBuildStructGEP(builder, stackLocal.stackAllocationPtr, fieldIndex, "")!!
                     if (refsOnly)
                         storeHeapRef(kNullObjHeaderPtr, fieldPtr)
                     else
@@ -363,7 +390,7 @@ internal class StackLocalsManagerImpl(
             }
 
             if (!refsOnly) {
-                val bodyPtr = ptrToInt(stackLocal.bodyPtr, codegen.intPtrType)
+                val bodyPtr = ptrToInt(stackLocal.stackAllocationPtr, codegen.intPtrType)
                 val bodySize = LLVMSizeOfTypeInBits(codegen.llvmTargetData, type).toInt() / 8
                 val serviceInfoSize = runtime.pointerSize
                 val serviceInfoSizeLlvm = LLVMConstInt(codegen.intPtrType, serviceInfoSize.toLong(), 1)!!
@@ -560,21 +587,22 @@ internal abstract class FunctionGenerationContext(
 
     fun param(index: Int): LLVMValueRef = LLVMGetParam(this.function, index)!!
 
-    fun load(address: LLVMValueRef, name: String = "", memoryOrder: LLVMAtomicOrdering? = null): LLVMValueRef {
+    fun load(address: LLVMValueRef, name: String = "",
+             memoryOrder: LLVMAtomicOrdering? = null, alignment: Int? = null
+    ): LLVMValueRef {
         val value = LLVMBuildLoad(builder, address, name)!!
-        if (memoryOrder != null) {
-            LLVMSetOrdering(value, memoryOrder)
-        }
+        memoryOrder?.let { LLVMSetOrdering(value, it) }
+        alignment?.let { LLVMSetAlignment(value, it) }
         // Use loadSlot() API for that.
         assert(!isObjectRef(value))
         return value
     }
 
-    fun loadSlot(address: LLVMValueRef, isVar: Boolean, resultSlot: LLVMValueRef? = null, name: String = "", memoryOrder: LLVMAtomicOrdering? = null): LLVMValueRef {
+    fun loadSlot(address: LLVMValueRef, isVar: Boolean, resultSlot: LLVMValueRef? = null, name: String = "",
+                 memoryOrder: LLVMAtomicOrdering? = null, alignment: Int? = null): LLVMValueRef {
         val value = LLVMBuildLoad(builder, address, name)!!
-        if (memoryOrder != null) {
-            LLVMSetOrdering(value, memoryOrder)
-        }
+        memoryOrder?.let { LLVMSetOrdering(value, it) }
+        alignment?.let { LLVMSetAlignment(value, it) }
         if (isObjectRef(value) && isVar) {
             val slot = resultSlot ?: alloca(LLVMTypeOf(value), variableLocation = null)
             storeStackRef(value, slot)
@@ -582,8 +610,10 @@ internal abstract class FunctionGenerationContext(
         return value
     }
 
-    fun store(value: LLVMValueRef, ptr: LLVMValueRef) {
-        LLVMBuildStore(builder, value, ptr)
+    fun store(value: LLVMValueRef, ptr: LLVMValueRef, memoryOrder: LLVMAtomicOrdering? = null, alignment: Int? = null) {
+        val store = LLVMBuildStore(builder, value, ptr)
+        memoryOrder?.let { LLVMSetOrdering(store, it) }
+        alignment?.let { LLVMSetAlignment(store, it) }
     }
 
     fun storeHeapRef(value: LLVMValueRef, ptr: LLVMValueRef) {
@@ -594,12 +624,12 @@ internal abstract class FunctionGenerationContext(
         updateRef(value, ptr, onStack = true)
     }
 
-    fun storeAny(value: LLVMValueRef, ptr: LLVMValueRef, onStack: Boolean) = if (isObjectRef(value)) {
-            if (onStack) storeStackRef(value, ptr) else storeHeapRef(value, ptr)
-            null
-        } else {
-            LLVMBuildStore(builder, value, ptr)
+    fun storeAny(value: LLVMValueRef, ptr: LLVMValueRef, onStack: Boolean, isVolatile: Boolean = false, alignment: Int? = null) {
+        when {
+            isObjectRef(value) -> updateRef(value, ptr, onStack, isVolatile, alignment)
+            else -> store(value, ptr, if (isVolatile) LLVMAtomicOrdering.LLVMAtomicOrderingSequentiallyConsistent else null, alignment)
         }
+    }
 
     fun freeze(value: LLVMValueRef, exceptionHandler: ExceptionHandler) {
         if (isObjectRef(value))
@@ -618,14 +648,21 @@ internal abstract class FunctionGenerationContext(
             call(llvm.updateReturnRefFunction, listOf(address, value))
     }
 
-    private fun updateRef(value: LLVMValueRef, address: LLVMValueRef, onStack: Boolean) {
+    private fun updateRef(value: LLVMValueRef, address: LLVMValueRef, onStack: Boolean,
+                          isVolatile: Boolean = false, alignment: Int? = null) {
+        require(alignment == null || alignment % runtime.pointerAlignment == 0)
         if (onStack) {
+            require(!isVolatile) { "Stack ref update can't be volatile"}
             if (context.memoryModel == MemoryModel.STRICT)
                 store(value, address)
             else
                 call(llvm.updateStackRefFunction, listOf(address, value))
         } else {
-            call(llvm.updateHeapRefFunction, listOf(address, value))
+            if (isVolatile && context.memoryModel == MemoryModel.EXPERIMENTAL) {
+                call(llvm.UpdateVolatileHeapRef, listOf(address, value))
+            } else {
+                call(llvm.updateHeapRefFunction, listOf(address, value))
+            }
         }
     }
 
@@ -763,17 +800,14 @@ internal abstract class FunctionGenerationContext(
         }
     }
 
-    fun allocInstance(typeInfo: LLVMValueRef, lifetime: Lifetime, resultSlot: LLVMValueRef?): LLVMValueRef =
+    fun allocInstance(typeInfo: LLVMValueRef, lifetime: Lifetime, resultSlot: LLVMValueRef?) : LLVMValueRef =
             call(llvm.allocInstanceFunction, listOf(typeInfo), lifetime, resultSlot = resultSlot)
 
-    fun allocInstance(irClass: IrClass, lifetime: Lifetime, stackLocalsManager: StackLocalsManager, resultSlot: LLVMValueRef?) =
-            if (lifetime == Lifetime.STACK)
-                stackLocalsManager.alloc(irClass,
-                        // In case the allocation is not from the root scope, fields must be cleaned up explicitly,
-                        // as the object might be being reused.
-                        cleanFieldsExplicitly = stackLocalsManager != this.stackLocalsManager)
-            else
-                allocInstance(codegen.typeInfoForAllocation(irClass), lifetime, resultSlot)
+    fun allocInstance(irClass: IrClass, lifetime: Lifetime, resultSlot: LLVMValueRef?) =
+        if (lifetime == Lifetime.STACK)
+            stackLocalsManager.alloc(irClass)
+        else
+            allocInstance(codegen.typeInfoForAllocation(irClass), lifetime, resultSlot)
 
     fun allocArray(
         irClass: IrClass,
@@ -1349,7 +1383,7 @@ internal abstract class FunctionGenerationContext(
             }
             addPhiIncoming(slotsPhi!!, prologueBb to slots)
             memScoped {
-                slotToVariableLocation.forEach { slot, variable ->
+                slotToVariableLocation.forEach { (slot, variable) ->
                     val expr = longArrayOf(DwarfOp.DW_OP_plus_uconst.value,
                             runtime.pointerSize * slot.toLong()).toCValues()
                     DIInsertDeclaration(

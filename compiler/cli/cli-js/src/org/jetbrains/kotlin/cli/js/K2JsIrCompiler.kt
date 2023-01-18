@@ -43,9 +43,7 @@ import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.impl.ModuleDescriptorImpl
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporterFactory
-import org.jetbrains.kotlin.fir.DependencyListForCliModule
-import org.jetbrains.kotlin.fir.FirModuleDataImpl
-import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.backend.Fir2IrConverter
 import org.jetbrains.kotlin.fir.backend.Fir2IrExtensions
 import org.jetbrains.kotlin.fir.backend.Fir2IrVisibilityConverter
@@ -55,7 +53,6 @@ import org.jetbrains.kotlin.fir.checkers.registerExtendedCommonCheckers
 import org.jetbrains.kotlin.fir.descriptors.FirModuleDescriptor
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
 import org.jetbrains.kotlin.fir.java.FirProjectSessionProvider
-import org.jetbrains.kotlin.fir.moduleData
 import org.jetbrains.kotlin.fir.pipeline.buildFirFromKtFiles
 import org.jetbrains.kotlin.fir.pipeline.runCheckers
 import org.jetbrains.kotlin.fir.pipeline.runResolution
@@ -80,6 +77,7 @@ import org.jetbrains.kotlin.ir.backend.js.lower.serialization.ir.JsManglerIr
 import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.IrModuleToJsTransformer
 import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.JsCodeGenerator
 import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.TranslationMode
+import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.CompilationOutputsBuilt
 import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
 import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImplForJsIC
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
@@ -100,6 +98,7 @@ import org.jetbrains.kotlin.storage.LockBasedStorageManager
 import org.jetbrains.kotlin.utils.KotlinPaths
 import org.jetbrains.kotlin.utils.PathUtil
 import org.jetbrains.kotlin.utils.join
+import org.jetbrains.kotlin.utils.metadataVersion
 import java.io.File
 import java.io.IOException
 import java.nio.file.Paths
@@ -145,7 +144,8 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
                     arguments.irSafeExternalBooleanDiagnostic,
                     messageCollector
                 ),
-                granularity = arguments.granularity
+                granularity = arguments.granularity,
+                es6mode = arguments.useEsClasses
             )
         }
 
@@ -157,7 +157,7 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
             return transformer.makeJsCodeGenerator(ir.allModules, mode)
         }
 
-        fun compileAndTransformIrNew(): CompilationOutputs {
+        fun compileAndTransformIrNew(): CompilationOutputsBuilt {
             return makeJsCodeGenerator().generateJsCode(relativeRequirePath = true, outJsProgram = false)
         }
     }
@@ -290,11 +290,7 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
             val outputKlibPath =
                 if (arguments.irProduceKlibFile) outputDir.resolve("$outputName.klib").normalize().absolutePath
                 else outputDirPath
-            if (arguments.useK2) {
-                messageCollector.report(
-                    STRONG_WARNING,
-                    "ATTENTION!\n This build uses experimental K2 compiler: \n  -Xuse-k2"
-                )
+            if (configuration.get(CommonConfigurationKeys.USE_FIR) == true) {
                 sourceModule = processSourceModuleWithK2(environmentForJS, libraries, friendLibraries, arguments, outputKlibPath)
             } else {
                 sourceModule = processSourceModule(environmentForJS, libraries, friendLibraries, arguments, outputKlibPath)
@@ -323,7 +319,7 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
                 )
 
                 val (outputs, rebuiltModules) = jsExecutableProducer.buildExecutable(arguments.irPerModule, outJsProgram = false)
-                outputs.write(outputDir, outputName, arguments.generateDts, moduleName, moduleKind)
+                outputs.writeAll(outputDir, outputName, arguments.generateDts, moduleName, moduleKind)
 
                 messageCollector.report(INFO, "Executable production duration (IC): ${System.currentTimeMillis() - beforeIc2Js}ms")
                 for ((event, duration) in jsExecutableProducer.getStopwatchLaps()) {
@@ -399,7 +395,7 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
 
                 messageCollector.report(INFO, "Executable production duration: ${System.currentTimeMillis() - start}ms")
 
-                outputs.write(outputDir, outputName, arguments.generateDts, moduleName, moduleKind)
+                outputs.writeAll(outputDir, outputName, arguments.generateDts, moduleName, moduleKind)
             } catch (e: CompilationException) {
                 messageCollector.report(
                     ERROR,
@@ -509,7 +505,8 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
 
         val mainModule = MainModule.SourceFiles(environmentForJS.getSourceFiles())
 
-        val dependencyList = DependencyListForCliModule.build(mainModuleName, JsPlatforms.defaultJsPlatform, JsPlatformAnalyzerServices) {
+        val binaryModuleData = BinaryModuleData.initialize(mainModuleName, JsPlatforms.defaultJsPlatform, JsPlatformAnalyzerServices)
+        val dependencyList = DependencyListForCliModule.build(binaryModuleData) {
             dependencies(libraries.map { Paths.get(it).toAbsolutePath() })
             friendDependencies(friendLibraries.map { Paths.get(it).toAbsolutePath() })
             // TODO: !!! dependencies module data?
@@ -533,8 +530,8 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
             dependencyList.regularDependencies,
             dependencyList.dependsOnDependencies,
             dependencyList.friendsDependencies,
-            dependencyList.platform,
-            dependencyList.analyzerServices
+            JsPlatforms.defaultJsPlatform,
+            JsPlatformAnalyzerServices
         )
 
         val session = FirJsSessionFactory.createJsModuleBasedSession(
@@ -592,13 +589,15 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
             session, scopeSession, firFiles + commonFirFiles,
             configuration.languageVersionSettings, signaturer,
             fir2IrExtensions,
-            FirJvmKotlinMangler(session), // TODO: replace with potentially simpler JS version
+            FirJvmKotlinMangler(), // TODO: replace with potentially simpler JS version
             JsManglerIr, IrFactoryImpl,
             Fir2IrVisibilityConverter.Default,
             Fir2IrJvmSpecialAnnotationSymbolProvider(), // TODO: replace with appropriate (probably empty) implementation
             IrGenerationExtension.getInstances(environmentForJS.project),
             generateSignatures = false,
-            kotlinBuiltIns = builtInsModule ?: DefaultBuiltIns.Instance // TODO: consider passing externally
+            kotlinBuiltIns = builtInsModule ?: DefaultBuiltIns.Instance, // TODO: consider passing externally
+            dependentComponents = emptyList(),
+            currentSymbolTable = null
         ).also {
             (it.irModuleFragment.descriptor as? FirModuleDescriptor)?.let { it.allDependencyModules = librariesDescriptors }
         }
@@ -613,9 +612,7 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
             // TODO: expect -> actual mapping
             val expectDescriptorToSymbol = mutableMapOf<DeclarationDescriptor, IrSymbol>()
 
-            val metadataVersion =
-                configuration.get(CommonConfigurationKeys.METADATA_VERSION)
-                    ?: GenerationState.LANGUAGE_TO_METADATA_VERSION.getValue(configuration.languageVersionSettings.languageVersion)
+            val metadataVersion = configuration.metadataVersion()
 
             serializeModuleIntoKlib(
                 configuration[CommonConfigurationKeys.MODULE_NAME]!!,
@@ -672,7 +669,14 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
                 compilerConfiguration = configurationJs,
                 irFactory = { IrFactoryImplForJsIC(WholeWorldStageController()) },
                 mainArguments = mainCallArguments,
-                compilerInterfaceFactory = { mainModule, cfg -> JsIrCompilerWithIC(mainModule, cfg, arguments.granularity) }
+                compilerInterfaceFactory = { mainModule, cfg ->
+                    JsIrCompilerWithIC(
+                        mainModule,
+                        cfg,
+                        arguments.granularity,
+                        es6mode = arguments.useEsClasses
+                    )
+                }
             )
 
             val artifacts = cacheUpdater.actualizeCaches()
@@ -707,28 +711,6 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
             artifacts
         } else emptyList()
         return icCaches
-    }
-
-    private fun CompilationOutputs.write(outputDir: File, outputName: String, genDTS: Boolean, moduleName: String, moduleKind: ModuleKind) {
-        val outputFile = outputDir.resolve("$outputName.js")
-        outputFile.parentFile.mkdirs()
-        outputFile.write(this)
-        dependencies.forEach { (name, content) ->
-            outputDir.resolve("$name.js").let {
-                it.parentFile.mkdirs()
-                it.write(content)
-            }
-        }
-
-        if (genDTS) {
-            val dtsFile = outputDir.resolve("$outputName.d.ts")
-            dtsFile.writeText(getFullTsDefinition(moduleName, moduleKind))
-        }
-    }
-
-    private fun File.write(outputs: CompilationOutputs) {
-        writeText(outputs.jsCode)
-        outputs.writeSourceMapIfPresent(this)
     }
 
     override fun setupPlatformSpecificArgumentsAndServices(
@@ -796,6 +778,10 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
                 ERROR, "Unknown module kind: $moduleKindName. Valid values are: plain, amd, commonjs, umd, es", null
             )
             moduleKind = ModuleKind.PLAIN
+        }
+        if (arguments.wasm) {
+            // K/Wasm support ES modules only.
+            moduleKind = ModuleKind.ES
         }
         configuration.put(JSConfigurationKeys.MODULE_KIND, moduleKind)
 

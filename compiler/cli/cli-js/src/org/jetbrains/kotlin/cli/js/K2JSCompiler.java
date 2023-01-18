@@ -175,10 +175,11 @@ public class K2JSCompiler extends CLICompiler<K2JSCompilerArguments> {
 
         ExitCode exitCode = OK;
 
-        if (K2JSCompilerArgumentsKt.isIrBackendEnabled(arguments)) {
+        boolean useFir = Boolean.TRUE.equals(configuration.get(CommonConfigurationKeys.USE_FIR));
+        if (K2JSCompilerArgumentsKt.isIrBackendEnabled(arguments) || useFir) {
             exitCode = getIrCompiler().doExecute(arguments, configuration.copy(), rootDisposable, paths);
         }
-        if (K2JSCompilerArgumentsKt.isPreIrBackendDisabled(arguments)) {
+        if (K2JSCompilerArgumentsKt.isPreIrBackendDisabled(arguments) || useFir) {
             return exitCode;
         }
 

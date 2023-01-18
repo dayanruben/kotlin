@@ -52,7 +52,7 @@ sealed class NativeLibraryHeaderFilter {
 }
 
 interface Compilation {
-    val includes: List<String>
+    val includes: List<IncludeInfo>
     val additionalPreambleLines: List<String>
     val compilerArgs: List<String>
     val language: Language
@@ -93,23 +93,30 @@ data class CompilationWithPCH(
     constructor(compilerArgs: List<String>, precompiledHeader: String, language: Language)
             : this(compilerArgs + listOf("-include-pch", precompiledHeader), language)
 
-    override val includes: List<String>
+    override val includes: List<IncludeInfo>
         get() = emptyList()
 
     override val additionalPreambleLines: List<String>
         get() = emptyList()
 }
 
-// TODO: Compilation hierarchy seems to require some refactoring.
-
-data class NativeLibrary(override val includes: List<String>,
-                         override val additionalPreambleLines: List<String>,
-                         override val compilerArgs: List<String>,
-                         val headerToIdMapper: HeaderToIdMapper,
-                         override val language: Language,
-                         val excludeSystemLibs: Boolean, // TODO: drop?
-                         val headerExclusionPolicy: HeaderExclusionPolicy,
-                         val headerFilter: NativeLibraryHeaderFilter) : Compilation
+/**
+ *
+ *  @param objCClassesIncludingCategories Objective-C classes that should be merged with categories from the same file.
+ *
+ * TODO: Compilation hierarchy seems to require some refactoring.
+ */
+data class NativeLibrary(
+        override val includes: List<IncludeInfo>,
+        override val additionalPreambleLines: List<String>,
+        override val compilerArgs: List<String>,
+        val headerToIdMapper: HeaderToIdMapper,
+        override val language: Language,
+        val excludeSystemLibs: Boolean, // TODO: drop?
+        val headerExclusionPolicy: HeaderExclusionPolicy,
+        val headerFilter: NativeLibraryHeaderFilter,
+        val objCClassesIncludingCategories: Set<String>,
+) : Compilation
 
 data class IndexerResult(val index: NativeIndex, val compilation: CompilationWithPCH)
 
@@ -144,9 +151,11 @@ data class HeaderId(val value: String)
 
 data class Location(val headerId: HeaderId)
 
-interface TypeDeclaration {
+interface LocatableDeclaration {
     val location: Location
 }
+
+interface TypeDeclaration : LocatableDeclaration
 
 sealed class StructMember(val name: String) {
     abstract val offset: Long?
@@ -270,10 +279,14 @@ data class ObjCProperty(val name: String, val getter: ObjCMethod, val setter: Ob
 abstract class ObjCClass(name: String) : ObjCClassOrProtocol(name) {
     abstract val binaryName: String?
     abstract val baseClass: ObjCClass?
+    /**
+     * Categories whose methods and properties should be generated as members of Kotlin class.
+     */
+    abstract val includedCategories: List<ObjCCategory>
 }
 abstract class ObjCProtocol(name: String) : ObjCClassOrProtocol(name)
 
-abstract class ObjCCategory(val name: String, val clazz: ObjCClass) : ObjCContainer()
+abstract class ObjCCategory(val name: String, val clazz: ObjCClass) : ObjCContainer(), LocatableDeclaration
 
 /**
  * C function parameter.

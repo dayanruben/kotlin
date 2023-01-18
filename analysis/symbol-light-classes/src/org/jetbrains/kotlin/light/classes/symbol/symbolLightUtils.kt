@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtSymbolPointer
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
-import org.jetbrains.kotlin.asJava.elements.KtLightElementBase
 import org.jetbrains.kotlin.asJava.elements.KtLightMember
 import org.jetbrains.kotlin.asJava.elements.psiType
 import org.jetbrains.kotlin.descriptors.Modality
@@ -37,15 +36,14 @@ import java.util.*
 internal fun <L : Any> L.invalidAccess(): Nothing =
     error("Cls delegate shouldn't be accessed for symbol light classes! Qualified name: ${javaClass.name}")
 
-
 internal fun KtAnalysisSession.mapType(
     type: KtType,
     psiContext: PsiElement,
     mode: KtTypeMappingMode
 ): PsiClassType? {
-    if (type is KtClassErrorType) return null
     val psiType = type.asPsiType(
         psiContext,
+        allowErrorTypes = true,
         mode,
     )
     return psiType as? PsiClassType
@@ -201,16 +199,18 @@ internal fun KtAnnotationValue.toAnnotationMemberValue(parent: PsiElement): PsiA
         }
 
         KtUnsupportedAnnotationValue -> null
-        is KtKClassAnnotationValue.KtErrorClassAnnotationValue -> null
-        is KtKClassAnnotationValue.KtLocalKClassAnnotationValue -> null
-        is KtKClassAnnotationValue.KtNonLocalKClassAnnotationValue -> toAnnotationMemberValue(parent)
+        is KtKClassAnnotationValue -> toAnnotationMemberValue(parent)
     }
 }
 
-private fun KtKClassAnnotationValue.KtNonLocalKClassAnnotationValue.toAnnotationMemberValue(parent: PsiElement): PsiExpression? {
-    val fqName = classId.asSingleFqName()
+private fun KtKClassAnnotationValue.toAnnotationMemberValue(parent: PsiElement): PsiExpression? {
+    val typeString = when (this) {
+        is KtKClassAnnotationValue.KtNonLocalKClassAnnotationValue -> classId.asSingleFqName().asString()
+        is KtKClassAnnotationValue.KtLocalKClassAnnotationValue -> null
+        is KtKClassAnnotationValue.KtErrorClassAnnotationValue -> unresolvedQualifierName
+    } ?: return null
     val canonicalText = psiType(
-        fqName.asString(), parent, boxPrimitiveType = false, /* TODO value.arrayNestedness > 0*/
+        typeString, parent, boxPrimitiveType = false, /* TODO value.arrayNestedness > 0*/
     ).let(TypeConversionUtil::erasure).getCanonicalText(false)
     return try {
         PsiElementFactory.getInstance(parent.project).createExpressionFromText("$canonicalText.class", parent)
