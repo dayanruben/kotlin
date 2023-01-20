@@ -13,13 +13,13 @@ import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
 import org.jetbrains.kotlin.fir.extensions.FirSwitchableExtensionDeclarationsSymbolProvider
 import org.jetbrains.kotlin.fir.java.FirCliSession
 import org.jetbrains.kotlin.fir.java.FirProjectSessionProvider
-import org.jetbrains.kotlin.fir.resolve.providers.FirDependenciesSymbolProvider
+import org.jetbrains.kotlin.fir.resolve.providers.DEPENDENCIES_SYMBOL_PROVIDER_QUALIFIED_KEY
 import org.jetbrains.kotlin.fir.resolve.providers.FirProvider
 import org.jetbrains.kotlin.fir.resolve.providers.FirSymbolProvider
-import org.jetbrains.kotlin.fir.resolve.providers.impl.FirCompositeSymbolProvider
-import org.jetbrains.kotlin.fir.resolve.providers.impl.FirDependenciesSymbolProviderImpl
+import org.jetbrains.kotlin.fir.resolve.providers.impl.FirCachingCompositeSymbolProvider
 import org.jetbrains.kotlin.fir.resolve.providers.impl.FirLibrarySessionProvider
 import org.jetbrains.kotlin.fir.resolve.providers.impl.FirProviderImpl
+import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.scopes.FirKotlinScopeProvider
 import org.jetbrains.kotlin.incremental.components.EnumWhenTracker
 import org.jetbrains.kotlin.incremental.components.LookupTracker
@@ -58,7 +58,7 @@ abstract class FirAbstractSessionFactory {
 
             val providers = createProviders(this, builtinsModuleData, kotlinScopeProvider)
 
-            val symbolProvider = FirCompositeSymbolProvider(this, providers)
+            val symbolProvider = FirCachingCompositeSymbolProvider(this, providers)
             register(FirSymbolProvider::class, symbolProvider)
             register(FirProvider::class, FirLibrarySessionProvider(symbolProvider))
         }
@@ -78,7 +78,7 @@ abstract class FirAbstractSessionFactory {
         createProviders: (
             FirSession, FirKotlinScopeProvider, FirSymbolProvider,
             FirSwitchableExtensionDeclarationsSymbolProvider?,
-            FirDependenciesSymbolProvider
+            dependencies: List<FirSymbolProvider>,
         ) -> List<FirSymbolProvider>
     ): FirSession {
         return FirCliSession(sessionProvider, FirSession.Kind.Source).apply session@{
@@ -106,17 +106,62 @@ abstract class FirAbstractSessionFactory {
                 init()
             }.configure()
 
-            val dependenciesSymbolProvider = FirDependenciesSymbolProviderImpl(this)
+            val dependencyProviders = computeDependencyProviderList(moduleData)
             val generatedSymbolsProvider = FirSwitchableExtensionDeclarationsSymbolProvider.create(this)
 
             val providers = createProviders(
-                this, kotlinScopeProvider, firProvider.symbolProvider, generatedSymbolsProvider, dependenciesSymbolProvider,
+                this, kotlinScopeProvider, firProvider.symbolProvider, generatedSymbolsProvider,
+                dependencyProviders,
             )
 
-            register(FirSymbolProvider::class, FirCompositeSymbolProvider(this, providers))
+            register(
+                FirSymbolProvider::class,
+                FirCachingCompositeSymbolProvider(
+                    this, providers,
+                    expectedCachesToBeCleanedOnce = generatedSymbolsProvider != null
+                )
+            )
 
             generatedSymbolsProvider?.let { register(FirSwitchableExtensionDeclarationsSymbolProvider::class, it) }
-            register(FirDependenciesSymbolProvider::class, dependenciesSymbolProvider)
+            register(DEPENDENCIES_SYMBOL_PROVIDER_QUALIFIED_KEY, FirCachingCompositeSymbolProvider(this, dependencyProviders))
         }
+    }
+
+    private fun FirSession.computeDependencyProviderList(moduleData: FirModuleData): List<FirSymbolProvider> {
+        val visited = mutableSetOf<FirSymbolProvider>()
+        return (moduleData.dependencies + moduleData.friendDependencies + moduleData.dependsOnDependencies)
+            .mapNotNull { sessionProvider?.getSession(it) }
+            .map { it.symbolProvider }
+            .flatMap { it.flatten(visited, collectSourceProviders = it.session.kind == FirSession.Kind.Source) }
+            .sortedBy { it.session.kind }
+    }
+
+    /* It eliminates dependency and composite providers since the current dependency provider is composite in fact.
+    *  To prevent duplications and resolving errors, library or source providers from other modules should be filtered out during flattening.
+    *  It depends on the session's kind of the top-level provider */
+    private fun FirSymbolProvider.flatten(
+        visited: MutableSet<FirSymbolProvider>,
+        collectSourceProviders: Boolean
+    ): List<FirSymbolProvider> {
+        val result = mutableListOf<FirSymbolProvider>()
+
+        fun FirSymbolProvider.collectProviders() {
+            if (!visited.add(this)) return
+            when {
+                this is FirCachingCompositeSymbolProvider -> {
+                    for (provider in providers) {
+                        provider.collectProviders()
+                    }
+                }
+                collectSourceProviders && session.kind == FirSession.Kind.Source ||
+                        !collectSourceProviders && session.kind == FirSession.Kind.Library -> {
+                    result.add(this)
+                }
+            }
+        }
+
+        collectProviders()
+
+        return result
     }
 }

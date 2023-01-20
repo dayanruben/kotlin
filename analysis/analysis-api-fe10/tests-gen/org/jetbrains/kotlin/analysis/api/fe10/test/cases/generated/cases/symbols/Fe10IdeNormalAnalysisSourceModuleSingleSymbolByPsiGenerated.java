@@ -47,6 +47,18 @@ public class Fe10IdeNormalAnalysisSourceModuleSingleSymbolByPsiGenerated extends
     }
 
     @Test
+    @TestMetadata("ExpandedParameterType.kt")
+    public void testExpandedParameterType() throws Exception {
+        runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/ExpandedParameterType.kt");
+    }
+
+    @Test
+    @TestMetadata("ExpandedReturnType.kt")
+    public void testExpandedReturnType() throws Exception {
+        runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/ExpandedReturnType.kt");
+    }
+
+    @Test
     @TestMetadata("functionWithReceiverAnnotation.kt")
     public void testFunctionWithReceiverAnnotation() throws Exception {
         runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/functionWithReceiverAnnotation.kt");
@@ -92,6 +104,78 @@ public class Fe10IdeNormalAnalysisSourceModuleSingleSymbolByPsiGenerated extends
     @TestMetadata("setterWithAnnotations.kt")
     public void testSetterWithAnnotations() throws Exception {
         runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/setterWithAnnotations.kt");
+    }
+
+    @Test
+    @TestMetadata("typeAnnotationsOnFunctionParameterType.kt")
+    public void testTypeAnnotationsOnFunctionParameterType() throws Exception {
+        runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/typeAnnotationsOnFunctionParameterType.kt");
+    }
+
+    @Test
+    @TestMetadata("typeAnnotationsOnFunctionReceiverType.kt")
+    public void testTypeAnnotationsOnFunctionReceiverType() throws Exception {
+        runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/typeAnnotationsOnFunctionReceiverType.kt");
+    }
+
+    @Test
+    @TestMetadata("typeAnnotationsOnPropertyGetterReturnType.kt")
+    public void testTypeAnnotationsOnPropertyGetterReturnType() throws Exception {
+        runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/typeAnnotationsOnPropertyGetterReturnType.kt");
+    }
+
+    @Test
+    @TestMetadata("typeAnnotationsOnPropertyReceiverType.kt")
+    public void testTypeAnnotationsOnPropertyReceiverType() throws Exception {
+        runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/typeAnnotationsOnPropertyReceiverType.kt");
+    }
+
+    @Test
+    @TestMetadata("typeAnnotationsOnPropertyReturnType.kt")
+    public void testTypeAnnotationsOnPropertyReturnType() throws Exception {
+        runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/typeAnnotationsOnPropertyReturnType.kt");
+    }
+
+    @Test
+    @TestMetadata("typeAnnotationsOnPropertySetterParameterType.kt")
+    public void testTypeAnnotationsOnPropertySetterParameterType() throws Exception {
+        runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/typeAnnotationsOnPropertySetterParameterType.kt");
+    }
+
+    @Test
+    @TestMetadata("typeAnnotationsOnPropertySetterParameterTypeWithAnotherAnnotation.kt")
+    public void testTypeAnnotationsOnPropertySetterParameterTypeWithAnotherAnnotation() throws Exception {
+        runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/typeAnnotationsOnPropertySetterParameterTypeWithAnotherAnnotation.kt");
+    }
+
+    @Test
+    @TestMetadata("typeAnnotationsOnSuperClassCall.kt")
+    public void testTypeAnnotationsOnSuperClassCall() throws Exception {
+        runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/typeAnnotationsOnSuperClassCall.kt");
+    }
+
+    @Test
+    @TestMetadata("typeAnnotationsOnSuperClassCallOnAnonymousObject.kt")
+    public void testTypeAnnotationsOnSuperClassCallOnAnonymousObject() throws Exception {
+        runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/typeAnnotationsOnSuperClassCallOnAnonymousObject.kt");
+    }
+
+    @Test
+    @TestMetadata("typeAnnotationsOnSuperInterface.kt")
+    public void testTypeAnnotationsOnSuperInterface() throws Exception {
+        runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/typeAnnotationsOnSuperInterface.kt");
+    }
+
+    @Test
+    @TestMetadata("typeAnnotationsOnSuperInterfaceOnAnonymousObject.kt")
+    public void testTypeAnnotationsOnSuperInterfaceOnAnonymousObject() throws Exception {
+        runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/typeAnnotationsOnSuperInterfaceOnAnonymousObject.kt");
+    }
+
+    @Test
+    @TestMetadata("typeAnnotationsWithTypeAlias.kt")
+    public void testTypeAnnotationsWithTypeAlias() throws Exception {
+        runTest("analysis/analysis-api/testData/symbols/singleSymbolByPsi/typeAnnotationsWithTypeAlias.kt");
     }
 
     @Nested

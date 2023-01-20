@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -60,6 +60,17 @@ open class FirTypeResolveTransformer(
 ) : FirAbstractTreeTransformer<Any?>(FirResolvePhase.TYPES) {
     private val scopes = mutableListOf<FirScope>()
     private val towerScope = scopes.asReversed()
+    private var currentDeclaration: FirDeclaration? = null
+
+    private inline fun <T> withDeclaration(declaration: FirDeclaration, crossinline action: () -> T): T {
+        val oldDeclaration = currentDeclaration
+        return try {
+            currentDeclaration = declaration
+            action()
+        } finally {
+            currentDeclaration = oldDeclaration
+        }
+    }
 
     init {
         scopes.addAll(initialScopes.asReversed())
@@ -107,7 +118,7 @@ open class FirTypeResolveTransformer(
     }
 
     override fun transformTypeAlias(typeAlias: FirTypeAlias, data: Any?): FirTypeAlias = whileAnalysing(session, typeAlias) {
-        return withScopeCleanup {
+        withScopeCleanup {
             typeAlias.addTypeParametersScope()
             transformDeclaration(typeAlias, data)
         } as FirTypeAlias
@@ -117,7 +128,7 @@ open class FirTypeResolveTransformer(
         enumEntry.transformReturnTypeRef(this, data)
         enumEntry.transformTypeParameters(this, data)
         enumEntry.transformAnnotations(this, data)
-        return enumEntry
+        enumEntry
     }
 
     override fun transformReceiverParameter(receiverParameter: FirReceiverParameter, data: Any?): FirReceiverParameter {
@@ -125,29 +136,32 @@ open class FirTypeResolveTransformer(
     }
 
     override fun transformProperty(property: FirProperty, data: Any?): FirProperty = whileAnalysing(session, property) {
-        return withScopeCleanup {
-            property.addTypeParametersScope()
-            property.transformTypeParameters(this, data)
-                .transformReturnTypeRef(this, data)
-                .transformReceiverParameter(this, data)
-                .transformContextReceivers(this, data)
-                .transformGetter(this, data)
-                .transformSetter(this, data)
-                .transformBackingField(this, data)
-                .transformAnnotations(this, data)
-            if (property.isFromVararg == true) {
-                property.transformTypeToArrayType()
-                property.backingField?.transformTypeToArrayType()
-                setAccessorTypesByPropertyType(property)
+        withScopeCleanup {
+            withDeclaration(property) {
+                property.addTypeParametersScope()
+                property.transformTypeParameters(this, data)
+                    .transformReturnTypeRef(this, data)
+                    .transformReceiverParameter(this, data)
+                    .transformContextReceivers(this, data)
+                    .transformGetter(this, data)
+                    .transformSetter(this, data)
+                    .transformBackingField(this, data)
+                    .transformAnnotations(this, data)
+
+                if (property.isFromVararg == true) {
+                    property.transformTypeToArrayType()
+                    property.backingField?.transformTypeToArrayType()
+                    setAccessorTypesByPropertyType(property)
+                }
+
+                if (property.returnTypeRef is FirResolvedTypeRef && property.delegate != null) {
+                    setAccessorTypesByPropertyType(property)
+                }
+
+                unboundCyclesInTypeParametersSupertypes(property)
+
+                property
             }
-
-            if (property.returnTypeRef is FirResolvedTypeRef && property.delegate != null) {
-                setAccessorTypesByPropertyType(property)
-            }
-
-            unboundCyclesInTypeParametersSupertypes(property)
-
-            property
         }
     }
 
@@ -157,7 +171,7 @@ open class FirTypeResolveTransformer(
     }
 
     override fun transformField(field: FirField, data: Any?): FirField = whileAnalysing(session, field) {
-        return withScopeCleanup {
+        withScopeCleanup {
             field.transformReturnTypeRef(this, data).transformAnnotations(this, data)
             field
         }
@@ -165,12 +179,14 @@ open class FirTypeResolveTransformer(
 
     override fun transformSimpleFunction(
         simpleFunction: FirSimpleFunction,
-        data: Any?
+        data: Any?,
     ): FirSimpleFunction = whileAnalysing(session, simpleFunction) {
-        return withScopeCleanup {
-            simpleFunction.addTypeParametersScope()
-            transformDeclaration(simpleFunction, data).also {
-                unboundCyclesInTypeParametersSupertypes(it as FirTypeParametersOwner)
+        withScopeCleanup {
+            withDeclaration(simpleFunction) {
+                simpleFunction.addTypeParametersScope()
+                transformDeclaration(simpleFunction, data).also {
+                    unboundCyclesInTypeParametersSupertypes(it as FirTypeParametersOwner)
+                }
             }
         } as FirSimpleFunction
     }
@@ -212,16 +228,21 @@ open class FirTypeResolveTransformer(
         return typeResolverTransformer.withFile(currentFile) {
             typeRef.transform(
                 typeResolverTransformer,
-                ScopeClassDeclaration(towerScope, classDeclarationsStack)
+                ScopeClassDeclaration(towerScope, classDeclarationsStack, containerDeclaration = currentDeclaration)
             )
         }
     }
 
-    override fun transformValueParameter(valueParameter: FirValueParameter, data: Any?): FirStatement = whileAnalysing(session, valueParameter) {
-        valueParameter.transformReturnTypeRef(this, data)
-        valueParameter.transformAnnotations(this, data)
-        valueParameter.transformVarargTypeToArrayType()
-        return valueParameter
+    override fun transformValueParameter(
+        valueParameter: FirValueParameter,
+        data: Any?,
+    ): FirStatement = whileAnalysing(session, valueParameter) {
+        withDeclaration(valueParameter) {
+            valueParameter.transformReturnTypeRef(this, data)
+            valueParameter.transformAnnotations(this, data)
+            valueParameter.transformVarargTypeToArrayType()
+            valueParameter
+        }
     }
 
     override fun transformBlock(block: FirBlock, data: Any?): FirStatement {

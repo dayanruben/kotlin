@@ -14905,6 +14905,28 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             }
 
             @Nested
+            @TestMetadata("compiler/testData/diagnostics/tests/inference/callableReferences")
+            @TestDataPath("$PROJECT_ROOT")
+            public class CallableReferences {
+                @Test
+                public void testAllFilesPresentInCallableReferences() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/inference/callableReferences"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.(fir|ll)\\.kts?$"), true);
+                }
+
+                @Test
+                @TestMetadata("conversionLastStatementInLambda.kt")
+                public void testConversionLastStatementInLambda() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/callableReferences/conversionLastStatementInLambda.kt");
+                }
+
+                @Test
+                @TestMetadata("kt55931.kt")
+                public void testKt55931() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/callableReferences/kt55931.kt");
+                }
+            }
+
+            @Nested
             @TestMetadata("compiler/testData/diagnostics/tests/inference/capturedTypes")
             @TestDataPath("$PROJECT_ROOT")
             public class CapturedTypes {

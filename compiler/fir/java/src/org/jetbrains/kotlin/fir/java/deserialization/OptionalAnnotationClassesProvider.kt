@@ -34,20 +34,33 @@ class OptionalAnnotationClassesProvider(
 
     private val optionalAnnotationClassesAndPackages by lazy(LazyThreadSafetyMode.PUBLICATION) {
         val optionalAnnotationClasses = mutableMapOf<ClassId, ClassData>()
-        val optionalAnnotationPackages = mutableSetOf<FqName>()
+        val optionalAnnotationPackages = mutableSetOf<String>()
 
         for (klass in packagePartProvider.getAllOptionalAnnotationClasses()) {
             val classId = klass.nameResolver.getClassId(klass.classProto.fqName)
             optionalAnnotationClasses[classId] = klass
-            optionalAnnotationPackages.add(classId.packageFqName)
+            optionalAnnotationPackages.add(classId.packageFqName.asString())
         }
 
         return@lazy Pair(optionalAnnotationClasses, optionalAnnotationPackages)
     }
 
+    private val optionalAnnotationClassNamesByPackage: Map<FqName, Set<String>> by lazy(LazyThreadSafetyMode.PUBLICATION) {
+        buildMap<FqName, MutableSet<String>> {
+            for (classId in optionalAnnotationClassesAndPackages.first.keys) {
+                getOrPut(classId.packageFqName, ::mutableSetOf).add(classId.shortClassName.asString())
+            }
+        }
+    }
+
     override fun computePackagePartsInfos(packageFqName: FqName): List<PackagePartsCacheData> {
         return emptyList()
     }
+
+    override fun computePackageSetWithNonClassDeclarations(): Set<String> = optionalAnnotationClassesAndPackages.second
+
+    override fun knownTopLevelClassesInPackage(packageFqName: FqName): Set<String> =
+        optionalAnnotationClassNamesByPackage[packageFqName] ?: emptySet()
 
     override fun extractClassMetadata(
         classId: ClassId,
@@ -69,5 +82,6 @@ class OptionalAnnotationClassesProvider(
         return JvmFlags.IS_COMPILED_IN_JVM_DEFAULT_MODE.get(classProto.getExtension(JvmProtoBuf.jvmClassFlags))
     }
 
-    override fun getPackage(fqName: FqName): FqName? = if (optionalAnnotationClassesAndPackages.second.contains(fqName)) fqName else null
+    override fun getPackage(fqName: FqName): FqName? =
+        if (optionalAnnotationClassesAndPackages.second.contains(fqName.asString())) fqName else null
 }
