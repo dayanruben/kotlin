@@ -658,10 +658,12 @@ class KotlinSpecificDependenciesIT : KGPBaseTest() {
         } else {
             if (isBuildGradleKts) buildGradleKts else buildGradle
         }
+
         buildFile.appendText(
             """
 
-            tasks.create("$printingTaskName") {
+            tasks.register("$printingTaskName") {
+                if ("transformDependenciesMetadata" in tasks.names) dependsOn("transformDependenciesMetadata")
                 doLast {
                     println("###$printingTaskName " + $itemsExpression)
                 }

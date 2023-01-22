@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.gradle
 
+import org.jetbrains.kotlin.gradle.targets.metadata.KotlinMetadataTargetConfigurator
 import org.jetbrains.kotlin.gradle.util.modify
 import org.jetbrains.kotlin.konan.target.HostManager
 import java.io.File
@@ -343,11 +344,13 @@ class KlibBasedMppIT : BaseGradleIT() {
         checkNoItemContains: List<Regex>
     ) = with(testCase) {
         setupWorkingDir()
+
         val printingTaskName = "printItems${testBuildRunId++}"
         gradleBuildScript(subproject).appendText(
             """
         ${'\n'}
-        tasks.create("$printingTaskName") {
+        tasks.register("$printingTaskName") {
+            dependsOn("transformDependenciesMetadata")
             doLast {
                 println("###$printingTaskName" + $itemsExpression)
             }

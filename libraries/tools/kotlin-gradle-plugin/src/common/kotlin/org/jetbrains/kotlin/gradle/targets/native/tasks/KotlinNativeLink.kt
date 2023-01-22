@@ -160,10 +160,10 @@ constructor(
     val processTests: Boolean get() = binary is TestExecutable
 
     @get:Classpath
-    val exportLibraries: FileCollection get() = exportLibrariesResolvedGraph?.files ?: objectFactory.fileCollection()
+    val exportLibraries: FileCollection get() = exportLibrariesResolvedConfiguration?.files ?: objectFactory.fileCollection()
 
-    private val exportLibrariesResolvedGraph = if (binary is AbstractNativeLibrary) {
-        ResolvedDependencyGraph(project.configurations.getByName(binary.exportConfigurationName))
+    private val exportLibrariesResolvedConfiguration = if (binary is AbstractNativeLibrary) {
+        LazyResolvedConfiguration(project.configurations.getByName(binary.exportConfigurationName))
     } else {
         null
     }
@@ -209,14 +209,14 @@ constructor(
     ) = Unit
 
     private fun validatedExportedLibraries() {
-        if (exportLibrariesResolvedGraph == null) return
+        if (exportLibrariesResolvedConfiguration == null) return
 
         val failed = mutableSetOf<ResolvedDependencyResult>()
-        exportLibrariesResolvedGraph
+        exportLibrariesResolvedConfiguration
             .allDependencies
             .filterIsInstance<ResolvedDependencyResult>()
             .forEach {
-                val dependencyFiles = exportLibrariesResolvedGraph.dependencyArtifacts(it).map { it.file }.filterKlibsPassedToCompiler()
+                val dependencyFiles = exportLibrariesResolvedConfiguration.getArtifacts(it).map { it.file }.filterKlibsPassedToCompiler()
                 if (!apiFiles.files.containsAll(dependencyFiles)) {
                     failed.add(it)
                 }
@@ -226,7 +226,7 @@ constructor(
             val failedDependenciesList = failed.joinToString(separator = "\n") {
                 val componentId = it.selected.id
                 when (componentId) {
-                    is ModuleComponentIdentifier -> "|Files: ${exportLibrariesResolvedGraph.dependencyArtifacts(it).map { it.file }}"
+                    is ModuleComponentIdentifier -> "|Files: ${exportLibrariesResolvedConfiguration.getArtifacts(it).map { it.file }}"
                     is ProjectComponentIdentifier -> "|Project ${componentId.projectPath}"
                     else -> "|${componentId.displayName}"
                 }
@@ -247,7 +247,7 @@ constructor(
     protected val friendModule: FileCollection = objectFactory.fileCollection().from({ compilation.friendPaths })
 
     @Suppress("DEPRECATION")
-    private val resolvedDependencyGraph = ResolvedDependencyGraph(
+    private val resolvedConfiguration = LazyResolvedConfiguration(
         project.configurations.getByName(compilation.compileDependencyConfigurationName)
     )
 
@@ -315,7 +315,7 @@ constructor(
                         settings = cacheBuilderSettings,
                         konanPropertiesService = konanPropertiesService.get()
                     )
-                    addAll(cacheBuilder.buildCompilerArgs(resolvedDependencyGraph))
+                    addAll(cacheBuilder.buildCompilerArgs(resolvedConfiguration))
                 }
             }
         }
