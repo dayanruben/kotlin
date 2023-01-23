@@ -6,11 +6,10 @@
 
 package org.jetbrains.kotlin.gradle.mpp
 
+import org.gradle.api.logging.LogLevel
 import org.gradle.api.logging.configuration.WarningMode
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.gradle.BaseGradleIT
-import org.jetbrains.kotlin.gradle.GradleVersionRequired
-import org.jetbrains.kotlin.gradle.chooseWrapperVersionOrFinishTest
+import org.jetbrains.kotlin.gradle.*
 import org.jetbrains.kotlin.gradle.embedProject
 import org.jetbrains.kotlin.gradle.mpp.ResolvedVariantChecker.ResolvedVariantRequest
 import org.jetbrains.kotlin.gradle.testbase.TestVersions
@@ -92,6 +91,8 @@ abstract class AndroidAndJavaConsumeMppLibIT : BaseGradleIT() {
                 buildParams.map { arrayOf(*it, agpVersion, gradleVersion) }
             }
         }
+
+        const val oldKotlinVersion = "1.5.31"
     }
 
     @Parameterized.Parameter(0)
@@ -122,17 +123,20 @@ abstract class AndroidAndJavaConsumeMppLibIT : BaseGradleIT() {
         val jdk11Home = File(System.getProperty("jdk11Home"))
         Assume.assumeTrue("This test requires JDK11 for AGP7", jdk11Home.isDirectory)
 
-        val producerBuildOptions = defaultBuildOptions().copy(
-            javaHome = jdk11Home,
-            androidHome = KtTestUtil.findAndroidSdk(),
-            androidGradlePluginVersion = producerAgpVersion,
-            // Workaround for a deprecation warning from AGP
-            // Relying on FileTrees for ignoring empty directories when using @SkipWhenEmpty has been deprecated.
-            warningMode = if (producerAgpVersion <= AGPVersion.v7_1_0) WarningMode.None else WarningMode.Fail,
-        )
-        producerBuildOptions.androidHome?.let { acceptAndroidSdkLicenses(it) }
+        val producerBuildOptions: BuildOptions
 
-        dependencyProject = Project("new-mpp-android", producerGradleVersion).apply {
+        dependencyProject = Project("new-mpp-android", producerGradleVersion, minLogLevel = LogLevel.INFO).apply {
+            val usedProducerGradleVersion = chooseWrapperVersionOrFinishTest()
+            producerBuildOptions = defaultBuildOptions().copy(
+                javaHome = jdk11Home,
+                androidHome = KtTestUtil.findAndroidSdk(),
+                androidGradlePluginVersion = producerAgpVersion,
+            ).suppressDeprecationWarningsOn(
+                "AGP relies on FileTrees for ignoring empty directories when using @SkipWhenEmpty which has been deprecated (Gradle 7.4)"
+            ) { options ->
+                GradleVersion.version(usedProducerGradleVersion) >= GradleVersion.version(TestVersions.Gradle.G_7_4) && options.safeAndroidGradlePluginVersion < AGPVersion.v7_1_0
+            }
+            producerBuildOptions.androidHome?.let { acceptAndroidSdkLicenses(it) }
             projectDir.deleteRecursively()
             setupWorkingDir()
             // Don't need custom attributes here
@@ -193,7 +197,7 @@ abstract class AndroidAndJavaConsumeMppLibIT : BaseGradleIT() {
 
         // We don't want to test the behavior with old Kotlin project-to-project dependencies, only compatibility with publications:
         if (isPublishedLibrary) {
-            runConsumerTest(dependencyProject, withKotlinVersion = "1.5.31")
+            runConsumerTest(dependencyProject, withKotlinVersion = oldKotlinVersion)
         }
     }
 
@@ -219,7 +223,7 @@ abstract class AndroidAndJavaConsumeMppLibIT : BaseGradleIT() {
             else "project(\":${dependencyProject.projectName}:lib\")"
 
         val usedConsumerGradleVersion: String
-        val consumerProject = Project("AndroidProject", consumerGradleVersion).apply {
+        val consumerProject = Project("AndroidProject", consumerGradleVersion, minLogLevel = LogLevel.INFO).apply {
             usedConsumerGradleVersion = chooseWrapperVersionOrFinishTest()
             projectDir.deleteRecursively()
             if (!isPublishedLibrary) {
@@ -288,15 +292,19 @@ abstract class AndroidAndJavaConsumeMppLibIT : BaseGradleIT() {
                 "com.example:lib:1.0"
             else ":${dependencyProject.projectName}:lib"
 
-        val consumerWarningMode =
-            if (consumerAgpVersion >= AGPVersion.v7_3_0 || GradleVersion.version(usedConsumerGradleVersion) < GradleVersion.version("7.5")) WarningMode.Fail else WarningMode.None
         val consumerBuildOptions = defaultBuildOptions().copy(
             javaHome = File(System.getProperty("jdk11Home")),
             androidHome = KtTestUtil.findAndroidSdk(),
             androidGradlePluginVersion = consumerAgpVersion,
-            kotlinVersion = withKotlinVersion ?: defaultBuildOptions().kotlinVersion,
-            warningMode = consumerWarningMode
-        )
+            kotlinVersion = withKotlinVersion ?: defaultBuildOptions().kotlinVersion
+        ).suppressDeprecationWarningsOn(
+            "AGP uses deprecated IncrementalTaskInputs (Gradle 7.5)"
+        ) { options ->
+            // looks a bit messy :/
+            (!isPublishedLibrary && (withKotlinVersion != null || options.safeAndroidGradlePluginVersion >= AGPVersion.v7_0_0) || isPublishedLibrary && withKotlinVersion == oldKotlinVersion) &&
+                    GradleVersion.version(usedConsumerGradleVersion) >= GradleVersion.version(TestVersions.Gradle.G_7_5) &&
+                    options.safeAndroidGradlePluginVersion < AGPVersion.v7_3_0
+        }
 
         val variantCheckRequests = mutableMapOf<ResolvedVariantRequest, String>()
 

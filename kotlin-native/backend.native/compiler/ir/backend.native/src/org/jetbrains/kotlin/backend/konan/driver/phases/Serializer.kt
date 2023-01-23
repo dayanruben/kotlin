@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.library.SerializedMetadata
 
 internal data class SerializerInput(
         val moduleDescriptor: ModuleDescriptor,
-        val psiToIrOutput: PsiToIrOutput?,
+        val psiToIrOutput: PsiToIrOutput.ForKlib?,
 )
 
 data class SerializerOutput(
@@ -48,6 +48,7 @@ internal val SerializerPhase = createSimpleNamedCompilerPhase<PhaseContext, Seri
                 compatibilityMode = CompatibilityMode.CURRENT,
                 normalizeAbsolutePaths = normalizeAbsolutePaths,
                 sourceBaseDirs = relativePathBase,
+                languageVersionSettings = config.languageVersionSettings,
         ).serializedIrModule(ir)
     }
 
@@ -58,13 +59,13 @@ internal val SerializerPhase = createSimpleNamedCompilerPhase<PhaseContext, Seri
             exportKDoc = context.shouldExportKDoc(),
             !expectActualLinker, includeOnlyModuleContent = true)
     val serializedMetadata = serializer.serializeModule(input.moduleDescriptor)
-    val neededLibraries = config.librariesWithDependencies(input.moduleDescriptor)
+    val neededLibraries = config.librariesWithDependencies()
     SerializerOutput(serializedMetadata, serializedIr, null, neededLibraries)
 }
 
 internal fun <T : PhaseContext> PhaseEngine<T>.runSerializer(
         moduleDescriptor: ModuleDescriptor,
-        psiToIrResult: PsiToIrOutput?,
+        psiToIrResult: PsiToIrOutput.ForKlib?,
 ): SerializerOutput {
     val input = SerializerInput(moduleDescriptor, psiToIrResult)
     return this.runPhase(SerializerPhase, input)

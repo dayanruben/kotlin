@@ -282,7 +282,10 @@ abstract class BaseGradleIT {
         val enableCompatibilityMetadataVariant: Boolean? = null,
         val withReports: List<BuildReportType> = emptyList(),
         val enableKpmModelMapping: Boolean? = null,
-    )
+    ) {
+        val safeAndroidGradlePluginVersion: AGPVersion
+            get() = androidGradlePluginVersion ?: error("AGP version is expected to be set")
+    }
 
     enum class ConfigurationCacheProblems {
         FAIL, WARN
@@ -425,7 +428,9 @@ abstract class BaseGradleIT {
         var result: ProcessRunResult? = null
         try {
             result = runProcess(cmd, projectDir, env, buildOptions)
-            CompiledProject(this, result.output, result.exitCode).check()
+            val compiledProject = CompiledProject(this, result.output, result.exitCode)
+            compiledProject.check()
+            compiledProject.additionalAssertions(buildOptions)
         } catch (t: Throwable) {
             println("<=== Test build: $projectName $cmd ===>")
 
@@ -439,6 +444,23 @@ abstract class BaseGradleIT {
 
             throw t
         }
+    }
+
+    private fun CompiledProject.additionalAssertions(options: BuildOptions) {
+        if (options.warningMode != WarningMode.Fail) {
+            assertDeprecationWarningsArePresent(options.warningMode)
+        }
+    }
+
+    private fun CompiledProject.assertDeprecationWarningsArePresent(warningMode: WarningMode) {
+        assertContains(
+            "[GradleWarningsDetectorPlugin] The plugin is being applied",
+            errorMessage = NO_GRADLE_WARNINGS_DETECTOR_PLUGIN_ERROR_MESSAGE
+        )
+        assertContains(
+            "[GradleWarningsDetectorPlugin] Some deprecation warnings were found during this build.",
+            errorMessage = getWarningModeChangeAdvice(warningMode)
+        )
     }
 
     fun <T> Project.getModels(modelType: Class<T>): ModelContainer<T> {
@@ -484,9 +506,9 @@ abstract class BaseGradleIT {
         return this
     }
 
-    fun CompiledProject.assertContains(vararg expected: String, ignoreCase: Boolean = false): CompiledProject {
+    fun CompiledProject.assertContains(vararg expected: String, ignoreCase: Boolean = false, errorMessage: String? = null): CompiledProject {
         for (str in expected) {
-            assertTrue(output.contains(str.normalize(), ignoreCase), "Output should contain '$str'")
+            assertTrue(output.contains(str.normalize(), ignoreCase), errorMessage ?: "Output should contain '$str'")
         }
         return this
     }
@@ -999,15 +1021,23 @@ fun BaseGradleIT.BuildOptions.withFreeCommandLineArgument(argument: String) = co
     freeCommandLineArgs = freeCommandLineArgs + argument
 )
 
-fun BaseGradleIT.BuildOptions.suppressDeprecationWarningsOnAgpLessThan(
-    agpVersion: AGPVersion,
-    @Suppress("UNUSED_PARAMETER") reason: String // just to require specifying a reason for suppressing
+fun BaseGradleIT.BuildOptions.suppressDeprecationWarningsOn(
+    @Suppress("UNUSED_PARAMETER") reason: String, // just to require specifying a reason for suppressing
+    predicate: (BaseGradleIT.BuildOptions) -> Boolean
 ) =
-    if ((androidGradlePluginVersion ?: error("AGP version expected to be configured")) >= agpVersion) {
-        this
+    if (predicate(this)) {
+        copy(warningMode = WarningMode.Summary)
     } else {
-        copy(warningMode = WarningMode.All)
+        this
     }
+
+fun BaseGradleIT.BuildOptions.suppressDeprecationWarningsSinceGradleVersion(
+    gradleVersion: String,
+    currentGradleVersion: String,
+    reason: String
+) = suppressDeprecationWarningsOn(reason) {
+    GradleVersion.version(currentGradleVersion) >= GradleVersion.version(gradleVersion)
+}
 
 private const val MAVEN_LOCAL_URL_PLACEHOLDER = "<mavenLocalUrl>"
 internal const val PLUGIN_MARKER_VERSION_PLACEHOLDER = "<pluginMarkerVersion>"

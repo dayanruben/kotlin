@@ -5,9 +5,7 @@
 
 package org.jetbrains.kotlin.gradle.native
 
-import org.gradle.api.logging.configuration.WarningMode
-import org.jetbrains.kotlin.gradle.BaseGradleIT
-import org.jetbrains.kotlin.gradle.GradleVersionRequired
+import org.jetbrains.kotlin.gradle.*
 import org.jetbrains.kotlin.gradle.plugin.cocoapods.KotlinCocoapodsPlugin.Companion.DUMMY_FRAMEWORK_TASK_NAME
 import org.jetbrains.kotlin.gradle.plugin.cocoapods.KotlinCocoapodsPlugin.Companion.POD_BUILD_TASK_NAME
 import org.jetbrains.kotlin.gradle.plugin.cocoapods.KotlinCocoapodsPlugin.Companion.POD_GEN_TASK_NAME
@@ -72,9 +70,10 @@ class CocoaPodsIT : BaseGradleIT() {
     private val defaultPodRepo = "https://github.com/AFNetworking/AFNetworking"
     private val defaultPodName = "AFNetworking"
     private val defaultTarget = "IOS"
-    private val defaultFamily = "IOS"
+    private val defaultFamily = "ios"
     private val defaultSDK = "iphonesimulator"
     private val defaultPodGenTaskName = podGenFullTaskName()
+    private val defaultPodInstallSyntheticTaskName = ":podInstallSyntheticIos"
     private val defaultBuildTaskName = podBuildFullTaskName()
     private val defaultSetupBuildTaskName = podSetupBuildFullTaskName()
     private val defaultCinteropTaskName = cinteropTaskName + defaultPodName + defaultTarget
@@ -247,7 +246,7 @@ class CocoaPodsIT : BaseGradleIT() {
     }
 
     @Test
-    fun testSyntheticProjectPodspecGeneration() {
+    fun testSyntheticProjectPodfileGeneration() {
         val gradleProject = transformProjectWithPluginsDsl(cocoapodsSingleKtPod, gradleVersion)
         gradleProject.gradleBuildScript().appendToCocoapodsBlock("""
             ios.deploymentTarget = "14.1"
@@ -259,9 +258,11 @@ class CocoaPodsIT : BaseGradleIT() {
                 }
             }
         """.trimIndent())
-        gradleProject.build("podGenIOS", "-Pkotlin.native.cocoapods.generate.wrapper=true") {
+        gradleProject.build("podInstallSyntheticIos", "-Pkotlin.native.cocoapods.generate.wrapper=true") {
             assertSuccessful()
-            val podfileText = gradleProject.projectDir.resolve("build/cocoapods/synthetic/IOS/Podfile").readText().trim()
+            assertTasksExecuted(":podGenIos")
+
+            val podfileText = gradleProject.projectDir.resolve("build/cocoapods/synthetic/ios/Podfile").readText().trim()
             assertTrue(podfileText.contains("platform :ios, '14.1'"))
             assertTrue(podfileText.contains("pod 'SSZipArchive'"))
             assertTrue(podfileText.contains("pod 'AFNetworking', '~> 4.0.1'"))
@@ -269,6 +270,27 @@ class CocoaPodsIT : BaseGradleIT() {
             assertTrue(podfileText.contains("config.build_settings['EXPANDED_CODE_SIGN_IDENTITY'] = \"\""))
             assertTrue(podfileText.contains("config.build_settings['CODE_SIGNING_REQUIRED'] = \"NO\""))
             assertTrue(podfileText.contains("config.build_settings['CODE_SIGNING_ALLOWED'] = \"NO\""))
+        }
+    }
+
+    @Test
+    fun testSyntheticProjectPodfilePostprocessing() {
+        project.gradleBuildScript().apply {
+            appendToCocoapodsBlock("""pod("AWSMobileClient", version = "2.29.1")""")
+
+            appendText("""
+                
+                tasks.withType<org.jetbrains.kotlin.gradle.targets.native.tasks.PodGenTask>().configureEach {
+                    doLast {
+                        podfile.get().appendText("ENV['SWIFT_VERSION'] = '5'")
+                    }
+                }
+            """.trimIndent())
+        }
+
+        project.build("podInstallSyntheticIos", "-Pkotlin.native.cocoapods.generate.wrapper=true") {
+            assertSuccessful()
+            assertFileContains(path = "build/cocoapods/synthetic/ios/Podfile", "ENV['SWIFT_VERSION'] = '5'")
         }
     }
 
@@ -376,13 +398,83 @@ class CocoaPodsIT : BaseGradleIT() {
     }
 
     @Test
+    fun testImportUTDAfterLinkingFramework() {
+        val linkTaskName = ":linkPodDebugFrameworkIOS"
+        project.gradleBuildScript().appendToCocoapodsBlock("""
+            framework {
+                baseName = "kotlin-library"
+            }
+            name = "kotlin-library"
+            podfile = project.file("ios-app/Podfile")
+        """.trimIndent())
+
+
+        hooks.addHook {
+            assertTasksExecuted(dummyTaskName)
+            assertTasksExecuted(podInstallTaskName)
+        }
+        project.testImport()
+
+        hooks.rewriteHooks {
+            assertTasksExecuted(linkTaskName)
+        }
+        project.testWithWrapper(linkTaskName)
+
+        hooks.rewriteHooks {
+            assertTasksUpToDate(dummyTaskName)
+            assertTasksUpToDate(podInstallTaskName)
+        }
+        project.testImport()
+    }
+
+    @Test
+    fun testChangeFrameworkTypeUTD() {
+        project.gradleBuildScript().appendToCocoapodsBlock("""
+            framework {
+                baseName = "kotlin-library"
+            }
+            name = "kotlin-library"
+            podfile = project.file("ios-app/Podfile")
+        """.trimIndent())
+
+        hooks.addHook {
+            assertTasksExecuted(dummyTaskName)
+            assertTasksExecuted(podInstallTaskName)
+        }
+        project.testImport()
+
+        hooks.rewriteHooks {
+            assertTasksUpToDate(dummyTaskName)
+            assertTasksUpToDate(podInstallTaskName)
+        }
+        project.testImport()
+
+        project.gradleBuildScript().appendToFrameworkBlock("isStatic = true")
+
+        hooks.rewriteHooks {
+            assertTasksExecuted(dummyTaskName)
+            assertTasksExecuted(podInstallTaskName)
+        }
+        project.testImport()
+
+        hooks.rewriteHooks {
+            assertTasksUpToDate(dummyTaskName)
+            assertTasksUpToDate(podInstallTaskName)
+        }
+        project.testImport()
+    }
+
+
+
+    @Test
     fun basicUTDTest() {
         val tasks = listOf(
             podspecTaskName,
             defaultPodGenTaskName,
+            defaultPodInstallSyntheticTaskName,
             defaultSetupBuildTaskName,
             defaultBuildTaskName,
-            defaultCinteropTaskName
+            defaultCinteropTaskName,
         )
         with(project.gradleBuildScript()) {
             addPod(defaultPodName, produceGitBlock(defaultPodRepo))
@@ -418,21 +510,21 @@ class CocoaPodsIT : BaseGradleIT() {
     }
 
     @Test
-    fun testPodGenInvalidatesUTD() {
+    fun testPodInstallInvalidatesUTD() {
         with(project.gradleBuildScript()) {
             addPod("AFNetworking")
         }
 
         hooks.addHook {
-            assertTasksExecuted(defaultPodGenTaskName)
-            assertTrue { fileInWorkingDir("build/cocoapods/synthetic/IOS/Pods/AFNetworking").deleteRecursively() }
+            assertTasksExecuted(defaultPodInstallSyntheticTaskName)
+            assertTrue { fileInWorkingDir("build/cocoapods/synthetic/ios/Pods/AFNetworking").deleteRecursively() }
         }
-        project.testSynthetic(defaultPodGenTaskName)
+        project.testSynthetic(defaultPodInstallSyntheticTaskName)
 
         hooks.rewriteHooks {
-            assertTasksExecuted(defaultPodGenTaskName)
+            assertTasksExecuted(defaultPodInstallSyntheticTaskName)
         }
-        project.testSynthetic(defaultPodGenTaskName)
+        project.testSynthetic(defaultPodInstallSyntheticTaskName)
     }
 
     @Test
@@ -501,7 +593,7 @@ class CocoaPodsIT : BaseGradleIT() {
 
         val anotherTarget = "MacosX64"
         val anotherSdk = "macosx"
-        val anotherFamily = "OSX"
+        val anotherFamily = "macos"
         with(project.gradleBuildScript()) {
             appendToKotlinBlock(anotherTarget.replaceFirstChar { it.lowercase(Locale.getDefault()) } + "()")
         }
@@ -748,13 +840,34 @@ class CocoaPodsIT : BaseGradleIT() {
     fun testUseDynamicFramework() {
         with(project) {
             gradleBuildScript().addPod(defaultPodName, produceGitBlock(defaultPodRepo))
-            gradleBuildScript().appendToFrameworkBlock("isStatic=false")
+            gradleBuildScript().appendToFrameworkBlock("isStatic = false")
             hooks.addHook {
                 // Check that an output framework is a dynamic framework
-                val framework = fileInWorkingDir("build/cocoapods/framework/cocoapods.framework/cocoapods")
+                val framework = fileInWorkingDir("build/bin/iOS/podDebugFramework/cocoapods.framework/cocoapods")
                 with(runProcess(listOf("file", framework.absolutePath), projectDir, environmentVariables = getEnvs())) {
                     assertTrue(isSuccessful)
                     assertTrue(output.contains("dynamically linked shared library"))
+                }
+            }
+
+            test(
+                "linkPodDebugFrameworkIOS",
+                "-Pkotlin.native.cocoapods.generate.wrapper=true"
+            )
+        }
+    }
+
+    @Test
+    fun testUseStaticFramework() {
+        with(project) {
+            gradleBuildScript().addPod(defaultPodName, produceGitBlock(defaultPodRepo))
+            gradleBuildScript().appendToFrameworkBlock("isStatic = true")
+            hooks.addHook {
+                // Check that an output framework is a static framework
+                val framework = fileInWorkingDir("build/bin/iOS/podDebugFramework/cocoapods.framework/cocoapods")
+                with(runProcess(listOf("file", framework.absolutePath), projectDir, environmentVariables = getEnvs())) {
+                    assertTrue(isSuccessful)
+                    assertTrue(output.contains("current ar archive random library"))
                 }
             }
 
@@ -1096,7 +1209,16 @@ class CocoaPodsIT : BaseGradleIT() {
             pod("SDWebImage/Core")
         """.trimIndent())
 
-        build(":linkPodDebugFrameworkIOS", "-Pkotlin.native.cocoapods.generate.wrapper=true") {
+        val currentGradleVersion = chooseWrapperVersionOrFinishTest()
+        build(
+            ":linkPodDebugFrameworkIOS",
+            "-Pkotlin.native.cocoapods.generate.wrapper=true",
+            options = defaultBuildOptions().suppressDeprecationWarningsSinceGradleVersion(
+                TestVersions.Gradle.G_7_4,
+                currentGradleVersion,
+                "Workaround for KT-55751"
+            )
+        ) {
             assertSuccessful()
 
             assertTasksExecuted(":podBuildAFNetworkingIphonesimulator")
@@ -1133,7 +1255,16 @@ class CocoaPodsIT : BaseGradleIT() {
             pod("AFNetworking") { linkOnly = true }
         """.trimIndent())
 
-        build(":linkPodDebugFrameworkIOS", "-Pkotlin.native.cocoapods.generate.wrapper=true") {
+        val currentGradleVersion = chooseWrapperVersionOrFinishTest()
+        build(
+            ":linkPodDebugFrameworkIOS",
+            "-Pkotlin.native.cocoapods.generate.wrapper=true",
+            options = defaultBuildOptions().suppressDeprecationWarningsSinceGradleVersion(
+                TestVersions.Gradle.G_7_4,
+                currentGradleVersion,
+                "Workaround for KT-55751"
+            )
+        ) {
             assertSuccessful()
 
             assertContains("Dependency on 'AFNetworking' with option 'linkOnly=true' is unused for building static frameworks")
@@ -1237,11 +1368,15 @@ class CocoaPodsIT : BaseGradleIT() {
         taskName: String,
         vararg args: String
     ) {
+        val currentGradleVersion = chooseWrapperVersionOrFinishTest()
         // check that test executable
-        build(taskName, *args, options = defaultBuildOptions().copy(
-            // Workaround for KT-55751
-            warningMode = WarningMode.None,
-        )) {
+        build(
+            taskName, *args, options = defaultBuildOptions().suppressDeprecationWarningsSinceGradleVersion(
+                TestVersions.Gradle.G_7_4,
+                currentGradleVersion,
+                "Workaround for KT-55751"
+            )
+        ) {
             //base checks
             assertSuccessful()
             hooks.trigger(this)

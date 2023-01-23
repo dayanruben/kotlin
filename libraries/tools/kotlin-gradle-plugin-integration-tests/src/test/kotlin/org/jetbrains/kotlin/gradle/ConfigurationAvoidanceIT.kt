@@ -153,15 +153,7 @@ class ConfigurationAvoidanceIT : KGPBaseTest() {
     @DisplayName("JS early configuration resolution")
     @GradleTest
     fun testEarlyConfigurationsResolutionKotlinJs(gradleVersion: GradleVersion) {
-        testEarlyConfigurationsResolution(
-            "kotlin-js-browser-project",
-            gradleVersion,
-            kts = true,
-            buildOptions = defaultBuildOptions.copy(
-                // bug in Gradle: https://github.com/gradle/gradle/issues/15796
-                warningMode = if (gradleVersion < GradleVersion.version("7.0")) WarningMode.Summary else defaultBuildOptions.warningMode
-            )
-        )
+        testEarlyConfigurationsResolution("kotlin-js-browser-project", gradleVersion, kts = true)
     }
 
     private fun testEarlyConfigurationsResolution(
