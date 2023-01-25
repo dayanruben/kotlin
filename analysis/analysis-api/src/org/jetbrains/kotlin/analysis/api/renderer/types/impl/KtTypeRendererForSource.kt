@@ -14,11 +14,11 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.*
 
 public object KtTypeRendererForSource {
     public val WITH_QUALIFIED_NAMES: KtTypeRenderer = KtTypeRenderer {
-        capturedTypeRenderer = KtCapturedTypeRenderer.AS_RPOJECTION
+        capturedTypeRenderer = KtCapturedTypeRenderer.AS_PROJECTION
         definitelyNotNullTypeRenderer = KtDefinitelyNotNullTypeRenderer.AS_TYPE_INTERSECTION
         dynamicTypeRenderer = KtDynamicTypeRenderer.AS_DYNAMIC_WORD
         flexibleTypeRenderer = KtFlexibleTypeRenderer.AS_SHORT
-        functionalTypeRenderer = KtFunctionalTypeRenderer.AS_FUNCTIONAL_TYPE
+        functionalTypeRenderer = KtFunctionalTypeRenderer.AS_CLASS_TYPE_FOR_REFLECTION_TYPES
         integerLiteralTypeRenderer = KtIntegerLiteralTypeRenderer.AS_ILT_WITH_VALUE
         intersectionTypeRenderer = KtIntersectionTypeRenderer.AS_INTERSECTION
         typeErrorTypeRenderer = KtTypeErrorTypeRenderer.AS_CODE_IF_POSSIBLE
@@ -27,7 +27,7 @@ public object KtTypeRendererForSource {
         usualClassTypeRenderer = KtUsualClassTypeRenderer.AS_CLASS_TYPE_WITH_TYPE_ARGUMENTS
         classIdRenderer = KtClassTypeQualifierRenderer.WITH_QUALIFIED_NAMES
         typeNameRenderer = KtTypeNameRenderer.QUOTED
-        typeApproximator = KtRendererTypeApproximator.TO_DENNOTABLE
+        typeApproximator = KtRendererTypeApproximator.TO_DENOTABLE
         typeProjectionRenderer = KtTypeProjectionRenderer.WITH_VARIANCE
         annotationsRenderer = KtAnnotationRendererForSource.WITH_QUALIFIED_NAMES
         contextReceiversRenderer = KtContextReceiversRendererForSource.WITH_LABELS

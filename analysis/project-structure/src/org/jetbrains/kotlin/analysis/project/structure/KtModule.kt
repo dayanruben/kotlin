@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.analysis.project.structure
 
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -170,4 +171,16 @@ public class KtBuiltinsModule(
 /**
  * A set of sources which lives outside project content root. E.g, testdata files or source files of some other project.
  */
-public interface KtNotUnderContentRootModule : KtModule
+public interface KtNotUnderContentRootModule : KtModule {
+    /**
+     * Human-readable module name.
+     */
+    public val name: String
+
+    /**
+     * Module owner file.
+     * A separate module is created for each file outside a content root.
+     */
+    public val file: PsiFile?
+        get() = null
+}

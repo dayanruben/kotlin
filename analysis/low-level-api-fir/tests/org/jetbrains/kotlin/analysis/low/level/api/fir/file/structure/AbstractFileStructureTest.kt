@@ -11,10 +11,12 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.analysis.low.level.api.fir.state.LLFirSourceResolveSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getFirResolveSession
+import org.jetbrains.kotlin.analysis.low.level.api.fir.isSourceSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirResolvableModuleSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.test.base.AbstractLowLevelApiSingleFileTest
+import org.jetbrains.kotlin.analysis.low.level.api.fir.test.configurators.AnalysisApiFirOutOfContentRootTestConfigurator
+import org.jetbrains.kotlin.analysis.low.level.api.fir.test.configurators.AnalysisApiFirSourceTestConfigurator
 import org.jetbrains.kotlin.analysis.project.structure.getKtModule
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
@@ -97,7 +99,8 @@ abstract class AbstractFileStructureTest : AbstractLowLevelApiSingleFileTest() {
     }
 
     private fun KtFile.getFileStructure(): FileStructure {
-        val moduleFirResolveSession = getFirResolveSession() as LLFirSourceResolveSession
+        val moduleFirResolveSession = getFirResolveSession()
+        check(moduleFirResolveSession.isSourceSession)
         val session = moduleFirResolveSession.getSessionFor(getKtModule()) as LLFirResolvableModuleSession
         return session.moduleComponents.fileStructureCache.getFileStructure(this)
     }
@@ -107,5 +110,12 @@ abstract class AbstractFileStructureTest : AbstractLowLevelApiSingleFileTest() {
             add(getStructureElementFor(ktElement))
         }
     }
+}
 
+abstract class AbstractSourceFileStructureTest : AbstractFileStructureTest() {
+    override val configurator = AnalysisApiFirSourceTestConfigurator(analyseInDependentSession = false)
+}
+
+abstract class AbstractOutOfContentRootFileStructureTest : AbstractFileStructureTest() {
+    override val configurator = AnalysisApiFirOutOfContentRootTestConfigurator
 }

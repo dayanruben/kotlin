@@ -35,7 +35,6 @@ abstract class LLFirResolveSession {
 
     abstract fun getScopeSessionFor(firSession: FirSession): ScopeSession
 
-
     /**
      * Build fully resolved FIR node for requested element.
      * This operation could be performance affective because it create FIleStructureElement and resolve non-local declaration into BODY phase, use

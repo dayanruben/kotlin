@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.fir.declarations.FirDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.fir.resolve.ImplicitReceiverStack
 import org.jetbrains.kotlin.fir.resolve.SessionHolderImpl
-import org.jetbrains.kotlin.analysis.low.level.api.fir.state.LLFirSourceResolveSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.DiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getDiagnostics
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getOrBuildFirFile
@@ -23,17 +22,19 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.FileStruct
 import org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.NonReanalyzableDeclarationStructureElement
 import org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.ReanalyzableStructureElement
 import org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.RootStructureElement
+import org.jetbrains.kotlin.analysis.low.level.api.fir.isSourceSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.name
 import org.jetbrains.kotlin.analysis.low.level.api.fir.resolveWithClearCaches
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirResolvableModuleSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.test.base.AbstractLowLevelApiSingleFileTest
+import org.jetbrains.kotlin.analysis.low.level.api.fir.test.configurators.AnalysisApiFirOutOfContentRootTestConfigurator
+import org.jetbrains.kotlin.analysis.low.level.api.fir.test.configurators.AnalysisApiFirSourceTestConfigurator
 import org.jetbrains.kotlin.analysis.project.structure.getKtModule
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.services.AssertionsService
 import org.jetbrains.kotlin.test.services.TestModuleStructure
 import org.jetbrains.kotlin.test.services.TestServices
 import org.jetbrains.kotlin.test.services.assertions
-
 
 abstract class AbstractFirContextCollectionTest : AbstractLowLevelApiSingleFileTest() {
     override fun doTestByFileStructure(ktFile: KtFile, moduleStructure: TestModuleStructure, testServices: TestServices) {
@@ -45,7 +46,7 @@ abstract class AbstractFirContextCollectionTest : AbstractLowLevelApiSingleFileT
                 register(BeforeElementDiagnosticCollectionHandler::class, handler)
             }
         ) { firResolveSession ->
-            check(firResolveSession is LLFirSourceResolveSession)
+            check(firResolveSession.isSourceSession)
 
             val session = firResolveSession.getSessionFor(ktFile.getKtModule()) as LLFirResolvableModuleSession
             val fileStructureCache = session.moduleComponents.fileStructureCache
@@ -102,3 +103,10 @@ abstract class AbstractFirContextCollectionTest : AbstractLowLevelApiSingleFileT
     }
 }
 
+abstract class AbstractFirSourceContextCollectionTest : AbstractFirContextCollectionTest() {
+    override val configurator = AnalysisApiFirSourceTestConfigurator(analyseInDependentSession = false)
+}
+
+abstract class AbstractFirOutOfContentRootContextCollectionTest : AbstractFirContextCollectionTest() {
+    override val configurator = AnalysisApiFirOutOfContentRootTestConfigurator
+}

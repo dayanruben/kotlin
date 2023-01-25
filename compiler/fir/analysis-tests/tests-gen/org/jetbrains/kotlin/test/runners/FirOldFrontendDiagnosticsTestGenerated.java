@@ -10398,9 +10398,21 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
                 }
 
                 @Test
+                @TestMetadata("entriesPropertyAsExtensionClashOn.kt")
+                public void testEntriesPropertyAsExtensionClashOn() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/enum/entries/entriesPropertyAsExtensionClashOn.kt");
+                }
+
+                @Test
                 @TestMetadata("entriesPropertyImportedClash.kt")
                 public void testEntriesPropertyImportedClash() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/enum/entries/entriesPropertyImportedClash.kt");
+                }
+
+                @Test
+                @TestMetadata("entriesPropertyImportedClashOn.kt")
+                public void testEntriesPropertyImportedClashOn() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/enum/entries/entriesPropertyImportedClashOn.kt");
                 }
 
                 @Test
@@ -10410,9 +10422,21 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
                 }
 
                 @Test
+                @TestMetadata("entriesPropertyInCompanionClashOn.kt")
+                public void testEntriesPropertyInCompanionClashOn() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/enum/entries/entriesPropertyInCompanionClashOn.kt");
+                }
+
+                @Test
                 @TestMetadata("entriesPropertyWithJvmStaticClash.kt")
                 public void testEntriesPropertyWithJvmStaticClash() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/enum/entries/entriesPropertyWithJvmStaticClash.kt");
+                }
+
+                @Test
+                @TestMetadata("entriesUnsupported.kt")
+                public void testEntriesUnsupported() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/enum/entries/entriesUnsupported.kt");
                 }
 
                 @Test
@@ -10440,9 +10464,21 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
                 }
 
                 @Test
+                @TestMetadata("nameShadowingOfExternallyDefinedEntriesOn.kt")
+                public void testNameShadowingOfExternallyDefinedEntriesOn() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/enum/entries/nameShadowingOfExternallyDefinedEntriesOn.kt");
+                }
+
+                @Test
                 @TestMetadata("redeclarationOfEnumEntriesNameWithIntrinsic.kt")
                 public void testRedeclarationOfEnumEntriesNameWithIntrinsic() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/enum/entries/redeclarationOfEnumEntriesNameWithIntrinsic.kt");
+                }
+
+                @Test
+                @TestMetadata("redeclarationOfEnumEntriesNameWithIntrinsicOn.kt")
+                public void testRedeclarationOfEnumEntriesNameWithIntrinsicOn() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/enum/entries/redeclarationOfEnumEntriesNameWithIntrinsicOn.kt");
                 }
             }
 
@@ -23407,6 +23443,12 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
             }
 
             @Test
+            @TestMetadata("InheritingJavaClassWithRawTypeInOverrideSignature.kt")
+            public void testInheritingJavaClassWithRawTypeInOverrideSignature() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/override/InheritingJavaClassWithRawTypeInOverrideSignature.kt");
+            }
+
+            @Test
             @TestMetadata("InternalPotentialOverride.kt")
             public void testInternalPotentialOverride() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/override/InternalPotentialOverride.kt");
@@ -24802,6 +24844,12 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
             @TestMetadata("lateinitOnTopLevel.kt")
             public void testLateinitOnTopLevel() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/properties/lateinitOnTopLevel.kt");
+            }
+
+            @Test
+            @TestMetadata("localPropertyExtensions.kt")
+            public void testLocalPropertyExtensions() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/properties/localPropertyExtensions.kt");
             }
 
             @Test
@@ -35401,6 +35449,12 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
         @TestMetadata("jvmFieldAndJavaGetter.kt")
         public void testJvmFieldAndJavaGetter() throws Exception {
             runTest("compiler/testData/diagnostics/testsWithStdLib/jvmFieldAndJavaGetter.kt");
+        }
+
+        @Test
+        @TestMetadata("kt54410.kt")
+        public void testKt54410() throws Exception {
+            runTest("compiler/testData/diagnostics/testsWithStdLib/kt54410.kt");
         }
 
         @Test

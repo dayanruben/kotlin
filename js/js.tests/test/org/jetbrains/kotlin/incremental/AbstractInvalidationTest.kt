@@ -10,6 +10,8 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.local.CoreLocalFileSystem
 import com.intellij.psi.PsiManager
 import com.intellij.psi.SingleRootFileViewProvider
+import org.jetbrains.kotlin.backend.common.phaser.PhaseConfig
+import org.jetbrains.kotlin.backend.common.phaser.toPhaseMap
 import org.jetbrains.kotlin.cli.common.messages.AnalyzerWithCompilerReport
 import org.jetbrains.kotlin.cli.js.klib.generateIrForKlibSerialization
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
@@ -36,6 +38,7 @@ import org.jetbrains.kotlin.js.testOld.V8IrJsTestChecker
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.serialization.js.ModuleKind
+import org.jetbrains.kotlin.test.DebugMode
 import org.jetbrains.kotlin.test.builders.LanguageVersionSettingsBuilder
 import org.jetbrains.kotlin.test.KotlinTestWithEnvironment
 import org.jetbrains.kotlin.test.TargetBackend
@@ -244,17 +247,10 @@ abstract class AbstractInvalidationTest(
         }
 
 
-        private fun verifyJsCode(stepId: Int, mainModuleName: String, jsOutput: CompilationOutputs) {
-            val compiledJsFiles = jsOutput.writeAll(jsDir, mainModuleName, true, mainModuleName, JS_MODULE_KIND).filter {
-                it.extension == "js"
-            }
-            for (jsCodeFile in compiledJsFiles) {
-                jsCodeFile.writeAsJsModule(jsCodeFile.readText(), "./${jsCodeFile.name}")
-            }
-
+        private fun verifyJsCode(stepId: Int, mainModuleName: String, jsFiles: List<String>) {
             try {
                 V8IrJsTestChecker.checkWithTestFunctionArgs(
-                    files = compiledJsFiles.mapTo(prepareExternalJsFiles()) { it.absolutePath },
+                    files = jsFiles,
                     testModuleName = "./$mainModuleName.js",
                     testPackageName = null,
                     testFunctionName = BOX_FUNCTION_NAME,
@@ -285,6 +281,29 @@ abstract class AbstractInvalidationTest(
             }
         }
 
+        private fun getPhaseConfig(stepId: Int): PhaseConfig {
+            if (DebugMode.fromSystemProperty("kotlin.js.debugMode") < DebugMode.SUPER_DEBUG) {
+                return PhaseConfig(jsPhases)
+            }
+
+            return PhaseConfig(
+                jsPhases,
+                dumpToDirectory = buildDir.resolve("irdump").resolve("step-$stepId").path,
+                toDumpStateAfter = jsPhases.toPhaseMap().values.toSet()
+            )
+        }
+
+        private fun writeJsCode(mainModuleName: String, jsOutput: CompilationOutputs): List<String> {
+            val compiledJsFiles = jsOutput.writeAll(jsDir, mainModuleName, true, mainModuleName, JS_MODULE_KIND).filter {
+                it.extension == "js"
+            }
+            for (jsCodeFile in compiledJsFiles) {
+                jsCodeFile.writeAsJsModule(jsCodeFile.readText(), "./${jsCodeFile.name}")
+            }
+
+            return compiledJsFiles.mapTo(prepareExternalJsFiles()) { it.absolutePath }
+        }
+
         fun execute() {
             for (projStep in projectInfo.steps) {
                 val testInfo = projStep.order.map { setupTestStep(projStep, it, true) }
@@ -308,6 +327,7 @@ abstract class AbstractInvalidationTest(
                             mainModule,
                             cfg,
                             JsGenerationGranularity.PER_MODULE,
+                            getPhaseConfig(projStep.id),
                             setOf(FqName(BOX_FUNCTION_NAME)),
                             targetBackend == TargetBackend.JS_IR_ES6
                         )
@@ -329,8 +349,10 @@ abstract class AbstractInvalidationTest(
                 )
 
                 val (jsOutput, rebuiltModules) = jsExecutableProducer.buildExecutable(multiModule = true, outJsProgram = true)
+                val writtenFiles = writeJsCode(mainModuleName, jsOutput)
+
                 verifyJsExecutableProducerBuildModules(projStep.id, rebuiltModules, projStep.dirtyJS)
-                verifyJsCode(projStep.id, mainModuleName, jsOutput)
+                verifyJsCode(projStep.id, mainModuleName, writtenFiles)
                 verifyDTS(projStep.id, testInfo)
             }
         }

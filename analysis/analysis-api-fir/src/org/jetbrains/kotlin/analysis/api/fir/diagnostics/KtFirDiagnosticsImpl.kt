@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtVariableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.contracts.description.EventOccurrencesRange
@@ -293,6 +294,13 @@ internal class DeprecationImpl(
     override val firDiagnostic: KtPsiDiagnostic,
     override val token: KtLifetimeToken,
 ) : KtFirDiagnostic.Deprecation(), KtAbstractFirDiagnostic<PsiElement>
+
+internal class ApiNotAvailableImpl(
+    override val sinceKotlinVersion: ApiVersion,
+    override val currentVersion: ApiVersion,
+    override val firDiagnostic: KtPsiDiagnostic,
+    override val token: KtLifetimeToken,
+) : KtFirDiagnostic.ApiNotAvailable(), KtAbstractFirDiagnostic<PsiElement>
 
 internal class UnresolvedReferenceWrongReceiverImpl(
     override val candidates: List<KtSymbol>,
@@ -2577,6 +2585,11 @@ internal class LateinitIntrinsicCallOnNonAccessiblePropertyImpl(
     override val firDiagnostic: KtPsiDiagnostic,
     override val token: KtLifetimeToken,
 ) : KtFirDiagnostic.LateinitIntrinsicCallOnNonAccessibleProperty(), KtAbstractFirDiagnostic<PsiElement>
+
+internal class LocalExtensionPropertyImpl(
+    override val firDiagnostic: KtPsiDiagnostic,
+    override val token: KtLifetimeToken,
+) : KtFirDiagnostic.LocalExtensionProperty(), KtAbstractFirDiagnostic<PsiElement>
 
 internal class ExpectedDeclarationWithBodyImpl(
     override val firDiagnostic: KtPsiDiagnostic,

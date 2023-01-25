@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -34,7 +34,7 @@ class MetadataSmokeTest {
 
         val inlineFunctions = classMetadata.toKmClass().functions
             .filter { Flag.Function.IS_INLINE(it.flags) }
-            .mapNotNull { it.signature?.asString() }
+            .mapNotNull { it.signature?.toString() }
 
         assertEquals(
             listOf("foo(Lkotlin/jvm/functions/Function0;)Ljava/lang/String;"),
@@ -139,14 +139,14 @@ class MetadataSmokeTest {
             className
         }
         assertEquals(".kotlinx/metadata/test/MetadataSmokeTest\$jvmInternalName\$L", l)
-        assertEquals("kotlinx/metadata/test/MetadataSmokeTest\$jvmInternalName\$L", l.jvmInternalName)
+        assertEquals("kotlinx/metadata/test/MetadataSmokeTest\$jvmInternalName\$L", l.toJvmInternalName())
 
         val coroutineContextKey = ClassNameReader().run {
             (KotlinClassMetadata.read(CoroutineContext.Key::class.java.readMetadata()) as KotlinClassMetadata.Class).accept(this)
             className
         }
         assertEquals("kotlin/coroutines/CoroutineContext.Key", coroutineContextKey)
-        assertEquals("kotlin/coroutines/CoroutineContext\$Key", coroutineContextKey.jvmInternalName)
+        assertEquals("kotlin/coroutines/CoroutineContext\$Key", coroutineContextKey.toJvmInternalName())
     }
 
     @Test
@@ -191,6 +191,7 @@ class MetadataSmokeTest {
     }
 
     @Test
+    @OptIn(UnstableMetadataApi::class)
     fun metadataVersionEarlierThan1_4() {
         val dummy = (KotlinClassMetadata.read(MetadataSmokeTest::class.java.readMetadata()) as KotlinClassMetadata.Class).toKmClass()
         val mv = intArrayOf(1, 3)

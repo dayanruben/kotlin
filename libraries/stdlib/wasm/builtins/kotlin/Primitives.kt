@@ -5,7 +5,7 @@
 @file:Suppress(
     "OVERRIDE_BY_INLINE",
     "NOTHING_TO_INLINE",
-    "unused"
+    "unused", "UNUSED_PARAMETER"
 )
 
 package kotlin
@@ -16,7 +16,7 @@ import kotlin.wasm.internal.*
  * Represents a 8-bit signed integer.
  */
 @WasmAutoboxed
-public class Byte private constructor(public val value: Byte) : Number(), Comparable<Byte> {
+public class Byte private constructor(private val value: Byte) : Number(), Comparable<Byte> {
     public companion object {
         /**
          * A constant holding the minimum value an instance of Byte can have.
@@ -359,29 +359,6 @@ public class Byte private constructor(public val value: Byte) : Number(), Compar
      */
     public override fun toDouble(): Double = wasm_f64_convert_i32_s(this.toInt())
 
-    /** Performs a bitwise AND operation between the two values. */
-    @SinceKotlin("1.1")
-    @WasmOp(WasmOp.I32_AND)
-    public infix fun and(other: Byte): Byte =
-        implementedAsIntrinsic
-
-    /** Performs a bitwise OR operation between the two values. */
-    @SinceKotlin("1.1")
-    @WasmOp(WasmOp.I32_OR)
-    public infix fun or(other: Byte): Byte =
-        implementedAsIntrinsic
-
-    /** Performs a bitwise XOR operation between the two values. */
-    @SinceKotlin("1.1")
-    @WasmOp(WasmOp.I32_XOR)
-    public infix fun xor(other: Byte): Byte =
-        implementedAsIntrinsic
-
-    /** Inverts the bits in this value/ */
-    @SinceKotlin("1.1")
-    public inline fun inv(): Byte = this.xor(-1)
-
-
     public override fun equals(other: Any?): Boolean =
         other is Byte && wasm_i32_eq(this.toInt(), other.toInt())
 
@@ -405,7 +382,7 @@ public class Byte private constructor(public val value: Byte) : Number(), Compar
  * Represents a 16-bit signed integer.
  */
 @WasmAutoboxed
-public class Short private constructor(public val value: Short) : Number(), Comparable<Short> {
+public class Short private constructor(private val value: Short) : Number(), Comparable<Short> {
     public companion object {
         /**
          * A constant holding the minimum value an instance of Short can have.
@@ -702,29 +679,6 @@ public class Short private constructor(public val value: Short) : Number(), Comp
     @ExperimentalStdlibApi
     public operator fun rangeUntil(other: Long): LongRange = this until other
 
-    /** Performs a bitwise AND operation between the two values. */
-    @SinceKotlin("1.1")
-    @WasmOp(WasmOp.I32_AND)
-    public infix fun and(other: Short): Short =
-        implementedAsIntrinsic
-
-    /** Performs a bitwise OR operation between the two values. */
-    @SinceKotlin("1.1")
-    @WasmOp(WasmOp.I32_OR)
-    public infix fun or(other: Short): Short =
-        implementedAsIntrinsic
-
-    /** Performs a bitwise XOR operation between the two values. */
-    @SinceKotlin("1.1")
-    @WasmOp(WasmOp.I32_XOR)
-    public infix fun xor(other: Short): Short =
-        implementedAsIntrinsic
-
-    /** Inverts the bits in this value */
-    @SinceKotlin("1.1")
-    public fun inv(): Short =
-        this.xor(-1)
-
     /**
      * Converts this [Short] value to [Byte].
      *
@@ -806,7 +760,7 @@ public class Short private constructor(public val value: Short) : Number(), Comp
  * Represents a 32-bit signed integer.
  */
 @WasmAutoboxed
-public class Int private constructor(val value: Int) : Number(), Comparable<Int> {
+public class Int private constructor(private val value: Int) : Number(), Comparable<Int> {
 
     public companion object {
         /**
@@ -1256,7 +1210,7 @@ public class Int private constructor(val value: Int) : Number(), Comparable<Int>
  * Represents a 64-bit signed integer.
  */
 @WasmAutoboxed
-public class Long private constructor(val value: Long) : Number(), Comparable<Long> {
+public class Long private constructor(private val value: Long) : Number(), Comparable<Long> {
 
     public companion object {
         /**
@@ -1689,7 +1643,7 @@ public class Long private constructor(val value: Long) : Number(), Comparable<Lo
  * Represents a single-precision 32-bit IEEE 754 floating point number.
  */
 @WasmAutoboxed
-public class Float private constructor(public val value: Float) : Number(), Comparable<Float> {
+public class Float private constructor(private val value: Float) : Number(), Comparable<Float> {
 
     public companion object {
         /**
@@ -1706,19 +1660,19 @@ public class Float private constructor(public val value: Float) : Number(), Comp
          * A constant holding the positive infinity value of Float.
          */
         @Suppress("DIVISION_BY_ZERO")
-        public val POSITIVE_INFINITY: Float = 1.0f / 0.0f
+        public const val POSITIVE_INFINITY: Float = 1.0f / 0.0f
 
         /**
          * A constant holding the negative infinity value of Float.
          */
         @Suppress("DIVISION_BY_ZERO")
-        public val NEGATIVE_INFINITY: Float = -1.0f / 0.0f
+        public const val NEGATIVE_INFINITY: Float = -1.0f / 0.0f
 
         /**
          * A constant holding the "not a number" value of Float.
          */
         @Suppress("DIVISION_BY_ZERO")
-        public val NaN: Float = 0.0f / 0.0f
+        public const val NaN: Float = 0.0f / 0.0f
 
         /**
          * The number of bytes used to represent an instance of Float in a binary form.
@@ -2029,7 +1983,7 @@ public class Float private constructor(public val value: Float) : Number(), Comp
  * Represents a double-precision 64-bit IEEE 754 floating point number.
  */
 @WasmAutoboxed
-public class Double private constructor(public val value: Double) : Number(), Comparable<Double> {
+public class Double private constructor(private val value: Double) : Number(), Comparable<Double> {
 
     public companion object {
         /**
@@ -2046,19 +2000,19 @@ public class Double private constructor(public val value: Double) : Number(), Co
          * A constant holding the positive infinity value of Double.
          */
         @Suppress("DIVISION_BY_ZERO")
-        public val POSITIVE_INFINITY: Double = 1.0 / 0.0
+        public const val POSITIVE_INFINITY: Double = 1.0 / 0.0
 
         /**
          * A constant holding the negative infinity value of Double.
          */
         @Suppress("DIVISION_BY_ZERO")
-        public val NEGATIVE_INFINITY: Double = -1.0 / 0.0
+        public const val NEGATIVE_INFINITY: Double = -1.0 / 0.0
 
         /**
          * A constant holding the "not a number" value of Double.
          */
         @Suppress("DIVISION_BY_ZERO")
-        public val NaN: Double = 0.0 / 0.0
+        public const val NaN: Double = 0.0 / 0.0
 
         /**
          * The number of bytes used to represent an instance of Double in a binary form.

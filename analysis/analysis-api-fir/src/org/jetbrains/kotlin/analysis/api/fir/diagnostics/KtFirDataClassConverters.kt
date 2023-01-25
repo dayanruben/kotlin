@@ -313,6 +313,14 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirErrors.API_NOT_AVAILABLE) { firDiagnostic ->
+        ApiNotAvailableImpl(
+            firDiagnostic.a,
+            firDiagnostic.b,
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
     add(FirErrors.UNRESOLVED_REFERENCE_WRONG_RECEIVER) { firDiagnostic ->
         UnresolvedReferenceWrongReceiverImpl(
             firDiagnostic.a.map { firBasedSymbol ->
@@ -3031,6 +3039,12 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
     add(FirErrors.LATEINIT_INTRINSIC_CALL_ON_NON_ACCESSIBLE_PROPERTY) { firDiagnostic ->
         LateinitIntrinsicCallOnNonAccessiblePropertyImpl(
             firSymbolBuilder.buildSymbol(firDiagnostic.a),
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.LOCAL_EXTENSION_PROPERTY) { firDiagnostic ->
+        LocalExtensionPropertyImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
         )

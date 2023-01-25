@@ -58,10 +58,6 @@ class K2MetadataCompiler : CLICompiler<K2MetadataCompilerArguments>() {
         paths: KotlinPaths?
     ): ExitCode {
         val collector = configuration.getNotNull(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY)
-        if (configuration.getBoolean(CommonConfigurationKeys.USE_FIR)) {
-            collector.report(ERROR, "Compilation to metadata is not supported with language version 2.0 right now")
-            return ExitCode.COMPILATION_ERROR
-        }
         val performanceManager = configuration.getNotNull(CLIConfigurationKeys.PERF_MANAGER)
 
         val pluginLoadResult = loadPlugins(paths, arguments, configuration)
@@ -116,13 +112,13 @@ class K2MetadataCompiler : CLICompiler<K2MetadataCompilerArguments>() {
         checkKotlinPackageUsage(environment.configuration, environment.getSourceFiles())
 
         try {
-            val metadataVersion =
-                configuration.get(CommonConfigurationKeys.METADATA_VERSION) as? BuiltInsBinaryVersion ?: BuiltInsBinaryVersion.INSTANCE
-            if (arguments.expectActualLinker) {
-                K2MetadataKlibSerializer(metadataVersion).serialize(environment)
-            } else {
-                MetadataSerializer(metadataVersion, true).serialize(environment)
+            val useFir = configuration.getBoolean(CommonConfigurationKeys.USE_FIR)
+            val metadataSerializer = when {
+                useFir -> FirMetadataSerializer(configuration, environment)
+                arguments.expectActualLinker -> K2MetadataKlibSerializer(configuration, environment)
+                else -> MetadataSerializer(configuration, environment, dependOnOldBuiltIns = true)
             }
+            metadataSerializer.analyzeAndSerialize()
         } catch (e: CompilationException) {
             collector.report(EXCEPTION, OutputMessageUtil.renderException(e), MessageUtil.psiElementToMessageLocation(e.element))
             return ExitCode.INTERNAL_ERROR

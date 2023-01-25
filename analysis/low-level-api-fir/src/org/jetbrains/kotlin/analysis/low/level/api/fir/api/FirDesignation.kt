@@ -5,21 +5,30 @@
 
 package org.jetbrains.kotlin.analysis.low.level.api.fir.api
 
+import org.jetbrains.kotlin.KtRealPsiSourceElement
+import org.jetbrains.kotlin.analysis.low.level.api.fir.project.structure.llFirModuleData
+import org.jetbrains.kotlin.analysis.low.level.api.fir.providers.nullableJavaSymbolProvider
+import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.llFirResolvableSession
+import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.llFirSession
+import org.jetbrains.kotlin.analysis.low.level.api.fir.util.FirElementFinder
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.getContainingFile
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.withFirEntry
 import org.jetbrains.kotlin.analysis.utils.errors.buildErrorWithAttachment
 import org.jetbrains.kotlin.analysis.utils.errors.checkWithAttachmentBuilder
 import org.jetbrains.kotlin.analysis.utils.errors.unexpectedElementError
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.declarations.*
-import org.jetbrains.kotlin.fir.declarations.utils.classId
+import org.jetbrains.kotlin.fir.declarations.synthetic.FirSyntheticProperty
 import org.jetbrains.kotlin.fir.declarations.utils.isLocal
 import org.jetbrains.kotlin.fir.diagnostics.ConeDestructuringDeclarationsOnTopLevel
-import org.jetbrains.kotlin.fir.java.javaSymbolProvider
 import org.jetbrains.kotlin.fir.resolve.providers.firProvider
-import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
-import org.jetbrains.kotlin.fir.symbols.impl.ConeClassLookupTagWithFixedSymbol
+import org.jetbrains.kotlin.fir.resolve.toSymbol
+import org.jetbrains.kotlin.fir.visitors.FirVisitorVoid
+import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.parents
 
 class FirDesignationWithFile(
     path: List<FirRegularClass>,
@@ -49,63 +58,150 @@ open class FirDesignation(
     }
 }
 
-private fun FirRegularClass.collectForNonLocal(): List<FirRegularClass> {
-    require(!isLocal)
-    val firProvider = moduleData.session.firProvider
-    var containingClassId = classId.outerClassId
-    val designation = mutableListOf<FirRegularClass>(this)
-    while (containingClassId != null) {
-        val currentClass = firProvider.getFirClassifierByFqName(containingClassId) as? FirRegularClass ?: break
-        designation.add(currentClass)
-        containingClassId = containingClassId.outerClassId
+private fun collectDesignationPath(target: FirElementWithResolvePhase): List<FirRegularClass>? {
+    when (target) {
+        is FirSimpleFunction,
+        is FirProperty,
+        is FirField,
+        is FirConstructor,
+        is FirEnumEntry,
+        is FirPropertyAccessor -> {
+            require(target is FirCallableDeclaration)
+
+            if ((target !is FirConstructor && target.symbol.callableId.isLocal) || target.status.visibility == Visibilities.Local) {
+                return null
+            }
+
+            val containingClassId = target.containingClassLookupTag()?.classId ?: return emptyList()
+
+            if (target.origin == FirDeclarationOrigin.SubstitutionOverride) {
+                val originalContainingClassId = target.originalForSubstitutionOverride?.containingClassLookupTag()?.classId
+                if (containingClassId == originalContainingClassId) {
+                    // Ugly temporary hack for call-site substitution overrides (KTIJ-24004).
+                    // Containing class ID from the origin cannot be used, as the origin might be in a different module.
+                    return emptyList()
+                }
+            }
+
+            return collectDesignationPathWithContainingClass(target, containingClassId)
+        }
+
+        is FirClassLikeDeclaration -> {
+            if (target.isLocal) {
+                return null
+            }
+
+            val containingClassId = target.symbol.classId.outerClassId ?: return emptyList()
+            return collectDesignationPathWithContainingClass(target, containingClassId)
+        }
+
+        is FirDanglingModifierList -> {
+            val containingClassId = target.containingClass()?.classId ?: return emptyList()
+            return collectDesignationPathWithContainingClass(target, containingClassId)
+        }
+
+        is FirErrorProperty -> {
+            return if (target.diagnostic == ConeDestructuringDeclarationsOnTopLevel) emptyList() else null
+        }
+
+        else -> {
+            return null
+        }
     }
-    return designation
 }
 
-private fun collectDesignationPath(target: FirElementWithResolvePhase): List<FirRegularClass>? {
-    val containingClass = when (target) {
-        is FirCallableDeclaration -> {
-            if (target !is FirConstructor && target.symbol.callableId.isLocal) return null
-            if ((target as? FirCallableDeclaration)?.status?.visibility == Visibilities.Local) return null
-            when (target) {
-                is FirSimpleFunction, is FirProperty, is FirField, is FirConstructor, is FirEnumEntry, is FirPropertyAccessor -> {
-                    val klass = target.containingClassLookupTag() ?: return emptyList()
-                    if (klass.classId.isLocal) return null
-                    klass.toFirRegularClassFromSameSession(target.moduleData.session)
+private fun collectDesignationPathWithContainingClass(target: FirDeclaration, containingClassId: ClassId): List<FirRegularClass>? {
+    if (containingClassId.isLocal) {
+        return null
+    }
+
+    val useSiteSession = getTargetSession(target)
+
+    fun resolveChunk(classId: ClassId): FirRegularClass {
+        val declaration = useSiteSession.firProvider.getFirClassifierByFqName(classId)
+            ?: useSiteSession.nullableJavaSymbolProvider?.getClassLikeSymbolByClassId(classId)?.fir
+            ?: findKotlinStdlibClass(classId, target)
+
+        check(declaration != null)
+
+        checkWithAttachmentBuilder(declaration is FirRegularClass, { "'FirRegularClass' expected as a containing declaration" }) {
+            withFirEntry("containingClassFir", declaration)
+        }
+
+        return declaration
+    }
+
+    val chunks = generateSequence(containingClassId) { it.outerClassId }.toList()
+
+    if (chunks.any { it.shortClassName.isSpecial }) {
+        val fallbackResult = collectDesignationPathWithTreeTraversal(target)
+        if (fallbackResult != null) {
+            return fallbackResult
+        }
+    }
+
+    return chunks
+        .dropWhile { it.shortClassName.isSpecial }
+        .map { resolveChunk(it) }
+        .asReversed()
+}
+
+/*
+    This implementation is certainly inefficient, however there seem to be no better way to implement designation collection for
+    anonymous outer classes unless FIR tree gets a way to get an element parent.
+ */
+private fun collectDesignationPathWithTreeTraversal(target: FirDeclaration): List<FirRegularClass>? {
+    val containingFile = target.getContainingFile() ?: return null
+
+    val path = ArrayDeque<FirElement>()
+    path.addLast(containingFile)
+
+    var result: List<FirRegularClass>? = null
+
+    val visitor = object : FirVisitorVoid() {
+        override fun visitElement(element: FirElement) {
+            if (result != null) {
+                return
+            } else if (element === target) {
+                result = path.filterIsInstance<FirRegularClass>()
+            } else {
+                try {
+                    path.addLast(element)
+                    element.acceptChildren(this)
+                } finally {
+                    path.removeLast()
                 }
-                is FirErrorProperty -> {
-                    return if (target.diagnostic == ConeDestructuringDeclarationsOnTopLevel) {
-                        emptyList()
-                    } else {
-                        null
-                    }
-                }
-                else -> return null
             }
         }
-        is FirClassLikeDeclaration -> {
-            if (target.isLocal) return null
-            val outerClassId = target.symbol.classId.outerClassId
-            outerClassId?.let(target.moduleData.session.firProvider::getFirClassifierByFqName)
-                ?: outerClassId?.let(target.moduleData.session.javaSymbolProvider::getClassLikeSymbolByClassId)?.fir
-        }
-        is FirDanglingModifierList -> {
-            val klass = target.containingClass() ?: return emptyList()
-            if (klass.classId.isLocal) return null
-            klass.toFirRegularClassFromSameSession(target.moduleData.session)
-        }
-        else -> return null
-    } ?: return emptyList()
-
-    checkWithAttachmentBuilder(containingClass is FirRegularClass, { "FirRegularClass as containing declaration expected" }) {
-        withFirEntry("containingClassFir", containingClass)
     }
-    return if (!containingClass.isLocal) containingClass.collectForNonLocal().asReversed() else null
+
+    containingFile.accept(visitor)
+    return result
 }
 
-private fun ConeClassLikeLookupTag.toFirRegularClassFromSameSession(useSiteSession: FirSession): FirRegularClass? {
-    if (this is ConeClassLookupTagWithFixedSymbol) return symbol.fir as? FirRegularClass
-    return useSiteSession.firProvider.getFirClassifierByFqName(classId) as? FirRegularClass
+private fun getTargetSession(target: FirDeclaration): FirSession {
+    if (target is FirSyntheticProperty) {
+        return getTargetSession(target.getter)
+    }
+
+    if (target is FirCallableDeclaration) {
+        val containingSymbol = target.containingClassLookupTag()?.toSymbol(target.moduleData.session)
+        if (containingSymbol != null) {
+            // Synthetic declarations might have a call site session
+            return containingSymbol.moduleData.session
+        }
+    }
+
+    return target.moduleData.session
+}
+
+private fun findKotlinStdlibClass(classId: ClassId, target: FirDeclaration): FirRegularClass? {
+    if (!classId.packageFqName.startsWith(StandardNames.BUILT_INS_PACKAGE_NAME)) {
+        return null
+    }
+
+    val firFile = target.getContainingFile() ?: return null
+    return FirElementFinder.findClassifierWithClassId(firFile, classId) as? FirRegularClass
 }
 
 fun FirElementWithResolvePhase.collectDesignation(firFile: FirFile): FirDesignationWithFile =

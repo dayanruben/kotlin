@@ -18,10 +18,7 @@ import org.jetbrains.kotlin.cli.common.checkKotlinPackageUsage
 import org.jetbrains.kotlin.cli.common.fir.FirDiagnosticsCompilerResultsReporter
 import org.jetbrains.kotlin.cli.common.messages.AnalyzerWithCompilerReport
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
-import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity.STRONG_WARNING
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
-import org.jetbrains.kotlin.cli.jvm.config.jvmClasspathRoots
-import org.jetbrains.kotlin.cli.jvm.config.jvmModularRoots
 import org.jetbrains.kotlin.codegen.ClassBuilderFactories
 import org.jetbrains.kotlin.codegen.CodegenFactory
 import org.jetbrains.kotlin.codegen.state.GenerationState
@@ -49,7 +46,6 @@ import org.jetbrains.kotlin.fir.types.isString
 import org.jetbrains.kotlin.fir.visitors.FirVisitorVoid
 import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmIrMangler
 import org.jetbrains.kotlin.ir.symbols.*
-import org.jetbrains.kotlin.load.kotlin.incremental.IncrementalPackagePartProvider
 import org.jetbrains.kotlin.load.kotlin.incremental.components.IncrementalCompilationComponents
 import org.jetbrains.kotlin.modules.Module
 import org.jetbrains.kotlin.modules.TargetId
@@ -198,7 +194,13 @@ object FirKotlinToJvmBytecodeCompiler {
 
         var librariesScope = projectEnvironment.getSearchScopeForProjectLibraries()
 
-        val providerAndScopeForIncrementalCompilation = createComponentsForIncrementalCompilation(sourceScope)
+        val providerAndScopeForIncrementalCompilation = createContextForIncrementalCompilation(
+            projectEnvironment,
+            incrementalComponents,
+            moduleConfiguration,
+            targetIds,
+            sourceScope
+        )
 
         providerAndScopeForIncrementalCompilation?.precompiledBinariesFileScope?.let {
             librariesScope -= it
@@ -211,7 +213,10 @@ object FirKotlinToJvmBytecodeCompiler {
         val sessionProvider = FirProjectSessionProvider()
 
         val moduleName = module.getModuleName()
-        val libraryList = createLibraryListAndSession(moduleName, sessionProvider, librariesScope, languageVersionSettings)
+        val libraryList = createFirLibraryListAndSession(
+            moduleName, moduleConfiguration, projectEnvironment,
+            scope = librariesScope, librariesScope = librariesScope, friendPaths = module.getFriendPaths(), sessionProvider
+        )
 
         val commonModuleData = runIf(isMppEnabled) {
             FirModuleDataImpl(
@@ -293,64 +298,12 @@ object FirKotlinToJvmBytecodeCompiler {
         return if (syntaxErrors || diagnosticsReporter.hasErrors) null else FirResult(platformOutput, commonOutput)
     }
 
-    private fun CompilationContext.createLibraryListAndSession(
-        moduleName: String,
-        sessionProvider: FirProjectSessionProvider,
-        librariesScope: AbstractProjectFileSearchScope,
-        languageVersionSettings: LanguageVersionSettings
-    ): DependencyListForCliModule {
-        val binaryModuleData = BinaryModuleData.initialize(
-            Name.identifier(moduleName),
-            JvmPlatforms.unspecifiedJvmPlatform,
-            JvmPlatformAnalyzerServices
-        )
-        val libraryList = DependencyListForCliModule.build(binaryModuleData) {
-            dependencies(moduleConfiguration.jvmClasspathRoots.map { it.toPath() })
-            dependencies(moduleConfiguration.jvmModularRoots.map { it.toPath() })
-            friendDependencies(moduleConfiguration[JVMConfigurationKeys.FRIEND_PATHS] ?: emptyList())
-            friendDependencies(module.getFriendPaths())
-        }
-        FirJvmSessionFactory.createLibrarySession(
-            Name.identifier(moduleName),
-            sessionProvider,
-            libraryList.moduleDataProvider,
-            projectEnvironment,
-            librariesScope,
-            projectEnvironment.getPackagePartProvider(librariesScope),
-            languageVersionSettings,
-            registerExtraComponents = {},
-        )
-        return libraryList
-    }
-
     private fun buildResolveAndCheckFir(
         session: FirSession,
         ktFiles: List<KtFile>,
         diagnosticsReporter: BaseDiagnosticsCollector
     ): ModuleCompilerAnalyzedOutput {
-        val rawFir = session.buildFirFromKtFiles(ktFiles)
-        val (scopeSession, fir) = session.runResolution(rawFir)
-        session.runCheckers(scopeSession, fir, diagnosticsReporter)
-        return ModuleCompilerAnalyzedOutput(session, scopeSession, fir)
-    }
-
-    private fun CompilationContext.createComponentsForIncrementalCompilation(
-        sourceScope: AbstractProjectFileSearchScope
-    ): IncrementalCompilationContext? {
-        if (targetIds == null || incrementalComponents == null) return null
-        val directoryWithIncrementalPartsFromPreviousCompilation =
-            moduleConfiguration[JVMConfigurationKeys.OUTPUT_DIRECTORY]
-                ?: return null
-        val incrementalCompilationScope = directoryWithIncrementalPartsFromPreviousCompilation.walk()
-            .filter { it.extension == "class" }
-            .let { projectEnvironment.getSearchScopeByIoFiles(it.asIterable()) }
-            .takeIf { !it.isEmpty }
-            ?: return null
-        val packagePartProvider = IncrementalPackagePartProvider(
-            projectEnvironment.getPackagePartProvider(sourceScope),
-            targetIds.map(incrementalComponents::getIncrementalCache)
-        )
-        return IncrementalCompilationContext(emptyList(), packagePartProvider, incrementalCompilationScope)
+        return resolveAndCheckFir(session, session.buildFirFromKtFiles(ktFiles), diagnosticsReporter)
     }
 
     private fun CompilationContext.runBackend(
