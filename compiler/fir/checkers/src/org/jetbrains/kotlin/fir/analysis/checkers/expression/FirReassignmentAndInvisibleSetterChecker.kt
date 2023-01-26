@@ -8,18 +8,17 @@ package org.jetbrains.kotlin.fir.analysis.checkers.expression
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.diagnostics.reportOn
+import org.jetbrains.kotlin.fir.analysis.cfa.evaluatedInPlace
+import org.jetbrains.kotlin.fir.analysis.cfa.requiresInitialization
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.checkers.context.findClosest
 import org.jetbrains.kotlin.fir.analysis.checkers.toRegularClassSymbol
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
-import org.jetbrains.kotlin.fir.containingClassLookupTag
-import org.jetbrains.kotlin.fir.declarations.FirAnonymousInitializer
-import org.jetbrains.kotlin.fir.declarations.FirConstructor
-import org.jetbrains.kotlin.fir.declarations.FirProperty
-import org.jetbrains.kotlin.fir.declarations.FirPropertyAccessor
-import org.jetbrains.kotlin.fir.declarations.utils.hasBackingField
+import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.visibility
+import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.FirSmartCastExpression
+import org.jetbrains.kotlin.fir.expressions.FirThisReceiverExpression
 import org.jetbrains.kotlin.fir.expressions.FirVariableAssignment
 import org.jetbrains.kotlin.fir.originalForSubstitutionOverride
 import org.jetbrains.kotlin.fir.references.FirBackingFieldReference
@@ -28,12 +27,8 @@ import org.jetbrains.kotlin.fir.references.toResolvedCallableSymbol
 import org.jetbrains.kotlin.fir.references.toResolvedPropertySymbol
 import org.jetbrains.kotlin.fir.references.toResolvedValueParameterSymbol
 import org.jetbrains.kotlin.fir.resolve.calls.ExpressionReceiverValue
-import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
-import org.jetbrains.kotlin.fir.symbols.impl.FirSyntheticPropertySymbol
-import org.jetbrains.kotlin.fir.types.ConeSimpleKotlinType
-import org.jetbrains.kotlin.fir.types.toSymbol
 import org.jetbrains.kotlin.fir.visibilityChecker
 
 object FirReassignmentAndInvisibleSetterChecker : FirVariableAssignmentChecker() {
@@ -42,7 +37,7 @@ object FirReassignmentAndInvisibleSetterChecker : FirVariableAssignmentChecker()
         checkValReassignmentViaBackingField(expression, context, reporter)
         checkValReassignmentOnValueParameter(expression, context, reporter)
         checkAssignmentToThis(expression, context, reporter)
-        checkValReassignmentOfNonLocalProperty(expression, context, reporter)
+        checkValReassignment(expression, context, reporter)
     }
 
     private fun checkInvisibleSetter(
@@ -126,40 +121,30 @@ object FirReassignmentAndInvisibleSetterChecker : FirVariableAssignmentChecker()
         }
     }
 
-    private fun checkValReassignmentOfNonLocalProperty(
-        expression: FirVariableAssignment,
-        context: CheckerContext,
-        reporter: DiagnosticReporter
-    ) {
+    private fun checkValReassignment(expression: FirVariableAssignment, context: CheckerContext, reporter: DiagnosticReporter) {
         val property = expression.lValue.toResolvedPropertySymbol() ?: return
-        if (property.isLocal || property.isVar) return
-        val assignIsIllegal = when (val dispatchReceiverType = property.dispatchReceiverType) {
-            null -> true
-            else -> when {
-                property is FirSyntheticPropertySymbol -> true
-                property.hasDelegate || !property.hasBackingField -> true
-                property.hasInitializer -> true
-                else -> !isInsideInitializationOfClass(dispatchReceiverType, context)
-            }
-        }
-        if (assignIsIllegal) {
-            reporter.reportOn(expression.lValue.source, FirErrors.VAL_REASSIGNMENT, property, context)
-        }
+        if (property.isVar) return
+        // Assignments of uninitialized `val`s must be checked via CFG, since the first one is OK.
+        // See `FirPropertyInitializationAnalyzer` for locals and `FirMemberPropertiesChecker` for backing fields in initializers.
+        if (property.requiresInitialization && (property.isLocal || isInOwnersInitializer(expression.dispatchReceiver, context))) return
+
+        reporter.reportOn(expression.lValue.source, FirErrors.VAL_REASSIGNMENT, property, context)
     }
 
-    private fun isInsideInitializationOfClass(classType: ConeSimpleKotlinType, context: CheckerContext): Boolean {
-        val session = context.session
-        val classSymbol = classType.toSymbol(session) ?: return false
-        for (containingDeclaration in context.containingDeclarations) {
-            val containingClassSymbol = when (containingDeclaration) {
-                is FirProperty -> containingDeclaration.containingClassLookupTag()?.toSymbol(session)
-                is FirAnonymousInitializer -> containingDeclaration.dispatchReceiverType?.toSymbol(session)
-                is FirConstructor -> containingDeclaration.containingClassLookupTag()?.toSymbol(session)
-                else -> null
-            } ?: continue
-
-            if (containingClassSymbol == classSymbol) return true
+    private fun isInOwnersInitializer(receiver: FirExpression, context: CheckerContext): Boolean {
+        val uninitializedThisSymbol = (receiver as? FirThisReceiverExpression)?.calleeReference?.boundSymbol ?: return false
+        var foundInitializer = false
+        for ((i, declaration) in context.containingDeclarations.withIndex()) {
+            if (declaration is FirClass) {
+                foundInitializer = if (context.containingDeclarations.getOrNull(i + 1)?.evaluatedInPlace == false) {
+                    // In member function of a class, assume all outer classes are already initialized
+                    // by the time this function is called.
+                    false
+                } else {
+                    foundInitializer || declaration.symbol == uninitializedThisSymbol
+                }
+            }
         }
-        return false
+        return foundInitializer
     }
 }

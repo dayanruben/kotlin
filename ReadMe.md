@@ -113,16 +113,9 @@ To build Kotlin/Native, see
 
 ## <a name="working-in-idea"></a> Working with the project in IntelliJ IDEA
 
-Working with the Kotlin project requires at least IntelliJ IDEA 2019.1. You can download IntelliJ IDEA 2019.1 [here](https://www.jetbrains.com/idea/download).
+It is recommended to use the latest released version of Intellij IDEA (Community or Ultimate Edition). You can download IntelliJ IDEA [here](https://www.jetbrains.com/idea/download).
 
-After cloning the project, to import the project in IntelliJ choose the project directory in the Open project dialog. Then, after project opened, select 
-`File` -> `New` -> `Module from Existing Sources...` in the menu, and select `build.gradle.kts` file in the project's root folder.
-
-In the import dialog, select `use default gradle wrapper`.
-
-To be able to run tests from IntelliJ easily, check `Delegate IDE build/run actions to Gradle` and choose `Gradle Test Runner` in the Gradle runner settings after importing the project.
-
-At this time, you can use the latest released `1.6.x` version of the Kotlin plugin for working with the code. To make sure you have the latest version installed, use `Tools` -> `Kotlin` -> `Configure Kotlin Plugin Updates`.
+After cloning the project, import the project in IntelliJ by choosing the project directory in the Open project dialog.
 
 For handy work with compiler tests it's recommended to use [
 Kotlin Compiler Test Helper](https://github.com/demiurg906/test-data-helper-plugin)
@@ -139,7 +132,9 @@ to perform such updates:
 
 - Use auto-generation for getting an initial list of new hashes (verify updates relate to you changes).
 
-`./gradlew -i --write-verification-metadata sha256,md5 -Pkotlin.native.enabled=true help`
+```bash
+./gradlew -i --write-verification-metadata sha256,md5 -Pkotlin.native.enabled=true help
+```
 
 *(any other task may be used instead of `help`)*
 
@@ -155,11 +150,15 @@ We publish `-dev` and `-SNAPSHOT` versions frequently.
 
 For `-dev` versions you can use the [list of available versions](https://maven.pkg.jetbrains.space/kotlin/p/kotlin/bootstrap/org/jetbrains/kotlin/kotlin-compiler/maven-metadata.xml) and include this maven repository:
 
-`maven { url = uri("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/bootstrap") }`
+```kotlin
+maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/bootstrap")
+```
 
 For `-SNAPSHOT` versions that are updated daily, you can use the [list of available versions](https://oss.sonatype.org/content/repositories/snapshots/org/jetbrains/kotlin/kotlin-compiler/maven-metadata.xml) and include this maven repository:
 
-`maven { url = uri("https://oss.sonatype.org/content/repositories/snapshots/") }`
+```kotlin
+maven("https://oss.sonatype.org/content/repositories/snapshots/")
+```
 
 # License
 Kotlin is distributed under the terms of the Apache License (Version 2.0). See [license folder](license/README.md) for details.

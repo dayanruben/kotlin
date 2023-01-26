@@ -13,12 +13,5 @@ import org.jetbrains.kotlin.fir.resolve.dfa.cfg.ControlFlowGraph
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 
 abstract class AbstractFirPropertyInitializationChecker {
-    abstract fun analyze(
-        graph: ControlFlowGraph,
-        reporter: DiagnosticReporter,
-        data: PropertyInitializationInfoData,
-        properties: Set<FirPropertySymbol>,
-        capturedWrites: Set<FirVariableAssignment>,
-        context: CheckerContext
-    )
+    abstract fun analyze(data: PropertyInitializationInfoData, reporter: DiagnosticReporter, context: CheckerContext)
 }

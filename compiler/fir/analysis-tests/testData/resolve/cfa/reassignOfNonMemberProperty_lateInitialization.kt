@@ -10,22 +10,36 @@ class Some {
 
     init {
         x = "ok"
-        x = "error"
+        <!VAL_REASSIGNMENT!>x<!> = "error"
         <!VAL_REASSIGNMENT!>z<!> = "error"
+
+        fun foo() {
+            <!CAPTURED_MEMBER_VAL_INITIALIZATION!>x<!> = "error" // VAL_REASSIGNMENT also ok (or even better?)
+            <!CAPTURED_MEMBER_VAL_INITIALIZATION!>y<!> = "error"
+            <!VAL_REASSIGNMENT!>z<!> = "error"
+        }
     }
 
     val a: String = run {
-        x = "error"
-        y = "ok"
-        y = "error"
+        // these are all on this@run, which is not guaranteed to be this@Some
+        <!VAL_REASSIGNMENT!>x<!> = "error"
+        <!VAL_REASSIGNMENT!>y<!> = "error"
         <!VAL_REASSIGNMENT!>z<!> = "error"
         "hello"
     }
 
+    val b: String = 123.run {
+        // now this@run is an Int, so these are on this@Some
+        <!VAL_REASSIGNMENT!>x<!> = "error"
+        y = "ok"
+        <!VAL_REASSIGNMENT!>y<!> = "error"
+        <!VAL_REASSIGNMENT!>z<!> = "error"
+        "there"
+    }
+
     init {
-        x = "error"
-        y = "error"
+        <!VAL_REASSIGNMENT!>x<!> = "error"
+        <!VAL_REASSIGNMENT!>y<!> = "error"
         <!VAL_REASSIGNMENT!>z<!> = "error"
     }
 }
-

@@ -31,6 +31,9 @@ abstract class PathAwareControlFlowGraphVisitor<I : ControlFlowInfo<I, *, *>> :
 
     abstract val emptyInfo: PathAwareControlFlowInfo<I>
 
+    open fun visitSubGraph(node: CFGNodeWithSubgraphs<*>, graph: ControlFlowGraph): Boolean =
+        true // false to skip
+
     open fun visitEdge(from: CFGNode<*>, to: CFGNode<*>, metadata: Edge, data: PathAwareControlFlowInfo<I>): PathAwareControlFlowInfo<I> {
         val label = metadata.label
         return when {
@@ -65,9 +68,4 @@ abstract class PathAwareControlFlowGraphVisitor<I : ControlFlowInfo<I, *, *>> :
         node: CFGNode<*>,
         data: PathAwareControlFlowInfo<I>
     ): PathAwareControlFlowInfo<I> = data
-
-    override fun <T> visitUnionNode(
-        node: T,
-        data: PathAwareControlFlowInfo<I>
-    ): PathAwareControlFlowInfo<I> where T : CFGNode<*>, T : UnionNodeMarker = data
 }
