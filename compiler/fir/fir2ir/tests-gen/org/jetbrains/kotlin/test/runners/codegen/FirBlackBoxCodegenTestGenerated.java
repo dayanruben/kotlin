@@ -28478,6 +28478,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         }
 
         @Test
+        @TestMetadata("javaInterfaceFieldDirectAccess.kt")
+        public void testJavaInterfaceFieldDirectAccess() throws Exception {
+            runTest("compiler/testData/codegen/box/javaInterop/javaInterfaceFieldDirectAccess.kt");
+        }
+
+        @Test
         @TestMetadata("javaOuterClassDependsOnInner.kt")
         public void testJavaOuterClassDependsOnInner() throws Exception {
             runTest("compiler/testData/codegen/box/javaInterop/javaOuterClassDependsOnInner.kt");
@@ -28960,6 +28966,30 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
             @Test
             public void testAllFilesPresentInPackage() throws Exception {
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/javaVisibility/package"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            }
+
+            @Test
+            @TestMetadata("cannotAccessInterfaceMemberViaReceiver.kt")
+            public void testCannotAccessInterfaceMemberViaReceiver() throws Exception {
+                runTest("compiler/testData/codegen/box/javaVisibility/package/cannotAccessInterfaceMemberViaReceiver.kt");
+            }
+
+            @Test
+            @TestMetadata("cannotAccessStaticMemberViaReceiver.kt")
+            public void testCannotAccessStaticMemberViaReceiver() throws Exception {
+                runTest("compiler/testData/codegen/box/javaVisibility/package/cannotAccessStaticMemberViaReceiver.kt");
+            }
+
+            @Test
+            @TestMetadata("cannotAccessStaticMemberViaReceiver2.kt")
+            public void testCannotAccessStaticMemberViaReceiver2() throws Exception {
+                runTest("compiler/testData/codegen/box/javaVisibility/package/cannotAccessStaticMemberViaReceiver2.kt");
+            }
+
+            @Test
+            @TestMetadata("cannotAccessStaticMemberViaTypeAlias.kt")
+            public void testCannotAccessStaticMemberViaTypeAlias() throws Exception {
+                runTest("compiler/testData/codegen/box/javaVisibility/package/cannotAccessStaticMemberViaTypeAlias.kt");
             }
 
             @Test

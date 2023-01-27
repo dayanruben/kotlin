@@ -7,6 +7,9 @@ package org.jetbrains.kotlin.backend.konan.driver.phases
 
 import llvm.DIFinalize
 import org.jetbrains.kotlin.backend.konan.NativeGenerationState
+import org.jetbrains.kotlin.backend.konan.driver.utilities.KotlinBackendIrHolder
+import org.jetbrains.kotlin.backend.konan.driver.utilities.getDefaultIrActions
+import org.jetbrains.kotlin.backend.konan.driver.utilities.getDefaultLlvmModuleActions
 import org.jetbrains.kotlin.backend.konan.llvm.CodeGeneratorVisitor
 import org.jetbrains.kotlin.backend.konan.llvm.Lifetime
 import org.jetbrains.kotlin.backend.konan.llvm.RTTIGeneratorVisitor
@@ -20,6 +23,8 @@ import org.jetbrains.kotlin.ir.visitors.acceptVoid
 internal val CreateLLVMDeclarationsPhase = createSimpleNamedCompilerPhase<NativeGenerationState, IrModuleFragment>(
         name = "CreateLLVMDeclarations",
         description = "Map IR declarations to LLVM",
+        preactions = getDefaultIrActions(),
+        postactions = getDefaultIrActions(),
         op = { generationState, module ->
             generationState.llvmDeclarations = createLlvmDeclarations(generationState, module)
         }
@@ -28,11 +33,16 @@ internal val CreateLLVMDeclarationsPhase = createSimpleNamedCompilerPhase<Native
 internal data class RTTIInput(
         val irModule: IrModuleFragment,
         val referencedFunctions: Set<IrFunction>?
-)
+) : KotlinBackendIrHolder {
+    override val kotlinIr: IrElement
+        get() = irModule
+}
 
 internal val RTTIPhase = createSimpleNamedCompilerPhase<NativeGenerationState, RTTIInput>(
         name = "RTTI",
         description = "RTTI generation",
+        preactions = getDefaultIrActions(),
+        postactions = getDefaultIrActions(),
         op = { generationState, input ->
             val visitor = RTTIGeneratorVisitor(generationState, input.referencedFunctions)
             input.irModule.acceptVoid(visitor)
@@ -43,11 +53,16 @@ internal val RTTIPhase = createSimpleNamedCompilerPhase<NativeGenerationState, R
 internal data class CodegenInput(
         val irModule: IrModuleFragment,
         val lifetimes: Map<IrElement, Lifetime>
-)
+) : KotlinBackendIrHolder {
+    override val kotlinIr: IrElement
+        get() = irModule
+}
 
 internal val CodegenPhase = createSimpleNamedCompilerPhase<NativeGenerationState, CodegenInput>(
         name = "Codegen",
         description = "Code generation",
+        preactions = getDefaultIrActions<CodegenInput, NativeGenerationState>() + getDefaultLlvmModuleActions(),
+        postactions = getDefaultIrActions<CodegenInput, NativeGenerationState>() + getDefaultLlvmModuleActions(),
         op = { generationState, input ->
             val context = generationState.context
             generationState.objCExport = ObjCExport(

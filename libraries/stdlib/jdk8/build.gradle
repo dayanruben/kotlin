@@ -19,13 +19,6 @@ sourceSets {
     }
     test {
         kotlin {
-            srcDir 'test'
-            if(!BuildPropertiesKt.getKotlinBuildProperties(project).inIdeaSync) {
-                srcDir '../jvm/test'
-                srcDir '../common/test'
-                srcDir '../test'
-                srcDir '../jdk7/test'
-            }
         }
     }
     java9 {
@@ -63,53 +56,15 @@ artifacts {
 }
 
 compileKotlin {
-    kotlinOptions.freeCompilerArgs = [
-            "-Xallow-kotlin-package",
-            "-Xmultifile-parts-inherit",
-            "-Xno-new-java-annotation-targets",
-    ]
     kotlinOptions.moduleName = project.name
 }
 
 compileTestKotlin {
-    kotlinOptions.freeCompilerArgs = [
-            "-Xallow-kotlin-package",
-            "-Xmulti-platform",
-            "-opt-in=kotlin.RequiresOptIn",
-            "-opt-in=kotlin.ExperimentalUnsignedTypes",
-            "-opt-in=kotlin.ExperimentalStdlibApi",
-            "-opt-in=kotlin.io.path.ExperimentalPathApi",
-            "-opt-in=kotlin.io.encoding.ExperimentalEncodingApi",
-            "-Xcommon-sources=${fileTree('../test').join(',')}",
-            "-XXLanguage:+RangeUntilOperator",
-    ]
 }
 
 configureFrontendIr(project)
 
 LibrariesCommon.configureJava9Compilation(project, 'kotlin.stdlib.jdk8')
-
-task testJdk6Tests(type: Test) { thisTask ->
-    dependsOn(':kotlin-stdlib:testClasses')
-    check.dependsOn(thisTask)
-    group = "verification"
-    def kotlinStdLibTestOutput = project(':kotlin-stdlib').sourceSets.test.output
-    def objectFactory = project.objects
-    doFirst {
-        testClassesDirs = kotlinStdLibTestOutput
-        classpath = objectFactory.fileCollection().from(
-                testClassesDirs,
-                sourceSets.test.compileClasspath
-        )
-    }
-}
-
-[JdkMajorVersion.JDK_9_0, JdkMajorVersion.JDK_10_0, JdkMajorVersion.JDK_11_0].forEach { jvmVersion ->
-    check.dependsOn(tasks.register("jdk${jvmVersion.majorVersion}Test", Test) { thisTask ->
-        group = "verification"
-        thisTask.javaLauncher.set(JvmToolchain.getToolchainLauncherFor(project, jvmVersion))
-    })
-}
 
 tasks.named("compileModuleTestJava", JavaCompile) {
     sourceCompatibility = JavaVersion.VERSION_1_9

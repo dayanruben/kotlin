@@ -34489,6 +34489,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             }
 
             @Test
+            @TestMetadata("javaInterfaceFieldDirectAccess.kt")
+            public void testJavaInterfaceFieldDirectAccess() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/visibility/javaInterfaceFieldDirectAccess.kt");
+            }
+
+            @Test
             @TestMetadata("lackOfInvisibleSetterOfJavaClassInSamePackage.kt")
             public void testLackOfInvisibleSetterOfJavaClassInSamePackage() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/visibility/lackOfInvisibleSetterOfJavaClassInSamePackage.kt");
@@ -34516,6 +34522,30 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             @TestMetadata("packagePrivateStatic.kt")
             public void testPackagePrivateStatic() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/visibility/packagePrivateStatic.kt");
+            }
+
+            @Test
+            @TestMetadata("packagePrivateStaticInterfaceFieldViaKotlinClass.kt")
+            public void testPackagePrivateStaticInterfaceFieldViaKotlinClass() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/visibility/packagePrivateStaticInterfaceFieldViaKotlinClass.kt");
+            }
+
+            @Test
+            @TestMetadata("packagePrivateStaticInterfaceMethod.kt")
+            public void testPackagePrivateStaticInterfaceMethod() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/visibility/packagePrivateStaticInterfaceMethod.kt");
+            }
+
+            @Test
+            @TestMetadata("packagePrivateStaticViaInternal.kt")
+            public void testPackagePrivateStaticViaInternal() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/visibility/packagePrivateStaticViaInternal.kt");
+            }
+
+            @Test
+            @TestMetadata("packagePrivateStaticViaTypeAlias.kt")
+            public void testPackagePrivateStaticViaTypeAlias() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/visibility/packagePrivateStaticViaTypeAlias.kt");
             }
 
             @Test
