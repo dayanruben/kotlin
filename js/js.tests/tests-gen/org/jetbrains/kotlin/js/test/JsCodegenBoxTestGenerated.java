@@ -20963,6 +20963,32 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
     }
 
     @Nested
+    @TestMetadata("compiler/testData/codegen/box/involvesIrInterpreter")
+    @TestDataPath("$PROJECT_ROOT")
+    public class InvolvesIrInterpreter {
+        @Test
+        public void testAllFilesPresentInInvolvesIrInterpreter() throws Exception {
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/involvesIrInterpreter"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JS, true);
+        }
+
+        @Test
+        @TestMetadata("kt55912.kt")
+        public void testKt55912() throws Exception {
+            runTest("compiler/testData/codegen/box/involvesIrInterpreter/kt55912.kt");
+        }
+
+        @Nested
+        @TestMetadata("compiler/testData/codegen/box/involvesIrInterpreter/dumpIrAndCheck")
+        @TestDataPath("$PROJECT_ROOT")
+        public class DumpIrAndCheck {
+            @Test
+            public void testAllFilesPresentInDumpIrAndCheck() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/involvesIrInterpreter/dumpIrAndCheck"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JS, true);
+            }
+        }
+    }
+
+    @Nested
     @TestMetadata("compiler/testData/codegen/box/ir")
     @TestDataPath("$PROJECT_ROOT")
     public class Ir {
@@ -33665,6 +33691,12 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
         @TestMetadata("kt17765.kt")
         public void testKt17765() throws Exception {
             runTest("compiler/testData/codegen/box/sam/kt17765.kt");
+        }
+
+        @Test
+        @TestMetadata("kt56188.kt")
+        public void testKt56188() throws Exception {
+            runTest("compiler/testData/codegen/box/sam/kt56188.kt");
         }
 
         @Nested

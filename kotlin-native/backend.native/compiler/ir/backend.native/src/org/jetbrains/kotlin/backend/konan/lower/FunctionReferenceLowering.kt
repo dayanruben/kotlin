@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.ir.builders.declarations.*
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.expressions.impl.IrInstanceInitializerCallImpl
+import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrTypeParameterSymbol
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.*
@@ -130,7 +131,7 @@ internal class FunctionReferenceLowering(val generationState: NativeGenerationSt
                         return super.visitTypeOperator(expression)
                     }
                     reference.transformChildrenVoid()
-                    return transformFunctionReference(reference, expression.typeOperand.erasure())
+                    return transformFunctionReference(reference, expression.typeOperand)
                 }
                 return super.visitTypeOperator(expression)
             }
@@ -211,7 +212,7 @@ internal class FunctionReferenceLowering(val generationState: NativeGenerationSt
 
         /**
          * The first element of a pair is a type parameter of [referencedFunction], the second element is its argument in
-         * [functionReference], to be passed upon instantiation of the function reference class.
+         * [functionReference].
          */
         private val allTypeParametersAndArguments: List<Pair<IrTypeParameterSymbol, IrType>> =
                 referencedFunction.typeParameters.map { typeParam ->
@@ -224,16 +225,11 @@ internal class FunctionReferenceLowering(val generationState: NativeGenerationSt
         private val allTypeParametersAndArgumentsMap: Map<IrTypeParameterSymbol, IrType> = allTypeParametersAndArguments.toMap()
 
         /**
-         * The type arguments of [functionReference] that are not concrete types,
+         * The distinct type arguments of [functionReference] that are not concrete types,
          * but are themselves type parameters coming from an enclosing scope.
-         *
-         * The first element of a pair is a type parameter of [referencedFunction], the second element is its argument in
-         * [functionReference].
-         *
-         * [functionReferenceClass] is only generic over these type parameters.
          */
-        private val typeParametersAndArgumentsFromEnclosingScope: List<Pair<IrTypeParameterSymbol, IrType>> =
-                allTypeParametersAndArguments.filter { it.second.isTypeParameter() }
+        private val typeParametersFromEnclosingScope: List<IrTypeParameter> = allTypeParametersAndArguments
+                .mapNotNull { (_, typeArgument) -> (typeArgument.classifierOrNull as? IrTypeParameterSymbol)?.owner }.distinct()
 
         private val functionReferenceClass = irFactory.buildClass {
             startOffset = this@FunctionReferenceBuilder.startOffset
@@ -245,7 +241,7 @@ internal class FunctionReferenceLowering(val generationState: NativeGenerationSt
             parent = this@FunctionReferenceBuilder.parent
 
             // The function reference class only needs to be generic over type parameters coming from an enclosing scope.
-            copyTypeParameters(typeParametersAndArgumentsFromEnclosingScope.map { it.first.owner })
+            copyTypeParameters(typeParametersFromEnclosingScope)
             createParameterDeclarations()
 
             // copy the generated name for IrClass, partially solves KT-47194
@@ -253,19 +249,42 @@ internal class FunctionReferenceLowering(val generationState: NativeGenerationSt
         }
 
         /**
-         * Remaps type parameters of [referencedFunction] to type parameters of [functionReferenceClass].
-         *
-         * Note: this is not a 1-to-1 mapping. Some type parameters of [referencedFunction] may be bound to a concrete type, in this case
-         * there will be no corresponding type parameter in [functionReferenceClass].
+         * Remaps [typeParametersFromEnclosingScope] to type parameters of [functionReferenceClass].
          */
         private val typeParameterRemapper = IrTypeParameterRemapper(
-                typeParametersAndArgumentsFromEnclosingScope.map { it.first.owner }.zip(functionReferenceClass.typeParameters).toMap()
+                typeParametersFromEnclosingScope.zip(functionReferenceClass.typeParameters).toMap()
         )
 
-        private val functionParameterTypes = unboundFunctionParameters.map { typeParameterRemapper.remapType(it.type) }
-        private val functionReturnType = typeParameterRemapper.remapType(referencedFunction.returnType)
+        private fun IrType.remappedTypeArguments(): List<IrType> {
+            if (this !is IrSimpleType) return emptyList()
+            return arguments.mapIndexed { index, typeArgument ->
+                when (typeArgument) {
+                    is IrTypeProjection -> typeParameterRemapper.remapType(typeArgument.type)
+                    is IrStarProjection -> (classifier as IrClassSymbol).owner.typeParameters[index].defaultType.erasure()
+                }
+            }
+        }
+
+        private val functionParameterAndReturnTypes = functionReference.type.remappedTypeArguments()
+
+        private val functionParameterTypes = functionParameterAndReturnTypes.dropLast(1)
+        private val functionReturnType = functionParameterAndReturnTypes.last()
 
         private val functionReferenceThis = functionReferenceClass.thisReceiver!!
+
+        /**
+         * Replaces [typeParameter] of [referencedFunction] with the corresponding type parameter of [functionReferenceClass]
+         * if such correspondence takes place. Otherwise, just returns [typeParameter] as [IrType].
+         */
+        private fun substituteTypeParameterOfReferencedFunction(typeParameter: IrTypeParameter): IrType {
+            if (typeParameter.parent != referencedFunction) {
+                compilationException(
+                        "The type parameter ${typeParameter.render()} is not defined in the referenced function ${referencedFunction.render()}",
+                        functionReference
+                )
+            }
+            return typeParameterRemapper.remapType(allTypeParametersAndArguments[typeParameter.index].second)
+        }
 
         /**
          * Substitutes a bound value parameter's [type] with a new type according to the following rules:
@@ -278,7 +297,8 @@ internal class FunctionReferenceLowering(val generationState: NativeGenerationSt
          * - Otherwise, just return [type] itself.
          */
         private fun substituteBoundValueParameterType(type: IrType): IrType =
-                typeParameterRemapper.remapType(type).substitute(allTypeParametersAndArgumentsMap)
+                ((type.classifierOrNull as? IrTypeParameterSymbol)?.owner?.let(this::substituteTypeParameterOfReferencedFunction) ?: type)
+                        .substitute(allTypeParametersAndArgumentsMap)
 
         private val argumentToPropertiesMap = boundFunctionParameters.associateWith {
             functionReferenceClass.addField {
@@ -316,12 +336,12 @@ internal class FunctionReferenceLowering(val generationState: NativeGenerationSt
             val superTypes = mutableListOf(superClass)
             val transformedSuperMethod: IrSimpleFunction
             if (samSuperType != null) {
-                superTypes += samSuperType
-                val samSuperClass = samSuperType.classOrNull ?: error("Expected a class but was: ${samSuperType.render()}")
-                transformedSuperMethod = samSuperClass.functions.single { it.owner.modality == Modality.ABSTRACT }.owner
+                val remappedSuperType = (samSuperType.classOrNull ?: error("Expected a class but was: ${samSuperType.render()}"))
+                        .typeWith(samSuperType.remappedTypeArguments())
+                superTypes += remappedSuperType
+                transformedSuperMethod = remappedSuperType.classOrNull!!.functions.single { it.owner.modality == Modality.ABSTRACT }.owner
             } else {
                 val numberOfParameters = unboundFunctionParameters.size
-                val functionParameterAndReturnTypes = functionParameterTypes + functionReturnType
                 if (isKSuspendFunction) {
                     val suspendFunctionClass = symbols.kSuspendFunctionN(numberOfParameters).owner
                     superTypes += suspendFunctionClass.typeWith(functionParameterAndReturnTypes)
@@ -434,7 +454,7 @@ internal class FunctionReferenceLowering(val generationState: NativeGenerationSt
             val clazz = buildClass()
             val constructor = buildConstructor()
             val arguments = functionReference.getArgumentsWithIr()
-            val typeArguments = typeParametersAndArgumentsFromEnclosingScope.map { it.second }
+            val typeArguments = typeParametersFromEnclosingScope.map { it.defaultType }
             val expression = if (arguments.isEmpty()) {
                 irBuilder.irConstantObject(clazz, emptyMap(), typeArguments)
             } else {
@@ -538,7 +558,7 @@ internal class FunctionReferenceLowering(val generationState: NativeGenerationSt
                             assert(unboundIndex == valueParameters.size) { "Not all arguments of <invoke> are used" }
 
                             referencedFunction.typeParameters.forEach { typeParam ->
-                                putTypeArgument(typeParam.index, substituteBoundValueParameterType(typeParam.defaultType))
+                                putTypeArgument(typeParam.index, substituteTypeParameterOfReferencedFunction(typeParam))
                             }
                         }
                 )

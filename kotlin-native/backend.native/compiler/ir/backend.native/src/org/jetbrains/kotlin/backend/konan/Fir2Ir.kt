@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.builtins.konan.KonanBuiltIns
 import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.descriptors.deserialization.PlatformDependentTypeTransformer
 import org.jetbrains.kotlin.descriptors.impl.ModuleDescriptorImpl
+import org.jetbrains.kotlin.descriptors.konan.isNativeStdlib
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.backend.*
 import org.jetbrains.kotlin.fir.backend.jvm.Fir2IrJvmSpecialAnnotationSymbolProvider
@@ -60,12 +61,16 @@ internal fun PhaseContext.fir2Ir(
                 lookupTracker = LookupTracker.DO_NOTHING
         )
         dependencies += moduleDescriptor
-        moduleDescriptor.setDependencies(ArrayList(dependencies))
 
-        val isBuiltIns = resolvedLibrary.library.unresolvedDependencies.isEmpty()
+        val isBuiltIns = moduleDescriptor.isNativeStdlib()
         if (isBuiltIns) builtInsModule = moduleDescriptor.builtIns
 
         moduleDescriptor
+    }
+
+    librariesDescriptors.forEach { moduleDescriptor ->
+        // Yes, just to all of them.
+        moduleDescriptor.setDependencies(ArrayList(dependencies))
     }
 
     val fir2irResult = Fir2IrConverter.createModuleFragmentWithSignaturesIfNeeded(

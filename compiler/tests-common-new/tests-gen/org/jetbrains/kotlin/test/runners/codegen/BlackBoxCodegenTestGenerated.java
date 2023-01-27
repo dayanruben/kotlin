@@ -27123,6 +27123,32 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
     }
 
     @Nested
+    @TestMetadata("compiler/testData/codegen/box/involvesIrInterpreter")
+    @TestDataPath("$PROJECT_ROOT")
+    public class InvolvesIrInterpreter {
+        @Test
+        public void testAllFilesPresentInInvolvesIrInterpreter() throws Exception {
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/involvesIrInterpreter"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
+        }
+
+        @Test
+        @TestMetadata("kt55912.kt")
+        public void testKt55912() throws Exception {
+            runTest("compiler/testData/codegen/box/involvesIrInterpreter/kt55912.kt");
+        }
+
+        @Nested
+        @TestMetadata("compiler/testData/codegen/box/involvesIrInterpreter/dumpIrAndCheck")
+        @TestDataPath("$PROJECT_ROOT")
+        public class DumpIrAndCheck {
+            @Test
+            public void testAllFilesPresentInDumpIrAndCheck() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/involvesIrInterpreter/dumpIrAndCheck"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
+            }
+        }
+    }
+
+    @Nested
     @TestMetadata("compiler/testData/codegen/box/ir")
     @TestDataPath("$PROJECT_ROOT")
     public class Ir {
@@ -45105,6 +45131,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         @TestMetadata("kt54600.kt")
         public void testKt54600() throws Exception {
             runTest("compiler/testData/codegen/box/sam/kt54600.kt");
+        }
+
+        @Test
+        @TestMetadata("kt56188.kt")
+        public void testKt56188() throws Exception {
+            runTest("compiler/testData/codegen/box/sam/kt56188.kt");
         }
 
         @Test
