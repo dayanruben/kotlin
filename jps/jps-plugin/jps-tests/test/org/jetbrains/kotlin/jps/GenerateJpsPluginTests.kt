@@ -45,7 +45,13 @@ fun main(args: Array<String>) {
                     "incremental/multiModule/multiplatform/custom", extension = null, excludeParentDirs = true,
                     targetBackend = TargetBackend.JVM_IR
                 )
-                model("incremental/pureKotlin", extension = null, recursive = false, targetBackend = TargetBackend.JVM_IR)
+                model(
+                    "incremental/pureKotlin",
+                    extension = null,
+                    recursive = false,
+                    targetBackend = TargetBackend.JVM_IR,
+                    excludedPattern = ".*SinceK2"
+                )
                 model("incremental/withJava", extension = null, excludeParentDirs = true, targetBackend = TargetBackend.JVM_IR)
                 model("incremental/inlineFunCallSite", extension = null, excludeParentDirs = true, targetBackend = TargetBackend.JVM_IR)
                 model(
@@ -57,19 +63,19 @@ fun main(args: Array<String>) {
             testClass<AbstractIncrementalK2JvmJpsTest>(
                 init = incrementalJvmTestData(
                     TargetBackend.JVM_IR,
-                    excludePattern = "(^.*Expect.*)"
+                    excludePattern = "(^.*Expect.*)|(^companionConstantChanged)"
                 )
             )
             testClass<AbstractIncrementalK2LightTreeJvmJpsTest>(
                 init = incrementalJvmTestData(
                     TargetBackend.JVM_IR,
-                    excludePattern = "(^.*Expect.*)"
+                    excludePattern = "(^.*Expect.*)|(^companionConstantChanged)"
                 )
             )
             testClass<AbstractIncrementalK2FirICLightTreeJvmJpsTest>(
                 init = incrementalJvmTestData(
                     TargetBackend.JVM_IR,
-                    excludePattern = "(^.*Expect.*)"
+                    excludePattern = "(^.*Expect.*)|(^companionConstantChanged)"
                 )
             )
 

@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.PropertyNames.KOTLI
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.plugin.whenEvaluated
 import org.jetbrains.kotlin.gradle.utils.SingleWarningPerBuild
-import org.jetbrains.kotlin.gradle.utils.hasSyncErrors
+import org.jetbrains.kotlin.gradle.utils.runProjectConfigurationHealthCheck
 import org.jetbrains.kotlin.gradle.utils.runProjectConfigurationHealthCheckWhenEvaluated
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.tooling.core.UnsafeApi
@@ -42,16 +42,15 @@ internal fun checkAndReportDeprecatedMppProperties(project: Project) {
     if (projectProperties.ignoreHmppDeprecationWarnings == true) return
 
     val warnings = deprecatedMppProperties.mapNotNull { propertyName ->
+        if (propertyName in propertiesSetByPlugin && projectProperties.mpp13XFlagsSetByPlugin)
+            return@mapNotNull null
+
         @OptIn(UnsafeApi::class)
         projectProperties.property(propertyName)?.let { getMppDeprecationWarningMessageForProperty(propertyName) }
     }
 
-    project.whenEvaluated {
-        if (!project.hasSyncErrors()) {
-            warnings.forEach { message ->
-                SingleWarningPerBuild.show(project, message)
-            }
-        }
+    warnings.forEach { message ->
+        SingleWarningPerBuild.show(project, message)
     }
 }
 
@@ -63,5 +62,11 @@ internal val deprecatedMppProperties: List<String> = listOf(
     KOTLIN_NATIVE_DEPENDENCY_PROPAGATION,
 )
 
+private val propertiesSetByPlugin: Set<String> = setOf(
+    KOTLIN_MPP_ENABLE_GRANULAR_SOURCE_SETS_METADATA,
+    KOTLIN_NATIVE_DEPENDENCY_PROPAGATION,
+)
+
 internal fun getMppDeprecationWarningMessageForProperty(property: String): String =
-    "w: The property '$property' is deprecated and is scheduled for removal in the stable Kotlin Multiplatform."
+    "w: The property '$property' is obsolete and will be removed in Kotlin 1.9. Read the details here: " +
+            "https://kotlinlang.org/docs/multiplatform-compatibility-guide.html#deprecate-hmpp-properties"

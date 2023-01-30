@@ -9,24 +9,21 @@
 @file:BenchmarkProject(
     name = "graphql-kotlin",
     gitUrl = "https://github.com/ExpediaGroup/graphql-kotlin.git",
-    gitCommitSha = "fd1e9063f3aae144e099cdcfa69a4416fa434fb2"
+    gitCommitSha = "46a7c7704c31ee3aaf514d764f6101056c340b0a",
+    stableKotlinVersion = "1.8.0",
 )
 
 import java.io.File
 
-val stableReleasePatch = {
-    "graphql-kotlin-1.7.20.patch" to File("benchmarkScripts/files/graphql-kotlin-1.7.20.patch")
-        .readText()
-        .byteInputStream()
-}
-val currentReleasePatch = {
-    "graphql-kotlin-current.patch" to File("benchmarkScripts/files/graphql-kotlin-current.patch")
+val repoPatch = {
+    "graphql-kotlin-current.patch" to File("benchmarkScripts/files/graphql-kotlin-repo.patch")
         .readText()
         .run { replace("<kotlin_version>", currentKotlinVersion) }
         .byteInputStream()
 }
 
-runAllBenchmarks(
+runBenchmarks(
+    repoPatch,
     suite {
         scenario {
             title = "Spring server clean build"
@@ -72,7 +69,6 @@ runAllBenchmarks(
             title = "Dry run configuration time"
             useGradleArgs("--no-build-cache", "-m")
 
-            iterations = 20
             runTasks("assemble")
         }
 
@@ -80,7 +76,6 @@ runAllBenchmarks(
             title = "No-op configuration time"
             useGradleArgs("--no-build-cache")
 
-            iterations = 20
             runTasks("help")
         }
 
@@ -88,12 +83,7 @@ runAllBenchmarks(
             title = "UP-TO-DATE configuration time"
             useGradleArgs("--no-build-cache")
 
-            iterations = 20
             runTasks("assemble")
         }
-    },
-    mapOf(
-        "1.7.20" to stableReleasePatch,
-        "1.8.0" to currentReleasePatch
-    )
+    }
 )

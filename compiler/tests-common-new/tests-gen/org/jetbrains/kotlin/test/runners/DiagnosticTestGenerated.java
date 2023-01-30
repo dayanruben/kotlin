@@ -35500,6 +35500,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         }
 
         @Test
+        @TestMetadata("kt55747.kt")
+        public void testKt55747() throws Exception {
+            runTest("compiler/testData/diagnostics/testsWithStdLib/kt55747.kt");
+        }
+
+        @Test
         @TestMetadata("kt8050.kt")
         public void testKt8050() throws Exception {
             runTest("compiler/testData/diagnostics/testsWithStdLib/kt8050.kt");
@@ -36514,6 +36520,18 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("inferCoroutineTypeInOldVersion.kt")
             public void testInferCoroutineTypeInOldVersion() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/builderInference/inferCoroutineTypeInOldVersion.kt");
+            }
+
+            @Test
+            @TestMetadata("kt48445.kt")
+            public void testKt48445() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/builderInference/kt48445.kt");
+            }
+
+            @Test
+            @TestMetadata("kt50520.kt")
+            public void testKt50520() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/builderInference/kt50520.kt");
             }
 
             @Test

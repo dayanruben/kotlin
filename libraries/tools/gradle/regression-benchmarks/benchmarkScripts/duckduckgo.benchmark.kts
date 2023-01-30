@@ -4,25 +4,21 @@
 @file:BenchmarkProject(
     name = "duckduckgo",
     gitUrl = "https://github.com/duckduckgo/Android.git",
-    gitCommitSha = "18e230fcefbefb4317c1fe128b4539a2315e7c0a"
+    gitCommitSha = "43bc063d9c044f2ca4a9eae1836cc783fcc7121c",
+    stableKotlinVersion = "1.8.0",
 )
 
 import java.io.File
 
-val stableReleasePatch = {
-    "duckduckgo-kotlin-1.7.20.patch" to File("benchmarkScripts/files/duckduckgo-kotlin-1.7.20.patch")
-        .readText()
-        .byteInputStream()
-}
-
-val currentReleasePatch = {
-    "duckduckgo-kotlin-current.patch" to File("benchmarkScripts/files/duckduckgo-kotlin-current.patch")
+val repoPatch = {
+    "duckduckgo-kotlin-repo.patch" to File("benchmarkScripts/files/duckduckgo-kotlin-repo.patch")
         .readText()
         .run { replace("<kotlin_version>", currentKotlinVersion) }
         .byteInputStream()
 }
 
-runAllBenchmarks(
+runBenchmarks(
+    repoPatch,
     suite {
         scenario {
             title = "Clean build"
@@ -45,15 +41,15 @@ runAllBenchmarks(
             useGradleArgs("--no-build-cache")
 
             runTasks(":app:assemblePlayDebug")
-            applyAbiChangeTo("app-tracking-protection/vpn-impl/src/main/java/com/duckduckgo/mobile/android/vpn/network/VpnNetworkModule.kt")
+            applyAbiChangeTo("app-tracking-protection/vpn-impl/src/main/java/com/duckduckgo/mobile/android/vpn/di/VpnModule.kt")
         }
 
         scenario {
-            title = "Incremental build with ABI change in Kapt component"
+            title = "Incremental build with non ABI change in Kapt component"
             useGradleArgs("--no-build-cache")
 
             runTasks(":app:assemblePlayDebug")
-            applyNonAbiChangeTo("app-tracking-protection/vpn-impl/src/main/java/com/duckduckgo/mobile/android/vpn/network/VpnNetworkModule.kt")
+            applyNonAbiChangeTo("app-tracking-protection/vpn-impl/src/main/java/com/duckduckgo/mobile/android/vpn/di/VpnModule.kt")
         }
 
         scenario {
@@ -62,33 +58,26 @@ runAllBenchmarks(
 
             runTasks(":app:assemblePlayDebug")
 
-            applyAndroidResourceValueChange("common-ui/src/main/res/values/strings.xml")
+            applyAndroidResourceValueChange("common/src/main/res/values/strings-common.xml")
         }
 
         scenario {
             title = "Dry run configuration time"
             useGradleArgs("-m")
 
-            iterations = 20
             runTasks(":app:assemblePlayDebug")
         }
 
         scenario {
             title = "No-op configuration time"
 
-            iterations = 20
             runTasks("help")
         }
 
         scenario {
             title = "UP-TO-DATE configuration time"
 
-            iterations = 20
             runTasks(":app:assemblePlayDebug")
         }
-    },
-    mapOf(
-        "1.7.20" to stableReleasePatch,
-        "1.8.0" to currentReleasePatch
-    )
+    }
 )

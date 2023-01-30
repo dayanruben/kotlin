@@ -325,6 +325,10 @@ class CompileKotlinAgainstCustomBinariesTest : AbstractKotlinCompilerIntegration
         doTestPreReleaseKotlinLibrary(K2JVMCompiler(), "library", tmpdir, "-Xskip-metadata-version-check")
     }
 
+    fun testReleaseCompilerAgainstPreReleaseLibrarySkipPrereleaseCheckAllowUnstableDependencies() {
+        doTestPreReleaseKotlinLibrary(K2JVMCompiler(), "library", tmpdir, "-Xallow-unstable-dependencies", "-Xskip-prerelease-check")
+    }
+
     fun testWrongMetadataVersion() {
         doTestKotlinLibraryWithWrongMetadataVersion("library", null)
     }
@@ -771,23 +775,23 @@ class CompileKotlinAgainstCustomBinariesTest : AbstractKotlinCompilerIntegration
                 )
             }
         )
-        val library15 = compileLibrary(
-            "library15",
-            additionalOptions = listOf("-language-version", "1.5")
+        val library16 = compileLibrary(
+            "library16",
+            additionalOptions = listOf("-language-version", "1.6")
         )
         compileKotlin(
             "expectActualLv14.kt",
             output = tmpdir,
-            classpath = listOf(library14, library15),
+            classpath = listOf(library14, library16),
             additionalOptions = listOf("-language-version", "1.4", "-Xmulti-platform"),
             expectedFileName = "output14.txt",
         )
         compileKotlin(
-            "expectActualLv15.kt",
+            "expectActualLv16.kt",
             output = tmpdir,
-            classpath = listOf(library14, library15),
-            additionalOptions = listOf("-language-version", "1.5", "-Xmulti-platform"),
-            expectedFileName = "output15.txt",
+            classpath = listOf(library14, library16),
+            additionalOptions = listOf("-language-version", "1.6", "-Xmulti-platform"),
+            expectedFileName = "output16.txt",
         )
     }
 

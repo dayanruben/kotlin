@@ -58,13 +58,8 @@ public class IncrementalJvmCompilerRunnerTestGenerated extends AbstractIncrement
             runTest("jps/jps-plugin/testData/incremental/pureKotlin/addTopLevelTypeAlias/");
         }
 
-        @TestMetadata("allConstants")
-        public void testAllConstants() throws Exception {
-            runTest("jps/jps-plugin/testData/incremental/pureKotlin/allConstants/");
-        }
-
         public void testAllFilesPresentInPureKotlin() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("jps/jps-plugin/testData/incremental/pureKotlin"), Pattern.compile("^([^\\.]+)$"), null, TargetBackend.JVM_IR, false);
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("jps/jps-plugin/testData/incremental/pureKotlin"), Pattern.compile("^([^\\.]+)$"), Pattern.compile(".*SinceK2"), TargetBackend.JVM_IR, false);
         }
 
         @TestMetadata("annotations")
@@ -85,6 +80,11 @@ public class IncrementalJvmCompilerRunnerTestGenerated extends AbstractIncrement
         @TestMetadata("changeWithRemovingUsage")
         public void testChangeWithRemovingUsage() throws Exception {
             runTest("jps/jps-plugin/testData/incremental/pureKotlin/changeWithRemovingUsage/");
+        }
+
+        @TestMetadata("checkConstants")
+        public void testCheckConstants() throws Exception {
+            runTest("jps/jps-plugin/testData/incremental/pureKotlin/checkConstants/");
         }
 
         @TestMetadata("classInlineFunctionChanged")

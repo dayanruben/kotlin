@@ -4372,6 +4372,18 @@ createInterop("workerSignals") {
     it.extraOpts "-Xcompile-source", "$projectDir/interop/workerSignals/workerSignals.cpp"
 }
 
+createInterop("cForwardDeclarations") {
+    it.defFile "interop/forwardDeclarations/cForwardDeclarations.def"
+}
+
+createInterop("cForwardDeclarationsTwoLibs1") {
+    it.defFile "interop/forwardDeclarationsTwoLibs/cForwardDeclarationsTwoLibs1.def"
+}
+
+createInterop("cForwardDeclarationsTwoLibs2") {
+    it.defFile "interop/forwardDeclarationsTwoLibs/cForwardDeclarationsTwoLibs2.def"
+}
+
 if (PlatformInfo.isAppleTarget(project)) {
     createInterop("objcSmoke") {
         it.defFile 'interop/objc/objcSmoke.def'
@@ -4465,6 +4477,9 @@ if (PlatformInfo.isAppleTarget(project)) {
         it.defFile 'interop/objc/include_categories/objc_include_categories.def'
         it.headers "$projectDir/interop/objc/include_categories/objc_include_categories.h"
     }
+    createInterop("frameworkForwardDeclarations") {
+        it.defFile 'framework/forwardDeclarations/clib.def'
+    }
 }
 
 createInterop("withSpaces") {
@@ -4491,7 +4506,9 @@ Task interopTestBase(String name, boolean multiFile, Closure<KonanInteropTest> c
             konanArtifacts {
                 def targetName = target.name
                 def interopLib = task.interop
+                def interopLib2 = task.interop2
                 UtilsKt.dependsOnKonanBuildingTask(task, interopLib, target)
+                if (interopLib2 != null) UtilsKt.dependsOnKonanBuildingTask(task, interopLib2, target)
 
                 def lib = "lib$name"
                 def hasIntermediateLib = task.lib != null
@@ -4500,6 +4517,7 @@ Task interopTestBase(String name, boolean multiFile, Closure<KonanInteropTest> c
                     library(lib, targets: [targetName]) {
                         libraries {
                             artifact interopLib
+                            if (interopLib2 != null) artifact interopLib2
                         }
                         srcFiles task.lib
                         baseDir  "$testOutputLocal/$name"
@@ -4512,6 +4530,7 @@ Task interopTestBase(String name, boolean multiFile, Closure<KonanInteropTest> c
                 program(name, targets: [targetName]) {
                     libraries {
                         artifact interopLib
+                        if (interopLib2 != null) artifact interopLib2
                         if (hasIntermediateLib)
                             klib lib
                     }
@@ -4903,6 +4922,19 @@ interopTest("interop_workerSignals") {
         (project.testTarget == 'mingw_x86' || project.testTarget == 'mingw_x64') // cross-thread signalling does not work on Windows
     source = "interop/workerSignals/workerSignals.kt"
     interop = "workerSignals"
+}
+
+interopTest("interop_forwardDeclarations") {
+    disabled = (project.testTarget == 'wasm32') // No interop for wasm yet.
+    source = "interop/forwardDeclarations/forwardDeclarations.kt"
+    interop = "cForwardDeclarations"
+}
+
+interopTest("interop_forwardDeclarationsTwoLibs") {
+    disabled = (project.testTarget == 'wasm32') // No interop for wasm yet.
+    source = "interop/forwardDeclarationsTwoLibs/forwardDeclarationsTwoLibs.kt"
+    interop = "cForwardDeclarationsTwoLibs1"
+    interop2 = "cForwardDeclarationsTwoLibs2"
 }
 
 /*
@@ -6028,6 +6060,14 @@ if (isAppleTarget(project)) {
                 throw new Error("Unexpected CFBundleVersion in Info.plist:\n$plistContent")
             }
         }
+    }
+
+    frameworkTest("testForwardDeclarationsFramework") {
+        framework('ForwardDeclarations') {
+            sources = ['framework/forwardDeclarations']
+            library = 'frameworkForwardDeclarations'
+        }
+        swiftSources = ['framework/forwardDeclarations/']
     }
 }
 

@@ -5,7 +5,7 @@
     <parent>
         <artifactId>kotlin-project</artifactId>
         <groupId>org.jetbrains.kotlin</groupId>
-        <version>1.8.255-SNAPSHOT</version>
+        <version>1.9.255-SNAPSHOT</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -112,6 +112,7 @@
                             </pomIncludes>
                             <properties>
                                 <kotlin.version>${project.version}</kotlin.version>
+                                <kotlin.js.compiler.legacy.force_enabled>true</kotlin.js.compiler.legacy.force_enabled>
                             </properties>
                             <!--This could speed up test by providing local repo as remote repo for test but might be tricky on different OS-->
                             <!--<settingsFile>src/it/settings.xml</settingsFile>-->
