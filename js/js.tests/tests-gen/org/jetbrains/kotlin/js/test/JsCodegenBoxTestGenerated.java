@@ -2525,6 +2525,12 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             }
 
             @Test
+            @TestMetadata("conversionCombinations.kt")
+            public void testConversionCombinations() throws Exception {
+                runTest("compiler/testData/codegen/box/callableReference/equality/conversionCombinations.kt");
+            }
+
+            @Test
             @TestMetadata("extensionReceiverVsDefault.kt")
             public void testExtensionReceiverVsDefault() throws Exception {
                 runTest("compiler/testData/codegen/box/callableReference/equality/extensionReceiverVsDefault.kt");
@@ -22942,6 +22948,12 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             @TestMetadata("typeAlias.kt")
             public void testTypeAlias() throws Exception {
                 runTest("compiler/testData/codegen/box/multiplatform/defaultArguments/typeAlias.kt");
+            }
+
+            @Test
+            @TestMetadata("typeAlias2.kt")
+            public void testTypeAlias2() throws Exception {
+                runTest("compiler/testData/codegen/box/multiplatform/defaultArguments/typeAlias2.kt");
             }
 
             @Test

@@ -321,10 +321,11 @@ enum class LanguageFeature(
     ValueClasses(sinceVersion = null, kind = UNSTABLE_FEATURE),
     JavaSamConversionEqualsHashCode(sinceVersion = null, kind = UNSTABLE_FEATURE),
     UnitConversionsOnArbitraryExpressions(sinceVersion = null),
-    JsAllowImplementingFunctionInterface(sinceVersion = null, kind = UNSTABLE_FEATURE),
+    JsAllowImplementingFunctionInterface(sinceVersion = null, kind = OTHER),
     CustomEqualsInValueClasses(sinceVersion = null, kind = OTHER), // KT-24874
     InlineLateinit(sinceVersion = null, kind = OTHER), // KT-23814
     EnableDfaWarningsInK2(sinceVersion = null, kind = OTHER), // KT-50965
+    ContractSyntaxV2(sinceVersion = null, kind = UNSTABLE_FEATURE), // KT-56127
     ;
 
     init {

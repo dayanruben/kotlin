@@ -239,6 +239,21 @@ public class LazyBodyIsNotTouchedTilContractsPhaseTestGenerated extends Abstract
         runTest("compiler/fir/analysis-tests/testData/resolve/implicitTypeInFakeOverride.kt");
     }
 
+    @TestMetadata("implicitTypeIntersectionOverrideFromOtherModule.kt")
+    public void testImplicitTypeIntersectionOverrideFromOtherModule() throws Exception {
+        runTest("compiler/fir/analysis-tests/testData/resolve/implicitTypeIntersectionOverrideFromOtherModule.kt");
+    }
+
+    @TestMetadata("implicitTypeSubstituteOverrideFromOtherModule.kt")
+    public void testImplicitTypeSubstituteOverrideFromOtherModule() throws Exception {
+        runTest("compiler/fir/analysis-tests/testData/resolve/implicitTypeSubstituteOverrideFromOtherModule.kt");
+    }
+
+    @TestMetadata("implicitTypeSubstituteOverrideInNestedClassFromOtherModule.kt")
+    public void testImplicitTypeSubstituteOverrideInNestedClassFromOtherModule() throws Exception {
+        runTest("compiler/fir/analysis-tests/testData/resolve/implicitTypeSubstituteOverrideInNestedClassFromOtherModule.kt");
+    }
+
     @TestMetadata("implicitTypeWithTypeBound.kt")
     public void testImplicitTypeWithTypeBound() throws Exception {
         runTest("compiler/fir/analysis-tests/testData/resolve/implicitTypeWithTypeBound.kt");
@@ -537,6 +552,16 @@ public class LazyBodyIsNotTouchedTilContractsPhaseTestGenerated extends Abstract
     @TestMetadata("typesInLocalFunctions.kt")
     public void testTypesInLocalFunctions() throws Exception {
         runTest("compiler/fir/analysis-tests/testData/resolve/typesInLocalFunctions.kt");
+    }
+
+    @TestMetadata("unitTypeFromOtherModule.kt")
+    public void testUnitTypeFromOtherModule() throws Exception {
+        runTest("compiler/fir/analysis-tests/testData/resolve/unitTypeFromOtherModule.kt");
+    }
+
+    @TestMetadata("unitTypeSubstituteOverrideInNestedClassFromOtherModule.kt")
+    public void testUnitTypeSubstituteOverrideInNestedClassFromOtherModule() throws Exception {
+        runTest("compiler/fir/analysis-tests/testData/resolve/unitTypeSubstituteOverrideInNestedClassFromOtherModule.kt");
     }
 
     @TestMetadata("varargInPrimaryConstructor.kt")
@@ -1206,6 +1231,11 @@ public class LazyBodyIsNotTouchedTilContractsPhaseTestGenerated extends Abstract
         @TestMetadata("contractFromOtherModule_samePackage.kt")
         public void testContractFromOtherModule_samePackage() throws Exception {
             runTest("compiler/fir/analysis-tests/testData/resolve/contracts/contractFromOtherModule_samePackage.kt");
+        }
+
+        @TestMetadata("disabledFeature.kt")
+        public void testDisabledFeature() throws Exception {
+            runTest("compiler/fir/analysis-tests/testData/resolve/contracts/disabledFeature.kt");
         }
 
         @TestMetadata("genericContract.kt")

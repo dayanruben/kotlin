@@ -3219,6 +3219,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestDataPath("$PROJECT_ROOT")
         @RunWith(JUnit3RunnerWithInners.class)
         public static class Equality extends AbstractLightAnalysisModeTest {
+            @TestMetadata("conversionCombinations.kt")
+            public void ignoreConversionCombinations() throws Exception {
+                runTest("compiler/testData/codegen/box/callableReference/equality/conversionCombinations.kt");
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM, testDataFilePath);
             }
@@ -26778,6 +26783,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/multiplatform/annotationsViaActualTypeAliasFromBinary.kt");
         }
 
+        @TestMetadata("annotationsViaActualTypeAliasFromBinary2.kt")
+        public void testAnnotationsViaActualTypeAliasFromBinary2() throws Exception {
+            runTest("compiler/testData/codegen/box/multiplatform/annotationsViaActualTypeAliasFromBinary2.kt");
+        }
+
         @TestMetadata("commonInternal.kt")
         public void testCommonInternal() throws Exception {
             runTest("compiler/testData/codegen/box/multiplatform/commonInternal.kt");
@@ -26943,6 +26953,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             @TestMetadata("typeAlias.kt")
             public void testTypeAlias() throws Exception {
                 runTest("compiler/testData/codegen/box/multiplatform/defaultArguments/typeAlias.kt");
+            }
+
+            @TestMetadata("typeAlias2.kt")
+            public void testTypeAlias2() throws Exception {
+                runTest("compiler/testData/codegen/box/multiplatform/defaultArguments/typeAlias2.kt");
             }
 
             @TestMetadata("withTypeParameter.kt")

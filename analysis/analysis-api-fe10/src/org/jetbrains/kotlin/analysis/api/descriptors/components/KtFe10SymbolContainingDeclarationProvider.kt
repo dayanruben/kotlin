@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
 import org.jetbrains.kotlin.analysis.api.symbols.KtBackingFieldSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithKind
 import org.jetbrains.kotlin.analysis.project.structure.KtLibraryModule
@@ -71,7 +70,8 @@ internal class KtFe10SymbolContainingDeclarationProvider(
                     override val librarySources: KtLibrarySourceModule? = null
                     override fun getBinaryRoots(): Collection<Path> = listOf(libraryPath)
                     override val directRegularDependencies: List<KtModule> = emptyList()
-                    override val directRefinementDependencies: List<KtModule> = emptyList()
+                    override val directDependsOnDependencies: List<KtModule> = emptyList()
+                    override val transitiveDependsOnDependencies: List<KtModule> = emptyList()
                     override val directFriendDependencies: List<KtModule> = emptyList()
                     override val contentScope: GlobalSearchScope = ProjectScope.getLibrariesScope(project)
                     override val platform: TargetPlatform

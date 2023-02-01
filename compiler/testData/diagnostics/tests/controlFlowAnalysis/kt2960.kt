@@ -1,4 +1,3 @@
-// FIR_IDENTICAL
 //KT-2960 Perform control flow checks for package property initializers
 
 package b

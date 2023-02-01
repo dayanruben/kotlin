@@ -727,6 +727,11 @@ public class KlibTextTestCaseGenerated extends AbstractKlibTextTestCase {
                 runTest("compiler/testData/ir/irText/declarations/multiplatform/expectedEnumClass.kt");
             }
 
+            @TestMetadata("expectedEnumClass2.kt")
+            public void testExpectedEnumClass2() throws Exception {
+                runTest("compiler/testData/ir/irText/declarations/multiplatform/expectedEnumClass2.kt");
+            }
+
             @TestMetadata("expectedSealedClass.kt")
             public void testExpectedSealedClass() throws Exception {
                 runTest("compiler/testData/ir/irText/declarations/multiplatform/expectedSealedClass.kt");
@@ -1945,9 +1950,19 @@ public class KlibTextTestCaseGenerated extends AbstractKlibTextTestCase {
             runTest("compiler/testData/ir/irText/firProblems/InnerClassInAnonymous.kt");
         }
 
+        @TestMetadata("integerLiteralWithExpectedTypealiasType.kt")
+        public void testIntegerLiteralWithExpectedTypealiasType() throws Exception {
+            runTest("compiler/testData/ir/irText/firProblems/integerLiteralWithExpectedTypealiasType.kt");
+        }
+
         @TestMetadata("kt43342.kt")
         public void testKt43342() throws Exception {
             runTest("compiler/testData/ir/irText/firProblems/kt43342.kt");
+        }
+
+        @TestMetadata("kt55458.kt")
+        public void testKt55458() throws Exception {
+            runTest("compiler/testData/ir/irText/firProblems/kt55458.kt");
         }
 
         @TestMetadata("lambdaInEnumEntryConstructorCall.kt")

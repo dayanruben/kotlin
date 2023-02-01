@@ -214,18 +214,6 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
         }
 
         @Test
-        @TestMetadata("derivedClassPropertyShadowsBaseClassField.kt")
-        public void testDerivedClassPropertyShadowsBaseClassField() throws Exception {
-            runTest("compiler/testData/diagnostics/tests/derivedClassPropertyShadowsBaseClassField.kt");
-        }
-
-        @Test
-        @TestMetadata("derivedClassPropertyShadowsBaseClassField13.kt")
-        public void testDerivedClassPropertyShadowsBaseClassField13() throws Exception {
-            runTest("compiler/testData/diagnostics/tests/derivedClassPropertyShadowsBaseClassField13.kt");
-        }
-
-        @Test
         @TestMetadata("derivedIntersectionPropertyShadowsBaseClassField.kt")
         public void testDerivedIntersectionPropertyShadowsBaseClassField() throws Exception {
             runTest("compiler/testData/diagnostics/tests/derivedIntersectionPropertyShadowsBaseClassField.kt");
@@ -409,24 +397,6 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
         @TestMetadata("IsExpressions.kt")
         public void testIsExpressions() throws Exception {
             runTest("compiler/testData/diagnostics/tests/IsExpressions.kt");
-        }
-
-        @Test
-        @TestMetadata("javaFieldKotlinPropertyJavaFieldInPackagePrivate.kt")
-        public void testJavaFieldKotlinPropertyJavaFieldInPackagePrivate() throws Exception {
-            runTest("compiler/testData/diagnostics/tests/javaFieldKotlinPropertyJavaFieldInPackagePrivate.kt");
-        }
-
-        @Test
-        @TestMetadata("javaFieldKotlinPropertyJavaPackagePrivateField.kt")
-        public void testJavaFieldKotlinPropertyJavaPackagePrivateField() throws Exception {
-            runTest("compiler/testData/diagnostics/tests/javaFieldKotlinPropertyJavaPackagePrivateField.kt");
-        }
-
-        @Test
-        @TestMetadata("javaProtectedFieldAndKotlinInvisiblePropertyReference.kt")
-        public void testJavaProtectedFieldAndKotlinInvisiblePropertyReference() throws Exception {
-            runTest("compiler/testData/diagnostics/tests/javaProtectedFieldAndKotlinInvisiblePropertyReference.kt");
         }
 
         @Test
@@ -4202,6 +4172,12 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
             @TestMetadata("AsInBlockWithReturnType.kt")
             public void testAsInBlockWithReturnType() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/cast/AsInBlockWithReturnType.kt");
+            }
+
+            @Test
+            @TestMetadata("AsInCompoundAssignment.kt")
+            public void testAsInCompoundAssignment() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/cast/AsInCompoundAssignment.kt");
             }
 
             @Test
@@ -8622,6 +8598,12 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
                 }
 
                 @Test
+                @TestMetadata("kt41952.kt")
+                public void testKt41952() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/delegatedProperty/inference/kt41952.kt");
+                }
+
+                @Test
                 @TestMetadata("labeledDelegatedExpression.kt")
                 public void testLabeledDelegatedExpression() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/delegatedProperty/inference/labeledDelegatedExpression.kt");
@@ -11498,6 +11480,46 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
             @TestMetadata("noExternalModifierInheritance.kt")
             public void testNoExternalModifierInheritance() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/external/noExternalModifierInheritance.kt");
+            }
+        }
+
+        @Nested
+        @TestMetadata("compiler/testData/diagnostics/tests/fieldRename")
+        @TestDataPath("$PROJECT_ROOT")
+        public class FieldRename {
+            @Test
+            public void testAllFilesPresentInFieldRename() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/fieldRename"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.(fir|ll)\\.kts?$"), true);
+            }
+
+            @Test
+            @TestMetadata("derivedClassPropertyShadowsBaseClassField.kt")
+            public void testDerivedClassPropertyShadowsBaseClassField() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/fieldRename/derivedClassPropertyShadowsBaseClassField.kt");
+            }
+
+            @Test
+            @TestMetadata("derivedClassPropertyShadowsBaseClassField13.kt")
+            public void testDerivedClassPropertyShadowsBaseClassField13() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/fieldRename/derivedClassPropertyShadowsBaseClassField13.kt");
+            }
+
+            @Test
+            @TestMetadata("javaFieldKotlinPropertyJavaFieldInPackagePrivate.kt")
+            public void testJavaFieldKotlinPropertyJavaFieldInPackagePrivate() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/fieldRename/javaFieldKotlinPropertyJavaFieldInPackagePrivate.kt");
+            }
+
+            @Test
+            @TestMetadata("javaFieldKotlinPropertyJavaPackagePrivateField.kt")
+            public void testJavaFieldKotlinPropertyJavaPackagePrivateField() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/fieldRename/javaFieldKotlinPropertyJavaPackagePrivateField.kt");
+            }
+
+            @Test
+            @TestMetadata("javaProtectedFieldAndKotlinInvisiblePropertyReference.kt")
+            public void testJavaProtectedFieldAndKotlinInvisiblePropertyReference() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/fieldRename/javaProtectedFieldAndKotlinInvisiblePropertyReference.kt");
             }
         }
 
@@ -18060,6 +18082,12 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
                 }
 
                 @Test
+                @TestMetadata("kt55179.kt")
+                public void testKt55179() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inline/nonPublicMember/kt55179.kt");
+                }
+
+                @Test
                 @TestMetadata("localClass.kt")
                 public void testLocalClass() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inline/nonPublicMember/localClass.kt");
@@ -21353,6 +21381,12 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
             }
 
             @Test
+            @TestMetadata("incDecOperatorsInExpectClass.kt")
+            public void testIncDecOperatorsInExpectClass() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multiplatform/incDecOperatorsInExpectClass.kt");
+            }
+
+            @Test
             @TestMetadata("incompatibles.kt")
             public void testIncompatibles() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/multiplatform/incompatibles.kt");
@@ -21821,6 +21855,18 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
                 @Test
                 public void testAllFilesPresentInHmpp() throws Exception {
                     KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/multiplatform/hmpp"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.(fir|ll)\\.kts?$"), true);
+                }
+
+                @Test
+                @TestMetadata("intermediateWithActualAndExpect.kt")
+                public void testIntermediateWithActualAndExpect() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/hmpp/intermediateWithActualAndExpect.kt");
+                }
+
+                @Test
+                @TestMetadata("kt-55570.kt")
+                public void testKt_55570() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/hmpp/kt-55570.kt");
                 }
 
                 @Test
@@ -29602,6 +29648,12 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
             @TestMetadata("kt3993.kt")
             public void testKt3993() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/smartCasts/kt3993.kt");
+            }
+
+            @Test
+            @TestMetadata("kt45814.kt")
+            public void testKt45814() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/smartCasts/kt45814.kt");
             }
 
             @Test

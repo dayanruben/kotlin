@@ -2641,6 +2641,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
                 }
 
                 @Test
+                @TestMetadata("conversionCombinations.kt")
+                public void testConversionCombinations() throws Exception {
+                    runTest("compiler/testData/codegen/box/callableReference/equality/conversionCombinations.kt");
+                }
+
+                @Test
                 @TestMetadata("extensionReceiverVsDefault.kt")
                 public void testExtensionReceiverVsDefault() throws Exception {
                     runTest("compiler/testData/codegen/box/callableReference/equality/extensionReceiverVsDefault.kt");
@@ -5591,6 +5597,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
             @TestMetadata("expectClassActualTypeAlias.kt")
             public void testExpectClassActualTypeAlias() throws Exception {
                 runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/expectClassActualTypeAlias.kt");
+            }
+
+            @Test
+            @TestMetadata("expectClassActualTypeAlias2.kt")
+            public void testExpectClassActualTypeAlias2() throws Exception {
+                runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/expectClassActualTypeAlias2.kt");
             }
 
             @Test
@@ -25769,6 +25781,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
                 @TestMetadata("typeAlias.kt")
                 public void testTypeAlias() throws Exception {
                     runTest("compiler/testData/codegen/box/multiplatform/defaultArguments/typeAlias.kt");
+                }
+
+                @Test
+                @TestMetadata("typeAlias2.kt")
+                public void testTypeAlias2() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/defaultArguments/typeAlias2.kt");
                 }
 
                 @Test

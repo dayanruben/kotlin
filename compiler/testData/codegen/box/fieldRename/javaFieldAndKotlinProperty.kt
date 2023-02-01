@@ -1,18 +1,25 @@
 // TARGET_BACKEND: JVM_IR
-// IGNORE_BACKEND: JVM_IR
-// IGNORE_BACKEND_FIR: JVM_IR
-// FIR_STATUS: accesses property backing field accidentally and fails with exception (does not work in K1/JVM too)
+// IGNORE_BACKEND_K1: JVM_IR
 // Field VS property: case 4.1
-// See KT-54393 for details
+// See KT-50082
+// DUMP_IR
 
 // FILE: BaseJava.java
 public class BaseJava {
-    public String a = "OK";
+    public String a = "FAIL";
 }
 
 // FILE: Derived.kt
 class Derived : BaseJava() {
-    val a = "FAIL"
+    var a = "OK"
 }
 
-fun box() = Derived().a
+fun box(): String {
+    val first = Derived().a
+    if (first != "OK") return first
+    val d = Derived()
+    if (d::a.get() != "OK") return d::a.get()
+    d.a = "12"
+    if (d.a != "12") return "Error writing: ${d.a}"
+    return "OK"
+}

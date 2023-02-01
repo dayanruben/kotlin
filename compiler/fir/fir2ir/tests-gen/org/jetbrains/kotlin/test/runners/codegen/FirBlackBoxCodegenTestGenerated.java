@@ -3827,6 +3827,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
             }
 
             @Test
+            @TestMetadata("conversionCombinations.kt")
+            public void testConversionCombinations() throws Exception {
+                runTest("compiler/testData/codegen/box/callableReference/equality/conversionCombinations.kt");
+            }
+
+            @Test
             @TestMetadata("extensionReceiverVsDefault.kt")
             public void testExtensionReceiverVsDefault() throws Exception {
                 runTest("compiler/testData/codegen/box/callableReference/equality/extensionReceiverVsDefault.kt");
@@ -7353,6 +7359,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         @TestMetadata("expectClassActualTypeAlias.kt")
         public void testExpectClassActualTypeAlias() throws Exception {
             runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/expectClassActualTypeAlias.kt");
+        }
+
+        @Test
+        @TestMetadata("expectClassActualTypeAlias2.kt")
+        public void testExpectClassActualTypeAlias2() throws Exception {
+            runTest("compiler/testData/codegen/box/compileKotlinAgainstKotlin/expectClassActualTypeAlias2.kt");
         }
 
         @Test
@@ -17952,9 +17964,39 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         }
 
         @Test
+        @TestMetadata("javaCloseFieldAndKotlinProperty.kt")
+        public void testJavaCloseFieldAndKotlinProperty() throws Exception {
+            runTest("compiler/testData/codegen/box/fieldRename/javaCloseFieldAndKotlinProperty.kt");
+        }
+
+        @Test
         @TestMetadata("javaFieldAndCompanionProperty.kt")
         public void testJavaFieldAndCompanionProperty() throws Exception {
             runTest("compiler/testData/codegen/box/fieldRename/javaFieldAndCompanionProperty.kt");
+        }
+
+        @Test
+        @TestMetadata("javaFieldAndKotlinInvisibleProperty.kt")
+        public void testJavaFieldAndKotlinInvisibleProperty() throws Exception {
+            runTest("compiler/testData/codegen/box/fieldRename/javaFieldAndKotlinInvisibleProperty.kt");
+        }
+
+        @Test
+        @TestMetadata("javaFieldAndKotlinInvisiblePropertyViaTypeParameter.kt")
+        public void testJavaFieldAndKotlinInvisiblePropertyViaTypeParameter() throws Exception {
+            runTest("compiler/testData/codegen/box/fieldRename/javaFieldAndKotlinInvisiblePropertyViaTypeParameter.kt");
+        }
+
+        @Test
+        @TestMetadata("javaFieldAndKotlinInvisiblePropertyWithGetter.kt")
+        public void testJavaFieldAndKotlinInvisiblePropertyWithGetter() throws Exception {
+            runTest("compiler/testData/codegen/box/fieldRename/javaFieldAndKotlinInvisiblePropertyWithGetter.kt");
+        }
+
+        @Test
+        @TestMetadata("javaFieldAndKotlinLateinitProperty.kt")
+        public void testJavaFieldAndKotlinLateinitProperty() throws Exception {
+            runTest("compiler/testData/codegen/box/fieldRename/javaFieldAndKotlinLateinitProperty.kt");
         }
 
         @Test
@@ -17967,6 +18009,90 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         @TestMetadata("javaFieldAndKotlinProperty.kt")
         public void testJavaFieldAndKotlinProperty() throws Exception {
             runTest("compiler/testData/codegen/box/fieldRename/javaFieldAndKotlinProperty.kt");
+        }
+
+        @Test
+        @TestMetadata("javaFieldAndKotlinPropertyReference.kt")
+        public void testJavaFieldAndKotlinPropertyReference() throws Exception {
+            runTest("compiler/testData/codegen/box/fieldRename/javaFieldAndKotlinPropertyReference.kt");
+        }
+
+        @Test
+        @TestMetadata("javaFieldAndKotlinPropertyReferenceFromInner.kt")
+        public void testJavaFieldAndKotlinPropertyReferenceFromInner() throws Exception {
+            runTest("compiler/testData/codegen/box/fieldRename/javaFieldAndKotlinPropertyReferenceFromInner.kt");
+        }
+
+        @Test
+        @TestMetadata("javaFieldAndKotlinPropertySuperAccess.kt")
+        public void testJavaFieldAndKotlinPropertySuperAccess() throws Exception {
+            runTest("compiler/testData/codegen/box/fieldRename/javaFieldAndKotlinPropertySuperAccess.kt");
+        }
+
+        @Test
+        @TestMetadata("javaFieldAndKotlinPropertyWithComplexReceiver.kt")
+        public void testJavaFieldAndKotlinPropertyWithComplexReceiver() throws Exception {
+            runTest("compiler/testData/codegen/box/fieldRename/javaFieldAndKotlinPropertyWithComplexReceiver.kt");
+        }
+
+        @Test
+        @TestMetadata("javaFieldAndKotlinPropertyWithSmartcast.kt")
+        public void testJavaFieldAndKotlinPropertyWithSmartcast() throws Exception {
+            runTest("compiler/testData/codegen/box/fieldRename/javaFieldAndKotlinPropertyWithSmartcast.kt");
+        }
+
+        @Test
+        @TestMetadata("javaFieldKotlinPropertyJavaField.kt")
+        public void testJavaFieldKotlinPropertyJavaField() throws Exception {
+            runTest("compiler/testData/codegen/box/fieldRename/javaFieldKotlinPropertyJavaField.kt");
+        }
+
+        @Test
+        @TestMetadata("javaFieldKotlinPropertyJavaPackagePrivate.kt")
+        public void testJavaFieldKotlinPropertyJavaPackagePrivate() throws Exception {
+            runTest("compiler/testData/codegen/box/fieldRename/javaFieldKotlinPropertyJavaPackagePrivate.kt");
+        }
+
+        @Test
+        @TestMetadata("javaInvisibleFieldAndKotlinProperty.kt")
+        public void testJavaInvisibleFieldAndKotlinProperty() throws Exception {
+            runTest("compiler/testData/codegen/box/fieldRename/javaInvisibleFieldAndKotlinProperty.kt");
+        }
+
+        @Test
+        @TestMetadata("javaInvisibleFieldAndKotlinPropertyReference.kt")
+        public void testJavaInvisibleFieldAndKotlinPropertyReference() throws Exception {
+            runTest("compiler/testData/codegen/box/fieldRename/javaInvisibleFieldAndKotlinPropertyReference.kt");
+        }
+
+        @Test
+        @TestMetadata("javaProtectedFieldAndKotlinInvisibleProperty.kt")
+        public void testJavaProtectedFieldAndKotlinInvisibleProperty() throws Exception {
+            runTest("compiler/testData/codegen/box/fieldRename/javaProtectedFieldAndKotlinInvisibleProperty.kt");
+        }
+
+        @Test
+        @TestMetadata("javaProtectedFieldAndKotlinInvisiblePropertyReference.kt")
+        public void testJavaProtectedFieldAndKotlinInvisiblePropertyReference() throws Exception {
+            runTest("compiler/testData/codegen/box/fieldRename/javaProtectedFieldAndKotlinInvisiblePropertyReference.kt");
+        }
+
+        @Test
+        @TestMetadata("javaProtectedFieldAndKotlinInvisiblePropertyWrite.kt")
+        public void testJavaProtectedFieldAndKotlinInvisiblePropertyWrite() throws Exception {
+            runTest("compiler/testData/codegen/box/fieldRename/javaProtectedFieldAndKotlinInvisiblePropertyWrite.kt");
+        }
+
+        @Test
+        @TestMetadata("javaProtectedFieldAndKotlinPropertyReference.kt")
+        public void testJavaProtectedFieldAndKotlinPropertyReference() throws Exception {
+            runTest("compiler/testData/codegen/box/fieldRename/javaProtectedFieldAndKotlinPropertyReference.kt");
+        }
+
+        @Test
+        @TestMetadata("javaProtectedFieldAnotherPackageReference.kt")
+        public void testJavaProtectedFieldAnotherPackageReference() throws Exception {
+            runTest("compiler/testData/codegen/box/fieldRename/javaProtectedFieldAnotherPackageReference.kt");
         }
 
         @Test
@@ -32612,6 +32738,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         }
 
         @Test
+        @TestMetadata("annotationsViaActualTypeAliasFromBinary2.kt")
+        public void testAnnotationsViaActualTypeAliasFromBinary2() throws Exception {
+            runTest("compiler/testData/codegen/box/multiplatform/annotationsViaActualTypeAliasFromBinary2.kt");
+        }
+
+        @Test
         @TestMetadata("commonInternal.kt")
         public void testCommonInternal() throws Exception {
             runTest("compiler/testData/codegen/box/multiplatform/commonInternal.kt");
@@ -32804,6 +32936,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
             @TestMetadata("typeAlias.kt")
             public void testTypeAlias() throws Exception {
                 runTest("compiler/testData/codegen/box/multiplatform/defaultArguments/typeAlias.kt");
+            }
+
+            @Test
+            @TestMetadata("typeAlias2.kt")
+            public void testTypeAlias2() throws Exception {
+                runTest("compiler/testData/codegen/box/multiplatform/defaultArguments/typeAlias2.kt");
             }
 
             @Test

@@ -279,6 +279,24 @@ public class FirDiagnosticsWithLightTreeTestGenerated extends AbstractFirDiagnos
         }
 
         @Test
+        @TestMetadata("implicitTypeIntersectionOverrideFromOtherModule.kt")
+        public void testImplicitTypeIntersectionOverrideFromOtherModule() throws Exception {
+            runTest("compiler/fir/analysis-tests/testData/resolve/implicitTypeIntersectionOverrideFromOtherModule.kt");
+        }
+
+        @Test
+        @TestMetadata("implicitTypeSubstituteOverrideFromOtherModule.kt")
+        public void testImplicitTypeSubstituteOverrideFromOtherModule() throws Exception {
+            runTest("compiler/fir/analysis-tests/testData/resolve/implicitTypeSubstituteOverrideFromOtherModule.kt");
+        }
+
+        @Test
+        @TestMetadata("implicitTypeSubstituteOverrideInNestedClassFromOtherModule.kt")
+        public void testImplicitTypeSubstituteOverrideInNestedClassFromOtherModule() throws Exception {
+            runTest("compiler/fir/analysis-tests/testData/resolve/implicitTypeSubstituteOverrideInNestedClassFromOtherModule.kt");
+        }
+
+        @Test
         @TestMetadata("implicitTypeWithTypeBound.kt")
         public void testImplicitTypeWithTypeBound() throws Exception {
             runTest("compiler/fir/analysis-tests/testData/resolve/implicitTypeWithTypeBound.kt");
@@ -636,6 +654,18 @@ public class FirDiagnosticsWithLightTreeTestGenerated extends AbstractFirDiagnos
         @TestMetadata("typesInLocalFunctions.kt")
         public void testTypesInLocalFunctions() throws Exception {
             runTest("compiler/fir/analysis-tests/testData/resolve/typesInLocalFunctions.kt");
+        }
+
+        @Test
+        @TestMetadata("unitTypeFromOtherModule.kt")
+        public void testUnitTypeFromOtherModule() throws Exception {
+            runTest("compiler/fir/analysis-tests/testData/resolve/unitTypeFromOtherModule.kt");
+        }
+
+        @Test
+        @TestMetadata("unitTypeSubstituteOverrideInNestedClassFromOtherModule.kt")
+        public void testUnitTypeSubstituteOverrideInNestedClassFromOtherModule() throws Exception {
+            runTest("compiler/fir/analysis-tests/testData/resolve/unitTypeSubstituteOverrideInNestedClassFromOtherModule.kt");
         }
 
         @Test
@@ -1383,6 +1413,12 @@ public class FirDiagnosticsWithLightTreeTestGenerated extends AbstractFirDiagnos
             @TestMetadata("contractFromOtherModule_samePackage.kt")
             public void testContractFromOtherModule_samePackage() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolve/contracts/contractFromOtherModule_samePackage.kt");
+            }
+
+            @Test
+            @TestMetadata("disabledFeature.kt")
+            public void testDisabledFeature() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/contracts/disabledFeature.kt");
             }
 
             @Test
@@ -4622,6 +4658,12 @@ public class FirDiagnosticsWithLightTreeTestGenerated extends AbstractFirDiagnos
         @TestMetadata("arrayInLocal.kt")
         public void testArrayInLocal() throws Exception {
             runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/arrayInLocal.kt");
+        }
+
+        @Test
+        @TestMetadata("assignmentWithWrongLhs.kt")
+        public void testAssignmentWithWrongLhs() throws Exception {
+            runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/assignmentWithWrongLhs.kt");
         }
 
         @Test

@@ -998,6 +998,12 @@ public class LightTreeFir2IrTextTestGenerated extends AbstractLightTreeFir2IrTex
             }
 
             @Test
+            @TestMetadata("expectedEnumClass2.kt")
+            public void testExpectedEnumClass2() throws Exception {
+                runTest("compiler/testData/ir/irText/declarations/multiplatform/expectedEnumClass2.kt");
+            }
+
+            @Test
             @TestMetadata("expectedSealedClass.kt")
             public void testExpectedSealedClass() throws Exception {
                 runTest("compiler/testData/ir/irText/declarations/multiplatform/expectedSealedClass.kt");
@@ -2643,6 +2649,12 @@ public class LightTreeFir2IrTextTestGenerated extends AbstractLightTreeFir2IrTex
         }
 
         @Test
+        @TestMetadata("integerLiteralWithExpectedTypealiasType.kt")
+        public void testIntegerLiteralWithExpectedTypealiasType() throws Exception {
+            runTest("compiler/testData/ir/irText/firProblems/integerLiteralWithExpectedTypealiasType.kt");
+        }
+
+        @Test
         @TestMetadata("internalPotentialFakeOverride.kt")
         public void testInternalPotentialFakeOverride() throws Exception {
             runTest("compiler/testData/ir/irText/firProblems/internalPotentialFakeOverride.kt");
@@ -2664,6 +2676,12 @@ public class LightTreeFir2IrTextTestGenerated extends AbstractLightTreeFir2IrTex
         @TestMetadata("kt43342.kt")
         public void testKt43342() throws Exception {
             runTest("compiler/testData/ir/irText/firProblems/kt43342.kt");
+        }
+
+        @Test
+        @TestMetadata("kt55458.kt")
+        public void testKt55458() throws Exception {
+            runTest("compiler/testData/ir/irText/firProblems/kt55458.kt");
         }
 
         @Test

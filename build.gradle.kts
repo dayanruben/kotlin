@@ -108,7 +108,7 @@ rootProject.apply {
 IdeVersionConfigurator.setCurrentIde(project)
 
 if (!project.hasProperty("versions.kotlin-native")) {
-    extra["versions.kotlin-native"] = "1.8.20-dev-5812"
+    extra["versions.kotlin-native"] = "1.9.0-dev-886"
 }
 
 val irCompilerModules = arrayOf(
@@ -665,7 +665,7 @@ tasks {
     }
 
     register("wasmCompilerTest") {
-        dependsOn(":js:js.tests:wasmTest")
+        dependsOn(":wasm:wasm.tests:test")
         // Windows WABT release requires Visual C++ Redistributable
         if (!kotlinBuildProperties.isTeamcityBuild || !org.gradle.internal.os.OperatingSystem.current().isWindows) {
             dependsOn(":wasm:wasm.ir:test")

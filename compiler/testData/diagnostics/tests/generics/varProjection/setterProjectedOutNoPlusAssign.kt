@@ -1,4 +1,3 @@
-// FIR_IDENTICAL
 // !DIAGNOSTICS: -UNREACHABLE_CODE
 interface Tr<T> {
     var v: T
