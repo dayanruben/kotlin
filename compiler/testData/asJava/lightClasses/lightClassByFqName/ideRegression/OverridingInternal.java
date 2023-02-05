@@ -1,11 +1,10 @@
 public final class C /* p.C*/ extends p.A implements p.I {
-  private final int ip;
+  private final int ip = 5 /* initializer type: int */;
+
+  @java.lang.Override()
+  public int af$light_idea_test_case();//  af$light_idea_test_case()
 
   public  C();//  .ctor()
-
-  public int <no name provided>$light_idea_test_case();//  <no name provided>$light_idea_test_case()
-
-  public int af$light_idea_test_case();//  af$light_idea_test_case()
 
   public int getAp$light_idea_test_case();//  getAp$light_idea_test_case()
 

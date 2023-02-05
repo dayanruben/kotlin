@@ -37,6 +37,18 @@ public class SymbolLightClassesByPsiForLibraryTestGenerated extends AbstractSymb
     }
 
     @Test
+    @TestMetadata("AnnotationsOnEnumEntry.kt")
+    public void testAnnotationsOnEnumEntry() throws Exception {
+        runTest("compiler/testData/asJava/lightClasses/lightClassByPsi/AnnotationsOnEnumEntry.kt");
+    }
+
+    @Test
+    @TestMetadata("AnnotationsWithUnresolvedAnnotations.kt")
+    public void testAnnotationsWithUnresolvedAnnotations() throws Exception {
+        runTest("compiler/testData/asJava/lightClasses/lightClassByPsi/AnnotationsWithUnresolvedAnnotations.kt");
+    }
+
+    @Test
     @TestMetadata("classModifiers.kt")
     public void testClassModifiers() throws Exception {
         runTest("compiler/testData/asJava/lightClasses/lightClassByPsi/classModifiers.kt");
@@ -106,6 +118,12 @@ public class SymbolLightClassesByPsiForLibraryTestGenerated extends AbstractSymb
     @TestMetadata("exposedAnonymousType.kt")
     public void testExposedAnonymousType() throws Exception {
         runTest("compiler/testData/asJava/lightClasses/lightClassByPsi/exposedAnonymousType.kt");
+    }
+
+    @Test
+    @TestMetadata("fieldModifiers.kt")
+    public void testFieldModifiers() throws Exception {
+        runTest("compiler/testData/asJava/lightClasses/lightClassByPsi/fieldModifiers.kt");
     }
 
     @Test

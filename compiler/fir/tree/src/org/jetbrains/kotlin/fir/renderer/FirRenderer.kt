@@ -5,6 +5,8 @@
 
 package org.jetbrains.kotlin.fir.renderer
 
+import org.jetbrains.kotlin.builtins.functions.FunctionTypeKindExtractor
+import org.jetbrains.kotlin.builtins.functions.AllowedToUsedOnlyInK1
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.contracts.FirContractDescription
@@ -741,8 +743,15 @@ class FirRenderer(
             visitTypeRefWithNullability(functionTypeRef)
         }
 
+        @OptIn(AllowedToUsedOnlyInK1::class)
         override fun visitResolvedTypeRef(resolvedTypeRef: FirResolvedTypeRef) {
-            typeRenderer.renderAsPossibleFunctionType(resolvedTypeRef.type)
+            typeRenderer.renderAsPossibleFunctionType(
+                resolvedTypeRef.type,
+                l@{
+                    val classId = it.classId ?: return@l null
+                    FunctionTypeKindExtractor.Default.getFunctionalClassKind(classId.packageFqName, classId.shortClassName.asString())
+                }
+            )
         }
 
         override fun visitUserTypeRef(userTypeRef: FirUserTypeRef) {

@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.light.classes.symbol.codeReferences.SymbolLightPsiJavaCodeReferenceElementWithNoReference
 import org.jetbrains.kotlin.light.classes.symbol.fields.SymbolLightFieldForEnumEntry
 import org.jetbrains.kotlin.light.classes.symbol.isOriginEquivalentTo
+import org.jetbrains.kotlin.light.classes.symbol.modifierLists.InitializedModifiersBox
 import org.jetbrains.kotlin.light.classes.symbol.modifierLists.SymbolLightClassModifierList
 import org.jetbrains.kotlin.load.java.structure.LightClassOriginKind
 import org.jetbrains.kotlin.psi.KtEnumEntry
@@ -52,8 +53,7 @@ internal class SymbolLightClassForEnumEntry(
     private val _modifierList: PsiModifierList by lazyPub {
         SymbolLightClassModifierList(
             containingDeclaration = this,
-            staticModifiers = setOf(PsiModifier.STATIC, PsiModifier.FINAL),
-            annotationsComputer = null,
+            modifiersBox = InitializedModifiersBox(PsiModifier.STATIC, PsiModifier.FINAL),
         )
     }
 
@@ -63,7 +63,7 @@ internal class SymbolLightClassForEnumEntry(
 
     override fun getContainingClass(): PsiClass = enumClass
 
-    override fun getTypeParameters(): Array<PsiTypeParameter> = emptyArray()
+    override fun getTypeParameters(): Array<PsiTypeParameter> = PsiTypeParameter.EMPTY_ARRAY
     override fun getTypeParameterList(): PsiTypeParameterList? = null
 
     override fun getQualifiedName(): String = "${enumConstant.containingClass.qualifiedName}.${enumConstant.name}"

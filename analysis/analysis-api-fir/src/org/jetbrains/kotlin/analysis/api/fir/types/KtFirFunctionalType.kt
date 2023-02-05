@@ -29,9 +29,10 @@ import org.jetbrains.kotlin.name.ClassId
 
 internal class KtFirFunctionalType(
     override val coneType: ConeClassLikeTypeImpl,
-    override val token: KtLifetimeToken,
     private val builder: KtSymbolByFirBuilder,
 ) : KtFunctionalType(), KtFirType {
+    override val token: KtLifetimeToken get() = builder.token
+
     override val classId: ClassId get() = withValidityAssertion { coneType.lookupTag.classId }
     override val classSymbol: KtClassLikeSymbol by cached {
         builder.classifierBuilder.buildClassLikeSymbolByLookupTag(coneType.lookupTag)
@@ -51,7 +52,8 @@ internal class KtFirFunctionalType(
 
     override val isSuspend: Boolean get() = withValidityAssertion { coneType.isSuspendOrKSuspendFunctionType(builder.rootSession) }
 
-    override val isReflectType: Boolean get() = withValidityAssertion { coneType.isKFunctionType(builder.rootSession) }
+    override val isReflectType: Boolean
+        get() = withValidityAssertion { coneType.functionTypeKind(builder.rootSession)?.isReflectType == true }
 
     override val arity: Int
         get() = withValidityAssertion {

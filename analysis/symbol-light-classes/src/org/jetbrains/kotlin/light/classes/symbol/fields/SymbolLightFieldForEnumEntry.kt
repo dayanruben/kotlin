@@ -7,16 +7,21 @@ package org.jetbrains.kotlin.light.classes.symbol.fields
 
 import com.intellij.psi.*
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.annotations.FieldAnnotationUseSiteTargetFilter
+import org.jetbrains.kotlin.analysis.api.annotations.NoAnnotationUseSiteTargetFilter
+import org.jetbrains.kotlin.analysis.api.annotations.PropertyAnnotationUseSiteTargetFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KtEnumEntrySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.pointers.symbolPointerOfType
 import org.jetbrains.kotlin.asJava.classes.cannotModify
 import org.jetbrains.kotlin.asJava.classes.lazyPub
-import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
-import org.jetbrains.kotlin.light.classes.symbol.NullabilityType
 import org.jetbrains.kotlin.light.classes.symbol.analyzeForLightClasses
-import org.jetbrains.kotlin.light.classes.symbol.annotations.computeAnnotations
+import org.jetbrains.kotlin.light.classes.symbol.annotations.GranularAnnotationsBox
+import org.jetbrains.kotlin.light.classes.symbol.annotations.SymbolAnnotationsProvider
+import org.jetbrains.kotlin.light.classes.symbol.annotations.annotationUseSiteTargetFilterOf
 import org.jetbrains.kotlin.light.classes.symbol.classes.SymbolLightClassForClassOrObject
 import org.jetbrains.kotlin.light.classes.symbol.classes.SymbolLightClassForEnumEntry
 import org.jetbrains.kotlin.light.classes.symbol.isOriginEquivalentTo
+import org.jetbrains.kotlin.light.classes.symbol.modifierLists.InitializedModifiersBox
 import org.jetbrains.kotlin.light.classes.symbol.modifierLists.SymbolLightMemberModifierList
 import org.jetbrains.kotlin.light.classes.symbol.nonExistentType
 import org.jetbrains.kotlin.psi.KtEnumEntry
@@ -35,16 +40,19 @@ internal class SymbolLightFieldForEnumEntry(
     private val _modifierList by lazyPub {
         SymbolLightMemberModifierList(
             containingDeclaration = this,
-            staticModifiers = setOf(PsiModifier.STATIC, PsiModifier.FINAL, PsiModifier.PUBLIC),
-        ) { modifierList ->
-            withEnumEntrySymbol { enumEntrySymbol ->
-                enumEntrySymbol.computeAnnotations(
-                    modifierList,
-                    nullability = NullabilityType.Unknown, // there is no need to add nullability annotations on enum entries
-                    annotationUseSiteTarget = AnnotationUseSiteTarget.FIELD,
+            modifiersBox = InitializedModifiersBox(PsiModifier.STATIC, PsiModifier.FINAL, PsiModifier.PUBLIC),
+            annotationsBox = GranularAnnotationsBox(
+                annotationsProvider = SymbolAnnotationsProvider(
+                    ktModule = ktModule,
+                    annotatedSymbolPointer = enumEntry.symbolPointerOfType<KtEnumEntrySymbol>(),
+                    annotationUseSiteTargetFilter = annotationUseSiteTargetFilterOf(
+                        NoAnnotationUseSiteTargetFilter,
+                        FieldAnnotationUseSiteTargetFilter,
+                        PropertyAnnotationUseSiteTargetFilter,
+                    ),
                 )
-            }
-        }
+            ),
+        )
     }
 
     override fun isEquivalentTo(another: PsiElement?): Boolean {

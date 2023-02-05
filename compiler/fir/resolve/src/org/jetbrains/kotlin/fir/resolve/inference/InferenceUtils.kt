@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.fir.resolve.BodyResolveComponents
 import org.jetbrains.kotlin.fir.resolve.calls.Candidate
 import org.jetbrains.kotlin.fir.types.*
 
-fun extractLambdaInfoFromFunctionalType(
+fun extractLambdaInfoFromFunctionType(
     expectedType: ConeKotlinType?,
     expectedTypeRef: FirTypeRef?,
     argument: FirAnonymousFunction,
@@ -26,7 +26,7 @@ fun extractLambdaInfoFromFunctionalType(
     val session = components.session
     if (expectedType == null) return null
     if (expectedType is ConeFlexibleType) {
-        return extractLambdaInfoFromFunctionalType(
+        return extractLambdaInfoFromFunctionType(
             expectedType.lowerBound,
             expectedTypeRef,
             argument,
@@ -36,7 +36,8 @@ fun extractLambdaInfoFromFunctionalType(
             duringCompletion
         )
     }
-    if (!expectedType.isBuiltinFunctionalType(session)) return null
+    val expectedFunctionKind = expectedType.functionTypeKind(session) ?: return null
+    val actualFunctionKind = session.functionTypeService.extractSingleSpecialKindForFunction(argument.symbol)
 
     val singleStatement = argument.body?.statements?.singleOrNull() as? FirReturnExpression
     if (argument.returnType == null && singleStatement != null &&
@@ -100,7 +101,7 @@ fun extractLambdaInfoFromFunctionalType(
     return ResolvedLambdaAtom(
         argument,
         expectedType,
-        expectedType.isSuspendOrKSuspendFunctionType(session),
+        actualFunctionKind ?: expectedFunctionKind,
         receiverType,
         contextReceivers,
         parameters,

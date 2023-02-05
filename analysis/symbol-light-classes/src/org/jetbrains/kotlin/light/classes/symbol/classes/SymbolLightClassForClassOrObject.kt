@@ -25,19 +25,17 @@ import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.StandardNames.HASHCODE_NAME
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.light.classes.symbol.NullabilityType
-import org.jetbrains.kotlin.light.classes.symbol.annotations.computeAnnotations
+import org.jetbrains.kotlin.light.classes.symbol.annotations.GranularAnnotationsBox
+import org.jetbrains.kotlin.light.classes.symbol.annotations.SymbolAnnotationsProvider
 import org.jetbrains.kotlin.light.classes.symbol.fields.SymbolLightFieldForEnumEntry
 import org.jetbrains.kotlin.light.classes.symbol.fields.SymbolLightFieldForObject
 import org.jetbrains.kotlin.light.classes.symbol.methods.SymbolLightSimpleMethod
+import org.jetbrains.kotlin.light.classes.symbol.modifierLists.GranularModifiersBox
 import org.jetbrains.kotlin.light.classes.symbol.modifierLists.SymbolLightClassModifierList
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtEnumEntry
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.DataClassResolver
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.JvmDeclarationOriginKind
 import org.jetbrains.kotlin.util.OperatorNameConventions.EQUALS
@@ -83,19 +81,13 @@ internal open class SymbolLightClassForClassOrObject : SymbolLightClassForNamedC
         manager = manager,
     )
 
-    private val _modifierList: PsiModifierList? by lazyPub {
+    private val _modifierList: PsiModifierList by lazyPub {
         SymbolLightClassModifierList(
             containingDeclaration = this,
-            lazyModifiersComputer = ::computeModifiers,
-            annotationsComputer = { modifierList ->
-                withClassOrObjectSymbol { classOrObjectSymbol ->
-                    classOrObjectSymbol.computeAnnotations(
-                        modifierList = modifierList,
-                        nullability = NullabilityType.Unknown,
-                        annotationUseSiteTarget = null,
-                    )
-                }
-            },
+            modifiersBox = GranularModifiersBox(computer = ::computeModifiers),
+            annotationsBox = GranularAnnotationsBox(
+                annotationsProvider = SymbolAnnotationsProvider(ktModule, classOrObjectSymbolPointer)
+            ),
         )
     }
 
@@ -124,7 +116,7 @@ internal open class SymbolLightClassForClassOrObject : SymbolLightClassForNamedC
             val declaredMemberScope = classOrObjectSymbol.getDeclaredMemberScope()
 
             val visibleDeclarations = declaredMemberScope.getCallableSymbols()
-                .applyIf(isObject) {
+                .applyIf(classKind().isObject) {
                     filterNot {
                         it is KtKotlinPropertySymbol && it.isConst
                     }
@@ -143,7 +135,7 @@ internal open class SymbolLightClassForClassOrObject : SymbolLightClassForNamedC
                     it.hasTypeForValueClassInSignature()
                 }
 
-            val suppressStatic = isCompanionObject
+            val suppressStatic = classKind() == KtClassKind.COMPANION_OBJECT
             createMethods(visibleDeclarations, result, suppressStatic = suppressStatic)
 
             createConstructors(declaredMemberScope.getConstructors(), result)
@@ -272,7 +264,7 @@ internal open class SymbolLightClassForClassOrObject : SymbolLightClassForNamedC
 
     context(KtAnalysisSession)
     private fun addInstanceFieldIfNeeded(result: MutableList<KtLightField>, namedClassOrObjectSymbol: KtNamedClassOrObjectSymbol) {
-        if (!isNamedObject || isLocal) return
+        if (classKind() != KtClassKind.OBJECT || isLocal) return
 
         result.add(
             SymbolLightFieldForObject(
@@ -303,8 +295,22 @@ internal open class SymbolLightClassForClassOrObject : SymbolLightClassForNamedC
     }
 
     override fun isInterface(): Boolean = false
-
     override fun isAnnotationType(): Boolean = false
+    override fun classKind(): KtClassKind = _classKind
+
+    private val _classKind: KtClassKind by lazyPub {
+        when (classOrObjectDeclaration) {
+            is KtObjectDeclaration -> {
+                if (classOrObjectDeclaration.isCompanion()) KtClassKind.COMPANION_OBJECT else KtClassKind.OBJECT
+            }
+
+            is KtClass -> {
+                if (classOrObjectDeclaration.isEnum()) KtClassKind.ENUM_CLASS else KtClassKind.CLASS
+            }
+
+            else -> withClassOrObjectSymbol { it.classKind }
+        }
+    }
 
     override fun copy(): SymbolLightClassForClassOrObject =
         SymbolLightClassForClassOrObject(classOrObjectDeclaration, classOrObjectSymbolPointer, ktModule, manager)

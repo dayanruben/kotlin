@@ -15,15 +15,17 @@ import org.jetbrains.kotlin.fir.lazy.Fir2IrLazyClass
 import org.jetbrains.kotlin.fir.resolve.getSymbolByLookupTag
 import org.jetbrains.kotlin.fir.resolve.providers.firProvider
 import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
+import org.jetbrains.kotlin.fir.resolve.providers.toSymbol
 import org.jetbrains.kotlin.fir.resolve.toSymbol
+import org.jetbrains.kotlin.fir.scopes.unsubstitutedScope
 import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
 import org.jetbrains.kotlin.fir.symbols.Fir2IrClassSymbol
 import org.jetbrains.kotlin.fir.symbols.Fir2IrEnumEntrySymbol
 import org.jetbrains.kotlin.fir.symbols.Fir2IrTypeAliasSymbol
-import org.jetbrains.kotlin.fir.symbols.impl.ConeClassLikeLookupTagImpl
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirTypeParameterSymbol
 import org.jetbrains.kotlin.fir.types.FirTypeRef
+import org.jetbrains.kotlin.fir.types.toLookupTag
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.declarations.impl.IrExternalPackageFragmentImpl
@@ -40,11 +42,11 @@ import org.jetbrains.kotlin.utils.addToStdlib.runUnless
 
 class Fir2IrClassifierStorage(
     private val components: Fir2IrComponents,
-    private val dependentStorages: List<Fir2IrClassifierStorage>
+    commonMemberStorage: Fir2IrCommonMemberStorage
 ) : Fir2IrComponents by components {
     private val firProvider = session.firProvider
 
-    private val classCache: MutableMap<FirRegularClass, IrClass> = merge { it.classCache }
+    private val classCache: MutableMap<FirRegularClass, IrClass> = commonMemberStorage.classCache
 
     private val localClassesCreatedOnTheFly: MutableMap<FirClass, IrClass> = mutableMapOf()
 
@@ -52,45 +54,32 @@ class Fir2IrClassifierStorage(
 
     private val typeAliasCache: MutableMap<FirTypeAlias, IrTypeAlias> = mutableMapOf()
 
-    private val typeParameterCache: MutableMap<FirTypeParameter, IrTypeParameter> = merge { it.typeParameterCache }
+    private val typeParameterCache: MutableMap<FirTypeParameter, IrTypeParameter> = commonMemberStorage.typeParameterCache
 
     private val typeParameterCacheForSetter: MutableMap<FirTypeParameter, IrTypeParameter> = mutableMapOf()
 
-    private val enumEntryCache: MutableMap<FirEnumEntry, IrEnumEntry> = merge { it.enumEntryCache }
+    private val enumEntryCache: MutableMap<FirEnumEntry, IrEnumEntry> = commonMemberStorage.enumEntryCache
 
     private val fieldsForContextReceivers: MutableMap<IrClass, List<IrField>> = mutableMapOf()
 
     private val localStorage: Fir2IrLocalClassStorage = Fir2IrLocalClassStorage(
-        // Merge is necessary here to be able to serialize local classes from common code in expression codegen
-        dependentStorages.map { it.localStorage }.fold(mutableMapOf()) { result, storage ->
-            result.putAll(storage.localClassCache)
-            result
-        }
+        // Using existing cache is necessary here to be able to serialize local classes from common code in expression codegen
+        commonMemberStorage.localClassCache
     )
-
-    private fun <K, V> merge(mapFunc: (Fir2IrClassifierStorage) -> MutableMap<K, V>): MutableMap<K, V> {
-        return dependentStorages.map { mapFunc(it) }.fold(mutableMapOf()) { result, map ->
-            result.putAll(map)
-            result
-        }
-    }
 
     private fun FirTypeRef.toIrType(typeContext: ConversionTypeContext = ConversionTypeContext.DEFAULT): IrType =
         with(typeConverter) { toIrType(typeContext) }
 
     fun preCacheBuiltinClasses() {
-        // dependentStorages are only actual for MPP scenario
-        // There is no need to precache them twice: the same library session is used and FIR and IR elements are the same
-        if (dependentStorages.isNotEmpty()) return
         for ((classId, irBuiltinSymbol) in typeConverter.classIdToSymbolMap) {
-            val firClass = ConeClassLikeLookupTagImpl(classId).toSymbol(session)!!.fir as FirRegularClass
+            val firClass = classId.toSymbol(session)!!.fir as FirRegularClass
             val irClass = irBuiltinSymbol.owner
             classCache[firClass] = irClass
             processClassHeader(firClass, irClass)
             declarationStorage.preCacheBuiltinClassMembers(firClass, irClass)
         }
         for ((primitiveClassId, primitiveArrayId) in StandardClassIds.primitiveArrayTypeByElementType) {
-            val firClass = ConeClassLikeLookupTagImpl(primitiveArrayId).toSymbol(session)!!.fir as FirRegularClass
+            val firClass = primitiveArrayId.toLookupTag().toSymbol(session)!!.fir as FirRegularClass
             val irType = typeConverter.classIdToTypeMap[primitiveClassId]
             val irClass = irBuiltIns.primitiveArrayForType[irType]!!.owner
             classCache[firClass] = irClass
@@ -209,13 +198,37 @@ class Fir2IrClassifierStorage(
             declarations.any { it is FirCallableDeclaration && it.modality == Modality.ABSTRACT } -> {
                 Modality.ABSTRACT
             }
-            declarations.any { it is FirEnumEntry && it.initializer != null } -> {
-                Modality.OPEN
-            }
-            else -> {
+            declarations.none { it is FirEnumEntry && it.initializer != null } -> {
                 Modality.FINAL
             }
+            hasAbstractMembersInScope() -> {
+                Modality.ABSTRACT
+            }
+            else -> {
+                Modality.OPEN
+            }
         }
+    }
+
+    private fun FirRegularClass.hasAbstractMembersInScope(): Boolean {
+        val scope = unsubstitutedScope(session, scopeSession, withForcedTypeCalculator = false)
+        val names = scope.getCallableNames()
+        var hasAbstract = false
+        for (name in names) {
+            scope.processFunctionsByName(name) {
+                if (it.isAbstract) {
+                    hasAbstract = true
+                }
+            }
+            if (hasAbstract) return true
+            scope.processPropertiesByName(name) {
+                if (it.isAbstract) {
+                    hasAbstract = true
+                }
+            }
+            if (hasAbstract) return true
+        }
+        return false
     }
 
     // This function is called when we refer local class earlier than we reach its declaration
@@ -601,7 +614,7 @@ class Fir2IrClassifierStorage(
         )
 
         val parentId = classId.outerClassId
-        val parentClass = parentId?.let { getIrClassSymbolForNotFoundClass(ConeClassLikeLookupTagImpl(it)) }
+        val parentClass = parentId?.let { getIrClassSymbolForNotFoundClass(it.toLookupTag()) }
         val irParent = parentClass?.owner ?: declarationStorage.getIrExternalPackageFragment(classId.packageFqName)
 
         val symbol = Fir2IrClassSymbol(signature)

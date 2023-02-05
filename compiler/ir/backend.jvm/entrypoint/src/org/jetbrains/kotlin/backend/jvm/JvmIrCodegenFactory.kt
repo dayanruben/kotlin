@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.diagnostics.impl.BaseDiagnosticsCollector
 import org.jetbrains.kotlin.idea.MainFunctionDetector
 import org.jetbrains.kotlin.ir.IrBuiltIns
+import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmDescriptorMangler
 import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmIrLinker
 import org.jetbrains.kotlin.ir.builders.TranslationPluginContext
@@ -44,6 +45,7 @@ import org.jetbrains.kotlin.library.metadata.KlibModuleOrigin
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi2ir.Psi2IrConfiguration
 import org.jetbrains.kotlin.psi2ir.Psi2IrTranslator
+import org.jetbrains.kotlin.psi2ir.descriptors.IrBuiltInsOverDescriptors
 import org.jetbrains.kotlin.psi2ir.generators.DeclarationStubGeneratorForNotFoundClasses
 import org.jetbrains.kotlin.psi2ir.generators.DeclarationStubGeneratorImpl
 import org.jetbrains.kotlin.psi2ir.generators.fragments.EvaluatorFragmentInfo
@@ -60,7 +62,7 @@ open class JvmIrCodegenFactory(
     private val externalSymbolTable: SymbolTable? = null,
     private val jvmGeneratorExtensions: JvmGeneratorExtensionsImpl = JvmGeneratorExtensionsImpl(configuration),
     private val evaluatorFragmentInfoForPsi2Ir: EvaluatorFragmentInfo? = null,
-    private val shouldStubAndNotLinkUnboundSymbols: Boolean = false,
+    private val ideCodegenSettings: IdeCodegenSettings = IdeCodegenSettings(),
 ) : CodegenFactory {
 
     @IDEAPluginsCompatibilityAPI(IDEAPlatforms._221, message = "Please migrate to the other constructor", plugins = "Android Studio")
@@ -81,7 +83,26 @@ open class JvmIrCodegenFactory(
         externalSymbolTable,
         jvmGeneratorExtensions,
         evaluatorFragmentInfoForPsi2Ir,
-        shouldStubAndNotLinkUnboundSymbols
+        IdeCodegenSettings(shouldStubAndNotLinkUnboundSymbols = shouldStubAndNotLinkUnboundSymbols),
+    )
+
+    init {
+        if (ideCodegenSettings.shouldDeduplicateBuiltInSymbols && !ideCodegenSettings.shouldStubAndNotLinkUnboundSymbols) {
+            throw IllegalStateException(
+                "`shouldDeduplicateBuiltInSymbols` depends on `shouldStubAndNotLinkUnboundSymbols` being enabled. Deduplication of" +
+                        " built-in symbols hasn't been tested without stubbing and there is currently no use case for it without stubbing."
+            )
+        }
+    }
+
+    /**
+     * @param shouldStubOrphanedExpectSymbols See [stubOrphanedExpectSymbols].
+     * @param shouldDeduplicateBuiltInSymbols See [SymbolTableWithBuiltInsDeduplication].
+     */
+    data class IdeCodegenSettings(
+        val shouldStubAndNotLinkUnboundSymbols: Boolean = false,
+        val shouldStubOrphanedExpectSymbols: Boolean = false,
+        val shouldDeduplicateBuiltInSymbols: Boolean = false,
     )
 
     data class JvmIrBackendInput(
@@ -102,6 +123,7 @@ open class JvmIrCodegenFactory(
         val notifyCodegenStart: () -> Unit,
     ) : CodegenFactory.CodegenInput
 
+    @OptIn(ObsoleteDescriptorBasedAPI::class)
     override fun convertToIr(input: CodegenFactory.IrConversionInput): JvmIrBackendInput {
         val enableIdSignatures =
             input.configuration.getBoolean(JVMConfigurationKeys.LINK_VIA_SIGNATURES) ||
@@ -114,7 +136,10 @@ open class JvmIrCodegenFactory(
                 val signaturer =
                     if (enableIdSignatures) JvmIdSignatureDescriptor(mangler)
                     else DisabledIdSignatureDescriptor
-                val symbolTable = SymbolTable(signaturer, IrFactoryImpl)
+                val symbolTable = when {
+                    ideCodegenSettings.shouldDeduplicateBuiltInSymbols -> SymbolTableWithBuiltInsDeduplication(signaturer, IrFactoryImpl)
+                    else -> SymbolTable(signaturer, IrFactoryImpl)
+                }
                 mangler to symbolTable
             }
         val messageLogger = input.configuration.irMessageLogger
@@ -134,6 +159,13 @@ open class JvmIrCodegenFactory(
             jvmGeneratorExtensions,
             fragmentContext = if (evaluatorFragmentInfoForPsi2Ir != null) FragmentContext() else null,
         )
+
+        // Built-ins deduplication must be enabled immediately so that there is no chance for duplicate built-in symbols to occur. For
+        // example, the creation of `IrPluginContextImpl` might already lead to duplicate built-in symbols via `BuiltinSymbolsBase`.
+        if (symbolTable is SymbolTableWithBuiltInsDeduplication) {
+            (psi2irContext.irBuiltIns as? IrBuiltInsOverDescriptors)?.let { symbolTable.bindIrBuiltIns(it) }
+        }
+
         val pluginExtensions = IrGenerationExtension.getInstances(input.project)
 
         val stubGenerator =
@@ -207,8 +239,7 @@ open class JvmIrCodegenFactory(
             irLinker.deserializeIrModuleHeader(it, kotlinLibrary, _moduleName = it.name.asString())
         }
 
-
-        val irProviders = if (shouldStubAndNotLinkUnboundSymbols) {
+        val irProviders = if (ideCodegenSettings.shouldStubAndNotLinkUnboundSymbols) {
             listOf(stubGenerator)
         } else {
             val stubGeneratorForMissingClasses = DeclarationStubGeneratorForNotFoundClasses(stubGenerator)
@@ -231,6 +262,10 @@ open class JvmIrCodegenFactory(
 
         // We need to compile all files we reference in Klibs
         irModuleFragment.files.addAll(dependencies.flatMap { it.files })
+
+        if (ideCodegenSettings.shouldStubOrphanedExpectSymbols) {
+            irModuleFragment.stubOrphanedExpectSymbols(stubGenerator)
+        }
 
         if (!input.configuration.getBoolean(JVMConfigurationKeys.DO_NOT_CLEAR_BINDING_CONTEXT)) {
             val originalBindingContext = input.bindingContext as? CleanableBindingContext

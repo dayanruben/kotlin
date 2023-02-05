@@ -46,6 +46,8 @@ import org.jetbrains.kotlin.fir.scopes.impl.FirIntersectionOverrideStorage
 import org.jetbrains.kotlin.fir.scopes.impl.FirSubstitutionOverrideStorage
 import org.jetbrains.kotlin.fir.symbols.FirLazyDeclarationResolver
 import org.jetbrains.kotlin.fir.types.FirCorrespondingSupertypesCache
+import org.jetbrains.kotlin.fir.types.FirFunctionTypeKindService
+import org.jetbrains.kotlin.fir.types.FirFunctionTypeKindServiceImpl
 import org.jetbrains.kotlin.fir.types.TypeComponents
 import org.jetbrains.kotlin.incremental.components.EnumWhenTracker
 import org.jetbrains.kotlin.incremental.components.LookupTracker
@@ -71,6 +73,11 @@ fun FirSession.registerCommonComponents(languageVersionSettings: LanguageVersion
     register(FirSamConstructorStorage::class, FirSamConstructorStorage(this))
     register(FirOverrideService::class, FirOverrideService(this))
     register(FirDynamicMembersStorage::class, FirDynamicMembersStorage(this))
+}
+
+@OptIn(SessionConfiguration::class)
+fun FirSession.registerCommonComponentsAfterExtensionsAreConfigured() {
+    register(FirFunctionTypeKindService::class, FirFunctionTypeKindServiceImpl(this))
 }
 
 @OptIn(SessionConfiguration::class)

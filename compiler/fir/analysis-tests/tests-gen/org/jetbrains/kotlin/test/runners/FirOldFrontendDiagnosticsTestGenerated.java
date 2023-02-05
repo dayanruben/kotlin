@@ -18363,6 +18363,12 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
             }
 
             @Test
+            @TestMetadata("reservedConstructorsBodyInKotlinPre19.kt")
+            public void testReservedConstructorsBodyInKotlinPre19() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inlineClasses/reservedConstructorsBodyInKotlinPre19.kt");
+            }
+
+            @Test
             @TestMetadata("reservedMembersAndConstructsInsideInlineClass.kt")
             public void testReservedMembersAndConstructsInsideInlineClass() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/inlineClasses/reservedMembersAndConstructsInsideInlineClass.kt");
@@ -29945,6 +29951,12 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
             }
 
             @Test
+            @TestMetadata("smartcastToStarProjection.kt")
+            public void testSmartcastToStarProjection() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/smartCasts/smartcastToStarProjection.kt");
+            }
+
+            @Test
             @TestMetadata("thisWithLabel.kt")
             public void testThisWithLabel() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/smartCasts/thisWithLabel.kt");
@@ -33177,6 +33189,18 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
             }
 
             @Test
+            @TestMetadata("typeParameterChainInReceiver.kt")
+            public void testTypeParameterChainInReceiver() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/typeParameters/typeParameterChainInReceiver.kt");
+            }
+
+            @Test
+            @TestMetadata("typeParameterChainInReturnType.kt")
+            public void testTypeParameterChainInReturnType() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/typeParameters/typeParameterChainInReturnType.kt");
+            }
+
+            @Test
             @TestMetadata("upperBoundCannotBeArray.kt")
             public void testUpperBoundCannotBeArray() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/typeParameters/upperBoundCannotBeArray.kt");
@@ -35549,6 +35573,18 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
         @TestMetadata("kt54410.kt")
         public void testKt54410() throws Exception {
             runTest("compiler/testData/diagnostics/testsWithStdLib/kt54410.kt");
+        }
+
+        @Test
+        @TestMetadata("kt55503.kt")
+        public void testKt55503() throws Exception {
+            runTest("compiler/testData/diagnostics/testsWithStdLib/kt55503.kt");
+        }
+
+        @Test
+        @TestMetadata("kt55503_2.kt")
+        public void testKt55503_2() throws Exception {
+            runTest("compiler/testData/diagnostics/testsWithStdLib/kt55503_2.kt");
         }
 
         @Test

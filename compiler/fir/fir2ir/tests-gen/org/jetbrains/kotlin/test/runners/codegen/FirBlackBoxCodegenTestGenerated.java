@@ -10766,6 +10766,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         }
 
         @Test
+        @TestMetadata("suspendImplTypeParameters.kt")
+        public void testSuspendImplTypeParameters() throws Exception {
+            runTest("compiler/testData/codegen/box/coroutines/suspendImplTypeParameters.kt");
+        }
+
+        @Test
         @TestMetadata("suspendInCycle.kt")
         public void testSuspendInCycle() throws Exception {
             runTest("compiler/testData/codegen/box/coroutines/suspendInCycle.kt");
@@ -33029,6 +33035,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
             }
 
             @Test
+            @TestMetadata("expectActualDifferentExtensionReceiversOnOverloads.kt")
+            public void testExpectActualDifferentExtensionReceiversOnOverloads() throws Exception {
+                runTest("compiler/testData/codegen/box/multiplatform/multiModule/expectActualDifferentExtensionReceiversOnOverloads.kt");
+            }
+
+            @Test
             @TestMetadata("expectActualDifferentPackages.kt")
             public void testExpectActualDifferentPackages() throws Exception {
                 runTest("compiler/testData/codegen/box/multiplatform/multiModule/expectActualDifferentPackages.kt");
@@ -33080,6 +33092,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
             @TestMetadata("getRidOfDoubleBindingInFir2IrLazyProperty.kt")
             public void testGetRidOfDoubleBindingInFir2IrLazyProperty() throws Exception {
                 runTest("compiler/testData/codegen/box/multiplatform/multiModule/getRidOfDoubleBindingInFir2IrLazyProperty.kt");
+            }
+
+            @Test
+            @TestMetadata("independentCommonSourceModules.kt")
+            public void testIndependentCommonSourceModules() throws Exception {
+                runTest("compiler/testData/codegen/box/multiplatform/multiModule/independentCommonSourceModules.kt");
             }
 
             @Test
@@ -46561,6 +46579,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         @TestMetadata("objectInsideDelegation.kt")
         public void testObjectInsideDelegation() throws Exception {
             runTest("compiler/testData/codegen/box/regressions/objectInsideDelegation.kt");
+        }
+
+        @Test
+        @TestMetadata("recursiveDnnTypeInLambda.kt")
+        public void testRecursiveDnnTypeInLambda() throws Exception {
+            runTest("compiler/testData/codegen/box/regressions/recursiveDnnTypeInLambda.kt");
         }
 
         @Test

@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.fir.diagnostics
 
 import org.jetbrains.kotlin.KtSourceElement
+import org.jetbrains.kotlin.builtins.functions.FunctionTypeKind
 import org.jetbrains.kotlin.fir.symbols.impl.FirTypeParameterSymbol
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
 import org.jetbrains.kotlin.name.Name
@@ -49,6 +50,11 @@ object ConeDestructuringDeclarationsOnTopLevel : ConeDiagnostic {
 object ConeDanglingModifierOnTopLevel : ConeDiagnostic {
     override val reason: String
         get() = "Top level declaration expected"
+}
+
+class ConeAmbiguousFunctionTypeKinds(val kinds: List<FunctionTypeKind>) : ConeDiagnostic {
+    override val reason: String
+        get() = "There are multiple function kinds for functional type ref"
 }
 
 enum class DiagnosticKind {

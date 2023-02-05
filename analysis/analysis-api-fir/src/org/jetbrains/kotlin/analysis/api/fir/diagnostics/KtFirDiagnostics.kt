@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtVariableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.builtins.functions.FunctionTypeKind
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
@@ -1290,6 +1291,11 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
     abstract class NextAmbiguity : KtFirDiagnostic<PsiElement>() {
         override val diagnosticClass get() = NextAmbiguity::class
         abstract val candidates: List<KtSymbol>
+    }
+
+    abstract class AmbiguousFunctionTypeKind : KtFirDiagnostic<PsiElement>() {
+        override val diagnosticClass get() = AmbiguousFunctionTypeKind::class
+        abstract val kinds: List<FunctionTypeKind>
     }
 
     abstract class NoContextReceiver : KtFirDiagnostic<KtElement>() {

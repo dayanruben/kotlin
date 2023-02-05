@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.scopes.KtScope
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
+import org.jetbrains.kotlin.analysis.api.symbols.pointers.symbolPointerOfType
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.classes.lazyPub
@@ -25,12 +26,10 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.fileClasses.isJvmMultifileClassFile
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.light.classes.symbol.NullabilityType
 import org.jetbrains.kotlin.light.classes.symbol.analyzeForLightClasses
-import org.jetbrains.kotlin.light.classes.symbol.annotations.computeAnnotations
-import org.jetbrains.kotlin.light.classes.symbol.annotations.hasInlineOnlyAnnotation
-import org.jetbrains.kotlin.light.classes.symbol.annotations.hasJvmFieldAnnotation
+import org.jetbrains.kotlin.light.classes.symbol.annotations.*
 import org.jetbrains.kotlin.light.classes.symbol.fields.SymbolLightField
+import org.jetbrains.kotlin.light.classes.symbol.modifierLists.InitializedModifiersBox
 import org.jetbrains.kotlin.light.classes.symbol.modifierLists.SymbolLightClassModifierList
 import org.jetbrains.kotlin.light.classes.symbol.toPsiVisibilityForMember
 import org.jetbrains.kotlin.load.java.structure.LightClassOriginKind
@@ -64,23 +63,19 @@ class SymbolLightClassForFacade(
     private val _modifierList: PsiModifierList by lazyPub {
         SymbolLightClassModifierList(
             containingDeclaration = this,
-            staticModifiers = setOf(PsiModifier.PUBLIC, PsiModifier.FINAL),
-        ) { modifierList ->
-            if (multiFileClass) {
-                emptyList()
+            modifiersBox = InitializedModifiersBox(PsiModifier.PUBLIC, PsiModifier.FINAL),
+            annotationsBox = if (multiFileClass) {
+                EmptyAnnotationsBox
             } else {
-                withFileSymbols { fileSymbols ->
-                    fileSymbols.flatMap {
-                        it.computeAnnotations(
-                            modifierList = modifierList,
-                            nullability = NullabilityType.Unknown,
-                            annotationUseSiteTarget = AnnotationUseSiteTarget.FILE,
-                            includeAnnotationsWithoutSite = false,
-                        )
-                    }
-                }
-            }
-        }
+                GranularAnnotationsBox(
+                    annotationsProvider = SymbolAnnotationsProvider(
+                        ktModule = this.ktModule,
+                        annotatedSymbolPointer = firstFileInFacade.symbolPointerOfType<KtFileSymbol>(),
+                        annotationUseSiteTargetFilter = AnnotationUseSiteTarget.FILE.toOptionalFilter(),
+                    )
+                )
+            },
+        )
     }
 
     override fun getModifierList(): PsiModifierList = _modifierList
@@ -241,8 +236,7 @@ class SymbolLightClassForFacade(
         return JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_LANG_OBJECT, resolveScope)
     }
 
-    override fun getSupers(): Array<PsiClass> =
-        superClass?.let { arrayOf(it) } ?: arrayOf()
+    override fun getSupers(): Array<PsiClass> = superClass?.let { arrayOf(it) } ?: PsiClass.EMPTY_ARRAY
 
     override fun getSuperTypes(): Array<PsiClassType> =
         arrayOf(PsiType.getJavaLangObject(manager, resolveScope))

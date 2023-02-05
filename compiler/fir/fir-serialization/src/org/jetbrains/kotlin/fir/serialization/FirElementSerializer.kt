@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.fir.serialization
 
 import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.builtins.functions.FunctionTypeKind
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.ClassKind
@@ -36,7 +37,10 @@ import org.jetbrains.kotlin.fir.serialization.constant.EnumValue
 import org.jetbrains.kotlin.fir.serialization.constant.IntValue
 import org.jetbrains.kotlin.fir.serialization.constant.StringValue
 import org.jetbrains.kotlin.fir.serialization.constant.toConstantValue
-import org.jetbrains.kotlin.fir.symbols.impl.*
+import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirClassifierSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirTypeAliasSymbol
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.builder.buildResolvedTypeRef
 import org.jetbrains.kotlin.fir.types.impl.ConeClassLikeTypeImpl
@@ -678,7 +682,7 @@ class FirElementSerializer private constructor(
                 return lowerBound
             }
             is ConeClassLikeType -> {
-                if (type.isSuspendFunctionType(session)) {
+                if (type.functionTypeKind(session) == FunctionTypeKind.SuspendFunction) {
                     val runtimeFunctionType = type.suspendFunctionTypeToFunctionTypeWithContinuation(
                         session, StandardClassIds.Continuation
                     )
@@ -775,7 +779,7 @@ class FirElementSerializer private constructor(
         val annotation = buildAnnotation {
             annotationTypeRef = buildResolvedTypeRef {
                 this.type = ConeClassLikeTypeImpl(
-                    ConeClassLikeLookupTagImpl(CompilerConeAttributes.classIdByCompilerAttributeKey.getValue(attribute.key)),
+                    CompilerConeAttributes.classIdByCompilerAttributeKey.getValue(attribute.key).toLookupTag(),
                     emptyArray(),
                     isNullable = false
                 )

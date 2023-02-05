@@ -19,10 +19,9 @@ import org.jetbrains.kotlin.asJava.builder.LightMemberOrigin
 import org.jetbrains.kotlin.asJava.classes.lazyPub
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.light.classes.symbol.*
-import org.jetbrains.kotlin.light.classes.symbol.annotations.computeAnnotations
-import org.jetbrains.kotlin.light.classes.symbol.annotations.hasDeprecatedAnnotation
+import org.jetbrains.kotlin.light.classes.symbol.annotations.*
 import org.jetbrains.kotlin.light.classes.symbol.classes.SymbolLightClassBase
-import org.jetbrains.kotlin.light.classes.symbol.modifierLists.LazyModifiersBox
+import org.jetbrains.kotlin.light.classes.symbol.modifierLists.GranularModifiersBox
 import org.jetbrains.kotlin.light.classes.symbol.modifierLists.SymbolLightMemberModifierList
 import org.jetbrains.kotlin.light.classes.symbol.modifierLists.with
 import org.jetbrains.kotlin.name.JvmNames.TRANSIENT_ANNOTATION_CLASS_ID
@@ -88,7 +87,7 @@ internal class SymbolLightFieldForProperty private constructor(
 
     private val _isDeprecated: Boolean by lazyPub {
         withPropertySymbol { propertySymbol ->
-            propertySymbol.hasDeprecatedAnnotation(AnnotationUseSiteTarget.FIELD, acceptAnnotationsWithoutUseSite = true)
+            propertySymbol.hasDeprecatedAnnotation(AnnotationUseSiteTarget.FIELD.toOptionalFilter())
         }
     }
 
@@ -103,8 +102,8 @@ internal class SymbolLightFieldForProperty private constructor(
     override fun getName(): String = fieldName
 
     private fun computeModifiers(modifier: String): Map<String, Boolean>? = when (modifier) {
-        in LazyModifiersBox.VISIBILITY_MODIFIERS -> LazyModifiersBox.computeVisibilityForMember(ktModule, propertySymbolPointer)
-        in LazyModifiersBox.MODALITY_MODIFIERS -> {
+        in GranularModifiersBox.VISIBILITY_MODIFIERS -> GranularModifiersBox.computeVisibilityForMember(ktModule, propertySymbolPointer)
+        in GranularModifiersBox.MODALITY_MODIFIERS -> {
             val modality = withPropertySymbol { propertySymbol ->
                 if (propertySymbol.isVal) {
                     PsiModifier.FINAL
@@ -115,7 +114,7 @@ internal class SymbolLightFieldForProperty private constructor(
                 }
             }
 
-            LazyModifiersBox.MODALITY_MODIFIERS_MAP.with(modality)
+            GranularModifiersBox.MODALITY_MODIFIERS_MAP.with(modality)
         }
 
         PsiModifier.STATIC -> {
@@ -124,12 +123,20 @@ internal class SymbolLightFieldForProperty private constructor(
         }
 
         PsiModifier.VOLATILE -> withPropertySymbol { propertySymbol ->
-            val hasAnnotation = propertySymbol.hasAnnotation(VOLATILE_ANNOTATION_CLASS_ID, null)
+            val hasAnnotation = propertySymbol.hasAnnotation(
+                VOLATILE_ANNOTATION_CLASS_ID,
+                AnnotationUseSiteTarget.FIELD.toOptionalFilter(),
+            )
+
             mapOf(modifier to hasAnnotation)
         }
 
         PsiModifier.TRANSIENT -> withPropertySymbol { propertySymbol ->
-            val hasAnnotation = propertySymbol.hasAnnotation(TRANSIENT_ANNOTATION_CLASS_ID, null)
+            val hasAnnotation = propertySymbol.hasAnnotation(
+                TRANSIENT_ANNOTATION_CLASS_ID,
+                AnnotationUseSiteTarget.FIELD.toOptionalFilter(),
+            )
+
             mapOf(modifier to hasAnnotation)
         }
 
@@ -140,28 +147,29 @@ internal class SymbolLightFieldForProperty private constructor(
         val initializerValue = if (takePropertyVisibility) {
             emptyMap()
         } else {
-            LazyModifiersBox.VISIBILITY_MODIFIERS_MAP.with(PsiModifier.PRIVATE)
+            GranularModifiersBox.VISIBILITY_MODIFIERS_MAP.with(PsiModifier.PRIVATE)
         }
 
         SymbolLightMemberModifierList(
             containingDeclaration = this,
-            initialValue = initializerValue,
-            lazyModifiersComputer = ::computeModifiers,
-        ) { modifierList ->
-            withPropertySymbol { propertySymbol ->
-                val nullability = if (!(propertySymbol is KtKotlinPropertySymbol && propertySymbol.isLateInit)) {
-                    getTypeNullability(propertySymbol.returnType)
-                } else {
-                    NullabilityType.Unknown
+            modifiersBox = GranularModifiersBox(initializerValue, ::computeModifiers),
+            annotationsBox = GranularAnnotationsBox(
+                annotationsProvider = SymbolAnnotationsProvider(
+                    ktModule = ktModule,
+                    annotatedSymbolPointer = propertySymbolPointer,
+                    annotationUseSiteTargetFilter = AnnotationUseSiteTarget.FIELD.toOptionalFilter(),
+                ),
+                additionalAnnotationsProvider = NullabilityAnnotationsProvider {
+                    withPropertySymbol { propertySymbol ->
+                        if (!(propertySymbol is KtKotlinPropertySymbol && propertySymbol.isLateInit)) {
+                            getTypeNullability(propertySymbol.returnType)
+                        } else {
+                            NullabilityType.Unknown
+                        }
+                    }
                 }
-
-                propertySymbol.computeAnnotations(
-                    modifierList = modifierList,
-                    nullability = nullability,
-                    annotationUseSiteTarget = AnnotationUseSiteTarget.FIELD,
-                )
-            }
-        }
+            ),
+        )
     }
 
     override fun getModifierList(): PsiModifierList = _modifierList

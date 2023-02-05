@@ -27039,6 +27039,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                 runTest("compiler/testData/codegen/box/multiplatform/multiModule/enumEntryNameCall.kt");
             }
 
+            @TestMetadata("expectActualDifferentExtensionReceiversOnOverloads.kt")
+            public void testExpectActualDifferentExtensionReceiversOnOverloads() throws Exception {
+                runTest("compiler/testData/codegen/box/multiplatform/multiModule/expectActualDifferentExtensionReceiversOnOverloads.kt");
+            }
+
             @TestMetadata("expectActualMultiCommon.kt")
             public void testExpectActualMultiCommon() throws Exception {
                 runTest("compiler/testData/codegen/box/multiplatform/multiModule/expectActualMultiCommon.kt");
@@ -35862,6 +35867,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("objectInsideDelegation.kt")
         public void testObjectInsideDelegation() throws Exception {
             runTest("compiler/testData/codegen/box/regressions/objectInsideDelegation.kt");
+        }
+
+        @TestMetadata("recursiveDnnTypeInLambda.kt")
+        public void testRecursiveDnnTypeInLambda() throws Exception {
+            runTest("compiler/testData/codegen/box/regressions/recursiveDnnTypeInLambda.kt");
         }
 
         @TestMetadata("referenceToSelfInLocal.kt")

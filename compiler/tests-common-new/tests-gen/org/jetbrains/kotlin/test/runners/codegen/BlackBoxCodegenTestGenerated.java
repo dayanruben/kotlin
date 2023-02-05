@@ -31763,6 +31763,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
             }
 
             @Test
+            @TestMetadata("expectActualDifferentExtensionReceiversOnOverloads.kt")
+            public void testExpectActualDifferentExtensionReceiversOnOverloads() throws Exception {
+                runTest("compiler/testData/codegen/box/multiplatform/multiModule/expectActualDifferentExtensionReceiversOnOverloads.kt");
+            }
+
+            @Test
             @TestMetadata("expectActualMultiCommon.kt")
             public void testExpectActualMultiCommon() throws Exception {
                 runTest("compiler/testData/codegen/box/multiplatform/multiModule/expectActualMultiCommon.kt");
@@ -44497,6 +44503,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         @TestMetadata("objectInsideDelegation.kt")
         public void testObjectInsideDelegation() throws Exception {
             runTest("compiler/testData/codegen/box/regressions/objectInsideDelegation.kt");
+        }
+
+        @Test
+        @TestMetadata("recursiveDnnTypeInLambda.kt")
+        public void testRecursiveDnnTypeInLambda() throws Exception {
+            runTest("compiler/testData/codegen/box/regressions/recursiveDnnTypeInLambda.kt");
         }
 
         @Test

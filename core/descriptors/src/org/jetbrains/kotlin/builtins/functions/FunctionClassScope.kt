@@ -26,8 +26,8 @@ class FunctionClassScope(
 ) : GivenFunctionsMemberScope(storageManager, containingClass) {
     override fun computeDeclaredFunctions(): List<FunctionDescriptor> =
             when ((containingClass as FunctionClassDescriptor).functionKind) {
-                FunctionClassKind.Function -> listOf(FunctionInvokeDescriptor.create(containingClass, isSuspend = false))
-                FunctionClassKind.SuspendFunction -> listOf(FunctionInvokeDescriptor.create(containingClass, isSuspend = true))
+                FunctionTypeKind.Function -> listOf(FunctionInvokeDescriptor.create(containingClass, isSuspend = false))
+                FunctionTypeKind.SuspendFunction -> listOf(FunctionInvokeDescriptor.create(containingClass, isSuspend = true))
                 else -> emptyList()
             }
 }

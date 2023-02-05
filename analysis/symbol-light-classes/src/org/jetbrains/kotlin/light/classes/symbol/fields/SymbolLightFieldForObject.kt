@@ -17,12 +17,13 @@ import org.jetbrains.kotlin.analysis.api.symbols.pointers.KtSymbolPointer
 import org.jetbrains.kotlin.analysis.api.symbols.sourcePsiSafe
 import org.jetbrains.kotlin.asJava.builder.LightMemberOrigin
 import org.jetbrains.kotlin.asJava.classes.lazyPub
+import org.jetbrains.kotlin.light.classes.symbol.annotations.ComputeAllAtOnceAnnotationsBox
 import org.jetbrains.kotlin.light.classes.symbol.annotations.SymbolLightSimpleAnnotation
 import org.jetbrains.kotlin.light.classes.symbol.annotations.hasDeprecatedAnnotation
 import org.jetbrains.kotlin.light.classes.symbol.classes.SymbolLightClassForClassLike
 import org.jetbrains.kotlin.light.classes.symbol.compareSymbolPointers
 import org.jetbrains.kotlin.light.classes.symbol.isValid
-import org.jetbrains.kotlin.light.classes.symbol.modifierLists.LazyModifiersBox
+import org.jetbrains.kotlin.light.classes.symbol.modifierLists.GranularModifiersBox
 import org.jetbrains.kotlin.light.classes.symbol.modifierLists.SymbolLightMemberModifierList
 import org.jetbrains.kotlin.light.classes.symbol.nonExistentType
 import org.jetbrains.kotlin.light.classes.symbol.withSymbol
@@ -57,19 +58,22 @@ internal class SymbolLightFieldForObject private constructor(
     private val _modifierList: PsiModifierList by lazyPub {
         SymbolLightMemberModifierList(
             containingDeclaration = this,
-            initialValue = LazyModifiersBox.MODALITY_MODIFIERS_MAP.mutate {
-                it[PsiModifier.FINAL] = true
-                it[PsiModifier.STATIC] = true
+            modifiersBox = GranularModifiersBox(
+                initialValue = GranularModifiersBox.MODALITY_MODIFIERS_MAP.mutate {
+                    it[PsiModifier.FINAL] = true
+                    it[PsiModifier.STATIC] = true
+                },
+                computer = ::computeModifiers,
+            ),
+            annotationsBox = ComputeAllAtOnceAnnotationsBox { modifierList ->
+                listOf(SymbolLightSimpleAnnotation(NotNull::class.java.name, modifierList))
             },
-            lazyModifiersComputer = ::computeModifiers,
-        ) { modifierList ->
-            listOf(SymbolLightSimpleAnnotation(NotNull::class.java.name, modifierList))
-        }
+        )
     }
 
     private fun computeModifiers(modifier: String): Map<String, Boolean>? {
-        if (modifier !in LazyModifiersBox.VISIBILITY_MODIFIERS) return null
-        return LazyModifiersBox.computeVisibilityForMember(ktModule, objectSymbolPointer)
+        if (modifier !in GranularModifiersBox.VISIBILITY_MODIFIERS) return null
+        return GranularModifiersBox.computeVisibilityForMember(ktModule, objectSymbolPointer)
     }
 
     private val _isDeprecated: Boolean by lazyPub {

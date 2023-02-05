@@ -44,10 +44,11 @@ object FirJsSessionFactory : FirAbstractSessionFactory() {
             },
             registerExtraCheckers = { it.registerJsCheckers() },
             createKotlinScopeProvider = { FirKotlinScopeProvider { _, declaredMemberScope, _, _ -> declaredMemberScope } },
-            createProviders = { _, _, symbolProvider, generatedSymbolsProvider, dependencies ->
+            createProviders = { _, _, symbolProvider, generatedSymbolsProvider, syntheticFunctionInterfaceProvider, dependencies ->
                 listOfNotNull(
                     symbolProvider,
                     generatedSymbolsProvider,
+                    syntheticFunctionInterfaceProvider,
                     *dependencies.toTypedArray(),
                 )
             }
@@ -78,6 +79,7 @@ object FirJsSessionFactory : FirAbstractSessionFactory() {
                 // TODO: consider using "poisoning" provider for builtins to ensure that proper ones are taken from dependencies
                 // NOTE: it requires precise filtering for true nuiltins, like Function*
                 FirBuiltinSymbolProvider(session, builtinsModuleData, kotlinScopeProvider),
+                FirExtensionSyntheticFunctionInterfaceProvider(session, builtinsModuleData, kotlinScopeProvider),
             )
         }
     )

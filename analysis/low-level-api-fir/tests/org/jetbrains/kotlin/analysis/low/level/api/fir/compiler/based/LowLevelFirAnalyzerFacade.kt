@@ -10,13 +10,10 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.api.LLFirResolveSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.collectDiagnosticsForFile
 import org.jetbrains.kotlin.diagnostics.KtDiagnostic
 import org.jetbrains.kotlin.fir.AbstractFirAnalyzerFacade
-import org.jetbrains.kotlin.fir.backend.Fir2IrComponents
-import org.jetbrains.kotlin.fir.backend.Fir2IrExtensions
-import org.jetbrains.kotlin.fir.backend.Fir2IrResult
+import org.jetbrains.kotlin.fir.backend.*
 import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.fir.psi
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
-import org.jetbrains.kotlin.ir.util.SymbolTable
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.model.TestFile
 
@@ -40,8 +37,8 @@ class LowLevelFirAnalyzerFacade(
     override fun runResolution(): List<FirFile> = shouldNotBeCalled()
     override fun convertToIr(
         fir2IrExtensions: Fir2IrExtensions,
-        dependentComponents: List<Fir2IrComponents>,
-        symbolTable: SymbolTable?
+        commonMemberStorage: Fir2IrCommonMemberStorage,
+        irBuiltIns: IrBuiltInsOverFir?
     ): Fir2IrResult = shouldNotBeCalled()
 }
 

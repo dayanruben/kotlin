@@ -15,12 +15,8 @@ import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.backend.generators.*
-import org.jetbrains.kotlin.fir.backend.generators.DataClassMembersGenerator
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.isLocal
 import org.jetbrains.kotlin.fir.declarations.utils.isSynthetic
@@ -30,8 +26,6 @@ import org.jetbrains.kotlin.fir.extensions.extensionService
 import org.jetbrains.kotlin.fir.extensions.generatedMembers
 import org.jetbrains.kotlin.fir.extensions.generatedNestedClassifiers
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
-import org.jetbrains.kotlin.fir.signaturer.FirBasedSignatureComposer
-import org.jetbrains.kotlin.fir.signaturer.FirMangler
 import org.jetbrains.kotlin.fir.symbols.lazyDeclarationResolver
 import org.jetbrains.kotlin.ir.PsiIrFileEntry
 import org.jetbrains.kotlin.ir.declarations.*
@@ -40,7 +34,8 @@ import org.jetbrains.kotlin.ir.declarations.impl.IrModuleFragmentImpl
 import org.jetbrains.kotlin.ir.interpreter.IrInterpreter
 import org.jetbrains.kotlin.ir.interpreter.checker.EvaluationMode
 import org.jetbrains.kotlin.ir.interpreter.checker.IrConstTransformer
-import org.jetbrains.kotlin.ir.util.*
+import org.jetbrains.kotlin.ir.util.KotlinMangler
+import org.jetbrains.kotlin.ir.util.NaiveSourceBasedFileEntryImpl
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -60,12 +55,15 @@ class Fir2IrConverter(
         irGenerationExtensions: Collection<IrGenerationExtension>,
         fir2irVisitor: Fir2IrVisitor,
         fir2IrExtensions: Fir2IrExtensions,
+        runPreCacheBuiltinClasses: Boolean
     ) {
         session.lazyDeclarationResolver.disableLazyResolveContractChecks()
         for (firFile in allFirFiles) {
             registerFileAndClasses(firFile, irModuleFragment)
         }
-        classifierStorage.preCacheBuiltinClasses()
+        if (runPreCacheBuiltinClasses) {
+            classifierStorage.preCacheBuiltinClasses()
+        }
         // The file processing is performed phase-to-phase:
         //   1. Creation of all non-local regular classes
         //   2. Class header processing (type parameters, supertypes, this receiver)
@@ -431,9 +429,7 @@ class Fir2IrConverter(
             scopeSession: ScopeSession,
             firFiles: List<FirFile>,
             languageVersionSettings: LanguageVersionSettings,
-            signaturer: IdSignatureComposer,
             fir2IrExtensions: Fir2IrExtensions,
-            mangler: FirMangler,
             irMangler: KotlinMangler.IrMangler,
             irFactory: IrFactory,
             visibilityConverter: Fir2IrVisibilityConverter,
@@ -441,120 +437,41 @@ class Fir2IrConverter(
             irGenerationExtensions: Collection<IrGenerationExtension>,
             generateSignatures: Boolean,
             kotlinBuiltIns: KotlinBuiltIns,
-            dependentComponents: List<Fir2IrComponents>,
-            currentSymbolTable: SymbolTable?
-        ): Fir2IrResult {
-            if (!generateSignatures) {
-                return createModuleFragmentWithoutSignatures(
-                    session, scopeSession, firFiles, languageVersionSettings,
-                    fir2IrExtensions, mangler, irMangler, irFactory,
-                    visibilityConverter, specialSymbolProvider, irGenerationExtensions,
-                    kotlinBuiltIns, dependentComponents, currentSymbolTable
-                )
-            }
-            val signatureComposer = FirBasedSignatureComposer(
-                mangler,
-                dependentComposers = dependentComponents.map { it.signatureComposer as FirBasedSignatureComposer }
-            )
-            val symbolTable = createSymbolTable(signaturer, signatureComposer, irFactory, currentSymbolTable)
-            return createModuleFragmentWithSymbolTable(
-                session, scopeSession, firFiles, languageVersionSettings,
-                fir2IrExtensions, irMangler, irFactory, visibilityConverter,
-                specialSymbolProvider, irGenerationExtensions, signatureComposer,
-                symbolTable, generateSignatures = true, kotlinBuiltIns = kotlinBuiltIns, dependentComponents = dependentComponents
-            )
-        }
-
-        fun createModuleFragmentWithoutSignatures(
-            session: FirSession,
-            scopeSession: ScopeSession,
-            firFiles: List<FirFile>,
-            languageVersionSettings: LanguageVersionSettings,
-            fir2IrExtensions: Fir2IrExtensions,
-            mangler: FirMangler,
-            irMangler: KotlinMangler.IrMangler,
-            irFactory: IrFactory,
-            visibilityConverter: Fir2IrVisibilityConverter,
-            specialSymbolProvider: Fir2IrSpecialSymbolProvider,
-            irGenerationExtensions: Collection<IrGenerationExtension>,
-            kotlinBuiltIns: KotlinBuiltIns,
-            dependentComponents: List<Fir2IrComponents>,
-            currentSymbolTable: SymbolTable?
-        ): Fir2IrResult {
-            val signatureComposer = FirBasedSignatureComposer(mangler, dependentComposers = dependentComponents.map { it.signatureComposer as FirBasedSignatureComposer })
-            val signaturer = DescriptorSignatureComposerStub()
-            val symbolTable = createSymbolTable(signaturer, signatureComposer, irFactory, currentSymbolTable)
-            return createModuleFragmentWithSymbolTable(
-                session, scopeSession, firFiles, languageVersionSettings,
-                fir2IrExtensions, irMangler, irFactory, visibilityConverter,
-                specialSymbolProvider, irGenerationExtensions, signatureComposer,
-                symbolTable, generateSignatures = false, kotlinBuiltIns = kotlinBuiltIns, dependentComponents = dependentComponents
-            )
-        }
-
-        private fun createSymbolTable(
-            signaturer: IdSignatureComposer,
-            signatureComposer: FirBasedSignatureComposer,
-            irFactory: IrFactory,
-            currentSymbolTable: SymbolTable?
-        ): SymbolTable =
-            currentSymbolTable ?: SymbolTable(
-                signaturer = WrappedDescriptorSignatureComposer(signaturer, signatureComposer),
-                irFactory = irFactory
-            )
-
-        private fun createModuleFragmentWithSymbolTable(
-            session: FirSession,
-            scopeSession: ScopeSession,
-            firFiles: List<FirFile>,
-            languageVersionSettings: LanguageVersionSettings,
-            fir2IrExtensions: Fir2IrExtensions,
-            irMangler: KotlinMangler.IrMangler,
-            irFactory: IrFactory,
-            visibilityConverter: Fir2IrVisibilityConverter,
-            specialSymbolProvider: Fir2IrSpecialSymbolProvider,
-            irGenerationExtensions: Collection<IrGenerationExtension>,
-            signatureComposer: FirBasedSignatureComposer,
-            symbolTable: SymbolTable,
-            generateSignatures: Boolean,
-            kotlinBuiltIns: KotlinBuiltIns,
-            dependentComponents: List<Fir2IrComponents>
+            commonMemberStorage: Fir2IrCommonMemberStorage,
+            initializedIrBuiltIns: IrBuiltInsOverFir?
         ): Fir2IrResult {
             val moduleDescriptor = FirModuleDescriptor(session, kotlinBuiltIns)
             val components = Fir2IrComponentsStorage(
-                session, scopeSession, symbolTable, irFactory, signatureComposer, fir2IrExtensions, generateSignatures
+                session,
+                scopeSession,
+                commonMemberStorage.symbolTable,
+                irFactory,
+                commonMemberStorage.signatureComposer,
+                fir2IrExtensions,
+                generateSignatures
             )
             val converter = Fir2IrConverter(moduleDescriptor, components)
 
             components.converter = converter
-
-            val classifierStorage = Fir2IrClassifierStorage(components, dependentComponents.map { it.classifierStorage })
-            components.classifierStorage = classifierStorage
+            components.classifierStorage = Fir2IrClassifierStorage(components, commonMemberStorage)
             components.delegatedMemberGenerator = DelegatedMemberGenerator(components)
-            val declarationStorage = Fir2IrDeclarationStorage(components, moduleDescriptor, dependentComponents.map { it.declarationStorage })
-            components.declarationStorage = declarationStorage
+            components.declarationStorage = Fir2IrDeclarationStorage(components, moduleDescriptor, commonMemberStorage)
             components.visibilityConverter = visibilityConverter
-            val typeConverter = Fir2IrTypeConverter(components)
-            components.typeConverter = typeConverter
-            val irBuiltIns = dependentComponents.lastOrNull()?.irBuiltIns ?: IrBuiltInsOverFir(
+            components.typeConverter = Fir2IrTypeConverter(components)
+            val irBuiltIns = initializedIrBuiltIns ?: IrBuiltInsOverFir(
                 components, languageVersionSettings, moduleDescriptor, irMangler,
                 languageVersionSettings.getFlag(AnalysisFlags.builtInsFromSources) || kotlinBuiltIns !== DefaultBuiltIns.Instance
             )
             components.irBuiltIns = irBuiltIns
             val conversionScope = Fir2IrConversionScope()
             val fir2irVisitor = Fir2IrVisitor(components, conversionScope)
-            val builtIns = Fir2IrBuiltIns(components, specialSymbolProvider)
-            val annotationGenerator = AnnotationGenerator(components)
-            components.builtIns = builtIns
-            components.annotationGenerator = annotationGenerator
-            val fakeOverrideGenerator = FakeOverrideGenerator(components, conversionScope)
-            components.fakeOverrideGenerator = fakeOverrideGenerator
-            val callGenerator = CallAndReferenceGenerator(components, fir2irVisitor, conversionScope)
-            components.callGenerator = callGenerator
-            val irProvider = FirIrProvider(components)
-            components.irProviders = listOf(irProvider)
+            components.builtIns = Fir2IrBuiltIns(components, specialSymbolProvider)
+            components.annotationGenerator = AnnotationGenerator(components)
+            components.fakeOverrideGenerator = FakeOverrideGenerator(components, conversionScope)
+            components.callGenerator = CallAndReferenceGenerator(components, fir2irVisitor, conversionScope)
+            components.irProviders = listOf(FirIrProvider(components))
 
-            fir2IrExtensions.registerDeclarations(symbolTable)
+            fir2IrExtensions.registerDeclarations(commonMemberStorage.symbolTable)
 
             val irModuleFragment = IrModuleFragmentImpl(moduleDescriptor, irBuiltIns)
 
@@ -564,43 +481,11 @@ class Fir2IrConverter(
             }
 
             converter.runSourcesConversion(
-                allFirFiles, irModuleFragment, irGenerationExtensions, fir2irVisitor, fir2IrExtensions
+                allFirFiles, irModuleFragment, irGenerationExtensions, fir2irVisitor, fir2IrExtensions,
+                runPreCacheBuiltinClasses = initializedIrBuiltIns == null
             )
 
             return Fir2IrResult(irModuleFragment, components, moduleDescriptor)
         }
-    }
-}
-
-private class WrappedDescriptorSignatureComposer(
-    private val delegate: IdSignatureComposer,
-    private val firComposer: Fir2IrSignatureComposer
-) : IdSignatureComposer by delegate {
-    override fun withFileSignature(fileSignature: IdSignature.FileSignature, body: () -> Unit) {
-        firComposer.withFileSignature(fileSignature) {
-            delegate.withFileSignature(fileSignature, body)
-        }
-    }
-}
-
-private class DescriptorSignatureComposerStub : IdSignatureComposer {
-    override fun composeSignature(descriptor: DeclarationDescriptor): IdSignature? {
-        return null
-    }
-
-    override fun composeEnumEntrySignature(descriptor: ClassDescriptor): IdSignature? {
-        return null
-    }
-
-    override fun composeFieldSignature(descriptor: PropertyDescriptor): IdSignature? {
-        return null
-    }
-
-    override fun composeAnonInitSignature(descriptor: ClassDescriptor): IdSignature? {
-        return null
-    }
-
-    override fun withFileSignature(fileSignature: IdSignature.FileSignature, body: () -> Unit) {
-        body()
     }
 }
