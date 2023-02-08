@@ -1225,6 +1225,11 @@ public class CliTestGenerated extends AbstractCliTest {
             runTest("compiler/testData/cli/js/fir.args");
         }
 
+        @TestMetadata("firMpp.args")
+        public void testFirMpp() throws Exception {
+            runTest("compiler/testData/cli/js/firMpp.args");
+        }
+
         @TestMetadata("inlineCycle.args")
         public void testInlineCycle() throws Exception {
             runTest("compiler/testData/cli/js/inlineCycle.args");
@@ -1504,6 +1509,16 @@ public class CliTestGenerated extends AbstractCliTest {
         @TestMetadata("kotlinPackageWithFir.args")
         public void testKotlinPackageWithFir() throws Exception {
             runTest("compiler/testData/cli/metadata/kotlinPackageWithFir.args");
+        }
+
+        @TestMetadata("lambdaWithReceiver.args")
+        public void testLambdaWithReceiver() throws Exception {
+            runTest("compiler/testData/cli/metadata/lambdaWithReceiver.args");
+        }
+
+        @TestMetadata("lambdaWithReceiverWithFir.args")
+        public void testLambdaWithReceiverWithFir() throws Exception {
+            runTest("compiler/testData/cli/metadata/lambdaWithReceiverWithFir.args");
         }
 
         @TestMetadata("moduleName.args")

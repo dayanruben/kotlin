@@ -2316,18 +2316,22 @@ class DeclarationsConverter(
             }
         }
 
-        val name = convertValueParameterName(identifier.nameAsSafeName(), identifier, valueParameterDeclaration)
+        val name = convertValueParameterName(identifier.nameAsSafeName(), valueParameterDeclaration) { identifier }
 
+        val valueParameterSource = valueParameter.toFirSourceElement()
         return ValueParameter(
             isVal = isVal,
             isVar = isVar,
             modifiers = modifiers,
             returnTypeRef = firType
                 ?: when {
+                    valueParameterDeclaration == ValueParameterDeclaration.LAMBDA -> buildImplicitTypeRef {
+                        source = valueParameterSource.fakeElement(KtFakeSourceElementKind.ImplicitReturnTypeOfLambdaValueParameter)
+                    }
                     valueParameterDeclaration.shouldExplicitParameterTypeBePresent -> createNoTypeForParameterTypeRef()
                     else -> implicitType
                 },
-            source = valueParameter.toFirSourceElement(),
+            source = valueParameterSource,
             moduleData = baseModuleData,
             isFromPrimaryConstructor = valueParameterDeclaration == ValueParameterDeclaration.PRIMARY_CONSTRUCTOR,
             additionalAnnotations = additionalAnnotations,

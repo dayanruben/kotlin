@@ -3347,6 +3347,12 @@ public class FirJsCodegenBoxTestGenerated extends AbstractFirJsCodegenBoxTest {
             public void testAllFilesPresentInSerializability() throws Exception {
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/callableReference/serializability"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JS_IR, true);
             }
+
+            @Test
+            @TestMetadata("referenceToCompanionFunction.kt")
+            public void testReferenceToCompanionFunction() throws Exception {
+                runTest("compiler/testData/codegen/box/callableReference/serializability/referenceToCompanionFunction.kt");
+            }
         }
     }
 
@@ -7387,6 +7393,12 @@ public class FirJsCodegenBoxTestGenerated extends AbstractFirJsCodegenBoxTest {
         @TestMetadata("kt55494.kt")
         public void testKt55494() throws Exception {
             runTest("compiler/testData/codegen/box/coroutines/kt55494.kt");
+        }
+
+        @Test
+        @TestMetadata("kt56407.kt")
+        public void testKt56407() throws Exception {
+            runTest("compiler/testData/codegen/box/coroutines/kt56407.kt");
         }
 
         @Test
@@ -23029,6 +23041,12 @@ public class FirJsCodegenBoxTestGenerated extends AbstractFirJsCodegenBoxTest {
             }
 
             @Test
+            @TestMetadata("expectActualSimpleJs.kt")
+            public void testExpectActualSimpleJs() throws Exception {
+                runTest("compiler/testData/codegen/box/multiplatform/multiModule/expectActualSimpleJs.kt");
+            }
+
+            @Test
             @TestMetadata("expectActualTypealiasLink.kt")
             public void testExpectActualTypealiasLink() throws Exception {
                 runTest("compiler/testData/codegen/box/multiplatform/multiModule/expectActualTypealiasLink.kt");
@@ -25207,6 +25225,30 @@ public class FirJsCodegenBoxTestGenerated extends AbstractFirJsCodegenBoxTest {
         @TestMetadata("initOrderMultiModule.kt")
         public void testInitOrderMultiModule() throws Exception {
             runTest("compiler/testData/codegen/box/properties/initOrderMultiModule.kt");
+        }
+
+        @Test
+        @TestMetadata("initializerOfConstValWithConst.kt")
+        public void testInitializerOfConstValWithConst() throws Exception {
+            runTest("compiler/testData/codegen/box/properties/initializerOfConstValWithConst.kt");
+        }
+
+        @Test
+        @TestMetadata("initializerOfConstValWithConstExpr.kt")
+        public void testInitializerOfConstValWithConstExpr() throws Exception {
+            runTest("compiler/testData/codegen/box/properties/initializerOfConstValWithConstExpr.kt");
+        }
+
+        @Test
+        @TestMetadata("initializerOfValWithConstExpr.kt")
+        public void testInitializerOfValWithConstExpr() throws Exception {
+            runTest("compiler/testData/codegen/box/properties/initializerOfValWithConstExpr.kt");
+        }
+
+        @Test
+        @TestMetadata("initializerOfValWithNonConstExpr.kt")
+        public void testInitializerOfValWithNonConstExpr() throws Exception {
+            runTest("compiler/testData/codegen/box/properties/initializerOfValWithNonConstExpr.kt");
         }
 
         @Test

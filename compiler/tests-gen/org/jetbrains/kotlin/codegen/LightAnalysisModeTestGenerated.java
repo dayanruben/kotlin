@@ -3952,6 +3952,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                 runTest("compiler/testData/codegen/box/callableReference/serializability/noReflect.kt");
             }
 
+            @TestMetadata("referenceToCompanionFunction.kt")
+            public void testReferenceToCompanionFunction() throws Exception {
+                runTest("compiler/testData/codegen/box/callableReference/serializability/referenceToCompanionFunction.kt");
+            }
+
             @TestMetadata("reflectedIsNotSerialized.kt")
             public void testReflectedIsNotSerialized() throws Exception {
                 runTest("compiler/testData/codegen/box/callableReference/serializability/reflectedIsNotSerialized.kt");
@@ -8110,6 +8115,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("kt55494.kt")
         public void testKt55494() throws Exception {
             runTest("compiler/testData/codegen/box/coroutines/kt55494.kt");
+        }
+
+        @TestMetadata("kt56407.kt")
+        public void testKt56407() throws Exception {
+            runTest("compiler/testData/codegen/box/coroutines/kt56407.kt");
         }
 
         @TestMetadata("lastExpressionIsLoop.kt")
@@ -29312,6 +29322,26 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("initOrderMultiModule.kt")
         public void testInitOrderMultiModule() throws Exception {
             runTest("compiler/testData/codegen/box/properties/initOrderMultiModule.kt");
+        }
+
+        @TestMetadata("initializerOfConstValWithConst.kt")
+        public void testInitializerOfConstValWithConst() throws Exception {
+            runTest("compiler/testData/codegen/box/properties/initializerOfConstValWithConst.kt");
+        }
+
+        @TestMetadata("initializerOfConstValWithConstExpr.kt")
+        public void testInitializerOfConstValWithConstExpr() throws Exception {
+            runTest("compiler/testData/codegen/box/properties/initializerOfConstValWithConstExpr.kt");
+        }
+
+        @TestMetadata("initializerOfValWithConstExpr.kt")
+        public void testInitializerOfValWithConstExpr() throws Exception {
+            runTest("compiler/testData/codegen/box/properties/initializerOfValWithConstExpr.kt");
+        }
+
+        @TestMetadata("initializerOfValWithNonConstExpr.kt")
+        public void testInitializerOfValWithNonConstExpr() throws Exception {
+            runTest("compiler/testData/codegen/box/properties/initializerOfValWithNonConstExpr.kt");
         }
 
         @TestMetadata("javaGenericSynthProperty.kt")

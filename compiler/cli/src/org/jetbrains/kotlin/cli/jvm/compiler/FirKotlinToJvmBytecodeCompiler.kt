@@ -159,7 +159,7 @@ object FirKotlinToJvmBytecodeCompiler {
         performanceManager?.notifyIRTranslationStarted()
 
         val fir2IrExtensions = JvmFir2IrExtensions(moduleConfiguration, JvmIrDeserializerImpl(), JvmIrMangler)
-        val fir2IrResult = firResult.convertToIrAndActualize(
+        val fir2IrResult = firResult.convertToIrAndActualizeForJvm(
             fir2IrExtensions,
             irGenerationExtensions,
             linkViaSignatures = moduleConfiguration.getBoolean(JVMConfigurationKeys.LINK_VIA_SIGNATURES)
@@ -295,14 +295,6 @@ object FirKotlinToJvmBytecodeCompiler {
         val platformOutput = buildResolveAndCheckFir(platformSession, platformKtFiles, diagnosticsReporter)
 
         return if (syntaxErrors || diagnosticsReporter.hasErrors) null else FirResult(platformOutput, commonOutput)
-    }
-
-    private fun buildResolveAndCheckFir(
-        session: FirSession,
-        ktFiles: List<KtFile>,
-        diagnosticsReporter: BaseDiagnosticsCollector
-    ): ModuleCompilerAnalyzedOutput {
-        return resolveAndCheckFir(session, session.buildFirFromKtFiles(ktFiles), diagnosticsReporter)
     }
 
     private fun CompilationContext.runBackend(

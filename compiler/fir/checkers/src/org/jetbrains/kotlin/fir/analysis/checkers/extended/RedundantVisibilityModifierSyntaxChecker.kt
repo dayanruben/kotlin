@@ -59,20 +59,18 @@ object RedundantVisibilityModifierSyntaxChecker : FirDeclarationSyntaxChecker<Fi
     ) {
         var setterImplicitVisibility: Visibility? = null
 
-        context.withDeclaration(property) {
-            property.setter?.let { setter ->
-                val visibility = setter.implicitVisibility(it)
-                setterImplicitVisibility = visibility
-                checkElementAndReport(setter, visibility, property, it, reporter)
-            }
+        property.setter?.let { setter ->
+            val visibility = setter.implicitVisibility(context)
+            setterImplicitVisibility = visibility
+            checkElementAndReport(setter, visibility, property, context, reporter)
+        }
 
-            property.getter?.let { getter ->
-                checkElementAndReport(getter, property, it, reporter)
-            }
+        property.getter?.let { getter ->
+            checkElementAndReport(getter, property, context, reporter)
+        }
 
-            property.backingField?.let { field ->
-                checkElementAndReport(field, property, it, reporter)
-            }
+        property.backingField?.let { field ->
+            checkElementAndReport(field, property, context, reporter)
         }
 
         if (property.canMakeSetterMoreAccessible(setterImplicitVisibility)) {
@@ -117,10 +115,7 @@ object RedundantVisibilityModifierSyntaxChecker : FirDeclarationSyntaxChecker<Fi
             return
         }
 
-        val isAccessorWithSameVisibility = element is FirPropertyAccessor
-                && element.visibility == context.containingPropertyVisibility
-
-        if (element !is FirMemberDeclaration && !isAccessorWithSameVisibility) {
+        if (element !is FirMemberDeclaration) {
             return
         }
 
@@ -183,13 +178,10 @@ object RedundantVisibilityModifierSyntaxChecker : FirDeclarationSyntaxChecker<Fi
         return when {
             this is FirPropertyAccessor
                     && isSetter
-                    && context.containingDeclarations.size >= 2
-                    && context.containingDeclarations.asReversed()[1] is FirClass
+                    && context.containingDeclarations.last() is FirClass
                     && propertySymbol.isOverride -> findPropertyAccessorVisibility(this, context)
 
-            this is FirPropertyAccessor -> {
-                context.findClosest<FirProperty>()?.visibility ?: Visibilities.DEFAULT_VISIBILITY
-            }
+            this is FirPropertyAccessor -> propertySymbol.visibility
 
             this is FirConstructor -> {
                 val classSymbol = this.getContainingClassSymbol(context.session)
@@ -281,7 +273,4 @@ object RedundantVisibilityModifierSyntaxChecker : FirDeclarationSyntaxChecker<Fi
             scope.processOverriddenFunctions(function.symbol, it)
         }
     }
-
-    private val CheckerContext.containingPropertyVisibility
-        get() = (this.containingDeclarations.last() as? FirProperty)?.visibility
 }

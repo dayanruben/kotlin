@@ -578,7 +578,7 @@ open class RawFirBuilder(
             valueParameterDeclaration: ValueParameterDeclaration,
             additionalAnnotations: List<FirAnnotation>,
         ): FirValueParameter {
-            val name = convertValueParameterName(nameAsSafeName, nameIdentifier?.node?.text, valueParameterDeclaration)
+            val name = convertValueParameterName(nameAsSafeName, valueParameterDeclaration) { nameIdentifier?.node?.text }
             return buildValueParameter {
                 source = toFirSourceElement()
                 moduleData = baseModuleData
@@ -1583,7 +1583,7 @@ open class RawFirBuilder(
                         multiParameter
                     } else {
                         val typeRef = valueParameter.typeReference?.convertSafe() ?: buildImplicitTypeRef {
-                            source = implicitTypeRefSource
+                            source = valueParameter.toFirSourceElement().fakeElement(KtFakeSourceElementKind.ImplicitReturnTypeOfLambdaValueParameter)
                         }
                         convertValueParameter(valueParameter, symbol, typeRef, ValueParameterDeclaration.LAMBDA)
                     }
@@ -2104,9 +2104,8 @@ open class RawFirBuilder(
                     val parameter = clause.catchParameter?.let { ktParameter ->
                         val name = convertValueParameterName(
                             ktParameter.nameAsSafeName,
-                            ktParameter.nameIdentifier?.node?.text,
                             ValueParameterDeclaration.CATCH
-                        )
+                        ) { ktParameter.nameIdentifier?.node?.text }
 
                         buildProperty {
                             source = ktParameter.toFirSourceElement()
