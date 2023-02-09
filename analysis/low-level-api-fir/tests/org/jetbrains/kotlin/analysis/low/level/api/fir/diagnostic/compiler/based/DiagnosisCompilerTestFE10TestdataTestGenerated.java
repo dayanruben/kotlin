@@ -27573,6 +27573,18 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             }
 
             @Test
+            @TestMetadata("samConversionWithCondition.kt")
+            public void testSamConversionWithCondition() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/samConversions/samConversionWithCondition.kt");
+            }
+
+            @Test
+            @TestMetadata("samConversionWithConditionJava.kt")
+            public void testSamConversionWithConditionJava() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/samConversions/samConversionWithConditionJava.kt");
+            }
+
+            @Test
             @TestMetadata("samConversionsWithSmartCasts.kt")
             public void testSamConversionsWithSmartCasts() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/samConversions/samConversionsWithSmartCasts.kt");

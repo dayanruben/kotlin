@@ -9,6 +9,7 @@ import kotlinx.collections.immutable.PersistentSet
 import kotlinx.collections.immutable.persistentSetOf
 import org.jetbrains.kotlin.fir.FirAnnotationContainer
 import org.jetbrains.kotlin.fir.declarations.FirDeclaration
+import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.fir.expressions.FirGetClassCall
 import org.jetbrains.kotlin.fir.expressions.FirStatement
 import org.jetbrains.kotlin.fir.resolve.PersistentImplicitReceiverStack
@@ -24,13 +25,14 @@ class MutableCheckerContext private constructor(
     override val getClassCalls: MutableList<FirGetClassCall>,
     override val annotationContainers: MutableList<FirAnnotationContainer>,
     override var isContractBody: Boolean,
+    override var containingFile: FirFile?,
     sessionHolder: SessionHolder,
     returnTypeCalculator: ReturnTypeCalculator,
     override val suppressedDiagnostics: PersistentSet<String>,
     allInfosSuppressed: Boolean,
     allWarningsSuppressed: Boolean,
     allErrorsSuppressed: Boolean
-) : AbstractCheckerContext(sessionHolder, returnTypeCalculator, allInfosSuppressed, allWarningsSuppressed, allErrorsSuppressed) {
+) : CheckerContextForProvider(sessionHolder, returnTypeCalculator, allInfosSuppressed, allWarningsSuppressed, allErrorsSuppressed) {
     constructor(sessionHolder: SessionHolder, returnTypeCalculator: ReturnTypeCalculator) : this(
         PersistentImplicitReceiverStack(),
         mutableListOf(),
@@ -38,6 +40,7 @@ class MutableCheckerContext private constructor(
         mutableListOf(),
         mutableListOf(),
         isContractBody = false,
+        containingFile = null,
         sessionHolder,
         returnTypeCalculator,
         persistentSetOf(),
@@ -54,6 +57,7 @@ class MutableCheckerContext private constructor(
             getClassCalls,
             annotationContainers,
             isContractBody,
+            containingFile,
             sessionHolder,
             returnTypeCalculator,
             suppressedDiagnostics,
@@ -90,7 +94,7 @@ class MutableCheckerContext private constructor(
         getClassCalls.removeAt(getClassCalls.size - 1)
     }
 
-    override fun addAnnotationContainer(annotationContainer: FirAnnotationContainer): CheckerContext {
+    override fun addAnnotationContainer(annotationContainer: FirAnnotationContainer): CheckerContextForProvider {
         annotationContainers.add(annotationContainer)
         return this
     }
@@ -104,7 +108,7 @@ class MutableCheckerContext private constructor(
         allInfosSuppressed: Boolean,
         allWarningsSuppressed: Boolean,
         allErrorsSuppressed: Boolean
-    ): MutableCheckerContext {
+    ): CheckerContextForProvider {
         if (diagnosticNames.isEmpty()) return this
         return MutableCheckerContext(
             implicitReceiverStack,
@@ -113,6 +117,7 @@ class MutableCheckerContext private constructor(
             getClassCalls,
             annotationContainers,
             isContractBody,
+            containingFile,
             sessionHolder,
             returnTypeCalculator,
             suppressedDiagnostics.addAll(diagnosticNames),
@@ -122,15 +127,25 @@ class MutableCheckerContext private constructor(
         )
     }
 
-    override fun enterContractBody(): CheckerContext {
+    override fun enterContractBody(): CheckerContextForProvider {
         check(!isContractBody)
         isContractBody = true
         return this
     }
 
-    override fun exitContractBody(): CheckerContext {
+    override fun exitContractBody(): CheckerContextForProvider {
         check(isContractBody)
         isContractBody = false
+        return this
+    }
+
+    override fun enterFile(file: FirFile): CheckerContextForProvider {
+        containingFile = file
+        return this
+    }
+
+    override fun exitFile(file: FirFile): CheckerContextForProvider {
+        containingFile = file
         return this
     }
 }

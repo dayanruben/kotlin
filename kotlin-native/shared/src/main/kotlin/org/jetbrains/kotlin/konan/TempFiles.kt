@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.konan.file.*
  * Creates and stores temporary compiler outputs
  * If pathToTemporaryDir is given and is not empty then temporary outputs will be preserved
  */
-class TempFiles(outputPath: String, pathToTemporaryDir: String? = null) {
+class TempFiles(pathToTemporaryDir: String? = null) {
     fun dispose() {
         if (deleteOnExit) {
             // Note: this can throw an exception if a file deletion is failed for some reason (e.g. OS is Windows and the file is in use).
@@ -30,16 +30,7 @@ class TempFiles(outputPath: String, pathToTemporaryDir: String? = null) {
         }
     }
 
-    private val outputName = File(outputPath).name
     val deleteOnExit = pathToTemporaryDir == null || pathToTemporaryDir.isEmpty()
-
-    val nativeBinaryFile    by lazy { create(outputName,".kt.bc") }
-    val cAdapterCpp         by lazy { create("api", ".cpp") }
-    val cAdapterBitcode     by lazy { create("api", ".bc") }
-
-    val nativeBinaryFileName    get() = nativeBinaryFile.absolutePath
-    val cAdapterCppName         get() = cAdapterCpp.absolutePath
-    val cAdapterBitcodeName     get() = cAdapterBitcode.absolutePath
 
     private val dir by lazy {
         if (deleteOnExit) {

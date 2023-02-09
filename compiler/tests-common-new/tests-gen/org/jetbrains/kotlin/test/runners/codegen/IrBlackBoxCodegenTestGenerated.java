@@ -33123,6 +33123,18 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
             public void testKt_51753_2() throws Exception {
                 runTest("compiler/testData/codegen/box/multiplatform/multiModule/kt-51753-2.kt");
             }
+
+            @Test
+            @TestMetadata("kt-56329.kt")
+            public void testKt_56329() throws Exception {
+                runTest("compiler/testData/codegen/box/multiplatform/multiModule/kt-56329.kt");
+            }
+
+            @Test
+            @TestMetadata("valueClasses.kt")
+            public void testValueClasses() throws Exception {
+                runTest("compiler/testData/codegen/box/multiplatform/multiModule/valueClasses.kt");
+            }
         }
     }
 

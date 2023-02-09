@@ -135,7 +135,7 @@ dependencies {
 
     implementation("gradle.plugin.org.jetbrains.gradle.plugin.idea-ext:gradle-idea-ext:1.0.1")
 
-    implementation("org.gradle:test-retry-gradle-plugin:1.2.0")
+    implementation("org.gradle:test-retry-gradle-plugin:1.5.1")
     compileOnly("com.gradle:gradle-enterprise-gradle-plugin:3.11.2")
 
     compileOnly(gradleApi())
@@ -145,6 +145,8 @@ dependencies {
     val slackApiVersion = "1.2.0"
     val metadataVersion = "0.0.1-dev-10"
 
+    // See https://github.com/gradle/gradle/issues/22510
+    implementation("org.gradle.kotlin:gradle-kotlin-dsl-plugins:2.4.1")
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
     implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
     implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
