@@ -18,6 +18,8 @@ import org.jetbrains.kotlin.resolve.scopes.MemberScope
 import org.jetbrains.kotlin.storage.StorageManager
 import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.types.checker.KotlinTypeRefiner
+import org.jetbrains.kotlin.utils.IDEAPlatforms
+import org.jetbrains.kotlin.utils.IDEAPluginsCompatibilityAPI
 import org.jetbrains.kotlin.utils.addToStdlib.shouldNotBeCalled
 
 /**
@@ -31,9 +33,9 @@ import org.jetbrains.kotlin.utils.addToStdlib.shouldNotBeCalled
 class FunctionClassDescriptor(
     private val storageManager: StorageManager,
     private val containingDeclaration: PackageFragmentDescriptor,
-    val functionKind: FunctionTypeKind,
+    val functionTypeKind: FunctionTypeKind,
     val arity: Int
-) : AbstractClassDescriptor(storageManager, functionKind.numberedClassName(arity)) {
+) : AbstractClassDescriptor(storageManager, functionTypeKind.numberedClassName(arity)) {
 
     private val typeConstructor = FunctionTypeConstructor()
     private val memberScope = FunctionClassScope(storageManager, this)
@@ -95,7 +97,7 @@ class FunctionClassDescriptor(
     private inner class FunctionTypeConstructor : AbstractClassTypeConstructor(storageManager) {
         override fun computeSupertypes(): Collection<KotlinType> {
             // For K{Suspend}Function{n}, add corresponding numbered {Suspend}Function{n} class, e.g. {Suspend}Function2 for K{Suspend}Function2
-            val supertypes = when (functionKind) {
+            val supertypes = when (functionTypeKind) {
                 FunctionTypeKind.Function -> // Function$N <: Function
                     listOf(functionClassId)
                 FunctionTypeKind.KFunction -> // KFunction$N <: KFunction
@@ -137,4 +139,7 @@ class FunctionClassDescriptor(
         private val functionClassId = ClassId(BUILT_INS_PACKAGE_FQ_NAME, Name.identifier("Function"))
         private val kFunctionClassId = ClassId(KOTLIN_REFLECT_FQ_NAME, Name.identifier("KFunction"))
     }
+
+    @IDEAPluginsCompatibilityAPI(IDEAPlatforms._223, message = "Please migrate to the functionTypeKind", plugins = "android")
+    val functionKind: FunctionClassKind = FunctionClassKind.getFunctionClassKind(functionTypeKind)
 }

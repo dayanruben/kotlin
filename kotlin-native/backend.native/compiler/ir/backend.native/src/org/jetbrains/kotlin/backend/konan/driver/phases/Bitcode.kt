@@ -8,11 +8,12 @@ package org.jetbrains.kotlin.backend.konan.driver.phases
 import llvm.LLVMDumpModule
 import llvm.LLVMModuleRef
 import llvm.LLVMWriteBitcodeToFile
-import org.jetbrains.kotlin.backend.common.phaser.ActionState
+import org.jetbrains.kotlin.backend.common.LoggingContext
 import org.jetbrains.kotlin.backend.konan.*
 import org.jetbrains.kotlin.backend.konan.NativeGenerationState
 import org.jetbrains.kotlin.backend.konan.checkLlvmModuleExternalCalls
 import org.jetbrains.kotlin.backend.konan.createLTOFinalPipelineConfig
+import org.jetbrains.kotlin.backend.konan.driver.BasicPhaseContext
 import org.jetbrains.kotlin.backend.konan.driver.PhaseContext
 import org.jetbrains.kotlin.backend.konan.driver.PhaseEngine
 import org.jetbrains.kotlin.backend.konan.driver.utilities.LlvmIrHolder
@@ -22,6 +23,7 @@ import org.jetbrains.kotlin.backend.konan.llvm.coverage.runCoveragePass
 import org.jetbrains.kotlin.backend.konan.llvm.verifyModule
 import org.jetbrains.kotlin.backend.konan.optimizations.RemoveRedundantSafepointsPass
 import org.jetbrains.kotlin.backend.konan.optimizations.removeMultipleThreadDataLoads
+import org.jetbrains.kotlin.konan.target.SanitizerKind
 import java.io.File
 
 
@@ -58,16 +60,46 @@ internal val RewriteExternalCallsCheckerGlobals = createSimpleNamedCompilerPhase
     addFunctionsListSymbolForChecker(context)
 }
 
-internal val BitcodeOptimizationPhase = createSimpleNamedCompilerPhase<NativeGenerationState, Unit>(
-        name = "BitcodeOptimization",
+internal class OptimizationState(
+        konanConfig: KonanConfig,
+        val llvmConfig: LlvmPipelineConfig
+) : BasicPhaseContext(konanConfig)
+
+internal fun optimizationPipelinePass(name: String, description: String, pipeline: (LlvmPipelineConfig, LoggingContext) -> LlvmOptimizationPipeline) =
+        createSimpleNamedCompilerPhase<OptimizationState, LLVMModuleRef>(
+                name = name,
+                description = description,
+                postactions = getDefaultLlvmModuleActions(),
+        ) { context, module ->
+            pipeline(context.llvmConfig, context).use {
+                it.execute(module)
+            }
+        }
+
+
+internal val MandatoryBitcodeLLVMPostprocessingPhase = optimizationPipelinePass(
+        name = "MandatoryBitcodeLLVMPostprocessingPhase",
+        description = "Mandatory bitcode llvm postprocessing",
+        pipeline = ::MandatoryOptimizationPipeline,
+)
+
+internal val ModuleBitcodeOptimizationPhase = optimizationPipelinePass(
+        name = "ModuleBitcodeOptimization",
         description = "Optimize bitcode",
-        postactions = getDefaultLlvmModuleActions(),
-) { context, _ ->
-    val config = createLTOFinalPipelineConfig(context, context.llvm.targetTriple, closedWorld = context.llvmModuleSpecification.isFinal)
-    LlvmOptimizationPipeline(config, context.llvm.module, context).use {
-        it.run()
-    }
-}
+        pipeline = ::ModuleOptimizationPipeline,
+)
+
+internal val LTOBitcodeOptimizationPhase = optimizationPipelinePass(
+        name = "LTOBitcodeOptimization",
+        description = "Runs llvm lto pipeline",
+        pipeline = ::LTOOptimizationPipeline
+)
+
+internal val ThreadSanitizerPhase = optimizationPipelinePass(
+        name = "ThreadSanitizer",
+        description = "Prepare to run with thread sanitizer",
+        pipeline = ::ThreadSanitizerPipeline,
+)
 
 internal val CoveragePhase = createSimpleNamedCompilerPhase<NativeGenerationState, Unit>(
         name = "Coverage",
@@ -126,7 +158,23 @@ internal fun PhaseEngine<NativeGenerationState>.runBitcodePostProcessing() {
     if (checkExternalCalls) {
         runPhase(CheckExternalCallsPhase)
     }
-    runPhase(BitcodeOptimizationPhase)
+    val optimizationConfig = createLTOFinalPipelineConfig(
+            context,
+            context.llvm.targetTriple,
+            closedWorld = context.llvmModuleSpecification.isFinal,
+            timePasses = context.config.flexiblePhaseConfig.needProfiling,
+    )
+    useContext(OptimizationState(context.config, optimizationConfig)) {
+        val module = this@runBitcodePostProcessing.context.llvmModule
+        it.runPhase(MandatoryBitcodeLLVMPostprocessingPhase, module)
+        it.runPhase(ModuleBitcodeOptimizationPhase, module)
+        it.runPhase(LTOBitcodeOptimizationPhase, module)
+        when (context.config.sanitizer) {
+            SanitizerKind.THREAD -> it.runPhase(ThreadSanitizerPhase, module)
+            SanitizerKind.ADDRESS -> context.reportCompilationError("Address sanitizer is not supported yet")
+            null -> {}
+        }
+    }
     runPhase(CoveragePhase)
     if (context.config.memoryModel == MemoryModel.EXPERIMENTAL) {
         runPhase(RemoveRedundantSafepointsPhase)
