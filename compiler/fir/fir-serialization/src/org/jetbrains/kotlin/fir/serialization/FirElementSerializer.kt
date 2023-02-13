@@ -188,7 +188,8 @@ class FirElementSerializer private constructor(
         }
 
         fun FirClass.nestedClassifiers(): List<FirClassifierSymbol<*>> {
-            val scope = defaultType().scope(session, scopeSession, FakeOverrideTypeCalculator.DoNothing, requiredPhase = null) ?: return emptyList()
+            val scope =
+                defaultType().scope(session, scopeSession, FakeOverrideTypeCalculator.DoNothing, requiredPhase = null) ?: return emptyList()
             return buildList {
                 scope.getClassifierNames().mapNotNullTo(this) { scope.getSingleClassifier(it) }
                 addAll(providedNestedClassifiers)
@@ -432,8 +433,9 @@ class FirElementSerializer private constructor(
             simpleFunction?.isExternal == true,
             simpleFunction?.isSuspend == true,
             simpleFunction?.isExpect == true,
-            true // TODO: supply 'hasStableParameterNames' flag for metadata
+            shouldSetStableParameterNames(simpleFunction),
         )
+
         if (flags != builder.flags) {
             builder.flags = flags
         }
@@ -506,6 +508,15 @@ class FirElementSerializer private constructor(
         return builder
     }
 
+    private fun shouldSetStableParameterNames(simpleFunction: FirSimpleFunction?): Boolean {
+        return when {
+            simpleFunction?.hasStableParameterNames == true -> true
+            // for backward compatibility with K1, remove this line to fix KT-4758
+            simpleFunction?.origin == FirDeclarationOrigin.Delegated -> true
+            else -> false
+        }
+    }
+
     private fun typeAliasProto(typeAlias: FirTypeAlias): ProtoBuf.TypeAlias.Builder? = whileAnalysing(session, typeAlias) {
         if (!extension.shouldSerializeTypeAlias(typeAlias)) return null
 
@@ -569,7 +580,7 @@ class FirElementSerializer private constructor(
             constructor.nonSourceAnnotations(session).isNotEmpty(),
             ProtoEnumFlags.visibility(normalizeVisibility(constructor)),
             !constructor.isPrimary,
-            true // TODO: supply 'hasStableParameterNames' flag for metadata
+            constructor.hasStableParameterNames,
         )
         if (flags != builder.flags) {
             builder.flags = flags
@@ -636,36 +647,37 @@ class FirElementSerializer private constructor(
         return builder
     }
 
-    private fun typeParameterProto(typeParameter: FirTypeParameter): ProtoBuf.TypeParameter.Builder = whileAnalysing(session, typeParameter) {
-        val builder = ProtoBuf.TypeParameter.newBuilder()
+    private fun typeParameterProto(typeParameter: FirTypeParameter): ProtoBuf.TypeParameter.Builder =
+        whileAnalysing(session, typeParameter) {
+            val builder = ProtoBuf.TypeParameter.newBuilder()
 
-        builder.id = getTypeParameterId(typeParameter)
+            builder.id = getTypeParameterId(typeParameter)
 
-        builder.name = getSimpleNameIndex(typeParameter.name)
+            builder.name = getSimpleNameIndex(typeParameter.name)
 
-        if (typeParameter.isReified != builder.reified) {
-            builder.reified = typeParameter.isReified
-        }
-
-        val variance = ProtoEnumFlags.variance(typeParameter.variance)
-        if (variance != builder.variance) {
-            builder.variance = variance
-        }
-        extension.serializeTypeParameter(typeParameter, builder)
-
-        val upperBounds = typeParameter.bounds
-        if (upperBounds.size == 1 && upperBounds.single() is FirImplicitNullableAnyTypeRef) return builder
-
-        for (upperBound in upperBounds) {
-            if (useTypeTable()) {
-                builder.addUpperBoundId(typeId(upperBound))
-            } else {
-                builder.addUpperBound(typeProto(upperBound))
+            if (typeParameter.isReified != builder.reified) {
+                builder.reified = typeParameter.isReified
             }
-        }
 
-        return builder
-    }
+            val variance = ProtoEnumFlags.variance(typeParameter.variance)
+            if (variance != builder.variance) {
+                builder.variance = variance
+            }
+            extension.serializeTypeParameter(typeParameter, builder)
+
+            val upperBounds = typeParameter.bounds
+            if (upperBounds.size == 1 && upperBounds.single() is FirImplicitNullableAnyTypeRef) return builder
+
+            for (upperBound in upperBounds) {
+                if (useTypeTable()) {
+                    builder.addUpperBoundId(typeId(upperBound))
+                } else {
+                    builder.addUpperBound(typeProto(upperBound))
+                }
+            }
+
+            return builder
+        }
 
     fun typeId(typeRef: FirTypeRef): Int {
         if (typeRef !is FirResolvedTypeRef) {
@@ -978,7 +990,8 @@ class FirElementSerializer private constructor(
     private fun serializeVersionRequirementFromRequireKotlin(annotation: FirAnnotation): ProtoBuf.VersionRequirement.Builder? {
         val argumentMapping = annotation.argumentMapping.mapping
 
-        val versionString = (argumentMapping[RequireKotlinConstants.VERSION]?.toConstantValue(session) as? StringValue)?.value ?: return null
+        val versionString =
+            (argumentMapping[RequireKotlinConstants.VERSION]?.toConstantValue(session) as? StringValue)?.value ?: return null
         val matchResult = RequireKotlinConstants.VERSION_REGEX.matchEntire(versionString) ?: return null
 
         val major = matchResult.groupValues.getOrNull(1)?.toIntOrNull() ?: return null
