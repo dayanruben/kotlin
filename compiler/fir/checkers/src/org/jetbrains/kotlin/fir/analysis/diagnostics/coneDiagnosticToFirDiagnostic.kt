@@ -225,6 +225,10 @@ private fun mapInapplicableCandidateError(
                 )
             }
 
+            // We don't report anything here, because there are already some errors inside the call or declaration
+            // And the errors should be reported there
+            is ErrorTypeInArguments -> null
+
             is MultipleContextReceiversApplicableForExtensionReceivers ->
                 FirErrors.AMBIGUOUS_CALL_WITH_IMPLICIT_CONTEXT_RECEIVER.createOn(qualifiedAccessSource ?: source)
 
@@ -375,10 +379,6 @@ private fun ConstraintSystemError.toDiagnostic(
 
             when (position) {
                 is ConeExpectedTypeConstraintPosition -> {
-                    if (position.expectedTypeMismatchIsReportedInChecker) {
-                        errorsToIgnore.add(this)
-                        return null
-                    }
                     val inferredType =
                         if (!lowerConeType.isNullableNothing)
                             lowerConeType

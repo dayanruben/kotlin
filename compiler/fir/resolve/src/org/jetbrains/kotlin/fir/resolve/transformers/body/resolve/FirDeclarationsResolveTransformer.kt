@@ -285,7 +285,13 @@ open class FirDeclarationsResolveTransformer(transformer: FirAbstractBodyResolve
 
             val stubTypeCompletionResultsWriter = FirStubTypeTransformer(finalSubstitutor)
             property.transformSingle(stubTypeCompletionResultsWriter, null)
-            property.replaceReturnTypeRef(property.returnTypeRef.approximateDeclarationType(session, property.visibilityForApproximation(), property.isLocal))
+            property.replaceReturnTypeRef(
+                property.returnTypeRef.approximateDeclarationType(
+                    session,
+                    property.visibilityForApproximation(),
+                    property.isLocal
+                )
+            )
 
             val callCompletionResultsWriter = callCompleter.createCompletionResultsWriter(
                 finalSubstitutor,
@@ -728,11 +734,9 @@ open class FirDeclarationsResolveTransformer(transformer: FirAbstractBodyResolve
             }
             is ResolutionMode.WithExpectedType ->
                 transformAnonymousFunctionWithExpectedType(anonymousFunction, data.expectedTypeRef, data)
-            is ResolutionMode.WithSuggestedType ->
-                transformAnonymousFunctionWithExpectedType(anonymousFunction, data.suggestedTypeRef, data)
             is ResolutionMode.ContextIndependent, is ResolutionMode.AssignmentLValue, is ResolutionMode.ReceiverResolution ->
                 transformAnonymousFunctionWithExpectedType(anonymousFunction, buildImplicitTypeRef(), data)
-            is ResolutionMode.WithStatus, is ResolutionMode.WithExpectedTypeFromCast ->
+            is ResolutionMode.WithStatus ->
                 throw AssertionError("Should not be here in WithStatus/WithExpectedTypeFromCast mode")
         }
     }
@@ -747,7 +751,10 @@ open class FirDeclarationsResolveTransformer(transformer: FirAbstractBodyResolve
         val lambdaType = anonymousFunction.typeRef
         return context.withAnonymousFunction(anonymousFunction, components, data) {
             withFullBodyResolve {
-                transformFunction(anonymousFunction, withExpectedType(expectedReturnTypeRef)) as FirAnonymousFunction
+                transformFunction(
+                    anonymousFunction,
+                    expectedReturnTypeRef?.let(::withExpectedType) ?: ResolutionMode.ContextDependent
+                ) as FirAnonymousFunction
             }
         }.apply { replaceTypeRef(lambdaType) }
     }
@@ -885,12 +892,15 @@ open class FirDeclarationsResolveTransformer(transformer: FirAbstractBodyResolve
         data: ResolutionMode,
     ): FirStatement = whileAnalysing(session, backingField) {
         val propertyType = data.expectedType
-        val initializerData = if (backingField.returnTypeRef is FirResolvedTypeRef) {
-            withExpectedType(backingField.returnTypeRef)
-        } else if (propertyType != null) {
-            ResolutionMode.WithSuggestedType(propertyType)
-        } else {
-            ResolutionMode.ContextDependent
+        val initializerData = when {
+            backingField.returnTypeRef is FirResolvedTypeRef -> withExpectedType(backingField.returnTypeRef)
+
+            propertyType is FirResolvedTypeRef ->
+                ResolutionMode.WithExpectedType(propertyType, shouldBeStrictlyEnforced = false)
+
+            propertyType != null -> ResolutionMode.ContextIndependent
+
+            else -> ResolutionMode.ContextDependent
         }
         backingField.transformInitializer(transformer, initializerData)
         if (

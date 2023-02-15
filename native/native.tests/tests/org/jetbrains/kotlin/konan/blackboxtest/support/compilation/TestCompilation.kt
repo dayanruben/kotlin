@@ -31,6 +31,7 @@ internal abstract class BasicCompilation<A : TestCompilationArtifact>(
     protected val home: KotlinNativeHome,
     private val classLoader: KotlinNativeClassLoader,
     private val optimizationMode: OptimizationMode,
+    private val compilerOutputInterceptor: CompilerOutputInterceptor,
     protected val freeCompilerArgs: TestCompilerArgs,
     protected val dependencies: CategorizedDependencies,
     protected val expectedArtifact: A
@@ -52,7 +53,6 @@ internal abstract class BasicCompilation<A : TestCompilationArtifact>(
         optimizationMode.compilerFlag?.let { compilerFlag -> add(compilerFlag) }
         add(
             "-enable-assertions",
-            "-Xskip-prerelease-check",
             "-Xverify-ir=error"
         )
         addFlattened(binaryOptions.entries) { (name, value) -> listOf("-Xbinary=$name=$value") }
@@ -83,10 +83,18 @@ internal abstract class BasicCompilation<A : TestCompilationArtifact>(
         val loggedCompilerParameters = LoggedData.CompilerParameters(home, compilerArgs, sourceModules)
 
         val (loggedCompilerCall: LoggedData, result: TestCompilationResult.ImmediateResult<out A>) = try {
-            val (exitCode, compilerOutput, compilerOutputHasErrors, duration) = callCompiler(
-                compilerArgs = compilerArgs,
-                kotlinNativeClassLoader = classLoader.classLoader
-            )
+            val compilerToolCallResult = when (compilerOutputInterceptor) {
+                CompilerOutputInterceptor.DEFAULT -> callCompiler(
+                    compilerArgs = compilerArgs,
+                    kotlinNativeClassLoader = classLoader.classLoader
+                )
+                CompilerOutputInterceptor.NONE -> callCompilerWithoutOutputInterceptor(
+                    compilerArgs = compilerArgs,
+                    kotlinNativeClassLoader = classLoader.classLoader
+                )
+            }
+
+            val (exitCode, compilerOutput, compilerOutputHasErrors, duration) = compilerToolCallResult
 
             val loggedCompilationToolCall =
                 LoggedData.CompilationToolCall("COMPILER", loggedCompilerParameters, exitCode, compilerOutput, compilerOutputHasErrors, duration)
@@ -117,6 +125,7 @@ internal abstract class SourceBasedCompilation<A : TestCompilationArtifact>(
     home: KotlinNativeHome,
     classLoader: KotlinNativeClassLoader,
     optimizationMode: OptimizationMode,
+    compilerOutputInterceptor: CompilerOutputInterceptor,
     private val memoryModel: MemoryModel,
     private val threadStateChecker: ThreadStateChecker,
     private val sanitizer: Sanitizer,
@@ -132,6 +141,7 @@ internal abstract class SourceBasedCompilation<A : TestCompilationArtifact>(
     home = home,
     classLoader = classLoader,
     optimizationMode = optimizationMode,
+    compilerOutputInterceptor = compilerOutputInterceptor,
     freeCompilerArgs = freeCompilerArgs,
     dependencies = dependencies,
     expectedArtifact = expectedArtifact
@@ -166,6 +176,7 @@ internal class LibraryCompilation(
     home = settings.get(),
     classLoader = settings.get(),
     optimizationMode = settings.get(),
+    compilerOutputInterceptor = settings.get(),
     memoryModel = settings.get(),
     threadStateChecker = settings.get(),
     sanitizer = settings.get(),
@@ -250,6 +261,7 @@ internal class ExecutableCompilation(
     home = settings.get(),
     classLoader = settings.get(),
     optimizationMode = settings.get(),
+    compilerOutputInterceptor = settings.get(),
     memoryModel = settings.get(),
     threadStateChecker = settings.get(),
     sanitizer = settings.get(),
@@ -333,6 +345,7 @@ internal class StaticCacheCompilation(
     home = settings.get(),
     classLoader = settings.get(),
     optimizationMode = settings.get(),
+    compilerOutputInterceptor = settings.get(),
     freeCompilerArgs = freeCompilerArgs,
     dependencies = CategorizedDependencies(dependencies),
     expectedArtifact = expectedArtifact

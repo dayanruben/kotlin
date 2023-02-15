@@ -10808,6 +10808,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         }
 
         @Test
+        @TestMetadata("suspendImplTypeParametersOuterClass.kt")
+        public void testSuspendImplTypeParametersOuterClass() throws Exception {
+            runTest("compiler/testData/codegen/box/coroutines/suspendImplTypeParametersOuterClass.kt");
+        }
+
+        @Test
         @TestMetadata("suspendInCycle.kt")
         public void testSuspendInCycle() throws Exception {
             runTest("compiler/testData/codegen/box/coroutines/suspendInCycle.kt");
@@ -18320,6 +18326,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         }
 
         @Test
+        @TestMetadata("callableReferenceConversionTopLevel.kt")
+        public void testCallableReferenceConversionTopLevel() throws Exception {
+            runTest("compiler/testData/codegen/box/fir/callableReferenceConversionTopLevel.kt");
+        }
+
+        @Test
         @TestMetadata("callableReferenceToJavaField.kt")
         public void testCallableReferenceToJavaField() throws Exception {
             runTest("compiler/testData/codegen/box/fir/callableReferenceToJavaField.kt");
@@ -18329,12 +18341,6 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         @TestMetadata("callableReferenceToStaticFunction.kt")
         public void testCallableReferenceToStaticFunction() throws Exception {
             runTest("compiler/testData/codegen/box/fir/callableReferenceToStaticFunction.kt");
-        }
-
-        @Test
-        @TestMetadata("cannotCastToFunction.kt")
-        public void testCannotCastToFunction() throws Exception {
-            runTest("compiler/testData/codegen/box/fir/cannotCastToFunction.kt");
         }
 
         @Test
@@ -28825,6 +28831,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         @TestMetadata("superCallOfPrintStackTrace.kt")
         public void testSuperCallOfPrintStackTrace() throws Exception {
             runTest("compiler/testData/codegen/box/javaInterop/superCallOfPrintStackTrace.kt");
+        }
+
+        @Test
+        @TestMetadata("syntheticPropClashingWithJvmField.kt")
+        public void testSyntheticPropClashingWithJvmField() throws Exception {
+            runTest("compiler/testData/codegen/box/javaInterop/syntheticPropClashingWithJvmField.kt");
         }
 
         @Test

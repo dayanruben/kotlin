@@ -171,7 +171,7 @@ private fun printType(type: KmType): String {
         } else {
             val (variance, argumentType) = argument
             if (variance == null || argumentType == null)
-                throw InconsistentKotlinMetadataException("Variance and type must be set for non-star type projection")
+                throw IllegalArgumentException("Variance and type must be set for non-star type projection")
             val argumentTypeString = printType(argumentType)
             buildString {
                 if (variance != KmVariance.INVARIANT) {
@@ -285,7 +285,8 @@ private fun renderAnnotationArgument(arg: KmAnnotationArgument): String =
         is KmAnnotationArgument.ULongValue -> arg.value.toString() + "uL"
         is KmAnnotationArgument.BooleanValue -> arg.value.toString()
         is KmAnnotationArgument.StringValue -> "\"${arg.value.sanitize(quote = '"')}\""
-        is KmAnnotationArgument.KClassValue -> buildString {
+        is KmAnnotationArgument.KClassValue -> "${arg.className}::class"
+        is KmAnnotationArgument.ArrayKClassValue -> buildString {
             repeat(arg.arrayDimensionCount) { append("kotlin/Array<") }
             append(arg.className).append("::class")
             repeat(arg.arrayDimensionCount) { append(">") }
