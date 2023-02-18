@@ -490,6 +490,18 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
         }
 
         @Test
+        @TestMetadata("kt56612.kt")
+        public void testKt56612() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/kt56612.kt");
+        }
+
+        @Test
+        @TestMetadata("kt56665.kt")
+        public void testKt56665() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/kt56665.kt");
+        }
+
+        @Test
         @TestMetadata("LValueAssignment.kt")
         public void testLValueAssignment() throws Exception {
             runTest("compiler/testData/diagnostics/tests/LValueAssignment.kt");
@@ -5667,6 +5679,12 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
             }
 
             @Test
+            @TestMetadata("capturingUninitializedVariableInNonInPlaceLambda.kt")
+            public void testCapturingUninitializedVariableInNonInPlaceLambda() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/capturingUninitializedVariableInNonInPlaceLambda.kt");
+            }
+
+            @Test
             @TestMetadata("checkInnerLocalDeclarations.kt")
             public void testCheckInnerLocalDeclarations() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/checkInnerLocalDeclarations.kt");
@@ -5688,6 +5706,12 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
             @TestMetadata("definiteReturnInWhen.kt")
             public void testDefiniteReturnInWhen() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/definiteReturnInWhen.kt");
+            }
+
+            @Test
+            @TestMetadata("delegatedMemberProperyWriteInInit.kt")
+            public void testDelegatedMemberProperyWriteInInit() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/delegatedMemberProperyWriteInInit.kt");
             }
 
             @Test
@@ -6108,6 +6132,12 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
             @TestMetadata("tryWithAssignmentUsedInCatch.kt")
             public void testTryWithAssignmentUsedInCatch() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/tryWithAssignmentUsedInCatch.kt");
+            }
+
+            @Test
+            @TestMetadata("uninintializedProperyWithDirectAndDelayedInitialization.kt")
+            public void testUninintializedProperyWithDirectAndDelayedInitialization() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/uninintializedProperyWithDirectAndDelayedInitialization.kt");
             }
 
             @Test

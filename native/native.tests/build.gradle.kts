@@ -55,13 +55,10 @@ val cachesTest = nativeTest("cachesTest", "caches")
 val k1libContentsTest = nativeTest("k1libContentsTest", "k1libContents")
 val k2libContentsTest = nativeTest("k2libContentsTest", "k2libContents")
 
-// "test" task is created by convention. We can't just remove it. Let's enable it in developer's environment, so it can be used
-// to run any test from IDE or from console, but disable it at TeamCity where it is not supposed to be ever used.
-val test by nativeTest("test", null /* no tags */).apply {
-    if (kotlinBuildProperties.isTeamcityBuild) {
-        configure { doFirst { throw GradleException("Task $path is not supposed to be executed in TeamCity environment") } }
-    }
-}
+val testTags = findProperty("kotlin.native.tests.tags")?.toString()
+// Note: arbitrary JUnit tag expressions can be used in this property.
+// See https://junit.org/junit5/docs/current/user-guide/#running-tests-tag-expressions
+val test by nativeTest("test", testTags)
 
 val generateTests by generator("org.jetbrains.kotlin.generators.tests.GenerateNativeTestsKt") {
     javaLauncher.set(project.getToolchainLauncherFor(JdkMajorVersion.JDK_11_0))

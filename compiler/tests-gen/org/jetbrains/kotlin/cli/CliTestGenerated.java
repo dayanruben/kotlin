@@ -105,6 +105,74 @@ public class CliTestGenerated extends AbstractCliTest {
         }
     }
 
+    @TestMetadata("compiler/testData/cli/jvm/hmpp")
+    @TestDataPath("$PROJECT_ROOT")
+    @RunWith(JUnit3RunnerWithInners.class)
+    public static class Hmpp extends AbstractCliTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doJvmTest, this, testDataFilePath);
+        }
+
+        public void testAllFilesPresentInHmpp() throws Exception {
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/cli/jvm/hmpp"), Pattern.compile("^(.+)\\.args$"), null, false);
+        }
+
+        @TestMetadata("cycleInDependencies.args")
+        public void testCycleInDependencies() throws Exception {
+            runTest("compiler/testData/cli/jvm/hmpp/cycleInDependencies.args");
+        }
+
+        @TestMetadata("dependsOnSingleModule.args")
+        public void testDependsOnSingleModule() throws Exception {
+            runTest("compiler/testData/cli/jvm/hmpp/dependsOnSingleModule.args");
+        }
+
+        @TestMetadata("dependsOnWithoutModules.args")
+        public void testDependsOnWithoutModules() throws Exception {
+            runTest("compiler/testData/cli/jvm/hmpp/dependsOnWithoutModules.args");
+        }
+
+        @TestMetadata("duplicatedModules.args")
+        public void testDuplicatedModules() throws Exception {
+            runTest("compiler/testData/cli/jvm/hmpp/duplicatedModules.args");
+        }
+
+        @TestMetadata("lowLanguageVersion.args")
+        public void testLowLanguageVersion() throws Exception {
+            runTest("compiler/testData/cli/jvm/hmpp/lowLanguageVersion.args");
+        }
+
+        @TestMetadata("missingModule.args")
+        public void testMissingModule() throws Exception {
+            runTest("compiler/testData/cli/jvm/hmpp/missingModule.args");
+        }
+
+        @TestMetadata("moduleIncorrectSyntax.args")
+        public void testModuleIncorrectSyntax() throws Exception {
+            runTest("compiler/testData/cli/jvm/hmpp/moduleIncorrectSyntax.args");
+        }
+
+        @TestMetadata("moduleWithoutSources.args")
+        public void testModuleWithoutSources() throws Exception {
+            runTest("compiler/testData/cli/jvm/hmpp/moduleWithoutSources.args");
+        }
+
+        @TestMetadata("sameSourceInDifferentModules.args")
+        public void testSameSourceInDifferentModules() throws Exception {
+            runTest("compiler/testData/cli/jvm/hmpp/sameSourceInDifferentModules.args");
+        }
+
+        @TestMetadata("sourceNotInAnyModule.args")
+        public void testSourceNotInAnyModule() throws Exception {
+            runTest("compiler/testData/cli/jvm/hmpp/sourceNotInAnyModule.args");
+        }
+
+        @TestMetadata("successfulCompilation.args")
+        public void testSuccessfulCompilation() throws Exception {
+            runTest("compiler/testData/cli/jvm/hmpp/successfulCompilation.args");
+        }
+    }
+
     @TestMetadata("compiler/testData/cli/jvm")
     @TestDataPath("$PROJECT_ROOT")
     @RunWith(JUnit3RunnerWithInners.class)
@@ -1390,6 +1458,11 @@ public class CliTestGenerated extends AbstractCliTest {
             runTest("compiler/testData/cli/js/sourceMapRootMultiple.args");
         }
 
+        @TestMetadata("successfulHmpp.args")
+        public void testSuccessfulHmpp() throws Exception {
+            runTest("compiler/testData/cli/js/successfulHmpp.args");
+        }
+
         @TestMetadata("suppressAllWarningsJS.args")
         public void testSuppressAllWarningsJS() throws Exception {
             runTest("compiler/testData/cli/js/suppressAllWarningsJS.args");
@@ -1554,6 +1627,11 @@ public class CliTestGenerated extends AbstractCliTest {
         @TestMetadata("optionalExpectationUsageWithFir.args")
         public void testOptionalExpectationUsageWithFir() throws Exception {
             runTest("compiler/testData/cli/metadata/optionalExpectationUsageWithFir.args");
+        }
+
+        @TestMetadata("successfulHmpp.args")
+        public void testSuccessfulHmpp() throws Exception {
+            runTest("compiler/testData/cli/metadata/successfulHmpp.args");
         }
     }
 }

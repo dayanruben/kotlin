@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.KtTypeParameterListOwner
 import java.util.*
+import org.jetbrains.kotlin.analysis.utils.errors.buildErrorWithAttachment
 
 internal fun <L : Any> L.invalidAccess(): Nothing =
     error("Cls delegate shouldn't be accessed for symbol light classes! Qualified name: ${javaClass.name}")
@@ -196,8 +197,8 @@ internal fun KtAnnotationValue.toAnnotationMemberValue(parent: PsiElement): PsiA
 
         is KtEnumEntryAnnotationValue -> {
             val fqName = this.callableId?.asSingleFqName()?.asString() ?: return null
-            val psiExpression = PsiElementFactory.getInstance(parent.project).createExpressionFromText(fqName, parent)
-            SymbolPsiExpression(sourcePsi, parent, psiExpression)
+            val psiReference = PsiElementFactory.getInstance(parent.project).createReferenceFromText(fqName, parent)
+            SymbolPsiReference(sourcePsi, parent, psiReference)
         }
 
         KtUnsupportedAnnotationValue -> null
@@ -245,7 +246,10 @@ internal fun BitSet.copy(): BitSet = clone() as BitSet
 
 context(KtAnalysisSession)
 internal fun <T : KtSymbol> KtSymbolPointer<T>.restoreSymbolOrThrowIfDisposed(): T =
-    restoreSymbol() ?: error("${this::class} pointer already disposed")
+    restoreSymbol()
+        ?: buildErrorWithAttachment("${this::class} pointer already disposed") {
+            withEntry("pointer", this@restoreSymbolOrThrowIfDisposed) { it.toString() }
+        }
 
 internal fun hasTypeParameters(
     ktModule: KtModule,
