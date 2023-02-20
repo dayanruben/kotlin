@@ -22167,6 +22167,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                 runTest("compiler/testData/codegen/box/invokedynamic/sam/simpleIndySam.kt");
             }
 
+            @TestMetadata("starProjectionSam.kt")
+            public void testStarProjectionSam() throws Exception {
+                runTest("compiler/testData/codegen/box/invokedynamic/sam/starProjectionSam.kt");
+            }
+
             @TestMetadata("streamApi1.kt")
             public void testStreamApi1() throws Exception {
                 runTest("compiler/testData/codegen/box/invokedynamic/sam/streamApi1.kt");
@@ -22880,6 +22885,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("kt55912.kt")
         public void testKt55912() throws Exception {
             runTest("compiler/testData/codegen/box/involvesIrInterpreter/kt55912.kt");
+        }
+
+        @TestMetadata("kt56215.kt")
+        public void testKt56215() throws Exception {
+            runTest("compiler/testData/codegen/box/involvesIrInterpreter/kt56215.kt");
         }
 
         @TestMetadata("compiler/testData/codegen/box/involvesIrInterpreter/dumpIrAndCheck")

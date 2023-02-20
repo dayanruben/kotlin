@@ -109,7 +109,7 @@ IdeVersionConfigurator.setCurrentIde(project)
 
 if (!project.hasProperty("versions.kotlin-native")) {
     // BEWARE! Bumping this version doesn't take an immediate effect on TeamCity: KTI-1107
-    extra["versions.kotlin-native"] = "1.9.0-dev-1261"
+    extra["versions.kotlin-native"] = "1.9.0-dev-2063"
 }
 
 val irCompilerModules = arrayOf(
@@ -682,18 +682,11 @@ tasks {
         dependsOn(":compiler:fir:raw-fir:light-tree2fir:test")
         dependsOn(":compiler:fir:analysis-tests:test")
         dependsOn(":compiler:fir:analysis-tests:legacy-fir-tests:test")
-        dependsOn(":compiler:fir:fir2ir:test")
+        dependsOn(":compiler:fir:fir2ir:aggregateTests")
     }
 
-    register("firAllTest") {
-        dependsOn(
-            ":dist",
-            ":compiler:fir:raw-fir:psi2fir:test",
-            ":compiler:fir:raw-fir:light-tree2fir:test",
-            ":compiler:fir:analysis-tests:test",
-            ":compiler:fir:analysis-tests:legacy-fir-tests:test",
-            ":compiler:fir:fir2ir:test",
-        )
+    register("nightlyFirCompilerTest") {
+        dependsOn(":compiler:fir:fir2ir:nightlyTests")
     }
 
     register("compilerFrontendVisualizerTest") {
