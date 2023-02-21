@@ -17613,6 +17613,12 @@ public class FirPsiBlackBoxCodegenTestGenerated extends AbstractFirPsiBlackBoxCo
             }
 
             @Test
+            @TestMetadata("kt56508.kt")
+            public void testKt56508() throws Exception {
+                runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/kt56508.kt");
+            }
+
+            @Test
             @TestMetadata("overload.kt")
             public void testOverload() throws Exception {
                 runTest("compiler/testData/codegen/box/extensionFunctions/contextReceivers/overload.kt");
@@ -18509,6 +18515,12 @@ public class FirPsiBlackBoxCodegenTestGenerated extends AbstractFirPsiBlackBoxCo
         @TestMetadata("namedArgumentOnTypeAnnotation.kt")
         public void testNamedArgumentOnTypeAnnotation() throws Exception {
             runTest("compiler/testData/codegen/box/fir/namedArgumentOnTypeAnnotation.kt");
+        }
+
+        @Test
+        @TestMetadata("nestedClassTypeParameterDeserialization.kt")
+        public void testNestedClassTypeParameterDeserialization() throws Exception {
+            runTest("compiler/testData/codegen/box/fir/nestedClassTypeParameterDeserialization.kt");
         }
 
         @Test
@@ -28260,6 +28272,12 @@ public class FirPsiBlackBoxCodegenTestGenerated extends AbstractFirPsiBlackBoxCo
         }
 
         @Test
+        @TestMetadata("kt56215.kt")
+        public void testKt56215() throws Exception {
+            runTest("compiler/testData/codegen/box/involvesIrInterpreter/kt56215.kt");
+        }
+
+        @Test
         @TestMetadata("referenceNameFromStaticInDifferentModule.kt")
         public void testReferenceNameFromStaticInDifferentModule() throws Exception {
             runTest("compiler/testData/codegen/box/involvesIrInterpreter/referenceNameFromStaticInDifferentModule.kt");
@@ -33134,6 +33152,12 @@ public class FirPsiBlackBoxCodegenTestGenerated extends AbstractFirPsiBlackBoxCo
             @TestMetadata("expectInterfaceInSupertypes.kt")
             public void testExpectInterfaceInSupertypes() throws Exception {
                 runTest("compiler/testData/codegen/box/multiplatform/multiModule/expectInterfaceInSupertypes.kt");
+            }
+
+            @Test
+            @TestMetadata("expectInterfaceInheritance.kt")
+            public void testExpectInterfaceInheritance() throws Exception {
+                runTest("compiler/testData/codegen/box/multiplatform/multiModule/expectInterfaceInheritance.kt");
             }
 
             @Test
