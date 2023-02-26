@@ -4,6 +4,7 @@ plugins {
 
 dependencies {
     implementation(project(":lib"))
+    testImplementation(kotlin("test-js"))
 }
 
 kotlin {
@@ -12,8 +13,4 @@ kotlin {
         }
         binaries.executable()
     }
-}
-
-configurations["compileClasspath"].apply {
-    attributes.attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage::class.java, "kotlin-runtime"))
 }

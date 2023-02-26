@@ -276,7 +276,8 @@ class HierarchicalMppIT : KGPBaseTest() {
                         "my-lib-foo-metadata-1.0-all.jar",
                         "my-lib-bar-metadata-1.0-all.jar",
                         "third-party-lib-metadata-1.0.jar",
-                        "kotlin-test-js-${buildOptions.kotlinVersion}.jar"
+                        "kotlin-test-js-${buildOptions.kotlinVersion}.jar",
+                        "kotlin-dom-api-compat-${buildOptions.kotlinVersion}.klib"
                     ),
                     transformedArtifacts()
                 )
@@ -1112,6 +1113,27 @@ class HierarchicalMppIT : KGPBaseTest() {
         }
     }
 
+    @GradleTest
+    @GradleTestVersions(maxVersion = TestVersions.Gradle.G_7_1)
+    @DisplayName("KT-51940: Test ArtifactCollection.getResolvedArtifactsCompat with Gradle earlier than 7.4")
+    fun `test getResolvedArtifactsCompat with Gradle earlier than 7_4`(gradleVersion: GradleVersion) {
+        project("kt-51940-hmpp-resolves-configurations-during-configuration", gradleVersion = gradleVersion) {
+            build("assemble", "--dry-run") {
+                assertOutputContains("Configuration Resolved")
+            }
+        }
+    }
+
+    @GradleTest
+    @GradleTestVersions(minVersion = TestVersions.Gradle.G_7_4)
+    @DisplayName("KT-51940: Configurations should not resolved during configuration phase")
+    fun `test configurations should not resolved during configuration phase`(gradleVersion: GradleVersion) {
+        project("kt-51940-hmpp-resolves-configurations-during-configuration", gradleVersion = gradleVersion) {
+            build("assemble", "--dry-run") {
+                assertOutputDoesNotContain("Configuration Resolved")
+            }
+        }
+    }
 
     private fun TestProject.testDependencyTransformations(
         subproject: String? = null,

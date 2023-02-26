@@ -44,16 +44,15 @@ class Fir2IrLazyPropertyAccessor(
         get() = firAccessor ?: firParentProperty
 
     // TODO: investigate why some deserialized properties are inline
-    override val isInline: Boolean
+    override var isInline: Boolean
         get() = firAccessor?.isInline == true
+        set(_) = mutationNotSupported()
 
     override var annotations: List<IrConstructorCall> by createLazyAnnotations()
 
     override var name: Name
         get() = Name.special("<${if (isSetter) "set" else "get"}-${firParentProperty.name}>")
-        set(_) {
-            throw UnsupportedOperationException()
-        }
+        set(_) = mutationNotSupported()
 
     override var returnType: IrType by lazyVar(lock) {
         if (isSetter) irBuiltIns.unitType else firParentProperty.returnTypeRef.toIrType(typeConverter, conversionTypeContext)

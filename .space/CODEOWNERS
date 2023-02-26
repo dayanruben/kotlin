@@ -272,6 +272,7 @@
 /libraries/tools/atomicfu/ "Kotlin Libraries"
 /libraries/tools/binary-compatibility-validator/ "Kotlin Libraries"
 /libraries/tools/dukat/ "Kotlin JS"
+/libraries/kotlin-dom-api-compat/ "Kotlin JS"
 /libraries/tools/gradle/ "Kotlin Build Tools"
 /libraries/tools/kotlin-allopen/ "Kotlin Build Tools"
 /libraries/tools/kotlin-annotation-processing/ "Kotlin Build Tools"
@@ -319,6 +320,7 @@
 /libraries/tools/kotlin-serialization/ "Kotlin Build Tools"
 /libraries/tools/kotlin-serialization-unshaded/ "Kotlin Build Tools"
 /libraries/tools/kotlin-stdlib-docs/ A.Qurbonzoda Vsevolod.Tolstopyato Ilya.Gorbunov
+/libraries/tools/kotlin-stdlib-docs-legacy/ A.Qurbonzoda Vsevolod.Tolstopyato Ilya.Gorbunov
 /libraries/tools/kotlin-stdlib-gen/ A.Qurbonzoda Vsevolod.Tolstopyato Ilya.Gorbunov
 /libraries/tools/kotlin-test-js-runner/ "Kotlin JS"
 /libraries/tools/kotlin-tooling-core/ "Kotlin Build Tools" "Kotlin Multiplatform"

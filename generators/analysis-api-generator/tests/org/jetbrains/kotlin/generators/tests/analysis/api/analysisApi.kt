@@ -43,6 +43,7 @@ import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.typeInf
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.typeInfoProvider.AbstractIsDenotableTest
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.typeProvider.AbstractAnalysisApiGetSuperTypesTest
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.typeProvider.AbstractHasCommonSubtypeTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.typeProvider.AbstractTypeReferenceTest
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.references.AbstractReferenceResolveTest
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.references.AbstractReferenceShortenerTest
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.scopes.*
@@ -115,6 +116,13 @@ private fun AnalysisApiTestGroup.generateAnalysisApiNonComponentsTests() {
 
         test(AbstractDelegateMemberScopeTest::class) {
             model("delegatedMemberScope")
+        }
+
+        test(
+            AbstractDeclaredMemberScopeTest::class,
+            filter = frontendIs(FrontendKind.Fir),
+        ) {
+            model("declaredMemberScope")
         }
     }
 
@@ -368,6 +376,9 @@ private fun AnalysisApiTestGroup.generateAnalysisApiComponentsTests() {
             test(AbstractHasCommonSubtypeTest::class) {
                 model("haveCommonSubtype")
             }
+        }
+        test(AbstractTypeReferenceTest::class) {
+            model("typeReference")
         }
     }
 

@@ -8,7 +8,6 @@
 
 package org.jetbrains.kotlin.ir.expressions
 
-import org.jetbrains.kotlin.ir.symbols.IrClassifierSymbol
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformer
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitor
@@ -18,13 +17,11 @@ import org.jetbrains.kotlin.ir.visitors.IrElementVisitor
  * @sample org.jetbrains.kotlin.ir.generator.IrTree.typeOperatorCall
  */
 abstract class IrTypeOperatorCall : IrExpression() {
-    abstract val operator: IrTypeOperator
+    abstract var operator: IrTypeOperator
 
     abstract var argument: IrExpression
 
     abstract var typeOperand: IrType
-
-    abstract val typeOperandClassifier: IrClassifierSymbol
 
     override fun <R, D> accept(visitor: IrElementVisitor<R, D>, data: D): R =
         visitor.visitTypeOperator(this, data)

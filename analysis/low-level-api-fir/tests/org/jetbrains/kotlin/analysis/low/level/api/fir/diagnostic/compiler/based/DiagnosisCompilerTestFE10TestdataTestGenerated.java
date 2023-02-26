@@ -1387,6 +1387,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             }
 
             @Test
+            @TestMetadata("javaAnnotationAndJavaClassWithIt.kt")
+            public void testJavaAnnotationAndJavaClassWithIt() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/annotations/javaAnnotationAndJavaClassWithIt.kt");
+            }
+
+            @Test
             @TestMetadata("JavaAnnotationConstructors.kt")
             public void testJavaAnnotationConstructors() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/annotations/JavaAnnotationConstructors.kt");
@@ -25057,9 +25063,21 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             }
 
             @Test
+            @TestMetadata("inferPropertyTypeFromGetter.kt")
+            public void testInferPropertyTypeFromGetter() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/properties/inferPropertyTypeFromGetter.kt");
+            }
+
+            @Test
             @TestMetadata("kt47621.kt")
             public void testKt47621() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/properties/kt47621.kt");
+            }
+
+            @Test
+            @TestMetadata("kt56707.kt")
+            public void testKt56707() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/properties/kt56707.kt");
             }
 
             @Test
@@ -32898,6 +32916,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
                 }
 
                 @Test
+                @TestMetadata("flexibleSealedInSubject.kt")
+                public void testFlexibleSealedInSubject() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/testsWithJava17/sealedClasses/flexibleSealedInSubject.kt");
+                }
+
+                @Test
                 @TestMetadata("javaSealedClassExhaustiveness.kt")
                 public void testJavaSealedClassExhaustiveness() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/testsWithJava17/sealedClasses/javaSealedClassExhaustiveness.kt");
@@ -35206,6 +35230,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             @TestMetadata("extractingEntireCall.kt")
             public void testExtractingEntireCall() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/when/extractingEntireCall.kt");
+            }
+
+            @Test
+            @TestMetadata("flexibleEnumInSubject.kt")
+            public void testFlexibleEnumInSubject() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/when/flexibleEnumInSubject.kt");
             }
 
             @Test

@@ -29,7 +29,6 @@ import org.jetbrains.kotlin.fir.resolve.*
 import org.jetbrains.kotlin.fir.resolve.calls.FirNamedReferenceWithCandidate
 import org.jetbrains.kotlin.fir.resolve.calls.candidate
 import org.jetbrains.kotlin.fir.resolve.dfa.FirControlFlowGraphReferenceImpl
-import org.jetbrains.kotlin.fir.expressions.unwrapSmartcastExpression
 import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeLocalVariableNoTypeOrInitializer
 import org.jetbrains.kotlin.fir.resolve.inference.FirStubTypeTransformer
 import org.jetbrains.kotlin.fir.resolve.inference.ResolvedLambdaAtom
@@ -48,7 +47,9 @@ import org.jetbrains.kotlin.fir.visitors.FirTransformer
 import org.jetbrains.kotlin.fir.visitors.transformSingle
 import org.jetbrains.kotlin.name.Name
 
-open class FirDeclarationsResolveTransformer(transformer: FirAbstractBodyResolveTransformerDispatcher) : FirPartialBodyResolveTransformer(transformer) {
+open class FirDeclarationsResolveTransformer(
+    transformer: FirAbstractBodyResolveTransformerDispatcher
+) : FirPartialBodyResolveTransformer(transformer) {
     private val statusResolver: FirStatusResolver = FirStatusResolver(session, scopeSession)
 
     private fun FirDeclaration.visibilityForApproximation(): Visibility {
@@ -127,7 +128,6 @@ open class FirDeclarationsResolveTransformer(transformer: FirAbstractBodyResolve
         if (bodyResolveState == FirPropertyBodyResolveState.EVERYTHING_RESOLVED) return property
 
         val canHaveDeepImplicitTypeRefs = property.hasExplicitBackingField
-
         if (returnTypeRefBeforeResolve !is FirImplicitTypeRef && implicitTypeOnly && !canHaveDeepImplicitTypeRefs) {
             return property
         }
@@ -164,9 +164,10 @@ open class FirDeclarationsResolveTransformer(transformer: FirAbstractBodyResolve
                     }
                     property.replaceBodyResolveState(FirPropertyBodyResolveState.EVERYTHING_RESOLVED)
                 } else {
-                    val hasNonDefaultAccessors = property.getter != null && property.getter !is FirDefaultPropertyAccessor ||
-                            property.setter != null && property.setter !is FirDefaultPropertyAccessor
-                    val mayResolveSetter = shouldResolveEverything || !hasNonDefaultAccessors
+                    val hasDefaultAccessors =
+                        (property.getter == null || property.getter is FirDefaultPropertyAccessor) &&
+                                (property.setter == null || property.setter is FirDefaultPropertyAccessor)
+                    val mayResolveSetter = shouldResolveEverything || hasDefaultAccessors
                     val propertyTypeRefAfterResolve = property.returnTypeRef
                     val propertyTypeIsKnown = propertyTypeRefAfterResolve is FirResolvedTypeRef
                     val mayResolveGetter = mayResolveSetter || !propertyTypeIsKnown
@@ -406,6 +407,9 @@ open class FirDeclarationsResolveTransformer(transformer: FirAbstractBodyResolve
         return variable
     }
 
+    /**
+     * This function is expected to transform everything but property accessors, backing field and delegate
+     */
     private fun FirProperty.transformChildrenWithoutComponents(returnTypeRef: FirTypeRef): FirProperty {
         val data = withExpectedType(returnTypeRef)
         return transformReturnTypeRef(transformer, data)
@@ -494,7 +498,10 @@ open class FirDeclarationsResolveTransformer(transformer: FirAbstractBodyResolve
         )
     }
 
-    override fun transformRegularClass(regularClass: FirRegularClass, data: ResolutionMode): FirStatement = whileAnalysing(session, regularClass) {
+    override fun transformRegularClass(
+        regularClass: FirRegularClass,
+        data: ResolutionMode
+    ): FirStatement = whileAnalysing(session, regularClass) {
         return context.withContainingClass(regularClass) {
             if (regularClass.isLocal && regularClass !in context.targetedLocalClasses) {
                 return regularClass.runAllPhasesForLocalClass(transformer, components, data, transformer.firTowerDataContextCollector)
@@ -629,7 +636,6 @@ open class FirDeclarationsResolveTransformer(transformer: FirAbstractBodyResolve
         if (functionIsNotAnalyzed) {
             dataFlowAnalyzer.enterFunction(function)
         }
-        @Suppress("UNCHECKED_CAST")
         return transformDeclarationContent(function, data).also {
             if (functionIsNotAnalyzed) {
                 val result = it as FirFunction
@@ -639,16 +645,17 @@ open class FirDeclarationsResolveTransformer(transformer: FirAbstractBodyResolve
         } as FirStatement
     }
 
-    override fun transformConstructor(constructor: FirConstructor, data: ResolutionMode): FirConstructor = whileAnalysing(session, constructor) {
+    override fun transformConstructor(
+        constructor: FirConstructor,
+        data: ResolutionMode
+    ): FirConstructor = whileAnalysing(session, constructor) {
         if (implicitTypeOnly) return constructor
         val container = context.containerIfAny as? FirRegularClass
         if (constructor.isPrimary && container?.classKind == ClassKind.ANNOTATION_CLASS) {
             return withFirArrayOfCallTransformer {
-                @Suppress("UNCHECKED_CAST")
                 doTransformConstructor(constructor, data)
             }
         }
-        @Suppress("UNCHECKED_CAST")
         return doTransformConstructor(constructor, data)
     }
 
@@ -997,7 +1004,10 @@ open class FirDeclarationsResolveTransformer(transformer: FirAbstractBodyResolve
             return element
         }
 
-        override fun transformValueParameter(valueParameter: FirValueParameter, data: Any?): FirStatement = whileAnalysing(valueParameter.moduleData.session, valueParameter) {
+        override fun transformValueParameter(
+            valueParameter: FirValueParameter,
+            data: Any?
+        ): FirStatement = whileAnalysing(valueParameter.moduleData.session, valueParameter) {
             if (valueParameter.returnTypeRef is FirImplicitTypeRef) {
                 valueParameter.replaceReturnTypeRef(
                     valueParameter.returnTypeRef.resolvedTypeFromPrototype(

@@ -6,7 +6,9 @@
 package org.jetbrains.kotlin.fir.resolve.transformers
 
 import kotlinx.collections.immutable.toImmutableList
+import org.jetbrains.kotlin.KtFakeSourceElementKind
 import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.copyWithNewSourceKind
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.isFromVararg
 import org.jetbrains.kotlin.fir.expressions.*
@@ -154,8 +156,16 @@ open class FirTypeResolveTransformer(
                     setAccessorTypesByPropertyType(property)
                 }
 
-                if (property.returnTypeRef is FirResolvedTypeRef && property.delegate != null) {
-                    setAccessorTypesByPropertyType(property)
+                when {
+                    property.returnTypeRef is FirResolvedTypeRef && property.delegate != null -> {
+                        setAccessorTypesByPropertyType(property)
+                    }
+                    property.returnTypeRef !is FirResolvedTypeRef && property.initializer == null &&
+                            property.getter?.returnTypeRef is FirResolvedTypeRef -> {
+                        property.replaceReturnTypeRef(
+                            property.getter!!.returnTypeRef.copyWithNewSourceKind(KtFakeSourceElementKind.PropertyTypeFromGetterReturnType)
+                        )
+                    }
                 }
 
                 unboundCyclesInTypeParametersSupertypes(property)
@@ -253,17 +263,21 @@ open class FirTypeResolveTransformer(
         shouldNotBeCalled()
     }
 
-    override fun transformAnnotationCall(annotationCall: FirAnnotationCall, data: Any?): FirStatement = whileAnalysing(session, annotationCall) {
+    override fun transformAnnotationCall(
+        annotationCall: FirAnnotationCall,
+        data: Any?
+    ): FirStatement = whileAnalysing(session, annotationCall) {
         when (val originalTypeRef = annotationCall.annotationTypeRef) {
             is FirResolvedTypeRef -> {
                 when (annotationCall.annotationResolvePhase) {
-                    FirAnnotationResolvePhase.Unresolved -> when (originalTypeRef){
+                    FirAnnotationResolvePhase.Unresolved -> when (originalTypeRef) {
                         is FirErrorTypeRef -> return annotationCall.also { it.replaceAnnotationResolvePhase(FirAnnotationResolvePhase.Types) }
                         else -> shouldNotBeCalled()
                     }
                     FirAnnotationResolvePhase.CompilerRequiredAnnotations -> {
                         annotationCall.replaceAnnotationResolvePhase(FirAnnotationResolvePhase.Types)
-                        val alternativeResolvedTypeRef = originalTypeRef.delegatedTypeRef?.transformSingle(this, data) ?: return annotationCall
+                        val alternativeResolvedTypeRef =
+                            originalTypeRef.delegatedTypeRef?.transformSingle(this, data) ?: return annotationCall
                         val coneTypeFromCompilerRequiredPhase = originalTypeRef.coneType
                         val coneTypeFromTypesPhase = alternativeResolvedTypeRef.coneType
                         if (coneTypeFromTypesPhase != coneTypeFromCompilerRequiredPhase) {
