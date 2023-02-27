@@ -6,55 +6,44 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.util.Properties
 
-plugins {
-    kotlin
-    groovy
-    id("org.gradle.kotlin.kotlin-dsl")
-    id("gradle-plugin-dependency-configuration")
-    id("org.jetbrains.kotlin.plugin.sam.with.receiver")
-}
-
 buildscript {
     val rootBuildDirectory by extra(project.file("../.."))
-
     apply(from = rootBuildDirectory.resolve("kotlin-native/gradle/loadRootProperties.gradle"))
+
     dependencies {
-        classpath(commonDependency("com.google.code.gson:gson"))
+        classpath("com.google.code.gson:gson:2.8.9")
     }
 }
 
-val rootProperties = Properties().apply {
-    project(":kotlin-native").projectDir.resolve("gradle.properties").reader().use(::load)
-}
-
-val kotlinVersion = project.bootstrapKotlinVersion
-val slackApiVersion: String by rootProperties
-val metadataVersion: String by rootProperties
-
-group = "org.jetbrains.kotlin"
-version = kotlinVersion
-
 repositories {
-    maven("https://cache-redirector.jetbrains.com/maven-central")
+    maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-dependencies")
     mavenCentral()
     gradlePluginPortal()
+}
+
+plugins {
+    groovy
+    kotlin("jvm")
+    `kotlin-dsl`
 }
 
 dependencies {
     api(gradleApi())
 
-    api(kotlinStdlib())
-    commonApi(project(":kotlin-gradle-plugin"))
-    commonApi(project(":kotlin-gradle-plugin-api"))
-    commonApi(project(":kotlin-gradle-plugin-model"))
-    implementation(commonDependency("org.jetbrains.kotlin:kotlin-reflect")) { isTransitive = false }
+    api("org.jetbrains.kotlin:kotlin-stdlib:${project.bootstrapKotlinVersion}")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:${project.bootstrapKotlinVersion}") { isTransitive = false }
     implementation("org.jetbrains.kotlin:kotlin-build-gradle-plugin:${kotlinBuildProperties.buildGradlePluginVersion}")
+    implementation("org.jetbrains.kotlin:kotlin-native-utils:${project.bootstrapKotlinVersion}")
+
+    // To build Konan Gradle plugin
+    implementation("org.jetbrains.kotlin:kotlin-build-common:${project.bootstrapKotlinVersion}")
+    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:${project.bootstrapKotlinVersion}")
 
     val versionProperties = Properties()
-    project.rootProject.projectDir.resolve("gradle/versions.properties").inputStream().use { propInput ->
+    project.rootProject.projectDir.resolve("../../gradle/versions.properties").inputStream().use { propInput ->
         versionProperties.load(propInput)
     }
-    implementation(commonDependency("com.google.code.gson:gson"))
+    implementation("com.google.code.gson:gson:2.8.9")
     configurations.all {
         resolutionStrategy.eachDependency {
             if (requested.group == "com.google.code.gson" && requested.name == "gson") {
@@ -65,17 +54,18 @@ dependencies {
     }
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0")
+    val metadataVersion = "0.0.1-dev-10"
+    implementation("org.jetbrains.kotlinx:kotlinx-metadata-klib:$metadataVersion")
 
-    api(project(":native:kotlin-native-utils"))
+    implementation("org.jetbrains.kotlin:kotlin-util-klib:${project.bootstrapKotlinVersion}")
+    implementation("org.jetbrains.kotlin:kotlin-native-utils:${project.bootstrapKotlinVersion}")
+
     api(project(":kotlin-native-shared"))
-    api(project(":kotlinx-metadata-klib"))
 }
 
-kotlin {
-    sourceSets {
-        main {
-            kotlin.srcDir("$projectDir/../tools/benchmarks/shared/src/main/kotlin/report")
-        }
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(8))
     }
 }
 
@@ -84,11 +74,12 @@ val compileGroovy: GroovyCompile by tasks
 
 compileKotlin.apply {
     kotlinOptions {
-        jvmTarget = "1.8"
         freeCompilerArgs += listOf(
                 "-Xskip-prerelease-check",
                 "-Xsuppress-version-warnings",
-                "-opt-in=kotlin.ExperimentalStdlibApi")
+                "-opt-in=kotlin.ExperimentalStdlibApi",
+                "-opt-in=kotlin.RequiresOptIn"
+        )
     }
 }
 
@@ -96,4 +87,42 @@ compileKotlin.apply {
 compileGroovy.apply {
     classpath += project.files(compileKotlin.destinationDirectory)
     dependsOn(compileKotlin)
+}
+
+kotlin {
+    sourceSets {
+        main {
+            kotlin.srcDir("src/main/kotlin")
+            kotlin.srcDir("../../kotlin-native/tools/kotlin-native-gradle-plugin/src/main/kotlin")
+        }
+    }
+}
+
+gradlePlugin {
+    plugins {
+        create("compileToBitcode") {
+            id = "compile-to-bitcode"
+            implementationClass = "org.jetbrains.kotlin.bitcode.CompileToBitcodePlugin"
+        }
+        create("runtimeTesting") {
+            id = "runtime-testing"
+            implementationClass = "org.jetbrains.kotlin.testing.native.RuntimeTestingPlugin"
+        }
+        create("compilationDatabase") {
+            id = "compilation-database"
+            implementationClass = "org.jetbrains.kotlin.cpp.CompilationDatabasePlugin"
+        }
+        create("konanPlugin") {
+            id = "konan"
+            implementationClass = "org.jetbrains.kotlin.gradle.plugin.konan.KonanPlugin"
+        }
+        create("native-interop-plugin") {
+            id = "native-interop-plugin"
+            implementationClass = "org.jetbrains.kotlin.NativeInteropPlugin"
+        }
+        create("native") {
+            id = "native"
+            implementationClass = "org.jetbrains.kotlin.tools.NativePlugin"
+        }
+    }
 }
