@@ -922,6 +922,12 @@ public class DiagnosisCompilerFirTestdataTestGenerated extends AbstractDiagnosis
             }
 
             @Test
+            @TestMetadata("setWithTrailingLambda.kt")
+            public void testSetWithTrailingLambda() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/arguments/setWithTrailingLambda.kt");
+            }
+
+            @Test
             @TestMetadata("simple.kt")
             public void testSimple() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolve/arguments/simple.kt");
@@ -955,6 +961,12 @@ public class DiagnosisCompilerFirTestdataTestGenerated extends AbstractDiagnosis
             @TestMetadata("vararg.kt")
             public void testVararg() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolve/arguments/vararg.kt");
+            }
+
+            @Test
+            @TestMetadata("varargFromJava.kt")
+            public void testVarargFromJava() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/arguments/varargFromJava.kt");
             }
 
             @Test
@@ -1069,6 +1081,12 @@ public class DiagnosisCompilerFirTestdataTestGenerated extends AbstractDiagnosis
             @TestMetadata("extensionInvokeAfterSafeCall.kt")
             public void testExtensionInvokeAfterSafeCall() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolve/callResolution/extensionInvokeAfterSafeCall.kt");
+            }
+
+            @Test
+            @TestMetadata("incorrectPlusOperatorFromJava.kt")
+            public void testIncorrectPlusOperatorFromJava() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/callResolution/incorrectPlusOperatorFromJava.kt");
             }
 
             @Test
@@ -1193,6 +1211,12 @@ public class DiagnosisCompilerFirTestdataTestGenerated extends AbstractDiagnosis
             @TestMetadata("reassignOfNonMemberProperty_lateInitialization.kt")
             public void testReassignOfNonMemberProperty_lateInitialization() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolve/cfa/reassignOfNonMemberProperty_lateInitialization.kt");
+            }
+
+            @Test
+            @TestMetadata("smartcastOnThisDuringClassInitialization.kt")
+            public void testSmartcastOnThisDuringClassInitialization() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/cfa/smartcastOnThisDuringClassInitialization.kt");
             }
         }
 
@@ -4362,6 +4386,12 @@ public class DiagnosisCompilerFirTestdataTestGenerated extends AbstractDiagnosis
             }
 
             @Test
+            @TestMetadata("smartcastedField.kt")
+            public void testSmartcastedField() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/smartcasts/smartcastedField.kt");
+            }
+
+            @Test
             @TestMetadata("smartcastsFromEquals_differentModule.kt")
             public void testSmartcastsFromEquals_differentModule() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolve/smartcasts/smartcastsFromEquals_differentModule.kt");
@@ -4604,6 +4634,12 @@ public class DiagnosisCompilerFirTestdataTestGenerated extends AbstractDiagnosis
                 @TestMetadata("noSmartcastToNullableNothing.kt")
                 public void testNoSmartcastToNullableNothing() throws Exception {
                     runTest("compiler/fir/analysis-tests/testData/resolve/smartcasts/problems/noSmartcastToNullableNothing.kt");
+                }
+
+                @Test
+                @TestMetadata("smartcastToStarProjectedSubclass.kt")
+                public void testSmartcastToStarProjectedSubclass() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolve/smartcasts/problems/smartcastToStarProjectedSubclass.kt");
                 }
             }
 

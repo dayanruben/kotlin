@@ -112,7 +112,7 @@ IdeVersionConfigurator.setCurrentIde(project)
 
 if (!project.hasProperty("versions.kotlin-native")) {
     // BEWARE! Bumping this version doesn't take an immediate effect on TeamCity: KTI-1107
-    extra["versions.kotlin-native"] = "1.9.0-dev-2063"
+    extra["versions.kotlin-native"] = "1.9.0-dev-2639"
 }
 
 val irCompilerModules = arrayOf(
@@ -150,7 +150,10 @@ val commonCompilerModules = arrayOf(
     ":analysis:decompiled:decompiler-to-file-stubs",
     ":analysis:decompiled:decompiler-to-psi",
     ":analysis:decompiled:light-classes-for-decompiled",
+    ":analysis:analysis-api-providers",
+    ":analysis:project-structure",
     ":analysis:kt-references",
+    ":kotlin-build-common",
 ).also { extra["commonCompilerModules"] = it }
 
 val firCompilerCoreModules = arrayOf(
@@ -224,7 +227,6 @@ val fe10CompilerModules = arrayOf(
     ":native:kotlin-native-utils",
     ":wasm:wasm.frontend",
     ":wasm:wasm.config",
-    ":kotlin-build-common",
     ":compiler:backend.common.jvm",
     ":analysis:decompiled:light-classes-for-decompiled-fe10",
 ).also { extra["fe10CompilerModules"] = it }

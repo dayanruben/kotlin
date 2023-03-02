@@ -717,24 +717,29 @@ abstract class CommonCompilerArguments : CommonToolArguments() {
         }
 
     @Argument(
-        value = "-Xmodule",
-        valueDescription = "<module name>;<source file[,source file...]>",
-        description = "Describes module with specific sources. Usage of this arguments requires to specify module for each source file from free args",
-        delimiter = ""
+        value = "-Xfragments",
+        valueDescription = "<fragment name>",
+        description = "Declares all known fragments of a multiplatform compilation"
     )
-    var modulesDescription: Array<String>? = null
+    var fragments: Array<String>? = null
+
+    @Argument(
+        value = "-Xfragment-sources",
+        valueDescription = "<fragment name>:<path>",
+        description = "Adds sources to a specific fragment of a multiplatform compilation",
+    )
+    var fragmentSources: Array<String>? = null
         set(value) {
             checkFrozen()
             field = value
         }
 
     @Argument(
-        value = "-Xdepends-on",
+        value = "-Xfragment-refines",
         valueDescription = "<fromModuleName>:<onModuleName>",
-        description = "Declares that <fromModuleName> depends on <onModuleName> with dependsOn relation",
-        delimiter = ""
+        description = "Declares that <fromModuleName> refines <onModuleName> with dependsOn/refines relation",
     )
-    var dependsOnDependencies: Array<String>? = null
+    var fragmentRefines: Array<String>? = null
         set(value) {
             checkFrozen()
             field = value

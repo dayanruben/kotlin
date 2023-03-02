@@ -358,6 +358,18 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
         }
 
         @Test
+        @TestMetadata("incrementDecrementOnFullyQualified.kt")
+        public void testIncrementDecrementOnFullyQualified() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/incrementDecrementOnFullyQualified.kt");
+        }
+
+        @Test
+        @TestMetadata("incrementDecrementOnObject.kt")
+        public void testIncrementDecrementOnObject() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/incrementDecrementOnObject.kt");
+        }
+
+        @Test
         @TestMetadata("InferNullabilityInThenBlock.kt")
         public void testInferNullabilityInThenBlock() throws Exception {
             runTest("compiler/testData/diagnostics/tests/InferNullabilityInThenBlock.kt");
@@ -6409,6 +6421,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
                 @TestMetadata("simpleClass.kt")
                 public void testSimpleClass() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/definiteReturn/simpleClass.kt");
+                }
+
+                @Test
+                @TestMetadata("singleReturnFromTry.kt")
+                public void testSingleReturnFromTry() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/definiteReturn/singleReturnFromTry.kt");
                 }
             }
 
@@ -17904,6 +17922,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             @TestMetadata("recursion.kt")
             public void testRecursion() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/inline/recursion.kt");
+            }
+
+            @Test
+            @TestMetadata("recursiveTypeInPrivateInlineFunction.kt")
+            public void testRecursiveTypeInPrivateInlineFunction() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inline/recursiveTypeInPrivateInlineFunction.kt");
             }
 
             @Test
@@ -35863,6 +35887,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             }
 
             @Test
+            @TestMetadata("annotationTargetResolvedAmbiguously.kt")
+            public void testAnnotationTargetResolvedAmbiguously() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/annotations/annotationTargetResolvedAmbiguously.kt");
+            }
+
+            @Test
             @TestMetadata("annotationsTargetingLateinitAccessors.kt")
             public void testAnnotationsTargetingLateinitAccessors() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/annotations/annotationsTargetingLateinitAccessors.kt");
@@ -38869,6 +38899,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             }
 
             @Test
+            @TestMetadata("overrideInPrimaryConstructor.kt")
+            public void testOverrideInPrimaryConstructor() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/overrideInPrimaryConstructor.kt");
+            }
+
+            @Test
             @TestMetadata("subClassOptInModality.kt")
             public void testSubClassOptInModality() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/subClassOptInModality.kt");
@@ -40172,6 +40208,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             @TestMetadata("listOfGeneric.kt")
             public void testListOfGeneric() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/smartcasts/listOfGeneric.kt");
+            }
+
+            @Test
+            @TestMetadata("unsoundSmartcast.kt")
+            public void testUnsoundSmartcast() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/smartcasts/unsoundSmartcast.kt");
             }
 
             @Test

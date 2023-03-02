@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.ir.symbols.IrPropertySymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.util.DeclarationStubGenerator
-import org.jetbrains.kotlin.ir.util.DeserializableClass
 import org.jetbrains.kotlin.ir.util.TypeTranslator
 import org.jetbrains.kotlin.ir.util.withScope
 import org.jetbrains.kotlin.name.Name
@@ -44,7 +43,7 @@ class IrLazyFunction(
     override var isInfix: Boolean,
     override val stubGenerator: DeclarationStubGenerator,
     override val typeTranslator: TypeTranslator,
-) : IrSimpleFunction(), IrLazyFunctionBase {
+) : AbstractIrLazyFunction(), IrLazyFunctionBase {
     override var parent: IrDeclarationParent by createLazyParent()
 
     override var annotations: List<IrConstructorCall> by createLazyAnnotations()
@@ -110,20 +109,8 @@ class IrLazyFunction(
     override val containerSource: DeserializedContainerSource?
         get() = (descriptor as? DescriptorWithContainerSource)?.containerSource
 
-    private fun tryLoadIr(): Boolean {
-        if (!stubGenerator.extensions.irDeserializationEnabled) return false
-        if (!isInline || isFakeOverride) return false
-        val toplevel = getToplevel()
-        return (toplevel as? DeserializableClass)?.loadIr() ?: false
-    }
-
-    private fun getToplevel(): IrDeclaration {
-        var current: IrDeclaration = this
-        while (current.parent !is IrPackageFragment) {
-            current = current.parent as IrDeclaration
-        }
-        return current
-    }
+    override val isDeserializationEnabled: Boolean
+        get() = stubGenerator.extensions.irDeserializationEnabled
 
     init {
         symbol.bind(this)

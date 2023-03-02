@@ -1443,6 +1443,12 @@ public class FirLightTreeSerializeCompileKotlinAgainstInlineKotlinTestGenerated 
         }
 
         @Test
+        @TestMetadata("kt56965.kt")
+        public void testKt56965() throws Exception {
+            runTest("compiler/testData/codegen/boxInline/capture/kt56965.kt");
+        }
+
+        @Test
         @TestMetadata("simpleCapturingInClass.kt")
         public void testSimpleCapturingInClass() throws Exception {
             runTest("compiler/testData/codegen/boxInline/capture/simpleCapturingInClass.kt");
@@ -3843,6 +3849,12 @@ public class FirLightTreeSerializeCompileKotlinAgainstInlineKotlinTestGenerated 
         }
 
         @Test
+        @TestMetadata("crossinlineFunctional.kt")
+        public void testCrossinlineFunctional() throws Exception {
+            runTest("compiler/testData/codegen/boxInline/property/crossinlineFunctional.kt");
+        }
+
+        @Test
         @TestMetadata("fromObject.kt")
         public void testFromObject() throws Exception {
             runTest("compiler/testData/codegen/boxInline/property/fromObject.kt");
@@ -3852,6 +3864,12 @@ public class FirLightTreeSerializeCompileKotlinAgainstInlineKotlinTestGenerated 
         @TestMetadata("kt22649.kt")
         public void testKt22649() throws Exception {
             runTest("compiler/testData/codegen/boxInline/property/kt22649.kt");
+        }
+
+        @Test
+        @TestMetadata("noinlineFunctional.kt")
+        public void testNoinlineFunctional() throws Exception {
+            runTest("compiler/testData/codegen/boxInline/property/noinlineFunctional.kt");
         }
 
         @Test

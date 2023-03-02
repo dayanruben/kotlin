@@ -304,13 +304,15 @@ class Fir2IrDeclarationStorage(
         endOffset: Int,
         type: IrType,
         parent: IrFunction,
-        name: Name? = null
+        name: Name? = null,
+        isCrossinline: Boolean = false,
+        isNoinline: Boolean = false,
     ): IrValueParameter {
         return irFactory.createValueParameter(
             startOffset, endOffset, IrDeclarationOrigin.DEFINED, IrValueParameterSymbolImpl(),
             name ?: SpecialNames.IMPLICIT_SET_PARAMETER, 0, type,
             varargElementType = null,
-            isCrossinline = false, isNoinline = false,
+            isCrossinline = isCrossinline, isNoinline = isNoinline,
             isHidden = false, isAssignable = false
         ).apply {
             this.parent = parent
@@ -1655,7 +1657,7 @@ class Fir2IrDeclarationStorage(
             annotationGenerator.generate(this, firAnnotationContainer)
             if (this is IrFunction && firAnnotationContainer is FirSimpleFunction) {
                 valueParameters.zip(firAnnotationContainer.valueParameters).forEach { (irParameter, firParameter) ->
-                    annotationGenerator.generate(irParameter, firParameter, isInConstructor = false)
+                    annotationGenerator.generate(irParameter, firParameter)
                 }
             }
         }

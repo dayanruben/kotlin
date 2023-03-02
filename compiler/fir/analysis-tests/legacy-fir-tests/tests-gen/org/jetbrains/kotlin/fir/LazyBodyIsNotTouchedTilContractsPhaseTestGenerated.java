@@ -784,6 +784,11 @@ public class LazyBodyIsNotTouchedTilContractsPhaseTestGenerated extends Abstract
             runTest("compiler/fir/analysis-tests/testData/resolve/arguments/overloadWithDefault.kt");
         }
 
+        @TestMetadata("setWithTrailingLambda.kt")
+        public void testSetWithTrailingLambda() throws Exception {
+            runTest("compiler/fir/analysis-tests/testData/resolve/arguments/setWithTrailingLambda.kt");
+        }
+
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             runTest("compiler/fir/analysis-tests/testData/resolve/arguments/simple.kt");
@@ -812,6 +817,11 @@ public class LazyBodyIsNotTouchedTilContractsPhaseTestGenerated extends Abstract
         @TestMetadata("vararg.kt")
         public void testVararg() throws Exception {
             runTest("compiler/fir/analysis-tests/testData/resolve/arguments/vararg.kt");
+        }
+
+        @TestMetadata("varargFromJava.kt")
+        public void testVarargFromJava() throws Exception {
+            runTest("compiler/fir/analysis-tests/testData/resolve/arguments/varargFromJava.kt");
         }
 
         @TestMetadata("varargOfLambdasWithReceiver.kt")
@@ -923,6 +933,11 @@ public class LazyBodyIsNotTouchedTilContractsPhaseTestGenerated extends Abstract
             runTest("compiler/fir/analysis-tests/testData/resolve/callResolution/extensionInvokeAfterSafeCall.kt");
         }
 
+        @TestMetadata("incorrectPlusOperatorFromJava.kt")
+        public void testIncorrectPlusOperatorFromJava() throws Exception {
+            runTest("compiler/fir/analysis-tests/testData/resolve/callResolution/incorrectPlusOperatorFromJava.kt");
+        }
+
         @TestMetadata("invokeAmbiguity.kt")
         public void testInvokeAmbiguity() throws Exception {
             runTest("compiler/fir/analysis-tests/testData/resolve/callResolution/invokeAmbiguity.kt");
@@ -1029,6 +1044,11 @@ public class LazyBodyIsNotTouchedTilContractsPhaseTestGenerated extends Abstract
         @TestMetadata("reassignOfNonMemberProperty_lateInitialization.kt")
         public void testReassignOfNonMemberProperty_lateInitialization() throws Exception {
             runTest("compiler/fir/analysis-tests/testData/resolve/cfa/reassignOfNonMemberProperty_lateInitialization.kt");
+        }
+
+        @TestMetadata("smartcastOnThisDuringClassInitialization.kt")
+        public void testSmartcastOnThisDuringClassInitialization() throws Exception {
+            runTest("compiler/fir/analysis-tests/testData/resolve/cfa/smartcastOnThisDuringClassInitialization.kt");
         }
     }
 
@@ -3842,6 +3862,11 @@ public class LazyBodyIsNotTouchedTilContractsPhaseTestGenerated extends Abstract
             runTest("compiler/fir/analysis-tests/testData/resolve/smartcasts/smartcastToTypeParameter.kt");
         }
 
+        @TestMetadata("smartcastedField.kt")
+        public void testSmartcastedField() throws Exception {
+            runTest("compiler/fir/analysis-tests/testData/resolve/smartcasts/smartcastedField.kt");
+        }
+
         @TestMetadata("smartcastsFromEquals_differentModule.kt")
         public void testSmartcastsFromEquals_differentModule() throws Exception {
             runTest("compiler/fir/analysis-tests/testData/resolve/smartcasts/smartcastsFromEquals_differentModule.kt");
@@ -4072,6 +4097,11 @@ public class LazyBodyIsNotTouchedTilContractsPhaseTestGenerated extends Abstract
             @TestMetadata("noSmartcastToNullableNothing.kt")
             public void testNoSmartcastToNullableNothing() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolve/smartcasts/problems/noSmartcastToNullableNothing.kt");
+            }
+
+            @TestMetadata("smartcastToStarProjectedSubclass.kt")
+            public void testSmartcastToStarProjectedSubclass() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/smartcasts/problems/smartcastToStarProjectedSubclass.kt");
             }
         }
 

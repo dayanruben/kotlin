@@ -122,19 +122,19 @@ public class CliTestGenerated extends AbstractCliTest {
             runTest("compiler/testData/cli/jvm/hmpp/cycleInDependencies.args");
         }
 
-        @TestMetadata("dependsOnSingleModule.args")
-        public void testDependsOnSingleModule() throws Exception {
-            runTest("compiler/testData/cli/jvm/hmpp/dependsOnSingleModule.args");
+        @TestMetadata("duplicatedFragments.args")
+        public void testDuplicatedFragments() throws Exception {
+            runTest("compiler/testData/cli/jvm/hmpp/duplicatedFragments.args");
         }
 
-        @TestMetadata("dependsOnWithoutModules.args")
-        public void testDependsOnWithoutModules() throws Exception {
-            runTest("compiler/testData/cli/jvm/hmpp/dependsOnWithoutModules.args");
+        @TestMetadata("fragmentSourcesIncorrectSyntax.args")
+        public void testFragmentSourcesIncorrectSyntax() throws Exception {
+            runTest("compiler/testData/cli/jvm/hmpp/fragmentSourcesIncorrectSyntax.args");
         }
 
-        @TestMetadata("duplicatedModules.args")
-        public void testDuplicatedModules() throws Exception {
-            runTest("compiler/testData/cli/jvm/hmpp/duplicatedModules.args");
+        @TestMetadata("fragmentWithoutSources.args")
+        public void testFragmentWithoutSources() throws Exception {
+            runTest("compiler/testData/cli/jvm/hmpp/fragmentWithoutSources.args");
         }
 
         @TestMetadata("lowLanguageVersion.args")
@@ -142,34 +142,39 @@ public class CliTestGenerated extends AbstractCliTest {
             runTest("compiler/testData/cli/jvm/hmpp/lowLanguageVersion.args");
         }
 
-        @TestMetadata("missingModule.args")
-        public void testMissingModule() throws Exception {
-            runTest("compiler/testData/cli/jvm/hmpp/missingModule.args");
+        @TestMetadata("missingFragment.args")
+        public void testMissingFragment() throws Exception {
+            runTest("compiler/testData/cli/jvm/hmpp/missingFragment.args");
         }
 
-        @TestMetadata("moduleIncorrectSyntax.args")
-        public void testModuleIncorrectSyntax() throws Exception {
-            runTest("compiler/testData/cli/jvm/hmpp/moduleIncorrectSyntax.args");
+        @TestMetadata("refinesSingleModule.args")
+        public void testRefinesSingleModule() throws Exception {
+            runTest("compiler/testData/cli/jvm/hmpp/refinesSingleModule.args");
         }
 
-        @TestMetadata("moduleWithoutSources.args")
-        public void testModuleWithoutSources() throws Exception {
-            runTest("compiler/testData/cli/jvm/hmpp/moduleWithoutSources.args");
+        @TestMetadata("refinesWithoutFragments.args")
+        public void testRefinesWithoutFragments() throws Exception {
+            runTest("compiler/testData/cli/jvm/hmpp/refinesWithoutFragments.args");
         }
 
-        @TestMetadata("sameSourceInDifferentModules.args")
-        public void testSameSourceInDifferentModules() throws Exception {
-            runTest("compiler/testData/cli/jvm/hmpp/sameSourceInDifferentModules.args");
+        @TestMetadata("sameSourceInDifferentFragments.args")
+        public void testSameSourceInDifferentFragments() throws Exception {
+            runTest("compiler/testData/cli/jvm/hmpp/sameSourceInDifferentFragments.args");
         }
 
-        @TestMetadata("sourceNotInAnyModule.args")
-        public void testSourceNotInAnyModule() throws Exception {
-            runTest("compiler/testData/cli/jvm/hmpp/sourceNotInAnyModule.args");
+        @TestMetadata("sourceNotInAnyFragment.args")
+        public void testSourceNotInAnyFragment() throws Exception {
+            runTest("compiler/testData/cli/jvm/hmpp/sourceNotInAnyFragment.args");
         }
 
         @TestMetadata("successfulCompilation.args")
         public void testSuccessfulCompilation() throws Exception {
             runTest("compiler/testData/cli/jvm/hmpp/successfulCompilation.args");
+        }
+
+        @TestMetadata("successfulCompilation2.args")
+        public void testSuccessfulCompilation2() throws Exception {
+            runTest("compiler/testData/cli/jvm/hmpp/successfulCompilation2.args");
         }
     }
 
@@ -678,6 +683,11 @@ public class CliTestGenerated extends AbstractCliTest {
         @TestMetadata("irSupported.args")
         public void testIrSupported() throws Exception {
             runTest("compiler/testData/cli/jvm/irSupported.args");
+        }
+
+        @TestMetadata("javaSealedClass.args")
+        public void testJavaSealedClass() throws Exception {
+            runTest("compiler/testData/cli/jvm/javaSealedClass.args");
         }
 
         @TestMetadata("javaSrcWrongPackage.args")
