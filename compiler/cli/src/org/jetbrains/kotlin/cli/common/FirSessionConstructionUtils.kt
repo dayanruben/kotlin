@@ -197,6 +197,7 @@ fun <F> prepareCommonSessions(
     extensionRegistrars: List<FirExtensionRegistrar>,
     librariesScope: AbstractProjectFileSearchScope,
     libraryList: DependencyListForCliModule,
+    resolvedLibraries: List<KotlinResolvedLibrary>,
     isCommonSource: (F) -> Boolean,
     fileBelongsToModule: (F, String) -> Boolean,
     createProviderAndScopeForIncrementalCompilation: (List<F>) -> IncrementalCompilationContext?,
@@ -210,6 +211,7 @@ fun <F> prepareCommonSessions(
                 libraryList.moduleDataProvider,
                 projectEnvironment,
                 librariesScope,
+                resolvedLibraries,
                 projectEnvironment.getPackagePartProvider(librariesScope) as PackageAndMetadataPartProvider,
                 configuration.languageVersionSettings,
                 registerExtraComponents = {},
@@ -219,14 +221,12 @@ fun <F> prepareCommonSessions(
         FirCommonSessionFactory.createModuleBasedSession(
             moduleData,
             sessionProvider,
-            librariesScope,
             projectEnvironment,
             incrementalCompilationContext = createProviderAndScopeForIncrementalCompilation(moduleFiles),
             extensionRegistrars,
             configuration.languageVersionSettings,
             lookupTracker = configuration.get(CommonConfigurationKeys.LOOKUP_TRACKER),
             enumWhenTracker = configuration.get(CommonConfigurationKeys.ENUM_WHEN_TRACKER),
-            needRegisterJavaElementFinder = true,
             registerExtraComponents = {},
             init = sessionConfigurator
         )
