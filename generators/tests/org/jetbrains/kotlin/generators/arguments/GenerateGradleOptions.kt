@@ -753,7 +753,7 @@ private fun Printer.generateDoc(property: KProperty1<*, *>) {
     val defaultValue = property.gradleDefaultValue
 
     println("/**")
-    println(" * $description")
+    println(" * ${description.replace("\n", " ")}")
     if (possibleValues != null) {
         println(" * Possible values: ${possibleValues.joinToString()}")
     }
@@ -794,6 +794,7 @@ private val KProperty1<*, *>.gradleValues: DefaultValues
             DefaultValue.BOOLEAN_TRUE_DEFAULT -> DefaultValues.BooleanTrueDefault
             DefaultValue.STRING_NULL_DEFAULT -> DefaultValues.StringNullDefault
             DefaultValue.EMPTY_STRING_LIST_DEFAULT -> DefaultValues.EmptyStringListDefault
+            DefaultValue.EMPTY_STRING_ARRAY_DEFAULT -> DefaultValues.EmptyStringArrayDefault
             DefaultValue.JVM_TARGET_VERSIONS -> DefaultValues.JvmTargetVersions
             DefaultValue.LANGUAGE_VERSIONS -> DefaultValues.LanguageVersions
             DefaultValue.API_VERSIONS -> DefaultValues.ApiVersions

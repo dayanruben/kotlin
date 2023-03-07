@@ -3136,6 +3136,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         }
 
         @Test
+        @TestMetadata("referenceToGenericSyntheticProperty.kt")
+        public void testReferenceToGenericSyntheticProperty() throws Exception {
+            runTest("compiler/testData/codegen/box/callableReference/referenceToGenericSyntheticProperty.kt");
+        }
+
+        @Test
         @TestMetadata("staticMethod.kt")
         public void testStaticMethod() throws Exception {
             runTest("compiler/testData/codegen/box/callableReference/staticMethod.kt");
@@ -33475,6 +33481,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         @TestMetadata("jvmOverloads.kt")
         public void testJvmOverloads() throws Exception {
             runTest("compiler/testData/codegen/box/parametersMetadata/jvmOverloads.kt");
+        }
+
+        @Test
+        @TestMetadata("kt40857_parameterizedExtensionReceiver.kt")
+        public void testKt40857_parameterizedExtensionReceiver() throws Exception {
+            runTest("compiler/testData/codegen/box/parametersMetadata/kt40857_parameterizedExtensionReceiver.kt");
         }
 
         @Test

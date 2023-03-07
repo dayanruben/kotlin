@@ -197,7 +197,9 @@ abstract class AbstractKotlinNativeCompile<
         compilation.languageSettings
     }
 
-    @get:Input
+    @Suppress("DeprecatedCallableAddReplaceWith")
+    @get:Deprecated("Replaced with 'compilerOptions.progressiveMode'")
+    @get:Internal
     val progressiveMode: Boolean
         get() = languageSettings.progressiveMode
     // endregion.
@@ -379,8 +381,12 @@ internal constructor(
     val enabledLanguageFeatures: Set<String>
         @Input get() = languageSettings.enabledLanguageFeatures
 
+    @Deprecated(
+        message = "Replaced with compilerOptions.optIn",
+        replaceWith = ReplaceWith("compilerOptions.optIn")
+    )
     val optInAnnotationsInUse: Set<String>
-        @Input get() = languageSettings.optInAnnotationsInUse
+        @Internal get() = compilerOptions.optIn.get().toSet()
     // endregion.
 
     // region Kotlin options

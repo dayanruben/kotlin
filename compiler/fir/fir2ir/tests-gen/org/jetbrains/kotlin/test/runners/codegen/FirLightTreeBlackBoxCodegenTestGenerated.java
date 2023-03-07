@@ -3280,6 +3280,12 @@ public class FirLightTreeBlackBoxCodegenTestGenerated extends AbstractFirLightTr
         }
 
         @Test
+        @TestMetadata("referenceToGenericSyntheticProperty.kt")
+        public void testReferenceToGenericSyntheticProperty() throws Exception {
+            runTest("compiler/testData/codegen/box/callableReference/referenceToGenericSyntheticProperty.kt");
+        }
+
+        @Test
         @TestMetadata("staticMethod.kt")
         public void testStaticMethod() throws Exception {
             runTest("compiler/testData/codegen/box/callableReference/staticMethod.kt");
@@ -34882,6 +34888,12 @@ public class FirLightTreeBlackBoxCodegenTestGenerated extends AbstractFirLightTr
         }
 
         @Test
+        @TestMetadata("kt40857_parameterizedExtensionReceiver.kt")
+        public void testKt40857_parameterizedExtensionReceiver() throws Exception {
+            runTest("compiler/testData/codegen/box/parametersMetadata/kt40857_parameterizedExtensionReceiver.kt");
+        }
+
+        @Test
         @TestMetadata("superParams.kt")
         public void testSuperParams() throws Exception {
             runTest("compiler/testData/codegen/box/parametersMetadata/superParams.kt");
@@ -50179,6 +50191,12 @@ public class FirLightTreeBlackBoxCodegenTestGenerated extends AbstractFirLightTr
         @TestMetadata("kt56154.kt")
         public void testKt56154() throws Exception {
             runTest("compiler/testData/codegen/box/syntheticExtensions/kt56154.kt");
+        }
+
+        @Test
+        @TestMetadata("kt57103.kt")
+        public void testKt57103() throws Exception {
+            runTest("compiler/testData/codegen/box/syntheticExtensions/kt57103.kt");
         }
 
         @Test
