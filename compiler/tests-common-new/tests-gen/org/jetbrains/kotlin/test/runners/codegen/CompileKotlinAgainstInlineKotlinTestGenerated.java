@@ -393,6 +393,12 @@ public class CompileKotlinAgainstInlineKotlinTestGenerated extends AbstractCompi
         }
 
         @Test
+        @TestMetadata("kt57053.kt")
+        public void testKt57053() throws Exception {
+            runTest("compiler/testData/codegen/boxInline/anonymousObject/kt57053.kt");
+        }
+
+        @Test
         @TestMetadata("kt6007.kt")
         public void testKt6007() throws Exception {
             runTest("compiler/testData/codegen/boxInline/anonymousObject/kt6007.kt");
@@ -1422,6 +1428,12 @@ public class CompileKotlinAgainstInlineKotlinTestGenerated extends AbstractCompi
         @TestMetadata("kt56965.kt")
         public void testKt56965() throws Exception {
             runTest("compiler/testData/codegen/boxInline/capture/kt56965.kt");
+        }
+
+        @Test
+        @TestMetadata("kt56965_2.kt")
+        public void testKt56965_2() throws Exception {
+            runTest("compiler/testData/codegen/boxInline/capture/kt56965_2.kt");
         }
 
         @Test

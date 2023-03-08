@@ -2850,6 +2850,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                 runTest("compiler/testData/codegen/box/callableReference/adaptedReferences/manyDefaultsAndVararg.kt");
             }
 
+            @TestMetadata("nestedClassConstructorWithDefault.kt")
+            public void testNestedClassConstructorWithDefault() throws Exception {
+                runTest("compiler/testData/codegen/box/callableReference/adaptedReferences/nestedClassConstructorWithDefault.kt");
+            }
+
             @TestMetadata("noAdaptedReferencesIfNoOptimizedReferencesEnabled.kt")
             public void testNoAdaptedReferencesIfNoOptimizedReferencesEnabled() throws Exception {
                 runTest("compiler/testData/codegen/box/callableReference/adaptedReferences/noAdaptedReferencesIfNoOptimizedReferencesEnabled.kt");
@@ -23339,6 +23344,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("syntheticPropClashingWithJvmField.kt")
         public void testSyntheticPropClashingWithJvmField() throws Exception {
             runTest("compiler/testData/codegen/box/javaInterop/syntheticPropClashingWithJvmField.kt");
+        }
+
+        @TestMetadata("syntheticPropOverriddenGetter.kt")
+        public void testSyntheticPropOverriddenGetter() throws Exception {
+            runTest("compiler/testData/codegen/box/javaInterop/syntheticPropOverriddenGetter.kt");
         }
 
         @TestMetadata("unresolvedJavaClassInDifferentFile.kt")

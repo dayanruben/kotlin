@@ -2233,6 +2233,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
                 }
 
                 @Test
+                @TestMetadata("nestedClassConstructorWithDefault.kt")
+                public void testNestedClassConstructorWithDefault() throws Exception {
+                    runTest("compiler/testData/codegen/box/callableReference/adaptedReferences/nestedClassConstructorWithDefault.kt");
+                }
+
+                @Test
                 @TestMetadata("noNameClashForReferencesToSameFunction.kt")
                 public void testNoNameClashForReferencesToSameFunction() throws Exception {
                     runTest("compiler/testData/codegen/box/callableReference/adaptedReferences/noNameClashForReferencesToSameFunction.kt");
@@ -41079,6 +41085,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
             }
 
             @Test
+            @TestMetadata("kt57053.kt")
+            public void testKt57053() throws Exception {
+                runTest("compiler/testData/codegen/boxInline/anonymousObject/kt57053.kt");
+            }
+
+            @Test
             @TestMetadata("kt6007.kt")
             public void testKt6007() throws Exception {
                 runTest("compiler/testData/codegen/boxInline/anonymousObject/kt6007.kt");
@@ -41976,6 +41988,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
             @TestMetadata("kt56965.kt")
             public void testKt56965() throws Exception {
                 runTest("compiler/testData/codegen/boxInline/capture/kt56965.kt");
+            }
+
+            @Test
+            @TestMetadata("kt56965_2.kt")
+            public void testKt56965_2() throws Exception {
+                runTest("compiler/testData/codegen/boxInline/capture/kt56965_2.kt");
             }
 
             @Test
