@@ -18326,6 +18326,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         }
 
         @Test
+        @TestMetadata("emptyIntersectionWarning.kt")
+        public void testEmptyIntersectionWarning() throws Exception {
+            runTest("compiler/testData/codegen/box/fir/emptyIntersectionWarning.kt");
+        }
+
+        @Test
         @TestMetadata("ExtensionAlias.kt")
         public void testExtensionAlias() throws Exception {
             runTest("compiler/testData/codegen/box/fir/ExtensionAlias.kt");
@@ -48993,6 +48999,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         @TestMetadata("nullSmartCast.kt")
         public void testNullSmartCast() throws Exception {
             runTest("compiler/testData/codegen/box/smartCasts/nullSmartCast.kt");
+        }
+
+        @Test
+        @TestMetadata("propertyInitializationAfterSmartCast.kt")
+        public void testPropertyInitializationAfterSmartCast() throws Exception {
+            runTest("compiler/testData/codegen/box/smartCasts/propertyInitializationAfterSmartCast.kt");
         }
 
         @Test

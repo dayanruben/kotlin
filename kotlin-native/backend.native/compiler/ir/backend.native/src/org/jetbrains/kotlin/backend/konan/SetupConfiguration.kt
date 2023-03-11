@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.getModuleNameForSource
 import org.jetbrains.kotlin.konan.file.File
 import org.jetbrains.kotlin.konan.target.CompilerOutputKind
+import org.jetbrains.kotlin.konan.util.visibleName
 
 fun CompilerConfiguration.setupFromArguments(arguments: K2NativeCompilerArguments) = with(KonanConfigKeys) {
     val commonSources = arguments.commonSources?.toSet().orEmpty().map { it.absoluteNormalizedFile() }
@@ -179,6 +180,16 @@ fun CompilerConfiguration.setupFromArguments(arguments: K2NativeCompilerArgument
     arguments.autoCacheDir?.let { put(AUTO_CACHE_DIR, it) }
     arguments.filesToCache?.let { put(FILES_TO_CACHE, it.toList()) }
     put(MAKE_PER_FILE_CACHE, arguments.makePerFileCache)
+    val nThreadsRaw = parseBackendThreads(arguments.backendThreads)
+    val availableProcessors = Runtime.getRuntime().availableProcessors()
+    val nThreads = if (nThreadsRaw == 0) availableProcessors else nThreadsRaw
+    if (nThreads > 1) {
+        report(LOGGING, "Running backend in parallel with $nThreads threads")
+    }
+    if (nThreads > availableProcessors) {
+        report(WARNING, "The number of threads $nThreads is more than the number of processors $availableProcessors")
+    }
+    put(CommonConfigurationKeys.PARALLEL_BACKEND_THREADS, nThreads)
 
     parseShortModuleName(arguments, this@setupFromArguments, outputKind)?.let {
         put(SHORT_MODULE_NAME, it)
@@ -262,7 +273,7 @@ fun CompilerConfiguration.setupFromArguments(arguments: K2NativeCompilerArgument
     arguments.testDumpOutputPath?.let { put(TEST_DUMP_OUTPUT_PATH, it) }
     put(PARTIAL_LINKAGE, arguments.partialLinkage)
     put(OMIT_FRAMEWORK_BINARY, arguments.omitFrameworkBinary)
-    putIfNotNull(COMPILE_FROM_BITCODE, arguments.compileFromBitcode)
+    putIfNotNull(COMPILE_FROM_BITCODE, parseCompileFromBitcode(arguments, this@setupFromArguments, outputKind))
     putIfNotNull(SERIALIZED_DEPENDENCIES, parseSerializedDependencies(arguments, this@setupFromArguments))
     putIfNotNull(SAVE_DEPENDENCIES_PATH, arguments.saveDependenciesPath)
     putIfNotNull(SAVE_LLVM_IR_DIRECTORY, arguments.saveLlvmIrDirectory)
@@ -404,6 +415,14 @@ private fun parseLibraryToAddToCache(
     }
 }
 
+private fun parseBackendThreads(stringValue: String): Int {
+    val value = stringValue.toIntOrNull()
+            ?: throw KonanCompilationException("Cannot parse -Xbackend-threads value: \"$stringValue\". Please use an integer number")
+    if (value < 0)
+        throw KonanCompilationException("-Xbackend-threads value cannot be negative")
+    return value
+}
+
 // TODO: Support short names for current module in ObjC export and lift this limitation.
 private fun parseShortModuleName(
         arguments: K2NativeCompilerArguments,
@@ -517,4 +536,16 @@ private fun parseSerializedDependencies(
                 "Providing serialized dependencies only works in conjunction with a bitcode file to compile.")
     }
     return arguments.serializedDependencies
+}
+
+private fun parseCompileFromBitcode(
+        arguments: K2NativeCompilerArguments,
+        configuration: CompilerConfiguration,
+        outputKind: CompilerOutputKind,
+): String? {
+    if (!arguments.compileFromBitcode.isNullOrEmpty() && !outputKind.involvesBitcodeGeneration) {
+        configuration.report(ERROR,
+                "Compilation from bitcode is not available when producing ${outputKind.visibleName}")
+    }
+    return arguments.compileFromBitcode
 }

@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.backend.konan.descriptors.ClassLayoutBuilder
 import org.jetbrains.kotlin.backend.konan.descriptors.GlobalHierarchyAnalysisResult
 import org.jetbrains.kotlin.backend.konan.ir.KonanIr
 import org.jetbrains.kotlin.backend.konan.ir.KonanSymbols
-import org.jetbrains.kotlin.backend.konan.llvm.CodegenClassMetadata
+import org.jetbrains.kotlin.backend.konan.llvm.KonanMetadata
 import org.jetbrains.kotlin.backend.konan.lower.*
 import org.jetbrains.kotlin.backend.konan.objcexport.ObjCExportCodeSpec
 import org.jetbrains.kotlin.backend.konan.objcexport.ObjCExportedInterface
@@ -24,13 +24,13 @@ import org.jetbrains.kotlin.builtins.konan.KonanBuiltIns
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.declarations.*
-import org.jetbrains.kotlin.ir.declarations.lazy.IrLazyClass
 import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
 import org.jetbrains.kotlin.ir.types.IrTypeSystemContext
 import org.jetbrains.kotlin.ir.types.IrTypeSystemContextImpl
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
+import java.util.concurrent.ConcurrentHashMap
 
 internal class NativeMapping : DefaultMapping() {
     data class BridgeKey(val target: IrSimpleFunction, val bridgeDirections: BridgeDirections)
@@ -42,7 +42,7 @@ internal class NativeMapping : DefaultMapping() {
     val outerThisFields = DefaultDelegateFactory.newDeclarationToDeclarationMapping<IrClass, IrField>()
     val enumValueGetters = DefaultDelegateFactory.newDeclarationToDeclarationMapping<IrClass, IrFunction>()
     val enumEntriesMaps = mutableMapOf<IrClass, Map<Name, LoweredEnumEntryDescription>>()
-    val bridges = mutableMapOf<BridgeKey, IrSimpleFunction>()
+    val bridges = ConcurrentHashMap<BridgeKey, IrSimpleFunction>()
     val partiallyLoweredInlineFunctions = mutableMapOf<IrFunctionSymbol, IrFunction>()
     val outerThisCacheAccessors = DefaultDelegateFactory.newDeclarationToDeclarationMapping<IrClass, IrSimpleFunction>()
     val lateinitPropertyCacheAccessors = DefaultDelegateFactory.newDeclarationToDeclarationMapping<IrProperty, IrSimpleFunction>()
@@ -80,20 +80,11 @@ internal class Context(
     val cachesAbiSupport by lazy { CachesAbiSupport(mapping, irFactory) }
 
     // TODO: Remove after adding special <userData> property to IrDeclaration.
-    private val layoutBuilders = mutableMapOf<IrClass, ClassLayoutBuilder>()
+    private val layoutBuilders = ConcurrentHashMap<IrClass, ClassLayoutBuilder>()
 
-    fun getLayoutBuilder(irClass: IrClass): ClassLayoutBuilder {
-        if (irClass is IrLazyClass)
-            return layoutBuilders.getOrPut(irClass) {
-                ClassLayoutBuilder(irClass, this)
-            }
-        val metadata = irClass.metadata as? CodegenClassMetadata
-                ?: CodegenClassMetadata(irClass).also { irClass.metadata = it }
-        metadata.layoutBuilder?.let { return it }
-        val layoutBuilder = ClassLayoutBuilder(irClass, this)
-        metadata.layoutBuilder = layoutBuilder
-        return layoutBuilder
-    }
+    fun getLayoutBuilder(irClass: IrClass): ClassLayoutBuilder =
+            (irClass.metadata as? KonanMetadata.Class)?.layoutBuilder
+                    ?: layoutBuilders.getOrPut(irClass) { ClassLayoutBuilder(irClass, this) }
 
     lateinit var globalHierarchyAnalysisResult: GlobalHierarchyAnalysisResult
 

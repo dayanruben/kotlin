@@ -210,7 +210,7 @@ task sanity {
     })
     dependsOn(":kotlin-native:Interop:Indexer:check")
     dependsOn(":kotlin-native:Interop:StubGenerator:check")
-    dependsOn(":kotlin-native-shared:check")
+    dependsOn(":native:kotlin-native-utils:check")
 }
 
 boolean isExcluded(String dir) {
@@ -628,6 +628,7 @@ task runtime_random(type: KonanLocalTest) {
 }
 
 task runtime_basic_simd(type: KonanLocalTest) {
+    disabled = (project.testTarget == 'linux_mips32')
     expectedFail = (project.testTarget == 'wasm32') // Uses exceptions.
     source = "runtime/basic/simd.kt"
 }
@@ -5584,6 +5585,12 @@ standaloneTest("fake_override_0") {
 }
 
 standaloneTest("split_compilation_pipeline") {
+    // Test infrastructure does not support passing flags only to the second stage,
+    // and we can't pass -Xcompile-from-bitcode when producing library. Thus, this test
+    // does not support 2-stage compilation for now.
+    // Also, it is failing for some reason on Windows CI, but since MinGW targets are not inteneded
+    // to use this mode, we can disable it for these targets.
+    enabled = !twoStageEnabled && project.target.name != "mingw_x64" && project.target.name != "mingw_x86"
     def dir = buildDir.absolutePath
     source = "link/private_fake_overrides/override_main.kt"
     doBeforeBuild {

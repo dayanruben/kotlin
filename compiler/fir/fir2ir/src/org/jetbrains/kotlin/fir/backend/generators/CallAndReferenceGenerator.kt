@@ -42,8 +42,6 @@ import org.jetbrains.kotlin.ir.util.isFunctionTypeOrSubtype
 import org.jetbrains.kotlin.ir.util.isInterface
 import org.jetbrains.kotlin.ir.util.isMethodOfAny
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi2ir.generators.hasNoSideEffects
-import org.jetbrains.kotlin.psi2ir.generators.isUnchanging
 import org.jetbrains.kotlin.resolve.calls.NewCommonSuperTypeCalculator.commonSuperType
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
@@ -569,7 +567,14 @@ class CallAndReferenceGenerator(
                     is IrPropertySymbol -> {
                         val irProperty = symbol.owner
                         val setter = irProperty.setter
-                        val backingField = irProperty.backingField
+                        var backingField = irProperty.backingField
+
+                        // If we found neither a setter nor a backing field, check if we have an override (possibly fake) of a val with
+                        // backing field. This can happen in a class initializer where `this` was smart-casted. See KT-57105.
+                        if (setter == null && backingField == null) {
+                            backingField = irProperty.overriddenSymbols.firstNotNullOfOrNull { it.owner.backingField }
+                        }
+
                         when {
                             setter != null -> IrCallImpl(
                                 startOffset, endOffset, type, setter.symbol,

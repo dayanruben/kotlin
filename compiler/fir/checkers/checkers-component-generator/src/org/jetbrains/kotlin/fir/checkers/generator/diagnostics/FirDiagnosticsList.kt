@@ -737,7 +737,9 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<FqName>("kotlinClass")
         }
 
-        val INFERRED_TYPE_VARIABLE_INTO_EMPTY_INTERSECTION by error<PsiElement> {
+        val INFERRED_TYPE_VARIABLE_INTO_EMPTY_INTERSECTION by deprecationError<PsiElement>(
+            LanguageFeature.ForbidInferringTypeVariablesIntoEmptyIntersection
+        ) {
             parameter<String>("typeVariableDescription")
             parameter<Collection<ConeKotlinType>>("incompatibleTypes")
             parameter<String>("description")
@@ -1270,6 +1272,9 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
 
     val FUNCTION_CONTRACTS by object : DiagnosticGroup("Function contracts") {
         val ERROR_IN_CONTRACT_DESCRIPTION by error<KtElement>(PositioningStrategy.SELECTOR_BY_QUALIFIED) {
+            parameter<String>("reason")
+        }
+        val CONTRACT_NOT_ALLOWED by error<KtElement>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED) {
             parameter<String>("reason")
         }
     }

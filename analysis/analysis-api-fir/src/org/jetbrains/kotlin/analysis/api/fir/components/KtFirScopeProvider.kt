@@ -39,6 +39,8 @@ import org.jetbrains.kotlin.fir.expressions.FirAnonymousObjectExpression
 import org.jetbrains.kotlin.fir.java.JavaScopeProvider
 import org.jetbrains.kotlin.fir.java.declarations.FirJavaClass
 import org.jetbrains.kotlin.analysis.api.fir.scopes.JavaClassDeclaredMembersEnhancementScope
+import org.jetbrains.kotlin.analysis.api.fir.symbols.KtFirPsiJavaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithDeclarations
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.resolve.calls.FirSyntheticPropertiesScope
 import org.jetbrains.kotlin.fir.resolve.scope
@@ -68,6 +70,7 @@ internal class KtFirScopeProvider(
     private inline fun <T> KtSymbolWithMembers.withFirForScope(crossinline body: (FirClass) -> T): T? {
         return when (this) {
             is KtFirNamedClassOrObjectSymbol -> body(firSymbol.fir)
+            is KtFirPsiJavaClassSymbol -> body(firSymbol.fir)
             is KtFirAnonymousObjectSymbol -> body(firSymbol.fir)
             is KtFirEnumEntrySymbol -> {
                 firSymbol.lazyResolveToPhase(FirResolvePhase.BODY_RESOLVE)
@@ -76,7 +79,7 @@ internal class KtFirScopeProvider(
                 body(initializer.anonymousObject)
             }
 
-            else -> error { "Unknown KtSymbolWithDeclarations implementation ${this::class.qualifiedName}" }
+            else -> error("Unknown ${KtSymbolWithDeclarations::class.simpleName} implementation ${this::class.qualifiedName}")
         }
     }
 

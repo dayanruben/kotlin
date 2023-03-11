@@ -1579,8 +1579,16 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         abstract val kotlinClass: FqName
     }
 
-    abstract class InferredTypeVariableIntoEmptyIntersection : KtFirDiagnostic<PsiElement>() {
-        override val diagnosticClass get() = InferredTypeVariableIntoEmptyIntersection::class
+    abstract class InferredTypeVariableIntoEmptyIntersectionError : KtFirDiagnostic<PsiElement>() {
+        override val diagnosticClass get() = InferredTypeVariableIntoEmptyIntersectionError::class
+        abstract val typeVariableDescription: String
+        abstract val incompatibleTypes: List<KtType>
+        abstract val description: String
+        abstract val causingTypes: String
+    }
+
+    abstract class InferredTypeVariableIntoEmptyIntersectionWarning : KtFirDiagnostic<PsiElement>() {
+        override val diagnosticClass get() = InferredTypeVariableIntoEmptyIntersectionWarning::class
         abstract val typeVariableDescription: String
         abstract val incompatibleTypes: List<KtType>
         abstract val description: String
@@ -2567,6 +2575,11 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         abstract val reason: String
     }
 
+    abstract class ContractNotAllowed : KtFirDiagnostic<KtElement>() {
+        override val diagnosticClass get() = ContractNotAllowed::class
+        abstract val reason: String
+    }
+
     abstract class NoGetMethod : KtFirDiagnostic<KtArrayAccessExpression>() {
         override val diagnosticClass get() = NoGetMethod::class
     }
@@ -3402,6 +3415,10 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
 
     abstract class InlineExternalDeclaration : KtFirDiagnostic<KtDeclaration>() {
         override val diagnosticClass get() = InlineExternalDeclaration::class
+    }
+
+    abstract class EnumClassInExternalDeclarationWarning : KtFirDiagnostic<KtDeclaration>() {
+        override val diagnosticClass get() = EnumClassInExternalDeclarationWarning::class
     }
 
     abstract class InlineClassInExternalDeclarationWarning : KtFirDiagnostic<KtElement>() {
