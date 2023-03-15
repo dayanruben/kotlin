@@ -6224,6 +6224,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/constants/divisionByZero.kt");
         }
 
+        @TestMetadata("doNotTriggerInit.kt")
+        public void testDoNotTriggerInit() throws Exception {
+            runTest("compiler/testData/codegen/box/constants/doNotTriggerInit.kt");
+        }
+
         @TestMetadata("float.kt")
         public void testFloat() throws Exception {
             runTest("compiler/testData/codegen/box/constants/float.kt");
@@ -39076,6 +39081,16 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
 
         public void testAllFilesPresentInTopLevelInitializtion() throws Exception {
             KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/topLevelInitializtion"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
+        }
+
+        @TestMetadata("failInInitializer1.kt")
+        public void testFailInInitializer1() throws Exception {
+            runTest("compiler/testData/codegen/box/topLevelInitializtion/failInInitializer1.kt");
+        }
+
+        @TestMetadata("failInInitializer2.kt")
+        public void testFailInInitializer2() throws Exception {
+            runTest("compiler/testData/codegen/box/topLevelInitializtion/failInInitializer2.kt");
         }
     }
 

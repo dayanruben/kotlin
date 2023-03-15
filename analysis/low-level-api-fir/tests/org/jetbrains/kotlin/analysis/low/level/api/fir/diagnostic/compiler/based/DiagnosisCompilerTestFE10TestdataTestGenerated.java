@@ -556,6 +556,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
         }
 
         @Test
+        @TestMetadata("kt57214.kt")
+        public void testKt57214() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/kt57214.kt");
+        }
+
+        @Test
         @TestMetadata("LValueAssignment.kt")
         public void testLValueAssignment() throws Exception {
             runTest("compiler/testData/diagnostics/tests/LValueAssignment.kt");
@@ -655,6 +661,18 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
         @TestMetadata("OverrideFunctionWithParamDefaultValue.kt")
         public void testOverrideFunctionWithParamDefaultValue() throws Exception {
             runTest("compiler/testData/diagnostics/tests/OverrideFunctionWithParamDefaultValue.kt");
+        }
+
+        @Test
+        @TestMetadata("overrideNotNull_Fail.kt")
+        public void testOverrideNotNull_Fail() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/overrideNotNull_Fail.kt");
+        }
+
+        @Test
+        @TestMetadata("overrideNotNull_Ok.kt")
+        public void testOverrideNotNull_Ok() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/overrideNotNull_Ok.kt");
         }
 
         @Test
@@ -763,6 +781,18 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
         @TestMetadata("QualifiedExpressions.kt")
         public void testQualifiedExpressions() throws Exception {
             runTest("compiler/testData/diagnostics/tests/QualifiedExpressions.kt");
+        }
+
+        @Test
+        @TestMetadata("rawCastToStarProjection_Fail.kt")
+        public void testRawCastToStarProjection_Fail() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/rawCastToStarProjection_Fail.kt");
+        }
+
+        @Test
+        @TestMetadata("rawCastToStarProjection_Ok.kt")
+        public void testRawCastToStarProjection_Ok() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/rawCastToStarProjection_Ok.kt");
         }
 
         @Test
@@ -3845,6 +3875,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
                 @TestMetadata("memberFromTopLevel.kt")
                 public void testMemberFromTopLevel() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/callableReference/property/memberFromTopLevel.kt");
+                }
+
+                @Test
+                @TestMetadata("mutablePropertyViaDelegation.kt")
+                public void testMutablePropertyViaDelegation() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/callableReference/property/mutablePropertyViaDelegation.kt");
                 }
 
                 @Test
@@ -34377,6 +34413,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             }
 
             @Test
+            @TestMetadata("inlineKeywordForMfvc.kt")
+            public void testInlineKeywordForMfvc() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/valueClasses/inlineKeywordForMfvc.kt");
+            }
+
+            @Test
             @TestMetadata("jvmInlineApplicability.kt")
             public void testJvmInlineApplicability() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/valueClasses/jvmInlineApplicability.kt");
@@ -35773,6 +35815,12 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
         @TestMetadata("commonCollections.kt")
         public void testCommonCollections() throws Exception {
             runTest("compiler/testData/diagnostics/testsWithStdLib/commonCollections.kt");
+        }
+
+        @Test
+        @TestMetadata("compileTimeUnsignedArray.kt")
+        public void testCompileTimeUnsignedArray() throws Exception {
+            runTest("compiler/testData/diagnostics/testsWithStdLib/compileTimeUnsignedArray.kt");
         }
 
         @Test

@@ -5370,6 +5370,12 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
         }
 
         @Test
+        @TestMetadata("doNotTriggerInit.kt")
+        public void testDoNotTriggerInit() throws Exception {
+            runTest("compiler/testData/codegen/box/constants/doNotTriggerInit.kt");
+        }
+
+        @Test
         @TestMetadata("float.kt")
         public void testFloat() throws Exception {
             runTest("compiler/testData/codegen/box/constants/float.kt");
@@ -35639,6 +35645,18 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
         @Test
         public void testAllFilesPresentInTopLevelInitializtion() throws Exception {
             KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/topLevelInitializtion"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JS, true);
+        }
+
+        @Test
+        @TestMetadata("failInInitializer1.kt")
+        public void testFailInInitializer1() throws Exception {
+            runTest("compiler/testData/codegen/box/topLevelInitializtion/failInInitializer1.kt");
+        }
+
+        @Test
+        @TestMetadata("failInInitializer2.kt")
+        public void testFailInInitializer2() throws Exception {
+            runTest("compiler/testData/codegen/box/topLevelInitializtion/failInInitializer2.kt");
         }
     }
 

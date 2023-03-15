@@ -170,7 +170,18 @@ object IrTree : AbstractTreeBuilder() {
         +listField("sealedSubclasses", classSymbolType, mutability = Var)
     }
     val attributeContainer: ElementConfig by element(Declaration) {
+        kDoc = """
+            Represents an IR element that can be copied, but must remember its original element. It is
+            useful, for example, to keep track of generated names for anonymous declarations.
+            @property attributeOwnerId original element before copying. Always satisfies the following
+              invariant: `this.attributeOwnerId == this.attributeOwnerId.attributeOwnerId`.
+            @property originalBeforeInline original element before inlining. Useful only with IR
+              inliner. `null` if the element wasn't inlined. Unlike [attributeOwnerId], doesn't have the
+              idempotence invariant and can contain a chain of declarations.
+        """.trimIndent()
+
         +field("attributeOwnerId", attributeContainer)
+        +field("originalBeforeInline", attributeContainer, nullable = true) // null <=> this element wasn't inlined
     }
     val anonymousInitializer: ElementConfig by element(Declaration) {
         visitorParent = declarationBase
@@ -496,6 +507,9 @@ object IrTree : AbstractTreeBuilder() {
         +field("attributeOwnerId", attributeContainer) {
             baseDefaultValue = code("this")
         }
+        +field("originalBeforeInline", attributeContainer, nullable = true) {
+            baseDefaultValue = code("null")
+        }
         +field("type", irTypeType)
     }
     val statementContainer: ElementConfig by element(Expression) {
@@ -641,7 +655,12 @@ object IrTree : AbstractTreeBuilder() {
         parent(returnTarget)
 
         +symbol(returnableBlockSymbolType)
-        +field("inlineFunctionSymbol", functionSymbolType, nullable = true)
+    }
+    val inlinedFunctionBlock: ElementConfig by element(Expression) {
+        parent(block)
+
+        +field("inlineCall", functionAccessExpression)
+        +field("inlinedElement", rootElement)
     }
     val syntheticBody: ElementConfig by element(Expression) {
         visitorParent = body

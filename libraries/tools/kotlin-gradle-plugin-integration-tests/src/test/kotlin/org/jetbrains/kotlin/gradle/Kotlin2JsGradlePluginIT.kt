@@ -209,7 +209,6 @@ class Kotlin2JsIrGradlePluginIT : AbstractKotlin2JsGradlePluginIT(true) {
                 assertTasksExecuted(":app:developmentExecutableCompileSync")
 
                 assertFileInProjectNotExists("build/js/packages/kotlin-js-browser-app/kotlin/foo/foo.txt")
-                assertFileInProjectNotExists("build/js/packages/kotlin-js-browser-app/sync-hashes/foo/foo.txt.hash")
             }
         }
     }
@@ -386,9 +385,9 @@ class Kotlin2JsIrGradlePluginIT : AbstractKotlin2JsGradlePluginIT(true) {
         }
     }
 
-    @DisplayName("JS IR implementation dependency")
+    @DisplayName("K1/JS IR implementation dependency")
     @GradleTest
-    fun testJsIrImplementationDependency(gradleVersion: GradleVersion) {
+    fun testK1JsIrImplementationDependency(gradleVersion: GradleVersion) {
         project("kotlin-js-browser-project", gradleVersion) {
             buildGradleKts.modify(::transformBuildScriptWithPluginsDsl)
 
@@ -399,6 +398,31 @@ class Kotlin2JsIrGradlePluginIT : AbstractKotlin2JsGradlePluginIT(true) {
             }
 
             buildAndFail("assemble")
+        }
+    }
+
+    @DisplayName("K2/JS IR implementation dependency")
+    @GradleTest
+    fun testK2JsIrImplementationDependency(gradleVersion: GradleVersion) {
+        project("kotlin-js-browser-project", gradleVersion) {
+            buildGradleKts.modify(::transformBuildScriptWithPluginsDsl)
+            buildGradleKts.append(
+                """
+                    rootProject.subprojects.forEach {
+                        it.tasks.withType<org.jetbrains.kotlin.gradle.tasks.Kotlin2JsCompile> {
+                            kotlinOptions.languageVersion = "2.0"
+                        }
+                    }
+                """.trimIndent()
+            )
+
+            build(":app:compileProductionExecutableKotlinJs")
+
+            projectPath.resolve("app/src/main/kotlin/App.kt").modify {
+                it.replace("sheldon()", "best()")
+            }
+
+            buildAndFail(":app:compileProductionExecutableKotlinJs")
         }
     }
 
@@ -1575,6 +1599,7 @@ abstract class AbstractKotlin2JsGradlePluginIT(protected val irBackend: Boolean)
         project("kotlin-js-browser-project", gradleVersion) {
             buildGradleKts.modify { originalScript ->
                 buildString {
+                    append("import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin.Companion.kotlinNpmResolutionManager")
                     append(originalScript)
                     append(
                         """
@@ -1583,7 +1608,7 @@ abstract class AbstractKotlin2JsGradlePluginIT(protected val irBackend: Boolean)
                         |    val nodejs = the<org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension>()
                         |    tasks.named<org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinNpmInstallTask>("kotlinNpmInstall") {
                         |        doFirst {
-                        |            nodejs.npmResolutionManager.state = 
+                        |            project.rootProject.kotlinNpmResolutionManager.get().state = 
                         |            org.jetbrains.kotlin.gradle.targets.js.npm.KotlinNpmResolutionManager.ResolutionState.Error(GradleException("someSpecialException"))
                         |        }
                         |    }

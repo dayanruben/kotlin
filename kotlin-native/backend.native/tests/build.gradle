@@ -114,6 +114,10 @@ if (!isExperimentalMM) {
     }
 }
 
+tasks.withType(KonanCompileNativeBinary).configureEach {
+    extraOpts "-XXLanguage:+ImplicitSignedToUnsignedIntegerConversion"
+}
+
 allprojects {
     // Root directories for test output (logs, compiled files, statistics etc). Only single path must be in each set.
     // backend.native/tests
@@ -1553,34 +1557,6 @@ standaloneTest("initializers_workers2") {
     useGoldenData = true
 }
 
-standaloneTest("initializers_failInInitializer1") {
-    expectedFail = (project.testTarget == 'wasm32') // Uses exceptions.
-    source = "codegen/initializers/failInInitializer1.kt"
-    useGoldenData = true
-    flags = ['-Xir-property-lazy-initialization=enable']
-}
-
-standaloneTest("initializers_failInInitializer2") {
-    expectedFail = (project.testTarget == 'wasm32') // Uses exceptions.
-    source = "codegen/initializers/failInInitializer2.kt"
-    useGoldenData = true
-    flags = ['-Xir-property-lazy-initialization=enable']
-}
-
-standaloneTest("initializers_failInInitializer3") {
-    expectedFail = (project.testTarget == 'wasm32') // Uses exceptions.
-    source = "codegen/initializers/failInInitializer3.kt"
-    useGoldenData = true
-    flags = ['-Xir-property-lazy-initialization=enable']
-}
-
-standaloneTest("initializers_failInInitializer4") {
-    expectedFail = (project.testTarget == 'wasm32') // Uses exceptions.
-    source = "codegen/initializers/failInInitializer4.kt"
-    useGoldenData = true
-    flags = ['-Xir-property-lazy-initialization=enable']
-}
-
 standaloneTest("initializers_when1") {
     source = "codegen/initializers/when1.kt"
     useGoldenData = true
@@ -2835,7 +2811,7 @@ standaloneTest("exception_in_global_init") {
     enabled = (project.testTarget != 'wasm32') // Uses exceptions.
     source = "runtime/exceptions/exception_in_global_init.kt"
     expectedExitStatusChecker = { it != 0 }
-    outputChecker = { s -> s.contains("Uncaught Kotlin exception: kotlin.IllegalStateException: FAIL") && !s.contains("in kotlin main") }
+    outputChecker = { s -> s.contains("Uncaught Kotlin exception:") && s.contains("FAIL") && !s.contains("in kotlin main") }
 }
 
 task rethrow_exception(type: KonanLocalTest) {
@@ -4969,7 +4945,7 @@ if (PlatformInfo.isAppleTarget(project)) {
     }
 
     interopTest("interop_objc_smoke_noopgc") {
-        enabled = isNoopGC
+        enabled = isNoopGC && !isK2(project) // KT-56030
         source = "interop/objc/smoke_noopgc.kt"
         interop = 'objcSmoke'
         doBeforeBuild {
@@ -5295,7 +5271,8 @@ if (PlatformInfo.isAppleTarget(project)) {
 
     standaloneTest("interop_kt40426") {
         // Test depends on iOS-specific UIKit
-        enabled = (project.testTarget == 'ios_x64' || project.testTarget == 'ios_simulator_arm64' || project.testTarget == 'ios_arm64')
+        enabled = (project.testTarget == 'ios_x64' || project.testTarget == 'ios_simulator_arm64' || project.testTarget == 'ios_arm64') &&
+                !isK2(project) // KT-56030
         source = "interop/objc/kt40426/main.kt"
         useGoldenData = true
         UtilsKt.dependsOnPlatformLibs(it)
@@ -5539,7 +5516,8 @@ interopTest("interop_exceptions_cCallback") {
 }
 
 tasks.register("library_ir_provider_mismatch", KonanDriverTest) {
-    disabled = isAggressiveGC // No need to test with different GC schedulers
+    disabled = isAggressiveGC || // No need to test with different GC schedulers
+            isK2(project) // KT-56855
 
     def dir = buildDir.absolutePath
     def lib = "$projectDir/link/ir_providers/library/empty.kt"
@@ -6148,6 +6126,7 @@ tasks.register("llvm_variant_dev", KonanDriverTest) {
     // so it is hard to reliably detect LLVM variant for these targets.
     disabled = isAppleTarget(project)
         || isAggressiveGC // No need to test with different GC schedulers
+        || isK2(project) // KT-56855
     flags = [
             "-Xllvm-variant=dev",
             "-Xverbose-phases=ObjectFiles"

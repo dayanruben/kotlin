@@ -8356,6 +8356,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         }
 
         @Test
+        @TestMetadata("doNotTriggerInit.kt")
+        public void testDoNotTriggerInit() throws Exception {
+            runTest("compiler/testData/codegen/box/constants/doNotTriggerInit.kt");
+        }
+
+        @Test
         @TestMetadata("float.kt")
         public void testFloat() throws Exception {
             runTest("compiler/testData/codegen/box/constants/float.kt");
@@ -22611,6 +22617,18 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         @TestMetadata("kt54656.kt")
         public void testKt54656() throws Exception {
             runTest("compiler/testData/codegen/box/inlineClasses/kt54656.kt");
+        }
+
+        @Test
+        @TestMetadata("kt57242.kt")
+        public void testKt57242() throws Exception {
+            runTest("compiler/testData/codegen/box/inlineClasses/kt57242.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
+        }
+
+        @Test
+        @TestMetadata("kt57261.kt")
+        public void testKt57261() throws Exception {
+            runTest("compiler/testData/codegen/box/inlineClasses/kt57261.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
         }
 
         @Test
@@ -50560,6 +50578,18 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         public void testAllFilesPresentInTopLevelInitializtion() throws Exception {
             KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/topLevelInitializtion"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
         }
+
+        @Test
+        @TestMetadata("failInInitializer1.kt")
+        public void testFailInInitializer1() throws Exception {
+            runTest("compiler/testData/codegen/box/topLevelInitializtion/failInInitializer1.kt");
+        }
+
+        @Test
+        @TestMetadata("failInInitializer2.kt")
+        public void testFailInInitializer2() throws Exception {
+            runTest("compiler/testData/codegen/box/topLevelInitializtion/failInInitializer2.kt");
+        }
     }
 
     @Nested
@@ -51726,9 +51756,21 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         }
 
         @Test
+        @TestMetadata("delegatingConstructors.kt")
+        public void testDelegatingConstructors() throws Exception {
+            runTest("compiler/testData/codegen/box/valueClasses/delegatingConstructors.kt");
+        }
+
+        @Test
         @TestMetadata("equality.kt")
         public void testEquality() throws Exception {
             runTest("compiler/testData/codegen/box/valueClasses/equality.kt");
+        }
+
+        @Test
+        @TestMetadata("fakeOverrideCall.kt")
+        public void testFakeOverrideCall() throws Exception {
+            runTest("compiler/testData/codegen/box/valueClasses/fakeOverrideCall.kt");
         }
 
         @Test
@@ -51798,6 +51840,18 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         }
 
         @Test
+        @TestMetadata("multiModules.kt")
+        public void testMultiModules() throws Exception {
+            runTest("compiler/testData/codegen/box/valueClasses/multiModules.kt");
+        }
+
+        @Test
+        @TestMetadata("mutableSharedMfvcVar.kt")
+        public void testMutableSharedMfvcVar() throws Exception {
+            runTest("compiler/testData/codegen/box/valueClasses/mutableSharedMfvcVar.kt");
+        }
+
+        @Test
         @TestMetadata("overrides.kt")
         public void testOverrides() throws Exception {
             runTest("compiler/testData/codegen/box/valueClasses/overrides.kt");
@@ -51813,6 +51867,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         @TestMetadata("overrides_typeParameters.kt")
         public void testOverrides_typeParameters() throws Exception {
             runTest("compiler/testData/codegen/box/valueClasses/overrides_typeParameters.kt");
+        }
+
+        @Test
+        @TestMetadata("regularClassSecondaryConstructorWithMfvc.kt")
+        public void testRegularClassSecondaryConstructorWithMfvc() throws Exception {
+            runTest("compiler/testData/codegen/box/valueClasses/regularClassSecondaryConstructorWithMfvc.kt");
         }
 
         @Test

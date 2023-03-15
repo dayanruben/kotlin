@@ -92,11 +92,10 @@ fun IrFunctionAccessExpression.getArgumentsWithSymbols(): List<Pair<IrValueParam
 }
 
 /**
- * Binds the arguments explicitly represented in the IR to the parameters of the accessed function.
+ * Binds all arguments represented in the IR to the parameters of the accessed function.
  * The arguments are to be evaluated in the same order as they appear in the resulting list.
  */
-fun IrMemberAccessExpression<*>.getArgumentsWithIr(): List<Pair<IrValueParameter, IrExpression>> {
-    val res = mutableListOf<Pair<IrValueParameter, IrExpression>>()
+fun IrMemberAccessExpression<*>.getAllArgumentsWithIr(): List<Pair<IrValueParameter, IrExpression?>> {
     val irFunction = when (this) {
         is IrFunctionAccessExpression -> this.symbol.owner
         is IrFunctionReference -> this.symbol.owner
@@ -107,6 +106,16 @@ fun IrMemberAccessExpression<*>.getArgumentsWithIr(): List<Pair<IrValueParameter
         else -> error(this)
     }
 
+    return getAllArgumentsWithIr(irFunction)
+}
+
+/**
+ * Binds all arguments represented in the IR to the parameters of the explicitly given function.
+ * The arguments are to be evaluated in the same order as they appear in the resulting list.
+ */
+fun IrMemberAccessExpression<*>.getAllArgumentsWithIr(irFunction: IrFunction): List<Pair<IrValueParameter, IrExpression?>> {
+    val res = mutableListOf<Pair<IrValueParameter, IrExpression?>>()
+
     dispatchReceiver?.let { arg ->
         irFunction.dispatchReceiverParameter?.let { parameter -> res += (parameter to arg) }
     }
@@ -116,13 +125,19 @@ fun IrMemberAccessExpression<*>.getArgumentsWithIr(): List<Pair<IrValueParameter
     }
 
     irFunction.valueParameters.forEachIndexed { index, it ->
-        val arg = getValueArgument(index)
-        if (arg != null) {
-            res += (it to arg)
-        }
+        res += it to getValueArgument(index)
     }
 
     return res
+}
+
+/**
+ * Binds the arguments explicitly represented in the IR to the parameters of the accessed function.
+ * The arguments are to be evaluated in the same order as they appear in the resulting list.
+ */
+@Suppress("UNCHECKED_CAST")
+fun IrMemberAccessExpression<*>.getArgumentsWithIr(): List<Pair<IrValueParameter, IrExpression>> {
+    return getAllArgumentsWithIr().filter { it.second != null } as List<Pair<IrValueParameter, IrExpression>>
 }
 
 /**
@@ -190,7 +205,7 @@ fun IrExpression.implicitCastIfNeededTo(type: IrType) =
         IrTypeOperatorCallImpl(startOffset, endOffset, type, IrTypeOperator.IMPLICIT_CAST, type, this)
 
 fun IrFunctionAccessExpression.usesDefaultArguments(): Boolean =
-    symbol.owner.valueParameters.any { this.getValueArgument(it.index) == null }
+    symbol.owner.valueParameters.any { this.getValueArgument(it.index) == null && (!it.isVararg || it.defaultValue != null) }
 
 fun IrValueParameter.createStubDefaultValue(): IrExpressionBody =
     factory.createExpressionBody(
@@ -1376,27 +1391,6 @@ val IrFunction.isValueClassTypedEquals: Boolean
                 && (parentClass.isValue)
     }
 
-// This code is partially duplicated in jvm FunctionReferenceLowering::adapteeCall
-// The difference is jvm version doesn't support ReturnableBlock, but returns call node instead of called function.
-fun IrFunction.getAdapteeFromAdaptedForReferenceFunction() : IrFunction? {
-    if (origin != IrDeclarationOrigin.ADAPTER_FOR_CALLABLE_REFERENCE) return null
-    // The body of a callable reference adapter contains either only a call, or an IMPLICIT_COERCION_TO_UNIT type operator
-    // applied to a either a call or ReturnableBlock produced from that call inlining.
-    // That call's target is the original function which we need to get.
-    fun unknownStructure(): Nothing = throw UnsupportedOperationException("Unknown structure of ADAPTER_FOR_CALLABLE_REFERENCE: ${dump()}")
-    val call = when (val statement = body?.statements?.singleOrNull() ?: unknownStructure()) {
-        is IrTypeOperatorCall -> {
-            if (statement.operator != IrTypeOperator.IMPLICIT_COERCION_TO_UNIT) unknownStructure()
-            statement.argument
-        }
-        is IrReturn -> statement.value
-        else -> statement
-    }
-    if (call is IrReturnableBlock) return (call.inlineFunctionSymbol ?: unknownStructure()).owner
-    if (call !is IrFunctionAccessExpression) { unknownStructure() }
-    return call.symbol.owner
-}
-
 /**
  * The method is used to calculate the previous offset from the current one to prevent situations when it can calculate
  * [UNDEFINED_OFFSET] from 0 offset and -2 offset from the [UNDEFINED OFFSET]
@@ -1408,3 +1402,12 @@ val Int.previousOffset
             -1 -> UNDEFINED_OFFSET
             else -> minus(1)
         }
+
+fun IrAttributeContainer.extractRelatedDeclaration(): IrDeclaration? {
+    return when (this) {
+        is IrClass -> this
+        is IrFunctionExpression -> function
+        is IrFunctionReference -> symbol.owner
+        else -> null
+    }
+}
