@@ -6,23 +6,22 @@
 package org.jetbrains.kotlin.fir.backend.generators
 
 import org.jetbrains.kotlin.KtFakeSourceElementKind
+import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.fir.backend.*
 import org.jetbrains.kotlin.fir.declarations.*
-import org.jetbrains.kotlin.fir.declarations.utils.isCompanion
-import org.jetbrains.kotlin.fir.dispatchReceiverClassLookupTagOrNull
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.builder.buildAnnotationCall
 import org.jetbrains.kotlin.fir.expressions.impl.FirNoReceiverExpression
-import org.jetbrains.kotlin.fir.getContainingClassLookupTag
+import org.jetbrains.kotlin.fir.languageVersionSettings
 import org.jetbrains.kotlin.fir.references.*
 import org.jetbrains.kotlin.fir.references.builder.buildResolvedNamedReference
 import org.jetbrains.kotlin.fir.render
 import org.jetbrains.kotlin.fir.resolve.calls.FirSyntheticFunctionSymbol
-import org.jetbrains.kotlin.fir.resolve.defaultType
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
+import org.jetbrains.kotlin.fir.resolve.isMarkedWithImplicitIntegerCoercion
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutorByMap
-import org.jetbrains.kotlin.fir.resolve.toFirRegularClassSymbol
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.approximateDeclarationType
 import org.jetbrains.kotlin.fir.scopes.unsubstitutedScope
@@ -572,7 +571,7 @@ class CallAndReferenceGenerator(
                         // If we found neither a setter nor a backing field, check if we have an override (possibly fake) of a val with
                         // backing field. This can happen in a class initializer where `this` was smart-casted. See KT-57105.
                         if (setter == null && backingField == null) {
-                            backingField = irProperty.overriddenSymbols.firstNotNullOfOrNull { it.owner.backingField }
+                            backingField = irProperty.overriddenBackingFieldOrNull()
                         }
 
                         when {
@@ -621,6 +620,13 @@ class CallAndReferenceGenerator(
                 "Error while translating ${variableAssignment.render()} " +
                         "from file ${conversionScope.containingFileIfAny()?.name ?: "???"} to BE IR", e
             )
+        }
+    }
+
+    private fun IrProperty.overriddenBackingFieldOrNull(): IrField? {
+        return overriddenSymbols.firstNotNullOfOrNull {
+            val owner = it.owner
+            owner.backingField ?: owner.overriddenBackingFieldOrNull()
         }
     }
 
@@ -935,7 +941,9 @@ class CallAndReferenceGenerator(
                 irArgument = irArgument.applySamConversionIfNeeded(argument, parameter, substitutor)
             }
         }
-        return irArgument.applyAssigningArrayElementsToVarargInNamedForm(argument, parameter)
+        return irArgument
+            .applyAssigningArrayElementsToVarargInNamedForm(argument, parameter)
+            .applyImplicitIntegerCoercionIfNeeded(argument, parameter)
     }
 
     private fun IrExpression.applyAssigningArrayElementsToVarargInNamedForm(
@@ -957,6 +965,66 @@ class CallAndReferenceGenerator(
                 irVarargElement.type.isArray()
             ) {
                 elements[i] = IrSpreadElementImpl(irVarargElement.startOffset, irVarargElement.endOffset, irVarargElement)
+            }
+        }
+        return this
+    }
+
+    private fun IrExpression.applyImplicitIntegerCoercionIfNeeded(
+        argument: FirExpression,
+        parameter: FirValueParameter?
+    ): IrExpression {
+        if (!session.languageVersionSettings.supportsFeature(LanguageFeature.ImplicitSignedToUnsignedIntegerConversion)) return this
+
+        if (parameter == null || !parameter.isMarkedWithImplicitIntegerCoercion) return this
+
+        fun IrExpression.applyToElement(argument: FirExpression, conversionFunction: IrSimpleFunctionSymbol): IrExpression =
+            if (argument is FirConstExpression<*> ||
+                argument.calleeReference?.toResolvedCallableSymbol()?.let {
+                    it.resolvedStatus.isConst && it.isMarkedWithImplicitIntegerCoercion
+                } == true
+            ) {
+                IrCallImpl(
+                    startOffset, endOffset,
+                    conversionFunction.owner.returnType,
+                    conversionFunction,
+                    typeArgumentsCount = 0,
+                    valueArgumentsCount = 0
+                ).apply {
+                    extensionReceiver = this@applyToElement
+                }
+            } else this@applyToElement
+
+        if (parameter.isMarkedWithImplicitIntegerCoercion) {
+            if (this is IrVarargImpl && argument is FirVarargArgumentsExpression) {
+
+                val targetTypeFqName = varargElementType.classFqName ?: return this
+                val conversionFunctions = irBuiltIns.getNonBuiltInFunctionsByExtensionReceiver(
+                    Name.identifier("to" + targetTypeFqName.shortName().asString()),
+                    StandardNames.BUILT_INS_PACKAGE_NAME.asString()
+                )
+                if (conversionFunctions.isNotEmpty()) {
+                    elements.forEachIndexed { i, irVarargElement ->
+                        val targetFun = argument.arguments[i].typeRef.toIrType().classifierOrNull?.let { conversionFunctions[it] }
+                        if (targetFun != null && irVarargElement is IrExpression) {
+                            elements[i] =
+                                irVarargElement.applyToElement(argument.arguments[i], targetFun)
+                        }
+                    }
+                }
+                return this
+            } else {
+                val targetIrType = parameter.returnTypeRef.toIrType()
+                val targetTypeFqName = targetIrType.classFqName ?: return this
+                val conversionFunctions = irBuiltIns.getNonBuiltInFunctionsByExtensionReceiver(
+                    Name.identifier("to" + targetTypeFqName.shortName().asString()),
+                    StandardNames.BUILT_INS_PACKAGE_NAME.asString()
+                )
+                val sourceTypeClassifier = argument.typeRef.toIrType().classifierOrNull ?: return this
+
+                val conversionFunction = conversionFunctions[sourceTypeClassifier] ?: return this
+
+                return this.applyToElement(argument, conversionFunction)
             }
         }
         return this

@@ -425,7 +425,7 @@ class FirElementSerializer private constructor(
             function.nonSourceAnnotations(session).isNotEmpty(),
             ProtoEnumFlags.visibility(simpleFunction?.let { normalizeVisibility(it) } ?: Visibilities.Local),
             ProtoEnumFlags.modality(simpleFunction?.modality ?: Modality.FINAL),
-            ProtoBuf.MemberKind.DECLARATION,
+            if (function.origin == FirDeclarationOrigin.Delegated) ProtoBuf.MemberKind.DELEGATION else ProtoBuf.MemberKind.DECLARATION,
             simpleFunction?.isOperator == true,
             simpleFunction?.isInfix == true,
             simpleFunction?.isInline == true,
@@ -985,6 +985,9 @@ class FirElementSerializer private constructor(
         return writeLanguageVersionRequirement(languageFeature, this)
     }
 
+    private fun MutableVersionRequirementTable.writeCompilerVersionRequirement(major: Int, minor: Int, patch: Int): Int =
+        writeCompilerVersionRequirement(major, minor, patch, this)
+
     private fun MutableVersionRequirementTable.writeVersionRequirementDependingOnCoroutinesVersion(): Int =
         writeVersionRequirement(LanguageFeature.ReleaseCoroutines)
 
@@ -1155,6 +1158,17 @@ class FirElementSerializer private constructor(
                 versionRequirementTable
             )
         }
+
+        fun writeCompilerVersionRequirement(
+            major: Int,
+            minor: Int,
+            patch: Int,
+            versionRequirementTable: MutableVersionRequirementTable
+        ): Int = writeVersionRequirement(
+            major, minor, patch,
+            ProtoBuf.VersionRequirement.VersionKind.COMPILER_VERSION,
+            versionRequirementTable
+        )
 
         fun writeVersionRequirement(
             major: Int,

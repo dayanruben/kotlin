@@ -12446,6 +12446,16 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
             runTest("compiler/testData/codegen/box/functions/defaultargs7.kt");
         }
 
+        @TestMetadata("delegatedPropertyWithMultipleOverriddens_generics.kt")
+        public void testDelegatedPropertyWithMultipleOverriddens_generics() throws Exception {
+            runTest("compiler/testData/codegen/box/functions/delegatedPropertyWithMultipleOverriddens_generics.kt");
+        }
+
+        @TestMetadata("delegatedPropertyWithMultipleOverriddens_noGenerics.kt")
+        public void testDelegatedPropertyWithMultipleOverriddens_noGenerics() throws Exception {
+            runTest("compiler/testData/codegen/box/functions/delegatedPropertyWithMultipleOverriddens_noGenerics.kt");
+        }
+
         @TestMetadata("ea33909.kt")
         public void testEa33909() throws Exception {
             runTest("compiler/testData/codegen/box/functions/ea33909.kt");
@@ -32856,6 +32866,11 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
         @TestMetadata("nullableUnsignedEqualsLiteral.kt")
         public void testNullableUnsignedEqualsLiteral() throws Exception {
             runTest("compiler/testData/codegen/box/unsignedTypes/nullableUnsignedEqualsLiteral.kt");
+        }
+
+        @TestMetadata("signedToUnsignedConversions.kt")
+        public void testSignedToUnsignedConversions() throws Exception {
+            runTest("compiler/testData/codegen/box/unsignedTypes/signedToUnsignedConversions.kt");
         }
 
         @TestMetadata("unsignedArraySize.kt")

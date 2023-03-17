@@ -14996,6 +14996,16 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/functions/defaultargs7.kt");
         }
 
+        @TestMetadata("delegatedPropertyWithMultipleOverriddens_generics.kt")
+        public void testDelegatedPropertyWithMultipleOverriddens_generics() throws Exception {
+            runTest("compiler/testData/codegen/box/functions/delegatedPropertyWithMultipleOverriddens_generics.kt");
+        }
+
+        @TestMetadata("delegatedPropertyWithMultipleOverriddens_noGenerics.kt")
+        public void testDelegatedPropertyWithMultipleOverriddens_noGenerics() throws Exception {
+            runTest("compiler/testData/codegen/box/functions/delegatedPropertyWithMultipleOverriddens_noGenerics.kt");
+        }
+
         @TestMetadata("ea33909.kt")
         public void testEa33909() throws Exception {
             runTest("compiler/testData/codegen/box/functions/ea33909.kt");
@@ -39805,6 +39815,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
     @TestDataPath("$PROJECT_ROOT")
     @RunWith(JUnit3RunnerWithInners.class)
     public static class UnsignedTypes extends AbstractLightAnalysisModeTest {
+        @TestMetadata("signedToUnsignedConversions.kt")
+        public void ignoreSignedToUnsignedConversions() throws Exception {
+            runTest("compiler/testData/codegen/box/unsignedTypes/signedToUnsignedConversions.kt");
+        }
+
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM, testDataFilePath);
         }

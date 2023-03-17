@@ -19571,6 +19571,24 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             }
 
             @Test
+            @TestMetadata("syntheticAssignmentInLambdaExpressionBody.kt")
+            public void testSyntheticAssignmentInLambdaExpressionBody() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/j+k/syntheticAssignmentInLambdaExpressionBody.kt");
+            }
+
+            @Test
+            @TestMetadata("syntheticPropertyOverridden.kt")
+            public void testSyntheticPropertyOverridden() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/j+k/syntheticPropertyOverridden.kt");
+            }
+
+            @Test
+            @TestMetadata("syntheticPropertyOverridden2.kt")
+            public void testSyntheticPropertyOverridden2() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/j+k/syntheticPropertyOverridden2.kt");
+            }
+
+            @Test
             @TestMetadata("traitDefaultCall.kt")
             public void testTraitDefaultCall() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/j+k/traitDefaultCall.kt");
@@ -30163,6 +30181,18 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             }
 
             @Test
+            @TestMetadata("smartCastOnAlienPropertyFromInvisibleClass.kt")
+            public void testSmartCastOnAlienPropertyFromInvisibleClass() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/smartCasts/smartCastOnAlienPropertyFromInvisibleClass.kt");
+            }
+
+            @Test
+            @TestMetadata("smartCastOnAlienPropertyFromInvisibleClassForbidden.kt")
+            public void testSmartCastOnAlienPropertyFromInvisibleClassForbidden() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/smartCasts/smartCastOnAlienPropertyFromInvisibleClassForbidden.kt");
+            }
+
+            @Test
             @TestMetadata("smartCastOnElvis.kt")
             public void testSmartCastOnElvis() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/smartCasts/smartCastOnElvis.kt");
@@ -36937,6 +36967,30 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             }
 
             @Test
+            @TestMetadata("buildListToUpperBound.kt")
+            public void testBuildListToUpperBound() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/builderInference/buildListToUpperBound.kt");
+            }
+
+            @Test
+            @TestMetadata("buildListToUpperBoundForbidden.kt")
+            public void testBuildListToUpperBoundForbidden() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/builderInference/buildListToUpperBoundForbidden.kt");
+            }
+
+            @Test
+            @TestMetadata("buildListToUpperBoundInLazy.kt")
+            public void testBuildListToUpperBoundInLazy() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/builderInference/buildListToUpperBoundInLazy.kt");
+            }
+
+            @Test
+            @TestMetadata("buildListToUpperBoundInLazyForbidden.kt")
+            public void testBuildListToUpperBoundInLazyForbidden() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/builderInference/buildListToUpperBoundInLazyForbidden.kt");
+            }
+
+            @Test
             @TestMetadata("completeIrrelevantCalls.kt")
             public void testCompleteIrrelevantCalls() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/builderInference/completeIrrelevantCalls.kt");
@@ -36958,18 +37012,6 @@ public class DiagnosisCompilerTestFE10TestdataTestGenerated extends AbstractDiag
             @TestMetadata("inferCoroutineTypeInOldVersion.kt")
             public void testInferCoroutineTypeInOldVersion() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/builderInference/inferCoroutineTypeInOldVersion.kt");
-            }
-
-            @Test
-            @TestMetadata("kt48445.kt")
-            public void testKt48445() throws Exception {
-                runTest("compiler/testData/diagnostics/testsWithStdLib/builderInference/kt48445.kt");
-            }
-
-            @Test
-            @TestMetadata("kt50520.kt")
-            public void testKt50520() throws Exception {
-                runTest("compiler/testData/diagnostics/testsWithStdLib/builderInference/kt50520.kt");
             }
 
             @Test

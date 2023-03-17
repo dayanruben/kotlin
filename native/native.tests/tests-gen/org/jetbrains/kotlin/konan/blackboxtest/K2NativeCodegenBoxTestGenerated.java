@@ -15250,6 +15250,18 @@ public class K2NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTes
             }
 
             @Test
+            @TestMetadata("delegatedPropertyWithMultipleOverriddens_generics.kt")
+            public void testDelegatedPropertyWithMultipleOverriddens_generics() throws Exception {
+                runTest("compiler/testData/codegen/box/functions/delegatedPropertyWithMultipleOverriddens_generics.kt");
+            }
+
+            @Test
+            @TestMetadata("delegatedPropertyWithMultipleOverriddens_noGenerics.kt")
+            public void testDelegatedPropertyWithMultipleOverriddens_noGenerics() throws Exception {
+                runTest("compiler/testData/codegen/box/functions/delegatedPropertyWithMultipleOverriddens_noGenerics.kt");
+            }
+
+            @Test
             @TestMetadata("ea33909.kt")
             public void testEa33909() throws Exception {
                 runTest("compiler/testData/codegen/box/functions/ea33909.kt");
@@ -40357,6 +40369,12 @@ public class K2NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTes
             @TestMetadata("nullableUnsignedEqualsLiteral.kt")
             public void testNullableUnsignedEqualsLiteral() throws Exception {
                 runTest("compiler/testData/codegen/box/unsignedTypes/nullableUnsignedEqualsLiteral.kt");
+            }
+
+            @Test
+            @TestMetadata("signedToUnsignedConversions.kt")
+            public void testSignedToUnsignedConversions() throws Exception {
+                runTest("compiler/testData/codegen/box/unsignedTypes/signedToUnsignedConversions.kt");
             }
 
             @Test
