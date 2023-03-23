@@ -18446,6 +18446,18 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         }
 
         @Test
+        @TestMetadata("manyImplFromOneJavaInterfaceWithDelegation.kt")
+        public void testManyImplFromOneJavaInterfaceWithDelegation() throws Exception {
+            runTest("compiler/testData/codegen/box/fir/manyImplFromOneJavaInterfaceWithDelegation.kt");
+        }
+
+        @Test
+        @TestMetadata("manyImplFromOneJavaInterfaceWithDelegation2.kt")
+        public void testManyImplFromOneJavaInterfaceWithDelegation2() throws Exception {
+            runTest("compiler/testData/codegen/box/fir/manyImplFromOneJavaInterfaceWithDelegation2.kt");
+        }
+
+        @Test
         @TestMetadata("NameHighlighter.kt")
         public void testNameHighlighter() throws Exception {
             runTest("compiler/testData/codegen/box/fir/NameHighlighter.kt");
@@ -28323,6 +28335,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
             }
 
             @Test
+            @TestMetadata("equals_after.kt")
+            public void testEquals_after() throws Exception {
+                runTest("compiler/testData/codegen/box/involvesIrInterpreter/dumpIrAndCheck/equals_after.kt");
+            }
+
+            @Test
             @TestMetadata("floatOperations.kt")
             public void testFloatOperations() throws Exception {
                 runTest("compiler/testData/codegen/box/involvesIrInterpreter/dumpIrAndCheck/floatOperations.kt");
@@ -33236,6 +33254,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
                 @TestMetadata("accessToLocalClassFromBackend.kt")
                 public void testAccessToLocalClassFromBackend() throws Exception {
                     runTest("compiler/testData/codegen/box/multiplatform/k2/basic/accessToLocalClassFromBackend.kt");
+                }
+
+                @Test
+                @TestMetadata("actualFunctionWithArgumentOfExpectType.kt")
+                public void testActualFunctionWithArgumentOfExpectType() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/actualFunctionWithArgumentOfExpectType.kt");
                 }
 
                 @Test
@@ -47090,6 +47114,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         }
 
         @Test
+        @TestMetadata("kt57487.kt")
+        public void testKt57487() throws Exception {
+            runTest("compiler/testData/codegen/box/regressions/kt57487.kt");
+        }
+
+        @Test
         @TestMetadata("kt5786_privateWithDefault.kt")
         public void testKt5786_privateWithDefault() throws Exception {
             runTest("compiler/testData/codegen/box/regressions/kt5786_privateWithDefault.kt");
@@ -49277,6 +49307,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         @TestMetadata("anonymousInitializerInClassObject.kt")
         public void testAnonymousInitializerInClassObject() throws Exception {
             runTest("compiler/testData/codegen/box/statics/anonymousInitializerInClassObject.kt");
+        }
+
+        @Test
+        @TestMetadata("enumWithInheritedStaticField.kt")
+        public void testEnumWithInheritedStaticField() throws Exception {
+            runTest("compiler/testData/codegen/box/statics/enumWithInheritedStaticField.kt");
         }
 
         @Test

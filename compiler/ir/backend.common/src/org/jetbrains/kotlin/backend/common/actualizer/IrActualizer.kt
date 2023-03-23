@@ -5,17 +5,25 @@
 
 package org.jetbrains.kotlin.backend.common.actualizer
 
-import org.jetbrains.kotlin.backend.common.ir.isProperExpect
+import org.jetbrains.kotlin.KtDiagnosticReporterWithImplicitIrBasedContext
+import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.name.FqName
 
 object IrActualizer {
-    fun actualize(mainFragment: IrModuleFragment, dependentFragments: List<IrModuleFragment>) {
-        val (expectActualMap, typeAliasMap) = ExpectActualCollector(mainFragment, dependentFragments).collect()
+    fun actualize(
+        mainFragment: IrModuleFragment,
+        dependentFragments: List<IrModuleFragment>,
+        diagnosticReporter: DiagnosticReporter,
+        languageVersionSettings: LanguageVersionSettings
+    ) {
+        val ktDiagnosticReporter = KtDiagnosticReporterWithImplicitIrBasedContext(diagnosticReporter, languageVersionSettings)
+        val (expectActualMap, expectActualTypeAliasMap) = ExpectActualCollector(mainFragment, dependentFragments, ktDiagnosticReporter).collect()
         FunctionDefaultParametersActualizer(expectActualMap).actualize()
         removeExpectDeclarations(dependentFragments, expectActualMap)
-        addMissingFakeOverrides(expectActualMap, dependentFragments, typeAliasMap)
+        addMissingFakeOverrides(expectActualMap, dependentFragments, expectActualTypeAliasMap, ktDiagnosticReporter)
         linkExpectToActual(expectActualMap, dependentFragments)
         mergeIrFragments(mainFragment, dependentFragments)
     }
@@ -40,9 +48,14 @@ object IrActualizer {
     private fun addMissingFakeOverrides(
         expectActualMap: Map<IrSymbol, IrSymbol>,
         dependentFragments: List<IrModuleFragment>,
-        typeAliasMap: Map<FqName, FqName>
+        expectActualTypeAliasMap: Map<FqName, FqName>,
+        diagnosticsReporter: KtDiagnosticReporterWithImplicitIrBasedContext
     ) {
-        MissingFakeOverridesAdder(expectActualMap, typeAliasMap).apply { dependentFragments.forEach { visitModuleFragment(it) } }
+        MissingFakeOverridesAdder(
+            expectActualMap,
+            expectActualTypeAliasMap,
+            diagnosticsReporter
+        ).apply { dependentFragments.forEach { visitModuleFragment(it) } }
     }
 
     private fun linkExpectToActual(expectActualMap: Map<IrSymbol, IrSymbol>, dependentFragments: List<IrModuleFragment>) {

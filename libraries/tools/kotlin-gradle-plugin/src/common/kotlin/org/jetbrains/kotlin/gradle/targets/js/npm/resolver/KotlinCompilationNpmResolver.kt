@@ -91,13 +91,17 @@ class KotlinCompilationNpmResolver(
 
     override fun toString(): String = "KotlinCompilationNpmResolver(${npmProject.name})"
 
+    val aggregatedConfiguration: Configuration by lazy {
+        createAggregatedConfiguration()
+    }
+
     private var _compilationNpmResolution: KotlinCompilationNpmResolution? = null
 
     val compilationNpmResolution: KotlinCompilationNpmResolution
         get() {
             return _compilationNpmResolution ?: run {
                 val visitor = ConfigurationVisitor()
-                visitor.visit(createAggregatedConfiguration())
+                visitor.visit(aggregatedConfiguration)
                 visitor.toPackageJsonProducer()
             }.also {
                 _compilationNpmResolution = it
@@ -140,7 +144,6 @@ class KotlinCompilationNpmResolver(
 
     inner class ConfigurationVisitor {
         private val internalDependencies = mutableSetOf<InternalDependency>()
-        private val internalCompositeDependencies = mutableSetOf<CompositeDependency>()
         private val externalGradleDependencies = mutableSetOf<ExternalGradleDependency>()
         private val externalNpmDependencies = mutableSetOf<NpmDependencyDeclaration>()
         private val fileCollectionDependencies = mutableSetOf<FileCollectionExternalGradleDependency>()
@@ -212,39 +215,12 @@ class KotlinCompilationNpmResolver(
             val artifactId = artifact.id
             val componentIdentifier = artifactId.componentIdentifier
 
-            if (artifactId `is` CompositeProjectComponentArtifactMetadata) {
-                visitCompositeProjectDependency(dependency, componentIdentifier as ProjectComponentIdentifier)
-                return
-            }
-
-            if (componentIdentifier is ProjectComponentIdentifier) {
+            if (componentIdentifier is ProjectComponentIdentifier && !(artifactId `is` CompositeProjectComponentArtifactMetadata)) {
                 visitProjectDependency(componentIdentifier)
                 return
             }
 
             externalGradleDependencies.add(ExternalGradleDependency(dependency, artifact))
-        }
-
-        private fun visitCompositeProjectDependency(
-            dependency: ResolvedDependency,
-            componentIdentifier: ProjectComponentIdentifier
-        ) {
-            check(target is KotlinJsIrTarget) {
-                """
-                Composite builds for Kotlin/JS are supported only for IR compiler.
-                Use kotlin.js.compiler=ir in gradle.properties or
-                js(IR) {
-                ...
-                }
-                """.trimIndent()
-            }
-
-            (componentIdentifier as DefaultProjectComponentIdentifier).let { identifier ->
-                val includedBuild = project.gradle.includedBuild(identifier.identityPath.topRealPath().name!!)
-                internalCompositeDependencies.add(
-                    CompositeDependency(dependency.moduleName, dependency.moduleVersion, includedBuild.projectDir, includedBuild)
-                )
-            }
         }
 
         private fun visitProjectDependency(
@@ -267,7 +243,6 @@ class KotlinCompilationNpmResolver(
 
         fun toPackageJsonProducer() = KotlinCompilationNpmResolution(
             internalDependencies,
-            internalCompositeDependencies,
             externalGradleDependencies.map {
                 FileExternalGradleDependency(
                     it.dependency.moduleName,

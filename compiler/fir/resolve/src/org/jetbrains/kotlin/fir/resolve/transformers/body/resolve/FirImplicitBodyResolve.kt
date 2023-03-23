@@ -60,7 +60,9 @@ class FirImplicitTypeBodyResolveTransformerAdapter(session: FirSession, scopeSes
     }
 
     override fun transformFile(file: FirFile, data: Any?): FirFile {
-        return file.transform(transformer, ResolutionMode.ContextIndependent)
+        return withFileAnalysisExceptionWrapping(file) {
+            file.transform(transformer, ResolutionMode.ContextIndependent)
+        }
     }
 }
 
@@ -257,6 +259,10 @@ private class ReturnTypeCalculatorWithJump(
                 val coneType = substitutor.substituteOrSelf(baseReturnType)
                 val returnType = declaration.returnTypeRef.resolvedTypeFromPrototype(coneType)
                 declaration.replaceReturnTypeRef(returnType)
+                if (declaration is FirProperty) {
+                    declaration.getter?.replaceReturnTypeRef(returnType)
+                    declaration.setter?.valueParameters?.firstOrNull()?.replaceReturnTypeRef(returnType)
+                }
                 return returnType
             }
         }
