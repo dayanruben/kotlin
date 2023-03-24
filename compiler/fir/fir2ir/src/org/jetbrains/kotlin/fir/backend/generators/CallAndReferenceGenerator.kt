@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutorByMap
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.approximateDeclarationType
+import org.jetbrains.kotlin.fir.scopes.getDeclaredConstructors
 import org.jetbrains.kotlin.fir.scopes.unsubstitutedScope
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.*
@@ -43,7 +44,6 @@ import org.jetbrains.kotlin.ir.util.isMethodOfAny
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.calls.NewCommonSuperTypeCalculator.commonSuperType
 import org.jetbrains.kotlin.util.OperatorNameConventions
-import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 class CallAndReferenceGenerator(
     private val components: Fir2IrComponents,
@@ -645,11 +645,17 @@ class CallAndReferenceGenerator(
                         // Fallback for FirReferencePlaceholderForResolvedAnnotations from jar
                         val fir = coneType.lookupTag.toSymbol(session)?.fir as? FirClass
                         var constructorSymbol: FirConstructorSymbol? = null
-                        fir?.unsubstitutedScope(session, scopeSession, withForcedTypeCalculator = true)?.processDeclaredConstructors {
+                        fir?.unsubstitutedScope(
+                            session,
+                            scopeSession,
+                            withForcedTypeCalculator = true,
+                            memberRequiredPhase = null,
+                        )?.processDeclaredConstructors {
                             if (it.fir.isPrimary && constructorSymbol == null) {
                                 constructorSymbol = it
                             }
                         }
+
                         constructorSymbol?.let {
                             this.declarationStorage.getIrConstructorSymbol(it)
                         }
@@ -685,7 +691,11 @@ class CallAndReferenceGenerator(
             useSiteTarget = this@toAnnotationCall.useSiteTarget
             annotationTypeRef = this@toAnnotationCall.annotationTypeRef
             val symbol = annotationTypeRef.coneType.fullyExpandedType(session).toSymbol(session) as? FirRegularClassSymbol ?: return null
-            val constructorSymbol = symbol.declarationSymbols.firstIsInstanceOrNull<FirConstructorSymbol>() ?: return null
+
+            val constructorSymbol =
+                symbol.unsubstitutedScope(session, scopeSession, withForcedTypeCalculator = false, memberRequiredPhase = null)
+                    .getDeclaredConstructors().firstOrNull() ?: return null
+
             val argumentToParameterToMapping = constructorSymbol.valueParameterSymbols.mapNotNull {
                 val parameter = it.fir
                 val argument = this@toAnnotationCall.argumentMapping.mapping[parameter.name] ?: return@mapNotNull null
@@ -1068,7 +1078,10 @@ class CallAndReferenceGenerator(
     private fun FirQualifiedAccessExpression.findIrExtensionReceiver(explicitReceiverExpression: IrExpression?): IrExpression? =
         findIrReceiver(explicitReceiverExpression, isDispatch = false)
 
-    internal fun FirQualifiedAccessExpression.findIrReceiver(explicitReceiverExpression: IrExpression?, isDispatch: Boolean): IrExpression? {
+    internal fun FirQualifiedAccessExpression.findIrReceiver(
+        explicitReceiverExpression: IrExpression?,
+        isDispatch: Boolean,
+    ): IrExpression? {
         val firReceiver = if (isDispatch) dispatchReceiver else extensionReceiver
         if (firReceiver == explicitReceiver) {
             return explicitReceiverExpression
@@ -1084,7 +1097,10 @@ class CallAndReferenceGenerator(
             }
     }
 
-    private fun IrExpression.applyReceivers(qualifiedAccess: FirQualifiedAccessExpression, explicitReceiverExpression: IrExpression?): IrExpression {
+    private fun IrExpression.applyReceivers(
+        qualifiedAccess: FirQualifiedAccessExpression,
+        explicitReceiverExpression: IrExpression?,
+    ): IrExpression {
         when (this) {
             is IrMemberAccessExpression<*> -> {
                 val ownerFunction =
