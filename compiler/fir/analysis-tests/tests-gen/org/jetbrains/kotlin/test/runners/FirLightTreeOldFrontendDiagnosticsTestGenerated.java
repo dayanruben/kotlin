@@ -21164,6 +21164,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
                 }
 
                 @Test
+                @TestMetadata("enumJavaName_after.kt")
+                public void testEnumJavaName_after() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/modifiers/const/enumJavaName_after.kt");
+                }
+
+                @Test
                 @TestMetadata("equals_after.kt")
                 public void testEquals_after() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/modifiers/const/equals_after.kt");
@@ -21227,6 +21233,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
                 @TestMetadata("stdlibConstFun.kt")
                 public void testStdlibConstFun() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/modifiers/const/stdlibConstFun.kt");
+                }
+
+                @Test
+                @TestMetadata("stringConcatenation.kt")
+                public void testStringConcatenation() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/modifiers/const/stringConcatenation.kt");
                 }
 
                 @Test
@@ -36424,6 +36436,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
             @TestMetadata("unsafeAssignment_noReport.kt")
             public void testUnsafeAssignment_noReport() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/builderInference/unsafeAssignment_noReport.kt");
+            }
+
+            @Test
+            @TestMetadata("upperBoundViolation.kt")
+            public void testUpperBoundViolation() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/builderInference/upperBoundViolation.kt");
             }
 
             @Test

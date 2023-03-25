@@ -27159,6 +27159,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                     runTest("compiler/testData/codegen/box/multiplatform/k2/basic/noArgActualConstructor.kt");
                 }
 
+                @TestMetadata("removeExpectDeclarationsFromMetadata.kt")
+                public void ignoreRemoveExpectDeclarationsFromMetadata() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/removeExpectDeclarationsFromMetadata.kt");
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM, testDataFilePath);
                 }
@@ -27187,9 +27192,24 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                     runTest("compiler/testData/codegen/box/multiplatform/k2/basic/enumEntryNameCall.kt");
                 }
 
+                @TestMetadata("expectActualCallableReference.kt")
+                public void testExpectActualCallableReference() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/expectActualCallableReference.kt");
+                }
+
                 @TestMetadata("expectActualDifferentExtensionReceiversOnOverloads.kt")
                 public void testExpectActualDifferentExtensionReceiversOnOverloads() throws Exception {
                     runTest("compiler/testData/codegen/box/multiplatform/k2/basic/expectActualDifferentExtensionReceiversOnOverloads.kt");
+                }
+
+                @TestMetadata("expectActualDifferentPackages.kt")
+                public void testExpectActualDifferentPackages() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/expectActualDifferentPackages.kt");
+                }
+
+                @TestMetadata("expectActualFakeOverrides.kt")
+                public void testExpectActualFakeOverrides() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/expectActualFakeOverrides.kt");
                 }
 
                 @TestMetadata("expectActualMultiCommon.kt")
@@ -27197,9 +27217,19 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                     runTest("compiler/testData/codegen/box/multiplatform/k2/basic/expectActualMultiCommon.kt");
                 }
 
+                @TestMetadata("expectActualOverloads.kt")
+                public void testExpectActualOverloads() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/expectActualOverloads.kt");
+                }
+
                 @TestMetadata("expectActualSimple.kt")
                 public void testExpectActualSimple() throws Exception {
                     runTest("compiler/testData/codegen/box/multiplatform/k2/basic/expectActualSimple.kt");
+                }
+
+                @TestMetadata("expectActualTypealias.kt")
+                public void testExpectActualTypealias() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/expectActualTypealias.kt");
                 }
 
                 @TestMetadata("expectInterfaceInSupertypes.kt")
@@ -27215,6 +27245,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                 @TestMetadata("getRidOfDoubleBindingInFir2IrLazyProperty.kt")
                 public void testGetRidOfDoubleBindingInFir2IrLazyProperty() throws Exception {
                     runTest("compiler/testData/codegen/box/multiplatform/k2/basic/getRidOfDoubleBindingInFir2IrLazyProperty.kt");
+                }
+
+                @TestMetadata("independentCommonSourceModules.kt")
+                public void testIndependentCommonSourceModules() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/independentCommonSourceModules.kt");
                 }
 
                 @TestMetadata("kt-56329.kt")

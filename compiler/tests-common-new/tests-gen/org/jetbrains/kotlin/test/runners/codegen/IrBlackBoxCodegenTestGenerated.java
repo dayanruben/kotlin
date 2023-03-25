@@ -28389,6 +28389,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
             }
 
             @Test
+            @TestMetadata("stringConcatenation.kt")
+            public void testStringConcatenation() throws Exception {
+                runTest("compiler/testData/codegen/box/involvesIrInterpreter/dumpIrAndCheck/stringConcatenation.kt");
+            }
+
+            @Test
             @TestMetadata("stringOperations.kt")
             public void testStringOperations() throws Exception {
                 runTest("compiler/testData/codegen/box/involvesIrInterpreter/dumpIrAndCheck/stringOperations.kt");
@@ -33379,6 +33385,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
                 @TestMetadata("noArgActualConstructor.kt")
                 public void testNoArgActualConstructor() throws Exception {
                     runTest("compiler/testData/codegen/box/multiplatform/k2/basic/noArgActualConstructor.kt");
+                }
+
+                @Test
+                @TestMetadata("removeExpectDeclarationsFromMetadata.kt")
+                public void testRemoveExpectDeclarationsFromMetadata() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/removeExpectDeclarationsFromMetadata.kt");
                 }
 
                 @Test

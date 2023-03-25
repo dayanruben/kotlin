@@ -519,7 +519,8 @@ internal class PartiallyLinkedIrTreePatcher(
             checkReferencedDeclaration(symbol)
                 ?: checkExpressionTypeArguments()
                 ?: checkReferencedDeclarationType(expression.symbol.owner.parentAsClass, "enum class") { constructedClass ->
-                    constructedClass.kind == ClassKind.ENUM_CLASS || constructedClass.symbol == builtIns.enumClass
+                    constructedClass.kind == ClassKind.ENUM_CLASS || constructedClass.kind == ClassKind.ENUM_ENTRY
+                            || constructedClass.symbol == builtIns.enumClass
                 }
                 ?: checkArgumentsAndValueParameters(symbol.owner)
         }
@@ -895,11 +896,12 @@ internal class PartiallyLinkedIrTreePatcher(
             }
         ) { super.visitBlockBody(body) }
 
-        override fun visitCall(expression: IrCall) = withContext(
+        // Allows visiting any type of call: IrCall, IrConstructorCall, IrEnumConstructorCall, IrDelegatingConstructorCall.
+        override fun visitFunctionAccess(expression: IrFunctionAccessExpression) = withContext(
             { oldContext ->
                 val functionSymbol = expression.symbol
                 val function = if (functionSymbol.isBound) functionSymbol.owner else return@withContext oldContext
-                if (!function.isInline) return@withContext oldContext
+                if (!function.isInline && !function.isInlineArrayConstructor(builtIns)) return@withContext oldContext
 
                 fun IrValueParameter?.canHaveNonLocalReturns(): Boolean = this != null && !isCrossinline && !isNoinline
 
@@ -925,7 +927,7 @@ internal class PartiallyLinkedIrTreePatcher(
                     inlinedLambdaArgumentsWithPermittedNonLocalReturns = inlinedLambdaArgumentsWithPermittedNonLocalReturns.toSet()
                 )
             }
-        ) { super.visitCall(expression) }
+        ) { super.visitFunctionAccess(expression) }
 
         override fun visitReturn(expression: IrReturn) = withContext { context ->
             expression.maybeThrowLinkageError(transformer = this@NonLocalReturnsPatcher) {
