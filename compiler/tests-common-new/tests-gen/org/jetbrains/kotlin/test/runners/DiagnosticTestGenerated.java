@@ -622,6 +622,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         }
 
         @Test
+        @TestMetadata("noUnusedOnDelegationWithProvider.kt")
+        public void testNoUnusedOnDelegationWithProvider() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/noUnusedOnDelegationWithProvider.kt");
+        }
+
+        @Test
         @TestMetadata("Nullability.kt")
         public void testNullability() throws Exception {
             runTest("compiler/testData/diagnostics/tests/Nullability.kt");
@@ -1141,6 +1147,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         @TestMetadata("UnusedParameters.kt")
         public void testUnusedParameters() throws Exception {
             runTest("compiler/testData/diagnostics/tests/UnusedParameters.kt");
+        }
+
+        @Test
+        @TestMetadata("unusedVariableOnRegularDelegatedProperty.kt")
+        public void testUnusedVariableOnRegularDelegatedProperty() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/unusedVariableOnRegularDelegatedProperty.kt");
         }
 
         @Test
@@ -5709,6 +5721,18 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         @TestMetadata("compiler/testData/diagnostics/tests/controlFlowAnalysis")
         @TestDataPath("$PROJECT_ROOT")
         public class ControlFlowAnalysis {
+            @Test
+            @TestMetadata("accessToCompanionInBaseEnumInitSection_function.kt")
+            public void testAccessToCompanionInBaseEnumInitSection_function() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/accessToCompanionInBaseEnumInitSection_function.kt");
+            }
+
+            @Test
+            @TestMetadata("accessToCompanionInBaseEnumInitSection_property.kt")
+            public void testAccessToCompanionInBaseEnumInitSection_property() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/accessToCompanionInBaseEnumInitSection_property.kt");
+            }
+
             @Test
             @TestMetadata("accessValueParameterInDefaultValue_after.kt")
             public void testAccessValueParameterInDefaultValue_after() throws Exception {
@@ -12532,6 +12556,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("localClassTypeRefWithTypeParameterFromFunction.kt")
             public void testLocalClassTypeRefWithTypeParameterFromFunction() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/generics/localClassTypeRefWithTypeParameterFromFunction.kt");
+            }
+
+            @Test
+            @TestMetadata("outerTypeParametersInNestedClasses.kt")
+            public void testOuterTypeParametersInNestedClasses() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/generics/outerTypeParametersInNestedClasses.kt");
             }
 
             @Test
@@ -22210,6 +22240,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 }
 
                 @Test
+                @TestMetadata("intermediateActualHasAdditionalSupertypes.kt")
+                public void testIntermediateActualHasAdditionalSupertypes() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/hmpp/intermediateActualHasAdditionalSupertypes.kt");
+                }
+
+                @Test
                 @TestMetadata("kt-55570.kt")
                 public void testKt_55570() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/multiplatform/hmpp/kt-55570.kt");
@@ -23685,6 +23721,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("lambdasWithDifferentParameterNumber.kt")
+            public void testLambdasWithDifferentParameterNumber() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/overload/lambdasWithDifferentParameterNumber.kt");
+            }
+
+            @Test
             @TestMetadata("LocalFunctions.kt")
             public void testLocalFunctions() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/overload/LocalFunctions.kt");
@@ -24121,6 +24163,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @Test
                 public void testAllFilesPresentInClashesOnInheritance() throws Exception {
                     KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/override/clashesOnInheritance"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);
+                }
+
+                @Test
+                @TestMetadata("conflictingInherited.kt")
+                public void testConflictingInherited() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/override/clashesOnInheritance/conflictingInherited.kt");
                 }
 
                 @Test
@@ -32266,6 +32314,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("javaAndKotlinSuperType.kt")
             public void testJavaAndKotlinSuperType() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/subtyping/javaAndKotlinSuperType.kt");
+            }
+
+            @Test
+            @TestMetadata("kFunctionalCST.kt")
+            public void testKFunctionalCST() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/subtyping/kFunctionalCST.kt");
             }
 
             @Test

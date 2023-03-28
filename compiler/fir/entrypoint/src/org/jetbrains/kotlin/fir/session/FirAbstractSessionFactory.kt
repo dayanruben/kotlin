@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.fir.session
 
 import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.container.topologicalSort
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.checkers.registerCommonCheckers
 import org.jetbrains.kotlin.fir.deserialization.ModuleDataProvider
@@ -33,6 +34,7 @@ abstract class FirAbstractSessionFactory {
         sessionProvider: FirProjectSessionProvider,
         moduleDataProvider: ModuleDataProvider,
         languageVersionSettings: LanguageVersionSettings,
+        extensionRegistrars: List<FirExtensionRegistrar>,
         registerExtraComponents: ((FirSession) -> Unit),
         createKotlinScopeProvider: () -> FirKotlinScopeProvider,
         createProviders: (FirSession, FirModuleData, FirKotlinScopeProvider) -> List<FirSymbolProvider>
@@ -45,7 +47,6 @@ abstract class FirAbstractSessionFactory {
 
             registerCliCompilerOnlyComponents()
             registerCommonComponents(languageVersionSettings)
-            registerCommonComponentsAfterExtensionsAreConfigured()
             registerExtraComponents(this)
 
             val kotlinScopeProvider = createKotlinScopeProvider.invoke()
@@ -57,6 +58,13 @@ abstract class FirAbstractSessionFactory {
                 moduleDataProvider.analyzerServices,
             )
             builtinsModuleData.bindSession(this)
+
+            FirSessionConfigurator(this).apply {
+                for (extensionRegistrar in extensionRegistrars) {
+                    registerExtensions(extensionRegistrar.configure())
+                }
+            }.configure()
+            registerCommonComponentsAfterExtensionsAreConfigured()
 
             val providers = createProviders(this, builtinsModuleData, kotlinScopeProvider)
 
@@ -139,7 +147,13 @@ abstract class FirAbstractSessionFactory {
 
     private fun FirSession.computeDependencyProviderList(moduleData: FirModuleData): List<FirSymbolProvider> {
         val visited = mutableSetOf<FirSymbolProvider>()
-        return (moduleData.dependencies + moduleData.friendDependencies + moduleData.dependsOnDependencies)
+
+        // dependsOnDependencies can actualize declarations from their dependencies. Because actual declarations can be more specific
+        // (e.g. have additional supertypes), the modules must be ordered from most specific (i.e. actual) to most generic (i.e. expect)
+        // to prevent false positive resolution errors (see KT-57369 for an example).
+        val dependsOnDependencies = topologicalSort(moduleData.dependsOnDependencies) { it.dependsOnDependencies }
+
+        return (moduleData.dependencies + moduleData.friendDependencies + dependsOnDependencies)
             .mapNotNull { sessionProvider?.getSession(it) }
             .map { it.symbolProvider }
             .flatMap { it.flatten(visited, collectSourceProviders = it.session.kind == FirSession.Kind.Source) }

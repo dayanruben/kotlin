@@ -1,3 +1,5 @@
+// IGNORE_REVERSED_RESOLVE
+//  Ignore reason: KT-57619
 import my.println
 
 enum class Order {
@@ -23,7 +25,7 @@ enum class Planet(val m: Double, internal val r: Double) {
         }
     };
 
-    val g: Double = <!UNINITIALIZED_VARIABLE!>G<!> * m / (r * r)
+    val g: Double = <!UNINITIALIZED_ENUM_COMPANION!>G<!> * m / (r * r)
 
     abstract fun sayHello()
 

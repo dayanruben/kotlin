@@ -15,6 +15,7 @@ import kotlin.native.internal.ReportUnhandledException
  * Initializes Kotlin runtime for the current thread, if not inited already.
  */
 @GCUnsafeCall("Kotlin_initRuntimeIfNeededFromKotlin")
+@Deprecated("Initializing runtime is not possible in the new memory model.", level = DeprecationLevel.WARNING)
 external public fun initRuntimeIfNeeded(): Unit
 
 /**
@@ -111,5 +112,6 @@ public external fun terminateWithUnhandledException(throwable: Throwable): Nothi
  * Compute stable wrt potential object relocations by the memory manager identity hash code.
  * @return 0 for `null` object, identity hash code otherwise.
  */
+@ExperimentalStdlibApi
 @GCUnsafeCall("Kotlin_Any_hashCode")
 public external fun Any?.identityHashCode(): Int

@@ -12,6 +12,7 @@ import org.gradle.api.logging.LogLevel
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.plugin.KotlinJsCompilerType
+import org.jetbrains.kotlin.gradle.targets.js.dsl.Distribution
 import org.jetbrains.kotlin.gradle.targets.js.ir.KLIB_TYPE
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmProject
 import org.jetbrains.kotlin.gradle.targets.js.npm.NpmProjectModules
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnLockCopyTask.Companion.YA
 import org.jetbrains.kotlin.gradle.tasks.USING_JS_INCREMENTAL_COMPILATION_MESSAGE
 import org.jetbrains.kotlin.gradle.tasks.USING_JS_IR_BACKEND_MESSAGE
 import org.jetbrains.kotlin.gradle.testbase.*
+import org.jetbrains.kotlin.gradle.testbase.TestVersions.Gradle.G_7_6
 import org.jetbrains.kotlin.gradle.util.jsCompilerType
 import org.jetbrains.kotlin.gradle.util.normalizePath
 import org.junit.jupiter.api.DisplayName
@@ -81,6 +83,7 @@ class Kotlin2JsIrGradlePluginIT : AbstractKotlin2JsGradlePluginIT(true) {
 
     @DisplayName("js composite build works")
     @GradleTest
+    @GradleTestVersions(minVersion = G_7_6)
     fun testJsCompositeBuild(gradleVersion: GradleVersion) {
         project("js-composite-build", gradleVersion) {
             buildGradleKts.modify(::transformBuildScriptWithPluginsDsl)
@@ -359,7 +362,7 @@ class Kotlin2JsIrGradlePluginIT : AbstractKotlin2JsGradlePluginIT(true) {
     fun testKotlinJsPackageModuleName(gradleVersion: GradleVersion) {
         project("kotlin-js-package-module-name", gradleVersion) {
             build("assemble") {
-                assertFileInProjectExists("build/distributions/kotlin-js-package-module-name.js")
+                assertFileInProjectExists("build/${Distribution.JS_DIST}/productionExecutable/kotlin-js-package-module-name.js")
                 assertFileInProjectExists("build/js/packages/@foo/bar/kotlin/@foo/bar.js")
             }
         }
@@ -470,6 +473,18 @@ class Kotlin2JsIrGradlePluginIT : AbstractKotlin2JsGradlePluginIT(true) {
             assertEquals(fingerprints[0], fingerprints[1], "fingerprints must be stable")
         }
     }
+
+    @DisplayName("Klib runtime dependency on module which already depends on dependent")
+    @GradleTest
+    fun testKlibRuntimeDependency(gradleVersion: GradleVersion) {
+        project("kotlin-js-ir-runtime-dependency", gradleVersion) {
+            build("assemble") {
+                assertTasksExecuted(":lib:otherKlib")
+                assertTasksExecuted(":lib:compileOtherKotlinJs")
+                assertTasksExecuted(":app:compileProductionExecutableKotlinJs")
+            }
+        }
+    }
 }
 
 @JsGradlePluginTests
@@ -492,6 +507,7 @@ class Kotlin2JsGradlePluginIT : AbstractKotlin2JsGradlePluginIT(false) {
                         |afterEvaluate {
                         |    tasks.named('compileKotlinJs') {
                         |        kotlinOptions.outputFile = "${'$'}{project.projectDir}/out/out.js"
+                        |        kotlinOptions.freeCompilerArgs += "-Xforce-deprecated-legacy-compiler-usage"
                         |    }
                         |}
                         |
@@ -1132,7 +1148,11 @@ abstract class AbstractKotlin2JsGradlePluginIT(protected val irBackend: Boolean)
                 assertDirectoryInProjectExists("build/js/packages/kotlin-js-browser-lib")
                 assertDirectoryInProjectExists("build/js/packages/kotlin-js-browser-app")
 
-                assertFileInProjectExists("app/build/distributions/app.js")
+                if (irBackend) {
+                    assertFileInProjectExists("app/build/${Distribution.JS_DIST}/productionExecutable/app.js")
+                } else {
+                    assertFileInProjectExists("app/build/distributions/app.js")
+                }
 
                 if (!irBackend) {
                     assertTasksExecuted(":app:processDceKotlinJs")
@@ -1154,7 +1174,11 @@ abstract class AbstractKotlin2JsGradlePluginIT(protected val irBackend: Boolean)
                     if (irBackend) ":app:browserProductionExecutableDistributeResources" else ":app:browserDistributeResources"
                 )
 
-                assertFileInProjectExists("app/build/distributions/index.html")
+                if (irBackend) {
+                    assertFileInProjectExists("app/build/${Distribution.JS_DIST}/productionExecutable/index.html")
+                } else {
+                    assertFileInProjectExists("app/build/distributions/index.html")
+                }
             }
         }
     }

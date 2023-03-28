@@ -339,34 +339,6 @@ fun generateJUnit5CompilerTests(args: Array<String>) {
             }
         }
 
-        testGroup(testsRoot = "compiler/fir/fir2ir/tests-gen", testDataRoot = "compiler/fir/fir2ir/testData") {
-            testClass<AbstractFirLightTreeBlackBoxCodegenTest>(
-                suiteTestClassName = "FirLightTreeSpecificBlackBoxCodegenTestGenerated"
-            ) {
-                model("codegen/box")
-                model("codegen/boxWithStdLib")
-            }
-
-            testClass<AbstractFirPsiBlackBoxCodegenTest>(
-                suiteTestClassName = "FirPsiSpecificBlackBoxCodegenTestGenerated"
-            ) {
-                model("codegen/box")
-                model("codegen/boxWithStdLib")
-            }
-
-            testClass<AbstractFirLightTreeBytecodeListingTest>(
-                suiteTestClassName = "FirLightTreeSpecificBytecodeListingTestGenerated"
-            ) {
-                model("codegen/bytecodeListing")
-            }
-
-            testClass<AbstractFirPsiBytecodeListingTest>(
-                suiteTestClassName = "FirPsiSpecificBytecodeListingTestGenerated"
-            ) {
-                model("codegen/bytecodeListing")
-            }
-        }
-
         testGroup("compiler/fir/analysis-tests/tests-gen", "compiler/fir/analysis-tests/testData") {
             testClass<AbstractFirPsiDiagnosticTest> {
                 model("resolve", pattern = TestGeneratorUtil.KT_WITHOUT_DOTS_IN_NAME)
