@@ -75,6 +75,15 @@ object FirJsErrors {
     val EXTENSION_FUNCTION_IN_EXTERNAL_DECLARATION by error0<KtElement>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE_OR_DEFAULT)
     val NON_ABSTRACT_MEMBER_OF_EXTERNAL_INTERFACE by error0<KtExpression>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE_OR_DEFAULT)
     val NON_EXTERNAL_DECLARATION_IN_INAPPROPRIATE_FILE by error1<KtElement, ConeKotlinType>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE_OR_DEFAULT)
+    val CANNOT_CHECK_FOR_EXTERNAL_INTERFACE by error1<KtElement, ConeKotlinType>()
+    val UNCHECKED_CAST_TO_EXTERNAL_INTERFACE by warning2<KtElement, ConeKotlinType, ConeKotlinType>()
+    val EXTERNAL_INTERFACE_AS_CLASS_LITERAL by error0<KtElement>()
+
+    // Export
+    val NESTED_JS_EXPORT by error0<KtElement>()
+    val WRONG_EXPORTED_DECLARATION by error1<KtElement, String>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE_OR_DEFAULT)
+    val NON_EXPORTABLE_TYPE by warning2<KtElement, String, ConeKotlinType>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE_OR_DEFAULT)
+    val NON_CONSUMABLE_EXPORTED_IDENTIFIER by warning1<KtElement, String>()
 
     // Dynamics
     val DELEGATION_BY_DYNAMIC by error0<KtElement>()

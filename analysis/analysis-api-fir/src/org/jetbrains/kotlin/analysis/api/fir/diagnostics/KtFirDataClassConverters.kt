@@ -3215,8 +3215,8 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
         NoActualForExpectImpl(
             firSymbolBuilder.buildSymbol(firDiagnostic.a),
             firDiagnostic.b,
-            firDiagnostic.c.mapKeys { (incompatible, _) ->
-                incompatible
+            firDiagnostic.c.mapKeys { (expectActualCompatibility, _) ->
+                expectActualCompatibility
             }.mapValues { (_, collection) -> 
                 collection.map { firBasedSymbol ->
                                     firSymbolBuilder.buildSymbol(firBasedSymbol)
@@ -3229,8 +3229,8 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
     add(FirErrors.ACTUAL_WITHOUT_EXPECT) { firDiagnostic ->
         ActualWithoutExpectImpl(
             firSymbolBuilder.buildSymbol(firDiagnostic.a),
-            firDiagnostic.b.mapKeys { (incompatible, _) ->
-                incompatible
+            firDiagnostic.b.mapKeys { (expectActualCompatibility, _) ->
+                expectActualCompatibility
             }.mapValues { (_, collection) -> 
                 collection.map { firBasedSymbol ->
                                     firSymbolBuilder.buildSymbol(firBasedSymbol)
@@ -4956,6 +4956,55 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
     add(FirJsErrors.NON_EXTERNAL_DECLARATION_IN_INAPPROPRIATE_FILE) { firDiagnostic ->
         NonExternalDeclarationInInappropriateFileImpl(
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJsErrors.CANNOT_CHECK_FOR_EXTERNAL_INTERFACE) { firDiagnostic ->
+        CannotCheckForExternalInterfaceImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJsErrors.UNCHECKED_CAST_TO_EXTERNAL_INTERFACE) { firDiagnostic ->
+        UncheckedCastToExternalInterfaceImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.b),
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJsErrors.EXTERNAL_INTERFACE_AS_CLASS_LITERAL) { firDiagnostic ->
+        ExternalInterfaceAsClassLiteralImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJsErrors.NESTED_JS_EXPORT) { firDiagnostic ->
+        NestedJsExportImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJsErrors.WRONG_EXPORTED_DECLARATION) { firDiagnostic ->
+        WrongExportedDeclarationImpl(
+            firDiagnostic.a,
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJsErrors.NON_EXPORTABLE_TYPE) { firDiagnostic ->
+        NonExportableTypeImpl(
+            firDiagnostic.a,
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.b),
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJsErrors.NON_CONSUMABLE_EXPORTED_IDENTIFIER) { firDiagnostic ->
+        NonConsumableExportedIdentifierImpl(
+            firDiagnostic.a,
             firDiagnostic as KtPsiDiagnostic,
             token,
         )

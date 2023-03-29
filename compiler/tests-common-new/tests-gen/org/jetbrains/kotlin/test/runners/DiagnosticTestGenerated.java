@@ -9357,6 +9357,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("deprecatedEnumEntry.kt")
+            public void testDeprecatedEnumEntry() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/deprecated/deprecatedEnumEntry.kt");
+            }
+
+            @Test
             @TestMetadata("deprecatedError.kt")
             public void testDeprecatedError() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/deprecated/deprecatedError.kt");
@@ -9366,6 +9372,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("deprecatedErrorBuilder.kt")
             public void testDeprecatedErrorBuilder() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/deprecated/deprecatedErrorBuilder.kt");
+            }
+
+            @Test
+            @TestMetadata("deprecatedField.kt")
+            public void testDeprecatedField() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/deprecated/deprecatedField.kt");
             }
 
             @Test
@@ -12556,6 +12568,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("localClassTypeRefWithTypeParameterFromFunction.kt")
             public void testLocalClassTypeRefWithTypeParameterFromFunction() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/generics/localClassTypeRefWithTypeParameterFromFunction.kt");
+            }
+
+            @Test
+            @TestMetadata("nullableTypeParameterScope.kt")
+            public void testNullableTypeParameterScope() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/generics/nullableTypeParameterScope.kt");
             }
 
             @Test
@@ -22246,6 +22264,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 }
 
                 @Test
+                @TestMetadata("kt57320.kt")
+                public void testKt57320() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/hmpp/kt57320.kt");
+                }
+
+                @Test
                 @TestMetadata("kt-55570.kt")
                 public void testKt_55570() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/multiplatform/hmpp/kt-55570.kt");
@@ -28885,6 +28909,34 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                     runTest("compiler/testData/diagnostics/tests/scopes/protectedVisibility/withSmartcast.kt");
                 }
             }
+
+            @Nested
+            @TestMetadata("compiler/testData/diagnostics/tests/scopes/variantProjections")
+            @TestDataPath("$PROJECT_ROOT")
+            public class VariantProjections {
+                @Test
+                public void testAllFilesPresentInVariantProjections() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/scopes/variantProjections"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);
+                }
+
+                @Test
+                @TestMetadata("dataClassCopy.kt")
+                public void testDataClassCopy() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/scopes/variantProjections/dataClassCopy.kt");
+                }
+
+                @Test
+                @TestMetadata("interdependentStarProjections.kt")
+                public void testInterdependentStarProjections() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/scopes/variantProjections/interdependentStarProjections.kt");
+                }
+
+                @Test
+                @TestMetadata("unsafeVarianceAndCovariantProjection.kt")
+                public void testUnsafeVarianceAndCovariantProjection() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/scopes/variantProjections/unsafeVarianceAndCovariantProjection.kt");
+                }
+            }
         }
 
         @Nested
@@ -32718,6 +32770,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("suspendConversionWithReferenceAdaptation.kt")
             public void testSuspendConversionWithReferenceAdaptation() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/suspendConversion/suspendConversionWithReferenceAdaptation.kt");
+            }
+
+            @Test
+            @TestMetadata("suspendFunctionExpectedTypeAndWhen.kt")
+            public void testSuspendFunctionExpectedTypeAndWhen() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/suspendConversion/suspendFunctionExpectedTypeAndWhen.kt");
             }
         }
 

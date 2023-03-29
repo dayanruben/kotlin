@@ -86,6 +86,28 @@ object JS_DIAGNOSTICS_LIST : DiagnosticList("FirJsErrors") {
         val NON_EXTERNAL_DECLARATION_IN_INAPPROPRIATE_FILE by error<KtElement>(PositioningStrategy.DECLARATION_SIGNATURE_OR_DEFAULT) {
             parameter<ConeKotlinType>("type")
         }
+        val CANNOT_CHECK_FOR_EXTERNAL_INTERFACE by error<KtElement> {
+            parameter<ConeKotlinType>("targetType")
+        }
+        val UNCHECKED_CAST_TO_EXTERNAL_INTERFACE by warning<KtElement> {
+            parameter<ConeKotlinType>("sourceType")
+            parameter<ConeKotlinType>("targetType")
+        }
+        val EXTERNAL_INTERFACE_AS_CLASS_LITERAL by error<KtElement>()
+    }
+
+    val EXPORT by object : DiagnosticGroup("Export") {
+        val NESTED_JS_EXPORT by error<KtElement>()
+        val WRONG_EXPORTED_DECLARATION by error<KtElement>(PositioningStrategy.DECLARATION_SIGNATURE_OR_DEFAULT) {
+            parameter<String>("kind")
+        }
+        val NON_EXPORTABLE_TYPE by warning<KtElement>(PositioningStrategy.DECLARATION_SIGNATURE_OR_DEFAULT) {
+            parameter<String>("kind")
+            parameter<ConeKotlinType>("type")
+        }
+        val NON_CONSUMABLE_EXPORTED_IDENTIFIER by warning<KtElement>(PositioningStrategy.DEFAULT) {
+            parameter<String>("name")
+        }
     }
 
     val DYNAMICS by object : DiagnosticGroup("Dynamics") {

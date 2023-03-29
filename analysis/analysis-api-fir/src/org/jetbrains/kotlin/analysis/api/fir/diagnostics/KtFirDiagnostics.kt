@@ -80,6 +80,7 @@ import org.jetbrains.kotlin.psi.KtWhenEntry
 import org.jetbrains.kotlin.psi.KtWhenExpression
 import org.jetbrains.kotlin.resolve.ForbiddenNamedArgumentsTarget
 import org.jetbrains.kotlin.resolve.deprecation.DeprecationInfo
+import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualCompatibility
 import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualCompatibility.Incompatible
 import org.jetbrains.kotlin.types.Variance
 
@@ -2262,13 +2263,13 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = NoActualForExpect::class
         abstract val declaration: KtSymbol
         abstract val module: FirModuleData
-        abstract val compatibility: Map<Incompatible<FirBasedSymbol<*>>, List<KtSymbol>>
+        abstract val compatibility: Map<ExpectActualCompatibility<FirBasedSymbol<*>>, List<KtSymbol>>
     }
 
     abstract class ActualWithoutExpect : KtFirDiagnostic<KtNamedDeclaration>() {
         override val diagnosticClass get() = ActualWithoutExpect::class
         abstract val declaration: KtSymbol
-        abstract val compatibility: Map<Incompatible<FirBasedSymbol<*>>, List<KtSymbol>>
+        abstract val compatibility: Map<ExpectActualCompatibility<FirBasedSymbol<*>>, List<KtSymbol>>
     }
 
     abstract class AmbiguousActuals : KtFirDiagnostic<KtNamedDeclaration>() {
@@ -3445,6 +3446,41 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
     abstract class NonExternalDeclarationInInappropriateFile : KtFirDiagnostic<KtElement>() {
         override val diagnosticClass get() = NonExternalDeclarationInInappropriateFile::class
         abstract val type: KtType
+    }
+
+    abstract class CannotCheckForExternalInterface : KtFirDiagnostic<KtElement>() {
+        override val diagnosticClass get() = CannotCheckForExternalInterface::class
+        abstract val targetType: KtType
+    }
+
+    abstract class UncheckedCastToExternalInterface : KtFirDiagnostic<KtElement>() {
+        override val diagnosticClass get() = UncheckedCastToExternalInterface::class
+        abstract val sourceType: KtType
+        abstract val targetType: KtType
+    }
+
+    abstract class ExternalInterfaceAsClassLiteral : KtFirDiagnostic<KtElement>() {
+        override val diagnosticClass get() = ExternalInterfaceAsClassLiteral::class
+    }
+
+    abstract class NestedJsExport : KtFirDiagnostic<KtElement>() {
+        override val diagnosticClass get() = NestedJsExport::class
+    }
+
+    abstract class WrongExportedDeclaration : KtFirDiagnostic<KtElement>() {
+        override val diagnosticClass get() = WrongExportedDeclaration::class
+        abstract val kind: String
+    }
+
+    abstract class NonExportableType : KtFirDiagnostic<KtElement>() {
+        override val diagnosticClass get() = NonExportableType::class
+        abstract val kind: String
+        abstract val type: KtType
+    }
+
+    abstract class NonConsumableExportedIdentifier : KtFirDiagnostic<KtElement>() {
+        override val diagnosticClass get() = NonConsumableExportedIdentifier::class
+        abstract val name: String
     }
 
     abstract class DelegationByDynamic : KtFirDiagnostic<KtElement>() {

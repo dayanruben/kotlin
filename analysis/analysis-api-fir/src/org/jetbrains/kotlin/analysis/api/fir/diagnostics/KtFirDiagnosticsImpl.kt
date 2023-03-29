@@ -81,6 +81,7 @@ import org.jetbrains.kotlin.psi.KtWhenEntry
 import org.jetbrains.kotlin.psi.KtWhenExpression
 import org.jetbrains.kotlin.resolve.ForbiddenNamedArgumentsTarget
 import org.jetbrains.kotlin.resolve.deprecation.DeprecationInfo
+import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualCompatibility
 import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualCompatibility.Incompatible
 import org.jetbrains.kotlin.types.Variance
 
@@ -2727,14 +2728,14 @@ internal class ExpectedFunctionSourceWithDefaultArgumentsNotFoundImpl(
 internal class NoActualForExpectImpl(
     override val declaration: KtSymbol,
     override val module: FirModuleData,
-    override val compatibility: Map<Incompatible<FirBasedSymbol<*>>, List<KtSymbol>>,
+    override val compatibility: Map<ExpectActualCompatibility<FirBasedSymbol<*>>, List<KtSymbol>>,
     override val firDiagnostic: KtPsiDiagnostic,
     override val token: KtLifetimeToken,
 ) : KtFirDiagnostic.NoActualForExpect(), KtAbstractFirDiagnostic<KtNamedDeclaration>
 
 internal class ActualWithoutExpectImpl(
     override val declaration: KtSymbol,
-    override val compatibility: Map<Incompatible<FirBasedSymbol<*>>, List<KtSymbol>>,
+    override val compatibility: Map<ExpectActualCompatibility<FirBasedSymbol<*>>, List<KtSymbol>>,
     override val firDiagnostic: KtPsiDiagnostic,
     override val token: KtLifetimeToken,
 ) : KtFirDiagnostic.ActualWithoutExpect(), KtAbstractFirDiagnostic<KtNamedDeclaration>
@@ -4171,6 +4172,48 @@ internal class NonExternalDeclarationInInappropriateFileImpl(
     override val firDiagnostic: KtPsiDiagnostic,
     override val token: KtLifetimeToken,
 ) : KtFirDiagnostic.NonExternalDeclarationInInappropriateFile(), KtAbstractFirDiagnostic<KtElement>
+
+internal class CannotCheckForExternalInterfaceImpl(
+    override val targetType: KtType,
+    override val firDiagnostic: KtPsiDiagnostic,
+    override val token: KtLifetimeToken,
+) : KtFirDiagnostic.CannotCheckForExternalInterface(), KtAbstractFirDiagnostic<KtElement>
+
+internal class UncheckedCastToExternalInterfaceImpl(
+    override val sourceType: KtType,
+    override val targetType: KtType,
+    override val firDiagnostic: KtPsiDiagnostic,
+    override val token: KtLifetimeToken,
+) : KtFirDiagnostic.UncheckedCastToExternalInterface(), KtAbstractFirDiagnostic<KtElement>
+
+internal class ExternalInterfaceAsClassLiteralImpl(
+    override val firDiagnostic: KtPsiDiagnostic,
+    override val token: KtLifetimeToken,
+) : KtFirDiagnostic.ExternalInterfaceAsClassLiteral(), KtAbstractFirDiagnostic<KtElement>
+
+internal class NestedJsExportImpl(
+    override val firDiagnostic: KtPsiDiagnostic,
+    override val token: KtLifetimeToken,
+) : KtFirDiagnostic.NestedJsExport(), KtAbstractFirDiagnostic<KtElement>
+
+internal class WrongExportedDeclarationImpl(
+    override val kind: String,
+    override val firDiagnostic: KtPsiDiagnostic,
+    override val token: KtLifetimeToken,
+) : KtFirDiagnostic.WrongExportedDeclaration(), KtAbstractFirDiagnostic<KtElement>
+
+internal class NonExportableTypeImpl(
+    override val kind: String,
+    override val type: KtType,
+    override val firDiagnostic: KtPsiDiagnostic,
+    override val token: KtLifetimeToken,
+) : KtFirDiagnostic.NonExportableType(), KtAbstractFirDiagnostic<KtElement>
+
+internal class NonConsumableExportedIdentifierImpl(
+    override val name: String,
+    override val firDiagnostic: KtPsiDiagnostic,
+    override val token: KtLifetimeToken,
+) : KtFirDiagnostic.NonConsumableExportedIdentifier(), KtAbstractFirDiagnostic<KtElement>
 
 internal class DelegationByDynamicImpl(
     override val firDiagnostic: KtPsiDiagnostic,
