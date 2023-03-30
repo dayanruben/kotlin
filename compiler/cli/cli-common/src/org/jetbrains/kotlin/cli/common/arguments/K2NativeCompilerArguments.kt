@@ -424,8 +424,19 @@ class K2NativeCompilerArguments : CommonCompilerArguments() {
     @Argument(value = "-Xlazy-ir-for-caches", valueDescription = "{disable|enable}", description = "Use lazy IR for cached libraries")
     var lazyIrForCaches: String? = null
 
-    @Argument(value = "-Xpartial-linkage", description = "Allow unlinked symbols")
-    var partialLinkage: Boolean = false
+    @Argument(value = "-Xpartial-linkage", valueDescription = "{enable|disable}", description = "Use partial linkage mode")
+    var partialLinkageMode: String? = null
+        set(value) {
+            checkFrozen()
+            field = if (value.isNullOrEmpty()) null else value
+        }
+
+    @Argument(value = "-Xpartial-linkage-loglevel", valueDescription = "{info|warning|error}", description = "Partial linkage compile-time log level")
+    var partialLinkageLogLevel: String? = null
+        set(value) {
+            checkFrozen()
+            field = if (value.isNullOrEmpty()) null else value
+        }
 
     @Argument(value = "-Xomit-framework-binary", description = "Omit binary when compiling framework")
     var omitFrameworkBinary: Boolean = false

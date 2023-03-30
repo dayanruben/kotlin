@@ -14,7 +14,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @MppGradlePluginTests
-class MppDiagnosticsIt : KGPBaseTest() {
+class MppDiagnosticsIt : MPPBaseTest() {
     @GradleTest
     fun testDeprecatedProperties(gradleVersion: GradleVersion) {
         project("mppDeprecatedProperties", gradleVersion) {

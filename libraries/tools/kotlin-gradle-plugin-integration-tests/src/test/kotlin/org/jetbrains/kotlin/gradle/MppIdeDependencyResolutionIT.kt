@@ -31,7 +31,7 @@ import kotlin.test.fail
 
 @MppGradlePluginTests
 @DisplayName("Multiplatform IDE dependency resolution")
-class MppIdeDependencyResolutionIT : KGPBaseTest() {
+class MppIdeDependencyResolutionIT : MPPBaseTest() {
     @GradleTest
     fun testCommonizedPlatformDependencyResolution(gradleVersion: GradleVersion) {
         with(project("commonizeHierarchically", gradleVersion)) {

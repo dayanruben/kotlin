@@ -970,6 +970,18 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
         }
 
         @Test
+        @TestMetadata("suppressExposedPropertyTypeInConstructor.kt")
+        public void testSuppressExposedPropertyTypeInConstructor() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/suppressExposedPropertyTypeInConstructor.kt");
+        }
+
+        @Test
+        @TestMetadata("suppressExposedPropertyTypeInPrivateConstructor.kt")
+        public void testSuppressExposedPropertyTypeInPrivateConstructor() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/suppressExposedPropertyTypeInPrivateConstructor.kt");
+        }
+
+        @Test
         @TestMetadata("SyntaxErrorInTestHighlighting.kt")
         public void testSyntaxErrorInTestHighlighting() throws Exception {
             runTest("compiler/testData/diagnostics/tests/SyntaxErrorInTestHighlighting.kt");
@@ -35297,6 +35309,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
         @Test
         public void testAllFilesPresentInTestsWithStdLib() throws Exception {
             KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/testsWithStdLib"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);
+        }
+
+        @Test
+        @TestMetadata("ambiguityWithUnsignedSpecificity.kt")
+        public void testAmbiguityWithUnsignedSpecificity() throws Exception {
+            runTest("compiler/testData/diagnostics/testsWithStdLib/ambiguityWithUnsignedSpecificity.kt");
         }
 
         @Test
