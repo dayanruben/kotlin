@@ -4,17 +4,12 @@ apply plugin: 'kotlin-multiplatform'
 group 'com.example'
 version '1.0'
 
-java {
-    toolchain.languageVersion.set(JavaLanguageVersion.of(8))
-}
-
 android {
-    compileSdkVersion 31
-    namespace 'app.example.com.app_sample'
+    compileSdkVersion 27
     defaultConfig {
         applicationId "app.example.com.app_sample"
-        minSdkVersion 26
-        targetSdkVersion 31
+        minSdkVersion 21
+        targetSdkVersion 30
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"

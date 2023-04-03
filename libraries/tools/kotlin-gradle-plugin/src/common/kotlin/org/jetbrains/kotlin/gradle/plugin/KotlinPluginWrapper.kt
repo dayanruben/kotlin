@@ -231,6 +231,8 @@ abstract class KotlinBasePluginWrapper : DefaultKotlinBasePlugin() {
         project.addNpmDependencyExtension()
 
         project.registerBuildKotlinToolingMetadataTask()
+
+        project.startKotlinPluginLifecycle()
     }
 
     internal open fun createTestRegistry(project: Project) = KotlinTestsRegistry(project)

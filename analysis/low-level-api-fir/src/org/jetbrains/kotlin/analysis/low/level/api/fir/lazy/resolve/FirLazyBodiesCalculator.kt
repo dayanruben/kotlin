@@ -18,12 +18,17 @@ import org.jetbrains.kotlin.fir.expressions.impl.FirLazyDelegatedConstructorCall
 import org.jetbrains.kotlin.fir.extensions.registeredPluginAnnotations
 import org.jetbrains.kotlin.fir.resolve.transformers.plugin.CompilerRequiredAnnotationsHelper
 import org.jetbrains.kotlin.fir.scopes.kotlinScopeProvider
+import org.jetbrains.kotlin.fir.types.FirResolvedTypeRef
+import org.jetbrains.kotlin.fir.types.FirTypeRef
 import org.jetbrains.kotlin.fir.types.FirUserTypeRef
+import org.jetbrains.kotlin.fir.types.coneType
 import org.jetbrains.kotlin.fir.visitors.FirTransformer
 import org.jetbrains.kotlin.fir.visitors.transformSingle
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.name.StandardClassIds.Annotations.SinceKotlin
+import org.jetbrains.kotlin.fir.types.customAnnotations
+import org.jetbrains.kotlin.fir.types.forEachType
 
 internal object FirLazyBodiesCalculator {
     fun calculateLazyBodiesInside(designation: FirDesignation) {
@@ -39,7 +44,7 @@ internal object FirLazyBodiesCalculator {
         firFile.transform<FirElement, PersistentList<FirRegularClass>>(FirLazyBodiesCalculatorTransformer, persistentListOf())
     }
 
-    fun calculateAnnotations(firElement: FirElementWithResolvePhase) {
+    fun calculateAnnotations(firElement: FirElementWithResolveState) {
         calculateAnnotations(firElement, firElement.moduleData.session)
     }
 
@@ -50,7 +55,7 @@ internal object FirLazyBodiesCalculator {
         )
     }
 
-    fun calculateCompilerAnnotations(firElement: FirElementWithResolvePhase) {
+    fun calculateCompilerAnnotations(firElement: FirElementWithResolveState) {
         firElement.transform<FirElement, FirLazyAnnotationTransformerData>(
             FirLazyAnnotationTransformer,
             FirLazyAnnotationTransformerData(firElement.moduleData.session, FirLazyAnnotationTransformerScope.COMPILER_ONLY)
@@ -221,6 +226,16 @@ private object FirLazyAnnotationTransformer : FirTransformer<FirLazyAnnotationTr
     override fun <E : FirElement> transformElement(element: E, data: FirLazyAnnotationTransformerData): E {
         element.transformChildren(this, data)
         return element
+    }
+
+    override fun transformResolvedTypeRef(resolvedTypeRef: FirResolvedTypeRef, data: FirLazyAnnotationTransformerData): FirTypeRef {
+        resolvedTypeRef.coneType.forEachType { coneType ->
+            for (typeArgumentAnnotation in coneType.customAnnotations) {
+                typeArgumentAnnotation.accept(this, data)
+            }
+        }
+
+        return super.transformResolvedTypeRef(resolvedTypeRef, data)
     }
 
     override fun transformAnnotationCall(annotationCall: FirAnnotationCall, data: FirLazyAnnotationTransformerData): FirStatement {

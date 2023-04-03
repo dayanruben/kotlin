@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContextImpl
 import org.jetbrains.kotlin.backend.common.linkage.issues.checkNoUnboundSymbols
+import org.jetbrains.kotlin.backend.common.linkage.partial.createPartialLinkageSupportForLinker
 import org.jetbrains.kotlin.backend.common.overrides.FakeOverrideChecker
 import org.jetbrains.kotlin.backend.common.serialization.*
 import org.jetbrains.kotlin.backend.common.serialization.mangle.ManglerChecker
@@ -126,6 +127,7 @@ fun generateKLib(
     icData: List<KotlinFileSerializedData>,
     expectDescriptorToSymbol: MutableMap<DeclarationDescriptor, IrSymbol>,
     moduleFragment: IrModuleFragment,
+    builtInsPlatform: BuiltInsPlatform = BuiltInsPlatform.JS,
     serializeSingleFile: (KtSourceFile) -> ProtoBuf.PackageFragment
 ) {
     val files = (depsDescriptors.mainModule as MainModule.SourceFiles).files.map(::KtPsiSourceFile)
@@ -148,6 +150,7 @@ fun generateKLib(
         depsDescriptors.jsFrontEndResult.hasErrors,
         abiVersion,
         jsOutputName,
+        builtInsPlatform,
         serializeSingleFile
     )
 }
@@ -262,14 +265,12 @@ fun getIrModuleInfoForKlib(
     val typeTranslator = TypeTranslatorImpl(symbolTable, configuration.languageVersionSettings, moduleDescriptor)
     val irBuiltIns = IrBuiltInsOverDescriptors(moduleDescriptor.builtIns, typeTranslator, symbolTable)
 
-    val partialLinkageEnabled = configuration.partialLinkageConfig.isEnabled
-
     val irLinker = JsIrLinker(
         currentModule = null,
         messageLogger = messageLogger,
         builtIns = irBuiltIns,
         symbolTable = symbolTable,
-        partialLinkageEnabled = partialLinkageEnabled,
+        partialLinkageSupport = createPartialLinkageSupportForLinker(configuration.partialLinkageConfig, irBuiltIns, messageLogger),
         translationPluginContext = null,
         icData = null,
         friendModules = friendModules
@@ -322,14 +323,12 @@ fun getIrModuleInfoForSourceFiles(
         JsIrLinker.JsFePluginContext(moduleDescriptor, symbolTable, typeTranslator, irBuiltIns)
     }
 
-    val partialLinkageEnabled = configuration.partialLinkageConfig.isEnabled
-
     val irLinker = JsIrLinker(
         currentModule = psi2IrContext.moduleDescriptor,
         messageLogger = messageLogger,
         builtIns = irBuiltIns,
         symbolTable = symbolTable,
-        partialLinkageEnabled = partialLinkageEnabled,
+        partialLinkageSupport = createPartialLinkageSupportForLinker(configuration.partialLinkageConfig, irBuiltIns, messageLogger),
         translationPluginContext = feContext,
         icData = null,
         friendModules = friendModules,
@@ -620,6 +619,7 @@ fun serializeModuleIntoKlib(
     containsErrorCode: Boolean = false,
     abiVersion: KotlinAbiVersion,
     jsOutputName: String?,
+    builtInsPlatform: BuiltInsPlatform = BuiltInsPlatform.JS,
     serializeSingleFile: (KtSourceFile) -> ProtoBuf.PackageFragment
 ) {
     assert(files.size == moduleFragment.files.size)
@@ -728,7 +728,7 @@ fun serializeModuleIntoKlib(
         perFile = perFile,
         output = klibPath,
         versions = versions,
-        builtInsPlatform = BuiltInsPlatform.JS
+        builtInsPlatform = builtInsPlatform
     )
 }
 

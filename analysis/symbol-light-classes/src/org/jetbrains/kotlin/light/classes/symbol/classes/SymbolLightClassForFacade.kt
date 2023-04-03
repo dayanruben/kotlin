@@ -116,18 +116,10 @@ internal class SymbolLightClassForFacade(
             // If this facade represents multiple files, only `const` properties need to be generated.
             if (multiFileClass && !propertySymbol.isConst) continue
 
-            val forceStaticAndPropertyVisibility = propertySymbol.isConst ||
-                    propertySymbol.hasJvmFieldAnnotation() ||
-                    propertySymbol.isLateInit &&
-                    propertySymbol.getter.isNullOrPublic() &&
-                    propertySymbol.setter.isNullOrPublic()
-
             createField(
                 propertySymbol,
                 nameGenerator,
-                isTopLevel = true,
-                forceStatic = forceStaticAndPropertyVisibility,
-                takePropertyVisibility = forceStaticAndPropertyVisibility,
+                isStatic = true,
                 result,
             )
         }
