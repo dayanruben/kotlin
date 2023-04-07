@@ -16,6 +16,7 @@
 # OWNER_LIST: Mikhail.Glukhikh
 # OWNER_LIST: Yan.Zhulanow
 # OWNER_LIST: Alexander.Udalov
+# OWNER_LIST: Zalim.Bashorov
 # OWNER_LIST: Alexander.Shabalin Pavel.Kunyavskiy Svyatoslav.Scherbina
 # Kotlin Libraries
 # OWNER_LIST: A.Qurbonzoda Vsevolod.Tolstopyato Ilya.Gorbunov Sergey.Shanshin Leonid.Startsev
@@ -28,6 +29,9 @@
 /.space/ "Kotlin Build Infrastructure"
 
 /analysis/ "Kotlin IDE"
+/analysis/analysis-api-fir/src/org/jetbrains/kotlin/analysis/api/fir/diagnostics/KtFirDiagnostics.kt "Kotlin Compiler Core"
+/analysis/analysis-api-fir/src/org/jetbrains/kotlin/analysis/api/fir/diagnostics/KtFirDiagnosticsImpl.kt "Kotlin Compiler Core"
+/analysis/analysis-api-fir/src/org/jetbrains/kotlin/analysis/api/fir/diagnostics/KtFirDataClassConverters.kt "Kotlin Compiler Core"
 
 # UNKNOWN: /annotations/
 
@@ -103,6 +107,7 @@
 /compiler/testData/cli/metadata/ "Kotlin Compiler Core"
 /compiler/testData/codegen/asmLike/ "Kotlin JVM"
 /compiler/testData/codegen/box/ "Kotlin Compiler Core" "Kotlin JVM" "Kotlin JS" "Kotlin Native" "Kotlin Wasm"
+/compiler/testData/codegen/box/size/ Zalim.Bashorov
 /compiler/testData/codegen/boxError/ "Kotlin JS"
 /compiler/testData/codegen/boxInline/ "Kotlin JVM" "Kotlin JS" "Kotlin Native" "Kotlin Wasm"
 /compiler/testData/codegen/boxKlib/ "Kotlin JVM"

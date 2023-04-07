@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.konan.blackboxtest.support.EnforcedHostTarget
 import org.jetbrains.kotlin.konan.blackboxtest.support.EnforcedProperty
 import org.jetbrains.kotlin.konan.blackboxtest.support.group.FirPipeline
 import org.jetbrains.kotlin.konan.blackboxtest.support.group.UseExtTestCaseGroupProvider
+import org.jetbrains.kotlin.konan.blackboxtest.support.group.UsePartialLinkage
 import org.jetbrains.kotlin.konan.blackboxtest.support.group.UseStandardTestCaseGroupProvider
 import org.jetbrains.kotlin.test.TargetBackend
 import org.junit.jupiter.api.Tag
@@ -25,17 +26,50 @@ fun main() {
         testGroup("native/native.tests/tests-gen", "compiler/testData") {
             testClass<AbstractNativeCodegenBoxTest>(
                 suiteTestClassName = "NativeCodegenBoxTestGenerated",
-                annotations = listOf(codegen(), k1Codegen(), provider<UseExtTestCaseGroupProvider>())
+                annotations = listOf(
+                    codegen(),
+                    k1Codegen(),
+                    provider<UseExtTestCaseGroupProvider>()
+                )
             ) {
                 model("codegen/box", targetBackend = TargetBackend.NATIVE)
                 model("codegen/boxInline", targetBackend = TargetBackend.NATIVE)
             }
-        }
-
-        testGroup("native/native.tests/tests-gen", "compiler/testData") {
+            testClass<AbstractNativeCodegenBoxTest>(
+                suiteTestClassName = "NativeCodegenBoxTestNoPLGenerated",
+                annotations = listOf(
+                    codegen(),
+                    k1Codegen(),
+                    provider<UseExtTestCaseGroupProvider>(),
+                    noPartialLinkage(),
+                    noPartialLinkageMayBeSkipped()
+                )
+            ) {
+                model("codegen/box", targetBackend = TargetBackend.NATIVE)
+                model("codegen/boxInline", targetBackend = TargetBackend.NATIVE)
+            }
             testClass<AbstractNativeCodegenBoxTest>(
                 suiteTestClassName = "FirNativeCodegenBoxTestGenerated",
-                annotations = listOf(codegenK2(), firCodegen(), provider<UseExtTestCaseGroupProvider>(), provider<FirPipeline>())
+                annotations = listOf(
+                    codegenK2(),
+                    firCodegen(),
+                    provider<UseExtTestCaseGroupProvider>(),
+                    provider<FirPipeline>()
+                )
+            ) {
+                model("codegen/box", targetBackend = TargetBackend.NATIVE)
+                model("codegen/boxInline", targetBackend = TargetBackend.NATIVE)
+            }
+            testClass<AbstractNativeCodegenBoxTest>(
+                suiteTestClassName = "FirNativeCodegenBoxTestNoPLGenerated",
+                annotations = listOf(
+                    codegenK2(),
+                    firCodegen(),
+                    provider<UseExtTestCaseGroupProvider>(),
+                    provider<FirPipeline>(),
+                    noPartialLinkage(),
+                    noPartialLinkageMayBeSkipped()
+                )
             ) {
                 model("codegen/box", targetBackend = TargetBackend.NATIVE)
                 model("codegen/boxInline", targetBackend = TargetBackend.NATIVE)
@@ -68,11 +102,16 @@ fun main() {
             }
         }
 
-        // KLIB binary compatibility tests.
+        // KLIB evolution tests.
         testGroup("native/native.tests/tests-gen", "compiler/testData") {
-            testClass<AbstractNativeKlibBinaryCompatibilityTest>(
-                suiteTestClassName = "KlibBinaryCompatibilityTestGenerated",
-                annotations = listOf(k1KLibCompatibility())
+            testClass<AbstractNativeKlibEvolutionTest>(
+                suiteTestClassName = "NativeKlibEvolutionTestGenerated"
+            ) {
+                model("binaryCompatibility/klibEvolution", recursive = false)
+            }
+            testClass<AbstractNativeKlibEvolutionTest>(
+                suiteTestClassName = "FirNativeKlibEvolutionTestGenerated",
+                annotations = listOf(provider<FirPipeline>())
             ) {
                 model("binaryCompatibility/klibEvolution", recursive = false)
             }
@@ -153,6 +192,14 @@ private fun debugOnly() = annotation(
 
 private fun hostOnly() = provider<EnforcedHostTarget>()
 
+private fun noPartialLinkage() = annotation(
+    UsePartialLinkage::class.java,
+    "mode" to UsePartialLinkage.Mode.DISABLED
+)
+
+// This is a special tag to mark codegen box tests with disabled partial linkage that may be skipped in slow TC configurations.
+private fun noPartialLinkageMayBeSkipped() = annotation(Tag::class.java, "no-partial-linkage-may-be-skipped")
+
 private fun codegen() = annotation(Tag::class.java, "codegen")
 private fun k1Codegen() = annotation(Tag::class.java, "k1Codegen")
 private fun codegenK2() = annotation(Tag::class.java, "codegenK2")
@@ -163,4 +210,3 @@ private fun k1Infrastructure() = annotation(Tag::class.java, "k1Infrastructure")
 private fun k1libContents() = annotation(Tag::class.java, "k1libContents")
 private fun k2libContents() = annotation(Tag::class.java, "k2libContents")
 private fun firKLibContents() = annotation(Tag::class.java, "firKlibContents")
-private fun k1KLibCompatibility() = annotation(Tag::class.java, "k1KlibCompatibility")

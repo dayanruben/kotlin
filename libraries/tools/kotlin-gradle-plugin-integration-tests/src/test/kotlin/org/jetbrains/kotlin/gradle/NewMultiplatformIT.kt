@@ -8,6 +8,8 @@ import org.gradle.api.logging.LogLevel
 import org.jetbrains.kotlin.gradle.native.GeneralNativeIT.Companion.withNativeCommandLineArguments
 import org.jetbrains.kotlin.gradle.native.GeneralNativeIT.Companion.containsSequentially
 import org.gradle.util.GradleVersion
+import org.jetbrains.kotlin.cli.common.arguments.K2NativeCompilerArguments
+import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.gradle.native.*
 import org.jetbrains.kotlin.gradle.native.MPPNativeTargets
 import org.jetbrains.kotlin.gradle.native.transformNativeTestProject
@@ -201,6 +203,8 @@ open class NewMultiplatformIT : BaseGradleIT() {
 
                 // Check that linker options were correctly passed to the K/N compiler.
                 withNativeCommandLineArguments(":linkMainDebugExecutableLinux64") { arguments ->
+                    val parsedArguments = parseCommandLineArguments<K2NativeCompilerArguments>(arguments)
+                    assertEquals(listOf("-L."), parsedArguments.singleLinkerArguments?.toList())
                     assertTrue(arguments.containsSequentially("-linker-option", "-L."))
                 }
             }
@@ -337,6 +341,7 @@ open class NewMultiplatformIT : BaseGradleIT() {
                 assertTasksExecuted(*compileTasksNames.toTypedArray(), ":allMetadataJar")
 
                 val groupDir = projectDir.resolve("repo/com/example")
+
                 @Suppress("DEPRECATION")
                 val jsExtension = if (jsCompilerType == KotlinJsCompilerType.LEGACY) "jar" else "klib"
                 val jsJarName = "sample-lib-nodejs/1.0/sample-lib-nodejs-1.0.$jsExtension"
@@ -826,10 +831,16 @@ open class NewMultiplatformIT : BaseGradleIT() {
             build(task) {
                 assertSuccessful()
                 assertTasksExecuted(":$task")
+                val arguments = parseCompilerArguments<K2NativeCompilerArguments>()
+                assertTrue(arguments.progressiveMode, "Expected progressiveMode")
+                assertTrue(arguments.noInline, "Expected no-inline")
+                assertEquals(
+                    setOf("kotlin.ExperimentalUnsignedTypes", "kotlin.contracts.ExperimentalContracts"),
+                    arguments.optIn?.toSet()
+                )
                 assertContains(
                     "-XXLanguage:+InlineClasses",
-                    "-progressive", "-opt-in=kotlin.ExperimentalUnsignedTypes",
-                    "-opt-in=kotlin.contracts.ExperimentalContracts",
+                    "-progressive",
                     "-Xno-inline"
                 )
             }
@@ -1557,8 +1568,10 @@ open class NewMultiplatformIT : BaseGradleIT() {
                 "jvm6", "nodeJs", "mingw64", "mingw86", "linux64", "macos64", "linuxMipsel32", "wasm"
             ).flatMapTo(mutableSetOf()) { target ->
                 listOf("main", "test").map { compilation ->
-                    Triple(target, compilation,
-                           "$target${compilation.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }}")
+                    Triple(
+                        target, compilation,
+                        "$target${compilation.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }}"
+                    )
                 }
             } + Triple("metadata", "main", "commonMain")
 
@@ -1766,7 +1779,8 @@ open class NewMultiplatformIT : BaseGradleIT() {
                             Locale.getDefault()
                         ) else it.toString()
                     }
-                }" }
+                }"
+            }
 
             build(
                 *tasks.toTypedArray()
@@ -1951,12 +1965,14 @@ open class NewMultiplatformIT : BaseGradleIT() {
     }
 
     @Test
-    fun testWasmJs() = with(Project(
-        "new-mpp-wasm-js",
-        // TODO: this test fails with deprecation error on Gradle <7.0
-        // Should be fixed via planned fixes in Kotlin/JS plugin: https://youtrack.jetbrains.com/issue/KFC-252
-        gradleVersionRequirement = GradleVersionRequired.AtLeast(TestVersions.Gradle.G_7_0)
-    )) {
+    fun testWasmJs() = with(
+        Project(
+            "new-mpp-wasm-js",
+            // TODO: this test fails with deprecation error on Gradle <7.0
+            // Should be fixed via planned fixes in Kotlin/JS plugin: https://youtrack.jetbrains.com/issue/KFC-252
+            gradleVersionRequirement = GradleVersionRequired.AtLeast(TestVersions.Gradle.G_7_0)
+        )
+    ) {
         setupWorkingDir()
         gradleBuildScript().modify(::transformBuildScriptWithPluginsDsl)
         build("build") {

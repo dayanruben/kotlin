@@ -77,15 +77,11 @@ internal open class GradleCompilerRunner(
      * @see [GradleKotlinCompilerWork]
      */
     fun runJvmCompilerAsync(
-        sourcesToCompile: List<File>,
-        javaPackagePrefix: String?,
         args: K2JVMCompilerArguments,
         environment: GradleCompilerEnvironment,
         jdkHome: File,
         taskOutputsBackup: TaskOutputsBackup?
     ): WorkQueue? {
-        args.freeArgs += sourcesToCompile.map { it.absolutePath }
-        args.javaPackagePrefix = javaPackagePrefix
         if (args.jdkHome == null && !args.noJdk) args.jdkHome = jdkHome.absolutePath
         loggerProvider.kotlinInfo("Kotlin compilation 'jdkHome' argument: ${args.jdkHome}")
         return runCompilerAsync(KotlinCompilerClass.JVM, args, environment, taskOutputsBackup)
@@ -96,12 +92,10 @@ internal open class GradleCompilerRunner(
      * @see [GradleKotlinCompilerWork]
      */
     fun runJsCompilerAsync(
-        kotlinSources: List<File>,
         args: K2JSCompilerArguments,
         environment: GradleCompilerEnvironment,
         taskOutputsBackup: TaskOutputsBackup?
     ): WorkQueue? {
-        args.freeArgs += kotlinSources.map { it.absolutePath }
         return runCompilerAsync(KotlinCompilerClass.JS, args, environment, taskOutputsBackup)
     }
 
@@ -110,13 +104,9 @@ internal open class GradleCompilerRunner(
      * @see [GradleKotlinCompilerWork]
      */
     fun runMetadataCompilerAsync(
-        kotlinSources: List<File>,
-        kotlinCommonSources: List<File>,
         args: K2MetadataCompilerArguments,
         environment: GradleCompilerEnvironment
     ): WorkQueue? {
-        args.freeArgs += kotlinSources.map { it.absolutePath }
-        args.commonSources = kotlinCommonSources.map { it.absolutePath }.toTypedArray()
         return runCompilerAsync(KotlinCompilerClass.METADATA, args, environment)
     }
 

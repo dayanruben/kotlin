@@ -24,16 +24,16 @@ import org.jetbrains.kotlin.diagnostics.impl.PendingDiagnosticsCollectorWithSupp
 import org.jetbrains.kotlin.fir.BinaryModuleData
 import org.jetbrains.kotlin.fir.DependencyListForCliModule
 import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.backend.ConstValueProviderImpl
 import org.jetbrains.kotlin.fir.backend.Fir2IrExtensions
 import org.jetbrains.kotlin.fir.backend.Fir2IrVisibilityConverter
 import org.jetbrains.kotlin.fir.backend.extractFirDeclarations
-import org.jetbrains.kotlin.fir.backend.jvm.FirJvmKotlinMangler
+import org.jetbrains.kotlin.fir.backend.js.FirJsKotlinMangler
 import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.fir.descriptors.FirModuleDescriptor
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
 import org.jetbrains.kotlin.fir.pipeline.*
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
-import org.jetbrains.kotlin.fir.serialization.FirElementAwareSerializableStringTable
 import org.jetbrains.kotlin.fir.serialization.FirKLibSerializerExtension
 import org.jetbrains.kotlin.fir.serialization.serializeSingleFirFile
 import org.jetbrains.kotlin.incremental.components.LookupTracker
@@ -133,7 +133,7 @@ fun transformFirToIr(
         linkViaSignatures = false,
         signatureComposerCreator = null,
         irMangler = JsManglerIr,
-        firManglerCreator = { FirJvmKotlinMangler() },
+        firManglerCreator = ::FirJsKotlinMangler,
         visibilityConverter = Fir2IrVisibilityConverter.Default,
         kotlinBuiltIns = builtInsModule ?: DefaultBuiltIns.Instance,
         diagnosticReporter = diagnosticsReporter,
@@ -192,7 +192,11 @@ fun serializeFirKlib(
             session,
             scopeSession,
             actualizedExpectDeclarations,
-            FirKLibSerializerExtension(session, metadataVersion, FirElementAwareSerializableStringTable()),
+            FirKLibSerializerExtension(
+                session, metadataVersion,
+                ConstValueProviderImpl(fir2IrActualizedResult.components),
+                allowErrorTypes = false, exportKDoc = false
+            ),
             moduleStructure.compilerConfiguration.languageVersionSettings,
         )
     }

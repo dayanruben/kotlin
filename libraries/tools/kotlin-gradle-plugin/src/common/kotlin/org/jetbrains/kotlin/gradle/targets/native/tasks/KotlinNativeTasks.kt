@@ -30,6 +30,8 @@ import org.jetbrains.kotlin.gradle.internal.ensureParentDirsCreated
 import org.jetbrains.kotlin.gradle.internal.isInIdeaSync
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilationInfo
+import org.jetbrains.kotlin.gradle.plugin.KotlinCompilerArgumentsProducer.CreateCompilerArgumentsContext
+import org.jetbrains.kotlin.gradle.plugin.KotlinCompilerArgumentsProducer.CreateCompilerArgumentsContext.Companion.create
 import org.jetbrains.kotlin.gradle.plugin.cocoapods.asValidFrameworkName
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.GradleKpmMetadataCompilationData
@@ -52,6 +54,7 @@ import org.jetbrains.kotlin.library.*
 import org.jetbrains.kotlin.project.model.LanguageSettings
 import org.jetbrains.kotlin.statistics.metrics.BooleanMetrics
 import org.jetbrains.kotlin.statistics.metrics.StringMetrics
+import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 import java.io.File
 import java.nio.file.Files
 import javax.inject.Inject
@@ -266,22 +269,9 @@ abstract class AbstractKotlinNativeCompile<
     @get:Nested
     var kotlinPluginData: Provider<KotlinCompilerPluginData>? = null
 
-    // Used by IDE via reflection.
-    @get:Internal
-    override val serializedCompilerArguments: List<String>
-        get() = buildCommonArgs()
-
-    // Used by IDE via reflection.
-    @get:Internal
-    override val defaultSerializedCompilerArguments: List<String>
-        get() = buildCommonArgs(true)
-
     private val languageSettingsBuilder by project.provider {
         compilation.languageSettings
     }
-
-    // Args used by both the compiler and IDEA.
-    abstract fun buildCommonArgs(defaultsOnly: Boolean = false): List<String>
 
     @get:Input
     @get:Optional
@@ -317,7 +307,7 @@ internal constructor(
     private val objectFactory: ObjectFactory,
     private val providerFactory: ProviderFactory,
     private val execOperations: ExecOperations
-) : AbstractKotlinNativeCompile<KotlinCommonOptions, StubK2NativeCompilerArguments>(objectFactory),
+) : AbstractKotlinNativeCompile<KotlinCommonOptions, K2NativeCompilerArguments>(objectFactory),
     KotlinCompile<KotlinCommonOptions>,
     K2MultiplatformCompilationTask,
     KotlinCompilationTask<KotlinNativeCompilerOptions> {
@@ -429,26 +419,71 @@ internal constructor(
     private val isAllowCommonizer: Boolean by lazy { project.isAllowCommonizer() }
     // endregion.
 
-    override fun createCompilerArgs(): StubK2NativeCompilerArguments = StubK2NativeCompilerArguments()
+    override fun createCompilerArguments(context: CreateCompilerArgumentsContext) = context.create<K2NativeCompilerArguments> {
+        val sharedCompilationData = createSharedCompilationDataOrNull()
 
-    override fun setupCompilerArgs(
-        args: StubK2NativeCompilerArguments,
-        defaultsOnly: Boolean,
-        ignoreClasspathResolutionErrors: Boolean
-    ) = Unit
-
-    override fun buildCommonArgs(defaultsOnly: Boolean): List<String> {
-        val plugins = listOfNotNull(
+        val compilerPlugins = listOfNotNull(
             compilerPluginClasspath?.let { CompilerPluginData(it, compilerPluginOptions) },
             kotlinPluginData?.orNull?.let { CompilerPluginData(it.classpath, it.options) }
         )
 
-        return buildKotlinNativeCompileCommonArgs(
-            languageSettings,
-            compilerOptions,
-            plugins
-        )
+        primitive { args ->
+            args.moduleName = compilerOptions.moduleName.get()
+            args.shortModuleName = shortModuleName
+            args.multiPlatform = true
+            args.noendorsedlibs = true
+            args.outputName = outputFile.get().absolutePath
+            args.optimization = optimized
+            args.debug = debuggable
+            args.enableAssertions = debuggable
+            args.target = konanTarget.name
+            args.produce = outputKind.name.toLowerCaseAsciiOnly()
+            args.expectActualLinker = sharedCompilationData != null
+            args.metadataKlib = sharedCompilationData != null
+            args.nodefaultlibs = sharedCompilationData != null
+            args.manifestFile = sharedCompilationData?.manifestFile?.absolutePath
+
+            args.pluginOptions = compilerPlugins.flatMap { it.options.arguments }.toTypedArray()
+
+            if (compilerOptions.usesK2.get()) {
+                args.fragments = multiplatformStructure.fragmentsCompilerArgs
+                args.fragmentRefines = multiplatformStructure.fragmentRefinesCompilerArgs
+            }
+
+            KotlinNativeCompilerOptionsHelper.fillCompilerArguments(compilerOptions, args)
+        }
+
+        pluginClasspath { args ->
+            args.pluginClasspaths = compilerPlugins.flatMap { classpath -> runSafe { classpath.files } ?: emptySet() }.toPathsArray()
+        }
+
+        dependencyClasspath { args ->
+            args.libraries = runSafe { libraries.files.filterKlibsPassedToCompiler().toPathsArray() }
+            args.friendModules = runSafe {
+                friendModule.files.takeIf { it.isNotEmpty() }?.map { it.absolutePath }?.joinToString(File.pathSeparator)
+            }
+            args.refinesPaths = runSafe {
+                sharedCompilationData?.refinesPaths?.files?.takeIf { it.isNotEmpty() }?.toPathsArray()
+            }
+        }
+
+        sources { args ->
+            if (compilerOptions.usesK2.get()) {
+                /*
+                For now, we only pass multiplatform structure to K2 for platform compilations
+                Metadata compilations will compile against pre-compiled klibs from their dependsOn
+                */
+                if (sharedCompilationData == null) {
+                    args.fragmentSources = multiplatformStructure.fragmentSourcesCompilerArgs
+                }
+            } else {
+                args.commonSources = commonSourcesTree.files.takeIf { it.isNotEmpty() }?.toPathsArray()
+            }
+
+            args.freeArgs += sources.asFileTree.map { it.absolutePath }
+        }
     }
+
 
     private val isMetadataCompilation: Boolean = when (compilation) {
         is KotlinCompilationInfo.KPM -> compilation.compilationData is GradleKpmMetadataCompilationData<*>
@@ -467,12 +502,14 @@ internal constructor(
         return SharedCompilationData(manifestFile, isAllowCommonizer, refinesModule)
     }
 
-    internal fun buildCompilerArgs(): List<String> = buildKotlinNativeKlibCompilerArgs(
+    internal fun buildCompilerArgs(isLenient: Boolean = false): List<String> = buildKotlinNativeKlibCompilerArgs(
         outFile = outputFile.get(),
         optimized = optimized,
         debuggable = debuggable,
         target = konanTarget,
-        libraries = libraries.files.filterKlibsPassedToCompiler(),
+        libraries = runCatching { libraries.files.filterKlibsPassedToCompiler() }.getOrElse {
+            if (isLenient) emptyList() else throw it
+        },
         languageSettings = languageSettings,
         compilerOptions = compilerOptions,
         compilerPlugins = listOfNotNull(
@@ -494,12 +531,13 @@ internal constructor(
         output.parentFile.mkdirs()
 
         collectCommonCompilerStats()
-        val buildArgs = buildCompilerArgs()
+        val arguments = createCompilerArguments()
+        val buildArguments = ArgumentUtils.convertArgumentsToStringList(arguments)
 
         KotlinNativeCompilerRunner(
             settings = runnerSettings,
             executionContext = KotlinToolRunner.GradleExecutionContext.fromTaskContext(objectFactory, execOperations, logger)
-        ).run(buildArgs)
+        ).run(buildArguments)
     }
 
     private fun collectCommonCompilerStats() {

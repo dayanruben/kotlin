@@ -24,17 +24,26 @@ import org.jetbrains.kotlin.fir.types.coneTypeUnsafe
 import org.jetbrains.kotlin.fir.visitors.FirDefaultVisitor
 import org.jetbrains.kotlin.types.ConstantValueKind
 
-internal fun FirExpression.toConstantValue(session: FirSession): ConstantValue<*>? = accept(FirToConstantValueTransformer, session)
+internal fun FirExpression.toConstantValue(session: FirSession): ConstantValue<*>? {
+    return accept(FirToConstantValueTransformerUnsafe, session)
+}
 
-internal object FirToConstantValueTransformer : FirDefaultVisitor<ConstantValue<*>?, FirSession>() {
+private object FirToConstantValueTransformerSafe : FirToConstantValueTransformer(failOnNonConst = false)
+private object FirToConstantValueTransformerUnsafe : FirToConstantValueTransformer(failOnNonConst = true)
+
+private abstract class FirToConstantValueTransformer(
+    private val failOnNonConst: Boolean
+) : FirDefaultVisitor<ConstantValue<*>?, FirSession>() {
     override fun visitElement(
         element: FirElement,
         data: FirSession
     ): ConstantValue<*>? {
-        error("Illegal element as annotation argument: ${element::class.qualifiedName} -> ${element.render()}")
+        if (failOnNonConst) {
+            error("Illegal element as annotation argument: ${element::class.qualifiedName} -> ${element.render()}")
+        }
+        return null
     }
 
-    @OptIn(ExperimentalUnsignedTypes::class)
     override fun <T> visitConstExpression(
         constExpression: FirConstExpression<T>,
         data: FirSession
@@ -49,11 +58,11 @@ internal object FirToConstantValueTransformer : FirDefaultVisitor<ConstantValue<
             ConstantValueKind.UnsignedShort -> UShortValue((value as Number).toShort())
             ConstantValueKind.Int -> IntValue((value as Number).toInt())
             ConstantValueKind.UnsignedInt -> UIntValue((value as Number).toInt())
-            ConstantValueKind.Long -> LongValue(value as Long)
-            ConstantValueKind.UnsignedLong -> ULongValue(value as Long)
+            ConstantValueKind.Long -> LongValue((value as Number).toLong())
+            ConstantValueKind.UnsignedLong -> ULongValue((value as Number).toLong())
             ConstantValueKind.String -> StringValue(value as String)
-            ConstantValueKind.Float -> FloatValue(value as Float)
-            ConstantValueKind.Double -> DoubleValue(value as Double)
+            ConstantValueKind.Float -> FloatValue((value as Number).toFloat())
+            ConstantValueKind.Double -> DoubleValue((value as Number).toDouble())
             ConstantValueKind.Null -> NullValue
             else -> null
         }
@@ -99,24 +108,22 @@ internal object FirToConstantValueTransformer : FirDefaultVisitor<ConstantValue<
             symbol is FirConstructorSymbol -> {
                 val constructorCall = qualifiedAccessExpression as FirFunctionCall
                 val constructedClassSymbol = symbol.containingClassLookupTag()?.toFirRegularClassSymbol(data) ?: return null
-                return if (constructedClassSymbol.classKind == ClassKind.ANNOTATION_CLASS) {
-                    AnnotationValue(
-                        buildAnnotationCall {
-                            argumentMapping = buildAnnotationArgumentMapping {
-                                constructorCall.resolvedArgumentMapping?.forEach { (firExpression, firValueParameter) ->
-                                    mapping[firValueParameter.name] = firExpression
-                                }
-                            }
-                            annotationTypeRef = qualifiedAccessExpression.typeRef
-                            calleeReference = buildSimpleNamedReference {
-                                source = qualifiedAccessExpression.source
-                                name = qualifiedAccessExpression.calleeReference.name
+                if (constructedClassSymbol.classKind != ClassKind.ANNOTATION_CLASS) return null
+
+                return AnnotationValue(
+                    buildAnnotationCall {
+                        argumentMapping = buildAnnotationArgumentMapping {
+                            constructorCall.resolvedArgumentMapping?.forEach { (firExpression, firValueParameter) ->
+                                mapping[firValueParameter.name] = firExpression
                             }
                         }
-                    )
-                } else {
-                    null
-                }
+                        annotationTypeRef = qualifiedAccessExpression.typeRef
+                        calleeReference = buildSimpleNamedReference {
+                            source = qualifiedAccessExpression.source
+                            name = qualifiedAccessExpression.calleeReference.name
+                        }
+                    }
+                )
             }
 
             symbol.callableId.packageName.asString() == "kotlin" -> {

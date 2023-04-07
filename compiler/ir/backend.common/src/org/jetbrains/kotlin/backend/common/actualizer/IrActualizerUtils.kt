@@ -106,7 +106,7 @@ fun generateIrElementFullNameFromExpect(
     declaration: IrElement,
     expectActualTypeAliasMap: Map<FqName, FqName>
 ): String {
-    return StringBuilder().apply { appendElementFullName(declaration, this, expectActualTypeAliasMap) }.toString()
+    return buildString { appendElementFullName(declaration, this, expectActualTypeAliasMap) }
 }
 
 private fun appendElementFullName(
@@ -150,7 +150,11 @@ private fun appendElementFullName(
 
 @OptIn(ObsoleteDescriptorBasedAPI::class)
 fun KtDiagnosticReporterWithImplicitIrBasedContext.reportMissingActual(irDeclaration: IrDeclaration) {
-    at(irDeclaration).report(CommonBackendErrors.NO_ACTUAL_FOR_EXPECT, irDeclaration.module)
+    at(irDeclaration).report(
+        CommonBackendErrors.NO_ACTUAL_FOR_EXPECT,
+        (irDeclaration as? IrDeclarationWithName)?.name?.asString().orEmpty(),
+        irDeclaration.module
+    )
 }
 
 internal fun IrElement.containsOptionalExpectation(): Boolean {

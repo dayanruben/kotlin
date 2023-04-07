@@ -1023,6 +1023,18 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirErrors.VOLATILE_ON_VALUE) { firDiagnostic ->
+        VolatileOnValueImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.VOLATILE_ON_DELEGATE) { firDiagnostic ->
+        VolatileOnDelegateImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
     add(FirJsErrors.WRONG_JS_QUALIFIER) { firDiagnostic ->
         WrongJsQualifierImpl(
             firDiagnostic as KtPsiDiagnostic,
@@ -4400,18 +4412,6 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
-    add(FirJvmErrors.VOLATILE_ON_VALUE) { firDiagnostic ->
-        VolatileOnValueImpl(
-            firDiagnostic as KtPsiDiagnostic,
-            token,
-        )
-    }
-    add(FirJvmErrors.VOLATILE_ON_DELEGATE) { firDiagnostic ->
-        VolatileOnDelegateImpl(
-            firDiagnostic as KtPsiDiagnostic,
-            token,
-        )
-    }
     add(FirJvmErrors.SYNCHRONIZED_ON_ABSTRACT) { firDiagnostic ->
         SynchronizedOnAbstractImpl(
             firDiagnostic as KtPsiDiagnostic,
@@ -5021,6 +5021,14 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirJsErrors.JS_EXTERNAL_INHERITORS_ONLY) { firDiagnostic ->
+        JsExternalInheritorsOnlyImpl(
+            firSymbolBuilder.classifierBuilder.buildClassLikeSymbol(firDiagnostic.a),
+            firSymbolBuilder.classifierBuilder.buildClassLikeSymbol(firDiagnostic.b),
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
     add(FirJsErrors.NESTED_JS_EXPORT) { firDiagnostic ->
         NestedJsExportImpl(
             firDiagnostic as KtPsiDiagnostic,
@@ -5051,6 +5059,19 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
     }
     add(FirJsErrors.DELEGATION_BY_DYNAMIC) { firDiagnostic ->
         DelegationByDynamicImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJsErrors.SPREAD_OPERATOR_IN_DYNAMIC_CALL) { firDiagnostic ->
+        SpreadOperatorInDynamicCallImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJsErrors.WRONG_OPERATION_WITH_DYNAMIC) { firDiagnostic ->
+        WrongOperationWithDynamicImpl(
+            firDiagnostic.a,
             firDiagnostic as KtPsiDiagnostic,
             token,
         )

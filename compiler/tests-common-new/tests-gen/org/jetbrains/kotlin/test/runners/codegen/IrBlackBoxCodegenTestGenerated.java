@@ -4830,6 +4830,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         }
 
         @Test
+        @TestMetadata("genericReturnCast.kt")
+        public void testGenericReturnCast() throws Exception {
+            runTest("compiler/testData/codegen/box/casts/genericReturnCast.kt");
+        }
+
+        @Test
         @TestMetadata("intersectionTypeMultipleBounds.kt")
         public void testIntersectionTypeMultipleBounds() throws Exception {
             runTest("compiler/testData/codegen/box/casts/intersectionTypeMultipleBounds.kt");
@@ -48794,6 +48800,18 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         }
 
         @Test
+        @TestMetadata("kt54028.kt")
+        public void testKt54028() throws Exception {
+            runTest("compiler/testData/codegen/box/sealed/kt54028.kt");
+        }
+
+        @Test
+        @TestMetadata("kt54028_cursed.kt")
+        public void testKt54028_cursed() throws Exception {
+            runTest("compiler/testData/codegen/box/sealed/kt54028_cursed.kt");
+        }
+
+        @Test
         @TestMetadata("multipleFiles_enabled.kt")
         public void testMultipleFiles_enabled() throws Exception {
             runTest("compiler/testData/codegen/box/sealed/multipleFiles_enabled.kt");
@@ -49035,6 +49053,16 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         @TestMetadata("withoutPrimarySimple.kt")
         public void testWithoutPrimarySimple() throws Exception {
             runTest("compiler/testData/codegen/box/secondaryConstructors/withoutPrimarySimple.kt");
+        }
+    }
+
+    @Nested
+    @TestMetadata("compiler/testData/codegen/box/size")
+    @TestDataPath("$PROJECT_ROOT")
+    public class Size {
+        @Test
+        public void testAllFilesPresentInSize() throws Exception {
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/size"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
         }
     }
 

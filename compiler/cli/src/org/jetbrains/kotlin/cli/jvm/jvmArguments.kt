@@ -173,13 +173,13 @@ fun CompilerConfiguration.configureJdkHome(arguments: K2JVMCompilerArguments): B
 }
 
 fun CompilerConfiguration.configureJavaModulesContentRoots(arguments: K2JVMCompilerArguments) {
-    for (modularRoot in arguments.javaModulePath?.split(File.pathSeparatorChar).orEmpty()) {
+    for (modularRoot in arguments.javaModulePath.orEmpty()) {
         add(CLIConfigurationKeys.CONTENT_ROOTS, JvmModulePathRoot(File(modularRoot)))
     }
 }
 
 fun CompilerConfiguration.configureContentRootsFromClassPath(arguments: K2JVMCompilerArguments) {
-    for (path in arguments.classpath?.split(File.pathSeparatorChar).orEmpty()) {
+    for (path in arguments.classpath.orEmpty()) {
         add(CLIConfigurationKeys.CONTENT_ROOTS, JvmClasspathRoot(File(path)))
     }
 }

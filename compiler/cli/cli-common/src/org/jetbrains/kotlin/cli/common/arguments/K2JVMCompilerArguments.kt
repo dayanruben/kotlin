@@ -26,9 +26,10 @@ class K2JVMCompilerArguments : CommonCompilerArguments() {
         value = "-classpath",
         shortName = "-cp",
         valueDescription = "<path>",
-        description = "List of directories and JAR/ZIP archives to search for user class files"
+        description = "List of directories and JAR/ZIP archives to search for user class files",
+        delimiter = Argument.Delimiters.pathSeparator
     )
-    var classpath: String? = null
+    var classpath: Array<String>? = null
         set(value) {
             checkFrozen()
             field = if (value.isNullOrEmpty()) null else value
@@ -123,7 +124,7 @@ class K2JVMCompilerArguments : CommonCompilerArguments() {
     @Argument(
         value = "-jvm-target",
         valueDescription = "<version>",
-        description = "Target version of the generated JVM bytecode (${JvmTarget.SUPPORTED_VERSIONS_DESCRIPTION}), default is 1.8"
+        description = "Target version of the generated JVM bytecode (${JvmTarget.SUPPORTED_VERSIONS_DESCRIPTION}), default is 1.8",
     )
     var jvmTarget: String? = null
         set(value) {
@@ -209,8 +210,13 @@ class K2JVMCompilerArguments : CommonCompilerArguments() {
             field = value
         }
 
-    @Argument(value = "-Xmodule-path", valueDescription = "<path>", description = "Paths where to find Java 9+ modules")
-    var javaModulePath: String? = null
+    @Argument(
+        value = "-Xmodule-path",
+        valueDescription = "<path>",
+        description = "Paths where to find Java 9+ modules",
+        delimiter = Argument.Delimiters.pathSeparator
+    )
+    var javaModulePath: Array<String>? = null
         set(value) {
             checkFrozen()
             field = if (value.isNullOrEmpty()) null else value

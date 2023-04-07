@@ -739,6 +739,14 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         abstract val symbols: List<KtSymbol>
     }
 
+    abstract class VolatileOnValue : KtFirDiagnostic<KtAnnotationEntry>() {
+        override val diagnosticClass get() = VolatileOnValue::class
+    }
+
+    abstract class VolatileOnDelegate : KtFirDiagnostic<KtAnnotationEntry>() {
+        override val diagnosticClass get() = VolatileOnDelegate::class
+    }
+
     abstract class WrongJsQualifier : KtFirDiagnostic<KtElement>() {
         override val diagnosticClass get() = WrongJsQualifier::class
     }
@@ -3066,14 +3074,6 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = StrictfpOnClass::class
     }
 
-    abstract class VolatileOnValue : KtFirDiagnostic<KtAnnotationEntry>() {
-        override val diagnosticClass get() = VolatileOnValue::class
-    }
-
-    abstract class VolatileOnDelegate : KtFirDiagnostic<KtAnnotationEntry>() {
-        override val diagnosticClass get() = VolatileOnDelegate::class
-    }
-
     abstract class SynchronizedOnAbstract : KtFirDiagnostic<KtAnnotationEntry>() {
         override val diagnosticClass get() = SynchronizedOnAbstract::class
     }
@@ -3493,6 +3493,12 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = ExternalInterfaceAsClassLiteral::class
     }
 
+    abstract class JsExternalInheritorsOnly : KtFirDiagnostic<KtDeclaration>() {
+        override val diagnosticClass get() = JsExternalInheritorsOnly::class
+        abstract val parent: KtClassLikeSymbol
+        abstract val kid: KtClassLikeSymbol
+    }
+
     abstract class NestedJsExport : KtFirDiagnostic<KtElement>() {
         override val diagnosticClass get() = NestedJsExport::class
     }
@@ -3515,6 +3521,15 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
 
     abstract class DelegationByDynamic : KtFirDiagnostic<KtElement>() {
         override val diagnosticClass get() = DelegationByDynamic::class
+    }
+
+    abstract class SpreadOperatorInDynamicCall : KtFirDiagnostic<KtElement>() {
+        override val diagnosticClass get() = SpreadOperatorInDynamicCall::class
+    }
+
+    abstract class WrongOperationWithDynamic : KtFirDiagnostic<KtElement>() {
+        override val diagnosticClass get() = WrongOperationWithDynamic::class
+        abstract val operation: String
     }
 
     abstract class Syntax : KtFirDiagnostic<PsiElement>() {

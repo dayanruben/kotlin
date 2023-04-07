@@ -4071,6 +4071,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/casts/dontCreateInconsistentTypeDuringStarProjectionSubstitution.kt");
         }
 
+        @TestMetadata("genericReturnCast.kt")
+        public void testGenericReturnCast() throws Exception {
+            runTest("compiler/testData/codegen/box/casts/genericReturnCast.kt");
+        }
+
         @TestMetadata("intersectionTypeMultipleBounds.kt")
         public void testIntersectionTypeMultipleBounds() throws Exception {
             runTest("compiler/testData/codegen/box/casts/intersectionTypeMultipleBounds.kt");
@@ -37470,6 +37475,16 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/sealed/kt49752.kt");
         }
 
+        @TestMetadata("kt54028.kt")
+        public void testKt54028() throws Exception {
+            runTest("compiler/testData/codegen/box/sealed/kt54028.kt");
+        }
+
+        @TestMetadata("kt54028_cursed.kt")
+        public void testKt54028_cursed() throws Exception {
+            runTest("compiler/testData/codegen/box/sealed/kt54028_cursed.kt");
+        }
+
         @TestMetadata("multipleFiles_enabled.kt")
         public void testMultipleFiles_enabled() throws Exception {
             runTest("compiler/testData/codegen/box/sealed/multipleFiles_enabled.kt");
@@ -37676,6 +37691,19 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("withoutPrimarySimple.kt")
         public void testWithoutPrimarySimple() throws Exception {
             runTest("compiler/testData/codegen/box/secondaryConstructors/withoutPrimarySimple.kt");
+        }
+    }
+
+    @TestMetadata("compiler/testData/codegen/box/size")
+    @TestDataPath("$PROJECT_ROOT")
+    @RunWith(JUnit3RunnerWithInners.class)
+    public static class Size extends AbstractLightAnalysisModeTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM, testDataFilePath);
+        }
+
+        public void testAllFilesPresentInSize() throws Exception {
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/size"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
         }
     }
 

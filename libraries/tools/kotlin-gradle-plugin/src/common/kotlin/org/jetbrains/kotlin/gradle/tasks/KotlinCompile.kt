@@ -30,33 +30,30 @@ import org.jetbrains.kotlin.compilerRunner.IncrementalCompilationEnvironment
 import org.jetbrains.kotlin.compilerRunner.OutputItemsCollectorImpl
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmCompilerOptions
+import org.jetbrains.kotlin.gradle.dsl.KotlinJvmCompilerOptionsHelper
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptions
-import org.jetbrains.kotlin.gradle.internal.CompilerArgumentsContributor
-import org.jetbrains.kotlin.gradle.internal.KotlinJvmCompilerArgumentsContributor
-import org.jetbrains.kotlin.gradle.internal.compilerArgumentsConfigurationFlags
+import org.jetbrains.kotlin.gradle.dsl.usesK2
 import org.jetbrains.kotlin.gradle.internal.tasks.allOutputFiles
 import org.jetbrains.kotlin.gradle.logging.GradleErrorMessageCollector
 import org.jetbrains.kotlin.gradle.logging.GradlePrintingMessageCollector
 import org.jetbrains.kotlin.gradle.logging.kotlinDebug
+import org.jetbrains.kotlin.gradle.plugin.KotlinCompilerArgumentsProducer
+import org.jetbrains.kotlin.gradle.plugin.KotlinCompilerArgumentsProducer.CreateCompilerArgumentsContext.Companion.create
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider
 import org.jetbrains.kotlin.gradle.plugin.getKotlinPluginVersion
 import org.jetbrains.kotlin.gradle.report.BuildReportMode
 import org.jetbrains.kotlin.gradle.tasks.internal.KotlinJvmOptionsCompat
 import org.jetbrains.kotlin.gradle.utils.*
-import org.jetbrains.kotlin.gradle.utils.chainedDisallowChanges
-import org.jetbrains.kotlin.gradle.utils.newInstance
-import org.jetbrains.kotlin.gradle.utils.property
-import org.jetbrains.kotlin.gradle.utils.propertyWithNewInstance
 import org.jetbrains.kotlin.incremental.ClasspathChanges
 import org.jetbrains.kotlin.incremental.ClasspathChanges.*
 import org.jetbrains.kotlin.incremental.ClasspathChanges.ClasspathSnapshotEnabled.*
 import org.jetbrains.kotlin.incremental.ClasspathChanges.ClasspathSnapshotEnabled.IncrementalRun.NoChanges
 import org.jetbrains.kotlin.incremental.ClasspathChanges.ClasspathSnapshotEnabled.IncrementalRun.ToBeComputedByIncrementalCompiler
 import org.jetbrains.kotlin.incremental.ClasspathSnapshotFiles
+import org.jetbrains.kotlin.incremental.classpathAsList
+import org.jetbrains.kotlin.incremental.destinationAsFile
 import org.jetbrains.kotlin.utils.addToStdlib.cast
-import java.io.File
 import javax.inject.Inject
-import kotlin.text.appendLine
 
 @CacheableTask
 abstract class KotlinCompile @Inject constructor(
@@ -208,9 +205,6 @@ abstract class KotlinCompile @Inject constructor(
 
     override fun skipCondition(): Boolean = sources.isEmpty && scriptSources.isEmpty
 
-    override fun createCompilerArgs(): K2JVMCompilerArguments =
-        K2JVMCompilerArguments()
-
     /**
      * Workaround for those "nasty" plugins that are adding 'freeCompilerArgs' on task execution phase.
      * With properties api it is not possible to update property value after task configuration is finished.
@@ -221,47 +215,84 @@ abstract class KotlinCompile @Inject constructor(
     @get:Internal
     internal var executionTimeFreeCompilerArgs: List<String>? = null
 
-    override fun setupCompilerArgs(args: K2JVMCompilerArguments, defaultsOnly: Boolean, ignoreClasspathResolutionErrors: Boolean) {
-        compilerArgumentsContributor.contributeArguments(
-            args, compilerArgumentsConfigurationFlags(
-                defaultsOnly,
-                ignoreClasspathResolutionErrors
-            )
-        )
+    override fun createCompilerArguments(
+        context: KotlinCompilerArgumentsProducer.CreateCompilerArgumentsContext
+    ): K2JVMCompilerArguments = context.create<K2JVMCompilerArguments> {
+        primitive { args ->
+            args.multiPlatform = multiPlatformEnabled.get()
 
-        args.configureMultiplatform(
-            compilerOptions,
-            k1CommonSources = commonSourceSet.asFileTree,
-            k2MultiplatformFragments = multiplatformStructure
-        )
+            args.pluginOptions = (pluginOptions.toSingleCompilerPluginOptions() + kotlinPluginData?.orNull?.options)
+                .arguments.toTypedArray()
 
-        if (reportingSettings().buildReportMode == BuildReportMode.VERBOSE) {
-            args.reportPerf = true
+            args.destinationAsFile = destinationDirectory.get().asFile
+
+            args.javaPackagePrefix = javaPackagePrefix
+
+            if (compilerOptions.usesK2.get()) {
+                args.fragments = multiplatformStructure.fragmentsCompilerArgs
+                args.fragmentRefines = multiplatformStructure.fragmentRefinesCompilerArgs
+            }
+
+            if (reportingSettings().buildReportMode == BuildReportMode.VERBOSE) {
+                args.reportPerf = true
+            }
+
+            KotlinJvmCompilerOptionsHelper.fillCompilerArguments(compilerOptions, args)
+
+            val localExecutionTimeFreeCompilerArgs = executionTimeFreeCompilerArgs
+            if (localExecutionTimeFreeCompilerArgs != null) {
+                args.freeArgs = localExecutionTimeFreeCompilerArgs
+            }
         }
 
-        val localExecutionTimeFreeCompilerArgs = executionTimeFreeCompilerArgs
-        if (localExecutionTimeFreeCompilerArgs != null) {
-            args.freeArgs = localExecutionTimeFreeCompilerArgs
+        pluginClasspath { args ->
+            args.pluginClasspaths = runSafe {
+                listOfNotNull(
+                    pluginClasspath, kotlinPluginData?.orNull?.classpath
+                ).reduce(FileCollection::plus).toPathsArray()
+            }
         }
-    }
 
-    @get:Internal
-    internal val compilerArgumentsContributor: CompilerArgumentsContributor<K2JVMCompilerArguments> by lazy {
-        KotlinJvmCompilerArgumentsContributor(KotlinJvmCompilerArgumentsProvider(this))
+        dependencyClasspath { args ->
+            args.friendPaths = friendPaths.toPathsArray()
+            args.classpathAsList = runSafe {
+                libraries.toList().filter { it.exists() }
+            }.orEmpty()
+        }
+
+        sources { args ->
+            if (compilerOptions.usesK2.get()) {
+                args.fragmentSources = multiplatformStructure.fragmentSourcesCompilerArgs
+            } else {
+                args.commonSources = commonSourceSet.asFileTree.toPathsArray()
+            }
+
+            val sourcesFiles = sources.asFileTree.files.toList()
+            val javaSourcesFiles = javaSources.files.toList()
+            val scriptSourcesFiles = scriptSources.asFileTree.files.toList()
+
+            if (logger.isInfoEnabled) {
+                logger.info("Kotlin source files: ${sourcesFiles.joinToString()}")
+                logger.info("Java source files: ${javaSourcesFiles.joinToString()}")
+                logger.info("Script source files: ${scriptSourcesFiles.joinToString()}")
+                logger.info("Script file extensions: ${scriptExtensions.get().joinToString()}")
+            }
+
+            args.freeArgs += (scriptSourcesFiles + javaSourcesFiles + sourcesFiles).map { it.absolutePath }
+        }
     }
 
     override fun callCompilerAsync(
         args: K2JVMCompilerArguments,
-        kotlinSources: Set<File>,
         inputChanges: InputChanges,
         taskOutputsBackup: TaskOutputsBackup?
     ) {
         validateKotlinAndJavaHasSameTargetCompatibility(args)
 
-        val scriptSources = scriptSources.asFileTree.files
-        val javaSources = javaSources.files
         val gradlePrintingMessageCollector = GradlePrintingMessageCollector(logger, args.allWarningsAsErrors)
-        val gradleMessageCollector = GradleErrorMessageCollector(gradlePrintingMessageCollector, kotlinPluginVersion = getKotlinPluginVersion(logger))
+        val gradleMessageCollector = GradleErrorMessageCollector(
+            gradlePrintingMessageCollector, kotlinPluginVersion = getKotlinPluginVersion(logger)
+        )
         val outputItemCollector = OutputItemsCollectorImpl()
         val compilerRunner = compilerRunner.get()
 
@@ -292,13 +323,7 @@ abstract class KotlinCompile @Inject constructor(
             incrementalCompilationEnvironment = icEnv,
             kotlinScriptExtensions = scriptExtensions.get().toTypedArray()
         )
-        logger.info("Kotlin source files: ${kotlinSources.joinToString()}")
-        logger.info("Java source files: ${javaSources.joinToString()}")
-        logger.info("Script source files: ${scriptSources.joinToString()}")
-        logger.info("Script file extensions: ${scriptExtensions.get().joinToString()}")
         compilerRunner.runJvmCompilerAsync(
-            (kotlinSources + scriptSources + javaSources).toList(),
-            javaPackagePrefix,
             args,
             environment,
             defaultKotlinJavaToolchain.get().buildJvm.get().javaHome,

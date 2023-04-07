@@ -127,6 +127,12 @@ public class FirOldFrontendMPPDiagnosticsWithLightTreeTestGenerated extends Abst
         runTest("compiler/testData/diagnostics/tests/multiplatform/smartcastOnMemberPropertyFromCommonClass.kt");
     }
 
+    @Test
+    @TestMetadata("varSetterVisibility.kt")
+    public void testVarSetterVisibility() throws Exception {
+        runTest("compiler/testData/diagnostics/tests/multiplatform/varSetterVisibility.kt");
+    }
+
     @Nested
     @TestMetadata("compiler/testData/diagnostics/tests/multiplatform/defaultArguments")
     @TestDataPath("$PROJECT_ROOT")
@@ -344,6 +350,12 @@ public class FirOldFrontendMPPDiagnosticsWithLightTreeTestGenerated extends Abst
         }
 
         @Test
+        @TestMetadata("actualMethodInExpectClass.kt")
+        public void testActualMethodInExpectClass() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/multiplatform/headerClass/actualMethodInExpectClass.kt");
+        }
+
+        @Test
         @TestMetadata("actualMissing.kt")
         public void testActualMissing() throws Exception {
             runTest("compiler/testData/diagnostics/tests/multiplatform/headerClass/actualMissing.kt");
@@ -406,6 +418,12 @@ public class FirOldFrontendMPPDiagnosticsWithLightTreeTestGenerated extends Abst
         @TestMetadata("expectFinalActualOpen.kt")
         public void testExpectFinalActualOpen() throws Exception {
             runTest("compiler/testData/diagnostics/tests/multiplatform/headerClass/expectFinalActualOpen.kt");
+        }
+
+        @Test
+        @TestMetadata("expectFunInterface.kt")
+        public void testExpectFunInterface() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/multiplatform/headerClass/expectFunInterface.kt");
         }
 
         @Test

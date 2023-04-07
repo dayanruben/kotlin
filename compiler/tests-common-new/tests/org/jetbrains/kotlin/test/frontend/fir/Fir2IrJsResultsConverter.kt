@@ -18,12 +18,11 @@ import org.jetbrains.kotlin.diagnostics.DiagnosticReporterFactory
 import org.jetbrains.kotlin.fir.AbstractFirAnalyzerFacade
 import org.jetbrains.kotlin.fir.FirAnalyzerFacade
 import org.jetbrains.kotlin.fir.backend.*
+import org.jetbrains.kotlin.fir.backend.js.FirJsKotlinMangler
 import org.jetbrains.kotlin.fir.backend.jvm.Fir2IrJvmSpecialAnnotationSymbolProvider
-import org.jetbrains.kotlin.fir.backend.jvm.FirJvmKotlinMangler
 import org.jetbrains.kotlin.fir.declarations.FirDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.fir.descriptors.FirModuleDescriptor
-import org.jetbrains.kotlin.fir.serialization.FirElementAwareSerializableStringTable
 import org.jetbrains.kotlin.fir.serialization.FirKLibSerializerExtension
 import org.jetbrains.kotlin.fir.serialization.serializeSingleFirFile
 import org.jetbrains.kotlin.incremental.components.LookupTracker
@@ -69,7 +68,7 @@ class Fir2IrJsResultsConverter(
         val commonMemberStorage = Fir2IrCommonMemberStorage(
             generateSignatures = false,
             signatureComposerCreator = null,
-            manglerCreator = { FirJvmKotlinMangler() } // TODO: replace with potentially simpler JS version
+            manglerCreator = ::FirJsKotlinMangler
         )
 
         for ((index, part) in inputArtifact.partsForDependsOnModules.withIndex()) {
@@ -123,7 +122,11 @@ class Fir2IrJsResultsConverter(
                 components.session,
                 components.scopeSession,
                 actualizedExpectDeclarations,
-                FirKLibSerializerExtension(components.session, metadataVersion, FirElementAwareSerializableStringTable()),
+                FirKLibSerializerExtension(
+                    components.session, metadataVersion,
+                    ConstValueProviderImpl(components),
+                    allowErrorTypes = false, exportKDoc = false
+                ),
                 configuration.languageVersionSettings,
             )
         }

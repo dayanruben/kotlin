@@ -25,6 +25,12 @@ public class DiagnosticsTestWithJsStdLibGenerated extends AbstractDiagnosticsTes
     }
 
     @Test
+    @TestMetadata("dynamicUnresolved.kt")
+    public void testDynamicUnresolved() throws Exception {
+        runTest("compiler/testData/diagnostics/testsWithJsStdLib/dynamicUnresolved.kt");
+    }
+
+    @Test
     @TestMetadata("funConstructorCallJS.kt")
     public void testFunConstructorCallJS() throws Exception {
         runTest("compiler/testData/diagnostics/testsWithJsStdLib/funConstructorCallJS.kt");
@@ -37,6 +43,12 @@ public class DiagnosticsTestWithJsStdLibGenerated extends AbstractDiagnosticsTes
     }
 
     @Test
+    @TestMetadata("jsExternalInheritorsOnly.kt")
+    public void testJsExternalInheritorsOnly() throws Exception {
+        runTest("compiler/testData/diagnostics/testsWithJsStdLib/jsExternalInheritorsOnly.kt");
+    }
+
+    @Test
     @TestMetadata("localClassMetadata.kt")
     public void testLocalClassMetadata() throws Exception {
         runTest("compiler/testData/diagnostics/testsWithJsStdLib/localClassMetadata.kt");
@@ -46,6 +58,12 @@ public class DiagnosticsTestWithJsStdLibGenerated extends AbstractDiagnosticsTes
     @TestMetadata("noImpl.kt")
     public void testNoImpl() throws Exception {
         runTest("compiler/testData/diagnostics/testsWithJsStdLib/noImpl.kt");
+    }
+
+    @Test
+    @TestMetadata("overridesMemberWithPlatformDependent.kt")
+    public void testOverridesMemberWithPlatformDependent() throws Exception {
+        runTest("compiler/testData/diagnostics/testsWithJsStdLib/overridesMemberWithPlatformDependent.kt");
     }
 
     @Test

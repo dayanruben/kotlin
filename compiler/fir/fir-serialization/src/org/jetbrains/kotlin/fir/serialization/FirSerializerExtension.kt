@@ -70,7 +70,7 @@ abstract class FirSerializerExtension {
     open fun serializeFlexibleType(type: ConeFlexibleType, lowerProto: ProtoBuf.Type.Builder, upperProto: ProtoBuf.Type.Builder) {
     }
 
-    open fun serializeTypeAnnotation(annotation: FirAnnotation, proto: ProtoBuf.Type.Builder) {
+    open fun serializeTypeAnnotations(annotations: List<FirAnnotation>, proto: ProtoBuf.Type.Builder) {
     }
 
     open fun serializeTypeParameter(typeParameter: FirTypeParameter, proto: ProtoBuf.TypeParameter.Builder) {
@@ -89,5 +89,4 @@ abstract class FirSerializerExtension {
     interface ClassMembersProducer {
         fun getCallableMembers(klass: FirClass): Collection<FirCallableDeclaration>
     }
-
 }

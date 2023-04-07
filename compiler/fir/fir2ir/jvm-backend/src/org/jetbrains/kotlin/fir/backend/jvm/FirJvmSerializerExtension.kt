@@ -23,9 +23,7 @@ import org.jetbrains.kotlin.fir.render
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.resolve.providers.firProvider
 import org.jetbrains.kotlin.fir.resolve.toFirRegularClassSymbol
-import org.jetbrains.kotlin.fir.serialization.FirElementAwareStringTable
-import org.jetbrains.kotlin.fir.serialization.FirElementSerializer
-import org.jetbrains.kotlin.fir.serialization.FirSerializerExtension
+import org.jetbrains.kotlin.fir.serialization.*
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.ir.declarations.MetadataSource
 import org.jetbrains.kotlin.load.kotlin.NON_EXISTENT_CLASS_NAME
@@ -59,7 +57,7 @@ class FirJvmSerializerExtension(
     private val unifiedNullChecks: Boolean,
     override val metadataVersion: BinaryVersion,
     private val jvmDefaultMode: JvmDefaultMode,
-    override val stringTable: FirElementAwareStringTable
+    override val stringTable: FirElementAwareStringTable,
 ) : FirSerializerExtension() {
 
     constructor(
@@ -75,7 +73,7 @@ class FirJvmSerializerExtension(
         session, bindings, metadata, localDelegatedProperties, approximator, components.scopeSession,
         state.globalSerializationBindings, state.useTypeTableInSerializer, state.moduleName, state.classBuilderMode,
         state.isParamAssertionsDisabled, state.unifiedNullChecks, state.metadataVersion, state.jvmDefaultMode,
-        FirJvmElementAwareStringTable(typeMapper, components)
+        FirJvmElementAwareStringTable(typeMapper, components),
     )
 
     override fun shouldUseTypeTable(): Boolean = useTypeTable
@@ -166,8 +164,10 @@ class FirJvmSerializerExtension(
         }
     }
 
-    override fun serializeTypeAnnotation(annotation: FirAnnotation, proto: ProtoBuf.Type.Builder) {
-        proto.addExtension(JvmProtoBuf.typeAnnotation, annotationSerializer.serializeAnnotation(annotation))
+    override fun serializeTypeAnnotations(annotations: List<FirAnnotation>, proto: ProtoBuf.Type.Builder) {
+        for (annotation in annotations) {
+            proto.addExtension(JvmProtoBuf.typeAnnotation, annotationSerializer.serializeAnnotation(annotation))
+        }
     }
 
 

@@ -886,6 +886,16 @@ internal class AmbiguousAnnotationArgumentImpl(
     override val token: KtLifetimeToken,
 ) : KtFirDiagnostic.AmbiguousAnnotationArgument(), KtAbstractFirDiagnostic<PsiElement>
 
+internal class VolatileOnValueImpl(
+    override val firDiagnostic: KtPsiDiagnostic,
+    override val token: KtLifetimeToken,
+) : KtFirDiagnostic.VolatileOnValue(), KtAbstractFirDiagnostic<KtAnnotationEntry>
+
+internal class VolatileOnDelegateImpl(
+    override val firDiagnostic: KtPsiDiagnostic,
+    override val token: KtLifetimeToken,
+) : KtFirDiagnostic.VolatileOnDelegate(), KtAbstractFirDiagnostic<KtAnnotationEntry>
+
 internal class WrongJsQualifierImpl(
     override val firDiagnostic: KtPsiDiagnostic,
     override val token: KtLifetimeToken,
@@ -3702,16 +3712,6 @@ internal class StrictfpOnClassImpl(
     override val token: KtLifetimeToken,
 ) : KtFirDiagnostic.StrictfpOnClass(), KtAbstractFirDiagnostic<KtAnnotationEntry>
 
-internal class VolatileOnValueImpl(
-    override val firDiagnostic: KtPsiDiagnostic,
-    override val token: KtLifetimeToken,
-) : KtFirDiagnostic.VolatileOnValue(), KtAbstractFirDiagnostic<KtAnnotationEntry>
-
-internal class VolatileOnDelegateImpl(
-    override val firDiagnostic: KtPsiDiagnostic,
-    override val token: KtLifetimeToken,
-) : KtFirDiagnostic.VolatileOnDelegate(), KtAbstractFirDiagnostic<KtAnnotationEntry>
-
 internal class SynchronizedOnAbstractImpl(
     override val firDiagnostic: KtPsiDiagnostic,
     override val token: KtLifetimeToken,
@@ -4226,6 +4226,13 @@ internal class ExternalInterfaceAsClassLiteralImpl(
     override val token: KtLifetimeToken,
 ) : KtFirDiagnostic.ExternalInterfaceAsClassLiteral(), KtAbstractFirDiagnostic<KtElement>
 
+internal class JsExternalInheritorsOnlyImpl(
+    override val parent: KtClassLikeSymbol,
+    override val kid: KtClassLikeSymbol,
+    override val firDiagnostic: KtPsiDiagnostic,
+    override val token: KtLifetimeToken,
+) : KtFirDiagnostic.JsExternalInheritorsOnly(), KtAbstractFirDiagnostic<KtDeclaration>
+
 internal class NestedJsExportImpl(
     override val firDiagnostic: KtPsiDiagnostic,
     override val token: KtLifetimeToken,
@@ -4254,6 +4261,17 @@ internal class DelegationByDynamicImpl(
     override val firDiagnostic: KtPsiDiagnostic,
     override val token: KtLifetimeToken,
 ) : KtFirDiagnostic.DelegationByDynamic(), KtAbstractFirDiagnostic<KtElement>
+
+internal class SpreadOperatorInDynamicCallImpl(
+    override val firDiagnostic: KtPsiDiagnostic,
+    override val token: KtLifetimeToken,
+) : KtFirDiagnostic.SpreadOperatorInDynamicCall(), KtAbstractFirDiagnostic<KtElement>
+
+internal class WrongOperationWithDynamicImpl(
+    override val operation: String,
+    override val firDiagnostic: KtPsiDiagnostic,
+    override val token: KtLifetimeToken,
+) : KtFirDiagnostic.WrongOperationWithDynamic(), KtAbstractFirDiagnostic<KtElement>
 
 internal class SyntaxImpl(
     override val firDiagnostic: KtPsiDiagnostic,
