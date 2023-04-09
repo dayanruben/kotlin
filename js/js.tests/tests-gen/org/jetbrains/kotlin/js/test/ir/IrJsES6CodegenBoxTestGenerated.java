@@ -21172,6 +21172,40 @@ public class IrJsES6CodegenBoxTestGenerated extends AbstractIrJsES6CodegenBoxTes
                 runTest("compiler/testData/codegen/box/involvesIrInterpreter/dumpIrAndCheck/unsignedConst.kt");
             }
         }
+
+        @Nested
+        @TestMetadata("compiler/testData/codegen/box/involvesIrInterpreter/serialization")
+        @TestDataPath("$PROJECT_ROOT")
+        public class Serialization {
+            @Test
+            public void testAllFilesPresentInSerialization() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/involvesIrInterpreter/serialization"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JS_IR_ES6, true);
+            }
+
+            @Test
+            @TestMetadata("annotationInArguments.kt")
+            public void testAnnotationInArguments() throws Exception {
+                runTest("compiler/testData/codegen/box/involvesIrInterpreter/serialization/annotationInArguments.kt");
+            }
+
+            @Test
+            @TestMetadata("annotationSerialization.kt")
+            public void testAnnotationSerialization() throws Exception {
+                runTest("compiler/testData/codegen/box/involvesIrInterpreter/serialization/annotationSerialization.kt");
+            }
+
+            @Test
+            @TestMetadata("annotationWithArray.kt")
+            public void testAnnotationWithArray() throws Exception {
+                runTest("compiler/testData/codegen/box/involvesIrInterpreter/serialization/annotationWithArray.kt");
+            }
+
+            @Test
+            @TestMetadata("annotationWithDefaults.kt")
+            public void testAnnotationWithDefaults() throws Exception {
+                runTest("compiler/testData/codegen/box/involvesIrInterpreter/serialization/annotationWithDefaults.kt");
+            }
+        }
     }
 
     @Nested

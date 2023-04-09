@@ -11,7 +11,8 @@ import kotlin.native.concurrent.FreezableAtomicReference
 import kotlin.native.concurrent.freeze
 
 @ExportForCppRuntime
-fun ThrowNullPointerException(): Nothing {
+@PublishedApi
+internal fun ThrowNullPointerException(): Nothing {
     throw NullPointerException()
 }
 
@@ -26,23 +27,27 @@ internal fun ThrowArrayIndexOutOfBoundsException(): Nothing {
 }
 
 @ExportForCppRuntime
-fun ThrowClassCastException(instance: Any, typeInfo: NativePtr): Nothing {
+@PublishedApi
+internal fun ThrowClassCastException(instance: Any, typeInfo: NativePtr): Nothing {
     val clazz = KClassImpl<Any>(typeInfo)
     throw ClassCastException("${instance::class} cannot be cast to $clazz")
 }
 
 @ExportForCppRuntime
-fun ThrowTypeCastException(instance: Any, typeName: String): Nothing {
+@PublishedApi
+internal fun ThrowTypeCastException(instance: Any, typeName: String): Nothing {
     throw TypeCastException("${instance::class} cannot be cast to class $typeName")
 }
 
 @ExportForCppRuntime
-fun ThrowKotlinNothingValueException(): Nothing {
+@PublishedApi
+internal fun ThrowKotlinNothingValueException(): Nothing {
     throw KotlinNothingValueException()
 }
 
 @ExportForCppRuntime
-fun ThrowInvalidReceiverTypeException(klass: KClass<*>): Nothing {
+@PublishedApi
+internal fun ThrowInvalidReceiverTypeException(klass: KClass<*>): Nothing {
     throw RuntimeException("Unexpected receiver type: " + (klass.qualifiedName ?: "noname"))
 }
 
@@ -61,11 +66,13 @@ internal fun ThrowOutOfMemoryError() : Nothing {
     throw OutOfMemoryError()
 }
 
-fun ThrowNoWhenBranchMatchedException(): Nothing {
+@PublishedApi
+internal fun ThrowNoWhenBranchMatchedException(): Nothing {
     throw NoWhenBranchMatchedException()
 }
 
-fun ThrowUninitializedPropertyAccessException(propertyName: String): Nothing {
+@PublishedApi
+internal fun ThrowUninitializedPropertyAccessException(propertyName: String): Nothing {
     throw UninitializedPropertyAccessException("lateinit property $propertyName has not been initialized")
 }
 
@@ -181,7 +188,8 @@ internal fun runUnhandledExceptionHook(throwable: Throwable) {
 @ExportForCppRuntime
 internal fun TheEmptyString() = ""
 
-public fun <T: Enum<T>> valueOfForEnum(name: String, values: Array<T>) : T {
+@PublishedApi
+internal fun <T: Enum<T>> valueOfForEnum(name: String, values: Array<T>) : T {
     var left = 0
     var right = values.size - 1
     while (left <= right) {
@@ -196,7 +204,8 @@ public fun <T: Enum<T>> valueOfForEnum(name: String, values: Array<T>) : T {
     throw Exception("Invalid enum value name: $name")
 }
 
-public fun <T: Enum<T>> valuesForEnum(values: Array<T>): Array<T> {
+@PublishedApi
+internal fun <T: Enum<T>> valuesForEnum(values: Array<T>): Array<T> {
     val result = @Suppress("TYPE_PARAMETER_AS_REIFIED") Array<T?>(values.size)
     for (value in values)
         result[value.ordinal] = value
