@@ -92,6 +92,8 @@ public actual open class IndexOutOfBoundsException : RuntimeException {
     actual constructor(message: String?) : super(message)
 }
 
+@Deprecated("Use IndexOutOfBoundsException instead.")
+@DeprecatedSinceKotlin(warningSince = "1.9")
 public open class ArrayIndexOutOfBoundsException : IndexOutOfBoundsException {
 
     constructor() : super()
@@ -124,11 +126,12 @@ public actual open class AssertionError : Error {
 
     actual constructor()
 
+    @Deprecated("Provided for binary compatibility", level = DeprecationLevel.HIDDEN)
     constructor(cause: Throwable?) : super(cause)
 
-    actual constructor(message: Any?) : super(message?.toString())
+    actual constructor(message: Any?) : super(message?.toString(), message as? Throwable)
 
-    constructor(message: String?, cause: Throwable?) : super(message, cause)
+    actual constructor(message: String?, cause: Throwable?) : super(message, cause)
 }
 
 @Suppress("ACTUAL_WITHOUT_EXPECT")

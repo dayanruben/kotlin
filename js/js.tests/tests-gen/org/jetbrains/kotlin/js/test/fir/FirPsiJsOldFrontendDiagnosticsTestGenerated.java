@@ -32,6 +32,12 @@ public class FirPsiJsOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiJ
     }
 
     @Test
+    @TestMetadata("externalInterfaceClassLiteral.kt")
+    public void testExternalInterfaceClassLiteral() throws Exception {
+        runTest("compiler/testData/diagnostics/testsWithJsStdLib/externalInterfaceClassLiteral.kt");
+    }
+
+    @Test
     @TestMetadata("funConstructorCallJS.kt")
     public void testFunConstructorCallJS() throws Exception {
         runTest("compiler/testData/diagnostics/testsWithJsStdLib/funConstructorCallJS.kt");
@@ -47,6 +53,12 @@ public class FirPsiJsOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiJ
     @TestMetadata("jsExternalInheritorsOnly.kt")
     public void testJsExternalInheritorsOnly() throws Exception {
         runTest("compiler/testData/diagnostics/testsWithJsStdLib/jsExternalInheritorsOnly.kt");
+    }
+
+    @Test
+    @TestMetadata("jsExternalSuperclassWithoutArguments.kt")
+    public void testJsExternalSuperclassWithoutArguments() throws Exception {
+        runTest("compiler/testData/diagnostics/testsWithJsStdLib/jsExternalSuperclassWithoutArguments.kt");
     }
 
     @Test

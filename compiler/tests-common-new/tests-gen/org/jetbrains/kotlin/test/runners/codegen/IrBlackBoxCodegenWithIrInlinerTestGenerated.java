@@ -150,6 +150,18 @@ public class IrBlackBoxCodegenWithIrInlinerTestGenerated extends AbstractIrBlack
         }
 
         @Test
+        @TestMetadata("deserializationOfNestedAnnotationOnType_1.kt")
+        public void testDeserializationOfNestedAnnotationOnType_1() throws Exception {
+            runTest("compiler/testData/codegen/box/annotations/deserializationOfNestedAnnotationOnType_1.kt");
+        }
+
+        @Test
+        @TestMetadata("deserializationOfNestedAnnotationOnType_2.kt")
+        public void testDeserializationOfNestedAnnotationOnType_2() throws Exception {
+            runTest("compiler/testData/codegen/box/annotations/deserializationOfNestedAnnotationOnType_2.kt");
+        }
+
+        @Test
         @TestMetadata("divisionByZeroInJava.kt")
         public void testDivisionByZeroInJava() throws Exception {
             runTest("compiler/testData/codegen/box/annotations/divisionByZeroInJava.kt");
@@ -28263,6 +28275,12 @@ public class IrBlackBoxCodegenWithIrInlinerTestGenerated extends AbstractIrBlack
         @TestMetadata("kt56215.kt")
         public void testKt56215() throws Exception {
             runTest("compiler/testData/codegen/box/involvesIrInterpreter/kt56215.kt");
+        }
+
+        @Test
+        @TestMetadata("kt57313.kt")
+        public void testKt57313() throws Exception {
+            runTest("compiler/testData/codegen/box/involvesIrInterpreter/kt57313.kt");
         }
 
         @Test
