@@ -8836,6 +8836,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 }
 
                 @Test
+                @TestMetadata("decoratedLambda.kt")
+                public void testDecoratedLambda() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/delegatedProperty/inference/decoratedLambda.kt");
+                }
+
+                @Test
                 @TestMetadata("delegateExpressionAsLambda.kt")
                 public void testDelegateExpressionAsLambda() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/delegatedProperty/inference/delegateExpressionAsLambda.kt");
@@ -27558,6 +27564,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 }
 
                 @Test
+                @TestMetadata("implicitPropertyType.kt")
+                public void testImplicitPropertyType() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/resolve/invoke/implicitPropertyType.kt");
+                }
+
+                @Test
                 @TestMetadata("invokeAndSmartCast.kt")
                 public void testInvokeAndSmartCast() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/resolve/invoke/invokeAndSmartCast.kt");
@@ -30624,6 +30636,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("smartCastOnWhen.kt")
             public void testSmartCastOnWhen() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/smartCasts/smartCastOnWhen.kt");
+            }
+
+            @Test
+            @TestMetadata("smartcastInFriendModule.kt")
+            public void testSmartcastInFriendModule() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/smartCasts/smartcastInFriendModule.kt");
             }
 
             @Test

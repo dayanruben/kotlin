@@ -5,7 +5,9 @@
 
 package kotlin.native.internal
 
+import kotlin.experimental.ExperimentalNativeApi
 import kotlin.native.concurrent.*
+import kotlin.native.runtime.GC
 import kotlinx.cinterop.NativePtr
 
 @Deprecated("Use kotlin.native.ref.Cleaner instead.", ReplaceWith("kotlin.native.ref.Cleaner"))
@@ -74,7 +76,7 @@ public interface Cleaner
 @Suppress("DEPRECATION")
 @ExperimentalStdlibApi
 @ExportForCompiler
-@OptIn(FreezingIsDeprecated::class)
+@OptIn(ExperimentalNativeApi::class)
 fun <T> createCleaner(argument: T, block: (T) -> Unit): Cleaner =
         kotlin.native.ref.createCleanerImpl(argument, block) as Cleaner
 
@@ -82,6 +84,7 @@ fun <T> createCleaner(argument: T, block: (T) -> Unit): Cleaner =
  * Perform GC on a worker that executes Cleaner blocks.
  */
 @InternalForKotlinNative
+@OptIn(kotlin.native.runtime.NativeRuntimeApi::class)
 fun performGCOnCleanerWorker() =
     getCleanerWorker().execute(TransferMode.SAFE, {}) {
         GC.collect()

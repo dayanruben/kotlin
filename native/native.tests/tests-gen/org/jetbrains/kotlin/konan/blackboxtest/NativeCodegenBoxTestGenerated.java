@@ -8178,6 +8178,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
             }
 
             @Test
+            @TestMetadata("inlineCallWithReturns.kt")
+            public void testInlineCallWithReturns() throws Exception {
+                runTest("compiler/testData/codegen/box/coroutines/inlineCallWithReturns.kt");
+            }
+
+            @Test
             @TestMetadata("inlineFunInGenericClass.kt")
             public void testInlineFunInGenericClass() throws Exception {
                 runTest("compiler/testData/codegen/box/coroutines/inlineFunInGenericClass.kt");
@@ -24744,6 +24750,19 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
         }
 
         @Nested
+        @TestMetadata("compiler/testData/codegen/box/js")
+        @TestDataPath("$PROJECT_ROOT")
+        @Tag("codegen")
+        @Tag("k1Codegen")
+        @UseExtTestCaseGroupProvider()
+        public class Js {
+            @Test
+            public void testAllFilesPresentInJs() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/js"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+            }
+        }
+
+        @Nested
         @TestMetadata("compiler/testData/codegen/box/jvm8")
         @TestDataPath("$PROJECT_ROOT")
         @Tag("codegen")
@@ -39453,6 +39472,25 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
                 public void testObjectExtendsLocalInner() throws Exception {
                     runTest("compiler/testData/codegen/box/super/superConstructor/objectExtendsLocalInner.kt");
                 }
+            }
+        }
+
+        @Nested
+        @TestMetadata("compiler/testData/codegen/box/suppressions")
+        @TestDataPath("$PROJECT_ROOT")
+        @Tag("codegen")
+        @Tag("k1Codegen")
+        @UseExtTestCaseGroupProvider()
+        public class Suppressions {
+            @Test
+            public void testAllFilesPresentInSuppressions() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/suppressions"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+            }
+
+            @Test
+            @TestMetadata("suppressInvisible.kt")
+            public void testSuppressInvisible() throws Exception {
+                runTest("compiler/testData/codegen/box/suppressions/suppressInvisible.kt");
             }
         }
 

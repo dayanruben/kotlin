@@ -7967,6 +7967,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/coroutines/infiniteLoopInNextMeaningful.kt");
         }
 
+        @TestMetadata("inlineCallWithReturns.kt")
+        public void testInlineCallWithReturns() throws Exception {
+            runTest("compiler/testData/codegen/box/coroutines/inlineCallWithReturns.kt");
+        }
+
         @TestMetadata("inlineFunInGenericClass.kt")
         public void testInlineFunInGenericClass() throws Exception {
             runTest("compiler/testData/codegen/box/coroutines/inlineFunInGenericClass.kt");
@@ -23991,6 +23996,19 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         }
     }
 
+    @TestMetadata("compiler/testData/codegen/box/js")
+    @TestDataPath("$PROJECT_ROOT")
+    @RunWith(JUnit3RunnerWithInners.class)
+    public static class Js extends AbstractLightAnalysisModeTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM, testDataFilePath);
+        }
+
+        public void testAllFilesPresentInJs() throws Exception {
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/js"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
+        }
+    }
+
     @TestMetadata("compiler/testData/codegen/box/jvm8")
     @TestDataPath("$PROJECT_ROOT")
     @RunWith(JUnit3RunnerWithInners.class)
@@ -38626,6 +38644,24 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             public void testObjectExtendsLocalInner() throws Exception {
                 runTest("compiler/testData/codegen/box/super/superConstructor/objectExtendsLocalInner.kt");
             }
+        }
+    }
+
+    @TestMetadata("compiler/testData/codegen/box/suppressions")
+    @TestDataPath("$PROJECT_ROOT")
+    @RunWith(JUnit3RunnerWithInners.class)
+    public static class Suppressions extends AbstractLightAnalysisModeTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM, testDataFilePath);
+        }
+
+        public void testAllFilesPresentInSuppressions() throws Exception {
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/suppressions"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
+        }
+
+        @TestMetadata("suppressInvisible.kt")
+        public void testSuppressInvisible() throws Exception {
+            runTest("compiler/testData/codegen/box/suppressions/suppressInvisible.kt");
         }
     }
 

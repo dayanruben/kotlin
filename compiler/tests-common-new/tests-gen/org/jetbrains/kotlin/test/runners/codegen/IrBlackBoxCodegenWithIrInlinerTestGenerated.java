@@ -228,6 +228,12 @@ public class IrBlackBoxCodegenWithIrInlinerTestGenerated extends AbstractIrBlack
         }
 
         @Test
+        @TestMetadata("javaConstAnnotationArguments.kt")
+        public void testJavaConstAnnotationArguments() throws Exception {
+            runTest("compiler/testData/codegen/box/annotations/javaConstAnnotationArguments.kt");
+        }
+
+        @Test
         @TestMetadata("javaNegativePropertyAsAnnotationParameter.kt")
         public void testJavaNegativePropertyAsAnnotationParameter() throws Exception {
             runTest("compiler/testData/codegen/box/annotations/javaNegativePropertyAsAnnotationParameter.kt");
@@ -10367,6 +10373,12 @@ public class IrBlackBoxCodegenWithIrInlinerTestGenerated extends AbstractIrBlack
         @TestMetadata("infiniteLoopInNextMeaningful.kt")
         public void testInfiniteLoopInNextMeaningful() throws Exception {
             runTest("compiler/testData/codegen/box/coroutines/infiniteLoopInNextMeaningful.kt");
+        }
+
+        @Test
+        @TestMetadata("inlineCallWithReturns.kt")
+        public void testInlineCallWithReturns() throws Exception {
+            runTest("compiler/testData/codegen/box/coroutines/inlineCallWithReturns.kt");
         }
 
         @Test
@@ -29763,6 +29775,16 @@ public class IrBlackBoxCodegenWithIrInlinerTestGenerated extends AbstractIrBlack
         @TestMetadata("useStream.kt")
         public void testUseStream() throws Exception {
             runTest("compiler/testData/codegen/box/jdk/useStream.kt");
+        }
+    }
+
+    @Nested
+    @TestMetadata("compiler/testData/codegen/box/js")
+    @TestDataPath("$PROJECT_ROOT")
+    public class Js {
+        @Test
+        public void testAllFilesPresentInJs() throws Exception {
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/js"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
         }
     }
 
@@ -50179,6 +50201,22 @@ public class IrBlackBoxCodegenWithIrInlinerTestGenerated extends AbstractIrBlack
             public void testObjectExtendsLocalInner() throws Exception {
                 runTest("compiler/testData/codegen/box/super/superConstructor/objectExtendsLocalInner.kt");
             }
+        }
+    }
+
+    @Nested
+    @TestMetadata("compiler/testData/codegen/box/suppressions")
+    @TestDataPath("$PROJECT_ROOT")
+    public class Suppressions {
+        @Test
+        public void testAllFilesPresentInSuppressions() throws Exception {
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/suppressions"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+        }
+
+        @Test
+        @TestMetadata("suppressInvisible.kt")
+        public void testSuppressInvisible() throws Exception {
+            runTest("compiler/testData/codegen/box/suppressions/suppressInvisible.kt");
         }
     }
 
