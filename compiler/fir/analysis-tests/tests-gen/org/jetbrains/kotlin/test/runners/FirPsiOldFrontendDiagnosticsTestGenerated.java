@@ -21039,6 +21039,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
             }
 
             @Test
+            @TestMetadata("labelToOuterLambda.kt")
+            public void testLabelToOuterLambda() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/labels/labelToOuterLambda.kt");
+            }
+
+            @Test
             @TestMetadata("labeledFunctionLiteral.kt")
             public void testLabeledFunctionLiteral() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/labels/labeledFunctionLiteral.kt");
@@ -27558,6 +27564,18 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
             @TestMetadata("initializerScopeOfExtensionProperty.kt")
             public void testInitializerScopeOfExtensionProperty() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/scopes/initializerScopeOfExtensionProperty.kt");
+            }
+
+            @Test
+            @TestMetadata("invisibleInternalSetterAccessFromDeriviedClass.kt")
+            public void testInvisibleInternalSetterAccessFromDeriviedClass() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/scopes/invisibleInternalSetterAccessFromDeriviedClass.kt");
+            }
+
+            @Test
+            @TestMetadata("invisibleInternalSetterAccessFromDeriviedClassOn.kt")
+            public void testInvisibleInternalSetterAccessFromDeriviedClassOn() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/scopes/invisibleInternalSetterAccessFromDeriviedClassOn.kt");
             }
 
             @Test

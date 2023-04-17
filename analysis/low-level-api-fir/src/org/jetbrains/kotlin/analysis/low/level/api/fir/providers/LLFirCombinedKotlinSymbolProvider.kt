@@ -40,10 +40,10 @@ import org.jetbrains.kotlin.psi.KtFile
  *
  * [declarationProvider] must have a scope which combines the scopes of the individual [providers].
  */
-internal class LLFirCombinedKotlinSymbolProvider(
+internal class LLFirCombinedKotlinSymbolProvider private constructor(
     session: FirSession,
     private val project: Project,
-    private val providers: List<LLFirProvider.SymbolProvider>,
+    providers: List<LLFirProvider.SymbolProvider>,
     private val declarationProvider: KotlinDeclarationProvider,
 ) : LLFirSelectingCombinedSymbolProvider<LLFirProvider.SymbolProvider>(session, project, providers) {
     private val symbolNameCache = object : LLFirSymbolProviderNameCache(session) {
@@ -67,7 +67,7 @@ internal class LLFirCombinedKotlinSymbolProvider(
     @OptIn(FirSymbolProviderInternals::class)
     private fun computeClassLikeSymbolByClassId(classId: ClassId): FirClassLikeSymbol<*>? {
         val candidates = declarationProvider.getAllClassesByClassId(classId) + declarationProvider.getAllTypeAliasesByClassId(classId)
-        val (ktClass, provider) = selectFirstElementInClasspathOrder(candidates) ?: return null
+        val (ktClass, provider) = selectFirstElementInClasspathOrder(candidates) { it } ?: return null
         return provider.getClassLikeSymbolByClassId(classId, ktClass)
     }
 
