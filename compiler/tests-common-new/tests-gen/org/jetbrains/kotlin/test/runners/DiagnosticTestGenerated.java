@@ -21268,6 +21268,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 runTest("compiler/testData/diagnostics/tests/modifiers/repeatedModifiers.kt");
             }
 
+            @Test
+            @TestMetadata("suspendAnonymousFunction.kt")
+            public void testSuspendAnonymousFunction() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/modifiers/suspendAnonymousFunction.kt");
+            }
+
             @Nested
             @TestMetadata("compiler/testData/diagnostics/tests/modifiers/const")
             @TestDataPath("$PROJECT_ROOT")
@@ -37542,6 +37548,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("inferCoroutineTypeInOldVersion.kt")
             public void testInferCoroutineTypeInOldVersion() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/builderInference/inferCoroutineTypeInOldVersion.kt");
+            }
+
+            @Test
+            @TestMetadata("inferenceFromLambdaReturnType.kt")
+            public void testInferenceFromLambdaReturnType() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/builderInference/inferenceFromLambdaReturnType.kt");
             }
 
             @Test

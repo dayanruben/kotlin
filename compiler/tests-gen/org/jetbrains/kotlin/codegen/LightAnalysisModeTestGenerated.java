@@ -14632,6 +14632,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         public void testSuspendFunctionReference() throws Exception {
             runTest("compiler/testData/codegen/box/fir/SuspendFunctionReference.kt");
         }
+
+        @TestMetadata("toLong.kt")
+        public void testToLong() throws Exception {
+            runTest("compiler/testData/codegen/box/fir/toLong.kt");
+        }
     }
 
     @TestMetadata("compiler/testData/codegen/box/fullJdk")
@@ -16761,6 +16766,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("kt50974_resultMultiModule.kt")
         public void ignoreKt50974_resultMultiModule() throws Exception {
             runTest("compiler/testData/codegen/box/inlineClasses/kt50974_resultMultiModule.kt");
+        }
+
+        @TestMetadata("kt57973.kt")
+        public void ignoreKt57973() throws Exception {
+            runTest("compiler/testData/codegen/box/inlineClasses/kt57973.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
         }
 
         @TestMetadata("mappingOfBoxedFlexibleInlineClassTypeGeneric.kt")
@@ -27278,6 +27288,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                     runTest("compiler/testData/codegen/box/multiplatform/k2/basic/expectActualSimple.kt");
                 }
 
+                @TestMetadata("expectActualTypeParameters.kt")
+                public void testExpectActualTypeParameters() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/expectActualTypeParameters.kt");
+                }
+
                 @TestMetadata("expectActualTypealias.kt")
                 public void testExpectActualTypealias() throws Exception {
                     runTest("compiler/testData/codegen/box/multiplatform/k2/basic/expectActualTypealias.kt");
@@ -27449,6 +27464,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                 @TestMetadata("annotations.kt")
                 public void testAnnotations() throws Exception {
                     runTest("compiler/testData/codegen/box/multiplatform/k2/defaultArguments/annotations.kt");
+                }
+
+                @TestMetadata("expectPropertyAsDefaultArgument.kt")
+                public void testExpectPropertyAsDefaultArgument() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/defaultArguments/expectPropertyAsDefaultArgument.kt");
                 }
             }
         }

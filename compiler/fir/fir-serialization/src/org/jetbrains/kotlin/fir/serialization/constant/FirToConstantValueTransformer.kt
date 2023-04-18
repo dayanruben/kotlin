@@ -115,7 +115,7 @@ private abstract class FirToConstantValueTransformer(
 
         return when {
             symbol.fir is FirEnumEntry -> {
-                val classId = symbol.fir.returnTypeRef.coneTypeSafe<ConeClassLikeType>()?.classId ?: return null
+                val classId = symbol.callableId.classId ?: return null
                 EnumValue(classId, (symbol.fir as FirEnumEntry).name)
             }
 
@@ -214,6 +214,8 @@ internal object FirToConstantValueChecker : FirDefaultVisitor<Boolean, FirSessio
         ConstantValueKind.Int, ConstantValueKind.UnsignedInt, ConstantValueKind.Long, ConstantValueKind.UnsignedLong,
     )
 
+    private val constantIntrinsicCalls = setOf("toByte", "toLong", "toShort", "toFloat", "toDouble", "toChar", "unaryMinus")
+
     override fun visitElement(element: FirElement, data: FirSession): Boolean {
         return false
     }
@@ -246,7 +248,7 @@ internal object FirToConstantValueChecker : FirDefaultVisitor<Boolean, FirSessio
         val fir = symbol.fir
 
         return when {
-            symbol.fir is FirEnumEntry -> symbol.fir.returnTypeRef.coneTypeSafe<ConeClassLikeType>()?.classId != null
+            symbol.fir is FirEnumEntry -> symbol.callableId.classId != null
 
             symbol is FirPropertySymbol -> symbol.fir.isConst
 
@@ -259,9 +261,8 @@ internal object FirToConstantValueChecker : FirDefaultVisitor<Boolean, FirSessio
             symbol.callableId.packageName.asString() == "kotlin" -> {
                 val dispatchReceiver = qualifiedAccessExpression.dispatchReceiver
                 when (symbol.callableId.callableName.asString()) {
-                    in setOf("toByte", "toLong", "toShort", "toFloat", "toDouble", "toChar") -> true
-                    "unaryMinus" -> dispatchReceiver.accept(this, data)
-                    else -> false
+                    !in constantIntrinsicCalls -> false
+                    else -> dispatchReceiver.accept(this, data)
                 }
             }
 

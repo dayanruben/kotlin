@@ -14917,6 +14917,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
             public void testNestedClassTypeParameterDeserialization() throws Exception {
                 runTest("compiler/testData/codegen/box/fir/nestedClassTypeParameterDeserialization.kt");
             }
+
+            @Test
+            @TestMetadata("toLong.kt")
+            public void testToLong() throws Exception {
+                runTest("compiler/testData/codegen/box/fir/toLong.kt");
+            }
         }
 
         @Nested
@@ -17135,6 +17141,7 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
                 register("compiler/testData/codegen/box/inlineClasses/kt51254.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
                 register("compiler/testData/codegen/box/inlineClasses/kt52913.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
                 register("compiler/testData/codegen/box/inlineClasses/kt54455.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
+                register("compiler/testData/codegen/box/inlineClasses/kt57973.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
                 register("compiler/testData/codegen/box/inlineClasses/lateinitInlineClasses.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
                 register("compiler/testData/codegen/box/inlineClasses/mangledDefaultParameterFunction.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
                 register("compiler/testData/codegen/box/inlineClasses/mangledDefaultParameterFunctionGeneric.kt", TransformersFunctions.getRemoveOptionalJvmInlineAnnotation());
@@ -18992,6 +18999,13 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
             public void testKt54455() throws Exception {
                 // There is a registered source transformer for the testcase: TransformersFunctions.getRemoveOptionalJvmInlineAnnotation()
                 runTest("compiler/testData/codegen/box/inlineClasses/kt54455.kt");
+            }
+
+            @Test
+            @TestMetadata("kt57973.kt")
+            public void testKt57973() throws Exception {
+                // There is a registered source transformer for the testcase: TransformersFunctions.getRemoveOptionalJvmInlineAnnotation()
+                runTest("compiler/testData/codegen/box/inlineClasses/kt57973.kt");
             }
 
             @Test
@@ -26479,6 +26493,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
                     }
 
                     @Test
+                    @TestMetadata("expectActualTypeParameters.kt")
+                    public void testExpectActualTypeParameters() throws Exception {
+                        runTest("compiler/testData/codegen/box/multiplatform/k2/basic/expectActualTypeParameters.kt");
+                    }
+
+                    @Test
                     @TestMetadata("expectActualTypealias.kt")
                     public void testExpectActualTypealias() throws Exception {
                         runTest("compiler/testData/codegen/box/multiplatform/k2/basic/expectActualTypealias.kt");
@@ -26567,6 +26587,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
                     @TestMetadata("dispatchReceiverValue.kt")
                     public void testDispatchReceiverValue() throws Exception {
                         runTest("compiler/testData/codegen/box/multiplatform/k2/defaultArguments/dispatchReceiverValue.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("expectPropertyAsDefaultArgument.kt")
+                    public void testExpectPropertyAsDefaultArgument() throws Exception {
+                        runTest("compiler/testData/codegen/box/multiplatform/k2/defaultArguments/expectPropertyAsDefaultArgument.kt");
                     }
 
                     @Test

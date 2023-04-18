@@ -286,6 +286,8 @@ extra["compilerArtifactsForIde"] = listOfNotNull(
     ":prepare:ide-plugin-dependencies:sam-with-receiver-compiler-plugin-for-ide",
     ":prepare:ide-plugin-dependencies:assignment-compiler-plugin-for-ide",
     ":prepare:ide-plugin-dependencies:parcelize-compiler-plugin-for-ide",
+    ":prepare:ide-plugin-dependencies:parcelize-compiler-plugin-fe10-for-ide",
+    ":prepare:ide-plugin-dependencies:parcelize-compiler-plugin-fir-for-ide",
     ":prepare:ide-plugin-dependencies:lombok-compiler-plugin-for-ide",
     ":prepare:ide-plugin-dependencies:kotlin-backend-native-for-ide".takeIf { kotlinBuildProperties.isKotlinNativeEnabled },
     ":prepare:ide-plugin-dependencies:kotlin-compiler-tests-for-ide",
@@ -390,7 +392,6 @@ val gradlePluginProjects = listOf(
     ":kotlin-gradle-plugin-kpm-android",
     ":kotlin-gradle-plugin-tcs-android",
     ":kotlin-allopen",
-    ":kotlin-annotation-processing-gradle",
     ":kotlin-noarg",
     ":kotlin-sam-with-receiver",
     ":kotlin-parcelize-compiler",
@@ -754,7 +755,7 @@ tasks {
     register("compilerPluginTest") {
         dependsOn(":kotlin-allopen-compiler-plugin:test")
         dependsOn(":kotlin-assignment-compiler-plugin:test")
-        dependsOn(":kotlinx-atomicfu-compiler-plugin:test")
+        dependsOn(":kotlin-atomicfu-compiler-plugin:test")
         dependsOn(":plugins:fir-plugin-prototype:test")
         dependsOn(":plugins:fir-plugin-prototype:fir-plugin-ic-test:test")
         dependsOn(":kotlin-imports-dumper-compiler-plugin:test")
