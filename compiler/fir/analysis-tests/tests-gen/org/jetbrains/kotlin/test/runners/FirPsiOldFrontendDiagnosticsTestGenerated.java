@@ -4330,6 +4330,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
                 }
 
                 @Test
+                @TestMetadata("javaOverridesKotlinProperty.kt")
+                public void testJavaOverridesKotlinProperty() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/callableReference/unsupported/javaOverridesKotlinProperty.kt");
+                }
+
+                @Test
                 @TestMetadata("localVariable.kt")
                 public void testLocalVariable() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/callableReference/unsupported/localVariable.kt");
@@ -4348,9 +4354,21 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
                 }
 
                 @Test
+                @TestMetadata("referenceToKotlinPropertyViaIntermediateJavaClass.kt")
+                public void testReferenceToKotlinPropertyViaIntermediateJavaClass() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/callableReference/unsupported/referenceToKotlinPropertyViaIntermediateJavaClass.kt");
+                }
+
+                @Test
                 @TestMetadata("syntheticProperties.kt")
                 public void testSyntheticProperties() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/callableReference/unsupported/syntheticProperties.kt");
+                }
+
+                @Test
+                @TestMetadata("syntheticPropertiesOnJavaAnnotation.kt")
+                public void testSyntheticPropertiesOnJavaAnnotation() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/callableReference/unsupported/syntheticPropertiesOnJavaAnnotation.kt");
                 }
             }
         }
@@ -20305,6 +20323,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
                 @TestMetadata("hashtableInheritance.kt")
                 public void testHashtableInheritance() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/j+k/specialBuiltIns/hashtableInheritance.kt");
+                }
+
+                @Test
+                @TestMetadata("inheritanceThroughEmptyClass.kt")
+                public void testInheritanceThroughEmptyClass() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/j+k/specialBuiltIns/inheritanceThroughEmptyClass.kt");
                 }
 
                 @Test
@@ -36782,6 +36806,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
             @TestMetadata("inferCoroutineTypeInOldVersion.kt")
             public void testInferCoroutineTypeInOldVersion() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/builderInference/inferCoroutineTypeInOldVersion.kt");
+            }
+
+            @Test
+            @TestMetadata("inferenceFromLambdaReturnStatement.kt")
+            public void testInferenceFromLambdaReturnStatement() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/builderInference/inferenceFromLambdaReturnStatement.kt");
             }
 
             @Test

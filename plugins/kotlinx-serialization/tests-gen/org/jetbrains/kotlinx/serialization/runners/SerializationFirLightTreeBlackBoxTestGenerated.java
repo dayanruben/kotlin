@@ -58,6 +58,12 @@ public class SerializationFirLightTreeBlackBoxTestGenerated extends AbstractSeri
         }
 
         @Test
+        @TestMetadata("contextualWithTypeParameters.kt")
+        public void testContextualWithTypeParameters() throws Exception {
+            runTest("plugins/kotlinx-serialization/testData/boxIr/contextualWithTypeParameters.kt");
+        }
+
+        @Test
         @TestMetadata("delegatedInterface.kt")
         public void testDelegatedInterface() throws Exception {
             runTest("plugins/kotlinx-serialization/testData/boxIr/delegatedInterface.kt");
@@ -127,6 +133,12 @@ public class SerializationFirLightTreeBlackBoxTestGenerated extends AbstractSeri
         @TestMetadata("intrinsicsBox.kt")
         public void testIntrinsicsBox() throws Exception {
             runTest("plugins/kotlinx-serialization/testData/boxIr/intrinsicsBox.kt");
+        }
+
+        @Test
+        @TestMetadata("intrinsicsNullable.kt")
+        public void testIntrinsicsNullable() throws Exception {
+            runTest("plugins/kotlinx-serialization/testData/boxIr/intrinsicsNullable.kt");
         }
 
         @Test

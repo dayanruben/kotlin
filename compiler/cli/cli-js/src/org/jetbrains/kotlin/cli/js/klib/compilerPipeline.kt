@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.common.prepareJsSessions
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.languageVersionSettings
+import org.jetbrains.kotlin.constant.EvaluatedConstTracker
 import org.jetbrains.kotlin.descriptors.impl.ModuleDescriptorImpl
 import org.jetbrains.kotlin.diagnostics.impl.BaseDiagnosticsCollector
 import org.jetbrains.kotlin.diagnostics.impl.PendingDiagnosticsCollectorWithSuppress
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.fir.BinaryModuleData
 import org.jetbrains.kotlin.fir.DependencyListForCliModule
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.backend.ConstValueProviderImpl
+import org.jetbrains.kotlin.fir.backend.Fir2IrConfiguration
 import org.jetbrains.kotlin.fir.backend.Fir2IrExtensions
 import org.jetbrains.kotlin.fir.backend.Fir2IrVisibilityConverter
 import org.jetbrains.kotlin.fir.backend.extractFirDeclarations
@@ -129,15 +131,19 @@ fun transformFirToIr(
     val firResult = FirResult(firOutputs)
     return firResult.convertToIrAndActualize(
         fir2IrExtensions,
+        Fir2IrConfiguration(
+            languageVersionSettings = moduleStructure.compilerConfiguration.languageVersionSettings,
+            linkViaSignatures = false,
+            evaluatedConstTracker = moduleStructure.compilerConfiguration
+                .putIfAbsent(CommonConfigurationKeys.EVALUATED_CONST_TRACKER, EvaluatedConstTracker.create()),
+        ),
         IrGenerationExtension.getInstances(moduleStructure.project),
-        linkViaSignatures = false,
         signatureComposerCreator = null,
         irMangler = JsManglerIr,
         firManglerCreator = ::FirJsKotlinMangler,
         visibilityConverter = Fir2IrVisibilityConverter.Default,
         kotlinBuiltIns = builtInsModule ?: DefaultBuiltIns.Instance,
         diagnosticReporter = diagnosticsReporter,
-        languageVersionSettings = moduleStructure.compilerConfiguration.languageVersionSettings,
         fir2IrResultPostCompute = {
             (this.irModuleFragment.descriptor as? FirModuleDescriptor)?.let { it.allDependencyModules = librariesDescriptors }
         }

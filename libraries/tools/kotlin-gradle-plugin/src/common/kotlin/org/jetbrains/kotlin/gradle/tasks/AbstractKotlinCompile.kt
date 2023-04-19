@@ -27,11 +27,12 @@ import org.jetbrains.kotlin.cli.common.CompilerSystemProperties
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.compilerRunner.CompilerExecutionSettings
 import org.jetbrains.kotlin.compilerRunner.GradleCompilerRunner
-import org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers
 import org.jetbrains.kotlin.compilerRunner.UsesCompilerSystemPropertiesService
+import org.jetbrains.kotlin.compilerRunner.createGradleCompilerRunner
 import org.jetbrains.kotlin.daemon.common.MultiModuleICSettings
 import org.jetbrains.kotlin.gradle.dsl.KotlinCommonCompilerOptions
 import org.jetbrains.kotlin.gradle.incremental.UsesIncrementalModuleInfoBuildService
+import org.jetbrains.kotlin.gradle.internal.UsesClassLoadersCachingBuildService
 import org.jetbrains.kotlin.gradle.internal.tasks.allOutputFiles
 import org.jetbrains.kotlin.gradle.logging.GradleKotlinLogger
 import org.jetbrains.kotlin.gradle.logging.kotlinDebug
@@ -61,6 +62,7 @@ abstract class AbstractKotlinCompile<T : CommonCompilerArguments> @Inject constr
     UsesCompilerSystemPropertiesService,
     UsesVariantImplementationFactories,
     UsesBuildFinishedListenerService,
+    UsesClassLoadersCachingBuildService,
     BaseKotlinCompile {
 
     init {
@@ -173,7 +175,7 @@ abstract class AbstractKotlinCompile<T : CommonCompilerArguments> @Inject constr
                         defaultKotlinJavaToolchain
                             .map {
                                 val toolsJar = it.currentJvmJdkToolsJar.orNull
-                                GradleCompilerRunnerWithWorkers(
+                                createGradleCompilerRunner(
                                     taskProvider,
                                     toolsJar,
                                     CompilerExecutionSettings(
@@ -182,7 +184,9 @@ abstract class AbstractKotlinCompile<T : CommonCompilerArguments> @Inject constr
                                         useDaemonFallbackStrategy.get()
                                     ),
                                     params.first,
-                                    workerExecutor
+                                    workerExecutor,
+                                    runViaBuildToolsApi.get(),
+                                    classLoadersCachingService,
                                 )
                             }
                     }

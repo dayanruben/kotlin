@@ -56,6 +56,12 @@ public class SerializationIrBoxTestGenerated extends AbstractSerializationIrBoxT
     }
 
     @Test
+    @TestMetadata("contextualWithTypeParameters.kt")
+    public void testContextualWithTypeParameters() throws Exception {
+        runTest("plugins/kotlinx-serialization/testData/boxIr/contextualWithTypeParameters.kt");
+    }
+
+    @Test
     @TestMetadata("delegatedInterface.kt")
     public void testDelegatedInterface() throws Exception {
         runTest("plugins/kotlinx-serialization/testData/boxIr/delegatedInterface.kt");
@@ -125,6 +131,12 @@ public class SerializationIrBoxTestGenerated extends AbstractSerializationIrBoxT
     @TestMetadata("intrinsicsBox.kt")
     public void testIntrinsicsBox() throws Exception {
         runTest("plugins/kotlinx-serialization/testData/boxIr/intrinsicsBox.kt");
+    }
+
+    @Test
+    @TestMetadata("intrinsicsNullable.kt")
+    public void testIntrinsicsNullable() throws Exception {
+        runTest("plugins/kotlinx-serialization/testData/boxIr/intrinsicsNullable.kt");
     }
 
     @Test
