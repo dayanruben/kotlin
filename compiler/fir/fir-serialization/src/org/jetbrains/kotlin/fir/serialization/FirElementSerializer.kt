@@ -25,18 +25,15 @@ import org.jetbrains.kotlin.fir.expressions.builder.buildAnnotation
 import org.jetbrains.kotlin.fir.expressions.builder.buildAnnotationArgumentMapping
 import org.jetbrains.kotlin.fir.expressions.builder.buildConstExpression
 import org.jetbrains.kotlin.fir.expressions.impl.FirEmptyAnnotationArgumentMapping
-import org.jetbrains.kotlin.fir.extensions.declarationForMetadataProviders
 import org.jetbrains.kotlin.fir.extensions.extensionService
 import org.jetbrains.kotlin.fir.extensions.typeAttributeExtensions
 import org.jetbrains.kotlin.fir.resolve.*
 import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.scopes.*
+import org.jetbrains.kotlin.fir.scopes.impl.nestedClassifierScope
 import org.jetbrains.kotlin.fir.serialization.constant.*
 import org.jetbrains.kotlin.fir.serialization.constant.toConstantValue
-import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
-import org.jetbrains.kotlin.fir.symbols.impl.FirClassifierSymbol
-import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
-import org.jetbrains.kotlin.fir.symbols.impl.FirTypeAliasSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.builder.buildResolvedTypeRef
 import org.jetbrains.kotlin.fir.types.impl.ConeClassLikeTypeImpl
@@ -70,7 +67,7 @@ class FirElementSerializer private constructor(
     private val languageVersionSettings: LanguageVersionSettings,
 ) {
     private val contractSerializer = FirContractSerializer()
-    private val extensionDeclarationProviders = session.extensionService.declarationForMetadataProviders
+    private val providedDeclarationsService = session.providedDeclarationsForMetadataService
 
     fun packagePartProto(
         packageFqName: FqName,
@@ -102,11 +99,9 @@ class FirElementSerializer private constructor(
         }
 
         extension.serializePackage(packageFqName, builder)
-        for (extensionProvider in extensionDeclarationProviders) {
-            for (declaration in extensionProvider.provideTopLevelDeclarations(packageFqName, scopeSession)) {
-                addDeclaration(declaration) {
-                    error("Unsupported top-level declaration type: ${it.render()}")
-                }
+        for (declaration in providedDeclarationsService.getProvidedTopLevelDeclarations(packageFqName, scopeSession)) {
+            addDeclaration(declaration) {
+                error("Unsupported top-level declaration type: ${it.render()}")
             }
         }
 
@@ -147,7 +142,8 @@ class FirElementSerializer private constructor(
             builder.addTypeParameter(typeParameterProto(typeParameter))
         }
 
-        val classId = klass.symbol.classId
+        val classSymbol = klass.symbol
+        val classId = classSymbol.classId
         if (classId != StandardClassIds.Any && classId != StandardClassIds.Nothing) {
             // Special classes (Any, Nothing) have no supertypes
             for (superTypeRef in klass.superTypeRefs) {
@@ -159,33 +155,19 @@ class FirElementSerializer private constructor(
             }
         }
 
-        val providedCallables = mutableListOf<FirCallableDeclaration>()
-        val providedConstructors = mutableListOf<FirConstructor>()
-        val providedNestedClassifiers = mutableListOf<FirClassifierSymbol<*>>()
-
-        for (extensionProvider in extensionDeclarationProviders) {
-            for (declaration in extensionProvider.provideDeclarationsForClass(klass, scopeSession)) {
-                when (declaration) {
-                    is FirConstructor -> providedConstructors += declaration
-                    is FirCallableDeclaration -> providedCallables += declaration
-                    is FirClassLikeDeclaration -> providedNestedClassifiers += declaration.symbol
-                    else -> error("Unsupported declaration type in: ${klass.render()} ${declaration.render()}")
-                }
-            }
-        }
-
         if (regularClass != null && regularClass.classKind != ClassKind.ENUM_ENTRY) {
             for (constructor in regularClass.constructors()) {
                 builder.addConstructor(constructorProto(constructor))
             }
-            for (constructor in providedConstructors) {
+
+            for (constructor in providedDeclarationsService.getProvidedConstructors(classSymbol, scopeSession)) {
                 builder.addConstructor(constructorProto(constructor))
             }
         }
 
         val callableMembers =
             extension.customClassMembersProducer?.getCallableMembers(klass)
-                ?: (klass.memberDeclarations() + providedCallables)
+                ?: (klass.memberDeclarations() + providedDeclarationsService.getProvidedCallables(classSymbol, scopeSession))
                     .sortedWith(FirCallableDeclarationComparator)
 
         for (declaration in callableMembers) {
@@ -198,16 +180,7 @@ class FirElementSerializer private constructor(
             }
         }
 
-        fun FirClass.nestedClassifiers(): List<FirClassifierSymbol<*>> {
-            val scope =
-                defaultType().scope(session, scopeSession, FakeOverrideTypeCalculator.DoNothing, requiredPhase = null) ?: return emptyList()
-            return buildList {
-                scope.getClassifierNames().mapNotNullTo(this) { scope.getSingleClassifier(it) }
-                addAll(providedNestedClassifiers)
-            }
-        }
-
-        val nestedClassifiers = klass.nestedClassifiers()
+        val nestedClassifiers = computeNestedClassifiersForClass(classSymbol)
         for (nestedClassifier in nestedClassifiers) {
             if (nestedClassifier is FirTypeAliasSymbol) {
                 typeAliasProto(nestedClassifier.fir)?.let { builder.addTypeAlias(it) }
@@ -279,6 +252,14 @@ class FirElementSerializer private constructor(
         versionRequirementTable.serialize()?.let { builder.versionRequirementTable = it }
 
         return builder
+    }
+
+    fun computeNestedClassifiersForClass(classSymbol: FirClassSymbol<*>): List<FirClassifierSymbol<*>> {
+        val scope = session.nestedClassifierScope(classSymbol.fir) ?: return emptyList()
+        return buildList {
+            scope.getClassifierNames().mapNotNullTo(this) { scope.getSingleClassifier(it) }
+            addAll(providedDeclarationsService.getProvidedNestedClassifiers(classSymbol, scopeSession))
+        }
     }
 
     private fun FirClass.memberDeclarations(): List<FirCallableDeclaration> {

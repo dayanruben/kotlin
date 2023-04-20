@@ -15732,6 +15732,18 @@ public class FirLightTreeBlackBoxCodegenTestGenerated extends AbstractFirLightTr
         }
 
         @Test
+        @TestMetadata("delegationToIntersectionType.kt")
+        public void testDelegationToIntersectionType() throws Exception {
+            runTest("compiler/testData/codegen/box/delegation/delegationToIntersectionType.kt");
+        }
+
+        @Test
+        @TestMetadata("delegationToIntersectionType2.kt")
+        public void testDelegationToIntersectionType2() throws Exception {
+            runTest("compiler/testData/codegen/box/delegation/delegationToIntersectionType2.kt");
+        }
+
+        @Test
         @TestMetadata("delegationToMap.kt")
         public void testDelegationToMap() throws Exception {
             runTest("compiler/testData/codegen/box/delegation/delegationToMap.kt");
@@ -15825,6 +15837,12 @@ public class FirLightTreeBlackBoxCodegenTestGenerated extends AbstractFirLightTr
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             runTest("compiler/testData/codegen/box/delegation/simple.kt");
+        }
+
+        @Test
+        @TestMetadata("smartCastedDelegation.kt")
+        public void testSmartCastedDelegation() throws Exception {
+            runTest("compiler/testData/codegen/box/delegation/smartCastedDelegation.kt");
         }
 
         @Test
@@ -33447,6 +33465,12 @@ public class FirLightTreeBlackBoxCodegenTestGenerated extends AbstractFirLightTr
                 @TestMetadata("expectActualMultiCommon.kt")
                 public void testExpectActualMultiCommon() throws Exception {
                     runTest("compiler/testData/codegen/box/multiplatform/k2/basic/expectActualMultiCommon.kt");
+                }
+
+                @Test
+                @TestMetadata("expectActualNullabilityBasedOverloads.kt")
+                public void testExpectActualNullabilityBasedOverloads() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/expectActualNullabilityBasedOverloads.kt");
                 }
 
                 @Test

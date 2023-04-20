@@ -13015,6 +13015,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
             }
 
             @Test
+            @TestMetadata("delegationToIntersectionType.kt")
+            public void testDelegationToIntersectionType() throws Exception {
+                runTest("compiler/testData/codegen/box/delegation/delegationToIntersectionType.kt");
+            }
+
+            @Test
             @TestMetadata("delegationWithPrivateConstructor.kt")
             public void testDelegationWithPrivateConstructor() throws Exception {
                 runTest("compiler/testData/codegen/box/delegation/delegationWithPrivateConstructor.kt");
@@ -13048,6 +13054,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
             @TestMetadata("kt8154.kt")
             public void testKt8154() throws Exception {
                 runTest("compiler/testData/codegen/box/delegation/kt8154.kt");
+            }
+
+            @Test
+            @TestMetadata("smartCastedDelegation.kt")
+            public void testSmartCastedDelegation() throws Exception {
+                runTest("compiler/testData/codegen/box/delegation/smartCastedDelegation.kt");
             }
 
             @Test
@@ -26490,6 +26502,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
                     @TestMetadata("expectActualMultiCommon.kt")
                     public void testExpectActualMultiCommon() throws Exception {
                         runTest("compiler/testData/codegen/box/multiplatform/k2/basic/expectActualMultiCommon.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("expectActualNullabilityBasedOverloads.kt")
+                    public void testExpectActualNullabilityBasedOverloads() throws Exception {
+                        runTest("compiler/testData/codegen/box/multiplatform/k2/basic/expectActualNullabilityBasedOverloads.kt");
                     }
 
                     @Test
