@@ -97,8 +97,18 @@ internal class FirElementBuilder(
 
 private fun KtDeclaration.isPartOf(callableDeclaration: KtCallableDeclaration): Boolean = when (this) {
     is KtPropertyAccessor -> this.property == callableDeclaration
+    is KtParameter -> {
+        val ownerFunction = ownerFunction
+        ownerFunction == callableDeclaration || ownerFunction?.isPartOf(callableDeclaration) == true
+    }
+    is KtTypeParameter -> containingDeclaration == callableDeclaration
     else -> false
 }
+
+internal val KtTypeParameter.containingDeclaration: KtDeclaration?
+    get() = (parent as? KtTypeParameterList)?.parent as? KtDeclaration
+
+internal val KtDeclaration.canBePartOfParentDeclaration: Boolean get() = this is KtPropertyAccessor || this is KtParameter || this is KtTypeParameter
 
 internal fun PsiElement.getNonLocalContainingOrThisDeclaration(predicate: (KtDeclaration) -> Boolean = { true }): KtDeclaration? {
     var candidate: KtDeclaration? = null
@@ -132,7 +142,13 @@ internal fun PsiElement.getNonLocalContainingOrThisDeclaration(predicate: (KtDec
                         propose(parent)
                     }
                 }
-                is KtNamedDeclaration -> {
+                is KtDeclaration -> {
+                    if (parent.canBePartOfParentDeclaration) {
+                        if (predicate(parent)) {
+                            propose(parent)
+                        }
+                    }
+
                     val isKindApplicable = when (parent) {
                         is KtClassOrObject -> !parent.isObjectLiteral()
                         is KtDeclarationWithBody, is KtProperty, is KtTypeAlias -> true
@@ -140,11 +156,6 @@ internal fun PsiElement.getNonLocalContainingOrThisDeclaration(predicate: (KtDec
                     }
 
                     if (isKindApplicable && declarationCanBeLazilyResolved(parent) && predicate(parent)) {
-                        propose(parent)
-                    }
-                }
-                is KtPropertyAccessor -> {
-                    if (predicate(parent)) {
                         propose(parent)
                     }
                 }

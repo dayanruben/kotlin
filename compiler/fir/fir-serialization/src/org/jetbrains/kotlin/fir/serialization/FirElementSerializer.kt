@@ -27,12 +27,13 @@ import org.jetbrains.kotlin.fir.expressions.builder.buildConstExpression
 import org.jetbrains.kotlin.fir.expressions.impl.FirEmptyAnnotationArgumentMapping
 import org.jetbrains.kotlin.fir.extensions.extensionService
 import org.jetbrains.kotlin.fir.extensions.typeAttributeExtensions
-import org.jetbrains.kotlin.fir.resolve.*
+import org.jetbrains.kotlin.fir.resolve.ScopeSession
+import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
+import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.scopes.*
 import org.jetbrains.kotlin.fir.scopes.impl.nestedClassifierScope
 import org.jetbrains.kotlin.fir.serialization.constant.*
-import org.jetbrains.kotlin.fir.serialization.constant.toConstantValue
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.builder.buildResolvedTypeRef
@@ -68,6 +69,8 @@ class FirElementSerializer private constructor(
 ) {
     private val contractSerializer = FirContractSerializer()
     private val providedDeclarationsService = session.providedDeclarationsForMetadataService
+
+    private var metDefinitelyNotNullType: Boolean = false
 
     fun packagePartProto(
         packageFqName: FqName,
@@ -248,6 +251,12 @@ class FirElementSerializer private constructor(
 
         writeVersionRequirementForInlineClasses(klass, builder, versionRequirementTable)
 
+        if (metDefinitelyNotNullType) {
+            builder.addVersionRequirement(
+                writeLanguageVersionRequirement(LanguageFeature.DefinitelyNonNullableTypes, versionRequirementTable)
+            )
+        }
+
         typeTable.serialize()?.let { builder.typeTable = it }
         versionRequirementTable.serialize()?.let { builder.versionRequirementTable = it }
 
@@ -413,6 +422,10 @@ class FirElementSerializer private constructor(
             if (property.hasInlineClassTypesInSignature()) {
                 builder.addVersionRequirement(writeVersionRequirement(LanguageFeature.InlineClasses))
             }
+
+            if (local.metDefinitelyNotNullType) {
+                builder.addVersionRequirement(writeVersionRequirement(LanguageFeature.DefinitelyNonNullableTypes))
+            }
         }
 
         extension.serializeProperty(property, builder, versionRequirementTable, local)
@@ -438,7 +451,7 @@ class FirElementSerializer private constructor(
             simpleFunction?.isExternal == true,
             simpleFunction?.isSuspend == true,
             simpleFunction?.isExpect == true,
-            shouldSetStableParameterNames(simpleFunction),
+            shouldSetStableParameterNames(function),
         )
 
         if (flags != builder.flags) {
@@ -508,21 +521,25 @@ class FirElementSerializer private constructor(
             if (function.hasInlineClassTypesInSignature()) {
                 builder.addVersionRequirement(writeVersionRequirement(LanguageFeature.InlineClasses))
             }
+
+            if (local.metDefinitelyNotNullType) {
+                builder.addVersionRequirement(writeVersionRequirement(LanguageFeature.DefinitelyNonNullableTypes))
+            }
         }
 
         return builder
     }
 
-    private fun shouldSetStableParameterNames(simpleFunction: FirSimpleFunction?): Boolean {
+    private fun shouldSetStableParameterNames(function: FirFunction?): Boolean {
         return when {
-            simpleFunction?.hasStableParameterNames == true -> true
+            function?.hasStableParameterNames == true -> true
             // for backward compatibility with K1, remove this line to fix KT-4758
-            simpleFunction?.origin == FirDeclarationOrigin.Delegated -> true
+            function?.origin == FirDeclarationOrigin.Delegated -> true
             else -> false
         }
     }
 
-    private fun typeAliasProto(typeAlias: FirTypeAlias): ProtoBuf.TypeAlias.Builder? = whileAnalysing(session, typeAlias) {
+    private fun typeAliasProto(typeAlias: FirTypeAlias): ProtoBuf.TypeAlias.Builder? = whileAnalysing<ProtoBuf.TypeAlias.Builder?>(session, typeAlias) {
         val builder = ProtoBuf.TypeAlias.newBuilder()
         val local = createChildSerializer(typeAlias)
 
@@ -556,6 +573,11 @@ class FirElementSerializer private constructor(
 
         versionRequirementTable?.run {
             builder.addAllVersionRequirement(serializeVersionRequirements(typeAlias))
+            if (local.metDefinitelyNotNullType) {
+                builder.addVersionRequirement(
+                    writeLanguageVersionRequirement(LanguageFeature.DefinitelyNonNullableTypes, versionRequirementTable)
+                )
+            }
         }
 
         extension.serializeTypeAlias(typeAlias, builder)
@@ -579,7 +601,7 @@ class FirElementSerializer private constructor(
             constructor.nonSourceAnnotations(session).isNotEmpty(),
             ProtoEnumFlags.visibility(normalizeVisibility(constructor)),
             !constructor.isPrimary,
-            constructor.hasStableParameterNames,
+            shouldSetStableParameterNames(constructor)
         )
         if (flags != builder.flags) {
             builder.flags = flags
@@ -598,6 +620,10 @@ class FirElementSerializer private constructor(
 
             if (constructor.hasInlineClassTypesInSignature()) {
                 builder.addVersionRequirement(writeVersionRequirement(LanguageFeature.InlineClasses))
+            }
+
+            if (local.metDefinitelyNotNullType) {
+                builder.addVersionRequirement(writeVersionRequirement(LanguageFeature.DefinitelyNonNullableTypes))
             }
         }
 
@@ -770,6 +796,7 @@ class FirElementSerializer private constructor(
                 }
 
                 if (isDefinitelyNotNullType) {
+                    metDefinitelyNotNullType = true
                     builder.flags = Flags.getTypeFlags(false, isDefinitelyNotNullType)
                 }
             }
@@ -860,34 +887,51 @@ class FirElementSerializer private constructor(
         }
     }
 
+    private fun fillFromPossiblyInnerType(
+        builder: ProtoBuf.Type.Builder,
+        symbol: FirClassLikeSymbol<*>,
+        typeArguments: Array<out ConeTypeProjection>,
+        typeArgumentIndex: Int
+    ) {
+        var argumentIndex = typeArgumentIndex
+        val classifier = symbol.fir
+        val classifierId = getClassifierId(classifier)
+        if (classifier is FirTypeAlias) {
+            builder.typeAliasName = classifierId
+        } else {
+            builder.className = classifierId
+        }
+        for (i in 0 until classifier.typeParameters.size) {
+            // Next type parameter is not for this type but for an outer type.
+            if (classifier.typeParameters[i] !is FirTypeParameter) break
+            // No explicit type argument provided. For example: `Map.Entry<K, V>` when we get to `Map`
+            // it has type parameters, but no explicit type arguments are provided for it.
+            if (argumentIndex >= typeArguments.size) return
+            builder.addArgument(typeArgument(typeArguments[argumentIndex++]))
+        }
+
+        val outerClassId = symbol.classId.outerClassId
+        if (outerClassId == null || outerClassId.isLocal) return
+        val outerSymbol = outerClassId.toLookupTag().toSymbol(session)
+        if (outerSymbol != null) {
+            val outerBuilder = ProtoBuf.Type.newBuilder()
+            fillFromPossiblyInnerType(outerBuilder, outerSymbol, typeArguments, argumentIndex)
+            if (useTypeTable()) {
+                builder.outerTypeId = typeTable[outerBuilder]
+            } else {
+                builder.setOuterType(outerBuilder)
+            }
+        }
+    }
+
     private fun fillFromPossiblyInnerType(builder: ProtoBuf.Type.Builder, type: ConeClassLikeType) {
         val classifierSymbol = type.lookupTag.toSymbol(session)
         if (classifierSymbol != null) {
-            val classifier = classifierSymbol.fir
-            val classifierId = getClassifierId(classifier)
-            if (classifier is FirTypeAlias) {
-                builder.typeAliasName = classifierId
-            } else {
-                builder.className = classifierId
-            }
+            fillFromPossiblyInnerType(builder, classifierSymbol, type.typeArguments, 0)
         } else {
             builder.className = getClassifierId(type.lookupTag.classId)
+            type.typeArguments.forEach { builder.addArgument(typeArgument(it)) }
         }
-
-        for (projection in type.typeArguments) {
-            builder.addArgument(typeArgument(projection))
-        }
-
-        // TODO: outer type
-//        if (type.outerType != null) {
-//            val outerBuilder = ProtoBuf.Type.newBuilder()
-//            fillFromPossiblyInnerType(outerBuilder, type.outerType!!)
-//            if (useTypeTable()) {
-//                builder.outerTypeId = typeTable[outerBuilder]
-//            } else {
-//                builder.setOuterType(outerBuilder)
-//            }
-//        }
     }
 
     private fun typeArgument(typeProjection: ConeTypeProjection): ProtoBuf.Type.Argument.Builder {
@@ -916,11 +960,12 @@ class FirElementSerializer private constructor(
         // [FirDefaultPropertyAccessor]---a property accessor without body---can still hold other information, such as annotations,
         // user-contributed visibility, and modifiers, such as `external` or `inline`.
         val nonSourceAnnotations = accessor.nonSourceAnnotations(session)
-        val isDefault = accessor is FirDefaultPropertyAccessor &&
-                nonSourceAnnotations.isEmpty() &&
-                accessor.visibility == property.visibility &&
-                !accessor.isExternal &&
-                !accessor.isInline
+        val isDefault = property.isLocal ||
+                (accessor is FirDefaultPropertyAccessor &&
+                        nonSourceAnnotations.isEmpty() &&
+                        accessor.visibility == property.visibility &&
+                        !accessor.isExternal &&
+                        !accessor.isInline)
         return Flags.getAccessorFlags(
             nonSourceAnnotations.isNotEmpty(),
             ProtoEnumFlags.visibility(normalizeVisibility(accessor)),
