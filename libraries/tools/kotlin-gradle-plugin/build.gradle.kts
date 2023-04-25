@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.pill.PillExtension
 plugins {
     id("gradle-plugin-common-configuration")
     id("jps-compatible")
+    id("org.jetbrains.kotlinx.binary-compatibility-validator")
 }
 
 repositories {
@@ -24,6 +25,12 @@ kotlin.sourceSets.all {
     languageSettings.optIn("org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi")
     languageSettings.optIn("org.jetbrains.kotlin.gradle.ExternalKotlinTargetApi")
     languageSettings.optIn("org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi")
+}
+
+apiValidation {
+    publicMarkers.add("org.jetbrains.kotlin.gradle.ExternalKotlinTargetApi")
+    nonPublicMarkers.add("org.jetbrains.kotlin.gradle.InternalKotlinGradlePluginApi")
+    additionalSourceSets.add("common")
 }
 
 dependencies {
@@ -59,6 +66,8 @@ dependencies {
         exclude(group = "*")
     }
     commonCompileOnly(project(":kotlin-tooling-metadata"))
+    commonCompileOnly(project(":compiler:build-tools:kotlin-build-statistics"))
+
 
     commonImplementation(project(":kotlin-gradle-plugin-idea"))
     commonImplementation(project(":kotlin-gradle-plugin-idea-proto"))
@@ -89,13 +98,15 @@ dependencies {
         exclude(group = "*")
     }
 
-    // Adding workaround KT-57317 for Gradle versions where Kotlin runtime <1.8.0
-    mainEmbedded(project(":kotlin-build-tools-enum-compat"))
-    gradle70Embedded(project(":kotlin-build-tools-enum-compat"))
-    gradle71Embedded(project(":kotlin-build-tools-enum-compat"))
-    gradle74Embedded(project(":kotlin-build-tools-enum-compat"))
-    gradle75Embedded(project(":kotlin-build-tools-enum-compat"))
-    gradle76Embedded(project(":kotlin-build-tools-enum-compat"))
+    if (!kotlinBuildProperties.isInJpsBuildIdeaSync) {
+        // Adding workaround KT-57317 for Gradle versions where Kotlin runtime <1.8.0
+        "mainEmbedded"(project(":kotlin-build-tools-enum-compat"))
+        "gradle70Embedded"(project(":kotlin-build-tools-enum-compat"))
+        "gradle71Embedded"(project(":kotlin-build-tools-enum-compat"))
+        "gradle74Embedded"(project(":kotlin-build-tools-enum-compat"))
+        "gradle75Embedded"(project(":kotlin-build-tools-enum-compat"))
+        "gradle76Embedded"(project(":kotlin-build-tools-enum-compat"))
+    }
 
     testCompileOnly(project(":compiler"))
     testCompileOnly(project(":kotlin-annotation-processing"))
@@ -109,6 +120,8 @@ dependencies {
     testImplementation(project(":kotlin-gradle-statistics"))
     testImplementation(project(":kotlin-tooling-metadata"))
 }
+
+configurations.commonCompileClasspath.get().exclude("org.jetbrains.kotlinx", "kotlinx-coroutines-core")
 
 if (kotlinBuildProperties.isInJpsBuildIdeaSync) {
     configurations.commonApi.get().exclude("com.android.tools.external.com-intellij", "intellij-core")

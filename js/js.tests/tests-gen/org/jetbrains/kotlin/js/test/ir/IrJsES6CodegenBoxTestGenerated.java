@@ -5472,6 +5472,12 @@ public class IrJsES6CodegenBoxTestGenerated extends AbstractIrJsES6CodegenBoxTes
         }
 
         @Test
+        @TestMetadata("literalToLongConversion.kt")
+        public void testLiteralToLongConversion() throws Exception {
+            runTest("compiler/testData/codegen/box/constants/literalToLongConversion.kt");
+        }
+
+        @Test
         @TestMetadata("long.kt")
         public void testLong() throws Exception {
             runTest("compiler/testData/codegen/box/constants/long.kt");
@@ -21873,16 +21879,6 @@ public class IrJsES6CodegenBoxTestGenerated extends AbstractIrJsES6CodegenBoxTes
             }
 
             @Nested
-            @TestMetadata("compiler/testData/codegen/box/jvm8/defaults/compatibility")
-            @TestDataPath("$PROJECT_ROOT")
-            public class Compatibility {
-                @Test
-                public void testAllFilesPresentInCompatibility() throws Exception {
-                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/jvm8/defaults/compatibility"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JS_IR_ES6, true);
-                }
-            }
-
-            @Nested
             @TestMetadata("compiler/testData/codegen/box/jvm8/defaults/delegationBy")
             @TestDataPath("$PROJECT_ROOT")
             public class DelegationBy {
@@ -21929,16 +21925,6 @@ public class IrJsES6CodegenBoxTestGenerated extends AbstractIrJsES6CodegenBoxTes
                     public void testAllFilesPresentInWithCompatibility() throws Exception {
                         KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/jvm8/defaults/noDefaultImpls/withCompatibility"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JS_IR_ES6, true);
                     }
-                }
-            }
-
-            @Nested
-            @TestMetadata("compiler/testData/codegen/box/jvm8/defaults/noDelegation")
-            @TestDataPath("$PROJECT_ROOT")
-            public class NoDelegation {
-                @Test
-                public void testAllFilesPresentInNoDelegation() throws Exception {
-                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/jvm8/defaults/noDelegation"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JS_IR_ES6, true);
                 }
             }
 
@@ -37041,6 +37027,12 @@ public class IrJsES6CodegenBoxTestGenerated extends AbstractIrJsES6CodegenBoxTes
         @TestMetadata("forInUnsignedUntil.kt")
         public void testForInUnsignedUntil() throws Exception {
             runTest("compiler/testData/codegen/box/unsignedTypes/forInUnsignedUntil.kt");
+        }
+
+        @Test
+        @TestMetadata("implicitIntegerCoercionNamedArg.kt")
+        public void testImplicitIntegerCoercionNamedArg() throws Exception {
+            runTest("compiler/testData/codegen/box/unsignedTypes/implicitIntegerCoercionNamedArg.kt");
         }
 
         @Test
