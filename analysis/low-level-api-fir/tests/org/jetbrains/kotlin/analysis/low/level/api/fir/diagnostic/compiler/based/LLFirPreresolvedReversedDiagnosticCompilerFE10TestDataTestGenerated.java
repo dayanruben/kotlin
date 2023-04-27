@@ -5771,6 +5771,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
             }
 
             @Test
+            @TestMetadata("parametersVsPropertiesFromPrimaryConstructor.kt")
+            public void testParametersVsPropertiesFromPrimaryConstructor() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/constructorConsistency/parametersVsPropertiesFromPrimaryConstructor.kt");
+            }
+
+            @Test
             @TestMetadata("property.kt")
             public void testProperty() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/constructorConsistency/property.kt");
@@ -11839,6 +11845,18 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
             }
 
             @Test
+            @TestMetadata("javaFieldKotlinPropertyDifferentType.kt")
+            public void testJavaFieldKotlinPropertyDifferentType() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/fieldRename/javaFieldKotlinPropertyDifferentType.kt");
+            }
+
+            @Test
+            @TestMetadata("javaFieldKotlinPropertyDifferentType2.kt")
+            public void testJavaFieldKotlinPropertyDifferentType2() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/fieldRename/javaFieldKotlinPropertyDifferentType2.kt");
+            }
+
+            @Test
             @TestMetadata("javaFieldKotlinPropertyJavaFieldInPackagePrivate.kt")
             public void testJavaFieldKotlinPropertyJavaFieldInPackagePrivate() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/fieldRename/javaFieldKotlinPropertyJavaFieldInPackagePrivate.kt");
@@ -15418,6 +15436,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
                 }
 
                 @Test
+                @TestMetadata("approximationLeavesNonTrivialLowerBound.kt")
+                public void testApproximationLeavesNonTrivialLowerBound() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/approximationLeavesNonTrivialLowerBound.kt");
+                }
+
+                @Test
                 @TestMetadata("avoidCreatingUselessCapturedTypes.kt")
                 public void testAvoidCreatingUselessCapturedTypes() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/avoidCreatingUselessCapturedTypes.kt");
@@ -15439,6 +15463,18 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
                 @TestMetadata("captureForPlatformTypes.kt")
                 public void testCaptureForPlatformTypes() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/captureForPlatformTypes.kt");
+                }
+
+                @Test
+                @TestMetadata("captureFromNullableTypeInScope.kt")
+                public void testCaptureFromNullableTypeInScope() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/captureFromNullableTypeInScope.kt");
+                }
+
+                @Test
+                @TestMetadata("captureFromNullableTypeInScopeAny.kt")
+                public void testCaptureFromNullableTypeInScopeAny() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/capturedTypes/captureFromNullableTypeInScopeAny.kt");
                 }
 
                 @Test
@@ -16933,6 +16969,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
                 @TestMetadata("reportImplicitNothingOnlyForOwnTypeParameters.kt")
                 public void testReportImplicitNothingOnlyForOwnTypeParameters() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/nothingType/reportImplicitNothingOnlyForOwnTypeParameters.kt");
+                }
+
+                @Test
+                @TestMetadata("returnAsLastStatementInLambda.kt")
+                public void testReturnAsLastStatementInLambda() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/nothingType/returnAsLastStatementInLambda.kt");
                 }
 
                 @Test
@@ -19189,6 +19231,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
             }
 
             @Test
+            @TestMetadata("complexMapping.kt")
+            public void testComplexMapping() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/integerLiterals/complexMapping.kt");
+            }
+
+            @Test
             @TestMetadata("constantUnaryOperators.kt")
             public void testConstantUnaryOperators() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/integerLiterals/constantUnaryOperators.kt");
@@ -19210,6 +19258,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
             @TestMetadata("typealiasOnLong.kt")
             public void testTypealiasOnLong() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/integerLiterals/typealiasOnLong.kt");
+            }
+
+            @Test
+            @TestMetadata("vararg.kt")
+            public void testVararg() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/integerLiterals/vararg.kt");
             }
         }
 
@@ -26422,6 +26476,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
             @TestMetadata("capturedTypesInLambdaParameter.kt")
             public void testCapturedTypesInLambdaParameter() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/resolve/capturedTypesInLambdaParameter.kt");
+            }
+
+            @Test
+            @TestMetadata("companionPropertyAndTypeParameter.kt")
+            public void testCompanionPropertyAndTypeParameter() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/resolve/companionPropertyAndTypeParameter.kt");
             }
 
             @Test

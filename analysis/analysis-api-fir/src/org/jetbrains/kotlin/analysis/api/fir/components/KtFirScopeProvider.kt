@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.analysis.api.fir.components
 
-import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.components.*
 import org.jetbrains.kotlin.analysis.api.fir.KtFirAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.KtSymbolByFirBuilder
@@ -53,7 +52,6 @@ import org.jetbrains.kotlin.utils.addToStdlib.applyIf
 internal class KtFirScopeProvider(
     override val analysisSession: KtFirAnalysisSession,
     private val builder: KtSymbolByFirBuilder,
-    private val project: Project,
     private val firResolveSession: LLFirResolveSession,
 ) : KtScopeProvider() {
 
@@ -246,14 +244,7 @@ internal class KtFirScopeProvider(
     }
 
     private fun createPackageScope(fqName: FqName): KtFirPackageScope {
-        return KtFirPackageScope(
-            fqName,
-            project,
-            builder,
-            analysisSession.useSiteAnalysisScope,
-            analysisSession.useSiteScopeDeclarationProvider,
-            analysisSession.targetPlatform
-        )
+        return KtFirPackageScope(fqName, analysisSession)
     }
 
     private fun convertToKtTypeScope(firScope: FirScope): KtTypeScope {

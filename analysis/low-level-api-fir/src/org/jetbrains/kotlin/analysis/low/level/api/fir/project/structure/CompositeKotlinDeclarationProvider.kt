@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 
-internal class CompositeKotlinDeclarationProvider
+class CompositeKotlinDeclarationProvider
 private constructor(
     private val providers: List<KotlinDeclarationProvider>
 ) : KotlinDeclarationProvider() {
@@ -63,6 +63,10 @@ private constructor(
 
     override fun findFilesForScript(scriptFqName: FqName): Collection<KtScript> {
         return providers.flatMapTo(mutableListOf()) { it.findFilesForScript(scriptFqName) }
+    }
+
+     override fun computePackageSetWithTopLevelCallableDeclarations(): Set<String> {
+        return providers.flatMapTo(mutableSetOf()) { it.computePackageSetWithTopLevelCallableDeclarations() }
     }
 
     companion object {

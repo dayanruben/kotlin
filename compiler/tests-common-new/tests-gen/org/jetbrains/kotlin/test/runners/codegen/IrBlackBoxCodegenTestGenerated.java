@@ -15710,6 +15710,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         }
 
         @Test
+        @TestMetadata("delegationDifferentModule2.kt")
+        public void testDelegationDifferentModule2() throws Exception {
+            runTest("compiler/testData/codegen/box/delegation/delegationDifferentModule2.kt");
+        }
+
+        @Test
         @TestMetadata("delegationToIntersectionType.kt")
         public void testDelegationToIntersectionType() throws Exception {
             runTest("compiler/testData/codegen/box/delegation/delegationToIntersectionType.kt");
@@ -18565,6 +18571,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         @TestMetadata("unqualifiedEnum.kt")
         public void testUnqualifiedEnum() throws Exception {
             runTest("compiler/testData/codegen/box/fir/unqualifiedEnum.kt");
+        }
+
+        @Test
+        @TestMetadata("vararg.kt")
+        public void testVararg() throws Exception {
+            runTest("compiler/testData/codegen/box/fir/vararg.kt");
         }
     }
 

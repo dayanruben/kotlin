@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.psi.KtProjectionKind
 import org.jetbrains.kotlin.psi.stubs.impl.*
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import java.nio.file.Paths
+import kotlin.reflect.KClass
 
 abstract class AbstractAdditionalStubInfoTest : AbstractDecompiledClassTest() {
     fun runTest(testDirectory: String) {
@@ -42,6 +43,25 @@ abstract class AbstractAdditionalStubInfoTest : AbstractDecompiledClassTest() {
                         element.accept(KotlinContractRenderer(builder), null)
                     }
                 }
+            }
+            is KotlinPropertyStubImpl -> {
+                val initializer = stub.constantInitializer
+                if (initializer != null) {
+                    builder.append("\n").append("  ".repeat(level)).append("initializer: ${initializer.value}")
+                }
+            }
+            is KotlinAnnotationEntryStubImpl -> {
+                val arguments = stub.valueArguments
+                if (arguments != null) {
+                    builder
+                        .append("\n")
+                        .append("  ".repeat(level))
+                        .append("valueArguments: ")
+                        .append(arguments.entries.joinToString(", ", "(", ")") { "${it.key.asString()} = ${it.value}" })
+                }
+            }
+            is KotlinParameterStubImpl -> {
+                stub.functionTypeParameterName?.let { builder.append("   paramNameByAnnotation: ").append(it) }
             }
         }
         for (child in stub.childrenStubs) {
