@@ -8938,6 +8938,18 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
                 }
 
                 @Test
+                @TestMetadata("nestedPartiallyResolvedCalls.kt")
+                public void testNestedPartiallyResolvedCalls() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/delegatedProperty/inference/nestedPartiallyResolvedCalls.kt");
+                }
+
+                @Test
+                @TestMetadata("nestedPartiallyResolvedCallsSimple.kt")
+                public void testNestedPartiallyResolvedCallsSimple() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/delegatedProperty/inference/nestedPartiallyResolvedCallsSimple.kt");
+                }
+
+                @Test
                 @TestMetadata("noErrorsForImplicitConstraints.kt")
                 public void testNoErrorsForImplicitConstraints() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/delegatedProperty/inference/noErrorsForImplicitConstraints.kt");
@@ -26882,6 +26894,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
                 }
 
                 @Test
+                @TestMetadata("completePropertyBeforeInvoke.kt")
+                public void testCompletePropertyBeforeInvoke() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/resolve/invoke/completePropertyBeforeInvoke.kt");
+                }
+
+                @Test
                 @TestMetadata("extensionValueAsNonExtension.kt")
                 public void testExtensionValueAsNonExtension() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/resolve/invoke/extensionValueAsNonExtension.kt");
@@ -26939,6 +26957,18 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
                 @TestMetadata("invokeAsMemberExtensionToExplicitReceiver.kt")
                 public void testInvokeAsMemberExtensionToExplicitReceiver() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/resolve/invoke/invokeAsMemberExtensionToExplicitReceiver.kt");
+                }
+
+                @Test
+                @TestMetadata("invokeCommonSystem.kt")
+                public void testInvokeCommonSystem() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/resolve/invoke/invokeCommonSystem.kt");
+                }
+
+                @Test
+                @TestMetadata("invokeCommonSystem2.kt")
+                public void testInvokeCommonSystem2() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/resolve/invoke/invokeCommonSystem2.kt");
                 }
 
                 @Test

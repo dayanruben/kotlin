@@ -43,6 +43,12 @@ public class FirOutOfContentRootLazyDeclarationResolveTestGenerated extends Abst
     }
 
     @Test
+    @TestMetadata("annotationOnLocalClass.kt")
+    public void testAnnotationOnLocalClass() throws Exception {
+        runTest("analysis/low-level-api-fir/testdata/lazyResolve/annotationOnLocalClass.kt");
+    }
+
+    @Test
     @TestMetadata("annotationParameters.kt")
     public void testAnnotationParameters() throws Exception {
         runTest("analysis/low-level-api-fir/testdata/lazyResolve/annotationParameters.kt");
@@ -67,6 +73,18 @@ public class FirOutOfContentRootLazyDeclarationResolveTestGenerated extends Abst
     }
 
     @Test
+    @TestMetadata("compilerRequiredAnnotationOnLocalClass.kt")
+    public void testCompilerRequiredAnnotationOnLocalClass() throws Exception {
+        runTest("analysis/low-level-api-fir/testdata/lazyResolve/compilerRequiredAnnotationOnLocalClass.kt");
+    }
+
+    @Test
+    @TestMetadata("complexLocalHierarchy.kt")
+    public void testComplexLocalHierarchy() throws Exception {
+        runTest("analysis/low-level-api-fir/testdata/lazyResolve/complexLocalHierarchy.kt");
+    }
+
+    @Test
     @TestMetadata("delegates.kt")
     public void testDelegates() throws Exception {
         runTest("analysis/low-level-api-fir/testdata/lazyResolve/delegates.kt");
@@ -76,6 +94,12 @@ public class FirOutOfContentRootLazyDeclarationResolveTestGenerated extends Abst
     @TestMetadata("enumEntry.kt")
     public void testEnumEntry() throws Exception {
         runTest("analysis/low-level-api-fir/testdata/lazyResolve/enumEntry.kt");
+    }
+
+    @Test
+    @TestMetadata("fakeOverride.kt")
+    public void testFakeOverride() throws Exception {
+        runTest("analysis/low-level-api-fir/testdata/lazyResolve/fakeOverride.kt");
     }
 
     @Test
@@ -130,6 +154,24 @@ public class FirOutOfContentRootLazyDeclarationResolveTestGenerated extends Abst
     @TestMetadata("propertyWithInitializer.kt")
     public void testPropertyWithInitializer() throws Exception {
         runTest("analysis/low-level-api-fir/testdata/lazyResolve/propertyWithInitializer.kt");
+    }
+
+    @Test
+    @TestMetadata("resolveSuperTypeFromLocalClass.kt")
+    public void testResolveSuperTypeFromLocalClass() throws Exception {
+        runTest("analysis/low-level-api-fir/testdata/lazyResolve/resolveSuperTypeFromLocalClass.kt");
+    }
+
+    @Test
+    @TestMetadata("resolveTypeFromLocalClassConstructor.kt")
+    public void testResolveTypeFromLocalClassConstructor() throws Exception {
+        runTest("analysis/low-level-api-fir/testdata/lazyResolve/resolveTypeFromLocalClassConstructor.kt");
+    }
+
+    @Test
+    @TestMetadata("resolveTypeFromLocalFunction.kt")
+    public void testResolveTypeFromLocalFunction() throws Exception {
+        runTest("analysis/low-level-api-fir/testdata/lazyResolve/resolveTypeFromLocalFunction.kt");
     }
 
     @Test

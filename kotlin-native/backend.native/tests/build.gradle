@@ -5291,7 +5291,9 @@ if (PlatformInfo.isAppleTarget(project)) {
 
     interopTest("interop_objc_kt56402") {
         // Test depends on macOS-specific AppKit
-        enabled = (project.testTarget == 'macos_x64' || project.testTarget == 'macos_arm64' || project.testTarget == null) && isExperimentalMM
+        enabled = (project.testTarget == 'macos_x64' || project.testTarget == 'macos_arm64' || project.testTarget == null)
+            && isExperimentalMM
+            && !isNoopGC // requires some GC
         source = 'interop/objc/kt56402/main.kt'
         interop = "objc_kt56402"
         flags = ["-tr", "-e", "runAllTests"] // Generate test suites, but use custom entrypoint.
@@ -5679,12 +5681,14 @@ Task objcExportTest(
         Boolean isStaticFramework,
         Boolean needLazyHeaderCheck
 ) {
+    needLazyHeaderCheck = needLazyHeaderCheck && !isK2(project)  // generating lazy headers is NYI in K2
     final String name = "testObjCExport$suffix"
     final String frameworkName = "Kt$suffix"
     final String expectedLazyHeaderName = "expectedLazy${suffix}.h"
     final Task task = frameworkTest(name) {
         final String dir = "$testOutputFramework/$name"
         final File lazyHeader = file("$dir/$target-lazy.h")
+        lazyHeader.delete()  // Clean up after previous runs
 
         doLast {
             // Check lazy header.
@@ -5747,7 +5751,6 @@ Task objcExportTest(
         }
         codesign = !isStaticFramework
         framework(frameworkName) {
-            enabled = !isK2(project) // KT-56182
             sources = ['objcexport']
             libraries = [libraryName, noEnumEntriesLibraryName]
             artifact = 'Kt'
