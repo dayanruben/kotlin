@@ -14889,6 +14889,18 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("receiverTypeMismatch_withProper.kt")
+            public void testReceiverTypeMismatch_withProper() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inference/receiverTypeMismatch_withProper.kt");
+            }
+
+            @Test
+            @TestMetadata("receiverTypeMismatch_withoutProper.kt")
+            public void testReceiverTypeMismatch_withoutProper() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inference/receiverTypeMismatch_withoutProper.kt");
+            }
+
+            @Test
             @TestMetadata("reportAboutUnresolvedReferenceAsUnresolved.kt")
             public void testReportAboutUnresolvedReferenceAsUnresolved() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/inference/reportAboutUnresolvedReferenceAsUnresolved.kt");
@@ -28124,6 +28136,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 }
 
                 @Test
+                @TestMetadata("extensionVsMember.kt")
+                public void testExtensionVsMember() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/resolve/priority/extensionVsMember.kt");
+                }
+
+                @Test
                 @TestMetadata("invokeExtensionVsOther.kt")
                 public void testInvokeExtensionVsOther() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/resolve/priority/invokeExtensionVsOther.kt");
@@ -37587,6 +37605,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("inconsistentTypeInference_noReporting.kt")
+            public void testInconsistentTypeInference_noReporting() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/builderInference/inconsistentTypeInference_noReporting.kt");
+            }
+
+            @Test
             @TestMetadata("incorrectCalls.kt")
             public void testIncorrectCalls() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/builderInference/incorrectCalls.kt");
@@ -37656,6 +37680,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("upperBoundViolation.kt")
             public void testUpperBoundViolation() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/builderInference/upperBoundViolation.kt");
+            }
+
+            @Test
+            @TestMetadata("upperBoundViolation_noReporting.kt")
+            public void testUpperBoundViolation_noReporting() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/builderInference/upperBoundViolation_noReporting.kt");
             }
 
             @Test
