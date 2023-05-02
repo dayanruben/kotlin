@@ -101,7 +101,7 @@ IdeVersionConfigurator.setCurrentIde(project)
 
 if (!project.hasProperty("versions.kotlin-native")) {
     // BEWARE! Bumping this version doesn't take an immediate effect on TeamCity: KTI-1107
-    extra["versions.kotlin-native"] = "1.9.0-dev-6050"
+    extra["versions.kotlin-native"] = "1.9.20-dev-293"
 }
 
 val irCompilerModules = arrayOf(
@@ -289,8 +289,6 @@ extra["compilerArtifactsForIde"] = listOfNotNull(
     ":prepare:ide-plugin-dependencies:sam-with-receiver-compiler-plugin-for-ide",
     ":prepare:ide-plugin-dependencies:assignment-compiler-plugin-for-ide",
     ":prepare:ide-plugin-dependencies:parcelize-compiler-plugin-for-ide",
-    ":prepare:ide-plugin-dependencies:parcelize-compiler-plugin-fe10-for-ide",
-    ":prepare:ide-plugin-dependencies:parcelize-compiler-plugin-fir-for-ide",
     ":prepare:ide-plugin-dependencies:lombok-compiler-plugin-for-ide",
     ":prepare:ide-plugin-dependencies:kotlin-backend-native-for-ide".takeIf { kotlinBuildProperties.isKotlinNativeEnabled },
     ":prepare:ide-plugin-dependencies:kotlin-compiler-tests-for-ide",
