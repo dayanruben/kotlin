@@ -7882,6 +7882,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/coroutines/crossInlineWithCapturedOuterReceiver.kt");
         }
 
+        @TestMetadata("defaultParameterLambdaInSuspend.kt")
+        public void testDefaultParameterLambdaInSuspend() throws Exception {
+            runTest("compiler/testData/codegen/box/coroutines/defaultParameterLambdaInSuspend.kt");
+        }
+
         @TestMetadata("defaultParametersInSuspend.kt")
         public void testDefaultParametersInSuspend() throws Exception {
             runTest("compiler/testData/codegen/box/coroutines/defaultParametersInSuspend.kt");
@@ -7890,11 +7895,6 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("defaultParametersInSuspendWithJvmOverloads.kt")
         public void testDefaultParametersInSuspendWithJvmOverloads() throws Exception {
             runTest("compiler/testData/codegen/box/coroutines/defaultParametersInSuspendWithJvmOverloads.kt");
-        }
-
-        @TestMetadata("defaultParamterLambdaInSuspend.kt")
-        public void testDefaultParamterLambdaInSuspend() throws Exception {
-            runTest("compiler/testData/codegen/box/coroutines/defaultParamterLambdaInSuspend.kt");
         }
 
         @TestMetadata("delegatedSuspendMember.kt")
@@ -22950,6 +22950,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("kt56215.kt")
         public void testKt56215() throws Exception {
             runTest("compiler/testData/codegen/box/involvesIrInterpreter/kt56215.kt");
+        }
+
+        @TestMetadata("kt57028.kt")
+        public void testKt57028() throws Exception {
+            runTest("compiler/testData/codegen/box/involvesIrInterpreter/kt57028.kt");
         }
 
         @TestMetadata("compiler/testData/codegen/box/involvesIrInterpreter/intrinsicConst")

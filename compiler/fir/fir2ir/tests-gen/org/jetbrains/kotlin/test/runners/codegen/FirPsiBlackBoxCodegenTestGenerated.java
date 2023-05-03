@@ -10246,6 +10246,12 @@ public class FirPsiBlackBoxCodegenTestGenerated extends AbstractFirPsiBlackBoxCo
         }
 
         @Test
+        @TestMetadata("defaultParameterLambdaInSuspend.kt")
+        public void testDefaultParameterLambdaInSuspend() throws Exception {
+            runTest("compiler/testData/codegen/box/coroutines/defaultParameterLambdaInSuspend.kt");
+        }
+
+        @Test
         @TestMetadata("defaultParametersInSuspend.kt")
         public void testDefaultParametersInSuspend() throws Exception {
             runTest("compiler/testData/codegen/box/coroutines/defaultParametersInSuspend.kt");
@@ -10255,12 +10261,6 @@ public class FirPsiBlackBoxCodegenTestGenerated extends AbstractFirPsiBlackBoxCo
         @TestMetadata("defaultParametersInSuspendWithJvmOverloads.kt")
         public void testDefaultParametersInSuspendWithJvmOverloads() throws Exception {
             runTest("compiler/testData/codegen/box/coroutines/defaultParametersInSuspendWithJvmOverloads.kt");
-        }
-
-        @Test
-        @TestMetadata("defaultParamterLambdaInSuspend.kt")
-        public void testDefaultParamterLambdaInSuspend() throws Exception {
-            runTest("compiler/testData/codegen/box/coroutines/defaultParamterLambdaInSuspend.kt");
         }
 
         @Test
@@ -28331,6 +28331,12 @@ public class FirPsiBlackBoxCodegenTestGenerated extends AbstractFirPsiBlackBoxCo
         @TestMetadata("kt56215.kt")
         public void testKt56215() throws Exception {
             runTest("compiler/testData/codegen/box/involvesIrInterpreter/kt56215.kt");
+        }
+
+        @Test
+        @TestMetadata("kt57028.kt")
+        public void testKt57028() throws Exception {
+            runTest("compiler/testData/codegen/box/involvesIrInterpreter/kt57028.kt");
         }
 
         @Test
