@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.low.level.api.fir.DeclarationCopyBuilder.withBodyFrom
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirResolveSessionDepended
+import org.jetbrains.kotlin.analysis.low.level.api.fir.api.targets.LLFirWholeFileResolveTarget
 import org.jetbrains.kotlin.analysis.low.level.api.fir.element.builder.FileTowerProvider
 import org.jetbrains.kotlin.analysis.low.level.api.fir.element.builder.FirTowerContextProvider
 import org.jetbrains.kotlin.analysis.low.level.api.fir.element.builder.FirTowerDataContextAllElementsCollector
@@ -109,7 +110,22 @@ object LowLevelFirApiFacadeForResolveOnAir {
         }
     }
 
-    fun onAirGetTowerContextProvider(
+    fun getOnAirTowerDataContextProviderForTheWholeFile(
+        firResolveSession: LLFirResolveSession,
+        ktFile: KtFile,
+    ): FirTowerContextProvider {
+        val ktModule = ktFile.getKtModule(firResolveSession.project)
+        val session = firResolveSession.getSessionFor(ktModule) as LLFirResolvableModuleSession
+        val moduleComponents = session.moduleComponents
+
+        val onAirFirFile = RawFirNonLocalDeclarationBuilder.buildNewFile(session, session.kotlinScopeProvider, ktFile)
+        val target = LLFirWholeFileResolveTarget(onAirFirFile)
+        val collector = FirTowerDataContextAllElementsCollector()
+        moduleComponents.firModuleLazyDeclarationResolver.lazyResolveTarget(target, FirResolvePhase.BODY_RESOLVE, collector)
+        return collector
+    }
+
+    fun getOnAirGetTowerContextProvider(
         firResolveSession: LLFirResolveSession,
         place: KtElement,
     ): FirTowerContextProvider {

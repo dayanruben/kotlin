@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.test.frontend.fir
 
 import org.jetbrains.kotlin.KtSourceFile
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
+import org.jetbrains.kotlin.backend.common.serialization.signature.IdSignatureDescriptor
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
@@ -31,20 +32,21 @@ import org.jetbrains.kotlin.incremental.components.LookupTracker
 import org.jetbrains.kotlin.ir.backend.js.JsFactories
 import org.jetbrains.kotlin.ir.backend.js.getSerializedData
 import org.jetbrains.kotlin.ir.backend.js.incrementalDataProvider
+import org.jetbrains.kotlin.ir.backend.js.lower.serialization.ir.JsManglerDesc
 import org.jetbrains.kotlin.ir.backend.js.lower.serialization.ir.JsManglerIr
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
+import org.jetbrains.kotlin.ir.util.KotlinMangler
 import org.jetbrains.kotlin.library.metadata.resolver.KotlinResolvedLibrary
 import org.jetbrains.kotlin.library.unresolvedDependencies
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
 import org.jetbrains.kotlin.test.backend.ir.IrBackendInput
+import org.jetbrains.kotlin.test.directives.CodegenTestDirectives
 import org.jetbrains.kotlin.test.model.BackendKinds
 import org.jetbrains.kotlin.test.model.Frontend2BackendConverter
 import org.jetbrains.kotlin.test.model.FrontendKinds
 import org.jetbrains.kotlin.test.model.TestModule
-import org.jetbrains.kotlin.test.services.TestServices
-import org.jetbrains.kotlin.test.services.compilerConfigurationProvider
-import org.jetbrains.kotlin.test.services.jsLibraryProvider
+import org.jetbrains.kotlin.test.services.*
 import org.jetbrains.kotlin.utils.metadataVersion
 
 class Fir2IrJsResultsConverter(
@@ -54,7 +56,19 @@ class Fir2IrJsResultsConverter(
     FrontendKinds.FIR,
     BackendKinds.IrBackend
 ) {
-    override fun transform(
+
+    override fun transform(module: TestModule, inputArtifact: FirOutputArtifact): IrBackendInput? =
+        try {
+            transformInternal(module, inputArtifact)
+        } catch (e: Throwable) {
+            if (CodegenTestDirectives.IGNORE_FIR2IR_EXCEPTIONS_IF_FIR_CONTAINS_ERRORS in module.directives && inputArtifact.hasErrors) {
+                null
+            } else {
+                throw e
+            }
+        }
+
+    private fun transformInternal(
         module: TestModule,
         inputArtifact: FirOutputArtifact
     ): IrBackendInput {
@@ -67,11 +81,9 @@ class Fir2IrJsResultsConverter(
         lateinit var mainPluginContext: IrPluginContext
         var irBuiltIns: IrBuiltInsOverFir? = null
 
-        val commonMemberStorage = Fir2IrCommonMemberStorage(
-            generateSignatures = false,
-            signatureComposerCreator = null,
-            manglerCreator = ::FirJsKotlinMangler
-        )
+        val commonMemberStorage = Fir2IrCommonMemberStorage(IdSignatureDescriptor(JsManglerDesc), FirJsKotlinMangler())
+
+        val irMangler = JsManglerIr
 
         for ((index, part) in inputArtifact.partsForDependsOnModules.withIndex()) {
             val (irModuleFragment, components, pluginContext) =
@@ -82,7 +94,9 @@ class Fir2IrJsResultsConverter(
                     configuration,
                     testServices,
                     commonMemberStorage,
-                    irBuiltIns
+                    irBuiltIns,
+                    irMangler,
+                    generateSignatures = true,
                 )
             irBuiltIns = components.irBuiltIns
             mainPluginContext = pluginContext
@@ -112,7 +126,10 @@ class Fir2IrJsResultsConverter(
             configuration.incrementalDataProvider?.getSerializedData(sourceFiles) ?: emptyList(),
             expectDescriptorToSymbol = mutableMapOf(),
             diagnosticsCollector = DiagnosticReporterFactory.createReporter(),
-            hasErrors = inputArtifact.hasErrors
+            hasErrors = inputArtifact.hasErrors,
+            descriptorMangler = commonMemberStorage.symbolTable.signaturer.mangler,
+            irMangler = irMangler,
+            firMangler = commonMemberStorage.firSignatureComposer.mangler,
         ) { file, irActualizedResult ->
             val (firFile, components) = firFilesAndComponentsBySourceFile[file]
                 ?: error("cannot find FIR file by source file ${file.name} (${file.path})")
@@ -142,7 +159,9 @@ fun AbstractFirAnalyzerFacade.convertToJsIr(
     configuration: CompilerConfiguration,
     testServices: TestServices,
     commonMemberStorage: Fir2IrCommonMemberStorage,
-    irBuiltIns: IrBuiltInsOverFir?
+    irBuiltIns: IrBuiltInsOverFir?,
+    irMangler: KotlinMangler.IrMangler,
+    generateSignatures: Boolean
 ): Fir2IrResult {
     this as FirAnalyzerFacade
     // TODO: consider avoiding repeated libraries resolution
@@ -151,7 +170,7 @@ fun AbstractFirAnalyzerFacade.convertToJsIr(
 
     val fir2IrConfiguration = Fir2IrConfiguration(
         languageVersionSettings = configuration.languageVersionSettings,
-        linkViaSignatures = false,
+        linkViaSignatures = generateSignatures,
         evaluatedConstTracker = configuration
             .putIfAbsent(CommonConfigurationKeys.EVALUATED_CONST_TRACKER, EvaluatedConstTracker.create()),
     )
@@ -159,7 +178,7 @@ fun AbstractFirAnalyzerFacade.convertToJsIr(
         session, scopeSession, firFiles.toList(),
         fir2IrExtensions,
         fir2IrConfiguration,
-        JsManglerIr, IrFactoryImpl,
+        irMangler, IrFactoryImpl,
         Fir2IrVisibilityConverter.Default,
         Fir2IrJvmSpecialAnnotationSymbolProvider(), // TODO: replace with appropriate (probably empty) implementation
         irGeneratorExtensions,

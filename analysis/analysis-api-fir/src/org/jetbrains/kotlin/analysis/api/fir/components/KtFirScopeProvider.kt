@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithDeclaration
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.LLFirResolveSession
+import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getOrBuildFirFile
 import org.jetbrains.kotlin.analysis.utils.errors.unexpectedElementError
 import org.jetbrains.kotlin.analysis.utils.printer.getElementTextInContext
 import org.jetbrains.kotlin.fir.FirSession
@@ -170,6 +171,20 @@ internal class KtFirScopeProvider(
         )?.let { convertToKtTypeScope(it) }
     }
 
+    override fun getImportingScopeContext(file: KtFile): KtScopeContext {
+        val firFile = file.getOrBuildFirFile(firResolveSession)
+        val firFileSession = firFile.moduleData.session
+        val firImportingScopes = createImportingScopes(
+            firFile,
+            firFileSession,
+            analysisSession.getScopeSessionFor(firFileSession),
+            useCaching = true,
+        )
+
+        val ktScopesWithKinds = createScopesWithKind(firImportingScopes.withIndex())
+        return KtScopeContext(ktScopesWithKinds, _implicitReceivers = emptyList(), token)
+    }
+
     override fun getScopeContextForPosition(
         originalFile: KtFile,
         positionInFakeFile: KtElement
@@ -196,11 +211,15 @@ internal class KtFirScopeProvider(
             val availableScopes = towerDataElement.getAvailableScopes().flatMap { flattenFirScope(it) }
             availableScopes.map { IndexedValue(index, it) }
         }
-        val scopes = firScopes.map { (index, firScope) ->
+        val ktScopesWithKinds = createScopesWithKind(firScopes)
+
+        return KtScopeContext(ktScopesWithKinds, implicitReceivers, token)
+    }
+
+    private fun createScopesWithKind(firScopes: Iterable<IndexedValue<FirScope>>): List<KtScopeWithKind> {
+        return firScopes.map { (index, firScope) ->
             KtScopeWithKind(convertToKtScope(firScope), getScopeKind(firScope, index), token)
         }
-
-        return KtScopeContext(scopes, implicitReceivers, token)
     }
 
     private fun flattenFirScope(firScope: FirScope): List<FirScope> = when (firScope) {

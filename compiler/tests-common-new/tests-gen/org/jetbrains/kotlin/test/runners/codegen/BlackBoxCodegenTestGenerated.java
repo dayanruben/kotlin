@@ -16296,6 +16296,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         }
 
         @Test
+        @TestMetadata("enumEntriesInCompanion.kt")
+        public void testEnumEntriesInCompanion() throws Exception {
+            runTest("compiler/testData/codegen/box/enum/enumEntriesInCompanion.kt");
+        }
+
+        @Test
         @TestMetadata("enumEntriesMultimoduleNoMappings.kt")
         public void testEnumEntriesMultimoduleNoMappings() throws Exception {
             runTest("compiler/testData/codegen/box/enum/enumEntriesMultimoduleNoMappings.kt");
@@ -27203,6 +27209,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         @TestMetadata("kt57028.kt")
         public void testKt57028() throws Exception {
             runTest("compiler/testData/codegen/box/involvesIrInterpreter/kt57028.kt");
+        }
+
+        @Test
+        @TestMetadata("kt58005.kt")
+        public void testKt58005() throws Exception {
+            runTest("compiler/testData/codegen/box/involvesIrInterpreter/kt58005.kt");
         }
 
         @Nested
@@ -49327,18 +49339,6 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         @Test
         public void testAllFilesPresentInValueClasses() throws Exception {
             KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/valueClasses"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
-        }
-
-        @Test
-        @TestMetadata("overrideFunctionWithDefaultParameter.kt")
-        public void testOverrideFunctionWithDefaultParameter() throws Exception {
-            runTest("compiler/testData/codegen/box/valueClasses/overrideFunctionWithDefaultParameter.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
-        }
-
-        @Test
-        @TestMetadata("overrideFunctionWithDefaultParameterGeneric.kt")
-        public void testOverrideFunctionWithDefaultParameterGeneric() throws Exception {
-            runTest("compiler/testData/codegen/box/valueClasses/overrideFunctionWithDefaultParameterGeneric.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
         }
     }
 

@@ -85,9 +85,63 @@ public class FirOutOfContentRootLazyDeclarationResolveTestGenerated extends Abst
     }
 
     @Test
+    @TestMetadata("cyclicHierarchy.kt")
+    public void testCyclicHierarchy() throws Exception {
+        runTest("analysis/low-level-api-fir/testdata/lazyResolve/cyclicHierarchy.kt");
+    }
+
+    @Test
+    @TestMetadata("cyclicHierarchy2.kt")
+    public void testCyclicHierarchy2() throws Exception {
+        runTest("analysis/low-level-api-fir/testdata/lazyResolve/cyclicHierarchy2.kt");
+    }
+
+    @Test
+    @TestMetadata("cyclicHierarchy3.kt")
+    public void testCyclicHierarchy3() throws Exception {
+        runTest("analysis/low-level-api-fir/testdata/lazyResolve/cyclicHierarchy3.kt");
+    }
+
+    @Test
+    @TestMetadata("cyclicNestedHierarchy.kt")
+    public void testCyclicNestedHierarchy() throws Exception {
+        runTest("analysis/low-level-api-fir/testdata/lazyResolve/cyclicNestedHierarchy.kt");
+    }
+
+    @Test
+    @TestMetadata("cyclicNestedHierarchy2.kt")
+    public void testCyclicNestedHierarchy2() throws Exception {
+        runTest("analysis/low-level-api-fir/testdata/lazyResolve/cyclicNestedHierarchy2.kt");
+    }
+
+    @Test
+    @TestMetadata("dataClassCopy.kt")
+    public void testDataClassCopy() throws Exception {
+        runTest("analysis/low-level-api-fir/testdata/lazyResolve/dataClassCopy.kt");
+    }
+
+    @Test
+    @TestMetadata("dataComponent2.kt")
+    public void testDataComponent2() throws Exception {
+        runTest("analysis/low-level-api-fir/testdata/lazyResolve/dataComponent2.kt");
+    }
+
+    @Test
+    @TestMetadata("delegatedField.kt")
+    public void testDelegatedField() throws Exception {
+        runTest("analysis/low-level-api-fir/testdata/lazyResolve/delegatedField.kt");
+    }
+
+    @Test
     @TestMetadata("delegates.kt")
     public void testDelegates() throws Exception {
         runTest("analysis/low-level-api-fir/testdata/lazyResolve/delegates.kt");
+    }
+
+    @Test
+    @TestMetadata("enumEntries.kt")
+    public void testEnumEntries() throws Exception {
+        runTest("analysis/low-level-api-fir/testdata/lazyResolve/enumEntries.kt");
     }
 
     @Test
@@ -97,9 +151,27 @@ public class FirOutOfContentRootLazyDeclarationResolveTestGenerated extends Abst
     }
 
     @Test
+    @TestMetadata("enumValueOf.kt")
+    public void testEnumValueOf() throws Exception {
+        runTest("analysis/low-level-api-fir/testdata/lazyResolve/enumValueOf.kt");
+    }
+
+    @Test
+    @TestMetadata("enumValues.kt")
+    public void testEnumValues() throws Exception {
+        runTest("analysis/low-level-api-fir/testdata/lazyResolve/enumValues.kt");
+    }
+
+    @Test
     @TestMetadata("fakeOverride.kt")
     public void testFakeOverride() throws Exception {
         runTest("analysis/low-level-api-fir/testdata/lazyResolve/fakeOverride.kt");
+    }
+
+    @Test
+    @TestMetadata("fakePrimaryConstructor.kt")
+    public void testFakePrimaryConstructor() throws Exception {
+        runTest("analysis/low-level-api-fir/testdata/lazyResolve/fakePrimaryConstructor.kt");
     }
 
     @Test
@@ -115,6 +187,12 @@ public class FirOutOfContentRootLazyDeclarationResolveTestGenerated extends Abst
     }
 
     @Test
+    @TestMetadata("lazyProperty.kt")
+    public void testLazyProperty() throws Exception {
+        runTest("analysis/low-level-api-fir/testdata/lazyResolve/lazyProperty.kt");
+    }
+
+    @Test
     @TestMetadata("parameterOfNonLocalSetter.kt")
     public void testParameterOfNonLocalSetter() throws Exception {
         runTest("analysis/low-level-api-fir/testdata/lazyResolve/parameterOfNonLocalSetter.kt");
@@ -124,6 +202,12 @@ public class FirOutOfContentRootLazyDeclarationResolveTestGenerated extends Abst
     @TestMetadata("parameterOfTopSetter.kt")
     public void testParameterOfTopSetter() throws Exception {
         runTest("analysis/low-level-api-fir/testdata/lazyResolve/parameterOfTopSetter.kt");
+    }
+
+    @Test
+    @TestMetadata("primaryConstructor.kt")
+    public void testPrimaryConstructor() throws Exception {
+        runTest("analysis/low-level-api-fir/testdata/lazyResolve/primaryConstructor.kt");
     }
 
     @Test

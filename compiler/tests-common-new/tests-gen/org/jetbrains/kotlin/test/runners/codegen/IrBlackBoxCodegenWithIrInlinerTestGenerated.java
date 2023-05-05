@@ -16650,6 +16650,12 @@ public class IrBlackBoxCodegenWithIrInlinerTestGenerated extends AbstractIrBlack
         }
 
         @Test
+        @TestMetadata("enumEntriesInCompanion.kt")
+        public void testEnumEntriesInCompanion() throws Exception {
+            runTest("compiler/testData/codegen/box/enum/enumEntriesInCompanion.kt");
+        }
+
+        @Test
         @TestMetadata("enumEntriesMultimodule.kt")
         public void testEnumEntriesMultimodule() throws Exception {
             runTest("compiler/testData/codegen/box/enum/enumEntriesMultimodule.kt");
@@ -28343,6 +28349,12 @@ public class IrBlackBoxCodegenWithIrInlinerTestGenerated extends AbstractIrBlack
         @TestMetadata("kt57313.kt")
         public void testKt57313() throws Exception {
             runTest("compiler/testData/codegen/box/involvesIrInterpreter/kt57313.kt");
+        }
+
+        @Test
+        @TestMetadata("kt58005.kt")
+        public void testKt58005() throws Exception {
+            runTest("compiler/testData/codegen/box/involvesIrInterpreter/kt58005.kt");
         }
 
         @Test
@@ -52093,6 +52105,12 @@ public class IrBlackBoxCodegenWithIrInlinerTestGenerated extends AbstractIrBlack
         @TestMetadata("mutableSharedMfvcVar.kt")
         public void testMutableSharedMfvcVar() throws Exception {
             runTest("compiler/testData/codegen/box/valueClasses/mutableSharedMfvcVar.kt");
+        }
+
+        @Test
+        @TestMetadata("nothingAsParameterType.kt")
+        public void testNothingAsParameterType() throws Exception {
+            runTest("compiler/testData/codegen/box/valueClasses/nothingAsParameterType.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
         }
 
         @Test
