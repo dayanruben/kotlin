@@ -850,6 +850,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
         }
 
         @Test
+        @TestMetadata("receiverResolutionInDelegatedConstructor.kt")
+        public void testReceiverResolutionInDelegatedConstructor() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/receiverResolutionInDelegatedConstructor.kt");
+        }
+
+        @Test
         @TestMetadata("RecursiveResolve.kt")
         public void testRecursiveResolve() throws Exception {
             runTest("compiler/testData/diagnostics/tests/RecursiveResolve.kt");
@@ -19321,6 +19327,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
             }
 
             @Test
+            @TestMetadata("sortedBy.kt")
+            public void testSortedBy() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/integerLiterals/sortedBy.kt");
+            }
+
+            @Test
             @TestMetadata("typealiasOnLong.kt")
             public void testTypealiasOnLong() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/integerLiterals/typealiasOnLong.kt");
@@ -24894,6 +24906,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
             @Test
             public void testAllFilesPresentInProperties() throws Exception {
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/properties"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true, "multiplatform");
+            }
+
+            @Test
+            @TestMetadata("constAnnotationCycle.kt")
+            public void testConstAnnotationCycle() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/properties/constAnnotationCycle.kt");
             }
 
             @Test
