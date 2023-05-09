@@ -9,8 +9,9 @@ import org.gradle.api.Project
 import org.jetbrains.kotlin.gradle.dsl.multiplatformExtensionOrNull
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.Companion.kotlinPropertiesProvider
 import org.jetbrains.kotlin.gradle.plugin.extraProperties
+import org.jetbrains.kotlin.gradle.plugin.launch
 
-internal fun Project.runKotlinGradleProjectCheckers() {
+internal fun Project.launchKotlinGradleProjectCheckers() {
     val checkers = kotlinGradleProjectCheckersOverride ?: KotlinGradleProjectChecker.ALL_CHECKERS
 
     val context = KotlinGradleProjectCheckerContext(
@@ -21,13 +22,14 @@ internal fun Project.runKotlinGradleProjectCheckers() {
     val collector = project.kotlinToolingDiagnosticsCollector
 
     for (checker in checkers) {
-        with(checker) { context.runChecks(collector) }
+        with(checker) { launch { context.runChecks(collector) } }
     }
 }
 
 internal val Project.kotlinGradleProjectCheckersOverride: Collection<KotlinGradleProjectChecker>?
     get() {
         return if (extraProperties.has(KOTLIN_GRADLE_PROJECT_CHECKERS_OVERRIDE))
+            @Suppress("unchecked_cast")
             extraProperties.get(KOTLIN_GRADLE_PROJECT_CHECKERS_OVERRIDE) as Collection<KotlinGradleProjectChecker>?
         else
             null

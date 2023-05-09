@@ -42,7 +42,6 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinPm20ProjectExtension
 import org.jetbrains.kotlin.gradle.plugin.sources.DefaultKotlinSourceSetFactory
 import org.jetbrains.kotlin.gradle.plugin.statistics.KotlinBuildStatsService
 import org.jetbrains.kotlin.gradle.report.BuildMetricsService
-import org.jetbrains.kotlin.gradle.report.BuildReportsService
 import org.jetbrains.kotlin.gradle.targets.js.KotlinJsCompilerAttribute
 import org.jetbrains.kotlin.gradle.targets.js.KotlinJsPlugin
 import org.jetbrains.kotlin.gradle.targets.js.npm.addNpmDependencyExtension
@@ -183,7 +182,7 @@ abstract class DefaultKotlinBasePlugin : KotlinBasePlugin {
 
     protected fun setupAttributeMatchingStrategy(
         project: Project,
-        isKotlinGranularMetadata: Boolean = project.isKotlinGranularMetadataEnabled
+        isKotlinGranularMetadata: Boolean = project.isKotlinGranularMetadataEnabled,
     ) = with(project.dependencies.attributesSchema) {
         KotlinPlatformType.setupAttributesMatchingStrategy(this)
         KotlinUsages.setupAttributesMatchingStrategy(this, isKotlinGranularMetadata)
@@ -238,16 +237,15 @@ abstract class KotlinBasePluginWrapper : DefaultKotlinBasePlugin() {
 
         setupAttributeMatchingStrategy(project)
 
+        project.startKotlinPluginLifecycle()
+
         plugin.apply(project)
 
         project.addNpmDependencyExtension()
 
         project.registerBuildKotlinToolingMetadataTask()
 
-        project.scheduleDiagnosticChecksAndReporting()
-
-        project.startKotlinPluginLifecycle()
-
+        project.launchDiagnosticChecksAndReporting()
     }
 
     internal open fun createTestRegistry(project: Project) = KotlinTestsRegistry(project)
@@ -255,30 +253,22 @@ abstract class KotlinBasePluginWrapper : DefaultKotlinBasePlugin() {
     internal abstract fun getPlugin(
         project: Project,
     ): Plugin<Project>
+}
 
-    private fun Project.scheduleDiagnosticChecksAndReporting() {
-        launchInStage(KotlinPluginLifecycle.Stage.ReadyForExecution) {
-            // Do not run checkers on projects which configuration finished with failure,
-            // as the internal state can not be trusted at this point (e.g. not entire of the
-            // user's buildscript could've been executed) and might produce bogus warnings
-            runProjectConfigurationHealthCheck {
-                project.runKotlinGradleProjectCheckers()
-            }
-
-            // TODO: this should run even if the application of KGP has finished with errors,
-            // because some diagnostics might indicate specifically the root cause of an
-            // exception.
-            renderReportedDiagnostics(
-                project.kotlinToolingDiagnosticsCollector.getDiagnosticsForProject(project),
-                project.logger,
-                project.kotlinPropertiesProvider.internalVerboseDiagnostics
-            )
-        }
+private fun Project.launchDiagnosticChecksAndReporting() {
+    project.launchKotlinGradleProjectCheckers()
+    project.launch {
+        project.configurationResult.await()
+        renderReportedDiagnostics(
+            project.kotlinToolingDiagnosticsCollector.getDiagnosticsForProject(project),
+            project.logger,
+            project.kotlinPropertiesProvider.internalVerboseDiagnostics
+        )
     }
 }
 
 abstract class AbstractKotlinPluginWrapper(
-    protected val registry: ToolingModelBuilderRegistry
+    protected val registry: ToolingModelBuilderRegistry,
 ) : KotlinBasePluginWrapper() {
     override fun getPlugin(project: Project): Plugin<Project> =
         KotlinJvmPlugin(registry)
@@ -288,7 +278,7 @@ abstract class AbstractKotlinPluginWrapper(
 }
 
 abstract class AbstractKotlinCommonPluginWrapper(
-    protected val registry: ToolingModelBuilderRegistry
+    protected val registry: ToolingModelBuilderRegistry,
 ) : KotlinBasePluginWrapper() {
     override fun getPlugin(project: Project): Plugin<Project> =
         KotlinCommonPlugin(registry)
@@ -298,7 +288,7 @@ abstract class AbstractKotlinCommonPluginWrapper(
 }
 
 abstract class AbstractKotlinAndroidPluginWrapper(
-    protected val registry: ToolingModelBuilderRegistry
+    protected val registry: ToolingModelBuilderRegistry,
 ) : KotlinBasePluginWrapper() {
     override fun getPlugin(project: Project): Plugin<Project> =
         KotlinAndroidPlugin(registry)
@@ -312,7 +302,7 @@ abstract class AbstractKotlinAndroidPluginWrapper(
     level = DeprecationLevel.ERROR
 )
 abstract class AbstractKotlin2JsPluginWrapper(
-    protected val registry: ToolingModelBuilderRegistry
+    protected val registry: ToolingModelBuilderRegistry,
 ) : KotlinBasePluginWrapper() {
 
     @Suppress("DEPRECATION_ERROR")
@@ -374,7 +364,7 @@ abstract class AbstractKotlinMultiplatformPluginWrapper : KotlinBasePluginWrappe
 }
 
 abstract class AbstractKotlinPm20PluginWrapper(
-    private val objectFactory: ObjectFactory
+    private val objectFactory: ObjectFactory,
 ) : KotlinBasePluginWrapper() {
     override fun apply(project: Project) {
         super.apply(project)

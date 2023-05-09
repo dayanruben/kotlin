@@ -4690,8 +4690,7 @@ interopTest("interop_concurrentTerminate") {
 }
 
 interopTest("interop_incompleteTypes") {
-    disabled = (project.testTarget == 'wasm32') || // No interop for wasm yet.
-            isK2(project) // KT-56027
+    disabled = (project.testTarget == 'wasm32')  // No interop for wasm yet.
     source = "interop/incomplete_types/main.kt"
     interop = 'incomplete_types'
 }
@@ -5868,7 +5867,6 @@ if (isAppleTarget(project)) {
         swiftSources = ['framework/values_generics/']
     }
 
-    if(!isK2(project))  // KT-56271
     frameworkTest("testStdlibFramework") {
         framework('Stdlib') {
             sources = ['framework/stdlib']
@@ -6034,6 +6032,13 @@ if (isAppleTarget(project)) {
             sources = ['framework/kt56233']
         }
         swiftSources = ['framework/kt56233']
+    }
+
+    frameworkTest("testKt57791Framework") {
+        framework("Kt57791") {
+            sources = ['framework/kt57791']
+        }
+        swiftSources = ['framework/kt57791']
     }
 
     frameworkTest("testPermanentObjectsFramework") {

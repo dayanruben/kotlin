@@ -100,13 +100,14 @@ private fun ConeDiagnostic.toKtDiagnostic(
     is ConeNoTypeArgumentsOnRhsError ->
         FirErrors.NO_TYPE_ARGUMENTS_ON_RHS.createOn(qualifiedAccessSource ?: source, this.desiredCount, this.symbol)
 
+    is ConeSyntaxDiagnostic -> FirSyntaxErrors.SYNTAX.createOn(qualifiedAccessSource ?: source, reason)
+
     is ConeSimpleDiagnostic -> when {
         source.kind is KtFakeSourceElementKind && source.kind != KtFakeSourceElementKind.ReferenceInAtomicQualifiedAccess -> null
-        kind == DiagnosticKind.Syntax -> FirSyntaxErrors.SYNTAX.createOn(qualifiedAccessSource ?: source, reason)
         else -> this.getFactory(source).createOn(qualifiedAccessSource ?: source)
     }
 
-    is ConeDestructuringDeclarationsOnTopLevel -> null // reported as regular syntax error
+    is ConeDestructuringDeclarationsOnTopLevel -> null // TODO Currently a parsing error. Would be better to report here instead KT-58563
     is ConeCannotInferTypeParameterType -> FirErrors.CANNOT_INFER_PARAMETER_TYPE.createOn(source)
     is ConeCannotInferValueParameterType -> FirErrors.CANNOT_INFER_PARAMETER_TYPE.createOn(source)
     is ConeTypeVariableTypeIsNotInferred -> FirErrors.INFERENCE_ERROR.createOn(qualifiedAccessSource ?: source)
@@ -534,7 +535,6 @@ private fun ConeSimpleDiagnostic.getFactory(source: KtSourceElement): KtDiagnost
         DiagnosticKind.UnresolvedSupertype,
         DiagnosticKind.UnresolvedExpandedType,
         DiagnosticKind.Other -> FirErrors.OTHER_ERROR
-        DiagnosticKind.Syntax -> error("Must not be called on `Syntax` because a message is required.")
     }
 }
 

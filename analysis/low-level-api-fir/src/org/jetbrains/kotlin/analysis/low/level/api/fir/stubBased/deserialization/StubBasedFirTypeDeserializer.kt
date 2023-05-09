@@ -29,7 +29,6 @@ import org.jetbrains.kotlin.fir.types.impl.ConeTypeParameterTypeImpl
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.hasSuspendModifier
 import org.jetbrains.kotlin.psi.psiUtil.unwrapNullability
@@ -38,12 +37,13 @@ import org.jetbrains.kotlin.psi.stubs.impl.*
 import org.jetbrains.kotlin.types.ConstantValueKind
 import org.jetbrains.kotlin.types.Variance
 
-class StubBasedFirTypeDeserializer(
+internal class StubBasedFirTypeDeserializer(
     private val moduleData: FirModuleData,
     private val annotationDeserializer: StubBasedAnnotationDeserializer,
     private val parent: StubBasedFirTypeDeserializer?,
     private val containingSymbol: FirBasedSymbol<*>?,
-    owner: KtTypeParameterListOwner
+    owner: KtTypeParameterListOwner?,
+    initialOrigin: FirDeclarationOrigin
 ) {
     private val typeParametersByName: Map<String, FirTypeParameterSymbol>
 
@@ -51,8 +51,8 @@ class StubBasedFirTypeDeserializer(
         get() = typeParametersByName.values.toList()
 
     init {
-        val typeParameters = owner.typeParameters
-        if (typeParameters.isNotEmpty()) {
+        val typeParameters = owner?.typeParameters
+        if (!typeParameters.isNullOrEmpty()) {
             typeParametersByName = mutableMapOf()
             val builders = mutableListOf<FirTypeParameterBuilder>()
             for (typeParameter in typeParameters) {
@@ -64,7 +64,7 @@ class StubBasedFirTypeDeserializer(
                     source = KtRealPsiSourceElement(typeParameter)
                     moduleData = this@StubBasedFirTypeDeserializer.moduleData
                     resolvePhase = FirResolvePhase.ANALYZED_DEPENDENCIES
-                    origin = FirDeclarationOrigin.Library
+                    origin = initialOrigin
                     this.name = name
                     this.symbol = symbol
                     this.containingDeclarationSymbol = containingSymbol ?: error("Top-level type parameter ???")
@@ -109,10 +109,10 @@ class StubBasedFirTypeDeserializer(
                 annotations += buildAnnotation {
                     annotationTypeRef = buildResolvedTypeRef {
                         type = StandardNames.FqNames.parameterNameClassId.toLookupTag()
-                            .constructClassType(emptyArray(), isNullable = false)
+                            .constructClassType(ConeTypeProjection.EMPTY_ARRAY, isNullable = false)
                     }
                     this.argumentMapping = buildAnnotationArgumentMapping {
-                        mapping[Name.identifier("name")] =
+                        mapping[StandardNames.NAME] =
                             buildConstExpression(null, ConstantValueKind.String, paramName, setType = true)
                     }
                 }
@@ -295,12 +295,12 @@ internal fun KtUserType.classId(): ClassId {
         return ClassId(
             FqName.fromSegments(packageFragments).parent(),
             FqName(packageFragments.last()),
-            false
+            /* local = */ false
         )
     }
     return ClassId(
         FqName.fromSegments(packageFragments),
         FqName.fromSegments(classFragments),
-        false
+        /* local = */ false
     )
 }

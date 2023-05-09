@@ -12955,6 +12955,12 @@ public class FirPsiBlackBoxCodegenTestGenerated extends AbstractFirPsiBlackBoxCo
             }
 
             @Test
+            @TestMetadata("bigArityLambda.kt")
+            public void testBigArityLambda() throws Exception {
+                runTest("compiler/testData/codegen/box/coroutines/reflect/bigArityLambda.kt");
+            }
+
+            @Test
             @TestMetadata("callSuspend.kt")
             public void testCallSuspend() throws Exception {
                 runTest("compiler/testData/codegen/box/coroutines/reflect/callSuspend.kt");
@@ -45878,6 +45884,12 @@ public class FirPsiBlackBoxCodegenTestGenerated extends AbstractFirPsiBlackBoxCo
             @TestMetadata("propertyOfNestedClassAndArrayType.kt")
             public void testPropertyOfNestedClassAndArrayType() throws Exception {
                 runTest("compiler/testData/codegen/box/reflection/properties/propertyOfNestedClassAndArrayType.kt");
+            }
+
+            @Test
+            @TestMetadata("propertyOrder.kt")
+            public void testPropertyOrder() throws Exception {
+                runTest("compiler/testData/codegen/box/reflection/properties/propertyOrder.kt");
             }
 
             @Test
