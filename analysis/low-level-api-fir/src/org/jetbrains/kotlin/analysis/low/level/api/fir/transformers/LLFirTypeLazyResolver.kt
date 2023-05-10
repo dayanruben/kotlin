@@ -125,10 +125,12 @@ private class LLFirTypeTargetResolver(
 
     override fun doLazyResolveUnderLock(target: FirElementWithResolveState) {
         when (target) {
+            is FirConstructor -> {
+                error("Should be resolved during ${::resolveConstructors.name}")
+            }
             is FirDanglingModifierList, is FirFileAnnotationsContainer, is FirCallableDeclaration, is FirTypeAlias, is FirScript -> {
                 target.accept(transformer, null)
             }
-
             is FirRegularClass -> {
                 resolveClassTypes(target)
             }

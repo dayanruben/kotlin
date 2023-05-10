@@ -54,7 +54,7 @@ interface IrBindableSymbol<out D : DeclarationDescriptor, B : IrSymbolOwner> : I
     fun bind(owner: B)
 }
 
-interface IrPackageFragmentSymbol : IrSymbol {
+sealed interface IrPackageFragmentSymbol : IrSymbol {
     @ObsoleteDescriptorBasedAPI
     override val descriptor: PackageFragmentDescriptor
 }
@@ -69,7 +69,7 @@ interface IrEnumEntrySymbol : IrBindableSymbol<ClassDescriptor, IrEnumEntry>
 
 interface IrFieldSymbol : IrBindableSymbol<PropertyDescriptor, IrField>
 
-interface IrClassifierSymbol : IrSymbol, TypeConstructorMarker {
+sealed interface IrClassifierSymbol : IrSymbol, TypeConstructorMarker {
     @ObsoleteDescriptorBasedAPI
     override val descriptor: ClassifierDescriptor
 }
@@ -80,7 +80,7 @@ interface IrScriptSymbol : IrClassifierSymbol, IrBindableSymbol<ScriptDescriptor
 
 interface IrTypeParameterSymbol : IrClassifierSymbol, IrBindableSymbol<TypeParameterDescriptor, IrTypeParameter>, TypeParameterMarker
 
-interface IrValueSymbol : IrSymbol {
+sealed interface IrValueSymbol : IrSymbol {
     @ObsoleteDescriptorBasedAPI
     override val descriptor: ValueDescriptor
 
@@ -91,14 +91,14 @@ interface IrValueParameterSymbol : IrValueSymbol, IrBindableSymbol<ParameterDesc
 
 interface IrVariableSymbol : IrValueSymbol, IrBindableSymbol<VariableDescriptor, IrVariable>
 
-interface IrReturnTargetSymbol : IrSymbol {
+sealed interface IrReturnTargetSymbol : IrSymbol {
     @ObsoleteDescriptorBasedAPI
     override val descriptor: FunctionDescriptor
 
     override val owner: IrReturnTarget
 }
 
-interface IrFunctionSymbol : IrReturnTargetSymbol {
+sealed interface IrFunctionSymbol : IrReturnTargetSymbol {
     override val owner: IrFunction
 }
 

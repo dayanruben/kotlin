@@ -123,6 +123,21 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
         realGc
     }
     val runtimeAssertsMode: RuntimeAssertsMode get() = configuration.get(BinaryOptions.runtimeAssertionsMode) ?: RuntimeAssertsMode.IGNORE
+    private val defaultDisableMmap get() = target.family == Family.MINGW
+    val disableMmap: Boolean by lazy {
+        when (configuration.get(BinaryOptions.disableMmap)) {
+            null -> defaultDisableMmap
+            true -> true
+            false -> {
+                if (target.family == Family.MINGW) {
+                    configuration.report(CompilerMessageSeverity.STRONG_WARNING, "MinGW target does not support mmap/munmap")
+                    true
+                } else {
+                    false
+                }
+            }
+        }
+    }
     val workerExceptionHandling: WorkerExceptionHandling get() = configuration.get(KonanConfigKeys.WORKER_EXCEPTION_HANDLING) ?: when (memoryModel) {
             MemoryModel.EXPERIMENTAL -> WorkerExceptionHandling.USE_HOOK
             else -> WorkerExceptionHandling.LEGACY
@@ -406,6 +421,8 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
 
     internal val additionalCacheFlags by lazy { platformManager.loader(target).additionalCacheFlags }
 
+    internal val threadsCount = configuration.get(CommonConfigurationKeys.PARALLEL_BACKEND_THREADS) ?: 1
+
     private fun StringBuilder.appendCommonCacheFlavor() {
         append(target.toString())
         if (debug) append("-g")
@@ -432,6 +449,8 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
             append("-gc-scheduler=${gcSchedulerType.name}")
         if (runtimeAssertsMode != RuntimeAssertsMode.IGNORE)
             append("-runtime_asserts=${runtimeAssertsMode.name}")
+        if (disableMmap != defaultDisableMmap)
+            append("-disable_mmap=${disableMmap}")
     }
 
     private val userCacheFlavorString = buildString {
@@ -440,9 +459,19 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
     }
 
     private val systemCacheRootDirectory = File(distribution.konanHome).child("klib").child("cache")
-    internal val systemCacheDirectory = systemCacheRootDirectory.child(systemCacheFlavorString)
-    private val autoCacheRootDirectory = configuration.get(KonanConfigKeys.AUTO_CACHE_DIR)?.let { File(it) } ?: systemCacheRootDirectory
-    internal val autoCacheDirectory = autoCacheRootDirectory.child(userCacheFlavorString)
+    internal val systemCacheDirectory = systemCacheRootDirectory.child(systemCacheFlavorString).also { it.mkdirs() }
+    private val autoCacheRootDirectory = configuration.get(KonanConfigKeys.AUTO_CACHE_DIR)?.let {
+        File(it).apply {
+            if (!isDirectory) configuration.reportCompilationError("auto cache directory $this is not found or is not a directory")
+        }
+    } ?: systemCacheRootDirectory
+    internal val autoCacheDirectory = autoCacheRootDirectory.child(userCacheFlavorString).also { it.mkdirs() }
+    private val incrementalCacheRootDirectory = configuration.get(KonanConfigKeys.INCREMENTAL_CACHE_DIR)?.let {
+        File(it).apply {
+            if (!isDirectory) configuration.reportCompilationError("incremental cache directory $this is not found or is not a directory")
+        }
+    }
+    internal val incrementalCacheDirectory = incrementalCacheRootDirectory?.child(userCacheFlavorString)?.also { it.mkdirs() }
 
     internal val ignoreCacheReason = when {
         optimizationsEnabled -> "for optimized compilation"
@@ -457,6 +486,7 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
             ignoreCacheReason = ignoreCacheReason,
             systemCacheDirectory = systemCacheDirectory,
             autoCacheDirectory = autoCacheDirectory,
+            incrementalCacheDirectory = incrementalCacheDirectory,
             target = target,
             produce = produce
     )

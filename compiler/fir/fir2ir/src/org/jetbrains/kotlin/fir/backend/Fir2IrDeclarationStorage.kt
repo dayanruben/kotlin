@@ -158,7 +158,7 @@ class Fir2IrDeclarationStorage(
                                 val irClass = irClassifierSymbol.owner
                                 firType is ConeClassLikeType && irClass.name == firType.lookupTag.name
                             }
-                            else -> {
+                            is IrScriptSymbol -> {
                                 false
                             }
                         }
@@ -569,7 +569,9 @@ class Fir2IrDeclarationStorage(
             val result = declareIrSimpleFunction(signature) { symbol ->
                 classifierStorage.preCacheTypeParameters(function, symbol)
                 irFactory.createFunction(
-                    startOffset, endOffset, updatedOrigin, symbol,
+                    if (updatedOrigin == IrDeclarationOrigin.DELEGATED_MEMBER) SYNTHETIC_OFFSET else startOffset,
+                    if (updatedOrigin == IrDeclarationOrigin.DELEGATED_MEMBER) SYNTHETIC_OFFSET else endOffset,
+                    updatedOrigin, symbol,
                     name, components.visibilityConverter.convertToDescriptorVisibility(visibility),
                     simpleFunction?.modality ?: Modality.FINAL,
                     function.returnTypeRef.toIrType(),

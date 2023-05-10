@@ -26593,6 +26593,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
             }
 
             @Test
+            @TestMetadata("errorPriority.kt")
+            public void testErrorPriority() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/resolve/errorPriority.kt");
+            }
+
+            @Test
             @TestMetadata("HiddenDeclarations.kt")
             public void testHiddenDeclarations() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/resolve/HiddenDeclarations.kt");
@@ -30885,6 +30891,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
             @TestDataPath("$PROJECT_ROOT")
             public class PublicVals {
                 @Test
+                @TestMetadata("accessThrowOtherModule.kt")
+                public void testAccessThrowOtherModule() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/smartCasts/publicVals/accessThrowOtherModule.kt");
+                }
+
+                @Test
                 public void testAllFilesPresentInPublicVals() throws Exception {
                     KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/smartCasts/publicVals"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true, "multiplatform");
                 }
@@ -31276,6 +31288,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
                 }
 
                 @Test
+                @TestMetadata("localDelegatedProperty.kt")
+                public void testLocalDelegatedProperty() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/smartCasts/variables/localDelegatedProperty.kt");
+                }
+
+                @Test
                 @TestMetadata("objectMembers.kt")
                 public void testObjectMembers() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/smartCasts/variables/objectMembers.kt");
@@ -31315,6 +31333,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
                 @TestMetadata("reassignedDependency.kt")
                 public void testReassignedDependency() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/smartCasts/variables/reassignedDependency.kt");
+                }
+
+                @Test
+                @TestMetadata("reassignedDependency_unstable.kt")
+                public void testReassignedDependency_unstable() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/smartCasts/variables/reassignedDependency_unstable.kt");
                 }
 
                 @Test
