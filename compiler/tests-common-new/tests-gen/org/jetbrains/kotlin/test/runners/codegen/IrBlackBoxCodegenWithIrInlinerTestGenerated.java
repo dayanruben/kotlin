@@ -15143,6 +15143,12 @@ public class IrBlackBoxCodegenWithIrInlinerTestGenerated extends AbstractIrBlack
             }
 
             @Test
+            @TestMetadata("kt57955.kt")
+            public void testKt57955() throws Exception {
+                runTest("compiler/testData/codegen/box/delegatedProperty/delegateToAnother/kt57955.kt");
+            }
+
+            @Test
             @TestMetadata("mutable.kt")
             public void testMutable() throws Exception {
                 runTest("compiler/testData/codegen/box/delegatedProperty/delegateToAnother/mutable.kt");
@@ -28518,6 +28524,18 @@ public class IrBlackBoxCodegenWithIrInlinerTestGenerated extends AbstractIrBlack
             @TestMetadata("annotationWithDefaults.kt")
             public void testAnnotationWithDefaults() throws Exception {
                 runTest("compiler/testData/codegen/box/involvesIrInterpreter/serialization/annotationWithDefaults.kt");
+            }
+
+            @Test
+            @TestMetadata("nestedTypeAnnotation.kt")
+            public void testNestedTypeAnnotation() throws Exception {
+                runTest("compiler/testData/codegen/box/involvesIrInterpreter/serialization/nestedTypeAnnotation.kt");
+            }
+
+            @Test
+            @TestMetadata("typeAnnotation.kt")
+            public void testTypeAnnotation() throws Exception {
+                runTest("compiler/testData/codegen/box/involvesIrInterpreter/serialization/typeAnnotation.kt");
             }
         }
     }

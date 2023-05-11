@@ -9507,6 +9507,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
             }
 
             @Test
+            @TestMetadata("deprecatedConstructorProperty.kt")
+            public void testDeprecatedConstructorProperty() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/deprecated/deprecatedConstructorProperty.kt");
+            }
+
+            @Test
             @TestMetadata("deprecatedEnumEntry.kt")
             public void testDeprecatedEnumEntry() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/deprecated/deprecatedEnumEntry.kt");
@@ -19733,6 +19739,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
             }
 
             @Test
+            @TestMetadata("privatePropertyAndSetterMultiModule.kt")
+            public void testPrivatePropertyAndSetterMultiModule() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/j+k/privatePropertyAndSetterMultiModule.kt");
+            }
+
+            @Test
             @TestMetadata("protectedStaticSamePackage.kt")
             public void testProtectedStaticSamePackage() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/j+k/protectedStaticSamePackage.kt");
@@ -27324,6 +27336,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
                 }
 
                 @Test
+                @TestMetadata("filteringOutOverrides.kt")
+                public void testFilteringOutOverrides() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/resolve/overloadConflicts/filteringOutOverrides.kt");
+                }
+
+                @Test
                 @TestMetadata("genericClash.kt")
                 public void testGenericClash() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/resolve/overloadConflicts/genericClash.kt");
@@ -32346,6 +32364,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
             @TestMetadata("suspendAndFunConversionInDisabledMode.kt")
             public void testSuspendAndFunConversionInDisabledMode() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/suspendConversion/suspendAndFunConversionInDisabledMode.kt");
+            }
+
+            @Test
+            @TestMetadata("suspendAnonymousAsNonSuspend.kt")
+            public void testSuspendAnonymousAsNonSuspend() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/suspendConversion/suspendAnonymousAsNonSuspend.kt");
             }
 
             @Test

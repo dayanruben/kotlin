@@ -26,13 +26,14 @@ import org.jetbrains.kotlin.fir.resolve.toFirRegularClass
 import org.jetbrains.kotlin.fir.serialization.FirElementAwareStringTable
 import org.jetbrains.kotlin.fir.serialization.FirElementSerializer
 import org.jetbrains.kotlin.fir.serialization.TypeApproximatorForMetadataSerializer
-import org.jetbrains.kotlin.fir.serialization.constant.*
-import org.jetbrains.kotlin.fir.symbols.impl.*
+import org.jetbrains.kotlin.fir.symbols.impl.FirAnonymousFunctionSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirDelegateFieldSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirPropertyAccessorSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.MetadataSource
-import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.metadata.jvm.serialization.JvmStringTable
 import org.jetbrains.kotlin.modules.TargetId
 import org.jetbrains.kotlin.name.ClassId
@@ -63,7 +64,6 @@ fun makeFirMetadataSerializerForIrClass(
     return FirMetadataSerializer(
         context.state.globalSerializationBindings,
         serializationBindings,
-        firSerializerExtension,
         approximator,
         makeElementSerializer(
             irClass.metadata, components.session, components.scopeSession, firSerializerExtension, approximator, parent,
@@ -73,7 +73,6 @@ fun makeFirMetadataSerializerForIrClass(
     )
 }
 
-@OptIn(LookupTagInternals::class)
 fun makeLocalFirMetadataSerializerForMetadataSource(
     metadata: MetadataSource?,
     session: FirSession,
@@ -110,7 +109,6 @@ fun makeLocalFirMetadataSerializerForMetadataSource(
     return FirMetadataSerializer(
         globalSerializationBindings,
         serializationBindings,
-        firSerializerExtension,
         approximator,
         makeElementSerializer(
             metadata, session, scopeSession, firSerializerExtension, approximator, parent,
@@ -123,7 +121,6 @@ fun makeLocalFirMetadataSerializerForMetadataSource(
 class FirMetadataSerializer(
     private val globalSerializationBindings: JvmSerializationBindings,
     private val serializationBindings: JvmSerializationBindings,
-    private val serializerExtension: FirJvmSerializerExtension,
     private val approximator: AbstractTypeApproximator,
     internal val serializer: FirElementSerializer?,
     irActualizedResult: IrActualizedResult?
@@ -134,8 +131,7 @@ class FirMetadataSerializer(
         val message = when (metadata) {
             is FirMetadataSource.Class -> serializer!!.classProto(metadata.fir).build()
             is FirMetadataSource.File ->
-                serializer!!.packagePartProto(metadata.files.first().packageFqName, metadata.files, actualizedExpectDeclarations)
-                    .apply { serializerExtension.serializeJvmPackage(this) }.build()
+                serializer!!.packagePartProto(metadata.files.first().packageFqName, metadata.files, actualizedExpectDeclarations).build()
             is FirMetadataSource.Function -> {
                 val withTypeParameters = metadata.fir.copyToFreeAnonymousFunction(approximator)
                 serializationBindings.get(FirJvmSerializerExtension.METHOD_FOR_FIR_FUNCTION, metadata.fir)?.let {
