@@ -49,17 +49,26 @@ fun interface IdeDependencyResolver {
     interface WithBuildDependencies {
         /**
          * return anything accepted to be passed to [org.gradle.api.Task.dependsOn]
+         *
+         * #### Example: Resolver relying on a single task to be executed:
+         * ```kotlin
+         * object MyResolver : IdeDependencyResolver, WithBuildDependencies {
+         *     fun resolve(sourceSet: KotlinSourceSet) = // ...
+         *     fun dependencies(project: Project) = listOf(project.tasks.named("myTask"))
+         * }
+         * ```
          */
         fun dependencies(project: Project): Iterable<Any>
     }
 
     @ExternalKotlinTargetApi
-    object Empty : IdeDependencyResolver {
-        override fun resolve(sourceSet: KotlinSourceSet): Set<IdeaKotlinDependency> = emptySet()
-    }
-
-    @ExternalKotlinTargetApi
     companion object {
+
+        /**
+         * [IdeDependencyResolver] that will just return an empty Set of dependencies (noop)
+         */
+        val empty = IdeDependencyResolver { emptySet() }
+
         /**
          * Special binaryType String that indicates that a certain dependency is only a sources.jar and
          * therefore should be attached as extra to the binary dependency.
@@ -98,10 +107,10 @@ fun interface IdeDependencyResolver {
  */
 @ExternalKotlinTargetApi
 fun IdeDependencyResolver(
-    resolvers: Iterable<IdeDependencyResolver?>
+    resolvers: Iterable<IdeDependencyResolver?>,
 ): IdeDependencyResolver {
     val resolversList = resolvers.filterNotNull()
-    if (resolversList.isEmpty()) return IdeDependencyResolver.Empty
+    if (resolversList.isEmpty()) return IdeDependencyResolver.empty
     return IdeCompositeDependencyResolver(resolversList)
 }
 
@@ -113,32 +122,11 @@ fun IdeDependencyResolver(
  */
 @ExternalKotlinTargetApi
 fun IdeDependencyResolver(
-    vararg resolvers: IdeDependencyResolver?
+    vararg resolvers: IdeDependencyResolver?,
 ): IdeDependencyResolver = IdeDependencyResolver(resolvers.toList())
 
-
-/**
- * Builds a composite [IdeDependencyResolver] by combining the receiver and the parameter resolver.
- * The resulting composite resolver will be flat, so if either the receiver or the parameter resolver already
- * is a composite, the resulting composite will aggregate the children in a flat manner.
- */
-@ExternalKotlinTargetApi
-operator fun IdeDependencyResolver.plus(other: IdeDependencyResolver): IdeDependencyResolver {
-    if (this is IdeCompositeDependencyResolver && other is IdeCompositeDependencyResolver)
-        return IdeCompositeDependencyResolver(this.children + other.children)
-
-    if (this is IdeCompositeDependencyResolver) {
-        return IdeCompositeDependencyResolver(this.children + other)
-    }
-
-    if (other is IdeCompositeDependencyResolver) {
-        return IdeCompositeDependencyResolver(listOf(this) + other.children)
-    }
-    return IdeCompositeDependencyResolver(listOf(this, other))
-}
-
 private class IdeCompositeDependencyResolver(
-    val children: List<IdeDependencyResolver>
+    val children: List<IdeDependencyResolver>,
 ) : IdeDependencyResolver, IdeDependencyResolver.WithBuildDependencies {
     override fun resolve(sourceSet: KotlinSourceSet): Set<IdeaKotlinDependency> {
         return children.flatMap { child -> child.resolve(sourceSet) }.toSet()
