@@ -628,6 +628,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
         }
 
         @Test
+        @TestMetadata("missingIteratorMissing.kt")
+        public void testMissingIteratorMissing() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/missingIteratorMissing.kt");
+        }
+
+        @Test
         @TestMetadata("MultilineStringTemplates.kt")
         public void testMultilineStringTemplates() throws Exception {
             runTest("compiler/testData/diagnostics/tests/MultilineStringTemplates.kt");
@@ -2952,6 +2958,18 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
             @TestMetadata("LocalDeclarations.kt")
             public void testLocalDeclarations() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/backingField/LocalDeclarations.kt");
+            }
+
+            @Test
+            @TestMetadata("MustBeInitializedEffectivelyFinalOff.kt")
+            public void testMustBeInitializedEffectivelyFinalOff() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/backingField/MustBeInitializedEffectivelyFinalOff.kt");
+            }
+
+            @Test
+            @TestMetadata("MustBeInitializedEffectivelyFinalOn.kt")
+            public void testMustBeInitializedEffectivelyFinalOn() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/backingField/MustBeInitializedEffectivelyFinalOn.kt");
             }
 
             @Test

@@ -10,7 +10,6 @@ package org.jetbrains.kotlin.gradle.dependencyResolutionTests.tcs
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.publish.maven.plugins.MavenPublishPlugin
-import org.jetbrains.kotlin.gradle.*
 import org.jetbrains.kotlin.gradle.android.androidTargetPrototype
 import org.jetbrains.kotlin.gradle.dependencyResolutionTests.mavenCentralCacheRedirector
 import org.jetbrains.kotlin.gradle.dsl.multiplatformExtension
@@ -20,6 +19,7 @@ import org.jetbrains.kotlin.gradle.idea.testFixtures.tcs.binaryCoordinates
 import org.jetbrains.kotlin.gradle.plugin.ide.kotlinIdeMultiplatformImport
 import org.jetbrains.kotlin.gradle.util.*
 import org.jetbrains.kotlin.gradle.utils.getByType
+import org.junit.Assume
 import org.junit.Test
 import kotlin.test.BeforeTest
 import kotlin.test.assertEquals
@@ -29,6 +29,7 @@ class ExternalAndroidTargetPrototypeSmokeTest {
 
     @BeforeTest
     fun checkSdk() {
+        Assume.assumeFalse("Mute tests on Windows, KT-58608", org.gradle.internal.os.OperatingSystem.current().isWindows)
         assumeAndroidSdkAvailable()
     }
 
@@ -48,6 +49,7 @@ class ExternalAndroidTargetPrototypeSmokeTest {
     @Test
     fun `apply prototype - evaluate - configurations can be resolved`() {
         val project = buildProjectWithMPP()
+        setAndroidSdkDirProperty(project)
         project.androidLibrary { compileSdk = 31 }
 
         val androidTargetPrototype = project.multiplatformExtension.androidTargetPrototype()
@@ -84,7 +86,7 @@ class ExternalAndroidTargetPrototypeSmokeTest {
             applyMultiplatformPlugin()
             repositories.mavenCentralCacheRedirector()
         }
-
+        setAndroidSdkDirProperty(project)
         project.androidLibrary { compileSdk = 31 }
         project.multiplatformExtension.androidTargetPrototype()
         project.evaluate()
