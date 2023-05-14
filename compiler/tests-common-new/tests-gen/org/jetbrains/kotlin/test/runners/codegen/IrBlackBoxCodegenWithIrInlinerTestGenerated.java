@@ -52090,6 +52090,12 @@ public class IrBlackBoxCodegenWithIrInlinerTestGenerated extends AbstractIrBlack
         }
 
         @Test
+        @TestMetadata("mfvcAndIcInsideConstructorsOfEachOther.kt")
+        public void testMfvcAndIcInsideConstructorsOfEachOther() throws Exception {
+            runTest("compiler/testData/codegen/box/valueClasses/mfvcAndIcInsideConstructorsOfEachOther.kt");
+        }
+
+        @Test
         @TestMetadata("mfvcBothEqualsOverride.kt")
         public void testMfvcBothEqualsOverride() throws Exception {
             runTest("compiler/testData/codegen/box/valueClasses/mfvcBothEqualsOverride.kt");
@@ -52147,6 +52153,12 @@ public class IrBlackBoxCodegenWithIrInlinerTestGenerated extends AbstractIrBlack
         @TestMetadata("mutableSharedMfvcVar.kt")
         public void testMutableSharedMfvcVar() throws Exception {
             runTest("compiler/testData/codegen/box/valueClasses/mutableSharedMfvcVar.kt");
+        }
+
+        @Test
+        @TestMetadata("nestedLoweringStart.kt")
+        public void testNestedLoweringStart() throws Exception {
+            runTest("compiler/testData/codegen/box/valueClasses/nestedLoweringStart.kt");
         }
 
         @Test
