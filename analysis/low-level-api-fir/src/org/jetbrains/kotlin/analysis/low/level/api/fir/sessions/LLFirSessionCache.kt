@@ -23,6 +23,8 @@ import org.jetbrains.kotlin.analysis.project.structure.*
 import org.jetbrains.kotlin.analysis.providers.createAnnotationResolver
 import org.jetbrains.kotlin.analysis.providers.createDeclarationProvider
 import org.jetbrains.kotlin.analysis.providers.createPackageProvider
+import org.jetbrains.kotlin.analysis.providers.impl.EmptyKotlinDeclarationProvider
+import org.jetbrains.kotlin.analysis.providers.impl.FileBasedKotlinDeclarationProvider
 import org.jetbrains.kotlin.analysis.utils.trackers.CompositeModificationTracker
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
@@ -142,7 +144,7 @@ internal class LLFirSessionCache(private val project: Project) {
             val provider = LLFirProvider(
                 this,
                 components,
-                project.createDeclarationProvider(contentScope),
+                project.createDeclarationProvider(contentScope, module),
                 project.createPackageProvider(contentScope),
                 /* Source modules can contain `kotlin` package only if `-Xallow-kotlin-package` is specified, this is handled in LLFirProvider */
                 canContainKotlinPackage = false,
@@ -229,7 +231,7 @@ internal class LLFirSessionCache(private val project: Project) {
             val provider = LLFirProvider(
                 this,
                 components,
-                project.createDeclarationProvider(contentScope),
+                project.createDeclarationProvider(contentScope, module),
                 project.createPackageProvider(contentScope),
                 canContainKotlinPackage = true,
             )
@@ -534,7 +536,7 @@ internal class LLFirSessionCache(private val project: Project) {
      * create a combined symbol provider.
      */
     private fun List<FirSymbolProvider>.mergeDependencySymbolProvidersInto(
-        session: FirSession,
+        session: LLFirSession,
         destination: MutableList<FirSymbolProvider>,
     ) {
         SymbolProviderMerger(this, destination).apply {

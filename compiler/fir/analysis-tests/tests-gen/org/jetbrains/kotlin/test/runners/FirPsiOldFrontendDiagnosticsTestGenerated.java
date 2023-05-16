@@ -910,6 +910,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
         }
 
         @Test
+        @TestMetadata("resolutionToTypealiasInsteadOfProperty.kt")
+        public void testResolutionToTypealiasInsteadOfProperty() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/resolutionToTypealiasInsteadOfProperty.kt");
+        }
+
+        @Test
         @TestMetadata("ResolveOfJavaGenerics.kt")
         public void testResolveOfJavaGenerics() throws Exception {
             runTest("compiler/testData/diagnostics/tests/ResolveOfJavaGenerics.kt");
@@ -1249,6 +1255,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
         @TestMetadata("Variance.kt")
         public void testVariance() throws Exception {
             runTest("compiler/testData/diagnostics/tests/Variance.kt");
+        }
+
+        @Test
+        @TestMetadata("whileConditionExpectedType.kt")
+        public void testWhileConditionExpectedType() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/whileConditionExpectedType.kt");
         }
 
         @Nested
@@ -35969,6 +35981,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
         @TestMetadata("InaccessibleInternalClass.kt")
         public void testInaccessibleInternalClass() throws Exception {
             runTest("compiler/testData/diagnostics/testsWithStdLib/InaccessibleInternalClass.kt");
+        }
+
+        @Test
+        @TestMetadata("incorrectComparatorInvocation.kt")
+        public void testIncorrectComparatorInvocation() throws Exception {
+            runTest("compiler/testData/diagnostics/testsWithStdLib/incorrectComparatorInvocation.kt");
         }
 
         @Test
