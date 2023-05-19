@@ -40,6 +40,7 @@ import org.jetbrains.kotlin.analysis.utils.printer.parentOfType
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.analysis.checkers.toRegularClassSymbol
 import org.jetbrains.kotlin.fir.declarations.FirClass
+import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.declarations.FirValueParameter
 import org.jetbrains.kotlin.fir.declarations.fullyExpandedClass
 import org.jetbrains.kotlin.fir.diagnostics.FirDiagnosticHolder
@@ -85,7 +86,11 @@ internal class KtFirCallResolver(
 ) : AbstractKtCallResolver(), KtFirAnalysisSessionComponent {
     private val equalsSymbolInAny: FirNamedFunctionSymbol by lazy(LazyThreadSafetyMode.PUBLICATION) {
         val session = analysisSession.useSiteSession
-        val scope = session.declaredMemberScope(session.builtinTypes.anyType.toRegularClassSymbol(session)!!)
+        val scope = session.declaredMemberScope(
+            session.builtinTypes.anyType.toRegularClassSymbol(session)!!,
+            memberRequiredPhase = FirResolvePhase.STATUS,
+        )
+
         lateinit var result: FirNamedFunctionSymbol
         scope.processFunctionsByName(EQUALS) {
             result = it
@@ -1202,7 +1207,7 @@ internal class KtFirCallResolver(
             analysisSession.useSiteSession,
             analysisSession.getScopeSessionFor(analysisSession.useSiteSession),
             false,
-            memberRequiredPhase = null,
+            memberRequiredPhase = FirResolvePhase.STATUS,
         )
 
         var equalsSymbol: FirNamedFunctionSymbol? = null

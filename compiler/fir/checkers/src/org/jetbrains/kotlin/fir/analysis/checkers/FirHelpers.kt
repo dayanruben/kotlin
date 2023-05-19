@@ -52,7 +52,7 @@ fun FirClass.unsubstitutedScope(context: CheckerContext): FirTypeScope =
         context.sessionHolder.session,
         context.sessionHolder.scopeSession,
         withForcedTypeCalculator = false,
-        memberRequiredPhase = null,
+        memberRequiredPhase = FirResolvePhase.STATUS,
     )
 
 fun FirClassSymbol<*>.unsubstitutedScope(context: CheckerContext): FirTypeScope =
@@ -60,7 +60,7 @@ fun FirClassSymbol<*>.unsubstitutedScope(context: CheckerContext): FirTypeScope 
         context.sessionHolder.session,
         context.sessionHolder.scopeSession,
         withForcedTypeCalculator = false,
-        memberRequiredPhase = null,
+        memberRequiredPhase = FirResolvePhase.STATUS,
     )
 
 fun FirTypeRef.toClassLikeSymbol(session: FirSession): FirClassLikeSymbol<*>? {
@@ -191,17 +191,15 @@ fun CheckerContext.findClosestClassOrObject(): FirClass? {
 fun FirSimpleFunction.overriddenFunctions(
     containingClass: FirClassSymbol<*>,
     context: CheckerContext,
-    memberRequiredPhase: FirResolvePhase?,
 ): List<FirFunctionSymbol<*>> {
-    return symbol.overriddenFunctions(containingClass, context, memberRequiredPhase)
+    return symbol.overriddenFunctions(containingClass, context)
 }
 
 fun FirNamedFunctionSymbol.overriddenFunctions(
     containingClass: FirClassSymbol<*>,
     context: CheckerContext,
-    memberRequiredPhase: FirResolvePhase?,
 ): List<FirFunctionSymbol<*>> {
-    return overriddenFunctions(containingClass, context.session, context.scopeSession, memberRequiredPhase)
+    return overriddenFunctions(containingClass, context.session, context.scopeSession)
 }
 
 fun FirClass.collectSupertypesWithDelegates(): Map<FirTypeRef, FirFieldSymbol?> {
