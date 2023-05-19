@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.analysis.api.fir.scopes
 
 import org.jetbrains.kotlin.analysis.api.fir.KtSymbolByFirBuilder
-import org.jetbrains.kotlin.analysis.api.fir.utils.cached
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.scopes.KtScope
@@ -15,35 +14,29 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPackageSymbol
-import org.jetbrains.kotlin.fir.scopes.FirContainingNamesAwareScope
+import org.jetbrains.kotlin.fir.scopes.FirScope
 import org.jetbrains.kotlin.name.Name
 
-internal open class KtFirDelegatingScope(
-    val firScope: FirContainingNamesAwareScope,
-    private val builder: KtSymbolByFirBuilder,
+internal abstract class KtFirBasedScope<S : FirScope>(
+    internal val firScope: S,
+    protected val builder: KtSymbolByFirBuilder,
 ) : KtScope {
-    override val token: KtLifetimeToken get() = builder.token
-
-    private val allNamesCached by cached {
-        getPossibleCallableNames() + getPossibleClassifierNames()
-    }
-
-    override fun getAllPossibleNames(): Set<Name> = withValidityAssertion { allNamesCached }
-
-    override fun getPossibleCallableNames(): Set<Name> = withValidityAssertion {
-        firScope.getCallableNames()
-    }
-
-    override fun getPossibleClassifierNames(): Set<Name> = withValidityAssertion {
-        firScope.getClassifierNames()
-    }
+    final override val token: KtLifetimeToken get() = builder.token
 
     override fun getCallableSymbols(nameFilter: KtScopeNameFilter): Sequence<KtCallableSymbol> = withValidityAssertion {
         firScope.getCallableSymbols(getPossibleCallableNames().filter(nameFilter), builder)
     }
 
+    override fun getCallableSymbols(names: Collection<Name>): Sequence<KtCallableSymbol> = withValidityAssertion {
+        firScope.getCallableSymbols(names, builder)
+    }
+
     override fun getClassifierSymbols(nameFilter: KtScopeNameFilter): Sequence<KtClassifierSymbol> = withValidityAssertion {
         firScope.getClassifierSymbols(getPossibleClassifierNames().filter(nameFilter), builder)
+    }
+
+    override fun getClassifierSymbols(names: Collection<Name>): Sequence<KtClassifierSymbol> = withValidityAssertion {
+        firScope.getClassifierSymbols(names, builder)
     }
 
     override fun getConstructors(): Sequence<KtConstructorSymbol> = withValidityAssertion {
@@ -53,10 +46,5 @@ internal open class KtFirDelegatingScope(
     override fun getPackageSymbols(nameFilter: KtScopeNameFilter): Sequence<KtPackageSymbol> = withValidityAssertion {
         emptySequence()
     }
-
-    override fun mayContainName(name: Name): Boolean = withValidityAssertion {
-        name in getAllPossibleNames()
-    }
-
 }
 
