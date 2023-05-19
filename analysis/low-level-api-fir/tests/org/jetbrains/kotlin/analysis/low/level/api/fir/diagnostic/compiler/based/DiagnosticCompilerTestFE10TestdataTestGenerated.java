@@ -5073,6 +5073,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
             }
 
             @Test
+            @TestMetadata("kt51062Error.kt")
+            public void testKt51062Error() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/checkArguments/kt51062Error.kt");
+            }
+
+            @Test
             @TestMetadata("overloadedFunction.kt")
             public void testOverloadedFunction() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/checkArguments/overloadedFunction.kt");
@@ -23748,6 +23754,18 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
             @TestMetadata("ToAbstractMembersFromSuper-kt1996.kt")
             public void testToAbstractMembersFromSuper_kt1996() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/override/ToAbstractMembersFromSuper-kt1996.kt");
+            }
+
+            @Test
+            @TestMetadata("varImplementedByInheritedVal.kt")
+            public void testVarImplementedByInheritedVal() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/override/varImplementedByInheritedVal.kt");
+            }
+
+            @Test
+            @TestMetadata("varImplementedByInheritedValError.kt")
+            public void testVarImplementedByInheritedValError() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/override/varImplementedByInheritedValError.kt");
             }
 
             @Nested

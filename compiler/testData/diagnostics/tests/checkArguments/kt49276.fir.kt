@@ -1,5 +1,5 @@
 // WITH_STDLIB
-// !LANGUAGE: +ProgressionsChangingResolve -DisableCheckingChangedProgressionsResolve
+// !LANGUAGE: -ProgressionsChangingResolve -DisableCheckingChangedProgressionsResolve
 // This test is not K1/K2 identical due to KT-58789 not implemented yet
 
 fun <E> SmartList(x: E) {}
@@ -20,11 +20,14 @@ fun append3(x: In<Collection<*>>) {}
 fun <E> append4(x: E) {}
 fun <E: Collection<*>> append4(x: E) {}
 
+fun <T> takes(range: T) {}
+fun <T> takes(range: T) where T : Collection<*>, T: ClosedRange<*> {}
+
 fun main() {
-    SmartList(<!PROGRESSIONS_CHANGING_RESOLVE_ERROR("fun <E> SmartList(x: Collection<E>): Unit")!>1..2<!>) // warning
+    SmartList(1..2) // warning
     SmartList<IntRange>(1..10) // no warning
 
-    append(<!PROGRESSIONS_CHANGING_RESOLVE_ERROR("fun append(x: Collection<*>): Unit")!>1..10<!>)    // warning
+    append(1..10)    // warning
     append((1..10) as Any) // no warning
     append((1..10) as Iterable<Int>) // no warning
     append("a".."z") // no warning, the range is not iterable
@@ -34,5 +37,9 @@ fun main() {
 
     append3(In(1..10))    // no warning
 
-    append4(<!PROGRESSIONS_CHANGING_RESOLVE_ERROR("fun <E : Collection<*>> append4(x: E): Unit")!>1..10<!>)    // warning
+    append4(1..10)    // warning
+
+    append4<IntRange>(1..10)    // warning
+
+    takes(1..10)    // warning
 }
