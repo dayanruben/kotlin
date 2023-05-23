@@ -2019,8 +2019,32 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = MustBeInitialized::class
     }
 
+    abstract class MustBeInitializedWarning : KtFirDiagnostic<KtProperty>() {
+        override val diagnosticClass get() = MustBeInitializedWarning::class
+    }
+
+    abstract class MustBeInitializedOrBeFinal : KtFirDiagnostic<KtProperty>() {
+        override val diagnosticClass get() = MustBeInitializedOrBeFinal::class
+    }
+
+    abstract class MustBeInitializedOrBeFinalWarning : KtFirDiagnostic<KtProperty>() {
+        override val diagnosticClass get() = MustBeInitializedOrBeFinalWarning::class
+    }
+
     abstract class MustBeInitializedOrBeAbstract : KtFirDiagnostic<KtProperty>() {
         override val diagnosticClass get() = MustBeInitializedOrBeAbstract::class
+    }
+
+    abstract class MustBeInitializedOrBeAbstractWarning : KtFirDiagnostic<KtProperty>() {
+        override val diagnosticClass get() = MustBeInitializedOrBeAbstractWarning::class
+    }
+
+    abstract class MustBeInitializedOrFinalOrAbstract : KtFirDiagnostic<KtProperty>() {
+        override val diagnosticClass get() = MustBeInitializedOrFinalOrAbstract::class
+    }
+
+    abstract class MustBeInitializedOrFinalOrAbstractWarning : KtFirDiagnostic<KtProperty>() {
+        override val diagnosticClass get() = MustBeInitializedOrFinalOrAbstractWarning::class
     }
 
     abstract class ExtensionPropertyMustHaveAccessorsOrBeAbstract : KtFirDiagnostic<KtProperty>() {
@@ -2264,6 +2288,14 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
 
     abstract class ExpectedPrivateDeclaration : KtFirDiagnostic<KtModifierListOwner>() {
         override val diagnosticClass get() = ExpectedPrivateDeclaration::class
+    }
+
+    abstract class ExpectedExternalDeclaration : KtFirDiagnostic<KtModifierListOwner>() {
+        override val diagnosticClass get() = ExpectedExternalDeclaration::class
+    }
+
+    abstract class ExpectedTailrecFunction : KtFirDiagnostic<KtModifierListOwner>() {
+        override val diagnosticClass get() = ExpectedTailrecFunction::class
     }
 
     abstract class ImplementationByDelegationInExpectClass : KtFirDiagnostic<KtDelegatedSuperTypeEntry>() {

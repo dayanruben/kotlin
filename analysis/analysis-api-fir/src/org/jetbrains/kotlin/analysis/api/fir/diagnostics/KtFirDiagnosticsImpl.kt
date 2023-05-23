@@ -2425,10 +2425,40 @@ internal class MustBeInitializedImpl(
     override val token: KtLifetimeToken,
 ) : KtFirDiagnostic.MustBeInitialized(), KtAbstractFirDiagnostic<KtProperty>
 
+internal class MustBeInitializedWarningImpl(
+    override val firDiagnostic: KtPsiDiagnostic,
+    override val token: KtLifetimeToken,
+) : KtFirDiagnostic.MustBeInitializedWarning(), KtAbstractFirDiagnostic<KtProperty>
+
+internal class MustBeInitializedOrBeFinalImpl(
+    override val firDiagnostic: KtPsiDiagnostic,
+    override val token: KtLifetimeToken,
+) : KtFirDiagnostic.MustBeInitializedOrBeFinal(), KtAbstractFirDiagnostic<KtProperty>
+
+internal class MustBeInitializedOrBeFinalWarningImpl(
+    override val firDiagnostic: KtPsiDiagnostic,
+    override val token: KtLifetimeToken,
+) : KtFirDiagnostic.MustBeInitializedOrBeFinalWarning(), KtAbstractFirDiagnostic<KtProperty>
+
 internal class MustBeInitializedOrBeAbstractImpl(
     override val firDiagnostic: KtPsiDiagnostic,
     override val token: KtLifetimeToken,
 ) : KtFirDiagnostic.MustBeInitializedOrBeAbstract(), KtAbstractFirDiagnostic<KtProperty>
+
+internal class MustBeInitializedOrBeAbstractWarningImpl(
+    override val firDiagnostic: KtPsiDiagnostic,
+    override val token: KtLifetimeToken,
+) : KtFirDiagnostic.MustBeInitializedOrBeAbstractWarning(), KtAbstractFirDiagnostic<KtProperty>
+
+internal class MustBeInitializedOrFinalOrAbstractImpl(
+    override val firDiagnostic: KtPsiDiagnostic,
+    override val token: KtLifetimeToken,
+) : KtFirDiagnostic.MustBeInitializedOrFinalOrAbstract(), KtAbstractFirDiagnostic<KtProperty>
+
+internal class MustBeInitializedOrFinalOrAbstractWarningImpl(
+    override val firDiagnostic: KtPsiDiagnostic,
+    override val token: KtLifetimeToken,
+) : KtFirDiagnostic.MustBeInitializedOrFinalOrAbstractWarning(), KtAbstractFirDiagnostic<KtProperty>
 
 internal class ExtensionPropertyMustHaveAccessorsOrBeAbstractImpl(
     override val firDiagnostic: KtPsiDiagnostic,
@@ -2730,6 +2760,16 @@ internal class ExpectedPrivateDeclarationImpl(
     override val firDiagnostic: KtPsiDiagnostic,
     override val token: KtLifetimeToken,
 ) : KtFirDiagnostic.ExpectedPrivateDeclaration(), KtAbstractFirDiagnostic<KtModifierListOwner>
+
+internal class ExpectedExternalDeclarationImpl(
+    override val firDiagnostic: KtPsiDiagnostic,
+    override val token: KtLifetimeToken,
+) : KtFirDiagnostic.ExpectedExternalDeclaration(), KtAbstractFirDiagnostic<KtModifierListOwner>
+
+internal class ExpectedTailrecFunctionImpl(
+    override val firDiagnostic: KtPsiDiagnostic,
+    override val token: KtLifetimeToken,
+) : KtFirDiagnostic.ExpectedTailrecFunction(), KtAbstractFirDiagnostic<KtModifierListOwner>
 
 internal class ImplementationByDelegationInExpectClassImpl(
     override val firDiagnostic: KtPsiDiagnostic,

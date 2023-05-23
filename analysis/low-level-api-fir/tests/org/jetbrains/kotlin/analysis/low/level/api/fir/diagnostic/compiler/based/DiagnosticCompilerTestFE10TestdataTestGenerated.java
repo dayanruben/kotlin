@@ -448,6 +448,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
         }
 
         @Test
+        @TestMetadata("invisibleClassInsteadOfFun.kt")
+        public void testInvisibleClassInsteadOfFun() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/invisibleClassInsteadOfFun.kt");
+        }
+
+        @Test
         @TestMetadata("InvokeAndRecursiveResolve.kt")
         public void testInvokeAndRecursiveResolve() throws Exception {
             runTest("compiler/testData/diagnostics/tests/InvokeAndRecursiveResolve.kt");
@@ -2979,9 +2985,181 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
             }
 
             @Test
+            @TestMetadata("OpenValPartialDeferredInitErrorAnyway.kt")
+            public void testOpenValPartialDeferredInitErrorAnyway() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/backingField/OpenValPartialDeferredInitErrorAnyway.kt");
+            }
+
+            @Test
+            @TestMetadata("OpenValPartialDeferredInitSecondaryConstructorErrorAnyway.kt")
+            public void testOpenValPartialDeferredInitSecondaryConstructorErrorAnyway() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/backingField/OpenValPartialDeferredInitSecondaryConstructorErrorAnyway.kt");
+            }
+
+            @Test
+            @TestMetadata("OpenValPartialDeferredInitTwoSecondaryConstructorsErrorAnyway.kt")
+            public void testOpenValPartialDeferredInitTwoSecondaryConstructorsErrorAnyway() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/backingField/OpenValPartialDeferredInitTwoSecondaryConstructorsErrorAnyway.kt");
+            }
+
+            @Test
             @TestMetadata("SetterWithExplicitType.kt")
             public void testSetterWithExplicitType() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/backingField/SetterWithExplicitType.kt");
+            }
+
+            @Test
+            @TestMetadata("ValDeferredInitInFinalClass.kt")
+            public void testValDeferredInitInFinalClass() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/backingField/ValDeferredInitInFinalClass.kt");
+            }
+
+            @Test
+            @TestMetadata("ValDeferredInitInOpenClassOpenValError.kt")
+            public void testValDeferredInitInOpenClassOpenValError() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/backingField/ValDeferredInitInOpenClassOpenValError.kt");
+            }
+
+            @Test
+            @TestMetadata("ValDeferredInitInOpenClassOpenValWarning.kt")
+            public void testValDeferredInitInOpenClassOpenValWarning() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/backingField/ValDeferredInitInOpenClassOpenValWarning.kt");
+            }
+
+            @Test
+            @TestMetadata("ValWithSetterDeferredInit.kt")
+            public void testValWithSetterDeferredInit() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/backingField/ValWithSetterDeferredInit.kt");
+            }
+
+            @Test
+            @TestMetadata("VarDeferredInitInFinalClass.kt")
+            public void testVarDeferredInitInFinalClass() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/backingField/VarDeferredInitInFinalClass.kt");
+            }
+
+            @Test
+            @TestMetadata("VarDeferredInitInOpenClass.kt")
+            public void testVarDeferredInitInOpenClass() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/backingField/VarDeferredInitInOpenClass.kt");
+            }
+
+            @Nested
+            @TestMetadata("compiler/testData/diagnostics/tests/backingField/prohibitMissedMustBeInitializedWhenThereIsNoPrimaryConstructor")
+            @TestDataPath("$PROJECT_ROOT")
+            public class ProhibitMissedMustBeInitializedWhenThereIsNoPrimaryConstructor {
+                @Test
+                public void testAllFilesPresentInProhibitMissedMustBeInitializedWhenThereIsNoPrimaryConstructor() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/backingField/prohibitMissedMustBeInitializedWhenThereIsNoPrimaryConstructor"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true, "multiplatform");
+                }
+
+                @Test
+                @TestMetadata("implicitPrimaryConstructor_errorAnyway.kt")
+                public void testImplicitPrimaryConstructor_errorAnyway() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/backingField/prohibitMissedMustBeInitializedWhenThereIsNoPrimaryConstructor/implicitPrimaryConstructor_errorAnyway.kt");
+                }
+
+                @Test
+                @TestMetadata("noPrimary_oneInheritedSecondary_mustBeInitializedError.kt")
+                public void testNoPrimary_oneInheritedSecondary_mustBeInitializedError() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/backingField/prohibitMissedMustBeInitializedWhenThereIsNoPrimaryConstructor/noPrimary_oneInheritedSecondary_mustBeInitializedError.kt");
+                }
+
+                @Test
+                @TestMetadata("noPrimary_oneInheritedSecondary_mustBeInitializedWarning.kt")
+                public void testNoPrimary_oneInheritedSecondary_mustBeInitializedWarning() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/backingField/prohibitMissedMustBeInitializedWhenThereIsNoPrimaryConstructor/noPrimary_oneInheritedSecondary_mustBeInitializedWarning.kt");
+                }
+
+                @Test
+                @TestMetadata("noPrimary_oneSecondary_deferredInitInSecondary_mustBeInitializedError.kt")
+                public void testNoPrimary_oneSecondary_deferredInitInSecondary_mustBeInitializedError() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/backingField/prohibitMissedMustBeInitializedWhenThereIsNoPrimaryConstructor/noPrimary_oneSecondary_deferredInitInSecondary_mustBeInitializedError.kt");
+                }
+
+                @Test
+                @TestMetadata("noPrimary_oneSecondary_deferredInitInSecondary_mustBeInitializedWarning.kt")
+                public void testNoPrimary_oneSecondary_deferredInitInSecondary_mustBeInitializedWarning() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/backingField/prohibitMissedMustBeInitializedWhenThereIsNoPrimaryConstructor/noPrimary_oneSecondary_deferredInitInSecondary_mustBeInitializedWarning.kt");
+                }
+
+                @Test
+                @TestMetadata("noPrimary_oneSecondary_mustBeInitializedError.kt")
+                public void testNoPrimary_oneSecondary_mustBeInitializedError() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/backingField/prohibitMissedMustBeInitializedWhenThereIsNoPrimaryConstructor/noPrimary_oneSecondary_mustBeInitializedError.kt");
+                }
+
+                @Test
+                @TestMetadata("noPrimary_oneSecondary_mustBeInitializedWarning.kt")
+                public void testNoPrimary_oneSecondary_mustBeInitializedWarning() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/backingField/prohibitMissedMustBeInitializedWhenThereIsNoPrimaryConstructor/noPrimary_oneSecondary_mustBeInitializedWarning.kt");
+                }
+
+                @Test
+                @TestMetadata("noPrimary_oneSecondary_openValError_mustBeInitializedError.kt")
+                public void testNoPrimary_oneSecondary_openValError_mustBeInitializedError() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/backingField/prohibitMissedMustBeInitializedWhenThereIsNoPrimaryConstructor/noPrimary_oneSecondary_openValError_mustBeInitializedError.kt");
+                }
+
+                @Test
+                @TestMetadata("noPrimary_oneSecondary_openValError_mustBeInitializedWarning.kt")
+                public void testNoPrimary_oneSecondary_openValError_mustBeInitializedWarning() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/backingField/prohibitMissedMustBeInitializedWhenThereIsNoPrimaryConstructor/noPrimary_oneSecondary_openValError_mustBeInitializedWarning.kt");
+                }
+
+                @Test
+                @TestMetadata("noPrimary_oneSecondary_openValWarning_mustBeInitializedError.kt")
+                public void testNoPrimary_oneSecondary_openValWarning_mustBeInitializedError() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/backingField/prohibitMissedMustBeInitializedWhenThereIsNoPrimaryConstructor/noPrimary_oneSecondary_openValWarning_mustBeInitializedError.kt");
+                }
+
+                @Test
+                @TestMetadata("noPrimary_oneSecondary_openValWarning_mustBeInitializedWarning.kt")
+                public void testNoPrimary_oneSecondary_openValWarning_mustBeInitializedWarning() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/backingField/prohibitMissedMustBeInitializedWhenThereIsNoPrimaryConstructor/noPrimary_oneSecondary_openValWarning_mustBeInitializedWarning.kt");
+                }
+
+                @Test
+                @TestMetadata("noPrimary_oneSecondary_openVar_mustBeInitializedError.kt")
+                public void testNoPrimary_oneSecondary_openVar_mustBeInitializedError() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/backingField/prohibitMissedMustBeInitializedWhenThereIsNoPrimaryConstructor/noPrimary_oneSecondary_openVar_mustBeInitializedError.kt");
+                }
+
+                @Test
+                @TestMetadata("noPrimary_oneSecondary_openVar_mustBeInitializedWarning.kt")
+                public void testNoPrimary_oneSecondary_openVar_mustBeInitializedWarning() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/backingField/prohibitMissedMustBeInitializedWhenThereIsNoPrimaryConstructor/noPrimary_oneSecondary_openVar_mustBeInitializedWarning.kt");
+                }
+
+                @Test
+                @TestMetadata("noPrimary_partialDeferredInitInSecondary_errorAnyway.kt")
+                public void testNoPrimary_partialDeferredInitInSecondary_errorAnyway() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/backingField/prohibitMissedMustBeInitializedWhenThereIsNoPrimaryConstructor/noPrimary_partialDeferredInitInSecondary_errorAnyway.kt");
+                }
+
+                @Test
+                @TestMetadata("noPrimary_partialDeferredInitInTwoSecondaries_errorAnyway.kt")
+                public void testNoPrimary_partialDeferredInitInTwoSecondaries_errorAnyway() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/backingField/prohibitMissedMustBeInitializedWhenThereIsNoPrimaryConstructor/noPrimary_partialDeferredInitInTwoSecondaries_errorAnyway.kt");
+                }
+
+                @Test
+                @TestMetadata("noPrimary_twoSecondary_mustBeInitializedError.kt")
+                public void testNoPrimary_twoSecondary_mustBeInitializedError() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/backingField/prohibitMissedMustBeInitializedWhenThereIsNoPrimaryConstructor/noPrimary_twoSecondary_mustBeInitializedError.kt");
+                }
+
+                @Test
+                @TestMetadata("noPrimary_twoSecondary_mustBeInitializedWarning.kt")
+                public void testNoPrimary_twoSecondary_mustBeInitializedWarning() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/backingField/prohibitMissedMustBeInitializedWhenThereIsNoPrimaryConstructor/noPrimary_twoSecondary_mustBeInitializedWarning.kt");
+                }
+
+                @Test
+                @TestMetadata("onePrimary_oneSecondary_errorAnyway.kt")
+                public void testOnePrimary_oneSecondary_errorAnyway() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/backingField/prohibitMissedMustBeInitializedWhenThereIsNoPrimaryConstructor/onePrimary_oneSecondary_errorAnyway.kt");
+                }
             }
         }
 
@@ -14610,6 +14788,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
             @TestMetadata("genericAssignmentOperator.kt")
             public void testGenericAssignmentOperator() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/inference/genericAssignmentOperator.kt");
+            }
+
+            @Test
+            @TestMetadata("genericCallInThrow.kt")
+            public void testGenericCallInThrow() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inference/genericCallInThrow.kt");
             }
 
             @Test
@@ -36841,6 +37025,76 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
                     runTest("compiler/testData/diagnostics/testsWithStdLib/annotations/prohibitPositionedArgument/withoutValue.kt");
                 }
             }
+
+            @Nested
+            @TestMetadata("compiler/testData/diagnostics/testsWithStdLib/annotations/subclassOptInRequired")
+            @TestDataPath("$PROJECT_ROOT")
+            public class SubclassOptInRequired {
+                @Test
+                public void testAllFilesPresentInSubclassOptInRequired() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/testsWithStdLib/annotations/subclassOptInRequired"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);
+                }
+
+                @Test
+                @TestMetadata("CorrectApplicability.kt")
+                public void testCorrectApplicability() throws Exception {
+                    runTest("compiler/testData/diagnostics/testsWithStdLib/annotations/subclassOptInRequired/CorrectApplicability.kt");
+                }
+
+                @Test
+                @TestMetadata("IncorrectApplicability.kt")
+                public void testIncorrectApplicability() throws Exception {
+                    runTest("compiler/testData/diagnostics/testsWithStdLib/annotations/subclassOptInRequired/IncorrectApplicability.kt");
+                }
+
+                @Test
+                @TestMetadata("InheritingByLocalClassifiers.kt")
+                public void testInheritingByLocalClassifiers() throws Exception {
+                    runTest("compiler/testData/diagnostics/testsWithStdLib/annotations/subclassOptInRequired/InheritingByLocalClassifiers.kt");
+                }
+
+                @Test
+                @TestMetadata("InheritingDifferentOptInLevels.kt")
+                public void testInheritingDifferentOptInLevels() throws Exception {
+                    runTest("compiler/testData/diagnostics/testsWithStdLib/annotations/subclassOptInRequired/InheritingDifferentOptInLevels.kt");
+                }
+
+                @Test
+                @TestMetadata("NotApiMarkerAsArgument.kt")
+                public void testNotApiMarkerAsArgument() throws Exception {
+                    runTest("compiler/testData/diagnostics/testsWithStdLib/annotations/subclassOptInRequired/NotApiMarkerAsArgument.kt");
+                }
+
+                @Test
+                @TestMetadata("UsageOptInIsNotImplied.kt")
+                public void testUsageOptInIsNotImplied() throws Exception {
+                    runTest("compiler/testData/diagnostics/testsWithStdLib/annotations/subclassOptInRequired/UsageOptInIsNotImplied.kt");
+                }
+
+                @Test
+                @TestMetadata("WithAbstractClasses.kt")
+                public void testWithAbstractClasses() throws Exception {
+                    runTest("compiler/testData/diagnostics/testsWithStdLib/annotations/subclassOptInRequired/WithAbstractClasses.kt");
+                }
+
+                @Test
+                @TestMetadata("WithInheritanceByDelegation.kt")
+                public void testWithInheritanceByDelegation() throws Exception {
+                    runTest("compiler/testData/diagnostics/testsWithStdLib/annotations/subclassOptInRequired/WithInheritanceByDelegation.kt");
+                }
+
+                @Test
+                @TestMetadata("WithInterfaces.kt")
+                public void testWithInterfaces() throws Exception {
+                    runTest("compiler/testData/diagnostics/testsWithStdLib/annotations/subclassOptInRequired/WithInterfaces.kt");
+                }
+
+                @Test
+                @TestMetadata("WithOpenClasses.kt")
+                public void testWithOpenClasses() throws Exception {
+                    runTest("compiler/testData/diagnostics/testsWithStdLib/annotations/subclassOptInRequired/WithOpenClasses.kt");
+                }
+            }
         }
 
         @Nested
@@ -39056,24 +39310,6 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
             @TestMetadata("overrideInPrimaryConstructor.kt")
             public void testOverrideInPrimaryConstructor() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/overrideInPrimaryConstructor.kt");
-            }
-
-            @Test
-            @TestMetadata("subClassOptInModality.kt")
-            public void testSubClassOptInModality() throws Exception {
-                runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/subClassOptInModality.kt");
-            }
-
-            @Test
-            @TestMetadata("subClassOptInRequired.kt")
-            public void testSubClassOptInRequired() throws Exception {
-                runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/subClassOptInRequired.kt");
-            }
-
-            @Test
-            @TestMetadata("subclassOptInInheritance.kt")
-            public void testSubclassOptInInheritance() throws Exception {
-                runTest("compiler/testData/diagnostics/testsWithStdLib/experimental/subclassOptInInheritance.kt");
             }
 
             @Test
