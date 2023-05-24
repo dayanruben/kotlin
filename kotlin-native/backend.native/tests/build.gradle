@@ -3999,14 +3999,12 @@ standaloneTest("testing_stacktrace") {
 // Just check that the driver is able to produce runnable binaries.
 tasks.register("driver0", KonanDriverTest) {
     disabled = isAggressiveGC // No need to test with different GC schedulers
-        || isK2(project) // KT-56855
     useGoldenData = true
     source = "runtime/basic/driver0.kt"
 }
 
 tasks.register("driver_opt", KonanDriverTest) {
     disabled = (cacheTesting != null) // Cache is not compatible with -opt.
-        || isK2(project) // KT-56855
         || isAggressiveGC // No need to test with different GC schedulers
     useGoldenData = true
     source = "runtime/basic/driver_opt.kt"
@@ -4855,8 +4853,7 @@ interopTest("interop_cppSkia") {
 }
 
 interopTest("interop_cppSkiaSignature") {
-    disabled = (project.testTarget == 'wasm32' || // No interop for wasm yet.
-            isK2(project)) || // KT-57484
+    disabled = (project.testTarget == 'wasm32') || // No interop for wasm yet.
             isAppleTarget(project) // KT-58422
     source = "interop/cpp/skiaSignature.kt"
     interop = "cppSkiaSignature"
@@ -4909,7 +4906,6 @@ if (PlatformInfo.isAppleTarget(project)) {
         enabled = !isNoopGC
         source = "interop/objc/smoke.kt"
         interop = 'objcSmoke'
-        verifyIr = false  // KT-57716
         doBeforeBuild {
             mkdir(buildDir)
             project.extensions.execClang.execClangForCompilerTests(project.target) {
@@ -4935,7 +4931,6 @@ if (PlatformInfo.isAppleTarget(project)) {
         enabled = isNoopGC
         source = "interop/objc/smoke_noopgc.kt"
         interop = 'objcSmoke'
-        verifyIr = false  // KT-57716
         doBeforeBuild {
             mkdir(buildDir)
             project.extensions.execClang.execClangForCompilerTests(project.target) {
@@ -4959,7 +4954,6 @@ if (PlatformInfo.isAppleTarget(project)) {
     }
 
     interopTestMultifile("interop_objc_tests") {
-        disabled = isK2(project) // KT-57504
         source = "interop/objc/tests/"
         interop = 'objcTests'
         flags = ['-tr', '-e', 'main']
@@ -5552,8 +5546,7 @@ interopTest("interop_exceptions_cCallback") {
 }
 
 tasks.register("library_ir_provider_mismatch", KonanDriverTest) {
-    disabled = isAggressiveGC || // No need to test with different GC schedulers
-            isK2(project) // KT-56855
+    disabled = isAggressiveGC // No need to test with different GC schedulers
 
     def dir = buildDir.absolutePath
     def lib = "$projectDir/link/ir_providers/library/empty.kt"
@@ -6154,7 +6147,6 @@ standaloneTest("local_ea_arraysfieldwrite") {
 
 tasks.register("override_konan_properties0", KonanDriverTest) {
     disabled = isAggressiveGC // No need to test with different GC schedulers
-        || isK2(project)  // KT-56855
     def overrides = PlatformInfo.isWindows()
             ? '-Xoverride-konan-properties="llvmInlineThreshold=76"'
             : '-Xoverride-konan-properties=llvmInlineThreshold=76'
@@ -6178,7 +6170,6 @@ tasks.register("llvm_variant_dev", KonanDriverTest) {
     // so it is hard to reliably detect LLVM variant for these targets.
     disabled = isAppleTarget(project)
         || isAggressiveGC // No need to test with different GC schedulers
-        || isK2(project) // KT-56855
     flags = [
             "-Xllvm-variant=dev",
             "-Xverbose-phases=ObjectFiles"

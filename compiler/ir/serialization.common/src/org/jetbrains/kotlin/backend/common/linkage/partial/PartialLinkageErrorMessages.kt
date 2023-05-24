@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.ir.linkage.partial.ExploredClassifier.Unusable
 import org.jetbrains.kotlin.ir.linkage.partial.PartialLinkageCase
 import org.jetbrains.kotlin.ir.linkage.partial.PartialLinkageCase.*
 import org.jetbrains.kotlin.ir.symbols.*
+import org.jetbrains.kotlin.ir.types.classifierOrFail
 import org.jetbrains.kotlin.ir.util.IdSignature.*
 import org.jetbrains.kotlin.ir.util.isAnonymousObject
 import org.jetbrains.kotlin.ir.util.parentAsClass
@@ -54,6 +55,10 @@ internal fun PartialLinkageCase.renderLinkageError(): String = buildString {
             )
         }
 
+        is InvalidSamConversion -> expression(expression) {
+            invalidSamConversion(expression, abstractFunctionSymbols, abstractPropertySymbol)
+        }
+
         is SuspendableFunctionCallWithoutCoroutineContext -> expression(expression) {
             suspendableCallWithoutCoroutine()
         }
@@ -74,6 +79,8 @@ internal fun PartialLinkageCase.renderLinkageError(): String = buildString {
 
         is UnimplementedAbstractCallable -> unimplementedAbstractCallable(callable)
         is UnusableAnnotation -> unusableAnnotation(annotationConstructorSymbol, holderDeclarationSymbol)
+
+        is AmbiguousNonOverriddenCallable -> ambiguousNonOverriddenCallable(callable)
     }
 }
 
@@ -143,6 +150,7 @@ private enum class ExpressionKind(val prefix: String?, val postfix: String?) {
     WRITING("Can not write value to", null),
     GETTING_INSTANCE("Can not get instance of", null),
     TYPE_OPERATOR("Type operator expression", "can not be evaluated"),
+    SAM_CONVERSION("Single abstract method (SAM) conversion expression", "can not be evaluated"),
     ANONYMOUS_OBJECT_LITERAL("Anonymous object literal", "can not be evaluated"),
     OTHER_EXPRESSION("Expression", "can not be evaluated")
 }
@@ -169,7 +177,12 @@ private val IrExpression.expression: Expression
             else -> Expression(REFERENCE, OTHER_DECLARATION)
         }
         is IrInstanceInitializerCall -> Expression(CALLING_INSTANCE_INITIALIZER, classSymbol.declarationKind)
-        is IrTypeOperatorCall -> Expression(TYPE_OPERATOR, null)
+        is IrTypeOperatorCall -> {
+            if (operator == IrTypeOperator.SAM_CONVERSION)
+                Expression(SAM_CONVERSION, null)
+            else
+                Expression(TYPE_OPERATOR, null)
+        }
         else -> {
             if (this is IrBlock && origin == IrStatementOrigin.OBJECT_LITERAL)
                 Expression(ANONYMOUS_OBJECT_LITERAL, null)
@@ -264,6 +277,17 @@ private fun Appendable.declarationKindName(symbol: IrSymbol, capitalized: Boolea
         else -> Unit
     }
     return append(" ").declarationName(symbol)
+}
+
+// Note: All items are rendered lower-case.
+private fun Appendable.sortedDeclarationsKindName(symbols: Set<IrSymbol>): Appendable {
+    symbols.map { symbol -> buildString inner@ { this@inner.declarationKindName(symbol, capitalized = false) } }.sorted().joinTo(this)
+    return this
+}
+
+private fun Appendable.sortedDeclarationsName(symbols: Set<IrSymbol>): Appendable {
+    symbols.map { symbol -> buildString inner@ { this@inner.declarationName(symbol) } }.sorted().joinTo(this)
+    return this
 }
 
 private fun Appendable.declarationNameIsKind(symbol: IrSymbol): Appendable =
@@ -515,18 +539,27 @@ private fun Appendable.memberAccessExpressionArgumentsMismatch(
             .append(functionValueParameterCount.toString()).append(")")
 }
 
+private fun Appendable.invalidSamConversion(
+    expression: IrTypeOperatorCall,
+    abstractFunctionSymbols: Set<IrSimpleFunctionSymbol>,
+    abstractPropertySymbol: IrPropertySymbol?,
+): Appendable {
+    declarationKindName(expression.typeOperand.classifierOrFail, capitalized = true)
+    return when {
+        abstractPropertySymbol != null -> append(" has abstract ").declarationKindName(abstractPropertySymbol, capitalized = false)
+        abstractFunctionSymbols.isEmpty() -> append(" does not have an abstract function")
+        else -> append(" has more than one abstract function: ").sortedDeclarationsName(abstractFunctionSymbols)
+    }
+}
+
 private fun Appendable.suspendableCallWithoutCoroutine(): Appendable =
     append("Suspend function can be called only from a coroutine or another suspend function")
 
-private fun Appendable.illegalNonLocalReturn(expression: IrReturn, validReturnTargets: Set<IrReturnTargetSymbol>): Appendable {
-    append("Illegal non-local return: The return target is ").declarationKindName(expression.returnTargetSymbol, capitalized = false)
-    append(" while only the following return targets are allowed: ")
-    validReturnTargets.forEachIndexed { index, returnTarget ->
-        if (index > 0) append(", ")
-        declarationKindName(returnTarget, capitalized = false)
-    }
-    return this
-}
+private fun Appendable.illegalNonLocalReturn(expression: IrReturn, validReturnTargets: Set<IrReturnTargetSymbol>): Appendable =
+    append("Illegal non-local return: The return target is ")
+        .declarationKindName(expression.returnTargetSymbol, capitalized = false)
+        .append(" while only the following return targets are allowed: ")
+        .sortedDeclarationsKindName(validReturnTargets)
 
 private fun Appendable.inaccessibleDeclaration(
     referencedDeclarationSymbol: IrSymbol,
@@ -556,6 +589,13 @@ private fun Appendable.unimplementedAbstractCallable(callable: IrOverridableDecl
 private fun Appendable.unusableAnnotation(annotationConstructorSymbol: IrConstructorSymbol, holderDeclarationSymbol: IrSymbol): Appendable =
     append("Unusable annotation ").declarationName(annotationConstructorSymbol)
         .append(" has been removed from ").declarationKindName(holderDeclarationSymbol, capitalized = false)
+
+private fun Appendable.ambiguousNonOverriddenCallable(callable: IrOverridableDeclaration<*>): Appendable =
+    declarationKindName(callable.symbol, capitalized = true)
+        .append(" in ")
+        .declarationKindName(callable.parentAsClass.symbol, capitalized = false)
+        .append(" inherits more than one default implementation")
+
 
 private fun Appendable.appendCapitalized(text: String, capitalized: Boolean): Appendable {
     if (capitalized && text.isNotEmpty()) {
