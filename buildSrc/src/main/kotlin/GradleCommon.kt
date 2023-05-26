@@ -104,7 +104,13 @@ fun Project.excludeGradleCommonDependencies(sourceSet: SourceSet) {
     configurations[sourceSet.runtimeOnlyConfigurationName].excludeGradleCommonDependencies()
 }
 
-private val testPlugins = setOf("kotlin-gradle-plugin-api", "android-test-fixes", "gradle-warnings-detector", "kotlin-compiler-args-properties")
+private val testPlugins = setOf(
+    "kotlin-gradle-plugin-api",
+    "android-test-fixes",
+    "gradle-warnings-detector",
+    "kotlin-compiler-args-properties",
+    "kotlin-gradle-plugin",
+)
 
 /**
  * Common sources for all variants.
@@ -124,7 +130,7 @@ fun Project.createGradleCommonSourceSet(): SourceSet {
 
         dependencies {
             compileOnlyConfigurationName(kotlinStdlib())
-            "commonGradleApiCompileOnly"("dev.gradleplugins:gradle-api:8.0")
+            "commonGradleApiCompileOnly"("dev.gradleplugins:gradle-api:8.1")
             if (this@createGradleCommonSourceSet.name !in testPlugins) {
                 compileOnlyConfigurationName(project(":kotlin-gradle-plugin-api")) {
                     capabilities {

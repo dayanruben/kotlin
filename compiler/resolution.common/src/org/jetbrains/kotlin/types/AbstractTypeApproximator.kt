@@ -375,7 +375,7 @@ abstract class AbstractTypeApproximator(
         }
 
         if (typeConstructor is TypeVariableTypeConstructorMarker) {
-            return if (conf.typeVariable(typeConstructor)) null else type.defaultResult(toSuper)
+            return if (conf.shouldKeepTypeVariableBasedType(typeConstructor, isK2)) null else type.defaultResult(toSuper)
         }
 
         if (typeConstructor.isIntegerLiteralConstantTypeConstructor()) {

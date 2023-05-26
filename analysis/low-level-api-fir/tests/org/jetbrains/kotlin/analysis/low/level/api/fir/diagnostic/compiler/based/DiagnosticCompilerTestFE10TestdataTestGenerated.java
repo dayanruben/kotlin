@@ -334,6 +334,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
         }
 
         @Test
+        @TestMetadata("funReturnsAny.kt")
+        public void testFunReturnsAny() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/funReturnsAny.kt");
+        }
+
+        @Test
         @TestMetadata("FunctionCalleeExpressions.kt")
         public void testFunctionCalleeExpressions() throws Exception {
             runTest("compiler/testData/diagnostics/tests/FunctionCalleeExpressions.kt");
@@ -1438,6 +1444,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
             @TestMetadata("AnnotationsForPropertyTypeParameter.kt")
             public void testAnnotationsForPropertyTypeParameter() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/annotations/AnnotationsForPropertyTypeParameter.kt");
+            }
+
+            @Test
+            @TestMetadata("annotationsOnDataClassCopy.kt")
+            public void testAnnotationsOnDataClassCopy() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/annotations/annotationsOnDataClassCopy.kt");
             }
 
             @Test
@@ -8942,6 +8954,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
             @TestMetadata("missedSetter.kt")
             public void testMissedSetter() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/delegatedProperty/missedSetter.kt");
+            }
+
+            @Test
+            @TestMetadata("noInferenceFromWrappedDelegate.kt")
+            public void testNoInferenceFromWrappedDelegate() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/delegatedProperty/noInferenceFromWrappedDelegate.kt");
             }
 
             @Test

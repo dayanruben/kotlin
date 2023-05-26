@@ -275,6 +275,7 @@ extra["kotlinJpsPluginMavenDependenciesNonTransitiveLibs"] = listOf(
 extra["compilerArtifactsForIde"] = listOfNotNull(
     ":prepare:ide-plugin-dependencies:android-extensions-compiler-plugin-for-ide",
     ":prepare:ide-plugin-dependencies:allopen-compiler-plugin-for-ide",
+    ":prepare:ide-plugin-dependencies:scripting-compiler-plugin-for-ide",
     ":prepare:ide-plugin-dependencies:incremental-compilation-impl-tests-for-ide",
     ":prepare:ide-plugin-dependencies:js-ir-runtime-for-ide",
     ":prepare:ide-plugin-dependencies:kotlin-build-common-tests-for-ide",
@@ -323,6 +324,7 @@ extra["compilerArtifactsForIde"] = listOfNotNull(
     ":kotlin-stdlib-common",
     ":kotlin-stdlib",
     ":kotlin-stdlib-js",
+    ":kotlin-stdlib-wasm",
     ":kotlin-test",
     ":kotlin-daemon",
     ":kotlin-compiler",
