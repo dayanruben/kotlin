@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.fir.resolve.transformers.plugin
 
+import org.jetbrains.kotlin.fir.FirAnnotationContainer
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.PrivateForInline
@@ -135,21 +136,26 @@ open class CompilerRequiredAnnotationsComputationSession {
         return file in filesWithResolvedImports
     }
 
+    open val useCacheForImportScope: Boolean get() = false
+
     fun recordThatImportsAreResolved(file: FirFile) {
         if (!filesWithResolvedImports.add(file)) {
             error("Imports are resolved twice")
         }
     }
 
-    private val declarationsWithResolvedAnnotations = mutableSetOf<FirDeclaration>()
+    private val declarationsWithResolvedAnnotations = mutableSetOf<FirAnnotationContainer>()
 
-    fun annotationsAreResolved(declaration: FirDeclaration): Boolean {
+    fun annotationsAreResolved(declaration: FirAnnotationContainer, treatNonSourceDeclarationsAsResolved: Boolean): Boolean {
         if (declaration is FirFile) return false
-        if (declaration.origin != FirDeclarationOrigin.Source) return true
+        if (treatNonSourceDeclarationsAsResolved && declaration is FirDeclaration && declaration.origin != FirDeclarationOrigin.Source) {
+            return true
+        }
+
         return declaration in declarationsWithResolvedAnnotations
     }
 
-    fun recordThatAnnotationsAreResolved(declaration: FirDeclaration) {
+    fun recordThatAnnotationsAreResolved(declaration: FirAnnotationContainer) {
         if (!declarationsWithResolvedAnnotations.add(declaration)) {
             error("Annotations are resolved twice")
         }
@@ -157,7 +163,7 @@ open class CompilerRequiredAnnotationsComputationSession {
 
     fun resolveAnnotationsOnAnnotationIfNeeded(symbol: FirRegularClassSymbol, scopeSession: ScopeSession) {
         val regularClass = symbol.fir
-        if (annotationsAreResolved(regularClass)) return
+        if (annotationsAreResolved(regularClass, treatNonSourceDeclarationsAsResolved = true)) return
 
         resolveAnnotationSymbol(symbol, scopeSession)
     }
@@ -199,7 +205,7 @@ class FirSpecificAnnotationResolveTransformer(
 ) : AbstractFirSpecificAnnotationResolveTransformer(session, scopeSession, computationSession) {
     override fun shouldTransformDeclaration(declaration: FirDeclaration): Boolean {
         @OptIn(PrivateForInline::class)
-        return !computationSession.annotationsAreResolved(declaration)
+        return !computationSession.annotationsAreResolved(declaration, treatNonSourceDeclarationsAsResolved = true)
     }
 }
 
