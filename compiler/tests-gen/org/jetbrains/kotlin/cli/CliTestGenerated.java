@@ -620,11 +620,6 @@ public class CliTestGenerated extends AbstractCliTest {
             runTest("compiler/testData/cli/jvm/inlineCycle.args");
         }
 
-        @TestMetadata("inlineCycle_ir.args")
-        public void testInlineCycle_ir() throws Exception {
-            runTest("compiler/testData/cli/jvm/inlineCycle_ir.args");
-        }
-
         @TestMetadata("instanceAccessBeforeSuperCall.args")
         public void testInstanceAccessBeforeSuperCall() throws Exception {
             runTest("compiler/testData/cli/jvm/instanceAccessBeforeSuperCall.args");
@@ -683,11 +678,6 @@ public class CliTestGenerated extends AbstractCliTest {
         @TestMetadata("invalidMetadataVersion.args")
         public void testInvalidMetadataVersion() throws Exception {
             runTest("compiler/testData/cli/jvm/invalidMetadataVersion.args");
-        }
-
-        @TestMetadata("irSupported.args")
-        public void testIrSupported() throws Exception {
-            runTest("compiler/testData/cli/jvm/irSupported.args");
         }
 
         @TestMetadata("javaSealedClass.args")
@@ -838,16 +828,6 @@ public class CliTestGenerated extends AbstractCliTest {
         @TestMetadata("jvmDefaultIncorrectValue.args")
         public void testJvmDefaultIncorrectValue() throws Exception {
             runTest("compiler/testData/cli/jvm/jvmDefaultIncorrectValue.args");
-        }
-
-        @TestMetadata("jvmIrByDefault1_4.args")
-        public void testJvmIrByDefault1_4() throws Exception {
-            runTest("compiler/testData/cli/jvm/jvmIrByDefault1_4.args");
-        }
-
-        @TestMetadata("jvmIrByDefault1_5.args")
-        public void testJvmIrByDefault1_5() throws Exception {
-            runTest("compiler/testData/cli/jvm/jvmIrByDefault1_5.args");
         }
 
         @TestMetadata("jvmRecordOk.args")
@@ -1003,11 +983,6 @@ public class CliTestGenerated extends AbstractCliTest {
         @TestMetadata("nonLocalDisabled.args")
         public void testNonLocalDisabled() throws Exception {
             runTest("compiler/testData/cli/jvm/nonLocalDisabled.args");
-        }
-
-        @TestMetadata("nonLocalDisabled_ir.args")
-        public void testNonLocalDisabled_ir() throws Exception {
-            runTest("compiler/testData/cli/jvm/nonLocalDisabled_ir.args");
         }
 
         @TestMetadata("nonexistentPathInModule.args")

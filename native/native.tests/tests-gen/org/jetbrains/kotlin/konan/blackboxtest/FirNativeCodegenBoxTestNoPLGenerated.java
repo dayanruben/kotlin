@@ -88,6 +88,12 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
                 runTest("compiler/testData/codegen/box/annotations/resolveWithLowPriorityAnnotation.kt");
             }
 
+            @Test
+            @TestMetadata("selfReferentialAnnotation.kt")
+            public void testSelfReferentialAnnotation() throws Exception {
+                runTest("compiler/testData/codegen/box/annotations/selfReferentialAnnotation.kt");
+            }
+
             @Nested
             @TestMetadata("compiler/testData/codegen/box/annotations/annotatedLambda")
             @TestDataPath("$PROJECT_ROOT")
@@ -16940,6 +16946,18 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
             }
 
             @Test
+            @TestMetadata("overrideDefaultProperty.kt")
+            public void testOverrideDefaultProperty() throws Exception {
+                runTest("compiler/testData/codegen/box/inference/overrideDefaultProperty.kt");
+            }
+
+            @Test
+            @TestMetadata("overrideGenericDefaultMethod.kt")
+            public void testOverrideGenericDefaultMethod() throws Exception {
+                runTest("compiler/testData/codegen/box/inference/overrideGenericDefaultMethod.kt");
+            }
+
+            @Test
             @TestMetadata("plusAssignInsideLambda.kt")
             public void testPlusAssignInsideLambda() throws Exception {
                 runTest("compiler/testData/codegen/box/inference/plusAssignInsideLambda.kt");
@@ -25324,6 +25342,12 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
             public void testKt1397() throws Exception {
                 runTest("compiler/testData/codegen/box/jdk/kt1397.kt");
             }
+
+            @Test
+            @TestMetadata("noStringToCharArray.kt")
+            public void testNoStringToCharArray() throws Exception {
+                runTest("compiler/testData/codegen/box/jdk/noStringToCharArray.kt");
+            }
         }
 
         @Nested
@@ -28569,6 +28593,12 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
             @TestMetadata("remOverModOperation.kt")
             public void testRemOverModOperation() throws Exception {
                 runTest("compiler/testData/codegen/box/operatorConventions/remOverModOperation.kt");
+            }
+
+            @Test
+            @TestMetadata("suspendOperators.kt")
+            public void testSuspendOperators() throws Exception {
+                runTest("compiler/testData/codegen/box/operatorConventions/suspendOperators.kt");
             }
 
             @Test
