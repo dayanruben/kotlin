@@ -166,7 +166,11 @@ internal class WasmUsefulDeclarationProcessor(
         irFunction.getEffectiveValueParameters().forEach { it.enqueueValueParameterType(irFunction) }
         irFunction.returnType.enqueueType(irFunction, "function return type")
 
-        kotlinClosureToJsClosureConvertFunToKotlinClosureCallFun[irFunction]?.enqueue(irFunction, "kotlin closure to JS closure conversion", false)
+        kotlinClosureToJsClosureConvertFunToKotlinClosureCallFun[irFunction]?.enqueue(
+            irFunction,
+            "kotlin closure to JS closure conversion",
+            false
+        )
     }
 
     override fun processSimpleFunction(irFunction: IrSimpleFunction) {
@@ -177,8 +181,18 @@ internal class WasmUsefulDeclarationProcessor(
 
     override fun processConstructor(irConstructor: IrConstructor) {
         super.processConstructor(irConstructor)
-        if (!context.inlineClassesUtils.isClassInlineLike(irConstructor.parentAsClass)) {
+        val constructedClass = irConstructor.constructedClass
+        if (!context.inlineClassesUtils.isClassInlineLike(constructedClass)) {
             processIrFunction(irConstructor)
+        }
+
+        // Primitive constructors has no body, since that such constructors implicitly initialize all fields, so we have to preserve them
+        if (irConstructor.hasWasmPrimitiveConstructorAnnotation()) {
+            constructedClass.declarations.forEach { declaration ->
+                if (declaration is IrField) {
+                    declaration.enqueue(constructedClass, "preserve all fields for primitive constructors")
+                }
+            }
         }
     }
 

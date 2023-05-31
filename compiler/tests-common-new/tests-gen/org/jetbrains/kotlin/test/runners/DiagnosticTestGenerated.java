@@ -19425,6 +19425,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("nestedClassTypeParameterNameCollision.kt")
+            public void testNestedClassTypeParameterNameCollision() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inner/nestedClassTypeParameterNameCollision.kt");
+            }
+
+            @Test
             @TestMetadata("nestedObject.kt")
             public void testNestedObject() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/inner/nestedObject.kt");
@@ -22460,6 +22466,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 }
 
                 @Test
+                @TestMetadata("constructorDefaultArgsViaActualTypealias.kt")
+                public void testConstructorDefaultArgsViaActualTypealias() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/defaultArguments/constructorDefaultArgsViaActualTypealias.kt");
+                }
+
+                @Test
                 @TestMetadata("expectedDeclaresDefaultArguments.kt")
                 public void testExpectedDeclaresDefaultArguments() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/multiplatform/defaultArguments/expectedDeclaresDefaultArguments.kt");
@@ -22475,6 +22487,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("expectedVsNonExpectedWithDefaults.kt")
                 public void testExpectedVsNonExpectedWithDefaults() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/multiplatform/defaultArguments/expectedVsNonExpectedWithDefaults.kt");
+                }
+
+                @Test
+                @TestMetadata("methodDefaultArgsViaActualTypealias.kt")
+                public void testMethodDefaultArgsViaActualTypealias() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/defaultArguments/methodDefaultArgsViaActualTypealias.kt");
                 }
             }
 
