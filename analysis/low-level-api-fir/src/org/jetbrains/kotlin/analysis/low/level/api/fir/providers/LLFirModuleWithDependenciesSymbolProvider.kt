@@ -8,6 +8,8 @@ package org.jetbrains.kotlin.analysis.low.level.api.fir.providers
 import org.jetbrains.kotlin.analysis.low.level.api.fir.stubBased.deserialization.JvmStubBasedFirDeserializedSymbolProvider
 import org.jetbrains.kotlin.analysis.utils.collections.buildSmartList
 import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.resolve.providers.FirNullSymbolNamesProvider
+import org.jetbrains.kotlin.fir.resolve.providers.FirSymbolNamesProvider
 import org.jetbrains.kotlin.fir.resolve.providers.FirSymbolProvider
 import org.jetbrains.kotlin.fir.resolve.providers.FirSymbolProviderInternals
 import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
@@ -29,19 +31,22 @@ internal class LLFirModuleWithDependenciesSymbolProvider(
     val providers: List<FirSymbolProvider>,
     val dependencyProvider: LLFirDependenciesSymbolProvider,
 ) : FirSymbolProvider(session) {
+    override val symbolNamesProvider: FirSymbolNamesProvider = FirNullSymbolNamesProvider
+
     override fun getClassLikeSymbolByClassId(classId: ClassId): FirClassLikeSymbol<*>? =
-        getClassLikeSymbolByFqNameWithoutDependencies(classId)
+        getClassLikeSymbolByClassIdWithoutDependencies(classId)
             ?: dependencyProvider.getClassLikeSymbolByClassId(classId)
 
-    fun getClassLikeSymbolByFqNameWithoutDependencies(classId: ClassId): FirClassLikeSymbol<*>? =
+    fun getClassLikeSymbolByClassIdWithoutDependencies(classId: ClassId): FirClassLikeSymbol<*>? =
         providers.firstNotNullOfOrNull { it.getClassLikeSymbolByClassId(classId) }
 
-    fun getClassLikeSymbolByFqNameWithoutDependencies(
+    @OptIn(FirSymbolProviderInternals::class)
+    fun getDeserializedClassLikeSymbolByClassIdWithoutDependencies(
+        classId: ClassId,
         classLikeDeclaration: KtClassLikeDeclaration,
-        classId: ClassId
-    ): FirClassLikeSymbol<*>? {
-        return providers.filterIsInstance(JvmStubBasedFirDeserializedSymbolProvider::class.java)
-            .firstNotNullOfOrNull { it.getClassLikeSymbolByClassId(classLikeDeclaration, classId) }
+    ): FirClassLikeSymbol<*>? = providers.firstNotNullOfOrNull { provider ->
+        if (provider !is JvmStubBasedFirDeserializedSymbolProvider) return@firstNotNullOfOrNull null
+        provider.getClassLikeSymbolByClassId(classId, classLikeDeclaration)
     }
 
     @FirSymbolProviderInternals
@@ -53,12 +58,14 @@ internal class LLFirModuleWithDependenciesSymbolProvider(
     @FirSymbolProviderInternals
     fun getTopLevelDeserializedCallableSymbolsToWithoutDependencies(
         destination: MutableList<FirCallableSymbol<*>>,
-        callableDeclaration: KtCallableDeclaration,
         packageFqName: FqName,
-        shortName: Name
+        shortName: Name,
+        callableDeclaration: KtCallableDeclaration,
     ) {
-        providers.filterIsInstance(JvmStubBasedFirDeserializedSymbolProvider::class.java)
-            .forEach { destination.addIfNotNull(it.getTopLevelCallableSymbol(callableDeclaration, packageFqName, shortName)) }
+        providers.forEach { provider ->
+            if (provider !is JvmStubBasedFirDeserializedSymbolProvider) return@forEach
+            destination.addIfNotNull(provider.getTopLevelCallableSymbol(packageFqName, shortName, callableDeclaration))
+        }
     }
 
     @FirSymbolProviderInternals
@@ -93,10 +100,6 @@ internal class LLFirModuleWithDependenciesSymbolProvider(
 
     fun getPackageWithoutDependencies(fqName: FqName): FqName? =
         providers.firstNotNullOfOrNull { it.getPackage(fqName) }
-
-    override fun computePackageSetWithTopLevelCallables(): Set<String>? = null
-    override fun knownTopLevelClassifiersInPackage(packageFqName: FqName): Set<String>? = null
-    override fun computeCallableNamesInPackage(packageFqName: FqName): Set<Name>? = null
 }
 
 internal class LLFirDependenciesSymbolProvider(
@@ -109,6 +112,8 @@ internal class LLFirDependenciesSymbolProvider(
                     " dependency providers must be flattened during session creation."
         }
     }
+
+    override val symbolNamesProvider: FirSymbolNamesProvider = FirNullSymbolNamesProvider
 
     override fun getClassLikeSymbolByClassId(classId: ClassId): FirClassLikeSymbol<*>? =
         providers.firstNotNullOfOrNull { it.getClassLikeSymbolByClassId(classId) }
@@ -147,10 +152,6 @@ internal class LLFirDependenciesSymbolProvider(
     }
 
     override fun getPackage(fqName: FqName): FqName? = providers.firstNotNullOfOrNull { it.getPackage(fqName) }
-
-    override fun computePackageSetWithTopLevelCallables(): Set<String>? = null
-    override fun knownTopLevelClassifiersInPackage(packageFqName: FqName): Set<String>? = null
-    override fun computeCallableNamesInPackage(packageFqName: FqName): Set<Name>? = null
 
     private fun <S : FirCallableSymbol<*>> addNewSymbolsConsideringJvmFacades(
         destination: MutableList<S>,

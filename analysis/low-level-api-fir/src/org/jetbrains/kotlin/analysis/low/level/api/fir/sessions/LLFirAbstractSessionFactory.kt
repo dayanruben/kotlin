@@ -18,8 +18,8 @@ import org.jetbrains.kotlin.analysis.project.structure.*
 import org.jetbrains.kotlin.analysis.providers.createAnnotationResolver
 import org.jetbrains.kotlin.analysis.providers.createDeclarationProvider
 import org.jetbrains.kotlin.analysis.providers.createPackageProvider
-import org.jetbrains.kotlin.analysis.providers.impl.EmptyKotlinDeclarationProvider
-import org.jetbrains.kotlin.analysis.providers.impl.FileBasedKotlinDeclarationProvider
+import org.jetbrains.kotlin.analysis.providers.impl.declarationProviders.EmptyKotlinDeclarationProvider
+import org.jetbrains.kotlin.analysis.providers.impl.declarationProviders.FileBasedKotlinDeclarationProvider
 import org.jetbrains.kotlin.analysis.utils.trackers.CompositeModificationTracker
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
@@ -46,10 +46,9 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.jvm.modules.JavaModuleResolver
 import org.jetbrains.kotlin.scripting.compiler.plugin.FirScriptingSamWithReceiverExtensionRegistrar
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
-import org.jetbrains.kotlin.utils.addIfNotNull
-import org.jetbrains.kotlin.utils.addToStdlib.partitionIsInstance
 import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
+import org.jetbrains.kotlin.analysis.providers.impl.util.mergeInto
 
 @OptIn(PrivateSessionConstructor::class, SessionConfiguration::class)
 internal abstract class LLFirAbstractSessionFactory(protected val project: Project) {
@@ -349,7 +348,7 @@ internal abstract class LLFirAbstractSessionFactory(protected val project: Proje
                     val librariesSearchScope = ProjectScope.getLibrariesScope(project)
                         .intersectWith(GlobalSearchScope.notScope(libraryModule.contentScope))
 
-                    val restLibrariesProvider = LLFirLibraryProviderFactory.createLibraryProvidersForAllProjectLibraries(
+                    val restLibrariesProvider = LLFirLibraryProviderFactory.createProjectLibraryProvidersForScope(
                         session, moduleData, scopeProvider,
                         project, builtinTypes, librariesSearchScope
                     )
@@ -503,29 +502,10 @@ internal abstract class LLFirAbstractSessionFactory(protected val project: Proje
         session: LLFirSession,
         destination: MutableList<FirSymbolProvider>,
     ) {
-        SymbolProviderMerger(this, destination).apply {
+        mergeInto(destination) {
             merge<LLFirProvider.SymbolProvider> { LLFirCombinedKotlinSymbolProvider.merge(session, project, it) }
             merge<JavaSymbolProvider> { LLFirCombinedJavaSymbolProvider.merge(session, project, it) }
             merge<FirExtensionSyntheticFunctionInterfaceProvider> { LLFirCombinedSyntheticFunctionSymbolProvider.merge(session, it) }
-            finish()
-        }
-    }
-
-    private class SymbolProviderMerger(
-        symbolProviders: List<FirSymbolProvider>,
-        private val destination: MutableList<FirSymbolProvider>
-    ) {
-        private var remainingSymbolProviders = symbolProviders
-
-        inline fun <reified A : FirSymbolProvider> merge(create: (List<A>) -> FirSymbolProvider?) {
-            val (specificSymbolProviders, remainingSymbolProviders) = remainingSymbolProviders.partitionIsInstance<_, A>()
-            destination.addIfNotNull(create(specificSymbolProviders))
-            this.remainingSymbolProviders = remainingSymbolProviders
-        }
-
-        fun finish() {
-            destination.addAll(remainingSymbolProviders)
-            remainingSymbolProviders = emptyList()
         }
     }
 }

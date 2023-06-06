@@ -3111,6 +3111,16 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
             runTest("compiler/testData/codegen/box/casts/kt54802.kt");
         }
 
+        @TestMetadata("kt58707.kt")
+        public void testKt58707() throws Exception {
+            runTest("compiler/testData/codegen/box/casts/kt58707.kt");
+        }
+
+        @TestMetadata("kt59022.kt")
+        public void testKt59022() throws Exception {
+            runTest("compiler/testData/codegen/box/casts/kt59022.kt");
+        }
+
         @TestMetadata("lambdaToUnitCast.kt")
         public void testLambdaToUnitCast() throws Exception {
             runTest("compiler/testData/codegen/box/casts/lambdaToUnitCast.kt");
@@ -31448,6 +31458,11 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
         @TestMetadata("helloWorldDOM.kt")
         public void testHelloWorldDOM() throws Exception {
             runTest("compiler/testData/codegen/box/size/helloWorldDOM.kt");
+        }
+
+        @TestMetadata("objectsOptimization.kt")
+        public void testObjectsOptimization() throws Exception {
+            runTest("compiler/testData/codegen/box/size/objectsOptimization.kt");
         }
 
         @TestMetadata("ok.kt")

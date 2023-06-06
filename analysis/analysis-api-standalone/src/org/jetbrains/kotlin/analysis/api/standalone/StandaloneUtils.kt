@@ -133,7 +133,6 @@ internal fun configureProjectEnvironment(
         KotlinFirReferenceContributor::class.java
     )
 
-    RegisterComponentService.registerLLFirResolveSessionService(project)
     project.registerService(
         FirSealedClassInheritorsProcessorFactory::class.java,
         object : FirSealedClassInheritorsProcessorFactory() {
@@ -158,6 +157,10 @@ internal fun configureProjectEnvironment(
     project.registerService(
         KotlinDeclarationProviderFactory::class.java,
         KotlinStaticDeclarationProviderFactory(project, ktFiles)
+    )
+    project.registerService(
+        KotlinDeclarationProviderMerger::class.java,
+        KotlinStaticDeclarationProviderMerger(project)
     )
     project.registerService(
         KotlinPackageProviderFactory::class.java,

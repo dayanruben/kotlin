@@ -158,7 +158,7 @@ internal fun IrClass.internalName(): String {
         .forEach {
             when (it) {
                 is IrClass -> internalName.insert(0, it.name.asString() + "$")
-                is IrPackageFragment -> it.fqName.asString().takeIf { it.isNotEmpty() }?.let { internalName.insert(0, "$it.") }
+                is IrPackageFragment -> it.packageFqName.asString().takeIf { it.isNotEmpty() }?.let { internalName.insert(0, "$it.") }
             }
         }
     return internalName.toString()
@@ -202,6 +202,14 @@ internal fun IrFunction.getArgsForMethodInvocation(
     }
 
     return argsValues
+}
+
+internal fun IrType.fqNameWithNullability(): String {
+    val fqName = classFqName?.toString()
+        ?: (this.classifierOrNull?.owner as? IrDeclarationWithName)?.name?.asString()
+        ?: render()
+    val nullability = if (this is IrSimpleType && this.nullability == SimpleTypeNullability.MARKED_NULLABLE) "?" else ""
+    return fqName + nullability
 }
 
 internal fun IrType.getOnlyName(): String {

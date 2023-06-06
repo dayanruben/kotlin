@@ -11,6 +11,7 @@ import com.intellij.core.CoreApplicationEnvironment
 import com.intellij.core.CoreJavaFileManager
 import com.intellij.core.CorePackageIndex
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.mock.MockApplication
 import com.intellij.mock.MockProject
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.roots.PackageIndex
@@ -25,8 +26,14 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
 import com.intellij.util.io.URLUtil.JAR_PROTOCOL
 import com.intellij.util.io.URLUtil.JAR_SEPARATOR
+import org.jetbrains.kotlin.analysis.api.impl.base.references.HLApiReferenceProviderService
 import org.jetbrains.kotlin.analysis.api.impl.base.java.source.JavaElementSourceWithSmartPointerFactory
+import org.jetbrains.kotlin.analysis.api.resolve.extensions.KtResolveExtensionProvider
+import org.jetbrains.kotlin.analysis.decompiler.stub.file.ClsKotlinBinaryClassCache
+import org.jetbrains.kotlin.analysis.decompiler.stub.file.DummyFileAttributeService
+import org.jetbrains.kotlin.analysis.decompiler.stub.file.FileAttributeService
 import org.jetbrains.kotlin.analysis.project.structure.*
+import org.jetbrains.kotlin.analysis.providers.impl.KotlinFakeClsStubsCache
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.jvm.compiler.*
 import org.jetbrains.kotlin.cli.jvm.index.JavaRoot
@@ -41,6 +48,7 @@ import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.load.java.structure.impl.source.JavaElementSourceFactory
 import org.jetbrains.kotlin.load.kotlin.MetadataFinderFactory
 import org.jetbrains.kotlin.load.kotlin.VirtualFileFinderFactory
+import org.jetbrains.kotlin.psi.KotlinReferenceProvidersService
 import org.jetbrains.kotlin.resolve.ModuleAnnotationsResolver
 import org.jetbrains.kotlin.resolve.jvm.KotlinJavaPsiFacade
 import org.jetbrains.kotlin.resolve.jvm.modules.JavaModuleResolver
@@ -58,8 +66,42 @@ object StandaloneProjectFactory {
             KotlinCoreEnvironment.getOrCreateApplicationEnvironmentForTests(applicationDisposable, compilerConfiguration)
         registerApplicationExtensionPoints(applicationEnvironment, applicationDisposable)
 
+        registerApplicationServices(applicationEnvironment.application)
+
         return KotlinCoreProjectEnvironment(projectDisposable, applicationEnvironment).apply {
+            registerProjectServices(project)
             registerJavaPsiFacade(project)
+        }
+    }
+
+    private fun registerApplicationServices(application: MockApplication) {
+        if (application.getServiceIfCreated(KotlinFakeClsStubsCache::class.java) != null) {
+            // application services already registered by som other threads, tests
+            return
+        }
+        KotlinCoreEnvironment.underApplicationLock {
+            if (application.getServiceIfCreated(KotlinFakeClsStubsCache::class.java) != null) {
+                // application services already registered by som other threads, tests
+                return
+            }
+            application.apply {
+                registerService(KotlinFakeClsStubsCache::class.java, KotlinFakeClsStubsCache::class.java)
+                registerService(ClsKotlinBinaryClassCache::class.java)
+                registerService(FileAttributeService::class.java, DummyFileAttributeService::class.java)
+            }
+        }
+    }
+
+    private fun registerProjectServices(project: MockProject) {
+        @Suppress("UnstableApiUsage")
+        CoreApplicationEnvironment.registerExtensionPoint(
+            project.extensionArea,
+            KtResolveExtensionProvider.EP_NAME.name,
+            KtResolveExtensionProvider::class.java
+        )
+
+        project.apply {
+            registerService(KotlinReferenceProvidersService::class.java, HLApiReferenceProviderService::class.java)
         }
     }
 
