@@ -717,6 +717,10 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
             +fieldList("contextReceiverTypeRefs", typeRef)
         }
 
+        errorTypeRef.configure {
+            +field("partiallyResolvedTypeRef", typeRef, nullable = true).withTransform()
+        }
+
         intersectionTypeRef.configure {
             +field("leftType", typeRef)
             +field("rightType", typeRef)
@@ -725,6 +729,10 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
         thisReceiverExpression.configure {
             +field("calleeReference", thisReference)
             +booleanField("isImplicit")
+        }
+
+        inaccessibleReceiverExpression.configure {
+            +field("calleeReference", thisReference)
         }
 
         whenExpression.configure {

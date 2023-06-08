@@ -26,12 +26,6 @@ public class FirLightTreeBlackBoxCodegenTestGenerated extends AbstractFirLightTr
         KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
     }
 
-    @Test
-    @TestMetadata("kt-57353.kt")
-    public void testKt_57353() throws Exception {
-        runTest("compiler/testData/codegen/box/kt-57353.kt");
-    }
-
     @Nested
     @TestMetadata("compiler/testData/codegen/box/annotations")
     @TestDataPath("$PROJECT_ROOT")
@@ -18328,6 +18322,18 @@ public class FirLightTreeBlackBoxCodegenTestGenerated extends AbstractFirLightTr
         }
 
         @Test
+        @TestMetadata("anonymousOverrideWithDefaultInLocalOverridden.kt")
+        public void testAnonymousOverrideWithDefaultInLocalOverridden() throws Exception {
+            runTest("compiler/testData/codegen/box/fir/anonymousOverrideWithDefaultInLocalOverridden.kt");
+        }
+
+        @Test
+        @TestMetadata("anonymousOverrideWithDefaultInOverridden.kt")
+        public void testAnonymousOverrideWithDefaultInOverridden() throws Exception {
+            runTest("compiler/testData/codegen/box/fir/anonymousOverrideWithDefaultInOverridden.kt");
+        }
+
+        @Test
         @TestMetadata("assertEqualsFakeOverride.kt")
         public void testAssertEqualsFakeOverride() throws Exception {
             runTest("compiler/testData/codegen/box/fir/assertEqualsFakeOverride.kt");
@@ -18511,6 +18517,18 @@ public class FirLightTreeBlackBoxCodegenTestGenerated extends AbstractFirLightTr
         @TestMetadata("linkViaSignatures.kt")
         public void testLinkViaSignatures() throws Exception {
             runTest("compiler/testData/codegen/box/fir/linkViaSignatures.kt");
+        }
+
+        @Test
+        @TestMetadata("localOverrideWithDefaultInLocalOverridden.kt")
+        public void testLocalOverrideWithDefaultInLocalOverridden() throws Exception {
+            runTest("compiler/testData/codegen/box/fir/localOverrideWithDefaultInLocalOverridden.kt");
+        }
+
+        @Test
+        @TestMetadata("localOverrideWithDefaultInOverridden.kt")
+        public void testLocalOverrideWithDefaultInOverridden() throws Exception {
+            runTest("compiler/testData/codegen/box/fir/localOverrideWithDefaultInOverridden.kt");
         }
 
         @Test
@@ -35108,6 +35126,12 @@ public class FirLightTreeBlackBoxCodegenTestGenerated extends AbstractFirLightTr
         }
 
         @Test
+        @TestMetadata("kt57353.kt")
+        public void testKt57353() throws Exception {
+            runTest("compiler/testData/codegen/box/package/kt57353.kt");
+        }
+
+        @Test
         @TestMetadata("mainInFiles.kt")
         public void testMainInFiles() throws Exception {
             runTest("compiler/testData/codegen/box/package/mainInFiles.kt");
@@ -46027,6 +46051,12 @@ public class FirLightTreeBlackBoxCodegenTestGenerated extends AbstractFirLightTr
             }
 
             @Test
+            @TestMetadata("interfaceDelegation.kt")
+            public void testInterfaceDelegation() throws Exception {
+                runTest("compiler/testData/codegen/box/reflection/properties/interfaceDelegation.kt");
+            }
+
+            @Test
             @TestMetadata("invokeKProperty.kt")
             public void testInvokeKProperty() throws Exception {
                 runTest("compiler/testData/codegen/box/reflection/properties/invokeKProperty.kt");
@@ -52299,6 +52329,12 @@ public class FirLightTreeBlackBoxCodegenTestGenerated extends AbstractFirLightTr
         @TestMetadata("inlineFunctions.kt")
         public void testInlineFunctions() throws Exception {
             runTest("compiler/testData/codegen/box/valueClasses/inlineFunctions.kt");
+        }
+
+        @Test
+        @TestMetadata("kt59079.kt")
+        public void testKt59079() throws Exception {
+            runTest("compiler/testData/codegen/box/valueClasses/kt59079.kt");
         }
 
         @Test

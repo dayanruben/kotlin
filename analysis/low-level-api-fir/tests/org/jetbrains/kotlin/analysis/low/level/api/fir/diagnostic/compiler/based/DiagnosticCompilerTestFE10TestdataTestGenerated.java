@@ -35,6 +35,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
         }
 
         @Test
+        @TestMetadata("abstractClassReference.kt")
+        public void testAbstractClassReference() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/abstractClassReference.kt");
+        }
+
+        @Test
         @TestMetadata("AbstractInAbstractClass.kt")
         public void testAbstractInAbstractClass() throws Exception {
             runTest("compiler/testData/diagnostics/tests/AbstractInAbstractClass.kt");
@@ -7064,6 +7070,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
             @TestMetadata("forLoopWithNullableRange.kt")
             public void testForLoopWithNullableRange() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/controlStructures/forLoopWithNullableRange.kt");
+            }
+
+            @Test
+            @TestMetadata("forWithIncorrectTypeSpecializer.kt")
+            public void testForWithIncorrectTypeSpecializer() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/controlStructures/forWithIncorrectTypeSpecializer.kt");
             }
 
             @Test
@@ -15157,6 +15169,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
             }
 
             @Test
+            @TestMetadata("nullableArgumentForDnn.kt")
+            public void testNullableArgumentForDnn() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inference/nullableArgumentForDnn.kt");
+            }
+
+            @Test
             @TestMetadata("nullableTypeArgumentWithNotNullUpperBound.kt")
             public void testNullableTypeArgumentWithNotNullUpperBound() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/inference/nullableTypeArgumentWithNotNullUpperBound.kt");
@@ -19935,6 +19953,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
             }
 
             @Test
+            @TestMetadata("nullForOptionalOf.kt")
+            public void testNullForOptionalOf() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/j+k/nullForOptionalOf.kt");
+            }
+
+            @Test
             @TestMetadata("nullForOptionalOrElse.kt")
             public void testNullForOptionalOrElse() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/j+k/nullForOptionalOrElse.kt");
@@ -20323,6 +20347,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
                 @TestMetadata("mapGetOverride.kt")
                 public void testMapGetOverride() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/j+k/collectionOverrides/mapGetOverride.kt");
+                }
+
+                @Test
+                @TestMetadata("nonDirectHiddenOverride.kt")
+                public void testNonDirectHiddenOverride() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/j+k/collectionOverrides/nonDirectHiddenOverride.kt");
                 }
 
                 @Test
@@ -27393,6 +27423,18 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
                 @TestMetadata("kt4321InvokeOnEnum.kt")
                 public void testKt4321InvokeOnEnum() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/resolve/invoke/kt4321InvokeOnEnum.kt");
+                }
+
+                @Test
+                @TestMetadata("kt51793.kt")
+                public void testKt51793() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/resolve/invoke/kt51793.kt");
+                }
+
+                @Test
+                @TestMetadata("kt51793Complex.kt")
+                public void testKt51793Complex() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/resolve/invoke/kt51793Complex.kt");
                 }
 
                 @Test

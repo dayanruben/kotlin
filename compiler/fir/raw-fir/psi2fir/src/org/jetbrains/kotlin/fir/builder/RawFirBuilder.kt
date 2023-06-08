@@ -1972,33 +1972,24 @@ open class RawFirBuilder(
                     isMarkedNullable = isNullable
                 }
                 is KtUserType -> {
-                    var referenceExpression = unwrappedElement.referenceExpression
+                    val referenceExpression = unwrappedElement.referenceExpression
                     if (referenceExpression != null) {
-                        FirUserTypeRefBuilder().apply {
-                            this.source = source
-                            isMarkedNullable = isNullable
-                            var ktQualifier: KtUserType? = unwrappedElement
-
-                            do {
-                                val firQualifier = FirQualifierPartImpl(
-                                    referenceExpression!!.toFirSourceElement(),
-                                    referenceExpression!!.getReferencedNameAsName(),
-                                    FirTypeArgumentListImpl(ktQualifier?.typeArgumentList?.toKtPsiSourceElement() ?: source).apply {
-                                        typeArguments.appendTypeArguments(ktQualifier!!.typeArguments)
-                                    }
-                                )
-                                qualifier.add(firQualifier)
-
-                                ktQualifier = ktQualifier!!.qualifier
-                                referenceExpression = ktQualifier?.referenceExpression
-                            } while (referenceExpression != null)
-
-                            qualifier.reverse()
-                        }
+                        convertKtTypeElement(source, isNullable, unwrappedElement, referenceExpression)
                     } else {
                         FirErrorTypeRefBuilder().apply {
                             this.source = source
                             diagnostic = ConeSyntaxDiagnostic("Incomplete user type")
+
+                            val qualifier = unwrappedElement.qualifier
+                            val reference = qualifier?.referenceExpression
+                            if (qualifier != null && reference != null) {
+                                partiallyResolvedTypeRef = convertKtTypeElement(
+                                    qualifier.toFirSourceElement(),
+                                    isNullable = false,
+                                    qualifier,
+                                    reference
+                                ).build()
+                            }
                         }
                     }
                 }
@@ -2047,6 +2038,36 @@ open class RawFirBuilder(
                 }
             }
             return firTypeBuilder.build()
+        }
+
+        private fun convertKtTypeElement(
+            source: KtPsiSourceElement,
+            isNullable: Boolean,
+            ktUserType: KtUserType,
+            reference: KtSimpleNameExpression,
+        ): FirUserTypeRefBuilder {
+            var referenceExpression: KtSimpleNameExpression? = reference
+            return FirUserTypeRefBuilder().apply {
+                this.source = source
+                isMarkedNullable = isNullable
+                var ktQualifier: KtUserType? = ktUserType
+
+                do {
+                    val firQualifier = FirQualifierPartImpl(
+                        referenceExpression!!.toFirSourceElement(),
+                        referenceExpression!!.getReferencedNameAsName(),
+                        FirTypeArgumentListImpl(ktQualifier?.typeArgumentList?.toKtPsiSourceElement() ?: source).apply {
+                            typeArguments.appendTypeArguments(ktQualifier!!.typeArguments)
+                        }
+                    )
+                    qualifier.add(firQualifier)
+
+                    ktQualifier = ktQualifier!!.qualifier
+                    referenceExpression = ktQualifier?.referenceExpression
+                } while (referenceExpression != null)
+
+                qualifier.reverse()
+            }
         }
 
         override fun visitAnnotationEntry(annotationEntry: KtAnnotationEntry, data: FirElement?): FirElement {

@@ -25,6 +25,11 @@ public class LazyBodyIsNotTouchedTestGenerated extends AbstractLazyBodyIsNotTouc
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("accessJavaFromKotlinViaImport.kt")
+    public void testAccessJavaFromKotlinViaImport() throws Exception {
+        runTest("compiler/fir/analysis-tests/testData/resolve/accessJavaFromKotlinViaImport.kt");
+    }
+
     public void testAllFilesPresentInResolve() throws Exception {
         KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolve"), Pattern.compile("^([^.]+)\\.kt$"), null, true);
     }
@@ -3324,6 +3329,16 @@ public class LazyBodyIsNotTouchedTestGenerated extends AbstractLazyBodyIsNotTouc
         @TestMetadata("inaccessibleJavaGetter.kt")
         public void testInaccessibleJavaGetter() throws Exception {
             runTest("compiler/fir/analysis-tests/testData/resolve/problems/inaccessibleJavaGetter.kt");
+        }
+
+        @TestMetadata("incompleteUserType.kt")
+        public void testIncompleteUserType() throws Exception {
+            runTest("compiler/fir/analysis-tests/testData/resolve/problems/incompleteUserType.kt");
+        }
+
+        @TestMetadata("incompleteUserTypeWithUnresovledTypeArgument.kt")
+        public void testIncompleteUserTypeWithUnresovledTypeArgument() throws Exception {
+            runTest("compiler/fir/analysis-tests/testData/resolve/problems/incompleteUserTypeWithUnresovledTypeArgument.kt");
         }
 
         @TestMetadata("innerClassHierarchy.kt")
