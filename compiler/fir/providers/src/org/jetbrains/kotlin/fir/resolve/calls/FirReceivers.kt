@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.fir.expressions.builder.buildThisReceiverExpression
 import org.jetbrains.kotlin.fir.references.builder.buildImplicitThisReference
 import org.jetbrains.kotlin.fir.renderWithType
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
-import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.resolve.scope
 import org.jetbrains.kotlin.fir.resolve.smartcastScope
 import org.jetbrains.kotlin.fir.scopes.FakeOverrideTypeCalculator
@@ -34,16 +33,13 @@ import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.builder.buildResolvedTypeRef
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.types.SmartcastStability
-import org.jetbrains.kotlin.utils.addToStdlib.applyIf
 
-interface Receiver
+abstract class ReceiverValue {
+    abstract val type: ConeKotlinType
 
-interface ReceiverValue : Receiver {
-    val type: ConeKotlinType
+    abstract val receiverExpression: FirExpression
 
-    val receiverExpression: FirExpression
-
-    fun scope(useSiteSession: FirSession, scopeSession: ScopeSession): FirTypeScope? = type.scope(
+    open fun scope(useSiteSession: FirSession, scopeSession: ScopeSession): FirTypeScope? = type.scope(
         useSiteSession = useSiteSession,
         scopeSession = scopeSession,
         fakeOverrideTypeCalculator = FakeOverrideTypeCalculator.DoNothing,
@@ -51,24 +47,12 @@ interface ReceiverValue : Receiver {
     )
 }
 
-// TODO: should inherit just Receiver, not ReceiverValue
-abstract class AbstractExplicitReceiver<E : FirExpression> : Receiver {
-    abstract val explicitReceiver: FirExpression
-}
-
-abstract class AbstractExplicitReceiverValue<E : FirExpression> : AbstractExplicitReceiver<E>(), ReceiverValue {
+class ExpressionReceiverValue(override val receiverExpression: FirExpression) : ReceiverValue() {
     override val type: ConeKotlinType
         // NB: safe cast is necessary here
-        get() = explicitReceiver.typeRef.coneTypeSafe()
-            ?: ConeErrorType(ConeIntermediateDiagnostic("No type calculated for: ${explicitReceiver.renderWithType()}")) // TODO: assert here
+        get() = receiverExpression.typeRef.coneTypeSafe()
+            ?: ConeErrorType(ConeIntermediateDiagnostic("No type calculated for: ${receiverExpression.renderWithType()}")) // TODO: assert here
 
-    override val receiverExpression: FirExpression
-        get() = explicitReceiver
-}
-
-open class ExpressionReceiverValue(
-    override val explicitReceiver: FirExpression
-) : AbstractExplicitReceiverValue<FirExpression>(), ReceiverValue {
     override fun scope(useSiteSession: FirSession, scopeSession: ScopeSession): FirTypeScope? {
         var receiverExpr: FirExpression? = receiverExpression
         // Unwrap `x!!` to `x` and use the resulted expression to derive receiver type. This is necessary so that smartcast types inside
@@ -97,20 +81,18 @@ open class ExpressionReceiverValue(
 sealed class ImplicitReceiverValue<S : FirBasedSymbol<*>>(
     val boundSymbol: S,
     type: ConeKotlinType,
-    protected val useSiteSession: FirSession,
+    val useSiteSession: FirSession,
     protected val scopeSession: ScopeSession,
     private val mutable: Boolean,
     val contextReceiverNumber: Int = -1,
     private val inaccessibleReceiver: Boolean = false
-) : ReceiverValue {
+) : ReceiverValue() {
     final override var type: ConeKotlinType = type
         private set
 
     abstract val isContextReceiver: Boolean
 
     val originalType: ConeKotlinType = type
-
-    val expandedType: ConeKotlinType = type.applyIf(type is ConeClassLikeType) { fullyExpandedType(useSiteSession) }
 
     var implicitScope: FirTypeScope? =
         type.scope(
@@ -123,10 +105,46 @@ sealed class ImplicitReceiverValue<S : FirBasedSymbol<*>>(
 
     override fun scope(useSiteSession: FirSession, scopeSession: ScopeSession): FirTypeScope? = implicitScope
 
-    private val originalReceiverExpression: FirExpression =
+    private var receiverIsSmartcasted: Boolean = false
+    private var originalReceiverExpression: FirExpression =
         receiverExpression(boundSymbol, type, contextReceiverNumber, inaccessibleReceiver)
-    final override var receiverExpression: FirExpression = originalReceiverExpression
-        private set
+    private var _receiverExpression: FirExpression? = null
+
+    private fun computeReceiverExpression(): FirExpression {
+        _receiverExpression?.let { return it }
+        val actualReceiverExpression = if (receiverIsSmartcasted) {
+            buildSmartCastExpression {
+                originalExpression = originalReceiverExpression
+                this.source = originalExpression.source?.fakeElement(KtFakeSourceElementKind.SmartCastExpression)
+                smartcastType = buildResolvedTypeRef {
+                    source = originalReceiverExpression.typeRef.source?.fakeElement(KtFakeSourceElementKind.SmartCastedTypeRef)
+                    type = this@ImplicitReceiverValue.type
+                }
+                typesFromSmartCast = listOf(type)
+                smartcastStability = SmartcastStability.STABLE_VALUE
+                typeRef = smartcastType.copyWithNewSourceKind(KtFakeSourceElementKind.ImplicitTypeRef)
+            }
+        } else {
+            originalReceiverExpression
+        }
+        _receiverExpression = actualReceiverExpression
+        return actualReceiverExpression
+    }
+
+    /**
+     * The idea of receiver expression for implicit receivers is following:
+     *   - Implicit receivers are mutable because of smartcasts
+     *   - Expression of implicit receiver may be used during call resolution and then stored for later. This implies necesserity
+     *      to keep receiver expression independent of state of corresponding implicit value
+     *   - In the same time we don't want to create new receiver expression for each access in sake of performance
+     * All those statements lead to the current implementation:
+     *   - original receiver expression (without smartcast) always stored inside receiver value and can not be changed (TODO: except builder inference)
+     *   - we keep information about was there smartcast or not in [receiverIsSmartcasted] field
+     *   - we cache computed receiver expression in [_receiverExpression] field
+     *   - if type of receiver value was changed this cache is dropped
+     */
+    final override val receiverExpression: FirExpression
+        get() = computeReceiverExpression()
 
     @RequiresOptIn
     annotation class ImplicitReceiverInternals
@@ -134,7 +152,8 @@ sealed class ImplicitReceiverValue<S : FirBasedSymbol<*>>(
     @Deprecated(level = DeprecationLevel.ERROR, message = "Builder inference should not modify implicit receivers. KT-54708")
     fun updateTypeInBuilderInference(type: ConeKotlinType) {
         this.type = type
-        receiverExpression = receiverExpression(boundSymbol, type, contextReceiverNumber, inaccessibleReceiver)
+        originalReceiverExpression = receiverExpression(boundSymbol, type, contextReceiverNumber, inaccessibleReceiver)
+        _receiverExpression = null
         implicitScope = type.scope(
             useSiteSession = useSiteSession,
             scopeSession = scopeSession,
@@ -149,24 +168,10 @@ sealed class ImplicitReceiverValue<S : FirBasedSymbol<*>>(
     @ImplicitReceiverInternals
     fun updateTypeFromSmartcast(type: ConeKotlinType) {
         if (type == this.type) return
-        if (!mutable) throw IllegalStateException("Cannot mutate an immutable ImplicitReceiverValue")
+        if (!mutable) error("Cannot mutate an immutable ImplicitReceiverValue")
         this.type = type
-        receiverExpression = if (type == originalReceiverExpression.typeRef.coneType) {
-            originalReceiverExpression
-        } else {
-            buildSmartCastExpression {
-                originalExpression = originalReceiverExpression
-                this.source = originalExpression.source?.fakeElement(KtFakeSourceElementKind.SmartCastExpression)
-                smartcastType = buildResolvedTypeRef {
-                    source = originalReceiverExpression.typeRef.source?.fakeElement(KtFakeSourceElementKind.SmartCastedTypeRef)
-                    this.type = type
-                }
-                typesFromSmartCast = listOf(type)
-                smartcastStability = SmartcastStability.STABLE_VALUE
-                typeRef = smartcastType.copyWithNewSourceKind(KtFakeSourceElementKind.ImplicitTypeRef)
-            }
-        }
-
+        receiverIsSmartcasted = type != this.originalType
+        _receiverExpression = null
         implicitScope = type.scope(
             useSiteSession = useSiteSession,
             scopeSession = scopeSession,
