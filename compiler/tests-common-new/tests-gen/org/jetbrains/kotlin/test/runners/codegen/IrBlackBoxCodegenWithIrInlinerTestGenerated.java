@@ -13746,6 +13746,12 @@ public class IrBlackBoxCodegenWithIrInlinerTestGenerated extends AbstractIrBlack
         }
 
         @Test
+        @TestMetadata("fromOtherModule.kt")
+        public void testFromOtherModule() throws Exception {
+            runTest("compiler/testData/codegen/box/dataClasses/fromOtherModule.kt");
+        }
+
+        @Test
         @TestMetadata("genericParam.kt")
         public void testGenericParam() throws Exception {
             runTest("compiler/testData/codegen/box/dataClasses/genericParam.kt");
@@ -18403,6 +18409,12 @@ public class IrBlackBoxCodegenWithIrInlinerTestGenerated extends AbstractIrBlack
         @TestMetadata("CustomThrowableMessage.kt")
         public void testCustomThrowableMessage() throws Exception {
             runTest("compiler/testData/codegen/box/fir/CustomThrowableMessage.kt");
+        }
+
+        @Test
+        @TestMetadata("delegatedAndDataTogether.kt")
+        public void testDelegatedAndDataTogether() throws Exception {
+            runTest("compiler/testData/codegen/box/fir/delegatedAndDataTogether.kt");
         }
 
         @Test
@@ -35539,6 +35551,12 @@ public class IrBlackBoxCodegenWithIrInlinerTestGenerated extends AbstractIrBlack
         @Test
         public void testAllFilesPresentInPrimitiveTypes() throws Exception {
             KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/primitiveTypes"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+        }
+
+        @Test
+        @TestMetadata("booleanHashCode.kt")
+        public void testBooleanHashCode() throws Exception {
+            runTest("compiler/testData/codegen/box/primitiveTypes/booleanHashCode.kt");
         }
 
         @Test

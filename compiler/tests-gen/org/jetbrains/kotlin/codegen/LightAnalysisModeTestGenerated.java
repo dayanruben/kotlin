@@ -10901,6 +10901,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/dataClasses/floatParam.kt");
         }
 
+        @TestMetadata("fromOtherModule.kt")
+        public void testFromOtherModule() throws Exception {
+            runTest("compiler/testData/codegen/box/dataClasses/fromOtherModule.kt");
+        }
+
         @TestMetadata("genericParam.kt")
         public void testGenericParam() throws Exception {
             runTest("compiler/testData/codegen/box/dataClasses/genericParam.kt");
@@ -29016,6 +29021,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
 
         public void testAllFilesPresentInPrimitiveTypes() throws Exception {
             KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/primitiveTypes"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
+        }
+
+        @TestMetadata("booleanHashCode.kt")
+        public void testBooleanHashCode() throws Exception {
+            runTest("compiler/testData/codegen/box/primitiveTypes/booleanHashCode.kt");
         }
 
         @TestMetadata("comparisonWithNaN.kt")

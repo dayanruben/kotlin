@@ -10086,6 +10086,12 @@ public class FirJsCodegenBoxTestGenerated extends AbstractFirJsCodegenBoxTest {
         }
 
         @Test
+        @TestMetadata("fromOtherModule.kt")
+        public void testFromOtherModule() throws Exception {
+            runTest("compiler/testData/codegen/box/dataClasses/fromOtherModule.kt");
+        }
+
+        @Test
         @TestMetadata("genericParam.kt")
         public void testGenericParam() throws Exception {
             runTest("compiler/testData/codegen/box/dataClasses/genericParam.kt");
@@ -25189,6 +25195,12 @@ public class FirJsCodegenBoxTestGenerated extends AbstractFirJsCodegenBoxTest {
         @Test
         public void testAllFilesPresentInPrimitiveTypes() throws Exception {
             KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/primitiveTypes"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JS_IR, true);
+        }
+
+        @Test
+        @TestMetadata("booleanHashCode.kt")
+        public void testBooleanHashCode() throws Exception {
+            runTest("compiler/testData/codegen/box/primitiveTypes/booleanHashCode.kt");
         }
 
         @Test
