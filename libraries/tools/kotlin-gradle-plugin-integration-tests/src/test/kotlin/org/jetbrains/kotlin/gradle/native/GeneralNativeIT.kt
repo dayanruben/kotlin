@@ -11,8 +11,7 @@ import org.gradle.api.logging.configuration.WarningMode
 import org.gradle.util.GradleVersion
 import org.jdom.input.SAXBuilder
 import org.jetbrains.kotlin.gradle.*
-import org.jetbrains.kotlin.gradle.internals.DISABLED_NATIVE_TARGETS_REPORTER_DISABLE_WARNING_PROPERTY_NAME
-import org.jetbrains.kotlin.gradle.internals.DISABLED_NATIVE_TARGETS_REPORTER_WARNING_PREFIX
+import org.jetbrains.kotlin.gradle.internals.KOTLIN_NATIVE_IGNORE_DISABLED_TARGETS_PROPERTY
 import org.jetbrains.kotlin.gradle.plugin.diagnostics.KotlinToolingDiagnostics
 import org.jetbrains.kotlin.gradle.plugin.mpp.NativeOutputKind
 import org.jetbrains.kotlin.gradle.testbase.*
@@ -804,7 +803,7 @@ class GeneralNativeIT : BaseGradleIT() {
     @Test
     fun testNativeTestGetters() = with(transformNativeTestProject("native-tests")) {
         // Check that test binaries can be accessed in a buildscript.
-        build("checkNewGetters") {
+        build("checkGetters") {
             assertSuccessful()
             val suffix = if (HostManager.hostIsMingw) "exe" else "kexe"
             val names = listOf("test", "another")
@@ -814,32 +813,6 @@ class GeneralNativeIT : BaseGradleIT() {
                 assertContains("Get test: $it")
                 assertContains("Find test: $it")
             }
-        }
-
-        // Check that accessing a test as an executable fails or returns null and shows the corresponding warning.
-        build("checkOldGet") {
-            assertFailed()
-            assertContains(
-                """
-                    |Probably you are accessing the default test binary using the 'binaries.getExecutable("test", DEBUG)' method.
-                    |Since 1.3.40 tests are represented by a separate binary type. To get the default test binary, use:
-                    |
-                    |    binaries.getTest("DEBUG")
-                """.trimMargin()
-            )
-        }
-
-        build("checkOldFind") {
-            assertSuccessful()
-            assertContains(
-                """
-                    |Probably you are accessing the default test binary using the 'binaries.findExecutable("test", DEBUG)' method.
-                    |Since 1.3.40 tests are represented by a separate binary type. To get the default test binary, use:
-                    |
-                    |    binaries.findTest("DEBUG")
-                """.trimMargin()
-            )
-            assertContains("Find test: null")
         }
     }
 
@@ -975,11 +948,11 @@ class GeneralNativeIT : BaseGradleIT() {
         hostHaveUnsupportedTarget()
         build {
             assertSuccessful()
-            assertEquals(1, output.lines().count { DISABLED_NATIVE_TARGETS_REPORTER_WARNING_PREFIX in it })
+            assertHasDiagnostic(KotlinToolingDiagnostics.DisabledKotlinNativeTargets)
         }
-        build("-P$DISABLED_NATIVE_TARGETS_REPORTER_DISABLE_WARNING_PROPERTY_NAME=true") {
+        build("-P$KOTLIN_NATIVE_IGNORE_DISABLED_TARGETS_PROPERTY=true") {
             assertSuccessful()
-            assertNotContains(DISABLED_NATIVE_TARGETS_REPORTER_WARNING_PREFIX)
+            assertNoDiagnostic(KotlinToolingDiagnostics.DisabledKotlinNativeTargets)
         }
     }
 

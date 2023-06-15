@@ -99,6 +99,14 @@ internal interface KotlinGradleProjectChecker {
             MissingNativeStdlibChecker,
             UnusedSourceSetsChecker,
             AndroidSourceSetLayoutV1SourceSetsNotFoundChecker,
+            TargetsWithAmbiguousConsumableConfigurationsChecker,
+            AndroidPluginWithoutAndroidTargetChecker,
+            NoKotlinTargetsDeclaredChecker,
+            DisabledCinteropCommonizationInHmppProjectChecker,
+            DisabledNativeTargetsChecker,
+            JsEnvironmentChecker,
+            PreHmppDependenciesUsageChecker,
+            ExperimentalK2UsageChecker
         )
     }
 }

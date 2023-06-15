@@ -1938,6 +1938,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
                 public void testHashSet() throws Exception {
                     runTest("compiler/testData/codegen/box/builtinStubMethods/extendJavaClasses/hashSet.kt");
                 }
+
+                @Test
+                @TestMetadata("overrideAbstractSetMethod.kt")
+                public void testOverrideAbstractSetMethod() throws Exception {
+                    runTest("compiler/testData/codegen/box/builtinStubMethods/extendJavaClasses/overrideAbstractSetMethod.kt");
+                }
             }
 
             @Nested
@@ -23944,12 +23950,6 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
             }
 
             @Test
-            @TestMetadata("thisPlusString.kt")
-            public void testThisPlusString() throws Exception {
-                runTest("compiler/testData/codegen/box/involvesIrInterpreter/thisPlusString.kt");
-            }
-
-            @Test
             @TestMetadata("unsignedConst.kt")
             public void testUnsignedConst() throws Exception {
                 runTest("compiler/testData/codegen/box/involvesIrInterpreter/unsignedConst.kt");
@@ -40117,6 +40117,18 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
             @Test
             public void testAllFilesPresentInValueClasses() throws Exception {
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/valueClasses"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+            }
+
+            @Nested
+            @TestMetadata("compiler/testData/codegen/box/valueClasses/javaInterop")
+            @TestDataPath("$PROJECT_ROOT")
+            @UseExtTestCaseGroupProvider()
+            @DisabledTestsIfProperty(sourceLocations = { "compiler/testData/codegen/box/coroutines/featureIntersection/defaultExpect.kt", "compiler/testData/codegen/box/multiplatform/defaultArguments/*.kt", "compiler/testData/codegen/box/multiplatform/migratedOldTests/*.kt", "compiler/testData/codegen/boxInline/multiplatform/defaultArguments/receiversAndParametersInLambda.kt" }, property = ClassLevelProperty.TEST_MODE, propertyValue = "ONE_STAGE_MULTI_MODULE")
+            public class JavaInterop {
+                @Test
+                public void testAllFilesPresentInJavaInterop() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/valueClasses/javaInterop"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+                }
             }
         }
 

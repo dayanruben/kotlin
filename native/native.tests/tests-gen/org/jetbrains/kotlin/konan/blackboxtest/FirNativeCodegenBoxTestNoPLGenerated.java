@@ -2012,6 +2012,12 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
                 public void testHashSet() throws Exception {
                     runTest("compiler/testData/codegen/box/builtinStubMethods/extendJavaClasses/hashSet.kt");
                 }
+
+                @Test
+                @TestMetadata("overrideAbstractSetMethod.kt")
+                public void testOverrideAbstractSetMethod() throws Exception {
+                    runTest("compiler/testData/codegen/box/builtinStubMethods/extendJavaClasses/overrideAbstractSetMethod.kt");
+                }
             }
 
             @Nested
@@ -24642,12 +24648,6 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
             }
 
             @Test
-            @TestMetadata("thisPlusString.kt")
-            public void testThisPlusString() throws Exception {
-                runTest("compiler/testData/codegen/box/involvesIrInterpreter/thisPlusString.kt");
-            }
-
-            @Test
             @TestMetadata("unsignedConst.kt")
             public void testUnsignedConst() throws Exception {
                 runTest("compiler/testData/codegen/box/involvesIrInterpreter/unsignedConst.kt");
@@ -41655,6 +41655,21 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
             @Test
             public void testAllFilesPresentInValueClasses() throws Exception {
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/valueClasses"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+            }
+
+            @Nested
+            @TestMetadata("compiler/testData/codegen/box/valueClasses/javaInterop")
+            @TestDataPath("$PROJECT_ROOT")
+            @Tag("frontend-fir")
+            @FirPipeline()
+            @UseExtTestCaseGroupProvider()
+            @UsePartialLinkage(mode = Mode.DISABLED)
+            @Tag("no-partial-linkage-may-be-skipped")
+            public class JavaInterop {
+                @Test
+                public void testAllFilesPresentInJavaInterop() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/valueClasses/javaInterop"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+                }
             }
         }
 
