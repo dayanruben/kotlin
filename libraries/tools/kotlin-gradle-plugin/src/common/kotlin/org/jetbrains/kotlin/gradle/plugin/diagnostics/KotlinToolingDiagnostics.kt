@@ -330,4 +330,49 @@ object KotlinToolingDiagnostics {
             """.trimIndent()
         )
     }
+
+    object KotlinSourceSetTreeDependsOnMismatch : ToolingDiagnosticFactory(WARNING) {
+        operator fun invoke(dependeeName: String, dependencyName: String) = build(
+            """
+                Kotlin Source Set '$dependeeName' can't depend on '$dependencyName' as they are from different Source Set Trees.
+                Please remove this dependency edge.
+            """.trimIndent()
+        )
+
+        operator fun invoke(dependents: Map<String, List<String>>, dependencyName: String) = build(
+            """
+                Following Kotlin Source Set groups can't depend on '$dependencyName' together as they belong to different Kotlin Source Set Trees.
+                ${renderSourceSetGroups(dependents).indentLines(16)}
+                Please keep dependsOn edges only from one group and remove the others.                
+            """.trimIndent()
+        )
+
+        private fun renderSourceSetGroups(sourceSetGroups: Map<String, List<String>>) = buildString {
+            for ((sourceSetTreeName, sourceSets) in sourceSetGroups) {
+                appendLine("Source Sets from '$sourceSetTreeName' Tree:")
+                appendLine(sourceSets.joinToString("\n") { "  * '$it'" })
+            }
+        }
+    }
+
+    object KotlinSourceSetDependsOnDefaultCompilationSourceSet : ToolingDiagnosticFactory(WARNING) {
+        operator fun invoke(dependeeName: String, dependencyName: String) = build(
+            """
+                Kotlin Source Set '$dependeeName' can't depend on '$dependencyName' which is a default source set for compilation.
+                None of source sets can depend on the compilation default source sets.
+                Please remove this dependency edge.
+            """.trimIndent()
+        )
+    }
+}
+
+private fun String.indentLines(nSpaces: Int = 4, skipFirstLine: Boolean = true): String {
+    val spaces = String(CharArray(nSpaces) { ' ' })
+
+    return lines()
+        .withIndex()
+        .joinToString(separator = "\n") { (index, line) ->
+            if (skipFirstLine && index == 0) return@joinToString line
+            if (line.isNotBlank()) "$spaces$line" else line
+        }
 }
