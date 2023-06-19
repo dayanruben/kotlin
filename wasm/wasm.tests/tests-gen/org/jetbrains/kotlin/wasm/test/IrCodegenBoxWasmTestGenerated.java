@@ -20962,6 +20962,11 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
                 public void testRemoveExpectDeclarationsFromMetadata() throws Exception {
                     runTest("compiler/testData/codegen/box/multiplatform/k2/basic/removeExpectDeclarationsFromMetadata.kt");
                 }
+
+                @TestMetadata("widerVisibilityInActualClassifier.kt")
+                public void testWiderVisibilityInActualClassifier() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/widerVisibilityInActualClassifier.kt");
+                }
             }
 
             @TestMetadata("compiler/testData/codegen/box/multiplatform/k2/defaultArguments")
@@ -32990,6 +32995,16 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
         @TestMetadata("kt5448.kt")
         public void testKt5448() throws Exception {
             runTest("compiler/testData/codegen/box/when/kt5448.kt");
+        }
+
+        @TestMetadata("kt55993.kt")
+        public void testKt55993() throws Exception {
+            runTest("compiler/testData/codegen/box/when/kt55993.kt");
+        }
+
+        @TestMetadata("kt59346.kt")
+        public void testKt59346() throws Exception {
+            runTest("compiler/testData/codegen/box/when/kt59346.kt");
         }
 
         @TestMetadata("longInRange.kt")

@@ -4586,6 +4586,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 }
 
                 @Test
+                @TestMetadata("classLiteralsWithEmptyLHS.kt")
+                public void testClassLiteralsWithEmptyLHS() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/callableReference/unsupported/classLiteralsWithEmptyLHS.kt");
+                }
+
+                @Test
                 @TestMetadata("javaOverridesKotlinProperty.kt")
                 public void testJavaOverridesKotlinProperty() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/callableReference/unsupported/javaOverridesKotlinProperty.kt");
@@ -22484,6 +22490,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("varSetterVisibility.kt")
             public void testVarSetterVisibility() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/multiplatform/varSetterVisibility.kt");
+            }
+
+            @Test
+            @TestMetadata("widerVisibilityInActualClassifier.kt")
+            public void testWiderVisibilityInActualClassifier() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multiplatform/widerVisibilityInActualClassifier.kt");
             }
 
             @Nested

@@ -32072,6 +32072,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
                 public void testRemoveExpectDeclarationsFromMetadata() throws Exception {
                     runTest("compiler/testData/codegen/box/multiplatform/k2/basic/removeExpectDeclarationsFromMetadata.kt");
                 }
+
+                @Test
+                @TestMetadata("widerVisibilityInActualClassifier.kt")
+                public void testWiderVisibilityInActualClassifier() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/widerVisibilityInActualClassifier.kt");
+                }
             }
 
             @Nested
@@ -49933,6 +49939,18 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         @TestMetadata("kt5448.kt")
         public void testKt5448() throws Exception {
             runTest("compiler/testData/codegen/box/when/kt5448.kt");
+        }
+
+        @Test
+        @TestMetadata("kt55993.kt")
+        public void testKt55993() throws Exception {
+            runTest("compiler/testData/codegen/box/when/kt55993.kt");
+        }
+
+        @Test
+        @TestMetadata("kt59346.kt")
+        public void testKt59346() throws Exception {
+            runTest("compiler/testData/codegen/box/when/kt59346.kt");
         }
 
         @Test
