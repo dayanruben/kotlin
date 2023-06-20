@@ -72,14 +72,16 @@ class Fir2IrClassifierStorage(
 
     fun preCacheBuiltinClasses() {
         for ((classId, irBuiltinSymbol) in typeConverter.classIdToSymbolMap) {
-            val firClass = classId.toSymbol(session)!!.fir as FirRegularClass
+            // toSymbol() can return null when using an old stdlib that's missing some types
+            val firClass = classId.toSymbol(session)?.fir as FirRegularClass? ?: continue
             val irClass = irBuiltinSymbol.owner
             classCache[firClass] = irClass
             processClassHeader(firClass, irClass)
             declarationStorage.preCacheBuiltinClassMembers(firClass, irClass)
         }
         for ((primitiveClassId, primitiveArrayId) in StandardClassIds.primitiveArrayTypeByElementType) {
-            val firClass = primitiveArrayId.toLookupTag().toSymbol(session)!!.fir as FirRegularClass
+            // toSymbol() can return null when using an old stdlib that's missing some types
+            val firClass = primitiveArrayId.toLookupTag().toSymbol(session)?.fir as FirRegularClass? ?: continue
             val irType = typeConverter.classIdToTypeMap[primitiveClassId]
             val irClass = irBuiltIns.primitiveArrayForType[irType]!!.owner
             classCache[firClass] = irClass
@@ -551,7 +553,11 @@ class Fir2IrClassifierStorage(
             val result = declareIrEnumEntry(signature) { symbol ->
                 val origin = enumEntry.computeIrOrigin(predefinedOrigin)
                 irFactory.createEnumEntry(
-                    startOffset, endOffset, origin, symbol, enumEntry.name
+                    startOffset = startOffset,
+                    endOffset = endOffset,
+                    origin = origin,
+                    name = enumEntry.name,
+                    symbol = symbol,
                 ).apply {
                     declarationStorage.enterScope(this)
                     if (irParent != null) {
@@ -614,7 +620,11 @@ class Fir2IrClassifierStorage(
     fun getIrClassSymbolForNotFoundClass(classLikeLookupTag: ConeClassLikeLookupTag): IrClassSymbol {
         val classId = classLikeLookupTag.classId
         val signature = IdSignature.CommonSignature(
-            classId.packageFqName.asString(), classId.relativeClassName.asString(), 0, 0,
+            packageFqName = classId.packageFqName.asString(),
+            declarationFqName = classId.relativeClassName.asString(),
+            id = 0,
+            mask = 0,
+            description = null,
         )
 
         val parentId = classId.outerClassId

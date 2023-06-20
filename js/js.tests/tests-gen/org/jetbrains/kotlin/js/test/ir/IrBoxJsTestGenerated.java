@@ -1763,6 +1763,12 @@ public class IrBoxJsTestGenerated extends AbstractIrBoxJsTest {
         }
 
         @Test
+        @TestMetadata("lambdaParameterInlining.kt")
+        public void testLambdaParameterInlining() throws Exception {
+            runTest("js/js.translator/testData/box/dynamic/lambdaParameterInlining.kt");
+        }
+
+        @Test
         @TestMetadata("operationsWithAssignment.kt")
         public void testOperationsWithAssignment() throws Exception {
             runTest("js/js.translator/testData/box/dynamic/operationsWithAssignment.kt");
@@ -5104,6 +5110,12 @@ public class IrBoxJsTestGenerated extends AbstractIrBoxJsTest {
         @TestMetadata("definitionOrder.kt")
         public void testDefinitionOrder() throws Exception {
             runTest("js/js.translator/testData/box/inheritance/definitionOrder.kt");
+        }
+
+        @Test
+        @TestMetadata("delegatingToSecondaryCtor.kt")
+        public void testDelegatingToSecondaryCtor() throws Exception {
+            runTest("js/js.translator/testData/box/inheritance/delegatingToSecondaryCtor.kt");
         }
 
         @Test

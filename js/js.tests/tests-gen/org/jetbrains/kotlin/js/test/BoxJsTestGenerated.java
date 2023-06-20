@@ -1693,6 +1693,12 @@ public class BoxJsTestGenerated extends AbstractBoxJsTest {
         }
 
         @Test
+        @TestMetadata("lambdaParameterInlining.kt")
+        public void testLambdaParameterInlining() throws Exception {
+            runTest("js/js.translator/testData/box/dynamic/lambdaParameterInlining.kt");
+        }
+
+        @Test
         @TestMetadata("nameClashing.kt")
         public void testNameClashing() throws Exception {
             runTest("js/js.translator/testData/box/dynamic/nameClashing.kt");
@@ -4476,6 +4482,12 @@ public class BoxJsTestGenerated extends AbstractBoxJsTest {
         @TestMetadata("definitionOrder.kt")
         public void testDefinitionOrder() throws Exception {
             runTest("js/js.translator/testData/box/inheritance/definitionOrder.kt");
+        }
+
+        @Test
+        @TestMetadata("delegatingToSecondaryCtor.kt")
+        public void testDelegatingToSecondaryCtor() throws Exception {
+            runTest("js/js.translator/testData/box/inheritance/delegatingToSecondaryCtor.kt");
         }
 
         @Test
