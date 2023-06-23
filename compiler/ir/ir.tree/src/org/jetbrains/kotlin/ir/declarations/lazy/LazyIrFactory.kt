@@ -49,21 +49,31 @@ class LazyIrFactory(
         startOffset: Int,
         endOffset: Int,
         origin: IrDeclarationOrigin,
-        symbol: IrConstructorSymbol,
         name: Name,
         visibility: DescriptorVisibility,
-        returnType: IrType,
         isInline: Boolean,
-        isExternal: Boolean,
-        isPrimary: Boolean,
         isExpect: Boolean,
+        returnType: IrType,
+        symbol: IrConstructorSymbol,
+        isPrimary: Boolean,
+        isExternal: Boolean,
         containerSource: DeserializedContainerSource?
     ): IrConstructor = if (symbol.isBound)
         symbol.owner
     else
         delegate.createConstructor(
-            startOffset, endOffset, origin, symbol, name, visibility, returnType,
-            isInline, isExternal, isPrimary, isExpect, containerSource
+            startOffset,
+            endOffset,
+            origin,
+            name,
+            visibility,
+            isInline,
+            isExpect,
+            returnType,
+            symbol,
+            isPrimary,
+            isExternal,
+            containerSource,
         )
 
     override fun createEnumEntry(
@@ -81,17 +91,17 @@ class LazyIrFactory(
         startOffset: Int,
         endOffset: Int,
         origin: IrDeclarationOrigin,
-        symbol: IrFieldSymbol,
         name: Name,
-        type: IrType,
         visibility: DescriptorVisibility,
+        symbol: IrFieldSymbol,
+        type: IrType,
         isFinal: Boolean,
-        isExternal: Boolean,
-        isStatic: Boolean
+        isStatic: Boolean,
+        isExternal: Boolean
     ): IrField = if (symbol.isBound)
         symbol.owner
     else
-        delegate.createField(startOffset, endOffset, origin, symbol, name, type, visibility, isFinal, isExternal, isStatic)
+        delegate.createField(startOffset, endOffset, origin, name, visibility, symbol, type, isFinal, isStatic, isExternal)
 
     override fun createFunction(
         startOffset: Int,

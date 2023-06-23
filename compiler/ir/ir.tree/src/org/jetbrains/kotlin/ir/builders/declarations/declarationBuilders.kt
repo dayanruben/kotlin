@@ -43,9 +43,16 @@ inline fun IrFactory.buildClass(builder: IrClassBuilder.() -> Unit) =
 @PublishedApi
 internal fun IrFactory.buildField(builder: IrFieldBuilder): IrField = with(builder) {
     createField(
-        startOffset, endOffset, origin,
-        IrFieldSymbolImpl(),
-        name, type, visibility, isFinal, isExternal, isStatic,
+        startOffset = startOffset,
+        endOffset = endOffset,
+        origin = origin,
+        name = name,
+        visibility = visibility,
+        symbol = IrFieldSymbolImpl(),
+        type = type,
+        isFinal = isFinal,
+        isStatic = isStatic,
+        isExternal = isExternal,
     ).also {
         it.metadata = metadata
     }
@@ -166,12 +173,18 @@ internal fun IrFactory.buildFunction(builder: IrFunctionBuilder): IrSimpleFuncti
 @PublishedApi
 internal fun IrFactory.buildConstructor(builder: IrFunctionBuilder): IrConstructor = with(builder) {
     return createConstructor(
-        startOffset, endOffset, origin,
-        IrConstructorSymbolImpl(),
-        SpecialNames.INIT,
-        visibility, returnType,
-        isInline = isInline, isExternal = isExternal, isPrimary = isPrimary, isExpect = isExpect,
-        containerSource = containerSource
+        startOffset = startOffset,
+        endOffset = endOffset,
+        origin = origin,
+        name = SpecialNames.INIT,
+        visibility = visibility,
+        isInline = isInline,
+        isExpect = isExpect,
+        returnType = returnType,
+        symbol = IrConstructorSymbolImpl(),
+        isPrimary = isPrimary,
+        isExternal = isExternal,
+        containerSource = containerSource,
     )
 }
 

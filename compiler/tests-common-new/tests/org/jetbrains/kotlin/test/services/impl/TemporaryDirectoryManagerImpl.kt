@@ -26,10 +26,9 @@ class TemporaryDirectoryManagerImpl(testServices: TestServices) : TemporaryDirec
 
         // This code will simplify directory name for windows. This is needed because there can occur errors due to long name
         val lastDot = className.lastIndexOf('.')
-        val packageName = className.substring(0, lastDot + 1)
         val simplifiedClassName = className.substring(lastDot + 1).getOnlyUpperCaseSymbols()
         val simplifiedMethodName = methodName.getOnlyUpperCaseSymbols()
-        KtTestUtil.tmpDirForTest(packageName + simplifiedClassName, "test$simplifiedMethodName")
+        KtTestUtil.tmpDirForTest(simplifiedClassName, simplifiedMethodName)
     }
 
     override val rootDir: File
@@ -44,13 +43,6 @@ class TemporaryDirectoryManagerImpl(testServices: TestServices) : TemporaryDirec
 
         if (rootTempDir.isInitialized()) {
             NioFiles.deleteRecursively(Paths.get(rootDir.path))
-        }
-    }
-
-    @Suppress("removal")
-    fun finalize() {
-        if (rootTempDir.isInitialized() && rootDir.exists()) {
-            error("The temporary directory $rootDir has not been deleted by the time the corresponding ${this::class.simpleName} is finalized.")
         }
     }
 

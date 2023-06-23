@@ -577,6 +577,16 @@ class IrDeclarationDeserializer(
         }
     }
 
+    fun <T : IrFunction> T.withDeserializeBodies(block: T.() -> Unit) {
+        val oldBodiesPolicy = deserializeBodies
+        try {
+            deserializeBodies = true
+            usingParent { block() }
+        } finally {
+            deserializeBodies = oldBodiesPolicy
+        }
+    }
+
     internal fun deserializeIrFunction(proto: ProtoFunction, setParent: Boolean = true): IrSimpleFunction =
         withDeserializedIrFunctionBase<IrSimpleFunctionSymbol, IrSimpleFunction>(
             proto.base,
@@ -658,15 +668,17 @@ class IrDeclarationDeserializer(
             val nameType = BinaryNameAndType.decode(proto.base.nameType)
             symbolTable.declareConstructor(idSig, { symbol }) {
                 irFactory.createConstructor(
-                    startOffset, endOffset, origin,
-                    it,
-                    deserializeName(nameType.nameIndex),
-                    flags.visibility,
-                    IrUninitializedType,
-                    flags.isInline,
-                    flags.isExternal || isEffectivelyExternal,
-                    flags.isPrimary,
-                    flags.isExpect
+                    startOffset = startOffset,
+                    endOffset = endOffset,
+                    origin = origin,
+                    name = deserializeName(nameType.nameIndex),
+                    visibility = flags.visibility,
+                    isInline = flags.isInline,
+                    isExpect = flags.isExpect,
+                    returnType = IrUninitializedType,
+                    symbol = it,
+                    isPrimary = flags.isPrimary,
+                    isExternal = flags.isExternal || isEffectivelyExternal,
                 )
             }
         }
@@ -680,14 +692,16 @@ class IrDeclarationDeserializer(
 
             val field = symbolTable.declareField(uniqId, { symbol.checkSymbolType(FIELD_SYMBOL) }) {
                 irFactory.createField(
-                    startOffset, endOffset, origin,
-                    it,
-                    deserializeName(nameType.nameIndex),
-                    type,
-                    flags.visibility,
-                    flags.isFinal,
-                    flags.isExternal || isEffectivelyExternal,
-                    flags.isStatic,
+                    startOffset = startOffset,
+                    endOffset = endOffset,
+                    origin = origin,
+                    name = deserializeName(nameType.nameIndex),
+                    visibility = flags.visibility,
+                    symbol = it,
+                    type = type,
+                    isFinal = flags.isFinal,
+                    isStatic = flags.isStatic,
+                    isExternal = flags.isExternal || isEffectivelyExternal,
                 )
             }
 

@@ -62,14 +62,14 @@ abstract class AbstractIrFactoryImpl : IrFactory {
         startOffset: Int,
         endOffset: Int,
         origin: IrDeclarationOrigin,
-        symbol: IrConstructorSymbol,
         name: Name,
         visibility: DescriptorVisibility,
-        returnType: IrType,
         isInline: Boolean,
-        isExternal: Boolean,
-        isPrimary: Boolean,
         isExpect: Boolean,
+        returnType: IrType,
+        symbol: IrConstructorSymbol,
+        isPrimary: Boolean,
+        isExternal: Boolean,
         containerSource: DeserializedContainerSource?,
     ): IrConstructor =
         IrConstructorImpl(
@@ -97,13 +97,13 @@ abstract class AbstractIrFactoryImpl : IrFactory {
         startOffset: Int,
         endOffset: Int,
         origin: IrDeclarationOrigin,
-        symbol: IrFieldSymbol,
         name: Name,
-        type: IrType,
         visibility: DescriptorVisibility,
+        symbol: IrFieldSymbol,
+        type: IrType,
         isFinal: Boolean,
-        isExternal: Boolean,
         isStatic: Boolean,
+        isExternal: Boolean,
     ): IrField =
         IrFieldImpl(startOffset, endOffset, origin, symbol, name, type, visibility, isFinal, isExternal, isStatic, factory = this)
 

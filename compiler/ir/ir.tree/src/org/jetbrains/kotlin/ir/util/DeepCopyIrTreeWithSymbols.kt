@@ -198,16 +198,17 @@ open class DeepCopyIrTreeWithSymbols(
 
     override fun visitConstructor(declaration: IrConstructor): IrConstructor =
         declaration.factory.createConstructor(
-            declaration.startOffset, declaration.endOffset,
-            mapDeclarationOrigin(declaration.origin),
-            symbolRemapper.getDeclaredConstructor(declaration.symbol),
-            declaration.name,
-            declaration.visibility,
-            declaration.returnType,
+            startOffset = declaration.startOffset,
+            endOffset = declaration.endOffset,
+            origin = mapDeclarationOrigin(declaration.origin),
+            name = declaration.name,
+            visibility = declaration.visibility,
             isInline = declaration.isInline,
-            isExternal = declaration.isExternal,
-            isPrimary = declaration.isPrimary,
             isExpect = declaration.isExpect,
+            returnType = declaration.returnType,
+            symbol = symbolRemapper.getDeclaredConstructor(declaration.symbol),
+            isPrimary = declaration.isPrimary,
+            isExternal = declaration.isExternal,
             containerSource = declaration.containerSource,
         ).apply {
             transformFunctionChildren(declaration)
@@ -264,15 +265,16 @@ open class DeepCopyIrTreeWithSymbols(
 
     override fun visitField(declaration: IrField): IrField =
         declaration.factory.createField(
-            declaration.startOffset, declaration.endOffset,
-            mapDeclarationOrigin(declaration.origin),
-            symbolRemapper.getDeclaredField(declaration.symbol),
-            symbolRenamer.getFieldName(declaration.symbol),
-            declaration.type.remapType(),
-            declaration.visibility,
+            startOffset = declaration.startOffset,
+            endOffset = declaration.endOffset,
+            origin = mapDeclarationOrigin(declaration.origin),
+            name = symbolRenamer.getFieldName(declaration.symbol),
+            visibility = declaration.visibility,
+            symbol = symbolRemapper.getDeclaredField(declaration.symbol),
+            type = declaration.type.remapType(),
             isFinal = declaration.isFinal,
-            isExternal = declaration.isExternal,
             isStatic = declaration.isStatic,
+            isExternal = declaration.isExternal,
         ).apply {
             transformAnnotations(declaration)
             initializer = declaration.initializer?.transform()

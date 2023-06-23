@@ -3329,6 +3329,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
             }
 
             @Test
+            @TestMetadata("genericTypealiasInLhs.kt")
+            public void testGenericTypealiasInLhs() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/callableReference/genericTypealiasInLhs.kt");
+            }
+
+            @Test
             @TestMetadata("kt15439_completeCall.kt")
             public void testKt15439_completeCall() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/callableReference/kt15439_completeCall.kt");
@@ -4046,6 +4052,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
                 }
 
                 @Test
+                @TestMetadata("boundViolated.kt")
+                public void testBoundViolated() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/callableReference/generic/boundViolated.kt");
+                }
+
+                @Test
                 @TestMetadata("dependOnArgumentType.kt")
                 public void testDependOnArgumentType() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/callableReference/generic/dependOnArgumentType.kt");
@@ -4073,6 +4085,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
                 @TestMetadata("genericFunctionsWithNullableTypes.kt")
                 public void testGenericFunctionsWithNullableTypes() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/callableReference/generic/genericFunctionsWithNullableTypes.kt");
+                }
+
+                @Test
+                @TestMetadata("incorrectNumberOfTypeArguments.kt")
+                public void testIncorrectNumberOfTypeArguments() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/callableReference/generic/incorrectNumberOfTypeArguments.kt");
                 }
 
                 @Test
@@ -5378,6 +5396,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
             @TestMetadata("nonClassesOnLHS.kt")
             public void testNonClassesOnLHS() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/classLiteral/nonClassesOnLHS.kt");
+            }
+
+            @Test
+            @TestMetadata("parameterizedTypeAlias.kt")
+            public void testParameterizedTypeAlias() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/classLiteral/parameterizedTypeAlias.kt");
             }
 
             @Test
@@ -11072,6 +11096,18 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
                 }
 
                 @Test
+                @TestMetadata("conflictingPropertyEntriesAndReferenceOn.kt")
+                public void testConflictingPropertyEntriesAndReferenceOn() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/enum/entries/conflictingPropertyEntriesAndReferenceOn.kt");
+                }
+
+                @Test
+                @TestMetadata("conflictingPropertyEntriesAndReferencePrioritized.kt")
+                public void testConflictingPropertyEntriesAndReferencePrioritized() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/enum/entries/conflictingPropertyEntriesAndReferencePrioritized.kt");
+                }
+
+                @Test
                 @TestMetadata("entriesPropertyAsExtensionClash.kt")
                 public void testEntriesPropertyAsExtensionClash() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/enum/entries/entriesPropertyAsExtensionClash.kt");
@@ -11084,6 +11120,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
                 }
 
                 @Test
+                @TestMetadata("entriesPropertyAsExtensionClashPrioritized.kt")
+                public void testEntriesPropertyAsExtensionClashPrioritized() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/enum/entries/entriesPropertyAsExtensionClashPrioritized.kt");
+                }
+
+                @Test
                 @TestMetadata("entriesPropertyImportedClash.kt")
                 public void testEntriesPropertyImportedClash() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/enum/entries/entriesPropertyImportedClash.kt");
@@ -11093,6 +11135,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
                 @TestMetadata("entriesPropertyImportedClashOn.kt")
                 public void testEntriesPropertyImportedClashOn() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/enum/entries/entriesPropertyImportedClashOn.kt");
+                }
+
+                @Test
+                @TestMetadata("entriesPropertyImportedClashPrioritized.kt")
+                public void testEntriesPropertyImportedClashPrioritized() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/enum/entries/entriesPropertyImportedClashPrioritized.kt");
                 }
 
                 @Test
@@ -11114,6 +11162,18 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
                 }
 
                 @Test
+                @TestMetadata("entriesPropertyWithJvmStaticClashOn.kt")
+                public void testEntriesPropertyWithJvmStaticClashOn() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/enum/entries/entriesPropertyWithJvmStaticClashOn.kt");
+                }
+
+                @Test
+                @TestMetadata("entriesPropertyWithJvmStaticClashPrioritized.kt")
+                public void testEntriesPropertyWithJvmStaticClashPrioritized() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/enum/entries/entriesPropertyWithJvmStaticClashPrioritized.kt");
+                }
+
+                @Test
                 @TestMetadata("entriesUnsupported.kt")
                 public void testEntriesUnsupported() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/enum/entries/entriesUnsupported.kt");
@@ -11132,9 +11192,27 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
                 }
 
                 @Test
+                @TestMetadata("genericEntriesPropertyClashOn.kt")
+                public void testGenericEntriesPropertyClashOn() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/enum/entries/genericEntriesPropertyClashOn.kt");
+                }
+
+                @Test
                 @TestMetadata("javaEnumEntriesAmbiguity.kt")
                 public void testJavaEnumEntriesAmbiguity() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/enum/entries/javaEnumEntriesAmbiguity.kt");
+                }
+
+                @Test
+                @TestMetadata("javaEnumEntriesAmbiguityOn.kt")
+                public void testJavaEnumEntriesAmbiguityOn() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/enum/entries/javaEnumEntriesAmbiguityOn.kt");
+                }
+
+                @Test
+                @TestMetadata("javaFakeEnumEntries.kt")
+                public void testJavaFakeEnumEntries() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/enum/entries/javaFakeEnumEntries.kt");
                 }
 
                 @Test
@@ -11147,6 +11225,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
                 @TestMetadata("nameShadowingOfExternallyDefinedEntriesOn.kt")
                 public void testNameShadowingOfExternallyDefinedEntriesOn() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/enum/entries/nameShadowingOfExternallyDefinedEntriesOn.kt");
+                }
+
+                @Test
+                @TestMetadata("nameShadowingOfExternallyDefinedEntriesPrioritized.kt")
+                public void testNameShadowingOfExternallyDefinedEntriesPrioritized() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/enum/entries/nameShadowingOfExternallyDefinedEntriesPrioritized.kt");
                 }
 
                 @Test
@@ -14122,6 +14206,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
             @TestMetadata("ImportFromCurrentWithDifferentName.kt")
             public void testImportFromCurrentWithDifferentName() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/imports/ImportFromCurrentWithDifferentName.kt");
+            }
+
+            @Test
+            @TestMetadata("ImportFromCurrentWithDifferentNameComplex.kt")
+            public void testImportFromCurrentWithDifferentNameComplex() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/imports/ImportFromCurrentWithDifferentNameComplex.kt");
             }
 
             @Test
@@ -19652,6 +19742,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
             @TestMetadata("intToLongConversion.kt")
             public void testIntToLongConversion() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/integerLiterals/intToLongConversion.kt");
+            }
+
+            @Test
+            @TestMetadata("literalInCompletedGeneric.kt")
+            public void testLiteralInCompletedGeneric() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/integerLiterals/literalInCompletedGeneric.kt");
             }
 
             @Test
@@ -29755,6 +29851,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
             }
 
             @Test
+            @TestMetadata("complexExpression.kt")
+            public void testComplexExpression() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/senselessComparison/complexExpression.kt");
+            }
+
+            @Test
             @TestMetadata("noExplicitType.kt")
             public void testNoExplicitType() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/senselessComparison/noExplicitType.kt");
@@ -39242,6 +39344,22 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
                 public void testValid() throws Exception {
                     runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/tailCalls/valid.kt");
                 }
+            }
+        }
+
+        @Nested
+        @TestMetadata("compiler/testData/diagnostics/testsWithStdLib/delegateInference")
+        @TestDataPath("$PROJECT_ROOT")
+        public class DelegateInference {
+            @Test
+            public void testAllFilesPresentInDelegateInference() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/testsWithStdLib/delegateInference"), Pattern.compile("^(.+)\\.kt$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);
+            }
+
+            @Test
+            @TestMetadata("ifWithCallableReferenceInLazy.kt")
+            public void testIfWithCallableReferenceInLazy() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/delegateInference/ifWithCallableReferenceInLazy.kt");
             }
         }
 
