@@ -133,25 +133,37 @@ val generateTests by generator("org.jetbrains.kotlin.generators.tests.GenerateWa
     dependsOn(":compiler:generateTestData")
 }
 
-projectTest(parallel = true) {
-    workingDir = rootDir
-    exclude("**/diagnostics/*.class")
-    setupV8()
-    setupSpiderMonkey()
-    setupWasmStdlib()
-    setupGradlePropertiesForwarding()
-    systemProperty("kotlin.wasm.test.root.out.dir", "$buildDir/")
+fun Project.wasmProjectTest(
+    taskName: String,
+    body: Test.() -> Unit = {}
+): TaskProvider<Test> {
+    return projectTest(
+        taskName = taskName,
+        parallel = true,
+        jUnitMode = JUnitMode.JUnit5
+    ) {
+        workingDir = rootDir
+        setupV8()
+        setupSpiderMonkey()
+        useJUnitPlatform()
+        setupWasmStdlib()
+        setupGradlePropertiesForwarding()
+        systemProperty("kotlin.wasm.test.root.out.dir", "$buildDir/")
+        body()
+    }
 }
 
-projectTest(
-    taskName = "diagnosticsTest",
-    parallel = true,
-    jUnitMode = JUnitMode.JUnit5
-) {
-    workingDir = rootDir
-    include("**/diagnostics/*.class")
-    useJUnitPlatform()
-    setupWasmStdlib()
-    setupGradlePropertiesForwarding()
-    systemProperty("kotlin.wasm.test.root.out.dir", "$buildDir/")
+// Test everything
+wasmProjectTest("test")
+
+wasmProjectTest("testFir") {
+    include("**/Fir*.class")
+}
+
+wasmProjectTest("testK1") {
+    include("**/K1*.class")
+}
+
+wasmProjectTest("diagnosticTest") {
+    include("**/Diagnostics*.class")
 }
