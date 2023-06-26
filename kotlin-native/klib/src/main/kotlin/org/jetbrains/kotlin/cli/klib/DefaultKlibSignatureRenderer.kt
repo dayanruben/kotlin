@@ -5,8 +5,9 @@ import org.jetbrains.kotlin.backend.konan.serialization.KonanManglerDesc
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.ir.util.render
 
-class DefaultIdSignatureRenderer(private val prefix: String? = null) : IdSignatureRenderer {
+internal class DefaultKlibSignatureRenderer(private val prefix: String? = null) : KlibSignatureRenderer {
     private val idSignaturer = KonanIdSignaturer(KonanManglerDesc)
 
     override fun render(descriptor: DeclarationDescriptor): String? {
