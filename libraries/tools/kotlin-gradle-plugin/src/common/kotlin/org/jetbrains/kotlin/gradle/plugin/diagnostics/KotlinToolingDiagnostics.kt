@@ -5,8 +5,14 @@
 
 package org.jetbrains.kotlin.gradle.plugin.diagnostics
 
+import org.gradle.api.Project
 import org.jetbrains.kotlin.gradle.InternalKotlinGradlePluginApi
+import org.jetbrains.kotlin.gradle.dsl.KotlinSourceSetConvention.isRegisteredByKotlinSourceSetConventionAt
+import org.jetbrains.kotlin.gradle.dsl.NativeTargetShortcutTrace
+import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
+import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider
+import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.PropertyNames.KOTLIN_MPP_APPLY_DEFAULT_HIERARCHY_TEMPLATE
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.PropertyNames.KOTLIN_NATIVE_IGNORE_DISABLED_TARGETS
 import org.jetbrains.kotlin.gradle.plugin.diagnostics.ToolingDiagnostic.Severity.*
 import org.jetbrains.kotlin.gradle.plugin.sources.android.multiplatformAndroidSourceSetLayoutV1
@@ -287,7 +293,7 @@ object KotlinToolingDiagnostics {
             targetCompatibility: String,
             kotlinTaskName: String,
             jvmTarget: String,
-            severity: ToolingDiagnostic.Severity
+            severity: ToolingDiagnostic.Severity,
         ) = build(
             """
                 Inconsistent JVM-target compatibility detected for tasks '$javaTaskName' ($targetCompatibility) and '$kotlinTaskName' ($jvmTarget).
@@ -364,6 +370,142 @@ object KotlinToolingDiagnostics {
             """.trimIndent()
         )
     }
+
+    object PlatformSourceSetConventionUsedWithCustomTargetName : ToolingDiagnosticFactory(WARNING) {
+        operator fun invoke(sourceSet: KotlinSourceSet, target: KotlinTarget, expectedTargetName: String) = build(
+            """
+                |Accessed '$sourceSet', but $expectedTargetName target used a custom name '${target.name}' (expected '$expectedTargetName'):
+                |
+                |Replace:
+                |    kotlin {
+                |        $expectedTargetName("${target.name}") /* <- custom name used */
+                |    }
+                |
+                |With:
+                |   kotlin {
+                |       $expectedTargetName()
+                |   }
+            """.trimMargin(),
+            throwable = sourceSet.isRegisteredByKotlinSourceSetConventionAt
+        )
+    }
+
+    object PlatformSourceSetConventionUsedWithoutCorrespondingTarget : ToolingDiagnosticFactory(WARNING) {
+        operator fun invoke(sourceSet: KotlinSourceSet, expectedTargetName: String) = build(
+            """
+                 |Accessed '$sourceSet' without the registering the $expectedTargetName target:
+                 |  kotlin {
+                 |      $expectedTargetName() /* <- register the '$expectedTargetName' target */
+                 |
+                 |      sourceSets.${sourceSet.name}.dependencies {
+                 |
+                 |      }
+                 |  }
+                """.trimMargin(),
+            throwable = sourceSet.isRegisteredByKotlinSourceSetConventionAt
+        )
+    }
+
+    object AndroidMainSourceSetConventionUsedWithoutAndroidTarget : ToolingDiagnosticFactory(ERROR) {
+        operator fun invoke(sourceSet: KotlinSourceSet) = build(
+            """
+                |Accessed '$sourceSet' without registering the Android target
+                |Please apply a given Android Gradle plugin (e.g. com.android.library) and register an Android target
+                |
+                |Example using the 'com.android.library' plugin:
+                |
+                |    plugins {
+                |        id("com.android.library")
+                |    }
+                |
+                |    android {
+                |        namespace = "org.sample.library"
+                |        compileSdk = 33
+                |    }
+                |
+                |    kotlin {
+                |        androidTarget() /* <- register the androidTarget */
+                |    }
+            """.trimMargin(),
+            throwable = sourceSet.isRegisteredByKotlinSourceSetConventionAt
+        )
+    }
+
+    object IosSourceSetConventionUsedWithoutIosTarget : ToolingDiagnosticFactory(WARNING) {
+        operator fun invoke(sourceSet: KotlinSourceSet) = build(
+            """
+                |Accessed '$sourceSet' without registering any ios target:
+                |  kotlin {
+                |     /* Register at least one of the following targets */
+                |     iosX64()
+                |     iosArm64()
+                |     iosSimulatorArm64()
+                |     
+                |     /* Use convention
+                |     sourceSets.${sourceSet.name}.dependencies {
+                |     
+                |     }
+                |  }
+            """.trimMargin(),
+            throwable = sourceSet.isRegisteredByKotlinSourceSetConventionAt
+        )
+    }
+
+    object KotlinDefaultHierarchyFallbackDependsOnUsageDetected : ToolingDiagnosticFactory(WARNING) {
+        operator fun invoke(project: Project, sourceSetsWithDependsOnEdges: Iterable<KotlinSourceSet>) = build(
+            """
+                The Default Kotlin Hierarchy was not applied to '${project.displayName}':
+                Manual .dependsOn() edges were configured for the following source sets:
+                ${sourceSetsWithDependsOnEdges.toSet().map { it.name }}
+                
+                To suppress the 'Default Hierarchy Template' add
+                    '$KOTLIN_MPP_APPLY_DEFAULT_HIERARCHY_TEMPLATE=false'
+                to your gradle.properties
+            """.trimIndent()
+        )
+    }
+
+    object KotlinDefaultHierarchyFallbackNativeTargetShortcutUsageDetected : ToolingDiagnosticFactory(WARNING) {
+        internal operator fun invoke(project: Project, trace: NativeTargetShortcutTrace) = build(
+            """
+                The Default Kotlin Hierarchy was not applied to '${project.displayName}':
+                Deprecated '${trace.shortcut}()' shortcut was used:
+                
+                  kotlin {
+                      ${trace.shortcut}()
+                  }
+                  
+                Could be replaced by declaring the supported ${trace.shortcut} targets directly: 
+                
+                  kotlin {
+                      ${trace.shortcut}X64()
+                      ${trace.shortcut}Arm64()
+                      ${trace.shortcut}SimulatorArm64() /* <- Note: Was not previously applied */
+                      /* ... */
+                  }
+                
+                To suppress the 'Default Hierarchy Template' add
+                    '$KOTLIN_MPP_APPLY_DEFAULT_HIERARCHY_TEMPLATE=false'
+                to your gradle.properties
+            """.trimIndent(),
+            throwable = trace
+        )
+    }
+
+    object KotlinDefaultHierarchyFallbackIllegalTargetNames : ToolingDiagnosticFactory(WARNING) {
+        operator fun invoke(project: Project, illegalTargetNamesUsed: Iterable<String>) = build(
+            """
+                The Default Kotlin Hierarchy was not applied to '${project.displayName}':
+                Illegal target names were found:
+                ${illegalTargetNamesUsed.toSet()}
+                
+                To suppress the 'Default Hierarchy Template' add 
+                    '$KOTLIN_MPP_APPLY_DEFAULT_HIERARCHY_TEMPLATE=false'
+                to your gradle.properties
+            """.trimIndent()
+        )
+    }
+
 }
 
 private fun String.indentLines(nSpaces: Int = 4, skipFirstLine: Boolean = true): String {

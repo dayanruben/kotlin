@@ -170,28 +170,28 @@ class LazyIrFactory(
     override fun createTypeAlias(
         startOffset: Int,
         endOffset: Int,
-        symbol: IrTypeAliasSymbol,
+        origin: IrDeclarationOrigin,
         name: Name,
         visibility: DescriptorVisibility,
-        expandedType: IrType,
+        symbol: IrTypeAliasSymbol,
         isActual: Boolean,
-        origin: IrDeclarationOrigin
+        expandedType: IrType
     ): IrTypeAlias = if (symbol.isBound)
         symbol.owner
     else
-        delegate.createTypeAlias(startOffset, endOffset, symbol, name, visibility, expandedType, isActual, origin)
+        delegate.createTypeAlias(startOffset, endOffset, origin, name, visibility, symbol, isActual, expandedType)
 
     override fun createTypeParameter(
         startOffset: Int,
         endOffset: Int,
         origin: IrDeclarationOrigin,
-        symbol: IrTypeParameterSymbol,
         name: Name,
+        symbol: IrTypeParameterSymbol,
+        variance: Variance,
         index: Int,
-        isReified: Boolean,
-        variance: Variance
+        isReified: Boolean
     ): IrTypeParameter = if (symbol.isBound)
         symbol.owner
     else
-        delegate.createTypeParameter(startOffset, endOffset, origin, symbol, name, index, isReified, variance)
+        delegate.createTypeParameter(startOffset, endOffset, origin, name, symbol, variance, index, isReified)
 }

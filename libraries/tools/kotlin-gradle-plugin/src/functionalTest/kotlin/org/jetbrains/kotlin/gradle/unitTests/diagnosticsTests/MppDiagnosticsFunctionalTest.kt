@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.gradle.unitTests.diagnosticsTests
 import org.gradle.api.attributes.Attribute
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinJvmWithJavaTargetPreset
 import org.jetbrains.kotlin.gradle.util.*
-import org.junit.Ignore
 import org.junit.Test
 
 class MppDiagnosticsFunctionalTest {
@@ -19,6 +18,7 @@ class MppDiagnosticsFunctionalTest {
             kotlin {
                 jvm()
                 linuxX64()
+                applyDefaultHierarchyTemplate()
 
                 sourceSets.apply {
                     val myCustomCommonMain = create("myCustomCommonMain")
@@ -48,18 +48,19 @@ class MppDiagnosticsFunctionalTest {
             kotlin {
                 jvm()
                 linuxX64()
+                applyDefaultHierarchyTemplate()
 
                 sourceSets.apply {
                     val unused1 = create("unused1")
                     // Check that dependsOn doesn't make source set "used"
                     create("unused2").dependsOn(unused1)
                     // Check that depending on used source sets doesn't make source set "used"
-                    create("unusedWithDependsOnUsed").dependsOn(commonMain)
+                    create("unusedWithDependsOnUsed").dependsOn(commonMain.get())
 
                     // Check that custom intermediate source set isn't reported as unused
                     val intermediate = create("intermediate")
-                    jvmMain.dependsOn(intermediate)
-                    intermediate.dependsOn(commonMain)
+                    jvmMain.get().dependsOn(intermediate)
+                    intermediate.dependsOn(commonMain.get())
                 }
             }
         }
@@ -87,11 +88,12 @@ class MppDiagnosticsFunctionalTest {
             kotlin {
                 androidTarget()
                 linuxX64()
+                applyDefaultHierarchyTemplate()
 
                 sourceSets.apply {
                     val intermediateBetweenAndroid = create("intermediate")
-                    androidMain.dependsOn(intermediateBetweenAndroid)
-                    intermediateBetweenAndroid.dependsOn(commonMain)
+                    androidMain.get().dependsOn(intermediateBetweenAndroid)
+                    intermediateBetweenAndroid.dependsOn(commonMain.get())
                 }
             }
         }

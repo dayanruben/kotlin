@@ -342,13 +342,14 @@ open class DeepCopyIrTreeWithSymbols(
 
     private fun copyTypeParameter(declaration: IrTypeParameter): IrTypeParameter =
         declaration.factory.createTypeParameter(
-            declaration.startOffset, declaration.endOffset,
-            mapDeclarationOrigin(declaration.origin),
-            symbolRemapper.getDeclaredTypeParameter(declaration.symbol),
-            symbolRenamer.getTypeParameterName(declaration.symbol),
-            declaration.index,
-            declaration.isReified,
-            declaration.variance
+            startOffset = declaration.startOffset,
+            endOffset = declaration.endOffset,
+            origin = mapDeclarationOrigin(declaration.origin),
+            name = symbolRenamer.getTypeParameterName(declaration.symbol),
+            symbol = symbolRemapper.getDeclaredTypeParameter(declaration.symbol),
+            variance = declaration.variance,
+            index = declaration.index,
+            isReified = declaration.isReified,
         ).apply {
             transformAnnotations(declaration)
         }
@@ -387,13 +388,14 @@ open class DeepCopyIrTreeWithSymbols(
 
     override fun visitTypeAlias(declaration: IrTypeAlias): IrTypeAlias =
         declaration.factory.createTypeAlias(
-            declaration.startOffset, declaration.endOffset,
-            symbolRemapper.getDeclaredTypeAlias(declaration.symbol),
-            symbolRenamer.getTypeAliasName(declaration.symbol),
-            declaration.visibility,
-            declaration.expandedType.remapType(),
-            declaration.isActual,
-            mapDeclarationOrigin(declaration.origin)
+            startOffset = declaration.startOffset,
+            endOffset = declaration.endOffset,
+            origin = mapDeclarationOrigin(declaration.origin),
+            name = symbolRenamer.getTypeAliasName(declaration.symbol),
+            visibility = declaration.visibility,
+            symbol = symbolRemapper.getDeclaredTypeAlias(declaration.symbol),
+            isActual = declaration.isActual,
+            expandedType = declaration.expandedType.remapType(),
         ).apply {
             transformAnnotations(declaration)
             copyTypeParametersFrom(declaration)
