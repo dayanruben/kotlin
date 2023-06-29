@@ -160,43 +160,43 @@ class IrFactoryImplForJsIC(override val stageController: StageController) : Abst
         ).register()
     }
 
-    override fun createFunction(
+    override fun createSimpleFunction(
         startOffset: Int,
         endOffset: Int,
         origin: IrDeclarationOrigin,
-        symbol: IrSimpleFunctionSymbol,
         name: Name,
         visibility: DescriptorVisibility,
-        modality: Modality,
-        returnType: IrType,
         isInline: Boolean,
-        isExternal: Boolean,
+        isExpect: Boolean,
+        returnType: IrType,
+        modality: Modality,
+        symbol: IrSimpleFunctionSymbol,
         isTailrec: Boolean,
         isSuspend: Boolean,
         isOperator: Boolean,
         isInfix: Boolean,
-        isExpect: Boolean,
-        isFakeOverride: Boolean,
-        containerSource: DeserializedContainerSource?
+        isExternal: Boolean,
+        containerSource: DeserializedContainerSource?,
+        isFakeOverride: Boolean
     ): IrSimpleFunction {
-        return super.createFunction(
+        return super.createSimpleFunction(
             startOffset,
             endOffset,
             origin,
-            symbol,
             name,
             visibility,
-            modality,
-            returnType,
             isInline,
-            isExternal,
+            isExpect,
+            returnType,
+            modality,
+            symbol,
             isTailrec,
             isSuspend,
             isOperator,
             isInfix,
-            isExpect,
-            isFakeOverride,
+            isExternal,
             containerSource,
+            isFakeOverride,
         ).register()
     }
 
@@ -258,35 +258,35 @@ class IrFactoryImplForJsIC(override val stageController: StageController) : Abst
         startOffset: Int,
         endOffset: Int,
         origin: IrDeclarationOrigin,
-        symbol: IrPropertySymbol,
         name: Name,
         visibility: DescriptorVisibility,
         modality: Modality,
+        symbol: IrPropertySymbol,
         isVar: Boolean,
         isConst: Boolean,
         isLateinit: Boolean,
         isDelegated: Boolean,
         isExternal: Boolean,
+        containerSource: DeserializedContainerSource?,
         isExpect: Boolean,
-        isFakeOverride: Boolean,
-        containerSource: DeserializedContainerSource?
+        isFakeOverride: Boolean
     ): IrProperty {
         return super.createProperty(
             startOffset,
             endOffset,
             origin,
-            symbol,
             name,
             visibility,
             modality,
+            symbol,
             isVar,
             isConst,
             isLateinit,
             isDelegated,
             isExternal,
+            containerSource,
             isExpect,
             isFakeOverride,
-            containerSource,
         ).register()
     }
 

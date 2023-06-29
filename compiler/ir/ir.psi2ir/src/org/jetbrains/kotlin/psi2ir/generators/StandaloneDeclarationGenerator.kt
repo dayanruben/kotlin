@@ -208,9 +208,22 @@ internal class StandaloneDeclarationGenerator(private val context: GeneratorCont
         defaultArgumentFactory: IrFunction.(IrValueParameter) -> IrExpressionBody? = { null }
     ): IrSimpleFunction {
         val irFunction = with(descriptor) {
-            irFactory.createFunction(
-                startOffset, endOffset, origin, symbol, name, visibility, modality, IrUninitializedType,
-                isInline, isEffectivelyExternal(), isTailrec, isSuspend, isOperator, isInfix, isExpect
+            irFactory.createSimpleFunction(
+                startOffset = startOffset,
+                endOffset = endOffset,
+                origin = origin,
+                name = name,
+                visibility = visibility,
+                isInline = isInline,
+                isExpect = isExpect,
+                returnType = IrUninitializedType,
+                modality = modality,
+                symbol = symbol,
+                isTailrec = isTailrec,
+                isSuspend = isSuspend,
+                isOperator = isOperator,
+                isInfix = isInfix,
+                isExternal = isEffectivelyExternal(),
             )
         }
         irFunction.metadata = DescriptorMetadataSource.Function(descriptor)
@@ -229,16 +242,19 @@ internal class StandaloneDeclarationGenerator(private val context: GeneratorCont
         startOffset: Int, endOffset: Int, origin: IrDeclarationOrigin, descriptor: PropertyDescriptor, symbol: IrPropertySymbol
     ): IrProperty {
         val irProperty = irFactory.createProperty(
-            startOffset, endOffset, origin, symbol,
+            startOffset = startOffset,
+            endOffset = endOffset,
+            origin = origin,
             name = descriptor.name,
             visibility = descriptor.visibility,
             modality = descriptor.modality,
+            symbol = symbol,
             isVar = descriptor.isVar,
             isConst = descriptor.isConst,
             isLateinit = descriptor.isLateInit,
             isDelegated = false,
             isExternal = descriptor.isEffectivelyExternal(),
-            isExpect = descriptor.isExpect
+            isExpect = descriptor.isExpect,
         )
 
         irProperty.metadata = DescriptorMetadataSource.Property(descriptor)

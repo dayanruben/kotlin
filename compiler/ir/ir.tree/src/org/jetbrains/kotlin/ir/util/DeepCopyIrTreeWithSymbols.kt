@@ -171,23 +171,24 @@ open class DeepCopyIrTreeWithSymbols(
         }.copyAttributes(declaration)
 
     override fun visitSimpleFunction(declaration: IrSimpleFunction): IrSimpleFunction =
-        declaration.factory.createFunction(
-            declaration.startOffset, declaration.endOffset,
-            mapDeclarationOrigin(declaration.origin),
-            symbolRemapper.getDeclaredFunction(declaration.symbol),
-            symbolRenamer.getFunctionName(declaration.symbol),
-            declaration.visibility,
-            declaration.modality,
-            declaration.returnType,
+        declaration.factory.createSimpleFunction(
+            startOffset = declaration.startOffset,
+            endOffset = declaration.endOffset,
+            origin = mapDeclarationOrigin(declaration.origin),
+            name = symbolRenamer.getFunctionName(declaration.symbol),
+            visibility = declaration.visibility,
             isInline = declaration.isInline,
-            isExternal = declaration.isExternal,
+            isExpect = declaration.isExpect,
+            returnType = declaration.returnType,
+            modality = declaration.modality,
+            symbol = symbolRemapper.getDeclaredFunction(declaration.symbol),
             isTailrec = declaration.isTailrec,
             isSuspend = declaration.isSuspend,
             isOperator = declaration.isOperator,
             isInfix = declaration.isInfix,
-            isExpect = declaration.isExpect,
-            isFakeOverride = declaration.isFakeOverride,
+            isExternal = declaration.isExternal,
             containerSource = declaration.containerSource,
+            isFakeOverride = declaration.isFakeOverride,
         ).apply {
             overriddenSymbols = declaration.overriddenSymbols.memoryOptimizedMap {
                 symbolRemapper.getReferencedFunction(it) as IrSimpleFunctionSymbol
@@ -234,19 +235,20 @@ open class DeepCopyIrTreeWithSymbols(
 
     override fun visitProperty(declaration: IrProperty): IrProperty =
         declaration.factory.createProperty(
-            declaration.startOffset, declaration.endOffset,
-            mapDeclarationOrigin(declaration.origin),
-            symbolRemapper.getDeclaredProperty(declaration.symbol),
-            declaration.name,
-            declaration.visibility,
-            declaration.modality,
+            startOffset = declaration.startOffset,
+            endOffset = declaration.endOffset,
+            origin = mapDeclarationOrigin(declaration.origin),
+            name = declaration.name,
+            visibility = declaration.visibility,
+            modality = declaration.modality,
+            symbol = symbolRemapper.getDeclaredProperty(declaration.symbol),
             isVar = declaration.isVar,
             isConst = declaration.isConst,
             isLateinit = declaration.isLateinit,
             isDelegated = declaration.isDelegated,
             isExternal = declaration.isExternal,
-            isExpect = declaration.isExpect,
             containerSource = declaration.containerSource,
+            isExpect = declaration.isExpect,
         ).apply {
             transformAnnotations(declaration)
             copyAttributes(declaration)
