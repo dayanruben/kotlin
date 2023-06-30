@@ -194,15 +194,15 @@ interface IrFactory {
         startOffset: Int,
         endOffset: Int,
         origin: IrDeclarationOrigin,
-        symbol: IrValueParameterSymbol,
         name: Name,
-        index: Int,
         type: IrType,
+        isAssignable: Boolean,
+        symbol: IrValueParameterSymbol,
+        index: Int,
         varargElementType: IrType?,
         isCrossinline: Boolean,
         isNoinline: Boolean,
-        isHidden: Boolean,
-        isAssignable: Boolean
+        isHidden: Boolean
     ): IrValueParameter
 
     // Bodies
@@ -210,16 +210,6 @@ interface IrFactory {
     fun createExpressionBody(
         startOffset: Int,
         endOffset: Int,
-        initializer: IrExpressionBody.() -> Unit,
-    ): IrExpressionBody
-
-    fun createExpressionBody(
-        startOffset: Int,
-        endOffset: Int,
-        expression: IrExpression,
-    ): IrExpressionBody
-
-    fun createExpressionBody(
         expression: IrExpression,
     ): IrExpressionBody
 

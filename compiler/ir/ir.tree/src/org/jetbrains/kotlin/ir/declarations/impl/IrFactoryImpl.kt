@@ -236,15 +236,15 @@ abstract class AbstractIrFactoryImpl : IrFactory {
         startOffset: Int,
         endOffset: Int,
         origin: IrDeclarationOrigin,
-        symbol: IrValueParameterSymbol,
         name: Name,
-        index: Int,
         type: IrType,
+        isAssignable: Boolean,
+        symbol: IrValueParameterSymbol,
+        index: Int,
         varargElementType: IrType?,
         isCrossinline: Boolean,
         isNoinline: Boolean,
         isHidden: Boolean,
-        isAssignable: Boolean,
     ): IrValueParameter =
         IrValueParameterImpl(
             startOffset, endOffset, origin, symbol, name, index, type, varargElementType,
@@ -254,21 +254,9 @@ abstract class AbstractIrFactoryImpl : IrFactory {
     override fun createExpressionBody(
         startOffset: Int,
         endOffset: Int,
-        initializer: IrExpressionBody.() -> Unit,
-    ): IrExpressionBody =
-        IrExpressionBodyImpl(startOffset, endOffset, initializer)
-
-    override fun createExpressionBody(
-        startOffset: Int,
-        endOffset: Int,
         expression: IrExpression,
     ): IrExpressionBody =
         IrExpressionBodyImpl(startOffset, endOffset, expression)
-
-    override fun createExpressionBody(
-        expression: IrExpression,
-    ): IrExpressionBody =
-        IrExpressionBodyImpl(expression)
 
     override fun createBlockBody(
         startOffset: Int,
