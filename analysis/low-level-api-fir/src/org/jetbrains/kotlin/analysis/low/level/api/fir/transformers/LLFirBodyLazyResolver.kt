@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.analysis.utils.errors.checkWithAttachmentBuilder
 import org.jetbrains.kotlin.fir.FirElementWithResolveState
 import org.jetbrains.kotlin.fir.FirFileAnnotationsContainer
 import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.PrivateForInline
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.getExplicitBackingField
 import org.jetbrains.kotlin.fir.expressions.*
@@ -35,6 +36,7 @@ import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirTowerDataCo
 import org.jetbrains.kotlin.fir.resolve.transformers.contracts.FirContractsDslNames
 import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
 import org.jetbrains.kotlin.fir.types.FirResolvedTypeRef
+import org.jetbrains.kotlin.fir.resolve.dfa.cfg.isUsedInControlFlowGraphBuilderForClass
 
 internal object LLFirBodyLazyResolver : LLFirLazyResolver(FirResolvePhase.BODY_RESOLVE) {
     override fun resolve(
@@ -128,14 +130,14 @@ private class LLFirBodyTargetResolver(
     }
 
     private fun resolveMembersForControlFlowGraph(target: FirRegularClass) {
+        withTypeArguments(target) {
+            transformer.firTowerDataContextCollector?.addClassHeaderContext(target, transformer.context.towerDataContext)
+        }
         withRegularClass(target) {
             transformer.firTowerDataContextCollector?.addDeclarationContext(target, transformer.context.towerDataContext)
 
             for (member in target.declarations) {
-                if (member is FirCallableDeclaration || member is FirAnonymousInitializer) {
-                    // TODO: Ideally, only properties and init blocks should be resolved here.
-                    // However, dues to changes in the compiler resolution, we temporarily have to resolve all callable members.
-                    // Such additional work might affect incremental analysis performance.
+                if (member is FirControlFlowGraphOwner && member.isUsedInControlFlowGraphBuilderForClass) {
                     member.lazyResolveToPhase(resolverPhase.previous)
                     performResolve(member)
                 }
@@ -171,6 +173,13 @@ private class LLFirBodyTargetResolver(
                 // No bodies here
             }
             else -> throwUnexpectedFirElementError(target)
+        }
+    }
+
+    private inline fun withTypeArguments(regularClass: FirRegularClass, action: () -> Unit) {
+        @OptIn(PrivateForInline::class)
+        transformer.declarationsTransformer.context.withTypeParametersOf(regularClass) {
+            action()
         }
     }
 }
@@ -212,6 +221,7 @@ internal object BodyStateKeepers {
 
         if (!isCallableWithSpecialBody(variable)) {
             add(FirVariable::initializerIfUnresolved, FirVariable::replaceInitializer, ::expressionGuard)
+            add(FirVariable::delegateIfUnresolved, FirVariable::replaceDelegate, ::expressionGuard)
         }
     }
 
@@ -241,11 +251,6 @@ internal object BodyStateKeepers {
         entity(property.getterIfUnresolved, FUNCTION)
         entity(property.setterIfUnresolved, FUNCTION)
         entity(property.backingFieldIfUnresolved, VARIABLE)
-
-        entity(property.delegateIfUnresolved) {
-            add(FirWrappedDelegateExpression::expression, FirWrappedDelegateExpression::replaceExpression, ::expressionGuard)
-            add(FirWrappedDelegateExpression::delegateProvider, FirWrappedDelegateExpression::replaceDelegateProvider, ::expressionGuard)
-        }
 
         add(FirProperty::controlFlowGraphReference, FirProperty::replaceControlFlowGraphReference)
     }
@@ -313,6 +318,12 @@ private val FirVariable.initializerIfUnresolved: FirExpression?
         else -> initializer
     }
 
+private val FirVariable.delegateIfUnresolved: FirExpression?
+    get() = when (this) {
+        is FirProperty -> if (bodyResolveState < FirPropertyBodyResolveState.EVERYTHING_RESOLVED) delegate else null
+        else -> delegate
+    }
+
 private val FirProperty.backingFieldIfUnresolved: FirBackingField?
     get() = if (bodyResolveState < FirPropertyBodyResolveState.INITIALIZER_RESOLVED) getExplicitBackingField() else null
 
@@ -321,9 +332,6 @@ private val FirProperty.getterIfUnresolved: FirPropertyAccessor?
 
 private val FirProperty.setterIfUnresolved: FirPropertyAccessor?
     get() = if (bodyResolveState < FirPropertyBodyResolveState.EVERYTHING_RESOLVED) setter else null
-
-private val FirProperty.delegateIfUnresolved: FirWrappedDelegateExpression?
-    get() = if (bodyResolveState < FirPropertyBodyResolveState.EVERYTHING_RESOLVED) delegate as? FirWrappedDelegateExpression else null
 
 private fun delegatedConstructorCallGuard(fir: FirDelegatedConstructorCall): FirDelegatedConstructorCall {
     if (fir is FirLazyDelegatedConstructorCall) {

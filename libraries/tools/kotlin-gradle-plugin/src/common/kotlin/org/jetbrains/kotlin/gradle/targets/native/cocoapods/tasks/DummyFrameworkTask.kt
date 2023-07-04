@@ -7,16 +7,16 @@
 package org.jetbrains.kotlin.gradle.tasks
 
 import org.gradle.api.DefaultTask
-import org.gradle.api.file.ProjectLayout
+import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Property
-import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
-import org.jetbrains.kotlin.gradle.plugin.cocoapods.cocoapodsBuildDirs
-import org.jetbrains.kotlin.gradle.utils.mapToFile
+import org.gradle.work.DisableCachingByDefault
+import org.jetbrains.kotlin.gradle.utils.MachO
+import org.jetbrains.kotlin.gradle.utils.getFile
 import java.io.File
-import javax.inject.Inject
 
 /**
  * Creates a dummy framework in the target directory.
@@ -29,7 +29,8 @@ import javax.inject.Inject
  * So we create a dummy static framework to allow CocoaPods install our pod correctly
  * and then replace it with the real one during a real build process.
  */
-abstract class DummyFrameworkTask @Inject constructor(projectLayout: ProjectLayout) : DefaultTask() {
+@DisableCachingByDefault
+abstract class DummyFrameworkTask : DefaultTask() {
 
     @get:Input
     abstract val frameworkName: Property<String>
@@ -38,13 +39,18 @@ abstract class DummyFrameworkTask @Inject constructor(projectLayout: ProjectLayo
     abstract val useStaticFramework: Property<Boolean>
 
     @get:OutputDirectory
-    val outputFramework: Provider<File> = projectLayout.cocoapodsBuildDirs.dummyFramework.mapToFile()
+    abstract val outputFramework: DirectoryProperty
+
+    @get:Internal
+    @Deprecated("Use outputFramework", replaceWith = ReplaceWith("outputFramework.get().asFile"))
+    val destinationDir: File
+        get() = outputFramework.getFile()
+
+    private val linkageName: String
+        get() = if (useStaticFramework.get()) "static" else "dynamic"
 
     private val dummyFrameworkResource: String
-        get() {
-            val staticOrDynamic = if (!useStaticFramework.get()) "dynamic" else "static"
-            return "/cocoapods/$staticOrDynamic/dummy.framework/"
-        }
+        get() = "/cocoapods/$linkageName/dummy.framework/"
 
     private fun copyResource(from: String, to: File) {
         to.parentFile.mkdirs()
@@ -69,23 +75,22 @@ abstract class DummyFrameworkTask @Inject constructor(projectLayout: ProjectLayo
     private fun copyFrameworkFile(relativeFrom: String, relativeTo: String = relativeFrom) =
         copyResource(
             "$dummyFrameworkResource$relativeFrom",
-            outputFramework.get().resolve(relativeTo)
+            outputFramework.getFile().resolve(relativeTo)
         )
 
     private fun copyFrameworkTextFile(
         relativeFrom: String,
         relativeTo: String = relativeFrom,
-        transform: (String) -> String = { it }
+        transform: (String) -> String = { it },
     ) = copyTextResource(
         "$dummyFrameworkResource$relativeFrom",
-        outputFramework.get().resolve(relativeTo),
+        outputFramework.getFile().resolve(relativeTo),
         transform
     )
 
-    @TaskAction
-    fun create() {
+    private fun copyFramework() {
         // Reset the destination directory
-        with(outputFramework.get()) {
+        with(outputFramework.getFile()) {
             deleteRecursively()
             mkdirs()
         }
@@ -99,6 +104,27 @@ abstract class DummyFrameworkTask @Inject constructor(projectLayout: ProjectLayo
                 it.replace("dummy", frameworkName.get())
             } else {
                 it
+            }
+        }
+    }
+
+
+    @TaskAction
+    fun create() {
+        val framework = outputFramework.getFile()
+        val binary = framework.resolve(frameworkName.get())
+
+        return when {
+            !binary.exists() -> {
+                logger.info("Generating dummy-framework because the framework is missing")
+                copyFramework()
+            }
+            MachO.isDylib(binary, logger) == !useStaticFramework.get() -> {
+                logger.info("Skipping dummy-framework generation because a $linkageName framework is already present")
+            }
+            else -> {
+                logger.info("Regenerating dummy-framework because present framework has different linkage")
+                copyFramework()
             }
         }
     }

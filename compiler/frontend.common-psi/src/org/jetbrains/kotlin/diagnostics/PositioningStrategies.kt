@@ -693,7 +693,8 @@ object PositioningStrategies {
                     if (lastArgument != null) {
                         markRange(lastArgument, rightParenthesis)
                     } else {
-                        markRange(qualifiedAccess, rightParenthesis)
+                        val leftParenthesis = argumentList.leftParenthesis
+                        markRange(leftParenthesis ?: qualifiedAccess, rightParenthesis)
                     }
                 }
 
@@ -703,6 +704,13 @@ object PositioningStrategies {
 
                 else -> markElement(qualifiedAccess)
             }
+        }
+    }
+
+    @JvmField
+    val VALUE_ARGUMENTS_LIST: PositioningStrategy<KtElement> = object : PositioningStrategy<KtElement>() {
+        override fun mark(element: KtElement): List<TextRange> {
+            return markElement(element.getChildOfType<KtValueArgumentList>() ?: element)
         }
     }
 
