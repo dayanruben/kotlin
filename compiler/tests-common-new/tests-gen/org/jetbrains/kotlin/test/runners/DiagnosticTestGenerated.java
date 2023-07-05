@@ -6211,6 +6211,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("cfgOfFullyIncorrectCode.kt")
+            public void testCfgOfFullyIncorrectCode() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/cfgOfFullyIncorrectCode.kt");
+            }
+
+            @Test
             @TestMetadata("checkInnerLocalDeclarations.kt")
             public void testCheckInnerLocalDeclarations() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/checkInnerLocalDeclarations.kt");
@@ -6613,6 +6619,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("reassignmentInCatch.kt")
+            public void testReassignmentInCatch() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/reassignmentInCatch.kt");
+            }
+
+            @Test
             @TestMetadata("reassignmentInTryCatch.kt")
             public void testReassignmentInTryCatch() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/reassignmentInTryCatch.kt");
@@ -6634,6 +6646,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("repeatUnitializedErrorOnlyForLocalVars.kt")
             public void testRepeatUnitializedErrorOnlyForLocalVars() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/repeatUnitializedErrorOnlyForLocalVars.kt");
+            }
+
+            @Test
+            @TestMetadata("safeCallAfterVariableInitialization.kt")
+            public void testSafeCallAfterVariableInitialization() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/safeCallAfterVariableInitialization.kt");
             }
 
             @Test
@@ -6856,6 +6874,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 }
 
                 @Test
+                @TestMetadata("initializationInUnreachableCode.kt")
+                public void testInitializationInUnreachableCode() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/deadCode/initializationInUnreachableCode.kt");
+                }
+
+                @Test
                 @TestMetadata("kt2585_1.kt")
                 public void testKt2585_1() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/deadCode/kt2585_1.kt");
@@ -6883,6 +6907,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("kt5200DeadCodeInLambdas.kt")
                 public void testKt5200DeadCodeInLambdas() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/deadCode/kt5200DeadCodeInLambdas.kt");
+                }
+
+                @Test
+                @TestMetadata("reassignementInUnreachableCode.kt")
+                public void testReassignementInUnreachableCode() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/deadCode/reassignementInUnreachableCode.kt");
                 }
 
                 @Test
@@ -7088,6 +7118,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("continueAndBreakLabelWithSameFunctionName.kt")
             public void testContinueAndBreakLabelWithSameFunctionName() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/controlStructures/continueAndBreakLabelWithSameFunctionName.kt");
+            }
+
+            @Test
+            @TestMetadata("continueInInitBlock.kt")
+            public void testContinueInInitBlock() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/controlStructures/continueInInitBlock.kt");
             }
 
             @Test
@@ -23180,6 +23216,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 }
 
                 @Test
+                @TestMetadata("inheritedJavaMembers.kt")
+                public void testInheritedJavaMembers() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/java/inheritedJavaMembers.kt");
+                }
+
+                @Test
                 @TestMetadata("parameterNames.kt")
                 public void testParameterNames() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/multiplatform/java/parameterNames.kt");
@@ -23724,6 +23766,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("kt58844.kt")
             public void testKt58844() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/nullableTypes/kt58844.kt");
+            }
+
+            @Test
+            @TestMetadata("notUselessComparasionAfterSmartcast.kt")
+            public void testNotUselessComparasionAfterSmartcast() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/nullableTypes/notUselessComparasionAfterSmartcast.kt");
             }
 
             @Test
@@ -38564,6 +38612,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                     @TestMetadata("breakContinuesInInlinedLambda.kt")
                     public void testBreakContinuesInInlinedLambda() throws Exception {
                         runTest("compiler/testData/diagnostics/testsWithStdLib/contracts/controlflow/flowInlining/breakContinuesInInlinedLambda.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("complexTryWithTryInFinally.kt")
+                    public void testComplexTryWithTryInFinally() throws Exception {
+                        runTest("compiler/testData/diagnostics/testsWithStdLib/contracts/controlflow/flowInlining/complexTryWithTryInFinally.kt");
                     }
 
                     @Test

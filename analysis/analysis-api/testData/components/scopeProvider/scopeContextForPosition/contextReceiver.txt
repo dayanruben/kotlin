@@ -9,7 +9,7 @@ implicit receivers:
 scopes:
   LocalScope, index = 0, empty
 
-  SimpleTypeScope, index = 1
+  TypeScope, index = 1
     classifiers: 0
     callables: 4
       KtFunctionSymbol:

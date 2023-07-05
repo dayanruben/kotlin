@@ -369,7 +369,7 @@ open class FirDeclarationsResolveTransformer(
 
         // Resolve call for provideDelegate, without completion
         // TODO: this generates some nodes in the control flow graph which we don't want if we
-        //  end up not selecting this option.
+        //  end up not selecting this option, KT-59684
         transformer.expressionsTransformer.transformFunctionCallInternal(
             provideDelegateCall, ResolutionMode.ContextIndependent, provideDelegate = true
         )
@@ -434,8 +434,7 @@ open class FirDeclarationsResolveTransformer(
         return variable
     }
 
-    // TODO: This enum might actually be a boolean (resolve setter/don't resolve setter)
-    // But for some reason, in IDE there's a need to resolve setter's parameter types on the implicit-resolution stage
+    // In IDE there's a need to resolve setter's parameter types on the implicit-resolution stage
     // See ad183434137939a0c9eeea2f7df9ef522672a18e commit.
     // But for delegate inference case, we don't need both body of the setter and its parameter resolved (SKIP mode)
     private enum class SetterResolutionMode {
@@ -555,7 +554,7 @@ open class FirDeclarationsResolveTransformer(
         val result = context.withScopesForScript(script, components) {
             transformDeclarationContent(script, data) as FirScript
         }
-        dataFlowAnalyzer.exitScript() // TODO: FirScript should be a FirControlFlowGraphOwner
+        dataFlowAnalyzer.exitScript() // TODO: FirScript should be a FirControlFlowGraphOwner, KT-59683
         return result
     }
 
@@ -601,8 +600,8 @@ open class FirDeclarationsResolveTransformer(
         if (anonymousObject !in context.targetedLocalClasses) {
             return anonymousObject.runAllPhasesForLocalClass(transformer, components, data, transformer.firTowerDataContextCollector)
         }
-        // TODO: why would there be a graph already?
-        val buildGraph = !implicitTypeOnly && anonymousObject.controlFlowGraphReference == null
+        require(anonymousObject.controlFlowGraphReference == null)
+        val buildGraph = !implicitTypeOnly
         dataFlowAnalyzer.enterClass(anonymousObject, buildGraph)
         val result = context.withAnonymousObject(anonymousObject, components) {
             transformDeclarationContent(anonymousObject, data) as FirAnonymousObject
@@ -630,7 +629,6 @@ open class FirDeclarationsResolveTransformer(
         return context.withSimpleFunction(simpleFunction, session) {
             doTransformTypeParameters(simpleFunction)
 
-            // TODO: I think it worth creating something like runAllPhasesForLocalFunction
             if (containingDeclaration != null && containingDeclaration !is FirClass) {
                 // For class members everything should be already prepared
                 prepareSignatureForBodyResolve(simpleFunction)
@@ -658,7 +656,7 @@ open class FirDeclarationsResolveTransformer(
         val body = result.body
         if (result.returnTypeRef is FirImplicitTypeRef) {
             val simpleFunction = function as? FirSimpleFunction
-            val returnExpression = (body?.statements?.single() as? FirReturnExpression)?.result
+            val returnExpression = (body?.statements?.singleOrNull() as? FirReturnExpression)?.result
             val returnTypeRef = if (returnExpression?.typeRef is FirResolvedTypeRef) {
                 returnExpression.resultType.approximateDeclarationType(
                     session,

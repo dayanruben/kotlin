@@ -1,0 +1,37 @@
+element: e
+implicit receivers:
+  type: JavaClass
+  owner symbol: KtFirFunctionSymbol
+
+scopes:
+  LocalScope, index = 0, empty
+
+  TypeScope, index = 1
+    classifiers: 0
+    callables: 5
+      fun getValue(): kotlin.Int?
+      fun equals(other: kotlin.Any?): kotlin.Boolean
+      fun hashCode(): kotlin.Int
+      fun toString(): kotlin.String
+      val value: kotlin.Int?
+        get()
+
+  LocalScope, index = 2, empty
+
+  ExplicitSimpleImportingScope, index = 3, empty
+
+  PackageMemberScope, index = 4
+    classifiers: 0
+    callables: 1
+      fun JavaClass.test()
+
+  DefaultSimpleImportingScope, index = 5
+
+  DefaultSimpleImportingScope, index = 6
+
+  ExplicitStarImportingScope, index = 7, empty
+
+  DefaultSimpleImportingScope, index = 8
+
+  DefaultStarImportingScope, index = 9
+

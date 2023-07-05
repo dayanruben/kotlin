@@ -28624,6 +28624,12 @@ public class IrBlackBoxCodegenWithIrInlinerTestGenerated extends AbstractIrBlack
         }
 
         @Test
+        @TestMetadata("thisPlusStringWithObject.kt")
+        public void testThisPlusStringWithObject() throws Exception {
+            runTest("compiler/testData/codegen/box/involvesIrInterpreter/thisPlusStringWithObject.kt");
+        }
+
+        @Test
         @TestMetadata("unsignedConst.kt")
         public void testUnsignedConst() throws Exception {
             runTest("compiler/testData/codegen/box/involvesIrInterpreter/unsignedConst.kt");
@@ -33191,6 +33197,12 @@ public class IrBlackBoxCodegenWithIrInlinerTestGenerated extends AbstractIrBlack
         @TestMetadata("expectProperty.kt")
         public void testExpectProperty() throws Exception {
             runTest("compiler/testData/codegen/box/multiplatform/expectProperty.kt");
+        }
+
+        @Test
+        @TestMetadata("kt59613.kt")
+        public void testKt59613() throws Exception {
+            runTest("compiler/testData/codegen/box/multiplatform/kt59613.kt");
         }
 
         @Test

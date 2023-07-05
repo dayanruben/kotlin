@@ -449,8 +449,9 @@ abstract class FirDataFlowAnalyzer(
             return
         }
 
-        // TODO: should be `getOrCreateIfRealAndUnchanged(flow from LHS, flow, leftOperand)`, otherwise the statement will
-        //  be added even if the value has changed in the RHS. Currently the only previous node is the RHS.
+        // Ideally it should be `getOrCreateIfRealAndUnchanged(flow from LHS, flow, leftOperand)`, otherwise the statement will
+        //  be added even if the value has changed in the RHS. Currently, the only previous node is the RHS.
+        // But seems like everything works and with current implementation
         val leftOperandVariable = variableStorage.getOrCreateIfReal(flow, leftOperand)
         val rightOperandVariable = variableStorage.getOrCreateIfReal(flow, rightOperand)
         if (leftOperandVariable == null && rightOperandVariable == null) return
@@ -651,7 +652,7 @@ abstract class FirDataFlowAnalyzer(
     private fun enterRepeatableStatement(flow: MutableFlow, statement: FirStatement) {
         val reassignedNames = context.preliminaryLoopVisitor.enterCapturingStatement(statement)
         if (reassignedNames.isEmpty()) return
-        // TODO: only choose the innermost variable for each name
+        // TODO: only choose the innermost variable for each name, KT-59688
         val possiblyChangedVariables = variableStorage.realVariables.values.filter {
             val identifier = it.identifier
             val symbol = identifier.symbol
@@ -751,10 +752,9 @@ abstract class FirDataFlowAnalyzer(
             // Otherwise if the result is non-null, then `b` executed, which implies `a` is not null
             // and every statement from `b` holds.
             val expressionVariable = variableStorage.getOrCreate(flow, safeCall)
-            // TODO? if the callee has non-null return type, then safe-call == null => receiver == null
-            //   if (x?.toString() == null) { /* x == null */ }
             // TODO? all new implications in previous node's flow are valid here if receiver != null
             //  (that requires a second level of implications: receiver != null => condition => effect).
+            //  KT-59689
             flow.addAllConditionally(expressionVariable notEq null, node.lastPreviousNode.flow)
         }
     }
@@ -842,8 +842,6 @@ abstract class FirDataFlowAnalyzer(
         if (conditionalEffects.isEmpty()) return
 
         val arguments = qualifiedAccess.orderedArguments(callee) ?: return
-        // TODO: should be `getOrCreateIfRealAndUnchanged(last flow of argument i, flow, it)`
-        //                                                ^-- good luck finding that
         val argumentVariables = Array(arguments.size) { i -> arguments[i]?.let { variableStorage.getOrCreateIfReal(flow, it) } }
         if (argumentVariables.all { it == null }) return
 
@@ -899,7 +897,6 @@ abstract class FirDataFlowAnalyzer(
             if (property.isLocal || property.isVal) {
                 exitVariableInitialization(flow, assignment.rValue, property, assignment.lValue, hasExplicitType = false)
             } else {
-                // TODO: add unstable smartcast for non-local var
                 val variable = variableStorage.getRealVariableWithoutUnwrappingAlias(flow, assignment)
                 if (variable != null) {
                     logicSystem.recordNewAssignment(flow, variable, context.newAssignmentIndex())
@@ -946,7 +943,7 @@ abstract class FirDataFlowAnalyzer(
 
         if (isAssignment) {
             // `propertyVariable` can be an alias to `initializerVariable`, in which case this will add
-            // a redundant type statement which is fine...probably. TODO: store initial type within the variable?
+            // a redundant type statement which is fine...probably
             flow.addTypeStatement(flow.unwrapVariable(propertyVariable) typeEq initializer.typeRef.coneType)
         }
     }
@@ -1004,7 +1001,7 @@ abstract class FirDataFlowAnalyzer(
             // Approved type statements for RHS already contain everything implied by the corresponding value of LHS.
             val bothEvaluated = operatorVariable eq isAnd
             // TODO? `bothEvaluated` also implies all implications from RHS. This requires a second level
-            //  of implications, which the logic system currently doesn't support. See also safe calls.
+            //  of implications, which the logic system currently doesn't support. See also safe calls. KT-59689
             flow.addAllConditionally(bothEvaluated, flowFromRight)
             if (rightIsBoolean) {
                 flow.addAllConditionally(bothEvaluated, logicSystem.approveOperationStatement(flowFromRight, rightVariable!! eq isAnd))
@@ -1018,7 +1015,7 @@ abstract class FirDataFlowAnalyzer(
                         // Not checking for reassignments is safe since we will only take statements that are also true in RHS
                         // (so they're true regardless of whether the variable ends up being reassigned or not).
                         logicSystem.approveOperationStatement(flowFromLeft, leftVariable!! eq !isAnd),
-                        // TODO: and(approved from right, ...)? FE1.0 doesn't seem to handle that correctly either.
+                        // TODO: and(approved from right, ...)? FE1.0 doesn't seem to handle that correctly either. KT-59690
                         //   if (x is A || whatever(x as B)) { /* x is (A | B) */ }
                         logicSystem.approveOperationStatement(flowFromRight, rightVariable!! eq !isAnd),
                     )

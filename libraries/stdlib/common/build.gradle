@@ -2,7 +2,7 @@ description = 'Kotlin Common Standard Library'
 
 apply plugin: 'kotlin-platform-common'
 
-configurePublishing(project)
+RepoArtifacts.publish(project)
 
 JvmToolchain.updateJvmTarget(project, "1.8")
 
@@ -63,11 +63,11 @@ compileTestKotlinCommon {
 }
 
 jar {
-    manifestAttributes(manifest, project, 'Main')
+    LibrariesCommon.manifestAttributes(project, manifest, 'Main')
 }
 
-configureSourcesJar()
-configureJavadocJar()
+RepoArtifacts.sourcesJar(project)
+RepoArtifacts.javadocJar(project)
 
 sourcesJar.dependsOn(":prepare:build.version:writeStdlibVersion")
 

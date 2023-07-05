@@ -8,9 +8,11 @@ package org.jetbrains.kotlin.fir.resolve.transformers.mpp
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibility
-import org.jetbrains.kotlin.descriptors.isEnumClass
 import org.jetbrains.kotlin.fir.FirSession
-import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
+import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
+import org.jetbrains.kotlin.fir.declarations.collectEnumEntries
+import org.jetbrains.kotlin.fir.declarations.isAnnotationConstructor
 import org.jetbrains.kotlin.fir.isSubstitutionOrIntersectionOverride
 import org.jetbrains.kotlin.fir.resolve.*
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
@@ -27,7 +29,6 @@ import org.jetbrains.kotlin.types.AbstractTypeChecker
 import org.jetbrains.kotlin.types.TypeCheckerState
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.model.*
-import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.castAll
 
@@ -170,9 +171,13 @@ class FirExpectActualMatchingContext(
                 scope.getMembersTo(this, name)
             }
 
-            // TODO: replace with scope lookup
-            for (name in symbol.declarationSymbols.mapNotNull { (it as? FirRegularClassSymbol)?.classId?.shortClassName }) {
-                addIfNotNull(scope.getSingleClassifier(name) as? FirRegularClassSymbol)
+            for (name in scope.getClassifierNames()) {
+                scope.processClassifiersByName(name) {
+                    // We should skip nested classes from supertypes here
+                    if (it is FirRegularClassSymbol && it.classId.parentClassId == symbol.classId) {
+                        add(it)
+                    }
+                }
             }
             getConstructorsTo(this, scope)
         }
@@ -299,10 +304,5 @@ class FirExpectActualMatchingContext(
     }
 
     override val CallableSymbolMarker.hasStableParameterNames: Boolean
-        get() = when (asSymbol().origin) {
-            is FirDeclarationOrigin.Java,
-            FirDeclarationOrigin.Enhancement,
-            FirDeclarationOrigin.DynamicScope -> false
-            else -> true
-        }
+        get() = asSymbol().rawStatus.hasStableParameterNames
 }
