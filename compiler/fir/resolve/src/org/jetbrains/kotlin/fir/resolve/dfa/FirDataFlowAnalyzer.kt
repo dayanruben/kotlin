@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.fir.resolve.dfa
 
+import kotlinx.collections.immutable.toPersistentSet
 import org.jetbrains.kotlin.contracts.description.LogicOperationKind
 import org.jetbrains.kotlin.contracts.description.canBeRevisited
 import org.jetbrains.kotlin.descriptors.Modality
@@ -235,6 +236,24 @@ abstract class FirDataFlowAnalyzer(
         return graph
     }
 
+    // ----------------------------------- Code Fragment ------------------------------------------
+
+    fun enterCodeFragment(codeFragment: FirCodeFragment) {
+        graphBuilder.enterCodeFragment(codeFragment).mergeIncomingFlow { flow ->
+            val realVariablesFromContext = codeFragment.codeFragmentContext?.variables.orEmpty()
+            for ((symbol, exactTypes) in realVariablesFromContext) {
+                val realVariable = variableStorage.getOrCreateIfReal(flow, symbol.fir) as? RealVariable ?: continue
+                val typeStatement = PersistentTypeStatement(realVariable, exactTypes.toPersistentSet())
+                flow.addTypeStatement(typeStatement)
+            }
+        }
+    }
+
+    fun exitCodeFragment(): ControlFlowGraph {
+        val (node, graph) = graphBuilder.exitCodeFragment()
+        node.mergeIncomingFlow()
+        return graph
+    }
     // ----------------------------------- Value parameters (and it's defaults) -----------------------------------
 
     fun enterValueParameter(valueParameter: FirValueParameter) {

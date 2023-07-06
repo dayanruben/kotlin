@@ -7,16 +7,13 @@ package org.jetbrains.kotlin.fir.resolve.transformers.body.resolve
 
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.ClassKind
-import org.jetbrains.kotlin.fir.FirSession
-import org.jetbrains.kotlin.fir.PrivateForInline
-import org.jetbrains.kotlin.fir.correspondingProperty
+import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyAccessor
 import org.jetbrains.kotlin.fir.declarations.utils.isCompanion
 import org.jetbrains.kotlin.fir.declarations.utils.isInner
 import org.jetbrains.kotlin.fir.expressions.FirCallableReferenceAccess
 import org.jetbrains.kotlin.fir.expressions.FirWhenExpression
-import org.jetbrains.kotlin.fir.languageVersionSettings
 import org.jetbrains.kotlin.fir.resolve.*
 import org.jetbrains.kotlin.fir.resolve.calls.ImplicitExtensionReceiverValue
 import org.jetbrains.kotlin.fir.resolve.calls.ImplicitReceiverValue
@@ -30,6 +27,7 @@ import org.jetbrains.kotlin.fir.resolve.inference.FirInferenceSession
 import org.jetbrains.kotlin.fir.resolve.transformers.ReturnTypeCalculator
 import org.jetbrains.kotlin.fir.resolve.transformers.withScopeCleanup
 import org.jetbrains.kotlin.fir.scopes.FirScope
+import org.jetbrains.kotlin.fir.scopes.computeImportingScopes
 import org.jetbrains.kotlin.fir.scopes.createImportingScopes
 import org.jetbrains.kotlin.fir.scopes.impl.FirLocalScope
 import org.jetbrains.kotlin.fir.scopes.impl.FirMemberTypeParameterScope
@@ -528,6 +526,35 @@ class BodyResolveContext(
         )
 
         return withTowerDataContexts(newContexts) {
+            f()
+        }
+    }
+
+    fun <T> withScopesForCodeFragment(codeFragment: FirCodeFragment, holder: SessionHolder, f: () -> T): T {
+        val codeFragmentContext = codeFragment.codeFragmentContext ?: error("Context is not set for a code fragment")
+        val towerDataContext = codeFragmentContext.towerDataContext
+
+        val fragmentImportTowerDataElements = computeImportingScopes(file, holder.session, holder.scopeSession)
+            .map { it.asTowerDataElement(isLocal = false) }
+
+        val base = towerDataContext
+            .addNonLocalTowerDataElements(towerDataContext.nonLocalTowerDataElements)
+            .addNonLocalTowerDataElements(fragmentImportTowerDataElements)
+
+        val baseWithLocalScope = towerDataContext.localScopes.fold(base) { acc, scope -> acc.addLocalScope(scope) }
+
+        val newContext = FirRegularTowerDataContexts(
+            regular = baseWithLocalScope,
+            forClassHeaderAnnotations = baseWithLocalScope,
+            forNestedClasses = baseWithLocalScope,
+            forCompanionObject = baseWithLocalScope,
+            forConstructorHeaders = null,
+            forEnumEntries = null,
+            primaryConstructorPureParametersScope = null,
+            primaryConstructorAllParametersScope = null
+        )
+
+        return withTowerDataContexts(newContext) {
             f()
         }
     }
