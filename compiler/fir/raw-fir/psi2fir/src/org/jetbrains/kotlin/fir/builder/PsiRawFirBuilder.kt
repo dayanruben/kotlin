@@ -1023,7 +1023,7 @@ open class PsiRawFirBuilder(
             val status = FirDeclarationStatusImpl(explicitVisibility ?: defaultVisibility(), Modality.FINAL).apply {
                 isExpect = this@toFirConstructor?.hasExpectModifier() == true || this@PsiRawFirBuilder.context.containerIsExpect
                 isActual = this@toFirConstructor?.hasActualModifier() == true
-                isInner = owner.hasModifier(INNER_KEYWORD)
+                isInner = owner.parent.parent !is KtScript && owner.hasModifier(INNER_KEYWORD) // a warning about inner script class is reported on the class itself
                 isFromSealedClass = owner.hasModifier(SEALED_KEYWORD) && explicitVisibility !== Visibilities.Private
                 isFromEnumClass = owner.hasModifier(ENUM_KEYWORD)
             }
@@ -1120,6 +1120,33 @@ open class PsiRawFirBuilder(
                     when (declaration) {
                         is KtScriptInitializer -> {
                             declaration.body?.let { statements.add(it.toFirStatement()) }
+                        }
+                        is KtDestructuringDeclaration -> {
+                            val destructuringContainerVar = generateTemporaryVariable(
+                                baseModuleData,
+                                declaration.toFirSourceElement(),
+                                "destruct",
+                                declaration.initializer.toFirExpression { ConeSyntaxDiagnostic("Initializer required for destructuring declaration") },
+                                extractAnnotationsTo = { extractAnnotationsTo(it) }
+                            ).apply {
+                                isDestructuringDeclarationContainerVariable = true
+                            }
+                            val destructuringBlock = generateDestructuringBlock(
+                                baseModuleData,
+                                declaration,
+                                destructuringContainerVar,
+                                tmpVariable = false,
+                                localEntries = false,
+                                extractAnnotationsTo = { extractAnnotationsTo(it) },
+                            ) {
+                                toFirOrImplicitType()
+                            }.apply {
+                                statements.forEach {
+                                    (it as FirProperty).destructuringDeclarationContainerVariable = destructuringContainerVar.symbol
+                                }
+                            }
+                            statements.add(destructuringContainerVar)
+                            statements.addAll(destructuringBlock.statements)
                         }
                         else -> {
                             statements.add(declaration.toFirStatement())
@@ -1244,6 +1271,7 @@ open class PsiRawFirBuilder(
             // NB: enum entry nested classes are considered local by FIR design (see discussion in KT-45115)
             val isLocal = classOrObject.isLocal || classOrObject.getStrictParentOfType<KtEnumEntry>() != null
             val classIsExpect = classOrObject.hasExpectModifier() || context.containerIsExpect
+            val sourceElement = classOrObject.toFirSourceElement()
             return withChildClassName(
                 classOrObject.nameAsSafeName,
                 isExpect = classIsExpect,
@@ -1265,7 +1293,7 @@ open class PsiRawFirBuilder(
                 ).apply {
                     isExpect = classIsExpect
                     isActual = classOrObject.hasActualModifier()
-                    isInner = classOrObject.hasModifier(INNER_KEYWORD)
+                    isInner = classOrObject.hasModifier(INNER_KEYWORD) && classOrObject.parent.parent !is KtScript
                     isCompanion = (classOrObject as? KtObjectDeclaration)?.isCompanion() == true
                     isData = classOrObject.hasModifier(DATA_KEYWORD)
                     isInline = classOrObject.hasModifier(INLINE_KEYWORD) || classOrObject.hasModifier(VALUE_KEYWORD)
@@ -1273,10 +1301,10 @@ open class PsiRawFirBuilder(
                     isExternal = classOrObject.hasModifier(EXTERNAL_KEYWORD)
                 }
 
-                withCapturedTypeParameters(status.isInner || isLocal, classOrObject.toFirSourceElement(), listOf()) {
+                withCapturedTypeParameters(status.isInner || isLocal, sourceElement, listOf()) {
                     var delegatedFieldsMap: Map<Int, FirFieldSymbol>?
                     buildRegularClass {
-                        source = classOrObject.toFirSourceElement()
+                        source = sourceElement
                         moduleData = baseModuleData
                         origin = FirDeclarationOrigin.Source
                         name = classOrObject.nameAsSafeName
@@ -1507,7 +1535,7 @@ open class PsiRawFirBuilder(
                     name = function.nameAsSafeName
                     labelName = context.getLastLabel(function)?.name ?: runIf(!name.isSpecial) { name.identifier }
                     symbol = FirNamedFunctionSymbol(callableIdForName(function.nameAsSafeName)).also { functionSymbol = it }
-                    dispatchReceiverType = currentDispatchReceiverType()
+                    dispatchReceiverType = runIf(!isLocalFunction) { currentDispatchReceiverType() }
                     status = FirDeclarationStatusImpl(
                         if (isLocalFunction) Visibilities.Local else function.visibility,
                         function.modality,
@@ -1647,6 +1675,7 @@ open class PsiRawFirBuilder(
                             multiDeclaration,
                             multiParameter,
                             tmpVariable = false,
+                            localEntries = true,
                             extractAnnotationsTo = { extractAnnotationsTo(it) },
                         ) { toFirOrImplicitType() }.statements
                         multiParameter
@@ -2462,7 +2491,8 @@ open class PsiRawFirBuilder(
                     if (ktParameter != null) {
                         val multiDeclaration = ktParameter.destructuringDeclaration
                         val firLoopParameter = generateTemporaryVariable(
-                            moduleData = baseModuleData, source = expression.loopParameter?.toFirSourceElement(),
+                            moduleData = baseModuleData,
+                            source = expression.loopParameter?.toFirSourceElement(),
                             name = if (multiDeclaration != null) SpecialNames.DESTRUCT else ktParameter.nameAsSafeName,
                             initializer = buildFunctionCall {
                                 source = fakeSource
@@ -2480,6 +2510,7 @@ open class PsiRawFirBuilder(
                                 multiDeclaration = multiDeclaration,
                                 container = firLoopParameter,
                                 tmpVariable = true,
+                                localEntries = true,
                                 extractAnnotationsTo = { extractAnnotationsTo(it) },
                             ) { toFirOrImplicitType() }
                             blockBuilder.statements.addAll(destructuringBlock.statements)
@@ -2842,6 +2873,7 @@ open class PsiRawFirBuilder(
                 multiDeclaration,
                 baseVariable,
                 tmpVariable = true,
+                localEntries = true,
                 extractAnnotationsTo = { extractAnnotationsTo(it) },
             ) {
                 toFirOrImplicitType()

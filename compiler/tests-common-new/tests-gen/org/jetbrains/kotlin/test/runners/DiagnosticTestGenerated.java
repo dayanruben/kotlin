@@ -29973,6 +29973,18 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("innerClassError.kts")
+            public void testInnerClassError() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/script/innerClassError.kts");
+            }
+
+            @Test
+            @TestMetadata("innerClassWarning.kts")
+            public void testInnerClassWarning() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/script/innerClassWarning.kts");
+            }
+
+            @Test
             @TestMetadata("LateInit.kts")
             public void testLateInit() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/script/LateInit.kts");
@@ -30006,6 +30018,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("SimpleScript.kts")
             public void testSimpleScript() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/script/SimpleScript.kts");
+            }
+
+            @Test
+            @TestMetadata("topLevelInlineFun.kts")
+            public void testTopLevelInlineFun() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/script/topLevelInlineFun.kts");
             }
 
             @Test

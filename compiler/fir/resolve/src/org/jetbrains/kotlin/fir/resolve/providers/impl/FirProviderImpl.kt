@@ -100,13 +100,6 @@ class FirProviderImpl(val session: FirSession, val kotlinScopeProvider: FirKotli
         }
     }
 
-    private val FirDeclaration.file: FirFile
-        get() = when (this) {
-            is FirFile -> this
-            is FirRegularClass -> getFirClassifierContainerFile(this.symbol.classId)
-            else -> error("Should not be here")
-        }
-
     private fun recordFile(file: FirFile, state: State) {
         val packageName = file.packageFqName
         state.fileMap.merge(packageName, listOf(file)) { a, b -> a + b }
@@ -191,6 +184,7 @@ class FirProviderImpl(val session: FirSession, val kotlinScopeProvider: FirKotli
         override fun visitScript(script: FirScript, data: FirRecorderData) {
             val symbol = script.symbol
             data.state.scriptContainerMap[symbol] = data.file
+            script.acceptChildren(this, data)
         }
     }
 
@@ -321,9 +315,6 @@ class FirProviderImpl(val session: FirSession, val kotlinScopeProvider: FirKotli
         return state.classesInPackage[fqName] ?: emptySet()
     }
 
-    fun getAllFirFiles(): List<FirFile> {
-        return state.fileMap.values.flatten()
-    }
 }
 
 private const val rebuildIndex = true

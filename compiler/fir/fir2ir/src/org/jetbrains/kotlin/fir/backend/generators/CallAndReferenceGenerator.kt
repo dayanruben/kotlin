@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.fir.backend.*
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.declarations.utils.isMethodOfAny
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.builder.buildAnnotationCall
 import org.jetbrains.kotlin.fir.expressions.impl.FirNoReceiverExpression
@@ -40,7 +41,6 @@ import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.dump
 import org.jetbrains.kotlin.ir.util.isFunctionTypeOrSubtype
 import org.jetbrains.kotlin.ir.util.isInterface
-import org.jetbrains.kotlin.ir.util.isMethodOfAny
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.calls.NewCommonSuperTypeCalculator.commonSuperType
 import org.jetbrains.kotlin.util.OperatorNameConventions
@@ -399,10 +399,17 @@ class CallAndReferenceGenerator(
                 when (symbol) {
                     is IrConstructorSymbol -> IrConstructorCallImpl.fromSymbolOwner(startOffset, endOffset, type, symbol)
                     is IrSimpleFunctionSymbol -> {
+                        require(firSymbol is FirCallableSymbol<*>) { "Illegal symbol: ${firSymbol!!::class}" }
+                        val valueParametersNumber = when (firSymbol) {
+                            is FirSyntheticPropertySymbol -> 0
+                            is FirNamedFunctionSymbol -> firSymbol.valueParameterSymbols.size + firSymbol.resolvedContextReceivers.size
+                            is FirFunctionSymbol<*> -> firSymbol.valueParameterSymbols.size
+                            else -> error("Illegal symbol: ${firSymbol::class}")
+                        }
                         IrCallImpl(
                             startOffset, endOffset, type, symbol,
-                            typeArgumentsCount = symbol.owner.typeParameters.size,
-                            valueArgumentsCount = symbol.owner.valueParameters.size,
+                            typeArgumentsCount = firSymbol.typeParameterSymbols.size,
+                            valueArgumentsCount = valueParametersNumber,
                             origin = calleeReference.statementOrigin(),
                             superQualifierSymbol = dispatchReceiver.superQualifierSymbol()
                         )
@@ -1104,11 +1111,6 @@ class CallAndReferenceGenerator(
         return firReceiver.takeIf { it !is FirNoReceiverExpression }
             ?.let { visitor.convertToIrReceiverExpression(it, calleeReference, this as? FirCallableReferenceAccess) }
             ?: explicitReceiverExpression
-            ?: run {
-                if (this is FirCallableReferenceAccess) return null
-                val name = if (isDispatch) "Dispatch" else "Extension"
-                error("$name receiver expected: ${render()} to ${calleeReference.render()}")
-            }
     }
 
     private fun IrExpression.applyReceivers(
@@ -1117,13 +1119,11 @@ class CallAndReferenceGenerator(
     ): IrExpression {
         when (this) {
             is IrMemberAccessExpression<*> -> {
-                val ownerFunction =
-                    symbol.owner as? IrFunction
-                        ?: (symbol.owner as? IrProperty)?.getter
-                if (ownerFunction?.dispatchReceiverParameter != null) {
+                val resolvedFirSymbol = qualifiedAccess.toResolvedCallableSymbol()
+                if (resolvedFirSymbol?.dispatchReceiverType != null) {
                     val baseDispatchReceiver = qualifiedAccess.findIrDispatchReceiver(explicitReceiverExpression)
                     dispatchReceiver =
-                        if (!ownerFunction.isMethodOfAny() || baseDispatchReceiver?.type?.classOrNull?.owner?.isInterface != true) {
+                        if (!resolvedFirSymbol.isFunctionFromAny() || baseDispatchReceiver?.type?.classOrNull?.owner?.isInterface != true) {
                             baseDispatchReceiver
                         } else {
                             // NB: for FE 1.0, this type cast is added by InterfaceObjectCallsLowering
@@ -1139,7 +1139,8 @@ class CallAndReferenceGenerator(
                             )
                         }
                 }
-                if (ownerFunction?.extensionReceiverParameter != null) {
+                // constructors don't have extension receiver but may have receiver parameter in case of inner classes
+                if (resolvedFirSymbol?.receiverParameter != null && resolvedFirSymbol !is FirConstructorSymbol) {
                     extensionReceiver = qualifiedAccess.findIrExtensionReceiver(explicitReceiverExpression)?.let {
                         val symbol = qualifiedAccess.calleeReference.toResolvedCallableSymbol()
                             ?: error("Symbol for call ${qualifiedAccess.render()} not found")
@@ -1164,6 +1165,11 @@ class CallAndReferenceGenerator(
             }
         }
         return this
+    }
+
+    private fun FirCallableSymbol<*>.isFunctionFromAny(): Boolean {
+        if (this !is FirNamedFunctionSymbol) return false
+        return isMethodOfAny
     }
 
     private fun generateErrorCallExpression(
