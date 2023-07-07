@@ -76,6 +76,9 @@ class CocoaPodsIT : KGPBaseTest() {
 
             buildWithCocoapodsWrapper(":kotlin-library:podImport") {
                 podImportAsserts(subProject("kotlin-library").buildGradleKts, "kotlin-library")
+                if (gradleVersion >= GradleVersion.version(TestVersions.Gradle.G_7_6)) {
+                    assertOutputContains("Podfile location is set")
+                }
             }
 
             buildWithCocoapodsWrapper(":second-library:podImport") {
@@ -246,6 +249,30 @@ class CocoaPodsIT : KGPBaseTest() {
 
             buildWithCocoapodsWrapper(podspecTaskName) {
                 assertTasksUpToDate(podspecTaskName)
+            }
+        }
+    }
+
+    @DisplayName("cinterops UTD after pod change")
+    @GradleTest
+    fun testCinteropsUTDAfterPodChange(gradleVersion: GradleVersion) {
+        nativeProjectWithCocoapodsAndIosAppPodFile(gradleVersion = gradleVersion) {
+
+            val podDeclaration = """pod("Base64", version = "1.0.1")"""
+            buildGradleKts.addCocoapodsBlock(podDeclaration)
+
+            buildWithCocoapodsWrapper(podImportTaskName) {
+                assertTasksExecuted(":cinteropBase64IOS")
+            }
+
+            buildWithCocoapodsWrapper(podImportTaskName) {
+                assertTasksUpToDate(":cinteropBase64IOS")
+            }
+
+            buildGradleKts.replaceText(podDeclaration, """pod("Base64", version = "1.1.2")""")
+
+            buildWithCocoapodsWrapper(podImportTaskName) {
+                assertTasksExecuted(":cinteropBase64IOS")
             }
         }
     }
