@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.backend.common.lower.inline.LocalClassesExtractionFr
 import org.jetbrains.kotlin.backend.common.lower.inline.LocalClassesInInlineFunctionsLowering
 import org.jetbrains.kotlin.backend.common.lower.inline.LocalClassesInInlineLambdasLowering
 import org.jetbrains.kotlin.backend.common.lower.loops.ForLoopsLowering
-import org.jetbrains.kotlin.backend.common.lower.optimizations.FoldConstantLowering
 import org.jetbrains.kotlin.backend.common.lower.optimizations.PropertyAccessorInlineLowering
 import org.jetbrains.kotlin.backend.common.phaser.*
 import org.jetbrains.kotlin.backend.common.runOnFilePostfix
@@ -35,6 +34,7 @@ import org.jetbrains.kotlin.backend.konan.lower.UnboxInlineLowering
 import org.jetbrains.kotlin.backend.konan.optimizations.KonanBCEForLoopBodyTransformer
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.declarations.IrFunction
+import org.jetbrains.kotlin.ir.interpreter.IrInterpreterConfiguration
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 
@@ -415,12 +415,6 @@ private val expressionBodyTransformPhase = createFileLoweringPhase(
         description = "Replace IrExpressionBody with IrBlockBody"
 )
 
-private val constantInliningPhase = createFileLoweringPhase(
-        ::ConstLowering,
-        name = "ConstantInlining",
-        description = "Inline const fields reads",
-)
-
 private val staticInitializersPhase = createFileLoweringPhase(
         ::StaticInitializersLowering,
         name = "StaticInitializers",
@@ -432,19 +426,6 @@ private val ifNullExpressionsFusionPhase = createFileLoweringPhase(
         ::IfNullExpressionsFusionLowering,
         name = "IfNullExpressionsFusionLowering",
         description = "Simplify '?.' and '?:' operator chains"
-)
-
-private val foldConstantLoweringPhase = createFileLoweringPhase(
-        { context, irFile -> FoldConstantLowering(context).lower(irFile) },
-        name = "FoldConstantLowering",
-        description = "Constant Folding",
-        prerequisite = setOf(flattenStringConcatenationPhase)
-)
-
-private val computeStringTrimPhase = createFileLoweringPhase(
-        ::StringTrimLowering,
-        name = "StringTrimLowering",
-        description = "Compute trimIndent and trimMargin operations on constant strings"
 )
 
 private val exportInternalAbiPhase = createFileLoweringPhase(
@@ -506,6 +487,18 @@ private val objectClassesPhase = createFileLoweringPhase(
         description = "Object classes lowering"
 )
 
+private val constEvaluationPhase = createFileLoweringPhase(
+        lowering = { context: Context ->
+            // NaN constants has inconsistencies between IR and metadata representation,
+            // so inlining them can lead to incorrect behaviour. Check KT-53258 for details.
+            val configuration = IrInterpreterConfiguration(printOnlyExceptionMessage = true, inlineNanVal = false)
+            ConstEvaluationLowering(context, configuration = configuration)
+        },
+        name = "ConstEvaluationLowering",
+        description = "Evaluate functions that are marked as `IntrinsicConstEvaluation`",
+        prerequisite = setOf(inlinePhase)
+)
+
 private fun PhaseEngine<NativeGenerationState>.getAllLowerings() = listOfNotNull<AbstractNamedCompilerPhase<NativeGenerationState, IrFile, IrFile>>(
         removeExpectDeclarationsPhase,
         stripTypeAliasDeclarationsPhase,
@@ -518,6 +511,7 @@ private fun PhaseEngine<NativeGenerationState>.getAllLowerings() = listOfNotNull
         extractLocalClassesFromInlineBodies,
         wrapInlineDeclarationsWithReifiedTypeParametersLowering,
         inlinePhase,
+        constEvaluationPhase,
         provisionalFunctionExpressionPhase,
         postInlinePhase,
         contractsDslRemovePhase,
@@ -525,8 +519,6 @@ private fun PhaseEngine<NativeGenerationState>.getAllLowerings() = listOfNotNull
         rangeContainsLoweringPhase,
         forLoopsPhase,
         flattenStringConcatenationPhase,
-        foldConstantLoweringPhase,
-        computeStringTrimPhase,
         stringConcatenationPhase,
         stringConcatenationTypeNarrowingPhase.takeIf { context.config.optimizationsEnabled },
         enumConstructorsPhase,
@@ -552,7 +544,6 @@ private fun PhaseEngine<NativeGenerationState>.getAllLowerings() = listOfNotNull
         coroutinesPhase,
         typeOperatorPhase,
         expressionBodyTransformPhase,
-        constantInliningPhase,
         objectClassesPhase,
         staticInitializersPhase,
         builtinOperatorPhase,

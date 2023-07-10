@@ -41,6 +41,7 @@ import org.jetbrains.kotlin.incremental.js.IncrementalDataProvider
 import org.jetbrains.kotlin.incremental.js.IncrementalNextRoundChecker
 import org.jetbrains.kotlin.incremental.js.IncrementalResultsConsumer
 import org.jetbrains.kotlin.ir.backend.js.*
+import org.jetbrains.kotlin.ir.backend.js.dce.DceDumpNameCache
 import org.jetbrains.kotlin.ir.backend.js.dce.dumpDeclarationIrSizesIfNeed
 import org.jetbrains.kotlin.ir.backend.js.ic.*
 import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.*
@@ -169,6 +170,8 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
         configuration.put(JSConfigurationKeys.WASM_ENABLE_ARRAY_RANGE_CHECKS, arguments.wasmEnableArrayRangeChecks)
         configuration.put(JSConfigurationKeys.WASM_ENABLE_ASSERTS, arguments.wasmEnableAsserts)
         configuration.put(JSConfigurationKeys.WASM_GENERATE_WAT, arguments.wasmGenerateWat)
+        configuration.putIfNotNull(JSConfigurationKeys.WASM_TARGET, arguments.wasmTarget?.let(WasmTarget::fromName))
+
         configuration.put(JSConfigurationKeys.OPTIMIZE_GENERATED_JS, arguments.optimizeGeneratedJs)
 
         val commonSourcesArray = arguments.commonSources
@@ -345,11 +348,12 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
                     exportedDeclarations = setOf(FqName("main")),
                     propertyLazyInitialization = arguments.irPropertyLazyInitialization,
                 )
+                val dceDumpNameCache = DceDumpNameCache()
                 if (arguments.irDce) {
-                    eliminateDeadDeclarations(allModules, backendContext)
+                    eliminateDeadDeclarations(allModules, backendContext, dceDumpNameCache)
                 }
 
-                dumpDeclarationIrSizesIfNeed(arguments.irDceDumpDeclarationIrSizesToFile, allModules)
+                dumpDeclarationIrSizesIfNeed(arguments.irDceDumpDeclarationIrSizesToFile, allModules, dceDumpNameCache)
 
                 val generateSourceMaps = configuration.getBoolean(JSConfigurationKeys.SOURCE_MAP)
 

@@ -46,24 +46,6 @@ object FirTopLevelPropertiesChecker : FirPropertyChecker() {
             reporter,
             context
         )
-        checkExpectDeclarationVisibilityAndBody(declaration, source, reporter, context)
-    }
-}
-
-// TODO: check class too
-internal fun checkExpectDeclarationVisibilityAndBody(
-    declaration: FirMemberDeclaration,
-    source: KtSourceElement,
-    reporter: DiagnosticReporter,
-    context: CheckerContext
-) {
-    if (declaration.isExpect) {
-        if (Visibilities.isPrivate(declaration.visibility)) {
-            reporter.reportOn(source, FirErrors.EXPECTED_PRIVATE_DECLARATION, context)
-        }
-        if (declaration is FirSimpleFunction && declaration.hasBody) {
-            reporter.reportOn(source, FirErrors.EXPECTED_DECLARATION_WITH_BODY, context)
-        }
     }
 }
 
@@ -150,7 +132,7 @@ internal fun checkPropertyInitializer(
             ) {
                 if (property.receiverParameter != null && !property.hasAnyAccessorImplementation) {
                     reporter.reportOn(propertySource, FirErrors.EXTENSION_PROPERTY_MUST_HAVE_ACCESSORS_OR_BE_ABSTRACT, context)
-                } else if (reachable) { // TODO: can be suppressed not to report diagnostics about no body
+                } else if (reachable) {
                     reportMustBeInitialized(property, isDefinitelyAssignedInConstructor, containingClass, propertySource, reporter, context)
                 }
             }
@@ -158,7 +140,7 @@ internal fun checkPropertyInitializer(
                 if (isExpect) {
                     reporter.reportOn(propertySource, FirErrors.EXPECTED_LATEINIT_PROPERTY, context)
                 }
-                // TODO: like [BindingContext.MUST_BE_LATEINIT], we should consider variable with uninitialized error.
+                // TODO, KT-59807: like [BindingContext.MUST_BE_LATEINIT], we should consider variable with uninitialized error.
                 if (backingFieldRequired && !inInterface && isCorrectlyInitialized) {
                     if (context.languageVersionSettings.supportsFeature(LanguageFeature.EnableDfaWarningsInK2)) {
                         reporter.reportOn(propertySource, FirErrors.UNNECESSARY_LATEINIT, context)

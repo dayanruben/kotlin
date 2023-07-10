@@ -102,7 +102,7 @@ IdeVersionConfigurator.setCurrentIde(project)
 
 if (!project.hasProperty("versions.kotlin-native")) {
     // BEWARE! Bumping this version doesn't take an immediate effect on TeamCity: KTI-1107
-    extra["versions.kotlin-native"] = "1.9.20-dev-5069"
+    extra["versions.kotlin-native"] = "1.9.20-dev-6128"
 }
 
 val irCompilerModules = arrayOf(
@@ -133,6 +133,7 @@ val commonCompilerModules = arrayOf(
     ":core:compiler.common",
     ":core:compiler.common.jvm",
     ":core:compiler.common.js",
+    ":core:compiler.common.native",
     ":core:util.runtime",
     ":compiler:frontend.common.jvm",
     ":compiler:frontend.java", // TODO this is fe10 module but some utils used in fir ide now
@@ -239,6 +240,7 @@ extra["kotlinJpsPluginEmbeddedDependencies"] = listOf(
     ":core:compiler.common",
     ":core:compiler.common.jvm",
     ":core:compiler.common.js",
+    ":core:compiler.common.native",
     ":core:descriptors",
     ":core:descriptors.jvm",
     ":compiler:backend.common.jvm",

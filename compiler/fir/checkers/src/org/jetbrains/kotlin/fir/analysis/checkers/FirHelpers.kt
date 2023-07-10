@@ -384,7 +384,7 @@ fun FirCallableSymbol<*>.getImplementationStatus(
             ) {
                 return ImplementationStatus.INHERITED_OR_SYNTHESIZED
             }
-            // TODO: suspend function overridden by a Java class in the middle is not properly regarded as an override
+            // TODO, KT-59818: suspend function overridden by a Java class in the middle is not properly regarded as an override
             if (isSuspend) {
                 return ImplementationStatus.INHERITED_OR_SYNTHESIZED
             }
@@ -599,11 +599,9 @@ fun FirFunctionSymbol<*>.isFunctionForExpectTypeFromCastFeature(): Boolean {
     return true
 }
 
-fun getActualTargetList(container: FirAnnotationContainer): AnnotationTargetList {
-    fun CallableId.isMember(): Boolean {
-        return classId != null || isLocal // TODO: Replace with .containingClass (after fixing)
-    }
+private val FirCallableDeclaration.isMember get() = dispatchReceiverType != null
 
+fun getActualTargetList(container: FirAnnotationContainer): AnnotationTargetList {
     val annotated =
         if (container is FirBackingField && !container.propertySymbol.hasBackingField) container.propertyIfBackingField
         else container
@@ -625,7 +623,7 @@ fun getActualTargetList(container: FirAnnotationContainer): AnnotationTargetList
                     } else {
                         TargetLists.T_LOCAL_VARIABLE
                     }
-                annotated.symbol.callableId.isMember() ->
+                annotated.isMember ->
                     if (annotated.source?.kind == KtFakeSourceElementKind.PropertyFromParameter) {
                         TargetLists.T_VALUE_PARAMETER_WITH_VAL
                     } else {
@@ -648,7 +646,7 @@ fun getActualTargetList(container: FirAnnotationContainer): AnnotationTargetList
         is FirSimpleFunction -> {
             when {
                 annotated.isLocal -> TargetLists.T_LOCAL_FUNCTION
-                annotated.symbol.callableId.isMember() -> TargetLists.T_MEMBER_FUNCTION
+                annotated.isMember -> TargetLists.T_MEMBER_FUNCTION
                 else -> TargetLists.T_TOP_LEVEL_FUNCTION
             }
         }
@@ -672,7 +670,7 @@ fun getActualTargetList(container: FirAnnotationContainer): AnnotationTargetList
             } else {
                 TargetLists.T_OBJECT_LITERAL
             }
-//            TODO: properly implement those cases
+//            TODO, KT-59819: properly implement those cases
 //            is KtDestructuringDeclarationEntry -> TargetLists.T_LOCAL_VARIABLE
 //            is KtDestructuringDeclaration -> TargetLists.T_DESTRUCTURING_DECLARATION
 //            is KtLambdaExpression -> TargetLists.T_FUNCTION_LITERAL

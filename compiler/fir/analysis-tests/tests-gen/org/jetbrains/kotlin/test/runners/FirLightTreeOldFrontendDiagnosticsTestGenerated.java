@@ -64,6 +64,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
         }
 
         @Test
+        @TestMetadata("ambiguityNamedVararg.kt")
+        public void testAmbiguityNamedVararg() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/ambiguityNamedVararg.kt");
+        }
+
+        @Test
         @TestMetadata("annotationArgumentWithAliasedArrayType.kt")
         public void testAnnotationArgumentWithAliasedArrayType() throws Exception {
             runTest("compiler/testData/diagnostics/tests/annotationArgumentWithAliasedArrayType.kt");
@@ -913,6 +919,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
         @TestMetadata("RecursiveTypeParameterEqualityCheck.kt")
         public void testRecursiveTypeParameterEqualityCheck() throws Exception {
             runTest("compiler/testData/diagnostics/tests/RecursiveTypeParameterEqualityCheck.kt");
+        }
+
+        @Test
+        @TestMetadata("referenceToParameterizedFun.kt")
+        public void testReferenceToParameterizedFun() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/referenceToParameterizedFun.kt");
         }
 
         @Test
