@@ -27645,6 +27645,12 @@ public class FirNativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTe
             }
 
             @Test
+            @TestMetadata("assignToDotQualifiedWithSideEffect.kt")
+            public void testAssignToDotQualifiedWithSideEffect() throws Exception {
+                runTest("compiler/testData/codegen/box/operatorConventions/assignToDotQualifiedWithSideEffect.kt");
+            }
+
+            @Test
             @TestMetadata("assignmentOperations.kt")
             public void testAssignmentOperations() throws Exception {
                 runTest("compiler/testData/codegen/box/operatorConventions/assignmentOperations.kt");
@@ -27768,6 +27774,12 @@ public class FirNativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTe
             @TestMetadata("plusExplicit.kt")
             public void testPlusExplicit() throws Exception {
                 runTest("compiler/testData/codegen/box/operatorConventions/plusExplicit.kt");
+            }
+
+            @Test
+            @TestMetadata("reassignmentLhsCaching.kt")
+            public void testReassignmentLhsCaching() throws Exception {
+                runTest("compiler/testData/codegen/box/operatorConventions/reassignmentLhsCaching.kt");
             }
 
             @Test
@@ -40113,6 +40125,12 @@ public class FirNativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTe
             @Test
             public void testAllFilesPresentInVolatile() throws Exception {
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/volatile"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+            }
+
+            @Test
+            @TestMetadata("atomicArrayIntrinsics.kt")
+            public void testAtomicArrayIntrinsics() throws Exception {
+                runTest("compiler/testData/codegen/box/volatile/atomicArrayIntrinsics.kt");
             }
 
             @Test

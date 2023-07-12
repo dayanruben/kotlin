@@ -16,11 +16,12 @@ import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.builder.buildAnonymousFunctionCopy
 import org.jetbrains.kotlin.fir.declarations.builder.buildContextReceiver
 import org.jetbrains.kotlin.fir.declarations.builder.buildValueParameter
-import org.jetbrains.kotlin.fir.declarations.impl.FirDeclarationStatusImpl
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyAccessor
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyBackingField
 import org.jetbrains.kotlin.fir.declarations.synthetic.FirSyntheticProperty
-import org.jetbrains.kotlin.fir.declarations.utils.*
+import org.jetbrains.kotlin.fir.declarations.utils.hasExplicitBackingField
+import org.jetbrains.kotlin.fir.declarations.utils.isInline
+import org.jetbrains.kotlin.fir.declarations.utils.isLocal
 import org.jetbrains.kotlin.fir.diagnostics.ConeSimpleDiagnostic
 import org.jetbrains.kotlin.fir.diagnostics.DiagnosticKind
 import org.jetbrains.kotlin.fir.expressions.*
@@ -39,7 +40,6 @@ import org.jetbrains.kotlin.fir.resolve.transformers.FirCallCompletionResultsWri
 import org.jetbrains.kotlin.fir.resolve.transformers.FirStatusResolver
 import org.jetbrains.kotlin.fir.resolve.transformers.contracts.runContractResolveForFunction
 import org.jetbrains.kotlin.fir.resolve.transformers.transformVarargTypeToArrayType
-import org.jetbrains.kotlin.fir.scopes.impl.FirMemberTypeParameterScope
 import org.jetbrains.kotlin.fir.symbols.impl.FirValueParameterSymbol
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.builder.buildErrorTypeRef
@@ -47,7 +47,6 @@ import org.jetbrains.kotlin.fir.types.builder.buildResolvedTypeRef
 import org.jetbrains.kotlin.fir.types.impl.FirImplicitTypeRefImplWithoutSource
 import org.jetbrains.kotlin.fir.visitors.FirTransformer
 import org.jetbrains.kotlin.fir.visitors.transformSingle
-import org.jetbrains.kotlin.name.Name
 
 open class FirDeclarationsResolveTransformer(
     transformer: FirAbstractBodyResolveTransformerDispatcher
@@ -310,7 +309,7 @@ open class FirDeclarationsResolveTransformer(
 
         // `isImplicitTypedProperty` means we haven't run setter resolution yet (see its second usage)
         if (isImplicitTypedProperty) {
-            property.resolveSetter(property.returnTypeRef, mayResolveSetterBody = true)
+            property.resolveSetter(mayResolveSetterBody = true)
         }
 
         dataFlowAnalyzer.exitDelegateExpression(delegate)
@@ -430,33 +429,30 @@ open class FirDeclarationsResolveTransformer(
     private fun FirProperty.transformAccessors(
         setterResolutionMode: SetterResolutionMode = SetterResolutionMode.FULLY_RESOLVE
     ) {
-        var enhancedTypeRef = returnTypeRef
         if (bodyResolveState < FirPropertyBodyResolveState.INITIALIZER_AND_GETTER_RESOLVED) {
             getter?.let {
-                transformAccessor(it, enhancedTypeRef, this)
+                transformAccessor(it, this)
             }
         }
         if (returnTypeRef is FirImplicitTypeRef) {
-            storeVariableReturnType(this)
-            enhancedTypeRef = returnTypeRef
+            storeVariableReturnType(this) // Here, we expect `this.returnTypeRef` is updated from the getter's return type
             // We need update type of getter for case when its type was approximated
-            getter?.transformTypeWithPropertyType(enhancedTypeRef, forceUpdateForNonImplicitTypes = true)
+            getter?.transformTypeWithPropertyType(returnTypeRef, forceUpdateForNonImplicitTypes = true)
         }
 
         if (setterResolutionMode != SetterResolutionMode.SKIP) {
-            resolveSetter(enhancedTypeRef, mayResolveSetterBody = setterResolutionMode == SetterResolutionMode.FULLY_RESOLVE)
+            resolveSetter(mayResolveSetterBody = setterResolutionMode == SetterResolutionMode.FULLY_RESOLVE)
         }
     }
 
     private fun FirProperty.resolveSetter(
-        enhancedTypeRef: FirTypeRef,
         mayResolveSetterBody: Boolean,
     ) {
         setter?.let {
-            it.transformTypeWithPropertyType(enhancedTypeRef)
+            it.transformTypeWithPropertyType(returnTypeRef)
 
             if (mayResolveSetterBody) {
-                transformAccessor(it, enhancedTypeRef, this)
+                transformAccessor(it, this)
             }
         }
     }
@@ -482,26 +478,21 @@ open class FirDeclarationsResolveTransformer(
 
     private fun transformAccessor(
         accessor: FirPropertyAccessor,
-        enhancedTypeRef: FirTypeRef,
         owner: FirProperty
     ): Unit = whileAnalysing(session, accessor) {
         context.withPropertyAccessor(owner, accessor, components) {
-            if (accessor is FirDefaultPropertyAccessor || accessor.body == null) {
-                transformFunction(accessor, withExpectedType(enhancedTypeRef))
-            } else {
-                val returnTypeRef = accessor.returnTypeRef
-                val expectedReturnTypeRef = if (enhancedTypeRef is FirResolvedTypeRef && returnTypeRef !is FirResolvedTypeRef) {
-                    enhancedTypeRef
-                } else {
-                    returnTypeRef
-                }
-                val resolutionMode = if (owner.delegate == null || expectedReturnTypeRef.coneTypeSafe<ConeKotlinType>()?.isUnit == true) {
-                    ResolutionMode.ContextIndependent
-                } else {
-                    withExpectedType(expectedReturnTypeRef)
-                }
+            val propertyTypeRef = owner.returnTypeRef
 
-                transformFunctionWithGivenSignature(accessor, resolutionMode)
+            // Currently, this condition might only be true for delegates, because if type is set explicitly for the property,
+            // it's been propagated to receivers in the RawFirBuilder
+            if (accessor.returnTypeRef is FirImplicitTypeRef && propertyTypeRef !is FirImplicitTypeRef) {
+                accessor.replaceReturnTypeRef(propertyTypeRef)
+            }
+
+            if (accessor is FirDefaultPropertyAccessor || accessor.body == null) {
+                transformFunction(accessor, ResolutionMode.ContextIndependent)
+            } else {
+                transformFunctionWithGivenSignature(accessor)
             }
         }
     }
@@ -634,18 +625,15 @@ open class FirDeclarationsResolveTransformer(
             }
             context.forFunctionBody(simpleFunction, components) {
                 withFullBodyResolve {
-                    transformFunctionWithGivenSignature(simpleFunction, ResolutionMode.ContextIndependent)
+                    transformFunctionWithGivenSignature(simpleFunction)
                 }
             }
         }
     }
 
-    private fun <F : FirFunction> transformFunctionWithGivenSignature(
-        function: F,
-        resolutionMode: ResolutionMode,
-    ): F {
+    private fun <F : FirFunction> transformFunctionWithGivenSignature(function: F): F {
         @Suppress("UNCHECKED_CAST")
-        val result = transformFunction(function, resolutionMode) as F
+        val result = transformFunction(function, ResolutionMode.ContextIndependent) as F
 
         val body = result.body
         if (result.returnTypeRef is FirImplicitTypeRef) {
