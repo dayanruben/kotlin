@@ -30,12 +30,12 @@ class Fir2IrImplicitCastInserter(
     private val components: Fir2IrComponents
 ) : Fir2IrComponents by components, FirDefaultVisitor<IrElement, IrElement>() {
 
-    private fun FirTypeRef.toIrType(conversionTypeContext: ConversionTypeContext): IrType = with(typeConverter) {
-        toIrType(conversionTypeContext)
+    private fun FirTypeRef.toIrType(typeOrigin: ConversionTypeOrigin): IrType = with(typeConverter) {
+        toIrType(typeOrigin)
     }
 
-    private fun ConeKotlinType.toIrType(conversionTypeContext: ConversionTypeContext): IrType = with(typeConverter) {
-        toIrType(conversionTypeContext)
+    private fun ConeKotlinType.toIrType(typeOrigin: ConversionTypeOrigin): IrType = with(typeConverter) {
+        toIrType(typeOrigin)
     }
 
     override fun visitElement(element: FirElement, data: IrElement): IrElement {
@@ -137,7 +137,6 @@ class Fir2IrImplicitCastInserter(
 
     override fun visitWhenSubjectExpression(whenSubjectExpression: FirWhenSubjectExpression, data: IrElement): IrElement = data
 
-    // TODO: cast `condition` expression to boolean?
     override fun visitWhenBranch(whenBranch: FirWhenBranch, data: IrElement): IrBranch {
         val irBranch = data as IrBranch
         (irBranch.result as? IrContainerExpression)?.let {
@@ -151,7 +150,6 @@ class Fir2IrImplicitCastInserter(
 
     // ==================================================================================
 
-    // TODO: cast `condition` expression to boolean?
     override fun visitDoWhileLoop(doWhileLoop: FirDoWhileLoop, data: IrElement): IrElement {
         val loop = data as IrDoWhileLoop
         (loop.body as? IrContainerExpression)?.let {
@@ -160,7 +158,6 @@ class Fir2IrImplicitCastInserter(
         return data
     }
 
-    // TODO: cast `condition` expression to boolean?
     override fun visitWhileLoop(whileLoop: FirWhileLoop, data: IrElement): IrElement {
         val loop = data as IrWhileLoop
         (loop.body as? IrContainerExpression)?.let {
@@ -207,8 +204,8 @@ class Fir2IrImplicitCastInserter(
             insertImplicitCasts()
         }
 
-        val valueType = valueTypeRef.coneTypeSafe<ConeKotlinType>()?.fullyExpandedType(session) ?: return this
-        val expectedType = expectedTypeRef.coneTypeSafe<ConeKotlinType>()?.fullyExpandedType(session) ?: return this
+        val valueType = valueTypeRef.coneType.fullyExpandedType(session)
+        val expectedType = expectedTypeRef.coneType.fullyExpandedType(session)
 
         return when {
             expectedType.isUnit -> {
@@ -216,7 +213,7 @@ class Fir2IrImplicitCastInserter(
             }
             valueType is ConeDynamicType -> {
                 if (expectedType !is ConeDynamicType && !expectedType.isNullableAny) {
-                    implicitCast(this, expectedType.toIrType(ConversionTypeContext.DEFAULT))
+                    implicitCast(this, expectedType.toIrType(ConversionTypeOrigin.DEFAULT))
                 } else {
                     this
                 }
@@ -282,7 +279,7 @@ class Fir2IrImplicitCastInserter(
         original: IrExpression,
         originalTypeRef: FirTypeRef,
         calleeReference: FirReference?,
-        conversionTypeContext: ConversionTypeContext,
+        typeOrigin: ConversionTypeOrigin,
     ): IrExpression {
         val referencedDeclaration = calleeReference?.toResolvedCallableSymbol()?.unwrapCallRepresentative()?.fir
 
@@ -295,23 +292,23 @@ class Fir2IrImplicitCastInserter(
         val castType = originalTypeRef.coneTypeSafe<ConeIntersectionType>()
         castType?.intersectedTypes?.forEach { componentType ->
             if (AbstractTypeChecker.isSubtypeOf(session.typeContext, componentType, starProjectedDispatchReceiver)) {
-                return implicitCastOrExpression(original, componentType, conversionTypeContext)
+                return implicitCastOrExpression(original, componentType, typeOrigin)
             }
         }
 
-        return implicitCastOrExpression(original, originalTypeRef, conversionTypeContext)
+        return implicitCastOrExpression(original, originalTypeRef, typeOrigin)
     }
 
     private fun implicitCastOrExpression(
-        original: IrExpression, castType: ConeKotlinType, conversionTypeContext: ConversionTypeContext = ConversionTypeContext.DEFAULT
+        original: IrExpression, castType: ConeKotlinType, typeOrigin: ConversionTypeOrigin = ConversionTypeOrigin.DEFAULT
     ): IrExpression {
-        return implicitCastOrExpression(original, castType.toIrType(conversionTypeContext))
+        return implicitCastOrExpression(original, castType.toIrType(typeOrigin))
     }
 
     private fun implicitCastOrExpression(
-        original: IrExpression, castType: FirTypeRef, conversionTypeContext: ConversionTypeContext = ConversionTypeContext.DEFAULT
+        original: IrExpression, castType: FirTypeRef, typeOrigin: ConversionTypeOrigin = ConversionTypeOrigin.DEFAULT
     ): IrExpression {
-        return implicitCastOrExpression(original, castType.toIrType(conversionTypeContext))
+        return implicitCastOrExpression(original, castType.toIrType(typeOrigin))
     }
 
     companion object {

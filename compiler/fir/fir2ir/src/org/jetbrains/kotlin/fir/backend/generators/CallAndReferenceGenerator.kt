@@ -54,10 +54,10 @@ class CallAndReferenceGenerator(
     private val adapterGenerator = AdapterGenerator(components, conversionScope)
 
     private fun FirTypeRef.toIrType(): IrType =
-        with(typeConverter) { toIrType(conversionScope.defaultConversionTypeContext()) }
+        with(typeConverter) { toIrType(conversionScope.defaultConversionTypeOrigin()) }
 
     private fun ConeKotlinType.toIrType(): IrType =
-        with(typeConverter) { toIrType(conversionScope.defaultConversionTypeContext()) }
+        with(typeConverter) { toIrType(conversionScope.defaultConversionTypeOrigin()) }
 
     fun convertToIrCallableReference(
         callableReferenceAccess: FirCallableReferenceAccess,
@@ -972,7 +972,6 @@ class CallAndReferenceGenerator(
         argument: FirExpression,
         parameter: FirValueParameter?
     ): IrExpression {
-        // TODO: Need to refer to language feature: AllowAssigningArrayElementsToVarargsInNamedFormForFunctions
         if (this !is IrVarargImpl ||
             parameter?.isVararg != true ||
             argument !is FirVarargArgumentsExpression ||

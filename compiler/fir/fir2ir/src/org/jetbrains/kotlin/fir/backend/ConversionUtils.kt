@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.fir.backend
 
 import com.intellij.psi.PsiCompiledElement
+import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.*
 import org.jetbrains.kotlin.backend.common.actualizer.IrActualizedResult
 import org.jetbrains.kotlin.builtins.StandardNames.DATA_CLASS_COMPONENT_PREFIX
@@ -44,10 +45,7 @@ import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.declarations.UNDEFINED_PARAMETER_INDEX
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin.GeneratedByPlugin
-import org.jetbrains.kotlin.ir.expressions.IrConst
-import org.jetbrains.kotlin.ir.expressions.IrConstKind
-import org.jetbrains.kotlin.ir.expressions.IrExpression
-import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
+import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.expressions.impl.*
 import org.jetbrains.kotlin.ir.symbols.*
 import org.jetbrains.kotlin.ir.symbols.impl.IrValueParameterSymbolImpl
@@ -61,7 +59,7 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffsetSkippingComments
 import org.jetbrains.kotlin.types.ConstantValueKind
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.util.OperatorNameConventions
-import org.jetbrains.kotlin.utils.addToStdlib.runIf
+import java.util.HashMap
 
 fun AbstractKtSourceElement?.startOffsetSkippingComments(): Int? {
     return when (this) {
@@ -110,37 +108,26 @@ internal fun <T : IrElement> FirStatement.convertWithOffsets(
 
 internal fun createErrorType(): IrErrorType = IrErrorTypeImpl(null, emptyList(), Variance.INVARIANT)
 
-internal enum class ConversionTypeOrigin {
-    DEFAULT,
-    SETTER
-}
-
-class ConversionTypeContext private constructor(internal val origin: ConversionTypeOrigin) {
-    companion object {
-        internal val DEFAULT = ConversionTypeContext(
-            origin = ConversionTypeOrigin.DEFAULT
-        )
-        internal val IN_SETTER = ConversionTypeContext(
-            origin = ConversionTypeOrigin.SETTER
-        )
-    }
+enum class ConversionTypeOrigin(val forSetter: Boolean) {
+    DEFAULT(forSetter = false),
+    SETTER(forSetter = true);
 }
 
 context(Fir2IrComponents)
 fun FirClassifierSymbol<*>.toSymbol(
-    typeContext: ConversionTypeContext = ConversionTypeContext.DEFAULT,
+    typeOrigin: ConversionTypeOrigin = ConversionTypeOrigin.DEFAULT,
     handleAnnotations: ((List<FirAnnotation>) -> Unit)? = null
 ): IrClassifierSymbol {
     return when (this) {
         is FirTypeParameterSymbol -> {
-            classifierStorage.getIrTypeParameterSymbol(this, typeContext)
+            classifierStorage.getIrTypeParameterSymbol(this, typeOrigin)
         }
 
         is FirTypeAliasSymbol -> {
             handleAnnotations?.invoke(fir.expandedTypeRef.annotations)
             val coneClassLikeType = fir.expandedTypeRef.coneType as ConeClassLikeType
             coneClassLikeType.lookupTag.toSymbol(session)
-                ?.toSymbol(typeContext, handleAnnotations)
+                ?.toSymbol(typeOrigin, handleAnnotations)
                 ?: classifierStorage.getIrClassSymbolForNotFoundClass(coneClassLikeType.lookupTag)
         }
 
@@ -736,36 +723,47 @@ fun FirDeclaration?.computeIrOrigin(predefinedOrigin: IrDeclarationOrigin? = nul
         ?: IrDeclarationOrigin.DEFINED
 }
 
+private typealias NameWithElementType = Pair<Name, IElementType>
+
+private val PREFIX_POSTFIX_ORIGIN_MAP: Map<NameWithElementType, IrStatementOrigin> = hashMapOf(
+    (OperatorNameConventions.INC to KtNodeTypes.PREFIX_EXPRESSION) to IrStatementOrigin.PREFIX_INCR,
+    (OperatorNameConventions.INC to KtNodeTypes.POSTFIX_EXPRESSION) to IrStatementOrigin.POSTFIX_INCR,
+    (OperatorNameConventions.DEC to KtNodeTypes.PREFIX_EXPRESSION) to IrStatementOrigin.PREFIX_DECR,
+    (OperatorNameConventions.DEC to KtNodeTypes.POSTFIX_EXPRESSION) to IrStatementOrigin.POSTFIX_DECR,
+)
+
 fun FirVariableAssignment.getIrAssignmentOrigin(): IrStatementOrigin {
-    val calleeReferenceSymbol = calleeReference?.toResolvedCallableSymbol() ?: return IrStatementOrigin.EQ
+    val callableName = getCallableNameFromIntClassIfAny() ?: return IrStatementOrigin.EQ
+    PREFIX_POSTFIX_ORIGIN_MAP[callableName to source?.elementType]?.let { return it }
+
+    val rValue = rValue as FirFunctionCall
+    val kind = rValue.source?.kind
+    if (kind == KtFakeSourceElementKind.DesugaredIncrementOrDecrement || kind == KtFakeSourceElementKind.DesugaredCompoundAssignment) {
+        if (callableName == OperatorNameConventions.PLUS) {
+            return IrStatementOrigin.PLUSEQ
+        } else if (callableName == OperatorNameConventions.MINUS) {
+            return IrStatementOrigin.MINUSEQ
+        }
+    }
+
+    return IrStatementOrigin.EQ
+}
+
+fun FirVariableAssignment.getIrPrefixPostfixOriginIfAny(): IrStatementOrigin? {
+    val callableName = getCallableNameFromIntClassIfAny() ?: return null
+    return PREFIX_POSTFIX_ORIGIN_MAP[callableName to source?.elementType]
+}
+
+private fun FirVariableAssignment.getCallableNameFromIntClassIfAny(): Name? {
+    val calleeReferenceSymbol = calleeReference?.toResolvedCallableSymbol() ?: return null
     val rValue = rValue
     if (rValue is FirFunctionCall && calleeReferenceSymbol.callableId.isLocal) {
         val callableId = rValue.calleeReference.toResolvedCallableSymbol()?.callableId
         if (callableId?.classId == StandardClassIds.Int) {
-            val callableName = callableId.callableName
-            if (callableName == OperatorNameConventions.INC) {
-                return if (source?.elementType == KtNodeTypes.PREFIX_EXPRESSION)
-                    IrStatementOrigin.PREFIX_INCR
-                else
-                    IrStatementOrigin.POSTFIX_INCR
-            } else if (callableName == OperatorNameConventions.DEC) {
-                return if (source?.elementType == KtNodeTypes.PREFIX_EXPRESSION)
-                    IrStatementOrigin.PREFIX_DECR
-                else
-                    IrStatementOrigin.POSTFIX_DECR
-            }
-
-            val kind = rValue.source?.kind
-            if (kind == KtFakeSourceElementKind.DesugaredIncrementOrDecrement || kind == KtFakeSourceElementKind.DesugaredCompoundAssignment) {
-                if (callableName == OperatorNameConventions.PLUS) {
-                    return IrStatementOrigin.PLUSEQ
-                } else if (callableName == OperatorNameConventions.MINUS) {
-                    return IrStatementOrigin.MINUSEQ
-                }
-            }
+            return callableId.callableName
         }
     }
-    return IrStatementOrigin.EQ
+    return null
 }
 
 fun FirCallableDeclaration.contextReceiversForFunctionOrContainingProperty(): List<FirContextReceiver> =

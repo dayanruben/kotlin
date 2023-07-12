@@ -106,8 +106,7 @@ class Fir2IrLazyProperty(
             }
             // Setting initializers to every other class causes some cryptic errors in lowerings
             initializer is FirConstExpression<*> -> {
-                // TODO: Normally we shouldn't have error type here
-                val constType = with(typeConverter) { initializer.typeRef.toIrType().takeIf { it !is IrErrorType } ?: type }
+                val constType = with(typeConverter) { initializer.typeRef.toIrType() }
                 factory.createExpressionBody(initializer.toIrConst(constType))
             }
             else -> null
@@ -115,12 +114,7 @@ class Fir2IrLazyProperty(
     }
 
     override var backingField: IrField? by lazyVar(lock) {
-        // TODO: this checks are very preliminary, FIR resolve should determine backing field presence itself
-        val parent = parent
         when {
-            !fir.isConst && (fir.modality == Modality.ABSTRACT || parent is IrClass && parent.isInterface) -> {
-                null
-            }
             fir.hasExplicitBackingField -> {
                 with(declarationStorage) {
                     val backingFieldType = with(typeConverter) {
@@ -197,7 +191,7 @@ class Fir2IrLazyProperty(
             correspondingPropertySymbol = this@Fir2IrLazyProperty.symbol
             with(classifierStorage) {
                 setTypeParameters(
-                    this@Fir2IrLazyProperty.fir, ConversionTypeContext.DEFAULT
+                    this@Fir2IrLazyProperty.fir, ConversionTypeOrigin.DEFAULT
                 )
             }
         }
@@ -229,7 +223,7 @@ class Fir2IrLazyProperty(
                     correspondingPropertySymbol = this@Fir2IrLazyProperty.symbol
                     with(classifierStorage) {
                         setTypeParameters(
-                            this@Fir2IrLazyProperty.fir, ConversionTypeContext.IN_SETTER
+                            this@Fir2IrLazyProperty.fir, ConversionTypeOrigin.SETTER
                         )
                     }
                 }

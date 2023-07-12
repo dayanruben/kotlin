@@ -80,8 +80,8 @@ internal class AdapterGenerator(
         }
     }
 
-    private fun ConeKotlinType.toIrType(typeContext: ConversionTypeContext = ConversionTypeContext.DEFAULT): IrType =
-        with(typeConverter) { toIrType(typeContext) }
+    private fun ConeKotlinType.toIrType(typeOrigin: ConversionTypeOrigin = ConversionTypeOrigin.DEFAULT): IrType =
+        with(typeConverter) { toIrType(typeOrigin) }
 
     internal fun needToGenerateAdaptedCallableReference(
         callableReferenceAccess: FirCallableReferenceAccess,
@@ -165,7 +165,6 @@ internal class AdapterGenerator(
             if (boundReceiver == null) {
                 IrFunctionExpressionImpl(startOffset, endOffset, type, irAdapterFunction, IrStatementOrigin.ADAPTED_FUNCTION_REFERENCE)
             } else {
-                // TODO add a bound receiver property to IrFunctionExpressionImpl?
                 val irAdapterRef = IrFunctionReferenceImpl(
                     startOffset, endOffset, type, irAdapterFunction.symbol, irAdapterFunction.typeParameters.size,
                     irAdapterFunction.valueParameters.size, null, IrStatementOrigin.ADAPTED_FUNCTION_REFERENCE
@@ -440,7 +439,7 @@ internal class AdapterGenerator(
             }
 
         val samFirType = substitutedParameterType.removeExternalProjections() ?: substitutedParameterType
-        val samType = samFirType.toIrType(ConversionTypeContext.DEFAULT)
+        val samType = samFirType.toIrType(ConversionTypeOrigin.DEFAULT)
         // Make sure the converted IrType owner indeed has a single abstract method, since FunctionReferenceLowering relies on it.
         if (!samType.isSamType) return this
         return IrTypeOperatorCallImpl(
@@ -590,7 +589,6 @@ internal class AdapterGenerator(
         argument: FirExpression,
         parameterType: ConeKotlinType
     ): IrExpression {
-        // TODO: should refer to LanguageVersionSettings.SuspendConversion
         if (this is IrBlock && origin == IrStatementOrigin.ADAPTED_FUNCTION_REFERENCE) {
             return this
         }
@@ -610,7 +608,6 @@ internal class AdapterGenerator(
         val suspendConvertedType = parameterType.toIrType() as IrSimpleType
         return argument.convertWithOffsets { startOffset, endOffset ->
             val irAdapterFunction = createAdapterFunctionForArgument(startOffset, endOffset, suspendConvertedType, type, invokeSymbol)
-            // TODO add a bound receiver property to IrFunctionExpressionImpl?
             val irAdapterRef = IrFunctionReferenceImpl(
                 startOffset, endOffset, suspendConvertedType, irAdapterFunction.symbol, irAdapterFunction.typeParameters.size,
                 irAdapterFunction.valueParameters.size, null, IrStatementOrigin.SUSPEND_CONVERSION

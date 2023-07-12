@@ -138,7 +138,8 @@ class Fir2IrVisitor(
             declarationStorage.enterScope(irEnumEntry)
             classifierStorage.putEnumEntryClassInScope(enumEntry, correspondingClass)
             val anonymousObject = (enumEntry.initializer as FirAnonymousObjectExpression).anonymousObject
-            converter.processAnonymousObjectMembers(anonymousObject, correspondingClass, processHeaders = true)
+            converter.processAnonymousObjectHeaders(anonymousObject, correspondingClass)
+            converter.processClassMembers(anonymousObject, correspondingClass)
             converter.bindFakeOverridesInClass(correspondingClass)
             conversionScope.withParent(correspondingClass) {
                 memberGenerator.convertClassContent(correspondingClass, anonymousObject)
@@ -465,7 +466,7 @@ class Fir2IrVisitor(
     }
 
     override fun visitWrappedArgumentExpression(wrappedArgumentExpression: FirWrappedArgumentExpression, data: Any?): IrElement {
-        // TODO: change this temporary hack to something correct
+        // Note: we deal with specific arguments in CallAndReferenceGenerator
         return convertToIrExpression(wrappedArgumentExpression.expression)
     }
 
@@ -693,7 +694,6 @@ class Fir2IrVisitor(
                 }
             }
         }
-        // TODO handle qualified "this" in instance methods of non-inner classes (inner class cases are handled by InnerClassesLowering)
         return visitQualifiedAccessExpression(thisReceiverExpression, data)
     }
 
@@ -815,7 +815,7 @@ class Fir2IrVisitor(
 
             implicitCastInserter.implicitCastFromDispatchReceiver(
                 this, expression.typeRef, calleeReference,
-                conversionScope.defaultConversionTypeContext()
+                conversionScope.defaultConversionTypeOrigin()
             )
         }
     }
@@ -851,25 +851,10 @@ class Fir2IrVisitor(
     }
 
     private fun List<FirStatement>.getStatementsOrigin(index: Int): IrStatementOrigin? {
-        if (index + 3 > size) return null
-
-        val statement0 = this[index]
-        if (statement0 !is FirProperty || !statement0.isLocal) return null
-        val unarySymbol = statement0.symbol
-        if (unarySymbol.callableId.callableName != SpecialNames.UNARY) return null
-        val variable = statement0.initializer?.toResolvedCallableSymbol() ?: return null
-
-        val statement2 = this[index + 2]
-        if (statement2 !is FirPropertyAccessExpression) return null
-        if (statement2.calleeReference.toResolvedCallableSymbol() != unarySymbol) return null
-
-        val incrementStatement = this[index + 1]
+        val incrementStatement = getOrNull(index + 1)
         if (incrementStatement !is FirVariableAssignment) return null
 
-        if (incrementStatement.calleeReference?.toResolvedCallableSymbol() != variable) return null
-
-        val origin = incrementStatement.getIrAssignmentOrigin()
-        return if (origin == IrStatementOrigin.EQ) null else origin
+        return incrementStatement.getIrPrefixPostfixOriginIfAny()
     }
 
     internal fun convertToIrBlockBody(block: FirBlock): IrBlockBody {
@@ -1410,7 +1395,7 @@ class Fir2IrVisitor(
             }
         val irClassReferenceSymbol = when (argument) {
             is FirResolvedReifiedParameterReference -> {
-                classifierStorage.getIrTypeParameterSymbol(argument.symbol, ConversionTypeContext.DEFAULT)
+                classifierStorage.getIrTypeParameterSymbol(argument.symbol, ConversionTypeOrigin.DEFAULT)
             }
             is FirResolvedQualifier -> {
                 when (val symbol = argument.symbol) {
