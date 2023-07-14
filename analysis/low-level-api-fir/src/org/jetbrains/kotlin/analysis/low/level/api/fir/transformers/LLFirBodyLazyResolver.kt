@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.analysis.low.level.api.fir.transformers
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.targets.LLFirResolveTarget
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.throwUnexpectedFirElementError
 import org.jetbrains.kotlin.analysis.low.level.api.fir.file.builder.LLFirLockProvider
-import org.jetbrains.kotlin.analysis.low.level.api.fir.lazy.resolve.LLFirPhaseUpdater
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.checkDelegatedConstructorIsResolved
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.*
 import org.jetbrains.kotlin.analysis.utils.errors.buildErrorWithAttachment
@@ -49,12 +48,7 @@ internal object LLFirBodyLazyResolver : LLFirLazyResolver(FirResolvePhase.BODY_R
         resolver.resolveDesignation()
     }
 
-    override fun updatePhaseForDeclarationInternals(target: FirElementWithResolveState) {
-        LLFirPhaseUpdater.updateDeclarationInternalsPhase(target, resolverPhase, updateForLocalDeclarations = true)
-    }
-
-    override fun checkIsResolved(target: FirElementWithResolveState) {
-        target.checkPhase(resolverPhase)
+    override fun phaseSpecificCheckIsResolved(target: FirElementWithResolveState) {
         when (target) {
             is FirValueParameter -> checkDefaultValueIsResolved(target)
             is FirVariable -> checkInitializerIsResolved(target)
@@ -64,8 +58,6 @@ internal object LLFirBodyLazyResolver : LLFirLazyResolver(FirResolvePhase.BODY_R
             }
             is FirFunction -> checkBodyIsResolved(target)
         }
-
-        checkNestedDeclarationsAreResolved(target)
     }
 }
 
@@ -151,7 +143,8 @@ private class LLFirBodyTargetResolver(
             is FirScript -> resolve(target, BodyStateKeepers.SCRIPT)
             is FirDanglingModifierList,
             is FirFileAnnotationsContainer,
-            is FirTypeAlias -> {
+            is FirTypeAlias,
+            -> {
                 // No bodies here
             }
             else -> throwUnexpectedFirElementError(target)

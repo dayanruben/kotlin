@@ -8,9 +8,8 @@ package org.jetbrains.kotlin.analysis.low.level.api.fir.transformers
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.targets.LLFirResolveTarget
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.throwUnexpectedFirElementError
 import org.jetbrains.kotlin.analysis.low.level.api.fir.file.builder.LLFirLockProvider
-import org.jetbrains.kotlin.analysis.low.level.api.fir.lazy.resolve.LLFirPhaseUpdater
-import org.jetbrains.kotlin.analysis.low.level.api.fir.util.checkPhase
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.blockGuard
+import org.jetbrains.kotlin.analysis.low.level.api.fir.util.checkContractDescriptionIsResolved
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.isCallableWithSpecialBody
 import org.jetbrains.kotlin.fir.FirElementWithResolveState
 import org.jetbrains.kotlin.fir.FirFileAnnotationsContainer
@@ -33,16 +32,9 @@ internal object LLFirContractsLazyResolver : LLFirLazyResolver(FirResolvePhase.C
         resolver.resolveDesignation()
     }
 
-    override fun updatePhaseForDeclarationInternals(target: FirElementWithResolveState) {
-        LLFirPhaseUpdater.updateDeclarationInternalsPhase(target, resolverPhase, updateForLocalDeclarations = false)
-    }
-
-    override fun checkIsResolved(target: FirElementWithResolveState) {
-        target.checkPhase(resolverPhase)
-        if (target is FirContractDescriptionOwner) {
-            // TODO checkContractDescriptionIsResolved(declaration)
-        }
-        checkNestedDeclarationsAreResolved(target)
+    override fun phaseSpecificCheckIsResolved(target: FirElementWithResolveState) {
+        if (target !is FirContractDescriptionOwner) return
+        checkContractDescriptionIsResolved(target)
     }
 }
 
@@ -72,7 +64,8 @@ private class LLFirContractsTargetResolver(
             is FirAnonymousInitializer,
             is FirScript,
             is FirFileAnnotationsContainer,
-            is FirDanglingModifierList -> {
+            is FirDanglingModifierList,
+            -> {
                 // No contracts here
                 check(target !is FirContractDescriptionOwner) {
                     "Unexpected contract description owner: $target (${target.javaClass.name})"

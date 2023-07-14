@@ -166,6 +166,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         }
 
         @Test
+        @TestMetadata("checkTypeWithExactTest.kt")
+        public void testCheckTypeWithExactTest() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/checkTypeWithExactTest.kt");
+        }
+
+        @Test
         @TestMetadata("CompareToWithErrorType.kt")
         public void testCompareToWithErrorType() throws Exception {
             runTest("compiler/testData/diagnostics/tests/CompareToWithErrorType.kt");
@@ -5988,6 +5994,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("derivedProperty.kt")
             public void testDerivedProperty() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/constructorConsistency/derivedProperty.kt");
+            }
+
+            @Test
+            @TestMetadata("errorInsideDelegationCallNoPrimary.kt")
+            public void testErrorInsideDelegationCallNoPrimary() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/constructorConsistency/errorInsideDelegationCallNoPrimary.kt");
             }
 
             @Test
@@ -22524,8 +22536,20 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         @TestDataPath("$PROJECT_ROOT")
         public class Multiplatform {
             @Test
+            @TestMetadata("actualTypealiasToSpecialAnnotation.kt")
+            public void testActualTypealiasToSpecialAnnotation() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multiplatform/actualTypealiasToSpecialAnnotation.kt");
+            }
+
+            @Test
             public void testAllFilesPresentInMultiplatform() throws Exception {
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/multiplatform"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);
+            }
+
+            @Test
+            @TestMetadata("checkNoActualForExpectInLastModule.kt")
+            public void testCheckNoActualForExpectInLastModule() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multiplatform/checkNoActualForExpectInLastModule.kt");
             }
 
             @Test
@@ -22556,6 +22580,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("expectObjectWithAbstractMember.kt")
             public void testExpectObjectWithAbstractMember() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/multiplatform/expectObjectWithAbstractMember.kt");
+            }
+
+            @Test
+            @TestMetadata("expectOptInAnnotation.kt")
+            public void testExpectOptInAnnotation() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multiplatform/expectOptInAnnotation.kt");
             }
 
             @Test
@@ -34509,6 +34539,18 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("simpleRecords.kt")
                 public void testSimpleRecords() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/testsWithJava17/jvmRecord/simpleRecords.kt");
+                }
+
+                @Test
+                @TestMetadata("simpleRecordsDefaultConstructor.kt")
+                public void testSimpleRecordsDefaultConstructor() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/testsWithJava17/jvmRecord/simpleRecordsDefaultConstructor.kt");
+                }
+
+                @Test
+                @TestMetadata("simpleRecordsWithSecondaryConstructor.kt")
+                public void testSimpleRecordsWithSecondaryConstructor() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/testsWithJava17/jvmRecord/simpleRecordsWithSecondaryConstructor.kt");
                 }
 
                 @Test

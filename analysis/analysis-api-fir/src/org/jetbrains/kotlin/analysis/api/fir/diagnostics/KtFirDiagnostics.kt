@@ -1234,6 +1234,7 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
 
     interface NullForNonnullType : KtFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = NullForNonnullType::class
+        val expectedType: KtType
     }
 
     interface InapplicableLateinitModifier : KtFirDiagnostic<KtModifierListOwner> {
@@ -2413,6 +2414,15 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
 
     interface NotAMultiplatformCompilation : KtFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = NotAMultiplatformCompilation::class
+    }
+
+    interface ExpectActualOptInAnnotation : KtFirDiagnostic<KtNamedDeclaration> {
+        override val diagnosticClass get() = ExpectActualOptInAnnotation::class
+    }
+
+    interface ActualTypealiasToSpecialAnnotation : KtFirDiagnostic<KtTypeAlias> {
+        override val diagnosticClass get() = ActualTypealiasToSpecialAnnotation::class
+        val typealiasedClassId: ClassId
     }
 
     interface InitializerRequiredForDestructuringDeclaration : KtFirDiagnostic<KtDestructuringDeclaration> {

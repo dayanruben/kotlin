@@ -360,7 +360,7 @@ object FirErrors {
     val THROWABLE_TYPE_MISMATCH by error2<PsiElement, ConeKotlinType, Boolean>()
     val CONDITION_TYPE_MISMATCH by error2<PsiElement, ConeKotlinType, Boolean>()
     val ARGUMENT_TYPE_MISMATCH by error3<PsiElement, ConeKotlinType, ConeKotlinType, Boolean>()
-    val NULL_FOR_NONNULL_TYPE by error0<PsiElement>()
+    val NULL_FOR_NONNULL_TYPE by error1<PsiElement, ConeKotlinType>()
     val INAPPLICABLE_LATEINIT_MODIFIER by error1<KtModifierListOwner, String>(SourceElementPositioningStrategies.LATEINIT_MODIFIER)
     val VARARG_OUTSIDE_PARENTHESES by error0<KtElement>()
     val NAMED_ARGUMENTS_NOT_ALLOWED by error1<KtValueArgument, ForbiddenNamedArgumentsTarget>(SourceElementPositioningStrategies.NAME_OF_NAMED_ARGUMENT)
@@ -626,6 +626,8 @@ object FirErrors {
     val NO_ACTUAL_CLASS_MEMBER_FOR_EXPECTED_CLASS by error2<KtNamedDeclaration, FirBasedSymbol<*>, List<Pair<FirBasedSymbol<*>, Map<Incompatible<FirBasedSymbol<*>>, Collection<FirBasedSymbol<*>>>>>>(SourceElementPositioningStrategies.ACTUAL_DECLARATION_NAME)
     val ACTUAL_MISSING by error0<KtNamedDeclaration>(SourceElementPositioningStrategies.ACTUAL_DECLARATION_NAME)
     val NOT_A_MULTIPLATFORM_COMPILATION by error0<PsiElement>()
+    val EXPECT_ACTUAL_OPT_IN_ANNOTATION by error0<KtNamedDeclaration>(SourceElementPositioningStrategies.EXPECT_ACTUAL_MODIFIER)
+    val ACTUAL_TYPEALIAS_TO_SPECIAL_ANNOTATION by error1<KtTypeAlias, ClassId>(SourceElementPositioningStrategies.TYPEALIAS_TYPE_REFERENCE)
 
     // Destructuring declaration
     val INITIALIZER_REQUIRED_FOR_DESTRUCTURING_DECLARATION by error0<KtDestructuringDeclaration>()

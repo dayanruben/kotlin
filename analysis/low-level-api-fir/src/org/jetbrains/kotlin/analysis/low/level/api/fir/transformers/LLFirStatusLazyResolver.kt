@@ -10,9 +10,7 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.api.targets.LLFirSingleRe
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.targets.asResolveTarget
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.tryCollectDesignationWithFile
 import org.jetbrains.kotlin.analysis.low.level.api.fir.file.builder.LLFirLockProvider
-import org.jetbrains.kotlin.analysis.low.level.api.fir.lazy.resolve.LLFirPhaseUpdater
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.checkDeclarationStatusIsResolved
-import org.jetbrains.kotlin.analysis.low.level.api.fir.util.checkPhase
 import org.jetbrains.kotlin.fir.FirElementWithResolveState
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.*
@@ -44,20 +42,9 @@ internal object LLFirStatusLazyResolver : LLFirLazyResolver(FirResolvePhase.STAT
         resolver.resolveDesignation()
     }
 
-    override fun updatePhaseForDeclarationInternals(target: FirElementWithResolveState) {
-        LLFirPhaseUpdater.updateDeclarationInternalsPhase(target, resolverPhase, updateForLocalDeclarations = false)
-    }
-
-    override fun checkIsResolved(target: FirElementWithResolveState) {
-        if (target !is FirAnonymousInitializer) {
-            target.checkPhase(resolverPhase)
-        }
-
-        if (target is FirMemberDeclaration) {
-            checkDeclarationStatusIsResolved(target)
-        }
-
-        checkNestedDeclarationsAreResolved(target)
+    override fun phaseSpecificCheckIsResolved(target: FirElementWithResolveState) {
+        if (target !is FirMemberDeclaration) return
+        checkDeclarationStatusIsResolved(target)
     }
 }
 

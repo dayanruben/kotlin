@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.fir.FirModuleData
 import org.jetbrains.kotlin.fir.PrivateForInline
 import org.jetbrains.kotlin.fir.checkers.generator.diagnostics.model.*
 import org.jetbrains.kotlin.fir.declarations.FirFunction
+import org.jetbrains.kotlin.fir.declarations.FirTypeAlias
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.*
@@ -531,7 +532,9 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<Boolean>("isMismatchDueToNullability")
         }
 
-        val NULL_FOR_NONNULL_TYPE by error<PsiElement> { }
+        val NULL_FOR_NONNULL_TYPE by error<PsiElement> {
+            parameter<ConeKotlinType>("expectedType")
+        }
 
         val INAPPLICABLE_LATEINIT_MODIFIER by error<KtModifierListOwner>(PositioningStrategy.LATEINIT_MODIFIER) {
             parameter<String>("reason")
@@ -1172,6 +1175,12 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val ACTUAL_MISSING by error<KtNamedDeclaration>(PositioningStrategy.ACTUAL_DECLARATION_NAME)
 
         val NOT_A_MULTIPLATFORM_COMPILATION by error<PsiElement>()
+
+        val EXPECT_ACTUAL_OPT_IN_ANNOTATION by error<KtNamedDeclaration>(PositioningStrategy.EXPECT_ACTUAL_MODIFIER)
+
+        val ACTUAL_TYPEALIAS_TO_SPECIAL_ANNOTATION by error<KtTypeAlias>(PositioningStrategy.TYPEALIAS_TYPE_REFERENCE) {
+            parameter<ClassId>("typealiasedClassId")
+        }
     }
 
     val DESTRUCTING_DECLARATION by object : DiagnosticGroup("Destructuring declaration") {

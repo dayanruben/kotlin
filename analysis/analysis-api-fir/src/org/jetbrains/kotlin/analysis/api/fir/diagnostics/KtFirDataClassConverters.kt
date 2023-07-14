@@ -1718,6 +1718,7 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
     }
     add(FirErrors.NULL_FOR_NONNULL_TYPE) { firDiagnostic ->
         NullForNonnullTypeImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
@@ -3453,6 +3454,19 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
     }
     add(FirErrors.NOT_A_MULTIPLATFORM_COMPILATION) { firDiagnostic ->
         NotAMultiplatformCompilationImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.EXPECT_ACTUAL_OPT_IN_ANNOTATION) { firDiagnostic ->
+        ExpectActualOptInAnnotationImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.ACTUAL_TYPEALIAS_TO_SPECIAL_ANNOTATION) { firDiagnostic ->
+        ActualTypealiasToSpecialAnnotationImpl(
+            firDiagnostic.a,
             firDiagnostic as KtPsiDiagnostic,
             token,
         )

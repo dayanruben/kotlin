@@ -21,8 +21,20 @@ import java.util.regex.Pattern;
 @TestDataPath("$PROJECT_ROOT")
 public class FirOldFrontendMPPDiagnosticsWithLightTreeTestGenerated extends AbstractFirLightTreeWithActualizerDiagnosticsTest {
     @Test
+    @TestMetadata("actualTypealiasToSpecialAnnotation.kt")
+    public void testActualTypealiasToSpecialAnnotation() throws Exception {
+        runTest("compiler/testData/diagnostics/tests/multiplatform/actualTypealiasToSpecialAnnotation.kt");
+    }
+
+    @Test
     public void testAllFilesPresentInMultiplatform() throws Exception {
         KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/multiplatform"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), TargetBackend.JVM_IR, true);
+    }
+
+    @Test
+    @TestMetadata("checkNoActualForExpectInLastModule.kt")
+    public void testCheckNoActualForExpectInLastModule() throws Exception {
+        runTest("compiler/testData/diagnostics/tests/multiplatform/checkNoActualForExpectInLastModule.kt");
     }
 
     @Test
@@ -53,6 +65,12 @@ public class FirOldFrontendMPPDiagnosticsWithLightTreeTestGenerated extends Abst
     @TestMetadata("expectObjectWithAbstractMember.kt")
     public void testExpectObjectWithAbstractMember() throws Exception {
         runTest("compiler/testData/diagnostics/tests/multiplatform/expectObjectWithAbstractMember.kt");
+    }
+
+    @Test
+    @TestMetadata("expectOptInAnnotation.kt")
+    public void testExpectOptInAnnotation() throws Exception {
+        runTest("compiler/testData/diagnostics/tests/multiplatform/expectOptInAnnotation.kt");
     }
 
     @Test

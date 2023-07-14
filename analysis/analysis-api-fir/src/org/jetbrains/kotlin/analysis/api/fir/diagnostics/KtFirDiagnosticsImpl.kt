@@ -1479,6 +1479,7 @@ internal class ArgumentTypeMismatchImpl(
 ) : KtAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KtFirDiagnostic.ArgumentTypeMismatch
 
 internal class NullForNonnullTypeImpl(
+    override val expectedType: KtType,
     firDiagnostic: KtPsiDiagnostic,
     token: KtLifetimeToken,
 ) : KtAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KtFirDiagnostic.NullForNonnullType
@@ -2911,6 +2912,17 @@ internal class NotAMultiplatformCompilationImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KtLifetimeToken,
 ) : KtAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KtFirDiagnostic.NotAMultiplatformCompilation
+
+internal class ExpectActualOptInAnnotationImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KtLifetimeToken,
+) : KtAbstractFirDiagnostic<KtNamedDeclaration>(firDiagnostic, token), KtFirDiagnostic.ExpectActualOptInAnnotation
+
+internal class ActualTypealiasToSpecialAnnotationImpl(
+    override val typealiasedClassId: ClassId,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KtLifetimeToken,
+) : KtAbstractFirDiagnostic<KtTypeAlias>(firDiagnostic, token), KtFirDiagnostic.ActualTypealiasToSpecialAnnotation
 
 internal class InitializerRequiredForDestructuringDeclarationImpl(
     firDiagnostic: KtPsiDiagnostic,

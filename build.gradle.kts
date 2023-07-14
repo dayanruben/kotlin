@@ -33,7 +33,13 @@ plugins {
     base
     idea
     id("jps-compatible")
-    id("org.jetbrains.gradle.plugin.idea-ext")
+    id("org.jetbrains.gradle.plugin.idea-ext") version "1.0.1" // this version should be in sync with repo/buildsrc-compat/build.gradle.kts
+    id("build-time-report")
+    id("java-instrumentation")
+    id("jps")
+    id("modularized-test-configurations")
+    id("idea-rt-hack")
+    id("resolve-dependencies")
     id("org.gradle.crypto.checksum") version "1.4.0"
     id("org.jetbrains.kotlinx.binary-compatibility-validator") version "0.13.1" apply false
     signing
@@ -87,22 +93,16 @@ extra["isSonatypeRelease"] = false
 
 rootProject.apply {
     from(rootProject.file("gradle/versions.gradle.kts"))
-    from(rootProject.file("gradle/report.gradle.kts"))
-    from(rootProject.file("gradle/javaInstrumentation.gradle.kts"))
-    from(rootProject.file("gradle/jps.gradle.kts"))
     from(rootProject.file("gradle/checkArtifacts.gradle.kts"))
     from(rootProject.file("gradle/checkCacheability.gradle.kts"))
     from(rootProject.file("gradle/retryPublishing.gradle.kts"))
-    from(rootProject.file("gradle/modularizedTestConfigurations.gradle.kts"))
-    from(rootProject.file("gradle/ideaRtHack.gradle.kts"))
-    from(rootProject.file("gradle/resolveDependencies.gradle.kts"))
 }
 
 IdeVersionConfigurator.setCurrentIde(project)
 
 if (!project.hasProperty("versions.kotlin-native")) {
     // BEWARE! Bumping this version doesn't take an immediate effect on TeamCity: KTI-1107
-    extra["versions.kotlin-native"] = "1.9.20-dev-6128"
+    extra["versions.kotlin-native"] = "1.9.20-dev-6271"
 }
 
 val irCompilerModules = arrayOf(

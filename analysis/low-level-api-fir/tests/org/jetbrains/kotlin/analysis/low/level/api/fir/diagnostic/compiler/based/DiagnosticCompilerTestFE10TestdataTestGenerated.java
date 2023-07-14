@@ -166,6 +166,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
         }
 
         @Test
+        @TestMetadata("checkTypeWithExactTest.kt")
+        public void testCheckTypeWithExactTest() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/checkTypeWithExactTest.kt");
+        }
+
+        @Test
         @TestMetadata("CompareToWithErrorType.kt")
         public void testCompareToWithErrorType() throws Exception {
             runTest("compiler/testData/diagnostics/tests/CompareToWithErrorType.kt");
@@ -5982,6 +5988,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
             @TestMetadata("derivedProperty.kt")
             public void testDerivedProperty() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/constructorConsistency/derivedProperty.kt");
+            }
+
+            @Test
+            @TestMetadata("errorInsideDelegationCallNoPrimary.kt")
+            public void testErrorInsideDelegationCallNoPrimary() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/constructorConsistency/errorInsideDelegationCallNoPrimary.kt");
             }
 
             @Test
@@ -33557,6 +33569,18 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
                 @TestMetadata("simpleRecords.kt")
                 public void testSimpleRecords() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/testsWithJava17/jvmRecord/simpleRecords.kt");
+                }
+
+                @Test
+                @TestMetadata("simpleRecordsDefaultConstructor.kt")
+                public void testSimpleRecordsDefaultConstructor() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/testsWithJava17/jvmRecord/simpleRecordsDefaultConstructor.kt");
+                }
+
+                @Test
+                @TestMetadata("simpleRecordsWithSecondaryConstructor.kt")
+                public void testSimpleRecordsWithSecondaryConstructor() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/testsWithJava17/jvmRecord/simpleRecordsWithSecondaryConstructor.kt");
                 }
 
                 @Test

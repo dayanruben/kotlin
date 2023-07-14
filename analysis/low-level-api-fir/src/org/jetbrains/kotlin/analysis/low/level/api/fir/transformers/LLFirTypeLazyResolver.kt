@@ -8,12 +8,12 @@ package org.jetbrains.kotlin.analysis.low.level.api.fir.transformers
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.targets.LLFirResolveTarget
 import org.jetbrains.kotlin.analysis.low.level.api.fir.file.builder.LLFirLockProvider
 import org.jetbrains.kotlin.analysis.low.level.api.fir.lazy.resolve.FirLazyBodiesCalculator
-import org.jetbrains.kotlin.analysis.low.level.api.fir.lazy.resolve.LLFirPhaseUpdater
-import org.jetbrains.kotlin.analysis.low.level.api.fir.util.checkPhase
+import org.jetbrains.kotlin.analysis.low.level.api.fir.util.checkAnnotationTypeIsResolved
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.checkReceiverTypeRefIsResolved
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.checkReturnTypeRefIsResolved
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.checkTypeRefIsResolved
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.errorWithFirSpecificEntries
+import org.jetbrains.kotlin.fir.FirAnnotationContainer
 import org.jetbrains.kotlin.fir.FirElementWithResolveState
 import org.jetbrains.kotlin.fir.FirFileAnnotationsContainer
 import org.jetbrains.kotlin.fir.FirSession
@@ -39,17 +39,17 @@ internal object LLFirTypeLazyResolver : LLFirLazyResolver(FirResolvePhase.TYPES)
         resolver.resolveDesignation()
     }
 
-    override fun updatePhaseForDeclarationInternals(target: FirElementWithResolveState) {
-        LLFirPhaseUpdater.updateDeclarationInternalsPhase(target, resolverPhase, updateForLocalDeclarations = false)
-    }
+    override fun phaseSpecificCheckIsResolved(target: FirElementWithResolveState) {
+        if (target is FirAnnotationContainer) {
+            checkAnnotationTypeIsResolved(target)
+        }
 
-    override fun checkIsResolved(target: FirElementWithResolveState) {
-        target.checkPhase(resolverPhase)
         if (target is FirConstructor) {
             target.delegatedConstructor?.let { delegated ->
                 checkTypeRefIsResolved(delegated.constructedTypeRef, "constructor type reference", target, acceptImplicitTypeRef = true)
             }
         }
+
         when (target) {
             is FirCallableDeclaration -> {
                 checkReturnTypeRefIsResolved(target, acceptImplicitTypeRef = true)
@@ -61,11 +61,7 @@ internal object LLFirTypeLazyResolver : LLFirLazyResolver(FirResolvePhase.TYPES)
                     checkTypeRefIsResolved(bound, "type parameter bound", target)
                 }
             }
-
-            else -> {}
         }
-
-        checkNestedDeclarationsAreResolved(target)
     }
 }
 
