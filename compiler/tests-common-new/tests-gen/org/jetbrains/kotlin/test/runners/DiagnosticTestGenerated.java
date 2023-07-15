@@ -6265,6 +6265,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("delegatedConstructorArguments.kt")
+            public void testDelegatedConstructorArguments() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/delegatedConstructorArguments.kt");
+            }
+
+            @Test
             @TestMetadata("delegatedMemberProperyWriteInInit.kt")
             public void testDelegatedMemberProperyWriteInInit() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/delegatedMemberProperyWriteInInit.kt");
@@ -6971,6 +6977,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("lambdaInTryFalsePositive.kt")
                 public void testLambdaInTryFalsePositive() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/definiteReturn/lambdaInTryFalsePositive.kt");
+                }
+
+                @Test
+                @TestMetadata("returnAliasedUnitNotRequired.kt")
+                public void testReturnAliasedUnitNotRequired() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/definiteReturn/returnAliasedUnitNotRequired.kt");
                 }
 
                 @Test

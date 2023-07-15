@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.multipl
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.psiTypeProvider.AbstractAnalysisApiExpressionPsiTypeProviderTest
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.psiTypeProvider.AbstractAnalysisApiPsiTypeProviderTest
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.referenceResolveProvider.AbstractIsImplicitCompanionReferenceTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.resolveExtensionInfoProvider.AbstractResolveExtensionInfoProviderTest
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.scopeProvider.*
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.signatureSubstitution.AbstractAnalysisApiSignatureContractsTest
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.components.signatureSubstitution.AbstractAnalysisApiSignatureSubstitutionTest
@@ -90,12 +91,8 @@ private fun AnalysisApiTestGroup.generateResolveExtensionsTests() {
                 frontendIs(FrontendKind.Fir) and
                 testModuleKindIs(TestModuleKind.Source)
     ) {
-        test(AbstractSingleModuleReferenceResolveWithResolveExtensionTest::class) {
+        test(AbstractReferenceResolveWithResolveExtensionTest::class) {
             model("referenceResolve")
-        }
-
-        test(AbstractMultiModuleReferenceResolveWithResolveExtensionTest::class) {
-            model("multiModule/referenceResolve")
         }
     }
 }
@@ -300,6 +297,12 @@ private fun AnalysisApiTestGroup.generateAnalysisApiComponentsTests() {
 
         test(AbstractAnalysisApiExpressionPsiTypeProviderTest::class, filter = frontendIs(FrontendKind.Fir)) {
             model("psiType/forExpression")
+        }
+    }
+
+    component("resolveExtensionInfoProvider", filter = frontendIs(FrontendKind.Fir)) {
+        test(AbstractResolveExtensionInfoProviderTest::class) {
+            model("extensionScopeWithPsi")
         }
     }
 

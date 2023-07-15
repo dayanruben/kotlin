@@ -6259,6 +6259,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
             }
 
             @Test
+            @TestMetadata("delegatedConstructorArguments.kt")
+            public void testDelegatedConstructorArguments() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/delegatedConstructorArguments.kt");
+            }
+
+            @Test
             @TestMetadata("delegatedMemberProperyWriteInInit.kt")
             public void testDelegatedMemberProperyWriteInInit() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/delegatedMemberProperyWriteInInit.kt");
@@ -6965,6 +6971,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
                 @TestMetadata("lambdaInTryFalsePositive.kt")
                 public void testLambdaInTryFalsePositive() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/definiteReturn/lambdaInTryFalsePositive.kt");
+                }
+
+                @Test
+                @TestMetadata("returnAliasedUnitNotRequired.kt")
+                public void testReturnAliasedUnitNotRequired() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/controlFlowAnalysis/definiteReturn/returnAliasedUnitNotRequired.kt");
                 }
 
                 @Test

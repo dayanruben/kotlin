@@ -12,19 +12,20 @@ import kotlin.js.*
 import org.khronos.webgl.*
 import org.w3c.dom.*
 import org.w3c.dom.events.*
+import org.w3c.dom.url.*
 import org.w3c.files.*
 
 /**
  * Exposes the JavaScript [XMLHttpRequestEventTarget](https://developer.mozilla.org/en/docs/Web/API/XMLHttpRequestEventTarget) to Kotlin
  */
 public external abstract class XMLHttpRequestEventTarget : EventTarget, JsAny {
-    open var onloadstart: ((ProgressEvent) -> JsAny?)?
-    open var onprogress: ((ProgressEvent) -> JsAny?)?
-    open var onabort: ((Event) -> JsAny?)?
-    open var onerror: ((Event) -> JsAny?)?
-    open var onload: ((Event) -> JsAny?)?
-    open var ontimeout: ((Event) -> JsAny?)?
-    open var onloadend: ((Event) -> JsAny?)?
+    open var onloadstart: ((ProgressEvent) -> Unit)?
+    open var onprogress: ((ProgressEvent) -> Unit)?
+    open var onabort: ((Event) -> Unit)?
+    open var onerror: ((Event) -> Unit)?
+    open var onload: ((Event) -> Unit)?
+    open var ontimeout: ((Event) -> Unit)?
+    open var onloadend: ((Event) -> Unit)?
 }
 
 public external abstract class XMLHttpRequestUpload : XMLHttpRequestEventTarget, JsAny
@@ -33,7 +34,7 @@ public external abstract class XMLHttpRequestUpload : XMLHttpRequestEventTarget,
  * Exposes the JavaScript [XMLHttpRequest](https://developer.mozilla.org/en/docs/Web/API/XMLHttpRequest) to Kotlin
  */
 public external open class XMLHttpRequest : XMLHttpRequestEventTarget, JsAny {
-    var onreadystatechange: ((Event) -> JsAny?)?
+    var onreadystatechange: ((Event) -> Unit)?
     open val readyState: Short
     var timeout: Int
     var withCredentials: Boolean
@@ -48,7 +49,12 @@ public external open class XMLHttpRequest : XMLHttpRequestEventTarget, JsAny {
     fun open(method: String, url: String)
     fun open(method: String, url: String, async: Boolean, username: String? = definedExternally, password: String? = definedExternally)
     fun setRequestHeader(name: String, value: String)
-    fun send(body: JsAny? = definedExternally)
+    fun send(body: Document)
+    fun send(body: Blob)
+    fun send(body: FormData)
+    fun send(body: URLSearchParams)
+    fun send(body: String)
+    fun send()
     fun abort()
     fun getResponseHeader(name: String): String?
     fun getAllResponseHeaders(): String
@@ -70,8 +76,8 @@ public external open class FormData(form: HTMLFormElement = definedExternally) :
     fun append(name: String, value: String)
     fun append(name: String, value: Blob, filename: String = definedExternally)
     fun delete(name: String)
-    fun get(name: String): JsAny?
-    fun getAll(name: String): JsArray<JsAny?>
+    fun get(name: String): JsAny? /* File|String */
+    fun getAll(name: String): JsArray<JsAny? /* File|String */>
     fun has(name: String): Boolean
     fun set(name: String, value: String)
     fun set(name: String, value: Blob, filename: String = definedExternally)

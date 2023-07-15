@@ -16,15 +16,15 @@ import org.jetbrains.kotlin.gradle.idea.tcs.extras.*
 import org.jetbrains.kotlin.gradle.idea.testFixtures.tcs.IdeaKotlinDependencyMatcher
 import org.jetbrains.kotlin.gradle.idea.testFixtures.tcs.assertMatches
 import org.jetbrains.kotlin.gradle.idea.testFixtures.tcs.binaryCoordinates
+import org.jetbrains.kotlin.gradle.idea.testFixtures.tcs.getOrFail
 import org.jetbrains.kotlin.gradle.testbase.*
-import org.jetbrains.kotlin.gradle.util.kotlinNativeDistributionDependencies
-import org.jetbrains.kotlin.gradle.util.replaceText
-import org.jetbrains.kotlin.gradle.util.resolveIdeDependencies
+import org.jetbrains.kotlin.gradle.util.*
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.KonanTarget.*
 import org.junit.AssumptionViolatedException
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.io.TempDir
+import java.io.File
 import java.nio.ByteBuffer
 import java.nio.file.Path
 import java.util.*
@@ -235,7 +235,7 @@ class MppIdeDependencyResolutionIT : KGPBaseTest() {
             resolveIdeDependencies { dependencies ->
                 dependencies["commonMain"].assertMatches(
                     kotlinNativeDistributionDependencies,
-                    binaryCoordinates(Regex("com.example:cinterop-.*-dummy:.*:linux_x64")),
+                    binaryCoordinates(Regex("com.example:cinterop-.*-dummy:linux_x64")),
                     IdeaKotlinDependencyMatcher("Unresolved 'failing' cinterop") { dependency ->
                         dependency is IdeaKotlinUnresolvedBinaryDependency && dependency.cause.orEmpty().contains(
                             "cinterop-withFailingCInteropProcess-cinterop-failing.klib"
@@ -270,9 +270,37 @@ class MppIdeDependencyResolutionIT : KGPBaseTest() {
             build(":lib:copyCommonizeCInteropForIde")
             resolveIdeDependencies { dependencies ->
                 dependencies["linuxMain"].cinteropDependencies().assertMatches(
-                    binaryCoordinates("org.example:included-lib-cinterop-a:null:(linux_arm64, linux_x64)"),
-                    binaryCoordinates("org.example:lib-cinterop-a:null:(linux_arm64, linux_x64)"),
+                    binaryCoordinates("org.example:included-lib-cinterop-a:(linux_arm64, linux_x64)"),
+                    binaryCoordinates("org.example:lib-cinterop-a:(linux_arm64, linux_x64)"),
                 )
+            }
+        }
+    }
+
+    @GradleTestVersions(minVersion = TestVersions.Gradle.G_7_6)
+    @GradleTest
+    fun `test dependency on java testFixtures and feature source sets`(gradleVersion: GradleVersion) {
+        project("kt-60053-dependencyOn-testFixtures", gradleVersion) {
+            build("publish")
+
+            resolveIdeDependencies(":consumer") { dependencies ->
+                val jvmMainDependencies = dependencies["jvmMain"].filterIsInstance<IdeaKotlinBinaryDependency>().assertMatches(
+                    kotlinStdlibDependencies,
+                    jetbrainsAnnotationDependencies,
+                    binaryCoordinates("org.jetbrains.sample:producer:1.0.0"),
+                    binaryCoordinates("org.jetbrains.sample:producer-foo:1.0.0"),
+                )
+
+                val jvmTestDependencies = dependencies["jvmTest"].filterIsInstance<IdeaKotlinBinaryDependency>().assertMatches(
+                    kotlinStdlibDependencies,
+                    jetbrainsAnnotationDependencies,
+                    binaryCoordinates("org.jetbrains.sample:producer:1.0.0"),
+                    binaryCoordinates("org.jetbrains.sample:producer-foo:1.0.0"),
+                    binaryCoordinates("org.jetbrains.sample:producer-test-fixtures:1.0.0"),
+                )
+
+                jvmMainDependencies.getOrFail(binaryCoordinates("org.jetbrains.sample:producer:1.0.0")).assertSingleSourcesJar()
+                jvmTestDependencies.getOrFail(binaryCoordinates("org.jetbrains.sample:producer:1.0.0")).assertSingleSourcesJar()
             }
         }
     }
@@ -281,4 +309,14 @@ class MppIdeDependencyResolutionIT : KGPBaseTest() {
         this.filterIsInstance<IdeaKotlinBinaryDependency>().filter {
             it.klibExtra?.isInterop == true && !it.isNativeStdlib && !it.isNativeDistribution
         }
+
+    private fun IdeaKotlinBinaryDependency.assertSingleSourcesJar(): File {
+        val sources = sourcesClasspath.toList()
+        if (sources.isEmpty()) fail("Missing -sources.jar")
+        if (sources.size > 1) fail("Multiple -sources.jar: $sources")
+
+        return sources.single().also { sourcesFile ->
+            if (!sourcesFile.name.endsWith("-sources.jar")) fail("-sources.jar suffix expected. Found: ${sourcesFile.name}")
+        }
+    }
 }

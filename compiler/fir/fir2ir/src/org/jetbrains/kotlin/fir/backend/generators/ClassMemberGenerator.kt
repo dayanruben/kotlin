@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.fir.backend.generators
 
-import org.jetbrains.kotlin.KtFakeSourceElementKind
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.fir.backend.*
@@ -365,6 +364,7 @@ internal class ClassMemberGenerator(
              *   constructor() : this(10) // <---- this call, IrDelegatingConstructorCall
              * }
              */
+            @OptIn(UnexpandedTypeCheck::class)
             if ((constructor.isFromEnumClass || constructor.returnTypeRef.isEnum) && this.isSuper) {
                 IrEnumConstructorCallImpl(
                     startOffset, endOffset,
