@@ -82,10 +82,20 @@ class IrBuiltInsOverDescriptors(
     private val kotlinInternalIrPackage = IrExternalPackageFragmentImpl.createEmptyExternalPackageFragment(builtInsModule, kotlinInternalPackage)
 
     private val packageFragmentDescriptor = IrBuiltinsPackageFragmentDescriptorImpl(builtInsModule, KOTLIN_INTERNAL_IR_FQN)
-    override val operatorsPackageFragment: IrExternalPackageFragment =
-        IrExternalPackageFragmentImpl(symbolTable.referenceExternalPackageFragment(packageFragmentDescriptor), KOTLIN_INTERNAL_IR_FQN)
 
-    private fun ClassDescriptor.toIrSymbol() = symbolTable.referenceClass(this)
+    /*
+     * In REPL it's possible that builtins will be created several times with the same symbol table
+     * And since IrBuiltinsPackageFragmentDescriptorImpl has overridden equals, symbol for external package
+     *   will be the same for different descriptors (with same FQN). So we should create IrExternalPackageFragment
+     *   here only if it was not created before, on previous compilation
+     */
+    override val operatorsPackageFragment: IrExternalPackageFragment =
+        symbolTable.descriptorExtension.declareExternalPackageFragmentIfNotExists(packageFragmentDescriptor)
+
+    private fun ClassDescriptor.toIrSymbol(): IrClassSymbol {
+        return symbolTable.descriptorExtension.referenceClass(this)
+    }
+
     private fun KotlinType.toIrType() = typeTranslator.translateType(this)
 
     private fun defineOperator(
@@ -102,7 +112,7 @@ class IrBuiltInsOverDescriptors(
             )
         }
 
-        val symbol = symbolTable.declareSimpleFunctionIfNotExists(operatorDescriptor) {
+        val symbol = symbolTable.descriptorExtension.declareSimpleFunctionIfNotExists(operatorDescriptor) {
             val operator = irFactory.createSimpleFunction(
                 startOffset = UNDEFINED_OFFSET,
                 endOffset = UNDEFINED_OFFSET,
@@ -196,8 +206,8 @@ class IrBuiltInsOverDescriptors(
             )
         }
 
-        return symbolTable.declareSimpleFunctionIfNotExists(operatorDescriptor) { operatorSymbol ->
-            val typeParameter = symbolTable.declareGlobalTypeParameter(
+        return symbolTable.descriptorExtension.declareSimpleFunctionIfNotExists(operatorDescriptor) { operatorSymbol ->
+            val typeParameter = symbolTable.descriptorExtension.declareGlobalTypeParameter(
                 UNDEFINED_OFFSET, UNDEFINED_OFFSET,
                 BUILTIN_OPERATOR,
                 typeParameterDescriptor
@@ -454,7 +464,7 @@ class IrBuiltInsOverDescriptors(
 
     val booleanNot =
         builtIns.boolean.unsubstitutedMemberScope.getContributedFunctions(Name.identifier("not"), NoLookupLocation.FROM_BACKEND).single()
-    override val booleanNotSymbol = symbolTable.referenceSimpleFunction(booleanNot)
+    override val booleanNotSymbol = symbolTable.descriptorExtension.referenceSimpleFunction(booleanNot)
 
     override val eqeqeqSymbol = defineOperator(BuiltInOperatorNames.EQEQEQ, booleanType, listOf(anyNType, anyNType))
     override val eqeqSymbol = defineOperator(BuiltInOperatorNames.EQEQ, booleanType, listOf(anyNType, anyNType), isIntrinsicConst = true)
@@ -479,17 +489,17 @@ class IrBuiltInsOverDescriptors(
     override val intTimesSymbol: IrSimpleFunctionSymbol =
         builtIns.int.unsubstitutedMemberScope.findFirstFunction("times") {
             KotlinTypeChecker.DEFAULT.equalTypes(it.valueParameters[0].type, int)
-        }.let { symbolTable.referenceSimpleFunction(it) }
+        }.let { symbolTable.descriptorExtension.referenceSimpleFunction(it) }
 
     override val intXorSymbol: IrSimpleFunctionSymbol =
         builtIns.int.unsubstitutedMemberScope.findFirstFunction("xor") {
             KotlinTypeChecker.DEFAULT.equalTypes(it.valueParameters[0].type, int)
-        }.let { symbolTable.referenceSimpleFunction(it) }
+        }.let { symbolTable.descriptorExtension.referenceSimpleFunction(it) }
 
     override val intPlusSymbol: IrSimpleFunctionSymbol =
         builtIns.int.unsubstitutedMemberScope.findFirstFunction("plus") {
             KotlinTypeChecker.DEFAULT.equalTypes(it.valueParameters[0].type, int)
-        }.let { symbolTable.referenceSimpleFunction(it) }
+        }.let { symbolTable.descriptorExtension.referenceSimpleFunction(it) }
 
     override val arrayOf = findFunctions(Name.identifier("arrayOf")).first {
         it.descriptor.extensionReceiverParameter == null && it.descriptor.dispatchReceiverParameter == null &&
@@ -510,27 +520,27 @@ class IrBuiltInsOverDescriptors(
 
     override fun findFunctions(name: Name, vararg packageNameSegments: String): Iterable<IrSimpleFunctionSymbol> =
         builtInsPackage(*packageNameSegments).getContributedFunctions(name, NoLookupLocation.FROM_BACKEND).map {
-            symbolTable.referenceSimpleFunction(it)
+            symbolTable.descriptorExtension.referenceSimpleFunction(it)
         }
 
     override fun findFunctions(name: Name, packageFqName: FqName): Iterable<IrSimpleFunctionSymbol> =
         builtIns.builtInsModule.getPackage(packageFqName).memberScope.getContributedFunctions(name, NoLookupLocation.FROM_BACKEND).map {
-            symbolTable.referenceSimpleFunction(it)
+            symbolTable.descriptorExtension.referenceSimpleFunction(it)
         }
 
     override fun findProperties(name: Name, packageFqName: FqName): Iterable<IrPropertySymbol> =
         builtIns.builtInsModule.getPackage(packageFqName).memberScope.getContributedVariables(name, NoLookupLocation.FROM_BACKEND).map {
-            symbolTable.referenceProperty(it)
+            symbolTable.descriptorExtension.referenceProperty(it)
         }
 
     override fun findClass(name: Name, vararg packageNameSegments: String): IrClassSymbol? =
         (builtInsPackage(*packageNameSegments).getContributedClassifier(
             name,
             NoLookupLocation.FROM_BACKEND
-        ) as? ClassDescriptor)?.let { symbolTable.referenceClass(it) }
+        ) as? ClassDescriptor)?.let { symbolTable.descriptorExtension.referenceClass(it) }
 
     override fun findClass(name: Name, packageFqName: FqName): IrClassSymbol? =
-        findClassDescriptor(name, packageFqName)?.let { symbolTable.referenceClass(it) }
+        findClassDescriptor(name, packageFqName)?.let { symbolTable.descriptorExtension.referenceClass(it) }
 
     fun findClassDescriptor(name: Name, packageFqName: FqName): ClassDescriptor? =
         builtIns.builtInsModule.getPackage(packageFqName).memberScope.getContributedClassifier(
@@ -541,7 +551,7 @@ class IrBuiltInsOverDescriptors(
     override fun findBuiltInClassMemberFunctions(builtInClass: IrClassSymbol, name: Name): Iterable<IrSimpleFunctionSymbol> =
         builtInClass.descriptor.unsubstitutedMemberScope
             .getContributedFunctions(name, NoLookupLocation.FROM_BACKEND)
-            .map { symbolTable.referenceSimpleFunction(it) }
+            .map { symbolTable.descriptorExtension.referenceSimpleFunction(it) }
 
     private val binaryOperatorCache = mutableMapOf<Triple<Name, IrType, IrType>, IrSimpleFunctionSymbol>()
 
@@ -585,7 +595,7 @@ class IrBuiltInsOverDescriptors(
         val result = mutableMapOf<T, IrSimpleFunctionSymbol>()
         for (d in builtInsPackage(*packageNameSegments).getContributedFunctions(name, NoLookupLocation.FROM_BACKEND)) {
             makeKey(d)?.let { key ->
-                result[key] = symbolTable.referenceSimpleFunction(d)
+                result[key] = symbolTable.descriptorExtension.referenceSimpleFunction(d)
             }
         }
         return result

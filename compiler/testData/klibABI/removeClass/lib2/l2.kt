@@ -1,3 +1,5 @@
+@file:Suppress("NOTHING_TO_INLINE")
+
 fun createRemovedClass() {
     check(RemovedClass().toString() != "Yellow Submarine")
 }
@@ -18,11 +20,11 @@ class Checker {
     fun useClassAsValueParameter(c: Class): String = "Checker.useClassAsValueParameter($c)"
     fun createAndPassClassAsValueParameter(): String = useClassAsValueParameter(Class())
 
-    fun useRemovedClassAsValueParameter(e: RemovedClass?): String = "FAIL: useRemovedClassAsValueParameter"
+    fun useRemovedClassAsValueParameter(@Suppress("UNUSED_PARAMETER") e: RemovedClass?): String = "FAIL: useRemovedClassAsValueParameter"
     fun createAndPassRemovedClassAsValueParameter(): String = useRemovedClassAsValueParameter(null)
 
     var removedClassProperty: RemovedClass? = null
-        protected set(value) { /* Do nothing */ }
+        protected set(_) { /* Do nothing */ }
 
     fun writeToRemovedClassProperty(): String {
         removedClassProperty = null
@@ -62,7 +64,8 @@ fun readVariableInFunction() {
 }
 
 fun writeVariableInFunction() {
-    var removed: RemovedClass?
+    @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE", "CanBeVal") var removed: RemovedClass?
+    @Suppress("UNUSED_VALUE")
     removed = null
 }
 
@@ -76,7 +79,8 @@ fun readVariableInLocalFunction() {
 
 fun writeVariableInLocalFunction() {
     fun local() {
-        var removed: RemovedClass?
+        @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE", "CanBeVal") var removed: RemovedClass?
+        @Suppress("UNUSED_VALUE")
         removed = null
     }
     local()
@@ -95,7 +99,8 @@ fun readVariableInLocalClass() {
 fun writeVariableInLocalClass() {
     class Local {
         fun foo() {
-            var removed: RemovedClass?
+            @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE", "CanBeVal") var removed: RemovedClass?
+            @Suppress("UNUSED_VALUE")
             removed = null
         }
     }
@@ -114,7 +119,8 @@ fun readVariableInAnonymousObject() {
 fun writeVariableInAnonymousObject() {
     object {
         fun foo() {
-            var removed: RemovedClass?
+            @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE", "CanBeVal") var removed: RemovedClass?
+            @Suppress("UNUSED_VALUE")
             removed = null
         }
     }.foo()
@@ -133,7 +139,8 @@ fun readVariableInAnonymousObjectThroughLocalVar() {
 fun writeVariableInAnonymousObjectThroughLocalVar() {
     val obj = object {
         fun foo() {
-            var removed: RemovedClass?
+            @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE", "CanBeVal") var removed: RemovedClass?
+            @Suppress("UNUSED_VALUE")
             removed = null
         }
     }
@@ -262,10 +269,10 @@ inline fun inlinedFunctionWithCreationOfOpenClassImplThroughReference() {
 
 inline fun inlinedFunctionWithRemovedOpenClassAnonymousObject() {
     val foo = object : RemovedOpenClass() {}
-    check(foo == null)
+    check(foo.toString().isNotEmpty())
 }
 
 inline fun inlinedFunctionWithOpenClassImplAnonymousObject() {
     val foo = object : OpenClassImpl() {}
-    check(foo == null)
+    check(foo.toString().isNotEmpty())
 }

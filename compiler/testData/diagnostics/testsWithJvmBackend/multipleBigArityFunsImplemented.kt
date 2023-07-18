@@ -1,5 +1,6 @@
-// TARGET_BACKEND: JVM_OLD
-class <!CONFLICTING_JVM_DECLARATIONS!>Fun<!> :
+// FIR_IDENTICAL
+
+class <!CONFLICTING_INHERITED_JVM_DECLARATIONS!>Fun<!> :
         (Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int,
          Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int) -> Int,
         (Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int,

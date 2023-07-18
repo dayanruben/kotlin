@@ -67,7 +67,7 @@ fun memberInfixToNonInfix(a: Int, b: Int): Int = (a.wrap() memberInfixToNonInfix
 fun extensionInfixToNonInfix(a: Int, b: Int): Int = with(Wrapper.Companion) { (a.wrap() extensionInfixToNonInfix b.wrap()).unwrap() }
 
 fun nonTailrecToTailrec(n: Int): Int = Functions.nonTailrecToTailrec(n, 1)
-tailrec fun tailrecToNonTailrec(n: Int): Int = Functions.tailrecToNonTailrec(n, 1)
+@Suppress("NO_TAIL_CALLS_FOUND") tailrec fun tailrecToNonTailrec(n: Int): Int = Functions.tailrecToNonTailrec(n, 1)
 
 // This is required to check that default arguments are counter correctly even for inherited classes.
 open class StableOpenClass {
@@ -129,8 +129,8 @@ class OpenClassImpl : OpenClass() {
     override fun openNonInlineToInlineFunction(x: Int): String = "OpenClassImpl.openNonInlineToInlineFunction($x)"
     override fun openNonInlineToInlineFunctionWithDelegation(x: Int): String = super.openNonInlineToInlineFunctionWithDelegation(x) + " called from OpenClassImpl.openNonInlineToInlineFunctionWithDelegation($x)"
     fun newInlineFunction1(x: Int): String = "OpenClassImpl.newInlineFunction1($x)" // overrides accidentally appeared inline function
-    inline fun newInlineFunction2(x: Int): String = "OpenClassImpl.newInlineFunction2($x)" // overrides accidentally appeared inline function
-    inline fun newNonInlineFunction(x: Int): String = "OpenClassImpl.newNonInlineFunction($x)" // overrides accidentally appeared non-inline function
+    @Suppress("NOTHING_TO_INLINE") inline fun newInlineFunction2(x: Int): String = "OpenClassImpl.newInlineFunction2($x)" // overrides accidentally appeared inline function
+    @Suppress("NOTHING_TO_INLINE") inline fun newNonInlineFunction(x: Int): String = "OpenClassImpl.newNonInlineFunction($x)" // overrides accidentally appeared non-inline function
 }
 
 fun suspendToNonSuspendFunctionInInterface(i: Interface, x: Int): String = runCoroutine { i.suspendToNonSuspendFunction(x) }

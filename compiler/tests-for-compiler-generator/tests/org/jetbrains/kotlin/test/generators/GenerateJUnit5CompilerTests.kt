@@ -41,14 +41,6 @@ fun generateJUnit5CompilerTests(args: Array<String>) {
                 model("diagnostics/testsWithJsStdLib", excludedPattern = excludedCustomTestdataPattern)
             }
 
-            testClass<AbstractDiagnosticsTestWithOldJvmBackend> {
-                model(
-                    "diagnostics/testsWithJvmBackend",
-                    targetBackend = TargetBackend.JVM_OLD,
-                    excludedPattern = excludedCustomTestdataPattern
-                )
-            }
-
             testClass<AbstractDiagnosticsTestWithJvmIrBackend> {
                 model(
                     "diagnostics/testsWithJvmBackend",
@@ -326,10 +318,6 @@ fun generateJUnit5CompilerTests(args: Array<String>) {
             }
 
             testClass<AbstractFirPsiDiagnosticsTestWithJvmIrBackend> {
-                model("diagnostics/firTestWithJvmBackend")
-            }
-
-            testClass<AbstractFirPsiDiagnosticsTestWithJvmIrBackend>(suiteTestClassName = "FirPsiOldDiagnosticsTestWithJvmIrBackendGenerated") {
                 model("diagnostics/testsWithJvmBackend", excludedPattern = excludedCustomTestdataPattern)
             }
 

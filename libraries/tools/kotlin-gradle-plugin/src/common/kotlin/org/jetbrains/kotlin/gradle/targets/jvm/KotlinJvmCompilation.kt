@@ -12,15 +12,15 @@ import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.compile.JavaCompile
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmCompilerOptions
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptions
-import org.jetbrains.kotlin.gradle.plugin.HasCompilerOptions
-import org.jetbrains.kotlin.gradle.plugin.KotlinCompilationWithResources
+import org.jetbrains.kotlin.gradle.plugin.*
+import org.jetbrains.kotlin.gradle.plugin.KotlinPluginLifecycle.Stage.AfterFinaliseDsl
 import org.jetbrains.kotlin.gradle.plugin.internal.JavaSourceSetsAccessor
 import org.jetbrains.kotlin.gradle.plugin.mpp.compilationImpl.KotlinCompilationImpl
 import org.jetbrains.kotlin.gradle.plugin.variantImplementationFactory
 import org.jetbrains.kotlin.gradle.targets.jvm.KotlinJvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
-import org.jetbrains.kotlin.gradle.utils.LenientFuture
-import org.jetbrains.kotlin.gradle.utils.future
+import org.jetbrains.kotlin.gradle.utils.CompletableFuture
+import org.jetbrains.kotlin.gradle.utils.Future
 import org.jetbrains.kotlin.gradle.utils.lenient
 import javax.inject.Inject
 
@@ -67,17 +67,33 @@ open class KotlinJvmCompilation @Inject internal constructor(
      * will be enabled after call to this method.
      */
     internal val compileJavaTaskProviderSafe: Provider<JavaCompile> = target.project.providers
-        .provider { javaSourceSet.getOrNull() }
+        .provider { javaSourceSet.lenient.getOrNull() }
         .flatMap { javaSourceSet ->
-            @Suppress("RedundantRequireNotNullCall") // IDE and CLI disagree here
             checkNotNull(javaSourceSet)
             project.tasks.named(javaSourceSet.compileJavaTaskName, JavaCompile::class.java)
         }
 
-    internal val javaSourceSet: LenientFuture<SourceSet> = target.project.future {
-        target.withJavaEnabledFuture.await()
-        target.project.javaSourceSets.maybeCreate(compilationName)
-    }.lenient
+
+    internal val javaSourceSet: Future<SourceSet?> get() = javaSourceSetImpl
+    private val javaSourceSetImpl: CompletableFuture<SourceSet?> = CompletableFuture<SourceSet?>().also { future ->
+        /**
+         * If no SourceSet was set until 'AfterFinaliseDsl', then user really did never call into 'withJava', hence
+         * we can complete the Future with 'null' notifying everybody, that there won't be any java source set associated with
+         * this compilation
+         */
+        target.project.launchInStage(AfterFinaliseDsl) {
+            if (!future.isCompleted) {
+                future.complete(null)
+            }
+        }
+    }
+
+    internal fun maybeCreateJavaSourceSet(): SourceSet {
+        check(target.withJavaEnabled)
+        val sourceSet = target.project.javaSourceSets.maybeCreate(compilationName)
+        javaSourceSetImpl.complete(sourceSet)
+        return sourceSet
+    }
 
     override val processResourcesTaskName: String
         get() = compilation.processResourcesTaskName ?: error("Missing 'processResourcesTaskName'")

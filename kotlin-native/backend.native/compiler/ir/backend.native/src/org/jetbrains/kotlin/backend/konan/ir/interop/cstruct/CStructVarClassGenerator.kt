@@ -41,7 +41,7 @@ internal class CStructVarClassGenerator(
     override val postLinkageSteps: MutableList<() -> Unit> = mutableListOf()
 
     fun findOrGenerateCStruct(classDescriptor: ClassDescriptor, parent: IrDeclarationContainer): IrClass {
-        val irClassSymbol = symbolTable.referenceClass(classDescriptor)
+        val irClassSymbol = symbolTable.descriptorExtension.referenceClass(classDescriptor)
         return if (!irClassSymbol.isBound) {
             provideIrClassForCStruct(classDescriptor).also {
                 it.patchDeclarationParents(parent)
@@ -148,7 +148,7 @@ internal class CStructVarClassGenerator(
 
         val managedValType = managedVal.getter!!.returnType
 
-        managedVal.backingField = symbolTable.declareField(
+        managedVal.backingField = symbolTable.descriptorExtension.declareField(
                 SYNTHETIC_OFFSET,
                 SYNTHETIC_OFFSET,
                 IrDeclarationOrigin.PROPERTY_BACKING_FIELD,
@@ -275,7 +275,7 @@ internal class CStructVarClassGenerator(
                         ).also {
                             it.putValueArgument(0, irGet(irConstructor.valueParameters[0]))
                         }
-                        +irInstanceInitializer(symbolTable.referenceClass(irClass.descriptor))
+                        +irInstanceInitializer(symbolTable.descriptorExtension.referenceClass(irClass.descriptor))
                     }
                 }
             }
@@ -290,7 +290,7 @@ internal class CStructVarClassGenerator(
                                 it.putTypeArgument(0, irConstructor.valueParameters[0].type)
                                 it.putValueArgument(0, irGet(irConstructor.valueParameters[0]))
                         }
-                        +irInstanceInitializer(symbolTable.referenceClass(irClass.descriptor))
+                        +irInstanceInitializer(symbolTable.descriptorExtension.referenceClass(irClass.descriptor))
                     }
                 }
             }

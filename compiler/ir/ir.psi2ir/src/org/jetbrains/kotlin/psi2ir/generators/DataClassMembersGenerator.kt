@@ -139,7 +139,7 @@ internal class DataClassMembersGenerator(
                 var substituted: CallableDescriptor? = null
                 val symbol = getHashCodeFunction(type.toKotlinType()) { hashCodeDescriptor ->
                     substituted = hashCodeDescriptor
-                    symbolTable.referenceSimpleFunction(hashCodeDescriptor.original)
+                    symbolTable.descriptorExtension.referenceSimpleFunction(hashCodeDescriptor.original)
                 }
                 return Psi2IrHashCodeFunctionInfo(symbol, substituted ?: symbol.descriptor)
             }
@@ -161,7 +161,7 @@ internal class DataClassMembersGenerator(
 
             val dataClassConstructor = classDescriptor.unsubstitutedPrimaryConstructor
                 ?: throw AssertionError("Data class should have a primary constructor: $classDescriptor")
-            val constructorSymbol = context.symbolTable.referenceConstructor(dataClassConstructor)
+            val constructorSymbol = context.symbolTable.descriptorExtension.referenceConstructor(dataClassConstructor)
 
             irDataClassMembersGenerator.generateCopyFunction(function, constructorSymbol)
         }
