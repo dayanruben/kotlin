@@ -16,11 +16,13 @@ import org.jetbrains.kotlin.fir.types.builder.buildResolvedTypeRef
 import org.jetbrains.kotlin.fir.types.impl.ConeTypeParameterTypeImpl
 import org.jetbrains.kotlin.fir.types.jvm.FirJavaTypeRef
 import org.jetbrains.kotlin.fir.types.jvm.buildJavaTypeRef
+import org.jetbrains.kotlin.fir.utils.exceptions.withConeTypeEntry
 import org.jetbrains.kotlin.load.java.structure.*
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.types.Variance
+import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 
 private fun ClassId.toConeFlexibleType(
     typeArguments: Array<out ConeTypeProjection>,
@@ -54,11 +56,9 @@ internal fun FirTypeRef.toConeKotlinTypeProbablyFlexible(
     (resolveIfJavaType(session, javaTypeParameterStack, mode) as? FirResolvedTypeRef)?.type
         ?: ConeErrorType(ConeSimpleDiagnostic("Type reference in Java not resolved: ${this::class.java}", DiagnosticKind.Java))
 
-internal fun JavaType.toFirJavaTypeRef(session: FirSession, javaTypeParameterStack: JavaTypeParameterStack): FirJavaTypeRef {
-    return buildJavaTypeRef {
-        annotationBuilder = { convertAnnotationsToFir(session, javaTypeParameterStack) }
-        type = this@toFirJavaTypeRef
-    }
+internal fun JavaType.toFirJavaTypeRef(session: FirSession): FirJavaTypeRef = buildJavaTypeRef {
+    annotationBuilder = { convertAnnotationsToFir(session) }
+    type = this@toFirJavaTypeRef
 }
 
 internal fun JavaType?.toFirResolvedTypeRef(
@@ -88,10 +88,11 @@ private fun JavaType?.toConeTypeProjection(
     val attributes = if (this != null && (annotations.isNotEmpty() || additionalAnnotations != null)) {
         val convertedAnnotations = buildList {
             if (annotations.isNotEmpty()) {
-                addAll(this@toConeTypeProjection.convertAnnotationsToFir(session, javaTypeParameterStack))
+                addAll(this@toConeTypeProjection.convertAnnotationsToFir(session))
             }
+
             if (additionalAnnotations != null) {
-                addAll(additionalAnnotations.convertAnnotationsToFir(session, javaTypeParameterStack))
+                addAll(additionalAnnotations.convertAnnotationsToFir(session))
             }
         }
 
@@ -158,7 +159,9 @@ private fun JavaType?.toConeTypeProjection(
         }
 
         null -> ConeStarProjection
-        else -> error("Strange JavaType: ${this::class.java}")
+        else -> errorWithAttachment("Strange JavaType: ${this::class.java}") {
+            withEntry("type", this@toConeTypeProjection) { it.toString() }
+        }
     }
 }
 

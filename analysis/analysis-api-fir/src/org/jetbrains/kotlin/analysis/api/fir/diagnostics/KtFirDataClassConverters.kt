@@ -1118,6 +1118,26 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirJsErrors.CALL_FROM_UMD_MUST_BE_JS_MODULE_AND_JS_NON_MODULE) { firDiagnostic ->
+        CallFromUmdMustBeJsModuleAndJsNonModuleImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJsErrors.CALL_TO_JS_MODULE_WITHOUT_MODULE_SYSTEM) { firDiagnostic ->
+        CallToJsModuleWithoutModuleSystemImpl(
+            firSymbolBuilder.buildSymbol(firDiagnostic.a),
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJsErrors.CALL_TO_JS_NON_MODULE_WITH_MODULE_SYSTEM) { firDiagnostic ->
+        CallToJsNonModuleWithModuleSystemImpl(
+            firSymbolBuilder.buildSymbol(firDiagnostic.a),
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
     add(FirJsErrors.RUNTIME_ANNOTATION_NOT_SUPPORTED) { firDiagnostic ->
         RuntimeAnnotationNotSupportedImpl(
             firDiagnostic as KtPsiDiagnostic,
@@ -3779,6 +3799,12 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirErrors.DYNAMIC_NOT_ALLOWED) { firDiagnostic ->
+        DynamicNotAllowedImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
     add(FirErrors.ENUM_ENTRY_AS_TYPE) { firDiagnostic ->
         EnumEntryAsTypeImpl(
             firDiagnostic as KtPsiDiagnostic,
@@ -5144,6 +5170,13 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirJsErrors.EXTERNAL_INTERFACE_AS_REIFIED_TYPE_ARGUMENT) { firDiagnostic ->
+        ExternalInterfaceAsReifiedTypeArgumentImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
     add(FirJsErrors.NESTED_JS_EXPORT) { firDiagnostic ->
         NestedJsExportImpl(
             firDiagnostic as KtPsiDiagnostic,
@@ -5174,6 +5207,12 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
     }
     add(FirJsErrors.DELEGATION_BY_DYNAMIC) { firDiagnostic ->
         DelegationByDynamicImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJsErrors.PROPERTY_DELEGATION_BY_DYNAMIC) { firDiagnostic ->
+        PropertyDelegationByDynamicImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
         )

@@ -967,6 +967,23 @@ internal class NestedJsModuleProhibitedImpl(
     token: KtLifetimeToken,
 ) : KtAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KtFirDiagnostic.NestedJsModuleProhibited
 
+internal class CallFromUmdMustBeJsModuleAndJsNonModuleImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KtLifetimeToken,
+) : KtAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KtFirDiagnostic.CallFromUmdMustBeJsModuleAndJsNonModule
+
+internal class CallToJsModuleWithoutModuleSystemImpl(
+    override val callee: KtSymbol,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KtLifetimeToken,
+) : KtAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KtFirDiagnostic.CallToJsModuleWithoutModuleSystem
+
+internal class CallToJsNonModuleWithModuleSystemImpl(
+    override val callee: KtSymbol,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KtLifetimeToken,
+) : KtAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KtFirDiagnostic.CallToJsNonModuleWithModuleSystem
+
 internal class RuntimeAnnotationNotSupportedImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KtLifetimeToken,
@@ -3183,6 +3200,11 @@ internal class IsEnumEntryImpl(
     token: KtLifetimeToken,
 ) : KtAbstractFirDiagnostic<KtTypeReference>(firDiagnostic, token), KtFirDiagnostic.IsEnumEntry
 
+internal class DynamicNotAllowedImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KtLifetimeToken,
+) : KtAbstractFirDiagnostic<KtTypeReference>(firDiagnostic, token), KtFirDiagnostic.DynamicNotAllowed
+
 internal class EnumEntryAsTypeImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KtLifetimeToken,
@@ -4329,6 +4351,12 @@ internal class JsExternalArgumentImpl(
     token: KtLifetimeToken,
 ) : KtAbstractFirDiagnostic<KtExpression>(firDiagnostic, token), KtFirDiagnostic.JsExternalArgument
 
+internal class ExternalInterfaceAsReifiedTypeArgumentImpl(
+    override val typeArgument: KtType,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KtLifetimeToken,
+) : KtAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KtFirDiagnostic.ExternalInterfaceAsReifiedTypeArgument
+
 internal class NestedJsExportImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KtLifetimeToken,
@@ -4357,6 +4385,11 @@ internal class DelegationByDynamicImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KtLifetimeToken,
 ) : KtAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KtFirDiagnostic.DelegationByDynamic
+
+internal class PropertyDelegationByDynamicImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KtLifetimeToken,
+) : KtAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KtFirDiagnostic.PropertyDelegationByDynamic
 
 internal class SpreadOperatorInDynamicCallImpl(
     firDiagnostic: KtPsiDiagnostic,

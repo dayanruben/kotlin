@@ -806,6 +806,20 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = NestedJsModuleProhibited::class
     }
 
+    interface CallFromUmdMustBeJsModuleAndJsNonModule : KtFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = CallFromUmdMustBeJsModuleAndJsNonModule::class
+    }
+
+    interface CallToJsModuleWithoutModuleSystem : KtFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = CallToJsModuleWithoutModuleSystem::class
+        val callee: KtSymbol
+    }
+
+    interface CallToJsNonModuleWithModuleSystem : KtFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = CallToJsNonModuleWithModuleSystem::class
+        val callee: KtSymbol
+    }
+
     interface RuntimeAnnotationNotSupported : KtFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = RuntimeAnnotationNotSupported::class
     }
@@ -2641,6 +2655,10 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = IsEnumEntry::class
     }
 
+    interface DynamicNotAllowed : KtFirDiagnostic<KtTypeReference> {
+        override val diagnosticClass get() = DynamicNotAllowed::class
+    }
+
     interface EnumEntryAsType : KtFirDiagnostic<KtTypeReference> {
         override val diagnosticClass get() = EnumEntryAsType::class
     }
@@ -3580,6 +3598,11 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         val argType: KtType
     }
 
+    interface ExternalInterfaceAsReifiedTypeArgument : KtFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = ExternalInterfaceAsReifiedTypeArgument::class
+        val typeArgument: KtType
+    }
+
     interface NestedJsExport : KtFirDiagnostic<KtElement> {
         override val diagnosticClass get() = NestedJsExport::class
     }
@@ -3602,6 +3625,10 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
 
     interface DelegationByDynamic : KtFirDiagnostic<KtElement> {
         override val diagnosticClass get() = DelegationByDynamic::class
+    }
+
+    interface PropertyDelegationByDynamic : KtFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = PropertyDelegationByDynamic::class
     }
 
     interface SpreadOperatorInDynamicCall : KtFirDiagnostic<KtElement> {

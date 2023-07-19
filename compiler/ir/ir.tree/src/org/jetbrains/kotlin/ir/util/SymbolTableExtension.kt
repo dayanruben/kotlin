@@ -10,22 +10,23 @@ import org.jetbrains.kotlin.ir.IrLock
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.IrExpressionBody
 import org.jetbrains.kotlin.ir.symbols.*
+import org.jetbrains.kotlin.ir.symbols.impl.*
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.utils.threadLocal
 
 abstract class ReferenceSymbolTableExtension<Class, TypeAlias, Script, Function, Constructor, Property, ValueParameter, TypeParameter> {
-    abstract fun referenceScript(descriptor: Script): IrScriptSymbol
-    abstract fun referenceClass(descriptor: Class): IrClassSymbol
-    abstract fun referenceConstructor(descriptor: Constructor): IrConstructorSymbol
-    abstract fun referenceEnumEntry(descriptor: Class): IrEnumEntrySymbol
-    abstract fun referenceField(descriptor: Property): IrFieldSymbol
-    abstract fun referenceProperty(descriptor: Property): IrPropertySymbol
-    abstract fun referenceSimpleFunction(descriptor: Function): IrSimpleFunctionSymbol
-    abstract fun referenceDeclaredFunction(descriptor: Function): IrSimpleFunctionSymbol
-    abstract fun referenceValueParameter(descriptor: ValueParameter): IrValueParameterSymbol
-    abstract fun referenceTypeParameter(classifier: TypeParameter): IrTypeParameterSymbol
-    abstract fun referenceScopedTypeParameter(classifier: TypeParameter): IrTypeParameterSymbol
-    abstract fun referenceTypeAlias(descriptor: TypeAlias): IrTypeAliasSymbol
+    abstract fun referenceScript(declaration: Script): IrScriptSymbol
+    abstract fun referenceClass(declaration: Class): IrClassSymbol
+    abstract fun referenceConstructor(declaration: Constructor): IrConstructorSymbol
+    abstract fun referenceEnumEntry(declaration: Class): IrEnumEntrySymbol
+    abstract fun referenceField(declaration: Property): IrFieldSymbol
+    abstract fun referenceProperty(declaration: Property): IrPropertySymbol
+    abstract fun referenceSimpleFunction(declaration: Function): IrSimpleFunctionSymbol
+    abstract fun referenceDeclaredFunction(declaration: Function): IrSimpleFunctionSymbol
+    abstract fun referenceValueParameter(declaration: ValueParameter): IrValueParameterSymbol
+    abstract fun referenceTypeParameter(declaration: TypeParameter): IrTypeParameterSymbol
+    abstract fun referenceScopedTypeParameter(declaration: TypeParameter): IrTypeParameterSymbol
+    abstract fun referenceTypeAlias(declaration: TypeAlias): IrTypeAliasSymbol
 }
 
 typealias SymbolFactory<Declaration, Symbol> = (Declaration, IdSignature?) -> Symbol
@@ -92,50 +93,52 @@ abstract class SymbolTableExtension<
     fun declareScript(
         startOffset: Int,
         endOffset: Int,
-        descriptor: Script,
+        declaration: Script,
     ): IrScript {
         return declare(
-            descriptor,
+            declaration,
             scriptSlice,
             SymbolTable::declareScript,
-            symbolFactory = { createScriptSymbol(descriptor, it) },
-            ownerFactory = { defaultScriptFactory(startOffset, endOffset, descriptor, it) }
+            symbolFactory = { createScriptSymbol(declaration, it) },
+            ownerFactory = { defaultScriptFactory(startOffset, endOffset, declaration, it) }
         )
     }
 
-    override fun referenceScript(descriptor: Script): IrScriptSymbol {
-        return scriptSlice.referenced(descriptor) { createScriptSymbol(descriptor, signature = null) }
+    override fun referenceScript(declaration: Script): IrScriptSymbol {
+        return scriptSlice.referenced(declaration) { createScriptSymbol(declaration, signature = null) }
     }
 
     protected abstract fun defaultScriptFactory(startOffset: Int, endOffset: Int, script: Script, symbol: IrScriptSymbol): IrScript
 
-    protected abstract fun createScriptSymbol(descriptor: Script, signature: IdSignature?): IrScriptSymbol
+    protected open fun createScriptSymbol(declaration: Script, signature: IdSignature?): IrScriptSymbol {
+        return IrScriptSymbolImpl()
+    }
 
-    // ------------------------------------ script ------------------------------------
+    // ------------------------------------ class ------------------------------------
 
-    fun declareClass(descriptor: Class, classFactory: (IrClassSymbol) -> IrClass): IrClass {
+    fun declareClass(declaration: Class, classFactory: (IrClassSymbol) -> IrClass): IrClass {
         return declare(
-            descriptor,
+            declaration,
             classSlice,
             SymbolTable::declareClass,
-            { createClassSymbol(descriptor, it) },
+            { createClassSymbol(declaration, it) },
             classFactory
         )
     }
 
-    fun declareClassIfNotExists(descriptor: Class, classFactory: (IrClassSymbol) -> IrClass): IrClass {
+    fun declareClassIfNotExists(declaration: Class, classFactory: (IrClassSymbol) -> IrClass): IrClass {
         return declareIfNotExist(
-            descriptor,
+            declaration,
             classSlice,
             SymbolTable::declareClassIfNotExists,
-            { createClassSymbol(descriptor, it) },
+            { createClassSymbol(declaration, it) },
             classFactory
         )
     }
 
-    override fun referenceClass(descriptor: Class): IrClassSymbol {
+    override fun referenceClass(declaration: Class): IrClassSymbol {
         return reference(
-            descriptor,
+            declaration,
             classSlice,
             SymbolTable::referenceClassImpl,
             ::createClassSymbol,
@@ -144,41 +147,46 @@ abstract class SymbolTableExtension<
         )
     }
 
-    protected fun createClassSymbol(descriptor: Class, signature: IdSignature?): IrClassSymbol {
-        return signature?.let { createPublicClassSymbol(descriptor, signature) } ?: createPrivateClassSymbol(descriptor)
+    protected fun createClassSymbol(declaration: Class, signature: IdSignature?): IrClassSymbol {
+        return signature?.let { createPublicClassSymbol(declaration, signature) } ?: createPrivateClassSymbol(declaration)
     }
 
-    protected abstract fun createPublicClassSymbol(descriptor: Class, signature: IdSignature): IrClassSymbol
-    protected abstract fun createPrivateClassSymbol(descriptor: Class): IrClassSymbol
+    protected open fun createPublicClassSymbol(declaration: Class, signature: IdSignature): IrClassSymbol {
+        return IrClassPublicSymbolImpl(signature)
+    }
+
+    protected open fun createPrivateClassSymbol(descriptor: Class): IrClassSymbol {
+        return IrClassSymbolImpl()
+    }
 
     // ------------------------------------ constructor ------------------------------------
 
-    fun declareConstructor(descriptor: Constructor, constructorFactory: (IrConstructorSymbol) -> IrConstructor): IrConstructor {
+    fun declareConstructor(declaration: Constructor, constructorFactory: (IrConstructorSymbol) -> IrConstructor): IrConstructor {
         return declare(
-            descriptor,
+            declaration,
             constructorSlice,
             SymbolTable::declareConstructor,
-            { createConstructorSymbol(descriptor, it) },
+            { createConstructorSymbol(declaration, it) },
             constructorFactory
         )
     }
 
     fun declareConstructorIfNotExists(
-        descriptor: Constructor,
+        declaration: Constructor,
         constructorFactory: (IrConstructorSymbol) -> IrConstructor,
     ): IrConstructor {
         return declareIfNotExist(
-            descriptor,
+            declaration,
             constructorSlice,
             SymbolTable::declareConstructorIfNotExists,
-            { createConstructorSymbol(descriptor, it) },
+            { createConstructorSymbol(declaration, it) },
             constructorFactory
         )
     }
 
-    override fun referenceConstructor(descriptor: Constructor): IrConstructorSymbol {
+    override fun referenceConstructor(declaration: Constructor): IrConstructorSymbol {
         return reference(
-            descriptor,
+            declaration,
             constructorSlice,
             SymbolTable::referenceConstructorImpl,
             ::createConstructorSymbol,
@@ -187,46 +195,51 @@ abstract class SymbolTableExtension<
         )
     }
 
-    protected fun createConstructorSymbol(descriptor: Constructor, signature: IdSignature?): IrConstructorSymbol {
-        return signature?.let { createPublicConstructorSymbol(descriptor, signature) } ?: createPrivateConstructorSymbol(descriptor)
+    protected fun createConstructorSymbol(declaration: Constructor, signature: IdSignature?): IrConstructorSymbol {
+        return signature?.let { createPublicConstructorSymbol(declaration, signature) } ?: createPrivateConstructorSymbol(declaration)
     }
 
-    protected abstract fun createPublicConstructorSymbol(descriptor: Constructor, signature: IdSignature): IrConstructorSymbol
-    protected abstract fun createPrivateConstructorSymbol(descriptor: Constructor): IrConstructorSymbol
+    protected open fun createPublicConstructorSymbol(declaration: Constructor, signature: IdSignature): IrConstructorSymbol {
+        return IrConstructorPublicSymbolImpl(signature)
+    }
+
+    protected open fun createPrivateConstructorSymbol(declaration: Constructor): IrConstructorSymbol {
+        return IrConstructorSymbolImpl()
+    }
 
     // ------------------------------------ enum entry ------------------------------------
 
-    fun declareEnumEntry(descriptor: Class, enumEntryFactory: (IrEnumEntrySymbol) -> IrEnumEntry): IrEnumEntry {
+    fun declareEnumEntry(declaration: Class, enumEntryFactory: (IrEnumEntrySymbol) -> IrEnumEntry): IrEnumEntry {
         return declare(
-            descriptor,
+            declaration,
             enumEntrySlice,
             SymbolTable::declareEnumEntry,
-            { createEnumEntrySymbol(descriptor, it) },
+            { createEnumEntrySymbol(declaration, it) },
             enumEntryFactory,
             ::calculateEnumEntrySignature
         )
     }
 
-    fun declareEnumEntry(startOffset: Int, endOffset: Int, origin: IrDeclarationOrigin, descriptor: Class): IrEnumEntry {
+    fun declareEnumEntry(startOffset: Int, endOffset: Int, origin: IrDeclarationOrigin, declaration: Class): IrEnumEntry {
         return declareEnumEntry(
-            descriptor
-        ) { enumEntrySymbol -> defaultEnumEntryFactory(startOffset, endOffset, origin, descriptor, enumEntrySymbol) }
+            declaration
+        ) { enumEntrySymbol -> defaultEnumEntryFactory(startOffset, endOffset, origin, declaration, enumEntrySymbol) }
     }
 
-    fun declareEnumEntryIfNotExists(descriptor: Class, enumEntryFactory: (IrEnumEntrySymbol) -> IrEnumEntry): IrEnumEntry {
+    fun declareEnumEntryIfNotExists(declaration: Class, enumEntryFactory: (IrEnumEntrySymbol) -> IrEnumEntry): IrEnumEntry {
         return declareIfNotExist(
-            descriptor,
+            declaration,
             enumEntrySlice,
             SymbolTable::declareEnumEntryIfNotExists,
-            { createEnumEntrySymbol(descriptor, it) },
+            { createEnumEntrySymbol(declaration, it) },
             enumEntryFactory,
             ::calculateEnumEntrySignature
         )
     }
 
-    override fun referenceEnumEntry(descriptor: Class): IrEnumEntrySymbol {
+    override fun referenceEnumEntry(declaration: Class): IrEnumEntrySymbol {
         return reference(
-            descriptor,
+            declaration,
             enumEntrySlice,
             SymbolTable::referenceEnumEntryImpl,
             ::createEnumEntrySymbol,
@@ -236,12 +249,17 @@ abstract class SymbolTableExtension<
         )
     }
 
-    protected fun createEnumEntrySymbol(descriptor: Class, signature: IdSignature?): IrEnumEntrySymbol {
-        return signature?.let { createPublicEnumEntrySymbol(descriptor, signature) } ?: createPrivateEnumEntrySymbol(descriptor)
+    protected fun createEnumEntrySymbol(declaration: Class, signature: IdSignature?): IrEnumEntrySymbol {
+        return signature?.let { createPublicEnumEntrySymbol(declaration, signature) } ?: createPrivateEnumEntrySymbol(declaration)
     }
 
-    protected abstract fun createPublicEnumEntrySymbol(descriptor: Class, signature: IdSignature): IrEnumEntrySymbol
-    protected abstract fun createPrivateEnumEntrySymbol(descriptor: Class): IrEnumEntrySymbol
+    protected open fun createPublicEnumEntrySymbol(declaration: Class, signature: IdSignature): IrEnumEntrySymbol {
+        return IrEnumEntryPublicSymbolImpl(signature)
+    }
+
+    protected open fun createPrivateEnumEntrySymbol(declaration: Class): IrEnumEntrySymbol {
+        return IrEnumEntrySymbolImpl()
+    }
 
     protected abstract fun defaultEnumEntryFactory(
         startOffset: Int,
@@ -257,7 +275,7 @@ abstract class SymbolTableExtension<
         startOffset: Int,
         endOffset: Int,
         origin: IrDeclarationOrigin,
-        descriptor: Property,
+        declaration: Property,
         type: IrType,
         visibility: DescriptorVisibility? = null,
         fieldFactory: (IrFieldSymbol) -> IrField = {
@@ -265,7 +283,7 @@ abstract class SymbolTableExtension<
                 startOffset,
                 endOffset,
                 origin,
-                descriptor,
+                declaration,
                 type,
                 visibility,
                 it
@@ -273,10 +291,10 @@ abstract class SymbolTableExtension<
         },
     ): IrField {
         return declare(
-            descriptor,
+            declaration,
             fieldSlice,
             SymbolTable::declareField,
-            { createFieldSymbol(descriptor, it) },
+            { createFieldSymbol(declaration, it) },
             fieldFactory,
             ::calculateFieldSignature
         )
@@ -286,18 +304,18 @@ abstract class SymbolTableExtension<
         startOffset: Int,
         endOffset: Int,
         origin: IrDeclarationOrigin,
-        descriptor: Property,
+        declaration: Property,
         type: IrType,
         irInitializer: IrExpressionBody?,
     ): IrField {
-        return declareField(startOffset, endOffset, origin, descriptor, type).apply {
+        return declareField(startOffset, endOffset, origin, declaration, type).apply {
             initializer = irInitializer
         }
     }
 
-    override fun referenceField(descriptor: Property): IrFieldSymbol {
+    override fun referenceField(declaration: Property): IrFieldSymbol {
         return reference(
-            descriptor,
+            declaration,
             fieldSlice,
             SymbolTable::referenceFieldImpl,
             ::createFieldSymbol,
@@ -307,18 +325,24 @@ abstract class SymbolTableExtension<
         )
     }
 
-    protected fun createFieldSymbol(descriptor: Property, signature: IdSignature?): IrFieldSymbol {
-        return signature?.let { createPublicFieldSymbol(descriptor, signature) } ?: createPrivateFieldSymbol(descriptor)
+    protected fun createFieldSymbol(declaration: Property, signature: IdSignature?): IrFieldSymbol {
+        return signature?.let { createPublicFieldSymbol(declaration, signature) } ?: createPrivateFieldSymbol(declaration)
     }
 
-    protected abstract fun createPublicFieldSymbol(descriptor: Property, signature: IdSignature): IrFieldSymbol
-    protected abstract fun createPrivateFieldSymbol(descriptor: Property): IrFieldSymbol
+    protected open fun createPublicFieldSymbol(declaration: Property, signature: IdSignature): IrFieldSymbol {
+        return IrFieldPublicSymbolImpl(signature)
+    }
+
+    protected open fun createPrivateFieldSymbol(declaration: Property): IrFieldSymbol {
+        return IrFieldSymbolImpl()
+    }
+
 
     protected abstract fun defaultFieldFactory(
         startOffset: Int,
         endOffset: Int,
         origin: IrDeclarationOrigin,
-        descriptor: Property,
+        declaration: Property,
         type: IrType,
         visibility: DescriptorVisibility?,
         symbol: IrFieldSymbol,
@@ -326,12 +350,12 @@ abstract class SymbolTableExtension<
 
     // ------------------------------------ property ------------------------------------
 
-    fun declareProperty(descriptor: Property, propertyFactory: (IrPropertySymbol) -> IrProperty): IrProperty {
+    fun declareProperty(declaration: Property, propertyFactory: (IrPropertySymbol) -> IrProperty): IrProperty {
         return declare(
-            descriptor,
+            declaration,
             propertySlice,
             SymbolTable::declareProperty,
-            { createPropertySymbol(descriptor, it) },
+            { createPropertySymbol(declaration, it) },
             propertyFactory
         )
     }
@@ -340,27 +364,27 @@ abstract class SymbolTableExtension<
         startOffset: Int,
         endOffset: Int,
         origin: IrDeclarationOrigin,
-        descriptor: Property,
+        declaration: Property,
         isDelegated: Boolean
     ): IrProperty {
-        return declareProperty(descriptor) { propertySymbol ->
-            defaultPropertyFactory(startOffset, endOffset, origin, descriptor, isDelegated, propertySymbol)
+        return declareProperty(declaration) { propertySymbol ->
+            defaultPropertyFactory(startOffset, endOffset, origin, declaration, isDelegated, propertySymbol)
         }
     }
 
-    fun declarePropertyIfNotExists(descriptor: Property, propertyFactory: (IrPropertySymbol) -> IrProperty): IrProperty {
+    fun declarePropertyIfNotExists(declaration: Property, propertyFactory: (IrPropertySymbol) -> IrProperty): IrProperty {
         return declareIfNotExist(
-            descriptor,
+            declaration,
             propertySlice,
             SymbolTable::declarePropertyIfNotExists,
-            { createPropertySymbol(descriptor, it) },
+            { createPropertySymbol(declaration, it) },
             propertyFactory
         )
     }
 
-    override fun referenceProperty(descriptor: Property): IrPropertySymbol {
+    override fun referenceProperty(declaration: Property): IrPropertySymbol {
         return reference(
-            descriptor,
+            declaration,
             propertySlice,
             SymbolTable::referencePropertyImpl,
             ::createPropertySymbol,
@@ -369,47 +393,52 @@ abstract class SymbolTableExtension<
         )
     }
 
-    protected fun createPropertySymbol(descriptor: Property, signature: IdSignature?): IrPropertySymbol {
-        return signature?.let { createPublicPropertySymbol(descriptor, signature) } ?: createPrivatePropertySymbol(descriptor)
+    protected fun createPropertySymbol(declaration: Property, signature: IdSignature?): IrPropertySymbol {
+        return signature?.let { createPublicPropertySymbol(declaration, signature) } ?: createPrivatePropertySymbol(declaration)
     }
 
-    protected abstract fun createPublicPropertySymbol(descriptor: Property, signature: IdSignature): IrPropertySymbol
-    protected abstract fun createPrivatePropertySymbol(descriptor: Property): IrPropertySymbol
+    protected open fun createPublicPropertySymbol(declaration: Property, signature: IdSignature): IrPropertySymbol {
+        return IrPropertyPublicSymbolImpl(signature)
+    }
+
+    protected open fun createPrivatePropertySymbol(declaration: Property): IrPropertySymbol {
+        return IrPropertySymbolImpl()
+    }
 
     protected abstract fun defaultPropertyFactory(
         startOffset: Int,
         endOffset: Int,
         origin: IrDeclarationOrigin,
-        descriptor: Property,
+        declaration: Property,
         isDelegated: Boolean,
         symbol: IrPropertySymbol,
     ): IrProperty
 
     // ------------------------------------ typealias ------------------------------------
 
-    fun declareTypeAlias(descriptor: TypeAlias, typeAliasFactory: (IrTypeAliasSymbol) -> IrTypeAlias): IrTypeAlias {
+    fun declareTypeAlias(declaration: TypeAlias, typeAliasFactory: (IrTypeAliasSymbol) -> IrTypeAlias): IrTypeAlias {
         return declare(
-            descriptor,
+            declaration,
             typeAliasSlice,
             SymbolTable::declareTypeAlias,
-            { createTypeAliasSymbol(descriptor, it) },
+            { createTypeAliasSymbol(declaration, it) },
             typeAliasFactory
         )
     }
 
-    fun declareTypeAliasIfNotExists(descriptor: TypeAlias, typeAliasFactory: (IrTypeAliasSymbol) -> IrTypeAlias): IrTypeAlias {
+    fun declareTypeAliasIfNotExists(declaration: TypeAlias, typeAliasFactory: (IrTypeAliasSymbol) -> IrTypeAlias): IrTypeAlias {
         return declareIfNotExist(
-            descriptor,
+            declaration,
             typeAliasSlice,
             SymbolTable::declareTypeAliasIfNotExists,
-            { createTypeAliasSymbol(descriptor, it) },
+            { createTypeAliasSymbol(declaration, it) },
             typeAliasFactory
         )
     }
 
-    override fun referenceTypeAlias(descriptor: TypeAlias): IrTypeAliasSymbol {
+    override fun referenceTypeAlias(declaration: TypeAlias): IrTypeAliasSymbol {
         return reference(
-            descriptor,
+            declaration,
             typeAliasSlice,
             SymbolTable::referenceTypeAliasImpl,
             ::createTypeAliasSymbol,
@@ -418,41 +447,46 @@ abstract class SymbolTableExtension<
         )
     }
 
-    protected fun createTypeAliasSymbol(descriptor: TypeAlias, signature: IdSignature?): IrTypeAliasSymbol {
-        return signature?.let { createPublicTypeAliasSymbol(descriptor, signature) } ?: createPrivateTypeAliasSymbol(descriptor)
+    protected fun createTypeAliasSymbol(declaration: TypeAlias, signature: IdSignature?): IrTypeAliasSymbol {
+        return signature?.let { createPublicTypeAliasSymbol(declaration, signature) } ?: createPrivateTypeAliasSymbol(declaration)
     }
 
-    protected abstract fun createPublicTypeAliasSymbol(descriptor: TypeAlias, signature: IdSignature): IrTypeAliasSymbol
-    protected abstract fun createPrivateTypeAliasSymbol(descriptor: TypeAlias): IrTypeAliasSymbol
+    protected open fun createPublicTypeAliasSymbol(declaration: TypeAlias, signature: IdSignature): IrTypeAliasSymbol {
+        return IrTypeAliasPublicSymbolImpl(signature)
+    }
+
+    protected open fun createPrivateTypeAliasSymbol(declaration: TypeAlias): IrTypeAliasSymbol {
+        return IrTypeAliasSymbolImpl()
+    }
 
     // ------------------------------------ function ------------------------------------
 
-    fun declareSimpleFunction(descriptor: Function, functionFactory: (IrSimpleFunctionSymbol) -> IrSimpleFunction): IrSimpleFunction {
+    fun declareSimpleFunction(declaration: Function, functionFactory: (IrSimpleFunctionSymbol) -> IrSimpleFunction): IrSimpleFunction {
         return declare(
-            descriptor,
+            declaration,
             functionSlice,
             SymbolTable::declareSimpleFunction,
-            { createFunctionSymbol(descriptor, it) },
+            { createFunctionSymbol(declaration, it) },
             functionFactory
         )
     }
 
     fun declareSimpleFunctionIfNotExists(
-        descriptor: Function,
+        declaration: Function,
         functionFactory: (IrSimpleFunctionSymbol) -> IrSimpleFunction,
     ): IrSimpleFunction {
         return declareIfNotExist(
-            descriptor,
+            declaration,
             functionSlice,
             SymbolTable::declareSimpleFunctionIfNotExists,
-            { createFunctionSymbol(descriptor, it) },
+            { createFunctionSymbol(declaration, it) },
             functionFactory
         )
     }
 
-    override fun referenceSimpleFunction(descriptor: Function): IrSimpleFunctionSymbol {
+    override fun referenceSimpleFunction(declaration: Function): IrSimpleFunctionSymbol {
         return reference(
-            descriptor,
+            declaration,
             functionSlice,
             SymbolTable::referenceSimpleFunctionImpl,
             ::createFunctionSymbol,
@@ -461,11 +495,11 @@ abstract class SymbolTableExtension<
         )
     }
 
-    override fun referenceDeclaredFunction(descriptor: Function): IrSimpleFunctionSymbol {
-        fun throwError(): Nothing = error("Function is not declared: $descriptor")
+    override fun referenceDeclaredFunction(declaration: Function): IrSimpleFunctionSymbol {
+        fun throwError(): Nothing = error("Function is not declared: $declaration")
 
         return reference(
-            descriptor,
+            declaration,
             functionSlice,
             SymbolTable::referenceSimpleFunctionImpl,
             { _, _ -> throwError() },
@@ -474,24 +508,29 @@ abstract class SymbolTableExtension<
         )
     }
 
-    protected fun createFunctionSymbol(descriptor: Function, signature: IdSignature?): IrSimpleFunctionSymbol {
-        return signature?.let { createPublicFunctionSymbol(descriptor, signature) } ?: createPrivateFunctionSymbol(descriptor)
+    protected fun createFunctionSymbol(declaration: Function, signature: IdSignature?): IrSimpleFunctionSymbol {
+        return signature?.let { createPublicFunctionSymbol(declaration, signature) } ?: createPrivateFunctionSymbol(declaration)
     }
 
-    protected abstract fun createPublicFunctionSymbol(descriptor: Function, signature: IdSignature): IrSimpleFunctionSymbol
-    protected abstract fun createPrivateFunctionSymbol(descriptor: Function): IrSimpleFunctionSymbol
+    protected open fun createPublicFunctionSymbol(declaration: Function, signature: IdSignature): IrSimpleFunctionSymbol {
+        return IrSimpleFunctionPublicSymbolImpl(signature)
+    }
+
+    protected open fun createPrivateFunctionSymbol(declaration: Function): IrSimpleFunctionSymbol {
+        return IrSimpleFunctionSymbolImpl()
+    }
 
     // ------------------------------------ type parameter ------------------------------------
 
     fun declareGlobalTypeParameter(
-        descriptor: TypeParameter,
+        declaration: TypeParameter,
         typeParameterFactory: (IrTypeParameterSymbol) -> IrTypeParameter,
     ): IrTypeParameter {
         return declare(
-            descriptor,
+            declaration,
             globalTypeParameterSlice,
             SymbolTable::declareGlobalTypeParameter,
-            { createTypeParameterSymbol(descriptor, it) },
+            { createTypeParameterSymbol(declaration, it) },
             typeParameterFactory
         )
     }
@@ -500,10 +539,10 @@ abstract class SymbolTableExtension<
         startOffset: Int,
         endOffset: Int,
         origin: IrDeclarationOrigin,
-        descriptor: TypeParameter,
+        declaration: TypeParameter,
     ): IrTypeParameter {
-        return declareGlobalTypeParameter(descriptor) {
-            defaultTypeParameterFactory(startOffset, endOffset, origin, descriptor, it)
+        return declareGlobalTypeParameter(declaration) {
+            defaultTypeParameterFactory(startOffset, endOffset, origin, declaration, it)
         }
     }
 
@@ -511,22 +550,22 @@ abstract class SymbolTableExtension<
         startOffset: Int,
         endOffset: Int,
         origin: IrDeclarationOrigin,
-        descriptor: TypeParameter,
+        declaration: TypeParameter,
         typeParameterFactory: (IrTypeParameterSymbol) -> IrTypeParameter = {
-            defaultTypeParameterFactory(startOffset, endOffset, origin, descriptor, it)
+            defaultTypeParameterFactory(startOffset, endOffset, origin, declaration, it)
         },
     ): IrTypeParameter {
         return scopedTypeParameterSlice.declare(
-            descriptor,
-            { createTypeParameterSymbol(descriptor, calculateSignature(descriptor)) },
+            declaration,
+            { createTypeParameterSymbol(declaration, calculateSignature(declaration)) },
             typeParameterFactory
         )
     }
 
-    override fun referenceTypeParameter(classifier: TypeParameter): IrTypeParameterSymbol {
-        scopedTypeParameterSlice.get(classifier)?.let { return it }
+    override fun referenceTypeParameter(declaration: TypeParameter): IrTypeParameterSymbol {
+        scopedTypeParameterSlice.get(declaration)?.let { return it }
         return reference(
-            classifier,
+            declaration,
             globalTypeParameterSlice,
             SymbolTable::referenceTypeParameterImpl,
             ::createTypeParameterSymbol,
@@ -535,28 +574,33 @@ abstract class SymbolTableExtension<
         )
     }
 
-    override fun referenceScopedTypeParameter(classifier: TypeParameter): IrTypeParameterSymbol {
-        return scopedTypeParameterSlice.referenced(classifier) { createTypeParameterSymbol(classifier, calculateSignature(classifier)) }
+    override fun referenceScopedTypeParameter(declaration: TypeParameter): IrTypeParameterSymbol {
+        return scopedTypeParameterSlice.referenced(declaration) { createTypeParameterSymbol(declaration, calculateSignature(declaration)) }
     }
 
-    protected fun createTypeParameterSymbol(descriptor: TypeParameter, signature: IdSignature?): IrTypeParameterSymbol {
-        return signature?.let { createPublicTypeParameterSymbol(descriptor, signature) } ?: createPrivateTypeParameterSymbol(descriptor)
+    protected fun createTypeParameterSymbol(declaration: TypeParameter, signature: IdSignature?): IrTypeParameterSymbol {
+        return signature?.let { createPublicTypeParameterSymbol(declaration, signature) } ?: createPrivateTypeParameterSymbol(declaration)
     }
 
-    protected abstract fun createPublicTypeParameterSymbol(descriptor: TypeParameter, signature: IdSignature): IrTypeParameterSymbol
-    protected abstract fun createPrivateTypeParameterSymbol(descriptor: TypeParameter): IrTypeParameterSymbol
+    protected open fun createPublicTypeParameterSymbol(declaration: TypeParameter, signature: IdSignature): IrTypeParameterSymbol {
+        return IrTypeParameterPublicSymbolImpl(signature)
+    }
+
+    protected open fun createPrivateTypeParameterSymbol(declaration: TypeParameter): IrTypeParameterSymbol {
+        return IrTypeParameterSymbolImpl()
+    }
 
     protected abstract fun defaultTypeParameterFactory(
         startOffset: Int,
         endOffset: Int,
         origin: IrDeclarationOrigin,
-        descriptor: TypeParameter,
+        declaration: TypeParameter,
         symbol: IrTypeParameterSymbol,
     ): IrTypeParameter
 
     // ------------------------------------ value parameter ------------------------------------
 
-    override fun referenceValueParameter(descriptor: ValueParameter): IrValueParameterSymbol {
+    override fun referenceValueParameter(declaration: ValueParameter): IrValueParameterSymbol {
         error("There is no default implementation for any symbol table extension")
     }
 
@@ -621,7 +665,7 @@ abstract class SymbolTableExtension<
         }
 
     private inline fun <D : Declaration, Symbol : IrBindableSymbol<*, SymbolOwner>, SymbolOwner : IrSymbolOwner> declare(
-        descriptor: D,
+        declaration: D,
         slice: SymbolTableSlice<D, SymbolOwner, Symbol>,
         declareBySignature: SymbolTable.(IdSignature, () -> Symbol, OwnerFactory<Symbol, SymbolOwner>) -> SymbolOwner,
         crossinline symbolFactory: (IdSignature?) -> Symbol,
@@ -629,7 +673,7 @@ abstract class SymbolTableExtension<
         specificCalculateSignature: (D) -> IdSignature? = { calculateSignature(it) }
     ): SymbolOwner {
         return declare(
-            descriptor,
+            declaration,
             slice,
             declareBySignature,
             SymbolTableSlice<D, SymbolOwner, Symbol>::declare,
@@ -640,7 +684,7 @@ abstract class SymbolTableExtension<
     }
 
     private inline fun <D : Declaration, Symbol : IrBindableSymbol<*, SymbolOwner>, SymbolOwner : IrSymbolOwner> declareIfNotExist(
-        descriptor: D,
+        declaration: D,
         slice: SymbolTableSlice<D, SymbolOwner, Symbol>,
         declareBySignature: SymbolTable.(IdSignature, () -> Symbol, OwnerFactory<Symbol, SymbolOwner>) -> SymbolOwner,
         crossinline symbolFactory: (IdSignature?) -> Symbol,
@@ -648,7 +692,7 @@ abstract class SymbolTableExtension<
         specificCalculateSignature: (D) -> IdSignature? = { calculateSignature(it) }
     ): SymbolOwner {
         return declare(
-            descriptor,
+            declaration,
             slice,
             declareBySignature,
             SymbolTableSlice<D, SymbolOwner, Symbol>::declareIfNotExists,
@@ -659,7 +703,7 @@ abstract class SymbolTableExtension<
     }
 
     private inline fun <D : Declaration, Symbol : IrBindableSymbol<*, SymbolOwner>, SymbolOwner : IrSymbolOwner> declare(
-        descriptor: D,
+        declaration: D,
         slice: SymbolTableSlice<D, SymbolOwner, Symbol>,
         declareBySignature: SymbolTable.(IdSignature, () -> Symbol, OwnerFactory<Symbol, SymbolOwner>) -> SymbolOwner,
         declareByDeclaration: SymbolTableSlice<D, SymbolOwner, Symbol>.(D, () -> Symbol, OwnerFactory<Symbol, SymbolOwner>) -> SymbolOwner,
@@ -667,14 +711,14 @@ abstract class SymbolTableExtension<
         noinline ownerFactory: OwnerFactory<Symbol, SymbolOwner>,
         specificCalculateSignature: (D) -> IdSignature?
     ): SymbolOwner {
-        return when (val signature = specificCalculateSignature(descriptor)) {
-            null -> slice.declareByDeclaration(descriptor, { symbolFactory(signature) }, ownerFactory)
+        return when (val signature = specificCalculateSignature(declaration)) {
+            null -> slice.declareByDeclaration(declaration, { symbolFactory(signature) }, ownerFactory)
             else -> table.declareBySignature(signature, { symbolFactory(signature) }, ownerFactory)
         }
     }
 
     private inline fun <D : Declaration, Symbol : IrBindableSymbol<*, SymbolOwner>, SymbolOwner : IrSymbolOwner> reference(
-        descriptor: D,
+        declaration: D,
         slice: SymbolTableSlice<D, SymbolOwner, Symbol>,
         referenceBySignature: SymbolTable.(IdSignature, () -> Symbol, () -> Symbol) -> Symbol,
         crossinline symbolFactory: (D, IdSignature?) -> Symbol,
@@ -682,12 +726,12 @@ abstract class SymbolTableExtension<
         crossinline privateSymbolFactory: (D) -> Symbol,
         specificCalculateSignature: (D) -> IdSignature? = { calculateSignature(it) }
     ): Symbol {
-        return when (val signature = specificCalculateSignature(descriptor)) {
-            null -> slice.referenced(descriptor) { symbolFactory(descriptor, signature) }
+        return when (val signature = specificCalculateSignature(declaration)) {
+            null -> slice.referenced(declaration) { symbolFactory(declaration, signature) }
             else -> table.referenceBySignature(
                 signature,
-                { publicSymbolFactory(descriptor, signature) },
-                { privateSymbolFactory(descriptor) }
+                { publicSymbolFactory(declaration, signature) },
+                { privateSymbolFactory(declaration) }
             )
         }
     }

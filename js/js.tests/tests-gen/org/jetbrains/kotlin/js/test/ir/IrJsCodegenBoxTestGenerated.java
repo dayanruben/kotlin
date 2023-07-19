@@ -6881,18 +6881,6 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
             }
 
             @Test
-            @TestMetadata("splitTryCorner1.kt")
-            public void testSplitTryCorner1() throws Exception {
-                runTest("compiler/testData/codegen/box/controlStructures/tryCatchInExpressions/splitTryCorner1.kt");
-            }
-
-            @Test
-            @TestMetadata("splitTryCorner2.kt")
-            public void testSplitTryCorner2() throws Exception {
-                runTest("compiler/testData/codegen/box/controlStructures/tryCatchInExpressions/splitTryCorner2.kt");
-            }
-
-            @Test
             @TestMetadata("try.kt")
             public void testTry() throws Exception {
                 runTest("compiler/testData/codegen/box/controlStructures/tryCatchInExpressions/try.kt");
@@ -6920,6 +6908,12 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
             @TestMetadata("tryCatchAfterWhileTrue.kt")
             public void testTryCatchAfterWhileTrue() throws Exception {
                 runTest("compiler/testData/codegen/box/controlStructures/tryCatchInExpressions/tryCatchAfterWhileTrue.kt");
+            }
+
+            @Test
+            @TestMetadata("tryFinallyOfTypeUnit.kt")
+            public void testTryFinallyOfTypeUnit() throws Exception {
+                runTest("compiler/testData/codegen/box/controlStructures/tryCatchInExpressions/tryFinallyOfTypeUnit.kt");
             }
 
             @Test

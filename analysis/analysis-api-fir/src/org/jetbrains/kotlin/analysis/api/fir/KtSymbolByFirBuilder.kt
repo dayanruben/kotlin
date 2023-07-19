@@ -21,11 +21,11 @@ import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.LLFirResolveSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.errorWithFirSpecificEntries
-import org.jetbrains.kotlin.analysis.low.level.api.fir.util.withConeTypeEntry
-import org.jetbrains.kotlin.analysis.low.level.api.fir.util.withFirEntry
-import org.jetbrains.kotlin.analysis.low.level.api.fir.util.withFirSymbolEntry
+import org.jetbrains.kotlin.fir.utils.exceptions.withConeTypeEntry
+import org.jetbrains.kotlin.fir.utils.exceptions.withFirEntry
+import org.jetbrains.kotlin.fir.utils.exceptions.withFirSymbolEntry
 import org.jetbrains.kotlin.analysis.providers.KotlinPackageProvider
-import org.jetbrains.kotlin.analysis.utils.errors.buildErrorWithAttachment
+import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.*
@@ -583,19 +583,19 @@ internal class KtSymbolByFirBuilder constructor(
 
     companion object {
         private fun throwUnexpectedElementError(element: FirBasedSymbol<*>): Nothing {
-            buildErrorWithAttachment("Unexpected ${element::class.simpleName}") {
+            errorWithAttachment("Unexpected ${element::class.simpleName}") {
                 withFirSymbolEntry("firSymbol", element)
             }
         }
 
         private fun throwUnexpectedElementError(element: FirElement): Nothing {
-            buildErrorWithAttachment("Unexpected ${element::class.simpleName}") {
+            errorWithAttachment("Unexpected ${element::class.simpleName}") {
                 withFirEntry("firElement", element)
             }
         }
 
         private fun throwUnexpectedElementError(element: ConeKotlinType): Nothing {
-            buildErrorWithAttachment("Unexpected ${element::class.simpleName}") {
+            errorWithAttachment("Unexpected ${element::class.simpleName}") {
                 withConeTypeEntry("coneType", element)
             }
         }

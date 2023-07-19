@@ -7913,16 +7913,6 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                 runTest("compiler/testData/codegen/box/controlStructures/tryCatchInExpressions/splitTry.kt");
             }
 
-            @TestMetadata("splitTryCorner1.kt")
-            public void testSplitTryCorner1() throws Exception {
-                runTest("compiler/testData/codegen/box/controlStructures/tryCatchInExpressions/splitTryCorner1.kt");
-            }
-
-            @TestMetadata("splitTryCorner2.kt")
-            public void testSplitTryCorner2() throws Exception {
-                runTest("compiler/testData/codegen/box/controlStructures/tryCatchInExpressions/splitTryCorner2.kt");
-            }
-
             @TestMetadata("try.kt")
             public void testTry() throws Exception {
                 runTest("compiler/testData/codegen/box/controlStructures/tryCatchInExpressions/try.kt");
@@ -7946,6 +7936,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             @TestMetadata("tryCatchAfterWhileTrue.kt")
             public void testTryCatchAfterWhileTrue() throws Exception {
                 runTest("compiler/testData/codegen/box/controlStructures/tryCatchInExpressions/tryCatchAfterWhileTrue.kt");
+            }
+
+            @TestMetadata("tryFinallyOfTypeUnit.kt")
+            public void testTryFinallyOfTypeUnit() throws Exception {
+                runTest("compiler/testData/codegen/box/controlStructures/tryCatchInExpressions/tryFinallyOfTypeUnit.kt");
             }
 
             @TestMetadata("tryInsideCatch.kt")
@@ -30450,6 +30445,26 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("anonymousSubclass.kt")
         public void testAnonymousSubclass() throws Exception {
             runTest("compiler/testData/codegen/box/polymorphicSignature/anonymousSubclass.kt");
+        }
+
+        @TestMetadata("insideComplexExpression.kt")
+        public void testInsideComplexExpression() throws Exception {
+            runTest("compiler/testData/codegen/box/polymorphicSignature/insideComplexExpression.kt");
+        }
+
+        @TestMetadata("insideIf.kt")
+        public void testInsideIf() throws Exception {
+            runTest("compiler/testData/codegen/box/polymorphicSignature/insideIf.kt");
+        }
+
+        @TestMetadata("insideTry.kt")
+        public void testInsideTry() throws Exception {
+            runTest("compiler/testData/codegen/box/polymorphicSignature/insideTry.kt");
+        }
+
+        @TestMetadata("insideWhen.kt")
+        public void testInsideWhen() throws Exception {
+            runTest("compiler/testData/codegen/box/polymorphicSignature/insideWhen.kt");
         }
 
         @TestMetadata("invoke.kt")

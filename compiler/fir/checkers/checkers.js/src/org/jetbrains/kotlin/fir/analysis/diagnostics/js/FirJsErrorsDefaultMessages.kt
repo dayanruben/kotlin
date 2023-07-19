@@ -10,7 +10,10 @@ import org.jetbrains.kotlin.diagnostics.KtDiagnosticRenderers
 import org.jetbrains.kotlin.diagnostics.rendering.BaseDiagnosticRendererFactory
 import org.jetbrains.kotlin.diagnostics.rendering.CommonRenderers
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers
+import org.jetbrains.kotlin.fir.analysis.diagnostics.js.FirJsErrors.CALL_FROM_UMD_MUST_BE_JS_MODULE_AND_JS_NON_MODULE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.js.FirJsErrors.CALL_TO_DEFINED_EXTERNALLY_FROM_NON_EXTERNAL_DECLARATION
+import org.jetbrains.kotlin.fir.analysis.diagnostics.js.FirJsErrors.CALL_TO_JS_MODULE_WITHOUT_MODULE_SYSTEM
+import org.jetbrains.kotlin.fir.analysis.diagnostics.js.FirJsErrors.CALL_TO_JS_NON_MODULE_WITH_MODULE_SYSTEM
 import org.jetbrains.kotlin.fir.analysis.diagnostics.js.FirJsErrors.CANNOT_CHECK_FOR_EXTERNAL_INTERFACE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.js.FirJsErrors.EXTENSION_FUNCTION_IN_EXTERNAL_DECLARATION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.js.FirJsErrors.EXTERNAL_ANONYMOUS_INITIALIZER
@@ -20,11 +23,13 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.js.FirJsErrors.EXTERNAL_DEL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.js.FirJsErrors.EXTERNAL_ENUM_ENTRY_WITH_BODY
 import org.jetbrains.kotlin.fir.analysis.diagnostics.js.FirJsErrors.EXTERNAL_TYPE_EXTENDS_NON_EXTERNAL_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.js.FirJsErrors.DELEGATION_BY_DYNAMIC
+import org.jetbrains.kotlin.fir.analysis.diagnostics.js.FirJsErrors.PROPERTY_DELEGATION_BY_DYNAMIC
 import org.jetbrains.kotlin.fir.analysis.diagnostics.js.FirJsErrors.EXTERNAL_INTERFACE_AS_CLASS_LITERAL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.js.FirJsErrors.IMPLEMENTING_FUNCTION_INTERFACE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.js.FirJsErrors.INLINE_CLASS_IN_EXTERNAL_DECLARATION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.js.FirJsErrors.INLINE_CLASS_IN_EXTERNAL_DECLARATION_WARNING
 import org.jetbrains.kotlin.fir.analysis.diagnostics.js.FirJsErrors.ENUM_CLASS_IN_EXTERNAL_DECLARATION_WARNING
+import org.jetbrains.kotlin.fir.analysis.diagnostics.js.FirJsErrors.EXTERNAL_INTERFACE_AS_REIFIED_TYPE_ARGUMENT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.js.FirJsErrors.JS_EXTERNAL_INHERITORS_ONLY
 import org.jetbrains.kotlin.fir.analysis.diagnostics.js.FirJsErrors.INLINE_EXTERNAL_DECLARATION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.js.FirJsErrors.JS_EXTERNAL_ARGUMENT
@@ -76,11 +81,24 @@ object FirJsErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             "@JsModule and @JsNonModule can't appear on here since the file is already marked by either @JsModule or @JsNonModule"
         )
         map.put(
+            CALL_FROM_UMD_MUST_BE_JS_MODULE_AND_JS_NON_MODULE,
+            "When accessing module declarations from UMD, they must be marked by both @JsModule and @JsNonModule"
+        )
+        map.put(
+            CALL_TO_JS_MODULE_WITHOUT_MODULE_SYSTEM,
+            "Can''t access {0} marked with @JsModule annotation from non-modular project", FirDiagnosticRenderers.SYMBOL
+        )
+        map.put(
+            CALL_TO_JS_NON_MODULE_WITH_MODULE_SYSTEM,
+            "Can''t access {0} marked with @JsNonModule annotation from modular project", FirDiagnosticRenderers.SYMBOL
+        )
+        map.put(
             WRONG_MULTIPLE_INHERITANCE,
             "Can''t apply multiple inheritance here, since it''s impossible to generate bridge for system function {0}",
             FirDiagnosticRenderers.SYMBOL
         )
         map.put(DELEGATION_BY_DYNAMIC, "Can't delegate to dynamic value")
+        map.put(PROPERTY_DELEGATION_BY_DYNAMIC, "Can't apply property delegation by dynamic handler")
         map.put(SPREAD_OPERATOR_IN_DYNAMIC_CALL, "Can't apply spread operator in dynamic call")
         map.put(WRONG_OPERATION_WITH_DYNAMIC, "Wrong operation with dynamic value: {0}", CommonRenderers.STRING)
         map.put(IMPLEMENTING_FUNCTION_INTERFACE, "Implementing function interface is prohibited in JavaScript")
@@ -167,6 +185,11 @@ object FirJsErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(
             JS_EXTERNAL_ARGUMENT,
             "Expected argument with external type, but type ''{0}'' is non-external",
+            FirDiagnosticRenderers.RENDER_TYPE
+        )
+        map.put(
+            EXTERNAL_INTERFACE_AS_REIFIED_TYPE_ARGUMENT,
+            "Cannot pass external interface {0} for reified type parameter",
             FirDiagnosticRenderers.RENDER_TYPE
         )
         map.put(JS_NAME_PROHIBITED_FOR_EXTENSION_PROPERTY, "@JsName is prohibited for extension properties")

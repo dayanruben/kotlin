@@ -21,10 +21,10 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.util.*
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.FirDeclarationForCompiledElementSearcher
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.findSourceNonLocalFirDeclaration
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
-import org.jetbrains.kotlin.analysis.utils.errors.buildErrorWithAttachment
+import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import org.jetbrains.kotlin.analysis.utils.errors.requireIsInstance
 import org.jetbrains.kotlin.analysis.utils.errors.withPsiEntry
-import org.jetbrains.kotlin.analysis.utils.printer.getElementTextInContext
+import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.FirDeclaration
@@ -114,7 +114,7 @@ internal abstract class LLFirResolvableResolveSession(
 
     private fun findFirCompiledSymbol(ktDeclaration: KtDeclaration, module: KtModule): FirBasedSymbol<*> {
         require(ktDeclaration.containingKtFile.isCompiled) {
-            "This method will only work on compiled declarations, but this declaration is not compiled: ${ktDeclaration.getElementTextInContext()}"
+            "This method will only work on compiled declarations, but this declaration is not compiled: ${ktDeclaration.getElementTextWithContext()}"
         }
 
         val session = getSessionFor(module)
@@ -133,7 +133,7 @@ internal abstract class LLFirResolvableResolveSession(
         }
 
         val nonLocalDeclaration = ktDeclaration.getNonLocalContainingOrThisDeclaration()
-            ?: buildErrorWithAttachment("Declaration should have non-local container") {
+            ?: errorWithAttachment("Declaration should have non-local container") {
                 withPsiEntry("ktDeclaration", ktDeclaration, ::getModule)
                 withEntry("module", module) { it.moduleDescription }
             }

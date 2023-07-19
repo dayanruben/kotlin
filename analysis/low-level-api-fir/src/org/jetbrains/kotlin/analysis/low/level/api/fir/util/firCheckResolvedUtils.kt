@@ -5,8 +5,8 @@
 
 package org.jetbrains.kotlin.analysis.low.level.api.fir.util
 
-import org.jetbrains.kotlin.analysis.utils.errors.ExceptionAttachmentBuilder
-import org.jetbrains.kotlin.analysis.utils.errors.checkWithAttachmentBuilder
+import org.jetbrains.kotlin.utils.exceptions.ExceptionAttachmentBuilder
+import org.jetbrains.kotlin.utils.exceptions.checkWithAttachment
 import org.jetbrains.kotlin.fir.FirAnnotationContainer
 import org.jetbrains.kotlin.fir.FirElementWithResolveState
 import org.jetbrains.kotlin.fir.contracts.FirLegacyRawContractDescription
@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.fir.references.*
 import org.jetbrains.kotlin.fir.types.FirImplicitTypeRef
 import org.jetbrains.kotlin.fir.types.FirResolvedTypeRef
 import org.jetbrains.kotlin.fir.types.FirTypeRef
+import org.jetbrains.kotlin.fir.utils.exceptions.withFirEntry
 
 internal inline fun checkTypeRefIsResolved(
     typeRef: FirTypeRef,
@@ -30,7 +31,7 @@ internal inline fun checkTypeRefIsResolved(
     acceptImplicitTypeRef: Boolean = false,
     extraAttachment: ExceptionAttachmentBuilder.() -> Unit = {},
 ) {
-    checkWithAttachmentBuilder(
+    checkWithAttachment(
         condition = typeRef is FirResolvedTypeRef || acceptImplicitTypeRef && typeRef is FirImplicitTypeRef,
         message = {
             buildString {
@@ -66,7 +67,7 @@ internal fun checkBodyIsResolved(function: FirFunction) {
 internal fun checkExpectForActualIsResolved(memberDeclaration: FirMemberDeclaration) {
     if (!memberDeclaration.isActual) return
 
-    checkWithAttachmentBuilder(
+    checkWithAttachment(
         condition = memberDeclaration.expectForActual != null,
         message = { "Expect for actual matching is missing" }
     ) {
@@ -87,7 +88,7 @@ internal fun checkReferenceIsResolved(
     owner: FirResolvable,
     extraAttachment: ExceptionAttachmentBuilder.() -> Unit = {},
 ) {
-    checkWithAttachmentBuilder(
+    checkWithAttachment(
         condition = reference is FirResolvedNamedReference || reference is FirErrorNamedReference || reference is FirFromMissingDependenciesNamedReference,
         message = {
             "Expected ${FirNamedReference::class.simpleName}, " +
@@ -116,7 +117,7 @@ internal fun checkDefaultValueIsResolved(parameter: FirValueParameter) {
 }
 
 internal fun checkDeprecationProviderIsResolved(declaration: FirDeclaration, provider: DeprecationsProvider) {
-    checkWithAttachmentBuilder(
+    checkWithAttachment(
         condition = provider !is UnresolvedDeprecationProvider,
         message = { "Unresolved deprecation provider found for ${declaration::class.simpleName}" }
     ) {
@@ -136,7 +137,7 @@ internal fun checkReceiverTypeRefIsResolved(declaration: FirCallableDeclaration,
 
 internal fun checkContractDescriptionIsResolved(declaration: FirContractDescriptionOwner) {
     val contractDescription = declaration.contractDescription
-    checkWithAttachmentBuilder(
+    checkWithAttachment(
         condition = contractDescription is FirResolvedContractDescription ||
                 contractDescription is FirEmptyContractDescription ||
                 contractDescription is FirLegacyRawContractDescription /* TODO: should be dropped after KT-60310 */,
@@ -148,7 +149,7 @@ internal fun checkContractDescriptionIsResolved(declaration: FirContractDescript
 
 internal fun checkDeclarationStatusIsResolved(declaration: FirMemberDeclaration) {
     val status = declaration.status
-    checkWithAttachmentBuilder(
+    checkWithAttachment(
         condition = status is FirResolvedDeclarationStatus,
         message = { "Expected ${FirResolvedDeclarationStatus::class.simpleName} but ${status::class.simpleName} found for ${declaration::class.simpleName}" }
     ) {
@@ -161,7 +162,7 @@ internal fun <T> checkAnnotationArgumentsMappingIsResolved(
 ) where T : FirAnnotationContainer, T : FirElementWithResolveState {
     for (annotation in annotationContainer.annotations) {
         if (annotation is FirAnnotationCall) {
-            checkWithAttachmentBuilder(
+            checkWithAttachment(
                 condition = annotation.argumentList is FirResolvedArgumentList,
                 message = {
                     buildString {
