@@ -23901,6 +23901,18 @@ public class FirNativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTe
             }
 
             @Test
+            @TestMetadata("inJavaLangPackage.kt")
+            public void testInJavaLangPackage() throws Exception {
+                runTest("compiler/testData/codegen/box/involvesIrInterpreter/inJavaLangPackage.kt");
+            }
+
+            @Test
+            @TestMetadata("inJavaPackage.kt")
+            public void testInJavaPackage() throws Exception {
+                runTest("compiler/testData/codegen/box/involvesIrInterpreter/inJavaPackage.kt");
+            }
+
+            @Test
             @TestMetadata("intOperations.kt")
             public void testIntOperations() throws Exception {
                 runTest("compiler/testData/codegen/box/involvesIrInterpreter/intOperations.kt");
@@ -46161,6 +46173,55 @@ public class FirNativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTe
             @TestMetadata("tryCatchFinally.kt")
             public void testTryCatchFinally() throws Exception {
                 runTest("compiler/testData/codegen/boxInline/tryCatchFinally/tryCatchFinally.kt");
+            }
+        }
+
+        @Nested
+        @TestMetadata("compiler/testData/codegen/boxInline/typeParameters")
+        @TestDataPath("$PROJECT_ROOT")
+        @Tag("frontend-fir")
+        @FirPipeline()
+        @UseExtTestCaseGroupProvider()
+        public class TypeParameters {
+            @Test
+            public void testAllFilesPresentInTypeParameters() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/boxInline/typeParameters"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+            }
+
+            @Test
+            @TestMetadata("anonymousObject.kt")
+            public void testAnonymousObject() throws Exception {
+                runTest("compiler/testData/codegen/boxInline/typeParameters/anonymousObject.kt");
+            }
+
+            @Test
+            @TestMetadata("basic.kt")
+            public void testBasic() throws Exception {
+                runTest("compiler/testData/codegen/boxInline/typeParameters/basic.kt");
+            }
+
+            @Test
+            @TestMetadata("projectionTypeArguments.kt")
+            public void testProjectionTypeArguments() throws Exception {
+                runTest("compiler/testData/codegen/boxInline/typeParameters/projectionTypeArguments.kt");
+            }
+
+            @Test
+            @TestMetadata("severalUpperBounds.kt")
+            public void testSeveralUpperBounds() throws Exception {
+                runTest("compiler/testData/codegen/boxInline/typeParameters/severalUpperBounds.kt");
+            }
+
+            @Test
+            @TestMetadata("typeArgFromGenericBaseClass.kt")
+            public void testTypeArgFromGenericBaseClass() throws Exception {
+                runTest("compiler/testData/codegen/boxInline/typeParameters/typeArgFromGenericBaseClass.kt");
+            }
+
+            @Test
+            @TestMetadata("uncheckedCastToNothing.kt")
+            public void testUncheckedCastToNothing() throws Exception {
+                runTest("compiler/testData/codegen/boxInline/typeParameters/uncheckedCastToNothing.kt");
             }
         }
 

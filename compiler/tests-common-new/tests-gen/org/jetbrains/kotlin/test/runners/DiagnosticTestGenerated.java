@@ -340,6 +340,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         }
 
         @Test
+        @TestMetadata("finalSupertype.kt")
+        public void testFinalSupertype() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/finalSupertype.kt");
+        }
+
+        @Test
         @TestMetadata("ForRangeConventions.kt")
         public void testForRangeConventions() throws Exception {
             runTest("compiler/testData/diagnostics/tests/ForRangeConventions.kt");
@@ -20157,6 +20163,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("kt60580.kt")
+            public void testKt60580() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/j+k/kt60580.kt");
+            }
+
+            @Test
             @TestMetadata("kt6720_abstractProperty.kt")
             public void testKt6720_abstractProperty() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/j+k/kt6720_abstractProperty.kt");
@@ -39552,6 +39564,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("kt41430.kt")
             public void testKt41430() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/kt41430.kt");
+            }
+
+            @Test
+            @TestMetadata("kt55072.kt")
+            public void testKt55072() throws Exception {
+                runTest("compiler/testData/diagnostics/testsWithStdLib/coroutines/kt55072.kt");
             }
 
             @Test

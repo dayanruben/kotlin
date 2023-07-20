@@ -119,12 +119,7 @@ class LightTreeRawFirDeclarationBuilder(
             this.sourceFile = sourceFile
             this.sourceFileLinesMapping = linesMapping
             this.packageDirective = packageDirective ?: buildPackageDirective { packageFqName = context.packageFqName }
-            annotationsContainer = fileAnnotationContainer ?: buildFileAnnotationsContainer {
-                moduleData = baseModuleData
-                containingFileSymbol = fileSymbol
-                resolvePhase = FirResolvePhase.BODY_RESOLVE
-            }
-
+            annotationsContainer = fileAnnotationContainer
             imports += importList
             declarations += firDeclarationList
         }
@@ -2358,9 +2353,6 @@ class LightTreeRawFirDeclarationBuilder(
             modifiers = modifiers,
             returnTypeRef = firType
                 ?: when {
-                    valueParameterDeclaration == ValueParameterDeclaration.LAMBDA -> buildImplicitTypeRef {
-                        source = valueParameterSource.fakeElement(KtFakeSourceElementKind.ImplicitReturnTypeOfLambdaValueParameter)
-                    }
                     valueParameterDeclaration.shouldExplicitParameterTypeBePresent -> createNoTypeForParameterTypeRef()
                     else -> implicitType
                 },

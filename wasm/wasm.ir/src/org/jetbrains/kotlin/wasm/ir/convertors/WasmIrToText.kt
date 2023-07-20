@@ -146,7 +146,6 @@ class WasmIrToText : SExpressionBuilder() {
         }
     }
 
-
     private fun f32Str(x: WasmImmediate.ConstF32): String {
         val bits = x.rawBits.toInt()
         val v = Float.fromBits(bits)
@@ -156,7 +155,8 @@ class WasmIrToText : SExpressionBuilder() {
             } else {
                 "-"
             }
-            if (bits != Float.NaN.toRawBits()) {
+
+            if (bits != F32_CANON_NAN) {
                 val customPayload = bits and 0x7fffff
                 "${sign}nan:0x${customPayload.toString(16)}"
             } else {
@@ -182,7 +182,7 @@ class WasmIrToText : SExpressionBuilder() {
             } else {
                 "-"
             }
-            if (bits != Double.NaN.toRawBits()) {
+            if (bits != F64_CANON_NAN) {
                 val customPayload = bits and 0xfffffffffffff
                 "${sign}nan:0x${customPayload.toString(16)}"
             } else {
@@ -228,16 +228,22 @@ class WasmIrToText : SExpressionBuilder() {
         with(module) {
             newLineList("module") {
                 functionTypes.forEach { appendFunctionTypeDeclaration(it) }
-                recGroupTypes.forEach {
-                    when (it) {
-                        is WasmStructDeclaration ->
-                            appendStructTypeDeclaration(it)
-                        is WasmArrayDeclaration ->
-                            appendArrayTypeDeclaration(it)
-                        is WasmFunctionType ->
-                            appendFunctionTypeDeclaration(it)
+
+                if(recGroupTypes.isNotEmpty()) {
+                    newLineList("rec") {
+                        recGroupTypes.forEach {
+                            when (it) {
+                                is WasmStructDeclaration ->
+                                    appendStructTypeDeclaration(it)
+                                is WasmArrayDeclaration ->
+                                    appendArrayTypeDeclaration(it)
+                                is WasmFunctionType ->
+                                    appendFunctionTypeDeclaration(it)
+                            }
+                        }
                     }
                 }
+
                 importsInOrder.forEach {
                     when (it) {
                         is WasmFunction.Imported -> appendImportedFunction(it)
@@ -306,7 +312,7 @@ class WasmIrToText : SExpressionBuilder() {
         newLineList("type") {
             appendModuleFieldReference(type)
             sameLineList("array") {
-                appendStructField(type.field)
+                appendFieldType(type.field)
             }
         }
     }
@@ -511,11 +517,15 @@ class WasmIrToText : SExpressionBuilder() {
 
     private fun appendStructField(field: WasmStructFieldDeclaration) {
         sameLineList("field") {
-            if (field.isMutable) {
-                sameLineList("mut") { appendType(field.type) }
-            } else {
-                appendType(field.type)
-            }
+            appendFieldType(field)
+        }
+    }
+
+    private fun appendFieldType(field: WasmStructFieldDeclaration) {
+        if (field.isMutable) {
+            sameLineList("mut") { appendType(field.type) }
+        } else {
+            appendType(field.type)
         }
     }
 
@@ -579,3 +589,7 @@ fun isValidWatIdentifierChar(c: Char): Boolean =
             //  permitted identifiers: '?', '<'
             || c in "!#$%&′*+-./:<=>?@\\^_`|~"
             || c in "$.@_"
+
+// https://webassembly.github.io/spec/core/syntax/values.html#floating-point
+private const val F32_CANON_NAN = 0x7FC0_0000
+private const val F64_CANON_NAN = 0x7FF8_0000_0000_0000L

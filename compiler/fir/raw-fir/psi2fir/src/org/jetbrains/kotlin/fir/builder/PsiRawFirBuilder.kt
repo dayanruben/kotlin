@@ -1091,16 +1091,18 @@ open class PsiRawFirBuilder(
                     packageFqName = context.packageFqName
                     source = file.packageDirective?.toKtPsiSourceElement()
                 }
-                annotationsContainer = buildFileAnnotationsContainer {
-                    moduleData = baseModuleData
-                    containingFileSymbol = this@buildFile.symbol
-                    source = file.fileAnnotationList?.toKtPsiSourceElement()
-                    for (annotationEntry in file.annotationEntries) {
-                        annotations += annotationEntry.convert<FirAnnotation>()
-                    }
+                annotationsContainer = file.fileAnnotationList?.let {
+                    buildFileAnnotationsContainer {
+                        moduleData = baseModuleData
+                        containingFileSymbol = this@buildFile.symbol
+                        source = it.toKtPsiSourceElement()
+                        for (annotationEntry in it.annotationEntries) {
+                            annotations += annotationEntry.convert<FirAnnotation>()
+                        }
 
-                    annotations.ifEmpty {
-                        resolvePhase = FirResolvePhase.BODY_RESOLVE
+                        annotations.ifEmpty {
+                            resolvePhase = FirResolvePhase.BODY_RESOLVE
+                        }
                     }
                 }
 
@@ -1678,21 +1680,14 @@ open class PsiRawFirBuilder(
         override fun visitLambdaExpression(expression: KtLambdaExpression, data: FirElement?): FirElement {
             val literal = expression.functionLiteral
             val literalSource = literal.toFirSourceElement()
-            val implicitTypeRefSource = literal.toFirSourceElement(KtFakeSourceElementKind.ImplicitTypeRef)
-            val returnType = buildImplicitTypeRef {
-                source = implicitTypeRefSource
-            }
-            val receiverType = buildImplicitTypeRef {
-                source = implicitTypeRefSource
-            }
 
             val target: FirFunctionTarget
             val anonymousFunction = buildAnonymousFunction {
                 source = literalSource
                 moduleData = baseModuleData
                 origin = FirDeclarationOrigin.Source
-                returnTypeRef = returnType
-                receiverParameter = receiverType.asReceiverParameter()
+                returnTypeRef = FirImplicitTypeRefImplWithoutSource
+                receiverParameter = literalSource.asReceiverParameter()
                 symbol = FirAnonymousFunctionSymbol()
                 isLambda = true
                 hasExplicitParameterList = expression.functionLiteral.arrow != null
@@ -1707,9 +1702,7 @@ open class PsiRawFirBuilder(
                             containingFunctionSymbol = this@buildAnonymousFunction.symbol
                             moduleData = baseModuleData
                             origin = FirDeclarationOrigin.Source
-                            returnTypeRef = valueParameter.typeReference?.convertSafe() ?: buildImplicitTypeRef {
-                                source = multiDeclaration.toFirSourceElement(KtFakeSourceElementKind.ImplicitTypeRef)
-                            }
+                            returnTypeRef = valueParameter.typeReference?.convertSafe() ?: FirImplicitTypeRefImplWithoutSource
                             this.name = name
                             symbol = FirValueParameterSymbol(name)
                             isCrossinline = false
@@ -1726,10 +1719,7 @@ open class PsiRawFirBuilder(
                         ) { toFirOrImplicitType() }.statements
                         multiParameter
                     } else {
-                        val typeRef = valueParameter.typeReference?.convertSafe() ?: buildImplicitTypeRef {
-                            source = valueParameter.toFirSourceElement()
-                                .fakeElement(KtFakeSourceElementKind.ImplicitReturnTypeOfLambdaValueParameter)
-                        }
+                        val typeRef = valueParameter.typeReference?.convertSafe() ?: FirImplicitTypeRefImplWithoutSource
                         convertValueParameter(valueParameter, symbol, typeRef, ValueParameterDeclaration.LAMBDA)
                     }
                 }
@@ -2728,7 +2718,10 @@ open class PsiRawFirBuilder(
 
                 null -> {
                     CalleeAndReceiver(
-                        buildErrorNamedReference { diagnostic = ConeSyntaxDiagnostic("Call has no callee") }
+                        buildErrorNamedReference {
+                            source = defaultSource
+                            diagnostic = ConeSyntaxDiagnostic("Call has no callee")
+                        }
                     )
                 }
 

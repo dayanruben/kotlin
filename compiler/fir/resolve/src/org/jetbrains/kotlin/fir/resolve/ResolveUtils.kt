@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.fir.references.builder.buildErrorNamedReference
 import org.jetbrains.kotlin.fir.references.builder.buildResolvedErrorReference
 import org.jetbrains.kotlin.fir.resolve.calls.*
 import org.jetbrains.kotlin.fir.resolve.dfa.PropertyStability
+import org.jetbrains.kotlin.fir.resolve.dfa.cfg.FirAnonymousFunctionReturnExpressionInfo
 import org.jetbrains.kotlin.fir.resolve.diagnostics.*
 import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.resultType
@@ -448,7 +449,6 @@ private fun <T : FirExpression> BodyResolveComponents.transformExpressionUsingSm
         }
         return buildSmartCastExpression {
             originalExpression = expression
-            source = originalExpression.source?.fakeElement(KtFakeSourceElementKind.SmartCastExpression)
             smartcastType = intersectedTypeRef
             smartcastTypeWithoutNullableNothing = reducedIntersectedTypeRef
             this.typesFromSmartCast = typesFromSmartCast
@@ -459,7 +459,6 @@ private fun <T : FirExpression> BodyResolveComponents.transformExpressionUsingSm
 
     return buildSmartCastExpression {
         originalExpression = expression
-        source = originalExpression.source?.fakeElement(KtFakeSourceElementKind.SmartCastExpression)
         smartcastType = intersectedTypeRef
         this.typesFromSmartCast = typesFromSmartCast
         this.smartcastStability = smartcastStability

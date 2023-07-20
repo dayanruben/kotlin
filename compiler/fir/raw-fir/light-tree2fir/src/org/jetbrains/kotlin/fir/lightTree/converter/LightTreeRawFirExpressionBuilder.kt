@@ -66,7 +66,8 @@ class LightTreeRawFirExpressionBuilder(
         return converted as? R
             ?: buildErrorExpression(
                 expression?.toFirSourceElement(),
-                ConeSimpleDiagnostic(errorReason, DiagnosticKind.ExpressionExpected),
+                if (expression == null) ConeSyntaxDiagnostic(errorReason)
+                else ConeSimpleDiagnostic(errorReason, DiagnosticKind.ExpressionExpected),
                 converted,
             ) as R
     }
@@ -116,7 +117,7 @@ class LightTreeRawFirExpressionBuilder(
             OBJECT_LITERAL -> declarationBuilder.convertObjectLiteral(expression)
             FUN -> declarationBuilder.convertFunctionDeclaration(expression)
             DESTRUCTURING_DECLARATION -> declarationBuilder.convertDestructingDeclaration(expression).toFirDestructingDeclaration(baseModuleData)
-            else -> buildErrorExpression(null, ConeSimpleDiagnostic(errorReason, DiagnosticKind.ExpressionExpected))
+            else -> buildErrorExpression(expression.toFirSourceElement(KtFakeSourceElementKind.ErrorTypeRef), ConeSimpleDiagnostic(errorReason, DiagnosticKind.ExpressionExpected))
         }
     }
 
@@ -145,7 +146,7 @@ class LightTreeRawFirExpressionBuilder(
             moduleData = baseModuleData
             origin = FirDeclarationOrigin.Source
             returnTypeRef = implicitType
-            receiverParameter = implicitType.asReceiverParameter()
+            receiverParameter = expressionSource.asReceiverParameter()
             symbol = functionSymbol
             isLambda = true
             hasExplicitParameterList = hasArrow
@@ -1422,8 +1423,12 @@ class LightTreeRawFirExpressionBuilder(
     private fun convertThisExpression(thisExpression: LighterASTNode): FirQualifiedAccessExpression {
         val label: String? = thisExpression.getLabelName()
         return buildThisReceiverExpression {
-            source = thisExpression.toFirSourceElement()
-            calleeReference = buildExplicitThisReference { labelName = label }
+            val sourceElement = thisExpression.toFirSourceElement()
+            source = sourceElement
+            calleeReference = buildExplicitThisReference {
+                labelName = label
+                source = sourceElement.fakeElement(KtFakeSourceElementKind.ReferenceInAtomicQualifiedAccess)
+            }
         }
     }
 
@@ -1441,10 +1446,12 @@ class LightTreeRawFirExpressionBuilder(
         }
 
         return buildPropertyAccessExpression {
-            source = superExpression.toFirSourceElement()
+            val sourceElement = superExpression.toFirSourceElement()
+            source = sourceElement
             calleeReference = buildExplicitSuperReference {
                 labelName = label
                 this.superTypeRef = superTypeRef
+                source = sourceElement.fakeElement(KtFakeSourceElementKind.ReferenceInAtomicQualifiedAccess)
             }
         }
     }

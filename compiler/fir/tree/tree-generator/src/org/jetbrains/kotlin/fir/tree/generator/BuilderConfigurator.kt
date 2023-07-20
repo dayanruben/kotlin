@@ -41,6 +41,10 @@ object BuilderConfigurator : AbstractBuilderConfigurator<FirTreeBuilder>(FirTree
             fields from klass without listOf("symbol", "resolvePhase", "resolveState", "controlFlowGraphReference")
         }
 
+        builder(file) {
+            defaultNull("annotationsContainer")
+        }
+
         builder(regularClass) {
             parents += classBuilder
             parents += typeParameterRefsOwnerBuilder
@@ -309,10 +313,6 @@ object BuilderConfigurator : AbstractBuilderConfigurator<FirTreeBuilder>(FirTree
             withCopy()
         }
 
-        builder(implicitTypeRef) {
-            withCopy()
-        }
-
         builder(breakExpression) {
             parents += loopJumpBuilder
         }
@@ -438,9 +438,7 @@ object BuilderConfigurator : AbstractBuilderConfigurator<FirTreeBuilder>(FirTree
 
         // -----------------------------------------------------------------------
 
-        findImplementationsWithElementInParents(annotationContainer) {
-            it.type !in setOf("FirImplicitTypeRefImpl")
-        }.forEach {
+        findImplementationsWithElementInParents(annotationContainer).forEach {
             it.builder?.parents?.add(annotationContainerBuilder)
         }
 

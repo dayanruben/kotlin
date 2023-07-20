@@ -452,6 +452,10 @@ object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() 
                 value = "smartcastStability == SmartcastStability.STABLE_VALUE"
                 withGetter = true
             }
+            default("source") {
+                value = "originalExpression.source?.fakeElement(KtFakeSourceElementKind.SmartCastExpression)"
+            }
+            useTypes(fakeElementImport, fakeSourceElementKindImport)
         }
 
         impl(resolvedNamedReference)
@@ -532,12 +536,7 @@ object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() 
         }
 
         impl(functionTypeRef)
-        impl(implicitTypeRef) {
-            defaultEmptyList("annotations")
-            default("source") {
-                notNull = true
-            }
-        }
+        noImpl(implicitTypeRef)
 
         impl(reference, "FirStubReference") {
             default("source") {
@@ -609,7 +608,7 @@ object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() 
 
         impl(file) {
             default("annotations") {
-                value = "annotationsContainer.annotations"
+                value = "annotationsContainer?.annotations ?: emptyList()"
                 withGetter = true
             }
         }
