@@ -194,17 +194,6 @@ object KotlinToolingDiagnostics {
         )
     }
 
-    object TargetsNeedDisambiguation : ToolingDiagnosticFactory(WARNING) {
-        operator fun invoke(targetGroupsRendered: String) = build(
-            """
-            |The following targets are not distinguishable:
-            |$targetGroupsRendered
-            |Use an additional attribute to disambiguate them 
-            |See https://kotlinlang.org/docs/multiplatform-set-up-targets.html#distinguish-several-targets-for-one-platform for more details
-            """.trimMargin()
-        )
-    }
-
     object DeprecatedPropertyWithReplacement : ToolingDiagnosticFactory(WARNING) {
         operator fun invoke(deprecatedPropertyName: String, replacement: String) = build(
             "Project property '$deprecatedPropertyName' is deprecated. Please use '$replacement' instead."
@@ -544,6 +533,19 @@ object KotlinToolingDiagnostics {
                   }
             """.trimIndent(),
             throwable = trace
+        )
+    }
+
+    object KotlinTargetAlreadyDeclared : ToolingDiagnosticFactory(WARNING) {
+        operator fun invoke(targetDslFunctionName: String) = build(
+            """
+                Kotlin Target '$targetDslFunctionName()' is already declared.
+
+                Declaring multiple Kotlin Targets of the same type is not recommended
+                and will become an error in the upcoming Kotlin releases.
+                
+                Read https://kotl.in/declaring-multiple-targets for details.
+            """.trimIndent()
         )
     }
 }

@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.fir.resolve.transformers.body.resolve
 
 import org.jetbrains.kotlin.KtFakeSourceElementKind
 import org.jetbrains.kotlin.KtSourceElement
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.fakeElement
 import org.jetbrains.kotlin.fir.*
@@ -30,6 +31,7 @@ import org.jetbrains.kotlin.fir.resolve.*
 import org.jetbrains.kotlin.fir.resolve.calls.*
 import org.jetbrains.kotlin.fir.resolve.diagnostics.*
 import org.jetbrains.kotlin.fir.resolve.inference.FirStubInferenceSession
+import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.resolve.transformers.replaceLambdaArgumentInvocationKinds
 import org.jetbrains.kotlin.fir.scopes.impl.isWrappedIntegerOperator
@@ -45,6 +47,7 @@ import org.jetbrains.kotlin.fir.visitors.transformSingle
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.resolve.ArrayFqNames
 import org.jetbrains.kotlin.resolve.calls.inference.buildAbstractResultingSubstitutor
 import org.jetbrains.kotlin.types.AbstractTypeChecker
 import org.jetbrains.kotlin.types.ConstantValueKind
@@ -495,7 +498,10 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
         )
 
         val approximationIsNeeded =
-            resolutionMode !is ResolutionMode.ReceiverResolution && resolutionMode !is ResolutionMode.ContextDependent
+            resolutionMode !is ResolutionMode.ReceiverResolution &&
+                    (resolutionMode !is ResolutionMode.ContextDependent ||
+                            // TODO check why we need a special case for ContextDependent.Delegate
+                            resolutionMode is ResolutionMode.ContextDependent.Delegate)
 
         val integerOperatorCall = buildIntegerLiteralOperatorCall {
             source = originalCall.source
@@ -1072,17 +1078,14 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
 
         transformedLHS?.let { callableReferenceAccess.replaceExplicitReceiver(transformedLHS) }
 
-        return when (data) {
-            is ResolutionMode.ContextDependent -> {
-                context.storeCallableReferenceContext(callableReferenceAccess)
-                callableReferenceAccess
-            }
-
-            else -> {
-                components.syntheticCallGenerator.resolveCallableReferenceWithSyntheticOuterCall(
-                    callableReferenceAccess, data.expectedType, resolutionContext,
-                ) ?: callableReferenceAccess
-            }
+        // TODO check why we need a special case for ContextDependent.Delegate
+        return if (data is ResolutionMode.ContextDependent && data !is ResolutionMode.ContextDependent.Delegate) {
+            context.storeCallableReferenceContext(callableReferenceAccess)
+            callableReferenceAccess
+        } else {
+            components.syntheticCallGenerator.resolveCallableReferenceWithSyntheticOuterCall(
+                callableReferenceAccess, data.expectedType, resolutionContext,
+            ) ?: callableReferenceAccess
         }.also {
             dataFlowAnalyzer.exitCallableReference(it)
         }
@@ -1633,14 +1636,26 @@ open class FirExpressionsResolveTransformer(transformer: FirAbstractBodyResolveT
 
     override fun transformArrayOfCall(arrayOfCall: FirArrayOfCall, data: ResolutionMode): FirStatement =
         whileAnalysing(session, arrayOfCall) {
-            if (data is ResolutionMode.ContextDependent) {
+            if (data is ResolutionMode.ContextDependent.Default) {
+                // Argument for primitive array parameter in annotation call or argument in non-annotation call (unsupported).
                 arrayOfCall.transformChildren(transformer, data)
-                return arrayOfCall
+                arrayOfCall
+            } else if (
+                data is ResolutionMode.WithExpectedType && !data.expectedTypeRef.coneType.isPrimitiveOrUnsignedArray ||
+                data is ResolutionMode.ContextDependent.TransformingArrayLiterals
+            ) {
+                // Default value of Array<T> parameter or argument for Array<T> parameter in annotation call.
+                arrayOfCall.transformChildren(transformer, ResolutionMode.ContextDependent)
+                val call = components.syntheticCallGenerator.generateSyntheticArrayOfCall(arrayOfCall, resolutionContext)
+                callCompleter.completeCall(call, data)
+                arrayOfCallTransformer.transformFunctionCall(call, session)
+            } else {
+                // Default value of primitive array parameter or other unsupported usage.
+                val syntheticIdCall = components.syntheticCallGenerator.generateSyntheticIdCall(arrayOfCall, resolutionContext)
+                arrayOfCall.transformChildren(transformer, ResolutionMode.ContextDependent)
+                callCompleter.completeCall(syntheticIdCall, data)
+                arrayOfCall
             }
-            val syntheticIdCall = components.syntheticCallGenerator.generateSyntheticCallForArrayOfCall(arrayOfCall, resolutionContext)
-            arrayOfCall.transformChildren(transformer, ResolutionMode.ContextDependent)
-            callCompleter.completeCall(syntheticIdCall, data)
-            return arrayOfCall
         }
 
     override fun transformStringConcatenationCall(

@@ -217,14 +217,23 @@ class SimpleKotlinGradleIT : KGPBaseTest() {
 
     @DisplayName("Proper Gradle plugin variant is used")
     @GradleTestVersions(
-        additionalVersions = [TestVersions.Gradle.G_7_0, TestVersions.Gradle.G_7_1, TestVersions.Gradle.G_7_3, TestVersions.Gradle.G_7_4, TestVersions.Gradle.G_7_5],
-        maxVersion = TestVersions.Gradle.G_7_6
+        additionalVersions = [
+            TestVersions.Gradle.G_7_0,
+            TestVersions.Gradle.G_7_1,
+            TestVersions.Gradle.G_7_3,
+            TestVersions.Gradle.G_7_4,
+            TestVersions.Gradle.G_7_5,
+            TestVersions.Gradle.G_7_6,
+            TestVersions.Gradle.G_8_0,
+        ],
     )
     @GradleTest
     internal fun pluginVariantIsUsed(gradleVersion: GradleVersion) {
         project("kotlinProject", gradleVersion) {
-            build("tasks") {
+            build("help") {
                 val expectedVariant = when (gradleVersion) {
+                    GradleVersion.version(TestVersions.Gradle.G_8_1)..GradleVersion.version(TestVersions.Gradle.G_8_2) -> "gradle81"
+                    GradleVersion.version(TestVersions.Gradle.G_8_0) -> "gradle80"
                     GradleVersion.version(TestVersions.Gradle.G_7_6) -> "gradle76"
                     GradleVersion.version(TestVersions.Gradle.G_7_5) -> "gradle75"
                     GradleVersion.version(TestVersions.Gradle.G_7_4) -> "gradle74"
@@ -235,28 +244,6 @@ class SimpleKotlinGradleIT : KGPBaseTest() {
 
                 assertOutputContains("Using Kotlin Gradle Plugin $expectedVariant variant")
             }
-        }
-    }
-
-    @DisplayName("Validate Gradle plugins inputs")
-    // TODO(Dmitrii Krasnov): validate-external-gradle-plugin has been removed in Gradle 8.0,
-    //  so this test should be removed after correct configuring k-g-p and k-g-p-api tasks
-    @GradleTestVersions(
-        minVersion = TestVersions.Gradle.G_7_6,
-        maxVersion = TestVersions.Gradle.G_7_6
-    ) // Always should use only latest Gradle version
-    @GradleTest
-    internal fun validatePluginInputs(gradleVersion: GradleVersion) {
-        project("kotlinProject", gradleVersion) {
-            buildGradle.modify {
-                """
-                plugins {
-                    id "validate-external-gradle-plugin"
-                ${it.substringAfter("plugins {")}
-                """.trimIndent()
-            }
-
-            build("validateExternalPlugins")
         }
     }
 

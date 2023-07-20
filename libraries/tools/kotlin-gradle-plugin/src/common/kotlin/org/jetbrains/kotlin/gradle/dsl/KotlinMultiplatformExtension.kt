@@ -5,7 +5,10 @@
 
 package org.jetbrains.kotlin.gradle.dsl
 
-import org.gradle.api.*
+import org.gradle.api.Action
+import org.gradle.api.InvalidUserCodeException
+import org.gradle.api.NamedDomainObjectCollection
+import org.gradle.api.Project
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.InternalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.plugin.*
@@ -194,7 +197,7 @@ internal abstract class DefaultTargetsFromPresetExtension @Inject constructor(
     }
 }
 
-internal fun KotlinTarget.isProducedFromPreset(kotlinTargetPreset: KotlinTargetPreset<*>): Boolean =
+private fun KotlinTarget.isProducedFromPreset(kotlinTargetPreset: KotlinTargetPreset<*>): Boolean =
     preset == kotlinTargetPreset
 
 internal fun <T : KotlinTarget> KotlinTargetsContainerWithPresets.configureOrCreate(
@@ -227,3 +230,4 @@ internal fun <T : KotlinTarget> KotlinTargetsContainerWithPresets.configureOrCre
         }
     }
 }
+
