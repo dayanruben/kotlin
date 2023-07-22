@@ -1059,6 +1059,17 @@ internal class JsNameProhibitedForExtensionPropertyImpl(
     token: KtLifetimeToken,
 ) : KtAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KtFirDiagnostic.JsNameProhibitedForExtensionProperty
 
+internal class JsBuiltinNameClashImpl(
+    override val name: String,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KtLifetimeToken,
+) : KtAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KtFirDiagnostic.JsBuiltinNameClash
+
+internal class NameContainsIllegalCharsImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KtLifetimeToken,
+) : KtAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KtFirDiagnostic.NameContainsIllegalChars
+
 internal class OptInUsageImpl(
     override val optInMarkerFqName: FqName,
     override val message: String,

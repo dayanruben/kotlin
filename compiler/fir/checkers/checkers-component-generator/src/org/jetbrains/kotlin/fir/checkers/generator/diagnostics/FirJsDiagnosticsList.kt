@@ -54,6 +54,10 @@ object JS_DIAGNOSTICS_LIST : DiagnosticList("FirJsErrors") {
         val JS_NAME_ON_PRIMARY_CONSTRUCTOR_PROHIBITED by error<KtElement>()
         val JS_NAME_ON_ACCESSOR_AND_PROPERTY by error<KtElement>()
         val JS_NAME_PROHIBITED_FOR_EXTENSION_PROPERTY by error<KtElement>()
+        val JS_BUILTIN_NAME_CLASH by error<KtElement>(PositioningStrategy.DECLARATION_SIGNATURE_OR_DEFAULT) {
+            parameter<String>("name")
+        }
+        val NAME_CONTAINS_ILLEGAL_CHARS by error<KtElement>(PositioningStrategy.DECLARATION_SIGNATURE_OR_DEFAULT)
     }
 
     val SUPERTYPES by object : DiagnosticGroup("Supertypes") {

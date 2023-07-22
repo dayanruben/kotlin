@@ -100,7 +100,8 @@ abstract class AbstractKotlinTargetConfigurator<KotlinTargetType : KotlinTarget>
 
     override fun configureSourceSet(target: KotlinTargetType) {
         target.compilations.all { compilation ->
-            compilation.source(compilation.defaultSourceSet) // also adds dependencies, requires the configurations for target and source set to exist at this point
+            @Suppress("DEPRECATION")
+            compilation.addSourceSet(compilation.defaultSourceSet) // also adds dependencies, requires the configurations for target and source set to exist at this point
         }
     }
 

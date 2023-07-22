@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.gradle.plugin.mpp
 
 import org.gradle.api.file.FileCollection
+import org.jetbrains.kotlin.gradle.InternalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.KotlinCommonOptions
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
 import org.jetbrains.kotlin.gradle.plugin.KotlinPluginLifecycle
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.compilationImpl.KotlinCompilationC
 import org.jetbrains.kotlin.gradle.utils.ObservableSet
 import org.jetbrains.kotlin.tooling.core.HasMutableExtras
 
+@InternalKotlinGradlePluginApi
 internal interface InternalKotlinCompilation<out T : KotlinCommonOptions> : KotlinCompilation<T>, HasMutableExtras {
     override val kotlinSourceSets: ObservableSet<KotlinSourceSet>
     override val allKotlinSourceSets: ObservableSet<KotlinSourceSet>
@@ -32,4 +34,9 @@ internal val <T : KotlinCommonOptions> KotlinCompilation<T>.internal: InternalKo
 internal suspend fun InternalKotlinCompilation<*>.awaitAllKotlinSourceSets(): Set<KotlinSourceSet> {
     KotlinPluginLifecycle.Stage.AfterFinaliseCompilations.await()
     return allKotlinSourceSets
+}
+
+@Deprecated("KT-58234: Adding source sets to Compilation is not recommended. Please consider using dependsOn.")
+internal fun KotlinCompilation<*>.addSourceSet(kotlinSourceSet: KotlinSourceSet) {
+    internal.decoratedInstance.compilation.sourceSets.source(kotlinSourceSet)
 }
