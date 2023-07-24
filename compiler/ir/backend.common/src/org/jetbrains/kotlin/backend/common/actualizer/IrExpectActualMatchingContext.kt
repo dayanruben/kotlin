@@ -5,11 +5,14 @@
 
 package org.jetbrains.kotlin.backend.common.actualizer
 
+import org.jetbrains.kotlin.backend.common.sourceElement
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.Visibility
+import org.jetbrains.kotlin.descriptors.annotations.KotlinRetention
 import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.expressions.IrConstructorCall
 import org.jetbrains.kotlin.ir.symbols.*
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
@@ -21,11 +24,17 @@ import org.jetbrains.kotlin.mpp.*
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.resolve.calls.mpp.ExpectActualCollectionArgumentsCompatibilityCheckStrategy
 import org.jetbrains.kotlin.resolve.calls.mpp.ExpectActualMatchingContext
+import org.jetbrains.kotlin.resolve.calls.mpp.ExpectActualMatchingContext.AnnotationCallInfo
+import org.jetbrains.kotlin.resolve.checkers.OptInNames
 import org.jetbrains.kotlin.types.AbstractTypeChecker
 import org.jetbrains.kotlin.types.TypeCheckerState
 import org.jetbrains.kotlin.types.Variance
-import org.jetbrains.kotlin.types.model.*
+import org.jetbrains.kotlin.types.model.AnnotationMarker
+import org.jetbrains.kotlin.types.model.KotlinTypeMarker
+import org.jetbrains.kotlin.types.model.TypeSubstitutorMarker
+import org.jetbrains.kotlin.types.model.TypeSystemContext
 import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.castAll
 import org.jetbrains.kotlin.utils.addToStdlib.shouldNotBeCalled
@@ -75,6 +84,7 @@ internal abstract class IrExpectActualMatchingContext(
     private fun TypeParameterSymbolMarker.asIr(): IrTypeParameter = (this as IrTypeParameterSymbol).owner
     private fun RegularClassSymbolMarker.asIr(): IrClass = (this as IrClassSymbol).owner
     private fun TypeAliasSymbolMarker.asIr(): IrTypeAlias = (this as IrTypeAliasSymbol).owner
+    private fun AnnotationMarker.asIr(): IrConstructorCall = this as IrConstructorCall
 
     private inline fun <reified T : IrDeclaration> DeclarationSymbolMarker.safeAsIr(): T? = (this as IrSymbol).owner as? T
 
@@ -440,4 +450,45 @@ internal abstract class IrExpectActualMatchingContext(
 
     abstract fun onMatchedClasses(expectClassSymbol: IrClassSymbol, actualClassSymbol: IrClassSymbol)
     abstract fun onMatchedCallables(expectSymbol: IrSymbol, actualSymbol: IrSymbol)
+
+    override val DeclarationSymbolMarker.annotations: List<AnnotationCallInfo>
+        get() = asIr().annotations.map(::AnnotationCallInfoImpl)
+
+    override fun areAnnotationArgumentsEqual(
+        annotation1: AnnotationCallInfo, annotation2: AnnotationCallInfo,
+        collectionArgumentsCompatibilityCheckStrategy: ExpectActualCollectionArgumentsCompatibilityCheckStrategy,
+    ): Boolean {
+        fun AnnotationCallInfo.getIrElement(): IrConstructorCall = (this as AnnotationCallInfoImpl).irElement
+
+        return areIrExpressionConstValuesEqual(
+            annotation1.getIrElement(),
+            annotation2.getIrElement(),
+            collectionArgumentsCompatibilityCheckStrategy,
+        )
+    }
+
+    internal fun getClassIdAfterActualization(classId: ClassId): ClassId {
+        return expectToActualClassMap[classId]?.classId ?: classId
+    }
+
+    private class AnnotationCallInfoImpl(val irElement: IrConstructorCall) : AnnotationCallInfo {
+        override val classId: ClassId?
+            get() = irElement.type.getClass()?.classId
+
+        override val isRetentionSource: Boolean
+            get() = getAnnotationClass()?.getAnnotationRetention() == KotlinRetention.SOURCE
+
+        override val isOptIn: Boolean
+            get() = getAnnotationClass()?.hasAnnotation(OptInNames.REQUIRES_OPT_IN_FQ_NAME) ?: false
+
+        private fun getAnnotationClass(): IrClass? {
+            return irElement.symbol.owner.parent as? IrClass
+        }
+    }
+
+    override val DeclarationSymbolMarker.hasSourceAnnotationsErased: Boolean
+        get() {
+            val ir = asIr()
+            return ir.sourceElement() != null || ir.origin is IrDeclarationOrigin.GeneratedByPlugin
+        }
 }

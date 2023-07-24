@@ -9,7 +9,9 @@ classifiers: 2
     classKind: CLASS
     companionObject: null
     contextReceivers: []
+    isActual: false
     isData: false
+    isExpect: false
     isExternal: false
     isFun: false
     isInline: false
@@ -36,7 +38,9 @@ classifiers: 2
     classKind: CLASS
     companionObject: null
     contextReceivers: []
+    isActual: false
     isData: false
+    isExpect: false
     isExternal: false
     isFun: false
     isInline: false
@@ -64,7 +68,9 @@ callables: 5
     contextReceivers: []
     contractEffects: []
     hasStableParameterNames: true
+    isActual: false
     isBuiltinFunctionInvoke: false
+    isExpect: false
     isExtension: false
     isExternal: false
     isInfix: false
@@ -116,7 +122,9 @@ callables: 5
     contextReceivers: []
     contractEffects: []
     hasStableParameterNames: true
+    isActual: false
     isBuiltinFunctionInvoke: false
+    isExpect: false
     isExtension: true
     isExternal: false
     isInfix: false
@@ -192,8 +200,10 @@ callables: 5
     hasGetter: true
     hasSetter: false
     initializer: KtConstantInitializerValue("baz")
+    isActual: false
     isConst: false
     isDelegatedProperty: false
+    isExpect: false
     isExtension: false
     isFromPrimaryConstructor: false
     isLateInit: false
@@ -260,8 +270,10 @@ callables: 5
     hasGetter: true
     hasSetter: true
     initializer: KtConstantInitializerValue("quux")
+    isActual: false
     isConst: false
     isDelegatedProperty: false
+    isExpect: false
     isExtension: false
     isFromPrimaryConstructor: false
     isLateInit: false
@@ -396,8 +408,10 @@ callables: 5
     hasGetter: true
     hasSetter: false
     initializer: null
+    isActual: false
     isConst: false
     isDelegatedProperty: false
+    isExpect: false
     isExtension: true
     isFromPrimaryConstructor: false
     isLateInit: false

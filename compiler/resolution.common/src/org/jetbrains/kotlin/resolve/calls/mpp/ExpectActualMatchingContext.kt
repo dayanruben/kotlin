@@ -157,4 +157,20 @@ interface ExpectActualMatchingContext<T : DeclarationSymbolMarker> : TypeSystemC
         expectSymbol: DeclarationSymbolMarker,
         actualSymbolsByIncompatibility: Map<ExpectActualCompatibility.Incompatible<*>, List<DeclarationSymbolMarker>>
     ) {}
+
+    val DeclarationSymbolMarker.annotations: List<AnnotationCallInfo>
+
+    fun areAnnotationArgumentsEqual(
+        annotation1: AnnotationCallInfo,
+        annotation2: AnnotationCallInfo,
+        collectionArgumentsCompatibilityCheckStrategy: ExpectActualCollectionArgumentsCompatibilityCheckStrategy,
+    ): Boolean
+
+    val DeclarationSymbolMarker.hasSourceAnnotationsErased: Boolean
+
+    interface AnnotationCallInfo {
+        val classId: ClassId?
+        val isRetentionSource: Boolean
+        val isOptIn: Boolean
+    }
 }

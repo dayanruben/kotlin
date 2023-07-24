@@ -29,7 +29,9 @@ scopes:
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
+        isActual: false
         isBuiltinFunctionInvoke: false
+        isExpect: false
         isExtension: false
         isExternal: false
         isInfix: false
@@ -56,7 +58,9 @@ scopes:
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
+        isActual: false
         isBuiltinFunctionInvoke: false
+        isExpect: false
         isExtension: false
         isExternal: false
         isInfix: false
@@ -104,7 +108,9 @@ scopes:
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
+        isActual: false
         isBuiltinFunctionInvoke: false
+        isExpect: false
         isExtension: false
         isExternal: false
         isInfix: false
@@ -131,7 +137,9 @@ scopes:
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
+        isActual: false
         isBuiltinFunctionInvoke: false
+        isExpect: false
         isExtension: false
         isExternal: false
         isInfix: false
@@ -159,6 +167,8 @@ scopes:
         containingClassIdIfNonLocal: A
         contextReceivers: []
         hasStableParameterNames: true
+        isActual: false
+        isExpect: false
         isExtension: false
         isPrimary: true
         origin: SOURCE_MEMBER_GENERATED
@@ -194,7 +204,9 @@ scopes:
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
+        isActual: false
         isBuiltinFunctionInvoke: false
+        isExpect: false
         isExtension: false
         isExternal: false
         isInfix: false
@@ -221,7 +233,9 @@ scopes:
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
+        isActual: false
         isBuiltinFunctionInvoke: false
+        isExpect: false
         isExtension: false
         isExternal: false
         isInfix: false
@@ -269,7 +283,9 @@ scopes:
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
+        isActual: false
         isBuiltinFunctionInvoke: false
+        isExpect: false
         isExtension: false
         isExternal: false
         isInfix: false
@@ -296,7 +312,9 @@ scopes:
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
+        isActual: false
         isBuiltinFunctionInvoke: false
+        isExpect: false
         isExtension: false
         isExternal: false
         isInfix: false
@@ -324,6 +342,8 @@ scopes:
         containingClassIdIfNonLocal: B
         contextReceivers: []
         hasStableParameterNames: true
+        isActual: false
+        isExpect: false
         isExtension: false
         isPrimary: true
         origin: SOURCE_MEMBER_GENERATED
@@ -415,7 +435,9 @@ scopes:
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
+        isActual: false
         isBuiltinFunctionInvoke: false
+        isExpect: false
         isExtension: false
         isExternal: false
         isInfix: false
@@ -487,7 +509,9 @@ scopes:
         classKind: CLASS
         companionObject: null
         contextReceivers: []
+        isActual: false
         isData: false
+        isExpect: false
         isExternal: false
         isFun: false
         isInline: false
@@ -510,7 +534,9 @@ scopes:
         classKind: CLASS
         companionObject: null
         contextReceivers: []
+        isActual: false
         isData: false
+        isExpect: false
         isExternal: false
         isFun: false
         isInline: false
@@ -534,7 +560,9 @@ scopes:
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
+        isActual: false
         isBuiltinFunctionInvoke: false
+        isExpect: false
         isExtension: false
         isExternal: false
         isInfix: false
@@ -584,7 +612,9 @@ scopes:
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
+        isActual: false
         isBuiltinFunctionInvoke: false
+        isExpect: false
         isExtension: false
         isExternal: false
         isInfix: false
@@ -632,7 +662,9 @@ scopes:
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
+        isActual: false
         isBuiltinFunctionInvoke: false
+        isExpect: false
         isExtension: false
         isExternal: false
         isInfix: false
@@ -659,7 +691,9 @@ scopes:
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
+        isActual: false
         isBuiltinFunctionInvoke: false
+        isExpect: false
         isExtension: false
         isExternal: false
         isInfix: false
@@ -687,6 +721,8 @@ scopes:
         containingClassIdIfNonLocal: C
         contextReceivers: []
         hasStableParameterNames: true
+        isActual: false
+        isExpect: false
         isExtension: false
         isPrimary: true
         origin: SOURCE_MEMBER_GENERATED
@@ -709,7 +745,9 @@ scopes:
         classKind: CLASS
         companionObject: null
         contextReceivers: []
+        isActual: false
         isData: false
+        isExpect: false
         isExternal: false
         isFun: false
         isInline: false
@@ -738,7 +776,9 @@ scopes:
         classKind: CLASS
         companionObject: null
         contextReceivers: []
+        isActual: false
         isData: false
+        isExpect: false
         isExternal: false
         isFun: false
         isInline: false
@@ -791,7 +831,9 @@ scopes:
         classKind: CLASS
         companionObject: null
         contextReceivers: []
+        isActual: false
         isData: false
+        isExpect: false
         isExternal: false
         isFun: false
         isInline: false
@@ -814,7 +856,9 @@ scopes:
         classKind: CLASS
         companionObject: null
         contextReceivers: []
+        isActual: false
         isData: false
+        isExpect: false
         isExternal: false
         isFun: false
         isInline: false
@@ -837,7 +881,9 @@ scopes:
         classKind: CLASS
         companionObject: null
         contextReceivers: []
+        isActual: false
         isData: false
+        isExpect: false
         isExternal: false
         isFun: false
         isInline: false
@@ -861,7 +907,9 @@ scopes:
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
+        isActual: false
         isBuiltinFunctionInvoke: false
+        isExpect: false
         isExtension: false
         isExternal: false
         isInfix: false
@@ -918,7 +966,9 @@ scopes:
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
+        isActual: false
         isBuiltinFunctionInvoke: false
+        isExpect: false
         isExtension: false
         isExternal: false
         isInfix: false
@@ -975,7 +1025,9 @@ scopes:
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
+        isActual: false
         isBuiltinFunctionInvoke: false
+        isExpect: false
         isExtension: false
         isExternal: false
         isInfix: false
@@ -1032,7 +1084,9 @@ scopes:
         contextReceivers: []
         contractEffects: []
         hasStableParameterNames: true
+        isActual: false
         isBuiltinFunctionInvoke: false
+        isExpect: false
         isExtension: false
         isExternal: false
         isInfix: false
@@ -1068,4 +1122,3 @@ scopes:
   DefaultSimpleImportingScope, index = 18
 
   DefaultStarImportingScope, index = 19
-

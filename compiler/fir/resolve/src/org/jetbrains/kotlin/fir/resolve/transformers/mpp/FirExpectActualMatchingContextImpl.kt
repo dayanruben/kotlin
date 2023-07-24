@@ -8,11 +8,14 @@ package org.jetbrains.kotlin.fir.resolve.transformers.mpp
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibility
+import org.jetbrains.kotlin.fir.FirExpectActualMatchingContext
+import org.jetbrains.kotlin.fir.FirExpectActualMatchingContextFactory
 import org.jetbrains.kotlin.fir.FirSession
-import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
-import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
-import org.jetbrains.kotlin.fir.declarations.collectEnumEntries
-import org.jetbrains.kotlin.fir.declarations.isAnnotationConstructor
+import org.jetbrains.kotlin.fir.analysis.getRetention
+import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.expressions.FirAnnotation
+import org.jetbrains.kotlin.fir.expressions.FirConstExpression
+import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.isSubstitutionOrIntersectionOverride
 import org.jetbrains.kotlin.fir.resolve.*
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
@@ -24,18 +27,23 @@ import org.jetbrains.kotlin.mpp.*
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.resolve.calls.mpp.ExpectActualMatchingContext
+import org.jetbrains.kotlin.resolve.calls.mpp.ExpectActualCollectionArgumentsCompatibilityCheckStrategy
+import org.jetbrains.kotlin.resolve.calls.mpp.ExpectActualMatchingContext.AnnotationCallInfo
+import org.jetbrains.kotlin.resolve.checkers.OptInNames
 import org.jetbrains.kotlin.types.AbstractTypeChecker
 import org.jetbrains.kotlin.types.TypeCheckerState
 import org.jetbrains.kotlin.types.Variance
-import org.jetbrains.kotlin.types.model.*
+import org.jetbrains.kotlin.types.model.KotlinTypeMarker
+import org.jetbrains.kotlin.types.model.SimpleTypeMarker
+import org.jetbrains.kotlin.types.model.TypeSubstitutorMarker
+import org.jetbrains.kotlin.types.model.TypeSystemContext
 import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.castAll
 
-class FirExpectActualMatchingContext(
+class FirExpectActualMatchingContextImpl private constructor(
     private val actualSession: FirSession,
     private val scopeSession: ScopeSession
-) : ExpectActualMatchingContext<FirBasedSymbol<*>>, TypeSystemContext by actualSession.typeContext {
+) : FirExpectActualMatchingContext, TypeSystemContext by actualSession.typeContext {
     override val shouldCheckReturnTypesOfCallables: Boolean
         get() = false
 
@@ -48,6 +56,7 @@ class FirExpectActualMatchingContext(
     override val allowTransitiveSupertypesActualization: Boolean
         get() = true
 
+    private fun DeclarationSymbolMarker.asSymbol(): FirBasedSymbol<*> = this as FirBasedSymbol<*>
     private fun CallableSymbolMarker.asSymbol(): FirCallableSymbol<*> = this as FirCallableSymbol<*>
     private fun FunctionSymbolMarker.asSymbol(): FirFunctionSymbol<*> = this as FirFunctionSymbol<*>
     private fun PropertySymbolMarker.asSymbol(): FirPropertySymbol = this as FirPropertySymbol
@@ -197,9 +206,9 @@ class FirExpectActualMatchingContext(
         }
     }
 
-    fun FirClassSymbol<*>.getConstructors(
+    override fun FirClassSymbol<*>.getConstructors(
         scopeSession: ScopeSession,
-        session: FirSession = moduleData.session
+        session: FirSession,
     ): Collection<FirConstructorSymbol> = mutableListOf<FirConstructorSymbol>().apply {
         getConstructorsTo(
             this,
@@ -305,4 +314,70 @@ class FirExpectActualMatchingContext(
 
     override val CallableSymbolMarker.hasStableParameterNames: Boolean
         get() = asSymbol().rawStatus.hasStableParameterNames
+
+    override val DeclarationSymbolMarker.annotations: List<AnnotationCallInfo>
+        get() = asSymbol().resolvedAnnotationsWithArguments.map(::AnnotationCallInfoImpl)
+
+    override fun areAnnotationArgumentsEqual(
+        annotation1: AnnotationCallInfo,
+        annotation2: AnnotationCallInfo,
+        collectionArgumentsCompatibilityCheckStrategy: ExpectActualCollectionArgumentsCompatibilityCheckStrategy,
+    ): Boolean {
+        fun AnnotationCallInfo.getFirAnnotation(): FirAnnotation {
+            return (this as AnnotationCallInfoImpl).annotation
+        }
+        return areFirAnnotationsEqual(annotation1.getFirAnnotation(), annotation2.getFirAnnotation())
+    }
+
+    private fun areFirAnnotationsEqual(annotation1: FirAnnotation, annotation2: FirAnnotation): Boolean {
+        if (!areCompatibleExpectActualTypes(annotation1.typeRef.coneType, annotation2.typeRef.coneType)) {
+            return false
+        }
+        val args1 = annotation1.argumentMapping.mapping
+        val args2 = annotation2.argumentMapping.mapping
+        if (args1.size != args2.size) {
+            return false
+        }
+        return args1.all { (key, value1) ->
+            val value2 = args2[key]
+            value2 != null && areAnnotationArgumentsEqual(value1, value2)
+        }
+    }
+
+    private fun areAnnotationArgumentsEqual(expression1: FirExpression, expression2: FirExpression): Boolean {
+        // In K2 const expression calculated in backend.
+        // Because of that, we have "honest" checker at backend IR stage
+        // and "only simplest case" checker in frontend, so that we have at least some reporting in the IDE.
+        return when {
+            expression1 is FirConstExpression<*> && expression2 is FirConstExpression<*> -> {
+                expression1.value == expression2.value
+            }
+            else -> true
+        }
+    }
+
+    private inner class AnnotationCallInfoImpl(val annotation: FirAnnotation) : AnnotationCallInfo {
+        override val classId: ClassId?
+            get() = annotation.toAnnotationClassId(actualSession)
+
+        override val isRetentionSource: Boolean
+            get() = getAnnotationClass()?.getRetention(actualSession) == AnnotationRetention.SOURCE
+
+        override val isOptIn: Boolean
+            get() = getAnnotationClass()?.hasAnnotation(OptInNames.REQUIRES_OPT_IN_CLASS_ID, actualSession) ?: false
+
+        private fun getAnnotationClass(): FirRegularClassSymbol? =
+            annotation.annotationTypeRef.coneType.toRegularClassSymbol(actualSession)
+    }
+
+    override val DeclarationSymbolMarker.hasSourceAnnotationsErased: Boolean
+        get() {
+            val symbol = asSymbol()
+            return symbol.source != null || symbol.origin is FirDeclarationOrigin.Plugin
+        }
+
+    object Factory : FirExpectActualMatchingContextFactory {
+        override fun create(session: FirSession, scopeSession: ScopeSession): FirExpectActualMatchingContextImpl =
+            FirExpectActualMatchingContextImpl(session, scopeSession)
+    }
 }
