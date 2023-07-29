@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.backend.jvm.mapping.IrTypeMapper
 import org.jetbrains.kotlin.backend.jvm.mapping.MethodSignatureMapper
 import org.jetbrains.kotlin.codegen.inline.SMAP
 import org.jetbrains.kotlin.codegen.state.GenerationState
+import org.jetbrains.kotlin.codegen.state.JvmBackendConfig
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
 import org.jetbrains.kotlin.ir.IrBuiltIns
@@ -80,6 +81,8 @@ class JvmBackendContext(
         val newParameterToCaptured: Map<IrValueParameter, IrValueSymbol>,
     )
 
+    val config: JvmBackendConfig = state.config
+
     // If not-null, this is populated by LocalDeclarationsLowering with the intermediate data
     // allowing mapping from local function captures to parameters and accurate transformation
     // of calls to local functions from code fragments (i.e. the expression evaluator).
@@ -113,6 +116,8 @@ class JvmBackendContext(
     override val sharedVariablesManager = JvmSharedVariablesManager(state.module, ir.symbols, irBuiltIns, irFactory)
 
     lateinit var getIntrinsic: (IrFunctionSymbol) -> IntrinsicMarker?
+
+    lateinit var enumEntriesIntrinsicMappingsCache: EnumEntriesIntrinsicMappingsCache
 
     // Store evaluated SMAP for anonymous classes. Used only with IR inliner.
     val typeToCachedSMAP = mutableMapOf<Type, SMAP>()
@@ -174,7 +179,7 @@ class JvmBackendContext(
 
     val staticDefaultStubs = ConcurrentHashMap<IrSimpleFunctionSymbol, IrSimpleFunction>()
 
-    val inlineClassReplacements = MemoizedInlineClassReplacements(state.functionsWithInlineClassReturnTypesMangled, irFactory, this)
+    val inlineClassReplacements = MemoizedInlineClassReplacements(config.functionsWithInlineClassReturnTypesMangled, irFactory, this)
 
     val multiFieldValueClassReplacements = MemoizedMultiFieldValueClassReplacements(irFactory, this)
 

@@ -276,9 +276,12 @@ open class PsiRawFirBuilder(
             kind: DiagnosticKind = DiagnosticKind.ExpressionExpected
         ): FirExpression = toFirExpression { ConeSimpleDiagnostic(errorReason, kind) }
 
-        private inline fun KtElement?.toFirExpression(diagnosticFn: () -> ConeDiagnostic): FirExpression {
+        private inline fun KtElement?.toFirExpression(
+            sourceWhenThisIsNull: PsiElement? = null,
+            diagnosticFn: () -> ConeDiagnostic,
+        ): FirExpression {
             if (this == null) {
-                return buildErrorExpression(source = null, diagnosticFn())
+                return buildErrorExpression(source = sourceWhenThisIsNull?.toFirSourceElement(), diagnosticFn())
             }
 
             val result = when (val fir = convertElement(this, null)) {
@@ -877,7 +880,7 @@ open class PsiRawFirBuilder(
             return buildField {
                 source = delegateSource
                 moduleData = baseModuleData
-                origin = FirDeclarationOrigin.Synthetic
+                origin = FirDeclarationOrigin.Synthetic.DelegateField
                 name = NameUtils.delegateFieldName(fieldOrd)
                 returnTypeRef = type
                 symbol = FirFieldSymbol(CallableId(this@PsiRawFirBuilder.context.currentClassId, name))
@@ -1197,10 +1200,12 @@ open class PsiRawFirBuilder(
                 moduleData = baseModuleData
                 origin = FirDeclarationOrigin.Source
                 symbol = FirCodeFragmentSymbol()
-                block = when (file) {
-                    is KtExpressionCodeFragment -> file.getContentElement()?.toFirBlock() ?: buildEmptyExpressionBlock()
-                    is KtBlockCodeFragment -> configureBlockWithoutBuilding(file.getContentElement()).build()
-                    else -> error("Unexpected code fragment type: ${file::class}")
+                block = buildOrLazyBlock {
+                    when (file) {
+                        is KtExpressionCodeFragment -> file.getContentElement()?.toFirBlock() ?: buildEmptyExpressionBlock()
+                        is KtBlockCodeFragment -> configureBlockWithoutBuilding(file.getContentElement()).build()
+                        else -> error("Unexpected code fragment type: ${file::class}")
+                    }
                 }
             }
         }
@@ -1752,7 +1757,7 @@ open class PsiRawFirBuilder(
                                     source = expressionSource.fakeElement(KtFakeSourceElementKind.ImplicitReturn.FromExpressionBody)
                                     this.target = target
                                     result = buildUnitExpression {
-                                        source = expressionSource.fakeElement(KtFakeSourceElementKind.ImplicitUnit)
+                                        source = expressionSource.fakeElement(KtFakeSourceElementKind.ImplicitUnit.LambdaCoercion)
                                     }
                                 }
                             )
@@ -2269,7 +2274,7 @@ open class PsiRawFirBuilder(
         }
 
         override fun visitReturnExpression(expression: KtReturnExpression, data: FirElement?): FirElement {
-            val source = expression.toFirSourceElement(KtFakeSourceElementKind.ImplicitUnit)
+            val source = expression.toFirSourceElement(KtFakeSourceElementKind.ImplicitUnit.Return)
             val result = expression.returnedExpression?.toFirExpression("Incorrect return expression")
                 ?: buildUnitExpression { this.source = source }
             return result.toReturn(source, expression.getTargetLabel()?.getReferencedName(), fromKtReturnExpression = true)
@@ -2927,7 +2932,11 @@ open class PsiRawFirBuilder(
         override fun visitClassLiteralExpression(expression: KtClassLiteralExpression, data: FirElement?): FirElement {
             return buildGetClassCall {
                 source = expression.toFirSourceElement()
-                argumentList = buildUnaryArgumentList(expression.receiverExpression.toFirExpression("No receiver in class literal"))
+                argumentList = buildUnaryArgumentList(
+                    expression.receiverExpression.toFirExpression(sourceWhenThisIsNull = expression) {
+                        ConeUnsupportedClassLiteralsWithEmptyLhs
+                    }
+                )
             }
         }
 
@@ -2944,7 +2953,7 @@ open class PsiRawFirBuilder(
         }
 
         override fun visitCollectionLiteralExpression(expression: KtCollectionLiteralExpression, data: FirElement?): FirElement {
-            return buildArrayOfCall {
+            return buildArrayLiteral {
                 source = expression.toFirSourceElement()
                 argumentList = buildArgumentList {
                     for (innerExpression in expression.getInnerExpressions()) {

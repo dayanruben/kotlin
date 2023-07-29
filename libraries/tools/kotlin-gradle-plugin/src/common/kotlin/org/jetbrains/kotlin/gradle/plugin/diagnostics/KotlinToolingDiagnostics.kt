@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.gradle.plugin.diagnostics
 
 import org.gradle.api.Project
 import org.jetbrains.kotlin.gradle.InternalKotlinGradlePluginApi
+import org.jetbrains.kotlin.gradle.PRESETS_DEPRECATION_MESSAGE_SUFFIX
 import org.jetbrains.kotlin.gradle.dsl.KotlinSourceSetConvention.isRegisteredByKotlinSourceSetConventionAt
 import org.jetbrains.kotlin.gradle.dsl.NativeTargetShortcutTrace
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
@@ -35,8 +36,8 @@ object KotlinToolingDiagnostics {
         )
     }
 
-    object CommonMainWithDependsOnDiagnostic : ToolingDiagnosticFactory(ERROR) {
-        operator fun invoke() = build("commonMain can't declare dependsOn on other source sets")
+    object CommonMainOrTestWithDependsOnDiagnostic : ToolingDiagnosticFactory(ERROR) {
+        operator fun invoke(suffix: String) = build("common$suffix can't declare dependsOn on other source sets")
     }
 
     object NativeStdlibIsMissingDiagnostic : ToolingDiagnosticFactory(WARNING) {
@@ -87,17 +88,12 @@ object KotlinToolingDiagnostics {
         }
     }
 
-    object PromoteAndroidSourceSetLayoutV2Warning : ToolingDiagnosticFactory(WARNING) {
+    object AndroidSourceSetLayoutV1Deprecation : ToolingDiagnosticFactory(ERROR) {
         operator fun invoke() = build(
             """
-                ${multiplatformAndroidSourceSetLayoutV1.name} is deprecated. Use ${multiplatformAndroidSourceSetLayoutV2.name} instead. 
-                To enable ${multiplatformAndroidSourceSetLayoutV2.name}: put the following in your gradle.properties: 
-                ${PropertiesProvider.PropertyNames.KOTLIN_MPP_ANDROID_SOURCE_SET_LAYOUT_VERSION}=2
+                The version 1 of Android source set layout is deprecated. Please remove kotlin.mpp.androidSourceSetLayoutVersion=1 from the gradle.properties file.
                 
-                To suppress this warning: put the following in your gradle.properties:
-                ${PropertiesProvider.PropertyNames.KOTLIN_MPP_ANDROID_SOURCE_SET_LAYOUT_VERSION_1_NO_WARN}=true
-                
-                Learn more: https://kotlinlang.org/docs/whatsnew18.html#kotlin-multiplatform-a-new-android-source-set-layout
+                Learn how to migrate to the version 2 source set layout at: https://kotl.in/android-source-set-layout-v2
             """.trimIndent()
         )
     }
@@ -120,7 +116,7 @@ object KotlinToolingDiagnostics {
                 To suppress this warning: put the following in your gradle.properties:
                 ${PropertiesProvider.PropertyNames.KOTLIN_MPP_ANDROID_SOURCE_SET_LAYOUT_ANDROID_STYLE_NO_WARN}=true
                 
-                Learn more: https://kotlinlang.org/docs/whatsnew18.html#kotlin-multiplatform-a-new-android-source-set-layout
+                Learn more: https://kotl.in/android-source-set-layout-v2
             """.trimIndent()
         )
     }
@@ -181,7 +177,7 @@ object KotlinToolingDiagnostics {
                 sourceSets.getByName("androidAndroidTest") -> sourceSets.getByName("androidInstrumentedTest")
                 
                 Learn more about the new Kotlin/Android SourceSet Layout: 
-                https://kotlinlang.org/docs/whatsnew18.html#kotlin-multiplatform-a-new-android-source-set-layout
+                https://kotl.in/android-source-set-layout-v2
             """.trimIndent()
         )
     }
@@ -207,10 +203,10 @@ object KotlinToolingDiagnostics {
         )
     }
 
-    object Kotlin12XMppDeprecation : ToolingDiagnosticFactory(WARNING) {
+    object Kotlin12XMppDeprecation : ToolingDiagnosticFactory(FATAL) {
         operator fun invoke() = build(
             """
-            The 'org.jetbrains.kotlin.platform.*' plugins are deprecated and are no longer available since Kotlin 1.4.
+            The 'org.jetbrains.kotlin.platform.*' plugins are no longer available.
             Please migrate the project to the 'org.jetbrains.kotlin.multiplatform' plugin.
             See: https://kotlinlang.org/docs/reference/building-mpp-with-gradle.html
             """.trimIndent()
@@ -234,6 +230,27 @@ object KotlinToolingDiagnostics {
             }
             ```
             """.trimIndent()
+        )
+    }
+
+    object AndroidGradlePluginIsMissing : ToolingDiagnosticFactory(FATAL) {
+        operator fun invoke(trace: Throwable? = null) = build(
+            """
+                The Android target requires a 'Android Gradle Plugin' to be applied to the project. 
+                
+                plugins {
+                    kotlin("multiplatform")
+                    
+                    /* Android Gradle Plugin missing */
+                    id("com.android.library") /* <- Android Gradle Plugin for libraries */
+                    id("com.android.application") <* <- Android Gradle Plugin for applications */
+                }
+                
+                kotlin {
+                    androidTarget() /* <- requires Android Gradle Plugin to be applied */
+                }
+            """.trimIndent(),
+            throwable = trace
         )
     }
 
@@ -518,6 +535,23 @@ object KotlinToolingDiagnostics {
                 To suppress this warning add '$KOTLIN_NATIVE_SUPPRESS_EXPERIMENTAL_ARTIFACTS_DSL_WARNING=true' to your gradle.properties
             """.trimIndent()
         )
+    }
+
+    private val presetsDeprecationSeverity = ToolingDiagnostic.Severity.WARNING
+
+    object TargetFromPreset : ToolingDiagnosticFactory(presetsDeprecationSeverity) {
+        const val DEPRECATION_MESSAGE = "The targetFromPreset() $PRESETS_DEPRECATION_MESSAGE_SUFFIX"
+        operator fun invoke() = build(DEPRECATION_MESSAGE)
+    }
+
+    object FromPreset : ToolingDiagnosticFactory(presetsDeprecationSeverity) {
+        const val DEPRECATION_MESSAGE = "The fromPreset() $PRESETS_DEPRECATION_MESSAGE_SUFFIX"
+        operator fun invoke() = build(DEPRECATION_MESSAGE)
+    }
+
+    object CreateTarget : ToolingDiagnosticFactory(presetsDeprecationSeverity) {
+        const val DEPRECATION_MESSAGE = "The KotlinTargetPreset.createTarget() $PRESETS_DEPRECATION_MESSAGE_SUFFIX"
+        operator fun invoke() = build(DEPRECATION_MESSAGE)
     }
 
     object JvmWithJavaIsIncompatibleWithAndroid : ToolingDiagnosticFactory(FATAL) {

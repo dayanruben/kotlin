@@ -30,6 +30,7 @@ kotlin {
                 "org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi",
                 "org.jetbrains.kotlin.gradle.ExternalKotlinTargetApi",
                 "org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi",
+                "org.jetbrains.kotlin.gradle.DeprecatedTargetPresetApi",
             )
         )
         suppressWarnings = true
@@ -247,12 +248,6 @@ gradlePlugin {
             description = "Kotlin Native plugin for CocoaPods integration"
             displayName = description
             implementationClass = "org.jetbrains.kotlin.gradle.plugin.cocoapods.KotlinCocoapodsPlugin"
-        }
-        create("kotlinMultiplatformPluginPm20") {
-            id = "org.jetbrains.kotlin.multiplatform.pm20"
-            description = "Kotlin Multiplatform plugin with PM2.0"
-            displayName = description
-            implementationClass = "org.jetbrains.kotlin.gradle.plugin.KotlinPm20PluginWrapper"
         }
     }
 }

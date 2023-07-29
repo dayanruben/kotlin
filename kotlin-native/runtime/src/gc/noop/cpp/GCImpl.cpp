@@ -8,41 +8,27 @@
 #include "Common.h"
 #include "GC.hpp"
 #include "NoOpGC.hpp"
+#include "ThreadData.hpp"
 #include "std_support/Memory.hpp"
 #include "GCStatistics.hpp"
 #include "ObjectOps.hpp"
 
 using namespace kotlin;
 
-gc::GC::ThreadData::ThreadData(GC& gc, gcScheduler::GCSchedulerThreadData& gcScheduler, mm::ThreadData& threadData) noexcept :
-#ifdef CUSTOM_ALLOCATOR
-    impl_(std_support::make_unique<Impl>(gc, gcScheduler, threadData)) {}
-#else
-    impl_(std_support::make_unique<Impl>(gc, threadData)) {}
-#endif
+gc::GC::ThreadData::ThreadData(GC& gc, mm::ThreadData& threadData) noexcept : impl_(std_support::make_unique<Impl>(gc, threadData)) {}
 
 gc::GC::ThreadData::~ThreadData() = default;
 
-void gc::GC::ThreadData::Schedule() noexcept {
-    impl_->gc().Schedule();
-}
-
-void gc::GC::ThreadData::ScheduleAndWaitFullGC() noexcept {
-    impl_->gc().ScheduleAndWaitFullGC();
-}
-
-void gc::GC::ThreadData::ScheduleAndWaitFullGCWithFinalizers() noexcept {
-    impl_->gc().ScheduleAndWaitFullGCWithFinalizers();
-}
-
 void gc::GC::ThreadData::Publish() noexcept {
 #ifndef CUSTOM_ALLOCATOR
+    impl_->extraObjectDataFactoryThreadQueue().Publish();
     impl_->objectFactoryThreadQueue().Publish();
 #endif
 }
 
 void gc::GC::ThreadData::ClearForTests() noexcept {
 #ifndef CUSTOM_ALLOCATOR
+    impl_->extraObjectDataFactoryThreadQueue().ClearForTests();
     impl_->objectFactoryThreadQueue().ClearForTests();
 #else
     impl_->alloc().PrepareForGC();
@@ -65,11 +51,22 @@ ALWAYS_INLINE ArrayHeader* gc::GC::ThreadData::CreateArray(const TypeInfo* typeI
 #endif
 }
 
-#ifdef CUSTOM_ALLOCATOR
-alloc::CustomAllocator& gc::GC::ThreadData::Allocator() noexcept {
-    return impl_->alloc();
-}
+ALWAYS_INLINE mm::ExtraObjectData& gc::GC::ThreadData::CreateExtraObjectDataForObject(
+        ObjHeader* object, const TypeInfo* typeInfo) noexcept {
+#ifndef CUSTOM_ALLOCATOR
+    return impl_->extraObjectDataFactoryThreadQueue().CreateExtraObjectDataForObject(object, typeInfo);
+#else
+    return impl_->alloc().CreateExtraObjectDataForObject(object, typeInfo);
 #endif
+}
+
+ALWAYS_INLINE void gc::GC::ThreadData::DestroyUnattachedExtraObjectData(mm::ExtraObjectData& extraObject) noexcept {
+#ifndef CUSTOM_ALLOCATOR
+    impl_->extraObjectDataFactoryThreadQueue().DestroyExtraObjectData(extraObject);
+#else
+    extraObject.setFlag(mm::ExtraObjectData::FLAGS_SWEEPABLE);
+#endif
+}
 
 void gc::GC::ThreadData::OnSuspendForGC() noexcept { }
 
@@ -94,6 +91,7 @@ size_t gc::GC::GetTotalHeapObjectsSizeBytes() const noexcept {
 
 void gc::GC::ClearForTests() noexcept {
 #ifndef CUSTOM_ALLOCATOR
+    impl_->extraObjectDataFactory().ClearForTests();
     impl_->objectFactory().ClearForTests();
 #else
     impl_->gc().heap().ClearForTests();
@@ -121,6 +119,9 @@ ALWAYS_INLINE void gc::GC::processFieldInMark(void* state, ObjHeader* field) noe
 int64_t gc::GC::Schedule() noexcept {
     return 0;
 }
+
+void gc::GC::WaitFinished(int64_t epoch) noexcept {}
+
 void gc::GC::WaitFinalizers(int64_t epoch) noexcept {}
 
 bool gc::isMarked(ObjHeader* object) noexcept {
@@ -138,4 +139,16 @@ const size_t gc::GC::objectDataSize = 0; // sizeof(NoOpGC::ObjectData) with [[no
 // static
 ALWAYS_INLINE bool gc::GC::SweepObject(void *objectData) noexcept {
     return true;
+}
+
+// static
+ALWAYS_INLINE void gc::GC::DestroyExtraObjectData(mm::ExtraObjectData& extraObject) noexcept {
+#ifndef CUSTOM_ALLOCATOR
+    extraObject.Uninstall();
+    auto* threadData = mm::ThreadRegistry::Instance().CurrentThreadData();
+    threadData->gc().impl().extraObjectDataFactoryThreadQueue().DestroyExtraObjectData(extraObject);
+#else
+    extraObject.ReleaseAssociatedObject();
+    extraObject.setFlag(mm::ExtraObjectData::FLAGS_FINALIZED);
+#endif
 }

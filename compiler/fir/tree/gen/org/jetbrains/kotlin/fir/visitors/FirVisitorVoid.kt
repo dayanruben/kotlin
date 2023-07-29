@@ -29,6 +29,8 @@ import org.jetbrains.kotlin.fir.declarations.FirAnonymousInitializer
 import org.jetbrains.kotlin.fir.declarations.FirCallableDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirTypeParameterRef
 import org.jetbrains.kotlin.fir.declarations.FirTypeParameter
+import org.jetbrains.kotlin.fir.declarations.FirConstructedClassTypeParameterRef
+import org.jetbrains.kotlin.fir.declarations.FirOuterClassTypeParameterRef
 import org.jetbrains.kotlin.fir.declarations.FirVariable
 import org.jetbrains.kotlin.fir.declarations.FirValueParameter
 import org.jetbrains.kotlin.fir.declarations.FirReceiverParameter
@@ -92,7 +94,7 @@ import org.jetbrains.kotlin.fir.expressions.FirWhenBranch
 import org.jetbrains.kotlin.fir.expressions.FirContextReceiverArgumentListOwner
 import org.jetbrains.kotlin.fir.expressions.FirCheckNotNullCall
 import org.jetbrains.kotlin.fir.expressions.FirElvisExpression
-import org.jetbrains.kotlin.fir.expressions.FirArrayOfCall
+import org.jetbrains.kotlin.fir.expressions.FirArrayLiteral
 import org.jetbrains.kotlin.fir.expressions.FirAugmentedArraySetCall
 import org.jetbrains.kotlin.fir.expressions.FirClassReferenceExpression
 import org.jetbrains.kotlin.fir.expressions.FirErrorExpression
@@ -257,6 +259,14 @@ abstract class FirVisitorVoid : FirVisitor<Unit, Nothing?>() {
 
     open fun visitTypeParameter(typeParameter: FirTypeParameter) {
         visitElement(typeParameter)
+    }
+
+    open fun visitConstructedClassTypeParameterRef(constructedClassTypeParameterRef: FirConstructedClassTypeParameterRef) {
+        visitElement(constructedClassTypeParameterRef)
+    }
+
+    open fun visitOuterClassTypeParameterRef(outerClassTypeParameterRef: FirOuterClassTypeParameterRef) {
+        visitElement(outerClassTypeParameterRef)
     }
 
     open fun visitVariable(variable: FirVariable) {
@@ -511,8 +521,8 @@ abstract class FirVisitorVoid : FirVisitor<Unit, Nothing?>() {
         visitElement(elvisExpression)
     }
 
-    open fun visitArrayOfCall(arrayOfCall: FirArrayOfCall) {
-        visitElement(arrayOfCall)
+    open fun visitArrayLiteral(arrayLiteral: FirArrayLiteral) {
+        visitElement(arrayLiteral)
     }
 
     open fun visitAugmentedArraySetCall(augmentedArraySetCall: FirAugmentedArraySetCall) {
@@ -871,6 +881,14 @@ abstract class FirVisitorVoid : FirVisitor<Unit, Nothing?>() {
         visitTypeParameter(typeParameter)
     }
 
+    final override fun visitConstructedClassTypeParameterRef(constructedClassTypeParameterRef: FirConstructedClassTypeParameterRef, data: Nothing?) {
+        visitConstructedClassTypeParameterRef(constructedClassTypeParameterRef)
+    }
+
+    final override fun visitOuterClassTypeParameterRef(outerClassTypeParameterRef: FirOuterClassTypeParameterRef, data: Nothing?) {
+        visitOuterClassTypeParameterRef(outerClassTypeParameterRef)
+    }
+
     final override fun visitVariable(variable: FirVariable, data: Nothing?) {
         visitVariable(variable)
     }
@@ -1123,8 +1141,8 @@ abstract class FirVisitorVoid : FirVisitor<Unit, Nothing?>() {
         visitElvisExpression(elvisExpression)
     }
 
-    final override fun visitArrayOfCall(arrayOfCall: FirArrayOfCall, data: Nothing?) {
-        visitArrayOfCall(arrayOfCall)
+    final override fun visitArrayLiteral(arrayLiteral: FirArrayLiteral, data: Nothing?) {
+        visitArrayLiteral(arrayLiteral)
     }
 
     final override fun visitAugmentedArraySetCall(augmentedArraySetCall: FirAugmentedArraySetCall, data: Nothing?) {

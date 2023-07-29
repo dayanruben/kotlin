@@ -9,6 +9,7 @@
 #include <cstddef>
 
 #include "Allocator.hpp"
+#include "ExtraObjectDataFactory.hpp"
 #include "FinalizerProcessor.hpp"
 #include "GCScheduler.hpp"
 #include "GCState.hpp"
@@ -78,24 +79,14 @@ public:
         using ObjectData = SameThreadMarkAndSweep::ObjectData;
         using Allocator = AllocatorWithGC<Allocator, ThreadData>;
 
-        ThreadData(SameThreadMarkAndSweep& gc, mm::ThreadData& threadData, gcScheduler::GCSchedulerThreadData& gcScheduler) noexcept :
-            gc_(gc), gcScheduler_(gcScheduler) {}
+        ThreadData(SameThreadMarkAndSweep& gc, mm::ThreadData& threadData) noexcept {}
         ~ThreadData() = default;
-
-        void SafePointAllocation(size_t size) noexcept;
-
-        void Schedule() noexcept;
-        void ScheduleAndWaitFullGC() noexcept;
-        void ScheduleAndWaitFullGCWithFinalizers() noexcept;
 
         void OnOOM(size_t size) noexcept;
 
         Allocator CreateAllocator() noexcept { return Allocator(gc::Allocator(), *this); }
 
     private:
-
-        SameThreadMarkAndSweep& gc_;
-        gcScheduler::GCSchedulerThreadData& gcScheduler_;
     };
 
     using Allocator = ThreadData::Allocator;
@@ -109,7 +100,10 @@ public:
     using FinalizerQueue = mm::ObjectFactory<SameThreadMarkAndSweep>::FinalizerQueue;
     using FinalizerQueueTraits = mm::ObjectFactory<SameThreadMarkAndSweep>::FinalizerQueueTraits;
 
-    SameThreadMarkAndSweep(mm::ObjectFactory<SameThreadMarkAndSweep>& objectFactory, gcScheduler::GCScheduler& gcScheduler) noexcept;
+    SameThreadMarkAndSweep(
+            mm::ObjectFactory<SameThreadMarkAndSweep>& objectFactory,
+            mm::ExtraObjectDataFactory& extraObjectDataFactory,
+            gcScheduler::GCScheduler& gcScheduler) noexcept;
 #endif
 
     ~SameThreadMarkAndSweep();
@@ -118,8 +112,7 @@ public:
     void StopFinalizerThreadIfRunning() noexcept;
     bool FinalizersThreadIsRunning() noexcept;
 
-    int64_t Schedule() noexcept { return state_.schedule(); }
-    void WaitFinalized(int64_t epoch) noexcept { state_.waitEpochFinalized(epoch); }
+    GCStateHolder& state() noexcept { return state_; }
 
 #ifdef CUSTOM_ALLOCATOR
     alloc::Heap& heap() noexcept { return heap_; }
@@ -130,6 +123,7 @@ private:
 
 #ifndef CUSTOM_ALLOCATOR
     mm::ObjectFactory<SameThreadMarkAndSweep>& objectFactory_;
+    mm::ExtraObjectDataFactory& extraObjectDataFactory_;
 #else
     alloc::Heap heap_;
 #endif

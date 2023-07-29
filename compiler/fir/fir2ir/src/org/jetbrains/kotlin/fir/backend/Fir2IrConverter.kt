@@ -5,9 +5,12 @@
 
 package org.jetbrains.kotlin.fir.backend
 
+import org.jetbrains.kotlin.KtDiagnosticReporterWithImplicitIrBasedContext
 import org.jetbrains.kotlin.KtFakeSourceElementKind
 import org.jetbrains.kotlin.KtPsiSourceFileLinesMapping
 import org.jetbrains.kotlin.KtSourceFileLinesMappingFromLineStartOffsets
+import org.jetbrains.kotlin.backend.common.CommonBackendErrors
+import org.jetbrains.kotlin.backend.common.sourceElement
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.config.AnalysisFlags
@@ -134,7 +137,7 @@ class Fir2IrConverter(
                         else ->
                             NaiveSourceBasedFileEntryImpl(file.sourceFile?.path ?: file.sourceFile?.name ?: file.name)
                     }
-            FirDeclarationOrigin.Synthetic -> NaiveSourceBasedFileEntryImpl(file.name)
+            is FirDeclarationOrigin.Synthetic -> NaiveSourceBasedFileEntryImpl(file.name)
             else -> error("Unsupported file origin: ${file.origin}")
         }
         val irFile = IrFileImpl(
@@ -330,16 +333,13 @@ class Fir2IrConverter(
                     declarationStorage.enterScope(irScript)
                     irScript.parent = parent
                     for (scriptStatement in declaration.statements) {
-                        if (scriptStatement is FirDeclaration) {
-                            when (scriptStatement) {
-                                is FirRegularClass -> {
-                                    registerClassAndNestedClasses(scriptStatement, irScript)
-                                    processClassAndNestedClassHeaders(scriptStatement)
-                                }
-                                is FirTypeAlias -> classifierStorage.registerTypeAlias(scriptStatement, irScript)
-                                else -> {}
+                        when (scriptStatement) {
+                            is FirRegularClass -> {
+                                registerClassAndNestedClasses(scriptStatement, irScript)
+                                processClassAndNestedClassHeaders(scriptStatement)
                             }
-
+                            is FirTypeAlias -> classifierStorage.registerTypeAlias(scriptStatement, irScript)
+                            else -> {}
                         }
                     }
                     for (scriptStatement in declaration.statements) {
@@ -403,8 +403,8 @@ class Fir2IrConverter(
         private fun evaluateConstants(irModuleFragment: IrModuleFragment, fir2IrConfiguration: Fir2IrConfiguration) {
             val firModuleDescriptor = irModuleFragment.descriptor as? FirModuleDescriptor
             val targetPlatform = firModuleDescriptor?.platform
-            val languageVersionSettings = firModuleDescriptor?.session?.languageVersionSettings
-            val intrinsicConstEvaluation = languageVersionSettings?.supportsFeature(LanguageFeature.IntrinsicConstEvaluation) == true
+            val languageVersionSettings = firModuleDescriptor?.session?.languageVersionSettings ?: return
+            val intrinsicConstEvaluation = languageVersionSettings.supportsFeature(LanguageFeature.IntrinsicConstEvaluation) == true
 
             val configuration = IrInterpreterConfiguration(
                 platform = targetPlatform,
@@ -412,8 +412,19 @@ class Fir2IrConverter(
             )
             val interpreter = IrInterpreter(IrInterpreterEnvironment(irModuleFragment.irBuiltins, configuration))
             val mode = if (intrinsicConstEvaluation) EvaluationMode.ONLY_INTRINSIC_CONST else EvaluationMode.ONLY_BUILTINS
+            val ktDiagnosticReporter = KtDiagnosticReporterWithImplicitIrBasedContext(fir2IrConfiguration.diagnosticReporter, languageVersionSettings)
             irModuleFragment.files.forEach {
-                it.transformConst(interpreter, mode, fir2IrConfiguration.evaluatedConstTracker, fir2IrConfiguration.inlineConstTracker)
+                it.transformConst(
+                    interpreter,
+                    mode,
+                    fir2IrConfiguration.evaluatedConstTracker,
+                    fir2IrConfiguration.inlineConstTracker,
+                    onError = { irFile, element, error ->
+                        // We are using exactly this overload of `at` to eliminate differences between PSI and LightTree render
+                        ktDiagnosticReporter.at(element.sourceElement(), element, irFile)
+                            .report(CommonBackendErrors.EVALUATION_ERROR, error.description)
+                    }
+                )
             }
         }
 

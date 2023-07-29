@@ -14,9 +14,13 @@ import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.descriptors.FirModuleDescriptor
 import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
+import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
+import org.jetbrains.kotlin.fir.symbols.lazyDeclarationResolver
+import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
 import org.jetbrains.kotlin.ir.BuiltInOperatorNames
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
@@ -375,29 +379,18 @@ class IrBuiltInsOverFir(
     override val ieee754equalsFunByOperandType: MutableMap<IrClassifierSymbol, IrSimpleFunctionSymbol>
         get() = _ieee754equalsFunByOperandType
 
-    @Suppress("RedundantModalityModifier") // Explicit `final` keyword can be dropped after bootstrap update
-    final override var eqeqeqSymbol: IrSimpleFunctionSymbol private set
-    @Suppress("RedundantModalityModifier") // Explicit `final` keyword can be dropped after bootstrap update
-    final override var eqeqSymbol: IrSimpleFunctionSymbol private set
-    @Suppress("RedundantModalityModifier") // Explicit `final` keyword can be dropped after bootstrap update
-    final override var throwCceSymbol: IrSimpleFunctionSymbol private set
-    @Suppress("RedundantModalityModifier") // Explicit `final` keyword can be dropped after bootstrap update
-    final override var throwIseSymbol: IrSimpleFunctionSymbol private set
-    @Suppress("RedundantModalityModifier") // Explicit `final` keyword can be dropped after bootstrap update
-    final override var andandSymbol: IrSimpleFunctionSymbol private set
-    @Suppress("RedundantModalityModifier") // Explicit `final` keyword can be dropped after bootstrap update
-    final override var ororSymbol: IrSimpleFunctionSymbol private set
-    @Suppress("RedundantModalityModifier") // Explicit `final` keyword can be dropped after bootstrap update
-    final override var noWhenBranchMatchedExceptionSymbol: IrSimpleFunctionSymbol private set
-    @Suppress("RedundantModalityModifier") // Explicit `final` keyword can be dropped after bootstrap update
-    final override var illegalArgumentExceptionSymbol: IrSimpleFunctionSymbol private set
-    @Suppress("RedundantModalityModifier") // Explicit `final` keyword can be dropped after bootstrap update
-    final override var dataClassArrayMemberHashCodeSymbol: IrSimpleFunctionSymbol private set
-    @Suppress("RedundantModalityModifier") // Explicit `final` keyword can be dropped after bootstrap update
-    final override var dataClassArrayMemberToStringSymbol: IrSimpleFunctionSymbol private set
+    override var eqeqeqSymbol: IrSimpleFunctionSymbol private set
+    override var eqeqSymbol: IrSimpleFunctionSymbol private set
+    override var throwCceSymbol: IrSimpleFunctionSymbol private set
+    override var throwIseSymbol: IrSimpleFunctionSymbol private set
+    override var andandSymbol: IrSimpleFunctionSymbol private set
+    override var ororSymbol: IrSimpleFunctionSymbol private set
+    override var noWhenBranchMatchedExceptionSymbol: IrSimpleFunctionSymbol private set
+    override var illegalArgumentExceptionSymbol: IrSimpleFunctionSymbol private set
+    override var dataClassArrayMemberHashCodeSymbol: IrSimpleFunctionSymbol private set
+    override var dataClassArrayMemberToStringSymbol: IrSimpleFunctionSymbol private set
 
-    @Suppress("RedundantModalityModifier") // Explicit `final` keyword can be dropped after bootstrap update
-    final override var checkNotNullSymbol: IrSimpleFunctionSymbol private set
+    override var checkNotNullSymbol: IrSimpleFunctionSymbol private set
     override val arrayOfNulls: IrSimpleFunctionSymbol by lazy {
         findFunctions(kotlinPackage, Name.identifier("arrayOfNulls")).first {
             it.owner.dispatchReceiverParameter == null && it.owner.valueParameters.size == 1 &&
@@ -408,14 +401,10 @@ class IrBuiltInsOverFir(
     override val linkageErrorSymbol: IrSimpleFunctionSymbol
         get() = TODO("Not yet implemented")
 
-    @Suppress("RedundantModalityModifier") // Explicit `final` keyword can be dropped after bootstrap update
-    final override var lessFunByOperandType: Map<IrClassifierSymbol, IrSimpleFunctionSymbol> private set
-    @Suppress("RedundantModalityModifier") // Explicit `final` keyword can be dropped after bootstrap update
-    final override var lessOrEqualFunByOperandType: Map<IrClassifierSymbol, IrSimpleFunctionSymbol> private set
-    @Suppress("RedundantModalityModifier") // Explicit `final` keyword can be dropped after bootstrap update
-    final override var greaterOrEqualFunByOperandType: Map<IrClassifierSymbol, IrSimpleFunctionSymbol> private set
-    @Suppress("RedundantModalityModifier") // Explicit `final` keyword can be dropped after bootstrap update
-    final override var greaterFunByOperandType: Map<IrClassifierSymbol, IrSimpleFunctionSymbol> private set
+    override var lessFunByOperandType: Map<IrClassifierSymbol, IrSimpleFunctionSymbol> private set
+    override var lessOrEqualFunByOperandType: Map<IrClassifierSymbol, IrSimpleFunctionSymbol> private set
+    override var greaterOrEqualFunByOperandType: Map<IrClassifierSymbol, IrSimpleFunctionSymbol> private set
+    override var greaterFunByOperandType: Map<IrClassifierSymbol, IrSimpleFunctionSymbol> private set
 
     init {
         with(this.operatorsPackageFragment) {
@@ -747,8 +736,9 @@ class IrBuiltInsOverFir(
         referenceClassByClassId(ClassId.topLevel(topLevelFqName))
 
     private fun referenceClassByClassId(classId: ClassId): IrClassSymbol? {
-        val firSymbol = components.session.symbolProvider.getClassLikeSymbolByClassId(classId) ?: return null
-        val firClassSymbol = firSymbol as? FirClassSymbol ?: return null
+        val firClassSymbol = components.session.symbolProvider.getClassLikeSymbolByClassId(classId) as? FirClassSymbol ?: return null
+        firClassSymbol.lazyResolveToPhaseWithoutContractCheck(FirResolvePhase.STATUS)
+
         return components.classifierStorage.getIrClassSymbol(firClassSymbol)
     }
 
@@ -1210,13 +1200,25 @@ class IrBuiltInsOverFir(
         )
     }
 
-    private fun findFunctions(packageName: FqName, name: Name): List<IrSimpleFunctionSymbol> =
-        components.session.symbolProvider.getTopLevelFunctionSymbols(packageName, name).mapNotNull { firOpSymbol ->
-            components.declarationStorage.getIrFunctionSymbol(firOpSymbol) as? IrSimpleFunctionSymbol
-        }
+    private fun findFunctions(packageName: FqName, name: Name): List<IrSimpleFunctionSymbol> {
+        return components.session.symbolProvider.getTopLevelFunctionSymbols(packageName, name)
+            .onEach { it.lazyResolveToPhaseWithoutContractCheck(FirResolvePhase.STATUS) }
+            .mapNotNull { components.declarationStorage.getIrFunctionSymbol(it) as? IrSimpleFunctionSymbol }
+    }
 
-    private fun findProperties(packageName: FqName, name: Name): List<IrPropertySymbol> =
-        components.session.symbolProvider.getTopLevelPropertySymbols(packageName, name).mapNotNull { firOpSymbol ->
-            components.declarationStorage.getIrPropertySymbol(firOpSymbol) as? IrPropertySymbol
+    private fun findProperties(packageName: FqName, name: Name): List<IrPropertySymbol> {
+        return components.session.symbolProvider.getTopLevelPropertySymbols(packageName, name)
+            .onEach { it.lazyResolveToPhaseWithoutContractCheck(FirResolvePhase.STATUS) }
+            .mapNotNull { components.declarationStorage.getIrPropertySymbol(it) as? IrPropertySymbol }
+    }
+
+    private fun FirBasedSymbol<*>.lazyResolveToPhaseWithoutContractCheck(toPhase: FirResolvePhase) {
+        val session = moduleData.session
+
+        // In the compiler, the declaration should have been already resolved.
+        // In the IDE, the contract check is not active.
+        session.lazyDeclarationResolver.disableLazyResolveContractChecksInside {
+            lazyResolveToPhase(toPhase)
         }
+    }
 }

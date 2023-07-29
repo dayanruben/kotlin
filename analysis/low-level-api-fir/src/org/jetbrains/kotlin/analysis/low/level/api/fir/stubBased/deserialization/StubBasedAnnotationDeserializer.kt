@@ -35,6 +35,8 @@ import org.jetbrains.kotlin.psi.stubs.impl.KotlinAnnotationEntryStubImpl
 import org.jetbrains.kotlin.psi.stubs.impl.KotlinClassTypeBean
 import org.jetbrains.kotlin.psi.stubs.impl.KotlinPropertyStubImpl
 import org.jetbrains.kotlin.types.ConstantValueKind
+import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
+import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 
 class StubBasedAnnotationDeserializer(
     private val session: FirSession,
@@ -117,10 +119,17 @@ class StubBasedAnnotationDeserializer(
                     }
                 )
             }
-            is ArrayValue -> buildArrayOfCall {
-                source = KtRealPsiSourceElement(sourceElement)
-                argumentList = buildArgumentList {
-                    value.value.mapTo(arguments) { resolveValue(sourceElement, it) }
+            is ArrayValue -> {
+                buildArrayLiteral {
+                    source = KtRealPsiSourceElement(sourceElement)
+                    typeRef = buildResolvedTypeRef {
+                        // Not quite precise, yet doesn't require annotation resolution
+                        type = (inferArrayValueType(value.value) ?: session.builtinTypes.anyType.type).createArrayType()
+                    }
+
+                    argumentList = buildArgumentList {
+                        value.value.mapTo(arguments) { resolveValue(sourceElement, it) }
+                    }
                 }
             }
             is AnnotationValue -> {
@@ -144,8 +153,48 @@ class StubBasedAnnotationDeserializer(
             is IntValue -> const(ConstantValueKind.Int, value.value, session.builtinTypes.intType, sourceElement)
             NullValue -> const(ConstantValueKind.Null, null, session.builtinTypes.nullableAnyType, sourceElement)
             is StringValue -> const(ConstantValueKind.String, value.value, session.builtinTypes.stringType, sourceElement)
-            else -> error("Unexpected value $value")
+            else -> errorWithAttachment("Unexpected value ${value::class}") {
+                withEntry("value", value.toString())
+            }
         }
+    }
+
+    private fun inferArrayValueType(values: List<ConstantValue<*>>): ConeClassLikeType? {
+        if (values.isNotEmpty()) {
+            val firstValue = values.first()
+
+            for ((index, value) in values.withIndex()) {
+                if (index > 0 && value.javaClass != firstValue.javaClass) {
+                    return null
+                }
+            }
+
+            return when (firstValue) {
+                is BooleanValue -> session.builtinTypes.booleanType.type
+                is ByteValue -> session.builtinTypes.byteType.type
+                is CharValue -> session.builtinTypes.charType.type
+                is ShortValue -> session.builtinTypes.shortType.type
+                is IntValue -> session.builtinTypes.intType.type
+                is LongValue -> session.builtinTypes.longType.type
+                is UByteValue -> session.builtinTypes.byteType.type
+                is UShortValue -> session.builtinTypes.shortType.type
+                is UIntValue -> session.builtinTypes.intType.type
+                is ULongValue -> session.builtinTypes.longType.type
+                is DoubleValue -> session.builtinTypes.doubleType.type
+                is FloatValue -> session.builtinTypes.floatType.type
+                is AnnotationValue -> session.builtinTypes.annotationType.type
+                is StringValue -> session.builtinTypes.stringType.type
+                is EnumValue -> firstValue.enumClassId.constructClassLikeType(ConeTypeProjection.EMPTY_ARRAY, isNullable = false)
+                is ArrayValue -> values.firstNotNullOfOrNull { inferArrayValueType((it as ArrayValue).value) }?.createArrayType()
+                is KClassValue -> {
+                    val kClassType = session.builtinTypes.anyType.type
+                    StandardClassIds.KClass.constructClassLikeType(arrayOf(kClassType), isNullable = false)
+                }
+                else -> null
+            }
+        }
+
+        return null
     }
 
     private fun <T> const(

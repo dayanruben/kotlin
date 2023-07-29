@@ -10,6 +10,7 @@
 
 #include "Allocator.hpp"
 #include "Barriers.hpp"
+#include "ExtraObjectDataFactory.hpp"
 #include "FinalizerProcessor.hpp"
 #include "GCScheduler.hpp"
 #include "GCState.hpp"
@@ -77,16 +78,8 @@ public:
 
         using Allocator = AllocatorWithGC<Allocator, ThreadData>;
 
-        explicit ThreadData(
-                ConcurrentMarkAndSweep& gc, mm::ThreadData& threadData, gcScheduler::GCSchedulerThreadData& gcScheduler) noexcept :
-            gc_(gc), threadData_(threadData), gcScheduler_(gcScheduler) {}
+        explicit ThreadData(ConcurrentMarkAndSweep& gc, mm::ThreadData& threadData) noexcept : threadData_(threadData) {}
         ~ThreadData() = default;
-
-        void SafePointAllocation(size_t size) noexcept;
-
-        void Schedule() noexcept;
-        void ScheduleAndWaitFullGC() noexcept;
-        void ScheduleAndWaitFullGCWithFinalizers() noexcept;
 
         void OnOOM(size_t size) noexcept;
 
@@ -100,9 +93,7 @@ public:
 
     private:
         friend ConcurrentMarkAndSweep;
-        ConcurrentMarkAndSweep& gc_;
         mm::ThreadData& threadData_;
-        gcScheduler::GCSchedulerThreadData& gcScheduler_;
         std::atomic<bool> marking_;
         BarriersThreadData barriers_;
     };
@@ -120,7 +111,10 @@ public:
 #ifdef CUSTOM_ALLOCATOR
     explicit ConcurrentMarkAndSweep(gcScheduler::GCScheduler& scheduler) noexcept;
 #else
-    ConcurrentMarkAndSweep(mm::ObjectFactory<ConcurrentMarkAndSweep>& objectFactory, gcScheduler::GCScheduler& scheduler) noexcept;
+    ConcurrentMarkAndSweep(
+            mm::ObjectFactory<ConcurrentMarkAndSweep>& objectFactory,
+            mm::ExtraObjectDataFactory& extraObjectDataFactory,
+            gcScheduler::GCScheduler& scheduler) noexcept;
 #endif
     ~ConcurrentMarkAndSweep();
 
@@ -136,14 +130,14 @@ public:
     alloc::Heap& heap() noexcept { return heap_; }
 #endif
 
-    int64_t Schedule() noexcept { return state_.schedule(); }
-    void WaitFinalized(int64_t epoch) noexcept { state_.waitEpochFinalized(epoch); }
+    GCStateHolder& state() noexcept { return state_; }
 
 private:
     void PerformFullGC(int64_t epoch) noexcept;
 
 #ifndef CUSTOM_ALLOCATOR
     mm::ObjectFactory<ConcurrentMarkAndSweep>& objectFactory_;
+    mm::ExtraObjectDataFactory& extraObjectDataFactory_;
 #else
     alloc::Heap heap_;
 #endif

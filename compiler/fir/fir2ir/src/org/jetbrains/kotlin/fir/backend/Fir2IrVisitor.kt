@@ -26,7 +26,9 @@ import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.impl.FirContractCallBlock
 import org.jetbrains.kotlin.fir.expressions.impl.FirElseIfTrueCondition
 import org.jetbrains.kotlin.fir.expressions.impl.FirUnitExpression
+import org.jetbrains.kotlin.fir.extensions.extensionService
 import org.jetbrains.kotlin.fir.references.*
+import org.jetbrains.kotlin.fir.resolve.fullyExpandedConeType
 import org.jetbrains.kotlin.fir.resolve.isIteratorNext
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.*
@@ -56,6 +58,7 @@ import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtForExpression
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.util.OperatorNameConventions
+import org.jetbrains.kotlin.utils.addToStdlib.runUnless
 
 class Fir2IrVisitor(
     private val components: Fir2IrComponents,
@@ -69,7 +72,7 @@ class Fir2IrVisitor(
     private val operatorGenerator = OperatorExpressionGenerator(components, this, conversionScope)
 
     private var _annotationMode: Boolean = false
-    public val annotationMode: Boolean
+    val annotationMode: Boolean
         get() = _annotationMode
 
     private fun FirTypeRef.toIrType(): IrType = with(typeConverter) { toIrType() }
@@ -207,6 +210,7 @@ class Fir2IrVisitor(
         return irClass
     }
 
+    @OptIn(UnexpandedTypeCheck::class)
     override fun visitScript(script: FirScript, data: Any?): IrElement {
         return declarationStorage.getCachedIrScript(script)!!.also { irScript ->
             irScript.parent = conversionScope.parentFromStack()
@@ -216,18 +220,29 @@ class Fir2IrVisitor(
                 declarationStorage.createIrVariable(parameter, irScript, givenOrigin = IrDeclarationOrigin.SCRIPT_CALL_PARAMETER)
             }
 
-            irScript.thisReceiver = script.contextReceivers.find { it.customLabelName?.asString() == SCRIPT_SPECIAL_NAME_STRING }?.let { receiver ->
-                receiver.convertWithOffsets { startOffset, endOffset ->
-                    irFactory.createValueParameter(
-                        startOffset, endOffset, IrDeclarationOrigin.INSTANCE_RECEIVER, SpecialNames.THIS, receiver.typeRef.toIrType(),
-                        isAssignable = false, IrValueParameterSymbolImpl(), UNDEFINED_PARAMETER_INDEX,
-                        varargElementType = null,
-                        isCrossinline = false, isNoinline = false,
-                        isHidden = false,
-                    ).also {
-                        it.parent = irScript
+            // NOTE: index should correspond to one generated in the collectTowerDataElementsForScript
+            irScript.implicitReceiversParameters = script.contextReceivers.mapIndexedNotNull { index, receiver ->
+                val isSelf = receiver.customLabelName?.asString() == SCRIPT_SPECIAL_NAME_STRING
+                val name =
+                    if (isSelf) SpecialNames.THIS
+                    else Name.identifier("${receiver.labelName?.asStringStripSpecialMarkers() ?: SCRIPT_RECEIVER_NAME_PREFIX}_$index")
+                val origin = if (isSelf) IrDeclarationOrigin.INSTANCE_RECEIVER else IrDeclarationOrigin.SCRIPT_IMPLICIT_RECEIVER
+                val irReceiver =
+                    receiver.convertWithOffsets { startOffset, endOffset ->
+                        irFactory.createValueParameter(
+                            startOffset, endOffset, origin, name, receiver.typeRef.toIrType(), isAssignable = false,
+                            IrValueParameterSymbolImpl(),
+                            if (isSelf) UNDEFINED_PARAMETER_INDEX else index,
+                            varargElementType = null, isCrossinline = false, isNoinline = false, isHidden = false
+                        ).also {
+                            it.parent = irScript
+                        }
                     }
-                }
+                if (isSelf) {
+                    irScript.thisReceiver = irReceiver
+                    irScript.baseClass = irReceiver.type
+                    null
+                } else irReceiver
             }
 
             conversionScope.withParent(irScript) {
@@ -235,6 +250,17 @@ class Fir2IrVisitor(
                 for (statement in script.statements) {
                     val irStatement = if (statement is FirDeclaration) {
                         when {
+                            statement is FirProperty && statement.origin == FirDeclarationOrigin.ScriptCustomization.ResultProperty -> {
+                                // Generating the result property only for expressions with a meaningful result type
+                                // otherwise skip the property and convert the expression into the statement
+                                if (statement.returnTypeRef.let { (it.isUnit || it.isNothing || it.isNullableNothing) } == true) {
+                                    statement.initializer!!.toIrStatement()
+                                } else {
+                                    (statement.accept(this@Fir2IrVisitor, null) as? IrDeclaration)?.also {
+                                        irScript.resultProperty = (it as? IrProperty)?.symbol
+                                    }
+                                }
+                            }
                             statement is FirVariable && statement.isDestructuringDeclarationContainerVariable == true -> {
                                 statement.convertWithOffsets { startOffset, endOffset ->
                                     IrCompositeImpl(
@@ -279,6 +305,11 @@ class Fir2IrVisitor(
                         statement.toIrStatement()
                     }
                     irScript.statements.add(irStatement!!)
+                }
+            }
+            for (configurator in session.extensionService.fir2IrScriptConfigurators) {
+                with(configurator) {
+                    irScript.configure(script) { declarationStorage.getCachedIrScript(it.fir)?.symbol }
                 }
             }
             declarationStorage.leaveScope(irScript)
@@ -758,7 +789,9 @@ class Fir2IrVisitor(
 
     private fun FirStatement.toIrStatement(): IrStatement? {
         if (this is FirTypeAlias) return null
-        if (this is FirUnitExpression) return convertToIrExpression(this)
+        if (this is FirUnitExpression) return runUnless(source?.kind is KtFakeSourceElementKind.ImplicitUnit.IndexedAssignmentCoercion) {
+            convertToIrExpression(this)
+        }
         if (this is FirContractCallBlock) return null
         if (this is FirBlock) return convertToIrExpression(this)
         return accept(this@Fir2IrVisitor, null) as IrStatement
@@ -1403,7 +1436,7 @@ class Fir2IrVisitor(
                         classifierStorage.getIrClassSymbol(symbol)
                     }
                     is FirTypeAliasSymbol -> {
-                        symbol.fir.expandedConeType.toIrClassSymbol()
+                        symbol.fir.fullyExpandedConeType(session).toIrClassSymbol()
                     }
                     else ->
                         return getClassCall.convertWithOffsets { startOffset, endOffset ->
@@ -1437,10 +1470,10 @@ class Fir2IrVisitor(
             classifierStorage.getIrClassSymbol(it)
         }
 
-    private fun convertToArrayOfCall(arrayOfCall: FirArrayOfCall): IrVararg {
-        return arrayOfCall.convertWithOffsets { startOffset, endOffset ->
-            val arrayType = arrayOfCall.typeRef.toIrType()
-            val elementType = if (arrayOfCall.typeRef is FirResolvedTypeRef) {
+    private fun convertToArrayLiteral(arrayLiteral: FirArrayLiteral): IrVararg {
+        return arrayLiteral.convertWithOffsets { startOffset, endOffset ->
+            val arrayType = arrayLiteral.typeRef.toIrType()
+            val elementType = if (arrayLiteral.typeRef is FirResolvedTypeRef) {
                 arrayType.getArrayElementType(irBuiltIns)
             } else {
                 createErrorType()
@@ -1449,13 +1482,13 @@ class Fir2IrVisitor(
                 startOffset, endOffset,
                 type = arrayType,
                 varargElementType = elementType,
-                elements = arrayOfCall.arguments.map { it.convertToIrVarargElement() }
+                elements = arrayLiteral.arguments.map { it.convertToIrVarargElement() }
             )
         }
     }
 
-    override fun visitArrayOfCall(arrayOfCall: FirArrayOfCall, data: Any?): IrElement = whileAnalysing(session, arrayOfCall) {
-        return convertToArrayOfCall(arrayOfCall)
+    override fun visitArrayLiteral(arrayLiteral: FirArrayLiteral, data: Any?): IrElement = whileAnalysing(session, arrayLiteral) {
+        return convertToArrayLiteral(arrayLiteral)
     }
 
     override fun visitAugmentedArraySetCall(

@@ -98,7 +98,7 @@ IdeVersionConfigurator.setCurrentIde(project)
 
 if (!project.hasProperty("versions.kotlin-native")) {
     // BEWARE! Bumping this version doesn't take an immediate effect on TeamCity: KTI-1107
-    extra["versions.kotlin-native"] = "1.9.20-dev-6473"
+    extra["versions.kotlin-native"] = "1.9.20-dev-7597"
 }
 
 val irCompilerModules = arrayOf(
@@ -195,6 +195,7 @@ val fe10CompilerModules = arrayOf(
     ":kotlin-util-io",
     ":kotlin-util-klib",
     ":kotlin-util-klib-metadata",
+    ":kotlin-util-klib-abi",
     ":compiler:backend-common",
     ":compiler:backend",
     ":compiler:plugin-api",
@@ -708,6 +709,7 @@ tasks {
         dependsOn(":kotlin-scripting-jsr223-test:embeddableTest")
         dependsOn(":kotlin-scripting-ide-services-test:test")
         dependsOn(":kotlin-scripting-ide-services-test:embeddableTest")
+        dependsOn(":kotlin-main-kts-test:test")
     }
 
     register("scriptingK2Test") {
@@ -718,6 +720,7 @@ tasks {
 
     register("scriptingTest") {
         dependsOn("scriptingJvmTest")
+        dependsOn("scriptingK2Test")
     }
 
     register("compilerTest") {
@@ -743,6 +746,7 @@ tasks {
         dependsOn(":core:descriptors.runtime:test")
         dependsOn(":kotlin-util-io:test")
         dependsOn(":kotlin-util-klib:test")
+        dependsOn(":kotlin-util-klib-abi:test")
         dependsOn(":generators:test")
     }
 

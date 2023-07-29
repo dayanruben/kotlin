@@ -9,6 +9,7 @@
 
 #include "CompilerConstants.hpp"
 #include "GlobalData.hpp"
+#include "GCImpl.hpp"
 #include "GCStatistics.hpp"
 #include "Logging.hpp"
 #include "MarkAndSweepUtils.hpp"
@@ -57,33 +58,10 @@ struct ProcessWeaksTraits {
 
 } // namespace
 
-void gc::SameThreadMarkAndSweep::ThreadData::SafePointAllocation(size_t size) noexcept {
-    gcScheduler_.OnSafePointAllocation(size);
-}
-
-void gc::SameThreadMarkAndSweep::ThreadData::Schedule() noexcept {
-    RuntimeLogInfo({kTagGC}, "Scheduling GC manually");
-    ThreadStateGuard guard(ThreadState::kNative);
-    gc_.state_.schedule();
-}
-
-void gc::SameThreadMarkAndSweep::ThreadData::ScheduleAndWaitFullGC() noexcept {
-    RuntimeLogInfo({kTagGC}, "Scheduling GC manually");
-    ThreadStateGuard guard(ThreadState::kNative);
-    auto scheduled_epoch = gc_.state_.schedule();
-    gc_.state_.waitEpochFinished(scheduled_epoch);
-}
-
-void gc::SameThreadMarkAndSweep::ThreadData::ScheduleAndWaitFullGCWithFinalizers() noexcept {
-    RuntimeLogInfo({kTagGC}, "Scheduling GC manually");
-    ThreadStateGuard guard(ThreadState::kNative);
-    auto scheduled_epoch = gc_.state_.schedule();
-    gc_.state_.waitEpochFinalized(scheduled_epoch);
-}
-
 void gc::SameThreadMarkAndSweep::ThreadData::OnOOM(size_t size) noexcept {
     RuntimeLogDebug({kTagGC}, "Attempt to GC on OOM at size=%zu", size);
-    ScheduleAndWaitFullGC();
+    // TODO: This will print the log for "manual" scheduling. Fix this.
+    mm::GlobalData::Instance().gcScheduler().scheduleAndWaitFinished();
 }
 
 #ifdef CUSTOM_ALLOCATOR
@@ -92,9 +70,11 @@ gc::SameThreadMarkAndSweep::SameThreadMarkAndSweep(
 #else
 gc::SameThreadMarkAndSweep::SameThreadMarkAndSweep(
         mm::ObjectFactory<SameThreadMarkAndSweep>& objectFactory,
+        mm::ExtraObjectDataFactory& extraObjectDataFactory,
         gcScheduler::GCScheduler& gcScheduler) noexcept :
 
     objectFactory_(objectFactory),
+    extraObjectDataFactory_(extraObjectDataFactory),
 #endif
     gcScheduler_(gcScheduler), finalizerProcessor_([this](int64_t epoch) noexcept {
         GCHandle::getByEpoch(epoch).finalizersDone();
@@ -143,14 +123,14 @@ void gc::SameThreadMarkAndSweep::PerformFullGC(int64_t epoch) noexcept {
     gcHandle.threadsAreSuspended();
 
     auto& scheduler = gcScheduler_;
-    scheduler.gcData().OnPerformFullGC();
+    scheduler.onGCStart();
 
     state_.start(epoch);
 
 #ifdef CUSTOM_ALLOCATOR
     // This should really be done by each individual thread while waiting
     for (auto& thread : kotlin::mm::ThreadRegistry::Instance().LockForIter()) {
-        thread.gc().Allocator().PrepareForGC();
+        thread.gc().impl().alloc().PrepareForGC();
     }
     heap_.PrepareForGC();
 #endif
@@ -158,15 +138,13 @@ void gc::SameThreadMarkAndSweep::PerformFullGC(int64_t epoch) noexcept {
     gc::collectRootSet<internal::MarkTraits>(gcHandle, markQueue_, [](mm::ThreadData&) { return true; });
 
     gc::Mark<internal::MarkTraits>(gcHandle, markQueue_);
-    auto markStats = gcHandle.getMarked();
-    scheduler.gcData().UpdateAliveSetBytes(markStats.markedSizeBytes);
 
     gc::processWeaks<ProcessWeaksTraits>(gcHandle, mm::SpecialRefRegistry::instance());
 
 #ifndef CUSTOM_ALLOCATOR
     // Taking the locks before the pause is completed. So that any destroying thread
     // would not publish into the global state at an unexpected time.
-    std::optional extraObjectFactoryIterable = mm::GlobalData::Instance().extraObjectDataFactory().LockForIter();
+    std::optional extraObjectFactoryIterable = extraObjectDataFactory_.LockForIter();
     std::optional objectFactoryIterable = objectFactory_.LockForIter();
 
     gc::SweepExtraObjects<SweepTraits>(gcHandle, *extraObjectFactoryIterable);
@@ -177,6 +155,8 @@ void gc::SameThreadMarkAndSweep::PerformFullGC(int64_t epoch) noexcept {
 #else
     auto finalizerQueue = heap_.Sweep(gcHandle);
 #endif
+
+    scheduler.onGCFinish(epoch, allocatedBytes());
 
     mm::ResumeThreads();
     gcHandle.threadsAreResumed();

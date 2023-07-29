@@ -9,5 +9,5 @@ interface T2 {
         get() = 1
 }
 
-class <!CONFLICTING_INHERITED_JVM_DECLARATIONS!>C<!> : T1, T2 {
-}
+<!CONFLICTING_INHERITED_JVM_DECLARATIONS!>class C : T1, T2 {
+}<!>

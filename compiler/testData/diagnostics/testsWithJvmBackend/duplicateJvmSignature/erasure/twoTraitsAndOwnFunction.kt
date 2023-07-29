@@ -10,5 +10,5 @@ interface Bar<T> {
 }
 
 class Baz(): Foo<String>, Bar<Int> {
-    <!ACCIDENTAL_OVERRIDE!>fun foo(l: List<Long>)<!> {}
+    <!ACCIDENTAL_OVERRIDE!>fun foo(l: List<Long>) {}<!>
 }

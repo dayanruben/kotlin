@@ -1,0 +1,349 @@
+RAW_FIR:
+FILE: [ResolvedTo(RAW_FIR)] contractScript2.kts
+    context(<script>@kotlin.script.templates.standard.ScriptTemplateWithArgs)
+    SCRIPT: [ResolvedTo(RAW_FIR)] 
+        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+
+        public? final? inline [ResolvedTo(RAW_FIR)] fun foo([ResolvedTo(RAW_FIR)] block: ( () -> Unit )): R|kotlin/Unit|
+            [Contract description] <
+                kotlin#.contracts#.contract#(<L> = [ResolvedTo(RAW_FIR)] contract@fun <implicit>.<anonymous>(): <implicit> <inline=Unknown>  {
+                    callsInPlace#(block#, InvocationKind#.EXACTLY_ONCE#)
+                }
+                )
+            >
+         {
+             {
+                kotlin#.contracts#.contract#(<L> = [ResolvedTo(RAW_FIR)] contract@fun <implicit>.<anonymous>(): <implicit> <inline=Unknown>  {
+                    callsInPlace#(block#, InvocationKind#.EXACTLY_ONCE#)
+                }
+                )
+            }
+
+            block#()
+        }
+
+
+IMPORTS:
+FILE: [ResolvedTo(IMPORTS)] contractScript2.kts
+    context(<script>@kotlin.script.templates.standard.ScriptTemplateWithArgs)
+    SCRIPT: [ResolvedTo(RAW_FIR)] 
+        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+
+        public? final? inline [ResolvedTo(RAW_FIR)] fun foo([ResolvedTo(RAW_FIR)] block: ( () -> Unit )): R|kotlin/Unit|
+            [Contract description] <
+                kotlin#.contracts#.contract#(<L> = [ResolvedTo(RAW_FIR)] contract@fun <implicit>.<anonymous>(): <implicit> <inline=Unknown>  {
+                    callsInPlace#(block#, InvocationKind#.EXACTLY_ONCE#)
+                }
+                )
+            >
+         {
+             {
+                kotlin#.contracts#.contract#(<L> = [ResolvedTo(RAW_FIR)] contract@fun <implicit>.<anonymous>(): <implicit> <inline=Unknown>  {
+                    callsInPlace#(block#, InvocationKind#.EXACTLY_ONCE#)
+                }
+                )
+            }
+
+            block#()
+        }
+
+
+COMPILER_REQUIRED_ANNOTATIONS:
+FILE: [ResolvedTo(IMPORTS)] contractScript2.kts
+    context(<script>@kotlin.script.templates.standard.ScriptTemplateWithArgs)
+    SCRIPT: [ResolvedTo(COMPILER_REQUIRED_ANNOTATIONS)] 
+        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+
+        public? final? inline [ResolvedTo(RAW_FIR)] fun foo([ResolvedTo(RAW_FIR)] block: ( () -> Unit )): R|kotlin/Unit|
+            [Contract description] <
+                kotlin#.contracts#.contract#(<L> = [ResolvedTo(RAW_FIR)] contract@fun <implicit>.<anonymous>(): <implicit> <inline=Unknown>  {
+                    callsInPlace#(block#, InvocationKind#.EXACTLY_ONCE#)
+                }
+                )
+            >
+         {
+             {
+                kotlin#.contracts#.contract#(<L> = [ResolvedTo(RAW_FIR)] contract@fun <implicit>.<anonymous>(): <implicit> <inline=Unknown>  {
+                    callsInPlace#(block#, InvocationKind#.EXACTLY_ONCE#)
+                }
+                )
+            }
+
+            block#()
+        }
+
+
+COMPANION_GENERATION:
+FILE: [ResolvedTo(IMPORTS)] contractScript2.kts
+    context(<script>@kotlin.script.templates.standard.ScriptTemplateWithArgs)
+    SCRIPT: [ResolvedTo(COMPANION_GENERATION)] 
+        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+
+        public? final? inline [ResolvedTo(RAW_FIR)] fun foo([ResolvedTo(RAW_FIR)] block: ( () -> Unit )): R|kotlin/Unit|
+            [Contract description] <
+                kotlin#.contracts#.contract#(<L> = [ResolvedTo(RAW_FIR)] contract@fun <implicit>.<anonymous>(): <implicit> <inline=Unknown>  {
+                    callsInPlace#(block#, InvocationKind#.EXACTLY_ONCE#)
+                }
+                )
+            >
+         {
+             {
+                kotlin#.contracts#.contract#(<L> = [ResolvedTo(RAW_FIR)] contract@fun <implicit>.<anonymous>(): <implicit> <inline=Unknown>  {
+                    callsInPlace#(block#, InvocationKind#.EXACTLY_ONCE#)
+                }
+                )
+            }
+
+            block#()
+        }
+
+
+SUPER_TYPES:
+FILE: [ResolvedTo(IMPORTS)] contractScript2.kts
+    context(<script>@kotlin.script.templates.standard.ScriptTemplateWithArgs)
+    SCRIPT: [ResolvedTo(SUPER_TYPES)] 
+        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+
+        public? final? inline [ResolvedTo(RAW_FIR)] fun foo([ResolvedTo(RAW_FIR)] block: ( () -> Unit )): R|kotlin/Unit|
+            [Contract description] <
+                kotlin#.contracts#.contract#(<L> = [ResolvedTo(RAW_FIR)] contract@fun <implicit>.<anonymous>(): <implicit> <inline=Unknown>  {
+                    callsInPlace#(block#, InvocationKind#.EXACTLY_ONCE#)
+                }
+                )
+            >
+         {
+             {
+                kotlin#.contracts#.contract#(<L> = [ResolvedTo(RAW_FIR)] contract@fun <implicit>.<anonymous>(): <implicit> <inline=Unknown>  {
+                    callsInPlace#(block#, InvocationKind#.EXACTLY_ONCE#)
+                }
+                )
+            }
+
+            block#()
+        }
+
+
+TYPES:
+FILE: [ResolvedTo(IMPORTS)] contractScript2.kts
+    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
+    SCRIPT: [ResolvedTo(TYPES)] 
+        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+
+        public? final? inline [ResolvedTo(RAW_FIR)] fun foo([ResolvedTo(RAW_FIR)] block: R|() -> kotlin/Unit|): R|kotlin/Unit|
+            [Contract description] <
+                kotlin#.contracts#.contract#(<L> = [ResolvedTo(RAW_FIR)] contract@fun <implicit>.<anonymous>(): <implicit> <inline=Unknown>  {
+                    callsInPlace#(block#, InvocationKind#.EXACTLY_ONCE#)
+                }
+                )
+            >
+         {
+             {
+                kotlin#.contracts#.contract#(<L> = [ResolvedTo(RAW_FIR)] contract@fun <implicit>.<anonymous>(): <implicit> <inline=Unknown>  {
+                    callsInPlace#(block#, InvocationKind#.EXACTLY_ONCE#)
+                }
+                )
+            }
+
+            block#()
+        }
+
+
+STATUS:
+FILE: [ResolvedTo(IMPORTS)] contractScript2.kts
+    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
+    SCRIPT: [ResolvedTo(STATUS)] 
+        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+
+        public final inline [ResolvedTo(RAW_FIR)] fun foo([ResolvedTo(RAW_FIR)] block: R|() -> kotlin/Unit|): R|kotlin/Unit|
+            [Contract description] <
+                kotlin#.contracts#.contract#(<L> = [ResolvedTo(RAW_FIR)] contract@fun <implicit>.<anonymous>(): <implicit> <inline=Unknown>  {
+                    callsInPlace#(block#, InvocationKind#.EXACTLY_ONCE#)
+                }
+                )
+            >
+         {
+             {
+                kotlin#.contracts#.contract#(<L> = [ResolvedTo(RAW_FIR)] contract@fun <implicit>.<anonymous>(): <implicit> <inline=Unknown>  {
+                    callsInPlace#(block#, InvocationKind#.EXACTLY_ONCE#)
+                }
+                )
+            }
+
+            block#()
+        }
+
+
+EXPECT_ACTUAL_MATCHING:
+FILE: [ResolvedTo(IMPORTS)] contractScript2.kts
+    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
+    SCRIPT: [ResolvedTo(EXPECT_ACTUAL_MATCHING)] 
+        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+
+        public final inline [ResolvedTo(RAW_FIR)] fun foo([ResolvedTo(RAW_FIR)] block: R|() -> kotlin/Unit|): R|kotlin/Unit|
+            [Contract description] <
+                kotlin#.contracts#.contract#(<L> = [ResolvedTo(RAW_FIR)] contract@fun <implicit>.<anonymous>(): <implicit> <inline=Unknown>  {
+                    callsInPlace#(block#, InvocationKind#.EXACTLY_ONCE#)
+                }
+                )
+            >
+         {
+             {
+                kotlin#.contracts#.contract#(<L> = [ResolvedTo(RAW_FIR)] contract@fun <implicit>.<anonymous>(): <implicit> <inline=Unknown>  {
+                    callsInPlace#(block#, InvocationKind#.EXACTLY_ONCE#)
+                }
+                )
+            }
+
+            block#()
+        }
+
+
+ARGUMENTS_OF_ANNOTATIONS:
+FILE: [ResolvedTo(IMPORTS)] contractScript2.kts
+    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
+    SCRIPT: [ResolvedTo(ARGUMENTS_OF_ANNOTATIONS)] 
+        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+
+        public final inline [ResolvedTo(RAW_FIR)] fun foo([ResolvedTo(RAW_FIR)] block: R|() -> kotlin/Unit|): R|kotlin/Unit|
+            [Contract description] <
+                kotlin#.contracts#.contract#(<L> = [ResolvedTo(RAW_FIR)] contract@fun <implicit>.<anonymous>(): <implicit> <inline=Unknown>  {
+                    callsInPlace#(block#, InvocationKind#.EXACTLY_ONCE#)
+                }
+                )
+            >
+         {
+             {
+                kotlin#.contracts#.contract#(<L> = [ResolvedTo(RAW_FIR)] contract@fun <implicit>.<anonymous>(): <implicit> <inline=Unknown>  {
+                    callsInPlace#(block#, InvocationKind#.EXACTLY_ONCE#)
+                }
+                )
+            }
+
+            block#()
+        }
+
+
+CONTRACTS:
+FILE: [ResolvedTo(IMPORTS)] contractScript2.kts
+    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
+    SCRIPT: [ResolvedTo(CONTRACTS)] 
+        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+
+        public final inline [ResolvedTo(RAW_FIR)] fun foo([ResolvedTo(RAW_FIR)] block: R|() -> kotlin/Unit|): R|kotlin/Unit|
+            [Contract description] <
+                kotlin#.contracts#.contract#(<L> = [ResolvedTo(RAW_FIR)] contract@fun <implicit>.<anonymous>(): <implicit> <inline=Unknown>  {
+                    callsInPlace#(block#, InvocationKind#.EXACTLY_ONCE#)
+                }
+                )
+            >
+         {
+             {
+                kotlin#.contracts#.contract#(<L> = [ResolvedTo(RAW_FIR)] contract@fun <implicit>.<anonymous>(): <implicit> <inline=Unknown>  {
+                    callsInPlace#(block#, InvocationKind#.EXACTLY_ONCE#)
+                }
+                )
+            }
+
+            block#()
+        }
+
+
+IMPLICIT_TYPES_BODY_RESOLVE:
+FILE: [ResolvedTo(IMPORTS)] contractScript2.kts
+    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
+    SCRIPT: [ResolvedTo(IMPLICIT_TYPES_BODY_RESOLVE)] 
+        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+
+        public final inline [ResolvedTo(RAW_FIR)] fun foo([ResolvedTo(RAW_FIR)] block: R|() -> kotlin/Unit|): R|kotlin/Unit|
+            [Contract description] <
+                kotlin#.contracts#.contract#(<L> = [ResolvedTo(RAW_FIR)] contract@fun <implicit>.<anonymous>(): <implicit> <inline=Unknown>  {
+                    callsInPlace#(block#, InvocationKind#.EXACTLY_ONCE#)
+                }
+                )
+            >
+         {
+             {
+                kotlin#.contracts#.contract#(<L> = [ResolvedTo(RAW_FIR)] contract@fun <implicit>.<anonymous>(): <implicit> <inline=Unknown>  {
+                    callsInPlace#(block#, InvocationKind#.EXACTLY_ONCE#)
+                }
+                )
+            }
+
+            block#()
+        }
+
+
+ANNOTATIONS_ARGUMENTS_MAPPING:
+FILE: [ResolvedTo(IMPORTS)] contractScript2.kts
+    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
+    SCRIPT: [ResolvedTo(ANNOTATIONS_ARGUMENTS_MAPPING)] 
+        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+
+        public final inline [ResolvedTo(RAW_FIR)] fun foo([ResolvedTo(RAW_FIR)] block: R|() -> kotlin/Unit|): R|kotlin/Unit|
+            [Contract description] <
+                kotlin#.contracts#.contract#(<L> = [ResolvedTo(RAW_FIR)] contract@fun <implicit>.<anonymous>(): <implicit> <inline=Unknown>  {
+                    callsInPlace#(block#, InvocationKind#.EXACTLY_ONCE#)
+                }
+                )
+            >
+         {
+             {
+                kotlin#.contracts#.contract#(<L> = [ResolvedTo(RAW_FIR)] contract@fun <implicit>.<anonymous>(): <implicit> <inline=Unknown>  {
+                    callsInPlace#(block#, InvocationKind#.EXACTLY_ONCE#)
+                }
+                )
+            }
+
+            block#()
+        }
+
+
+BODY_RESOLVE:
+FILE: [ResolvedTo(IMPORTS)] contractScript2.kts
+    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
+    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+
+        public final inline [ResolvedTo(RAW_FIR)] fun foo([ResolvedTo(RAW_FIR)] block: R|() -> kotlin/Unit|): R|kotlin/Unit|
+            [Contract description] <
+                Q|kotlin/contracts|.R|kotlin/contracts/contract|(<L> = [ResolvedTo(RAW_FIR)] [MatchingParameterFunctionTypeKey=@ExtensionFunctionType kotlin/Function1<kotlin/contracts/ContractBuilder, kotlin/Unit>] contract@fun R|kotlin/contracts/ContractBuilder|.<anonymous>(): R|kotlin/Unit| <inline=Inline, kind=UNKNOWN>  {
+                    this@R|special/anonymous|.R|kotlin/contracts/ContractBuilder.callsInPlace|<R|kotlin/Unit|>(R|<local>/block|, Q|kotlin/contracts/InvocationKind|.R|kotlin/contracts/InvocationKind.EXACTLY_ONCE|)
+                }
+                )
+            >
+         {
+             {
+                Q|kotlin/contracts|.R|kotlin/contracts/contract|(<L> = [ResolvedTo(RAW_FIR)] [MatchingParameterFunctionTypeKey=@ExtensionFunctionType kotlin/Function1<kotlin/contracts/ContractBuilder, kotlin/Unit>] contract@fun R|kotlin/contracts/ContractBuilder|.<anonymous>(): R|kotlin/Unit| <inline=Inline, kind=UNKNOWN>  {
+                    this@R|special/anonymous|.R|kotlin/contracts/ContractBuilder.callsInPlace|<R|kotlin/Unit|>(R|<local>/block|, Q|kotlin/contracts/InvocationKind|.R|kotlin/contracts/InvocationKind.EXACTLY_ONCE|)
+                }
+                )
+            }
+
+            R|<local>/block|.R|SubstitutionOverride<kotlin/Function0.invoke: R|kotlin/Unit|>|()
+        }
+
+
+FILE RAW TO BODY:
+FILE: [ResolvedTo(IMPORTS)] contractScript2.kts
+    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
+    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+
+        public final inline [ResolvedTo(RAW_FIR)] fun foo([ResolvedTo(RAW_FIR)] block: R|() -> kotlin/Unit|): R|kotlin/Unit|
+            [Contract description] <
+                Q|kotlin/contracts|.R|kotlin/contracts/contract|(<L> = [ResolvedTo(RAW_FIR)] [MatchingParameterFunctionTypeKey=@ExtensionFunctionType kotlin/Function1<kotlin/contracts/ContractBuilder, kotlin/Unit>] contract@fun R|kotlin/contracts/ContractBuilder|.<anonymous>(): R|kotlin/Unit| <inline=Inline, kind=UNKNOWN>  {
+                    this@R|special/anonymous|.R|kotlin/contracts/ContractBuilder.callsInPlace|<R|kotlin/Unit|>(R|<local>/block|, Q|kotlin/contracts/InvocationKind|.R|kotlin/contracts/InvocationKind.EXACTLY_ONCE|)
+                }
+                )
+            >
+         {
+             {
+                Q|kotlin/contracts|.R|kotlin/contracts/contract|(<L> = [ResolvedTo(RAW_FIR)] [MatchingParameterFunctionTypeKey=@ExtensionFunctionType kotlin/Function1<kotlin/contracts/ContractBuilder, kotlin/Unit>] contract@fun R|kotlin/contracts/ContractBuilder|.<anonymous>(): R|kotlin/Unit| <inline=Inline, kind=UNKNOWN>  {
+                    this@R|special/anonymous|.R|kotlin/contracts/ContractBuilder.callsInPlace|<R|kotlin/Unit|>(R|<local>/block|, Q|kotlin/contracts/InvocationKind|.R|kotlin/contracts/InvocationKind.EXACTLY_ONCE|)
+                }
+                )
+            }
+
+            R|<local>/block|.R|SubstitutionOverride<kotlin/Function0.invoke: R|kotlin/Unit|>|()
+        }
+

@@ -35,6 +35,7 @@ import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
 import org.jetbrains.kotlin.ir.util.IdSignature
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import org.jetbrains.kotlin.utils.addToStdlib.runUnless
@@ -43,8 +44,6 @@ class Fir2IrClassifierStorage(
     private val components: Fir2IrComponents,
     commonMemberStorage: Fir2IrCommonMemberStorage
 ) : Fir2IrComponents by components {
-    private val firProvider = session.firProvider
-
     private val classCache: MutableMap<FirRegularClass, IrClass> = commonMemberStorage.classCache
 
     private val localClassesCreatedOnTheFly: MutableMap<FirClass, IrClass> = mutableMapOf()
@@ -236,7 +235,7 @@ class Fir2IrClassifierStorage(
         // finding the parent class that actually contains the [klass] in the tree - it is the root one that should be created on the fly
         val classOrLocalParent = generateSequence(klass) { c ->
             (c as? FirRegularClass)?.containingClassForLocalAttr?.let { lookupTag ->
-                (firProvider.symbolProvider.getSymbolByLookupTag(lookupTag)?.fir as? FirClass)?.takeIf {
+                (session.firProvider.symbolProvider.getSymbolByLookupTag(lookupTag)?.fir as? FirClass)?.takeIf {
                     it.declarations.contains(c)
                 }
             }
@@ -382,7 +381,7 @@ class Fir2IrClassifierStorage(
     fun registerIrAnonymousObject(
         anonymousObject: FirAnonymousObject,
         visibility: Visibility = Visibilities.Local,
-        name: Name = Name.special("<no name provided>"),
+        name: Name = SpecialNames.NO_NAME_PROVIDED,
         irParent: IrDeclarationParent? = null
     ): IrClass {
         val origin = IrDeclarationOrigin.DEFINED
@@ -527,7 +526,9 @@ class Fir2IrClassifierStorage(
         predefinedOrigin: IrDeclarationOrigin? = null,
     ): IrEnumEntry {
         getCachedIrEnumEntry(enumEntry)?.let { return it }
-        val containingFile = firProvider.getFirCallableContainerFile(enumEntry.symbol)
+
+        val firProviderForEntry = enumEntry.moduleData.session.firProvider
+        val containingFile = firProviderForEntry.getFirCallableContainerFile(enumEntry.symbol)
 
         @Suppress("NAME_SHADOWING")
         val predefinedOrigin = predefinedOrigin ?: if (containingFile != null) {
@@ -617,7 +618,8 @@ class Fir2IrClassifierStorage(
         }
         val irClass = firClass.convertWithOffsets { startOffset, endOffset ->
             declareIrClass(signature) { irClassSymbol ->
-                Fir2IrLazyClass(components, startOffset, endOffset, firClass.irOrigin(firProvider), firClass, irClassSymbol).apply {
+                val firClassOrigin = firClass.irOrigin(session.firProvider)
+                Fir2IrLazyClass(components, startOffset, endOffset, firClassOrigin, firClass, irClassSymbol).apply {
                     parent = irParent
                 }
             }
@@ -664,10 +666,28 @@ class Fir2IrClassifierStorage(
         typeOrigin: ConversionTypeOrigin
     ): IrTypeParameterSymbol {
         val firTypeParameter = firTypeParameterSymbol.fir
-        return getCachedIrTypeParameter(firTypeParameter, typeOrigin)?.symbol
-        // We can try to use default cache because setter can use parent type parameters
-            ?: typeParameterCache[firTypeParameter]?.symbol
-            ?: error("Cannot find cached type parameter by FIR symbol: ${firTypeParameterSymbol.name} of the owner: ${firTypeParameter.containingDeclarationSymbol}")
+
+        val cachedSymbol = getCachedIrTypeParameter(firTypeParameter, typeOrigin)?.symbol
+            ?: typeParameterCache[firTypeParameter]?.symbol // We can try to use default cache because setter can use parent type parameters
+
+        if (cachedSymbol != null) {
+            return cachedSymbol
+        }
+
+        if (components.configuration.allowNonCachedDeclarations) {
+            val firTypeParameterOwnerSymbol = firTypeParameter.containingDeclarationSymbol
+            val firTypeParameterOwner = firTypeParameterOwnerSymbol.fir as FirTypeParameterRefsOwner
+            val index = firTypeParameterOwner.typeParameters.indexOf(firTypeParameter).also { check(it >= 0) }
+
+            val isSetter = firTypeParameterOwner is FirPropertyAccessor && firTypeParameterOwner.isSetter
+            val conversionTypeOrigin = if (isSetter) ConversionTypeOrigin.SETTER else ConversionTypeOrigin.DEFAULT
+
+            return createIrTypeParameterWithoutBounds(firTypeParameter, index, IrTypeParameterSymbolImpl(), conversionTypeOrigin).apply {
+                superTypes = firTypeParameter.bounds.map { it.toIrType(typeConverter) }
+            }.symbol
+        }
+
+        error("Cannot find cached type parameter by FIR symbol: ${firTypeParameterSymbol.name} of the owner: ${firTypeParameter.containingDeclarationSymbol}")
     }
 
     private val temporaryParent by lazy {

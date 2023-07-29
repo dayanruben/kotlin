@@ -1,0 +1,405 @@
+RAW_FIR:
+FILE: [ResolvedTo(IMPORTS)] secondaryConstructorParameterScript.kts
+    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
+    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+
+        public final [ResolvedTo(STATUS)] class A : R|kotlin/Any| {
+            public [ResolvedTo(STATUS)] [ContainingClassKey=A] constructor([ResolvedTo(STATUS)] [CorrespondingProperty=/A.prop] prop: R|kotlin/Int| = Int(42), [ResolvedTo(STATUS)] c: R|kotlin/String|): R|A| {
+                super<R|kotlin/Any|>()
+            }
+
+            public final [ResolvedTo(STATUS)] [IsFromPrimaryConstructor=true] val prop: R|kotlin/Int| = R|<local>/prop|
+                public [ResolvedTo(STATUS)] [ContainingClassKey=A] get(): R|kotlin/Int|
+
+            public [ResolvedTo(STATUS)] [ContainingClassKey=A] constructor([ResolvedTo(STATUS)] str: R|kotlin/String|): R|A| {
+                this<R|A|>(R|<local>/str|.R|/myToInt|(), R|<local>/str|)
+            }
+
+            public final [ResolvedTo(STATUS)] fun foo(): R|kotlin/String| {
+                ^foo String(str)
+            }
+
+        }
+
+        public final [ResolvedTo(RAW_FIR)] fun R|kotlin/String|.myToInt(): R|kotlin/Int| {
+            ^myToInt Int(42)
+        }
+
+
+IMPORTS:
+FILE: [ResolvedTo(IMPORTS)] secondaryConstructorParameterScript.kts
+    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
+    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+
+        public final [ResolvedTo(STATUS)] class A : R|kotlin/Any| {
+            public [ResolvedTo(STATUS)] [ContainingClassKey=A] constructor([ResolvedTo(STATUS)] [CorrespondingProperty=/A.prop] prop: R|kotlin/Int| = Int(42), [ResolvedTo(STATUS)] c: R|kotlin/String|): R|A| {
+                super<R|kotlin/Any|>()
+            }
+
+            public final [ResolvedTo(STATUS)] [IsFromPrimaryConstructor=true] val prop: R|kotlin/Int| = R|<local>/prop|
+                public [ResolvedTo(STATUS)] [ContainingClassKey=A] get(): R|kotlin/Int|
+
+            public [ResolvedTo(STATUS)] [ContainingClassKey=A] constructor([ResolvedTo(STATUS)] str: R|kotlin/String|): R|A| {
+                this<R|A|>(R|<local>/str|.R|/myToInt|(), R|<local>/str|)
+            }
+
+            public final [ResolvedTo(STATUS)] fun foo(): R|kotlin/String| {
+                ^foo String(str)
+            }
+
+        }
+
+        public final [ResolvedTo(RAW_FIR)] fun R|kotlin/String|.myToInt(): R|kotlin/Int| {
+            ^myToInt Int(42)
+        }
+
+
+COMPILER_REQUIRED_ANNOTATIONS:
+FILE: [ResolvedTo(IMPORTS)] secondaryConstructorParameterScript.kts
+    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
+    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+
+        public final [ResolvedTo(STATUS)] class A : R|kotlin/Any| {
+            public [ResolvedTo(STATUS)] [ContainingClassKey=A] constructor([ResolvedTo(STATUS)] [CorrespondingProperty=/A.prop] prop: R|kotlin/Int| = Int(42), [ResolvedTo(STATUS)] c: R|kotlin/String|): R|A| {
+                super<R|kotlin/Any|>()
+            }
+
+            public final [ResolvedTo(STATUS)] [IsFromPrimaryConstructor=true] val prop: R|kotlin/Int| = R|<local>/prop|
+                public [ResolvedTo(STATUS)] [ContainingClassKey=A] get(): R|kotlin/Int|
+
+            public [ResolvedTo(STATUS)] [ContainingClassKey=A] constructor([ResolvedTo(STATUS)] str: R|kotlin/String|): R|A| {
+                this<R|A|>(R|<local>/str|.R|/myToInt|(), R|<local>/str|)
+            }
+
+            public final [ResolvedTo(STATUS)] fun foo(): R|kotlin/String| {
+                ^foo String(str)
+            }
+
+        }
+
+        public final [ResolvedTo(RAW_FIR)] fun R|kotlin/String|.myToInt(): R|kotlin/Int| {
+            ^myToInt Int(42)
+        }
+
+
+COMPANION_GENERATION:
+FILE: [ResolvedTo(IMPORTS)] secondaryConstructorParameterScript.kts
+    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
+    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+
+        public final [ResolvedTo(STATUS)] class A : R|kotlin/Any| {
+            public [ResolvedTo(STATUS)] [ContainingClassKey=A] constructor([ResolvedTo(STATUS)] [CorrespondingProperty=/A.prop] prop: R|kotlin/Int| = Int(42), [ResolvedTo(STATUS)] c: R|kotlin/String|): R|A| {
+                super<R|kotlin/Any|>()
+            }
+
+            public final [ResolvedTo(STATUS)] [IsFromPrimaryConstructor=true] val prop: R|kotlin/Int| = R|<local>/prop|
+                public [ResolvedTo(STATUS)] [ContainingClassKey=A] get(): R|kotlin/Int|
+
+            public [ResolvedTo(STATUS)] [ContainingClassKey=A] constructor([ResolvedTo(STATUS)] str: R|kotlin/String|): R|A| {
+                this<R|A|>(R|<local>/str|.R|/myToInt|(), R|<local>/str|)
+            }
+
+            public final [ResolvedTo(STATUS)] fun foo(): R|kotlin/String| {
+                ^foo String(str)
+            }
+
+        }
+
+        public final [ResolvedTo(RAW_FIR)] fun R|kotlin/String|.myToInt(): R|kotlin/Int| {
+            ^myToInt Int(42)
+        }
+
+
+SUPER_TYPES:
+FILE: [ResolvedTo(IMPORTS)] secondaryConstructorParameterScript.kts
+    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
+    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+
+        public final [ResolvedTo(STATUS)] class A : R|kotlin/Any| {
+            public [ResolvedTo(STATUS)] [ContainingClassKey=A] constructor([ResolvedTo(STATUS)] [CorrespondingProperty=/A.prop] prop: R|kotlin/Int| = Int(42), [ResolvedTo(STATUS)] c: R|kotlin/String|): R|A| {
+                super<R|kotlin/Any|>()
+            }
+
+            public final [ResolvedTo(STATUS)] [IsFromPrimaryConstructor=true] val prop: R|kotlin/Int| = R|<local>/prop|
+                public [ResolvedTo(STATUS)] [ContainingClassKey=A] get(): R|kotlin/Int|
+
+            public [ResolvedTo(STATUS)] [ContainingClassKey=A] constructor([ResolvedTo(STATUS)] str: R|kotlin/String|): R|A| {
+                this<R|A|>(R|<local>/str|.R|/myToInt|(), R|<local>/str|)
+            }
+
+            public final [ResolvedTo(STATUS)] fun foo(): R|kotlin/String| {
+                ^foo String(str)
+            }
+
+        }
+
+        public final [ResolvedTo(RAW_FIR)] fun R|kotlin/String|.myToInt(): R|kotlin/Int| {
+            ^myToInt Int(42)
+        }
+
+
+TYPES:
+FILE: [ResolvedTo(IMPORTS)] secondaryConstructorParameterScript.kts
+    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
+    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+
+        public final [ResolvedTo(STATUS)] class A : R|kotlin/Any| {
+            public [ResolvedTo(STATUS)] [ContainingClassKey=A] constructor([ResolvedTo(STATUS)] [CorrespondingProperty=/A.prop] prop: R|kotlin/Int| = Int(42), [ResolvedTo(STATUS)] c: R|kotlin/String|): R|A| {
+                super<R|kotlin/Any|>()
+            }
+
+            public final [ResolvedTo(STATUS)] [IsFromPrimaryConstructor=true] val prop: R|kotlin/Int| = R|<local>/prop|
+                public [ResolvedTo(STATUS)] [ContainingClassKey=A] get(): R|kotlin/Int|
+
+            public [ResolvedTo(STATUS)] [ContainingClassKey=A] constructor([ResolvedTo(STATUS)] str: R|kotlin/String|): R|A| {
+                this<R|A|>(R|<local>/str|.R|/myToInt|(), R|<local>/str|)
+            }
+
+            public final [ResolvedTo(STATUS)] fun foo(): R|kotlin/String| {
+                ^foo String(str)
+            }
+
+        }
+
+        public final [ResolvedTo(RAW_FIR)] fun R|kotlin/String|.myToInt(): R|kotlin/Int| {
+            ^myToInt Int(42)
+        }
+
+
+STATUS:
+FILE: [ResolvedTo(IMPORTS)] secondaryConstructorParameterScript.kts
+    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
+    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+
+        public final [ResolvedTo(STATUS)] class A : R|kotlin/Any| {
+            public [ResolvedTo(STATUS)] [ContainingClassKey=A] constructor([ResolvedTo(STATUS)] [CorrespondingProperty=/A.prop] prop: R|kotlin/Int| = Int(42), [ResolvedTo(STATUS)] c: R|kotlin/String|): R|A| {
+                super<R|kotlin/Any|>()
+            }
+
+            public final [ResolvedTo(STATUS)] [IsFromPrimaryConstructor=true] val prop: R|kotlin/Int| = R|<local>/prop|
+                public [ResolvedTo(STATUS)] [ContainingClassKey=A] get(): R|kotlin/Int|
+
+            public [ResolvedTo(STATUS)] [ContainingClassKey=A] constructor([ResolvedTo(STATUS)] str: R|kotlin/String|): R|A| {
+                this<R|A|>(R|<local>/str|.R|/myToInt|(), R|<local>/str|)
+            }
+
+            public final [ResolvedTo(STATUS)] fun foo(): R|kotlin/String| {
+                ^foo String(str)
+            }
+
+        }
+
+        public final [ResolvedTo(RAW_FIR)] fun R|kotlin/String|.myToInt(): R|kotlin/Int| {
+            ^myToInt Int(42)
+        }
+
+
+EXPECT_ACTUAL_MATCHING:
+FILE: [ResolvedTo(IMPORTS)] secondaryConstructorParameterScript.kts
+    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
+    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+
+        public final [ResolvedTo(STATUS)] class A : R|kotlin/Any| {
+            public [ResolvedTo(STATUS)] [ContainingClassKey=A] constructor([ResolvedTo(STATUS)] [CorrespondingProperty=/A.prop] prop: R|kotlin/Int| = Int(42), [ResolvedTo(STATUS)] c: R|kotlin/String|): R|A| {
+                super<R|kotlin/Any|>()
+            }
+
+            public final [ResolvedTo(STATUS)] [IsFromPrimaryConstructor=true] val prop: R|kotlin/Int| = R|<local>/prop|
+                public [ResolvedTo(STATUS)] [ContainingClassKey=A] get(): R|kotlin/Int|
+
+            public [ResolvedTo(STATUS)] [ContainingClassKey=A] constructor([ResolvedTo(STATUS)] str: R|kotlin/String|): R|A| {
+                this<R|A|>(R|<local>/str|.R|/myToInt|(), R|<local>/str|)
+            }
+
+            public final [ResolvedTo(STATUS)] fun foo(): R|kotlin/String| {
+                ^foo String(str)
+            }
+
+        }
+
+        public final [ResolvedTo(RAW_FIR)] fun R|kotlin/String|.myToInt(): R|kotlin/Int| {
+            ^myToInt Int(42)
+        }
+
+
+ARGUMENTS_OF_ANNOTATIONS:
+FILE: [ResolvedTo(IMPORTS)] secondaryConstructorParameterScript.kts
+    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
+    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+
+        public final [ResolvedTo(STATUS)] class A : R|kotlin/Any| {
+            public [ResolvedTo(STATUS)] [ContainingClassKey=A] constructor([ResolvedTo(STATUS)] [CorrespondingProperty=/A.prop] prop: R|kotlin/Int| = Int(42), [ResolvedTo(STATUS)] c: R|kotlin/String|): R|A| {
+                super<R|kotlin/Any|>()
+            }
+
+            public final [ResolvedTo(STATUS)] [IsFromPrimaryConstructor=true] val prop: R|kotlin/Int| = R|<local>/prop|
+                public [ResolvedTo(STATUS)] [ContainingClassKey=A] get(): R|kotlin/Int|
+
+            public [ResolvedTo(STATUS)] [ContainingClassKey=A] constructor([ResolvedTo(STATUS)] str: R|kotlin/String|): R|A| {
+                this<R|A|>(R|<local>/str|.R|/myToInt|(), R|<local>/str|)
+            }
+
+            public final [ResolvedTo(STATUS)] fun foo(): R|kotlin/String| {
+                ^foo String(str)
+            }
+
+        }
+
+        public final [ResolvedTo(RAW_FIR)] fun R|kotlin/String|.myToInt(): R|kotlin/Int| {
+            ^myToInt Int(42)
+        }
+
+
+CONTRACTS:
+FILE: [ResolvedTo(IMPORTS)] secondaryConstructorParameterScript.kts
+    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
+    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+
+        public final [ResolvedTo(STATUS)] class A : R|kotlin/Any| {
+            public [ResolvedTo(STATUS)] [ContainingClassKey=A] constructor([ResolvedTo(STATUS)] [CorrespondingProperty=/A.prop] prop: R|kotlin/Int| = Int(42), [ResolvedTo(STATUS)] c: R|kotlin/String|): R|A| {
+                super<R|kotlin/Any|>()
+            }
+
+            public final [ResolvedTo(STATUS)] [IsFromPrimaryConstructor=true] val prop: R|kotlin/Int| = R|<local>/prop|
+                public [ResolvedTo(STATUS)] [ContainingClassKey=A] get(): R|kotlin/Int|
+
+            public [ResolvedTo(STATUS)] [ContainingClassKey=A] constructor([ResolvedTo(STATUS)] str: R|kotlin/String|): R|A| {
+                this<R|A|>(R|<local>/str|.R|/myToInt|(), R|<local>/str|)
+            }
+
+            public final [ResolvedTo(STATUS)] fun foo(): R|kotlin/String| {
+                ^foo String(str)
+            }
+
+        }
+
+        public final [ResolvedTo(RAW_FIR)] fun R|kotlin/String|.myToInt(): R|kotlin/Int| {
+            ^myToInt Int(42)
+        }
+
+
+IMPLICIT_TYPES_BODY_RESOLVE:
+FILE: [ResolvedTo(IMPORTS)] secondaryConstructorParameterScript.kts
+    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
+    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+
+        public final [ResolvedTo(STATUS)] class A : R|kotlin/Any| {
+            public [ResolvedTo(STATUS)] [ContainingClassKey=A] constructor([ResolvedTo(STATUS)] [CorrespondingProperty=/A.prop] prop: R|kotlin/Int| = Int(42), [ResolvedTo(STATUS)] c: R|kotlin/String|): R|A| {
+                super<R|kotlin/Any|>()
+            }
+
+            public final [ResolvedTo(STATUS)] [IsFromPrimaryConstructor=true] val prop: R|kotlin/Int| = R|<local>/prop|
+                public [ResolvedTo(STATUS)] [ContainingClassKey=A] get(): R|kotlin/Int|
+
+            public [ResolvedTo(STATUS)] [ContainingClassKey=A] constructor([ResolvedTo(STATUS)] str: R|kotlin/String|): R|A| {
+                this<R|A|>(R|<local>/str|.R|/myToInt|(), R|<local>/str|)
+            }
+
+            public final [ResolvedTo(STATUS)] fun foo(): R|kotlin/String| {
+                ^foo String(str)
+            }
+
+        }
+
+        public final [ResolvedTo(RAW_FIR)] fun R|kotlin/String|.myToInt(): R|kotlin/Int| {
+            ^myToInt Int(42)
+        }
+
+
+ANNOTATIONS_ARGUMENTS_MAPPING:
+FILE: [ResolvedTo(IMPORTS)] secondaryConstructorParameterScript.kts
+    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
+    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+
+        public final [ResolvedTo(STATUS)] class A : R|kotlin/Any| {
+            public [ResolvedTo(STATUS)] [ContainingClassKey=A] constructor([ResolvedTo(STATUS)] [CorrespondingProperty=/A.prop] prop: R|kotlin/Int| = Int(42), [ResolvedTo(STATUS)] c: R|kotlin/String|): R|A| {
+                super<R|kotlin/Any|>()
+            }
+
+            public final [ResolvedTo(STATUS)] [IsFromPrimaryConstructor=true] val prop: R|kotlin/Int| = R|<local>/prop|
+                public [ResolvedTo(STATUS)] [ContainingClassKey=A] get(): R|kotlin/Int|
+
+            public [ResolvedTo(STATUS)] [ContainingClassKey=A] constructor([ResolvedTo(STATUS)] str: R|kotlin/String|): R|A| {
+                this<R|A|>(R|<local>/str|.R|/myToInt|(), R|<local>/str|)
+            }
+
+            public final [ResolvedTo(STATUS)] fun foo(): R|kotlin/String| {
+                ^foo String(str)
+            }
+
+        }
+
+        public final [ResolvedTo(RAW_FIR)] fun R|kotlin/String|.myToInt(): R|kotlin/Int| {
+            ^myToInt Int(42)
+        }
+
+
+BODY_RESOLVE:
+FILE: [ResolvedTo(IMPORTS)] secondaryConstructorParameterScript.kts
+    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
+    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+
+        public final [ResolvedTo(STATUS)] class A : R|kotlin/Any| {
+            public [ResolvedTo(STATUS)] [ContainingClassKey=A] constructor([ResolvedTo(STATUS)] [CorrespondingProperty=/A.prop] prop: R|kotlin/Int| = Int(42), [ResolvedTo(STATUS)] c: R|kotlin/String|): R|A| {
+                super<R|kotlin/Any|>()
+            }
+
+            public final [ResolvedTo(STATUS)] [IsFromPrimaryConstructor=true] val prop: R|kotlin/Int| = R|<local>/prop|
+                public [ResolvedTo(STATUS)] [ContainingClassKey=A] get(): R|kotlin/Int|
+
+            public [ResolvedTo(STATUS)] [ContainingClassKey=A] constructor([ResolvedTo(STATUS)] str: R|kotlin/String|): R|A| {
+                this<R|A|>(R|<local>/str|.R|/myToInt|(), R|<local>/str|)
+            }
+
+            public final [ResolvedTo(STATUS)] fun foo(): R|kotlin/String| {
+                ^foo String(str)
+            }
+
+        }
+
+        public final [ResolvedTo(RAW_FIR)] fun R|kotlin/String|.myToInt(): R|kotlin/Int| {
+            ^myToInt Int(42)
+        }
+
+
+FILE RAW TO BODY:
+FILE: [ResolvedTo(IMPORTS)] secondaryConstructorParameterScript.kts
+    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
+    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+
+        public final [ResolvedTo(STATUS)] class A : R|kotlin/Any| {
+            public [ResolvedTo(STATUS)] [ContainingClassKey=A] constructor([ResolvedTo(STATUS)] [CorrespondingProperty=/A.prop] prop: R|kotlin/Int| = Int(42), [ResolvedTo(STATUS)] c: R|kotlin/String|): R|A| {
+                super<R|kotlin/Any|>()
+            }
+
+            public final [ResolvedTo(STATUS)] [IsFromPrimaryConstructor=true] val prop: R|kotlin/Int| = R|<local>/prop|
+                public [ResolvedTo(STATUS)] [ContainingClassKey=A] get(): R|kotlin/Int|
+
+            public [ResolvedTo(STATUS)] [ContainingClassKey=A] constructor([ResolvedTo(STATUS)] str: R|kotlin/String|): R|A| {
+                this<R|A|>(R|<local>/str|.R|/myToInt|(), R|<local>/str|)
+            }
+
+            public final [ResolvedTo(STATUS)] fun foo(): R|kotlin/String| {
+                ^foo String(str)
+            }
+
+        }
+
+        public final [ResolvedTo(RAW_FIR)] fun R|kotlin/String|.myToInt(): R|kotlin/Int| {
+            ^myToInt Int(42)
+        }
+

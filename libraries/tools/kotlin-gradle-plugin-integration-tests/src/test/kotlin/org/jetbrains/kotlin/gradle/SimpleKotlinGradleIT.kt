@@ -232,7 +232,7 @@ class SimpleKotlinGradleIT : KGPBaseTest() {
         project("kotlinProject", gradleVersion) {
             build("help") {
                 val expectedVariant = when (gradleVersion) {
-                    GradleVersion.version(TestVersions.Gradle.G_8_1)..GradleVersion.version(TestVersions.Gradle.G_8_2) -> "gradle81"
+                    in GradleVersion.version(TestVersions.Gradle.G_8_1)..GradleVersion.version(TestVersions.Gradle.G_8_2) -> "gradle81"
                     GradleVersion.version(TestVersions.Gradle.G_8_0) -> "gradle80"
                     GradleVersion.version(TestVersions.Gradle.G_7_6) -> "gradle76"
                     GradleVersion.version(TestVersions.Gradle.G_7_5) -> "gradle75"
@@ -252,19 +252,6 @@ class SimpleKotlinGradleIT : KGPBaseTest() {
     @GradleTest
     internal fun kotlinDslSourceSets(gradleVersion: GradleVersion) {
         project("sourceSetsKotlinDsl", gradleVersion) {
-            build("assemble")
-        }
-    }
-
-    @DisplayName("KT-53402: ignore non project source changes")
-    @GradleTest
-    fun ignoreNonProjectSourceChanges(gradleVersion: GradleVersion) {
-        project("simpleProject", gradleVersion) {
-            val resources = projectPath.resolve("src/main/resources").createDirectories()
-            val resourceKts = resources.resolve("resource.kts").createFile()
-            resourceKts.appendText("lkdfjgkjs invalid something")
-            build("assemble")
-            resourceKts.appendText("kajhgfkh invalid something")
             build("assemble")
         }
     }
@@ -312,43 +299,6 @@ class SimpleKotlinGradleIT : KGPBaseTest() {
                 ZipFile(projectPath.resolve("build/libs/simpleProject.jar").toFile()).use { jar ->
                     assert(jar.entries().asSequence().count { it.name == "demo/KotlinGreetingJoiner.class" } == 1) {
                         "The jar should contain one entry `demo/KotlinGreetingJoiner.class` with no duplicates\n" +
-                                jar.entries().asSequence().map { it.name }.joinToString()
-                    }
-                }
-            }
-        }
-    }
-
-    @DisplayName("KT-36904: Adding resources to Kotlin source set should work")
-    @GradleTest
-    internal fun addResourcesKotlinSourceSet(gradleVersion: GradleVersion) {
-        project("simpleProject", gradleVersion) {
-            val mainResDir = projectPath.resolve("src/main/resources").apply { createDirectories() }
-            val mainResFile = mainResDir.resolve("main.txt").apply { writeText("Yay, Kotlin!") }
-
-            val additionalResDir = projectPath.resolve("additionalRes").apply { createDirectory() }
-            val additionalResFile = additionalResDir.resolve("test.txt").apply { writeText("Kotlin!") }
-
-            buildGradle.appendText(
-                //language=groovy
-                """
-                |
-                |kotlin {
-                |    sourceSets.main.resources.srcDir("additionalRes")
-                |}
-                """.trimMargin()
-            )
-
-            build("jar") {
-                assertFileInProjectExists("build/libs/simpleProject.jar")
-                ZipFile(projectPath.resolve("build/libs/simpleProject.jar").toFile()).use { jar ->
-                    assert(jar.entries().asSequence().count { it.name == mainResFile.name } == 1) {
-                        "The jar should contain one entry `${mainResFile.name}` with no duplicates\n" +
-                                jar.entries().asSequence().map { it.name }.joinToString()
-                    }
-
-                    assert(jar.entries().asSequence().count { it.name == additionalResFile.name } == 1) {
-                        "The jar should contain one entry `${additionalResFile.name}` with no duplicates\n" +
                                 jar.entries().asSequence().map { it.name }.joinToString()
                     }
                 }

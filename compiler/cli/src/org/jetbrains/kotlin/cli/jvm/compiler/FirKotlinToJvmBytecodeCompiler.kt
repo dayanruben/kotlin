@@ -155,16 +155,17 @@ object FirKotlinToJvmBytecodeCompiler {
         val fir2IrExtensions = JvmFir2IrExtensions(moduleConfiguration, JvmIrDeserializerImpl(), JvmIrMangler)
         val fir2IrConfiguration = Fir2IrConfiguration(
             languageVersionSettings = moduleConfiguration.languageVersionSettings,
+            diagnosticReporter = diagnosticsReporter,
             linkViaSignatures = moduleConfiguration.getBoolean(JVMConfigurationKeys.LINK_VIA_SIGNATURES),
             evaluatedConstTracker = moduleConfiguration
                 .putIfAbsent(CommonConfigurationKeys.EVALUATED_CONST_TRACKER, EvaluatedConstTracker.create()),
             inlineConstTracker = moduleConfiguration[CommonConfigurationKeys.INLINE_CONST_TRACKER],
+            allowNonCachedDeclarations = false,
         )
         val fir2IrAndIrActualizerResult = firResult.convertToIrAndActualizeForJvm(
             fir2IrExtensions,
             fir2IrConfiguration,
             irGenerationExtensions,
-            diagnosticsReporter,
         )
 
         performanceManager?.notifyIRTranslationFinished()

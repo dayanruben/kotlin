@@ -1,7 +1,17 @@
+public final class org/jetbrains/kotlin/buildtools/api/CompilationResult : java/lang/Enum {
+	public static final field COMPILATION_ERROR Lorg/jetbrains/kotlin/buildtools/api/CompilationResult;
+	public static final field COMPILATION_OOM_ERROR Lorg/jetbrains/kotlin/buildtools/api/CompilationResult;
+	public static final field COMPILATION_SUCCESS Lorg/jetbrains/kotlin/buildtools/api/CompilationResult;
+	public static final field COMPILER_INTERNAL_ERROR Lorg/jetbrains/kotlin/buildtools/api/CompilationResult;
+	public static fun valueOf (Ljava/lang/String;)Lorg/jetbrains/kotlin/buildtools/api/CompilationResult;
+	public static fun values ()[Lorg/jetbrains/kotlin/buildtools/api/CompilationResult;
+}
+
 public abstract interface class org/jetbrains/kotlin/buildtools/api/CompilationService {
 	public static final field Companion Lorg/jetbrains/kotlin/buildtools/api/CompilationService$Companion;
 	public abstract fun calculateClasspathSnapshot (Ljava/io/File;)Lorg/jetbrains/kotlin/buildtools/api/jvm/ClasspathEntrySnapshot;
-	public abstract fun compileJvm (Lorg/jetbrains/kotlin/buildtools/api/CompilerExecutionStrategyConfiguration;Lorg/jetbrains/kotlin/buildtools/api/jvm/JvmCompilationConfiguration;Ljava/util/List;Ljava/util/List;)V
+	public abstract fun compileJvm (Lorg/jetbrains/kotlin/buildtools/api/ProjectId;Lorg/jetbrains/kotlin/buildtools/api/CompilerExecutionStrategyConfiguration;Lorg/jetbrains/kotlin/buildtools/api/jvm/JvmCompilationConfiguration;Ljava/util/List;Ljava/util/List;)Lorg/jetbrains/kotlin/buildtools/api/CompilationResult;
+	public abstract fun finishProjectCompilation (Lorg/jetbrains/kotlin/buildtools/api/ProjectId;)V
 	public static fun loadImplementation (Ljava/lang/ClassLoader;)Lorg/jetbrains/kotlin/buildtools/api/CompilationService;
 	public abstract fun makeCompilerExecutionStrategyConfiguration ()Lorg/jetbrains/kotlin/buildtools/api/CompilerExecutionStrategyConfiguration;
 	public abstract fun makeJvmCompilationConfiguration ()Lorg/jetbrains/kotlin/buildtools/api/jvm/JvmCompilationConfiguration;
@@ -9,6 +19,10 @@ public abstract interface class org/jetbrains/kotlin/buildtools/api/CompilationS
 
 public final class org/jetbrains/kotlin/buildtools/api/CompilationService$Companion {
 	public final fun loadImplementation (Ljava/lang/ClassLoader;)Lorg/jetbrains/kotlin/buildtools/api/CompilationService;
+}
+
+public final class org/jetbrains/kotlin/buildtools/api/CompilerArgumentsParseException : org/jetbrains/kotlin/buildtools/api/KotlinBuildToolsException {
+	public fun <init> (Ljava/lang/String;)V
 }
 
 public abstract interface class org/jetbrains/kotlin/buildtools/api/CompilerExecutionStrategyConfiguration {
@@ -19,6 +33,10 @@ public abstract interface class org/jetbrains/kotlin/buildtools/api/CompilerExec
 public abstract interface annotation class org/jetbrains/kotlin/buildtools/api/ExperimentalBuildToolsApi : java/lang/annotation/Annotation {
 }
 
+public abstract class org/jetbrains/kotlin/buildtools/api/KotlinBuildToolsException : java/lang/Exception {
+	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
 public abstract interface class org/jetbrains/kotlin/buildtools/api/KotlinLogger {
 	public abstract fun debug (Ljava/lang/String;)V
 	public abstract fun error (Ljava/lang/String;Ljava/lang/Throwable;)V
@@ -27,6 +45,20 @@ public abstract interface class org/jetbrains/kotlin/buildtools/api/KotlinLogger
 	public abstract fun isDebugEnabled ()Z
 	public abstract fun lifecycle (Ljava/lang/String;)V
 	public abstract fun warn (Ljava/lang/String;)V
+}
+
+public abstract interface class org/jetbrains/kotlin/buildtools/api/ProjectId {
+}
+
+public final class org/jetbrains/kotlin/buildtools/api/ProjectId$ProjectUUID : org/jetbrains/kotlin/buildtools/api/ProjectId {
+	public fun <init> (Ljava/util/UUID;)V
+	public final fun component1 ()Ljava/util/UUID;
+	public final fun copy (Ljava/util/UUID;)Lorg/jetbrains/kotlin/buildtools/api/ProjectId$ProjectUUID;
+	public static synthetic fun copy$default (Lorg/jetbrains/kotlin/buildtools/api/ProjectId$ProjectUUID;Ljava/util/UUID;ILjava/lang/Object;)Lorg/jetbrains/kotlin/buildtools/api/ProjectId$ProjectUUID;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getUuid ()Ljava/util/UUID;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class org/jetbrains/kotlin/buildtools/api/SharedApiClassesClassLoader {

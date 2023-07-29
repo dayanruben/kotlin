@@ -11,11 +11,17 @@ import org.gradle.api.NamedDomainObjectCollection
 import org.gradle.api.Project
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.InternalKotlinGradlePluginApi
+import org.jetbrains.kotlin.gradle.PRESETS_API_IS_DEPRECATED_MESSAGE
+import org.jetbrains.kotlin.gradle.DeprecatedTargetPresetApi
 import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.plugin.KotlinPluginLifecycle.Stage.AfterFinaliseDsl
+import org.jetbrains.kotlin.gradle.plugin.diagnostics.KotlinToolingDiagnostics
+import org.jetbrains.kotlin.gradle.plugin.diagnostics.reportDiagnostic
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.Companion.kotlinPropertiesProvider
 import org.jetbrains.kotlin.gradle.plugin.hierarchy.KotlinHierarchyDslImpl
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
+import org.jetbrains.kotlin.gradle.targets.android.internal.InternalKotlinTargetPreset
+import org.jetbrains.kotlin.gradle.targets.android.internal.internal
 import javax.inject.Inject
 
 @Suppress("DEPRECATION")
@@ -29,6 +35,10 @@ abstract class KotlinMultiplatformExtension
     KotlinTargetContainerWithNativeShortcuts,
     KotlinHierarchyDsl,
     KotlinMultiplatformSourceSetConventions by KotlinMultiplatformSourceSetConventionsImpl {
+    @Deprecated(
+        PRESETS_API_IS_DEPRECATED_MESSAGE,
+        level = DeprecationLevel.WARNING,
+    )
     override val presets: NamedDomainObjectCollection<KotlinTargetPreset<*>> = project.container(KotlinTargetPreset::class.java)
 
     final override val targets: NamedDomainObjectCollection<KotlinTarget> = project.container(KotlinTarget::class.java)
@@ -43,7 +53,8 @@ abstract class KotlinMultiplatformExtension
     private val presetExtension = project.objects.newInstance(
         DefaultTargetsFromPresetExtension::class.java,
         { this },
-        targets
+        targets,
+        project,
     )
 
     fun targets(configure: Action<TargetsFromPresetExtension>) {
@@ -104,6 +115,16 @@ abstract class KotlinMultiplatformExtension
      */
     fun applyDefaultHierarchyTemplate() = applyHierarchyTemplate(KotlinHierarchyTemplate.default)
 
+    /**
+     * @see applyDefaultHierarchyTemplate
+     * @see applyHierarchyTemplate
+     * @param extension: Additionally extend the default hierarchy with additional groups
+     *
+     */
+    @ExperimentalKotlinGradlePluginApi
+    fun applyDefaultHierarchyTemplate(extension: KotlinHierarchyBuilder.Root.() -> Unit) {
+        hierarchy.applyHierarchyTemplate(KotlinHierarchyTemplate.default, extension)
+    }
 
     @ExperimentalKotlinGradlePluginApi
     override fun applyHierarchyTemplate(template: KotlinHierarchyTemplate) {
@@ -120,6 +141,9 @@ abstract class KotlinMultiplatformExtension
         hierarchy.applyHierarchyTemplate(template)
     }
 
+    @ExperimentalKotlinGradlePluginApi
+    val targetHierarchy: DeprecatedKotlinTargetHierarchyDsl get() = DeprecatedKotlinTargetHierarchyDsl(this)
+
     @Suppress("unused") // DSL
     val testableTargets: NamedDomainObjectCollection<KotlinTargetWithTests<*, *>>
         get() = targets.withType(KotlinTargetWithTests::class.java)
@@ -134,41 +158,117 @@ abstract class KotlinMultiplatformExtension
         targets.all { it.withSourcesJar(publish) }
     }
 
+    private fun warnAboutTargetFromPresetDeprecation() {
+        project.reportDiagnostic(KotlinToolingDiagnostics.TargetFromPreset())
+    }
+
+    @DeprecatedTargetPresetApi
+    @Deprecated(
+        KotlinToolingDiagnostics.TargetFromPreset.DEPRECATION_MESSAGE,
+        level = DeprecationLevel.WARNING
+    )
     fun <T : KotlinTarget> targetFromPreset(
         preset: KotlinTargetPreset<T>,
         name: String = preset.name,
         configure: T.() -> Unit = { },
-    ): T = configureOrCreate(name, preset, configure)
+    ): T {
+        warnAboutTargetFromPresetDeprecation()
+        return targetFromPresetInternal(
+            preset = preset,
+            name = name,
+            configure = configure,
+        )
+    }
 
+    @DeprecatedTargetPresetApi
+    @Deprecated(
+        KotlinToolingDiagnostics.TargetFromPreset.DEPRECATION_MESSAGE,
+        level = DeprecationLevel.WARNING
+    )
     fun <T : KotlinTarget> targetFromPreset(
         preset: KotlinTargetPreset<T>,
         name: String,
         configure: Action<T>,
-    ) = targetFromPreset(preset, name) { configure.execute(this) }
+    ): T {
+        warnAboutTargetFromPresetDeprecation()
+        return targetFromPresetInternal(
+            preset = preset,
+            name = name,
+            configure = configure,
+        )
+    }
 
-    fun <T : KotlinTarget> targetFromPreset(preset: KotlinTargetPreset<T>) = targetFromPreset(preset, preset.name) { }
-    fun <T : KotlinTarget> targetFromPreset(preset: KotlinTargetPreset<T>, name: String) = targetFromPreset(preset, name) { }
-    fun <T : KotlinTarget> targetFromPreset(preset: KotlinTargetPreset<T>, configure: Action<T>) =
-        targetFromPreset(preset, preset.name, configure)
+    @DeprecatedTargetPresetApi
+    @Deprecated(
+        KotlinToolingDiagnostics.TargetFromPreset.DEPRECATION_MESSAGE,
+        level = DeprecationLevel.WARNING
+    )
+    fun <T : KotlinTarget> targetFromPreset(preset: KotlinTargetPreset<T>): T {
+        warnAboutTargetFromPresetDeprecation()
+        return targetFromPresetInternal(
+            preset = preset
+        )
+    }
+
+    @DeprecatedTargetPresetApi
+    @Deprecated(
+        KotlinToolingDiagnostics.TargetFromPreset.DEPRECATION_MESSAGE,
+        level = DeprecationLevel.WARNING
+    )
+    fun <T : KotlinTarget> targetFromPreset(preset: KotlinTargetPreset<T>, name: String): T {
+        warnAboutTargetFromPresetDeprecation()
+        return targetFromPresetInternal(
+            preset = preset,
+            name = name
+        )
+    }
+
+    @DeprecatedTargetPresetApi
+    @Deprecated(
+        KotlinToolingDiagnostics.TargetFromPreset.DEPRECATION_MESSAGE,
+        level = DeprecationLevel.WARNING
+    )
+    fun <T : KotlinTarget> targetFromPreset(preset: KotlinTargetPreset<T>, configure: Action<T>): T {
+        warnAboutTargetFromPresetDeprecation()
+        return targetFromPresetInternal(
+            preset = preset,
+            configure = configure
+        )
+    }
 
     internal val rootSoftwareComponent: KotlinSoftwareComponent by lazy {
         KotlinSoftwareComponentWithCoordinatesAndPublication(project, "kotlin", targets)
     }
 }
 
+@DeprecatedTargetPresetApi
+@KotlinGradlePluginDsl
 interface TargetsFromPresetExtension : NamedDomainObjectCollection<KotlinTarget> {
 
+    @Deprecated(
+        KotlinToolingDiagnostics.FromPreset.DEPRECATION_MESSAGE,
+        level = DeprecationLevel.WARNING,
+    )
     fun <T : KotlinTarget> fromPreset(
         preset: KotlinTargetPreset<T>,
         name: String,
         configureAction: T.() -> Unit = {},
     ): T
 
+    @Suppress("DeprecatedCallableAddReplaceWith", "DEPRECATION")
+    @Deprecated(
+        KotlinToolingDiagnostics.FromPreset.DEPRECATION_MESSAGE,
+        level = DeprecationLevel.WARNING,
+    )
     fun <T : KotlinTarget> fromPreset(
         preset: KotlinTargetPreset<T>,
         name: String,
-    ): T = fromPreset(preset, name, {})
+    ): T = fromPreset(preset, name) {}
 
+    @Deprecated(
+        KotlinToolingDiagnostics.FromPreset.DEPRECATION_MESSAGE,
+        level = DeprecationLevel.WARNING,
+    )
     fun <T : KotlinTarget> fromPreset(
         preset: KotlinTargetPreset<T>,
         name: String,
@@ -176,18 +276,28 @@ interface TargetsFromPresetExtension : NamedDomainObjectCollection<KotlinTarget>
     ): T
 }
 
+@Suppress("OVERRIDE_DEPRECATION")
 internal abstract class DefaultTargetsFromPresetExtension @Inject constructor(
     private val targetsContainer: () -> KotlinTargetsContainerWithPresets,
     val targets: NamedDomainObjectCollection<KotlinTarget>,
+    val project: Project,
 ) : TargetsFromPresetExtension,
     NamedDomainObjectCollection<KotlinTarget> by targets {
+
+    private fun warnAboutFromPresetDeprecation() {
+        project.reportDiagnostic(KotlinToolingDiagnostics.FromPreset())
+    }
 
     override fun <T : KotlinTarget> fromPreset(
         preset: KotlinTargetPreset<T>,
         name: String,
         configureAction: T.() -> Unit,
-    ): T = targetsContainer().configureOrCreate(name, preset, configureAction)
+    ): T {
+        warnAboutFromPresetDeprecation()
+        return targetsContainer().configureOrCreate(name, preset.internal, configureAction)
+    }
 
+    @Suppress("DEPRECATION")
     override fun <T : KotlinTarget> fromPreset(
         preset: KotlinTargetPreset<T>,
         name: String,
@@ -197,12 +307,13 @@ internal abstract class DefaultTargetsFromPresetExtension @Inject constructor(
     }
 }
 
+@Suppress("DEPRECATION")
 private fun KotlinTarget.isProducedFromPreset(kotlinTargetPreset: KotlinTargetPreset<*>): Boolean =
     preset == kotlinTargetPreset
 
 internal fun <T : KotlinTarget> KotlinTargetsContainerWithPresets.configureOrCreate(
     targetName: String,
-    targetPreset: KotlinTargetPreset<T>,
+    targetPreset: InternalKotlinTargetPreset<T>,
     configure: T.() -> Unit,
 ): T {
     val existingTarget = targets.findByName(targetName)
@@ -214,13 +325,14 @@ internal fun <T : KotlinTarget> KotlinTargetsContainerWithPresets.configureOrCre
         }
 
         existingTarget == null -> {
-            val newTarget = targetPreset.createTarget(targetName)
+            val newTarget = targetPreset.createTargetInternal(targetName)
             targets.add(newTarget)
             configure(newTarget)
             return newTarget
         }
 
         else -> {
+            @Suppress("DEPRECATION")
             throw InvalidUserCodeException(
                 "The target '$targetName' already exists, but it was not created with the '${targetPreset.name}' preset. " +
                         "To configure it, access it by name in `kotlin.targets`" +
@@ -230,4 +342,3 @@ internal fun <T : KotlinTarget> KotlinTargetsContainerWithPresets.configureOrCre
         }
     }
 }
-

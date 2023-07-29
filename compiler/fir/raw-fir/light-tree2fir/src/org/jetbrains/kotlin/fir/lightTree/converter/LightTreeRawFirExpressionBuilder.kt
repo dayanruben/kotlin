@@ -203,7 +203,7 @@ class LightTreeRawFirExpressionBuilder(
                                 source = expressionSource.fakeElement(KtFakeSourceElementKind.ImplicitReturn.FromExpressionBody)
                                 this.target = target
                                 result = buildUnitExpression {
-                                    source = expressionSource.fakeElement(KtFakeSourceElementKind.ImplicitUnit)
+                                    source = expressionSource.fakeElement(KtFakeSourceElementKind.ImplicitUnit.LambdaCoercion)
                                 }
                             }
                         )
@@ -463,11 +463,13 @@ class LightTreeRawFirExpressionBuilder(
             if (it.isExpression()) firReceiverExpression = getAsFirExpression(it, "No receiver in class literal")
         }
 
+        val classLiteralSource = classLiteralExpression.toFirSourceElement()
+
         return buildGetClassCall {
-            source = classLiteralExpression.toFirSourceElement()
+            source = classLiteralSource
             argumentList = buildUnaryArgumentList(
                 firReceiverExpression
-                    ?: buildErrorExpression(null, ConeSyntaxDiagnostic("No receiver in class literal"))
+                    ?: buildErrorExpression(classLiteralSource, ConeUnsupportedClassLiteralsWithEmptyLhs)
             )
         }
     }
@@ -986,7 +988,7 @@ class LightTreeRawFirExpressionBuilder(
             if (it.isExpression()) firExpressionList += getAsFirExpression<FirExpression>(it, "Incorrect collection literal argument")
         }
 
-        return buildArrayOfCall {
+        return buildArrayLiteral {
             source = expression.toFirSourceElement()
             argumentList = buildArgumentList {
                 arguments += firExpressionList
@@ -1391,7 +1393,7 @@ class LightTreeRawFirExpressionBuilder(
         }
 
         val calculatedFirExpression = firExpression ?: buildUnitExpression {
-            source = returnExpression.toFirSourceElement(KtFakeSourceElementKind.ImplicitUnit)
+            source = returnExpression.toFirSourceElement(KtFakeSourceElementKind.ImplicitUnit.Return)
         }
         return calculatedFirExpression.toReturn(
             baseSource = returnExpression.toFirSourceElement(),

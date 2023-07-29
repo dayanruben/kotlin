@@ -6,15 +6,13 @@
 #pragma once
 
 #include <atomic>
+#include <cstdint>
 
+#include "ExtraObjectData.hpp"
 #include "GCScheduler.hpp"
 #include "Memory.h"
 #include "Utils.hpp"
 #include "std_support/Memory.hpp"
-
-#ifdef CUSTOM_ALLOCATOR
-#include "CustomAllocator.hpp"
-#endif
 
 namespace kotlin {
 
@@ -32,24 +30,18 @@ public:
     public:
         class Impl;
 
-        ThreadData(GC& gc, gcScheduler::GCSchedulerThreadData& gcScheduler, mm::ThreadData& threadData) noexcept;
+        ThreadData(GC& gc, mm::ThreadData& threadData) noexcept;
         ~ThreadData();
 
         Impl& impl() noexcept { return *impl_; }
-
-        void Schedule() noexcept;
-        void ScheduleAndWaitFullGC() noexcept;
-        void ScheduleAndWaitFullGCWithFinalizers() noexcept;
 
         void Publish() noexcept;
         void ClearForTests() noexcept;
 
         ObjHeader* CreateObject(const TypeInfo* typeInfo) noexcept;
         ArrayHeader* CreateArray(const TypeInfo* typeInfo, uint32_t elements) noexcept;
-
-#ifdef CUSTOM_ALLOCATOR
-        alloc::CustomAllocator& Allocator() noexcept;
-#endif
+        mm::ExtraObjectData& CreateExtraObjectDataForObject(ObjHeader* object, const TypeInfo* typeInfo) noexcept;
+        void DestroyUnattachedExtraObjectData(mm::ExtraObjectData& extraObject) noexcept;
 
         void OnSuspendForGC() noexcept;
 
@@ -78,13 +70,15 @@ public:
     static void processArrayInMark(void* state, ArrayHeader* array) noexcept;
     static void processFieldInMark(void* state, ObjHeader* field) noexcept;
 
-    // TODO: These should be moved into the scheduler.
+    // TODO: These should exist only in the scheduler.
     int64_t Schedule() noexcept;
+    void WaitFinished(int64_t epoch) noexcept;
     void WaitFinalizers(int64_t epoch) noexcept;
-    void ScheduleAndWaitFullGCWithFinalizers() noexcept { WaitFinalizers(Schedule()); }
 
     static const size_t objectDataSize;
     static bool SweepObject(void* objectData) noexcept;
+
+    static void DestroyExtraObjectData(mm::ExtraObjectData& extraObject) noexcept;
 
 private:
     std_support::unique_ptr<Impl> impl_;

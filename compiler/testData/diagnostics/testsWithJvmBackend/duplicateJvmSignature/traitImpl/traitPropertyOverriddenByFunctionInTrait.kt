@@ -6,5 +6,5 @@ interface T {
 }
 
 interface C : T {
-    <!ACCIDENTAL_OVERRIDE!>fun getX()<!> = 1
+    <!ACCIDENTAL_OVERRIDE!>fun getX() = 1<!>
 }

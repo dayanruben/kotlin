@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.test.frontend.fir.Fir2IrJvmResultsConverter
 import org.jetbrains.kotlin.test.frontend.fir.FirFrontendFacade
 import org.jetbrains.kotlin.test.frontend.fir.FirOutputArtifact
 import org.jetbrains.kotlin.test.frontend.fir.handlers.FirDiagnosticsHandler
+import org.jetbrains.kotlin.test.frontend.fir.handlers.PsiLightTreeMetaInfoProcessor
 import org.jetbrains.kotlin.test.model.*
 import org.jetbrains.kotlin.test.services.configuration.CommonEnvironmentConfigurator
 import org.jetbrains.kotlin.test.services.configuration.JvmEnvironmentConfigurator
@@ -63,6 +64,7 @@ abstract class AbstractDiagnosticsTestWithJvmBackend<R : ResultingArtifact.Front
         )
 
         useMetaInfoProcessors(::OldNewInferenceMetaInfoProcessor)
+
         useAdditionalSourceProviders(
             ::AdditionalDiagnosticsSourceFilesProvider,
             ::CoroutineHelpersSourceFilesProvider,
@@ -72,11 +74,11 @@ abstract class AbstractDiagnosticsTestWithJvmBackend<R : ResultingArtifact.Front
         if (targetFrontend == FrontendKinds.ClassicFrontend) {
             classicFrontendHandlersStep {
                 useHandlers(
-                    ::DeclarationsDumpHandler,
                     ::ClassicDiagnosticsHandler,
                 )
             }
         } else {
+            useMetaInfoProcessors(::PsiLightTreeMetaInfoProcessor)
             firHandlersStep {
                 useHandlers(::FirDiagnosticsHandler)
             }
@@ -132,3 +134,5 @@ abstract class AbstractFirDiagnosticsTestWithJvmIrBackendBase(
 }
 
 abstract class AbstractFirPsiDiagnosticsTestWithJvmIrBackend : AbstractFirDiagnosticsTestWithJvmIrBackendBase(FirParser.Psi)
+
+abstract class AbstractFirLightTreeDiagnosticsTestWithJvmIrBackend : AbstractFirDiagnosticsTestWithJvmIrBackendBase(FirParser.LightTree)

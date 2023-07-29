@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.diagnostics.WhenMissingCase
 import org.jetbrains.kotlin.fir.FirModuleData
 import org.jetbrains.kotlin.fir.checkers.generator.diagnostics.model.*
 import org.jetbrains.kotlin.fir.declarations.FirFunction
+import org.jetbrains.kotlin.fir.declarations.FirTypeAlias
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.*
@@ -806,6 +807,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val EXPRESSION_OF_NULLABLE_TYPE_IN_CLASS_LITERAL_LHS by error<PsiElement> {
             parameter<ConeKotlinType>("lhsType")
         }
+        val UNSUPPORTED_CLASS_LITERALS_WITH_EMPTY_LHS by error<KtElement>()
     }
 
     val OVERRIDES by object : DiagnosticGroup("overrides") {
@@ -821,6 +823,11 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val DATA_CLASS_OVERRIDE_CONFLICT by error<KtClassOrObject>(PositioningStrategy.DATA_MODIFIER) {
             parameter<FirCallableSymbol<*>>("overridingMember")
             parameter<FirCallableSymbol<*>>("baseMember")
+        }
+
+        val DATA_CLASS_OVERRIDE_DEFAULT_VALUES by error<KtElement>(PositioningStrategy.DATA_MODIFIER) {
+            parameter<FirCallableSymbol<*>>("overridingMember")
+            parameter<FirClassSymbol<*>>("baseType")
         }
 
         val CANNOT_WEAKEN_ACCESS_PRIVILEGE by error<KtModifierListOwner>(PositioningStrategy.VISIBILITY_MODIFIER) {
@@ -1009,6 +1016,10 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val DATA_OBJECT_CUSTOM_EQUALS_OR_HASH_CODE by error<KtNamedFunction>(PositioningStrategy.OVERRIDE_MODIFIER)
     }
 
+    val PARAMETER_DEFAULT_VALUES by object : DiagnosticGroup("Parameter default values") {
+        val DEFAULT_VALUE_NOT_ALLOWED_IN_OVERRIDE by error<KtElement>()
+    }
+
     val FUN_INTERFACES by object : DiagnosticGroup("Fun interfaces") {
         val FUN_INTERFACE_CONSTRUCTOR_REFERENCE by error<KtExpression>(PositioningStrategy.REFERENCE_BY_QUALIFIED)
         val FUN_INTERFACE_WRONG_COUNT_OF_ABSTRACT_MEMBERS by error<KtClass>(PositioningStrategy.FUN_MODIFIER)
@@ -1134,6 +1145,8 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val ACTUAL_TYPE_ALIAS_TO_CLASS_WITH_DECLARATION_SITE_VARIANCE by error<KtTypeAlias>(PositioningStrategy.DECLARATION_SIGNATURE)
         val ACTUAL_TYPE_ALIAS_WITH_USE_SITE_VARIANCE by error<KtTypeAlias>(PositioningStrategy.DECLARATION_SIGNATURE)
         val ACTUAL_TYPE_ALIAS_WITH_COMPLEX_SUBSTITUTION by error<KtTypeAlias>(PositioningStrategy.DECLARATION_SIGNATURE)
+        val ACTUAL_TYPE_ALIAS_TO_NULLABLE_TYPE by error<KtTypeAlias>(PositioningStrategy.DECLARATION_SIGNATURE)
+        val ACTUAL_TYPE_ALIAS_TO_NOTHING by error<KtTypeAlias>(PositioningStrategy.DECLARATION_SIGNATURE)
         val ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS by error<PsiElement>()
         val DEFAULT_ARGUMENTS_IN_EXPECT_WITH_ACTUAL_TYPEALIAS by error<KtTypeAlias> {
             parameter<FirClassSymbol<*>>("expectClassSymbol")
@@ -1541,6 +1554,10 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val NON_INTERNAL_PUBLISHED_API by error<KtElement>()
 
         val INVALID_DEFAULT_FUNCTIONAL_PARAMETER_FOR_INLINE by error<KtElement>() {
+            parameter<FirValueParameterSymbol>("parameter")
+        }
+
+        val NOT_SUPPORTED_INLINE_PARAMETER_IN_INLINE_PARAMETER_DEFAULT_VALUE by error<KtElement> {
             parameter<FirValueParameterSymbol>("parameter")
         }
 

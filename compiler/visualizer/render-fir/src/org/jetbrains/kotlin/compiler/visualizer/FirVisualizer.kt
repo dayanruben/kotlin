@@ -265,7 +265,7 @@ class FirVisualizer(private val firFile: FirFile) : BaseRenderer() {
 
         override fun visitCallExpression(expression: KtCallExpression) {
             expression.firstOfTypeWithLocalReplace<FirFunctionCall> { this.calleeReference.name.asString() }
-                ?: expression.firstOfTypeWithRender<FirArrayOfCall>()
+                ?: expression.firstOfTypeWithRender<FirArrayLiteral>()
             expression.children.filter { it.node.elementType != KtNodeTypes.REFERENCE_EXPRESSION }.forEach { psi ->
                 when (psi) {
                     is KtLambdaArgument -> {
@@ -613,6 +613,15 @@ class FirVisualizer(private val firFile: FirFile) : BaseRenderer() {
             visitTypeParameter(typeParameterRef.symbol.fir, data)
         }
 
+        override fun visitOuterClassTypeParameterRef(outerClassTypeParameterRef: FirOuterClassTypeParameterRef, data: StringBuilder) {
+            visitTypeParameterRef(outerClassTypeParameterRef, data)
+        }
+
+        override fun visitConstructedClassTypeParameterRef(constructedClassTypeParameterRef: FirConstructedClassTypeParameterRef, data: StringBuilder
+        ) {
+            visitTypeParameterRef(constructedClassTypeParameterRef, data)
+        }
+
         override fun visitTypeParameter(typeParameter: FirTypeParameter, data: StringBuilder) {
             data.append(typeParameter.name)
             val bounds = typeParameter.bounds.filterNot { it.render() == "kotlin/Any?" }
@@ -835,9 +844,9 @@ class FirVisualizer(private val firFile: FirFile) : BaseRenderer() {
             getClassCall.argument.accept(this, data)
         }
 
-        override fun visitArrayOfCall(arrayOfCall: FirArrayOfCall, data: StringBuilder) {
-            val name = arrayOfCall.typeRef.coneType.classId!!.shortClassName.asString()
-            val typeArguments = arrayOfCall.typeRef.coneType.typeArguments
+        override fun visitArrayLiteral(arrayLiteral: FirArrayLiteral, data: StringBuilder) {
+            val name = arrayLiteral.typeRef.coneType.classId!!.shortClassName.asString()
+            val typeArguments = arrayLiteral.typeRef.coneType.typeArguments
             val typeParameters = if (typeArguments.isEmpty()) "" else " <T>"
             data.append("fun$typeParameters ${name.replaceFirstChar(Char::lowercaseChar)}Of")
             typeArguments.firstOrNull()?.let {

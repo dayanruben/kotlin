@@ -1730,6 +1730,10 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         val lhsType: KtType
     }
 
+    interface UnsupportedClassLiteralsWithEmptyLhs : KtFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = UnsupportedClassLiteralsWithEmptyLhs::class
+    }
+
     interface NothingToOverride : KtFirDiagnostic<KtModifierListOwner> {
         override val diagnosticClass get() = NothingToOverride::class
         val declaration: KtCallableSymbol
@@ -1745,6 +1749,12 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = DataClassOverrideConflict::class
         val overridingMember: KtCallableSymbol
         val baseMember: KtCallableSymbol
+    }
+
+    interface DataClassOverrideDefaultValues : KtFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = DataClassOverrideDefaultValues::class
+        val overridingMember: KtCallableSymbol
+        val baseType: KtClassLikeSymbol
     }
 
     interface CannotWeakenAccessPrivilege : KtFirDiagnostic<KtModifierListOwner> {
@@ -2030,6 +2040,10 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
 
     interface DataObjectCustomEqualsOrHashCode : KtFirDiagnostic<KtNamedFunction> {
         override val diagnosticClass get() = DataObjectCustomEqualsOrHashCode::class
+    }
+
+    interface DefaultValueNotAllowedInOverride : KtFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = DefaultValueNotAllowedInOverride::class
     }
 
     interface FunInterfaceConstructorReference : KtFirDiagnostic<KtExpression> {
@@ -2379,6 +2393,14 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
 
     interface ActualTypeAliasWithComplexSubstitution : KtFirDiagnostic<KtTypeAlias> {
         override val diagnosticClass get() = ActualTypeAliasWithComplexSubstitution::class
+    }
+
+    interface ActualTypeAliasToNullableType : KtFirDiagnostic<KtTypeAlias> {
+        override val diagnosticClass get() = ActualTypeAliasToNullableType::class
+    }
+
+    interface ActualTypeAliasToNothing : KtFirDiagnostic<KtTypeAlias> {
+        override val diagnosticClass get() = ActualTypeAliasToNothing::class
     }
 
     interface ActualFunctionWithDefaultArguments : KtFirDiagnostic<PsiElement> {
@@ -3076,6 +3098,11 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
 
     interface InvalidDefaultFunctionalParameterForInline : KtFirDiagnostic<KtElement> {
         override val diagnosticClass get() = InvalidDefaultFunctionalParameterForInline::class
+        val parameter: KtSymbol
+    }
+
+    interface NotSupportedInlineParameterInInlineParameterDefaultValue : KtFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = NotSupportedInlineParameterInInlineParameterDefaultValue::class
         val parameter: KtSymbol
     }
 

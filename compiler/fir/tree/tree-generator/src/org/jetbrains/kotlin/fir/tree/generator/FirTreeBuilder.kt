@@ -40,6 +40,8 @@ object FirTreeBuilder : AbstractFirTreeBuilder() {
     val callableDeclaration by sealedElement(Declaration, memberDeclaration)
     val typeParameterRef by element(Declaration)
     val typeParameter by element(Declaration, typeParameterRef, declaration)
+    val constructedClassTypeParameterRef by element(Declaration, typeParameterRef)
+    val outerClassTypeParameterRef by element(Declaration, typeParameterRef)
 
     val variable by sealedElement(Declaration, callableDeclaration, statement)
     val valueParameter by element(Declaration, variable, controlFlowGraphOwner)
@@ -116,7 +118,7 @@ object FirTreeBuilder : AbstractFirTreeBuilder() {
     val checkNotNullCall by element(Expression, expression, call, resolvable)
     val elvisExpression by element(Expression, expression, resolvable)
 
-    val arrayOfCall by element(Expression, expression, call)
+    val arrayLiteral by element(Expression, expression, call)
     val augmentedArraySetCall by element(Expression, statement)
     val classReferenceExpression by element(Expression, expression)
     val errorExpression by element(Expression, expression, diagnosticHolder)

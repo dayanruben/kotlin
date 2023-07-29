@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.gradle.unitTests.diagnosticsTests
 
+import org.jetbrains.kotlin.gradle.dsl.targetFromPresetInternal
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinJvmWithJavaTargetPreset
 import org.jetbrains.kotlin.gradle.util.androidLibrary
 import org.jetbrains.kotlin.gradle.util.checkDiagnosticsWithMppProject
@@ -14,8 +15,8 @@ import org.junit.Test
 class MppDiagnosticsFunctionalTest {
 
     @Test
-    fun testCommonMainWithDependsOn() {
-        checkDiagnosticsWithMppProject("commonMainWithDependsOn") {
+    fun testCommonMainOrTestWithDependsOn() {
+        checkDiagnosticsWithMppProject("commonMainOrTestWithDependsOn") {
             kotlin {
                 jvm()
                 linuxX64()
@@ -29,6 +30,13 @@ class MppDiagnosticsFunctionalTest {
                         dependsOn(myCustomCommonMain)
                         dependsOn(myCustomCommonMain2) // check that diagnostic isn't duplicated
                     }
+
+                    val myCustomCommonTest = create("myCustomCommonTest")
+                    val myCustomCommonTest2 = create("myCustomCommonTest2")
+                    commonTest {
+                        dependsOn(myCustomCommonTest)
+                        dependsOn(myCustomCommonTest2) // check that diagnostic isn't duplicated
+                    }
                 }
             }
         }
@@ -38,7 +46,8 @@ class MppDiagnosticsFunctionalTest {
     fun testDeprecatedJvmWithJavaPreset() {
         checkDiagnosticsWithMppProject("deprecatedJvmWithJavaPreset") {
             kotlin {
-                targetFromPreset(presets.getByName(KotlinJvmWithJavaTargetPreset.PRESET_NAME))
+                @Suppress("DEPRECATION")
+                targetFromPresetInternal(presets.getByName(KotlinJvmWithJavaTargetPreset.PRESET_NAME))
             }
         }
     }

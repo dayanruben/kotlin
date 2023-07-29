@@ -3114,6 +3114,9 @@ public final class kotlin/enums/EnumEntriesKt {
 	public static final fun enumEntries ([Ljava/lang/Enum;)Lkotlin/enums/EnumEntries;
 }
 
+public abstract interface annotation class kotlin/experimental/ExperimentalNativeApi : java/lang/annotation/Annotation {
+}
+
 public abstract interface annotation class kotlin/experimental/ExperimentalObjCName : java/lang/annotation/Annotation {
 }
 
@@ -3388,6 +3391,9 @@ public abstract interface annotation class kotlin/js/ExperimentalJsFileName : ja
 }
 
 public abstract interface annotation class kotlin/js/ExperimentalJsReflectionCreateInstance : java/lang/annotation/Annotation {
+}
+
+public abstract interface annotation class kotlin/jvm/ImplicitlyActualizedByJvmDeclaration : java/lang/annotation/Annotation {
 }
 
 public final class kotlin/jvm/JvmClassMappingKt {

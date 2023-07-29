@@ -21,10 +21,12 @@ import org.jetbrains.kotlin.analysis.providers.createAnnotationResolver
 import org.jetbrains.kotlin.analysis.providers.createDeclarationProvider
 import org.jetbrains.kotlin.analysis.providers.impl.declarationProviders.FileBasedKotlinDeclarationProvider
 import org.jetbrains.kotlin.analysis.providers.impl.util.mergeInto
+import org.jetbrains.kotlin.analysis.utils.errors.withKtModuleEntry
 import org.jetbrains.kotlin.analysis.utils.trackers.CompositeModificationTracker
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
+import org.jetbrains.kotlin.fir.BuiltinTypes
 import org.jetbrains.kotlin.fir.PrivateSessionConstructor
 import org.jetbrains.kotlin.fir.SessionConfiguration
 import org.jetbrains.kotlin.fir.analysis.checkersComponent
@@ -47,6 +49,8 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.jvm.modules.JavaModuleResolver
 import org.jetbrains.kotlin.scripting.compiler.plugin.FirScriptingSamWithReceiverExtensionRegistrar
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
+import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
+import org.jetbrains.kotlin.utils.exceptions.withVirtualFileEntry
 import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 
@@ -58,6 +62,38 @@ internal abstract class LLFirAbstractSessionFactory(protected val project: Proje
     abstract fun createSourcesSession(module: KtSourceModule): LLFirSourcesSession
     abstract fun createLibrarySession(module: KtModule): LLFirLibraryOrLibrarySourceResolvableModuleSession
     abstract fun createBinaryLibrarySession(module: KtBinaryModule): LLFirLibrarySession
+
+    private fun createLibraryProvidersForScope(
+        session: LLFirSession,
+        moduleData: LLFirModuleData,
+        kotlinScopeProvider: FirKotlinScopeProvider,
+        project: Project,
+        builtinTypes: BuiltinTypes,
+        scope: GlobalSearchScope,
+        builtinSymbolProvider: FirSymbolProvider,
+    ): LLFirModuleWithDependenciesSymbolProvider {
+        return LLFirModuleWithDependenciesSymbolProvider(
+            session,
+            providers = createProjectLibraryProvidersForScope(
+                session,
+                moduleData,
+                kotlinScopeProvider,
+                project,
+                builtinTypes,
+                scope
+            ),
+            LLFirDependenciesSymbolProvider(session, listOf(builtinSymbolProvider)),
+        )
+    }
+
+    abstract fun createProjectLibraryProvidersForScope(
+        session: LLFirSession,
+        moduleData: LLFirModuleData,
+        kotlinScopeProvider: FirKotlinScopeProvider,
+        project: Project,
+        builtinTypes: BuiltinTypes,
+        scope: GlobalSearchScope,
+    ): List<FirSymbolProvider>
 
     fun createScriptSession(module: KtScriptModule): LLFirScriptSession {
         val platform = module.platform
@@ -125,7 +161,9 @@ internal abstract class LLFirAbstractSessionFactory(protected val project: Proje
             FirSessionConfigurator(this).apply {
                 val hostConfiguration = ScriptingHostConfiguration(defaultJvmScriptingHostConfiguration) {}
                 val scriptDefinition = module.file.findScriptDefinition()
-                    ?: error("Cannot load script definition for ${module.file.virtualFilePath}")
+                    ?: errorWithAttachment("Cannot load script definition") {
+                        withVirtualFileEntry("file", module.file.virtualFile)
+                    }
 
                 val extensionRegistrar = FirScriptingCompilerExtensionIdeRegistrar(
                     project,
@@ -292,7 +330,9 @@ internal abstract class LLFirAbstractSessionFactory(protected val project: Proje
         val libraryModule = when (module) {
             is KtLibraryModule -> module
             is KtLibrarySourceModule -> module.binaryLibrary
-            else -> error("Unexpected module ${module::class.simpleName}")
+            else -> errorWithAttachment("Unexpected module ${module::class.simpleName}") {
+                withKtModuleEntry("module", module)
+            }
         }
 
         val platform = module.platform
@@ -348,7 +388,7 @@ internal abstract class LLFirAbstractSessionFactory(protected val project: Proje
                     val librariesSearchScope = ProjectScope.getLibrariesScope(project)
                         .intersectWith(GlobalSearchScope.notScope(libraryModule.contentScope))
 
-                    val restLibrariesProvider = LLFirLibraryProviderFactory.createProjectLibraryProvidersForScope(
+                    val restLibrariesProvider = createProjectLibraryProvidersForScope(
                         session, moduleData, scopeProvider,
                         project, builtinTypes, librariesSearchScope
                     )
@@ -398,7 +438,7 @@ internal abstract class LLFirAbstractSessionFactory(protected val project: Proje
             val kotlinScopeProvider = FirKotlinScopeProvider(::wrapScopeWithJvmMapped)
             register(FirKotlinScopeProvider::class, kotlinScopeProvider)
 
-            val symbolProvider = LLFirLibraryProviderFactory.createLibraryProvidersForScope(
+            val symbolProvider = createLibraryProvidersForScope(
                 this,
                 moduleData,
                 kotlinScopeProvider,
@@ -447,7 +487,13 @@ internal abstract class LLFirAbstractSessionFactory(protected val project: Proje
             is KtScriptModule,
             is KtScriptDependencyModule,
             is KtNotUnderContentRootModule,
-            is KtLibrarySourceModule -> error("Module $module cannot depend on ${dependency::class}: $dependency")
+            is KtLibrarySourceModule,
+            -> {
+                errorWithAttachment("Module ${module::class} cannot depend on ${dependency::class}") {
+                    withKtModuleEntry("module", module)
+                    withKtModuleEntry("dependency", dependency)
+                }
+            }
         }
 
         val dependencyModules = buildSet {

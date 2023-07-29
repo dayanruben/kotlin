@@ -30,7 +30,7 @@ import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.impl.FirFieldImpl
-import org.jetbrains.kotlin.fir.declarations.impl.FirOuterClassTypeParameterRef
+import org.jetbrains.kotlin.fir.declarations.FirOuterClassTypeParameterRef
 import org.jetbrains.kotlin.fir.diagnostics.ConeCannotInferTypeParameterType
 import org.jetbrains.kotlin.fir.diagnostics.ConeSimpleDiagnostic
 import org.jetbrains.kotlin.fir.java.declarations.FirJavaField
@@ -623,7 +623,9 @@ private class BuilderCache<From, To : KtSymbol> {
     inline fun <reified S : To> cache(key: From, calculation: () -> S): S {
         val value = cache.getOrPut(key, calculation)
         return value as? S
-            ?: error("Cannot cast ${value::class} to ${S::class}\n${value}")
+            ?: errorWithAttachment("Cannot cast ${value::class} to ${S::class}") {
+                withEntry("value", value.toString())
+            }
     }
 }
 

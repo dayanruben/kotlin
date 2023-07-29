@@ -491,8 +491,9 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
             +name
             +fieldList(statement).withTransform()
             +symbol("FirScriptSymbol")
-            +FieldList("parameters", variable, withReplace = false)
+            +fieldList("parameters", variable, withReplace = false)
             +fieldList(contextReceiver, useMutableOrEmpty = true)
+            +field("resultPropertyName", nameType, nullable = true)
         }
 
         codeFragment.configure {
@@ -509,6 +510,7 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
             +booleanField("isAllUnder")
             +field("aliasName", nameType, nullable = true)
             +field("aliasSource", sourceElementType, nullable = true)
+            shouldBeAbstractClass()
         }
 
         resolvedImport.configure {

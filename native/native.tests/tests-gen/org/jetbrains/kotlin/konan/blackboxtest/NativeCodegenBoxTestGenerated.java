@@ -140,6 +140,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
                 }
 
                 @Test
+                @TestMetadata("annotationWithTypeParameters.kt")
+                public void testAnnotationWithTypeParameters() throws Exception {
+                    runTest("compiler/testData/codegen/box/annotations/instances/annotationWithTypeParameters.kt");
+                }
+
+                @Test
                 @TestMetadata("annotationsUnsignedTypes.kt")
                 public void testAnnotationsUnsignedTypes() throws Exception {
                     runTest("compiler/testData/codegen/box/annotations/instances/annotationsUnsignedTypes.kt");
@@ -155,6 +161,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
                 @TestMetadata("multifileEqHc.kt")
                 public void testMultifileEqHc() throws Exception {
                     runTest("compiler/testData/codegen/box/annotations/instances/multifileEqHc.kt");
+                }
+
+                @Test
+                @TestMetadata("multimoduleTypeParams.kt")
+                public void testMultimoduleTypeParams() throws Exception {
+                    runTest("compiler/testData/codegen/box/annotations/instances/multimoduleTypeParams.kt");
                 }
 
                 @Test
@@ -1846,6 +1858,120 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
         }
 
         @Nested
+        @TestMetadata("compiler/testData/codegen/box/builderInference")
+        @TestDataPath("$PROJECT_ROOT")
+        @UseExtTestCaseGroupProvider()
+        @DisabledTestsIfProperty(sourceLocations = { "compiler/testData/codegen/box/coroutines/featureIntersection/defaultExpect.kt", "compiler/testData/codegen/box/multiplatform/defaultArguments/*.kt", "compiler/testData/codegen/box/multiplatform/migratedOldTests/*.kt", "compiler/testData/codegen/boxInline/multiplatform/defaultArguments/receiversAndParametersInLambda.kt" }, property = ClassLevelProperty.TEST_MODE, propertyValue = "ONE_STAGE_MULTI_MODULE")
+        public class BuilderInference {
+            @Test
+            public void testAllFilesPresentInBuilderInference() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/builderInference"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+            }
+
+            @Nested
+            @TestMetadata("compiler/testData/codegen/box/builderInference/oneParameter")
+            @TestDataPath("$PROJECT_ROOT")
+            @UseExtTestCaseGroupProvider()
+            @DisabledTestsIfProperty(sourceLocations = { "compiler/testData/codegen/box/coroutines/featureIntersection/defaultExpect.kt", "compiler/testData/codegen/box/multiplatform/defaultArguments/*.kt", "compiler/testData/codegen/box/multiplatform/migratedOldTests/*.kt", "compiler/testData/codegen/boxInline/multiplatform/defaultArguments/receiversAndParametersInLambda.kt" }, property = ClassLevelProperty.TEST_MODE, propertyValue = "ONE_STAGE_MULTI_MODULE")
+            public class OneParameter {
+                @Test
+                public void testAllFilesPresentInOneParameter() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/builderInference/oneParameter"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+                }
+
+                @Nested
+                @TestMetadata("compiler/testData/codegen/box/builderInference/oneParameter/oneTypeVariable")
+                @TestDataPath("$PROJECT_ROOT")
+                @UseExtTestCaseGroupProvider()
+                @DisabledTestsIfProperty(sourceLocations = { "compiler/testData/codegen/box/coroutines/featureIntersection/defaultExpect.kt", "compiler/testData/codegen/box/multiplatform/defaultArguments/*.kt", "compiler/testData/codegen/box/multiplatform/migratedOldTests/*.kt", "compiler/testData/codegen/boxInline/multiplatform/defaultArguments/receiversAndParametersInLambda.kt" }, property = ClassLevelProperty.TEST_MODE, propertyValue = "ONE_STAGE_MULTI_MODULE")
+                public class OneTypeVariable {
+                    @Test
+                    public void testAllFilesPresentInOneTypeVariable() throws Exception {
+                        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/builderInference/oneParameter/oneTypeVariable"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+                    }
+
+                    @Nested
+                    @TestMetadata("compiler/testData/codegen/box/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin")
+                    @TestDataPath("$PROJECT_ROOT")
+                    @UseExtTestCaseGroupProvider()
+                    @DisabledTestsIfProperty(sourceLocations = { "compiler/testData/codegen/box/coroutines/featureIntersection/defaultExpect.kt", "compiler/testData/codegen/box/multiplatform/defaultArguments/*.kt", "compiler/testData/codegen/box/multiplatform/migratedOldTests/*.kt", "compiler/testData/codegen/boxInline/multiplatform/defaultArguments/receiversAndParametersInLambda.kt" }, property = ClassLevelProperty.TEST_MODE, propertyValue = "ONE_STAGE_MULTI_MODULE")
+                    public class OneTypeInfoOrigin {
+                        @Test
+                        public void testAllFilesPresentInOneTypeInfoOrigin() throws Exception {
+                            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+                        }
+
+                        @Test
+                        @TestMetadata("AnonymousFunctionArgumentAndBuildeeParameter.kt")
+                        public void testAnonymousFunctionArgumentAndBuildeeParameter() throws Exception {
+                            runTest("compiler/testData/codegen/box/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/AnonymousFunctionArgumentAndBuildeeParameter.kt");
+                        }
+
+                        @Test
+                        @TestMetadata("AnonymousFunctionArgumentAndBuildeeReceiver.kt")
+                        public void testAnonymousFunctionArgumentAndBuildeeReceiver() throws Exception {
+                            runTest("compiler/testData/codegen/box/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/AnonymousFunctionArgumentAndBuildeeReceiver.kt");
+                        }
+
+                        @Test
+                        @TestMetadata("LambdaArgumentAndBuildeeParameter.kt")
+                        public void testLambdaArgumentAndBuildeeParameter() throws Exception {
+                            runTest("compiler/testData/codegen/box/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/LambdaArgumentAndBuildeeParameter.kt");
+                        }
+
+                        @Test
+                        @TestMetadata("LambdaArgumentAndBuildeeReceiver.kt")
+                        public void testLambdaArgumentAndBuildeeReceiver() throws Exception {
+                            runTest("compiler/testData/codegen/box/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/LambdaArgumentAndBuildeeReceiver.kt");
+                        }
+
+                        @Nested
+                        @TestMetadata("compiler/testData/codegen/box/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/sourceSinkFeedContexts")
+                        @TestDataPath("$PROJECT_ROOT")
+                        @UseExtTestCaseGroupProvider()
+                        @DisabledTestsIfProperty(sourceLocations = { "compiler/testData/codegen/box/coroutines/featureIntersection/defaultExpect.kt", "compiler/testData/codegen/box/multiplatform/defaultArguments/*.kt", "compiler/testData/codegen/box/multiplatform/migratedOldTests/*.kt", "compiler/testData/codegen/boxInline/multiplatform/defaultArguments/receiversAndParametersInLambda.kt" }, property = ClassLevelProperty.TEST_MODE, propertyValue = "ONE_STAGE_MULTI_MODULE")
+                        public class SourceSinkFeedContexts {
+                            @Test
+                            public void testAllFilesPresentInSourceSinkFeedContexts() throws Exception {
+                                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/sourceSinkFeedContexts"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+                            }
+
+                            @Test
+                            @TestMetadata("InsideAnonymousObject.kt")
+                            public void testInsideAnonymousObject() throws Exception {
+                                runTest("compiler/testData/codegen/box/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/sourceSinkFeedContexts/InsideAnonymousObject.kt");
+                            }
+
+                            @Test
+                            @TestMetadata("InsideNestedLambda.kt")
+                            public void testInsideNestedLambda() throws Exception {
+                                runTest("compiler/testData/codegen/box/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/sourceSinkFeedContexts/InsideNestedLambda.kt");
+                            }
+
+                            @Test
+                            @TestMetadata("ThroughDelegatedLocalVariableMaterializeCase.kt")
+                            public void testThroughDelegatedLocalVariableMaterializeCase() throws Exception {
+                                runTest("compiler/testData/codegen/box/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/sourceSinkFeedContexts/ThroughDelegatedLocalVariableMaterializeCase.kt");
+                            }
+
+                            @Test
+                            @TestMetadata("ThroughDelegatedLocalVariableYieldCase.kt")
+                            public void testThroughDelegatedLocalVariableYieldCase() throws Exception {
+                                runTest("compiler/testData/codegen/box/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/sourceSinkFeedContexts/ThroughDelegatedLocalVariableYieldCase.kt");
+                            }
+
+                            @Test
+                            @TestMetadata("ThroughLocalVariable.kt")
+                            public void testThroughLocalVariable() throws Exception {
+                                runTest("compiler/testData/codegen/box/builderInference/oneParameter/oneTypeVariable/oneTypeInfoOrigin/sourceSinkFeedContexts/ThroughLocalVariable.kt");
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        @Nested
         @TestMetadata("compiler/testData/codegen/box/builtinStubMethods")
         @TestDataPath("$PROJECT_ROOT")
         @UseExtTestCaseGroupProvider()
@@ -1944,6 +2070,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
             @TestMetadata("arrayOf.kt")
             public void testArrayOf() throws Exception {
                 runTest("compiler/testData/codegen/box/callableReference/arrayOf.kt");
+            }
+
+            @Test
+            @TestMetadata("arrayOfNulls.kt")
+            public void testArrayOfNulls() throws Exception {
+                runTest("compiler/testData/codegen/box/callableReference/arrayOfNulls.kt");
             }
 
             @Test
@@ -13521,6 +13653,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
             }
 
             @Test
+            @TestMetadata("enumEntriesIntrinsicWithoutFeature.kt")
+            public void testEnumEntriesIntrinsicWithoutFeature() throws Exception {
+                runTest("compiler/testData/codegen/box/enum/enumEntriesIntrinsicWithoutFeature.kt");
+            }
+
+            @Test
             @TestMetadata("enumEntriesMultimoduleNoMappings.kt")
             public void testEnumEntriesMultimoduleNoMappings() throws Exception {
                 runTest("compiler/testData/codegen/box/enum/enumEntriesMultimoduleNoMappings.kt");
@@ -14598,6 +14736,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
             @TestMetadata("falsePositiveBoundSmartcast.kt")
             public void testFalsePositiveBoundSmartcast() throws Exception {
                 runTest("compiler/testData/codegen/box/fir/falsePositiveBoundSmartcast.kt");
+            }
+
+            @Test
+            @TestMetadata("listAssignmentInWhen.kt")
+            public void testListAssignmentInWhen() throws Exception {
+                runTest("compiler/testData/codegen/box/fir/listAssignmentInWhen.kt");
             }
 
             @Test
@@ -23840,6 +23984,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
                 @TestMetadata("kt58717.kt")
                 public void testKt58717() throws Exception {
                     runTest("compiler/testData/codegen/box/involvesIrInterpreter/intrinsicConst/kt58717.kt");
+                }
+
+                @Test
+                @TestMetadata("nullableEnumName.kt")
+                public void testNullableEnumName() throws Exception {
+                    runTest("compiler/testData/codegen/box/involvesIrInterpreter/intrinsicConst/nullableEnumName.kt");
                 }
             }
 
@@ -39000,6 +39150,12 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
             }
 
             @Test
+            @TestMetadata("typeAliasOnTypeAlias.kt")
+            public void testTypeAliasOnTypeAlias() throws Exception {
+                runTest("compiler/testData/codegen/box/typealias/typeAliasOnTypeAlias.kt");
+            }
+
+            @Test
             @TestMetadata("typeAliasSecondaryConstructor.kt")
             public void testTypeAliasSecondaryConstructor() throws Exception {
                 runTest("compiler/testData/codegen/box/typealias/typeAliasSecondaryConstructor.kt");
@@ -42459,6 +42615,18 @@ public class NativeCodegenBoxTestGenerated extends AbstractNativeCodegenBoxTest 
             @Test
             public void testAllFilesPresentInEnum() throws Exception {
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/boxInline/enum"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+            }
+
+            @Test
+            @TestMetadata("enumEntries.kt")
+            public void testEnumEntries() throws Exception {
+                runTest("compiler/testData/codegen/boxInline/enum/enumEntries.kt");
+            }
+
+            @Test
+            @TestMetadata("enumEntriesChainCapturedType.kt")
+            public void testEnumEntriesChainCapturedType() throws Exception {
+                runTest("compiler/testData/codegen/boxInline/enum/enumEntriesChainCapturedType.kt");
             }
 
             @Test

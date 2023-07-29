@@ -3150,8 +3150,7 @@ standaloneTest("stress_gc_allocations") {
         (project.testTarget != "watchos_simulator_arm64") &&
         !isNoopGC &&
         !isAggressiveGC && // TODO: Investigate why too slow
-        !runtimeAssertionsPanic && // New allocator with assertions makes this test very slow
-        (project.testTarget != "mingw_x64") // TODO: Fix on mingw.
+        !runtimeAssertionsPanic // New allocator with assertions makes this test very slow
     source = "runtime/memory/stress_gc_allocations.kt"
     flags = ['-tr', '-opt-in=kotlin.native.internal.InternalForKotlinNative']
 }
@@ -4147,6 +4146,10 @@ if (PlatformInfo.isAppleTarget(project)) {
         it.defFile 'interop/objc/kt56402/objclib.def'
         it.headers "$projectDir/interop/objc/kt56402/objclib.h"
     }
+    createInterop("objc_autorelease_from_dealloc") {
+        it.defFile 'interop/objc/autorelease_from_dealloc/objclib.def'
+        it.headers "$projectDir/interop/objc/autorelease_from_dealloc/objclib.h"
+    }
     createInterop("objCAction") {
         it.defFile 'interop/objc/objCAction/objclib.def'
         it.headers "$projectDir/interop/objc/objCAction/objclib.h"
@@ -4295,7 +4298,6 @@ interopTest("interop_globals") {
 }
 
 interopTest("interop_macros") {
-    disabled = isK2(project) // KT-56041
     source = "interop/basics/macros.kt"
     interop = 'cmacros'
 }
@@ -4584,7 +4586,6 @@ if (PlatformInfo.isAppleTarget(project)) {
         enabled = !isNoopGC
         source = "interop/objc/smoke.kt"
         interop = 'objcSmoke'
-        verifyIr = false  // KT-57716
         doBeforeBuild {
             mkdir(buildDir)
             project.extensions.execClang.execClangForCompilerTests(project.target) {
@@ -4682,14 +4683,6 @@ if (PlatformInfo.isAppleTarget(project)) {
         UtilsKt.dependsOnPlatformLibs(it)
     }
 
-    interopTest("interop_kt49034_objcprotocol") {
-        disabled = isK2(project) // KT-56028
-        interop = 'kt49034_objcprotocol'
-        source = 'interop/objc/kt49034/objcprotocol/main.kt'
-
-        // The test depends on collision between kt49034.__darwin_fp_control and platform.darwin.__darwin_fp_control
-        UtilsKt.dependsOnPlatformLibs(it)
-    }
 
     interopTest("interop_objc_global_initializer") {
         useGoldenData = true
@@ -4943,6 +4936,7 @@ if (PlatformInfo.isAppleTarget(project)) {
             mkdir(buildDir)
             project.extensions.execClang.execClangForCompilerTests(project.target) {
                 args "$projectDir/interop/objc/kt56402/objclib.m"
+                args "-g"
                 args "-lobjc", '-fobjc-arc'
                 args '-fPIC', '-shared', '-o', "$buildDir/libobjc_kt56402.dylib"
                 args '-framework', 'AppKit'
@@ -4951,6 +4945,26 @@ if (PlatformInfo.isAppleTarget(project)) {
                 UtilsKt.codesign(project, "$buildDir/libobjc_kt56402.dylib")
             }
         }
+    }
+
+    interopTest("interop_objc_autorelease_from_dealloc") {
+        enabled = !isNoopGC // requires some GC
+        source = 'interop/objc/autorelease_from_dealloc/main.kt'
+        interop = "objc_autorelease_from_dealloc"
+        flags = ["-tr"]
+
+        doBeforeBuild {
+            mkdir(buildDir)
+            project.extensions.execClang.execClangForCompilerTests(project.target) {
+                args "$projectDir/interop/objc/autorelease_from_dealloc/objclib.m"
+                args "-lobjc", '-fno-objc-arc'
+                args '-fPIC', '-shared', '-o', "$buildDir/libobjc_autorelease_from_dealloc.dylib"
+            }
+            if (UtilsKt.isSimulatorTarget(project, project.target)) {
+                UtilsKt.codesign(project, "$buildDir/libobjc_autorelease_from_dealloc.dylib")
+            }
+        }
+        UtilsKt.dependsOnPlatformLibs(it)
     }
 
     interopTest("interop_objCAction") {

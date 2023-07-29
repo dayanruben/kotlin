@@ -36,6 +36,7 @@ include ":benchmarks",
         ":kotlin-util-io",
         ":kotlin-util-klib",
         ":kotlin-util-klib-metadata",
+        ":kotlin-util-klib-abi",
         ":daemon-common",
         ":kotlin-daemon",
         ":kotlin-daemon-client",
@@ -386,6 +387,12 @@ if (!buildProperties.inJpsBuildIdeaSync) {
 include ":compiler:build-tools:kotlin-build-tools-api",
         ":compiler:build-tools:kotlin-build-tools-impl"
 
+// Experimental modules, should be placed into plugins/compose-compiler-plugin folder
+include ":plugins:compose-compiler-plugin:compiler",
+        ":plugins:compose-compiler-plugin:compiler-hosted",
+        ":plugins:compose-compiler-plugin:compiler-daemon",
+        ":plugins:compose-compiler-plugin:compiler-daemon:integration-tests"
+
 void intellij(String imlPath) {
     File imlFile = new File("${rootDir}/intellij/community/plugins/kotlin/${imlPath}")
     imlFile = imlFile.exists() ? imlFile : new File("${rootDir}/intellij/plugins/kotlin/${imlPath}")
@@ -671,6 +678,7 @@ project(':compiler:ir.interpreter').projectDir = "$rootDir/compiler/ir/ir.interp
 project(':kotlin-util-io').projectDir = "$rootDir/compiler/util-io" as File
 project(':kotlin-util-klib').projectDir = "$rootDir/compiler/util-klib" as File
 project(':kotlin-util-klib-metadata').projectDir = "$rootDir/compiler/util-klib-metadata" as File
+project(':kotlin-util-klib-abi').projectDir = "$rootDir/compiler/util-klib-abi" as File
 project(':native:kotlin-native-utils').projectDir = "$rootDir/native/utils" as File
 project(':native:frontend.native').projectDir = "$rootDir/native/frontend" as File
 project(':native:kotlin-klib-commonizer').projectDir = "$rootDir/native/commonizer" as File

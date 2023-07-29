@@ -31,10 +31,10 @@ object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() 
             defaultFalse("isPrimary", withGetter = true)
         }
 
-        impl(typeParameterRef, "FirOuterClassTypeParameterRef") {
+        impl(outerClassTypeParameterRef) {
             publicImplementation()
         }
-        impl(typeParameterRef, "FirConstructedClassTypeParameterRef")
+        impl(constructedClassTypeParameterRef)
 
         noImpl(declarationStatus)
         noImpl(resolvedDeclarationStatus)
@@ -112,7 +112,7 @@ object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() 
             }
         }
 
-        impl(arrayOfCall)
+        impl(arrayLiteral)
 
         impl(callableReferenceAccess)
 
@@ -666,7 +666,7 @@ object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() 
             "FirVarargArgumentsExpressionImpl",
             "FirSafeCallExpressionImpl",
             "FirCheckedSafeCallSubjectImpl",
-            "FirArrayOfCallImpl",
+            "FirArrayLiteralImpl",
             "FirIntegerLiteralOperatorCallImpl",
             "FirContextReceiverImpl",
             "FirReceiverParameterImpl",

@@ -29,6 +29,8 @@ import org.jetbrains.kotlin.fir.declarations.FirAnonymousInitializer
 import org.jetbrains.kotlin.fir.declarations.FirCallableDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirTypeParameterRef
 import org.jetbrains.kotlin.fir.declarations.FirTypeParameter
+import org.jetbrains.kotlin.fir.declarations.FirConstructedClassTypeParameterRef
+import org.jetbrains.kotlin.fir.declarations.FirOuterClassTypeParameterRef
 import org.jetbrains.kotlin.fir.declarations.FirVariable
 import org.jetbrains.kotlin.fir.declarations.FirValueParameter
 import org.jetbrains.kotlin.fir.declarations.FirReceiverParameter
@@ -92,7 +94,7 @@ import org.jetbrains.kotlin.fir.expressions.FirWhenBranch
 import org.jetbrains.kotlin.fir.expressions.FirContextReceiverArgumentListOwner
 import org.jetbrains.kotlin.fir.expressions.FirCheckNotNullCall
 import org.jetbrains.kotlin.fir.expressions.FirElvisExpression
-import org.jetbrains.kotlin.fir.expressions.FirArrayOfCall
+import org.jetbrains.kotlin.fir.expressions.FirArrayLiteral
 import org.jetbrains.kotlin.fir.expressions.FirAugmentedArraySetCall
 import org.jetbrains.kotlin.fir.expressions.FirClassReferenceExpression
 import org.jetbrains.kotlin.fir.expressions.FirErrorExpression
@@ -258,6 +260,14 @@ abstract class FirTransformer<in D> : FirVisitor<FirElement, D>() {
 
     open fun transformTypeParameter(typeParameter: FirTypeParameter, data: D): FirTypeParameterRef {
         return transformElement(typeParameter, data)
+    }
+
+    open fun transformConstructedClassTypeParameterRef(constructedClassTypeParameterRef: FirConstructedClassTypeParameterRef, data: D): FirTypeParameterRef {
+        return transformElement(constructedClassTypeParameterRef, data)
+    }
+
+    open fun transformOuterClassTypeParameterRef(outerClassTypeParameterRef: FirOuterClassTypeParameterRef, data: D): FirTypeParameterRef {
+        return transformElement(outerClassTypeParameterRef, data)
     }
 
     open fun transformVariable(variable: FirVariable, data: D): FirStatement {
@@ -512,8 +522,8 @@ abstract class FirTransformer<in D> : FirVisitor<FirElement, D>() {
         return transformElement(elvisExpression, data)
     }
 
-    open fun transformArrayOfCall(arrayOfCall: FirArrayOfCall, data: D): FirStatement {
-        return transformElement(arrayOfCall, data)
+    open fun transformArrayLiteral(arrayLiteral: FirArrayLiteral, data: D): FirStatement {
+        return transformElement(arrayLiteral, data)
     }
 
     open fun transformAugmentedArraySetCall(augmentedArraySetCall: FirAugmentedArraySetCall, data: D): FirStatement {
@@ -872,6 +882,14 @@ abstract class FirTransformer<in D> : FirVisitor<FirElement, D>() {
         return transformTypeParameter(typeParameter, data)
     }
 
+    final override fun visitConstructedClassTypeParameterRef(constructedClassTypeParameterRef: FirConstructedClassTypeParameterRef, data: D): FirTypeParameterRef {
+        return transformConstructedClassTypeParameterRef(constructedClassTypeParameterRef, data)
+    }
+
+    final override fun visitOuterClassTypeParameterRef(outerClassTypeParameterRef: FirOuterClassTypeParameterRef, data: D): FirTypeParameterRef {
+        return transformOuterClassTypeParameterRef(outerClassTypeParameterRef, data)
+    }
+
     final override fun visitVariable(variable: FirVariable, data: D): FirStatement {
         return transformVariable(variable, data)
     }
@@ -1124,8 +1142,8 @@ abstract class FirTransformer<in D> : FirVisitor<FirElement, D>() {
         return transformElvisExpression(elvisExpression, data)
     }
 
-    final override fun visitArrayOfCall(arrayOfCall: FirArrayOfCall, data: D): FirStatement {
-        return transformArrayOfCall(arrayOfCall, data)
+    final override fun visitArrayLiteral(arrayLiteral: FirArrayLiteral, data: D): FirStatement {
+        return transformArrayLiteral(arrayLiteral, data)
     }
 
     final override fun visitAugmentedArraySetCall(augmentedArraySetCall: FirAugmentedArraySetCall, data: D): FirStatement {

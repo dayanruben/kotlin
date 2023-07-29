@@ -5,8 +5,8 @@
 
 package org.jetbrains.kotlin.fir.renderer
 
-import org.jetbrains.kotlin.builtins.functions.FunctionTypeKindExtractor
 import org.jetbrains.kotlin.builtins.functions.AllowedToUsedOnlyInK1
+import org.jetbrains.kotlin.builtins.functions.FunctionTypeKindExtractor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.contracts.FirContractDescription
@@ -179,6 +179,29 @@ class FirRenderer(
             printer.popIndent()
         }
 
+        override fun visitScript(script: FirScript) {
+            renderContexts(script.contextReceivers)
+            annotationRenderer?.render(script)
+            printer.print("SCRIPT: ")
+            declarationRenderer?.renderPhaseAndAttributes(script) ?: resolvePhaseRenderer?.render(script)
+            printer.newLine()
+
+            printer.pushIndent()
+            script.parameters.forEach {
+                it.accept(this)
+                printer.newLine()
+            }
+
+            printer.newLine()
+
+            script.statements.forEach {
+                it.accept(this)
+                printer.newLine()
+            }
+
+            printer.popIndent()
+        }
+
         override fun visitFileAnnotationsContainer(fileAnnotationsContainer: FirFileAnnotationsContainer) {
             if (fileAnnotationsContainerRenderer != null) {
                 fileAnnotationsContainerRenderer.render(fileAnnotationsContainer)
@@ -245,6 +268,14 @@ class FirRenderer(
             typeParameterRef.symbol.fir.accept(this)
         }
 
+        override fun visitOuterClassTypeParameterRef(outerClassTypeParameterRef: FirOuterClassTypeParameterRef) {
+            visitTypeParameterRef(outerClassTypeParameterRef)
+        }
+
+        override fun visitConstructedClassTypeParameterRef(constructedClassTypeParameterRef: FirConstructedClassTypeParameterRef) {
+            visitTypeParameterRef(constructedClassTypeParameterRef)
+        }
+
         override fun visitMemberDeclaration(memberDeclaration: FirMemberDeclaration) {
             modifierRenderer?.renderModifiers(memberDeclaration)
             declarationRenderer?.render(memberDeclaration)
@@ -297,14 +328,7 @@ class FirRenderer(
 
         override fun visitVariable(variable: FirVariable) {
             visitCallableDeclaration(variable)
-            variable.initializer?.let {
-                print(" = ")
-                it.accept(this)
-            }
-            variable.delegate?.let {
-                print("by ")
-                it.accept(this)
-            }
+            bodyRenderer?.render(variable)
         }
 
         override fun visitField(field: FirField) {
@@ -1102,10 +1126,10 @@ class FirRenderer(
             print(")")
         }
 
-        override fun visitArrayOfCall(arrayOfCall: FirArrayOfCall) {
-            annotationRenderer?.render(arrayOfCall)
+        override fun visitArrayLiteral(arrayLiteral: FirArrayLiteral) {
+            annotationRenderer?.render(arrayLiteral)
             print("<implicitArrayOf>")
-            visitCall(arrayOfCall)
+            visitCall(arrayLiteral)
         }
 
         override fun visitThrowExpression(throwExpression: FirThrowExpression) {

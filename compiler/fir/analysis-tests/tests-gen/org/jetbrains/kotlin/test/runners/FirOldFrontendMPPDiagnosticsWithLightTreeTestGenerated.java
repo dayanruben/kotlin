@@ -879,6 +879,24 @@ public class FirOldFrontendMPPDiagnosticsWithLightTreeTestGenerated extends Abst
         }
 
         @Test
+        @TestMetadata("implicitJavaActualizationAllowed.kt")
+        public void testImplicitJavaActualizationAllowed() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/multiplatform/java/implicitJavaActualizationAllowed.kt");
+        }
+
+        @Test
+        @TestMetadata("implicitJavaActualizationDisallowed.kt")
+        public void testImplicitJavaActualizationDisallowed() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/multiplatform/java/implicitJavaActualizationDisallowed.kt");
+        }
+
+        @Test
+        @TestMetadata("implicitJavaActualization_multipleActuals.kt")
+        public void testImplicitJavaActualization_multipleActuals() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/multiplatform/java/implicitJavaActualization_multipleActuals.kt");
+        }
+
+        @Test
         @TestMetadata("inheritedJavaMembers.kt")
         public void testInheritedJavaMembers() throws Exception {
             runTest("compiler/testData/diagnostics/tests/multiplatform/java/inheritedJavaMembers.kt");
@@ -998,6 +1016,28 @@ public class FirOldFrontendMPPDiagnosticsWithLightTreeTestGenerated extends Abst
         @TestMetadata("simpleHeaderVar.kt")
         public void testSimpleHeaderVar() throws Exception {
             runTest("compiler/testData/diagnostics/tests/multiplatform/topLevelProperty/simpleHeaderVar.kt");
+        }
+    }
+
+    @Nested
+    @TestMetadata("compiler/testData/diagnostics/tests/multiplatform/typealias")
+    @TestDataPath("$PROJECT_ROOT")
+    public class Typealias {
+        @Test
+        @TestMetadata("actualTypealiasToNothing.kt")
+        public void testActualTypealiasToNothing() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/multiplatform/typealias/actualTypealiasToNothing.kt");
+        }
+
+        @Test
+        @TestMetadata("actualTypealiasToNullableType.kt")
+        public void testActualTypealiasToNullableType() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/multiplatform/typealias/actualTypealiasToNullableType.kt");
+        }
+
+        @Test
+        public void testAllFilesPresentInTypealias() throws Exception {
+            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/multiplatform/typealias"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), TargetBackend.JVM_IR, true);
         }
     }
 }

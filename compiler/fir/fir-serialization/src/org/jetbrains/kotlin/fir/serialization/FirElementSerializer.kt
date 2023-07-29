@@ -46,6 +46,7 @@ import org.jetbrains.kotlin.fir.types.builder.buildResolvedTypeRef
 import org.jetbrains.kotlin.fir.types.impl.ConeClassLikeTypeImpl
 import org.jetbrains.kotlin.fir.types.impl.FirImplicitNullableAnyTypeRef
 import org.jetbrains.kotlin.metadata.ProtoBuf
+import org.jetbrains.kotlin.metadata.ProtoBuf.MemberKind
 import org.jetbrains.kotlin.metadata.deserialization.Flags
 import org.jetbrains.kotlin.metadata.deserialization.VersionRequirement
 import org.jetbrains.kotlin.metadata.deserialization.isKotlin1Dot4OrLater
@@ -507,7 +508,7 @@ class FirElementSerializer private constructor(
             function.nonSourceAnnotations(session).isNotEmpty() || extension.hasAdditionalAnnotations(function),
             ProtoEnumFlags.visibility(simpleFunction?.let { normalizeVisibility(it) } ?: Visibilities.Local),
             ProtoEnumFlags.modality(simpleFunction?.modality ?: Modality.FINAL),
-            if (function.origin == FirDeclarationOrigin.Delegated) ProtoBuf.MemberKind.DELEGATION else ProtoBuf.MemberKind.DECLARATION,
+            function.memberKind(),
             simpleFunction?.isOperator == true,
             simpleFunction?.isInfix == true,
             simpleFunction?.isInline == true,
@@ -527,7 +528,7 @@ class FirElementSerializer private constructor(
                 function.name
             }
             is FirAnonymousFunction -> {
-                if (function.isLambda) SpecialNames.ANONYMOUS else Name.special("<no name provided>")
+                if (function.isLambda) SpecialNames.ANONYMOUS else SpecialNames.NO_NAME_PROVIDED
             }
             else -> throw AssertionError("Unsupported function: ${function.render()}")
         }
@@ -592,6 +593,14 @@ class FirElementSerializer private constructor(
         }
 
         return builder
+    }
+
+    private fun FirFunction.memberKind(): MemberKind {
+        return when (origin) {
+            FirDeclarationOrigin.Delegated -> MemberKind.DELEGATION
+            is FirDeclarationOrigin.Synthetic -> MemberKind.SYNTHESIZED
+            else -> MemberKind.DECLARATION
+        }
     }
 
     private fun shouldSetStableParameterNames(function: FirFunction?): Boolean {

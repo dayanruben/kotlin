@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.backend.jvm.JvmIrTypeSystemContext
 import org.jetbrains.kotlin.backend.jvm.serialization.JvmIdSignatureDescriptor
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
-import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.backend.*
 import org.jetbrains.kotlin.fir.backend.jvm.Fir2IrJvmSpecialAnnotationSymbolProvider
@@ -36,7 +35,27 @@ data class ModuleCompilerAnalyzedOutput(
     val session: FirSession,
     val scopeSession: ScopeSession,
     val fir: List<FirFile>
-)
+) {
+    fun convertToIr(
+        fir2IrExtensions: Fir2IrExtensions,
+        fir2IrConfiguration: Fir2IrConfiguration,
+        commonMemberStorage: Fir2IrCommonMemberStorage,
+        irBuiltIns: IrBuiltInsOverFir?,
+        irMangler: KotlinMangler.IrMangler,
+        visibilityConverter: Fir2IrVisibilityConverter,
+        kotlinBuiltIns: KotlinBuiltIns,
+    ): Fir2IrResult {
+        return Fir2IrConverter.createModuleFragmentWithSignaturesIfNeeded(
+            session, scopeSession, fir,
+            fir2IrExtensions, fir2IrConfiguration,
+            irMangler, IrFactoryImpl, visibilityConverter,
+            Fir2IrJvmSpecialAnnotationSymbolProvider(), // TODO KT-60526: replace with appropriate (probably empty) implementation for other backends.
+            kotlinBuiltIns = kotlinBuiltIns,
+            commonMemberStorage = commonMemberStorage,
+            initializedIrBuiltIns = irBuiltIns
+        )
+    }
+}
 
 data class Fir2IrActualizedResult(
     val irModuleFragment: IrModuleFragment,
@@ -49,7 +68,6 @@ fun FirResult.convertToIrAndActualizeForJvm(
     fir2IrExtensions: Fir2IrExtensions,
     fir2IrConfiguration: Fir2IrConfiguration,
     irGeneratorExtensions: Collection<IrGenerationExtension>,
-    diagnosticReporter: DiagnosticReporter,
 ): Fir2IrActualizedResult = this.convertToIrAndActualize(
     fir2IrExtensions,
     fir2IrConfiguration,
@@ -58,7 +76,6 @@ fun FirResult.convertToIrAndActualizeForJvm(
     irMangler = JvmIrMangler,
     firMangler = FirJvmKotlinMangler(),
     visibilityConverter = FirJvmVisibilityConverter,
-    diagnosticReporter = diagnosticReporter,
     kotlinBuiltIns = DefaultBuiltIns.Instance,
     actualizerTypeContextProvider = ::JvmIrTypeSystemContext,
 )
@@ -81,7 +98,6 @@ fun FirResult.convertToIrAndActualize(
     firMangler: FirMangler,
     visibilityConverter: Fir2IrVisibilityConverter,
     kotlinBuiltIns: KotlinBuiltIns,
-    diagnosticReporter: DiagnosticReporter,
     actualizerTypeContextProvider: (IrBuiltIns) -> IrTypeSystemContext,
     fir2IrResultPostCompute: Fir2IrResult.() -> Unit = {},
 ): Fir2IrActualizedResult {
@@ -141,7 +157,7 @@ fun FirResult.convertToIrAndActualize(
             actualizationResult = IrActualizer.actualize(
                 fir2IrResult.irModuleFragment,
                 commonIrOutputs.map { it.irModuleFragment },
-                diagnosticReporter,
+                fir2IrConfiguration.diagnosticReporter,
                 actualizerTypeContextProvider(fir2IrResult.irModuleFragment.irBuiltins),
                 fir2IrConfiguration.languageVersionSettings
             )
@@ -165,22 +181,3 @@ fun IrPluginContext.applyIrGenerationExtensions(irModuleFragment: IrModuleFragme
     }
 }
 
-private fun ModuleCompilerAnalyzedOutput.convertToIr(
-    fir2IrExtensions: Fir2IrExtensions,
-    fir2IrConfiguration: Fir2IrConfiguration,
-    commonMemberStorage: Fir2IrCommonMemberStorage,
-    irBuiltIns: IrBuiltInsOverFir?,
-    irMangler: KotlinMangler.IrMangler,
-    visibilityConverter: Fir2IrVisibilityConverter,
-    kotlinBuiltIns: KotlinBuiltIns,
-): Fir2IrResult {
-    return Fir2IrConverter.createModuleFragmentWithSignaturesIfNeeded(
-        session, scopeSession, fir,
-        fir2IrExtensions, fir2IrConfiguration,
-        irMangler, IrFactoryImpl, visibilityConverter,
-        Fir2IrJvmSpecialAnnotationSymbolProvider(), // TODO: replace with appropriate (probably empty) implementation for other backends.
-        kotlinBuiltIns = kotlinBuiltIns,
-        commonMemberStorage = commonMemberStorage,
-        initializedIrBuiltIns = irBuiltIns
-    )
-}

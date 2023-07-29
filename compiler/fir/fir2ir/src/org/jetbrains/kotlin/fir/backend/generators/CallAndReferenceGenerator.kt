@@ -5,12 +5,14 @@
 
 package org.jetbrains.kotlin.fir.backend.generators
 
+import com.intellij.openapi.progress.ProcessCanceledException
 import org.jetbrains.kotlin.KtFakeSourceElementKind
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.fir.backend.*
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.isMethodOfAny
+import org.jetbrains.kotlin.fir.diagnostics.ConeSimpleDiagnostic
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.builder.buildAnnotationCall
 import org.jetbrains.kotlin.fir.expressions.impl.FirNoReceiverExpression
@@ -484,6 +486,8 @@ class CallAndReferenceGenerator(
                 }
             }.applyTypeArguments(qualifiedAccess).applyReceivers(qualifiedAccess, convertedExplicitReceiver)
                 .applyCallArguments(qualifiedAccess)
+        } catch (e: ProcessCanceledException) {
+            throw e
         } catch (e: Throwable) {
             throw IllegalStateException(
                 "Error while translating ${qualifiedAccess.render()} " +
@@ -636,6 +640,8 @@ class CallAndReferenceGenerator(
                     else -> generateErrorCallExpression(startOffset, endOffset, calleeReference)
                 }
             }.applyTypeArguments(lValue).applyReceivers(lValue, explicitReceiverExpression)
+        } catch (e: ProcessCanceledException) {
+            throw e
         } catch (e: Throwable) {
             throw IllegalStateException(
                 "Error while translating ${variableAssignment.render()} " +
@@ -1099,7 +1105,9 @@ class CallAndReferenceGenerator(
                     }
                     typeRef = (typeProjection as? ConeKotlinType)?.let {
                         buildResolvedTypeRef { type = it }
-                    } ?: buildErrorTypeRef { }
+                    } ?: buildErrorTypeRef {
+                        diagnostic = ConeSimpleDiagnostic("Expansion contains unexpected type ${typeProjection.javaClass}")
+                    }
                 }
             }
     }

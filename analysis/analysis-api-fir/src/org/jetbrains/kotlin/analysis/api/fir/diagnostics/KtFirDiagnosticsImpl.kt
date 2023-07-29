@@ -2080,6 +2080,11 @@ internal class ExpressionOfNullableTypeInClassLiteralLhsImpl(
     token: KtLifetimeToken,
 ) : KtAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KtFirDiagnostic.ExpressionOfNullableTypeInClassLiteralLhs
 
+internal class UnsupportedClassLiteralsWithEmptyLhsImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KtLifetimeToken,
+) : KtAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KtFirDiagnostic.UnsupportedClassLiteralsWithEmptyLhs
+
 internal class NothingToOverrideImpl(
     override val declaration: KtCallableSymbol,
     firDiagnostic: KtPsiDiagnostic,
@@ -2099,6 +2104,13 @@ internal class DataClassOverrideConflictImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KtLifetimeToken,
 ) : KtAbstractFirDiagnostic<KtClassOrObject>(firDiagnostic, token), KtFirDiagnostic.DataClassOverrideConflict
+
+internal class DataClassOverrideDefaultValuesImpl(
+    override val overridingMember: KtCallableSymbol,
+    override val baseType: KtClassLikeSymbol,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KtLifetimeToken,
+) : KtAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KtFirDiagnostic.DataClassOverrideDefaultValues
 
 internal class CannotWeakenAccessPrivilegeImpl(
     override val overridingVisibility: Visibility,
@@ -2438,6 +2450,11 @@ internal class DataObjectCustomEqualsOrHashCodeImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KtLifetimeToken,
 ) : KtAbstractFirDiagnostic<KtNamedFunction>(firDiagnostic, token), KtFirDiagnostic.DataObjectCustomEqualsOrHashCode
+
+internal class DefaultValueNotAllowedInOverrideImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KtLifetimeToken,
+) : KtAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KtFirDiagnostic.DefaultValueNotAllowedInOverride
 
 internal class FunInterfaceConstructorReferenceImpl(
     firDiagnostic: KtPsiDiagnostic,
@@ -2871,6 +2888,16 @@ internal class ActualTypeAliasWithComplexSubstitutionImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KtLifetimeToken,
 ) : KtAbstractFirDiagnostic<KtTypeAlias>(firDiagnostic, token), KtFirDiagnostic.ActualTypeAliasWithComplexSubstitution
+
+internal class ActualTypeAliasToNullableTypeImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KtLifetimeToken,
+) : KtAbstractFirDiagnostic<KtTypeAlias>(firDiagnostic, token), KtFirDiagnostic.ActualTypeAliasToNullableType
+
+internal class ActualTypeAliasToNothingImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KtLifetimeToken,
+) : KtAbstractFirDiagnostic<KtTypeAlias>(firDiagnostic, token), KtFirDiagnostic.ActualTypeAliasToNothing
 
 internal class ActualFunctionWithDefaultArgumentsImpl(
     firDiagnostic: KtPsiDiagnostic,
@@ -3712,6 +3739,12 @@ internal class InvalidDefaultFunctionalParameterForInlineImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KtLifetimeToken,
 ) : KtAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KtFirDiagnostic.InvalidDefaultFunctionalParameterForInline
+
+internal class NotSupportedInlineParameterInInlineParameterDefaultValueImpl(
+    override val parameter: KtSymbol,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KtLifetimeToken,
+) : KtAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KtFirDiagnostic.NotSupportedInlineParameterInInlineParameterDefaultValue
 
 internal class ReifiedTypeParameterInOverrideImpl(
     firDiagnostic: KtPsiDiagnostic,

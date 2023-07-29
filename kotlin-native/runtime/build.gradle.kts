@@ -370,7 +370,6 @@ bitcode {
             headersDirs.from(files("src/gc/common/cpp", "src/mm/cpp", "src/main/cpp"))
             sourceSets {
                 main {}
-                testFixtures {}
                 test {}
             }
 
@@ -589,6 +588,8 @@ konanArtifacts {
                 "-opt-in=kotlin.contracts.ExperimentalContracts",
                 "-opt-in=kotlin.ExperimentalMultiplatform",
                 "-opt-in=kotlin.native.internal.InternalForKotlinNative",
+                "-language-version",
+                "1.9",
         )
 
         commonStdlibSrcDirs.forEach { commonSrcDir(it) }
