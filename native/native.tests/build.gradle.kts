@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.ideaExt.idea
-
 plugins {
     kotlin("jvm")
     id("jps-compatible")
@@ -20,6 +18,8 @@ dependencies {
     testImplementation(projectTests(":generators:test-generator"))
     testImplementation(project(":native:kotlin-native-utils"))
     testImplementation(project(":native:executors"))
+    testImplementation(project(":kotlin-util-klib-abi"))
+    testImplementation(projectTests(":kotlin-util-klib-abi"))
     testApiJUnit5()
     testImplementation(commonDependency("org.jetbrains.kotlinx", "kotlinx-metadata-klib"))
     testImplementation(commonDependency("org.jetbrains.kotlinx", "kotlinx-coroutines-core")) { isTransitive = false }
@@ -36,6 +36,8 @@ sourceSets {
     }
 }
 
+testsJar {}
+
 // Tasks that run different sorts of tests. Most frequent use case: running specific tests at TeamCity.
 val infrastructureTest = nativeTest("infrastructureTest", "infrastructure")
 val codegenBoxTest = nativeTest("codegenBoxTest", "codegen & !frontend-fir")
@@ -48,8 +50,7 @@ val partialLinkageTest = nativeTest("partialLinkageTest", "partial-linkage")
 val cinteropTest = nativeTest("cinteropTest", "cinterop")
 val debuggerTest = nativeTest("debuggerTest", "debugger")
 val cachesTest = nativeTest("cachesTest", "caches")
-val klibContentsTest = nativeTest("klibContentsTest", "klib-contents & !frontend-fir")
-val klibContentsK2Test = nativeTest("klibContentsK2Test", "klib-contents & frontend-fir")
+val klibTest = nativeTest("klibTest", "klib")
 
 val testTags = findProperty("kotlin.native.tests.tags")?.toString()
 // Note: arbitrary JUnit tag expressions can be used in this property.

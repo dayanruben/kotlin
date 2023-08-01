@@ -12,7 +12,10 @@ fun main() {
 
     generateTestGroupSuiteWithJUnit5 {
         testGroup("compiler/util-klib-abi/tests-gen", "compiler/util-klib-abi/testData") {
-            testClass<AbstractLibraryAbiReaderTest>(suiteTestClassName = "LibraryAbiReaderTest") {
+            testClass<AbstractFirJsLibraryAbiReaderTest> {
+                model("content")
+            }
+            testClass<AbstractClassicJsLibraryAbiReaderTest> {
                 model("content")
             }
         }

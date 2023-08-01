@@ -24,9 +24,16 @@ internal class ToolingDiagnosticRenderingOptions(
     }
 }
 
-internal fun Collection<ToolingDiagnostic>.withoutSuppressed(options: ToolingDiagnosticRenderingOptions): Collection<ToolingDiagnostic> =
-    filter { !it.isSuppressed(options) }
+internal fun ToolingDiagnostic.isSuppressed(options: ToolingDiagnosticRenderingOptions): Boolean {
+    return when {
+        // Non-suppressible
+        id == KotlinToolingDiagnostics.InternalKotlinGradlePluginPropertiesUsed.id -> false
 
-internal fun ToolingDiagnostic.isSuppressed(options: ToolingDiagnosticRenderingOptions): Boolean =
-    severity == ToolingDiagnostic.Severity.WARNING && id in options.suppressedWarningIds
-            || severity == ToolingDiagnostic.Severity.ERROR && id in options.suppressedErrorIds
+        severity == ToolingDiagnostic.Severity.WARNING -> id in options.suppressedWarningIds
+
+        severity == ToolingDiagnostic.Severity.ERROR -> id in options.suppressedErrorIds
+
+        // NB: FATALs can not be suppressed
+        else -> false
+    }
+}

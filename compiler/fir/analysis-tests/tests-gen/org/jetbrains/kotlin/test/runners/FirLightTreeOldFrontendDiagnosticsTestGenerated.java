@@ -484,6 +484,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
         }
 
         @Test
+        @TestMetadata("invalidTargetCrashesCompiler.kt")
+        public void testInvalidTargetCrashesCompiler() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/invalidTargetCrashesCompiler.kt");
+        }
+
+        @Test
         @TestMetadata("invisibleClassInsteadOfFun.kt")
         public void testInvisibleClassInsteadOfFun() throws Exception {
             runTest("compiler/testData/diagnostics/tests/invisibleClassInsteadOfFun.kt");
@@ -685,6 +691,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
         @TestMetadata("localInterfaces.kt")
         public void testLocalInterfaces() throws Exception {
             runTest("compiler/testData/diagnostics/tests/localInterfaces.kt");
+        }
+
+        @Test
+        @TestMetadata("missedTypeArgumentsInAnnotationCall.kt")
+        public void testMissedTypeArgumentsInAnnotationCall() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/missedTypeArgumentsInAnnotationCall.kt");
         }
 
         @Test

@@ -484,6 +484,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         }
 
         @Test
+        @TestMetadata("invalidTargetCrashesCompiler.kt")
+        public void testInvalidTargetCrashesCompiler() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/invalidTargetCrashesCompiler.kt");
+        }
+
+        @Test
         @TestMetadata("invisibleClassInsteadOfFun.kt")
         public void testInvisibleClassInsteadOfFun() throws Exception {
             runTest("compiler/testData/diagnostics/tests/invisibleClassInsteadOfFun.kt");
@@ -685,6 +691,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         @TestMetadata("localInterfaces.kt")
         public void testLocalInterfaces() throws Exception {
             runTest("compiler/testData/diagnostics/tests/localInterfaces.kt");
+        }
+
+        @Test
+        @TestMetadata("missedTypeArgumentsInAnnotationCall.kt")
+        public void testMissedTypeArgumentsInAnnotationCall() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/missedTypeArgumentsInAnnotationCall.kt");
         }
 
         @Test
@@ -22912,9 +22924,9 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 }
 
                 @Test
-                @TestMetadata("instrinsicConstEvaluation.kt")
-                public void testInstrinsicConstEvaluation() throws Exception {
-                    runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/instrinsicConstEvaluation.kt");
+                @TestMetadata("intrinsicConstEvaluation.kt")
+                public void testIntrinsicConstEvaluation() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/intrinsicConstEvaluation.kt");
                 }
 
                 @Test
@@ -22927,6 +22939,18 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("kotlinAnaloguesForJavaAnnotations.kt")
                 public void testKotlinAnaloguesForJavaAnnotations() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/kotlinAnaloguesForJavaAnnotations.kt");
+                }
+
+                @Test
+                @TestMetadata("repeatableNoArg.kt")
+                public void testRepeatableNoArg() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/repeatableNoArg.kt");
+                }
+
+                @Test
+                @TestMetadata("repeatableWithArg.kt")
+                public void testRepeatableWithArg() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/repeatableWithArg.kt");
                 }
 
                 @Test
@@ -22957,6 +22981,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("typealiasToKtLibrary.kt")
                 public void testTypealiasToKtLibrary() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/typealiasToKtLibrary.kt");
+                }
+
+                @Test
+                @TestMetadata("withAnnotationActualTypealias.kt")
+                public void testWithAnnotationActualTypealias() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/withAnnotationActualTypealias.kt");
                 }
 
                 @Test

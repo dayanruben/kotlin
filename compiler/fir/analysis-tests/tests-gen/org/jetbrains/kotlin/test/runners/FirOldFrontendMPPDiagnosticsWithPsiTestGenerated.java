@@ -275,9 +275,9 @@ public class FirOldFrontendMPPDiagnosticsWithPsiTestGenerated extends AbstractFi
         }
 
         @Test
-        @TestMetadata("instrinsicConstEvaluation.kt")
-        public void testInstrinsicConstEvaluation() throws Exception {
-            runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/instrinsicConstEvaluation.kt");
+        @TestMetadata("intrinsicConstEvaluation.kt")
+        public void testIntrinsicConstEvaluation() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/intrinsicConstEvaluation.kt");
         }
 
         @Test
@@ -290,6 +290,18 @@ public class FirOldFrontendMPPDiagnosticsWithPsiTestGenerated extends AbstractFi
         @TestMetadata("kotlinAnaloguesForJavaAnnotations.kt")
         public void testKotlinAnaloguesForJavaAnnotations() throws Exception {
             runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/kotlinAnaloguesForJavaAnnotations.kt");
+        }
+
+        @Test
+        @TestMetadata("repeatableNoArg.kt")
+        public void testRepeatableNoArg() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/repeatableNoArg.kt");
+        }
+
+        @Test
+        @TestMetadata("repeatableWithArg.kt")
+        public void testRepeatableWithArg() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/repeatableWithArg.kt");
         }
 
         @Test
@@ -320,6 +332,12 @@ public class FirOldFrontendMPPDiagnosticsWithPsiTestGenerated extends AbstractFi
         @TestMetadata("typealiasToKtLibrary.kt")
         public void testTypealiasToKtLibrary() throws Exception {
             runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/typealiasToKtLibrary.kt");
+        }
+
+        @Test
+        @TestMetadata("withAnnotationActualTypealias.kt")
+        public void testWithAnnotationActualTypealias() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/withAnnotationActualTypealias.kt");
         }
 
         @Test

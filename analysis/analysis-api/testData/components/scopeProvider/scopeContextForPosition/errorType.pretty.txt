@@ -1,9 +1,6 @@
 element: e
 implicit receivers:
-  type: ERROR(Cannot infer argument for type parameter E)
-  owner symbol: KtFirAnonymousFunctionSymbol
-
-  type: List<ERROR(Cannot infer argument for type parameter E)>
+  type: ERROR(Cannot infer argument for type parameter T)
   owner symbol: KtFirAnonymousFunctionSymbol
 
 scopes:
@@ -25,42 +22,19 @@ scopes:
     callables: 0
     constructors: 0
 
-  TypeScope, index = 3
-    packages: 0
-    classifiers: 0
-    callables: 5
-      fun add(e: T)
-      fun get(index: kotlin.Int): T
-      fun equals(other: kotlin.Any?): kotlin.Boolean
-      fun hashCode(): kotlin.Int
-      fun toString(): kotlin.String
-    constructors: 0
-
-  LocalScope, index = 4
+  LocalScope, index = 3
     packages: 0
     classifiers: 0
     callables: 0
     constructors: 0
 
-  LocalScope, index = 5
+  ExplicitSimpleImportingScope, index = 4
     packages: 0
     classifiers: 0
     callables: 0
     constructors: 0
 
-  LocalScope, index = 6
-    packages: 0
-    classifiers: 0
-    callables: 0
-    constructors: 0
-
-  ExplicitSimpleImportingScope, index = 7
-    packages: 0
-    classifiers: 0
-    callables: 0
-    constructors: 0
-
-  PackageMemberScope, index = 8
+  PackageMemberScope, index = 5
     packages: 6
       META-INF
       java
@@ -68,24 +42,22 @@ scopes:
       kotlin
       org
       sun
-    classifiers: 1
-      interface List<T>
-    callables: 2
-      fun <E> buildList(f: List<E>.() -> kotlin.Unit): List<E>
+    classifiers: 0
+    callables: 1
       fun test()
     constructors: 0
 
-  DefaultSimpleImportingScope, index = 9
+  DefaultSimpleImportingScope, index = 6
 
-  DefaultSimpleImportingScope, index = 10
+  DefaultSimpleImportingScope, index = 7
 
-  ExplicitStarImportingScope, index = 11
+  ExplicitStarImportingScope, index = 8
     packages: 0
     classifiers: 0
     callables: 0
     constructors: 0
 
-  DefaultSimpleImportingScope, index = 12
+  DefaultSimpleImportingScope, index = 9
 
-  DefaultStarImportingScope, index = 13
+  DefaultStarImportingScope, index = 10
 

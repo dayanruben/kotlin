@@ -36,6 +36,7 @@ import org.jetbrains.kotlin.gradle.tasks.registerTask
 import org.jetbrains.kotlin.gradle.utils.*
 import org.jetbrains.kotlin.statistics.metrics.BooleanMetrics
 import org.jetbrains.kotlin.tooling.core.extrasLazyProperty
+import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 
 internal const val COMMON_MAIN_ELEMENTS_CONFIGURATION_NAME = "commonMainMetadataElements"
 
@@ -151,6 +152,10 @@ class KotlinMetadataTargetConfigurator :
 
             if (target.project.isCompatibilityMetadataVariantEnabled) {
                 allMetadataJar.archiveClassifier.set("all")
+            }
+
+            target.disambiguationClassifier?.let { classifier ->
+                allMetadataJar.archiveAppendix.set(classifier.toLowerCaseAsciiOnly())
             }
         }
 
@@ -328,15 +333,6 @@ class KotlinMetadataTargetConfigurator :
                     // Also clear the dependency files (classpath) of the compilation so that the host-specific dependencies are
                     // not resolved:
                     compileDependencyFiles = project.files()
-                }
-            }
-
-            target.project.runOnceAfterEvaluated("Sync common compilation language settings to compiler options") {
-                target.compilations.all { compilation ->
-                    applyLanguageSettingsToCompilerOptions(
-                        compilation.defaultSourceSet.languageSettings,
-                        compilation.compilerOptions.options
-                    )
                 }
             }
         }

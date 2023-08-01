@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.gradle.plugin.sources.awaitPlatformCompilations
 import org.jetbrains.kotlin.gradle.plugin.sources.internal
 import org.jetbrains.kotlin.gradle.plugin.statistics.KotlinBuildStatsService
 import org.jetbrains.kotlin.gradle.scripting.internal.ScriptingGradleSubplugin
+import org.jetbrains.kotlin.gradle.targets.js.KotlinWasmTargetType
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrTargetPreset
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinWasmTargetPreset
 import org.jetbrains.kotlin.gradle.targets.native.createFatFrameworks
@@ -40,7 +41,7 @@ import org.jetbrains.kotlin.statistics.metrics.StringMetrics
 class KotlinMultiplatformPlugin : Plugin<Project> {
 
     override fun apply(project: Project) {
-        checkGradleCompatibility("the Kotlin Multiplatform plugin", GradleVersion.version("6.0"))
+        checkGradleCompatibility("the Kotlin Multiplatform plugin")
         runDeprecationDiagnostics(project)
 
         project.plugins.apply(JavaBasePlugin::class.java)
@@ -136,7 +137,8 @@ class KotlinMultiplatformPlugin : Plugin<Project> {
                     irPreset = KotlinJsIrTargetPreset(project).apply { mixedMode = true }
                 }
             )
-            add(KotlinWasmTargetPreset(project))
+            add(KotlinWasmTargetPreset(project, KotlinWasmTargetType.JS))
+            add(KotlinWasmTargetPreset(project, KotlinWasmTargetType.WASI))
             add(project.objects.newInstance(KotlinAndroidTargetPreset::class.java, project))
             add(KotlinJvmWithJavaTargetPreset(project))
 
@@ -204,9 +206,10 @@ internal fun Project.setupGeneralKotlinExtensionParameters() {
                 .awaitPlatformCompilations()
                 .any { KotlinSourceSetTree.orNull(it) == KotlinSourceSetTree.main }
 
-            languageSettings.explicitApi = project.providers.provider {
-                val explicitApiFlag = project.kotlinExtension.explicitApiModeAsCompilerArg()
-                explicitApiFlag.takeIf { isMainSourceSet }
+            if (isMainSourceSet) {
+                languageSettings.explicitApi = project.providers.provider {
+                    project.kotlinExtension.explicitApiModeAsCompilerArg()
+                }
             }
 
             languageSettings.freeCompilerArgsProvider = project.provider {

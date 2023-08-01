@@ -221,11 +221,11 @@ internal fun AbstractNativeSimpleTest.generateTestCaseWithSingleModule(
 
 internal fun AbstractNativeSimpleTest.generateTestCaseWithSingleFile(
     sourceFile: File,
+    moduleName: String = sourceFile.name,
     freeCompilerArgs: TestCompilerArgs = TestCompilerArgs.EMPTY,
     testKind: TestKind = TestKind.STANDALONE,
     extras: TestCase.Extras = TestCase.WithTestRunnerExtras(TestRunnerType.DEFAULT)
 ): TestCase {
-    val moduleName: String = sourceFile.name ?: LAUNCHER_MODULE_NAME
     val module = TestModule.Exclusive(moduleName, emptySet(), emptySet(), emptySet())
     module.files += TestFile.createCommitted(sourceFile, module)
 
@@ -308,6 +308,9 @@ internal fun AbstractNativeSimpleTest.muteTestIfNecessary(testDataFileContents: 
     val mutedWhenValues = directiveValues(testDataFileContents, TestDirectives.MUTED_WHEN.name)
     Assumptions.assumeFalse(mutedWhenValues.any { it == pipelineType.mutedOption.name })
 }
+
+internal fun AbstractNativeSimpleTest.firIdentical(testDataFile: File) =
+     InTextDirectivesUtils.isDirectiveDefined(FileUtil.loadFile(testDataFile), TestDirectives.FIR_IDENTICAL.name)
 
 internal fun AbstractNativeSimpleTest.freeCompilerArgs(testDataFile: File) = freeCompilerArgs(FileUtil.loadFile(testDataFile))
 internal fun AbstractNativeSimpleTest.freeCompilerArgs(testDataFileContents: String) =

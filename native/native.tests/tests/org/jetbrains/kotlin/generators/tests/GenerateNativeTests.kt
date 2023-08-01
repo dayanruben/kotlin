@@ -196,19 +196,38 @@ fun main() {
         // Klib contents tests
         testGroup("native/native.tests/tests-gen", "native/native.tests/testData") {
             testClass<AbstractNativeKlibContentsTest>(
-                suiteTestClassName = "NativeKLibContentsTestGenerated"
+                suiteTestClassName = "NativeKlibContentsTestGenerated"
             ) {
                 model("klibContents", pattern = "^([^_](.+)).kt$", recursive = true)
             }
         }
         testGroup("native/native.tests/tests-gen", "native/native.tests/testData") {
             testClass<AbstractNativeKlibContentsTest>(
-                suiteTestClassName = "FirNativeKLibContentsTestGenerated",
+                suiteTestClassName = "FirNativeKlibContentsTestGenerated",
                 annotations = listOf(
                     *frontendFir()
                 )
             ) {
                 model("klibContents", pattern = "^([^_](.+)).kt$", recursive = true)
+            }
+        }
+
+        // Klib ir tests
+        testGroup("native/native.tests/tests-gen", "native/native.tests/testData") {
+            testClass<AbstractNativeKlibIrTest>(
+                suiteTestClassName = "NativeKlibIrTestGenerated",
+            ) {
+                model("klibIr", pattern = "^([^_](.+)).kt$", recursive = true)
+            }
+        }
+        testGroup("native/native.tests/tests-gen", "native/native.tests/testData") {
+            testClass<AbstractNativeKlibIrTest>(
+                suiteTestClassName = "FirNativeKlibIrTestGenerated",
+                annotations = listOf(
+                    *frontendFir()
+                )
+            ) {
+                model("klibIr", pattern = "^([^_](.+)).kt$", recursive = true)
             }
         }
 
@@ -245,6 +264,44 @@ fun main() {
                 annotations = listOf(*frontendFir()),
             ) {
                 model("diagnostics/nativeTests", excludedPattern = CUSTOM_TEST_DATA_EXTENSION_PATTERN)
+            }
+        }
+
+        generateTestGroupSuiteWithJUnit5 {
+            testGroup("native/native.tests/tests-gen", "compiler/util-klib-abi/testData") {
+                testClass<AbstractNativeLibraryAbiReaderTest>(
+                    suiteTestClassName = "NativeLibraryAbiReaderTest"
+                ) {
+                    model("content", targetBackend = TargetBackend.NATIVE)
+                }
+            }
+            testGroup("native/native.tests/tests-gen", "compiler/util-klib-abi/testData") {
+                testClass<AbstractNativeLibraryAbiReaderTest>(
+                    suiteTestClassName = "FirNativeLibraryAbiReaderTest",
+                    annotations = listOf(
+                        *frontendFir()
+                    )
+                ) {
+                    model("content", targetBackend = TargetBackend.NATIVE)
+                }
+            }
+
+            testGroup("native/native.tests/tests-gen", "compiler/util-klib-abi/testData") {
+                testClass<AbstractNativeCInteropLibraryAbiReaderTest>(
+                    suiteTestClassName = "NativeCInteropLibraryAbiReaderTest"
+                ) {
+                    model("cinterop")
+                }
+            }
+            testGroup("native/native.tests/tests-gen", "compiler/util-klib-abi/testData") {
+                testClass<AbstractNativeCInteropLibraryAbiReaderTest>(
+                    suiteTestClassName = "FirNativeCInteropLibraryAbiReaderTest",
+                    annotations = listOf(
+                        *frontendFir()
+                    )
+                ) {
+                    model("cinterop")
+                }
             }
         }
     }
@@ -286,3 +343,6 @@ private fun frontendFir() = arrayOf(
 
 private fun debugger() = annotation(Tag::class.java, "debugger")
 private fun infrastructure() = annotation(Tag::class.java, "infrastructure")
+private fun k1libContents() = annotation(Tag::class.java, "k1libContents")
+private fun k2libContents() = annotation(Tag::class.java, "k2libContents")
+private fun atomicfu() = annotation(Tag::class.java, "atomicfu")

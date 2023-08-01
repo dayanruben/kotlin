@@ -583,7 +583,7 @@ object KotlinToolingDiagnostics {
         )
     }
 
-    object KotlinCompilationSourceDeprecation : ToolingDiagnosticFactory(ERROR) {
+    object KotlinCompilationSourceDeprecation : ToolingDiagnosticFactory(WARNING) {
         operator fun invoke(trace: Throwable?) = build(
             """
                 `KotlinCompilation.source(KotlinSourceSet)` method is deprecated 
@@ -592,6 +592,27 @@ object KotlinToolingDiagnostics {
                 See https://kotl.in/compilation-source-deprecation for details.
             """.trimIndent(),
             throwable = trace,
+        )
+    }
+
+    object CircularDependsOnEdges : ToolingDiagnosticFactory(FATAL) {
+        operator fun invoke(sourceSetsOnCycle: Collection<String>) = build(
+            """
+                Circular dependsOn hierarchy found in the Kotlin source sets: ${sourceSetsOnCycle.joinToString(" -> ")}
+            """.trimIndent()
+        )
+    }
+
+    object InternalKotlinGradlePluginPropertiesUsed : ToolingDiagnosticFactory(WARNING) {
+        operator fun invoke(propertiesUsed: Collection<String>) = build(
+            """
+                |ATTENTION! This build uses the following Kotlin Gradle Plugin properties:
+                |
+                |${propertiesUsed.joinToString(separator = "\n")}
+                |
+                |kotlin.internal-properties are not recommended for production use. 
+                |Stability and future compatibility of the build is not guaranteed.
+            """.trimMargin()
         )
     }
 }

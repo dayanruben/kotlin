@@ -421,6 +421,7 @@ open class NewMultiplatformIT : BaseGradleIT() {
     }
 
     @Test
+    @Ignore // KT-60745
     fun testJvmWithJavaEquivalence() = doTestJvmWithJava(testJavaSupportInJvmTargets = false)
 
     @Test
@@ -627,31 +628,12 @@ open class NewMultiplatformIT : BaseGradleIT() {
                 ":compileTestKotlinJs",
                 ":compileKotlinJvmWithoutJava",
                 ":compileTestKotlinJvmWithoutJava",
-                ":compileKotlinJvmWithJava",
-                ":compileJava",
-                ":compileTestKotlinJvmWithJava",
-                ":compileTestJava",
                 // test tasks:
                 ":jsTest", // does not run any actual tests for now
                 ":jvmWithoutJavaTest",
-                ":test"
             )
 
             val expectedKotlinOutputFiles = listOf(
-                *kotlinClassesDir(sourceSet = "jvmWithJava/main").let {
-                    arrayOf(
-                        it + "com/example/lib/JavaClassUsageKt.class",
-                        it + "com/example/lib/CommonKt.class",
-                        it + "META-INF/new-mpp-lib-with-tests.kotlin_module"
-                    )
-                },
-                *kotlinClassesDir(sourceSet = "jvmWithJava/test").let {
-                    arrayOf(
-                        it + "com/example/lib/TestCommonCode.class",
-                        it + "com/example/lib/TestWithJava.class",
-                        it + "META-INF/new-mpp-lib-with-tests_test.kotlin_module"
-                    )
-                },
                 *kotlinClassesDir(sourceSet = "jvmWithoutJava/main").let {
                     arrayOf(
                         it + "com/example/lib/CommonKt.class",
@@ -676,7 +658,6 @@ open class NewMultiplatformIT : BaseGradleIT() {
             assertTestResults(
                 expectedTestResults,
                 "jsNodeTest",
-                "test", // jvmTest
                 "${targetName}Test"
             )
         }
@@ -778,47 +759,58 @@ open class NewMultiplatformIT : BaseGradleIT() {
     }
 
     @Test
-    fun testLanguageSettingsConsistency() = with(Project("sample-lib", gradleVersion, "new-mpp-lib-and-app")) {
+    fun testLanguageSettingsConsistency() = with(
+        Project("sample-lib", gradleVersion, "new-mpp-lib-and-app", minLogLevel = LogLevel.INFO)
+    ) {
         setupWorkingDir()
 
-        gradleBuildScript().appendText(
-            "\n" + """
-                kotlin.sourceSets {
-                    foo { }
-                    bar { dependsOn foo }
-                }
-            """.trimIndent()
-        )
-
         fun testMonotonousCheck(
-            initialSetupForSourceSets: String?,
             sourceSetConfigurationChange: String,
             expectedErrorHint: String,
+            initialSetupForSourceSets: String? = null,
         ) {
             if (initialSetupForSourceSets != null) {
                 gradleBuildScript().appendText(
-                    "\nkotlin.sourceSets.foo.${initialSetupForSourceSets}\n" + "" +
-                            "kotlin.sourceSets.bar.${initialSetupForSourceSets}",
+                    """
+                    |
+                    |kotlin.sourceSets.commonMain.${initialSetupForSourceSets}
+                    |kotlin.sourceSets.nativeMain.${initialSetupForSourceSets}
+                    |kotlin.sourceSets.linux64Main.${initialSetupForSourceSets}
+                    |kotlin.sourceSets.macos64Main.${initialSetupForSourceSets}
+                    |kotlin.sourceSets.jvm6Main.${initialSetupForSourceSets}
+                    |kotlin.sourceSets.mingw64Main.${initialSetupForSourceSets}
+                    |kotlin.sourceSets.nodeJsMain.${initialSetupForSourceSets}
+                    |kotlin.sourceSets.wasmMain.${initialSetupForSourceSets}
+                    """.trimMargin()
                 )
             }
-            gradleBuildScript().appendText("\nkotlin.sourceSets.foo.${sourceSetConfigurationChange}")
+            gradleBuildScript().appendText("\nkotlin.sourceSets.commonMain.${sourceSetConfigurationChange}")
             build("tasks") {
                 assertFailed()
                 assertContains(expectedErrorHint)
             }
-            gradleBuildScript().appendText("\nkotlin.sourceSets.bar.${sourceSetConfigurationChange}")
+            gradleBuildScript().appendText(
+                """
+                |
+                |kotlin.sourceSets.nativeMain.${sourceSetConfigurationChange}
+                |kotlin.sourceSets.linux64Main.${sourceSetConfigurationChange}
+                |kotlin.sourceSets.macos64Main.${sourceSetConfigurationChange}
+                |kotlin.sourceSets.jvm6Main.${sourceSetConfigurationChange}
+                |kotlin.sourceSets.mingw64Main.${sourceSetConfigurationChange}
+                |kotlin.sourceSets.nodeJsMain.${sourceSetConfigurationChange}
+                |kotlin.sourceSets.wasmMain.${sourceSetConfigurationChange}
+                """.trimMargin()
+            )
             build("tasks") {
                 assertSuccessful()
             }
         }
 
-        fun testMonotonousCheck(sourceSetConfigurationChange: String, expectedErrorHint: String): Unit =
-            testMonotonousCheck(null, sourceSetConfigurationChange, expectedErrorHint)
 
         testMonotonousCheck(
-            "languageSettings.languageVersion = '1.3'",
             "languageSettings.languageVersion = '1.4'",
-            "The language version of the dependent source set must be greater than or equal to that of its dependency."
+            "The language version of the dependent source set must be greater than or equal to that of its dependency.",
+            "languageSettings.languageVersion = '1.3'",
         )
 
         testMonotonousCheck(
@@ -835,7 +827,7 @@ open class NewMultiplatformIT : BaseGradleIT() {
         // don't require doing the same for dependent source sets:
         gradleBuildScript().appendText(
             "\n" + """
-                kotlin.sourceSets.foo.languageSettings {
+                kotlin.sourceSets.commonMain.languageSettings {
                     apiVersion = '1.4'
                     enableLanguageFeature('SoundSmartcastForEnumEntries')
                     progressiveMode = true
@@ -1434,7 +1426,7 @@ open class NewMultiplatformIT : BaseGradleIT() {
             }
 
             val expectedDefaultSourceSets = listOf(
-                "jvm6", "nodeJs", "mingw64", "linux64", "macos64", "wasm"
+                "jvm6", "nodeJs", "mingw64", "linux64", "macos64", "wasmJs"
             ).flatMapTo(mutableSetOf()) { target ->
                 listOf("main", "test").map { compilation ->
                     Triple(
@@ -1813,7 +1805,7 @@ open class NewMultiplatformIT : BaseGradleIT() {
         build("build") {
             assertSuccessful()
             assertTasksExecuted(":compileKotlinJs")
-            assertTasksExecuted(":compileKotlinWasm")
+            assertTasksExecuted(":compileKotlinWasmJs")
 
             val outputPrefix = "build/js/packages/"
 
@@ -1835,17 +1827,17 @@ open class NewMultiplatformIT : BaseGradleIT() {
                 .replace("<JsEngine>", engine)
                 .replace("<ApplyBinaryen>", if (useBinaryen) "applyBinaryen()" else "")
         }
-        build(":wasm${name}Test") {
-            assertTasksExecuted(":compileKotlinWasm")
+        build(":wasmJs${name}Test") {
+            assertTasksExecuted(":compileKotlinWasmJs")
             if (useBinaryen) {
-                assertTasksExecuted(":compileTestDevelopmentExecutableKotlinWasmOptimize")
+                assertTasksExecuted(":compileTestDevelopmentExecutableKotlinWasmJsOptimize")
             } else {
-                assertTasksNotExecuted(":compileTestDevelopmentExecutableKotlinWasmOptimize")
+                assertTasksNotExecuted(":compileTestDevelopmentExecutableKotlinWasmJsOptimize")
             }
-            assertTasksFailed(":wasm${name}Test")
+            assertTasksFailed(":wasmJs${name}Test")
             assertTestResults(
                 "testProject/new-mpp-wasm-test/TEST-${engine}.xml",
-                "wasm${name}Test"
+                "wasmJs${name}Test"
             )
         }
     }

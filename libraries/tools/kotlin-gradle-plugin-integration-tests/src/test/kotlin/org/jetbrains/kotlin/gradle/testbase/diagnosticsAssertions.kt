@@ -7,7 +7,9 @@ package org.jetbrains.kotlin.gradle.testbase
 
 import org.gradle.testkit.runner.BuildResult
 import org.jetbrains.kotlin.gradle.BaseGradleIT
+import org.jetbrains.kotlin.gradle.internals.ENSURE_NO_KOTLIN_GRADLE_PLUGIN_ERRORS_TASK_NAME
 import org.jetbrains.kotlin.gradle.internals.VERBOSE_DIAGNOSTIC_SEPARATOR
+import org.jetbrains.kotlin.gradle.plugin.diagnostics.KotlinToolingDiagnostics
 import org.jetbrains.kotlin.gradle.plugin.diagnostics.ToolingDiagnosticFactory
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -68,39 +70,60 @@ fun String.assertNoDiagnostic(diagnosticFactory: ToolingDiagnosticFactory, withS
 
 /**
  * NB: Needs verbose mode of diagnostics, see [org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.internalVerboseDiagnostics]
+ * Because this mode is enabled by the 'kotlin.internal'-property, actual output will always contain
+ * [org.jetbrains.kotlin.gradle.plugin.diagnostics.KotlinToolingDiagnostics.InternalKotlinGradlePluginPropertiesUsed].
+ * For the sake of clarity, this diagnostic is filtered by default.
  */
 fun BuildResult.extractProjectsAndTheirVerboseDiagnostics(): String = buildString {
     var diagnosticStarted = false
+    val currentDiagnostic = mutableListOf<String>()
+
+    fun startDiagnostic(line: String, lineIndex: Int) {
+        require(!diagnosticStarted) {
+            printBuildOutput()
+            "Unexpected start of diagnostic $line on line ${lineIndex + 1}. The end of the previous diagnostic wasn't found yet"
+        }
+
+        currentDiagnostic += line
+        diagnosticStarted = true
+    }
+
+    fun continueDiagnostic(line: String) {
+        currentDiagnostic += line
+    }
+
+    fun endDiagnostic(line: String, lineIndex: Int) {
+        require(diagnosticStarted) {
+            printBuildOutput()
+            "Unexpected end of diagnostic $line on line ${lineIndex + 1}"
+        }
+
+        currentDiagnostic += line
+
+        // Suppress InternalKotlinGradlePluginProperties, but only if the single property it complains about is
+        // 'kotlin.internal.verboseDiagnostics'
+        val offendingProperties = currentDiagnostic.asSequence().filter { it.startsWith("kotlin.internal.") }
+        if (KotlinToolingDiagnostics.InternalKotlinGradlePluginPropertiesUsed.id !in currentDiagnostic.first() ||
+            offendingProperties.singleOrNull() != "kotlin.internal.verboseDiagnostics"
+        ) {
+            appendLine(currentDiagnostic.joinToString(separator = "\n", postfix = "\n"))
+        }
+
+        currentDiagnostic.clear()
+        diagnosticStarted = false
+    }
+
+
     for ((index, line) in output.lines().withIndex()) {
         when {
-            line.trim() == VERBOSE_DIAGNOSTIC_SEPARATOR -> {
-                if (diagnosticStarted) {
-                    appendLine(line)
-                    appendLine()
-                    diagnosticStarted = false
-                } else {
-                    printBuildOutput()
-                    error("Unexpected end of diagnostic $line on line ${index + 1}")
-                }
-            }
+            line.trim() == VERBOSE_DIAGNOSTIC_SEPARATOR -> endDiagnostic(line, index)
 
-            DIAGNOSTIC_START_REGEX.matches(line) -> {
-                if (!diagnosticStarted) {
-                    appendLine(line)
-                    diagnosticStarted = true
-                } else {
-                    printBuildOutput()
-                    error(
-                        "Unexpected start of diagnostic $line on line ${index + 1}. The end of the previous diagnostic wasn't found yet"
-                    )
-                }
-            }
+            DIAGNOSTIC_START_REGEX.containsMatchIn(line) -> startDiagnostic(line, index)
 
-            diagnosticStarted -> {
-                appendLine(line)
-            }
+            diagnosticStarted -> continueDiagnostic(line)
 
-            line.startsWith(CONFIGURE_PROJECT_PREFIX) -> {
+            line.startsWith(CONFIGURE_PROJECT_PREFIX)
+                    || (line.contains(ENSURE_NO_KOTLIN_GRADLE_PLUGIN_ERRORS_TASK_NAME) && line.startsWith(TASK_EXECUTION_PREFIX)) -> {
                 appendLine() // additional empty line between projects
                 appendLine(line)
             }
@@ -111,9 +134,10 @@ fun BuildResult.extractProjectsAndTheirVerboseDiagnostics(): String = buildStrin
 /*
 Expected format
       w: [DIAGNOSTIC_ID | WARNING] first line of diagnostic's text
+or (fatals don't have 'w:' or 'e:' prefix):
+      [DIAGNOSTIC_ID | FATAL] Fatal diagnostic
  */
-private val DIAGNOSTIC_START_REGEX = """\s*[we]:\s*\[[^\[]*].*""".toRegex()
-
+private val DIAGNOSTIC_START_REGEX = """\s*([we]:)?\s*\[\w+ \| \w+].*""".toRegex()
 
 /*
  Expected format:
@@ -165,3 +189,4 @@ private fun extractNextVerboselyRenderedDiagnosticAndIndex(
 }
 
 private const val CONFIGURE_PROJECT_PREFIX = "> Configure project"
+private const val TASK_EXECUTION_PREFIX = "> Task"

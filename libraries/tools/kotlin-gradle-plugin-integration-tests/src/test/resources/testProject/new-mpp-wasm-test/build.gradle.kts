@@ -8,9 +8,7 @@ repositories {
 }
 
 with(org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin.apply(rootProject)) {
-    // canary nodejs that supports recent Wasm GC changes
-    nodeVersion = "21.0.0-v8-canary202307189734ce28be"
-    nodeDownloadBaseUrl = "https://nodejs.org/download/v8-canary"
+    nodeVersion = "20.2.0"
 }
 
 with(org.jetbrains.kotlin.gradle.targets.js.d8.D8RootPlugin.apply(rootProject)) {
@@ -31,7 +29,7 @@ tasks.named<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnLockCopyTask>("kotli
 }
 
 kotlin {
-    wasm {
+    wasmJs {
         <JsEngine> {
             testTask {
                 filter.apply {
