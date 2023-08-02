@@ -656,6 +656,12 @@ class BodyGenerator(
         }
 
         if (expression is IrReturnableBlock) {
+            val inlineFunction = expression.symbol.owner.inlineFunction
+            val correspondingProperty = (inlineFunction as? IrSimpleFunction)?.correspondingPropertySymbol
+            val owner = correspondingProperty?.owner ?: inlineFunction
+            val name = owner?.fqNameWhenAvailable?.asString() ?: owner?.name?.asString() ?: "<UNKNOWN>"
+
+            body.commentGroupStart { "Inlined call of `$name`" }
             functionContext.defineNonLocalReturnLevel(
                 expression.symbol,
                 body.buildBlock(context.transformBlockResultType(expression.type))
@@ -679,6 +685,7 @@ class BodyGenerator(
 
         if (expression is IrReturnableBlock) {
             body.buildEnd()
+            body.commentGroupEnd()
         }
     }
 
@@ -747,6 +754,19 @@ class BodyGenerator(
             return
         }
 
+        // Type? -> Nothing? -> ref.cast null (none/noextern)
+        if (actualType.isNullable() && expectedType.isNullableNothing()) {
+            val type =
+                if (expectedType.getClass()?.isExternal == true)
+                    WasmHeapType.Simple.NoExtern
+                else
+                    WasmHeapType.Simple.None
+
+            body.buildInstr(WasmOp.REF_CAST_NULL, location, WasmImmediate.HeapType(type))
+
+            return
+        }
+
         val expectedClassErased = expectedType.getRuntimeClass(irBuiltIns)
 
         // TYPE -> EXTERNAL -> TRUE
@@ -771,8 +791,8 @@ class BodyGenerator(
             return
         }
 
-        val expectedIsPrimitive = expectedTypeErased.isPrimitiveType()
-        val actualIsPrimitive = actualTypeErased.isPrimitiveType()
+        val expectedIsPrimitive = expectedTypeErased.isPrimitiveType() && !expectedType.isNullable()
+        val actualIsPrimitive = actualTypeErased.isPrimitiveType() && !actualType.isNullable()
 
         // PRIMITIVE -> REF -> FALSE
         // REF -> PRIMITIVE -> FALSE
@@ -785,7 +805,11 @@ class BodyGenerator(
         // REF -> REF -> REF_CAST
         if (!expectedIsPrimitive) {
             if (expectedClassErased.isSubclassOf(actualClassErased)) {
-                generateRefCast(actualTypeErased, expectedTypeErased, location)
+                if (expectedType.isNullable())
+                    generateRefNullCast(actualTypeErased, expectedTypeErased, location)
+                else
+                    generateRefCast(actualTypeErased, expectedTypeErased, location)
+                body.commentPreviousInstr { "to make verifier happy" }
             } else {
                 body.buildUnreachableForVerifier()
             }

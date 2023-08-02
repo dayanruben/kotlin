@@ -55,6 +55,7 @@ import org.jetbrains.kotlin.incremental.components.InlineConstTracker
 import org.jetbrains.kotlin.incremental.components.LookupTracker
 import org.jetbrains.kotlin.incremental.js.IncrementalDataProvider
 import org.jetbrains.kotlin.incremental.js.IncrementalResultsConsumer
+import org.jetbrains.kotlin.incremental.multiproject.EmptyModulesApiHistory
 import org.jetbrains.kotlin.incremental.multiproject.ModulesApiHistoryAndroid
 import org.jetbrains.kotlin.incremental.multiproject.ModulesApiHistoryJs
 import org.jetbrains.kotlin.incremental.multiproject.ModulesApiHistoryJvm
@@ -555,12 +556,18 @@ abstract class CompileServiceImplBase(
         }
 
         val workingDir = incrementalCompilationOptions.workingDir
-        val modulesApiHistory = ModulesApiHistoryJs(incrementalCompilationOptions.modulesInfo)
+        val modulesApiHistory = incrementalCompilationOptions.multiModuleICSettings?.run {
+            val modulesInfo = incrementalCompilationOptions.modulesInfo
+                ?: error("The build is configured to use the history-file based IC approach, but doesn't provide the modulesInfo")
+            val rootProjectDir = incrementalCompilationOptions.rootProjectDir
+                ?: error("rootProjectDir is expected to be non null when the history-file based IC approach is used")
+            ModulesApiHistoryJs(rootProjectDir, modulesInfo)
+        } ?: EmptyModulesApiHistory
 
         val compiler = IncrementalJsCompilerRunner(
             workingDir = workingDir,
             reporter = reporter,
-            buildHistoryFile = incrementalCompilationOptions.multiModuleICSettings.buildHistoryFile,
+            buildHistoryFile = incrementalCompilationOptions.multiModuleICSettings?.buildHistoryFile,
             scopeExpansion = if (args.isIrBackendEnabled()) CompileScopeExpansionMode.ALWAYS else CompileScopeExpansionMode.NEVER,
             modulesApiHistory = modulesApiHistory,
             withAbiSnapshot = incrementalCompilationOptions.withAbiSnapshot,
@@ -605,17 +612,23 @@ abstract class CompileServiceImplBase(
 
         val workingDir = incrementalCompilationOptions.workingDir
 
-        val modulesApiHistory = incrementalCompilationOptions.run {
-            reporter.info { "Use module detection: ${multiModuleICSettings.useModuleDetection}" }
+        val projectRoot = incrementalCompilationOptions.rootProjectDir
 
-            if (!multiModuleICSettings.useModuleDetection) {
-                ModulesApiHistoryJvm(modulesInfo)
-            } else {
-                ModulesApiHistoryAndroid(modulesInfo)
+        val modulesApiHistory = incrementalCompilationOptions.multiModuleICSettings?.run {
+            reporter.info { "Use module detection: $useModuleDetection" }
+            val modulesInfo = incrementalCompilationOptions.modulesInfo
+                ?: error("The build is configured to use the history-file based IC approach, but doesn't provide the modulesInfo")
+            check(projectRoot != null) {
+                "rootProjectDir is expected to be non null when the history-file based IC approach is used"
             }
-        }
 
-        val projectRoot = incrementalCompilationOptions.modulesInfo.projectRoot
+            if (!useModuleDetection) {
+                ModulesApiHistoryJvm(projectRoot, modulesInfo)
+            } else {
+                ModulesApiHistoryAndroid(projectRoot, modulesInfo)
+            }
+        } ?: EmptyModulesApiHistory
+
         val useK2 = k2jvmArgs.useK2 || LanguageVersion.fromVersionString(k2jvmArgs.languageVersion)?.usesK2 == true
         // TODO: This should be reverted after implementing of fir-based java tracker (KT-57147).
         //  See org.jetbrains.kotlin.incremental.CompilerRunnerUtilsKt.makeJvmIncrementally
@@ -624,7 +637,7 @@ abstract class CompileServiceImplBase(
         val compiler = IncrementalJvmCompilerRunner(
             workingDir,
             reporter,
-            buildHistoryFile = incrementalCompilationOptions.multiModuleICSettings.buildHistoryFile,
+            buildHistoryFile = incrementalCompilationOptions.multiModuleICSettings?.buildHistoryFile,
             outputDirs = incrementalCompilationOptions.outputFiles,
             usePreciseJavaTracking = usePreciseJavaTracking,
             modulesApiHistory = modulesApiHistory,
