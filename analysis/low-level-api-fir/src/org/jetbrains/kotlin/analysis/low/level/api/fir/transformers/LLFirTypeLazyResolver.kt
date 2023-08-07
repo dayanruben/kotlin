@@ -9,10 +9,12 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.api.targets.LLFirResolveT
 import org.jetbrains.kotlin.analysis.low.level.api.fir.file.builder.LLFirLockProvider
 import org.jetbrains.kotlin.analysis.low.level.api.fir.lazy.resolve.FirLazyBodiesCalculator
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.checkAnnotationTypeIsResolved
+import org.jetbrains.kotlin.analysis.low.level.api.fir.util.checkContextReceiverTypeRefIsResolved
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.checkReceiverTypeRefIsResolved
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.checkReturnTypeRefIsResolved
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.checkTypeRefIsResolved
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.errorWithFirSpecificEntries
+import org.jetbrains.kotlin.analysis.low.level.api.fir.util.forEachDependentDeclaration
 import org.jetbrains.kotlin.fir.FirAnnotationContainer
 import org.jetbrains.kotlin.fir.FirElementWithResolveState
 import org.jetbrains.kotlin.fir.FirFileAnnotationsContainer
@@ -56,6 +58,7 @@ internal object LLFirTypeLazyResolver : LLFirLazyResolver(FirResolvePhase.TYPES)
             is FirCallableDeclaration -> {
                 checkReturnTypeRefIsResolved(target, acceptImplicitTypeRef = true)
                 checkReceiverTypeRefIsResolved(target)
+                checkContextReceiverTypeRefIsResolved(target)
             }
 
             is FirTypeParameter -> {
@@ -81,9 +84,7 @@ private class LLFirTypeTargetResolver(
     }
 
     override fun withFile(firFile: FirFile, action: () -> Unit) {
-        transformer.withFileScope(firFile) {
-            action()
-        }
+        transformer.withFileScope(firFile, action)
     }
 
     @Deprecated("Should never be called directly, only for override purposes, please use withRegularClass", level = DeprecationLevel.ERROR)
@@ -123,17 +124,24 @@ private class LLFirTypeTargetResolver(
 
                 target.accept(transformer, null)
             }
-            is FirDanglingModifierList, is FirFileAnnotationsContainer, is FirCallableDeclaration, is FirTypeAlias, is FirScript -> {
+            is FirScript -> resolveScriptTypes(target)
+            is FirDanglingModifierList, is FirFileAnnotationsContainer, is FirCallableDeclaration, is FirTypeAlias -> {
                 target.accept(transformer, null)
             }
             is FirRegularClass -> {
                 resolveClassTypes(target)
             }
-            is FirAnonymousInitializer -> {}
+            is FirFile, is FirAnonymousInitializer -> {}
             else -> errorWithAttachment("Unknown declaration ${target::class}") {
                 withFirEntry("declaration", target)
             }
         }
+    }
+
+    private fun resolveScriptTypes(firScript: FirScript) {
+        firScript.annotations.forEach { it.accept(transformer, null) }
+        firScript.contextReceivers.forEach { it.accept(transformer, null) }
+        firScript.forEachDependentDeclaration { it.accept(transformer, null) }
     }
 
     private fun resolveClassTypes(firClass: FirRegularClass) {

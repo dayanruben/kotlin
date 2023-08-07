@@ -25,23 +25,35 @@ namespace {
 
 } // namespace
 
+bool kotlin::mm::isSuspendedOrNative(kotlin::mm::ThreadData& thread) noexcept {
+    auto& suspensionData = thread.suspensionData();
+    return suspensionData.suspended() || suspensionData.state() == kotlin::ThreadState::kNative;
+}
+
 std::atomic<bool> kotlin::mm::internal::gSuspensionRequested = false;
 
 kotlin::ThreadState kotlin::mm::ThreadSuspensionData::setState(kotlin::ThreadState newState) noexcept {
     ThreadState oldState = state_.exchange(newState);
     if (oldState == ThreadState::kNative && newState == ThreadState::kRunnable) {
-        // must use already acquired ThreadData because TLS may be in invalid state e.g. during thread detach
-        safePoint(threadData_);
+        // Must use already acquired `ThreadData` because TLS may be in invalid state e.g. during thread detach.
+        // Also, this must load SP in sequentially consistent order, because GC
+        // may have touched this thread's data, and we must synchronize before
+        // continuing.
+        // GC would have either changed stored SP handler (with seq_cst),
+        // or would have changed `internal::gSuspensionRequested` (with seq_cst),
+        // so, loading SP here, or checking `internal::gSuspensionRequested` in
+        // `suspendIfRequested` is enough.
+        safePoint(threadData_, std::memory_order_seq_cst);
     }
     return oldState;
 }
 
 NO_EXTERNAL_CALLS_CHECK void kotlin::mm::ThreadSuspensionData::suspendIfRequested() noexcept {
     if (IsThreadSuspensionRequested()) {
+        auto suspendStartMs = konan::getTimeMicros();
         threadData_.gc().OnSuspendForGC();
         std::unique_lock lock(gSuspensionMutex);
         auto threadId = konan::currentThreadId();
-        auto suspendStartMs = konan::getTimeMicros();
         RuntimeLogDebug({kTagGC, kTagMM}, "Suspending thread %d", threadId);
         AutoReset scopedAssignSuspended(&suspended_, true);
         gSuspensionCondVar.wait(lock, []() { return !IsThreadSuspensionRequested(); });

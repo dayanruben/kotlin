@@ -129,13 +129,11 @@ internal class CompilerOptionsIT : KGPBaseTest() {
                 """
                 |
                 |kotlin.options.suppressFreeCompilerArgsModificationWarning=true
-                |# to enable the :compileKotlinMetadata task
-                |kotlin.mpp.enableCompatibilityMetadataVariant=true
                 """.trimMargin()
             )
 
             val compileTasks = listOf(
-                "compileKotlinMetadata",
+                "compileCommonMainKotlinMetadata",
                 "compileKotlinJvmWithoutJava",
                 "compileKotlinJs",
                 // we do not allow modifying free args for K/N at execution time
@@ -493,8 +491,7 @@ internal class CompilerOptionsIT : KGPBaseTest() {
             gradleVersion = gradleVersion,
             // We need to get specific task output as commonizer may run first producing
             // arguments as well in output
-            // TODO Yahor: remove 'configurationCache = false' once it will be merged into `master` - issue due to the build reports error
-            buildOptions = defaultBuildOptions.copy(logLevel = LogLevel.DEBUG, configurationCache = false)
+            buildOptions = defaultBuildOptions.copy(logLevel = LogLevel.DEBUG)
         ) {
             buildGradle.modify {
                 val buildScript = """

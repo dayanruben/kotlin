@@ -54,6 +54,43 @@ private class LLFirAnnotationArgumentsTargetResolver(
         firResolveContextCollector = firResolveContextCollector,
     )
 
+    private inline fun actionWithContextCollector(
+        noinline action: () -> Unit,
+        crossinline collect: (FirResolveContextCollector, BodyResolveContext) -> Unit,
+    ): () -> Unit {
+        val collector = transformer.firResolveContextCollector ?: return action
+        return {
+            collect(collector, transformer.context)
+            action()
+        }
+    }
+
+    override fun withScript(firScript: FirScript, action: () -> Unit) {
+        val actionWithCollector = actionWithContextCollector(action) { collector, context ->
+            collector.addDeclarationContext(firScript, context)
+        }
+
+        super.withScript(firScript, actionWithCollector)
+    }
+
+    override fun withFile(firFile: FirFile, action: () -> Unit) {
+        val actionWithCollector = actionWithContextCollector(action) { collector, context ->
+            collector.addFileContext(firFile, context.towerDataContext)
+        }
+
+        super.withFile(firFile, actionWithCollector)
+    }
+
+    @Deprecated("Should never be called directly, only for override purposes, please use withRegularClass", level = DeprecationLevel.ERROR)
+    override fun withRegularClassImpl(firClass: FirRegularClass, action: () -> Unit) {
+        val actionWithCollector = actionWithContextCollector(action) { collector, context ->
+            collector.addDeclarationContext(firClass, context)
+        }
+
+        @Suppress("DEPRECATION_ERROR")
+        super.withRegularClassImpl(firClass, actionWithCollector)
+    }
+
     override fun doLazyResolveUnderLock(target: FirElementWithResolveState) {
         collectTowerDataContext(target)
 
@@ -76,14 +113,20 @@ private class LLFirAnnotationArgumentsTargetResolver(
                     contextCollector.addDeclarationContext(target, bodyResolveContext)
                 }
 
+                is FirScript -> {}
+
                 else -> contextCollector.addDeclarationContext(target, bodyResolveContext)
             }
         }
 
-        if (target is FirRegularClass) {
-            withRegularClass(target) {
-                contextCollector.addDeclarationContext(target, bodyResolveContext)
-            }
+        /**
+         * [withRegularClass] and [withScript] already have [FirResolveContextCollector.addDeclarationContext] call,
+         * so we shouldn't do anything inside
+         */
+        when (target) {
+            is FirRegularClass -> withRegularClass(target) { }
+            is FirScript -> withScript(target) { }
+            else -> {}
         }
     }
 
@@ -109,9 +152,17 @@ internal fun LLFirAbstractBodyTargetResolver.transformAnnotations(target: FirEle
             target.transformSuperTypeRefs(declarationsTransformer, ResolutionMode.ContextIndependent)
         }
 
+        target is FirScript -> {
+            transformer.declarationsTransformer?.let {
+                target.transformAnnotations(it, ResolutionMode.ContextIndependent)
+            }
+        }
+
         target.isRegularDeclarationWithAnnotation -> {
             target.transformSingle(transformer, ResolutionMode.ContextIndependent)
         }
+
+        target is FirFile -> {}
 
         else -> throwUnexpectedFirElementError(target)
     }
@@ -124,7 +175,6 @@ internal val FirElementWithResolveState.isRegularDeclarationWithAnnotation: Bool
         is FirDanglingModifierList,
         is FirFileAnnotationsContainer,
         is FirTypeAlias,
-        is FirScript,
         -> true
         else -> false
     }

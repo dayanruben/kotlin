@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.gradle
 
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.util.*
+import org.junit.Ignore
 import org.junit.Test
 import kotlin.test.assertTrue
 
@@ -193,6 +194,7 @@ class VariantAwareDependenciesMppIT : BaseGradleIT() {
     }
 
     @Test
+    @Ignore("stdlib publication migration")
     fun testResolvesOldKotlinArtifactsPublishedWithMetadata() = with(Project("multiplatformProject", gradleVersion)) {
         setupWorkingDir()
         gradleBuildScript().appendText(
@@ -330,8 +332,8 @@ class VariantAwareDependenciesMppIT : BaseGradleIT() {
 
         projectDir.resolve("gradle.properties").appendText(
             "\n" + """
-                kotlin.mpp.enableGranularSourceSetsMetadata=true
                 kotlin.mpp.enableCompatibilityMetadataVariant=true
+                kotlin.internal.suppressGradlePluginErrors=PreHMPPFlagsError
             """
         )
 

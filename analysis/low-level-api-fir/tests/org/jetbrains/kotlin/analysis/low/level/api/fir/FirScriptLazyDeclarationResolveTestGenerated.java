@@ -427,6 +427,24 @@ public class FirScriptLazyDeclarationResolveTestGenerated extends AbstractFirScr
     }
 
     @Test
+    @TestMetadata("script3.kts")
+    public void testScript3() throws Exception {
+        runTest("analysis/low-level-api-fir/testdata/lazyResolve/script3.kts");
+    }
+
+    @Test
+    @TestMetadata("script4.kts")
+    public void testScript4() throws Exception {
+        runTest("analysis/low-level-api-fir/testdata/lazyResolve/script4.kts");
+    }
+
+    @Test
+    @TestMetadata("scriptArgument.kts")
+    public void testScriptArgument() throws Exception {
+        runTest("analysis/low-level-api-fir/testdata/lazyResolve/scriptArgument.kts");
+    }
+
+    @Test
     @TestMetadata("secondaryConstructorParameterScript.kts")
     public void testSecondaryConstructorParameterScript() throws Exception {
         runTest("analysis/low-level-api-fir/testdata/lazyResolve/secondaryConstructorParameterScript.kts");
@@ -472,6 +490,18 @@ public class FirScriptLazyDeclarationResolveTestGenerated extends AbstractFirScr
     @TestMetadata("superTypesScript.kts")
     public void testSuperTypesScript() throws Exception {
         runTest("analysis/low-level-api-fir/testdata/lazyResolve/superTypesScript.kts");
+    }
+
+    @Test
+    @TestMetadata("syntheticResultDeclaration.kts")
+    public void testSyntheticResultDeclaration() throws Exception {
+        runTest("analysis/low-level-api-fir/testdata/lazyResolve/syntheticResultDeclaration.kts");
+    }
+
+    @Test
+    @TestMetadata("syntheticResultDeclarationWithBigBody.kts")
+    public void testSyntheticResultDeclarationWithBigBody() throws Exception {
+        runTest("analysis/low-level-api-fir/testdata/lazyResolve/syntheticResultDeclarationWithBigBody.kts");
     }
 
     @Test

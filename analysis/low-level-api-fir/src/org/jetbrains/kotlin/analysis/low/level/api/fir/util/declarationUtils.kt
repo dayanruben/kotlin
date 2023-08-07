@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.file.builder.LLFirFileBui
 import org.jetbrains.kotlin.analysis.low.level.api.fir.providers.LLFirProvider
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.llFirSession
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.expressions.FirStatement
 import org.jetbrains.kotlin.fir.psi
 import org.jetbrains.kotlin.fir.realPsi
 import org.jetbrains.kotlin.fir.resolve.providers.FirProvider
@@ -52,7 +53,12 @@ internal fun KtDeclaration.findSourceNonLocalFirDeclaration(firFile: FirFile, pr
                     } else {
                         if (declaration.containingKtFile.isScript()) {
                             // .kts will have a single [FirScript] as a declaration. We need to unwrap statements in it.
-                            (firFile.declarations.singleOrNull() as? FirScript)?.statements?.filterIsInstance<FirDeclaration>()
+                            val firScript = firFile.declarations.singleOrNull() as? FirScript
+                            if (declaration is KtScript) {
+                                return@findSourceNonLocalFirDeclarationByProvider firScript?.takeIf { it.psi == declaration }
+                            }
+
+                            firScript?.statements?.filterIsInstance<FirDeclaration>()
                         } else {
                             firFile.declarations
                         }
@@ -190,6 +196,38 @@ private fun KtClassLikeDeclaration.findFir(provider: FirProvider): FirClassLikeD
     }
 }
 
-
 val FirDeclaration.isGeneratedDeclaration
     get() = realPsi == null
+
+internal inline fun FirScript.forEachDeclaration(action: (FirDeclaration) -> Unit) {
+    for (statement in statements) {
+        if (statement.isScriptStatement) continue
+        action(statement as FirDeclaration)
+    }
+}
+
+internal inline fun FirRegularClass.forEachDeclaration(action: (FirDeclaration) -> Unit) {
+    declarations.forEach(action)
+}
+
+internal val FirDeclaration.isDeclarationContainer: Boolean get() = this is FirRegularClass || this is FirScript
+
+internal inline fun FirDeclaration.forEachDeclaration(action: (FirDeclaration) -> Unit) {
+    when (this) {
+        is FirRegularClass -> forEachDeclaration(action)
+        is FirScript -> forEachDeclaration(action)
+        else -> errorWithFirSpecificEntries("Unsupported declarations container", fir = this)
+    }
+}
+
+internal val FirStatement.isScriptStatement: Boolean get() = this !is FirDeclaration || isScriptDependentDeclaration
+
+internal val FirStatement.isScriptDependentDeclaration: Boolean
+    get() = this is FirDeclaration && origin == FirDeclarationOrigin.ScriptCustomization.ResultProperty
+
+internal inline fun FirScript.forEachDependentDeclaration(action: (FirDeclaration) -> Unit) {
+    for (statement in statements) {
+        if (statement !is FirDeclaration || !statement.isScriptDependentDeclaration) continue
+        action(statement)
+    }
+}

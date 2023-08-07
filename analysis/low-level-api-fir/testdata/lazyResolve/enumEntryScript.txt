@@ -1,250 +1,208 @@
 RAW_FIR:
-FILE: [ResolvedTo(IMPORTS)] enumEntryScript.kts
-    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+FILE: [ResolvedTo(RAW_FIR)] enumEntryScript.kts
+    context(<script>@kotlin.script.templates.standard.ScriptTemplateWithArgs)
+    SCRIPT: [ResolvedTo(RAW_FIR)] 
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
-        public final [ResolvedTo(STATUS)] annotation class Anno : R|kotlin/Annotation| {
-            public [ResolvedTo(STATUS)] [ContainingClassKey=Anno] constructor(): R|Anno| {
-                super<R|kotlin/Any|>()
+        public? final? [ResolvedTo(RAW_FIR)] annotation class Anno : R|kotlin/Annotation| {
+            public? [ResolvedTo(RAW_FIR)] [ContainingClassKey=Anno] constructor(): R|Anno| {
+                LAZY_super<R|kotlin/Any|>
             }
 
         }
 
-        public final [ResolvedTo(STATUS)] enum class Foo : R|kotlin/Enum<Foo>| {
-            private [ResolvedTo(STATUS)] [ContainingClassKey=Foo] constructor(): R|Foo| {
-                super<R|kotlin/Enum<Foo>|>()
+        public? final? [ResolvedTo(RAW_FIR)] enum class Foo : R|kotlin/Enum<Foo>| {
+            private [ResolvedTo(RAW_FIR)] [ContainingClassKey=Foo] constructor(): R|Foo| {
+                LAZY_super<R|kotlin/Enum<Foo>|>
             }
 
-            @R|Anno|[Types]() public final static [ResolvedTo(STATUS)] [ContainingClassKey=Foo] enum entry ResolveMe: R|Foo| = object : R|Foo| {
-                private [ResolvedTo(RAW_FIR)] [ContainingClassKey=<anonymous>] constructor(): R|<anonymous>| {
-                    super<R|Foo|>()
-                }
-
+            @Anno[Unresolved]() public final static [ResolvedTo(RAW_FIR)] [ContainingClassKey=Foo] enum entry ResolveMe: R|Foo| = LAZY_EXPRESSION
+            public final static [ResolvedTo(RAW_FIR)] [ContainingClassKey=Foo] fun values(): R|kotlin/Array<Foo>| {
             }
 
-            public final static [ResolvedTo(STATUS)] [ContainingClassKey=Foo] fun values(): R|kotlin/Array<Foo>| {
+            public final static [ResolvedTo(RAW_FIR)] [ContainingClassKey=Foo] fun valueOf([ResolvedTo(RAW_FIR)] value: R|kotlin/String|): R|Foo| {
             }
 
-            public final static [ResolvedTo(STATUS)] [ContainingClassKey=Foo] fun valueOf([ResolvedTo(STATUS)] value: R|kotlin/String|): R|Foo| {
-            }
-
-            public final static [ResolvedTo(STATUS)] [ContainingClassKey=Foo] val entries: R|kotlin/enums/EnumEntries<Foo>|
-                public [ResolvedTo(STATUS)] get(): R|kotlin/enums/EnumEntries<Foo>|
+            public final static [ResolvedTo(RAW_FIR)] [ContainingClassKey=Foo] val entries: R|kotlin/enums/EnumEntries<Foo>|
+                public [ResolvedTo(RAW_FIR)] get(): R|kotlin/enums/EnumEntries<Foo>|
 
         }
 
 
 IMPORTS:
 FILE: [ResolvedTo(IMPORTS)] enumEntryScript.kts
-    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+    context(<script>@kotlin.script.templates.standard.ScriptTemplateWithArgs)
+    SCRIPT: [ResolvedTo(RAW_FIR)] 
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
-        public final [ResolvedTo(STATUS)] annotation class Anno : R|kotlin/Annotation| {
-            public [ResolvedTo(STATUS)] [ContainingClassKey=Anno] constructor(): R|Anno| {
-                super<R|kotlin/Any|>()
+        public? final? [ResolvedTo(RAW_FIR)] annotation class Anno : R|kotlin/Annotation| {
+            public? [ResolvedTo(RAW_FIR)] [ContainingClassKey=Anno] constructor(): R|Anno| {
+                LAZY_super<R|kotlin/Any|>
             }
 
         }
 
-        public final [ResolvedTo(STATUS)] enum class Foo : R|kotlin/Enum<Foo>| {
-            private [ResolvedTo(STATUS)] [ContainingClassKey=Foo] constructor(): R|Foo| {
-                super<R|kotlin/Enum<Foo>|>()
+        public? final? [ResolvedTo(RAW_FIR)] enum class Foo : R|kotlin/Enum<Foo>| {
+            private [ResolvedTo(RAW_FIR)] [ContainingClassKey=Foo] constructor(): R|Foo| {
+                LAZY_super<R|kotlin/Enum<Foo>|>
             }
 
-            @R|Anno|[Types]() public final static [ResolvedTo(STATUS)] [ContainingClassKey=Foo] enum entry ResolveMe: R|Foo| = object : R|Foo| {
-                private [ResolvedTo(RAW_FIR)] [ContainingClassKey=<anonymous>] constructor(): R|<anonymous>| {
-                    super<R|Foo|>()
-                }
-
+            @Anno[Unresolved]() public final static [ResolvedTo(RAW_FIR)] [ContainingClassKey=Foo] enum entry ResolveMe: R|Foo| = LAZY_EXPRESSION
+            public final static [ResolvedTo(RAW_FIR)] [ContainingClassKey=Foo] fun values(): R|kotlin/Array<Foo>| {
             }
 
-            public final static [ResolvedTo(STATUS)] [ContainingClassKey=Foo] fun values(): R|kotlin/Array<Foo>| {
+            public final static [ResolvedTo(RAW_FIR)] [ContainingClassKey=Foo] fun valueOf([ResolvedTo(RAW_FIR)] value: R|kotlin/String|): R|Foo| {
             }
 
-            public final static [ResolvedTo(STATUS)] [ContainingClassKey=Foo] fun valueOf([ResolvedTo(STATUS)] value: R|kotlin/String|): R|Foo| {
-            }
-
-            public final static [ResolvedTo(STATUS)] [ContainingClassKey=Foo] val entries: R|kotlin/enums/EnumEntries<Foo>|
-                public [ResolvedTo(STATUS)] get(): R|kotlin/enums/EnumEntries<Foo>|
+            public final static [ResolvedTo(RAW_FIR)] [ContainingClassKey=Foo] val entries: R|kotlin/enums/EnumEntries<Foo>|
+                public [ResolvedTo(RAW_FIR)] get(): R|kotlin/enums/EnumEntries<Foo>|
 
         }
 
 
 COMPILER_REQUIRED_ANNOTATIONS:
 FILE: [ResolvedTo(IMPORTS)] enumEntryScript.kts
-    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+    context(<script>@kotlin.script.templates.standard.ScriptTemplateWithArgs)
+    SCRIPT: [ResolvedTo(RAW_FIR)] 
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
-        public final [ResolvedTo(STATUS)] annotation class Anno : R|kotlin/Annotation| {
-            public [ResolvedTo(STATUS)] [ContainingClassKey=Anno] constructor(): R|Anno| {
-                super<R|kotlin/Any|>()
+        public? final? [ResolvedTo(RAW_FIR)] annotation class Anno : R|kotlin/Annotation| {
+            public? [ResolvedTo(RAW_FIR)] [ContainingClassKey=Anno] constructor(): R|Anno| {
+                LAZY_super<R|kotlin/Any|>
             }
 
         }
 
-        public final [ResolvedTo(STATUS)] enum class Foo : R|kotlin/Enum<Foo>| {
-            private [ResolvedTo(STATUS)] [ContainingClassKey=Foo] constructor(): R|Foo| {
-                super<R|kotlin/Enum<Foo>|>()
+        public? final? [ResolvedTo(RAW_FIR)] enum class Foo : R|kotlin/Enum<Foo>| {
+            private [ResolvedTo(RAW_FIR)] [ContainingClassKey=Foo] constructor(): R|Foo| {
+                LAZY_super<R|kotlin/Enum<Foo>|>
             }
 
-            @R|Anno|[Types]() public final static [ResolvedTo(STATUS)] [ContainingClassKey=Foo] enum entry ResolveMe: R|Foo| = object : R|Foo| {
-                private [ResolvedTo(RAW_FIR)] [ContainingClassKey=<anonymous>] constructor(): R|<anonymous>| {
-                    super<R|Foo|>()
-                }
-
+            @Anno[Unresolved]() public final static [ResolvedTo(COMPILER_REQUIRED_ANNOTATIONS)] [ContainingClassKey=Foo] enum entry ResolveMe: R|Foo| = LAZY_EXPRESSION
+            public final static [ResolvedTo(RAW_FIR)] [ContainingClassKey=Foo] fun values(): R|kotlin/Array<Foo>| {
             }
 
-            public final static [ResolvedTo(STATUS)] [ContainingClassKey=Foo] fun values(): R|kotlin/Array<Foo>| {
+            public final static [ResolvedTo(RAW_FIR)] [ContainingClassKey=Foo] fun valueOf([ResolvedTo(RAW_FIR)] value: R|kotlin/String|): R|Foo| {
             }
 
-            public final static [ResolvedTo(STATUS)] [ContainingClassKey=Foo] fun valueOf([ResolvedTo(STATUS)] value: R|kotlin/String|): R|Foo| {
-            }
-
-            public final static [ResolvedTo(STATUS)] [ContainingClassKey=Foo] val entries: R|kotlin/enums/EnumEntries<Foo>|
-                public [ResolvedTo(STATUS)] get(): R|kotlin/enums/EnumEntries<Foo>|
+            public final static [ResolvedTo(RAW_FIR)] [ContainingClassKey=Foo] val entries: R|kotlin/enums/EnumEntries<Foo>|
+                public [ResolvedTo(RAW_FIR)] get(): R|kotlin/enums/EnumEntries<Foo>|
 
         }
 
 
 COMPANION_GENERATION:
 FILE: [ResolvedTo(IMPORTS)] enumEntryScript.kts
-    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+    context(<script>@kotlin.script.templates.standard.ScriptTemplateWithArgs)
+    SCRIPT: [ResolvedTo(RAW_FIR)] 
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
-        public final [ResolvedTo(STATUS)] annotation class Anno : R|kotlin/Annotation| {
-            public [ResolvedTo(STATUS)] [ContainingClassKey=Anno] constructor(): R|Anno| {
-                super<R|kotlin/Any|>()
+        public? final? [ResolvedTo(RAW_FIR)] annotation class Anno : R|kotlin/Annotation| {
+            public? [ResolvedTo(RAW_FIR)] [ContainingClassKey=Anno] constructor(): R|Anno| {
+                LAZY_super<R|kotlin/Any|>
             }
 
         }
 
-        public final [ResolvedTo(STATUS)] enum class Foo : R|kotlin/Enum<Foo>| {
-            private [ResolvedTo(STATUS)] [ContainingClassKey=Foo] constructor(): R|Foo| {
-                super<R|kotlin/Enum<Foo>|>()
+        public? final? [ResolvedTo(RAW_FIR)] enum class Foo : R|kotlin/Enum<Foo>| {
+            private [ResolvedTo(RAW_FIR)] [ContainingClassKey=Foo] constructor(): R|Foo| {
+                LAZY_super<R|kotlin/Enum<Foo>|>
             }
 
-            @R|Anno|[Types]() public final static [ResolvedTo(STATUS)] [ContainingClassKey=Foo] enum entry ResolveMe: R|Foo| = object : R|Foo| {
-                private [ResolvedTo(RAW_FIR)] [ContainingClassKey=<anonymous>] constructor(): R|<anonymous>| {
-                    super<R|Foo|>()
-                }
-
+            @Anno[Unresolved]() public final static [ResolvedTo(COMPANION_GENERATION)] [ContainingClassKey=Foo] enum entry ResolveMe: R|Foo| = LAZY_EXPRESSION
+            public final static [ResolvedTo(RAW_FIR)] [ContainingClassKey=Foo] fun values(): R|kotlin/Array<Foo>| {
             }
 
-            public final static [ResolvedTo(STATUS)] [ContainingClassKey=Foo] fun values(): R|kotlin/Array<Foo>| {
+            public final static [ResolvedTo(RAW_FIR)] [ContainingClassKey=Foo] fun valueOf([ResolvedTo(RAW_FIR)] value: R|kotlin/String|): R|Foo| {
             }
 
-            public final static [ResolvedTo(STATUS)] [ContainingClassKey=Foo] fun valueOf([ResolvedTo(STATUS)] value: R|kotlin/String|): R|Foo| {
-            }
-
-            public final static [ResolvedTo(STATUS)] [ContainingClassKey=Foo] val entries: R|kotlin/enums/EnumEntries<Foo>|
-                public [ResolvedTo(STATUS)] get(): R|kotlin/enums/EnumEntries<Foo>|
+            public final static [ResolvedTo(RAW_FIR)] [ContainingClassKey=Foo] val entries: R|kotlin/enums/EnumEntries<Foo>|
+                public [ResolvedTo(RAW_FIR)] get(): R|kotlin/enums/EnumEntries<Foo>|
 
         }
 
 
 SUPER_TYPES:
 FILE: [ResolvedTo(IMPORTS)] enumEntryScript.kts
-    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+    context(<script>@kotlin.script.templates.standard.ScriptTemplateWithArgs)
+    SCRIPT: [ResolvedTo(RAW_FIR)] 
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
-        public final [ResolvedTo(STATUS)] annotation class Anno : R|kotlin/Annotation| {
-            public [ResolvedTo(STATUS)] [ContainingClassKey=Anno] constructor(): R|Anno| {
-                super<R|kotlin/Any|>()
+        public? final? [ResolvedTo(RAW_FIR)] annotation class Anno : R|kotlin/Annotation| {
+            public? [ResolvedTo(RAW_FIR)] [ContainingClassKey=Anno] constructor(): R|Anno| {
+                LAZY_super<R|kotlin/Any|>
             }
 
         }
 
-        public final [ResolvedTo(STATUS)] enum class Foo : R|kotlin/Enum<Foo>| {
-            private [ResolvedTo(STATUS)] [ContainingClassKey=Foo] constructor(): R|Foo| {
-                super<R|kotlin/Enum<Foo>|>()
+        public? final? [ResolvedTo(SUPER_TYPES)] enum class Foo : R|kotlin/Enum<Foo>| {
+            private [ResolvedTo(RAW_FIR)] [ContainingClassKey=Foo] constructor(): R|Foo| {
+                LAZY_super<R|kotlin/Enum<Foo>|>
             }
 
-            @R|Anno|[Types]() public final static [ResolvedTo(STATUS)] [ContainingClassKey=Foo] enum entry ResolveMe: R|Foo| = object : R|Foo| {
-                private [ResolvedTo(RAW_FIR)] [ContainingClassKey=<anonymous>] constructor(): R|<anonymous>| {
-                    super<R|Foo|>()
-                }
-
+            @Anno[Unresolved]() public final static [ResolvedTo(SUPER_TYPES)] [ContainingClassKey=Foo] enum entry ResolveMe: R|Foo| = LAZY_EXPRESSION
+            public final static [ResolvedTo(RAW_FIR)] [ContainingClassKey=Foo] fun values(): R|kotlin/Array<Foo>| {
             }
 
-            public final static [ResolvedTo(STATUS)] [ContainingClassKey=Foo] fun values(): R|kotlin/Array<Foo>| {
+            public final static [ResolvedTo(RAW_FIR)] [ContainingClassKey=Foo] fun valueOf([ResolvedTo(RAW_FIR)] value: R|kotlin/String|): R|Foo| {
             }
 
-            public final static [ResolvedTo(STATUS)] [ContainingClassKey=Foo] fun valueOf([ResolvedTo(STATUS)] value: R|kotlin/String|): R|Foo| {
-            }
-
-            public final static [ResolvedTo(STATUS)] [ContainingClassKey=Foo] val entries: R|kotlin/enums/EnumEntries<Foo>|
-                public [ResolvedTo(STATUS)] get(): R|kotlin/enums/EnumEntries<Foo>|
+            public final static [ResolvedTo(RAW_FIR)] [ContainingClassKey=Foo] val entries: R|kotlin/enums/EnumEntries<Foo>|
+                public [ResolvedTo(RAW_FIR)] get(): R|kotlin/enums/EnumEntries<Foo>|
 
         }
 
 
 TYPES:
 FILE: [ResolvedTo(IMPORTS)] enumEntryScript.kts
-    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+    context(<script>@kotlin.script.templates.standard.ScriptTemplateWithArgs)
+    SCRIPT: [ResolvedTo(RAW_FIR)] 
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
-        public final [ResolvedTo(STATUS)] annotation class Anno : R|kotlin/Annotation| {
-            public [ResolvedTo(STATUS)] [ContainingClassKey=Anno] constructor(): R|Anno| {
-                super<R|kotlin/Any|>()
+        public? final? [ResolvedTo(RAW_FIR)] annotation class Anno : R|kotlin/Annotation| {
+            public? [ResolvedTo(RAW_FIR)] [ContainingClassKey=Anno] constructor(): R|Anno| {
+                LAZY_super<R|kotlin/Any|>
             }
 
         }
 
-        public final [ResolvedTo(STATUS)] enum class Foo : R|kotlin/Enum<Foo>| {
-            private [ResolvedTo(STATUS)] [ContainingClassKey=Foo] constructor(): R|Foo| {
-                super<R|kotlin/Enum<Foo>|>()
+        public? final? [ResolvedTo(TYPES)] enum class Foo : R|kotlin/Enum<Foo>| {
+            private [ResolvedTo(RAW_FIR)] [ContainingClassKey=Foo] constructor(): R|Foo| {
+                LAZY_super<R|kotlin/Enum<Foo>|>
             }
 
-            @R|Anno|[Types]() public final static [ResolvedTo(STATUS)] [ContainingClassKey=Foo] enum entry ResolveMe: R|Foo| = object : R|Foo| {
-                private [ResolvedTo(RAW_FIR)] [ContainingClassKey=<anonymous>] constructor(): R|<anonymous>| {
-                    super<R|Foo|>()
-                }
-
+            @R|Anno|[Types]() public final static [ResolvedTo(TYPES)] [ContainingClassKey=Foo] enum entry ResolveMe: R|Foo| = LAZY_EXPRESSION
+            public final static [ResolvedTo(RAW_FIR)] [ContainingClassKey=Foo] fun values(): R|kotlin/Array<Foo>| {
             }
 
-            public final static [ResolvedTo(STATUS)] [ContainingClassKey=Foo] fun values(): R|kotlin/Array<Foo>| {
+            public final static [ResolvedTo(RAW_FIR)] [ContainingClassKey=Foo] fun valueOf([ResolvedTo(RAW_FIR)] value: R|kotlin/String|): R|Foo| {
             }
 
-            public final static [ResolvedTo(STATUS)] [ContainingClassKey=Foo] fun valueOf([ResolvedTo(STATUS)] value: R|kotlin/String|): R|Foo| {
-            }
-
-            public final static [ResolvedTo(STATUS)] [ContainingClassKey=Foo] val entries: R|kotlin/enums/EnumEntries<Foo>|
-                public [ResolvedTo(STATUS)] get(): R|kotlin/enums/EnumEntries<Foo>|
+            public final static [ResolvedTo(RAW_FIR)] [ContainingClassKey=Foo] val entries: R|kotlin/enums/EnumEntries<Foo>|
+                public [ResolvedTo(RAW_FIR)] get(): R|kotlin/enums/EnumEntries<Foo>|
 
         }
 
 
 STATUS:
 FILE: [ResolvedTo(IMPORTS)] enumEntryScript.kts
-    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+    context(<script>@kotlin.script.templates.standard.ScriptTemplateWithArgs)
+    SCRIPT: [ResolvedTo(RAW_FIR)] 
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
-        public final [ResolvedTo(STATUS)] annotation class Anno : R|kotlin/Annotation| {
-            public [ResolvedTo(STATUS)] [ContainingClassKey=Anno] constructor(): R|Anno| {
-                super<R|kotlin/Any|>()
+        public? final? [ResolvedTo(RAW_FIR)] annotation class Anno : R|kotlin/Annotation| {
+            public? [ResolvedTo(RAW_FIR)] [ContainingClassKey=Anno] constructor(): R|Anno| {
+                LAZY_super<R|kotlin/Any|>
             }
 
         }
 
         public final [ResolvedTo(STATUS)] enum class Foo : R|kotlin/Enum<Foo>| {
             private [ResolvedTo(STATUS)] [ContainingClassKey=Foo] constructor(): R|Foo| {
-                super<R|kotlin/Enum<Foo>|>()
+                LAZY_super<R|kotlin/Enum<Foo>|>
             }
 
-            @R|Anno|[Types]() public final static [ResolvedTo(STATUS)] [ContainingClassKey=Foo] enum entry ResolveMe: R|Foo| = object : R|Foo| {
-                private [ResolvedTo(RAW_FIR)] [ContainingClassKey=<anonymous>] constructor(): R|<anonymous>| {
-                    super<R|Foo|>()
-                }
-
-            }
-
+            @R|Anno|[Types]() public final static [ResolvedTo(STATUS)] [ContainingClassKey=Foo] enum entry ResolveMe: R|Foo| = LAZY_EXPRESSION
             public final static [ResolvedTo(STATUS)] [ContainingClassKey=Foo] fun values(): R|kotlin/Array<Foo>| {
             }
 
@@ -259,29 +217,23 @@ FILE: [ResolvedTo(IMPORTS)] enumEntryScript.kts
 
 EXPECT_ACTUAL_MATCHING:
 FILE: [ResolvedTo(IMPORTS)] enumEntryScript.kts
-    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+    context(<script>@kotlin.script.templates.standard.ScriptTemplateWithArgs)
+    SCRIPT: [ResolvedTo(RAW_FIR)] 
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
-        public final [ResolvedTo(STATUS)] annotation class Anno : R|kotlin/Annotation| {
-            public [ResolvedTo(STATUS)] [ContainingClassKey=Anno] constructor(): R|Anno| {
-                super<R|kotlin/Any|>()
+        public? final? [ResolvedTo(RAW_FIR)] annotation class Anno : R|kotlin/Annotation| {
+            public? [ResolvedTo(RAW_FIR)] [ContainingClassKey=Anno] constructor(): R|Anno| {
+                LAZY_super<R|kotlin/Any|>
             }
 
         }
 
         public final [ResolvedTo(STATUS)] enum class Foo : R|kotlin/Enum<Foo>| {
             private [ResolvedTo(STATUS)] [ContainingClassKey=Foo] constructor(): R|Foo| {
-                super<R|kotlin/Enum<Foo>|>()
+                LAZY_super<R|kotlin/Enum<Foo>|>
             }
 
-            @R|Anno|[Types]() public final static [ResolvedTo(STATUS)] [ContainingClassKey=Foo] enum entry ResolveMe: R|Foo| = object : R|Foo| {
-                private [ResolvedTo(RAW_FIR)] [ContainingClassKey=<anonymous>] constructor(): R|<anonymous>| {
-                    super<R|Foo|>()
-                }
-
-            }
-
+            @R|Anno|[Types]() public final static [ResolvedTo(EXPECT_ACTUAL_MATCHING)] [ContainingClassKey=Foo] enum entry ResolveMe: R|Foo| = LAZY_EXPRESSION
             public final static [ResolvedTo(STATUS)] [ContainingClassKey=Foo] fun values(): R|kotlin/Array<Foo>| {
             }
 
@@ -297,28 +249,22 @@ FILE: [ResolvedTo(IMPORTS)] enumEntryScript.kts
 ARGUMENTS_OF_ANNOTATIONS:
 FILE: [ResolvedTo(IMPORTS)] enumEntryScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+    SCRIPT: [ResolvedTo(TYPES)] 
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
-        public final [ResolvedTo(STATUS)] annotation class Anno : R|kotlin/Annotation| {
-            public [ResolvedTo(STATUS)] [ContainingClassKey=Anno] constructor(): R|Anno| {
-                super<R|kotlin/Any|>()
+        public? final? [ResolvedTo(RAW_FIR)] annotation class Anno : R|kotlin/Annotation| {
+            public? [ResolvedTo(RAW_FIR)] [ContainingClassKey=Anno] constructor(): R|Anno| {
+                LAZY_super<R|kotlin/Any|>
             }
 
         }
 
         public final [ResolvedTo(STATUS)] enum class Foo : R|kotlin/Enum<Foo>| {
             private [ResolvedTo(STATUS)] [ContainingClassKey=Foo] constructor(): R|Foo| {
-                super<R|kotlin/Enum<Foo>|>()
+                LAZY_super<R|kotlin/Enum<Foo>|>
             }
 
-            @R|Anno|[Types]() public final static [ResolvedTo(STATUS)] [ContainingClassKey=Foo] enum entry ResolveMe: R|Foo| = object : R|Foo| {
-                private [ResolvedTo(RAW_FIR)] [ContainingClassKey=<anonymous>] constructor(): R|<anonymous>| {
-                    super<R|Foo|>()
-                }
-
-            }
-
+            @R|Anno|[Types]() public final static [ResolvedTo(ARGUMENTS_OF_ANNOTATIONS)] [ContainingClassKey=Foo] enum entry ResolveMe: R|Foo| = LAZY_EXPRESSION
             public final static [ResolvedTo(STATUS)] [ContainingClassKey=Foo] fun values(): R|kotlin/Array<Foo>| {
             }
 
@@ -334,28 +280,22 @@ FILE: [ResolvedTo(IMPORTS)] enumEntryScript.kts
 CONTRACTS:
 FILE: [ResolvedTo(IMPORTS)] enumEntryScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+    SCRIPT: [ResolvedTo(TYPES)] 
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
-        public final [ResolvedTo(STATUS)] annotation class Anno : R|kotlin/Annotation| {
-            public [ResolvedTo(STATUS)] [ContainingClassKey=Anno] constructor(): R|Anno| {
-                super<R|kotlin/Any|>()
+        public? final? [ResolvedTo(RAW_FIR)] annotation class Anno : R|kotlin/Annotation| {
+            public? [ResolvedTo(RAW_FIR)] [ContainingClassKey=Anno] constructor(): R|Anno| {
+                LAZY_super<R|kotlin/Any|>
             }
 
         }
 
         public final [ResolvedTo(STATUS)] enum class Foo : R|kotlin/Enum<Foo>| {
             private [ResolvedTo(STATUS)] [ContainingClassKey=Foo] constructor(): R|Foo| {
-                super<R|kotlin/Enum<Foo>|>()
+                LAZY_super<R|kotlin/Enum<Foo>|>
             }
 
-            @R|Anno|[Types]() public final static [ResolvedTo(STATUS)] [ContainingClassKey=Foo] enum entry ResolveMe: R|Foo| = object : R|Foo| {
-                private [ResolvedTo(RAW_FIR)] [ContainingClassKey=<anonymous>] constructor(): R|<anonymous>| {
-                    super<R|Foo|>()
-                }
-
-            }
-
+            @R|Anno|[Types]() public final static [ResolvedTo(CONTRACTS)] [ContainingClassKey=Foo] enum entry ResolveMe: R|Foo| = LAZY_EXPRESSION
             public final static [ResolvedTo(STATUS)] [ContainingClassKey=Foo] fun values(): R|kotlin/Array<Foo>| {
             }
 
@@ -371,22 +311,22 @@ FILE: [ResolvedTo(IMPORTS)] enumEntryScript.kts
 IMPLICIT_TYPES_BODY_RESOLVE:
 FILE: [ResolvedTo(IMPORTS)] enumEntryScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+    SCRIPT: [ResolvedTo(TYPES)] 
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
-        public final [ResolvedTo(STATUS)] annotation class Anno : R|kotlin/Annotation| {
-            public [ResolvedTo(STATUS)] [ContainingClassKey=Anno] constructor(): R|Anno| {
-                super<R|kotlin/Any|>()
+        public? final? [ResolvedTo(RAW_FIR)] annotation class Anno : R|kotlin/Annotation| {
+            public? [ResolvedTo(RAW_FIR)] [ContainingClassKey=Anno] constructor(): R|Anno| {
+                LAZY_super<R|kotlin/Any|>
             }
 
         }
 
         public final [ResolvedTo(STATUS)] enum class Foo : R|kotlin/Enum<Foo>| {
             private [ResolvedTo(STATUS)] [ContainingClassKey=Foo] constructor(): R|Foo| {
-                super<R|kotlin/Enum<Foo>|>()
+                LAZY_super<R|kotlin/Enum<Foo>|>
             }
 
-            @R|Anno|[Types]() public final static [ResolvedTo(STATUS)] [ContainingClassKey=Foo] enum entry ResolveMe: R|Foo| = object : R|Foo| {
+            @R|Anno|[Types]() public final static [ResolvedTo(IMPLICIT_TYPES_BODY_RESOLVE)] [ContainingClassKey=Foo] enum entry ResolveMe: R|Foo| = object : R|Foo| {
                 private [ResolvedTo(RAW_FIR)] [ContainingClassKey=<anonymous>] constructor(): R|<anonymous>| {
                     super<R|Foo|>()
                 }
@@ -408,22 +348,22 @@ FILE: [ResolvedTo(IMPORTS)] enumEntryScript.kts
 ANNOTATIONS_ARGUMENTS_MAPPING:
 FILE: [ResolvedTo(IMPORTS)] enumEntryScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+    SCRIPT: [ResolvedTo(TYPES)] 
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
         public final [ResolvedTo(STATUS)] annotation class Anno : R|kotlin/Annotation| {
             public [ResolvedTo(STATUS)] [ContainingClassKey=Anno] constructor(): R|Anno| {
-                super<R|kotlin/Any|>()
+                LAZY_super<R|kotlin/Any|>
             }
 
         }
 
         public final [ResolvedTo(STATUS)] enum class Foo : R|kotlin/Enum<Foo>| {
             private [ResolvedTo(STATUS)] [ContainingClassKey=Foo] constructor(): R|Foo| {
-                super<R|kotlin/Enum<Foo>|>()
+                LAZY_super<R|kotlin/Enum<Foo>|>
             }
 
-            @R|Anno|[Types]() public final static [ResolvedTo(STATUS)] [ContainingClassKey=Foo] enum entry ResolveMe: R|Foo| = object : R|Foo| {
+            @R|Anno|[Types]() public final static [ResolvedTo(ANNOTATIONS_ARGUMENTS_MAPPING)] [ContainingClassKey=Foo] enum entry ResolveMe: R|Foo| = object : R|Foo| {
                 private [ResolvedTo(RAW_FIR)] [ContainingClassKey=<anonymous>] constructor(): R|<anonymous>| {
                     super<R|Foo|>()
                 }
@@ -445,23 +385,23 @@ FILE: [ResolvedTo(IMPORTS)] enumEntryScript.kts
 BODY_RESOLVE:
 FILE: [ResolvedTo(IMPORTS)] enumEntryScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+    SCRIPT: [ResolvedTo(TYPES)] 
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
         public final [ResolvedTo(STATUS)] annotation class Anno : R|kotlin/Annotation| {
             public [ResolvedTo(STATUS)] [ContainingClassKey=Anno] constructor(): R|Anno| {
-                super<R|kotlin/Any|>()
+                LAZY_super<R|kotlin/Any|>
             }
 
         }
 
         public final [ResolvedTo(STATUS)] enum class Foo : R|kotlin/Enum<Foo>| {
             private [ResolvedTo(STATUS)] [ContainingClassKey=Foo] constructor(): R|Foo| {
-                super<R|kotlin/Enum<Foo>|>()
+                LAZY_super<R|kotlin/Enum<Foo>|>
             }
 
-            @R|Anno|[Types]() public final static [ResolvedTo(STATUS)] [ContainingClassKey=Foo] enum entry ResolveMe: R|Foo| = object : R|Foo| {
-                private [ResolvedTo(RAW_FIR)] [ContainingClassKey=<anonymous>] constructor(): R|<anonymous>| {
+            @R|Anno|[Types]() public final static [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=Foo] enum entry ResolveMe: R|Foo| = object : R|Foo| {
+                private [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=<anonymous>] constructor(): R|<anonymous>| {
                     super<R|Foo|>()
                 }
 
@@ -480,38 +420,38 @@ FILE: [ResolvedTo(IMPORTS)] enumEntryScript.kts
 
 
 FILE RAW TO BODY:
-FILE: [ResolvedTo(IMPORTS)] enumEntryScript.kts
+FILE: [ResolvedTo(BODY_RESOLVE)] enumEntryScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
     SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
-        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+        [ResolvedTo(BODY_RESOLVE)] lval args: R|kotlin/Array<kotlin/String>|
 
-        public final [ResolvedTo(STATUS)] annotation class Anno : R|kotlin/Annotation| {
-            public [ResolvedTo(STATUS)] [ContainingClassKey=Anno] constructor(): R|Anno| {
+        public final [ResolvedTo(BODY_RESOLVE)] annotation class Anno : R|kotlin/Annotation| {
+            public [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=Anno] constructor(): R|Anno| {
                 super<R|kotlin/Any|>()
             }
 
         }
 
-        public final [ResolvedTo(STATUS)] enum class Foo : R|kotlin/Enum<Foo>| {
-            private [ResolvedTo(STATUS)] [ContainingClassKey=Foo] constructor(): R|Foo| {
+        public final [ResolvedTo(BODY_RESOLVE)] enum class Foo : R|kotlin/Enum<Foo>| {
+            private [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=Foo] constructor(): R|Foo| {
                 super<R|kotlin/Enum<Foo>|>()
             }
 
-            @R|Anno|[Types]() public final static [ResolvedTo(STATUS)] [ContainingClassKey=Foo] enum entry ResolveMe: R|Foo| = object : R|Foo| {
-                private [ResolvedTo(RAW_FIR)] [ContainingClassKey=<anonymous>] constructor(): R|<anonymous>| {
+            @R|Anno|[Types]() public final static [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=Foo] enum entry ResolveMe: R|Foo| = object : R|Foo| {
+                private [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=<anonymous>] constructor(): R|<anonymous>| {
                     super<R|Foo|>()
                 }
 
             }
 
-            public final static [ResolvedTo(STATUS)] [ContainingClassKey=Foo] fun values(): R|kotlin/Array<Foo>| {
+            public final static [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=Foo] fun values(): R|kotlin/Array<Foo>| {
             }
 
-            public final static [ResolvedTo(STATUS)] [ContainingClassKey=Foo] fun valueOf([ResolvedTo(STATUS)] value: R|kotlin/String|): R|Foo| {
+            public final static [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=Foo] fun valueOf([ResolvedTo(BODY_RESOLVE)] value: R|kotlin/String|): R|Foo| {
             }
 
-            public final static [ResolvedTo(STATUS)] [ContainingClassKey=Foo] val entries: R|kotlin/enums/EnumEntries<Foo>|
-                public [ResolvedTo(STATUS)] get(): R|kotlin/enums/EnumEntries<Foo>|
+            public final static [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=Foo] val entries: R|kotlin/enums/EnumEntries<Foo>|
+                public [ResolvedTo(BODY_RESOLVE)] get(): R|kotlin/enums/EnumEntries<Foo>|
 
         }
 

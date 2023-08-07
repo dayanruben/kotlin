@@ -47,6 +47,7 @@ import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin.GeneratedByPlugi
 import org.jetbrains.kotlin.ir.declarations.impl.*
 import org.jetbrains.kotlin.ir.declarations.lazy.IrLazyClass
 import org.jetbrains.kotlin.ir.expressions.IrExpression
+import org.jetbrains.kotlin.ir.expressions.IrExpressionBody
 import org.jetbrains.kotlin.ir.expressions.IrSyntheticBodyKind
 import org.jetbrains.kotlin.ir.expressions.impl.IrErrorExpressionImpl
 import org.jetbrains.kotlin.ir.symbols.*
@@ -116,6 +117,20 @@ class Fir2IrDeclarationStorage(
     // we have to match fake override in platform class with overridden fake overrides in common class
     private val fakeOverridesInClass: MutableMap<IrClass, MutableMap<FakeOverrideKey, FirCallableDeclaration>> =
         commonMemberStorage.fakeOverridesInClass
+
+    /*
+     * FIR declarations for substitution and intersection overrides are session dependent, which means that in MPP project
+     *   we can have two different functions for the same substitution overrides (in common and platform modules)
+     *
+     * So this cache is needed to have only one IR declaration for both overrides
+     *
+     * The key here is a pair of the original function (first not f/o) and lookup tag of class for which this fake override was created
+     * THe value is IR function, build for this fake override during fir2ir translation of the module that contains parent class of this function
+     */
+    private val irFakeOverridesForRealFirFakeOverrideMap: MutableMap<FakeOverrideIdentifier, IrDeclaration> =
+        commonMemberStorage.irFakeOverridesForRealFirFakeOverrideMap
+
+    data class FakeOverrideIdentifier(val originalSymbol: FirCallableSymbol<*>, val dispatchReceiverLookupTag: ConeClassLikeLookupTag)
 
     sealed class FakeOverrideKey {
         data class Signature(val signature: IdSignature) : FakeOverrideKey()
@@ -554,16 +569,13 @@ class Fir2IrDeclarationStorage(
         return this
     }
 
-    fun getCachedIrFunction(function: FirFunction): IrSimpleFunction? =
-        if (function is FirSimpleFunction) getCachedIrFunction(function)
+    fun getCachedIrFunction(function: FirFunction): IrSimpleFunction? {
+        return if (function is FirSimpleFunction) getCachedIrFunction(function)
         else localStorage.getLocalFunction(function)
+    }
 
     fun getCachedIrFunction(function: FirSimpleFunction): IrSimpleFunction? {
-        return if (function.visibility == Visibilities.Local) {
-            localStorage.getLocalFunction(function)
-        } else {
-            functionCache[function]
-        }
+        return getCachedIrFunction(function, fakeOverrideOwnerLookupTag = null) { signatureComposer.composeSignature(function) }
     }
 
     fun getCachedIrFunction(
@@ -574,9 +586,15 @@ class Fir2IrDeclarationStorage(
         if (function.visibility == Visibilities.Local) {
             return localStorage.getLocalFunction(function)
         }
-        return getCachedIrCallable(function, fakeOverrideOwnerLookupTag, functionCache, signatureCalculator) { signature ->
+        val cachedIrCallable = getCachedIrCallable(
+            function,
+            fakeOverrideOwnerLookupTag,
+            functionCache,
+            signatureCalculator
+        ) { signature ->
             symbolTable.referenceSimpleFunctionIfAny(signature)?.owner
         }
+        return cachedIrCallable
     }
 
     internal fun cacheDelegationFunction(function: FirSimpleFunction, irFunction: IrSimpleFunction) {
@@ -701,6 +719,11 @@ class Fir2IrDeclarationStorage(
             (function.symbol.originalForSubstitutionOverride as? FirNamedFunctionSymbol)?.let {
                 created.overriddenSymbols += getIrFunctionSymbol(it) as IrSimpleFunctionSymbol
             }
+        }
+        if (function.isSubstitutionOrIntersectionOverride) {
+            val originalFunction = function.unwrapFakeOverrides()
+            val key = FakeOverrideIdentifier(originalFunction.symbol, function.dispatchReceiverClassLookupTagOrNull()!!)
+            irFakeOverridesForRealFirFakeOverrideMap[key] = created
         }
         functionCache[function] = created
         return created
@@ -1114,6 +1137,11 @@ class Fir2IrDeclarationStorage(
                     leaveScope(this)
                 }
             }
+            if (property.isSubstitutionOrIntersectionOverride) {
+                val originalProperty = property.unwrapFakeOverrides()
+                val key = FakeOverrideIdentifier(originalProperty.symbol, property.dispatchReceiverClassLookupTagOrNull()!!)
+                irFakeOverridesForRealFirFakeOverrideMap[key] = result
+            }
             propertyCache[property] = result
             result
         }
@@ -1126,7 +1154,12 @@ class Fir2IrDeclarationStorage(
         fakeOverrideOwnerLookupTag: ConeClassLikeLookupTag?,
         signatureCalculator: () -> IdSignature?
     ): IrProperty? {
-        return getCachedIrCallable(property, fakeOverrideOwnerLookupTag, propertyCache, signatureCalculator) { signature ->
+        return getCachedIrCallable(
+            property,
+            fakeOverrideOwnerLookupTag,
+            propertyCache,
+            signatureCalculator
+        ) { signature ->
             symbolTable.referencePropertyIfAny(signature)?.owner
         }
     }
@@ -1138,13 +1171,33 @@ class Fir2IrDeclarationStorage(
         signatureCalculator: () -> IdSignature?,
         referenceIfAny: (IdSignature) -> IC?
     ): IC? {
-        val isFakeOverride = fakeOverrideOwnerLookupTag != null && fakeOverrideOwnerLookupTag != declaration.containingClassLookupTag()
-        if (!isFakeOverride) {
+        val isFakeFakeOverride = fakeOverrideOwnerLookupTag != null && fakeOverrideOwnerLookupTag != declaration.containingClassLookupTag()
+        if (!isFakeFakeOverride) {
             cache[declaration]?.let { return it }
+        }
+        /*
+         * There are three types of declarations:
+         * 1. Real declarations. They are stored in simple FirDeclaration -> IrDeclaration cache
+         * 2. "Real" fake overrides (fake overrides, which have their own declaration in FIR, such as substitution and intersection
+         *      overrides). They are stored in [irFakeOverridesForRealFirFakeOverrideMap], where key is original real declaration and
+         *      specific dispatch receiver of particular fake override. This cache is needed, because we can have two different FIR
+         *      f/o for common and platform modules (because they are session dependant), but we should create IR declaration for them
+         *      only once. So [irFakeOverridesForRealFirFakeOverrideMap] is shared between fir2ir conversion for different MPP modules
+         *      (see KT-58229)
+         * 3. "Fake" fake overrides (fake overrides without some real FIR declaration). Right now they are stored in symbol table.
+         *     TODO: they also should be stored in [irFakeOverridesForRealFirFakeOverrideMap], see KT-60850
+         */
+        val isRealFakeOverride = declaration.isSubstitutionOrIntersectionOverride
+        if (isRealFakeOverride) {
+            val key = FakeOverrideIdentifier(
+                declaration.originalIfFakeOverride()!!.symbol,
+                declaration.dispatchReceiverClassLookupTagOrNull()!!
+            )
+            irFakeOverridesForRealFirFakeOverrideMap[key]?.let { return it as IC }
         }
         return signatureCalculator()?.let { signature ->
             referenceIfAny(signature)?.let { irDeclaration ->
-                if (!isFakeOverride) {
+                if (!isFakeFakeOverride) {
                     cache[declaration] = irDeclaration
                 }
                 irDeclaration
@@ -1294,6 +1347,11 @@ class Fir2IrDeclarationStorage(
         useStubForDefaultValueStub: Boolean = true,
         typeOrigin: ConversionTypeOrigin = ConversionTypeOrigin.DEFAULT,
         skipDefaultParameter: Boolean = false,
+        // Use this parameter if you want to insert the actual default value instead of the stub (overrides useStubForDefaultValueStub parameter).
+        // This parameter is intended to be used for default values of annotation parameters where they are needed and
+        // may produce incorrect results for values that may be encountered outside annotations.
+        // Does not do anything if valueParameter.defaultValue is already FirExpressionStub.
+        forcedDefaultValueConversion: Boolean = false,
     ): IrValueParameter = convertCatching(valueParameter) {
         val origin = valueParameter.computeIrOrigin()
         val type = valueParameter.returnTypeRef.toIrType(typeOrigin)
@@ -1314,16 +1372,20 @@ class Fir2IrDeclarationStorage(
                 isNoinline = valueParameter.isNoinline,
                 isHidden = false,
             ).apply {
-                if (!skipDefaultParameter && valueParameter.defaultValue.let {
-                        it != null && (useStubForDefaultValueStub || it !is FirExpressionStub)
+                val defaultValue = valueParameter.defaultValue
+                if (!skipDefaultParameter && defaultValue != null) {
+                    this.defaultValue = when {
+                        forcedDefaultValueConversion && defaultValue !is FirExpressionStub ->
+                            defaultValue.asCompileTimeIrInitializer(components)
+                        useStubForDefaultValueStub || defaultValue !is FirExpressionStub ->
+                            factory.createExpressionBody(
+                                IrErrorExpressionImpl(
+                                    UNDEFINED_OFFSET, UNDEFINED_OFFSET, type,
+                                    "Stub expression for default value of ${valueParameter.name}"
+                                )
+                            )
+                        else -> null
                     }
-                ) {
-                    this.defaultValue = factory.createExpressionBody(
-                        IrErrorExpressionImpl(
-                            UNDEFINED_OFFSET, UNDEFINED_OFFSET, type,
-                            "Stub expression for default value of ${valueParameter.name}"
-                        )
-                    )
                 }
                 annotationGenerator.generate(this, valueParameter)
             }

@@ -1,24 +1,24 @@
 KT element: KtTypeReference
-FIR element: FirErrorTypeRefImpl
+FIR element: FirResolvedTypeRefImpl
 FIR source kind: KtRealSourceElementKind
 
 FIR element rendered:
-<ERROR TYPE REF: Symbol not found for Nested>
+R|Foo.Nested|
 
 FIR FILE:
 FILE: [ResolvedTo(IMPORTS)] nestedClassTypeScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+    SCRIPT: [ResolvedTo(TYPES)] 
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
         public open [ResolvedTo(STATUS)] class Foo : R|kotlin/Any| {
             public [ResolvedTo(STATUS)] [ContainingClassKey=Foo] constructor(): R|Foo| {
-                super<R|kotlin/Any|>()
+                LAZY_super<R|kotlin/Any|>
             }
 
-            public final [ResolvedTo(STATUS)] class Nested : R|kotlin/Any| {
-                public [ResolvedTo(STATUS)] [ContainingClassKey=Nested] constructor(): R|Foo.Nested| {
-                    super<R|kotlin/Any|>()
+            public? final? [ResolvedTo(RAW_FIR)] class Nested : R|kotlin/Any| {
+                public? [ResolvedTo(RAW_FIR)] [ContainingClassKey=Nested] constructor(): R|Foo.Nested| {
+                    LAZY_super<R|kotlin/Any|>
                 }
 
             }
@@ -27,10 +27,10 @@ FILE: [ResolvedTo(IMPORTS)] nestedClassTypeScript.kts
 
         public final [ResolvedTo(STATUS)] class Bar : R|Foo| {
             public [ResolvedTo(STATUS)] [ContainingClassKey=Bar] constructor(): R|Bar| {
-                super<R|Foo|>()
+                LAZY_super<R|Foo|>
             }
 
-            public final [ResolvedTo(STATUS)] fun create(): <ERROR TYPE REF: Symbol not found for Nested> {
+            public final [ResolvedTo(ANNOTATIONS_ARGUMENTS_MAPPING)] fun create(): R|Foo.Nested| {
             }
 
         }

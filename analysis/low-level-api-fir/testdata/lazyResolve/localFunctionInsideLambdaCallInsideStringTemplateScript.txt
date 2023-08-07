@@ -1,18 +1,18 @@
 RAW_FIR:
 FILE: [ResolvedTo(IMPORTS)] localFunctionInsideLambdaCallInsideStringTemplateScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+    SCRIPT: [ResolvedTo(TYPES)] 
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
         public open [ResolvedTo(STATUS)] class ClassWithParameter : R|kotlin/Any| {
             public [ResolvedTo(STATUS)] [ContainingClassKey=ClassWithParameter] constructor([ResolvedTo(STATUS)] s: R|kotlin/String|): R|one/ClassWithParameter| {
-                super<R|kotlin/Any|>()
+                LAZY_super<R|kotlin/Any|>
             }
 
         }
 
-        public final [ResolvedTo(STATUS)] class TopLevelClass : R|one/ClassWithParameter| {
-            public [ResolvedTo(STATUS)] [ContainingClassKey=TopLevelClass] constructor(): R|one/TopLevelClass| {
+        public final [ResolvedTo(BODY_RESOLVE)] class TopLevelClass : R|one/ClassWithParameter| {
+            public [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=TopLevelClass] constructor(): R|one/TopLevelClass| {
                 super<R|one/ClassWithParameter|>(<strcat>([ResolvedTo(RAW_FIR)] fun <anonymous>(): R|kotlin/String| <inline=Unknown>  {
                     local final [ResolvedTo(RAW_FIR)] fun str(): R|kotlin/String| {
                         ^str Int(42)
@@ -29,18 +29,18 @@ FILE: [ResolvedTo(IMPORTS)] localFunctionInsideLambdaCallInsideStringTemplateScr
 IMPORTS:
 FILE: [ResolvedTo(IMPORTS)] localFunctionInsideLambdaCallInsideStringTemplateScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+    SCRIPT: [ResolvedTo(TYPES)] 
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
         public open [ResolvedTo(STATUS)] class ClassWithParameter : R|kotlin/Any| {
             public [ResolvedTo(STATUS)] [ContainingClassKey=ClassWithParameter] constructor([ResolvedTo(STATUS)] s: R|kotlin/String|): R|one/ClassWithParameter| {
-                super<R|kotlin/Any|>()
+                LAZY_super<R|kotlin/Any|>
             }
 
         }
 
-        public final [ResolvedTo(STATUS)] class TopLevelClass : R|one/ClassWithParameter| {
-            public [ResolvedTo(STATUS)] [ContainingClassKey=TopLevelClass] constructor(): R|one/TopLevelClass| {
+        public final [ResolvedTo(BODY_RESOLVE)] class TopLevelClass : R|one/ClassWithParameter| {
+            public [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=TopLevelClass] constructor(): R|one/TopLevelClass| {
                 super<R|one/ClassWithParameter|>(<strcat>([ResolvedTo(RAW_FIR)] fun <anonymous>(): R|kotlin/String| <inline=Unknown>  {
                     local final [ResolvedTo(RAW_FIR)] fun str(): R|kotlin/String| {
                         ^str Int(42)
@@ -57,18 +57,18 @@ FILE: [ResolvedTo(IMPORTS)] localFunctionInsideLambdaCallInsideStringTemplateScr
 COMPILER_REQUIRED_ANNOTATIONS:
 FILE: [ResolvedTo(IMPORTS)] localFunctionInsideLambdaCallInsideStringTemplateScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+    SCRIPT: [ResolvedTo(TYPES)] 
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
         public open [ResolvedTo(STATUS)] class ClassWithParameter : R|kotlin/Any| {
             public [ResolvedTo(STATUS)] [ContainingClassKey=ClassWithParameter] constructor([ResolvedTo(STATUS)] s: R|kotlin/String|): R|one/ClassWithParameter| {
-                super<R|kotlin/Any|>()
+                LAZY_super<R|kotlin/Any|>
             }
 
         }
 
-        public final [ResolvedTo(STATUS)] class TopLevelClass : R|one/ClassWithParameter| {
-            public [ResolvedTo(STATUS)] [ContainingClassKey=TopLevelClass] constructor(): R|one/TopLevelClass| {
+        public final [ResolvedTo(BODY_RESOLVE)] class TopLevelClass : R|one/ClassWithParameter| {
+            public [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=TopLevelClass] constructor(): R|one/TopLevelClass| {
                 super<R|one/ClassWithParameter|>(<strcat>([ResolvedTo(RAW_FIR)] fun <anonymous>(): R|kotlin/String| <inline=Unknown>  {
                     local final [ResolvedTo(RAW_FIR)] fun str(): R|kotlin/String| {
                         ^str Int(42)
@@ -85,18 +85,18 @@ FILE: [ResolvedTo(IMPORTS)] localFunctionInsideLambdaCallInsideStringTemplateScr
 COMPANION_GENERATION:
 FILE: [ResolvedTo(IMPORTS)] localFunctionInsideLambdaCallInsideStringTemplateScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+    SCRIPT: [ResolvedTo(TYPES)] 
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
         public open [ResolvedTo(STATUS)] class ClassWithParameter : R|kotlin/Any| {
             public [ResolvedTo(STATUS)] [ContainingClassKey=ClassWithParameter] constructor([ResolvedTo(STATUS)] s: R|kotlin/String|): R|one/ClassWithParameter| {
-                super<R|kotlin/Any|>()
+                LAZY_super<R|kotlin/Any|>
             }
 
         }
 
-        public final [ResolvedTo(STATUS)] class TopLevelClass : R|one/ClassWithParameter| {
-            public [ResolvedTo(STATUS)] [ContainingClassKey=TopLevelClass] constructor(): R|one/TopLevelClass| {
+        public final [ResolvedTo(BODY_RESOLVE)] class TopLevelClass : R|one/ClassWithParameter| {
+            public [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=TopLevelClass] constructor(): R|one/TopLevelClass| {
                 super<R|one/ClassWithParameter|>(<strcat>([ResolvedTo(RAW_FIR)] fun <anonymous>(): R|kotlin/String| <inline=Unknown>  {
                     local final [ResolvedTo(RAW_FIR)] fun str(): R|kotlin/String| {
                         ^str Int(42)
@@ -113,18 +113,18 @@ FILE: [ResolvedTo(IMPORTS)] localFunctionInsideLambdaCallInsideStringTemplateScr
 SUPER_TYPES:
 FILE: [ResolvedTo(IMPORTS)] localFunctionInsideLambdaCallInsideStringTemplateScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+    SCRIPT: [ResolvedTo(TYPES)] 
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
         public open [ResolvedTo(STATUS)] class ClassWithParameter : R|kotlin/Any| {
             public [ResolvedTo(STATUS)] [ContainingClassKey=ClassWithParameter] constructor([ResolvedTo(STATUS)] s: R|kotlin/String|): R|one/ClassWithParameter| {
-                super<R|kotlin/Any|>()
+                LAZY_super<R|kotlin/Any|>
             }
 
         }
 
-        public final [ResolvedTo(STATUS)] class TopLevelClass : R|one/ClassWithParameter| {
-            public [ResolvedTo(STATUS)] [ContainingClassKey=TopLevelClass] constructor(): R|one/TopLevelClass| {
+        public final [ResolvedTo(BODY_RESOLVE)] class TopLevelClass : R|one/ClassWithParameter| {
+            public [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=TopLevelClass] constructor(): R|one/TopLevelClass| {
                 super<R|one/ClassWithParameter|>(<strcat>([ResolvedTo(RAW_FIR)] fun <anonymous>(): R|kotlin/String| <inline=Unknown>  {
                     local final [ResolvedTo(RAW_FIR)] fun str(): R|kotlin/String| {
                         ^str Int(42)
@@ -141,18 +141,18 @@ FILE: [ResolvedTo(IMPORTS)] localFunctionInsideLambdaCallInsideStringTemplateScr
 TYPES:
 FILE: [ResolvedTo(IMPORTS)] localFunctionInsideLambdaCallInsideStringTemplateScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+    SCRIPT: [ResolvedTo(TYPES)] 
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
         public open [ResolvedTo(STATUS)] class ClassWithParameter : R|kotlin/Any| {
             public [ResolvedTo(STATUS)] [ContainingClassKey=ClassWithParameter] constructor([ResolvedTo(STATUS)] s: R|kotlin/String|): R|one/ClassWithParameter| {
-                super<R|kotlin/Any|>()
+                LAZY_super<R|kotlin/Any|>
             }
 
         }
 
-        public final [ResolvedTo(STATUS)] class TopLevelClass : R|one/ClassWithParameter| {
-            public [ResolvedTo(STATUS)] [ContainingClassKey=TopLevelClass] constructor(): R|one/TopLevelClass| {
+        public final [ResolvedTo(BODY_RESOLVE)] class TopLevelClass : R|one/ClassWithParameter| {
+            public [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=TopLevelClass] constructor(): R|one/TopLevelClass| {
                 super<R|one/ClassWithParameter|>(<strcat>([ResolvedTo(RAW_FIR)] fun <anonymous>(): R|kotlin/String| <inline=Unknown>  {
                     local final [ResolvedTo(RAW_FIR)] fun str(): R|kotlin/String| {
                         ^str Int(42)
@@ -169,18 +169,18 @@ FILE: [ResolvedTo(IMPORTS)] localFunctionInsideLambdaCallInsideStringTemplateScr
 STATUS:
 FILE: [ResolvedTo(IMPORTS)] localFunctionInsideLambdaCallInsideStringTemplateScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+    SCRIPT: [ResolvedTo(TYPES)] 
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
         public open [ResolvedTo(STATUS)] class ClassWithParameter : R|kotlin/Any| {
             public [ResolvedTo(STATUS)] [ContainingClassKey=ClassWithParameter] constructor([ResolvedTo(STATUS)] s: R|kotlin/String|): R|one/ClassWithParameter| {
-                super<R|kotlin/Any|>()
+                LAZY_super<R|kotlin/Any|>
             }
 
         }
 
-        public final [ResolvedTo(STATUS)] class TopLevelClass : R|one/ClassWithParameter| {
-            public [ResolvedTo(STATUS)] [ContainingClassKey=TopLevelClass] constructor(): R|one/TopLevelClass| {
+        public final [ResolvedTo(BODY_RESOLVE)] class TopLevelClass : R|one/ClassWithParameter| {
+            public [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=TopLevelClass] constructor(): R|one/TopLevelClass| {
                 super<R|one/ClassWithParameter|>(<strcat>([ResolvedTo(RAW_FIR)] fun <anonymous>(): R|kotlin/String| <inline=Unknown>  {
                     local final [ResolvedTo(RAW_FIR)] fun str(): R|kotlin/String| {
                         ^str Int(42)
@@ -197,18 +197,18 @@ FILE: [ResolvedTo(IMPORTS)] localFunctionInsideLambdaCallInsideStringTemplateScr
 EXPECT_ACTUAL_MATCHING:
 FILE: [ResolvedTo(IMPORTS)] localFunctionInsideLambdaCallInsideStringTemplateScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+    SCRIPT: [ResolvedTo(TYPES)] 
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
         public open [ResolvedTo(STATUS)] class ClassWithParameter : R|kotlin/Any| {
             public [ResolvedTo(STATUS)] [ContainingClassKey=ClassWithParameter] constructor([ResolvedTo(STATUS)] s: R|kotlin/String|): R|one/ClassWithParameter| {
-                super<R|kotlin/Any|>()
+                LAZY_super<R|kotlin/Any|>
             }
 
         }
 
-        public final [ResolvedTo(STATUS)] class TopLevelClass : R|one/ClassWithParameter| {
-            public [ResolvedTo(STATUS)] [ContainingClassKey=TopLevelClass] constructor(): R|one/TopLevelClass| {
+        public final [ResolvedTo(BODY_RESOLVE)] class TopLevelClass : R|one/ClassWithParameter| {
+            public [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=TopLevelClass] constructor(): R|one/TopLevelClass| {
                 super<R|one/ClassWithParameter|>(<strcat>([ResolvedTo(RAW_FIR)] fun <anonymous>(): R|kotlin/String| <inline=Unknown>  {
                     local final [ResolvedTo(RAW_FIR)] fun str(): R|kotlin/String| {
                         ^str Int(42)
@@ -225,18 +225,18 @@ FILE: [ResolvedTo(IMPORTS)] localFunctionInsideLambdaCallInsideStringTemplateScr
 ARGUMENTS_OF_ANNOTATIONS:
 FILE: [ResolvedTo(IMPORTS)] localFunctionInsideLambdaCallInsideStringTemplateScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+    SCRIPT: [ResolvedTo(TYPES)] 
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
         public open [ResolvedTo(STATUS)] class ClassWithParameter : R|kotlin/Any| {
             public [ResolvedTo(STATUS)] [ContainingClassKey=ClassWithParameter] constructor([ResolvedTo(STATUS)] s: R|kotlin/String|): R|one/ClassWithParameter| {
-                super<R|kotlin/Any|>()
+                LAZY_super<R|kotlin/Any|>
             }
 
         }
 
-        public final [ResolvedTo(STATUS)] class TopLevelClass : R|one/ClassWithParameter| {
-            public [ResolvedTo(STATUS)] [ContainingClassKey=TopLevelClass] constructor(): R|one/TopLevelClass| {
+        public final [ResolvedTo(BODY_RESOLVE)] class TopLevelClass : R|one/ClassWithParameter| {
+            public [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=TopLevelClass] constructor(): R|one/TopLevelClass| {
                 super<R|one/ClassWithParameter|>(<strcat>([ResolvedTo(RAW_FIR)] fun <anonymous>(): R|kotlin/String| <inline=Unknown>  {
                     local final [ResolvedTo(RAW_FIR)] fun str(): R|kotlin/String| {
                         ^str Int(42)
@@ -253,18 +253,18 @@ FILE: [ResolvedTo(IMPORTS)] localFunctionInsideLambdaCallInsideStringTemplateScr
 CONTRACTS:
 FILE: [ResolvedTo(IMPORTS)] localFunctionInsideLambdaCallInsideStringTemplateScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+    SCRIPT: [ResolvedTo(TYPES)] 
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
         public open [ResolvedTo(STATUS)] class ClassWithParameter : R|kotlin/Any| {
             public [ResolvedTo(STATUS)] [ContainingClassKey=ClassWithParameter] constructor([ResolvedTo(STATUS)] s: R|kotlin/String|): R|one/ClassWithParameter| {
-                super<R|kotlin/Any|>()
+                LAZY_super<R|kotlin/Any|>
             }
 
         }
 
-        public final [ResolvedTo(STATUS)] class TopLevelClass : R|one/ClassWithParameter| {
-            public [ResolvedTo(STATUS)] [ContainingClassKey=TopLevelClass] constructor(): R|one/TopLevelClass| {
+        public final [ResolvedTo(BODY_RESOLVE)] class TopLevelClass : R|one/ClassWithParameter| {
+            public [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=TopLevelClass] constructor(): R|one/TopLevelClass| {
                 super<R|one/ClassWithParameter|>(<strcat>([ResolvedTo(RAW_FIR)] fun <anonymous>(): R|kotlin/String| <inline=Unknown>  {
                     local final [ResolvedTo(RAW_FIR)] fun str(): R|kotlin/String| {
                         ^str Int(42)
@@ -281,18 +281,18 @@ FILE: [ResolvedTo(IMPORTS)] localFunctionInsideLambdaCallInsideStringTemplateScr
 IMPLICIT_TYPES_BODY_RESOLVE:
 FILE: [ResolvedTo(IMPORTS)] localFunctionInsideLambdaCallInsideStringTemplateScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+    SCRIPT: [ResolvedTo(TYPES)] 
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
         public open [ResolvedTo(STATUS)] class ClassWithParameter : R|kotlin/Any| {
             public [ResolvedTo(STATUS)] [ContainingClassKey=ClassWithParameter] constructor([ResolvedTo(STATUS)] s: R|kotlin/String|): R|one/ClassWithParameter| {
-                super<R|kotlin/Any|>()
+                LAZY_super<R|kotlin/Any|>
             }
 
         }
 
-        public final [ResolvedTo(STATUS)] class TopLevelClass : R|one/ClassWithParameter| {
-            public [ResolvedTo(STATUS)] [ContainingClassKey=TopLevelClass] constructor(): R|one/TopLevelClass| {
+        public final [ResolvedTo(BODY_RESOLVE)] class TopLevelClass : R|one/ClassWithParameter| {
+            public [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=TopLevelClass] constructor(): R|one/TopLevelClass| {
                 super<R|one/ClassWithParameter|>(<strcat>([ResolvedTo(RAW_FIR)] fun <anonymous>(): R|kotlin/String| <inline=Unknown>  {
                     local final [ResolvedTo(RAW_FIR)] fun str(): R|kotlin/String| {
                         ^str Int(42)
@@ -309,18 +309,18 @@ FILE: [ResolvedTo(IMPORTS)] localFunctionInsideLambdaCallInsideStringTemplateScr
 ANNOTATIONS_ARGUMENTS_MAPPING:
 FILE: [ResolvedTo(IMPORTS)] localFunctionInsideLambdaCallInsideStringTemplateScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+    SCRIPT: [ResolvedTo(TYPES)] 
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
         public open [ResolvedTo(STATUS)] class ClassWithParameter : R|kotlin/Any| {
             public [ResolvedTo(STATUS)] [ContainingClassKey=ClassWithParameter] constructor([ResolvedTo(STATUS)] s: R|kotlin/String|): R|one/ClassWithParameter| {
-                super<R|kotlin/Any|>()
+                LAZY_super<R|kotlin/Any|>
             }
 
         }
 
-        public final [ResolvedTo(STATUS)] class TopLevelClass : R|one/ClassWithParameter| {
-            public [ResolvedTo(STATUS)] [ContainingClassKey=TopLevelClass] constructor(): R|one/TopLevelClass| {
+        public final [ResolvedTo(BODY_RESOLVE)] class TopLevelClass : R|one/ClassWithParameter| {
+            public [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=TopLevelClass] constructor(): R|one/TopLevelClass| {
                 super<R|one/ClassWithParameter|>(<strcat>([ResolvedTo(RAW_FIR)] fun <anonymous>(): R|kotlin/String| <inline=Unknown>  {
                     local final [ResolvedTo(RAW_FIR)] fun str(): R|kotlin/String| {
                         ^str Int(42)
@@ -337,18 +337,18 @@ FILE: [ResolvedTo(IMPORTS)] localFunctionInsideLambdaCallInsideStringTemplateScr
 BODY_RESOLVE:
 FILE: [ResolvedTo(IMPORTS)] localFunctionInsideLambdaCallInsideStringTemplateScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+    SCRIPT: [ResolvedTo(TYPES)] 
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
         public open [ResolvedTo(STATUS)] class ClassWithParameter : R|kotlin/Any| {
             public [ResolvedTo(STATUS)] [ContainingClassKey=ClassWithParameter] constructor([ResolvedTo(STATUS)] s: R|kotlin/String|): R|one/ClassWithParameter| {
-                super<R|kotlin/Any|>()
+                LAZY_super<R|kotlin/Any|>
             }
 
         }
 
-        public final [ResolvedTo(STATUS)] class TopLevelClass : R|one/ClassWithParameter| {
-            public [ResolvedTo(STATUS)] [ContainingClassKey=TopLevelClass] constructor(): R|one/TopLevelClass| {
+        public final [ResolvedTo(BODY_RESOLVE)] class TopLevelClass : R|one/ClassWithParameter| {
+            public [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=TopLevelClass] constructor(): R|one/TopLevelClass| {
                 super<R|one/ClassWithParameter|>(<strcat>([ResolvedTo(RAW_FIR)] fun <anonymous>(): R|kotlin/String| <inline=Unknown>  {
                     local final [ResolvedTo(RAW_FIR)] fun str(): R|kotlin/String| {
                         ^str Int(42)
@@ -363,20 +363,20 @@ FILE: [ResolvedTo(IMPORTS)] localFunctionInsideLambdaCallInsideStringTemplateScr
 
 
 FILE RAW TO BODY:
-FILE: [ResolvedTo(IMPORTS)] localFunctionInsideLambdaCallInsideStringTemplateScript.kts
+FILE: [ResolvedTo(BODY_RESOLVE)] localFunctionInsideLambdaCallInsideStringTemplateScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
     SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
-        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+        [ResolvedTo(BODY_RESOLVE)] lval args: R|kotlin/Array<kotlin/String>|
 
-        public open [ResolvedTo(STATUS)] class ClassWithParameter : R|kotlin/Any| {
-            public [ResolvedTo(STATUS)] [ContainingClassKey=ClassWithParameter] constructor([ResolvedTo(STATUS)] s: R|kotlin/String|): R|one/ClassWithParameter| {
+        public open [ResolvedTo(BODY_RESOLVE)] class ClassWithParameter : R|kotlin/Any| {
+            public [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=ClassWithParameter] constructor([ResolvedTo(BODY_RESOLVE)] s: R|kotlin/String|): R|one/ClassWithParameter| {
                 super<R|kotlin/Any|>()
             }
 
         }
 
-        public final [ResolvedTo(STATUS)] class TopLevelClass : R|one/ClassWithParameter| {
-            public [ResolvedTo(STATUS)] [ContainingClassKey=TopLevelClass] constructor(): R|one/TopLevelClass| {
+        public final [ResolvedTo(BODY_RESOLVE)] class TopLevelClass : R|one/ClassWithParameter| {
+            public [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=TopLevelClass] constructor(): R|one/TopLevelClass| {
                 super<R|one/ClassWithParameter|>(<strcat>([ResolvedTo(RAW_FIR)] fun <anonymous>(): R|kotlin/String| <inline=Unknown>  {
                     local final [ResolvedTo(RAW_FIR)] fun str(): R|kotlin/String| {
                         ^str Int(42)

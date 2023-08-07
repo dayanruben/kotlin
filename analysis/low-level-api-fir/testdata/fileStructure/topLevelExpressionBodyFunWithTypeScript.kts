@@ -1,1 +1,1 @@
-/* NonReanalyzableNonClassDeclarationStructureElement */fun foo(): Int = 42
+/* RootScriptStructureElement */fun foo(): Int = 42/* ReanalyzableFunctionStructureElement */

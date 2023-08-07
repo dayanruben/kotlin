@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.FileStruct
 import org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.FirElementsRecorder
 import org.jetbrains.kotlin.analysis.low.level.api.fir.lazy.resolve.declarationCanBeLazilyResolved
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.findSourceNonLocalFirDeclaration
-import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.analysis.utils.printer.parentOfType
 import org.jetbrains.kotlin.analysis.utils.printer.parentsOfType
 import org.jetbrains.kotlin.fir.FirAnnotationContainer
@@ -78,7 +77,7 @@ internal class FirElementBuilder(
         firResolveSession: LLFirResolveSession,
     ): FirElement? = when (element) {
         is KtFile -> getOrBuildFirForKtFile(element)
-        else -> getOrBuildFirForNonKtFileElement(element, firResolveSession)
+        else -> getFirForNonKtFileElement(element, firResolveSession)
     }
 
     private fun getOrBuildFirForKtFile(ktFile: KtFile): FirFile {
@@ -87,7 +86,7 @@ internal class FirElementBuilder(
         return firFile
     }
 
-    private fun getOrBuildFirForNonKtFileElement(
+    private fun getFirForNonKtFileElement(
         element: KtElement,
         firResolveSession: LLFirResolveSession,
     ): FirElement? {
@@ -97,8 +96,8 @@ internal class FirElementBuilder(
             return null
         }
 
-        getOrBuildFirForElementInsideAnnotations(element, firResolveSession)?.let { return it }
-        getOrBuildFirForElementInsideTypes(element, firResolveSession)?.let { return it }
+        getFirForElementInsideAnnotations(element, firResolveSession)?.let { return it }
+        getFirForElementInsideTypes(element, firResolveSession)?.let { return it }
 
         val psi = getPsiAsFirElementSource(element) ?: return null
         val firFile = element.containingKtFile
@@ -106,10 +105,10 @@ internal class FirElementBuilder(
 
         val structureElement = fileStructure.getStructureElementFor(element)
         val mappings = structureElement.mappings
-        return mappings.getFirOfClosestParent(psi) ?: firResolveSession.getOrBuildFirFile(firFile)
+        return mappings.getFir(psi)
     }
 
-    private inline fun <T : KtElement> getOrBuildFirForNonBodyElement(
+    private inline fun <T : KtElement> getFirForNonBodyElement(
         element: KtElement,
         firResolveSession: LLFirResolveSession,
         anchorElementProvider: (KtElement) -> T?,
@@ -139,10 +138,10 @@ internal class FirElementBuilder(
         return modifierList.owner as? KtDeclaration
     }
 
-    private fun getOrBuildFirForElementInsideAnnotations(
+    private fun getFirForElementInsideAnnotations(
         element: KtElement,
         firResolveSession: LLFirResolveSession,
-    ): FirElement? = getOrBuildFirForNonBodyElement(
+    ): FirElement? = getFirForNonBodyElement(
         element = element,
         firResolveSession = firResolveSession,
         anchorElementProvider = { it.parentOfType<KtAnnotationEntry>(withSelf = true) },
@@ -150,10 +149,10 @@ internal class FirElementBuilder(
         resolveAndFindFirForAnchor = { declaration, anchor -> declaration.resolveAndFindAnnotation(anchor, goDeep = true) },
     )
 
-    private fun getOrBuildFirForElementInsideTypes(
+    private fun getFirForElementInsideTypes(
         element: KtElement,
         firResolveSession: LLFirResolveSession,
-    ): FirElement? = getOrBuildFirForNonBodyElement(
+    ): FirElement? = getFirForNonBodyElement(
         element = element,
         firResolveSession = firResolveSession,
         anchorElementProvider = { it.parentsOfType<KtTypeReference>(withSelf = true).lastOrNull() },
@@ -263,8 +262,7 @@ internal fun PsiElement.getNonLocalContainingOrThisDeclaration(predicate: (KtDec
                 !notNullCandidate.isPartOf(parent) ||
                 parent is KtClassInitializer ||
                 parent is KtObjectLiteralExpression ||
-                parent is KtCallElement ||
-                parent is KtScript
+                parent is KtCallElement
             ) {
                 // Candidate turned out to be local. Let's find another one.
                 candidate = null

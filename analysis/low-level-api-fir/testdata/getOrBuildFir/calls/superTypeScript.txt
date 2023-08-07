@@ -8,14 +8,14 @@ R|A|
 FIR FILE:
 FILE: [ResolvedTo(IMPORTS)] superTypeScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+    SCRIPT: [ResolvedTo(TYPES)] 
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
         public abstract [ResolvedTo(STATUS)] interface A : R|kotlin/Any| {
         }
 
-        public final [ResolvedTo(STATUS)] class C : R|A| {
-            public [ResolvedTo(STATUS)] [ContainingClassKey=C] constructor(): R|C| {
+        public final [ResolvedTo(BODY_RESOLVE)] class C : R|A| {
+            public [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=C] constructor(): R|C| {
                 super<R|kotlin/Any|>()
             }
 

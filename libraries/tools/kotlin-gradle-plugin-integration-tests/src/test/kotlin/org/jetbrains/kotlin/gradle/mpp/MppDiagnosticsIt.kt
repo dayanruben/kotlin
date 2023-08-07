@@ -19,31 +19,29 @@ class MppDiagnosticsIt : KGPBaseTest() {
     fun testDiagnosticsRenderingSmoke(gradleVersion: GradleVersion) {
         project("diagnosticsRenderingSmoke", gradleVersion) {
             build {
-                assertEqualsToFile(expectedOutputFile(), extractProjectsAndTheirVerboseDiagnostics())
+                assertEqualsToFile(expectedOutputFile(), extractProjectsAndTheirDiagnostics())
             }
         }
     }
 
     @GradleTest
     fun testDeprecatedMppProperties(gradleVersion: GradleVersion) {
-        project("mppDeprecatedProperties", gradleVersion) {
-            checkDeprecatedProperties(isDeprecationExpected = false)
+        for (deprecatedProperty in this.deprecatedFlags) {
+            project("mppDeprecatedProperties", gradleVersion) {
+                checkDeprecatedProperties(isDeprecationExpected = false)
 
-            this.gradleProperties.appendText(
-                defaultFlags.entries.joinToString(
-                    prefix = System.lineSeparator(),
-                    postfix = System.lineSeparator(),
-                    separator = System.lineSeparator(),
-                ) { (prop, value) -> "$prop=$value" }
-            )
-            checkDeprecatedProperties(isDeprecationExpected = true)
+                this.gradleProperties.appendText(
+                    "${deprecatedProperty.key}=${deprecatedProperty.value}${System.lineSeparator()}"
+                )
+                checkDeprecatedProperties(isDeprecationExpected = true)
 
-            // remove the MPP plugin from the top-level project and check the warnings are still reported in subproject
-            this.buildGradleKts.writeText("")
-            checkDeprecatedProperties(isDeprecationExpected = true)
+                // remove the MPP plugin from the top-level project and check the warnings are still reported in subproject
+                this.buildGradleKts.writeText("")
+                checkDeprecatedProperties(isDeprecationExpected = true)
 
-            this.gradleProperties.appendText("kotlin.mpp.deprecatedProperties.nowarn=true${System.lineSeparator()}")
-            checkDeprecatedProperties(isDeprecationExpected = false)
+                this.gradleProperties.appendText("kotlin.internal.suppressGradlePluginErrors=PreHMPPFlagsError${System.lineSeparator()}")
+                checkDeprecatedProperties(isDeprecationExpected = false)
+            }
         }
     }
 
@@ -52,22 +50,22 @@ class MppDiagnosticsIt : KGPBaseTest() {
         project("errorDiagnosticBuildFails", gradleVersion) {
             // 'assemble' (triggers compileKotlin-tasks indirectly): fail
             buildAndFail("assemble") {
-                assertEqualsToFile(expectedOutputFile("assemble"), extractProjectsAndTheirVerboseDiagnostics())
+                assertEqualsToFile(expectedOutputFile("assemble"), extractProjectsAndTheirDiagnostics())
             }
 
             // 'clean', not directly relevant to Kotlin tasks: build is OK
             build("clean") {
-                assertEqualsToFile(expectedOutputFile("clean"), extractProjectsAndTheirVerboseDiagnostics())
+                assertEqualsToFile(expectedOutputFile("clean"), extractProjectsAndTheirDiagnostics())
             }
 
             // Custom task, irrelevant to Kotlin tasks: build is OK
             build("myTask", "--rerun-tasks") {
-                assertEqualsToFile(expectedOutputFile("customTask"), extractProjectsAndTheirVerboseDiagnostics())
+                assertEqualsToFile(expectedOutputFile("customTask"), extractProjectsAndTheirDiagnostics())
             }
 
             // commonizer task: build is OK (otherwise IDE will be bricked)
             build("commonize") {
-                assertEqualsToFile(expectedOutputFile("commonize"), extractProjectsAndTheirVerboseDiagnostics())
+                assertEqualsToFile(expectedOutputFile("commonize"), extractProjectsAndTheirDiagnostics())
             }
         }
     }
@@ -79,13 +77,13 @@ class MppDiagnosticsIt : KGPBaseTest() {
         project("errorDiagnosticBuildFails", gradleVersion) {
             buildAndFail("assemble", buildOptions = buildOptions.copy(configurationCache = true)) {
                 assertConfigurationCacheStored()
-                assertEqualsToFile(expectedOutputFile("assemble"), extractProjectsAndTheirVerboseDiagnostics())
+                assertEqualsToFile(expectedOutputFile("assemble"), extractProjectsAndTheirDiagnostics())
             }
 
             // fails again
             buildAndFail("assemble", buildOptions = buildOptions.copy(configurationCache = true)) {
                 assertConfigurationCacheReused()
-                assertEqualsToFile(expectedOutputFile("assemble-cache-reused"), extractProjectsAndTheirVerboseDiagnostics())
+                assertEqualsToFile(expectedOutputFile("assemble-cache-reused"), extractProjectsAndTheirDiagnostics())
             }
         }
     }
@@ -94,10 +92,10 @@ class MppDiagnosticsIt : KGPBaseTest() {
     fun testErrorDiagnosticBuildSucceeds(gradleVersion: GradleVersion) {
         project("errorDiagnosticBuildSucceeds", gradleVersion) {
             build("assemble") {
-                assertEqualsToFile(expectedOutputFile("assemble"), extractProjectsAndTheirVerboseDiagnostics())
+                assertEqualsToFile(expectedOutputFile("assemble"), extractProjectsAndTheirDiagnostics())
             }
             build("myTask", "--rerun-tasks") {
-                assertEqualsToFile(expectedOutputFile("customTask"), extractProjectsAndTheirVerboseDiagnostics())
+                assertEqualsToFile(expectedOutputFile("customTask"), extractProjectsAndTheirDiagnostics())
             }
         }
     }
@@ -107,7 +105,7 @@ class MppDiagnosticsIt : KGPBaseTest() {
         project("suppressGradlePluginErrors", gradleVersion) {
             // build succeeds
             build("assemble") {
-                assertEqualsToFile(expectedOutputFile(), extractProjectsAndTheirVerboseDiagnostics())
+                assertEqualsToFile(expectedOutputFile(), extractProjectsAndTheirDiagnostics())
             }
         }
     }
@@ -116,7 +114,7 @@ class MppDiagnosticsIt : KGPBaseTest() {
     fun testSuppressGradlePluginWarnings(gradleVersion: GradleVersion) {
         project("suppressGradlePluginWarnings", gradleVersion) {
             build("assemble") {
-                assertEqualsToFile(expectedOutputFile(), extractProjectsAndTheirVerboseDiagnostics())
+                assertEqualsToFile(expectedOutputFile(), extractProjectsAndTheirDiagnostics())
             }
         }
     }
@@ -128,7 +126,7 @@ class MppDiagnosticsIt : KGPBaseTest() {
                 // Gradle 8.0+ for some reason renders exception twice in the build log
                 val testDataSuffixIfAny = if (gradleVersion < GradleVersion.version(TestVersions.Gradle.G_8_0)) "gradle-6.8.3" else null
 
-                assertEqualsToFile(expectedOutputFile(testDataSuffixIfAny), extractProjectsAndTheirVerboseDiagnostics())
+                assertEqualsToFile(expectedOutputFile(testDataSuffixIfAny), extractProjectsAndTheirDiagnostics())
             }
         }
     }
@@ -137,24 +135,24 @@ class MppDiagnosticsIt : KGPBaseTest() {
     fun testErrorsFailOnlyRelevantProjects(gradleVersion: GradleVersion) {
         project("errorsFailOnlyRelevantProjects", gradleVersion) {
             buildAndFail("brokenProjectA:assemble") {
-                assertEqualsToFile(expectedOutputFile("brokenA"), extractProjectsAndTheirVerboseDiagnostics())
+                assertEqualsToFile(expectedOutputFile("brokenA"), extractProjectsAndTheirDiagnostics())
             }
 
             buildAndFail("brokenProjectB:assemble") {
-                assertEqualsToFile(expectedOutputFile("brokenB"), extractProjectsAndTheirVerboseDiagnostics())
+                assertEqualsToFile(expectedOutputFile("brokenB"), extractProjectsAndTheirDiagnostics())
             }
 
             build("healthyProject:assemble") {
-                assertEqualsToFile(expectedOutputFile("healthy"), extractProjectsAndTheirVerboseDiagnostics())
+                assertEqualsToFile(expectedOutputFile("healthy"), extractProjectsAndTheirDiagnostics())
             }
 
             // Turn off parallel execution so that order of execution (and therefore the testdata) is stable
             buildAndFail("assemble", buildOptions = buildOptions.copy(parallel = false)) {
-                assertEqualsToFile(expectedOutputFile("root"), extractProjectsAndTheirVerboseDiagnostics())
+                assertEqualsToFile(expectedOutputFile("root"), extractProjectsAndTheirDiagnostics())
             }
 
             buildAndFail("assemble", "--continue", buildOptions = buildOptions.copy(parallel = false)) {
-                assertEqualsToFile(expectedOutputFile("root-with-continue"), extractProjectsAndTheirVerboseDiagnostics())
+                assertEqualsToFile(expectedOutputFile("root-with-continue"), extractProjectsAndTheirDiagnostics())
             }
         }
     }
@@ -163,7 +161,27 @@ class MppDiagnosticsIt : KGPBaseTest() {
     fun testEarlyTasksMaterializationDoesntBreakReports(gradleVersion: GradleVersion) {
         project("earlyTasksMaterializationDoesntBreakReports", gradleVersion) {
             buildAndFail("assemble") {
-                assertEqualsToFile(expectedOutputFile(), extractProjectsAndTheirVerboseDiagnostics())
+                assertEqualsToFile(expectedOutputFile(), extractProjectsAndTheirDiagnostics())
+            }
+        }
+    }
+
+    @GradleTest
+    fun testDiagnosticsRenderingWithStacktraceOption(gradleVersion: GradleVersion) {
+        project("diagnosticsRenderingWithStacktraceOption", gradleVersion) {
+            // KGP sets showDiagnosticsStacktrace=false and --full-stacktrace by default in tests,
+            // need to override that to mimic real-life scenarios
+            val options = buildOptions.copy(showDiagnosticsStacktrace = null, stacktraceMode = null)
+            build("help", buildOptions = options) {
+                assertEqualsToFile(expectedOutputFile("without-stacktrace"), extractProjectsAndTheirDiagnostics())
+            }
+
+            build("help", "--stacktrace", buildOptions = options) {
+                assertEqualsToFile(expectedOutputFile("with-stacktrace"), extractProjectsAndTheirDiagnostics())
+            }
+
+            build("help", "--full-stacktrace", buildOptions = options) {
+                assertEqualsToFile(expectedOutputFile("with-full-stacktrace"), extractProjectsAndTheirDiagnostics())
             }
         }
     }
@@ -176,13 +194,13 @@ class MppDiagnosticsIt : KGPBaseTest() {
     private fun TestProject.checkDeprecatedProperties(isDeprecationExpected: Boolean) {
         build {
             if (isDeprecationExpected)
-                output.assertHasDiagnostic(KotlinToolingDiagnostics.HierarchicalMultiplatformFlagsWarning)
+                output.assertHasDiagnostic(KotlinToolingDiagnostics.PreHMPPFlagsError)
             else
-                output.assertNoDiagnostic(KotlinToolingDiagnostics.HierarchicalMultiplatformFlagsWarning)
+                output.assertNoDiagnostic(KotlinToolingDiagnostics.PreHMPPFlagsError)
         }
     }
 
-    private val defaultFlags: Map<String, String>
+    private val deprecatedFlags: Map<String, String>
         get() = mapOf(
             "kotlin.mpp.enableGranularSourceSetsMetadata" to "true",
             "kotlin.mpp.enableCompatibilityMetadataVariant" to "false",

@@ -84,7 +84,6 @@ internal abstract class IrExpectActualMatchingContext(
     private fun TypeParameterSymbolMarker.asIr(): IrTypeParameter = (this as IrTypeParameterSymbol).owner
     private fun RegularClassSymbolMarker.asIr(): IrClass = (this as IrClassSymbol).owner
     private fun TypeAliasSymbolMarker.asIr(): IrTypeAlias = (this as IrTypeAliasSymbol).owner
-    private fun AnnotationMarker.asIr(): IrConstructorCall = this as IrConstructorCall
 
     private inline fun <reified T : IrDeclaration> DeclarationSymbolMarker.safeAsIr(): T? = (this as IrSymbol).owner as? T
 
@@ -492,6 +491,6 @@ internal abstract class IrExpectActualMatchingContext(
     override val DeclarationSymbolMarker.hasSourceAnnotationsErased: Boolean
         get() {
             val ir = asIr()
-            return ir.sourceElement() != null || ir.origin is IrDeclarationOrigin.GeneratedByPlugin
+            return ir.sourceElement() == null && ir.origin !is IrDeclarationOrigin.GeneratedByPlugin
         }
 }

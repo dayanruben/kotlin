@@ -22,7 +22,8 @@ extern std::atomic<bool> gSuspensionRequested;
 } // namespace internal
 
 inline bool IsThreadSuspensionRequested() noexcept {
-    // TODO: Consider using a more relaxed memory order.
+    // Must use seq_cst ordering for synchronization with GC
+    // in native->runnable transition.
     return internal::gSuspensionRequested.load();
 }
 
@@ -50,6 +51,8 @@ private:
 
 bool RequestThreadsSuspension() noexcept;
 void WaitForThreadsSuspension() noexcept;
+
+bool isSuspendedOrNative(kotlin::mm::ThreadData& thread) noexcept;
 
 /**
  * Suspends all threads registered in ThreadRegistry except threads that are in the Native state.

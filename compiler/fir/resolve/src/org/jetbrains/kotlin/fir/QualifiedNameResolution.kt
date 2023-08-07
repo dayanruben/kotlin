@@ -6,10 +6,9 @@
 package org.jetbrains.kotlin.fir
 
 import org.jetbrains.kotlin.KtSourceElement
-import org.jetbrains.kotlin.config.ApiVersion
-import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.fir.declarations.FirClass
 import org.jetbrains.kotlin.fir.declarations.fullyExpandedClass
+import org.jetbrains.kotlin.fir.declarations.getDeprecationForCallSite
 import org.jetbrains.kotlin.fir.diagnostics.ConeDiagnostic
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.FirResolvedQualifier
@@ -22,8 +21,6 @@ import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeDeprecated
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.resultType
 import org.jetbrains.kotlin.fir.resolve.typeForQualifier
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassLikeSymbol
-import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
-import org.jetbrains.kotlin.fir.symbols.impl.FirTypeAliasSymbol
 import org.jetbrains.kotlin.fir.types.FirTypeProjection
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -75,7 +72,7 @@ fun BodyResolveComponents.resolveRootPartOfQualifier(
                         explicitReceiver = null,
                         it,
                         extraNotFatalDiagnostics = nonFatalDiagnosticsFromExpression,
-                        session.languageVersionSettings.apiVersion
+                        session
                     )
                 )
             }.apply {
@@ -89,8 +86,7 @@ fun BodyResolveComponents.resolveRootPartOfQualifier(
         typeArguments,
         nonFatalDiagnosticsFromExpression,
         this,
-        source,
-        session.languageVersionSettings.apiVersion
+        source
     )
 }
 
@@ -117,10 +113,9 @@ fun FirResolvedQualifier.continueQualifier(
                     symbol = nestedClassSymbol as FirClassLikeSymbol<*>
                     isFullyQualified = true
 
-                    val outerTypeArguments = this.typeArguments.toList()
                     this.typeArguments.clear()
                     this.typeArguments.addAll(typeArguments)
-                    this.typeArguments.addAll(outerTypeArguments)
+                    this.typeArguments.addAll(this@continueQualifier.typeArguments)
                     this.nonFatalDiagnostics.addAll(nonFatalDiagnosticsFromExpression.orEmpty())
                     this.nonFatalDiagnostics.addAll(
                         extractNonFatalDiagnostics(
@@ -128,7 +123,7 @@ fun FirResolvedQualifier.continueQualifier(
                             explicitReceiver = null,
                             nestedClassSymbol,
                             extraNotFatalDiagnostics = this@continueQualifier.nonFatalDiagnostics,
-                            session.languageVersionSettings.apiVersion
+                            session
                         )
                     )
                 }.apply {
@@ -142,8 +137,7 @@ fun FirResolvedQualifier.continueQualifier(
         typeArguments,
         nonFatalDiagnosticsFromExpression,
         components,
-        source,
-        session.languageVersionSettings.apiVersion
+        source
     )
 }
 
@@ -152,8 +146,7 @@ private fun FqName.continueQualifierInPackage(
     typeArguments: List<FirTypeProjection>,
     nonFatalDiagnosticsFromExpression: List<ConeDiagnostic>?,
     components: BodyResolveComponents,
-    source: KtSourceElement?,
-    apiVersion: ApiVersion
+    source: KtSourceElement?
 ): FirResolvedQualifier? {
     val childFqName = this.child(name)
     if (components.symbolProvider.getPackage(childFqName) != null) {
@@ -182,7 +175,7 @@ private fun FqName.continueQualifierInPackage(
                 explicitReceiver = null,
                 symbol,
                 extraNotFatalDiagnostics = nonFatalDiagnosticsFromExpression,
-                apiVersion
+                components.session
             )
         )
         isFullyQualified = true
@@ -196,12 +189,12 @@ internal fun extractNonFatalDiagnostics(
     explicitReceiver: FirExpression?,
     symbol: FirClassLikeSymbol<*>,
     extraNotFatalDiagnostics: List<ConeDiagnostic>?,
-    apiVersion: ApiVersion
+    session: FirSession,
 ): List<ConeDiagnostic> {
     val prevDiagnostics = (explicitReceiver as? FirResolvedQualifier)?.nonFatalDiagnostics ?: emptyList()
     var result: MutableList<ConeDiagnostic>? = null
 
-    val deprecation = symbol.getDeprecation(apiVersion)?.forUseSite()
+    val deprecation = symbol.getDeprecationForCallSite(session)
     if (deprecation != null) {
         result = mutableListOf()
         result.addAll(prevDiagnostics)

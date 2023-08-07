@@ -124,6 +124,7 @@ object CommonDeclarationCheckers : DeclarationCheckers() {
             FirOuterClassArgumentsRequiredChecker,
             FirPropertyInitializationChecker,
             FirDelegateFieldTypeMismatchChecker,
+            FirMultipleDefaultsInheritedFromSupertypesChecker,
         )
 
     override val constructorCheckers: Set<FirConstructorChecker>
@@ -160,6 +161,7 @@ object CommonDeclarationCheckers : DeclarationCheckers() {
             FirTopLevelTypeAliasChecker,
             FirActualTypeAliasChecker,
             FirActualTypealiasToSpecialAnnotationChecker,
+            FirTypeAliasExpandsToArrayOfNothingsChecker,
         )
 
     override val anonymousFunctionCheckers: Set<FirAnonymousFunctionChecker>

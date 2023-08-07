@@ -1,135 +1,127 @@
 RAW_FIR:
-FILE: [ResolvedTo(IMPORTS)] typeParameterOfNonLocalFunctionScript.kts
-    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+FILE: [ResolvedTo(RAW_FIR)] typeParameterOfNonLocalFunctionScript.kts
+    context(<script>@kotlin.script.templates.standard.ScriptTemplateWithArgs)
+    SCRIPT: [ResolvedTo(RAW_FIR)] 
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
-        public final [ResolvedTo(STATUS)] class X : R|kotlin/Any| {
-            public [ResolvedTo(STATUS)] [ContainingClassKey=X] constructor(): R|X| {
-                super<R|kotlin/Any|>()
+        public? final? [ResolvedTo(RAW_FIR)] class X : R|kotlin/Any| {
+            public? [ResolvedTo(RAW_FIR)] [ContainingClassKey=X] constructor(): R|X| {
+                LAZY_super<R|kotlin/Any|>
             }
 
-            public final [ResolvedTo(STATUS)] fun <[ResolvedTo(STATUS)] resolveMe> ddd(): R|kotlin/Unit| {
-            }
+            public? final? [ResolvedTo(RAW_FIR)] fun <[ResolvedTo(RAW_FIR)] resolveMe> ddd(): R|kotlin/Unit| { LAZY_BLOCK }
 
         }
 
 
 IMPORTS:
 FILE: [ResolvedTo(IMPORTS)] typeParameterOfNonLocalFunctionScript.kts
-    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+    context(<script>@kotlin.script.templates.standard.ScriptTemplateWithArgs)
+    SCRIPT: [ResolvedTo(RAW_FIR)] 
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
-        public final [ResolvedTo(STATUS)] class X : R|kotlin/Any| {
-            public [ResolvedTo(STATUS)] [ContainingClassKey=X] constructor(): R|X| {
-                super<R|kotlin/Any|>()
+        public? final? [ResolvedTo(RAW_FIR)] class X : R|kotlin/Any| {
+            public? [ResolvedTo(RAW_FIR)] [ContainingClassKey=X] constructor(): R|X| {
+                LAZY_super<R|kotlin/Any|>
             }
 
-            public final [ResolvedTo(STATUS)] fun <[ResolvedTo(STATUS)] resolveMe> ddd(): R|kotlin/Unit| {
-            }
+            public? final? [ResolvedTo(RAW_FIR)] fun <[ResolvedTo(RAW_FIR)] resolveMe> ddd(): R|kotlin/Unit| { LAZY_BLOCK }
 
         }
 
 
 COMPILER_REQUIRED_ANNOTATIONS:
 FILE: [ResolvedTo(IMPORTS)] typeParameterOfNonLocalFunctionScript.kts
-    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+    context(<script>@kotlin.script.templates.standard.ScriptTemplateWithArgs)
+    SCRIPT: [ResolvedTo(RAW_FIR)] 
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
-        public final [ResolvedTo(STATUS)] class X : R|kotlin/Any| {
-            public [ResolvedTo(STATUS)] [ContainingClassKey=X] constructor(): R|X| {
-                super<R|kotlin/Any|>()
+        public? final? [ResolvedTo(RAW_FIR)] class X : R|kotlin/Any| {
+            public? [ResolvedTo(RAW_FIR)] [ContainingClassKey=X] constructor(): R|X| {
+                LAZY_super<R|kotlin/Any|>
             }
 
-            public final [ResolvedTo(STATUS)] fun <[ResolvedTo(STATUS)] resolveMe> ddd(): R|kotlin/Unit| {
-            }
+            public? final? [ResolvedTo(COMPILER_REQUIRED_ANNOTATIONS)] fun <[ResolvedTo(COMPILER_REQUIRED_ANNOTATIONS)] resolveMe> ddd(): R|kotlin/Unit| { LAZY_BLOCK }
 
         }
 
 
 COMPANION_GENERATION:
 FILE: [ResolvedTo(IMPORTS)] typeParameterOfNonLocalFunctionScript.kts
-    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+    context(<script>@kotlin.script.templates.standard.ScriptTemplateWithArgs)
+    SCRIPT: [ResolvedTo(RAW_FIR)] 
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
-        public final [ResolvedTo(STATUS)] class X : R|kotlin/Any| {
-            public [ResolvedTo(STATUS)] [ContainingClassKey=X] constructor(): R|X| {
-                super<R|kotlin/Any|>()
+        public? final? [ResolvedTo(RAW_FIR)] class X : R|kotlin/Any| {
+            public? [ResolvedTo(RAW_FIR)] [ContainingClassKey=X] constructor(): R|X| {
+                LAZY_super<R|kotlin/Any|>
             }
 
-            public final [ResolvedTo(STATUS)] fun <[ResolvedTo(STATUS)] resolveMe> ddd(): R|kotlin/Unit| {
-            }
+            public? final? [ResolvedTo(COMPANION_GENERATION)] fun <[ResolvedTo(COMPANION_GENERATION)] resolveMe> ddd(): R|kotlin/Unit| { LAZY_BLOCK }
 
         }
 
 
 SUPER_TYPES:
 FILE: [ResolvedTo(IMPORTS)] typeParameterOfNonLocalFunctionScript.kts
-    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+    context(<script>@kotlin.script.templates.standard.ScriptTemplateWithArgs)
+    SCRIPT: [ResolvedTo(RAW_FIR)] 
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
-        public final [ResolvedTo(STATUS)] class X : R|kotlin/Any| {
-            public [ResolvedTo(STATUS)] [ContainingClassKey=X] constructor(): R|X| {
-                super<R|kotlin/Any|>()
+        public? final? [ResolvedTo(SUPER_TYPES)] class X : R|kotlin/Any| {
+            public? [ResolvedTo(RAW_FIR)] [ContainingClassKey=X] constructor(): R|X| {
+                LAZY_super<R|kotlin/Any|>
             }
 
-            public final [ResolvedTo(STATUS)] fun <[ResolvedTo(STATUS)] resolveMe> ddd(): R|kotlin/Unit| {
-            }
+            public? final? [ResolvedTo(SUPER_TYPES)] fun <[ResolvedTo(SUPER_TYPES)] resolveMe> ddd(): R|kotlin/Unit| { LAZY_BLOCK }
 
         }
 
 
 TYPES:
 FILE: [ResolvedTo(IMPORTS)] typeParameterOfNonLocalFunctionScript.kts
-    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+    context(<script>@kotlin.script.templates.standard.ScriptTemplateWithArgs)
+    SCRIPT: [ResolvedTo(RAW_FIR)] 
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
-        public final [ResolvedTo(STATUS)] class X : R|kotlin/Any| {
-            public [ResolvedTo(STATUS)] [ContainingClassKey=X] constructor(): R|X| {
-                super<R|kotlin/Any|>()
+        public? final? [ResolvedTo(TYPES)] class X : R|kotlin/Any| {
+            public? [ResolvedTo(RAW_FIR)] [ContainingClassKey=X] constructor(): R|X| {
+                LAZY_super<R|kotlin/Any|>
             }
 
-            public final [ResolvedTo(STATUS)] fun <[ResolvedTo(STATUS)] resolveMe> ddd(): R|kotlin/Unit| {
-            }
+            public? final? [ResolvedTo(TYPES)] fun <[ResolvedTo(TYPES)] resolveMe> ddd(): R|kotlin/Unit| { LAZY_BLOCK }
 
         }
 
 
 STATUS:
 FILE: [ResolvedTo(IMPORTS)] typeParameterOfNonLocalFunctionScript.kts
-    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+    context(<script>@kotlin.script.templates.standard.ScriptTemplateWithArgs)
+    SCRIPT: [ResolvedTo(RAW_FIR)] 
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
         public final [ResolvedTo(STATUS)] class X : R|kotlin/Any| {
             public [ResolvedTo(STATUS)] [ContainingClassKey=X] constructor(): R|X| {
-                super<R|kotlin/Any|>()
+                LAZY_super<R|kotlin/Any|>
             }
 
-            public final [ResolvedTo(STATUS)] fun <[ResolvedTo(STATUS)] resolveMe> ddd(): R|kotlin/Unit| {
-            }
+            public final [ResolvedTo(STATUS)] fun <[ResolvedTo(STATUS)] resolveMe> ddd(): R|kotlin/Unit| { LAZY_BLOCK }
 
         }
 
 
 EXPECT_ACTUAL_MATCHING:
 FILE: [ResolvedTo(IMPORTS)] typeParameterOfNonLocalFunctionScript.kts
-    context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+    context(<script>@kotlin.script.templates.standard.ScriptTemplateWithArgs)
+    SCRIPT: [ResolvedTo(RAW_FIR)] 
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
         public final [ResolvedTo(STATUS)] class X : R|kotlin/Any| {
             public [ResolvedTo(STATUS)] [ContainingClassKey=X] constructor(): R|X| {
-                super<R|kotlin/Any|>()
+                LAZY_super<R|kotlin/Any|>
             }
 
-            public final [ResolvedTo(STATUS)] fun <[ResolvedTo(STATUS)] resolveMe> ddd(): R|kotlin/Unit| {
-            }
+            public final [ResolvedTo(EXPECT_ACTUAL_MATCHING)] fun <[ResolvedTo(EXPECT_ACTUAL_MATCHING)] resolveMe> ddd(): R|kotlin/Unit| { LAZY_BLOCK }
 
         }
 
@@ -137,16 +129,15 @@ FILE: [ResolvedTo(IMPORTS)] typeParameterOfNonLocalFunctionScript.kts
 ARGUMENTS_OF_ANNOTATIONS:
 FILE: [ResolvedTo(IMPORTS)] typeParameterOfNonLocalFunctionScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+    SCRIPT: [ResolvedTo(TYPES)] 
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
         public final [ResolvedTo(STATUS)] class X : R|kotlin/Any| {
             public [ResolvedTo(STATUS)] [ContainingClassKey=X] constructor(): R|X| {
-                super<R|kotlin/Any|>()
+                LAZY_super<R|kotlin/Any|>
             }
 
-            public final [ResolvedTo(STATUS)] fun <[ResolvedTo(STATUS)] resolveMe> ddd(): R|kotlin/Unit| {
-            }
+            public final [ResolvedTo(ARGUMENTS_OF_ANNOTATIONS)] fun <[ResolvedTo(ARGUMENTS_OF_ANNOTATIONS)] resolveMe> ddd(): R|kotlin/Unit| { LAZY_BLOCK }
 
         }
 
@@ -154,15 +145,15 @@ FILE: [ResolvedTo(IMPORTS)] typeParameterOfNonLocalFunctionScript.kts
 CONTRACTS:
 FILE: [ResolvedTo(IMPORTS)] typeParameterOfNonLocalFunctionScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+    SCRIPT: [ResolvedTo(TYPES)] 
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
         public final [ResolvedTo(STATUS)] class X : R|kotlin/Any| {
             public [ResolvedTo(STATUS)] [ContainingClassKey=X] constructor(): R|X| {
-                super<R|kotlin/Any|>()
+                LAZY_super<R|kotlin/Any|>
             }
 
-            public final [ResolvedTo(STATUS)] fun <[ResolvedTo(STATUS)] resolveMe> ddd(): R|kotlin/Unit| {
+            public final [ResolvedTo(CONTRACTS)] fun <[ResolvedTo(CONTRACTS)] resolveMe> ddd(): R|kotlin/Unit| {
             }
 
         }
@@ -171,15 +162,15 @@ FILE: [ResolvedTo(IMPORTS)] typeParameterOfNonLocalFunctionScript.kts
 IMPLICIT_TYPES_BODY_RESOLVE:
 FILE: [ResolvedTo(IMPORTS)] typeParameterOfNonLocalFunctionScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+    SCRIPT: [ResolvedTo(TYPES)] 
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
         public final [ResolvedTo(STATUS)] class X : R|kotlin/Any| {
             public [ResolvedTo(STATUS)] [ContainingClassKey=X] constructor(): R|X| {
-                super<R|kotlin/Any|>()
+                LAZY_super<R|kotlin/Any|>
             }
 
-            public final [ResolvedTo(STATUS)] fun <[ResolvedTo(STATUS)] resolveMe> ddd(): R|kotlin/Unit| {
+            public final [ResolvedTo(IMPLICIT_TYPES_BODY_RESOLVE)] fun <[ResolvedTo(IMPLICIT_TYPES_BODY_RESOLVE)] resolveMe> ddd(): R|kotlin/Unit| {
             }
 
         }
@@ -188,15 +179,15 @@ FILE: [ResolvedTo(IMPORTS)] typeParameterOfNonLocalFunctionScript.kts
 ANNOTATIONS_ARGUMENTS_MAPPING:
 FILE: [ResolvedTo(IMPORTS)] typeParameterOfNonLocalFunctionScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+    SCRIPT: [ResolvedTo(TYPES)] 
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
         public final [ResolvedTo(STATUS)] class X : R|kotlin/Any| {
             public [ResolvedTo(STATUS)] [ContainingClassKey=X] constructor(): R|X| {
-                super<R|kotlin/Any|>()
+                LAZY_super<R|kotlin/Any|>
             }
 
-            public final [ResolvedTo(STATUS)] fun <[ResolvedTo(STATUS)] resolveMe> ddd(): R|kotlin/Unit| {
+            public final [ResolvedTo(ANNOTATIONS_ARGUMENTS_MAPPING)] fun <[ResolvedTo(ANNOTATIONS_ARGUMENTS_MAPPING)] resolveMe> ddd(): R|kotlin/Unit| {
             }
 
         }
@@ -205,32 +196,32 @@ FILE: [ResolvedTo(IMPORTS)] typeParameterOfNonLocalFunctionScript.kts
 BODY_RESOLVE:
 FILE: [ResolvedTo(IMPORTS)] typeParameterOfNonLocalFunctionScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
+    SCRIPT: [ResolvedTo(TYPES)] 
         [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
 
         public final [ResolvedTo(STATUS)] class X : R|kotlin/Any| {
             public [ResolvedTo(STATUS)] [ContainingClassKey=X] constructor(): R|X| {
-                super<R|kotlin/Any|>()
+                LAZY_super<R|kotlin/Any|>
             }
 
-            public final [ResolvedTo(STATUS)] fun <[ResolvedTo(STATUS)] resolveMe> ddd(): R|kotlin/Unit| {
+            public final [ResolvedTo(BODY_RESOLVE)] fun <[ResolvedTo(BODY_RESOLVE)] resolveMe> ddd(): R|kotlin/Unit| {
             }
 
         }
 
 
 FILE RAW TO BODY:
-FILE: [ResolvedTo(IMPORTS)] typeParameterOfNonLocalFunctionScript.kts
+FILE: [ResolvedTo(BODY_RESOLVE)] typeParameterOfNonLocalFunctionScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
     SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
-        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+        [ResolvedTo(BODY_RESOLVE)] lval args: R|kotlin/Array<kotlin/String>|
 
-        public final [ResolvedTo(STATUS)] class X : R|kotlin/Any| {
-            public [ResolvedTo(STATUS)] [ContainingClassKey=X] constructor(): R|X| {
+        public final [ResolvedTo(BODY_RESOLVE)] class X : R|kotlin/Any| {
+            public [ResolvedTo(BODY_RESOLVE)] [ContainingClassKey=X] constructor(): R|X| {
                 super<R|kotlin/Any|>()
             }
 
-            public final [ResolvedTo(STATUS)] fun <[ResolvedTo(STATUS)] resolveMe> ddd(): R|kotlin/Unit| {
+            public final [ResolvedTo(BODY_RESOLVE)] fun <[ResolvedTo(BODY_RESOLVE)] resolveMe> ddd(): R|kotlin/Unit| {
             }
 
         }

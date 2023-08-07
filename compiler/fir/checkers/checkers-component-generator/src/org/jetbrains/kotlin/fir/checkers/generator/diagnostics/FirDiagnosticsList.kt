@@ -259,6 +259,9 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val NON_PRIVATE_OR_PROTECTED_CONSTRUCTOR_IN_SEALED by error<PsiElement>()
         val CYCLIC_CONSTRUCTOR_DELEGATION_CALL by error<PsiElement>()
         val PRIMARY_CONSTRUCTOR_DELEGATION_CALL_EXPECTED by error<PsiElement>(PositioningStrategy.SECONDARY_CONSTRUCTOR_DELEGATION_CALL)
+        val PROTECTED_CONSTRUCTOR_NOT_IN_SUPER_CALL by error<KtExpression> {
+            parameter<FirBasedSymbol<*>>("symbol")
+        }
 
         // TODO: change it to KtSuperTypeEntry when possible (after re-targeter implementation)
         val SUPERTYPE_NOT_INITIALIZED by error<KtTypeReference>()
@@ -287,6 +290,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val NON_CONST_VAL_USED_IN_CONSTANT_EXPRESSION by error<KtExpression>()
         val CYCLE_IN_ANNOTATION_PARAMETER by deprecationError<KtParameter>(LanguageFeature.ProhibitCyclesInAnnotations)
         val ANNOTATION_CLASS_CONSTRUCTOR_CALL by error<KtCallExpression>()
+        val ENUM_CLASS_CONSTRUCTOR_CALL by error<KtCallExpression>()
         val NOT_AN_ANNOTATION_CLASS by error<PsiElement> {
             parameter<String>("annotationName")
         }
@@ -623,7 +627,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<ConeKotlinType>("contextReceiverRepresentation")
         }
         val AMBIGUOUS_CALL_WITH_IMPLICIT_CONTEXT_RECEIVER by error<KtElement>(PositioningStrategy.REFERENCE_BY_QUALIFIED)
-        val UNSUPPORTED_CONTEXTUAL_DECLARATION_CALL by error<KtElement>()
+        val UNSUPPORTED_CONTEXTUAL_DECLARATION_CALL by error<KtElement>(PositioningStrategy.NAME_IDENTIFIER)
     }
 
     val TYPES_AND_TYPE_PARAMETERS by object : DiagnosticGroup("Types & type parameters") {
@@ -841,6 +845,17 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<Visibility>("overridingVisibility")
             parameter<FirCallableSymbol<*>>("overridden")
             parameter<Name>("containingClassName")
+        }
+
+        val MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES by error<KtElement>(PositioningStrategy.DECLARATION_SIGNATURE_OR_DEFAULT) {
+            parameter<FirValueParameterSymbol>("valueParameter")
+        }
+        val MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_WHEN_NO_EXPLICIT_OVERRIDE by error<KtElement>(PositioningStrategy.DECLARATION_NAME) {
+            parameter<FirValueParameterSymbol>("valueParameter")
+        }
+
+        val TYPEALIAS_EXPANDS_TO_ARRAY_OF_NOTHINGS by error<KtElement> {
+            parameter<ConeKotlinType>("type")
         }
 
         val OVERRIDING_FINAL_MEMBER by error<KtNamedDeclaration>(PositioningStrategy.OVERRIDE_MODIFIER) {

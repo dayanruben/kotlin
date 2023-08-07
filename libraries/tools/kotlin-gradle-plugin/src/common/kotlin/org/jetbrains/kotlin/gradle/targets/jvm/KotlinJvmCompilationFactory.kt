@@ -12,13 +12,13 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.compilationImpl.factory.KotlinJvmC
 import org.jetbrains.kotlin.gradle.targets.jvm.KotlinJvmTarget
 
 open class KotlinJvmCompilationFactory internal constructor(
-    override val target: KotlinJvmTarget
+    final override val target: KotlinJvmTarget
 ) : KotlinCompilationFactory<KotlinJvmCompilation> {
 
     private val compilationImplFactory: KotlinCompilationImplFactory =
         KotlinCompilationImplFactory(
             compilerOptionsFactory = KotlinJvmCompilerOptionsFactory,
-            compilationAssociator = KotlinJvmCompilationAssociator
+            compilationAssociator = KotlinJvmCompilationAssociator,
         )
 
     override val itemClass: Class<KotlinJvmCompilation>

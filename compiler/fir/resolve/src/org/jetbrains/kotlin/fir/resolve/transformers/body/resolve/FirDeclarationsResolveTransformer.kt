@@ -525,13 +525,17 @@ open class FirDeclarationsResolveTransformer(
             }
         }
 
-    override fun transformScript(script: FirScript, data: ResolutionMode): FirScript {
+    fun withScript(script: FirScript, action: () -> FirScript): FirScript {
         dataFlowAnalyzer.enterScript(script)
         val result = context.withScopesForScript(script, components) {
-            transformDeclarationContent(script, data) as FirScript
+            action()
         }
         dataFlowAnalyzer.exitScript() // TODO: FirScript should be a FirControlFlowGraphOwner, KT-59683
         return result
+    }
+
+    override fun transformScript(script: FirScript, data: ResolutionMode): FirScript = withScript(script) {
+        transformDeclarationContent(script, data) as FirScript
     }
 
     override fun transformCodeFragment(codeFragment: FirCodeFragment, data: ResolutionMode): FirCodeFragment {
@@ -662,16 +666,12 @@ open class FirDeclarationsResolveTransformer(
         function: FirFunction,
         data: ResolutionMode
     ): FirStatement = whileAnalysing(session, function) {
-        val functionIsNotAnalyzed = !function.bodyResolved
-        if (functionIsNotAnalyzed) {
-            dataFlowAnalyzer.enterFunction(function)
-        }
+        if (function.bodyResolved) return function
+        dataFlowAnalyzer.enterFunction(function)
         return transformDeclarationContent(function, data).also {
-            if (functionIsNotAnalyzed) {
-                val result = it as FirFunction
-                val controlFlowGraphReference = dataFlowAnalyzer.exitFunction(result)
-                result.replaceControlFlowGraphReference(controlFlowGraphReference)
-            }
+            val result = it as FirFunction
+            val controlFlowGraphReference = dataFlowAnalyzer.exitFunction(result)
+            result.replaceControlFlowGraphReference(controlFlowGraphReference)
         } as FirStatement
     }
 
@@ -816,7 +816,8 @@ open class FirDeclarationsResolveTransformer(
     ): FirAnonymousFunction {
         val resolvedLambdaAtom = (expectedTypeRef as? FirResolvedTypeRef)?.let {
             extractLambdaInfoFromFunctionType(
-                it.type, anonymousFunction, returnTypeVariable = null, components, candidate = null, duringCompletion = false
+                it.type, anonymousFunction, returnTypeVariable = null, components, candidate = null,
+                allowCoercionToExtensionReceiver = true,
             )
         }
         var lambda = anonymousFunction
@@ -826,7 +827,9 @@ open class FirDeclarationsResolveTransformer(
         }
         lambda = buildAnonymousFunctionCopy(lambda) {
             receiverParameter = lambda.receiverParameter?.takeIf { it.typeRef !is FirImplicitTypeRef }
-                ?: resolvedLambdaAtom?.receiver?.let { coneKotlinType ->
+                ?: resolvedLambdaAtom?.receiver?.takeIf {
+                    !resolvedLambdaAtom.coerceFirstParameterToExtensionReceiver
+                }?.let { coneKotlinType ->
                     lambda.receiverParameter?.apply {
                         replaceTypeRef(typeRef.resolvedTypeFromPrototype(coneKotlinType))
                     }
@@ -903,7 +906,16 @@ open class FirDeclarationsResolveTransformer(
                 listOf(itParam)
             }
 
-            else -> obtainValueParametersFromExpectedParameterTypes(resolvedLambdaAtom.parameters, lambda)
+            else -> {
+                val parameters = if (resolvedLambdaAtom.coerceFirstParameterToExtensionReceiver) {
+                    val receiver = resolvedLambdaAtom.receiver ?: error("Coercion to an extension function type, but no receiver found")
+                    listOf(receiver) + resolvedLambdaAtom.parameters
+                } else {
+                    resolvedLambdaAtom.parameters
+                }
+
+                obtainValueParametersFromExpectedParameterTypes(parameters, lambda)
+            }
         }
     }
 

@@ -430,6 +430,16 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                 runTest("compiler/testData/codegen/box/annotations/instances/innerAnnotationInstantiation.kt");
             }
 
+            @TestMetadata("javaAnnotationDefault.kt")
+            public void ignoreJavaAnnotationDefault() throws Exception {
+                runTest("compiler/testData/codegen/box/annotations/instances/javaAnnotationDefault.kt");
+            }
+
+            @TestMetadata("javaExistingAnnotation.kt")
+            public void ignoreJavaExistingAnnotation() throws Exception {
+                runTest("compiler/testData/codegen/box/annotations/instances/javaExistingAnnotation.kt");
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM_IR, testDataFilePath);
             }
@@ -15367,6 +15377,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/fir/emptyIntersectionWarning.kt");
         }
 
+        @TestMetadata("selectingLambdas.kt")
+        public void ignoreSelectingLambdas() throws Exception {
+            runTest("compiler/testData/codegen/box/fir/selectingLambdas.kt");
+        }
+
         @TestMetadata("typeParameterInClashingAccessor.kt")
         public void ignoreTypeParameterInClashingAccessor() throws Exception {
             runTest("compiler/testData/codegen/box/fir/typeParameterInClashingAccessor.kt");
@@ -28852,6 +28867,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                     runTest("compiler/testData/codegen/box/multiplatform/k2/basic/interfaceMethodFromSuperTypeIsImplementedInOtherExpectSuperClass.kt");
                 }
 
+                @TestMetadata("intersectionOverrideInCommonModule.kt")
+                public void testIntersectionOverrideInCommonModule() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/intersectionOverrideInCommonModule.kt");
+                }
+
                 @TestMetadata("kt-51753-1.kt")
                 public void testKt_51753_1() throws Exception {
                     runTest("compiler/testData/codegen/box/multiplatform/k2/basic/kt-51753-1.kt");
@@ -28867,9 +28887,24 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                     runTest("compiler/testData/codegen/box/multiplatform/k2/basic/kt-56329.kt");
                 }
 
+                @TestMetadata("localIntersectionOverrideInCommonModule.kt")
+                public void testLocalIntersectionOverrideInCommonModule() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/localIntersectionOverrideInCommonModule.kt");
+                }
+
+                @TestMetadata("localSubstitutionOverrideInCommonModule.kt")
+                public void testLocalSubstitutionOverrideInCommonModule() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/localSubstitutionOverrideInCommonModule.kt");
+                }
+
                 @TestMetadata("nonExternalEquals.kt")
                 public void testNonExternalEquals() throws Exception {
                     runTest("compiler/testData/codegen/box/multiplatform/k2/basic/nonExternalEquals.kt");
+                }
+
+                @TestMetadata("substitutionOverrideInCommonModule.kt")
+                public void testSubstitutionOverrideInCommonModule() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/substitutionOverrideInCommonModule.kt");
                 }
 
                 @TestMetadata("transitiveSuperclassActualization.kt")

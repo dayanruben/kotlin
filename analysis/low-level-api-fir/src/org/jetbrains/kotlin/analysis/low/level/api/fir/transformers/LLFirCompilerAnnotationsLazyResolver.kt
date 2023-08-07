@@ -31,6 +31,8 @@ import org.jetbrains.kotlin.fir.resolve.transformers.plugin.FirCompilerRequiredA
 import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
 import org.jetbrains.kotlin.fir.types.FirUserTypeRef
+import org.jetbrains.kotlin.analysis.low.level.api.fir.util.forEachDependentDeclaration
+import org.jetbrains.kotlin.analysis.low.level.api.fir.util.isScriptDependentDeclaration
 
 internal object LLFirCompilerAnnotationsLazyResolver : LLFirLazyResolver(FirResolvePhase.COMPILER_REQUIRED_ANNOTATIONS) {
     override fun resolve(
@@ -91,27 +93,30 @@ private class LLFirCompilerRequiredAnnotationsTargetResolver(
         get() = transformer.annotationTransformer.computationSession as LLFirCompilerRequiredAnnotationsComputationSession
 
     override fun withFile(firFile: FirFile, action: () -> Unit) {
-        transformer.annotationTransformer.withFileAndFileScopes(firFile) {
-            action()
-        }
+        transformer.annotationTransformer.withFileAndFileScopes(firFile, action)
     }
 
     @Deprecated("Should never be called directly, only for override purposes, please use withRegularClass", level = DeprecationLevel.ERROR)
     override fun withRegularClassImpl(firClass: FirRegularClass, action: () -> Unit) {
-        transformer.annotationTransformer.withRegularClass(firClass) {
-            action()
-        }
+        transformer.annotationTransformer.withRegularClass(firClass, action)
     }
 
     override fun doResolveWithoutLock(target: FirElementWithResolveState): Boolean {
-        if (target !is FirRegularClass && !target.isRegularDeclarationWithAnnotation) {
-            throwUnexpectedFirElementError(target)
+        if (target is FirFile) return false
+        when {
+            target is FirRegularClass || target is FirScript || target.isRegularDeclarationWithAnnotation -> {}
+            else -> throwUnexpectedFirElementError(target)
         }
 
         requireIsInstance<FirAnnotationContainer>(target)
         resolveTargetDeclaration(target)
 
         return true
+    }
+
+    override fun doLazyResolveUnderLock(target: FirElementWithResolveState) {
+        if (target is FirFile) return
+        throwUnexpectedFirElementError(target)
     }
 
     private fun <T> resolveTargetDeclaration(target: T) where T : FirAnnotationContainer, T : FirElementWithResolveState {
@@ -236,6 +241,8 @@ private class LLFirCompilerRequiredAnnotationsTargetResolver(
                     target.setter?.let(::publishResult)
                     target.backingField?.let(::publishResult)
                 }
+
+                is FirScript -> target.forEachDependentDeclaration(::publishResult)
             }
         }
     }
@@ -257,6 +264,10 @@ private class LLFirCompilerRequiredAnnotationsTargetResolver(
                 getter?.annotationsForTransformationTo(map)
                 setter?.annotationsForTransformationTo(map)
                 backingField?.annotationsForTransformationTo(map)
+            }
+
+            is FirScript -> {
+                forEachDependentDeclaration { it.annotationsForTransformationTo(map) }
             }
         }
 
@@ -293,10 +304,6 @@ private class LLFirCompilerRequiredAnnotationsTargetResolver(
             map[this] = containerForAnnotations
         }
     }
-
-    override fun doLazyResolveUnderLock(target: FirElementWithResolveState) {
-        throwUnexpectedFirElementError(target)
-    }
 }
 
 private fun FirAnnotationContainer.hasAnnotationsToResolve(): Boolean {
@@ -308,6 +315,7 @@ private fun FirAnnotationContainer.hasAnnotationsToResolve(): Boolean {
                 this.setter?.hasAnnotationsToResolve() == true ||
                 this.backingField?.hasAnnotationsToResolve() == true
 
+        is FirScript -> statements.any { it.isScriptDependentDeclaration && it.hasAnnotationsToResolve() }
         else -> false
     }
 }

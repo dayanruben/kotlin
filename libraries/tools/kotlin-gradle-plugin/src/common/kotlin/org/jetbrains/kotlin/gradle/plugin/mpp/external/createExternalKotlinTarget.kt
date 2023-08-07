@@ -12,16 +12,22 @@ import org.gradle.api.attributes.Category
 import org.gradle.api.attributes.Usage
 import org.gradle.jvm.tasks.Jar
 import org.jetbrains.kotlin.gradle.ExternalKotlinTargetApi
-import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
+import org.jetbrains.kotlin.gradle.dsl.*
+import org.jetbrains.kotlin.gradle.dsl.KotlinCommonCompilerOptionsDefault
+import org.jetbrains.kotlin.gradle.dsl.KotlinJsCompilerOptionsDefault
+import org.jetbrains.kotlin.gradle.dsl.KotlinJvmCompilerOptionsDefault
+import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
 import org.jetbrains.kotlin.gradle.plugin.ide.kotlinIdeMultiplatformImport
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinUsages
 import org.jetbrains.kotlin.gradle.plugin.mpp.configureSourcesPublicationAttributes
 import org.jetbrains.kotlin.gradle.plugin.usesPlatformOf
 import org.jetbrains.kotlin.gradle.tasks.locateOrRegisterTask
+import org.jetbrains.kotlin.gradle.utils.*
 import org.jetbrains.kotlin.gradle.utils.lowerCamelCaseName
 import org.jetbrains.kotlin.gradle.utils.markConsumable
 import org.jetbrains.kotlin.gradle.utils.named
+import org.jetbrains.kotlin.gradle.utils.newInstance
 
 /**
  * Creates an adhoc/external Kotlin Target which can be maintained and evolved outside the kotlin.git repository.
@@ -55,11 +61,21 @@ fun <T : DecoratedExternalKotlinTarget> KotlinMultiplatformExtension.createExter
         target.project.locateOrRegisterTask<Jar>(lowerCamelCaseName(descriptor.targetName, "jar"))
     }
 
+    val compilerOptions = when (descriptor.platformType) {
+        KotlinPlatformType.androidJvm,
+        KotlinPlatformType.jvm -> project.objects.newInstance<KotlinJvmCompilerOptionsDefault>()
+        KotlinPlatformType.wasm,
+        KotlinPlatformType.js -> project.objects.newInstance<KotlinJsCompilerOptionsDefault>()
+        KotlinPlatformType.common -> project.objects.newInstance<KotlinCommonCompilerOptionsDefault>()
+        KotlinPlatformType.native -> project.objects.newInstance<KotlinNativeCompilerOptionsDefault>()
+    }.configureExperimentalTryK2(project)
+
     val target = ExternalKotlinTargetImpl(
         project = project,
         targetName = descriptor.targetName,
         platformType = descriptor.platformType,
         publishable = true,
+        compilerOptions = compilerOptions,
         apiElementsConfiguration = apiElementsConfiguration,
         runtimeElementsConfiguration = runtimeElementsConfiguration,
         sourcesElementsConfiguration = sourcesElementsConfiguration,

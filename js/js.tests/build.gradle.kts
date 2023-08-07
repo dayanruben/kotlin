@@ -4,6 +4,7 @@ import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinUsages
 import org.jetbrains.kotlin.ideaExt.idea
 import org.apache.tools.ant.filters.FixCrLfFilter
+import org.jetbrains.kotlin.gradle.targets.js.KotlinJsCompilerAttribute
 import java.util.Properties
 
 plugins {
@@ -24,8 +25,10 @@ node {
 val antLauncherJar by configurations.creating
 val testJsRuntime by configurations.creating {
     attributes {
+        attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category.LIBRARY))
         attribute(Usage.USAGE_ATTRIBUTE, objects.named(KotlinUsages.KOTLIN_RUNTIME))
         attribute(KotlinPlatformType.attribute, KotlinPlatformType.js)
+        attribute(KotlinJsCompilerAttribute.jsCompilerAttribute, KotlinJsCompilerAttribute.legacy)
     }
 }
 
@@ -65,7 +68,7 @@ dependencies {
     testRuntimeOnly(commonDependency("org.jetbrains.intellij.deps:jdom"))
 
     testRuntimeOnly(kotlinStdlib())
-    testJsRuntime(kotlinStdlib("js"))
+    testJsRuntime(kotlinStdlib())
     if (!kotlinBuildProperties.isInJpsBuildIdeaSync) {
         testJsRuntime(project(":kotlin-test:kotlin-test-js")) // to be sure that kotlin-test-js built before tests runned
     }
@@ -239,12 +242,12 @@ fun Test.setUpJsBoxTests(jsEnabled: Boolean, jsIrEnabled: Boolean, firEnabled: B
     }
 
     if (jsIrEnabled) {
-        dependsOn(":kotlin-stdlib-js-ir:compileKotlinJs")
-        systemProperty("kotlin.js.full.stdlib.path", "libraries/stdlib/js-ir/build/classes/kotlin/js/main")
-        inputs.dir(rootDir.resolve("libraries/stdlib/js-ir/build/classes/kotlin/js/main"))
+        dependsOn(":kotlin-stdlib:jsJar")
+        systemProperty("kotlin.js.full.stdlib.path", "libraries/stdlib/build/classes/kotlin/js/main")
+        inputs.dir(rootDir.resolve("libraries/stdlib/build/classes/kotlin/js/main"))
 
-        systemProperty("kotlin.js.stdlib.klib.path", "libraries/stdlib/js-ir/build/libs/kotlin-stdlib-js-ir-js-$version.klib")
-        inputs.file(rootDir.resolve("libraries/stdlib/js-ir/build/libs/kotlin-stdlib-js-ir-js-$version.klib"))
+        systemProperty("kotlin.js.stdlib.klib.path", "libraries/stdlib/build/libs/kotlin-stdlib-js-$version.klib")
+        inputs.file(rootDir.resolve("libraries/stdlib/build/libs/kotlin-stdlib-js-$version.klib"))
 
         dependsOn(":kotlin-stdlib-js-ir-minimal-for-test:compileKotlinJs")
         systemProperty("kotlin.js.reduced.stdlib.path", "libraries/stdlib/js-ir-minimal-for-test/build/classes/kotlin/js/main")
@@ -405,9 +408,9 @@ projectTest("jsStdlibApiTest", parallel = true, maxHeapSizeMb = 4096) {
     include("org/jetbrains/kotlin/js/testOld/api/*")
     inputs.dir(rootDir.resolve("libraries/stdlib/api/js"))
 
-    dependsOn(":kotlin-stdlib-js-ir:compileKotlinJs")
-    systemProperty("kotlin.js.full.stdlib.path", "libraries/stdlib/js-ir/build/classes/kotlin/js/main")
-    inputs.dir(rootDir.resolve("libraries/stdlib/js-ir/build/classes/kotlin/js/main"))
+    dependsOn(":kotlin-stdlib:jsJar")
+    systemProperty("kotlin.js.full.stdlib.path", "libraries/stdlib/build/classes/kotlin/js/main")
+    inputs.dir(rootDir.resolve("libraries/stdlib/build/classes/kotlin/js/main"))
 
     setTestNameIncludePatterns(listOf("org.jetbrains.kotlin.js.testOld.api.ApiTest.*"))
 

@@ -1,14 +1,14 @@
-/* NonReanalyzableNonClassDeclarationStructureElement */class Foo {
+/* RootScriptStructureElement */class Foo {/* NonReanalyzableClassDeclarationStructureElement */
     @Suppress("") @MustBeDocumented
 }
-class Bar {
+class Bar {/* NonReanalyzableClassDeclarationStructureElement */
     @Suppress("") @MustBeDocumented
 }
-class Outer {
-    class Inner {
+class Outer {/* NonReanalyzableClassDeclarationStructureElement */
+    class Inner {/* NonReanalyzableClassDeclarationStructureElement */
         @Suppress("") @MustBeDocumented
     }
-    fun foo() {
+    fun foo() {/* ReanalyzableFunctionStructureElement */
         class Local {
             @Suppress("") @MustBeDocumented
         }

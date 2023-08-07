@@ -1,21 +1,21 @@
-FILE: [ResolvedTo(IMPORTS)] localFunScript.kts
+FILE: [ResolvedTo(BODY_RESOLVE)] localFunScript.kts
     context(<script>@R|kotlin/script/templates/standard/ScriptTemplateWithArgs|)
-    SCRIPT: [ResolvedTo(BODY_RESOLVE)] 
-        [ResolvedTo(RAW_FIR)] lval args: R|kotlin/Array<kotlin/String>|
+    SCRIPT: [ResolvedTo(BODY_RESOLVE)]
+        [ResolvedTo(BODY_RESOLVE)] lval args: R|kotlin/Array<kotlin/String>|
 
-        public final [ResolvedTo(RAW_FIR)] fun x(): R|kotlin/Unit| {
-            local final [ResolvedTo(RAW_FIR)] fun y(): R|kotlin/Unit| {
+        public final [ResolvedTo(BODY_RESOLVE)] fun x(): R|kotlin/Unit| {
+            local final [ResolvedTo(BODY_RESOLVE)] fun y(): R|kotlin/Unit| {
             }
 
         }
 
-        public final [ResolvedTo(STATUS)] class A : R|kotlin/Any| {
-            public [ResolvedTo(STATUS)] constructor(): R|A| {
+        public final [ResolvedTo(BODY_RESOLVE)] class A : R|kotlin/Any| {
+            public [ResolvedTo(BODY_RESOLVE)] constructor(): R|A| {
                 super<R|kotlin/Any|>()
             }
 
-            public final [ResolvedTo(STATUS)] fun z(): R|kotlin/Unit| {
-                local final [ResolvedTo(RAW_FIR)] fun q(): R|kotlin/Unit| {
+            public final [ResolvedTo(BODY_RESOLVE)] fun z(): R|kotlin/Unit| {
+                local final [ResolvedTo(BODY_RESOLVE)] fun q(): R|kotlin/Unit| {
                 }
 
             }

@@ -92,6 +92,7 @@ public final class org/jetbrains/kotlin/gradle/dsl/JvmTarget : java/lang/Enum {
 	public static final field JVM_19 Lorg/jetbrains/kotlin/gradle/dsl/JvmTarget;
 	public static final field JVM_1_8 Lorg/jetbrains/kotlin/gradle/dsl/JvmTarget;
 	public static final field JVM_20 Lorg/jetbrains/kotlin/gradle/dsl/JvmTarget;
+	public static final field JVM_21 Lorg/jetbrains/kotlin/gradle/dsl/JvmTarget;
 	public static final field JVM_9 Lorg/jetbrains/kotlin/gradle/dsl/JvmTarget;
 	public final fun getTarget ()Ljava/lang/String;
 	public static fun valueOf (Ljava/lang/String;)Lorg/jetbrains/kotlin/gradle/dsl/JvmTarget;
@@ -1110,6 +1111,7 @@ public abstract interface class org/jetbrains/kotlin/gradle/plugin/KotlinTarget 
 	public abstract fun getApiElementsConfigurationName ()Ljava/lang/String;
 	public abstract fun getArtifactsTaskName ()Ljava/lang/String;
 	public abstract fun getCompilations ()Lorg/gradle/api/NamedDomainObjectContainer;
+	public abstract fun getCompilerOptions ()Lorg/jetbrains/kotlin/gradle/dsl/KotlinCommonCompilerOptions;
 	public abstract fun getComponents ()Ljava/util/Set;
 	public abstract fun getDisambiguationClassifier ()Ljava/lang/String;
 	public abstract fun getName ()Ljava/lang/String;

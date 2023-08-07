@@ -583,6 +583,18 @@ public class FirPsiBlackBoxCodegenTestGenerated extends AbstractFirPsiBlackBoxCo
             }
 
             @Test
+            @TestMetadata("javaAnnotationDefault.kt")
+            public void testJavaAnnotationDefault() throws Exception {
+                runTest("compiler/testData/codegen/box/annotations/instances/javaAnnotationDefault.kt");
+            }
+
+            @Test
+            @TestMetadata("javaExistingAnnotation.kt")
+            public void testJavaExistingAnnotation() throws Exception {
+                runTest("compiler/testData/codegen/box/annotations/instances/javaExistingAnnotation.kt");
+            }
+
+            @Test
             @TestMetadata("kotlinExistingAnnotation.kt")
             public void testKotlinExistingAnnotation() throws Exception {
                 runTest("compiler/testData/codegen/box/annotations/instances/kotlinExistingAnnotation.kt");
@@ -18788,6 +18800,12 @@ public class FirPsiBlackBoxCodegenTestGenerated extends AbstractFirPsiBlackBoxCo
         }
 
         @Test
+        @TestMetadata("selectingLambdas.kt")
+        public void testSelectingLambdas() throws Exception {
+            runTest("compiler/testData/codegen/box/fir/selectingLambdas.kt");
+        }
+
+        @Test
         @TestMetadata("staticImportFromEnum.kt")
         public void testStaticImportFromEnum() throws Exception {
             runTest("compiler/testData/codegen/box/fir/staticImportFromEnum.kt");
@@ -33842,6 +33860,12 @@ public class FirPsiBlackBoxCodegenTestGenerated extends AbstractFirPsiBlackBoxCo
                 }
 
                 @Test
+                @TestMetadata("intersectionOverrideInCommonModule.kt")
+                public void testIntersectionOverrideInCommonModule() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/intersectionOverrideInCommonModule.kt");
+                }
+
+                @Test
                 @TestMetadata("kt-51753-1.kt")
                 public void testKt_51753_1() throws Exception {
                     runTest("compiler/testData/codegen/box/multiplatform/k2/basic/kt-51753-1.kt");
@@ -33857,6 +33881,18 @@ public class FirPsiBlackBoxCodegenTestGenerated extends AbstractFirPsiBlackBoxCo
                 @TestMetadata("kt-56329.kt")
                 public void testKt_56329() throws Exception {
                     runTest("compiler/testData/codegen/box/multiplatform/k2/basic/kt-56329.kt");
+                }
+
+                @Test
+                @TestMetadata("localIntersectionOverrideInCommonModule.kt")
+                public void testLocalIntersectionOverrideInCommonModule() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/localIntersectionOverrideInCommonModule.kt");
+                }
+
+                @Test
+                @TestMetadata("localSubstitutionOverrideInCommonModule.kt")
+                public void testLocalSubstitutionOverrideInCommonModule() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/localSubstitutionOverrideInCommonModule.kt");
                 }
 
                 @Test
@@ -33881,6 +33917,12 @@ public class FirPsiBlackBoxCodegenTestGenerated extends AbstractFirPsiBlackBoxCo
                 @TestMetadata("removeExpectDeclarationsFromMetadata.kt")
                 public void testRemoveExpectDeclarationsFromMetadata() throws Exception {
                     runTest("compiler/testData/codegen/box/multiplatform/k2/basic/removeExpectDeclarationsFromMetadata.kt");
+                }
+
+                @Test
+                @TestMetadata("substitutionOverrideInCommonModule.kt")
+                public void testSubstitutionOverrideInCommonModule() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/substitutionOverrideInCommonModule.kt");
                 }
 
                 @Test

@@ -253,6 +253,12 @@ public class FirSourceLazyDeclarationResolveTestGenerated extends AbstractFirSou
     }
 
     @Test
+    @TestMetadata("fileElements.kt")
+    public void testFileElements() throws Exception {
+        runTest("analysis/low-level-api-fir/testdata/lazyResolve/fileElements.kt");
+    }
+
+    @Test
     @TestMetadata("fromLocalHierarchyToOuter.kt")
     public void testFromLocalHierarchyToOuter() throws Exception {
         runTest("analysis/low-level-api-fir/testdata/lazyResolve/fromLocalHierarchyToOuter.kt");
@@ -721,6 +727,12 @@ public class FirSourceLazyDeclarationResolveTestGenerated extends AbstractFirSou
         @Test
         public void testAllFilesPresentInNoRuntime() throws Exception {
             KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("analysis/low-level-api-fir/testdata/lazyResolve/noRuntime"), Pattern.compile("^(.+)\\.(kt)$"), null, true);
+        }
+
+        @Test
+        @TestMetadata("arrayOfCall.kt")
+        public void testArrayOfCall() throws Exception {
+            runTest("analysis/low-level-api-fir/testdata/lazyResolve/noRuntime/arrayOfCall.kt");
         }
 
         @Test

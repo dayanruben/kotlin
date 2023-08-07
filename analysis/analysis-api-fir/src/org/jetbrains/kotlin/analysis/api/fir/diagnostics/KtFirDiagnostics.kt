@@ -542,6 +542,11 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = PrimaryConstructorDelegationCallExpected::class
     }
 
+    interface ProtectedConstructorNotInSuperCall : KtFirDiagnostic<KtExpression> {
+        override val diagnosticClass get() = ProtectedConstructorNotInSuperCall::class
+        val symbol: KtSymbol
+    }
+
     interface SupertypeNotInitialized : KtFirDiagnostic<KtTypeReference> {
         override val diagnosticClass get() = SupertypeNotInitialized::class
     }
@@ -628,6 +633,10 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
 
     interface AnnotationClassConstructorCall : KtFirDiagnostic<KtCallExpression> {
         override val diagnosticClass get() = AnnotationClassConstructorCall::class
+    }
+
+    interface EnumClassConstructorCall : KtFirDiagnostic<KtCallExpression> {
+        override val diagnosticClass get() = EnumClassConstructorCall::class
     }
 
     interface NotAnAnnotationClass : KtFirDiagnostic<PsiElement> {
@@ -1771,6 +1780,21 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         val overridingVisibility: Visibility
         val overridden: KtCallableSymbol
         val containingClassName: Name
+    }
+
+    interface MultipleDefaultsInheritedFromSupertypes : KtFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = MultipleDefaultsInheritedFromSupertypes::class
+        val valueParameter: KtSymbol
+    }
+
+    interface MultipleDefaultsInheritedFromSupertypesWhenNoExplicitOverride : KtFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = MultipleDefaultsInheritedFromSupertypesWhenNoExplicitOverride::class
+        val valueParameter: KtSymbol
+    }
+
+    interface TypealiasExpandsToArrayOfNothings : KtFirDiagnostic<KtElement> {
+        override val diagnosticClass get() = TypealiasExpandsToArrayOfNothings::class
+        val type: KtType
     }
 
     interface OverridingFinalMember : KtFirDiagnostic<KtNamedDeclaration> {
@@ -3521,6 +3545,10 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
 
     interface JavaSamInterfaceConstructorReference : KtFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = JavaSamInterfaceConstructorReference::class
+    }
+
+    interface NoReflectionInClassPath : KtFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = NoReflectionInClassPath::class
     }
 
     interface ImplementingFunctionInterface : KtFirDiagnostic<KtClassOrObject> {

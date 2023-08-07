@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.api.FirDesignationWithFil
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.targets.LLFirResolveTarget
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.throwUnexpectedFirElementError
 import org.jetbrains.kotlin.analysis.low.level.api.fir.file.builder.LLFirLockProvider
+import org.jetbrains.kotlin.analysis.low.level.api.fir.lazy.resolve.FirLazyBodiesCalculator
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.checkDelegatedConstructorIsResolved
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.*
 import org.jetbrains.kotlin.fir.utils.exceptions.withFirEntry
@@ -37,6 +38,8 @@ import org.jetbrains.kotlin.fir.resolve.transformers.contracts.FirContractsDslNa
 import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
 import org.jetbrains.kotlin.fir.types.FirResolvedTypeRef
 import org.jetbrains.kotlin.fir.resolve.dfa.cfg.isUsedInControlFlowGraphBuilderForClass
+import org.jetbrains.kotlin.utils.exceptions.requireWithAttachment
+import org.jetbrains.kotlin.utils.findIsInstanceAnd
 
 internal object LLFirBodyLazyResolver : LLFirLazyResolver(FirResolvePhase.BODY_RESOLVE) {
     override fun resolve(
@@ -146,17 +149,64 @@ private class LLFirBodyTargetResolver(
             is FirDanglingModifierList,
             is FirFileAnnotationsContainer,
             is FirTypeAlias,
+            is FirFile,
             -> {
                 // No bodies here
             }
             else -> throwUnexpectedFirElementError(target)
         }
     }
+
+    override fun rawResolve(target: FirElementWithResolveState) {
+        when (target) {
+            is FirScript -> target.takeUnless(FirScript::isCertainlyResolved)?.let(::resolveScript)
+            else -> super.rawResolve(target)
+        }
+    }
 }
 
 internal object BodyStateKeepers {
-    val SCRIPT: StateKeeper<FirScript, FirDesignationWithFile> = stateKeeper { _, _ ->
-        // TODO Lazy body is not supported for scripts yet
+    val SCRIPT: StateKeeper<FirScript, FirDesignationWithFile> = stateKeeper { script, designation ->
+        val oldStatements = script.statements
+        if (oldStatements.none { it.isScriptStatement } || script.isCertainlyResolved) return@stateKeeper
+
+        add(RESULT_PROPERTY, designation)
+        add(FirScript::statements, FirScript::replaceStatements) {
+            val recreatedStatements = FirLazyBodiesCalculator.createStatementsForScript(script)
+            requireSameSize(oldStatements, recreatedStatements)
+
+            ArrayList<FirStatement>(oldStatements.size).apply {
+                oldStatements.zip(recreatedStatements).mapTo(this) { (old, new) ->
+                    when {
+                        !old.isScriptStatement -> old
+                        old is FirProperty && old.origin == FirDeclarationOrigin.ScriptCustomization.ResultProperty -> {
+                            old.replaceInitializer((new as FirProperty).initializer)
+                            old
+                        }
+
+                        else -> new
+                    }
+                }
+            }
+        }
+    }
+
+    private val RESULT_PROPERTY: StateKeeper<FirScript, FirDesignationWithFile> = stateKeeper { script, _ ->
+        val resultedProperty = script.findResultProperty() ?: return@stateKeeper
+        add(
+            provider = { resultedProperty.bodyResolveState },
+            mutator = { _, value -> resultedProperty.replaceBodyResolveState(value) },
+        )
+
+        add(
+            provider = { resultedProperty.returnTypeRef },
+            mutator = { _, value -> resultedProperty.replaceReturnTypeRef(value) },
+        )
+
+        add(
+            provider = { resultedProperty.controlFlowGraphReference },
+            mutator = { _, value -> resultedProperty.replaceControlFlowGraphReference(value) },
+        )
     }
 
     val ANONYMOUS_INITIALIZER: StateKeeper<FirAnonymousInitializer, FirDesignationWithFile> = stateKeeper { _, _ ->
@@ -265,6 +315,18 @@ private fun StateKeeperScope<FirFunction, FirDesignationWithFile>.preserveContra
     }
 }
 
+private fun FirScript.findResultProperty(): FirProperty? = statements.findIsInstanceAnd<FirProperty> {
+    it.origin == FirDeclarationOrigin.ScriptCustomization.ResultProperty
+}
+
+private val FirScript.isCertainlyResolved: Boolean
+    get() {
+        val dependentProperty = findResultProperty() ?: return false
+
+        // This meant that we already resolve the entire script on implicit body phase
+        return dependentProperty.bodyResolveState == FirPropertyBodyResolveState.EVERYTHING_RESOLVED
+    }
+
 private val FirFunction.isCertainlyResolved: Boolean
     get() {
         if (this is FirPropertyAccessor) {
@@ -330,6 +392,21 @@ private fun delegatedConstructorCallGuard(fir: FirDelegatedConstructorCall): Fir
                     superTypeRef = originalCalleeReference.superTypeRef
                 }
             }
+        }
+    }
+}
+
+private fun requireSameSize(old: List<FirStatement>, new: List<FirStatement>) {
+    requireWithAttachment(
+        condition = old.size == new.size,
+        message = { "The number of statements are different" }
+    ) {
+        withEntryGroup("originalStatements") {
+            old.forEachIndexed { index, statement -> withFirEntry("statement$index", statement) }
+        }
+
+        withEntryGroup("newStatements") {
+            new.forEachIndexed { index, statement -> withFirEntry("statement$index", statement) }
         }
     }
 }

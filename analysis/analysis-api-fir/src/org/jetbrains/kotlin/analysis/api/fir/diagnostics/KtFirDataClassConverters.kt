@@ -724,6 +724,13 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirErrors.PROTECTED_CONSTRUCTOR_NOT_IN_SUPER_CALL) { firDiagnostic ->
+        ProtectedConstructorNotInSuperCallImpl(
+            firSymbolBuilder.buildSymbol(firDiagnostic.a),
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
     add(FirErrors.SUPERTYPE_NOT_INITIALIZED) { firDiagnostic ->
         SupertypeNotInitializedImpl(
             firDiagnostic as KtPsiDiagnostic,
@@ -852,6 +859,12 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
     }
     add(FirErrors.ANNOTATION_CLASS_CONSTRUCTOR_CALL) { firDiagnostic ->
         AnnotationClassConstructorCallImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.ENUM_CLASS_CONSTRUCTOR_CALL) { firDiagnostic ->
+        EnumClassConstructorCallImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
@@ -2491,6 +2504,27 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             firDiagnostic.a,
             firSymbolBuilder.callableBuilder.buildCallableSymbol(firDiagnostic.b),
             firDiagnostic.c,
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES) { firDiagnostic ->
+        MultipleDefaultsInheritedFromSupertypesImpl(
+            firSymbolBuilder.buildSymbol(firDiagnostic.a),
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_WHEN_NO_EXPLICIT_OVERRIDE) { firDiagnostic ->
+        MultipleDefaultsInheritedFromSupertypesWhenNoExplicitOverrideImpl(
+            firSymbolBuilder.buildSymbol(firDiagnostic.a),
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.TYPEALIAS_EXPANDS_TO_ARRAY_OF_NOTHINGS) { firDiagnostic ->
+        TypealiasExpandsToArrayOfNothingsImpl(
+            firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
@@ -5051,6 +5085,12 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
     }
     add(FirJvmErrors.JAVA_SAM_INTERFACE_CONSTRUCTOR_REFERENCE) { firDiagnostic ->
         JavaSamInterfaceConstructorReferenceImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirJvmErrors.NO_REFLECTION_IN_CLASS_PATH) { firDiagnostic ->
+        NoReflectionInClassPathImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
         )

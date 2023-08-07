@@ -6,12 +6,15 @@
 package org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiErrorElement
 import org.jetbrains.kotlin.KtFakeSourceElementKind
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirModuleResolveComponents
 import org.jetbrains.kotlin.analysis.low.level.api.fir.diagnostics.ClassDiagnosticRetriever
 import org.jetbrains.kotlin.analysis.low.level.api.fir.diagnostics.FileDiagnosticRetriever
 import org.jetbrains.kotlin.analysis.low.level.api.fir.diagnostics.FileStructureElementDiagnostics
+import org.jetbrains.kotlin.analysis.low.level.api.fir.diagnostics.ScriptDiagnosticRetriever
 import org.jetbrains.kotlin.analysis.low.level.api.fir.diagnostics.SingleNonLocalDeclarationDiagnosticRetriever
+import org.jetbrains.kotlin.analysis.low.level.api.fir.util.isScriptStatement
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.correspondingProperty
 import org.jetbrains.kotlin.fir.declarations.*
@@ -21,7 +24,10 @@ import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirFunctionSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
+import org.jetbrains.kotlin.fir.visitors.FirVisitor
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 internal sealed class FileStructureElement(val firFile: FirFile, protected val moduleComponents: LLFirModuleResolveComponents) {
     abstract val psi: KtAnnotated
@@ -36,15 +42,67 @@ internal class KtToFirMapping(firElement: FirElement, recorder: FirElementsRecor
         return mapping[ktElement]
     }
 
-    fun getFirOfClosestParent(element: KtElement): FirElement? {
+    fun getFir(element: KtElement): FirElement? {
         var current: PsiElement? = element
-        while (current != null && current !is KtFile) {
-            if (current is KtElement) {
-                getElement(current)?.let { return it }
-            }
+        while (
+            current == element ||
+            current is KtUserType ||
+            current is KtTypeReference ||
+            current is KtDotQualifiedExpression ||
+            current is KtNullableType
+        ) {
+            // We are still referring to the same element with possible type parameter/name qualification/nullability, hence it is always
+            // sane to return corresponding element if present
+            if (current is KtElement) getElement(current)?.let { return it }
             current = current.parent
         }
-        return null
+
+        // Here current is the lowest ancestor that has different corresponding text
+        return when (current) {
+            // Constants with unary operation (i.e. +1 or -1) are saved as leaf element of FIR tree
+            is KtPrefixExpression,
+            // There is no separate element for annotation construction call
+            is KtAnnotationEntry,
+            // We replace source for selector for that of whole expression
+            is KtSafeQualifiedExpression,
+            // Top level destructuring declarations does not have FIR for r-value at the moment, would probably be changed later
+            is KtDestructuringDeclaration,
+            // There is no separate FIR node for this in this@foo expressions, same for super@Foo
+            is KtThisExpression,
+            is KtSuperExpression,
+            // Part of path in import/package directives has no FIR node
+            is KtImportDirective,
+            is KtPackageDirective,
+            // Super type refs are not recorded
+            is KtSuperTypeCallEntry,
+            // this/super in delegation calls are not part of FIR tree, this(args) is
+            is KtConstructorDelegationCall,
+            // In case of type projection we are not recording corresponding type reference
+            is KtTypeProjection,
+            // If we have, say, A(), reference A is not recorded, while call A() is recorded
+            is KtCallExpression ->
+                getElement(current as KtElement)
+            is KtBinaryExpression ->
+                // Here there is no separate FIR node for partial operator calls (like for a[i] = 1, there is no separate node for a[i])
+                if (element is KtArrayAccessExpression || element is KtOperationReferenceExpression) getElement(current) else null
+            is KtBlockExpression ->
+                // For script initializers we need to return FIR element for script itself
+                if (element is KtScriptInitializer) getElement(current.parent as KtScript) else null
+            is PsiErrorElement -> {
+                val parent = current.parent
+                if (parent is KtDestructuringDeclaration) getElement(parent) else null
+            }
+            // Value argument names and corresponding references are not part of FIR tree
+            is KtValueArgumentName -> getElement(current.parent as KtValueArgument)
+            is KtContainerNode -> {
+                val parent = current.parent
+                // Labels in labeled expression (i.e. return@foo) has no FIR node
+                if (parent is KtExpressionWithLabel) getElement(parent) else null
+            }
+            // Enum entries/annotation entries constructor calls
+            is KtConstructorCalleeExpression -> getElement(current.parent as KtCallElement)
+            else -> null
+        }
     }
 }
 
@@ -122,6 +180,38 @@ internal sealed class NonReanalyzableDeclarationStructureElement(
     firFile: FirFile,
     moduleComponents: LLFirModuleResolveComponents,
 ) : FileStructureElement(firFile, moduleComponents)
+
+internal class RootScriptStructureElement(
+    firFile: FirFile,
+    val script: FirScript,
+    override val psi: KtScript,
+    moduleComponents: LLFirModuleResolveComponents,
+) : NonReanalyzableDeclarationStructureElement(firFile, moduleComponents) {
+    override val mappings: KtToFirMapping = KtToFirMapping(script, Recorder)
+
+    override val diagnostics: FileStructureElementDiagnostics = FileStructureElementDiagnostics(
+        firFile,
+        ScriptDiagnosticRetriever(script),
+        moduleComponents,
+    )
+
+    private object Recorder : FirElementsRecorder() {
+        override fun visitScript(script: FirScript, data: MutableMap<KtElement, FirElement>) {
+            cacheElement(script, data)
+            visitScriptDependentElements(script, this, data)
+        }
+    }
+}
+
+internal fun <T, R> visitScriptDependentElements(script: FirScript, visitor: FirVisitor<T, R>, data: R) {
+    script.annotations.forEach { it.accept(visitor, data) }
+    script.contextReceivers.forEach { it.accept(visitor, data) }
+    script.statements.forEach {
+        if (it.isScriptStatement) {
+            it.accept(visitor, data)
+        }
+    }
+}
 
 internal class NonReanalyzableClassDeclarationStructureElement(
     firFile: FirFile,
@@ -217,17 +307,14 @@ internal class RootStructureElement(
     override val psi: KtFile,
     moduleComponents: LLFirModuleResolveComponents,
 ) : FileStructureElement(firFile, moduleComponents) {
-    override val mappings = KtToFirMapping(firFile, recorder)
+    override val mappings = KtToFirMapping(firFile, Recorder)
 
-    override val diagnostics =
-        FileStructureElementDiagnostics(firFile, FileDiagnosticRetriever, moduleComponents)
+    override val diagnostics = FileStructureElementDiagnostics(firFile, FileDiagnosticRetriever, moduleComponents)
 
-    companion object {
-        private val recorder = object : FirElementsRecorder() {
-            override fun visitElement(element: FirElement, data: MutableMap<KtElement, FirElement>) {
-                if (element !is FirDeclaration || element is FirFile) {
-                    super.visitElement(element, data)
-                }
+    private object Recorder : FirElementsRecorder() {
+        override fun visitElement(element: FirElement, data: MutableMap<KtElement, FirElement>) {
+            if (element !is FirDeclaration || element is FirFile) {
+                super.visitElement(element, data)
             }
         }
     }
