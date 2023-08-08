@@ -6,10 +6,14 @@
 package org.jetbrains.kotlin.analysis.low.level.api.fir.transformers
 
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.FirDesignationWithFile
+import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getFirResolveSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.targets.LLFirResolveTarget
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.throwUnexpectedFirElementError
+import org.jetbrains.kotlin.analysis.low.level.api.fir.compile.codeFragmentScopeProvider
 import org.jetbrains.kotlin.analysis.low.level.api.fir.file.builder.LLFirLockProvider
 import org.jetbrains.kotlin.analysis.low.level.api.fir.lazy.resolve.FirLazyBodiesCalculator
+import org.jetbrains.kotlin.analysis.low.level.api.fir.project.structure.llFirModuleData
+import org.jetbrains.kotlin.analysis.low.level.api.fir.state.LLFirResolvableResolveSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.checkDelegatedConstructorIsResolved
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.*
 import org.jetbrains.kotlin.fir.utils.exceptions.withFirEntry
@@ -25,20 +29,28 @@ import org.jetbrains.kotlin.fir.expressions.builder.buildLazyDelegatedConstructo
 import org.jetbrains.kotlin.fir.expressions.builder.buildMultiDelegatedConstructorCall
 import org.jetbrains.kotlin.fir.expressions.impl.FirContractCallBlock
 import org.jetbrains.kotlin.fir.expressions.impl.FirLazyDelegatedConstructorCall
+import org.jetbrains.kotlin.fir.psi
 import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
 import org.jetbrains.kotlin.fir.references.FirSuperReference
 import org.jetbrains.kotlin.fir.references.FirThisReference
 import org.jetbrains.kotlin.fir.references.builder.buildExplicitSuperReference
 import org.jetbrains.kotlin.fir.references.builder.buildExplicitThisReference
+import org.jetbrains.kotlin.fir.resolve.FirCodeFragmentContext
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.resolve.dfa.FirControlFlowGraphReferenceImpl
+import org.jetbrains.kotlin.fir.resolve.codeFragmentContext
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirBodyResolveTransformer
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirResolveContextCollector
 import org.jetbrains.kotlin.fir.resolve.transformers.contracts.FirContractsDslNames
 import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
 import org.jetbrains.kotlin.fir.types.FirResolvedTypeRef
 import org.jetbrains.kotlin.fir.resolve.dfa.cfg.isUsedInControlFlowGraphBuilderForClass
+import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
+import org.jetbrains.kotlin.fir.types.ConeKotlinType
+import org.jetbrains.kotlin.psi.KtCodeFragment
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.exceptions.requireWithAttachment
+import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 import org.jetbrains.kotlin.utils.findIsInstanceAnd
 
 internal object LLFirBodyLazyResolver : LLFirLazyResolver(FirResolvePhase.BODY_RESOLVE) {
@@ -102,6 +114,14 @@ private class LLFirBodyTargetResolver(
 
                 return true
             }
+            is FirCodeFragment -> {
+                resolveCodeFragmentContext(target)
+                performCustomResolveUnderLock(target) {
+                    resolve(target, BodyStateKeepers.CODE_FRAGMENT)
+                }
+
+                return true
+            }
         }
 
         return false
@@ -136,9 +156,42 @@ private class LLFirBodyTargetResolver(
         }
     }
 
+    private fun resolveCodeFragmentContext(firCodeFragment: FirCodeFragment) {
+        val ktCodeFragment = firCodeFragment.psi as? KtCodeFragment
+            ?: errorWithAttachment("Code fragment source not found") {
+                withFirEntry("firCodeFragment", firCodeFragment)
+            }
+
+        val module = firCodeFragment.llFirModuleData.ktModule
+        val resolveSession = module.getFirResolveSession(ktCodeFragment.project) as LLFirResolvableResolveSession
+
+        fun FirTowerDataContext.withExtraScopes(): FirTowerDataContext {
+            return resolveSession.useSiteFirSession.codeFragmentScopeProvider.getExtraScopes(ktCodeFragment)
+                .fold(this) { context, scope -> context.addLocalScope(scope) }
+        }
+
+        val contextPsiElement = ktCodeFragment.context
+        val contextKtFile = contextPsiElement?.containingFile as? KtFile
+
+        firCodeFragment.codeFragmentContext = if (contextKtFile != null) {
+            val contextFirFile = resolveSession.getOrBuildFirFile(contextKtFile)
+            val sessionHolder = transformer.components
+
+            val elementContext = ContextCollector.process(contextFirFile, sessionHolder, contextPsiElement)
+                ?: errorWithAttachment("Cannot find enclosing context for ${contextPsiElement::class}") {
+                    withPsiEntry("contextPsiElement", contextPsiElement)
+                }
+
+            LLFirCodeFragmentContext(elementContext.towerDataContext.withExtraScopes(), elementContext.smartCasts)
+        } else {
+            val towerDataContext = FirTowerDataContext().withExtraScopes()
+            LLFirCodeFragmentContext(towerDataContext, emptyMap())
+        }
+    }
+
     override fun doLazyResolveUnderLock(target: FirElementWithResolveState) {
         when (target) {
-            is FirRegularClass -> error("Should have been resolved in ${::doResolveWithoutLock.name}")
+            is FirRegularClass, is FirCodeFragment -> error("Should have been resolved in ${::doResolveWithoutLock.name}")
             is FirConstructor -> resolve(target, BodyStateKeepers.CONSTRUCTOR)
             is FirFunction -> resolve(target, BodyStateKeepers.FUNCTION)
             is FirProperty -> resolve(target, BodyStateKeepers.PROPERTY)
@@ -207,6 +260,10 @@ internal object BodyStateKeepers {
             provider = { resultedProperty.controlFlowGraphReference },
             mutator = { _, value -> resultedProperty.replaceControlFlowGraphReference(value) },
         )
+    }
+
+    val CODE_FRAGMENT: StateKeeper<FirCodeFragment, FirDesignationWithFile> = stateKeeper { _, _ ->
+        add(FirCodeFragment::block, FirCodeFragment::replaceBlock, ::blockGuard)
     }
 
     val ANONYMOUS_INITIALIZER: StateKeeper<FirAnonymousInitializer, FirDesignationWithFile> = stateKeeper { _, _ ->
@@ -410,3 +467,8 @@ private fun requireSameSize(old: List<FirStatement>, new: List<FirStatement>) {
         }
     }
 }
+
+private class LLFirCodeFragmentContext(
+    override val towerDataContext: FirTowerDataContext,
+    override val variables: Map<FirBasedSymbol<*>, Set<ConeKotlinType>>
+) : FirCodeFragmentContext

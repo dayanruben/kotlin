@@ -6,7 +6,9 @@
 package org.jetbrains.kotlin.analysis.low.level.api.fir.util
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.KtAnalysisApiInternals
+import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.LLFirResolveSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.element.builder.canBePartOfParentDeclaration
 import org.jetbrains.kotlin.analysis.low.level.api.fir.element.builder.containingDeclaration
@@ -80,7 +82,7 @@ internal fun KtDeclaration.findSourceNonLocalFirDeclaration(firFile: FirFile, pr
     )?.let { return it }
 
     errorWithFirSpecificEntries(
-        "No fir element was found for",
+        "No fir element was found for ${this::class.simpleName}",
         psi = this,
         fir = firFile,
         additionalInfos = { withEntry("isPhysical", isPhysical.toString()) }
@@ -196,6 +198,13 @@ private fun KtClassLikeDeclaration.findFir(provider: FirProvider): FirClassLikeD
     }
 }
 
+@LLFirInternals
+val FirFile.codeFragment: FirCodeFragment
+    get() {
+        return declarations.singleOrNull() as? FirCodeFragment
+            ?: errorWithFirSpecificEntries("Code fragment not found in a FirFile", fir = this)
+    }
+
 val FirDeclaration.isGeneratedDeclaration
     get() = realPsi == null
 
@@ -231,3 +240,15 @@ internal inline fun FirScript.forEachDependentDeclaration(action: (FirDeclaratio
         action(statement)
     }
 }
+
+val PsiElement.parentsWithSelfCodeFragmentAware: Sequence<PsiElement>
+    get() = generateSequence(this) { element ->
+        when (element) {
+            is KtCodeFragment -> element.context
+            is PsiFile -> null
+            else -> element.parent
+        }
+    }
+
+val PsiElement.parentsCodeFragmentAware: Sequence<PsiElement>
+    get() = parentsWithSelfCodeFragmentAware.drop(1)
