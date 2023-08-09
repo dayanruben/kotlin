@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.fir.declarations
 
 import org.jetbrains.kotlin.config.ApiVersion
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.fir.FirAnnotationContainer
 import org.jetbrains.kotlin.fir.FirElement
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirTypeAliasSymbol
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
 import org.jetbrains.kotlin.fir.types.forEachType
 import org.jetbrains.kotlin.fir.types.toSymbol
+import org.jetbrains.kotlin.metadata.deserialization.VersionRequirement
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.name.StandardClassIds.Annotations.ParameterNames
@@ -91,7 +93,7 @@ private fun FirBasedSymbol<*>.getUseSitesForCallSite(callSite: FirElement?): Arr
  * corresponding declaration.
  */
 fun FirBasedSymbol<*>.getOwnDeprecation(session: FirSession, callSite: FirElement?): DeprecationInfo? {
-    return getOwnDeprecationForCallSite(session.languageVersionSettings.apiVersion, *getUseSitesForCallSite(callSite))
+    return getOwnDeprecationForCallSite(session.languageVersionSettings, *getUseSitesForCallSite(callSite))
 }
 
 /**
@@ -114,9 +116,14 @@ fun FirAnnotationContainer.extractDeprecationInfoPerUseSite(
     getterAnnotations: List<FirAnnotation>? = null,
     setterAnnotations: List<FirAnnotation>? = null,
 ): DeprecationAnnotationInfoPerUseSiteStorage {
-    val fromJava = this is FirDeclaration && this.isJavaOrEnhancement
+    var fromJava = false
+    var versionRequirements: List<VersionRequirement>? = null
+    if (this is FirDeclaration) {
+        fromJava = this.isJavaOrEnhancement
+        versionRequirements = this.versionRequirements
+    }
     return buildDeprecationAnnotationInfoPerUseSiteStorage {
-        add((customAnnotations ?: annotations).extractDeprecationAnnotationInfoPerUseSite(fromJava))
+        add((customAnnotations ?: annotations).extractDeprecationAnnotationInfoPerUseSite(fromJava, versionRequirements))
         if (this@extractDeprecationInfoPerUseSite is FirProperty) {
             add(
                 getDeprecationsAnnotationInfoByUseSiteFromAccessors(
@@ -169,9 +176,10 @@ fun getDeprecationsAnnotationInfoByUseSiteFromAccessors(
 
 fun List<FirAnnotation>.getDeprecationsProviderFromAnnotations(
     session: FirSession,
-    fromJava: Boolean
+    fromJava: Boolean,
+    versionRequirements: List<VersionRequirement>? = null,
 ): DeprecationsProvider {
-    val deprecationAnnotationByUseSite = extractDeprecationAnnotationInfoPerUseSite(fromJava)
+    val deprecationAnnotationByUseSite = extractDeprecationAnnotationInfoPerUseSite(fromJava, versionRequirements)
     return deprecationAnnotationByUseSite.toDeprecationsProvider(session.firCachesFactory)
 }
 
@@ -180,12 +188,12 @@ fun List<FirAnnotation>.getDeprecationsProviderFromAnnotations(
  * corresponding declaration.
  */
 private fun FirBasedSymbol<*>.getOwnDeprecationForCallSite(
-    apiVersion: ApiVersion,
+    languageVersionSettings: LanguageVersionSettings,
     vararg sites: AnnotationUseSiteTarget
 ): DeprecationInfo? {
     val deprecations = when (this) {
-        is FirCallableSymbol<*> -> getDeprecation(apiVersion)
-        is FirClassLikeSymbol<*> -> getOwnDeprecation(apiVersion)
+        is FirCallableSymbol<*> -> getDeprecation(languageVersionSettings)
+        is FirClassLikeSymbol<*> -> getOwnDeprecation(languageVersionSettings)
         else -> null
     }
     return (deprecations ?: EmptyDeprecationsPerUseSite).forUseSite(*sites)
@@ -201,12 +209,10 @@ fun FirBasedSymbol<*>.getDeprecationForCallSite(
     session: FirSession,
     vararg sites: AnnotationUseSiteTarget,
 ): DeprecationInfo? {
-    val apiVersion = session.languageVersionSettings.apiVersion
-
     return when (this) {
-        !is FirTypeAliasSymbol -> getOwnDeprecationForCallSite(apiVersion, *sites)
+        !is FirTypeAliasSymbol -> getOwnDeprecationForCallSite(session.languageVersionSettings, *sites)
         else -> {
-            var worstDeprecationInfo = getOwnDeprecationForCallSite(apiVersion, *sites)
+            var worstDeprecationInfo = getOwnDeprecationForCallSite(session.languageVersionSettings, *sites)
             val visited = mutableMapOf<ConeKotlinType, DeprecationInfo?>()
 
             resolvedExpandedTypeRef.type.forEachType {
@@ -252,7 +258,10 @@ val deprecationAnnotationSimpleNames: Set<String> = setOf(
     StandardClassIds.Annotations.SinceKotlin.shortClassName.asString(),
 )
 
-private fun List<FirAnnotation>.extractDeprecationAnnotationInfoPerUseSite(fromJava: Boolean): DeprecationAnnotationInfoPerUseSiteStorage {
+private fun List<FirAnnotation>.extractDeprecationAnnotationInfoPerUseSite(
+    fromJava: Boolean,
+    versionRequirements: List<VersionRequirement>?,
+): DeprecationAnnotationInfoPerUseSiteStorage {
     // NB: We can't expand typealiases (`toAnnotationClassId`), because it
     // requires `lookupTag.tySymbol()`, but we can have cycles in annotations.
     // See the commit message for an example.
@@ -298,6 +307,10 @@ private fun List<FirAnnotation>.extractDeprecationAnnotationInfoPerUseSite(fromJ
                     }
                 add(deprecated.useSiteTarget, deprecatedInfo)
             }
+        }
+
+        versionRequirements?.forEach {
+            add(null, RequireKotlinInfo(it))
         }
     }
 }

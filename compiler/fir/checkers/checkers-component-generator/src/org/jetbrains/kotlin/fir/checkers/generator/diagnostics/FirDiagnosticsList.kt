@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
 import org.jetbrains.kotlin.lexer.KtKeywordToken
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
+import org.jetbrains.kotlin.metadata.deserialization.VersionRequirement
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -53,6 +54,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val UNSUPPORTED_FEATURE by error<PsiElement> {
             parameter<Pair<LanguageFeature, LanguageVersionSettings>>("unsupportedFeature")
         }
+        val UNSUPPORTED_SUSPEND_TEST by error<PsiElement>()
         val NEW_INFERENCE_ERROR by error<PsiElement> {
             parameter<String>("error")
         }
@@ -127,6 +129,20 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
 
         val DEPRECATION by warning<PsiElement>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED) {
             parameter<Symbol>("reference")
+            parameter<String>("message")
+        }
+
+        val VERSION_REQUIREMENT_DEPRECATION_ERROR by error<PsiElement>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED) {
+            parameter<Symbol>("reference")
+            parameter<VersionRequirement.Version>("version")
+            parameter<String>("currentVersion")
+            parameter<String>("message")
+        }
+
+        val VERSION_REQUIREMENT_DEPRECATION by warning<PsiElement>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED) {
+            parameter<Symbol>("reference")
+            parameter<VersionRequirement.Version>("version")
+            parameter<String>("currentVersion")
             parameter<String>("message")
         }
 

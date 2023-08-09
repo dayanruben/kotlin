@@ -585,6 +585,8 @@ if (buildProperties.inJpsBuildIdeaSync) {
             ":kotlin-dom-api-compat",
             ":kotlin-stdlib-js-ir-minimal-for-test",
             ":kotlin-stdlib-wasm",
+            ":kotlin-stdlib-wasm-js",
+            ":kotlin-stdlib-wasm-wasi",
             ":kotlin-stdlib-jdk7",
             ":kotlin-stdlib-jdk8",
             ":kotlin-stdlib:samples",
@@ -598,7 +600,8 @@ if (buildProperties.inJpsBuildIdeaSync) {
             ":kotlin-test:kotlin-test-js-ir",
             ":kotlin-test:kotlin-test-js:kotlin-test-js-it",
             ":kotlin-test:kotlin-test-js-ir:kotlin-test-js-ir-it",
-            ":kotlin-test:kotlin-test-wasm",
+            ":kotlin-test:kotlin-test-wasm-js",
+            ":kotlin-test:kotlin-test-wasm-wasi",
             ":native:native.tests"
 
     if (!stdlibMpp) include ":kotlin-stdlib-js", ":kotlin-stdlib-js-ir"
@@ -610,6 +613,8 @@ if (buildProperties.inJpsBuildIdeaSync) {
     if (!stdlibMpp) project(':kotlin-stdlib-js-ir').projectDir = "$rootDir/libraries/stdlib/js-ir" as File
     project(':kotlin-dom-api-compat').projectDir = "$rootDir/libraries/kotlin-dom-api-compat" as File
     project(':kotlin-stdlib-wasm').projectDir = "$rootDir/libraries/stdlib/wasm" as File
+    project(':kotlin-stdlib-wasm-js').projectDir = "$rootDir/libraries/stdlib/wasm/js" as File
+    project(':kotlin-stdlib-wasm-wasi').projectDir = "$rootDir/libraries/stdlib/wasm/wasi" as File
     project(':kotlin-stdlib-js-ir-minimal-for-test').projectDir = "$rootDir/libraries/stdlib/js-ir-minimal-for-test" as File
     project(':kotlin-stdlib-jdk7').projectDir = "$rootDir/libraries/stdlib/jdk7" as File
     project(':kotlin-stdlib-jdk8').projectDir = "$rootDir/libraries/stdlib/jdk8" as File
@@ -626,7 +631,8 @@ if (buildProperties.inJpsBuildIdeaSync) {
     project(':kotlin-test:kotlin-test-js-ir').projectDir = "$rootDir/libraries/kotlin.test/js-ir" as File
     project(':kotlin-test:kotlin-test-js:kotlin-test-js-it').projectDir = "$rootDir/libraries/kotlin.test/js/it" as File
     project(':kotlin-test:kotlin-test-js-ir:kotlin-test-js-ir-it').projectDir = "$rootDir/libraries/kotlin.test/js-ir/it" as File
-    project(':kotlin-test:kotlin-test-wasm').projectDir = "$rootDir/libraries/kotlin.test/wasm" as File
+    project(':kotlin-test:kotlin-test-wasm-js').projectDir = "$rootDir/libraries/kotlin.test/wasm/js" as File
+    project(':kotlin-test:kotlin-test-wasm-wasi').projectDir = "$rootDir/libraries/kotlin.test/wasm/wasi" as File
     project(':native:native.tests').projectDir = "$rootDir/native/native.tests" as File
 }
 include ":compiler:android-tests"

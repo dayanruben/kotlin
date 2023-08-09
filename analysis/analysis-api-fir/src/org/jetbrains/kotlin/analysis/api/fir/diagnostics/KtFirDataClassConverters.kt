@@ -82,6 +82,12 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirErrors.UNSUPPORTED_SUSPEND_TEST) { firDiagnostic ->
+        UnsupportedSuspendTestImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
     add(FirErrors.NEW_INFERENCE_ERROR) { firDiagnostic ->
         NewInferenceErrorImpl(
             firDiagnostic.a,
@@ -323,6 +329,26 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
         DeprecationImpl(
             firSymbolBuilder.buildSymbol(firDiagnostic.a),
             firDiagnostic.b,
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.VERSION_REQUIREMENT_DEPRECATION_ERROR) { firDiagnostic ->
+        VersionRequirementDeprecationErrorImpl(
+            firSymbolBuilder.buildSymbol(firDiagnostic.a),
+            firDiagnostic.b,
+            firDiagnostic.c,
+            firDiagnostic.d,
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.VERSION_REQUIREMENT_DEPRECATION) { firDiagnostic ->
+        VersionRequirementDeprecationImpl(
+            firSymbolBuilder.buildSymbol(firDiagnostic.a),
+            firDiagnostic.b,
+            firDiagnostic.c,
+            firDiagnostic.d,
             firDiagnostic as KtPsiDiagnostic,
             token,
         )

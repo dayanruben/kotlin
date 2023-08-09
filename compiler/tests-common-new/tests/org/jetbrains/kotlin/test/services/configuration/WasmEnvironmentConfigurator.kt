@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.descriptors.impl.ModuleDescriptorImpl
 import org.jetbrains.kotlin.js.config.JSConfigurationKeys
 import org.jetbrains.kotlin.js.config.SourceMapSourceEmbedding
+import org.jetbrains.kotlin.js.config.WasmTarget
 import org.jetbrains.kotlin.library.KotlinLibrary
 import org.jetbrains.kotlin.serialization.js.ModuleKind
 import org.jetbrains.kotlin.test.directives.JsEnvironmentConfigurationDirectives.INFER_MAIN_MODULE
@@ -32,15 +33,34 @@ import org.jetbrains.kotlin.test.model.TestModule
 import org.jetbrains.kotlin.test.services.*
 import java.io.File
 
-class WasmEnvironmentConfigurator(testServices: TestServices) : EnvironmentConfigurator(testServices) {
+class WasmEnvironmentConfiguratorJs(testServices: TestServices) : WasmEnvironmentConfigurator(testServices) {
+    override fun configureCompilerConfiguration(configuration: CompilerConfiguration, module: TestModule) {
+        super.configureCompilerConfiguration(configuration, module)
+        configuration.put(JSConfigurationKeys.WASM_TARGET, WasmTarget.JS)
+    }
+}
+
+class WasmEnvironmentConfiguratorWasi(testServices: TestServices) : WasmEnvironmentConfigurator(testServices) {
+    override fun configureCompilerConfiguration(configuration: CompilerConfiguration, module: TestModule) {
+        super.configureCompilerConfiguration(configuration, module)
+        configuration.put(JSConfigurationKeys.WASM_TARGET, WasmTarget.WASI)
+    }
+}
+
+abstract class WasmEnvironmentConfigurator(testServices: TestServices) : EnvironmentConfigurator(testServices) {
     override val directiveContainers: List<DirectivesContainer>
         get() = listOf(WasmEnvironmentConfigurationDirectives)
 
     companion object {
         private const val OUTPUT_KLIB_DIR_NAME = "outputKlibDir"
 
-        fun getRuntimePathsForModule(): List<String> {
-            return listOf(System.getProperty("kotlin.wasm.stdlib.path")!!, System.getProperty("kotlin.wasm.kotlin.test.path")!!)
+        fun getRuntimePathsForModule(target: WasmTarget): List<String> {
+            val suffix = when (target) {
+                WasmTarget.JS -> "-js"
+                WasmTarget.WASI -> "-wasi"
+                else -> error("Unexpected wasi target")
+            }
+            return listOf(System.getProperty("kotlin.wasm$suffix.stdlib.path")!!, System.getProperty("kotlin.wasm$suffix.kotlin.test.path")!!)
         }
 
         fun getKlibDependencies(module: TestModule, testServices: TestServices, kind: DependencyRelation): List<File> {
@@ -158,5 +178,7 @@ class WasmEnvironmentConfigurator(testServices: TestServices) : EnvironmentConfi
         configuration.put(CommonConfigurationKeys.EXPECT_ACTUAL_LINKER, EXPECT_ACTUAL_LINKER in registeredDirectives)
 
         configuration.put(JSConfigurationKeys.WASM_USE_TRAPS_INSTEAD_OF_EXCEPTIONS, DISABLE_WASM_EXCEPTION_HANDLING in registeredDirectives)
+
+        configuration.put(JSConfigurationKeys.WASM_TARGET, WasmTarget.JS)
     }
 }

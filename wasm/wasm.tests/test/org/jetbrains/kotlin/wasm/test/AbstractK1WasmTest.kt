@@ -12,8 +12,11 @@ import org.jetbrains.kotlin.test.frontend.classic.ClassicFrontend2IrConverter
 import org.jetbrains.kotlin.test.frontend.classic.ClassicFrontendFacade
 import org.jetbrains.kotlin.test.frontend.classic.ClassicFrontendOutputArtifact
 import org.jetbrains.kotlin.test.model.*
+import org.jetbrains.kotlin.test.services.EnvironmentConfigurator
+import org.jetbrains.kotlin.test.services.configuration.WasmEnvironmentConfiguratorJs
 import org.jetbrains.kotlin.wasm.test.converters.FirWasmKlibBackendFacade
 import org.jetbrains.kotlin.wasm.test.converters.WasmBackendFacade
+import org.jetbrains.kotlin.wasm.test.handlers.WasmBoxRunner
 
 abstract class AbstractK1WasmTest(
     pathToTestDir: String,
@@ -32,6 +35,12 @@ abstract class AbstractK1WasmTest(
 
     override val afterBackendFacade: Constructor<AbstractTestFacade<BinaryArtifacts.KLib, BinaryArtifacts.Wasm>>
         get() = ::WasmBackendFacade
+
+    override val wasmBoxTestRunner: Constructor<AnalysisHandler<BinaryArtifacts.Wasm>>
+        get() = ::WasmBoxRunner
+
+    override val wasmEnvironmentConfigurator: Constructor<EnvironmentConfigurator>
+        get() = ::WasmEnvironmentConfiguratorJs
 }
 
 open class AbstractK1WasmCodegenBoxTest : AbstractK1WasmTest(

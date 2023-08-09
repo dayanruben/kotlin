@@ -196,6 +196,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         }
 
         @Test
+        @TestMetadata("compilerCrashParameterType.kt")
+        public void testCompilerCrashParameterType() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/compilerCrashParameterType.kt");
+        }
+
+        @Test
         @TestMetadata("Constants.kt")
         public void testConstants() throws Exception {
             runTest("compiler/testData/diagnostics/tests/Constants.kt");
@@ -23011,6 +23017,28 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("withOtherIncomatibilities.kt")
                 public void testWithOtherIncomatibilities() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/withOtherIncomatibilities.kt");
+                }
+            }
+
+            @Nested
+            @TestMetadata("compiler/testData/diagnostics/tests/multiplatform/complexMatchings")
+            @TestDataPath("$PROJECT_ROOT")
+            public class ComplexMatchings {
+                @Test
+                public void testAllFilesPresentInComplexMatchings() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/multiplatform/complexMatchings"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);
+                }
+
+                @Test
+                @TestMetadata("expectCtorlessFinalToActualObject.kt")
+                public void testExpectCtorlessFinalToActualObject() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/complexMatchings/expectCtorlessFinalToActualObject.kt");
+                }
+
+                @Test
+                @TestMetadata("expectCtorlessFinalToActualObjectViaTypealias.kt")
+                public void testExpectCtorlessFinalToActualObjectViaTypealias() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/complexMatchings/expectCtorlessFinalToActualObjectViaTypealias.kt");
                 }
             }
 

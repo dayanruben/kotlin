@@ -44,6 +44,8 @@ import org.jetbrains.kotlin.incremental.components.InlineConstTracker
 import org.jetbrains.kotlin.incremental.components.LookupTracker
 import org.jetbrains.kotlin.ir.backend.js.*
 import org.jetbrains.kotlin.js.analyze.TopDownAnalyzerFacadeForJS
+import org.jetbrains.kotlin.js.config.JSConfigurationKeys
+import org.jetbrains.kotlin.js.config.WasmTarget
 import org.jetbrains.kotlin.library.unresolvedDependencies
 import org.jetbrains.kotlin.load.java.lazy.SingleModuleClassResolver
 import org.jetbrains.kotlin.load.kotlin.ModuleVisibilityManager
@@ -342,10 +344,16 @@ class ClassicFrontendFacade(
         dependencyDescriptors: List<ModuleDescriptor>,
         friendsDescriptors: List<ModuleDescriptor>,
     ): AnalysisResult {
+        val suffix = when (configuration.get(JSConfigurationKeys.WASM_TARGET, WasmTarget.JS)) {
+            WasmTarget.JS -> "-js"
+            WasmTarget.WASI -> "-wasi"
+            else -> error("Unexpected wasi target")
+        }
+
         val runtimeKlibsNames =
             listOfNotNull(
-                System.getProperty("kotlin.wasm.stdlib.path")!!,
-                System.getProperty("kotlin.wasm.kotlin.test.path")!!
+                System.getProperty("kotlin.wasm$suffix.stdlib.path")!!,
+                System.getProperty("kotlin.wasm$suffix.kotlin.test.path")!!
             ).map {
                 File(it).absolutePath
             }
@@ -356,7 +364,9 @@ class ClassicFrontendFacade(
         val allDependencies = runtimeKlibs + dependencyDescriptors + friendLibraries + friendsDescriptors + transitiveLibraries
 
         val builtInModuleDescriptor = allDependencies.firstNotNullOfOrNull { it.builtIns }?.builtInsModule
-        return TopDownAnalyzerFacadeForWasm.analyzeFiles(
+        val analyzerFacade = TopDownAnalyzerFacadeForWasm.facadeFor(configuration.get(JSConfigurationKeys.WASM_TARGET))
+
+        return analyzerFacade.analyzeFiles(
             files,
             project,
             configuration,

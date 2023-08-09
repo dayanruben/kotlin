@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.fir.expressions.FirAnnotation
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.lexer.KtKeywordToken
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
+import org.jetbrains.kotlin.metadata.deserialization.VersionRequirement.Version
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -100,6 +101,10 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
     interface UnsupportedFeature : KtFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = UnsupportedFeature::class
         val unsupportedFeature: Pair<LanguageFeature, LanguageVersionSettings>
+    }
+
+    interface UnsupportedSuspendTest : KtFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = UnsupportedSuspendTest::class
     }
 
     interface NewInferenceError : KtFirDiagnostic<PsiElement> {
@@ -268,6 +273,22 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
     interface Deprecation : KtFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = Deprecation::class
         val reference: KtSymbol
+        val message: String
+    }
+
+    interface VersionRequirementDeprecationError : KtFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = VersionRequirementDeprecationError::class
+        val reference: KtSymbol
+        val version: Version
+        val currentVersion: String
+        val message: String
+    }
+
+    interface VersionRequirementDeprecation : KtFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = VersionRequirementDeprecation::class
+        val reference: KtSymbol
+        val version: Version
+        val currentVersion: String
         val message: String
     }
 

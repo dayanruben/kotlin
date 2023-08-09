@@ -14,10 +14,7 @@ import org.jetbrains.kotlin.analysis.api.diagnostics.KtDiagnostic
 import org.jetbrains.kotlin.analysis.api.fir.KtFirAnalysisSession
 import org.jetbrains.kotlin.analysis.api.impl.base.util.KtCompiledFileForOutputFile
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
-import org.jetbrains.kotlin.analysis.low.level.api.fir.api.DiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.low.level.api.fir.api.LLFirResolveSession
-import org.jetbrains.kotlin.analysis.low.level.api.fir.api.collectDiagnosticsForFile
-import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getOrBuildFirFile
+import org.jetbrains.kotlin.analysis.low.level.api.fir.api.*
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.targets.LLFirWholeFileResolveTarget
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.targets.resolve
 import org.jetbrains.kotlin.analysis.low.level.api.fir.compile.CodeFragmentCapturedValueAnalyzer
@@ -41,23 +38,34 @@ import org.jetbrains.kotlin.diagnostics.KtPsiDiagnostic
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.fir.backend.*
 import org.jetbrains.kotlin.fir.backend.jvm.*
-import org.jetbrains.kotlin.fir.declarations.FirFile
-import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
+import org.jetbrains.kotlin.fir.declarations.FirDeclaration
+import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.pipeline.applyIrGenerationExtensions
 import org.jetbrains.kotlin.fir.pipeline.signatureComposerForJvmFir2Ir
+import org.jetbrains.kotlin.fir.psi
 import org.jetbrains.kotlin.fir.references.FirReference
 import org.jetbrains.kotlin.fir.references.FirThisReference
 import org.jetbrains.kotlin.fir.references.toResolvedSymbol
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
+import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.PsiIrFileEntry
 import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmIrMangler
-import org.jetbrains.kotlin.ir.declarations.IrClass
-import org.jetbrains.kotlin.ir.declarations.IrConstructor
-import org.jetbrains.kotlin.ir.declarations.IrFunction
-import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
+import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
+import org.jetbrains.kotlin.ir.descriptors.IrBasedDeclarationDescriptor
+import org.jetbrains.kotlin.ir.descriptors.IrBasedReceiverParameterDescriptor
+import org.jetbrains.kotlin.ir.descriptors.IrBasedValueParameterDescriptor
+import org.jetbrains.kotlin.ir.descriptors.IrBasedVariableDescriptor
+import org.jetbrains.kotlin.ir.expressions.*
+import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
+import org.jetbrains.kotlin.ir.symbols.IrSymbol
+import org.jetbrains.kotlin.ir.types.IrSimpleType
+import org.jetbrains.kotlin.ir.util.classId
 import org.jetbrains.kotlin.ir.util.StubGeneratorExtensions
+import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
+import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
+import org.jetbrains.kotlin.ir.visitors.acceptVoid
 import org.jetbrains.kotlin.load.kotlin.toSourceElement
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -66,7 +74,9 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi2ir.generators.fragments.EvaluatorFragmentInfo
 import org.jetbrains.kotlin.resolve.source.PsiSourceFile
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedContainerSource
+import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
+import java.util.Collections
 
 internal class KtFirCompilerFacility(
     override val analysisSession: KtFirAnalysisSession
@@ -147,6 +157,8 @@ internal class KtFirCompilerFacility(
             initializedIrBuiltIns = null
         )
 
+        patchCodeFragmentIr(fir2IrResult)
+
         ProgressManager.checkCanceled()
 
         val irGeneratorExtensions = IrGenerationExtension.getInstances(project)
@@ -193,11 +205,80 @@ internal class KtFirCompilerFacility(
             }
 
             val outputFiles = generationState.factory.asList().map(::KtCompiledFileForOutputFile)
-            val capturedValues = codeFragmentMappings?.capturedValues ?: emptyList()
+            val capturedValues = buildList {
+                if (codeFragmentMappings != null) {
+                    addAll(codeFragmentMappings.capturedValues)
+                }
+                for ((_, _, descriptor) in generationState.newFragmentCaptureParameters) {
+                    if (descriptor is IrBasedDeclarationDescriptor<*>) {
+                        addIfNotNull(computeAdditionalCodeFragmentMapping(descriptor))
+                    }
+                }
+            }
             return KtCompilationResult.Success(outputFiles, capturedValues)
         } finally {
             generationState.destroy()
         }
+    }
+
+    private fun patchCodeFragmentIr(fir2IrResult: Fir2IrResult) {
+        fun isCodeFragmentFile(irFile: IrFile): Boolean {
+            val firFiles = (irFile.metadata as? FirMetadataSource.File)?.files ?: return false
+            return firFiles.any { it.psi is KtCodeFragment }
+        }
+
+        val (irCodeFragmentFiles, irOrdinaryFiles) = fir2IrResult.irModuleFragment.files.partition(::isCodeFragmentFile)
+
+        // Collect original declarations from the context files
+        val collectingVisitor = IrDeclarationMappingCollectingVisitor()
+        irOrdinaryFiles.forEach { it.acceptVoid(collectingVisitor) }
+
+        // Replace duplicate symbols with the original ones
+        val patchingVisitor = IrDeclarationPatchingVisitor(collectingVisitor.mappings)
+        irCodeFragmentFiles.forEach { it.acceptVoid(patchingVisitor) }
+    }
+
+    private fun computeAdditionalCodeFragmentMapping(descriptor: IrBasedDeclarationDescriptor<*>): CodeFragmentCapturedValue? {
+        val owner = descriptor.owner
+
+        if (descriptor is IrBasedReceiverParameterDescriptor && owner is IrValueParameter) {
+            val receiverClass = (owner.type as? IrSimpleType)?.classifier as? IrClassSymbol
+            val receiverClassId = receiverClass?.owner?.classId
+
+            if (receiverClassId != null) {
+                if (owner.index >= 0) {
+                    val labelName = receiverClassId.shortClassName
+                    return CodeFragmentCapturedValue.ContextReceiver(owner.index, labelName, isCrossingInlineBounds = true)
+                }
+
+                val parent = owner.parent
+                if (parent is IrFunction) {
+                    if (parent.dispatchReceiverParameter == owner) {
+                        return CodeFragmentCapturedValue.ContainingClass(receiverClassId, isCrossingInlineBounds = true)
+                    }
+
+                    return CodeFragmentCapturedValue.ExtensionReceiver(parent.name.asString(), isCrossingInlineBounds = true)
+                }
+            }
+        }
+
+        if (descriptor is IrBasedVariableDescriptor && owner is IrVariable) {
+            val name = owner.name
+            val isMutated = false // TODO capture the usage somehow
+
+            if (owner.origin == IrDeclarationOrigin.PROPERTY_DELEGATE) {
+                return CodeFragmentCapturedValue.LocalDelegate(name, isMutated, isCrossingInlineBounds = true)
+            }
+
+            return CodeFragmentCapturedValue.Local(name, isMutated, isCrossingInlineBounds = true)
+        }
+
+        if (descriptor is IrBasedValueParameterDescriptor && owner is IrValueParameter) {
+            val name = owner.name
+            return CodeFragmentCapturedValue.Local(name, isMutated = false, isCrossingInlineBounds = true)
+        }
+
+        return null
     }
 
     private fun getFullyResolvedFirFile(file: KtFile): FirFile {
@@ -367,5 +448,97 @@ internal class KtFirCompilerFacility(
             evaluatorFragmentInfoForPsi2Ir = evaluatorFragmentInfoForPsi2Ir,
             ideCodegenSettings = ideCodegenSettings,
         )
+    }
+}
+
+private class IrDeclarationMappingCollectingVisitor : IrElementVisitorVoid {
+    private val collectedMappings = HashMap<FirDeclaration, IrDeclaration>()
+
+    val mappings: Map<FirDeclaration, IrDeclaration>
+        get() = Collections.unmodifiableMap(collectedMappings)
+
+    override fun visitElement(element: IrElement) {
+        element.acceptChildrenVoid(this)
+    }
+
+    override fun visitDeclaration(declaration: IrDeclarationBase) {
+        dumpDeclaration(declaration)
+        super.visitDeclaration(declaration)
+    }
+
+    private fun dumpDeclaration(declaration: IrDeclaration) {
+        if (declaration is IrMetadataSourceOwner) {
+            val fir = (declaration.metadata as? FirMetadataSource)?.fir
+            if (fir != null) {
+                collectedMappings.putIfAbsent(fir, declaration)
+            }
+        }
+    }
+}
+
+private class IrDeclarationPatchingVisitor(private val mapping: Map<FirDeclaration, IrDeclaration>) : IrElementVisitorVoid {
+    override fun visitElement(element: IrElement) {
+        element.acceptChildrenVoid(this)
+    }
+
+    override fun visitFieldAccess(expression: IrFieldAccessExpression) {
+        patchIfNeeded(expression.symbol) { expression.symbol = it }
+        patchIfNeeded(expression.superQualifierSymbol) { expression.superQualifierSymbol = it }
+        super.visitFieldAccess(expression)
+    }
+
+    override fun visitValueAccess(expression: IrValueAccessExpression) {
+        patchIfNeeded(expression.symbol) { expression.symbol = it }
+        super.visitValueAccess(expression)
+    }
+
+    override fun visitGetEnumValue(expression: IrGetEnumValue) {
+        patchIfNeeded(expression.symbol) { expression.symbol = it }
+        super.visitGetEnumValue(expression)
+    }
+
+    override fun visitGetObjectValue(expression: IrGetObjectValue) {
+        patchIfNeeded(expression.symbol) { expression.symbol = it }
+        super.visitGetObjectValue(expression)
+    }
+
+    override fun visitCall(expression: IrCall) {
+        patchIfNeeded(expression.symbol) { expression.symbol = it }
+        patchIfNeeded(expression.superQualifierSymbol) { expression.superQualifierSymbol = it }
+        super.visitCall(expression)
+    }
+
+    override fun visitConstructorCall(expression: IrConstructorCall) {
+        patchIfNeeded(expression.symbol) { expression.symbol = it }
+        super.visitConstructorCall(expression)
+    }
+
+    override fun visitPropertyReference(expression: IrPropertyReference) {
+        patchIfNeeded(expression.symbol) { expression.symbol = it }
+        patchIfNeeded(expression.getter) { expression.getter = it }
+        patchIfNeeded(expression.setter) { expression.setter = it }
+        super.visitPropertyReference(expression)
+    }
+
+    override fun visitFunctionReference(expression: IrFunctionReference) {
+        patchIfNeeded(expression.symbol) { expression.symbol = it }
+        patchIfNeeded(expression.reflectionTarget) { expression.reflectionTarget = it }
+        super.visitFunctionReference(expression)
+    }
+
+    override fun visitClassReference(expression: IrClassReference) {
+        patchIfNeeded(expression.symbol) { expression.symbol = it }
+        super.visitClassReference(expression)
+    }
+
+    private inline fun <reified T : IrSymbol> patchIfNeeded(irSymbol: T?, patcher: (T) -> Unit) {
+        if (irSymbol != null) {
+            val irDeclaration = irSymbol.owner as? IrMetadataSourceOwner ?: return
+            val firDeclaration = (irDeclaration.metadata as? FirMetadataSource)?.fir ?: return
+            val correctedIrSymbol = mapping[firDeclaration]?.symbol as? T ?: return
+            if (correctedIrSymbol != irSymbol) {
+                patcher(correctedIrSymbol)
+            }
+        }
     }
 }

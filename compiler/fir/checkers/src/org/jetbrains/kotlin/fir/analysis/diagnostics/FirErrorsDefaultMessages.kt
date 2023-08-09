@@ -27,10 +27,12 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.FUNC
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.MODULE_DATA
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.NAME_OF_CONTAINING_DECLARATION_OR_FILE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.NAME_OF_DECLARATION_OR_FILE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.OPTIONAL_SENTENCE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.RENDER_CLASS_OR_OBJECT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.RENDER_CLASS_OR_OBJECT_NAME
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.RENDER_COLLECTION_OF_TYPES
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.RENDER_TYPE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.REQUIRE_KOTLIN_VERSION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.SYMBOL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.SYMBOLS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirDiagnosticRenderers.SYMBOLS_ON_NEWLINE_WITH_INDENT
@@ -183,6 +185,8 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DEPRECATED_SINCE_
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DEPRECATED_TYPE_PARAMETER_SYNTAX
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DEPRECATION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DEPRECATION_ERROR
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.VERSION_REQUIREMENT_DEPRECATION
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.VERSION_REQUIREMENT_DEPRECATION_ERROR
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DESERIALIZATION_ERROR
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DIVISION_BY_ZERO
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.DSL_SCOPE_VIOLATION
@@ -603,6 +607,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNSUPPORTED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNSUPPORTED_CLASS_LITERALS_WITH_EMPTY_LHS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNSUPPORTED_CONTEXTUAL_DECLARATION_CALL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNSUPPORTED_FEATURE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNSUPPORTED_SUSPEND_TEST
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNUSED_VARIABLE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UPPER_BOUND_IS_EXTENSION_FUNCTION_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UPPER_BOUND_VIOLATED
@@ -671,6 +676,7 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         // Meta-errors
         map.put(UNSUPPORTED, "Unsupported [{0}]", TO_STRING)
         map.put(UNSUPPORTED_FEATURE, "{0}", LanguageFeatureMessageRenderer(LanguageFeatureMessageRenderer.Type.UNSUPPORTED))
+        map.put(UNSUPPORTED_SUSPEND_TEST, "'suspend' functions annotated with @kotlin.test.Test are unsupported")
         map.put(NEW_INFERENCE_ERROR, "New inference error [{0}]", STRING)
 
         // Miscellaneous
@@ -697,6 +703,8 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         map.put(VAL_OR_VAR_ON_SECONDARY_CONSTRUCTOR_PARAMETER, "''{0}'' on secondary constructor parameter is not allowed", TO_STRING)
         map.put(DEPRECATION, "''{0}'' is deprecated. {1}", SYMBOL, STRING)
         map.put(DEPRECATION_ERROR, "''{0}'' is deprecated. {1}", SYMBOL, STRING)
+        map.put(VERSION_REQUIREMENT_DEPRECATION, "''{0}''{1} should not be used in Kotlin {2}.{3}", SYMBOL, REQUIRE_KOTLIN_VERSION, STRING, OPTIONAL_SENTENCE)
+        map.put(VERSION_REQUIREMENT_DEPRECATION_ERROR, "''{0}''{1} cannot be used in Kotlin {2}.{3}", SYMBOL, REQUIRE_KOTLIN_VERSION, STRING, OPTIONAL_SENTENCE)
         map.put(TYPEALIAS_EXPANSION_DEPRECATION, "''{0}'' uses ''{1}'', which is deprecated. {2}", SYMBOL, SYMBOL, STRING)
         map.put(TYPEALIAS_EXPANSION_DEPRECATION_ERROR, "''{0}'' uses ''{1}'', which is an error. {2}", SYMBOL, SYMBOL, STRING)
 
