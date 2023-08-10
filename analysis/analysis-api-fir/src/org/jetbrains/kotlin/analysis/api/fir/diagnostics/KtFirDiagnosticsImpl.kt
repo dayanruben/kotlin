@@ -584,11 +584,22 @@ internal class ClassInheritsJavaSealedClassImpl(
     token: KtLifetimeToken,
 ) : KtAbstractFirDiagnostic<KtTypeReference>(firDiagnostic, token), KtFirDiagnostic.ClassInheritsJavaSealedClass
 
+internal class UnsupportedSealedFunInterfaceImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KtLifetimeToken,
+) : KtAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KtFirDiagnostic.UnsupportedSealedFunInterface
+
 internal class SupertypeNotAClassOrInterfaceImpl(
     override val reason: String,
     firDiagnostic: KtPsiDiagnostic,
     token: KtLifetimeToken,
 ) : KtAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KtFirDiagnostic.SupertypeNotAClassOrInterface
+
+internal class UnsupportedInheritanceFromJavaMemberReferencingKotlinFunctionImpl(
+    override val symbol: KtSymbol,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KtLifetimeToken,
+) : KtAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KtFirDiagnostic.UnsupportedInheritanceFromJavaMemberReferencingKotlinFunction
 
 internal class CyclicInheritanceHierarchyImpl(
     firDiagnostic: KtPsiDiagnostic,
@@ -2957,7 +2968,7 @@ internal class ActualTypeAliasToNothingImpl(
 internal class ActualFunctionWithDefaultArgumentsImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KtLifetimeToken,
-) : KtAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KtFirDiagnostic.ActualFunctionWithDefaultArguments
+) : KtAbstractFirDiagnostic<KtFunction>(firDiagnostic, token), KtFirDiagnostic.ActualFunctionWithDefaultArguments
 
 internal class DefaultArgumentsInExpectWithActualTypealiasImpl(
     override val expectClassSymbol: KtClassLikeSymbol,
@@ -3041,6 +3052,21 @@ internal class ActualAnnotationsNotMatchExpectImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KtLifetimeToken,
 ) : KtAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KtFirDiagnostic.ActualAnnotationsNotMatchExpect
+
+internal class OptionalDeclarationOutsideOfAnnotationEntryImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KtLifetimeToken,
+) : KtAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KtFirDiagnostic.OptionalDeclarationOutsideOfAnnotationEntry
+
+internal class OptionalDeclarationUsageInNonCommonSourceImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KtLifetimeToken,
+) : KtAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KtFirDiagnostic.OptionalDeclarationUsageInNonCommonSource
+
+internal class OptionalExpectationNotOnExpectedImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KtLifetimeToken,
+) : KtAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KtFirDiagnostic.OptionalExpectationNotOnExpected
 
 internal class InitializerRequiredForDestructuringDeclarationImpl(
     firDiagnostic: KtPsiDiagnostic,

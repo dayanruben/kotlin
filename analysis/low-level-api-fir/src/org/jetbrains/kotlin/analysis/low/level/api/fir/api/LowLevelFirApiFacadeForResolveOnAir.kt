@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.util.codeFragment
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.errorWithFirSpecificEntries
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.isScriptStatement
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.originalDeclaration
+import org.jetbrains.kotlin.analysis.low.level.api.fir.util.originalKtFile
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import org.jetbrains.kotlin.analysis.utils.printer.parentOfType
 import org.jetbrains.kotlin.analysis.utils.printer.parentsOfType
@@ -71,13 +72,24 @@ object LowLevelFirApiFacadeForResolveOnAir {
             fake.originalDeclaration = original
         }
 
+        /**
+         * We assume that [targetDeclaration] should have the same number of declarations
+         *
+         * @see restoreOriginalDeclarationsInScript
+         */
         if (targetDeclaration is KtScript && originalDeclaration is KtScript) {
-            originalDeclaration.blockExpression.statements.zip(targetDeclaration.blockExpression.statements) { original, fake ->
-                if (original is KtDeclaration && fake is KtDeclaration) {
-                    fake.originalDeclaration = original
-                }
+            val originalStatements = originalDeclaration.declarationSequence()
+            val newStatements = targetDeclaration.declarationSequence()
+            originalStatements.zip(newStatements) { original, fake ->
+                fake.originalDeclaration = original
             }
         }
+    }
+
+    private fun KtScript.declarationSequence(): Sequence<KtDeclaration> {
+        val sequence = blockExpression.statements.asSequence().filter { it !is KtScriptInitializer && it is KtDeclaration }
+        @Suppress("UNCHECKED_CAST")
+        return sequence as Sequence<KtDeclaration>
     }
 
     fun <T : KtElement> onAirResolveElement(
@@ -189,6 +201,8 @@ object LowLevelFirApiFacadeForResolveOnAir {
     ): LLFirResolveSession {
         require(originalFirResolveSession is LLFirResolvableResolveSession)
         require(elementToAnalyze !is KtFile) { "KtFile for dependency element not supported" }
+
+        elementToAnalyze.containingKtFile.originalKtFile = originalKtFile
 
         val minimalCopiedDeclaration = elementToAnalyze.getNonLocalContainingOrThisDeclarationCodeFragmentAware {
             it.isApplicableForOnAirResolve()
@@ -335,11 +349,7 @@ object LowLevelFirApiFacadeForResolveOnAir {
          * We shouldn't touch script declarations because they're independent of a script
          */
         if (newFirDeclaration is FirScript && originalFirDeclaration is FirScript) {
-            val newStatements = originalFirDeclaration.statements.zip(newFirDeclaration.statements).map { (original, copied) ->
-                original.takeUnless(FirStatement::isScriptStatement) ?: copied
-            }
-
-            newFirDeclaration.replaceStatements(newStatements)
+            restoreOriginalDeclarationsInScript(originalScript = originalFirDeclaration, newScript = newFirDeclaration)
         }
 
         session.moduleComponents.firModuleLazyDeclarationResolver.runLazyDesignatedOnAirResolve(
@@ -349,6 +359,59 @@ object LowLevelFirApiFacadeForResolveOnAir {
         )
 
         return newFirDeclaration
+    }
+
+    /**
+     * We assume that [newScript] has the same declarations as [originalScript]
+     */
+    private fun restoreOriginalDeclarationsInScript(originalScript: FirScript, newScript: FirScript) {
+        val updatedStatements = ArrayList<FirStatement>(newScript.statements.size)
+        val originalDeclarations = originalScript.statements.iterator()
+        for (recreatedStatement in newScript.statements) {
+            updatedStatements += if (recreatedStatement.isScriptStatement) {
+                recreatedStatement
+            } else {
+                originalDeclarations.nextDeclaration() ?: scriptDeclarationInconsistencyError(originalScript, newScript)
+            }
+        }
+
+        val nextDeclaration = originalDeclarations.nextDeclaration()
+        if (nextDeclaration != null) {
+            scriptDeclarationInconsistencyError(originalScript, newScript)
+        }
+
+        newScript.replaceStatements(updatedStatements)
+    }
+
+    private fun scriptDeclarationInconsistencyError(originalScript: FirScript, newScript: FirScript): Nothing {
+        val originalDeclarations = originalScript.statements.filterNot(FirStatement::isScriptStatement)
+        val newDeclarations = newScript.statements.filterNot(FirStatement::isScriptStatement)
+        errorWithAttachment("New script has ${if (newDeclarations.size > originalDeclarations.size) "more" else "less"} declarations") {
+            withFirEntry("originalScript", originalScript)
+            withFirEntry("newScript", newScript)
+            withEntryGroup("originalDeclarations") {
+                for ((index, declaration) in originalDeclarations.withIndex()) {
+                    withFirEntry(index.toString(), declaration)
+                }
+            }
+
+            withEntryGroup("newDeclarations") {
+                for ((index, declaration) in newDeclarations.withIndex()) {
+                    withFirEntry(index.toString(), declaration)
+                }
+            }
+        }
+    }
+
+    private fun Iterator<FirStatement>.nextDeclaration(): FirStatement? {
+        while (hasNext()) {
+            val statement = next()
+            if (statement.isScriptStatement) continue
+
+            return statement
+        }
+
+        return null
     }
 
     private fun computeDesignation(originalDeclaration: KtElement, originalFirFile: FirFile): FirElementFinder.FirDeclarationDesignation? {

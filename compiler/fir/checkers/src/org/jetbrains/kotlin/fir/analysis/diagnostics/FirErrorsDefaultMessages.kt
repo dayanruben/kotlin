@@ -121,6 +121,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CAST_NEVER_SUCCEE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CATCH_PARAMETER_WITH_DEFAULT_VALUE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CLASS_CANNOT_BE_EXTENDED_DIRECTLY
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CLASS_INHERITS_JAVA_SEALED_CLASS
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNSUPPORTED_SEALED_FUN_INTERFACE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CLASS_IN_SUPERTYPE_FOR_ENUM
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.CLASS_LITERAL_LHS_NOT_A_CLASS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.COMMA_IN_WHEN_CONDITION_WITHOUT_ARGUMENT
@@ -434,6 +435,9 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.NULL_FOR_NONNULL_
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ONLY_ONE_CLASS_BOUND_ALLOWED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.OPERATOR_MODIFIER_REQUIRED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.OPERATOR_RENAMED_ON_IMPORT
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.OPTIONAL_DECLARATION_OUTSIDE_OF_ANNOTATION_ENTRY
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.OPTIONAL_DECLARATION_USAGE_IN_NON_COMMON_SOURCE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.OPTIONAL_EXPECTATION_NOT_ON_EXPECTED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.OPT_IN_ARGUMENT_IS_NOT_MARKER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.OPT_IN_CAN_ONLY_BE_USED_AS_ANNOTATION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.OPT_IN_IS_NOT_ENABLED
@@ -608,6 +612,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNSUPPORTED_CLASS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNSUPPORTED_CONTEXTUAL_DECLARATION_CALL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNSUPPORTED_FEATURE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNSUPPORTED_SUSPEND_TEST
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNSUPPORTED_INHERITANCE_FROM_JAVA_MEMBER_REFERENCING_KOTLIN_FUNCTION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNUSED_VARIABLE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UPPER_BOUND_IS_EXTENSION_FUNCTION_TYPE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UPPER_BOUND_VIOLATED
@@ -818,8 +823,14 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
         )
         map.put(SEALED_INHERITOR_IN_DIFFERENT_MODULE, "Inheritance of sealed classes or interfaces from different module is prohibited")
         map.put(CLASS_INHERITS_JAVA_SEALED_CLASS, "Inheritance of Java sealed classes is prohibited")
+        map.put(UNSUPPORTED_SEALED_FUN_INTERFACE, "'sealed fun interface' is unsupported")
 
         map.put(SUPERTYPE_NOT_A_CLASS_OR_INTERFACE, "Supertype is not a class or interface", TO_STRING)
+        map.put(
+            UNSUPPORTED_INHERITANCE_FROM_JAVA_MEMBER_REFERENCING_KOTLIN_FUNCTION,
+            "Inheritance of a Java member referencing 'kotlin.jvm.functions.FunctionN': {0} is unsupported",
+            TO_STRING,
+        )
         map.put(CYCLIC_INHERITANCE_HIERARCHY, "There's a cycle in the inheritance hierarchy for this type")
         map.put(
             EXPANDED_TYPE_CANNOT_BE_INHERITED,
@@ -1912,6 +1923,18 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             FirExpectActualAnnotationIncompatibilityDiagnosticRenderers.SYMBOL_RENDERER,
             FirExpectActualAnnotationIncompatibilityDiagnosticRenderers.SYMBOL_RENDERER,
             FirExpectActualAnnotationIncompatibilityDiagnosticRenderers.INCOMPATIBILITY,
+        )
+        map.put(
+            OPTIONAL_DECLARATION_OUTSIDE_OF_ANNOTATION_ENTRY,
+            "Declaration annotated with '@OptionalExpectation' can only be used inside an annotation entry"
+        )
+        map.put(
+            OPTIONAL_DECLARATION_USAGE_IN_NON_COMMON_SOURCE,
+            "Declaration annotated with '@OptionalExpectation' can only be used in common module sources"
+        )
+        map.put(
+            OPTIONAL_EXPECTATION_NOT_ON_EXPECTED,
+            "'@OptionalExpectation' can only be used on an expected annotation class"
         )
 
         // Destructuring declaration

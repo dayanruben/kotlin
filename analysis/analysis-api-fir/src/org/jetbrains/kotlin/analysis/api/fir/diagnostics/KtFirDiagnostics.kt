@@ -497,9 +497,18 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = ClassInheritsJavaSealedClass::class
     }
 
+    interface UnsupportedSealedFunInterface : KtFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = UnsupportedSealedFunInterface::class
+    }
+
     interface SupertypeNotAClassOrInterface : KtFirDiagnostic<KtElement> {
         override val diagnosticClass get() = SupertypeNotAClassOrInterface::class
         val reason: String
+    }
+
+    interface UnsupportedInheritanceFromJavaMemberReferencingKotlinFunction : KtFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = UnsupportedInheritanceFromJavaMemberReferencingKotlinFunction::class
+        val symbol: KtSymbol
     }
 
     interface CyclicInheritanceHierarchy : KtFirDiagnostic<PsiElement> {
@@ -2450,7 +2459,7 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = ActualTypeAliasToNothing::class
     }
 
-    interface ActualFunctionWithDefaultArguments : KtFirDiagnostic<PsiElement> {
+    interface ActualFunctionWithDefaultArguments : KtFirDiagnostic<KtFunction> {
         override val diagnosticClass get() = ActualFunctionWithDefaultArguments::class
     }
 
@@ -2522,6 +2531,18 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         val expectSymbol: KtSymbol
         val actualSymbol: KtSymbol
         val incompatibilityType: ExpectActualAnnotationsIncompatibilityType<FirAnnotation>
+    }
+
+    interface OptionalDeclarationOutsideOfAnnotationEntry : KtFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = OptionalDeclarationOutsideOfAnnotationEntry::class
+    }
+
+    interface OptionalDeclarationUsageInNonCommonSource : KtFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = OptionalDeclarationUsageInNonCommonSource::class
+    }
+
+    interface OptionalExpectationNotOnExpected : KtFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = OptionalExpectationNotOnExpected::class
     }
 
     interface InitializerRequiredForDestructuringDeclaration : KtFirDiagnostic<KtDestructuringDeclaration> {

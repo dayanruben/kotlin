@@ -650,9 +650,22 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirErrors.UNSUPPORTED_SEALED_FUN_INTERFACE) { firDiagnostic ->
+        UnsupportedSealedFunInterfaceImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
     add(FirErrors.SUPERTYPE_NOT_A_CLASS_OR_INTERFACE) { firDiagnostic ->
         SupertypeNotAClassOrInterfaceImpl(
             firDiagnostic.a,
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.UNSUPPORTED_INHERITANCE_FROM_JAVA_MEMBER_REFERENCING_KOTLIN_FUNCTION) { firDiagnostic ->
+        UnsupportedInheritanceFromJavaMemberReferencingKotlinFunctionImpl(
+            firSymbolBuilder.buildSymbol(firDiagnostic.a),
             firDiagnostic as KtPsiDiagnostic,
             token,
         )
@@ -3601,6 +3614,24 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             firSymbolBuilder.buildSymbol(firDiagnostic.a),
             firSymbolBuilder.buildSymbol(firDiagnostic.b),
             firDiagnostic.c,
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.OPTIONAL_DECLARATION_OUTSIDE_OF_ANNOTATION_ENTRY) { firDiagnostic ->
+        OptionalDeclarationOutsideOfAnnotationEntryImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.OPTIONAL_DECLARATION_USAGE_IN_NON_COMMON_SOURCE) { firDiagnostic ->
+        OptionalDeclarationUsageInNonCommonSourceImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.OPTIONAL_EXPECTATION_NOT_ON_EXPECTED) { firDiagnostic ->
+        OptionalExpectationNotOnExpectedImpl(
             firDiagnostic as KtPsiDiagnostic,
             token,
         )

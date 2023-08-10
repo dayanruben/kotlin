@@ -213,7 +213,9 @@ object FirErrors {
     val SEALED_INHERITOR_IN_DIFFERENT_PACKAGE by error0<KtTypeReference>()
     val SEALED_INHERITOR_IN_DIFFERENT_MODULE by error0<KtTypeReference>()
     val CLASS_INHERITS_JAVA_SEALED_CLASS by error0<KtTypeReference>()
+    val UNSUPPORTED_SEALED_FUN_INTERFACE by error0<PsiElement>()
     val SUPERTYPE_NOT_A_CLASS_OR_INTERFACE by error1<KtElement, String>()
+    val UNSUPPORTED_INHERITANCE_FROM_JAVA_MEMBER_REFERENCING_KOTLIN_FUNCTION by error1<PsiElement, FirBasedSymbol<*>>(SourceElementPositioningStrategies.DECLARATION_NAME)
     val CYCLIC_INHERITANCE_HIERARCHY by error0<PsiElement>()
     val EXPANDED_TYPE_CANNOT_BE_INHERITED by error1<KtTypeReference, ConeKotlinType>()
     val PROJECTION_IN_IMMEDIATE_ARGUMENT_TO_SUPERTYPE by error0<KtModifierListOwner>(SourceElementPositioningStrategies.VARIANCE_MODIFIER)
@@ -633,7 +635,7 @@ object FirErrors {
     val ACTUAL_TYPE_ALIAS_WITH_COMPLEX_SUBSTITUTION by error0<KtTypeAlias>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE)
     val ACTUAL_TYPE_ALIAS_TO_NULLABLE_TYPE by error0<KtTypeAlias>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE)
     val ACTUAL_TYPE_ALIAS_TO_NOTHING by error0<KtTypeAlias>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE)
-    val ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS by error0<PsiElement>()
+    val ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS by error0<KtFunction>(SourceElementPositioningStrategies.PARAMETERS_WITH_DEFAULT_VALUE)
     val DEFAULT_ARGUMENTS_IN_EXPECT_WITH_ACTUAL_TYPEALIAS by error2<KtTypeAlias, FirClassSymbol<*>, Collection<FirCallableSymbol<*>>>()
     val ACTUAL_ANNOTATION_CONFLICTING_DEFAULT_ARGUMENT_VALUE by error1<PsiElement, FirVariableSymbol<*>>()
     val EXPECTED_FUNCTION_SOURCE_WITH_DEFAULT_ARGUMENTS_NOT_FOUND by error0<PsiElement>()
@@ -647,6 +649,9 @@ object FirErrors {
     val EXPECT_ACTUAL_OPT_IN_ANNOTATION by error0<KtNamedDeclaration>(SourceElementPositioningStrategies.EXPECT_ACTUAL_MODIFIER)
     val ACTUAL_TYPEALIAS_TO_SPECIAL_ANNOTATION by error1<KtTypeAlias, ClassId>(SourceElementPositioningStrategies.TYPEALIAS_TYPE_REFERENCE)
     val ACTUAL_ANNOTATIONS_NOT_MATCH_EXPECT by warning3<KtElement, FirBasedSymbol<*>, FirBasedSymbol<*>, ExpectActualAnnotationsIncompatibilityType<FirAnnotation>>(SourceElementPositioningStrategies.DECLARATION_NAME_ONLY)
+    val OPTIONAL_DECLARATION_OUTSIDE_OF_ANNOTATION_ENTRY by error0<PsiElement>()
+    val OPTIONAL_DECLARATION_USAGE_IN_NON_COMMON_SOURCE by error0<PsiElement>()
+    val OPTIONAL_EXPECTATION_NOT_ON_EXPECTED by error0<PsiElement>()
 
     // Destructuring declaration
     val INITIALIZER_REQUIRED_FOR_DESTRUCTURING_DECLARATION by error0<KtDestructuringDeclaration>()

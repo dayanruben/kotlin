@@ -245,8 +245,12 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val SEALED_INHERITOR_IN_DIFFERENT_PACKAGE by error<KtTypeReference>()
         val SEALED_INHERITOR_IN_DIFFERENT_MODULE by error<KtTypeReference>()
         val CLASS_INHERITS_JAVA_SEALED_CLASS by error<KtTypeReference>()
+        val UNSUPPORTED_SEALED_FUN_INTERFACE by error<PsiElement>()
         val SUPERTYPE_NOT_A_CLASS_OR_INTERFACE by error<KtElement> {
             parameter<String>("reason")
+        }
+        val UNSUPPORTED_INHERITANCE_FROM_JAVA_MEMBER_REFERENCING_KOTLIN_FUNCTION by error<PsiElement>(PositioningStrategy.DECLARATION_NAME) {
+            parameter<FirBasedSymbol<*>>("symbol")
         }
         val CYCLIC_INHERITANCE_HIERARCHY by error<PsiElement>()
         val EXPANDED_TYPE_CANNOT_BE_INHERITED by error<KtTypeReference> {
@@ -1180,7 +1184,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val ACTUAL_TYPE_ALIAS_WITH_COMPLEX_SUBSTITUTION by error<KtTypeAlias>(PositioningStrategy.DECLARATION_SIGNATURE)
         val ACTUAL_TYPE_ALIAS_TO_NULLABLE_TYPE by error<KtTypeAlias>(PositioningStrategy.DECLARATION_SIGNATURE)
         val ACTUAL_TYPE_ALIAS_TO_NOTHING by error<KtTypeAlias>(PositioningStrategy.DECLARATION_SIGNATURE)
-        val ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS by error<PsiElement>()
+        val ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS by error<KtFunction>(PositioningStrategy.PARAMETERS_WITH_DEFAULT_VALUE)
         val DEFAULT_ARGUMENTS_IN_EXPECT_WITH_ACTUAL_TYPEALIAS by error<KtTypeAlias> {
             parameter<FirClassSymbol<*>>("expectClassSymbol")
             parameter<Collection<FirCallableSymbol<*>>>("members")
@@ -1232,6 +1236,12 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<Symbol>("actualSymbol")
             parameter<ExpectActualAnnotationsIncompatibilityType<FirAnnotation>>("incompatibilityType")
         }
+
+        val OPTIONAL_DECLARATION_OUTSIDE_OF_ANNOTATION_ENTRY by error<PsiElement>()
+
+        val OPTIONAL_DECLARATION_USAGE_IN_NON_COMMON_SOURCE by error<PsiElement>()
+
+        val OPTIONAL_EXPECTATION_NOT_ON_EXPECTED by error<PsiElement>()
     }
 
     val DESTRUCTING_DECLARATION by object : DiagnosticGroup("Destructuring declaration") {

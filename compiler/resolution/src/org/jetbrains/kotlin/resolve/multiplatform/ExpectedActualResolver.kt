@@ -29,7 +29,7 @@ object ExpectedActualResolver {
                             // TODO: support non-source definitions (e.g. from Java)
                             actual.couldHaveASource
                 }.groupBy { actual ->
-                    AbstractExpectActualCompatibilityChecker.areCompatibleCallables(
+                    AbstractExpectActualCompatibilityChecker.getCallablesCompatibility(
                         expected,
                         actual,
                         parentSubstitutor = null,
@@ -43,7 +43,7 @@ object ExpectedActualResolver {
                 context.findClassifiersFromModule(expected.classId, platformModule, moduleVisibilityFilter).filter { actual ->
                     expected != actual && !actual.isExpect && actual.couldHaveASource
                 }.groupBy { actual ->
-                    AbstractExpectActualCompatibilityChecker.areCompatibleClassifiers(
+                    AbstractExpectActualCompatibilityChecker.getClassifiersCompatibility(
                         expected,
                         actual,
                         context
@@ -54,11 +54,13 @@ object ExpectedActualResolver {
         }
     }
 
-    fun findExpectedForActual(
+    // incremental compilation workaround for KT-60759
+    fun findExpectedForActual_incrementalCompilationWorkaround(
         actual: MemberDescriptor,
-        moduleFilter: (ModuleDescriptor) -> Boolean = allModulesProvidingExpectsFor(actual.module)
+        moduleFilter: (ModuleDescriptor) -> Boolean = allModulesProvidingExpectsFor(actual.module),
+        shouldCheckAbsenceOfDefaultParamsInActual: Boolean = false,
     ): Map<ExpectActualCompatibility<MemberDescriptor>, List<MemberDescriptor>>? {
-        val context = ClassicExpectActualMatchingContext(actual.module)
+        val context = ClassicExpectActualMatchingContext(actual.module, shouldCheckAbsenceOfDefaultParamsInActual)
         return when (actual) {
             is CallableMemberDescriptor -> {
                 val container = actual.containingDeclaration
@@ -66,7 +68,8 @@ object ExpectedActualResolver {
                     is ClassifierDescriptorWithTypeParameters -> {
                         // TODO: replace with 'singleOrNull' as soon as multi-module diagnostic tests are refactored
                         val expectedClass =
-                            findExpectedForActual(container, moduleFilter)?.values?.firstOrNull()?.firstOrNull() as? ClassDescriptor
+                            findExpectedForActual_incrementalCompilationWorkaround(container, moduleFilter, shouldCheckAbsenceOfDefaultParamsInActual)?.values
+                                ?.firstOrNull()?.firstOrNull() as? ClassDescriptor
                         with(context) {
                             expectedClass?.getMembersForExpectClass(actual.name)?.filterIsInstance<CallableMemberDescriptor>().orEmpty()
                         }
@@ -97,7 +100,7 @@ object ExpectedActualResolver {
                             }
                             else -> null
                         }
-                    AbstractExpectActualCompatibilityChecker.areCompatibleCallables(
+                    AbstractExpectActualCompatibilityChecker.getCallablesCompatibility(
                         expectDeclaration = declaration,
                         actualDeclaration = actual,
                         parentSubstitutor = substitutor,
@@ -111,7 +114,7 @@ object ExpectedActualResolver {
                 context.findClassifiersFromModule(actual.classId, actual.module, moduleFilter).filter { declaration ->
                     actual != declaration && declaration is ClassDescriptor && declaration.isExpect
                 }.groupBy { expected ->
-                    AbstractExpectActualCompatibilityChecker.areCompatibleClassifiers(
+                    AbstractExpectActualCompatibilityChecker.getClassifiersCompatibility(
                         expected as ClassDescriptor,
                         actual,
                         context
@@ -160,11 +163,12 @@ object ExpectedActualResolver {
     }
 }
 
-// FIXME(dsavvinov): review clients, as they won't work properly in HMPP projects
+// FIXME(dsavvinov): review clients, as they won't work properly in HMPP projects. KT-61105
 @JvmOverloads
 fun MemberDescriptor.findCompatibleActualsForExpected(
     platformModule: ModuleDescriptor, moduleFilter: ModuleFilter = allModulesProvidingActualsFor(module, platformModule)
 ): List<MemberDescriptor> =
+    // ?.get(Compatible) is suspicious. Probably, we must check not only Compatible but Incompatible.WeakIncompatible as well
     ExpectedActualResolver.findActualForExpected(this, platformModule, moduleFilter)?.get(Compatible).orEmpty()
 
 @JvmOverloads
@@ -180,7 +184,7 @@ fun MemberDescriptor.findAnyActualsForExpected(
 fun MemberDescriptor.findCompatibleExpectsForActual(
     moduleFilter: ModuleFilter = allModulesProvidingExpectsFor(module)
 ): List<MemberDescriptor> =
-    ExpectedActualResolver.findExpectedForActual(this, moduleFilter)?.get(Compatible).orEmpty()
+    ExpectedActualResolver.findExpectedForActual_incrementalCompilationWorkaround(this, moduleFilter)?.get(Compatible).orEmpty()
 
 fun DeclarationDescriptor.findExpects(): List<MemberDescriptor> {
     if (this !is MemberDescriptor) return emptyList()

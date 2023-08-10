@@ -32,6 +32,7 @@ object CommonDeclarationCheckers : DeclarationCheckers() {
             FirPublishedApiChecker,
             FirOptInMarkedDeclarationChecker,
             FirExpectConsistencyChecker,
+            FirOptionalExpectationDeclarationChecker
         )
 
     override val callableDeclarationCheckers: Set<FirCallableDeclarationChecker>
@@ -105,6 +106,8 @@ object CommonDeclarationCheckers : DeclarationCheckers() {
             FirPrimaryConstructorSuperTypeChecker,
             FirDynamicSupertypeChecker,
             FirEnumCompanionInEnumConstructorCallChecker,
+            FirBadInheritedJavaSignaturesChecker,
+            FirSealedInterfaceAllowedChecker,
         )
 
     override val regularClassCheckers: Set<FirRegularClassChecker>

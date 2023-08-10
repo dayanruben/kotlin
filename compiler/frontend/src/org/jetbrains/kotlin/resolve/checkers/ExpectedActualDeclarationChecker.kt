@@ -270,7 +270,7 @@ class ExpectedActualDeclarationChecker(
         compatibility: Map<ExpectActualCompatibility<MemberDescriptor>, List<MemberDescriptor>>
     ): Boolean {
         return compatibility.values.flatMapTo(hashSetOf()) { it }.all { actual ->
-            val expectedOnes = ExpectedActualResolver.findExpectedForActual(actual, onlyFromThisModule(module))
+            val expectedOnes = ExpectedActualResolver.findExpectedForActual_incrementalCompilationWorkaround(actual, onlyFromThisModule(module))
             expectedOnes != null && Compatible in expectedOnes.keys
         }
     }
@@ -297,7 +297,8 @@ class ExpectedActualDeclarationChecker(
         trace: BindingTrace,
         moduleVisibilityFilter: ModuleFilter
     ) {
-        val compatibility = ExpectedActualResolver.findExpectedForActual(descriptor, moduleVisibilityFilter)
+        val compatibility = ExpectedActualResolver
+            .findExpectedForActual_incrementalCompilationWorkaround(descriptor, moduleVisibilityFilter, shouldCheckAbsenceOfDefaultParamsInActual = true)
             ?: return
 
         checkAmbiguousExpects(compatibility, trace, reportOn, descriptor)
@@ -336,7 +337,7 @@ class ExpectedActualDeclarationChecker(
                 return actualMember != null &&
                         actualMember.isExplicitActualDeclaration() &&
                         !incompatibility.allStrongIncompatibilities() &&
-                        ExpectedActualResolver.findExpectedForActual(
+                        ExpectedActualResolver.findExpectedForActual_incrementalCompilationWorkaround(
                             actualMember, onlyFromThisModule(expectedMember.module)
                         )?.values?.singleOrNull()?.singleOrNull() == expectedMember
             }
@@ -357,7 +358,12 @@ class ExpectedActualDeclarationChecker(
             assert(compatibility.keys.all { it is Incompatible })
             @Suppress("UNCHECKED_CAST")
             val incompatibility = compatibility as Map<Incompatible<MemberDescriptor>, Collection<MemberDescriptor>>
-            trace.report(Errors.ACTUAL_WITHOUT_EXPECT.on(reportOn, descriptor, incompatibility))
+            // A nicer diagnostic for functions with default params
+            if (reportOn is KtFunction && incompatibility.keys.any { it is Incompatible.ActualFunctionWithDefaultParameters }) {
+                trace.report(Errors.ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS.on(reportOn))
+            } else {
+                trace.report(Errors.ACTUAL_WITHOUT_EXPECT.on(reportOn, descriptor, incompatibility))
+            }
         } else {
             val expected = compatibility[Compatible]!!.first()
             if (expected is ClassDescriptor && expected.kind == ClassKind.ANNOTATION_CLASS) {
@@ -499,11 +505,10 @@ class ExpectedActualDeclarationChecker(
 
     companion object {
         fun Map<out ExpectActualCompatibility<MemberDescriptor>, Collection<MemberDescriptor>>.allStrongIncompatibilities(): Boolean =
-            this.keys.all { it is Incompatible && it.kind == IncompatibilityKind.STRONG }
+            this.keys.all { it is Incompatible.StrongIncompatible }
 
         internal fun ExpectActualCompatibility<MemberDescriptor>.isCompatibleOrWeakCompatible() =
-            this is Compatible ||
-                    this is Incompatible && kind == IncompatibilityKind.WEAK
+            this is Compatible || this is Incompatible.WeakIncompatible
     }
 }
 
