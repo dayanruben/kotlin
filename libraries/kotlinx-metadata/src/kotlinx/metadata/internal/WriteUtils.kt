@@ -5,10 +5,7 @@
 
 package kotlinx.metadata.internal
 
-import kotlinx.metadata.ClassName
-import kotlinx.metadata.KmAnnotation
-import kotlinx.metadata.KmAnnotationArgument
-import kotlinx.metadata.isLocalClassName
+import kotlinx.metadata.*
 import org.jetbrains.kotlin.metadata.ProtoBuf
 import org.jetbrains.kotlin.metadata.deserialization.Flags
 import org.jetbrains.kotlin.metadata.serialization.StringTable

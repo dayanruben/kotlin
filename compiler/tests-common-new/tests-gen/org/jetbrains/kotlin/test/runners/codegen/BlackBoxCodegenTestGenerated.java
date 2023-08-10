@@ -2214,6 +2214,30 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         }
 
         @Test
+        @TestMetadata("internalMethodOverrideInFriendModule.kt")
+        public void testInternalMethodOverrideInFriendModule() throws Exception {
+            runTest("compiler/testData/codegen/box/bridges/internalMethodOverrideInFriendModule.kt");
+        }
+
+        @Test
+        @TestMetadata("internalMethodOverrideInOtherModule.kt")
+        public void testInternalMethodOverrideInOtherModule() throws Exception {
+            runTest("compiler/testData/codegen/box/bridges/internalMethodOverrideInOtherModule.kt");
+        }
+
+        @Test
+        @TestMetadata("internalMethodOverrideMultipleInheritance.kt")
+        public void testInternalMethodOverrideMultipleInheritance() throws Exception {
+            runTest("compiler/testData/codegen/box/bridges/internalMethodOverrideMultipleInheritance.kt");
+        }
+
+        @Test
+        @TestMetadata("internalMethodOverridePublishedApi.kt")
+        public void testInternalMethodOverridePublishedApi() throws Exception {
+            runTest("compiler/testData/codegen/box/bridges/internalMethodOverridePublishedApi.kt");
+        }
+
+        @Test
         @TestMetadata("kt12416.kt")
         public void testKt12416() throws Exception {
             runTest("compiler/testData/codegen/box/bridges/kt12416.kt");
@@ -17492,6 +17516,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         }
 
         @Test
+        @TestMetadata("intersectionInLocal.kt")
+        public void testIntersectionInLocal() throws Exception {
+            runTest("compiler/testData/codegen/box/fakeOverride/intersectionInLocal.kt");
+        }
+
+        @Test
         @TestMetadata("kt49371.kt")
         public void testKt49371() throws Exception {
             runTest("compiler/testData/codegen/box/fakeOverride/kt49371.kt");
@@ -17519,6 +17549,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         @TestMetadata("propertySetter.kt")
         public void testPropertySetter() throws Exception {
             runTest("compiler/testData/codegen/box/fakeOverride/propertySetter.kt");
+        }
+
+        @Test
+        @TestMetadata("substitutionInLocal.kt")
+        public void testSubstitutionInLocal() throws Exception {
+            runTest("compiler/testData/codegen/box/fakeOverride/substitutionInLocal.kt");
         }
 
         @Test
@@ -32232,6 +32268,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
                 }
 
                 @Test
+                @TestMetadata("intersectionOverrideWithDefaultParameterInCommonModule.kt")
+                public void testIntersectionOverrideWithDefaultParameterInCommonModule() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/intersectionOverrideWithDefaultParameterInCommonModule.kt");
+                }
+
+                @Test
                 @TestMetadata("kt-56329.kt")
                 public void testKt_56329() throws Exception {
                     runTest("compiler/testData/codegen/box/multiplatform/k2/basic/kt-56329.kt");
@@ -32241,6 +32283,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
                 @TestMetadata("localIntersectionOverrideInCommonModule.kt")
                 public void testLocalIntersectionOverrideInCommonModule() throws Exception {
                     runTest("compiler/testData/codegen/box/multiplatform/k2/basic/localIntersectionOverrideInCommonModule.kt");
+                }
+
+                @Test
+                @TestMetadata("localIntersectionOverrideWithDefaultParameterInCommonModule.kt")
+                public void testLocalIntersectionOverrideWithDefaultParameterInCommonModule() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/basic/localIntersectionOverrideWithDefaultParameterInCommonModule.kt");
                 }
 
                 @Test

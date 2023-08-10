@@ -922,6 +922,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
         }
 
         @Test
+        @TestMetadata("publishedApiOverride.kt")
+        public void testPublishedApiOverride() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/publishedApiOverride.kt");
+        }
+
+        @Test
         @TestMetadata("QualifiedExpressions.kt")
         public void testQualifiedExpressions() throws Exception {
             runTest("compiler/testData/diagnostics/tests/QualifiedExpressions.kt");
@@ -24617,6 +24623,12 @@ public class DiagnosticCompilerTestFE10TestdataTestGenerated extends AbstractDia
                 @TestMetadata("kotlinInheritsJava.kt")
                 public void testKotlinInheritsJava() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/override/parameterNames/kotlinInheritsJava.kt");
+                }
+
+                @Test
+                @TestMetadata("noWarningOnJavaKotlinInheritance.kt")
+                public void testNoWarningOnJavaKotlinInheritance() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/override/parameterNames/noWarningOnJavaKotlinInheritance.kt");
                 }
             }
 

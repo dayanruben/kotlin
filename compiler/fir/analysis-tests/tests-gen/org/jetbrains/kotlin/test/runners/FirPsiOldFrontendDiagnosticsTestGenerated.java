@@ -922,6 +922,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
         }
 
         @Test
+        @TestMetadata("publishedApiOverride.kt")
+        public void testPublishedApiOverride() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/publishedApiOverride.kt");
+        }
+
+        @Test
         @TestMetadata("QualifiedExpressions.kt")
         public void testQualifiedExpressions() throws Exception {
             runTest("compiler/testData/diagnostics/tests/QualifiedExpressions.kt");
@@ -24623,6 +24629,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
                 @TestMetadata("kotlinInheritsJava.kt")
                 public void testKotlinInheritsJava() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/override/parameterNames/kotlinInheritsJava.kt");
+                }
+
+                @Test
+                @TestMetadata("noWarningOnJavaKotlinInheritance.kt")
+                public void testNoWarningOnJavaKotlinInheritance() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/override/parameterNames/noWarningOnJavaKotlinInheritance.kt");
                 }
             }
 

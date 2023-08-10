@@ -2,7 +2,10 @@
  * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
-@file:Suppress("DEPRECATION")
+@file:Suppress(
+    "DEPRECATION_ERROR", // Deprecated .accept implementation
+    "UNUSED_PARAMETER" // For deprecated Writer.write
+)
 
 package kotlinx.metadata.jvm
 
@@ -58,9 +61,9 @@ public sealed class KotlinClassMetadata(internal val annotationData: Metadata) {
          *
          * Returns the same (mutable) [KmClass] instance every time.
          */
-        public val kmClass: KmClass = KmClass().apply {
+        public val kmClass: KmClass = run {
             val (strings, proto) = JvmProtoBufUtil.readClassDataFrom(annotationData.requireNotEmpty(), annotationData.data2)
-            proto.accept(this, strings)
+            proto.toKmClass(strings)
         }
 
         /**
@@ -78,7 +81,7 @@ public sealed class KotlinClassMetadata(internal val annotationData: Metadata) {
          *
          * @param v the visitor that must visit this class
          */
-        @Deprecated(VISITOR_API_MESSAGE)
+        @Deprecated(VISITOR_API_MESSAGE, level = DeprecationLevel.ERROR)
         public fun accept(v: KmClassVisitor): Unit = kmClass.accept(v)
 
         /**
@@ -86,6 +89,7 @@ public sealed class KotlinClassMetadata(internal val annotationData: Metadata) {
          */
         @Deprecated(
             "$WRITER_API_MESSAGE, such as KotlinClassMetadata.writeClass(kmClass, metadataVersion, extraInt)",
+            level = DeprecationLevel.ERROR
         )
         public class Writer : ClassWriter(JvmStringTable()) {
             /**
@@ -99,15 +103,13 @@ public sealed class KotlinClassMetadata(internal val annotationData: Metadata) {
             @JvmOverloads
             @Deprecated(
                 "$WRITER_API_MESSAGE, such as KotlinClassMetadata.writeClass(kmClass, metadataVersion, extraInt)",
+                level = DeprecationLevel.ERROR
             )
             public fun write(
                 metadataVersion: IntArray = COMPATIBLE_METADATA_VERSION,
                 extraInt: Int = 0
             ): Class {
-                checkMetadataVersion(metadataVersion)
-                val (d1, d2) = writeProtoBufData(t.build(), c)
-                val metadata = Metadata(CLASS_KIND, metadataVersion, d1, d2, extraInt = extraInt)
-                return Class(metadata)
+                error("This method is no longer implemented. Migrate to KotlinClassMetadata.writeClass.")
             }
         }
     }
@@ -127,9 +129,9 @@ public sealed class KotlinClassMetadata(internal val annotationData: Metadata) {
          *
          * Returns the same (mutable) [KmPackage] instance every time.
          */
-        public val kmPackage: KmPackage = KmPackage().apply {
+        public val kmPackage: KmPackage = run {
             val (strings, proto) = JvmProtoBufUtil.readPackageDataFrom(annotationData.requireNotEmpty(), annotationData.data2)
-            proto.accept(this, strings)
+            proto.toKmPackage(strings)
         }
 
         /**
@@ -147,7 +149,7 @@ public sealed class KotlinClassMetadata(internal val annotationData: Metadata) {
          *
          * @param v the visitor that must visit this file facade
          */
-        @Deprecated(VISITOR_API_MESSAGE)
+        @Deprecated(VISITOR_API_MESSAGE, level = DeprecationLevel.ERROR)
         public fun accept(v: KmPackageVisitor): Unit = kmPackage.accept(v)
 
         /**
@@ -155,6 +157,7 @@ public sealed class KotlinClassMetadata(internal val annotationData: Metadata) {
          */
         @Deprecated(
             "$WRITER_API_MESSAGE, such as KotlinClassMetadata.writeFileFacade(kmPackage, metadataVersion, extraInt)",
+            level = DeprecationLevel.ERROR
         )
         public class Writer : PackageWriter(JvmStringTable()) {
             /**
@@ -168,15 +171,13 @@ public sealed class KotlinClassMetadata(internal val annotationData: Metadata) {
             @JvmOverloads
             @Deprecated(
                 "$WRITER_API_MESSAGE, such as KotlinClassMetadata.writeFileFacade(kmPackage, metadataVersion, extraInt)",
+                level = DeprecationLevel.ERROR
             )
             public fun write(
                 metadataVersion: IntArray = COMPATIBLE_METADATA_VERSION,
                 extraInt: Int = 0
             ): FileFacade {
-                checkMetadataVersion(metadataVersion)
-                val (d1, d2) = writeProtoBufData(t.build(), c)
-                val metadata = Metadata(FILE_FACADE_KIND, metadataVersion, d1, d2, extraInt = extraInt)
-                return FileFacade(metadata)
+                error("This method is no longer implemented. Migrate to KotlinClassMetadata.writeFileFacade.")
             }
         }
     }
@@ -203,9 +204,9 @@ public sealed class KotlinClassMetadata(internal val annotationData: Metadata) {
          *
          * Returns the same (mutable) [KmLambda] instance every time.
          */
-        public val kmLambda: KmLambda? = if (!isLambda) null else KmLambda().apply {
+        public val kmLambda: KmLambda? = if (!isLambda) null else {
             val (strings, proto) = functionData!!
-            proto.accept(this, strings)
+            proto.toKmLambda(strings)
         }
 
         /**
@@ -227,7 +228,7 @@ public sealed class KotlinClassMetadata(internal val annotationData: Metadata) {
          *
          * @param v the visitor that must visit this lambda
          */
-        @Deprecated(VISITOR_API_MESSAGE)
+        @Deprecated(VISITOR_API_MESSAGE, level = DeprecationLevel.ERROR)
         public fun accept(v: KmLambdaVisitor) {
             if (!isLambda) throw IllegalArgumentException(
                 "accept(KmLambdaVisitor) is only possible for synthetic classes which are lambdas (isLambda = true)"
@@ -244,6 +245,7 @@ public sealed class KotlinClassMetadata(internal val annotationData: Metadata) {
         @Deprecated(
             WRITER_API_MESSAGE + ": KotlinClassMetadata.writeLambda(kmLambda, metadataVersion, extraInt) " +
                     "or KotlinClassMetadata.writeSyntheticClass(metadataVersion, extraInt) for a non-lambda synthetic class",
+            level = DeprecationLevel.ERROR
         )
         public class Writer : LambdaWriter(JvmStringTable()) {
             /**
@@ -257,19 +259,14 @@ public sealed class KotlinClassMetadata(internal val annotationData: Metadata) {
             @Deprecated(
                 WRITER_API_MESSAGE + ": KotlinClassMetadata.writeLambda(kmLambda, metadataVersion, extraInt) " +
                         "or KotlinClassMetadata.writeSyntheticClass(metadataVersion, extraInt) for a non-lambda synthetic class",
+                level = DeprecationLevel.ERROR
             )
             @JvmOverloads
             public fun write(
                 metadataVersion: IntArray = COMPATIBLE_METADATA_VERSION,
                 extraInt: Int = 0
             ): SyntheticClass {
-                checkMetadataVersion(metadataVersion)
-                val proto = t?.build()
-                val (d1, d2) =
-                    if (proto != null) writeProtoBufData(proto, c)
-                    else Pair(emptyArray(), emptyArray())
-                val metadata = Metadata(SYNTHETIC_CLASS_KIND, metadataVersion, d1, d2, extraInt = extraInt)
-                return SyntheticClass(metadata)
+                error("This method is no longer implemented. Migrate to KotlinClassMetadata.writeLambda or KotlinClassMetadata.writeSyntheticClass.")
             }
         }
     }
@@ -316,6 +313,7 @@ public sealed class KotlinClassMetadata(internal val annotationData: Metadata) {
          */
         @Deprecated(
             "$WRITER_API_MESSAGE, such as KotlinClassMetadata.writeMultiFileClassFacade(partClassNames, metadataVersion, extraInt)",
+            level = DeprecationLevel.ERROR
         )
         public class Writer {
             /**
@@ -329,6 +327,7 @@ public sealed class KotlinClassMetadata(internal val annotationData: Metadata) {
              */
             @Deprecated(
                 "$WRITER_API_MESSAGE, such as KotlinClassMetadata.writeMultiFileClassFacade(partClassNames, metadataVersion, extraInt)",
+                level = DeprecationLevel.ERROR
             )
             @JvmOverloads
             public fun write(
@@ -336,12 +335,7 @@ public sealed class KotlinClassMetadata(internal val annotationData: Metadata) {
                 metadataVersion: IntArray = COMPATIBLE_METADATA_VERSION,
                 extraInt: Int = 0
             ): MultiFileClassFacade {
-                checkMetadataVersion(metadataVersion)
-                val metadata = Metadata(
-                    MULTI_FILE_CLASS_FACADE_KIND, metadataVersion,
-                    partClassNames.toTypedArray(), extraInt = extraInt
-                )
-                return MultiFileClassFacade(metadata)
+                error("This method is no longer implemented. Migrate to KotlinClassMetadata.writeMultiFileClassFacade.")
             }
         }
     }
@@ -363,9 +357,9 @@ public sealed class KotlinClassMetadata(internal val annotationData: Metadata) {
          *
          * Returns the same (mutable) [KmPackage] instance every time.
          */
-        public val kmPackage: KmPackage = KmPackage().apply {
+        public val kmPackage: KmPackage = run {
             val (strings, proto) = JvmProtoBufUtil.readPackageDataFrom(annotationData.requireNotEmpty(), annotationData.data2)
-            proto.accept(this, strings)
+            proto.toKmPackage(strings)
         }
 
         /**
@@ -389,7 +383,7 @@ public sealed class KotlinClassMetadata(internal val annotationData: Metadata) {
          *
          * @param v the visitor that must visit this multi-file class part
          */
-        @Deprecated(VISITOR_API_MESSAGE)
+        @Deprecated(VISITOR_API_MESSAGE, level = DeprecationLevel.ERROR)
         public fun accept(v: KmPackageVisitor) {
             kmPackage.accept(v)
         }
@@ -398,7 +392,8 @@ public sealed class KotlinClassMetadata(internal val annotationData: Metadata) {
          * A [KmPackageVisitor] that generates the metadata of a multi-file class part.
          */
         @Deprecated(
-            "$WRITER_API_MESSAGE, such as KotlinClassMetadata.writeMultiFileClassPart(kmPackage, facadeClassName, metadataVersion, extraInt)"
+            "$WRITER_API_MESSAGE, such as KotlinClassMetadata.writeMultiFileClassPart(kmPackage, facadeClassName, metadataVersion, extraInt)",
+            level = DeprecationLevel.ERROR
         )
         public class Writer : PackageWriter(JvmStringTable()) {
             /**
@@ -411,7 +406,8 @@ public sealed class KotlinClassMetadata(internal val annotationData: Metadata) {
              *   0 by default
              */
             @Deprecated(
-                "$WRITER_API_MESSAGE, such as KotlinClassMetadata.writeMultiFileClassPart(kmPackage, facadeClassName, metadataVersion, extraInt)"
+                "$WRITER_API_MESSAGE, such as KotlinClassMetadata.writeMultiFileClassPart(kmPackage, facadeClassName, metadataVersion, extraInt)",
+                level = DeprecationLevel.ERROR
             )
             @JvmOverloads
             public fun write(
@@ -419,12 +415,7 @@ public sealed class KotlinClassMetadata(internal val annotationData: Metadata) {
                 metadataVersion: IntArray = COMPATIBLE_METADATA_VERSION,
                 extraInt: Int = 0
             ): MultiFileClassPart {
-                checkMetadataVersion(metadataVersion)
-                val (d1, d2) = writeProtoBufData(t.build(), c)
-                val metadata = Metadata(
-                    MULTI_FILE_CLASS_PART_KIND, metadataVersion, d1, d2, facadeClassName, extraInt = extraInt
-                )
-                return MultiFileClassPart(metadata)
+                error("This method is no longer implemented. Migrate to KotlinClassMetadata.writeMultifileClassPart.")
             }
         }
     }
@@ -457,7 +448,11 @@ public sealed class KotlinClassMetadata(internal val annotationData: Metadata) {
             metadataVersion: IntArray = COMPATIBLE_METADATA_VERSION,
             extraInt: Int = 0,
         ): Metadata = wrapWriteIntoIAE {
-            Class.Writer().also { kmClass.accept(it) }.write(metadataVersion, extraInt).annotationData
+            checkMetadataVersion(metadataVersion)
+            val writer = ClassWriter(JvmStringTable())
+            writer.writeClass(kmClass)
+            val (d1, d2) = writeProtoBufData(writer.t.build(), writer.c)
+            Metadata(CLASS_KIND, metadataVersion, d1, d2, extraInt = extraInt)
         }
 
         /**
@@ -477,7 +472,11 @@ public sealed class KotlinClassMetadata(internal val annotationData: Metadata) {
             metadataVersion: IntArray = COMPATIBLE_METADATA_VERSION,
             extraInt: Int = 0,
         ): Metadata = wrapWriteIntoIAE {
-            FileFacade.Writer().also { kmPackage.accept(it) }.write(metadataVersion, extraInt).annotationData
+            checkMetadataVersion(metadataVersion)
+            val writer = PackageWriter(JvmStringTable())
+            writer.writePackage(kmPackage)
+            val (d1, d2) = writeProtoBufData(writer.t.build(), writer.c)
+            Metadata(FILE_FACADE_KIND, metadataVersion, d1, d2, extraInt = extraInt)
         }
 
         /**
@@ -497,7 +496,14 @@ public sealed class KotlinClassMetadata(internal val annotationData: Metadata) {
             metadataVersion: IntArray = COMPATIBLE_METADATA_VERSION,
             extraInt: Int = 0,
         ): Metadata = wrapWriteIntoIAE {
-            SyntheticClass.Writer().also { kmLambda.accept(it) }.write(metadataVersion, extraInt).annotationData
+            checkMetadataVersion(metadataVersion)
+            val writer = LambdaWriter(JvmStringTable())
+            writer.writeLambda(kmLambda)
+            val proto = writer.t?.build()
+            val (d1, d2) =
+                if (proto != null) writeProtoBufData(proto, writer.c)
+                else Pair(emptyArray(), emptyArray())
+            Metadata(SYNTHETIC_CLASS_KIND, metadataVersion, d1, d2, extraInt = extraInt)
         }
 
         /**
@@ -515,7 +521,10 @@ public sealed class KotlinClassMetadata(internal val annotationData: Metadata) {
         public fun writeSyntheticClass(
             metadataVersion: IntArray = COMPATIBLE_METADATA_VERSION,
             extraInt: Int = 0,
-        ): Metadata = SyntheticClass.Writer().write(metadataVersion, extraInt).annotationData
+        ): Metadata {
+            checkMetadataVersion(metadataVersion)
+            return Metadata(SYNTHETIC_CLASS_KIND, metadataVersion, emptyArray(), emptyArray(), extraInt = extraInt)
+        }
 
         /**
          * Writes metadata of the multi-file class facade.
@@ -533,7 +542,13 @@ public sealed class KotlinClassMetadata(internal val annotationData: Metadata) {
         public fun writeMultiFileClassFacade(
             partClassNames: List<String>, metadataVersion: IntArray = COMPATIBLE_METADATA_VERSION,
             extraInt: Int = 0,
-        ): Metadata = MultiFileClassFacade.Writer().write(partClassNames, metadataVersion, extraInt).annotationData
+        ): Metadata {
+            checkMetadataVersion(metadataVersion)
+            return Metadata(
+                MULTI_FILE_CLASS_FACADE_KIND, metadataVersion,
+                partClassNames.toTypedArray(), extraInt = extraInt
+            )
+        }
 
         /**
          * Writes the metadata of the multi-file class part.
@@ -554,7 +569,13 @@ public sealed class KotlinClassMetadata(internal val annotationData: Metadata) {
             metadataVersion: IntArray = COMPATIBLE_METADATA_VERSION,
             extraInt: Int = 0,
         ): Metadata = wrapWriteIntoIAE {
-            MultiFileClassPart.Writer().also { kmPackage.accept(it) }.write(facadeClassName, metadataVersion, extraInt).annotationData
+            checkMetadataVersion(metadataVersion)
+            val writer = PackageWriter(JvmStringTable())
+            writer.writePackage(kmPackage)
+            val (d1, d2) = writeProtoBufData(writer.t.build(), writer.c)
+            Metadata(
+                MULTI_FILE_CLASS_PART_KIND, metadataVersion, d1, d2, facadeClassName, extraInt = extraInt
+            )
         }
 
         /**

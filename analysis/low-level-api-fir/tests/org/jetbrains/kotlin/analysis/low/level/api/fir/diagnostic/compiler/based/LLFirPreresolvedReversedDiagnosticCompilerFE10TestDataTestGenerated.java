@@ -922,6 +922,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
         }
 
         @Test
+        @TestMetadata("publishedApiOverride.kt")
+        public void testPublishedApiOverride() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/publishedApiOverride.kt");
+        }
+
+        @Test
         @TestMetadata("QualifiedExpressions.kt")
         public void testQualifiedExpressions() throws Exception {
             runTest("compiler/testData/diagnostics/tests/QualifiedExpressions.kt");
@@ -24617,6 +24623,12 @@ public class LLFirPreresolvedReversedDiagnosticCompilerFE10TestDataTestGenerated
                 @TestMetadata("kotlinInheritsJava.kt")
                 public void testKotlinInheritsJava() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/override/parameterNames/kotlinInheritsJava.kt");
+                }
+
+                @Test
+                @TestMetadata("noWarningOnJavaKotlinInheritance.kt")
+                public void testNoWarningOnJavaKotlinInheritance() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/override/parameterNames/noWarningOnJavaKotlinInheritance.kt");
                 }
             }
 
