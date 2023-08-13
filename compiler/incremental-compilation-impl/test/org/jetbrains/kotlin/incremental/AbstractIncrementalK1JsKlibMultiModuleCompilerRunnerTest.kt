@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.incremental.testingUtils.BuildLogFinder
 import org.jetbrains.kotlin.library.KLIB_FILE_EXTENSION
 import java.io.File
 
-abstract class AbstractIncrementalMultiModuleJsKlibCompilerRunnerTest :
+abstract class AbstractIncrementalK1JsKlibMultiModuleCompilerRunnerTest :
     AbstractIncrementalMultiModuleCompilerRunnerTest<K2JSCompilerArguments, ModulesApiHistoryJs>() {
 
     override fun createCompilerArguments(destinationDir: File, testDir: File): K2JSCompilerArguments =
@@ -89,5 +89,16 @@ abstract class AbstractIncrementalMultiModuleJsKlibCompilerRunnerTest :
         private val String.klib: String get() = "$this.$KLIB_FILE_EXTENSION"
 
         private const val STDLIB_DEPENDENCY = "build/js-ir-runtime/full-runtime.klib"
+    }
+}
+
+abstract class AbstractIncrementalK2JsKlibMultiModuleCompilerRunnerTest :
+    AbstractIncrementalK1JsKlibMultiModuleCompilerRunnerTest() {
+
+    override fun createCompilerArguments(destinationDir: File, testDir: File): K2JSCompilerArguments {
+        return super.createCompilerArguments(destinationDir, testDir).apply {
+            useK2 = true
+            languageVersion = "2.0"
+        }
     }
 }
