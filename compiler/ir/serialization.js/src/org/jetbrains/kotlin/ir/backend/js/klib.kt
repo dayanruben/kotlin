@@ -662,7 +662,7 @@ fun serializeModuleIntoKlib(
     klibPath: String,
     dependencies: List<KotlinLibrary>,
     moduleFragment: IrModuleFragment,
-    expectDescriptorToSymbol: MutableMap<DeclarationDescriptor, IrSymbol>,
+    @Suppress("UNUSED_PARAMETER") expectDescriptorToSymbol: MutableMap<DeclarationDescriptor, IrSymbol>, // TODO: to be removed later
     cleanFiles: List<KotlinFileSerializedData>,
     nopack: Boolean,
     perFile: Boolean,
@@ -683,9 +683,7 @@ fun serializeModuleIntoKlib(
         JsIrModuleSerializer(
             messageLogger,
             moduleFragment.irBuiltins,
-            expectDescriptorToSymbol,
             compatibilityMode,
-            skipExpects = !configuration.expectActualLinker,
             normalizeAbsolutePaths = absolutePathNormalization,
             sourceBaseDirs = sourceBaseDirs,
             configuration.languageVersionSettings,

@@ -30,7 +30,6 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.api.resolveToFirSymbol
 import org.jetbrains.kotlin.analysis.low.level.api.fir.element.builder.FirTowerContextProvider
 import org.jetbrains.kotlin.analysis.low.level.api.fir.resolver.AllCandidatesResolver
 import org.jetbrains.kotlin.analysis.utils.printer.parentsOfType
-import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.analysis.checkers.toRegularClassSymbol
 import org.jetbrains.kotlin.fir.declarations.*
@@ -87,7 +86,7 @@ internal class KtFirReferenceShortener(
         val declarationToVisit = file.findSmallestElementOfTypeContainingSelection<KtDeclaration>(selection)
             ?: file
 
-        val firDeclaration = declarationToVisit.getOrBuildFir(firResolveSession) as? FirDeclaration ?: return ShortenCommandImpl(
+        val firDeclaration = declarationToVisit.getCorrespondingFirDeclaration() ?: return ShortenCommandImpl(
             file.createSmartPointer(),
             importsToAdd = emptySet(),
             starImportsToAdd = emptySet(),
@@ -142,6 +141,18 @@ internal class KtFirReferenceShortener(
         )
     }
 
+    private fun KtElement.getCorrespondingFirDeclaration(): FirDeclaration? {
+        require(this is KtFile || this is KtDeclaration)
+
+        val firElement = getOrBuildFir(firResolveSession)
+
+        return when (firElement) {
+            is FirDeclaration -> firElement
+            is FirAnonymousFunctionExpression -> firElement.anonymousFunction
+            else -> null
+        }
+    }
+
     private fun buildSymbol(firSymbol: FirBasedSymbol<*>): KtSymbol = analysisSession.firSymbolBuilder.buildSymbol(firSymbol)
 }
 
@@ -154,10 +165,13 @@ private fun FqName.dropFakeRootPrefixIfPresent(): FqName {
 
 private data class AdditionalImports(val simpleImports: Set<FqName>, val starImports: Set<FqName>)
 
-private inline fun <reified T : KtElement> KtFile.findSmallestElementOfTypeContainingSelection(selection: TextRange): T? =
-    findElementAt(selection.startOffset)
-        ?.parentsOfType<T>(withSelf = true)
-        ?.firstOrNull { selection in it.textRange }
+private inline fun <reified T : KtElement> KtFile.findSmallestElementOfTypeContainingSelection(selection: TextRange): T? {
+    val parents = findElementAt(selection.startOffset)
+        ?.parentsWithSelf
+        ?.toList()
+
+    return parents?.filterIsInstance<T>()?.firstOrNull { selection in it.textRange }
+}
 
 /**
  * How a symbol is imported. The order of the enum entry represents the priority of imports. If a symbol is available from multiple kinds of
@@ -985,6 +999,9 @@ private class ElementsToShortenCollector(
     }
 
     private fun processPropertyAccess(firPropertyAccess: FirPropertyAccessExpression) {
+        // if explicit receiver is a property access or a function call, we cannot shorten it
+        if (!canBePossibleToDropReceiver(firPropertyAccess)) return
+
         val propertyReferenceExpression = firPropertyAccess.correspondingNameReference ?: return
         if (!propertyReferenceExpression.textRange.intersects(selection)) return
 
@@ -996,10 +1013,6 @@ private class ElementsToShortenCollector(
 
         val scopes = shorteningContext.findScopesAtPosition(qualifiedProperty, getNamesToImport(), towerContextProvider) ?: return
         val availableCallables = shorteningContext.findPropertiesInScopes(scopes, propertySymbol.name)
-
-        // if explicit receiver is a property access or a function call, we cannot shorten it
-        if (firPropertyAccess.explicitReceiver !is FirResolvedQualifier) return
-
         if (availableCallables.isNotEmpty() && shortenIfAlreadyImported(firPropertyAccess, propertySymbol, qualifiedProperty)) {
             addElementToShorten(ShortenQualifier(qualifiedProperty))
             return
@@ -1100,15 +1113,12 @@ private class ElementsToShortenCollector(
         callToShorten?.let(::addElementToShorten)
     }
 
-    private fun canBePossibleToDropReceiver(functionCall: FirFunctionCall): Boolean {
+    private fun canBePossibleToDropReceiver(qualifiedAccess: FirQualifiedAccessExpression): Boolean {
         // we can remove receiver only if it is a qualifier
-        val explicitReceiver = functionCall.explicitReceiver as? FirResolvedQualifier ?: return false
+        if (qualifiedAccess.explicitReceiver !is FirResolvedQualifier) return false
 
         // if there is no extension receiver necessary, then it can be removed
-        if (functionCall.extensionReceiver is FirNoReceiverExpression) return true
-
-        val receiverType = shorteningContext.getRegularClass(explicitReceiver.typeRef) ?: return true
-        return receiverType.classKind != ClassKind.OBJECT
+        return qualifiedAccess.extensionReceiver is FirNoReceiverExpression
     }
 
     private fun findUnambiguousReferencedCallableId(namedReference: FirNamedReference): FirCallableSymbol<*>? {

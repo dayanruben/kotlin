@@ -3,22 +3,31 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-package org.jetbrains.kotlin.jvm.compiler
+package org.jetbrains.kotlin.jvm.modules
 
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.cli.AbstractCliTest
 import org.jetbrains.kotlin.cli.AbstractCliTest.getNormalizedCompilerOutput
 import org.jetbrains.kotlin.codegen.forTestCompile.ForTestCompileRuntime
+import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.jvm.compiler.AbstractKotlinCompilerIntegrationTest
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import java.io.File
 import java.util.concurrent.TimeUnit
 import java.util.jar.Manifest
 import kotlin.test.fail
 
-abstract class JavaModulesIntegrationTest(private val jdkVersion: Int, private val jdkHome: File) :
-    AbstractKotlinCompilerIntegrationTest() {
+abstract class AbstractJavaModulesIntegrationTest(
+    private val jdkVersion: Int,
+    private val jdkHome: File,
+    private val languageVersion: LanguageVersion,
+) : AbstractKotlinCompilerIntegrationTest() {
     override val testDataPath: String
         get() = "compiler/testData/javaModules/"
+
+    protected open fun muteForK2(test: () -> Unit) {
+        test()
+    }
 
     private fun module(
         name: String,
@@ -32,7 +41,8 @@ abstract class JavaModulesIntegrationTest(private val jdkVersion: Int, private v
 
         val kotlinOptions = mutableListOf(
             "-jdk-home", jdkHome.path,
-            "-Xmodule-path=$paths"
+            "-Xmodule-path=$paths",
+            "-language-version", languageVersion.versionString,
         )
         if (addModules.isNotEmpty()) {
             kotlinOptions += "-Xadd-modules=${addModules.joinToString()}"
@@ -60,11 +70,10 @@ abstract class JavaModulesIntegrationTest(private val jdkVersion: Int, private v
 
 
     private fun checkKotlinOutput(moduleName: String): (String) -> Unit {
-        val expectedFile =
-            File(testDataDirectory, "$moduleName.$jdkVersion.txt").takeIf { it.exists() } ?: File(testDataDirectory, "$moduleName.txt")
+        val expectedFirFile = File(testDataDirectory, "$moduleName.fir.txt")
         return { actual ->
             KotlinTestUtils.assertEqualsToFile(
-                expectedFile,
+                if (languageVersion.usesK2 && expectedFirFile.exists()) expectedFirFile else File(testDataDirectory, "$moduleName.txt"),
                 getNormalizedCompilerOutput(actual, null, testDataPath, tmpdir.absolutePath)
                     .replace((System.getenv("JDK_11_0") ?: System.getenv("JDK_11")).replace("\\", "/"), "\$JDK11")
                     .replace((System.getenv("JDK_17_0") ?: System.getenv("JDK_17")).replace("\\", "/"), "\$JDK17")
@@ -112,7 +121,8 @@ abstract class JavaModulesIntegrationTest(private val jdkVersion: Int, private v
         module("moduleB", listOf(a))
     }
 
-    fun testSimpleUseNonExportedPackage() {
+    // TODO (KT-60797): missing JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE.
+    fun testSimpleUseNonExportedPackage() = muteForK2 {
         val a = module("moduleA")
         module("moduleB", listOf(a))
     }
@@ -124,7 +134,8 @@ abstract class JavaModulesIntegrationTest(private val jdkVersion: Int, private v
         module("moduleD", listOf(a, b, c))
     }
 
-    fun testUnnamedDependsOnNamed() {
+    // TODO (KT-60797): missing JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE.
+    fun testUnnamedDependsOnNamed() = muteForK2 {
         val a = module("moduleA")
         module("moduleB", listOf(a), listOf("moduleA"))
 
@@ -164,7 +175,8 @@ abstract class JavaModulesIntegrationTest(private val jdkVersion: Int, private v
         }
     }
 
-    fun testAutomaticModuleInternalJdkPackageUsage() {
+    // TODO (KT-60797): missing JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE.
+    fun testAutomaticModuleInternalJdkPackageUsage() = muteForK2 {
         module("jvmStatUsage")
     }
 

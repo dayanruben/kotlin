@@ -655,9 +655,12 @@ class Fir2IrVisitor(
     ): IrElement = whileAnalysing(session, thisReceiverExpression) {
         val calleeReference = thisReceiverExpression.calleeReference
 
-        callGenerator.injectGetValueCall(thisReceiverExpression, calleeReference)?.let { return it }
-
         val boundSymbol = calleeReference.boundSymbol
+
+        if (boundSymbol !is FirClassSymbol || calleeReference.contextReceiverNumber == -1) {
+            callGenerator.injectGetValueCall(thisReceiverExpression, calleeReference)?.let { return it }
+        }
+
         when (boundSymbol) {
             is FirClassSymbol -> {
                 // Object case
@@ -680,7 +683,9 @@ class Fir2IrVisitor(
                 val dispatchReceiver = conversionScope.dispatchReceiverParameter(irClass)
                 if (dispatchReceiver != null) {
                     return thisReceiverExpression.convertWithOffsets { startOffset, endOffset ->
-                        val thisRef = IrGetValueImpl(startOffset, endOffset, dispatchReceiver.type, dispatchReceiver.symbol)
+                        val thisRef = callGenerator.findInjectedValue(calleeReference)?.let {
+                            callGenerator.useInjectedValue(it, calleeReference, startOffset, endOffset)
+                        } ?: IrGetValueImpl(startOffset, endOffset, dispatchReceiver.type, dispatchReceiver.symbol)
                         if (calleeReference.contextReceiverNumber != -1) {
                             val constructorForCurrentlyGeneratedDelegatedConstructor =
                                 conversionScope.getConstructorForCurrentlyGeneratedDelegatedConstructor(irClass)
@@ -691,8 +696,11 @@ class Fir2IrVisitor(
                                 IrGetValueImpl(startOffset, endOffset, constructorParameter.type, constructorParameter.symbol)
                             } else {
                                 val contextReceivers =
-                                    components.classifierStorage.getFieldsWithContextReceiversForClass(irClass)
-                                        ?: error("Not defined context receivers for $irClass")
+                                    components.classifierStorage.getFieldsWithContextReceiversForClass(irClass, firClass)
+                                require(contextReceivers.size > calleeReference.contextReceiverNumber) {
+                                    "Not defined context receiver #${calleeReference.contextReceiverNumber} for $irClass. " +
+                                            "Context receivers found: $contextReceivers"
+                                }
 
                                 IrGetFieldImpl(
                                     startOffset, endOffset, contextReceivers[calleeReference.contextReceiverNumber].symbol,
