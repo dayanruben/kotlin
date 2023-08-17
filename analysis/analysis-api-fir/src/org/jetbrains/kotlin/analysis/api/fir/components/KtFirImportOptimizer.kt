@@ -18,11 +18,13 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getOrBuildFirFile
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.FirFile
+import org.jetbrains.kotlin.fir.declarations.FirProperty
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.psi
 import org.jetbrains.kotlin.fir.realPsi
 import org.jetbrains.kotlin.fir.references.FirErrorNamedReference
+import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeAmbiguityError
 import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeUnresolvedError
 import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeUnresolvedNameError
 import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeUnresolvedReferenceError
@@ -127,6 +129,11 @@ internal class KtFirImportOptimizer(
             override fun visitImplicitInvokeCall(implicitInvokeCall: FirImplicitInvokeCall) {
                 processImplicitFunctionCall(implicitInvokeCall)
                 super.visitImplicitInvokeCall(implicitInvokeCall)
+            }
+
+            override fun visitProperty(property: FirProperty) {
+                if (property.name == SpecialNames.UNDERSCORE_FOR_UNUSED_VAR) return
+                super.visitProperty(property)
             }
 
             override fun visitComponentCall(componentCall: FirComponentCall) {
@@ -300,9 +307,10 @@ internal class KtFirImportOptimizer(
 }
 
 private val FirErrorNamedReference.unresolvedName: Name?
-    get() {
-        val diagnostic = diagnostic as? ConeUnresolvedError ?: return null
-        return diagnostic.unresolvedName
+    get() = when (val diagnostic = diagnostic) {
+        is ConeUnresolvedError -> diagnostic.unresolvedName
+        is ConeAmbiguityError -> diagnostic.name
+        else -> null
     }
 
 private val ConeUnresolvedError.unresolvedName: Name?

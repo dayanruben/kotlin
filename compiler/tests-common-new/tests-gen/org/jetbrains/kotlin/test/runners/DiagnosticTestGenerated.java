@@ -712,6 +712,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
         }
 
         @Test
+        @TestMetadata("missingWrongAnnotationTarget.kt")
+        public void testMissingWrongAnnotationTarget() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/missingWrongAnnotationTarget.kt");
+        }
+
+        @Test
         @TestMetadata("MultilineStringTemplates.kt")
         public void testMultilineStringTemplates() throws Exception {
             runTest("compiler/testData/diagnostics/tests/MultilineStringTemplates.kt");
@@ -22792,6 +22798,18 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestMetadata("checkNoActualForExpectInLastModule.kt")
             public void testCheckNoActualForExpectInLastModule() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/multiplatform/checkNoActualForExpectInLastModule.kt");
+            }
+
+            @Test
+            @TestMetadata("defaultParams_inheritanceByDelegation_negative.kt")
+            public void testDefaultParams_inheritanceByDelegation_negative() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multiplatform/defaultParams_inheritanceByDelegation_negative.kt");
+            }
+
+            @Test
+            @TestMetadata("defaultParams_inheritanceByDelegation_positive.kt")
+            public void testDefaultParams_inheritanceByDelegation_positive() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/multiplatform/defaultParams_inheritanceByDelegation_positive.kt");
             }
 
             @Test
