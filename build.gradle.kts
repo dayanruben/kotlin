@@ -325,8 +325,6 @@ extra["compilerArtifactsForIde"] = listOfNotNull(
     ":plugins:parcelize:parcelize-runtime",
     ":kotlin-stdlib-common",
     ":kotlin-stdlib",
-    ":kotlin-stdlib-wasm-js",
-    ":kotlin-stdlib-wasm-wasi",
     ":kotlin-test",
     ":kotlin-daemon",
     ":kotlin-compiler",
@@ -710,6 +708,7 @@ tasks {
         dependsOn(":kotlin-scripting-jvm-host-test:test")
         dependsOn(":kotlin-scripting-dependencies:test")
         dependsOn(":kotlin-scripting-dependencies-maven:test")
+        dependsOn(":kotlin-scripting-dependencies-maven-all:test")
         dependsOn(":kotlin-scripting-jsr223-test:test")
         // see comments on the task in kotlin-scripting-jvm-host-test
 //        dependsOn(":kotlin-scripting-jvm-host-test:embeddableTest")

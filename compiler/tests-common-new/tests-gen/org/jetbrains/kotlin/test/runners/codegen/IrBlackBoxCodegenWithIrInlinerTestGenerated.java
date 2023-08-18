@@ -18866,6 +18866,12 @@ public class IrBlackBoxCodegenWithIrInlinerTestGenerated extends AbstractIrBlack
         }
 
         @Test
+        @TestMetadata("suppressedInvisibleReferenceQualifier.kt")
+        public void testSuppressedInvisibleReferenceQualifier() throws Exception {
+            runTest("compiler/testData/codegen/box/fir/suppressedInvisibleReferenceQualifier.kt");
+        }
+
+        @Test
         @TestMetadata("SuspendExtension.kt")
         public void testSuspendExtension() throws Exception {
             runTest("compiler/testData/codegen/box/fir/SuspendExtension.kt");
@@ -28899,12 +28905,6 @@ public class IrBlackBoxCodegenWithIrInlinerTestGenerated extends AbstractIrBlack
             }
 
             @Test
-            @TestMetadata("ifConstVal.kt")
-            public void testIfConstVal() throws Exception {
-                runTest("compiler/testData/codegen/box/involvesIrInterpreter/intrinsicConst/ifConstVal.kt");
-            }
-
-            @Test
             @TestMetadata("kCallableName.kt")
             public void testKCallableName() throws Exception {
                 runTest("compiler/testData/codegen/box/involvesIrInterpreter/intrinsicConst/kCallableName.kt");
@@ -33725,6 +33725,12 @@ public class IrBlackBoxCodegenWithIrInlinerTestGenerated extends AbstractIrBlack
                 @TestMetadata("annotationsViaActualTypeAliasFromBinary.kt")
                 public void testAnnotationsViaActualTypeAliasFromBinary() throws Exception {
                     runTest("compiler/testData/codegen/box/multiplatform/k2/annotations/annotationsViaActualTypeAliasFromBinary.kt");
+                }
+
+                @Test
+                @TestMetadata("expectAnnotationCallInLibrary.kt")
+                public void testExpectAnnotationCallInLibrary() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/annotations/expectAnnotationCallInLibrary.kt");
                 }
 
                 @Test
@@ -44303,6 +44309,12 @@ public class IrBlackBoxCodegenWithIrInlinerTestGenerated extends AbstractIrBlack
                 @TestMetadata("internalPrimaryValOfInlineClass.kt")
                 public void testInternalPrimaryValOfInlineClass() throws Exception {
                     runTest("compiler/testData/codegen/box/reflection/call/inlineClasses/internalPrimaryValOfInlineClass.kt");
+                }
+
+                @Test
+                @TestMetadata("kt58887.kt")
+                public void testKt58887() throws Exception {
+                    runTest("compiler/testData/codegen/box/reflection/call/inlineClasses/kt58887.kt");
                 }
 
                 @Test

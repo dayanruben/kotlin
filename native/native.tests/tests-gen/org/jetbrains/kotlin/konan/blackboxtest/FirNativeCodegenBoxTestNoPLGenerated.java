@@ -15347,6 +15347,12 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
             }
 
             @Test
+            @TestMetadata("suppressedInvisibleReferenceQualifier.kt")
+            public void testSuppressedInvisibleReferenceQualifier() throws Exception {
+                runTest("compiler/testData/codegen/box/fir/suppressedInvisibleReferenceQualifier.kt");
+            }
+
+            @Test
             @TestMetadata("toLong.kt")
             public void testToLong() throws Exception {
                 runTest("compiler/testData/codegen/box/fir/toLong.kt");
@@ -24706,12 +24712,6 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
                 }
 
                 @Test
-                @TestMetadata("ifConstVal.kt")
-                public void testIfConstVal() throws Exception {
-                    runTest("compiler/testData/codegen/box/involvesIrInterpreter/intrinsicConst/ifConstVal.kt");
-                }
-
-                @Test
                 @TestMetadata("kCallableName.kt")
                 public void testKCallableName() throws Exception {
                     runTest("compiler/testData/codegen/box/involvesIrInterpreter/intrinsicConst/kCallableName.kt");
@@ -27123,6 +27123,12 @@ public class FirNativeCodegenBoxTestNoPLGenerated extends AbstractNativeCodegenB
                     @Test
                     public void testAllFilesPresentInAnnotations() throws Exception {
                         KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/multiplatform/k2/annotations"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.NATIVE, true);
+                    }
+
+                    @Test
+                    @TestMetadata("expectAnnotationCallInLibrary.kt")
+                    public void testExpectAnnotationCallInLibrary() throws Exception {
+                        runTest("compiler/testData/codegen/box/multiplatform/k2/annotations/expectAnnotationCallInLibrary.kt");
                     }
 
                     @Test

@@ -304,6 +304,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
         }
 
         @Test
+        @TestMetadata("duplicateDirrectOverriddenCallables.kt")
+        public void testDuplicateDirrectOverriddenCallables() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/duplicateDirrectOverriddenCallables.kt");
+        }
+
+        @Test
         @TestMetadata("emptyLhsClassLiterals.kt")
         public void testEmptyLhsClassLiterals() throws Exception {
             runTest("compiler/testData/diagnostics/tests/emptyLhsClassLiterals.kt");
@@ -343,6 +349,24 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
         @TestMetadata("ExternalAndAbstract.kt")
         public void testExternalAndAbstract() throws Exception {
             runTest("compiler/testData/diagnostics/tests/ExternalAndAbstract.kt");
+        }
+
+        @Test
+        @TestMetadata("falseNegativeDuplicateDefaultValues1.kt")
+        public void testFalseNegativeDuplicateDefaultValues1() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/falseNegativeDuplicateDefaultValues1.kt");
+        }
+
+        @Test
+        @TestMetadata("falseNegativeDuplicateDefaultValues2.kt")
+        public void testFalseNegativeDuplicateDefaultValues2() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/falseNegativeDuplicateDefaultValues2.kt");
+        }
+
+        @Test
+        @TestMetadata("falseNegativeDuplicateDefaultValues3.kt")
+        public void testFalseNegativeDuplicateDefaultValues3() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/falseNegativeDuplicateDefaultValues3.kt");
         }
 
         @Test
@@ -706,6 +730,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
         }
 
         @Test
+        @TestMetadata("missingConflictingOverloads.kt")
+        public void testMissingConflictingOverloads() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/missingConflictingOverloads.kt");
+        }
+
+        @Test
         @TestMetadata("missingIteratorMissing.kt")
         public void testMissingIteratorMissing() throws Exception {
             runTest("compiler/testData/diagnostics/tests/missingIteratorMissing.kt");
@@ -727,6 +757,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
         @TestMetadata("MultipleBounds.kt")
         public void testMultipleBounds() throws Exception {
             runTest("compiler/testData/diagnostics/tests/MultipleBounds.kt");
+        }
+
+        @Test
+        @TestMetadata("multipleDefaultsNoSource.kt")
+        public void testMultipleDefaultsNoSource() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/multipleDefaultsNoSource.kt");
         }
 
         @Test
@@ -757,6 +793,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
         @TestMetadata("noUnusedOnDelegationWithProvider.kt")
         public void testNoUnusedOnDelegationWithProvider() throws Exception {
             runTest("compiler/testData/diagnostics/tests/noUnusedOnDelegationWithProvider.kt");
+        }
+
+        @Test
+        @TestMetadata("nonConstNotCall.kt")
+        public void testNonConstNotCall() throws Exception {
+            runTest("compiler/testData/diagnostics/tests/nonConstNotCall.kt");
         }
 
         @Test
@@ -35448,6 +35490,12 @@ public class FirLightTreeOldFrontendDiagnosticsTestGenerated extends AbstractFir
             @TestMetadata("UnaryVsVararg.kt")
             public void testUnaryVsVararg() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/varargs/UnaryVsVararg.kt");
+            }
+
+            @Test
+            @TestMetadata("unresolvedVarargType.kt")
+            public void testUnresolvedVarargType() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/varargs/unresolvedVarargType.kt");
             }
 
             @Test

@@ -17918,6 +17918,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         }
 
         @Test
+        @TestMetadata("suppressedInvisibleReferenceQualifier.kt")
+        public void testSuppressedInvisibleReferenceQualifier() throws Exception {
+            runTest("compiler/testData/codegen/box/fir/suppressedInvisibleReferenceQualifier.kt");
+        }
+
+        @Test
         @TestMetadata("SuspendExtension.kt")
         public void testSuspendExtension() throws Exception {
             runTest("compiler/testData/codegen/box/fir/SuspendExtension.kt");
@@ -32072,6 +32078,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
                 }
 
                 @Test
+                @TestMetadata("expectAnnotationCallInLibrary.kt")
+                public void testExpectAnnotationCallInLibrary() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/annotations/expectAnnotationCallInLibrary.kt");
+                }
+
+                @Test
                 @TestMetadata("expectClassInJvmMultifileFacade.kt")
                 public void testExpectClassInJvmMultifileFacade() throws Exception {
                     runTest("compiler/testData/codegen/box/multiplatform/k2/annotations/expectClassInJvmMultifileFacade.kt");
@@ -41693,6 +41705,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
                 @TestMetadata("internalPrimaryValOfInlineClass.kt")
                 public void testInternalPrimaryValOfInlineClass() throws Exception {
                     runTest("compiler/testData/codegen/box/reflection/call/inlineClasses/internalPrimaryValOfInlineClass.kt");
+                }
+
+                @Test
+                @TestMetadata("kt58887.kt")
+                public void testKt58887() throws Exception {
+                    runTest("compiler/testData/codegen/box/reflection/call/inlineClasses/kt58887.kt");
                 }
 
                 @Test

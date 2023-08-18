@@ -105,6 +105,9 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<CallableId>("callableId")
         }
         val INNER_ON_TOP_LEVEL_SCRIPT_CLASS by deprecationError<PsiElement>(LanguageFeature.ProhibitScriptTopLevelInnerClasses)
+        val ERROR_SUPPRESSION by warning<PsiElement> {
+            parameter<String>("diagnosticName")
+        }
     }
 
     val UNRESOLVED by object : DiagnosticGroup("Unresolved") {
@@ -125,6 +128,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val DEPRECATION_ERROR by error<PsiElement>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED) {
             parameter<Symbol>("reference")
             parameter<String>("message")
+            isSuppressible = true
         }
 
         val DEPRECATION by warning<PsiElement>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED) {
@@ -150,6 +154,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<Symbol>("alias")
             parameter<Symbol>("reference")
             parameter<String>("message")
+            isSuppressible = true
         }
         val TYPEALIAS_EXPANSION_DEPRECATION by warning<PsiElement>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED) {
             parameter<Symbol>("alias")
@@ -870,13 +875,6 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<Visibility>("overridingVisibility")
             parameter<FirCallableSymbol<*>>("overridden")
             parameter<Name>("containingClassName")
-        }
-
-        val MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES by error<KtElement>(PositioningStrategy.DECLARATION_SIGNATURE_OR_DEFAULT) {
-            parameter<FirValueParameterSymbol>("valueParameter")
-        }
-        val MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_WHEN_NO_EXPLICIT_OVERRIDE by error<KtElement>(PositioningStrategy.DECLARATION_NAME) {
-            parameter<FirValueParameterSymbol>("valueParameter")
         }
 
         val TYPEALIAS_EXPANDS_TO_ARRAY_OF_NOTHINGS by error<KtElement> {
@@ -1656,6 +1654,10 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             LanguageFeature.ModifierNonBuiltinSuspendFunError, PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED
         )
         val RETURN_FOR_BUILT_IN_SUSPEND by error<KtReturnExpression>()
+        val MIXING_SUSPEND_AND_NON_SUSPEND_SUPERTYPES by error<PsiElement>(PositioningStrategy.SUPERTYPES_LIST)
+        val MIXING_FUNCTIONAL_KINDS_IN_SUPERTYPES by error<PsiElement>(PositioningStrategy.SUPERTYPES_LIST) {
+            parameter<Set<FunctionTypeKind>>("kinds")
+        }
     }
 
     val LABEL by object : DiagnosticGroup("label") {

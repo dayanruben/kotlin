@@ -271,6 +271,13 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirErrors.ERROR_SUPPRESSION) { firDiagnostic ->
+        ErrorSuppressionImpl(
+            firDiagnostic.a,
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
     add(FirErrors.INVISIBLE_REFERENCE) { firDiagnostic ->
         InvisibleReferenceImpl(
             firSymbolBuilder.buildSymbol(firDiagnostic.a),
@@ -2562,20 +2569,6 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
-    add(FirErrors.MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES) { firDiagnostic ->
-        MultipleDefaultsInheritedFromSupertypesImpl(
-            firSymbolBuilder.buildSymbol(firDiagnostic.a),
-            firDiagnostic as KtPsiDiagnostic,
-            token,
-        )
-    }
-    add(FirErrors.MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_WHEN_NO_EXPLICIT_OVERRIDE) { firDiagnostic ->
-        MultipleDefaultsInheritedFromSupertypesWhenNoExplicitOverrideImpl(
-            firSymbolBuilder.buildSymbol(firDiagnostic.a),
-            firDiagnostic as KtPsiDiagnostic,
-            token,
-        )
-    }
     add(FirErrors.TYPEALIAS_EXPANDS_TO_ARRAY_OF_NOTHINGS) { firDiagnostic ->
         TypealiasExpandsToArrayOfNothingsImpl(
             firSymbolBuilder.typeBuilder.buildKtType(firDiagnostic.a),
@@ -4675,6 +4668,21 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
     }
     add(FirErrors.RETURN_FOR_BUILT_IN_SUSPEND) { firDiagnostic ->
         ReturnForBuiltInSuspendImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.MIXING_SUSPEND_AND_NON_SUSPEND_SUPERTYPES) { firDiagnostic ->
+        MixingSuspendAndNonSuspendSupertypesImpl(
+            firDiagnostic as KtPsiDiagnostic,
+            token,
+        )
+    }
+    add(FirErrors.MIXING_FUNCTIONAL_KINDS_IN_SUPERTYPES) { firDiagnostic ->
+        MixingFunctionalKindsInSupertypesImpl(
+            firDiagnostic.a.map { functionTypeKind ->
+                functionTypeKind
+            },
             firDiagnostic as KtPsiDiagnostic,
             token,
         )

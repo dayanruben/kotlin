@@ -264,6 +264,12 @@ internal class InnerOnTopLevelScriptClassWarningImpl(
     token: KtLifetimeToken,
 ) : KtAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KtFirDiagnostic.InnerOnTopLevelScriptClassWarning
 
+internal class ErrorSuppressionImpl(
+    override val diagnosticName: String,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KtLifetimeToken,
+) : KtAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KtFirDiagnostic.ErrorSuppression
+
 internal class InvisibleReferenceImpl(
     override val reference: KtSymbol,
     override val visible: Visibility,
@@ -2187,18 +2193,6 @@ internal class CannotChangeAccessPrivilegeImpl(
     token: KtLifetimeToken,
 ) : KtAbstractFirDiagnostic<KtModifierListOwner>(firDiagnostic, token), KtFirDiagnostic.CannotChangeAccessPrivilege
 
-internal class MultipleDefaultsInheritedFromSupertypesImpl(
-    override val valueParameter: KtSymbol,
-    firDiagnostic: KtPsiDiagnostic,
-    token: KtLifetimeToken,
-) : KtAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KtFirDiagnostic.MultipleDefaultsInheritedFromSupertypes
-
-internal class MultipleDefaultsInheritedFromSupertypesWhenNoExplicitOverrideImpl(
-    override val valueParameter: KtSymbol,
-    firDiagnostic: KtPsiDiagnostic,
-    token: KtLifetimeToken,
-) : KtAbstractFirDiagnostic<KtElement>(firDiagnostic, token), KtFirDiagnostic.MultipleDefaultsInheritedFromSupertypesWhenNoExplicitOverride
-
 internal class TypealiasExpandsToArrayOfNothingsImpl(
     override val type: KtType,
     firDiagnostic: KtPsiDiagnostic,
@@ -3939,6 +3933,17 @@ internal class ReturnForBuiltInSuspendImpl(
     firDiagnostic: KtPsiDiagnostic,
     token: KtLifetimeToken,
 ) : KtAbstractFirDiagnostic<KtReturnExpression>(firDiagnostic, token), KtFirDiagnostic.ReturnForBuiltInSuspend
+
+internal class MixingSuspendAndNonSuspendSupertypesImpl(
+    firDiagnostic: KtPsiDiagnostic,
+    token: KtLifetimeToken,
+) : KtAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KtFirDiagnostic.MixingSuspendAndNonSuspendSupertypes
+
+internal class MixingFunctionalKindsInSupertypesImpl(
+    override val kinds: List<FunctionTypeKind>,
+    firDiagnostic: KtPsiDiagnostic,
+    token: KtLifetimeToken,
+) : KtAbstractFirDiagnostic<PsiElement>(firDiagnostic, token), KtFirDiagnostic.MixingFunctionalKindsInSupertypes
 
 internal class RedundantLabelWarningImpl(
     firDiagnostic: KtPsiDiagnostic,

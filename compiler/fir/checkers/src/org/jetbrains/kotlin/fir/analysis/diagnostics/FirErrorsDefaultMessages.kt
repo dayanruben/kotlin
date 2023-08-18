@@ -205,6 +205,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EQUALITY_NOT_APPL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EQUALITY_NOT_APPLICABLE_WARNING
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ERROR_FROM_JAVA_RESOLUTION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ERROR_IN_CONTRACT_DESCRIPTION
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ERROR_SUPPRESSION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPANDED_TYPE_CANNOT_BE_INHERITED
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPECTED_CLASS_CONSTRUCTOR_DELEGATION_CALL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.EXPECTED_CLASS_CONSTRUCTOR_PROPERTY_PARAMETER
@@ -356,11 +357,11 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.METHOD_OF_ANY_IMP
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MISPLACED_TYPE_PARAMETER_CONSTRAINTS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MISSING_STDLIB_CLASS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MISSING_VAL_ON_ANNOTATION_PARAMETER
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MIXING_FUNCTIONAL_KINDS_IN_SUPERTYPES
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MIXING_SUSPEND_AND_NON_SUSPEND_SUPERTYPES
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND_FUN
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MULTIPLE_ARGUMENTS_APPLICABLE_FOR_CONTEXT_RECEIVER
-import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES
-import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_WHEN_NO_EXPLICIT_OVERRIDE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MULTIPLE_VARARG_PARAMETERS
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MULTI_FIELD_VALUE_CLASS_PRIMARY_CONSTRUCTOR_DEFAULT_PARAMETER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.MUST_BE_INITIALIZED
@@ -748,6 +749,11 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             NAME_OF_CONTAINING_DECLARATION_OR_FILE
         )
         map.put(INNER_ON_TOP_LEVEL_SCRIPT_CLASS, "Top level script class cannot be inner.")
+        map.put(
+            ERROR_SUPPRESSION,
+            "This code uses error suppression for ''{0}''. While it might compile and work, the compiler behavior is UNSPECIFIED and WON''T BE PRESERVED. Please report your use case to the Kotlin issue tracker instead: https://kotl.in/issue",
+            TO_STRING
+        )
         map.put(UNRESOLVED_REFERENCE, "Unresolved reference: {0}", NULLABLE_STRING)
         map.put(UNRESOLVED_IMPORT, "Unresolved reference: {0}", NULLABLE_STRING) // &
         map.put(UNRESOLVED_LABEL, "Unresolved label")
@@ -1457,10 +1463,6 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             FQ_NAMES_IN_TYPES,
             FQ_NAMES_IN_TYPES
         )
-
-        val multipleDefaultsMessage = "More than one overridden descriptor declares a default value for ''{0}''. As the compiler can not make sure these values agree, this is not allowed."
-        map.put(MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES, multipleDefaultsMessage, SYMBOL)
-        map.put(MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_WHEN_NO_EXPLICIT_OVERRIDE, multipleDefaultsMessage, SYMBOL)
 
         map.put(TYPEALIAS_EXPANDS_TO_ARRAY_OF_NOTHINGS, "Type alias expanded to malformed type ''{0}''", RENDER_TYPE)
 
@@ -2353,6 +2355,12 @@ object FirErrorsDefaultMessages : BaseDiagnosticRendererFactory() {
             " See https://youtrack.jetbrains.com/issue/KT-49264"
         )
         map.put(RETURN_FOR_BUILT_IN_SUSPEND, "Using implicit label for this lambda is prohibited")
+        map.put(MIXING_SUSPEND_AND_NON_SUSPEND_SUPERTYPES, "Mixing suspend and non-suspend supertypes is not allowed")
+        map.put(
+            MIXING_FUNCTIONAL_KINDS_IN_SUPERTYPES,
+            "Mixing supertypes of different functional kinds ({0}) is not allowed.",
+            FUNCTIONAL_TYPE_KINDS,
+        )
 
         // Label
         map.put(

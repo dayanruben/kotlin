@@ -232,6 +232,11 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = InnerOnTopLevelScriptClassWarning::class
     }
 
+    interface ErrorSuppression : KtFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = ErrorSuppression::class
+        val diagnosticName: String
+    }
+
     interface InvisibleReference : KtFirDiagnostic<PsiElement> {
         override val diagnosticClass get() = InvisibleReference::class
         val reference: KtSymbol
@@ -1821,16 +1826,6 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         val containingClassName: Name
     }
 
-    interface MultipleDefaultsInheritedFromSupertypes : KtFirDiagnostic<KtElement> {
-        override val diagnosticClass get() = MultipleDefaultsInheritedFromSupertypes::class
-        val valueParameter: KtSymbol
-    }
-
-    interface MultipleDefaultsInheritedFromSupertypesWhenNoExplicitOverride : KtFirDiagnostic<KtElement> {
-        override val diagnosticClass get() = MultipleDefaultsInheritedFromSupertypesWhenNoExplicitOverride::class
-        val valueParameter: KtSymbol
-    }
-
     interface TypealiasExpandsToArrayOfNothings : KtFirDiagnostic<KtElement> {
         override val diagnosticClass get() = TypealiasExpandsToArrayOfNothings::class
         val type: KtType
@@ -3264,6 +3259,15 @@ sealed interface KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
 
     interface ReturnForBuiltInSuspend : KtFirDiagnostic<KtReturnExpression> {
         override val diagnosticClass get() = ReturnForBuiltInSuspend::class
+    }
+
+    interface MixingSuspendAndNonSuspendSupertypes : KtFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = MixingSuspendAndNonSuspendSupertypes::class
+    }
+
+    interface MixingFunctionalKindsInSupertypes : KtFirDiagnostic<PsiElement> {
+        override val diagnosticClass get() = MixingFunctionalKindsInSupertypes::class
+        val kinds: List<FunctionTypeKind>
     }
 
     interface RedundantLabelWarning : KtFirDiagnostic<KtLabelReferenceExpression> {

@@ -109,6 +109,7 @@ object CommonDeclarationCheckers : DeclarationCheckers() {
             FirEnumCompanionInEnumConstructorCallChecker,
             FirBadInheritedJavaSignaturesChecker,
             FirSealedInterfaceAllowedChecker,
+            FirMixedFunctionalTypesInSupertypesChecker,
         )
 
     override val regularClassCheckers: Set<FirRegularClassChecker>
@@ -129,7 +130,6 @@ object CommonDeclarationCheckers : DeclarationCheckers() {
             FirOuterClassArgumentsRequiredChecker,
             FirPropertyInitializationChecker,
             FirDelegateFieldTypeMismatchChecker,
-            FirMultipleDefaultsInheritedFromSupertypesChecker,
             FirFiniteBoundRestrictionChecker,
         )
 

@@ -13844,6 +13844,12 @@ public class FirWasmCodegenBoxTestGenerated extends AbstractFirWasmCodegenBoxTes
         }
 
         @Test
+        @TestMetadata("suppressedInvisibleReferenceQualifier.kt")
+        public void testSuppressedInvisibleReferenceQualifier() throws Exception {
+            runTest("compiler/testData/codegen/box/fir/suppressedInvisibleReferenceQualifier.kt");
+        }
+
+        @Test
         @TestMetadata("toLong.kt")
         public void testToLong() throws Exception {
             runTest("compiler/testData/codegen/box/fir/toLong.kt");
@@ -23291,6 +23297,12 @@ public class FirWasmCodegenBoxTestGenerated extends AbstractFirWasmCodegenBoxTes
                 @Test
                 public void testAllFilesPresentInAnnotations() throws Exception {
                     KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/multiplatform/k2/annotations"), Pattern.compile("^([^_](.+))\\.kt$"), null, TargetBackend.WASM, true);
+                }
+
+                @Test
+                @TestMetadata("expectAnnotationCallInLibrary.kt")
+                public void testExpectAnnotationCallInLibrary() throws Exception {
+                    runTest("compiler/testData/codegen/box/multiplatform/k2/annotations/expectAnnotationCallInLibrary.kt");
                 }
 
                 @Test

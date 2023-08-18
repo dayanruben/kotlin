@@ -152,6 +152,7 @@ object FirErrors {
     val VAL_OR_VAR_ON_SECONDARY_CONSTRUCTOR_PARAMETER by error1<KtParameter, KtKeywordToken>(SourceElementPositioningStrategies.VAL_OR_VAR_NODE)
     val INVISIBLE_SETTER by error3<PsiElement, FirPropertySymbol, Visibility, CallableId>(SourceElementPositioningStrategies.SELECTOR_BY_QUALIFIED)
     val INNER_ON_TOP_LEVEL_SCRIPT_CLASS by deprecationError0<PsiElement>(ProhibitScriptTopLevelInnerClasses)
+    val ERROR_SUPPRESSION by warning1<PsiElement, String>()
 
     // Unresolved
     val INVISIBLE_REFERENCE by error3<PsiElement, FirBasedSymbol<*>, Visibility, ClassId?>(SourceElementPositioningStrategies.REFERENCE_BY_QUALIFIED)
@@ -484,8 +485,6 @@ object FirErrors {
     val DATA_CLASS_OVERRIDE_DEFAULT_VALUES by error2<KtElement, FirCallableSymbol<*>, FirClassSymbol<*>>(SourceElementPositioningStrategies.DATA_MODIFIER)
     val CANNOT_WEAKEN_ACCESS_PRIVILEGE by error3<KtModifierListOwner, Visibility, FirCallableSymbol<*>, Name>(SourceElementPositioningStrategies.VISIBILITY_MODIFIER)
     val CANNOT_CHANGE_ACCESS_PRIVILEGE by error3<KtModifierListOwner, Visibility, FirCallableSymbol<*>, Name>(SourceElementPositioningStrategies.VISIBILITY_MODIFIER)
-    val MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES by error1<KtElement, FirValueParameterSymbol>(SourceElementPositioningStrategies.DECLARATION_SIGNATURE_OR_DEFAULT)
-    val MULTIPLE_DEFAULTS_INHERITED_FROM_SUPERTYPES_WHEN_NO_EXPLICIT_OVERRIDE by error1<KtElement, FirValueParameterSymbol>(SourceElementPositioningStrategies.DECLARATION_NAME)
     val TYPEALIAS_EXPANDS_TO_ARRAY_OF_NOTHINGS by error1<KtElement, ConeKotlinType>()
     val OVERRIDING_FINAL_MEMBER by error2<KtNamedDeclaration, FirCallableSymbol<*>, Name>(SourceElementPositioningStrategies.OVERRIDE_MODIFIER)
     val RETURN_TYPE_MISMATCH_ON_INHERITANCE by error2<KtClassOrObject, FirCallableSymbol<*>, FirCallableSymbol<*>>(SourceElementPositioningStrategies.DECLARATION_NAME)
@@ -828,6 +827,8 @@ object FirErrors {
     val MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND by error0<PsiElement>(SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
     val MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND_FUN by deprecationError0<PsiElement>(ModifierNonBuiltinSuspendFunError, SourceElementPositioningStrategies.REFERENCED_NAME_BY_QUALIFIED)
     val RETURN_FOR_BUILT_IN_SUSPEND by error0<KtReturnExpression>()
+    val MIXING_SUSPEND_AND_NON_SUSPEND_SUPERTYPES by error0<PsiElement>(SourceElementPositioningStrategies.SUPERTYPES_LIST)
+    val MIXING_FUNCTIONAL_KINDS_IN_SUPERTYPES by error1<PsiElement, Set<FunctionTypeKind>>(SourceElementPositioningStrategies.SUPERTYPES_LIST)
 
     // label
     val REDUNDANT_LABEL_WARNING by warning0<KtLabelReferenceExpression>(SourceElementPositioningStrategies.LABEL)
