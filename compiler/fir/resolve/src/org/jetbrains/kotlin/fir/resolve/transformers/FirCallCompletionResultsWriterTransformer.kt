@@ -63,6 +63,7 @@ class FirCallCompletionResultsWriterTransformer(
     private val typeApproximator: ConeTypeApproximator,
     private val dataFlowAnalyzer: FirDataFlowAnalyzer,
     private val integerOperatorApproximator: IntegerLiteralAndOperatorApproximationTransformer,
+    private val samResolver: FirSamResolver,
     private val context: BodyResolveContext,
     private val mode: Mode = Mode.Normal
 ) : FirAbstractTreeTransformer<ExpectedArgumentType?>(phase = FirResolvePhase.IMPLICIT_TYPES_BODY_RESOLVE) {
@@ -81,8 +82,6 @@ class FirCallCompletionResultsWriterTransformer(
 
     private val arrayOfCallTransformer = FirArrayOfCallTransformer()
     private var enableArrayOfCallTransformation = false
-
-    private val samResolver: FirSamResolver = FirSamResolver(session, ScopeSession())
 
     enum class Mode {
         Normal, DelegatedPropertyCompletion
@@ -561,20 +560,7 @@ class FirCallCompletionResultsWriterTransformer(
                 // a built-in functional type, no-brainer
                 expectedArgumentType.isSomeFunctionType(session) -> expectedArgumentType
                 // fun interface (a.k.a. SAM), then unwrap it and build a functional type from that interface function
-                expectedArgumentType is ConeClassLikeType -> {
-                    expectedArgumentType.lookupTag.toFirRegularClass(session)?.let answer@{ firRegularClass ->
-                        val functionType = samResolver.getFunctionTypeForPossibleSamType(firRegularClass.defaultType())
-                            ?: return@answer null
-                        val kind = functionType.functionTypeKind(session) ?: FunctionTypeKind.Function
-                        createFunctionType(
-                            kind,
-                            functionType.typeArguments.dropLast(1).map { it as ConeKotlinType },
-                            null,
-                            functionType.typeArguments.last() as ConeKotlinType
-                        )
-                    }
-                }
-                else -> null
+                else -> samResolver.getFunctionTypeForPossibleSamType(expectedArgumentType)?.lowerBoundIfFlexible()
             }
         }
 

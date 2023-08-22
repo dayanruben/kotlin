@@ -275,6 +275,12 @@ public class FirIdeNormalAnalysisSourceModuleReferenceShortenerTestGenerated ext
     }
 
     @Test
+    @TestMetadata("functionalType_parameterPosition.kt")
+    public void testFunctionalType_parameterPosition() throws Exception {
+        runTest("analysis/analysis-api/testData/components/referenceShortener/referenceShortener/functionalType_parameterPosition.kt");
+    }
+
+    @Test
     @TestMetadata("kdoc.kt")
     public void testKdoc() throws Exception {
         runTest("analysis/analysis-api/testData/components/referenceShortener/referenceShortener/kdoc.kt");
@@ -284,6 +290,12 @@ public class FirIdeNormalAnalysisSourceModuleReferenceShortenerTestGenerated ext
     @TestMetadata("kdocQualifierSelected.kt")
     public void testKdocQualifierSelected() throws Exception {
         runTest("analysis/analysis-api/testData/components/referenceShortener/referenceShortener/kdocQualifierSelected.kt");
+    }
+
+    @Test
+    @TestMetadata("kdocQualifierSelected_rootIdePrefix.kt")
+    public void testKdocQualifierSelected_rootIdePrefix() throws Exception {
+        runTest("analysis/analysis-api/testData/components/referenceShortener/referenceShortener/kdocQualifierSelected_rootIdePrefix.kt");
     }
 
     @Test
