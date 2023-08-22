@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.resolve.calls.mpp.ExpectActualMatchingContext
 import org.jetbrains.kotlin.resolve.calls.mpp.ExpectActualMatchingContext.AnnotationCallInfo
 import org.jetbrains.kotlin.resolve.checkers.OptInNames
 import org.jetbrains.kotlin.resolve.descriptorUtil.*
-import org.jetbrains.kotlin.resolve.findTopMostOverriddenDescriptors
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.MemberScope
 import org.jetbrains.kotlin.resolve.scopes.getDescriptorsFiltered
@@ -177,11 +176,14 @@ class ClassicExpectActualMatchingContext(
     }
 
     override fun RegularClassSymbolMarker.collectEnumEntryNames(): List<Name> {
+        return collectEnumEntries().map { it.name }
+    }
+
+    override fun RegularClassSymbolMarker.collectEnumEntries(): List<DeclarationDescriptor> {
         return asDescriptor()
             .unsubstitutedMemberScope
             .getDescriptorsFiltered()
             .filter(DescriptorUtils::isEnumEntry)
-            .map { it.name }
     }
 
     override val CallableSymbolMarker.dispatchReceiverType: KotlinTypeMarker?
@@ -387,4 +389,37 @@ class ClassicExpectActualMatchingContext(
                     this !is K1SyntheticClassifierSymbolMarker &&
                     !(this is CallableMemberDescriptor && kind == CallableMemberDescriptor.Kind.SYNTHESIZED)
         }
+
+    override val checkClassScopesForAnnotationCompatibility = true
+
+    override fun skipCheckingAnnotationsOfActualClassMember(actualMember: DeclarationSymbolMarker): Boolean =
+        (actualMember as MemberDescriptor).isActual
+
+    override fun findPotentialExpectClassMembersForActual(
+        expectClass: RegularClassSymbolMarker,
+        actualClass: RegularClassSymbolMarker,
+        actualMember: DeclarationSymbolMarker,
+        checkClassScopesCompatibility: Boolean,
+    ): Map<MemberDescriptor, ExpectActualCompatibility<*>> {
+        val compatibilityToExpects = ExpectedActualResolver.findExpectForActualClassMember(
+            actualMember as MemberDescriptor,
+            actualClass as ClassDescriptor,
+            expectClass as ClassDescriptor,
+            checkClassScopesCompatibility,
+            this,
+        )
+        return buildMap {
+            for ((compatibility, expectMembers) in compatibilityToExpects.entries) {
+                for (expectMember in expectMembers) {
+                    val oldValue = put(expectMember, compatibility)
+                    if (oldValue != null) {
+                        error(
+                            "Several incompatibilities correspond to the same expect symbol: symbol=$expectMember, " +
+                                    "compatibilities=$oldValue, $compatibility"
+                        )
+                    }
+                }
+            }
+        }
+    }
 }

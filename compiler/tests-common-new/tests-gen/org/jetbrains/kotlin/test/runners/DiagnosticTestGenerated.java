@@ -3141,6 +3141,30 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("OpenValDeferredInitError_InFinalClass_DisableEffectivelyFinal.kt")
+            public void testOpenValDeferredInitError_InFinalClass_DisableEffectivelyFinal() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/backingField/OpenValDeferredInitError_InFinalClass_DisableEffectivelyFinal.kt");
+            }
+
+            @Test
+            @TestMetadata("OpenValDeferredInitError_InFinalClass_EnableEffectivelyFinal.kt")
+            public void testOpenValDeferredInitError_InFinalClass_EnableEffectivelyFinal() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/backingField/OpenValDeferredInitError_InFinalClass_EnableEffectivelyFinal.kt");
+            }
+
+            @Test
+            @TestMetadata("OpenValDeferredInitWarning_InFinalClass_DisableEffectivelyFinal.kt")
+            public void testOpenValDeferredInitWarning_InFinalClass_DisableEffectivelyFinal() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/backingField/OpenValDeferredInitWarning_InFinalClass_DisableEffectivelyFinal.kt");
+            }
+
+            @Test
+            @TestMetadata("OpenValDeferredInitWarning_InFinalClass_EnableEffectivelyFinal.kt")
+            public void testOpenValDeferredInitWarning_InFinalClass_EnableEffectivelyFinal() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/backingField/OpenValDeferredInitWarning_InFinalClass_EnableEffectivelyFinal.kt");
+            }
+
+            @Test
             @TestMetadata("OpenValPartialDeferredInitErrorAnyway.kt")
             public void testOpenValPartialDeferredInitErrorAnyway() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/backingField/OpenValPartialDeferredInitErrorAnyway.kt");
@@ -15231,6 +15255,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("genericOnJavaWildcardBoundedByRaw.kt")
+            public void testGenericOnJavaWildcardBoundedByRaw() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inference/genericOnJavaWildcardBoundedByRaw.kt");
+            }
+
+            @Test
             @TestMetadata("hasErrorInConstrainingTypes.kt")
             public void testHasErrorInConstrainingTypes() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/inference/hasErrorInConstrainingTypes.kt");
@@ -23427,6 +23457,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             @TestDataPath("$PROJECT_ROOT")
             public class AnnotationMatching {
                 @Test
+                @TestMetadata("actualInnerClassMissingMember.kt")
+                public void testActualInnerClassMissingMember() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/actualInnerClassMissingMember.kt");
+                }
+
+                @Test
                 public void testAllFilesPresentInAnnotationMatching() throws Exception {
                     KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/diagnostics/tests/multiplatform/annotationMatching"), Pattern.compile("^(.*)\\.kts?$"), Pattern.compile("^(.+)\\.(reversed|fir|ll)\\.kts?$"), true);
                 }
@@ -23468,6 +23504,18 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 }
 
                 @Test
+                @TestMetadata("classScopeInnerClasses.kt")
+                public void testClassScopeInnerClasses() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/classScopeInnerClasses.kt");
+                }
+
+                @Test
+                @TestMetadata("classScopeViaTypealiasIncompatible.kt")
+                public void testClassScopeViaTypealiasIncompatible() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/classScopeViaTypealiasIncompatible.kt");
+                }
+
+                @Test
                 @TestMetadata("compatibleOverrides.kt")
                 public void testCompatibleOverrides() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/compatibleOverrides.kt");
@@ -23477,6 +23525,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("differentOrder.kt")
                 public void testDifferentOrder() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/differentOrder.kt");
+                }
+
+                @Test
+                @TestMetadata("enumEntries.kt")
+                public void testEnumEntries() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/enumEntries.kt");
                 }
 
                 @Test
@@ -23531,6 +23585,18 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
                 @TestMetadata("sourceRetentionAnnotationsWhenTypealias.kt")
                 public void testSourceRetentionAnnotationsWhenTypealias() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/sourceRetentionAnnotationsWhenTypealias.kt");
+                }
+
+                @Test
+                @TestMetadata("substitutionOverrideInTwoClasses.kt")
+                public void testSubstitutionOverrideInTwoClasses() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/substitutionOverrideInTwoClasses.kt");
+                }
+
+                @Test
+                @TestMetadata("twoActualTypealiasesToSameClass.kt")
+                public void testTwoActualTypealiasesToSameClass() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/multiplatform/annotationMatching/twoActualTypealiasesToSameClass.kt");
                 }
 
                 @Test

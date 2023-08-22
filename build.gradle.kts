@@ -155,6 +155,7 @@ val firCompilerCoreModules = arrayOf(
     ":compiler:fir:plugin-utils",
     ":compiler:fir:tree",
     ":compiler:fir:java",
+    ":compiler:fir:native",
     ":compiler:fir:raw-fir:raw-fir.common",
     ":compiler:fir:raw-fir:psi2fir",
     ":compiler:fir:checkers",
@@ -870,6 +871,12 @@ tasks {
             @Suppress("UNCHECKED_CAST")
             dependsOn((rootProject.extra["compilerArtifactsForIde"] as List<String>).map { "$it:install" })
         }
+    }
+
+    register<Exec>("mvnInstall") {
+        group = "publishing"
+        workingDir = rootProject.projectDir.resolve("libraries")
+        commandLine = getMvnwCmd() + listOf("clean", "install", "-DskipTests")
     }
 }
 

@@ -15663,6 +15663,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/fir/manyImplFromOneJavaInterfaceWithDelegation2.kt");
         }
 
+        @TestMetadata("Mockito.kt")
+        public void testMockito() throws Exception {
+            runTest("compiler/testData/codegen/box/fir/Mockito.kt");
+        }
+
         @TestMetadata("NameHighlighter.kt")
         public void testNameHighlighter() throws Exception {
             runTest("compiler/testData/codegen/box/fir/NameHighlighter.kt");
@@ -28727,6 +28732,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         public static class K2 extends AbstractLightAnalysisModeTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM_IR, testDataFilePath);
+            }
+
+            @TestMetadata("actualInnerClassesFirMemberMapping.kt")
+            public void testActualInnerClassesFirMemberMapping() throws Exception {
+                runTest("compiler/testData/codegen/box/multiplatform/k2/actualInnerClassesFirMemberMapping.kt");
             }
 
             public void testAllFilesPresentInK2() throws Exception {

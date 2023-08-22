@@ -79,6 +79,14 @@ object ConeUnsupportedClassLiteralsWithEmptyLhs : ConeDiagnostic {
     override val reason: String get() = "No receiver in class literal"
 }
 
+object ConeNoConstructorError : ConeDiagnostic {
+    override val reason: String get() = "This type does not have a constructor"
+}
+
+object ConeMissingConstructorKeyword : ConeDiagnostic {
+    override val reason: String get() = "Use the 'constructor' keyword after the modifiers of the primary constructor."
+}
+
 enum class DiagnosticKind {
     ExpressionExpected,
     NotLoopLabel,

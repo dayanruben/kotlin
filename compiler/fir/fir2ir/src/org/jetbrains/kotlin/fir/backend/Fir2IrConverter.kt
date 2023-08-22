@@ -11,9 +11,7 @@ import org.jetbrains.kotlin.KtPsiSourceFileLinesMapping
 import org.jetbrains.kotlin.KtSourceFileLinesMappingFromLineStartOffsets
 import org.jetbrains.kotlin.backend.common.CommonBackendErrors
 import org.jetbrains.kotlin.backend.common.sourceElement
-import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
-import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
@@ -43,6 +41,7 @@ import org.jetbrains.kotlin.ir.interpreter.IrInterpreterConfiguration
 import org.jetbrains.kotlin.ir.interpreter.IrInterpreterEnvironment
 import org.jetbrains.kotlin.ir.interpreter.checker.EvaluationMode
 import org.jetbrains.kotlin.ir.interpreter.transformer.transformConst
+import org.jetbrains.kotlin.ir.symbols.IrSymbolInternals
 import org.jetbrains.kotlin.ir.util.KotlinMangler
 import org.jetbrains.kotlin.ir.util.NaiveSourceBasedFileEntryImpl
 import org.jetbrains.kotlin.ir.util.defaultType
@@ -66,7 +65,6 @@ class Fir2IrConverter(
         fir2irVisitor: Fir2IrVisitor,
         runPreCacheBuiltinClasses: Boolean
     ) {
-        session.lazyDeclarationResolver.disableLazyResolveContractChecks()
         for (firFile in allFirFiles) {
             registerFileAndClasses(firFile, irModuleFragment)
         }
@@ -239,6 +237,7 @@ class Fir2IrConverter(
         return irClass
     }
 
+    @OptIn(IrSymbolInternals::class)
     private fun processCodeFragmentMembers(
         codeFragment: FirCodeFragment,
         irClass: IrClass = classifierStorage.getCachedIrCodeFragment(codeFragment)!!
@@ -543,6 +542,7 @@ class Fir2IrConverter(
             commonMemberStorage: Fir2IrCommonMemberStorage,
             initializedIrBuiltIns: IrBuiltInsOverFir?
         ): Fir2IrResult {
+            session.lazyDeclarationResolver.disableLazyResolveContractChecks()
             val moduleDescriptor = FirModuleDescriptor(session, kotlinBuiltIns)
             val components = Fir2IrComponentsStorage(
                 session,
@@ -562,8 +562,7 @@ class Fir2IrConverter(
             components.visibilityConverter = visibilityConverter
             components.typeConverter = Fir2IrTypeConverter(components)
             val irBuiltIns = initializedIrBuiltIns ?: IrBuiltInsOverFir(
-                components, fir2IrConfiguration.languageVersionSettings, moduleDescriptor, irMangler,
-                fir2IrConfiguration.languageVersionSettings.getFlag(AnalysisFlags.builtInsFromSources) || kotlinBuiltIns !== DefaultBuiltIns.Instance
+                components, fir2IrConfiguration.languageVersionSettings, moduleDescriptor, irMangler
             )
             components.irBuiltIns = irBuiltIns
             val conversionScope = Fir2IrConversionScope()

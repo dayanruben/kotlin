@@ -3141,6 +3141,30 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
             }
 
             @Test
+            @TestMetadata("OpenValDeferredInitError_InFinalClass_DisableEffectivelyFinal.kt")
+            public void testOpenValDeferredInitError_InFinalClass_DisableEffectivelyFinal() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/backingField/OpenValDeferredInitError_InFinalClass_DisableEffectivelyFinal.kt");
+            }
+
+            @Test
+            @TestMetadata("OpenValDeferredInitError_InFinalClass_EnableEffectivelyFinal.kt")
+            public void testOpenValDeferredInitError_InFinalClass_EnableEffectivelyFinal() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/backingField/OpenValDeferredInitError_InFinalClass_EnableEffectivelyFinal.kt");
+            }
+
+            @Test
+            @TestMetadata("OpenValDeferredInitWarning_InFinalClass_DisableEffectivelyFinal.kt")
+            public void testOpenValDeferredInitWarning_InFinalClass_DisableEffectivelyFinal() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/backingField/OpenValDeferredInitWarning_InFinalClass_DisableEffectivelyFinal.kt");
+            }
+
+            @Test
+            @TestMetadata("OpenValDeferredInitWarning_InFinalClass_EnableEffectivelyFinal.kt")
+            public void testOpenValDeferredInitWarning_InFinalClass_EnableEffectivelyFinal() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/backingField/OpenValDeferredInitWarning_InFinalClass_EnableEffectivelyFinal.kt");
+            }
+
+            @Test
             @TestMetadata("OpenValPartialDeferredInitErrorAnyway.kt")
             public void testOpenValPartialDeferredInitErrorAnyway() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/backingField/OpenValPartialDeferredInitErrorAnyway.kt");
@@ -15228,6 +15252,12 @@ public class FirPsiOldFrontendDiagnosticsTestGenerated extends AbstractFirPsiDia
             @TestMetadata("genericCallInThrow.kt")
             public void testGenericCallInThrow() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/inference/genericCallInThrow.kt");
+            }
+
+            @Test
+            @TestMetadata("genericOnJavaWildcardBoundedByRaw.kt")
+            public void testGenericOnJavaWildcardBoundedByRaw() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inference/genericOnJavaWildcardBoundedByRaw.kt");
             }
 
             @Test

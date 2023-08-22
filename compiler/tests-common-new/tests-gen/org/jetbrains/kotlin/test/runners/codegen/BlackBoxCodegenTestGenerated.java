@@ -17910,6 +17910,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         }
 
         @Test
+        @TestMetadata("Mockito.kt")
+        public void testMockito() throws Exception {
+            runTest("compiler/testData/codegen/box/fir/Mockito.kt");
+        }
+
+        @Test
         @TestMetadata("NameHighlighter.kt")
         public void testNameHighlighter() throws Exception {
             runTest("compiler/testData/codegen/box/fir/NameHighlighter.kt");
@@ -32067,6 +32073,12 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
         @TestMetadata("compiler/testData/codegen/box/multiplatform/k2")
         @TestDataPath("$PROJECT_ROOT")
         public class K2 {
+            @Test
+            @TestMetadata("actualInnerClassesFirMemberMapping.kt")
+            public void testActualInnerClassesFirMemberMapping() throws Exception {
+                runTest("compiler/testData/codegen/box/multiplatform/k2/actualInnerClassesFirMemberMapping.kt");
+            }
+
             @Test
             public void testAllFilesPresentInK2() throws Exception {
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/multiplatform/k2"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);

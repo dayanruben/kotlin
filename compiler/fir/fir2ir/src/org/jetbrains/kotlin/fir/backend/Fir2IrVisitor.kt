@@ -43,6 +43,7 @@ import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.expressions.impl.*
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
+import org.jetbrains.kotlin.ir.symbols.IrSymbolInternals
 import org.jetbrains.kotlin.ir.symbols.impl.IrValueParameterSymbolImpl
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.types.impl.IrErrorClassImpl
@@ -498,9 +499,13 @@ class Fir2IrVisitor(
     // ==================================================================================
 
     override fun visitReturnExpression(returnExpression: FirReturnExpression, data: Any?): IrElement {
+        val result = returnExpression.result
+        if (result is FirThrowExpression) {
+            // Note: in FIR we must have 'return' as the last statement
+            return convertToIrExpression(result)
+        }
         val irTarget = conversionScope.returnTarget(returnExpression, declarationStorage)
         return returnExpression.convertWithOffsets { startOffset, endOffset ->
-            val result = returnExpression.result
             // For implicit returns, use the expression endOffset to generate the expected line number for debugging.
             val returnStartOffset = if (returnExpression.source?.kind is KtFakeSourceElementKind.ImplicitReturn) endOffset else startOffset
             IrReturnImpl(
@@ -652,6 +657,7 @@ class Fir2IrVisitor(
                 !((scopeOwner is IrFunction || scopeOwner is IrProperty || scopeOwner is IrField) && (scopeOwner as IrDeclaration).parent == irClass) // Members of object
     }
 
+    @OptIn(IrSymbolInternals::class)
     override fun visitThisReceiverExpression(
         thisReceiverExpression: FirThisReceiverExpression,
         data: Any?
@@ -1190,7 +1196,8 @@ class Fir2IrVisitor(
         branches: List<IrBranch>,
         resultType: IrType
     ): IrExpression {
-        val irWhen = IrWhenImpl(startOffset, endOffset, resultType, origin, branches)
+        // Note: ELVIS origin is set only on wrapping block
+        val irWhen = IrWhenImpl(startOffset, endOffset, resultType, origin.takeIf { it != IrStatementOrigin.ELVIS }, branches)
         return if (subjectVariable == null) {
             irWhen
         } else {
